@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.26.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
-/* $OpenBSD: auth2.c,v 1.167 2023/08/28 09:48:11 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.26.2.3 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: auth2.c,v 1.168 2023/12/18 14:45:49 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.26.2.2 2023/11/02 22:15:21 sborrill Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.26.2.3 2023/12/25 12:22:55 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: auth2.c,v 1.26.2.2 2023/11/02 22:15:21 sborrill Exp $");
 #include "monitor_wrap.h"
 #include "ssherr.h"
 #include "digest.h"
+#include "kex.h"
 
 /* import */
 extern ServerOptions options;
@@ -187,6 +188,8 @@ do_authentication2(struct ssh *ssh)
 	Authctxt *authctxt = ssh->authctxt;
 
 	ssh_dispatch_init(ssh, &dispatch_protocol_error);
+	if (ssh->kex->ext_info_c)
+		ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, &kex_input_ext_info);
 	ssh_dispatch_set(ssh, SSH2_MSG_SERVICE_REQUEST, &input_service_request);
 	ssh_dispatch_run_fatal(ssh, DISPATCH_BLOCK, &authctxt->success);
 	ssh->authctxt = NULL;
@@ -226,6 +229,7 @@ input_service_request(int type, u_int32_t seq, struct ssh *ssh)
 		debug("bad service request %s", service);
 		ssh_packet_disconnect(ssh, "bad service request %s", service);
 	}
+	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, &dispatch_protocol_error);
 	r = 0;
  out:
 	free(service);
@@ -331,6 +335,8 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		if (use_privsep)
 			mm_inform_authserv(service, style);
 		userauth_banner(ssh);
+		if ((r = kex_server_update_ext_info(ssh)) != 0)
+			fatal_fr(r, "kex_server_update_ext_info failed");
 		if (auth2_setup_methods_lists(authctxt) != 0)
 			ssh_packet_disconnect(ssh,
 			    "no authentication methods enabled");

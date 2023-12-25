@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.c,v 1.29.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
-/* $OpenBSD: sshkey.c,v 1.138 2023/08/21 04:36:46 djm Exp $ */
+/*	$NetBSD: sshkey.c,v 1.29.2.3 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: sshkey.c,v 1.140 2023/10/16 08:40:00 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.29.2.2 2023/11/02 22:15:22 sborrill Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.29.2.3 2023/12/25 12:22:56 martin Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -3463,6 +3463,41 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 		if (prv != NULL && prv->ecdsa != NULL)
 			sshkey_dump_ec_key(prv->ecdsa);
 #endif
+	} else if (EVP_PKEY_base_id(pk) == EVP_PKEY_ED25519 &&
+	    (type == KEY_UNSPEC || type == KEY_ED25519)) {
+		size_t len;
+
+		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL ||
+		    (prv->ed25519_sk = calloc(1, ED25519_SK_SZ)) == NULL ||
+		    (prv->ed25519_pk = calloc(1, ED25519_PK_SZ)) == NULL) {
+			r = SSH_ERR_ALLOC_FAIL;
+			goto out;
+		}
+		prv->type = KEY_ED25519;
+		len = ED25519_PK_SZ;
+		if (!EVP_PKEY_get_raw_public_key(pk, prv->ed25519_pk, &len)) {
+			r = SSH_ERR_LIBCRYPTO_ERROR;
+			goto out;
+		}
+		if (len != ED25519_PK_SZ) {
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		len = ED25519_SK_SZ - ED25519_PK_SZ;
+		if (!EVP_PKEY_get_raw_private_key(pk, prv->ed25519_sk, &len)) {
+			r = SSH_ERR_LIBCRYPTO_ERROR;
+			goto out;
+		}
+		if (len != ED25519_SK_SZ - ED25519_PK_SZ) {
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		/* Append the public key to our private key */
+		memcpy(prv->ed25519_sk + (ED25519_SK_SZ - ED25519_PK_SZ),
+		    prv->ed25519_pk, ED25519_PK_SZ);
+#ifdef DEBUG_PK
+		sshbuf_dump_data(prv->ed25519_sk, ED25519_SK_SZ, stderr);
+#endif
 	} else {
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
@@ -3492,7 +3527,6 @@ sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
 		*commentp = NULL;
 
 	switch (type) {
-	case KEY_ED25519:
 	case KEY_XMSS:
 		/* No fallback for new-format-only keys */
 		return sshkey_parse_private2(blob, type, passphrase,

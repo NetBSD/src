@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.26 2022/12/01 22:57:37 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.60 2021/09/16 15:11:19 djm Exp $ */
+/*	$NetBSD: log.c,v 1.26.2.1 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: log.c,v 1.61 2023/12/06 21:06:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.26 2022/12/01 22:57:37 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.26.2.1 2023/12/25 12:22:55 martin Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -447,6 +447,10 @@ sshlogv(const char *file, const char *func, int line, int showfunc,
 	int forced = 0;
 	const char *cp;
 	size_t i;
+
+	/* short circuit processing early if we're not going to log anything */
+	if (nlog_verbose == 0 && level > log_level)
+		return;
 
 	snprintf(tag, sizeof(tag), "%.48s:%.48s():%d (pid=%ld)",
 	    (cp = strrchr(file, '/')) == NULL ? file : cp + 1, func, line,

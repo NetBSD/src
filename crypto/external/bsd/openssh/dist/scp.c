@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.36.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
-/* $OpenBSD: scp.c,v 1.259 2023/09/10 23:12:32 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.36.2.3 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: scp.c,v 1.260 2023/10/11 05:42:08 djm Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.36.2.2 2023/11/02 22:15:21 sborrill Exp $");
+__RCSID("$NetBSD: scp.c,v 1.36.2.3 2023/12/25 12:22:56 martin Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -1769,8 +1769,16 @@ sink(int argc, char **argv, const char *src)
 				    fnmatch(patterns[n], cp, 0) == 0)
 					break;
 			}
-			if (n >= npatterns)
+			if (n >= npatterns) {
+				debug2_f("incoming filename \"%s\" does not "
+				    "match any of %zu expected patterns", cp,
+				    npatterns);
+				for (n = 0; n < npatterns; n++) {
+					debug3_f("expected pattern %zu: \"%s\"",
+					    n, patterns[n]);
+				}
 				SCREWUP("filename does not match request");
+			}
 		}
 		if (targisdir) {
 			static char *namebuf;

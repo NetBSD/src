@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.43.2.2 2023/11/02 22:15:22 sborrill Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.367 2023/08/01 08:15:04 dtucker Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.43.2.3 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.371 2023/12/18 14:45:49 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.43.2.2 2023/11/02 22:15:22 sborrill Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.43.2.3 2023/12/25 12:22:56 martin Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -154,7 +154,7 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port,
 	}
 	if (options.known_hosts_command != NULL) {
 		load_hostkeys_command(hostkeys, options.known_hosts_command,
-		    "ORDER", cinfo, NULL, host);
+		    "ORDER", cinfo, NULL, hostname);
 	}
 	/*
 	 * If a plain public key exists that matches the type of the best
@@ -370,7 +370,6 @@ struct cauthmethod {
 };
 
 static int input_userauth_service_accept(int, u_int32_t, struct ssh *);
-static int input_userauth_ext_info(int, u_int32_t, struct ssh *);
 static int input_userauth_success(int, u_int32_t, struct ssh *);
 static int input_userauth_failure(int, u_int32_t, struct ssh *);
 static int input_userauth_banner(int, u_int32_t, struct ssh *);
@@ -479,10 +478,8 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 	authctxt.mech_tried = 0;
 #endif
 	authctxt.agent_fd = -1;
-	pubkey_prepare(ssh, &authctxt);
-	if (authctxt.method == NULL) {
+	if (authctxt.method == NULL)
 		fatal_f("internal error: cannot send userauth none request");
-	}
 
 	if ((r = sshpkt_start(ssh, SSH2_MSG_SERVICE_REQUEST)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, "ssh-userauth")) != 0 ||
@@ -491,10 +488,18 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 
 	ssh->authctxt = &authctxt;
 	ssh_dispatch_init(ssh, &input_userauth_error);
-	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, &input_userauth_ext_info);
+	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, kex_input_ext_info);
 	ssh_dispatch_set(ssh, SSH2_MSG_SERVICE_ACCEPT, &input_userauth_service_accept);
 	ssh_dispatch_run_fatal(ssh, DISPATCH_BLOCK, &authctxt.success);	/* loop until success */
 	pubkey_cleanup(ssh);
+#ifdef GSSAPI
+	if (authctxt.gss_supported_mechs != NULL) {
+		u_int ms;
+
+		gss_release_oid_set(&ms, &authctxt.gss_supported_mechs);
+		authctxt.gss_supported_mechs = NULL;
+	}
+#endif
 	ssh->authctxt = NULL;
 
 	ssh_dispatch_range(ssh, SSH2_MSG_USERAUTH_MIN, SSH2_MSG_USERAUTH_MAX, NULL);
@@ -547,19 +552,15 @@ input_userauth_service_accept(int type, u_int32_t seq, struct ssh *ssh)
 	/* initial userauth request */
 	userauth_none(ssh);
 
-	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, &input_userauth_error);
+	/* accept EXT_INFO at any time during userauth */
+	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, ssh->kex->ext_info_s ?
+	    &kex_input_ext_info : &input_userauth_error);
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_SUCCESS, &input_userauth_success);
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_FAILURE, &input_userauth_failure);
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_BANNER, &input_userauth_banner);
 	r = 0;
  out:
 	return r;
-}
-
-static int
-input_userauth_ext_info(int type, u_int32_t seqnr, struct ssh *ssh)
-{
-	return kex_input_ext_info(type, seqnr, ssh);
 }
 
 void
@@ -640,6 +641,7 @@ input_userauth_success(int type, u_int32_t seq, struct ssh *ssh)
 	free(authctxt->methoddata);
 	authctxt->methoddata = NULL;
 	authctxt->success = 1;			/* break out */
+	ssh_dispatch_set(ssh, SSH2_MSG_EXT_INFO, dispatch_protocol_error);
 	return 0;
 }
 
@@ -853,9 +855,6 @@ userauth_gssapi_cleanup(struct ssh *ssh)
 
 	ssh_gssapi_delete_ctx(&gssctxt);
 	authctxt->methoddata = NULL;
-
-	free(authctxt->gss_supported_mechs);
-	authctxt->gss_supported_mechs = NULL;
 }
 
 static OM_uint32
@@ -1712,10 +1711,10 @@ pubkey_prepare(struct ssh *ssh, Authctxt *authctxt)
 	struct identity *id, *id2, *tmp;
 	struct idlist agent, files, *preferred;
 	struct sshkey *key;
-	int agent_fd = -1, i, r, found;
+	int disallowed, agent_fd = -1, i, r, found;
 	size_t j;
 	struct ssh_identitylist *idlist;
-	char *ident;
+	char *cp, *ident;
 
 	TAILQ_INIT(&agent);	/* keys from the agent */
 	TAILQ_INIT(&files);	/* keys from the config file */
@@ -1833,16 +1832,30 @@ pubkey_prepare(struct ssh *ssh, Authctxt *authctxt)
 	TAILQ_CONCAT(preferred, &files, next);
 	/* finally, filter by PubkeyAcceptedAlgorithms */
 	TAILQ_FOREACH_SAFE(id, preferred, next, id2) {
-		if (id->key != NULL && !key_type_allowed_by_config(id->key)) {
-			debug("Skipping %s key %s - "
-			    "corresponding algo not in PubkeyAcceptedAlgorithms",
-			    sshkey_ssh_name(id->key), id->filename);
-			TAILQ_REMOVE(preferred, id, next);
-			sshkey_free(id->key);
-			free(id->filename);
-			memset(id, 0, sizeof(*id));
+		disallowed = 0;
+		cp = NULL;
+		if (id->key == NULL)
 			continue;
+		if (!key_type_allowed_by_config(id->key)) {
+			debug("Skipping %s key %s - corresponding algorithm "
+			    "not in PubkeyAcceptedAlgorithms",
+			    sshkey_ssh_name(id->key), id->filename);
+			disallowed = 1;
+		} else if (ssh->kex->server_sig_algs != NULL &&
+		    (cp = key_sig_algorithm(ssh, id->key)) == NULL) {
+			debug("Skipping %s key %s - corresponding algorithm "
+			    "not supported by server",
+			    sshkey_ssh_name(id->key), id->filename);
+			disallowed = 1;
 		}
+		free(cp);
+		if (!disallowed)
+			continue;
+		/* remove key */
+		TAILQ_REMOVE(preferred, id, next);
+		sshkey_free(id->key);
+		free(id->filename);
+		memset(id, 0, sizeof(*id));
 	}
 	/* List the keys we plan on using */
 	TAILQ_FOREACH_SAFE(id, preferred, next, id2) {
@@ -1888,6 +1901,12 @@ userauth_pubkey(struct ssh *ssh)
 	Identity *id;
 	int sent = 0;
 	char *ident;
+	static int prepared;
+
+	if (!prepared) {
+		pubkey_prepare(ssh, authctxt);
+		prepared = 1;
+	}
 
 	while ((id = TAILQ_FIRST(&authctxt->keys))) {
 		if (id->tried++)

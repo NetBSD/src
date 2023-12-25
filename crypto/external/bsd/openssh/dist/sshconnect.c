@@ -1,5 +1,6 @@
-/*	$NetBSD: sshconnect.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.363 2023/03/10 07:17:08 dtucker Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.33.2.2 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.365 2023/11/20 02:50:00 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.33.2.2 2023/12/25 12:22:56 martin Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -27,6 +28,8 @@ __RCSID("$NetBSD: sshconnect.c,v 1.33.2.1 2023/08/11 15:36:39 martin Exp $");
 
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet6/ip6_var.h>
 #include <rpc/rpc.h>
 
 #include <ctype.h>
@@ -312,29 +315,30 @@ ssh_set_socket_recvbuf(int sock)
  */
 static int
 check_ifaddrs(const char *ifname, int af, const struct ifaddrs *ifaddrs,
-    struct sockaddr_storage *resultp, socklen_t *rlenp)
+    int prefertemp, struct sockaddr_storage *resultp, socklen_t *rlenp)
 {
 	struct sockaddr_in6 *sa6;
 	struct sockaddr_in *sa;
 	struct in6_addr *v6addr;
 	const struct ifaddrs *ifa;
-	int allow_local;
+	int try;
 
 	/*
+	 * Prefer temporary addresses according to prefertemp.
 	 * Prefer addresses that are not loopback or linklocal, but use them
 	 * if nothing else matches.
 	 */
-	for (allow_local = 0; allow_local < 2; allow_local++) {
+	for (try = 0; try < 3; try++) {
 		for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
 			if (ifa->ifa_addr == NULL || ifa->ifa_name == NULL ||
 			    (ifa->ifa_flags & IFF_UP) == 0 ||
 			    ifa->ifa_addr->sa_family != af ||
-			    strcmp(ifa->ifa_name, options.bind_interface) != 0)
+			    strcmp(ifa->ifa_name, ifname) != 0)
 				continue;
 			switch (ifa->ifa_addr->sa_family) {
 			case AF_INET:
 				sa = (struct sockaddr_in *)ifa->ifa_addr;
-				if (!allow_local && sa->sin_addr.s_addr ==
+				if (try < 2 && sa->sin_addr.s_addr ==
 				    htonl(INADDR_LOOPBACK))
 					continue;
 				if (*rlenp < sizeof(struct sockaddr_in)) {
@@ -347,13 +351,33 @@ check_ifaddrs(const char *ifname, int af, const struct ifaddrs *ifaddrs,
 			case AF_INET6:
 				sa6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 				v6addr = &sa6->sin6_addr;
-				if (!allow_local &&
+				if (try < 2 &&
 				    (IN6_IS_ADDR_LINKLOCAL(v6addr) ||
 				    IN6_IS_ADDR_LOOPBACK(v6addr)))
 					continue;
 				if (*rlenp < sizeof(struct sockaddr_in6)) {
 					error_f("v6 addr doesn't fit");
 					return -1;
+				}
+
+				/*
+				 * For now, ignore scope and
+				 * don't allow deprecated addresses.  XXX
+				 */
+				if (ifa->ifa_addrflags & IN6_IFF_ANYCAST)
+					continue;
+				if (ifa->ifa_addrflags & IN6_IFF_NOTREADY)
+					continue;
+				if (ifa->ifa_addrflags & IN6_IFF_DETACHED)
+					continue;
+				if (ifa->ifa_addrflags & IN6_IFF_DEPRECATED)
+					continue;
+
+				if (prefertemp >= 0 && try < 1) {
+					int istemp = ifa->ifa_addrflags
+						& IN6_IFF_TEMPORARY;
+					if (!!istemp != prefertemp)
+						continue;
 				}
 				*rlenp = sizeof(struct sockaddr_in6);
 				memcpy(resultp, sa6, *rlenp);
@@ -392,9 +416,6 @@ ssh_create_socket(struct addrinfo *ai)
 		set_sock_tos(sock, options.ip_qos_interactive);
 
 	/* Bind the socket to an alternative local IP address */
-	if (options.bind_address == NULL && options.bind_interface == NULL)
-		return sock;
-
 	if (options.bind_address != NULL) {
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = ai->ai_family;
@@ -421,12 +442,27 @@ ssh_create_socket(struct addrinfo *ai)
 		}
 		bindaddrlen = sizeof(bindaddr);
 		if (check_ifaddrs(options.bind_interface, ai->ai_family,
-		    ifaddrs, &bindaddr, &bindaddrlen) != 0) {
+		    ifaddrs, options.ipv6_prefer_temporary,
+		    &bindaddr, &bindaddrlen) != 0) {
 			logit("getifaddrs: %s: no suitable addresses",
 			    options.bind_interface);
 			goto fail;
 		}
+	} else {
+		/* Apply user specified temporary address preference */
+		if (ai->ai_family == AF_INET6
+		    && options.ipv6_prefer_temporary >= 0) {
+			int temp = options.ipv6_prefer_temporary
+				? IP6PO_TEMPADDR_PREFER
+				: IP6PO_TEMPADDR_NOTPREFER;
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_PREFER_TEMPADDR,
+			    &temp, sizeof temp) < 0)
+				error("setsockopt(IPV6_PREFER_TEMPADDR: %.100s",
+				    strerror(errno));
+		}
+		return sock;
 	}
+
 	if ((r = getnameinfo((struct sockaddr *)&bindaddr, bindaddrlen,
 	    ntop, sizeof(ntop), NULL, 0, NI_NUMERICHOST)) != 0) {
 		error_f("getnameinfo failed: %s", ssh_gai_strerror(r));
@@ -497,6 +533,14 @@ ssh_connect_direct(struct ssh *ssh, const char *host, struct addrinfo *aitop,
 				errno = oerrno;
 				continue;
 			}
+			if (options.address_family != AF_UNSPEC &&
+			    ai->ai_family != options.address_family) {
+				debug2_f("skipping address [%s]:%s: "
+				    "wrong address family", ntop, strport);
+				errno = EAFNOSUPPORT;
+				continue;
+			}
+
 			debug("Connecting to %.200s [%.100s] port %s.",
 				host, ntop, strport);
 
