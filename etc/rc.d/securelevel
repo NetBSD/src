@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: securelevel,v 1.8 2009/12/29 17:06:10 elad Exp $
+# $NetBSD: securelevel,v 1.9 2023/12/25 07:39:59 kre Exp $
 #
 
 # PROVIDE: securelevel
@@ -25,7 +25,7 @@ securelevel_start()
 		exit 1
 	fi
 
-	if [ -n "$securelevel" -a "$securelevel" != "$osecurelevel" ]; then
+	if [ -n "$securelevel" ] && [ "$securelevel" != "$osecurelevel" ]; then
 		if [ "$securelevel" -lt "$osecurelevel" ]; then
 			echo "Can't lower securelevel."
 			exit 1
