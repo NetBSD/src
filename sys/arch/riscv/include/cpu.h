@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.14 2023/09/03 08:48:20 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.15 2023/12/25 13:21:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct cpu_info {
 #define	CPUF_RUNNING	__BIT(2)		/* CPU is running */
 #define	CPUF_PAUSED	__BIT(3)		/* CPU is paused */
 
+	void *ci_intcsoftc;
 	volatile u_long ci_request_ipis;
 						/* bitmask of IPIs requested */
 	u_long ci_active_ipis;			/* bitmask of IPIs being serviced */

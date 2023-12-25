@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.3 2023/12/25 13:21:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.3 2023/12/25 13:21:30 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -90,13 +90,36 @@ struct intc_fdt_softc {
 
 	struct intc_irq		*sc_irq[IRQ_NSOURCES];
 
-	struct evcnt		*sc_evs[IRQ_NSOURCES];
+	struct evcnt		 sc_evs[IRQ_NSOURCES];
 
 	struct cpu_info 	*sc_ci;
 	cpuid_t			 sc_hartid;
 };
 
-static struct intc_fdt_softc *intc_sc;
+static const char * const intc_sources[IRQ_NSOURCES] = {
+	/* Software interrupts */
+	"(reserved)",
+	"Supervisor software",
+	"Virtual Supervisor software",
+	"Machine software",
+
+	/* Timer interrupts */
+	"(reserved)",
+	"Supervisor timer",
+	"Virtual Supervisor timer",
+	"Machine timer",
+
+	/* External interrupts */
+	"(reserved)",
+	"Supervisor external",
+	"Virtual Supervisor external",
+	"Machine external",
+
+	"(reserved)",
+	"Supervisor guest external.",
+	"(reserved)",
+	"(reserved)"
+};
 
 
 static void *
@@ -118,6 +141,9 @@ intc_intr_establish(struct intc_fdt_softc *sc, u_int source, u_int ipl,
 		irq->intr_source = source;
 		TAILQ_INIT(&irq->intr_handlers);
 		sc->sc_irq[source] = irq;
+
+		evcnt_attach_dynamic(&sc->sc_evs[source], EVCNT_TYPE_INTR, NULL,
+		    device_xname(sc->sc_dev), intc_sources[source]);
 	} else {
 		if (irq->intr_arg == NULL || arg == NULL) {
 			device_printf(dev,
@@ -185,31 +211,6 @@ intc_fdt_disestablish(device_t dev, void *ih)
 
 }
 
-static const char * const intc_sources[IRQ_NSOURCES] = {
-	/* Software interrupts */
-	"(reserved)",
-	"Supervisor software",
-	"Virtual Supervisor software",
-	"Machine software",
-
-	/* Timer interrupts */
-	"(reserved)",
-	"Supervisor timer",
-	"Virtual Supervisor timer",
-	"Machine timer",
-
-	/* External interrupts */
-	"(reserved)",
-	"Supervisor external",
-	"Virtual Supervisor external",
-	"Machine external",
-
-	"(reserved)",
-	"Supervisor guest external.",
-	"(reserved)",
-	"(reserved)"
-};
-
 static bool
 intc_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
@@ -246,7 +247,7 @@ intc_intr_handler(struct trapframe *tf, register_t epc, register_t status,
 
 	KASSERT(CAUSE_INTERRUPT_P(cause));
 
-	struct intc_fdt_softc * const sc = intc_sc;
+	struct intc_fdt_softc * const sc = ci->ci_intcsoftc;
 
 	ci->ci_intr_depth++;
 	ci->ci_data.cpu_nintr++;
@@ -259,6 +260,8 @@ intc_intr_handler(struct trapframe *tf, register_t epc, register_t status,
 
 		int source = ffs(pending) - 1;
 		struct intc_irq *irq = sc->sc_irq[source];
+		sc->sc_evs[source].ev_count++;
+
 		KASSERTMSG(irq != NULL, "source %d\n", source);
 
 		if (irq) {
@@ -326,13 +329,13 @@ intc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": local interrupt controller\n");
 
 	struct intc_fdt_softc * const sc = device_private(self);
-	intc_sc = sc;
 
 	riscv_intr_set_handler(intc_intr_handler);
 
 	sc->sc_dev = self;
 	sc->sc_ci = ci;
 	sc->sc_hartid = ci->ci_cpuid;
+	ci->ci_intcsoftc = sc;
 
 	intc_intr_establish(sc, IRQ_SUPERVISOR_TIMER, IPL_SCHED, IST_MPSAFE,
 	    riscv_timer_intr, NULL, "clock");
