@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.4.2.1 2023/12/25 12:43:34 martin Exp $	*/
 
 /*++
 /* NAME
@@ -51,11 +51,9 @@
 /*
 /*	This feature is available with Postfix version 2.4 and later.
 /* .IP "\fB-j\fR"
-/*	Produce a queue listing in JSON format, based on output
-/*	from the showq(8) daemon.  The result is a stream of zero
-/*	or more JSON objects, one per queue file.  Each object is
-/*	followed by a newline character to support simple streaming
-/*	parsers. See "\fBJSON OBJECT FORMAT\fR" below for details.
+/*	Produce a queue listing in JSON LINES format, based on
+/*	output from the showq(8) daemon. See "\fBJSON OBJECT
+/*	FORMAT\fR" below for details.
 /*
 /*	This feature is available in Postfix 3.1 and later.
 /* .IP \fB-p\fR

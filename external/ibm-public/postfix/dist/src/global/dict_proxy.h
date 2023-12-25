@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dict_proxy.h,v 1.2.22.1 2023/12/25 12:43:31 martin Exp $	*/
 
 #ifndef _DICT_PROXY_H_INCLUDED_
 #define _DICT_PROXY_H_INCLUDED_
@@ -17,6 +17,7 @@
   * Utility library.
   */
 #include <dict.h>
+#include <mkmap.h>
 
  /*
   * External interface.
@@ -24,6 +25,7 @@
 #define DICT_TYPE_PROXY	"proxy"
 
 extern DICT *dict_proxy_open(const char *, int, int);
+extern MKMAP *mkmap_proxy_open(const char *);
 
  /*
   * Protocol interface.
@@ -50,6 +52,11 @@ extern DICT *dict_proxy_open(const char *, int, int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

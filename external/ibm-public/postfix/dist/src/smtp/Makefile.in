@@ -45,7 +45,7 @@ update: ../../libexec/$(PROG)
 smtp.o:	smtp.c smtp_params.c lmtp_params.c
 
 lmtp_params.c: smtp_params.c
-	egrep -v -f smtp-only smtp_params.c | \
+	grep -E -v -f smtp-only smtp_params.c | \
 	    sed 's/SMTP/LMTP/g; s/smtp_\([a-z]*_table\)/lmtp_\1/' >$@
 
 printfck: $(OBJS) $(PROG)
@@ -567,6 +567,7 @@ smtp_sasl_auth_cache.o: ../../include/htable.h
 smtp_sasl_auth_cache.o: ../../include/maps.h
 smtp_sasl_auth_cache.o: ../../include/match_list.h
 smtp_sasl_auth_cache.o: ../../include/mime_state.h
+smtp_sasl_auth_cache.o: ../../include/mkmap.h
 smtp_sasl_auth_cache.o: ../../include/msg.h
 smtp_sasl_auth_cache.o: ../../include/msg_stats.h
 smtp_sasl_auth_cache.o: ../../include/myaddrinfo.h

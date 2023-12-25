@@ -1,4 +1,4 @@
-/*	$NetBSD: map_search.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: map_search.c,v 1.3.2.1 2023/12/25 12:43:32 martin Exp $	*/
 
 /*++
 /* NAME
@@ -160,7 +160,8 @@ const MAP_SEARCH *map_search_create(const char *map_spec)
 	if ((heap_err = extpar(&bp, CHARS_BRACE, EXTPAR_FLAG_STRIP)) != 0) {
 	    msg_warn("malformed map specification: '%s'", heap_err);
 	    MAP_SEARCH_CREATE_RETURN(0);
-	} else if ((map_type_name = mystrtok(&bp, CHARS_COMMA_SP)) == 0) {
+	} else if ((map_type_name = mystrtokq(&bp, CHARS_COMMA_SP,
+					      CHARS_BRACE)) == 0) {
 	    msg_warn("empty map specification: '%s'", map_spec);
 	    MAP_SEARCH_CREATE_RETURN(0);
 	}
@@ -310,6 +311,7 @@ int     main(int argc, char **argv)
 	{"{type:name {search_order=one, two}}", 1, "type:name", "\01\02"},
 	{"{type:name {search_order=one, two, bad}}", 0, 0, 0},
 	{"{inline:{a=b} {search_order=one, two}}", 1, "inline:{a=b}", "\01\02"},
+	{"{inline:{a=b, c=d} {search_order=one, two}}", 1, "inline:{a=b, c=d}", "\01\02"},
 	{0},
     };
     TEST_CASE *test_case;

@@ -1,4 +1,4 @@
-/*	$NetBSD: header_body_checks.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: header_body_checks.h,v 1.2.22.1 2023/12/25 12:43:32 martin Exp $	*/
 
 #ifndef _HBC_H_INCLUDED_
 #define _HBC_H_INCLUDED_
@@ -80,6 +80,11 @@ extern const char hbc_checks_unknown;
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

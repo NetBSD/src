@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.h,v 1.1.1.2 2013/09/25 19:06:38 tron Exp $	*/
+/*	$NetBSD: valid_hostname.h,v 1.1.1.2.36.1 2023/12/25 12:43:38 martin Exp $	*/
 
 #ifndef _VALID_HOSTNAME_H_INCLUDED_
 #define _VALID_HOSTNAME_H_INCLUDED_
@@ -20,6 +20,8 @@
 
 #define DONT_GRIPE		0
 #define DO_GRIPE		1
+#define DONT_WILDCARD		0
+#define DO_WILDCARD		(1<<1)
 
 extern int valid_hostname(const char *, int);
 extern int valid_hostaddr(const char *, int);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postfix-tls.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postfix-tls.1,v 1.2.26.1 2023/12/25 12:43:26 martin Exp $
 .\"
 .TH POSTFIX-TLS 1 
 .ad
@@ -188,9 +188,7 @@ The location of the OpenSSL command line program \fBopenssl\fR(1).
 .IP "\fBsmtp_tls_loglevel (0)\fR"
 Enable additional Postfix SMTP client logging of TLS activity.
 .IP "\fBsmtp_tls_security_level (empty)\fR"
-The default SMTP TLS security level for the Postfix SMTP client;
-when a non\-empty value is specified, this overrides the obsolete
-parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername.
+The default SMTP TLS security level for the Postfix SMTP client.
 .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 Name of the file containing the optional Postfix SMTP client
 TLS session cache.

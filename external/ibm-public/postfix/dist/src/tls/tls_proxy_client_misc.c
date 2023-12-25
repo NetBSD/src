@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_misc.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_misc.c,v 1.3.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -68,14 +68,15 @@
 TLS_CLIENT_PARAMS *tls_proxy_client_param_from_config(TLS_CLIENT_PARAMS *params)
 {
     TLS_PROXY_PARAMS(params,
+		     tls_cnf_file = var_tls_cnf_file,
+		     tls_cnf_name = var_tls_cnf_name,
 		     tls_high_clist = var_tls_high_clist,
 		     tls_medium_clist = var_tls_medium_clist,
-		     tls_low_clist = var_tls_low_clist,
-		     tls_export_clist = var_tls_export_clist,
 		     tls_null_clist = var_tls_null_clist,
 		     tls_eecdh_auto = var_tls_eecdh_auto,
 		     tls_eecdh_strong = var_tls_eecdh_strong,
 		     tls_eecdh_ultra = var_tls_eecdh_ultra,
+		     tls_ffdhe_auto = var_tls_ffdhe_auto,
 		     tls_bug_tweaks = var_tls_bug_tweaks,
 		     tls_ssl_options = var_tls_ssl_options,
 		     tls_dane_digests = var_tls_dane_digests,

@@ -8,6 +8,7 @@
 <title>Postfix Address Classes </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -50,10 +51,11 @@ address classes are very important for the operation of Postfix. </p>
 
 <ul>
 
-<li> <p> The list of domains that are a member of the class: for
-example, all local domains, or all relay domains. </p>
+<li> <p> The list of domains that are a member of that address
+class: for example, all local domains, or all relay domains. </p>
 
-<li> <p> The default delivery transport. For example, the local,
+<li> <p> The default delivery transport for that address class. For
+example, the local,
 virtual or relay delivery transport (delivery transports are defined
 in master.cf). This helps to keep Postfix configurations simple,
 by avoiding the need for explicit routing information in transport
@@ -80,7 +82,8 @@ are. </p>
 
 <li> <p> Purpose: final delivery for traditional UNIX system accounts
 and traditional Sendmail-style aliases. This is typically used for
-the canonical domains of the machine.  For a discussion of the
+the canonical domains of the machine (for example, $myhostname,
+$mydomain).  For a discussion of the
 difference between canonical domains, hosted domains and other
 domains, see the VIRTUAL_README file. </p>
 
@@ -108,7 +111,8 @@ class. </p>
 <ul>
 
 <li> <p> Purpose: hosted domains where each recipient address is
-aliased to a local UNIX system account or to a remote address.  A
+aliased to an address in a different domain, for example, a local
+UNIX system account or a remote address.  A
 virtual alias example is given in the VIRTUAL_README file. </p>
 
 <li> <p> Domain names are listed in virtual_alias_domains. The
@@ -121,7 +125,7 @@ parameter. The Postfix SMTP server rejects invalid recipients with
 $virtual_maps for Postfix 1.1 compatibility. </p>
 
 <li> <p> There is no mail delivery transport parameter. Every
-address must be aliased to some other address. </p>
+address must be aliased to an address in some other domain. </p>
 
 </ul>
 
@@ -223,9 +227,9 @@ is needed to keep undeliverable mail (and bounced undeliverable
 mail) out of the mail queue. This is controlled by the
 smtpd_reject_unlisted_recipient configuration parameter. </p>
 
-<li> <p> As of Postfix version 2.1, the SMTP server also rejects
+<li> <p> As of Postfix version 2.1, the SMTP server can also reject
 unknown sender addresses (i.e. addresses that it would reject as
-unknown recipient addresses).  Sender "egress filtering" can help
+an unknown recipient addresses). Sender "egress filtering" can help
 to slow down an email worm explosion.  This is controlled by the
 smtpd_reject_unlisted_sender configuration parameter. </p>
 

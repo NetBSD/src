@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_env.c,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: clean_env.c,v 1.2.6.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -52,9 +52,11 @@
 /* Utility library. */
 
 #include <msg.h>
+#include <mymalloc.h>
 #include <argv.h>
 #include <safe.h>
 #include <clean_env.h>
+#include <stringops.h>
 
 /* clean_env - clean up the environment */
 
@@ -64,20 +66,27 @@ void    clean_env(char **preserve_list)
     ARGV   *save_list;
     char   *value;
     char  **cpp;
-    char   *eq;
+    char   *copy;
+    char   *key;
+    char   *val;
+    const char *err;
 
     /*
      * Preserve or specify selected environment variables.
      */
-#define STRING_AND_LENGTH(x, y) (x), (ssize_t) (y)
-
     save_list = argv_alloc(10);
-    for (cpp = preserve_list; *cpp; cpp++)
-	if ((eq = strchr(*cpp, '=')) != 0)
-	    argv_addn(save_list, STRING_AND_LENGTH(*cpp, eq - *cpp),
-		      STRING_AND_LENGTH(eq + 1, strlen(eq + 1)), (char *) 0);
-	else if ((value = safe_getenv(*cpp)) != 0)
+    for (cpp = preserve_list; *cpp; cpp++) {
+	if (strchr(*cpp, '=') != 0) {
+	    copy = mystrdup(*cpp);
+	    err = split_nameval(copy, &key, &val);
+	    if (err != 0)
+		msg_fatal("clean_env: %s in: %s", err, *cpp);
+	    argv_add(save_list, key, val, (char *) 0);
+	    myfree(copy);
+	} else if ((value = safe_getenv(*cpp)) != 0) {
 	    argv_add(save_list, *cpp, value, (char *) 0);
+	}
+    }
 
     /*
      * Truncate the process environment, if available. On some systems
@@ -105,16 +114,25 @@ void    update_env(char **preserve_list)
 {
     char  **cpp;
     ARGV   *save_list;
-    char   *eq;
+    char   *copy;
+    char   *key;
+    char   *val;
+    const char *err;
 
     /*
      * Extract name=value settings.
      */
     save_list = argv_alloc(10);
-    for (cpp = preserve_list; *cpp; cpp++)
-	if ((eq = strchr(*cpp, '=')) != 0)
-	    argv_addn(save_list, STRING_AND_LENGTH(*cpp, eq - *cpp),
-		      STRING_AND_LENGTH(eq + 1, strlen(eq + 1)), (char *) 0);
+    for (cpp = preserve_list; *cpp; cpp++) {
+	if (strchr(*cpp, '=') != 0) {
+	    copy = mystrdup(*cpp);
+	    err = split_nameval(copy, &key, &val);
+	    if (err != 0)
+		msg_fatal("update_env: %s in: %s", err, *cpp);
+	    argv_add(save_list, key, val, (char *) 0);
+	    myfree(copy);
+	}
+    }
 
     /*
      * Apply name=value settings.
@@ -128,3 +146,22 @@ void    update_env(char **preserve_list)
      */
     argv_free(save_list);
 }
+
+#ifdef TEST
+
+#include <stdlib.h>
+#include <vstream.h>
+
+int     main(int argc, char **argv)
+{
+    extern char **environ;
+    char  **cpp;
+
+    clean_env(argv + 1);
+    for (cpp = environ; *cpp; cpp++)
+	vstream_printf("%s\n", *cpp);
+    vstream_fflush(VSTREAM_OUT);
+    exit(0);
+}
+
+#endif

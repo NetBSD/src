@@ -27,15 +27,15 @@ rcpt foo@postfix.org
 helo_restrictions check_helo_ns_access,inline:{168.100.3.75=reject}
 helo www.porcupine.org
 helo example.tld
-helo foo@postfix.org
+helo foo@maildaemon.org
 sender_restrictions check_sender_ns_access,inline:{168.100.3.75=reject}
 mail foo@www.porcupine.org
 mail example.tld
-mail foo@postfix.org
+mail foo@maildaemon.org
 recipient_restrictions check_recipient_ns_access,inline:{168.100.3.75=reject}
 rcpt foo@www.porcupine.org
 rcpt foo@example.tld
-rcpt foo@postfix.org
+rcpt foo@maildaemon.org
 #
 # Check A access
 #

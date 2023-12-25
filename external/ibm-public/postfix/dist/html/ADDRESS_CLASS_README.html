@@ -8,6 +8,7 @@
 <title>Postfix Address Classes </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -50,10 +51,11 @@ address classes are very important for the operation of Postfix. </p>
 
 <ul>
 
-<li> <p> The list of domains that are a member of the class: for
-example, all <a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a>, or all <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a>. </p>
+<li> <p> The list of domains that are a member of that address
+class: for example, all <a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a>, or all <a href="ADDRESS_CLASS_README.html#relay_domain_class">relay domains</a>. </p>
 
-<li> <p> The default delivery transport. For example, the local,
+<li> <p> The default delivery transport for that address class. For
+example, the local,
 virtual or relay delivery transport (delivery transports are defined
 in <a href="master.5.html">master.cf</a>). This helps to keep Postfix configurations simple,
 by avoiding the need for explicit routing information in transport
@@ -80,7 +82,8 @@ are. </p>
 
 <li> <p> Purpose: final delivery for traditional UNIX system accounts
 and traditional Sendmail-style aliases. This is typically used for
-the <a href="VIRTUAL_README.html#canonical">canonical domains</a> of the machine.  For a discussion of the
+the <a href="VIRTUAL_README.html#canonical">canonical domains</a> of the machine (for example, $<a href="postconf.5.html#myhostname">myhostname</a>,
+$<a href="postconf.5.html#mydomain">mydomain</a>).  For a discussion of the
 difference between <a href="VIRTUAL_README.html#canonical">canonical domains</a>, <a href="VIRTUAL_README.html#canonical">hosted domains</a> and other
 domains, see the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file. </p>
 
@@ -108,7 +111,8 @@ class. </p>
 <ul>
 
 <li> <p> Purpose: <a href="VIRTUAL_README.html#canonical">hosted domains</a> where each recipient address is
-aliased to a local UNIX system account or to a remote address.  A
+aliased to an address in a different domain, for example, a local
+UNIX system account or a remote address.  A
 <a href="VIRTUAL_README.html#virtual_alias">virtual alias example</a> is given in the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file. </p>
 
 <li> <p> Domain names are listed in <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>. The
@@ -121,7 +125,7 @@ parameter. The Postfix SMTP server rejects invalid recipients with
 $<a href="postconf.5.html#virtual_maps">virtual_maps</a> for Postfix 1.1 compatibility. </p>
 
 <li> <p> There is no mail delivery transport parameter. Every
-address must be aliased to some other address. </p>
+address must be aliased to an address in some other domain. </p>
 
 </ul>
 
@@ -223,9 +227,9 @@ is needed to keep undeliverable mail (and bounced undeliverable
 mail) out of the mail queue. This is controlled by the
 <a href="postconf.5.html#smtpd_reject_unlisted_recipient">smtpd_reject_unlisted_recipient</a> configuration parameter. </p>
 
-<li> <p> As of Postfix version 2.1, the SMTP server also rejects
+<li> <p> As of Postfix version 2.1, the SMTP server can also reject
 unknown sender addresses (i.e. addresses that it would reject as
-unknown recipient addresses).  Sender "egress filtering" can help
+an unknown recipient addresses). Sender "egress filtering" can help
 to slow down an email worm explosion.  This is controlled by the
 <a href="postconf.5.html#smtpd_reject_unlisted_sender">smtpd_reject_unlisted_sender</a> configuration parameter. </p>
 

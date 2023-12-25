@@ -16,8 +16,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	mail_params.c mail_pathname.c mail_queue.c mail_run.c \
 	mail_scan_dir.c mail_stream.c mail_task.c mail_trigger.c maps.c \
 	mark_corrupt.c match_parent_style.c mbox_conf.c mbox_open.c \
-	mime_state.c mkmap_cdb.c mkmap_db.c mkmap_dbm.c mkmap_lmdb.c mkmap_open.c \
-	mkmap_sdbm.c msg_stats_print.c msg_stats_scan.c mynetworks.c \
+	mime_state.c msg_stats_print.c msg_stats_scan.c mynetworks.c \
 	mypwd.c namadr_list.c off_cvt.c opened.c own_inet_addr.c \
 	pipe_command.c post_mail.c quote_821_local.c quote_822_local.c \
 	rcpt_buf.c rcpt_print.c rec_attr_map.c rec_streamlf.c rec_type.c \
@@ -32,7 +31,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	match_service.c mail_conf_nint.c addr_match_list.c mail_conf_nbool.c \
 	smtp_reply_footer.c safe_ultostr.c verify_sender_addr.c \
 	dict_memcache.c mail_version.c memcache_proto.c server_acl.c \
-	mkmap_fail.c haproxy_srvr.c dsn_filter.c dynamicmaps.c uxtext.c \
+	haproxy_srvr.c dsn_filter.c dynamicmaps.c uxtext.c \
 	smtputf8.c mail_conf_over.c mail_parm_split.c midna_adomain.c \
 	mail_addr_form.c quote_flags.c maillog_client.c \
 	normalize_mailhost_addr.c map_search.c reject_deliver_request.c \
@@ -56,8 +55,7 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	mail_params.o mail_pathname.o mail_queue.o mail_run.o \
 	mail_scan_dir.o mail_stream.o mail_task.o mail_trigger.o maps.o \
 	mark_corrupt.o match_parent_style.o mbox_conf.o mbox_open.o \
-	mime_state.o mkmap_db.o mkmap_dbm.o mkmap_open.o \
-	msg_stats_print.o msg_stats_scan.o mynetworks.o \
+	mime_state.o msg_stats_print.o msg_stats_scan.o mynetworks.o \
 	mypwd.o namadr_list.o off_cvt.o opened.o own_inet_addr.o \
 	pipe_command.o post_mail.o quote_821_local.o quote_822_local.o \
 	rcpt_buf.o rcpt_print.o rec_attr_map.o rec_streamlf.o rec_type.o \
@@ -72,7 +70,7 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	match_service.o mail_conf_nint.o addr_match_list.o mail_conf_nbool.o \
 	smtp_reply_footer.o safe_ultostr.o verify_sender_addr.o \
 	dict_memcache.o mail_version.o memcache_proto.o server_acl.o \
-	mkmap_fail.o haproxy_srvr.o dsn_filter.o dynamicmaps.o uxtext.o \
+	haproxy_srvr.o dsn_filter.o dynamicmaps.o uxtext.o \
 	smtputf8.o attr_override.o mail_parm_split.o midna_adomain.o \
 	$(NON_PLUGIN_MAP_OBJ) mail_addr_form.o quote_flags.o maillog_client.o \
 	normalize_mailhost_addr.o map_search.o reject_deliver_request.o \
@@ -82,8 +80,8 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these maps, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
-MAP_OBJ = dict_ldap.o dict_mysql.o dict_pgsql.o dict_sqlite.o mkmap_cdb.o \
-	mkmap_lmdb.o mkmap_sdbm.o 
+MAP_OBJ = dict_ldap.o dict_mysql.o dict_pgsql.o dict_sqlite.o
+
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
@@ -98,7 +96,7 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	mail_open_ok.h mail_params.h mail_proto.h mail_queue.h mail_run.h \
 	mail_scan_dir.h mail_stream.h mail_task.h mail_version.h maps.h \
 	mark_corrupt.h match_parent_style.h mbox_conf.h mbox_open.h \
-	mime_state.h mkmap.h msg_stats.h mynetworks.h mypwd.h namadr_list.h \
+	mime_state.h msg_stats.h mynetworks.h mypwd.h namadr_list.h \
 	off_cvt.h opened.h own_inet_addr.h pipe_command.h post_mail.h \
 	qmgr_user.h qmqp_proto.h quote_821_local.h quote_822_local.h \
 	quote_flags.h rcpt_buf.h rcpt_print.h rec_attr_map.h rec_streamlf.h \
@@ -138,9 +136,7 @@ LIBS	= ../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
 PLUGIN_MAP_SO = $(LIB_PREFIX)ldap$(LIB_SUFFIX) $(LIB_PREFIX)mysql$(LIB_SUFFIX) \
-	$(LIB_PREFIX)pgsql$(LIB_SUFFIX) $(LIB_PREFIX)sqlite$(LIB_SUFFIX) \
-	$(LIB_PREFIX)lmdb$(LIB_SUFFIX) $(LIB_PREFIX)cdb$(LIB_SUFFIX) \
-	$(LIB_PREFIX)sdbm$(LIB_SUFFIX)
+	$(LIB_PREFIX)pgsql$(LIB_SUFFIX) $(LIB_PREFIX)sqlite$(LIB_SUFFIX)
 MAKES	=
 
 .c.o:;	$(CC) $(SHLIB_CFLAGS) $(CFLAGS) -c $*.c
@@ -176,19 +172,6 @@ $(LIB_PREFIX)pgsql$(LIB_SUFFIX): dict_pgsql.o
 
 $(LIB_PREFIX)sqlite$(LIB_SUFFIX): dict_sqlite.o
 	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ dict_sqlite.o $(AUXLIBS_SQLITE)
-
-$(LIB_PREFIX)cdb$(LIB_SUFFIX): mkmap_cdb.o $(LIB_DIR)/dict_cdb.o
-	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ mkmap_cdb.o \
-	    $(LIB_DIR)/dict_cdb.o $(AUXLIBS_CDB)
-
-$(LIB_PREFIX)lmdb$(LIB_SUFFIX): mkmap_lmdb.o $(LIB_DIR)/dict_lmdb.o \
-	    $(LIB_DIR)/slmdb.o
-	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ mkmap_lmdb.o $(LIB_DIR)/dict_lmdb.o \
-	    $(LIB_DIR)/slmdb.o $(AUXLIBS_LMDB)
-
-$(LIB_PREFIX)sdbm$(LIB_SUFFIX): mkmap_sdbm.o $(LIB_DIR)/dict_sdbm.o
-	$(PLUGIN_LD) $(SHLIB_RPATH) -o $@ mkmap_sdbm.o \
-	    $(LIB_DIR)/dict_sdbm.o $(AUXLIBS_SDBM)
 
 update: $(LIB_DIR)/$(LIB) $(HDRS) $(PLUGIN_MAP_SO_UPDATE)
 	-for i in $(HDRS); \
@@ -1024,6 +1007,7 @@ data_redirect.o: ../../include/dict_cdb.h
 data_redirect.o: ../../include/dict_db.h
 data_redirect.o: ../../include/dict_dbm.h
 data_redirect.o: ../../include/dict_lmdb.h
+data_redirect.o: ../../include/mkmap.h
 data_redirect.o: ../../include/msg.h
 data_redirect.o: ../../include/myflock.h
 data_redirect.o: ../../include/name_code.h
@@ -1273,6 +1257,7 @@ dict_proxy.o: ../../include/check_arg.h
 dict_proxy.o: ../../include/dict.h
 dict_proxy.o: ../../include/htable.h
 dict_proxy.o: ../../include/iostuff.h
+dict_proxy.o: ../../include/mkmap.h
 dict_proxy.o: ../../include/msg.h
 dict_proxy.o: ../../include/myflock.h
 dict_proxy.o: ../../include/mymalloc.h
@@ -1413,6 +1398,7 @@ dynamicmaps.o: ../../include/check_arg.h
 dynamicmaps.o: ../../include/dict.h
 dynamicmaps.o: ../../include/htable.h
 dynamicmaps.o: ../../include/load_lib.h
+dynamicmaps.o: ../../include/mkmap.h
 dynamicmaps.o: ../../include/msg.h
 dynamicmaps.o: ../../include/myflock.h
 dynamicmaps.o: ../../include/mymalloc.h
@@ -1426,7 +1412,6 @@ dynamicmaps.o: ../../include/vstring.h
 dynamicmaps.o: ../../include/vstring_vstream.h
 dynamicmaps.o: dynamicmaps.c
 dynamicmaps.o: dynamicmaps.h
-dynamicmaps.o: mkmap.h
 ehlo_mask.o: ../../include/check_arg.h
 ehlo_mask.o: ../../include/name_mask.h
 ehlo_mask.o: ../../include/sys_defs.h
@@ -1865,6 +1850,7 @@ mail_date.o: mail_date.h
 mail_dict.o: ../../include/argv.h
 mail_dict.o: ../../include/check_arg.h
 mail_dict.o: ../../include/dict.h
+mail_dict.o: ../../include/mkmap.h
 mail_dict.o: ../../include/msg.h
 mail_dict.o: ../../include/myflock.h
 mail_dict.o: ../../include/mymalloc.h
@@ -1926,6 +1912,7 @@ mail_params.o: ../../include/inet_addr_list.h
 mail_params.o: ../../include/inet_proto.h
 mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/midna_domain.h
+mail_params.o: ../../include/mkmap.h
 mail_params.o: ../../include/msg.h
 mail_params.o: ../../include/msg_syslog.h
 mail_params.o: ../../include/myaddrinfo.h
@@ -1941,8 +1928,8 @@ mail_params.o: ../../include/vbuf.h
 mail_params.o: ../../include/vstream.h
 mail_params.o: ../../include/vstring.h
 mail_params.o: ../../include/vstring_vstream.h
-mail_params.o: config_known_tcp_ports.h
 mail_params.o: compat_level.h
+mail_params.o: config_known_tcp_ports.h
 mail_params.o: mail_conf.h
 mail_params.o: mail_params.c
 mail_params.o: mail_params.h
@@ -2212,102 +2199,10 @@ mime_state.o: mail_params.h
 mime_state.o: mime_state.c
 mime_state.o: mime_state.h
 mime_state.o: rec_type.h
-mkmap_cdb.o: ../../include/argv.h
-mkmap_cdb.o: ../../include/check_arg.h
-mkmap_cdb.o: ../../include/dict.h
-mkmap_cdb.o: ../../include/dict_cdb.h
-mkmap_cdb.o: ../../include/myflock.h
-mkmap_cdb.o: ../../include/mymalloc.h
-mkmap_cdb.o: ../../include/sys_defs.h
-mkmap_cdb.o: ../../include/vbuf.h
-mkmap_cdb.o: ../../include/vstream.h
-mkmap_cdb.o: ../../include/vstring.h
-mkmap_cdb.o: mkmap.h
-mkmap_cdb.o: mkmap_cdb.c
-mkmap_db.o: ../../include/argv.h
-mkmap_db.o: ../../include/check_arg.h
-mkmap_db.o: ../../include/dict.h
-mkmap_db.o: ../../include/dict_db.h
-mkmap_db.o: ../../include/msg.h
-mkmap_db.o: ../../include/myflock.h
-mkmap_db.o: ../../include/mymalloc.h
-mkmap_db.o: ../../include/stringops.h
-mkmap_db.o: ../../include/sys_defs.h
-mkmap_db.o: ../../include/vbuf.h
-mkmap_db.o: ../../include/vstream.h
-mkmap_db.o: ../../include/vstring.h
-mkmap_db.o: ../../include/warn_stat.h
-mkmap_db.o: mail_params.h
-mkmap_db.o: mkmap.h
-mkmap_db.o: mkmap_db.c
-mkmap_dbm.o: ../../include/argv.h
-mkmap_dbm.o: ../../include/check_arg.h
-mkmap_dbm.o: ../../include/dict.h
-mkmap_dbm.o: ../../include/dict_dbm.h
-mkmap_dbm.o: ../../include/msg.h
-mkmap_dbm.o: ../../include/myflock.h
-mkmap_dbm.o: ../../include/mymalloc.h
-mkmap_dbm.o: ../../include/stringops.h
-mkmap_dbm.o: ../../include/sys_defs.h
-mkmap_dbm.o: ../../include/vbuf.h
-mkmap_dbm.o: ../../include/vstream.h
-mkmap_dbm.o: ../../include/vstring.h
-mkmap_dbm.o: mkmap.h
-mkmap_dbm.o: mkmap_dbm.c
-mkmap_fail.o: ../../include/argv.h
-mkmap_fail.o: ../../include/check_arg.h
-mkmap_fail.o: ../../include/dict.h
-mkmap_fail.o: ../../include/dict_fail.h
-mkmap_fail.o: ../../include/myflock.h
-mkmap_fail.o: ../../include/mymalloc.h
-mkmap_fail.o: ../../include/sys_defs.h
-mkmap_fail.o: ../../include/vbuf.h
-mkmap_fail.o: ../../include/vstream.h
-mkmap_fail.o: ../../include/vstring.h
-mkmap_fail.o: mkmap.h
-mkmap_fail.o: mkmap_fail.c
-mkmap_lmdb.o: ../../include/argv.h
-mkmap_lmdb.o: ../../include/check_arg.h
-mkmap_lmdb.o: ../../include/dict.h
-mkmap_lmdb.o: ../../include/dict_lmdb.h
-mkmap_lmdb.o: ../../include/msg.h
-mkmap_lmdb.o: ../../include/myflock.h
-mkmap_lmdb.o: ../../include/mymalloc.h
-mkmap_lmdb.o: ../../include/stringops.h
-mkmap_lmdb.o: ../../include/sys_defs.h
-mkmap_lmdb.o: ../../include/vbuf.h
-mkmap_lmdb.o: ../../include/vstream.h
-mkmap_lmdb.o: ../../include/vstring.h
-mkmap_lmdb.o: ../../include/warn_stat.h
-mkmap_lmdb.o: mail_conf.h
-mkmap_lmdb.o: mail_params.h
-mkmap_lmdb.o: mkmap.h
-mkmap_lmdb.o: mkmap_lmdb.c
-mkmap_open.o: ../../include/argv.h
-mkmap_open.o: ../../include/check_arg.h
-mkmap_open.o: ../../include/dict.h
-mkmap_open.o: ../../include/dict_cdb.h
-mkmap_open.o: ../../include/dict_db.h
-mkmap_open.o: ../../include/dict_dbm.h
-mkmap_open.o: ../../include/dict_fail.h
-mkmap_open.o: ../../include/dict_lmdb.h
-mkmap_open.o: ../../include/dict_sdbm.h
-mkmap_open.o: ../../include/htable.h
-mkmap_open.o: ../../include/msg.h
-mkmap_open.o: ../../include/myflock.h
-mkmap_open.o: ../../include/mymalloc.h
-mkmap_open.o: ../../include/sigdelay.h
-mkmap_open.o: ../../include/stringops.h
-mkmap_open.o: ../../include/sys_defs.h
-mkmap_open.o: ../../include/vbuf.h
-mkmap_open.o: ../../include/vstream.h
-mkmap_open.o: ../../include/vstring.h
-mkmap_open.o: dict_proxy.h
-mkmap_open.o: mkmap.h
-mkmap_open.o: mkmap_open.c
 mkmap_proxy.o: ../../include/argv.h
 mkmap_proxy.o: ../../include/check_arg.h
 mkmap_proxy.o: ../../include/dict.h
+mkmap_proxy.o: ../../include/mkmap.h
 mkmap_proxy.o: ../../include/myflock.h
 mkmap_proxy.o: ../../include/mymalloc.h
 mkmap_proxy.o: ../../include/sys_defs.h
@@ -2315,22 +2210,7 @@ mkmap_proxy.o: ../../include/vbuf.h
 mkmap_proxy.o: ../../include/vstream.h
 mkmap_proxy.o: ../../include/vstring.h
 mkmap_proxy.o: dict_proxy.h
-mkmap_proxy.o: mkmap.h
 mkmap_proxy.o: mkmap_proxy.c
-mkmap_sdbm.o: ../../include/argv.h
-mkmap_sdbm.o: ../../include/check_arg.h
-mkmap_sdbm.o: ../../include/dict.h
-mkmap_sdbm.o: ../../include/dict_sdbm.h
-mkmap_sdbm.o: ../../include/msg.h
-mkmap_sdbm.o: ../../include/myflock.h
-mkmap_sdbm.o: ../../include/mymalloc.h
-mkmap_sdbm.o: ../../include/stringops.h
-mkmap_sdbm.o: ../../include/sys_defs.h
-mkmap_sdbm.o: ../../include/vbuf.h
-mkmap_sdbm.o: ../../include/vstream.h
-mkmap_sdbm.o: ../../include/vstring.h
-mkmap_sdbm.o: mkmap.h
-mkmap_sdbm.o: mkmap_sdbm.c
 msg_stats_print.o: ../../include/attr.h
 msg_stats_print.o: ../../include/check_arg.h
 msg_stats_print.o: ../../include/htable.h

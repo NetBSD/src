@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_fnv.h,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: hash_fnv.h,v 1.2.2.1 2023/12/25 12:43:37 martin Exp $	*/
 
 #ifndef _HASH_FNV_H_INCLUDED_
 #define _HASH_FNV_H_INCLUDED_
@@ -26,6 +26,7 @@
 #endif					/* HASH_FNV_T */
 
 extern HASH_FNV_T hash_fnv(const void *, size_t);
+extern HASH_FNV_T hash_fnvz(const char *);
 
 /* LICENSE
 /* .ad

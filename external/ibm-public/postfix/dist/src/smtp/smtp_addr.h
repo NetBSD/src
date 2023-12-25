@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_addr.h,v 1.2.22.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,7 @@
   */
 extern DNS_RR *smtp_host_addr(const char *, int, DSN_BUF *);
 extern DNS_RR *smtp_domain_addr(const char *, DNS_RR **, int, DSN_BUF *, int *);
+extern DNS_RR *smtp_service_addr(const char *, const char *, DNS_RR **, int, DSN_BUF *, int *);
 
 /* LICENSE
 /* .ad
@@ -30,4 +31,9 @@ extern DNS_RR *smtp_domain_addr(const char *, DNS_RR **, int, DSN_BUF *, int *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

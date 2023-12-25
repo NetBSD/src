@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_sa_to_rr.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: dns_sa_to_rr.c,v 1.2.22.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -57,14 +57,14 @@ DNS_RR *dns_sa_to_rr(const char *hostname, unsigned pref, struct sockaddr *sa)
 #define DUMMY_TTL	0
 
     if (sa->sa_family == AF_INET) {
-	return (dns_rr_create(hostname, hostname, T_A, C_IN, DUMMY_TTL, pref,
-			      (char *) &SOCK_ADDR_IN_ADDR(sa),
-			      sizeof(SOCK_ADDR_IN_ADDR(sa))));
+	return (dns_rr_create_noport(hostname, hostname, T_A, C_IN, DUMMY_TTL,
+				     pref, (char *) &SOCK_ADDR_IN_ADDR(sa),
+				     sizeof(SOCK_ADDR_IN_ADDR(sa))));
 #ifdef HAS_IPV6
     } else if (sa->sa_family == AF_INET6) {
-	return (dns_rr_create(hostname, hostname, T_AAAA, C_IN, DUMMY_TTL, pref,
-			      (char *) &SOCK_ADDR_IN6_ADDR(sa),
-			      sizeof(SOCK_ADDR_IN6_ADDR(sa))));
+	return (dns_rr_create_noport(hostname, hostname, T_AAAA, C_IN, DUMMY_TTL,
+				     pref, (char *) &SOCK_ADDR_IN6_ADDR(sa),
+				     sizeof(SOCK_ADDR_IN6_ADDR(sa))));
 #endif
     } else {
 	errno = EAFNOSUPPORT;
@@ -123,7 +123,7 @@ int     main(int argc, char **argv)
 	    resv[len++] = res;
 	qsort((void *) resv, len, sizeof(*resv), compare_family);
 	for (n = 0; n < len; n++) {
-	    if ((rr = dns_sa_to_rr(argv[0], 0, resv[n]->ai_addr)) == 0)
+	    if ((rr = dns_sa_to_rr(argv[0], DNS_RR_NOPREF, resv[n]->ai_addr)) == 0)
 		msg_fatal("dns_sa_to_rr: %m");
 	    if (dns_rr_to_pa(rr, &hostaddr) == 0)
 		msg_fatal("dns_rr_to_pa: %m");

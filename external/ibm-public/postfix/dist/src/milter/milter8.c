@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.4.2.1 2023/12/25 12:43:32 martin Exp $	*/
 
 /*++
 /* NAME
@@ -130,6 +130,7 @@
 #define SMFIC_OPTNEG		'O'	/* Option negotiation */
 #define SMFIC_QUIT		'Q'	/* QUIT */
 #define SMFIC_RCPT		'R'	/* RCPT to */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIC_DATA		'T'	/* DATA */
 #define SMFIC_UNKNOWN		'U'	/* Any unknown command */
  /* Introduced with Sendmail 8.14. */
@@ -148,6 +149,7 @@ static const NAME_CODE smfic_table[] = {
     "SMFIC_OPTNEG", SMFIC_OPTNEG,
     "SMFIC_QUIT", SMFIC_QUIT,
     "SMFIC_RCPT", SMFIC_RCPT,
+    /* Introduced with Sendmail 8.13. */
     "SMFIC_DATA", SMFIC_DATA,
     "SMFIC_UNKNOWN", SMFIC_UNKNOWN,
     /* Introduced with Sendmail 8.14. */
@@ -216,11 +218,12 @@ static const NAME_CODE smfir_table[] = {
 #define SMFIP_NOBODY		(1L<<4)	/* filter does not want body */
 #define SMFIP_NOHDRS		(1L<<5)	/* filter does not want headers */
 #define SMFIP_NOEOH		(1L<<6)	/* filter does not want EOH */
-#define SMFIP_NR_HDR		(1L<<7)	/* filter won't reply for header */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIP_NOHREPL		SMFIP_NR_HDR
+ /* Introduced with Sendmail 8.14. */
+#define SMFIP_NR_HDR		(1L<<7)	/* filter won't reply for header */
 #define SMFIP_NOUNKNOWN 	(1L<<8)	/* filter does not want unknown cmd */
 #define SMFIP_NODATA		(1L<<9)	/* filter does not want DATA */
- /* Introduced with Sendmail 8.14. */
 #define SMFIP_SKIP		(1L<<10)/* MTA supports SMFIR_SKIP */
 #define SMFIP_RCPT_REJ		(1L<<11)/* filter wants rejected RCPTs */
 #define SMFIP_NR_CONN		(1L<<12)/* filter won't reply for connect */
@@ -251,10 +254,10 @@ static const NAME_MASK smfip_table[] = {
     "SMFIP_NOBODY", SMFIP_NOBODY,
     "SMFIP_NOHDRS", SMFIP_NOHDRS,
     "SMFIP_NOEOH", SMFIP_NOEOH,
+    /* Introduced with Sendmail 8.14. */
     "SMFIP_NR_HDR", SMFIP_NR_HDR,
     "SMFIP_NOUNKNOWN", SMFIP_NOUNKNOWN,
     "SMFIP_NODATA", SMFIP_NODATA,
-    /* Introduced with Sendmail 8.14. */
     "SMFIP_SKIP", SMFIP_SKIP,
     "SMFIP_RCPT_REJ", SMFIP_RCPT_REJ,
     "SMFIP_NR_CONN", SMFIP_NR_CONN,
@@ -278,6 +281,7 @@ static const NAME_MASK smfip_table[] = {
 #define SMFIF_ADDRCPT		(1L<<2)	/* filter may add recipients */
 #define SMFIF_DELRCPT		(1L<<3)	/* filter may delete recipients */
 #define SMFIF_CHGHDRS		(1L<<4)	/* filter may change/delete headers */
+ /* Introduced with Sendmail 8.13. */
 #define SMFIF_QUARANTINE 	(1L<<5)	/* filter may quarantine envelope */
  /* Introduced with Sendmail 8.14. */
 #define SMFIF_CHGFROM		(1L<<6)	/* filter may replace sender */
@@ -290,6 +294,7 @@ static const NAME_MASK smfif_table[] = {
     "SMFIF_ADDRCPT", SMFIF_ADDRCPT,
     "SMFIF_DELRCPT", SMFIF_DELRCPT,
     "SMFIF_CHGHDRS", SMFIF_CHGHDRS,
+    /* Introduced with Sendmail 8.13. */
     "SMFIF_QUARANTINE", SMFIF_QUARANTINE,
     /* Introduced with Sendmail 8.14. */
     "SMFIF_CHGFROM", SMFIF_CHGFROM,

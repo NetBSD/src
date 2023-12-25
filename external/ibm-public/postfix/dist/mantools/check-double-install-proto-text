@@ -4,4 +4,4 @@
 
 LANG=C; export LANG
 
-(ls *install* proto/* | egrep -v 'stop|Makefile|html|\.proto' | xargs mantools/deroff; cat RELEASE_NOTES) | mantools/find-double | fgrep -vxf proto/stop.double-install-proto-text
+(ls *install* proto/* | grep -E -v 'stop|Makefile|html|\.proto' | xargs mantools/deroff; cat RELEASE_NOTES) | mantools/find-double | grep -F -vxf proto/stop.double-install-proto-text

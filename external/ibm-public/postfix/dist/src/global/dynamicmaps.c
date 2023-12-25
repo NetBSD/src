@@ -1,4 +1,4 @@
-/*	$NetBSD: dynamicmaps.c,v 1.3 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: dynamicmaps.c,v 1.3.2.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,23 +10,26 @@
 /*
 /*	void dymap_init(const char *conf_path, const char *plugin_dir)
 /* DESCRIPTION
-/*	This module reads the dynamicmaps.cf file and performs
-/*	run-time loading of Postfix dictionaries. Each dynamicmaps.cf
-/*	entry specifies the name of a dictionary type, the pathname
-/*	of a shared-library object, the name of a "dict_open"
-/*	function for access to individual dictionary entries, and
-/*	optionally the name of a "mkmap_open" function for bulk-mode
+/*	This module reads the dynamicmaps.cf file and on-demand
+/*	loads Postfix dictionaries. Each dynamicmaps.cf entry
+/*	specifies the name of a dictionary type, the pathname of a
+/*	shared-library object, the name of a "dict_open" function
+/*	for access to individual dictionary entries, and optionally
+/*	the name of a "mkmap_open" wrapper function for bulk-mode
 /*	dictionary creation. Plugins may be specified with a relative
 /*	pathname.
 /*
-/*	A dictionary may be installed without editing the file
-/*	dynamicmaps.cf, by placing a configuration file under the
-/*	directory dynamicmaps.cf.d, with the same format as
-/*	dynamicmaps.cf.
+/*	A dictionary shared object may be installed on a system
+/*	without editing the file dynamicmaps.cf, by placing a
+/*	configuration file under the directory dynamicmaps.cf.d,
+/*	with the same format as dynamicmaps.cf.
 /*
 /*	dymap_init() reads the specified configuration file which
-/*	is in dynamicmaps.cf format, and hooks itself into the
-/*	dict_open(), dict_mapnames(), and mkmap_open() functions.
+/*	must be in dynamicmaps.cf format, appends ".d" to the path
+/*	and scans the named directory for other configuration files,
+/*	and on the first call hooks itself into the dict_open() and
+/*	dict_mapnames() functions. All files are optional, but if
+/*	an existing file cannot be opened, that is a fatal error.
 /*
 /*	dymap_init() may be called multiple times during a process
 /*	lifetime, but it will not "unload" dictionaries that have
@@ -36,14 +39,19 @@
 /*
 /*	Arguments:
 /* .IP conf_path
-/*	Pathname for the dynamicmaps configuration file.
+/*	Pathname for the dynamicmaps configuration file. With ".d"
+/*	appended,  this becomes the pathname for a directory with
+/*	other files in dynamicmaps.cf format.
 /* .IP plugin_dir
 /*	Default directory for plugins with a relative pathname.
 /* SEE ALSO
-/*	load_lib(3) low-level run-time linker adapter
+/*	load_lib(3) low-level run-time linker adapter.
 /* DIAGNOSTICS
-/*	Fatal errors: memory allocation problem, dictionary or
-/*	dictionary function not available.  Panic: invalid use.
+/*	Warnings: unsupported dictionary type, shared object file
+/*	does not exist, shared object permissions are not safe-for-root,
+/*	configuration file permissions are not safe-for-root.
+/*	Fatal errors: memory allocation problem, error opening an
+/*	existing configuration file, bad configuration file syntax.
 /* LICENSE
 /* .ad
 /* .fi
@@ -58,6 +66,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -77,6 +90,7 @@
 #include <htable.h>
 #include <argv.h>
 #include <dict.h>
+#include <mkmap.h>
 #include <load_lib.h>
 #include <vstring.h>
 #include <vstream.h>
@@ -88,7 +102,6 @@
  /*
   * Global library.
   */
-#include <mkmap.h>
 #include <dynamicmaps.h>
 
 #ifdef USE_DYNAMIC_MAPS
@@ -105,34 +118,43 @@ typedef struct {
 static HTABLE *dymap_info;
 static int dymap_hooks_done = 0;
 static DICT_OPEN_EXTEND_FN saved_dict_open_hook = 0;
-static MKMAP_OPEN_EXTEND_FN saved_mkmap_open_hook = 0;
 static DICT_MAPNAMES_EXTEND_FN saved_dict_mapnames_hook = 0;
 
 #define STREQ(x, y) (strcmp((x), (y)) == 0)
 
-/* dymap_dict_lookup - look up "dict_foo_open" function */
 
-static DICT_OPEN_FN dymap_dict_lookup(const char *dict_type)
+/* dymap_dict_lookup - look up DICT_OPEN_INFO */
+
+static const DICT_OPEN_INFO *dymap_dict_lookup(const char *dict_type)
 {
+    const char myname[] = "dymap_dict_lookup";
     struct stat st;
-    LIB_FN  fn[2];
-    DICT_OPEN_FN dict_open_fn;
+    LIB_FN  fn[3];
     DYMAP_INFO *dp;
+    const DICT_OPEN_INFO *op;
+    DICT_OPEN_INFO *np;
+
+    if (msg_verbose > 1)
+	msg_info("%s: %s", myname, dict_type);
 
     /*
      * Respect the hook nesting order.
      */
     if (saved_dict_open_hook != 0
-	&& (dict_open_fn = saved_dict_open_hook(dict_type)) != 0)
-	return (dict_open_fn);
+	&& (op = saved_dict_open_hook(dict_type)) != 0)
+	return (op);
 
     /*
      * Allow for graceful degradation when a database is unavailable. This
      * allows Postfix daemon processes to continue handling email with
      * reduced functionality.
      */
-    if ((dp = (DYMAP_INFO *) htable_find(dymap_info, dict_type)) == 0)
+    if ((dp = (DYMAP_INFO *) htable_find(dymap_info, dict_type)) == 0) {
+	msg_warn("unsupported dictionary type: %s. "
+		 "Is the postfix-%s package installed?",
+		 dict_type, dict_type);
 	return (0);
+    }
     if (stat(dp->soname, &st) < 0) {
 	msg_warn("unsupported dictionary type: %s (%s: %m)",
 		 dict_type, dp->soname);
@@ -144,64 +166,15 @@ static DICT_OPEN_FN dymap_dict_lookup(const char *dict_type)
 		 dict_type, dp->soname);
 	return (0);
     }
-    fn[0].name = dp->dict_name;
-    fn[1].name = 0;
+    fn[0].name = dp->dict_name;			/* not null */
+    fn[1].name = dp->mkmap_name;		/* may be null */
+    fn[2].name = 0;
     load_library_symbols(dp->soname, fn, (LIB_DP *) 0);
-    return ((DICT_OPEN_FN) fn[0].fptr);
-}
-
-/* dymap_mkmap_lookup - look up "mkmap_foo_open" function */
-
-static MKMAP_OPEN_FN dymap_mkmap_lookup(const char *dict_type)
-{
-    struct stat st;
-    LIB_FN  fn[2];
-    MKMAP_OPEN_FN mkmap_open_fn;
-    DYMAP_INFO *dp;
-
-    /*
-     * Respect the hook nesting order.
-     */
-    if (saved_mkmap_open_hook != 0
-	&& (mkmap_open_fn = saved_mkmap_open_hook(dict_type)) != 0)
-	return (mkmap_open_fn);
-
-    /*
-     * All errors are fatal. If the postmap(1) or postalias(1) command can't
-     * create the requested database, then graceful degradation is not
-     * useful.
-     * 
-     * Fix 20220416: if this dictionary type is registered for some non-mkmap
-     * purpose, then don't talk nonsense about a missing package.
-     */
-    if ((dp = (DYMAP_INFO *) htable_find(dymap_info, dict_type)) == 0) {
-	ARGV   *types = dict_mapnames();
-	char  **cpp;
-
-	for (cpp = types->argv; *cpp; cpp++) {
-	    if (strcmp(dict_type, *cpp) == 0)
-		msg_fatal("unsupported dictionary type: %s does not support "
-			  "bulk-mode creation.", dict_type);
-	}
-	msg_fatal("unsupported dictionary type: %s. "
-		  "Is the postfix-%s package installed?",
-		  dict_type, dict_type);
-    }
-    if (!dp->mkmap_name)
-	msg_fatal("unsupported dictionary type: %s does not support "
-		  "bulk-mode creation.", dict_type);
-    if (stat(dp->soname, &st) < 0)
-	msg_fatal("unsupported dictionary type: %s (%s: %m). "
-		  "Is the postfix-%s package installed?",
-		  dict_type, dp->soname, dict_type);
-    if (st.st_uid != 0 || (st.st_mode & (S_IWGRP | S_IWOTH)) != 0)
-	msg_fatal("unsupported dictionary type: %s "
-		  "(%s: file is owned or writable by non-root users)",
-		  dict_type, dp->soname);
-    fn[0].name = dp->mkmap_name;
-    fn[1].name = 0;
-    load_library_symbols(dp->soname, fn, (LIB_DP *) 0);
-    return ((MKMAP_OPEN_FN) fn[0].fptr);
+    np = (DICT_OPEN_INFO *) mymalloc(sizeof(*op));
+    np->type = mystrdup(dict_type);
+    np->dict_fn = (DICT_OPEN_FN) fn[0].fptr;
+    np->mkmap_fn = (MKMAP_OPEN_FN) (dp->mkmap_name ? fn[1].fptr : 0);
+    return (np);
 }
 
 /* dymap_list - enumerate dynamically-linked database type names */
@@ -251,6 +224,7 @@ static void dymap_entry_free(void *ptr)
 
 static void dymap_read_conf(const char *path, const char *path_base)
 {
+    const char myname[] = "dymap_read_conf";
     VSTREAM *fp;
     VSTRING *buf;
     char   *cp;
@@ -262,6 +236,8 @@ static void dymap_read_conf(const char *path, const char *path_base)
      * Silently ignore a missing dynamicmaps.cf file, but be explicit about
      * problems when the file does exist.
      */
+    if (msg_verbose > 1)
+	msg_info("%s: opening %s", myname, path);
     if ((fp = vstream_fopen(path, O_RDONLY, 0)) != 0) {
 	if (fstat(vstream_fileno(fp), &st) < 0)
 	    msg_fatal("%s: fstat failed; %m", path);
@@ -272,6 +248,8 @@ static void dymap_read_conf(const char *path, const char *path_base)
 	    buf = vstring_alloc(100);
 	    while (vstring_get_nonl(buf, fp) != VSTREAM_EOF) {
 		cp = vstring_str(buf);
+		if (msg_verbose > 1)
+		    msg_info("%s: read: %s", myname, cp);
 		linenum++;
 		if (*cp == '#' || *cp == '\0')
 		    continue;
@@ -298,13 +276,11 @@ static void dymap_read_conf(const char *path, const char *path_base)
 	    vstring_free(buf);
 
 	    /*
-	     * Once-only: hook into the dict_open(3) and mkmap_open(3)
-	     * infrastructure,
+	     * Once-only: hook into the dict_open(3) infrastructure.
 	     */
 	    if (dymap_hooks_done == 0) {
 		dymap_hooks_done = 1;
 		saved_dict_open_hook = dict_open_extend(dymap_dict_lookup);
-		saved_mkmap_open_hook = mkmap_open_extend(dymap_mkmap_lookup);
 		saved_dict_mapnames_hook = dict_mapnames_extend(dymap_list);
 	    }
 	}
@@ -323,6 +299,9 @@ void    dymap_init(const char *conf_path, const char *plugin_dir)
     char   *conf_path_d;
     const char *conf_name;
     VSTRING *sub_conf_path;
+
+    if (msg_verbose > 1)
+	msg_info("%s: %s %s", myname, conf_path, plugin_dir);
 
     /*
      * Reload dynamicmaps.cf, but don't reload already-loaded plugins.

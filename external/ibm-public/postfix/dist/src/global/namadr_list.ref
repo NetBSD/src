@@ -51,3 +51,11 @@ bar/168.100.3.3: ERROR
 ./namadr_list: warning: non-existent:/tmp/nosuchfile is unavailable. open file /tmp/nosuchfile: No such file or directory
 ./namadr_list: warning: command line: non-existent:/tmp/nosuchfile: table lookup problem
 bar/168.100.3.3: ERROR
+./namadr_list: warning: command line: #comment after other text is not allowed: #text ...
+foo/1.2.3.4: YES
+./namadr_list: warning: command line: #comment after other text is not allowed: #text ...
+fool/1.2.3.4: NO
+foo/1.2.3.4: YES
+bar/1.2.3.4: YES
+baz/1.2.3.4: YES
+fool/1.2.3.4: NO

@@ -8,8 +8,7 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= 
 PROG	= postlogd
 INC_DIR = ../../include
-LIBS	= ../../lib/lib$(LIB_PREFIX)dns$(LIB_SUFFIX) \
-	../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
+LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_connect.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: inet_connect.c,v 1.2.2.1 2023/12/25 12:43:37 martin Exp $	*/
 
 /*++
 /* NAME
@@ -110,6 +110,7 @@ int     inet_connect(const char *addr, int block_mode, int timeout)
 	errno = EADDRNOTAVAIL;			/* for up-stream "%m" */
 	return (-1);
     }
+
     proto_info = inet_proto_info();
     for (sock = -1, found = 0, res = res0; res != 0; res = res->ai_next) {
 

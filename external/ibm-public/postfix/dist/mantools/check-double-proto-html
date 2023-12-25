@@ -4,4 +4,4 @@
 
 LANG=C; export LANG
 
-ls proto/*.html proto/*.proto | xargs mantools/dehtml | mantools/find-double | fgrep -vxf proto/stop.double-proto-html
+ls proto/*.html proto/*.proto | xargs mantools/dehtml | mantools/find-double | grep -F -vxf proto/stop.double-proto-html

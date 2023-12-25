@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.4.2.1 2023/12/25 12:43:37 martin Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,7 @@
 /*	against the table.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	pcre_table(5) PCRE table configuration
 /* AUTHOR(S)
 /*	Andrew McNamara
 /*	andrewm@connect.com.au

@@ -93,6 +93,7 @@ postalias.o: ../../include/argv.h
 postalias.o: ../../include/check_arg.h
 postalias.o: ../../include/clean_env.h
 postalias.o: ../../include/dict.h
+postalias.o: ../../include/dict_db.h
 postalias.o: ../../include/dict_proxy.h
 postalias.o: ../../include/mail_conf.h
 postalias.o: ../../include/mail_dict.h

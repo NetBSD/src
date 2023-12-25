@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_level.c,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: compat_level.c,v 1.2.2.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -268,7 +268,7 @@ static MAC_EXP_OP_RES compat_relop_eval(const char *left_str, int relop,
 					        const char *rite_str)
 {
     const char myname[] = "compat_relop_eval";
-    long    left_val, rite_val;
+    long    left_val, rite_val, delta;
 
     /*
      * Negative result means error.
@@ -281,7 +281,7 @@ static MAC_EXP_OP_RES compat_relop_eval(const char *left_str, int relop,
      * Valid result. The difference between non-negative numbers will no
      * overflow.
      */
-    long    delta = left_val - rite_val;
+    delta = left_val - rite_val;
 
     switch (relop) {
     case MAC_EXP_OP_TOK_EQ:

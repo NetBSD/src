@@ -1,4 +1,4 @@
-.\"	$NetBSD: posttls-finger.1,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: posttls-finger.1,v 1.4.2.1 2023/12/25 12:43:26 martin Exp $
 .\"
 .TH POSTTLS-FINGER 1 
 .ad
@@ -245,6 +245,8 @@ seconds. Report whether the session is re\-used. Retry if a new server
 is encountered, up to 5 times or as specified with the \fB\-m\fR option.
 By default reconnection is disabled, specify a positive delay to
 enable this behavior.
+.IP "\fB\-R\fR"
+Use SRV lookup instead of MX.
 .IP "\fB\-s \fIservername\fR"
 The server name to send with the TLS Server Name Indication (SNI)
 extension.  When the server has DANE TLSA records, this parameter

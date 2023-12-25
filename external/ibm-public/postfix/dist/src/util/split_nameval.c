@@ -1,4 +1,4 @@
-/*	$NetBSD: split_nameval.c,v 1.1.1.2 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: split_nameval.c,v 1.1.1.2.34.1 2023/12/25 12:43:38 martin Exp $	*/
 
 /*++
 /* NAME
@@ -83,7 +83,7 @@ const char *split_nameval(char *buf, char **name, char **value)
     } while (0)
 
     SKIP(buf, np, ISSPACE(*np));		/* find name begin */
-    if (*np == 0)
+    if (*np == 0 || *np == '=')
 	return ("missing attribute name");
     SKIP(np, ep, !ISSPACE(*ep) && *ep != '=');	/* find name end */
     SKIP(ep, cp, ISSPACE(*cp));			/* skip blanks before '=' */

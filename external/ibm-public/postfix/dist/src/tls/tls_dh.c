@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dh.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: tls_dh.c,v 1.4.2.1 2023/12/25 12:43:36 martin Exp $	*/
 
 /*++
 /* NAME
@@ -12,9 +12,10 @@
 /*	void	tls_set_dh_from_file(path)
 /*	const char *path;
 /*
-/*	void	tls_auto_eecdh_curves(ctx, configured)
+/*	void	tls_auto_groups(ctx, eecdh, ffdhe)
 /*	SSL_CTX	*ctx;
-/*	char	*configured;
+/*	char	*eecdh;
+/*	char	*ffdhe;
 /*
 /*	void	tls_tmp_dh(ctx, useauto)
 /*	SSL_CTX *ctx;
@@ -23,17 +24,19 @@
 /*	This module maintains parameters for Diffie-Hellman key generation.
 /*
 /*	tls_tmp_dh() returns the configured or compiled-in FFDHE
-/*	group parameters.
+/*	group parameters.  The useauto argument enables OpenSSL-builtin group
+/*	selection in preference to our own compiled-in group.  This may
+/*	interoperate better with overly strict peers that accept only
+/*	"standard" groups.
 /*
 /*	tls_set_dh_from_file() overrides compiled-in DH parameters
 /*	with those specified in the named files. The file format
 /*	is as expected by the PEM_read_DHparams() routine.
 /*
-/*	tls_auto_eecdh_curves() enables negotiation of the most preferred curve
-/*	among the curves specified by the "configured" argument.  The useauto
-/*	argument enables OpenSSL-builtin group selection in preference to our
-/*	own compiled-in group.  This may interoperate better with overly strict
-/*	peers that accept only "standard" groups (bogus threat model).
+/*	tls_auto_groups() enables negotiation of the most preferred key
+/*	exchange group among those specified by the "eecdh" and "ffdhe"
+/*	arguments.  The "ffdhe" argument is only used with OpenSSL 3.0
+/*	and later, and applies to TLS 1.3 and up.
 /* DIAGNOSTICS
 /*	In case of error, tls_set_dh_from_file() logs a warning and
 /*	ignores the request.
@@ -302,54 +305,63 @@ void    tls_tmp_dh(SSL_CTX *ctx, int useauto)
 
 /* ------------------------------------- Common API */
 
-void    tls_auto_eecdh_curves(SSL_CTX *ctx, const char *configured)
+#define AG_STAT_OK	(0)
+#define AG_STAT_NO_GROUP (-1)	/* no usable group, may retry */
+#define AG_STAT_NO_RETRY (-2)	/* other error, don't retry */
+
+static int setup_auto_groups(SSL_CTX *ctx, const char *origin,
+				const char *eecdh,
+			             const char *ffdhe)
 {
 #ifndef OPENSSL_NO_ECDH
     SSL_CTX *tmpctx;
     int    *nids;
-    int     space = 5;
+    int     space = 10;
     int     n = 0;
-    int     unknown = 0;
     char   *save;
-    char   *curves;
-    char   *curve;
+    char   *groups;
+    char   *group;
 
     if ((tmpctx = SSL_CTX_new(TLS_method())) == 0) {
-	msg_warn("cannot allocate temp SSL_CTX, using default ECDHE curves");
+	msg_warn("cannot allocate temp SSL_CTX");
 	tls_print_errors();
-	return;
+	return (AG_STAT_NO_RETRY);
     }
     nids = mymalloc(space * sizeof(int));
-    curves = save = mystrdup(configured);
-#define RETURN do { \
+
+#define SETUP_AG_RETURN(val) do { \
 	myfree(save); \
 	myfree(nids); \
 	SSL_CTX_free(tmpctx); \
-	return; \
+	return (val); \
     } while (0)
 
-    while ((curve = mystrtok(&curves, CHARS_COMMA_SP)) != 0) {
-	int     nid = EC_curve_nist2nid(curve);
+    groups = save = concatenate(eecdh, " ", ffdhe, NULL);
+    if ((group = mystrtok(&groups, CHARS_COMMA_SP)) == 0) {
+	msg_warn("no %s key exchange group - OpenSSL requires at least one",
+		 origin);
+	SETUP_AG_RETURN(AG_STAT_NO_GROUP);
+    }
+    for (; group != 0; group = mystrtok(&groups, CHARS_COMMA_SP)) {
+	int     nid = EC_curve_nist2nid(group);
 
 	if (nid == NID_undef)
-	    nid = OBJ_sn2nid(curve);
+	    nid = OBJ_sn2nid(group);
 	if (nid == NID_undef)
-	    nid = OBJ_ln2nid(curve);
+	    nid = OBJ_ln2nid(group);
 	if (nid == NID_undef) {
-	    msg_warn("ignoring unknown ECDHE curve \"%s\"",
-		     curve);
+	    msg_warn("ignoring unknown key exchange group \"%s\"", group);
 	    continue;
 	}
 
 	/*
-	 * Validate the NID by trying it as the sole EC curve for a
-	 * throw-away SSL context.  Silently skip unsupported code points.
-	 * This way, we can list X25519 and X448 as soon as the nids are
-	 * assigned, and before the supporting code is implemented.  They'll
-	 * be silently skipped when not yet supported.
+	 * Validate the NID by trying it as the group for a throw-away SSL
+	 * context. Silently skip unsupported code points. This way, we can
+	 * list X25519 and X448 as soon as the nids are assigned, and before
+	 * the supporting code is implemented. They'll be silently skipped
+	 * when not yet supported.
 	 */
 	if (SSL_CTX_set1_curves(tmpctx, &nid, 1) <= 0) {
-	    ++unknown;
 	    continue;
 	}
 	if (++n > space) {
@@ -360,16 +372,60 @@ void    tls_auto_eecdh_curves(SSL_CTX *ctx, const char *configured)
     }
 
     if (n == 0) {
-	if (unknown > 0)
-	    msg_warn("none of the configured ECDHE curves are supported");
-	RETURN;
+	/* The names may be case-sensitive */
+	msg_warn("none of the %s key exchange groups are supported", origin);
+	SETUP_AG_RETURN(AG_STAT_NO_GROUP);
     }
     if (SSL_CTX_set1_curves(ctx, nids, n) <= 0) {
-	msg_warn("failed to configure ECDHE curves");
+	msg_warn("failed to set up the %s key exchange groups", origin);
 	tls_print_errors();
-	RETURN;
+	SETUP_AG_RETURN(AG_STAT_NO_RETRY);
     }
-    RETURN;
+    SETUP_AG_RETURN(AG_STAT_OK);
+#endif
+}
+
+void    tls_auto_groups(SSL_CTX *ctx, const char *eecdh, const char *ffdhe)
+{
+#ifndef OPENSSL_NO_ECDH
+    char   *def_eecdh = DEF_TLS_EECDH_AUTO;
+
+#if OPENSSL_VERSION_PREREQ(3, 0)
+    char   *def_ffdhe = DEF_TLS_FFDHE_AUTO;
+
+#else
+    char   *def_ffdhe = "";
+
+    /* Has no effect prior to OpenSSL 3.0 */
+    ffdhe = def_ffdhe;
+#endif
+    const char *origin;
+
+    /*
+     * Try the user-specified list first. If that fails (empty list or no
+     * known group name), try again with the Postfix defaults. We assume that
+     * group selection is mere performance tuning and not security critical.
+     * All the groups supported for negotiation should be strong enough.
+     */
+    for (origin = "configured"; /* void */ ; /* void */) {
+	switch (setup_auto_groups(ctx, origin, eecdh, ffdhe)) {
+	case AG_STAT_OK:
+	    return;
+	case AG_STAT_NO_GROUP:
+	    if (strcmp(eecdh, def_eecdh) != 0
+		|| strcmp(ffdhe, def_ffdhe) != 0) {
+		msg_warn("using Postfix default key exchange groups instead");
+		origin = "Postfix default";
+		eecdh = def_eecdh;
+		ffdhe = def_ffdhe;
+		break;
+	    }
+	    /* FALLTHROUGH */
+	default:
+	    msg_warn("using OpenSSL default key exchange groups instead");
+	    return;
+	}
+    }
 #endif
 }
 

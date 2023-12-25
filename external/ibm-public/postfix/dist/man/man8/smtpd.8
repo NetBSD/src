@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: smtpd.8,v 1.4.2.1 2023/12/25 12:43:27 martin Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -163,6 +163,11 @@ Available in Postfix version 3.0 and later:
 .IP "\fBsmtpd_dns_reply_filter (empty)\fR"
 Optional filter for Postfix SMTP server DNS lookup results.
 .PP
+Available in Postfix 3.5 and later:
+.IP "\fBinfo_log_address_format (external)\fR"
+The email address form that will be used in non\-debug logging
+(info, warning, etc.).
+.PP
 Available in Postfix version 3.6 and later:
 .IP "\fBsmtpd_relay_before_recipient_restrictions (see 'postconf -d' output)\fR"
 Evaluate smtpd_relay_restrictions before smtpd_recipient_restrictions.
@@ -192,12 +197,9 @@ filtering, or address mapping.
 .PP
 Available in Postfix version 2.2 and later:
 .IP "\fBlocal_header_rewrite_clients (permit_inet_interfaces)\fR"
-Rewrite message header addresses in mail from these clients and
-update incomplete addresses with the domain name in $myorigin or
-$mydomain; either don't rewrite message headers from other clients
-at all, or rewrite message headers and update incomplete addresses
-with the domain specified in the remote_header_rewrite_domain
-parameter.
+Rewrite or add message headers in mail from these clients,
+updating incomplete addresses with the domain name in $myorigin or
+$mydomain, and adding missing headers.
 .SH "BEFORE-SMTPD PROXY AGENT"
 .na
 .nf
@@ -475,7 +477,7 @@ CommonName.
 With mandatory TLS encryption, require a trusted remote SMTP client
 certificate in order to allow TLS connections to proceed.
 .IP "\fBsmtpd_tls_wrappermode (no)\fR"
-Run the Postfix SMTP server in the non\-standard "wrapper" mode,
+Run the Postfix SMTP server in TLS "wrapper" mode,
 instead of using the STARTTLS command.
 .IP "\fBtls_daemon_random_bytes (32)\fR"
 The number of pseudo\-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
@@ -485,13 +487,15 @@ internal pseudo random number generator (PRNG).
 The OpenSSL cipherlist for "high" grade ciphers.
 .IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "medium" or higher grade ciphers.
+.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
+The OpenSSL cipherlist for "NULL" grade ciphers that provide
+authentication without encryption.
+.PP
+Available in Postfix version 2.3..3.7:
 .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "low" or higher grade ciphers.
 .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
 The OpenSSL cipherlist for "export" or higher grade ciphers.
-.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
-The OpenSSL cipherlist for "NULL" grade ciphers that provide
-authentication without encryption.
 .PP
 Available in Postfix version 2.5 and later:
 .IP "\fBsmtpd_tls_fingerprint_digest (see 'postconf -d' output)\fR"
@@ -557,10 +561,18 @@ Available in Postfix 3.5, 3.4.6, 3.3.5, 3.2.10, 3.1.13 and later:
 A workaround for implementations that hang Postfix while shutting
 down a TLS session, until Postfix times out.
 .PP
-Available in Postfix 3.5 and later:
-.IP "\fBinfo_log_address_format (external)\fR"
-The email address form that will be used in non\-debug logging
-(info, warning, etc.).
+Available in Postfix version 3.8 and later:
+.IP "\fBtls_ffdhe_auto_groups (see 'postconf -d' output)\fR"
+The prioritized list of finite\-field Diffie\-Hellman ephemeral
+(FFDHE) key exchange groups supported by the Postfix SMTP client and
+server.
+.PP
+Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+.IP "\fBtls_config_file (default)\fR"
+Optional configuration file with baseline OpenSSL settings.
+.IP "\fBtls_config_name (empty)\fR"
+The application name passed by Postfix to OpenSSL library
+initialization functions.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -586,7 +598,7 @@ cipher list.
 Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
 .IP "\fBsmtputf8_enable (yes)\fR"
 Enable preliminary SMTPUTF8 support for the protocols described
-in RFC 6531..6533.
+in RFC 6531, RFC 6532, and RFC 6533.
 .IP "\fBstrict_smtputf8 (no)\fR"
 Enable stricter enforcement of the SMTPUTF8 protocol.
 .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
@@ -696,10 +708,10 @@ Parameters concerning known/unknown local recipients:
 The list of domains that are delivered via the $local_transport
 mail delivery transport.
 .IP "\fBinet_interfaces (all)\fR"
-The network interface addresses that this mail system receives
+The local network interface addresses that this mail system receives
 mail on.
 .IP "\fBproxy_interfaces (empty)\fR"
-The network interface addresses that this mail system receives mail
+The remote network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
 .IP "\fBinet_protocols (see 'postconf -d output')\fR"
 The Internet protocols Postfix will attempt to use when making
@@ -728,12 +740,12 @@ a list of lookup tables that does not match the recipient address.
 Parameters concerning known/unknown recipients in virtual alias
 domains:
 .IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
-Postfix is final destination for the specified list of virtual
+Postfix is the final destination for the specified list of virtual
 alias domains, that is, domains for which all addresses are aliased
 to addresses in other local or remote domains.
 .IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
 Optional lookup tables that alias specific mail addresses or domains
-to other local or remote address.
+to other local or remote addresses.
 .IP "\fBunknown_virtual_alias_reject_code (550)\fR"
 The Postfix SMTP server reply code when a recipient address matches
 $virtual_alias_domains, and $virtual_alias_maps specifies a list
@@ -742,7 +754,7 @@ of lookup tables that does not match the recipient address.
 Parameters concerning known/unknown recipients in virtual mailbox
 domains:
 .IP "\fBvirtual_mailbox_domains ($virtual_mailbox_maps)\fR"
-Postfix is final destination for the specified list of domains;
+Postfix is the final destination for the specified list of domains;
 mail is delivered via the $virtual_transport mail delivery transport.
 .IP "\fBvirtual_mailbox_maps (empty)\fR"
 Optional lookup tables with all valid addresses in the domains that
@@ -838,6 +850,28 @@ DATA and BDAT requests, when deadlines are enabled with
 smtpd_per_request_deadline.
 .IP "\fBheader_from_format (standard)\fR"
 The format of the Postfix\-generated \fBFrom:\fR header.
+.PP
+Available in Postfix version 3.8 and later:
+.IP "\fBsmtpd_client_ipv4_prefix_length (32)\fR"
+Aggregate smtpd_client_*_count and smtpd_client_*_rate statistics
+by IPv4 network blocks with the specified network prefix.
+.IP "\fBsmtpd_client_ipv6_prefix_length (84)\fR"
+Aggregate smtpd_client_*_count and smtpd_client_*_rate statistics
+by IPv6 network blocks with the specified network prefix.
+.PP
+Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+.IP "\fBsmtpd_forbid_unauth_pipelining (Postfix >= 3.9: yes)\fR"
+Disconnect remote SMTP clients that violate RFC 2920 (or 5321)
+command pipelining constraints.
+.PP
+Available in Postfix 3.9, 3.8.4, 3.7.9, 3.6.13, 3.5.23 and later:
+.IP "\fBsmtpd_forbid_bare_newline (Postfix < 3.9: no)\fR"
+Reply with "Error: bare <LF> received" and disconnect
+when a remote SMTP client sends a line ending in <LF>, violating
+the RFC 5321 requirement that lines must end in <CR><LF>.
+.IP "\fBsmtpd_forbid_bare_newline_exclusions ($mynetworks)\fR"
+Exclude the specified clients from smtpd_forbid_bare_newline
+enforcement.
 .SH "TARPIT CONTROLS"
 .na
 .nf

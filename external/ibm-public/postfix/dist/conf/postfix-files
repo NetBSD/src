@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.8 2022/10/08 16:12:43 christos Exp $
+#	$NetBSD: postfix-files,v 1.8.2.1 2023/12/25 12:43:21 martin Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -440,6 +440,7 @@ $html_directory/postfix-manuals.html:f:root:-:644
 $html_directory/postfix-tls.1.html:f:root:-:644
 $html_directory/postfix-wrapper.5.html:f:root:-:644
 $html_directory/postfix.1.html:f:root:-:644
+$html_directory/postfix-doc.css:f:root:-:644
 $html_directory/postkick.1.html:f:root:-:644
 $html_directory/postlock.1.html:f:root:-:644
 $html_directory/postlog.1.html:f:root:-:644

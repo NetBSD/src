@@ -6,6 +6,7 @@
 <title>Postfix SASL Howto</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -267,10 +268,26 @@ in <code>/usr/lib/sasl2/</code>. </p> </li>
 <li> <p> Cyrus SASL version 2.1.22 and newer additionally search
 in <code>/etc/sasl2/</code>. </p> </li>
 
-<li> <p> Some Postfix distributions are modified and look for the
-Cyrus SASL configuration file in <code>/etc/postfix/sasl/</code>,
-<code>/var/lib/sasl2/</code> etc. See the distribution-specific
+<li> <p> With Postfix 2.5 and later you can explicitly configure the
+search path via the <code>cyrus_sasl_config_path</code> configuration
+parameter. Specify zero or more colon-separated directories. If
+set empty (the default value) the search path is the one compiled
+into the Cyrus SASL library. </p> </li>
+
+<li> <p> Some Postfix distributions employ a non-empty default value
+for <code>cyrus_sasl_config_path</code> to look for the Cyrus SASL
+configuration file in <code>/etc/postfix/sasl/</code>,
+<code>/var/lib/sasl2/</code> etc. See the output of <code>postconf
+cyrus_sasl_config_path</code> and/or the distribution-specific
 documentation to determine the expected location. </p> </li>
+
+<li> <p> Some Debian-based Postfix distributions patch Postfix to
+hardcode a non-default search path, making it impossible to set an
+alternate search path via the "cyrus_sasl_config_path" parameter.  This
+is likely to be the case when the distribution documents a
+Postfix-specific path (e.g. <code>/etc/postfix/sasl/</code>) that is
+different from the default value of "cyrus_sasl_config_path" (which
+then is likely to be empty). </p> </li>
 
 </ul>
 
@@ -2028,8 +2045,8 @@ the Postfix top-level directory: </p>
 <blockquote>
 <pre>
 % <strong>make tidy</strong> # if you have left-over files from a previous build
-% <strong>make makefiles CCARGS='-DUSE_SASL_AUTH \
-    -DDEF_SERVER_SASL_TYPE=\"dovecot\"'</strong>
+% <strong>make makefiles CCARGS="-DUSE_SASL_AUTH \
+    -DDEF_SERVER_SASL_TYPE=\\\"dovecot\\\""</strong>
 </pre>
 </blockquote>
 
@@ -2042,7 +2059,7 @@ the INSTALL document. </p>
 
 <li>
 
-<p> The <code>-DDEF_SERVER_SASL_TYPE=\"dovecot\"</code> is not
+<p> The <code>-DDEF_SERVER_SASL_TYPE=\\\"dovecot\\\"</code> is not
 necessary; it just makes Postfix configuration a little more
 convenient because you don't have to specify the SASL plug-in type
 in the Postfix main.cf file (but this may cause surprises when you
@@ -2061,10 +2078,10 @@ TLS_README for details.  </p>
 <blockquote>
 <pre>
 % <strong>make tidy</strong> # if you have left-over files from a previous build
-% <strong>make makefiles CCARGS='-DUSE_SASL_AUTH \
-    -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
-    ...<i>CCARGS options for LDAP or TLS etc.</i>...' \
-   AUXLIBS='...<i>AUXLIBS options for LDAP or TLS etc.</i>...'</strong>
+% <strong>make makefiles CCARGS="-DUSE_SASL_AUTH \
+    -DDEF_SERVER_SASL_TYPE=\\\"dovecot\\\" \
+    ...<i>CCARGS options for LDAP or TLS etc.</i>..." \
+   AUXLIBS="...<i>AUXLIBS options for LDAP or TLS etc.</i>..."</strong>
 </pre>
 </blockquote>
 

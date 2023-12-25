@@ -8,6 +8,7 @@
 <title>Postfix Standard Configuration Examples</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -377,7 +378,7 @@ is the real purpose of the firewall email function. </p>
 17      . . .
 18 
 19 /etc/postfix/transport:
-20     example.com   smtp:[inside-gateway.example.com]
+20     example.com   relay:[inside-gateway.example.com]
 </pre>
 </blockquote>
 
@@ -399,7 +400,12 @@ wild-card in the relay_recipients table. </p>
 
 <li> <p> Lines 12, 19-20: Route mail for "example.com" to the inside
 gateway machine. The <tt>[]</tt> forces Postfix to do no MX lookup.
-</p>
+This uses the "relay" delivery transport (a copy of the default
+"smtp" delivery transport) to forward inbound mail. This can improve
+performance of deliveries to internal domains because they will
+compete for SMTP clients from the "relay" delivery transport, instead
+of competing with other SMTP deliveries for SMTP clients from the
+default "smtp" delivery transport. </p>
 
 </ul>
 

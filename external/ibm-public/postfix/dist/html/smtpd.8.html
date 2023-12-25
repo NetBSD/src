@@ -2,6 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html> <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 <title> Postfix manual - smtpd(8) </title>
 </head> <body> <pre>
 SMTPD(8)                                                              SMTPD(8)
@@ -159,32 +160,38 @@ SMTPD(8)                                                              SMTPD(8)
        <b><a href="postconf.5.html#smtpd_dns_reply_filter">smtpd_dns_reply_filter</a> (empty)</b>
               Optional filter for Postfix SMTP server DNS lookup results.
 
+       Available in Postfix 3.5 and later:
+
+       <b><a href="postconf.5.html#info_log_address_format">info_log_address_format</a> (external)</b>
+              The email address form that will be used  in  non-debug  logging
+              (info, warning, etc.).
+
        Available in Postfix version 3.6 and later:
 
        <b><a href="postconf.5.html#smtpd_relay_before_recipient_restrictions">smtpd_relay_before_recipient_restrictions</a> (see 'postconf -d' output)</b>
-              Evaluate    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>    before     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipi</a>-
+              Evaluate     <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>    before    <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipi</a>-
               <a href="postconf.5.html#smtpd_recipient_restrictions">ent_restrictions</a>.
 
-       <b><a href="postconf.5.html#known_tcp_ports">known_tcp_ports</a>   (lmtp=24,   smtp=25,  smtps=submissions=465,  submis-</b>
+       <b><a href="postconf.5.html#known_tcp_ports">known_tcp_ports</a>  (lmtp=24,  smtp=25,   smtps=submissions=465,   submis-</b>
        <b>sion=587)</b>
-              Optional  setting  that  avoids lookups in the <b>services</b>(5) data-
+              Optional setting that avoids lookups in  the  <b>services</b>(5)  data-
               base.
 
        Available in Postfix version 3.7 and later:
 
        <b><a href="postconf.5.html#smtpd_per_request_deadline">smtpd_per_request_deadline</a> (normal: no, overload: yes)</b>
               Change  the  behavior  of  the  <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a>  and  <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_start</a>-
-              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a>  time limits, from a time limit per plaintext or TLS
-              read or write call, to a combined time  limit  for  receiving  a
-              complete  SMTP request and for sending a complete SMTP response.
+              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a> time limits, from a time limit per plaintext or  TLS
+              read  or  write  call,  to a combined time limit for receiving a
+              complete SMTP request and for sending a complete SMTP  response.
 
        <b><a href="postconf.5.html#smtpd_min_data_rate">smtpd_min_data_rate</a> (500)</b>
-              The minimum plaintext data transfer  rate  in  bytes/second  for
-              DATA   and  BDAT  requests,  when  deadlines  are  enabled  with
+              The  minimum  plaintext  data  transfer rate in bytes/second for
+              DATA  and  BDAT  requests,  when  deadlines  are  enabled   with
               <a href="postconf.5.html#smtpd_per_request_deadline">smtpd_per_request_deadline</a>.
 
 <b>ADDRESS REWRITING CONTROLS</b>
-       See the <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a> document for a detailed discussion  of
+       See  the <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a> document for a detailed discussion of
        Postfix address rewriting.
 
        <b><a href="postconf.5.html#receive_override_options">receive_override_options</a> (empty)</b>
@@ -194,12 +201,9 @@ SMTPD(8)                                                              SMTPD(8)
        Available in Postfix version 2.2 and later:
 
        <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> (<a href="postconf.5.html#permit_inet_interfaces">permit_inet_interfaces</a>)</b>
-              Rewrite message header addresses in mail from these clients  and
-              update incomplete addresses with the domain name in $<a href="postconf.5.html#myorigin">myorigin</a> or
-              $<a href="postconf.5.html#mydomain">mydomain</a>; either  don't  rewrite  message  headers  from  other
-              clients at all, or rewrite message headers and update incomplete
-              addresses with the domain  specified  in  the  <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_re</a>-
-              <a href="postconf.5.html#remote_header_rewrite_domain">write_domain</a> parameter.
+              Rewrite  or  add  message  headers  in  mail from these clients,
+              updating incomplete addresses with the domain name in  $<a href="postconf.5.html#myorigin">myorigin</a>
+              or $<a href="postconf.5.html#mydomain">mydomain</a>, and adding missing headers.
 
 <b>BEFORE-SMTPD PROXY AGENT</b>
        Available in Postfix version 2.10 and later:
@@ -520,8 +524,8 @@ SMTPD(8)                                                              SMTPD(8)
               client certificate in order to allow TLS connections to proceed.
 
        <b><a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a> (no)</b>
-              Run  the Postfix SMTP server in the non-standard "wrapper" mode,
-              instead of using the STARTTLS command.
+              Run  the  Postfix  SMTP server in TLS "wrapper" mode, instead of
+              using the STARTTLS command.
 
        <b><a href="postconf.5.html#tls_daemon_random_bytes">tls_daemon_random_bytes</a> (32)</b>
               The number of pseudo-random bytes that an  <a href="smtp.8.html"><b>smtp</b>(8)</a>  or  <a href="smtpd.8.html"><b>smtpd</b>(8)</a>
@@ -534,15 +538,17 @@ SMTPD(8)                                                              SMTPD(8)
        <b><a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a> (see 'postconf -d' output)</b>
               The OpenSSL cipherlist for "medium" or higher grade ciphers.
 
+       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (eNULL:!aNULL)</b>
+              The OpenSSL cipherlist for "NULL"  grade  ciphers  that  provide
+              authentication without encryption.
+
+       Available in Postfix version 2.3..3.7:
+
        <b><a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> (see 'postconf -d' output)</b>
               The OpenSSL cipherlist for "low" or higher grade ciphers.
 
        <b><a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a> (see 'postconf -d' output)</b>
               The OpenSSL cipherlist for "export" or higher grade ciphers.
-
-       <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (eNULL:!aNULL)</b>
-              The OpenSSL cipherlist for "NULL"  grade  ciphers  that  provide
-              authentication without encryption.
 
        Available in Postfix version 2.5 and later:
 
@@ -626,11 +632,21 @@ SMTPD(8)                                                              SMTPD(8)
               A  workaround  for implementations that hang Postfix while shut-
               ting down a TLS session, until Postfix times out.
 
-       Available in Postfix 3.5 and later:
+       Available in Postfix version 3.8 and later:
 
-       <b><a href="postconf.5.html#info_log_address_format">info_log_address_format</a> (external)</b>
-              The email address form that will be used  in  non-debug  logging
-              (info, warning, etc.).
+       <b><a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a> (see 'postconf -d' output)</b>
+              The prioritized list of  finite-field  Diffie-Hellman  ephemeral
+              (FFDHE) key exchange groups supported by the Postfix SMTP client
+              and server.
+
+       Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+
+       <b><a href="postconf.5.html#tls_config_file">tls_config_file</a> (default)</b>
+              Optional configuration file with baseline OpenSSL settings.
+
+       <b><a href="postconf.5.html#tls_config_name">tls_config_name</a> (empty)</b>
+              The application name passed by Postfix to OpenSSL  library  ini-
+              tialization functions.
 
 <b>OBSOLETE STARTTLS CONTROLS</b>
        The  following  configuration  parameters  exist for compatibility with
@@ -654,7 +670,7 @@ SMTPD(8)                                                              SMTPD(8)
 
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable preliminary SMTPUTF8 support for the protocols  described
-              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+              in <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a>, <a href="https://tools.ietf.org/html/rfc6532">RFC 6532</a>, and <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a>.
 
        <b><a href="postconf.5.html#strict_smtputf8">strict_smtputf8</a> (no)</b>
               Enable stricter enforcement of the SMTPUTF8 protocol.
@@ -777,76 +793,77 @@ SMTPD(8)                                                              SMTPD(8)
               mail delivery transport.
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
-              The network interface addresses that this mail  system  receives
-              mail on.
+              The local network interface  addresses  that  this  mail  system
+              receives mail on.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
-              The  network  interface addresses that this mail system receives
-              mail on by way of a proxy or network address translation unit.
+              The  remote  network  interface  addresses that this mail system
+              receives mail on by way of a proxy or network  address  transla-
+              tion unit.
 
        <b><a href="postconf.5.html#inet_protocols">inet_protocols</a> (see 'postconf -d output')</b>
-              The Internet protocols Postfix will attempt to use  when  making
+              The  Internet  protocols Postfix will attempt to use when making
               or accepting connections.
 
        <b><a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> (<a href="proxymap.8.html">proxy</a>:unix:passwd.byname $<a href="postconf.5.html#alias_maps">alias_maps</a>)</b>
               Lookup tables with all names or addresses of local recipients: a
-              recipient address is local when its domain  matches  $<a href="postconf.5.html#mydestination">mydestina</a>-
+              recipient  address  is local when its domain matches $<a href="postconf.5.html#mydestination">mydestina</a>-
               <a href="postconf.5.html#mydestination">tion</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>.
 
        <b><a href="postconf.5.html#unknown_local_recipient_reject_code">unknown_local_recipient_reject_code</a> (550)</b>
               The numerical Postfix SMTP server response code when a recipient
-              address is local, and $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> specifies a list  of
+              address  is local, and $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> specifies a list of
               lookup tables that does not match the recipient.
 
        Parameters concerning known/unknown recipients of relay destinations:
 
        <b><a href="postconf.5.html#relay_domains">relay_domains</a> (Postfix</b> &gt;<b>= 3.0: empty, Postfix</b> &lt; <b>3.0: $<a href="postconf.5.html#mydestination">mydestination</a>)</b>
-              What  destination  domains  (and subdomains thereof) this system
+              What destination domains (and subdomains  thereof)  this  system
               will relay mail to.
 
        <b><a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> (empty)</b>
-              Optional lookup tables with all valid addresses in  the  domains
+              Optional  lookup  tables with all valid addresses in the domains
               that match $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#unknown_relay_recipient_reject_code">unknown_relay_recipient_reject_code</a> (550)</b>
-              The  numerical  Postfix  SMTP server reply code when a recipient
-              address matches $<a href="postconf.5.html#relay_domains">relay_domains</a>, and <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>  speci-
-              fies  a  list of lookup tables that does not match the recipient
+              The numerical Postfix SMTP server reply code  when  a  recipient
+              address  matches $<a href="postconf.5.html#relay_domains">relay_domains</a>, and <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> speci-
+              fies a list of lookup tables that does not match  the  recipient
               address.
 
-       Parameters  concerning  known/unknown  recipients  in   virtual   alias
+       Parameters   concerning   known/unknown  recipients  in  virtual  alias
        domains:
 
        <b><a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> ($<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>)</b>
-              Postfix  is  final destination for the specified list of virtual
-              alias domains, that is, domains  for  which  all  addresses  are
+              Postfix is the final destination for the specified list of  vir-
+              tual alias domains, that is, domains for which all addresses are
               aliased to addresses in other local or remote domains.
 
        <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> ($<a href="postconf.5.html#virtual_maps">virtual_maps</a>)</b>
-              Optional  lookup  tables  that  alias specific mail addresses or
-              domains to other local or remote address.
+              Optional lookup tables that alias  specific  mail  addresses  or
+              domains to other local or remote addresses.
 
        <b><a href="postconf.5.html#unknown_virtual_alias_reject_code">unknown_virtual_alias_reject_code</a> (550)</b>
-              The Postfix SMTP server reply  code  when  a  recipient  address
-              matches  $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,  and $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> speci-
-              fies a list of lookup tables that does not match  the  recipient
+              The  Postfix  SMTP  server  reply  code when a recipient address
+              matches $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>, and  $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>  speci-
+              fies  a  list of lookup tables that does not match the recipient
               address.
 
        Parameters  concerning  known/unknown  recipients  in  virtual  mailbox
        domains:
 
        <b><a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> ($<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>)</b>
-              Postfix is final destination for the specified list of  domains;
-              mail  is  delivered  via  the  $<a href="postconf.5.html#virtual_transport">virtual_transport</a>  mail delivery
-              transport.
+              Postfix  is  the  final  destination  for  the specified list of
+              domains; mail  is  delivered  via  the  $<a href="postconf.5.html#virtual_transport">virtual_transport</a>  mail
+              delivery transport.
 
        <b><a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> (empty)</b>
-              Optional lookup tables with all valid addresses in  the  domains
+              Optional  lookup  tables with all valid addresses in the domains
               that match $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
 
        <b><a href="postconf.5.html#unknown_virtual_mailbox_reject_code">unknown_virtual_mailbox_reject_code</a> (550)</b>
-              The  Postfix  SMTP  server  reply  code when a recipient address
-              matches  $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>,   and   $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
+              The Postfix SMTP server reply  code  when  a  recipient  address
+              matches   $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>,   and  $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
               specifies a list of lookup tables that does not match the recip-
               ient address.
 
@@ -855,7 +872,7 @@ SMTPD(8)                                                              SMTPD(8)
        control client request rates.
 
        <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
-              Upon  input,  long  lines  are chopped up into pieces of at most
+              Upon input, long lines are chopped up into  pieces  of  at  most
               this length; upon delivery, long lines are reconstructed.
 
        <b><a href="postconf.5.html#queue_minfree">queue_minfree</a> (0)</b>
@@ -863,62 +880,62 @@ SMTPD(8)                                                              SMTPD(8)
               tem that is needed to receive mail.
 
        <b><a href="postconf.5.html#message_size_limit">message_size_limit</a> (10240000)</b>
-              The  maximal  size  in  bytes  of  a message, including envelope
+              The maximal size in  bytes  of  a  message,  including  envelope
               information.
 
        <b><a href="postconf.5.html#smtpd_recipient_limit">smtpd_recipient_limit</a> (1000)</b>
-              The maximal number of recipients that the  Postfix  SMTP  server
+              The  maximal  number  of recipients that the Postfix SMTP server
               accepts per message delivery request.
 
        <b><a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> (normal: 300s, overload: 10s)</b>
-              When  the  Postfix  SMTP  server  wants  to  send an SMTP server
-              response, how long the Postfix SMTP  server  will  wait  for  an
-              underlying  network  write  operation  to complete; and when the
-              Postfix SMTP server Postfix wants  to  receive  an  SMTP  client
-              request,  how  long  the  Postfix  SMTP  server will wait for an
+              When the Postfix SMTP  server  wants  to  send  an  SMTP  server
+              response,  how  long  the  Postfix  SMTP server will wait for an
+              underlying network write operation to  complete;  and  when  the
+              Postfix  SMTP  server  Postfix  wants  to receive an SMTP client
+              request, how long the Postfix  SMTP  server  will  wait  for  an
               underlying network read operation to complete.
 
        <b><a href="postconf.5.html#smtpd_history_flush_threshold">smtpd_history_flush_threshold</a> (100)</b>
-              The maximal number of lines in the Postfix SMTP  server  command
-              history  before it is flushed upon receipt of EHLO, RSET, or end
+              The  maximal  number of lines in the Postfix SMTP server command
+              history before it is flushed upon receipt of EHLO, RSET, or  end
               of DATA.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#smtpd_peername_lookup">smtpd_peername_lookup</a> (yes)</b>
-              Attempt to look up the remote SMTP client hostname,  and  verify
+              Attempt  to  look up the remote SMTP client hostname, and verify
               that the name matches the client IP address.
 
        The per SMTP client connection count and request rate limits are imple-
-       mented in co-operation with the <a href="anvil.8.html"><b>anvil</b>(8)</a> service, and are available  in
+       mented  in co-operation with the <a href="anvil.8.html"><b>anvil</b>(8)</a> service, and are available in
        Postfix version 2.2 and later.
 
        <b><a href="postconf.5.html#smtpd_client_connection_count_limit">smtpd_client_connection_count_limit</a> (50)</b>
-              How  many simultaneous connections any client is allowed to make
+              How many simultaneous connections any client is allowed to  make
               to this service.
 
        <b><a href="postconf.5.html#smtpd_client_connection_rate_limit">smtpd_client_connection_rate_limit</a> (0)</b>
-              The maximal number of connection attempts any client is  allowed
+              The  maximal number of connection attempts any client is allowed
               to make to this service per time unit.
 
        <b><a href="postconf.5.html#smtpd_client_message_rate_limit">smtpd_client_message_rate_limit</a> (0)</b>
-              The  maximal number of message delivery requests that any client
-              is allowed to make to this service per time unit, regardless  of
+              The maximal number of message delivery requests that any  client
+              is  allowed to make to this service per time unit, regardless of
               whether or not Postfix actually accepts those messages.
 
        <b><a href="postconf.5.html#smtpd_client_recipient_rate_limit">smtpd_client_recipient_rate_limit</a> (0)</b>
-              The  maximal  number  of  recipient addresses that any client is
-              allowed to send to this service per  time  unit,  regardless  of
+              The maximal number of recipient addresses  that  any  client  is
+              allowed  to  send  to  this service per time unit, regardless of
               whether or not Postfix actually accepts those recipients.
 
        <b><a href="postconf.5.html#smtpd_client_event_limit_exceptions">smtpd_client_event_limit_exceptions</a> ($<a href="postconf.5.html#mynetworks">mynetworks</a>)</b>
-              Clients  that  are excluded from smtpd_client_*_count/rate_limit
+              Clients that are excluded  from  smtpd_client_*_count/rate_limit
               restrictions.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#smtpd_client_new_tls_session_rate_limit">smtpd_client_new_tls_session_rate_limit</a> (0)</b>
-              The maximal number of new (i.e., uncached) TLS sessions  that  a
+              The  maximal  number of new (i.e., uncached) TLS sessions that a
               remote SMTP client is allowed to negotiate with this service per
               time unit.
 
@@ -926,84 +943,111 @@ SMTPD(8)                                                              SMTPD(8)
 
        <b><a href="postconf.5.html#smtpd_per_record_deadline">smtpd_per_record_deadline</a> (normal: no, overload: yes)</b>
               Change  the  behavior  of  the  <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a>  and  <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_start</a>-
-              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a>  time  limits,  from  a time limit per read or write
-              system call, to a time limit  to  send  or  receive  a  complete
-              record  (an  SMTP command line, SMTP response line, SMTP message
+              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a> time limits, from a time limit  per  read  or  write
+              system  call,  to  a  time  limit  to send or receive a complete
+              record (an SMTP command line, SMTP response line,  SMTP  message
               content line, or TLS protocol message).
 
        Available in Postfix version 3.1 and later:
 
        <b><a href="postconf.5.html#smtpd_client_auth_rate_limit">smtpd_client_auth_rate_limit</a> (0)</b>
-              The maximal number of AUTH commands that any client  is  allowed
-              to  send to this service per time unit, regardless of whether or
+              The  maximal  number of AUTH commands that any client is allowed
+              to send to this service per time unit, regardless of whether  or
               not Postfix actually accepts those commands.
 
        Available in Postfix version 3.7 and later:
 
        <b><a href="postconf.5.html#smtpd_per_request_deadline">smtpd_per_request_deadline</a> (normal: no, overload: yes)</b>
               Change  the  behavior  of  the  <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a>  and  <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_start</a>-
-              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a>  time limits, from a time limit per plaintext or TLS
-              read or write call, to a combined time  limit  for  receiving  a
-              complete  SMTP request and for sending a complete SMTP response.
+              <a href="postconf.5.html#smtpd_starttls_timeout">tls_timeout</a> time limits, from a time limit per plaintext or  TLS
+              read  or  write  call,  to a combined time limit for receiving a
+              complete SMTP request and for sending a complete SMTP  response.
 
        <b><a href="postconf.5.html#smtpd_min_data_rate">smtpd_min_data_rate</a> (500)</b>
-              The minimum plaintext data transfer  rate  in  bytes/second  for
-              DATA   and  BDAT  requests,  when  deadlines  are  enabled  with
+              The  minimum  plaintext  data  transfer rate in bytes/second for
+              DATA  and  BDAT  requests,  when  deadlines  are  enabled   with
               <a href="postconf.5.html#smtpd_per_request_deadline">smtpd_per_request_deadline</a>.
 
        <b><a href="postconf.5.html#header_from_format">header_from_format</a> (standard)</b>
               The format of the Postfix-generated <b>From:</b> header.
 
+       Available in Postfix version 3.8 and later:
+
+       <b><a href="postconf.5.html#smtpd_client_ipv4_prefix_length">smtpd_client_ipv4_prefix_length</a> (32)</b>
+              Aggregate  smtpd_client_*_count  and smtpd_client_*_rate statis-
+              tics by IPv4 network blocks with the specified network prefix.
+
+       <b><a href="postconf.5.html#smtpd_client_ipv6_prefix_length">smtpd_client_ipv6_prefix_length</a> (84)</b>
+              Aggregate smtpd_client_*_count and  smtpd_client_*_rate  statis-
+              tics by IPv6 network blocks with the specified network prefix.
+
+       Available in Postfix 3.9, 3.8.1, 3.7.6, 3.6.10, 3.5.20 and later:
+
+       <b><a href="postconf.5.html#smtpd_forbid_unauth_pipelining">smtpd_forbid_unauth_pipelining</a> (Postfix</b> &gt;<b>= 3.9: yes)</b>
+              Disconnect  remote  SMTP clients that violate <a href="https://tools.ietf.org/html/rfc2920">RFC 2920</a> (or 5321)
+              command pipelining constraints.
+
+       Available in Postfix 3.9, 3.8.4, 3.7.9, 3.6.13, 3.5.23 and later:
+
+       <b><a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a> (Postfix</b> &lt; <b>3.9: no)</b>
+              Reply with "Error: bare &lt;LF&gt; received"  and  disconnect  when  a
+              remote  SMTP  client  sends a line ending in &lt;LF&gt;, violating the
+              <a href="https://tools.ietf.org/html/rfc5321">RFC 5321</a> requirement that lines must end in &lt;CR&gt;&lt;LF&gt;.
+
+       <b><a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">smtpd_forbid_bare_newline_exclusions</a> ($<a href="postconf.5.html#mynetworks">mynetworks</a>)</b>
+              Exclude the  specified  clients  from  <a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a>
+              enforcement.
+
 <b>TARPIT CONTROLS</b>
-       When a remote SMTP client makes errors, the  Postfix  SMTP  server  can
-       insert  delays  before  responding. This can help to slow down run-away
-       software.  The behavior is controlled by an error counter  that  counts
+       When  a  remote  SMTP  client makes errors, the Postfix SMTP server can
+       insert delays before responding. This can help to  slow  down  run-away
+       software.   The  behavior is controlled by an error counter that counts
        the number of errors within an SMTP session that a client makes without
        delivering mail.
 
        <b><a href="postconf.5.html#smtpd_error_sleep_time">smtpd_error_sleep_time</a> (1s)</b>
-              With Postfix version 2.1 and later:  the  SMTP  server  response
-              delay  after a client has made more than $<a href="postconf.5.html#smtpd_soft_error_limit">smtpd_soft_error_limit</a>
-              errors, and fewer than $<a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a>  errors,  without
+              With  Postfix  version  2.1  and later: the SMTP server response
+              delay after a client has made more than  $<a href="postconf.5.html#smtpd_soft_error_limit">smtpd_soft_error_limit</a>
+              errors,  and  fewer than $<a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> errors, without
               delivering mail.
 
        <b><a href="postconf.5.html#smtpd_soft_error_limit">smtpd_soft_error_limit</a> (10)</b>
-              The  number  of  errors  a remote SMTP client is allowed to make
-              without delivering mail before the  Postfix  SMTP  server  slows
+              The number of errors a remote SMTP client  is  allowed  to  make
+              without  delivering  mail  before  the Postfix SMTP server slows
               down all its responses.
 
        <b><a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> (normal: 20, overload: 1)</b>
-              The  maximal number of errors a remote SMTP client is allowed to
+              The maximal number of errors a remote SMTP client is allowed  to
               make without delivering mail.
 
        <b><a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> (normal: 100, overload: 1)</b>
-              The number of junk commands (NOOP, VRFY, ETRN or  RSET)  that  a
-              remote  SMTP  client  can  send  before  the Postfix SMTP server
+              The  number  of  junk commands (NOOP, VRFY, ETRN or RSET) that a
+              remote SMTP client can  send  before  the  Postfix  SMTP  server
               starts to increment the error counter with each junk command.
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#smtpd_recipient_overshoot_limit">smtpd_recipient_overshoot_limit</a> (1000)</b>
-              The number of recipients that a remote SMTP client can  send  in
+              The  number  of recipients that a remote SMTP client can send in
               excess  of  the  limit  specified  with  $<a href="postconf.5.html#smtpd_recipient_limit">smtpd_recipient_limit</a>,
-              before the Postfix SMTP server increments the per-session  error
+              before  the Postfix SMTP server increments the per-session error
               count for each excess recipient.
 
 <b>ACCESS POLICY DELEGATION CONTROLS</b>
-       As  of version 2.1, Postfix can be configured to delegate access policy
-       decisions to an external server that runs  outside  Postfix.   See  the
+       As of version 2.1, Postfix can be configured to delegate access  policy
+       decisions  to  an  external  server that runs outside Postfix.  See the
        file <a href="SMTPD_POLICY_README.html">SMTPD_POLICY_README</a> for more information.
 
        <b><a href="postconf.5.html#smtpd_policy_service_max_idle">smtpd_policy_service_max_idle</a> (300s)</b>
-              The  time after which an idle SMTPD policy service connection is
+              The time after which an idle SMTPD policy service connection  is
               closed.
 
        <b><a href="postconf.5.html#smtpd_policy_service_max_ttl">smtpd_policy_service_max_ttl</a> (1000s)</b>
-              The time after which an active SMTPD policy  service  connection
+              The  time  after which an active SMTPD policy service connection
               is closed.
 
        <b><a href="postconf.5.html#smtpd_policy_service_timeout">smtpd_policy_service_timeout</a> (100s)</b>
-              The  time limit for connecting to, writing to, or receiving from
+              The time limit for connecting to, writing to, or receiving  from
               a delegated SMTPD policy server.
 
        Available in Postfix version 3.0 and later:
@@ -1013,81 +1057,81 @@ SMTPD(8)                                                              SMTPD(8)
               The default action when an SMTPD policy service request fails.
 
        <b><a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> (0)</b>
-              The maximal number of requests per SMTPD policy service  connec-
+              The  maximal number of requests per SMTPD policy service connec-
               tion, or zero (no limit).
 
        <b><a href="postconf.5.html#smtpd_policy_service_try_limit">smtpd_policy_service_try_limit</a> (2)</b>
-              The  maximal  number of attempts to send an SMTPD policy service
+              The maximal number of attempts to send an SMTPD  policy  service
               request before giving up.
 
        <b><a href="postconf.5.html#smtpd_policy_service_retry_delay">smtpd_policy_service_retry_delay</a> (1s)</b>
-              The delay between attempts to resend a failed SMTPD policy  ser-
+              The  delay between attempts to resend a failed SMTPD policy ser-
               vice request.
 
        Available in Postfix version 3.1 and later:
 
        <b><a href="postconf.5.html#smtpd_policy_service_policy_context">smtpd_policy_service_policy_context</a> (empty)</b>
-              Optional  information  that the Postfix SMTP server specifies in
-              the "policy_context"  attribute  of  a  policy  service  request
-              (originally,  to  share the same service endpoint among multiple
+              Optional information that the Postfix SMTP server  specifies  in
+              the  "policy_context"  attribute  of  a  policy  service request
+              (originally, to share the same service endpoint  among  multiple
               <a href="postconf.5.html#check_policy_service">check_policy_service</a> clients).
 
 <b>ACCESS CONTROLS</b>
-       The <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a> document gives an introduction to all the  SMTP
+       The  <a href="SMTPD_ACCESS_README.html">SMTPD_ACCESS_README</a> document gives an introduction to all the SMTP
        server access control features.
 
        <b><a href="postconf.5.html#smtpd_delay_reject">smtpd_delay_reject</a> (yes)</b>
-              Wait    until    the   RCPT   TO   command   before   evaluating
+              Wait   until   the   RCPT   TO   command    before    evaluating
               $<a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a>,     $<a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a>     and
               $<a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a>,  or  wait  until  the  ETRN  command
-              before      evaluating      $<a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a>       and
+              before       evaluating      $<a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a>      and
               $<a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a>.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
-              A  list of Postfix features where the pattern "example.com" also
-              matches subdomains  of  example.com,  instead  of  requiring  an
+              A list of Postfix features where the pattern "example.com"  also
+              matches  subdomains  of  example.com,  instead  of  requiring an
               explicit ".example.com" pattern.
 
        <b><a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> (empty)</b>
-              Optional  restrictions  that  the Postfix SMTP server applies in
+              Optional restrictions that the Postfix SMTP  server  applies  in
               the context of a client connection request.
 
        <b><a href="postconf.5.html#smtpd_helo_required">smtpd_helo_required</a> (no)</b>
-              Require that a remote SMTP client  introduces  itself  with  the
-              HELO  or  EHLO  command before sending the MAIL command or other
+              Require  that  a  remote  SMTP client introduces itself with the
+              HELO or EHLO command before sending the MAIL  command  or  other
               commands that require EHLO negotiation.
 
        <b><a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a> (empty)</b>
-              Optional restrictions that the Postfix SMTP  server  applies  in
+              Optional  restrictions  that  the Postfix SMTP server applies in
               the context of a client HELO command.
 
        <b><a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> (empty)</b>
-              Optional  restrictions  that  the Postfix SMTP server applies in
+              Optional restrictions that the Postfix SMTP  server  applies  in
               the context of a client MAIL FROM command.
 
        <b><a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> (see 'postconf -d' output)</b>
-              Optional restrictions that the Postfix SMTP  server  applies  in
-              the    context    of   a   client   RCPT   TO   command,   after
+              Optional  restrictions  that  the Postfix SMTP server applies in
+              the   context   of   a   client   RCPT   TO    command,    after
               <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
 
        <b><a href="postconf.5.html#smtpd_etrn_restrictions">smtpd_etrn_restrictions</a> (empty)</b>
-              Optional restrictions that the Postfix SMTP  server  applies  in
+              Optional  restrictions  that  the Postfix SMTP server applies in
               the context of a client ETRN command.
 
        <b><a href="postconf.5.html#allow_untrusted_routing">allow_untrusted_routing</a> (no)</b>
-              Forward       mail       with      sender-specified      routing
-              (user[@%!]remote[@%!]site) from untrusted  clients  to  destina-
+              Forward      mail      with       sender-specified       routing
+              (user[@%!]remote[@%!]site)  from  untrusted  clients to destina-
               tions matching $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> (empty)</b>
               User-defined aliases for groups of access restrictions.
 
        <b><a href="postconf.5.html#smtpd_null_access_lookup_key">smtpd_null_access_lookup_key</a> (</b>&lt;&gt;<b>)</b>
-              The  lookup  key  to be used in SMTP <a href="access.5.html"><b>access</b>(5)</a> tables instead of
+              The lookup key to be used in SMTP <a href="access.5.html"><b>access</b>(5)</a>  tables  instead  of
               the null sender address.
 
        <b><a href="postconf.5.html#permit_mx_backup_networks">permit_mx_backup_networks</a> (empty)</b>
-              Restrict the use of the <a href="postconf.5.html#permit_mx_backup">permit_mx_backup</a> SMTP access feature  to
+              Restrict  the use of the <a href="postconf.5.html#permit_mx_backup">permit_mx_backup</a> SMTP access feature to
               only domains whose primary MX hosts match the listed networks.
 
        Available in Postfix version 2.0 and later:
@@ -1097,19 +1141,19 @@ SMTPD(8)                                                              SMTPD(8)
               applies in the context of the SMTP DATA command.
 
        <b><a href="postconf.5.html#smtpd_expansion_filter">smtpd_expansion_filter</a> (see 'postconf -d' output)</b>
-              What characters are allowed in $name  expansions  of  RBL  reply
+              What  characters  are  allowed  in $name expansions of RBL reply
               templates.
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#smtpd_reject_unlisted_sender">smtpd_reject_unlisted_sender</a> (no)</b>
-              Request  that  the Postfix SMTP server rejects mail from unknown
-              sender addresses, even when no  explicit  <a href="postconf.5.html#reject_unlisted_sender">reject_unlisted_sender</a>
+              Request that the Postfix SMTP server rejects mail  from  unknown
+              sender  addresses,  even when no explicit <a href="postconf.5.html#reject_unlisted_sender">reject_unlisted_sender</a>
               access restriction is specified.
 
        <b><a href="postconf.5.html#smtpd_reject_unlisted_recipient">smtpd_reject_unlisted_recipient</a> (yes)</b>
-              Request  that  the  Postfix SMTP server rejects mail for unknown
-              recipient     addresses,     even     when      no      explicit
+              Request that the Postfix SMTP server rejects  mail  for  unknown
+              recipient      addresses,      even     when     no     explicit
               <a href="postconf.5.html#reject_unlisted_recipient">reject_unlisted_recipient</a> access restriction is specified.
 
        Available in Postfix version 2.2 and later:
@@ -1123,17 +1167,17 @@ SMTPD(8)                                                              SMTPD(8)
        <b><a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> (<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>,</b>
        <b><a href="postconf.5.html#defer_unauth_destination">defer_unauth_destination</a>)</b>
               Access restrictions for mail relay control that the Postfix SMTP
-              server  applies  in  the  context of the RCPT TO command, before
+              server applies in the context of the  RCPT  TO  command,  before
               <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.
 
 <b>SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS</b>
-       Postfix version 2.1 introduces sender and recipient  address  verifica-
+       Postfix  version  2.1 introduces sender and recipient address verifica-
        tion.  This feature is implemented by sending probe email messages that
        are  not  actually  delivered.   This  feature  is  requested  via  the
-       <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a>    and    <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a>   access
-       restrictions.  The status of verification probes is maintained  by  the
-       <a href="verify.8.html"><b>verify</b>(8)</a>  server.  See the file <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a> for infor-
-       mation about how to configure and operate the Postfix  sender/recipient
+       <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a>   and    <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a>    access
+       restrictions.   The  status of verification probes is maintained by the
+       <a href="verify.8.html"><b>verify</b>(8)</a> server.  See the file <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a> for  infor-
+       mation  about how to configure and operate the Postfix sender/recipient
        address verification service.
 
        <b><a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a> (normal: 3, overload: 1)</b>
@@ -1145,7 +1189,7 @@ SMTPD(8)                                                              SMTPD(8)
               fication request in progress.
 
        <b><a href="postconf.5.html#address_verify_sender">address_verify_sender</a> ($<a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a>)</b>
-              The  sender address to use in address verification probes; prior
+              The sender address to use in address verification probes;  prior
               to Postfix 2.5 the default was "postmaster".
 
        <b><a href="postconf.5.html#unverified_sender_reject_code">unverified_sender_reject_code</a> (450)</b>
@@ -1153,18 +1197,18 @@ SMTPD(8)                                                              SMTPD(8)
               address is rejected by the <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a> restriction.
 
        <b><a href="postconf.5.html#unverified_recipient_reject_code">unverified_recipient_reject_code</a> (450)</b>
-              The numerical Postfix SMTP  server  response  when  a  recipient
-              address  is rejected by the <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a> restric-
+              The  numerical  Postfix  SMTP  server  response when a recipient
+              address is rejected by the <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a>  restric-
               tion.
 
        Available in Postfix version 2.6 and later:
 
        <b><a href="postconf.5.html#unverified_sender_defer_code">unverified_sender_defer_code</a> (450)</b>
-              The numerical Postfix SMTP server response code  when  a  sender
+              The  numerical  Postfix  SMTP server response code when a sender
               address probe fails due to a temporary error condition.
 
        <b><a href="postconf.5.html#unverified_recipient_defer_code">unverified_recipient_defer_code</a> (450)</b>
-              The  numerical  Postfix  SMTP  server  response when a recipient
+              The numerical Postfix SMTP  server  response  when  a  recipient
               address probe fails due to a temporary error condition.
 
        <b><a href="postconf.5.html#unverified_sender_reject_reason">unverified_sender_reject_reason</a> (empty)</b>
@@ -1176,17 +1220,17 @@ SMTPD(8)                                                              SMTPD(8)
               <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a>.
 
        <b><a href="postconf.5.html#unverified_sender_tempfail_action">unverified_sender_tempfail_action</a> ($<a href="postconf.5.html#reject_tempfail_action">reject_tempfail_action</a>)</b>
-              The Postfix SMTP server's action  when  <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a>
+              The  Postfix  SMTP server's action when <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a>
               fails due to a temporary error condition.
 
        <b><a href="postconf.5.html#unverified_recipient_tempfail_action">unverified_recipient_tempfail_action</a> ($<a href="postconf.5.html#reject_tempfail_action">reject_tempfail_action</a>)</b>
-              The  Postfix SMTP server's action when <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipi</a>-
+              The Postfix SMTP server's action when  <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipi</a>-
               <a href="postconf.5.html#reject_unverified_recipient">ent</a> fails due to a temporary error condition.
 
        Available with Postfix 2.9 and later:
 
        <b><a href="postconf.5.html#address_verify_sender_ttl">address_verify_sender_ttl</a> (0s)</b>
-              The time  between  changes  in  the  time-dependent  portion  of
+              The  time  between  changes  in  the  time-dependent  portion of
               address verification probe sender addresses.
 
 <b>ACCESS CONTROL RESPONSES</b>
@@ -1198,36 +1242,36 @@ SMTPD(8)                                                              SMTPD(8)
               map "reject" action.
 
        <b><a href="postconf.5.html#defer_code">defer_code</a> (450)</b>
-              The  numerical  Postfix  SMTP server response code when a remote
+              The numerical Postfix SMTP server response code  when  a  remote
               SMTP client request is rejected by the "defer" restriction.
 
        <b><a href="postconf.5.html#invalid_hostname_reject_code">invalid_hostname_reject_code</a> (501)</b>
-              The numerical Postfix SMTP server response code when the  client
-              HELO   or   EHLO   command   parameter   is   rejected   by  the
+              The  numerical Postfix SMTP server response code when the client
+              HELO  or   EHLO   command   parameter   is   rejected   by   the
               <a href="postconf.5.html#reject_invalid_helo_hostname">reject_invalid_helo_hostname</a> restriction.
 
        <b><a href="postconf.5.html#maps_rbl_reject_code">maps_rbl_reject_code</a> (554)</b>
-              The numerical Postfix SMTP server response code  when  a  remote
-              SMTP   client  request  is  blocked  by  the  <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a>,
+              The  numerical  Postfix  SMTP server response code when a remote
+              SMTP  client  request  is  blocked  by  the   <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a>,
               <a href="postconf.5.html#reject_rhsbl_client">reject_rhsbl_client</a>,                <a href="postconf.5.html#reject_rhsbl_reverse_client">reject_rhsbl_reverse_client</a>,
               <a href="postconf.5.html#reject_rhsbl_sender">reject_rhsbl_sender</a> or <a href="postconf.5.html#reject_rhsbl_recipient">reject_rhsbl_recipient</a> restriction.
 
        <b><a href="postconf.5.html#non_fqdn_reject_code">non_fqdn_reject_code</a> (504)</b>
-              The  numerical  Postfix  SMTP  server  reply  code when a client
-              request  is  rejected  by   the   <a href="postconf.5.html#reject_non_fqdn_helo_hostname">reject_non_fqdn_helo_hostname</a>,
+              The numerical Postfix SMTP  server  reply  code  when  a  client
+              request   is   rejected  by  the  <a href="postconf.5.html#reject_non_fqdn_helo_hostname">reject_non_fqdn_helo_hostname</a>,
               <a href="postconf.5.html#reject_non_fqdn_sender">reject_non_fqdn_sender</a> or <a href="postconf.5.html#reject_non_fqdn_recipient">reject_non_fqdn_recipient</a> restriction.
 
        <b><a href="postconf.5.html#plaintext_reject_code">plaintext_reject_code</a> (450)</b>
-              The numerical Postfix SMTP server response code when  a  request
+              The  numerical  Postfix SMTP server response code when a request
               is rejected by the <b><a href="postconf.5.html#reject_plaintext_session">reject_plaintext_session</a></b> restriction.
 
        <b><a href="postconf.5.html#reject_code">reject_code</a> (554)</b>
-              The  numerical  Postfix  SMTP server response code when a remote
+              The numerical Postfix SMTP server response code  when  a  remote
               SMTP client request is rejected by the "reject" restriction.
 
        <b><a href="postconf.5.html#relay_domains_reject_code">relay_domains_reject_code</a> (554)</b>
-              The numerical Postfix SMTP server response code  when  a  client
-              request  is  rejected by the <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> recipient
+              The  numerical  Postfix  SMTP server response code when a client
+              request is rejected by the  <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>  recipient
               restriction.
 
        <b><a href="postconf.5.html#unknown_address_reject_code">unknown_address_reject_code</a> (450)</b>
@@ -1235,24 +1279,24 @@ SMTPD(8)                                                              SMTPD(8)
               a sender or recipient address because its domain is unknown.
 
        <b><a href="postconf.5.html#unknown_client_reject_code">unknown_client_reject_code</a> (450)</b>
-              The  numerical  Postfix  SMTP server response code when a client
-              without valid address  &lt;=&gt;  name  mapping  is  rejected  by  the
+              The numerical Postfix SMTP server response code  when  a  client
+              without  valid  address  &lt;=&gt;  name  mapping  is  rejected by the
               <a href="postconf.5.html#reject_unknown_client_hostname">reject_unknown_client_hostname</a> restriction.
 
        <b><a href="postconf.5.html#unknown_hostname_reject_code">unknown_hostname_reject_code</a> (450)</b>
-              The  numerical  Postfix SMTP server response code when the host-
-              name specified with the HELO or EHLO command is rejected by  the
+              The numerical Postfix SMTP server response code when  the  host-
+              name  specified with the HELO or EHLO command is rejected by the
               <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_hostname</a> restriction.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#default_rbl_reply">default_rbl_reply</a> (see 'postconf -d' output)</b>
-              The  default Postfix SMTP server response template for a request
+              The default Postfix SMTP server response template for a  request
               that is rejected by an RBL-based restriction.
 
        <b><a href="postconf.5.html#multi_recipient_bounce_reject_code">multi_recipient_bounce_reject_code</a> (550)</b>
-              The numerical Postfix SMTP server response code  when  a  remote
-              SMTP  client  request  is  blocked  by  the <a href="postconf.5.html#reject_multi_recipient_bounce">reject_multi_recipi</a>-
+              The  numerical  Postfix  SMTP server response code when a remote
+              SMTP client  request  is  blocked  by  the  <a href="postconf.5.html#reject_multi_recipient_bounce">reject_multi_recipi</a>-
               <a href="postconf.5.html#reject_multi_recipient_bounce">ent_bounce</a> restriction.
 
        <b><a href="postconf.5.html#rbl_reply_maps">rbl_reply_maps</a> (empty)</b>
@@ -1262,52 +1306,52 @@ SMTPD(8)                                                              SMTPD(8)
 
        <b><a href="postconf.5.html#access_map_defer_code">access_map_defer_code</a> (450)</b>
               The numerical Postfix SMTP server response code for an <a href="access.5.html"><b>access</b>(5)</a>
-              map    "defer"    action,    including    "<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>"   or
+              map   "defer"    action,    including    "<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>"    or
               "<a href="postconf.5.html#defer_if_reject">defer_if_reject</a>".
 
        <b><a href="postconf.5.html#reject_tempfail_action">reject_tempfail_action</a> (<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>)</b>
-              The Postfix SMTP server's action when a reject-type  restriction
+              The  Postfix SMTP server's action when a reject-type restriction
               fails due to a temporary error condition.
 
        <b><a href="postconf.5.html#unknown_helo_hostname_tempfail_action">unknown_helo_hostname_tempfail_action</a> ($<a href="postconf.5.html#reject_tempfail_action">reject_tempfail_action</a>)</b>
-              The  Postfix SMTP server's action when <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_host</a>-
+              The Postfix SMTP server's action when  <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_host</a>-
               <a href="postconf.5.html#reject_unknown_helo_hostname">name</a> fails due to a temporary error condition.
 
        <b><a href="postconf.5.html#unknown_address_tempfail_action">unknown_address_tempfail_action</a> ($<a href="postconf.5.html#reject_tempfail_action">reject_tempfail_action</a>)</b>
-              The      Postfix      SMTP      server's       action       when
-              <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>  or <a href="postconf.5.html#reject_unknown_recipient_domain">reject_unknown_recipient_domain</a>
+              The       Postfix       SMTP      server's      action      when
+              <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a> or  <a href="postconf.5.html#reject_unknown_recipient_domain">reject_unknown_recipient_domain</a>
               fail due to a temporary error condition.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much  time  a  Postfix  daemon process may take to handle a
+              How much time a Postfix daemon process  may  take  to  handle  a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
               The location of all postfix administrative commands.
 
        <b><a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a> (double-bounce)</b>
-              The sender address of postmaster notifications that  are  gener-
+              The  sender  address of postmaster notifications that are gener-
               ated by the mail system.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The  time  limit  for  sending  or receiving information over an
+              The time limit for sending  or  receiving  information  over  an
               internal communication channel.
 
        <b><a href="postconf.5.html#mail_name">mail_name</a> (Postfix)</b>
-              The mail system name that is displayed in Received: headers,  in
+              The  mail system name that is displayed in Received: headers, in
               the SMTP greeting banner, and in bounced mail.
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The  UNIX  system  account  that owns the Postfix queue and most
+              The UNIX system account that owns the  Postfix  queue  and  most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time that an idle Postfix  daemon  process
+              The  maximum  amount of time that an idle Postfix daemon process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -1318,11 +1362,11 @@ SMTPD(8)                                                              SMTPD(8)
               The internet hostname of this mail system.
 
        <b><a href="postconf.5.html#mynetworks">mynetworks</a> (see 'postconf -d' output)</b>
-              The  list of "trusted" remote SMTP clients that have more privi-
+              The list of "trusted" remote SMTP clients that have more  privi-
               leges than "strangers".
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The domain name that locally-posted mail appears to  come  from,
+              The  domain  name that locally-posted mail appears to come from,
               and that locally posted mail is delivered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
@@ -1335,24 +1379,24 @@ SMTPD(8)                                                              SMTPD(8)
               The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set of characters that can separate an email address local-
+              The set of characters that can separate an email address  local-
               part, user name, or a .forward file name from its extension.
 
        <b><a href="postconf.5.html#smtpd_banner">smtpd_banner</a> ($<a href="postconf.5.html#myhostname">myhostname</a> ESMTP $<a href="postconf.5.html#mail_name">mail_name</a>)</b>
-              The text that follows the 220 status code in the  SMTP  greeting
+              The  text  that follows the 220 status code in the SMTP greeting
               banner.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
+              A prefix that  is  prepended  to  the  process  name  in  syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix version 2.2 and later:
 
        <b><a href="postconf.5.html#smtpd_forbidden_commands">smtpd_forbidden_commands</a> (CONNECT GET POST <a href="regexp_table.5.html">regexp</a>:{{/^[^A-Z]/ Bogus}})</b>
-              List of commands that cause the Postfix SMTP server  to  immedi-
+              List  of  commands that cause the Postfix SMTP server to immedi-
               ately terminate the session with a 221 code.
 
        Available in Postfix version 2.5 and later:
@@ -1369,7 +1413,7 @@ SMTPD(8)                                                              SMTPD(8)
        Available in Postfix 3.4 and later:
 
        <b><a href="postconf.5.html#smtpd_reject_footer_maps">smtpd_reject_footer_maps</a> (empty)</b>
-              Lookup tables, indexed by the complete Postfix SMTP  server  4xx
+              Lookup  tables,  indexed by the complete Postfix SMTP server 4xx
               or 5xx response, with reject footer templates.
 
 <b>SEE ALSO</b>

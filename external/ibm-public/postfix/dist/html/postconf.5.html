@@ -8,6 +8,7 @@
 <title>Postfix Configuration Parameters </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -475,7 +476,7 @@ Examples:
 
 <pre>
 <a href="postconf.5.html#address_verify_sender">address_verify_sender</a> = &lt;&gt;
-<a href="postconf.5.html#address_verify_sender">address_verify_sender</a> = postmaster@my.domain
+<a href="postconf.5.html#address_verify_sender">address_verify_sender</a> = postmaster@<a href="postconf.5.html#mydomain">mydomain</a>
 </pre>
 
 <p>
@@ -764,6 +765,17 @@ Example:
 
 </DD>
 
+<DT><b><a name="allow_srv_lookup_fallback">allow_srv_lookup_fallback</a>
+(default: no)</b></DT><DD>
+
+<p> When SRV record lookup fails or no SRV record exists, fall back
+to MX or IP address lookup as if SRV record lookup was not enabled. <p>
+
+<p> This feature is available in Postfix 3.8 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="allow_untrusted_routing">allow_untrusted_routing</a>
 (default: no)</b></DT><DD>
 
@@ -946,7 +958,7 @@ instead.
 </p>
 
 <p>
-Note 1: this feature is enabled by default. If disabled, users will not be
+Note 1: When disabled (Postfix 3.0 and later), users will not be
 able to send mail to "user@partialdomainname" but will have to
 specify full domain names instead.
 </p>
@@ -3749,7 +3761,10 @@ filtered with the character set that is specified with the
 <dt><b>$<a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a></b></dt>
 
 <dd>The address extension delimiter that was found in the recipient
-address (Postfix 2.11 and later), or the system-wide recipient
+address (Postfix 2.11 and later), or the 'first' delimiter specified
+with the system-wide recipient address extension delimiter (Postfix
+3.5.22, 3.5.12, 3.7.8, 3.8.3 and later). Historically, this was
+always the system-wide recipient
 address extension delimiter (Postfix 2.10 and earlier). </dd>
 
 <dt><b>${name?value}</b></dt>
@@ -4019,6 +4034,17 @@ mis-delivery of mail.
 
 </DD>
 
+<DT><b><a name="ignore_srv_lookup_error">ignore_srv_lookup_error</a>
+(default: no)</b></DT><DD>
+
+<p> When SRV record lookup fails, fall back to MX or IP address
+lookup as if SRV record lookup was not enabled. </p>
+
+<p> This feature is available in Postfix 3.8 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="import_environment">import_environment</a>
 (default: see "postconf -d" output)</b></DT><DD>
 
@@ -4046,6 +4072,16 @@ environment.  Examples of relevant environment variables: </p>
 <dt><b>MAIL_CONFIG</b></dt>
 
 <dd>Needed to make "<b>postfix -c</b>" work. </dd>
+
+<dt><b>POSTLOG_SERVICE</b></dt>
+
+<dd>Needed to make "<b><a href="postconf.5.html#maillog_file">maillog_file</a></b>" work during daemon
+process initialization. </dd>
+
+<dt><b>POSTLOG_HOSTNAME</b></dt>
+
+<dd>Needed to make "<b><a href="postconf.5.html#maillog_file">maillog_file</a></b>" work during daemon
+process initialization. </dd>
 
 </dl>
 
@@ -4084,7 +4120,7 @@ Specify 0 to disable the feature. Valid delays are 0..10.
 <DT><b><a name="inet_interfaces">inet_interfaces</a>
 (default: all)</b></DT><DD>
 
-<p> The network interface addresses that this mail system receives
+<p> The local network interface addresses that this mail system receives
 mail on. Specify "all" to receive mail on all network
 interfaces (default), and "loopback-only" to receive mail
 on loopback network interfaces only (Postfix version 2.2 and later).  The
@@ -4929,7 +4965,7 @@ and for receiving the initial remote LMTP server response. </p>
 </DD>
 
 <DT><b><a name="lmtp_line_length_limit">lmtp_line_length_limit</a>
-(default: 990)</b></DT><DD>
+(default: 998)</b></DT><DD>
 
 <p> The LMTP-specific version of the <a href="postconf.5.html#smtp_line_length_limit">smtp_line_length_limit</a>
 configuration parameter.  See there for details. </p>
@@ -5892,16 +5928,16 @@ into concurrency per domain.  </p>
 <DT><b><a name="local_header_rewrite_clients">local_header_rewrite_clients</a>
 (default: <a href="postconf.5.html#permit_inet_interfaces">permit_inet_interfaces</a>)</b></DT><DD>
 
-<p> Rewrite message header addresses in mail from these clients and
-update incomplete addresses with the domain name in $<a href="postconf.5.html#myorigin">myorigin</a> or
-$<a href="postconf.5.html#mydomain">mydomain</a>; either don't rewrite message headers from other clients
-at all, or rewrite message headers and update incomplete addresses
-with the domain specified in the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a>
-parameter.  </p>
+<p> Rewrite or add message headers in mail from these clients,
+updating incomplete addresses with the domain name in $<a href="postconf.5.html#myorigin">myorigin</a> or
+$<a href="postconf.5.html#mydomain">mydomain</a>, and adding missing headers. </p>
 
 <p> See the <a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a> and <a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> parameters
 for details of how domain names are appended to incomplete addresses.
 </p>
+
+<p> See <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> to optionally rewrite or add
+message headers in mail from other clients. </p>
 
 <p> Specify a list of zero or more of the following:  </p>
 
@@ -8599,13 +8635,16 @@ the file is read). </p>
 <DT><b><a name="postscreen_dnsbl_sites">postscreen_dnsbl_sites</a>
 (default: empty)</b></DT><DD>
 
-<p>Optional list of DNS allow/denylist domains, filters and weight
+<p>Optional list of patterns with DNS allow/denylist domains, filters
+and weight
 factors. When the list is non-empty, the <a href="dnsblog.8.html">dnsblog(8)</a> daemon will
-query these domains with the IP addresses of remote SMTP clients,
+query these domains with the reversed IP addresses of remote SMTP
+clients,
 and <a href="postscreen.8.html">postscreen(8)</a> will update an SMTP client's DNSBL score with
-each non-error reply. </p>
+each non-error reply as described below. </p>
 
-<p> Caution: when postscreen rejects mail, it replies with the DNSBL
+<p> Caution: when postscreen rejects mail, its SMTP response contains
+the DNSBL
 domain name. Use the <a href="postconf.5.html#postscreen_dnsbl_reply_map">postscreen_dnsbl_reply_map</a> feature to hide
 "password" information in DNSBL domain names. </p>
 
@@ -8613,26 +8652,25 @@ domain name. Use the <a href="postconf.5.html#postscreen_dnsbl_reply_map">postsc
 specified with <a href="postconf.5.html#postscreen_dnsbl_threshold">postscreen_dnsbl_threshold</a>, <a href="postscreen.8.html">postscreen(8)</a> can drop
 the connection with the remote SMTP client. </p>
 
-<p> Specify a list of domain=filter*weight entries, separated by
+<p> Specify a list of domain=filter*weight patterns, separated by
 comma or whitespace.  </p>
 
 <ul>
 
-<li> <p> When no "=filter" is specified, <a href="postscreen.8.html">postscreen(8)</a> will use any
-non-error DNSBL reply.  Otherwise, <a href="postscreen.8.html">postscreen(8)</a> uses only DNSBL
-replies that match the filter. The filter has the form d.d.d.d,
+<li> <p> When a pattern specifies no "=filter", <a href="postscreen.8.html">postscreen(8)</a> will
+use any non-error DNSBL query result.  Otherwise, <a href="postscreen.8.html">postscreen(8)</a>
+will use only DNSBL
+query results that match the filter. The filter has the form d.d.d.d,
 where each d is a number, or a pattern inside [] that contains one
 or more ";"-separated numbers or number..number ranges.  </p>
 
-<li> <p> When no "*weight" is specified, <a href="postscreen.8.html">postscreen(8)</a> increments
-the remote SMTP client's DNSBL score by 1.  Otherwise, the weight must be
-an integral number, and <a href="postscreen.8.html">postscreen(8)</a> adds the specified weight to
-the remote SMTP client's DNSBL score.  Specify a negative number for
-allowlisting.  </p>
+<li> <p> When a pattern specifies no "*weight", the weight of the
+pattern is 1.  Otherwise, the weight must be an integral number.
+Specify a negative number for allowlisting.  </p>
 
-<li> <p> When one <a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> entry produces multiple
-DNSBL responses, <a href="postscreen.8.html">postscreen(8)</a> applies the weight at most once.
-</p>
+<li> <p> When a pattern matches one or more DNSBL query results,
+<a href="postscreen.8.html">postscreen(8)</a> adds that pattern's weight once to the remote SMTP
+client's DNSBL score. </p>
 
 </ul>
 
@@ -9227,7 +9265,7 @@ Examples:
 (default: empty)</b></DT><DD>
 
 <p>
-The network interface addresses that this mail system receives mail
+The remote network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
 </p>
 
@@ -9692,7 +9730,7 @@ This feature is available in Postfix 2.1 and later.
 
 <p>
 Optional BCC (blind carbon-copy) address lookup tables, indexed by
-recipient address.  The BCC address (multiple results are not
+envelope recipient address.  The BCC address (multiple results are not
 supported) is added when mail enters from outside of Postfix.
 </p>
 
@@ -10170,9 +10208,13 @@ Examples:
 <DT><b><a name="remote_header_rewrite_domain">remote_header_rewrite_domain</a>
 (default: empty)</b></DT><DD>
 
-<p> Don't rewrite message headers from remote clients at all when
-this parameter is empty; otherwise, rewrite message headers and
-append the specified domain name to incomplete addresses.  The
+<p> Rewrite or add message headers in mail from remote clients if
+the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter value is non-empty,
+updating incomplete addresses with the domain specified in the
+<a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter, and adding missing headers.
+</p>
+
+<p> The
 <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> parameter controls what clients Postfix
 considers local. </p>
 
@@ -10391,7 +10433,7 @@ in Postfix version 2.3.
 (default: empty)</b></DT><DD>
 
 <p> Optional BCC (blind carbon-copy) address lookup tables, indexed
-by sender address.  The BCC address (multiple results are not
+by envelope sender address.  The BCC address (multiple results are not
 supported) is added when mail enters from outside of Postfix.  </p>
 
 <p>
@@ -10484,9 +10526,9 @@ The table format and lookups are documented in <a href="canonical.5.html">canoni
 </p>
 
 <p>
-Example: you want to rewrite the SENDER address "user@ugly.domain"
-to "user@pretty.domain", while still being able to send mail to
-the RECIPIENT address "user@ugly.domain".
+Example: you want to rewrite the SENDER address "user@ugly.example"
+to "user@pretty.example", while still being able to send mail to
+the RECIPIENT address "user@ugly.example".
 </p>
 
 <p>
@@ -11505,15 +11547,14 @@ Postfix 2.3 and later use <a href="postconf.5.html#smtp_tls_security_level">smtp
 <DT><b><a name="smtp_fallback_relay">smtp_fallback_relay</a>
 (default: $<a href="postconf.5.html#fallback_relay">fallback_relay</a>)</b></DT><DD>
 
-<p>
-Optional list of relay hosts for SMTP destinations that can't be
-found or that are unreachable. With Postfix 2.2 and earlier this
-parameter is called <a href="postconf.5.html#fallback_relay">fallback_relay</a>.  </p>
+<p> Optional list of relay destinations that will be used when an
+SMTP destination is not found, or when delivery fails due to a
+non-permanent error. With Postfix 2.2 and earlier this parameter
+is called <a href="postconf.5.html#fallback_relay">fallback_relay</a>. </p>
 
-<p>
-By default, mail is returned to the sender when a destination is
-not found, and delivery is deferred when a destination is unreachable.
-</p>
+<p> By default, <a href="postconf.5.html#smtp_fallback_relay">smtp_fallback_relay</a> is empty, mail is returned to
+the sender when a destination is not found, and delivery is deferred
+after it fails due to a non-permanent error. </p>
 
 <p> With bulk email deliveries, it can be beneficial to run the
 fallback relay MTA on the same host, so that it can reuse the sender
@@ -13253,24 +13294,6 @@ on a per-destination basis. </p>
 <p> The following cipher grades are supported: </p>
 
 <dl>
-<dt><b>export</b></dt>
-<dd> Enable "EXPORT" grade or better OpenSSL ciphers.  The underlying
-cipherlist is specified via the <a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a> configuration
-parameter, which you are strongly encouraged not to change.  This
-choice is insecure and SHOULD NOT be used.  </dd>
-
-<dt><b>low</b></dt>
-<dd> Enable "LOW" grade or better OpenSSL ciphers.  The underlying
-cipherlist is specified via the <a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> configuration
-parameter, which you are strongly encouraged not to change.  This
-choice is insecure and SHOULD NOT be used.  </dd>
-
-<dt><b>medium</b></dt>
-<dd> Enable "MEDIUM" grade or better OpenSSL ciphers.
-The underlying cipherlist is specified via the <a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a>
-configuration parameter, which you are strongly encouraged not to change.
-</dd>
-
 <dt><b>high</b></dt>
 <dd> Enable only "HIGH" grade OpenSSL ciphers.  This setting may
 be appropriate when all mandatory TLS destinations (e.g. when all
@@ -13278,6 +13301,12 @@ mail is routed to a suitably capable <a href="postconf.5.html#relayhost">relayho
 "HIGH" grade cipher. The underlying cipherlist is specified via the
 <a href="postconf.5.html#tls_high_cipherlist">tls_high_cipherlist</a> configuration parameter, which you are strongly
 encouraged not to change. </dd>
+
+<dt><b>medium</b></dt>
+<dd> Enable "MEDIUM" grade or better OpenSSL ciphers.
+The underlying cipherlist is specified via the <a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a>
+configuration parameter, which you are strongly encouraged not to change.
+</dd>
 
 <dt><b>null</b></dt>
 <dd> Enable only the "NULL" OpenSSL ciphers, these provide authentication
@@ -13288,6 +13317,24 @@ UNIX-domain socket that is configured to support "NULL" ciphers. The
 underlying cipherlist is specified via the <a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a>
 configuration parameter, which you are strongly encouraged not to
 change. </dd>
+
+<dt><b>low</b></dt>
+<dd> Enable "LOW" grade or stronger OpenSSL ciphers.  In Postfix
+&ge; 3.8 this cipher grade is always identical to "medium".  Recent
+versions of OpenSSL do not support any "LOW" grade ciphers.  In
+earlier Postfix releases the underlying cipherlist was specified
+via the <a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> configuration parameter, which you are
+strongly encouraged not to change.  This obsolete cipher grade
+SHOULD NOT be used.  </dd>
+
+<dt><b>export</b></dt>
+<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.  In Postfix
+&ge; 3.8 this cipher grade is always identical to "medium".  Recent
+versions of OpenSSL do not support any "EXPORT" grade ciphers.  In
+earlier Postfix releases the underlying cipherlist was specified
+via the <a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a> configuration parameter, which you are
+strongly encouraged not to change.  This obsolete cipher grade
+SHOULD NOT be used.  </dd>
 
 </dl>
 
@@ -14597,6 +14644,32 @@ This feature is available in Postfix 2.2 and later.
 
 </DD>
 
+<DT><b><a name="smtpd_client_ipv4_prefix_length">smtpd_client_ipv4_prefix_length</a>
+(default: 32)</b></DT><DD>
+
+<p> Aggregate smtpd_client_*_count and smtpd_client_*_rate statistics
+by IPv4 network blocks with the specified network prefix. Aggregation
+uses fewer <a href="anvil.8.html">anvil(8)</a> resources to maintain counters. By default,
+aggregation is disabled for IPv4. </p>
+
+<p> This feature is available in Postfix 3.8 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_client_ipv6_prefix_length">smtpd_client_ipv6_prefix_length</a>
+(default: 84)</b></DT><DD>
+
+<p> Aggregate smtpd_client_*_count and smtpd_client_*_rate statistics
+by IPv6 network blocks with the specified network prefix. Aggregation
+uses fewer the <a href="anvil.8.html">anvil(8)</a> resources to maintain counters. By default,
+aggregation is enabled for IPv6.  </p>
+
+<p> This feature is available in Postfix 3.8 and later. </p>
+
+
+</DD>
+
 <DT><b><a name="smtpd_client_message_rate_limit">smtpd_client_message_rate_limit</a>
 (default: 0)</b></DT><DD>
 
@@ -15529,6 +15602,81 @@ parameter $name expansion.
 <p>
 This feature is available in Postfix 2.0 and later.
 </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a>
+(default: Postfix &lt; 3.9: no)</b></DT><DD>
+
+<p> Reply with "Error: bare &lt;LF&gt; received" and disconnect
+when a remote SMTP client sends a line ending in &lt;LF&gt;, violating
+the <a href="https://tools.ietf.org/html/rfc5321">RFC 5321</a> requirement that lines must end in &lt;CR&gt;&lt;LF&gt;.
+This feature is disbled by default with Postfix &lt; 3.9. Use
+<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">smtpd_forbid_bare_newline_exclusions</a> to exclude non-standard clients
+such as netcat. Specify "<a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a> = no" to disable
+(not recommended for an Internet-connected MTA). </p>
+
+<p> See <a href="https://www.postfix.org/smtp-smuggling.html">
+https://www.postfix.org/smtp-smuggling.html</a> for details.
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+# Disconnect remote SMTP clients that send bare newlines, but allow
+# local clients with non-standard SMTP implementations such as netcat,
+# fax machines, or load balancer health checks.
+#
+<a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a> = yes
+<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">smtpd_forbid_bare_newline_exclusions</a> = $<a href="postconf.5.html#mynetworks">mynetworks</a>
+</pre>
+</blockquote>
+
+<p> This feature is available in Postfix &ge; 3.9, 3.8.4, 3.7.9,
+3.6.13, and 3.5.23. </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_forbid_bare_newline_exclusions">smtpd_forbid_bare_newline_exclusions</a>
+(default: $<a href="postconf.5.html#mynetworks">mynetworks</a>)</b></DT><DD>
+
+<p> Exclude the specified clients from <a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a>
+enforcement. It uses the same syntax and parent-domain matching
+behavior as <a href="postconf.5.html#mynetworks">mynetworks</a>. </p>
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+# Disconnect remote SMTP clients that send bare newlines, but allow
+# local clients with non-standard SMTP implementations such as netcat,
+# fax machines, or load balancer health checks.
+#
+<a href="postconf.5.html#smtpd_forbid_bare_newline">smtpd_forbid_bare_newline</a> = yes
+<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">smtpd_forbid_bare_newline_exclusions</a> = $<a href="postconf.5.html#mynetworks">mynetworks</a>
+</pre>
+</blockquote>
+
+<p> This feature is available in Postfix &ge; 3.9, 3.8.4, 3.7.9,
+3.6.13, and 3.5.23. </p>
+
+
+</DD>
+
+<DT><b><a name="smtpd_forbid_unauth_pipelining">smtpd_forbid_unauth_pipelining</a>
+(default: Postfix &ge; 3.9: yes)</b></DT><DD>
+
+<p> Disconnect remote SMTP clients that violate <a href="https://tools.ietf.org/html/rfc2920">RFC 2920</a> (or 5321)
+command pipelining constraints. The server replies with "554 5.5.0
+Error: SMTP protocol synchronization" and logs the unexpected remote
+SMTP client input. Specify "<a href="postconf.5.html#smtpd_forbid_unauth_pipelining">smtpd_forbid_unauth_pipelining</a> = yes"
+to enable. This feature is enabled by default with Postfix &ge;
+3.9.  </p>
+
+<p> This feature is available in Postfix &ge; 3.9, 3.8.1, 3.7.6,
+3.6.10, and 3.5.20. </p>
 
 
 </DD>
@@ -16603,27 +16751,11 @@ access restriction is specified. This prevents the Postfix queue
 from filling up with undeliverable MAILER-DAEMON messages.
 </p>
 
-<p> An address is always considered "known" when it matches a
-<a href="virtual.5.html">virtual(5)</a> alias or a <a href="canonical.5.html">canonical(5)</a> mapping.
-
-<ul>
-
-<li> The recipient domain matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>
-or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, but the recipient is not listed in
-$<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, and $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> is not null.
-
-<li> The recipient domain matches $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> but the
-recipient is not listed in $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>.
-
-<li> The recipient domain matches $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> but the
-recipient is not listed in $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>, and $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
-is not null.
-
-<li> The recipient domain matches $<a href="postconf.5.html#relay_domains">relay_domains</a> but the recipient
-is not listed in $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>, and $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>
-is not null.
-
-</ul>
+<p> An address is considered "unknown" when 1) it does not match a
+<a href="virtual.5.html">virtual(5)</a> alias or <a href="canonical.5.html">canonical(5)</a> mapping, and 2) the address is not
+valid for its address class. For a definition of class-based address
+validation, see <a href="ADDRESS_CLASS_README.html#classes">
+ADDRESS_CLASS_README</a>. </p>
 
 <p>
 This feature is available in Postfix 2.1 and later.
@@ -16638,29 +16770,13 @@ This feature is available in Postfix 2.1 and later.
 <p> Request that the Postfix SMTP server rejects mail from unknown
 sender addresses, even when no explicit <a href="postconf.5.html#reject_unlisted_sender">reject_unlisted_sender</a>
 access restriction is specified. This can slow down an explosion
-of forged mail from worms or viruses.  </p>
+of forged mail from worms or viruses. </p>
 
-<p> An address is always considered "known" when it matches a
-<a href="virtual.5.html">virtual(5)</a> alias or a <a href="canonical.5.html">canonical(5)</a> mapping.
-
-<ul>
-
-<li> The sender domain matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or
-$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, but the sender is not listed in
-$<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, and $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> is not null.
-
-<li> The sender domain matches $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> but the sender
-is not listed in $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>.
-
-<li> The sender domain matches $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> but the
-sender is not listed in $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>, and $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
-is not null.
-
-<li> The sender domain matches $<a href="postconf.5.html#relay_domains">relay_domains</a> but the sender is
-not listed in $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>, and $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> is
-not null.
-
-</ul>
+<p> An address is considered "unknown" when 1) it does not match a
+<a href="virtual.5.html">virtual(5)</a> alias or <a href="canonical.5.html">canonical(5)</a> mapping, and 2) the address is not
+valid for its address class. For a definition of class-based address
+validation, see <a href="ADDRESS_CLASS_README.html#classes">
+ADDRESS_CLASS_README</a>. </p>
 
 <p>
 This feature is available in Postfix 2.1 and later.
@@ -17204,15 +17320,30 @@ feature is available in Postfix 2.1 and later.  </dd>
 
 <dt><b><a name="reject_authenticated_sender_login_mismatch">reject_authenticated_sender_login_mismatch</a></b></dt>
 
-<dd>Enforces the <a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a> restriction for
-authenticated clients only. This feature is available in
-Postfix version 2.1 and later. </dd>
+<dd> Reject the request when the client is authenticated with SASL,
+but either the MAIL FROM address is not listed in $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>,
+or the SASL login name is not an owner for that address.
+<br>
+This prevents an authenticated client from using a MAIL FROM address
+that they do not explicitly own.
+<br>
+This feature is available in Postfix version 2.1 and later. </dd>
 
 <dt><b><a name="reject_known_sender_login_mismatch">reject_known_sender_login_mismatch</a></b></dt>
 
-<dd>Apply the <a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a> restriction only to MAIL
-FROM addresses that are known in $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>.  This
-feature is available in Postfix version 2.11 and later. </dd>
+<dd> When the client is authenticated with SASL, reject the request
+when the MAIL FROM address is listed in $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>,
+but the SASL login name is not an owner for that address.
+<br>
+When the client is not authenticated with SASL, reject the request
+when SASL is enabled, and the MAIL FROM address is listed in
+$<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>.
+<br>
+This protects any MAIL FROM address that is listed in
+$<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>, while still allowing a client to use any
+unlisted MAIL FROM address.
+<br>
+This feature is available in Postfix version 2.11 and later.</dd>
 
 <dt><b><a name="reject_non_fqdn_sender">reject_non_fqdn_sender</a></b></dt>
 
@@ -17240,17 +17371,20 @@ This feature is available in Postfix 2.0 and later.</dd>
 
 <dt><b><a name="reject_sender_login_mismatch">reject_sender_login_mismatch</a></b></dt>
 
-<dd>Reject the request when $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a> specifies an
-owner for the MAIL FROM address, but the client is not (SASL) logged
-in as that MAIL FROM address owner; or when the client is (SASL)
-logged in, but the client login name doesn't own the MAIL FROM
-address according to $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>.</dd>
+<dd> As of Postfix 2.1, this is an alias for
+"<a href="postconf.5.html#reject_authenticated_sender_login_mismatch">reject_authenticated_sender_login_mismatch</a>,
+<a href="postconf.5.html#reject_unauthenticated_sender_login_mismatch">reject_unauthenticated_sender_login_mismatch</a>".</dd>
 
 <dt><b><a name="reject_unauthenticated_sender_login_mismatch">reject_unauthenticated_sender_login_mismatch</a></b></dt>
 
-<dd>Enforces the <a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a> restriction for
-unauthenticated clients only. This feature is available in
-Postfix version 2.1 and later. </dd>
+<dd> Reject the request when SASL is enabled, the MAIL FROM address
+is listed in $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>, but the client is not
+authenticated with SASL.
+<br>
+With SASL enabled, this prevents an unauthenticated client from
+using any MAIL FROM address that is listed in $<a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a>.
+<br>
+This feature is available in Postfix version 2.1 and later.</dd>
 
 <dt><b><a name="reject_unknown_sender_domain">reject_unknown_sender_domain</a></b></dt>
 
@@ -18252,17 +18386,11 @@ one "medium" or "high" grade cipher. </p>
 <p> The following cipher grades are supported: </p>
 
 <dl>
-<dt><b>export</b></dt>
-<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.  The
-underlying cipherlist is specified via the <a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a>
-configuration parameter, which you are strongly encouraged not to
-change.  This choice is insecure and SHOULD NOT be used.  </dd>
-
-<dt><b>low</b></dt>
-<dd> Enable "LOW" grade or stronger OpenSSL ciphers. The underlying
-cipherlist is specified via the <a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> configuration
-parameter, which you are strongly encouraged not to change.  This
-choice is insecure and SHOULD NOT be used.  </dd>
+<dt><b>high</b></dt>
+<dd> Enable only "HIGH" grade OpenSSL ciphers. The
+underlying cipherlist is specified via the <a href="postconf.5.html#tls_high_cipherlist">tls_high_cipherlist</a>
+configuration parameter, which you are strongly encouraged to
+not change. </dd>
 
 <dt><b>medium</b></dt>
 <dd> Enable "MEDIUM" grade or stronger OpenSSL ciphers. These use 128-bit
@@ -18271,12 +18399,6 @@ strength for mandatory TLS encryption. The underlying cipherlist is
 specified via the <a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a> configuration parameter, which
 you are strongly encouraged not to change. </dd>
 
-<dt><b>high</b></dt>
-<dd> Enable only "HIGH" grade OpenSSL ciphers. The
-underlying cipherlist is specified via the <a href="postconf.5.html#tls_high_cipherlist">tls_high_cipherlist</a>
-configuration parameter, which you are strongly encouraged to
-not change. </dd>
-
 <dt><b>null</b></dt>
 <dd> Enable only the "NULL" OpenSSL ciphers, these provide authentication
 without encryption.  This setting is only appropriate in the rare
@@ -18284,6 +18406,24 @@ case that all clients are prepared to use NULL ciphers (not normally
 enabled in TLS clients). The underlying cipherlist is specified via the
 <a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> configuration parameter, which you are strongly
 encouraged not to change. </dd>
+
+<dt><b>low</b></dt>
+<dd> Enable "LOW" grade or stronger OpenSSL ciphers.  In Postfix
+&ge; 3.8 this cipher grade is always identical to "medium".  Recent
+versions of OpenSSL do not support any "LOW" grade ciphers.  In
+earlier Postfix releases the underlying cipherlist was specified
+via the <a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> configuration parameter, which you are
+strongly encouraged not to change.  This obsolete cipher grade
+SHOULD NOT be used.  </dd>
+
+<dt><b>export</b></dt>
+<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.  In Postfix
+&ge; 3.8 this cipher grade is always identical to "medium".  Recent
+versions of OpenSSL do not support any "EXPORT" grade ciphers.  In
+earlier Postfix releases the underlying cipherlist was specified
+via the <a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a> configuration parameter, which you are
+strongly encouraged not to change.  This obsolete cipher grade
+SHOULD NOT be used.  </dd>
 
 </dl>
 
@@ -19075,6 +19215,113 @@ with sites that don't use <a href="postconf.5.html#permit_tls_all_clientcerts">p
 
 </DD>
 
+<DT><b><a name="tls_config_file">tls_config_file</a>
+(default: default)</b></DT><DD>
+
+<p> Optional configuration file with baseline OpenSSL settings.
+OpenSSL loads any SSL settings found in the configuration file for
+the selected application name (see <a href="postconf.5.html#tls_config_name">tls_config_name</a>) or else the
+built-in application name "openssl_conf" when no application name is
+specified, or no corresponding configuration section is present.
+</p>
+
+<p> With OpenSSL releases 1.1.1 and 1.1.1a, applications (including
+Postfix) can neither specify an alternative configuration file, nor
+avoid loading the default configuration file.  </p>
+
+<p> With OpenSSL 1.1.1b or later, this parameter may be set to one of:
+</p>
+
+<dl>
+
+<dt> <b>default</b> (default) </dt> <dd> Load the system-wide
+"openssl.cnf" configuration file.  </dd>
+
+<dt> <b>none</b> (recommended, OpenSSL 1.1.1b or later only) </dt>
+<dd> This setting disables loading of  the system-wide "openssl.cnf"
+file.  </dd>
+
+<dt> <b><i>/absolute-path</i></b> (OpenSSL 1.1.1b or later only) </dt>
+<dd> Load the configuration file specified by <i>/absolute-path</i>.
+With this setting it is an error for the file to not contain any
+settings for the selected <a href="postconf.5.html#tls_config_name">tls_config_name</a>.  There is no fallback to
+the default "openssl_conf" name. </dd>
+
+</dl>
+
+<p> Failures in processing of the built-in default configuration file,
+are silently ignored.  Any errors in loading a non-default configuration
+file are detected by Postfix, and cause TLS support to be disabled.
+</p>
+
+<p> The OpenSSL configuration file format is not documented here,
+beyond giving two examples. <p>
+
+<p> Example: Default settings for all applications. </p>
+
+<blockquote>
+<pre>
+# The name 'openssl_conf' is the default application name
+# The section name to the right of the '=' sign is arbitrary,
+# any name will do, so long as it refers to the desired section.
+#
+# The name 'system_default' selects the settings applied internally
+# by the SSL library as part of SSL object creation.  Applications
+# can then apply any additional settings of their choice.
+#
+# In this example, TLS versions prior to 1.2 are disabled by default.
+#
+openssl_conf = system_wide_settings
+[system_wide_settings]
+ssl_conf = ssl_library_settings
+[ssl_library_settings]
+system_default = initial_ssl_settings
+[initial_ssl_settings]
+MinProtocol = TLSv1.2
+</pre>
+</blockquote>
+
+<p> Example: Custom settings for an application named "postfix". </p>
+
+<blockquote>
+<pre>
+# The mapping from an application name to the corresponding configuration
+# section must appear near the top of the file, (in what is sometimes called
+# the "default section") prior to the start of any explicitly named
+# "[sections]".  The named sections can appear in any order and don't nest.
+#
+postfix = postfix_settings
+[postfix_settings]
+ssl_conf = postfix_ssl_settings
+[postfix_ssl_settings]
+system_default = baseline_postfix_settings
+[baseline_postfix_settings]
+MinProtocol = TLSv1
+</pre>
+</blockquote>
+
+<p> This feature is available in Postfix &ge; 3.9, 3.8.1, 3.7.6,
+3.6.10, and 3.5.20. </p>
+
+
+</DD>
+
+<DT><b><a name="tls_config_name">tls_config_name</a>
+(default: empty)</b></DT><DD>
+
+<p> The application name passed by Postfix to OpenSSL library
+initialization functions.  This name is used to select the desired
+configuration "section" in the OpenSSL configuration file specified
+via the <a href="postconf.5.html#tls_config_file">tls_config_file</a> parameter.  When empty, or when the
+selected name is not present in the configuration file, the default
+application name ("openssl_conf") is used as a fallback.  </p>
+
+<p> This feature is available in Postfix &ge; 3.9, 3.8.1, 3.7.6,
+3.6.10, and 3.5.20. </p>
+
+
+</DD>
+
 <DT><b><a name="tls_daemon_random_bytes">tls_daemon_random_bytes</a>
 (default: 32)</b></DT><DD>
 
@@ -19246,11 +19493,10 @@ be using 0.9.6! </dd>
 
 <p> The prioritized list of elliptic curves supported by the Postfix
 SMTP client and server.  These curves are used by the Postfix SMTP
-server when "<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = auto".  The selected curves
-must be implemented by OpenSSL and be standardized for use in TLS
-(<a href="https://tools.ietf.org/html/rfc8422">RFC 8422</a>).  It is unwise to list only
-"bleeding-edge" curves supported by a small subset of clients.  The
-default list is suitable for most users. </p>
+server when "<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = auto".  The selected curves must be
+implemented by OpenSSL and be standardized for use in TLS (<a href="https://tools.ietf.org/html/rfc8422">RFC 8422</a>).
+It is unwise to list only "bleeding-edge" curves supported by a small
+subset of clients.  The default list is suitable for most users. </p>
 
 <p> Postfix skips curve names that are unknown to OpenSSL, or that
 are known but not yet implemented.  This makes it possible to
@@ -19260,6 +19506,11 @@ available.  In particular, in some OpenSSL versions, the new <a href="https://to
 support for either or both may be missing.  These curves may appear
 in the default value of this parameter, even though they'll only
 be usable with later versions of OpenSSL.  </p>
+
+<p> See also the "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>" parameter, which supports
+customizing the list of FFDHE groups enabled with TLS 1.3.  That setting
+is introduced with Postfix 3.8, when built against OpenSSL 3.0 or later.
+</p>
 
 <p> This feature is available in Postfix 3.2 and later, when it is
 compiled and linked with OpenSSL 1.0.2 or later on platforms where
@@ -19352,16 +19603,15 @@ EC algorithms have not been disabled by the vendor. </p>
 <DT><b><a name="tls_export_cipherlist">tls_export_cipherlist</a>
 (default: see "postconf -d" output)</b></DT><DD>
 
-<p> The OpenSSL cipherlist for "export" or higher grade ciphers. This
-defines the meaning of the "export" setting in <a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>,
-<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>, <a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>, <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>,
-<a href="postconf.5.html#lmtp_tls_ciphers">lmtp_tls_ciphers</a>, and <a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>.  With Postfix
-releases before the middle of 2015 this is the default cipherlist
-for the opportunistic ("may") TLS client security level and also
-the default cipherlist for the SMTP server. You are strongly
-encouraged not to change this setting.  </p>
+<p> The OpenSSL cipherlist for "export" or higher grade ciphers.
+Ignored as of Postfix 3.8.  In earlier Postfix releases this
+defined the meaning of the "export" setting in <a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>,
+<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>, <a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>,
+<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>, <a href="postconf.5.html#lmtp_tls_ciphers">lmtp_tls_ciphers</a>, and
+<a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>.  You are strongly encouraged not to
+change this setting.  </p>
 
-<p> This feature is available in Postfix 2.3 and later. </p>
+<p> This feature is available in Postfix 2.3 and later.  </p>
 
 
 </DD>
@@ -19374,6 +19624,49 @@ down a TLS session, until Postfix times out. With this enabled,
 Postfix will not wait for the remote TLS peer to respond to a TLS
 'close' notification. This behavior is recommended for TLSv1.0 and
 later. </p>
+
+
+</DD>
+
+<DT><b><a name="tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>
+(default: see "postconf -d" output)</b></DT><DD>
+
+<p> The prioritized list of finite-field Diffie-Hellman ephemeral
+(FFDHE) key exchange groups supported by the Postfix SMTP client and
+server.  OpenSSL 3.0 adds support for FFDHE key agreement in TLS 1.3.
+In OpenSSL 1.1.1, TLS 1.3 was only supported with elliptic-curve based
+key agreement.  The "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>" parameter makes it possible
+to configure the list of FFDHE groups that the Postfix client or server
+will enable in OpenSSL 3.0 and up.  This parameter has no effect when
+Postfix is built against earlier OpenSSL versions. </p>
+
+<p> The default list of FFDHE groups that Postfix enables in OpenSSL 3.0
+and up includes just the 2048 and 3072-bit groups.  Stronger FFDHE
+groups perform poorly and EC groups are a much better choice for the
+same security level.  Postfix ignores group names that are unknown to
+OpenSSL, or that are known but not yet implemented.  The FFDHE groups
+are largely a backup, in case some peer does not support EC key
+exchange, or EC key exchange needs to be disabled for some pressing
+reason. </p>
+
+<p> Setting this parameter empty disables FFDHE support in TLS 1.3.
+Whether FFDHE key agreement is enabled in TLS 1.2 and earlier depends
+on whether any of the "kDHE" ciphers are included in the cipherlist.
+</p>
+
+<p> Conversely, setting "<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>" empty disables TLS 1.3
+EC key agreement in OpenSSL 3.0 and later.  Note that at least one of
+"<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>" and "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>" must be non-empty,
+this is required by OpenSSL 3.0.  If both are inadvertently set empty,
+Postfix will fall back to the compiled-in defaults. </p>
+
+<p> All the default groups and EC curves should sufficiently strong
+to make "pruning" the defaults unwise.  At a minimum, "X25519" and
+"P-256" (a.k.a. "prime256v1") should be among the enabled EC curves,
+while "dhe2048" and "dhe3072" should be among the FFDHE groups. </p>
+
+<p> This feature is available in Postfix 3.8 and later, when it is
+compiled and linked with OpenSSL 3.0 or later. </p>
 
 
 </DD>
@@ -19414,13 +19707,15 @@ certificate public-key fingerprints, see <a href="TLS_README.html">TLS_README</a
 <DT><b><a name="tls_low_cipherlist">tls_low_cipherlist</a>
 (default: see "postconf -d" output)</b></DT><DD>
 
-<p> The OpenSSL cipherlist for "low" or higher grade ciphers. This defines
-the meaning of the "low" setting in <a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>,
-<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>, <a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>, <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>,
-<a href="postconf.5.html#lmtp_tls_ciphers">lmtp_tls_ciphers</a>, and <a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>. You are strongly
-encouraged not to change this setting.  </p>
+<p> The OpenSSL cipherlist for "low" or higher grade ciphers.
+Ignored as of Postfix 3.8.  In earlier Postfix releases this
+defined the meaning of the "low" setting in <a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>,
+<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>, <a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a>,
+<a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>, <a href="postconf.5.html#lmtp_tls_ciphers">lmtp_tls_ciphers</a>, and
+<a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>. You are strongly encouraged not to
+change this setting.  </p>
 
-<p> This feature is available in Postfix 2.3 and later. </p>
+<p> This feature is available in Postfix 2.3 and later.  </p>
 
 
 </DD>
@@ -21197,6 +21492,103 @@ for opportunities to reject mail, and defers the client request
 only if it would otherwise be accepted. </p>
 
 <p> This feature is available in Postfix 2.6 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="use_srv_lookup">use_srv_lookup</a>
+(default: empty)</b></DT><DD>
+
+<p> Enables discovery for the specified service(s) using DNS SRV
+records. For example, with "<a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a> = submission" and
+"<a href="postconf.5.html#relayhost">relayhost</a> = example.com:submission", the Postfix SMTP client will
+look up DNS SRV records for _submission._tcp.example.com, and will
+relay email through the hosts and ports that are specified with
+those records. See <a href="https://tools.ietf.org/html/rfc2782">RFC 2782</a> for details of the host selection
+process. </p>
+
+<p> Specify zero or more service names separated by comma and/or
+whitespace. Any name in the services(5) database may be specified,
+though in practice only submission, submissions, and smtp make
+sense.  </p>
+
+<p> When SRV record lookup is enabled with <a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a>, you can
+enclose a domain name in "[]" to force IP address lookup instead
+of SRV record lookup. </p>
+
+<p> Example 1: MUA-to-MTA submission using SRV record lookup for
+the "submission" service for domain "example.com". This uses the
+default SMTP delivery agent with STARTTLS, and looks up SRV records
+for "_submission._tcp.example.com". </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a> = submission
+    <a href="postconf.5.html#relayhost">relayhost</a> = example.com:submission
+    <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
+    ...see <a href="SASL_README.html">SASL_README</a> for sasl configuration...
+</pre>
+
+<p> Example 2: MUA-to-MTA submission using SRV record lookup for
+the "submissions" service for domain "example.org". This uses a
+dedicated SMTP delivery agent (smtp-wraptls) with tls_wrappermode
+turned on, and looks up SRV records for "_submissions._tcp.example.org".
+</p>
+
+<p> Note: specify the older name "smtps" instead of "submissions"
+when a provider has DNS SRV records like "_smtps._tcp.example.org"
+instead of "_submissions._tcp.example.org". </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a> = submissions
+    <a href="postconf.5.html#default_transport">default_transport</a> = smtp-wraptls:example.org:submissions
+    ...see <a href="SASL_README.html">SASL_README</a> for sasl configuration...
+</pre>
+
+<pre>
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    smtp-wraptls   unix   ...   ...   ...   ...   ...   smtp
+        -o { <a href="postconf.5.html#smtp_tls_wrappermode">smtp_tls_wrappermode</a> = yes }
+        -o { <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = encrypt }
+</pre>
+
+<p> Example 3: Sender-dependent selection for a combination of
+MUA-to-MTA submission services. This combines examples 1 and 2 with
+examples of how to disable SRV and look up IP address records for
+"smtp-relay.example.net" and "smtp-relay.other.example".  Again,
+specify the older name "smtps" instead of "submissions" when a
+provider has DNS SRV records like "_smtps._tcp.example.org" instead
+of "_submissions._tcp.example.org". </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a> = submission, submissions
+    <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a> = <a href="DATABASE_README.html#types">inline</a>:{
+        # Destinations that support SRV record lookup.
+        { user1@example.com = <a href="smtp.8.html">smtp</a>:example.com:submission }
+        { user2@example.org = smtp-wraptls:example.org:submissions }
+        # Use [destination] to force IP address lookups.
+        { user3@example.net = <a href="smtp.8.html">smtp</a>:[smtp-relay.example.net]:submission }
+        { user4@other.example =
+              smtp-wraptls:[smtp-relay.other.example]:submissions } }
+    ...see <a href="SASL_README.html">SASL_README</a> for sasl configuration...
+</pre>
+
+<p> Example 4: MTA-to-MTA traffic, using SRV record lookup for the
+SMTP service. This is useful for Postfix tests, and may be useful
+in environments where ports are dynamically assigned to servers.
+</p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#use_srv_lookup">use_srv_lookup</a> = smtp
+    # Fall back to MX record lookup when SRV records are unavailable.
+    #<a href="postconf.5.html#allow_srv_lookup_fallback">allow_srv_lookup_fallback</a> = yes
+    #<a href="postconf.5.html#ignore_srv_lookup_error">ignore_srv_lookup_error</a> = yes
+</pre>
+
+<p> This feature is available in Postfix 3.8 and later. </p>
 
 
 </DD>

@@ -2227,7 +2227,7 @@ If you're willing to revert your settings to the defaults and switch to a
 "stock" opportunistic TLS configuration, then you can: erase all the SMTP
 client TLS settings and then enable client TLS:
 
-    # postconf -X `postconf -nH | egrep '^smtp(_|_enforce_|_use_)tls'`
+    # postconf -X `postconf -nH | grep -E '^smtp(_|_enforce_|_use_)tls'`
     # postfix tls enable-client
     # postfix reload
 
@@ -2251,7 +2251,7 @@ If you're willing to revert your settings to the defaults and switch to a
 "stock" server TLS configuration, then you can: erase all the SMTP server TLS
 settings and then enable server TLS:
 
-    # postconf -X `postconf -nH | egrep '^smtpd(_|_enforce_|_use_)tls'`
+    # postconf -X `postconf -nH | grep -E '^smtpd(_|_enforce_|_use_)tls'`
     # postfix tls enable-server
     # postfix reload
 

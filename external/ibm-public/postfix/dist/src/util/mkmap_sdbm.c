@@ -1,26 +1,26 @@
-/*	$NetBSD: mkmap_dbm.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mkmap_sdbm.c,v 1.2.2.2 2023/12/25 12:43:38 martin Exp $	*/
 
 /*++
 /* NAME
-/*	mkmap_dbm 3
+/*	mkmap_sdbm 3
 /* SUMMARY
-/*	create or open database, DBM style
+/*	create or open database, SDBM style
 /* SYNOPSIS
-/*	#include <mkmap.h>
+/*	#include <dict_sdbm.h>
 /*
-/*	MKMAP	*mkmap_dbm_open(path)
+/*	MKMAP	*mkmap_sdbm_open(path)
 /*	const char *path;
 /* DESCRIPTION
-/*	This module implements support for creating DBM databases.
+/*	This module implements support for creating SDBM databases.
 /*
-/*	mkmap_dbm_open() takes a file name, appends the ".dir" and ".pag"
-/*	suffixes, and creates or opens the named DBM database.
-/*	This routine is a DBM-specific helper for the more general
+/*	mkmap_sdbm_open() takes a file name, appends the ".dir" and ".pag"
+/*	suffixes, and creates or opens the named SDBM database.
+/*	This routine is a SDBM-specific helper for the more general
 /*	mkmap_open() routine.
 /*
 /*	All errors are fatal.
 /* SEE ALSO
-/*	dict_dbm(3), DBM dictionary interface.
+/*	dict_sdbm(3), SDBM dictionary interface.
 /* LICENSE
 /* .ad
 /* .fi
@@ -30,6 +30,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -42,43 +47,35 @@
 #include <msg.h>
 #include <mymalloc.h>
 #include <stringops.h>
-#include <dict.h>
-#include <dict_dbm.h>
+#include <dict_sdbm.h>
 #include <myflock.h>
 
-/* Application-specific. */
+#ifdef HAS_SDBM
 
-#include "mkmap.h"
+#include <sdbm.h>
 
-#ifdef HAS_DBM
-#ifdef PATH_NDBM_H
-#include PATH_NDBM_H
-#else
-#include <ndbm.h>
-#endif
-
-typedef struct MKMAP_DBM {
+typedef struct MKMAP_SDBM {
     MKMAP   mkmap;			/* parent class */
     char   *lock_file;			/* path name */
     int     lock_fd;			/* -1 or open locked file */
-} MKMAP_DBM;
+} MKMAP_SDBM;
 
-/* mkmap_dbm_after_close - clean up after closing database */
+/* mkmap_sdbm_after_close - clean up after closing database */
 
-static void mkmap_dbm_after_close(MKMAP *mp)
+static void mkmap_sdbm_after_close(MKMAP *mp)
 {
-    MKMAP_DBM *mkmap = (MKMAP_DBM *) mp;
+    MKMAP_SDBM *mkmap = (MKMAP_SDBM *) mp;
 
     if (mkmap->lock_fd >= 0 && close(mkmap->lock_fd) < 0)
 	msg_warn("close %s: %m", mkmap->lock_file);
     myfree(mkmap->lock_file);
 }
 
-/* mkmap_dbm_open - create or open database */
+/* mkmap_sdbm_open - create or open database */
 
-MKMAP  *mkmap_dbm_open(const char *path)
+MKMAP  *mkmap_sdbm_open(const char *path)
 {
-    MKMAP_DBM *mkmap = (MKMAP_DBM *) mymalloc(sizeof(*mkmap));
+    MKMAP_SDBM *mkmap = (MKMAP_SDBM *) mymalloc(sizeof(*mkmap));
     char   *pag_file;
     int     pag_fd;
 
@@ -86,9 +83,9 @@ MKMAP  *mkmap_dbm_open(const char *path)
      * Fill in the generic members.
      */
     mkmap->lock_file = concatenate(path, ".dir", (char *) 0);
-    mkmap->mkmap.open = dict_dbm_open;
+    mkmap->mkmap.open = dict_sdbm_open;
     mkmap->mkmap.after_open = 0;
-    mkmap->mkmap.after_close = mkmap_dbm_after_close;
+    mkmap->mkmap.after_close = mkmap_sdbm_after_close;
 
     /*
      * Unfortunately, not all systems support locking on open(), so we open

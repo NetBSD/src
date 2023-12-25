@@ -8,6 +8,7 @@
 <title> Postfix Debugging Howto </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -92,7 +93,7 @@ properly:  </p>
 
 <blockquote>
 <pre>
-% <b>egrep '(warning|error|fatal|panic):' /some/log/file | more</b>
+% <b>grep -E '(warning|error|fatal|panic):' /some/log/file | more</b>
 </pre>
 </blockquote>
 

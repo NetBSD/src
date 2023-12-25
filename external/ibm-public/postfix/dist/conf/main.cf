@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.9 2022/10/08 16:12:43 christos Exp $
+#	$NetBSD: main.cf,v 1.9.2.1 2023/12/25 12:43:21 martin Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -33,7 +33,7 @@
 #
 # The level below is what should be used with new (not upgrade) installs.
 #
-compatibility_level = 3.7
+compatibility_level = 3.8
 
 # On NetBSD we are built without EAI support, so we must disable utf8
 smtputf8_enable=no

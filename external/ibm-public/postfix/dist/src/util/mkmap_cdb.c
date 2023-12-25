@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_cdb.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mkmap_cdb.c,v 1.2.2.2 2023/12/25 12:43:38 martin Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	create or open database, CDB style
 /* SYNOPSIS
-/*	#include <mkmap.h>
+/*	#include <dict_cdb.h>
 /*
 /*	MKMAP	*mkmap_cdb_open(path)
 /*	const char *path;
@@ -34,6 +34,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -45,11 +50,6 @@
 /* Utility library. */
 
 #include <mymalloc.h>
-#include <dict.h>
-
-/* Application-specific. */
-
-#include "mkmap.h"
 #include <dict_cdb.h>
 
 /* This is a dummy module, since CDB has all the functionality

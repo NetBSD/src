@@ -8,6 +8,7 @@
 <title>Postfix SQLite Howto</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -43,8 +44,8 @@ name of the standard POSIX thread library (pthread).  For example:
 <blockquote>
 <pre>
 make -f Makefile.init makefiles \
-     'CCARGS=-DHAS_SQLITE -I/usr/local/include' \
-     'AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread'
+     "CCARGS=-DHAS_SQLITE -I/usr/local/include" \
+     "AUXLIBS_SQLITE=-L/usr/local/lib -lsqlite3 -lpthread"
 </pre>
 </blockquote>
 

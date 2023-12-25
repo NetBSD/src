@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.2.22.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -390,7 +390,7 @@ static int smtpd_proxy_connect(SMTPD_STATE *state)
      */
     server_xforward_features = 0;
     lines = STR(proxy->reply);
-    while ((words = mystrtok(&lines, "\n")) != 0) {
+    while ((words = mystrtok(&lines, "\r\n")) != 0) {
 	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t")) != 0) {
 	    if (strcasecmp(word, XFORWARD_CMD) == 0)
 		while ((word = mystrtok(&words, " \t")) != 0)

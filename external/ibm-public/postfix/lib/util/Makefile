@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2022/10/08 16:12:51 christos Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2023/12/25 12:43:39 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -105,8 +105,10 @@ htable.c \
 inet_addr_host.c \
 inet_addr_list.c \
 inet_addr_local.c \
+inet_addr_sizes.c \
 inet_connect.c \
 inet_listen.c \
+inet_prefix_top.c \
 inet_proto.c \
 inet_trigger.c \
 inet_windowsize.c \
@@ -128,6 +130,13 @@ mask_addr.c \
 match_list.c \
 match_ops.c \
 midna_domain.c \
+mkmap_cdb.c \
+mkmap_db.c \
+mkmap_dbm.c \
+mkmap_fail.c \
+mkmap_lmdb.c \
+mkmap_open.c \
+mkmap_sdbm.c \
 msg.c \
 msg_logger.c \
 msg_output.c \

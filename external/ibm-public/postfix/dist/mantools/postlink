@@ -543,6 +543,8 @@ while (<>) {
     s;\bsmtpd_client_port_logging\b;<a href="postconf.5.html#smtpd_client_port_logging">$&</a>;g;
     s;\bsmtpd_client_recipient_rate_limit\b;<a href="postconf.5.html#smtpd_client_recipient_rate_limit">$&</a>;g;
     s;\bsmtpd_client_new_tls_session_rate_limit\b;<a href="postconf.5.html#smtpd_client_new_tls_session_rate_limit">$&</a>;g;
+    s;\bsmtpd_client_ipv4_prefix_length\b;<a href="postconf.5.html#smtpd_client_ipv4_prefix_length">$&</a>;g;
+    s;\bsmtpd_client_ipv6_prefix_length\b;<a href="postconf.5.html#smtpd_client_ipv6_prefix_length">$&</a>;g;
     s;\bsmtpd_client_restrictions\b;<a href="postconf.5.html#smtpd_client_restrictions">$&</a>;g;
     s;\bsmtpd_command_filter\b;<a href="postconf.5.html#smtpd_command_filter">$&</a>;g;
     s;\bsmtpd_data_restrictions\b;<a href="postconf.5.html#smtpd_data_restrictions">$&</a>;g;
@@ -555,6 +557,9 @@ while (<>) {
     s;\bsmtpd_etrn_restrictions\b;<a href="postconf.5.html#smtpd_etrn_restrictions">$&</a>;g;
     s;\bsmtpd_expansion_filter\b;<a href="postconf.5.html#smtpd_expansion_filter">$&</a>;g;
     s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bidden_commands\b;<a href="postconf.5.html#smtpd_forbidden_commands">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_newline\b;<a href="postconf.5.html#smtpd_forbid_bare_newline">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_bare_newline_exclusions\b;<a href="postconf.5.html#smtpd_forbid_bare_newline_exclusions">$&</a>;g;
+    s;\bsmtpd_for[-</bB>]*\n*[ <bB>]*bid_unauth_pipelining\b;<a href="postconf.5.html#smtpd_forbid_unauth_pipelining">$&</a>;g;
     s;\bsmtpd_hard_error_limit\b;<a href="postconf.5.html#smtpd_hard_error_limit">$&</a>;g;
     s;\bsmtpd_helo_required\b;<a href="postconf.5.html#smtpd_helo_required">$&</a>;g;
     s;\bsmtpd_helo_restrictions\b;<a href="postconf.5.html#smtpd_helo_restrictions">$&</a>;g;
@@ -770,6 +775,7 @@ while (<>) {
     s;\btls_eecdh_auto_curves\b;<a href="postconf.5.html#tls_eecdh_auto_curves">$&</a>;g;
     s;\btls_eecdh_strong_curve\b;<a href="postconf.5.html#tls_eecdh_strong_curve">$&</a>;g;
     s;\btls_eecdh_ultra_curve\b;<a href="postconf.5.html#tls_eecdh_ultra_curve">$&</a>;g;
+    s;\btls_ffdhe_auto_groups\b;<a href="postconf.5.html#tls_ffdhe_auto_groups">$&</a>;g;
     s;\btls_preempt_cipherlist\b;<a href="postconf.5.html#tls_preempt_cipherlist">$&</a>;g;
     s;\btls_disable_workarounds\b;<a href="postconf.5.html#tls_disable_workarounds">$&</a>;g;
     s;\btls_append_default_CA\b;<a href="postconf.5.html#tls_append_default_CA">$&</a>;g;
@@ -779,6 +785,8 @@ while (<>) {
     s;\btls_session_ticket_cipher\b;<a href="postconf.5.html#tls_session_ticket_cipher">$&</a>;g;
     s;\btls_server_sni_maps\b;<a href="postconf.5.html#tls_server_sni_maps">$&</a>;g;
     s;\btls_ssl_options\b;<a href="postconf.5.html#tls_ssl_options">$&</a>;g;
+    s;\btls_config_name\b;<a href="postconf.5.html#tls_config_name">$&</a>;g;
+    s;\btls_config_file\b;<a href="postconf.5.html#tls_config_file">$&</a>;g;
     s;\btls_dane_digest_agility\b;<a href="postconf.5.html#tls_dane_digest_agility">$&</a>;g;
     s;\btls_dane_trust_anchor_digest_enable\b;<a href="postconf.5.html#tls_dane_trust_anchor_digest_enable">$&</a>;g;
     s;\btls_fast_shutdown_enable\b;<a href="postconf.5.html#tls_fast_shutdown_enable">$&</a>;g;
@@ -1155,6 +1163,10 @@ while (<>) {
 
     s;\blocal_login_sender_maps\b;<a href="postconf.5.html#local_login_sender_maps">$&</a>;g;
     s;\bempty_address_local_login_sender_maps_lookup_key\b;<a href="postconf.5.html#empty_address_local_login_sender_maps_lookup_key">$&</a>;g;
+
+    s;\buse_srv_lookup\b;<a href="postconf.5.html#use_srv_lookup">$&</a>;g;
+    s;\ballow_srv_lookup_fallback\b;<a href="postconf.5.html#allow_srv_lookup_fallback">$&</a>;g;
+    s;\bignore_srv_lookup_error\b;<a href="postconf.5.html#ignore_srv_lookup_error">$&</a>;g;
 
     # Service-defined parameters...
 

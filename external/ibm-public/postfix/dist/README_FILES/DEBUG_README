@@ -46,7 +46,7 @@ Postfix logs all failed and successful deliveries to a logfile.
 When Postfix does not receive or deliver mail, the first order of business is
 to look for errors that prevent Postfix from working properly:
 
-    % eeggrreepp ''((wwaarrnniinngg||eerrrroorr||ffaattaall||ppaanniicc))::'' //ssoommee//lloogg//ffiillee || mmoorree
+    % ggrreepp --EE ''((wwaarrnniinngg||eerrrroorr||ffaattaall||ppaanniicc))::'' //ssoommee//lloogg//ffiillee || mmoorree
 
 Note: the most important message is near the BEGINNING of the output. Error
 messages that come later are less useful.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_db.h,v 1.3.6.1 2023/12/25 12:43:36 martin Exp $	*/
 
 #ifndef _DICT_DB_H_INCLUDED_
 #define _DICT_DB_H_INCLUDED_
@@ -17,6 +17,7 @@
   * Utility library.
   */
 #include <dict.h>
+#include <mkmap.h>
 
  /*
   * External interface.
@@ -26,6 +27,8 @@
 
 extern DICT *dict_hash_open(const char *, int, int);
 extern DICT *dict_btree_open(const char *, int, int);
+extern MKMAP *mkmap_hash_open(const char *);
+extern MKMAP *mkmap_btree_open(const char *);
 
  /*
   * XXX Should be part of the DICT interface.

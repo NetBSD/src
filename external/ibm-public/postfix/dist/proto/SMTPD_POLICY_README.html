@@ -8,6 +8,7 @@
 <title>Postfix SMTP Access Policy Delegation </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -116,6 +117,9 @@ policy_context=submission
 <b>Postfix version 3.2 and later:</b>
 server_address=10.3.2.1
 server_port=54321
+<b>Postfix version 3.8 and later:</b>
+compatibility_level=<i>major</i>.<i>minor</i>.<i>patch</i>
+mail_version=3.8.0
 [empty line]
 </pre>
 </blockquote>
@@ -212,6 +216,17 @@ server_port=54321
     <li> <p> The "policy_context" attribute provides a way to pass
     information that is not available via other attributes (Postfix
     version 3.1 and later). </p>
+
+   <li> <p> The "compatibility_level" attribute corresponds to the
+   compatibility_level parameter value. It has the form
+   <i>major</i>.<i>minor</i>.<i>patch</i> where <i>minor</i> and
+   <i>patch</i> may be absent. </p>
+
+   <li> <p> The "mail_version" attribute corresponds to the
+   mail_version parameter value. It has the form
+   <i>major</i>.<i>minor</i>.<i>patch</i> for stable releases, and
+   <i>major</i>.<i>minor</i>-<i>yyyymmdd</i> for unstable releases.
+   </p>
 
 </ul>
 

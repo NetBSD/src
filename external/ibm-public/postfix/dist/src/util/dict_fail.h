@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_fail.h,v 1.1.1.1 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_fail.h,v 1.1.1.1.44.1 2023/12/25 12:43:36 martin Exp $	*/
 
 #ifndef _DICT_FAIL_H_INCLUDED_
 #define _DICT_FAIL_H_INCLUDED_
@@ -17,6 +17,7 @@
   * Utility library.
   */
 #include <dict.h>
+#include <mkmap.h>
 
  /*
   * External interface.
@@ -24,6 +25,7 @@
 #define DICT_TYPE_FAIL	"fail"
 
 extern DICT *dict_fail_open(const char *, int, int);
+extern MKMAP *mkmap_fail_open(const char *);
 
 /* LICENSE
 /* .ad
@@ -32,6 +34,11 @@ extern DICT *dict_fail_open(const char *, int, int);
 /* AUTHOR(S)
 /*	jeffm
 /*	ghostgun.com
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

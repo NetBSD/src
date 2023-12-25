@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_level.h,v 1.2 2022/10/08 16:12:45 christos Exp $	*/
+/*	$NetBSD: compat_level.h,v 1.2.2.1 2023/12/25 12:43:31 martin Exp $	*/
 
 #ifndef _COMPAT_LEVEL_H_INCLUDED_
 #define _COMPAT_LEVEL_H_INCLUDED_
@@ -28,8 +28,6 @@ extern const char *compat_level_to_string(long,
 	compat_level_from_major_minor((major), 0, (msg_fn))
 #define compat_level_from_major_minor(major, minor, msg_fn) \
 	compat_level_from_numbers((major), (minor), 0, (msg_fn))
-
-#
 
 /* LICENSE
 /* .ad

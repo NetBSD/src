@@ -161,5 +161,5 @@ grep -n . "$@" | sed -n '
         p
         d
     }
-' | egrep -v ':[a-z][_a-z0-9-]*\([0-9]\),' | 
-    fgrep -vf mantools/manlint.stop
+' | grep -E -v ':[a-z][_a-z0-9-]*\([0-9]\),' | 
+    grep -F -vf mantools/manlint.stop

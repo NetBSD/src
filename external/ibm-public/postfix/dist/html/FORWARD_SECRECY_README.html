@@ -8,6 +8,7 @@
 <title>TLS Forward Secrecy in Postfix</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -112,10 +113,7 @@ sends a random "pre-master secret" to the server encrypted with the
 server's RSA public key.  The server decrypts this with its private
 key, and uses it together with other data exchanged in the clear
 to generate the session key.  An attacker with access to the server's
-private key can perform the same computation at any later time.
-The TLS library in Windows XP and Windows Server 2003 only supported
-cipher suites of this type, and Exchange 2003 servers largely do
-not support forward secrecy.  </p>
+private key can perform the same computation at any later time.  </p>
 
 <p> Later revisions to the TLS protocol introduced forward-secrecy
 cipher suites in which the client and server implement a key exchange
@@ -130,34 +128,25 @@ Presently, there are two flavors of "groups" that work with PFS: </p>
 
 <ul>
 
-<li> <p> <b> Prime-field groups (EDH):</b>  The server needs to be
-configured with a suitably-large prime and a corresponding "generator".
-The acronym for forward secrecy over prime fields is EDH for Ephemeral
-Diffie-Hellman (also abbreviated as DHE).
-</p>
+<li> <p> <b>FFDHE:</b> Finite-field Diffie-Hellman ephemeral key
+exchange groups (also EDH or DHE).  The server needs to be configured
+with a suitably-large prime and a corresponding "generator".  Standard
+choices of the prime and generator are specified in <a href="https://tools.ietf.org/html/rfc7919">RFC7919</a>, and can be
+used in the TLS 1.3 protocol with the server and client negotiating a
+mutually supported choice.  In earlier versions of TLS (1.0 through
+1.2), when FFDHE key exchange is performed, the server chooses the prime
+and generator unilaterally.  </p>
 
-<li> <p> <b> Elliptic-curve groups (EECDH): </b>  The server needs
-to be configured with a "named curve".  These offer better security
-at lower computational cost than prime field groups, but are not
-as widely implemented.  The acronym for the elliptic curve version
-is EECDH which is short for Ephemeral Elliptic Curve Diffie-Hellman
-(also abbreviated as ECDHE). </p>
+<li> <p> <b>EECDH:</b> This is short for Ephemeral Elliptic Curve
+Diffie-Hellman (also abbreviated as ECDHE).  EECDH offers better
+security at lower computational cost than FFDHE.  Elliptic curves used
+in cryptography are typically identified by a "name" that stands for a
+set of well-known parameter values, and it is these "named curves" (or,
+in certificates, associated ASN.1 object identifiers) that are used in
+the TLS protocol.  When EECDH key exchange is used, a mutually supported
+named curve is negotiated as part of the TLS handshake. </p>
 
 </ul>
-
-<p> It is not essential to know what these are, but one does need
-to know that OpenSSL supports EECDH with version 1.0.0 or later.
-Thus the configuration parameters related to Elliptic-Curve forward
-secrecy are available when Postfix is linked with OpenSSL &ge; 1.0.0
-(provided EC support has not been disabled by the vendor, as in
-some versions of RedHat Linux).  </p>
-
-<p> Elliptic curves used in cryptography are typically identified
-by a "name" that stands for a set of well-known parameter values,
-and it is these "names" (or associated ASN.1 object identifiers)
-that are used in the TLS protocol.  On the other hand, with TLS there
-are no specially designated prime field groups, so each server is
-free to select its own suitably-strong prime and generator.  </p>
 
 <h2><a name="server_fs">Forward Secrecy in the Postfix SMTP Server</a></h2>
 
@@ -167,108 +156,52 @@ suites with forward secrecy, then the traffic between the server
 and client will resist decryption even if the server's long-term
 authentication keys are <i>later</i> compromised. </p>
 
-<p> Some remote SMTP clients may support forward secrecy, but prefer
-cipher suites <i>without</i> forward secrecy. In that case, Postfix
-&ge; 2.8 could be configured to ignore the client's preference with
-the <a href="postconf.5.html">main.cf</a> setting "<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = yes".  However, this
-will likely cause interoperability issues with older Exchange servers
-and is not recommended for now.  </p>
+<p> Most remote SMTP clients now support forward secrecy (the only
+choice as of TLS 1.3), but some may prefer cipher suites <i>without</i>
+forward secrecy.  Postfix &ge; 2.8 servers can be configured to override
+the client's preference by setting "<a href="postconf.5.html#tls_preempt_cipherlist">tls_preempt_cipherlist</a> = yes". </p>
 
-<h3> EDH Server support </h3>
+<h3> FFDHE Server support </h3>
 
-<p> Postfix &ge; 2.2 supports 1024-bit-prime EDH out of the box,
-with no additional configuration, but you may want to override the
-default prime to be 2048 bits long, and you may want to regenerate
-your primes periodically. See the <a href="#quick-start">quick-start</a>
-section for details.  With Postfix &ge; 3.1 the out of the box
-(compiled-in) EDH prime size is 2048 bits.  </p>
+<p> Postfix &ge; 3.1 supports 2048-bit-prime FFDHE out of the box, with
+no additional configuration.  You can also generate your own FFDHE
+parameters, but this is not necessary and no longer recommended.  See
+the <a href="#quick-start">quick-start</a> section for details.  </p>
 
-<p> With prime-field EDH, OpenSSL wants the server to provide
-two explicitly-selected (prime, generator) combinations.  One for
-the now long-obsolete "export" cipher suites, and another for
-non-export cipher suites.  Postfix has two such default combinations
-compiled in, but also supports explicitly-configured overrides.
-</p>
-
-<ul>
-
-<li> <p> The "export" EDH parameters are used only with the obsolete
-"export" ciphers.  To use a non-default prime, generate a 512-bit
-DH parameter file and set <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> to the filename
-(see the <a href="#quick-start">quick-start</a> section for details).
-With Postfix releases after the middle of 2015 the default opportunistic
-TLS cipher grade (<a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>) is "medium" or stronger, and
-export ciphers are no longer used.  </p>
-
-<li> <p> The non-export EDH parameters are used for all other EDH
-cipher suites.  To use a non-default prime, generate a 1024-bit or
-2048-bit DH parameter file and set <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> to
-the filename.  Despite the name this is simply the non-export
-parameter file and the prime need not actually be 1024 bits long
-(see the <a href="#quick-start">quick-start</a> section for details).
-</p>
-
-</ul>
-
-<p> As of mid-2015, SMTP clients are starting to reject TLS
-handshakes with primes smaller than 2048 bits.  Each site needs to
-determine which prime size works best for the majority of its
-clients.  See the <a href="#quick-start">quick-start</a> section
-for the recommended configuration to work around this issue.  </p>
+<p> Postfix &ge; 3.8 supports the finite-field Diffie-Hellman ephemeral
+(FFDHE) key exchange group negotiation API of OpenSSL &ge; 3.0.  FFDHE
+groups are explicitly negotiated between client and server starting with
+TLS 1.3.  In earlier TLS versions, the server chooses the group
+unilaterally.  The list of candidate FFDHE groups can be configured via
+"<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>", which can be used to select a prioritized list
+of supported groups (most preferred first) on both the server and
+client.  The default list is suitable for most users.  Either, but not
+both of "<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>" and "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>" may be set
+empty, disabling either EC or FFDHE key exchange in OpenSSL 3.0 with TLS
+1.3.  That said, interoperability will be poor if the EC curves are
+all disabled or don't include the most widely used curves. </p>
 
 <h3> EECDH Server support </h3>
 
-<p> Postfix &ge; 2.6 supports NIST P-256 EECDH when built with OpenSSL
-&ge; 1.0.0.  When the remote SMTP client also supports EECDH and
-implements the P-256 curve, forward secrecy just works.  </p>
-
-<blockquote> <p> Note: With Postfix 2.6 and 2.7, enable EECDH by
-setting the <a href="postconf.5.html">main.cf</a> parameter <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> to "strong".
-</p> </blockquote>
-
-<p> The elliptic curve standards are evolving, with new curves
-introduced in <a href="https://tools.ietf.org/html/rfc8031">RFC 8031</a> to augment or replace the NIST curves tarnished
-by the Snowden revelations.  Fortunately, TLS clients advertise
-their list of supported curves to the server so that servers can
-choose newer stronger curves when mutually supported.  OpenSSL 1.0.2
-released in January 2015 was the first release to implement negotiation
-of supported curves in TLS servers.  In older OpenSSL releases, the
-server is limited to selecting a single widely supported curve.  </p>
-
-<p> With Postfix prior to 3.2 or OpenSSL prior to 1.0.2, only a
-single server-side curve can be configured, by specifying a suitable
-EECDH "grade": </p>
-
-<blockquote>
-<pre>
-    <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = strong | ultra
-    # Underlying curves, best not changed:
-    # <a href="postconf.5.html#tls_eecdh_strong_curve">tls_eecdh_strong_curve</a> = prime256v1
-    # <a href="postconf.5.html#tls_eecdh_ultra_curve">tls_eecdh_ultra_curve</a> = secp384r1
-</pre>
-</blockquote>
-
-<p> Postfix &ge; 3.2 supports the curve negotiation API of OpenSSL
-&ge; 1.0.2.  When using this software combination, the default setting
-of "<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a>" changes to "auto", which selects a curve
-that is supported by both the server and client.  The list of
-candidate curves can be configured via "<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>",
-which can be used to configure a prioritized list of supported
-curves (most preferred first) on both the server and client.
-The default list is suitable for most users. </p>
+<p> As of Postfix 3.2 and OpenSSL 1.0.2, a range of supported EECDH
+curves is enabled in the server and client, and a suitable mutually
+supported curve is negotiated as part of the TLS handshake.  The list of
+supported curves is configurable via the "<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>"
+parameter.  With TLS 1.2 the server needs to leave its setting of
+"<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a>" at the default value of "auto" (earlier choices
+of an explicit single curve grade are deprecated).  With TLS 1.3, the
+"<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a>" parameter is not used, and curve selection is
+unconditionally negotiated. </p>
 
 <h2> <a name="client_fs">Forward Secrecy in the Postfix SMTP Client</a> </h2>
 
-<p> The Postfix &ge; 2.2 SMTP client supports forward secrecy in
-its default configuration.  All supported OpenSSL releases support
-EDH key exchange.  OpenSSL releases &ge; 1.0.0 also support EECDH
-key exchange (provided elliptic-curve support has not been disabled
-by the vendor as in some versions of RedHat Linux).  If the
-remote SMTP server supports cipher suites with forward secrecy (and
-does not override the SMTP client's cipher preference), then the
-traffic between the server and client will resist decryption even
-if the server's long-term authentication keys are <i>later</i>
-compromised.  </p>
+<p> The Postfix &ge; 2.2 SMTP client supports forward secrecy in its
+default configuration.  All supported OpenSSL releases support both
+FFDHE and EECDH key exchange.  If the remote SMTP server supports cipher
+suites with forward secrecy (and does not override the SMTP client's
+cipher preference), then the traffic between the server and client will
+resist decryption even if the server's long-term authentication keys are
+<i>later</i> compromised.  Forward secrecy is always on in TLS 1.3. </p>
 
 <p> Postfix &ge; 3.2 supports the curve negotiation API of OpenSSL
 &ge; 1.0.2.  The list of candidate curves can be changed via the
@@ -277,23 +210,21 @@ to select a prioritized list of supported curves (most preferred
 first) on both the Postfix SMTP server and SMTP client.  The default
 list is suitable for most users. </p>
 
-<p> The default Postfix SMTP client cipher lists are correctly
-ordered to prefer EECDH and EDH cipher suites ahead of similar
-cipher suites that don't implement forward secrecy.  Administrators
-are strongly discouraged from changing the cipher list definitions. </p>
+<p> Postfix &ge; 3.8 supports the finite-field Diffie-Hellman ephemeral
+(FFDHE) key exchange group negotiation API of OpenSSL &ge; 3.0.
+The list of candidate FFDHE groups can be configured via
+"<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>", which can be used to select a prioritized list
+of supported groups (most preferred first) on both the server and
+client.  The default list is suitable for most users.  </p>
 
-<p> The default minimum cipher grade for opportunistic TLS is
-"medium" for Postfix releases after the middle of 2015, "export"
-for older releases. Changing the minimum cipher grade does not
-change the cipher preference order.  Note that cipher grades higher
-than "medium" exclude Exchange 2003 and likely other MTAs, thus a
-"high" cipher grade should be chosen only on a case-by-case basis
-via the <a href="TLS_README.html#client_tls_policy">TLS policy</a>
-table. </p>
+<p> The default Postfix SMTP client cipher lists are correctly ordered
+to prefer EECDH and FFDHE cipher suites ahead of similar cipher suites
+that don't implement forward secrecy.  Administrators are strongly
+discouraged from changing the cipher list definitions. </p>
 
 <h2><a name="quick-start">Getting started, quick and dirty</a></h2>
 
-<h3> EECDH Client support (Postfix &ge; 2.2 with OpenSSL &ge; 1.0.0) </h3>
+<h3> EECDH Client support (Postfix &ge; 3.2 with OpenSSL &ge; 1.1.1) </h3>
 
 <p> This works "out of the box" with no need for additional
 configuration. </p>
@@ -305,96 +236,52 @@ to select a prioritized list of supported curves (most preferred
 first) on both the Postfix SMTP server and SMTP client.  The default
 list is suitable for most users. </p>
 
-<h3> EECDH Server support (Postfix &ge; 2.6 with OpenSSL &ge; 1.0.0) </h3>
+<h3> EECDH Server support (Postfix &ge; 3.2 with OpenSSL &ge; 1.1.1) </h3>
 
-<p> With Postfix 2.6 and 2.7, enable elliptic-curve support in the
-Postfix SMTP server. This is the default with Postfix
-&ge; 2.8. Note, however, that elliptic-curve support may be disabled
-by the vendor, as in some versions of RedHat Linux. </p>
+<p> This works "out of the box" with no need for additional
+configuration. </p>
 
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    # Postfix 2.6 &amp; 2.7 only. EECDH is on by default with Postfix &ge; 2.8.
-    # The default grade is "auto" with Postfix &ge; 3.2.
-    <a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a> = strong
-</pre>
-</blockquote>
+<p> Postfix &ge; 3.2 supports the curve negotiation API of OpenSSL
+&ge; 1.0.2.  The list of candidate curves can be changed via the
+"<a href="postconf.5.html#tls_eecdh_auto_curves">tls_eecdh_auto_curves</a>" configuration parameter, which can be used
+to select a prioritized list of supported curves (most preferred
+first) on both the Postfix SMTP server and SMTP client.  The default
+list is suitable for most users. </p>
 
-<h3> EDH Client support (Postfix &ge; 2.2, all supported OpenSSL
+<h3> FFDHE Client support (Postfix &ge; 3.2, OpenSSL &ge; 1.1.1) </h3>
+
+<p> In Postfix &lt; 3.8, or OpenSSL prior to 3.0, FFDHE for TLS 1.2 or
+below works "out of the box", no additional configuration is necessary.
+The most one can do is (not advisable) disable all "kDHE" ciphers, which
+would then disable FFDHE key exchange in TLS 1.2 and below. </p>
+
+<p> With OpenSSL 1.1.1, FFDHE is not supported for TLS 1.3, which uses
+only EECDH key exchange.  Support for FFDHE with TLS 1.3 was added in
+OpenSSL 3.0.  With OpenSSL 3.0 and Postfix 3.8 the list of supported TLS
+1.3 FFDHE groups becomes configurable via the "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>"
+parameter, which can be set empty to disable FFDHE in TLS 1.3, or
+conversely expanded to support more groups.  The default should work
+well for most users. </p>
+
+<h3> FFDHE Server support (Postfix &ge; 2.2, all supported OpenSSL
 versions) </h3>
 
-<p> This works "out of the box" without additional configuration. </p>
+<p> In Postfix &lt; 3.8, or OpenSSL prior to 3.0, FFDHE for TLS 1.2 or
+below works "out of the box", no additional configuration is necessary.
+One can of course (not advisable) disable all "kDHE" ciphers, which
+would then disable FFDHE key exchange in TLS 1.2 and below. </p>
 
-<h3> EDH Server support (Postfix &ge; 2.2, all supported OpenSSL
-versions) </h3>
+<p> The built-in default Postfix FFDHE group is a 2048-bit group as of
+Postfix 3.1.  You can optionally generate non-default Postfix SMTP
+server FFDHE parameters for possibly improved security against
+pre-computation attacks, but this is not necessary or recommended.  Just
+leave "<a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a>" at its default empty value. </p>
 
-<p> Optionally generate non-default Postfix SMTP server EDH parameters
-for improved security against pre-computation attacks and for
-compatibility with Debian-patched Exim SMTP clients that require a
-&ge; 2048-bit length for the non-export prime. </p>
-
-<p> With Postfix &ge; 3.7 built against OpenSSL version is 3.0.0 or later, when
-the value of <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> is either empty or "<b>auto</b>", the
-EDH parameter selection is delegated to the OpenSSL library, which selects
-appropriate parameters based on the TLS handshake.  This choice is likely to be
-the most interoperable with SMTP clients using various TLS libraries, and
-custom local parameters are no longer recommended when using Postfix &ge; 3.7
-built against OpenSSL 3.0.0.  Just leave <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> at its
-default value (both in <a href="postconf.5.html">main.cf</a>(5) and any <a href="master.5.html">master.cf</a>(5) overrides, and let
-OpenSSL do the work.  </p>
-
-<p> Otherwise, execute as root (prime group generation can take a
-few seconds to a few minutes): </p>
-
-<blockquote>
-<pre>
-# cd /etc/postfix
-# umask 022
-# openssl dhparam -out dh512.tmp 512 &amp;&amp; mv dh512.tmp dh512.pem
-# openssl dhparam -out dh1024.tmp 1024 &amp;&amp; mv dh1024.tmp dh1024.pem
-# openssl dhparam -out dh2048.tmp 2048 &amp;&amp; mv dh2048.tmp dh2048.pem
-# chmod 644 dh512.pem dh1024.pem dh2048.pem
-</pre>
-</blockquote>
-
-<p> The Postfix SMTP server EDH parameter files are not secret,
-after all these parameters are sent to all remote SMTP clients in
-the clear. Mode 0644 is appropriate. </p>
-
-<p> You can improve security against pre-computation attacks further
-by regenerating the Postfix SMTP server EDH parameters periodically
-(an hourly or daily cron job running the above commands as root can
-automate this task). </p>
-
-<p> Once the parameters are in place, update <a href="postconf.5.html">main.cf</a> as follows: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/dh2048.pem
-    <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/dh512.pem
-</pre>
-</blockquote>
-
-<p> If some of your MSA clients don't support 2048-bit EDH, you may
-need to adjust the submission entry in <a href="master.5.html">master.cf</a> accordingly: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="master.5.html">master.cf</a>:
-    submission inet n       -       n       -       -       smtpd
-        # Some submission clients may not yet do 2048-bit EDH, if such
-        # clients use your MSA, configure 1024-bit EDH instead.  However,
-        # as of mid-2015, many submission clients no longer accept primes
-        # with less than 2048-bits.  Each site needs to determine which
-        # type of client is more important to support.
-        -o <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a>=${<a href="postconf.5.html#config_directory">config_directory</a>}/dh1024.pem
-        -o <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a>=encrypt
-        -o <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a>=yes
-        ...
-</pre>
-</blockquote>
+<p> The set of FFDHE groups enabled for use with TLS 1.3 becomes
+configurable with Postfix &ge; 3.8 and OpenSSL &ge; 3.0.  The default
+setting of "<a href="postconf.5.html#tls_ffdhe_auto_groups">tls_ffdhe_auto_groups</a>" enables the <a href="https://tools.ietf.org/html/rfc7919">RFC7919</a> 2048 and 3072-bit
+groups.  If you need more security, you should probably be using EECDH.
+</p>
 
 <h2><a name="test">How can I see that a connection has forward
 secrecy? </a> </h2>

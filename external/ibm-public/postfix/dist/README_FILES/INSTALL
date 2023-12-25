@@ -466,7 +466,7 @@ configuration file, except for one: the parameter that specifies the location
 of Postfix configuration files. In order to build Postfix with a configuration
 directory other than /etc/postfix, use:
 
-    $ make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
+    $ make makefiles CCARGS="-DDEF_CONFIG_DIR=\\\"/some/where\\\""
     $ make
 
 IMPORTANT: Be sure to get the quotes right. These details matter a lot.
@@ -567,7 +567,7 @@ The following is an extensive list of names and values.
 ||                              |Do not build with IPv6 support. By default,  |
 ||                              |IPv6 support is compiled in on platforms that|
 ||                              |are known to have IPv6 support. Note: this   |
-||-DNO_IPV6                     |directive is for debugging And testing only. |
+||-DNO_IPV6                     |directive is for debugging and testing only. |
 ||                              |It is not guaranteed to work on all          |
 ||                              |platforms. If you don't want IPv6 support,   |
 ||                              |set "inet_protocols = ipv4" in main.cf.      |
@@ -829,7 +829,7 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
@@ -879,7 +879,7 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
@@ -919,7 +919,7 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
@@ -1151,7 +1151,7 @@ Hopefully, the number of problems will be small, but it is a good idea to run
 every night before the syslog files are rotated:
 
     # postfix check
-    # egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    # grep -E '(reject|warning|error|fatal|panic):' /some/log/file
 
   * The first line (postfix check) causes Postfix to report file permission/
     ownership discrepancies.

@@ -117,25 +117,25 @@ recent messages pertaining to the domains in question.
     # Find deliveries to example.com
     #
     $ tail -10000 /var/log/maillog |
-            egrep -i ': to=<.*@example\.com>,' |
+            grep -E -i ': to=<.*@example\.com>,' |
             less
 
     # Find messages from example.com
     #
     $ tail -10000 /var/log/maillog |
-            egrep -i ': from=<.*@example\.com>,' |
+            grep -E -i ': from=<.*@example\.com>,' |
             less
 
 You may want to drill in on some specific queue ids:
 
     # Find all messages for a specific queue id.
     #
-    $ tail -10000 /var/log/maillog | egrep ': 2B2173FF68: '
+    $ tail -10000 /var/log/maillog | grep -E ': 2B2173FF68: '
 
 Also look for queue manager warning messages in the log. These warnings can
 suggest strategies to reduce congestion.
 
-    $ egrep 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
+    $ grep -E 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
 
 When all else fails try the Postfix mailing list for help, but please don't
 forget to include the top 10 or 20 lines of qshape(1) output.

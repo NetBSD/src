@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_memcache.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dict_memcache.c,v 1.2.22.1 2023/12/25 12:43:31 martin Exp $	*/
 
 /*++
 /* NAME
@@ -17,8 +17,6 @@
 /*	a dictionary interface for Postfix key->value mappings.
 /*	The result is a pointer to the installed dictionary.
 /*
-/*	Configuration parameters are described in memcache_table(5).
-/*
 /*	Arguments:
 /* .IP name
 /*	The path to the Postfix memcache configuration file.
@@ -29,6 +27,7 @@
 /*	See dict_open(3).
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	memcache_table(5) memcache client configuration
 /* HISTORY
 /* .ad
 /* .fi

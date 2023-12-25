@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.4.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -19,6 +19,15 @@
 /*	char	*name;
 /*	int	misc_flags;
 /*	DSN_BUF	*why;
+/*
+/*	DNS_RR	*smtp_service_addr(name, service, mxrr, misc_flags, why,
+/*					found_myself)
+/*	const char *name;
+/*	const char *service;
+/*	DNS_RR  **mxrr;
+/*	int	misc_flags;
+/*	DSN_BUF	*why;
+/*	int	*found_myself;
 /* DESCRIPTION
 /*	This module implements Internet address lookups. By default,
 /*	lookups are done via the Internet domain name service (DNS).
@@ -35,6 +44,8 @@
 /*	destination.  If MX records were found, the rname, qname,
 /*	and dnssec validation status of the MX RRset are returned
 /*	via mxrr, which the caller must free with dns_rr_free().
+/*	Fallback from MX to address lookups is governed by RFC 2821,
+/*	and by local policy (var_ign_mx_lookup_err).
 /*
 /*	When no mail exchanger is listed in the DNS for \fIname\fR, the
 /*	request is passed to smtp_host_addr().
@@ -46,8 +57,18 @@
 /*	host.  The host can be specified as a numerical Internet network
 /*	address, or as a symbolic host name.
 /*
-/*	Results from smtp_domain_addr() or smtp_host_addr() are
-/*	destroyed by dns_rr_free(), including null lists.
+/*	smtp_service_addr() looks up addresses for hosts specified
+/*	in SRV records for the specified domain and service. This
+/*	supports the features of smtp_domain_addr() except that
+/*	the order of SRV records is determined by RFC 2782, and
+/*	that address records are not sorted by IP address family
+/*	preference.  Fallback from SRV to MX or address lookups is
+/*	governed by local policy (var_ign_mx_lookup_err and
+/*	var_allow_srv_fallback).
+/*
+/*	Results from smtp_domain_addr(), smtp_host_addr(), and
+/*	smtp_service_addr() are destroyed by dns_rr_free(), including
+/*	null lists.
 /* DIAGNOSTICS
 /*	Panics: interface violations. For example, calling smtp_domain_addr()
 /*	when DNS lookups are explicitly disabled.
@@ -68,6 +89,10 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	SRV Support by
+/*	Tomas Korbar
+/*	Red Hat, Inc.
 /*--*/
 
 /* System library. */
@@ -132,7 +157,8 @@ static void smtp_print_addr(const char *what, DNS_RR *addr_list)
 /* smtp_addr_one - address lookup for one host name */
 
 static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
-			             unsigned pref, DSN_BUF *why)
+			             unsigned pref, unsigned port,
+			             DSN_BUF *why)
 {
     const char *myname = "smtp_addr_one";
     DNS_RR *addr = 0;
@@ -156,6 +182,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
 		msg_fatal("host %s: conversion error for address family "
 			  "%d: %m", host, res0->ai_addr->sa_family);
 	    addr_list = dns_rr_append(addr_list, addr);
+	    addr->pref = pref;
+	    addr->port = port;
 	    if (msg_verbose)
 		msg_info("%s: using numerical host %s", myname, host);
 	    freeaddrinfo(res0);
@@ -176,8 +204,10 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
 			     why->reason, DNS_REQ_FLAG_NONE,
 			     proto_info->dns_atype_list)) {
 	case DNS_OK:
-	    for (rr = addr; rr; rr = rr->next)
+	    for (rr = addr; rr; rr = rr->next) {
 		rr->pref = pref;
+		rr->port = port;
+	    }
 	    addr_list = dns_rr_append(addr_list, addr);
 	    return (addr_list);
 	default:
@@ -295,10 +325,10 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
      * tweaking the in-process resolver flags.
      */
     for (rr = mx_names; rr; rr = rr->next) {
-	if (rr->type != T_MX)
+	if (rr->type != T_MX && rr->type != T_SRV)
 	    msg_panic("smtp_addr_list: bad resource type: %d", rr->type);
 	addr_list = smtp_addr_one(addr_list, (char *) rr->data, res_opt,
-				  rr->pref, why);
+				  rr->pref, rr->port, why);
     }
     return (addr_list);
 }
@@ -680,7 +710,7 @@ DNS_RR *smtp_host_addr(const char *host, int misc_flags, DSN_BUF *why)
      * address to internal form. Otherwise, the host is specified by name.
      */
 #define PREF0	0
-    addr_list = smtp_addr_one((DNS_RR *) 0, ahost, res_opt, PREF0, why);
+    addr_list = smtp_addr_one((DNS_RR *) 0, ahost, res_opt, PREF0, 0, why);
     if (addr_list
 	&& (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
 	&& smtp_find_self(addr_list) != 0) {
@@ -700,5 +730,137 @@ DNS_RR *smtp_host_addr(const char *host, int misc_flags, DSN_BUF *why)
     }
     if (msg_verbose)
 	smtp_print_addr(host, addr_list);
+    return (addr_list);
+}
+
+/* smtp_service_addr - service address lookup */
+
+DNS_RR *smtp_service_addr(const char *name, const char *service, DNS_RR **mxrr,
+			          int misc_flags, DSN_BUF *why,
+			          int *found_myself)
+{
+    static VSTRING *srv_qname = 0;
+    const char *str_srv_qname;
+    DNS_RR *srv_names = 0;
+    DNS_RR *addr_list = 0;
+    DNS_RR *self = 0;
+    unsigned best_pref;
+    unsigned best_found;
+    int     r = 0;
+    const char *aname;
+    int     allow_non_srv_fallback = var_allow_srv_fallback;
+
+    dsb_reset(why);
+
+    /*
+     * Sanity check.
+     */
+    if (smtp_dns_support == SMTP_DNS_DISABLED)
+	msg_panic("smtp_service_addr: DNS lookup is disabled");
+
+    if (smtp_dns_support == SMTP_DNS_DNSSEC) {
+	r |= RES_USE_DNSSEC;
+    }
+    if (srv_qname == 0)
+	srv_qname = vstring_alloc(100);
+    vstring_sprintf(srv_qname, "_%s._tcp.%s", service, name);
+    str_srv_qname = STR(srv_qname);
+
+    /*
+     * IDNA support.
+     */
+#ifndef NO_EAI
+    if (!allascii(str_srv_qname)
+	&& (aname = midna_domain_to_ascii(str_srv_qname)) != 0) {
+	if (msg_verbose)
+	    msg_info("%s asciified to %s", str_srv_qname, aname);
+    } else
+#endif
+	aname = str_srv_qname;
+
+    switch (dns_lookup(aname, T_SRV, r, &srv_names, (VSTRING *) 0,
+		       why->reason)) {
+    default:
+	dsb_status(why, "4.4.3");
+	allow_non_srv_fallback |= var_ign_srv_lookup_err;
+	break;
+    case DNS_INVAL:
+	dsb_status(why, "5.4.4");
+	allow_non_srv_fallback |= var_ign_srv_lookup_err;
+	break;
+    case DNS_POLICY:
+	dsb_status(why, "4.7.0");
+	break;
+    case DNS_FAIL:
+	dsb_status(why, "5.4.3");
+	allow_non_srv_fallback |= var_ign_srv_lookup_err;
+	break;
+    case DNS_NULLSRV:
+	dsb_status(why, "5.1.0");
+	break;
+    case DNS_OK:
+	/* Shuffle then sort the SRV rr records by priority and weight. */
+	srv_names = dns_srv_rr_sort(srv_names);
+	best_pref = (srv_names ? srv_names->pref : IMPOSSIBLE_PREFERENCE);
+	addr_list = smtp_addr_list(srv_names, why);
+	if (mxrr)
+	    *mxrr = dns_rr_copy(srv_names);	/* copies one record! */
+	dns_rr_free(srv_names);
+	if (addr_list == 0) {
+	    msg_warn("no SRV host for %s has a valid address record",
+		     str_srv_qname);
+	    break;
+	}
+	/* Optional loop prevention, similar to smtp_domain_addr(). */
+	best_found = (addr_list ? addr_list->pref : IMPOSSIBLE_PREFERENCE);
+	if (msg_verbose)
+	    smtp_print_addr(aname, addr_list);
+	if ((misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
+	    && (self = smtp_find_self(addr_list)) != 0) {
+	    addr_list = smtp_truncate_self(addr_list, self->pref);
+	    if (addr_list == 0) {
+		if (best_pref != best_found) {
+		    dsb_simple(why, "4.4.4",
+			       "unable to find primary relay for %s",
+			       str_srv_qname);
+		} else {
+		    dsb_simple(why, "5.4.6", "mail for %s loops back to myself",
+			       str_srv_qname);
+		}
+	    }
+	}
+	/* TODO: sort by priority, weight, and address family preference. */
+
+	/* Optional address family balancing, as in smtp_domain_addr(). */
+	if (addr_list && addr_list->next) {
+	    if (var_smtp_mxaddr_limit > 0 && var_smtp_balance_inet_proto)
+		addr_list = smtp_balance_inet_proto(addr_list, misc_flags,
+						    var_smtp_mxaddr_limit);
+	}
+	break;
+    case DNS_NOTFOUND:
+	dsb_status(why, "5.4.4");
+	break;
+    }
+
+    /*
+     * If permitted, fall back to non-SRV record lookups.
+     */
+    if (addr_list == 0 && allow_non_srv_fallback) {
+	msg_info("skipping SRV lookup for %s: %s",
+		 str_srv_qname, STR(why->reason));
+	if (misc_flags & SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX)
+	    addr_list = smtp_domain_addr(name, mxrr, misc_flags, why,
+					 found_myself);
+	else
+	    addr_list = smtp_host_addr(name, misc_flags, why);
+    }
+
+    /*
+     * Only if we're not falling back.
+     */ 
+    else {
+	*found_myself |= (self != 0);
+    }
     return (addr_list);
 }

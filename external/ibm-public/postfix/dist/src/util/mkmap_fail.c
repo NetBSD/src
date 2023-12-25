@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_fail.c,v 1.1.1.1 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: mkmap_fail.c,v 1.2.2.2 2023/12/25 12:43:38 martin Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	create or open database, fail: style
 /* SYNOPSIS
-/*	#include <mkmap.h>
+/*	#include <dict_fail.h>
 /*
 /*	MKMAP	*mkmap_fail_open(path)
 /*	const char *path;
@@ -25,6 +25,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -34,11 +39,6 @@
 /* Utility library. */
 
 #include <mymalloc.h>
-#include <dict.h>
-
-/* Application-specific. */
-
-#include <mkmap.h>
 #include <dict_fail.h>
 
  /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.4 2022/10/08 16:12:49 christos Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.4.2.1 2023/12/25 12:43:35 martin Exp $	*/
 
 /*++
 /* NAME
@@ -30,7 +30,8 @@
 /*	destinations may be specified as "unix:pathname", "inet:host"
 /*	or "inet:host:port".
 /*
-/*	With SMTP, the Internet domain name service is queried for mail
+/*	With SMTP, or with SRV record lookup enabled, the Internet
+/*	domain name service is queried for mail
 /*	exchanger hosts. Quote the domain name with `[' and `]' to
 /*	suppress mail exchanger lookups.
 /*
@@ -359,7 +360,8 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr *sa,
 /* smtp_parse_destination - parse host/port destination */
 
 static char *smtp_parse_destination(char *destination, char *def_service,
-				            char **hostp, unsigned *portp)
+				            char **hostp, char **servicep,
+				            unsigned *portp)
 {
     char   *buf = mystrdup(destination);
     char   *service;
@@ -375,13 +377,13 @@ static char *smtp_parse_destination(char *destination, char *def_service,
      * Parse the host/port information. We're working with a copy of the
      * destination argument so the parsing can be destructive.
      */
-    if ((err = host_port(buf, hostp, (char *) 0, &service, def_service)) != 0)
+    if ((err = host_port(buf, hostp, (char *) 0, servicep, def_service)) != 0)
 	msg_fatal("%s in server description: %s", err, destination);
 
     /*
      * Convert service to port number, network byte order.
      */
-    service = (char *) filter_known_tcp_port(service);
+    service = (char *) filter_known_tcp_port(*servicep);
     if (alldig(service)) {
 	if ((port = atoi(service)) >= 65536 || port == 0)
 	    msg_fatal("bad network port: %s for destination: %s",
@@ -663,6 +665,9 @@ static void smtp_update_addr_list(DNS_RR **addr_list, const char *server_addr,
      * XXX Extend the SMTP_SESSION structure with sockaddr information so that
      * we can avoid repeated string->binary transformations for the same
      * address.
+     * 
+     * XXX SRV support: this should match the port, too, otherwise we may
+     * eliminate too many list entries.
      */
     if ((aierr = hostaddr_to_sockaddr(server_addr, (char *) 0, 0, &res0)) != 0) {
 	msg_warn("hostaddr_to_sockaddr %s: %s",
@@ -693,6 +698,18 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
     DSN_BUF *why = state->why;
 
     /*
+     * This code is called after server address/port lookup, before
+     * iter->host, iter->addr, iter->rr and iter->mx are assigned concrete
+     * values, and while iter->port still corresponds to the nexthop service,
+     * or the default service configured with smtp_tcp_port or lmtp_tcp_port.
+     * 
+     * When a connection is reused by nexthop/service or by server address/port,
+     * iter->host, iter->addr and iter->port are updated with actual values
+     * from the cached session. Additionally, when a connection is searched
+     * by nexthop/service, iter->rr remains null, and when a connection is
+     * searched by server address/port, iter->rr is updated with an actual
+     * server address/port before the search is made.
+     * 
      * First, search the cache by delivery request nexthop. We truncate the
      * server address list when all the sessions for this destination are
      * used up, to reduce the number of variables that need to be checked
@@ -759,9 +776,7 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
 	    /* XXX Assume there is no code at the end of this loop. */
 	    continue;
 	}
-	vstring_strcpy(iter->addr, hostaddr.buf);
-	vstring_strcpy(iter->host, SMTP_HNAME(addr));
-	iter->rr = addr;
+	SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
 	if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
 	    msg_warn("TLS policy lookup error for %s/%s: %s",
@@ -846,6 +861,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	char   *dest_buf;
 	char   *domain;
 	unsigned port;
+	char   *service;
 	DNS_RR *addr_list;
 	DNS_RR *addr;
 	DNS_RR *next;
@@ -853,6 +869,8 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	int     sess_count;
 	SMTP_SESSION *session;
 	int     lookup_mx;
+	int     non_dns_or_literal;
+	int     i_am_mx;
 	unsigned domain_best_pref;
 	MAI_HOSTADDR_STR hostaddr;
 
@@ -862,8 +880,28 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	/*
 	 * Parse the destination. If no TCP port is specified, use the port
 	 * that is reserved for the protocol (SMTP or LMTP).
+	 * 
+	 * The 'service' variable corresponds to the remote service specified
+	 * with the nexthop, or the default service configured with
+	 * smtp_tcp_port or lmtp_tcp_port. The 'port' variable and
+	 * SMTP_ITERATOR.port initially correspond to that service. This
+	 * determines what loop prevention will be in effect.
+	 * 
+	 * The SMTP_ITERATOR.port will be overwritten after SRV record lookup.
+	 * This guarantees that the connection cache key contains the correct
+	 * port value when caching and retrieving a connection by its server
+	 * address (and port).
+	 * 
+	 * By design, the connection cache key contains NO port information when
+	 * caching or retrieving a connection by its nexthop destination.
+	 * Instead, the cache key contains the master.cf service name (a
+	 * proxy for all the parameter settings including the default service
+	 * from smtp_tcp_port or lmtp_tcp_port), together with the nexthop
+	 * destination and sender-dependent info. This should be sufficient
+	 * to avoid cross talk between mail streams that should be separated.
 	 */
-	dest_buf = smtp_parse_destination(dest, def_service, &domain, &port);
+	dest_buf = smtp_parse_destination(dest, def_service, &domain,
+					  &service, &port);
 	if (var_helpful_warnings && var_smtp_tls_wrappermode == 0
 	    && ntohs(port) == 465) {
 	    msg_info("SMTPS wrappermode (TCP port 465) requires setting "
@@ -876,32 +914,48 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	SMTP_ITER_INIT(iter, dest, NO_HOST, NO_ADDR, port, state);
 
 	/*
-	 * Resolve an SMTP or LMTP server. In the case of SMTP, skip mail
-	 * exchanger lookups when a quoted host is specified or when DNS
-	 * lookups are disabled.
+	 * Resolve an SMTP or LMTP server. Skip MX or SRV lookups when a
+	 * quoted domain is specified or when DNS lookups are disabled.
 	 */
 	if (msg_verbose)
-	    msg_info("connecting to %s port %d", domain, ntohs(port));
+	    msg_info("connecting to %s service %s", domain, service);
+	non_dns_or_literal = (smtp_dns_support == SMTP_DNS_DISABLED
+			      || *dest == '[');
 	if (smtp_mode) {
 	    if (ntohs(port) == IPPORT_SMTP)
 		state->misc_flags |= SMTP_MISC_FLAG_LOOP_DETECT;
 	    else
 		state->misc_flags &= ~SMTP_MISC_FLAG_LOOP_DETECT;
-	    lookup_mx = (smtp_dns_support != SMTP_DNS_DISABLED && *dest != '[');
+	    lookup_mx = !non_dns_or_literal;
 	} else
 	    lookup_mx = 0;
-	if (!lookup_mx) {
+
+	/*
+	 * Look up SRV and address records and fall back to non-SRV lookups
+	 * if permitted by configuration settings, or look up MX and address
+	 * records, or look up address records only.
+	 */
+	i_am_mx = 0;
+	addr_list = 0;
+	if (!non_dns_or_literal && smtp_use_srv_lookup
+	    && string_list_match(smtp_use_srv_lookup, service)) {
+	    if (lookup_mx)
+		state->misc_flags |= SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX;
+	    else
+		state->misc_flags &= ~SMTP_MISC_FLAG_FALLBACK_SRV_TO_MX;
+	    addr_list = smtp_service_addr(domain, service, &iter->mx,
+					  state->misc_flags, why, &i_am_mx);
+	} else if (!lookup_mx) {
+	    /* Non-DNS, literal, or non-SMTP service */
 	    addr_list = smtp_host_addr(domain, state->misc_flags, why);
 	    /* XXX We could be an MX host for this destination... */
 	} else {
-	    int     i_am_mx = 0;
-
 	    addr_list = smtp_domain_addr(domain, &iter->mx, state->misc_flags,
 					 why, &i_am_mx);
-	    /* If we're MX host, don't connect to non-MX backups. */
-	    if (i_am_mx)
-		state->misc_flags |= SMTP_MISC_FLAG_FINAL_NEXTHOP;
 	}
+	/* If we're MX host, don't connect to non-MX backups. */
+	if (i_am_mx)
+	    state->misc_flags |= SMTP_MISC_FLAG_FINAL_NEXTHOP;
 
 	/*
 	 * Don't try fall-back hosts if mail loops to myself. That would just
@@ -994,9 +1048,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		/* XXX Assume there is no code at the end of this loop. */
 		continue;
 	    }
-	    vstring_strcpy(iter->addr, hostaddr.buf);
-	    vstring_strcpy(iter->host, SMTP_HNAME(addr));
-	    iter->rr = addr;
+	    SMTP_ITER_UPDATE_HOST(iter, SMTP_HNAME(addr), hostaddr.buf, addr);
 #ifdef USE_TLS
 	    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
 		msg_warn("TLS policy lookup for %s/%s: %s",

@@ -8,6 +8,7 @@
 <title>Postfix Bottleneck Analysis</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -187,13 +188,13 @@ question. </p>
 # Find deliveries to example.com
 #
 $ tail -10000 /var/log/maillog |
-        egrep -i ': to=&lt;.*@example\.com&gt;,' |
+        grep -E -i ': to=&lt;.*@example\.com&gt;,' |
         less
 
 # Find messages from example.com
 #
 $ tail -10000 /var/log/maillog |
-        egrep -i ': from=&lt;.*@example\.com&gt;,' |
+        grep -E -i ': from=&lt;.*@example\.com&gt;,' |
         less
 </pre>
 </blockquote>
@@ -204,7 +205,7 @@ $ tail -10000 /var/log/maillog |
 <pre>
 # Find all messages for a specific queue id.
 #
-$ tail -10000 /var/log/maillog | egrep ': 2B2173FF68: '
+$ tail -10000 /var/log/maillog | grep -E ': 2B2173FF68: '
 </pre>
 </blockquote>
 
@@ -213,7 +214,7 @@ warnings can suggest strategies to reduce congestion. </p>
 
 <blockquote>
 <pre>
-$ egrep 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
+$ grep -E 'qmgr.*(panic|fatal|error|warning):' /var/log/maillog
 </pre>
 </blockquote>
 

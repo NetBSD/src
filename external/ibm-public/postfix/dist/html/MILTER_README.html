@@ -8,6 +8,7 @@
 <title>Postfix before-queue Milter support </title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
 
 </head>
 
@@ -47,6 +48,9 @@ document for differences between Postfix and Sendmail implementations.
 <ul>
 
 <li><a href="#plumbing">How Milter applications plug into Postfix </a>
+
+<li><a href="#when-inspect">When Postfix and Milters inspect an
+SMTP session </a>
 
 <li><a href="#building">Building Milter applications</a>
 
@@ -192,10 +196,59 @@ href="QSHAPE_README.html#incoming_queue"> incoming </a> </td>
 
 </blockquote>
 
+<h2><a name="when-inspect">When Postfix and Milters inspect an SMTP
+session </a></h2>
+
+<p> Generally, Postfix inspects information first, then the first
+configured Milter, the second configured Milter, and so on. </p>
+
+<ul>
+
+<li><p> With most SMTP commands: Postfix reviews one SMTP command,
+and if Postfix does not reject it, Postfix passes the command to
+the first configured Milter. If the first Milter does not reject
+the command, Postfix passes it to the second configured Milter, and
+so on. This includes commands with an envelope sender (MAIL FROM)
+or envelope recipient (RCPT TO). Postfix stores the same envelope
+records in a queue file as when no Milters are configured, including
+rewritten envelope addresses, expanded virtual aliases, BCC addresses
+from sender/recipient_bcc_maps, and so on. </p>
+
+<li><p> With header/body content: Postfix may rewrite or reject
+header/body content before it stores that content in the queue file;
+Postfix stores the same header/body content as when no Milters are
+configured.  If Postfix does not reject the header/body content,
+Postfix passes it to the first configured Milter which may modify
+or reject that content or may modify the stored envelope. If the
+first Milter does not reject the header/body content, Postfix passes
+it to the second configured Milter, and so on. </p>
+
+</ul>
+
+<p> Details: </p>
+
+<ul>
+
+<li><p> Postfix hides its own Postfix-prepended Received: header, for
+compatibility with Sendmail. Postfix does not hide other headers that
+Postfix or Milters added or modified. </p>
+
+
+<li><p> When the Postfix SMTP server receives a sequence of one or
+more valid BDAT commands, it generates one DATA command for the
+Milters.  </p>
+
+<li><p> The Milter API does not support inspection of SMTP commands
+such as QUIT, NOOP, or VRFY; the API supports only commands that are
+needed for email delivery. <p>
+
+</ul>
+
 <h2><a name="building">Building Milter applications</a></h2>
 
-<p> Milter applications have been written in C, JAVA and Perl, but
-this document deals with C applications only.   For these, you need
+<p> Milter applications have been written in C, Haskell, Java, Perl,
+Python, Rust, and more, but
+this document covers C applications only. For these, you need
 an object library that implements the Sendmail 8 Milter protocol.
 Postfix currently does not provide such a library, but Sendmail
 does. </p>
@@ -286,10 +339,10 @@ information. </blockquote>
 <p> You specify SMTP-only Milter applications (there can be more
 than one) with the <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> parameter.  Each Milter application
 is identified by the name of its listening socket; other Milter
-configuration options will be discussed in later sections.  Milter
-applications are applied in the order as specified, and the first
-Milter application that rejects a command will override the responses
-from other Milter applications.  </p>
+configuration options will be discussed in later sections. Postfix
+sends commands to each Milter application in the order as configured
+with <a href="postconf.5.html#smtpd_milters">smtpd_milters</a>. When a Milter application rejects a command,
+that will override responses from other Milter applications. </p>
 
 <blockquote>
 <pre>
@@ -348,10 +401,10 @@ information. </p>
 <p> You specify non-SMTP Milter applications with the <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>
 parameter. This parameter uses the same syntax as the <a href="postconf.5.html#smtpd_milters">smtpd_milters</a>
 parameter in the previous section. As with the SMTP-only filters,
-you can specify more than one Milter application; they are applied
-in the order as specified, and the first Milter application that
-rejects a command will override the responses from the other
-applications.  </p>
+you can specify more than one Milter application. Postfix sends
+commands to each Milter application in the order as configured with
+<a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>. When a Milter application rejects a command,
+that will override responses from other Milter applications. </p>
 
 <blockquote>
 <pre>
@@ -705,10 +758,9 @@ With rejected recipient: "error" </td> </tr>
 <h3><a name="send-macros">What macros will Postfix send to Milters?</a></h3>
 
 <p> Postfix sends specific sets of macros at different Milter protocol
-stages.  The sets are configured with the parameters as shown in the
-table below (EOH = end of headers; EOM = end of message). The
-protocol version is a number that Postfix sends at the beginning
-of the Milter protocol handshake. </p>
+stages. The names of these macros are configured with the parameters
+shown in the table below (EOH = end of headers; EOM = end of message).
+Some lists require a minimum Milter protocol version.  </p>
 
 <p> As of Sendmail 8.14.0, Milter applications can specify what
 macros they want to receive at different Milter protocol stages.
@@ -941,9 +993,8 @@ st_optionneg[134563840]: 0x3d does not fulfill action requirements 0x1e
 
 <p> The solution is to use Postfix version 2.4 or later. </p>
 
-<li> <p> Most Milter configuration options are global. Future Postfix
-versions may support per-Milter timeouts, per-Milter error handling,
-etc. </p>
+<li> <p> Postfix versions before 3.0 did not support per-Milter
+timeouts, per-Milter error handling, etc. </p>
 
 </ul>
 
