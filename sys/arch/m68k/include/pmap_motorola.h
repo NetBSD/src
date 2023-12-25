@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.38 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.39 2023/12/25 21:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -176,7 +176,7 @@ struct pmap {
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
+		loadustp((paddr_t)(pmap)->pm_stpa);			\
 }
 
 /*

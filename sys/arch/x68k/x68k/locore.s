@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 2023/09/17 07:22:17 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 2023/12/25 21:32:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -833,8 +833,6 @@ ENTRY(ecacheoff)
  */
 ENTRY(loadustp)
 	movl	%sp@(4),%d0		| new USTP
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0			| convert to addr
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip

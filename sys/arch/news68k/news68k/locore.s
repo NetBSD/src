@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2023/10/15 10:46:51 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2023/12/25 21:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -896,8 +896,6 @@ Lnocache8:
  */
 ENTRY(loadustp)
 	movl	%sp@(4),%d0		| new USTP
-	moveq	#PGSHIFT, %d1
-	lsll	%d1,%d0			| convert to addr
 	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),%a0	| CRP prototype
 	movl	%d0,%a0@(4)		| stash USTP

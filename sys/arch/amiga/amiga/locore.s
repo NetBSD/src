@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2022/05/30 09:56:02 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.162 2023/12/25 21:32:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1124,8 +1124,6 @@ ENTRY(probeva)
  */
 ENTRY(loadustp)
 	movl	%sp@(4),%d0			| new USTP
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0				| convert to addr
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)	| 68060?
 	jeq	Lldustp060			|  yes, skip
