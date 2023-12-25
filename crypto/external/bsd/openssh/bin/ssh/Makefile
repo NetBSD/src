@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18.2.2 2023/08/11 18:13:07 martin Exp $
+#	$NetBSD: Makefile,v 1.18.2.3 2023/12/25 12:22:53 martin Exp $
 
 .include <bsd.own.mk>
 
 BINDIR = /usr/bin
 
 PROG=	ssh
-SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
+SRCS=	channels.c ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect2.c mux.c auth.c auth-options.c
 
 COPTS.auth.c=		-DHOST_ONLY

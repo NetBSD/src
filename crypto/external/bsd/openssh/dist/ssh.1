@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.34.2.2 2023/11/02 22:15:22 sborrill Exp $
+.\"	$NetBSD: ssh.1,v 1.34.2.3 2023/12/25 12:22:56 martin Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.437 2023/07/23 20:04:45 naddy Exp $
-.Dd July 23 2023
+.\" $OpenBSD: ssh.1,v 1.438 2023/10/11 23:14:33 djm Exp $
+.Dd October 11 2023
 .Dt SSH 1
 .Os
 .Sh NAME
@@ -61,13 +61,14 @@
 .Op Fl o Ar option
 .Op Fl P Ar tag
 .Op Fl p Ar port
-.Op Fl Q Ar query_option
 .Op Fl R Ar address
 .Op Fl S Ar ctl_path
 .Op Fl W Ar host : Ns Ar port
 .Op Fl w Ar local_tun Ns Op : Ns Ar remote_tun
 .Ar destination
 .Op Ar command Op Ar argument ...
+.Nm
+.Op Fl Q Ar query_option
 .Sh DESCRIPTION
 .Nm
 (SSH client) is a program for logging into a remote machine and for
@@ -548,6 +549,7 @@ For full details of the options listed below, and their possible values, see
 .It IdentityAgent
 .It IdentityFile
 .It IPQoS
+.It IPv6PreferTemporary
 .It KbdInteractiveAuthentication
 .It KbdInteractiveDevices
 .It KexAlgorithms

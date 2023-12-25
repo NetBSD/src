@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.16 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: authfd.h,v 1.51 2021/12/19 22:10:24 djm Exp $ */
+/*	$NetBSD: authfd.h,v 1.16.2.1 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: authfd.h,v 1.52 2023/12/18 14:46:56 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -57,7 +57,8 @@ int	ssh_remove_identity(int sock, const struct sshkey *key);
 int	ssh_update_card(int sock, int add, const char *reader_id,
 	    const char *pin, u_int life, u_int confirm,
 	    struct dest_constraint **dest_constraints,
-	    size_t ndest_constraints);
+	    size_t ndest_constraints,
+	    int cert_only, struct sshkey **certs, size_t ncerts);
 int	ssh_remove_all_identities(int sock, int version);
 
 int	ssh_agent_sign(int sock, const struct sshkey *key,

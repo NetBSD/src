@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.24.2.1 2023/11/02 22:15:21 sborrill Exp $	*/
-/* $OpenBSD: packet.h,v 1.95 2023/08/28 03:31:16 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.24.2.2 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: packet.h,v 1.96 2023/12/18 14:45:17 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -121,7 +121,6 @@ int	 ssh_packet_authentication_state(struct ssh *);
 void	 ssh_packet_request_rekeying(void);
 
 int      ssh_packet_read(struct ssh *);
-int	 ssh_packet_read_expect(struct ssh *, u_int type);
 int      ssh_packet_read_poll(struct ssh *);
 int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
 int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);

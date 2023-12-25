@@ -1,5 +1,5 @@
-/*	$NetBSD: sshsig.c,v 1.10.2.1 2023/11/02 22:15:22 sborrill Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.33 2023/09/06 23:18:15 djm Exp $ */
+/*	$NetBSD: sshsig.c,v 1.10.2.2 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.34 2023/12/08 09:18:39 markus Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.10.2.1 2023/11/02 22:15:22 sborrill Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.10.2.2 2023/12/25 12:22:56 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1123,12 +1123,11 @@ sshsig_match_principals(const char *path, const char *principal,
 	if (ret == 0) {
 		if (nprincipals == 0)
 			ret = SSH_ERR_KEY_NOT_FOUND;
+		if (nprincipalsp != 0)
+			*nprincipalsp = nprincipals;
 		if (principalsp != NULL) {
 			*principalsp = principals;
 			principals = NULL; /* transferred */
-		}
-		if (nprincipalsp != 0) {
-			*nprincipalsp = nprincipals;
 			nprincipals = 0;
 		}
 	}

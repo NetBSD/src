@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.20 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.119 2021/04/03 06:18:40 djm Exp $ */
+/*	$NetBSD: cipher.c,v 1.20.6.1 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: cipher.c,v 1.120 2023/10/10 06:49:54 tb Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.20.6.1 2023/12/25 12:22:55 martin Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -463,27 +463,6 @@ cipher_free(struct sshcipher_ctx *cc)
 	cc->evp = NULL;
 #endif
 	freezero(cc, sizeof(*cc));
-}
-
-/*
- * Exports an IV from the sshcipher_ctx required to export the key
- * state back from the unprivileged child to the privileged parent
- * process.
- */
-int
-cipher_get_keyiv_len(const struct sshcipher_ctx *cc)
-{
-	const struct sshcipher *c = cc->cipher;
-
-	if ((c->flags & CFLAG_CHACHAPOLY) != 0)
-		return 0;
-	else if ((c->flags & CFLAG_AESCTR) != 0)
-		return sizeof(cc->ac_ctx.ctr);
-#ifdef WITH_OPENSSL
-	return EVP_CIPHER_CTX_iv_length(cc->evp);
-#else
-	return 0;
-#endif
 }
 
 int

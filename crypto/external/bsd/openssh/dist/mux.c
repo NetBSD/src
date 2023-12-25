@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.32.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
-/* $OpenBSD: mux.c,v 1.100 2023/08/18 01:37:41 djm Exp $ */
+/*	$NetBSD: mux.c,v 1.32.2.3 2023/12/25 12:22:55 martin Exp $	*/
+/* $OpenBSD: mux.c,v 1.101 2023/11/23 03:37:05 dtucker Exp $ */
 
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
@@ -20,7 +20,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.32.2.2 2023/11/02 22:15:21 sborrill Exp $");
+__RCSID("$NetBSD: mux.c,v 1.32.2.3 2023/12/25 12:22:55 martin Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -2265,7 +2265,7 @@ muxclient(const char *path)
 	switch (options.control_master) {
 	case SSHCTL_MASTER_AUTO:
 	case SSHCTL_MASTER_AUTO_ASK:
-		debug("auto-mux: Trying existing master");
+		debug("auto-mux: Trying existing master at '%s'", path);
 		/* FALLTHROUGH */
 	case SSHCTL_MASTER_NO:
 		break;

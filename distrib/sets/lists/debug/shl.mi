@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.298.2.13 2023/11/02 22:15:21 sborrill Exp $
+# $NetBSD: shl.mi,v 1.298.2.14 2023/12/25 12:22:54 martin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -283,8 +283,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug		comp-sys-debug	debug,compatfile,skey
 ./usr/libdata/debug/usr/lib/libsl.so.7.0.debug			comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.4.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libssh.so.45.0.debug		comp-obsolete	obsolete
-./usr/libdata/debug/usr/lib/libssh.so.45.1.debug		comp-secsh-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libssh.so.46.1.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libssl.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libssl.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30

@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.32.2.2 2023/11/02 22:15:21 sborrill Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.174 2023/09/08 06:10:02 djm Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.32.2.3 2023/12/25 12:22:56 martin Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.175 2023/11/13 09:18:19 tobhe Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -23,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.32.2.2 2023/11/02 22:15:21 sborrill Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.32.2.3 2023/12/25 12:22:56 martin Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -642,7 +642,7 @@ sftp_get_limits(struct sftp_conn *conn, struct sftp_limits *limits)
 		/* Disable the limits extension */
 		conn->exts &= ~SFTP_EXT_LIMITS;
 		sshbuf_free(msg);
-		return 0;
+		return -1;
 	}
 
 	memset(limits, 0, sizeof(*limits));
