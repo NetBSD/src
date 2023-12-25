@@ -1,4 +1,4 @@
-/* $NetBSD: plic.c,v 1.3 2023/12/16 18:02:02 skrll Exp $ */
+/* $NetBSD: plic.c,v 1.4 2023/12/25 13:01:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.3 2023/12/16 18:02:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.4 2023/12/25 13:01:59 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -73,10 +73,10 @@ plic_intr_establish_xname(u_int irq, int ipl, int flags,
 	struct plic_intrhand *ih;
 
 	/*
-	 * Choose hart 0.
+	 * Choose calling hart.
 	 * XXX need a better hart selection method
 	 */
-	u_int hartid = 0;
+	u_int hartid = curcpu()->ci_cpuid;
 
 	evcnt_attach_dynamic(&sc->sc_intrevs[irq], EVCNT_TYPE_INTR, NULL,
 	    "plic", xname);
