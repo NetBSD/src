@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfs,v 1.8 2018/09/23 07:24:19 maxv Exp $
+# $NetBSD: ipfs,v 1.9 2023/12/25 08:24:58 kre Exp $
 #
 
 # PROVIDE: ipfs
@@ -17,7 +17,8 @@ stop_cmd="ipfs_stop"
 
 ipfs_start()
 {
-	if [ -r /var/db/ipf/ipstate.ipf -a -r /var/db/ipf/ipnat.ipf ]; then
+	if [ -r /var/db/ipf/ipstate.ipf ] && [ -r /var/db/ipf/ipnat.ipf ]
+	then
 		/usr/sbin/ipfs -R ${rc_flags}
 		rm -f /var/db/ipf/ipstate.ipf /var/db/ipf/ipnat.ipf
 	fi
@@ -25,7 +26,7 @@ ipfs_start()
 
 ipfs_stop()
 {
-	if [ ! -d /var/db/ipf ]; then
+	if ! [ -d /var/db/ipf ]; then
 		mkdir /var/db/ipf
 		chmod 700 /var/db/ipf
 		chown root:wheel /var/db/ipf
