@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ip6addrctl,v 1.7 2020/09/08 12:52:18 martin Exp $
+# $NetBSD: ip6addrctl,v 1.8 2023/12/25 07:49:22 kre Exp $
 # FreeBSD: head/etc/rc.d/ip6addrctl 270836 2014-08-30 07:08:10Z hrs
 #
 
@@ -58,7 +58,7 @@ ip6addrctl_start()
 	# install the policy of the address selection algorithm.
 	case "${ip6addrctl_policy}" in
 	[Aa][Uu][Tt][Oo])
-		if [ -r "${config_file}" -a -s "${config_file}" ]; then
+		if [ -r "${config_file}" ] && [ -s "${config_file}" ]; then
 			${IP6ADDRCTL_CMD} flush >/dev/null 2>&1
 			${IP6ADDRCTL_CMD} install "${config_file}"
 		else
