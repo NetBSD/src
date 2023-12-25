@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: certctl_init,v 1.1 2023/09/27 00:24:13 riastradh Exp $
+# $NetBSD: certctl_init,v 1.2 2023/12/25 07:43:03 kre Exp $
 #
 # PROVIDE: certctl_init
 # REQUIRE: mountcritremote
@@ -36,10 +36,9 @@ certctl_init()
 	# directory, or is a directory but is nonempty, then we're not
 	# in the first boot's initial configuration.  So do nothing.
 	if [ -h "$certsdir" ] ||
-	    [ -e "$certsdir" -a ! -d "$certsdir" ] ||
-	    ([ -d "$certsdir" ] &&
-		find -f "$certsdir" -- \
-		    -maxdepth 0 -type d -empty -exit 1)
+	    { [ -e "$certsdir" ] && ! [ -d "$certsdir" ] ; } ||
+	    ( [ -d "$certsdir" ] &&
+		find -f "$certsdir" -- -maxdepth 0 -type d -empty -exit 1 )
         then
 		return
 	fi
