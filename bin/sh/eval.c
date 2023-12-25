@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.190 2023/06/24 05:17:02 msaitoh Exp $	*/
+/*	$NetBSD: eval.c,v 1.191 2023/12/25 04:52:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.190 2023/06/24 05:17:02 msaitoh Exp $");
+__RCSID("$NetBSD: eval.c,v 1.191 2023/12/25 04:52:38 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,7 +932,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		line_number = argp->narg.lineno;
 		if (!isassignment(argp->narg.text))
 			break;
-		expandarg(argp, &varlist, EXP_VARTILDE);
+		/* EXP_CASE handles CTL* chars in expansions properly */
+		expandarg(argp, &varlist, EXP_VARTILDE | EXP_CASE);
 	}
 	*varlist.lastp = NULL;
 
