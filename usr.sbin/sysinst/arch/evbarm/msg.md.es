@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.1.38.1 2023/12/26 05:58:02 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,23 +72,7 @@ Compensación en %s):
 }
 
 message set_kernel_1
-{Núcleo (ADI_BRH)}
-message set_kernel_2
-{Núcleo (INTERGRATOR)}
-message set_kernel_3
-{Núcleo (IQ80310)}
-message set_kernel_4
-{Núcleo (IQ80321)}
-message set_kernel_5
-{Núcleo (MINI2440)}
-message set_kernel_6
-{Núcleo (TEAMASA_NPWR)}
-message set_kernel_7
-{Núcleo (TS7200)}
-message set_kernel_8
-{N\xfacleo (RPI)}
-message set_kernel_9
-{Núcleo (KUROBOX_PRO)}
+{Núcleo}
 
 message nomsdospart
 {There is no MSDOS boot partition in the MBR partition table.}
