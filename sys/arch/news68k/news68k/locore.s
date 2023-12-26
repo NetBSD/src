@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2023/12/25 21:32:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2023/12/26 02:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -903,11 +903,6 @@ ENTRY(loadustp)
 	movc	%cacr,%d0
 	orl	#DCIC_CLR,%d0
 	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-
-ENTRY(ploadw)
-	movl	%sp@(4),%a0		| address to load
-	ploadw	#1,%a0@			| pre-load translation
 	rts
 
 ENTRY(getsr)

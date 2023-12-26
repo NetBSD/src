@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 2023/12/26 02:31:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 2023/12/26 02:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1163,14 +1163,6 @@ Lldustp060:
 Lldustp040:
 	.word	0xf518			| pflusha
 	.word	0x4e7b,0x0806		| movec d0,URP
-	rts
-
-ENTRY(ploadw)
-	movl	%sp@(4),%a0		|  address to load
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jeq	Lploadw040
-	ploadw	#1,%a0@			|  pre-load translation
-Lploadw040:				|  should 68040 do a ptest?
 	rts
 
 /*
