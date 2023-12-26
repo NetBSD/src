@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.249 2023/12/24 16:48:30 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.250 2023/12/26 17:12:33 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.249 2023/12/24 16:48:30 sjg Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.250 2023/12/26 17:12:33 sjg Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -400,6 +400,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 				 * but let others continue.
 				 */
 				printf(" (continuing)\n");
+				fflush(stdout);
 			} else {
 				printf("\n");
 			}
@@ -411,6 +412,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 			 * If we return 0, this will happen...
 			 */
 			printf(" (ignored)\n");
+			fflush(stdout);
 			status = 0;
 		}
 	}
