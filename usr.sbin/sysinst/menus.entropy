@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.entropy,v 1.2 2021/10/08 15:59:55 martin Exp $	*/
+/*	$NetBSD: menus.entropy,v 1.2.2.1 2023/12/26 05:54:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,12 @@ menu entropy_ftpsource, y=-4, x=0, w=70, no box, no clear,
 	exitstring MSG_download_entropy;
 	option {src_legend(menu, MSG_Host,
 			((struct ftpinfo*)((arg_rv*)arg)->arg)->xfer_host[
-			((struct ftpinfo*)((arg_rv*)arg)->arg)->xfer]);},
+			XFER_HOST(((struct ftpinfo*)
+			((arg_rv*)arg)->arg)->xfer)]);},
 		action { struct ftpinfo *fpi = (struct ftpinfo*)((arg_rv*)arg)->arg;
-			src_prompt(MSG_Host, fpi->xfer_host[fpi->xfer],
-			sizeof fpi->xfer_host[fpi->xfer]); };
+			src_prompt(MSG_Host,
+			fpi->xfer_host[XFER_HOST(fpi->xfer)],
+			sizeof fpi->xfer_host[XFER_HOST(fpi->xfer)]); };
 	option {src_legend(menu, MSG_entropy_path_and_file, entropy_file);},
 		action { src_prompt(MSG_entropy_path_and_file,
 			entropy_file, sizeof entropy_file); };

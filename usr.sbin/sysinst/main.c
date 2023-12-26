@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30.2.1 2023/06/23 05:40:02 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.30.2.2 2023/12/26 05:54:16 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,8 +132,8 @@ static const struct f_arg fflagopts[] = {
 	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
 	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
 	{"ext src dir", "", ext_dir_src, sizeof ext_dir_src},
-	{"ftp host", SYSINST_FTP_HOST, ftp.xfer_host[XFER_FTP], sizeof ftp.xfer_host[XFER_FTP]},
-	{"http host", SYSINST_HTTP_HOST, ftp.xfer_host[XFER_HTTP], sizeof ftp.xfer_host[XFER_HTTP]},
+	{"ftp host", SYSINST_FTP_HOST, ftp.xfer_host[XFER_HOST(XFER_FTP)], sizeof ftp.xfer_host[XFER_HOST(XFER_FTP)]},
+	{"http host", SYSINST_HTTP_HOST, ftp.xfer_host[XFER_HOST(XFER_HTTP)], sizeof ftp.xfer_host[XFER_HOST(XFER_HTTP)]},
 	{"ftp dir", SYSINST_FTP_DIR, ftp.dir, sizeof ftp.dir},
 	{"ftp prefix", "/" ARCH_SUBDIR "/binary/sets", set_dir_bin, sizeof set_dir_bin},
 	{"ftp src prefix", "/source/sets", set_dir_src, sizeof set_dir_src},
@@ -150,15 +150,15 @@ static const struct f_arg fflagopts[] = {
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
 	{"dist postfix", "." SETS_TAR_SUFF, dist_postfix, sizeof dist_postfix},
 	{"dist tgz postfix", ".tgz", dist_tgz_postfix, sizeof dist_tgz_postfix},
-	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
-	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},
+	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_HOST(XFER_FTP)], sizeof pkg.xfer_host[XFER_HOST(XFER_FTP)]},
+	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HOST(XFER_HTTP)], sizeof pkg.xfer_host[XFER_HOST(XFER_HTTP)]},
 	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
 	{"pkg prefix", "/" PKG_ARCH_SUBDIR "/" PKG_SUBDIR "/All", pkg_dir, sizeof pkg_dir},
 	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
 	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
 	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},
-	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.xfer_host[XFER_FTP], sizeof pkgsrc.xfer_host[XFER_FTP]},
-	{"pkgsrc http host", SYSINST_PKGSRC_HTTP_HOST, pkgsrc.xfer_host[XFER_HTTP], sizeof pkgsrc.xfer_host[XFER_HTTP]},
+	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.xfer_host[XFER_HOST(XFER_FTP)], sizeof pkgsrc.xfer_host[XFER_HOST(XFER_FTP)]},
+	{"pkgsrc http host", SYSINST_PKGSRC_HTTP_HOST, pkgsrc.xfer_host[XFER_HOST(XFER_HTTP)], sizeof pkgsrc.xfer_host[XFER_HOST(XFER_HTTP)]},
 	{"pkgsrc dir", "", pkgsrc.dir, sizeof pkgsrc.dir},
 	{"pkgsrc prefix", "pub/pkgsrc/stable", pkgsrc_dir, sizeof pkgsrc_dir},
 	{"pkgsrc user", "ftp", pkgsrc.user, sizeof pkgsrc.user},
@@ -191,7 +191,7 @@ init(void)
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
-	pkg.xfer = pkgsrc.xfer = XFER_HTTP;
+	ftp.xfer = pkg.xfer = pkgsrc.xfer = XFER_HTTPS;
 
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
