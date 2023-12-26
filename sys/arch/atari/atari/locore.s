@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 2023/12/25 21:32:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 2023/12/26 02:31:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1164,35 +1164,6 @@ Lldustp040:
 	.word	0xf518			| pflusha
 	.word	0x4e7b,0x0806		| movec d0,URP
 	rts
-
-/*
- * Flush any hardware context associated with given USTP.
- * Only does something for HP330 where we must flush RPT
- * and ATC entries in PMMU.
- */
-ENTRY(flushustp)
-#if defined(M68060)
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lflustp060		|  A 060 needs special treatment
-#endif
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jeq	Lnot68851
-	tstl	_C_LABEL(mmutype)	|  68851 PMMU?
-	jle	Lnot68851		|  no, nothing to do
-	movl	%sp@(4),%d0		|  get USTP to flush
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0			|  convert to address
-	movl	%d0,_C_LABEL(protorp)+4	|  stash USTP
-	pflushr	_C_LABEL(protorp)	|  flush RPT/TLB entries
-Lnot68851:
-	rts
-#if defined(M68060)
-Lflustp060:
-	movc	%cacr,%d1
-	orl	IC60_CUBC,%d1		| clear user branch cache entries
-	movc	%d1,%cacr
-	rts
-#endif
 
 ENTRY(ploadw)
 	movl	%sp@(4),%a0		|  address to load
