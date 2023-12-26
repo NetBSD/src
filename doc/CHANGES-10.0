@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.177 2023/12/25 12:48:47 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.178 2023/12/26 05:59:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -14942,4 +14942,26 @@ doc/3RDPARTY					(apply patch)
 	postfix(1): update to 3.8.4.
 	[kim, #517]
 
+usr.sbin/sysinst/configmenu.c			1.18
+usr.sbin/sysinst/defs.h				1.90
+usr.sbin/sysinst/main.c				1.32
+usr.sbin/sysinst/menus.entropy			1.3
+usr.sbin/sysinst/menus.mi			1.29
+usr.sbin/sysinst/net.c				1.45
+
+	Add a https transfer method (sharing all host details with the
+	http transfer). Make this method the default for all downloads.
+
+	Try to make sure the binary pkg installation can make use of SSL
+	verification.
+	[martin, ticket #511]
+
+usr.sbin/sysinst/arch/evbarm/msg.md.de		1.2
+usr.sbin/sysinst/arch/evbarm/msg.md.en		1.3
+usr.sbin/sysinst/arch/evbarm/msg.md.es		1.2
+usr.sbin/sysinst/arch/evbarm/msg.md.fr		1.2
+usr.sbin/sysinst/arch/evbarm/msg.md.pl		1.2
+
+	Fix kernel set names.
+	[martin, ticket #512]
 
