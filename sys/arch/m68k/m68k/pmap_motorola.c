@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.81 2023/12/26 17:42:43 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.82 2023/12/26 17:48:38 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.81 2023/12/26 17:42:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.82 2023/12/26 17:48:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,13 @@ void pmap_check_wiring(const char *, vaddr_t);
 #define	PRM_TFLUSH	0x01
 #define	PRM_CFLUSH	0x02
 #define	PRM_KEEPPTPAGE	0x04
+
+#define	active_pmap(pm) \
+	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+
+#define	active_user_pmap(pm) \
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * pmap_bootstrap_finalize:	[ INTERFACE ]

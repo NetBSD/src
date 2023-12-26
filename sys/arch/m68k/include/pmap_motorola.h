@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.40 2023/12/26 17:42:43 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.41 2023/12/26 17:48:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -181,12 +181,6 @@ struct pv_entry {
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 };
-
-#define	active_pmap(pm) \
-	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
-#define	active_user_pmap(pm) \
-	(curproc && \
-	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_header	*pv_table;	/* array of entries, one per page */
 
