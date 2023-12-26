@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.107 2023/05/17 01:35:00 uwe Exp $
+.\"	$NetBSD: installboot.8,v 1.108 2023/12/26 06:00:35 mrg Exp $
 .\"
 .\" Copyright (c) 2002-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" Usage: \*(UB
 .ds UB U\(hyBoot
 .
-.Dd May 16, 2023
+.Dd December 25, 2023
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -1124,6 +1124,18 @@ with the secondary bootstrap
 already present:
 .Pp
 .Dl installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.
+.Ss NetBSD/vax
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Ql ra0 :
+.Pp
+.Dl installboot /dev/rra0c /usr/mdec/raboot
+.Pp
+The primary bootstrap works with FFSv1 and FFSv2 file systems.
+The secondary
+.Nx Ns /vax
+bootstrap is located in
+.Pa /usr/mdec/boot .
 .
 .Sh DIAGNOSTIC
 .Ex -std
