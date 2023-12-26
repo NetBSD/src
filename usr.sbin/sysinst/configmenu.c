@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.17 2022/05/18 16:39:03 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.17.2.1 2023/12/26 05:54:15 snj Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -324,6 +324,9 @@ set_binpkg(struct menudesc *menu, void *arg)
 	int allok = 0;
 	arg_rv parm;
 
+	if (config_network(0))
+		mnt_net_config();
+
 	do {
 		parm.rv = -1;
 		parm.arg = additional_pkgs;
@@ -333,7 +336,16 @@ set_binpkg(struct menudesc *menu, void *arg)
 			return 0;
 		}
 
-		make_url(pkgpath, &pkg, pkg_dir);
+		/*
+		 * Make sure we have the TLS certs in a usable state
+		 * (if target is a new installation)
+		 */
+		if (pkg.xfer == XFER_HTTPS) {
+			run_program(RUN_CHROOT | RUN_SILENT,
+			    "/bin/sh /etc/rc.d/certctl_init onestart");
+			make_url(pkgpath, &pkg, pkg_dir);
+		}
+
 		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 			"pkg_add %s/pkgin", pkgpath) == 0) {
 			allok = 1;

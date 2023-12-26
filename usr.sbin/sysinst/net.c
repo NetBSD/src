@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.43.2.1 2023/01/04 05:30:44 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.43.2.2 2023/12/26 05:54:16 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -905,8 +905,9 @@ const char *
 url_proto(unsigned int xfer)
 {
 	switch (xfer) {
-	case XFER_FTP:	return "ftp";
-	case XFER_HTTP:	return "http";
+	case XFER_FTP:		return "ftp";
+	case XFER_HTTP:		return "http";
+	case XFER_HTTPS:	return "https";
 	}
 
 	return "";
@@ -956,7 +957,8 @@ make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
 	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", url_proto(f->xfer),
-	    ftp_user_encoded, f->xfer_host[f->xfer], ftp_dir_encoded);
+	    ftp_user_encoded, f->xfer_host[XFER_HOST(f->xfer)],
+	    ftp_dir_encoded);
 }
 
 

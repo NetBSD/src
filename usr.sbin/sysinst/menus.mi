@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.27.2.1 2023/02/24 13:48:28 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.27.2.2 2023/12/26 05:54:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -366,8 +366,12 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 		msg_display_subst(MSG_ftpsource, 2, "." SETS_TAR_SUFF,
 		    url_proto((uintptr_t)((arg_rv*)arg)->arg));
 	    };
-	option {src_legend(menu, MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]);},
-		action { src_prompt(MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg], sizeof ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]); };
+	option {src_legend(menu, MSG_Host, ftp.xfer_host[
+		XFER_HOST((uintptr_t)((arg_rv*)arg)->arg)]);},
+		action { src_prompt(MSG_Host, ftp.xfer_host[
+		XFER_HOST((uintptr_t)((arg_rv*)arg)->arg)],
+		sizeof ftp.xfer_host[XFER_HOST(
+		(uintptr_t)((arg_rv*)arg)->arg)]); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
 		action { src_prompt(MSG_Base_dir, ftp.dir, sizeof ftp.dir); };
 	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
@@ -566,8 +570,11 @@ menu zeroconf, title "Zeroconf", no clear;
 menu binpkg, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Install_pkgin;
 	display action { msg_display(MSG_pkgpath); };
-	option {src_legend(menu, MSG_Host, pkg.xfer_host[pkg.xfer]);},
-		action { src_prompt(MSG_Host, pkg.xfer_host[pkg.xfer], sizeof pkg.xfer_host[pkg.xfer]); };
+	option {src_legend(menu, MSG_Host,
+		pkg.xfer_host[XFER_HOST(pkg.xfer)]);},
+		action { src_prompt(MSG_Host,
+		pkg.xfer_host[XFER_HOST(pkg.xfer)],
+		sizeof pkg.xfer_host[XFER_HOST(pkg.xfer)]); };
 	option {src_legend(menu, MSG_Base_dir, pkg.dir);},
 		action { src_prompt(MSG_Base_dir, pkg.dir, sizeof pkg.dir); };
 	option {src_legend(menu, MSG_Pkg_dir, pkg_dir);},
@@ -613,9 +620,11 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	    exit, exitstring MSG_Install_pkgsrc;
 	display action { msg_display(MSG_pkgsrc); };
-	option {src_legend(menu, MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer]);},
-		action { src_prompt(MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer],
-			sizeof pkgsrc.xfer_host[pkgsrc.xfer]); };
+	option {src_legend(menu, MSG_Host, pkgsrc.xfer_host[
+		XFER_HOST(pkgsrc.xfer)]);},
+		action { src_prompt(MSG_Host,
+			pkgsrc.xfer_host[XFER_HOST(pkgsrc.xfer)],
+			sizeof pkgsrc.xfer_host[XFER_HOST(pkgsrc.xfer)]); };
 	option {src_legend(menu, MSG_Pkgsrc_dir, pkgsrc_dir);},
 		action { src_prompt(MSG_Pkgsrc_dir, pkgsrc_dir, sizeof pkgsrc_dir); };
 	option {src_legend(menu, MSG_User, pkgsrc.user);},
