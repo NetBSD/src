@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 2023/12/25 21:32:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 2023/12/26 02:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -836,22 +836,6 @@ Lhpmmu9:
 	moveq	#PGSHIFT,%d1
 	lsrl	%d1,%d0			| convert to page frame
 	movl	%d0,%a0@(MMUUSTP)	| load a new USTP
-#endif
-	rts
-
-ENTRY(ploadw)
-#if defined(M68K_MMU_MOTOROLA)
-	movl	%sp@(4),%a0		| address to load
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lploadwskp		| yes, skip
-#endif
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lploadwskp		| yes, skip
-#endif
-	ploadw	#1,%a0@			| pre-load translation
-Lploadwskp:
 #endif
 	rts
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 2023/12/25 21:32:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 2023/12/26 02:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -855,18 +855,6 @@ LmotommuC:
 	pmove	%a0@,%crp		| load root pointer
 	movl	#CACHE_CLR,%d0
 	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-
-ENTRY(ploadw)
-#if defined(M68030)
-	movl	%sp@(4),%a0		| address to load
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lploadwskp		| yes, skip
-#endif
-	ploadw	#1,%a0@			| pre-load translation
-Lploadwskp:
-#endif
 	rts
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2023/12/25 21:32:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2023/12/26 02:38:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -919,22 +919,6 @@ Lhpmmu9:
 	orl	#MMU_CEN,%a0@(MMUCMD)	| to clear data cache
 1:
 	movl	%sp@(4),%a0@(MMUUSTP)	| load a new USTP
-#endif
-	rts
-
-ENTRY(ploadw)
-#if defined(M68K_MMU_MOTOROLA)
-	movl	%sp@(4),%a0		| address to load
-#if defined(M68K_MMU_HP)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lploadwskp		| yes, skip
-#endif
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lploadwskp		| yes, skip
-#endif
-	ploadw	#1,%a0@			| pre-load translation
-Lploadwskp:
 #endif
 	rts
 
