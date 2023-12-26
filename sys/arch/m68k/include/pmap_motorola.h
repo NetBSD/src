@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.39 2023/12/25 21:32:57 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.40 2023/12/26 17:42:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -108,7 +108,7 @@ struct pmap {
  *
  * 68020/030 l2 size is chosen per NPTEPG, a number of page table entries
  * per page, to use one whole page for PTEs per one segment table entry,
- * and maybe also because 68020 HP MMU machines use simlar structures.
+ * and maybe also because 68020 HP MMU machines use similar structures.
  *
  * 68040/060 layout is defined by hardware design and not configurable,
  * as defined in <m68k/pte_motorola.h>.
@@ -169,15 +169,6 @@ struct pmap {
 #endif
 #define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
-
-/*
- * Macros for speed
- */
-#define	PMAP_ACTIVATE(pmap, loadhw)					\
-{									\
-	if ((loadhw))							\
-		loadustp((paddr_t)(pmap)->pm_stpa);			\
-}
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
