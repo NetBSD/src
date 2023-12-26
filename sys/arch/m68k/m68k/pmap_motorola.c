@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.80 2023/12/20 00:40:43 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.81 2023/12/26 17:42:43 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.80 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.81 2023/12/26 17:42:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -753,8 +753,15 @@ pmap_activate(struct lwp *l)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
 	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, (curlwp->l_flag & LW_IDLE) != 0 ||
-	    l->l_proc == curproc);
+	KASSERT(l == curlwp);
+
+	/*
+	 * Because the kernel has a separate root pointer, we don't
+	 * need to activate the kernel pmap.
+	 */
+	if (pmap != pmap_kernel()) {
+		loadustp((paddr_t)pmap->pm_stpa);
+	}
 }
 
 /*
@@ -2248,15 +2255,13 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 #endif
 					ptpmap->pm_stfree = protostfree;
 #endif
-
 				/*
-				 * XXX may have changed segment table
-				 * pointer for current process so
-				 * update now to reload hardware.
+				 * Segment table has changed; reload the
+				 * MMU if it's the active user pmap.
 				 */
-
-				if (active_user_pmap(ptpmap))
-					PMAP_ACTIVATE(ptpmap, 1);
+				if (active_user_pmap(ptpmap)) {
+					loadustp((paddr_t)ptpmap->pm_stpa);
+				}
 			}
 		}
 		pvh->pvh_attrs &= ~PVH_PTPAGE;
@@ -2474,11 +2479,12 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		}
 #endif
 		/*
-		 * XXX may have changed segment table pointer for current
-		 * process so update now to reload hardware.
+		 * Segment table has changed; reload the
+		 * MMU if it's the active user pmap.
 		 */
-		if (active_user_pmap(pmap))
-			PMAP_ACTIVATE(pmap, 1);
+		if (active_user_pmap(pmap)) {
+			loadustp((paddr_t)pmap->pm_stpa);
+		}
 
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 		    ("enter: pmap %p stab %p(%p)\n",
