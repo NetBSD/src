@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2023/12/27 03:03:41 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.19 2023/12/27 16:20:39 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -127,7 +127,6 @@ define	SPL6			PSL_S | PSL_IPL6
 
 # magic
 define	FC_USERD		FC_USERD
-define	FC_PURGE		FC_PURGE
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
