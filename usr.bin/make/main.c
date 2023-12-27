@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.605 2023/12/17 09:02:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.606 2023/12/27 00:45:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.605 2023/12/17 09:02:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.606 2023/12/27 00:45:37 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1706,7 +1706,7 @@ Cmd_Exec(const char *cmd, char **error)
 	char *p;
 	int saved_errno;
 
-	if (shellName == NULL)
+	if (shellPath == NULL)
 		Shell_Init();
 
 	args[0] = shellName;
