@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2023/12/27 03:03:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2023/12/27 19:26:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -379,16 +379,13 @@ Lstploaddone:
 Lmotommu2:
 	/* Use %tt0 register to map I/O space */
 	RELOC(protott0, %a0)
-	movl	#0xe01f8543,%a0@	| use %tt0 (0xe0000000-0xffffffff)
 	.long	0xf0100800		| pmove %a0@,%tt0
-	/* Use %tt1 register to map RAM  to use PROM calls */
+	/* Use %tt1 register to map RAM to use PROM calls */
 	RELOC(protott1, %a0)
-	movl	#0xc01f8143,%a0@	| use %tt1 (0xc0000000-0xdfffffff)
 	.long	0xf0100c00		| pmove %a0@,%tt1
 
 	pflusha
 	RELOC(prototc, %a2)
-	movl	#MMU51_TCR_BITS,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
 
 /*
@@ -1018,13 +1015,13 @@ GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
 
 GLOBAL(prototc)
-	.long	0		| prototype translation control
+	.long	MMU51_TCR_BITS	| prototype translation control
 
 GLOBAL(protott0)
-	.long	0		| prototype transparent translation register 0
+	.long	NEWS68K_TT_IO	| prototype transparent translation register 0
 
 GLOBAL(protott1)
-	.long	0		| prototype transparent translation register 1
+	.long	NEWS68K_TT_PROM	| prototype transparent translation register 1
 
 /*
  * Information from first stage boot program
