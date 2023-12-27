@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.9 2023/11/25 08:06:02 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.10 2023/12/27 18:07:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -285,7 +285,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	snprintf(portnum, sizeof(portnum), "%u", addr->port);
+	snprintf(portnum, sizeof(portnum), "%u", addr->port
+	    ? addr->port : ISCSI_DEFAULT_PORT);
 	ret = getaddrinfo((char *)addr->address, portnum, &hints, &ai0);
 	switch (ret) {
 	case 0:
@@ -553,7 +554,8 @@ event_recover_connection(uint32_t sid, uint32_t cid)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	snprintf(portnum, sizeof(portnum), "%u", addr->port);
+	snprintf(portnum, sizeof(portnum), "%u", addr->port
+	    ? addr->port : ISCSI_DEFAULT_PORT);
 	ret = getaddrinfo((char *)addr->address, portnum, &hints, &ai0);
 	if (ret) {
 		DEB(1, ("getaddrinfo failed (%s)", gai_strerror(ret)));
