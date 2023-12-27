@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.30 2020/02/20 08:27:39 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.31 2023/12/27 03:03:42 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -88,6 +88,12 @@ define	USPACE			USPACE
 define	PAGE_SIZE		PAGE_SIZE
 define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
+
+# MMU configuration constants (from pmap.h)
+export	MMU51_SRP_BITS
+export	MMU51_CRP_BITS
+export	MMU51_TCR_BITS
+export	MMU40_TCR_BITS
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)

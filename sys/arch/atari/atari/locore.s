@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 2023/12/26 02:38:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.121 2023/12/27 03:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1260,7 +1260,7 @@ Ldorebootend:
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 GLOBAL(protorp)
-	.long	0x80000002,0		|  prototype root pointer
+	.long	MMU51_CRP_BITS,0	| prototype root pointer
 
 #ifdef M68060 /* XXX */
 L60iem:		.long	0

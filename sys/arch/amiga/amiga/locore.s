@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.164 2023/12/26 02:38:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.165 2023/12/27 03:03:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -933,7 +933,7 @@ Lstartnot040:
 	orl	#0x0000c044,%d0		| 16 MB, ro, cache inhibited
 	.word	0x4e7b,0x0004		| movc %d0,%itt0
 	.word	0xf518			| pflusha
-	movl	#0xc000,%d0		| enable MMU
+	movl	#MMU40_TCR_BITS,%d0	| enable MMU
 	.word	0x4e7b,0x0003		| movc %d0,%tc
 	jmp	Lcleanitt0:l
 Lcleanitt0:
@@ -963,7 +963,7 @@ LMMUenable_start:
 	cmpl	#MMU_68040,%a0@
 	jne	Lenable030
 	.word	0xf518			| pflusha
-	movl	#0xc000,%d0		| enable MMU
+	movl	#MMU40_TCR_BITS,%d0	| enable MMU
 	.word	0x4e7b,0x0003		| movc	%d0,%tc
 	jmp	LMMUenable_end:l
 #endif /* M68040 || M68060 */
@@ -973,8 +973,7 @@ Lenable030:
 	pmove	%a0@,%tc
 	jmp	LMMUenable_end:l
 
-/* ENABLE, SRP_ENABLE, 8K pages, 8bit A-level, 11bit B-level */
-Ltc:	.long	0x82d08b00
+Ltc:	.long	MMU51_TCR_BITS		| see pmap.h
 
 LMMUenable_end:
 
@@ -1419,7 +1418,7 @@ GLOBAL(ectype)
 GLOBAL(fputype)
 	.long	FPU_NONE
 GLOBAL(protorp)
-	.long	0x80000002,0	| prototype root pointer
+	.long	MMU51_CRP_BITS,0 | prototype root pointer
 GLOBAL(delaydivisor)
 	.long	12		| should be enough for 80 MHz 68060
 				| will be adapted to other CPUs in
