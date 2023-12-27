@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.69 2023/12/27 02:40:31 thorpej Exp $
+# $NetBSD: ad.m68k,v 1.70 2023/12/27 19:22:11 thorpej Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
@@ -54,6 +54,7 @@
 ./usr/include/m68k/m68k.h			comp-c-include
 ./usr/include/m68k/math.h			comp-c-include
 ./usr/include/m68k/mcontext.h			comp-c-include
+./usr/include/m68k/mmu_30.h			comp-c-include
 ./usr/include/m68k/mmu_40.h			comp-c-include
 ./usr/include/m68k/mmu_51.h			comp-c-include
 ./usr/include/m68k/mutex.h			comp-c-include
