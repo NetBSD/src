@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.20 2023/03/26 19:10:33 andvar Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.21 2023/12/27 07:46:20 skrll Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.20 2023/03/26 19:10:33 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.21 2023/12/27 07:46:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 		fdtbus_regulator_enable(regulator);
 		fdtbus_regulator_release(regulator);
 	}
-		
+
 	fdtbus_clock_assign(phandle);
 	clock_enable_all(phandle);
 
@@ -301,7 +301,7 @@ again:
 
 	delay(1000);	/* TPERST. use 1ms */
 	delayed_ms += 1;
-	
+
 	reset_deassert(phandle, "pm");
 	reset_deassert(phandle, "aclk");
 	reset_deassert(phandle, "pclk");
