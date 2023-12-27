@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177 2023/12/27 03:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.178 2023/12/27 19:26:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1143,7 +1143,7 @@ ENTRY_NOPROFILE(get_pte)
 	subql	#4,%sp		| make temporary space
 
 	lea	_ASM_LABEL(longscratch),%a0
-	movl	#0x00ff8710,%a0@ | Set up FC 1 r/w access
+	movl	#MAC68K_TT_GET_PTE,%a0@ | See pmap.h
 	.long	0xf0100800	| pmove %a0@,%tt0
 
 	movl	%sp@(8),%a0	| logical address to look up
