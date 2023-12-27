@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2023/12/22 19:53:47 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2023/12/27 17:35:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2023/12/22 19:53:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2023/12/27 17:35:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2023/12/22 19:53:47 thorpej Exp $");
 #include <machine/vmparam.h>
 
 #include <sun2/sun2/control.h>
-#include <sun2/sun2/fc.h>
 #include <sun2/sun2/machdep.h>
 
 #ifdef DDB

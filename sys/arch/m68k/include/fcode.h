@@ -1,9 +1,9 @@
-/*	$NetBSD: fc.h,v 1.5 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: fcode.h,v 1.1 2023/12/27 17:35:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -33,30 +33,38 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cpu.h 1.16 91/03/25
- *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
+ * from: Utah $Hdr: cpu.h 1.16 91/03/25$
+ *
+ *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
+
+#ifndef _M68K_FCODE_H_
+#define	_M68K_FCODE_H_
 
 /*
- * This file defines the values that can be loaded into the
- * "sfc" and "dfc" registers (source/dest. function code).
+ * 680x0 Function Codes.
  *
- * These definitions used to be in <machine/cpu.h> but were
- * moved here so they can be included only where needed.
+ * Section 4.2 of the 68030 User's Manual describes the address spaces
+ * selected by the Function Code:
+ *
+ *	FC2	FC1	FC0	Address space
+ *	-----------------------------------------------------------
+ *	 0	 0	 0	(Undefined, reserved for Motorola)
+ *	 0	 0	 1	User Data space
+ *	 0	 1	 0	User Program space
+ *	 0	 1	 1	(Undefined, reserved for user)
+ *	 1	 0	 0	(Undefined, reserved for Motorola)
+ *	 1	 0	 1	Supervisor Data space
+ *	 1	 1	 0	Supervisor Program space
+ *	 1	 1	 1	CPU space
  */
-
-/* 680X0 function codes */
+#define	FC_UNDEF0	0
 #define	FC_USERD	1	/* user data space */
 #define	FC_USERP	2	/* user program space */
-#define	FC_CTRL3	3	/* sun3 control space */
-#define	FC_CTRL4	4	/* sun3x control space */
+#define	FC_UNDEF3	3
+#define	FC_UNDEF4	4
 #define	FC_SUPERD	5	/* supervisor data space */
 #define	FC_SUPERP	6	/* supervisor program space */
 #define	FC_CPU		7	/* CPU space */
 
-#ifdef	_SUN3X_
-#define FC_CONTROL FC_CTRL4
-#else
-#define FC_CONTROL FC_CTRL3
-#endif
+#endif /* _M68K_FCODE_H_ */

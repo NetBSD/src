@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2020/08/10 10:59:34 rin Exp $
+#	$NetBSD: genassym.cf,v 1.20 2023/12/27 17:35:37 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -76,6 +76,7 @@ include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
 include <machine/dvma.h>
+include <machine/fcode.h>
 include <machine/mon.h>
 include <machine/pcb.h>
 include <machine/pmap.h>
@@ -86,7 +87,6 @@ include <machine/vmparam.h>
 include <sun3/sun3/buserr.h>
 include <sun3/sun3/cache.h>
 include <sun3/sun3/control.h>
-include <sun3/sun3/fc.h>
 
 include <sun3/sun3/enable.h>
 

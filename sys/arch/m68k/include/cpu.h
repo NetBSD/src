@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2019/12/01 15:34:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2023/12/27 17:35:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,16 +102,6 @@
 #define	MMU40_U1	0x200
 #define	MMU40_GLB	0x400
 #define	MMU40_BE	0x800
-
-/* XXX - Move this stuff into <m68k/fcode.h> maybe? */
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_PURGE	3	/* HPMMU: clear TLB entries */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
 
 /* XXX - Move this stuff into <m68k/cacr.h> maybe? */
 
