@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 2023/12/27 03:03:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 2023/12/27 19:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -361,17 +361,17 @@ Lstploaddone:
 	| This is a hack to get PA=KVA when turning on MMU as mentioned above.
 	| Currently this will only work on 68040's.  We should also provide
 	| %tt0 and %tt1 settings to boot 68030's later.
-	movel	#0x0200c040,%d0		| intio devices are at 0x02000000
+	movel	#NEXT68K_TT40_IO,%d0	| see pmap.h
 	.long	0x4e7b0004		| movc %d0,%itt0
 	.long	0x4e7b0006		| movc %d0,%dtt0
-	movel	#0x0403c000,%d0		| kernel text and data at 0x04000000
+	movel	#NEXT68K_TT40_KERN,%d0	| see pmap.h
 	.long	0x4e7b0005		| movc %d0,%itt1
 	.long	0x4e7b0007		| movc %d0,%dtt1
 
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
-	movl	#0x8000,%d0
-	.long	0x4e7b0003		| movc %d0,tc
+	movl	#MMU40_TCR_BITS,%d0
+	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
 
