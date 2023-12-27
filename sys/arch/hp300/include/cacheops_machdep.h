@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.7 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.8 2023/12/27 17:35:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -72,6 +72,8 @@
 
 #ifndef _HP300_CACHEOPS_MACHDEP_H_
 #define	_HP300_CACHEOPS_MACHDEP_H_
+
+#include <machine/fcode.h>
 
 extern vaddr_t MMUbase;
 

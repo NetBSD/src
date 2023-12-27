@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2023/12/27 03:03:40 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.35 2023/12/27 17:35:34 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -41,6 +41,7 @@ include <sys/syscall.h>
 
 include <uvm/uvm_extern.h>
 
+include <machine/fcode.h>
 include <machine/psl.h>
 include <machine/pcb.h>
 include <machine/pte.h>

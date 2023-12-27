@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.49 2023/12/27 16:20:39 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.50 2023/12/27 17:35:34 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -42,6 +42,7 @@ include <uvm/uvm.h>
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
+include <machine/fcode.h>
 include <machine/frame.h>
 include <machine/intr.h>
 include <machine/psl.h>

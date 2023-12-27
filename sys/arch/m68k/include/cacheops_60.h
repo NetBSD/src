@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.14 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.15 2023/12/27 17:35:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <machine/fcode.h>
 
 /*
  * Invalidate entire TLB.

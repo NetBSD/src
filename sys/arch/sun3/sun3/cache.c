@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.23 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.24 2023/12/27 17:35:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.23 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.24 2023/12/27 17:35:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.23 2023/12/20 05:18:00 thorpej Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/fcode.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
 #include <sun3/sun3/cache.h>
 #include <sun3/sun3/control.h>
 #include <sun3/sun3/enable.h>
-#include <sun3/sun3/fc.h>
 #include <sun3/sun3/machdep.h>
 
 #define	CACHE_LINE	16	/* bytes */

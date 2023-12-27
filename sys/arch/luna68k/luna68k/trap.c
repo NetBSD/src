@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.78 2023/10/05 19:41:04 ad Exp $ */
+/* $NetBSD: trap.c,v 1.79 2023/12/27 17:35:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2023/12/27 17:35:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2023/10/05 19:41:04 ad Exp $");
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
+#include <machine/fcode.h>
 #include <machine/reg.h>
 #include <machine/db_machdep.h>
 
