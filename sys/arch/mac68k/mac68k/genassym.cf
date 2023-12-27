@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2020/02/20 08:27:39 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.42 2023/12/27 03:03:41 thorpej Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -73,6 +73,12 @@ define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
 define	USRIOSIZE		USRIOSIZE
 define	USRSTACK		USRSTACK
+
+# MMU configuration constants (from pmap.h)
+export	MMU51_SRP_BITS
+export	MMU51_CRP_BITS
+export	MMU51_TCR_BITS
+export	MMU40_TCR_BITS
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)

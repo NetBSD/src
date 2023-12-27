@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.41 2023/12/26 17:48:38 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.42 2023/12/27 03:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -98,6 +98,21 @@ struct pmap {
 };
 
 /*
+ * Root Pointer attributes for Supervisor and User modes.
+ *
+ * Supervisor:
+ * - No index limit (Lower limit == 0)
+ * - Points to Short format descriptor table.
+ * - Shared Globally
+ *
+ * User:
+ * - No index limit (Lower limit == 0)
+ * - Points to Short format descriptor table.
+ */
+#define	MMU51_SRP_BITS	(DTE51_LOWER | DTE51_SG | DT51_SHORT)
+#define	MMU51_CRP_BITS	(DTE51_LOWER |            DT51_SHORT)
+
+/*
  * MMU specific segment values
  *
  * We are using following segment layout in m68k pmap_motorola.c:
@@ -122,12 +137,19 @@ struct pmap {
  * so they have different values between 020/030 and 040/060.
  */
 							/*  8KB /  4KB	*/
-#define TIB_SHIFT	(PG_SHIFT - 2)			/*   11 /   10	*/
+#define TIB_SHIFT	(PGSHIFT - 2)			/*   11 /   10	*/
 #define TIB_SIZE	(1U << TIB_SHIFT)		/* 2048 / 1024	*/
-#define TIA_SHIFT	(32 - TIB_SHIFT - PG_SHIFT)	/*    8 /   10	*/
+#define TIA_SHIFT	(32 - TIB_SHIFT - PGSHIFT)	/*    8 /   10	*/
 #define TIA_SIZE	(1U << TIA_SHIFT)		/*  256 / 1024	*/
 
-#define SEGSHIFT	(TIB_SHIFT + PG_SHIFT)		/*   24 /   22	*/
+#define	MMU51_TCR_BITS	(TCR51_E | TCR51_SRE |				\
+			 __SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			 __SHIFTIN(TIA_SHIFT, TCR51_TIA) |		\
+			 __SHIFTIN(TIB_SHIFT, TCR51_TIB))
+#define	MMU40_TCR_BITS	(TCR40_E |					\
+			 __SHIFTIN(PGSHIFT - 12, TCR40_P))
+
+#define SEGSHIFT	(TIB_SHIFT + PGSHIFT)		/*   24 /   22	*/
 
 #define NBSEG30		(1U << SEGSHIFT)
 #define NBSEG40		(1U << SG4_SHIFT2)

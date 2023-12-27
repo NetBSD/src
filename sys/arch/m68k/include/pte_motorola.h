@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.8 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.9 2023/12/27 03:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,9 @@
 
 #ifndef	_MACHINE_PTE_H_
 #define	_MACHINE_PTE_H_
+
+#include <m68k/mmu_51.h>
+#include <m68k/mmu_40.h>
 
 /*
  * m68k motorola MMU segment/page table entries

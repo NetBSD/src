@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2023/12/26 02:38:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2023/12/27 03:03:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -336,10 +336,10 @@ Lstart3:
 	jra	Lstploaddone
 Lmotommu1:
 	RELOC(protorp, %a0)
-	movl	#0x80000202,%a0@	| nolimit + share global + 4 byte PTEs
+	movl	#MMU51_SRP_BITS,%a0@	| see pmap.h
 	movl	%d1,%a0@(4)		| + segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
-	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
+	movl	#MMU51_CRP_BITS,%a0@	| reinit upper half for CRP loads
 
 Lstploaddone:
 
@@ -386,7 +386,7 @@ Lturnoffttr:
 Lmotommu2:
 	pflusha
 	RELOC(prototc, %a2)
-	movl	#0x82c0aa00,%a2@	| value to load TC with
+	movl	#MMU51_TCR_BITS,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
 	jmp	Lenab1:l		| force absolute (not pc-relative) jmp
 
