@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.6 2019/03/31 22:24:41 jmcneill Exp $	*/
+/*	$NetBSD: efinet.c,v 1.7 2023/12/27 09:28:04 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -333,7 +333,7 @@ efi_net_probe(void)
 	EFI_STATUS status;
 	UINTN i, nhandles;
 	int nifs, depth = -1;
-	bool found;
+	bool found, is_bootdp;
 
 	status = LibLocateHandle(ByProtocol, &SimpleNetworkProtocol, NULL,
 	    &nhandles, &handles);
@@ -369,6 +369,9 @@ efi_net_probe(void)
 		if (!found)
 			continue;
 
+		is_bootdp = depth > 0 &&
+		    efi_device_path_ncmp(efi_bootdp, dp0, depth) == 0;
+
 		status = uefi_call_wrapper(BS->OpenProtocol, 6, handles[i],
 		    &SimpleNetworkProtocol, (void **)&net, IH, NULL,
 		    EFI_OPEN_PROTOCOL_EXCLUSIVE);
@@ -396,10 +399,21 @@ efi_net_probe(void)
 			return;
 		}
 
-		if (depth > 0 && efi_device_path_ncmp(efi_bootdp, dp0, depth) == 0) {
+		if (is_bootdp) {
+			/*
+			 * This is boot device...
+			 */
 			char devname[9];
+
 			snprintf(devname, sizeof(devname), "net%u", nifs);
 			set_default_device(devname);
+
+			/*
+			 * and now opened for us excluively. Therefore,
+			 * access via device path is illegal.
+			 */
+			efi_bootdp = NULL;
+			depth = -1;
 		}
 
 		nifs++;
