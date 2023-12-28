@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.22 2023/12/20 15:07:16 tsutsui Exp $	*/
+/*	$NetBSD: msdos.c,v 1.23 2023/12/28 12:13:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.22 2023/12/20 15:07:16 tsutsui Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.23 2023/12/28 12:13:55 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	} else if (fsopts->sectorsize == -1) {
 		fsopts->sectorsize = msdos_opt->options.bytes_per_sector;
 	} else if (fsopts->sectorsize != msdos_opt->options.bytes_per_sector) {
-		err(1, "inconsistent sectorsize -S %u"
+		err(EXIT_FAILURE, "inconsistent sectorsize -S %u"
 		    "!= -o bytes_per_sector %u",
 		    fsopts->sectorsize, msdos_opt->options.bytes_per_sector);
 	}
@@ -177,7 +177,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	printf("Creating `%s'\n", image);
 	TIMER_START(start);
 	if (mkfs_msdos(image, NULL, &msdos_opt->options) == -1)
-		errx(1, "Image file `%s' not created.", image);
+		errx(EXIT_FAILURE, "Image file `%s' not created.", image);
 	TIMER_RESULTS(start, "mkfs_msdos");
 
 	fsopts->fd = open(image, O_RDWR);
@@ -188,10 +188,10 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		flags |= MSDOSFSMNT_UTF8;
 
 	if ((pmp = msdosfs_mount(&vp, flags)) == NULL)
-		err(1, "msdosfs_mount");
+		err(EXIT_FAILURE, "msdosfs_mount");
 
 	if (msdosfs_root(pmp, &rootvp) != 0)
-		err(1, "msdosfs_root");
+		err(EXIT_FAILURE, "msdosfs_root");
 
 	if (debug & DEBUG_FS_MAKEFS)
 		printf("msdos_makefs: image %s directory %s root %p\n",
@@ -201,7 +201,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	printf("Populating `%s'\n", image);
 	TIMER_START(start);
 	if (msdos_populate_dir(dir, VTODE(&rootvp), root, root, fsopts) == -1)
-		errx(1, "Image file `%s' not populated.", image);
+		errx(EXIT_FAILURE, "Image file `%s' not populated.", image);
 	TIMER_RESULTS(start, "msdos_populate_dir");
 
 	if (debug & DEBUG_FS_MAKEFS)

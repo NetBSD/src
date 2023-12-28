@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.30 2022/05/07 08:54:02 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.31 2023/12/28 12:13:55 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.30 2022/05/07 08:54:02 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.31 2023/12/28 12:13:55 tsutsui Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -251,7 +251,8 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 			emul_mmc_profile = 0x1a;
 			stdsize = DVDRWSIZE;
 		} else {
-			errx(1, "unknown or unimplemented disc format");
+			errx(EXIT_FAILURE,
+			    "unknown or unimplemented disc format");
 		}
 		if (emul_mmc_profile != 0x01)
 			set_sectorsize = 2048;
@@ -271,20 +272,23 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 		if (context.primary_name)
 			free(context.primary_name);
 		if ((strstr(buf, ":")))
-			errx(1, "primary name can't have ':' in its name");
+			errx(EXIT_FAILURE,
+			    "primary name can't have ':' in its name");
 		context.primary_name = strdup(buf);
 		break;
 	case 'v':
 		context.min_udf = a_udf_version(buf, "min_udf");
 		if (context.min_udf > 0x250)
-			errx(1, "maximum supported version is UDF 2.50");
+			errx(EXIT_FAILURE,
+			    "maximum supported version is UDF 2.50");
 		if (context.min_udf > context.max_udf)
 			context.max_udf = context.min_udf;
 		break;
 	case 'V':
 		context.max_udf = a_udf_version(buf, "min_udf");
 		if (context.max_udf > 0x250)
-			errx(1, "maximum supported version is UDF 2.50");
+			errx(EXIT_FAILURE,
+			    "maximum supported version is UDF 2.50");
 		if (context.min_udf > context.max_udf)
 			context.min_udf = context.max_udf;
 		break;
@@ -334,7 +338,7 @@ udf_inc_link(union dscrptr *dscr)
 		efe       = &dscr->efe;
 		efe->link_cnt = udf_rw16(udf_rw16(efe->link_cnt) + 1);
 	} else {
-		errx(1, "bad tag passed to udf_inc_link");
+		errx(EXIT_FAILURE, "bad tag passed to udf_inc_link");
 	}
 }
 
@@ -352,7 +356,7 @@ udf_set_link_cnt(union dscrptr *dscr, int num)
 		efe       = &dscr->efe;
 		efe->link_cnt = udf_rw16(num);
 	} else {
-		errx(1, "bad tag passed to udf_set_link_cnt");
+		errx(EXIT_FAILURE, "bad tag passed to udf_set_link_cnt");
 	}
 }
 
@@ -432,7 +436,7 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		inf_len   = udf_rw64(efe->inf_len);
 		obj_size  = udf_rw64(efe->obj_size);
 	} else {
-		errx(1, "bad tag passed to udf_file_inject_blob");
+		errx(EXIT_FAILURE, "bad tag passed to udf_file_inject_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
 
@@ -522,7 +526,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 		obj_size    = udf_rw64(efe->obj_size);
 		logblks_rec = udf_rw64(efe->logblks_rec);
 	} else {
-		errx(1, "bad tag passed to udf_file_append_blob");
+		errx(EXIT_FAILURE, "bad tag passed to udf_file_append_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
 
@@ -1154,7 +1158,7 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 
 	if (fsopts->size) {
 		if (fsopts->size < proposed_size)
-			errx(1, "makefs_udf: won't fit on disc!");
+			errx(EXIT_FAILURE, "makefs_udf: won't fit on disc!");
 	} else {
 		fsopts->size = proposed_size;
 	}
@@ -1180,12 +1184,12 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	/* names */
 	error = udf_proces_names();
 	if (error)
-		errx(1, "bad names given");
+		errx(EXIT_FAILURE, "bad names given");
 
 	/* open disc device or emulated file */
 	if (udf_opendisc(image, O_CREAT)) {
 		udf_closedisc();
-		errx(1, "can't open %s", image);
+		errx(EXIT_FAILURE, "can't open %s", image);
 	}
 	fsopts->fd = dev_fd;
 
@@ -1196,7 +1200,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	error = udf_derive_format(req_enable, req_disable);
 	if (error) {
 		udf_closedisc();
-		errx(1, "can't derive format from media/settings");
+		errx(EXIT_FAILURE, "can't derive format from media/settings");
 	}
 
 	/* estimate the amount of space needed */
@@ -1212,13 +1216,13 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		(long)fsopts->inodes);
 	emul_size = MAX(emul_size, fsopts->size);
 	if ((fsopts->maxsize > 0) && (emul_size > fsopts->maxsize))
-		errx(1, "won't fit due to set maximum disk size");
+		errx(EXIT_FAILURE, "won't fit due to set maximum disk size");
 
 	/* prepare disc if necessary (recordables mainly) */
 	error = udf_prepare_disc();
 	if (error) {
 		udf_closedisc();
-		errx(1, "preparing disc failed");
+		errx(EXIT_FAILURE, "preparing disc failed");
 	}
 
 	/* update mmc info but now with correct size */
@@ -1243,7 +1247,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	udf_allow_writing();
 	if (udf_do_newfs_prefix()) {
 		udf_closedisc();
-		errx(1, "basic setup failed");
+		errx(EXIT_FAILURE, "basic setup failed");
 	}
 
 	/* update context */
