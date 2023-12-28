@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.59 2023/04/18 23:05:51 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.60 2023/12/28 12:13:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.59 2023/04/18 23:05:51 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.60 2023/12/28 12:13:55 tsutsui Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1188,7 +1188,7 @@ cd9660_copy_filenames(iso9660_disk *diskStructure, cd9660node *node)
 
 	if (TAILQ_FIRST(&node->cn_children)->isoDirRecord == NULL) {
 		debug_print_tree(diskStructure, diskStructure->rootNode, 0);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.18 2023/12/28 12:13:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.18 2023/12/28 12:13:56 tsutsui Exp $");
 #endif  /* !__lint */
 
 #include <util.h>
@@ -305,7 +305,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 		working_sector = writenode->fileDataSector;
 		if (fseeko(fd, working_sector * diskStructure->sectorSize,
 		    SEEK_SET) == -1)
-			err(1, "fseeko");
+			err(EXIT_FAILURE, "fseeko");
 
 		/*
 		 * Now loop over children, writing out their directory
@@ -330,7 +330,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 				/* Seek to the next sector. */
 				if (fseeko(fd, working_sector *
 				    diskStructure->sectorSize, SEEK_SET) == -1)
-					err(1, "fseeko");
+					err(EXIT_FAILURE, "fseeko");
 			}
 			/* Write out the basic ISO directory record */
 			(void)fwrite(&temp_record, 1,
@@ -343,7 +343,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 			    diskStructure->sectorSize + cur_sector_offset +
 			    temp_record.length[0] - temp->su_tail_size,
 			    SEEK_SET) == -1)
-				err(1, "fseeko");
+				err(EXIT_FAILURE, "fseeko");
 			if (temp->su_tail_size > 0)
 				fwrite(temp->su_tail_data, 1,
 				    temp->su_tail_size, fd);
@@ -394,12 +394,12 @@ cd9660_write_filedata(iso9660_disk *diskStructure, FILE *fd, off_t sector,
 	curpos = ftello(fd);
 
 	if (fseeko(fd, sector * diskStructure->sectorSize, SEEK_SET) == -1)
-		err(1, "fseeko");
+		err(EXIT_FAILURE, "fseeko");
 
 	success = fwrite(buf, diskStructure->sectorSize * numsecs, 1, fd);
 
 	if (fseeko(fd, curpos, SEEK_SET) == -1)
-		err(1, "fseeko");
+		err(EXIT_FAILURE, "fseeko");
 
 	if (success == 1)
 		success = diskStructure->sectorSize * numsecs;
@@ -439,7 +439,7 @@ cd9660_copy_file(iso9660_disk *diskStructure, FILE *fd, off_t start_sector,
 		printf("Writing file: %s\n",filename);
 
 	if (fseeko(fd, start_sector * diskStructure->sectorSize, SEEK_SET) == -1)
-		err(1, "fseeko");
+		err(EXIT_FAILURE, "fseeko");
 
 	while (!feof(rf)) {
 		bytes_read = fread(buf,1,buf_size,rf);
@@ -475,7 +475,7 @@ cd9660_write_rr(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode,
 	offset += writenode->isoDirRecord->length[0];
 	if (fseeko(fd, sector * diskStructure->sectorSize + offset, SEEK_SET) ==
 	    -1)
-		err(1, "fseeko");
+		err(EXIT_FAILURE, "fseeko");
 	/* Offset now points at the end of the record */
 	TAILQ_FOREACH(myattr, &writenode->head, rr_ll) {
 		fwrite(&(myattr->attr), CD9660_SUSP_ENTRY_SIZE(myattr), 1, fd);
@@ -492,7 +492,7 @@ cd9660_write_rr(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode,
 				    diskStructure->sectorSize)
 				    + writenode->susp_entry_ce_start,
 				    SEEK_SET) == -1)
-					err(1, "fseeko");
+					err(EXIT_FAILURE, "fseeko");
 				in_ca = 1;
 			}
 		}
@@ -505,5 +505,5 @@ cd9660_write_rr(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode,
 	if (in_ca)
 		if (fseeko(fd, sector * diskStructure->sectorSize + offset,
 		    SEEK_SET) == -1)
-			err(1, "fseeko");
+			err(EXIT_FAILURE, "fseeko");
 }

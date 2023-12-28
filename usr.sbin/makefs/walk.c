@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.32 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: walk.c,v 1.33 2023/12/28 12:13:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.32 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: walk.c,v 1.33 2023/12/28 12:13:55 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -92,11 +92,11 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 
 	len = snprintf(path, sizeof(path), "%s/%s", root, dir);
 	if (len >= (int)sizeof(path))
-		errx(1, "Pathname too long.");
+		errx(EXIT_FAILURE, "Pathname too long.");
 	if (debug & DEBUG_WALK_DIR)
 		printf("walk_dir: %s %p\n", path, parent);
 	if ((dirp = opendir(path)) == NULL)
-		err(1, "Can't opendir `%s'", path);
+		err(EXIT_FAILURE, "Can't opendir `%s'", path);
 	rp = path + strlen(root) + 1;
 	if (join != NULL) {
 		first = cur = join;
@@ -126,13 +126,13 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 			printf("scanning %s/%s/%s\n", root, dir, name);
 		if (snprintf(path + len, sizeof(path) - len, "/%s", name) >=
 		    (int)sizeof(path) - len)
-			errx(1, "Pathname too long.");
+			errx(EXIT_FAILURE, "Pathname too long.");
 		if (follow) {
 			if (stat(path, &stbuf) == -1)
-				err(1, "Can't stat `%s'", path);
+				err(EXIT_FAILURE, "Can't stat `%s'", path);
 		} else {
 			if (lstat(path, &stbuf) == -1)
-				err(1, "Can't lstat `%s'", path);
+				err(EXIT_FAILURE, "Can't lstat `%s'", path);
 		}
 #ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
@@ -164,7 +164,8 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 					continue;
 				}
 				if (!replace)
-					errx(1, "Can't merge %s `%s' with "
+					errx(EXIT_FAILURE,
+					    "Can't merge %s `%s' with "
 					    "existing %s",
 					    inode_type(stbuf.st_mode), path,
 					    inode_type(cur->type));
@@ -229,7 +230,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 
 			llen = readlink(path, slink, sizeof(slink) - 1);
 			if (llen == -1)
-				err(1, "Readlink `%s'", path);
+				err(EXIT_FAILURE, "Readlink `%s'", path);
 			slink[llen] = '\0';
 			cur->symlink = estrdup(slink);
 		}
@@ -239,7 +240,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 		for (cur = first->next; cur != NULL; cur = cur->next)
 			cur->first = first;
 	if (closedir(dirp) == -1)
-		err(1, "Can't closedir `%s/%s'", root, dir);
+		err(EXIT_FAILURE, "Can't closedir `%s/%s'", root, dir);
 	return (first);
 }
 
@@ -344,16 +345,17 @@ apply_specfile(const char *specfile, const char *dir, fsnode *parent, int specon
 
 				/* read in the specfile */
 	if ((fp = fopen(specfile, "r")) == NULL)
-		err(1, "Can't open `%s'", specfile);
+		err(EXIT_FAILURE, "Can't open `%s'", specfile);
 	TIMER_START(start);
 	root = spec(fp);
 	TIMER_RESULTS(start, "spec");
 	if (fclose(fp) == EOF)
-		err(1, "Can't close `%s'", specfile);
+		err(EXIT_FAILURE, "Can't close `%s'", specfile);
 
 				/* perform some sanity checks */
 	if (root == NULL)
-		errx(1, "Specfile `%s' did not contain a tree", specfile);
+		errx(EXIT_FAILURE,
+		    "Specfile `%s' did not contain a tree", specfile);
 	assert(strcmp(root->name, ".") == 0);
 	assert(root->type == F_DIR);
 
@@ -377,10 +379,10 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 		printf("apply_specdir: %s %p %p\n", dir, specnode, dirnode);
 
 	if (specnode->type != F_DIR)
-		errx(1, "Specfile node `%s/%s' is not a directory",
+		errx(EXIT_FAILURE, "Specfile node `%s/%s' is not a directory",
 		    dir, specnode->name);
 	if (dirnode->type != S_IFDIR)
-		errx(1, "Directory node `%s/%s' is not a directory",
+		errx(EXIT_FAILURE, "Directory node `%s/%s' is not a directory",
 		    dir, dirnode->name);
 
 	apply_specentry(dir, specnode, dirnode);
@@ -427,7 +429,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 		}
 		if ((size_t)snprintf(path, sizeof(path), "%s/%s",
 		    dir, curnode->name) >= sizeof(path))
-			errx(1, "Pathname too long.");
+			errx(EXIT_FAILURE, "Pathname too long.");
 		if (curfsnode == NULL) {	/* need new entry */
 			struct stat	stbuf;
 
@@ -442,7 +444,8 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 					/* check that enough info is provided */
 #define NODETEST(t, m)							\
 			if (!(t))					\
-				errx(1, "`%s': %s not provided", path, m)
+				errx(EXIT_FAILURE,			\
+				    "`%s': %s not provided", path, m)
 			NODETEST(curnode->flags & F_TYPE, "type");
 			NODETEST(curnode->flags & F_MODE, "mode");
 				/* XXX: require F_TIME ? */
@@ -490,7 +493,8 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 		apply_specentry(dir, curnode, curfsnode);
 		if (curnode->type == F_DIR) {
 			if (curfsnode->type != S_IFDIR)
-				errx(1, "`%s' is not a directory", path);
+				errx(EXIT_FAILURE,
+				    "`%s' is not a directory", path);
 			assert (curfsnode->child != NULL);
 			apply_specdir(path, curnode, curfsnode->child, speconly);
 		}
@@ -505,7 +509,8 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	assert(dirnode != NULL);
 
 	if (nodetoino(specnode->type) != dirnode->type)
-		errx(1, "`%s/%s' type mismatch: specfile %s, tree %s",
+		errx(EXIT_FAILURE,
+		    "`%s/%s' type mismatch: specfile %s, tree %s",
 		    dir, specnode->name, inode_type(nodetoino(specnode->type)),
 		    inode_type(dirnode->type));
 
@@ -594,7 +599,7 @@ dump_fsnodes(fsnode *root)
 	for (cur = root; cur != NULL; cur = cur->next) {
 		if (snprintf(path, sizeof(path), "%s/%s", cur->path,
 		    cur->name) >= (int)sizeof(path))
-			errx(1, "Pathname too long.");
+			errx(EXIT_FAILURE, "Pathname too long.");
 
 		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
 			printf("cur=%8p parent=%8p first=%8p ",

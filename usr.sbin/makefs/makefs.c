@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.55 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: makefs.c,v 1.56 2023/12/28 12:13:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.55 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.56 2023/12/28 12:13:55 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -107,7 +107,8 @@ main(int argc, char *argv[])
 
 	debug = 0;
 	if ((fstype = get_fstype(DEFAULT_FSTYPE)) == NULL)
-		errx(1, "Unknown default fs type `%s'.", DEFAULT_FSTYPE);
+		errx(EXIT_FAILURE,
+		    "Unknown default fs type `%s'.", DEFAULT_FSTYPE);
 
 		/* set default fsoptions */
 	(void)memset(&fsoptions, 0, sizeof(fsoptions));
@@ -126,7 +127,7 @@ main(int argc, char *argv[])
 	start_time.tv_nsec = start.tv_usec * 1000;
 #endif
 	if (ch == -1)
-		err(1, "Unable to get system time");
+		err(EXIT_FAILURE, "Unable to get system time");
 
 
 	while ((ch = getopt(argc, argv, "B:b:d:f:F:LM:m:N:O:o:rs:S:t:T:xZ")) != -1) {
@@ -198,7 +199,7 @@ main(int argc, char *argv[])
 
 		case 'N':
 			if (! setup_getid(optarg))
-				errx(1,
+				errx(EXIT_FAILURE,
 			    "Unable to use user and group databases in `%s'",
 				    optarg);
 			break;
@@ -219,7 +220,7 @@ main(int argc, char *argv[])
 
 			while ((p = strsep(&optarg, ",")) != NULL) {
 				if (*p == '\0')
-					errx(1, "Empty option");
+					errx(EXIT_FAILURE, "Empty option");
 				if (! fstype->parse_options(p, &fsoptions))
 					usage(fstype, &fsoptions);
 			}
@@ -247,14 +248,15 @@ main(int argc, char *argv[])
 				fstype->cleanup_options(&fsoptions);
 			fsoptions.fs_specific = NULL;
 			if ((fstype = get_fstype(optarg)) == NULL)
-				errx(1, "Unknown fs type `%s'.", optarg);
+				errx(EXIT_FAILURE,
+				    "Unknown fs type `%s'.", optarg);
 			fstype->prepare_options(&fsoptions);
 			break;
 
 		case 'T':
 			if (get_tstamp(optarg, &stampst) == -1)
-				errx(1, "Cannot get timestamp from `%s'",
-				    optarg);
+				errx(EXIT_FAILURE,
+				    "Cannot get timestamp from `%s'", optarg);
 			break;
 
 		case 'x':
@@ -286,7 +288,7 @@ main(int argc, char *argv[])
 
 	/* -x must be accompanied by -F */
 	if (fsoptions.onlyspec != 0 && specfile == NULL)
-		errx(1, "-x requires -F mtree-specfile.");
+		errx(EXIT_FAILURE, "-x requires -F mtree-specfile.");
 
 				/* walk the tree */
 	TIMER_START(start);
@@ -298,9 +300,9 @@ main(int argc, char *argv[])
 	for (i = 2; i < argc; i++) {
 		struct stat sb;
 		if (stat(argv[i], &sb) == -1)
-			err(1, "Can't stat `%s'", argv[i]);
+			err(EXIT_FAILURE, "Can't stat `%s'", argv[i]);
 		if (!S_ISDIR(sb.st_mode))
-			errx(1, "%s: not a directory", argv[i]);
+			errx(EXIT_FAILURE, "%s: not a directory", argv[i]);
 		TIMER_START(start);
 		root = walk_dir(argv[i], ".", NULL, root, fsoptions.replace,
 		    fsoptions.follow);
@@ -326,7 +328,7 @@ main(int argc, char *argv[])
 
 	free_fsnodes(root);
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
 }
 
@@ -483,5 +485,5 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 			    o[i].letter ? ',' : ' ',
 			    o[i].name, o[i].desc);
 	}
-	exit(1);
+	exit(EXIT_FAILURE);
 }
