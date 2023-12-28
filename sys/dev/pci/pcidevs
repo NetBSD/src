@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1499 2023/11/13 08:07:24 jnemeth Exp $
+$NetBSD: pcidevs,v 1.1500 2023/12/28 09:42:39 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6508,6 +6508,8 @@ product INTEL I740		0x7800	i740 Graphics Accelerator
 product INTEL 7HS_Z790_ESPI	0x7a04	Z790 eSPI
 product INTEL 7HS_H770_ESPI	0x7a05	H770 eSPI
 product INTEL 7HS_B760_ESPI	0x7a06	B760 eSPI
+product INTEL 7HS_C266_ESPI	0x7a13	C266 eSPI
+product INTEL 7HS_C262_ESPI	0x7a14	C262 eSPI
 product INTEL 7HS_P2SB		0x7a20	700 Series PCH P2SB
 product INTEL 7HS_PMC		0x7a21	700 Series PCH PMC
 product INTEL 7HS_SMB		0x7a23	700 Series PCH SMBus
