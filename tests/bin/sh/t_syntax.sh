@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.12 2021/11/22 05:07:15 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.13 2023/12/28 20:04:10 andvar Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,7 +114,7 @@ b_comments_body() {
 		'echo \## #\#'
 
 	cat <<-'DONE' |
-		# test comments do not provoke synax errors !\
+		# test comments do not provoke syntax errors !\
 		echo foo # ( { " hello
 		while : # that's forever
 		do	# the following command list
