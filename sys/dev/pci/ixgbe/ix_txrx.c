@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.111 2023/12/13 08:25:54 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.112 2023/12/28 10:02:14 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.111 2023/12/13 08:25:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.112 2023/12/28 10:02:14 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.111 2023/12/13 08:25:54 msaitoh Exp $"
  */
 static bool ixgbe_rsc_enable = FALSE;
 
+#ifdef IXGBE_FDIR
 /*
  * For Flow Director: this is the
  * number of TX packets we sample
@@ -95,6 +96,7 @@ static bool ixgbe_rsc_enable = FALSE;
  * setting this to 0.
  */
 static int atr_sample_rate = 20;
+#endif
 
 #define IXGBE_M_ADJ(sc, rxr, mp)					\
 	if (sc->max_frame_size <= (rxr->mbuf_sz - ETHER_ALIGN))	\
@@ -715,9 +717,11 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 		txbuf->eop = NULL;
 	}
 
+#ifdef IXGBE_FDIR
 	/* Set the rate at which we sample packets */
 	if (sc->feat_en & IXGBE_FEATURE_FDIR)
 		txr->atr_sample = atr_sample_rate;
+#endif
 
 	/* Set number of descriptors available */
 	txr->tx_avail = sc->num_tx_desc;

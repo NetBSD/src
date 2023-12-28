@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.93 2023/10/12 08:06:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.94 2023/12/28 10:02:14 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -376,9 +376,11 @@ struct tx_ring {
 	void			*txr_si;
 	bool			txr_no_space; /* Like IFF_OACTIVE */
 
+#ifdef IXGBE_FDIR
 	/* Flow Director */
 	u16			atr_sample;
 	u16			atr_count;
+#endif
 
 	u64			bytes;  /* Used for AIM */
 	u64			packets;
