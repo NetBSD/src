@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.35 2021/06/05 22:21:15 pgoyette Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.36 2023/12/28 19:58:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.35 2021/06/05 22:21:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.36 2023/12/28 19:58:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -960,7 +960,7 @@ scsipi_print_sense_data_real(struct scsi_sense_data *sense, int verbosity)
 		return;
 
 	/*
-	 * Now figure whether we should print any additional informtion.
+	 * Now figure whether we should print any additional information.
 	 *
 	 * Where should we start from? If we had SKSV data,
 	 * start from offset 18, else from offset 15.
