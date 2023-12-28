@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.102 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.103 2023/12/28 12:48:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.102 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.103 2023/12/28 12:48:08 hannken Exp $");
+
+#include "veriexec.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.102 2023/02/24 11:02:27 riastradh Ex
 #include <sys/fstrans.h>
 #include <sys/namei.h>
 #include <sys/extattr.h>
+#include <sys/verified_exec.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
