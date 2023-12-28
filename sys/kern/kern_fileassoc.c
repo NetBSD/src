@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.37 2023/08/02 07:11:31 riastradh Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.37 2023/08/02 07:11:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -218,6 +218,8 @@ fileassoc_init(void)
 		return error;
 	}
 	fileassoc_domain = specificdata_domain_create();
+
+	mutex_init(&fileassoc_global.lock, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
 }
