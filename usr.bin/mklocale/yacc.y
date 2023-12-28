@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.34 2019/10/13 21:12:32 christos Exp $	*/
+/*	$NetBSD: yacc.y,v 1.35 2023/12/28 03:49:35 rin Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.34 2019/10/13 21:12:32 christos Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.35 2023/12/28 03:49:35 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,9 @@ __nbrune_t	charsetmask = (__nbrune_t)0x0000007f;
 __nbrune_t	charsetmask = (__nbrune_t)0xffffffff;
 
 void set_map(rune_map *, rune_list *, u_int32_t);
+#if 0
 void set_digitmap(rune_map *, rune_list *);
+#endif
 void add_map(rune_map *, rune_list *, u_int32_t);
 
 __dead void	usage(void);
@@ -187,8 +189,19 @@ entry	:	ENCODING STRING
 		{ set_map(&maplower, $2, 0); }
 	|	MAPUPPER map
 		{ set_map(&mapupper, $2, 0); }
-	|	DIGITMAP map
-		{ set_digitmap(&types, $2); }
+/*
+ * XXX PR lib/57798
+ * set_digitmap() was implemented with an assumption that
+ * all characters are mapped to numerical values <= 255.
+ * This is no longer true for Unicode, and results in, e.g.,
+ * wrong return values of wcwidth(3) for U+5146 or U+16B60.
+ *
+ *	|	DIGITMAP map
+ *		{ set_digitmap(&types, $2); }
+ *
+ */
+	|	DIGITMAP mapignore
+		{ }
 	;
 
 list	:	RUNE
@@ -253,6 +266,12 @@ map	:	LBRK RUNE RUNE RBRK
 		    $$->map = $7;
 		    $$->next = $1;
 		}
+	;
+
+mapignore :	LBRK RUNE RUNE RBRK { }
+	|	map LBRK RUNE RUNE RBRK { }
+	|	LBRK RUNE THRU RUNE ':' RUNE RBRK { }
+	|	map LBRK RUNE THRU RUNE ':' RUNE RBRK { }
 	;
 %%
 
@@ -382,6 +401,7 @@ set_map(rune_map *map, rune_list *list, u_int32_t flag)
     }
 }
 
+#if 0
 void
 set_digitmap(rune_map *map, rune_list *list)
 {
@@ -401,6 +421,7 @@ set_digitmap(rune_map *map, rune_list *list)
 	list = nlist;
     }
 }
+#endif
 
 void
 add_map(rune_map *map, rune_list *list, u_int32_t flag)
