@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.83 2023/12/28 01:33:05 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.84 2023/12/28 15:33:12 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.83 2023/12/28 01:33:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.84 2023/12/28 15:33:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,13 +580,15 @@ pmap_init(void)
 		paddr_t paddr;
 
 		while (kptp) {
-			pmap_changebit(kptp->kpt_pa, PG_CI, ~PG_CCB);
+			pmap_changebit(kptp->kpt_pa, PG_CI,
+				       (pt_entry_t)~PG_CCB);
 			kptp = kptp->kpt_next;
 		}
 
 		paddr = (paddr_t)Segtabzeropa;
 		while (paddr < (paddr_t)Segtabzeropa + M68K_STSIZE) {
-			pmap_changebit(paddr, PG_CI, ~PG_CCB);
+			pmap_changebit(paddr, PG_CI,
+				       (pt_entry_t)~PG_CCB);
 			paddr += PAGE_SIZE;
 		}
 
