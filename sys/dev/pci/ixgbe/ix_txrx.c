@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.112 2023/12/28 10:02:14 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.113 2023/12/28 10:05:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.112 2023/12/28 10:02:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.113 2023/12/28 10:05:18 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1505,8 +1505,8 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		slot = netmap_reset(na, NR_RX, rxr->me, 0);
 #endif /* DEV_NETMAP */
 
-	rsize = roundup2(sc->num_rx_desc *
-	    sizeof(union ixgbe_adv_rx_desc), DBA_ALIGN);
+	rsize = sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc);
+	KASSERT((rsize % DBA_ALIGN) == 0);
 	bzero((void *)rxr->rx_base, rsize);
 	/* Cache the size */
 	rxr->mbuf_sz = sc->rx_mbuf_sz;
@@ -2353,8 +2353,8 @@ ixgbe_allocate_queues(struct ixgbe_softc *sc)
 	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* For the ring itself */
-	tsize = roundup2(sc->num_tx_desc * sizeof(union ixgbe_adv_tx_desc),
-	    DBA_ALIGN);
+	tsize = sc->num_tx_desc * sizeof(union ixgbe_adv_tx_desc);
+	KASSERT((tsize % DBA_ALIGN) == 0);
 
 	/*
 	 * Now set up the TX queues, txconf is needed to handle the
@@ -2410,8 +2410,8 @@ ixgbe_allocate_queues(struct ixgbe_softc *sc)
 	/*
 	 * Next the RX queues...
 	 */
-	rsize = roundup2(sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc),
-	    DBA_ALIGN);
+	rsize = sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc);
+	KASSERT((rsize % DBA_ALIGN) == 0);
 	for (int i = 0; i < sc->num_queues; i++, rxconf++) {
 		rxr = &sc->rx_rings[i];
 		/* Set up some basics */
