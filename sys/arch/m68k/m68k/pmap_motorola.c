@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.82 2023/12/26 17:48:38 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.83 2023/12/28 01:33:05 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.82 2023/12/26 17:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.83 2023/12/28 01:33:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ pa_to_pvh(paddr_t pa)
 void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int,
 			    struct pv_entry **);
 bool	pmap_testbit(paddr_t, int);
-bool	pmap_changebit(paddr_t, int, int);
+bool	pmap_changebit(paddr_t, pt_entry_t, pt_entry_t);
 int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
@@ -1826,7 +1826,7 @@ pmap_zero_page(paddr_t phys)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	int npte1, npte2;
+	pt_entry_t npte1, npte2;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%lx, %lx)\n", src, dst));
 
@@ -1890,7 +1890,7 @@ pmap_clear_modify(struct vm_page *pg)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", pg));
 
-	return pmap_changebit(pa, 0, ~PG_M);
+	return pmap_changebit(pa, 0, (pt_entry_t)~PG_M);
 }
 
 /*
@@ -1905,7 +1905,7 @@ pmap_clear_reference(struct vm_page *pg)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", pg));
 
-	return pmap_changebit(pa, 0, ~PG_U);
+	return pmap_changebit(pa, 0, (pt_entry_t)~PG_U);
 }
 
 /*
@@ -2193,7 +2193,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 		PMAP_DPRINTF(PDB_CACHE,
 		    ("remove: clearing CI for pa %lx\n", pa));
 		pvh->pvh_attrs &= ~PVH_CI;
-		pmap_changebit(pa, 0, ~PG_CI);
+		pmap_changebit(pa, 0, (pt_entry_t)~PG_CI);
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
 		    (PDB_CACHE|PDB_PVDUMP))
@@ -2352,7 +2352,7 @@ pmap_testbit(paddr_t pa, int bit)
  */
 /* static */
 bool
-pmap_changebit(paddr_t pa, int set, int mask)
+pmap_changebit(paddr_t pa, pt_entry_t set, pt_entry_t mask)
 {
 	struct pv_header *pvh;
 	struct pv_entry *pv;
@@ -2629,7 +2629,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 			    pmap == pmap_kernel() ? "Kernel" : "User",
 			    va, ptpa, pte, *pte);
 #endif
-		if (pmap_changebit(ptpa, PG_CI, ~PG_CCB))
+		if (pmap_changebit(ptpa, PG_CI, (pt_entry_t)~PG_CCB))
 			DCIS();
 	}
 #endif
@@ -2769,15 +2769,18 @@ _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
 #if defined(M68020) || defined(M68030)
 	if (mmutype == MMU_68040) {
 #endif
-	if (pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), PG_CCB, ~PG_CI))
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), PG_CCB,
+			   (pt_entry_t)~PG_CI))
 		DCIS();
 
 #if defined(M68020) || defined(M68030)
 	} else
-		pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), 0, ~PG_CI);
+		pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), 0,
+			       (pt_entry_t)~PG_CI);
 #endif
 #else
-	pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), 0, ~PG_CI);
+	pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), 0,
+		       (pt_entry_t)~PG_CI);
 #endif
 }
 
@@ -2792,7 +2795,8 @@ _pmap_set_page_cacheinhibit(pmap_t pmap, vaddr_t va)
 #if defined(M68020) || defined(M68030)
 	if (mmutype == MMU_68040) {
 #endif
-	if (pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), PG_CI, ~PG_CCB))
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pmap, va)), PG_CI,
+			   (pt_entry_t)~PG_CCB))
 		DCIS();
 #if defined(M68020) || defined(M68030)
 	} else
