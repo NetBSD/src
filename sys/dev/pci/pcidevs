@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1500 2023/12/28 09:42:39 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1501 2023/12/28 09:43:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5963,7 +5963,7 @@ product INTEL ADL_U15_2_4_HOST	0x4609	Alder Lake (U15,2+4) Host
 product INTEL ADL_U9_2_4_HOST	0x460a	Alder Lake (U9,2+4) Host
 product INTEL ADL_PCIE_RP_0	0x460d	Alder Lake PCIe G5 Root Port 0 (x16)
 product INTEL ADL_XDCI		0x460e	Alder Lake USB-C Device (xDCI)
-product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake (S,2+0) Host
+product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake Refresh (S,2+0) Host
 product INTEL ADL_N_8_HOST	0x4617	Alder Lake-N (0+8) Host
 product INTEL ADL_U15_1_4_HOST	0x4619	Alder Lake (U15,1+4) Host
 product INTEL ADL_U9_1_4_HOST	0x461a	Alder Lake (U9,1+4) Host
@@ -5985,7 +5985,9 @@ product INTEL ADL_HX_6_8_HOST	0x463b	Alder Lake (HX,6+8) Host
 product INTEL ADL_PCIE_RP_3	0x463d	Alder Lake PCIe G4 Root Port 3 (x4)
 product INTEL ADL_TBTDMA_0	0x463e	Alder Lake Thunderbolt DMA 0
 product INTEL ADL_TBT_PCIE_1	0x463f	Alder Lake Thunderbolt PCIe 1
+product INTEL RPL_S_6_8_HOST_2	0x4640	Raptor Lake (S,6+8) Host
 product INTEL ADL_H_6_8_HOST	0x4641	Alder Lake (H,6+8) Host
+product INTEL RPL_HX_6_4_HOST_2	0x4647	Raptor Lake (HX,6+4) Host
 product INTEL ADL_S_6_4_HOST	0x4648	Alder Lake (S,6+4) Host
 product INTEL ADL_H_6_4_HOST	0x4649	Alder Lake (H,6+4) Host
 product INTEL ADL_PCIE_RP_2	0x464d	Alder Lake PCIe G4 Root Port 2 (x4)
@@ -7436,7 +7438,12 @@ product INTEL RPL_S_6_4_HOST	0xa705	Raptor Lake (S,6+4) Host
 product INTEL RPL_H_6_8_HOST	0xa706	Raptor Lake (H,6+8) Host
 product INTEL RPL_H_4_8_HOST	0xa707	Raptor Lake (H,4+8) Host
 product INTEL RPL_U_2_8_HOST	0xa708	Raptor Lake (U,2+8) Host
+product INTEL RPL_PX_6_8_HOST	0xa709	Raptor Lake (PX,6+8) Host
+product INTEL RPL_PX_4_8_HOST	0xa70a	Raptor Lake (PX,4+8) Host
 product INTEL RPL_PCIE_RP_0	0xa70d	Raptor Lake PCIe G5 Root Port 0 (x16)
+product INTEL RPL_E_8_0_HOST	0xa711	Raptor Lake (E,8+0) Host
+product INTEL RPL_E_6_0_HOST	0xa712	Raptor Lake (E,6+0) Host
+product INTEL RPL_E_4_0_HOST	0xa713	Raptor Lake (E,4+0) Host
 product INTEL RPL_H_4_4_HOST	0xa716	Raptor Lake (H,4+4) Host
 product INTEL RPL_HX_6_4_HOST	0xa719	Raptor Lake (HX,6+4) Host
 product INTEL RPL_U_2_4_HOST	0xa71b	Raptor Lake (U,2+4) Host
@@ -7448,6 +7455,7 @@ product INTEL RPL_HX_8_12_HOST	0xa729	Raptor Lake (HX,8+12) Host
 product INTEL RPL_HX_6_8_HOST	0xa72a	Raptor Lake (HX,6+8) Host
 product INTEL RPL_PCIE_RP_1	0xa72d	Raptor Lake PCIe G5 Root Port 1 (x8)
 product INTEL RPL_TBTDMA_0	0xa73e	Raptor Lake Thunderbolt DMA 0
+product INTEL RPL_S_8_12_HOST	0xa740	Raptor Lake Refresh (S,8+12) Host
 product INTEL RPL_PCIE_RP_2	0xa74d	Raptor Lake PCIe G4 Root Port 2 (x4)
 product INTEL RPL_GNA		0xa74f	Raptor Lake Gauss Newton Algorithm
 product INTEL RPL_TBTDMA_1	0xa76d	Raptor Lake Thunderbolt DMA 1
