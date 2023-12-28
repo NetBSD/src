@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.10 2022/01/24 09:14:37 andvar Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.11 2023/12/28 19:58:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_sense.c,v 1.10 2022/01/24 09:14:37 andvar Exp $");
+__RCSID("$NetBSD: scsi_sense.c,v 1.11 2023/12/28 19:58:11 andvar Exp $");
 #endif
 
 
@@ -371,7 +371,7 @@ scsi_print_sense_data(const unsigned char *s, int slen, int verbosity)
 	}
 
 	/*
-	 * Now figure whether we should print any additional informtion.
+	 * Now figure whether we should print any additional information.
 	 *
 	 * Where should we start from? If we had SKSV data,
 	 * start from offset 18, else from offset 15.

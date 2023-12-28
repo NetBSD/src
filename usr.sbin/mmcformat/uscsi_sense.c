@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_sense.c,v 1.2 2022/01/24 09:14:38 andvar Exp $	*/
+/* $NetBSD: uscsi_sense.c,v 1.3 2023/12/28 19:58:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -704,7 +704,7 @@ uscsi_print_sense_data(uint8_t *s, int slen, int verbosity)
 	}
 
 	/*
-	 * Now figure whether we should print any additional informtion.
+	 * Now figure whether we should print any additional information.
 	 *
 	 * Where should we start from? If we had SKSV data,
 	 * start from offset 18, else from offset 15.
