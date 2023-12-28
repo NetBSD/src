@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.113 2023/12/28 10:05:18 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.114 2023/12/28 10:13:51 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.113 2023/12/28 10:05:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.114 2023/12/28 10:13:51 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -626,8 +626,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 		goto fail;
 	}
 
-	txr->tx_buffers = malloc(sizeof(struct ixgbe_tx_buf) *
-	    sc->num_tx_desc, M_DEVBUF, M_WAITOK | M_ZERO);
+	txr->tx_buffers = kmem_zalloc(sizeof(struct ixgbe_tx_buf) *
+	    sc->num_tx_desc, KM_SLEEP);
 
 	/* Create the descriptor buffer dma maps */
 	txbuf = txr->tx_buffers;
@@ -758,7 +758,7 @@ ixgbe_free_transmit_structures(struct ixgbe_softc *sc)
 		ixgbe_dma_free(sc, &txr->txdma);
 		IXGBE_TX_LOCK_DESTROY(txr);
 	}
-	free(sc->tx_rings, M_DEVBUF);
+	kmem_free(sc->tx_rings, sizeof(struct tx_ring) * sc->num_queues);
 } /* ixgbe_free_transmit_structures */
 
 /************************************************************************
@@ -806,7 +806,8 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 		pcq_destroy(txr->txr_interq);
 	}
 	if (txr->tx_buffers != NULL) {
-		free(txr->tx_buffers, M_DEVBUF);
+		kmem_free(txr->tx_buffers,
+		    sizeof(struct ixgbe_tx_buf) * sc->num_tx_desc);
 		txr->tx_buffers = NULL;
 	}
 	if (txr->txtag != NULL) {
@@ -1427,7 +1428,7 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 	int                 bsize, error;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * rxr->num_desc;
-	rxr->rx_buffers = malloc(bsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	rxr->rx_buffers = kmem_zalloc(bsize, KM_SLEEP);
 
 	error = ixgbe_dma_tag_create(
 	         /*      parent */ sc->osdep.dmat,
@@ -1673,7 +1674,7 @@ ixgbe_free_receive_structures(struct ixgbe_softc *sc)
 		IXGBE_RX_LOCK_DESTROY(rxr);
 	}
 
-	free(sc->rx_rings, M_DEVBUF);
+	kmem_free(sc->rx_rings, sizeof(struct rx_ring) * sc->num_queues);
 } /* ixgbe_free_receive_structures */
 
 
@@ -1700,7 +1701,8 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 		}
 
 		if (rxr->rx_buffers != NULL) {
-			free(rxr->rx_buffers, M_DEVBUF);
+			kmem_free(rxr->rx_buffers,
+			    sizeof(struct ixgbe_rx_buf) * rxr->num_desc);
 			rxr->rx_buffers = NULL;
 		}
 	}
@@ -2341,16 +2343,16 @@ ixgbe_allocate_queues(struct ixgbe_softc *sc)
 	int             txconf = 0, rxconf = 0;
 
 	/* First, allocate the top level queue structs */
-	sc->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->queues = kmem_zalloc(sizeof(struct ix_queue) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* Second, allocate the TX ring struct memory */
-	sc->tx_rings = malloc(sizeof(struct tx_ring) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->tx_rings = kmem_zalloc(sizeof(struct tx_ring) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* Third, allocate the RX ring */
-	sc->rx_rings = (struct rx_ring *)malloc(sizeof(struct rx_ring) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->rx_rings = kmem_zalloc(sizeof(struct rx_ring) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* For the ring itself */
 	tsize = sc->num_tx_desc * sizeof(union ixgbe_adv_tx_desc);
@@ -2469,9 +2471,9 @@ err_rx_desc:
 err_tx_desc:
 	for (txr = sc->tx_rings; txconf > 0; txr++, txconf--)
 		ixgbe_dma_free(sc, &txr->txdma);
-	free(sc->rx_rings, M_DEVBUF);
-	free(sc->tx_rings, M_DEVBUF);
-	free(sc->queues, M_DEVBUF);
+	kmem_free(sc->rx_rings, sizeof(struct rx_ring) * sc->num_queues);
+	kmem_free(sc->tx_rings, sizeof(struct tx_ring) * sc->num_queues);
+	kmem_free(sc->queues, sizeof(struct ix_queue) * sc->num_queues);
 	return (error);
 } /* ixgbe_allocate_queues */
 
@@ -2493,5 +2495,5 @@ ixgbe_free_queues(struct ixgbe_softc *sc)
 		que = &sc->queues[i];
 		mutex_destroy(&que->dc_mtx);
 	}
-	free(sc->queues, M_DEVBUF);
+	kmem_free(sc->queues, sizeof(struct ix_queue) * sc->num_queues);
 } /* ixgbe_free_queues */
