@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1309 2023/09/10 14:04:28 abs Exp $
+#	$NetBSD: files,v 1.1310 2023/12/29 23:31:45 thorpej Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1658,6 +1658,11 @@ include "dev/ic/files.athn"
 # MI clk api
 #
 include "dev/clk/files.clk"
+
+#
+# Goldfish virtual devices
+#
+include "dev/goldfish/files.goldfish"
 
 #
 # Flattened Device Tree (FDT) support

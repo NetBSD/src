@@ -1,0 +1,5 @@
+# $NetBSD: files.goldfish,v 1.1 2023/12/29 23:31:44 thorpej Exp $
+
+# Goldfish real-time clock / timer
+device	gfrtc
+file	dev/goldfish/gfrtc.c		gfrtc

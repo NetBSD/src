@@ -1,11 +1,11 @@
-/*	$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $	*/
+/*	$NetBSD: gfrtcvar.h,v 1.1 2023/12/29 23:31:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson
+ * by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,61 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $");
+#ifndef _DEV_GOLDFISH_GFRTCVAR_H_
+#define	_DEV_GOLDFISH_GFRTCVAR_H_
 
-#include <sys/param.h>
+#include <dev/clock_subr.h>
 
-#include <sys/bus.h>
-#include <sys/device.h>
+struct gfrtc_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
 
-#include <dev/fdt/fdtvar.h>
-#include <dev/goldfish/gfrtcvar.h>
-
-/*
- * https://android.googlesource.com/platform/external/qemu/+/master/docs/GOLDFISH-VIRTUAL-HARDWARE.TXT
- */
-
-static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "google,goldfish-rtc" },
-	DEVICE_COMPAT_EOL
+	struct todr_chip_handle	sc_todr;
 };
 
+void	gfrtc_attach(struct gfrtc_softc *);
 
-static int
-gfrtc_fdt_match(device_t parent, cfdata_t cf, void *aux)
-{
-	struct fdt_attach_args * const faa = aux;
-
-	return of_compatible_match(faa->faa_phandle, compat_data);
-}
-
-static void
-gfrtc_fdt_attach(device_t parent, device_t self, void *aux)
-{
-	struct gfrtc_softc * const sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
-	const int phandle = faa->faa_phandle;
-	bus_addr_t addr;
-	bus_size_t size;
-
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-
-	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
-		return;
-	}
-
-	aprint_naive("\n");
-	aprint_normal(": Google Goldfish RTC\n");
-
-	gfrtc_attach(sc);
-}
-
-CFATTACH_DECL_NEW(gfrtc_fdt, sizeof(struct gfrtc_softc),
-	gfrtc_fdt_match, gfrtc_fdt_attach, NULL, NULL);
+#endif /* _DEV_GOLDFISH_GFRTCVAR_H_ */
