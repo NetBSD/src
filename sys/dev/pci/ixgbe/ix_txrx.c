@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.114 2023/12/28 10:13:51 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.115 2023/12/29 07:36:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.114 2023/12/28 10:13:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.115 2023/12/29 07:36:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1577,7 +1577,9 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = sc->num_rx_desc - 1; /* Fully allocated */
+#ifdef LRO
 	rxr->lro_enabled = FALSE;
+#endif
 	rxr->discard_multidesc = false;
 	IXGBE_EVC_STORE(&rxr->rx_copies, 0);
 #if 0 /* NetBSD */
