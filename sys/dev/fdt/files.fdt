@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.70 2023/05/08 10:18:03 skrll Exp $
+# $NetBSD: files.fdt,v 1.71 2023/12/29 23:31:44 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -217,6 +217,5 @@ attach	vmt at fdt with vmt_fdt
 file	dev/fdt/vmt_fdt.c			vmt_fdt
 
 # Google Goldfish RTC
-device	gfrtc
 attach	gfrtc at fdt with gfrtc_fdt
 file	dev/fdt/gfrtc_fdt.c			gfrtc_fdt

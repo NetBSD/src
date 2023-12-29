@@ -1,11 +1,11 @@
-/*	$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.1 2023/12/29 23:31:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson
+ * by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,60 +30,67 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.1 2023/12/29 23:31:44 thorpej Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bus.h>
 #include <sys/device.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/goldfish/gfrtcvar.h>
 
 /*
  * https://android.googlesource.com/platform/external/qemu/+/master/docs/GOLDFISH-VIRTUAL-HARDWARE.TXT
  */
 
-static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "google,goldfish-rtc" },
-	DEVICE_COMPAT_EOL
-};
+#define	GOLDFISH_RTC_READ(sc, reg) \
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define	GOLDFISH_RTC_WRITE(sc, reg, val) \
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+
+#define	GOLDFISH_RTC_TIME_LOW	0x00
+#define	GOLDFISH_RTC_TIME_HIGH	0x04
 
 
 static int
-gfrtc_fdt_match(device_t parent, cfdata_t cf, void *aux)
+gfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct fdt_attach_args * const faa = aux;
+	struct gfrtc_softc *sc = ch->cookie;
+	const uint64_t lo = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_LOW);
+	const uint64_t hi = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_HIGH);
 
-	return of_compatible_match(faa->faa_phandle, compat_data);
+	uint64_t nsec = (hi << 32) | lo;
+
+	tv->tv_sec = nsec / 1000000000;
+	tv->tv_usec = (nsec - tv->tv_sec) / 1000;	// Always 0?
+
+	return 0;
 }
 
-static void
-gfrtc_fdt_attach(device_t parent, device_t self, void *aux)
+static int
+gfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct gfrtc_softc * const sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
-	const int phandle = faa->faa_phandle;
-	bus_addr_t addr;
-	bus_size_t size;
+	struct gfrtc_softc *sc = ch->cookie;
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
+	uint64_t nsec = (tv->tv_sec * 1000000 + tv->tv_usec) * 1000;
+	uint32_t hi = nsec >> 32;
+	uint32_t lo = nsec;
 
-	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
-		return;
-	}
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_HIGH, hi);
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_HIGH, lo);
 
-	aprint_naive("\n");
-	aprint_normal(": Google Goldfish RTC\n");
-
-	gfrtc_attach(sc);
+	return 0;
 }
 
-CFATTACH_DECL_NEW(gfrtc_fdt, sizeof(struct gfrtc_softc),
-	gfrtc_fdt_match, gfrtc_fdt_attach, NULL, NULL);
+
+void
+gfrtc_attach(struct gfrtc_softc * const sc)
+{
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = gfrtc_gettime;
+	sc->sc_todr.todr_settime = gfrtc_settime;
+	sc->sc_todr.todr_setwen = NULL;
+
+	todr_attach(&sc->sc_todr);
+}
