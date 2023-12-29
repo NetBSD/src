@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1086 2023/12/20 09:03:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1087 2023/12/29 12:20:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1086 2023/12/20 09:03:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1087 2023/12/29 12:20:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3252,7 +3252,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 			size_t ac = words.len;
 			SubstringWords_Free(words);
 
-			Buf_InitSize(&buf, 4);
+			Buf_Init(&buf);
 			Buf_AddInt(&buf, (int)ac);
 			Expr_SetValueOwn(expr, Buf_DoneData(&buf));
 		}

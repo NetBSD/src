@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.372 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.373 2023/12/29 12:20:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.372 2023/12/19 19:33:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.373 2023/12/29 12:20:55 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2113,7 +2113,7 @@ Suffix_Print(const Suffix *suff)
 {
 	Buffer buf;
 
-	Buf_InitSize(&buf, 16);
+	Buf_Init(&buf);
 	Buf_AddFlag(&buf, suff->include, "SUFF_INCLUDE");
 	Buf_AddFlag(&buf, suff->library, "SUFF_LIBRARY");
 	Buf_AddFlag(&buf, suff->isNull, "SUFF_NULL");
@@ -2169,7 +2169,7 @@ Suff_NamesStr(void)
 	SuffixListNode *ln;
 	Suffix *suff;
 
-	Buf_InitSize(&buf, 16);
+	Buf_Init(&buf);
 	for (ln = sufflist.first; ln != NULL; ln = ln->next) {
 		suff = ln->datum;
 		if (ln != sufflist.first)
