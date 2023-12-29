@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.16 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.17 2023/12/29 15:47:03 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -7,34 +7,38 @@ all:	mod-assign-empty
 all:	mod-assign-parse
 all:	mod-assign-shell-error
 
-# The modifier '::?=' applies the assignment operator '?=' 3 times. The
+# In the following loop expression,
+# the '::?=' modifier applies the assignment operator '?=' 3 times. The
 # operator '?=' only has an effect for the first time, therefore the variable
 # FIRST ends up with the value 1.
 .if "${1 2 3:L:@i@${FIRST::?=$i}@} first=${FIRST}" != " first=1"
 .  error
 .endif
 
-# The modifier '::=' applies the assignment operator '=' 3 times. The
+# In the following loop expression,
+# the modifier '::=' applies the assignment operator '=' 3 times. The
 # operator '=' overwrites the previous value, therefore the variable LAST ends
 # up with the value 3.
 .if "${1 2 3:L:@i@${LAST::=$i}@} last=${LAST}" != " last=3"
 .  error
 .endif
 
-# The modifier '::+=' applies the assignment operator '+=' 3 times. The
+# In the following loop expression,
+# the modifier '::+=' applies the assignment operator '+=' 3 times. The
 # operator '+=' appends 3 times to the variable, therefore the variable
 # APPENDED ends up with the value "1 2 3".
 .if "${1 2 3:L:@i@${APPENDED::+=$i}@} appended=${APPENDED}" != " appended=1 2 3"
 .  error
 .endif
 
-# The modifier '::!=' applies the assignment operator '!=' 3 times. Just as
+# In the following loop expression,
+# the modifier '::!=' applies the assignment operator '!=' 3 times. Just as
 # with the modifier '::=', the last value is stored in the RAN variable.
 .if "${1 2 3:L:@i@${RAN::!=${i:%=echo '<%>';}}@} ran=${RAN}" != " ran=<3>"
 .  error
 .endif
 
-# The assignments were performed as part of .if conditions and thus happened
+# When a '::=' modifier is evaluated as part of an .if condition, it happens
 # in the command line scope.
 .if "${FIRST}, ${LAST}, ${APPENDED}, ${RAN}" != "1, 3, 1 2 3, <3>"
 .  error
@@ -149,3 +153,47 @@ ${VARNAME}=	initial-value	# Sets 'VAR.${param}' to 'expanded'.
 .  error
 .endif
 .MAKEFLAGS: -d0
+
+
+# Conditional directives are evaluated in command line scope.  Any assignment
+# modifiers in these conditions create or
+.MAKEFLAGS: CMD_CMD_VAR=cmd-value
+CMD_GLOBAL_VAR=global-value
+export CMD_ENV_VAR=env-value
+
+.MAKEFLAGS: -dv
+# expect-reset
+# expect: Command: CMD_CMD_VAR = new-value
+# expect: Global: CMD_GLOBAL_VAR = new-value
+# expect: Global: CMD_ENV_VAR = new-value
+# expect: Global: ignoring delete 'CMD_NEW_VAR' as it is not found
+# expect: Command: CMD_NEW_VAR = new-value
+.if ${CMD_CMD_VAR::=new-value} \
+  || ${CMD_GLOBAL_VAR::=new-value} \
+  || ${CMD_ENV_VAR::=new-value} \
+  || "${CMD_NEW_VAR::=new-value}"
+.  error
+.endif
+.MAKEFLAGS: -d0
+
+
+# In target scope, assignments only happen in a few cases.  To extract the
+# debug log for this test, the debug log would have to be enabled for the
+# other targets as well, thus producing lots of irrelevant output.
+#
+# Running './make -r -f varmod-assign.mk target' results in:
+#	target: TARGET_TARGET_VAR = target-value
+#	target: TARGET_TARGET_VAR = new-value
+#	Global: TARGET_GLOBAL_VAR = new-value
+#	Global: TARGET_ENV_VAR = new-value
+#	target: TARGET_NEW_VAR = new-value
+.MAKEFLAGS: TARGET_CMD_VAR=cmd-value
+TARGET_GLOBAL_VAR=global-value
+export TARGET_ENV_VAR=env-value
+.MAKEFLAGS: ${make(target):?-dv:}
+target: TARGET_TARGET_VAR=target-value
+	: ${TARGET_TARGET_VAR::=new-value}
+	: ${TARGET_CMD_VAR::=new-value}
+	: ${TARGET_GLOBAL_VAR::=new-value}
+	: ${TARGET_ENV_VAR::=new-value}
+	: ${TARGET_NEW_VAR::=new-value}
