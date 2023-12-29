@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.712 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.713 2023/12/29 20:43:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.712 2023/12/19 19:33:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.713 2023/12/29 20:43:58 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -311,6 +311,23 @@ static const struct {
 enum PosixState posix_state = PS_NOT_YET;
 
 static HashTable /* full file name -> Guard */ guards;
+
+
+static List *
+Lst_New(void)
+{
+	List *list = bmake_malloc(sizeof *list);
+	Lst_Init(list);
+	return list;
+}
+
+static void
+Lst_Free(List *list)
+{
+
+	Lst_Done(list);
+	free(list);
+}
 
 static IncludedFile *
 GetInclude(size_t i)
