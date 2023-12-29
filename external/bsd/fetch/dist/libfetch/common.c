@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 2023/01/24 08:02:57 mlelstv Exp $	*/
+/*	$NetBSD: common.c,v 1.5 2023/12/29 00:55:46 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -368,7 +368,9 @@ fetch_cache_get(const struct url *url, int af)
 {
 	conn_t *conn, *last_conn = NULL;
 
-	for (conn = connection_cache; conn; conn = conn->next_cached) {
+	for (conn = connection_cache; conn; last_conn = conn,
+	    conn = conn->next_cached)
+	{
 		if (conn->cache_url->port == url->port &&
 		    strcmp(conn->cache_url->scheme, url->scheme) == 0 &&
 		    strcmp(conn->cache_url->host, url->host) == 0 &&
@@ -395,7 +397,7 @@ fetch_cache_get(const struct url *url, int af)
 void
 fetch_cache_put(conn_t *conn, int (*closecb)(conn_t *))
 {
-	conn_t *iter, *last;
+	conn_t *iter, *last, *oiter;
 	int global_count, host_count;
 
 	if (conn->cache_url == NULL || cache_global_limit == 0) {
@@ -405,20 +407,25 @@ fetch_cache_put(conn_t *conn, int (*closecb)(conn_t *))
 
 	global_count = host_count = 0;
 	last = NULL;
-	for (iter = connection_cache; iter;
-	    last = iter, iter = iter->next_cached) {
+	for (iter = connection_cache; iter; ) {
 		++global_count;
 		if (strcmp(conn->cache_url->host, iter->cache_url->host) == 0)
 			++host_count;
 		if (global_count < cache_global_limit &&
 		    host_count < cache_per_host_limit)
-			continue;
-		--global_count;
-		if (last != NULL)
-			last->next_cached = iter->next_cached;
-		else
-			connection_cache = iter->next_cached;
-		(*iter->cache_close)(iter);
+			oiter = NULL;
+		else {
+			--global_count;
+			if (last != NULL)
+				last->next_cached = iter->next_cached;
+			else
+				connection_cache = iter->next_cached;
+			oiter = iter;
+		}
+		last = iter;
+		iter = iter->next_cached;
+		if (oiter)
+			(*oiter->cache_close)(oiter);
 	}
 
 	conn->cache_close = closecb;
