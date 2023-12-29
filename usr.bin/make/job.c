@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.461 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.462 2023/12/29 12:59:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.461 2023/12/19 19:33:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.462 2023/12/29 12:59:43 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -857,13 +857,9 @@ static void
 JobWriteSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
 		 CommandFlags *inout_cmdFlags, const char **inout_cmdTemplate)
 {
-	if (!run) {
-		/*
-		 * If there is no command to run, there is no need to switch
-		 * error checking off and on again for nothing.
-		 */
+	if (!run)
 		inout_cmdFlags->ignerr = false;
-	} else if (shell->hasErrCtl)
+	else if (shell->hasErrCtl)
 		ShellWriter_ErrOff(wr, job->echo && inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
 		JobWriteSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,

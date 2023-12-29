@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1087 2023/12/29 12:20:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1088 2023/12/29 12:59:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1087 2023/12/29 12:20:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1088 2023/12/29 12:59:43 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -261,10 +261,7 @@ typedef struct SepBuf {
 } SepBuf;
 
 
-/*
- * This lets us tell if we have replaced the original environ
- * (which we cannot free).
- */
+/* Whether we have replaced the original environ (which we cannot free). */
 char **savedEnv = NULL;
 
 /*
@@ -308,9 +305,7 @@ static bool save_dollars = true;
  * override variables from SCOPE_GLOBAL.
  *
  * There is no scope for environment variables, these are generated on-the-fly
- * whenever they are referenced.  If there were such a scope, each change to
- * environment variables would have to be reflected in that scope, which may
- * be simpler or more complex than the current implementation.
+ * whenever they are referenced.
  *
  * Each target has its own scope, containing the 7 target-local variables
  * .TARGET, .ALLSRC, etc.  Variables set on dependency lines also go in
@@ -661,7 +656,7 @@ ExportVarLiteral(Var *v)
 /*
  * Mark a single variable to be exported later for subprocesses.
  *
- * Internal variables (those starting with '.') are not exported.
+ * Internal variables are not exported.
  */
 static bool
 ExportVar(const char *name, VarExportMode mode)
@@ -890,11 +885,7 @@ UnexportVars(FStr *varnames, UnexportWhat what)
 		Global_Delete(".MAKE.EXPORTED");
 }
 
-/*
- * This is called when .unexport[-env] is seen.
- *
- * str must have the form "unexport[-env] varname...".
- */
+/* Handle the .unexport and .unexport-env directives. */
 void
 Var_UnExport(bool isEnv, const char *arg)
 {
@@ -1106,24 +1097,12 @@ Var_Append(GNode *scope, const char *name, const char *val)
 }
 
 /*
- * The variable of the given name has the given value appended to it in the
- * given scope.
+ * In the scope, expand the variable name once.  If the variable exists in the
+ * scope, add a space and the value, otherwise set the variable to the value.
  *
- * If the variable doesn't exist, it is created. Otherwise the strings are
- * concatenated, with a space in between.
- *
- * Input:
- *	scope		scope in which this should occur
- *	name		name of the variable to modify, is expanded once
- *	val		string to append to it
- *
- * Notes:
- *	Only if the variable is being sought in the global scope is the
- *	environment searched.
- *	XXX: Knows its calling circumstances in that if called with scope
- *	an actual target, it will only search that scope since only
- *	a local variable could be being appended to. This is actually
- *	a big win and must be tolerated.
+ * Appending to an environment variable only works in the global scope, that
+ * is, for variable assignments in makefiles, but not inside conditions or the
+ * commands of a target.
  */
 void
 Var_AppendExpand(GNode *scope, const char *name, const char *val)
@@ -1212,7 +1191,7 @@ Var_Value(GNode *scope, const char *name)
 	return FStr_InitOwn(value);
 }
 
-/* Set or clear the read-only attribute of the specified var if it exists. */
+/* Set or clear the read-only attribute of the variable if it exists. */
 void
 Var_ReadOnly(const char *name, bool bf)
 {
@@ -1341,10 +1320,6 @@ SepBuf_DoneData(SepBuf *buf)
 typedef void (*ModifyWordProc)(Substring word, SepBuf *buf, void *data);
 
 
-/*
- * Callback for ModifyWords to implement the :H modifier.
- * Add the dirname of the given word to the buffer.
- */
 /*ARGSUSED*/
 static void
 ModifyWord_Head(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
@@ -1352,10 +1327,6 @@ ModifyWord_Head(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 	SepBuf_AddSubstring(buf, Substring_Dirname(word));
 }
 
-/*
- * Callback for ModifyWords to implement the :T modifier.
- * Add the basename of the given word to the buffer.
- */
 /*ARGSUSED*/
 static void
 ModifyWord_Tail(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
@@ -1363,10 +1334,6 @@ ModifyWord_Tail(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 	SepBuf_AddSubstring(buf, Substring_Basename(word));
 }
 
-/*
- * Callback for ModifyWords to implement the :E modifier.
- * Add the filename suffix of the given word to the buffer, if it exists.
- */
 /*ARGSUSED*/
 static void
 ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
@@ -1376,10 +1343,6 @@ ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 		SepBuf_AddRange(buf, lastDot + 1, word.end);
 }
 
-/*
- * Callback for ModifyWords to implement the :R modifier.
- * Add the filename without extension of the given word to the buffer.
- */
 /*ARGSUSED*/
 static void
 ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
@@ -1400,7 +1363,6 @@ struct ModifyWord_SysVSubstArgs {
 	const char *rhs;
 };
 
-/* Callback for ModifyWords to implement the :%.from=%.to modifier. */
 static void
 ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 {
@@ -1454,10 +1416,6 @@ struct ModifyWord_SubstArgs {
 	bool matched;
 };
 
-/*
- * Callback for ModifyWords to implement the :S,from,to, modifier.
- * Perform a string substitution on the given word.
- */
 static void
 ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 {
@@ -1580,10 +1538,6 @@ struct ModifyWord_SubstRegexArgs {
 	bool matched;
 };
 
-/*
- * Callback for ModifyWords to implement the :C/from/to/ modifier.
- * Perform a regex substitution on the given word.
- */
 static void
 ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
 {
@@ -1637,7 +1591,6 @@ struct ModifyWord_LoopArgs {
 	VarEvalMode emode;
 };
 
-/* Callback for ModifyWords to implement the :@var@...@ modifier of ODE make. */
 static void
 ModifyWord_Loop(Substring word, SepBuf *buf, void *data)
 {
@@ -1691,18 +1644,13 @@ VarSelectWords(const char *str, int first, int last,
 		words = Substring_Words(str, false);
 	}
 
-	/*
-	 * Now sanitize the given range.  If first or last are negative,
-	 * convert them to the positive equivalents (-1 gets converted to len,
-	 * -2 gets converted to (len - 1), etc.).
-	 */
+	/* Convert -1 to len, -2 to (len - 1), etc. */
 	len = (int)words.len;
 	if (first < 0)
 		first += len + 1;
 	if (last < 0)
 		last += len + 1;
 
-	/* We avoid scanning more of the list than we need to. */
 	if (first > last) {
 		start = (first > len ? len : first) - 1;
 		end = last < 1 ? 0 : last - 1;
@@ -1724,10 +1672,6 @@ VarSelectWords(const char *str, int first, int last,
 }
 
 
-/*
- * Callback for ModifyWords to implement the :tA modifier.
- * Replace each word with the result of realpath() if successful.
- */
 /*ARGSUSED*/
 static void
 ModifyWord_Realpath(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
@@ -1907,7 +1851,7 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * in the :S, :C or :@ modifiers), return AMR_CLEANUP.
  *
  * If parsing fails because the modifier is unknown, return AMR_UNKNOWN to
- * try the SysV modifier ${VAR:from=to} as fallback.  This should only be
+ * try the SysV modifier ':from=to' as fallback.  This should only be
  * done as long as there have been no side effects from evaluating nested
  * variables, to avoid evaluating them more than once.  In this case, the
  * parsing position may or may not be updated.  (XXX: Why not? The original
@@ -1915,12 +1859,9 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  *
  * If parsing fails and the SysV modifier ${VAR:from=to} should not be used
  * as a fallback, issue an error message using Parse_Error (preferred over
- * Error) and then return AMR_CLEANUP, or return AMR_BAD for the default error
- * message.  Both of these return values will stop processing the
- * expression.  (XXX: As of 2020-08-23, evaluation of the whole string
- * continues nevertheless after skipping a few bytes, which essentially is
- * undefined behavior.  Not in the sense of C, but still the resulting string
- * is garbage.)
+ * Error) and then return AMR_CLEANUP, which stops processing the expression.
+ * (XXX: As of 2020-08-23, evaluation of the string continues nevertheless
+ * after skipping a few bytes, which results in garbage.)
  *
  * Evaluating the modifier
  *
@@ -1941,12 +1882,8 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * TODO: This should be fixed by adding proper error handling to Var_Subst,
  * Var_Parse, ApplyModifiers and ModifyWords.
  *
- * Housekeeping
- *
  * Some modifiers such as :D and :U turn undefined expressions into defined
  * expressions using Expr_Define.
- *
- * Some modifiers need to free some memory.
  */
 
 typedef enum ExprDefined {
@@ -2003,9 +1940,6 @@ typedef struct Expr {
  *	Chain 1 ends at the final '}' of the expression.
  *
  * After such a chain ends, its properties no longer have any effect.
- *
- * It may or may not have been intended that 'defined' has scope Expr while
- * 'sep' and 'oneBigWord' have smaller scope.
  *
  * See varmod-indirect.mk.
  */
