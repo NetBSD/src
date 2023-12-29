@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1088 2023/12/29 12:59:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1089 2023/12/29 13:25:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1088 2023/12/29 12:59:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1089 2023/12/29 13:25:15 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -897,20 +897,6 @@ Var_UnExport(bool isEnv, const char *arg)
 	FStr_Done(&varnames);
 }
 
-/*
- * When there is a variable of the same name in the command line scope, the
- * global variable would not be visible anywhere.  Therefore, there is no
- * point in setting it at all.
- *
- * See 'scope == SCOPE_CMDLINE' in Var_SetWithFlags.
- */
-static bool
-ExistsInCmdline(const char *name)
-{
-	Var *v = VarFind(name, SCOPE_CMDLINE, false);
-	return v != NULL && v->fromCmd;
-}
-
 /* Set the variable to the value; the name is not expanded. */
 void
 Var_SetWithFlags(GNode *scope, const char *name, const char *val,
@@ -926,7 +912,12 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		return;
 	}
 
-	if (scope == SCOPE_GLOBAL && ExistsInCmdline(name)) {
+	if (scope == SCOPE_GLOBAL
+	    && VarFind(name, SCOPE_CMDLINE, false) != NULL) {
+		/*
+		 * The global variable would not be visible anywhere.
+		 * Therefore, there is no point in setting it at all.
+		 */
 		DEBUG3(VAR,
 		    "%s: ignoring '%s = %s' "
 		    "due to a command line variable of the same name\n",
@@ -1023,7 +1014,6 @@ Var_Set(GNode *scope, const char *name, const char *val)
 void
 Var_SetExpand(GNode *scope, const char *name, const char *val)
 {
-	const char *unexpanded_name = name;
 	FStr varname = FStr_InitRefer(name);
 
 	assert(val != NULL);
@@ -1034,7 +1024,7 @@ Var_SetExpand(GNode *scope, const char *name, const char *val)
 		DEBUG4(VAR,
 		    "%s: ignoring '%s = %s' "
 		    "as the variable name '%s' expands to empty\n",
-		    scope->name, varname.str, val, unexpanded_name);
+		    scope->name, varname.str, val, name);
 	} else
 		Var_SetWithFlags(scope, varname.str, val, VAR_SET_NONE);
 
@@ -1421,10 +1411,9 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 {
 	struct ModifyWord_SubstArgs *args = data;
 	size_t wordLen, lhsLen;
-	const char *wordEnd, *match;
+	const char *match;
 
 	wordLen = Substring_Length(word);
-	wordEnd = word.end;
 	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
@@ -1439,7 +1428,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
 		SepBuf_AddSubstring(buf, args->rhs);
-		SepBuf_AddRange(buf, word.start + lhsLen, wordEnd);
+		SepBuf_AddRange(buf, word.start + lhsLen, word.end);
 		args->matched = true;
 		return;
 	}
@@ -1447,11 +1436,11 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 	if (args->pflags.anchorEnd) {
 		if (wordLen < lhsLen)
 			goto nosub;
-		if (memcmp(wordEnd - lhsLen, args->lhs.start, lhsLen) != 0)
+		if (memcmp(word.end - lhsLen, args->lhs.start, lhsLen) != 0)
 			goto nosub;
 
 		/* :S,suffix$,replacement, */
-		SepBuf_AddRange(buf, word.start, wordEnd - lhsLen);
+		SepBuf_AddRange(buf, word.start, word.end - lhsLen);
 		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
 		return;
@@ -2066,7 +2055,6 @@ static void
 ParseModifierPartBalanced(const char **pp, LazyBuf *part)
 {
 	const char *p = *pp;
-	const char *start = *pp;
 
 	if (p[1] == '(' || p[1] == '{') {
 		char startc = p[1];
@@ -2081,10 +2069,10 @@ ParseModifierPartBalanced(const char **pp, LazyBuf *part)
 					depth--;
 			}
 		}
-		LazyBuf_AddSubstring(part, Substring_Init(start, p));
+		LazyBuf_AddSubstring(part, Substring_Init(*pp, p));
 		*pp = p;
 	} else {
-		LazyBuf_Add(part, *start);
+		LazyBuf_Add(part, *p);
 		*pp = p + 1;
 	}
 }
@@ -3480,7 +3468,7 @@ found_op:
 		return AMR_BAD;
 	}
 
-	*pp = mod + (op[0] == '+' || op[0] == '?' || op[0] == '!' ? 3 : 2);
+	*pp = mod + (op[0] != '=' ? 3 : 2);
 
 	if (!ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf))
 		return AMR_CLEANUP;
@@ -3492,13 +3480,9 @@ found_op:
 		goto done;
 
 	scope = expr->scope;	/* scope where v belongs */
-	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
-		Var *v = VarFind(expr->name, expr->scope, false);
-		if (v == NULL)
-			scope = SCOPE_GLOBAL;
-		else
-			VarFreeShortLived(v);
-	}
+	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL
+	    && VarFind(expr->name, expr->scope, false) == NULL)
+		scope = SCOPE_GLOBAL;
 
 	if (op[0] == '+')
 		Var_Append(scope, expr->name, val.str);
