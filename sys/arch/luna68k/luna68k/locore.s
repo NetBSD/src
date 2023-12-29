@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.71 2023/12/27 03:03:41 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.72 2023/12/29 02:30:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -898,16 +898,16 @@ GLOBAL(protocrp)
 
 GLOBAL(prototc)
 	.long	MMU51_TCR_BITS	| %tc -- see pmap.h
-GLOBAL(protott0)		| tt0 0x4000.0000-0x7fff.ffff
-	.long	0x403f8543	|
-GLOBAL(protott1)		| tt1 0x8000.0000-0xffff.ffff
-	.long	0x807f8543	|
+GLOBAL(protott0)
+	.long	LUNA68K_TT30_IO0 | prototype transparent translation register 0
+GLOBAL(protott1)
+	.long	LUNA68K_TT30_IO1 | prototype transparent translation register 1
 GLOBAL(proto040tc)
 	.long	MMU40_TCR_BITS	| %tc -- see pmap.h
-GLOBAL(proto040tt0)		| tt0 0x4000.0000-0x7fff.ffff
-	.long	0x403fa040	| kernel only, cache inhibit, serialized
-GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xffff.ffff
-	.long	0x807fa040	| kernel only, cache inhibit, serialized
+GLOBAL(proto040tt0)
+	.long	LUNA68K_TT40_IO0 | prototype transparent translation register 0
+GLOBAL(proto040tt1)
+	.long	LUNA68K_TT40_IO1 | prototype transparent translation register 1
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
