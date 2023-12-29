@@ -28,10 +28,10 @@ Modifier part: "${.SUFFIXES}"
 ModifyWords: split "1 2" into 2 words
 Command: ignoring '.SUFFIXES = 1' as it is read-only
 Var_Parse: ${.SUFFIXES} (eval-defined)
-ModifyWord_Loop: in "1", replace ".SUFFIXES" with "${.SUFFIXES}" to ".c .o .1 .err .tar.gz"
+ModifyWord_Loop: expand "${.SUFFIXES}" to ".c .o .1 .err .tar.gz"
 Command: ignoring '.SUFFIXES = 2' as it is read-only
 Var_Parse: ${.SUFFIXES} (eval-defined)
-ModifyWord_Loop: in "2", replace ".SUFFIXES" with "${.SUFFIXES}" to ".c .o .1 .err .tar.gz"
+ModifyWord_Loop: expand "${.SUFFIXES}" to ".c .o .1 .err .tar.gz"
 Command: ignoring delete '.SUFFIXES' as it is not found
 Result of ${1 2:@.SUFFIXES@${.SUFFIXES}@} is ".c .o .1 .err .tar.gz .c .o .1 .err .tar.gz" (eval-defined, defined)
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d 0 -d v -d

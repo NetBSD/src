@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1089 2023/12/29 13:25:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1090 2023/12/29 14:57:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1089 2023/12/29 13:25:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1090 2023/12/29 14:57:00 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1597,9 +1597,8 @@ ModifyWord_Loop(Substring word, SepBuf *buf, void *data)
 	/* TODO: handle errors */
 
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	DEBUG4(VAR, "ModifyWord_Loop: "
-		    "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
-	    word.start, args->var, args->body, s);
+	DEBUG2(VAR, "ModifyWord_Loop: expand \"%s\" to \"%s\"\n",
+	    args->body, s);
 
 	if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
 		buf->needSep = false;
