@@ -1,4 +1,4 @@
-/*	$NetBSD: smp.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: smp.h,v 1.5 2023/12/29 22:58:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ static inline void
 put_cpu(void)
 {
 
-	kpreempt_disable();
+	kpreempt_enable();
 }
 
 static inline void
