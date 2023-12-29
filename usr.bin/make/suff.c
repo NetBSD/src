@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.373 2023/12/29 12:20:55 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.374 2023/12/29 18:53:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.373 2023/12/29 12:20:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.374 2023/12/29 18:53:24 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1541,7 +1541,7 @@ ApplyTransform(GNode *tgn, GNode *sgn, Suffix *tsuff, Suffix *ssuff)
 static void
 ExpandMember(GNode *gn, const char *eoarch, GNode *mem, Suffix *memSuff)
 {
-	GNodeListNode *ln;
+	SuffixListNode *ln;
 	size_t nameLen = (size_t)(eoarch - gn->name);
 
 	/* Use first matching suffix... */
