@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.19 2022/02/06 15:47:06 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.20 2023/12/29 08:02:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.19 2022/02/06 15:47:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.20 2023/12/29 08:02:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -249,7 +249,7 @@ dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
 	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu);
 
 	aprint_debug_dev(sc->sc_dev, "set clock rate to %u kHz (target %u kHz)\n",
-	    sc->sc_clock_freq, rate);
+	    sc->sc_clock_freq / 1000, rate);
 
 	return 0;
 }
