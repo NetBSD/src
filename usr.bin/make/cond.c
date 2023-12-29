@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.358 2023/12/29 12:20:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.359 2023/12/29 12:59:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.358 2023/12/29 12:20:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.359 2023/12/29 12:59:43 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -165,9 +165,7 @@ typedef struct CondParser {
 
 	/*
 	 * Whether an error message has already been printed for this
-	 * condition. The first available error message is usually the most
-	 * specific one, therefore it makes sense to suppress the standard
-	 * "Malformed conditional" message.
+	 * condition.
 	 */
 	bool printedError;
 } CondParser;
@@ -257,7 +255,7 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func)
 	const char *p = *pp;
 	char *res;
 
-	p++;			/* Skip opening '(' - verified by caller */
+	p++;			/* skip the '(' */
 	cpp_skip_hspace(&p);
 	res = ParseWord(&p, doEval);
 	cpp_skip_hspace(&p);
@@ -486,10 +484,6 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 		default:
 			if (!unquotedOK && !quoted && *start != '$' &&
 			    !ch_isdigit(*start)) {
-				/*
-				 * The left-hand side must be quoted,
-				 * an expression or a number.
-				 */
 				str = FStr_InitRefer(NULL);
 				goto return_str;
 			}
@@ -743,13 +737,12 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	char *arg;
 	const char *p;
 
-	/* Push anything numeric through the compare expression */
 	p = par->p;
 	if (ch_isdigit(p[0]) || p[0] == '-' || p[0] == '+')
 		return CondParser_Comparison(par, doEval);
 
 	/*
-	 * Most likely we have a naked token to apply the default function to.
+	 * Most likely we have a bare word to apply the default function to.
 	 * However, ".if a == b" gets here when the "a" is unquoted and
 	 * doesn't start with a '$'. This surprises people.
 	 * If what follows the function argument is a '=' or '!' then the
