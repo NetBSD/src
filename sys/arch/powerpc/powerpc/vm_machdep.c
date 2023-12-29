@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.105 2022/12/05 16:01:03 martin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.105.2.1 2023/12/29 20:21:40 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2022/12/05 16:01:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105.2.1 2023/12/29 20:21:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -322,7 +322,8 @@ cpu_uarea_alloc(bool system)
 	 * Allocate a new physically contiguous uarea which can be
 	 * direct-mapped.
 	 */
-	error = uvm_pglistalloc(USPACE, 0, ~0UL, 0, 0, &pglist, 1, 1);
+	error = uvm_pglistalloc(USPACE, 0, PMAP_DIRECT_MAPPED_LEN, 0, 0,
+	    &pglist, 1, 1);
 	if (error) {
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42 2022/05/07 07:10:46 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42.4.1 2023/12/29 20:21:39 martin Exp $	*/
 
 #ifndef _POWERPC_PMAP_H_
 #define _POWERPC_PMAP_H_
@@ -18,6 +18,10 @@
 #include <powerpc/oea/pmap.h>
 #elif defined(_KERNEL)
 #error unknown PPC variant
+#endif
+
+#ifndef PMAP_DIRECT_MAPPED_LEN
+#define	PMAP_DIRECT_MAPPED_LEN	(~0UL)
 #endif
 
 #endif /* !_MODULE */

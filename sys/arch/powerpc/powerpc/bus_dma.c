@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.55 2022/07/26 20:08:56 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.55.4.1 2023/12/29 20:21:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55.4.1 2023/12/29 20:21:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -707,8 +707,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 	if (nsegs == 1 && (flags & BUS_DMA_DONTCACHE) == 0) {
 		KASSERT(size == segs->ds_len);
 		addr = BUS_MEM_TO_PHYS(t, segs->ds_addr);
-		*kvap = (void *)PMAP_MAP_POOLPAGE(addr);
-		return 0;
+		if (__predict_true(addr + size < PMAP_DIRECT_MAPPED_LEN)) {
+			*kvap = (void *)PMAP_MAP_POOLPAGE(addr);
+			return 0;
+		}
 	}
 #endif
 

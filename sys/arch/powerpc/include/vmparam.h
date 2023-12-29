@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2022/05/11 13:58:43 andvar Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26.4.1 2023/12/29 20:21:39 martin Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -12,7 +12,7 @@
  * These are common for BOOKE, IBM4XX, and OEA
  */
 #define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST256	1
+#define	VM_FREELIST_DIRECT_MAPPED	1
 #define	VM_FREELIST_FIRST16	2
 #define	VM_NFREELIST		3
 
