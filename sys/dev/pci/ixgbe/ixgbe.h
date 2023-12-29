@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.95 2023/12/29 07:34:20 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.96 2023/12/29 07:36:47 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -413,8 +413,8 @@ struct rx_ring {
 	struct ixgbe_dma_alloc	rxdma;
 #ifdef LRO
 	struct lro_ctrl		lro;
-#endif /* LRO */
 	bool			lro_enabled;
+#endif /* LRO */
 	bool			hw_rsc;
 	bool			vtag_strip;
 	bool			discard_multidesc;
