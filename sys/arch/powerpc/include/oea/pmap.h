@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2022/05/07 07:10:46 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37.4.1 2023/12/29 20:21:39 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -121,6 +121,16 @@ __BEGIN_DECLS
 #include <sys/param.h>
 #include <sys/systm.h>
 
+/*
+ * For OEA and OEA64_BRIDGE, we guarantee that pa below USER_ADDR
+ * (== 3GB < VM_MIN_KERNEL_ADDRESS) is direct-mapped.
+ */
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+#define	PMAP_DIRECT_MAPPED_SR	(USER_SR - 1)
+#define	PMAP_DIRECT_MAPPED_LEN \
+    ((vaddr_t)SEGMENT_LENGTH * (PMAP_DIRECT_MAPPED_SR + 1))
+#endif
+
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 extern register_t iosrtable[];
 #endif
@@ -186,10 +196,13 @@ static __inline paddr_t vtophys (vaddr_t);
  * VA==PA all at once.  But pmap_copy_page() and pmap_zero_page() will have
  * this problem, too.
  */
-#if !defined(PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64)
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
 #define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)
+
+#define	PMAP_ALLOC_POOLPAGE(flags)	pmap_alloc_poolpage(flags)
+struct vm_page *pmap_alloc_poolpage(int);
 #endif
 
 static __inline paddr_t

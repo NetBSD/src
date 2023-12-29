@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.13 2022/02/16 23:31:13 riastradh Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.13.4.1 2023/12/29 20:21:40 martin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.13 2022/02/16 23:31:13 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.13.4.1 2023/12/29 20:21:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -39,7 +39,9 @@ __KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.13 2022/02/16 23:31:13 riastradh E
 #endif
 
 #include <sys/param.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #ifdef ALTIVEC
 int pmap_use_altivec;
@@ -61,6 +63,25 @@ powerpc_mmap_flags(paddr_t pa)
 	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
 		flags &= ~PMAP_NOCACHE;
 	return flags;
+}
+
+struct vm_page *
+pmap_alloc_poolpage(int flags)
+{
+
+	if (__predict_false(!uvm.page_init_done)) {
+		struct vm_page *pg;
+		paddr_t pa __diagused;
+
+		pg = uvm_pagealloc(NULL, 0, NULL, flags);
+		KASSERT(pg != NULL);
+		pa = VM_PAGE_TO_PHYS(pg);
+		KASSERT(pa < PMAP_DIRECT_MAPPED_LEN);
+		return pg;
+	}
+
+	return uvm_pagealloc_strat(NULL, 0, NULL, flags, UVM_PGA_STRAT_ONLY,
+	    VM_FREELIST_DIRECT_MAPPED);
 }
 
 #ifdef PMAP_NEEDS_FIXUP

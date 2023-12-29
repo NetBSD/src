@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2020/07/15 08:58:52 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.163.20.1 2023/12/29 20:21:40 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2020/07/15 08:58:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.20.1 2023/12/29 20:21:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -137,42 +137,40 @@ trap(struct trapframe *tf)
 
 		ci->ci_ev_kdsi.ev_count++;
 
+		if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
+			va &= ADDR_PIDX | ADDR_POFF;
+			va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
+			map = &p->p_vmspace->vm_map;
+		}
+#if defined(DIAGNOSTIC) && !defined(PPC_OEA64)
+		else if (__predict_false((va >> ADDR_SR_SHFT) == USER_SR)) {
+			printf("trap: kernel %s DSI trap @ %#lx by %#lx"
+			    " (DSISR %#x): USER_SR unset\n",
+			    (tf->tf_dsisr & DSISR_STORE)
+				? "write" : "read",
+			    va, tf->tf_srr0, tf->tf_dsisr);
+			goto brain_damage2;
+		}
+#endif
+		else {
+			map = kernel_map;
+		}
+
+#ifdef PPC_OEA64
+		if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
+		    vm_map_pmap(map)->pm_ste_evictions > 0 &&
+		    pmap_ste_spill(vm_map_pmap(map), trunc_page(va), false))
+			return;
+#endif
+		if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
+		    vm_map_pmap(map)->pm_evictions > 0 &&
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(va), false))
+			return;
+
 		/*
 		 * Only query UVM if no interrupts are active.
 		 */
 		if (ci->ci_idepth < 0) {
-			if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
-				va &= ADDR_PIDX | ADDR_POFF;
-				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
-				map = &p->p_vmspace->vm_map;
-#ifdef PPC_OEA64
-				if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
-				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
-				    pmap_ste_spill(vm_map_pmap(map),
-					    trunc_page(va), false)) {
-					return;
-				}
-#endif
-
-				if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
-				    vm_map_pmap(map)->pm_evictions > 0 &&
-				    pmap_pte_spill(vm_map_pmap(map),
-					    trunc_page(va), false)) {
-					return;
-				}
-#if defined(DIAGNOSTIC) && !defined(PPC_OEA64)
-			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
-				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
-				    " (DSISR %#x): USER_SR unset\n",
-				    (tf->tf_dsisr & DSISR_STORE)
-					? "write" : "read",
-				    va, tf->tf_srr0, tf->tf_dsisr);
-				goto brain_damage2;
-#endif
-			} else {
-				map = kernel_map;
-			}
-
 			if (tf->tf_dsisr & DSISR_STORE)
 				ftype = VM_PROT_WRITE;
 			else
