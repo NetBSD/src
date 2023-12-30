@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.27 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.28 2023/12/30 15:37:27 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.27 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.28 2023/12/30 15:37:27 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -221,15 +221,7 @@ is_typeok_bool_compares_with_zero(const tnode_t *tn)
 
 	if (tn->tn_sys && is_scalar(t))
 		return true;
-
-	/* For enums that are used as bit sets, allow "flags & FLAG". */
-	if (tn->tn_op == BITAND &&
-	    tn->tn_left->tn_op == CVT &&
-	    tn->tn_left->tn_type->t_is_enum &&
-	    tn->tn_right->tn_type->t_is_enum)
-		return true;
-
-	return false;
+	return tn->tn_op == BITAND;
 }
 
 bool
