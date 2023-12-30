@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.46 2023/12/30 15:18:57 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.47 2023/12/30 15:37:27 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -858,7 +858,7 @@ strict_bool_bitwise_and_enum(enum Flags flags)
  * what would fit into an unsigned char).  Even if an enum could be extended
  * to larger types than int, this pattern would work.
  */
-void
+bool
 query_flag_from_enum_bit_set(enum Flags flags)
 {
 	if (flags & FLAG0)
@@ -878,12 +878,20 @@ query_flag_from_enum_bit_set(enum Flags flags)
 
 	if (flags & FLAG28)
 		println("FLAG28 is set");
+
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b0 = flags & FLAG0;
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b1 = flags & FLAG1;
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b28 = flags & FLAG28;
+	return b0 || b1 || b28;
 }
 
-void
+bool
 query_flag_from_int(int flags)
 {
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+
 	if (flags & FLAG0)
 		println("FLAG0 is set");
 
@@ -893,17 +901,22 @@ query_flag_from_int(int flags)
 	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
 		println("FLAG0 and FLAG1 are both set");
 
-	/* expect+2: error: left operand of '&&' must be bool, not 'int' [331] */
-	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
 	if (flags & FLAG0 && flags & FLAG1)
 		println("FLAG0 and FLAG1 are both set");
 
 	if ((flags & (FLAG0 | FLAG1)) != 0)
 		println("At least one of FLAG0 and FLAG1 is set");
 
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (flags & FLAG28)
 		println("FLAG28 is set");
+
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b0 = flags & FLAG0;
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b1 = flags & FLAG1;
+	/* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
+	bool b28 = flags & FLAG28;
+	return b0 || b1 || b28;
 }
 
 
@@ -989,10 +1002,10 @@ typedef struct stdio_file {
 int ferror(FILE *);
 FILE stdio_files[3];
 FILE *stdio_stdout;
-# 993 "d_c99_bool_strict.c" 2
+# 1006 "d_c99_bool_strict.c" 2
 # 1 "string.h" 1 3 4
 int strcmp(const char *, const char *);
-# 996 "d_c99_bool_strict.c" 2
+# 1009 "d_c99_bool_strict.c" 2
 
 void
 controlling_expression(FILE *f, const char *a, const char *b)
@@ -1026,9 +1039,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1030 "d_c99_bool_strict.c" 3 4
+# 1043 "d_c99_bool_strict.c" 3 4
 	    &stdio_files[1]
-# 1032 "d_c99_bool_strict.c"
+# 1045 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1044,9 +1057,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1048 "d_c99_bool_strict.c" 3 4
+# 1061 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
-# 1050 "d_c99_bool_strict.c"
+# 1063 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1059,9 +1072,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1063 "d_c99_bool_strict.c" 3 4
+# 1076 "d_c99_bool_strict.c" 3 4
 	    (stdio_stdout)
-# 1065 "d_c99_bool_strict.c"
+# 1078 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1085,9 +1098,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1089 "d_c99_bool_strict.c" 3 4
+# 1102 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout /* comment */
-# 1091 "d_c99_bool_strict.c"
+# 1104 "d_c99_bool_strict.c"
 	    ))
 		return;
 }
