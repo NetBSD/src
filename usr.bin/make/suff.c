@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.375 2023/12/30 13:28:06 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.376 2023/12/30 15:00:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.375 2023/12/30 13:28:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.376 2023/12/30 15:00:56 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -364,7 +364,6 @@ SuffixList_Unref(SuffixList *list, Suffix *suff)
 	}
 }
 
-/* Free up all memory associated with the given suffix structure. */
 static void
 Suffix_Free(Suffix *suff)
 {
@@ -390,12 +389,6 @@ Suffix_Free(Suffix *suff)
 	free(suff);
 }
 
-static void
-SuffFree(void *p)
-{
-	Suffix_Free(p);
-}
-
 /* Remove the suffix from the list, and free if it is otherwise unused. */
 static void
 SuffixList_Remove(SuffixList *list, Suffix *suff)
@@ -405,7 +398,7 @@ SuffixList_Remove(SuffixList *list, Suffix *suff)
 		/* XXX: can lead to suff->refCount == -1 */
 		SuffixList_Unref(&sufflist, suff);
 		DEBUG1(SUFF, "Removing suffix \"%s\"\n", suff->name);
-		SuffFree(suff);
+		Suffix_Free(suff);
 	}
 }
 
@@ -482,7 +475,7 @@ Suff_ClearSuffixes(void)
 	Lst_Init(&sufflist);
 	sNum = 0;
 	if (nullSuff != NULL)
-		SuffFree(nullSuff);
+		Suffix_Free(nullSuff);
 	emptySuff = nullSuff = Suffix_New("");
 
 	SearchPath_AddAll(nullSuff->searchPath, &dirSearchPath);
@@ -2054,16 +2047,21 @@ Suff_Init(void)
 	Suff_ClearSuffixes();
 }
 
-
 /* Clean up the suffixes module. */
 void
 Suff_End(void)
 {
 #ifdef CLEANUP
-	Lst_DoneCall(&sufflist, SuffFree);
-	Lst_DoneCall(&suffClean, SuffFree);
+	SuffixListNode *ln;
+
+	for (ln = sufflist.first; ln != NULL; ln = ln->next)
+		Suffix_Free(ln->datum);
+	Lst_Done(&sufflist);
+	for (ln = suffClean.first; ln != NULL; ln = ln->next)
+		Suffix_Free(ln->datum);
+	Lst_Done(&suffClean);
 	if (nullSuff != NULL)
-		SuffFree(nullSuff);
+		Suffix_Free(nullSuff);
 	Lst_Done(&transforms);
 #endif
 }
