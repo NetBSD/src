@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.47 2023/12/30 15:37:27 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.48 2023/12/30 17:09:42 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -59,14 +59,14 @@
  *
  * strict-bool-bitwise-and:
  *	Expressions of the form "flags & FLAG" are compatible with _Bool if
- *	the left operand has enum type, the right operand is an integer
- *	constant and the resulting value is used in a context where it is
- *	implicitly and immediately compared to zero.
+ *	the resulting value is used in a context where it is implicitly and
+ *	immediately compared to zero.
  *
  *	Note: An efficient implementation technique for a collection of bool
  *	flags is an enum.  The enum declaration groups the available
  *	constants, and as of 2020, compilers such as GCC and Clang have basic
- *	support for detecting type mismatches on enums.
+ *	support for detecting type mismatches on enums.  Another implementation
+ *	technique for bit sets is a plain integer.
  *
  *	Note: Examples for such contexts are controlling expressions or the
  *	operands of the operators '!', '&&', '||'.
@@ -795,14 +795,14 @@ strict_bool_operator_result(bool b)
 /*
  * strict-bool-bitwise-and:
  *	Expressions of the form "flags & FLAG" are compatible with _Bool if
- *	the left operand has enum type, the right operand is an integer
- *	constant and the resulting value is used in a context where it is
- *	implicitly and immediately compared to zero.
+ *	the resulting value is used in a context where it is implicitly and
+ *	immediately compared to zero.
  *
  *	Note: Examples for such contexts are controlling expressions or the
  *	operands of the operators '!', '&&', '||'.
  *
- *	Note: Counterexamples for contexts are assignments to a bool variable.
+ *	Note: Counterexamples for contexts are assignments to a bool variable,
+ *	as before C99, the conversion was defined differently.
  *
  *	Note: These rules ensure that conforming code can be compiled without
  *	change in behavior using old compilers that implement bool as an
