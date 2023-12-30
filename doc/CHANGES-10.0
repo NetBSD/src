@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.180 2023/12/29 20:43:17 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.181 2023/12/30 19:35:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15004,4 +15004,27 @@ doc/3RDPARTY					1.1972 (patch)
 
 	Update tzdata to 2023d.
 	[kre, ticket #520]
+
+distrib/sets/lists/debug/module.md.i386		1.8
+distrib/sets/lists/modules/md.i386		1.97
+sys/modules/Makefile				1.281
+
+	PR 57793: do not build and install the (legacy) radeondrm module.
+	[pgoyette, ticket #521]
+
+usr.sbin/makefs/msdos.c				1.22
+
+	makefs(8): PR 57752: return a proper exit status on failure
+	on creating msdosfs.
+	[tsutsui, ticket #522]
+
+sbin/iscsid/iscsid_driverif.c			1.10
+
+	iscsid(8): treat port 0 (unset) as ISCSI_DEFAULT_PORT like before.
+	[mlelstv, ticket #523]
+
+sys/stand/efiboot/efinet.c			1.7,1.8
+
+	efiboot: fix PXE boot on some UEFI implementations.
+	[rin, ticket #524]
 
