@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.7 2022/07/28 22:00:23 riastradh Exp $
+# $NetBSD: module.md.i386,v 1.7.2.1 2023/12/30 19:13:50 martin Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -149,8 +149,8 @@
 ./usr/libdata/debug/@MODULEDIR@/pwdog/pwdog.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/r128drm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/r128drm/r128drm.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/radeondrm				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/radeondrm/radeondrm.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/radeondrm				base-obsolete	obsolete
+./usr/libdata/debug/@MODULEDIR@/radeondrm/radeondrm.kmod.debug		base-obsolete	obsolete
 ./usr/libdata/debug/@MODULEDIR@/savagedrm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/savagedrm/savagedrm.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sisdrm				modules-base-kernel	kmod,debug
