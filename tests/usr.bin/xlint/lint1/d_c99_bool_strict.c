@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.45 2023/12/10 14:59:47 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.46 2023/12/30 15:18:57 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -880,6 +880,32 @@ query_flag_from_enum_bit_set(enum Flags flags)
 		println("FLAG28 is set");
 }
 
+void
+query_flag_from_int(int flags)
+{
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (flags & FLAG0)
+		println("FLAG0 is set");
+
+	if ((flags & FLAG1) != 0)
+		println("FLAG1 is set");
+
+	if ((flags & (FLAG0 | FLAG1)) == (FLAG0 | FLAG1))
+		println("FLAG0 and FLAG1 are both set");
+
+	/* expect+2: error: left operand of '&&' must be bool, not 'int' [331] */
+	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	if (flags & FLAG0 && flags & FLAG1)
+		println("FLAG0 and FLAG1 are both set");
+
+	if ((flags & (FLAG0 | FLAG1)) != 0)
+		println("At least one of FLAG0 and FLAG1 is set");
+
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (flags & FLAG28)
+		println("FLAG28 is set");
+}
+
 
 void
 strict_bool_operator_eq_bool_int(void)
@@ -963,10 +989,10 @@ typedef struct stdio_file {
 int ferror(FILE *);
 FILE stdio_files[3];
 FILE *stdio_stdout;
-# 967 "d_c99_bool_strict.c" 2
+# 993 "d_c99_bool_strict.c" 2
 # 1 "string.h" 1 3 4
 int strcmp(const char *, const char *);
-# 970 "d_c99_bool_strict.c" 2
+# 996 "d_c99_bool_strict.c" 2
 
 void
 controlling_expression(FILE *f, const char *a, const char *b)
@@ -1000,9 +1026,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1004 "d_c99_bool_strict.c" 3 4
+# 1030 "d_c99_bool_strict.c" 3 4
 	    &stdio_files[1]
-# 1006 "d_c99_bool_strict.c"
+# 1032 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1018,9 +1044,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1022 "d_c99_bool_strict.c" 3 4
+# 1048 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
-# 1024 "d_c99_bool_strict.c"
+# 1050 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1033,9 +1059,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1037 "d_c99_bool_strict.c" 3 4
+# 1063 "d_c99_bool_strict.c" 3 4
 	    (stdio_stdout)
-# 1039 "d_c99_bool_strict.c"
+# 1065 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -1059,9 +1085,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 1063 "d_c99_bool_strict.c" 3 4
+# 1089 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout /* comment */
-# 1065 "d_c99_bool_strict.c"
+# 1091 "d_c99_bool_strict.c"
 	    ))
 		return;
 }
