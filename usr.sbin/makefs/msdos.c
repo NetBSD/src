@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.21 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: msdos.c,v 1.21.2.1 2023/12/30 19:15:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.21 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.21.2.1 2023/12/30 19:15:59 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -177,7 +177,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	printf("Creating `%s'\n", image);
 	TIMER_START(start);
 	if (mkfs_msdos(image, NULL, &msdos_opt->options) == -1)
-		return;
+		errx(1, "Image file `%s' not created.", image);
 	TIMER_RESULTS(start, "mkfs_msdos");
 
 	fsopts->fd = open(image, O_RDWR);
@@ -201,7 +201,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	printf("Populating `%s'\n", image);
 	TIMER_START(start);
 	if (msdos_populate_dir(dir, VTODE(&rootvp), root, root, fsopts) == -1)
-		errx(1, "Image file `%s' not created.", image);
+		errx(1, "Image file `%s' not populated.", image);
 	TIMER_RESULTS(start, "msdos_populate_dir");
 
 	if (debug & DEBUG_FS_MAKEFS)
