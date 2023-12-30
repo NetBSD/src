@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.96 2022/09/07 11:37:25 martin Exp $
+# $NetBSD: md.i386,v 1.96.2.1 2023/12/30 19:13:50 martin Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -166,8 +166,8 @@
 ./@MODULEDIR@/pwdog/pwdog.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/r128drm				modules-base-kernel	kmod
 ./@MODULEDIR@/r128drm/r128drm.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/radeondrm				modules-base-kernel	kmod
-./@MODULEDIR@/radeondrm/radeondrm.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/radeondrm				base-obsolete		obsolete
+./@MODULEDIR@/radeondrm/radeondrm.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/savagedrm				modules-base-kernel	kmod
 ./@MODULEDIR@/savagedrm/savagedrm.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/sisdrm				modules-base-kernel	kmod

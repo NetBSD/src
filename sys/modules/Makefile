@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274.2.1 2023/08/17 09:57:28 martin Exp $
+#	$NetBSD: Makefile,v 1.274.2.2 2023/12/30 19:13:50 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -341,7 +341,7 @@ SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
 SUBDIR+=	padlock
 SUBDIR+=	r128drm
-SUBDIR+=	radeondrm
+#SUBDIR+=	radeondrm
 SUBDIR+=	savagedrm
 SUBDIR+=	sisdrm
 SUBDIR+=	tdfxdrm
