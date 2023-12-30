@@ -7,6 +7,10 @@
 # tz@iana.org for general use in the future).  For more, please see
 # the file CONTRIBUTING in the tz distribution.
 
+# When proposing changes to this file, please use 'git format-patch'
+# format, either by attaching the resulting .patch file to your email,
+# or by using 'git send-email'.  This will help maintainers save time.
+
 
 # From Paul Eggert (2014-10-31):
 
@@ -155,7 +159,7 @@
 # 12-hour clock starting at our 06:00, so their "8 o'clock" is our
 # 02:00 or 14:00.  Keep this in mind when you ask the time in Amharic.
 #
-# Shanks & Pottenger write that Ethiopia had six narrowly-spaced time
+# Shanks & Pottenger write that Ethiopia had six narrowly spaced time
 # zones between 1870 and 1890, that they merged to 38E50 (2:35:20) in
 # 1890, and that they switched to 3:00 on 1936-05-05.  Perhaps 38E50
 # was for Adis Dera.  Quite likely the Shanks data entries are wrong
@@ -373,7 +377,7 @@ Zone America/Argentina/ComodRivadavia -4:30:00 - LMT	1894 Oct 31
 # ever since standard time was introduced, but the information from
 # McKinnon sounds more authoritative.  For now, assume that Atikokan
 # switched to EST immediately after WWII era daylight saving time
-# ended.  This matches the old (less-populous) America/Coral_Harbour
+# ended.  This matches the old (less populous) America/Coral_Harbour
 # entry since our cutoff date of 1970, so we can move
 # America/Coral_Harbour to the 'backward' file.
 
@@ -578,6 +582,66 @@ Zone America/Montreal	-4:54:16 -	LMT	1884
 
 
 
+# Canada
+# From Chris Walton (2022-10-15):
+# I would also like to see America/Nipigon and America/Rainy_River converted
+# into link entries because I have zero faith in the current Shanks based data.
+# From Paul Eggert (2022-10-15):
+# These are now links in the primary data.  Also see America/Thunder_Bay.
+Zone America/Nipigon	-5:53:04 -	LMT	1895
+			-5:00	Canada	E%sT	1940 Sep 29
+			-5:00	1:00	EDT	1942 Feb  9  2:00s
+			-5:00	Canada	E%sT
+
+# From Rives McDow (1999-11-08):
+# On October 31, when the rest of Nunavut went to Central time,
+# Pangnirtung wobbled.  Here is the result of their wobble:
+#
+# The following businesses and organizations in Pangnirtung use Central Time:
+#
+#	First Air, Power Corp, Nunavut Construction, Health Center, RCMP,
+#	Eastern Arctic National Parks, A & D Specialist
+#
+# The following businesses and organizations in Pangnirtung use Eastern Time:
+#
+#	Hamlet office, All other businesses, Both schools, Airport operator
+#
+# This has made for an interesting situation there, which warranted the news.
+# No one there that I spoke with seems concerned, or has plans to
+# change the local methods of keeping time, as it evidently does not
+# really interfere with any activities or make things difficult locally.
+# They plan to celebrate New Year's turn-over twice, one hour apart,
+# so it appears that the situation will last at least that long.
+# The Nunavut Intergovernmental Affairs hopes that they will "come to
+# their senses", but the locals evidently don't see any problem with
+# the current state of affairs.
+
+# From Michaela Rodrigue, writing in the
+# Nunatsiaq News (1999-11-19):
+# http://www.nunatsiaqonline.ca/archives/nunavut991130/nvt91119_17.html
+# Clyde River, Pangnirtung and Sanikiluaq now operate with two time zones,
+# central - or Nunavut time - for government offices, and eastern time
+# for municipal offices and schools....  Igloolik [was similar but then]
+# made the switch to central time on Saturday, Nov. 6.
+
+# From Chris Walton (2022-11-06):
+# The implication is that Pangnirtung and Qikiqtarjuaq have observed Eastern
+# Time as far back as 1984 (and likely even further back than that).
+# It is possible that these communities never actually observed Atlantic
+# Time, but that would be difficult to prove.
+# From Paul Eggert (2022-11-06):
+# This is in 'backzone' as we have no good evidence that Pangnirtung differs
+# from America/Iqaluit since 1970.  A Google Books snippet view of
+# volume 2, page 186 of "Pilot of Arctic Canada", published 1959 by
+# the Canadian Hydrographic Service, suggests (though does not state)
+# that Pangnirtung observed EST then.
+#
+# aka Panniqtuuq
+Zone America/Pangnirtung 0	-	-00	1921 # trading post est.
+			-5:00	NT_YK	E%sT	1999 Oct 31  2:00
+			-6:00	Canada	C%sT	2000 Oct 29  2:00
+			-5:00	Canada	E%sT
+
 # United States
 #
 # From Paul Eggert (2018-03-18):
@@ -604,6 +668,17 @@ Zone America/Montreal	-4:54:16 -	LMT	1884
 
 # Trinidad and Tobago
 
+# Canada
+# From Chris Walton (2022-10-15):
+# I would also like to see America/Nipigon and America/Rainy_River converted
+# into link entries because I have zero faith in the current Shanks based data.
+# From Paul Eggert (2022-10-15):
+# These are now links in the primary data.  Also see America/Thunder_Bay.
+Zone America/Rainy_River -6:18:16 -	LMT	1895
+			-6:00	Canada	C%sT	1940 Sep 29
+			-6:00	1:00	CDT	1942 Feb  9  2:00s
+			-6:00	Canada	C%sT
+
 # Argentina
 # This entry was intended for the following areas, but has been superseded by
 # more detailed zones.
@@ -627,7 +702,59 @@ Link America/St_Thomas America/Virgin
 
 # St Vincent and the Grenadines
 
+# Canada
+#
+# From Paul Eggert (2003-07-27):
+# Willett (1914-03) writes (p. 17) "In the Cities of Fort William, and
+# Port Arthur, Ontario, the principle of the Bill has been in
+# operation for the past three years, and in the City of Moose Jaw,
+# Saskatchewan, for one year."
+#
+# From David Bryan via Tory Tronrud, Director/Curator,
+# Thunder Bay Museum (2003-11-12):
+# There is some suggestion, however, that, by-law or not, daylight
+# savings time was being practiced in Fort William and Port Arthur
+# before 1909.... [I]n 1910, the line between the Eastern and Central
+# Time Zones was permanently moved about two hundred miles west to
+# include the Thunder Bay area....  When Canada adopted daylight
+# savings time in 1916, Fort William and Port Arthur, having done so
+# already, did not change their clocks....  During the Second World
+# War,... [t]he cities agreed to implement DST during the summer
+# months for the remainder of the war years.
+#
+# From Jeffery Nichols (2020-02-06):
+# According to the [Shanks] atlas, those western Ontario zones are huge,
+# covering most of Ontario northwest of Sault Ste Marie and Timmins.
+# The zones seem to include towns bigger than the ones they're named after,
+# like Dryden in America/Rainy_River and Wawa (and maybe Attawapiskat) in
+# America/Nipigon.  I assume it's too much trouble to change the name of the
+# zone (like when you found out that America/Glace_Bay includes Sydney, Nova
+# Scotia)....
+#
+# From Chris Walton (2022-10-15):
+# The TZ database currently shows that Thunder Bay has observed daylight
+# saving every year from 1970 onwards with the exception of 1973.
+# Back in July I raised some doubts on this mailing list about the 1973 data.
+# I now have more proof that it is wrong.
+# [attached Chronicle-Journal front pages, 1973-04-28 and 1973-10-27]
+#
+# From Paul Eggert (2022-10-15):
+# This is now a link in the primary data.  The following entry is
+# from Shanks & Pottenger, with corrections as noted above.
+#
+Zone America/Thunder_Bay -5:57:00 -	LMT	1895
+			-6:00	-	CST	1910
+			-5:00	-	EST	1942
+			-5:00	Canada	E%sT	1970
+			-5:00	Toronto	E%sT	1974
+			-5:00	Canada	E%sT
+
 # British Virgin Is
+
+# Yellowknife, Northwest Territories
+Zone America/Yellowknife 0	-	-00	1935 # Yellowknife founded?
+			-7:00	NT_YK	M%sT	1980
+			-7:00	Canada	M%sT
 
 # Dumont d'Urville, Île des Pétrels, -6640+14001, since 1956-11
 # <https://en.wikipedia.org/wiki/Dumont_d'Urville_Station> (2005-12-05)
@@ -650,33 +777,6 @@ Link Antarctica/McMurdo Antarctica/South_Pole
 # See:
 # NIPR Antarctic Research Activities (1999-08-17)
 # http://www.nipr.ac.jp/english/ara01.html
-
-# Vostok, Antarctica
-#
-# Vostok, since 1957-12-16, temporarily closed 1994-02/1994-11
-# From Craig Mundell (1994-12-15):
-# http://quest.arc.nasa.gov/antarctica/QA/computers/Directions,Time,ZIP
-# Vostok, which is one of the Russian stations, is set on the same
-# time as Moscow, Russia.
-#
-# From Lee Hotz (2001-03-08):
-# I queried the folks at Columbia who spent the summer at Vostok and this is
-# what they had to say about time there:
-# "in the US Camp (East Camp) we have been on New Zealand (McMurdo)
-# time, which is 12 hours ahead of GMT. The Russian Station Vostok was
-# 6 hours behind that (although only 2 miles away, i.e. 6 hours ahead
-# of GMT). This is a time zone I think two hours east of Moscow. The
-# natural time zone is in between the two: 8 hours ahead of GMT."
-#
-# From Paul Eggert (2001-05-04):
-# This seems to be hopelessly confusing, so I asked Lee Hotz about it
-# in person.  He said that some Antarctic locations set their local
-# time so that noon is the warmest part of the day, and that this
-# changes during the year and does not necessarily correspond to mean
-# solar noon.  So the Vostok time might have been whatever the clocks
-# happened to be during their visit.  So we still don't really know what time
-# it is at Vostok.  But we'll guess +06.
-#
 
 # Yemen
 # Milne says 2:59:54 was the meridian of the saluting battery at Aden,
@@ -1193,7 +1293,7 @@ Zone Europe/Zaporozhye	2:20:40 -	LMT	1880
 # Enderbury was inhabited 1860/1880s to mine guano, and 1938-03-06/1942-02-09
 # for aviation (ostensibly commercial, but military uses foreseen).
 # The 19th-century dates are approximate.  See Pacific/Kanton for
-# the currently-inhabited representative for this timezone.
+# the currently inhabited representative for this timezone.
 Zone Pacific/Enderbury	0	-	-00	1860
 			-11:24:20 -	LMT	1885
 			0	-	-00	1938 Mar  6
