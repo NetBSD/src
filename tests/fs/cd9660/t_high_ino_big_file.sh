@@ -1,4 +1,4 @@
-# $NetBSD: t_high_ino_big_file.sh,v 1.4 2014/07/07 22:06:02 pgoyette Exp $
+# $NetBSD: t_high_ino_big_file.sh,v 1.5 2023/12/30 13:09:24 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ mntpnt=""
 
 atf_test_case pr_kern_48787 cleanup
 pr_kern_48787_head() {
-	atf_set "descr" "Verifies 32bit overflow isssues from PR kern/48787 are fixed"
+	atf_set "descr" "Verifies 32bit overflow issues from PR kern/48787 are fixed"
 	atf_set "require.user" "root"
 	atf_set "require.progs" "rump_cd9660 bunzip2 stat"
 	atf_set "timeout" 6000
