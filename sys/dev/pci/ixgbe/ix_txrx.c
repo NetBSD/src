@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.115 2023/12/29 07:36:47 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.116 2023/12/30 06:16:44 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,13 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.115 2023/12/29 07:36:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.116 2023/12/30 06:16:44 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 
 #include "ixgbe.h"
 
+#ifdef RSC
 /*
  * HW RSC control:
  *  this feature only works with
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.115 2023/12/29 07:36:47 msaitoh Exp $"
  *  to enable.
  */
 static bool ixgbe_rsc_enable = FALSE;
+#endif
 
 #ifdef IXGBE_FDIR
 /*
@@ -124,8 +126,9 @@ static __inline void ixgbe_rx_input(struct rx_ring *, struct ifnet *,
 static int           ixgbe_dma_malloc(struct ixgbe_softc *, bus_size_t,
                                       struct ixgbe_dma_alloc *, int);
 static void          ixgbe_dma_free(struct ixgbe_softc *, struct ixgbe_dma_alloc *);
-
+#ifdef RSC
 static void	     ixgbe_setup_hw_rsc(struct rx_ring *);
+#endif
 
 /************************************************************************
  * ixgbe_legacy_start_locked - Transmit entry point
@@ -1258,6 +1261,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	return ((limit > 0) ? false : true);
 } /* ixgbe_txeof */
 
+#ifdef RSC
 /************************************************************************
  * ixgbe_rsc_count
  *
@@ -1334,6 +1338,7 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 
 	rxr->hw_rsc = TRUE;
 } /* ixgbe_setup_hw_rsc */
+#endif
 
 /************************************************************************
  * ixgbe_refresh_mbufs
@@ -1596,10 +1601,15 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/*
 	 * Now set up the LRO interface
 	 */
+#ifdef RSC
 	if (ixgbe_rsc_enable)
 		ixgbe_setup_hw_rsc(rxr);
+#endif
 #ifdef LRO
-	else if (ifp->if_capenable & IFCAP_LRO) {
+#ifdef RSC
+	else
+#endif
+	if (ifp->if_capenable & IFCAP_LRO) {
 		device_t dev = sc->dev;
 		int err = tcp_lro_init(lro);
 		if (err) {
@@ -1867,7 +1877,10 @@ ixgbe_rxeof(struct ix_queue *que)
 
 		struct mbuf *sendmp, *mp;
 		struct mbuf *newmp;
-		u32         rsc, ptype;
+#ifdef RSC
+		u32         rsc;
+#endif
+		u32         ptype;
 		u16         len;
 		u16         vtag = 0;
 		bool        eop;
@@ -1902,7 +1915,9 @@ ixgbe_rxeof(struct ix_queue *que)
 		loopcount++;
 		sendmp = newmp = NULL;
 		nbuf = NULL;
+#ifdef RSC
 		rsc = 0;
+#endif
 		cur->wb.upper.status_error = 0;
 		rbuf = &rxr->rx_buffers[i];
 		mp = rbuf->buf;
@@ -1988,6 +2003,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			 * Figure out the next descriptor
 			 * of this frame.
 			 */
+#ifdef RSC
 			if (rxr->hw_rsc == TRUE) {
 				rsc = ixgbe_rsc_count(cur);
 				rxr->rsc_num += (rsc - 1);
@@ -1995,7 +2011,9 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (rsc) { /* Get hardware index */
 				nextp = ((staterr & IXGBE_RXDADV_NEXTP_MASK) >>
 				    IXGBE_RXDADV_NEXTP_SHIFT);
-			} else { /* Just sequential */
+			} else
+#endif
+			{ /* Just sequential */
 				nextp = i + 1;
 				if (nextp == sc->num_rx_desc)
 					nextp = 0;
