@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.374 2023/12/29 18:53:24 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.375 2023/12/30 13:28:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.374 2023/12/29 18:53:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.375 2023/12/30 13:28:06 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -141,8 +141,6 @@ static GNodeList transforms = LST_INIT;
  * TODO: What are these suffix numbers used for?
  */
 static int sNum = 0;
-
-typedef List SuffixListList;
 
 /*
  * A suffix such as ".c" or ".o" that may be used in suffix transformation
@@ -185,14 +183,6 @@ typedef struct Suffix {
 	SuffixList parents;
 	/* Suffixes we have a transformation from */
 	SuffixList children;
-	/*
-	 * Lists in which this suffix is referenced.
-	 *
-	 * XXX: These lists are used nowhere, they are just appended to, for
-	 * no apparent reason.  They do have the side effect of increasing
-	 * refCount though.
-	 */
-	SuffixListList ref;
 } Suffix;
 
 /*
@@ -392,7 +382,6 @@ Suffix_Free(Suffix *suff)
 		    suff->name, suff->refCount);
 #endif
 
-	Lst_Done(&suff->ref);
 	Lst_Done(&suff->children);
 	Lst_Done(&suff->parents);
 	SearchPath_Free(suff->searchPath);
@@ -440,12 +429,10 @@ SuffixList_Insert(SuffixList *list, Suffix *suff)
 		DEBUG2(SUFF, "inserting \"%s\" (%d) at end of list\n",
 		    suff->name, suff->sNum);
 		Lst_Append(list, Suffix_Ref(suff));
-		Lst_Append(&suff->ref, list);
 	} else if (listSuff->sNum != suff->sNum) {
 		DEBUG4(SUFF, "inserting \"%s\" (%d) before \"%s\" (%d)\n",
 		    suff->name, suff->sNum, listSuff->name, listSuff->sNum);
 		Lst_InsertBefore(list, ln, Suffix_Ref(suff));
-		Lst_Append(&suff->ref, list);
 	} else {
 		DEBUG2(SUFF, "\"%s\" (%d) is already there\n",
 		    suff->name, suff->sNum);
@@ -469,7 +456,6 @@ Suffix_New(const char *name)
 	suff->searchPath = SearchPath_New();
 	Lst_Init(&suff->children);
 	Lst_Init(&suff->parents);
-	Lst_Init(&suff->ref);
 	suff->sNum = sNum++;
 	suff->include = false;
 	suff->library = false;
@@ -821,19 +807,7 @@ UpdateTargets(Suffix *suff)
 	}
 }
 
-/*
- * Add the suffix to the end of the list of known suffixes.
- * Should we restructure the suffix graph? Make doesn't.
- *
- * A GNode is created for the suffix (XXX: this sounds completely wrong) and
- * a Suffix structure is created and added to the suffixes list unless the
- * suffix was already known.
- * The mainNode passed can be modified if a target mutated into a
- * transform and that target happened to be the main target.
- *
- * Input:
- *	name		the name of the suffix to add
- */
+/* Add the suffix to the end of the list of known suffixes. */
 void
 Suff_AddSuffix(const char *name)
 {
