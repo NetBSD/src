@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.96 2023/12/29 07:36:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.97 2023/12/30 06:16:03 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -325,7 +325,7 @@ struct ix_queue {
 	struct ixgbe_softc *sc;
 	u32              msix;           /* This queue's MSI-X vector */
 	u32              eitr_setting;
-	u32              me;
+	u8               me;
 	struct resource  *res;
 	int              busy;
 	struct tx_ring   *txr;
@@ -357,7 +357,7 @@ struct ix_queue {
 struct tx_ring {
 	struct ixgbe_softc	*sc;
 	kmutex_t		tx_mtx;
-	u32			me;
+	u8			me;
 	u32			tail;
 	int			busy;
 	union ixgbe_adv_tx_desc	*tx_base;
@@ -407,7 +407,7 @@ struct tx_ring {
 struct rx_ring {
 	struct ixgbe_softc	*sc;
 	kmutex_t		rx_mtx;
-	u32			me;
+	u8			me;
 	u32			tail;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
