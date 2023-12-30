@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.124 2023/12/22 10:22:00 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.125 2023/12/30 21:46:52 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.124 2023/12/22 10:22:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.125 2023/12/30 21:46:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -794,7 +794,7 @@ xennetback_tx_m0len_fragment(struct xnetback_instance *xneti,
 			return -1;
 		if (RING_REQUEST_CONS_OVERFLOW(&xneti->xni_txring, req_cons))
 			return -1;
-			
+
 		m0_len -= txreq->size;
 		req_cons++;
 		(*cntp)++;
