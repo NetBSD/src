@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.97 2023/12/30 06:16:03 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.98 2023/12/30 06:16:44 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -415,7 +415,9 @@ struct rx_ring {
 	struct lro_ctrl		lro;
 	bool			lro_enabled;
 #endif /* LRO */
+#ifdef RSC
 	bool			hw_rsc;
+#endif
 	bool			vtag_strip;
 	bool			discard_multidesc;
 	u16			next_to_refresh;
@@ -437,7 +439,9 @@ struct rx_ring {
 	struct evcnt		rx_bytes;
 	struct evcnt		rx_discarded;
 	struct evcnt		no_mbuf;
+#ifdef RSC
 	u64			rsc_num;
+#endif
 };
 
 struct ixgbe_vf {
