@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.26 2021/09/01 13:44:02 andvar Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.27 2023/12/31 19:41:22 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,12 @@ The
 file is the configuration file for the
 .Xr syslogd 8
 program.
-It consists of extended options (lines with one key="value" assignment)
+It consists of extended options
+.Po
+lines with one
+.Ar key\^ Ns Li = Ns Ar value
+assignment
+.Pc
 and blocks of lines separated by
 .Em program
 and
@@ -62,15 +67,22 @@ field is separated from the
 .Em action
 field by one or more tab characters.
 .Pp
+Blank lines and lines whose first non-blank character is a hash
+.Pq Ql #
+character are ignored.
+.\"
+.Ss Selectors
+.Pp
 The
-.Em Selectors
+.Em selector Ns s
 function
 are encoded as a
 .Em facility ,
 a period
-.Pq Sq \&. ,
-an optional set of comparison flags
-.Pq Bo ! Bc Bq <=> ,
+.Pq Ql \&. ,
+an optional set of
+.Em comparison flags
+.Pq Oo Li \&! Oc Ns Op Li <=> ,
 and a
 .Em level ,
 with no intervening white-space.
@@ -83,11 +95,31 @@ are case insensitive.
 The
 .Em facility
 describes the part of the system generating the message, and is one of
-the following keywords: auth, authpriv, cron, ftp, daemon, kern, lpr,
-mail, mark, news, syslog, user, uucp and local0 through local7.
-These keywords (with the exception of mark) correspond to the
-similar
-.Dq Dv LOG_
+the following keywords:
+.Ic auth ,
+.Ic authpriv ,
+.Ic cron ,
+.Ic daemon ,
+.Ic ftp ,
+.Ic kern ,
+.Ic lpr ,
+.Ic mail ,
+.Ic mark ,
+.Ic news ,
+.Ic syslog ,
+.Ic user ,
+.Ic uucp ,
+and
+.Ic local0
+through
+.Ic local7 .
+These keywords
+.Po
+with the exception of
+.Ic mark
+.Pc
+correspond to the similar
+.Ql LOG_
 values specified to the
 .Xr openlog 3
 and
@@ -98,32 +130,40 @@ The
 .Em comparison flags
 may be used to specify exactly what levels are logged.
 If unspecified, the default comparison is
-.Sq >=
+.Ql >=
 .Pq greater than or equal to ,
 or, if the
 .Fl U
 option is passed to
 .Xr syslogd 8 ,
-.Sq =
+.Ql =
 .Pq equal to .
 Comparison flags beginning with
-.So ! Sc
+.Ql \&!
 will have their logical sense inverted.
 Thus,
-.Sq !=info
+.Ql !=info
 means all levels except info and
-.Sq !notice
+.Ql !notice
 has the same meaning as
-.Sq <notice .
+.Ql <notice .
 .Pp
 The
 .Em level
 describes the severity of the message, and is a keyword from the
-following ordered list (higher to lower): emerg, alert, crit, err,
-warning, notice, info and debug.
+following ordered list (higher to lower):
+.Ic emerg ,
+.Ic alert ,
+.Ic crit ,
+.Ic err ,
+.Ic warning ,
+.Ic notice ,
+.Ic info ,
+and
+.Ic debug .
 These keywords correspond to the
 similar
-.Pq Dv LOG_
+.Ql LOG_
 values specified to the
 .Xr syslog 3
 library routine.
@@ -238,7 +278,7 @@ Multiple
 may be specified for a single
 .Em action
 by separating them with semicolon
-.Pq Sq \&;
+.Pq Ql \&;
 characters.
 It is important to note, however, that each
 .Em selector
@@ -249,11 +289,11 @@ Multiple
 may be specified for a single
 .Em level
 by separating them with comma
-.Pq Sq \&,
+.Pq Ql \&,
 characters.
 .Pp
 An asterisk
-.Pq Sq \&*
+.Pq Ql \&*
 can be used to specify all
 .Em facilities
 or all
@@ -261,21 +301,24 @@ or all
 .Pp
 The special
 .Em facility
-.Dq mark
+.Ic mark
 receives a message at priority
-.Dq info
+.Ql info
 every 20 minutes
-(see
-.Xr syslogd 8 ) .
+.Po see
+.Xr syslogd 8
+.Pc .
 This is not enabled by a
 .Em facility
 field containing an asterisk.
 .Pp
 The special
 .Em level
-.Dq none
+.Ql none
 disables a particular
 .Em facility .
+.\"
+.Ss Actions
 .Pp
 The
 .Em action
@@ -285,7 +328,8 @@ field selects a message.
 There are five forms:
 .Bl -bullet
 .It
-A pathname (beginning with a leading slash).
+A pathname beginning with a leading slash
+.Pq Ql \&/ .
 Selected messages are appended to the file, unless
 pathname points to an existing FIFO special file.
 .Xr syslogd 8
@@ -300,7 +344,7 @@ after writing messages from the kernel.
 Other messages are not synced explicitly.
 You may disable syncing of files specified to receive kernel messages
 by prefixing the pathname with a minus sign
-.Ql - .
+.Pq Ql \- .
 Note that use of this option may cause the loss of log information in
 the event of a system crash immediately following the write attempt.
 However, using this option may prove to be useful if your system's
@@ -308,59 +352,61 @@ kernel is logging many messages.
 .Pp
 Normally the priority and version is not written to file.
 In order to use syslog-sign you may prefix a pathname with the plus sign
-.Ql + .
+.Pq Ql + .
 If both switches are used the order has to be
-.Ql +- .
+.Ql +\- .
 .It
-A hostname (preceded by an at
-.Pq Sq @
-sign).
+A hostname preceded by an at sign
+.Pq Ql @ .
 Selected messages are forwarded to the
 .Xr syslogd 8
 program on the named host with UDP.
 .It
-A hostname preceded by an at
-.Pq Sq @
-sign and enclosed in brackets
-.Pq Sq []
-.
+A hostname preceded by an at sign
+.Pq Ql @ ,
+and enclosed in brackets
+.Pq Ql [] .
 Selected messages are forwarded with TLS to the
 .Xr syslogd 8
 program on the named host.
 After the closing bracket a colon
-.Pq Sq \&:
-and a port or service name may be appended.
-Additional options are configured in parentheses in the form of key="value".
+.Pq Ql \&:
+and a port number or service name may be appended.
+Additional parameters are configured in parentheses in the form of
+.Ar key\^ Ns Li = Ns Ar value .
 Recognized keywords are
-.Ar subject ,
-.Ar fingerprint ,
-.Ar cert ,
+.Ic subject ,
+.Ic fingerprint ,
+.Ic cert ,
 and
-.Ar verify .
+.Ic verify .
 .It
 A comma separated list of users.
 Selected messages are written to those users
 if they are logged in.
 .It
-An asterisk.
+An asterisk
+.Pq Ql * .
 Selected messages are written to all logged-in users.
 .It
 A vertical bar
-.Pq Sq |
+.Pq Ql |
 followed by a command to which to pipe the selected messages.
 The command string is passed to
 .Pa /bin/sh
 for evaluation, so the usual shell metacharacters or input/output
 redirection can occur.
-(Note that redirecting
+.Po
+Note that redirecting
 .Xr stdio 3
 buffered output from the invoked command can cause additional delays,
 or even lost output data in case a logging subprocess exits with a
-signal.)
+signal.
+.Pc
 The command itself runs with
-.Em stdout
+.Va stdout
 and
-.Em stderr
+.Va stderr
 redirected to
 .Pa /dev/null .
 Upon receipt of a
@@ -384,7 +430,7 @@ are being piped through the filter.
 .Pp
 Unless the command is a full pipeline, it may be useful to
 start the command with
-.Em exec
+.Ic exec
 so that the invoking shell process does not wait for the command to
 complete.
 Note that the command is started with the UID of the
@@ -392,119 +438,124 @@ Note that the command is started with the UID of the
 process, normally the superuser.
 .Pp
 Just like with files a plus sign
-.Ql +
+.Pq Ql +
 will leave the priority and version information intact.
 .El
-.Pp
-Blank lines and lines whose first non-blank character is a hash
-.Pq Sq #
-character are ignored.
 .Sh "TLS OPTIONS"
 Additional options are used for TLS configuration:
-.Bl -ohang
-.It Em tls_server
+.Bl -tag -width Ic
+.It Ic tls_server
 Enables TLS server mode.
-.It Em tls_bindport
+.It Ic tls_bindport
 Service name or port number to bind to.
 Default is
-.Sq syslog .
+.Ql syslog .
 .Em As long as no official port is assigned this option is required
 .Em for TLS servers.
-.It Em tls_bindhost
+.It Ic tls_bindhost
 Hostname or IP to bind to.
-.It Em tls_gen_cert
+.It Ic tls_gen_cert
 Automatically generate a private key and certificate.
-.It Em tls_key
+.It Ic tls_key
 File with private key.
 Default is
-.Sq /etc/openssl/default.key
-.It Em tls_cert
+.Pa /etc/openssl/default.key
+.It Ic tls_cert
 File with certificate to use.
 Default is
-.Sq /etc/openssl/default.crt
-.It Em tls_ca
+.Pa /etc/openssl/default.crt
+.It Ic tls_ca
 File with CA certificate to use.
-.It Em tls_cadir
+.It Ic tls_cadir
 Directory containing CA certificates.
-.It Em tls_verify
+.It Ic tls_verify
 If set to
-.Sq off
+.Ql off
 then certificate authentication is skipped.
-.It Em tls_allow_fingerprints
+.It Ic tls_allow_fingerprints
 List of fingerprints of trusted client certificates.
-.It Em tls_allow_clientcerts
+.It Ic tls_allow_clientcerts
 List of filenames with trusted client certificates.
 .El
-.Sh "TLS AUTHENTICATION"
 One function of TLS is mutual authentication of client and server.
 Unless authentication is disabled by setting
-.Sq tls_verify=off
+.Ql tls_verify=off
 the following rules are used:
-.Ss "As client:"
-A client can be configured not to check a server's certificate by setting the
+.Ss "Client Authentication"
+A client can be configured not to check a server's certificate by
+setting the
+.Em action Ap s
 parameter
-.Ar verify
+.Ql verify
 to
-.Sq off .
+.Ql off .
 If the server's certificate is signed by a trusted CA then it is checked
-if its hostname or IP is given in its certificate (as a CommonName, as a
-DNS SubjectAltName, or as an IP SubjectAltName).
+if its hostname or IP is given in its certificate
+.Po
+as a CommonName, as a
+.Tn DNS
+SubjectAltName, or as an
+.Tn IP
+SubjectAltName
+.Pc .
 If any match is found then the server is authenticated.
 If a
-.Ar subject
+.Ql subject
 parameter is given then it is can satisfy this test as well.
 This allows DNS-independent configurations using the server's IP address in the
 destination and adding its hostname as
-.Ar subject
+.Ql subject
 to authenticate the TLS connection without having to add the IP to the X.509
 certificate.
 .Pp
 If no CA is used or no trust path between CA and server certificate exists, then
 hash value of the server's certificate is compared with the hash given in
-.Ar fingerprint
+.Ql fingerprint
 and the hash of the certificate in
-.Ar cert .
+.Ql cert .
 If the hashes are equal then the server is authenticated.
-.Ss "As server:"
+.Ss "Server Authentication"
 If using a CA and the client's certificate is signed by it then the client is
 authenticated.
 Otherwise the hash of the client's certificate is compared with the hashes given
 in
-.Ar tls_allow_fingerprints
+.Ql tls_allow_fingerprints ,
 and the hashes of the certificates given in
-.Ar tls_allow_clientcerts .
+.Ql tls_allow_clientcerts
+options.
 On any match the client is authenticated.
-.Sh BUFFERING
+.Sh BUFFERING OPTIONS
 .Xr syslogd 8
 is able to buffer temporary not writable messages in memory.
 To limit the memory consumed for this buffering the following options may be
 given:
-.Bl -ohang
-.It Em file_queue_length
-.It Em pipe_queue_length
-.It Em tls_queue_length
-The maximum number of messages buffered for one destination of type tls, file,
-or pipe respectively.
+.Pp
+.Bl -tag -width Ic -compact
+.It Ic file_queue_length
+.It Ic pipe_queue_length
+.It Ic tls_queue_length
+The maximum number of messages buffered for one destination of type file,
+pipe, or TLS respectively.
 Defaults are
-.Sq 1024 ,
-.Sq 1024 ,
-and
-.Sq -1
-(no limit).
-.It Em file_queue_size
-.It Em pipe_queue_size
-.It Em tls_queue_size
+1024 for files and pipes and \-1 (no limit) for TLS.
+.Pp
+.It Ic file_queue_size
+.It Ic pipe_queue_size
+.It Ic tls_queue_size
 The maximum memory usage in bytes of messages buffered for one destination.
 Defaults are
-.Sq 1M ,
-.Sq 1M ,
-and
-.Sq 16M .
+.Tn 1M
+for files and pipes, and
+.Tn 16M
+for TLS.
 .El
-.Sh SIGNING
+.Pp
+Values for these options can be specified using the usual suffixes accepted by
+.Xr dehumanize_number 3 .
+.Sh SIGNING OPTIONS
 .Xr syslogd 8
 is able to digitally sign all processed messages.
-The used protocol is defined by RFC 5848 (syslog-sign):
+The used protocol is defined by RFC\~5848 (syslog-sign):
 at the start of a session the signing sender sends so called certificate
 blocks containing its public key; after that it periodically sends a signed
 message containing hashes of previous messages.
@@ -519,8 +570,8 @@ Otherwise new keys are generated on every restart and for certain verification
 it is necessary to have copies of all used keys.
 So logging only to a local file is not secure; at least the used keys should
 be logged to another host.
-.Bl -ohang
-.It Em sign_sg
+.Bl -tag -width Ic
+.It Ic sign_sg
 Enables signing.
 Set this option to enable syslog-sign and select how to assign
 messages to signature groups (subsets of messages that are signed together).
@@ -528,37 +579,40 @@ To enable later signature verification and detection of lost messages the
 assignment should be chosen such that all messages of one signature group
 are written to the same file.
 Four possible values for this option are:
-.Bl -hang -offset indent
-.It Em 0
+.Bl -tag -width Ds
+.It Li 0
 Use one global signature group for all messages.
-.It Em 1
+.It Li 1
 Use one signature group per priority.
-.It Em 2
+.It Li 2
 Use signature groups for ranges of priorities.
-.It Em 3
+.It Li 3
 Use one signature group per destination.
 This is a custom strategy not defined by the standard.
 With this setting one signature group is set up for
 every file and network action.
 .El
-.It Em sign_delim_sg2
+.It Ic sign_delim_sg2
 This option is only evaluated with
-.Sq sign_sg=2
+.Ql sign_sg=2
 and allows to configure the priority ranges for signature groups.
 The parameters are numerical values used as the maximum priority for one group.
 The default is to use one signature groups per facility, which is equal to
 setting
-.Sq sign_delim_sg2=7 15 23 31 39 ... .
+.Dl sign_delim_sg2=7 15 23 31 39 ...
 .El
 .Sh FILES
-.Bl -tag -width /etc/syslog.conf -compact
+.Bl -tag -width Pa
 .It Pa /etc/syslog.conf
 The
 .Xr syslogd 8
 configuration file.
 .It Pa /usr/share/examples/syslogd/verify.pl
 Example script to verify message signatures.
-(Requires Perl and modules not part of NetBSD.)
+.Po
+Requires Perl and modules not part of
+.Nx .
+.Pc
 .El
 .Sh EXAMPLES
 A configuration file might appear as follows:
@@ -641,12 +695,12 @@ along with
 .Sh BUGS
 The effects of multiple selectors are sometimes not intuitive.
 For example
-.Dq mail.crit;*.err
+.Ql mail.crit;*.err
 will select
-.Dq mail
+.Ql mail
 facility messages at
 the level of
-.Dq err
+.Ql err
 or higher, not at the level of
-.Dq crit
+.Ql crit
 or higher.
