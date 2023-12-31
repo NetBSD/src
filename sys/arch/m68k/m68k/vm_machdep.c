@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2023/12/20 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 2023/12/31 21:59:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2023/12/31 21:59:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,11 +252,7 @@ physunaccess(void *vaddr, int size)
 int
 kvtop(void *addr)
 {
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
-		panic("kvtop: zero page frame");
-	return (int)pa;
+	return (int)vtophys((vaddr_t)addr);
 }
 
 #endif

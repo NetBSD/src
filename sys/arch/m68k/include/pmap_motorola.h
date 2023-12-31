@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.42 2023/12/27 03:03:41 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.43 2023/12/31 21:59:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -253,5 +253,7 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
 int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
+
+paddr_t	vtophys(vaddr_t va);
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */
