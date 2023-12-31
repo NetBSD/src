@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.18 2019/04/25 10:44:52 msaitoh Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.19 2023/12/31 03:19:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.18 2019/04/25 10:44:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.19 2023/12/31 03:19:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,8 @@ rtl80x9_media_init(struct dp8390_softc *sc)
 	aprint_normal_dev(sc->sc_dev,
 	    "10base2, 10baseT, 10baseT-FDX, auto, default ");
 
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_3);
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR,
+	    sc->cr_proto | ED_CR_PAGE_3);
 
 	conf2 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
 	conf3 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3);
@@ -201,7 +202,8 @@ rtl80x9_media_init(struct dp8390_softc *sc)
 		break;
 	}
 
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_0);
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR,
+	    sc->cr_proto | ED_CR_PAGE_0);
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	for (i = 0; i < rtl80x9_nmedia; i++)
