@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.218.2.2 2023/10/08 18:48:20 martin Exp $
+#  $NetBSD: Makefile,v 1.218.2.3 2023/12/31 12:41:02 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -144,14 +144,14 @@ SUBDIR=arch/i387
 .if defined(M68060)
 .PATH:	${.CURDIR}/arch/m68060
 .include "${.CURDIR}/arch/m68060/Makefile.list"
-COPTS+=-m68060
+COPTS+= -m68060
 .PATH:	${.CURDIR}/arch/m68k
 ARCH_SRCS += s_ceil.S s_copysign.S s_finite.S s_floor.S s_rint.S
 .elif defined(M68040)
 .PATH: ${.CURDIR}/arch/m68k
-COPTS+=-m68040
+COPTS+= -m68040
 ARCH_SRCS = s_copysign.S s_finite.S
-.else
+.endif
 .if (${MKSOFTFLOAT} == "no")
 .PATH:	${.CURDIR}/arch/mc68881 ${.CURDIR}/arch/m68k
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
@@ -159,7 +159,6 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
 COMMON_SRCS += fenv.c s_nexttoward.c s_rintl.c
-.endif
 .endif
 # end of m68k
 
