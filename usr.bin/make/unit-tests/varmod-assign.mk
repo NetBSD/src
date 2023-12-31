@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.17 2023/12/29 15:47:03 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.18 2023/12/31 10:09:01 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -155,8 +155,10 @@ ${VARNAME}=	initial-value	# Sets 'VAR.${param}' to 'expanded'.
 .MAKEFLAGS: -d0
 
 
-# Conditional directives are evaluated in command line scope.  Any assignment
-# modifiers in these conditions create or
+# Conditional directives are evaluated in command line scope.  An assignment
+# modifier that creates a new variable creates it in the command line scope.
+# Existing variables are updated in their previous scope, and environment
+# variables are created in the global scope, as in other situations.
 .MAKEFLAGS: CMD_CMD_VAR=cmd-value
 CMD_GLOBAL_VAR=global-value
 export CMD_ENV_VAR=env-value
@@ -181,8 +183,7 @@ export CMD_ENV_VAR=env-value
 # debug log for this test, the debug log would have to be enabled for the
 # other targets as well, thus producing lots of irrelevant output.
 #
-# Running './make -r -f varmod-assign.mk target' results in:
-#	target: TARGET_TARGET_VAR = target-value
+# Running './make -r -f varmod-assign.mk target | grep ": TARGET"' results in:
 #	target: TARGET_TARGET_VAR = new-value
 #	Global: TARGET_GLOBAL_VAR = new-value
 #	Global: TARGET_ENV_VAR = new-value
@@ -191,7 +192,7 @@ export CMD_ENV_VAR=env-value
 TARGET_GLOBAL_VAR=global-value
 export TARGET_ENV_VAR=env-value
 .MAKEFLAGS: ${make(target):?-dv:}
-target: TARGET_TARGET_VAR=target-value
+target: .PHONY TARGET_TARGET_VAR=target-value
 	: ${TARGET_TARGET_VAR::=new-value}
 	: ${TARGET_CMD_VAR::=new-value}
 	: ${TARGET_GLOBAL_VAR::=new-value}
