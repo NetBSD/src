@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.307 2022/04/09 23:38:31 riastradh Exp $ */
+/* $NetBSD: pmap.c,v 1.307.4.1 2023/12/31 12:45:18 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2022/04/09 23:38:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307.4.1 2023/12/31 12:45:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1204,13 +1204,15 @@ static bool	vtophys_internal(vaddr_t, paddr_t *p);
 	l1pte_ = pmap_l1pte(kernel_lev1map, va);			\
 	if (pmap_pte_v(l1pte_) == 0) {					\
 		printf("kernel level 1 PTE not valid, va 0x%lx "	\
-		    "(line %d)\n", (va), __LINE__);			\
+		    "(line %d) pte=%p *pte=0x%016lx\n", (va), __LINE__,	\
+		    l1pte_, *l1pte_);					\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
 	l2pte_ = pmap_l2pte(kernel_lev1map, va, l1pte_);		\
 	if (pmap_pte_v(l2pte_) == 0) {					\
 		printf("kernel level 2 PTE not valid, va 0x%lx "	\
-		    "(line %d)\n", (va), __LINE__);			\
+		    "(line %d) pte=%p *pte=0x%016lx\n", (va), __LINE__,	\
+		    l2pte_, *l2pte_);					\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
 	pmap_l3pte(kernel_lev1map, va, l2pte_);				\
@@ -1358,8 +1360,19 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		pte = (ALPHA_K0SEG_TO_PHYS(((vaddr_t)lev3map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
-		    (i*PAGE_SIZE*NPTEPG))] = pte;
+		/*
+		 * No need to use l2pte_index() here; it's equivalent
+		 * to just indexing with our loop variable i, but will
+		 * fall over if we end up with more than 1 L2 PT page.
+		 *
+		 * In other words:
+		 *
+		 *	l2pte_index(VM_MIN_KERNEL_ADDRESS +
+		 *	            (i*PAGE_SIZE*NPTEPG))
+		 *
+		 * ...is the same as 'i' so long as i stays below 1024.
+		 */
+		lev2map[i] = pte;
 	}
 
 	/* Initialize the pmap_growkernel_lock. */
