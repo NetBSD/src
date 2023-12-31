@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.27 2023/12/31 19:41:22 uwe Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.28 2023/12/31 23:39:27 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,10 +477,11 @@ List of fingerprints of trusted client certificates.
 .It Ic tls_allow_clientcerts
 List of filenames with trusted client certificates.
 .El
+.Pp
 One function of TLS is mutual authentication of client and server.
 Unless authentication is disabled by setting
 .Ql tls_verify=off
-the following rules are used:
+the following rules are used.
 .Ss "Client Authentication"
 A client can be configured not to check a server's certificate by
 setting the
