@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.35 2023/08/01 07:04:15 mrg Exp $ */
+/* $NetBSD: bwfm.c,v 1.36 2023/12/31 21:32:43 gutteridge Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -632,11 +632,10 @@ bwfm_init(struct ifnet *ifp)
 		return EIO;
 	}
 
-        /*
-         * Use CAM (constantly awake) when we are running as AP
-         * otherwise use fast power saving.
-         */
-
+	/*
+	 * Use CAM (constantly awake) when we are running as AP
+	 * otherwise use fast power saving.
+	 */
 	if (ic->ic_flags & IEEE80211_F_PMGTON) {
 		sc->sc_pm = BWFM_PM_FAST_PS;
 #ifndef IEEE80211_STA_ONLY
