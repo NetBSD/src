@@ -1,9 +1,9 @@
-.\" $NetBSD: zdump.8,v 1.22 2022/12/11 17:57:23 christos Exp $
+.\" $NetBSD: zdump.8,v 1.22.2.1 2023/12/31 12:34:48 martin Exp $
 .\" @(#)zdump.8	8.2
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
-.TH zdump 8
-.Dd October 22, 2021
+.\" .TH zdump 8
+.Dd December 6, 2023
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@ The
 program prints the current time in each
 .Ar timezone
 named on the command line.
-.SH OPTIONS
+.Sh OPTIONS
 .Bl -tag -width XXXXXXXXX -compact
 .It Fl \-version
 Output version information and exit.
@@ -48,9 +48,9 @@ For each
 on the command line,
 print the times at the two extreme time values,
 the times (if present) at and just beyond the boundaries of years that
-.BR localtime (3)
+.Xr localtime 3
 and
-.BR gmtime (3)
+.Xr gmtime 3
 can represent, and
 the times both one second before and exactly at
 each detected time discontinuity.
