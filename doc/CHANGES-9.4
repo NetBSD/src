@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.123 2023/12/30 19:18:25 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.124 2023/12/31 12:51:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4032,4 +4032,9 @@ usr.sbin/makefs/msdos.c				1.22
 	makefs(8): PR 57752: return a proper exit status on failure
 	on creating msdosfs.
 	[tsutsui, ticket #1783]
+
+etc/newsyslog.conf				1.25
+
+	newsyslog.conf: collate npflog0.pcap properly
+	[uwe, ticket #1784]
 
