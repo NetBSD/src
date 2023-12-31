@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc.c,v 1.1 2023/12/29 23:31:44 thorpej Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.1 2023/12/29 23:31:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -78,7 +78,7 @@ gfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	uint32_t lo = nsec;
 
 	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_HIGH, hi);
-	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_HIGH, lo);
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_LOW, lo);
 
 	return 0;
 }
