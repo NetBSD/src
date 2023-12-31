@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.21 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.22 2023/12/31 09:45:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.21 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22 2023/12/31 09:45:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -370,7 +370,7 @@ rk_gmac_setup_clocks(int phandle)
 	static const char * const clknames[] = {
 #if 0
 		"stmmaceth",
-		"mac_clk_rx", 
+		"mac_clk_rx",
 		"mac_clk_tx",
 		"clk_mac_ref",
 		"clk_mac_refout",
