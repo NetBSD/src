@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.84 2023/12/28 15:33:12 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.85 2023/12/31 21:59:24 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.84 2023/12/28 15:33:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.85 2023/12/31 21:59:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1590,6 +1590,22 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		printf("failed\n");
 #endif
 	return false;
+}
+
+/*
+ * vtophys:		[ INTERFACE-ish ]
+ *
+ *	Kernel virtual to physical.  Use with caution.
+ */
+paddr_t
+vtophys(vaddr_t va)
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa))
+		return pa;
+	KASSERT(0);
+	return (paddr_t) -1;
 }
 
 /*
