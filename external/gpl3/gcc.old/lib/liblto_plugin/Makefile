@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/02/20 02:12:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2023/12/31 22:52:49 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -15,7 +15,7 @@ SRCS=		lto-plugin.c hashtab.c simple-object.c pex-unix.c \
 
 # libiberty
 SRCS+=		xstrerror.c xasprintf.c xvasprintf.c safe-ctype.c \
-		vprintf-support.c
+		vprintf-support.c unlink-if-ordinary.c
 
 CPPFLAGS+=	-I${DIST}/include -I. 
 CPPFLAGS+=	-DHAVE_CONFIG_H
