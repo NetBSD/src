@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.4 2023/12/20 18:09:19 skrll Exp $ */
+/*	$NetBSD: if_dse.c,v 1.5 2024/01/01 22:29:48 gutteridge Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -300,7 +300,7 @@ static const scsi_dayna_ether_generic	sonic_ether_vendor1 = {
 
 #if 0
 /*
- * Compare two Ether/802 addredses for equality, inlined and
+ * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.
  * Note: use this like memcmp()
  */
