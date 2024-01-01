@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.9 2023/12/27 03:03:41 thorpej Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.10 2024/01/01 22:47:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,55 +56,63 @@ typedef u_int	pt_entry_t;	/* page table entry */
 
 #define PG_SHIFT	PGSHIFT
 
-#define	SG_V		0x00000002	/* segment is valid */
-#define	SG_NV		0x00000000
-#define	SG_PROT		0x00000004	/* access protection mask */
-#define	SG_RO		0x00000004
+/*
+ * "Segment" Table Entry bits, defined in terms of the 68851 bits
+ * (compatible 68040 bits noted in comments).
+ */
+#define	SG_V		DT51_SHORT	/* == UTE40_RESIDENT */
+#define	SG_NV		DT51_INVALID	/* == UTE40_INVALID */
+#define	SG_RO		DTE51_WP	/* == UTE40_W */
 #define	SG_RW		0x00000000
-#define	SG_U		0x00000008	/* modified bit (68040) */
-#define	SG_FRAME	((~0) << PG_SHIFT)
+#define	SG_PROT		DTE51_WP
+#define	SG_U		DTE51_U		/* == UTE40_U */
+#define	SG_FRAME	((~0U) << PG_SHIFT)
 #define	SG_ISHIFT	((PG_SHIFT << 1) - 2)	/* 24 or 22 */
-#define	SG_IMASK	((~0) << SG_ISHIFT)
+#define	SG_IMASK	((~0U) << SG_ISHIFT)
 #define	SG_PSHIFT	PG_SHIFT
-#define	SG_PMASK	(((~0) << SG_PSHIFT) & ~SG_IMASK)
+#define	SG_PMASK	(((~0U) << SG_PSHIFT) & ~SG_IMASK)
 
 /* 68040 additions */
-#define	SG4_MASK1	0xfe000000
+#define	SG4_MASK1	0xfe000000U
 #define	SG4_SHIFT1	25
-#define	SG4_MASK2	0x01fc0000
+#define	SG4_MASK2	0x01fc0000U
 #define	SG4_SHIFT2	18
-#define	SG4_MASK3	(((~0) << PG_SHIFT) & ~(SG4_MASK1 | SG4_MASK2))
+#define	SG4_MASK3	(((~0U) << PG_SHIFT) & ~(SG4_MASK1 | SG4_MASK2))
 #define	SG4_SHIFT3	PG_SHIFT
 #define	SG4_ADDR1	0xfffffe00
-#define	SG4_ADDR2	((~0) << (20 - PG_SHIFT))
+#define	SG4_ADDR2	((~0U) << (20 - PG_SHIFT))
 #define	SG4_LEV1SIZE	128
 #define	SG4_LEV2SIZE	128
-#define	SG4_LEV3SIZE	(1 << (SG4_SHIFT2 - PG_SHIFT))	/* 64 or 32 */
+#define	SG4_LEV3SIZE	(1U << (SG4_SHIFT2 - PG_SHIFT))	/* 64 or 32 */
 
-#define	PG_V		0x00000001
-#define	PG_NV		0x00000000
-#define	PG_PROT		0x00000004
-#define	PG_U		0x00000008
-#define	PG_M		0x00000010
-#define	PG_W		0x00000100
-#define	PG_RO		0x00000004
+/*
+ * Page Table Entry bits, defined in terms of the 68851 bits
+ * (compatible 68040 bits noted in comments).
+ */
+#define	PG_V		DT51_PAGE	/* == PTE40_RESIDENT */
+#define	PG_NV		DT51_INVALID	/* == PTE40_INVALID */
+#define	PG_RO		PTE51_WP	/* == PTE40_W */
 #define	PG_RW		0x00000000
-#define	PG_FRAME	((~0) << PG_SHIFT)
-#define	PG_CI		0x00000040
-#define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
+#define	PG_PROT		PG_RO
+#define	PG_U		PTE51_U		/* == PTE40_U */
+#define	PG_M		PTE51_M		/* == PTE40_M */
+#define	PG_CI		PTE51_CI
+#define	PG_W		__BIT(8)	/* 851 unused bit XXX040 PTE40_U0 */
+#define	PG_FRAME	((~0U) << PG_SHIFT)
+#define	PG_PFNUM(x)	(((uintptr_t)(x) & PG_FRAME) >> PG_SHIFT)
 
 /* 68040 additions */
-#define	PG_CMASK	0x00000060	/* cache mode mask */
-#define	PG_CWT		0x00000000	/* writethrough caching */
-#define	PG_CCB		0x00000020	/* copyback caching */
-#define	PG_CIS		0x00000040	/* cache inhibited serialized */
-#define	PG_CIN		0x00000060	/* cache inhibited nonserialized */
-#define	PG_SO		0x00000080	/* supervisor only */
+#define	PG_CMASK	PTE40_CM	/* cache mode mask */
+#define	PG_CWT		PTE40_CM_WT	/* writethrough caching */
+#define	PG_CCB		PTE40_CM_CB	/* copyback caching */
+#define	PG_CIS		PTE40_CM_NC_SER	/* cache inhibited serialized */
+#define	PG_CIN		PTE40_CM_NC	/* cache inhibited nonserialized */
+#define	PG_SO		PTE40_S		/* supervisor only */
 
 #define M68K_STSIZE	(MAXUL2SIZE * SG4_LEV2SIZE * sizeof(st_entry_t))
 					/* user process segment table size */
-#define M68K_MAX_PTSIZE	(1 << (32 - PG_SHIFT + 2))	/* max size of UPT */
-#define M68K_MAX_KPTSIZE	(M68K_MAX_PTSIZE >> 2)	/* max memory to allocate to KPT */
+#define M68K_MAX_PTSIZE	 (1U << (32 - PG_SHIFT + 2))	/* max size of UPT */
+#define M68K_MAX_KPTSIZE (M68K_MAX_PTSIZE >> 2)	/* max memory to allocate to KPT */
 #define M68K_PTBASE	0x10000000	/* UPT map base address */
 #define M68K_PTMAXSIZE	0x70000000	/* UPT map maximum size */
 
