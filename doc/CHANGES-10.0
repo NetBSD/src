@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.183 2024/01/01 11:47:38 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.184 2024/01/01 14:04:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15087,4 +15087,10 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h					(manually edited)
 
 	Welcome to 10.0_RC2
+
+sys/stand/efiboot/efinet.c			1.9
+
+	MI efiboot: Revert "Stop using efi_bootdp after exclusive open for PXE"
+	Move RC2 tag to include this change.
+	[rin, ticket #524]
 
