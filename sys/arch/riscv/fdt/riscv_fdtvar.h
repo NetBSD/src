@@ -1,4 +1,4 @@
-/* $NetBSD: riscv_fdtvar.h,v 1.1 2023/06/12 19:04:13 skrll Exp $ */
+/* $NetBSD: riscv_fdtvar.h,v 1.2 2024/01/01 13:51:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #ifndef _RISCV_RISCV_FDTVAR_H
 #define _RISCV_RISCV_FDTVAR_H
 
+bool	riscv_fdt_cpu_okay(const int);
 void	riscv_fdt_cpu_bootstrap(void);
 int	riscv_fdt_cpu_mpstart(void);
 void	riscv_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
