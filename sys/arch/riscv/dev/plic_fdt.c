@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.3 2023/09/02 09:58:15 skrll Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.3 2023/09/02 09:58:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.3 2023/09/02 09:58:15 skrll Exp $");
 #include <dev/fdt/fdtvar.h>
 
 #include <riscv/sysreg.h>
+#include <riscv/fdt/riscv_fdtvar.h>
 #include <riscv/dev/plicreg.h>
 #include <riscv/dev/plicvar.h>
 
@@ -103,6 +104,58 @@ plic_fdt_match(device_t parent, cfdata_t cf, void *aux)
 
 	return of_compatible_match(faa->faa_phandle, compat_data);
 }
+
+
+static void
+plic_fdt_attach_source(device_t self, int phandle, int context, int xref,
+    int intr_source)
+{
+	struct plic_softc * const sc = device_private(self);
+	static const struct device_compatible_entry clint_compat_data[] = {
+		{ .compat = "riscv,cpu-intc" },
+		DEVICE_COMPAT_EOL
+	};
+
+	if (!of_compatible_match(xref, clint_compat_data)) {
+		aprint_error_dev(self, "incompatiable CLINT "
+		    "for PLIC for context %d\n", context);
+		return;
+	}
+
+	const int cpu_ref = OF_parent(xref);
+	if (!riscv_fdt_cpu_okay(cpu_ref)) {
+		aprint_verbose_dev(self, "inactive HART "
+		    "for PLIC for context %d\n", context);
+		return;
+	}
+
+	/* What do we want to pass as arg to plic_intr */
+	void *ih = fdtbus_intr_establish_xname(phandle,
+	    context, IPL_VM, FDT_INTR_MPSAFE,
+	    plic_intr, sc, device_xname(self));
+	if (ih == NULL) {
+		    aprint_error_dev(self, "couldn't install "
+		    "interrupt handler\n");
+	} else {
+		char intrstr[128];
+		bool ok = fdtbus_intr_str(phandle, context,
+		    intrstr, sizeof(intrstr));
+		aprint_verbose_dev(self, "interrupt %s handler "
+		    "installed\n", ok ? intrstr : "(unk)");
+	}
+
+	if (intr_source == IRQ_SUPERVISOR_EXTERNAL) {
+		bus_addr_t hartid;
+		/* get cpuid for the parent node */
+		fdtbus_get_reg(cpu_ref, 0, &hartid, NULL);
+
+		KASSERT(context <= PLIC_MAX_CONTEXT);
+		sc->sc_context[hartid] = context;
+		aprint_verbose_dev(self, "hart %"PRId64" context %d\n",
+		    hartid, context);
+	}
+}
+
 
 static void
 plic_fdt_attach(device_t parent, device_t self, void *aux)
@@ -179,49 +232,8 @@ plic_fdt_attach(device_t parent, device_t self, void *aux)
 		}
 
 		if (intr_source != -1) {
-			/* What do we want to pass as arg to plic_intr */
-			void *ih = fdtbus_intr_establish_xname(phandle,
-			    context, IPL_VM, FDT_INTR_MPSAFE,
-			    plic_intr, sc, device_xname(self));
-			if (ih == NULL) {
-				    aprint_error_dev(self, "couldn't install "
-				    "interrupt handler\n");
-			} else {
-				char intrstr[128];
-				bool ok = fdtbus_intr_str(phandle, context,
-				    intrstr, sizeof(intrstr));
-				aprint_verbose_dev(self, "interrupt %s handler "
-				    "installed\n", ok ? intrstr : "(unk)");
-			}
-
-			if (intr_source == IRQ_SUPERVISOR_EXTERNAL) {
-				/*
-				 * When finding context info, parent _must_ be a
-				 * compatbile clint device.
-				 */
-				bus_addr_t hartid;
-				int cpu_ref;
-				static const struct device_compatible_entry clint_compat_data[] = {
-					{ .compat = "riscv,cpu-intc" },
-					DEVICE_COMPAT_EOL
-				};
-
-				if (of_compatible_match(xref, clint_compat_data)) {
-					/* get cpuid for the parent node */
-					cpu_ref = OF_parent(xref);
-					fdtbus_get_reg(cpu_ref, 0, &hartid, NULL);
-
-					KASSERT(context <= PLIC_MAX_CONTEXT);
-					sc->sc_context[hartid] = context;
-					aprint_verbose_dev(self,
-					    "hart %"PRId64" context %d\n",
-					    hartid, context);
-				} else {
-					aprint_error_dev(self, "incompatiable CLINT "
-					    " for PLIC for context %d\n", context);
-				}
-
-			}
+			plic_fdt_attach_source(self, phandle, context, xref,
+				intr_source);
 		}
 		len -= (intr_cells + 1) * 4;
 		data += (intr_cells + 1);

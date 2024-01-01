@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.3 2023/09/03 08:48:19 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.3 2023/09/03 08:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -43,17 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.3 2023/09/03 08:48:19 skrll Exp $");
 
 #include <riscv/fdt/riscv_fdtvar.h>
 
-
-static bool
-riscv_fdt_cpu_okay(const int child)
+bool
+riscv_fdt_cpu_okay(const int node)
 {
 	const char *s;
 
-	s = fdtbus_get_string(child, "device_type");
+	s = fdtbus_get_string(node, "device_type");
 	if (!s || strcmp(s, "cpu") != 0)
 		return false;
 
-	s = fdtbus_get_string(child, "status");
+	s = fdtbus_get_string(node, "status");
 	if (s) {
 		if (strcmp(s, "okay") == 0)
 			return true;
