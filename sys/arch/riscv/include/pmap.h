@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.22 2023/10/06 08:48:49 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.23 2024/01/01 17:18:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -217,7 +217,16 @@ pmap_md_vca_clean(struct vm_page_md *mdpg, vaddr_t va, int op)
 static inline size_t
 pmap_md_tlb_asid_max(void)
 {
-	return PMAP_TLB_NUM_PIDS - 1;
+	const register_t satp = csr_satp_read();
+	const register_t test = satp | SATP_ASID;
+
+	csr_satp_write(test);
+
+	const register_t ret = __SHIFTOUT(csr_satp_read(), SATP_ASID);
+	csr_satp_write(satp);
+
+	KASSERT(ret < PMAP_TLB_NUM_PIDS);
+	return ret;
 }
 
 static inline pt_entry_t *
