@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.14 2023/07/18 11:44:32 riastradh Exp $ */
+/*	$NetBSD: _env.c,v 1.15 2024/01/02 19:27:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.14 2023/07/18 11:44:32 riastradh Exp $");
+__RCSID("$NetBSD: _env.c,v 1.15 2024/01/02 19:27:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,7 +88,7 @@ static rwlock_t env_lock = RWLOCK_INITIALIZER;
 #endif
 
 /* Compatibility function. */
-char *__findenv(const char *name, int *offsetp);
+extern char *__findenv(const char *name, int *offsetp);
 
 __warn_references(__findenv,
     "warning: __findenv is an internal obsolete function.")
