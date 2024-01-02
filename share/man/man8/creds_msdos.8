@@ -1,4 +1,4 @@
-.\"	$NetBSD: creds_msdos.8,v 1.2 2021/12/11 19:24:19 mrg Exp $
+.\"	$NetBSD: creds_msdos.8,v 1.3 2024/01/02 19:15:59 uwe Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -55,34 +55,41 @@ it will inspect the file
 for any credentials to be added to the system.
 .Pp
 These are the supported options in the credentials files:
-.Bl -tag -compact -width "sshkeyfilepl" -offset indent
-.It Sy sshkeyfile Ar user Ar keyfile
-.It Sy sshkey Ar user Ar keystring
-.It Sy useraddpwhash Ar user Ar pwhash
-.It Sy useradd Ar user Ar password
+.Pp
+.Bl -tag -compact -width Ic -offset indent
+.It Ic sshkeyfile Ar user Ar keyfile
+.It Ic sshkey Ar user Ar keystring
+.It Ic useraddpwhash Ar user Ar pwhash
+.It Ic useradd Ar user Ar password
 .El
 .Pp
 In all cases
 .Ar user
 is the username to be added, and the user will be
 added to the
-.Dq wheel
+.Ql wheel
 group.
 .Pp
-The sshkeyfile method looks in the MSDOS boot partition for
+The
+.Ic sshkeyfile
+method looks in the MSDOS boot partition for
 the specified file and merges ssh keys from this file into
 .Ar user Ap s
 .Pa ~/.ssh/authorized_keys
 file.
 .Pp
-The sshkey method adds the
+The
+.Ic sshkey
+method adds the
 .Ar keystring
 to the
 .Ar user Ap s
 .Pa ~/.ssh/authorized_keys
 file.
 .Pp
-The useraddpwhash method uses
+The
+.Ic useraddpwhash
+method uses
 .Ar pwhash
 as the
 .Ar users Ap s
@@ -90,7 +97,9 @@ password hash.
 .Pp
 The above three methods are the preferred methods.
 .Pp
-For the useradd method
+For the
+.Ic useradd
+method
 .Ar password
 is an unencrypted raw password that will be hashed and added to the system.
 This method is not recommended as it leaves unencrypted passwords
@@ -98,7 +107,7 @@ around until such time that the script runs.
 If this method is used then the
 .Pa creds.txt
 file will be shredded and deleted using
-.Dq rm -P
+.Ql rm -P
 after the credentials are updated.
 .Sh FILES
 .Pa /boot/creds.txt
