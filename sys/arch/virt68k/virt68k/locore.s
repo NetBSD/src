@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2024/01/02 18:10:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -692,13 +692,6 @@ ENTRY(getsr)
 	moveq	#0,%d0
 	movw	%sr,%d0
 	rts
-
-/*
- * Handle the nitty-gritty of rebooting the machine.
- */
-ENTRY_NOPROFILE(doboot)
-	movw	#PSL_HIGHIPL,%sr
-1:	jra	1b			| XXX
 
 /*
  * Misc. global variables.
