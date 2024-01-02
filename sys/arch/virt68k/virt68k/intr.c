@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2024/01/02 07:48:46 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2024/01/02 07:48:46 thorpej Exp $");
 
 #define _VIRT68K_INTR_PRIVATE
 
