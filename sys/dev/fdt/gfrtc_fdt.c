@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $	*/
+/*	$NetBSD: gfrtc_fdt.c,v 1.3 2024/01/02 07:34:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc_fdt.c,v 1.2 2023/12/29 23:31:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc_fdt.c,v 1.3 2024/01/02 07:34:27 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -79,10 +79,7 @@ gfrtc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_naive("\n");
-	aprint_normal(": Google Goldfish RTC\n");
-
-	gfrtc_attach(sc);
+	gfrtc_attach(sc, true);
 }
 
 CFATTACH_DECL_NEW(gfrtc_fdt, sizeof(struct gfrtc_softc),
