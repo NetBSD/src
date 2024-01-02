@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmiovar.h,v 1.5 2021/10/22 02:57:23 yamaguchi Exp $ */
+/* $NetBSD: virtio_mmiovar.h,v 1.6 2024/01/02 07:24:50 thorpej Exp $ */
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
  * All rights reserved.
@@ -36,6 +36,7 @@ struct virtio_mmio_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
+	bool			sc_le_regs;
 
 	void			*sc_ih;
 
