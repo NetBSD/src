@@ -1,8 +1,12 @@
-# $NetBSD: files.goldfish,v 1.2 2024/01/02 07:27:51 thorpej Exp $
+# $NetBSD: files.goldfish,v 1.3 2024/01/02 07:29:39 thorpej Exp $
 
 # Goldfish programmable interrupt controller
 device	gfpic
 file	dev/goldfish/gfpic.c		gfpic
+
+# Goldfish virtual terminal
+device	gftty: tty
+file	dev/goldfish/gftty.c		gftty		needs-flag
 
 # Goldfish real-time clock / timer
 device	gfrtc
