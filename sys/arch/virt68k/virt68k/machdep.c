@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2024/01/02 17:13:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2024/01/02 18:10:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2024/01/02 17:13:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2024/01/02 18:10:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -422,6 +422,18 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 
 int	waittime = -1;
 
+static void (*cpu_reset_func)(void *, int);
+static void *cpu_reset_func_arg;
+
+void
+cpu_set_reset_func(void (*func)(void *, int), void *arg)
+{
+	if (cpu_reset_func == NULL) {
+		cpu_reset_func = cpu_reset_func;
+		cpu_reset_func_arg = arg;
+	}
+}
+
 void
 cpu_reboot(int howto, char *bootstr)
 {
@@ -471,17 +483,29 @@ cpu_reboot(int howto, char *bootstr)
 	}
 #endif
 
+	if (cpu_reset_func == NULL) {
+		printf("WARNING: No reset handler, holding here.\n\n");
+		for (;;) {
+			/* spin forever. */
+		}
+	}
+
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
-		doboot(RB_HALT);
+		(*cpu_reset_func)(cpu_reset_func_arg, RB_HALT);
+		/* NOTREACHED */
+	} else {
+		printf("rebooting...\n");
+		delay(1000000);
+		(*cpu_reset_func)(cpu_reset_func_arg, RB_AUTOBOOT);
 		/* NOTREACHED */
 	}
-
-	printf("rebooting...\n");
-	delay(1000000);
-	doboot(RB_AUTOBOOT);
-	/*NOTREACHED*/
+	/* ...but just in case it is... */
+	printf("WARNING: System reset handler failed, holding here.\n\n");
+	for (;;) {
+		/* spin forever. */
+	}
 }
 
 /*
