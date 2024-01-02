@@ -1,4 +1,4 @@
-/*	$NetBSD: gftty.c,v 1.1 2024/01/02 07:29:39 thorpej Exp $	*/
+/*	$NetBSD: gftty.c,v 1.2 2024/01/02 07:30:29 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */     
 
 /*
- * Support for the Goldfish virtual Programmable Interrupt Controller.
+ * Support for the Goldfish virtual TTY.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.1 2024/01/02 07:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.2 2024/01/02 07:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
