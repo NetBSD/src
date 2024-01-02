@@ -1,0 +1,70 @@
+#	$NetBSD: files.virt68k,v 1.1 2024/01/02 07:40:59 thorpej Exp $
+
+# config file for virt68k
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+defflag	opt_m060sp.h		M060SP
+
+# Generic devices
+include "dev/scsipi/files.scsipi"		# SCSI
+
+device mainbus { [addr = -1] }
+attach mainbus at root
+file arch/virt68k/dev/mainbus.c			mainbus
+
+attach gfpic at mainbus with gfpic_mainbus
+file arch/virt68k/dev/gfpic_mainbus.c		gfpic_mainbus
+
+attach gftty at mainbus with gftty_mainbus
+file arch/virt68k/dev/gftty_mainbus.c		gftty_mainbus
+
+attach gfrtc at mainbus with gfrtc_mainbus
+file arch/virt68k/dev/gfrtc_mainbus.c		gfrtc_mainbus
+
+attach virtio at mainbus with virtio_mainbus: virtio_mmio
+file arch/virt68k/dev/virtio_mainbus.c		virtio_mainbus
+
+# Memory disk for installer
+file dev/md_root.c				memory_disk_hooks
+
+file arch/virt68k/virt68k/autoconf.c
+file arch/virt68k/virt68k/bootinfo.c
+file arch/virt68k/virt68k/bus_dma.c
+file arch/virt68k/virt68k/bus_space.c
+file arch/virt68k/virt68k/clock.c
+file arch/virt68k/virt68k/disksubr.c
+file arch/virt68k/virt68k/intr.c
+file arch/virt68k/virt68k/machdep.c
+file arch/virt68k/virt68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file arch/virt68k/virt68k/trap.c
+file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/db_memrw.c			ddb | kgdb
+file arch/m68k/m68k/kgdb_machdep.c		kgdb
+file arch/m68k/m68k/m68k_trap.c
+file arch/m68k/m68k/pmap_motorola.c
+file arch/m68k/m68k/procfs_machdep.c		procfs
+file arch/m68k/m68k/sys_machdep.c
+file arch/m68k/m68k/vm_machdep.c
+file dev/cons.c
+
+# Motorola 68060 support package
+include "arch/m68k/060sp/files.060sp"
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+include	"arch/virt68k/conf/majors.virt68k"

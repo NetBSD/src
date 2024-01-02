@@ -1,0 +1,176 @@
+# $NetBSD: GENERIC,v 1.1 2024/01/02 07:40:59 thorpej Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include 	"arch/virt68k/conf/std.virt68k"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+
+# reserve symbol space and copy the symbol table into it.  Needed
+# because Qemu does not load the symbol table when loading the
+# kernel.
+makeoptions     COPY_SYMTAB=1
+
+# CPUs this kernel supports
+options		M68030
+options		M68040
+
+maxusers	16
+
+# Needed on m68040 boards to emulate some missing FP instructions
+options 	FPSP
+
+options 	DDB
+options 	DIAGNOSTIC
+options 	LOCKDEBUG
+#options 	DEBUG
+
+#options 	SYSVSHM
+options 	KTRACE
+
+options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+file-system 	FFS
+file-system 	NFS
+file-system 	KERNFS
+#file-system 	MFS
+file-system 	CD9660
+#file-system	MSDOSFS
+#file-system	UNION
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+
+# File system options
+#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	WAPBL		# File system journaling support
+options 	NFSSERVER	# Network File System server
+
+# Networking options
+options 	INET
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	GATEWAY		# IP packet forwarding
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
+include 	"conf/compat_netbsd09.config"
+#options 	COMPAT_SUNOS
+#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+#options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
+#options 	COMPAT_OSSAUDIO	# compatibility with Linux/m68k binaries
+
+## force NFS root and swap
+#config	netbsd		root on ? type nfs
+## "generic" boot (put root on boot device)
+config netbsd		root on ? type ?
+
+# Which protocol to use when booting over NFS
+options 	NFS_BOOT_DHCP		# Diskless client w/ dhcp
+options 	NFS_BOOT_BOOTP		# Diskless client w/ bootp
+options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
+
+pseudo-device	sl
+pseudo-device	ppp 
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	loop
+pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#pseudo-device	vether			# Virtual Ethernet for bridge
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	vnd 
+#options 	VND_COMPRESSION		# compressed vnd(4)
+pseudo-device	fss			# file system snapshot device
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	npf			# NPF packet filter
+pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
+
+# random number generator pseudo-device
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# Veriexec
+# include "dev/veriexec.config"
+
+mainbus0	at root
+
+# Goldfish virtual devices
+gfpic*		at mainbus? addr ?	# interrupt controller
+gftty*		at mainbus? addr ?	# console terminal
+gfrtc*		at mainbus? addr ?	# real-time clock / timer
+
+# VirtIO devices
+virtio*		at mainbus? addr ?	# VirtIO nexus
+ld*		at virtio?		# VirtIO disk device
+vioif*		at virtio?		# VirtIO network device
+viornd*		at virtio?		# VirtIO entropy device
+vioscsi*	at virtio?		# VirtIO SCSI device
+
+# SCSI devices
+scsibus* at scsi?
+sd*		at scsibus? target ? lun ?	# SCSI disks
+#st*		at scsibus? target ? lun ?	# SCSI tapes
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+#ch*		at scsibus? target ? lun ?	# SCSI changer devices
+#ss*		at scsibus? target ? lun ?	# SCSI scanners
+#ses*		at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*		at scsibus? target ? lun ?	# unknown SCSI
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/virt68k/conf/GENERIC.local"
