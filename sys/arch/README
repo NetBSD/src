@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.65 2022/07/09 19:31:34 andvar Exp $
+$NetBSD: README,v 1.66 2024/01/02 18:18:47 thorpej Exp $
 
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
 algor	mipsel,mips64el	20010528	Algorithmics, Ltd. MIPS evaluation boards
@@ -55,6 +55,7 @@ sparc64	sparc64/sparc	19980620	Sun Microsystems UltraSPARC 64 bit machines
 sun2	m68000	20010328	Sun m68010 based machines
 sun3	m68k	19930625	Sun m680[23]0 based machines
 vax	vax	19940802	Digital Equipment Corp. VAX machines
+virt68k	m68k	20240101	Qemu m68k virtual machine
 x68k	m68k	19960505	Sharp X68000, X68030
 xen	xen	20040311	Xen virtual machine monitor
 zaurus	arm	20061217	Sharp Zaurus C7x0/860/1000/3x00 PDAs
