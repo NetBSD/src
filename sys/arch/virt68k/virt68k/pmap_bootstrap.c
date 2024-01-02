@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2 2024/01/02 07:42:52 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3 2024/01/02 07:43:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.2 2024/01/02 07:42:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.3 2024/01/02 07:43:29 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -235,21 +235,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			*ste++ = protoste;
 			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
-#if 0
-		/*
-		 * Now initialize the final portion of that block of
-		 * descriptors to map Sysmap.
-		 */
-		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
-		ste = (st_entry_t *)kstpa;
-		ste = &ste[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
-		este = &ste[NPTEPG / SG4_LEV3SIZE];
-		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (ste < este) {
-			*ste++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-#endif
 		/*
 		 * Calculate the free level 2 descriptor mask
 		 * noting that we have used:
