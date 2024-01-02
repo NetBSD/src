@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_top.c,v 1.9 2023/04/17 08:37:24 msaitoh Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.10 2024/01/02 22:35:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.9 2023/04/17 08:37:24 msaitoh Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.10 2024/01/02 22:35:26 kre Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: tprof_top.c,v 1.9 2023/04/17 08:37:24 msaitoh Exp $");
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <term.h>
