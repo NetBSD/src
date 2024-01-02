@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.9 2024/01/02 19:27:57 christos Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.10 2024/01/02 22:35:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/endian.h>
+
+#ifdef RBDEBUG
+#include <stdbool.h>
+#endif
 
 __BEGIN_DECLS
 
