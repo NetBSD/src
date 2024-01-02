@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.1 2024/01/02 07:40:59 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.2 2024/01/02 18:11:44 thorpej Exp $
 
 # config file for virt68k
 
@@ -25,6 +25,10 @@ file arch/virt68k/dev/gfrtc_mainbus.c		gfrtc_mainbus
 
 attach virtio at mainbus with virtio_mainbus: virtio_mmio
 file arch/virt68k/dev/virtio_mainbus.c		virtio_mainbus
+
+device virtctrl
+attach virtctrl at mainbus
+file arch/virt68k/dev/virtctrl.c		virtctrl
 
 # Memory disk for installer
 file dev/md_root.c				memory_disk_hooks

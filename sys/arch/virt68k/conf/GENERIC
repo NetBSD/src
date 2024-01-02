@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2 2024/01/02 07:47:36 thorpej Exp $
+# $NetBSD: GENERIC,v 1.3 2024/01/02 18:11:44 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/virt68k/conf/std.virt68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -154,6 +154,9 @@ mainbus0	at root
 gfpic*		at mainbus? addr ?	# interrupt controller
 gftty*		at mainbus? addr ?	# console terminal
 gfrtc*		at mainbus? addr ?	# real-time clock / timer
+
+# Qemu Virtual System Controller
+virtctrl*	at mainbus? addr ?
 
 # VirtIO devices
 virtio*		at mainbus? addr ?	# VirtIO nexus
