@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2024/01/02 17:13:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2024/01/02 17:13:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -204,6 +204,9 @@ virt68k_init(void)
 	}
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 	pmap_update(pmap_kernel());
+
+	/* Check for RND seed from the loader. */
+	bootinfo_setup_rndseed();
 }
 
 /*
