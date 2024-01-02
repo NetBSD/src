@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.2 2024/01/02 16:59:14 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.3 2024/01/02 17:13:03 thorpej Exp $        */      
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.2 2024/01/02 16:59:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.3 2024/01/02 17:13:03 thorpej Exp $");
 
 #include "opt_md.h"
 
 #include <sys/types.h>
 #include <sys/cpu.h>
+#include <sys/rnd.h>
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -292,4 +293,24 @@ bootinfo_setup_initrd(void)
 		md_root_setconf((void *)rd->mem_addr, rd->mem_size);
 	}
 #endif /* MEMORY_DISK_DYNAMIC */
+}
+
+/*
+ * bootinfo_setup_rndseed --
+ *	Check for a BI_RNG_SEED record and, if found, use it to
+ *	seed the kenrnel entropy pool.
+ */
+void
+bootinfo_setup_rndseed(void)
+{
+	struct bi_record *bi = bootinfo_find(BI_RNG_SEED);
+	if (bi != NULL) {
+		struct bi_data *rnd = bootinfo_dataptr(bi);
+#if 0 /* XXX */
+		rnd_seed(rnd->data_bytes, rnd->data_length);
+#else
+		printf("WARNING: ignored %u bytes of RND_SEED data @ %p\n",
+		    rnd->data_length, rnd->data_bytes);
+#endif
+	}
 }

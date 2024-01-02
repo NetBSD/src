@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2024/01/02 16:59:14 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2024/01/02 17:13:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),
 bool			bootinfo_addr_is_console(paddr_t);
 
 void			bootinfo_setup_initrd(void);
+void			bootinfo_setup_rndseed(void);
 
 void			bootinfo_md_cnattach(void (*)(bus_space_tag_t,
 						      bus_space_handle_t),
