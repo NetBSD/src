@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.1 2024/01/02 07:41:02 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.2 2024/01/02 07:52:47 thorpej Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -137,10 +137,6 @@ GLOBAL(vectab)
 	VECTOR(badtrap)		/* 62: unassigned, reserved */
 	VECTOR(badtrap)		/* 63: unassigned, reserved */
 
-	/*
-	 * PCC, PCCTWO, MC, and VME vectors are installed from 64-255
-	 * by the *intr_extablish() functions.
-	 */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */
