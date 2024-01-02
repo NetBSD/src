@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.2 2024/01/02 16:59:14 thorpej Exp $        */      
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,10 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.2 2024/01/02 16:59:14 thorpej Exp $");
+
+#include "opt_md.h"
 
 #include <sys/types.h>
 #include <sys/cpu.h>
+
+#ifdef MEMORY_DISK_DYNAMIC
+#include <dev/md.h>
+#endif
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -269,4 +275,21 @@ bool
 bootinfo_addr_is_console(paddr_t pa)
 {
 	return bootinfo_console_addr_valid && bootinfo_console_addr == pa;
+}
+
+/*
+ * bootinfo_setup_initrd --
+ *	Check for a BI_RAMDISK record and, if found, set it as
+ *	the root file system.
+ */
+void
+bootinfo_setup_initrd(void)
+{
+#ifdef MEMORY_DISK_DYNAMIC
+	struct bi_record *bi = bootinfo_find(BI_RAMDISK);
+	if (bi != NULL) {
+		struct bi_mem_info *rd = bootinfo_dataptr(bi);
+		md_root_setconf((void *)rd->mem_addr, rd->mem_size);
+	}
+#endif /* MEMORY_DISK_DYNAMIC */
 }
