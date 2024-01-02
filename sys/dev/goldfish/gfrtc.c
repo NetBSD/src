@@ -1,11 +1,11 @@
-/*	$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.3 2024/01/02 07:26:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson.
+ * by Nick Hudson and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.3 2024/01/02 07:26:17 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -39,8 +39,20 @@ __KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $");
 
 #include <dev/goldfish/gfrtcvar.h>
 
+#define	GOLDFISH_RTC_TIME_LOW		0x00
+#define	GOLDFISH_RTC_TIME_HIGH		0x04
+#define	GOLDFISH_RTC_ALARM_LOW		0x08
+#define	GOLDFISH_RTC_ALARM_HIGH		0x0c
+#define	GOLDFISH_RTC_IRQ_ENABLED	0x10
+#define	GOLDFISH_RTC_CLEAR_ALARM	0x14
+#define	GOLDFISH_RTC_ALARM_STATUS	0x18
+#define	GOLDFISH_RTC_CLEAR_INTERRUPT	0x1c
+
 /*
  * https://android.googlesource.com/platform/external/qemu/+/master/docs/GOLDFISH-VIRTUAL-HARDWARE.TXT
+ *
+ * (Despite what the Google docs say, the Qemu goldfish-rtc implements
+ * the timer functionality.)
  */
 
 #define	GOLDFISH_RTC_READ(sc, reg) \
@@ -48,19 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.2 2023/12/31 22:06:41 thorpej Exp $");
 #define	GOLDFISH_RTC_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-
-#define	GOLDFISH_RTC_TIME_LOW	0x00
-#define	GOLDFISH_RTC_TIME_HIGH	0x04
-
-
 static int
 gfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct gfrtc_softc *sc = ch->cookie;
-	const uint64_t lo = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_LOW);
-	const uint64_t hi = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_HIGH);
-
-	uint64_t nsec = (hi << 32) | lo;
+	const uint64_t nsec = gfrtc_get_time(sc);
 
 	tv->tv_sec = nsec / 1000000000;
 	tv->tv_usec = (nsec - tv->tv_sec) / 1000;	// Always 0?
@@ -73,9 +77,9 @@ gfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct gfrtc_softc *sc = ch->cookie;
 
-	uint64_t nsec = (tv->tv_sec * 1000000 + tv->tv_usec) * 1000;
-	uint32_t hi = nsec >> 32;
-	uint32_t lo = nsec;
+	const uint64_t nsec = (tv->tv_sec * 1000000 + tv->tv_usec) * 1000;
+	const uint32_t hi = (uint32_t)(nsec >> 32);
+	const uint32_t lo = (uint32_t)nsec;
 
 	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_HIGH, hi);
 	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_TIME_LOW, lo);
@@ -85,12 +89,90 @@ gfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 
 
 void
-gfrtc_attach(struct gfrtc_softc * const sc)
+gfrtc_attach(struct gfrtc_softc * const sc, bool todr)
 {
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = gfrtc_gettime;
-	sc->sc_todr.todr_settime = gfrtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
-	todr_attach(&sc->sc_todr);
+	aprint_naive("\n");
+	aprint_normal(": Google Goldfish RTC + timer\n");
+
+	/* Cancel any alarms, make sure interrupt is disabled. */
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_IRQ_ENABLED, 0);
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_CLEAR_ALARM, 0);
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_CLEAR_INTERRUPT, 0);
+
+	if (todr) {
+		aprint_normal_dev(sc->sc_dev,
+		    "using as Time of Day Register.\n");
+		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_gettime = gfrtc_gettime;
+		sc->sc_todr.todr_settime = gfrtc_settime;
+		sc->sc_todr.todr_setwen = NULL;
+		todr_attach(&sc->sc_todr);
+	}
+}
+
+
+void
+gfrtc_delay(device_t dev, unsigned int usec)
+{
+	struct gfrtc_softc *sc = device_private(dev);
+	uint64_t start_ns, end_ns, min_ns;
+
+	/* Get the start time now while we do the setup work. */
+	start_ns = gfrtc_get_time(sc);
+
+	/* Delay for this many nsec. */
+	min_ns = (uint64_t)usec * 1000;
+
+	do {
+		end_ns = gfrtc_get_time(sc);
+	} while ((end_ns - start_ns) < min_ns);
+}
+
+
+uint64_t
+gfrtc_get_time(struct gfrtc_softc * const sc)
+{
+	const uint64_t lo = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_LOW);
+	const uint64_t hi = GOLDFISH_RTC_READ(sc, GOLDFISH_RTC_TIME_HIGH);
+
+	return (hi << 32) | lo;
+}
+
+
+void
+gfrtc_set_alarm(struct gfrtc_softc * const sc, const uint64_t nsec)
+{
+	uint64_t next = gfrtc_get_time(sc) + nsec;
+
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_ALARM_HIGH, (uint32_t)(next >> 32));
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_ALARM_LOW, (uint32_t)next);
+}
+
+
+void
+gfrtc_clear_alarm(struct gfrtc_softc * const sc)
+{
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_CLEAR_ALARM, 0);
+}
+
+
+void
+gfrtc_enable_interrupt(struct gfrtc_softc * const sc)
+{
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_IRQ_ENABLED, 1);
+}
+
+
+void
+gfrtc_disable_interrupt(struct gfrtc_softc * const sc)
+{
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_IRQ_ENABLED, 0);
+}
+
+
+void
+gfrtc_clear_interrupt(struct gfrtc_softc * const sc)
+{
+	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_CLEAR_INTERRUPT, 0);
 }

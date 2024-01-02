@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtcvar.h,v 1.1 2023/12/29 23:31:45 thorpej Exp $	*/
+/*	$NetBSD: gfrtcvar.h,v 1.2 2024/01/02 07:26:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -42,6 +42,15 @@ struct gfrtc_softc {
 	struct todr_chip_handle	sc_todr;
 };
 
-void	gfrtc_attach(struct gfrtc_softc *);
+void	gfrtc_attach(struct gfrtc_softc *, bool);
+
+uint64_t gfrtc_get_time(struct gfrtc_softc *);
+void	gfrtc_set_alarm(struct gfrtc_softc *, uint64_t);
+void	gfrtc_clear_alarm(struct gfrtc_softc *);
+void	gfrtc_enable_interrupt(struct gfrtc_softc *);
+void	gfrtc_disable_interrupt(struct gfrtc_softc *);
+void	gfrtc_clear_interrupt(struct gfrtc_softc *);
+
+void	gfrtc_delay(device_t, unsigned int);
 
 #endif /* _DEV_GOLDFISH_GFRTCVAR_H_ */
