@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.384 2023/12/19 15:01:23 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.385 2024/01/02 17:44:00 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -577,6 +577,7 @@ EPP	enhanced parallel port
 EPP	extensible provisioning protocol (RFC5730)
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
+EPSS	Exploit Prediction Scoring System
 EPT	extended page tables
 ERC	error recovery control
 ERD	emergency recovery disk
@@ -1254,6 +1255,7 @@ PE	protection enable
 PE	provider edge
 PEAP	Protected EAP
 PECI	platform environment control interface
+PED	PIN Entry Device
 PEP	protocol extension protocol
 PER	packed encoding rules
 PFS	perfect forward secrecy
