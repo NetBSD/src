@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2024/01/02 16:48:01 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2024/01/02 16:59:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2024/01/02 16:48:01 thorpej Exp $");
-
-#include "opt_md.h"
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2024/01/02 16:59:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2024/01/02 16:48:01 thorpej Exp $")
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-
-#ifdef MEMORY_DISK_DYNAMIC
-#include <dev/md.h>
-#endif
 
 #include <machine/bootinfo.h>
 #include <machine/intr.h>
@@ -84,21 +78,7 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-#ifdef MEMORY_DISK_DYNAMIC
-	struct bi_record *bi;
-
-	/*
-	 * Look for a RAMDISK bootinfo record.  If we have one,
-	 * hook is up to the memory disk and set it as the root
-	 * file system.
-	 */
-	bi = bootinfo_find(BI_RAMDISK);
-	if (bi != NULL) {
-		struct bi_mem_info *rd = bootinfo_dataptr(bi);
-		md_root_setconf((void *)rd->mem_addr, rd->mem_size);
-	}
-#endif /* MEMORY_DISK_DYNAMIC */
-
+	bootinfo_setup_initrd();
 	rootconf();
 }
 
