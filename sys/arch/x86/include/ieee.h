@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.12 2023/09/16 13:37:10 christos Exp $ */
+/*	$NetBSD: ieee.h,v 1.13 2024/01/02 19:28:25 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,13 +69,13 @@
  *   i386:  16 bits.
  */
 struct ieee_ext {
-	u_int	ext_fracl:EXT_FRACLBITS;
-	u_int	ext_frach:EXT_FRACHBITS;
+	uint32_t	ext_fracl:EXT_FRACLBITS;
+	uint32_t	ext_frach:EXT_FRACHBITS;
 #if 0
-	u_int	ext_int:1;
+	uint32_t	ext_int:1;
 #endif
-	u_int	ext_exp:EXT_EXPBITS;
-	u_int	ext_sign:1;
+	uint32_t	ext_exp:EXT_EXPBITS;
+	uint32_t	ext_sign:1;
 };
 
 /*
