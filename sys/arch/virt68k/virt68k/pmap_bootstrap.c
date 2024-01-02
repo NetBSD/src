@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 2024/01/02 07:42:52 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.2 2024/01/02 07:42:52 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -170,16 +170,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 #if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		int nl1desc, nl2desc;
-
-		/*
-		 * XXX NOTES:
-		 * SYSMAP_VA == 0xfe000000
-		 * pte va == 0xfe000e38
-		 *
-		 * L1 idx = 127
-		 * L2 idx = 0
-		 * L3 idx = 
-		 */
 
 		/*
 		 * First invalidate the entire "segment table" pages
