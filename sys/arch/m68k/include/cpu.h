@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2023/12/27 17:35:35 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2024/01/03 12:46:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,36 +72,6 @@
  */
 
 #include <m68k/m68k.h>
-
-/* XXX - Move this stuff into <m68k/mmu030.h> maybe? */
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/* XXX - Move this stuff into <m68k/mmu040.h> maybe? */
-
-/*
- * 68040 MMU
- */
-#define	MMU40_RES	0x001
-#define	MMU40_TTR	0x002
-#define	MMU40_WP	0x004
-#define	MMU40_MOD	0x010
-#define	MMU40_CMMASK	0x060
-#define	MMU40_SUP	0x080
-#define	MMU40_U0	0x100
-#define	MMU40_U1	0x200
-#define	MMU40_GLB	0x400
-#define	MMU40_BE	0x800
 
 /* XXX - Move this stuff into <m68k/cacr.h> maybe? */
 
