@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.249 2022/11/25 08:41:05 knakahara Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.250 2024/01/03 18:10:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.249 2022/11/25 08:41:05 knakahara Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.250 2024/01/03 18:10:42 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -751,8 +751,8 @@ main(int argc, char **argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 *
-	 * -w means "spin until DAD completes for all addreseses", and is
-	 * mutually exclusivewith all other flags/commands.
+	 * -w means "spin until DAD completes for all addresses", and is
+	 * mutually exclusive with all other flags/commands.
 	 */
 	if ((lflag || Cflag || wflag) &&
 	    (aflag || get_flag('m') || vflag || zflag))

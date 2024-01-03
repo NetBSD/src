@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.142 2022/10/26 23:38:09 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.142 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143 2024/01/03 18:10:42 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1202,7 +1202,7 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 
 bad:
 	/*
-	 * On error, free the prepended addreseses. For consistency
+	 * On error, free the prepended addresses. For consistency
 	 * with sbappendaddr(), leave it to our caller to free
 	 * the input record chain passed to us as m0.
 	 */
