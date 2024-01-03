@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.17 2024/01/03 18:41:53 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.17 2024/01/03 18:41:53 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -38,10 +38,6 @@ __RCSID("$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #include "local.h"
-
-extern struct timeval _yplib_timeout;
-extern int _yplib_nerrs;
-extern int _yplib_bindtries;
 
 #ifdef __weak_alias
 __weak_alias(yp_first,_yp_first)
