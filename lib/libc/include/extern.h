@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2023/04/04 19:26:06 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2024/01/03 18:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,6 +34,7 @@ typedef struct _locale		*locale_t;
 
 __BEGIN_DECLS
 extern char *__minbrk;
+extern sigset_t __sigintr;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.4 2012/03/20 16:30:26 matt Exp $	*/
+/*	$NetBSD: local.h,v 1.5 2024/01/03 18:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -27,4 +27,10 @@
 __BEGIN_DECLS
 void __yp_unbind(struct dom_binding *);
 int _yp_invalid_domain(const char *);
+
+extern struct timeval _yplib_timeout;
+extern int _yplib_nerrs;
+extern int _yplib_bindtries;
+extern char _yp_domain[];
+
 __END_DECLS

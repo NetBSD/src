@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.19 2012/03/20 16:30:26 matt Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.20 2024/01/03 18:41:53 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.19 2012/03/20 16:30:26 matt Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.20 2024/01/03 18:41:53 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -44,11 +44,6 @@ __RCSID("$NetBSD: yp_match.c,v 1.19 2012/03/20 16:30:26 matt Exp $");
 #include "local.h"
 
 #define YPMATCHCACHE
-
-extern struct timeval _yplib_timeout;
-extern int _yplib_nerrs;
-extern int _yplib_bindtries;
-extern char _yp_domain[];
 
 #ifdef __weak_alias
 __weak_alias(yp_match,_yp_match)
