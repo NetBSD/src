@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.31 2022/08/08 18:55:18 rillig Exp $	*/
+/*	$NetBSD: endian.h,v 1.32 2024/01/03 18:43:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -52,7 +52,7 @@
 
 #include <sys/ansi.h>
 #include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 #ifndef in_addr_t
 typedef __in_addr_t	in_addr_t;
