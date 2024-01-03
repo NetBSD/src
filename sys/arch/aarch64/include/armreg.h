@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.65 2023/09/24 10:13:44 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.66 2024/01/03 18:13:19 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1153,7 +1153,7 @@ AARCH64REG_WRITE_INLINE(tcr_el2)
 #define TCR_EL2_DS		__BIT(32)	// 52-bit output address (FEAT_LPA2)
 //				__BIT(31)	// Res1
 #define TCR_EL2_TCMA		__BIT(30)	// Unchecked accesses control (FEAT_MTE2)
-#define TCR_EL2_TBID		__BIT(29)	// Top Byte Instruction ddress matching (FEAT_PAuth)
+#define TCR_EL2_TBID		__BIT(29)	// Top Byte Instruction address matching (FEAT_PAuth)
 #define TCR_EL2_HWU62		__BIT(28)	// Hardware use bit 62 (FEAT_HPDS2)
 #define TCR_EL2_HWU61		__BIT(27)	// Hardware use bit 61 (FEAT_HPDS2)
 #define TCR_EL2_HWU60		__BIT(26)	// Hardware use bit 60 (FEAT_HPDS2)
