@@ -1,4 +1,4 @@
-#	$NetBSD: majors.virt68k,v 1.1 2024/01/02 07:40:59 thorpej Exp $
+#	$NetBSD: majors.virt68k,v 1.2 2024/01/03 03:56:57 thorpej Exp $
 #
 # Device majors for virt68k
 # Aligns with historical values on mvme68k (and some slots also used
@@ -15,6 +15,8 @@ device-major	log		char 6
 device-major	ipl		char 7			ipfilter
 device-major	sd		char 8   block 4	sd
 device-major	ld		char 9   block 2	ld
+
+device-major	gftty		char 12
 
 device-major	ccd		char 17  block 5	ccd
 device-major	cd		char 18  block 8	cd
