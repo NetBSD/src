@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.19 2023/07/08 13:59:05 riastradh Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.20 2024/01/04 11:18:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.19 2023/07/08 13:59:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.20 2024/01/04 11:18:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -223,7 +223,6 @@ cpu_topology_link(struct cpu_info *ci, struct cpu_info *ci2, enum cpu_rel rel)
 static void
 cpu_topology_dump(void)
 {
-#ifdef DEBUG
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *ci2;
 	const char *names[] = { "core", "pkg", "1st" };
@@ -237,25 +236,24 @@ cpu_topology_dump(void)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (cpu_topology_haveslow)
-			printf("%s ", ci->ci_is_slow ? "slow" : "fast");
+			aprint_debug("%s ", ci->ci_is_slow ? "slow" : "fast");
 		for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
-			printf("%s has %d %s siblings:", cpu_name(ci),
+			aprint_debug("%s has %d %s siblings:", cpu_name(ci),
 			    ci->ci_nsibling[rel], names[rel]);
 			ci2 = ci->ci_sibling[rel];
 			i = 0;
 			do {
-				printf(" %s", cpu_name(ci2));
+				aprint_debug(" %s", cpu_name(ci2));
 				ci2 = ci2->ci_sibling[rel];
 			} while (++i < 64 && ci2 != ci->ci_sibling[rel]);
 			if (i == 64) {
-				printf(" GAVE UP");
+				aprint_debug(" GAVE UP");
 			}
-			printf("\n");
+			aprint_debug("\n");
 		}
-		printf("%s first in package: %s\n", cpu_name(ci),
+		aprint_debug("%s first in package: %s\n", cpu_name(ci),
 		    cpu_name(ci->ci_package1st));
 	}
-#endif	/* DEBUG */
 }
 
 /*
