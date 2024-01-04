@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc.c,v 1.3 2024/01/02 07:26:17 thorpej Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.4 2024/01/04 12:02:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.3 2024/01/02 07:26:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.4 2024/01/04 12:02:11 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -67,7 +67,7 @@ gfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 	const uint64_t nsec = gfrtc_get_time(sc);
 
 	tv->tv_sec = nsec / 1000000000;
-	tv->tv_usec = (nsec - tv->tv_sec) / 1000;	// Always 0?
+	tv->tv_usec = (nsec - tv->tv_sec * 1000000000) / 1000;
 
 	return 0;
 }
