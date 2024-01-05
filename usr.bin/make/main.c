@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.607 2024/01/05 22:20:07 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.608 2024/01/05 23:22:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.607 2024/01/05 22:20:07 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.608 2024/01/05 23:22:06 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -222,8 +222,7 @@ MainParseArgDebugFile(const char *arg)
 
 	opts.debug_file = fopen(fname, mode);
 	if (opts.debug_file == NULL) {
-		fprintf(stderr, "Cannot open debug file \"%s\"\n",
-		    fname);
+		fprintf(stderr, "Cannot open debug file \"%s\"\n", fname);
 		exit(2);
 	}
 	free(fname);
@@ -408,9 +407,9 @@ MainParseArgJobs(const char *arg)
 	if (*p != '\0') {
 		double d;
 
-		if (*p == 'C') {
+		if (*p == 'C')
 			d = (opts.maxJobs > 0) ? opts.maxJobs : 1;
-		} else if (*p == '.') {
+		else if (*p == '.') {
 			d = strtod(arg, &end);
 			p = end;
 		} else

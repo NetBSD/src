@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.101 2023/12/17 22:46:44 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.102 2024/01/05 23:22:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.101 2023/12/17 22:46:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.102 2024/01/05 23:22:06 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -106,6 +106,10 @@ str_concat3(const char *s1, const char *s2, const char *s3)
 /*
  * Fracture a string into an array of words (as delineated by tabs or spaces)
  * taking quotation marks into account.
+ *
+ * A string that is empty or only contains whitespace nevertheless results in
+ * a single word.  This is unexpected in many places, and the caller needs to
+ * correct for this edge case.
  *
  * If expand is true, quotes are removed and escape sequences such as \r, \t,
  * etc... are expanded. In this case, return NULL on parse errors.
