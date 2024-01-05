@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.251 2023/12/26 20:09:42 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.252 2024/01/05 23:22:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.251 2023/12/26 20:09:42 sjg Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.252 2024/01/05 23:22:06 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -107,10 +107,8 @@ CompatDeleteTarget(GNode *gn)
 	if (gn != NULL && !GNode_IsPrecious(gn) &&
 	    (gn->type & OP_PHONY) == 0) {
 		const char *file = GNode_VarTarget(gn);
-
-		if (!opts.noExecute && unlink_file(file) == 0) {
+		if (!opts.noExecute && unlink_file(file) == 0)
 			Error("*** %s removed", file);
-		}
 	}
 }
 
@@ -132,9 +130,8 @@ CompatInterrupt(int signo)
 		/* Run .INTERRUPT only if hit with interrupt signal. */
 		if (signo == SIGINT) {
 			GNode *gn = Targ_FindNode(".INTERRUPT");
-			if (gn != NULL) {
+			if (gn != NULL)
 				Compat_Make(gn, gn);
-			}
 		}
 	}
 
@@ -360,9 +357,8 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	while ((retstat = wait(&reason)) != cpid) {
 		if (retstat > 0)
 			JobReapChild(retstat, reason, false); /* not ours? */
-		if (retstat == -1 && errno != EINTR) {
+		if (retstat == -1 && errno != EINTR)
 			break;
-		}
 	}
 
 	if (retstat < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.376 2023/12/30 15:00:56 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.377 2024/01/05 23:22:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.376 2023/12/30 15:00:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.377 2024/01/05 23:22:06 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1281,8 +1281,7 @@ ExpandChildrenRegular(char *p, GNode *pgn, GNodeList *members)
 			/* TODO: handle errors */
 			if (junk.str == var_Error) {
 				Parse_Error(PARSE_FATAL,
-				    "Malformed expression at \"%s\"",
-				    p);
+				    "Malformed expression at \"%s\"", p);
 				p++;
 			} else {
 				p += nested_p - p;
@@ -1917,8 +1916,7 @@ FindDepsRegular(GNode *gn, CandidateSearcher *cs)
 		if (targ->node == NULL)
 			targ->node = Targ_GetNode(targ->file);
 
-		ApplyTransform(targ->node, src->node,
-		    targ->suff, src->suff);
+		ApplyTransform(targ->node, src->node, targ->suff, src->suff);
 
 		if (targ->node != gn) {
 			/*

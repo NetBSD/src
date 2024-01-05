@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.462 2023/12/29 12:59:43 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.463 2024/01/05 23:22:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.462 2023/12/29 12:59:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.463 2024/01/05 23:22:06 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -928,12 +928,10 @@ JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 	escCmd = shell->hasErrCtl ? NULL : EscapeShellDblQuot(xcmd);
 
 	if (!cmdFlags.echo) {
-		if (job->echo && run && shell->hasEchoCtl) {
+		if (job->echo && run && shell->hasEchoCtl)
 			ShellWriter_EchoOff(wr);
-		} else {
-			if (shell->hasErrCtl)
-				cmdFlags.echo = true;
-		}
+		else if (shell->hasErrCtl)
+			cmdFlags.echo = true;
 	}
 
 	if (cmdFlags.ignerr) {
@@ -2182,11 +2180,10 @@ Shell_GetNewline(void)
 void
 Job_SetPrefix(void)
 {
-	if (targPrefix != NULL) {
+	if (targPrefix != NULL)
 		free(targPrefix);
-	} else if (!Var_Exists(SCOPE_GLOBAL, ".MAKE.JOB.PREFIX")) {
+	else if (!Var_Exists(SCOPE_GLOBAL, ".MAKE.JOB.PREFIX"))
 		Global_Set(".MAKE.JOB.PREFIX", "---");
-	}
 
 	targPrefix = Var_Subst("${.MAKE.JOB.PREFIX}",
 	    SCOPE_GLOBAL, VARE_WANTRES);
@@ -2484,18 +2481,9 @@ Job_ParseShell(char *line)
 		 * its word and copy it to a new location. In either case,
 		 * we need to record the path the user gave for the shell.
 		 */
+		char *name = path + (str_basename(path) - path);
 		shellPath = path;
-		path = strrchr(path, '/');
-		if (path == NULL) {
-			path = UNCONST(shellPath);
-		} else {
-			path++;
-		}
-		if (newShell.name != NULL) {
-			shellName = newShell.name;
-		} else {
-			shellName = path;
-		}
+		shellName = newShell.name != NULL ? newShell.name : name;
 		if (!fullSpec) {
 			if ((sh = FindShellByName(shellName)) == NULL) {
 				Parse_Error(PARSE_WARNING,
@@ -2592,11 +2580,10 @@ Job_Finish(void)
 	GNode *endNode = Targ_GetEndNode();
 	if (!Lst_IsEmpty(&endNode->commands) ||
 	    !Lst_IsEmpty(&endNode->children)) {
-		if (job_errors != 0) {
+		if (job_errors != 0)
 			Error("Errors reported so .END ignored");
-		} else {
+		else
 			JobRun(endNode);
-		}
 	}
 	return job_errors;
 }
@@ -2867,9 +2854,8 @@ Job_TokenWithdraw(void)
 	if (count == 0)
 		Fatal("eof on job pipe!");
 	if (count < 0 && jobTokensRunning != 0) {
-		if (errno != EAGAIN) {
+		if (errno != EAGAIN)
 			Fatal("job pipe read: %s", strerror(errno));
-		}
 		DEBUG1(JOB, "(%d) blocked for token\n", getpid());
 		wantToken = 1;
 		return false;
