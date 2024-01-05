@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1090 2023/12/29 14:57:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1091 2024/01/05 21:51:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1090 2023/12/29 14:57:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1091 2024/01/05 21:51:27 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4222,7 +4222,8 @@ FindLocalLegacyVar(Substring varname, GNode *scope,
 	if (strchr("@%?*!<>", varname.start[0]) == NULL)
 		return NULL;
 
-	v = VarFindSubstring(Substring_Sub(varname, 0, 1), scope, false);
+	v = VarFindSubstring(Substring_Init(varname.start, varname.start + 1),
+	    scope, false);
 	if (v == NULL)
 		return NULL;
 

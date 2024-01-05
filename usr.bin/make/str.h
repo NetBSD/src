@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.17 2023/06/23 04:56:54 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.18 2024/01/05 21:51:27 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -152,14 +152,6 @@ Substring_Eq(Substring sub, Substring str)
 	size_t len = Substring_Length(sub);
 	return len == Substring_Length(str) &&
 	       memcmp(sub.start, str.start, len) == 0;
-}
-
-MAKE_STATIC Substring
-Substring_Sub(Substring sub, size_t start, size_t end)
-{
-	assert(start <= Substring_Length(sub));
-	assert(end <= Substring_Length(sub));
-	return Substring_Init(sub.start + start, sub.start + end);
 }
 
 MAKE_STATIC bool
