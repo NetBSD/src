@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.18 2023/12/28 03:49:35 rin Exp $
+.\" $NetBSD: mklocale.1,v 1.19 2024/01/05 02:38:06 rin Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mklocale.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd December 28, 2023
+.Dd January 5, 2024
 .Dt MKLOCALE 1
 .Os
 .Sh NAME
@@ -212,7 +212,9 @@ For example, the ASCII character
 would map to the decimal value 0.
 On
 .Nx ,
-this information is ignored and not put into the binary output file.
+this information has never been used until now.
+Only values up to 255 are allowed, and mapping to 256 and above is
+silently ignored.
 .El
 .Pp
 The following keywords may appear multiple times and have the following
