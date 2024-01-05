@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.35 2023/12/28 03:49:35 rin Exp $	*/
+/*	$NetBSD: yacc.y,v 1.36 2024/01/05 02:38:06 rin Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.35 2023/12/28 03:49:35 rin Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.36 2024/01/05 02:38:06 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ __nbrune_t	charsetmask = (__nbrune_t)0x0000007f;
 __nbrune_t	charsetmask = (__nbrune_t)0xffffffff;
 
 void set_map(rune_map *, rune_list *, u_int32_t);
-#if 0
 void set_digitmap(rune_map *, rune_list *);
-#endif
 void add_map(rune_map *, rune_list *, u_int32_t);
 
 __dead void	usage(void);
@@ -189,19 +187,8 @@ entry	:	ENCODING STRING
 		{ set_map(&maplower, $2, 0); }
 	|	MAPUPPER map
 		{ set_map(&mapupper, $2, 0); }
-/*
- * XXX PR lib/57798
- * set_digitmap() was implemented with an assumption that
- * all characters are mapped to numerical values <= 255.
- * This is no longer true for Unicode, and results in, e.g.,
- * wrong return values of wcwidth(3) for U+5146 or U+16B60.
- *
- *	|	DIGITMAP map
- *		{ set_digitmap(&types, $2); }
- *
- */
-	|	DIGITMAP mapignore
-		{ }
+	|	DIGITMAP map
+		{ set_digitmap(&types, $2); }
 	;
 
 list	:	RUNE
@@ -266,12 +253,6 @@ map	:	LBRK RUNE RUNE RBRK
 		    $$->map = $7;
 		    $$->next = $1;
 		}
-	;
-
-mapignore :	LBRK RUNE RUNE RBRK { }
-	|	map LBRK RUNE RUNE RBRK { }
-	|	LBRK RUNE THRU RUNE ':' RUNE RBRK { }
-	|	map LBRK RUNE THRU RUNE ':' RUNE RBRK { }
 	;
 %%
 
@@ -401,7 +382,6 @@ set_map(rune_map *map, rune_list *list, u_int32_t flag)
     }
 }
 
-#if 0
 void
 set_digitmap(rune_map *map, rune_list *list)
 {
@@ -410,18 +390,24 @@ set_digitmap(rune_map *map, rune_list *list)
     while (list) {
 	rune_list *nlist = list->next;
 	for (i = list->min; i <= list->max; ++i) {
-	    if (list->map + (i - list->min)) {
+	    /*
+	     * XXX PR lib/57798
+	     * Currently, we support mapping up to 255. Attempts to map
+	     * 256 (== _RUNETYPE_A) and above are silently ignored.
+	     */
+	    _RuneType digit = list->map + (i - list->min);
+	    if (digit > 0 && digit <= 0xff) {
 		rune_list *tmp = (rune_list *)xmalloc(sizeof(rune_list));
+		memset(tmp, 0, sizeof(*tmp));
 		tmp->min = i;
 		tmp->max = i;
-		add_map(map, tmp, list->map + (i - list->min));
+		add_map(map, tmp, digit);
 	    }
 	}
 	free(list);
 	list = nlist;
     }
 }
-#endif
 
 void
 add_map(rune_map *map, rune_list *list, u_int32_t flag)
