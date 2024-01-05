@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.196 2020/06/11 19:20:46 ad Exp $	 */
+/* $NetBSD: machdep.c,v 1.197 2024/01/05 17:29:29 hans Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2024/01/05 17:29:29 hans Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2020/06/11 19:20:46 ad Exp $");
 #include <ddb/db_extern.h>
 #endif
 
+#include "leds.h"
 #include "smg.h"
 #include "ksyms.h"
 
