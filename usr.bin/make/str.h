@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.18 2024/01/05 21:51:27 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.19 2024/01/05 21:56:55 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -76,27 +76,24 @@ typedef struct StrMatchResult {
 } StrMatchResult;
 
 
-MAKE_INLINE FStr
-FStr_Init(const char *str, void *freeIt)
-{
-	FStr fstr;
-	fstr.str = str;
-	fstr.freeIt = freeIt;
-	return fstr;
-}
-
 /* Return a string that is the sole owner of str. */
 MAKE_INLINE FStr
 FStr_InitOwn(char *str)
 {
-	return FStr_Init(str, str);
+	FStr fstr;
+	fstr.str = str;
+	fstr.freeIt = str;
+	return fstr;
 }
 
 /* Return a string that refers to the shared str. */
 MAKE_INLINE FStr
 FStr_InitRefer(const char *str)
 {
-	return FStr_Init(str, NULL);
+	FStr fstr;
+	fstr.str = str;
+	fstr.freeIt = NULL;
+	return fstr;
 }
 
 MAKE_INLINE void
@@ -190,7 +187,7 @@ Substring_SkipFirst(Substring sub, char ch)
 }
 
 MAKE_STATIC const char *
-Substring_LastIndex(Substring sub, char ch)
+Substring_FindLast(Substring sub, char ch)
 {
 	const char *p;
 
