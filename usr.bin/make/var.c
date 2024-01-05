@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1091 2024/01/05 21:51:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1092 2024/01/05 21:56:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1091 2024/01/05 21:51:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1092 2024/01/05 21:56:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1328,7 +1328,7 @@ ModifyWord_Tail(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 static void
 ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	const char *lastDot = Substring_LastIndex(word, '.');
+	const char *lastDot = Substring_FindLast(word, '.');
 	if (lastDot != NULL)
 		SepBuf_AddRange(buf, lastDot + 1, word.end);
 }
@@ -1339,7 +1339,7 @@ ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
 	const char *lastDot, *end;
 
-	lastDot = Substring_LastIndex(word, '.');
+	lastDot = Substring_FindLast(word, '.');
 	end = lastDot != NULL ? lastDot : word.end;
 	SepBuf_AddRange(buf, word.start, end);
 }
