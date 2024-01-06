@@ -1,4 +1,4 @@
-/*	$NetBSD: virtctrl.c,v 1.1 2024/01/02 18:11:44 thorpej Exp $	*/
+/*	$NetBSD: virtctrl.c,v 1.2 2024/01/06 21:49:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtctrl.c,v 1.1 2024/01/02 18:11:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtctrl.c,v 1.2 2024/01/06 21:49:59 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -64,7 +64,7 @@ static const struct device_compatible_entry compat_data[] = {
 #define	REG_READ(sc, r)		\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (r))
 #define	REG_WRITE(sc, r, v)	\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (r))
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (r), (v))
 
 static void
 virtctrl_reset_handler(void *v, int howto)
