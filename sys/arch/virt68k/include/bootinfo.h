@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 2024/01/02 17:13:03 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2024/01/06 17:32:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ extern size_t	bootinfo_mem_segments_ignored_bytes;
 extern struct bi_mem_info bootinfo_mem_segments[];
 extern struct bi_mem_info bootinfo_mem_segments_avail[];
 extern int	bootinfo_mem_nsegments;
+extern int	bootinfo_mem_nsegments_avail;
 extern vaddr_t	bootinfo_end;
 
 #define	bootinfo_dataptr(bi)	((void *)&(bi)->bi_data[0])

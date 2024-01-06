@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2024/01/02 07:41:01 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2024/01/06 17:32:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,10 +115,15 @@
 
 /*
  * Constants which control the way the VM system deals with memory segments.
- * The Qemu virt68k platform only has a single memory segment.
+ *
+ * We generally assume there's just a single real memory segment on this
+ * platform, but we need to be able to deal with a "hole" left by a RAM
+ * disk if the loader provided one.  We optimize for the loader either
+ * plopping the RAM disk immediately after the kernel image or at the end
+ * of RAM, which would still leave us with a single large segment.
  */
-#define	VM_PHYSSEG_MAX		1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_MAX		4
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
