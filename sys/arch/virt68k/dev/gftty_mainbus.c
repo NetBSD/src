@@ -1,7 +1,7 @@
-/*	$NetBSD: gftty_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $	*/
+/*	$NetBSD: gftty_mainbus.c,v 1.2 2024/01/06 17:52:43 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty_mainbus.c,v 1.2 2024/01/06 17:52:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -61,6 +61,7 @@ gftty_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct gftty_softc * const sc = device_private(self);
 	struct mainbus_attach_args * const ma = aux;
+	char strbuf[INTR_STRING_BUFSIZE];
 
 	sc->sc_dev = self;
 
@@ -75,7 +76,21 @@ gftty_mainbus_attach(device_t parent, device_t self, void *aux)
 		gftty_alloc_config(sc, ma->ma_st, bsh);
 	}
 
+	sc->sc_dmat = ma->ma_dmat;
+
 	gftty_attach(sc);
+	if (sc->sc_tty != NULL) {
+		/* Attach was successful. Set up interrupt. */
+		sc->sc_ih = intr_establish(gftty_intr, sc,
+		    ma->ma_irq, IPL_TTY, 0);
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(self,
+			    "couldn't install interrupt handler\n");
+			return;
+		}
+		aprint_normal_dev(self, "interrupting at %s\n",
+		    intr_string(sc->sc_ih, strbuf, sizeof(strbuf)));
+	}
 }
 
 CFATTACH_DECL_NEW(gftty_mainbus, sizeof(struct gftty_softc),

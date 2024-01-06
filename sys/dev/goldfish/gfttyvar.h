@@ -1,4 +1,4 @@
-/*	$NetBSD: gfttyvar.h,v 1.1 2024/01/02 07:29:39 thorpej Exp $	*/
+/*	$NetBSD: gfttyvar.h,v 1.2 2024/01/06 17:52:43 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 #ifndef _DEV_GOLDFISH_GFTTYVAR_H_
 #define	_DEV_GOLDFISH_GFTTYVAR_H_
 
+#include <sys/bus.h>
+#include <sys/mutex.h>
+#include <sys/tty.h>
+
 struct gftty_config {
 	bus_space_tag_t		c_bst;
 	bus_space_handle_t	c_bsh;
@@ -41,12 +45,30 @@ struct gftty_config {
 struct gftty_softc {
 	device_t		sc_dev;
 	struct gftty_config	*sc_config;
+
+	void			*sc_ih;
+	void			*sc_rx_si;
+
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_tx_dma;
+	bus_dmamap_t		sc_rx_dma;
+
+	kmutex_t		sc_hwlock;	/* locks DMA pointer */
+
+	struct tty		*sc_tty;
+	char			*sc_rxbufs[2];
+	bus_addr_t		sc_rxaddrs[2];
+	char			*sc_rxbuf;	/* tty lock */
+	bus_addr_t		sc_rxaddr;	/* tty lock */
+	int			sc_rxpos;	/* tty lock */
+	int			sc_rxcur;	/* tty lock */
 };
 
 void	gftty_attach(struct gftty_softc *sc);
 bool	gftty_is_console(struct gftty_softc *sc);
 void	gftty_alloc_config(struct gftty_softc *sc, bus_space_tag_t,
 	    bus_space_handle_t);
+int	gftty_intr(void *);
 void	gftty_cnattach(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _DEV_GOLDFISH_GFTTYVAR_H_ */
