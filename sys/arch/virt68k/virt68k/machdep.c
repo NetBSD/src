@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2024/01/02 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2024/01/02 18:10:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -171,7 +171,7 @@ virt68k_init(void)
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
-	for (i = 0; i < bootinfo_mem_nsegments; i++) {
+	for (i = 0; i < bootinfo_mem_nsegments_avail; i++) {
 		if (bootinfo_mem_segments_avail[i].mem_size < PAGE_SIZE) {
 			/*
 			 * Segment has been completely gobbled up.

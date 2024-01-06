@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.3 2024/01/02 17:13:03 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $        */      
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.3 2024/01/02 17:13:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $");
 
 #include "opt_md.h"
 
 #include <sys/types.h>
 #include <sys/cpu.h>
 #include <sys/rnd.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -58,9 +60,13 @@ size_t			bootinfo_mem_segments_ignored_bytes;
 struct bi_mem_info	bootinfo_mem_segments[VM_PHYSSEG_MAX];
 struct bi_mem_info	bootinfo_mem_segments_avail[VM_PHYSSEG_MAX];
 int			bootinfo_mem_nsegments;
+int			bootinfo_mem_nsegments_avail;
 
 static paddr_t		bootinfo_console_addr;
 static bool		bootinfo_console_addr_valid;
+
+static uint32_t		bootinfo_initrd_start;
+static uint32_t		bootinfo_initrd_size;
 
 static bool
 bootinfo_set_console(paddr_t pa)
@@ -141,9 +147,79 @@ bootinfo_add_mem(struct bi_record *bi)
 	m->mem_size = m68k_trunc_page(m->mem_size);
 	physmem += m->mem_size >> PGSHIFT;
 
-	bootinfo_mem_segments[bootinfo_mem_nsegments] = *m;
-	bootinfo_mem_segments_avail[bootinfo_mem_nsegments] = *m;
-	bootinfo_mem_nsegments++;
+	bootinfo_mem_segments[bootinfo_mem_nsegments++] = *m;
+	bootinfo_mem_segments_avail[bootinfo_mem_nsegments_avail++] = *m;
+}
+
+static inline void
+bootinfo_add_initrd(struct bi_record *bi)
+{
+	struct bi_mem_info *rd = bootinfo_dataptr(bi);
+
+	if (bootinfo_initrd_size == 0) {
+		bootinfo_initrd_start = rd->mem_addr;
+		bootinfo_initrd_size  = rd->mem_size;
+	}
+}
+
+static inline void
+bootinfo_reserve_initrd(void)
+{
+	if (bootinfo_initrd_size == 0) {
+		return;
+	}
+
+	paddr_t initrd_start = bootinfo_initrd_start;
+	paddr_t initrd_end   = bootinfo_initrd_start + bootinfo_initrd_size;
+	int i;
+
+	/* Page-align the RAM disk start/end. */
+	initrd_end = m68k_round_page(initrd_end);
+	initrd_start = m68k_trunc_page(initrd_start);
+
+	/*
+	 * XXX All if this code assumes that the RAM disk fits within
+	 * XXX a single memory segment.
+	 */
+
+	for (i = 0; i < bootinfo_mem_nsegments_avail; i++) {
+		/* Memory segment start/end already page-aligned. */
+		paddr_t seg_start = bootinfo_mem_segments_avail[i].mem_addr;
+		paddr_t seg_end = seg_start +
+		    bootinfo_mem_segments_avail[i].mem_size;
+
+		if (initrd_start >= seg_end ||
+		    initrd_end <= seg_start) {
+			/* Does not fall within this segment. */
+			continue;
+		}
+
+		if (initrd_start > seg_start && initrd_end < seg_end) {
+			/* We need to split this segment. */
+			/* XXX */
+			printf("WARNING: ignoring RAM disk that splits "
+			       "memory segment.\n");
+			bootinfo_initrd_size = 0;
+			return;
+		}
+
+		printf("Reserving RAM disk pages %p - %p from memory "
+		       "segment %d.\n", (void *)initrd_start,
+		       (void *)(initrd_end - 1), i);
+
+		if (initrd_start == seg_start) {
+			seg_start = initrd_end;
+		}
+
+		if (initrd_end == seg_end) {
+			seg_end = initrd_start;
+		}
+
+		/* Now adjust the segment. */
+		bootinfo_mem_segments_avail[i].mem_addr = seg_start;
+		bootinfo_mem_segments_avail[i].mem_size = seg_end - seg_start;
+		return;
+	}
 }
 
 static inline void
@@ -198,6 +274,10 @@ bootinfo_start(struct bi_record *first)
 			bootinfo_add_mem(bi);
 			break;
 
+		case BI_RAMDISK:
+			bootinfo_add_initrd(bi);
+			break;
+
 		case BI_VIRT_GF_TTY_BASE:
 			bootinfo_gf_tty_consinit(bi);
 			break;
@@ -209,6 +289,12 @@ bootinfo_start(struct bi_record *first)
 
 	/* Set bootinfo_end to be just past the BI_LAST record. */
 	bootinfo_end = (vaddr_t)bootinfo_next(bi);
+
+	/*
+	 * If we have a RAM disk, we need to take it out of the
+	 * available memory segments.
+	 */
+	bootinfo_reserve_initrd();
 }
 
 /*
@@ -287,10 +373,34 @@ void
 bootinfo_setup_initrd(void)
 {
 #ifdef MEMORY_DISK_DYNAMIC
-	struct bi_record *bi = bootinfo_find(BI_RAMDISK);
-	if (bi != NULL) {
-		struct bi_mem_info *rd = bootinfo_dataptr(bi);
-		md_root_setconf((void *)rd->mem_addr, rd->mem_size);
+	if (bootinfo_initrd_size != 0) {
+		paddr_t rdstart, rdend, rdpgoff;
+		vaddr_t rdva, rdoff;
+		vsize_t rdvsize;
+
+		printf("Initializing root RAM disk @ %p - %p\n",
+		    (void *)bootinfo_initrd_start,
+		    (void *)(bootinfo_initrd_start + bootinfo_initrd_size - 1));
+
+		rdend = m68k_round_page(bootinfo_initrd_start +
+		    bootinfo_initrd_size);
+		rdstart = m68k_trunc_page(bootinfo_initrd_start);
+		rdvsize = rdend - rdstart;
+		rdpgoff = bootinfo_initrd_start & PAGE_MASK;
+
+		rdva = uvm_km_alloc(kernel_map, rdvsize, PAGE_SIZE,
+		    UVM_KMF_VAONLY);
+		if (rdva == 0) {
+			printf("WARNING: Unable to allocate KVA for "
+			       "RAM disk.\n");
+			return;
+		}
+		for (rdoff = 0; rdoff < rdvsize; rdoff += PAGE_SIZE) {
+			pmap_kenter_pa(rdva + rdoff, rdstart + rdoff,
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
+		}
+		md_root_setconf((void *)(rdva + rdpgoff),
+		    bootinfo_initrd_size);
 	}
 #endif /* MEMORY_DISK_DYNAMIC */
 }
