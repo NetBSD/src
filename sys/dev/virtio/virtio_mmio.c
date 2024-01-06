@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.12 2024/01/02 07:24:50 thorpej Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.13 2024/01/06 06:59:33 thorpej Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.12 2024/01/02 07:24:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.13 2024/01/06 06:59:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.12 2024/01/02 07:24:50 thorpej Exp
 #define	VIRTIO_MMIO_V2_CONFIG_GEN	0x0fc
 #define VIRTIO_MMIO_CONFIG		0x100
 
-#define VIRTIO_MMIO_INT_VRING		(1 << 0)
-#define VIRTIO_MMIO_INT_CONFIG		(1 << 1)
-
 /*
  * MMIO configuration space for virtio-mmio v1 is in guest byte order.
  *
@@ -124,6 +121,7 @@ static void	virtio_mmio_kick(struct virtio_softc *, uint16_t);
 static uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
 static void	virtio_mmio_v1_setup_queue(struct virtio_softc *, uint16_t, uint64_t);
 static void	virtio_mmio_v2_setup_queue(struct virtio_softc *, uint16_t, uint64_t);
+static int	virtio_mmio_get_status(struct virtio_softc *);
 static void	virtio_mmio_set_status(struct virtio_softc *, int);
 static void	virtio_mmio_negotiate_features(struct virtio_softc *, uint64_t);
 static int	virtio_mmio_alloc_interrupts(struct virtio_softc *);
@@ -232,6 +230,14 @@ virtio_mmio_v2_setup_queue(struct virtio_softc *vsc, uint16_t idx,
 	}
 }
 
+static int
+virtio_mmio_get_status(struct virtio_softc *vsc)
+{
+	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
+
+	return virtio_mmio_reg_read(sc, VIRTIO_MMIO_STATUS);
+}
+
 static void
 virtio_mmio_set_status(struct virtio_softc *vsc, int status)
 {
@@ -260,7 +266,8 @@ virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 {
 	struct virtio_softc *vsc = &sc->sc_sc;
 	device_t self = vsc->sc_dev;
-	uint32_t id, magic, ver;
+	uint32_t id, magic;
+	int virtio_vers;
 
 	magic = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    VIRTIO_MMIO_MAGIC_VALUE);
@@ -276,25 +283,35 @@ virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 	vsc->sc_bus_endian    = READ_ENDIAN;
 	vsc->sc_struct_endian = STRUCT_ENDIAN;
 
-	ver = virtio_mmio_reg_read(sc, VIRTIO_MMIO_VERSION);
-	switch (ver) {
+	sc->sc_mmio_vers = virtio_mmio_reg_read(sc, VIRTIO_MMIO_VERSION);
+	switch (sc->sc_mmio_vers) {
 	case 1:
 		/* we could use PAGE_SIZE, but virtio(4) assumes 4KiB for now */
 		virtio_mmio_reg_write(sc,
 		    VIRTIO_MMIO_V1_GUEST_PAGE_SIZE, VIRTIO_PAGE_SIZE);
 		vsc->sc_ops = &virtio_mmio_v1_ops;
+		/*
+		 * MMIO v1 ("legacy") is documented in the VirtIO 0.9.x
+		 * draft(s) and uses the same page-oriented queue setup,
+		 * so that's what we'll report as the VirtIO version.
+		 */
+		virtio_vers = 0;
 		break;
 
 	case 2:
 		vsc->sc_ops = &virtio_mmio_v2_ops;
+		/*
+		 * MMIO v2 is documented in the VirtIO 1.0 spec.
+		 */
+		virtio_vers = 1;
 		break;
 
 	default:
 		aprint_error_dev(vsc->sc_dev,
-		    "unknown version 0x%08x; giving up\n", ver);
+		    "unknown version 0x%08x; giving up\n", sc->sc_mmio_vers);
 		return;
 	}
-	aprint_normal_dev(self, "VirtIO-MMIO v%d\n", ver);
+	aprint_normal_dev(self, "VirtIO-MMIO-v%u\n", sc->sc_mmio_vers);
 
 	id = virtio_mmio_reg_read(sc, VIRTIO_MMIO_DEVICE_ID);
 	if (id == 0) {
@@ -302,7 +319,7 @@ virtio_mmio_common_attach(struct virtio_mmio_softc *sc)
 		return;
 	}
 
-	virtio_print_device_type(self, id, ver);
+	virtio_print_device_type(self, id, virtio_vers);
 
 	/* set up our device config tag */
 	vsc->sc_devcfg_iosize = sc->sc_iosize - VIRTIO_MMIO_CONFIG;
@@ -347,21 +364,89 @@ virtio_mmio_common_detach(struct virtio_mmio_softc *sc, int flags)
 
 /*
  * Feature negotiation.
+ *
+ * We fold pre-VirtIO-1.0 feature negotiation into this single routine
+ * because the "legacy" (MMIO-v1) also had the feature sel registers.
  */
 static void
 virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint64_t
     driver_features)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	uint32_t r;
+	device_t self = vsc->sc_dev;
+	uint64_t saved_driver_features = driver_features;
+	uint64_t device_features, negotiated;
+	uint32_t device_status;
+
+	driver_features |= VIRTIO_F_VERSION_1;
+	vsc->sc_active_features = 0;
 
 	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DEVICE_FEATURES_SEL, 0);
-	r = virtio_mmio_reg_read(sc, VIRTIO_MMIO_DEVICE_FEATURES);
-	r &= driver_features;
-	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES_SEL, 0);
-	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES, r);
+	device_features = virtio_mmio_reg_read(sc, VIRTIO_MMIO_DEVICE_FEATURES);
+	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DEVICE_FEATURES_SEL, 1);
+	device_features |= (uint64_t)
+	    virtio_mmio_reg_read(sc, VIRTIO_MMIO_DEVICE_FEATURES) << 32;
 
-	vsc->sc_active_features = r;
+	/* notify on empty is 0.9 only */
+	if (device_features & VIRTIO_F_VERSION_1) {
+		driver_features &= ~VIRTIO_F_NOTIFY_ON_EMPTY;
+	} else {
+		/*
+		 * Require version 1 for MMIO-v2 transport.
+		 */
+		if (sc->sc_mmio_vers >= 2) {
+			aprint_error_dev(self, "MMIO-v%u requires version 1\n",
+			    sc->sc_mmio_vers);
+			virtio_mmio_set_status(vsc,
+			    VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+			return;
+		}
+		/*
+		 * If the driver requires version 1, but the device doesn't
+		 * support it, fail now.
+		 */
+		if (saved_driver_features & VIRTIO_F_VERSION_1) {
+			aprint_error_dev(self, "device rejected version 1\n");
+			virtio_mmio_set_status(vsc,
+			    VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+			return;
+		}
+	}
+
+	negotiated = device_features & driver_features;
+
+	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES_SEL, 0);
+	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES,
+	    (uint32_t)negotiated);
+	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES_SEL, 1);
+	virtio_mmio_reg_write(sc, VIRTIO_MMIO_DRIVER_FEATURES,
+	    (uint32_t)(negotiated >> 32));
+
+	/*
+	 * FEATURES_OK status is not present pre-1.0.
+	 */
+	if (device_features & VIRTIO_F_VERSION_1) {
+		virtio_mmio_set_status(vsc,
+		    VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK);
+		device_status = virtio_mmio_get_status(vsc);
+		if ((device_status &
+		     VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK) == 0) {
+			aprint_error_dev(self, "feature negotiation failed\n");
+			virtio_mmio_set_status(vsc,
+			    VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+			return;
+		}
+	}
+
+	if (negotiated & VIRTIO_F_VERSION_1) {
+		/*
+		 * All VirtIO 1.0 access is little-endian.
+		 */
+		vsc->sc_bus_endian    = LITTLE_ENDIAN;
+		vsc->sc_struct_endian = LITTLE_ENDIAN;
+	}
+
+	vsc->sc_active_features = negotiated;
 }
 
 /*
@@ -377,10 +462,10 @@ virtio_mmio_intr(void *arg)
 	/* check and ack the interrupt */
 	isr = virtio_mmio_reg_read(sc, VIRTIO_MMIO_INTERRUPT_STATUS);
 	virtio_mmio_reg_write(sc, VIRTIO_MMIO_INTERRUPT_ACK, isr);
-	if ((isr & VIRTIO_MMIO_INT_CONFIG) &&
+	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
 	    (vsc->sc_config_change != NULL))
 		r = (vsc->sc_config_change)(vsc);
-	if ((isr & VIRTIO_MMIO_INT_VRING) &&
+	if ((isr & VIRTIO_CONFIG_ISR_QUEUE_INTERRUPT) &&
 	    (vsc->sc_intrhand != NULL)) {
 		if (vsc->sc_soft_ih != NULL)
 			softint_schedule(vsc->sc_soft_ih);
