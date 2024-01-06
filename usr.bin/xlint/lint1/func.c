@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.178 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.179 2024/01/06 15:05:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.178 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.179 2024/01/06 15:05:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -326,7 +326,7 @@ begin_function(sym_t *fsym)
 
 	if (fsym->s_osdef && !fsym->s_type->t_proto) {
 		/* TODO: Make this an error in C99 mode as well. */
-		if ((!allow_trad && !allow_c99) && hflag &&
+		if (!allow_trad && !allow_c99 && hflag &&
 		    strcmp(fsym->s_name, "main") != 0)
 			/* function definition is not a prototype */
 			warning(286);
