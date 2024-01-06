@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -429,7 +429,7 @@ void
 cpu_set_reset_func(void (*func)(void *, int), void *arg)
 {
 	if (cpu_reset_func == NULL) {
-		cpu_reset_func = cpu_reset_func;
+		cpu_reset_func = func;
 		cpu_reset_func_arg = arg;
 	}
 }
