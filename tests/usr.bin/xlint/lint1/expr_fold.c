@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.10 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.11 2024/01/06 15:05:24 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -185,7 +185,6 @@ fold_shl(void)
 	/* expect+1: warning: operator '<<' produces integer overflow [141] */
 	take_uint(1U << 24 << 24);
 
-	/* FIXME: undefined behavior in 'fold' at 'uint64_t << 104'. */
 	/* expect+1: warning: shift amount 104 is greater than bit-size 32 of 'unsigned int' [122] */
 	take_uint(1U << 24 << 104);
 }
@@ -197,7 +196,6 @@ fold_shr(void)
 
 	take_int(16777216 >> 25);
 
-	/* FIXME: undefined behavior in 'fold' at 'uint64_t >> 104'. */
 	/* expect+1: warning: shift amount 104 is greater than bit-size 32 of 'int' [122] */
 	take_int(16777216 >> 104);
 }

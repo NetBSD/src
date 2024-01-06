@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.205 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.206 2024/01/06 15:05:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -664,7 +664,7 @@ value_bits(unsigned bitsize)
 	 * see d_c99_complex_split.c to trigger this case.
 	 */
 	if (bitsize >= 64)
-		return ~((uint64_t)0);
+		return ~(uint64_t)0;
 
 	return ~(~(uint64_t)0 << bitsize);
 }

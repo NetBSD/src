@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.588 2024/01/06 14:21:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.589 2024/01/06 15:05:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.588 2024/01/06 14:21:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.589 2024/01/06 15:05:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -787,12 +787,8 @@ build_address(bool sys, tnode_t *tn, bool noign)
  * this function. An audit and a set of proper regression tests are needed.
  *     --Perry Metzger, Nov. 16, 2001
  */
-/*
- * Do only as much as necessary to compute constant expressions.
- * Called only if the operator allows folding and all operands are constants.
- */
 static tnode_t *
-fold(tnode_t *tn)
+fold_constant_integer(tnode_t *tn)
 {
 
 	val_t *v = xcalloc(1, sizeof(*v));
@@ -827,7 +823,7 @@ fold(tnode_t *tn)
 			si = (int64_t)(ul * ur);
 			if (si != (si & mask))
 				ovfl = true;
-			else if ((ul != 0) && ((si / ul) != ur))
+			else if (ul != 0 && si / ul != ur)
 				ovfl = true;
 		} else {
 			si = sl * sr;
@@ -954,7 +950,7 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	type_t *ptr_tp = expr_derive_type(rn->tn_type, PTR);
 	tnode_t *ntn = build_op(PLUS, sys, ptr_tp, ln, ctn);
 	if (ln->tn_op == CON)
-		ntn = fold(ntn);
+		ntn = fold_constant_integer(ntn);
 
 	op_t nop = rn->tn_type->t_bitfield ? FSEL : INDIR;
 	ntn = build_op(nop, sys, ntn->tn_type->t_subt, ntn, NULL);
@@ -1104,7 +1100,7 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 
 		tnode_t *prod = build_op(MULT, sys, rn->tn_type, rn, elsz);
 		if (rn->tn_op == CON)
-			prod = fold(prod);
+			prod = fold_constant_integer(prod);
 
 		return build_op(op, sys, ln->tn_type, ln, prod);
 	}
@@ -1117,7 +1113,7 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		type_t *ptrdiff = gettyp(PTRDIFF_TSPEC);
 		tnode_t *raw_diff = build_op(op, sys, ptrdiff, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
-			raw_diff = fold(raw_diff);
+			raw_diff = fold_constant_integer(raw_diff);
 
 		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
 		balance(NOOP, &raw_diff, &elsz);
@@ -1308,7 +1304,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
 		rn = build_op(MULT, sys, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
-			rn = fold(rn);
+			rn = fold_constant_integer(rn);
 	}
 
 	if ((op == ASSIGN || op == RETURN || op == INIT) &&
@@ -1454,11 +1450,8 @@ check_precedence_confusion(tnode_t *tn)
 	}
 }
 
-/*
- * Fold constant nodes, as much as is needed for comparing the value with 0.
- */
 static tnode_t *
-fold_bool(tnode_t *tn)
+fold_constant_compare_zero(tnode_t *tn)
 {
 
 	val_t *v = xcalloc(1, sizeof(*v));
@@ -1530,11 +1523,8 @@ is_floating_overflow(tspec_t t, long double val)
 	return false;
 }
 
-/*
- * Fold constant nodes having operands with floating point type.
- */
 static tnode_t *
-fold_float(tnode_t *tn)
+fold_constant_floating(tnode_t *tn)
 {
 
 	fpe = 0;
@@ -1657,22 +1647,14 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (mp->m_binary && op != ARROW && op != POINT)
 		rn = cconv(rn);
 
-	/*
-	 * Print some warnings for comparisons of unsigned values with
-	 * constants lower than or equal to null. This must be done before
-	 * promote() because otherwise unsigned char and unsigned short would
-	 * be promoted to int. Types are also tested to be CHAR, which would
-	 * also become int.
-	 */
 	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
 
 	if (mp->m_value_context || mp->m_compares_with_zero)
 		ln = promote(op, false, ln);
 	if (mp->m_binary && op != ARROW && op != POINT &&
-	    op != ASSIGN && op != RETURN && op != INIT) {
+	    op != ASSIGN && op != RETURN && op != INIT)
 		rn = promote(op, false, rn);
-	}
 
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
 	    ln->tn_op == CON && ln->tn_val.v_unsigned_since_c90) {
@@ -1768,23 +1750,22 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (hflag && !suppress_constcond &&
 	    mp->m_compares_with_zero &&
 	    (ln->tn_op == CON ||
-	     ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) &&
+	     (mp->m_binary && op != QUEST && rn->tn_op == CON)) &&
 	    /* XXX: rn->tn_system_dependent should be checked as well */
 	    !ln->tn_system_dependent) {
 		/* constant in conditional context */
 		warning(161);
 	}
 
-	if (mp->m_fold_constant_operands) {
-		if (ln->tn_op == CON && (!mp->m_binary || rn->tn_op == CON)) {
-			if (mp->m_compares_with_zero) {
-				ntn = fold_bool(ntn);
-			} else if (is_floating(ntn->tn_type->t_tspec)) {
-				ntn = fold_float(ntn);
-			} else {
-				ntn = fold(ntn);
-			}
-		} else if (op == QUEST && ln->tn_op == CON) {
+	if (mp->m_fold_constant_operands && ln->tn_op == CON) {
+		if (!mp->m_binary || rn->tn_op == CON) {
+			if (mp->m_compares_with_zero)
+				ntn = fold_constant_compare_zero(ntn);
+			else if (is_floating(ntn->tn_type->t_tspec))
+				ntn = fold_constant_floating(ntn);
+			else
+				ntn = fold_constant_integer(ntn);
+		} else if (op == QUEST) {
 			lint_assert(has_operands(rn));
 			use(ln->tn_val.u.integer != 0
 			    ? rn->tn_right : rn->tn_left);
@@ -2337,7 +2318,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 
 	if (lst == VOID || rst == VOID) {
 		/* TODO: C99 behaves like C90 here. */
-		if ((!allow_trad && !allow_c99) &&
+		if (!allow_trad && !allow_c99 &&
 		    (lst == FUNC || rst == FUNC)) {
 			/* (void *)0 is already handled in typeok() */
 			const char *lsts, *rsts;
@@ -2356,7 +2337,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 
 	if (lst == FUNC && rst == FUNC) {
 		/* TODO: C99 behaves like C90 here, see C99 6.5.8p2. */
-		if ((!allow_trad && !allow_c99) && op != EQ && op != NE)
+		if (!allow_trad && !allow_c99 && op != EQ && op != NE)
 			/* pointers to functions can only be compared ... */
 			warning(125);
 	}
@@ -2554,7 +2535,7 @@ check_assign_void_pointer(op_t op, int arg,
 	/* two pointers, at least one pointer to void */
 
 	/* TODO: C99 behaves like C90 here. */
-	if (!((!allow_trad && !allow_c99) && (lst == FUNC || rst == FUNC)))
+	if (!(!allow_trad && !allow_c99 && (lst == FUNC || rst == FUNC)))
 		return;
 	/* comb. of ptr to func and ptr to void */
 
@@ -3515,7 +3496,7 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 
 	if (nst == VOID || ost == VOID) {
 		/* TODO: C99 behaves like C90 here. */
-		if ((!allow_trad && !allow_c99) && (nst == FUNC || ost == FUNC)) {
+		if (!allow_trad && !allow_c99 && (nst == FUNC || ost == FUNC)) {
 			const char *nts, *ots;
 			/* null pointers are already handled in convert() */
 			*(nst == FUNC ? &nts : &ots) = "function pointer";
@@ -3829,8 +3810,8 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 	} else if (op == ANDASS || op == BITAND) {
 		convert_constant_check_range_bitand(
 		    nbitsz, obitsz, xmask, nv, ot, v, tp, op);
-	} else if ((nt != PTR && is_uinteger(nt)) &&
-	    (ot != PTR && !is_uinteger(ot)) &&
+	} else if (nt != PTR && is_uinteger(nt) &&
+	    ot != PTR && !is_uinteger(ot) &&
 	    v->u.integer < 0)
 		convert_constant_check_range_signed(op, arg);
 	else if (nv->u.integer != v->u.integer && nbitsz <= obitsz &&
