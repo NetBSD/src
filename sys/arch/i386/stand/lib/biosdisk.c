@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.60 2023/10/02 00:02:33 manu Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.61 2024/01/06 21:26:43 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -1198,11 +1198,13 @@ out:
 static void
 add_biosdisk_bootinfo(void)
 {
+#ifndef EFIBOOT
 	if (bootinfo == NULL) {
 		return;
 	}
 	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
 	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
+#endif
 	return;
 }
 #endif
