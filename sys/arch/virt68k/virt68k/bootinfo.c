@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.5 2024/01/06 21:40:41 thorpej Exp $        */      
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.4 2024/01/06 17:32:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.5 2024/01/06 21:40:41 thorpej Exp $");
 
 #include "opt_md.h"
 
 #include <sys/types.h>
 #include <sys/cpu.h>
 #include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -413,14 +414,15 @@ bootinfo_setup_initrd(void)
 void
 bootinfo_setup_rndseed(void)
 {
+	static struct krndsource bootinfo_rndsource;
 	struct bi_record *bi = bootinfo_find(BI_RNG_SEED);
 	if (bi != NULL) {
 		struct bi_data *rnd = bootinfo_dataptr(bi);
-#if 0 /* XXX */
-		rnd_seed(rnd->data_bytes, rnd->data_length);
-#else
-		printf("WARNING: ignored %u bytes of RND_SEED data @ %p\n",
-		    rnd->data_length, rnd->data_bytes);
-#endif
+		rnd_attach_source(&bootinfo_rndsource, "bootinfo",
+		    RND_TYPE_RNG, RND_FLAG_DEFAULT);
+		rnd_add_data(&bootinfo_rndsource,
+		    rnd->data_bytes, rnd->data_length,
+		    rnd->data_length * NBBY);
+		explicit_memset(rnd->data_bytes, 0, rnd->data_length);
 	}
 }
