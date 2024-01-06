@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2021/05/31 14:38:57 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2024/01/06 05:31:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/intr.h>
 
-#define	delay(us)	_delay((us) << 8)
+#define	delay(us)	_delay(us)
 #define DELAY(us)	delay(us)
 
 void	_delay(u_int);
