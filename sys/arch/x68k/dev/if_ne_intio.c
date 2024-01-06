@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.19 2018/06/22 04:17:41 msaitoh Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.20 2024/01/06 05:16:57 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.19 2018/06/22 04:17:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.20 2024/01/06 05:16:57 isaki Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -111,13 +111,13 @@ ne_intio_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/* Map I/O space */
-	if (bus_space_map(iot, ia->ia_addr, NE2000_NPORTS*2,
+	if (bus_space_map(iot, ia->ia_addr, NE2000_NPORTS * 2,
 			BUS_SPACE_MAP_SHIFTED_EVEN, &ioh))
 		return 0;
 
 	asict = iot;
-	if (bus_space_subregion(iot, ioh, NE2000_ASIC_OFFSET*2,
-			NE2000_ASIC_NPORTS*2, &asich))
+	if (bus_space_subregion(iot, ioh, NE2000_ASIC_OFFSET * 2,
+			NE2000_ASIC_NPORTS * 2, &asich))
 		goto out;
 
 	/* Look for an NE2000 compatible card */
@@ -145,15 +145,15 @@ ne_intio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Nereid Ethernet\n");
 
 	/* Map I/O space */
-	if (bus_space_map(iot, ia->ia_addr, NE2000_NPORTS*2,
-			BUS_SPACE_MAP_SHIFTED_EVEN, &ioh)){
+	if (bus_space_map(iot, ia->ia_addr, NE2000_NPORTS * 2,
+			BUS_SPACE_MAP_SHIFTED_EVEN, &ioh)) {
 		aprint_error_dev(self, "can't map I/O space\n");
 		return;
 	}
 
 	asict = iot;
-	if (bus_space_subregion(iot, ioh, NE2000_ASIC_OFFSET*2,
-			NE2000_ASIC_NPORTS*2, &asich)) {
+	if (bus_space_subregion(iot, ioh, NE2000_ASIC_OFFSET * 2,
+			NE2000_ASIC_NPORTS * 2, &asich)) {
 		aprint_error_dev(self, "can't subregion I/O space\n");
 		return;
 	}
