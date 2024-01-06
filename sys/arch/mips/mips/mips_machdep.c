@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.305 2024/01/06 07:27:05 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.306 2024/01/06 07:27:35 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.305 2024/01/06 07:27:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.306 2024/01/06 07:27:35 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2311,7 +2311,6 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			 * Now we give this segment to uvm.
 			 */
 			printf("adding %#"PRIxPADDR" @ %#"PRIxPADDR" to freelist %d\n",
-
 			    segend - segstart, segstart, freelist);
 			paddr_t first = atop(segstart);
 			paddr_t last = atop(segend);
