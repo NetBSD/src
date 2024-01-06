@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.811 2023/12/24 02:42:51 gutteridge Exp $
+$NetBSD: usbdevs,v 1.812 2024/01/06 00:24:07 maya Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -586,6 +586,7 @@ vendor HIROSE		0x2631	Hirose Electric
 vendor ONEPLUS		0x2717	ONEPLUS
 vendor NHJ		0x2770	NHJ
 vendor PLANEX		0x2c02	Planex Communications
+vendor MERCUSYS		0x2c4e	Mercusys
 vendor VIDZMEDIA	0x3275	VidzMedia Pte Ltd
 vendor AEI		0x3334	AEI
 vendor HANK		0x3353	Hank Connection
@@ -2287,6 +2288,9 @@ product MELCO CEWL_1		0x017f	Sony UWA-BR100 WLAN
 product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
 product MELCO WLIUCGNM2T	0x01ee	WLI-UC-GNM2T
 product MELCO WIU2300D		0x0241	WI-U2-300D
+
+/* Mercusys products */
+product	MERCUSYS MW150USV2	0x0102	MW150US V2
 
 /* Merlin products */
 product MERLIN V620		0x1110	Merlin V620
