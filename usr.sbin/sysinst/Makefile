@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/01/24 09:04:46 skrll Exp $
+#	$NetBSD: Makefile,v 1.4 2024/01/06 07:38:13 thorpej Exp $
 #
 # sysinst is usually built when the crunched install binary is built,
 # but can be built here as a normal program for testing.
@@ -49,6 +49,7 @@ SUBDIR += arch/shark
 SUBDIR += arch/sparc
 SUBDIR += arch/sparc64
 SUBDIR += arch/vax
+SUBDIR += arch/virt68k
 SUBDIR += arch/x68k
 SUBDIR += arch/zaurus
 
