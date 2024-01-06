@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.10 2023/05/14 09:07:54 riastradh Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.11 2024/01/06 21:26:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -38,9 +38,12 @@
 #include "biosdisk_ll.h"
 #include "devopen.h"
 #include "efidisk.h"
+#include "bootinfo.h"
 
 static struct efidiskinfo_lh efi_disklist;
 static int nefidisks;
+static struct btinfo_biosgeom *bibg;
+static size_t bibg_len;
 
 #define MAXDEVNAME 39 /* "NAME=" + 34 char part_name */
 
@@ -157,6 +160,23 @@ next:
 			nefidisks++;
 		if (edi->bootdev)
 			boot_biosdev = edi->dev;
+	}
+
+	bibg_len = sizeof(*bibg) + nefidisks * sizeof(struct bi_biosgeom_entry);
+	bibg = alloc(bibg_len);
+	if (bibg == NULL)
+		return;
+
+	bibg->num = nefidisks;
+
+	i = 0;
+	TAILQ_FOREACH(edi, &efi_disklist, list) {
+		if (edi->type == BIOSDISK_TYPE_HD) {
+			memset(&bibg->disk[i], 0, sizeof(bibg->disk[i]));
+			bibg->disk[i].dev = edi->dev;
+			bibg->disk[i].flags = BI_GEOM_INVALID;
+		}
+		++i;
 	}
 }
 
@@ -383,3 +403,10 @@ efidisk_get_efi_system_partition(int dev, int *partition)
 	*partition = i;
 	return 0;
 }
+
+void
+efidisk_getbiosgeom()
+{
+	BI_ADD(bibg, BTINFO_BIOSGEOM, bibg_len);
+}
+
