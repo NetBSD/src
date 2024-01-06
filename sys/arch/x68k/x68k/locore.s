@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 2023/12/27 03:03:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 2024/01/06 05:31:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -852,13 +852,14 @@ LmotommuC:
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microseconds.
+ * Delay for at least N microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */
 ENTRY_NOPROFILE(_delay)
-	| %d0 = arg = (usecs << 8)
+	| %d0 = (usecs * a certain magnification factor)
 	movl	%sp@(4),%d0
+	lsll	#8,%d0
 	| %d1 = delay_divisor
 	movl	_C_LABEL(delay_divisor),%d1
 L_delay:
