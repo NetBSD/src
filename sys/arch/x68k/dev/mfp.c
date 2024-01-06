@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.30 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.31 2024/01/06 05:24:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.30 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.31 2024/01/06 05:24:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ mfp_init(void)
 }
 
 extern int delay_divisor;
-void	_delay(u_int);
 
 static void
 mfp_calibrate_delay(void)
