@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.715 2024/01/05 23:22:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.716 2024/01/07 11:39:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.715 2024/01/05 23:22:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.716 2024/01/07 11:39:04 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -115,9 +115,7 @@ typedef enum {
 	GS_NO			/* the file is not guarded */
 } GuardState;
 
-/*
- * A file being read.
- */
+/* A file being parsed. */
 typedef struct IncludedFile {
 	FStr name;		/* absolute or relative to the cwd */
 	unsigned lineno;	/* 1-based */
@@ -2901,13 +2899,6 @@ ParseDependencyLine(char *line)
 static void
 ParseLine(char *line)
 {
-	/*
-	 * Lines that begin with '.' can be pretty much anything:
-	 *	- directives like '.include' or '.if',
-	 *	- suffix rules like '.c.o:',
-	 *	- dependencies for filenames that start with '.',
-	 *	- variable assignments like '.tmp=value'.
-	 */
 	if (line[0] == '.' && ParseDirective(line))
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.464 2024/01/07 01:33:57 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.465 2024/01/07 11:39:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.464 2024/01/07 01:33:57 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.465 2024/01/07 11:39:04 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2474,16 +2474,9 @@ Job_ParseShell(char *line)
 			}
 		}
 	} else {
-		/*
-		 * The user provided a path. If s/he gave nothing else
-		 * (fullSpec is false), try and find a matching shell in the
-		 * ones we know of. Else we just take the specification at
-		 * its word and copy it to a new location. In either case,
-		 * we need to record the path the user gave for the shell.
-		 */
-		char *name = path + (str_basename(path) - path);
 		shellPath = path;
-		shellName = newShell.name != NULL ? newShell.name : name;
+		shellName = newShell.name != NULL ? newShell.name
+		    : str_basename(path);
 		if (!fullSpec) {
 			if ((sh = FindShellByName(shellName)) == NULL) {
 				Parse_Error(PARSE_WARNING,
