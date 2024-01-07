@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 2024/01/02 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 2024/01/07 16:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,7 +278,14 @@ Lenab3:
  * later on.
  */
 	jbsr	_C_LABEL(virt68k_init)	| additional pre-main initialization
+#if 0
+	/*
+	 * XXX Don't do the spl0() here; when Qemu performs a reboot request,
+	 * XXX it seems to not clear pending interrupts, and so we blow up
+	 * XXX early when the new kernel starts up.
+	 */
 	movw	#PSL_LOWIPL,%sr		| lower SPL
+#endif
 	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"
 	movw	#PSL_USER,%sp@-		| in user mode
