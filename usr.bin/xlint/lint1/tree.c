@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.590 2024/01/07 12:20:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.591 2024/01/07 12:43:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.590 2024/01/07 12:20:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.591 2024/01/07 12:43:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -409,7 +409,7 @@ fallback_symbol(sym_t *sym)
 		return;
 	}
 
-	if (block_level > 0 && strcmp(sym->s_name, "__func__") == 0) {
+	if (funcsym != NULL && strcmp(sym->s_name, "__func__") == 0) {
 		if (!allow_c99)
 			/* __func__ is a C99 feature */
 			warning(317);

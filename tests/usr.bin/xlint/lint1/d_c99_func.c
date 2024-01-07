@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_func.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_func.c,v 1.7 2024/01/07 12:43:16 rillig Exp $	*/
 # 3 "d_c99_func.c"
 
 /* C99 __func__ */
@@ -14,3 +14,10 @@ function_name(void)
 	typedef int reveal_size[-(int)sizeof(__func__)];
 	return __func__;
 }
+
+
+// Since tree.c 1.504 from 2023-01-29 and before tree.c 1.591 from 2024-01-07,
+// lint crashed because there was no "current function", even though the "block
+// level" was not 0.
+/* expect+1: error: '__func__' undefined [99] */
+typedef int f(int[sizeof(__func__)]);
