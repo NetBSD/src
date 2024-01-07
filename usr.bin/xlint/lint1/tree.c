@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.589 2024/01/06 15:05:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.590 2024/01/07 12:20:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.589 2024/01/06 15:05:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.590 2024/01/07 12:20:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -536,13 +536,13 @@ build_string(strg_t *strg)
 	n->tn_type = tp;
 	n->tn_lvalue = true;
 
-	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string), "type.string");
+	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string), "tnode.string");
 	n->tn_string->st_char = strg->st_char;
 	n->tn_string->st_len = len;
 
 	size_t chsize = strg->st_char ? sizeof(char) : sizeof(wchar_t);
 	size_t size = (len + 1) * chsize;
-	n->tn_string->st_mem = expr_zero_alloc(size, "type.string.data");
+	n->tn_string->st_mem = expr_zero_alloc(size, "tnode.string.data");
 	(void)memcpy(n->tn_string->st_mem, strg->st_mem, size);
 	free(strg->st_mem);
 	free(strg);
@@ -759,18 +759,18 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 }
 
 static tnode_t *
-build_address(bool sys, tnode_t *tn, bool noign)
+build_address(bool sys, tnode_t *tn, bool force)
 {
 	tspec_t t;
 
-	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
+	if (!force && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
 		if (!allow_c90)
 			/* '&' before array or function: ignored */
 			warning(127);
 		return tn;
 	}
 
-	/* eliminate &* */
+	/* eliminate '&*' */
 	if (tn->tn_op == INDIR &&
 	    tn->tn_left->tn_type->t_tspec == PTR &&
 	    tn->tn_left->tn_type->t_subt == tn->tn_type) {
