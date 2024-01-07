@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.196 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.197 2024/01/07 18:42:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.196 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.197 2024/01/07 18:42:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -868,6 +868,13 @@ get_escaped_char(int delim)
 		c = read_escaped_backslash(delim);
 		if (c == -3)
 			return get_escaped_char(delim);
+		break;
+	default:
+		if (c != ' ' && (isspace(c) || iscntrl(c))) {
+			/* invisible character U+%04X in %s */
+			query_message(17, (unsigned int)c, delim == '"'
+			    ? "string literal" : "character constant");
+		}
 	}
 	return c;
 }
