@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.128 2023/12/17 21:52:11 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.129 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.128 2023/12/17 21:52:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.129 2024/01/07 07:58:33 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -1768,7 +1768,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		*(int *)addr = fd->sc_opts;
 		return 0;
 
-	case FDIOCSETOPTS:        	/* set drive options */
+	case FDIOCSETOPTS:		/* set drive options */
 		DPRINTF(("FDIOCSETOPTS\n"));
 		fd->sc_opts = *(int *)addr;
 		return 0;
@@ -1882,7 +1882,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	lp->d_secperunit  = sc->sc_type->size;
 
 	lp->d_type        = DKTYPE_FLOPPY;
-	lp->d_rpm         = 300; 	/* XXX */
+	lp->d_rpm         = 300;	/* XXX */
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
 	lp->d_sbsize      = 0;

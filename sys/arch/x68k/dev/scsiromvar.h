@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiromvar.h,v 1.6 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: scsiromvar.h,v 1.7 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ struct scsirom_softc {
 	enum {
 		INTERNAL = 0,	/* onboard */
 		EXTERNAL = 1,	/* optional */
-	} 		sc_which;
+	}		sc_which;
 	paddr_t		sc_addr;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.17 2015/08/21 15:33:04 christos Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.18 2024/01/07 07:58:33 isaki Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -170,7 +170,7 @@ get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf)
 		printf("LFS: ino: %d\nifpb: %d, bsize: %d\n",
 			ino, fsi_lfs.ifpb, fsi.bsize);
 #endif
-		ufs_read((union ufs_dinode *) &ifile_dinode, buf, 
+		ufs_read((union ufs_dinode *) &ifile_dinode, buf,
 			 ino / fsi_lfs.ifpb + fsi_lfs.ioffset,
 			 fsi.bsize);
 		i = ino % fsi_lfs.ifpb;

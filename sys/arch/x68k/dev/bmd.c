@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.27 2023/12/17 21:51:29 andvar Exp $	*/
+/*	$NetBSD: bmd.c,v 1.28 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.27 2023/12/17 21:51:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.28 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ bmd_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 
 	/* Check CTRL addr */
- 	if (badaddr((void *)IIOV(ia->ia_addr)))
+	if (badaddr((void *)IIOV(ia->ia_addr)))
 		return (0);
 
 	ia->ia_size = 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.15 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.16 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.15 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.16 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ CFATTACH_DECL_NEW(slhci_intio, sizeof(struct slhci_intio_softc),
     slhci_intio_match, slhci_intio_attach, NULL, NULL);
 
 #define INTR_ON 	1
-#define INTR_OFF 	0
+#define INTR_OFF	0
 
 static int
 slhci_intio_match(device_t parent, cfdata_t cf, void *aux)
@@ -147,7 +147,7 @@ slhci_intio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize sc */
-	slhci_preinit(sc, slhci_intio_enable_power, iot, ioh, 30, 
+	slhci_preinit(sc, slhci_intio_enable_power, iot, ioh, 30,
 	    SL11_IDX_DATA);
 
 	/* Establish the interrupt handler */

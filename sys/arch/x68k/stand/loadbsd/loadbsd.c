@@ -20,13 +20,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.15 2023/12/23 20:57:16 andvar Exp $
+ *	$NetBSD: loadbsd.c,v 1.16 2024/01/07 07:58:34 isaki Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.15 2023/12/23 20:57:16 andvar Exp $");
-#define VERSION	"$Revision: 1.15 $ $Date: 2023/12/23 20:57:16 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.16 2024/01/07 07:58:34 isaki Exp $");
+#define VERSION	"$Revision: 1.16 $ $Date: 2024/01/07 07:58:34 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -365,8 +365,8 @@ read_kernel(const char *fn)
 	arg->xk.d5 = IOCS_BOOTINF();	/* unused for now */
 #if 0
 	/* filled afterwards */
-	arg->xk.rootdev = 
-	arg->xk.boothowto = 
+	arg->xk.rootdev =
+	arg->xk.boothowto =
 #endif
 
 	if (opt_v)

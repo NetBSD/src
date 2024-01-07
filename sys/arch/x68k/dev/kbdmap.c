@@ -1,10 +1,10 @@
-/*	$NetBSD: kbdmap.c,v 1.8 2022/05/26 14:28:56 tsutsui Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.9 2024/01/07 07:58:33 isaki Exp $	*/
 
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki and Makoto MINOURA */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.8 2022/05/26 14:28:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.9 2024/01/07 07:58:33 isaki Exp $");
 
 #include "kbdmap.h"
 
@@ -180,7 +180,7 @@ const struct kbdmap ascii_kbdmap = {
 	   {0, '+'},
 	   {0, '*'},	/* 0x28 */
 	   {0, '}'},
-	   {C, 'Z'},	
+	   {C, 'Z'},
 	   {C, 'X'},
 	   {C, 'C'},
 	   {C, 'V'},

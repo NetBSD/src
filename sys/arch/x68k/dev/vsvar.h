@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.19 2021/02/06 12:50:04 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.20 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -59,7 +59,7 @@
 #define VS_MAX_BUFSIZE	(65536*4) /* XXX: enough? */
 
 /* XXX: msm6258vreg.h */
-#define MSM6258_CMD 	0		/* W */
+#define MSM6258_CMD	0		/* W */
 #define MSM6258_CMD_STOP	(0x01)
 #define MSM6258_CMD_PLAY_START	(0x02)
 #define MSM6258_CMD_REC_START	(0x04)

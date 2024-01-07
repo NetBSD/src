@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.69 2024/01/07 07:58:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2024/01/07 07:58:35 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -85,7 +85,7 @@ cpu_rootconf(void)
 
 void
 config_console(void)
-{	
+{
 	mfp_config_console();
 	grf_config_console();
 	ite_config_console();

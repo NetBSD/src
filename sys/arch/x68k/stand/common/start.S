@@ -9,7 +9,7 @@
 |
 |	This file is in the public domain
 |
-|	$NetBSD: start.S,v 1.3 2011/02/21 02:31:58 itohy Exp $
+|	$NetBSD: start.S,v 1.4 2024/01/07 07:58:34 isaki Exp $
 
 #include <machine/asm.h>
 
@@ -84,10 +84,10 @@
 #define __SETBLOCK	0xFF4A
 #define __EXIT2		0xFF4C
 
-|	
+|
 |	seed to estimate argument string/vector and environment vector size
 |	(max nohupair argv[0](92+4) + NULLs(8) + alignment(3))	<- donburi?
-|	
+|
 #define estimated_argsz	107
 #define estimated_com	92	/* estimated command name length (included) */
 

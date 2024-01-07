@@ -1,4 +1,4 @@
-/* $NetBSD: if_ne.c,v 1.2 2012/11/01 14:46:26 isaki Exp $ */
+/* $NetBSD: if_ne.c,v 1.3 2024/01/07 07:58:33 isaki Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.
@@ -114,14 +114,14 @@ static int
 ne_put(struct iodesc *desc, void *pkt, size_t len)
 {
 #ifdef DEBUG
- 	struct ether_header *eh;
- 
- 	eh = pkt;
- 	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
- 	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
- 	printf("type: 0x%x\n", eh->ether_type & 0xffff);
+	struct ether_header *eh;
+
+	eh = pkt;
+	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
+	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
+	printf("type: 0x%x\n", eh->ether_type & 0xffff);
 #endif
- 
+
 	return EtherSend(pkt, len);
 }
 

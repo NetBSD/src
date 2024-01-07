@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.2 1998/01/05 20:52:29 perry Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.3 2024/01/07 07:58:34 isaki Exp $	*/
 
 #define NUL	0
 #define SOH	1
@@ -94,9 +94,9 @@ struct key {
 #define KBD_MODE_ACCMASK  (0xf0)
 
 struct kbdmap {
-	struct key 	keys[KBD_NUM_KEYS],
-		   	shift_keys[KBD_NUM_KEYS],
-		   	alt_keys[KBD_NUM_KEYS],
+	struct key	keys[KBD_NUM_KEYS],
+			shift_keys[KBD_NUM_KEYS],
+			alt_keys[KBD_NUM_KEYS],
 			alt_shift_keys[KBD_NUM_KEYS];
 	unsigned char	strings[KBD_STRTAB_SIZE];
 };

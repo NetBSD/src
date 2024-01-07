@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.70 2022/06/25 05:01:31 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.71 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2022/06/25 05:01:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2024/01/07 07:58:33 isaki Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -186,7 +186,7 @@ static int
 itematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct grf_softc *gp;
-	
+
 	gp = aux;
 	if (cf->cf_loc[GRFCF_GRFADDR] != gp->g_cfaddr)
 		return 0;
@@ -844,7 +844,7 @@ ite_filter(u_char c)
 		    (key.mode & KBD_MODE_CAPS) != 0)
 			key = kbdmap.shift_keys[c];
 		else if ((mod & KBD_MOD_OPT2) != 0 &&
-		    	 (key.mode & KBD_MODE_KPAD) != 0)
+		         (key.mode & KBD_MODE_KPAD) != 0)
 			key = kbdmap.shift_keys[c];
 	}
 	code = key.code;
@@ -1205,7 +1205,7 @@ ite_putstr(const u_char *s, int len, dev_t dev)
 
 	/* XXX avoid problems */
 	if ((ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE)
-	  	return;
+		return;
 
 	SUBR_CURSOR(ip, START_CURSOROPT);
 	for (i = 0; i < len; i++)
@@ -2222,7 +2222,7 @@ iteputchar(int c, struct ite_softc *ip)
 	case SO:
 		ip->GL = &ip->G1;
 		break;
-		
+
 	case SI:
 		ip->GL = &ip->G0;
 		break;
@@ -2234,16 +2234,16 @@ iteputchar(int c, struct ite_softc *ip)
 	case 0x14:	/* DC4 */
 	case 0x15:	/* NAK */
 	case 0x16:	/* SYN */
-	case 0x17:	/* ETB */		
+	case 0x17:	/* ETB */
 		break;
 
 	case CAN:
 		ip->escape = 0;	/* cancel any escape sequence in progress */
 		break;
-		
+
 	case 0x19:	/* EM */
 		break;
-					
+
 	case SUB:
 		ip->escape = 0;	/* dito, but see below */
 		/* should also display a reverse question mark!! */
@@ -2263,7 +2263,7 @@ iteputchar(int c, struct ite_softc *ip)
 	case IND:	/* index: move cursor down, scroll */
 		ite_index(ip);
 		break;
-		
+
 	case NEL:	/* next line. next line, first pos. */
 		ite_crlf(ip);
 		break;
@@ -2272,7 +2272,7 @@ iteputchar(int c, struct ite_softc *ip)
 		if (ip->curx < ip->cols)
 			ip->tabs[ip->curx] = 1;
 		break;
-		
+
 	case RI:	/* reverse index */
 		ite_rlf(ip);
 		break;
@@ -2281,26 +2281,26 @@ iteputchar(int c, struct ite_softc *ip)
 		ip->save_GL = ip->GR;	/* GL XXX EUC */
 		ip->GR = &ip->G2;	/* GL XXX */
 		break;
-		
+
 	case SS3:	/* go into G3 for one character */
 		ip->save_GL = ip->GR;	/* GL XXX EUC */
 		ip->GR = &ip->G3;	/* GL XXX */
 		break;
-		
+
 	case DCS:	/* device control string introducer */
 		ip->escape = DCS;
 		ip->ap = ip->argbuf;
 		break;
-		
+
 	case CSI:	/* control sequence introducer */
 		ip->escape = CSI;
 		ip->ap = ip->argbuf;
 		break;
-		
+
 	case ST:	/* string terminator */
 		/* ignore, if not used as terminator */
 		break;
-		
+
 	case OSC:	/* introduces OS command. */
 		/* Ignore everything upto ST */
 		ip->escape = OSC;
@@ -2310,7 +2310,7 @@ iteputchar(int c, struct ite_softc *ip)
 		/* ignore everything upto ST */
 		ip->escape = PM;
 		break;
-		
+
 	case APC:	/* application program command */
 		/* ignore everything upto ST */
 		ip->escape = APC;
@@ -2547,7 +2547,7 @@ itecnputc(dev_t dev, int c)
 #ifdef ITE_KERNEL_ATTR
 	short save_attribute;
 #endif
-	
+
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE) {
 		(void) iteon(dev, 3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.36 2020/06/18 19:54:08 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.36 2020/06/18 19:54:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -404,7 +404,7 @@ dodospart:
 	/* disklabel in appropriate location? */
 	if (lp->d_partitions[0].p_offset != 0
 		&& lp->d_partitions[0].p_offset != dospartoff) {
-		error = EXDEV;		
+		error = EXDEV;
 		goto done;
 	}
 #endif

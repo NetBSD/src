@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2019/11/23 19:40:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 #define	cpu_need_resched(ci,l,flags)	do {	\
-	__USE(flags); 				\
+	__USE(flags);				\
 	aston();				\
 } while (/*CONSTCOND*/0)
 

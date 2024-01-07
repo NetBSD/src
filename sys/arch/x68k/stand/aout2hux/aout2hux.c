@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.13 2011/02/21 02:31:58 itohy Exp $
+ *	$NetBSD: aout2hux.c,v 1.14 2024/01/07 07:58:33 isaki Exp $
  */
 
 #include <sys/types.h>
@@ -593,7 +593,7 @@ aout2hux(const char *fn1, const char *fn2, u_int32_t loadadr1, u_int32_t loadadr
 	datasize = inf1.data_size;
 	execoff = inf1.entry_addr - loadadr1;
 
-	DPRINTF(("text: %u, data: %u, pad: %u, bss: %u, exec: %u\n", 
+	DPRINTF(("text: %u, data: %u, pad: %u, bss: %u, exec: %u\n",
 		textsize, datasize, paddingsize, inf1.bss_size, execoff));
 
 	if (textsize & 1) {

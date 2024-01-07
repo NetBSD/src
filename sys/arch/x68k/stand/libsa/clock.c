@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.5 2014/11/21 01:18:39 christos Exp $ */
+/* $NetBSD: clock.c,v 1.6 2024/01/07 07:58:34 isaki Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
- 
+
 #include <sys/types.h>
 #include <sys/clock.h>
 #include <lib/libsa/stand.h>

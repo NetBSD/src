@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.39 2023/12/17 22:03:50 andvar Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.40 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.39 2023/12/17 22:03:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.40 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ dmac_alloc_channel(device_t self, int ch, const char *name,
 	if (chan->ch_name[0])
 		panic("DMAC: channel in use.");
 	if (strlen(name) > 8)
-	  	panic("DMAC: wrong user name.");
+		panic("DMAC: wrong user name.");
 #endif
 
 #ifdef DMAC_ARRAYCHAIN
@@ -380,7 +380,7 @@ dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
 	if ((offset >= dmamap->dm_mapsize) ||
 	    (offset + size > dmamap->dm_mapsize))
 		panic("dmac_start_xfer_offset: invalid offset: "
-			"offset=%d, size=%d, mapsize=%ld",
+		      "offset=%d, size=%d, mapsize=%ld",
 		       offset, size, dmamap->dm_mapsize);
 #endif
 	/* program DMAC in single block mode or array chainning mode */

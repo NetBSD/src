@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.S,v 1.1 2020/08/16 06:43:43 isaki Exp $	*/
+/*	$NetBSD: memcmp.S,v 1.2 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (C) 2020 Tetsuya Isaki. All rights reserved.
@@ -106,7 +106,7 @@ fail:
 
 test1:
 		| b1 == b2 within length
-		.long 	0x11223344		| b1
+		.long	0x11223344		| b1
 		.long	0x11223355		| b2
 		.long	3			| len
 		.long	0			| expected

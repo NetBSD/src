@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2024/01/07 07:58:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2024/01/07 07:58:35 isaki Exp $");
 
 #include "clock.h"
 
@@ -130,7 +130,7 @@ cpu_initclocks(void)
 		.tc_get_timecount = mfp_get_timecount,
 		.tc_quality = 100,
 	};
-	
+
 	if (CLOCKS_PER_SEC % hz ||
 	    hz <= (CLOCKS_PER_SEC / 256) || hz > CLOCKS_PER_SEC) {
 		printf("cannot set %d Hz clock. using 100 Hz\n", hz);
@@ -275,7 +275,7 @@ int
 clockioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 {
 	int error = 0;
-	
+
 	switch (cmd) {
 
 	case CLOCKMAP:

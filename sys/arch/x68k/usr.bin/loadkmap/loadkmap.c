@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.10 2011/05/19 21:26:39 tsutsui Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.11 2024/01/07 07:58:34 isaki Exp $	*/
 /*
  * loadkmap - load keyboard map (for NetBSD/X680x0)
  * from: amiga/stand/loadkmap/loadkmap.c
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: loadkmap.c,v 1.10 2011/05/19 21:26:39 tsutsui Exp $");
+__RCSID("$NetBSD: loadkmap.c,v 1.11 2024/01/07 07:58:34 isaki Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +50,6 @@ load_kmap(const char *file)
 
 		close (fd);
 	} else {
-	    perror("open kbdmap");
+		perror("open kbdmap");
 	}
 }
