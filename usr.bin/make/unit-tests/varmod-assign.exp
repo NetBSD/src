@@ -50,4 +50,11 @@ make: Unfinished modifier for "ASSIGN" ('}' missing)
 ok=word
 make: " echo word; false " returned non-zero status
 err=previous
+Command: TARGET_CMD_VAR = cmd-value
+Global: TARGET_GLOBAL_VAR = global-value
+target: TARGET_TARGET_VAR = target-value
+target: TARGET_TARGET_VAR = new-value
+Global: TARGET_GLOBAL_VAR = new-value
+Global: TARGET_ENV_VAR = new-value
+target: TARGET_NEW_VAR = new-value
 exit status 0
