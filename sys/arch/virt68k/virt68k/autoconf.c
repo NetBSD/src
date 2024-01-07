@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2024/01/02 16:59:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2024/01/07 16:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2024/01/02 16:59:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2024/01/07 16:41:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,14 @@ cpu_configure(void)
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
+
+	/*
+	 * XXX Go ahead and enable interrupts now that we've configured
+	 * XXX everything.
+	 * XXX
+	 * XXX See locore.s, right before main() is called.
+	 */
+	spl0();
 }
 
 void
