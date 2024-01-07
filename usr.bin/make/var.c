@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1093 2024/01/05 23:22:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1094 2024/01/07 11:39:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1093 2024/01/05 23:22:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1094 2024/01/07 11:39:04 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1859,15 +1859,15 @@ FormatTime(const char *fmt, time_t t, bool gmt)
  * Some modifiers such as ':sh' or '::=' have noticeable side effects though.
  *
  * Evaluating the modifier usually takes the current value of the
- * expression from ch->expr->value, or the variable name from ch->var->name
+ * expression from ch->expr->value, or the variable name from ch->var->name,
  * and stores the result back in ch->expr->value via Expr_SetValueOwn or
  * Expr_SetValueRefer.
  *
- * If evaluating fails (as of 2020-08-23), an error message is printed using
- * Error.  This function has no side effects, it really just prints the error
- * message.  Processing the expression continues as if everything were ok.
- * TODO: This should be fixed by adding proper error handling to Var_Subst,
- * Var_Parse, ApplyModifiers and ModifyWords.
+ * If evaluating fails, the fallback error message "Bad modifier" is printed
+ * using Error.  This function has no side effects, it really just prints the
+ * error message, continuing as if nothing had happened.  TODO: This should be
+ * fixed by adding proper error handling to Var_Subst, Var_Parse,
+ * ApplyModifiers and ModifyWords.
  *
  * Some modifiers such as :D and :U turn undefined expressions into defined
  * expressions using Expr_Define.
@@ -1936,7 +1936,7 @@ typedef struct ModChain {
 	char const_member startc;
 	/* '\0' or '}' or ')' */
 	char const_member endc;
-	/* Word separator when joining words (see the :ts modifier). */
+	/* Separator when joining words (see the :ts modifier). */
 	char sep;
 	/*
 	 * Whether some modifiers that otherwise split the variable value
@@ -4598,10 +4598,10 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 		} else if (val.str == var_Error) {
 
 			/*
-			 * XXX: This condition is wrong.  If val == var_Error,
-			 * this doesn't necessarily mean there was an undefined
-			 * variable.  It could equally well be a parse error;
-			 * see unit-tests/varmod-order.exp.
+			 * FIXME: The condition 'val.str == var_Error' doesn't
+			 * mean there was an undefined variable.  It could
+			 * equally well be a parse error; see
+			 * unit-tests/varmod-order.mk.
 			 */
 
 			/*
@@ -4612,10 +4612,10 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 			if (!*inout_errorReported) {
 				Parse_Error(PARSE_FATAL,
 				    "Undefined variable \"%.*s\"",
-				    (int)(size_t)(nested_p - p), p);
+				    (int)(nested_p - p), p);
+				*inout_errorReported = true;
 			}
 			p = nested_p;
-			*inout_errorReported = true;
 		} else {
 			/*
 			 * Copy the initial '$' of the undefined expression,

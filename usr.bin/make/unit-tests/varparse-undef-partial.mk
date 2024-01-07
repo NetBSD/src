@@ -1,4 +1,4 @@
-# $NetBSD: varparse-undef-partial.mk,v 1.4 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varparse-undef-partial.mk,v 1.5 2024/01/07 11:39:04 rillig Exp $
 
 # When an undefined variable is expanded in a ':=' assignment, only the
 # initial '$' of the expression is skipped by the parser, while
@@ -11,9 +11,8 @@ PARAM=	:Q
 
 # The expression ${VAR.${PARAM}} refers to the variable named "VAR.:Q",
 # with the ":Q" being part of the name.  This variable is not defined,
-# therefore the initial '$' of that whole expression is skipped by the
-# parser (see Var_Subst, the Buf_AddByte in the else branch) and the rest
-# of the expression is expanded as usual.
+# therefore the initial '$' of that whole expression is skipped by the parser
+# (see VarSubstExpr) and the rest of the expression is expanded as usual.
 #
 # The resulting expression is ${VAR.:Q}, which means that the
 # interpretation of the ":Q" has changed from being part of the variable
