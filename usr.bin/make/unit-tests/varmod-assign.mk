@@ -1,7 +1,9 @@
-# $NetBSD: varmod-assign.mk,v 1.18 2023/12/31 10:09:01 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.19 2024/01/07 11:42:22 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
+
+.if !make(target)
 
 all:	mod-assign-empty
 all:	mod-assign-parse
@@ -162,7 +164,6 @@ ${VARNAME}=	initial-value	# Sets 'VAR.${param}' to 'expanded'.
 .MAKEFLAGS: CMD_CMD_VAR=cmd-value
 CMD_GLOBAL_VAR=global-value
 export CMD_ENV_VAR=env-value
-
 .MAKEFLAGS: -dv
 # expect-reset
 # expect: Command: CMD_CMD_VAR = new-value
@@ -178,23 +179,30 @@ export CMD_ENV_VAR=env-value
 .endif
 .MAKEFLAGS: -d0
 
+# Run the 'target' test in a separate sub-make, with reduced debug logging.
+all: run-target
+run-target: .PHONY
+	@${MAKE} -r -f ${MAKEFILE} -dv target 2>&1 | grep ': TARGET_'
 
-# In target scope, assignments only happen in a few cases.  To extract the
-# debug log for this test, the debug log would have to be enabled for the
-# other targets as well, thus producing lots of irrelevant output.
+.else # make(target)
+
+# The commands of a target are evaluated in target scope.  An assignment
+# modifier that creates a new variable creates it in the target scope.
+# Existing variables are updated in their previous scope, and environment
+# variables are created in the global scope, as in other situations.
 #
-# Running './make -r -f varmod-assign.mk target | grep ": TARGET"' results in:
-#	target: TARGET_TARGET_VAR = new-value
-#	Global: TARGET_GLOBAL_VAR = new-value
-#	Global: TARGET_ENV_VAR = new-value
-#	target: TARGET_NEW_VAR = new-value
+# expect: target: TARGET_TARGET_VAR = new-value
+# expect: Global: TARGET_GLOBAL_VAR = new-value
+# expect: Global: TARGET_ENV_VAR = new-value
+# expect: target: TARGET_NEW_VAR = new-value
 .MAKEFLAGS: TARGET_CMD_VAR=cmd-value
 TARGET_GLOBAL_VAR=global-value
 export TARGET_ENV_VAR=env-value
-.MAKEFLAGS: ${make(target):?-dv:}
 target: .PHONY TARGET_TARGET_VAR=target-value
 	: ${TARGET_TARGET_VAR::=new-value}
 	: ${TARGET_CMD_VAR::=new-value}
 	: ${TARGET_GLOBAL_VAR::=new-value}
 	: ${TARGET_ENV_VAR::=new-value}
 	: ${TARGET_NEW_VAR::=new-value}
+
+.endif
