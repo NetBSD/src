@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.20 2023/12/10 15:29:38 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.21 2024/01/07 18:42:37 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -11,11 +11,11 @@
  *	Understanding how C works internally, by making the usual arithmetic
  *	conversions visible.
  *
- * 	Finding code that intentionally suppresses a regular lint warning,
- * 	such as casts between arithmetic types.
+ *	Finding code that intentionally suppresses a regular lint warning,
+ *	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -457,6 +457,11 @@ static void Q16(void);
 void Q16(void)
 {
 }
+
+/* expect+1: invisible character U+0009 in character constant [Q17] */
+char Q17_char[] = { ' ', '\0', '	' };
+/* expect+1: invisible character U+0009 in string literal [Q17] */
+char Q17_string[] = " \0	";
 
 /*
  * Since queries do not affect the exit status, force a warning to make this
