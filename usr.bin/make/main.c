@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.608 2024/01/05 23:22:06 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.609 2024/01/07 01:33:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.608 2024/01/05 23:22:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.609 2024/01/07 01:33:57 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1851,6 +1851,7 @@ Fatal(const char *fmt, ...)
 		Job_Wait();
 
 	(void)fflush(stdout);
+	fprintf(stderr, "%s: ", progname);
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);

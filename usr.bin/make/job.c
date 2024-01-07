@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.463 2024/01/05 23:22:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.464 2024/01/07 01:33:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.463 2024/01/05 23:22:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.464 2024/01/07 01:33:57 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1379,7 +1379,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 		return false;
 	}
 
-	abortProc("%s: don't know how to make %s. Stop", progname, gn->name);
+	abortProc("don't know how to make %s. Stop", gn->name);
 	return false;
 }
 
