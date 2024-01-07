@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.18 2022/06/23 12:32:22 isaki Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.19 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -51,7 +51,7 @@ static int check_unit(int);
 #ifdef DEBUG
 #define DPRINTF(x)	printf x
 #else
-#define DPRINTF(x)	
+#define DPRINTF(x)
 #endif
 
 /*

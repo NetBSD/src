@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2023/07/11 11:50:39 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #define splsoftclock()	splraise1()
 #define splsoftnet()	splraise1()
 #define splsoftserial()	splraise1()
-#define splvm()         splraise5()
-#define splsched()      spl7()
-#define splhigh()       spl7()
+#define splvm()		splraise5()
+#define splsched()	spl7()
+#define splhigh()	spl7()
 
 #define	splnone()	spl0()
 #define	splzs()		splraise5()	/* disallow serial interrupts */

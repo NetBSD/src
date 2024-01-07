@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.11 2022/01/01 21:07:14 andvar Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.12 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -55,7 +55,7 @@ struct acb {
 	int	 clen;
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
-	u_char 	 stat;		/* SCSI status byte */
+	u_char	 stat;		/* SCSI status byte */
 
 /*	struct spc_dma_seg dma[SPC_NSEG];*/ /* Physical addresses+len */
 };
@@ -110,9 +110,9 @@ struct mha_softc {
 	int	sc_phase;	/* Copy of what bus phase we are in */
 	int	sc_prevphase;	/* Copy of what bus phase we were in */
 	u_char	sc_state;	/* State applicable to the adapter */
-	u_char	 sc_flags;
+	u_char	sc_flags;
 	u_char	sc_selid;	/* Reselection ID */
-	volatile u_char	 sc_spcinitialized;	/* */
+	volatile u_char	sc_spcinitialized;	/* */
 
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* Messages we want to send */
@@ -121,7 +121,7 @@ struct mha_softc {
 	u_char	sc_lastmsg;	/* Message last transmitted */
 	u_char	sc_currmsg;	/* Message currently ready to transmit */
 #define SPC_MAX_MSG_LEN 8
-	u_char  sc_omess[SPC_MAX_MSG_LEN];
+	u_char	sc_omess[SPC_MAX_MSG_LEN];
 	u_char	*sc_omp;		/* Outgoing message pointer */
 	u_char	sc_imess[SPC_MAX_MSG_LEN];
 	u_char	*sc_imp;		/* Incoming message pointer */
@@ -173,7 +173,7 @@ struct mha_softc {
 #define SEND_PARITY_ERROR	0x02
 #define SEND_INIT_DET_ERR	0x04
 #define SEND_REJECT		0x08
-#define SEND_IDENTIFY  		0x10
+#define SEND_IDENTIFY		0x10
 #define SEND_ABORT		0x20
 #define SEND_SDTR		0x40
 #define	SEND_WDTR		0x80

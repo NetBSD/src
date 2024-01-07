@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.60 2023/12/17 22:07:34 andvar Exp $	*/
+/*	$NetBSD: mha.c,v 1.61 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,13 +59,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.60 2023/12/17 22:07:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.61 2024/01/07 07:58:33 isaki Exp $");
 
 #include "opt_ddb.h"
 
 /* Synchronous data transfers? */
 #define SPC_USE_SYNCHRONOUS	0
-#define SPC_SYNC_REQ_ACK_OFS 	8
+#define SPC_SYNC_REQ_ACK_OFS	8
 
 /* Default DMA mode? */
 #define MHA_DMA_LIMIT_XFER	1
@@ -247,7 +247,7 @@ int	mha_datain_pio(struct mha_softc *, u_char *, int);
 int	mha_dataout(struct mha_softc *, u_char *, int);
 int	mha_datain(struct mha_softc *, u_char *, int);
 void	mha_abort(struct mha_softc *, struct acb *);
-void 	mha_init(struct mha_softc *);
+void	mha_init(struct mha_softc *);
 void	mha_scsi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 void	mha_poll(struct mha_softc *, struct acb *);
 void	mha_sched(struct mha_softc *);
@@ -1215,7 +1215,7 @@ printf("%s: unimplemented message: %d\n", device_xname(sc->sc_dev), sc->sc_imess
 		struct spc_tinfo *ti;
 		u_char lunit;
 
-		if (MSG_ISIDENTIFY(sc->sc_imess[0])) { 	/* Identify? */
+		if (MSG_ISIDENTIFY(sc->sc_imess[0])) {	/* Identify? */
 			SPC_MISC(("searching "));
 			/*
 			 * Search wait queue for disconnected cmd

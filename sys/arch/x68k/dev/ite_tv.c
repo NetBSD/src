@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.19 2022/06/25 03:57:17 tsutsui Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.20 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.19 2022/06/25 03:57:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.20 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ void
 ite_set_glyph(void)
 {
 	uint8_t glyph = IODEVbase->io_sram[0x59];
-	
+
 	if ((glyph & 4) != 0)
 		SETGLYPH(0x82, '|');
 	if ((glyph & 2) != 0)

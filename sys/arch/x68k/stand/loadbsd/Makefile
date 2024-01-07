@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2019/09/23 13:42:37 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2024/01/07 07:58:34 isaki Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -24,7 +24,7 @@ LIBIOCS!=	cd ${.CURDIR}/../libiocs && ${PRINTOBJDIR}
 
 CPPFLAGS=	-W -Wall -O -fomit-frame-pointer -fno-unwind-tables
 CPPFLAGS+=	-m68000 -Wa,-mc68000
-CPPFLAGS+=	-nostdinc 
+CPPFLAGS+=	-nostdinc
 CPPFLAGS+=	-I$S -I.
 CPPFLAGS+=	-I${.CURDIR}/../libdos -I${.CURDIR}/../libiocs
 CPPFLAGS+=	-I${DESTDIR}/usr/include

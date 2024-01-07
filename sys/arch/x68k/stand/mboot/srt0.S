@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.3 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <m68k/asm.h>	
+#include <m68k/asm.h>
 
 ENTRY_NOPROFILE(_start)
 	bra		start0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.21 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: sram.c,v 1.22 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.21 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.22 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,9 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((sc->sc_flags & SRF_WRITE) == 0)
 			return EPERM;
 		DPRINTF(SRAM_DEBUG_IOCTL,
-    			("Sram ioctl SIOPSRAM address=%p\n", data));
+			("Sram ioctl SIOPSRAM address=%p\n", data));
 		DPRINTF(SRAM_DEBUG_IOCTL,
-    			("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset));
+			("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset));
 		if (sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
 			return EFAULT;
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbellio.h,v 1.5 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: opmbellio.h,v 1.6 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Takuya Harakawa.
@@ -58,7 +58,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: opmbellio.h,v 1.5 2005/12/11 12:19:44 christos Exp $
+ *	$NetBSD: opmbellio.h,v 1.6 2024/01/07 07:58:33 isaki Exp $
  */
 
 #ifndef _X68K_OPMBELLIO_H_
@@ -75,7 +75,7 @@ struct bell_info {
 };
 
 /* default values */
-#define	BELL_VOLUME	100	/* percentage */
+#define BELL_VOLUME	100	/* percentage */
 #define BELL_PITCH	440
 #define BELL_DURATION	100
 #define BELL_CHANNEL	7

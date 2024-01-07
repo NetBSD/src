@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.38 2022/07/26 20:08:56 andvar Exp $	*/
+/*	$NetBSD: bus.c,v 1.39 2024/01/07 07:58:35 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.38 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.39 2024/01/07 07:58:35 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ x68k_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		ICIA();		/* no per-page/per-line control */
 		DCIA();
 		return;
-	}		
+	}
 #endif
 	if (offset >= map->dm_mapsize)
 		return;	/* driver bug; warn it? */
@@ -461,7 +461,7 @@ x68k_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	rv = _bus_dmamem_mmap_common(t, segs, nsegs, off, prot, flags);
 	if (rv == (bus_addr_t)-1)
 		return (-1);
-	
+
 	return (m68k_btop((char *)rv));
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.20 2022/04/25 15:12:07 mlelstv Exp $
+#	$NetBSD: Makefile.xxboot,v 1.21 2024/01/07 07:58:34 isaki Exp $
 
 NOMAN=		# defined
 
@@ -66,7 +66,7 @@ CPPFLAGS+= -DLIBSA_NO_TWIDDLE
 CPPFLAGS+= -DUSTAR_SECT_PER_CYL=30
 SRCS+=	open.c close.c read.c lseek.c loadfile.c loadfile_aout.c alloc.c
 SRCS+=	errno.c globals.c files.c
-SRCS+=  $(FS).c
+SRCS+=	$(FS).c
 SRCS+=	${BOOTSRCS}
 
 .PATH: $M/stand/common

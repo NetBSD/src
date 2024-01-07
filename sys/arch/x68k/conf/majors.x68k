@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.33 2021/06/29 10:22:37 nia Exp $
+#	$NetBSD: majors.x68k,v 1.34 2024/01/07 07:58:33 isaki Exp $
 #
 # Device majors for x68k
 #
@@ -63,5 +63,5 @@ device-major	sysmon		char 61			sysmon
 #device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

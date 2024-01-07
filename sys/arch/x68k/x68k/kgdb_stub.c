@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.21 2024/01/07 07:58:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.21 2024/01/07 07:58:35 isaki Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.21 2024/01/07 07:58:35 isaki Exp $";
 #endif
 
 #include <sys/param.h>
@@ -159,7 +159,7 @@ restart:
 			if (escape)
 				c = FRAME_START;
 			break;
-			
+
 		case FRAME_START:
 			goto restart;
 
@@ -338,11 +338,12 @@ kgdb_trap(int type, struct frame *frame)
 			return (0);
 		}
 		kgdb_getc = 0;
-		for (inlen = 0; constab[inlen].cn_probe; inlen++)
-		    if (major(constab[inlen].cn_dev) == major(kgdb_dev)) {
-			kgdb_getc = constab[inlen].cn_getc;
-			kgdb_putc = constab[inlen].cn_putc;
-			break;
+		for (inlen = 0; constab[inlen].cn_probe; inlen++) {
+			if (major(constab[inlen].cn_dev) == major(kgdb_dev)) {
+				kgdb_getc = constab[inlen].cn_getc;
+				kgdb_putc = constab[inlen].cn_putc;
+				break;
+			}
 		}
 		if (kgdb_getc == 0 || kgdb_putc == 0)
 			return (0);
@@ -443,7 +444,7 @@ kgdb_trap(int type, struct frame *frame)
 				}
 			}
 			break;
-			
+
 		case KGDB_REG_W:
 		case KGDB_REG_W | KGDB_DELTA:
 			cp = inbuffer;
@@ -457,7 +458,7 @@ kgdb_trap(int type, struct frame *frame)
 			gdb_to_regs(frame, gdb_regs);
 			outlen = 0;
 			break;
-				
+
 		case KGDB_MEM_R:
 			len = inbuffer[0];
 			kgdb_copy(&inbuffer[1], (u_char *)&addr, 4);

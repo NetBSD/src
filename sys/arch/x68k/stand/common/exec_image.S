@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_image.S,v 1.2 2001/09/27 14:08:28 minoura Exp $	*/
+/*	$NetBSD: exec_image.S,v 1.3 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto.
@@ -36,7 +36,7 @@
 
 ENTRY_NOPROFILE(exec_image)
 ||	void exec_image(loaded,executed,entry,size,bootdev,boothowto)
-|| 	unsigned int loaded;
+||	unsigned int loaded;
 ||	unsigned int executed;
 ||	unsigned int entry;
 ||	int size;

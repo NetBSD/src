@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.11 2014/10/17 17:48:53 snj Exp $	*/
+/*	$NetBSD: consio.c,v 1.12 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -115,7 +115,7 @@ check_getchar(void)
 			}
 			/* discard non ASCII keys (CTRL, OPT.1 etc) */
 			(void)IOCS_B_KEYINP();
-		} 
+		}
 		/* no input */
 		return 0;
 	case SERIAL:

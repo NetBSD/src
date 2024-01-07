@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 2014/03/08 03:20:24 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -108,7 +108,7 @@ fdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 	nhead = sc->fmt.maxsec.H - sc->fmt.minsec.H + 1;
 	nsect = sc->fmt.maxsec.R - sc->fmt.minsec.R + 1;
 
-	sect = 	dblk % nsect + sc->fmt.minsec.R;
+	sect =  dblk % nsect + sc->fmt.minsec.R;
 	head = (dblk / nsect) % nhead + sc->fmt.minsec.H;
 	cyl = (dblk / nsect) / nhead + sc->fmt.minsec.C;
 

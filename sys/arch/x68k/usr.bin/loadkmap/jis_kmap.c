@@ -1,13 +1,13 @@
-/*	$NetBSD: jis_kmap.c,v 1.6 2011/05/19 21:26:39 tsutsui Exp $	*/
+/*	$NetBSD: jis_kmap.c,v 1.7 2024/01/07 07:58:34 isaki Exp $	*/
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: jis_kmap.c,v 1.6 2011/05/19 21:26:39 tsutsui Exp $");
+__RCSID("$NetBSD: jis_kmap.c,v 1.7 2024/01/07 07:58:34 isaki Exp $");
 
 #include <machine/kbdmap.h>
 
-/* define a default keymap. This can be changed by keyboard ioctl's 
+/* define a default keymap. This can be changed by keyboard ioctl's
    (later at least..) */
 
 /* mode shortcuts: */
@@ -174,7 +174,7 @@ struct kbdmap ascii_kbdmap = {
 	   {0, '+'},
 	   {0, '*'},	/* 0x28 */
 	   {0, '}'},
-	   {C, 'Z'},	
+	   {C, 'Z'},
 	   {C, 'X'},
 	   {C, 'C'},
 	   {C, 'V'},
@@ -252,14 +252,14 @@ struct kbdmap ascii_kbdmap = {
 	{
 	},
 
-	{	   
+	{
 	  /* string table. If there's a better way to get the offsets into the
 	     above table, please tell me..
-	     
+
 	     NOTE: save yourself and others a lot of grief by *not* using
 	           CSI == 0x9b, using the two-character sequence gives
 	           much less trouble, especially in GNU-Emacs.. */
-	  
+
 	  3, ESC, '[', 'A',		/* 0x00: CRSR UP */
 	  3, ESC, '[', 'B',		/* 0x04: CRSR DOWN */
 	  3, ESC, '[', 'C',		/* 0x08: CRSR RIGHT */

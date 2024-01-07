@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.44 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: par.c,v 1.45 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.44 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.45 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -65,9 +65,9 @@ struct	par_softc {
 	bus_space_handle_t	sc_bsh;
 	int			sc_flags;
 	struct parparam		sc_param;
-#define sc_burst 	sc_param.burst
-#define sc_timo  	sc_param.timo
-#define sc_delay 	sc_param.delay
+#define sc_burst	sc_param.burst
+#define sc_timo		sc_param.timo
+#define sc_delay	sc_param.delay
 	struct callout		sc_timo_ch;
 	struct callout		sc_start_ch;
 } ;
@@ -77,8 +77,8 @@ struct	par_softc {
 #define PAR_STROBE	3
 
 /* sc_flags values */
-#define	PARF_ALIVE	0x01	
-#define	PARF_OPEN	0x02	
+#define	PARF_ALIVE	0x01
+#define	PARF_OPEN	0x02
 #define PARF_UIO	0x04
 #define PARF_TIMO	0x08
 #define PARF_DELAY	0x10
@@ -169,7 +169,7 @@ parattach(device_t parent, device_t self, void *aux)
 	struct par_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	int r __diagused;
-	
+
 	par_attached = 1;
 
 	sc->sc_dev = self;
@@ -207,7 +207,7 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc;
-	
+
 	sc = device_lookup_private(&par_cd, unit);
 	if (sc == NULL || !(sc->sc_flags & PARF_ALIVE))
 		return(ENXIO);
@@ -216,11 +216,11 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 	/* X680x0 can't read */
 	if ((flags & FREAD) == FREAD)
 		return (EINVAL);
-	
+
 	sc->sc_flags |= PARF_OPEN;
-	
+
 	sc->sc_flags |= PARF_OWRITE;
-	
+
 	sc->sc_burst = PAR_BURST;
 	sc->sc_timo = parmstohz(PAR_TIMO);
 	sc->sc_delay = parmstohz(PAR_DELAY);
@@ -234,7 +234,7 @@ parclose(dev_t dev, int flags, int mode, struct lwp *l)
 	int unit = UNIT(dev);
 	int s;
 	struct par_softc *sc = device_lookup_private(&par_cd, unit);
-	
+
 	sc->sc_flags &= ~(PARF_OPEN|PARF_OWRITE);
 
 	/* don't allow interrupts any longer */
@@ -273,7 +273,7 @@ partimo(void *arg)
 int
 parwrite(dev_t dev, struct uio *uio, int flag)
 {
-	
+
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
 		printf("parwrite(%x, %p)\n", UNIT(dev), uio);
@@ -292,13 +292,13 @@ parrw(dev_t dev, struct uio *uio)
 	int error = 0;
 	int buflen;
 	char *buf;
-	
+
 	if (!!(sc->sc_flags & PARF_OREAD) ^ (uio->uio_rw == UIO_READ))
 		return EINVAL;
-	
+
 	if (uio->uio_resid == 0)
 		return(0);
-	
+
 	buflen = uimin(sc->sc_burst, uio->uio_resid);
 	buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
 	sc->sc_flags |= PARF_UIO;
@@ -341,7 +341,7 @@ parrw(dev_t dev, struct uio *uio)
 			error = -cnt;
 			break;
 		}
-		
+
 		s = splsoftclock();
 		/*
 		 * Operation timeout (or non-blocking), quit now.
@@ -418,7 +418,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct par_softc *sc = device_lookup_private(&par_cd, UNIT(dev));
 	struct parparam *pp, *upp;
 	int error = 0;
-	
+
 	switch (cmd) {
 	case PARIOCGPARAM:
 		pp = &sc->sc_param;
@@ -427,7 +427,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		upp->timo = parhztoms(pp->timo);
 		upp->delay = parhztoms(pp->delay);
 		break;
-		
+
 	case PARIOCSPARAM:
 		pp = &sc->sc_param;
 		upp = (struct parparam *)data;
@@ -438,7 +438,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		pp->timo = parmstohz(upp->timo);
 		pp->delay = parmstohz(upp->delay);
 		break;
-		
+
 	default:
 		return(EINVAL);
 	}
@@ -449,7 +449,7 @@ int
 parhztoms(int h)
 {
 	int m = h;
-	
+
 	if (m > 0)
 		m = m * 1000 / hz;
 	return(m);
@@ -459,7 +459,7 @@ int
 parmstohz(int m)
 {
 	int h = m;
-	
+
 	if (h > 0) {
 		h = h * hz / 1000;
 		if (h == 0)
@@ -499,10 +499,10 @@ parintr(void *arg)
 		if (parsend_pending)
 			parsend_pending = 0;
 	}
-	
+
 	/* either way, there won't be a timeout pending any longer */
 	partimeout_pending = 0;
-	
+
 	wakeup(parintr);
 	splx(s);
 }
@@ -512,7 +512,7 @@ parsendch(struct par_softc *sc, u_char ch)
 {
 	int error = 0;
 	int s;
-	
+
 	/* if either offline, busy or out of paper, wait for that
 	   condition to clear */
 	s = spl1();
@@ -556,9 +556,9 @@ parsendch(struct par_softc *sc, u_char ch)
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, PAR_STROBE, 1);
 		parsend_pending = 1;
 	}
-	
+
 	splx(s);
-	
+
 	return error;
 }
 
@@ -567,11 +567,11 @@ int
 parsend(struct par_softc *sc, u_char *buf, int len)
 {
 	int err, orig_len = len;
-	
+
 	for (; len; len--, buf++)
 		if ((err = parsendch(sc, *buf)))
 			return err < 0 ? -EINTR : -err;
-	
+
 	/* either all or nothing.. */
 	return orig_len;
 }

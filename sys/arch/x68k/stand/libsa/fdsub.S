@@ -1,4 +1,4 @@
-/*	$NetBSD: fdsub.S,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: fdsub.S,v 1.2 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -33,7 +33,7 @@
  *	int drive;		(0-3)
  *	int head;		(0-1)
  *	struct fdfmt *minmax;	(results are stored)
- *	return value:	0 on success, or negative 
+ *	return value:	0 on success, or negative
  */
 
 	.text

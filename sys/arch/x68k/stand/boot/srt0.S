@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.2 2011/04/12 14:07:35 tsutsui Exp $	*/
+/*	$NetBSD: srt0.S,v 1.3 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001 Minoura Makoto
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include <m68k/asm.h>	
+#include <m68k/asm.h>
 
 ASENTRY(start)
 	bra		start0

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.16 2022/06/25 03:18:38 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,7 +146,7 @@ enum emul_level {
 	(((c) / (ip)->cpl) * (ip)->ftheight + (ip)->fonty)
 
 /* Character attributes */
-#define ATTR_NOR        0x0             /* normal */
+#define ATTR_NOR	0x0		/* normal */
 #define	ATTR_INV	0x1		/* inverse */
 #define	ATTR_UL		0x2		/* underline */
 #define ATTR_BOLD	0x4		/* bold */
@@ -160,14 +160,14 @@ enum emul_level {
 #define RR_CLEAR		0x0
 #define RR_COPY			0x3
 #define RR_XOR			0x6
-#define RR_COPYINVERTED  	0xc
+#define RR_COPYINVERTED		0xc
 
 #define SCROLL_UP	0x01
 #define SCROLL_DOWN	0x02
 #define SCROLL_LEFT	0x03
 #define SCROLL_RIGHT	0x04
 #define DRAW_CURSOR	0x05
-#define ERASE_CURSOR    0x06
+#define ERASE_CURSOR	0x06
 #define MOVE_CURSOR	0x07
 #define START_CURSOROPT	0x08	/* at start of output. May disable cursor */
 #define END_CURSOROPT	0x09	/* at end, make sure cursor state is ok */

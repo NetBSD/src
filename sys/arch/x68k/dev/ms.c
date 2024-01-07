@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.40 2022/05/23 16:58:37 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.41 2024/01/07 07:58:33 isaki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.40 2022/05/23 16:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.41 2024/01/07 07:58:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -469,7 +469,7 @@ ms_input(struct ms_softc *ms, int c)
 		 * moving up (forward) is positive. (see vuid_event.h)
 		 * On the other hand, X680x0 mouse protocol reports
 		 * moving down (backward) is positive.
-		 * 
+		 *
 		 * Note wsmouse(9) also defines moving upward is positive,
 		 * but Xorg DIX layer requires moving down is positive.
 		 */

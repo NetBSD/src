@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2011/08/30 12:39:59 bouyer Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2024/01/07 07:58:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Masaru Oki
@@ -46,10 +46,10 @@
 #define NDOSPART	8
 
 struct dos_partition {
-  unsigned char dp_typname[8];	/* partition name */
-  unsigned int  dp_flag:8;	/* state of partition */
-  unsigned int  dp_start:24;	/* start position (1024bytes/block) */
-  unsigned long dp_size;	/* partition size (1024bytes/block) */
+	unsigned char dp_typname[8];	/* partition name */
+	unsigned int  dp_flag:8;	/* state of partition */
+	unsigned int  dp_start:24;	/* start position (1024bytes/block) */
+	unsigned long dp_size;		/* partition size (1024bytes/block) */
 };
 
 #if HAVE_NBTOOL_CONFIG_H

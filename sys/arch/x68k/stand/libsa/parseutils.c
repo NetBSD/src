@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.3 2016/05/31 04:12:10 dholland Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.4 2024/01/07 07:58:34 isaki Exp $	*/
 
 /*
  *	from /sys/arch/i386/lib/parseutils.c
@@ -75,7 +75,7 @@ parseopts(const char *opts, int *howto)
 {
 	int r, tmpopt = 0;
 
-	opts++; 	/* skip - */
+	opts++;		/* skip - */
 	while (*opts && *opts != ' ') {
 		r = 0;
 		BOOT_FLAG(*opts, r);
