@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.195 2023/10/05 19:41:06 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.196 2024/01/08 19:33:49 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.195 2023/10/05 19:41:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2024/01/08 19:33:49 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -747,20 +747,8 @@ dopanic:
 		  
 			printf("Alignment error: pid=%d.%d comm=%s pc=%lx\n",
 			       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, pc);
-			paddr_t mmufsa_ift_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ift);
-			paddr_t mmufsa_ifa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ifa);
-			paddr_t mmufsa_ifc_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, ifc);
-			paddr_t mmufsa_dft_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dft);
 			paddr_t mmufsa_dfa_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfa);
 			paddr_t mmufsa_dfc_addr = cpus->ci_mmufsa + offsetof(struct mmufsa, dfc);
-			int64_t ift = ldxa(mmufsa_ift_addr, ASI_PHYS_CACHED);
-			printf("ift = %016lx\n", ift);
-			int64_t ifa = ldxa(mmufsa_ifa_addr, ASI_PHYS_CACHED);
-			printf("ifa = %016lx\n", ifa);
-			int64_t ifc = ldxa(mmufsa_ifc_addr, ASI_PHYS_CACHED);
-			printf("ifc = %016lx\n", ifc);
-			int64_t dft = ldxa(mmufsa_dft_addr, ASI_PHYS_CACHED);
-			printf("dft = %016lx\n", dft);
 			int64_t dfa = ldxa(mmufsa_dfa_addr, ASI_PHYS_CACHED);
 			printf("dfa = %016lx\n", dfa);
 			int64_t dfc = ldxa(mmufsa_dfc_addr, ASI_PHYS_CACHED);
