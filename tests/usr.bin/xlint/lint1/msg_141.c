@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.8 2024/01/07 21:19:42 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.9 2024/01/08 17:11:32 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -68,7 +68,7 @@ unsigned long long overflow_unsigned[] = {
 	0x10000U * 0x10000U,
 	0x10000ULL * 0x10000U,
 	/* expect+1: warning: operator '*' produces integer overflow [141] */
-	0x100000000U * 0x100000000U,
+	0x100000000ULL * 0x100000000ULL,
 
 	// '/'
 
@@ -123,12 +123,12 @@ long long overflow_signed[] = {
 	// unary '+'
 
 	+(unsigned char)255,
-	+0x7fffffffffffffff,
+	+0x7fffffffffffffffLL,
 
 	// unary '-'
 
 	-(unsigned char)255,
-	-0x7fffffffffffffff,
+	-0x7fffffffffffffffLL,
 
 	// '~'
 
