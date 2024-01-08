@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.2 2024/01/08 05:11:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2024/01/08 05:11:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -174,20 +174,20 @@ cpu_initclocks(void)
 	}
 
 	if (1000000 % hz) {
-		printf("Cannot get %d Hz clock; using 100 Hz\n", hz);
+		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
 	}
 
 	if (virt68k_clocks[CLOCK_STATCLOCK].args == NULL) {
-		printf("No statclock; using hardclock.\n");
+		aprint_normal("No statclock; using hardclock.\n");
 		stathz = 0;
 		statint = 0;
 	} else if (stathz == 0) {
 		stathz = hz;
 		if (1000000 % stathz) {
-			printf("Cannot get %d Hz statclock; using 100 Hz\n",
-			    stathz);
+			aprint_error("Cannot get %d Hz statclock; "
+				     "using 100 Hz\n", stathz);
 			stathz = 100;
 		}
 		profhz = stathz;	/* always */
