@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.5 2024/01/06 21:40:41 thorpej Exp $        */      
+/*      $NetBSD: bootinfo.c,v 1.6 2024/01/08 05:09:41 thorpej Exp $        */      
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.5 2024/01/06 21:40:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.6 2024/01/08 05:09:41 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -425,4 +425,50 @@ bootinfo_setup_rndseed(void)
 		    rnd->data_length * NBBY);
 		explicit_memset(rnd->data_bytes, 0, rnd->data_length);
 	}
+}
+
+/*
+ * bootinfo_getarg --
+ *	Get an argument from the BI_COMMAND_LINE bootinfo record.
+ */
+bool
+bootinfo_getarg(const char *var, char *buf, size_t buflen)
+{
+	const size_t varlen = strlen(var);
+	struct bi_record *bi = bootinfo_find(BI_COMMAND_LINE);
+
+	if (bi == NULL) {
+		return false;
+	}
+
+	const char *sp = bootinfo_dataptr(bi);
+	const char *osp = sp;
+	for (;;) {
+		sp = strstr(sp, var);
+		if (sp == NULL) {
+			return false;
+		}
+
+		if (sp != osp &&
+		    sp[-1] != ' ' && sp[-1] != '\t' && sp[-1] != '-') {
+			continue;
+		}
+		sp += varlen;
+		char ch = *sp++;
+		if (ch != '=' && ch != ' ' && ch != '\t' && ch != '\0') {
+			continue;
+		}
+		/* Found it. */
+		break;
+	}
+
+	while (--buflen) {
+		if (*sp == ' ' || *sp == '\t' || *sp == '\0') {
+			break;
+		}
+		*buf++ = *sp++;
+	}
+	*buf = '\0';
+
+	return true;
 }
