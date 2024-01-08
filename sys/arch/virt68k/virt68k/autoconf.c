@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2024/01/07 16:41:24 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2024/01/08 05:10:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2024/01/07 16:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2024/01/08 05:10:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,26 @@ void
 device_register(device_t dev, void *aux)
 {
 	device_t parent = device_parent(dev);
+	char rootname[DEVICE_XNAME_SIZE];
+	bool rootname_valid = false;
+
+	if (booted_device == NULL) {
+		rootname_valid = bootinfo_getarg("root",
+		    rootname, sizeof(rootname));
+		if (rootname_valid) {
+			size_t len = strlen(rootname);
+			while (len) {
+				len--;
+				if (isdigit(rootname[len])) {
+					break;
+				}
+				rootname[len] = '\0';
+			}
+			if (strcmp(device_xname(dev), rootname) == 0) {
+				booted_device = dev;
+			}
+		}
+	}
 
 	if (device_is_a(parent, "mainbus")) {
 		struct mainbus_attach_args *ma = aux;

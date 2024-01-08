@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2024/01/08 05:10:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2024/01/08 05:10:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $");
 #include <sys/module.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
+#include <sys/boot_flag.h>
 
 #include "ksyms.h"
 
@@ -99,8 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/01/06 21:43:37 thorpej Exp $");
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #endif
-
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -207,6 +206,17 @@ virt68k_init(void)
 
 	/* Check for RND seed from the loader. */
 	bootinfo_setup_rndseed();
+
+	char flags[32];
+	if (bootinfo_getarg("flags", flags, sizeof(flags))) {
+		for (const char *cp = flags; *cp != '\0'; cp++) {
+			/* Consume 'm' in favor of BI_RAMDISK. */
+			if (*cp == 'm') {
+				continue;
+			}
+			BOOT_FLAG(*cp, boothowto);
+		}
+	}
 }
 
 /*
