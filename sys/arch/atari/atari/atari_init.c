@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.109 2023/12/27 03:03:40 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.110 2024/01/09 07:28:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.109 2023/12/27 03:03:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.110 2024/01/09 07:28:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -204,7 +204,6 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 {
 	extern char	end[];
 	extern void	etext(void);
-	extern u_long	protorp[2];
 	paddr_t		pstart;		/* Next available physical address */
 	vaddr_t		vstart;		/* Next available virtual address */
 	vsize_t		avail;
@@ -602,7 +601,6 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * Prepare to enable the MMU.
 	 * Setup and load SRP (see pmap.h)
 	 */
-	protorp[0] = MMU51_SRP_BITS;
 	protorp[1] = Sysseg_pa;			/* + segtable address */
 
 	cpu_init_kcorehdr(kbase, Sysseg_pa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_51.h,v 1.2 2024/01/09 04:16:25 thorpej Exp $	*/
+/*	$NetBSD: mmu_51.h,v 1.3 2024/01/09 07:28:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2023 The NetBSD Foundation, Inc.
@@ -264,6 +264,8 @@ struct mmu51_rootptr {
 #define	PSR51_N		__BITS(0,2)	/* Number of levels */
 
 #ifdef _KERNEL
+extern unsigned int protorp[2];
+
 void	mmu_load_urp51(paddr_t);
 void	mmu_load_urp20hp(paddr_t);	/* for convenience */
 #endif /* _KERNEL */

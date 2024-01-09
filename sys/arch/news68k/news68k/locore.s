@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 2024/01/09 04:16:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 2024/01/09 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -357,10 +357,8 @@ Lstart2:
 Lmotommu1:
 #ifdef M68030
 	RELOC(protorp, %a0)
-	movl	#MMU51_SRP_BITS,%a0@	| see pmap.h
-	movl	%d1,%a0@(4)		| + segtable address
+	movl	%d1,%a0@(4)		| segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
-	movl	#MMU51_CRP_BITS,%a0@	| reinit upper half for CRP loads
 #endif /* M68030 */
 Lstploaddone:
 	RELOC(mmutype, %a0)

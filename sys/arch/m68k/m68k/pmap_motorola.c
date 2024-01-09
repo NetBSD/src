@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.86 2024/01/09 04:16:25 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.87 2024/01/09 07:28:26 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.86 2024/01/09 04:16:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.87 2024/01/09 07:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,6 +618,7 @@ pmap_init(void)
 	case CPU_68020:
 #ifdef M68K_MMU_MOTOROLA
 		if (mmutype == MMU_68851) {
+			protorp[0] = MMU51_CRP_BITS;
 			pmap_load_urp_func = mmu_load_urp51;
 		}
 #endif
@@ -630,6 +631,7 @@ pmap_init(void)
 #endif /* M68020 */
 #if defined(M68030)
 	case CPU_68030:
+		protorp[0] = MMU51_CRP_BITS;
 		pmap_load_urp_func = mmu_load_urp51;
 		break;
 #endif /* M68030 */
