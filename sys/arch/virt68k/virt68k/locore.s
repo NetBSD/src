@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 2024/01/09 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 2024/01/09 14:24:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,6 @@ ASLOCAL(tmpstk)
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
 
-BSS(lowram,4)
 BSS(esym,4)
 
 	.globl	_C_LABEL(edata)
@@ -112,9 +111,6 @@ ASENTRY_NOPROFILE(start)
 	lsrl	#2,%d0
 1:	clrl	%a0@+
 	dbra	%d0,1b
-
-	RELOC(lowram, %a0)
-	movl	%a5,%a0@		| store start of physical memory
 
 	/*
 	 * Qemu does not pass us the symbols, so leave esym alone.

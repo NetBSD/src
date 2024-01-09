@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2024/01/08 05:10:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2024/01/09 14:24:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2024/01/08 05:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2024/01/09 14:24:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -113,7 +113,6 @@ paddr_t msgbufpa;		/* PA of message buffer */
 
 // int	maxmem;			/* max memory per process */
 
-extern	u_int lowram;
 extern	short exframesize[];
 
 /* prototypes for local functions */ 
@@ -902,6 +901,18 @@ const uint16_t ipl2psl_table[NIPL] = {
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	psize_t size;
+	int i;
 
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+	for (i = 0; i < bootinfo_mem_nsegments; i++) {
+		if (pa < bootinfo_mem_segments[i].mem_addr) {
+			continue;
+		}
+		size = trunc_page(bootinfo_mem_segments[i].mem_size);
+		if (pa >= bootinfo_mem_segments[i].mem_addr + size) {
+			continue;
+		}
+		return 0;
+	}
+	return EFAULT;
 }
