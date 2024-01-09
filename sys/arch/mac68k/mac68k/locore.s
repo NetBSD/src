@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.179 2024/01/09 04:16:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.180 2024/01/09 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -399,15 +399,15 @@ Lenablepre040MMU:
 	.long	0xf0100c00		| movl %a0@,%tt1
 
 LnokillTT:
+#if defined(M68020) || defined(M68030)
 	lea	_C_LABEL(protorp),%a0
-	movl	#MMU51_SRP_BITS,%a0@	| see pmap.h
-	movl	%a1,%a0@(4)		| + segtable address
+	movl	%a1,%a0@(4)		| segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
-	movl	#MMU51_CRP_BITS,%a0@	| reinit upper half for CRP loads
 	pflusha
 	lea	_ASM_LABEL(longscratch),%a2
 	movl	#MMU51_TCR_BITS,%a2@	| value to load %TC with
 	pmove	%a2@,%tc		| load it
+#endif /* M68020 || M68030 */
 
 Lloaddone:
 

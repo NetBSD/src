@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.1 2024/01/09 07:21:48 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.2 2024/01/09 07:28:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  * pmap_init() will re-configure it to load the CPU Root Pointer.
  */
 GLOBAL(protorp)
-	.long	MMU51_CRP_BITS,0	| prototype CPU root pointer
+	.long	MMU51_SRP_BITS,0	| prototype CPU root pointer
 
 	.text
 ENTRY_NOPROFILE(mmu_load_urp51)
