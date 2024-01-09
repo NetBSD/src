@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.129 2023/02/25 00:32:49 riastradh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.130 2024/01/09 18:39:53 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.129 2023/02/25 00:32:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.130 2024/01/09 18:39:53 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1122,7 +1122,13 @@ xennet_submit_tx_request(struct xennet_xenbus_softc *sc, struct mbuf *m,
 			if (m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) {
 				txreq->flags |= NETTXF_csum_blank;
 			} else {
+#if 0
+				/*
+				 * XXX Checksum optimization disabled 
+				 * to avoid port-xen/57743.
+				 */
 				txreq->flags |= NETTXF_data_validated;
+#endif
 			}
 		}
 		if (multiseg && i < lastseg)
