@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2024/01/02 18:10:36 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2024/01/09 04:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #ifdef _KERNEL
 void	cpu_set_reset_func(void (*)(void *, int), void *);
 int	nmihand(void *);
-void	loadustp(paddr_t);
 
 #endif /* _KERNEL */
 

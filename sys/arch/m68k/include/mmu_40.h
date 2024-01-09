@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.1 2023/12/27 02:40:31 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.2 2024/01/09 04:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -210,5 +210,10 @@
 #define	MMUSR40_W	PTE40_W
 #define	MMUSR40_T	__BIT(1)	/* Transparent Translation hit */
 #define	MMUSR40_R	PTE40_RESIDENT
+
+#ifdef _KERNEL
+void	mmu_load_urp40(paddr_t);
+void	mmu_load_urp60(paddr_t);
+#endif /* _KERNEL */
 
 #endif /* _M68K_MMU_40_H_ */

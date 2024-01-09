@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2023/12/27 03:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2024/01/09 04:16:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1137,35 +1137,6 @@ ENTRY(probeva)
 	rts
 
 /*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-	movl	%sp@(4),%d0			| new USTP
-#if defined(M68060)
-	cmpl	#CPU_68060,_C_LABEL(cputype)	| 68060?
-	jeq	Lldustp060			|  yes, skip
-#endif
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Lldustp040			|  yes, skip
-	pflusha					| flush entire TLB
-	lea	_C_LABEL(protorp),%a0		| CRP prototype
-	movl	%d0,%a0@(4)			| stash USTP
-	pmove	%a0@,%crp			| load root pointer
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-#if defined(M68060)
-Lldustp060:
-	movc	%cacr,%d1
-	orl	#IC60_CUBC,%d1		| clear user branch cache entries
-	movc	%d1,%cacr
-#endif
-Lldustp040:
-	.word	0xf518			| pflusha
-	.word	0x4e7b,0x0806		| movec d0,URP
-	rts
-
-/*
  * Set processor priority level calls.  Most are implemented with
  * inline asm expansions.  However, spl0 requires special handling
  * as we need to check for our emulated software interrupts.
@@ -1259,8 +1230,6 @@ Ldorebootend:
 	.p2align 2
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
-GLOBAL(protorp)
-	.long	MMU51_CRP_BITS,0	| prototype root pointer
 
 #ifdef M68060 /* XXX */
 L60iem:		.long	0

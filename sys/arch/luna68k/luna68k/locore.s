@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.72 2023/12/29 02:30:36 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.73 2024/01/09 04:16:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -777,27 +777,6 @@ ENTRY(ecacheon)
 	rts
 
 ENTRY(ecacheoff)
-	rts
-
-/*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-	movl	%sp@(4),%d0		| new USTP
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	LmotommuC		| no, skip
-	.word	0xf518			| yes, pflusha
-	.long	0x4e7b0806		| movc %d0,%urp
-	rts
-LmotommuC:
-#endif
-	pflusha				| flush entire TLB
-	lea	_C_LABEL(protocrp),%a0	| %crp prototype
-	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp		| load root pointer
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
 	rts
 
 ENTRY(getsr)

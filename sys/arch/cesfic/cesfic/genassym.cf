@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2023/12/27 17:35:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.21 2024/01/09 04:16:24 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -54,12 +54,7 @@ define	MMU_HP			MMU_HP
 define	MMU_68851		MMU_68851
 
 # MMU configuration options
-ifdef M68K_MMU_HP
-define	M68K_MMU_HP		1
-endif
-ifdef M68K_MMU_MOTOROLA
 define	M68K_MMU_MOTOROLA	1
-endif
 
 # values for cputype
 define	CPU_68020		CPU_68020

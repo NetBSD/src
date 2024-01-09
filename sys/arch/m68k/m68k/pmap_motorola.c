@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.85 2023/12/31 21:59:24 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.86 2024/01/09 04:16:25 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
  *
  * Supports:
  *	68020 with 68851 MMU
+ *	68020 with HP MMU
  *	68030 with on-chip MMU
  *	68040 with on-chip MMU
  *	68060 with on-chip MMU
@@ -119,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.85 2023/12/31 21:59:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.86 2024/01/09 04:16:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,6 +332,19 @@ void pmap_check_wiring(const char *, vaddr_t);
 #define	active_user_pmap(pm) \
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
+
+static void (*pmap_load_urp_func)(paddr_t);
+
+/*
+ * pmap_load_urp:
+ *
+ *	Load the user root table into the MMU.
+ */
+static inline void
+pmap_load_urp(paddr_t urp)
+{
+	(*pmap_load_urp_func)(urp);
+}
 
 /*
  * pmap_bootstrap_finalize:	[ INTERFACE ]
@@ -597,6 +611,47 @@ pmap_init(void)
 #endif
 
 	/*
+	 * Set up the routine that loads the MMU root table pointer.
+	 */
+	switch (cputype) {
+#if defined(M68020)
+	case CPU_68020:
+#ifdef M68K_MMU_MOTOROLA
+		if (mmutype == MMU_68851) {
+			pmap_load_urp_func = mmu_load_urp51;
+		}
+#endif
+#ifdef M68K_MMU_HP
+		if (mmutype == MMU_HP) {
+			pmap_load_urp_func = mmu_load_urp20hp;
+		}
+#endif
+		break;
+#endif /* M68020 */
+#if defined(M68030)
+	case CPU_68030:
+		pmap_load_urp_func = mmu_load_urp51;
+		break;
+#endif /* M68030 */
+#if defined(M68040)
+	case CPU_68040:
+		pmap_load_urp_func = mmu_load_urp40;
+		break;
+#endif /* M68040 */
+#if defined(M68060)
+	case CPU_68060:
+		pmap_load_urp_func = mmu_load_urp60;
+		break;
+#endif /* M68060 */
+	default:
+		break;
+	}
+	if (pmap_load_urp_func == NULL) {
+		panic("pmap_init: No mmu_load_*() for cpu=%d mmu=%d",
+		    cputype, mmutype);
+	}
+
+	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
 	pmap_initialized = true;
@@ -769,7 +824,7 @@ pmap_activate(struct lwp *l)
 	 * need to activate the kernel pmap.
 	 */
 	if (pmap != pmap_kernel()) {
-		loadustp((paddr_t)pmap->pm_stpa);
+		pmap_load_urp((paddr_t)pmap->pm_stpa);
 	}
 }
 
@@ -2285,7 +2340,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 				 * MMU if it's the active user pmap.
 				 */
 				if (active_user_pmap(ptpmap)) {
-					loadustp((paddr_t)ptpmap->pm_stpa);
+					pmap_load_urp((paddr_t)ptpmap->pm_stpa);
 				}
 			}
 		}
@@ -2508,7 +2563,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		 * MMU if it's the active user pmap.
 		 */
 		if (active_user_pmap(pmap)) {
-			loadustp((paddr_t)pmap->pm_stpa);
+			pmap_load_urp((paddr_t)pmap->pm_stpa);
 		}
 
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,

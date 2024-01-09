@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2024/01/09 04:16:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,7 +155,6 @@ extern void *romcallvec;
 struct frame;
 
 /* locore.s functions */
-void loadustp(int);
 void badtrap(void);
 void intrhand_vectored(void);
 int getsr(void);

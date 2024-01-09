@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64 2024/01/09 04:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,9 +120,6 @@ extern uint8_t *intiolimit;
 
 /* machdep.c functions */
 void	dumpsys(void);
-
-/* locore.s functions */
-void	loadustp(int);
 
 /* machdep.c functions */
 int	badaddr(volatile void*);

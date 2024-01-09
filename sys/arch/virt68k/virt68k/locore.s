@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 2024/01/07 16:41:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 2024/01/09 04:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -618,7 +618,6 @@ Laststkadj:
 #define	FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
-
 #if defined(M68040) || defined(M68060)
 ENTRY(suline)
 	movl	%sp@(4),%a0		| address to write
@@ -666,35 +665,6 @@ ENTRY_NOPROFILE(getsp)
 	movl	%d0,%a0
 	rts
 
-/*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-	movl	%sp@(4),%d0		| new USTP
-#if defined(M68040) || defined(M68060)
-	cmpl    #MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne     LmotommuC               | no, skip
-	.word	0xf518			| pflusha
-	.long   0x4e7b0806              | movc d0,urp
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Lldno60
-	movc	%cacr,%d0
-	orl	#IC60_CUBC,%d0		| clear user branch cache entries
-	movc	%d0,%cacr
-Lldno60:
-#endif
-	rts
-LmotommuC:
-#endif
-	pflusha				| flush entire TLB
-	lea	_C_LABEL(protorp),%a0	| CRP prototype
-	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp		| load root pointer
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-
 ENTRY(getsr)
 	moveq	#0,%d0
 	movw	%sr,%d0
@@ -713,9 +683,6 @@ GLOBAL(cputype)
 
 GLOBAL(fputype)
 	.long	FPU_68040	| default to FPU_68040
-
-GLOBAL(protorp)
-	.long	0,0		| prototype root pointer
 
 /*
  * interrupt counters.

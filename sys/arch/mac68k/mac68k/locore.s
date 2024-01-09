@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.178 2023/12/27 19:26:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.179 2024/01/09 04:16:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -944,27 +944,6 @@ ENTRY(ecacheoff)
 	rts
 
 /*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-	movl	%sp@(4),%d0		| new USTP
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	LmotommuC		| no, skip
-	.word	0xf518			| pflusha
-	.long	0x4e7b0806		| movec %d0, URP
-	rts
-LmotommuC:
-#endif
-	pflusha				| flush entire TLB
-	lea	_C_LABEL(protorp),%a0	| CRP prototype
-	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp		| load root pointer
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-
-/*
  * Set processor priority level calls.  Most are implemented with
  * inline asm expansions.  However, spl0 requires special handling
  * as we need to check for our emulated software interrupts.
@@ -1377,9 +1356,6 @@ GLOBAL(ectype)
 
 GLOBAL(fputype)
 	.long	FPU_68882	| default to 68882 FPU
-
-GLOBAL(protorp)
-	.long	0,0		| prototype root pointer
 
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space
