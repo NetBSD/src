@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.591 2024/01/07 12:43:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.592 2024/01/09 23:46:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.591 2024/01/07 12:43:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.592 2024/01/09 23:46:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3884,7 +3884,7 @@ build_sizeof(const type_t *tp)
 }
 
 tnode_t *
-build_offsetof(const type_t *tp, const sym_t *sym)
+build_offsetof(const type_t *tp, designation dn)
 {
 	unsigned int offset_in_bits = 0;
 
@@ -3893,13 +3893,29 @@ build_offsetof(const type_t *tp, const sym_t *sym)
 		error(111, "offsetof");
 		goto proceed;
 	}
-	sym_t *mem = find_member(tp->t_sou, sym->s_name);
-	if (mem == NULL) {
-		/* type '%s' does not have member '%s' */
-		error(101, sym->s_name, type_name(tp));
-		goto proceed;
+	for (size_t i = 0; i < dn.dn_len; i++) {
+		const designator *dr = dn.dn_items + i;
+		if (dr->dr_kind == DK_ARRAY) {
+			if (tp->t_tspec != ARRAY)
+				goto proceed;	/* silent error */
+			tp = tp->t_subt;
+			offset_in_bits += (unsigned) dr->dr_subscript
+			    * type_size_in_bits(tp);
+		} else {
+			if (!is_struct_or_union(tp->t_tspec))
+				goto proceed;	/* silent error */
+			const char *name = dr->dr_member->s_name;
+			sym_t *mem = find_member(tp->t_sou, name);
+			if (mem == NULL) {
+				/* type '%s' does not have member '%s' */
+				error(101, name, type_name(tp));
+				goto proceed;
+			}
+			tp = mem->s_type;
+			offset_in_bits += mem->u.s_member.sm_offset_in_bits;
+		}
 	}
-	offset_in_bits = mem->u.s_member.sm_offset_in_bits;
+	free(dn.dn_items);
 
 proceed:;
 	unsigned int offset_in_bytes = offset_in_bits / CHAR_SIZE;
