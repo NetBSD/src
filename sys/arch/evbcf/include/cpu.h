@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2024/01/09 04:08:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,7 +157,6 @@ int	nmihand(void *);
 void	mvme68k_abort(const char *);
 void	*iomap(u_long, size_t);
 void	iounmap(void *, size_t);
-void	loadustp(paddr_t);
 
 /* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)
