@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.477 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.478 2024/01/09 23:46:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.477 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.478 2024/01/09 23:46:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -154,6 +154,7 @@ is_either(const char *s, const char *a, const char *b)
 	struct generic_association *y_generic;
 	struct array_size y_array_size;
 	bool	y_in_system_header;
+	designation y_designation;
 };
 
 /* for Bison:
@@ -289,6 +290,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_name>	identifier
 %type	<y_string>	string
 %type	<y_tnode>	primary_expression
+%type	<y_designation>	member_designator
 %type	<y_tnode>	generic_selection
 %type	<y_generic>	generic_assoc_list
 %type	<y_generic>	generic_association
@@ -499,10 +501,28 @@ primary_expression:
 	}
 |	generic_selection
 	/* GCC primary-expression, see c_parser_postfix_expression */
-	/* TODO: C99 7.17p3 allows not only an identifier but a designator. */
-|	T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
+|	T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA {
 		set_symtyp(FMEMBER);
-		$$ = build_offsetof($3, getsym($5));
+	} member_designator T_RPAREN {
+		$$ = build_offsetof($3, $6);
+	}
+;
+
+/* K&R ---, C90 ---, C99 7.17p3, C11 7.19p3, C23 7.21p4 */
+member_designator:
+	identifier {
+		$$ = (designation) { .dn_len = 0 };
+		designation_push(&$$, DK_STRUCT /* or union */, getsym($1), 0);
+	}
+|	member_designator T_LBRACK range T_RBRACK {
+		$$ = $1;
+		designation_push(&$$, DK_ARRAY, NULL, $3.lo);
+	}
+|	member_designator T_POINT {
+		set_symtyp(FMEMBER);
+	} identifier {
+		$$ = $1;
+		designation_push(&$$, DK_STRUCT /* or union */, getsym($4), 0);
 	}
 ;
 
