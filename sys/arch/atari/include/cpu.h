@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.75 2024/01/09 04:16:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,6 @@ const char *fpu_describe(int);
  */
 void	clearseg(paddr_t);
 void	doboot(void);
-void	loadustp(int);
 void	physcopyseg(paddr_t, paddr_t);
 u_int	probeva(u_int, u_int);
 

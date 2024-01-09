@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2023/12/27 19:26:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2024/01/09 04:16:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -355,11 +355,13 @@ Lstart2:
 	.long	0x4e7b1807		| movc %d1,%srp
 	jra	Lstploaddone
 Lmotommu1:
+#ifdef M68030
 	RELOC(protorp, %a0)
 	movl	#MMU51_SRP_BITS,%a0@	| see pmap.h
 	movl	%d1,%a0@(4)		| + segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#MMU51_CRP_BITS,%a0@	| reinit upper half for CRP loads
+#endif /* M68030 */
 Lstploaddone:
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
@@ -880,20 +882,6 @@ ENTRY(ecacheoff)
 Lnocache8:
 	rts
 
-/*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-	movl	%sp@(4),%d0		| new USTP
-	pflusha				| flush entire TLB
-	lea	_C_LABEL(protorp),%a0	| CRP prototype
-	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp		| load root pointer
-	movc	%cacr,%d0
-	orl	#DCIC_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-
 ENTRY(getsr)
 	moveq	#0,%d0
 	movw	%sr,%d0
@@ -1010,9 +998,6 @@ GLOBAL(fputype)
 
 GLOBAL(ectype)
 	.long	EC_NONE		| external cache type, default to none
-
-GLOBAL(protorp)
-	.long	0,0		| prototype root pointer
 
 GLOBAL(prototc)
 	.long	MMU51_TCR_BITS	| prototype translation control

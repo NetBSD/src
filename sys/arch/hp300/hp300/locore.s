@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177 2023/12/27 03:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.178 2024/01/09 04:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1072,48 +1072,6 @@ Lnocache8:
 	rts
 
 /*
- * Load a new user segment table pointer.
- */
-ENTRY(loadustp)
-#if defined(M68K_MMU_MOTOROLA)
-	tstl	_C_LABEL(mmutype)	| HP MMU?
-	jeq	Lhpmmu9			| yes, skip
-	movl	%sp@(4),%d0		| new USTP
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	LmotommuC		| no, skip
-	.word	0xf518			| yes, pflusha
-	.long	0x4e7b0806		| movc %d0,%urp
-	rts
-LmotommuC:
-#endif
-	pflusha				| flush entire TLB
-	lea	_C_LABEL(protorp),%a0	| CRP prototype
-	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp		| load root pointer
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	rts
-Lhpmmu9:
-#endif
-#if defined(M68K_MMU_HP)
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	MMUADDR(%a0)
-	movl	%a0@(MMUTBINVAL),%d1	| invalidate TLB
-	tstl	_C_LABEL(ectype)	| have external VAC?
-	jle	1f			| no, skip
-	andl	#~MMU_CEN,%a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,%a0@(MMUCMD)	| to clear data cache
-1:
-	movl	%sp@(4),%d0
-	moveq	#PGSHIFT,%d1
-	lsrl	%d1,%d0			| convert to page frame
-	movl	%d0,%a0@(MMUUSTP)	| load a new USTP
-#endif
-	rts
-
-/*
  * _delay(u_int N)
  *
  * Delay for at least (N/256) microseconds.
@@ -1262,9 +1220,6 @@ GLOBAL(ectype)
 
 GLOBAL(fputype)
 	.long	FPU_68882		| default to 68882 FPU
-
-GLOBAL(protorp)
-	.long	0,0			| prototype root pointer
 
 GLOBAL(prototc)
 	.long	0			| prototype translation control

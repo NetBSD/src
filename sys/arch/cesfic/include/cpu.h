@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2019/11/23 19:40:34 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2024/01/09 04:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,8 +110,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #endif /* ! M68K_MMU_MOTOROLA */
 
 /* locore.s functions */
-void	loadustp(int);
-
 void	doboot(void)
 	__attribute__((__noreturn__));
 

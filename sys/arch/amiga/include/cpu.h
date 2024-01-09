@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.83 2019/11/23 19:40:34 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.84 2024/01/09 04:16:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,7 +148,6 @@ void	drsc_handler(void);
  */
 void	clearseg(vm_offset_t);
 void	doboot(void) __attribute__((__noreturn__));
-void	loadustp(int);
 void	physcopyseg(vm_offset_t, vm_offset_t);
 u_int	probeva(u_int, u_int);
 

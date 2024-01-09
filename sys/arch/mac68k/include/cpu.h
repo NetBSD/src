@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103 2024/01/09 04:16:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,9 +286,6 @@ extern	unsigned long		load_addr;
 void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
 int	mac68k_ring_bell(int, int, int);
 u_int	get_mapping(void);
-
-/* locore.s functions */
-void	loadustp(int);
 
 /* fpu.c */
 void	initfpu(void);

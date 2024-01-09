@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.2 2024/01/02 18:11:44 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.3 2024/01/09 04:16:27 thorpej Exp $
 
 # config file for virt68k
 
@@ -47,6 +47,7 @@ file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb
 file arch/m68k/m68k/kgdb_machdep.c		kgdb
 file arch/m68k/m68k/m68k_trap.c
+file arch/m68k/m68k/mmu_subr.s
 file arch/m68k/m68k/pmap_motorola.c
 file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/sys_machdep.c
