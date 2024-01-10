@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.4 2014/04/22 02:23:03 ginsbach Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.5 2024/01/10 01:48:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getaddrinfo.c,v 1.4 2014/04/22 02:23:03 ginsbach Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.5 2024/01/10 01:48:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -80,44 +80,36 @@ main(int argc, char **argv)
 		case 'c':
 			hints.ai_flags |= AI_CANONNAME;
 			break;
-
 		case 'f':
 			if (!parse_af(optarg, &hints.ai_family)) {
 				warnx("invalid address family: %s", optarg);
 				usage();
 			}
 			break;
-
 		case 'n':
 			hints.ai_flags |= AI_NUMERICHOST;
 			break;
-
 		case 'N':
 			hints.ai_flags |= AI_NUMERICSERV;
 			break;
-
 		case 's':
 			service = optarg;
 			break;
-
 		case 'p':
 			if (!parse_protocol(optarg, &hints.ai_protocol)) {
 				warnx("invalid protocol: %s", optarg);
 				usage();
 			}
 			break;
-
 		case 'P':
 			hints.ai_flags |= AI_PASSIVE;
 			break;
-
 		case 't':
 			if (!parse_socktype(optarg, &hints.ai_socktype)) {
 				warnx("invalid socket type: %s", optarg);
 				usage();
 			}
 			break;
-
 		case '?':
 		default:
 			usage();
@@ -142,7 +134,7 @@ main(int argc, char **argv)
 			}
 			*p = '\0';
 			p++;
-			
+
 			if (!parse_protocol(p, &hints.ai_protocol)) {
 				warnx("invalid protocol: %s", p);
 				usage();
@@ -304,7 +296,6 @@ printaddrinfo(struct addrinfo *addrinfo)
 			n = sockaddr_snprintf(buf, sizeof(buf), " %a %p",
 			    ai->ai_addr);
 			break;
-
 		default:
 			n = sockaddr_snprintf(buf, sizeof(buf),
 			    "%a %p %I %F %R %S", ai->ai_addr);
