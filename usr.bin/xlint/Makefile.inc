@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2023/07/08 11:18:16 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2024/01/11 04:45:20 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ CPPFLAGS+=	-I${.CURDIR}/../common
 
 CLEANFILES+=	*.gcno *.gcda *.gcov
 
-.if ${MACHINE_CPU} != "alpha"
+.if ${MACHINE_CPU:Nalpha:Nvax}
 CFLAGS+=	${ACTIVE_CC:Mgcc:%=-ftrapv}
 .endif
 
