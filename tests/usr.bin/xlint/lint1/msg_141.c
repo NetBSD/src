@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.9 2024/01/08 17:11:32 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.10 2024/01/11 20:25:04 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -149,8 +149,11 @@ long long overflow_signed[] = {
 
 	// '/'
 
-	-1 / INT_MIN,	// TODO: integer overflow
+	-1 / INT_MIN,
 	-1 / INT_MAX,
+	/* expect+1: warning: operator '/' produces integer overflow [141] */
+	INT_MIN / -1,
+	INT_MAX / -1,
 
 	// '%'
 
