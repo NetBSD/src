@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.38 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.39 2024/01/11 00:31:02 gutteridge Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.38 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.39 2024/01/11 00:31:02 gutteridge Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -247,6 +247,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	struct athn_usb_softc *usc;
 	struct athn_softc *sc;
 	struct usb_attach_arg *uaa;
+	char *devinfop;
 	int error;
 
 	usc = device_private(self);
@@ -257,6 +258,10 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(usc->usc_udev, 0);
+	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
