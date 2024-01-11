@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.592 2024/01/09 23:46:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.593 2024/01/11 20:25:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.592 2024/01/09 23:46:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.593 2024/01/11 20:25:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -802,7 +802,7 @@ fold_constant_integer(tnode_t *tn)
 	if (is_binary(tn))
 		ur = sr = tn->tn_right->tn_val.u.integer;
 
-	int64_t mask = (int64_t)value_bits(size_in_bits(t));
+	uint64_t mask = value_bits(size_in_bits(t));
 	bool ovfl = false;
 
 	int64_t si;
@@ -821,7 +821,7 @@ fold_constant_integer(tnode_t *tn)
 	case MULT:
 		if (utyp) {
 			si = (int64_t)(ul * ur);
-			if (si != (si & mask))
+			if (si != (si & (int64_t)mask))
 				ovfl = true;
 			else if (ul != 0 && si / ul != ur)
 				ovfl = true;
@@ -836,6 +836,11 @@ fold_constant_integer(tnode_t *tn)
 			/* division by 0 */
 			error(139);
 			si = utyp ? -1 : INT64_MAX;
+		} else if (!utyp
+		    && (sl & mask) == (mask ^ (mask >> 1)) && sr == -1) {
+			/* operator '%s' produces integer overflow */
+			warning(141, op_name(DIV));
+			si = sl;
 		} else {
 			si = utyp ? (int64_t)(ul / ur) : sl / sr;
 		}
@@ -910,7 +915,7 @@ fold_constant_integer(tnode_t *tn)
 
 	/* XXX: The overflow check does not work for 64-bit integers. */
 	if (ovfl ||
-	    ((uint64_t)(si | mask) != ~(uint64_t)0 && (si & ~mask) != 0)) {
+	    ((si | mask) != ~(uint64_t)0 && (si & ~mask) != 0)) {
 		if (hflag)
 			/* operator '%s' produces integer overflow */
 			warning(141, op_name(tn->tn_op));
