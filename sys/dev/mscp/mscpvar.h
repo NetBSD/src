@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.18 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.19 2024/01/11 06:19:49 mrg Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -129,6 +129,8 @@ struct	mscp_device {
 	   (device_t, struct buf *);
 	int	(*me_online)	/* drive on line */
 	   (device_t, struct mscp *);
+	void	(*me_online_cb)	/* drive on line, thread context */
+	   (struct work *wk);
 	int	(*me_gotstatus) /* got unit status */
 	   (device_t, struct mscp *);
 	void	(*me_replace)	/* replace done */
@@ -188,6 +190,7 @@ struct mscp_work {
 	struct work mw_work;
 	struct mscp_softc *mw_mi;
 	struct mscp mw_mp;
+	bool mw_online;
 	SLIST_ENTRY(mscp_work) mw_list;
 };
 

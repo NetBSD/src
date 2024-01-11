@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.43 2014/07/25 08:10:37 dholland Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.44 2024/01/11 06:19:49 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.43 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.44 2024/01/11 06:19:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,6 +97,7 @@ struct	mscp_device mt_device = {
 	mtdgram,
 	mtiodone,
 	mtonline,
+	NULL,
 	mtgotstatus,
 	0,
 	mtioerror,

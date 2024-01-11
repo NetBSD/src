@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.90 2021/08/09 19:24:33 andvar Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.91 2024/01/11 06:19:49 mrg Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.90 2021/08/09 19:24:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.91 2024/01/11 06:19:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -112,6 +112,12 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.90 2021/08/09 19:24:33 andvar Exp $"
 #include "ioconf.h"
 #include "ra.h"
 
+/* Embed mscp_work here, kinda ugly. */
+struct ra_work {
+	struct mscp_work ra_mw;
+	device_t ra_usc;
+};
+
 /*
  * Drive status, per drive
  */
@@ -123,6 +129,7 @@ struct ra_softc {
 	int	ra_hwunit;	/* Hardware unit number */
 	int	ra_havelabel;	/* true if we have a label */
 	int	ra_wlabel;	/* label sector is currently writable */
+	struct	ra_work ra_work;/* online callback handling */
 };
 
 #define rx_softc ra_softc
@@ -910,6 +917,7 @@ rxsize(dev_t dev)
 void	rrdgram(device_t, struct mscp *, struct mscp_softc *);
 void	rriodone(device_t, struct buf *);
 int	rronline(device_t, struct mscp *);
+void	rronline_cb(struct work *);
 int	rrgotstatus(device_t, struct mscp *);
 void	rrreplace(device_t, struct mscp *);
 int	rrioerror(device_t, struct mscp *, struct buf *);
@@ -921,6 +929,7 @@ struct	mscp_device ra_device = {
 	rrdgram,
 	rriodone,
 	rronline,
+	rronline_cb,
 	rrgotstatus,
 	rrreplace,
 	rrioerror,
@@ -962,11 +971,36 @@ rriodone(device_t usc, struct buf *bp)
 /*
  * A drive came on line.  Check its type and size.  Return DONE if
  * we think the drive is truly on line.	 In any case, awaken anyone
- * sleeping on the drive on-line-ness.
+ * sleeping on the drive on-line-ness.  We do most of this in a
+ * workqueue callback as the call to disk_set_info() will trigger a
+ * sleep lock while handling a hardware interrupt.
  */
 int
 rronline(device_t usc, struct mscp *mp)
 {
+	struct ra_softc *ra = device_private(usc);
+	device_t parent = device_parent(usc);
+	struct mscp_softc *mi;
+
+	if (!device_is_a(parent, "mscpbus"))
+		return (MSCP_FAILED);
+
+	mi = device_private(parent);
+	ra->ra_work.ra_usc = usc;
+	ra->ra_work.ra_mw.mw_mi = mi;
+	ra->ra_work.ra_mw.mw_mp = *mp;
+	ra->ra_work.ra_mw.mw_online = true;
+	workqueue_enqueue(mi->mi_wq, (struct work *)&ra->ra_work, NULL);
+
+	return (MSCP_DONE);
+}
+
+void
+rronline_cb(struct work *wk)
+{
+	struct ra_work *ra_work = (struct ra_work *)wk;
+	struct mscp *mp = &ra_work->ra_mw.mw_mp;
+	device_t usc = ra_work->ra_usc;
 	struct ra_softc *ra = device_private(usc);
 	struct disklabel *dl;
 
@@ -974,7 +1008,7 @@ rronline(device_t usc, struct mscp *mp)
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		aprint_error_dev(usc, "attempt to bring on line failed: ");
 		mscp_printevent(mp);
-		return (MSCP_FAILED);
+		return;
 	}
 
 	ra->ra_state = DK_OPEN;
@@ -992,8 +1026,6 @@ rronline(device_t usc, struct mscp *mp)
 	}
 	rrmakelabel(dl, ra->ra_mediaid);
 	ra_set_geometry(ra);
-
-	return (MSCP_DONE);
 }
 
 void

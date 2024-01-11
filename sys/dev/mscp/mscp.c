@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.38 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.39 2024/01/11 06:19:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.38 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.39 2024/01/11 06:19:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -314,6 +314,7 @@ loop:
 
 				mw->mw_mi = mi;
 				mw->mw_mp = *mp;
+				mw->mw_online = false;
 				workqueue_enqueue(mi->mi_wq,
 				    (struct work *)mw, NULL);
 			}
@@ -483,15 +484,29 @@ mscp_requeue(struct mscp_softc *mi)
 	panic("mscp_requeue");
 }
 
+/*
+ * mscp_worker: Complete configuration and online events.
+ *
+ * If the new work mw_online is false, this is an autoconfiguration
+ * event, otherwise it is a online event that needs to be handled
+ * in a thread context.
+ */
 void
-mscp_worker(struct work *wk, void *dummy)
+mscp_worker(struct work *wk, void *arg)
 {
-	struct mscp_softc *mi;
-	struct mscp_work *mw;
-	struct	drive_attach_args da;
+	struct mscp_work *mw = (struct mscp_work *)wk;
+	struct mscp_softc *mi = mw->mw_mi;
+	struct drive_attach_args da;
 
-	mw = (struct mscp_work *)wk;
-	mi = mw->mw_mi;
+	/* This is an online event. */
+	if (mw->mw_online) {
+		struct mscp_device *me = mi->mi_me;
+
+		if (me->me_online_cb)
+			return (*me->me_online_cb)(wk);
+		/* Must be cb for this type. */
+		panic("mscp_worker");
+	}
 
 	da.da_mp = &mw->mw_mp;
 	da.da_typ = mi->mi_type;
