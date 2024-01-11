@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.593 2024/01/11 20:25:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.594 2024/01/11 23:06:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.593 2024/01/11 20:25:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.594 2024/01/11 23:06:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4017,7 +4017,7 @@ build_alignof(const type_t *tp)
 }
 
 static tnode_t *
-cast_to_union(tnode_t *otn, type_t *ntp)
+cast_to_union(tnode_t *otn, bool sys, type_t *ntp)
 {
 
 	if (!allow_gcc) {
@@ -4030,12 +4030,8 @@ cast_to_union(tnode_t *otn, type_t *ntp)
 	    m != NULL; m = m->s_next) {
 		if (types_compatible(m->s_type, otn->tn_type,
 		    false, false, NULL)) {
-			tnode_t *ntn = expr_alloc_tnode();
-			ntn->tn_op = CVT;
-			ntn->tn_type = ntp;
+			tnode_t *ntn = build_op(CVT, sys, ntp, otn, NULL);
 			ntn->tn_cast = true;
-			ntn->tn_left = otn;
-			ntn->tn_right = NULL;
 			return ntn;
 		}
 	}
@@ -4046,7 +4042,7 @@ cast_to_union(tnode_t *otn, type_t *ntp)
 }
 
 tnode_t *
-cast(tnode_t *tn, type_t *tp)
+cast(tnode_t *tn, bool sys, type_t *tp)
 {
 
 	if (tn == NULL)
@@ -4065,7 +4061,7 @@ cast(tnode_t *tn, type_t *tp)
 		 * scalar type to a scalar type.
 		 */
 	} else if (nt == UNION)
-		return cast_to_union(tn, tp);
+		return cast_to_union(tn, sys, tp);
 	else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		/* Casting to a struct is an undocumented GCC extension. */
 		if (!(allow_gcc && nt == STRUCT))
@@ -4099,6 +4095,7 @@ cast(tnode_t *tn, type_t *tp)
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = true;
+	tn->tn_sys = sys;
 
 	return tn;
 

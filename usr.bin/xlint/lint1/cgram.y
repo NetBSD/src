@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.478 2024/01/09 23:46:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.479 2024/01/11 23:06:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.478 2024/01/09 23:46:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.479 2024/01/11 23:06:19 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -724,8 +724,8 @@ unary_expression:
 /* K&R 7.2, C90 ???, C99 6.5.4, C11 6.5.4 */
 cast_expression:
 	unary_expression
-|	T_LPAREN type_name T_RPAREN cast_expression {
-		$$ = cast($4, $2);
+|	T_LPAREN type_name T_RPAREN sys cast_expression {
+		$$ = cast($5, $4, $2);
 	}
 ;
 
