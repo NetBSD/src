@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.254 2024/01/09 23:46:54 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.255 2024/01/11 23:26:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.254 2024/01/09 23:46:54 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.255 2024/01/11 23:26:39 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -311,7 +311,7 @@ designator_type(const designator *dr, const type_t *tp)
 	switch (tp->t_tspec) {
 	case STRUCT:
 	case UNION:
-		if (dr->dr_kind != DK_STRUCT && dr->dr_kind != DK_UNION) {
+		if (dr->dr_kind != DK_MEMBER) {
 			const sym_t *fmem = first_named_member(tp);
 			/* syntax error '%s' */
 			error(249, "designator '[...]' is only for arrays");
@@ -321,7 +321,7 @@ designator_type(const designator *dr, const type_t *tp)
 		lint_assert(dr->dr_member != NULL);
 		return dr->dr_member->s_type;
 	case ARRAY:
-		if (dr->dr_kind != DK_ARRAY) {
+		if (dr->dr_kind != DK_SUBSCRIPT) {
 			/* syntax error '%s' */
 			error(249,
 			    "designator '.member' is only for struct/union");
@@ -344,13 +344,13 @@ static void
 designator_debug(const designator *dr)
 {
 
-	if (dr->dr_kind == DK_STRUCT || dr->dr_kind == DK_UNION) {
+	if (dr->dr_kind == DK_MEMBER) {
 		lint_assert(dr->dr_subscript == 0);
 		debug_printf(".%s",
 		    dr->dr_member != NULL
 			? dr->dr_member->s_name
 			: "<end>");
-	} else if (dr->dr_kind == DK_ARRAY) {
+	} else if (dr->dr_kind == DK_SUBSCRIPT) {
 		lint_assert(dr->dr_member == NULL);
 		debug_printf("[%zu]", dr->dr_subscript);
 	} else {
@@ -421,10 +421,9 @@ designation_descend(designation *dn, const type_t *tp)
 		const sym_t *member = first_named_member(tp);
 		if (member == NULL)
 			return false;
-		designation_push(dn,
-		    tp->t_tspec == STRUCT ? DK_STRUCT : DK_UNION, member, 0);
+		designation_push(dn, DK_MEMBER, member, 0);
 	} else if (tp->t_tspec == ARRAY)
-		designation_push(dn, DK_ARRAY, NULL, 0);
+		designation_push(dn, DK_SUBSCRIPT, NULL, 0);
 	else
 		designation_push(dn, DK_SCALAR, NULL, 0);
 	return true;
@@ -550,10 +549,10 @@ static void
 warn_too_many_initializers(designator_kind kind, const type_t *tp)
 {
 
-	if (kind == DK_STRUCT || kind == DK_UNION) {
+	if (kind == DK_MEMBER) {
 		/* too many struct/union initializers */
 		error(172);
-	} else if (kind == DK_ARRAY) {
+	} else if (kind == DK_SUBSCRIPT) {
 		lint_assert(tp->t_tspec == ARRAY);
 		lint_assert(!tp->t_incomplete_array);
 		/* too many array initializers, expected %d */
@@ -816,8 +815,7 @@ proceed:;
 		return;
 	}
 
-	designation_push(&bl->bl_designation,
-	    tp->t_tspec == STRUCT ? DK_STRUCT : DK_UNION, member, 0);
+	designation_push(&bl->bl_designation, DK_MEMBER, member, 0);
 }
 
 static void
@@ -847,7 +845,7 @@ initialization_add_designator_subscript(initialization *in, size_t subscript)
 	if (tp->t_incomplete_array && subscript > in->in_max_subscript)
 		in->in_max_subscript = subscript;
 
-	designation_push(&bl->bl_designation, DK_ARRAY, NULL, subscript);
+	designation_push(&bl->bl_designation, DK_SUBSCRIPT, NULL, subscript);
 }
 
 /*
