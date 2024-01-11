@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.594 2024/01/11 23:06:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.595 2024/01/11 23:26:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.594 2024/01/11 23:06:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.595 2024/01/11 23:26:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3900,7 +3900,7 @@ build_offsetof(const type_t *tp, designation dn)
 	}
 	for (size_t i = 0; i < dn.dn_len; i++) {
 		const designator *dr = dn.dn_items + i;
-		if (dr->dr_kind == DK_ARRAY) {
+		if (dr->dr_kind == DK_SUBSCRIPT) {
 			if (tp->t_tspec != ARRAY)
 				goto proceed;	/* silent error */
 			tp = tp->t_subt;

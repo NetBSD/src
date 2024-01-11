@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.479 2024/01/11 23:06:19 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.480 2024/01/11 23:26:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.479 2024/01/11 23:06:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.480 2024/01/11 23:26:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -512,17 +512,17 @@ primary_expression:
 member_designator:
 	identifier {
 		$$ = (designation) { .dn_len = 0 };
-		designation_push(&$$, DK_STRUCT /* or union */, getsym($1), 0);
+		designation_push(&$$, DK_MEMBER, getsym($1), 0);
 	}
 |	member_designator T_LBRACK range T_RBRACK {
 		$$ = $1;
-		designation_push(&$$, DK_ARRAY, NULL, $3.lo);
+		designation_push(&$$, DK_SUBSCRIPT, NULL, $3.lo);
 	}
 |	member_designator T_POINT {
 		set_symtyp(FMEMBER);
 	} identifier {
 		$$ = $1;
-		designation_push(&$$, DK_STRUCT /* or union */, getsym($4), 0);
+		designation_push(&$$, DK_MEMBER, getsym($4), 0);
 	}
 ;
 
