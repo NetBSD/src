@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.33 2024/01/12 11:24:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.32 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.33 2024/01/12 11:24:48 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -506,8 +506,8 @@ pcihost_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	index = 0;
 	while (imaplen >= 20) {
 		const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
-	        if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
-                	addr_cells = 2;
+		if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
+			addr_cells = 2;
 		if (of_getprop_uint32(map_ihandle, "#interrupt-cells", &interrupt_cells))
 			interrupt_cells = 0;
 		if (imaplen < (addr_cells + interrupt_cells) * 4)
@@ -542,8 +542,8 @@ pcihost_find_intr(struct pcihost_softc *sc, pci_intr_handle_t ih, int *pihandle)
 	index = 0;
 	while (imaplen >= 20) {
 		const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
-	        if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
-                	addr_cells = 2;
+		if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
+			addr_cells = 2;
 		if (of_getprop_uint32(map_ihandle, "#interrupt-cells", &interrupt_cells))
 			interrupt_cells = 0;
 		if (imaplen < (addr_cells + interrupt_cells) * 4)
