@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 2022/03/16 20:31:02 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 2024/01/12 01:53:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -549,20 +549,6 @@ Ldorte:
  */
 #undef FPCOPROC
 #include <m68k/m68k/switch_subr.s>
-
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- *
- * [I don't think the ENTRY() macro will do the right thing with this -- glass]
- */
-GLOBAL(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
-	rts
 
 ENTRY(getvbr)
 	movc	%vbr,%d0

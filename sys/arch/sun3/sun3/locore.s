@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 2022/03/16 20:31:02 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 2024/01/12 01:53:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -618,20 +618,6 @@ ENTRY(DCIU)
 
 /* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
 /* PCIA, ecacheon, ecacheoff */
-
-/*
- * Get callers current SP value.
- * Note that simply taking the address of a local variable in a C function
- * doesn't work because callee saved registers may be outside the stack frame
- * defined by A6 (e.g. GCC generated code).
- *
- * [I don't think the ENTRY() macro will do the right thing with this -- glass]
- */
-GLOBAL(getsp)
-	movl	%sp,%d0			| get current SP
-	addql	#4,%d0			| compensate for return address
-	movl	%d0,%a0
-	rts
 
 ENTRY(getvbr)
 	movc	%vbr,%a0
