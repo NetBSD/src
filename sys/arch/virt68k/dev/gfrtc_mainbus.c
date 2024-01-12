@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $	*/
+/*	$NetBSD: gfrtc_mainbus.c,v 1.2 2024/01/12 06:23:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc_mainbus.c,v 1.2 2024/01/12 06:23:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,11 +65,11 @@ struct gfrtc_mainbus_softc {
 
 #define	CLOCK_HANDLER()							\
 do {									\
-	/* Get the next alarm set ASAP. */				\
-	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_interval_ns);		\
-									\
 	/* Clear the interrupt condition. */				\
 	gfrtc_clear_interrupt(&sc->sc_gfrtc);				\
+									\
+	/* Get the next alarm set ASAP. */				\
+	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_interval_ns);		\
 									\
 	/* Increment the counter and call the handler. */		\
 	sc->sc_evcnt->ev_count++;					\
