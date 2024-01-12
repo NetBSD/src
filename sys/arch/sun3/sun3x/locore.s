@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2024/01/12 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2024/01/12 23:46:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -597,16 +597,6 @@ ENTRY(ecacheon)
 	rts
 
 ENTRY(ecacheoff)
-	rts
-
-ENTRY(getvbr)
-	movc	%vbr,%d0
-	movl	%d0,%a0
-	rts
-
-ENTRY(setvbr)
-	movl	%sp@(4),%d0
-	movc	%d0,%vbr
 	rts
 
 /*

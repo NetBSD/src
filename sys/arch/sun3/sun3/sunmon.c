@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.22 2020/09/10 02:03:44 rin Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.23 2024/01/12 23:46:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.22 2020/09/10 02:03:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.23 2024/01/12 23:46:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.22 2020/09/10 02:03:44 rin Exp $");
 
 #include <machine/mon.h>
 #include <machine/mc68851.h>
+
+#include <m68k/frame.h>
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>

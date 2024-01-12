@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.14 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.15 2024/01/12 23:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -115,13 +115,9 @@ int 	fpu_emulate(struct trapframe *, struct fpframe *, ksiginfo_t *);
 int 	getdfc(void);
 int 	getsfc(void);
 
-void**	getvbr(void);
-
 void	initfpu(void);
 
 void	set_clk_mode(int, int);
-
-void	setvbr(void **);
 
 void	g0_entry(void);
 void	g4_entry(void);

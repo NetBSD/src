@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 2024/01/12 23:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -549,18 +549,6 @@ Ldorte:
  */
 #undef FPCOPROC
 #include <m68k/m68k/switch_subr.s>
-
-ENTRY(getvbr)
-	movc	%vbr,%d0
-#ifdef __ELF__
-	movl	%d0, %a0
-#endif /* __ELF__ */
-	rts
-
-ENTRY(setvbr)
-	movl	%sp@(4),%d0
-	movc	%d0,%vbr
-	rts
 
 /* loadustp, ptest_addr */
 

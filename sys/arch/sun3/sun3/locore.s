@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 2024/01/12 23:46:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -618,15 +618,6 @@ ENTRY(DCIU)
 
 /* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
 /* PCIA, ecacheon, ecacheoff */
-
-ENTRY(getvbr)
-	movc	%vbr,%a0
-	rts
-
-ENTRY(setvbr)
-	movl	%sp@(4),%d0
-	movc	%d0,%vbr
-	rts
 
 /* loadustp, ptest_addr */
 
