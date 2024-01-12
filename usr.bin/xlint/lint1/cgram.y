@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.480 2024/01/11 23:26:39 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.481 2024/01/12 08:33:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.480 2024/01/11 23:26:39 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.481 2024/01/12 08:33:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -363,7 +363,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_parameter_list>	param_list
 /* No type for id_list_lparen. */
 %type	<y_array_size>	array_size_opt
-%type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
 %type	<y_type>	type_name
 %type	<y_sym>		abstract_declaration
@@ -1461,28 +1460,26 @@ array_size_opt:
 		$$.has_dim = false; /* TODO: maybe change to true */
 		$$.dim = 0;	/* just as a placeholder */
 	}
-|	array_size {
-		$$.has_dim = true;
-		$$.dim = $1 == NULL ? 0 : to_int_constant($1, false);
-	}
-;
-
-array_size:
-	type_qualifier_list_opt T_SCLASS constant_expression {
+|	type_qualifier_list_opt T_SCLASS constant_expression {
 		/* C11 6.7.6.3p7 */
 		if ($2 != STATIC)
 			yyerror("Bad attribute");
 		/* static array size requires C11 or later */
 		c11ism(343);
-		$$ = $3;
+		$$.has_dim = true;
+		$$.dim = $3 == NULL ? 0 : to_int_constant($3, false);
 	}
 |	type_qualifier {
 		/* C11 6.7.6.2 */
 		if (!$1.tq_restrict)
 			yyerror("Bad attribute");
-		$$ = NULL;
+		$$.has_dim = true;
+		$$.dim = 0;
 	}
-|	constant_expression
+|	constant_expression {
+		$$.has_dim = true;
+		$$.dim = $1 == NULL ? 0 : to_int_constant($1, false);
+	}
 ;
 
 identifier_list:		/* C99 6.7.5 */
