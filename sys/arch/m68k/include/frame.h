@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.33 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: frame.h,v 1.34 2024/01/12 23:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -242,6 +242,22 @@ do {									\
 #else
 #define	ATOMIC_CAS_CHECK(cfp)	/* nothing */
 #endif /* __mc68010__ */
+
+static inline void **
+getvbr(void)
+{
+	void **vbr;
+
+	__asm volatile("movc %%vbr,%0" : "=r" (vbr));
+
+	return vbr;
+}
+
+static inline void
+setvbr(void **vbr)
+{
+	__asm volatile("movc %0,%%vbr" : : "r" (vbr));
+}
 
 #endif	/* _KERNEL */
 
