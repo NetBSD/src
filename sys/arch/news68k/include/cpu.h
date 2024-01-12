@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2024/01/09 04:16:26 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 2024/01/12 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,8 +157,6 @@ struct frame;
 /* locore.s functions */
 void badtrap(void);
 void intrhand_vectored(void);
-int getsr(void);
-
 
 void doboot(int)
 	__attribute__((__noreturn__));

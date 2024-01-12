@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2023/07/11 11:46:38 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2024/01/12 23:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -104,18 +104,6 @@ void isr_add_custom(int, void *);
  * these functions will work normally, etc.
  * (See the GCC extensions info document.)
  */
-
-static __inline int _getsr(void);
-
-/* Get current sr value. */
-static __inline int
-_getsr(void)
-{
-	int rv;
-
-	__asm volatile ("clrl %0; movew %%sr,%0" : "=&d" (rv));
-	return (rv);
-}
 
 /*
  * The rest of this is sun68k specific, because other ports may

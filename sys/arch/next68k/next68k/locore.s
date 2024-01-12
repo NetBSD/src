@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 2024/01/09 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 2024/01/12 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -900,11 +900,6 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,%sp@	| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
-	rts
-
-ENTRY(getsr)
-	moveq	#0,%d0
-	movw	%sr,%d0
 	rts
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2024/01/12 01:53:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2024/01/12 23:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -641,12 +641,6 @@ ENTRY(ptest_addr)
  * in case some non-optimized code makes external references.
  * Most places will use the inlined functions param.h supplies.
  */
-
-ENTRY(_getsr)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%a1,%d0
-	rts
 
 ENTRY(_spl)
 	clrl	%d0
