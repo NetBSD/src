@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.25 2021/04/02 12:11:41 rin Exp $	*/
+/*	$NetBSD: isr.c,v 1.26 2024/01/12 23:36:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25 2021/04/02 12:11:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2024/01/12 23:36:29 thorpej Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -55,8 +55,6 @@ extern	u_int intrcnt[];	/* from locore.s */
 extern	void (*vectab[])(void);
 extern	void badtrap(void);
 extern	void intrhand_vectored(void);
-
-extern	int getsr(void);	/* in locore.s */
 
 void
 isrinit(void)

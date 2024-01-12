@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.28 2024/01/12 23:36:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.28 2024/01/12 23:36:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ isr_vectored(struct clockframe cf)
 	idepth++;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
-	ipl = _getsr();
+	ipl = getsr();
 	ipl = (ipl >> 8) & 7;
 
 	intrcnt[ipl]++;

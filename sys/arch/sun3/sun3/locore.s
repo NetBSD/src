@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.102 2024/01/12 01:53:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.103 2024/01/12 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -636,12 +636,6 @@ ENTRY(setvbr)
  * in case some non-optimized code makes external references.
  * Most places will use the inlined functions param.h supplies.
  */
-
-ENTRY(_getsr)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%d0,%a0
-	rts
 
 ENTRY(_spl)
 	clrl	%d0
