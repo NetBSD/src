@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.240 2023/09/04 21:01:15 mrg Exp $
+# $NetBSD: HACKS,v 1.241 2024/01/12 08:44:42 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1058,14 +1058,16 @@ kcah
 hack	alpha gcc error in lint
 cdate	2022/04/10 13:21:34
 who	martin
-port	alpha
-file	usr.bin/xlint/Makefile.inc: 1.23
+port	alpha, vax
+file	usr.bin/xlint/Makefile.inc: 1.23, 1.25
 pr	56789
 descr
 	Compiling lint with -ftrapv fails with an internal
 	gcc compiler error.
 
 	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105209
+
+	Supposedly fixed in gcc 11 or newer.
 kcah
 
 hack	compile copy{in,out}() for ibm4xx with -O0 for clang
