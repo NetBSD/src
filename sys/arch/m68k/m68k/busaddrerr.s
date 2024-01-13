@@ -1,4 +1,4 @@
-/*	$NetBSD: busaddrerr.s,v 1.2 2023/04/29 03:17:30 isaki Exp $	*/
+/*	$NetBSD: busaddrerr.s,v 1.3 2024/01/13 18:40:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,6 +159,8 @@ Lberr40:
  */
 #if defined(M68020) || defined(M68030)
 ENTRY_NOPROFILE(busaddrerr2030)
+GLOBAL(buserr2030)
+GLOBAL(addrerr2030)
 	clrl	%sp@-			| stack adjust count
 	moveml	%d0-%d7/%a0-%a7,%sp@-	| save user registers
 	movl	%usp,%a0		| save the user SP
