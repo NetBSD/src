@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.26 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.27 2024/01/13 00:44:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,10 +102,6 @@ struct fpframe;
 void	copypage040(void *fromaddr, void *toaddr);
 void	copypage(void *fromaddr, void *toaddr);
 void	zeropage(void *addr);
-
-/* support.s */
-int	getdfc(void);
-int	getsfc(void);
 
 /* switch_subr.s */
 void	lwp_trampoline(void);

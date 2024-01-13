@@ -1,4 +1,4 @@
-/*	$NetBSD: regdump.c,v 1.15 2023/08/03 08:16:31 mrg Exp $	*/
+/*	$NetBSD: regdump.c,v 1.16 2024/01/13 00:44:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.15 2023/08/03 08:16:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.16 2024/01/13 00:44:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: regdump.c,v 1.15 2023/08/03 08:16:31 mrg Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <m68k/m68k.h>
+#include <m68k/fcode.h>
 #include <m68k/frame.h>
 #include <m68k/reg.h>
 
