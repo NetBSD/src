@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.179 2024/01/09 07:28:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.180 2024/01/13 19:20:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -127,8 +127,6 @@ GLOBAL(kernel_text)
 	.data
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
-
-#include <hp300/hp300/vectors.s>
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -370,36 +368,6 @@ Lis320:
 	 */
 
 Lstart1:
-	/*
-	 * Now that we know what CPU we have, initialize the address error
-	 * and bus error handlers in the vector table:
-	 *
-	 *	vectab+8	bus error
-	 *	vectab+12	address error
-	 */
-	RELOC(cputype, %a0)
-	movl	#_C_LABEL(vectab),%a2
-	addl	%a5,%a2
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68020) || defined(M68030)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jeq	1f			| yes, skip
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-	/* Config botch; no hope. */
-	DOREBOOT
-
-Lstart2:
 	movl	#0,%a1@(MMUCMD)		| clear out MMU again
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
@@ -493,13 +461,6 @@ Lcodecopy:
 	 */
 
 Lhighcode:
-	/*
-	 * Set up the vector table, and race to get the MMU
-	 * enabled.
-	 */
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
-
 	RELOC(mmutype, %a0)
 	tstl	%a0@			| HP MMU?
 	jeq	Lhpmmu3			| yes, skip
@@ -542,7 +503,8 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
