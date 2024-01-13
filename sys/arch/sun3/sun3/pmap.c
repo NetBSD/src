@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.177 2023/12/27 17:35:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178 2024/01/13 00:43:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2023/12/27 17:35:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2024/01/13 00:43:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1690,7 +1690,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * the job using hardware-dependent tricks...
 	 */
 #ifdef	DIAGNOSTIC
-	/* Note: PROM setcxsegmap function needs sfc=dfs=FC_CONTROL */
+	/* Note: PROM setcxsegmap function needs sfc=dfc=FC_CONTROL */
 	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
 		mon_printf("pmap_bootstrap: bad dfc or sfc\n");
 		sunmon_abort();
