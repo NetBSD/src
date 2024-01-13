@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190 2023/02/12 14:50:42 abs Exp $
+# $NetBSD: GENERIC,v 1.191 2024/01/13 05:31:29 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.190 $"
+#ident		"GENERIC-$Revision: 1.191 $"
 
 makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
 	# Bootloader has size limit (~2MB). -fno-omit-frame-pointer is
@@ -294,8 +294,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 # Veriexec
 # include "dev/veriexec.config"
-
-no obmem0 at mainbus?			# XXXXXX
 
 # Pull in optional local configuration - always at end
 cinclude	"arch/sun3/conf/GENERIC.local"
