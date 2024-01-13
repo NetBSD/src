@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.7 2023/09/03 08:48:19 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.8 2024/01/13 16:36:32 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -129,14 +129,14 @@ cpu* 		at fdt? pass 0
 
 intc* 		at cpu? pass 1
 
+# Fixed Clocks
+fclock* 	at fdt? pass 1
+
 # Core-level Interrupt Control block
 #clint0		at fdt? pass 2
 
 # Platform-Level Interrupt Controller
 plic* 		at fdt? pass 2
-
-# Clocks
-fclock* 	at fdt? pass 1
 
 # UART
 com* 		at fdt?			# UART
