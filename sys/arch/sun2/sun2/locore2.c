@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.28 2020/07/11 13:07:01 nia Exp $	*/
+/*	$NetBSD: locore2.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.28 2020/07/11 13:07:01 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.28 2020/07/11 13:07:01 nia Exp $");
 #include <machine/promlib.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
+#include <machine/vectors.h>
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
-#include <sun68k/sun68k/vector.h>
 
 #include "ksyms.h"
 
@@ -285,7 +285,7 @@ _bootstrap(void)
 	 * Point interrupts/exceptions to our vector table.
 	 * (Until now, we use the one setup by the PROM.)
 	 */
-	setvbr((void **)vector_table);
+	vec_init();
 	/* Interrupts are enabled later, after autoconfig. */
 
 	/*

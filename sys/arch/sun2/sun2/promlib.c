@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.19 2020/09/10 02:03:44 rin Exp $	*/
+/*	$NetBSD: promlib.c,v 1.20 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.19 2020/09/10 02:03:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.20 2024/01/13 18:51:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,10 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.19 2020/09/10 02:03:44 rin Exp $");
 
 #define _SUN2_PROMLIB_PRIVATE
 #include <machine/promlib.h>
+#include <machine/vectors.h>
 
 #include <sun2/sun2/machdep.h>
 #include <sun2/sun2/control.h>
-#include <sun68k/sun68k/vector.h>
 #include <machine/pte.h>
 
 /*
@@ -131,7 +131,7 @@ _mode_kernel(struct kernel_state *state, int full)
 	 */
 	if (full) {
 		set_clk_mode(1, 0);
-		setvbr(vector_table);
+		setvbr(vectab);
 		set_clk_mode(0, 1);
 		splx(state->saved_spl);
 	}

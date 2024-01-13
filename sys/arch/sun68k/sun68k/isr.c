@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.28 2024/01/12 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.28 2024/01/12 23:36:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.28 2024/01/12 23:36:30 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>
-
-#include <sun68k/sun68k/vector.h>
+#include <machine/vectors.h>
 
 extern int intrcnt[];	/* statistics */
 
@@ -68,9 +67,6 @@ struct isr {
 
 int idepth;
 
-void set_vector_entry(int, void *);
-void *get_vector_entry(int);
-
 /*
  * These are called from locore.  The "struct clockframe" arg
  * is really just the normal H/W interrupt frame format.
@@ -83,7 +79,7 @@ void
 isr_add_custom(int level, void *handler)
 {
 
-	set_vector_entry(AUTOVEC_BASE + level, handler);
+	vec_set_entry(VECI_INTRAV0 + level, handler);
 }
 
 
@@ -101,12 +97,9 @@ isr_autovec(struct clockframe cf)
 
 	idepth++;
 
-	vec = (cf.cf_vo & 0xFFF) >> 2;
-#ifdef DIAGNOSTIC
-	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE + NUM_LEVELS)))
-		panic("isr_autovec: bad vec");
-#endif
-	ipl = vec - AUTOVEC_BASE;
+	vec = VECO_TO_VECI(cf.cf_vo & 0xFFF);
+	KASSERT(vec >= VECI_INTRAV0 && vec <= VECI_INTRAV7);
+	ipl = vec - VECI_INTRAV0;
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n + 1;
@@ -166,12 +159,13 @@ static struct vector_handler isr_vector_handlers[192];
 void
 isr_vectored(struct clockframe cf)
 {
+	extern char badtrap[];
 	struct vector_handler *vh;
 	int ipl, vec;
 
 	idepth++;
 
-	vec = (cf.cf_vo & 0xFFF) >> 2;
+	vec = VECO_TO_VECI(cf.cf_vo & 0xFFF);
 	ipl = getsr();
 	ipl = (ipl >> 8) & 7;
 
@@ -179,15 +173,15 @@ isr_vectored(struct clockframe cf)
 	curcpu()->ci_data.cpu_nintr++;
 
 #ifdef DIAGNOSTIC
-	if (vec < 64 || vec >= 256) {
+	if (vec < VECI_USRVEC_START || vec >= NVECTORS) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
 		goto out;
 	}
 #endif
-	vh = &isr_vector_handlers[vec - 64];
+	vh = &isr_vector_handlers[vec - VECI_USRVEC_START];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
-		set_vector_entry(vec, (void *)badtrap);
+		vec_set_entry(vec, badtrap);
 		goto out;
 	}
 
@@ -211,39 +205,18 @@ isr_add_vectored(isr_func_t func, void *arg, int level, int vec)
 {
 	struct vector_handler *vh;
 
-	if (vec < 64 || vec >= 256) {
+	if (vec < VECI_USRVEC_START || vec >= NVECTORS) {
 		printf("isr_add_vectored: vect=0x%x (invalid)\n", vec);
 		return;
 	}
-	vh = &isr_vector_handlers[vec - 64];
+	vh = &isr_vector_handlers[vec - VECI_USRVEC_START];
 	if (vh->func) {
 		printf("isr_add_vectored: vect=0x%x (in use)\n", vec);
 		return;
 	}
 	vh->func = func;
 	vh->arg = arg;
-	set_vector_entry(vec, (void *)_isr_vectored);
-}
-
-/*
- * XXX - could just kill these...
- */
-void 
-set_vector_entry(int entry, void *handler)
-{
-
-	if ((entry < 0) || (entry >= NVECTORS))
-	panic("set_vector_entry: setting vector too high or low");
-	vector_table[entry] = handler;
-}
-
-void *
-get_vector_entry(int entry)
-{
-
-	if ((entry < 0) || (entry >= NVECTORS))
-	panic("get_vector_entry: setting vector too high or low");
-	return (void *)vector_table[entry];
+	vec_set_entry(vec, _isr_vectored);
 }
 
 const uint16_t ipl2psl_table[NIPL] = {
