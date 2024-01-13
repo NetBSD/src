@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.19 2023/09/23 18:20:20 ad Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.20 2024/01/13 09:44:42 tnn Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -100,7 +100,7 @@ struct uvm_physseg {
 	paddr_t	avail_end;		/* (PF# of last free page in segment) +1  */
 	struct  extent *ext;		/* extent(9) structure to manage pgs[] */
 	int	free_list;		/* which free list they belong on */
-	u_int	start_hint;		/* start looking for free pages here */
+	u_long	start_hint;		/* start looking for free pages here */
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
@@ -1108,7 +1108,7 @@ uvm_physseg_get_free_list(uvm_physseg_t upm)
 	return HANDLE_TO_PHYSSEG_NODE(upm)->free_list;
 }
 
-u_int
+u_long
 uvm_physseg_get_start_hint(uvm_physseg_t upm)
 {
 	KASSERT(uvm_physseg_valid_p(upm));
@@ -1116,7 +1116,7 @@ uvm_physseg_get_start_hint(uvm_physseg_t upm)
 }
 
 bool
-uvm_physseg_set_start_hint(uvm_physseg_t upm, u_int start_hint)
+uvm_physseg_set_start_hint(uvm_physseg_t upm, u_long start_hint)
 {
 	if (uvm_physseg_valid_p(upm) == false)
 		return false;
