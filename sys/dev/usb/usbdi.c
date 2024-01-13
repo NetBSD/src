@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.249 2024/01/13 12:42:10 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.250 2024/01/13 18:22:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.249 2024/01/13 12:42:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.250 2024/01/13 18:22:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -417,11 +417,9 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 * XXX For synchronous transfers this is fine.  What to
 		 * do for asynchronous transfers?  The callback is
 		 * never run, not even with status USBD_CANCELLED.
-		 *
-		 * XXX Does it make sense to abort while polling?
 		 */
-		if (pipe->up_dev->ud_bus->ub_usepolling == 0)
-			usbd_unlock_pipe(pipe);
+		KASSERT(pipe->up_dev->ud_bus->ub_usepolling == 0);
+		usbd_unlock_pipe(pipe);
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, aborting",
 		    (uintptr_t)xfer, 0, 0, 0);
 		SDT_PROBE2(usb, device, xfer, done,  xfer, USBD_CANCELLED);
@@ -1036,6 +1034,7 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 
 	ASSERT_SLEEPABLE();
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
+	KASSERT(pipe->up_dev->ud_bus->ub_usepolling == 0);
 
 	/*
 	 * Allow only one thread at a time to abort the pipe, so we
