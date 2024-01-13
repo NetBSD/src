@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 2024/01/13 21:40:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -124,8 +124,6 @@ GLOBAL(endstack)
 	.space	PAGE_SIZE
 GLOBAL(bgnstack)
 ASLOCAL(tmpstk)
-
-#include <next68k/next68k/vectors.s>
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -258,41 +256,6 @@ Lis68020:
 	 */
 
 Lstart1:
-	/*
-	 * Now that we know what CPU we have, initialize the address error
-	 * and bus error handlers in the vector table:
-	 *
-	 *	vectab+8	bus error
-	 *	vectab+12	address error
-	 */
-	RELOC(cputype, %a0)
-#if 0
-	/* XXX assembler/linker feature/bug */
-	RELOC(vectab, %a2)
-#else
-	movl	#_C_LABEL(vectab),%a2
-	addl	%a5,%a2
-#endif
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68020) || defined(M68030)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jeq	1f			| yes, skip
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-	/* Config botch; no hope. */
-	PANIC("Config botch in locore")
-
-Lstart2:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
@@ -340,19 +303,8 @@ Lmotommu1:
 	movl	%d1,%a0@(4)		| segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
 #endif /* M68030 */
+
 Lstploaddone:
-
-	/*
-	 * Set up the vector table, and race to get the MMU
-	 * enabled.
-	 */
-
-	movc    %vbr,%d0		| Keep copy of ROM VBR
-	ASRELOC(save_vbr,%a0)
-	movl    %d0,%a0@
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
-
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu2		| no, skip
@@ -382,6 +334,7 @@ Lturnoffttr:
 	.long	0x4e7b0005		| movc %d0,%itt1
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	jmp	Lenab1
+
 Lmotommu2:
 	pflusha
 	RELOC(prototc, %a2)
@@ -393,10 +346,8 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	bsr     Lpushpc			| Push the PC on the stack.
-Lpushpc:
-
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -697,8 +648,6 @@ Lbrkpt3:
  * For vectored interrupts, we pull the pc, evec, and exception frame
  * and pass them to the vectored interrupt dispatcher.  The vectored
  * interrupt dispatcher will deal with strays.
- *
- * intrhand_vectored is the entry point for vectored interrupts.
  */
 
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
@@ -730,16 +679,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
-ENTRY_NOPROFILE(intrhand_vectored)
-	addql	#1,_C_LABEL(interrupt_depth)
-	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| get pointer to frame
-	movl	%a1,%sp@-
-	movw	%sr,%d0
-	bfextu	%d0,21,3,%d0		| Get current ipl
-	movl	%d0,%sp@-		| Push it
-	jbsr	_C_LABEL(isrdispatch_vectored)	| call dispatcher
-	addql	#8,%sp
 Lintrhand_exit:
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
@@ -964,7 +903,7 @@ ENTRY_NOPROFILE(doboot)
 	ASRELOC(Ldoboot1, %a0)
 	jmp     %a0@			| jump into physical address space.
 Ldoboot1:
-	ASRELOC(save_vbr, %a0)
+	RELOC(saved_vbr, %a0)
 	movl    %a0@,%d0
 	movc    %d0,%vbr
 
@@ -1021,9 +960,6 @@ GLOBAL(fbbasepa)
 
 GLOBAL(fblimitpa)
 	.long	MONOTOP		| PA of end of framebuffer
-
-ASLOCAL(save_vbr)		| VBR from ROM
-	.long 0xdeadbeef
 
 GLOBAL(monbootflag)
 	.long 0

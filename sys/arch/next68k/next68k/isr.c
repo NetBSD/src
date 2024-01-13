@@ -1,11 +1,4 @@
-/*	$NetBSD: isr.c,v 1.33 2023/02/03 23:19:03 tsutsui Exp $ */
-
-/*
- * This file was taken from mvme68k/mvme68k/isr.c
- * should probably be re-synced when needed.
- * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
- * original cvs id: NetBSD: isr.c,v 1.12 1998/07/05 06:49:07 jonathan Exp
- */
+/*	$NetBSD: isr.c,v 1.34 2024/01/13 21:40:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.33 2023/02/03 23:19:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.34 2024/01/13 21:40:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.33 2023/02/03 23:19:03 tsutsui Exp $");
 
 volatile unsigned int interrupt_depth;
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
-struct	isr_vectored isr_vectored[NISRVECTORED];
 static const char irqgroupname[] = "hard irqs";
 struct	evcnt next68k_irq_evcnt[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "spur"),
@@ -77,7 +69,6 @@ int ssir;
 extern	u_int intrcnt[];	/* from locore.s. XXXSCW: will go away soon */
 extern	void (*vectab[])(void);
 extern	void badtrap(void);
-extern	void intrhand_vectored(void);
 
 #if 0
 static	int spurintr(void *);
@@ -95,10 +86,6 @@ isrinit(void)
 	/* Initialise the interrupt event counts */
 	for (i = 0; i < (sizeof(next68k_irq_evcnt) / sizeof(struct evcnt)); i++)
 		evcnt_attach_static(&next68k_irq_evcnt[i]);
-
-	/* Arrange to trap Spurious and NMI auto-vectored Interrupts */
-/* 	isrlink_autovec(spurintr, NULL, 0, 0, NULL); */
-/* 	isrlink_autovec(nmihand, NULL, 7, 0, NULL); */
 }
 
 /*
@@ -172,40 +159,6 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
 }
 
 /*
- * Establish a vectored interrupt handler.
- * Called by bus interrupt establish functions.
- */
-void
-isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec,
-    struct evcnt *evcnt)
-{
-	struct isr_vectored *isr;
-
-#ifdef DIAGNOSTIC
-	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
-		panic("isrlink_vectored: bad ipl %d", ipl);
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
-		panic("isrlink_vectored: bad vec 0x%x", vec);
-#endif
-
-	isr = &isr_vectored[vec - ISRVECTORED];
-
-#ifdef DIAGNOSTIC
-	if ((vectab[vec] != badtrap) || (isr->isr_func != NULL))
-		panic("isrlink_vectored: vec 0x%x not available", vec);
-#endif
-
-	/* Fill in the new entry. */
-	isr->isr_func = func;
-	isr->isr_arg = arg;
-	isr->isr_ipl = ipl;
-	isr->isr_evcnt = evcnt;
-
-	/* Hook into the vector table. */
-	vectab[vec] = intrhand_vectored;
-}
-
-/*
  * Return a pointer to the evcnt structure for
  * the specified ipl.
  */
@@ -220,25 +173,6 @@ isrlink_evcnt(int ipl)
 #endif
 
 	return (&next68k_irq_evcnt[ipl]);
-}
-
-/*
- * Unhook a vectored interrupt.
- */
-void
-isrunlink_vectored(int vec)
-{
-
-#ifdef DIAGNOSTIC
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
-		panic("isrunlink_vectored: bad vec 0x%x", vec);
-
-	if (vectab[vec] != intrhand_vectored)
-		panic("isrunlink_vectored: not vectored interrupt");
-#endif
-
-	vectab[vec] = badtrap;
-	memset(&isr_vectored[vec - ISRVECTORED], 0, sizeof(struct isr_vectored));
 }
 
 /*
@@ -343,47 +277,6 @@ cpu_intr_p(void)
 {
 
 	return idepth != 0;
-}
-
-/*
- * This is the dispatcher called by the low-level
- * assembly language vectored interrupt routine.
- */
-void
-isrdispatch_vectored(int ipl, struct clockframe *frame)
-{
-	struct isr_vectored *isr;
-	int vec;
-
-	vec = (frame->vec >> 2) - ISRVECTORED;
-
-#ifdef DIAGNOSTIC
-	if ((vec < 0) || (vec >= NISRVECTORED))
-		panic("isrdispatch_vectored: bad vec 0x%x", frame->vec);
-#endif
-
-	isr = &isr_vectored[vec];
-
-	intrcnt[ipl]++; /* XXXSCW: Will go away soon */
-	next68k_irq_evcnt[ipl].ev_count++;
-	curcpu()->ci_data.cpu_nintr++;
-
-	if (isr->isr_func == NULL) {
-		printf("isrdispatch_vectored: no handler for vec 0x%x\n",
-		    frame->vec);
-		vectab[vec + ISRVECTORED] = badtrap;
-		return;
-	}
-
-	/*
-	 * Handler gets exception frame if argument is NULL.
-	 */
-	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
-		printf("isrdispatch_vectored: vec 0x%x not claimed\n",
-		    frame->vec);
-	else
-	if (isr->isr_evcnt)
-		isr->isr_evcnt->ev_count++;
 }
 
 #if 0
