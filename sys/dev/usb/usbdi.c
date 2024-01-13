@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.248 2024/01/13 12:27:54 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.249 2024/01/13 12:42:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.248 2024/01/13 12:27:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.249 2024/01/13 12:42:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -410,14 +410,18 @@ usbd_transfer(struct usbd_xfer *xfer)
 		}
 	}
 
-	usbd_lock_pipe(pipe);
+	if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+		usbd_lock_pipe(pipe);
 	if (pipe->up_aborting) {
 		/*
 		 * XXX For synchronous transfers this is fine.  What to
 		 * do for asynchronous transfers?  The callback is
 		 * never run, not even with status USBD_CANCELLED.
+		 *
+		 * XXX Does it make sense to abort while polling?
 		 */
-		usbd_unlock_pipe(pipe);
+		if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+			usbd_unlock_pipe(pipe);
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, aborting",
 		    (uintptr_t)xfer, 0, 0, 0);
 		SDT_PROBE2(usb, device, xfer, done,  xfer, USBD_CANCELLED);
@@ -443,7 +447,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	} while (0);
 	SDT_PROBE3(usb, device, pipe, transfer__done,  pipe, xfer, err);
 
-	usbd_unlock_pipe(pipe);
+	if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+		usbd_unlock_pipe(pipe);
 
 	if (err != USBD_IN_PROGRESS && err) {
 		/*
@@ -453,7 +458,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 */
 		USBHIST_LOG(usbdebug, "xfer failed: %jd, reinserting",
 		    err, 0, 0, 0);
-		usbd_lock_pipe(pipe);
+		if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+			usbd_lock_pipe(pipe);
 		SDT_PROBE1(usb, device, xfer, preabort,  xfer);
 #ifdef DIAGNOSTIC
 		xfer->ux_state = XFER_BUSY;
@@ -461,7 +467,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		if (pipe->up_serialise)
 			usbd_start_next(pipe);
-		usbd_unlock_pipe(pipe);
+		if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+			usbd_unlock_pipe(pipe);
 	}
 
 	if (!(flags & USBD_SYNCHRONOUS)) {
@@ -480,7 +487,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 
 	/* Sync transfer, wait for completion. */
-	usbd_lock_pipe(pipe);
+	if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+		usbd_lock_pipe(pipe);
 	while (!xfer->ux_done) {
 		if (pipe->up_dev->ud_bus->ub_usepolling)
 			panic("usbd_transfer: not done");
@@ -503,7 +511,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 	err = xfer->ux_status;
 	SDT_PROBE2(usb, device, xfer, done,  xfer, err);
-	usbd_unlock_pipe(pipe);
+	if (pipe->up_dev->ud_bus->ub_usepolling == 0)
+		usbd_unlock_pipe(pipe);
 	return err;
 }
 
