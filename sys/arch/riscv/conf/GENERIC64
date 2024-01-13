@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.1 2023/05/07 12:41:48 skrll Exp $
+# $NetBSD: GENERIC64,v 1.2 2024/01/13 17:01:58 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -45,6 +45,9 @@ options 	DEBUG		# expensive debugging checks/support
 
 #options 	COMPAT_NETBSD32
 #options 	EXEC_ELF32
+
+# Cache controller
+ccache* 	at fdt?			# SiFive FU[57]40 L2 Cache
 
 # Pull in optional local configuration - always at end
 cinclude 	"arch/riscv/conf/GENERIC64.local"
