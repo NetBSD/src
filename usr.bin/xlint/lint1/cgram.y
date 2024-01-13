@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.481 2024/01/12 08:33:39 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.482 2024/01/13 01:23:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.481 2024/01/12 08:33:39 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.482 2024/01/13 01:23:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -328,7 +328,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_type>	struct_or_union_specifier
 %type	<y_tspec>	struct_or_union
 %type	<y_sym>		braced_member_declaration_list
-/* No type for member_declaration_lbrace. */
 %type	<y_sym>		member_declaration_list_with_rbrace
 %type	<y_sym>		member_declaration_list
 %type	<y_sym>		member_declaration
@@ -339,7 +338,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_type>	enum_specifier
 /* No type for enum. */
 %type	<y_sym>		enum_declaration
-/* No type for enum_decl_lbrace. */
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
@@ -361,7 +359,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		direct_param_declarator
 %type	<y_sym>		direct_notype_param_declarator
 %type	<y_parameter_list>	param_list
-/* No type for id_list_lparen. */
 %type	<y_array_size>	array_size_opt
 %type	<y_sym>		identifier_list
 %type	<y_type>	type_name
@@ -378,7 +375,6 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for initializer_list. */
 /* No type for initializer_list_item. */
 /* No type for designation. */
-/* No type for begin_designation. */
 /* No type for designator_list. */
 /* No type for designator. */
 /* No type for static_assert_declaration. */
@@ -406,7 +402,6 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for while_expr. */
 /* No type for do_statement. */
 /* No type for do. */
-%type	<y_tnode>	do_while_expr
 /* No type for for_start. */
 /* No type for for_exprs. */
 /* No type for jump_statement. */
@@ -1040,14 +1035,10 @@ struct_or_union:
 ;
 
 braced_member_declaration_list:	/* see C99 6.7.2.1 */
-	member_declaration_lbrace member_declaration_list_with_rbrace {
-		$$ = $2;
-	}
-;
-
-member_declaration_lbrace:	/* see C99 6.7.2.1 */
 	T_LBRACE {
 		set_symtyp(FVFT);
+	} member_declaration_list_with_rbrace {
+		$$ = $3;
 	}
 ;
 
@@ -1194,15 +1185,11 @@ enum:				/* helper for C99 6.7.2.2 */
 ;
 
 enum_declaration:		/* helper for C99 6.7.2.2 */
-	enum_decl_lbrace enums_with_opt_comma T_RBRACE {
-		$$ = $2;
-	}
-;
-
-enum_decl_lbrace:		/* helper for C99 6.7.2.2 */
 	T_LBRACE {
 		set_symtyp(FVFT);
 		enumval = 0;
+	} enums_with_opt_comma T_RBRACE {
+		$$ = $3;
 	}
 ;
 
@@ -1437,17 +1424,13 @@ direct_notype_param_declarator:
 ;
 
 param_list:
-	id_list_lparen identifier_list T_RPAREN {
-		$$ = (struct parameter_list){ .first = $2 };
-	}
-|	abstract_decl_param_list
-;
-
-id_list_lparen:
 	T_LPAREN {
 		block_level++;
 		begin_declaration_level(DLK_PROTO_PARAMS);
+	} identifier_list T_RPAREN {
+		$$ = (struct parameter_list){ .first = $3 };
 	}
+|	abstract_decl_param_list
 ;
 
 array_size_opt:
@@ -1679,18 +1662,14 @@ initializer_list_item:		/* helper */
 ;
 
 designation:			/* C99 6.7.8 "Initialization" */
-	begin_designation designator_list T_ASSIGN
+	/* empty */ {
+		begin_designation();
+	} designator_list T_ASSIGN
 |	identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
 		gnuism(315);
 		begin_designation();
 		add_designator_member($1);
-	}
-;
-
-begin_designation:		/* lint-specific helper */
-	/* empty */ {
-		begin_designation();
 	}
 ;
 
@@ -1933,8 +1912,8 @@ iteration_statement:		/* C99 6.8.5 */
 		clear_warning_flags();
 		stmt_while_expr_stmt();
 	}
-|	do_statement do_while_expr {
-		stmt_do_while_expr($2);
+|	do_statement T_WHILE T_LPAREN expression T_RPAREN T_SEMI {
+		stmt_do_while_expr($4);
 		suppress_fallthrough = false;
 	}
 |	do error {
@@ -1971,12 +1950,6 @@ do_statement:			/* see C99 6.8.5 */
 do:				/* see C99 6.8.5 */
 	T_DO {
 		stmt_do();
-	}
-;
-
-do_while_expr:			/* see C99 6.8.5 */
-	T_WHILE T_LPAREN expression T_RPAREN T_SEMI {
-		$$ = $3;
 	}
 ;
 
