@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2024/01/09 04:16:26 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2024/01/13 21:40:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,8 +111,6 @@ extern volatile unsigned int interrupt_depth;
 #define aston() (astpending++)
 
 extern	int	astpending;	/* need to trap before returning to user mode */
-
-extern	void (*vectab[])(void);
 
 /* locore.s functions */
 void	doboot(void) __attribute__((__noreturn__));

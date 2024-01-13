@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.8 2021/12/05 04:54:21 msaitoh Exp $ */
+/*	$NetBSD: isr.h,v 1.9 2024/01/13 21:40:54 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.h
@@ -51,7 +51,6 @@
  * of the vector table.
  */
 #define ISRVECTORED	0x40
-#define NISRVECTORED	192
 
 /*
  * Autovectored interrupt handler cookie.
@@ -92,8 +91,5 @@ extern struct evcnt next68k_irq_evcnt[];
 void	isrinit(void);
 struct	evcnt *isrlink_evcnt(int);
 void	isrlink_autovec(int (*)(void *), void *, int, int, struct evcnt *);
-void	isrlink_vectored(int (*)(void *), void *, int, int, struct evcnt *);
-void	isrunlink_vectored(int);
 void	isrdispatch_autovec(struct clockframe *);
-void	isrdispatch_vectored(int, struct clockframe *);
 void	netintr(void);
