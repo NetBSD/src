@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2024/01/12 23:46:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2024/01/13 00:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -623,32 +623,6 @@ ENTRY(ptest_addr)
 	movl	%sp@(4),%a1		| VA
 	ptestr	#5,%a1@,#7,%a0		| %a0 = addr of PTE
 	movl	%a0,%d0			| Result in %d0 (not a pointer return)
-	rts
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, we need one instantiation here
- * in case some non-optimized code makes external references.
- * Most places will use the inlined functions param.h supplies.
- */
-
-ENTRY(_spl)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%sp@(4),%d1
-	movw	%d1,%sr
-	rts
-
-ENTRY(_splraise)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%d0,%d1
-	andl	#PSL_HIGHIPL,%d1 	| old &= PSL_HIGHIPL
-	cmpl	%sp@(4),%d1		| (old - new)
-	bge	Lsplr
-	movl	%sp@(4),%d1
-	movw	%d1,%sr
-Lsplr:
 	rts
 
 /*

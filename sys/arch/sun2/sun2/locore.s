@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 2024/01/12 23:46:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 2024/01/13 00:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -551,32 +551,6 @@ Ldorte:
 #include <m68k/m68k/switch_subr.s>
 
 /* loadustp, ptest_addr */
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, we need one instantiation here
- * in case some non-optimized code makes external references.
- * Most places will use the inlined functions param.h supplies.
- */
-
-ENTRY(_spl)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%sp@(4),%d1
-	movw	%d1,%sr
-	rts
-
-ENTRY(_splraise)
-	clrl	%d0
-	movw	%sr,%d0
-	movl	%d0,%d1
-	andl	#PSL_HIGHIPL,%d1 	| old &= PSL_HIGHIPL
-	cmpl	%sp@(4),%d1		| (old - new)
-	bge	Lsplr
-	movl	%sp@(4),%d1
-	movw	%d1,%sr
-Lsplr:
-	rts
 
 #ifdef DIAGNOSTIC
 | Message for 68881 save/restore panic
