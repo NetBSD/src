@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.2 2024/01/13 18:42:11 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.3 2024/01/13 20:10:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -516,7 +516,7 @@ void *vectab[NVECTORS] = {
 	[VECI_USRVEC_START+191]	=	badtrap,
 };
 
-static void **saved_vbr;
+void **saved_vbr;
 
 /*
  * vec_init --
