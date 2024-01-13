@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.247 2022/09/13 10:32:58 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.248 2024/01/13 12:27:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.247 2022/09/13 10:32:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.248 2024/01/13 12:27:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1362,14 +1362,34 @@ usbd_dopoll(struct usbd_interface *iface)
 void
 usbd_set_polling(struct usbd_device *dev, int on)
 {
-	if (on)
-		dev->ud_bus->ub_usepolling++;
-	else
-		dev->ud_bus->ub_usepolling--;
 
-	/* Kick the host controller when switching modes */
 	mutex_enter(dev->ud_bus->ub_lock);
-	dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
+	if (on) {
+		/*
+		 * Enabling polling.  If we're enabling for the first
+		 * time, call the softint routine on transition while
+		 * we hold the lock and polling is still disabled, and
+		 * then enable polling -- once polling is enabled, we
+		 * must not hold the lock when we call the softint
+		 * routine.
+		 */
+		KASSERT(dev->ud_bus->ub_usepolling < __type_max(char));
+		if (dev->ud_bus->ub_usepolling == 0)
+			dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
+		dev->ud_bus->ub_usepolling++;
+	} else {
+		/*
+		 * Disabling polling.  If we're disabling polling for
+		 * the last time, disable polling first and then call
+		 * the softint routine while we hold the lock -- until
+		 * polling is disabled, we must not hold the lock when
+		 * we call the softint routine.
+		 */
+		KASSERT(dev->ud_bus->ub_usepolling > 0);
+		dev->ud_bus->ub_usepolling--;
+		if (dev->ud_bus->ub_usepolling == 0)
+			dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
+	}
 	mutex_exit(dev->ud_bus->ub_lock);
 }
 
