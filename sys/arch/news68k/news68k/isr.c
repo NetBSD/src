@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23 2020/11/21 17:55:38 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.24 2024/01/13 23:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23 2020/11/21 17:55:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.24 2024/01/13 23:59:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23 2020/11/21 17:55:38 thorpej Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/vectors.h>
+
 #include <news68k/news68k/isr.h>
 
-isr_autovec_list_t isr_autovec[NISRAUTOVEC];
-struct	isr_vectored isr_vectored[NISRVECTORED];
+isr_autovec_list_t isr_autovec[NAUTOVECTORS];
+struct	isr_vectored isr_vectored[NUSERVECTORS];
 int idepth;
 
-void set_vector_entry(int, void *);
-void *get_vector_entry(int);
+extern char badtrap[];
+extern char intrhand_vectored[];
 
 void
 isrinit(void)
@@ -64,7 +66,7 @@ isrinit(void)
 	int i;
 
 	/* Initialize the autovector lists. */
-	for (i = 0; i < NISRAUTOVEC; ++i) {
+	for (i = 0; i < NAUTOVECTORS; ++i) {
 		LIST_INIT(&isr_autovec[i]);
 	}
 }
@@ -79,7 +81,7 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 	struct isr_autovec *newisr, *curisr;
 	isr_autovec_list_t *list;
 
-	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
+	if ((ipl < 0) || (ipl >= NAUTOVECTORS))
 		panic("isrlink_autovec: bad ipl %d", ipl);
 
 	newisr = kmem_alloc(sizeof(*newisr), KM_SLEEP);
@@ -144,14 +146,14 @@ isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
 {
 	struct isr_vectored *isr;
 
-	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
+	if (ipl < 0 || ipl >= NAUTOVECTORS)
 		panic("isrlink_vectored: bad ipl %d", ipl);
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
+	if (vec < VECI_USRVEC_START || vec >= NVECTORS)
 		panic("isrlink_vectored: bad vec 0x%x", vec);
 
-	isr = &isr_vectored[vec - ISRVECTORED];
+	isr = &isr_vectored[vec - VECI_USRVEC_START];
 
-	if ((vectab[vec] != badtrap) || (isr->isr_func != NULL))
+	if (vec_get_entry(vec) != badtrap || isr->isr_func != NULL)
 		panic("isrlink_vectored: vec 0x%x not available", vec);
 
 	/* Fill in the new entry. */
@@ -160,7 +162,7 @@ isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
 	isr->isr_ipl = ipl;
 
 	/* Hook into the vector table. */
-	vectab[vec] = intrhand_vectored;
+	vec_set_entry(vec, intrhand_vectored);
 }
 
 /*
@@ -169,15 +171,14 @@ isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
 void
 isrunlink_vectored(int vec)
 {
-
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
+	if (vec < VECI_USRVEC_START || vec >= NVECTORS)
 		panic("isrunlink_vectored: bad vec 0x%x", vec);
 
-	if (vectab[vec] != intrhand_vectored)
+	if (vec_get_entry(vec) != intrhand_vectored)
 		panic("isrunlink_vectored: not vectored interrupt");
 
-	vectab[vec] = badtrap;
-	memset(&isr_vectored[vec - ISRVECTORED], 0,
+	vec_set_entry(vec, badtrap);
+	memset(&isr_vectored[vec - VECI_USRVEC_START], 0,
 	    sizeof(struct isr_vectored));
 }
 
@@ -193,10 +194,9 @@ isrdispatch_autovec(int evec)
 	int handled = 0, ipl, vec;
 	static int straycount, unexpected;
 
-	vec = (evec & 0xfff) >> 2;
-	if ((vec < ISRAUTOVEC) || (vec >= (ISRAUTOVEC + NISRAUTOVEC)))
-		panic("isrdispatch_autovec: bad vec 0x%x", vec);
-	ipl = vec - ISRAUTOVEC;
+	vec = VECO_TO_VECI(evec & 0xfff);
+	KASSERT(vec >= VECI_INTRAV0 && vec <= VECI_INTRAV7);
+	ipl = vec - VECI_INTRAV0;
 
 	intrcnt[ipl]++;
 	curcpu()->ci_data.cpu_nintr++;
@@ -232,15 +232,15 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	struct isr_vectored *isr;
 	int ipl, vec;
 
-	vec = (evec & 0xfff) >> 2;
+	vec = VECO_TO_VECI(evec & 0xfff);
 	ipl = (getsr() >> 8) & 7;
 
 	intrcnt[ipl]++;
 	curcpu()->ci_data.cpu_nintr++;
 
-	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
+	if (vec < VECI_USRVEC_START || vec >= NVECTORS)
 		panic("isrdispatch_vectored: bad vec 0x%x", vec);
-	isr = &isr_vectored[vec - ISRVECTORED];
+	isr = &isr_vectored[vec - VECI_USRVEC_START];
 
 	if (isr->isr_func == NULL) {
 		printf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
@@ -258,29 +258,7 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 void
 isrlink_custom(int level, void *handler)
 {
-
-	set_vector_entry(ISRAUTOVEC + level, handler);
-}
-
-/*
- * XXX - could just kill these... [from sun3]
- */
-void
-set_vector_entry(int entry, void *handler)
-{
-
-	if ((entry < 0) || (entry >= NVECTORS))
-		panic("set_vector_entry: setting vector too high or low");
-	vectab[entry] = handler;
-}
-
-void *
-get_vector_entry(int entry)
-{
-
-	if ((entry < 0) || (entry >= NVECTORS))
-		panic("get_vector_entry: setting vector too high or low");
-	return (void *)vectab[entry];
+	vec_set_entry(VECI_INTRAV0 + level, handler);
 }
 
 const uint16_t ipl2psl_table[NIPL] = {

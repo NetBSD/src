@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2024/01/13 23:59:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,14 +149,9 @@ extern u_int intiobase_phys, intiotop_phys;
 extern u_int extiobase_phys, extiotop_phys;
 extern u_int intrcnt[];
 
-extern void (*vectab[])(void);
 extern void *romcallvec;
 
 struct frame;
-
-/* locore.s functions */
-void badtrap(void);
-void intrhand_vectored(void);
 
 void doboot(int)
 	__attribute__((__noreturn__));
