@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.34 2024/01/12 23:46:52 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.35 2024/01/13 17:07:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,10 +69,6 @@
 #define	FMT9SIZE	sizeof(struct fmt9)
 #define	FMTASIZE	sizeof(struct fmtA)
 #define	FMTBSIZE	sizeof(struct fmtB)
-
-#define	V_BUSERR	0x008
-#define	V_ADDRERR	0x00C
-#define	V_TRAP1		0x084
 
 /* 68010 SSW bits */
 #define SSW1_RR		0x8000
