@@ -1,4 +1,4 @@
-#	$NetBSD: files.sifive,v 1.2 2022/12/03 09:40:56 skrll Exp $
+#	$NetBSD: files.sifive,v 1.3 2024/01/13 17:01:58 skrll Exp $
 #
 # Configuration info for SiFive SoCs
 #
@@ -8,3 +8,8 @@
 device	prci
 attach	prci at fdt with fu540_prci
 file	arch/riscv/sifive/fu540_prci.c		fu540_prci
+
+# FU540 Level 2 Cache controller
+device	ccache: fdt
+attach	ccache at fdt with fu540_ccache
+file	arch/riscv/sifive/fu540_ccache.c	fu540_ccache
