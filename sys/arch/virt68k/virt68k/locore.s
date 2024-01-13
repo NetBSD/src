@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2024/01/12 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2024/01/13 17:10:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,8 +72,6 @@
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
-#include <virt68k/virt68k/vectors.s>
-
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
@@ -128,36 +126,6 @@ ASENTRY_NOPROFILE(start)
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 	/* XXX XXX XXX */
 
-	/*
-	 * bootinfo_start() will have determined what kind of CPU
-	 * we have, so it's time to fix up the vector table:
-	 *
-	 *	vectab+8	bus error
-	 *	vectab+12	address error
-	 */
-	RELOC(cputype, %a0)
-	movl    #_C_LABEL(vectab),%a2
-	addl	%a5,%a2
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart1
-1:
-#endif /* M68040 */
-#if defined(M68030)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jeq	1f			| yes, skip
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-	jra	Lstart1
-1:
-#endif /* M68030 */
-
-	/* Config botch.  No hope.  SOLDIER ON! */
-
-Lstart1:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
@@ -239,10 +207,8 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* Point the CPU VBR at our vector table */
-	movl	#_C_LABEL(vectab),%d0	| get our VBR address
-	movc	%d0,%vbr
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
