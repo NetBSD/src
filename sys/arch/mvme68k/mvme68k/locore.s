@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 2024/01/13 20:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,12 +61,6 @@
 	.data
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
-
-ASLOCAL(bug_vbr)
-	.long	0
-
-#include <mvme68k/mvme68k/vectors.s>
-
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -201,8 +195,6 @@ ASLOCAL(Lbrdid2mach)
 	.word		CPU_68030
 	.word		MMU_68030
 	.word		FPU_68882
-	.long		_C_LABEL(busaddrerr2030)
-	.long		_C_LABEL(busaddrerr2030)
 	.long		Linit147
 #endif
 #ifdef MVME162
@@ -210,8 +202,6 @@ ASLOCAL(Lbrdid2mach)
 	.word		CPU_68040
 	.word		MMU_68040
 	.word		FPU_68040
-	.long		_C_LABEL(buserr40)
-	.long		_C_LABEL(addrerr4060)
 	.long		Linit1x2
 #endif
 #ifdef MVME167
@@ -219,8 +209,6 @@ ASLOCAL(Lbrdid2mach)
 	.word		CPU_68040
 	.word		MMU_68040
 	.word		FPU_68040
-	.long		_C_LABEL(buserr40)
-	.long		_C_LABEL(addrerr4060)
 	.long		Linit1x7
 #endif
 #ifdef MVME172
@@ -228,8 +216,6 @@ ASLOCAL(Lbrdid2mach)
 	.word		CPU_68060
 	.word		MMU_68040
 	.word		FPU_68060
-	.long		_C_LABEL(buserr60)
-	.long		_C_LABEL(addrerr4060)
 	.long		Linit1x2
 #endif
 #ifdef MVME177
@@ -237,8 +223,6 @@ ASLOCAL(Lbrdid2mach)
 	.word		CPU_68060
 	.word		MMU_68040
 	.word		FPU_68060
-	.long		_C_LABEL(buserr60)
-	.long		_C_LABEL(addrerr4060)
 	.long		Linit1x7
 #endif
 	.word	0
@@ -254,19 +238,17 @@ Lgotmatch:
 	extl	%d1
 	RELOC(cputype,%a1)
 	movel	%d1,%a1@
+
 	movew	%a0@+,%d1		| Copy the MMU type
 	extl	%d1
 	RELOC(mmutype,%a1)
 	movel	%d1,%a1@
+
 	movew	%a0@+,%d1		| Copy the FPU type
 	extl	%d1
 	RELOC(fputype,%a1)
 	movel	%d1,%a1@
-	movel	%a0@+,%a2		| Fetch the bus error vector
-	RELOC(vectab,%a1)
-	movl	%a2,%a1@(8)
-	movel	%a0@+,%a2		| Fetch the address error vector
-	movl	%a2,%a1@(12)
+
 	movel	%a0@,%a0		| Finally, the board-specific init code
 	jmp	%a0@
 
@@ -622,11 +604,8 @@ Lmotommu2:
  */
 Lenab1:
 /* Point the CPU VBR at our vector table */
-	movc	%vbr,%d0		| Preserve Bug's VBR address
-	movl	%d0,_ASM_LABEL(bug_vbr)
-	movl	#_C_LABEL(vectab),%d0	| get our VBR address
-	movc	%d0,%vbr
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -1121,7 +1100,7 @@ ENTRY_NOPROFILE(doboot)
 	movw	#PSL_HIGHIPL,%sr
 	movl	_C_LABEL(boothowto),%d1	| load howto
 	movl	%sp@(4),%d2		| arg
-	movl	_ASM_LABEL(bug_vbr),%d3	| Fetch Bug's original VBR value
+	movl	_C_LABEL(saved_vbr),%d3	| Fetch Bug's original VBR value
 	movl	_C_LABEL(machineid),%d4	| What type of board is this?
 	movl	#CACHE_OFF,%d0
 #if defined(M68040) || defined(M68060)
