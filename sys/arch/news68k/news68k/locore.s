@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 2024/01/13 23:59:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,14 +67,8 @@
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
-ASLOCAL(monitor_vbr)
-	.long	0
-
 ASLOCAL(monitor)
 	.long	0
-
-#include <news68k/news68k/vectors.s>
-
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -254,11 +248,6 @@ Lnot1200:
 	movl	#CTRL_LED1700,%a0@	| CTRL_LED port for news1700
 Lcom030:
 
-	RELOC(vectab,%a0)
-	RELOC(busaddrerr2030,%a1)
-	movl	%a1,%a0@(8)
-	movl	%a1,%a0@(12)
-
 	movl	%d4,%d1
 	addl	%a5,%d1
 	moveq	#PGSHIFT,%d2
@@ -341,12 +330,6 @@ Lstart2:
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
  */
-	movc	%vbr,%d0		| Preserve monitor's VBR address
-	movl	%d0,_ASM_LABEL(monitor_vbr)
-
-	movl	#_C_LABEL(vectab),%d0	| get our VBR address
-	movc	%d0,%vbr
-
 	RELOC(Sysseg_pa, %a0)		| system segment table addr
 	movl	%a0@,%d1		| read value (a PA)
 	RELOC(mmutype, %a0)
@@ -392,7 +375,8 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -925,7 +909,7 @@ Lnocache5:
 	movl	_C_LABEL(bootdev),%d6	| load bootdev
 	movl	%sp@(4),%d2		| arg
 	movl	_C_LABEL(ctrl_power),%a0| CTRL_POWER port
-	movl	_ASM_LABEL(monitor_vbr),%d3	| Fetch original VBR value
+	movl	_C_LABEL(saved_vbr),%d3	| Fetch original VBR value
 	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
 	movl	#0,%a7@-		| value for pmove to TC (turn off MMU)
 	pmove	%a7@,%tc		| disable MMU

@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.h,v 1.8 2024/01/13 23:59:47 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.1 2024/01/13 23:59:47 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,36 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _NEWS68K_VECTORS_H_
+#define	_NEWS68K_VECTORS_H_
 
-/*
- * Autovectored interrupt handler cookie.
- */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int  (*isr_func)(void *);
-	void *isr_arg;
-	int  isr_ipl;
-	int  isr_priority;
-};
+#ifdef _KERNEL
 
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
+#include <m68k/vectors.h>
 
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int  (*isr_func)(void *);
-	void *isr_arg;
-	int  isr_ipl;
-};
+#define	MACHINE_AV0_HANDLER	spurintr
+#define	MACHINE_AV1_HANDLER	lev1intr
+#define	MACHINE_AV2_HANDLER	intrhand_autovec
+#define	MACHINE_AV3_HANDLER	lev3intr
+#define	MACHINE_AV4_HANDLER	lev4intr
+#define	MACHINE_AV5_HANDLER	intrhand_autovec
+#define	MACHINE_AV6_HANDLER	intrhand_autovec
+#define	MACHINE_AV7_HANDLER	intrhand_autovec
 
-void isrinit(void);
-void isrlink_autovec(int (*)(void *), void *, int, int);
-void isrlink_vectored(int (*)(void *), void *, int, int);
-void isrunlink_vectored(int);
-void isrdispatch_autovec(int);
-void isrdispatch_vectored(int, int, void *);
-void isrlink_custom(int, void *);
+#endif /* _KERNEL */
+
+#endif /* _NEWS68K_VECTORS_H_ */

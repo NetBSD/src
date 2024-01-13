@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.37 2024/01/09 04:16:26 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.38 2024/01/13 23:59:47 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -29,6 +29,7 @@ file	arch/m68k/m68k/mmu_subr.s
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 file	dev/cons.c
 
