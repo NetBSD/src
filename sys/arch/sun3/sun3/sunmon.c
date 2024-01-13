@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.23 2024/01/12 23:46:53 thorpej Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.24 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.23 2024/01/12 23:46:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.24 2024/01/13 18:51:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,12 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.23 2024/01/12 23:46:53 thorpej Exp $");
 
 #include <machine/mon.h>
 #include <machine/mc68851.h>
+#include <machine/vectors.h>
 
 #include <m68k/frame.h>
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
-#include <sun68k/sun68k/vector.h>
 
 static void **sunmon_vbr;
 static void *sunmon_vcmd;	/* XXX: always 0? */
@@ -76,7 +76,7 @@ _mode_kernel(void)
 	/* Disable the PROM NMI clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
 	/* Restore our own vector table */
-	setvbr(vector_table);
+	setvbr(vectab);
 	/* Enable our level-5 clock. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 }

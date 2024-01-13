@@ -1,11 +1,11 @@
-/*	$NetBSD: vector.h,v 1.4 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: vectors.h,v 1.1 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Adam Glass.
+ * by Adam Glass and Gordon W. Ross, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,31 +29,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NVECTORS 256
+#ifndef _SUN68K_VECTORS_H_
+#define	_SUN68K_VECTORS_H_
 
-#define AUTOVEC_BASE 0x18
+#ifdef _KERNEL
 
-extern void *vector_table[];
+#include <m68k/vectors.h>
 
-void _isr_autovec(void);
+#define	MACHINE_RESET_SP	(void *)0xfffe000
+#define	MACHINE_RESET_PC	(void *)0xfef0000
 
-void addrerr(void);
-void badtrap(void);
-void buserr(void);
-void chkinst(void);
-void coperr(void);
-void fmterr(void);
-void fpfline(void);
-void fpunsupp(void);
-void illinst(void);
-void privinst(void);
-void trace(void);
-void trap0(void);
-void trap1(void);
-void trap12(void);
-void trap15(void);
-void trap2(void);
-void trap3(void);
-void trapvinst(void);
-void zerodiv(void);
-void fpfault(void);
+#define	MACHINE_BUSERR_HANDLER	buserr
+#define	MACHINE_ADDRERR_HANDLER	addrerr
+
+#define	MACHINE_AV0_HANDLER	_isr_autovec
+#define	MACHINE_AV1_HANDLER	_isr_autovec
+#define	MACHINE_AV2_HANDLER	_isr_autovec
+#define	MACHINE_AV3_HANDLER	_isr_autovec
+#define	MACHINE_AV4_HANDLER	_isr_autovec
+#define	MACHINE_AV5_HANDLER	_isr_autovec
+#define	MACHINE_AV6_HANDLER	_isr_autovec
+#define	MACHINE_AV7_HANDLER	_isr_autovec
+
+#endif /* _KERNEL */
+
+#endif /* _SUN68K_VECTORS_H_ */

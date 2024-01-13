@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.103 2020/07/11 13:07:01 nia Exp $	*/
+/*	$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.103 2020/07/11 13:07:01 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -54,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.103 2020/07/11 13:07:01 nia Exp $");
 #include <machine/mon.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
+#include <machine/vectors.h>
 
 #include <sun3/sun3/control.h>
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/obmem.h>
-#include <sun68k/sun68k/vector.h>
 
 #include "ksyms.h"
 
@@ -344,7 +344,7 @@ _bootstrap(void)
 	 * it will not cause "spurrious level 7" complaints.
 	 * Done after _vm_init so the PROM can debug that.
 	 */
-	setvbr((void **)vector_table);
+	vec_init();
 	/* Interrupts are enabled later, after autoconfig. */
 
 	/*
