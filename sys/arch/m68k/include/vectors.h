@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.1 2024/01/13 17:10:03 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.2 2024/01/13 18:42:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@
 #define	VECI_rsvd21		21	/* unassigned, reserved */
 #define	VECI_rsvd22		22	/* unassigned, reserved */
 #define	VECI_rsvd23		23	/* unassigned, reserved */
-#define	VECI_SPURIOUS_INTR	24	/* Spurious Interrupt */
+#define	VECI_INTRAV0		24	/* Spurious Interrupt */
+#define	VECI_SPURIOUS_INTR	VECI_INTRAV0
 #define	VECI_INTRAV1		25	/* Level 1 Interrupt Autovector */
 #define	VECI_INTRAV2		26	/* Level 2 Interrupt Autovector */
 #define	VECI_INTRAV3		27	/* Level 3 Interrupt Autovector */
@@ -118,8 +119,8 @@
 #define	VECI_INTRAV(ipl)	((ipl) + VECI_SPURIOUS_INTR)
 #define	VECI_TRAP(x)		((x) + VECI_TRAP0)
 
-#define	VECI_TO_VEC(x)		((x) << 2)
-#define	VEC_TO_VECI(x)		((unsigned int)(x) >> 2)
+#define	VECI_TO_VECO(x)		((x) << 2)
+#define	VECO_TO_VECI(x)		((unsigned int)(x) >> 2)
 
 #ifdef _KERNEL
 
@@ -127,6 +128,8 @@ extern void *vectab[NVECTORS];
 
 void	vec_init(void);
 void	vec_reset(void);
+void	*vec_get_entry(int);
+void	vec_set_entry(int, void *);
 
 #endif /* _KERNEL */
 
