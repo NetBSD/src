@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.255 2024/01/11 23:26:39 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.256 2024/01/13 11:24:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.255 2024/01/11 23:26:39 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.256 2024/01/13 11:24:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -992,10 +992,9 @@ begin_designation(void)
 	if (in->in_err)
 		return;
 
-	brace_level *bl = in->in_brace_level;
-	lint_assert(bl != NULL);
-	bl->bl_designation.dn_len = 0;
-	designation_debug(&bl->bl_designation);
+	designation *dn = &in->in_brace_level->bl_designation;
+	dn->dn_len = 0;
+	designation_debug(dn);
 }
 
 void

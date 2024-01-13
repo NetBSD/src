@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.482 2024/01/13 01:23:39 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.483 2024/01/13 11:24:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.482 2024/01/13 01:23:39 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.483 2024/01/13 11:24:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -295,7 +295,6 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_generic>	generic_assoc_list
 %type	<y_generic>	generic_association
 %type	<y_tnode>	postfix_expression
-/* No type for comma_opt. */
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_op>		point_or_arrow
@@ -373,7 +372,6 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for braced_initializer. */
 /* No type for initializer. */
 /* No type for initializer_list. */
-/* No type for initializer_list_item. */
 /* No type for designation. */
 /* No type for designator_list. */
 /* No type for designator. */
@@ -589,11 +587,6 @@ postfix_expression:
 	} compound_statement_rbrace T_RPAREN {
 		$$ = end_statement_expr();
 	}
-;
-
-comma_opt:			/* helper for 'postfix_expression' */
-	/* empty */
-|	T_COMMA
 ;
 
 /*
@@ -1636,7 +1629,8 @@ braced_initializer:
 		c23ism(353);
 	}
 	/* K&R ---, C90 ---, C99 6.7.8, C11 6.7.9, C23 6.7.10 */
-|	init_lbrace initializer_list comma_opt init_rbrace
+|	init_lbrace initializer_list init_rbrace
+|	init_lbrace initializer_list T_COMMA init_rbrace
 ;
 
 initializer:			/* C99 6.7.8 "Initialization" */
@@ -1646,23 +1640,21 @@ initializer:			/* C99 6.7.8 "Initialization" */
 |	init_lbrace init_rbrace {
 		/* XXX: Empty braces are not covered by C99 6.7.8. */
 	}
-|	init_lbrace initializer_list comma_opt init_rbrace
+|	init_lbrace initializer_list init_rbrace
+|	init_lbrace initializer_list T_COMMA init_rbrace
 	/* XXX: What is this error handling for? */
 |	error
 ;
 
 initializer_list:		/* C99 6.7.8 "Initialization" */
-	initializer_list_item
-|	initializer_list T_COMMA initializer_list_item
-;
-
-initializer_list_item:		/* helper */
-	designation initializer
-|	initializer
+	initializer
+|	designation initializer
+|	initializer_list T_COMMA initializer
+|	initializer_list T_COMMA designation initializer
 ;
 
 designation:			/* C99 6.7.8 "Initialization" */
-	/* empty */ {
+	{
 		begin_designation();
 	} designator_list T_ASSIGN
 |	identifier T_COLON {
