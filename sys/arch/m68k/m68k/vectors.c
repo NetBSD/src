@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.1 2024/01/13 17:10:03 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.2 2024/01/13 18:42:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,6 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.  
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
+#endif 
+
 #include <sys/types.h>
 
 #include <machine/cpu.h>
@@ -48,12 +53,12 @@ extern char badtrap[];
 extern char coperr[];
 extern char fmterr[];
 extern char trap0[];
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_SUNOS)
 extern char trap1[];
 #define	TRAP1_HANDLER		trap1
 #else
 #define	TRAP1_HANDLER		illinst
-#endif /* COMPAT_13 */
+#endif /* COMPAT_13 || COMPAT_SUNOS */
 extern char trap2[];
 #ifdef COMPAT_16
 extern char trap3[];
@@ -75,15 +80,39 @@ extern char MACHINE_AV5_HANDLER[];
 extern char MACHINE_AV6_HANDLER[];
 extern char MACHINE_AV7_HANDLER[];
 
-#ifndef __mc68010__
+#ifdef MACHINE_BUSERR_HANDLER
+extern char MACHINE_BUSERR_HANDLER[];
+#endif
+
+#ifdef MACHINE_ADDRERR_HANDLER
+extern char MACHINE_ADDRERR_HANDLER[];
+#endif
+
+#ifdef __mc68010__
+
+#define	BUSERR_HANDLER		MACHINE_BUSERR_HANDLER
+#define	ADDRERR_HANDLER		MACHINE_ADDRERR_HANDLER
+
+#else
 
 #if defined(M68020) || defined(M68030)
-extern char busaddrerr2030[];
+#ifdef MACHINE_BUSERR_HANDLER
+#define	BUSERR_HANDLER2030	MACHINE_BUSERR_HANDLER
+#else
+extern char buserr2030[];
+#define	BUSERR_HANDLER2030	buserr2030
+#endif
+#ifdef MACHINE_ADDRERR_HANDLER
+#define	ADDRERR_HANDLER2030	MACHINE_ADDRERR_HANDLER
+#else
+extern char addrerr2030[];
+#define	ADDRERR_HANDLER2030	addrerr2030
+#endif
 #if defined(M68040) || defined(M68060)
 #define	NEED_FIXUP_2030
 #else
-#define	BUSERR_HANDLER		busaddrerr2030
-#define	ADDRERR_HANDLER		busaddrerr2030
+#define	BUSERR_HANDLER		BUSERR_HANDLER2030
+#define	ADDRERR_HANDLER		ADDRERR_HANDLER2030
 #endif
 #endif /* M68020 || M68030 */
 
@@ -168,6 +197,14 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 
 #endif /* __mc68010__ */
 
+#ifndef MACHINE_RESET_SP
+#define	MACHINE_RESET_SP	NULL
+#endif
+
+#ifndef MACHINE_RESET_PC
+#define	MACHINE_RESET_PC	NULL
+#endif
+
 #ifndef BUSERR_HANDLER
 #define	BUSERR_HANDLER		badtrap
 #endif
@@ -221,6 +258,8 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #endif
 
 void *vectab[NVECTORS] = {
+	[VECI_RIISP]		=	MACHINE_RESET_SP,
+	[VECI_RIPC]		=	MACHINE_RESET_PC,
 	[VECI_BUSERR]		=	BUSERR_HANDLER,
 	[VECI_ADDRERR]		=	ADDRERR_HANDLER,
 	[VECI_ILLINST]		=	illinst,
@@ -243,7 +282,7 @@ void *vectab[NVECTORS] = {
 	[VECI_rsvd21]		=	badtrap,
 	[VECI_rsvd22]		=	badtrap,
 	[VECI_rsvd23]		=	badtrap,
-	[VECI_SPURIOUS_INTR]	=	MACHINE_AV0_HANDLER,
+	[VECI_INTRAV0]		=	MACHINE_AV0_HANDLER,
 	[VECI_INTRAV1]		=	MACHINE_AV1_HANDLER,
 	[VECI_INTRAV2]		=	MACHINE_AV2_HANDLER,
 	[VECI_INTRAV3]		=	MACHINE_AV3_HANDLER,
@@ -496,8 +535,8 @@ vec_init(void)
 #ifdef NEED_FIXUP_2030
 	case CPU_68020:
 	case CPU_68030:
-		vectab[VECI_BUSERR]        = busaddrerr2030;
-		vectab[VECI_ADDRERR]       = busaddrerr2030;
+		vectab[VECI_BUSERR]        = BUSERR_HANDLER2030;
+		vectab[VECI_ADDRERR]       = ADDRERR_HANDLER2030;
 		break;
 #endif /* NEED_FIXUP_2030 */
 
@@ -549,4 +588,33 @@ void
 vec_reset(void)
 {
 	setvbr(saved_vbr);
+}
+
+/*
+ * vec_get_entry --
+ *	Get a vector table entry.
+ */
+void *
+vec_get_entry(int vec)
+{
+	KASSERT(vec >= 0);
+	KASSERT(vec < NVECTORS);
+	return vectab[vec];
+}
+
+/*
+ * vec_set_entry --
+ *	Set a vector table entry.
+ */
+void
+vec_set_entry(int vec, void *addr)
+{
+	KASSERT(vec >= 0);
+	KASSERT(vec < NVECTORS);
+	vectab[vec] = addr;
+#if defined(M68040) || defined(M68060)
+	if (cputype == CPU_68040 || cputype == CPU_68060) {
+		DCIS();
+	}
+#endif
 }
