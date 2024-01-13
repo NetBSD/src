@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.2 2024/01/13 18:42:11 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.3 2024/01/13 20:10:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@
 #ifdef _KERNEL
 
 extern void *vectab[NVECTORS];
+extern void **saved_vbr;
 
 void	vec_init(void);
 void	vec_reset(void);
