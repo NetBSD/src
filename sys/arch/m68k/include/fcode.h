@@ -1,4 +1,4 @@
-/*	$NetBSD: fcode.h,v 1.1 2023/12/27 17:35:35 thorpej Exp $	*/
+/*	$NetBSD: fcode.h,v 1.2 2024/01/13 00:44:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,5 +66,29 @@
 #define	FC_SUPERD	5	/* supervisor data space */
 #define	FC_SUPERP	6	/* supervisor program space */
 #define	FC_CPU		7	/* CPU space */
+
+#ifdef _KERNEL
+
+static inline int
+getdfc(void)
+{
+	int rv;
+
+	__asm volatile("movc %%dfc,%0" : "=d" (rv));
+
+	return rv;
+}
+
+static inline int
+getsfc(void)
+{
+	int rv;
+
+	__asm volatile("movc %%sfc,%0" : "=d" (rv));
+
+	return rv;
+}
+
+#endif /* _KERNEL */
 
 #endif /* _M68K_FCODE_H_ */
