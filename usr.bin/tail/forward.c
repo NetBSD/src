@@ -96,7 +96,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	case FBYTES:
 		if (off == 0)
 			break;
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (sbp->st_size < off)
 				off = sbp->st_size;
 			if (fseeko(fp, off, SEEK_SET) == -1) {
@@ -128,7 +128,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		}
 		break;
 	case RBYTES:
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (sbp->st_size >= off &&
 			    fseeko(fp, -off, SEEK_END) == -1) {
 				ierr();
@@ -146,7 +146,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		}
 		break;
 	case RLINES:
-		if (S_ISREG(sbp->st_mode)) {
+		if (S_ISREG(sbp->st_mode) && sbp->st_size > 0) {
 			if (!off) {
 				if (fseek(fp, 0L, SEEK_END) == -1) {
 					ierr();
