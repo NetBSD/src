@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.30 2024/01/14 00:00:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.30 2024/01/14 00:00:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.29 2024/01/13 18:51:38 thorpej Exp $");
 #include <machine/vectors.h>
 
 extern int intrcnt[];	/* statistics */
-
-#define NUM_LEVELS 8
 
 struct isr {
 	struct isr *isr_next;
@@ -78,12 +76,11 @@ void isr_vectored(struct clockframe);
 void 
 isr_add_custom(int level, void *handler)
 {
-
 	vec_set_entry(VECI_INTRAV0 + level, handler);
 }
 
 
-static struct isr *isr_autovec_list[NUM_LEVELS];
+static struct isr *isr_autovec_list[NAUTOVECTORS];
 
 /*
  * This is called by the assembly routines
@@ -136,7 +133,7 @@ isr_add_autovect(isr_func_t handler, void *arg, int level)
 {
 	struct isr *new_isr;
 
-	if ((level < 0) || (level >= NUM_LEVELS))
+	if ((level < 0) || (level >= NAUTOVECTORS))
 		panic("isr_add: bad level=%d", level);
 	new_isr = kmem_alloc(sizeof(struct isr), KM_SLEEP);
 	new_isr->isr_intr = handler;
@@ -150,7 +147,7 @@ struct vector_handler {
 	isr_func_t func;
 	void *arg;
 };
-static struct vector_handler isr_vector_handlers[192];
+static struct vector_handler isr_vector_handlers[NUSERVECTORS];
 
 /*
  * This is called by the assembly glue
