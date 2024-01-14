@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.34 2019/10/13 21:12:32 christos Exp $	*/
+/*	$NetBSD: yacc.y,v 1.34.8.1 2024/01/14 15:15:00 martin Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.34 2019/10/13 21:12:32 christos Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.34.8.1 2024/01/14 15:15:00 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,11 +390,18 @@ set_digitmap(rune_map *map, rune_list *list)
     while (list) {
 	rune_list *nlist = list->next;
 	for (i = list->min; i <= list->max; ++i) {
-	    if (list->map + (i - list->min)) {
+	    /*
+	     * XXX PR lib/57798
+	     * Currently, we support mapping up to 255. Attempts to map
+	     * 256 (== _RUNETYPE_A) and above are silently ignored.
+	     */
+	    _RuneType digit = list->map + (i - list->min);
+	    if (digit > 0 && digit <= 0xff) {
 		rune_list *tmp = (rune_list *)xmalloc(sizeof(rune_list));
+		memset(tmp, 0, sizeof(*tmp));
 		tmp->min = i;
 		tmp->max = i;
-		add_map(map, tmp, list->map + (i - list->min));
+		add_map(map, tmp, digit);
 	    }
 	}
 	free(list);
