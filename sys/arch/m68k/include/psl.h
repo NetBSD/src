@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 2024/01/14 22:06:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -85,7 +85,7 @@ getsr(void)
 	return sr;
 }
 
-static __inline int
+static inline int
 _spl(int s)
 {
 	int sr;
@@ -96,7 +96,13 @@ _spl(int s)
 	return sr;
 }
 
-static __inline int
+static inline void
+_splx(int s)
+{
+	__asm volatile("movew %0,%%sr" : : "di" (s) : "memory");
+}
+
+static inline int
 _splraise(int level)
 {
 	int sr;
