@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2021/11/13 10:13:42 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2024/01/14 07:39:25 skrll Exp $
 
 TARGETS+=	dtblist
 
 SUBDIR+=	sifive
+SUBDIR+=	starfive
 
 .include <bsd.subdir.mk>
