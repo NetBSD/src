@@ -2037,7 +2037,7 @@ handle_dir(char *dir)
 
 	path_argv[0] = dir;
 	path_argv[1] = 0;
-	fts = fts_open(path_argv, FTS_PHYSICAL, NULL);
+	fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
 	if (fts == NULL) {
 		warn("couldn't fts_open %s", dir);
 		return;
@@ -2055,7 +2055,7 @@ handle_dir(char *dir)
 			maybe_warn("%s", entry->fts_path);
 			continue;
 		case FTS_F:
-			handle_file(entry->fts_name, entry->fts_statp);
+			handle_file(entry->fts_path, entry->fts_statp);
 		}
 	}
 	(void)fts_close(fts);
