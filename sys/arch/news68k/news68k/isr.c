@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.24 2024/01/13 23:59:47 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.25 2024/01/14 23:01:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.24 2024/01/13 23:59:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25 2024/01/14 23:01:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,12 +253,6 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	 */
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
-}
-
-void
-isrlink_custom(int level, void *handler)
-{
-	vec_set_entry(VECI_INTRAV0 + level, handler);
 }
 
 const uint16_t ipl2psl_table[NIPL] = {
