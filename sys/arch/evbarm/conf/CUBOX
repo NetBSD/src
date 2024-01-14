@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX,v 1.21 2022/08/07 02:52:25 simonb Exp $
+# $NetBSD: CUBOX,v 1.22 2024/01/14 10:35:26 andvar Exp $
 #
 #	CUBOX -- SolidRun Ltd. Cubox kernel
 #
@@ -344,7 +344,7 @@ pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer		# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
