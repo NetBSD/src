@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.26 2021/07/11 14:17:48 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.26.2.1 2024/01/14 16:00:09 martin Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -201,6 +201,8 @@ HP-HIL devices
 Keyboards
 .It
 Two and three button mice
+.It
+Three button trackballs (M1309A)
 .It
 46094 Quadrature Port (supports normal serial mice)
 .It
