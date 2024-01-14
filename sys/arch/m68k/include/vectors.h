@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.3 2024/01/13 20:10:36 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.4 2024/01/14 00:00:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@
 #define	VECI_USRVEC_START	64	/* User defined vectors (192) */
 
 #define	NVECTORS		256
+#define	NAUTOVECTORS		8
+#define	NUSERVECTORS		(NVECTORS - VECI_USRVEC_START)
 
 #define	VECI_INTRAV(ipl)	((ipl) + VECI_SPURIOUS_INTR)
 #define	VECI_TRAP(x)		((x) + VECI_TRAP0)
