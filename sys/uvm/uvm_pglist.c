@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.91 2024/01/13 09:44:42 tnn Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.92 2024/01/14 10:38:47 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.91 2024/01/13 09:44:42 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.92 2024/01/14 10:38:47 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,7 +577,7 @@ again:
 			     candidate, bank, psi);
 			KDASSERTMSG(cidx == candidate - uvm_physseg_get_start(psi),
 			    "uvm_physseg_find(%#lx): %#"PRIxPADDR" != off %"PRIxPADDR,
-			     candidate, cidx, candidate - uvm_physseg_get_start(psi));
+			     candidate, cidx, (paddr_t)candidate - uvm_physseg_get_start(psi));
 		}
 #endif
 		if (VM_PAGE_IS_FREE(pg) == 0)
