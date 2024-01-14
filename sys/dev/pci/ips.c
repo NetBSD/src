@@ -1,4 +1,4 @@
-/*	$NetBSD: ips.c,v 1.6 2022/02/12 02:58:50 riastradh Exp $	*/
+/*	$NetBSD: ips.c,v 1.6.4.1 2024/01/14 15:20:19 martin Exp $	*/
 /*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.6 2022/02/12 02:58:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.6.4.1 2024/01/14 15:20:19 martin Exp $");
 
 #include "bio.h"
 
@@ -458,7 +458,7 @@ struct ips_softc {
 };
 
 int	ips_match(device_t, cfdata_t, void *);
-void	ips_attach(struct device *, struct device *, void *);
+void	ips_attach(device_t, device_t, void *);
 
 void	ips_scsi_cmd(struct ips_ccb *);
 void	ips_scsi_pt_cmd(struct scsipi_xfer *);
@@ -617,9 +617,9 @@ ips_match(device_t parent, cfdata_t cfdata, void *aux)
 }
 
 void
-ips_attach(struct device *parent, struct device *self, void *aux)
+ips_attach(device_t parent, device_t self, void *aux)
 {
-	struct ips_softc *sc = (struct ips_softc *)self;
+	struct ips_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ips_ccb ccb0;
 	struct ips_adapterinfo *ai;
@@ -1042,7 +1042,7 @@ ips_scsi_ioctl(struct scsipi_channel *chan, u_long cmd, void *data,
 int
 ips_ioctl(device_t dev, u_long cmd, void *data)
 {
-	struct ips_softc *sc = (struct ips_softc *)dev;
+	struct ips_softc *sc = device_private(dev);
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl: cmd %lu\n",
 	    device_xname(sc->sc_dev), cmd));
@@ -1086,7 +1086,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	struct ips_rblstat *rblstat = &sc->sc_info->rblstat;
 	struct ips_ld *ld;
 	int vid = bv->bv_volid;
-	struct device *dv;
+	device_t dv;
 	int error, rebuild = 0;
 	u_int32_t total = 0, done = 0;
 
