@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2022/12/09 17:02:13 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10.2.1 2024/01/14 13:22:15 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ md_init_set_status(int flags)
 		set_kernel_set(SET_KERNEL_4);
 	else if (strstr(instsys.version, "(MILAN-ISAIDE"))
 		set_kernel_set(SET_KERNEL_5);
-	else if (strstr(instsys.version, "(MILAN_PCIIDE"))
+	else if (strstr(instsys.version, "(MILAN-PCIIDE"))
 		set_kernel_set(SET_KERNEL_6);
 }
 
