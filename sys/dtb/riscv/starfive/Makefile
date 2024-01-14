@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile,v 1.1 2024/01/14 07:39:25 skrll Exp $
+
+DTSSUBDIR=	starfive
+DTSMAKEVARS=	CONFIG_ARCH_STARFIVE=y
+DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTS=		${DTSFILESCMD:sh}
+
+.include <bsd.dtb.mk>
