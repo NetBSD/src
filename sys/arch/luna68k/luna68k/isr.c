@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.26 2024/01/12 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.27 2024/01/14 00:17:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.26 2024/01/12 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27 2024/01/14 00:17:46 thorpej Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -134,51 +134,6 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 }
 
 /*
- * Establish a vectored interrupt handler.
- * Called by bus interrupt establish functions.
- */
-void
-isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
-{
-	struct isr_vectored *isr;
-
-	if ((ipl < 0) || (ipl >= NISRAUTOVEC))
-		panic("isrlink_vectored: bad ipl %d", ipl);
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
-		panic("isrlink_vectored: bad vec 0x%x", vec);
-
-	isr = &isr_vectored[vec - ISRVECTORED];
-
-	if ((vectab[vec] != badtrap) || (isr->isr_func != NULL))
-		panic("isrlink_vectored: vec 0x%x not available", vec);
-
-	/* Fill in the new entry. */
-	isr->isr_func = func;
-	isr->isr_arg = arg;
-	isr->isr_ipl = ipl;
-
-	/* Hook into the vector table. */
-	vectab[vec] = intrhand_vectored;
-}
-
-/*
- * Unhook a vectored interrupt.
- */
-void
-isrunlink_vectored(int vec)
-{
-
-	if ((vec < ISRVECTORED) || (vec >= ISRVECTORED + NISRVECTORED))
-		panic("isrunlink_vectored: bad vec 0x%x", vec);
-
-	if (vectab[vec] != intrhand_vectored)
-		panic("isrunlink_vectored: not vectored interrupt");
-
-	vectab[vec] = badtrap;
-	memset(&isr_vectored[vec - ISRVECTORED], 0, sizeof(struct isr_vectored));
-}
-
-/*
  * This is the dispatcher called by the low-level
  * assembly language autovectored interrupt routine.
  */
@@ -219,42 +174,6 @@ isrdispatch_autovec(int evec)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
-	idepth--;
-}
-
-/*
- * This is the dispatcher called by the low-level
- * assembly language vectored interrupt routine.
- */
-void
-isrdispatch_vectored(int pc, int evec, void *frame)
-{
-	struct isr_vectored *isr;
-	int ipl, vec;
-
-	idepth++;
-	vec = (evec & 0xfff) >> 2;
-	ipl = (getsr() >> 8) & 7;
-
-	intrcnt[ipl]++;
-	curcpu()->ci_data.cpu_nintr++;
-
-	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
-		panic("isrdispatch_vectored: bad vec 0x%x", vec);
-	isr = &isr_vectored[vec - ISRVECTORED];
-
-	if (isr->isr_func == NULL) {
-		printf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
-		vectab[vec] = badtrap;
-		idepth--;
-		return;
-	}
-
-	/*
-	 * Handler gets exception frame if argument is NULL.
-	 */
-	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
-		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 	idepth--;
 }
 
