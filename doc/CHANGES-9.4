@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.125 2024/01/01 11:38:06 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.126 2024/01/14 15:34:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4042,4 +4042,30 @@ sys/conf/copyright				1.22
 
 	Update copyright notice for 2024.
 	[hgutch, ticket #1785]
+
+distrib/sets/lists/base/mi			1.1330
+distrib/sets/lists/man/mi			1.1768
+external/ibm-public/postfix/libexec/postfix-script/Makefile 1.2
+external/ibm-public/postfix/man/man1/Makefile	1.3
+
+	postfix: install postfix-tls-script (for "postfix tls")
+	[kim, ticket #1786]
+
+bin/sh/eval.c					1.191
+bin/sh/expand.c					1.144
+
+	sh(1): PR 57773: fix /bin/sh - expansions involving some
+	bytes in the range '\201'->'\213' were performed incorrectly.
+	[kre, ticket #1787]
+
+lib/libc/inet/inet.3				1.7
+
+	inet(3): Fix typo in description of size argument.
+	[riastradh, ticket #1788]
+
+external/bsd/iscsi/dist/src/lib/protocol.c	1.5
+
+	libiscsi: PR 57784: fix types of Time2Wait and Time2Retain in
+	logout decap.
+	[riastradh, ticket #1789]
 
