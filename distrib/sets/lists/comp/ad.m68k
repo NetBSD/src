@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.70 2023/12/27 19:22:11 thorpej Exp $
+# $NetBSD: ad.m68k,v 1.71 2024/01/14 22:32:32 thorpej Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
@@ -48,6 +48,7 @@
 ./usr/include/m68k/int_limits.h			comp-c-include
 ./usr/include/m68k/int_mwgwtypes.h		comp-c-include
 ./usr/include/m68k/int_types.h			comp-c-include
+./usr/include/m68k/intr.h			comp-c-include
 ./usr/include/m68k/kcore.h			comp-c-include
 ./usr/include/m68k/limits.h			comp-c-include
 ./usr/include/m68k/lock.h			comp-c-include
