@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.25 2016/03/04 03:02:52 dholland Exp $	*/
+/*	$NetBSD: display.c,v 1.26 2024/01/14 16:42:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.25 2016/03/04 03:02:52 dholland Exp $");
+__RCSID("$NetBSD: display.c,v 1.26 2024/01/14 16:42:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,16 +256,16 @@ get(void)
 		 */
 		if (!length || (ateof && !next())) {
 			if (need == blocksize)
-				return(NULL);
+				return NULL ;
 			if (!need && vflag != ALL &&
 			    !memcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
-				return(NULL);
+				return NULL ;
 			}
 			memset((char *)curp + nread, 0, need);
 			eaddress = address + nread;
-			return(curp);
+			return curp ;
 		}
 		n = fread((char *)curp + nread, sizeof(u_char),
 		    length == -1 ? need : MIN(length, need), stdin);
@@ -283,7 +283,7 @@ get(void)
 			    memcmp(curp, savp, blocksize)) {
 				if (vflag == DUP || vflag == FIRST)
 					vflag = WAIT;
-				return(curp);
+				return curp ;
 			}
 			if (vflag == WAIT)
 				(void)printf("*\n");
@@ -313,9 +313,11 @@ stashargv(char **argv)
  * The "done" flag doesn't mean "we are done", it means "we are done
  * once we run out of filenames".
  *
- * XXX: is there any reason not to remove the logic that inhibits
+ * Is there any reason not to remove the logic that inhibits
  * calling fstat if using stdin and not a filename? It should be safe
- * to call fstat on any fd.
+ * to call fstat on any fd. Yes, because on stdin it st_size will not
+ * convey useful information. In addition on kernfs/procfs stat might
+ * not return proper size info.
  *
  * Note: I have ruled that if there is one file on the command line
  * and it doesn't open, we should exit after complaining about it and
@@ -341,7 +343,7 @@ next(void)
 			statok = 1;
 		} else {
 			if (done++)
-				return(0);
+				return 0 ;
 			statok = 0;
 		}
 		if (skip)
@@ -349,7 +351,7 @@ next(void)
 		if (*_argv)
 			++_argv;
 		if (!skip)
-			return(1);
+			return 1 ;
 	}
 	/* NOTREACHED */
 }
@@ -362,8 +364,10 @@ doskip(const char *fname, int statok)
 
 	if (statok) {
 		if (fstat(fileno(stdin), &sb))
-			err(1, "fstat %s", fname);
-		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
+			err(EXIT_FAILURE, "fstat %s", fname);
+		/* kernfs/procfs files have dev_t == -1 */
+		if (sb.st_dev != (dev_t)-1 &&
+		    S_ISREG(sb.st_mode) && skip >= sb.st_size) {
 			address += sb.st_size;
 			skip -= sb.st_size;
 			return;
