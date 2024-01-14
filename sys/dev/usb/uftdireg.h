@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.11 2019/09/13 20:50:45 ryo Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.12 2024/01/14 12:53:41 andvar Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -8,7 +8,7 @@
  * USB on the other.
  *
  * Thanx to FTDI (http://www.ftdichip.com) for so kindly providing details
- * of the protocol required to talk to the device and ongoing assistence
+ * of the protocol required to talk to the device and ongoing assistance
  * during development.
  *
  * Bill Ryder - bryder@sgi.com of Silicon Graphics, Inc. is the original
@@ -343,7 +343,7 @@ enum {
  */
 /* FTDI_SIO_SET_BITMODE */
 #define FTDI_BITMODE_RESET   0x00 /* UART mode */
-#define FTDI_BITMODE_BITBANG 0x01 /* asynchrounous bitbang mode */
+#define FTDI_BITMODE_BITBANG 0x01 /* asynchronous bitbang mode */
 #define FTDI_BITMODE_MPSSE   0x02 /* MPSSE mode */
 #define FTDI_BITMODE_SYNCBB  0x04 /* synchronous bitbang mode */
 #define FTDI_BITMODE_MCU     0x08 /* MCU Host Bus Emulation mode */
