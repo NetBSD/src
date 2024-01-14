@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.465 2022/09/04 21:37:50 thorpej Exp $
+#       $NetBSD: Makefile,v 1.465.2.1 2024/01/14 15:17:12 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -51,7 +51,10 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	scanc.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
 	secmodel_bsd44.9 secmodel_extensions.9 \
-	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
+	secmodel_overlay.9
+MAN+=	secmodel_securelevel.9 
+MLINKS+=secmodel_securelevel.9 securelevel.9
+MAN+=	secmodel_suser.9 \
 	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 specificdata.9 \
 	spi.9 splraiseipl.9 \

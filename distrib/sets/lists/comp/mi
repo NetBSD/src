@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.2 2023/09/05 17:11:34 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.3 2024/01/14 15:17:11 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12600,6 +12600,7 @@
 ./usr/share/man/cat9/secmodel_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_securelevel.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_suser.0		comp-sys-catman		.cat
+./usr/share/man/cat9/securelevel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/seldestroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/select.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/selinit.0			comp-sys-catman		.cat
@@ -20926,6 +20927,7 @@
 ./usr/share/man/html9/secmodel_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_securelevel.html comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_suser.html	comp-sys-htmlman	html
+./usr/share/man/html9/securelevel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/seldestroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/select.html		comp-sys-htmlman	html
 ./usr/share/man/html9/selinit.html		comp-sys-htmlman	html
@@ -29441,6 +29443,7 @@
 ./usr/share/man/man9/secmodel_register.9	comp-sys-man		.man
 ./usr/share/man/man9/secmodel_securelevel.9	comp-sys-man		.man
 ./usr/share/man/man9/secmodel_suser.9		comp-sys-man		.man
+./usr/share/man/man9/securelevel.9		comp-sys-man		.man
 ./usr/share/man/man9/seldestroy.9		comp-sys-man		.man
 ./usr/share/man/man9/select.9			comp-sys-man		.man
 ./usr/share/man/man9/selinit.9			comp-sys-man		.man
