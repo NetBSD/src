@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.187 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.188 2024/01/14 11:46:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.187 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.188 2024/01/14 11:46:05 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -137,7 +137,9 @@ lockops_t _kernel_lock_ops = {
 
 #ifdef LOCKDEBUG
 
+#ifdef DDB
 #include <ddb/ddb.h>
+#endif
 
 static void
 kernel_lock_trace_ipi(void *cookie)
@@ -146,7 +148,9 @@ kernel_lock_trace_ipi(void *cookie)
 	printf("%s[%d %s]: hogging kernel lock\n", cpu_name(curcpu()),
 	    curlwp->l_lid,
 	    curlwp->l_name ? curlwp->l_name : curproc->p_comm);
+#ifdef DDB
 	db_stacktrace();
+#endif
 }
 
 #endif
