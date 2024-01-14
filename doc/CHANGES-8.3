@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.216 2024/01/01 11:40:17 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.217 2024/01/14 15:36:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4185,4 +4185,10 @@ sys/conf/copyright				1.22
 
 	Update copyright notice for 2024.
 	[hgutch, ticket #1929]
+
+external/bsd/iscsi/dist/src/lib/protocol.c	1.5
+
+	libiscsi: PR 57784: fix types of Time2Wait and Time2Retain in
+	logout decap.
+	[riastradh, ticket #1930]
 
