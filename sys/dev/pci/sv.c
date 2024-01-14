@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.61 2021/08/07 16:19:14 thorpej Exp $ */
+/*      $NetBSD: sv.c,v 1.61.6.1 2024/01/14 15:24:06 martin Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.61 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.61.6.1 2024/01/14 15:24:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;
 	arg.hdl = 0;
-	(void)config_found(self, &arg, audioprint, CFARGS_NONE);
+	(void)config_found(self, &arg, audioprint, CFARGS(.iattr = "sv"));
 
 	sc->sc_pa = *pa;	/* for deferred setup */
 	config_defer(self, sv_defer);
