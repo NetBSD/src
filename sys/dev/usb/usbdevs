@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.806.4.1 2023/02/17 17:35:26 martin Exp $
+$NetBSD: usbdevs,v 1.806.4.2 2024/01/14 15:51:05 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2363,6 +2363,7 @@ product MICROSOFT 24GHZ_XCVR10		0x071d	2.4GHz Transceiver V1.0
 product MICROSOFT 24GHZ_XCVR20		0x071f	2.4GHz Transceiver V2.0
 product MICROSOFT 24GHZ_XCVR70		0x0745	2.4GHz Transceiver V7.0
 product MICROSOFT 24GHZ_XCVR80		0x07b2	2.4GHz Transceiver V8.0
+product MICROSOFT 24GHZ_XCVR90		0x07a5	2.4GHz Transceiver V9.0
 product MICROSOFT CM6000		0x077d	Comfort Mouse 6000
 
 
