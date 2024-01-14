@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2024/01/12 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2024/01/14 17:51:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -94,7 +94,6 @@ splraiseipl(ipl_cookie_t icookie)
 typedef int (*isr_func_t)(void *);
 void isr_add_autovect(isr_func_t, void *, int);
 void isr_add_vectored(isr_func_t, void *, int, int);
-void isr_add_custom(int, void *);
 
 /*
  * Define inline functions for PSL manipulation.
