@@ -363,7 +363,7 @@ doskip(const char *fname, int statok)
 	if (statok) {
 		if (fstat(fileno(stdin), &sb))
 			err(1, "fstat %s", fname);
-		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
+		if (S_ISREG(sb.st_mode) && skip >= sb.st_size && sb.st_size > 0) {
 			address += sb.st_size;
 			skip -= sb.st_size;
 			return;
@@ -371,7 +371,7 @@ doskip(const char *fname, int statok)
 	} else
 		sb.st_mode = S_IFIFO;
 
-	if (S_ISREG(sb.st_mode)) {
+	if (S_ISREG(sb.st_mode) && sb.st_size > 0) {
 		if (fseek(stdin, skip, SEEK_SET))
 			err(1, "fseek %s", fname);
 		address += skip;
