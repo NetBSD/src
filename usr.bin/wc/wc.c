@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $	*/
+/*	$NetBSD: wc.c,v 1.36 2024/01/14 17:16:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.35 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: wc.c,v 1.36 2024/01/14 17:16:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,9 +239,11 @@ cnt(const char *file)
 				warn("%s", name);
 				rval = 1;
 			} else {
-				if (S_ISREG(sb.st_mode) ||
+				/* st_dev == -1 for kernfs/procfs files */
+				if (sb.st_dev != (dev_t)-1 &&
+				    (S_ISREG(sb.st_mode) ||
 				    S_ISLNK(sb.st_mode) ||
-				    S_ISDIR(sb.st_mode)) {
+				    S_ISDIR(sb.st_mode))) {
 					charct = sb.st_size;
 				} else {
 					while ((len =
