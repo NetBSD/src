@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.141.2.1 2024/01/14 13:15:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.141.2.1 2024/01/14 13:15:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1185,7 +1185,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	    quoted ? ", quoted" : "", subtype, flag));
 
 	if (subtype == VSLENGTH)	/* no magic required ... */
-		flag &= ~EXP_FULL;
+		flag &= ~(EXP_FULL | EXP_QNEEDED);
 
 #define STRTODEST(p) \
 	do {\
@@ -1197,7 +1197,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			} \
 		} else \
 			while (*p) { \
-				if (ISCTL(*p)) \
+				if ((flag & EXP_QNEEDED) && ISCTL(*p)) \
 					STPUTC(CTLESC, expdest); \
 				STPUTC(*p++, expdest); \
 			} \
