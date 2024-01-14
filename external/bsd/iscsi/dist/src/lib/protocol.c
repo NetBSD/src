@@ -920,8 +920,8 @@ iscsi_logout_rsp_decap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 	rsp->StatSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 24)));	/* StatSN */
 	rsp->ExpCmdSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 28)));	/* ExpCmdSN */
 	rsp->MaxCmdSN = ISCSI_NTOHL(*((uint32_t *) (void *) (header + 32)));	/* MaxCmdSN  */
-	rsp->Time2Wait = ISCSI_NTOHS(*((uint32_t *) (void *) (header + 40)));	/* Time2Wait */
-	rsp->Time2Retain = ISCSI_NTOHS(*((uint32_t *) (void *) (header + 42)));	/* Time2Retain */
+	rsp->Time2Wait = ISCSI_NTOHS(*((uint16_t *) (void *) (header + 40)));	/* Time2Wait */
+	rsp->Time2Retain = ISCSI_NTOHS(*((uint16_t *) (void *) (header + 42)));	/* Time2Retain */
 
 	errmsg = NULL;
 	(void) memset(zeros, 0x0, sizeof(zeros));
