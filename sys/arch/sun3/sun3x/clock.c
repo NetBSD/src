@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 2021/04/02 12:11:41 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.42 2024/01/14 17:51:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2021/04/02 12:11:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2024/01/14 17:51:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2021/04/02 12:11:41 rin Exp $");
 #include <machine/cpu.h>
 #include <machine/idprom.h>
 #include <machine/leds.h>
+#include <machine/vectors.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170reg.h>
@@ -387,7 +388,7 @@ cpu_initclocks(void)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isr_add_custom(CLOCK_PRI, (void *)_isr_clock);
+	vec_set_entry(VECI_INTRAV0 + CLOCK_PRI, (void *)_isr_clock);
 
 	/* Now enable the clock at level 5 in the interrupt reg. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);

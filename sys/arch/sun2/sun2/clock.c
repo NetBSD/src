@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2010/01/28 14:10:54 mbalmer Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2024/01/14 17:51:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2010/01/28 14:10:54 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2024/01/14 17:51:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2010/01/28 14:10:54 mbalmer Exp $");
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/leds.h>
+#include <machine/vectors.h>
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/enable.h>
@@ -268,7 +269,7 @@ cpu_initclocks(void)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isr_add_custom(5, (void*)_isr_clock);
+	vec_set_entry(VECI_INTRAV0 + 5, _isr_clock);
 
 	/* Now enable the clock at level 5 in the interrupt reg. */
 	set_clk_mode(0, 1);

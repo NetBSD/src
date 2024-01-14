@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.30 2024/01/14 00:00:58 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.31 2024/01/14 17:51:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.30 2024/01/14 00:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.31 2024/01/14 17:51:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,13 +72,6 @@ int idepth;
  */
 void isr_autovec (struct clockframe);
 void isr_vectored(struct clockframe);
-
-void 
-isr_add_custom(int level, void *handler)
-{
-	vec_set_entry(VECI_INTRAV0 + level, handler);
-}
-
 
 static struct isr *isr_autovec_list[NAUTOVECTORS];
 
