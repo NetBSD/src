@@ -180,9 +180,9 @@ copy_file(FTSENT *entp, int dne)
 
 	/* 
 	 * There's no reason to do anything other than close the file
-	 * now if it's regular and empty, so let's not bother.
+	 * now if it's not regular and empty, so let's not bother.
 	 */
-	bool need_copy = !S_ISREG(fs->st_mode) || fs->st_size > 0;
+	bool need_copy = S_ISREG(fs->st_mode) ? fs->st_size >= 0 : fs->st_size > 0;
 
 	struct finfo fi;
 
