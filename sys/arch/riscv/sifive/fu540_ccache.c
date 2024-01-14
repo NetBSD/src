@@ -1,4 +1,4 @@
-/*	$NetBSD: fu540_ccache.c,v 1.1 2024/01/13 17:01:58 skrll Exp $	*/
+/*	$NetBSD: fu540_ccache.c,v 1.2 2024/01/14 07:13:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fu540_ccache.c,v 1.1 2024/01/13 17:01:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fu540_ccache.c,v 1.2 2024/01/14 07:13:15 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: fu540_ccache.c,v 1.1 2024/01/13 17:01:58 skrll Exp $
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "sifive,fu540-c000-ccache" },
 	{ .compat = "sifive,fu740-c000-ccache" },
+	{ .compat = "starfive,jh7100-ccache" },
+	{ .compat = "starfive,jh7110-ccache" },
+	{ .compat = "starfive,ccache0" },
 	DEVICE_COMPAT_EOL
 };
 
