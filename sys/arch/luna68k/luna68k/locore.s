@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.75 2024/01/12 23:36:29 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.76 2024/01/14 00:17:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,8 +72,6 @@
 	.data
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
-
-#include <luna68k/luna68k/vectors.s>
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -171,35 +169,6 @@ Lstart1:
 1:	movb	%a0@+,%a1@+		| copy to bootarg
 	dbra	%d0,1b			| upto 63 characters
 
-	/*
-	 * Now that we know what CPU we have, initialize the address error
-	 * and bus error handlers in the vector table:
-	 *
-	 *	vectab+8	bus error
-	 *	vectab+12	address error
-	 */
-	lea	_C_LABEL(cputype),%a0
-	lea	_C_LABEL(vectab),%a2
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68030)
-	cmpl	#CPU_68030,%a0@		| 68030?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-	/* Config botch; no hope. */
-	PANIC("Config botch in locore")
-
-Lstart2:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
@@ -294,7 +263,8 @@ Lmotommu1:
  * Should be running mapped from this point on
  */
 Lenab1:
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -323,8 +293,6 @@ Lenab2:
 Lenab3:
 
 /* final setup for C code */
-	movl	#_C_LABEL(vectab),%d0	| get our %vbr address
-	movc	%d0,%vbr
 	jbsr	_C_LABEL(luna68k_init)	| additional pre-main initialization
 
 /*
@@ -595,8 +563,6 @@ Lbrkpt3:
  * For vectored interrupts, we pull the pc, evec, and exception frame
  * and pass them to the vectored interrupt dispatcher.  The vectored
  * interrupt dispatcher will deal with strays.
- *
- * _intrhand_vectored is the entry point for vectored interrupts.
  */
 
 ENTRY_NOPROFILE(spurintr)		/* Level 0 */
@@ -626,18 +592,6 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
-
-ENTRY_NOPROFILE(intrhand_vectored)
-	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| get pointer to frame
-	movl	%a1,%sp@-
-	movw	%sp@(26),%d0
-	movl	%d0,%sp@-		| push exception vector info
-	movl	%sp@(26),%sp@-		| and PC
-	jbsr	_C_LABEL(isrdispatch_vectored)	| call dispatcher
-	lea	%sp@(12),%sp		| pop value args
-	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
 #if 1	/* XXX wild timer -- how can I disable/enable the interrupt? */
