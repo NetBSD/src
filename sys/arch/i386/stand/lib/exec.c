@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.78.4.1 2023/05/13 13:26:57 martin Exp $	 */
+/*	$NetBSD: exec.c,v 1.78.4.2 2024/01/14 15:46:00 martin Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -108,6 +108,8 @@
 #endif
 #ifdef EFIBOOT
 #include "efiboot.h"
+#include "biosdisk.h"
+#include "efidisk.h"
 #undef DEBUG	/* XXX */
 #endif
 
@@ -498,6 +500,10 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 		goto out;
 	}
 #ifdef EFIBOOT
+	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
+	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
+	efidisk_getbiosgeom();
+
 	efi_load_start = marks[MARK_START];
 
 	/* adjust to the real load address */
