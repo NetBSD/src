@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.17 2017/07/03 21:34:20 wiz Exp $
+.\" $NetBSD: mklocale.1,v 1.17.16.1 2024/01/14 15:15:00 martin Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mklocale.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd July 15, 2013
+.Dd January 5, 2024
 .Dt MKLOCALE 1
 .Os
 .Sh NAME
@@ -210,7 +210,11 @@ is the integer value represented by
 For example, the ASCII character
 .Sq 0
 would map to the decimal value 0.
-Only values up to 255 are allowed.
+On
+.Nx ,
+this information has never been used until now.
+Only values up to 255 are allowed, and mapping to 256 and above is
+silently ignored.
 .El
 .Pp
 The following keywords may appear multiple times and have the following
