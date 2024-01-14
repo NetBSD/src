@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.185 2024/01/14 16:01:50 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.186 2024/01/14 18:06:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15205,4 +15205,9 @@ distrib/notes/hp300/hardware			1.27
 
 	Add three button trackballs (M1309A) to a supported HP-HIL device list.
 	[tsutsui, ticket #551]
+
+sys/arch/vax/vax/machdep.c			1.198
+
+	vax: set default RLIMIT_AS to the same as MAXDSIZ.
+	[mrg, ticket #552]
 
