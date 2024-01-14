@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.6 2023/12/09 13:13:48 martin Exp $
+# $NetBSD: mi,v 1.1757.2.7 2024/01/14 13:02:26 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -455,6 +455,7 @@
 ./usr/share/man/cat1/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postdrop.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postfix.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat1/postfix-tls.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postkick.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postlock.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postlog.0			man-postfix-catman	postfix,.cat
@@ -3911,6 +3912,7 @@
 ./usr/share/man/html1/postconf.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postdrop.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postfix.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html1/postfix-tls.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postkick.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postlock.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postlog.html		man-postfix-htmlman	postfix,html
@@ -7013,6 +7015,7 @@
 ./usr/share/man/man1/postconf.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postdrop.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postfix.1			man-postfix-man		postfix,.man
+./usr/share/man/man1/postfix-tls.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postkick.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postlock.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postlog.1			man-postfix-man		postfix,.man

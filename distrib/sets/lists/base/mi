@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.3 2023/09/04 17:33:29 martin Exp $
+# $NetBSD: mi,v 1.1314.2.4 2024/01/14 13:02:26 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1342,6 +1342,7 @@
 ./usr/libexec/postfix/post-install		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-files		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-tls-script	base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
 ./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/postscreen		base-postfix-bin	postfix
