@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.184 2024/01/01 14:04:52 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.185 2024/01/14 16:01:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15093,4 +15093,116 @@ sys/stand/efiboot/efinet.c			1.9
 	MI efiboot: Revert "Stop using efi_bootdp after exclusive open for PXE"
 	Move RC2 tag to include this change.
 	[rin, ticket #524]
+
+distrib/sets/lists/base/mi			1.1330
+distrib/sets/lists/man/mi			1.1768
+external/ibm-public/postfix/libexec/postfix-script/Makefile 1.2
+external/ibm-public/postfix/man/man1/Makefile	1.3
+
+	postfix: install postfix-tls-script (for "postfix tls")
+	[kim, ticket #534]
+
+bin/sh/eval.c					1.191
+bin/sh/expand.c					1.144
+
+	sh(1): PR 57773: fix /bin/sh - expansions involving some
+	bytes in the range '\201'->'\213' were performed incorrectly.
+	[kre, ticket #535]
+
+external/bsd/fetch/dist/libfetch/common.c	1.6
+
+	fetch(3): enable HTTPS certificate validation, as in pkgsrc
+	net/libfetch 2.40.
+	[riastradh, ticket #536]
+
+usr.sbin/sysinst/arch/atari/md.c		1.11
+
+	sysinst: fix a typo of a kernel name on detecting a running
+	machine type.
+	[tsutsui, ticket #537]
+
+usr.bin/mklocale/mklocale.1			1.18,1.19
+usr.bin/mklocale/yacc.y				1.35,1.36
+
+	mklocale(1): PR 57798: fix corruption in Rune attributes for
+	`numerical` characters like U+5146.
+	[rin, ticket #538]
+
+distrib/sets/lists/comp/mi			1.2452
+share/man/man9/Makefile				1.469
+
+	Install securelevel.9 as an alias of secmodel_securelevel.9.
+	[pgoyette, ticket #539]
+
+sys/net/if_tun.c				1.174
+
+	tun(4): add missing kpreempt_enable() if pktq_enqueue() fails.
+	[chs, ticket #540]
+
+sys/dev/pci/ips.c				1.7
+
+	ips(4): fix a couple of device_t/softc split bugs.
+	[chs, ticket #541]
+
+sys/dev/pci/cmpci.c				1.61
+sys/dev/pci/fms.c				1.50
+sys/dev/pci/sv.c				1.62
+sys/dev/pci/yds.c				1.69
+
+	mpu / opl: fix attachement of midi child devices.
+	[chs, ticket #542]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.130
+
+	xennet(4): PR 57743: disable TX checksum optimization.
+	[jdolecek, ticket #543]
+
+lib/libc/inet/inet.3				1.7
+
+	inet(3): Fix typo in description of size argument.
+	[riastradh, ticket #544]
+
+external/bsd/iscsi/dist/src/lib/protocol.c	1.5
+
+	libiscsi: PR 57784: fix types of Time2Wait and Time2Retain in
+	logout decap.
+	[riastradh, ticket #545]
+
+tools/gdb/Makefile				(apply patch)
+
+	gdb: PR 57841: fix MKCROSSGDB=yes build on gcc>=11.
+	(this change does not affect -current due to a different gdb version)
+	[riastradh, ticket #546]
+
+lib/libm/Makefile				1.221 (patch)
+
+	libm: Add fma(3) and friends to m68k
+	[riastradh, ticket #547]
+
+sys/arch/i386/stand/efiboot/efidisk.c		1.11
+sys/arch/i386/stand/efiboot/efidisk.h		1.4
+sys/arch/i386/stand/lib/biosdisk.c		1.61
+sys/arch/i386/stand/lib/exec.c			1.80
+
+	efiboot: fix boot from cd.
+	[mlelstv, ticket #548]
+
+sys/dev/usb/ums.c				1.105
+sys/dev/usb/usbdevs				1.813
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	ums(4): PR 57845: add workaround for Microsoft Sculpt Wireless
+	keyboard/mouse.
+	[hgutch, ticket #549]
+
+sys/arch/sun3/conf/GENERIC			1.191,1.192 (patch)
+
+	sun3: fix GENERIC, remove several pseudo-devices to shrink binary size.
+	[tsutsui, ticket #550]
+
+distrib/notes/hp300/hardware			1.27
+
+	Add three button trackballs (M1309A) to a supported HP-HIL device list.
+	[tsutsui, ticket #551]
 
