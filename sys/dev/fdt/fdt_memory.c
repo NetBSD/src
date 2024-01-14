@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.9 2024/01/12 18:06:18 skrll Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.10 2024/01/14 07:53:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.9 2024/01/12 18:06:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.10 2024/01/14 07:53:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -77,26 +77,43 @@ fdt_memory_range_free(struct fdt_memory_range *mr)
 void
 fdt_memory_get(uint64_t *pstart, uint64_t *pend)
 {
-	const int memory = OF_finddevice("/memory");
+	const void *fdt_data = fdtbus_get_data();
 	uint64_t cur_addr, cur_size;
-	int index, nadd;
+	int index, nadd = 0, off, memory;
 
-	for (index = 0, nadd = 0;
-	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
-	     index++) {
-		if (cur_size == 0)
-			continue;
-		fdt_memory_add_range(cur_addr, cur_size);
+	off = fdt_node_offset_by_prop_value(fdt_data, -1,
+	    "device_type", "memory", sizeof("memory"));
 
-		if (nadd++ == 0) {
-			*pstart = cur_addr;
-			*pend = cur_addr + cur_size;
-			continue;
+	/*
+	 * Device Tree Specification 3.2 says that memory
+	 * nodes are named "memory" and have device_type
+	 * "memory", but if the device_type is missing, try
+	 * to find the (then single) node by name.
+	 */
+	if (off == -FDT_ERR_NOTFOUND)
+		off = fdt_path_offset(fdt_data, "/memory");
+
+	while (off != -FDT_ERR_NOTFOUND) {
+		memory = fdtbus_offset2phandle(off);
+		for (index = 0;
+		     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
+		     index++) {
+			if (cur_size == 0)
+				continue;
+			fdt_memory_add_range(cur_addr, cur_size);
+
+			if (nadd++ == 0) {
+				*pstart = cur_addr;
+				*pend = cur_addr + cur_size;
+				continue;
+			}
+			if (cur_addr < *pstart)
+				*pstart = cur_addr;
+			if (cur_addr + cur_size > *pend)
+				*pend = cur_addr + cur_size;
 		}
-		if (cur_addr < *pstart)
-			*pstart = cur_addr;
-		if (cur_addr + cur_size > *pend)
-			*pend = cur_addr + cur_size;
+		off = fdt_node_offset_by_prop_value(fdt_data, off,
+		    "device_type", "memory", sizeof("memory"));
 	}
 	if (nadd == 0)
 		panic("Cannot determine memory size");
