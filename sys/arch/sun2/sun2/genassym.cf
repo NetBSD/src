@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2023/12/27 17:35:36 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.16 2024/01/14 22:34:54 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -92,6 +92,9 @@ include <dev/ic/am9513reg.h>
 
 # XXX: for copy.s
 define	M68010			1
+
+# for m68k_intr.c / m68k_intr_stubs.s
+define	__HAVE_M68K_INTR_VECTORED	1
 
 # bus error stuff
 define	BUSERR_REG			BUSERR_REG

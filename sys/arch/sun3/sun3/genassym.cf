@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2023/12/27 17:35:37 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.21 2024/01/14 22:34:54 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -92,6 +92,9 @@ include <sun3/sun3/enable.h>
 
 # XXX: for copy.s
 define	M68020			1
+
+# for m68k_intr.c / m68k_intr_stubs.s
+define	__HAVE_M68K_INTR_VECTORED	1
 
 # 68k isms
 define	PSL_LOWIPL			PSL_LOWIPL

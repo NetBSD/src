@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun68k,v 1.6 2024/01/13 18:51:38 thorpej Exp $
+#	$NetBSD: files.sun68k,v 1.7 2024/01/14 22:34:54 thorpej Exp $
 
 #
 # common sun68k configuration info
@@ -8,11 +8,12 @@
 file arch/sun68k/sun68k/autoconf.c		_sun2_	# XXX not yet merged
 file arch/sun68k/sun68k/bus.c
 file arch/sun68k/sun68k/ctrlsp.S		!_sun3x_
-file arch/sun68k/sun68k/isr.c
 file arch/sun68k/sun68k/stub.c
 
 file arch/m68k/m68k/kgdb_machdep.c 		kgdb
 file arch/m68k/m68k/procfs_machdep.c		procfs
+file arch/m68k/m68k/m68k_intr.c
+file arch/m68k/m68k/m68k_intr_stubs.s
 file arch/m68k/m68k/vectors.c
 file arch/m68k/m68k/vm_machdep.c
 
