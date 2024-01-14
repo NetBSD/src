@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.h,v 1.3 2018/04/02 09:44:18 nonaka Exp $	*/
+/*	$NetBSD: efidisk.h,v 1.3.32.1 2024/01/14 15:46:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -41,3 +41,4 @@ TAILQ_HEAD(efidiskinfo_lh, efidiskinfo);
 
 const struct efidiskinfo *efidisk_getinfo(int);
 int efidisk_get_efi_system_partition(int, int *);
+void efidisk_getbiosgeom(void);
