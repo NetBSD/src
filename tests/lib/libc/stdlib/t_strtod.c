@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.34 2015/12/22 14:19:25 christos Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.35 2024/01/14 12:44:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.34 2015/12/22 14:19:25 christos Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.35 2024/01/14 12:44:09 andvar Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -231,7 +231,7 @@ ATF_TC_BODY(strtold_nan, tc)
 ATF_TC(strtod_round);
 ATF_TC_HEAD(strtod_round, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test rouding in strtod(3)");
+	atf_tc_set_md_var(tc, "descr", "Test rounding in strtod(3)");
 }
 
 ATF_TC_BODY(strtod_round, tc)
