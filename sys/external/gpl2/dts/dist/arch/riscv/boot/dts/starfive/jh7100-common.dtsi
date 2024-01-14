@@ -606,6 +606,9 @@
 };
 
 &usb3 {
-	dr_mode = "host";
 	status = "okay";
+};
+
+&usb_cdns3 {
+	dr_mode = "host";
 };
