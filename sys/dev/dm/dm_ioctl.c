@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.56 2022/10/13 06:10:48 andvar Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.57 2024/01/14 07:56:53 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.56 2022/10/13 06:10:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.57 2024/01/14 07:56:53 mlelstv Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -209,18 +209,21 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		dm_dev_unbusy(dmv);
 		return EEXIST;
 	}
+
+	if ((dmv = dm_dev_alloc()) == NULL)
+		return ENOMEM;
+
 	cf = kmem_alloc(sizeof(*cf), KM_SLEEP);
 	cf->cf_name = dm_cd.cd_name;
 	cf->cf_atname = dm_ca.ca_name;
 	cf->cf_unit = atomic_inc_32_nv(&sc_minor_num);
 	cf->cf_fstate = FSTATE_NOTFOUND;
 	if ((devt = config_attach_pseudo(cf)) == NULL) {
+		dm_dev_free(dmv);
 		kmem_free(cf, sizeof(*cf));
 		aprint_error("Unable to attach pseudo device dm/%s\n", name);
 		return (ENOMEM);
 	}
-	if ((dmv = dm_dev_alloc()) == NULL)
-		return ENOMEM;
 
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
@@ -247,7 +250,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
-	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
+	disk_init(dmv->diskp, device_xname(devt), &dmdkdriver);
 	disk_attach(dmv->diskp);
 
 	dmv->diskp->dk_info = NULL;
