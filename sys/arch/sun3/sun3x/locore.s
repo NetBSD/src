@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2024/01/13 00:21:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2024/01/14 22:34:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -430,22 +430,6 @@ Lbrkpt2:
  *   %d0,%d1,%a0,%a1, sr, pc, vo
  */
 
-/*
- * This is the common auto-vector interrupt handler,
- * for which the CPU provides the vector=0x18+level.
- * These are installed in the interrupt vector table.
- */
-#ifdef __ELF__
-	.align	4
-#else
-	.align	2
-#endif
-GLOBAL(_isr_autovec)
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(isr_autovec)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
-
 /* clock: see clock.c */
 #ifdef __ELF__
 	.align	4
@@ -455,18 +439,6 @@ GLOBAL(_isr_autovec)
 GLOBAL(_isr_clock)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(clock_intr)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
-
-| Handler for all vectored interrupts (i.e. VME interrupts)
-#ifdef __ELF__
-	.align	4
-#else
-	.align	2
-#endif
-GLOBAL(_isr_vectored)
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(isr_vectored)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.1 2024/01/13 18:51:38 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.2 2024/01/14 22:34:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2024 The NetBSD Foundation, Inc.
@@ -42,14 +42,14 @@
 #define	MACHINE_BUSERR_HANDLER	buserr
 #define	MACHINE_ADDRERR_HANDLER	addrerr
 
-#define	MACHINE_AV0_HANDLER	_isr_autovec
-#define	MACHINE_AV1_HANDLER	_isr_autovec
-#define	MACHINE_AV2_HANDLER	_isr_autovec
-#define	MACHINE_AV3_HANDLER	_isr_autovec
-#define	MACHINE_AV4_HANDLER	_isr_autovec
-#define	MACHINE_AV5_HANDLER	_isr_autovec
-#define	MACHINE_AV6_HANDLER	_isr_autovec
-#define	MACHINE_AV7_HANDLER	_isr_autovec
+#define	MACHINE_AV0_HANDLER	intrstub_autovec
+#define	MACHINE_AV1_HANDLER	intrstub_autovec
+#define	MACHINE_AV2_HANDLER	intrstub_autovec
+#define	MACHINE_AV3_HANDLER	intrstub_autovec
+#define	MACHINE_AV4_HANDLER	intrstub_autovec
+#define	MACHINE_AV5_HANDLER	intrstub_autovec
+#define	MACHINE_AV6_HANDLER	intrstub_autovec
+#define	MACHINE_AV7_HANDLER	intrstub_autovec
 
 #endif /* _KERNEL */
 

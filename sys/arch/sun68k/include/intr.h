@@ -1,9 +1,11 @@
-/*	$NetBSD: intr.h,v 1.23 2024/01/14 17:51:16 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2024/01/14 22:34:54 thorpej Exp $	*/
 
-/*
- * Copyright (c) 2001 Matt Fredette.
- * Copyright (c) 1998 Matt Thomas.
+/*-
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,41 +15,35 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the names of the authors may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _SUN68K_INTR_H_
 #define _SUN68K_INTR_H_
 
-#include <sys/queue.h>
 #include <m68k/psl.h>
 
-/*
- * Interrupt levels.
- */
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTBIO	2
-#define	IPL_SOFTNET	3
-#define	IPL_SOFTSERIAL	4
-#define	IPL_VM		5
-#define	IPL_SCHED	6
-#define	IPL_HIGH	7
-#define	NIPL		8
+#define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTBIO		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTNET		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL3
+#define	MACHINE_PSL_IPL_VM		PSL_IPL4
+#define	MACHINE_PSL_IPL_SCHED		PSL_IPL7
+
+/* Zilog Serial hardware interrupts (hard-wired at 6) */
+#define splzs()		splserial()	/* aliased to splhigh() */
+#define	IPL_ZS		IPL_SERIAL
 
 #define _IPL_SOFT_LEVEL1	1
 #define _IPL_SOFT_LEVEL2	2
@@ -55,89 +51,33 @@
 #define _IPL_SOFT_LEVEL_MIN	1
 #define _IPL_SOFT_LEVEL_MAX	3
 
-#if defined(_KERNEL) || defined(_KMEMUSER)
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
-#endif
+#include <m68k/intr.h>
 
 #ifdef _KERNEL
 
-extern int idepth;
+/*
+ * Aliases for the legacy sun68k ISR routines.
+ */
 
-static inline bool    
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
-}       
-        
-extern const uint16_t ipl2psl_table[NIPL];
-
-typedef int ipl_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._psl);
-}
-
-/* These connect interrupt handlers. */
 typedef int (*isr_func_t)(void *);
-void isr_add_autovect(isr_func_t, void *, int);
-void isr_add_vectored(isr_func_t, void *, int, int);
 
-/*
- * Define inline functions for PSL manipulation.
- * These are as close to macros as one can get.
- * When not optimizing gcc will call the locore.s
- * functions by the same names, so breakpoints on
- * these functions will work normally, etc.
- * (See the GCC extensions info document.)
- */
+static inline void
+isr_add_autovect(isr_func_t func, void *arg, int ipl)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, (void *)0, 0, ipl, 0, 0);
+}
 
-/*
- * The rest of this is sun68k specific, because other ports may
- * need to do special things in spl0() (i.e. simulate SIR).
- * Suns have a REAL interrupt register, so spl0() and splx(s)
- * have no need to check for any simulated interrupts, etc.
- */
-
-#define spl0()  _spl0()		/* we have real software interrupts */
-#define splx(x)	_spl(x)
-
-/* IPL used by soft interrupts: netintr(), softclock() */
-#define splsoftclock()  splraise1()
-#define splsoftbio()    splraise1()
-#define splsoftnet()    splraise1()
-#define	splsoftserial()	splraise3()
-
-/*
- * Note that the VM code runs at spl7 during kernel
- * initialization, and later at spl0, so we have to 
- * use splraise to avoid enabling interrupts early.
- */
-#define splvm()         splraise4()
-
-/* Zilog Serial hardware interrupts (hard-wired at 6) */
-#define splzs()		splserial()
-#define	IPL_ZS		IPL_SERIAL
-
-/* Block out all interrupts (except NMI of course). */
-#define splhigh()       spl7()
-#define splsched()      spl7()
+static inline void
+isr_add_vectored(isr_func_t func, void *arg, int ipl, int vec)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, (void *)0, vec, ipl, 0, 0);
+}
 
 /* This returns true iff the spl given is spl0. */
 #define	is_spl0(s)	(((s) & PSL_IPL7) == 0)
 
-#endif	/* _KERNEL */
+#endif /* _KERNEL */
 
 #endif	/* _SUN68K_INTR_H */
