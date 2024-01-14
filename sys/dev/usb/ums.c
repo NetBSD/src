@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.103 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: ums.c,v 1.103.4.1 2024/01/14 15:52:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.103 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.103.4.1 2024/01/14 15:52:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -181,6 +181,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 			fixpos = 24;
 			break;
 		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR80:
+		case USB_PRODUCT_MICROSOFT_24GHZ_XCVR90:
 			fixpos = 40;
 			woffset = sc->sc_ms.hidms_loc_z.size;
 			break;
