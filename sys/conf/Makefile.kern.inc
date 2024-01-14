@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.299 2023/07/28 02:41:31 rin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.300 2024/01/14 00:39:10 gutteridge Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -249,7 +249,7 @@ SYSTEM_LD_TAIL?=	@${_MKSHECHO}
 OBJCOPY_STRIPFLAGS?=	-g
 
 # Strip some architecture-defined symbols from kernel image, while
-# keep them in netbsd.gdb.
+# keeping them in netbsd.gdb.
 .if defined(ARCH_STRIP_SYMBOLS)
 .if empty(DEBUG:M-g*)
 SYSTEM_LD_TAIL+=	&& ${OBJCOPY} -w ${ARCH_STRIP_SYMBOLS} $@
