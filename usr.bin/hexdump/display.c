@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.26 2024/01/14 16:42:58 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.27 2024/01/14 17:40:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.26 2024/01/14 16:42:58 christos Exp $");
+__RCSID("$NetBSD: display.c,v 1.27 2024/01/14 17:40:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,8 +365,7 @@ doskip(const char *fname, int statok)
 	if (statok) {
 		if (fstat(fileno(stdin), &sb))
 			err(EXIT_FAILURE, "fstat %s", fname);
-		/* kernfs/procfs files have dev_t == -1 */
-		if (sb.st_dev != (dev_t)-1 &&
+		if (sb.st_size != 0 &&
 		    S_ISREG(sb.st_mode) && skip >= sb.st_size) {
 			address += sb.st_size;
 			skip -= sb.st_size;
