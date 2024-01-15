@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2024/01/15 02:13:16 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2024/01/15 17:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -132,7 +132,15 @@ struct m68k_ih_allocfuncs {
 struct m68k_ih_allocfuncs;
 #endif /* _M68K_INTR_PRIVATE */
 
-struct evcnt;
+#include <sys/evcnt.h>
+
+#ifndef __HAVE_LEGACY_INTRCNT
+/*
+ * This is exposed here so that platform-specific interrupt handlers
+ * can access it.
+ */
+extern struct evcnt m68k_intr_evcnt[];
+#endif
 
 /*
  * Common m68k interrupt dispatch:

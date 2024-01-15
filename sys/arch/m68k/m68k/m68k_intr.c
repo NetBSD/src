@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.4 2024/01/15 02:13:16 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.5 2024/01/15 17:12:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.4 2024/01/15 02:13:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.5 2024/01/15 17:12:00 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -70,16 +70,39 @@ extern char intrstub_vectored[];
 /* A dummy event counter where interrupt stats go to die. */
 static struct evcnt bitbucket;
 
-#ifdef __HAVE_LEGACY_INTRCNT
-extern u_int intrcnt[];		/* XXX old-style statistics */
-#endif
-
 int idepth;
 
 static struct m68k_intrhand_list m68k_intrhands_autovec[NAUTOVECTORS];
 #ifdef __HAVE_M68K_INTR_VECTORED
 static struct m68k_intrhand *m68k_intrhands_vectored[NVECHANDS];
 #endif
+
+#ifdef __HAVE_LEGACY_INTRCNT
+extern u_int intrcnt[];
+#define	INTRCNT(x)	intrcnt[(x)]++
+#else
+#ifndef MACHINE_INTREVCNT_NAMES
+#define	MACHINE_INTREVCNT_NAMES						\
+	{ "spur", "lev1", "lev2", "lev3", "lev4", "lev5", "lev6", "nmi" }
+#endif
+static const char * const m68k_intr_evcnt_names[] = MACHINE_INTREVCNT_NAMES;
+__CTASSERT(__arraycount(m68k_intr_evcnt_names) == NAUTOVECTORS);
+static const char m68k_intr_evcnt_group[] = "cpu";
+
+#define	INTRCNT_INIT(x)							\
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, m68k_intr_evcnt_group,	\
+			  m68k_intr_evcnt_names[(x)])
+
+struct evcnt m68k_intr_evcnt[] = {
+	INTRCNT_INIT(0), INTRCNT_INIT(1), INTRCNT_INIT(2), INTRCNT_INIT(3),
+	INTRCNT_INIT(4), INTRCNT_INIT(5), INTRCNT_INIT(6), INTRCNT_INIT(7),
+};
+__CTASSERT(__arraycount(m68k_intr_evcnt) == NAUTOVECTORS);
+
+#undef INTRCNT_INIT
+
+#define	INTRCNT(x)	m68k_intr_evcnt[(x)].ev_count++
+#endif /* __HAVE_LEGACY_INTRCNT */
 
 const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_NONE]	 = PSL_S | PSL_IPL0,
@@ -197,13 +220,15 @@ m68k_intr_init(const struct m68k_ih_allocfuncs *allocfuncs)
 
 	for (i = 0; i < NAUTOVECTORS; i++) {
 		LIST_INIT(&m68k_intrhands_autovec[i]);
+#ifndef __HAVE_LEGACY_INTRCNT
+		evcnt_attach_static(&m68k_intr_evcnt[i]);
+#endif
 	}
 }
 
 /*
  * m68k_intr_establish --
  *	Establish an interrupt handler at the specified vector.
- *	XXX We don't do anything with isrpri yet.
  *	XXX We don't do anything with the flags yet.
  */
 void *
@@ -339,9 +364,7 @@ m68k_intr_autovec(struct clockframe frame)
 
 	idepth++;
 
-#ifdef __HAVE_LEGACY_INTRCNT
-	intrcnt[ipl]++;		/* XXX */
-#endif
+	INTRCNT(ipl);
 	curcpu()->ci_data.cpu_nintr++;
 
 	LIST_FOREACH(ih, &m68k_intrhands_autovec[ipl], ih_link) {
@@ -377,9 +400,7 @@ m68k_intr_vectored(struct clockframe frame)
 
 	idepth++;
 
-#ifdef __HAVE_LEGACY_INTRCNT
-	intrcnt[ipl]++;		/* XXX */
-#endif
+	INTRCNT(ipl);
 	curcpu()->ci_data.cpu_nintr++;
 
 #ifdef DIAGNOSTIC
@@ -394,7 +415,10 @@ m68k_intr_vectored(struct clockframe frame)
 		vec_set_entry(vec, INTR_FREEVEC);
 	}
 
-	if ((*ih->ih_func)(ih->ih_arg ? ih->ih_arg : &frame) == 0) {
+	if (__predict_true((*ih->ih_func)(ih->ih_arg ? ih->ih_arg
+						     : &frame) != 0)) {
+		ih->ih_evcnt->ev_count++;
+	} else {
 		printf("Spurious interrupt on vector=0x%0x IPL %d\n",
 		    vec, ipl);
 	}
