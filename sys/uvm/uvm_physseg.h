@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.8 2017/01/02 20:08:32 cherry Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.8.52.1 2024/01/15 14:15:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ struct	pmap_physseg * uvm_physseg_get_pmseg(uvm_physseg_t);
 #endif
 
 int uvm_physseg_get_free_list(uvm_physseg_t);
-u_int uvm_physseg_get_start_hint(uvm_physseg_t);
-bool uvm_physseg_set_start_hint(uvm_physseg_t, u_int);
+u_long uvm_physseg_get_start_hint(uvm_physseg_t);
+bool uvm_physseg_set_start_hint(uvm_physseg_t, u_long);
 
 /*
  * Functions to help walk the list of segments.

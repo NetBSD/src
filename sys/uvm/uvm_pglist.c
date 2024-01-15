@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.90 2021/12/21 08:27:49 skrll Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.90.4.1 2024/01/15 14:15:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.90 2021/12/21 08:27:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.90.4.1 2024/01/15 14:15:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,9 @@ static int
 uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
     paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
-	signed int candidate, limit, candidateidx, end, idx, skip;
-	int pagemask;
+	long candidate, limit, candidateidx, end, idx;
+	int skip;
+	long pagemask;
 	bool second_pass;
 #ifdef DEBUG
 	paddr_t idxpa, lastidxpa;
@@ -138,9 +139,9 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	 * succeeded.
 	 */
 	alignment = atop(alignment);
-	candidate = roundup2(uimax(low, uvm_physseg_get_avail_start(psi) +
+	candidate = roundup2(ulmax(low, uvm_physseg_get_avail_start(psi) +
 		uvm_physseg_get_start_hint(psi)), alignment);
-	limit = uimin(high, uvm_physseg_get_avail_end(psi));
+	limit = ulmin(high, uvm_physseg_get_avail_end(psi));
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
 	second_pass = false;
@@ -162,8 +163,8 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 			 * is were we started.
 			 */
 			second_pass = true;
-			candidate = roundup2(uimax(low, uvm_physseg_get_avail_start(psi)), alignment);
-			limit = uimin(limit, uvm_physseg_get_avail_start(psi) +
+			candidate = roundup2(ulmax(low, uvm_physseg_get_avail_start(psi)), alignment);
+			limit = ulmin(limit, uvm_physseg_get_avail_start(psi) +
 			    uvm_physseg_get_start_hint(psi));
 			skip = 0;
 			continue;
@@ -200,7 +201,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 		 * Found a suitable starting page.  See if the range is free.
 		 */
 #ifdef PGALLOC_VERBOSE
-		printf("%s: psi=%d candidate=%#x end=%#x skip=%#x, align=%#"PRIxPADDR,
+		printf("%s: psi=%d candidate=%#lx end=%#lx skip=%#x, align=%#"PRIxPADDR,
 		    __func__, psi, candidateidx, end, skip, alignment);
 #endif
 		/*
@@ -283,7 +284,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	    uvm_physseg_get_avail_start(psi));
 	KASSERTMSG(uvm_physseg_get_start_hint(psi) <=
 	    uvm_physseg_get_avail_end(psi) - uvm_physseg_get_avail_start(psi),
-	    "%x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    "%lx %lu (%#lx) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
 	    candidate + num,
 	    uvm_physseg_get_start_hint(psi), uvm_physseg_get_start_hint(psi),
 	    uvm_physseg_get_avail_end(psi), uvm_physseg_get_avail_start(psi),
@@ -523,7 +524,8 @@ static int
 uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
     struct pglist *rlist)
 {
-	int todo, limit, candidate;
+	int todo;
+	long limit, candidate;
 	struct vm_page *pg;
 	bool second_pass;
 #ifdef PGALLOC_VERBOSE
@@ -546,9 +548,9 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 		return -1;
 
 	todo = num;
-	candidate = uimax(low, uvm_physseg_get_avail_start(psi) +
+	candidate = ulmax(low, uvm_physseg_get_avail_start(psi) +
 	    uvm_physseg_get_start_hint(psi));
-	limit = uimin(high, uvm_physseg_get_avail_end(psi));
+	limit = ulmin(high, uvm_physseg_get_avail_end(psi));
 	pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
 	second_pass = false;
 
@@ -560,8 +562,8 @@ again:
 				break;
 			}
 			second_pass = true;
-			candidate = uimax(low, uvm_physseg_get_avail_start(psi));
-			limit = uimin(limit, uvm_physseg_get_avail_start(psi) +
+			candidate = ulmax(low, uvm_physseg_get_avail_start(psi));
+			limit = ulmin(limit, uvm_physseg_get_avail_start(psi) +
 			    uvm_physseg_get_start_hint(psi));
 			pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
 			goto again;
@@ -571,11 +573,11 @@ again:
 			paddr_t cidx = 0;
 			const uvm_physseg_t bank = uvm_physseg_find(candidate, &cidx);
 			KDASSERTMSG(bank == psi,
-			    "uvm_physseg_find(%#x) (%"PRIxPHYSSEG ") != psi %"PRIxPHYSSEG,
+			    "uvm_physseg_find(%#lx) (%"PRIxPHYSSEG ") != psi %"PRIxPHYSSEG,
 			     candidate, bank, psi);
 			KDASSERTMSG(cidx == candidate - uvm_physseg_get_start(psi),
-			    "uvm_physseg_find(%#x): %#"PRIxPADDR" != off %"PRIxPADDR,
-			     candidate, cidx, candidate - uvm_physseg_get_start(psi));
+			    "uvm_physseg_find(%#lx): %#"PRIxPADDR" != off %"PRIxPADDR,
+			     candidate, cidx, (paddr_t)candidate - uvm_physseg_get_start(psi));
 		}
 #endif
 		if (VM_PAGE_IS_FREE(pg) == 0)
@@ -594,7 +596,7 @@ again:
 	uvm_physseg_set_start_hint(psi, candidate + 1 - uvm_physseg_get_avail_start(psi));
 	KASSERTMSG(uvm_physseg_get_start_hint(psi) <= uvm_physseg_get_avail_end(psi) -
 	    uvm_physseg_get_avail_start(psi),
-	    "%#x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    "%#lx %lu (%#lx) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
 	    candidate + 1,
 	    uvm_physseg_get_start_hint(psi),
 	    uvm_physseg_get_start_hint(psi),
