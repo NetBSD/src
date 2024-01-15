@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.28 2023/07/11 11:09:13 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2024/01/15 00:35:23 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Minoura Makoto and Jason R. Thorpe.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,81 +30,17 @@
  */
 
 #ifndef _NEWS68K_INTR_H_
-#define	_NEWS68K_INTR_H_
+#define _NEWS68K_INTR_H_
 
-#include <sys/types.h>
+#include <m68k/psl.h>
 
-#include <sys/evcnt.h>
-#include <sys/queue.h>
-#include <sys/stdbool.h>
+#define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL2
+#define	MACHINE_PSL_IPL_SOFTBIO		PSL_IPL2
+#define	MACHINE_PSL_IPL_SOFTNET		PSL_IPL2
+#define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL2
+#define	MACHINE_PSL_IPL_VM		PSL_IPL5
+#define	MACHINE_PSL_IPL_SCHED		PSL_IPL7
 
-#include <machine/psl.h>
+#include <m68k/intr.h>
 
-#include <m68k/asm_single.h>
-
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTBIO	2
-#define	IPL_SOFTNET	3
-#define	IPL_SOFTSERIAL	4
-#define	IPL_VM		5
-#define	IPL_SCHED	6
-#define	IPL_HIGH	7
-#define	NIPL		8
-
-extern int idepth;
-
-static __inline bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
-}
-
-extern const uint16_t ipl2psl_table[NIPL];
-
-typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
-
-#ifdef _KERNEL
-
-static __inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
-}
-
-static __inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._psl);
-}
-
-static __inline void
-splx(int sr)
-{
-
-	__asm volatile("movw %0,%%sr" : : "di" (sr));
-}
-
-/*
- * news68k can handle software interrupts by its own hardware
- * so has no need to check for any simulated interrupts, etc.
- */
-#define	spl0()		_spl0()
-
-#define	splsoftbio()	splraise2()
-#define	splsoftclock()	splraise2()
-#define	splsoftnet()	splraise2()
-#define	splsoftserial()	splraise2()
-#define	splvm()		splraise5()
-#define	splhigh()	spl7()
-#define	splsched()	spl7()
-
-#endif
-
-#endif /* _NEWS68K_INTR_H_ */
+#endif	/* _NEWS68K_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.19 2011/11/22 14:31:02 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.20 2024/01/15 00:35:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.19 2011/11/22 14:31:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.20 2024/01/15 00:35:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.19 2011/11/22 14:31:02 tsutsui Exp $"
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/vectors.h>
 
 #include <dev/clock_subr.h>
 
@@ -62,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.19 2011/11/22 14:31:02 tsutsui Exp $"
 static int timer_hb_match(device_t, cfdata_t, void *);
 static void timer_hb_attach(device_t, device_t, void *);
 static void timer_hb_initclocks(int, int);
-void clock_intr(struct clockframe *);
+void clock_intr(struct clockframe);
 
 static inline void leds_intr(void);
 
@@ -113,7 +114,7 @@ timer_hb_attach(device_t parent, device_t self, void *aux)
 	timer_config(timer_hb_initclocks);
 
 #if 0 /* XXX this will be done in timer_hb_initclocks() */
-	isrlink_custom(ha->ha_ipl, (void *)_isr_clock);
+	vec_set_entry(VECI_INTRAV0 + ha->ha_ipl, _isr_clock);
 #endif
 }
 
@@ -130,7 +131,7 @@ timer_hb_initclocks(int prof, int stat)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isrlink_custom(TIMER_LEVEL, (void *)_isr_clock);
+	vec_set_entry(VECI_INTRAV0 + TIMER_LEVEL, _isr_clock);
 
 	/* enable the clock */
 	*ctrl_timer = 1;
@@ -144,7 +145,7 @@ timer_hb_initclocks(int prof, int stat)
  * from sun3/sun3x/clock.c -tsutsui
  */
 void
-clock_intr(struct clockframe *cf)
+clock_intr(struct clockframe cf)
 {
 #ifdef	LED_IDLE_CHECK
 	extern char _Idle[];	/* locore.s */
@@ -162,7 +163,7 @@ clock_intr(struct clockframe *cf)
 		leds_intr();
 
 	/* Call common clock interrupt handler. */
-	hardclock(cf);
+	hardclock(&cf);
 	curcpu()->ci_data.cpu_nintr++;
 }
 
