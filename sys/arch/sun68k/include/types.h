@@ -1,8 +1,7 @@
-/*	$NetBSD: types.h,v 1.2 2024/01/14 22:34:54 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2024/01/15 17:40:35 thorpej Exp $	*/
 
 #include <m68k/types.h>
 
-#define	__HAVE_LEGACY_INTRCNT
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_MMAP

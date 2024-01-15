@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2024/01/14 22:34:54 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2024/01/15 17:40:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 #define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL3
 #define	MACHINE_PSL_IPL_VM		PSL_IPL4
 #define	MACHINE_PSL_IPL_SCHED		PSL_IPL7
+
+#define	MACHINE_INTREVCNT_NAMES						\
+	{ "spur", "lev1", "lev2", "lev3", "lev4", "clock", "lev6", "nmi" }
 
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
 #define splzs()		splserial()	/* aliased to splhigh() */

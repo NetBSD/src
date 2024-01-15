@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 2024/01/14 22:34:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 2024/01/15 17:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -410,25 +410,6 @@ GLOBAL(_isr_clock)
 	jbsr	_C_LABEL(clock_intr)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
-
-/* interrupt counters (needed by vmstat) */
-GLOBAL(intrnames)
-	.asciz	"spur"	| 0
-	.asciz	"lev1"	| 1
-	.asciz	"lev2"	| 2
-	.asciz	"lev3"	| 3
-	.asciz	"lev4"	| 4
-	.asciz	"clock"	| 5
-	.asciz	"lev6"	| 6
-	.asciz	"nmi"	| 7
-GLOBAL(eintrnames)
-
-	.data
-	.even
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
-	.text
 
 /*
  * Emulation of VAX REI instruction.
