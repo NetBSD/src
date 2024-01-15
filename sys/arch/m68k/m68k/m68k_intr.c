@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.3 2024/01/15 00:37:08 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.4 2024/01/15 02:13:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.3 2024/01/15 00:37:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.4 2024/01/15 02:13:16 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -208,7 +208,7 @@ m68k_intr_init(const struct m68k_ih_allocfuncs *allocfuncs)
  */
 void *
 m68k_intr_establish(int (*func)(void *), void *arg, struct evcnt *ev,
-    int vec, int ipl, int isrpri __unused, int flags __unused)
+    int vec, int ipl, int isrpri, int flags __unused)
 {
 	struct m68k_intrhand *ih;
 	int s;
@@ -242,6 +242,7 @@ m68k_intr_establish(int (*func)(void *), void *arg, struct evcnt *ev,
 	ih->ih_arg = arg;
 	ih->ih_vec = vec;
 	ih->ih_ipl = ipl;
+	ih->ih_isrpri = isrpri;
 	if ((ih->ih_evcnt = ev) == NULL) {
 		ih->ih_evcnt = &bitbucket;
 	}
@@ -260,8 +261,32 @@ m68k_intr_establish(int (*func)(void *), void *arg, struct evcnt *ev,
 	}
 #endif
 
+	/*
+	 * Some devices are particularly sensitive to interrupt
+	 * handling latency.  Unbuffered serial ports, for example,
+	 * can lose data if their interrupts aren't handled with
+	 * reasonable speed.  For this reason, we sort interrupt
+	 * handlers by an abstract "ISR" priority, inserting higher-
+	 * priority interrupts before lower-priority interrupts.
+	 */
+	struct m68k_intrhand_list * const list = &m68k_intrhands_autovec[ipl];
+	struct m68k_intrhand *curih;
+
 	s = splhigh();
-	LIST_INSERT_HEAD(&m68k_intrhands_autovec[ipl], ih, ih_link);
+	if (LIST_EMPTY(list)) {
+		LIST_INSERT_HEAD(list, ih, ih_link);
+		goto done;
+	}
+	for (curih = LIST_FIRST(list);
+	     LIST_NEXT(curih, ih_link) != NULL;
+	     curih = LIST_NEXT(curih, ih_link)) {
+		if (ih->ih_isrpri > curih->ih_isrpri) {
+			LIST_INSERT_BEFORE(curih, ih, ih_link);
+			goto done;
+		}
+	}
+	LIST_INSERT_AFTER(curih, ih, ih_link);
+ done:
 	splx(s);
 
 	return ih;
