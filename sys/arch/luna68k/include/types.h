@@ -1,5 +1,3 @@
-/*	$NetBSD: types.h,v 1.9 2022/07/05 15:37:13 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2024/01/15 20:10:33 thorpej Exp $	*/
 
 #include <m68k/types.h>
-
-#define	__HAVE_LEGACY_INTRCNT
