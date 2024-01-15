@@ -1,13 +1,11 @@
-/*	$NetBSD: intr.h,v 1.15 2023/07/11 10:55:02 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2024/01/15 03:07:14 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,95 +15,32 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machparam.h 1.16 92/12/20$
- *
- *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CESFIC_INTR_H_
-#define _CESFIC_INTR_H_
+#ifndef _LUNA68K_INTR_H_
+#define _LUNA68K_INTR_H_
 
-/*
- * spl functions; all but spl0 are done in-line
- */
-#include <machine/psl.h>
+#include <m68k/psl.h>
 
-#if (defined(_KERNEL) || defined(_KMEMUSER)) && !defined(_LOCORE)
+#define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTBIO		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTNET		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL1
+#define	MACHINE_PSL_IPL_VM		PSL_IPL4
+#define	MACHINE_PSL_IPL_SCHED		PSL_IPL6
 
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
+#include <m68k/intr.h>
 
-#endif
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-/* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-
-/* These spl calls are used by machine-independent code. */
-#define splsoftclock()	splraise1()
-#define splsoftbio()	splraise1()
-#define splsoftnet()	splraise1()
-#define splsoftserial()	splraise1()
-#define splvm()		splraise4()
-#define splsched()	spl6()
-#define splhigh()	spl7()
-
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
-
-int	spl0(void);
-
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTBIO	1
-#define	IPL_SOFTNET	3
-#define	IPL_SOFTSERIAL	4
-#define	IPL_VM		5
-#define	IPL_SCHED	6
-#define	IPL_HIGH	7
-#define	NIPL		8
-
-extern const uint16_t ipl2psl_table[NIPL];
-
-typedef int ipl_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._psl);
-}
-
-#endif /* _KERNEL && !_LOCORE */
-
-#endif /* !_CESFIC_INTR_H_ */
+#endif	/* _LUNA68K_INTR_H */

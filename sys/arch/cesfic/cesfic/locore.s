@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 2024/01/15 02:40:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 2024/01/15 03:07:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -613,15 +613,6 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
-	INTERRUPT_SAVEREG
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	jbsr	_C_LABEL(isrdispatch)	| call dispatch routine
-	addql	#4,%sp
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
-
 ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	INTERRUPT_SAVEREG
 	/* XXX */
@@ -631,7 +622,7 @@ ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	btst #2, %d0
 	jeq 1f
 	addql	#1,_C_LABEL(intrcnt)+24
-	lea	%sp@(16), %a1		| a1 = &clockframe
+	lea	%sp@(0), %a1		| a1 = &clockframe
 	movl	%a1, %sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4, %sp
