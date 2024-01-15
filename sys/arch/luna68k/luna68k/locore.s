@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.78 2024/01/15 19:30:15 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.79 2024/01/15 20:10:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -555,7 +555,7 @@ Lbrkpt3:
  */
 
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
-	addql	#1,_C_LABEL(intrcnt)+32
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+NMI_INTRCNT
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
 	movl	%usp,%a0		| and save
@@ -580,7 +580,7 @@ ENTRY_NOPROFILE(lev5intr)
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
-	addql	#1,_C_LABEL(intrcnt)+20
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+CLOCK_INTRCNT
 	INTERRUPT_RESTOREREG
 1:
 	subql	#1,_C_LABEL(idepth)
@@ -830,19 +830,3 @@ GLOBAL(intiobase_phys)
 	.long	0		| PA of board's I/O registers
 GLOBAL(intiotop_phys)
 	.long	0		| PA of top of board's I/O registers
-
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"scsi"
-	.asciz	"network"
-	.asciz	"lev4"
-	.asciz	"clock"
-	.asciz	"serial"
-	.asciz	"nmi"
-	.asciz	"statclock"
-GLOBAL(eintrnames)
-	.even
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
