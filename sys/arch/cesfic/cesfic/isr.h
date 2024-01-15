@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.h,v 1.4 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: isr.h,v 1.5 2024/01/15 03:07:14 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,41 +29,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _LUNA68K_ISR_H_
+#define	_LUNA68K_ISR_H_
+
+#include <sys/intr.h>
 
 /*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
+ * Aliases for the legacy cesfic ISR routines.
  */
-#define ISRLOC		0x18
-#define NISR		8
 
-struct isr {
-	LIST_ENTRY(isr) isr_link;
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-};
+static inline void
+isrinit(void)
+{
+	m68k_intr_init(NULL);
+}
 
-/*
- * ISR priorities.  These are not the same as interrupt levels.
- * These serve 2 purposes:
- *	- properly order ISRs in the list
- *	- compute levels for spl*() calls.
- */
-#define ISRPRI_BIO		0
-#define ISRPRI_NET		1
-#define ISRPRI_TTY		2
-#define ISRPRI_TTYNOBUF		3
+static inline void *
+isrlink(int (*func)(void *), void *arg, int ipl, int isrpri)
+{
+	return m68k_intr_establish(func, arg, NULL, 0, ipl, isrpri, 0);
+}
 
-/*
- * Convert PSL values to IPLs and vice-versa.
- */
-#define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
-#define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
-
-void	isrinit(void);
-void	*isrlink(int (*)(void *), void *, int, int);
-void	isrunlink(void *);
-void	isrdispatch(int);
+#endif /* _LUNA68K_ISR_H_ */
