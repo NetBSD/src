@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.h,v 1.9 2024/01/14 23:01:43 thorpej Exp $	*/
+/*	$NetBSD: isr.h,v 1.10 2024/01/15 00:35:24 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,35 +29,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _NEWS68k_ISR_H_
+#define	_NEWS68k_ISR_H_
+
+#include <sys/intr.h>
 
 /*
- * Autovectored interrupt handler cookie.
+ * Aliases for the legacy news68k ISR routines.
  */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int  (*isr_func)(void *);
-	void *isr_arg;
-	int  isr_ipl;
-	int  isr_priority;
-};
 
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
+static inline void
+isrinit(void)
+{
+	m68k_intr_init(NULL);
+}
 
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int  (*isr_func)(void *);
-	void *isr_arg;
-	int  isr_ipl;
-};
+static inline void
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int isrpri)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, NULL, 0, ipl, isrpri, 0);
+}
 
-void isrinit(void);
-void isrlink_autovec(int (*)(void *), void *, int, int);
-void isrlink_vectored(int (*)(void *), void *, int, int);
-void isrunlink_vectored(int);
-void isrdispatch_autovec(int);
-void isrdispatch_vectored(int, int, void *);
+static inline void
+isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, NULL, vec, ipl, 0, 0);
+}
+
+static inline void
+isrunlink_vectored(int vec)
+{
+	/* XXX isrlink_*() functions should return handle. */
+	panic("isrunlink_vectored");
+}
+
+#endif /* _NEWS68k_ISR_H_ */

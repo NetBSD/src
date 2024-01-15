@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2024/01/09 04:16:26 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.35 2024/01/15 00:35:24 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -73,6 +73,8 @@ define	M68040			1
 endif
 
 define	M68K_MMU_MOTOROLA	1
+
+define	__HAVE_M68K_INTR_VECTORED 1
 
 # values for fputype
 define	FPU_NONE		FPU_NONE
