@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.66 2024/01/14 17:51:16 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.67 2024/01/15 17:40:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,13 +83,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.66 2024/01/14 17:51:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67 2024/01/15 17:40:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -108,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.66 2024/01/14 17:51:16 thorpej Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170reg.h>
 #include <dev/ic/intersil7170var.h>
-
-extern u_int intrcnt[];
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
@@ -317,7 +316,7 @@ clock_intr(struct clockframe cf)
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
 
-	intrcnt[CLOCK_PRI]++;
+	m68k_intr_evcnt[CLOCK_PRI].ev_count++;
 	curcpu()->ci_data.cpu_nintr++;
 
 	{ /* Entertainment! */

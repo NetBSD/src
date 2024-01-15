@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2024/01/14 17:51:16 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 2024/01/15 17:40:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2024/01/14 17:51:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2024/01/15 17:40:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2024/01/14 17:51:16 thorpej Exp $");
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
-
-extern u_int intrcnt[];
 
 #define SUN3_470	Yes
 
@@ -443,7 +441,7 @@ clock_intr(struct clockframe cf)
 	}
 #endif	/* SUN3_470 */
 
-	intrcnt[CLOCK_PRI]++;
+	m68k_intr_evcnt[CLOCK_PRI].ev_count++;
 	curcpu()->ci_data.cpu_nintr++;
 
 	/* Entertainment! */
