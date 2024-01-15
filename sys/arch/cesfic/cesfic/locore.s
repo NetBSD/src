@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 2024/01/15 03:07:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 2024/01/15 19:11:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -607,7 +607,7 @@ Lbrkpt2:
  */
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	addql	#1,_C_LABEL(intrcnt)+0
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+SPUR_INTRCNT
 	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
@@ -621,7 +621,7 @@ ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	movl %d0, %a0@
 	btst #2, %d0
 	jeq 1f
-	addql	#1,_C_LABEL(intrcnt)+24
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+CLOCK_INTRCNT
 	lea	%sp@(0), %a1		| a1 = &clockframe
 	movl	%a1, %sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
@@ -636,7 +636,7 @@ ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
-	addql	#1,_C_LABEL(intrcnt)+28
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+NMI_INTRCNT
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
 	movl	%usp,%a0			| and save
@@ -844,19 +844,3 @@ fulltflush:
 fullcflush:
 	.long	0
 #endif
-
-/* interrupt counters */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"clock"
-	.asciz	"nmi"
-GLOBAL(eintrnames)
-	.even
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
