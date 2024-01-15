@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.h,v 1.5 2024/01/14 00:17:46 thorpej Exp $	*/
+/*	$NetBSD: isr.h,v 1.6 2024/01/15 02:16:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,54 +29,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _LUNA68K_ISR_H_
+#define	_LUNA68K_ISR_H_
+
+#include <sys/intr.h>
 
 /*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
+ * Aliases for the legacy luna68k ISR routines.
  */
-#define ISRAUTOVEC	0x18
-#define NISRAUTOVEC	8
 
-/*
- * The location and size of the vectored interrupt portion
- * of the vector table.
- */
-#define ISRVECTORED	0x40
-#define NISRVECTORED	192
+static inline void
+isrinit(void)
+{
+	m68k_intr_init(NULL);
+}
 
-/*
- * Autovectored interrupt handler cookie.
- */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-};
+static inline void
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int isrpri)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, NULL, 0, ipl, isrpri, 0);
+}
 
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
-
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-};
-
-/*
- * Autovectored ISR priorities.  These are not the same as interrupt levels.
- */
-#define ISRPRI_BIO		0
-#define ISRPRI_NET		1
-#define ISRPRI_TTY		2
-#define ISRPRI_TTYNOBUF		3
-
-void	isrinit(void);
-void	isrlink_autovec(int (*)(void *), void *, int, int);
-void	isrdispatch_autovec(int);
+#endif /* _LUNA68K_ISR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.76 2024/01/14 00:17:46 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.77 2024/01/15 02:16:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -552,17 +552,6 @@ Lbrkpt3:
 
 /*
  * Interrupt handlers.
- *
- * For auto-vectored interrupts, the CPU provides the
- * vector 0x18+level.  Note we count spurious interrupts,
- * but don't do anything else with them.
- *
- * _intrhand_autovec is the entry point for auto-vectored
- * interrupts.
- *
- * For vectored interrupts, we pull the pc, evec, and exception frame
- * and pass them to the vectored interrupt dispatcher.  The vectored
- * interrupt dispatcher will deal with strays.
  */
 
 ENTRY_NOPROFILE(spurintr)		/* Level 0 */
@@ -571,15 +560,6 @@ ENTRY_NOPROFILE(spurintr)		/* Level 0 */
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
-	INTERRUPT_SAVEREG
-	movw	%sp@(22),%sp@-		| push exception vector
-	clrw	%sp@-
-	jbsr	_C_LABEL(isrdispatch_autovec)	| call dispatcher
-	addql	#4,%sp
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 	addql	#1,_C_LABEL(intrcnt)+32
@@ -603,7 +583,7 @@ ENTRY_NOPROFILE(lev5intr)
 	tstl	_C_LABEL(clock_enable)	| is hardclock() available?
 	jeq	1f
 	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| %a1 = &clockframe
+	lea	%sp@(0),%a1		| %a1 = &clockframe
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
@@ -616,7 +596,7 @@ ENTRY_NOPROFILE(lev5intr)
 					| XP device has also lev5 intr,
 					| routing to autovec
 	subql	#1,_C_LABEL(idepth)
-	jbra	_ASM_LABEL(intrhand_autovec)
+	jbra	_C_LABEL(intrstub_autovec)
 #endif
 
 /*
