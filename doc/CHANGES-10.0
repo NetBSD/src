@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.187 2024/01/15 14:17:04 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.188 2024/01/15 16:13:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15224,4 +15224,10 @@ sys/uvm/uvm_physseg.h				1.9
 	uvm: PR 57683: change type of uvm_physseg.start_hint from u_int
 	to u_long.
 	[tnn, ticket #554]
+
+usr.bin/ftp/fetch.c				1.237,1.238
+
+	ftp(1): fix HTTPS through Proxy.
+	Avoid confusing message when downloading empty files.
+	[mlelstv, ticket #555]
 
