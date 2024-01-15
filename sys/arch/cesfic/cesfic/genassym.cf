@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2024/01/09 04:16:24 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.22 2024/01/15 19:11:31 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -38,6 +38,7 @@ include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/device.h>
+include <sys/intr.h>
 
 include <uvm/uvm_extern.h>
 
@@ -104,8 +105,14 @@ define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
+# event counter
+define	EVCNT_COUNT		offsetof(struct evcnt, ev_count)
+
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	SPUR_INTRCNT		((sizeof(struct evcnt)*0) + offsetof(struct evcnt, ev_count32))
+define	CLOCK_INTRCNT		((sizeof(struct evcnt)*6) + offsetof(struct evcnt, ev_count32))
+define	NMI_INTRCNT		((sizeof(struct evcnt)*7) + offsetof(struct evcnt, ev_count32))
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
@@ -175,6 +182,3 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 # errno
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
-
-# event counter
-define	EVCNT_COUNT		offsetof(struct evcnt, ev_count)
