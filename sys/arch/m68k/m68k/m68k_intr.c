@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.6 2024/01/15 18:47:03 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.7 2024/01/15 19:27:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.6 2024/01/15 18:47:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.7 2024/01/15 19:27:16 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -110,6 +110,24 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_HIGH]	 = PSL_S | PSL_IPL7,
 };
 
+/*
+ * m68k_spurintr --
+ *	Interrupt handler for the "spurious interrupt" that comes in
+ *	on auto-vector level 0.  All we do is claim it; it gets counted
+ *	during the normal course of auto-vector interrupt handling.
+ */
+static int
+m68k_spurintr(void *arg)
+{
+	return 1;
+}
+
+static struct m68k_intrhand m68k_spurintr_ih = {
+	.ih_func  = m68k_spurintr,
+	.ih_arg   = m68k_spurintr,
+	.ih_evcnt = &bitbucket,
+};
+
 static struct m68k_intrhand *
 m68k_ih_stdalloc(int km_flag)
 {
@@ -140,7 +158,9 @@ static void
 m68k_ih_free(struct m68k_intrhand *ih)
 {
 	KASSERT(ih_allocfuncs != NULL);
-	ih_allocfuncs->free(ih);
+	if (__predict_true(ih != &m68k_spurintr_ih)) {
+		ih_allocfuncs->free(ih);
+	}
 }
 
 #ifdef __HAVE_M68K_INTR_VECTORED
@@ -219,6 +239,8 @@ m68k_intr_init(const struct m68k_ih_allocfuncs *allocfuncs)
 		evcnt_attach_static(&m68k_intr_evcnt[i]);
 #endif
 	}
+	LIST_INSERT_HEAD(&m68k_intrhands_autovec[0],
+	    &m68k_spurintr_ih, ih_link);
 }
 
 /*
