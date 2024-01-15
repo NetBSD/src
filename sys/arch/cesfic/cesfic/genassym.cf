@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2024/01/15 19:11:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.23 2024/01/15 19:28:06 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -110,7 +110,6 @@ define	EVCNT_COUNT		offsetof(struct evcnt, ev_count)
 
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
-define	SPUR_INTRCNT		((sizeof(struct evcnt)*0) + offsetof(struct evcnt, ev_count32))
 define	CLOCK_INTRCNT		((sizeof(struct evcnt)*6) + offsetof(struct evcnt, ev_count32))
 define	NMI_INTRCNT		((sizeof(struct evcnt)*7) + offsetof(struct evcnt, ev_count32))
 
