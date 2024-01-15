@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2024/01/15 17:12:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2024/01/15 18:47:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -134,13 +134,27 @@ struct m68k_ih_allocfuncs;
 
 #include <sys/evcnt.h>
 
-#ifndef __HAVE_LEGACY_INTRCNT
+#ifdef __HAVE_LEGACY_INTRCNT
+#define	m68k_count_intr(x)						\
+do {									\
+	extern u_int intrcnt[];						\
+	intrcnt[(x)]++;							\
+	curcpu()->ci_data.cpu_nintr++;					\
+} while (/*CONSTCOND*/0)
+#else
 /*
  * This is exposed here so that platform-specific interrupt handlers
  * can access it.
  */
 extern struct evcnt m68k_intr_evcnt[];
-#endif
+
+#define	m68k_count_intr(x)						\
+do {									\
+	/* 32-bit counter should be sufficient for m68k. */		\
+	m68k_intr_evcnt[(x)].ev_count32++;				\
+	curcpu()->ci_data.cpu_nintr++;					\
+} while (/*CONSTCOND*/0)
+#endif /* __HAVE_LEGACY_INTRCNT */
 
 /*
  * Common m68k interrupt dispatch:

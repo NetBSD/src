@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67 2024/01/15 17:40:35 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.68 2024/01/15 18:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67 2024/01/15 17:40:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2024/01/15 18:47:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,8 +316,7 @@ clock_intr(struct clockframe cf)
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
 
-	m68k_intr_evcnt[CLOCK_PRI].ev_count++;
-	curcpu()->ci_data.cpu_nintr++;
+	m68k_count_intr(CLOCK_PRI);
 
 	{ /* Entertainment! */
 #ifdef	LED_IDLE_CHECK
