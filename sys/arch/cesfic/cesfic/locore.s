@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 2024/01/09 07:28:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 2024/01/15 02:40:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -107,10 +107,7 @@ GLOBAL(kernel_text)
 	.space	PAGE_SIZE
 ASLOCAL(tmpstk)
 
-#include <cesfic/cesfic/vectors.s>
-
 	.text
-
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
@@ -323,15 +320,14 @@ Lenab1:
 	nop
 	nop
 	nop
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
 	moveq	#0,%d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0006		| movc d0,dtt0
 	.long	0x4e7b0007		| movc d0,dtt1
 
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */

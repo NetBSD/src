@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.19 2024/01/09 04:16:24 thorpej Exp $
+#	$NetBSD: files.cesfic,v 1.20 2024/01/15 02:40:52 thorpej Exp $
 #
 # cesfic-specific configuration info
 
@@ -63,6 +63,7 @@ file	arch/m68k/m68k/mmu_subr.s
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
