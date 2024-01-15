@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.34 2024/01/13 21:40:54 thorpej Exp $ */
+/*	$NetBSD: isr.c,v 1.35 2024/01/15 20:28:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.34 2024/01/13 21:40:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.35 2024/01/15 20:28:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,23 +156,6 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
 	 * on the end.
 	 */
 	LIST_INSERT_AFTER(curisr, newisr, isr_link);
-}
-
-/*
- * Return a pointer to the evcnt structure for
- * the specified ipl.
- */
-struct evcnt *
-isrlink_evcnt(int ipl)
-{
-
-#ifdef DIAGNOSTIC
-	if (ipl < 0 ||
-	    ipl >= (sizeof(next68k_irq_evcnt) / sizeof(struct evcnt)))
-		panic("isrlink_evcnt: bad ipl %d", ipl);
-#endif
-
-	return (&next68k_irq_evcnt[ipl]);
 }
 
 /*

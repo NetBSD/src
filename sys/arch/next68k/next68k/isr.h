@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.9 2024/01/13 21:40:54 thorpej Exp $ */
+/*	$NetBSD: isr.h,v 1.10 2024/01/15 20:28:56 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.h
@@ -89,7 +89,6 @@ struct isr_vectored {
 extern struct evcnt next68k_irq_evcnt[];
 
 void	isrinit(void);
-struct	evcnt *isrlink_evcnt(int);
 void	isrlink_autovec(int (*)(void *), void *, int, int, struct evcnt *);
 void	isrdispatch_autovec(struct clockframe *);
 void	netintr(void);
