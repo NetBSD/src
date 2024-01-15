@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.78 2021/03/28 10:29:05 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.79 2024/01/15 20:35:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2021/03/28 10:29:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.79 2024/01/15 20:35:22 andvar Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_cputypes.h"
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.78 2021/03/28 10:29:05 skrll Exp $"
 #include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
+#ifdef STACKCHECKS
+#include <sys/syslog.h>
+#endif
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
