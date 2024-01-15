@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2024/01/14 22:32:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2024/01/15 02:13:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -48,6 +48,18 @@
 #define	IPL_SCHED	6	/* scheduler / hard clock interrupts */
 #define	IPL_HIGH	7	/* blocks all interrupts */
 #define	NIPL		8
+
+/*
+ * Abstract ISR priorities.  These allow sorting of latency-sensitive
+ * devices earlier on the shared auto-vectored interrupt lists.
+ */
+#define	ISRPRI_BIO		0	/* a block I/O device */
+#define	ISRPRI_MISC		0	/* misc. devices */
+#define	ISRPRI_NET		1	/* a network interface */
+#define	ISRPRI_TTY		2	/* a serial port */
+#define	ISRPRI_DISPLAY		2	/* display devices / framebuffers */
+#define	ISRPRI_TTYNOBUF		3	/* a particularly bad serial port */
+#define	ISRPRI_AUDIO		4	/* audio devices */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 typedef struct {
@@ -108,6 +120,7 @@ struct m68k_intrhand {
 	struct evcnt			*ih_evcnt;
 	int				ih_ipl;	/* m68k IPL, not IPL_* */
 	int				ih_vec;
+	int				ih_isrpri;
 };
 LIST_HEAD(m68k_intrhand_list, m68k_intrhand);
 
