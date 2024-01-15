@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.10 2021/08/03 23:12:14 andvar Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.11 2024/01/15 18:14:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -83,7 +83,10 @@
  */
 
 struct evcnt {
-	uint64_t	ev_count;	/* how many have occurred */
+	union {
+		uint64_t ev_count;	/* how many have occurred */
+		uint32_t ev__count32[2];
+	};
 	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
 	unsigned char	ev_type;	/* counter type; see below */
 	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
@@ -94,6 +97,16 @@ struct evcnt {
 	const char	*ev_name;	/* name of specific event */
 };
 TAILQ_HEAD(evcntlist, evcnt);
+
+/*
+ * For 32-bit counters, ev_count32 is the correct half of the 64-bit
+ * counter field.
+ */
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define	ev_count32	ev__count32[1]
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+#define	ev_count32	ev__count32[0]
+#endif
 
 /* maximum group/name lengths, including trailing NUL */
 #define	EVCNT_STRING_MAX	255
