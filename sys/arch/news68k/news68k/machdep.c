@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2024/01/15 20:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2024/01/15 20:21:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -898,8 +898,7 @@ intrhand_lev3(void)
 	int stat;
 
 	stat = *int_status;
-	intrcnt[3]++;
-	curcpu()->ci_data.cpu_nintr++;
+	m68k_count_intr(3);
 #if 1
 	printf("level 3 interrupt: INT_STATUS = 0x%02x\n", stat);
 #endif
@@ -917,8 +916,7 @@ intrhand_lev4(void)
 #define INTST_SCSI	0x80
 
 	stat = *int_status;
-	intrcnt[4]++;
-	curcpu()->ci_data.cpu_nintr++;
+	m68k_count_intr(4);
 
 #if NSI > 0
 	if (stat & INTST_SCSI) {

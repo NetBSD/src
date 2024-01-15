@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2024/01/15 19:54:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2024/01/15 20:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -655,7 +655,7 @@ ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
 	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
-	addql	#1,_C_LABEL(intrcnt)+4
+	addql	#1,_C_LABEL(m68k_intr_evcnt)+AST_INTRCNT
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
 	INTERRUPT_RESTOREREG
@@ -696,7 +696,7 @@ ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
 
 #if 0
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
-	addql	#1,_C_LABEL(intrcnt)+32
+	addql	#1,_C_LABEL(intrcnt)+NMI_INTRCNT
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
 	movl	%usp,%a0		| and save
@@ -974,21 +974,3 @@ GLOBAL(cache_clr)
 
 GLOBAL(romcallvec)
 	.long	0
-
-
-/* interrupt counters */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"AST"		| lev1: AST
-	.asciz	"softint"	| lev2: software interrupt
-	.asciz	"lev3"		| lev3: slot intr, VME intr 2, fd, lpt
-	.asciz	"lev4"		| lev4: slot intr, VME intr 4, le, scsi
-	.asciz	"lev5"		| lev5: kb, ms, zs
-	.asciz	"clock"		| lev6: clock
-	.asciz	"nmi"		| parity error
-GLOBAL(eintrnames)
-	.even
-
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)

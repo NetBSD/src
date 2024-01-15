@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2024/01/15 00:35:23 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2024/01/15 20:21:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,7 +148,6 @@ extern int cpuspeed;
 extern char *intiobase, *intiolimit, *extiobase;
 extern u_int intiobase_phys, intiotop_phys;
 extern u_int extiobase_phys, extiotop_phys;
-extern u_int intrcnt[];
 
 extern void *romcallvec;
 

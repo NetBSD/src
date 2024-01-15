@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.35 2024/01/15 00:35:24 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.36 2024/01/15 20:21:50 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -115,6 +115,8 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	AST_INTRCNT		((sizeof(struct evcnt)*1) + offsetof(struct evcnt, ev_count32))
+define	NMI_INTRCNT		((sizeof(struct evcnt)*7) + offsetof(struct evcnt, ev_count32))
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
