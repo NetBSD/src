@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.12 2021/07/14 08:33:05 ozaki-r Exp $	*/
+/*	$NetBSD: parser.c,v 1.13 2024/01/15 19:44:07 andvar Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -469,7 +469,7 @@ interface_parser(char *cmdbuf)
 		return (0);
 	}
 
-	/* create argment list & look for scheduling discipline options. */
+	/* create argument list & look for scheduling discipline options. */
 	snprintf(qdisc_name, sizeof qdisc_name, "null");
 	argc = 0;
 	ap = w;

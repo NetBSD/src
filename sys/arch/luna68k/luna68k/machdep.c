@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.110 2023/12/20 00:40:43 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.111 2024/01/15 19:44:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2024/01/15 19:44:07 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -222,7 +222,7 @@ luna68k_init(void)
 	 *
 	 * 'bootarg' on LUNA-II has "<args of x command>" only.
 	 *
-	 * NetBSD/luna68k cares only the first argment; any of "sda".
+	 * NetBSD/luna68k cares only the first argument; any of "sda".
 	 */
 	bootarg[63] = '\0';
 	for (cp = bootarg; *cp != '\0'; cp++) {

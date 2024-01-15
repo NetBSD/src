@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.10 2014/02/25 18:30:08 pooka Exp $	*/
+/*	$NetBSD: obsled.c,v 1.11 2024/01/15 19:44:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.10 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.11 2024/01/15 19:44:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,7 +165,7 @@ obsled_set_state(struct obsled_softc *sc)
 
 /*
  * Setting LED interface for inside kernel.
- * Argumnt `led' is 3-bit LED state (led=0-7/ON=1/OFF=0).
+ * Argument `led' is 3-bit LED state (led=0-7/ON=1/OFF=0).
  */
 void
 obs266_led_set(int led)
