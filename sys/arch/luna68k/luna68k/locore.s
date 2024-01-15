@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.77 2024/01/15 02:16:52 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.78 2024/01/15 19:30:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -553,13 +553,6 @@ Lbrkpt3:
 /*
  * Interrupt handlers.
  */
-
-ENTRY_NOPROFILE(spurintr)		/* Level 0 */
-	addql	#1,_C_LABEL(intrcnt)+0
-	INTERRUPT_SAVEREG
-	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 	addql	#1,_C_LABEL(intrcnt)+32

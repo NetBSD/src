@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 2024/01/15 19:11:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 2024/01/15 19:28:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -601,17 +601,7 @@ Lbrkpt2:
 
 /*
  * Interrupt handlers.
- * All device interrupts are auto-vectored.  The CPU provides
- * the vector 0x18+level.  Note we count spurious interrupts, but
- * we don't do anything else with them.
  */
-
-ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	addql	#1,_C_LABEL(m68k_intr_evcnt)+SPUR_INTRCNT
-	INTERRUPT_SAVEREG
-	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	INTERRUPT_SAVEREG
