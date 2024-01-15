@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.71 2022/01/09 20:30:04 palle Exp $ */
+/*	$NetBSD: intr.c,v 1.72 2024/01/15 08:13:45 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.71 2022/01/09 20:30:04 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72 2024/01/15 08:13:45 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -108,7 +108,7 @@ strayintr(const struct trapframe64 *fp, int vectored)
 
 	snprintb(buf, sizeof(buf), PSTATE_BITS,
 	    (fp->tf_tstate>>TSTATE_PSTATE_SHIFT));
-	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%s vecttored=%d\n",
+	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%s vectored=%d\n",
 	    fp->tf_pil, (unsigned long long)fp->tf_pc,
 	    (unsigned long long)fp->tf_npc,  buf, vectored);
 

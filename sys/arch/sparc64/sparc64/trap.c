@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196 2024/01/08 19:33:49 palle Exp $ */
+/*	$NetBSD: trap.c,v 1.197 2024/01/15 08:13:45 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2024/01/08 19:33:49 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2024/01/15 08:13:45 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -342,7 +342,7 @@ const char *trap_type[] = {
 	T, T, T, T, T, T, T, T, /* 128..12f */
 	T, T,			/* 130..131 */
 	"get condition codes",	/* 132 */
-	"set condision codes",	/* 133 */
+	"set condition codes",	/* 133 */
 	T, T, T, T,		/* 134..137 */
 	T, T, T, T, T, T, T, T, /* 138..13f */
 	T, T, T, T, T, T, T, T, /* 140..147 */
@@ -352,7 +352,7 @@ const char *trap_type[] = {
 	T, T, T, T,		/* 160..163 */
 	"SVID syscall64",	/* 164 */
 	"SPARC Intl syscall64",	/* 165 */
-	"OS vedor spec syscall",/* 166 */
+	"OS vendor spec syscall",	/* 166 */
 	"HW OEM syscall",	/* 167 */
 	"ret from deferred trap",	/* 168 */
 };
