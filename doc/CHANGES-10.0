@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.186 2024/01/14 18:06:46 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.187 2024/01/15 14:17:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15210,4 +15210,18 @@ sys/arch/vax/vax/machdep.c			1.198
 
 	vax: set default RLIMIT_AS to the same as MAXDSIZ.
 	[mrg, ticket #552]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_pci.c	1.5
+
+	i915: PR 57268: backport change to downgrade gen7/vlv to
+	aliasing-ppggtt.
+	[riastradh, ticket #553]
+
+sys/uvm/uvm_pglist.c				1.91,1.92
+sys/uvm/uvm_physseg.c				1.20
+sys/uvm/uvm_physseg.h				1.9
+
+	uvm: PR 57683: change type of uvm_physseg.start_hint from u_int
+	to u_long.
+	[tnn, ticket #554]
 
