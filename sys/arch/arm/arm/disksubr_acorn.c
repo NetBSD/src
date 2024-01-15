@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.13 2020/09/29 02:58:52 msaitoh Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.14 2024/01/15 19:34:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.13 2020/09/29 02:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.14 2024/01/15 19:34:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ filecore_label_read(dev_t dev, void (*strat)(struct buf *),
 
 		bp->b_blkno = cyl * heads * sectors;
 #ifdef DEBUG_LABEL
-		printf("%s: Found RiscIX partition table @ %08x\n",
+		printf("%s: Found RiscIX partition table @ %" PRId64 "\n",
 		    __func__, bp->b_blkno);
 #endif
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
@@ -277,8 +277,8 @@ filecore_label_read(dev_t dev, void (*strat)(struct buf *),
 		rpt = (struct riscix_partition_table *)bp->b_data;
 #ifdef DEBUG_LABEL
 		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop)
-			printf("%s: p%d: %16s %08x %08x %08x\n", loop,
-			    __func__, rpt->partitions[loop].rp_name,
+			printf("%s: p%d: %16s %08x %08x %08x\n", __func__,
+			    loop, rpt->partitions[loop].rp_name,
 			    rpt->partitions[loop].rp_start,
 			    rpt->partitions[loop].rp_length,
 			    rpt->partitions[loop].rp_type);
