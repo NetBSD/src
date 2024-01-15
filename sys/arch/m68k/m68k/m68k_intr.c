@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.5 2024/01/15 17:12:00 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.6 2024/01/15 18:47:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.5 2024/01/15 17:12:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.6 2024/01/15 18:47:03 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -77,10 +77,7 @@ static struct m68k_intrhand_list m68k_intrhands_autovec[NAUTOVECTORS];
 static struct m68k_intrhand *m68k_intrhands_vectored[NVECHANDS];
 #endif
 
-#ifdef __HAVE_LEGACY_INTRCNT
-extern u_int intrcnt[];
-#define	INTRCNT(x)	intrcnt[(x)]++
-#else
+#ifndef __HAVE_LEGACY_INTRCNT
 #ifndef MACHINE_INTREVCNT_NAMES
 #define	MACHINE_INTREVCNT_NAMES						\
 	{ "spur", "lev1", "lev2", "lev3", "lev4", "lev5", "lev6", "nmi" }
@@ -100,8 +97,6 @@ struct evcnt m68k_intr_evcnt[] = {
 __CTASSERT(__arraycount(m68k_intr_evcnt) == NAUTOVECTORS);
 
 #undef INTRCNT_INIT
-
-#define	INTRCNT(x)	m68k_intr_evcnt[(x)].ev_count++
 #endif /* __HAVE_LEGACY_INTRCNT */
 
 const uint16_t ipl2psl_table[NIPL] = {
@@ -364,8 +359,7 @@ m68k_intr_autovec(struct clockframe frame)
 
 	idepth++;
 
-	INTRCNT(ipl);
-	curcpu()->ci_data.cpu_nintr++;
+	m68k_count_intr(ipl);
 
 	LIST_FOREACH(ih, &m68k_intrhands_autovec[ipl], ih_link) {
 		void *arg = ih->ih_arg ? ih->ih_arg : &frame;
@@ -400,8 +394,7 @@ m68k_intr_vectored(struct clockframe frame)
 
 	idepth++;
 
-	INTRCNT(ipl);
-	curcpu()->ci_data.cpu_nintr++;
+	m68k_count_intr(ipl);
 
 #ifdef DIAGNOSTIC
 	if (vec < MACHINE_USERVEC_START || vec >= NVECTORS) {
