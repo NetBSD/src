@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2024/01/15 00:35:23 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.30 2024/01/15 20:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 #define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL2
 #define	MACHINE_PSL_IPL_VM		PSL_IPL5
 #define	MACHINE_PSL_IPL_SCHED		PSL_IPL7
+
+#define	MACHINE_INTREVCNT_NAMES						\
+	{ "spur", "AST", "softint", "lev3", "lev4", "lev5", "clock", "nmi" }
 
 #include <m68k/intr.h>
 

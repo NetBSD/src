@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.20 2024/01/15 00:35:23 thorpej Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.21 2024/01/15 20:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.20 2024/01/15 00:35:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.21 2024/01/15 20:21:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -154,7 +154,8 @@ clock_intr(struct clockframe cf)
 	/* Pulse the clock intr. enable low. */
 	*ctrl_timer = 0;
 	*ctrl_timer = 1;
-	intrcnt[TIMER_LEVEL]++;
+
+	m68k_count_intr(TIMER_LEVEL);
 
 	/* Entertainment! */
 #ifdef	LED_IDLE_CHECK
@@ -164,7 +165,6 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
-	curcpu()->ci_data.cpu_nintr++;
 }
 
 /* heartbeat LED */
