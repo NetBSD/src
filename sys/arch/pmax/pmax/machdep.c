@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.254 2020/09/28 01:20:29 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255 2024/01/15 19:44:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2020/09/28 01:20:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/01/15 19:44:07 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -128,7 +128,7 @@ extern struct consdev promcd;		/* XXX */
 
 /*
  * Do all the stuff that locore normally does before calling main().
- * The first 4 argments are passed by PROM monitor, and remaining two
+ * The first 4 arguments are passed by PROM monitor, and remaining two
  * are built on temporary stack by our boot loader (or in reg if N32/N64).
  */
 void
