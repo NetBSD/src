@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.39 2024/01/09 04:16:25 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.40 2024/01/15 02:16:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,19 +57,20 @@
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the luna68k, we use
- * what the hardware pushes on an interrupt (frame format 0).
+ * what the locore.s glue puts on the stack before calling C-code.
  */
 struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
-};
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+	u_short	cf_sr;		/* sr at time of interrupt */
+	u_long	cf_pc;		/* pc at time of interrupt */
+	u_short	cf_vo;		/* vector offset (4-word frame) */
+} __attribute__((packed));
 
-#define CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define CLKF_PC(framep)		((framep)->pc)
+#define CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define CLKF_PC(framep)		((framep)->cf_pc)
 #if 0
 /* We would like to do it this way... */
-#define CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#define CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
 #define CLKF_INTR(framep)	(0)	/* XXX */
