@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.2 2024/01/15 00:25:15 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.3 2024/01/15 00:37:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.2 2024/01/15 00:25:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.3 2024/01/15 00:37:08 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -70,7 +70,9 @@ extern char intrstub_vectored[];
 /* A dummy event counter where interrupt stats go to die. */
 static struct evcnt bitbucket;
 
+#ifdef __HAVE_LEGACY_INTRCNT
 extern u_int intrcnt[];		/* XXX old-style statistics */
+#endif
 
 int idepth;
 
@@ -312,7 +314,9 @@ m68k_intr_autovec(struct clockframe frame)
 
 	idepth++;
 
+#ifdef __HAVE_LEGACY_INTRCNT
 	intrcnt[ipl]++;		/* XXX */
+#endif
 	curcpu()->ci_data.cpu_nintr++;
 
 	LIST_FOREACH(ih, &m68k_intrhands_autovec[ipl], ih_link) {
@@ -348,7 +352,9 @@ m68k_intr_vectored(struct clockframe frame)
 
 	idepth++;
 
+#ifdef __HAVE_LEGACY_INTRCNT
 	intrcnt[ipl]++;		/* XXX */
+#endif
 	curcpu()->ci_data.cpu_nintr++;
 
 #ifdef DIAGNOSTIC
