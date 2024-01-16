@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.14 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.15 2024/01/16 07:06:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,5 +98,5 @@ void	dmago(int, char *, int, int);
 void	dmastop(int);
 void	dmafree(struct dmaqueue *);
 int	dmareq(struct dmaqueue *);
-void	dmacomputeipl(void);
+void	dmaupdateipl(int);
 #endif /* _KERNEL */

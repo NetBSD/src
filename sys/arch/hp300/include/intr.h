@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.37 2024/01/16 03:44:44 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.38 2024/01/16 07:07:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -60,6 +60,13 @@
 
 #include <m68k/intr.h>
 
+#ifdef _M68K_INTR_PRIVATE
+struct hp300_intrhand {
+	struct m68k_intrhand       ih_super;
+	LIST_ENTRY(hp300_intrhand) ih_dio_link;
+};
+#endif
+
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	splraise1()
 #define	splkbd()	splhil()
@@ -67,12 +74,6 @@
 /*
  * Interface wrappers.
  */
-
-static inline void
-intr_init(void)
-{
-	m68k_intr_init(NULL);
-}
 
 static inline void *
 intr_establish(int (*func)(void *), void *arg, int ipl, int isrpri)

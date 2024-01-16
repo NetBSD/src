@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.111 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.112 2024/01/16 07:07:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.111 2023/01/15 06:19:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.112 2024/01/16 07:07:00 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -101,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.111 2023/01/15 06:19:46 tsutsui Exp $
 #include "com_dio.h"
 #include "com_frodo.h"
 #include "dcm.h"
+
+#define	_M68K_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,6 +276,30 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 }
 
 /*
+ * hp300 systems need to track all DIO interrupt handlers on a single
+ * list in order to compute the auto-vector interrupt level the DMA
+ * controller should interrupt at.  So, we provide a custom allocator
+ * for the common interrupt dispatch code that allocates us handles
+ * with linkage for this list.
+ */
+static struct m68k_intrhand *
+hp300_ih_alloc(int km_flag)
+{
+	return kmem_zalloc(sizeof(struct hp300_intrhand), km_flag);
+}
+
+static void
+hp300_ih_free(struct m68k_intrhand *ih)
+{
+	kmem_free(ih, sizeof(struct hp300_intrhand));
+}
+ 
+static const struct m68k_ih_allocfuncs hp300_ih_allocfuncs = { 
+	.alloc = hp300_ih_alloc,
+	.free  = hp300_ih_free,
+}; 
+
+/*
  * Determine the device configuration for the running system.
  */
 void
@@ -291,7 +317,7 @@ cpu_configure(void)
 	(void)splhigh();
 
 	/* Initialize the interrupt handlers. */
-	intr_init();
+	m68k_intr_init(&hp300_ih_allocfuncs);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
