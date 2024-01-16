@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.180 2024/01/09 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.181 2024/01/16 15:38:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -897,11 +897,6 @@ ASENTRY_NOPROFILE(rei)
 /*
  * Primitives
  */ 
-
-/*
- * Use common m68k support routines.
- */
-#include <m68k/m68k/support.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.
