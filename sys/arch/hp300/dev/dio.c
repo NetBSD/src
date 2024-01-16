@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.42 2024/01/16 03:44:43 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.43 2024/01/16 07:06:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.42 2024/01/16 03:44:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.43 2024/01/16 07:06:59 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -77,6 +77,9 @@ static int	diosubmatch(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL_NEW(dio, sizeof(struct dio_softc),
     diomatch, dioattach, NULL, NULL);
+
+static LIST_HEAD(, hp300_intrhand) dio_dma_users =
+    LIST_HEAD_INITIALIZER(dio_dma_users);
 
 static int
 diomatch(device_t parent, cfdata_t cf, void *aux)
@@ -280,18 +283,40 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 }
 
 /*
+ * Enumerate the list of DMA controller users (the HPIB and SCSI
+ * controllers, essentially), and calculate what the highest
+ * auto-vector level used by those devices is.  Then tell the DMA
+ * controller to interrupt at that level.
+ */
+static void
+dio_dma_users_changed(void)
+{
+	struct hp300_intrhand *ih;
+	int ipl = 0;
+
+	LIST_FOREACH(ih, &dio_dma_users, ih_dio_link) {
+		KASSERT(ih->ih_super.ih_isrpri == ISRPRI_BIO);
+		if (ih->ih_super.ih_ipl > ipl) {
+			ipl = ih->ih_super.ih_ipl;
+		}
+	}
+	dmaupdateipl(ipl);
+}
+
+/*
  * Establish an interrupt handler for a DIO device.
  */
 void *
 dio_intr_establish(int (*func)(void *), void *arg, int ipl, int isrpri)
 {
-	void *ih;
+	struct hp300_intrhand *ih;
 
 	ih = intr_establish(func, arg, ipl, isrpri);
 
-	/* XXX XXX XXX */
-	if (isrpri == IPL_BIO)
-		dmacomputeipl();
+	if (ih != NULL && isrpri == ISRPRI_BIO) {
+		LIST_INSERT_HEAD(&dio_dma_users, ih, ih_dio_link);
+		dio_dma_users_changed();
+	}
 
 	return ih;
 }
@@ -302,14 +327,18 @@ dio_intr_establish(int (*func)(void *), void *arg, int ipl, int isrpri)
 void
 dio_intr_disestablish(void *arg)
 {
-	struct m68k_intrhand *ih = arg;
-	int isrpri = ih->ih_isrpri;
+	struct hp300_intrhand *ih = arg;
+	int isrpri = ih->ih_super.ih_isrpri;
+
+	if (isrpri == ISRPRI_BIO) {
+		LIST_REMOVE(ih, ih_dio_link);
+	}
 
 	intr_disestablish(arg);
 
-	/* XXX XXX XXX */
-	if (isrpri == IPL_BIO)
-		dmacomputeipl();
+	if (isrpri == ISRPRI_BIO) {
+		dio_dma_users_changed();
+	}
 }
 
 /*

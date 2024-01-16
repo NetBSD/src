@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.46 2024/01/16 05:48:28 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.47 2024/01/16 07:06:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.46 2024/01/16 05:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.47 2024/01/16 07:06:59 thorpej Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -263,19 +263,30 @@ dmaattach(device_t parent, device_t self, void *aux)
  * for the DMA controller.
  */
 void
-dmacomputeipl(void)
+dmaupdateipl(int ipl)
 {
 	struct dma_softc *sc = dma_softc;
 
-	if (sc->sc_ih != NULL)
-		intr_disestablish(sc->sc_ih);
+	if (sc->sc_ih != NULL && sc->sc_ipl == ipl) {
+		/* No change. */
+		return;
+	}
 
-	/*
-	 * Our interrupt level must be as high as the highest
-	 * device using DMA (i.e. splbio).
-	 */
-	sc->sc_ipl = PSLTOIPL(ipl2psl_table[IPL_VM]);
+	if (sc->sc_ih != NULL) {
+		intr_disestablish(sc->sc_ih);
+	}
+
+	if ((sc->sc_ipl == ipl) == 0) {
+		/* Don't hook up a new handler. */
+		return;
+	}
+
 	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, ISRPRI_BIO);
+	if (sc->sc_type == DMA_B && sc->sc_ipl != 3) {
+		aprint_error_dev(sc->sc_dev,
+		    "WARNING: IPL set to %d on maybe-rev. A card!\n",
+		    sc->sc_ipl);
+	}
 }
 
 int
