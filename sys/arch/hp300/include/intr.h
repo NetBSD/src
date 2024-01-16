@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.36 2023/07/11 17:54:54 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.37 2024/01/16 03:44:44 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,115 +30,60 @@
  */
 
 #ifndef _HP300_INTR_H_
-#define	_HP300_INTR_H_
+#define _HP300_INTR_H_
 
-#include <sys/types.h>
+#include <m68k/psl.h>
 
-#include <sys/evcnt.h>
-#include <sys/queue.h>
-#include <sys/stdbool.h>
+#define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTBIO		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTNET		PSL_IPL1
+#define	MACHINE_PSL_IPL_SOFTSERIAL	PSL_IPL1
+#define	MACHINE_PSL_IPL_VM		PSL_IPL5
+#define	MACHINE_PSL_IPL_SCHED		PSL_IPL6
 
-#include <machine/psl.h>
+#define	MACHINE_INTREVCNT_NAMES						\
+	{ "spurious", "lev1", "lev2", "lev3", "lev4", "lev5", "clock", "nmi" }
 
+#if defined(_M68K_INTR_PRIVATE) && defined(_KERNEL_OPT)
+#include "audio.h"
+#if NAUDIO > 0
 /*
- * Interrupt "levels".  These are a more abstract representation
- * of interrupt levels, and do not have the same meaning as m68k
- * CPU interrupt levels.  They serve the following purposes:
- *
- *	- properly order ISRs in the list for that CPU ipl
- *	- compute CPU PSL values for the spl*() calls.
- *	- used to create cookie for the splraiseipl().
+ * Audio interrupts also come in on level 6, and those are dispatched
+ * from a custom stub which handles the clock inline before calling the
+ * general interrupt dispatch.  We want to suppress warning about stray
+ * level 6 interrupts in the common code in case the clock interrupted
+ * but audio did not.
  */
-#define	IPL_NONE	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTBIO	2
-#define	IPL_SOFTNET	3
-#define	IPL_SOFTSERIAL	4
-#define	IPL_VM		5
-#define	IPL_SCHED	6
-#define	IPL_HIGH	7
-#define	NIPL		8
+#define	MACHINE_AUTOVEC_IGNORE_STRAY(x)	((x) == 6)
+#endif
+#endif
 
-/*
- * Convert PSL values to m68k CPU IPLs and vice-versa.
- * Note: CPU IPL values are different from IPL_* used by splraiseipl().
- */
-#define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
-#define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
-
-extern int idepth;
-
-static inline bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
-}
-
-extern const uint16_t ipl2psl_table[NIPL];
-
-typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
-
-#ifdef _KERNEL
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._psl);
-}
-
-static inline void
-splx(int sr)
-{
-
-	__asm volatile("movew %0,%%sr" : : "di" (sr));
-}
+#include <m68k/intr.h>
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	splraise1()
 #define	splkbd()	splhil()
 
-/* These spl calls are used by machine-independent code. */
-#define	spl0()		_spl0()
+/*
+ * Interface wrappers.
+ */
 
-#define	splsoftbio()	splraise1()
-#define	splsoftclock()	splraise1()
-#define	splsoftnet()	splraise1()
-#define	splsoftserial()	splraise1()
-#define	splvm()		splraise5()
-#define	splsched()	spl6()
-#define	splhigh()	spl7()
+static inline void
+intr_init(void)
+{
+	m68k_intr_init(NULL);
+}
 
-struct hp300_intrhand {
-	LIST_ENTRY(hp300_intrhand) ih_q;
-	int (*ih_fn)(void *);
-	void *ih_arg;
-	int ih_ipl;
-	int ih_priority;
-};
+static inline void *
+intr_establish(int (*func)(void *), void *arg, int ipl, int isrpri)
+{
+	return m68k_intr_establish(func, arg, (void *)0, 0, ipl, isrpri, 0);
+}
 
-struct hp300_intr {
-	LIST_HEAD(, hp300_intrhand) hi_q;
-	struct evcnt hi_evcnt;
-};
+static inline void
+intr_disestablish(void *ih)
+{
+	m68k_intr_disestablish(ih);
+}
 
-/* intr.c */
-void	intr_init(void);
-void	*intr_establish(int (*)(void *), void *, int, int);
-void	intr_disestablish(void *);
-void	intr_dispatch(int);
-
-#endif	/* _KERNEL */
-
-#endif /* _HP300_INTR_H_ */
+#endif	/* _HP300_INTR_H */

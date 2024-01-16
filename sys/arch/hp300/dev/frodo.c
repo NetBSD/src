@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.35 2022/11/25 13:12:02 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.36 2024/01/16 03:44:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,9 +60,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.35 2022/11/25 13:12:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.36 2024/01/16 03:44:43 thorpej Exp $");
 
-#define	_HP300_INTR_H_PRIVATE
+#define	_M68K_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.35 2022/11/25 13:12:02 tsutsui Exp $");
 struct frodo_interhand {
 	int	(*ih_fn)(void *);
 	void	*ih_arg;
-	int	ih_priority;
+	int	ih_isrpri;
 };
 
 struct frodo_softc {
@@ -237,10 +237,10 @@ frodoprint(void *aux, const char *pnp)
 
 void
 frodo_intr_establish(device_t frdev, int (*func)(void *), void *arg,
-    int line, int priority)
+    int line, int isrpri)
 {
 	struct frodo_softc *sc = device_private(frdev);
-	struct hp300_intrhand *ih = sc->sc_ih;
+	struct m68k_intrhand *ih = sc->sc_ih;
 
 	if (line < 0 || line >= FRODO_NINTR) {
 		aprint_error_dev(frdev, "bad interrupt line %d\n", line);
@@ -255,17 +255,17 @@ frodo_intr_establish(device_t frdev, int (*func)(void *), void *arg,
 	/* Install the handler. */
 	sc->sc_intr[line].ih_fn = func;
 	sc->sc_intr[line].ih_arg = arg;
-	sc->sc_intr[line].ih_priority = priority;
+	sc->sc_intr[line].ih_isrpri = isrpri;
 
 	/*
 	 * If this is the first one, establish the frodo
 	 * interrupt handler.  If not, reestablish at a
 	 * higher priority if necessary.
 	 */
-	if (ih == NULL || ih->ih_priority < priority) {
+	if (ih == NULL || ih->ih_isrpri < isrpri) {
 		if (ih != NULL)
 			intr_disestablish(ih);
-		sc->sc_ih = intr_establish(frodointr, sc, sc->sc_ipl, priority);
+		sc->sc_ih = intr_establish(frodointr, sc, sc->sc_ipl, isrpri);
 	}
 
 	sc->sc_refcnt++;
@@ -281,7 +281,7 @@ void
 frodo_intr_disestablish(device_t frdev, int line)
 {
 	struct frodo_softc *sc = device_private(frdev);
-	struct hp300_intrhand *ih = sc->sc_ih;
+	struct m68k_intrhand *ih = sc->sc_ih;
 	int newpri;
 
 	if (sc->sc_intr[line].ih_fn == NULL) {
@@ -302,10 +302,10 @@ frodo_intr_disestablish(device_t frdev, int line)
 	/* Lower our priority, if appropriate. */
 	for (newpri = 0, line = 0; line < FRODO_NINTR; line++)
 		if (sc->sc_intr[line].ih_fn != NULL &&
-		    sc->sc_intr[line].ih_priority > newpri)
-			newpri = sc->sc_intr[line].ih_priority;
+		    sc->sc_intr[line].ih_isrpri > newpri)
+			newpri = sc->sc_intr[line].ih_isrpri;
 
-	if (newpri != ih->ih_priority) {
+	if (newpri != ih->ih_isrpri) {
 		intr_disestablish(ih);
 		sc->sc_ih = intr_establish(frodointr, sc, sc->sc_ipl, newpri);
 	}
