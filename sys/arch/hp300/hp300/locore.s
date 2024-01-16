@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.180 2024/01/13 19:20:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.181 2024/01/16 03:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -798,31 +798,13 @@ Lbrkpt3:
 
 /* 64-bit evcnt counter increments */
 #define EVCNT_COUNTER(ipl)					\
-	_C_LABEL(hp300_intr_list) + (ipl)*SIZEOF_HI + HI_EVCNT
+	_C_LABEL(m68k_intr_evcnt) + (ipl)*SIZEOF_EVCNT + EV_COUNT
 #define EVCNT_INCREMENT(ipl)					\
 	clrl	%d0;						\
 	addql	#1,EVCNT_COUNTER(ipl)+4;			\
 	movel	EVCNT_COUNTER(ipl),%d1;				\
 	addxl	%d0,%d1;					\
 	movel	%d1,EVCNT_COUNTER(ipl)
-
-ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	INTERRUPT_SAVEREG
-	EVCNT_INCREMENT(0)
-	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
-	addql	#1,_C_LABEL(idepth)	| entering interrupt
-	INTERRUPT_SAVEREG
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
-	addql	#4,%sp
-	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
-	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
 	addql	#1,_C_LABEL(idepth)	| entering interrupt
@@ -839,7 +821,7 @@ Lnotim1:
 	btst	#2,%d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
 	movpw	%a0@(CLKMSB3),%d1	| clear timer3 interrupt
-	lea	%sp@(16),%a1		| a1 = &clockframe
+	lea	%sp@(0),%a1		| a1 = &clockframe
 	movl	%d0,%sp@-		| save status
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(statintr)	| statintr(&frame)
@@ -850,7 +832,7 @@ Lnotim3:
 	btst	#0,%d0			| timer1 interrupt?
 	jeq	Lrecheck		| no, skip hardclock
 	EVCNT_INCREMENT(6)
-	lea	%sp@(16),%a1		| a1 = &clockframe
+	lea	%sp@(0),%a1		| a1 = &clockframe
 	movl	%a1,%sp@-
 #ifdef USELEDS
 	tstl	_C_LABEL(ledaddr)	| using LEDs?
@@ -889,10 +871,9 @@ Lrecheck:
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 #if NAUDIO >0
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
-	addql	#4,%sp
+	jbsr	_C_LABEL(m68k_intr_autovec) | call dispatch routine
+					    |  in case the audio device
+					    |  generated the interrupt
 #endif
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)	| exiting from interrupt

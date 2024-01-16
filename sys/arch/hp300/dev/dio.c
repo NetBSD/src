@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.41 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.42 2024/01/16 03:44:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,9 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.41 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.42 2024/01/16 03:44:43 thorpej Exp $");
 
-#define	_HP300_INTR_H_PRIVATE
+#define	_M68K_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,13 +283,14 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
  * Establish an interrupt handler for a DIO device.
  */
 void *
-dio_intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
+dio_intr_establish(int (*func)(void *), void *arg, int ipl, int isrpri)
 {
 	void *ih;
 
-	ih = intr_establish(func, arg, ipl, priority);
+	ih = intr_establish(func, arg, ipl, isrpri);
 
-	if (priority == IPL_BIO)
+	/* XXX XXX XXX */
+	if (isrpri == IPL_BIO)
 		dmacomputeipl();
 
 	return ih;
@@ -301,12 +302,13 @@ dio_intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 void
 dio_intr_disestablish(void *arg)
 {
-	struct hp300_intrhand *ih = arg;
-	int priority = ih->ih_priority;
+	struct m68k_intrhand *ih = arg;
+	int isrpri = ih->ih_isrpri;
 
 	intr_disestablish(arg);
 
-	if (priority == IPL_BIO)
+	/* XXX XXX XXX */
+	if (isrpri == IPL_BIO)
 		dmacomputeipl();
 }
 

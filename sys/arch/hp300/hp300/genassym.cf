@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2023/12/27 17:35:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.51 2024/01/16 03:44:44 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -157,8 +157,8 @@ define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # interrupt event counters
-define	HI_EVCNT		offsetof(struct hp300_intr, hi_evcnt)
-define	SIZEOF_HI		sizeof(struct hp300_intr)
+define	SIZEOF_EVCNT		sizeof(struct evcnt)
+define	EV_COUNT		offsetof(struct evcnt, ev_count)
 
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
