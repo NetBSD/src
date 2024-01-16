@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.5.6.1 2023/05/28 10:14:36 martin Exp $ */
+/* $Id: imx23_usb.c,v 1.5.6.2 2024/01/16 08:25:48 martin Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ static void	imx23_usb_attach(device_t, device_t, void *);
 static int	imx23_usb_activate(device_t, enum devact);
 
 static int      imxusbc_search(device_t, cfdata_t, const int *, void *);
-static void	imx23_usb_init(struct imxehci_softc *);
+static void	imx23_usb_init(struct imxehci_softc *, uintptr_t);
 
 CFATTACH_DECL3_NEW(imxusbc,
         sizeof(struct imx23_usb_softc),
