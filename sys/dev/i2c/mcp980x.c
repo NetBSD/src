@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.7 2019/12/23 14:48:58 thorpej Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.8 2024/01/16 21:08:52 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,13 +32,13 @@
 /*
  * Microchip MCP9800/1/2/3 2-Wire High-Accuracy Temperature Sensor driver.
  *
- * TODO: better error checking, particurarly in user settable limits.
+ * TODO: better error checking, particularly in user settable limits.
  *
  * Note: MCP9805 is different and is supported by the sdtemp(4) driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.7 2019/12/23 14:48:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.8 2024/01/16 21:08:52 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

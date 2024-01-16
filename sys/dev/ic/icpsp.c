@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.29 2024/01/16 21:08:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.29 2024/01/16 21:08:52 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/*
 		 * Neither of these cases are supported, and neither of them
-		 * is particulatly relevant, since we have an abstract view
+		 * is particularly relevant, since we have an abstract view
 		 * of the bus; the controller takes care of all the nitty
 		 * gritty.
 		 */
