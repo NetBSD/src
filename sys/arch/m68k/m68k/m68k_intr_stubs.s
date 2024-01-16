@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr_stubs.s,v 1.2 2024/01/16 01:16:46 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr_stubs.s,v 1.3 2024/01/16 02:14:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -62,9 +62,11 @@
  */
 	INTRSTUB_ALIGN
 ENTRY_NOPROFILE(intrstub_autovec)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(m68k_intr_autovec)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
 #ifdef __HAVE_M68K_INTR_VECTORED
@@ -73,8 +75,10 @@ ENTRY_NOPROFILE(intrstub_autovec)
  */
 	INTRSTUB_ALIGN
 ENTRY_NOPROFILE(intrstub_vectored)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(m68k_intr_vectored)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* __HAVE_M68K_INTR_VECTORED */
