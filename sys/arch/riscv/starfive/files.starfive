@@ -1,0 +1,10 @@
+#	$NetBSD: files.starfive,v 1.1 2024/01/16 09:06:46 skrll Exp $
+#
+# Configuration info for StarFive SoCs
+#
+
+# JH7100 Clock controller
+device	jh7100clkc
+attach	jh7100clkc at fdt with jh7100_clkc
+file	arch/riscv/starfive/jh7100_clkc.c		jh7100_clkc
+
