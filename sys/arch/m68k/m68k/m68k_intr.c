@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.9 2024/01/16 02:14:33 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.10 2024/01/16 02:36:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.9 2024/01/16 02:14:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.10 2024/01/16 02:36:49 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -377,6 +377,10 @@ m68k_intr_disestablish(void *v)
 
 void	m68k_intr_autovec(struct clockframe);
 
+#ifndef MACHINE_AUTOVEC_IGNORE_STRAY
+#define	MACHINE_AUTOVEC_IGNORE_STRAY(ipl)	0
+#endif
+
 /*
  * m68k_intr_autovec --
  *	Run the interrupt handlers for an auto-vectored interrupt.
@@ -398,8 +402,8 @@ m68k_intr_autovec(struct clockframe frame)
 			rv = true;
 		}
 	}
-	if (!rv) {
-		printf("Spurious interrupt on IPL %d\n", ipl);
+	if (!rv && !MACHINE_AUTOVEC_IGNORE_STRAY(ipl)) {
+		printf("Stray level %d interrupt\n", ipl);
 	}
 
 	ATOMIC_CAS_CHECK(&frame);
@@ -438,8 +442,8 @@ m68k_intr_vectored(struct clockframe frame)
 						     : &frame) != 0)) {
 		ih->ih_evcnt->ev_count++;
 	} else {
-		printf("Spurious interrupt on vector=0x%0x IPL %d\n",
-		    vec, ipl);
+		printf("Stray level %d interrupt vector=0x%x\n",
+		    ipl, vec);
 	}
 #ifdef DIAGNOSTIC
  out:
