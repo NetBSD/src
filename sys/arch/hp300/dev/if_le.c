@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.62 2010/01/19 22:06:20 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.63 2024/01/16 05:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.62 2010/01/19 22:06:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.63 2024/01/16 05:48:28 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -236,7 +236,7 @@ leattach(device_t parent, device_t self, void *aux)
 	am7990_config(&lesc->sc_am7990);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(leintr, sc, da->da_ipl, IPL_NET);
+	(void) dio_intr_establish(leintr, sc, da->da_ipl, ISRPRI_NET);
 	bus_space_write_1(bst, bsh0, LER0_STATUS, LE_IE);
 }
 

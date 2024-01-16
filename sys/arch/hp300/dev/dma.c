@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.46 2024/01/16 05:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.46 2024/01/16 05:48:28 thorpej Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -275,7 +275,7 @@ dmacomputeipl(void)
 	 * device using DMA (i.e. splbio).
 	 */
 	sc->sc_ipl = PSLTOIPL(ipl2psl_table[IPL_VM]);
-	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_VM);
+	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, ISRPRI_BIO);
 }
 
 int
