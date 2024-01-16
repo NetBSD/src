@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr_stubs.s,v 1.1 2024/01/14 22:32:32 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr_stubs.s,v 1.2 2024/01/16 01:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -48,6 +48,13 @@
 #else
 #define	INTRSTUB_ALIGN	.align 2
 #endif
+
+/*
+ * XXX Some platforms (e.g. news68k) have hardware-assisted ASTs, and
+ * XXX thus don't need to branch to rei() after an interrupt.  Figure
+ * XXX out a way to handle these platforms.  This works for now; the
+ * XXX hardware-assist is just an optimization.
+ */
 
 /*
  * Vector stub for auto-vectored interrupts.  Calls the dispatch

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.7 2024/01/15 19:27:16 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.8 2024/01/16 01:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.7 2024/01/15 19:27:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.8 2024/01/16 01:16:46 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -70,7 +70,7 @@ extern char intrstub_vectored[];
 /* A dummy event counter where interrupt stats go to die. */
 static struct evcnt bitbucket;
 
-int idepth;
+volatile int idepth;
 
 static struct m68k_intrhand_list m68k_intrhands_autovec[NAUTOVECTORS];
 #ifdef __HAVE_M68K_INTR_VECTORED
@@ -213,6 +213,16 @@ m68k_intrvec_remove(struct m68k_intrhand *ih)
 
 	vec_set_entry(ih->ih_vec, INTR_FREEVEC);
 	*slot = NULL;
+}
+
+/* XXX This is horrible and should burn to the ground. */
+void *
+m68k_intrvec_intrhand(int vec)
+{
+	KASSERT(vec >= MACHINE_USERVEC_START);
+	KASSERT(vec < NVECTORS);
+
+	return m68k_intrhands_vectored[vec - MACHINE_USERVEC_START];
 }
 
 #endif /* __HAVE_M68K_INTR_VECTORED */
