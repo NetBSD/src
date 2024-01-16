@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_intio.c,v 1.4 2020/12/26 00:16:16 tsutsui Exp $	*/
+/*	$NetBSD: hil_intio.c,v 1.5 2024/01/16 05:48:28 thorpej Exp $	*/
 /*	$OpenBSD: hil_intio.c,v 1.8 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ hil_intio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	hil_attach(sc, &hil_is_console);
-	intr_establish(hil_intr, sc, ia->ia_ipl, IPL_TTY);
+	intr_establish(hil_intr, sc, ia->ia_ipl, ISRPRI_TTY);
 
 	config_interrupts(self, hil_attach_deferred);
 }

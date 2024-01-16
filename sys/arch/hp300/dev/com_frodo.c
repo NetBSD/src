@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.11 2024/01/16 05:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.10 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.11 2024/01/16 05:48:28 thorpej Exp $");
 
 #include "sti_sgc.h"
 
@@ -149,7 +149,7 @@ com_frodo_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	frodo_intr_establish(parent, comintr, sc, fa->fa_line, IPL_VM);
+	frodo_intr_establish(parent, comintr, sc, fa->fa_line, ISRPRI_TTY);
 }
 
 int

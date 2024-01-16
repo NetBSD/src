@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.8 2011/02/12 23:10:22 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.9 2024/01/16 05:48:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.8 2011/02/12 23:10:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.9 2024/01/16 05:48:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ spc_dio_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_1(iot, iohsc, HPSCSI_CSR, 0x00);
 	bus_space_write_1(iot, iohsc, HPSCSI_HCONF, 0x00);
 
-	dio_intr_establish(spc_intr, (void *)sc, da->da_ipl, IPL_BIO);
+	dio_intr_establish(spc_intr, (void *)sc, da->da_ipl, ISRPRI_BIO);
 
 	spc_attach(sc);
 

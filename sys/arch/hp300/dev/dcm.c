@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.93 2023/09/08 22:51:54 andvar Exp $	*/
+/*	$NetBSD: dcm.c,v 1.94 2024/01/16 05:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.93 2023/09/08 22:51:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.94 2024/01/16 05:48:28 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -408,7 +408,7 @@ dcmattach(device_t parent, device_t self, void *aux)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	(void)dio_intr_establish(dcmintr, sc, da->da_ipl, IPL_TTY);
+	(void)dio_intr_establish(dcmintr, sc, da->da_ipl, ISRPRI_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);

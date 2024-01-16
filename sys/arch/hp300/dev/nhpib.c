@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.43 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.44 2024/01/16 05:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.43 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.44 2024/01/16 05:48:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ nhpib_dio_attach(device_t parent, device_t self, void *aux)
 	nhpib_common_attach(sc, desc);
 
 	/* establish the interrupt handler */
-	(void)dio_intr_establish(nhpibintr, sc, da->da_ipl, IPL_BIO);
+	(void)dio_intr_establish(nhpibintr, sc, da->da_ipl, ISRPRI_BIO);
 }
 
 static void

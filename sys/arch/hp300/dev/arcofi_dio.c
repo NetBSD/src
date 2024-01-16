@@ -1,4 +1,4 @@
-/*	$NetBSD: arcofi_dio.c,v 1.2 2019/05/08 13:40:15 isaki Exp $	*/
+/*	$NetBSD: arcofi_dio.c,v 1.3 2024/01/16 05:48:28 thorpej Exp $	*/
 /*	$OpenBSD: arcofi_dio.c,v 1.1 2011/12/21 23:12:03 miod Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ arcofi_dio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	ipl = da->da_ipl;
-	dio_intr_establish(arcofi_hwintr, sc, ipl, IPL_AUDIO);
+	dio_intr_establish(arcofi_hwintr, sc, ipl, ISRPRI_AUDIO);
 
 	aprint_normal("\n");
 
