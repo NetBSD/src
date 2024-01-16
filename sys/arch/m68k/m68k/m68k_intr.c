@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.8 2024/01/16 01:16:46 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.9 2024/01/16 02:14:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.8 2024/01/16 01:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.9 2024/01/16 02:14:33 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -70,7 +70,7 @@ extern char intrstub_vectored[];
 /* A dummy event counter where interrupt stats go to die. */
 static struct evcnt bitbucket;
 
-volatile int idepth;
+volatile int idepth;	/* updated in assembly glue */
 
 static struct m68k_intrhand_list m68k_intrhands_autovec[NAUTOVECTORS];
 #ifdef __HAVE_M68K_INTR_VECTORED
@@ -389,8 +389,6 @@ m68k_intr_autovec(struct clockframe frame)
 	struct m68k_intrhand *ih;
 	bool rv = false;
 
-	idepth++;
-
 	m68k_count_intr(ipl);
 
 	LIST_FOREACH(ih, &m68k_intrhands_autovec[ipl], ih_link) {
@@ -403,8 +401,6 @@ m68k_intr_autovec(struct clockframe frame)
 	if (!rv) {
 		printf("Spurious interrupt on IPL %d\n", ipl);
 	}
-
-	idepth--;
 
 	ATOMIC_CAS_CHECK(&frame);
 }
@@ -423,8 +419,6 @@ m68k_intr_vectored(struct clockframe frame)
 	const int vec = VECO_TO_VECI(frame.cf_vo & 0xfff);
 	const int ipl = (getsr() >> 8) & 7;
 	struct m68k_intrhand *ih;
-
-	idepth++;
 
 	m68k_count_intr(ipl);
 
@@ -450,8 +444,6 @@ m68k_intr_vectored(struct clockframe frame)
 #ifdef DIAGNOSTIC
  out:
 #endif
-	idepth--;
-
 	ATOMIC_CAS_CHECK(&frame);
 }
 #endif /* __HAVE_M68K_INTR_VECTORED */
