@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2024/01/15 17:40:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2024/01/16 15:38:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -522,11 +522,6 @@ Ldorte:
 /*
  * Primitives
  */
-
-/*
- * Use common m68k support routines.
- */
-#include <m68k/m68k/support.s>
 
 /*
  * Use common m68k process/lwp switch and context save subroutines.

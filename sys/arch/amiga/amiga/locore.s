@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 2024/01/12 01:53:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.168 2024/01/16 15:38:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1061,11 +1061,6 @@ Lnoflush:
 /*
  * Primitives
  */
-
-/*
- * Use common m68k support routines.
- */
-#include <m68k/m68k/support.s>
 
 /*
  * non-local gotos
