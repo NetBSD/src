@@ -1,14 +1,7 @@
-/*	$NetBSD: isr.h,v 1.10 2024/01/15 20:28:56 thorpej Exp $ */
-
-/*
- * This file was taken from mvme68k/mvme68k/isr.h
- * should probably be re-synced when needed.
- * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
- * original cvs id: NetBSD: isr.h,v 1.3 1997/10/09 08:40:06 jtc Exp
- */
+/*	$NetBSD: isr.h,v 1.11 2024/01/16 00:34:58 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,59 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _NEXT68K_ISR_H_
+#define	_NEXT68K_ISR_H_
+
+#include <sys/intr.h>
 
 /*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
+ * Aliases for the legacy next68k ISR routines.
  */
-#define ISRAUTOVEC	0x18
-#define NISRAUTOVEC	8
-#define NIPLS		8
 
-/*
- * The location and size of the vectored interrupt portion
- * of the vector table.
- */
-#define ISRVECTORED	0x40
+static inline void
+isrinit(void)
+{
+	m68k_intr_init(NULL);
+}
 
-/*
- * Autovectored interrupt handler cookie.
- */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-	struct evcnt	*isr_evcnt;
-};
+static inline void
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int isrpri,
+    struct evcnt *ev)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, ev, 0, ipl, isrpri, 0);
+}
 
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
-
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	struct evcnt	*isr_evcnt;
-};
-
-/*
- * Autovectored ISR priorities.  These are not the same as interrupt levels.
- */
-#define ISRPRI_BIO		0
-#define ISRPRI_NET		1
-#define ISRPRI_TTY		2
-#define ISRPRI_TTYNOBUF		3
-
-extern struct evcnt next68k_irq_evcnt[];
-
-void	isrinit(void);
-void	isrlink_autovec(int (*)(void *), void *, int, int, struct evcnt *);
-void	isrdispatch_autovec(struct clockframe *);
-void	netintr(void);
+#endif /* _NEXT68K_ISR_H_ */
