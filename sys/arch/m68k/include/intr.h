@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2024/01/15 18:47:03 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2024/01/16 01:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ typedef struct {
 #endif
 
 #ifdef _KERNEL
-extern int idepth;		/* interrupt depth */
+extern volatile int idepth;		/* interrupt depth */
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;		/* logical IPL_* value */
@@ -197,6 +197,10 @@ void	m68k_intr_init(const struct m68k_ih_allocfuncs *);
 void	*m68k_intr_establish(int (*)(void *), void *, struct evcnt *,
 	    int/*vec*/, int/*m68k ipl*/, int/*isrpri*/, int/*flags*/);
 bool	m68k_intr_disestablish(void *);
+
+#ifdef __HAVE_M68K_INTR_VECTORED
+void	*m68k_intrvec_intrhand(int vec);	/* XXX */
+#endif
 
 #endif /* _KERNEL */
 
