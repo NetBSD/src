@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.10 2024/01/15 00:35:24 thorpej Exp $	*/
+/*	$NetBSD: isr.h,v 1.11 2024/01/16 01:17:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -61,8 +61,11 @@ isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec)
 static inline void
 isrunlink_vectored(int vec)
 {
-	/* XXX isrlink_*() functions should return handle. */
-	panic("isrunlink_vectored");
+	/* XXX isrlink_vectored() should return a handle. */
+	void *ih = m68k_intrvec_intrhand(vec);
+	if (ih != NULL) {
+		m68k_intr_disestablish(ih);
+	}
 }
 
 #endif /* _NEWS68k_ISR_H_ */
