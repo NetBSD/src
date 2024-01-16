@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126 2024/01/13 20:18:47 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.127 2024/01/16 01:26:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -913,47 +913,6 @@ Lbrkpt3:
 #include <m68k/m68k/sigreturn.s>
 
 /*
- * Interrupt handlers.
- *
- * For auto-vectored interrupts, the CPU provides the
- * vector 0x18+level.
- *
- * intrhand_autovec is the entry point for auto-vectored
- * interrupts.
- *
- * For vectored interrupts, we pull the pc, evec, and exception frame
- * and pass them to the vectored interrupt dispatcher.  The vectored
- * interrupt dispatcher will deal with strays.
- *
- * intrhand_vectored is the entry point for vectored interrupts.
- */
-
-ENTRY_NOPROFILE(intrhand_autovec)
-	addql	#1,_C_LABEL(interrupt_depth)
-	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| get pointer to frame
-	movl	%a1,%sp@-
-	jbsr	_C_LABEL(isrdispatch_autovec)  | call dispatcher
-	addql	#4,%sp
-	jbra	Lintrhand_exit
-
-ENTRY_NOPROFILE(intrhand_vectored)
-	addql	#1,_C_LABEL(interrupt_depth)
-	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| get pointer to frame
-	movl	%a1,%sp@-
-	movw	%sr,%d0
-	bfextu	%d0,21,3,%d0		| Get current ipl
-	movl	%d0,%sp@-		| Push it
-	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
-	addql	#8,%sp
-Lintrhand_exit:
-	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
-
-	/* FALLTHROUGH to rei */
-
-/*
  * Emulation of VAX REI instruction.
  *
  * This code deals with checking for and servicing ASTs
@@ -1193,24 +1152,3 @@ GLOBAL(intiobase_phys)
 
 GLOBAL(intiotop_phys)
 	.long	0		| PA of top of board's I/O registers
-
-/*
- * interrupt counters.
- * XXXSCW: Will go away soon; kept here to keep vmstat happy
- */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"clock"
-	.asciz	"lev6"
-	.asciz	"nmi"
-	.asciz	"statclock"
-GLOBAL(eintrnames)
-	.even
-
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)

@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.h,v 1.12 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: isr.h,v 1.13 2024/01/16 01:26:34 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,56 +29,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
+#ifndef _MVME68K_ISR_H_
+#define	_MVME68K_ISR_H_
+
+#include <sys/intr.h>
 
 /*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
+ * Aliases for the legacy mvme68k ISR routines.
  */
-#define ISRAUTOVEC	0x18
-#define NISRAUTOVEC	8
-#define NIPLS		8
 
-/*
- * The location and size of the vectored interrupt portion
- * of the vector table.
- */
-#define ISRVECTORED	0x40
-#define NISRVECTORED	192
+static inline void
+isrinit(void)
+{
+	extern int nmihand(void *);
 
-/*
- * Autovectored interrupt handler cookie.
- */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-	struct evcnt	*isr_evcnt;
-};
+	m68k_intr_init(NULL);
+	m68k_intr_establish(nmihand, NULL, NULL, 0, 7, 0, 0);
+}
 
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
+static inline void
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int isrpri,
+    struct evcnt *ev)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, ev, 0, ipl, isrpri, 0);
+}
 
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int		(*isr_func)(void *);
-	void		*isr_arg;
-	int		isr_ipl;
-	struct evcnt	*isr_evcnt;
-};
+static inline void
+isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec,
+    struct evcnt *ev)
+{
+	/* XXX leaks interrupt handle. */
+	m68k_intr_establish(func, arg, ev, vec, ipl, 0, 0);
+}
 
-extern	struct evcnt mvme68k_irq_evcnt[];
+static inline struct evcnt *
+isrlink_evcnt(int ipl)
+{
+	KASSERT(ipl >= 0 && ipl <= 7);
+	return &m68k_intr_evcnt[ipl];
+}
 
-void	isrinit(void);
-struct evcnt *isrlink_evcnt(int);
-void	isrlink_autovec(int (*)(void *), void *, int, int, struct evcnt *);
-void	isrlink_vectored(int (*)(void *), void *, int, int, struct evcnt *);
-void	isrunlink_vectored(int);
-void	isrdispatch_autovec(struct clockframe *);
-void	isrdispatch_vectored(int, struct clockframe *);
-void	netintr(void);
+static inline void
+isrunlink_vectored(int vec)
+{
+	/* XXX isrlink_vectored() should return a handle. */
+	void *ih = m68k_intrvec_intrhand(vec);
+	if (ih != NULL) {
+		m68k_intr_disestablish(ih);
+	}
+}
+
+#endif /* _MVME68K_ISR_H_ */

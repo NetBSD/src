@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2023/10/05 19:41:05 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 2024/01/16 01:26:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2023/10/05 19:41:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2024/01/16 01:26:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -564,7 +564,7 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 		}
 
 #ifdef DIAGNOSTIC
-		if (interrupt_depth && !panicking) {
+		if (idepth && !panicking) {
 			printf("trap: calling uvm_fault() from interrupt!\n");
 			goto dopanic;
 		}

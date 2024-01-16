@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2024/01/13 20:18:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 2024/01/16 01:26:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2024/01/13 20:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2024/01/16 01:26:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -1028,17 +1028,6 @@ module_init_md(void)
 {
 }
 #endif
-
-const uint16_t ipl2psl_table[NIPL] = {
-	[IPL_NONE]       = PSL_S | PSL_IPL0,
-	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
-	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
-	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
-	[IPL_VM]         = PSL_S | PSL_IPL3,
-	[IPL_SCHED]      = PSL_S | PSL_IPL7,
-	[IPL_HIGH]       = PSL_S | PSL_IPL7,
-};
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)

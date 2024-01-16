@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2023/12/27 17:35:36 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.41 2024/01/16 01:26:34 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -66,6 +66,8 @@ endif
 
 # MMU options
 define	M68K_MMU_MOTOROLA	1
+
+define	__HAVE_M68K_INTR_VECTORED	1
 
 # values for mmutype
 define	MMU_68060		MMU_68060
