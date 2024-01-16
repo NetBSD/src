@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 2024/01/14 22:06:03 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.19 2024/01/16 05:29:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,6 +64,9 @@
 
 #define	PSL_USERSET	(0)
 #define	PSL_USERCLR	(PSL_S | PSL_IPL7 | PSL_MBZ)
+
+#define	PSLTOIPL(x)	(((x) >> 8) & 0x7)
+#define	IPLTOPSL(x)	((((x) & 0x7) << 8) | PSL_S)
 
 #define	USERMODE(ps)	(((ps) & PSL_S) == 0)
 
