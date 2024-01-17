@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.113 2024/01/17 10:20:12 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.114 2024/01/17 10:21:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.113 2024/01/17 10:20:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.114 2024/01/17 10:21:01 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -112,9 +112,12 @@ MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common");
 VFS_PROTOS(procfs);
 
 #define PROCFS_HASHSIZE	256
+#define PROCFS_EXEC_HOOK ((void *)1)
+#define PROCFS_EXIT_HOOK ((void *)2)
 
 static kauth_listener_t procfs_listener;
 static void *procfs_exechook;
+static void *procfs_exithook;
 LIST_HEAD(hashhead, pfsnode);
 static u_long procfs_hashmask;
 static struct hashhead *procfs_hashtab;
@@ -522,7 +525,7 @@ procfs_exechook_cb(struct proc *p, void *arg)
 	struct vnode *vp;
 	int error;
 
-	if (!(p->p_flag & PK_SUGID))
+	if (arg == PROCFS_EXEC_HOOK && !(p->p_flag & PK_SUGID))
 		return;
 
 	head = procfs_hashhead(p->p_pid);
@@ -616,7 +619,10 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		procfs_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 		    procfs_listener_cb, NULL);
 
-		procfs_exechook = exechook_establish(procfs_exechook_cb, NULL);
+		procfs_exechook = exechook_establish(procfs_exechook_cb,
+		    PROCFS_EXEC_HOOK);
+		procfs_exithook = exithook_establish(procfs_exechook_cb,
+		    PROCFS_EXIT_HOOK);
 
 		mutex_init(&procfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 		procfs_hashtab = hashinit(PROCFS_HASHSIZE, HASH_LIST, true,
@@ -629,6 +635,7 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 			break;
 		kauth_unlisten_scope(procfs_listener);
 		exechook_disestablish(procfs_exechook);
+		exithook_disestablish(procfs_exithook);
 		mutex_destroy(&procfs_hashlock);
 		hashdone(procfs_hashtab, HASH_LIST, procfs_hashmask);
 		break;
