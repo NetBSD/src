@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.80 2024/01/16 15:38:57 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.81 2024/01/17 12:19:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -546,9 +546,6 @@ Lbrkpt3:
 	moveml	%sp@+,#0x7FFF		| restore all but %sp
 	movl	%sp@,%sp		| ... and %sp
 	rte				| all done
-
-/* Use common m68k sigreturn */
-#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.

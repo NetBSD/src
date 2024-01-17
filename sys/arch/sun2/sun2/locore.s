@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 2024/01/16 15:38:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 2024/01/17 12:19:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -388,9 +388,6 @@ Lbrkpt2:
 	moveml	%sp@+,#0x7FFF		| restore all but sp
 	movl	%sp@,%sp		| ... and sp
 	rte				| all done
-
-/* Use common m68k sigreturn */
-#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.  Most are auto-vectored,
