@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.546 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.547 2024/01/17 10:18:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.546 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.547 2024/01/17 10:18:41 hannken Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -407,6 +407,9 @@ main(void)
 	/* Must be called after lwpinit (lwpinit_specificdata) */
 	psref_init();
 
+	/* Initialize exec structures */
+	exec_init(1);		/* signal_init calls exechook_establish() */
+
 	/* Initialize signal-related data structures. */
 	signal_init();
 
@@ -578,9 +581,6 @@ main(void)
 	yield();
 
 	vmem_rehash_start();	/* must be before exec_init */
-
-	/* Initialize exec structures */
-	exec_init(1);		/* seminit calls exithook_establish() */
 
 #if NVERIEXEC > 0
 	/*
