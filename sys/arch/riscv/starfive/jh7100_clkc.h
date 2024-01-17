@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100_clkc.h,v 1.1 2024/01/16 09:06:46 skrll Exp $ */
+/* $NetBSD: jh7100_clkc.h,v 1.2 2024/01/17 07:05:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@
 #define JH7100_CLK_INT_MASK	__BITS(7, 0)
 
 /* fractional divider min/max */
-#define JH7100_CLK_FRAC_MIN	100
-#define JH7100_CLK_FRAC_MAX	(26600 - 1)
+#define JH7100_CLK_FRAC_MIN	100UL
+#define JH7100_CLK_FRAC_MAX	(26600UL - 1)
 
 struct jh7100_clkc_softc;
 struct jh7100_clkc_clk;
