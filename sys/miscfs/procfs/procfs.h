@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.83 2024/01/17 10:19:21 hannken Exp $	*/
+/*	$NetBSD: procfs.h,v 1.84 2024/01/17 10:20:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -192,7 +192,6 @@ procfs_fileno(pid_t _pid, pfstype _type, int _fd)
 #define PROCFS_TYPE(type)	((type) % PFSlast)
 
 struct procfsmount {
-	void *pmnt_exechook;
 	int pmnt_flags;
 };
 
@@ -272,7 +271,6 @@ int procfs_dolimit(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_hashrem(struct pfsnode *);
-void procfs_revoke_vnodes(struct proc *, void *);
 int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 
 /* functions to check whether or not files should be displayed */
