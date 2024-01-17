@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 2024/01/17 12:19:07 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 2024/01/17 12:33:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -505,16 +505,6 @@ Ldorte:
  * interrupt vector table for reset is NOT at address zero.
  * (The MMU has a "boot" bit that forces access to the PROM)
  */
-
-/*
- * Use common m68k sigcode.
- */
-#include <m68k/m68k/sigcode.s>
-#ifdef COMPAT_SUNOS
-#include <m68k/m68k/sunos_sigcode.s>
-#endif
-
-	.text
 
 /*
  * Primitives

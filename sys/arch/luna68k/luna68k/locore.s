@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.81 2024/01/17 12:19:06 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.82 2024/01/17 12:33:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -642,14 +642,6 @@ Laststkadj:
 	moveml	%sp@+,#0x7FFF		| restore user registers
 	movl	%sp@,%sp		| and our SP
 	rte				| and do real RTE
-
-/*
- * Use common m68k sigcode.
- */
-#include <m68k/m68k/sigcode.s>
-#ifdef COMPAT_SUNOS
-#include <m68k/m68k/sunos_sigcode.s>
-#endif
 
 /*
  * Primitives

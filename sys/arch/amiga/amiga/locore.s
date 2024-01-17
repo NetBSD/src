@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.169 2024/01/17 12:19:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.170 2024/01/17 12:33:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1046,14 +1046,6 @@ Lnoflush:
 	moveml	%sp@+,%d0-%d7/%a0-%a6	| load most registers (all but SSP)
 	addql	#8,%sp			| pop SSP and stack adjust count
   	rte
-
-/*
- * Use common m68k sigcode.
- */
-#include <m68k/m68k/sigcode.s>
-#ifdef COMPAT_SUNOS
-#include <m68k/m68k/sunos_sigcode.s>
-#endif
 
 /*
  * Primitives
