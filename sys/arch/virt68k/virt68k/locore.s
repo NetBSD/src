@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 2024/01/16 15:38:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 2024/01/17 05:22:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -622,24 +622,3 @@ GLOBAL(cputype)
 
 GLOBAL(fputype)
 	.long	FPU_68040	| default to FPU_68040
-
-/*
- * interrupt counters.
- * XXXSCW: Will go away soon; kept here to keep vmstat happy
- */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"clock"
-	.asciz	"lev6"
-	.asciz	"nmi"
-	.asciz	"statclock"
-GLOBAL(eintrnames)
-	.even
-
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
