@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.82 2022/01/19 10:23:00 martin Exp $	*/
+/*	$NetBSD: procfs.h,v 1.83 2024/01/17 10:19:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -129,7 +129,9 @@ struct pfskey {
 	int		pk_fd;		/* associated fd if not -1 */
 };
 struct pfsnode {
+	LIST_ENTRY(pfsnode) pfs_hash;	/* per pid hash list */
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
+	struct mount	*pfs_mount;	/* mount associated with this pfsnode */
 	struct pfskey	pfs_key;
 #define pfs_type pfs_key.pk_type
 #define pfs_pid pfs_key.pk_pid
@@ -269,6 +271,7 @@ int procfs_doauxv(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_dolimit(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
+void procfs_hashrem(struct pfsnode *);
 void procfs_revoke_vnodes(struct proc *, void *);
 int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.111 2022/01/17 11:20:00 bouyer Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.112 2024/01/17 10:19:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.111 2022/01/17 11:20:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.112 2024/01/17 10:19:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -110,7 +110,29 @@ MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common");
 
 VFS_PROTOS(procfs);
 
+#define PROCFS_HASHSIZE	256
+
 static kauth_listener_t procfs_listener;
+LIST_HEAD(hashhead, pfsnode);
+static u_long procfs_hashmask;
+static struct hashhead *procfs_hashtab;
+static kmutex_t procfs_hashlock;
+
+static struct hashhead *
+procfs_hashhead(pid_t pid)
+{
+
+	return &procfs_hashtab[pid & procfs_hashmask];
+}
+
+void
+procfs_hashrem(struct pfsnode *pfs)
+{
+
+	mutex_enter(&procfs_hashlock);
+	LIST_REMOVE(pfs, pfs_hash);
+	mutex_exit(&procfs_hashlock);
+}
 
 /*
  * VFS Operations.
@@ -279,6 +301,7 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	pfs->pfs_type = pfskey.pk_type;
 	pfs->pfs_fd = pfskey.pk_fd;
 	pfs->pfs_vnode = vp;
+	pfs->pfs_mount = mp;
 	pfs->pfs_flags = 0;
 	pfs->pfs_fileno =
 	    PROCFS_FILENO(pfs->pfs_pid, pfs->pfs_type, pfs->pfs_fd);
@@ -420,6 +443,10 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	default:
 		panic("procfs_allocvp");
 	}
+
+	mutex_enter(&procfs_hashlock);
+	LIST_INSERT_HEAD(procfs_hashhead(pfs->pfs_pid), pfs, pfs_hash);
+	mutex_exit(&procfs_hashlock);
 
 	uvm_vnp_setsize(vp, 0);
 	*new_key = &pfs->pfs_key;
