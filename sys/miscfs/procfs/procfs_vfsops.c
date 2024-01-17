@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.112 2024/01/17 10:19:21 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.113 2024/01/17 10:20:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.112 2024/01/17 10:19:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.113 2024/01/17 10:20:12 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.112 2024/01/17 10:19:21 hannken 
 #include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
@@ -113,6 +114,7 @@ VFS_PROTOS(procfs);
 #define PROCFS_HASHSIZE	256
 
 static kauth_listener_t procfs_listener;
+static void *procfs_exechook;
 LIST_HEAD(hashhead, pfsnode);
 static u_long procfs_hashmask;
 static struct hashhead *procfs_hashtab;
@@ -188,7 +190,6 @@ procfs_mount(
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
-	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	if (*data_len >= sizeof *args)
 		pmnt->pmnt_flags = args->flags;
 	else
@@ -212,8 +213,6 @@ procfs_unmount(struct mount *mp, int mntflags)
 
 	if ((error = vflush(mp, 0, flags)) != 0)
 		return (error);
-
-	exechook_disestablish(VFSTOPROC(mp)->pmnt_exechook);
 
 	kmem_free(mp->mnt_data, sizeof(struct procfsmount));
 	mp->mnt_data = NULL;
@@ -513,6 +512,48 @@ struct vfsops procfs_vfsops = {
 	.vfs_opv_descs = procfs_vnodeopv_descs
 };
 
+static void
+procfs_exechook_cb(struct proc *p, void *arg)
+{
+	struct hashhead *head;
+	struct pfsnode *pfs;
+	struct mount *mp;
+	struct pfskey key;
+	struct vnode *vp;
+	int error;
+
+	if (!(p->p_flag & PK_SUGID))
+		return;
+
+	head = procfs_hashhead(p->p_pid);
+
+again:
+	mutex_enter(&procfs_hashlock);
+	LIST_FOREACH(pfs, head, pfs_hash) {
+		if (pfs->pfs_pid != p->p_pid)
+			continue;
+		mp = pfs->pfs_mount;
+		key = pfs->pfs_key;
+		vfs_ref(mp);
+		mutex_exit(&procfs_hashlock);
+
+		error = vcache_get(mp, &key, sizeof(key), &vp);
+		vfs_rele(mp);
+		if (error != 0)
+			goto again;
+		if (vrecycle(vp))
+			goto again;
+		do {
+			error = vfs_suspend(mp, 0);
+		} while (error == EINTR || error == ERESTART);
+		vgone(vp);
+		if (error == 0)
+			vfs_resume(mp);
+		goto again;
+	}
+	mutex_exit(&procfs_hashlock);
+}
+
 static int
 procfs_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
@@ -575,12 +616,21 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		procfs_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 		    procfs_listener_cb, NULL);
 
+		procfs_exechook = exechook_establish(procfs_exechook_cb, NULL);
+
+		mutex_init(&procfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
+		procfs_hashtab = hashinit(PROCFS_HASHSIZE, HASH_LIST, true,
+		    &procfs_hashmask);
+
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&procfs_vfsops);
 		if (error != 0)
 			break;
 		kauth_unlisten_scope(procfs_listener);
+		exechook_disestablish(procfs_exechook);
+		mutex_destroy(&procfs_hashlock);
+		hashdone(procfs_hashtab, HASH_LIST, procfs_hashmask);
 		break;
 	default:
 		error = ENOTTY;
