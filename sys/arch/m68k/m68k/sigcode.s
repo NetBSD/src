@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.15 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.16 2024/01/17 12:33:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,12 +38,11 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
-/*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/sigcode.s>
- */
+#include <machine/asm.h>
+
+#include "assym.h"
+
+	.file	"sigcode.s"
 
 /*
  * Signal trampoline; copied to top of user stack.

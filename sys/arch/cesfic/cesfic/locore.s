@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 2024/01/17 12:19:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 2024/01/17 12:33:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -718,14 +718,6 @@ Lnosir:
 	movl	%sp@+,%d0			| restore scratch register
 Ldorte:
 	rte				| real return
-
-/*
- * Use common m68k sigcode.
- */
-#include <m68k/m68k/sigcode.s>
-#ifdef COMPAT_SUNOS
-#include <m68k/m68k/sunos_sigcode.s>
-#endif
 
 /*
  * Primitives
