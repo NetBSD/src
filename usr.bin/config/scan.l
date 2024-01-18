@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.34 2021/09/10 21:52:17 rillig Exp $	*/
+/*	$NetBSD: scan.l,v 1.35 2024/01/18 04:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.34 2021/09/10 21:52:17 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.35 2024/01/18 04:41:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -164,6 +164,7 @@ linkzero	return LINKZERO;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
+mkflagvar	return MKFLAGVAR;
 maxpartitions	return MAXPARTITIONS;
 maxusers	return MAXUSERS;
 minor		return MINOR;

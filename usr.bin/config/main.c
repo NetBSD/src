@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.100 2020/04/03 19:53:41 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.101 2024/01/18 04:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.100 2020/04/03 19:53:41 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.101 2024/01/18 04:41:37 thorpej Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -210,7 +210,6 @@ static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
 static void	defopt(struct dlhash *ht, const char *fname,
 	     struct defoptlist *opts, struct nvlist *deps, int obs);
-static struct defoptlist *find_declared_option_option(const char *name);
 static struct nvlist *find_declared_fs_option(const char *name);
 
 #define LOGCONFIG_LARGE "INCLUDE_CONFIG_FILE"
@@ -922,7 +921,7 @@ badfilename(const char *fname)
  * This used to be one function (find_declared_option) before options
  * and filesystems became different types.
  */
-static struct defoptlist *
+struct defoptlist *
 find_declared_option_option(const char *name)
 {
 	struct defoptlist *option;
@@ -1065,6 +1064,27 @@ defopt(struct dlhash *ht, const char *fname, struct defoptlist *opts,
 }
 
 /*
+ * Specify that a defined option should have a Makefile variable created.
+ */
+static void
+mkoptvar(struct dlhash *ht, struct defoptlist *opts)
+{
+	struct defoptlist *dl, *defined_dl;
+
+	for (dl = opts; dl != NULL; dl = dl->dl_next) {
+		defined_dl = dlhash_lookup(ht, dl->dl_name);
+		if (defined_dl == NULL) {
+			cfgerror("option `%s' not defined"
+			    " at %s:%hu", dl->dl_name, dl->dl_where.w_srcfile,
+			    dl->dl_where.w_srcline);
+			continue;
+		}
+		defined_dl->dl_mkvar = 1;
+	}
+	defoptlist_destroy(dl);
+}
+
+/*
  * Define one or more standard options.  If an option file name is specified,
  * place all options in one file with the specified name.  Otherwise, create
  * an option file for each option.
@@ -1099,6 +1119,16 @@ defflag(const char *fname, struct defoptlist *opts, struct nvlist *deps, int obs
 	defopt(defflagtab, fname, opts, deps, obs);
 }
 
+/*
+ * Specify that a defined flag option should have a Makefile variable
+ * created.
+ */
+void
+mkflagvar(struct defoptlist *opts)
+{
+
+	mkoptvar(defflagtab, opts);
+}
 
 /*
  * Add an option from "options FOO".  Note that this selects things that

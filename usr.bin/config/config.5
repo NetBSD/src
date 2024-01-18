@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.47 2021/10/04 14:35:20 andvar Exp $
+.\" $NetBSD: config.5,v 1.48 2024/01/18 04:41:37 thorpej Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 19, 2016
+.Dd January 17, 2024
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -457,6 +457,24 @@ will emit a warning and ignore the option.
 The optional
 .Ar file
 argument should match the original definition of the option.
+.\"
+.Pp
+.It Ic mkflagvar \
+    Ar option ...
+Specifes that an option previously defined with
+.Ic defflag
+should have a variable created in the kernel Makefile if the option
+is selection with an
+.Ic options
+statement.
+No variable is created if the option is not selected.
+The Makefile variable will have the name
+.Li KERNEL_OPT_ Ns Aq Ar option
+and, because options defined with
+.Ic defflag
+are boolean, 
+the variable will have the value
+.Dq 1 .
 .\"
 .Pp
 .It Ic define \
