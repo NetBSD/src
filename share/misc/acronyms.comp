@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.385 2024/01/02 17:44:00 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.386 2024/01/18 03:33:08 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -788,6 +788,7 @@ IGMP	Internet Group Management Protocol
 IGP	interior gateway protocol
 IHV	independent hardware vendor
 IKE	Internet key exchange
+IKM	input keying material
 ILM	internal loopback mode
 ILOM	integrated lights-out management
 ILP	instruction level parallelism
