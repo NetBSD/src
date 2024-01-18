@@ -1,5 +1,7 @@
-#	$NetBSD: files.m68k,v 1.55 2024/01/18 05:04:13 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.56 2024/01/18 05:42:29 thorpej Exp $
 #
+
+version	20240118		# mkflagvar
 
 defflag	opt_fpsp.h		FPSP
 defflag	opt_m68k_arch.h		M68010
