@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.176 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.177 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13146,7 +13146,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		and humidity sensor [brad 20211003]
 	network: Make pktq_rps_hash() pluggable for each interface type.
 		[knakahara 20211011]
-	wm(4): Add Tiger Lake and newer devices (I219V 15-V9 and LM 16-19).
+	wm(4): Add Tiger Lake and newer devices (I219V 15-V19 and LM 16-19).
 		[msaitoh 20211013]
 	sgp40mox(4): Driver for the Sensirion SGP40 MOx gas sensor for air
 		quality [brad 20211014]
