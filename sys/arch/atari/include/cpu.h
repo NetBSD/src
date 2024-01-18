@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2024/01/09 04:16:23 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76 2024/01/18 14:39:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,11 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-/*
- * Exported definitions unique to atari/68k cpu support.
- */
-#define	M68K_MMU_MOTOROLA
-
 void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*

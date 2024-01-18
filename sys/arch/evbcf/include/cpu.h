@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2024/01/09 04:08:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2024/01/18 14:39:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
-#include "opt_m68k_arch.h"
 #endif
 
 /*

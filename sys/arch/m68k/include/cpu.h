@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2024/01/03 12:46:12 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2024/01/18 14:39:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,10 @@
 
 #ifndef _M68K_CPU_H_
 #define	_M68K_CPU_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_m68k_arch.h"	/* XXX Should not do this here. */
+#endif
 
 /*
  * Exported definitions common to Motorola m68k-based ports.

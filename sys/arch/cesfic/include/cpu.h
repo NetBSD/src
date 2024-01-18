@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2024/01/15 03:07:14 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2024/01/18 14:39:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
-#include "opt_m68k_arch.h"
 #endif
 
 /*
@@ -101,14 +100,6 @@ struct clockframe {
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-#ifndef M68040
-#define	M68040
-#endif /* ! M68040 */
-
-#ifndef M68K_MMU_MOTOROLA
-#define	M68K_MMU_MOTOROLA
-#endif /* ! M68K_MMU_MOTOROLA */
 
 /* locore.s functions */
 void	doboot(void)

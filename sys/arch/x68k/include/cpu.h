@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2024/01/09 04:16:27 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2024/01/18 14:39:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,6 @@
 #define	_X68K_CPU_H_
 
 #if defined(_KERNEL_OPT)
-#include "opt_m68k_arch.h"
 #include "opt_lockdebug.h"
 #endif
 
@@ -52,11 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-/*
- * Exported definitions unique to x68k/68k cpu support.
- */
-#define	M68K_MMU_MOTOROLA
-
 /*
  * Get interrupt glue.
  */

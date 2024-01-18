@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2024/01/09 04:16:23 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85 2024/01/18 14:39:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,11 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-/*
- * Exported definitions unique to amiga/68k cpu support.
- */
-#define	M68K_MMU_MOTOROLA
-
 extern volatile unsigned int interrupt_depth;
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
