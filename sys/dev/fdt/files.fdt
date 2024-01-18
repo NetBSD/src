@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.71 2023/12/29 23:31:44 thorpej Exp $
+# $NetBSD: files.fdt,v 1.72 2024/01/18 07:48:57 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -149,6 +149,10 @@ file	dev/fdt/ehci_fdt.c			ehci_fdt
 # OHCI
 attach	ohci at fdt with ohci_fdt
 file	dev/fdt/ohci_fdt.c			ohci_fdt
+
+# Cadence USB3 XHCI
+attach	xhci at fdt with cdns3_fdt
+file	dev/fdt/cdns3_fdt.c			cdns3_fdt
 
 # Designware USB2 OTG
 attach	dwctwo at fdt with dwc2_fdt
