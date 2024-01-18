@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.35 2023/12/22 08:41:59 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.36 2024/01/18 07:41:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.35 2023/12/22 08:41:59 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.36 2024/01/18 07:41:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -134,18 +134,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL);
-}
-
-void
-delay(unsigned long us)
-{
-	const uint32_t cycles_per_us = curcpu()->ci_data.cpu_cc_freq / 1000000;
-	const uint64_t cycles = (uint64_t)us * cycles_per_us;
-	const uint64_t finish = csr_cycle_read() + cycles;
-
-	while (csr_cycle_read() < finish) {
-		/* spin, baby spin */
-	}
 }
 
 #ifdef MODULAR

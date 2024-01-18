@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.6 2023/07/26 06:13:44 skrll Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.7 2024/01/18 07:41:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.6 2023/07/26 06:13:44 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.7 2024/01/18 07:41:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,6 +47,7 @@ static void (*_riscv_timer_init)(void) = riscv_timer_init;
 
 static uint32_t timer_frequency;
 static uint32_t	timer_ticks_per_hz;
+static uint32_t timer_ticks_per_usec;
 
 static u_int
 timer_get_timecount(struct timecounter *tc)
@@ -67,6 +68,7 @@ riscv_timer_frequency_set(uint32_t freq)
 {
 	timer_frequency = freq;
 	timer_ticks_per_hz = freq / hz;
+	timer_ticks_per_usec = freq / 1000000;
 }
 
 uint32_t
@@ -142,4 +144,15 @@ cpu_initclocks(void)
 void
 setstatclockrate(int newhz)
 {
+}
+
+void
+delay(unsigned long us)
+{
+        const uint64_t ticks = (uint64_t)us * timer_ticks_per_usec;
+        const uint64_t finish = csr_time_read() + ticks;
+
+        while (csr_time_read() < finish) {
+                /* spin, baby spin */
+        }
 }
