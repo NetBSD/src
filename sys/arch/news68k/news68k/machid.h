@@ -1,4 +1,4 @@
-/*	$NetBSD: machid.h,v 1.4 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: machid.h,v 1.5 2024/01/18 04:07:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -85,6 +85,8 @@
 #define	NWB235	235
 #define	NWB235A	236
 #define	NWXRES	255
+
+#include "opt_newsconf.h"
 
 #if defined(news700) || defined(news800) || defined(news1700) || defined(news1800)
 struct oidrom {
