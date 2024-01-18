@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.40 2024/01/15 02:16:52 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.41 2024/01/18 14:39:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,9 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-
-#define M68K_MMU_MOTOROLA
-
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the luna68k, we use

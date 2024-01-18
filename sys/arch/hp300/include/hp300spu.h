@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.15 2024/01/18 03:40:48 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.16 2024/01/18 14:39:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,17 +87,6 @@ extern	int mmuid;		/* MMU id */
 #if defined(_KERNEL_OPT)
 #include "opt_spuconf.h"
 #include "opt_m68k_arch.h"
-#endif
-
-/*
- * MMU configuration.
- */
-#if defined(HP320) || defined(HP350)
-#define M68K_MMU_HP
-#endif
-
-#if defined(HP330) || defined(M68030) || defined(M68040)
-#define	M68K_MMU_MOTOROLA
 #endif
 
 /*

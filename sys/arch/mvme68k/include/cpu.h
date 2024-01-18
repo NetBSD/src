@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2024/01/18 05:12:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2024/01/18 14:39:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
-#include "opt_m68k_arch.h"
-#include "opt_mvmeconf.h"
 #endif
 
 /*
@@ -53,11 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-/*
- * Exported definitions unique to mvme68k/68k cpu support.
- */
-#define	M68K_MMU_MOTOROLA
-
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the mvme68k, we use

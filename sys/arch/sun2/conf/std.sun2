@@ -1,12 +1,13 @@
-# $NetBSD: std.sun2,v 1.8 2024/01/18 05:13:48 thorpej Exp $
+# $NetBSD: std.sun2,v 1.9 2024/01/18 14:39:07 thorpej Exp $
 
 # Standard information for Sun2 machines.
 machine	sun2 m68k sun68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
 
-# All sun2 systems have a 68010.
+# All sun2 systems have a 68010 with Sun2 MMU
 options 	M68010
+options 	M68K_MMU_SUN2
 
 # XXX temporary option until sun3 port migrates to all sun68k stuff
 options 	_SUN2_

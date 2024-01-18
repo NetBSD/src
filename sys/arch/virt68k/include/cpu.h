@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2024/01/09 04:16:27 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2024/01/18 14:39:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
-#include "opt_m68k_arch.h"
 #endif
 
 /*
@@ -52,11 +51,6 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-/*
- * Exported definitions unique to virt68k/68k cpu support.
- */
-#define	M68K_MMU_MOTOROLA
-
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the virt68k, we use
