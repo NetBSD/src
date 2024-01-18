@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2024/01/18 10:34:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2024/01/18 10:34:29 macallan Exp $");
 
 #include "locators.h"
 #include "power.h"
 #include "lcd.h"
+#include "opt_useleds.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $");
 #include <hppa/hppa/machdep.h>
 #include <hppa/dev/cpudevs.h>
 
-#if NLCD > 0
 static struct pdc_chassis_info pdc_chassis_info;
-#endif
 
 #ifdef MBUSDEBUG
 
@@ -1362,9 +1361,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
-#if NLCD > 0
 	int err;
-#endif
 
 	sc->sc_dv = self;
 	mb_attached = 1;
@@ -1409,11 +1406,11 @@ mbattach(device_t parent, device_t self, void *aux)
 	config_found(self, &nca, mbprint, CFARGS_NONE);
 #endif
 
-#if NLCD > 0
 	memset(&nca, 0, sizeof(nca));
 	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
 	if (!err) {
 		if (nca.ca_pcl.enabled) {
+#if NLCD > 0
 			nca.ca_name = "lcd";
 			nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
 			nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
@@ -1423,13 +1420,15 @@ mbattach(device_t parent, device_t self, void *aux)
 			nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
 			config_found(self, &nca, mbprint, CFARGS_NONE);
+#endif
 		} else if (nca.ca_pcl.model == 2) {
+#ifdef USELEDS
 			bus_space_map(&hppa_bustag, nca.ca_pcl.cmd_addr,
 		  	  4, 0, (bus_space_handle_t *)&machine_ledaddr);
 		  	machine_ledword = 1;
+#endif
 		}
 	}
-#endif
 
 	hppa_modules_scan();
 
