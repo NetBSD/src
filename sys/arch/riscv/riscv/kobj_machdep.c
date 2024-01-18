@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2024/01/18 03:36:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014,2023 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: kobj_machdep.c,v 1.5 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: kobj_machdep.c,v 1.6 2024/01/18 03:36:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data, bool isrela,
 		// XXXNH eh? what's with the symidx test?'
 		if (symidx == 0)
 			break;
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 
 	case R_RISCV_CALL_PLT:
 	case R_RISCV_CALL:
@@ -177,7 +177,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data, bool isrela,
 	case R_RISCV_RVC_JUMP:
 	case R_RISCV_32_PCREL:
 		addend -= (intptr_t)where;		/* A -= P */
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 
 #ifdef _LP64
 	case R_RISCV_64:	/* doubleword64 S + A */
