@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.44 2024/01/13 21:40:53 thorpej Exp $
+# $NetBSD: files.next68k,v 1.45 2024/01/18 13:46:14 thorpej Exp $
 
 # next68k-specific configuration info
 
@@ -35,6 +35,8 @@ file	arch/next68k/dev/zs_kgdb.c	kgdb
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/m68k_intr.c
+file	arch/m68k/m68k/m68k_intr_stubs.s
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
 file	arch/m68k/m68k/pmap_motorola.c
@@ -50,7 +52,6 @@ file	arch/next68k/next68k/pmap_bootstrap.c
 file	arch/next68k/next68k/machdep.c
 file	arch/next68k/next68k/clock.c
 file	arch/next68k/next68k/conf.c
-file	arch/next68k/next68k/isr.c
 file	arch/next68k/next68k/autoconf.c
 file	arch/next68k/next68k/mainbus.c
 file	arch/next68k/next68k/nextrom.c
