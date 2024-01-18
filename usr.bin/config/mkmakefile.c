@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.72 2024/01/18 04:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.72 2024/01/18 04:41:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -275,6 +275,7 @@ emitsubs(FILE *fp, const char *line, const char *file, int lineno)
 static void
 emitdefs(FILE *fp)
 {
+	struct defoptlist *dl;
 	struct nvlist *nv;
 
 	fprintf(fp, "KERNEL_BUILD=%s\n", conffile);
@@ -308,6 +309,22 @@ emitdefs(FILE *fp)
 	}
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		emitmkoption(fp, "=", nv);
+
+	/*
+	 * Go through the options again and emit Makefile variables
+	 * for those specified to get one.
+	 */
+	for (nv = options; nv != NULL; nv = nv->nv_next) {
+
+		dl = find_declared_option_option(nv->nv_name);
+		if (dl != NULL && dl->dl_mkvar) {
+			const char *s = nv->nv_str;
+			if (s == NULL) {
+				s = "1";
+			}
+			fprintf(fp, "KERNEL_OPT_%s=\"%s\"\n", nv->nv_name, s);
+		}
+	}
 }
 
 static void

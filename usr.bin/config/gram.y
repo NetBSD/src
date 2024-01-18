@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.56 2020/07/26 22:40:52 uwe Exp $	*/
+/*	$NetBSD: gram.y,v 1.57 2024/01/18 04:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.56 2020/07/26 22:40:52 uwe Exp $");
+__RCSID("$NetBSD: gram.y,v 1.57 2024/01/18 04:41:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,6 +179,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %token	IDENT IOCONF
 %token	LINKZERO
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
+%token	MKFLAGVAR
 %token	NEEDS_COUNT NEEDS_FLAG NO CNO
 %token	XOBJECT OBSOLETE ON OPTIONS
 %token	PACKAGE PLUSEQ PREFIX BUILDPREFIX PSEUDO_DEVICE PSEUDO_ROOT
@@ -334,6 +335,7 @@ definition:
 	| define_attribute
 	| define_option
 	| define_flag
+	| define_flag_mkvar
 	| define_obsolete_flag
 	| define_param
 	| define_obsolete_param
@@ -401,6 +403,10 @@ define_flag:
 	DEFFLAG optfile_opt defopts optdepend_list
 					{ defflag($2, $3, $4, 0); }
 ;
+
+define_flag_mkvar:
+	MKFLAGVAR defopts
+					{ mkflagvar($2); }
 
 define_obsolete_flag:
 	OBSOLETE DEFFLAG optfile_opt defopts

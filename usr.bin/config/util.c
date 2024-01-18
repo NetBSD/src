@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2020/03/07 19:26:13 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.22 2024/01/18 04:41:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.21 2020/03/07 19:26:13 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.22 2024/01/18 04:41:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -258,6 +258,7 @@ defoptlist_create(const char *name, const char *val, const char *lintval)
 	dl->dl_value = val;
 	dl->dl_lintvalue = lintval;
 	dl->dl_obsolete = 0;
+	dl->dl_mkvar = 0;
 	dl->dl_depends = NULL;
 	dl->dl_where.w_srcfile = yyfile;
 	dl->dl_where.w_srcline = currentline();
