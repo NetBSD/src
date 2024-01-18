@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 2024/01/16 01:26:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164 2024/01/18 05:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2024/01/16 01:26:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2024/01/18 05:12:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_m68k_arch.h"
+#include "opt_mvmeconf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

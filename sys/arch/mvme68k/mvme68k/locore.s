@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 2024/01/17 12:33:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 2024/01/18 05:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_m68k_arch.h"
+#include "opt_mvmeconf.h"
 
 #include "assym.h"
 #include <machine/asm.h>

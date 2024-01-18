@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.68 2018/09/22 12:24:02 rin Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.69 2024/01/18 05:12:29 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -32,19 +32,19 @@ GENASSYM_CONF=	${MVME68K}/mvme68k/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Dmvme68k
-.if empty(IDENT:M-DMVME172) && empty(IDENT:M-DMVME177)
-.if empty(IDENT:M-DMVME147)
+.if empty(KERNEL_OPT_M68060)
+.if empty(KERNEL_OPT_M68030)
 CMACHFLAGS=	-m68040
 .else
 CMACHFLAGS=	-m68030
 .endif
-.else
-.if empty(IDENT:M-DMVME147) && empty(IDENT:M-DMVME162) && empty(IDENT:M-DMVME167)
+.else		# M68060
+.if empty(KERNEL_OPT_M68030) && empty(KERNEL_OPT_M68040)
 CMACHFLAGS=	-m68060 -Wa,-march=68030 -Wa,-m68030 -Wa,-mcpu=68030 -Wa,-m68851
 .else
 CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-mcpu=68030 -Wa,-m68851
 .endif
-.endif
+.endif		# M68060
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp
 

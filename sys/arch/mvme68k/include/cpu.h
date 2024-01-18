@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2024/01/16 01:26:34 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2024/01/18 05:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_m68k_arch.h"
+#include "opt_mvmeconf.h"
 #endif
 
 /*
@@ -80,7 +81,6 @@ struct clockframe {
  */
 #define	CLKF_INTR(framep)	(idepth > 1)
 
-
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -107,31 +107,8 @@ struct clockframe {
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
-/*
- * Associate MVME models with CPU types.
- */
-#define	MVME68K		1	
+#define	MVME68K		1	/* XXX */
 
-/*
- * MVME-147; 68030 CPU
- */
-#if defined(MVME147) && !defined(M68030)
-#define M68030
-#endif
-
-/*
- * MVME-162/166/167; 68040 CPU
- */
-#if (defined(MVME162) || defined(MVME167)) && !defined(M68040)
-#define M68040
-#endif
-
-/*
- * MVME-172/177; 68060 CPU
- */
-#if (defined(MVME172) || defined(MVME177)) && !defined(M68060)
-#define M68060
-#endif
 #endif /* _KERNEL */
 
 /*

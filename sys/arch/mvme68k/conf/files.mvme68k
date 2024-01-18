@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.68 2024/01/16 01:26:34 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.69 2024/01/18 05:12:29 thorpej Exp $
 
 # config file for mvme68k
 
@@ -7,6 +7,13 @@ defflag				PANICBUTTON	# panic on ABORT if not DDB
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
+
+# System configuration options.
+defflag	opt_mvmeconf.h	MVME147: M68030
+defflag	opt_mvmeconf.h	MVME162: M68040
+defflag	opt_mvmeconf.h	MVME167: M68040
+defflag	opt_mvmeconf.h	MVME172: M68060
+defflag	opt_mvmeconf.h	MVME177: M68060
 
 device mainbus { }
 attach mainbus at root
