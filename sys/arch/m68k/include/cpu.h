@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2024/01/18 14:39:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2024/01/18 14:42:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,24 +47,6 @@
 
 /*
  * Exported definitions common to Motorola m68k-based ports.
- *
- * Note that are some port-specific definitions here, such as
- * HP and Sun MMU types.  These facilitate adding very small
- * amounts of port-specific code to what would otherwise be
- * identical.  The is especially true in the case of the HP
- * and other m68k pmaps.
- *
- * Individual ports are expected to define the following CPP symbols
- * in <machine/cpu.h> to enable conditional code:
- *
- *	M68K_MMU_MOTOROLA	Machine has a Motorola MMU (incl.
- *				68851, 68030, 68040, 68060)
- *
- *	M68K_MMU_HP		Machine has an HP MMU.
- *
- * Note also that while m68k-generic code conditionalizes on the
- * M68K_MMU_HP CPP symbol, none of the HP MMU definitions are in this
- * file (since none are used in otherwise sharable code).
  */
 
 /*
