@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.46 2024/01/18 05:12:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46 2024/01/18 05:12:29 thorpej Exp $");
+
+#include "opt_mvmeconf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

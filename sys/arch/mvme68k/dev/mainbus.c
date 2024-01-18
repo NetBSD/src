@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2024/01/18 05:12:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2024/01/18 05:12:29 thorpej Exp $");
 
+#include "opt_mvmeconf.h"
 #include "vmetwo.h"
 
 #include <sys/param.h>

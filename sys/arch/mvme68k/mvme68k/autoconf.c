@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2024/01/18 05:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2024/01/18 05:12:30 thorpej Exp $");
+
+#include "opt_mvmeconf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
