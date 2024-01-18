@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.30 2023/12/21 08:50:22 skrll Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.31 2024/01/18 03:47:26 msaitoh Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.30 2023/12/21 08:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.31 2024/01/18 03:47:26 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -198,6 +198,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	int offset;
 	pcireg_t command;
+	const char *revstr;
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
@@ -269,21 +270,26 @@ rge_attach(device_t parent, device_t self, void *aux)
 	switch (hwrev) {
 	case 0x60800000:
 		sc->rge_type = MAC_CFG2;
+		revstr = "Z1";
 		break;
 	case 0x60900000:
 		sc->rge_type = MAC_CFG3;
+		revstr = "Z2";
 		break;
 	case 0x64000000:
 		sc->rge_type = MAC_CFG4;
+		revstr = "A";
 		break;
 	case 0x64100000:
 		sc->rge_type = MAC_CFG5;
+		revstr = "B";
 		break;
 	default:
 		aprint_error(": unknown version 0x%08x\n", hwrev);
 		return;
 	}
 
+	aprint_normal_dev(sc->sc_dev, "HW rev. %s\n", revstr);
 	rge_config_imtype(sc, RGE_IMTYPE_SIM);
 
 	/*
