@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.42 2023/10/08 03:57:47 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.43 2024/01/18 04:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2023/10/08 03:57:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2024/01/18 04:07:38 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
+#include "opt_newsconf.h"
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>

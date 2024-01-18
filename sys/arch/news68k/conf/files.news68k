@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.39 2024/01/15 00:35:23 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.40 2024/01/18 04:07:37 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -6,6 +6,10 @@
 maxpartitions 8
 
 maxusers 2 8 64
+
+# System configuration options.
+defflag	opt_newsconf.h	news1200: M68030
+defflag	opt_newsconf.h	news1700: M68030
 
 device mainbus { [systype = -1] }
 attach mainbus at root

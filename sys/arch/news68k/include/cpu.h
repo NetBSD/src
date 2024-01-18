@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2024/01/15 20:21:50 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2024/01/18 04:07:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_m68k_arch.h"
+#include "opt_newsconf.h"
 #endif
 
 /*
@@ -130,9 +131,6 @@ extern volatile u_char *ctrl_ast;
 	do { astpending++; *ctrl_ast = 0xff; } while (/* CONSTCOND */0)
 
 #if defined(news1700) || defined(news1200)
-#ifndef M68030
-#define M68030
-#endif
 #define M68K_MMU_MOTOROLA
 #endif
 
