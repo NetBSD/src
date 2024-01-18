@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1501 2023/12/28 09:43:57 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1502 2024/01/18 03:15:26 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6307,6 +6307,10 @@ product INTEL I219_LM18		0x550a	I219-LM (18) Ethernet Connection
 product INTEL I219_V18		0x550b	I219-V (18) Ethernet Connection
 product INTEL I219_LM19		0x550c	I219-LM (19) Ethernet Connection
 product INTEL I219_V19		0x550d	I219-V (19) Ethernet Connection
+product INTEL I219_LM20		0x550e	I219-LM (20) Ethernet Connection
+product INTEL I219_V20		0x550f	I219-V (20) Ethernet Connection
+product INTEL I219_LM21		0x5510	I219-LM (21) Ethernet Connection
+product INTEL I219_V21		0x5511	I219-V (21) Ethernet Connection
 product INTEL CORE7G_H_M_D_HOST_DRAM 0x5900 Core 7G (H, Mobile, Dual) Host Bridge, DRAM
 product INTEL CORE7G_PCIE_X16	0x5901	Core 7G PCIe x16
 product INTEL CORE7G_S_GT1	0x5902	HD Graphics 610 (GT1)
