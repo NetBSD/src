@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 2024/01/17 12:33:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 2024/01/18 12:07:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,8 +199,13 @@ Lnot060cache:
 	jmp	Lenab1
 
 Lmotommu2:
+	movl	#VIRT68K_TT30_IO,%sp@-	| TT0 maps the I/O space
+	.long	0xf0170800		| pmove %sp@,%tt0
+	clrl	%sp@			| ensure TT1 is disabled
+	.long	0xf0170c00		| pmove %sp@,%tt1
+
 	pflusha
-	movl	#MMU51_TCR_BITS,%sp@-	| value to load TC with
+	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
 	pmove	%sp@,%tc		| load it
 
 /*
