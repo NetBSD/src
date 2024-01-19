@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2023/07/10 07:04:20 rin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2024/01/19 09:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.5 2023/07/10 07:04:20 rin Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.6 2024/01/19 09:09:39 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -57,10 +57,26 @@ cpu_configure(void)
 	spl0();
 }
 
+/*
+ * Set up the root device from the boot args.
+ *
+ * cpu_bootconf() is called before RAIDframe root detection,
+ * and cpu_rootconf() is called after.
+ */
+void
+cpu_bootconf(void)
+{
+#ifndef MEMORY_DISK_IS_ROOT
+	fdt_cpu_rootconf();
+#endif
+}
+
 void
 cpu_rootconf(void)
 {
-
+	cpu_bootconf();
+	aprint_normal("boot device: %s\n",
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 	rootconf();
 }
 
