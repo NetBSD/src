@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.88 2024/01/18 14:39:06 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.88 2024/01/18 14:39:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2951,3 +2951,48 @@ pmap_check_wiring(const char *str, vaddr_t va)
 		       str, va, pg->wire_count, count);
 }
 #endif /* DEBUG */
+
+/*
+ * XXX XXX XXX These are legacy remants and should go away XXX XXX XXX
+ * (Cribbed from vm_machdep.c because they're tied to this pmap impl.)
+ */
+
+/*      
+ * Map `size' bytes of physical memory starting at `paddr' into
+ * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
+ * are specified by `prot'.
+ */
+void
+physaccess(void *vaddr, void *paddr, int size, int prot)
+{
+	pt_entry_t *pte;
+	u_int page;
+
+	pte = kvtopte(vaddr);
+	page = (u_int)paddr & PG_FRAME;
+	for (size = btoc(size); size; size--) {
+		*pte++ = PG_V | prot | page;
+		page += PAGE_SIZE;
+	}
+	TBIAS();
+}
+
+void
+physunaccess(void *vaddr, int size)
+{
+	 pt_entry_t *pte;
+
+	 pte = kvtopte(vaddr);
+	 for (size = btoc(size); size; size--)
+	 	*pte++ = PG_NV;
+	TBIAS();
+}
+
+/*
+ * Convert kernel VA to physical address
+ */
+int
+kvtop(void *addr)
+{
+	return (int)vtophys((vaddr_t)addr);
+}
