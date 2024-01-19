@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.11 2019/03/13 06:27:34 martin Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.12 2024/01/19 03:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.11 2019/03/13 06:27:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.12 2024/01/19 03:59:47 thorpej Exp $");
+
+#include "opt_mvmeconf.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

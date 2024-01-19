@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.17 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.18 2024/01/19 03:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.17 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.18 2024/01/19 03:59:47 thorpej Exp $");
 
 #include "vmetwo.h"
+#include "opt_mvmeconf.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

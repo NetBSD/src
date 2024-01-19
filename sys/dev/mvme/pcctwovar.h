@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.5 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.6 2024/01/19 03:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef	_MVME_PCCTWOVAR_H
 #define	_MVME_PCCTWOVAR_H
+
+#include "opt_mvmeconf.h"
 
 /*
  * Structure used to attach PCC devices.
