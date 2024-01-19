@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.3 2009/05/26 08:04:12 joerg Exp $	*/
+/*	$NetBSD: sha2.h,v 1.4 2024/01/19 18:39:59 christos Exp $	*/
 /*	$KAME: sha2.h,v 1.4 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -115,6 +115,13 @@ char *SHA512_FileChunk(const char *, char *, off_t, off_t);
 char *SHA512_File(const char *, char *);
 char *SHA512_Data(const uint8_t *, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
 #endif /* !_KERNEL */
+
+#ifdef _LIBC_INTERNAL
+void SHA224_Transform(SHA224_CTX *, const uint32_t*);
+void SHA256_Transform(SHA256_CTX *, const uint32_t*);
+void SHA384_Transform(SHA384_CTX *, const uint64_t*);
+void SHA512_Transform(SHA512_CTX *, const uint64_t*);
+#endif
 __END_DECLS
 
 #endif /* __SHA2_H__ */

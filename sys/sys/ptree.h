@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.h,v 1.8 2012/10/06 22:15:09 matt Exp $	*/
+/*	$NetBSD: ptree.h,v 1.9 2024/01/19 18:39:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -190,5 +190,6 @@ void *	ptree_find_filtered_node(pt_tree_t *, const void *, pt_filter_t, void *);
 	ptree_find_filtered_node((pt), (key), NULL, NULL)
 void	ptree_remove_node(pt_tree_t *, void *);
 void *	ptree_iterate(pt_tree_t *, const void *, pt_direction_t);
+bool	ptree_check(const pt_tree_t *pt);
 
 #endif /* _SYS_PTREE_H_ */
