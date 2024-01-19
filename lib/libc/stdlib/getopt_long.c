@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.27 2015/09/01 19:39:57 kamil Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.28 2024/01/19 18:41:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt_long.c,v 1.27 2015/09/01 19:39:57 kamil Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.28 2024/01/19 18:41:38 christos Exp $");
 
 #include "namespace.h"
 
@@ -167,7 +167,7 @@ permute_args(int panonopt_start, int panonopt_end, int opt_end, char **nargv)
 static int
 getopt_internal(int nargc, char **nargv, const char *options)
 {
-	char *oli;				/* option letter list index */
+	const char *oli;			/* option letter list index */
 	int optchar;
 
 	_DIAGASSERT(nargv != NULL);

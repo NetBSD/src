@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.29 2014/06/05 22:00:22 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.30 2024/01/19 18:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt.c,v 1.29 2014/06/05 22:00:22 christos Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.30 2024/01/19 18:41:38 christos Exp $");
 
 #include "namespace.h"
 
@@ -63,7 +63,7 @@ int
 getopt(int nargc, char * const nargv[], const char *ostr)
 {
 	static const char *place = EMSG;	/* option letter processing */
-	char *oli;				/* option letter list index */
+	const char *oli;			/* option letter list index */
 
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(ostr != NULL);
