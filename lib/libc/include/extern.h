@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2024/01/03 18:41:53 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2024/01/19 19:31:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,9 +35,13 @@ typedef struct _locale		*locale_t;
 __BEGIN_DECLS
 extern char *__minbrk;
 extern sigset_t __sigintr;
+extern char **environ;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
+int __posix_fadvise50(int, int, __off_t, __off_t, int);
+void  __section(".text.startup") __attribute__((__visibility__("hidden")))
+    __libc_atomic_init(void);
 void _resumecontext(void) __dead;
 __dso_hidden int	_strerror_lr(int, char *, size_t, locale_t);
 const char *__strerror(int , char *, size_t);
