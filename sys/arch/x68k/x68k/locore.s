@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 2024/01/19 18:18:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 2024/01/19 18:49:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -672,8 +672,7 @@ ENTRY_NOPROFILE(timertrap)
 	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG		| save scratch registers
 	addql	#1,_C_LABEL(intrcnt)+32	| count hardclock interrupts
-	lea	%sp@(16),%a1		| a1 = &clockframe
-	movl	%a1,%sp@-
+	movl	%sp,%sp@-		| push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
 	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
