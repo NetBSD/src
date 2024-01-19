@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.197 2024/01/07 18:42:37 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.198 2024/01/19 18:23:13 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.197 2024/01/07 18:42:37 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.198 2024/01/19 18:23:13 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -791,6 +791,8 @@ read_escaped_backslash(int delim)
 		return '\a';
 	case 'b':
 		return '\b';
+	case 'e':	/* Not in the C standard yet, compilers recognize it */
+		return '\e';
 	case 'f':
 		return '\f';
 	case 'n':
