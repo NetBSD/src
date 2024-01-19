@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.17 2020/05/15 15:20:40 martin Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.18 2024/01/19 19:33:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.17 2020/05/15 15:20:40 martin Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.18 2024/01/19 19:33:49 christos Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -97,8 +97,6 @@ static uint8_t _atomic_cas_8_up(volatile uint8_t *, uint8_t, uint8_t);
 static uint8_t (*_atomic_cas_8_fn)(volatile uint8_t *, uint8_t, uint8_t) =
     _atomic_cas_8_up;
 RAS_DECL(_atomic_cas_8);
-
-void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
 
 #ifndef	__HAVE_ASM_ATOMIC_CAS_UP
 static uint32_t
@@ -276,7 +274,7 @@ _atomic_cas_8(volatile uint8_t *ptr, uint8_t old, uint8_t new)
 	return (*_atomic_cas_8_fn)(ptr, old, new);
 }
 
-void __section(".text.startup")
+void __section(".text.startup") __attribute__ ((__visibility__("hidden")))
 __libc_atomic_init(void)
 {
 	int ncpu, mib[2];
