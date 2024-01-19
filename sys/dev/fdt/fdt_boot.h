@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_boot.h,v 1.3 2023/07/10 07:01:48 rin Exp $ */
+/* $NetBSD: fdt_boot.h,v 1.4 2024/01/19 09:09:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ void fdt_reserve_rndseed(void);
 void fdt_probe_efirng(void);
 void fdt_setup_efirng(void);
 void fdt_reserve_efirng(void);
+void fdt_cpu_rootconf(void);
 
 void fdt_update_stdout_path(void *, const char *);
 
