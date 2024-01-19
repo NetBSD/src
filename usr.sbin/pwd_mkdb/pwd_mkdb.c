@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.60 2024/01/19 19:08:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.60 2024/01/19 19:08:49 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -130,12 +130,8 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $");
 #define	PERM_INSECURE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define	PERM_SECURE	(S_IRUSR | S_IWUSR)
 
-#if HAVE_NBTOOL_CONFIG_H
+// Defined in libc
 static const char __yp_token[] = "__YP!";
-#else
-/* Pull this out of the C library. */
-extern const char __yp_token[];
-#endif
 
 static HASHINFO openinfo = {
 	4096,		/* bsize */
