@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2024/01/16 01:26:34 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2024/01/19 03:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _MVME68K_INTR_H_
 #define _MVME68K_INTR_H_
 
+#ifdef _KERNEL
+
 #include <m68k/psl.h>
 
 #define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
@@ -43,6 +45,8 @@
 
 #define	MACHINE_INTREVCNT_NAMES						\
 	{ "spur", "lev1", "lev2", "lev3", "lev4", "clock", "lev6", "nmi" }
+
+#endif /* _KERNEL */
 
 #include <m68k/intr.h>
 

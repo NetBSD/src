@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.38 2024/01/16 07:07:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.39 2024/01/19 03:09:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _HP300_INTR_H_
 #define _HP300_INTR_H_
 
+#ifdef _KERNEL
+
 #include <m68k/psl.h>
 
 #define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
@@ -58,7 +60,11 @@
 #endif
 #endif
 
+#endif /* _KERNEL */
+
 #include <m68k/intr.h>
+
+#ifdef _KERNEL
 
 #ifdef _M68K_INTR_PRIVATE
 struct hp300_intrhand {
@@ -86,5 +92,7 @@ intr_disestablish(void *ih)
 {
 	m68k_intr_disestablish(ih);
 }
+
+#endif /* _KERNEL */
 
 #endif	/* _HP300_INTR_H */
