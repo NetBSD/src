@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.13 2021/08/09 21:13:06 andvar Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.14 2024/01/19 03:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
  * Non-exported definitions common to the different attachment
  * types for the SCC on the Motorola MVME series of computers.
  */
+
+#include "opt_mvmeconf.h"
 
 /*
  * The MVME-147 provides a 5 MHz clock to the SCC chips.
