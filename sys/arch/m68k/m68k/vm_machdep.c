@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2023/12/31 21:59:24 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43 2024/01/19 03:35:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2023/12/31 21:59:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2024/01/19 03:35:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,51 +209,3 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
-
-
-#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
-
-#include <m68k/cacheops.h>
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */
-void
-physaccess(void *vaddr, void *paddr, int size, int prot)
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += PAGE_SIZE;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(void *vaddr, int size)
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(void *addr)
-{
-	return (int)vtophys((vaddr_t)addr);
-}
-
-#endif
-
