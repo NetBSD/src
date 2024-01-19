@@ -37,7 +37,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/subr_acl_nfs4.c 341827 2018-12-11 19:32:16Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.1 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.2 2024/01/19 19:07:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,6 +261,7 @@ __acl_nfs4_sync_mode_from_acl(mode_t *_mode, const struct acl *aclp)
  * Populate the ACL with entries inherited from parent_aclp.
  */
 static void		
+/*ARGSUSED*/
 acl_nfs4_inherit_entries(const struct acl *parent_aclp,
     struct acl *child_aclp, mode_t mode, int file_owner_id,
     int is_directory)
@@ -469,6 +470,7 @@ acl_nfs4_trivial_from_mode(struct acl *aclp, mode_t mode)
  * and acl_is_trivial_np(3).
  */
 void
+/*ARGSUSED*/
 __acl_nfs4_trivial_from_mode_libc(struct acl *aclp, int mode, int canonical_six)
 {
 
