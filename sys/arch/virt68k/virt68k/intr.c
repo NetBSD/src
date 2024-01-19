@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2024/01/02 07:48:46 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2024/01/19 05:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2024/01/02 07:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2024/01/19 05:46:36 thorpej Exp $");
 
 #define _VIRT68K_INTR_PRIVATE
 
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2024/01/02 07:48:46 thorpej Exp $");
 #include <sys/cpu.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+
+#include <machine/vectors.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -267,9 +269,9 @@ intr_string(void *v, char *buf, size_t bufsize)
 #define	VEC_AVINTR	0x18
 
 void
-intr_dispatch(struct clockframe *frame)
+intr_dispatch(struct clockframe frame)
 {
-	const int ipl = (frame->vec >> 2) - VEC_AVINTR;
+	const int ipl = VECO_TO_VECI(frame.cf_vo) - VEC_AVINTR;
 	const int pic = ipl_to_pic(ipl);
 	int pirq;
 
@@ -283,7 +285,7 @@ intr_dispatch(struct clockframe *frame)
 
 	while ((pirq = gfpic_pending(pics[pic])) >= 0) {
 		LIST_FOREACH(ih, &intrhands[base + pirq], ih_link) {
-			void *arg = ih->ih_arg ? ih->ih_arg : frame;
+			void *arg = ih->ih_arg ? ih->ih_arg : &frame;
 			if (ih->ih_func(arg)) {
 				ih->ih_evcnt->ev_count++;
 				rv = true;

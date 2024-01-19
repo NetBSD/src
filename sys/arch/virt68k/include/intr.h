@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2024/01/02 07:41:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2024/01/19 05:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ void	intr_register_pic(struct device *, int);
 #include <sys/cpu.h>
 #include <sys/device.h>
 
-void	intr_dispatch(struct clockframe *);
+void	intr_dispatch(struct clockframe);
 #endif /* _VIRT68K_INTR_PRIVATE */
 
 #endif /* !_LOCORE */

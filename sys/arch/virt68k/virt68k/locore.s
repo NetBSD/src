@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2024/01/18 12:07:51 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 2024/01/19 05:46:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -500,10 +500,7 @@ Lbrkpt3:
 ENTRY_NOPROFILE(intrhand_autovec)
 	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
-	lea	%sp@(16),%a1		| get pointer to frame
-	movl	%a1,%sp@-
 	jbsr	_C_LABEL(intr_dispatch)	| call dispatcher
-	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(intr_depth)
 
