@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2024/01/18 14:39:05 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.86 2024/01/19 17:08:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,18 +55,18 @@ extern volatile unsigned int interrupt_depth;
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the amiga, we use
- * what the hardware pushes on an interrupt (frame format 0).
+ * what the locore.s glue puts on the stack before calling C-code.
  */
 struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
-};
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+	u_short	cf_sr;		/* sr at time of interrupt */
+	u_long	cf_pc;		/* pc at time of interrupt */
+	u_short	cf_vo;		/* vector offset (4-word frame) */
+} __attribute__((__packed__));
 
-#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_pc)
 #define	CLKF_INTR(framep)	(interrupt_depth > 1)
-
 
 /*
  * Preempt the current process if in interrupt from user mode,

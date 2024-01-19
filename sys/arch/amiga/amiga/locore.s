@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.170 2024/01/17 12:33:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.171 2024/01/19 17:08:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -479,9 +479,7 @@ ENTRY_NOPROFILE(DraCoLev2intr)
 	btst	#0,%d0			| timerA interrupt?
 	jeq	Ldraciaend
 
-	lea	%sp@(16),%a1		| get pointer to PS
-	movl	%a1,%sp@-		| push pointer to PS, PC
-
+	movl	%sp,%sp@-		| push pointer to clockframe
 	movw	#PSL_HIGHIPL,%sr	| hardclock at high IPL
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	addql	#4,%sp			| pop params
@@ -504,10 +502,9 @@ ENTRY_NOPROFILE(DraCoLev1intr)
 	jeq	Ldrintrcommon	| so test last.
 	movw	#PSL_HIGHIPL,%sr	| run clock at high ipl
 Ldrclockretry:
-	lea	%sp@(16),%a1	| get pointer to PS
-	movl	%a1,%sp@-	| push pointer to PS, PC
+	movl	%sp,%sp@-		| push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)
-	addql	#4,%sp		| pop params
+	addql	#4,%sp			| pop params
 	addql	#1,_C_LABEL(intrcnt)+32	| add another system clock interrupt
 
 	movl	_C_LABEL(draco_ioct),%a0
@@ -627,8 +624,8 @@ ENTRY_NOPROFILE(fake_lev6intr)
 	btst	#0,%d0			| timerA interrupt?
 	jeq     Ltstciab4		| no
 	movl	%d0,%sp@-		| push CIAB interrupt flags
-	lea	%sp@(20),%a1		| get pointer to PS
-	movl	%a1,%sp@-		| push pointer to PS, PC
+	lea	%sp@(4),%a1		| get pointer to clockframe
+	movl	%a1,%sp@-		| push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	addql	#4,%sp			| pop params
 	addql	#1,_C_LABEL(intrcnt)+32	| add another system clock interrupt
