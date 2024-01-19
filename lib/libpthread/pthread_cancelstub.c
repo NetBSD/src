@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.44 2023/07/28 18:19:00 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.44 2023/07/28 18:19:00 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.45 2024/01/19 19:55:03 christos Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -73,12 +73,14 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.44 2023/07/28 18:19:00 christos Exp $
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/event.h>
+#include <sys/resource.h>
 
 #include <compat/sys/mman.h>
 #include <compat/sys/poll.h>
 #include <compat/sys/select.h>
 #include <compat/sys/event.h>
 #include <compat/sys/wait.h>
+#include <compat/sys/resource.h>
 #include <compat/include/mqueue.h>
 #include <compat/include/signal.h>
 
