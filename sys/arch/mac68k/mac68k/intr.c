@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2024/01/19 18:18:54 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.35 2024/01/19 20:55:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2024/01/19 18:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2024/01/19 20:55:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ int	intr_debug = 0;
  * to interrupt on different levels as listed in locore.s
  */
 uint16_t ipl2psl_table[NIPL];
-int intr_depth;
+volatile unsigned int intr_depth;
 volatile int ssir;
 
 extern	u_int intrcnt[];	/* from locore.s */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2024/01/19 18:18:54 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2024/01/19 20:55:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ typedef struct {
 
 #ifndef _LOCORE
 
-extern volatile int intr_depth;		/* interrupt depth */
+extern volatile unsigned int intr_depth;/* interrupt depth */
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;		/* logical IPL_* value */
