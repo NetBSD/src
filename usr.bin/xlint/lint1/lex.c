@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.198 2024/01/19 18:23:13 christos Exp $ */
+/* $NetBSD: lex.c,v 1.199 2024/01/19 19:23:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.198 2024/01/19 18:23:13 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.199 2024/01/19 19:23:34 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -791,7 +791,11 @@ read_escaped_backslash(int delim)
 		return '\a';
 	case 'b':
 		return '\b';
-	case 'e':	/* Not in the C standard yet, compilers recognize it */
+	case 'e':
+		if (!allow_gcc)
+			break;
+		/* Not in the C standard yet, compilers recognize it */
+		/* LINTED 79 */
 		return '\e';
 	case 'f':
 		return '\f';
@@ -820,15 +824,15 @@ read_escaped_backslash(int delim)
 	case EOF:
 		return -2;
 	default:
-		if (isprint(c)) {
-			/* dubious escape \%c */
-			warning(79, c);
-		} else {
-			/* dubious escape \%o */
-			warning(80, c);
-		}
-		return c;
+		break;
 	}
+	if (isprint(c))
+		/* dubious escape \%c */
+		warning(79, c);
+	else
+		/* dubious escape \%o */
+		warning(80, c);
+	return c;
 }
 
 /*
