@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.4 2024/01/14 00:00:15 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.5 2024/01/19 05:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #define	VECI_TRAP(x)		((x) + VECI_TRAP0)
 
 #define	VECI_TO_VECO(x)		((x) << 2)
-#define	VECO_TO_VECI(x)		((unsigned int)(x) >> 2)
+#define	VECO_TO_VECI(x)		((uint8_t)((unsigned int)(x) >> 2))
 
 #ifdef _KERNEL
 

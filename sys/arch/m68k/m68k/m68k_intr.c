@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.10 2024/01/16 02:36:49 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.11 2024/01/19 05:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.10 2024/01/16 02:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.11 2024/01/19 05:45:28 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -389,7 +389,7 @@ void	m68k_intr_autovec(struct clockframe);
 void
 m68k_intr_autovec(struct clockframe frame)
 {
-	const int ipl = VECO_TO_VECI(frame.cf_vo & 0xfff) - VECI_INTRAV0;
+	const int ipl = VECO_TO_VECI(frame.cf_vo) - VECI_INTRAV0;
 	struct m68k_intrhand *ih;
 	bool rv = false;
 
@@ -420,7 +420,7 @@ void	m68k_intr_vectored(struct clockframe);
 void
 m68k_intr_vectored(struct clockframe frame)
 {
-	const int vec = VECO_TO_VECI(frame.cf_vo & 0xfff);
+	const int vec = VECO_TO_VECI(frame.cf_vo);
 	const int ipl = (getsr() >> 8) & 7;
 	struct m68k_intrhand *ih;
 
