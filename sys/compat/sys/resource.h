@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.5 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.6 2024/01/19 18:39:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,7 +57,17 @@ struct	rusage50 {
 	long	ru_nivcsw;		/* involuntary " */
 };
 
-void rusage_to_rusage50(const struct rusage *, struct rusage50 *);
+static __inline void
+rusage_to_rusage50(const struct rusage *ru, struct rusage50 *ru50)
+{
+	memset(ru50, 0, sizeof(*ru50));
+	(void)memcpy(&ru50->ru_first, &ru->ru_first,
+	    (char *)&ru50->ru_last - (char *)&ru50->ru_first +
+	    sizeof(ru50->ru_last));
+	ru50->ru_maxrss = ru->ru_maxrss;
+	timeval_to_timeval50(&ru->ru_utime, &ru50->ru_utime);
+	timeval_to_timeval50(&ru->ru_stime, &ru50->ru_stime);
+}
 
 #ifndef _KERNEL
 __BEGIN_DECLS

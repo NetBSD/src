@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.15 2021/08/30 08:40:00 riastradh Exp $	*/
+/*	$NetBSD: mount.h,v 1.16 2024/01/19 18:39:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -194,6 +194,12 @@ int	__compat___fhstat30(const struct compat_30_fhandle *, struct stat30 *)
 int	__compat___fhstat40(const void *, size_t, struct stat30 *) __dso_hidden;
 struct stat;
 int	__fhstat50(const void *, size_t, struct stat *);
+int	__fhopen40(const void *, size_t, int);
+int	fhopen(const struct compat_30_fhandle *, int);
+int     __getfh30(const char *, void*, size_t *);
+int	getfh(const char *path, struct compat_30_fhandle *fhp);
+int	mount(const char *, const char *, int, void *);
+int	__mount50(const char *, const char *, int, void *, size_t);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 

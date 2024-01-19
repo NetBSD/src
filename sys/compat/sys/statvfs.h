@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.4 2021/09/07 11:43:05 riastradh Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.5 2024/01/19 18:39:15 christos Exp $	 */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -154,6 +154,10 @@ int	__fhstatvfs190(const void *, size_t, struct statvfs *, int);
 int	__getvfsstat90(struct statvfs *, size_t, int);
 
 int	__getmntinfo90(struct statvfs **, int);
+
+struct compat_30_fhandle;
+int	fhstatvfs(const struct compat_30_fhandle *, struct statvfs90 *);
+int	fhstatvfs1(const struct compat_30_fhandle *, struct statvfs90 *, int);
 
 #endif /* __LIBC12_SOURCE__ */
 

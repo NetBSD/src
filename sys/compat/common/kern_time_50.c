@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.37 2021/09/07 11:43:02 riastradh Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.38 2024/01/19 18:39:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.37 2021/09/07 11:43:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.38 2024/01/19 18:39:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -454,18 +454,6 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 #else
 	return ENOSYS;
 #endif
-}
-
-void
-rusage_to_rusage50(const struct rusage *ru, struct rusage50 *ru50)
-{
-	memset(ru50, 0, sizeof(*ru50));
-	(void)memcpy(&ru50->ru_first, &ru->ru_first,
-	    (char *)&ru50->ru_last - (char *)&ru50->ru_first +
-	    sizeof(ru50->ru_last));
-	ru50->ru_maxrss = ru->ru_maxrss;
-	timeval_to_timeval50(&ru->ru_utime, &ru50->ru_utime);
-	timeval_to_timeval50(&ru->ru_stime, &ru50->ru_stime);
 }
 
 int
