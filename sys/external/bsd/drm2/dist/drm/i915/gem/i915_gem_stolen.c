@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.6 2024/01/19 22:24:27 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.6 2024/01/19 22:24:27 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -569,7 +569,8 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	}
 	loaded = true;
 
-out:	if (ret) {
+out:	kmem_free(seg, nseg * sizeof(seg[0]));
+	if (ret) {
 		if (loaded)
 			bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
 		sg_free_table(st);
