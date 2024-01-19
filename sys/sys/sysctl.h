@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.237 2023/04/07 03:01:21 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.238 2024/01/19 18:39:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1231,6 +1231,9 @@ int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
     const struct kinfo_proc2 *, const struct kinfo_lwp *);
 void	*asysctl(const int *, size_t, size_t *);
 void	*asysctlbyname(const char *, size_t *);
+#ifdef _LIBC_INTERNAL
+int	__learn_tree(int *, u_int, struct sysctlnode *);
+#endif
 __END_DECLS
 
 #endif	/* !_KERNEL */
