@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.15 2011/06/22 18:06:33 matt Exp $
+#	$NetBSD: files.mvmeppc,v 1.16 2024/01/19 03:57:04 thorpej Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -8,10 +8,10 @@ maxusers 2 8 64
 
 include "arch/powerpc/pic/files.pic"
 
-defflag	opt_mvmetype.h		SUPPORT_MVME160X
-defflag	opt_mvmetype.h		SUPPORT_MVME210X
-defflag	opt_mvmetype.h		SUPPORT_MVME230X
-defflag	opt_mvmetype.h		SUPPORT_MVME240X
+defflag	opt_mvmeconf.h		SUPPORT_MVME160X
+defflag	opt_mvmeconf.h		SUPPORT_MVME210X
+defflag	opt_mvmeconf.h		SUPPORT_MVME230X
+defflag	opt_mvmeconf.h		SUPPORT_MVME240X
 
 file	arch/mvmeppc/mvmeppc/autoconf.c
 file	arch/powerpc/powerpc/clock.c
