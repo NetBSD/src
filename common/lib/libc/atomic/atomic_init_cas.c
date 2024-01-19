@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_cas.c,v 1.4 2013/08/21 03:00:56 matt Exp $	*/
+/*	$NetBSD: atomic_init_cas.c,v 1.5 2024/01/19 19:33:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_cas.c,v 1.4 2013/08/21 03:00:56 matt Exp $");
+__RCSID("$NetBSD: atomic_init_cas.c,v 1.5 2024/01/19 19:33:49 christos Exp $");
+#include "extern.h"
 
-void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
-
-void __section(".text.startup")
+void __section(".text.startup") __attribute__ ((__visibility__("hidden")))
 __libc_atomic_init(void)
 {
 
