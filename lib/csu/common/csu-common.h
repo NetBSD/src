@@ -36,3 +36,5 @@
 extern char *__progname __common;
 extern char **environ __common;
 extern struct ps_strings *__ps_strings __common;
+
+void    _libc_init(void) __attribute__((__constructor__, __used__));

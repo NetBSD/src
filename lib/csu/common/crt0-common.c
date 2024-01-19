@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.27 2022/06/21 06:52:17 skrll Exp $ */
+/* $NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.27 2022/06/21 06:52:17 skrll Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.28 2024/01/19 19:22:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -55,7 +55,6 @@ typedef void (*fptr_t)(void);
 extern void	_init(void);
 extern void	_fini(void);
 #endif
-extern void	_libc_init(void);
 
 /*
  * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
