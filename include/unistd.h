@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.163 2022/05/31 13:42:59 riastradh Exp $	*/
+/*	$NetBSD: unistd.h,v 1.164 2024/01/19 18:40:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -412,6 +412,11 @@ extern const char *const *sys_siglist __RENAME(__sys_siglist14);
 #endif /* __SYS_SIGLIST_DECLARED */
 extern	 int optreset;		/* getopt(3) external variable */
 extern	 char *suboptarg;	/* getsubopt(3) external variable */
+#endif
+
+#ifdef _LIBC_INTERNAL
+pid_t	__fork(void);
+pid_t	__locked_fork(int *) __weak;
 #endif
 
 __END_DECLS
