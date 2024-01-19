@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2024/01/19 17:08:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.87 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
 #include <m68k/cpu.h>
 
 #if defined(_KERNEL)
-extern volatile unsigned int interrupt_depth;
+extern volatile unsigned int intr_depth;
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  On the amiga, we use
@@ -66,7 +66,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_pc)
-#define	CLKF_INTR(framep)	(interrupt_depth > 1)
+#define	CLKF_INTR(framep)	(intr_depth > 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,

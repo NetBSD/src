@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.32 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2024/01/19 18:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2023/01/06 10:28:27 tsutsui Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 static ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 static ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
-int idepth;
+int intr_depth;
 volatile int ssir;
 
 void
@@ -311,7 +311,7 @@ bool
 cpu_intr_p(void)
 {
 
-	return idepth != 0;
+	return intr_depth != 0;
 }
 
 const uint16_t ipl2psl_table[NIPL] = {

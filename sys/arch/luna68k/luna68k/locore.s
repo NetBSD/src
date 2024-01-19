@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.82 2024/01/17 12:33:49 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.83 2024/01/19 18:18:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -566,7 +566,7 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 
 #if 1	/* XXX wild timer -- how can I disable/enable the interrupt? */
 ENTRY_NOPROFILE(lev5intr)
-	addql	#1,_C_LABEL(idepth)
+	addql	#1,_C_LABEL(intr_depth)
 	btst	#7,OBIO_CLOCK		| check whether system clock
 	beq	2f
 	movb	#1,OBIO_CLOCK		| clear the interrupt
@@ -580,12 +580,12 @@ ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(m68k_intr_evcnt)+CLOCK_INTRCNT
 	INTERRUPT_RESTOREREG
 1:
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)		| all done
 2:
 					| XP device has also lev5 intr,
 					| routing to autovec
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jbra	_C_LABEL(intrstub_autovec)
 #endif
 

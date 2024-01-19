@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.131 2024/01/17 12:33:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.132 2024/01/19 18:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -636,14 +636,14 @@ ENTRY_NOPROFILE(kbdtimer)
 	rte
 
 ENTRY_NOPROFILE(intiotrap)
-	addql	#1,_C_LABEL(idepth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 	pea	%sp@(16-(FR_HW))	| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,%sp
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	rei
 
 ENTRY_NOPROFILE(lev1intr)
@@ -652,7 +652,7 @@ ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(lev5intr)
 ENTRY_NOPROFILE(lev6intr)
-	addql	#1,_C_LABEL(idepth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 Lnotdma:
 	lea	_C_LABEL(intrcnt),%a0
@@ -665,11 +665,11 @@ Lnotdma:
 	addql	#4,%sp			| pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(timertrap)
-	addql	#1,_C_LABEL(idepth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG		| save scratch registers
 	addql	#1,_C_LABEL(intrcnt)+32	| count hardclock interrupts
 	lea	%sp@(16),%a1		| a1 = &clockframe
@@ -678,11 +678,11 @@ ENTRY_NOPROFILE(timertrap)
 	addql	#4,%sp
 	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
 	INTERRUPT_RESTOREREG		| restore scratch registers
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)
-	addql	#1,_C_LABEL(idepth)
+	addql	#1,_C_LABEL(intr_depth)
 	addql	#1,_C_LABEL(intrcnt)+28
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
@@ -693,7 +693,7 @@ ENTRY_NOPROFILE(lev7intr)
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	subql	#1,_C_LABEL(idepth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)		| all done
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2019/11/24 15:53:47 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2024/01/19 18:18:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@ struct clockframe {
 #else
 /* but until we start using PSL_M, we have to do this instead */
 #include <machine/intr.h>
-#define	CLKF_INTR(framep)	(idepth > 1)	/* XXX */
+#define	CLKF_INTR(framep)	(intr_depth > 1)	/* XXX */
 #endif
 
 extern int astpending;	 /* need to trap before returning to user mode */

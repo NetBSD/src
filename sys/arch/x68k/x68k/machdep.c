@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212 2024/01/19 18:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2024/01/19 18:18:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1239,13 +1239,13 @@ setmemrange(void)
 #endif
 }
 
-int idepth;
+int intr_depth;
 
 bool
 cpu_intr_p(void)
 {
 
-	return idepth != 0;
+	return intr_depth != 0;
 }
 
 int

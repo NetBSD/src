@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.254 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2024/01/19 18:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ void ser_outintr(void);
 void fdintr(int);
 #endif
 
-volatile unsigned int interrupt_depth = 0;
+volatile unsigned int intr_depth = 0;
 
 struct vm_map *phys_map = NULL;
 
@@ -1120,7 +1120,7 @@ bool
 cpu_intr_p(void)
 {
 
-	return interrupt_depth != 0;
+	return intr_depth != 0;
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

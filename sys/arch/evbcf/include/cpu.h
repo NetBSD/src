@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2024/01/18 14:39:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,8 +77,8 @@ struct clockframe {
  * (Remember, the clock interrupt handler itself will cause the
  * depth counter to be incremented).
  */
-extern volatile unsigned int interrupt_depth;
-#define	CLKF_INTR(framep)	(interrupt_depth > 1)
+extern volatile unsigned int intr_depth;
+#define	CLKF_INTR(framep)	(intr_depth > 1)
 
 
 /*
