@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.148 2023/10/07 12:15:53 rin Exp $
+#	$NetBSD: Makefile,v 1.149 2024/01/19 19:21:34 christos Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -111,7 +111,7 @@ BINDIR=		${SHLINKINSTALLDIR}
 CPPFLAGS.tls.c+=	-std=gnu11
 CPPFLAGS+=	-DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+=	-I${.CURDIR} -I. -D_KERNTYPES
-CPPFLAGS+=	-DRTLD_LOADER
+CPPFLAGS+=	-DRTLD_LOADER -D_LIBC_INTERNAL
 CPPFLAGS+=	-DGNU_RELRO
 CPPFLAGS+=	-D_RTLD_SOURCE
 CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
