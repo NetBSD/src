@@ -1,4 +1,4 @@
-/*	$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $	*/
+/*	$NetBSD: sha3.c,v 1.4 2024/01/19 19:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 Taylor R. Campbell
@@ -38,14 +38,14 @@
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
-__KERNEL_RCSID(0, "$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha3.c,v 1.4 2024/01/19 19:32:42 christos Exp $");
 #include <lib/libkern/libkern.h>
 
 #define	SHA3_ASSERT	KASSERT
 
 #else
 
-__RCSID("$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $");
+__RCSID("$NetBSD: sha3.c,v 1.4 2024/01/19 19:32:42 christos Exp $");
 
 #include "namespace.h"
 
@@ -228,7 +228,7 @@ sha3_final(uint8_t *h, unsigned d, struct sha3 *C, unsigned rw)
 }
 
 static void
-shake_final(uint8_t *h, unsigned d, struct sha3 *C, unsigned rw)
+shake_final(uint8_t *h, size_t d, struct sha3 *C, unsigned rw)
 {
 	unsigned nw, iw;
 
