@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_wide_char.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: lex_wide_char.c,v 1.5 2024/01/19 19:23:34 rillig Exp $	*/
 # 3 "lex_wide_char.c"
 
 /*
@@ -26,8 +26,10 @@ test(void)
 	sink(L'ä');
 
 	/* GCC extension */
-	/* expect+1: warning: dubious escape \e [79] */
 	sink(L'\e');
+
+	/* expect+1: warning: dubious escape \y [79] */
+	sink(L'\y');
 
 	/* since C99 */
 	sink(L'\x12');
