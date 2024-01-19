@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2024/01/15 17:40:35 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.26 2024/01/19 03:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _SUN68K_INTR_H_
 #define _SUN68K_INTR_H_
 
+#ifdef _KERNEL
+
 #include <m68k/psl.h>
 
 #define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
@@ -53,6 +55,8 @@
 #define _IPL_SOFT_LEVEL3	3
 #define _IPL_SOFT_LEVEL_MIN	1
 #define _IPL_SOFT_LEVEL_MAX	3
+
+#endif /* _KERNEL */
 
 #include <m68k/intr.h>
 

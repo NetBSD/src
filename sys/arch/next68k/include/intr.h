@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2024/01/18 13:46:14 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2024/01/19 03:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _NEXT68K_INTR_H_
 #define _NEXT68K_INTR_H_
 
+#ifdef _KERNEL
+
 #include <m68k/psl.h>
 
 #define	MACHINE_PSL_IPL_SOFTCLOCK	PSL_IPL1
@@ -41,11 +43,13 @@
 #define	MACHINE_PSL_IPL_VM		PSL_IPL6
 #define	MACHINE_PSL_IPL_SCHED		PSL_IPL7
 
+#endif /* _KERNEL */
+
 #include <m68k/intr.h>
 
-#define	spldma()	splraise6()
-
 #ifdef _KERNEL
+
+#define	spldma()	splraise6()
 
 extern volatile u_long *intrstat;
 extern volatile u_long *intrmask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2024/01/16 01:16:46 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2024/01/19 03:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -32,8 +32,15 @@
 #ifndef _M68k_INTR_H_
 #define	_M68k_INTR_H_
 
-#include <sys/types.h>
 #include <machine/psl.h>
+
+#if (defined(_KERNEL) && !defined(_LOCORE)) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;		/* physical manifestation of logical IPL_* */
+} ipl_cookie_t;
+#endif
+
+#ifdef _KERNEL
 
 /*
  * Logical interrupt priority levels -- these are distinct from
@@ -61,13 +68,8 @@
 #define	ISRPRI_TTYNOBUF		3	/* a particularly bad serial port */
 #define	ISRPRI_AUDIO		4	/* audio devices */
 
-#if defined(_KERNEL) || defined(_KMEMUSER)
-typedef struct {
-	uint16_t _psl;		/* physical manifestation of logical IPL_* */
-} ipl_cookie_t;
-#endif
+#ifndef _LOCORE
 
-#ifdef _KERNEL
 extern volatile int idepth;		/* interrupt depth */
 extern const uint16_t ipl2psl_table[NIPL];
 
@@ -201,6 +203,8 @@ bool	m68k_intr_disestablish(void *);
 #ifdef __HAVE_M68K_INTR_VECTORED
 void	*m68k_intrvec_intrhand(int vec);	/* XXX */
 #endif
+
+#endif /* !_LOCORE */
 
 #endif /* _KERNEL */
 
