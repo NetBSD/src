@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.33 2024/01/19 20:55:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2024/01/19 18:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2024/01/19 20:55:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2024/01/19 18:18:53 thorpej Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 static ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 static ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
-int intr_depth;
+volatile unsigned int intr_depth;
 volatile int ssir;
 
 void
