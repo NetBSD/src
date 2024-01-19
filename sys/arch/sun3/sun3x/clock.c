@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2024/01/15 18:47:03 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.45 2024/01/19 18:18:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2024/01/15 18:47:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2024/01/19 18:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ clock_intr(struct clockframe cf)
 {
 	extern char _Idle[];	/* locore.s */
 
-	idepth++;
+	intr_depth++;
 
 #ifdef	SUN3_470
 	if (intersil_va) {
@@ -450,5 +450,5 @@ clock_intr(struct clockframe cf)
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
 
-	idepth--;
+	intr_depth--;
 }

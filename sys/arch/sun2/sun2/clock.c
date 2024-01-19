@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2024/01/14 17:51:16 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2024/01/19 18:18:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2024/01/14 17:51:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2024/01/19 18:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ void
 clock_intr(struct clockframe cf)
 {
 
-	idepth++;
+	intr_depth++;
 
 	/* Read the clock interrupt register. */
 	am9513_write_clk_cmd(AM9513_CMD_CLEAR_OUTPUT(SUN2_CLK_TIMER));
@@ -316,7 +316,7 @@ clock_intr(struct clockframe cf)
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
 
-	idepth--;
+	intr_depth--;
 
 	ATOMIC_CAS_CHECK(&cf);
 }

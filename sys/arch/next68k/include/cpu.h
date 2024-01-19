@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2024/01/18 14:39:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2024/01/19 18:18:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,7 @@ struct clockframe {
  * (Remember, the clock interrupt handler itself will cause the
  * depth counter to be incremented).
  */
-#define	CLKF_INTR(framep)	(idepth > 1)
+#define	CLKF_INTR(framep)	(intr_depth > 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,

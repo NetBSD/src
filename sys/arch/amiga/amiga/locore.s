@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.171 2024/01/19 17:08:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.172 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -440,16 +440,16 @@ ENTRY_NOPROFILE(trace)
  * and serial RBF (int5) specially, to improve performance
  */
 ENTRY_NOPROFILE(spurintr)
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	addql	#1,_C_LABEL(intrcnt)+0
 	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev5intr)
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 #include "ser.h"
 #if NSER > 0
@@ -461,12 +461,12 @@ ENTRY_NOPROFILE(lev5intr)
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+20
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 
 #ifdef DRACO
 ENTRY_NOPROFILE(DraCoLev2intr)
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 
 	CIAAADDR(%a0)
@@ -488,12 +488,12 @@ ENTRY_NOPROFILE(DraCoLev2intr)
 Ldraciaend:
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
 ENTRY_NOPROFILE(DraCoLev1intr)
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 	movl	_C_LABEL(draco_ioct),%a0
 	btst	#5,%a0@(7)
@@ -521,12 +521,12 @@ Ldrclockretry:
 
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)	| XXXX: shouldn't we call the normal lev1?
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 ENTRY_NOPROFILE(DraCoIntr)
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 Ldrintrcommon:
 	lea	_ASM_LABEL(Drintrcnt)-4,%a0
@@ -539,7 +539,7 @@ Ldrintrcommon:
 	addql	#4,%sp			| pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 #endif
 
@@ -550,7 +550,7 @@ ENTRY_NOPROFILE(lev3intr)
 #ifndef LEV6_DEFER
 ENTRY_NOPROFILE(lev4intr)
 #endif
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 Lintrcommon:
 	lea	_C_LABEL(intrcnt),%a0
@@ -563,7 +563,7 @@ Lintrcommon:
 	addql	#4,%sp			| pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)
 
 /* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
@@ -575,7 +575,7 @@ ENTRY_NOPROFILE(lev6intr)
 	 * as we return. Block generation of level 6 ints until
 	 * we have dealt with this one.
 	 */
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	moveml	%d0/%a0,%sp@-
 	INTREQRADDR(%a0)
 	movew	%a0@,%d0
@@ -587,18 +587,18 @@ ENTRY_NOPROFILE(lev6intr)
 	movew	#INTF_EXTER,%a0@
 	movew	#INTF_SETCLR+INTF_AUD3,%a0@	| make sure THIS one is ok...
 	moveml	%sp@+,%d0/%a0
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	rte
 Llev6spur:
 	addql	#1,_C_LABEL(intrcnt)+36	| count spurious level 6 interrupts
 	moveml	%sp@+,%d0/%a0
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	rte
 
 ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(fake_lev6intr)
 #endif
-	addql	#1,_C_LABEL(interrupt_depth)
+	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 #ifdef LEV6_DEFER
 	/*
@@ -642,7 +642,7 @@ Lskipciab:
 Llev6done:
 	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(interrupt_depth)
+	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)		| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?

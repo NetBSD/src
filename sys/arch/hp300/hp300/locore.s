@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.184 2024/01/17 12:33:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.185 2024/01/19 18:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -804,7 +804,7 @@ Lbrkpt3:
 	movel	%d1,EVCNT_COUNTER(ipl)
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
-	addql	#1,_C_LABEL(idepth)	| entering interrupt
+	addql	#1,_C_LABEL(intr_depth)	| entering interrupt
 	INTERRUPT_SAVEREG
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| read clock status
@@ -873,7 +873,7 @@ Lrecheck:
 					    |  generated the interrupt
 #endif
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
+	subql	#1,_C_LABEL(intr_depth)	| exiting from interrupt
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
