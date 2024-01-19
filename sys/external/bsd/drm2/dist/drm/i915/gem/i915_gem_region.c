@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_region.c,v 1.4 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_region.c,v 1.5 2024/01/19 22:22:27 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_region.c,v 1.4 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_region.c,v 1.5 2024/01/19 22:22:27 riastradh Exp $");
 
 #include "intel_memory_region.h"
 #include "i915_gem_region.h"
@@ -63,7 +63,6 @@ i915_gem_object_get_pages_buddy(struct drm_i915_gem_object *obj)
 	sg = st->sgl;
 #ifdef __NetBSD__
 	__USE(prev_end);
-	__USE(sg_page_sizes);
 	bus_dma_tag_t dmat = obj->base.dev->dmat;
 	bus_dma_segment_t *segs = NULL;
 	int i = 0, nsegs = 0;
@@ -106,7 +105,7 @@ i915_gem_object_get_pages_buddy(struct drm_i915_gem_object *obj)
 	kmem_free(segs, nsegs * sizeof(segs[0]));
 	segs = NULL;
 
-	__i915_gem_object_set_pages(obj, st, i915_sg_page_sizes(sg));
+	sg_page_sizes = i915_sg_page_sizes(sg);
 #else
 	st->nents = 0;
 	sg_page_sizes = 0;
@@ -145,9 +144,9 @@ i915_gem_object_get_pages_buddy(struct drm_i915_gem_object *obj)
 	sg_page_sizes |= sg->length;
 	sg_mark_end(sg);
 	i915_sg_trim(st);
+#endif
 
 	__i915_gem_object_set_pages(obj, st, sg_page_sizes);
-#endif
 
 	return 0;
 
