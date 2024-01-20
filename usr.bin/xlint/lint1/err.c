@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.222 2024/01/07 18:42:37 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.223 2024/01/20 10:02:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.222 2024/01/07 18:42:37 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.223 2024/01/20 10:02:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -716,6 +716,7 @@ static const char *queries[] = {
 	"implicit conversion from integer 0 to pointer '%s'",	      /* Q15 */
 	"'%s' was declared 'static', now non-'static'",		      /* Q16 */
 	"invisible character U+%04X in %s",			      /* Q17 */
+	"const automatic variable '%s'",					      /* Q18 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */

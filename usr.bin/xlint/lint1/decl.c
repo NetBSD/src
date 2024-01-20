@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.386 2024/01/06 15:05:24 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.387 2024/01/20 10:02:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.386 2024/01/06 15:05:24 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.387 2024/01/20 10:02:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2351,6 +2351,12 @@ declare_parameter(sym_t *sym, bool has_initializer)
 		/* parameter '%s' declared inline */
 		warning(269, sym->s_name);
 
+	if (any_query_enabled && sym->s_type->t_const
+	    && (sym->s_scl == AUTO || sym->s_scl == REG)) {
+		/* const automatic variable '%s' */
+		query_message(18, sym->s_name);
+	}
+
 	/*
 	 * Arguments must have complete types. length_in_bits prints the needed
 	 * error messages (null dimension is impossible because arrays are
@@ -2692,6 +2698,12 @@ declare_local(sym_t *dsym, bool has_initializer)
 			/* variable '%s' declared inline */
 			warning(268, dsym->s_name);
 		}
+	}
+
+	if (any_query_enabled && dsym->s_type->t_const
+	    && (dsym->s_scl == AUTO || dsym->s_scl == REG)) {
+		/* const automatic variable '%s' */
+		query_message(18, dsym->s_name);
 	}
 
 	check_function_definition(dsym, true);
