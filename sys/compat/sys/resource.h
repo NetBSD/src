@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.6 2024/01/19 18:39:15 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.7 2024/01/20 08:40:37 kre Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,7 @@
 #define	_COMPAT_SYS_RESOURCE_H_
 
 #include <sys/featuretest.h>
+#include <sys/resource.h>
 #include <sys/time.h>
 #include <compat/sys/time.h>
 
