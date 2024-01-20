@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.4 2024/01/18 07:48:56 skrll Exp $
+# $NetBSD: GENERIC64,v 1.5 2024/01/20 08:04:35 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -51,6 +51,10 @@ ccache* 	at fdt?			# SiFive FU[57]40 L2 Cache
 
 # Clock controller
 jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
+
+# SDMMC
+dwcmmc* 	at fdt?			# DesignWare SD/MMC
+sdmmc*		at sdmmcbus?
 
 # USB
 jh71x0usb* 	at fdt?			# StarFive JH71x0 usb
