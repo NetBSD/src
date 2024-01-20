@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2024/01/19 18:18:55 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 2024/01/20 00:15:32 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2024/01/19 18:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2024/01/20 00:15:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -98,8 +98,6 @@ void	dumpwb(int, u_short, u_int, u_int);
 #endif
 
 static inline void userret(struct lwp *, struct frame *, u_quad_t, u_int, int);
-
-int	astpending;
 
 const char *trap_type[] = {
 	"Bus error",

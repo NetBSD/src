@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2023/12/27 17:35:37 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2024/01/20 00:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2023/12/27 17:35:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2024/01/20 00:15:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -137,7 +137,7 @@ void straytrap(struct trapframe);
 
 static void userret(struct lwp *, struct trapframe *, u_quad_t);
 
-int astpending;
+volatile int astpending;
 
 const char *trap_type[] = {
 	"Bus error",
