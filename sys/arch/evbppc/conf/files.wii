@@ -1,0 +1,58 @@
+#	$NetBSD: files.wii,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+#
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+include "arch/powerpc/pic/files.pic"
+
+file	arch/evbppc/wii/autoconf.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/evbppc/wii/pic_pi.c
+file	arch/evbppc/wii/machdep.c
+
+#
+# Machine-independent drivers
+#
+include "dev/ata/files.ata"
+include "dev/bluetooth/files.bluetooth"
+include "dev/scsipi/files.scsipi"
+include "dev/sdmmc/files.sdmmc"
+include "dev/usb/files.usb"
+
+#
+# Memory Disk for install floppy
+#
+file dev/md_root.c	memory_disk_hooks
+
+#
+# System bus types
+#
+define	mainbus { [addr=-1], [irq=-1] }
+device	mainbus: mainbus
+attach	mainbus at root
+device	cpu
+attach	cpu at mainbus
+file	arch/evbppc/wii/mainbus.c		mainbus | cpu	needs-flag
+
+attach	genfb at mainbus with wiifb
+file	arch/evbppc/wii/dev/wiifb.c		wiifb
+
+define	hollywood { [addr=-1], [irq=-1] }
+device	hollywood: hollywood
+attach	hollywood at mainbus
+file	arch/evbppc/wii/dev/hollywood.c		hollywood
+
+device	resetbtn
+attach	resetbtn at hollywood
+file	arch/evbppc/wii/dev/resetbtn.c		resetbtn
+
+attach	ehci at hollywood with ehci_hollywood
+file	arch/evbppc/wii/dev/ehci_hollywood.c	ehci_hollywood
+
+attach	ohci at hollywood with ohci_hollywood
+file	arch/evbppc/wii/dev/ohci_hollywood.c	ohci_hollywood
+
+attach	sdhc at hollywood with sdhc_hollywood
+file	arch/evbppc/wii/dev/sdhc_hollywood.c	sdhc_hollywood

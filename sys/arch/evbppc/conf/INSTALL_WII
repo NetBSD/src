@@ -1,0 +1,7 @@
+# 	$NetBSD: INSTALL_WII,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+
+include "arch/evbppc/conf/WII"
+
+#ident 		"INSTALL_WII-$Revision: 1.1 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
