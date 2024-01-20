@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2024/01/20 10:21:35 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 2024/01/20 10:25:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem.c,v 1.23 2024/01/20 10:21:35 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.24 2024/01/20 10:25:57 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -62,7 +62,7 @@ xmalloc(size_t s)
 	return not_null(malloc(s));
 }
 
-#if defined(IS_LINT1) || defined(IS_LINT2)
+#if IS_LINT1 || IS_LINT2
 void *
 xcalloc(size_t n, size_t s)
 {
