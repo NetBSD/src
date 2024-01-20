@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_copy.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_copy.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_copy.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -75,6 +75,7 @@ acl_copy_entry(acl_entry_t dest_d, acl_entry_t src_d)
 }
 
 ssize_t
+/*ARGSUSED*/
 acl_copy_ext(void *buf_p, acl_t acl, ssize_t size)
 {
 
@@ -83,6 +84,7 @@ acl_copy_ext(void *buf_p, acl_t acl, ssize_t size)
 }
 
 acl_t
+/*ARGSUSED*/
 acl_copy_int(const void *buf_p)
 {
 

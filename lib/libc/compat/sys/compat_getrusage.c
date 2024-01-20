@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getrusage.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: compat_getrusage.c,v 1.5 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getrusage.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
+__RCSID("$NetBSD: compat_getrusage.c,v 1.5 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -47,19 +47,6 @@ __warn_references(getrusage,
 
 __strong_alias(getrusage, __compat_getrusage)
 
-void __rusage_to_rusage50(const struct rusage *, struct rusage50 *);
-
-void
-__rusage_to_rusage50(const struct rusage *ru, struct rusage50 *ru50)
-{
-	(void)memcpy(&ru50->ru_first, &ru->ru_first,
-	    (size_t)((char *)(void *)&ru50->ru_last -
-	    (char *)(void *)&ru50->ru_first));
-	ru50->ru_maxrss = ru->ru_maxrss;
-	timeval_to_timeval50(&ru->ru_utime, &ru50->ru_utime);
-	timeval_to_timeval50(&ru->ru_stime, &ru50->ru_stime);
-}
-
 /*
  * libc12 compatible getrusage routine.
  */
@@ -71,6 +58,6 @@ __compat_getrusage(int who, struct rusage50 *ru50)
 
 	if ((rv = __getrusage50(who, &ru)) == -1)
 		return rv;
-	__rusage_to_rusage50(&ru, ru50);
+	rusage_to_rusage50(&ru, ru50);
 	return rv;
 }

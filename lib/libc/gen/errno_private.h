@@ -1,11 +1,8 @@
-/*	$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: errno_private.h,v 1.1 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,29 +25,5 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef _FORTIFY_SOURCE
-#define _FORTIFY_SOURCE 2
-#define __ssp_inline
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $");
-
-#include <unistd.h>
-
-
-/*
- * Provide definitions of the redirect functions in libc.
- */
-static int __used
-/*LINTED unused*/
-__ssp_use(void)
-{
-	if (getcwd(NULL, 0) == NULL)
-		return -1;
-	if (read(-1, NULL, 0) == -1)
-		return -1;
-	if (readlink(NULL, NULL, 0) == -1)
-		return -1;
-	return 0;
-}
+#undef errno
+extern int errno;

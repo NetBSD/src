@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_calc_mask.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_calc_mask.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_calc_mask.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -99,7 +99,7 @@ acl_calc_mask(acl_t *acl_p)
 			    acl_int_new->acl_entry[i].ae_perm & ACL_PERM_BITS;
 			break;
 		case ACL_MASK:
-			mask_num = i;
+			mask_num = (int)i;
 			break;
 		}
 	}

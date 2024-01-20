@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.1 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -28,29 +28,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _COMPAT_EXTERN_H_
+#define _COMPAT_EXTERN_H_
 
-#undef _FORTIFY_SOURCE
-#define _FORTIFY_SOURCE 2
-#define __ssp_inline
+#include <stdarg.h>
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $");
+struct syslog_data60;
+void	syslog_ss(int, struct syslog_data60 *, const char *, ...)
+    __printflike(3, 4);
+void    vsyslog_ss(int, struct syslog_data60 *, const char *, va_list) 
+    __printflike(3, 0); 
+void	syslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
+    const char *, ...) __printflike(5, 0);
+void	vsyslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
+    const char *, va_list) __printflike(5, 0);
 
-#include <unistd.h>
+int __cmsg_alignbytes(void);
 
-
-/*
- * Provide definitions of the redirect functions in libc.
- */
-static int __used
-/*LINTED unused*/
-__ssp_use(void)
-{
-	if (getcwd(NULL, 0) == NULL)
-		return -1;
-	if (read(-1, NULL, 0) == -1)
-		return -1;
-	if (readlink(NULL, NULL, 0) == -1)
-		return -1;
-	return 0;
-}
+#endif /* _COMPAT_EXTERN_H_ */

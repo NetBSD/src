@@ -1,11 +1,11 @@
-/*	$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.1 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
- * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Nathan J. Williams.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,28 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef _FORTIFY_SOURCE
-#define _FORTIFY_SOURCE 2
-#define __ssp_inline
+#ifndef _COMPAT_SCHED_H_
+#define _COMPAT_SCHED_H_
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ssp_redirect.c,v 1.3 2024/01/20 14:52:49 christos Exp $");
+#include <sys/featuretest.h>
+#include <sys/sched.h>
 
-#include <unistd.h>
+/* Required by POSIX 1003.1, section 13.1, lines 12-13. */
+#include <compat/sys/time.h>
 
+__BEGIN_DECLS
+struct timespec50;
+int	sched_rr_get_interval(pid_t, struct timespec50 *);
+__END_DECLS
 
-/*
- * Provide definitions of the redirect functions in libc.
- */
-static int __used
-/*LINTED unused*/
-__ssp_use(void)
-{
-	if (getcwd(NULL, 0) == NULL)
-		return -1;
-	if (read(-1, NULL, 0) == -1)
-		return -1;
-	if (readlink(NULL, NULL, 0) == -1)
-		return -1;
-	return 0;
-}
+#endif /* _COMPAT_SCHED_H_ */

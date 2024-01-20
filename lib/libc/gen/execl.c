@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.17 2011/06/30 19:46:07 joerg Exp $	*/
+/*	$NetBSD: execl.c,v 1.18 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.17 2011/06/30 19:46:07 joerg Exp $");
+__RCSID("$NetBSD: execl.c,v 1.18 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,13 +44,12 @@ __RCSID("$NetBSD: execl.c,v 1.17 2011/06/30 19:46:07 joerg Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include "reentrant.h"
+#include "extern.h"
 
 #ifdef __weak_alias
 __weak_alias(execl,_execl)
 #endif
 
-
-extern char **environ;
 
 int
 execl(const char *name, const char *arg, ...)

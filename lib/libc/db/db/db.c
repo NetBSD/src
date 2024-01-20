@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.20 2019/10/05 18:07:58 uwe Exp $	*/
+/*	$NetBSD: db.c,v 1.21 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.20 2019/10/05 18:07:58 uwe Exp $");
+__RCSID("$NetBSD: db.c,v 1.21 2024/01/20 14:52:46 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -81,6 +81,7 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 	return (NULL);
 }
 
+/*ARGSUSED*/
 static int
 __dberr(const DB *dbp, ...)
 {

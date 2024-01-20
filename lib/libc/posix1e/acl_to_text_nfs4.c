@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_to_text_nfs4.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_to_text_nfs4.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_to_text_nfs4.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -177,7 +177,7 @@ format_entry(char *str, size_t size, const acl_entry_t entry, int flags)
 	acl_permset_t permset;
 	acl_flagset_t flagset;
 	int error;
-	unsigned int len;
+	size_t len;
 	char buf[MAX_ENTRY_LENGTH + 1];
 
 	assert(_entry_brand(entry) == ACL_BRAND_NFS4);
@@ -197,7 +197,7 @@ format_entry(char *str, size_t size, const acl_entry_t entry, int flags)
 	len = strlen(buf);
 	if (len < min_who_field_length)
 		len = min_who_field_length;
-	off += snprintf(str + off, size - off, "%*s:", len, buf);
+	off += snprintf(str + off, size - off, "%*s:", (int)len, buf);
 
 	error = _nfs4_format_access_mask(buf, sizeof(buf), *permset,
 	    flags & ACL_TEXT_VERBOSE);
@@ -234,7 +234,8 @@ format_entry(char *str, size_t size, const acl_entry_t entry, int flags)
 char *
 _nfs4_acl_to_text_np(const acl_t aclp, ssize_t *len_p, int flags)
 {
-	int error, off = 0, size, entry_id = ACL_FIRST_ENTRY;
+	int error, entry_id = ACL_FIRST_ENTRY;
+	size_t off = 0, size;
 	char *str;
 	acl_entry_t entry;
 

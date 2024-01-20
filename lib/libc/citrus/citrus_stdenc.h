@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.h,v 1.4 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.h,v 1.5 2024/01/20 14:52:45 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -56,6 +56,9 @@ int _citrus_stdenc_open(struct _citrus_stdenc * __restrict * __restrict,
 			char const * __restrict,
 			const void * __restrict, size_t);
 void _citrus_stdenc_close(struct _citrus_stdenc *);
+
+extern struct _citrus_stdenc _citrus_stdenc_default;
+
 __END_DECLS
 
 static __inline int

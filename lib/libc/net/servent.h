@@ -1,4 +1,4 @@
-/*	$NetBSD: servent.h,v 1.4 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: servent.h,v 1.5 2024/01/20 14:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,6 +30,9 @@
  */
 
 #include <stdio.h>
+#ifdef _REENTRANT
+#include "reentrant.h"
+#endif
 
 struct servent_data {
 	FILE *plainfile;
@@ -48,6 +51,11 @@ struct servent_data {
 	char *line;
 	void *dummy;
 };
+
+#ifdef _REENTRANT
+extern mutex_t _servent_mutex;
+#endif
+extern struct servent_data _servent_data;
 
 struct servent	*getservent_r(struct servent *, struct servent_data *);
 struct servent	*getservbyname_r(const char *, const char *,

@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.67 2023/12/23 20:48:38 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.68 2024/01/20 14:52:49 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -60,6 +60,7 @@
 #endif
 
 #if __STDC_VERSION__ < 202311
+# undef static_assert
 # define static_assert(cond) extern int static_assert_check[(cond) ? 1 : -1]
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: locale.h,v 1.1 2010/06/07 13:52:30 tnozaki Exp $ */
+/* $NetBSD: locale.h,v 1.2 2024/01/20 14:52:46 christos Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,6 +39,12 @@
 __BEGIN_DECLS
 char *setlocale(int, const char *);
 char *__setlocale_mb_len_max_32(int, const char *);
+/*
+ * Preparation for the future import of multibyte locale.
+ * This function will ensure binary compatibility for old executables.
+ */
+char *
+compat_setlocale(int category, const char *locale) __RENAME(setlocale);
 __END_DECLS
 
 #endif /* _COMPAT_LOCALE_H_ */

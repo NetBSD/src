@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_errlist.c,v 1.2 2006/10/31 00:38:07 cbiere Exp $	*/
+/*	$NetBSD: compat_errlist.c,v 1.3 2024/01/20 14:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -34,14 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: compat_errlist.c,v 1.2 2006/10/31 00:38:07 cbiere Exp $");
+__RCSID("$NetBSD: compat_errlist.c,v 1.3 2024/01/20 14:52:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
-#define __LIBC12_SOURCE__
-#include <errno.h>
+#include <compat/include/errno.h>
 #ifdef __weak_alias
 __weak_alias(sys_errlist, _sys_errlist)
 __weak_alias(__sys_errlist, _sys_errlist)

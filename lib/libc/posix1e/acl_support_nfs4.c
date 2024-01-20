@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_support_nfs4.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_support_nfs4.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_support_nfs4.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,7 +47,7 @@ struct flagnames_struct {
 	char		letter;
 };
 
-struct flagnames_struct a_flags[] =
+static struct flagnames_struct a_flags[] =
     {{ ACL_ENTRY_FILE_INHERIT, "file_inherit", 'f'},
      { ACL_ENTRY_DIRECTORY_INHERIT, "dir_inherit", 'd'},
      { ACL_ENTRY_INHERIT_ONLY, "inherit_only", 'i'},
@@ -62,7 +62,7 @@ struct flagnames_struct a_flags[] =
       */
      { 0, 0, 0}};
 
-struct flagnames_struct a_access_masks[] =
+static struct flagnames_struct a_access_masks[] =
     {{ ACL_READ_DATA, "read_data", 'r'},
      { ACL_WRITE_DATA, "write_data", 'w'},
      { ACL_EXECUTE, "execute", 'x'},

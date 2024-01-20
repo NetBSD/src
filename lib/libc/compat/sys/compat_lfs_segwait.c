@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_lfs_segwait.c,v 1.2 2009/01/11 02:46:26 christos Exp $ */
+/*	$NetBSD: compat_lfs_segwait.c,v 1.3 2024/01/20 14:52:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_lfs_segwait.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_lfs_segwait.c,v 1.3 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,12 +46,11 @@ __RCSID("$NetBSD: compat_lfs_segwait.c,v 1.2 2009/01/11 02:46:26 christos Exp $"
 #include <sys/fstypes.h>
 #include <sys/time.h>
 #include <compat/sys/time.h>
+#include <compat/ufs/lfs/lfs_extern.h>
 
 __warn_references(lfs_segwait,
     "warning: reference to compatibility lfs_segwait(); include <???.h> to generate correct reference")
 
-int lfs_segwait(fsid_t *, struct timeval50 *);
-int __lfs_segwait50(fsid_t *, struct timeval *);
 int
 lfs_segwait(fsid_t *fsid, struct timeval50 *ts50)
 {

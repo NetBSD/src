@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_signame.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_signame.c,v 1.2 2024/01/20 14:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,14 +34,25 @@
 #if 0
 static char sccsid[] = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
 #else
-__RCSID("$NetBSD: compat_signame.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_signame.c,v 1.2 2024/01/20 14:52:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
+#include <sys/time.h>
+#include <compat/sys/time.h>
+#include <signal.h>
+#include <compat/include/signal.h>
+
+#ifdef __weak_alias
+__weak_alias(sys_signame, _sys_signame) 
+__weak_alias(__sys_signame, _sys_signame)
+#endif 
 
 __warn_references(sys_signame,
     "warning: reference to compatibility sys_signame[]; include <signal.h> for correct reference")
 
-const char *const sys_signame[] = {
+const char *const _sys_signame[] = {
 	"Signal 0",	/* 0 */
 	"HUP",		/* 1 SIGHUP */
 	"INT",		/* 2 SIGINT */

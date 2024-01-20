@@ -1,5 +1,5 @@
 /*	$KAME: sctp_sys_calls.c,v 1.10 2005/03/06 16:04:16 itojun Exp $ */
-/*	$NetBSD: sctp_sys_calls.c,v 1.1 2018/08/02 08:40:48 rjs Exp $ */
+/*	$NetBSD: sctp_sys_calls.c,v 1.2 2024/01/20 14:52:48 christos Exp $ */
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -146,7 +146,7 @@ sctp_connectx(int sd, struct sockaddr *addrs, int addrcnt,
 		if (at->sa_family == AF_INET) {
 			len += at->sa_len;
 		} else if (at->sa_family == AF_INET6){
-			if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)at)->sin6_addr)){
+			if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)(void *)at)->sin6_addr)){
 				len += sizeof(struct sockaddr_in);
 #if 0
 				in6_sin6_2_sin((struct sockaddr_in *)cpto,
@@ -171,7 +171,7 @@ sctp_connectx(int sd, struct sockaddr *addrs, int addrcnt,
 	}
 
 	sca.cx_num = cnt;
-	sca.cx_len = len;
+	sca.cx_len = (int)len;
 	sca.cx_addrs = addrs;
 	ret = ioctl(sd, SIOCCONNECTX, (void *)&sca);
 	if ((ret == 0) && (id != NULL)) {
@@ -204,7 +204,7 @@ sctp_bindx(int sd, struct sockaddr *addrs, int addrcnt, int flags)
 	for (i = 0; i < addrcnt; i++) {
 		sz = sa->sa_len;
 		fam = sa->sa_family;
-		((struct sockaddr_in *)&addrs[i])->sin_port = ((struct sockaddr_in *)sa)->sin_port;
+		((struct sockaddr_in *)(void *)&addrs[i])->sin_port = ((struct sockaddr_in *)(void *)sa)->sin_port;
 		if ((fam != AF_INET) && (fam != AF_INET6)) {
 			errno = EINVAL;
 			return(-1);
@@ -308,7 +308,7 @@ sctp_getladdrs (int sd, sctp_assoc_t id, struct sockaddr **raddrs)
 	caddr_t lim;
 	struct sockaddr *sa;
 	int size_of_addresses;
-	unsigned int siz;
+	socklen_t siz;
 	int cnt;
 
 	if (raddrs == NULL) {
@@ -325,7 +325,7 @@ sctp_getladdrs (int sd, sctp_assoc_t id, struct sockaddr **raddrs)
 		errno = ENOTCONN;
 		return(-1);
 	}
-	siz = size_of_addresses + sizeof(struct sockaddr_storage);
+	siz = (socklen_t)(size_of_addresses + sizeof(struct sockaddr_storage));
 	siz += sizeof(struct sctp_getaddresses);
 	addrs = calloc((unsigned long)1, (unsigned long)siz);
 	if (addrs == NULL) {
@@ -375,7 +375,7 @@ sctp_sendmsg(int s,
 	     u_int32_t timetolive,
 	     u_int32_t context)
 {
-	int sz;
+	ssize_t sz;
 	struct msghdr msg;
 	struct iovec iov[2];
 	char controlVector[256];
@@ -415,7 +415,7 @@ sctp_sendmsg(int s,
 		} else {
 			memcpy (&addr, to, to->sa_len);
 		}
-		who = (struct sockaddr *)&addr;
+		who = (struct sockaddr *)(void *)&addr;
 	}
 	iov[0].iov_base = (void *)(unsigned long)data;
 	iov[0].iov_len = len;
@@ -477,7 +477,7 @@ sctp_send(int sd, const void *data, size_t len,
 	  const struct sctp_sndrcvinfo *sinfo,
 	  int flags)
 {
-	int sz;
+	ssize_t sz;
 	struct msghdr msg;
 	struct iovec iov[2];
 	struct sctp_sndrcvinfo *s_info;
@@ -516,7 +516,8 @@ sctp_sendx(int sd, const void *msg, size_t len,
 	   struct sctp_sndrcvinfo *sinfo,
 	   int flags)
 {
-	int i, ret, cnt, saved_errno;
+	int i, cnt, saved_errno;
+	ssize_t ret;
 	int add_len;
 	struct sockaddr *at;
 	struct sctp_connectx_addrs sca;
@@ -545,7 +546,7 @@ sctp_sendx(int sd, const void *msg, size_t len,
 	}
 
 	sca.cx_num = cnt;
-	sca.cx_len = len;
+	sca.cx_len = (int)len;
 	sca.cx_addrs = addrs;
 	ret = ioctl(sd, SIOCCONNECTXDEL, (void *)&sca);
 	if (ret != 0) {
@@ -873,7 +874,7 @@ sctp_sendv(int sd,
 		switch (addr->sa_family) {
 		case AF_INET:
 			addr_len = (socklen_t) sizeof(struct sockaddr_in);
-			addr_in = (struct sockaddr_in *)addr;
+			addr_in = (struct sockaddr_in *)(void *)addr;
 			if (addr_in->sin_len != addr_len) {
 				free(cmsgbuf);
 				errno = EINVAL;
@@ -898,7 +899,7 @@ sctp_sendv(int sd,
 			break;
 		case AF_INET6:
 			addr_len = (socklen_t) sizeof(struct sockaddr_in6);
-			addr_in6 = (struct sockaddr_in6 *)addr;
+			addr_in6 = (struct sockaddr_in6 *)(void *)addr;
 			if (addr_in6->sin6_len != addr_len) {
 				free(cmsgbuf);
 				errno = EINVAL;

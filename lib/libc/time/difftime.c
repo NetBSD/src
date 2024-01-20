@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.23 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: difftime.c,v 1.24 2024/01/20 14:52:49 christos Exp $	*/
 
 /* Return the difference between two timestamps.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.23 2021/10/22 14:26:04 christos Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.24 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,7 @@ difftime(time_t time1, time_t time0)
 	** if the minuend is greater than or equal to the subtrahend.
 	*/
 	if (!TYPE_SIGNED(time_t))
+		/*NOTREACHED*/
 		return time0 <= time1 ? time1 - time0 :
 		    dminus((double)(time0 - time1));
 

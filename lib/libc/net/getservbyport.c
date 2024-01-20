@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport.c,v 1.12 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: getservbyport.c,v 1.13 2024/01/20 14:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getservbyport.c,v 1.12 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: getservbyport.c,v 1.13 2024/01/20 14:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,11 +44,6 @@ __RCSID("$NetBSD: getservbyport.c,v 1.12 2008/04/28 20:23:00 martin Exp $");
 #ifdef __weak_alias
 __weak_alias(getservbyport,_getservbyport)
 #endif
-
-#ifdef _REENTRANT
-extern mutex_t _servent_mutex;
-#endif
-extern struct servent_data _servent_data;
 
 struct servent *
 getservbyport(int port, const char *proto)

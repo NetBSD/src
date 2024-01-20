@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.216 2022/05/31 13:42:59 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.217 2024/01/20 14:52:47 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -209,5 +209,9 @@ CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+
+LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
+LINTFLAGS.siglist.c += -X 351	# XXX: renames
+LINTFLAGS.signame.c += -X 351	# XXX: renames
 
 CLEANFILES+= errlist.c

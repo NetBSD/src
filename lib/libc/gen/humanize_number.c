@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.18 2019/03/11 15:10:51 kre Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.19 2024/01/20 14:52:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.18 2019/03/11 15:10:51 kre Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.19 2024/01/20 14:52:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -133,8 +133,9 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		if (len - baselen > 19)
 			i = 0;
 		else {
+			size_t j;
 			/* See if there are additional columns to be used. */
-			for (max = 100, i = len - baselen; i-- > 0;)
+			for (max = 100, j = len - baselen; j-- > 0;)
 				max *= 10;
 
 			/*

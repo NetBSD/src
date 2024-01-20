@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_syslog.c,v 1.2 2012/10/11 17:09:55 christos Exp $	*/
+/*	$NetBSD: compat_syslog.c,v 1.3 2024/01/20 14:52:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,16 +37,8 @@
 
 #include <sys/types.h>
 #include <sys/syslog.h>
+#include <compat/include/extern.h>
 #include <compat/sys/syslog.h>
-
-void	syslog_ss(int, struct syslog_data60 *, const char *, ...)
-    __printflike(3, 4);
-void    vsyslog_ss(int, struct syslog_data60 *, const char *, va_list) 
-    __printflike(3, 0); 
-void	syslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
-    const char *, ...) __printflike(5, 0);
-void	vsyslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
-    const char *, va_list) __printflike(5, 0);
 
 #ifdef __weak_alias
 __weak_alias(closelog_r,_closelog_r)

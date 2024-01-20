@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.21 2017/01/10 17:45:12 christos Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.22 2024/01/20 14:52:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.21 2017/01/10 17:45:12 christos Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.22 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ int
 GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 {
 	char *start, *trv, *suffp, *carryp;
-	char *pad;
+	const char *pad;
 	struct stat sbuf;
 	int rval;
 	uint32_t r;

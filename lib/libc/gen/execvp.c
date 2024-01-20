@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.31 2014/09/26 19:28:03 christos Exp $	*/
+/*	$NetBSD: execvp.c,v 1.32 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.31 2014/09/26 19:28:03 christos Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.32 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: execvp.c,v 1.31 2014/09/26 19:28:03 christos Exp $");
 #include <unistd.h>
 #include <paths.h>
 #include "reentrant.h"
+#include "extern.h"
 
 #ifdef __weak_alias
 __weak_alias(execvp,_execvp)
@@ -152,8 +153,6 @@ retry:		(void)execve(bp, argv, envp);
 done:
 	return (-1);
 }
-
-extern char **environ;
 
 int
 execvp(const char *name, char * const *argv)

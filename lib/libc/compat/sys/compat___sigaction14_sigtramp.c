@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigaction14_sigtramp.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $	*/
+/*	$NetBSD: compat___sigaction14_sigtramp.c,v 1.2 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,36 +31,25 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___sigaction14_sigtramp.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $");
+__RCSID("$NetBSD: compat___sigaction14_sigtramp.c,v 1.2 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#define __LIBC12_SOURCE__
 #include <sys/types.h>
 #include <stddef.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <signal.h>
+#include <compat/include/signal.h>
 #include <errno.h>
 
 #include "extern.h"
 
-#define C(a,b) __CONCAT(a,b)
-#define __SIGTRAMP_SIGCONTEXT  \
-    C(__sigtramp_sigcontext_,__SIGTRAMP_SIGCONTEXT_VERSION)
-#define __SIGTRAMP_SIGINFO  \
-    C(__sigtramp_siginfo_,__SIGTRAMP_SIGINFO_VERSION)
-
 __weak_alias(__sigaction14, __libc_sigaction14)
-
-#define __LIBC12_SOURCE__
-
-/*
- * The symbol must remain, but we don't want this exposed in a header
- * anywhere, so the prototype goes here.
- */
-int	__libc_sigaction14(int, const struct sigaction *, struct sigaction *);
 
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern const char __SIGTRAMP_SIGINFO[];
 
 	/*
 	 * If no sigaction, use the "default" trampoline since it won't
@@ -75,7 +64,6 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	 * set in the sigaction.
 	 */
 	if ((act->sa_flags & SA_SIGINFO) == 0) {
-		extern const char __SIGTRAMP_SIGCONTEXT[];
 		int sav = errno;
 		int rv =  __sigaction_sigtramp(sig, act, oact,
 		    __SIGTRAMP_SIGCONTEXT, __SIGTRAMP_SIGCONTEXT_VERSION);

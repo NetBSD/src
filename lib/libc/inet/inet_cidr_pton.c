@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.9 2018/12/13 08:42:26 maya Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.10 2024/01/20 14:52:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.6 2005/04/27 04:56:19 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.9 2018/12/13 08:42:26 maya Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.10 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif
 
@@ -76,12 +76,12 @@ int
 inet_cidr_pton(int af, const char *src, void *dst, int *bits) {
 	switch (af) {
 	case AF_INET:
-		return (inet_cidr_pton_ipv4(src, dst, bits, 0));
+		return inet_cidr_pton_ipv4(src, dst, bits, 0);
 	case AF_INET6:
-		return (inet_cidr_pton_ipv6(src, dst, bits));
+		return inet_cidr_pton_ipv6(src, dst, bits);
 	default:
 		errno = EAFNOSUPPORT;
-		return (-1);
+		return -1;
 	}
 }
 
@@ -144,15 +144,15 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, int *pbits, int ipv6) {
 		*dst++ = 0;
 
 	*pbits = bits;
-	return (0);
+	return 0;
 
  enoent:
 	errno = ENOENT;
-	return (-1);
+	return -1;
 
  emsgsize:
 	errno = EMSGSIZE;
-	return (-1);
+	return -1;
 }
 
 static int
@@ -171,7 +171,7 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, int *pbits) {
 	/* Leading :: requires some special handling. */
 	if (*src == ':')
 		if (*++src != ':')
-			return (0);
+			return 0;
 	curtok = src;
 	saw_xdigit = 0;
 	val = 0;
@@ -185,7 +185,7 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, int *pbits) {
 			val <<= 4;
 			val |= (int)(pch - xdigits);
 			if (val > 0xffff)
-				return (0);
+				return 0;
 			saw_xdigit = 1;
 			continue;
 		}
@@ -193,14 +193,14 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, int *pbits) {
 			curtok = src;
 			if (!saw_xdigit) {
 				if (colonp)
-					return (0);
+					return 0;
 				colonp = tp;
 				continue;
 			} else if (*src == '\0') {
-				return (0);
+				return 0;
 			}
 			if (tp + NS_INT16SZ > endp)
-				return (0);
+				return 0;
 			*tp++ = (u_char) (val >> 8) & 0xff;
 			*tp++ = (u_char) val & 0xff;
 			saw_xdigit = 0;
@@ -247,38 +247,37 @@ inet_cidr_pton_ipv6(const char *src, u_char *dst, int *pbits) {
 	memcpy(dst, tmp, NS_IN6ADDRSZ);
 
 	*pbits = bits;
-	return (0);
+	return 0;
 
  enoent:
 	errno = ENOENT;
-	return (-1);
+	return -1;
 
  emsgsize:
 	errno = EMSGSIZE;
-	return (-1);
+	return -1;
 }
 
 static int
 getbits(const char *src, int ipv6) {
 	int bits = 0;
-	char *cp, ch;
 	
 	if (*src == '\0')			/*%< syntax */
-		return (-2);
+		return -2;
 	do {
-		ch = *src++;
-		cp = strchr(digits, ch);
+		char ch = *src++;
+		const char *cp = strchr(digits, ch);
 		if (cp == NULL)			/*%< syntax */
-			return (-2);
+			return -2;
 		bits *= 10;
 		bits += (int)(cp - digits);
 		if (bits == 0 && *src != '\0')	/*%< no leading zeros */
-			return (-2);
+			return -2;
 		if (bits > (ipv6 ? 128 : 32))	/*%< range error */
-			return (-2);
+			return -2;
 	} while (*src != '\0');
 
-	return (bits);
+	return bits;
 }
 
 /*! \file */

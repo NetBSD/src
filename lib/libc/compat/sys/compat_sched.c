@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sched.c,v 1.2 2009/01/11 02:46:26 christos Exp $	*/
+/*	$NetBSD: compat_sched.c,v 1.3 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sched.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_sched.c,v 1.3 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -40,12 +40,11 @@ __RCSID("$NetBSD: compat_sched.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <compat/sys/time.h>
+#include <compat/include/sched.h>
 #include <unistd.h>
 
 __warn_references(sched_rr_get_interval,
     "warning: reference to compatibility sched_rr_get_interval(); include <sched.h> to generate correct reference")
-
-int sched_rr_get_interval(pid_t, struct timespec50 *);
 
 int
 /*ARGSUSED*/

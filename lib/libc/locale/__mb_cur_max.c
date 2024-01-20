@@ -1,4 +1,4 @@
-/*	$NetBSD: __mb_cur_max.c,v 1.2 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: __mb_cur_max.c,v 1.3 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -28,11 +28,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __mb_cur_max.c,v 1.2 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: __mb_cur_max.c,v 1.3 2024/01/20 14:52:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <limits.h>
+#include <stdlib.h>
+#include "setlocale_local.h"
 
 size_t __mb_cur_max = 1;
 size_t __mb_len_max_runtime = MB_LEN_MAX;

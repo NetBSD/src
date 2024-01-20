@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.16 2019/10/05 19:19:51 uwe Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.17 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getlogin.c,v 1.16 2019/10/05 19:19:51 uwe Exp $");
+__RCSID("$NetBSD: getlogin.c,v 1.17 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __weak_alias(getlogin_r,_getlogin_r)
 __weak_alias(setlogin,_setlogin)
 #endif
 
-int	__logname_valid;		/* known to setlogin() */
+static int	__logname_valid;		/* known to setlogin() */
 static char logname[MAXLOGNAME + 1];
 
 #ifdef _REENTRANT

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.17 2022/09/13 10:18:47 riastradh Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.18 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.17 2022/09/13 10:18:47 riastradh Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.18 2024/01/20 14:52:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,9 +47,6 @@ __RCSID("$NetBSD: pthread_atfork.c,v 1.17 2022/09/13 10:18:47 riastradh Exp $");
 __weak_alias(pthread_atfork, _pthread_atfork)
 __weak_alias(fork, _fork)
 #endif /* __weak_alias */
-
-pid_t	__fork(void);	/* XXX */
-pid_t	__locked_fork(int *) __weak; /* XXX */
 
 pid_t
 __locked_fork(int *my_errno)

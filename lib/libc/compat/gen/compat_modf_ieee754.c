@@ -1,4 +1,4 @@
-/* $NetBSD: compat_modf_ieee754.c,v 1.5 2016/10/07 11:10:44 christos Exp $ */
+/* $NetBSD: compat_modf_ieee754.c,v 1.6 2024/01/20 14:52:45 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,8 +30,7 @@
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <errno.h>
-
-double modf(double, double *);
+#include <math.h>
 
 /*
  * double modf(double val, double *iptr)
