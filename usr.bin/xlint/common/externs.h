@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.31 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.32 2024/01/20 10:21:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -43,7 +43,9 @@ const char *tspec_name(tspec_t);
  * mem.c
  */
 void *xmalloc(size_t);
+#if defined(IS_LINT1) || defined(IS_LINT2)
 void *xcalloc(size_t, size_t);
+#endif
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
 char *xasprintf(const char *, ...) __printflike(1, 2);
