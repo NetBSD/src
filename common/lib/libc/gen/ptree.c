@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $	*/
+/*	$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
 #else
 #define	KASSERT(e)	do { } while (0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.13 2024/01/20 14:55:02 christos Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -111,7 +111,6 @@ __RCSID("$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
 #define	ITEMTONODE(pt, ptn)	\
 	((pt_node_t *)((uintptr_t)(ptn) + (pt)->pt_node_offset))
 
-bool ptree_check(const pt_tree_t *);
 #if PTCHECK > 1
 #define	PTREE_CHECK(pt)		ptree_check(pt)
 #else
