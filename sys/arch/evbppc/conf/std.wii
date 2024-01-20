@@ -1,0 +1,26 @@
+#	$NetBSD: std.wii,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+#
+# standard, required NetBSD/wii 'options'
+
+machine		evbppc powerpc
+include		"conf/std"	# MI standard options
+
+options 	PPC_OEA		# Nintendo Wii uses IBM PPC750CXe CPUs
+makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
+
+# Executable support:
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+options		EVBPPC_HAS_MBR
+
+options 	INTSTK=0x2000
+
+#makeoptions	TEXTADDR=0x80004000
+makeoptions	TEXTADDR=0x4000
+options 	DISTANT_KERNEL
+makeoptions 	EXTRA_LINKFLAGS="-q"
+makeoptions	BOARDTYPE="wii"
+
+options		PPC_INTR_IMPL="<powerpc/intr.h>"
+
+include		"arch/evbppc/conf/files.wii"
