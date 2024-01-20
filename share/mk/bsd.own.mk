@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1362 2024/01/03 02:59:00 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.1363 2024/01/20 08:09:13 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1289,6 +1289,7 @@ MKFIRMWARE.hppa=		yes
 MKFIRMWARE.i386=		yes
 MKFIRMWARE.mac68k=		yes
 MKFIRMWARE.macppc=		yes
+MKFIRMWARE.riscv=		yes
 MKFIRMWARE.sandpoint=		yes
 MKFIRMWARE.sparc64=		yes
 
