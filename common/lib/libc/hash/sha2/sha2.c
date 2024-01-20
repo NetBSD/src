@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.25 2021/10/28 15:08:05 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.25 2021/10/28 15:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,12 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.25 2021/10/28 15:08:05 christos Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.25 2021/10/28 15:08:05 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <string.h>
 
+#endif
+
+#ifndef _LIBC_INTERNAL
+#define _LIBC_INTERNAL
 #endif
 
 #include <sys/types.h>
@@ -122,10 +126,6 @@ __RCSID("$NetBSD: sha2.c,v 1.25 2021/10/28 15:08:05 christos Exp $");
  * only.
  */
 static void SHA512_Last(SHA512_CTX *);
-void SHA224_Transform(SHA224_CTX *, const uint32_t*);
-void SHA256_Transform(SHA256_CTX *, const uint32_t*);
-void SHA384_Transform(SHA384_CTX *, const uint64_t*);
-void SHA512_Transform(SHA512_CTX *, const uint64_t*);
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
