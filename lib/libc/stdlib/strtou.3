@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtou.3,v 1.7 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: strtou.3,v 1.8 2024/01/20 16:13:39 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,12 +36,12 @@
 .\" Created by Kamil Rytarowski, based on ID:
 .\" NetBSD: strtoul.3,v 1.29 2015/03/10 13:00:58 christos Exp
 .\"
-.Dd November 13, 2015
+.Dd January 20, 2024
 .Dt STRTOU 3
 .Os
 .Sh NAME
 .Nm strtou
-.Nd convert a string to an uintmax_t integer
+.Nd convert a string value to an uintmax_t integer
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -120,7 +120,7 @@ The remainder of the string is converted to an
 .Em uintmax_t
 value in the obvious manner,
 stopping at the end of the string
-or at the first character that does not produce a valid digit
+or at the first character which is not a valid digit
 in the given base.
 (In bases above 10, the letter
 .Ql A
@@ -195,12 +195,18 @@ In this case,
 .Fa endptr
 points to the first unconverted character.
 .It Bq Er ERANGE
-The given string was out of range; the value converted has been clamped; or
-the range given was invalid, i.e.
+The given string was out of range; the value converted has been clamped;
+or the range given was invalid, i.e.
 .Fa lo
 >
 .Fa hi .
 .El
+.Pp
+The range check is important than the unconverted characters check,
+and it is performed first.
+If a program needs to know if there were unconverted characters when an
+out of range number has been provided, it needs to supply and test
+.Fa endptr.
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,
