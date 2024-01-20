@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.29 2023/06/15 03:20:58 rin Exp $
+# $NetBSD: Makefile.efiboot,v 1.30 2024/01/20 11:04:53 kre Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -127,6 +127,7 @@ KERN_AS= library
 LIBKERN_ARCH?= ${MACHINE_ARCH}
 KERNMISCMAKEFLAGS+="LIBKERN_ARCH=${LIBKERN_ARCH}"
 .include "${S}/lib/libkern/Makefile.inc"
+CPPFLAGS+= -I${S}/../common/include/libc
 LIBKERN= ${KERNLIB}
 
 ### find out what to use for libz

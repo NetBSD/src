@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.54 2024/01/01 20:33:34 rhialto Exp $
+#	$NetBSD: Makefile.libkern,v 1.55 2024/01/20 11:04:53 kre Exp $
 
 #
 # Variable definitions for libkern.
@@ -35,6 +35,7 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libppath/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
+CPPFLAGS+=	-I${KERNDIR}/../../../common/include/libc
 CPPFLAGS+=	-I${KERNDIR}/../../../common/libc/hash/sha3
 
 .PATH.c: ${KERNDIR}
