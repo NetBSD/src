@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.121 2023/12/10 14:59:47 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.122 2024/01/20 12:02:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.121 2023/12/10 14:59:47 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.122 2024/01/20 12:02:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,8 +60,6 @@ __RCSID("$NetBSD: xlint.c,v 1.121 2023/12/10 14:59:47 rillig Exp $");
 #include "pathnames.h"
 #include "findcc.h"
 
-#define DEFAULT_PATH		_PATH_DEFPATH
-
 typedef struct {
 	char	**items;
 	size_t	len;
@@ -73,8 +71,8 @@ static struct {
 	list	flags;		/* flags always passed */
 	list	lcflags;	/* flags, controlled by sflag/tflag */
 	char	*outfile;	/* path name for preprocessed C source */
-	int	outfd;		/* file descriptor for outfile */
-} cpp = { .outfd = -1 };
+	int	output_fd;	/* file descriptor for outfile */
+} cpp;
 
 /* Parameters for lint1, which checks an isolated translation unit. */
 static struct {
@@ -85,9 +83,9 @@ static struct {
 /* Parameters for lint2, which performs cross-translation-unit checks. */
 static struct {
 	list	flags;
-	list	infiles;	/* input files (without libraries) */
-	list	inlibs;		/* input libraries */
-	char	*outlib;	/* output library that will be created */
+	list	input_files;	/* without libraries */
+	list	input_libraries;
+	char	*output_library;
 } lint2;
 
 static const char *tmpdir;
@@ -100,8 +98,8 @@ static char *output_filename;	/* filename for -o */
 static bool seen_filename;
 
 /*
- * name of a file which is currently written by a child and should
- * be removed after abnormal termination of the child
+ * The file that is currently written by a child process and should be removed
+ * in case the child process fails.
  */
 static const char *currfn;
 
@@ -168,10 +166,9 @@ concat2(const char *s1, const char *s2)
 
 	size_t len1 = strlen(s1);
 	size_t len2 = strlen(s2);
-	char *s = xmalloc(len1 + len2 + 1);
+	char *s = xrealloc(NULL, len1 + len2 + 1);
 	memcpy(s, s1, len1);
 	memcpy(s + len1, s2, len2 + 1);
-
 	return s;
 }
 
@@ -191,8 +188,8 @@ __dead static void
 terminate(int signo)
 {
 
-	if (cpp.outfd != -1)
-		(void)close(cpp.outfd);
+	if (cpp.output_fd != -1)
+		(void)close(cpp.output_fd);
 	if (cpp.outfile != NULL) {
 		const char *keep_env = getenv("LINT_KEEP_CPPOUT");
 		bool keep = keep_env != NULL && (strcmp(keep_env, "yes") == 0
@@ -207,8 +204,8 @@ terminate(int signo)
 	for (size_t i = 0; i < lint1.outfiles.len; i++)
 		(void)remove(lint1.outfiles.items[i]);
 
-	if (lint2.outlib != NULL)
-		(void)remove(lint2.outlib);
+	if (lint2.output_library != NULL)
+		(void)remove(lint2.output_library);
 
 	if (currfn != NULL && currfn != cpp.outfile)
 		(void)remove(currfn);
@@ -245,12 +242,8 @@ usage(const char *fmt, ...)
 	terminate(-1);
 }
 
-/*
- * Returns a pointer to the last component of path after delim.
- * Returns path if the string does not contain delim.
- */
 static const char *
-lbasename(const char *path, int delim)
+skip_last(const char *path, int delim)
 {
 
 	const char *base = path;
@@ -294,7 +287,7 @@ needs_quoting:
 }
 
 static void
-run_child(const char *path, list *args, const char *crfn, int fdout)
+run_child(const char *path, const list *args, const char *crfn, int fdout)
 {
 
 	if (Vflag) {
@@ -362,7 +355,7 @@ run_cpp(const char *name)
 		cc = DEFAULT_CC;
 
 	char *abs_cc = findcc(cc);
-	if (abs_cc == NULL && setenv("PATH", DEFAULT_PATH, 1) == 0)
+	if (abs_cc == NULL && setenv("PATH", _PATH_DEFPATH, 1) == 0)
 		abs_cc = findcc(cc);
 	if (abs_cc == NULL) {
 		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), cc);
@@ -377,16 +370,16 @@ run_cpp(const char *name)
 	list_add_ref(&args, NULL);
 
 	/* Rewind after a possible previous run of cpp and lint1. */
-	if (lseek(cpp.outfd, 0, SEEK_SET) != 0) {
+	if (lseek(cpp.output_fd, 0, SEEK_SET) != 0) {
 		warn("lseek");
 		terminate(-1);
 	}
-	if (ftruncate(cpp.outfd, 0) != 0) {
+	if (ftruncate(cpp.output_fd, 0) != 0) {
 		warn("ftruncate");
 		terminate(-1);
 	}
 
-	run_child(abs_cc, &args, cpp.outfile, cpp.outfd);
+	run_child(abs_cc, &args, cpp.outfile, cpp.output_fd);
 	list_clear(&args);
 }
 
@@ -409,30 +402,28 @@ run_lint1(const char *out_fname)
 	list_clear(&args);
 }
 
-/*
- * Read a file name from the command line
- * and pass it through lint1 if it is a C source.
- */
 static void
 handle_filename(const char *name)
 {
 
-	const char *base = lbasename(name, '/');
-	const char *suff = lbasename(base, '.');
+	const char *base = skip_last(name, '/');
+	const char *suff = skip_last(base, '.');
 
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
 		if (!iflag)
-			list_add(&lint2.infiles, name);
+			list_add(&lint2.input_files, name);
 		return;
 	}
 
-	if (!(strcmp(suff, "c") == 0 ||
-	    (strncmp(base, "llib-l", 6) == 0 && base == suff))) {
-		warnx("unknown file type: %s", name);
-		return;
-	}
+	if (strcmp(suff, "c") == 0)
+		goto c_file;
+	if (strncmp(base, "llib-l", 6) == 0 && base == suff)
+		goto c_file;
+	warnx("unknown file type: %s", name);
+	return;
 
+c_file:
 	if (!iflag || seen_filename)
 		(void)printf("%s:\n", Fflag ? name : base);
 
@@ -461,7 +452,7 @@ handle_filename(const char *name)
 	run_cpp(name);
 	run_lint1(ofn);
 
-	list_add(&lint2.infiles, ofn);
+	list_add(&lint2.input_files, ofn);
 	free(ofn);
 }
 
@@ -497,7 +488,7 @@ find_lib(const char *lib)
 	return;
 
 found:
-	list_add_ref(&lint2.inlibs, concat2("-l", lfn));
+	list_add_ref(&lint2.input_libraries, concat2("-l", lfn));
 	free(lfn);
 }
 
@@ -520,11 +511,11 @@ run_lint2(void)
 	list args = { NULL, 0, 0 };
 	list_add_ref(&args, abs_lint2);
 	list_add_all(&args, &lint2.flags);
-	list_add_all(&args, &lint2.inlibs);
-	list_add_all(&args, &lint2.infiles);
+	list_add_all(&args, &lint2.input_libraries);
+	list_add_all(&args, &lint2.input_files);
 	list_add_ref(&args, NULL);
 
-	run_child(abs_lint2, &args, lint2.outlib, -1);
+	run_child(abs_lint2, &args, lint2.output_library, -1);
 	list_clear(&args);
 }
 
@@ -569,8 +560,8 @@ main(int argc, char *argv[])
 	set_tmpdir();
 
 	cpp.outfile = concat2(tmpdir, "lint0.XXXXXX");
-	cpp.outfd = mkstemp(cpp.outfile);
-	if (cpp.outfd == -1) {
+	cpp.output_fd = mkstemp(cpp.outfile);
+	if (cpp.output_fd == -1) {
 		warn("can't make temp");
 		terminate(-1);
 	}
@@ -707,7 +698,7 @@ main(int argc, char *argv[])
 			Cflag = true;
 			list_add_flag(&lint2.flags, c);
 			list_add(&lint2.flags, optarg);
-			lint2.outlib = xasprintf("llib-l%s.ln", optarg);
+			lint2.output_library = xasprintf("llib-l%s.ln", optarg);
 			list_clear(&default_libraries);
 			break;
 
@@ -816,10 +807,10 @@ main(int argc, char *argv[])
 	run_lint2();
 
 	if (output_filename != NULL)
-		cat(&lint2.infiles, output_filename);
+		cat(&lint2.input_files, output_filename);
 
 	if (Cflag)
-		lint2.outlib = NULL;
+		lint2.output_library = NULL;
 
 	terminate(0);
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.33 2024/01/20 10:25:57 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.34 2024/01/20 12:02:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -42,8 +42,8 @@ const char *tspec_name(tspec_t);
 /*
  * mem.c
  */
-void *xmalloc(size_t);
 #if IS_LINT1 || IS_LINT2
+void *xmalloc(size_t);
 void *xcalloc(size_t, size_t);
 #endif
 void *xrealloc(void *, size_t);
