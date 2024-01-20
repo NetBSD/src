@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2024/01/20 00:15:31 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2024/01/20 02:23:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,6 +168,13 @@ struct clockframe {
  *
  * XXX Actually, we can't, because we don't use the master stack
  * XXX right now.
+ *
+ * (Actually, it's unlikely that we'll ever use the master stack in NetBSD.
+ * It would complicate the spl*() functions considerably and it just doesn't
+ * seem like a good trade-off for what seems like extremely marginal gains.
+ * So, just blissfully run the kernel on the interrupt stack all the time,
+ * and it's been that way for >30 years and no one has really complained
+ * about it.)
  */
 #define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
 #else
