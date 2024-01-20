@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.11 2023/08/26 21:03:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.12 2024/01/20 13:33:03 mlelstv Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -2144,16 +2144,28 @@ int stbi_jpeg_info(char const *filename, int *x, int *y, int *comp)
 
 int stbi_jpeg_test_memory(stbi_uc const *buffer, int len)
 {
-   jpeg j;
-   start_mem(&j.s, buffer,len);
-   return decode_jpeg_header(&j, SCAN_type);
+    jpeg *j;
+    int res;
+
+    j = MALLOC(sizeof(*j));
+    if (j == NULL) return 0;
+    start_mem(&j->s, buffer,len);
+    res = decode_jpeg_header(j, SCAN_type);
+    FREE(j);
+    return res;
 }
 
 int stbi_jpeg_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp)
 {
-    jpeg j;
-    start_mem(&j.s, buffer, len);
-    return stbi_jpeg_info_raw(&j, x, y, comp);
+    jpeg *j;
+    int res;
+
+    j = MALLOC(sizeof(*j));
+    if (j == NULL) return 0;
+    start_mem(&j->s, buffer, len);
+    res = stbi_jpeg_info_raw(j, x, y, comp);
+    FREE(j);
+    return res;
 }
 
 #ifndef STBI_NO_STDIO
@@ -2523,18 +2535,25 @@ static int do_zlib(zbuf *a, char *obuf, int olen, int exp, int parse_header)
 
 char *stbi_zlib_decode_malloc_guesssize(const char * buffer, int len, int initial_size, int *outlen)
 {
-   zbuf a;
-   char *p = MALLOC(initial_size);
-   if (p == NULL) return NULL;
-   a.zbuffer = (uint8 const *) buffer;
-   a.zbuffer_end = (uint8 const *) buffer + len;
-   if (do_zlib(&a, p, initial_size, 1, 1)) {
-      if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
+   zbuf *a;
+   char *p;
+   char *res = NULL;
+
+   a = MALLOC(sizeof(*a));
+   if (a == NULL) return NULL;
+   p = MALLOC(initial_size);
+   if (p == NULL) goto fail;
+   a->zbuffer = (uint8 const *) buffer;
+   a->zbuffer_end = (uint8 const *) buffer + len;
+   if (do_zlib(a, p, initial_size, 1, 1)) {
+      if (outlen) *outlen = (int) (a->zout - a->zout_start);
+      res = a->zout_start;
    } else {
-      FREE(a.zout_start);
-      return NULL;
+      FREE(a->zout_start);
    }
+fail:
+   FREE(a);
+   return res;
 }
 
 char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen)
@@ -2544,56 +2563,81 @@ char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen)
 
 char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header)
 {
-   zbuf a;
-   char *p = MALLOC(initial_size);
-   if (p == NULL) return NULL;
-   a.zbuffer = (uint8 const *) buffer;
-   a.zbuffer_end = (uint8 const *) buffer + len;
-   if (do_zlib(&a, p, initial_size, 1, parse_header)) {
-      if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
+   zbuf *a;
+   char *p;
+   char *res = NULL;
+
+   a = MALLOC(sizeof(*a));
+   if (a == NULL) return NULL;
+   p = MALLOC(initial_size);
+   if (p == NULL) goto fail;
+   a->zbuffer = (uint8 const *) buffer;
+   a->zbuffer_end = (uint8 const *) buffer + len;
+   if (do_zlib(a, p, initial_size, 1, parse_header)) {
+      if (outlen) *outlen = (int) (a->zout - a->zout_start);
+      res = a->zout_start;
    } else {
-      FREE(a.zout_start);
-      return NULL;
+      FREE(a->zout_start);
    }
+fail:
+   FREE(a);
+   return res;
 }
 
 int stbi_zlib_decode_buffer(char *obuffer, int olen, char const *ibuffer, int ilen)
 {
-   zbuf a;
-   a.zbuffer = (uint8 const *) ibuffer;
-   a.zbuffer_end = (uint8 const *) ibuffer + ilen;
-   if (do_zlib(&a, obuffer, olen, 0, 1))
-      return (int) (a.zout - a.zout_start);
+   zbuf *a;
+   int res;
+
+   a = MALLOC(sizeof(*a));
+   if (a == NULL) return -1;
+   a->zbuffer = (uint8 const *) ibuffer;
+   a->zbuffer_end = (uint8 const *) ibuffer + ilen;
+   if (do_zlib(a, obuffer, olen, 0, 1))
+      res = (int) (a->zout - a->zout_start);
    else
-      return -1;
+      res = -1;
+   FREE(a);
+   return res;
 }
 
 char *stbi_zlib_decode_noheader_malloc(char const *buffer, int len, int *outlen)
 {
-   zbuf a;
-   char *p = MALLOC(16384);
-   if (p == NULL) return NULL;
-   a.zbuffer = (uint8 const *) buffer;
-   a.zbuffer_end = (uint8 const *) buffer+len;
-   if (do_zlib(&a, p, 16384, 1, 0)) {
-      if (outlen) *outlen = (int) (a.zout - a.zout_start);
-      return a.zout_start;
-   } else {
-      FREE(a.zout_start);
-      return NULL;
-   }
+   zbuf *a;
+   char *p;
+   char *res = NULL;
+
+   a = MALLOC(sizeof(*a));
+   if (a == NULL) return NULL;
+   p = MALLOC(16384);
+   if (p == NULL) goto fail;
+   a->zbuffer = (uint8 const *) buffer;
+   a->zbuffer_end = (uint8 const *) buffer+len;
+   if (do_zlib(a, p, 16384, 1, 0)) {
+      if (outlen) *outlen = (int) (a->zout - a->zout_start);
+      res = a->zout_start;
+   } else
+      FREE(a->zout_start);
+fail:
+   FREE(a);
+   return res;
 }
 
 int stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char *ibuffer, int ilen)
 {
-   zbuf a;
-   a.zbuffer = (uint8 const *) ibuffer;
-   a.zbuffer_end = (uint8 const *) ibuffer + ilen;
-   if (do_zlib(&a, obuffer, olen, 0, 0))
-      return (int) (a.zout - a.zout_start);
+   zbuf *a;
+   int res;
+
+   a = MALLOC(sizeof(*a));
+   if (a == NULL) return -1;
+   a->zbuffer = (uint8 const *) ibuffer;
+   a->zbuffer_end = (uint8 const *) ibuffer + ilen;
+   if (do_zlib(a, obuffer, olen, 0, 0))
+      res = (int) (a->zout - a->zout_start);
    else
-      return -1;
+      res = -1;
+   FREE(a);
+   return res;
 }
 
 // public domain "baseline" PNG decoder   v0.10  Sean Barrett 2006-11-18
@@ -4361,11 +4405,18 @@ static int stbi_gif_header(stbi *s, stbi_gif *g, int *comp, int is_info)
 
 static int stbi_gif_info_raw(stbi *s, int *x, int *y, int *comp)
 {
-   stbi_gif g;   
-   if (!stbi_gif_header(s, &g, comp, 1)) return 0;
-   if (x) *x = g.w;
-   if (y) *y = g.h;
-   return 1;
+   stbi_gif *g;
+   int res = 0;
+
+   g = MALLOC(sizeof(*g));   
+   if (g == NULL) return 0;
+   if (!stbi_gif_header(s, g, comp, 1)) goto fail;
+   if (x) *x = g->w;
+   if (y) *y = g->h;
+   res = 1;
+fail:
+   FREE(g);
+   return res;
 }
 
 static void stbi_out_gif_code(stbi_gif *g, uint16 code)
