@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.153 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.154 2024/01/20 00:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2024/01/20 00:15:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -84,8 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2023/10/05 19:41:04 ad Exp $");
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
-
-int	astpending;
 
 const char	*trap_type[] = {
 	"Bus error",

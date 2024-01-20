@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2024/01/19 18:18:54 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 2024/01/20 00:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2024/01/19 18:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2024/01/20 00:15:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -90,8 +90,6 @@ void	dumpwb(int, u_short, u_int, u_int);
 
 static inline void userret(struct lwp *l, struct frame *fp,
     u_quad_t oticks, u_int faultaddr, int fromtrap);
-
-int	astpending;
 
 const char	*trap_type[] = {
 	"Bus error",

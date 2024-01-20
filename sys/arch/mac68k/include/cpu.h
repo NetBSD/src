@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.104 2024/01/18 14:39:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.105 2024/01/20 00:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,54 +68,6 @@
  * Get common m68k definitions.
  */
 #include <m68k/cpu.h>
-
-#if defined(_KERNEL)
-/*
- * Get interrupt glue.
- */
-#include <machine/intr.h>
-
-/*
- * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  On the mac68k, we use
- * what the hardware pushes on an interrupt (frame format 0).
- */
-struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
-} __attribute__((packed));
-
-#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(0) /* XXX should use PSL_M (see hp300) */
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-#define	cpu_need_resched(ci,l,flags)	do {	\
-	__USE(flags); 				\
-	aston();				\
-} while (/*CONSTCOND*/0)
-
-/*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  Request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
- */
-#define	cpu_need_proftick(l)	( (l)->l_pflag |= LP_OWEUPC, aston() )
-
-/*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
- */
-#define	cpu_signotify(l)	aston()
-
-extern int astpending;		/* need to trap before returning to user mode */
-#define aston() (astpending++)
-
-#endif /* _KERNEL */
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */

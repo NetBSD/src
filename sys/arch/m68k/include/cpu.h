@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2024/01/18 14:42:09 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2024/01/20 00:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,6 +142,80 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 #define cpu_number()			0
 
 #define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
+
+/*
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  On the m68k platforms, we use
+ * what the interrupt stub puts on the stack before calling C code.
+ */
+struct clockframe {
+	/* regs saved on the stack by the interrupt stub */
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+	/* hardware frame */
+	u_short	cf_sr;		/* sr at time of interrupt */
+	u_long	cf_pc;		/* pc at time of interrupt */
+	u_short	cf_vo;		/* vector offset (4-word HW frame) */
+} __attribute__((__packed__));
+
+#define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_pc)
+
+#if 0
+/*
+ * We can determine if we were previously in an interrupt context
+ * if we were running on the interrupt stack (as opposed to the
+ * "master" stack).
+ *
+ * XXX Actually, we can't, because we don't use the master stack
+ * XXX right now.
+ */
+#define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
+#else
+/*
+ * The clock interrupt handler can determine if it's a nested
+ * interrupt by checking for intr_depth > 1.
+ * (Remember, the clock interrupt handler itself will cause the
+ * depth counter to be incremented).
+ */
+extern volatile unsigned int intr_depth;
+#define	CLKF_INTR(framep)	(intr_depth > 1)
+#endif
+
+#ifndef __HAVE_M68K_HW_AST
+#define	cpu_set_hw_ast(l)	__nothing
+#endif
+
+extern volatile int astpending;
+#define	cpu_set_ast(l)							\
+	do {								\
+		__USE(l); astpending = 1; cpu_set_hw_ast(l);		\
+	} while (/*CONSTCOND*/0)
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+#define	cpu_need_resched(ci, l, flags)					\
+	do {								\
+		__USE(ci); __USE(flags); cpu_set_ast(l);		\
+	} while (/*CONSTCOND*/0)
+
+/*
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On m68k, request an ast to send us through
+ * trap, marking the proc as needing a profiling tick.
+ */
+#define	cpu_need_proftick(l)						\
+	do {								\
+		(l)->l_pflag |= LP_OWEUPC; cpu_set_ast(l);		\
+	} while (/*CONSTCOND*/0)
+
+/*
+ * Notify the current process (p) that it has a signal pending,
+ * process as soon as possible.
+ */
+#define	cpu_signotify(l)	cpu_set_ast(l)
+
 #endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */

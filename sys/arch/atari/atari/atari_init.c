@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.111 2024/01/15 03:14:31 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.112 2024/01/20 00:15:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.111 2024/01/15 03:14:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.112 2024/01/20 00:15:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -121,7 +121,7 @@ static u_int milan_probe_bank(paddr_t paddr);
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int	lowram;
-int		machineid, mmutype, cputype, astpending;
+int		machineid, mmutype, cputype;
 
 extern char		*esym;
 extern struct pcb	*curpcb;

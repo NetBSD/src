@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.3 2021/03/06 13:32:56 martin Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.4 2024/01/20 00:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.3 2021/03/06 13:32:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.4 2024/01/20 00:15:31 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.3 2021/03/06 13:32:56 martin Exp $")
 #include <machine/pcb.h>
 
 extern int suline(void *, void *);	/* locore.s */
+
+volatile int astpending;
 
 #ifdef M68060
 #define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
