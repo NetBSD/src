@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.123 2023/07/31 23:52:12 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.124 2024/01/20 21:09:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -778,7 +778,7 @@ typedef struct {
 /* Allow for marginal (i.e. non-conforming) devices. */
 #define USB_PORT_RESET_DELAY	50  /* ms */
 #define USB_PORT_ROOT_RESET_DELAY 250  /* ms */
-#define USB_PORT_RESET_RECOVERY	10  /* ms */
+#define USB_PORT_RESET_RECOVERY	20  /* ms */
 #define USB_PORT_POWERUP_DELAY	300 /* ms */
 #define USB_SET_ADDRESS_SETTLE	10  /* ms */
 #define USB_RESUME_DELAY	(50*5)  /* ms */
