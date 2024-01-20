@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2024/01/20 10:25:57 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.25 2024/01/20 12:02:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem.c,v 1.24 2024/01/20 10:25:57 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.25 2024/01/20 12:02:09 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -51,10 +51,11 @@ not_null(void *ptr)
 {
 
 	if (ptr == NULL)
-		errx(1, "virtual memory exhausted");
+		errx(1, "out of memory");
 	return ptr;
 }
 
+#if IS_LINT1 || IS_LINT2
 void *
 xmalloc(size_t s)
 {
@@ -62,7 +63,6 @@ xmalloc(size_t s)
 	return not_null(malloc(s));
 }
 
-#if IS_LINT1 || IS_LINT2
 void *
 xcalloc(size_t n, size_t s)
 {
@@ -85,7 +85,7 @@ xstrdup(const char *s)
 	return not_null(strdup(s));
 }
 
-#if defined(IS_XLINT)
+#if IS_XLINT
 char *
 xasprintf(const char *fmt, ...)
 {
