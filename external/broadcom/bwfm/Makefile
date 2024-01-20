@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2021/02/09 11:57:20 yamt Exp $
+# $NetBSD: Makefile,v 1.10 2024/01/20 08:09:13 skrll Exp $
 
 NOMAN=	# define
 
@@ -6,7 +6,8 @@ NOMAN=	# define
 
 # Only install the SDIO firmware binaries on platforms where it will
 # be useful.
-.if ${MACHINE} == "evbarm"
+.if (${MACHINE} == "evbarm" || \
+     ${MACHINE} == "riscv")
 BWFM_WANT_SDIO_FIRMWARE=	yes
 .endif
 
@@ -81,6 +82,14 @@ LINKS+=	${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt \
 # cf. https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/commit/?id=923bfa68a1c97929652f029da699495f4ce43f14
 LINKS+=	${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt \
     ${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-a-plus.txt
+.endif
+
+# Platform-specific configuration files
+.if ${MACHINE} == "riscv"
+# Boards that share the common AP6212 nvram config are listed here.
+FILES+=	dist/brcmfmac43430-sdio.AP6212.txt
+LINKS+=	${FILESDIR}/brcmfmac43430-sdio.AP6212.txt \
+	${FILESDIR}/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-r0.txt
 .endif
 
 .include <bsd.links.mk>
