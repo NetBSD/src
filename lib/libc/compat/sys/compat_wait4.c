@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_wait4.c,v 1.3 2015/03/26 11:17:08 justin Exp $	*/
+/*	$NetBSD: compat_wait4.c,v 1.4 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_wait4.c,v 1.3 2015/03/26 11:17:08 justin Exp $");
+__RCSID("$NetBSD: compat_wait4.c,v 1.4 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -39,16 +39,14 @@ __RCSID("$NetBSD: compat_wait4.c,v 1.3 2015/03/26 11:17:08 justin Exp $");
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <compat/sys/wait.h>
 #include <sys/resource.h>
+#include <compat/sys/wait.h>
 #include <compat/sys/resource.h>
 
 __warn_references(wait3,
     "warning: reference to compatibility wait3(); include <sys/wait.h> to generate correct reference")
 __warn_references(wait4,
     "warning: reference to compatibility wait4(); include <sys/wait.h> to generate correct reference")
-
-extern void __rusage_to_rusage50(const struct rusage *, struct rusage50 *);
 
 #ifdef __weak_alias
 __weak_alias(wait4, _wait4)
@@ -68,7 +66,7 @@ wait3(int *status, int options, struct rusage50 *ru50)
 	if ((rv = __wait350(status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;
 	if (ru50)
-		__rusage_to_rusage50(&ru, ru50);
+		rusage_to_rusage50(&ru, ru50);
 	return rv;
 }
 
@@ -81,6 +79,6 @@ wait4(pid_t wpid, int *status, int options, struct rusage50 *ru50)
 	if ((rv = __wait450(wpid, status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;
 	if (ru50)
-		__rusage_to_rusage50(&ru, ru50);
+		rusage_to_rusage50(&ru, ru50);
 	return rv;
 }

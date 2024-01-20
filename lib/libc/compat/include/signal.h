@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2021/11/02 06:54:10 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,6 +37,12 @@
 #include <compat/sys/signal.h>
 
 __BEGIN_DECLS
+#if defined(_NETBSD_SOURCE)
+extern const char *const _sys_signame[];
+extern const char *const _sys_siglist[];
+extern const int sys_nsig;
+#endif
+
 int	sigaction(int, const struct sigaction13 * __restrict,
     struct sigaction13 * __restrict);
 int	__sigaction_siginfo(int, const struct sigaction * __restrict,
@@ -68,6 +74,8 @@ int	__sigtimedwait50(const sigset_t * __restrict,
     siginfo_t * __restrict, const struct timespec * __restrict);
 int	____sigtimedwait50(const sigset_t * __restrict,
     siginfo_t * __restrict, struct timespec * __restrict);
+int	__libc_sigaction14(int, const struct sigaction *, struct sigaction *);
+
 /*
  * X/Open CAE Specification Issue 4 Version 2
  */      
@@ -77,6 +85,15 @@ int	sigaltstack(const struct sigaltstack13 * __restrict,
     struct sigaltstack13 * __restrict);
 int	__sigaltstack14(const stack_t * __restrict, stack_t * __restrict);
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+
+#define C(a,b) __CONCAT(a,b)
+#define __SIGTRAMP_SIGCONTEXT  \
+    C(__sigtramp_sigcontext_,__SIGTRAMP_SIGCONTEXT_VERSION)
+#define __SIGTRAMP_SIGINFO  \
+    C(__sigtramp_siginfo_,__SIGTRAMP_SIGINFO_VERSION)
+
+extern const char __SIGTRAMP_SIGINFO[];
+extern const char __SIGTRAMP_SIGCONTEXT[];
 
 __END_DECLS
 

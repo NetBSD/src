@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.13 2023/06/19 08:40:29 msaitoh Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.14 2024/01/20 14:52:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.13 2023/06/19 08:40:29 msaitoh Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.14 2024/01/20 14:52:48 christos Exp $");
 #endif
 #endif
 
@@ -227,7 +227,7 @@ int
 ns_name_pton2(const char *src, u_char *dst, size_t dstsiz, size_t *dstlen) {
 	u_char *label, *bp, *eom;
 	int c, n, escaped, e = 0;
-	char *cp;
+	const char *cp;
 
 	escaped = 0;
 	bp = dst;

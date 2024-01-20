@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_branding.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_branding.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_branding.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include <assert.h>
@@ -57,7 +57,7 @@ entry2acl(acl_entry_t entry)
 {
 	acl_t aclp;
 
-	aclp = (acl_t)(((long)entry >> _ACL_T_ALIGNMENT_BITS) << _ACL_T_ALIGNMENT_BITS);
+	aclp = (acl_t)(((unsigned long)entry >> _ACL_T_ALIGNMENT_BITS) << _ACL_T_ALIGNMENT_BITS);
 
 	return (aclp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.13 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: _errno.c,v 1.14 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,15 +31,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _errno.c,v 1.13 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: _errno.c,v 1.14 2024/01/20 14:52:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
 #include <errno.h>
 #include <stdlib.h>
 
-#undef errno
-extern int errno;
+#include "errno_private.h"
 
 int *
 __errno(void)

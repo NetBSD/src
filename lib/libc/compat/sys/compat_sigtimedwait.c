@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigtimedwait.c,v 1.2 2009/01/11 02:46:27 christos Exp $ */
+/*	$NetBSD: compat_sigtimedwait.c,v 1.3 2024/01/20 14:52:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sigtimedwait.c,v 1.2 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: compat_sigtimedwait.c,v 1.3 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#undef sys_siglist
 #define __LIBC12_SOURCE__
 #include <time.h>
 #include <compat/include/time.h>

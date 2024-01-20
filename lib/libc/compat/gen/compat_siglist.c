@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_siglist.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_siglist.c,v 1.2 2024/01/20 14:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,9 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_siglist.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_siglist.c,v 1.2 2024/01/20 14:52:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
+#include <sys/time.h>
+#include <compat/sys/time.h>
+#include <signal.h>
+#include <compat/include/signal.h>
 
 #ifdef __weak_alias
 __weak_alias(sys_siglist, _sys_siglist)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname.c,v 1.14 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: getservbyname.c,v 1.15 2024/01/20 14:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getservbyname.c,v 1.14 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: getservbyname.c,v 1.15 2024/01/20 14:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,11 +43,6 @@ __RCSID("$NetBSD: getservbyname.c,v 1.14 2008/04/28 20:23:00 martin Exp $");
 #ifdef __weak_alias
 __weak_alias(getservbyname,_getservbyname)
 #endif
-
-#ifdef _REENTRANT
-extern mutex_t _servent_mutex;
-#endif
-extern struct servent_data _servent_data;
 
 struct servent *
 getservbyname(const char *name, const char *proto)

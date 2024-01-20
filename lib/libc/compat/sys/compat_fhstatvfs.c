@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fhstatvfs.c,v 1.4 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: compat_fhstatvfs.c,v 1.5 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhstatvfs.c,v 1.4 2019/09/22 22:59:38 christos Exp $");
+__RCSID("$NetBSD: compat_fhstatvfs.c,v 1.5 2024/01/20 14:52:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -44,8 +44,6 @@ __RCSID("$NetBSD: compat_fhstatvfs.c,v 1.4 2019/09/22 22:59:38 christos Exp $");
 
 __warn_references(fhstatvfs,
     "warning: reference to compatibility fhstatvfs(); include <sys/statvfs.h> to generate correct reference")
-
-int	fhstatvfs(const struct compat_30_fhandle *fhp, struct statvfs90 *buf);
 
 /*
  * Convert old fhstatvs() call to new calling convention

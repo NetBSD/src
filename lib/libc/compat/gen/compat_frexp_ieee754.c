@@ -1,4 +1,4 @@
-/* $NetBSD: compat_frexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $ */
+/* $NetBSD: compat_frexp_ieee754.c,v 1.6 2024/01/20 14:52:45 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,14 +40,13 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $");
+__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.6 2024/01/20 14:52:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
-
-double frexp(double, int *);
+#include <math.h>
 
 /*
  * Split the given value into a fraction in the range [0.5, 1.0) and

@@ -1,4 +1,4 @@
-/*	$NetBSD: wordexp.c,v 1.3 2009/02/12 04:10:52 lukem Exp $	*/
+/*	$NetBSD: wordexp.c,v 1.4 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -38,12 +38,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <wordexp.h>
+#include "extern.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/gen/wordexp.c,v 1.5 2004/04/09 11:32:32 tjr Exp $");
 #else
-__RCSID("$NetBSD: wordexp.c,v 1.3 2009/02/12 04:10:52 lukem Exp $");
+__RCSID("$NetBSD: wordexp.c,v 1.4 2024/01/20 14:52:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,7 +105,6 @@ we_askshell(const char *words, wordexp_t *we, int flags)
 	char *nstrings;			/* Temporary for realloc() */
 	char **nwv;			/* Temporary for realloc() */
 	FILE *fp;			/* Stream to read pipe */
-	extern char **environ;
 	char *cmd;
 
 	if ((ifs = getenv("IFS")) == NULL)

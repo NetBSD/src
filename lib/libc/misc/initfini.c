@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.16 2023/07/18 11:44:32 riastradh Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.17 2024/01/20 14:52:48 christos Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.16 2023/07/18 11:44:32 riastradh Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.17 2024/01/20 14:52:48 christos Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -40,13 +40,11 @@ __RCSID("$NetBSD: initfini.c,v 1.16 2023/07/18 11:44:32 riastradh Exp $");
 #include <sys/exec.h>
 #include <sys/tls.h>
 #include <stdbool.h>
+#include "extern.h"
 #include "csu-common.h"
-
-void	_libc_init(void) __attribute__((__constructor__, __used__));
 
 void	__guard_setup(void);
 void	__libc_thr_init(void);
-void	__libc_atomic_init(void);
 void	__libc_atexit_init(void);
 void	__libc_env_init(void);
 
@@ -69,8 +67,6 @@ ___dlauxinfo(void)
 #endif
 
 static bool libc_initialised;
-
-void _libc_init(void);
 
 /*
  * Declare as common symbol to allow new libc with older binaries to

@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.11 2021/05/06 16:15:33 christos Exp $ */
+/* $NetBSD: dtoa.c,v 1.12 2024/01/20 14:52:46 christos Exp $ */
 
 /****************************************************************
 
@@ -366,7 +366,7 @@ dtoa
 			}
 		else if (( jj1 = -k )!=0) {
 			dval(&d) *= tens[jj1 & 0xf];
-			for(j = jj1 >> 4; j; j >>= 1, i++)
+			for(j = (unsigned int)jj1 >> 4; j; j = (unsigned int)j >> 1, i++)
 				if (j & 1) {
 					ieps++;
 					dval(&d) *= bigtens[i];

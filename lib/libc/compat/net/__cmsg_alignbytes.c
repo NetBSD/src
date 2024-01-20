@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.1 2012/01/20 14:08:05 joerg Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.2 2024/01/20 14:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.1 2012/01/20 14:08:05 joerg Exp $");
+__RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.2 2024/01/20 14:52:46 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: __cmsg_alignbytes.c,v 1.1 2012/01/20 14:08:05 joerg Exp $");
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 
-int __cmsg_alignbytes(void);
+#include <compat/include/extern.h>
 
 int
 __cmsg_alignbytes(void)

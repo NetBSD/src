@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.86 2023/08/13 15:20:37 riastradh Exp $	*/
+/*	$NetBSD: vis.c,v 1.87 2024/01/20 14:52:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.86 2023/08/13 15:20:37 riastradh Exp $");
+__RCSID("$NetBSD: vis.c,v 1.87 2024/01/20 14:52:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -404,7 +404,8 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	uint64_t bmsk, wmsk;
 	wint_t c;
 	visfun_t f;
-	int clen = 0, cerr, error = -1, i, shft;
+	int cerr, error = -1, i, shft;
+	ssize_t clen = 0;
 	char *mbdst, *mbwrite, *mdst;
 	size_t mbslength;
 	size_t maxolen;
@@ -478,7 +479,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	while (mbslength > 0) {
 		/* Convert one multibyte character to wchar_t. */
 		if (!cerr) {
-			clen = mbrtowc(src, mbsrc,
+			clen = (ssize_t)mbrtowc(src, mbsrc,
 			    (mbslength < MB_LEN_MAX
 				? mbslength
 				: MB_LEN_MAX),
@@ -598,7 +599,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 				mbwrite = mbdst;
 			else
 				mbwrite = mbbuf;
-			clen = wcrtomb(mbwrite, *dst, &mbstate);
+			clen = (ssize_t)wcrtomb(mbwrite, *dst, &mbstate);
 			if (clen > 0 && mbwrite != mbdst) {
 				/*
 				 * Don't break past our output limit, noting

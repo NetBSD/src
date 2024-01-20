@@ -33,7 +33,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_from_text.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_from_text.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_from_text.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -50,9 +50,6 @@ __RCSID("$NetBSD: acl_from_text.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
 #include "acl_support.h"
 
 static acl_tag_t acl_string_to_tag(char *tag, char *qualifier);
-
-int _nfs4_acl_entry_from_text(acl_t aclp, char *entry);
-int _text_could_be_nfs4_acl(const char *entry);
 
 static acl_tag_t
 acl_string_to_tag(char *tag, char *qualifier)
@@ -71,7 +68,7 @@ acl_string_to_tag(char *tag, char *qualifier)
 		if ((!strcmp(tag, "other")) || (!strcmp(tag, "o"))) {
 			return (ACL_OTHER);
 		} else
-			return(-1);
+			return((acl_tag_t)-1);
 	} else {
 		if ((!strcmp(tag, "user")) || (!strcmp(tag, "u"))) {
 			return(ACL_USER);
@@ -79,7 +76,7 @@ acl_string_to_tag(char *tag, char *qualifier)
 		if ((!strcmp(tag, "group")) || (!strcmp(tag, "g"))) {
 			return(ACL_GROUP);
 		} else
-			return(-1);
+			return((acl_tag_t)-1);
 	}
 }
 

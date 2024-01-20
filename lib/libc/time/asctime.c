@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.29 2023/09/16 18:40:26 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.30 2024/01/20 14:52:49 christos Exp $	*/
 
 /* asctime and asctime_r a la POSIX and ISO C, except pad years before 1000.  */
 
@@ -18,7 +18,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.29 2023/09/16 18:40:26 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.30 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,19 +68,19 @@ enum { STD_ASCTIME_BUF_SIZE = 26 };
 ** as an example; the size expression below is a bound for the system at
 ** hand.
 */
-static char buf_asctime[2*3 + 5*INT_STRLEN_MAXIMUM(int) + 7 + 2 + 1 + 1];
+static char buf_ctime[2*3 + 5*INT_STRLEN_MAXIMUM(int) + 7 + 2 + 1 + 1];
 
 /* A similar buffer for ctime.
    C89 requires that they be the same buffer.
    This requirement was removed in C99, so support it only if requested,
    as support is more likely to lead to bugs in badly written programs.  */
+#ifndef __LIBC12_SOURCE__
 #if SUPPORT_C89
-# define buf_ctime buf_asctime
+# define buf_asctime buf_ctime
 #else
-static char buf_ctime[sizeof buf_asctime];
+static char buf_asctime[sizeof buf_ctime];
 #endif
 
-#ifndef __LIBC12_SOURCE__
 char *
 asctime_r(struct tm const *restrict timeptr, char *restrict buf)
 {
@@ -94,7 +94,7 @@ asctime_r(struct tm const *restrict timeptr, char *restrict buf)
 	const char *	wn;
 	const char *	mn;
 	char			year[INT_STRLEN_MAXIMUM(int) + 2];
-	char result[sizeof buf_asctime];
+	char result[sizeof buf_ctime];
 
 	if (timeptr == NULL) {
 		errno = EINVAL;

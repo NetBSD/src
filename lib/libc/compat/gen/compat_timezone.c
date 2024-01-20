@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_timezone.c,v 1.4 2012/03/20 17:05:59 matt Exp $	*/
+/*	$NetBSD: compat_timezone.c,v 1.5 2024/01/20 14:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_timezone.c,v 1.4 2012/03/20 17:05:59 matt Exp $");
+__RCSID("$NetBSD: compat_timezone.c,v 1.5 2024/01/20 14:52:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
+#define	__TIMEZONE_FUNCTION__
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -60,11 +61,8 @@ __warn_references(timezone,
  *	application code, by a call to localtime.
  */
 
-char *_tztab(int, int);
-
 static char	czone[TZ_MAX_CHARS];		/* space for zone name */
 
-char *timezone(int, int);
 char *
 timezone(int zone, int dst)
 {

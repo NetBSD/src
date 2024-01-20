@@ -1,8 +1,13 @@
-/* $NetBSD: compat_setlocale1.c,v 1.3 2024/01/20 14:52:46 christos Exp $ */
+/*	$NetBSD: errno.h,v 1.1 2024/01/20 14:52:46 christos Exp $	*/
 
-/*-
- * Copyright (c)1999 Citrus Project,
- * All rights reserved.
+/*
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +17,14 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,31 +33,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * NetBSD: setlocale1.c,v 1.4 2010/05/22 13:50:02 tnozaki Exp
+ *	from: @(#)errno.h	8.5 (Berkeley) 1/21/94
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_setlocale1.c,v 1.3 2024/01/20 14:52:46 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+#ifndef _COMPAT_ERRNO_H_
+#define _COMPAT_ERRNO_H_
 
-#include <sys/types.h>
-#include <compat/include/locale.h>
+__BEGIN_DECLS
+extern const int sys_nerr;
+extern const char *const sys_errlist[];
+__END_DECLS
 
-#include "setlocale_local.h"
-
-#undef setlocale
-
-__warn_references(setlocale,
-    "warning: reference to compatibility setlocale();"
-    "include <locale.h> for correct reference")
-
-char *
-compat_setlocale(int category, const char *locale)
-{
-
-	/* locale may be NULL */
-
-	__mb_len_max_runtime = 1;
-	return __setlocale(category, locale);
-}
+#endif /* !_COMPAT_ERRNO_H_ */

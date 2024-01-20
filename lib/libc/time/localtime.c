@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.139 2023/12/23 20:48:38 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.140 2024/01/20 14:52:49 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.139 2023/12/23 20:48:38 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.140 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -137,6 +137,7 @@ struct state {
 	__time_t	ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
+	/*CONSTCOND*/
 	char chars[max(max(TZ_MAX_CHARS + CHARS_EXTRA, sizeof "UTC"),
 		       2 * (TZNAME_MAXIMUM + 1))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
@@ -165,7 +166,7 @@ static struct tm *gmtsub(struct state const *, time_t const *, int_fast32_t,
 			 struct tm *);
 static bool increment_overflow(int *, int);
 static bool increment_overflow_time(__time_t *, int_fast32_t);
-static int_fast32_t leapcorr(struct state const *, time_t);
+static int_fast32_t leapcorr(struct state const *, __time_t);
 static bool normalize_overflow32(int_fast32_t *, int *, int);
 static struct tm *timesub(time_t const *, int_fast32_t, struct state const *,
 			  struct tm *);
@@ -222,9 +223,6 @@ extern __aconst char *	tzname[2];
 # if !defined(__LIBC12_SOURCE__)
 long 			timezone = 0;
 int			daylight = 0;
-# else
-extern int		daylight;
-extern long		timezone __RENAME(__timezone13);
 # endif /* __LIBC12_SOURCE__ */
 #endif /* 2<= USG_COMPAT + TZ_TIME_T */
 
@@ -400,7 +398,7 @@ settzname(void)
  	}
 
 #if USG_COMPAT
-	daylight = stddst_mask >> 1 ^ 1;
+	daylight = (unsigned int)stddst_mask >> 1 ^ 1;
 #endif
 }
 
@@ -414,7 +412,7 @@ scrub_abbrs(struct state *sp)
 
 	/* Reject overlong abbreviations.  */
 	for (i = 0; i < sp->charcnt - (TZNAME_MAXIMUM + 1); ) {
-	  int len = strlen(&sp->chars[i]);
+	  int len = (int)strlen(&sp->chars[i]);
 	  if (TZNAME_MAXIMUM < len)
 	    return EOVERFLOW;
 	  i += len + 1;
@@ -1153,7 +1151,7 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 	register char *			cp;
 	register bool			load_ok;
 	ptrdiff_t stdlen, dstlen, charcnt;
-	time_t atlo = TIME_T_MIN, leaplo = TIME_T_MIN;
+	__time_t atlo = TIME_T_MIN, leaplo = TIME_T_MIN;
 
 	dstname = NULL; /* XXX gcc */
 	stdname = name;
@@ -1252,7 +1250,7 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 			} while (atlo < janfirst
 				 && EPOCH_YEAR - YEARSPERREPEAT / 2 < yearbeg);
 
-			while (true) {
+			for (;;) {
 			  int_fast32_t yearsecs
 			    = year_lengths[isleap(yearbeg)] * SECSPERDAY;
 			  int yearbeg1 = yearbeg;
@@ -1526,7 +1524,8 @@ tzalloc(char const *name)
       errno = err;
       return NULL;
     }
-  } else if (!HAVE_MALLOC_ERRNO)
+  } else if (/*CONSTCOND*/!HAVE_MALLOC_ERRNO)
+    /*NOTREACHED*/
     errno = ENOMEM;
   return sp;
 }
@@ -1580,7 +1579,7 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t setname,
 	if ((sp->goback && t < sp->ats[0]) ||
 		(sp->goahead && t > sp->ats[sp->timecnt - 1])) {
 			time_t newt;
-			register time_t		seconds;
+			register __time_t	seconds;
 			register time_t		years;
 
 			if (t < sp->ats[0])
@@ -1842,7 +1841,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	/* If less than SECSPERMIN, the number of seconds since the
 	   most recent positive leap second; otherwise, do not add 1
 	   to localtime tm_sec because of leap seconds.  */
-	time_t secs_since_posleap = SECSPERMIN;
+	__time_t secs_since_posleap = SECSPERMIN;
 
 	corr = 0;
 	i = (sp == NULL) ? 0 : sp->leapcnt;
@@ -2237,9 +2236,11 @@ again:
 		    && (yourtm.TM_GMTOFF < 0
 			? (-SECSPERDAY <= yourtm.TM_GMTOFF
 			   && (mytm.TM_GMTOFF <=
+			       /*CONSTCOND*/
 			       (min(INT_FAST32_MAX, LONG_MAX)
 				+ yourtm.TM_GMTOFF)))
 			: (yourtm.TM_GMTOFF <= SECSPERDAY
+			       /*CONSTCOND*/
 			   && ((max(INT_FAST32_MIN, LONG_MIN)
 				+ yourtm.TM_GMTOFF)
 			       <= mytm.TM_GMTOFF)))) {
@@ -2495,7 +2496,7 @@ timegm(struct tm *tmp)
 }
 
 static int_fast32_t
-leapcorr(struct state const *sp, time_t t)
+leapcorr(struct state const *sp, __time_t t)
 {
 	register struct lsinfo const *	lp;
 	register int			i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.40 2023/04/04 19:26:06 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.41 2024/01/20 14:52:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.40 2023/04/04 19:26:06 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.41 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1302,7 +1302,8 @@ fp_common:
 				 * NUL in the first `prec' characters, and
 				 * STRLEN() will go further.
 				 */
-				CHAR_T *p = MEMCHR(result, 0, (size_t)prec);
+				const CHAR_T *p =
+				    MEMCHR(result, 0, (size_t)prec);
 
 				if (p != NULL) {
 					_DIAGASSERT(__type_fit(int,

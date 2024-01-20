@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotobynumber.c,v 1.4 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: getprotobynumber.c,v 1.5 2024/01/20 14:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getprotobynumber.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: getprotobynumber.c,v 1.5 2024/01/20 14:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,11 +44,6 @@ __RCSID("$NetBSD: getprotobynumber.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 #ifdef __weak_alias
 __weak_alias(getprotobynumber,_getprotobynumber)
 #endif
-
-#ifdef _REENTRANT
-extern mutex_t _protoent_mutex;
-#endif
-extern struct protoent_data _protoent_data;
 
 struct protoent *
 getprotobynumber(int proto)

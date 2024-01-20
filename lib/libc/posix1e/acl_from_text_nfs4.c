@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/posix1e/acl_from_text_nfs4.c 326193 2017-11-25 17:12:48Z pfg $");
 #else
-__RCSID("$NetBSD: acl_from_text_nfs4.c,v 1.1 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: acl_from_text_nfs4.c,v 1.2 2024/01/20 14:52:48 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -91,7 +91,8 @@ parse_tag(const char *str, acl_entry_t entry, int *need_qualifier)
 static int
 parse_qualifier(char *str, acl_entry_t entry, int *need_qualifier)
 {
-	int qualifier_length, error;
+	size_t qualifier_length;
+	int error;
 	uid_t id;
 	acl_tag_t tag;
 
@@ -169,7 +170,7 @@ parse_entry_type(const char *str, acl_entry_t entry)
 static int
 parse_appended_id(char *str, acl_entry_t entry)
 {
-	int qualifier_length;
+	size_t qualifier_length;
 	char *end;
 	id_t id;
 
@@ -181,7 +182,7 @@ parse_appended_id(char *str, acl_entry_t entry)
 	}
 
 	id = strtod(str, &end);
-	if (end - str != qualifier_length) {
+	if ((size_t)(end - str) != qualifier_length) {
 		warnx("malformed ACL: appended id is not a number");
 		return (-1);
 	}

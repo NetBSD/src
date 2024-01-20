@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.52 2023/09/16 18:40:26 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.53 2024/01/20 14:52:49 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.52 2023/09/16 18:40:26 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.53 2024/01/20 14:52:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -396,6 +396,7 @@ label:
 						(void)snprintf(buf, sizeof(buf),
 						    "%"PRIdMAX, n);
 					} else {
+						/*LINTED possibly unreached*/
 						uintmax_t n = mkt;
 						(void)snprintf(buf, sizeof(buf),
 						    "%"PRIuMAX, n);

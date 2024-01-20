@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.48 2023/04/04 19:26:06 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2024/01/20 14:52:49 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -72,3 +72,7 @@ MLINKS+=printf_l.3 asprintf_l.3 printf_l.3 fprintf_l.3 printf_l.3 snprintf_l.3 \
 MLINKS+=scanf_l.3 fscanf_l.3 scanf_l.3 sscanf_l.3 scanf_l.3 vfscanf_l.3 \
         scanf_l.3 vscanf_l.3 scanf_l.3 vsscanf_l.3
 
+LINTFLAGS.vfscanf.c += -X 207 # XXX: lint is wrong
+LINTFLAGS.clrerr.c += -X 309 # XXX: lint bogus warning
+LINTFLAGS.rewind.c += -X 309 # XXX: lint bogus warning
+LINTFLAGS.ungetwc.c += -X 309 # XXX: lint bogus warning

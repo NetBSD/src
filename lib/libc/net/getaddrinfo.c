@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.124 2023/08/01 08:47:25 mrg Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.125 2024/01/20 14:52:48 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.124 2023/08/01 08:47:25 mrg Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.125 2024/01/20 14:52:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1393,7 +1393,8 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 	const struct afd *afd;
 	struct addrinfo *cur;
 	int error;
-	char *cp, *hostname2 = NULL, *scope, *addr;
+	char *hostname2 = NULL, *addr;
+	const char *cp, *scope;
 	struct sockaddr_in6 *sin6;
 
 	_DIAGASSERT(pai != NULL);
@@ -1439,7 +1440,8 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
+			if (ip6_str2scopeid(__UNCONST(scope), sin6, &scopeid)
+			    == -1) {
 				free(hostname2);
 				return EAI_NODATA; /* XXX: is return OK? */
 			}

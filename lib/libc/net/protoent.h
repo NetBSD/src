@@ -1,4 +1,4 @@
-/*	$NetBSD: protoent.h,v 1.2 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: protoent.h,v 1.3 2024/01/20 14:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,6 +30,9 @@
  */
 
 #include <stdio.h>
+#ifdef _REENTRANT
+#include "reentrant.h"
+#endif
 
 struct protoent_data {
         FILE *fp;
@@ -40,6 +43,12 @@ struct protoent_data {
 	char *line;
 	void *dummy;
 };
+
+#ifdef _REENTRANT
+extern mutex_t _protoent_mutex;
+#endif
+
+extern struct protoent_data _protoent_data;
 
 struct protoent	*getprotoent_r(struct protoent *, struct protoent_data *);
 struct protoent	*getprotobyname_r(const char *,
