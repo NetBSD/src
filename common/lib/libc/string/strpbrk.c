@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.2 2018/02/04 01:13:45 mrg Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.3 2024/01/20 14:55:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.2 2018/02/04 01:13:45 mrg Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.3 2024/01/20 14:55:11 christos Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
@@ -64,7 +64,7 @@ strpbrk(const char *s, const char *charset)
 	if (charset[0] == '\0')
 		return NULL;
 	if (charset[1] == '\0')
-		return strchr(s, charset[0]);
+		return __UNCONST(strchr(s, charset[0]));
 
 	for (; *charset != '\0'; ++charset)
 		ADD_TO_SET(UC(*charset));
