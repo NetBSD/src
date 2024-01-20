@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.41 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.42 2024/01/20 10:25:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,10 +37,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.41 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.42 2024/01/20 10:25:57 rillig Exp $");
 #endif
 
-#if defined(IS_LINT1)
+#if IS_LINT1
 #include "lint1.h"
 #else
 #include "lint2.h"
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: inittyp.c,v 1.41 2023/12/03 18:17:41 rillig Exp $");
 
 #define INT_RANK	(/*CONSTCOND*/INTPTR_TSPEC == LONG ? 4 : 5)
 
-#ifdef IS_LINT1
+#if IS_LINT1
 #define typeinfo(name, signed_type, unsigned_type, size_in_bits, rv, c) \
 	{ /*CONSTCOND*/ \
 		size_in_bits, \

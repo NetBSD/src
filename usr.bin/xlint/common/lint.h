@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.46 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.47 2024/01/20 10:25:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -47,7 +47,7 @@
 
 #include "param.h"
 
-#if defined(IS_LINT1) || defined(IS_LINT2)
+#if IS_LINT1 || IS_LINT2
 /*
  * Type specifiers, used in type structures (type_t) and elsewhere.
  */
@@ -93,7 +93,7 @@ typedef enum {
  * size of types, name and classification
  */
 typedef struct {
-#ifdef IS_LINT1
+#if IS_LINT1
 	unsigned int tt_size_in_bits;
 	enum rank_kind {
 		RK_NONE,
@@ -107,7 +107,7 @@ typedef struct {
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
 	bool	tt_is_integer:1;	/* integer type */
-#ifdef IS_LINT1
+#if IS_LINT1
 	bool	tt_is_uinteger:1;	/* unsigned integer type */
 	bool	tt_is_floating:1;	/* floating point type */
 	bool	tt_is_arithmetic:1;	/* arithmetic type */
@@ -145,7 +145,7 @@ typedef enum {
 	DEF			/* defined */
 } def_t;
 
-#if defined(IS_LINT1)
+#if IS_LINT1
 typedef struct lint1_type type_t;
 #else
 typedef struct lint2_type type_t;
