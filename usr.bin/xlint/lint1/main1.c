@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.78 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.79 2024/01/21 14:11:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.78 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.79 2024/01/21 14:11:52 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 
 
 	/* initialize output */
-	outopen(any_query_enabled ? "/dev/null" : argv[1]);
+	outopen(argv[1]);
 
 #ifdef DEBUG
 	setvbuf(stdout, NULL, _IONBF, 0);
