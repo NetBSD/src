@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.24 2020/07/30 21:23:36 uwe Exp $
+.\"     $NetBSD: snprintb.3,v 1.25 2024/01/21 21:31:23 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 6, 2019
+.Dd January 21, 2024
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -246,21 +246,25 @@ snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
 \(rA "03<BITTWO,BITONE>"
 
 snprintb(buf, buflen,
-       "\e20\ex10NOTBOOT\ex0f" "FPP\ex0eSDVMA\ex0cVIDEO"
-       "\ex0bLORES\ex0a" "FPA\ex09" "DIAG\ex07" "CACHE"
-       "\ex06IOCACHE\ex05LOOPBACK\ex04" "DBGCACHE",
-       0xe860)
+    "\e20"
+    "\ex10NOTBOOT" "\ex0fFPP" "\ex0eSDVMA" ""
+    "\ex0cVIDEO" "\ex0bLORES" "\ex0aFPA" "\ex09DIAG"
+    "" "\ex07CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
+    "\ex04DBGCACHE",
+    0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
 .Pp
 An example of the new formatting style:
 .Bd -literal -offset indent
 snprintb(buf, buflen,
-       "\e177\e020b\e0LSB\e0b\e1_BITONE\e0f\e4\e4NIBBLE2\e0"
-       "f\ex10\e4BURST\e0=\e4FOUR\e0=\exfSIXTEEN\e0"
-       "b\ex1fMSB\e0\e0",
-       0x800f0701)
-\(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=SIXTEEN,MSB>"
+    "\e177\e020"
+    "b\e0LSB\e0" "b\e1BITONE\e0"
+    "f\e4\e4NIBBLE2\e0"
+    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
+    "b\ex1fMSB\e0" "\e0",
+    0x800f0701)
+\(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
 .Pp
 A more complex example from
@@ -320,11 +324,14 @@ snprintb(buf, buflen, MAP_FMT, 0x2e000000)
 An example using snprintb_m:
 .Bd -literal -offset indent
 snprintb_m(buf, buflen,
-       "\e177\e020b\e0LSB\e0b\e1_BITONE\e0f\e4\e4NIBBLE2\e0"
-       "f\ex10\e4BURST\e0=\e4FOUR\e0=\exfSIXTEEN\e0"
-       "b\ex1fMSB\e0\e0",
-       0x800f0701, 34)
-\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e00x800f0701<BURST=0xf=SIXTEEN,MSB>\e0"
+    "\e177\e020"
+    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
+    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
+    "b\ex1fMSB\e0" "\e0",
+    0x800f0701, 34)
+\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
+   "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
+   ""
 .Ed
 .Sh ERRORS
 .Fn snprintb
