@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.3 2023/12/25 13:21:30 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.4 2024/01/21 08:39:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.3 2023/12/25 13:21:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.4 2024/01/21 08:39:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -313,7 +313,7 @@ intc_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 
 	int error = fdtbus_register_interrupt_controller(self, phandle,
-            &intc_fdt_funcs);
+	    &intc_fdt_funcs);
 	if (error) {
 		aprint_error(": couldn't register with fdtbus: %d\n", error);
 		return;
