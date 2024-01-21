@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.18 2024/01/19 19:33:49 christos Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.19 2024/01/21 03:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.18 2024/01/19 19:33:49 christos Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.19 2024/01/21 03:42:08 thorpej Exp $");
 
+#include "extern.h"
 #include "atomic_op_namespace.h"
 
 #include <sys/types.h>
