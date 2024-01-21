@@ -1,4 +1,4 @@
-/* $NetBSD: vireg.h,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: vireg.h,v 1.2 2024/01/21 13:05:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -163,7 +163,8 @@
 
 /* [2B] VISEL - VI DTV Status Register */
 #define VI_VISEL	0x6e
-#define	 VI_VISEL_SEL	__BIT(2)
+#define	 VI_VISEL_SEL			__BIT(2)
+#define	 VI_VISEL_COMPONENT_CABLE	__BIT(0)
 
 /* [2B] VI_HSCALINGW - Horizontal Scaling Width */
 #define VI_HSCALINGW	0x70
