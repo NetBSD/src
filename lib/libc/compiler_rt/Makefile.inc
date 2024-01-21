@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.43 2024/01/19 18:45:01 christos Exp $
+# $NetBSD: Makefile.inc,v 1.44 2024/01/21 00:43:34 christos Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -360,15 +360,20 @@ LINTFLAGS.fixunsxfti.c += -X 132,351
 LINTFLAGS.fixxfdi.c += -X 351
 LINTFLAGS.fixxfti.c += -X 117,132,351
 LINTFLAGS.floatdidf.c += -X 351
+LINTFLAGS.floatdidf.c += -X 117	# alpha
 LINTFLAGS.floatdisf.c += -X 351
+LINTFLAGS.floatdisf.c += -X 117	# alpha
 LINTFLAGS.floatdixf.c += -X 351
+LINTFLAGS.floatdixf.c += -X 117	# alpha
 LINTFLAGS.floattidf.c += -X 117,122,141,267,351
 LINTFLAGS.floattisf.c += -X 117,351
 LINTFLAGS.floattisf.c += -X 117,351
 LINTFLAGS.floattixf.c += -X 117,122,351
+LINTFLAGS.floattixf.c += -X 141	# alpha
 LINTFLAGS.floatuntidf.c += -X 122,141,267,351
 LINTFLAGS.floatuntisf.c += -X 351
 LINTFLAGS.floatuntixf.c += -X 122,351
+LINTFLAGS.floatuntixf.c += -X 141 # alpha
 LINTFLAGS.int_util.c += -X 231
 LINTFLAGS.lshrti3.c += -X 351
 LINTFLAGS.modsi3.c += -X 117,351
