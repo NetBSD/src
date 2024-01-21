@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.4 2024/01/21 08:39:50 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.5 2024/01/21 08:41:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.4 2024/01/21 08:39:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.5 2024/01/21 08:41:00 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -208,7 +208,6 @@ intc_fdt_disestablish(device_t dev, void *ih)
 #if 0
 	struct intc_fdt_softc * const sc = device_private(dev);
 #endif
-
 }
 
 static bool
