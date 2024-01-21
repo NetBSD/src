@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2024/01/21 01:41:54 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2024/01/21 01:41:54 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -379,9 +379,18 @@ cpu_reboot(int howto, char *what)
 	}
 	pmf_system_shutdown(boothowto);
 	doshutdownhooks();
+
+	disable_intr();
+
 	/* Force halt on panic to capture the cause on screen. */
 	if (panicstr != NULL) {
 		howto |= RB_HALT;
+	}
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		printf("power off\n\n");
+		out32(HW_GPIOB_OUT, in32(HW_GPIOB_OUT) | __BIT(GPIO_SHUTDOWN));
+		delay(100000);
+		printf("power off failed!\n\n");
 	}
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
@@ -389,7 +398,6 @@ cpu_reboot(int howto, char *what)
 	}
 
 	printf("rebooting\n\n");
-	disable_intr();
 	out32(HW_RESETS, in32(HW_RESETS) & ~RSTBINB);
 	while (1);
 }
@@ -399,6 +407,9 @@ wii_setup(void)
 {
 	/* Turn on the drive slot LED. */
 	out32(HW_GPIOB_OUT, in32(HW_GPIOB_OUT) | __BIT(GPIO_SLOT_LED));
+
+	/* Enable PPC access to SHUTDOWN GPIO. */
+	out32(HW_GPIO_OWNER, in32(HW_GPIO_OWNER) | __BIT(GPIO_SHUTDOWN));
 }
 
 static void

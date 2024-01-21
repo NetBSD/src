@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.2 2024/01/21 01:41:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -99,7 +99,7 @@
 #define HW_ARMIRQMASK			(HOLLYWOOD_PRIV_BASE + 0x03c)
 #define HW_AHBPROT			(HOLLYWOOD_PRIV_BASE + 0x064)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
-#define HW_GPIO_OUT			(HOLLYWOOD_PRIV_BASE + 0x0e0)
+#define HW_GPIO_OWNER			(HOLLYWOOD_PRIV_BASE + 0x0fc)
 #define HW_RESETS			(HOLLYWOOD_PRIV_BASE + 0x194)
 #define  RSTB_IOP			__BIT(23)
 #define  RSTBINB			__BIT(0)
@@ -108,6 +108,7 @@
 #define  HWREV_MASK			__BITS(3,0)
 
 /* GPIOs */
+#define GPIO_SHUTDOWN			1
 #define GPIO_SLOT_LED			5
 
 /* Blink the slot LED forever at the specified interval. */
