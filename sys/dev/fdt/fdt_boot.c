@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_boot.c,v 1.5 2024/01/19 09:09:04 skrll Exp $	*/
+/*	$NetBSD: fdt_boot.c,v 1.6 2024/01/21 15:10:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -56,13 +56,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.5 2024/01/19 09:09:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.6 2024/01/21 15:10:07 kre Exp $");
 
 #include "opt_efi.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
 
+#include <sys/bootblock.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
