@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.27 2024/01/21 23:44:30 uwe Exp $
+.\"     $NetBSD: snprintb.3,v 1.28 2024/01/21 23:57:49 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,6 +260,10 @@ The new format string is terminated by an additional
 .Tn NUL
 character at the end, following that delimiting the last
 bit-position\(endescription pair.
+This
+.Tn NUL
+is supplied by the compiler to terminate the string literal and
+doesn't need to be written explicitly.
 .Sh RETURN VALUES
 The
 .Fn snprintb
@@ -295,7 +299,7 @@ snprintb(buf, buflen,
     "b\e0LSB\e0" "b\e1BITONE\e0"
     "f\e4\e4NIBBLE2\e0"
     "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
-    "b\ex1fMSB\e0" "\e0",
+    "b\ex1fMSB\e0",
     0x800f0701)
 \(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
@@ -303,53 +307,58 @@ snprintb(buf, buflen,
 A more complex example from
 .In sys/mman.h
 that uses the both bit position
-.Sq b
+.Sq Cm b
 formatting as well as the
-.Sq F
-multi-field formatting with a default case:
+.Sq Cm F
+multibit field formatting with a default case
+.Pq Sq Cm \&* :
 .Bd -literal -offset indent
-#define MAP_FMT	"\e177\e020\e
-b\e0SHARED\e0\e
-b\e1PRIVATE\e0\e
-b\e2COPY\e0\e
-b\e4FIXED\e0\e
-b\e5RENAME\e0\e
-b\e6NORESERVE\e0\e
-b\e7INHERIT\e0\e
-b\e11HASSEMAPHORE\e0\e
-b\e12TRYFIXED\e0\e
-b\e13WIRED\e0\e
-F\e14\e1\e0\e
-:\e0FILE\e0\e
-:\e1ANONYMOUS\e0\e
-b\e15STACK\e0\e
-F\e30\e010\e0\e
-:\e000ALIGN=NONE\e0\e
-:\e012ALIGN=1KB\e0\e
-:\e013ALIGN=2KB\e0\e
-:\e014ALIGN=4KB\e0\e
-:\e015ALIGN=8KB\e0\e
-:\e016ALIGN=16KB\e0\e
-:\e017ALIGN=32KB\e0\e
-:\e020ALIGN=64KB\e0\e
-:\e021ALIGN=128KB\e0\e
-:\e022ALIGN=256KB\e0\e
-:\e023ALIGN=512KB\e0\e
-:\e024ALIGN=1MB\e0\e
-:\e030ALIGN=16MB\e0\e
-:\e034ALIGN=256MB\e0\e
-:\e040ALIGN=4GB\e0\e
-:\e044ALIGN=64GB\e0\e
-:\e050ALIGN=1TB\e0\e
-:\e054ALIGN=16TB\e0\e
-:\e060ALIGN=256TB\e0\e
-:\e064ALIGN=4PB\e0\e
-:\e070ALIGN=64PB\e0\e
-:\e074ALIGN=256PB\e0\e
-*ALIGN=2^%jd\e0\e
-"
+#define MAP_FMT "\e177\e020"                      \e
+        "b\e0"  "SHARED\e0"                       \e
+        "b\e1"  "PRIVATE\e0"                      \e
+        "b\e2"  "COPY\e0"                         \e
+        "b\e4"  "FIXED\e0"                        \e
+        "b\e5"  "RENAME\e0"                       \e
+        "b\e6"  "NORESERVE\e0"                    \e
+        "b\e7"  "INHERIT\e0"                      \e
+        "b\e11" "HASSEMAPHORE\e0"                 \e
+        "b\e12" "TRYFIXED\e0"                     \e
+        "b\e13" "WIRED\e0"                        \e
+        "F\e14\e1\e0"                              \e
+                ":\e0" "FILE\e0"                  \e
+                ":\e1" "ANONYMOUS\e0"             \e
+        "b\e15" "STACK\e0"                        \e
+        "F\e30\e010\e0"                            \e
+                ":\e000" "ALIGN=NONE\e0"          \e
+                ":\e012" "ALIGN=1KB\e0"           \e
+                ":\e013" "ALIGN=2KB\e0"           \e
+                ":\e014" "ALIGN=4KB\e0"           \e
+                ":\e015" "ALIGN=8KB\e0"           \e
+                ":\e016" "ALIGN=16KB\e0"          \e
+                ":\e017" "ALIGN=32KB\e0"          \e
+                ":\e020" "ALIGN=64KB\e0"          \e
+                ":\e021" "ALIGN=128KB\e0"         \e
+                ":\e022" "ALIGN=256KB\e0"         \e
+                ":\e023" "ALIGN=512KB\e0"         \e
+                ":\e024" "ALIGN=1MB\e0"           \e
+                ":\e025" "ALIGN=2MB\e0"           \e
+                ":\e026" "ALIGN=4MB\e0"           \e
+                ":\e027" "ALIGN=8MB\e0"           \e
+                ":\e030" "ALIGN=16MB\e0"          \e
+                ":\e034" "ALIGN=256MB\e0"         \e
+                ":\e040" "ALIGN=4GB\e0"           \e
+                ":\e044" "ALIGN=64GB\e0"          \e
+                ":\e050" "ALIGN=1TB\e0"           \e
+                ":\e054" "ALIGN=16TB\e0"          \e
+                ":\e060" "ALIGN=256TB\e0"         \e
+                ":\e064" "ALIGN=4PB\e0"           \e
+                ":\e070" "ALIGN=64PB\e0"          \e
+                ":\e074" "ALIGN=256PB\e0"         \e
+                "*"     "ALIGN=2^%ju\e0"
+
 snprintb(buf, buflen, MAP_FMT, 0x0d001234)
 \(rA "0xd001234<COPY,FIXED,RENAME,HASSEMAPHORE,ANONYMOUS,ALIGN=8KB>"
+
 snprintb(buf, buflen, MAP_FMT, 0x2e000000)
 \(rA "0xd001234<0x2e000000<FILE,ALIGN=2^46>
 .Ed
