@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.17 2023/03/14 05:49:03 kre Exp $ */
+/* $NetBSD: namespace.h,v 1.18 2024/01/21 18:53:18 christos Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -23,6 +23,7 @@
 #define finite _finite
 #define finitef _finitef
 #endif /* notyet */
+
 #define sincos _sincos
 #define sincosf _sincosf
 #define sincosl _sincosl
@@ -77,10 +78,23 @@
 #define log1pl _log1pl
 #define log2l _log2l
 
+#define cospi _cospi
+#define cospif _cospif
+#define cospil _cospil
+
+#define sinpi _sinpi
+#define sinpif _sinpif
+#define sinpil _sinpil
+
+#define tanpi _tanpi
+#define tanpif _tanpif
+#define tanpil _tanpil
+
 #define erfl _erfl
 #define erfcl _erfcl
 
 #define lgammal _lgammal
+#define lgammal_r _lgammal_r
 #define tgammal _tgammal
 
 #define feclearexcept _feclearexcept

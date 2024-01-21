@@ -83,7 +83,7 @@ __ieee754_rem_pio2l(long double x, long double *y)
 
 	u.extu_ld = x;
 	ex = u.extu_exp;
-	expsign = u.extu_exp | (u.extu_sign << EXT_EXPBITS);
+	expsign = GET_EXPSIGN(&u);
 	if (ex < BIAS + 25 || (ex == BIAS + 25 && u.extu_frach < 0xc90fdaa2U)) {
 	    /* |x| ~< 2^25*(pi/2), medium size */
 	    fn = rnintl(x*invpio2);
@@ -129,8 +129,7 @@ __ieee754_rem_pio2l(long double x, long double *y)
 	u1.extu_ld = x;
 	e0 = ex - BIAS - 23;		/* e0 = ilogb(|x|)-23; */
 	expsign1 = ex - e0;
-	u1.extu_exp = expsign1;
-	u1.extu_sign = expsign1 >> EXT_EXPBITS;
+	SET_EXPSIGN(&u1, expsign1);
 	z = u1.extu_ld;
 	for(i=0;i<2;i++) {
 		tx[i] = (double)((int32_t)(z));
