@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.360 2024/01/21 15:22:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.361 2024/01/21 16:32:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.360 2024/01/21 15:22:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.361 2024/01/21 16:32:41 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -867,12 +867,13 @@ CondParser_Term(CondParser *par, bool doEval)
 {
 	CondResult res;
 	Token t;
+	bool neg = false;
 
-	t = CondParser_Token(par, doEval);
-	if (t == TOK_TRUE)
-		return CR_TRUE;
-	if (t == TOK_FALSE)
-		return CR_FALSE;
+	while ((t = CondParser_Token(par, doEval)) == TOK_NOT)
+		neg = !neg;
+
+	if (t == TOK_TRUE || t == TOK_FALSE)
+		return neg == (t == TOK_FALSE) ? CR_TRUE : CR_FALSE;
 
 	if (t == TOK_LPAREN) {
 		res = CondParser_Or(par, doEval);
@@ -880,16 +881,7 @@ CondParser_Term(CondParser *par, bool doEval)
 			return CR_ERROR;
 		if (CondParser_Token(par, doEval) != TOK_RPAREN)
 			return CR_ERROR;
-		return res;
-	}
-
-	if (t == TOK_NOT) {
-		res = CondParser_Term(par, doEval);
-		if (res == CR_TRUE)
-			res = CR_FALSE;
-		else if (res == CR_FALSE)
-			res = CR_TRUE;
-		return res;
+		return neg == (res == CR_FALSE) ? CR_TRUE : CR_FALSE;
 	}
 
 	return CR_ERROR;
