@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1094 2024/01/07 11:39:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1095 2024/01/21 15:02:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1094 2024/01/07 11:39:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1095 2024/01/21 15:02:17 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4279,7 +4279,7 @@ ParseVarnameLong(
 	bool dynamic = false;
 
 	const char *p = *pp;
-	const char *const start = p;
+	const char *start = p;
 	char endc = startc == '(' ? ')' : '}';
 
 	p += 2;			/* skip "${" or "$(" or "y(" */
