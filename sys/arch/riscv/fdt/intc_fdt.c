@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.5 2024/01/21 08:41:00 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.6 2024/01/21 08:48:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.5 2024/01/21 08:41:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.6 2024/01/21 08:48:21 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -57,7 +57,6 @@ static const struct device_compatible_entry compat_data[] = {
 
 struct intc_irqhandler;
 struct intc_irq;
-struct intc_softc;
 
 typedef int (*intcih_t)(void *);
 
@@ -121,6 +120,20 @@ static const char * const intc_sources[IRQ_NSOURCES] = {
 	"(reserved)"
 };
 
+#ifndef MULTIPROCESSOR
+struct intc_fdt_softc *intc_sc;
+#endif
+
+
+static inline struct intc_fdt_softc *
+intc_getsc(struct cpu_info *ci)
+{
+#ifdef MULTIPROCESSOR
+	return ci->ci_intcsoftc;
+#else
+	return intc_sc;
+#endif
+}
 
 static void *
 intc_intr_establish(struct intc_fdt_softc *sc, u_int source, u_int ipl,
@@ -246,7 +259,7 @@ intc_intr_handler(struct trapframe *tf, register_t epc, register_t status,
 
 	KASSERT(CAUSE_INTERRUPT_P(cause));
 
-	struct intc_fdt_softc * const sc = ci->ci_intcsoftc;
+	struct intc_fdt_softc * const sc = intc_getsc(ci);
 
 	ci->ci_intr_depth++;
 	ci->ci_data.cpu_nintr++;
@@ -334,13 +347,15 @@ intc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_ci = ci;
 	sc->sc_hartid = ci->ci_cpuid;
-	ci->ci_intcsoftc = sc;
 
 	intc_intr_establish(sc, IRQ_SUPERVISOR_TIMER, IPL_SCHED, IST_MPSAFE,
 	    riscv_timer_intr, NULL, "clock");
 #ifdef MULTIPROCESSOR
+	ci->ci_intcsoftc = sc;
 	intc_intr_establish(sc, IRQ_SUPERVISOR_SOFTWARE, IPL_HIGH, IST_MPSAFE,
 	    riscv_ipi_intr, NULL, "ipi");
+#else
+	intc_sc = sc;
 #endif
 }
 
