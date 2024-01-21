@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.25 2024/01/21 21:31:23 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.26 2024/01/21 22:06:46 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -247,9 +247,9 @@ snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
 
 snprintb(buf, buflen,
     "\e20"
-    "\ex10NOTBOOT" "\ex0fFPP" "\ex0eSDVMA" ""
+    "\ex10NOTBOOT" "\ex0fFPP" "\ex0eSDVMA"
     "\ex0cVIDEO" "\ex0bLORES" "\ex0aFPA" "\ex09DIAG"
-    "" "\ex07CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
+    "\ex07CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
     "\ex04DBGCACHE",
     0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
@@ -331,7 +331,6 @@ snprintb_m(buf, buflen,
     0x800f0701, 34)
 \(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
-   ""
 .Ed
 .Sh ERRORS
 .Fn snprintb
