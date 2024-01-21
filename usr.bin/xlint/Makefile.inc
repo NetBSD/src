@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2024/01/11 04:45:20 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2024/01/21 14:21:34 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -31,3 +31,4 @@ LINTFLAGS+=	-aa	# warn about all lossy conversions
 LINTFLAGS+=	-e	# strict enum mode
 LINTFLAGS+=	-T	# strict bool mode
 LINTFLAGS+=	-w	# treat warnings as errors
+LINTFLAGS+=	-q18	# list const parameters and local variables
