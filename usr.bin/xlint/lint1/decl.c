@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.387 2024/01/20 10:02:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.388 2024/01/21 14:21:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.387 2024/01/20 10:02:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.388 2024/01/21 14:21:34 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -932,7 +932,7 @@ check_type(sym_t *sym)
  * implementation-defined type".
  */
 static void
-check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
+check_bit_field_type(sym_t *dsym, type_t **inout_tp, tspec_t *inout_t)
 {
 	type_t *tp = *inout_tp;
 	tspec_t t = *inout_t;
@@ -976,7 +976,7 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 }
 
 static void
-check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
+check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **inout_tp)
 {
 
 	check_bit_field_type(dsym, inout_tp, inout_t);
