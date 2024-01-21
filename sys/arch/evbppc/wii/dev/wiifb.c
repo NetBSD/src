@@ -1,4 +1,4 @@
-/* $NetBSD: wiifb.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: wiifb.c,v 1.2 2024/01/21 13:05:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.2 2024/01/21 13:05:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
 
 #include "mainbus.h"
 #include "vireg.h"
+#include "viio.h"
 
 #define	WIIFB_ERROR_BLINK_INTERVAL	1000000
 
@@ -179,30 +180,22 @@ static void
 wiifb_init(struct wiifb_softc *sc)
 {
 	uint16_t dcr;
+	uint16_t visel;
 
-#if notyet
 	/* Read current display format and interlaced settings. */
 	dcr = RD2(sc, VI_DCR);
-	sc->sc_format = __SHIFTOUT(dcr, VI_DCR_FMT);
-	sc->sc_interlaced = (dcr & VI_DCR_NIN) == 0;
+	if ((dcr & VI_DCR_ENB) != 0) {
+		sc->sc_format = __SHIFTOUT(dcr, VI_DCR_FMT);
+		sc->sc_interlaced = (dcr & VI_DCR_NIN) == 0;
+	} else {
+		visel = RD2(sc, VI_VISEL);
+		sc->sc_format = VI_DCR_FMT_NTSC;
+		sc->sc_interlaced = (visel & VI_VISEL_COMPONENT_CABLE) == 0;
+	}
 
 	/* Reset video interface. */
 	WR2(sc, VI_DCR, dcr | VI_DCR_RST);
 	WR2(sc, VI_DCR, dcr & ~VI_DCR_RST);
-#else
-	/* Force NTSC 480i and reset video interface. */
-	dcr = RD2(sc, VI_DCR);
-	dcr |= VI_DCR_RST;
-	WR2(sc, VI_DCR, dcr);
-	dcr &= ~VI_DCR_RST;
-	dcr &= ~VI_DCR_FMT;
-	dcr |= __SHIFTIN(VI_DCR_FMT_NTSC, VI_DCR_FMT);
-	dcr &= ~VI_DCR_NIN;
-	WR2(sc, VI_DCR, dcr);
-
-	sc->sc_format = VI_DCR_FMT_NTSC;
-	sc->sc_interlaced = 1;
-#endif
 }
 
 static void
@@ -219,7 +212,7 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 	sc->sc_curmode = &wiifb_modes[modeidx];
 
 	if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_NTSC, 1)) {
-		/* Magic numbers from YAGCD. */
+		/* NTSC 480i Magic numbers from YAGCD. */
 		WR2(sc, VI_VTR, 0x0f06);
 		WR4(sc, VI_HTR0, 0x476901AD);
 		WR4(sc, VI_HTR1, 0x02EA5140);
@@ -227,6 +220,15 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		WR4(sc, VI_VTE, 0x00020019);
 		WR4(sc, VI_BBOI, 0x410C410C);
 		WR4(sc, VI_BBEI, 0x40ED40ED);
+	} else if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_NTSC, 0)) {
+		/* NTSC 480p */
+		WR2(sc, VI_VTR, 0x1e0c);
+		WR4(sc, VI_HTR0, 0x476901ad);
+		WR4(sc, VI_HTR1, 0x030a4940);
+		WR4(sc, VI_VTO, 0x00060030);
+		WR4(sc, VI_VTE, 0x00060030);
+		WR4(sc, VI_BBOI, 0x81d881d8);
+		WR4(sc, VI_BBEI, 0x81d881d8);
 	} else {
 		/*
 		 * Display mode is not supported. Blink the slot LED to
@@ -242,7 +244,12 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 	    __SHIFTIN(strides, VI_PICCONF_STRIDES) |
 	    __SHIFTIN(reads, VI_PICCONF_READS));
 
-	WR2(sc, VI_HSR, __SHIFTIN(256, VI_HSR_STP));
+	/* Horizontal scaler configuration */
+	if (interlaced) {
+		WR2(sc, VI_HSR, __SHIFTIN(256, VI_HSR_STP));
+	} else {
+		WR2(sc, VI_HSR, __SHIFTIN(244, VI_HSR_STP) | VI_HSR_HS_EN);
+	}
 
 	/* Video clock configuration */
 	WR2(sc, VI_VICLK,
@@ -281,6 +288,7 @@ wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 	struct wiifb_softc *sc = v;
 	struct wsdisplayio_bus_id *busid;
 	struct wsdisplayio_fbinfo *fbi;
+	struct vi_regs *vr;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -305,6 +313,35 @@ wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		fbi->fbi_bitsperpixel = 16;
 		fbi->fbi_pixeltype = WSFB_YUY2;
 		fbi->fbi_flags = WSFB_VRAM_IS_RAM;
+		return 0;
+
+	case VIIO_GETREGS:
+	case VIIO_SETREGS:
+		vr = data;
+		switch (vr->bits) {
+		case 16:
+			if ((vr->reg & 1) != 0) {
+				return EINVAL;
+			}
+			if (cmd == VIIO_GETREGS) {
+				vr->val16 = RD2(sc, vr->reg);
+			} else {
+				WR2(sc, vr->reg, vr->val16);
+			}
+			return 0;
+		case 32:
+			if ((vr->reg & 3) != 0) {
+				return EINVAL;
+			}
+			if (cmd == VIIO_GETREGS) {
+				vr->val32 = RD4(sc, vr->reg);
+			} else {
+				WR4(sc, vr->reg, vr->val32);
+			}
+			return 0;
+		default:
+			return EINVAL;
+		}
 		return 0;
 	}
 
