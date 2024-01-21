@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.65 2023/05/31 17:56:54 kim Exp $ */
+/* $NetBSD: date.c,v 1.66 2024/01/21 16:55:56 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.65 2023/05/31 17:56:54 kim Exp $");
+__RCSID("$NetBSD: date.c,v 1.66 2024/01/21 16:55:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,8 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'd':
-#ifndef HAVE_NBTOOL_CONFIG_H
 			rflag = 1;
+#ifndef HAVE_NBTOOL_CONFIG_H
 			tval = parsedate(optarg, NULL, NULL);
 			if (tval == -1) {
 				errx(EXIT_FAILURE,
@@ -107,6 +107,19 @@ main(int argc, char *argv[])
 			}
 			break;
 #else
+			/* handle YYYYMMDD, or fail */
+			{
+				struct tm tm;
+				char *p;
+				memset(&tm, 0, sizeof(tm));
+				p = strptime(optarg, "%Y%m%d", &tm);
+				if (*p == '\0'
+				    && tm.tm_year >= 0 && tm.tm_year < 1000
+				    && tm.tm_mon >= 0 && tm.tm_mon <= 11
+				    && tm.tm_mday >= 1 && tm.tm_mday <= 31
+				    && (tval = mktime(&tm)) != -1)
+					break;
+			}
 			errx(EXIT_FAILURE,
 			    "-d not supported in the tool version");
 #endif
