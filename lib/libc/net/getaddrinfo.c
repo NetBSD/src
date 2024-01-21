@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.126 2024/01/20 16:18:56 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.127 2024/01/21 12:58:10 kre Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.126 2024/01/20 16:18:56 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.127 2024/01/21 12:58:10 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1440,8 +1440,7 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if (ip6_str2scopeid(scope, sin6, &scopeid)
-			    == -1) {
+			if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
 				free(hostname2);
 				return EAI_NODATA; /* XXX: is return OK? */
 			}
