@@ -11,13 +11,15 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.27 2023/08/03 20:45:49 andvar Exp $
+ * $NetBSD: math_private.h,v 1.28 2024/01/21 18:53:18 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
 #define _MATH_PRIVATE_H_
 
+#include <assert.h>
 #include <sys/types.h>
+#include <machine/ieee.h>
 
 /* The original fdlibm code used statements like:
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
@@ -34,11 +36,62 @@
    ints.  */
 
 /*
- * The ARM ports are little endian except for the FPA word order which is
- * big endian.
+ * A union which permits us to convert between a double and two 32 bit
+ * ints.
  */
 
-#if (BYTE_ORDER == BIG_ENDIAN) || (defined(__arm__) && !defined(__VFP_FP__))
+#ifdef __arm__
+#if defined(__VFP_FP__) || defined(__ARM_EABI__)
+#define	IEEE_WORD_ORDER	BYTE_ORDER
+#else
+#define	IEEE_WORD_ORDER	BIG_ENDIAN
+#endif
+#else /* __arm__ */
+#define	IEEE_WORD_ORDER	BYTE_ORDER
+#endif
+
+/* A union which permits us to convert between a long double and
+   four 32 bit ints.  */
+
+#if IEEE_WORD_ORDER == BIG_ENDIAN
+
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t mswhi;
+    u_int32_t mswlo;
+    u_int32_t lswhi;
+    u_int32_t lswlo;
+  } parts32;
+  struct {
+    u_int64_t msw;
+    u_int64_t lsw;
+  } parts64;
+} ieee_quad_shape_type;
+
+#endif
+
+#if IEEE_WORD_ORDER == LITTLE_ENDIAN
+
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t lswlo;
+    u_int32_t lswhi;
+    u_int32_t mswlo;
+    u_int32_t mswhi;
+  } parts32;
+  struct {
+    u_int64_t lsw;
+    u_int64_t msw;
+  } parts64;
+} ieee_quad_shape_type;
+
+#endif
+
+#if IEEE_WORD_ORDER == BIG_ENDIAN
 
 typedef union
 {
@@ -48,15 +101,15 @@ typedef union
     u_int32_t msw;
     u_int32_t lsw;
   } parts;
-  struct {
+  struct
+  {
     u_int64_t w;
   } xparts;
 } ieee_double_shape_type;
 
 #endif
 
-#if (BYTE_ORDER == LITTLE_ENDIAN) && \
-    !(defined(__arm__) && !defined(__VFP_FP__))
+#if IEEE_WORD_ORDER == LITTLE_ENDIAN
 
 typedef union
 {
@@ -66,7 +119,8 @@ typedef union
     u_int32_t lsw;
     u_int32_t msw;
   } parts;
-  struct {
+  struct
+  {
     u_int64_t w;
   } xparts;
 } ieee_double_shape_type;
@@ -176,6 +230,104 @@ do {								\
   (d) = sf_u.value;						\
 } while (0)
 
+#define GET_EXPSIGN(u)						\
+  (((u)->extu_sign << EXT_EXPBITS) | (u)->extu_exp)
+#define SET_EXPSIGN(u, x)					\
+  (u)->extu_exp = (x),						\
+  (u)->extu_sign = ((x) >> EXT_EXPBITS)
+#define GET_LDBL80_MAN(u)					\
+  (((uint64_t)(u)->extu_frach << EXT_FRACLBITS) | (u)->extu_fracl)
+#define SET_LDBL80_MAN(u, v)					\
+  ((u)->extu_fracl = (v) & ((1ULL << EXT_FRACLBITS) - 1),	\
+  (u)->extu_frach = (v) >> EXT_FRACLBITS)
+
+
+/*
+ * Get expsign and mantissa as 16 bit and 64 bit ints from an 80 bit long
+ * double.
+ */
+
+#define	EXTRACT_LDBL80_WORDS(ix0,ix1,d)				\
+do {								\
+  union ieee_ext_u ew_u;					\
+  ew_u.extu_ld = (d);						\
+  (ix0) = GET_EXPSIGN(&ew_u);					\
+  (ix1) = GET_LDBL80_MAN(&ew_u);				\
+} while (0)
+
+/*
+ * Get expsign and mantissa as one 16 bit and two 64 bit ints from a 128 bit
+ * long double.
+ */
+
+#define	EXTRACT_LDBL128_WORDS(ix0,ix1,ix2,d)			\
+do {								\
+  union ieee_ext_u ew_u;					\
+  ew_u.extu_ld = (d);						\
+  (ix0) = GET_EXPSIGN(&ew_u);					\
+  (ix1) = ew_u.extu_fracl;					\
+  (ix2) = ew_u.extu_frach;					\
+} while (0)
+
+/* Get expsign as a 16 bit int from a long double.  */
+
+#define	GET_LDBL_EXPSIGN(i,d)					\
+do {								\
+  union ieee_ext_u ge_u;					\
+  ge_u.extu_ld = (d);						\
+  (i) = GET_EXPSIGN(&ge_u);					\
+} while (0)
+
+/*
+ * Set an 80 bit long double from a 16 bit int expsign and a 64 bit int
+ * mantissa.
+ */
+
+#define	INSERT_LDBL80_WORDS(d,ix0,ix1)				\
+do {								\
+  union ieee_ext_u iw_u;					\
+  SET_EXPSIGN(&iw_u, ix0);					\
+  SET_LDBL80_MAN(&iw_u, ix1);					\
+  (d) = iw_u.extu_ld;						\
+} while (0)
+
+/*
+ * Set a 128 bit long double from a 16 bit int expsign and two 64 bit ints
+ * comprising the mantissa.
+ */
+
+#define	INSERT_LDBL128_WORDS(d,ix0,ix1,ix2)			\
+do {								\
+  union ieee_ext_u iw_u;					\
+  SET_EXPSIGN(&iw_u, ix0);					\
+  iw_u.extu_frach = (ix1);					\
+  iw_u.extu_fracl = (ix2);					\
+  (d) = iw_u.extu_ld;						\
+} while (0)
+
+/* Set expsign of a long double from a 16 bit int.  */
+
+#define	SET_LDBL_EXPSIGN(d,v)					\
+do {								\
+  union ieee_ext_u se_u;					\
+  se_u.extu_ld = (d);						\
+  SET_EXPSIGN(&se_u, v);						\
+  (d) = se_u.extu_ld;						\
+} while (0)
+
+#ifdef __i386__
+/* Long double constants are broken on i386. */
+#define	LD80C(m, ex, v) {						\
+	.extu_fracl = __CONCAT(m, ULL);					\
+	.extu_frach = __CONCAT(m, ULL) >> EXT_FRACLBITS;		\
+	.extu_exp = (0x3fff + (ex)) | ((v) < 0 ? 0x8000 : 0),		\
+	.extu_sign = (0x3fff + (ex)) | ((v) < 0 ? 0x8000 : 0) >> EXP_EXPBITS,\
+}
+#else
+/* The above works on non-i386 too, but we use this to check v. */
+#define	LD80C(m, ex, v)	{ .extu_ld = (v), }
+#endif
+
 /*
  * Attempt to get strict C99 semantics for assignment with non-C99 compilers.
  */
@@ -226,6 +378,143 @@ do {								\
 #define	ENTERV()
 #define	RETURNV()	return
 #endif
+
+/* Default return statement if hack*_t() is not used. */
+#define      RETURNF(v)      return (v)
+
+/*
+ * 2sum gives the same result as 2sumF without requiring |a| >= |b| or
+ * a == 0, but is slower.
+ */
+#define	_2sum(a, b) do {	\
+	__typeof(a) __s, __w;	\
+				\
+	__w = (a) + (b);	\
+	__s = __w - (a);	\
+	(b) = ((a) - (__w - __s)) + ((b) - __s); \
+	(a) = __w;		\
+} while (0)
+
+/*
+ * 2sumF algorithm.
+ *
+ * "Normalize" the terms in the infinite-precision expression a + b for
+ * the sum of 2 floating point values so that b is as small as possible
+ * relative to 'a'.  (The resulting 'a' is the value of the expression in
+ * the same precision as 'a' and the resulting b is the rounding error.)
+ * |a| must be >= |b| or 0, b's type must be no larger than 'a's type, and
+ * exponent overflow or underflow must not occur.  This uses a Theorem of
+ * Dekker (1971).  See Knuth (1981) 4.2.2 Theorem C.  The name "TwoSum"
+ * is apparently due to Skewchuk (1997).
+ *
+ * For this to always work, assignment of a + b to 'a' must not retain any
+ * extra precision in a + b.  This is required by C standards but broken
+ * in many compilers.  The brokenness cannot be worked around using
+ * STRICT_ASSIGN() like we do elsewhere, since the efficiency of this
+ * algorithm would be destroyed by non-null strict assignments.  (The
+ * compilers are correct to be broken -- the efficiency of all floating
+ * point code calculations would be destroyed similarly if they forced the
+ * conversions.)
+ *
+ * Fortunately, a case that works well can usually be arranged by building
+ * any extra precision into the type of 'a' -- 'a' should have type float_t,
+ * double_t or long double.  b's type should be no larger than 'a's type.
+ * Callers should use these types with scopes as large as possible, to
+ * reduce their own extra-precision and efficiciency problems.  In
+ * particular, they shouldn't convert back and forth just to call here.
+ */
+#ifdef DEBUG
+#define	_2sumF(a, b) do {				\
+	__typeof(a) __w;				\
+	volatile __typeof(a) __ia, __ib, __r, __vw;	\
+							\
+	__ia = (a);					\
+	__ib = (b);					\
+	assert(__ia == 0 || fabsl(__ia) >= fabsl(__ib));	\
+							\
+	__w = (a) + (b);				\
+	(b) = ((a) - __w) + (b);			\
+	(a) = __w;					\
+							\
+	/* The next 2 assertions are weak if (a) is already long double. */ \
+	assert((long double)__ia + __ib == (long double)(a) + (b));	\
+	__vw = __ia + __ib;				\
+	__r = __ia - __vw;				\
+	__r += __ib;					\
+	assert(__vw == (a) && __r == (b));		\
+} while (0)
+#else /* !DEBUG */
+#define	_2sumF(a, b) do {	\
+	__typeof(a) __w;	\
+				\
+	__w = (a) + (b);	\
+	(b) = ((a) - __w) + (b); \
+	(a) = __w;		\
+} while (0)
+#endif /* DEBUG */
+
+/*
+ * Set x += c, where x is represented in extra precision as a + b.
+ * x must be sufficiently normalized and sufficiently larger than c,
+ * and the result is then sufficiently normalized.
+ *
+ * The details of ordering are that |a| must be >= |c| (so that (a, c)
+ * can be normalized without extra work to swap 'a' with c).  The details of
+ * the normalization are that b must be small relative to the normalized 'a'.
+ * Normalization of (a, c) makes the normalized c tiny relative to the
+ * normalized a, so b remains small relative to 'a' in the result.  However,
+ * b need not ever be tiny relative to 'a'.  For example, b might be about
+ * 2**20 times smaller than 'a' to give about 20 extra bits of precision.
+ * That is usually enough, and adding c (which by normalization is about
+ * 2**53 times smaller than a) cannot change b significantly.  However,
+ * cancellation of 'a' with c in normalization of (a, c) may reduce 'a'
+ * significantly relative to b.  The caller must ensure that significant
+ * cancellation doesn't occur, either by having c of the same sign as 'a',
+ * or by having |c| a few percent smaller than |a|.  Pre-normalization of
+ * (a, b) may help.
+ *
+ * This is a variant of an algorithm of Kahan (see Knuth (1981) 4.2.2
+ * exercise 19).  We gain considerable efficiency by requiring the terms to
+ * be sufficiently normalized and sufficiently increasing.
+ */
+#define	_3sumF(a, b, c) do {	\
+	__typeof(a) __tmp;	\
+				\
+	__tmp = (c);		\
+	_2sumF(__tmp, (a));	\
+	(b) += (a);		\
+	(a) = __tmp;		\
+} while (0)
+
+/*
+ * Common routine to process the arguments to nan(), nanf(), and nanl().
+ */
+void _scan_nan(uint32_t *__words, int __num_words, const char *__s);
+
+/*
+ * Mix 0, 1 or 2 NaNs.  First add 0 to each arg.  This normally just turns
+ * signaling NaNs into quiet NaNs by setting a quiet bit.  We do this
+ * because we want to never return a signaling NaN, and also because we
+ * don't want the quiet bit to affect the result.  Then mix the converted
+ * args using the specified operation.
+ *
+ * When one arg is NaN, the result is typically that arg quieted.  When both
+ * args are NaNs, the result is typically the quietening of the arg whose
+ * mantissa is largest after quietening.  When neither arg is NaN, the
+ * result may be NaN because it is indeterminate, or finite for subsequent
+ * construction of a NaN as the indeterminate 0.0L/0.0L.
+ *
+ * Technical complications: the result in bits after rounding to the final
+ * precision might depend on the runtime precision and/or on compiler
+ * optimizations, especially when different register sets are used for
+ * different precisions.  Try to make the result not depend on at least the
+ * runtime precision by always doing the main mixing step in long double
+ * precision.  Try to reduce dependencies on optimizations by adding the
+ * the 0's in different precisions (unless everything is in long double
+ * precision).
+ */
+#define	nan_mix(x, y)		(nan_mix_op((x), (y), +))
+#define	nan_mix_op(x, y, op)	(((x) + 0.0L) op ((y) + 0))
 
 #ifdef	_COMPLEX_H
 
@@ -525,5 +814,102 @@ irintl(long double x)
 	return (n);
 }
 #endif
+
+/*
+ * The following are fast floor macros for 0 <= |x| < 0x1p(N-1), where
+ * N is the precision of the type of x. These macros are used in the
+ * half-cycle trignometric functions (e.g., sinpi(x)).
+ */
+#define	FFLOORF(x, j0, ix) do {			\
+	(j0) = (((ix) >> 23) & 0xff) - 0x7f;	\
+	(ix) &= ~(0x007fffff >> (j0));		\
+	SET_FLOAT_WORD((x), (ix));		\
+} while (0)
+
+#define	FFLOOR(x, j0, ix, lx) do {				\
+	(j0) = (((ix) >> 20) & 0x7ff) - 0x3ff;			\
+	if ((j0) < 20) {					\
+		(ix) &= ~(0x000fffff >> (j0));			\
+		(lx) = 0;					\
+	} else {						\
+		(lx) &= ~((uint32_t)0xffffffff >> ((j0) - 20));	\
+	}							\
+	INSERT_WORDS((x), (ix), (lx));				\
+} while (0)
+
+#define	FFLOORL80(x, j0, ix, lx) do {			\
+	j0 = ix - 0x3fff + 1;				\
+	if ((j0) < 32) {				\
+		(lx) = ((lx) >> 32) << 32;		\
+		(lx) &= ~((((lx) << 32)-1) >> (j0));	\
+	} else {					\
+		uint64_t _m;				\
+		_m = (uint64_t)-1 >> (j0);		\
+		if ((lx) & _m) (lx) &= ~_m;		\
+	}						\
+	INSERT_LDBL80_WORDS((x), (ix), (lx));		\
+} while (0)
+
+#define FFLOORL128(x, ai, ar) do {			\
+	union ieee_ext_u u;				\
+	uint64_t m;					\
+	int e;						\
+	u.extu_ld = (x);					\
+	e = u.extu_exp - 16383;				\
+	if (e < 48) {					\
+		m = ((1llu << 49) - 1) >> (e + 1);	\
+		u.extu_frach &= ~m;			\
+		u.extu_fracl = 0;			\
+	} else {					\
+		m = (uint64_t)-1 >> (e - 48);		\
+		u.extu_fracl &= ~m;			\
+	}						\
+	(ai) = u.extu_ld;					\
+	(ar) = (x) - (ai);				\
+} while (0)
+
+#ifdef DEBUG
+#if defined(__amd64__) || defined(__i386__)
+#define breakpoint()    asm("int $3")
+#else
+#include <signal.h>
+ 
+#define breakpoint()    raise(SIGTRAP)
+#endif  
+#endif  
+
+#ifdef STRUCT_RETURN
+#define	RETURNSP(rp) do {		\
+	if (!(rp)->lo_set)		\
+		RETURNF((rp)->hi);	\
+	RETURNF((rp)->hi + (rp)->lo);	\
+} while (0)
+#define	RETURNSPI(rp) do {		\
+	if (!(rp)->lo_set)		\
+		RETURNI((rp)->hi);	\
+	RETURNI((rp)->hi + (rp)->lo);	\
+} while (0)
+#endif
+
+#define	SUM2P(x, y) ({			\
+	const __typeof (x) __x = (x);	\
+	const __typeof (y) __y = (y);	\
+	__x + __y;			\
+})
+
+#ifndef INLINE_KERNEL_SINDF
+float   __kernel_sindf(double);
+#endif
+#ifndef INLINE_KERNEL_COSDF
+float   __kernel_cosdf(double);
+#endif
+#ifndef INLINE_KERNEL_TANDF
+float   __kernel_tandf(double,int);
+#endif
+
+/* long double precision kernel functions */
+long double __kernel_sinl(long double, long double, int);
+long double __kernel_cosl(long double, long double);
+long double __kernel_tanl(long double, long double, int);
 
 #endif /* _MATH_PRIVATE_H_ */
