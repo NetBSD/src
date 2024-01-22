@@ -41,6 +41,8 @@
  * bsdrc/b_tgamma.c converted to long double by Steven G. Kargl.
  */
 
+#include <sys/cdefs.h>
+
 /*
  * See bsdsrc/t_tgamma.c for implementation details.
  */
