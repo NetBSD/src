@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.28 2024/01/21 18:53:18 christos Exp $
+ * $NetBSD: math_private.h,v 1.29 2024/01/22 12:15:19 kre Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -318,10 +318,10 @@ do {								\
 #ifdef __i386__
 /* Long double constants are broken on i386. */
 #define	LD80C(m, ex, v) {						\
-	.extu_fracl = __CONCAT(m, ULL);					\
-	.extu_frach = __CONCAT(m, ULL) >> EXT_FRACLBITS;		\
-	.extu_exp = (0x3fff + (ex)) | ((v) < 0 ? 0x8000 : 0),		\
-	.extu_sign = (0x3fff + (ex)) | ((v) < 0 ? 0x8000 : 0) >> EXP_EXPBITS,\
+	.extu_fracl = (uint32_t)(__CONCAT(m, ULL)),			\
+	.extu_frach = __CONCAT(m, ULL) >> EXT_FRACLBITS,		\
+	.extu_exp = (0x3fff + (ex)),					\
+	.extu_sign = ((v) < 0 ? 0x8000 : 0) >> EXT_EXPBITS,		\
 }
 #else
 /* The above works on non-i386 too, but we use this to check v. */

@@ -29,11 +29,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 /*
  * See bsdsrc/b_log.c for implementation details.
  *
  * bsdrc/b_log.c converted to long double by Steven G. Kargl.
  */
+
+#include "math_private.h"
 
 #define N 128
 

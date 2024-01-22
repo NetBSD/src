@@ -15,6 +15,9 @@
 
 #include <float.h>
 
+#include "math.h"
+#include "math_private.h"
+
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(atanl, _atanl)
 
@@ -31,8 +34,6 @@ __weak_alias(atanl, _atanl)
 #else
 #error "Unsupported long double format"
 #endif
-#include "math.h"
-#include "math_private.h"
 
 #ifdef LDBL_IMPLICIT_NBIT
 #define	LDBL_NBIT	0

@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 /*
  * See bsdsrc/b_exp.c for implementation details.
  *

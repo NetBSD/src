@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.67 2022/08/27 08:31:59 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.68 2024/01/22 12:15:19 kre Exp $	*/
 
 /*
  * ====================================================
@@ -589,6 +589,21 @@ int	__isfinitel(long double);
 int	__isinfl(long double);
 int	__isnanl(long double);
 int	__signbitl(long double);
+#endif
+
+/* XXX: Probable temporary hacks for new math functions - 20240122 */
+double	cospi(double);
+float	cospif(float);
+double	sinpi(double);
+float	sinpif(float);
+double	tanpi(double);
+float	tanpif(float);
+
+#ifdef __HAVE_LONG_DOUBLE
+long double	cospil(long double);
+long double	lgammal_r(long double, int *);
+long double	sinpil(long double);
+long double	tanpil(long double);
 #endif
 
 __END_DECLS

@@ -13,10 +13,10 @@
 #include <float.h>
 #include <stdint.h>
 
-#ifdef __HAVE_LONG_DOUBLE
-
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #define	BIAS (LDBL_MAX_EXP - 1)
 
