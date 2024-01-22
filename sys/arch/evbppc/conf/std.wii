@@ -1,11 +1,11 @@
-#	$NetBSD: std.wii,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+#	$NetBSD: std.wii,v 1.2 2024/01/22 21:23:03 jmcneill Exp $
 #
 # standard, required NetBSD/wii 'options'
 
 machine		evbppc powerpc
 include		"conf/std"	# MI standard options
 
-options 	PPC_OEA		# Nintendo Wii uses IBM PPC750CXe CPUs
+options 	PPC_OEA		# Nintendo Wii uses IBM PPC750CL CPUs
 makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 # Executable support:
