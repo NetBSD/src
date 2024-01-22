@@ -1,4 +1,4 @@
-/* $NetBSD: wiifb.c,v 1.2 2024/01/21 13:05:29 jmcneill Exp $ */
+/* $NetBSD: wiifb.c,v 1.3 2024/01/22 23:07:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.2 2024/01/21 13:05:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.3 2024/01/22 23:07:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,7 @@ static void	wiifb_attach(device_t, device_t, void *);
 static void	wiifb_init(struct wiifb_softc *);
 static void	wiifb_set_mode(struct wiifb_softc *, uint8_t, bool);
 static void	wiifb_set_fb(struct wiifb_softc *);
+static void	wiifb_set_picconf(struct wiifb_softc *, u_int, bool);
 
 static int	wiifb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	wiifb_mmap(void *, void *, off_t, int);
@@ -202,7 +203,6 @@ static void
 wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 {
 	u_int modeidx;
-	u_int strides, reads;
 
 	modeidx = WIIFB_MODE_INDEX(format, interlaced);
 	if (modeidx >= WIIFB_NMODES || wiifb_modes[modeidx].name == NULL) {
@@ -238,11 +238,7 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 	}
 
 	/* Picture configuration */
-	strides = (sc->sc_curmode->width * 2) / (interlaced ? 16 : 32);
-	reads = (sc->sc_curmode->width * 2) / 32;
-	WR2(sc, VI_PICCONF,
-	    __SHIFTIN(strides, VI_PICCONF_STRIDES) |
-	    __SHIFTIN(reads, VI_PICCONF_READS));
+	wiifb_set_picconf(sc, sc->sc_curmode->width, interlaced);
 
 	/* Horizontal scaler configuration */
 	if (interlaced) {
@@ -282,6 +278,18 @@ wiifb_set_fb(struct wiifb_softc *sc)
 	WR4(sc, VI_BFBR, 0);
 }
 
+static void
+wiifb_set_picconf(struct wiifb_softc *sc, u_int width, bool interlaced)
+{
+	u_int strides, reads;
+
+	strides = (width * 2) / (interlaced ? 16 : 32);
+	reads = (width * 2) / 32;
+	WR2(sc, VI_PICCONF,
+	    __SHIFTIN(strides, VI_PICCONF_STRIDES) |
+	    __SHIFTIN(reads, VI_PICCONF_READS));
+}
+
 static int
 wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 {
@@ -289,6 +297,7 @@ wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 	struct wsdisplayio_bus_id *busid;
 	struct wsdisplayio_fbinfo *fbi;
 	struct vi_regs *vr;
+	u_int video;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -314,6 +323,20 @@ wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		fbi->fbi_pixeltype = WSFB_YUY2;
 		fbi->fbi_flags = WSFB_VRAM_IS_RAM;
 		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		video = *(u_int *)data;
+		switch (video) {
+		case WSDISPLAYIO_VIDEO_OFF:
+			wiifb_set_picconf(sc, 0, sc->sc_interlaced);
+			return 0;
+		case WSDISPLAYIO_VIDEO_ON:
+			wiifb_set_picconf(sc, sc->sc_curmode->width,
+			    sc->sc_interlaced);
+			return 0;
+		default:
+			return EINVAL;
+		}
 
 	case VIIO_GETREGS:
 	case VIIO_SETREGS:
