@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.14 2021/01/11 07:49:04 simonb Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.15 2024/01/22 07:57:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.14 2021/01/11 07:49:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.15 2024/01/22 07:57:48 skrll Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -161,7 +161,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 		    "PPID", "PGRP", "UID", "FLAGS", "LWPS", "COMMAND", "WAIT");
 		break;
 	case 'w':
-		db_printf("PID  %4s %16s %8s %4s %-12s%s\n",
+		db_printf("PID   %4s %16s %8s %4s %-16s %s\n",
 		    "LID", "COMMAND", "EMUL", "PRI", "WAIT-MSG",
 		    "WAIT-CHANNEL");
 		break;
@@ -262,7 +262,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				db_nbuf[MAXCOMLEN] = '\0';
 
 				db_printf(
-				    "%c%4d %16s %8s %4d %-12s %-18lx\n",
+				    "%c%4d %16s %8s %4d %-16s %-18lx\n",
 				    (run ? '>' : ' '), l.l_lid,
 				    p.p_comm, db_nbuf,
 				    l.l_priority, wbuf, (long)l.l_wchan);
