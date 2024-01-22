@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+#	$NetBSD: WII,v 1.2 2024/01/22 21:28:15 jmcneill Exp $
 #
 #	Nintendo Wii
 #
@@ -128,6 +128,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	WSDISPLAY_SCROLLSUPPORT
 
 hollywood0 	at mainbus0 irq 14
+bwai0		at mainbus0 addr 0x0d006c00 irq 5	# Audio interface
+bwdsp0		at mainbus0 addr 0x0c005000 irq 6	# DSP
 
 #iosipc0 	at hollywood0 addr 0x0d000000 irq 30	# IOS IPC
 resetbtn0	at hollywood0 irq 17			# Reset button

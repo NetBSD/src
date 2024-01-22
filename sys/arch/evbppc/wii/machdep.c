@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2024/01/21 01:41:54 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2024/01/22 21:28:15 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2024/01/21 01:41:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2024/01/22 21:28:15 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -254,8 +254,8 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	availmemr[1].size = physmemr[1].size;
 	if (mem2_size != 0) {
 		/* DSP uses 16KB at the start of MEM2 */
-		availmemr[1].start += DSP_SIZE;
-		availmemr[1].size -= DSP_SIZE;
+		availmemr[1].start += DSP_MEM_SIZE;
+		availmemr[1].size -= DSP_MEM_SIZE;
 		/* IPC and Starlet use memory at the end of MEM2 */
 		availmemr[1].size -= IPC_SIZE;
 		availmemr[1].size -= ARM_SIZE;

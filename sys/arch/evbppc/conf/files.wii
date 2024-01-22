@@ -1,4 +1,4 @@
-#	$NetBSD: files.wii,v 1.1 2024/01/20 21:35:59 jmcneill Exp $
+#	$NetBSD: files.wii,v 1.2 2024/01/22 21:28:15 jmcneill Exp $
 #
 #
 maxpartitions 16
@@ -38,6 +38,14 @@ file	arch/evbppc/wii/mainbus.c		mainbus | cpu	needs-flag
 
 attach	genfb at mainbus with wiifb
 file	arch/evbppc/wii/dev/wiifb.c		wiifb
+
+device	bwai
+attach	bwai at mainbus
+file	arch/evbppc/wii/dev/bwai.c		bwai
+
+device	bwdsp: audiobus
+attach	bwdsp at mainbus
+file	arch/evbppc/wii/dev/bwdsp.c		bwdsp
 
 define	hollywood { [addr=-1], [irq=-1] }
 device	hollywood: hollywood
