@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.2 2024/01/21 01:41:54 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.3 2024/01/22 21:28:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -42,17 +42,23 @@
 
 #define WII_IOMEM_BASE			0x0c000000
 
-#define	GLOBAL_BASE			0x00000000
+#define GLOBAL_BASE			0x00000000
 #define GLOBAL_SIZE			0x00003400
 
 #define BROADWAY_BASE			0x0c000000
 #define BROADWAY_SIZE			0x00000004
 
-#define	VI_BASE				0x0c002000
-#define	VI_SIZE				0x00000100
+#define VI_BASE				0x0c002000
+#define VI_SIZE				0x00000100
 
 #define PI_BASE				0x0c003000
 #define PI_SIZE				0x00000100
+
+#define DSP_BASE			0x0c005000
+#define DSP_SIZE			0x00000200
+
+#define AI_BASE				0x0d006c00
+#define AI_SIZE				0x00000020
 
 #define HOLLYWOOD_BASE			0x0d000000
 #define HOLLYWOOD_PRIV_BASE		0x0d800000
@@ -61,8 +67,8 @@
 #define XFB_START			0x01698000
 #define XFB_SIZE			0x00168000
 
-#define DSP_START			0x10000000
-#define DSP_SIZE			0x00004000
+#define DSP_MEM_START			0x10000000
+#define DSP_MEM_SIZE			0x00004000
 
 #define IPC_START			0x133e0000
 #define IPC_SIZE			0x00020000
@@ -90,12 +96,14 @@
 #define PI_INTMR			(PI_BASE + 0x04)
 
 /* Processor IRQs */
-#define	PI_IRQ_HOLLYWOOD		14
+#define PI_IRQ_AI			5
+#define PI_IRQ_DSP			6
+#define PI_IRQ_HOLLYWOOD		14
 
 /* Hollywood registers */
 #define HW_PPCIRQFLAGS			(HOLLYWOOD_BASE + 0x030)
 #define HW_PPCIRQMASK			(HOLLYWOOD_BASE + 0x034)
-#define	HW_ARMIRQFLAGS			(HOLLYWOOD_PRIV_BASE + 0x038)
+#define HW_ARMIRQFLAGS			(HOLLYWOOD_PRIV_BASE + 0x038)
 #define HW_ARMIRQMASK			(HOLLYWOOD_PRIV_BASE + 0x03c)
 #define HW_AHBPROT			(HOLLYWOOD_PRIV_BASE + 0x064)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
