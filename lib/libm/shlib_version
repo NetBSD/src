@@ -1,8 +1,8 @@
-#	$NetBSD: shlib_version,v 1.18 2023/03/23 12:38:13 riastradh Exp $
+#	$NetBSD: shlib_version,v 1.19 2024/01/22 15:19:38 kre Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
 # - remove compatibility cabs
 # - not provide isinff / isnanf (only provide __isinff version)
 major=0
-minor=13
+minor=14

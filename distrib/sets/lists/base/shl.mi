@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.973 2023/12/20 17:17:21 christos Exp $
+# $NetBSD: shl.mi,v 1.974 2024/01/22 15:19:38 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -66,7 +66,7 @@
 ./lib/liblzma.so.2.0				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
-./lib/libm.so.0.13				base-sys-shlib		dynamicroot
+./lib/libm.so.0.14				base-sys-shlib		dynamicroot
 ./lib/libnpf.so					base-npf-shlib		dynamicroot,npf
 ./lib/libnpf.so.0				base-npf-shlib		dynamicroot,npf
 ./lib/libnpf.so.0.1				base-npf-shlib		dynamicroot,npf
@@ -444,7 +444,7 @@
 ./usr/lib/liblzma.so.2.0			base-sys-shlib		compatfile
 ./usr/lib/libm.so				base-sys-shlib		compatfile
 ./usr/lib/libm.so.0				base-sys-shlib		compatfile
-./usr/lib/libm.so.0.13				base-sys-shlib		compatfile
+./usr/lib/libm.so.0.14				base-sys-shlib		compatfile
 ./usr/lib/libmagic.so				base-sys-shlib		compatfile
 ./usr/lib/libmagic.so.8				base-sys-shlib		compatfile
 ./usr/lib/libmagic.so.8.0			base-sys-shlib		compatfile
