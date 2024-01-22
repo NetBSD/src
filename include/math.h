@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.68 2024/01/22 12:15:19 kre Exp $	*/
+/*	$NetBSD: math.h,v 1.69 2024/01/22 14:01:50 kre Exp $	*/
 
 /*
  * ====================================================
@@ -599,12 +599,10 @@ float	sinpif(float);
 double	tanpi(double);
 float	tanpif(float);
 
-#ifdef __HAVE_LONG_DOUBLE
 long double	cospil(long double);
 long double	lgammal_r(long double, int *);
 long double	sinpil(long double);
 long double	tanpil(long double);
-#endif
 
 __END_DECLS
 
