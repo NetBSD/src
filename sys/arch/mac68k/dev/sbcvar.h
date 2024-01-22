@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.13 2023/02/18 13:28:05 nat Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.14 2024/01/22 06:28:49 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -82,7 +82,7 @@ struct sbc_softc {
 #define	SBC_RESELECT		0x04	/* Allow disconnect/reselect */
 #define	SBC_PDMA_NO_WRITE	0x08	/* No PDMA for writes */
 #define	SBC_OPTIONS_MASK (SBC_PDMA_NO_WRITE|SBC_RESELECT|SBC_INTR|SBC_PDMA)
-#define	SBC_OPTIONS_BITS	"\10\4NOWRITE3RESELECT\2INTR\1PDMA"
+#define	SBC_OPTIONS_BITS	"\10\4NOWRITE\3RESELECT\2INTR\1PDMA"
 
 extern int	sbc_debug;
 extern int	sbc_link_flags;
