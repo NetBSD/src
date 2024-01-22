@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.238 2023/04/12 06:48:08 riastradh Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.239 2024/01/22 21:15:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ struct pkthdr {
 
 #define M_CSUM_BITS \
     "\20\1TCPv4\2UDPv4\3TCP_UDP_BAD\4DATA\5TCPv6\6UDPv6\7IPv4\10IPv4_BAD" \
-    "\11TSOv4\12TSOv6\39BLANK\40NO_PSEUDOHDR"
+    "\11TSOv4\12TSOv6\37BLANK\40NO_PSEUDOHDR"
 
 /*
  * Macros for manipulating csum_data on outgoing packets. These are
