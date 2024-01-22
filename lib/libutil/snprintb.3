@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.28 2024/01/21 23:57:49 uwe Exp $
+.\"     $NetBSD: snprintb.3,v 1.29 2024/01/22 00:11:21 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -304,6 +304,19 @@ snprintb(buf, buflen,
 \(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
 .Pp
+The same example using snprintb_m:
+.Bd -literal -offset indent
+snprintb_m(buf, buflen,
+    "\e177\e020"
+    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
+    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
+    "b\ex1fMSB\e0",
+    0x800f0701, 34)
+\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
+   "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
+   ""
+.Ed
+.Pp
 A more complex example from
 .In sys/mman.h
 that uses the both bit position
@@ -360,19 +373,7 @@ snprintb(buf, buflen, MAP_FMT, 0x0d001234)
 \(rA "0xd001234<COPY,FIXED,RENAME,HASSEMAPHORE,ANONYMOUS,ALIGN=8KB>"
 
 snprintb(buf, buflen, MAP_FMT, 0x2e000000)
-\(rA "0xd001234<0x2e000000<FILE,ALIGN=2^46>
-.Ed
-.Pp
-An example using snprintb_m:
-.Bd -literal -offset indent
-snprintb_m(buf, buflen,
-    "\e177\e020"
-    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
-    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
-    "b\ex1fMSB\e0" "\e0",
-    0x800f0701, 34)
-\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
-   "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
+\(rA "0xd001234<0x2e000000<FILE,ALIGN=2^46>"
 .Ed
 .Sh ERRORS
 .Fn snprintb
