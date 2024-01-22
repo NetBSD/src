@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.29 2024/01/22 12:15:19 kre Exp $
+ * $NetBSD: math_private.h,v 1.30 2024/01/22 14:26:18 kre Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -321,9 +321,10 @@ do {								\
 	.extu_fracl = (uint32_t)(__CONCAT(m, ULL)),			\
 	.extu_frach = __CONCAT(m, ULL) >> EXT_FRACLBITS,		\
 	.extu_exp = (0x3fff + (ex)),					\
-	.extu_sign = ((v) < 0 ? 0x8000 : 0) >> EXT_EXPBITS,		\
+	.extu_sign = ((v) < 0),						\
 }
 #else
+/**XXX: the following comment may no longer be true:  kre 20240122 **/
 /* The above works on non-i386 too, but we use this to check v. */
 #define	LD80C(m, ex, v)	{ .extu_ld = (v), }
 #endif
