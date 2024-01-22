@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.334 2023/12/20 17:17:21 christos Exp $
+# $NetBSD: shl.mi,v 1.335 2024/01/22 15:19:39 kre Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -18,7 +18,7 @@
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzma.so.2.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libm.so.0.13.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libm.so.0.14.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnpf.so.0.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnvpair.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libpcap.so.9.0.debug			comp-sys-debug	debug,dynamicroot
@@ -146,7 +146,7 @@
 ./usr/libdata/debug/usr/lib/liblutok.so.3.0.debug		comp-kyua-debug	debug,compatfile,kyua
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblzma.so.2.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libm.so.0.13.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libm.so.0.14.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmagic.so.8.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.8.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
