@@ -1,4 +1,4 @@
-/*	$NetBSD: open_memstream.c,v 1.1 2014/10/13 00:40:36 christos Exp $	*/
+/*	$NetBSD: open_memstream.c,v 1.2 2024/01/23 15:32:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Advanced Computing Technologies LLC
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/stdio/open_memstream.c 247411 2013-02-27 19:50:46Z jhb $");
 #endif
-__RCSID("$NetBSD: open_memstream.c,v 1.1 2014/10/13 00:40:36 christos Exp $");
+__RCSID("$NetBSD: open_memstream.c,v 1.2 2024/01/23 15:32:54 christos Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -51,16 +51,21 @@ struct memstream {
 	size_t offset;
 };
 
+static __inline size_t
+off_t_to_size_t(off_t off)
+{
+	if (off < 0 || off >= SSIZE_MAX)
+		return SSIZE_MAX - 1;
+	return (size_t)off;
+}
+
 static int
 memstream_grow(struct memstream *ms, off_t newoff)
 {
 	char *buf;
 	size_t newsize;
 
-	if (newoff < 0 || newoff >= SSIZE_MAX)
-		newsize = SSIZE_MAX - 1;
-	else
-		newsize = newoff;
+	newsize = off_t_to_size_t(newoff);
 	if (newsize > ms->len) {
 		buf = realloc(*ms->bufp, newsize + 1);
 		if (buf != NULL) {
@@ -125,7 +130,7 @@ memstream_seek(void *cookie, off_t pos, int whence)
 	case SEEK_SET:
 		/* _fseeko() checks for negative offsets. */
 		assert(pos >= 0);
-		ms->offset = pos;
+		ms->offset = off_t_to_size_t(pos);
 		break;
 	case SEEK_CUR:
 		/* This is only called by _ftello(). */
@@ -153,7 +158,7 @@ memstream_seek(void *cookie, off_t pos, int whence)
 				return (-1);
 			}
 		}
-		ms->offset = ms->len + pos;
+		ms->offset = off_t_to_size_t(ms->len + pos);
 		break;
 	}
 	memstream_update(ms);
