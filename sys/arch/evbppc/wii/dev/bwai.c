@@ -1,4 +1,4 @@
-/* $NetBSD: bwai.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $ */
+/* $NetBSD: bwai.c,v 1.2 2024/01/23 21:49:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.2 2024/01/23 21:49:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $");
 #include <machine/wii.h>
 
 #include "mainbus.h"
+#include "avenc.h"
 #include "bwai.h"
 
 #define	AI_CONTROL		0x00
@@ -62,7 +63,6 @@ struct bwai_softc {
 
 	struct audio_dai_device	sc_dai;
 
-	uint8_t			sc_swvol;
 	void			(*sc_intr)(void *);
 	void			*sc_intrarg;
 
@@ -123,36 +123,16 @@ bwai_dsp_init(kmutex_t *intr_lock)
 	return &sc->sc_dai;
 }
 
-static void
-bwai_swvol_codec(audio_filter_arg_t *arg)
-{
-	struct bwai_softc * const sc = arg->context;
-	const aint_t *src;
-	int16_t *dst;
-	u_int sample_count;
-	u_int i;
-
-	src = arg->src;
-	dst = arg->dst;
-	sample_count = arg->count * arg->srcfmt->channels;
-	for (i = 0; i < sample_count; i++) {
-		aint2_t v = (aint2_t)(*src++);
-		v = v * sc->sc_swvol / 255;
-		*dst++ = (aint_t)v;
-	}
-}
-
 static int
 bwai_set_port(void *priv, mixer_ctrl_t *mc)
 {
-	struct bwai_softc * const sc = priv;
-
 	if (mc->dev != BWAI_OUTPUT_MASTER_VOLUME &&
 	    mc->dev != BWAI_INPUT_DAC_VOLUME) {
 		return ENXIO;
 	}
 
-	sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+	avenc_set_volume(mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT],
+			 mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]);
 
 	return 0;
 }
@@ -160,15 +140,13 @@ bwai_set_port(void *priv, mixer_ctrl_t *mc)
 static int
 bwai_get_port(void *priv, mixer_ctrl_t *mc)
 {
-	struct bwai_softc * const sc = priv;
-
 	if (mc->dev != BWAI_OUTPUT_MASTER_VOLUME &&
 	    mc->dev != BWAI_INPUT_DAC_VOLUME) {
 		return ENXIO;
 	}
 
-	mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_swvol;
-	mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_swvol;
+	avenc_get_volume(&mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT],
+			 &mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT]);
 
 	return 0;
 }
@@ -220,11 +198,6 @@ bwai_set_format(void *priv, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	struct bwai_softc * const sc = priv;
-
-	pfil->codec = bwai_swvol_codec;
-	pfil->context = sc;
-
 	return 0;
 }
 
@@ -308,7 +281,6 @@ bwai_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dai.dai_hw_if = &bwai_hw_if;
 	sc->sc_dai.dai_dev = self;
 	sc->sc_dai.dai_priv = sc;
-	sc->sc_swvol = 255;
 }
 
 CFATTACH_DECL_NEW(bwai, sizeof(struct bwai_softc),
