@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.44 2024/01/21 00:43:34 christos Exp $
+# $NetBSD: Makefile.inc,v 1.45 2024/01/23 12:23:34 christos Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -342,6 +342,7 @@ LINTFLAGS.ctzti2.c += -X 351
 LINTFLAGS.divmodsi4.c += -X 351
 LINTFLAGS.divsi3.c += -X 117
 LINTFLAGS.divti3.c += -X 117,351
+LINTFLAGS.divtc3.c += -X 351	# ppc
 LINTFLAGS.dlfcn_elf.c += -X 351
 LINTFLAGS.ffsdi2.c += -X 132,351
 LINTFLAGS.ffsti2.c += -X 132,351
