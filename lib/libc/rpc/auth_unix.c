@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.27 2020/10/03 18:31:29 christos Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.28 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.27 2020/10/03 18:31:29 christos Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.28 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -66,8 +66,11 @@ __RCSID("$NetBSD: auth_unix.c,v 1.27 2020/10/03 18:31:29 christos Exp $");
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <rpc/rpc.h>
 #include <rpc/auth.h>
 #include <rpc/auth_unix.h>
+
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(authunix_create,_authunix_create)
@@ -370,9 +373,6 @@ static const struct auth_ops *
 authunix_ops(void)
 {
 	static struct auth_ops ops;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
 
 	/* VARIABLES PROTECTED BY ops_lock: ops */
 

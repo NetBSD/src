@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.40 2021/08/21 23:00:30 andvar Exp $	*/
+/*	$NetBSD: svc.c,v 1.41 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.40 2021/08/21 23:00:30 andvar Exp $");
+__RCSID("$NetBSD: svc.c,v 1.41 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -115,11 +115,6 @@ static struct svc_callout {
 	char		   *sc_netid;
 	void		    (*sc_dispatch)(struct svc_req *, SVCXPRT *);
 } *svc_head;
-
-#ifdef _REENTRANT
-extern rwlock_t svc_lock;
-extern rwlock_t svc_fd_lock;
-#endif
 
 static struct svc_callout *svc_find(rpcprog_t, rpcvers_t,
 					 struct svc_callout **, char *);

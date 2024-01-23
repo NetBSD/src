@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.19 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.20 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.19 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.20 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.19 2013/03/11 20:19:29 tron Exp $");
  */
 
 #include "namespace.h"
-
+#include "reentrant.h"
 #include <unistd.h>
 
 #include <rpc/rpc.h>

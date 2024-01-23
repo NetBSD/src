@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.33 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.34 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_simple.c,v 1.33 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.34 2024/01/23 17:24:38 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -114,9 +114,6 @@ rpc_reg(
 	struct netconfig *nconf;
 	int done = FALSE;
 	void *handle;
-#ifdef _REENTRANT
-	extern mutex_t proglst_lock;
-#endif
 
 	if (procnum == NULLPROC) {
 		warnx("%s: can't reassign procedure number %u", __func__,
@@ -260,9 +257,6 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 	char *outdata;
 	char *xdrbuf;
 	struct proglst *pl;
-#ifdef _REENTRANT
-	extern mutex_t proglst_lock;
-#endif
 
 	_DIAGASSERT(rqstp != NULL);
 	_DIAGASSERT(transp != NULL);

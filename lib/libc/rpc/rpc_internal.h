@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_internal.h,v 1.8 2015/11/07 23:09:20 christos Exp $	*/
+/*	$NetBSD: rpc_internal.h,v 1.9 2024/01/23 17:24:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -64,5 +64,22 @@ u_int32_t __rpc_getxid(void);
 extern SVCXPRT **__svc_xports;
 extern int __svc_maxrec;
 extern int __svc_flags;
+extern int __rpc_lowvers;
+
+#ifdef _REENTRANT
+extern mutex_t authsvc_lock;
+extern mutex_t clnt_fd_lock;
+extern mutex_t clntraw_lock;
+extern mutex_t dupreq_lock;
+extern mutex_t loopnconf_lock;
+extern mutex_t ops_lock;
+extern mutex_t proglst_lock;
+extern mutex_t rpcsoc_lock; 
+extern mutex_t svcraw_lock; 
+extern mutex_t xprtlist_lock;
+extern rwlock_t rpcbaddr_cache_lock;
+extern rwlock_t svc_fd_lock;
+extern rwlock_t svc_lock;
+#endif  
 
 int __clnt_sigfillset(sigset_t *);

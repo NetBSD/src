@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.28 2017/01/10 17:45:27 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.29 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.28 2017/01/10 17:45:27 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.29 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -73,9 +73,6 @@ svc_run_select(void)
 	int *maxfd, fdsize;
 #ifndef RUMP_RPC		
 	int probs = 0;
-#endif
-#ifdef _REENTRANT
-	extern rwlock_t svc_fd_lock;
 #endif
 
 	readfds = NULL;
@@ -139,9 +136,6 @@ svc_run_poll(void)
 	int *maxfd, fdsize, i;
 #ifndef RUMP_RPC		
 	int probs = 0;
-#endif
-#ifdef _REENTRANT
-	extern rwlock_t svc_fd_lock;
 #endif
 
 	fdsize = 0;
@@ -209,9 +203,6 @@ svc_run(void)
 void
 svc_exit(void)
 {
-#ifdef _REENTRANT
-	extern rwlock_t svc_fd_lock;
-#endif
 
 	rwlock_wrlock(&svc_fd_lock);
 	svc_fdset_zero();

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.14 2009/10/24 05:35:37 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.15 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: res_data.c,v 1.7 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.14 2009/10/24 05:35:37 christos Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.15 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,8 +117,6 @@ res_init(void) {
 	 * size as the original res structure, and then copy fields to
 	 * it so that we achieve the same initialization
 	 */
-	extern void *__res_get_old_state(void);
-	extern void __res_put_old_state(void *);
 	res_state ores = __res_get_old_state();
 
 	if (ores->options != 0)

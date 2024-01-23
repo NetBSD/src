@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction_siginfo.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $	*/
+/*	$NetBSD: __sigaction_siginfo.c,v 1.2 2024/01/23 17:24:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction_siginfo.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $");
+__RCSID("$NetBSD: __sigaction_siginfo.c,v 1.2 2024/01/23 17:24:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: __sigaction_siginfo.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $"
 #define C(a,b) __CONCAT(a,b)
 #define __SIGTRAMP_SIGINFO  \
     C(__sigtramp_siginfo_,__SIGTRAMP_SIGINFO_VERSION)
+extern const char __SIGTRAMP_SIGINFO[];
 
 /*
  * This serves no purpose except as a marker that this function should
@@ -55,7 +56,6 @@ int
 __sigaction_siginfo(int sig, const struct sigaction *act,
     struct sigaction *oact)
 {
-	extern const char __SIGTRAMP_SIGINFO[];
 
 	return __sigaction_sigtramp(sig, act, oact,
 	    __SIGTRAMP_SIGINFO, __SIGTRAMP_SIGINFO_VERSION);
