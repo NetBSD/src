@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.3 2024/01/22 21:28:15 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.4 2024/01/23 00:13:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -101,6 +101,10 @@
 #define PI_IRQ_HOLLYWOOD		14
 
 /* Hollywood registers */
+#define HW_VIDIM			(HOLLYWOOD_PRIV_BASE + 0x01c)
+#define  VIDIM_E			__BIT(7)
+#define  VIDIM_Y			__BITS(5,3)
+#define  VIDIM_C			__BITS(2,0)
 #define HW_PPCIRQFLAGS			(HOLLYWOOD_BASE + 0x030)
 #define HW_PPCIRQMASK			(HOLLYWOOD_BASE + 0x034)
 #define HW_ARMIRQFLAGS			(HOLLYWOOD_PRIV_BASE + 0x038)
