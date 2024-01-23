@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3028 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3029 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -246,5 +246,26 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	tzdata: Updated to 2023d (via 2023dgtz) [kre 20231223]
 	postfix(1): Import version 3.8.4. [christos 20231223]
 	tzcode: Updated to 2023d. [christos 20231223]
+	postfix(1): Install postfix-tls-script (for "postfix tls")
+		[kim 20240101]
+	gfpic(4): New driver for the Goldfish virtual programmable
+		interrupt controller. [thorpej 20240102]
+	gftty(4): New driver for the Goldfish virtual tty. [thorpej 20240102]
+	virt68k: Add new port for virtual Motorola 68040 machines in
+	QEMU using VirtIO devices. [thorpej 20240102]
+	urtwn(4): Add Mercusys NW150US V2 USB support. [maya 20240106]
+	riscv: Add a SiFive FU[57]40/ L2 Cache controller driver.
+		[skrll 20240113]
+	cp(1): Always copy regular files, even if they appear to be zero-sized.
+		[christos 20240115]
+	riscv: Add a StarTech JH7100 SoC clock driver, seen in the Beagle-V
+		board. [skrll 20240116]
 	wm(4): Add some Meteor Lake devices (I219 V20-V21 and LM 20-21).
 		[msaitoh 20240118]
+	cpuctl(8): Recognize Intel Meteor Lake and Emerald Rapids.
+		[msaitoh 20240118]
+	m68k: Made many ports share common code for interrupt dispatch
+		and vector tables. [thorpej 20240118]
+	evbppc: Add initial support for the Nintendo Wii. [jmcneill 20240120]
+	libm: Import more long double functions from FreeBSD.
+		[christos 20240121]
