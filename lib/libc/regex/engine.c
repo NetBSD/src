@@ -1,4 +1,4 @@
-/* $NetBSD: engine.c,v 1.29 2021/02/25 21:47:46 christos Exp $ */
+/* $NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -41,7 +41,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libc/regex/engine.c 368358 2020-12-05 03:16:05Z kevans $");
 #endif
-__RCSID("$NetBSD: engine.c,v 1.29 2021/02/25 21:47:46 christos Exp $");
+__RCSID("$NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $");
 
 #include <stdbool.h>
 
@@ -784,13 +784,13 @@ backref(
 		if (m->pmatch[i].rm_eo == -1)
 			return(NULL);
 		assert(m->pmatch[i].rm_so != -1);
-		len = m->pmatch[i].rm_eo - m->pmatch[i].rm_so;
+		len = (size_t)(m->pmatch[i].rm_eo - m->pmatch[i].rm_so);
 		if (len == 0 && rec++ > MAX_RECURSION)
 			return(NULL);
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
-		ssp = m->offp + m->pmatch[i].rm_so;
+		ssp = m->offp + (size_t)m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
 		while (m->g->strip[ss] != SOP(O_BACK, i))

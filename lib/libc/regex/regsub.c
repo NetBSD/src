@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.c,v 1.3 2016/02/29 22:10:13 aymeric Exp $	*/
+/*	$NetBSD: regsub.c,v 1.4 2024/01/23 15:32:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regsub.c,v 1.3 2016/02/29 22:10:13 aymeric Exp $");
+__RCSID("$NetBSD: regsub.c,v 1.4 2024/01/23 15:32:54 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ regsub1(char **buf, size_t len, const char *sub,
 			addchar(&s, c);
                 } else if (rm[i].rm_so != -1 && rm[i].rm_eo != -1) {
                         size_t l = (size_t)(rm[i].rm_eo - rm[i].rm_so);
-			addnstr(&s, str + rm[i].rm_so, l);
+			addnstr(&s, str + (size_t)rm[i].rm_so, l);
                 }
         }
 

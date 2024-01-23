@@ -1,4 +1,4 @@
-/*	$NetBSD: open_wmemstream.c,v 1.1 2014/10/13 00:40:36 christos Exp $	*/
+/*	$NetBSD: open_wmemstream.c,v 1.2 2024/01/23 15:32:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Advanced Computing Technologies LLC
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/stdio/open_wmemstream.c 247411 2013-02-27 19:50:46Z jhb $");
 #endif
-__RCSID("$NetBSD: open_wmemstream.c,v 1.1 2014/10/13 00:40:36 christos Exp $");
+__RCSID("$NetBSD: open_wmemstream.c,v 1.2 2024/01/23 15:32:54 christos Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -51,6 +51,14 @@ struct wmemstream {
 	size_t offset;
 	mbstate_t mbstate;
 };
+
+static __inline size_t
+off_t_to_size_t(off_t off)
+{
+	if (off < 0 || off >= SSIZE_MAX)
+		return SSIZE_MAX - 1;
+	return (size_t)off;
+}
 
 static int
 wmemstream_grow(struct wmemstream *ms, size_t newoff)
@@ -180,7 +188,7 @@ wmemstream_seek(void *cookie, off_t pos, int whence)
 	case SEEK_SET:
 		/* _fseeko() checks for negative offsets. */
 		assert(pos >= 0);
-		ms->offset = pos;
+		ms->offset = off_t_to_size_t(pos);
 		break;
 	case SEEK_CUR:
 		/* This is only called by _ftello(). */
@@ -208,7 +216,7 @@ wmemstream_seek(void *cookie, off_t pos, int whence)
 				return (-1);
 			}
 		}
-		ms->offset = ms->len + pos;
+		ms->offset = off_t_to_size_t(ms->len + pos);
 		break;
 	}
 	/* Reset the multibyte state if a seek changes the position. */
