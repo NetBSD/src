@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.199 2024/01/19 19:23:34 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.200 2024/01/23 19:44:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.199 2024/01/19 19:23:34 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.200 2024/01/23 19:44:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -205,7 +205,7 @@ static sym_t *symtab[503];
  * The kind of the next expected symbol, to distinguish the namespaces of
  * members, labels, type tags and other identifiers.
  */
-symt_t symtyp;
+symbol_kind sym_kind;
 
 
 static unsigned int
@@ -243,7 +243,7 @@ symtab_search(const char *name)
 		if (strcmp(sym->s_name, name) != 0)
 			continue;
 		if (sym->s_keyword != NULL ||
-		    sym->s_kind == symtyp ||
+		    sym->s_kind == sym_kind ||
 		    in_gcc_attribute)
 			return sym;
 	}
@@ -459,7 +459,7 @@ lex_keyword(sym_t *sym)
 
 /*
  * Look up the definition of a name in the symbol table. This symbol must
- * either be a keyword or a symbol of the type required by symtyp (label,
+ * either be a keyword or a symbol of the type required by sym_kind (label,
  * member, tag, ...).
  */
 extern int
@@ -1335,18 +1335,18 @@ getsym(sbuf_t *sb)
 
 	/*
 	 * During member declaration it is possible that name() looked for
-	 * symbols of type FVFT, although it should have looked for symbols of
-	 * type FTAG. Same can happen for labels. Both cases are compensated
-	 * here.
+	 * symbols of type SK_VCFT, although it should have looked for symbols
+	 * of type SK_TAG. Same can happen for labels. Both cases are
+	 * compensated here.
 	 */
-	if (symtyp == FMEMBER || symtyp == FLABEL) {
-		if (sym == NULL || sym->s_kind == FVFT)
+	if (sym_kind == SK_MEMBER || sym_kind == SK_LABEL) {
+		if (sym == NULL || sym->s_kind == SK_VCFT)
 			sym = symtab_search(sb->sb_name);
 	}
 
 	if (sym != NULL) {
-		lint_assert(sym->s_kind == symtyp);
-		set_symtyp(FVFT);
+		lint_assert(sym->s_kind == sym_kind);
+		set_sym_kind(SK_VCFT);
 		free(sb);
 		return sym;
 	}
@@ -1355,7 +1355,7 @@ getsym(sbuf_t *sb)
 
 	/* labels must always be allocated at level 1 (outermost block) */
 	decl_level *dl;
-	if (symtyp == FLABEL) {
+	if (sym_kind == SK_LABEL) {
 		sym = level_zero_alloc(1, sizeof(*sym), "sym");
 		char *s = level_zero_alloc(1, sb->sb_len + 1, "string");
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
@@ -1374,10 +1374,10 @@ getsym(sbuf_t *sb)
 	}
 
 	sym->s_def_pos = unique_curr_pos();
-	if ((sym->s_kind = symtyp) != FLABEL)
+	if ((sym->s_kind = sym_kind) != SK_LABEL)
 		sym->s_type = gettyp(INT);
 
-	set_symtyp(FVFT);
+	set_sym_kind(SK_VCFT);
 
 	if (!in_gcc_attribute) {
 		debug_printf("%s: symtab_add ", __func__);
@@ -1414,7 +1414,7 @@ mktempsym(type_t *tp)
 	sym->s_type = tp;
 	sym->s_block_level = block_level;
 	sym->s_scl = scl;
-	sym->s_kind = FVFT;
+	sym->s_kind = SK_VCFT;
 	sym->s_used = true;
 	sym->s_set = true;
 
@@ -1432,7 +1432,8 @@ rmsym(sym_t *sym)
 {
 
 	debug_step("rmsym '%s' %s '%s'",
-	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
+	    sym->s_name, symbol_kind_name(sym->s_kind),
+	    type_name(sym->s_type));
 	symtab_remove(sym);
 
 	/* avoid that the symbol will later be put back to the symbol table */
@@ -1454,9 +1455,8 @@ symtab_remove_level(sym_t *syms)
 	for (sym_t *sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
 			debug_step("%s '%s' %s '%s' %d", __func__,
-			    sym->s_name, symt_name(sym->s_kind),
-			    type_name(sym->s_type),
-			    sym->s_block_level);
+			    sym->s_name, symbol_kind_name(sym->s_kind),
+			    type_name(sym->s_type), sym->s_block_level);
 			symtab_remove(sym);
 			sym->s_symtab_ref = NULL;
 		}
@@ -1469,8 +1469,8 @@ inssym(int level, sym_t *sym)
 {
 
 	debug_step("%s '%s' %s '%s' %d", __func__,
-	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type),
-	    level);
+	    sym->s_name, symbol_kind_name(sym->s_kind),
+	    type_name(sym->s_type), level);
 	sym->s_block_level = level;
 	symtab_add(sym);
 
@@ -1502,7 +1502,8 @@ pushdown(const sym_t *sym)
 	sym_t *nsym;
 
 	debug_step("pushdown '%s' %s '%s'",
-	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
+	    sym->s_name, symbol_kind_name(sym->s_kind),
+	    type_name(sym->s_type));
 	nsym = block_zero_alloc(sizeof(*nsym), "sym");
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;

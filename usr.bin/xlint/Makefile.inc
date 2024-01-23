@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2024/01/21 14:59:18 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2024/01/23 19:44:28 rillig Exp $
 
 .include <bsd.own.mk>
 

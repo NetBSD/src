@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.208 2024/01/11 23:26:39 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.209 2024/01/23 19:44:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -192,15 +192,15 @@ struct lint1_type {
 #define	t_enum	t_u._t_enum
 #define	t_params	t_u._t_params
 
-/*
- * types of symbols
- */
+
+
+
 typedef enum {
-	FVFT,			/* variables, functions, type names, enums */
-	FMEMBER,		/* members of structs or unions */
-	FTAG,			/* tags */
-	FLABEL			/* labels */
-} symt_t;
+	SK_VCFT,		/* variable, constant, function, type */
+	SK_MEMBER,		/* member of a struct or union */
+	SK_TAG,
+	SK_LABEL
+} symbol_kind;
 
 /*
  * storage classes and related things
@@ -242,7 +242,7 @@ typedef struct sym {
 				 * order */
 	pos_t	s_set_pos;	/* position of first initialization */
 	pos_t	s_use_pos;	/* position of first use */
-	symt_t	s_kind;		/* type of symbol */
+	symbol_kind s_kind;
 	const struct keyword *s_keyword;
 	bool	s_bitfield:1;
 	bool	s_set:1;	/* variable set, label defined */
@@ -717,10 +717,10 @@ is_member(const sym_t *sym)
 }
 
 static inline void
-set_symtyp(symt_t symt)
+set_sym_kind(symbol_kind kind)
 {
 	if (yflag)
 		debug_step("%s: %s -> %s", __func__,
-		    symt_name(symtyp), symt_name(symt));
-	symtyp = symt;
+		    symbol_kind_name(sym_kind), symbol_kind_name(kind));
+	sym_kind = kind;
 }

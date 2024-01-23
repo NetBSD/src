@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.26 2023/08/01 19:52:15 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.27 2024/01/23 19:44:28 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -224,7 +224,7 @@ symbol_type_in_unnamed_bit_field_member(void)
 	struct s {
 		// Since there is no name in the declarator, the next symbol
 		// after the ':' must not be interpreted as a member name, but
-		// instead as a variable, type or function (FVFT).
+		// instead as a variable, type or function (SK_VCFT).
 		unsigned int :bits;
 		int named_member;
 	};
