@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.45 2024/01/23 12:23:34 christos Exp $
+# $NetBSD: Makefile.inc,v 1.46 2024/01/23 15:32:18 christos Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -317,10 +317,13 @@ COPTS.${src}+=	-D__SOFT_FP__
 .endfor
 
 LINTFLAGS.GCDAProfiling.c += -X 123,132,351 # Ok, this is just sloppy
+LINTFLAGS.GCDAProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfiling.c += -X 351
+LINTFLAGS.InstrProfiling.c += -X 298 # vax
 LINTFLAGS.InstrProfilingFile.c += -X 351
 LINTFLAGS.InstrProfilingPlatformLinux.c += -X 190,351
 LINTFLAGS.InstrProfilingValue.c += -X 132,231,275,351
+LINTFLAGS.InstrProfilingValue.c += -X 298 # vax
 LINTFLAGS.InstrProfilingWriter.c += -X 132
 LINTFLAGS.absvdi2.c += -X 117,351
 LINTFLAGS.absvsi2.c += -X 117,351
@@ -331,6 +334,7 @@ LINTFLAGS.addvsi3.c += -X 351
 LINTFLAGS.addvti3.c += -X 351
 LINTFLAGS.ashlti3.c += -X 351
 LINTFLAGS.ashrti3.c += -X 117,351
+LINTFLAGS.ashrdi3.c += -X 117 # vax
 LINTFLAGS.clzdi2.c += -X 351
 LINTFLAGS.clzsi2.c += -X 351
 LINTFLAGS.cmpti2.c += -X 351
@@ -339,6 +343,7 @@ LINTFLAGS.crzdi2.c += -X 351
 LINTFLAGS.ctzdi2.c += -X 351
 LINTFLAGS.ctzsi2.c += -X 351
 LINTFLAGS.ctzti2.c += -X 351
+LINTFLAGS.divdi3.c += -X 117 # vax
 LINTFLAGS.divmodsi4.c += -X 351
 LINTFLAGS.divsi3.c += -X 117
 LINTFLAGS.divti3.c += -X 117,351
@@ -377,6 +382,7 @@ LINTFLAGS.floatuntixf.c += -X 122,351
 LINTFLAGS.floatuntixf.c += -X 141 # alpha
 LINTFLAGS.int_util.c += -X 231
 LINTFLAGS.lshrti3.c += -X 351
+LINTFLAGS.moddi3.c += -X 117 # vax
 LINTFLAGS.modsi3.c += -X 117,351
 LINTFLAGS.modti3.c += -X 117,351
 LINTFLAGS.muldc3.c += -X 117,351
@@ -405,6 +411,7 @@ LINTFLAGS.subvsi3.c += -X 351
 LINTFLAGS.subvti3.c += -X 351
 LINTFLAGS.ucmpti2.c += -X 351
 LINTFLAGS.ucmpti2.c += -X 351
+LINTFLAGS.udivmoddi4.c += -X 117 # vax
 LINTFLAGS.udivmodti4.c += -X 117,132
 LINTFLAGS.udivsi3.c += -X 117
 LINTFLAGS.udivti3.c += -X 351
