@@ -1,4 +1,7 @@
-/*	$NetBSD: ieee.h,v 1.6 2014/10/22 10:32:50 joerg Exp $	*/
+/*	$NetBSD: ieee.h,v 1.7 2024/01/23 04:15:54 rin Exp $	*/
+
+#ifndef _POWERPC_IEEE_H_
+#define _POWERPC_IEEE_H_
 
 #include <sys/ieee754.h>
 
@@ -16,3 +19,5 @@ union ldbl_u {
 	long double	ldblu_ld;
 	double		ldblu_d[2];
 };
+
+#endif /* !_POWERPC_IEEE_H_ */
