@@ -1,4 +1,4 @@
-/*	$NetBSD: e_atan2l.c,v 1.1 2024/01/21 18:53:17 christos Exp $	*/
+/*	$NetBSD: e_atan2l.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
 /* @(#)e_atan2.c 1.3 95/01/18 */
 /* FreeBSD: head/lib/msun/src/e_atan2.c 176451 2008-02-22 02:30:36Z das */
 /*
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: e_atan2l.c,v 1.1 2024/01/21 18:53:17 christos Exp $");
+__RCSID("$NetBSD: e_atan2l.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 
 /*
  * See comments in e_atan2.c.
@@ -28,6 +28,7 @@ __weak_alias(atan2l, _atan2l)
 #endif
 
 #include <float.h>
+#include <machine/ieee.h>
 
 #include "math.h"
 #include "math_private.h"

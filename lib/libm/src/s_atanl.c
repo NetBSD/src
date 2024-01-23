@@ -14,6 +14,7 @@
 #include "namespace.h"
 
 #include <float.h>
+#include <machine/ieee.h>
 
 #include "math.h"
 #include "math_private.h"
