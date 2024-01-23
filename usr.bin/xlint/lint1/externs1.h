@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.211 2024/01/11 23:06:19 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.212 2024/01/23 19:44:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -80,7 +80,7 @@ extern bool in_gcc_attribute;
 extern pos_t curr_pos;
 extern pos_t csrc_pos;
 extern bool in_system_header;
-extern symt_t symtyp;
+extern symbol_kind sym_kind;
 extern FILE *yyin;
 
 void initscan(void);
@@ -133,7 +133,7 @@ void expr_restore_memory(memory_pool);
 #ifdef DEBUG
 const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
-const char *symt_name(symt_t);
+const char *symbol_kind_name(symbol_kind);
 const char *type_qualifiers_string(type_qualifiers);
 const char *function_specifier_name(function_specifier);
 void debug_dcs(void);

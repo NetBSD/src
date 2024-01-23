@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.596 2024/01/21 14:21:34 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.597 2024/01/23 19:44:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.596 2024/01/21 14:21:34 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.597 2024/01/23 19:44:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -495,7 +495,7 @@ build_name(sym_t *sym, bool is_funcname)
 			fallback_symbol(sym);
 	}
 
-	lint_assert(sym->s_kind == FVFT || sym->s_kind == FMEMBER);
+	lint_assert(sym->s_kind == SK_VCFT || sym->s_kind == SK_MEMBER);
 
 	tnode_t *n = expr_alloc_tnode();
 	n->tn_type = sym->s_type;
@@ -514,7 +514,7 @@ build_name(sym_t *sym, bool is_funcname)
 	} else {
 		n->tn_op = NAME;
 		n->tn_sym = sym;
-		if (sym->s_kind == FVFT && sym->s_type->t_tspec != FUNC)
+		if (sym->s_kind == SK_VCFT && sym->s_type->t_tspec != FUNC)
 			n->tn_lvalue = true;
 	}
 
@@ -1869,7 +1869,7 @@ remove_unknown_member(tnode_t *tn, sym_t *msym)
 	/* type '%s' does not have member '%s' */
 	error(101, type_name(tn->tn_type), msym->s_name);
 	rmsym(msym);
-	msym->s_kind = FMEMBER;
+	msym->s_kind = SK_MEMBER;
 	msym->s_scl = STRUCT_MEMBER;
 
 	struct_or_union *sou = expr_zero_alloc(sizeof(*sou),
@@ -2670,11 +2670,11 @@ check_unconst_function(const type_t *lstp, const tnode_t *rn)
 
 static bool
 check_assign_void_pointer_compat(op_t op, int arg,
-				 const type_t *ltp, tspec_t lt,
-				 const type_t *lstp, tspec_t lst,
-				 const tnode_t *rn,
-				 const type_t *rtp, tspec_t rt,
-				 const type_t *rstp, tspec_t rst)
+				 const type_t *const ltp, tspec_t const lt,
+				 const type_t *const lstp, tspec_t const lst,
+				 const tnode_t *const rn,
+				 const type_t *const rtp, tspec_t const rt,
+				 const type_t *const rstp, tspec_t const rst)
 {
 	if (!(lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
 					 types_compatible(lstp, rstp,
@@ -2713,8 +2713,8 @@ check_assign_void_pointer_compat(op_t op, int arg,
 
 static bool
 check_assign_pointer_integer(op_t op, int arg,
-			     const type_t *ltp, tspec_t lt,
-			     const type_t *rtp, tspec_t rt)
+			     const type_t *const ltp, tspec_t const lt,
+			     const type_t *const rtp, tspec_t const rt)
 {
 
 	if (!((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)))

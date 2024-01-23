@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.483 2024/01/13 11:24:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.484 2024/01/23 19:44:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.483 2024/01/13 11:24:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.484 2024/01/23 19:44:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -494,7 +494,7 @@ primary_expression:
 |	generic_selection
 	/* GCC primary-expression, see c_parser_postfix_expression */
 |	T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} member_designator T_RPAREN {
 		$$ = build_offsetof($3, $6);
 	}
@@ -511,7 +511,7 @@ member_designator:
 		designation_push(&$$, DK_SUBSCRIPT, NULL, $3.lo);
 	}
 |	member_designator T_POINT {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} identifier {
 		$$ = $1;
 		designation_push(&$$, DK_MEMBER, getsym($4), 0);
@@ -631,11 +631,11 @@ gcc_statement_expr_item:
 
 point_or_arrow:			/* helper for 'postfix_expression' */
 	T_POINT {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 		$$ = POINT;
 	}
 |	T_ARROW {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 		$$ = ARROW;
 	}
 ;
@@ -1010,7 +1010,7 @@ struct_or_union_specifier:
 		$$ = complete_struct_or_union($3);
 	}
 |	struct_or_union error {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		$$ = gettyp(INT);
 	}
 ;
@@ -1018,7 +1018,7 @@ struct_or_union_specifier:
 /* K&R ---, C90 ---, C99 6.7.2.1, C11 ???, C23 6.7.2.1 */
 struct_or_union:
 	T_STRUCT_OR_UNION {
-		set_symtyp(FTAG);
+		set_sym_kind(SK_TAG);
 		begin_declaration_level($1 == STRUCT ? DLK_STRUCT : DLK_UNION);
 		dcs->d_sou_size_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
@@ -1029,7 +1029,7 @@ struct_or_union:
 
 braced_member_declaration_list:	/* see C99 6.7.2.1 */
 	T_LBRACE {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 	} member_declaration_list_with_rbrace {
 		$$ = $3;
 	}
@@ -1058,15 +1058,15 @@ member_declaration:
 	begin_type_qualifier_list end_type {
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} notype_member_declarators T_SEMI {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		$$ = $4;
 	}
 |	begin_type_specifier_qualifier_list end_type {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} type_member_declarators T_SEMI {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		$$ = $4;
 	}
 |	begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
@@ -1076,7 +1076,7 @@ member_declaration:
 	}
 |	begin_type_specifier_qualifier_list end_type type_attribute_opt
 	    T_SEMI {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		if (!allow_c11 && !allow_gcc)
 			/* anonymous struct/union members is a C11 feature */
 			warning(49);
@@ -1092,7 +1092,7 @@ member_declaration:
 		$$ = NULL;
 	}
 |	error T_SEMI {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		$$ = NULL;
 	}
 ;
@@ -1103,7 +1103,7 @@ notype_member_declarators:
 		$$ = declare_member($1);
 	}
 |	notype_member_declarators {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	}
@@ -1115,7 +1115,7 @@ type_member_declarators:
 		$$ = declare_member($1);
 	}
 |	type_member_declarators {
-		set_symtyp(FMEMBER);
+		set_sym_kind(SK_MEMBER);
 	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	}
@@ -1130,7 +1130,7 @@ notype_member_declarator:
 	}
 	/* C99 6.7.2.1 */
 |	{
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 	} T_COLON constant_expression {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	}
@@ -1143,7 +1143,7 @@ type_member_declarator:
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	}
 |	{
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 	} T_COLON constant_expression type_attribute_list_opt {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	}
@@ -1165,21 +1165,21 @@ enum_specifier:
 		$$ = complete_enum($4);
 	}
 |	enum error {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		$$ = gettyp(INT);
 	}
 ;
 
 enum:				/* helper for C99 6.7.2.2 */
 	T_ENUM {
-		set_symtyp(FTAG);
+		set_sym_kind(SK_TAG);
 		begin_declaration_level(DLK_ENUM);
 	}
 ;
 
 enum_declaration:		/* helper for C99 6.7.2.2 */
 	T_LBRACE {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 		enumval = 0;
 	} enums_with_opt_comma T_RBRACE {
 		$$ = $3;
@@ -1771,7 +1771,7 @@ labeled_statement:		/* C99 6.8.1 */
 
 label:
 	T_NAME T_COLON {
-		set_symtyp(FLABEL);
+		set_sym_kind(SK_LABEL);
 		named_label(getsym($1));
 	}
 |	T_CASE constant_expression T_COLON {
@@ -1977,7 +1977,7 @@ jump_statement:			/* C99 6.8.6 */
 		stmt_goto(getsym($2));
 	}
 |	goto error T_SEMI {
-		set_symtyp(FVFT);
+		set_sym_kind(SK_VCFT);
 	}
 |	T_CONTINUE T_SEMI {
 		stmt_continue();
@@ -1995,7 +1995,7 @@ jump_statement:			/* C99 6.8.6 */
 
 goto:				/* see C99 6.8.6 */
 	T_GOTO {
-		set_symtyp(FLABEL);
+		set_sym_kind(SK_LABEL);
 	}
 ;
 

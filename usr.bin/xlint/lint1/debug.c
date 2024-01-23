@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.65 2023/12/03 12:03:38 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.66 2024/01/23 19:44:28 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.65 2023/12/03 12:03:38 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.66 2024/01/23 19:44:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -320,7 +320,7 @@ scl_name(scl_t scl)
 }
 
 const char *
-symt_name(symt_t kind)
+symbol_kind_name(symbol_kind kind)
 {
 	static const char *const name[] = {
 		"var-func-type",
@@ -373,7 +373,7 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		debug_printf(" type='%s'", type_name(sym->s_type));
 	if (sym->s_rename != NULL)
 		debug_printf(" rename=%s", sym->s_rename);
-	debug_printf(" %s", symt_name(sym->s_kind));
+	debug_printf(" %s", symbol_kind_name(sym->s_kind));
 	debug_word(sym->s_keyword != NULL, "keyword");
 	debug_word(sym->s_bitfield, "bit-field");
 	debug_word(sym->s_set, "set");

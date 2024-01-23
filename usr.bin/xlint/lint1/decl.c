@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.388 2024/01/21 14:21:34 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.389 2024/01/23 19:44:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.388 2024/01/21 14:21:34 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.389 2024/01/23 19:44:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -932,7 +932,7 @@ check_type(sym_t *sym)
  * implementation-defined type".
  */
 static void
-check_bit_field_type(sym_t *dsym, type_t **inout_tp, tspec_t *inout_t)
+check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 {
 	type_t *tp = *inout_tp;
 	tspec_t t = *inout_t;
@@ -976,7 +976,7 @@ check_bit_field_type(sym_t *dsym, type_t **inout_tp, tspec_t *inout_t)
 }
 
 static void
-check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **inout_tp)
+check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 {
 
 	check_bit_field_type(dsym, inout_tp, inout_t);
@@ -1054,7 +1054,7 @@ declare_unnamed_member(void)
 
 	sym_t *mem = block_zero_alloc(sizeof(*mem), "sym");
 	mem->s_name = unnamed;
-	mem->s_kind = FMEMBER;
+	mem->s_kind = SK_MEMBER;
 	mem->s_scl = dcs->d_kind == DLK_STRUCT ? STRUCT_MEMBER : UNION_MEMBER;
 	mem->s_block_level = -1;
 	mem->s_type = dcs->d_type;
@@ -1123,7 +1123,7 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 	if (dsym == NULL) {
 		dsym = block_zero_alloc(sizeof(*dsym), "sym");
 		dsym->s_name = unnamed;
-		dsym->s_kind = FMEMBER;
+		dsym->s_kind = SK_MEMBER;
 		dsym->s_scl = STRUCT_MEMBER;
 		dsym->s_type = gettyp(UINT);
 		dsym->s_block_level = -1;
@@ -1640,7 +1640,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		tag = block_zero_alloc(sizeof(*tag), "sym");
 		tag->s_name = unnamed;
 		tag->s_def_pos = unique_curr_pos();
-		tag->s_kind = FTAG;
+		tag->s_kind = SK_TAG;
 		tag->s_scl = scl;
 		tag->s_block_level = -1;
 		tag->s_type = tp = block_zero_alloc(sizeof(*tp), "type");
@@ -2612,7 +2612,7 @@ declare_external_in_block(sym_t *dsym)
 	sym_t *esym = dcs->d_redeclared_symbol;
 	while (esym != NULL && esym->s_block_level != 0) {
 		while ((esym = esym->s_symtab_next) != NULL) {
-			if (esym->s_kind != FVFT)
+			if (esym->s_kind != SK_VCFT)
 				continue;
 			if (strcmp(dsym->s_name, esym->s_name) == 0)
 				break;
@@ -2858,7 +2858,7 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 	 * Probably not, because there is no point in declaring an external
 	 * variable only to get its size.
 	 */
-	if (!fcall && !szof && sym->s_kind == FVFT && sym->s_scl == EXTERN)
+	if (!fcall && !szof && sym->s_kind == SK_VCFT && sym->s_scl == EXTERN)
 		outusg(sym);
 }
 
@@ -3015,13 +3015,13 @@ check_usage_sym(bool novar, const sym_t *sym)
 	if (sym->s_block_level == -1)
 		return;
 
-	if (sym->s_kind == FVFT && sym->s_param)
+	if (sym->s_kind == SK_VCFT && sym->s_param)
 		check_parameter_usage(novar, sym);
-	else if (sym->s_kind == FVFT)
+	else if (sym->s_kind == SK_VCFT)
 		check_variable_usage(novar, sym);
-	else if (sym->s_kind == FLABEL)
+	else if (sym->s_kind == SK_LABEL)
 		check_label_usage(sym);
-	else if (sym->s_kind == FTAG)
+	else if (sym->s_kind == SK_TAG)
 		check_tag_usage(sym);
 }
 
@@ -3127,12 +3127,12 @@ end_translation_unit(void)
 	    sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level == -1)
 			continue;
-		if (sym->s_kind == FVFT)
+		if (sym->s_kind == SK_VCFT)
 			check_global_variable(sym);
-		else if (sym->s_kind == FTAG)
+		else if (sym->s_kind == SK_TAG)
 			check_tag_usage(sym);
 		else
-			lint_assert(sym->s_kind == FMEMBER);
+			lint_assert(sym->s_kind == SK_MEMBER);
 	}
 }
 
