@@ -1,4 +1,4 @@
-/* $NetBSD: resetbtn.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: resetbtn.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: resetbtn.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: resetbtn.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,8 @@ resetbtn_attach(device_t parent, device_t self, void *aux)
 		smpsw = NULL;
 	}
 
-	hollywood_intr_establish(haa->haa_irq, IPL_HIGH, resetbtn_intr, smpsw);
+	hollywood_intr_establish(haa->haa_irq, IPL_HIGH, resetbtn_intr, smpsw,
+	    device_xname(self));
 }
 
 static int
