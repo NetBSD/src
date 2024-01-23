@@ -1,4 +1,4 @@
-/* $NetBSD: bwdsp.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $ */
+/* $NetBSD: bwdsp.c,v 1.2 2024/01/23 21:49:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwdsp.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwdsp.c,v 1.2 2024/01/23 21:49:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,13 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: bwdsp.c,v 1.1 2024/01/22 21:28:15 jmcneill Exp $");
 
 #define	BWDSP_MAP_FLAGS		BUS_DMA_NOCACHE
 
-#define	DSP_CONTROL_STATUS	0x0a
-#define	 DSP_CONTROL_STATUS_DSPINT	__BIT(7)
-#define	 DSP_CONTROL_STATUS_ARINT	__BIT(5)
-#define  DSP_CONTROL_STATUS_AIDINTMASK	__BIT(4)
-#define	 DSP_CONTROL_STATUS_AIDINT	__BIT(3)
-#define	 DSP_CONTROL_STATUS_HALT	__BIT(2)
-#define	 DSP_CONTROL_STATUS_PIINT	__BIT(1)
 #define DSP_DMA_START_ADDR_H	0x30
 #define	DSP_DMA_START_ADDR_L	0x32
 #define DSP_DMA_CONTROL_LENGTH	0x36
@@ -339,24 +332,6 @@ static const struct audio_hw_if bwdsp_hw_if = {
 	.get_locks = bwdsp_get_locks,
 };
 
-static int
-bwdsp_intr(void *priv)
-{
-	struct bwdsp_softc * const sc = priv;
-	uint16_t val;
-
-	val = RD2(sc, DSP_CONTROL_STATUS);
-	if ((val & DSP_CONTROL_STATUS_AIDINT) != 0) {
-		/* Acknowledge audio interrupt */
-		val &= ~(DSP_CONTROL_STATUS_DSPINT |
-			 DSP_CONTROL_STATUS_ARINT |
-			 DSP_CONTROL_STATUS_PIINT);
-		WR2(sc, DSP_CONTROL_STATUS, val);
-	}
-
-	return 1;
-}
-
 static void
 bwdsp_late_attach(device_t dev)
 {
@@ -386,7 +361,6 @@ bwdsp_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args * const maa = aux;
 	bus_addr_t addr = maa->maa_addr;
 	bus_size_t size = 0x200;
-	uint16_t val;
 
 	sc->sc_dev = self;
 	sc->sc_bst = maa->maa_bst;
@@ -410,13 +384,6 @@ bwdsp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_format.channel_mask = AUFMT_STEREO;
 	sc->sc_format.frequency_type = 1;
 	sc->sc_format.frequency[0] = 48000;
-
-	val = RD2(sc, DSP_CONTROL_STATUS);
-	val |= DSP_CONTROL_STATUS_AIDINTMASK;
-	val |= DSP_CONTROL_STATUS_PIINT;
-	WR2(sc, DSP_CONTROL_STATUS, val);
-
-	intr_establish(maa->maa_irq, IST_LEVEL, IPL_AUDIO, bwdsp_intr, sc);
 
 	config_defer(self, bwdsp_late_attach);
 }
