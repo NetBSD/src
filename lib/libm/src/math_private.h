@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.30 2024/01/22 14:26:18 kre Exp $
+ * $NetBSD: math_private.h,v 1.31 2024/01/23 15:45:07 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -19,7 +19,6 @@
 
 #include <assert.h>
 #include <sys/types.h>
-#include <machine/ieee.h>
 
 /* The original fdlibm code used statements like:
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *

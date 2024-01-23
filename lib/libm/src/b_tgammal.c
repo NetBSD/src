@@ -1,4 +1,4 @@
-/* 	$NetBSD: b_tgammal.c,v 1.1 2024/01/21 18:53:17 christos Exp $	*/
+/* 	$NetBSD: b_tgammal.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: b_tgammal.c,v 1.1 2024/01/21 18:53:17 christos Exp $");
+__RCSID("$NetBSD: b_tgammal.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include "math.h"
 #include <machine/float.h>
+#include <machine/ieee.h>
 
 
 #ifdef __HAVE_LONG_DOUBLE

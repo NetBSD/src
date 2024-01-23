@@ -1,4 +1,4 @@
-/*	$NetBSD: s_logl.c,v 1.1 2024/01/21 18:53:19 christos Exp $	*/
+/*	$NetBSD: s_logl.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_logl.c,v 1.1 2024/01/21 18:53:19 christos Exp $");
+__RCSID("$NetBSD: s_logl.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include "math.h"
 #include <machine/float.h>
+#include <machine/ieee.h>
 
 __weak_alias(logl, log)
 
