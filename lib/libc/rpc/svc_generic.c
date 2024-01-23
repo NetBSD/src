@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.17 2014/05/29 12:35:45 christos Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.18 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.17 2014/05/29 12:35:45 christos Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.18 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -101,9 +101,6 @@ svc_create(
 	SVCXPRT *xprt;
 	struct netconfig *nconf;
 	void *handle;
-#ifdef _REENTRANT
-	extern mutex_t xprtlist_lock;
-#endif
 
 /* VARIABLES PROTECTED BY xprtlist_lock: xprtlist */
 

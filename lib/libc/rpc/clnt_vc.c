@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.28 2022/01/24 09:14:36 andvar Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.29 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.28 2022/01/24 09:14:36 andvar Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.29 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
  
@@ -130,7 +130,6 @@ struct ct_data {
 #ifdef _REENTRANT
 static int      *vc_fd_locks;
 #define __rpc_lock_value __isthreaded;
-extern mutex_t  clnt_fd_lock;
 static cond_t   *vc_cv;
 #define release_fd_lock(fd, mask) {             \
 	mutex_lock(&clnt_fd_lock);      \
@@ -758,7 +757,6 @@ clnt_vc_ops(void)
 {
 	static struct clnt_ops ops;
 #ifdef _REENTRANT
-	extern mutex_t  ops_lock;
 	sigset_t mask;
 #endif
 	sigset_t newmask;

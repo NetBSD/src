@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.26 2013/03/11 20:19:28 tron Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.27 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.26 2013/03/11 20:19:28 tron Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.27 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: clnt_bcast.c,v 1.26 2013/03/11 20:19:28 tron Exp $");
  */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

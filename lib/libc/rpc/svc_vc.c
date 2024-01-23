@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.36 2021/12/07 22:09:59 andvar Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.37 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.36 2021/12/07 22:09:59 andvar Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.37 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -76,10 +76,6 @@ __RCSID("$NetBSD: svc_vc.c,v 1.36 2021/12/07 22:09:59 andvar Exp $");
 #ifdef __weak_alias
 __weak_alias(svc_fd_create,_svc_fd_create)
 __weak_alias(svc_vc_create,_svc_vc_create)
-#endif
-
-#ifdef _REENTRANT
-extern rwlock_t svc_fd_lock;
 #endif
 
 static SVCXPRT *makefd_xprt(int, u_int, u_int);
@@ -703,9 +699,6 @@ svc_vc_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
 
 /* VARIABLES PROTECTED BY ops_lock: ops, ops2 */
 
@@ -729,9 +722,7 @@ svc_vc_rendezvous_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
+
 	mutex_lock(&ops_lock);
 	if (ops.xp_recv == NULL) {
 		ops.xp_recv = rendezvous_request;

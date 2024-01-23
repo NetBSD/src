@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.39 2023/06/16 20:01:20 andvar Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.40 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.39 2023/06/16 20:01:20 andvar Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.40 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: xdr_rec.c,v 1.39 2023/06/16 20:01:20 andvar Exp $");
  */
 
 #include "namespace.h"
+#include "reentrant.h"
 
 #include <sys/types.h>
 

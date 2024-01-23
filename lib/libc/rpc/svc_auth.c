@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.18 2022/03/22 21:45:13 andvar Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.19 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_auth.c 1.26 89/02/07 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_auth.c,v 1.18 2022/03/22 21:45:13 andvar Exp $");
+__RCSID("$NetBSD: svc_auth.c,v 1.19 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: svc_auth.c,v 1.18 2022/03/22 21:45:13 andvar Exp $");
 #include <rpc/rpc.h>
 #include <assert.h>
 #include <stdlib.h>
+
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(svc_auth_reg,_svc_auth_reg)
@@ -108,9 +110,6 @@ _authenticate(struct svc_req *rqst, struct rpc_msg *msg)
 	int cred_flavor;
 	struct authsvc *asp;
 	enum auth_stat dummy;
-#ifdef _REENTRANT
-	extern mutex_t authsvc_lock;
-#endif
 
 	_DIAGASSERT(rqst != NULL);
 	_DIAGASSERT(msg != NULL);
@@ -183,9 +182,6 @@ svc_auth_reg(
 	enum auth_stat (*handler)(struct svc_req *, struct rpc_msg *))
 {
 	struct authsvc *asp;
-#ifdef _REENTRANT
-	extern mutex_t authsvc_lock;
-#endif
 
 	switch (cred_flavor) {
 	    case AUTH_NULL:

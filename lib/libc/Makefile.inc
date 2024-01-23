@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2024/01/20 14:52:45 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2024/01/23 17:24:38 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -57,8 +57,6 @@ LINTFLAGS+=	-w
 LINTFLAGS+=	-X 272
 # XXX: ignore 'missing header declaration' warnings (for now).
 LINTFLAGS+=	-X 351
-# XXX: ignore 'nested extern' warnings (for now).
-LINTFLAGS+=	-X 352
 
 .include "libcincludes.mk"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.33 2015/11/06 19:32:08 christos Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.34 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.33 2015/11/06 19:32:08 christos Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.34 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -62,13 +62,11 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.33 2015/11/06 19:32:08 christos Exp $");
 #include <rpc/rpc.h>
 #include <rpc/raw.h>
 
+#include "rpc_internal.h"
+
 #ifdef __weak_alias
 __weak_alias(clntraw_create,_clntraw_create)
 __weak_alias(clnt_raw_create,_clnt_raw_create)
-#endif
-
-#ifdef _REENTRANT
-extern mutex_t clntraw_lock;
 #endif
 
 #define MCALL_MSG_SIZE 24
@@ -299,9 +297,6 @@ static struct clnt_ops *
 clnt_raw_ops(void)
 {
 	static struct clnt_ops ops;
-#ifdef _REENTRANT
-	extern mutex_t  ops_lock;
-#endif
 
 	/* VARIABLES PROTECTED BY ops_lock: ops */
 

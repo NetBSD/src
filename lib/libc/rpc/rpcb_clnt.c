@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.32 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.31 2015/03/26 11:31:57 justin Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.32 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -108,8 +108,6 @@ static int cachesize;
 #define	CLCR_SET_RPCB_TIMEOUT	2
 
 
-extern int __rpc_lowvers;
-
 static struct address_cache *check_cache(const char *, const char *);
 static void delete_cache(struct netbuf *);
 static void add_cache(const char *, const char *, struct netbuf *, char *);
@@ -159,9 +157,6 @@ __rpc_control(int request, void *info)
  * block all clnt_create's if we are trying to connect to a host that's down,
  * since the lock will be held all during that time.
  */
-#ifdef _REENTRANT
-extern rwlock_t	rpcbaddr_cache_lock;
-#endif
 
 /*
  * The routines check_cache(), add_cache(), delete_cache() manage the
@@ -438,9 +433,6 @@ local_rpcb(void)
 	CLIENT *client;
 	static struct netconfig *loopnconf;
 	static const char *hostname;
-#ifdef _REENTRANT
-	extern mutex_t loopnconf_lock;
-#endif
 	int sock;
 	size_t tsize;
 	struct netbuf nbuf;

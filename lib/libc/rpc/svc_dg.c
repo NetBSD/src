@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.17 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.18 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.17 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.18 2024/01/23 17:24:38 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -318,9 +318,6 @@ svc_dg_ops(SVCXPRT *xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef _REENTRANT
-	extern mutex_t ops_lock;
-#endif
 
 	_DIAGASSERT(xprt != NULL);
 
@@ -407,10 +404,6 @@ struct cl_cache {
 #define	CACHE_LOC(transp, xid)	\
 	(xid % (SPARSENESS * ((struct cl_cache *) \
 		su_data(transp)->su_cache)->uc_size))
-
-#ifdef _REENTRANT
-extern mutex_t	dupreq_lock;
-#endif
 
 /*
  * Enable use of the cache. Returns 1 on success, 0 on failure.

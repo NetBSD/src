@@ -1,4 +1,4 @@
-/*	$NetBSD: res_private.h,v 1.4 2021/09/30 12:35:55 christos Exp $	*/
+/*	$NetBSD: res_private.h,v 1.5 2024/01/23 17:24:38 christos Exp $	*/
 
 #ifndef res_private_h
 #define res_private_h
@@ -21,6 +21,11 @@ struct __res_state_ext {
 
 extern int res_ourserver_p(const res_state, const struct sockaddr *);
 extern int __res_vinit(res_state, int);
+#ifdef COMPAT__RES
+extern void *__res_get_old_state(void);
+extern void __res_put_old_state(void *);
+#endif
+
 
 #endif
 

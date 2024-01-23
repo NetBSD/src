@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.23 2015/11/13 15:23:17 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.24 2024/01/23 17:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.23 2015/11/13 15:23:17 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.24 2024/01/23 17:24:38 christos Exp $");
 #endif
 #endif
 
@@ -94,10 +94,6 @@ __weak_alias(svcraw_create,_svcraw_create)
 __weak_alias(callrpc,_callrpc)
 __weak_alias(registerrpc,_registerrpc)
 __weak_alias(clnt_broadcast,_clnt_broadcast)
-#endif
-
-#ifdef _REENTRANT
-extern mutex_t	rpcsoc_lock;
 #endif
 
 static CLIENT *clnt_com_create(struct sockaddr_in *, rpcprog_t, rpcvers_t,
