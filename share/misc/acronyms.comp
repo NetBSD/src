@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.386 2024/01/18 03:33:08 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.387 2024/01/23 15:58:17 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -724,6 +724,7 @@ HLE	hardware lock elision (Intel)
 HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
+HNDL	harvest now, decrypt later
 HOOD	hierarchical object oriented design
 HOTP	HMAC-based one time password
 HP	Hewlett-Packard
