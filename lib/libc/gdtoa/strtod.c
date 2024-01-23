@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.19 2023/08/11 06:02:46 mrg Exp $ */
+/* $NetBSD: strtod.c,v 1.20 2024/01/23 15:31:58 christos Exp $ */
 
 /****************************************************************
 
@@ -96,7 +96,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #ifdef Avoid_Underflow
 	int scale;
 #endif
-	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, decpt, dsign,
+	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj;
@@ -117,7 +117,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #endif /*USE_LOCALE}}*/
 
 #ifdef Honor_FLT_ROUNDS /*{*/
-	int Rounding;
+	int Rounding, decpt = 0;
 #ifdef Trust_FLT_ROUNDS /*{{ only define this if FLT_ROUNDS really works! */
 	Rounding = Flt_Rounds;
 #else /*}{*/
@@ -130,7 +130,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #endif /*}}*/
 #endif /*}*/
 
-	sign = nz0 = nz = decpt = 0;
+	sign = nz0 = nz = 0;
 	dval(&rv) = 0.;
 	for(s = s00;;s++) switch(*s) {
 		case '-':
@@ -211,7 +211,9 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 	if (c == '.') {
 		c = *++s;
 #endif
+#ifdef Honor_FLT_ROUNDS
 		decpt = 1;
+#endif
 		if (!nd) {
 			for(; c == '0'; c = *++s)
 				nz++;
@@ -349,6 +351,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 	if (nd <= DBL_DIG
 #ifndef RND_PRODQUOT
 #ifndef Honor_FLT_ROUNDS
+	/*CONSTCOND*/
 		&& Flt_Rounds == 1
 #endif
 #endif
