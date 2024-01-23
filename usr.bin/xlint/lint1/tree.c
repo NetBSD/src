@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.597 2024/01/23 19:44:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.598 2024/01/23 20:03:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.597 2024/01/23 19:44:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.598 2024/01/23 20:03:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2670,11 +2670,11 @@ check_unconst_function(const type_t *lstp, const tnode_t *rn)
 
 static bool
 check_assign_void_pointer_compat(op_t op, int arg,
-				 const type_t *const ltp, tspec_t const lt,
-				 const type_t *const lstp, tspec_t const lst,
-				 const tnode_t *const rn,
-				 const type_t *const rtp, tspec_t const rt,
-				 const type_t *const rstp, tspec_t const rst)
+				 const type_t *ltp, tspec_t lt,
+				 const type_t *lstp, tspec_t lst,
+				 const tnode_t *rn,
+				 const type_t *rtp, tspec_t rt,
+				 const type_t *rstp, tspec_t rst)
 {
 	if (!(lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
 					 types_compatible(lstp, rstp,
@@ -2713,8 +2713,8 @@ check_assign_void_pointer_compat(op_t op, int arg,
 
 static bool
 check_assign_pointer_integer(op_t op, int arg,
-			     const type_t *const ltp, tspec_t const lt,
-			     const type_t *const rtp, tspec_t const rt)
+			     const type_t *ltp, tspec_t lt,
+			     const type_t *rtp, tspec_t rt)
 {
 
 	if (!((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)))
