@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: ehci_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,7 +84,8 @@ ehci_hollywood_attach(device_t parent, device_t self, void *aux)
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	EOWRITE4(sc, EHCI_USBINTR, 0);
 
-	hollywood_intr_establish(haa->haa_irq, IPL_USB, ehci_intr, sc);
+	hollywood_intr_establish(haa->haa_irq, IPL_USB, ehci_intr, sc,
+	    device_xname(self));
 
 	error = ehci_init(sc);
 	if (error != 0) {

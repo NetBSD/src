@@ -1,4 +1,4 @@
-/* $NetBSD: hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -206,15 +206,16 @@ hollywood_intr_init(int irq)
 
 	pic_add(&hollywood_pic);
 
-	intr_establish(irq, IST_LEVEL, IPL_SCHED, pic_handle_intr,
-	    &hollywood_pic);
+	intr_establish_xname(irq, IST_LEVEL, IPL_SCHED, pic_handle_intr,
+	    &hollywood_pic, "hollywood0");
 }
 
 void *
-hollywood_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
+hollywood_intr_establish(int irq, int ipl, int (*func)(void *), void *arg,
+    const char *name)
 {
 	KASSERT(hollywood_pic.pic_intrbase != 0);
 
-	return intr_establish(hollywood_pic.pic_intrbase + irq,
-	    IST_LEVEL, ipl, func, arg);
+	return intr_establish_xname(hollywood_pic.pic_intrbase + irq,
+	    IST_LEVEL, ipl, func, arg, name);
 }

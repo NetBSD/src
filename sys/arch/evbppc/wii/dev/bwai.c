@@ -1,4 +1,4 @@
-/* $NetBSD: bwai.c,v 1.2 2024/01/23 21:49:20 jmcneill Exp $ */
+/* $NetBSD: bwai.c,v 1.3 2024/01/23 21:56:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.2 2024/01/23 21:49:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwai.c,v 1.3 2024/01/23 21:56:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,7 +118,8 @@ bwai_dsp_init(kmutex_t *intr_lock)
 
 	sc->sc_intr_lock = intr_lock;
 
-	intr_establish(sc->sc_irq, IST_LEVEL, IPL_AUDIO, bwai_intr, sc);
+	intr_establish_xname(sc->sc_irq, IST_LEVEL, IPL_AUDIO, bwai_intr, sc,
+	    device_xname(dev));
 
 	return &sc->sc_dai;
 }

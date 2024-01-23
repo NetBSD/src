@@ -1,4 +1,4 @@
-/* $NetBSD: sdhc_hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $ */
+/* $NetBSD: sdhc_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_hollywood.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_hollywood.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,7 +90,7 @@ sdhc_hollywood_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": SDHC\n");
 
 	hollywood_intr_establish(haa->haa_irq, IPL_SDMMC, sdhc_intr,
-	    &sc->sc_base);
+	    &sc->sc_base, device_xname(self));
 
 	error = sdhc_host_found(&sc->sc_base, bst, bsh, SDHC_SIZE);
 	if (error != 0) {
