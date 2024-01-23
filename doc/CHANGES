@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3029 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3030 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -252,7 +252,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		interrupt controller. [thorpej 20240102]
 	gftty(4): New driver for the Goldfish virtual tty. [thorpej 20240102]
 	virt68k: Add new port for virtual Motorola 68040 machines in
-	QEMU using VirtIO devices. [thorpej 20240102]
+		QEMU using VirtIO devices. [thorpej 20240102]
 	urtwn(4): Add Mercusys NW150US V2 USB support. [maya 20240106]
 	riscv: Add a SiFive FU[57]40/ L2 Cache controller driver.
 		[skrll 20240113]
