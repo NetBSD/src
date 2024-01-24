@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2024/01/24 21:53:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2024/01/24 21:53:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,12 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2024/01/20 21:36:00 jmcneill Exp $"
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/boot_flag.h>
 
 #include <powerpc/pte.h>
+
+#include <machine/wii.h>
 
 void findroot(void);
 void disable_intr(void);
 void enable_intr(void);
+
+static void parse_cmdline(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -66,6 +71,7 @@ void enable_intr(void);
 void
 cpu_configure(void)
 {
+	parse_cmdline();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -87,21 +93,40 @@ cpu_rootconf(void)
 void
 findroot(void)
 {
-	device_t dev;
-
-	if (booted_device != NULL) {
-		return;
-	}
-
-	if ((dev = device_find_by_driver_unit("ld", 0)) != NULL) {
-		booted_device = dev;
-		booted_partition = 0;
-		return;
-	}
 }
 
 void
 device_register(device_t dev, void *aux)
 {
-	/* do nothing */
+	if (bootspec != NULL && strcmp(device_xname(dev), bootspec) == 0) {
+		booted_device = dev;
+		booted_partition = 0;
+	}
+}
+
+static void
+parse_cmdline(void)
+{
+	static char bootspec_buf[64];
+	extern char wii_cmdline[];
+	const char *cmdline = wii_cmdline;
+
+	while (*cmdline != '\0') {
+		const char *cp = cmdline;
+
+		if (*cp == '-') {
+			for (cp++; *cp != '\0'; cp++) {
+				BOOT_FLAG(*cp, boothowto);
+			}
+		} else if (strncmp(cp, "root=", 5) == 0) {
+			snprintf(bootspec_buf, sizeof(bootspec_buf), "%s",
+			    cp + 5);
+			if (bootspec_buf[0] != '\0') {
+				bootspec = bootspec_buf;
+				booted_method = "bootinfo/rootdevice";
+			}
+		}
+
+		cmdline += strlen(cmdline) + 1;
+	}
 }

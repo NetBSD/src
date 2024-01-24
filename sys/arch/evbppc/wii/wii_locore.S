@@ -1,4 +1,4 @@
-/*	$NetBSD: wii_locore.S,v 1.1 2024/01/20 21:36:00 jmcneill Exp $	*/
+/*	$NetBSD: wii_locore.S,v 1.2 2024/01/24 21:53:34 jmcneill Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
-#include "opt_openpic.h"
 #include "opt_ppcparam.h"
 #include "assym.h"
 
@@ -79,7 +77,22 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
+	b	__mmu_init
 
+	/*
+	 * Command-line argument protocol supported by HBC.
+	 */
+	.long	0x5f617267	/* WII_ARGV_MAGIC */
+	.globl	_C_LABEL(wii_argv)
+_C_LABEL(wii_argv):
+	.long	0		/* argv magic, set by loader */
+	.long	0		/* command line */
+	.long	0		/* command line length */
+	.long	0		/* argc */
+	.long	0		/* argv */
+	.long	0		/* end of argv */
+
+__mmu_init:
 	/* reset MMU to a known state */
 #include "wii_mmuinit.S"
 

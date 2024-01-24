@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.5 2024/01/23 21:48:12 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.6 2024/01/24 21:53:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -124,6 +124,15 @@
 /* GPIOs */
 #define GPIO_SHUTDOWN			1
 #define GPIO_SLOT_LED			5
+
+/* Command line protocol */
+#define WII_ARGV_MAGIC			0x5f617267
+struct wii_argv {
+	uint32_t	magic;
+	uint32_t	cmdline;
+	uint32_t	length;
+	uint32_t	unused[3];
+};
 
 /* Blink the slot LED forever at the specified interval. */
 static inline void __dead

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2024/01/22 21:28:15 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2024/01/24 21:53:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2024/01/22 21:28:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2024/01/24 21:53:34 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -214,6 +214,7 @@ struct powerpc_bus_dma_tag wii_mem2_bus_dma_tag = {
  * Global variables used here and there
  */
 struct mem_region physmemr[3], availmemr[3];
+char wii_cmdline[1024];
 
 void initppc(u_int, u_int, u_int, void *); /* Called from locore */
 void wii_dolphin_elf_loader_id(void);
@@ -226,10 +227,18 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
 	extern u_long ticks_per_sec;
 	extern unsigned char edata[], end[];
+	extern struct wii_argv wii_argv;
 	uint32_t mem2_size;
 	register_t scratch;
 
 	memset(&edata, 0, end - edata); /* clear BSS */
+
+	if (wii_argv.magic == WII_ARGV_MAGIC) {
+		void *ptr = (void *)(uintptr_t)(wii_argv.cmdline & ~0x80000000);
+		if (ptr != NULL) {
+			memcpy(wii_cmdline, ptr, wii_argv.length);
+		}
+	}
 
 	mem2_size = in32(GLOBAL_MEM2_SIZE);
 
