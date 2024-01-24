@@ -1,0 +1,14 @@
+#!/bin/sh
+# simple script to do some of the mechanical conversion from the FreeBSD
+# sources
+sed -i \
+    -e 's/IEEEl2bits/ieee_ext_u/g' \
+    -e 's/bits.man/extu_frac/g' \
+    -e 's/\.\<e\>/\.extu_ld/g' \
+    -e 's/LDBL_MANH_SIZE/EXT_FRACHBITS/g' \
+    -e 's/LDBL_MANL_SIZE/EXT_FRACLBITS/g' \
+    -e 's/u.xbits.expsign/GET_EXPSIGN(\&u)/g' \
+    -e 's/bits.exp/extu_exp/g' \
+    -e 's/bits.sign/extu_sign/g' \
+    "$@"
+
