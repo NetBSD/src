@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.39 2020/05/23 21:24:41 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.40 2024/01/24 16:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.39 2020/05/23 21:24:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.40 2024/01/24 16:11:48 christos Exp $");
 
 #include <sys/param.h>
 
@@ -91,14 +91,22 @@ sched_rqinit(void)
 	sched_rrticks = mstohz(100);			/* ~100 ms */
 	sched_precalcts();
 
-#ifdef notdef
+#ifdef notyet
 	/* Need to set the name etc. This does not belong here */
 	/* Attach the primary CPU here */
 	sched_cpuattach(curcpu());
 #endif
 
 	sched_lwp_fork(NULL, &lwp0);
+#ifdef notyet
+	/* without attaching the primary CPU l_mutex does not get initialized */
+	lwp_lock(&lwp0);
 	sched_newts(&lwp0);
+	lwp_unlock(&lwp0);
+#else
+	/* gross */
+	lwp0.l_sched.timeslice = ts_map[lwp0.l_auxprio];
+#endif
 }
 
 /* Pre-calculate the time-slices for the priorities */
