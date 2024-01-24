@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1978 2024/01/24 20:06:40 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1979 2024/01/24 21:04:08 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -365,16 +365,16 @@ Notes:
 Please submit all changes upstream.
 Import using the import-src make target.
 
-Package:       drm
-Version:       Linux 3.15
-Current Vers:  ?
-Maintainer:    Intel, AMD, Linux kernel developers
-Archive Site:  git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-Home Page:     http://dri.freedesktop.org/
-Mailing List:  dri-devel@lists.freedesktop.org
-Responsible:   riastradh
-License:       BSD
-Location:      sys/external/bsd/drm2/dist
+Package:	drm
+Version:	Linux 3.15
+Current Vers:	?
+Maintainer:	Intel, AMD, Linux kernel developers
+Archive Site:	git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+Home Page:	http://dri.freedesktop.org/
+Mailing List:	dri-devel@lists.freedesktop.org
+Responsible:	riastradh
+License:	BSD
+Location:	sys/external/bsd/drm2/dist
 Notes:
 Graphics drivers.   Talk to riastradh@ about updates.  When importing
 from Linux, we map
@@ -1658,39 +1658,39 @@ Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	usr.bin/timeout
 
-Package:        libproc
-Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-2018-07-27 r336782
-Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
-Archive Site:   none
-Home Page:      https://svnweb.freebsd.org/base/head/lib/libproc/
-Mailing List:   none
-Responsible:    christos
-License:        BSD-like (2-clause)
-Location:       external/bsd/libproc/dist
+Package:	libproc
+Version:	FreeBSD-2015-09-24
+Current Vers:	FreeBSD-2018-07-27 r336782
+Maintainer:	Rui Paulo <rpaulo@FreeBSD.org>
+Archive Site:	none
+Home Page:	https://svnweb.freebsd.org/base/head/lib/libproc/
+Mailing List:	none
+Responsible:	christos
+License:	BSD-like (2-clause)
+Location:	external/bsd/libproc/dist
 
-Package:        librtld_db
-Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-2017-11-26 r326219
-Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
-Archive Site:   none
-Home Page:      https://svnweb.freebsd.org/base/head/lib/librtld_db/
-Mailing List:   none
-Responsible:    christos
-License:        BSD-like (2-clause)
-Location:       external/bsd/librtld_db/dist
+Package:	librtld_db
+Version:	FreeBSD-2015-09-24
+Current Vers:	FreeBSD-2017-11-26 r326219
+Maintainer:	Rui Paulo <rpaulo@FreeBSD.org>
+Archive Site:	none
+Home Page:	https://svnweb.freebsd.org/base/head/lib/librtld_db/
+Mailing List:	none
+Responsible:	christos
+License:	BSD-like (2-clause)
+Location:	external/bsd/librtld_db/dist
 
-Package:        netcat
-Version:        OpenBSD-2017-02-06
-Current Vers:   OpenBSD-2020-02-12
-Maintainer:     OpenBSD
-Archive Site:   http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/nc/
-Home Page:      none
+Package:	netcat
+Version:	OpenBSD-2017-02-06
+Current Vers:	OpenBSD-2020-02-12
+Maintainer:	OpenBSD
+Archive Site:	http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/nc/
+Home Page:	none
 Date:		2020-06-13
-Mailing List:   none
-Responsible:    christos
-License:        BSD-like (3-clause)
-Location:       usr.bin/nc
+Mailing List:	none
+Responsible:	christos
+License:	BSD-like (3-clause)
+Location:	usr.bin/nc
 
 Package:	gnu-efi
 Version:	3.0.14
@@ -2009,7 +2009,7 @@ Package:	tigon
 Version:	12.4.11
 Current Vers:
 Maintainer:	wpaul@brak.osd.bsdi.com
-Archive Site:   https://people.freebsd.org/~wpaul/Alteon/
+Archive Site:	https://people.freebsd.org/~wpaul/Alteon/
 Home Page:	http://www.alteon.com/support/openkits (extinct)
 Mailing List:
 License:	Alteon WebSystems, Inc.
