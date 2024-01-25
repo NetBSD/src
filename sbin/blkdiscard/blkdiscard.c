@@ -1,7 +1,7 @@
-/*	$NetBSD: blkdiscard.c,v 1.2 2024/01/25 02:06:56 mrg Exp $	*/
+/*	$NetBSD: blkdiscard.c,v 1.3 2024/01/25 02:42:17 mrg Exp $	*/
 
 /*
- * Copyright (c) 2019, 2020, 2022 Matthew R. Green
+ * Copyright (c) 2019, 2020, 2022, 2024 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,6 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
-#include <assert.h>
 #include <stdbool.h>
 
 static bool secure = false;
@@ -53,7 +52,7 @@ static bool zeroout = false;
 static char *zeros = NULL;
 static unsigned ttywidth = 80;
 
-#define FDISCARD_VERSION	20220206u
+#define FDISCARD_VERSION	20240113u
 
 static void __dead
 usage(const char* msg)
@@ -105,6 +104,7 @@ main(int argc, char *argv[])
 	int64_t val;
 	int i;
 	bool verbose = false;
+	struct stat sb;
 
 	/* Default /sbin/blkdiscard to be "run" */
 	bool norun = strcmp(getprogname(), "blkdiscard") != 0;
@@ -176,6 +176,7 @@ main(int argc, char *argv[])
 
 	if (size == 0) {
 		struct dkwedge_info dkw;
+
 		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
 			size = dkw.dkw_size * DEV_BSIZE;
 			if (verbose)
@@ -184,24 +185,20 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (size == 0) {
+	if (size == 0 && fstat(fd, &sb) != -1) {
 		struct disklabel dl;
+
 		if (ioctl(fd, DIOCGDINFO, &dl) != -1) {
-			char partchar = name[strlen(name)-1];
-			assert(partchar >= 'a' && partchar <= 'p');
-			int part = partchar - 'a';
+			unsigned part = DISKPART(sb.st_rdev);
 
 			size = (uint64_t)dl.d_partitions[part].p_size *
 			    dl.d_secsize;
 			if (verbose)
-				printf("%s: disklabel size is %lld\n", name,
-				    (long long)size);
+				printf("%s: partition %u disklabel size is"
+				       " %lld\n", name, part, (long long)size);
 		}
-	}
 
-	if (size == 0) {
-		struct stat sb;
-		if (fstat(fd, &sb) != -1) {
+		if (size == 0) {
 			size = sb.st_size;
 			if (verbose)
 				printf("%s: stat size is %lld\n", name,
