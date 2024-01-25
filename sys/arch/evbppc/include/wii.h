@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.6 2024/01/24 21:53:34 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.7 2024/01/25 11:47:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -57,6 +57,9 @@
 #define DSP_BASE			0x0c005000
 #define DSP_SIZE			0x00000200
 
+#define EXI_BASE			0x0d006800
+#define EXI_SIZE			0x00000080
+
 #define AI_BASE				0x0d006c00
 #define AI_SIZE				0x00000020
 
@@ -96,6 +99,7 @@
 #define PI_INTMR			(PI_BASE + 0x04)
 
 /* Processor IRQs */
+#define PI_IRQ_EXI			4
 #define PI_IRQ_AI			5
 #define PI_IRQ_DSP			6
 #define PI_IRQ_HOLLYWOOD		14
