@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.9 2023/12/20 18:09:19 skrll Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.10 2024/01/25 05:48:56 msaitoh Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.9 2023/12/20 18:09:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.10 2024/01/25 05:48:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -1116,11 +1116,35 @@ igc_update_counters(struct igc_softc *sc)
 
 	/* Mac statistics */
 	struct igc_hw *hw = &sc->hw;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint64_t iqdrops = 0;
 
 	for (int cnt = 0; cnt < IGC_MAC_COUNTERS; cnt++) {
-		IGC_MAC_COUNTER_ADD(sc, cnt, igc_read_mac_counter(hw,
-		    igc_mac_counters[cnt].reg, igc_mac_counters[cnt].is64));
+		uint64_t val;
+		bus_size_t regaddr = igc_mac_counters[cnt].reg;
+
+		val = igc_read_mac_counter(hw, regaddr,
+		    igc_mac_counters[cnt].is64);
+		IGC_MAC_COUNTER_ADD(sc, cnt, val);
+		/* XXX Count MPC to iqdrops. */
+		if (regaddr == IGC_MPC)
+			iqdrops += val;
 	}
+
+	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
+		uint32_t val;
+
+		/* XXX RQDPC should be visible via evcnt(9). */
+		val = IGC_READ_REG(hw, IGC_RQDPC(iq));
+
+		/* RQDPC is not cleard on read. */
+		if (val != 0)
+			IGC_WRITE_REG(hw, IGC_RQDPC(iq), 0);
+		iqdrops += val;
+	}
+
+	if (iqdrops != 0)
+		if_statadd(ifp, if_iqdrops, iqdrops);
 #endif
 }
 
