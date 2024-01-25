@@ -1,4 +1,4 @@
-/*	$NetBSD: blkdiscard.c,v 1.1 2022/02/07 09:33:26 mrg Exp $	*/
+/*	$NetBSD: blkdiscard.c,v 1.2 2024/01/25 02:06:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2022 Matthew R. Green
@@ -51,6 +51,7 @@
 static bool secure = false;
 static bool zeroout = false;
 static char *zeros = NULL;
+static unsigned ttywidth = 80;
 
 #define FDISCARD_VERSION	20220206u
 
@@ -224,7 +225,9 @@ main(int argc, char *argv[])
 		size = end_offset;
 	}
 
-	if (verbose)
+	if (verbose) {
+		struct winsize winsize;
+
 		printf("%sgoing to %s on %s from byte %lld for "
 		       "%lld bytes, %lld at a time\n",
 		       norun ? "not " : "",
@@ -233,7 +236,12 @@ main(int argc, char *argv[])
 		       name, (long long)first_byte, (long long)size,
 		       (long long)max_per_call);
 
-	int loop = 0;
+		if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) != -1 &&
+		    winsize.ws_col > 1)
+			ttywidth = winsize.ws_col - 1;
+	}
+
+	unsigned loop = 0;
 	while (size > 0) {
 		if (size > max_per_call)
 			discard_size = max_per_call;
@@ -248,7 +256,7 @@ main(int argc, char *argv[])
 		if (verbose) {
 			printf(".");
 			fflush(stdout);
-			if (loop++ > 100) {
+			if (++loop >= ttywidth) {
 				loop = 0;
 				printf("\n");
 			}
