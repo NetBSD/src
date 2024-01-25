@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.373 2024/01/25 07:35:46 sjg Exp $
+.\"	$NetBSD: make.1,v 1.374 2024/01/25 21:00:59 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1772,11 +1772,11 @@ is used to save the result of the
 .Ql :S
 modifier which is later referenced using the index values from
 .Ql :range .
-.It Cm \&:U\| Ns Oo Ar newval Oc
+.It Cm \&:U\| Ns Ar newval
 If the variable is undefined,
 the optional
 .Ar newval
-is the value.
+(which may be empty) is the value.
 If the variable is defined, the existing value is returned.
 This is another ODE make feature.
 It is handy for setting per-target CFLAGS for instance:
@@ -1786,7 +1786,7 @@ If a value is only required if the variable is undefined, use:
 .It Cm \&:D\| Ns Ar newval
 If the variable is defined,
 .Ar newval
-is the value.
+(which may be empty) is the value.
 .It Cm \&:L
 The name of the variable is the value.
 .It Cm \&:P
