@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.372 2023/12/24 16:48:30 sjg Exp $
+.\"	$NetBSD: make.1,v 1.373 2024/01/25 07:35:46 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 24, 2023
+.Dd January 24, 2024
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1772,8 +1772,9 @@ is used to save the result of the
 .Ql :S
 modifier which is later referenced using the index values from
 .Ql :range .
-.It Cm \&:U\| Ns Ar newval
+.It Cm \&:U\| Ns Oo Ar newval Oc
 If the variable is undefined,
+the optional
 .Ar newval
 is the value.
 If the variable is defined, the existing value is returned.
