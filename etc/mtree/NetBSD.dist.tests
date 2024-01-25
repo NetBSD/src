@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.201 2023/08/26 10:06:16 rillig Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.202 2024/01/25 00:30:57 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -462,6 +462,7 @@
 ./usr/tests/usr.bin/make/unit-tests
 ./usr/tests/usr.bin/mixerctl
 ./usr/tests/usr.bin/mkdep
+./usr/tests/usr.bin/mtree
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/patch
