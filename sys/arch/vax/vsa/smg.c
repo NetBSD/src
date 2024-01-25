@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.65 2023/03/26 15:12:34 andvar Exp $ */
+/*	$NetBSD: smg.c,v 1.66 2024/01/25 19:12:49 tsutsui Exp $ */
 /*	$OpenBSD: smg.c,v 1.28 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.65 2023/03/26 15:12:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.66 2024/01/25 19:12:49 tsutsui Exp $");
 
 #include "dzkbd.h"
 #include "wsdisplay.h"
@@ -475,7 +475,7 @@ smg_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset >= SMSIZE || offset < 0)
 		return -1;
 
-	return SMADDR + offset;
+	return (SMADDR + offset) >> PGSHIFT;
 }
 
 static int
