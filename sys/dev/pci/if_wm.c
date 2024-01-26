@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.793 2024/01/18 03:16:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.794 2024/01/26 03:23:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.793 2024/01/18 03:16:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.794 2024/01/26 03:23:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -2721,6 +2721,10 @@ alloc_retry:
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
+
+	/* sc->sc_pba is set in wm_reset(). */
+	aprint_verbose_dev(sc->sc_dev, "RX packet buffer size: %uKB\n",
+	    sc->sc_pba);
 
 	/*
 	 * Check for I21[01] PLL workaround.
