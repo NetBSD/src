@@ -1,4 +1,12 @@
-$NetBSD: CHANGES,v 1.54 2022/11/02 20:38:21 andvar Exp $
+$NetBSD: CHANGES,v 1.55 2024/01/26 23:19:44 mrg Exp $
+
+changes in bozohttpd 20240126:
+	o  add some more default mime types.
+	o  fix memory leaks.  from shm.
+	o  fix reading 2 bytes beyond '%', possibly not mapped.  from shm.
+	o  support openssl 3.  from christos.
+	o  add -q option to not log.  from martin.
+	o  fix default return value of bozo_set_defaults(), PR#54785.
 
 changes in bozohttpd 20220104:
 	o  remove obsolete .bzdirect handling.

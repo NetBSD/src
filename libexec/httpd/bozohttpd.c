@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.145 2023/09/20 07:13:35 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.146 2024/01/26 23:19:44 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2023 Matthew R. Green
+ * Copyright (c) 1997-2024 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20230602"
+#define SERVER_SOFTWARE		"bozohttpd/20240126"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
