@@ -26,13 +26,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sinh.3	6.6 (Berkeley) 4/19/91
-.\"	$NetBSD: sinh.3,v 1.14 2003/08/07 16:44:49 agc Exp $
+.\"	$NetBSD: sinh.3,v 1.15 2024/01/26 19:27:30 nros Exp $
 .Dd April 19, 1991
 .Dt SINH 3
 .Os
 .Sh NAME
 .Nm sinh ,
-.Nm sinhf
+.Nm sinhf ,
+.Nm sinhl
 .Nd hyperbolic sine function
 .Sh LIBRARY
 .Lb libm
@@ -42,6 +43,8 @@
 .Fn sinh "double x"
 .Ft float
 .Fn sinhf "float x"
+.Ft long double
+.Fn sinh "long double x"
 .Sh DESCRIPTION
 The
 .Fn sinh

@@ -26,22 +26,25 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.23 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: lgamma.3,v 1.24 2024/01/26 19:27:30 nros Exp $
 .\"
-.Dd May 4, 2012
+.Dd January 24, 2024
 .Dt LGAMMA 3
 .Os
 .Sh NAME
 .Nm lgamma ,
 .Nm lgammaf ,
+.Nm lgammal ,
 .Nm lgamma_r ,
 .Nm lgammaf_r ,
+.Nm lgammal_r ,
 .Nm gamma ,
 .Nm gammaf ,
 .Nm gamma_r ,
 .Nm gammaf_r ,
 .Nm tgamma ,
-.Nm tgammaf
+.Nm tgammaf ,
+.Nm tgammal
 .Nd log gamma function
 .Sh LIBRARY
 .Lb libm
@@ -54,10 +57,14 @@
 .Fn lgamma "double x"
 .Ft float
 .Fn lgammaf "float x"
+.Ft long double
+.Fn lgammal "long double x"
 .Ft double
 .Fn lgamma_r "double x" "int *sign"
 .Ft float
 .Fn lgammaf_r "float x" "int *sign"
+.Ft long double
+.Fn lgammal_r "long double x" "int *sign"
 .Ft double
 .Fn gamma "double x"
 .Ft float
@@ -70,6 +77,8 @@
 .Fn tgamma "double x"
 .Ft float
 .Fn tgammaf "float x"
+.Ft long double
+.Fn tgammal "long double x"
 .Sh DESCRIPTION
 .Fn lgamma x
 .if t \{\

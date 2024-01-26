@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2452 2024/01/07 00:38:18 pgoyette Exp $
+#	$NetBSD: mi,v 1.2453 2024/01/26 19:27:29 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7010,6 +7010,7 @@
 ./usr/share/man/cat3/cosf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cosh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/coshf.0			comp-c-catman		.cat
+./usr/share/man/cat3/coshl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cosl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpow.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		complex,.cat
@@ -7660,11 +7661,14 @@
 ./usr/share/man/cat3/exp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp2f.0			comp-c-catman		.cat
+./usr/share/man/cat3/exp2l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expf.0			comp-c-catman		.cat
+./usr/share/man/cat3/expl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/explicit_bzero.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/explicit_memset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
+./usr/share/man/cat3/expm1l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/extattr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/extattr_copy_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_copy_file.0	comp-c-catman		.cat
@@ -9071,6 +9075,8 @@
 ./usr/share/man/cat3/lgamma_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lgammaf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lgammaf_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/lgammal.0			comp-c-catman		.cat
+./usr/share/man/cat3/lgammal_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/lhash.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libarchive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_changes.0	comp-c-catman		.cat
@@ -9116,6 +9122,7 @@
 ./usr/share/man/cat3/lldiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/llrint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/llrintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/llrintl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/localeconv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime_r.0		comp-c-catman		.cat
@@ -9124,14 +9131,18 @@
 ./usr/share/man/cat3/log.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log10.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log10f.0			comp-c-catman		.cat
+./usr/share/man/cat3/log10l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log1p.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log1pf.0			comp-c-catman		.cat
+./usr/share/man/cat3/log1pl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log2f.0			comp-c-catman		.cat
+./usr/share/man/cat3/log2fl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logbf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logbl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logf.0			comp-c-catman		.cat
+./usr/share/man/cat3/logl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/login.0			comp-c-catman		.cat
 ./usr/share/man/cat3/login_cap.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_close.0		comp-c-catman		.cat
@@ -9154,6 +9165,7 @@
 ./usr/share/man/cat3/lrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lrint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lrintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/lrintl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/magic_buffer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/magic_check.0		comp-c-catman		.cat
@@ -9583,6 +9595,7 @@
 ./usr/share/man/cat3/post_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/powf.0			comp-c-catman		.cat
+./usr/share/man/cat3/powl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ppath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_bool.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_component_at.0	comp-c-catman		.cat
@@ -10162,10 +10175,12 @@
 ./usr/share/man/cat3/regsterrpc.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/remainder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remainderf.0		comp-c-catman		.cat
+./usr/share/man/cat3/remainderl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remque.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remquo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remquof.0			comp-c-catman		.cat
+./usr/share/man/cat3/remquol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/replace_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/replace_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_init.0		comp-c-catman		.cat
@@ -10530,6 +10545,8 @@
 ./usr/share/man/cat3/sinf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sinh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sinhf.0			comp-c-catman		.cat
+./usr/share/man/cat3/sinhl.0			comp-c-catman		.cat
+./usr/share/man/cat3/sinl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/skey.0			comp-c-catman		skey,.cat
 ./usr/share/man/cat3/skey_authenticate.0	comp-c-catman		skey,.cat
 ./usr/share/man/cat3/skey_get_algorithm.0	comp-c-catman		skey,.cat
@@ -10973,6 +10990,8 @@
 ./usr/share/man/cat3/tanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tanh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tanhf.0			comp-c-catman		.cat
+./usr/share/man/cat3/tanhl.0			comp-c-catman		.cat
+./usr/share/man/cat3/tanl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tcdrain.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tcflow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tcflush.0			comp-c-catman		.cat
@@ -11000,6 +11019,7 @@
 ./usr/share/man/cat3/tfind.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgamma.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgammaf.0			comp-c-catman		.cat
+./usr/share/man/cat3/tgammal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetflag.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetnum.0			comp-c-catman		.cat
@@ -15483,6 +15503,7 @@
 ./usr/share/man/html3/cosf.html			comp-c-htmlman		html
 ./usr/share/man/html3/cosh.html			comp-c-htmlman		html
 ./usr/share/man/html3/coshf.html		comp-c-htmlman		html
+./usr/share/man/html3/coshl.html		comp-c-htmlman		html
 ./usr/share/man/html3/cosl.html			comp-c-htmlman		html
 ./usr/share/man/html3/cpow.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpowf.html		comp-c-htmlman		complex,html
@@ -16142,11 +16163,14 @@
 ./usr/share/man/html3/exp.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2f.html		comp-c-htmlman		html
+./usr/share/man/html3/exp2l.html		comp-c-htmlman		html
 ./usr/share/man/html3/expf.html			comp-c-htmlman		html
+./usr/share/man/html3/expl.html			comp-c-htmlman		html
 ./usr/share/man/html3/explicit_bzero.html	comp-obsolete		obsolete
 ./usr/share/man/html3/explicit_memset.html	comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
+./usr/share/man/html3/expm1l.html		comp-c-htmlman		html
 ./usr/share/man/html3/extattr.html		comp-obsolete		obsolete
 ./usr/share/man/html3/extattr_copy_fd.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_copy_file.html	comp-c-htmlman		html
@@ -17531,6 +17555,8 @@
 ./usr/share/man/html3/lgamma_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/lgammaf.html		comp-c-htmlman		html
 ./usr/share/man/html3/lgammaf_r.html		comp-c-htmlman		html
+./usr/share/man/html3/lgammal.html		comp-c-htmlman		html
+./usr/share/man/html3/lgammal_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/lh_stats.html	comp-obsolete		obsolete
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_changes.html	comp-c-htmlman		html
@@ -17564,6 +17590,7 @@
 ./usr/share/man/html3/lldiv.html		comp-c-htmlman		html
 ./usr/share/man/html3/llrint.html		comp-c-htmlman		html
 ./usr/share/man/html3/llrintf.html		comp-c-htmlman		html
+./usr/share/man/html3/llrintl.html		comp-c-htmlman		html
 ./usr/share/man/html3/localeconv.html		comp-c-htmlman		html
 ./usr/share/man/html3/localtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/localtime_r.html		comp-c-htmlman		html
@@ -17572,14 +17599,18 @@
 ./usr/share/man/html3/log.html			comp-c-htmlman		html
 ./usr/share/man/html3/log10.html		comp-c-htmlman		html
 ./usr/share/man/html3/log10f.html		comp-c-htmlman		html
+./usr/share/man/html3/log10l.html		comp-c-htmlman		html
 ./usr/share/man/html3/log1p.html		comp-c-htmlman		html
 ./usr/share/man/html3/log1pf.html		comp-c-htmlman		html
+./usr/share/man/html3/log1pl.html		comp-c-htmlman		html
 ./usr/share/man/html3/log2.html			comp-c-htmlman		html
 ./usr/share/man/html3/log2f.html		comp-c-htmlman		html
+./usr/share/man/html3/log2l.html		comp-c-htmlman		html
 ./usr/share/man/html3/logb.html			comp-c-htmlman		html
 ./usr/share/man/html3/logbf.html		comp-c-htmlman		html
 ./usr/share/man/html3/logbl.html		comp-c-htmlman		html
 ./usr/share/man/html3/logf.html			comp-c-htmlman		html
+./usr/share/man/html3/logl.html			comp-c-htmlman		html
 ./usr/share/man/html3/login.html		comp-c-htmlman		html
 ./usr/share/man/html3/login_cap.html		comp-c-htmlman		html
 ./usr/share/man/html3/login_close.html		comp-c-htmlman		html
@@ -17602,6 +17633,7 @@
 ./usr/share/man/html3/lrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/lrint.html		comp-c-htmlman		html
 ./usr/share/man/html3/lrintf.html		comp-c-htmlman		html
+./usr/share/man/html3/lrintl.html		comp-c-htmlman		html
 ./usr/share/man/html3/lsearch.html		comp-c-htmlman		html
 ./usr/share/man/html3/magic_buffer.html		comp-c-htmlman		html
 ./usr/share/man/html3/magic_check.html		comp-c-htmlman		html
@@ -18050,6 +18082,7 @@
 ./usr/share/man/html3/post_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/pow.html			comp-c-htmlman		html
 ./usr/share/man/html3/powf.html			comp-c-htmlman		html
+./usr/share/man/html3/powl.html			comp-c-htmlman		html
 ./usr/share/man/html3/ppath.html		comp-c-htmlman		html
 ./usr/share/man/html3/ppath_bool.html		comp-c-htmlman		html
 ./usr/share/man/html3/ppath_component_at.html	comp-c-htmlman		html
@@ -18624,10 +18657,12 @@
 ./usr/share/man/html3/regnsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainder.html		comp-c-htmlman		html
 ./usr/share/man/html3/remainderf.html		comp-c-htmlman		html
+./usr/share/man/html3/remainderl.html		comp-c-htmlman		html
 ./usr/share/man/html3/remove.html		comp-c-htmlman		html
 ./usr/share/man/html3/remque.html		comp-c-htmlman		html
 ./usr/share/man/html3/remquo.html		comp-c-htmlman		html
 ./usr/share/man/html3/remquof.html		comp-c-htmlman		html
+./usr/share/man/html3/remquol.html		comp-c-htmlman		html
 ./usr/share/man/html3/replace_panel.html	comp-c-htmlman		html
 ./usr/share/man/html3/replace_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/request_init.html		comp-c-htmlman		html
@@ -18973,6 +19008,8 @@
 ./usr/share/man/html3/sinf.html			comp-c-htmlman		html
 ./usr/share/man/html3/sinh.html			comp-c-htmlman		html
 ./usr/share/man/html3/sinhf.html		comp-c-htmlman		html
+./usr/share/man/html3/sinhl.html		comp-c-htmlman		html
+./usr/share/man/html3/sinl.html			comp-c-htmlman		html
 ./usr/share/man/html3/skey.html			comp-c-htmlman		skey,html
 ./usr/share/man/html3/skey_authenticate.html	comp-c-htmlman		skey,html
 ./usr/share/man/html3/skey_get_algorithm.html	comp-c-htmlman		skey,html
@@ -19401,6 +19438,8 @@
 ./usr/share/man/html3/tanf.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanh.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanhf.html		comp-c-htmlman		html
+./usr/share/man/html3/tanhl.html		comp-c-htmlman		html
+./usr/share/man/html3/tanl.html			comp-c-htmlman		html
 ./usr/share/man/html3/tcdrain.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcflow.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcflush.html		comp-c-htmlman		html
@@ -19428,6 +19467,7 @@
 ./usr/share/man/html3/tfind.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgamma.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgammaf.html		comp-c-htmlman		html
+./usr/share/man/html3/tgammal.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetent.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetnum.html		comp-c-htmlman		html
@@ -23899,6 +23939,7 @@
 ./usr/share/man/man3/cosf.3			comp-c-man		.man
 ./usr/share/man/man3/cosh.3			comp-c-man		.man
 ./usr/share/man/man3/coshf.3			comp-c-man		.man
+./usr/share/man/man3/coshl.3			comp-c-man		.man
 ./usr/share/man/man3/cosl.3			comp-c-man		.man
 ./usr/share/man/man3/cpow.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		complex,.man
@@ -24560,11 +24601,14 @@
 ./usr/share/man/man3/exp.3			comp-c-man		.man
 ./usr/share/man/man3/exp2.3			comp-c-man		.man
 ./usr/share/man/man3/exp2f.3			comp-c-man		.man
+./usr/share/man/man3/exp2l.3			comp-c-man		.man
 ./usr/share/man/man3/expf.3			comp-c-man		.man
+./usr/share/man/man3/expl.3			comp-c-man		.man
 ./usr/share/man/man3/explicit_bzero.3		comp-obsolete		obsolete
 ./usr/share/man/man3/explicit_memset.3		comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
+./usr/share/man/man3/expm1l.3			comp-c-man		.man
 ./usr/share/man/man3/extattr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/extattr_copy_fd.3		comp-c-man		.man
 ./usr/share/man/man3/extattr_copy_file.3	comp-c-man		.man
@@ -25971,6 +26015,8 @@
 ./usr/share/man/man3/lgamma_r.3			comp-c-man		.man
 ./usr/share/man/man3/lgammaf.3			comp-c-man		.man
 ./usr/share/man/man3/lgammaf_r.3		comp-c-man		.man
+./usr/share/man/man3/lgammal.3			comp-c-man		.man
+./usr/share/man/man3/lgammal_r.3		comp-c-man		.man
 ./usr/share/man/man3/lh_stats.3	comp-obsolete		obsolete
 ./usr/share/man/man3/lhash.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
@@ -26017,6 +26063,7 @@
 ./usr/share/man/man3/lldiv.3			comp-c-man		.man
 ./usr/share/man/man3/llrint.3			comp-c-man		.man
 ./usr/share/man/man3/llrintf.3			comp-c-man		.man
+./usr/share/man/man3/llrintl.3			comp-c-man		.man
 ./usr/share/man/man3/localeconv.3		comp-c-man		.man
 ./usr/share/man/man3/localtime.3		comp-c-man		.man
 ./usr/share/man/man3/localtime_r.3		comp-c-man		.man
@@ -26025,14 +26072,18 @@
 ./usr/share/man/man3/log.3			comp-c-man		.man
 ./usr/share/man/man3/log10.3			comp-c-man		.man
 ./usr/share/man/man3/log10f.3			comp-c-man		.man
+./usr/share/man/man3/log10l.3			comp-c-man		.man
 ./usr/share/man/man3/log1p.3			comp-c-man		.man
 ./usr/share/man/man3/log1pf.3			comp-c-man		.man
+./usr/share/man/man3/log1pl.3			comp-c-man		.man
 ./usr/share/man/man3/log2.3			comp-c-man		.man
 ./usr/share/man/man3/log2f.3			comp-c-man		.man
+./usr/share/man/man3/log2l.3			comp-c-man		.man
 ./usr/share/man/man3/logb.3			comp-c-man		.man
 ./usr/share/man/man3/logbf.3			comp-c-man		.man
 ./usr/share/man/man3/logbl.3			comp-c-man		.man
 ./usr/share/man/man3/logf.3			comp-c-man		.man
+./usr/share/man/man3/logl.3			comp-c-man		.man
 ./usr/share/man/man3/login.3			comp-c-man		.man
 ./usr/share/man/man3/login_cap.3		comp-c-man		.man
 ./usr/share/man/man3/login_close.3		comp-c-man		.man
@@ -26055,6 +26106,7 @@
 ./usr/share/man/man3/lrand48.3			comp-c-man		.man
 ./usr/share/man/man3/lrint.3			comp-c-man		.man
 ./usr/share/man/man3/lrintf.3			comp-c-man		.man
+./usr/share/man/man3/lrintl.3			comp-c-man		.man
 ./usr/share/man/man3/lsearch.3			comp-c-man		.man
 ./usr/share/man/man3/magic_buffer.3		comp-c-man		.man
 ./usr/share/man/man3/magic_check.3		comp-c-man		.man
@@ -26507,6 +26559,7 @@
 ./usr/share/man/man3/post_menu.3		comp-c-man		.man
 ./usr/share/man/man3/pow.3			comp-c-man		.man
 ./usr/share/man/man3/powf.3			comp-c-man		.man
+./usr/share/man/man3/powl.3			comp-c-man		.man
 ./usr/share/man/man3/ppath.3			comp-c-man		.man
 ./usr/share/man/man3/ppath_bool.3		comp-c-man		.man
 ./usr/share/man/man3/ppath_component_at.3	comp-c-man		.man
@@ -27086,10 +27139,12 @@
 ./usr/share/man/man3/regsterrpc.3		comp-obsolete		obsolete
 ./usr/share/man/man3/remainder.3		comp-c-man		.man
 ./usr/share/man/man3/remainderf.3		comp-c-man		.man
+./usr/share/man/man3/remainderl.3		comp-c-man		.man
 ./usr/share/man/man3/remove.3			comp-c-man		.man
 ./usr/share/man/man3/remque.3			comp-c-man		.man
 ./usr/share/man/man3/remquo.3			comp-c-man		.man
 ./usr/share/man/man3/remquof.3			comp-c-man		.man
+./usr/share/man/man3/remquol.3			comp-c-man		.man
 ./usr/share/man/man3/replace_panel.3		comp-c-man		.man
 ./usr/share/man/man3/replace_window.3		comp-c-man		.man
 ./usr/share/man/man3/request_init.3		comp-c-man		.man
@@ -27450,6 +27505,8 @@
 ./usr/share/man/man3/sinf.3			comp-c-man		.man
 ./usr/share/man/man3/sinh.3			comp-c-man		.man
 ./usr/share/man/man3/sinhf.3			comp-c-man		.man
+./usr/share/man/man3/sinhl.3			comp-c-man		.man
+./usr/share/man/man3/sinl.3			comp-c-man		.man
 ./usr/share/man/man3/skey.3			comp-c-man		skey,.man
 ./usr/share/man/man3/skey_authenticate.3	comp-c-man		skey,.man
 ./usr/share/man/man3/skey_get_algorithm.3	comp-c-man		skey,.man
@@ -27893,6 +27950,8 @@
 ./usr/share/man/man3/tanf.3			comp-c-man		.man
 ./usr/share/man/man3/tanh.3			comp-c-man		.man
 ./usr/share/man/man3/tanhf.3			comp-c-man		.man
+./usr/share/man/man3/tanhl.3			comp-c-man		.man
+./usr/share/man/man3/tanl.3			comp-c-man		.man
 ./usr/share/man/man3/tcdrain.3			comp-c-man		.man
 ./usr/share/man/man3/tcflow.3			comp-c-man		.man
 ./usr/share/man/man3/tcflush.3			comp-c-man		.man
@@ -27920,6 +27979,7 @@
 ./usr/share/man/man3/tfind.3			comp-c-man		.man
 ./usr/share/man/man3/tgamma.3			comp-c-man		.man
 ./usr/share/man/man3/tgammaf.3			comp-c-man		.man
+./usr/share/man/man3/tgammal.3			comp-c-man		.man
 ./usr/share/man/man3/tgetent.3			comp-c-man		.man
 ./usr/share/man/man3/tgetflag.3			comp-c-man		.man
 ./usr/share/man/man3/tgetnum.3			comp-c-man		.man

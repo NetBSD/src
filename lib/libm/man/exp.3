@@ -27,20 +27,22 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\" $FreeBSD: src/lib/msun/man/exp.3,v 1.24 2008/01/18 21:43:00 das Exp $
-.\"	$NetBSD: exp.3,v 1.32 2019/09/02 00:25:47 sevan Exp $
+.\"	$NetBSD: exp.3,v 1.33 2024/01/26 19:27:30 nros Exp $
 .\"
-.Dd September 2, 2019
+.Dd January 24, 2024
 .Dt EXP 3
 .Os
 .Sh NAME
 .Nm exp ,
 .Nm expf ,
+.Nm expl ,
 .\" The sorting error is intentional.  exp and expf should be adjacent.
 .Nm exp2 ,
 .Nm exp2f ,
-.\" .Nm exp2l ,
+.Nm exp2l ,
 .Nm expm1 ,
 .Nm expm1f
+.Nm expm1l
 .Nd exponential functions
 .Sh LIBRARY
 .Lb libm
@@ -50,40 +52,44 @@
 .Fn exp "double x"
 .Ft float
 .Fn expf "float x"
+.Ft long double
+.Fn expf "long double x"
 .Ft double
 .Fn exp2 "double x"
 .Ft float
 .Fn exp2f "float x"
-.\" .Ft long double
-.\" .Fn exp2l "long double x"
+.Ft long double
+.Fn exp2l "long double x"
 .Ft double
 .Fn expm1 "double x"
 .Ft float
 .Fn expm1f "float x"
+.Ft long double
+.Fn expm1l "long double x"
 .Sh DESCRIPTION
 The
-.Fn exp
+.Fn exp ,
+.Fn expf ,
 and
-.Fn expf
+.Fn expl
 functions compute the base
 .Ms e
 exponential value of the given argument
 .Fa x .
 .Pp
 The
-.Fn exp2
+.Fn exp2 ,
+.Fn exp2f ,
 and
-.Fn exp2f
-.\" .Fn exp2f ,
-.\" and
-.\" .Fn exp2l
+.Fn exp2l
 functions compute the base 2 exponential of the given argument
 .Fa x .
 .Pp
 The
-.Fn expm1
-and
+.Fn expm1 ,
 .Fn expm1f
+and
+.Fn expm1l
 functions compute the value exp(x)\-1 accurately even for tiny argument
 .Fa x .
 .Sh RETURN VALUES
@@ -110,10 +116,13 @@ function conforms to
 The
 .Fn exp2 ,
 .Fn exp2f ,
+.Fn exp2l ,
 .Fn expf ,
+.Fn expl ,
 .Fn expm1 ,
+.Fn expm1f ,
 and
-.Fn expm1f
+.Fn expm1l
 functions conform to
 .St -isoC-99 .
 .Sh HISTORY

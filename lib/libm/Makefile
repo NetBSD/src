@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.224 2024/01/21 18:53:15 christos Exp $
+#  $NetBSD: Makefile,v 1.225 2024/01/26 19:27:30 nros Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -419,21 +419,28 @@ MLINKS+=copysign.3 copysignf.3 \
 MLINKS+=cos.3 cosf.3
 MLINKS+=cos.3 cosl.3
 MLINKS+=cosh.3 coshf.3
+MLINKS+=cosh.3 coshl.3
 MLINKS+=erf.3 erff.3 \
 	erf.3 erfl.3 \
 	erf.3 erfc.3 \
 	erf.3 erfcf.3 \
 	erf.3 erfcl.3
 MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
-	exp.3 exp2.3 exp.3 exp2f.3
+	exp.3 exp2.3 exp.3 exp2f.3 exp.3 expl.3				\
+	exp.3 expm1l.3 exp.3 exp2l.3
 MLINKS+=log.3 logf.3 \
+	log.3 logl.3 \
 	log.3 log10.3 \
 	log.3 log10f.3 \
+	log.3 log10l.3 \
 	log.3 log1p.3 \
 	log.3 log1pf.3 \
+	log.3 log1pl.3 \
 	log.3 log2.3 \
-	log.3 log2f.3
+	log.3 log2f.3 \
+	log.3 log2l.3
 MLINKS+=pow.3 powf.3
+MLINKS+=pow.3 powl.3
 MLINKS+=fabs.3 fabsf.3 \
 	fabs.3 fabsl.3
 MLINKS+=finite.3 finitef.3
@@ -452,7 +459,8 @@ MLINKS+=ldexp.3 ldexpf.3 \
 	ldexp.3 ldexpl.3
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
 	lgamma.3 gamma.3 lgamma.3 gammaf.3 lgamma.3 gamma_r.3 \
-	lgamma.3 gammaf_r.3 lgamma.3 tgamma.3 lgamma.3 tgammaf.3
+	lgamma.3 gammaf_r.3 lgamma.3 tgamma.3 lgamma.3 tgammaf.3 \
+	lgamma.3 lgammal.3 lgamma.3 lgammal_r.3 lgamma.3 tgammal.3
 MLINKS+=modf.3 modff.3 \
 	modf.3 modfl.3
 MLINKS+=nextafter.3 nextafterf.3 \
@@ -460,10 +468,12 @@ MLINKS+=nextafter.3 nextafterf.3 \
 	nextafter.3 nexttoward.3 \
 	nextafter.3 nexttowardf.3 \
 	nextafter.3 nexttowardl.3
-MLINKS+=lrint.3 lrintf.3 lrint.3 llrint.3 lrint.3 llrintf.3
+MLINKS+=lrint.3 lrintf.3 lrint.3 lrintl.3 lrint.3 llrint.3 lrint.3 llrintf.3 lrint.3 llrintl.3
 MLINKS+=remainder.3 remainderf.3 \
+	remainder.3 remainderl.3 \
 	remainder.3 remquo.3 \
-	remainder.3 remquof.3
+	remainder.3 remquof.3 \
+	remainder.3 remquol.3
 MLINKS+=rint.3 rintf.3 \
 	rint.3 rintl.3 \
 	rint.3 nearbyint.3 \
@@ -471,12 +481,16 @@ MLINKS+=rint.3 rintf.3 \
 	rint.3 nearbyintl.3
 MLINKS+=scalbn.3 scalbnf.3 \
 	scalbn.3 scalbnl.3
-MLINKS+=sin.3 sinf.3
+MLINKS+=sin.3 sinf.3 \
+	sin.3 sinl.3
 MLINKS+=sin.3 sinhf.3
+MLINKS+=sinh.3 sinhl.3
 MLINKS+=sqrt.3 sqrtf.3 sqrt.3 sqrtl.3 \
 	sqrt.3 cbrt.3 sqrt.3 cbrtf.3 sqrt.3 cbrtl.3
-MLINKS+=tan.3 tanf.3
-MLINKS+=tanh.3 tanhf.3
+MLINKS+=tan.3 tanf.3 \
+	tan.3 tanl.3
+MLINKS+=tanh.3 tanhf.3 \
+	tanh.3 tanhl.3
 MLINKS+=round.3 roundf.3 \
 	round.3 roundl.3
 MLINKS+=trunc.3 truncf.3 \

@@ -26,14 +26,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sin.3	6.7 (Berkeley) 4/19/91
-.\"	$NetBSD: sin.3,v 1.15 2019/09/02 00:51:48 sevan Exp $
+.\"	$NetBSD: sin.3,v 1.16 2024/01/26 19:27:30 nros Exp $
 .\"
-.Dd September 2, 2019
+.Dd January 24, 2024
 .Dt SIN 3
 .Os
 .Sh NAME
 .Nm sin ,
-.Nm sinf
+.Nm sinf ,
+.Nm sinl
 .Nd sine function
 .Sh LIBRARY
 .Lb libm
@@ -43,6 +44,8 @@
 .Fn sin "double x"
 .Ft float
 .Fn sinf "float x"
+.Ft long double
+.Fn sinl "long double x"
 .Sh DESCRIPTION
 The
 .Fn sin

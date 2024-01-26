@@ -1,4 +1,4 @@
-.\" $NetBSD: remainder.3,v 1.2 2011/09/18 05:33:14 jruoho Exp $
+.\" $NetBSD: remainder.3,v 1.3 2024/01/26 19:27:30 nros Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,14 +24,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 18, 2011
+.Dd January 24, 2024
 .Dt REMAINDER 3
 .Os
 .Sh NAME
 .Nm remainder ,
 .Nm remainderf ,
+.Nm remainderl ,
 .Nm remquo ,
-.Nm remquof
+.Nm remquof ,
+.Nm remquol
 .Nd remainder functions
 .Sh LIBRARY
 .Lb libm
@@ -41,18 +43,23 @@
 .Fn remainder "double x" "double y"
 .Ft float
 .Fn remainderf "float x" "float y"
+.Ft long double
+.Fn remainderl "long double x" "long double y"
 .Ft double
 .Fn remquo "double x" "double y" "int *quo"
 .Ft float
 .Fn remquof "float x" "float y" "int *quo"
+.Ft long double
+.Fn remquol "long double x" "long double y" "int *quo"
 .Sh DESCRIPTION
 Provided that
 .Fa y
 \*(Ne 0 ,
 the
 .Fn remainder
-and
 .Fn remainderf
+and
+.Fn remainderl
 functions calculate the floating-point remainder
 .Fa r
 of
@@ -87,8 +94,9 @@ Consequently, the remainder is computed exactly and
 .Pp
 Also the
 .Fn remquo
-and
 .Fn remquof
+and
+.Fn remquol
 functions calculate the remainder as described above.
 But these additionally use
 .Fa quo
