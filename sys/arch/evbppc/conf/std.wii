@@ -1,4 +1,4 @@
-#	$NetBSD: std.wii,v 1.2 2024/01/22 21:23:03 jmcneill Exp $
+#	$NetBSD: std.wii,v 1.3 2024/01/26 00:49:22 jmcneill Exp $
 #
 # standard, required NetBSD/wii 'options'
 
@@ -15,7 +15,6 @@ options		EVBPPC_HAS_MBR
 
 options 	INTSTK=0x2000
 
-#makeoptions	TEXTADDR=0x80004000
 makeoptions	TEXTADDR=0x4000
 options 	DISTANT_KERNEL
 makeoptions 	EXTRA_LINKFLAGS="-q"
