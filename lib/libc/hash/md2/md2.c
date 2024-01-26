@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.8 2024/01/20 14:52:47 christos Exp $	*/
+/*	$NetBSD: md2.c,v 1.9 2024/01/26 21:34:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md2.c,v 1.8 2024/01/20 14:52:47 christos Exp $");
+__RCSID("$NetBSD: md2.c,v 1.9 2024/01/26 21:34:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -103,6 +103,30 @@ __weak_alias(MD2Final,_MD2Final)
 __weak_alias(MD2Transform,_MD2Transform)
 #endif
 
+/*
+ * XXX This should not be visible, but due to an accident, it is
+ * XXX so it must remain so.
+ */
+/*static*/ void
+MD2Transform(MD2_CTX *context)
+{
+	uint32_t l, j, k, t;
+
+	/* set block "3" and update "checksum" */
+	for (l = context->C[15], j = 0; j < 16; j++) {
+		context->X[32 + j] = context->X[j] ^ context->X[16 + j];
+		l = context->C[j] ^= S[context->X[16 + j] ^ l];
+	}
+
+	/* mangle input block */
+	for (t = j = 0; j < 18; t = (t + j) % 256, j++)
+		for (k = 0; k < 48; k++)
+			t = context->X[k] = (context->X[k] ^ S[t]);
+
+	/* reset input pointer */
+	context->i = 16;
+}
+
 void
 MD2Init(MD2_CTX *context)
 {
@@ -155,28 +179,5 @@ MD2Final(unsigned char digest[16], MD2_CTX *context)
 	MD2Init(context);
 }
 
-/*
- * XXX This should not be visible, but due to an accident, it is
- * XXX so it must remain so.
- */
-/*static*/ void
-MD2Transform(MD2_CTX *context)
-{
-	uint32_t l, j, k, t;
-
-	/* set block "3" and update "checksum" */
-	for (l = context->C[15], j = 0; j < 16; j++) {
-		context->X[32 + j] = context->X[j] ^ context->X[16 + j];
-		l = context->C[j] ^= S[context->X[16 + j] ^ l];
-	}
-
-	/* mangle input block */
-	for (t = j = 0; j < 18; t = (t + j) % 256, j++)
-		for (k = 0; k < 48; k++)
-			t = context->X[k] = (context->X[k] ^ S[t]);
-
-	/* reset input pointer */
-	context->i = 16;
-}
 
 #endif /* !HAVE_MD2_H */
