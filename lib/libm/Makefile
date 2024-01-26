@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.225 2024/01/26 19:27:30 nros Exp $
+#  $NetBSD: Makefile,v 1.226 2024/01/26 22:01:40 nros Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -483,7 +483,7 @@ MLINKS+=scalbn.3 scalbnf.3 \
 	scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinf.3 \
 	sin.3 sinl.3
-MLINKS+=sin.3 sinhf.3
+MLINKS+=sinh.3 sinhf.3
 MLINKS+=sinh.3 sinhl.3
 MLINKS+=sqrt.3 sqrtf.3 sqrt.3 sqrtl.3 \
 	sqrt.3 cbrt.3 sqrt.3 cbrtf.3 sqrt.3 cbrtl.3
