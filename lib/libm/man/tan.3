@@ -26,15 +26,16 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tan.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: tan.3,v 1.13 2003/08/07 16:44:49 agc Exp $
+.\"	$NetBSD: tan.3,v 1.14 2024/01/26 19:27:30 nros Exp $
 .\"
 .Dd May 2, 1991
 .Dt TAN 3
 .Os
 .Sh NAME
 .Nm tan ,
-.Nm tanf
-.Nd tangent function
+.Nm tanf ,
+.Nm tanl
+.Nd tangent functions
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
@@ -43,11 +44,14 @@
 .Fn tan "double x"
 .Ft float
 .Fn tanf "float x"
+.Ft long double
+.Fn tanl "long double x"
 .Sh DESCRIPTION
 The
 .Fn tan
-and
 .Fn tanf
+and
+.Fn tanl
 functions compute the tangent of
 .Fa x
 (measured in radians).

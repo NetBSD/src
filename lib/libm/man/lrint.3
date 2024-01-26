@@ -1,4 +1,4 @@
-.\" $NetBSD: lrint.3,v 1.1 2005/09/16 15:26:47 wiz Exp $
+.\" $NetBSD: lrint.3,v 1.2 2024/01/26 19:27:30 nros Exp $
 .\"
 .\" Copyright (c) 2005 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -26,14 +26,16 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/lib/msun/man/lrint.3,v 1.2.2.2 2005/03/01 16:18:39 brueffer Exp $
 .\"
-.Dd January 11, 2005
+.Dd January 24, 2024
 .Dt LRINT 3
 .Os
 .Sh NAME
 .Nm llrint ,
 .Nm llrintf ,
+.Nm llrintl ,
 .Nm lrint ,
-.Nm lrintf
+.Nm lrintf ,
+.Nm lrintl
 .Nd convert to integer
 .Sh LIBRARY
 .Lb libm
@@ -43,10 +45,14 @@
 .Fn llrint "double x"
 .Ft long long
 .Fn llrintf "float x"
+.Ft long long
+.Fn llrintl "long double x"
 .Ft long
 .Fn lrint "double x"
 .Ft long
 .Fn lrintf "float x"
+.Ft long
+.Fn lrintl "long double x"
 .Sh DESCRIPTION
 The
 .Fn lrint
@@ -57,8 +63,10 @@ according to the current rounding mode.
 The
 .Fn llrint ,
 .Fn llrintf ,
+.Fn llrintl ,
+.Fn lrintf ,
 and
-.Fn lrintf
+.Fn lrintl
 functions differ from
 .Fn lrint
 only in their input and output types.
@@ -66,9 +74,11 @@ only in their input and output types.
 The
 .Nm llrint ,
 .Nm llrintf ,
+.Nm llrintl ,
 .Nm lrint ,
+.Nm lrintf ,
 and
-.Nm lrintf
+.Nm lrintl
 functions return the integer nearest to their argument
 .Fa x
 according to the current rounding mode.
@@ -96,8 +106,10 @@ the return value is undefined.
 The
 .Fn llrint ,
 .Fn llrintf ,
+.Fn llrintl ,
 .Fn lrint ,
+.Fn lrintf ,
 and
-.Fn lrintf
+.Fn lrintl
 functions conform to
 .St -isoC-99 .
