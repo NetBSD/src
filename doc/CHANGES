@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3030 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3031 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -266,6 +266,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[msaitoh 20240118]
 	m68k: Made many ports share common code for interrupt dispatch
 		and vector tables. [thorpej 20240118]
-	evbppc: Add initial support for the Nintendo Wii. [jmcneill 20240120]
+	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]
 	libm: Import more long double functions from FreeBSD.
 		[christos 20240121]
