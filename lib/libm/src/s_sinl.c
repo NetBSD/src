@@ -1,4 +1,4 @@
-/*	$NetBSD: s_sinl.c,v 1.1 2024/01/21 18:53:19 christos Exp $	*/
+/*	$NetBSD: s_sinl.c,v 1.2 2024/01/26 12:32:49 ryoon Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_sinl.c,v 1.1 2024/01/21 18:53:19 christos Exp $");
+__RCSID("$NetBSD: s_sinl.c,v 1.2 2024/01/26 12:32:49 ryoon Exp $");
 
 #include "namespace.h"
 #include <float.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: s_sinl.c,v 1.1 2024/01/21 18:53:19 christos Exp $");
 #include <ieeefp.h>
 #endif
 
-#ifndef __weak_alias
+#ifdef __weak_alias
 __weak_alias(sinl, _sinl)
 #endif
 
