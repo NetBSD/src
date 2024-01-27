@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.97 2024/01/20 16:45:07 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.98 2024/01/27 17:58:36 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -120,10 +120,12 @@ LINTFLAGS.extent.c += -X 86,161,117,191,193,207,217,226
 LINTFLAGS.extent_dss.c += -X 86,117,161,191,193,207,217,226
 LINTFLAGS.extent_mmap.c += -X 86,117,161,191,193,207,217,226
 LINTFLAGS.jemalloc.c += -X 86,117,161,191,193,207,217,226,236,307
+LINTFLAGS.jemalloc.c += -X 141 # i386
 LINTFLAGS.hooks.c += -X 226
 LINTFLAGS.large.c += -X 86,161,117,191,193,207,217,226
 LINTFLAGS.log.c += -X 86,117,161,191,193,207,217,226
 LINTFLAGS.malloc_io.c += -X 86,117,161,191,193,207,217,226,284
+LINTFLAGS.malloc_io.c += -X 132 # i386
 LINTFLAGS.mutex.c += -X 86,117,161,191,193,207,217,226
 LINTFLAGS.mutex_pool.c += -X 86,117,161,191,193,207,217,226
 LINTFLAGS.nstime.c += -X 86,117,161,191,193,207,217,226
