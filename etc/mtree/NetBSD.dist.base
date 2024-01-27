@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.253 2023/09/03 18:31:01 riastradh Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.254 2024/01/27 21:01:08 riastradh Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -13,7 +13,7 @@
 ./dev
 ./dev/altq
 ./dev/fd
-./dev/pts
+./dev/pts			mode=0555
 ./etc
 ./etc/X11
 ./etc/X11/fs
