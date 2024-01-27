@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.36 2023/10/25 08:19:34 simonb Exp $	*/
+/*	$NetBSD: getconf.c,v 1.37 2024/01/27 16:04:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.36 2023/10/25 08:19:34 simonb Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.37 2024/01/27 16:04:36 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	const struct conf_variable *cp;
-	const char *varname, *pathname;
+	const char *varname, *pathname, *vn;
 	int found;
 
 	setprogname(argv[0]);
@@ -230,8 +230,10 @@ main(int argc, char **argv)
 	pathname = argv[0];	/* may be NULL */
 
 	found = 0;
+	vn = varname;
+again:
 	for (cp = conf_table; cp->name != NULL; cp++) {
-		if (a_flag || strcmp(varname, cp->name) == 0) {
+		if (a_flag || strcmp(vn, cp->name) == 0) {
 			/*LINTED weird expression*/
 			if ((cp->type == PATHCONF) == (pathname != NULL)) {
 				printvar(cp, pathname);
@@ -242,8 +244,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (!a_flag && !found)
+	if (!a_flag && !found) {
+		if (*vn++ == '_')
+			goto again;
 		errx(EXIT_FAILURE, "%s: unknown variable", varname);
+	}
 
 	(void)fflush(stdout);
 	return ferror(stdout) ? EXIT_FAILURE : EXIT_SUCCESS;
