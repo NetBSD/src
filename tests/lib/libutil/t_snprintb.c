@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.11 2024/01/27 10:32:03 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.12 2024/01/27 21:42:29 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.11 2024/01/27 10:32:03 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.12 2024/01/27 21:42:29 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -161,7 +161,7 @@ ATF_TC_BODY(snprintb, tc)
 	    // The old-style format supports only 32 bits, interpreting the
 	    // \041 as part of the text belonging to bit 1.
 	    "\04133",
-	    0x0000ffff00ff0f35ULL,
+	    0x0000ffff00ff0f35,
 	    "0xffff00ff0f35<24,6,5,3,1!33>");
 
 	// old-style format, hexadecimal, from lsb to msb
@@ -181,7 +181,7 @@ ATF_TC_BODY(snprintb, tc)
 	    // The old-style format supports only 32 bits, interpreting the
 	    // \041 as part of the text belonging to bit 32.
 	    "\04133",
-	    0xffff0000ff00f0caULL,
+	    0xffff0000ff00f0ca,
 	    "0xffff0000ff00f0ca<2,4,7,8,16,32!33>");
 
 	// The bits can be listed in arbitrary order, there can also be
@@ -208,7 +208,7 @@ ATF_TC_BODY(snprintb, tc)
 	    "\020"
 	    "\177undefined_behavior"
 	    "\001lsb",
-	    0xffffffffffffffffULL,
+	    0xffffffffffffffff,
 	    "0xffffffffffffffff<?>");
 #endif
 
@@ -276,7 +276,7 @@ ATF_TC_BODY(snprintb, tc)
 	    "b\037bit31\0"
 	    "b\040bit32\0"
 	    "b\077bit63\0",
-	    0xf000000ff000000fULL,
+	    0xf000000ff000000f,
 	    "01700000000776000000017<bit0,bit31,bit32,bit63>");
 
 	// new-style format, single bits, decimal
@@ -286,7 +286,7 @@ ATF_TC_BODY(snprintb, tc)
 	    "b\037bit31\0"
 	    "b\040bit32\0"
 	    "b\077bit63\0",
-	    0xf000000ff000000fULL,
+	    0xf000000ff000000f,
 	    "17293822637553745935<bit0,bit31,bit32,bit63>");
 
 	// new-style format, single bits, hexadecimal
@@ -296,7 +296,7 @@ ATF_TC_BODY(snprintb, tc)
 	    "b\037bit31\0"
 	    "b\040bit32\0"
 	    "b\077bit63\0",
-	    0xf000000ff000000fULL,
+	    0xf000000ff000000f,
 	    "0xf000000ff000000f<bit0,bit31,bit32,bit63>");
 
 	// new-style format, invalid number base 2
