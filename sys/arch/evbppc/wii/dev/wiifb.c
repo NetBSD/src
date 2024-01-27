@@ -1,4 +1,4 @@
-/* $NetBSD: wiifb.c,v 1.4 2024/01/23 00:13:37 jmcneill Exp $ */
+/* $NetBSD: wiifb.c,v 1.5 2024/01/27 17:44:37 hgutch Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.4 2024/01/23 00:13:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5 2024/01/27 17:44:37 hgutch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,6 +86,13 @@ static const struct wiifb_mode wiifb_modes[] = {
 		.height = 480,
 		.lines = 525,
 	},
+	[WIIFB_MODE_INDEX(VI_DCR_FMT_PAL, 1)] = {
+		.name = "PAL 576i",
+		.width = 640,
+		.height = 574,
+		.lines = 625,
+	},
+
 };
 #define WIIFB_NMODES	__arraycount(wiifb_modes)
 
@@ -229,6 +236,15 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		WR4(sc, VI_VTE, 0x00060030);
 		WR4(sc, VI_BBOI, 0x81d881d8);
 		WR4(sc, VI_BBEI, 0x81d881d8);
+	} else if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_PAL, 1)) {
+		/* PAL 576i */
+		WR2(sc, VI_VTR, 0x11f5);
+		WR4(sc, VI_HTR0, 0x4b6a01b0);
+		WR4(sc, VI_HTR1, 0x02f85640);
+		WR4(sc, VI_VTO, 0x00010023);
+		WR4(sc, VI_VTE, 0x00000024);
+		WR4(sc, VI_BBOI, 0x4d2b4d6d);
+		WR4(sc, VI_BBEI, 0x4d8a4d4c);
 	} else {
 		/*
 		 * Display mode is not supported. Blink the slot LED to
