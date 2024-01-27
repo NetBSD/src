@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.200 2024/01/23 19:44:28 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.201 2024/01/27 12:14:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.200 2024/01/23 19:44:28 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.201 2024/01/27 12:14:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -487,6 +487,21 @@ lex_name(const char *yytext, size_t yyleng)
 	return T_NAME;
 }
 
+// Determines whether the constant is signed in traditional C but unsigned in
+// C90 and later.
+static bool
+is_unsigned_since_c90(tspec_t typ, uint64_t ui, int base)
+{
+	if (!(allow_trad && allow_c90))
+		return false;
+	if (typ == INT) {
+		if (ui > TARG_INT_MAX && ui <= TARG_UINT_MAX && base != 10)
+			return true;
+		return ui > TARG_LONG_MAX;
+	}
+	return typ == LONG && ui > TARG_LONG_MAX;
+}
+
 int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
@@ -546,11 +561,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		query_message(8, (int)len, cp);
 	}
 
-	/*
-	 * If the value is too big for the current type, we must choose another
-	 * type.
-	 */
-	bool ansiu = false;
+	bool ansiu = is_unsigned_since_c90(typ, ui, base);
 	switch (typ) {
 	case INT:
 		if (ui <= TARG_INT_MAX) {
@@ -566,17 +577,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 				warning(252);
 			}
 		}
-		if (typ == UINT || typ == ULONG) {
-			if (!allow_c90) {
-				typ = LONG;
-			} else if (allow_trad) {
-				/*
-				 * Remember that the constant is unsigned only
-				 * in C90.
-				 */
-				ansiu = true;
-			}
-		}
+		if ((typ == UINT || typ == ULONG) && !allow_c90)
+			typ = LONG;
 		break;
 	case UINT:
 		if (ui > TARG_UINT_MAX) {
@@ -590,8 +592,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	case LONG:
 		if (ui > TARG_LONG_MAX && allow_c90) {
 			typ = ULONG;
-			if (allow_trad)
-				ansiu = true;
 			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
