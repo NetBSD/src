@@ -24,6 +24,7 @@
 __weak_alias(coshl, _coshl)
 
 #ifdef __HAVE_LONG_DOUBLE
+#error SHOULD STOP HERE!!!
 
 #ifdef __i386__
 #include <ieeefp.h>
