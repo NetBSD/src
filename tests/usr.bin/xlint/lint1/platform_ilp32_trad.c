@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_trad.c,v 1.1 2024/01/27 15:10:57 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_trad.c,v 1.2 2024/01/27 20:03:14 rillig Exp $	*/
 # 3 "platform_ilp32_trad.c"
 
 /*
@@ -52,32 +52,34 @@ void *lex_integer[] = {
 	2147483647L,
 	/* expect+1: ... integer 'long' ... */
 	0x7fffffffL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	2147483648L,
 	/* expect+1: ... integer 'long' ... */
 	0x80000000L,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	4294967295L,
 	/* expect+1: ... integer 'long' ... */
 	0xffffffffL,
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	4294967296L,
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	0x0000000100000000L,
 	/* expect+2: ... integer 'long' ... */
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	9223372036854775807L,
 	/* expect+2: ... integer 'long' ... */
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	0x7fffffffffffffffL,
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	9223372036854775808L,
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	0x8000000000000000L,
 	/* expect+2: ... integer 'long' ... */
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+1: warning: integer constant out of range [252] */
 	18446744073709551615L,
-	/* TODO: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	0xffffffffffffffffL,
 	/* expect+2: warning: integer constant out of range [252] */
@@ -107,10 +109,12 @@ void *lex_integer[] = {
 	9223372036854775807LL,
 	/* expect+1: ... integer 'long long' ... */
 	0x7fffffffffffffffLL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long long' ... */
 	9223372036854775808LL,
 	/* expect+1: ... integer 'long long' ... */
 	0x8000000000000000LL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long long' ... */
 	18446744073709551615LL,
 	/* expect+1: ... integer 'long long' ... */
