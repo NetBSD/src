@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1301 2024/01/25 01:43:58 mrg Exp $
+# $NetBSD: mi,v 1.1302 2024/01/27 15:10:56 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7481,8 +7481,11 @@
 ./usr/tests/usr.bin/xlint/lint1/parse_type_name.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32.exp		tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/platform_ilp32_c90.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/platform_ilp32_c99.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32_int.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32_long.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/platform_ilp32_trad.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_int.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_int.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ldbl128.c		tests-usr.bin-tests	compattestfile,atf
@@ -7495,6 +7498,9 @@
 ./usr/tests/usr.bin/xlint/lint1/platform_long.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_lp64.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_lp64.exp		tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/platform_lp64_c90.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/platform_lp64_c99.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/platform_lp64_trad.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_schar.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_schar.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_uchar.c		tests-usr.bin-tests	compattestfile,atf

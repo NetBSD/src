@@ -1,7 +1,17 @@
-/*	$NetBSD: msg_252.c,v 1.6 2023/07/02 18:14:44 rillig Exp $	*/
+/*	$NetBSD: msg_252.c,v 1.7 2024/01/27 15:10:57 rillig Exp $	*/
 # 3 "msg_252.c"
 
 // Test for message: integer constant out of range [252]
+
+/*
+ * See also:
+ *	platform_ilp32_trad.c
+ *	platform_ilp32_c90.c
+ *	platform_ilp32_c99.c
+ *	platform_lp64_trad.c
+ *	platform_lp64_c90.c
+ *	platform_lp64_c99.c
+ */
 
 /*
  * On ILP32 platforms, lint additionally and unnecessarily warns:
