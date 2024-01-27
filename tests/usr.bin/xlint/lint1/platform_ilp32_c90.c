@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_c90.c,v 1.1 2024/01/27 15:10:57 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_c90.c,v 1.2 2024/01/27 20:03:14 rillig Exp $	*/
 # 3 "platform_ilp32_c90.c"
 
 /*
@@ -13,10 +13,12 @@ void *lex_integer[] = {
 	2147483647,
 	/* expect+1: ... integer 'int' ... */
 	0x7fffffff,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long' ... */
 	2147483648,
 	/* expect+1: ... integer 'unsigned int' ... */
 	0x80000000,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long' ... */
 	4294967295,
 	/* expect+1: ... integer 'unsigned int' ... */
@@ -91,10 +93,12 @@ void *lex_integer[] = {
 	2147483647L,
 	/* expect+1: ... integer 'long' ... */
 	0x7fffffffL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long' ... */
 	2147483648L,
 	/* expect+1: ... integer 'unsigned long' ... */
 	0x80000000L,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long' ... */
 	4294967295L,
 	/* expect+1: ... integer 'unsigned long' ... */
@@ -185,10 +189,12 @@ void *lex_integer[] = {
 	9223372036854775807LL,
 	/* expect+1: ... integer 'long long' ... */
 	0x7fffffffffffffffLL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long long' ... */
 	9223372036854775808LL,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0x8000000000000000LL,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551615LL,
 	/* expect+1: ... integer 'unsigned long long' ... */

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.202 2024/01/27 15:53:27 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.203 2024/01/27 20:03:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.202 2024/01/27 15:53:27 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.203 2024/01/27 20:03:14 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -503,64 +503,102 @@ is_unsigned_since_c90(tspec_t typ, uint64_t ui, int base)
 }
 
 static tspec_t
-integer_constant_type(tspec_t typ, uint64_t ui, int base, bool warned)
+integer_constant_type(tspec_t t, uint64_t ui, int base, bool warned)
 {
-	switch (typ) {
+	switch (t) {
 	case INT:
-		if (ui <= TARG_INT_MAX) {
-			/* ok */
-		} else if (ui <= TARG_UINT_MAX && base != 10) {
-			typ = UINT;
-		} else if (ui <= TARG_LONG_MAX) {
-			typ = LONG;
-		} else {
-			typ = ULONG;
-			if (ui > TARG_ULONG_MAX && !warned) {
+		if (ui <= TARG_INT_MAX)
+			return INT;
+		if (ui <= TARG_UINT_MAX && base != 10 && allow_c90)
+			return UINT;
+		if (ui <= TARG_LONG_MAX)
+			return LONG;
+		if (ui <= TARG_ULONG_MAX && base != 10 && allow_c90)
+			return ULONG;
+		if (ui <= TARG_ULONG_MAX && !allow_c90)
+			return LONG;
+		if (!allow_c99) {
+			if (!warned)
 				/* integer constant out of range */
 				warning(252);
-			}
+			return allow_c90 ? ULONG : LONG;
 		}
-		if ((typ == UINT || typ == ULONG) && !allow_c90)
-			typ = LONG;
-		break;
+		if (ui <= TARG_LLONG_MAX)
+			return LLONG;
+		if (ui <= TARG_ULLONG_MAX && base != 10)
+			return ULLONG;
+		if (!warned)
+			/* integer constant out of range */
+			warning(252);
+		return ULLONG;
 	case UINT:
-		if (ui > TARG_UINT_MAX) {
-			typ = ULONG;
-			if (ui > TARG_ULONG_MAX && !warned) {
+		if (ui <= TARG_UINT_MAX)
+			return UINT;
+		if (ui <= TARG_ULONG_MAX)
+			return ULONG;
+		if (!allow_c99) {
+			if (!warned)
 				/* integer constant out of range */
 				warning(252);
-			}
+			return ULONG;
 		}
-		break;
+		if (ui <= TARG_ULLONG_MAX)
+			return ULLONG;
+		if (!warned)
+			/* integer constant out of range */
+			warning(252);
+		return ULLONG;
 	case LONG:
-		if (ui > TARG_LONG_MAX && allow_c90) {
-			typ = ULONG;
-			if (ui > TARG_ULONG_MAX && !warned) {
+		if (ui <= TARG_LONG_MAX)
+			return LONG;
+		if (ui <= TARG_ULONG_MAX && base != 10)
+			return allow_c90 ? ULONG : LONG;
+		if (!allow_c99) {
+			if (!warned)
 				/* integer constant out of range */
 				warning(252);
-			}
+			return allow_c90 ? ULONG : LONG;
 		}
-		break;
+		if (ui <= TARG_LLONG_MAX)
+			return LLONG;
+		if (ui <= TARG_ULLONG_MAX && base != 10)
+			return ULLONG;
+		if (!warned)
+			/* integer constant out of range */
+			warning(252);
+		return ULLONG;
 	case ULONG:
-		if (ui > TARG_ULONG_MAX && !warned) {
+		if (ui <= TARG_ULONG_MAX)
+			return ULONG;
+		if (!allow_c99) {
+			if (!warned)
+				/* integer constant out of range */
+				warning(252);
+			return ULONG;
+		}
+		if (ui <= TARG_ULLONG_MAX)
+			return ULLONG;
+		if (!warned)
 			/* integer constant out of range */
 			warning(252);
-		}
-		break;
+		return ULLONG;
 	case LLONG:
-		if (ui > TARG_LLONG_MAX && allow_c90)
-			typ = ULLONG;
-		break;
-	case ULLONG:
-		if (ui > TARG_ULLONG_MAX && !warned) {
+		if (ui <= TARG_LLONG_MAX)
+			return LLONG;
+		if (ui <= TARG_ULLONG_MAX && base != 10)
+			return allow_c90 ? ULLONG : LLONG;
+		if (!warned)
 			/* integer constant out of range */
 			warning(252);
-		}
-		break;
+		return allow_c90 ? ULLONG : LLONG;
 	default:
-		break;
+		if (ui <= TARG_ULLONG_MAX)
+			return ULLONG;
+		if (!warned)
+			/* integer constant out of range */
+			warning(252);
+		return ULLONG;
 	}
-	return typ;
 }
 
 int
