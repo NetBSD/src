@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.201 2024/01/27 12:14:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.202 2024/01/27 15:53:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.201 2024/01/27 12:14:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.202 2024/01/27 15:53:27 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -502,66 +502,9 @@ is_unsigned_since_c90(tspec_t typ, uint64_t ui, int base)
 	return typ == LONG && ui > TARG_LONG_MAX;
 }
 
-int
-lex_integer_constant(const char *yytext, size_t yyleng, int base)
+static tspec_t
+integer_constant_type(tspec_t typ, uint64_t ui, int base, bool warned)
 {
-	/* C11 6.4.4.1p5 */
-	static const tspec_t suffix_type[2][3] = {
-		{ INT,  LONG,  LLONG, },
-		{ UINT, ULONG, ULLONG, }
-	};
-
-	const char *cp = yytext;
-	size_t len = yyleng;
-
-	/* skip 0[xX] or 0[bB] */
-	if (base == 16 || base == 2) {
-		cp += 2;
-		len -= 2;
-	}
-
-	/* read suffixes */
-	unsigned l_suffix = 0, u_suffix = 0;
-	for (;; len--) {
-		char c = cp[len - 1];
-		if (c == 'l' || c == 'L')
-			l_suffix++;
-		else if (c == 'u' || c == 'U')
-			u_suffix++;
-		else
-			break;
-	}
-	if (l_suffix > 2 || u_suffix > 1) {
-		/* malformed integer constant */
-		warning(251);
-		if (l_suffix > 2)
-			l_suffix = 2;
-		if (u_suffix > 1)
-			u_suffix = 1;
-	}
-	if (!allow_c90 && u_suffix > 0) {
-		/* suffix 'U' is illegal in traditional C */
-		warning(97);
-	}
-	tspec_t typ = suffix_type[u_suffix][l_suffix];
-
-	bool warned = false;
-	errno = 0;
-	char *eptr;
-	uint64_t ui = (uint64_t)strtoull(cp, &eptr, base);
-	lint_assert(eptr == cp + len);
-	if (errno != 0) {
-		/* integer constant out of range */
-		warning(252);
-		warned = true;
-	}
-
-	if (any_query_enabled && base == 8 && ui != 0) {
-		/* octal number '%.*s' */
-		query_message(8, (int)len, cp);
-	}
-
-	bool ansiu = is_unsigned_since_c90(typ, ui, base);
 	switch (typ) {
 	case INT:
 		if (ui <= TARG_INT_MAX) {
@@ -617,11 +560,75 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	default:
 		break;
 	}
+	return typ;
+}
 
-	ui = (uint64_t)convert_integer((int64_t)ui, typ, 0);
+int
+lex_integer_constant(const char *yytext, size_t yyleng, int base)
+{
+	/* C11 6.4.4.1p5 */
+	static const tspec_t suffix_type[2][3] = {
+		{ INT,  LONG,  LLONG, },
+		{ UINT, ULONG, ULLONG, }
+	};
+
+	const char *cp = yytext;
+	size_t len = yyleng;
+
+	/* skip 0[xX] or 0[bB] */
+	if (base == 16 || base == 2) {
+		cp += 2;
+		len -= 2;
+	}
+
+	/* read suffixes */
+	unsigned l_suffix = 0, u_suffix = 0;
+	for (;; len--) {
+		char c = cp[len - 1];
+		if (c == 'l' || c == 'L')
+			l_suffix++;
+		else if (c == 'u' || c == 'U')
+			u_suffix++;
+		else
+			break;
+	}
+	if (l_suffix > 2 || u_suffix > 1) {
+		/* malformed integer constant */
+		warning(251);
+		if (l_suffix > 2)
+			l_suffix = 2;
+		if (u_suffix > 1)
+			u_suffix = 1;
+	}
+	if (!allow_c90 && u_suffix > 0) {
+		/* suffix 'U' is illegal in traditional C */
+		warning(97);
+	}
+	tspec_t ct = suffix_type[u_suffix][l_suffix];
+
+	bool warned = false;
+	errno = 0;
+	char *eptr;
+	uint64_t ui = (uint64_t)strtoull(cp, &eptr, base);
+	lint_assert(eptr == cp + len);
+	if (errno != 0) {
+		/* integer constant out of range */
+		warning(252);
+		warned = true;
+	}
+
+	if (any_query_enabled && base == 8 && ui != 0) {
+		/* octal number '%.*s' */
+		query_message(8, (int)len, cp);
+	}
+
+	bool ansiu = is_unsigned_since_c90(ct, ui, base);
+
+	tspec_t t = integer_constant_type(ct, ui, base, warned);
+	ui = (uint64_t)convert_integer((int64_t)ui, t, 0);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
-	yylval.y_val->v_tspec = typ;
+	yylval.y_val->v_tspec = t;
 	yylval.y_val->v_unsigned_since_c90 = ansiu;
 	yylval.y_val->u.integer = (int64_t)ui;
 
