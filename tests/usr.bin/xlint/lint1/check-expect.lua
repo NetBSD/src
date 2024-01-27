@@ -1,9 +1,9 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.8 2023/08/11 04:27:49 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.9 2024/01/27 15:10:57 rillig Exp $
 
 --[[
 
-usage: lua ./check-expect.lua *.c
+usage: lua ./check-expect.lua [-u] *.c
 
 Check that the /* expect+-n: ... */ comments in the .c source files match the
 actual messages found in the corresponding .exp files.  The .exp files are
