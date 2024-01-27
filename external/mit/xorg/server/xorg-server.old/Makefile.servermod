@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.servermod,v 1.6 2024/01/26 11:32:12 tsutsui Exp $
+#	$NetBSD: Makefile.servermod,v 1.7 2024/01/27 10:57:04 tsutsui Exp $
 
 NOFULLRELRO=	yes
 
@@ -7,7 +7,7 @@ NOFULLRELRO=	yes
 .if defined(XMODULEDIR)
 SHLIB_MAJOR=0
 
-# dri and dri2 need to be linked statically as well?
+# dri, dri2 and fb need to be linked statically as well?
 .if !defined(XMODULEDIRANDSTATIC)
 MKSTATICLIB:=	no
 .endif
