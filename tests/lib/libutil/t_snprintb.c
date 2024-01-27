@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.10 2024/01/27 08:54:15 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.11 2024/01/27 10:32:03 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.10 2024/01/27 08:54:15 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.11 2024/01/27 10:32:03 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -81,7 +81,8 @@ h_snprintb_loc(const char *file, size_t line,
 	    "\twant: %d bytes %s\n"
 	    "\thave: %d bytes %s\n",
 	    file, line,
-	    vis_arr(fmt, fmtlen), (uintmax_t)val,
+	    vis_arr(fmt, fmtlen),
+	    (uintmax_t)val,
 	    exp_rv, vis_arr(res, reslen),
 	    rv, vis_arr(buf, reslen));
 }
@@ -180,7 +181,7 @@ ATF_TC_BODY(snprintb, tc)
 	    // The old-style format supports only 32 bits, interpreting the
 	    // \041 as part of the text belonging to bit 32.
 	    "\04133",
-	    0xffff0000ff00f0ca,
+	    0xffff0000ff00f0caULL,
 	    "0xffff0000ff00f0ca<2,4,7,8,16,32!33>");
 
 	// The bits can be listed in arbitrary order, there can also be
@@ -207,7 +208,7 @@ ATF_TC_BODY(snprintb, tc)
 	    "\020"
 	    "\177undefined_behavior"
 	    "\001lsb",
-	    0xffffffffffffffff,
+	    0xffffffffffffffffULL,
 	    "0xffffffffffffffff<?>");
 #endif
 
@@ -592,7 +593,8 @@ h_snprintb_m_loc(const char *file, size_t line,
 	    "\twant: %zu bytes %s\n"
 	    "\thave: %zu bytes %s\n",
 	    file, line,
-	    vis_arr(fmt, fmtlen), (uintmax_t)val,
+	    vis_arr(fmt, fmtlen),
+	    (uintmax_t)val,
 	    reslen, vis_arr(res, reslen),
 	    buflen, vis_arr(buf, buflen));
 }
