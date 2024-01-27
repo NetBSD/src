@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1330 2024/01/01 18:56:53 kim Exp $
+# $NetBSD: mi,v 1.1331 2024/01/27 21:06:09 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6342,7 +6342,7 @@
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
 ./var/run/lwresd				base-obsolete		obsolete
-./var/run/named					base-bind-root
+./var/run/named					base-obsolete		obsolete
 ./var/rwho					base-netutil-root
 ./var/shm					base-sys-root
 ./var/spool					base-sys-root
