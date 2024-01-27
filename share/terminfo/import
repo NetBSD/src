@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: import,v 1.1 2019/11/27 19:00:25 christos Exp $
+# $NetBSD: import,v 1.2 2024/01/27 15:53:57 christos Exp $
 #
 # Simple shell script to import the newest version of terminfo
 # Download it from ftp://ftp.invisible-island.net/ncurses/current
@@ -18,7 +18,7 @@ tag=${input%%.src}
 vendor=NCURSES
 
 TMP=$(mktemp -d /tmp/import-terminfo)
-trap rm -fr "${TMP}" 0 1 2 15
+trap "rm -fr ${TMP}" 0 1 2 15
 
 cp "$1" "${TMP}/terminfo"
 cd "${TMP}"
