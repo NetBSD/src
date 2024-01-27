@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3031 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3032 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -269,3 +269,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]
 	libm: Import more long double functions from FreeBSD.
 		[christos 20240121]
+	terminfo: Import 20231209 [christos 20240127]
