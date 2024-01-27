@@ -1,4 +1,4 @@
-/*	$NetBSD: s_logl.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
+/*	$NetBSD: s_logl.c,v 1.3 2024/01/27 05:50:42 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_logl.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
+__RCSID("$NetBSD: s_logl.c,v 1.3 2024/01/27 05:50:42 ryoon Exp $");
 #endif
 
 #include "namespace.h"
@@ -38,11 +38,10 @@ __RCSID("$NetBSD: s_logl.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 #include <machine/float.h>
 #include <machine/ieee.h>
 
-__weak_alias(logl, log)
-
 #ifdef __HAVE_LONG_DOUBLE
 
 #ifdef __weak_alias
+__weak_alias(logl, _logl)
 __weak_alias(log10l, _log10l)
 __weak_alias(log2l, _log2l)
 __weak_alias(log1pl, _log1pl)

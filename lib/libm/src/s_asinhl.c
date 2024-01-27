@@ -16,6 +16,10 @@
 #include "namespace.h"
 
 #include <float.h>
+#include <machine/ieee.h>
+
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(asinhl, _asinhl)
@@ -30,9 +34,6 @@ __weak_alias(asinhl, _asinhl)
 #ifdef __i386__
 #include <ieeefp.h>
 #endif
-
-#include "math.h"
-#include "math_private.h"
 
 /* EXP_LARGE is the threshold above which we use asinh(x) ~= log(2x). */
 /* EXP_TINY is the threshold below which we use asinh(x) ~= x. */

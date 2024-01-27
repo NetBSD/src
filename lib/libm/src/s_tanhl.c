@@ -15,6 +15,10 @@
 
 #include "namespace.h"
 #include <float.h>
+#include <machine/ieee.h>
+
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(tanhl, _tanhl)
@@ -28,8 +32,6 @@ __weak_alias(tanhl, _tanhl)
 #include <ieeefp.h>
 #endif
 
-#include "math.h"
-#include "math_private.h"
 #if LDBL_MANT_DIG == 64
 #include "../ld80/k_expl.h"
 #elif LDBL_MANT_DIG == 113

@@ -17,6 +17,10 @@
 #include "namespace.h"
 
 #include <float.h>
+#include <machine/ieee.h>
+
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(atanhl, _atanhl)
@@ -30,9 +34,6 @@ __weak_alias(atanhl, _atanhl)
 #ifdef __i386__
 #include <ieeefp.h>
 #endif
-
-#include "math.h"
-#include "math_private.h"
 
 /* EXP_TINY is the threshold below which we use atanh(x) ~= x. */
 #if LDBL_MANT_DIG == 64

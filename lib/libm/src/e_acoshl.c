@@ -16,6 +16,12 @@
 
 #include "namespace.h"
 
+#include <float.h>
+#include <machine/ieee.h>
+
+#include "math.h"
+#include "math_private.h"
+
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(acoshl, _acoshl)
 
@@ -26,13 +32,9 @@ __weak_alias(acoshl, _acoshl)
  * Bruce D. Evans.
  */
 
-#include <float.h>
 #ifdef __i386__
 #include <ieeefp.h>
 #endif
-
-#include "math.h"
-#include "math_private.h"
 
 /* EXP_LARGE is the threshold above which we use acosh(x) ~= log(2x). */
 #if LDBL_MANT_DIG == 64
