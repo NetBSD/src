@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.h,v 1.2 2011/06/30 20:09:42 wiz Exp $	*/
+/*	$NetBSD: aml_common.h,v 1.3 2024/01/28 10:09:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -37,7 +37,7 @@
  */
 #ifdef _KERNEL
 #define AML_SYSABORT() do {						\
-	printf("aml: fatal errer at %s:%d\n", __FILE__, __LINE__);	\
+	printf("aml: fatal error at %s:%d\n", __FILE__, __LINE__);	\
 	panic("panic in AML interpreter!");				\
 } while(0)
 #define AML_SYSASSERT(x) do {						\
