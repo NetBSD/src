@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.22 2024/01/20 10:02:31 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.23 2024/01/28 08:54:27 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -464,23 +464,7 @@ char Q17_char[] = { ' ', '\0', '	' };
 /* expect+1: invisible character U+0009 in string literal [Q17] */
 char Q17_string[] = " \0	";
 
-/*
- * Variables with automatic storage duration often have so small scope that
- * adding the 'const' qualifier hurts readability more than it helps.
- */
-int
-/* expect+1: const automatic variable 'const_arg' [Q18] */
-Q18(const int const_arg, int arg)
-{
-	/* expect+1: const automatic variable 'Q18_scalar' [Q18] */
-	const char Q18_scalar = '1';
-	const char Q18_array[] = { '1', '2', '3' };
-	const char Q18_string[] = "123";
-	const char *Q18_string_pointer = "123";
-
-	return const_arg + arg
-	    + Q18_scalar + Q18_array[0] + Q18_string[0] + Q18_string_pointer[0];
-}
+/* For Q18, see queries_schar.c and queries_uchar.c. */
 
 /*
  * Since queries do not affect the exit status, force a warning to make this

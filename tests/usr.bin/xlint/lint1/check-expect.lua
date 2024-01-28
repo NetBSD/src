@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.11 2024/01/28 08:26:07 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.12 2024/01/28 08:54:27 rillig Exp $
 
 --[[
 
@@ -236,9 +236,11 @@ local function check_test(c_fname, update)
 
     local found = false
     for i, c_comment in ipairs(c_comments) do
-      if c_comment ~= "" and matches(expected_message, c_comment) then
-        c_comments[i] = ""
-        found = true
+      if c_comment ~= "" then
+        if matches(expected_message, c_comment) then
+          c_comments[i] = ""
+          found = true
+        end
         break
       end
     end
