@@ -1,4 +1,4 @@
-/*	$NetBSD: queries_uchar.c,v 1.1 2023/07/03 15:29:42 rillig Exp $	*/
+/*	$NetBSD: queries_uchar.c,v 1.2 2024/01/28 08:54:27 rillig Exp $	*/
 # 3 "queries_uchar.c"
 
 /*
@@ -11,20 +11,42 @@
  */
 
 /* lint1-only-if: uchar */
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 -X 351 */
 
 int
 Q14(char c)
 {
 	/* expect+6: implicit conversion changes sign from 'char' to 'int' [Q3] */
 	/* expect+5: implicit conversion changes sign from 'char' to 'int' [Q3] */
-	/* expect+4: implicit conversion changes sign from 'char' to 'int' [Q3] */
-	/* expect+3: comparison '==' of 'char' with plain integer 92 [Q14] */
-	/* expect+2: implicit conversion changes sign from 'char' to 'int' [Q3] */
-	/* expect+1: comparison '==' of 'char' with plain integer 0 [Q14] */
+	/* expect+4: comparison '==' of 'char' with plain integer 92 [Q14] */
+	/* expect+3: implicit conversion changes sign from 'char' to 'int' [Q3] */
+	/* expect+2: comparison '==' of 'char' with plain integer 0 [Q14] */
+	/* expect+1: implicit conversion changes sign from 'char' to 'int' [Q3] */
 	if (c == 'c' || c == L'w' || c == 92 || c == 0)
 		return 1;
 	return 5;
+}
+
+/*
+ * Variables with automatic storage duration often have so small scope that
+ * adding the 'const' qualifier hurts readability more than it helps.
+ */
+int
+/* expect+1: const automatic variable 'const_arg' [Q18] */
+Q18(const int const_arg, int arg)
+{
+	/* expect+1: const automatic variable 'Q18_scalar' [Q18] */
+	const char Q18_scalar = '1';
+	const char Q18_array[] = { '1', '2', '3' };
+	const char Q18_string[] = "123";
+	const char *Q18_string_pointer = "123";
+
+	/* expect+5: implicit conversion changes sign from 'char' to 'int' [Q3] */
+	/* expect+4: implicit conversion changes sign from 'char' to 'int' [Q3] */
+	/* expect+3: implicit conversion changes sign from 'char' to 'int' [Q3] */
+	/* expect+2: implicit conversion changes sign from 'char' to 'int' [Q3] */
+	return const_arg + arg
+	    + Q18_scalar + Q18_array[0] + Q18_string[0] + Q18_string_pointer[0];
 }
 
 /*
