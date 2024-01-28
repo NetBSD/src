@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.5 2023/08/03 18:48:42 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.6 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -73,11 +73,11 @@ void fcompat(void)
 	int (*p)[4][n+1];
 	int c[n][n][6][m];
 	int (*r)[n][n][n+1];
-	/* expect+2: warning: 'p' set but not used in function 'fcompat' [191] */
-	/* expect+1: warning: illegal combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
+	/* expect+2: warning: illegal combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
+	/* expect+1: warning: 'p' set but not used in function 'fcompat' [191] */
 	p = a;
-	/* expect+2: warning: 'r' set but not used in function 'fcompat' [191] */
-	/* expect+1: warning: illegal combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
+	/* expect+2: warning: illegal combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
+	/* expect+1: warning: 'r' set but not used in function 'fcompat' [191] */
 	r = c;
 }
 
@@ -153,8 +153,8 @@ thread_local int thread_local_variable_c23;
 _Thread_local int thread_local_variable_c11;
 
 /* The '_Noreturn' must not appear after the declarator. */
+/* expect+2: error: formal parameter #1 lacks name [59] */
+/* expect+1: warning: empty declaration [2] */
 void _Noreturn exit(int) _Noreturn;
-/* expect-1: error: formal parameter #1 lacks name [59] */
-/* expect-2: warning: empty declaration [2] */
 /* expect+2: error: syntax error '' [249] */
 /* expect+1: error: cannot recover from previous errors [224] */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_277.c,v 1.8 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_277.c,v 1.9 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_277.c"
 
 // Test for message: initialization of '%s' with '%s' [277]
@@ -29,7 +29,7 @@ example(enum E e, int i)
 
 	/* expect+1: warning: 'init_0' set but not used in function 'example' [191] */
 	enum E init_0 = 0;
-	/* expect+2: warning: 'init_1' set but not used in function 'example' [191] */
-	/* expect+1: warning: initialization of 'enum E' with 'int' [277] */
+	/* expect+2: warning: initialization of 'enum E' with 'int' [277] */
+	/* expect+1: warning: 'init_1' set but not used in function 'example' [191] */
 	enum E init_1 = 1;
 }

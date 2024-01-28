@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.7 2023/07/28 22:05:44 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.8 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -50,7 +50,7 @@ function(void)
 // storage classes.  The other storage classes cannot be combined.
 extern thread_local int extern_thread_local_1;
 thread_local extern int extern_thread_local_2;
+/* expect+1: warning: static variable 'static_thread_local_1' unused [226] */
 static thread_local int static_thread_local_1;
+/* expect+1: warning: static variable 'static_thread_local_2' unused [226] */
 thread_local static int static_thread_local_2;
-/* expect-2: warning: static variable 'static_thread_local_1' unused [226] */
-/* expect-2: warning: static variable 'static_thread_local_2' unused [226] */

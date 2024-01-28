@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_343.c,v 1.10 2023/09/14 21:53:02 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.11 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_343.c"
 
 /* Test for message: static array size requires C11 or later [343] */
@@ -36,7 +36,7 @@ int
 returns_volatile_int_array(int a[volatile 3])
 {
 	/* expect+2: error: cannot dereference non-pointer type 'int' [96] */
-	/* expect+1: ... expects to return value [214] */
+	/* expect+1: error: function 'returns_volatile_int_array' expects to return value [214] */
 	return a[0];
 }
 

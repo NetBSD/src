@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.12 2023/08/02 18:51:25 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.13 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -30,8 +30,8 @@ void type_qualifier_pointer(const number *const);
 /* expect+2: warning: parameter 'a_struct' unused in function 'old_style' [231] */
 extern void
 old_style(an_int, a_const_int, a_number, a_function, a_struct)
-/* expect+2: warning: empty declaration [2] */
-/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
+/* expect+2: error: only 'register' is valid as storage class in parameter [9] */
+/* expect+1: warning: empty declaration [2] */
 static;
 /* expect+1: error: syntax error '"' [249] */
 static "error";
@@ -71,8 +71,8 @@ const (parenthesized_name);
 const array[];
 /* expect+1: error: declared parameter 'array_size' is missing [53] */
 const array_size[1+1+1];
-/* expect+2: error: declared parameter 'multi_array' is missing [53] */
-/* expect+1: error: null dimension [17] */
+/* expect+2: error: null dimension [17] */
+/* expect+1: error: declared parameter 'multi_array' is missing [53] */
 const multi_array[][][][][][];
 /* expect+1: error: declared parameter 'function' is missing [53] */
 const function(void);

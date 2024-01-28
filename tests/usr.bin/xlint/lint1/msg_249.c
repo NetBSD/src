@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.14 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.15 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -30,8 +30,8 @@ int recover_from_rbrace;
 void
 function(void)
 {
-	/* expect+2: warning: statement not reached [193] */
 	if (0)
+		/* expect+1: warning: statement not reached [193] */
 		;
 	/* expect+1: error: syntax error ')' [249] */
 	);
@@ -71,9 +71,9 @@ int gcc_statement_expression_1 = ({
 unused_label:
 	1;
 	1;
+	/* expect+2: error: syntax error 'labels are only valid inside a function' [249] */
+	/* expect+1: error: non-constant initializer [177] */
 });
-/* expect-1: error: non-constant initializer [177] */
-/* expect-2: error: syntax error 'labels are only valid inside a function' [249] */
 
 /* Even another function definition does not help. */
 void
@@ -85,6 +85,6 @@ int gcc_statement_expression_2 = ({
 unused_label:
 	1;
 	1;
+	/* expect+2: error: syntax error 'labels are only valid inside a function' [249] */
+	/* expect+1: error: non-constant initializer [177] */
 });
-/* expect-1: error: non-constant initializer [177] */
-/* expect-2: error: syntax error 'labels are only valid inside a function' [249] */

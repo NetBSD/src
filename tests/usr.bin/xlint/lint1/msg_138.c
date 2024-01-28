@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_138.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_138.c,v 1.7 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_138.c"
 
 // Test for message: unknown operand size, op '%s' [138]
@@ -14,8 +14,8 @@ struct incomplete;
 void
 function(_Bool cond, struct incomplete *i1, struct incomplete *i2)
 {
-	/* expect+2: error: 'local' has incomplete type 'incomplete struct incomplete' [31] */
-	/* expect+1: error: cannot initialize 'incomplete struct incomplete' from 'pointer to incomplete struct incomplete' [185] */
+	/* expect+2: error: cannot initialize 'incomplete struct incomplete' from 'pointer to incomplete struct incomplete' [185] */
+	/* expect+1: error: 'local' has incomplete type 'incomplete struct incomplete' [31] */
 	struct incomplete local = i1;
 
 	/* expect+1: error: unknown operand size, op '=' [138] */

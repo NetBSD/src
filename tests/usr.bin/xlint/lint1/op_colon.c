@@ -1,4 +1,4 @@
-/*	$NetBSD: op_colon.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: op_colon.c,v 1.8 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "op_colon.c"
 
 /*
@@ -59,9 +59,9 @@ test_merge_qualifiers(_Bool cond, int *p, const int *c, volatile int *v,
 void
 c99_6_5_15_p6(_Bool cond, const volatile double *cv_dp)
 {
-	/* expect+2: ... 'pointer to const volatile double' ... */
-	/* expect+2: ... 'pointer to const volatile double' ... */
+	/* expect+1: ... 'pointer to const volatile double' ... */
 	sink(cond ? cv_dp : (void *)0);
+	/* expect+1: ... 'pointer to const volatile double' ... */
 	sink(cond ? (void *)0 : cv_dp);
 }
 
@@ -76,33 +76,33 @@ c99_6_5_15_p8(
     const char *c_cp
 )
 {
-	/* expect+2: ... 'pointer to const void' ... */
-	/* expect+2: ... 'pointer to const void' ... */
+	/* expect+1: ... 'pointer to const void' ... */
 	sink(cond ? c_vp : c_ip);
+	/* expect+1: ... 'pointer to const void' ... */
 	sink(cond ? c_ip : c_vp);
 
-	/* expect+2: ... 'pointer to volatile int' ... */
-	/* expect+2: ... 'pointer to volatile int' ... */
+	/* expect+1: ... 'pointer to volatile int' ... */
 	sink(cond ? v_ip : 0);
+	/* expect+1: ... 'pointer to volatile int' ... */
 	sink(cond ? 0 : v_ip);
 
-	/* expect+2: ... 'pointer to const volatile int' ... */
-	/* expect+2: ... 'pointer to const volatile int' ... */
+	/* expect+1: ... 'pointer to const volatile int' ... */
 	sink(cond ? c_ip : v_ip);
+	/* expect+1: ... 'pointer to const volatile int' ... */
 	sink(cond ? v_ip : c_ip);
 
-	/* expect+2: ... 'pointer to const void' ... */
-	/* expect+2: ... 'pointer to const void' ... */
+	/* expect+1: ... 'pointer to const void' ... */
 	sink(cond ? vp : c_cp);
+	/* expect+1: ... 'pointer to const void' ... */
 	sink(cond ? c_cp : vp);
 
-	/* expect+2: ... 'pointer to const int' ... */
-	/* expect+2: ... 'pointer to const int' ... */
+	/* expect+1: ... 'pointer to const int' ... */
 	sink(cond ? ip : c_ip);
+	/* expect+1: ... 'pointer to const int' ... */
 	sink(cond ? c_ip : ip);
 
-	/* expect+2: ... 'pointer to void' ... */
-	/* expect+2: ... 'pointer to void' ... */
+	/* expect+1: ... 'pointer to void' ... */
 	sink(cond ? vp : ip);
+	/* expect+1: ... 'pointer to void' ... */
 	sink(cond ? ip : vp);
 }
