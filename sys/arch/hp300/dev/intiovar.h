@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.14 2023/08/07 23:28:58 mrg Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.15 2024/01/28 17:31:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ struct intio_builtins {
 	const char *ib_modname;			/* module name */
 	bus_size_t ib_offset;			/* intio offset */
 	int ib_ipl;				/* interrupt priority level */
+	uint32_t ib_spumask;			/* which machines have it */
 };
 
 /*
