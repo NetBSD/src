@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_c99.c,v 1.2 2024/01/27 20:03:14 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_c99.c,v 1.3 2024/01/28 08:26:07 rillig Exp $	*/
 # 3 "platform_ilp32_c99.c"
 
 /*
@@ -29,21 +29,21 @@ void *lex_integer[] = {
 	9223372036854775807,
 	/* expect+1: ... integer 'long long' ... */
 	0x7fffffffffffffff,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	9223372036854775808,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0x8000000000000000,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551615,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffff,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	0x00010000000000000000,
 
 	/* expect+1: ... integer 'unsigned int' ... */
@@ -74,11 +74,11 @@ void *lex_integer[] = {
 	18446744073709551615U,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffffU,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616U,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	0x00010000000000000000U,
 
 	/* expect+1: ... integer 'long' ... */
@@ -101,21 +101,21 @@ void *lex_integer[] = {
 	9223372036854775807L,
 	/* expect+1: ... integer 'long long' ... */
 	0x7fffffffffffffffL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	9223372036854775808L,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0x8000000000000000L,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551615L,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffffL,
 	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616L,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	0x00010000000000000000L,
 
 	/* expect+1: ... integer 'unsigned long' ... */
@@ -146,11 +146,11 @@ void *lex_integer[] = {
 	18446744073709551615UL,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffffUL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616UL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	0x00010000000000000000UL,
 
 	/* expect+1: ... integer 'long long' ... */
@@ -183,11 +183,11 @@ void *lex_integer[] = {
 	18446744073709551615LL,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffffLL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616LL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	0x00010000000000000000LL,
 
 	/* expect+1: ... integer 'unsigned long long' ... */
@@ -218,8 +218,8 @@ void *lex_integer[] = {
 	18446744073709551615ULL,
 	/* expect+1: ... integer 'unsigned long long' ... */
 	0xffffffffffffffffULL,
-	/* expect+2: ... integer 'unsigned long long' ... */
-	/* expect+1: warning: integer constant out of range [252] */
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: ... integer 'unsigned long long' ... */
 	18446744073709551616ULL,
 	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'unsigned long long' ... */
