@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.14 2023/07/08 10:01:17 rillig Exp $
+# $NetBSD: accept.sh,v 1.15 2024/01/28 08:17:27 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# usage: accept.sh <pattern>...
+# usage: accept.sh [-u] <pattern>...
 #
 #	Run one or more lint tests, saving their output in the corresponding
 #	.exp files, for incorporating the messages into the .c files as

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_324.c,v 1.9 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_324.c,v 1.10 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_324.c"
 
 // Test for message: suggest cast from '%s' to '%s' on op '%s' to avoid overflow [324]
@@ -22,13 +22,13 @@ example(char c, int i, unsigned u)
 	long long ll;
 	unsigned long long ull;
 
-	/* expect+2: warning: 'll' set but not used in function 'example' [191] */
-	/* expect+1: warning: suggest cast from 'int' to 'long long' on op '+' to avoid overflow [324] */
+	/* expect+2: warning: suggest cast from 'int' to 'long long' on op '+' to avoid overflow [324] */
+	/* expect+1: warning: 'll' set but not used in function 'example' [191] */
 	ll = c + i;
 	/* expect+1: warning: suggest cast from 'int' to 'long long' on op '-' to avoid overflow [324] */
 	ll = i - c;
-	/* expect+2: warning: 'ull' set but not used in function 'example' [191] */
-	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '*' to avoid overflow [324] */
+	/* expect+2: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '*' to avoid overflow [324] */
+	/* expect+1: warning: 'ull' set but not used in function 'example' [191] */
 	ull = c * u;
 	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '+' to avoid overflow [324] */
 	ull = u + c;

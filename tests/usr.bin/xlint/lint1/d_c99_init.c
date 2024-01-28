@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.46 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.47 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -420,7 +420,7 @@ ensure_array_type_is_not_modified_during_initialization(void)
 }
 
 struct point unknown_member_name_beginning = {
-	 /* expect+1: error: type 'struct point' does not have member 'r' [101] */
+	/* expect+1: error: type 'struct point' does not have member 'r' [101] */
 	.r = 5,
 	.x = 4,
 	.y = 3,
@@ -489,7 +489,7 @@ union {
 };
 
 int designator_for_scalar = {
-	 /* expect+1: error: syntax error 'scalar type cannot use designator' [249] */
+	/* expect+1: error: syntax error 'scalar type cannot use designator' [249] */
 	.value = 3,
 };
 
@@ -557,10 +557,10 @@ struct offset_and_data offset_and_data = {
 // The size of the array is determined by the maximum index, not by the last
 // one mentioned.
 int arr_11[] = { [10] = 10, [0] = 0 };
+/* expect+1: error: negative array dimension (-11) [20] */
 typedef int ctassert_11[-(int)(sizeof(arr_11) / sizeof(arr_11[0]))];
-/* expect-1: error: negative array dimension (-11) [20] */
 
 // Without an explicit subscript designator, the subscript counts up.
 int arr_3[] = { [1] = 1, [0] = 0, 1, 2 };
+/* expect+1: error: negative array dimension (-3) [20] */
 typedef int ctassert_3[-(int)(sizeof(arr_3) / sizeof(arr_3[0]))];
-/* expect-1: error: negative array dimension (-3) [20] */

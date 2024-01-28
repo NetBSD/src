@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_095.c,v 1.7 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_095.c,v 1.8 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "msg_095.c"
 
 // Test for message: declaration of '%s' hides earlier one [95]
@@ -12,8 +12,8 @@ example(int identifier)
 {
 
 	{
-		/* expect+2: warning: 'identifier' set but not used in function 'example' [191] */
-		/* expect+1: warning: declaration of 'identifier' hides earlier one [95] */
+		/* expect+2: warning: declaration of 'identifier' hides earlier one [95] */
+		/* expect+1: warning: 'identifier' set but not used in function 'example' [191] */
 		int identifier = 3;
 	}
 

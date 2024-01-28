@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.11 2023/10/22 21:30:32 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.12 2024/01/28 08:17:27 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -57,7 +57,7 @@ function_returning_pointer(void)
 {
 	// GCC says 'error: cast specifies function type'.
 	// Clang says 'char (short *(*)(long))'.
-	/* expect+1: error: invalid cast from 'struct incompatible' to 'function(pointer to function(long) returning pointer to short) returning char' [147] */
+	/* expect+1: ... 'function(pointer to function(long) returning pointer to short) returning char' ... */
 	x = (char(short *(long)))x;
 
 	/* expect+1: warning: nested 'extern' declaration of 'f2' [352] */

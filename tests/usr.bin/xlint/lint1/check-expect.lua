@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.9 2024/01/27 15:10:57 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.10 2024/01/28 08:17:27 rillig Exp $
 
 --[[
 
@@ -185,21 +185,36 @@ test(function()
   assert_equals(matches("abc123xyz", "...y..."), true)
   assert_equals(matches("abc123xyz", "...z..."), true)
   assert_equals(matches("pattern", "...pattern..."), true)
+  assert_equals(matches("pattern", "... pattern ..."), false)
 end)
 
 
--- Inserts the '/* expect */' lines to the .c file, so that the .c file matches
--- the .exp file.  Multiple 'expect' comments for a single line of code are not
--- handled correctly, but it's still better than doing the same work manually.
+-- Inserts the '/* expect */' lines to the .c file, so that the .c file
+-- matches the .exp file.
+--
+-- TODO: Fix crashes in tests with '# line file' preprocessing directives.
 local function insert_missing(missing)
   for fname, items in pairs(missing) do
-    table.sort(items, function(a, b) return a.lineno > b.lineno end)
+    for i, item in ipairs(items) do
+      item.stable_sort_rank = i
+    end
+    local function less(a, b)
+      if a.lineno ~= b.lineno then
+        return a.lineno > b.lineno
+      end
+      return a.stable_sort_rank > b.stable_sort_rank
+    end
+    table.sort(items, less)
     local lines = assert(load_lines(fname))
+    local seen = {}
     for _, item in ipairs(items) do
       local lineno, message = item.lineno, item.message
       local indent = (lines[lineno] or ""):match("^([ \t]*)")
-      local line = ("%s/* expect+1: %s */"):format(indent, message)
+      local offset = 1 + (seen[lineno] or 0)
+      local line = ("%s/* expect+%d: %s */"):format(indent, offset, message)
+      print(("insert %s:%d %s"):format(fname, lineno, line))
       table.insert(lines, lineno, line)
+      seen[lineno] = (seen[lineno] or 0) + 1
     end
     save_lines(fname, lines)
   end
