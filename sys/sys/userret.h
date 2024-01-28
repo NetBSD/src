@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.34 2023/09/23 18:48:05 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.35 2024/01/28 10:06:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019, 2020, 2023
@@ -41,7 +41,7 @@
  * Define the MI code needed before returning to user mode, for trap and
  * syscall.
  *
- * We handle "exceptional" events: pending signals, stop/exit actions, etc. 
+ * We handle "exceptional" events: pending signals, stop/exit actions, etc.
  * Note that the event must be flagged BEFORE any AST is posted as we are
  * reading unlocked.
  */
