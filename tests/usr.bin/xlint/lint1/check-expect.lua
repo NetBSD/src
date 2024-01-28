@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.10 2024/01/28 08:17:27 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.11 2024/01/28 08:26:07 rillig Exp $
 
 --[[
 
@@ -212,7 +212,6 @@ local function insert_missing(missing)
       local indent = (lines[lineno] or ""):match("^([ \t]*)")
       local offset = 1 + (seen[lineno] or 0)
       local line = ("%s/* expect+%d: %s */"):format(indent, offset, message)
-      print(("insert %s:%d %s"):format(fname, lineno, line))
       table.insert(lines, lineno, line)
       seen[lineno] = (seen[lineno] or 0) + 1
     end
