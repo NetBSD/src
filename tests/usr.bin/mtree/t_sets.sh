@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.2 2024/01/26 00:32:46 riastradh Exp $
+#	$NetBSD: t_sets.sh,v 1.3 2024/01/28 19:08:06 riastradh Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,10 +28,6 @@
 check_mtree()
 {
 	local set=$1
-
-	if [ "$set" = base ]; then
-		atf_expect_fail "PR misc/57877"
-	fi
 
 	cd /
 	atf_check -o empty -s eq:0 \
