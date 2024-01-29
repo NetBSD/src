@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.46 2022/06/24 13:11:44 kre Exp $
+.\"	$NetBSD: stat.1,v 1.47 2024/01/29 21:55:24 christos Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2022
+.Dd January 29, 2023
 .Dt STAT 1
 .Os
 .Sh NAME
@@ -315,6 +315,11 @@ format with the extension that
 prints nanoseconds if available.
 .It Cm d , r
 Display actual device name.
+.It Cm f
+Display the flags of
+.Ar file
+as in
+.Nm ls Fl ldo .
 .It Cm g , u
 Display group or user name.
 .It Cm p
