@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.49 2024/01/29 21:55:24 christos Exp $ */
+/*	$NetBSD: stat.c,v 1.50 2024/01/29 22:01:58 christos Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.49 2024/01/29 21:55:24 christos Exp $");
+__RCSID("$NetBSD: stat.c,v 1.50 2024/01/29 22:01:58 christos Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: stat.c,v 1.49 2024/01/29 21:55:24 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#if HAVE_STRUCT_STAT_ST_FLAGS
+#if HAVE_STRUCT_STAT_ST_FLAGS && !HAVE_NBTOOL_CONFIG_H
 #include <util.h>
 #endif
 #include <vis.h>
@@ -870,9 +870,11 @@ format1(const struct stat *st,
 	case SHOW_st_flags:
 		small = (sizeof(st->st_flags) == 4);
 		data = st->st_flags;
+		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX;
+#if !HAVE_NBTOOL_CONFIG_H
 		sdata = flags_to_string((u_long)st->st_flags, "-");
-		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
-		    FMTF_STRING;
+		formats |= FMT_STRING;
+#endif
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
