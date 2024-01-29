@@ -14,4 +14,6 @@ COPTS.stat.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 COPTS.stat.c += -Wno-format-nonliteral
 
+LDADD=	-lutil
+
 .include <bsd.prog.mk>
