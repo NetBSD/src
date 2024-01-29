@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.203 2024/01/27 20:03:14 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.204 2024/01/29 21:30:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.203 2024/01/27 20:03:14 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.204 2024/01/29 21:30:25 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1259,28 +1259,26 @@ clear_warn_flags(void)
 int
 lex_string(void)
 {
-	unsigned char *s;
+	size_t s_len = 0;
+	size_t s_cap = 64;
+	char *s = xmalloc(s_cap);
+
 	int c;
-	size_t len, max;
-
-	s = xmalloc(max = 64);
-
-	len = 0;
 	while ((c = get_escaped_char('"')) >= 0) {
 		/* +1 to reserve space for a trailing NUL character */
-		if (len + 1 == max)
-			s = xrealloc(s, max *= 2);
-		s[len++] = (char)c;
+		if (s_len + 1 == s_cap)
+			s = xrealloc(s, s_cap *= 2);
+		s[s_len++] = (char)c;
 	}
-	s[len] = '\0';
+	s[s_len] = '\0';
 	if (c == -2)
 		/* unterminated string constant */
 		error(258);
 
 	strg_t *strg = xcalloc(1, sizeof(*strg));
 	strg->st_char = true;
-	strg->st_len = len;
-	strg->st_mem = s;
+	strg->st_len = s_len;
+	strg->st_chars = s;
 
 	yylval.y_string = strg;
 	return T_STRING;
@@ -1317,7 +1315,7 @@ lex_wide_string(void)
 			n = 1;
 	}
 
-	wchar_t *ws = xmalloc((wlen + 1) * sizeof(*ws));
+	wchar_t *ws = xcalloc(wlen + 1, sizeof(*ws));
 	size_t wi = 0;
 	/* convert from multibyte to wide char */
 	(void)mbtowc(NULL, NULL, 0);
@@ -1327,13 +1325,12 @@ lex_wide_string(void)
 		if (n == 0)
 			n = 1;
 	}
-	ws[wi] = 0;
 	free(s);
+	free(ws);
 
 	strg_t *strg = xcalloc(1, sizeof(*strg));
 	strg->st_char = false;
 	strg->st_len = wlen;
-	strg->st_mem = ws;
 
 	yylval.y_string = strg;
 	return T_STRING;
@@ -1580,7 +1577,7 @@ freeyyv(void *sp, int tok)
 		free(val);
 	} else if (tok == T_STRING) {
 		strg_t *strg = *(strg_t **)sp;
-		free(strg->st_mem);
+		free(strg->st_chars);
 		free(strg);
 	}
 }

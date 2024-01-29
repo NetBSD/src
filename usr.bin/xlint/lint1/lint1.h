@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.209 2024/01/23 19:44:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.210 2024/01/29 21:30:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -81,7 +81,7 @@ typedef struct {
 typedef struct strg {
 	bool	st_char;	/* string doesn't have an 'L' prefix */
 	size_t	st_len;		/* length without trailing NUL */
-	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
+	char	*st_chars;	/* only if st_char */
 } strg_t;
 
 // TODO: Use bit-fields instead of plain bool, but keep an eye on arm and

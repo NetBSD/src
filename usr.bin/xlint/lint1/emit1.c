@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.81 2023/12/03 18:17:41 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.82 2024/01/29 21:30:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.81 2023/12/03 18:17:41 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.82 2024/01/29 21:30:24 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -450,17 +450,13 @@ outqchar(char c)
 static void
 outfstrg(strg_t *strg)
 {
-	char c, oc;
-	bool first;
-	const char *cp;
 
 	lint_assert(strg->st_char);
-	cp = strg->st_mem;
+	const char *cp = strg->st_chars;
 
 	outchar('"');
 
-	c = *cp++;
-
+	char c = *cp++;
 	while (c != '\0') {
 
 		if (c != '%') {
@@ -511,7 +507,7 @@ outfstrg(strg_t *strg)
 		 */
 		if (c != '\0') {
 			outqchar(c);
-			oc = c;
+			char oc = c;
 			c = *cp++;
 			/*
 			 * handle [ for scanf. [-] means that a minus sign was
@@ -522,7 +518,7 @@ outfstrg(strg_t *strg)
 					c = *cp++;
 				if (c == ']')
 					c = *cp++;
-				first = true;
+				bool first = true;
 				while (c != '\0' && c != ']') {
 					if (c == '-') {
 						if (!first && *cp != ']')
