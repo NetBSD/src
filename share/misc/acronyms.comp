@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.387 2024/01/23 15:58:17 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.388 2024/01/29 16:31:53 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -731,6 +731,7 @@ HP	Hewlett-Packard
 HPC	high performance computing
 HPD	hot plug detection
 HPET	high precision event timer
+HPKE	hybrid public key encryption
 HSM	hardware security module
 HSM	hierarchical storage management
 HSRP	hot standby router protocol
@@ -1284,6 +1285,7 @@ PIT	programmable interrupt timer
 PIV	personal identity verification
 PIX	Private Internet eXchange
 PKCS	public-key cryptography standards
+PKE	public key encryption
 PKI	public key infrastructure
 PLC	programmable logic controller
 PLD	programmable logic device
