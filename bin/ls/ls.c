@@ -445,7 +445,7 @@ traverse(int argc, char *argv[], int options)
 			break;
 		case FTS_DNR:
 		case FTS_ERR:
-			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = EXIT_FAILURE;
 			break;
 		case FTS_D:
