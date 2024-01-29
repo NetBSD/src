@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $ */
+/*	$NetBSD: stat.c,v 1.49 2024/01/29 21:55:24 christos Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
+__RCSID("$NetBSD: stat.c,v 1.49 2024/01/29 21:55:24 christos Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -63,6 +63,9 @@ __RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#if HAVE_STRUCT_STAT_ST_FLAGS
+#include <util.h>
+#endif
 #include <vis.h>
 
 #if HAVE_STRUCT_STAT_ST_FLAGS
@@ -867,8 +870,9 @@ format1(const struct stat *st,
 	case SHOW_st_flags:
 		small = (sizeof(st->st_flags) == 4);
 		data = st->st_flags;
-		sdata = NULL;
-		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX;
+		sdata = flags_to_string((u_long)st->st_flags, "-");
+		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
+		    FMTF_STRING;
 		if (ofmt == 0)
 			ofmt = FMTF_UNSIGNED;
 		break;
