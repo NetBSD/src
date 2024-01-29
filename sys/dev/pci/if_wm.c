@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.795 2024/01/29 05:02:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.796 2024/01/29 06:05:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.795 2024/01/29 05:02:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.796 2024/01/29 06:05:11 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -8458,6 +8458,8 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 		    rxq->rxq_descsize * rxq->rxq_ndesc);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			uint32_t srrctl;
+
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
 				panic("%s: MCLBYTES %d unsupported for 82575 "
 				    "or higher\n", __func__, MCLBYTES);
@@ -8466,9 +8468,17 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 			 * Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF
 			 * only.
 			 */
-			CSR_WRITE(sc, WMREG_SRRCTL(qid),
-			    SRRCTL_DESCTYPE_ADV_ONEBUF
-			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
+			srrctl = SRRCTL_DESCTYPE_ADV_ONEBUF
+			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT);
+			/*
+			 * Drop frames if the RX descriptor ring has no room.
+			 * This is enabled only on multiqueue system to avoid
+			 * bad influence to other queues.
+			 */
+			if (sc->sc_nqueues > 1)
+				srrctl |= SRRCTL_DROP_EN;
+			CSR_WRITE(sc, WMREG_SRRCTL(qid), srrctl);
+
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_QUEUE_ENABLE
 			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
 			    | RXDCTL_WTHRESH(1));
