@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.31 2024/01/29 18:55:51 riastradh Exp $ */
+/* $NetBSD: hdafg.c,v 1.32 2024/01/29 18:58:54 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.31 2024/01/29 18:55:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.32 2024/01/29 18:58:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -4282,9 +4282,11 @@ hdafg_freem(void *opaque, void *addr, size_t size)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
 
-	if (ad->ad_playback != NULL && addr == DMA_KERNADDR(&ad->ad_playback->st_data))
+	if (ad->ad_playback != NULL &&
+	    addr == DMA_KERNADDR(&ad->ad_playback->st_data))
 		st = ad->ad_playback;
-	else if (ad->ad_capture != NULL && addr == DMA_KERNADDR(&ad->ad_capture->st_data))
+	else if (ad->ad_capture != NULL &&
+	    addr == DMA_KERNADDR(&ad->ad_capture->st_data))
 		st = ad->ad_capture;
 	else
 		panic("bad hdafg hwbuf mem: %p (%zu bytes)", addr, size);
