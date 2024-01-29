@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.17 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.18 2024/01/29 21:04:21 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.17 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.18 2024/01/29 21:04:21 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -75,38 +75,35 @@ static struct {
 	int switch_level;
 } ck;
 
-#define NEED(cond) \
-	do {				\
-		if (!(cond))		\
-			return false;	\
-	} while (false)
-
-/* Return whether tn has the form 'getopt(argc, argv, "literal") != -1'. */
+/* Return whether tn has the form '(c = getopt(argc, argv, "str")) != -1'. */
 static bool
 is_getopt_condition(const tnode_t *tn, char **out_options)
 {
 	const tnode_t *call, *last_arg;
+	const strg_t *str;
 
-	NEED(tn != NULL);
-	NEED(tn->tn_op == NE);
-	NEED(tn->tn_left->tn_op == ASSIGN);
+	if (tn != NULL
+	    && tn->tn_op == NE
+	    && tn->tn_left->tn_op == ASSIGN
+	    && tn->tn_right->tn_op == CON
+	    && tn->tn_right->tn_u._tn_val.v_tspec == INT
+	    && tn->tn_right->tn_u._tn_val.u.integer == -1
 
-	call = tn->tn_left->tn_right;
-	NEED(call->tn_op == CALL);
-	NEED(call->tn_left->tn_op == ADDR);
-	NEED(call->tn_left->tn_left->tn_op == NAME);
-	NEED(strcmp(call->tn_left->tn_left->tn_sym->s_name, "getopt") == 0);
+	    && (call = tn->tn_left->tn_right)->tn_op == CALL
+	    && call->tn_left->tn_op == ADDR
+	    && call->tn_left->tn_left->tn_op == NAME
+	    && strcmp(call->tn_left->tn_left->tn_sym->s_name, "getopt") == 0
 
-	NEED(call->tn_right->tn_op == PUSH);
+	    && call->tn_right->tn_op == PUSH
 
-	last_arg = call->tn_right->tn_left;
-	NEED(last_arg->tn_op == CVT);
-	NEED(last_arg->tn_left->tn_op == ADDR);
-	NEED(last_arg->tn_left->tn_left->tn_op == STRING);
-	NEED(last_arg->tn_left->tn_left->tn_string->st_char);
-
-	*out_options = xstrdup(last_arg->tn_left->tn_left->tn_string->st_mem);
-	return true;
+	    && (last_arg = call->tn_right->tn_left)->tn_op == CVT
+	    && last_arg->tn_left->tn_op == ADDR
+	    && last_arg->tn_left->tn_left->tn_op == STRING
+	    && (str = last_arg->tn_left->tn_left->tn_string)->st_char) {
+		*out_options = xstrdup(str->st_mem);
+		return true;
+	}
+	return false;
 }
 
 static void
