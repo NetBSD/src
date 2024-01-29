@@ -290,13 +290,8 @@ ext2fs_getattr(void *v)
 
 	vap->va_flags = 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_NODUMP) ? UF_NODUMP : 0;
-#ifdef EXT2FS_SYSTEM_FLAGS
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? SF_IMMUTABLE : 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_APPEND) ? SF_APPEND : 0;
-#else
-	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? UF_IMMUTABLE : 0;
-	vap->va_flags |= (ip->i_e2fs_flags & EXT2_APPEND) ? UF_APPEND : 0;
-#endif
 
 	vap->va_gen = ip->i_e2fs_gen;
 	/* this doesn't belong here */
@@ -345,13 +340,6 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
 
-		/*
-		 * Check if we're allowed to change the flags.
-		 * If EXT2FS_SYSTEM_FLAGS is set, then the flags are treated
-		 * as system flags, otherwise they're considered to be user
-		 * flags.
-		 */
-#ifdef EXT2FS_SYSTEM_FLAGS
 		/* Indicate we're changing system flags if we are. */
 		if ((vap->va_flags & SF_APPEND) ||
 		     (vap->va_flags & SF_IMMUTABLE)) {
@@ -363,7 +351,6 @@ ext2fs_setattr(void *v)
 		if (ip->i_e2fs_flags & (EXT2_APPEND | EXT2_IMMUTABLE)) {
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
-#endif /* EXT2FS_SYSTEM_FLAGS */
 
 		error = kauth_authorize_vnode(cred, action, vp, NULL,
 		    genfs_can_chflags(vp, cred, ip->i_uid, changing_sysflags));
@@ -371,15 +358,9 @@ ext2fs_setattr(void *v)
 			return error;
 
 		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE | EXT2_NODUMP);
-#ifdef EXT2FS_SYSTEM_FLAGS
 		ip->i_e2fs_flags |=
 		    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
 		    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
-#else
-		ip->i_e2fs_flags |=
-		    (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
-		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
-#endif
 		ip->i_e2fs_flags |=
 		    (vap->va_flags & UF_NODUMP) ? EXT2_NODUMP : 0;
 		ip->i_flag |= IN_CHANGE;
