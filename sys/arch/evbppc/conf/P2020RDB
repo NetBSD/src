@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.32 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: P2020RDB,v 1.33 2024/01/29 18:27:12 christos Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.32 $"
+ident 		"P2020RBD-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -88,8 +88,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
 #options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
-options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	NFSSERVER	# Network File System server
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.527 2023/09/03 19:38:58 andvar Exp $
+.\"	$NetBSD: options.4,v 1.528 2024/01/29 18:27:09 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1131,22 +1131,6 @@ created for another architecture.
 .It Cd options LFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
-.El
-.Ss Options for the ext2fs File System
-.Bl -ohang
-.It Cd options EXT2FS_SYSTEM_FLAGS
-This option changes the behavior of the APPEND and IMMUTABLE flags
-for a file on an
-.Em ext2
-file system.
-Without this option, the superuser or owner of the file can
-set and clear them.
-With this option, only the superuser can set them, and
-they can't be cleared if the securelevel is greater than 0.
-See also
-.Xr chflags 1
-and
-.Xr secmodel_securelevel 9 .
 .El
 .Ss Options for the NFS File System
 .Bl -ohang

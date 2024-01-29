@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.67 2022/08/07 02:52:25 simonb Exp $
+# $NetBSD: HDL_G,v 1.68 2024/01/29 18:27:11 christos Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -55,8 +55,6 @@ file-system	UNION		# union file system
 options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	NFSSERVER	# Network File System server
 
