@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.796 2024/01/29 06:05:11 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.797 2024/01/29 06:24:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.796 2024/01/29 06:05:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.797 2024/01/29 06:24:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -6640,7 +6640,6 @@ wm_update_stats(struct wm_softc *sc)
 	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
 	    cexterr;
 	uint64_t total_qdrop = 0;
-	int i;
 
 	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
 	symerrc = CSR_READ(sc, WMREG_SYMERRC);
@@ -6789,7 +6788,8 @@ wm_update_stats(struct wm_softc *sc)
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
 		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
 		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
-		for (i = 0; i < sc->sc_nqueues; i++) {
+#ifdef WM_EVENT_COUNTERS
+		for (int i = 0; i < sc->sc_nqueues; i++) {
 			struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 			uint32_t rqdpc;
 
@@ -6803,6 +6803,7 @@ wm_update_stats(struct wm_softc *sc)
 			WM_Q_EVCNT_ADD(rxq, qdrop, rqdpc);
 			total_qdrop += rqdpc;
 		}
+#endif
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
