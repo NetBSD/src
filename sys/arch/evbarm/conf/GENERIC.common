@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.51 2023/02/06 12:59:13 simonb Exp $
+#	$NetBSD: GENERIC.common,v 1.52 2024/01/29 18:27:11 christos Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -38,8 +38,6 @@ options 	WAPBL		# File system journaling support
 # lfs
 #options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH
 # ext2fs
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 # other
 options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	NFSSERVER	# Network File System server

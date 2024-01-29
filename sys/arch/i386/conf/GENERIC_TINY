@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.171 2023/02/09 14:09:48 abs Exp $
+#	$NetBSD: GENERIC_TINY,v 1.172 2024/01/29 18:27:13 christos Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -86,8 +86,6 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

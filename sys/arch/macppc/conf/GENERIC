@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.378 2024/01/17 13:23:30 uwe Exp $
+# $NetBSD: GENERIC,v 1.379 2024/01/29 18:27:13 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.378 $"
+#ident 		"GENERIC-$Revision: 1.379 $"
 
 maxusers	32
 
@@ -91,8 +91,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 options 	NFSSERVER	# Network File System server
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.514 2023/12/13 10:53:15 andvar Exp $
+# $NetBSD: ALL,v 1.515 2024/01/29 18:27:13 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.514 $"
+#ident		"ALL-$Revision: 1.515 $"
 
 maxusers	64		# estimated number of users
 
@@ -200,8 +200,6 @@ options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH
 options 	LFS_QUOTA	# quotas for LFS - experimental
 options 	LFS_QUOTA2	# new-style quotas for LFS - experimental
 # ext2fs
-options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 # other
 options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	NFSSERVER	# Network File System server

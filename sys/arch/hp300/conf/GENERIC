@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2023/02/12 14:50:39 abs Exp $
+# $NetBSD: GENERIC,v 1.212 2024/01/29 18:27:12 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -115,8 +115,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 options 	NFSSERVER	# Network File System server
 
 # Networking options

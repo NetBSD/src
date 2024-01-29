@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2023/02/12 14:50:41 abs Exp $
+# $NetBSD: GENERIC,v 1.180 2024/01/29 18:27:14 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.180 $"
 
 maxusers	32
 
@@ -109,8 +109,6 @@ options 	UFS_DIRHASH	# UFS Large Directory Hashing
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
 options 	LFS_DIRHASH	# LFS version of UFS_DIRHASH - experimental
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 options 	NFSSERVER	# Network File System server
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root

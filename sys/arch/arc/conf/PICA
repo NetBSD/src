@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.86 2020/01/19 01:25:04 thorpej Exp $
+#	$NetBSD: PICA,v 1.87 2024/01/29 18:27:10 christos Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -71,8 +71,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.116 2023/02/12 14:50:40 abs Exp $
+#	$NetBSD: GENERIC,v 1.117 2024/01/29 18:27:13 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 maxusers	32		# estimated number of users
 
@@ -128,8 +128,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 options 	WAPBL		# File system journaling support
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
 #options 	NFSSERVER	# Network File System server
 
 # Networking options
