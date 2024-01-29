@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.598 2024/01/23 20:03:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.599 2024/01/29 21:30:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.598 2024/01/23 20:03:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.599 2024/01/29 21:30:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -542,9 +542,12 @@ build_string(strg_t *strg)
 
 	size_t chsize = strg->st_char ? sizeof(char) : sizeof(wchar_t);
 	size_t size = (len + 1) * chsize;
-	n->tn_string->st_mem = expr_zero_alloc(size, "tnode.string.data");
-	(void)memcpy(n->tn_string->st_mem, strg->st_mem, size);
-	free(strg->st_mem);
+	if (strg->st_char) {
+		n->tn_string->st_chars = expr_zero_alloc(size,
+		    "tnode.string.data");
+		(void)memcpy(n->tn_string->st_chars, strg->st_chars, size);
+		free(strg->st_chars);
+	}
 	free(strg);
 
 	return n;
@@ -4700,13 +4703,11 @@ cat_strings(strg_t *s1, strg_t *s2)
 
 	size_t len1 = s1->st_len;
 	size_t len2 = s2->st_len;
-	size_t chsize = s1->st_char ? sizeof(char) : sizeof(wchar_t);
-	size_t size1 = len1 * chsize;
-	size_t size2 = (len2 + 1) * chsize;
-	s1->st_mem = xrealloc(s1->st_mem, size1 + size2);
-	memcpy((char *)s1->st_mem + size1, s2->st_mem, size2);
-	free(s2->st_mem);
-
+	if (s1->st_char) {
+		s1->st_chars = xrealloc(s1->st_chars, len1 + len2 + 1);
+		memcpy(s1->st_chars + len1, s2->st_chars, len2 + 1);
+		free(s2->st_chars);
+	}
 	s1->st_len = len1 + len2;
 	free(s2);
 
