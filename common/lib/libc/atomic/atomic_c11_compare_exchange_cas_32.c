@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.5 2022/05/16 06:07:23 skrll Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.6 2024/01/29 16:09:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ bool __atomic_compare_exchange_4(volatile void *, void *, uint32_t,
     bool, int, int);
 
 bool
+/*ARGSUSED*/
 __atomic_compare_exchange_4(volatile void *mem,
     void *expected, uint32_t desired,
     bool weak, int success, int failure)
