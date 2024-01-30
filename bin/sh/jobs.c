@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.118 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.119 2024/01/30 19:05:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.118 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.119 2024/01/30 19:05:07 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,7 +439,8 @@ showjob(struct output *out, struct job *jp, int mode)
 #if JOBS
 	if (mode & SHOW_PGID) {
 		/* output only the process group ID (lead process ID) */
-		outfmt(out, "%ld\n", (long)jp->pgrp);
+		outfmt(out, "%ld\n",
+		    jp->pgrp != 0 ? (long)jp->pgrp : (long)jp->ps->pid);
 		return;
 	}
 #endif
