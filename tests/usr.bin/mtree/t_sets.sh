@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.3 2024/01/28 19:08:06 riastradh Exp $
+#	$NetBSD: t_sets.sh,v 1.4 2024/01/30 16:57:32 martin Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,13 @@ atf_init_test_cases()
 		case $set in
 		base)	# Handled above already.
 			continue
+			;;
+		dtb)
+			# contents of this set go to the boot partition,
+			# which may not be mounted during normal operation
+			if [ ! -d /boot/dtb ]; then
+				continue;
+			fi
 			;;
 		etc|xetc)
 			# etc and xetc have files that may be modified
