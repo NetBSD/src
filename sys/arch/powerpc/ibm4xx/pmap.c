@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2022/10/05 09:03:06 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2024/02/01 22:02:18 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2022/10/05 09:03:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2024/02/01 22:02:18 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1207,7 +1207,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 
 		/*
 		 * For p != curproc, we cannot rely upon TLB miss handler in
-		 * user context. Therefore, extract pa and operate againt it.
+		 * user context. Therefore, extract pa and operate against it.
 		 *
 		 * Note that va below VM_MIN_KERNEL_ADDRESS is reserved for
 		 * direct mapping.
