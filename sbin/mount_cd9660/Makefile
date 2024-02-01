@@ -4,7 +4,7 @@
 .include <bsd.own.mk>
 
 PROG=	mount_cd9660
-SRCS=	mount_cd9660.c pathadj.c
+SRCS=	mount_cd9660.c fattr.c pathadj.c
 MAN=	mount_cd9660.8
 
 MOUNT=	${NETBSDSRCDIR}/sbin/mount

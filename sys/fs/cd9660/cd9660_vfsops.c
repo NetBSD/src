@@ -456,6 +456,13 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 
+	if (argp->flags & ISOFSMNT_UID)
+		isomp->im_uid = argp->uid;
+	if (argp->flags & ISOFSMNT_GID)
+		isomp->im_gid = argp->gid;
+	isomp->im_fmask = argp->fmask & ACCESSPERMS;
+	isomp->im_dmask = argp->dmask & ACCESSPERMS;
+
 	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		struct iso_directory_record *rootp;
@@ -483,7 +490,8 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		bp = NULL;
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |
-		 ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET | ISOFSMNT_RRCASEINS);
+		 ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET | ISOFSMNT_RRCASEINS |
+		 ISOFSMNT_UID | ISOFSMNT_GID);
 
 	if (isomp->im_flags & ISOFSMNT_GENS)
 		isomp->iso_ftype = ISO_FTYPE_9660;
