@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.599 2024/01/29 21:30:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.600 2024/02/01 18:37:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.599 2024/01/29 21:30:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.600 2024/02/01 18:37:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -522,13 +522,13 @@ build_name(sym_t *sym, bool is_funcname)
 }
 
 tnode_t *
-build_string(strg_t *strg)
+build_string(buffer *strg)
 {
-	size_t len = strg->st_len;
+	size_t len = strg->len;
 
 	type_t *tp = expr_zero_alloc(sizeof(*tp), "type");
 	tp->t_tspec = ARRAY;
-	tp->t_subt = gettyp(strg->st_char ? CHAR : WCHAR_TSPEC);
+	tp->t_subt = gettyp(strg->data != NULL ? CHAR : WCHAR_TSPEC);
 	tp->t_dim = (int)(len + 1);
 
 	tnode_t *n = expr_alloc_tnode();
@@ -537,16 +537,13 @@ build_string(strg_t *strg)
 	n->tn_lvalue = true;
 
 	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string), "tnode.string");
-	n->tn_string->st_char = strg->st_char;
-	n->tn_string->st_len = len;
+	n->tn_string->len = len;
 
-	size_t chsize = strg->st_char ? sizeof(char) : sizeof(wchar_t);
-	size_t size = (len + 1) * chsize;
-	if (strg->st_char) {
-		n->tn_string->st_chars = expr_zero_alloc(size,
+	if (strg->data != NULL) {
+		n->tn_string->data = expr_zero_alloc(len + 1,
 		    "tnode.string.data");
-		(void)memcpy(n->tn_string->st_chars, strg->st_chars, size);
-		free(strg->st_chars);
+		(void)memcpy(n->tn_string->data, strg->data, len + 1);
+		free(strg->data);
 	}
 	free(strg);
 
@@ -4691,24 +4688,22 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 }
 
 /* Append s2 to s1, then free s2. */
-strg_t *
-cat_strings(strg_t *s1, strg_t *s2)
+buffer *
+cat_strings(buffer *s1, buffer *s2)
 {
 
-	if (s1->st_char != s2->st_char) {
+	if ((s1->data != NULL) != (s2->data != NULL)) {
 		/* cannot concatenate wide and regular string literals */
 		error(292);
 		return s1;
 	}
 
-	size_t len1 = s1->st_len;
-	size_t len2 = s2->st_len;
-	if (s1->st_char) {
-		s1->st_chars = xrealloc(s1->st_chars, len1 + len2 + 1);
-		memcpy(s1->st_chars + len1, s2->st_chars, len2 + 1);
-		free(s2->st_chars);
+	if (s1->data != NULL) {
+		s1->data = xrealloc(s1->data, s1->len + s2->len + 1);
+		memcpy(s1->data + s1->len, s2->data, s2->len + 1);
+		free(s2->data);
 	}
-	s1->st_len = len1 + len2;
+	s1->len += s2->len;
 	free(s2);
 
 	return s1;

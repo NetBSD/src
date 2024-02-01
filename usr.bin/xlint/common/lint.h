@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.47 2024/01/20 10:25:57 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.48 2024/02/01 18:37:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -48,6 +48,14 @@
 #include "param.h"
 
 #if IS_LINT1 || IS_LINT2
+
+// Null-terminated character buffer, may contain null characters.
+typedef struct {
+	size_t	len;		/* excluding the terminating '\0' */
+	size_t	cap;
+	char	*data;
+} buffer;
+
 /*
  * Type specifiers, used in type structures (type_t) and elsewhere.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.204 2024/01/29 21:30:25 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.205 2024/02/01 18:37:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.204 2024/01/29 21:30:25 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.205 2024/02/01 18:37:06 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1275,12 +1275,11 @@ lex_string(void)
 		/* unterminated string constant */
 		error(258);
 
-	strg_t *strg = xcalloc(1, sizeof(*strg));
-	strg->st_char = true;
-	strg->st_len = s_len;
-	strg->st_chars = s;
+	buffer *str = xcalloc(1, sizeof(*str));
+	str->len = s_len;
+	str->data = s;
 
-	yylval.y_string = strg;
+	yylval.y_string = str;
 	return T_STRING;
 }
 
@@ -1328,11 +1327,10 @@ lex_wide_string(void)
 	free(s);
 	free(ws);
 
-	strg_t *strg = xcalloc(1, sizeof(*strg));
-	strg->st_char = false;
-	strg->st_len = wlen;
+	buffer *str = xcalloc(1, sizeof(*str));
+	str->len = wlen;
 
-	yylval.y_string = strg;
+	yylval.y_string = str;
 	return T_STRING;
 }
 
@@ -1576,8 +1574,8 @@ freeyyv(void *sp, int tok)
 		val_t *val = *(val_t **)sp;
 		free(val);
 	} else if (tok == T_STRING) {
-		strg_t *strg = *(strg_t **)sp;
-		free(strg->st_chars);
-		free(strg);
+		buffer *str = *(buffer **)sp;
+		free(str->data);
+		free(str);
 	}
 }
