@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.59 2024/02/01 18:37:06 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.60 2024/02/01 21:19:13 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.59 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.60 2024/02/01 21:19:13 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -94,7 +94,7 @@ intern(const char *name)
 	return n->ntn_name;
 }
 
-static void
+void
 buf_init(buffer *buf)
 {
 	buf->len = 0;
@@ -110,17 +110,28 @@ buf_done(buffer *buf)
 }
 
 static void
-buf_add(buffer *buf, const char *s)
+buf_add_mem(buffer *buf, const char *s, size_t n)
 {
-	size_t len = strlen(s);
-
-	while (buf->len + len + 1 >= buf->cap) {
-		buf->data = xrealloc(buf->data, 2 * buf->cap);
-		buf->cap = 2 * buf->cap;
+	while (buf->len + n + 1 >= buf->cap) {
+		buf->cap *= 2;
+		buf->data = xrealloc(buf->data, buf->cap);
 	}
 
-	memcpy(buf->data + buf->len, s, len + 1);
-	buf->len += len;
+	memcpy(buf->data + buf->len, s, n);
+	buf->len += n;
+	buf->data[buf->len] = '\0';
+}
+
+void
+buf_add_char(buffer *buf, char c)
+{
+	buf_add_mem(buf, &c, 1);
+}
+
+static void
+buf_add(buffer *buf, const char *s)
+{
+	buf_add_mem(buf, s, strlen(s));
 }
 
 static void

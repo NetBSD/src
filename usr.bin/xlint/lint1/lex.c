@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.205 2024/02/01 18:37:06 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.206 2024/02/01 21:19:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.205 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.206 2024/02/01 21:19:13 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1259,27 +1259,18 @@ clear_warn_flags(void)
 int
 lex_string(void)
 {
-	size_t s_len = 0;
-	size_t s_cap = 64;
-	char *s = xmalloc(s_cap);
+	buffer *buf = xcalloc(1, sizeof(*buf));
+	buf_init(buf);
 
 	int c;
-	while ((c = get_escaped_char('"')) >= 0) {
-		/* +1 to reserve space for a trailing NUL character */
-		if (s_len + 1 == s_cap)
-			s = xrealloc(s, s_cap *= 2);
-		s[s_len++] = (char)c;
-	}
-	s[s_len] = '\0';
+	while ((c = get_escaped_char('"')) >= 0)
+		buf_add_char(buf, (char)c);
 	if (c == -2)
 		/* unterminated string constant */
 		error(258);
 
-	buffer *str = xcalloc(1, sizeof(*str));
-	str->len = s_len;
-	str->data = s;
 
-	yylval.y_string = str;
+	yylval.y_string = buf;
 	return T_STRING;
 }
 
@@ -1288,15 +1279,10 @@ lex_wide_string(void)
 {
 	int c, n;
 
-	size_t len = 0, max = 64;
-	char *s = xmalloc(max);
-	while ((c = get_escaped_char('"')) >= 0) {
-		/* +1 to save space for a trailing NUL character */
-		if (len + 1 >= max)
-			s = xrealloc(s, max *= 2);
-		s[len++] = (char)c;
-	}
-	s[len] = '\0';
+	buffer buf;
+	buf_init(&buf);
+	while ((c = get_escaped_char('"')) >= 0)
+		buf_add_char(&buf, (char)c);
 	if (c == -2)
 		/* unterminated string constant */
 		error(258);
@@ -1304,8 +1290,8 @@ lex_wide_string(void)
 	/* get length of wide-character string */
 	(void)mblen(NULL, 0);
 	size_t wlen = 0;
-	for (size_t i = 0; i < len; i += n, wlen++) {
-		if ((n = mblen(&s[i], MB_CUR_MAX)) == -1) {
+	for (size_t i = 0; i < buf.len; i += n, wlen++) {
+		if ((n = mblen(buf.data + i, MB_CUR_MAX)) == -1) {
 			/* invalid multibyte character */
 			error(291);
 			break;
@@ -1318,13 +1304,13 @@ lex_wide_string(void)
 	size_t wi = 0;
 	/* convert from multibyte to wide char */
 	(void)mbtowc(NULL, NULL, 0);
-	for (size_t i = 0; i < len; i += n, wi++) {
-		if ((n = mbtowc(&ws[wi], &s[i], MB_CUR_MAX)) == -1)
+	for (size_t i = 0; i < buf.len; i += n, wi++) {
+		if ((n = mbtowc(&ws[wi], buf.data + i, MB_CUR_MAX)) == -1)
 			break;
 		if (n == 0)
 			n = 1;
 	}
-	free(s);
+	free(buf.data);
 	free(ws);
 
 	buffer *str = xcalloc(1, sizeof(*str));

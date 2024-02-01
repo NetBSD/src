@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.34 2024/01/20 12:02:09 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.35 2024/02/01 21:19:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,6 +37,8 @@
 #if IS_LINT1 || IS_LINT2
 const char *type_name(const type_t *);
 const char *tspec_name(tspec_t);
+void buf_init(buffer *);
+void buf_add_char(buffer *, char);
 #endif
 
 /*
