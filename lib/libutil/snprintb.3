@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.29 2024/01/22 00:11:21 uwe Exp $
+.\"     $NetBSD: snprintb.3,v 1.30 2024/02/01 22:18:34 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2024
+.Dd February 1, 2024
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ into the buffer
 of size
 .Fa buflen ,
 using a specified radix and an interpretation of
-the bits within that integer as though they were flags.
+the bits within that integer as though they were flags or groups of bits.
 The buffer is always
 .Tn NUL Ns -terminated.
 If the buffer
@@ -98,7 +98,7 @@ additional
 character
 .Pq or, if you prefer, a zero-length string .
 .Pp
-The decoding directive string
+The decoding directive in
 .Fa fmt
 describes how the bitfield is to be interpreted and displayed.
 It follows two possible syntaxes, referred to as
@@ -113,7 +113,9 @@ The first character of
 .Fa fmt
 may be
 .Ql \e177 ,
-indicating that the remainder of the format string follows the
+indicating that the remainder of the
+.Fa fmt
+argument follows the
 .Dq new
 syntax.
 The second character
@@ -131,18 +133,17 @@ and
 .Ql \e20
 .Pq hexadecimal .
 .Pp
-The remaining characters in
+The remaining characters in the
 .Fa fmt
-are interpreted as a list of bit-position\(endescription pairs.
-From here the syntaxes diverge.
+argument are interpreted as a list of formatting directives.
 .
 .Ss Old Syntax
 .Pp
 The
 .Dq old
-format syntax is series of bit-position\(endescription pairs.
+format syntax is a series of bit-position\(endescription pairs.
 .Pp
-Each description begins with a binary character value that represents
+Each directive begins with a binary character value that represents
 the position of the bit being described.
 .Pp
 .Sy NB :
@@ -164,17 +165,19 @@ The old syntax is limited to 32-bit values.
 The remaining characters are the description to print should the bit
 being described be set.
 .Pp
-Description strings are delimited by the next bit position value character
+Descriptions are delimited by the next bit position value character
 encountered
 .Pq distinguishable by its value being \*[Le] 32 ,
-or the end of the decoding directive string itself.
+or by the end of the format string itself.
 .
 .Ss New Syntax
 .Pp
 For the
 .Dq new
-format syntax, a field description begins with a field type followed
-by a binary field position and possibly a field length.
+format syntax,
+a formatting directive begins with a field type
+followed by a binary field position and possibly a field length,
+followed by a description.
 The bit positions are 0-based,
 the least significant bit is bit-position zero.
 Each description is terminated by a
@@ -188,7 +191,7 @@ Describes a single bit at bit-position
 .Ar B .
 The remaining characters are the description to print should the bit
 being described be set.
-This field description is similar in function to the old format.
+This field directive is similar in function to the old format.
 When converting old formats to the new syntax don't forget that the
 new syntax uses zero-based bit positions.
 .
@@ -202,8 +205,9 @@ followed by
 .Ql \&=
 and the value of the field.
 The value of the field is printed in the base specified as the second
-character of the decoding directive string
-.Ar fmt .
+character of the
+.Ar fmt
+argument.
 .
 .It Cm F\e Ns Ar B Ns Cm \e Ns Ar L
 Describes a multi-bit field like
@@ -224,7 +228,7 @@ directive is compared to the byte value
 .Pq for values 0 through 255 .
 If they are equal,
 .Ql \&=
-followed by the string following
+followed by the description string following
 .Ar V
 is printed.
 This and the
@@ -240,7 +244,7 @@ directive, but omits the leading
 .It Cm * Ns Ar FMT
 This provides a
 .Dq default
-case that prints the extracted field value using
+case that prints the extracted field value using the
 .Xr printf 3
 format
 .Ar FMT
@@ -256,7 +260,7 @@ format specification that prints the value that
 did not match, since the field can be more than 32 bits wide.
 .El
 .Pp
-The new format string is terminated by an additional
+The new format is terminated by an additional
 .Tn NUL
 character at the end, following that delimiting the last
 bit-position\(endescription pair.
@@ -269,7 +273,7 @@ The
 .Fn snprintb
 and
 .Fn snprintb_m
-functions return the number of bytes that would have written to the buffer
+functions return the number of bytes that they would have written to the buffer
 if there was adequate space, excluding the final terminating NUL, or \-1 in
 case an error occurred.
 For
@@ -284,10 +288,10 @@ snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
 
 snprintb(buf, buflen,
     "\e20"
-    "\ex10NOTBOOT" "\ex0fFPP" "\ex0eSDVMA"
-    "\ex0cVIDEO" "\ex0bLORES" "\ex0aFPA" "\ex09DIAG"
-    "\ex07CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
-    "\ex04DBGCACHE",
+    "\ex10NOTBOOT" "\ex0f""FPP" "\ex0eSDVMA"
+    "\ex0cVIDEO" "\ex0bLORES" "\ex0a""FPA" "\ex09""DIAG"
+    "\ex07""CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
+    "\ex04""DBGCACHE",
     0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
@@ -298,7 +302,7 @@ snprintb(buf, buflen,
     "\e177\e020"
     "b\e0LSB\e0" "b\e1BITONE\e0"
     "f\e4\e4NIBBLE2\e0"
-    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
+    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
     "b\ex1fMSB\e0",
     0x800f0701)
 \(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=FIFTEEN,MSB>"
@@ -309,7 +313,7 @@ The same example using snprintb_m:
 snprintb_m(buf, buflen,
     "\e177\e020"
     "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
-    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exfFIFTEEN\e0"
+    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
     "b\ex1fMSB\e0",
     0x800f0701, 34)
 \(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
@@ -380,7 +384,17 @@ snprintb(buf, buflen, MAP_FMT, 0x2e000000)
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The leading character does not describe a supported format,
+The leading character
+.Po for the
+.Dq old
+format
+.Pc
+or the second character
+.Po for the
+.Dq new
+format
+.Pc
+does not describe a supported numeral base,
 or
 .Fn snprintf
 failed.
