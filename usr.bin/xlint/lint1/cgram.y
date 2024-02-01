@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.484 2024/01/23 19:44:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.485 2024/02/01 18:37:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.484 2024/01/23 19:44:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.485 2024/02/01 18:37:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -148,7 +148,7 @@ is_either(const char *s, const char *a, const char *b)
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	range_t	y_range;
-	strg_t	*y_string;
+	buffer	*y_string;
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
 	struct generic_association *y_generic;

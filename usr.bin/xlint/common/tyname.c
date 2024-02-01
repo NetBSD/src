@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.58 2024/01/20 10:25:57 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.59 2024/02/01 18:37:06 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.58 2024/01/20 10:25:57 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.59 2024/02/01 18:37:06 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -55,13 +55,6 @@ typedef struct name_tree_node {
 	struct name_tree_node *ntn_less;
 	struct name_tree_node *ntn_greater;
 } name_tree_node;
-
-/* A growable string buffer. */
-typedef struct buffer {
-	size_t	len;
-	size_t	cap;
-	char *	data;
-} buffer;
 
 static name_tree_node *type_names;
 

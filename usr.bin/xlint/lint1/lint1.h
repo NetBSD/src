@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.210 2024/01/29 21:30:25 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.211 2024/02/01 18:37:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -70,19 +70,6 @@ typedef struct {
 	int	p_line;
 	int	p_uniq;			/* uniquifier */
 } pos_t;
-
-/*
- * Strings cannot be referenced simply by a pointer to their first
- * char. This is because strings can contain NUL characters other than the
- * trailing NUL.
- *
- * Strings are stored with a trailing NUL.
- */
-typedef struct strg {
-	bool	st_char;	/* string doesn't have an 'L' prefix */
-	size_t	st_len;		/* length without trailing NUL */
-	char	*st_chars;	/* only if st_char */
-} strg_t;
 
 // TODO: Use bit-fields instead of plain bool, but keep an eye on arm and
 // powerpc, on which NetBSD's GCC 10.5.0 (but not the upstream GCC) generates
@@ -324,7 +311,9 @@ typedef struct tnode {
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
 		val_t	_tn_val;	/* value if op == CON */
-		strg_t	*_tn_string;	/* string if op == STRING */
+		buffer	*_tn_string;	/* string if op == STRING; for wide
+					 * char strings, data is NULL but len
+					 * is valid */
 	} tn_u;
 } tnode_t;
 

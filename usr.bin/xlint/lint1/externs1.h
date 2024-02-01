@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.212 2024/01/23 19:44:28 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.213 2024/02/01 18:37:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -275,7 +275,7 @@ type_t *expr_derive_type(type_t *, tspec_t);
 bool is_compiler_builtin(const char *);
 tnode_t *build_constant(type_t *, val_t *);
 tnode_t *build_name(sym_t *, bool);
-tnode_t *build_string(strg_t *);
+tnode_t *build_string(buffer *);
 tnode_t *build_generic_selection(const tnode_t *,
 		    struct generic_association *);
 
@@ -298,7 +298,7 @@ val_t *integer_constant(tnode_t *, bool);
 void expr(tnode_t *, bool, bool, bool, bool);
 void check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
 bool constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
-strg_t *cat_strings(strg_t *, strg_t *);
+buffer *cat_strings(buffer *, buffer *);
 unsigned int type_size_in_bits(const type_t *);
 sym_t *find_member(const struct_or_union *, const char *);
 

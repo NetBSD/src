@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.82 2024/01/29 21:30:24 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.83 2024/02/01 18:37:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,13 +38,13 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.82 2024/01/29 21:30:24 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.83 2024/02/01 18:37:06 rillig Exp $");
 #endif
 
 #include "lint1.h"
 
 static void outtt(sym_t *, sym_t *);
-static void outfstrg(strg_t *);
+static void outfstrg(const char *);
 
 /*
  * Write type into the output file, encoded as follows:
@@ -367,11 +367,11 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 			}
 		} else if (arg->tn_op == ADDR &&
 		    arg->tn_left->tn_op == STRING &&
-		    arg->tn_left->tn_string->st_char) {
+		    arg->tn_left->tn_string->data != NULL) {
 			/* constant string, write all format specifiers */
 			outchar('s');
 			outint(n);
-			outfstrg(arg->tn_left->tn_string);
+			outfstrg(arg->tn_left->tn_string->data);
 		}
 	}
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
@@ -448,11 +448,8 @@ outqchar(char c)
  * writes them, enclosed in "" and quoted if necessary, to the output file
  */
 static void
-outfstrg(strg_t *strg)
+outfstrg(const char *cp)
 {
-
-	lint_assert(strg->st_char);
-	const char *cp = strg->st_chars;
 
 	outchar('"');
 
