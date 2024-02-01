@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.5 2024/01/19 05:45:28 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.6 2024/02/01 22:00:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #define	VECI_LINE1010		10	/* Line 1010 Emulator */
 #define	VECI_LINE1111		11	/* Line 1111 Emulator */
 #define	VECI_rsvd12		12	/* unassigned, reserved */
-#define	VECI_CPV		13	/* Coprocessor Prototol Violation */
+#define	VECI_CPV		13	/* Coprocessor Protocol Violation */
 #define	VECI_FORMATERR		14	/* Format Error */
 #define	VECI_UNINT_INTR		15	/* Uninitialized Interrupt */
 #define	VECI_rsvd16		16	/* unassigned, reserved */
@@ -109,7 +109,7 @@
 #define	VECI_PMMU_ACCESS	58	/* PMMU Access Level Violation */
 #define	VECI_rsvd59		59	/* unassigned, reserved */
 #define	VECI_UNIMP_EA		60	/* Unimplemented Effective Address */
-#define	VECI_UNIMP_II		61	/* Umimplemented Integer Instruction */
+#define	VECI_UNIMP_II		61	/* Unimplemented Integer Instruction */
 #define	VECI_rsvd62		62	/* unassigned, reserved */
 #define	VECI_rsvd63		63	/* unassigned, reserved */
 #define	VECI_USRVEC_START	64	/* User defined vectors (192) */
