@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.33 2024/02/01 02:41:56 gutteridge Exp $	*/
+/*	$NetBSD: sti.c,v 1.34 2024/02/01 06:50:36 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.33 2024/02/01 02:41:56 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.34 2024/02/01 06:50:36 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -933,8 +933,8 @@ sti_init(struct sti_screen *scr, int mode)
 		a.in.text_planes = 1;
 	} else {
 		a.flags.flags |= STI_INITF_TEXT | STI_INITF_NTEXT;
-		/* 
-		 * Request as many text planes as STI will allow. 
+		/*
+		 * Request as many text planes as STI will allow.
 		 * The reason to do this - when switching to framebuffer mode
 		 * for X we need access to all planes. In theory STI should do
 		 * just that when we request access to both text and non-text
