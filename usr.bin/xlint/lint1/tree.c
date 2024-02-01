@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.600 2024/02/01 18:37:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.601 2024/02/01 21:19:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.600 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.601 2024/02/01 21:19:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4699,7 +4699,9 @@ cat_strings(buffer *s1, buffer *s2)
 	}
 
 	if (s1->data != NULL) {
-		s1->data = xrealloc(s1->data, s1->len + s2->len + 1);
+		while (s1->len + s2->len + 1 > s1->cap)
+			s1->cap *= 2;
+		s1->data = xrealloc(s1->data, s1->cap);
 		memcpy(s1->data + s1->len, s2->data, s2->len + 1);
 		free(s2->data);
 	}
