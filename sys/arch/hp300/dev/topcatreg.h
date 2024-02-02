@@ -1,5 +1,5 @@
 /*	$OpenBSD: topcatreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: topcatreg.h,v 1.3 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: topcatreg.h,v 1.4 2024/02/02 22:19:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ struct tcboxfb {
 	uint16_t wheight;		/* block mover pixel height   0x4106 */
   /* Catseye */
 	uint8_t f19[0x4206-0x4106-2];
-	uint16_t rug_cmdstat;		/* RUG Command/Staus	      0x4206 */
+	uint16_t rug_cmdstat;		/* RUG Command/Status	      0x4206 */
 	uint8_t f20[0x4510-0x4206-2];
 	uint16_t vb_select;		/* Vector/BitBlt Select	      0x4510 */
 	uint16_t tcntrl;		/* Three Operand Control      0x4512 */
