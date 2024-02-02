@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.79 2022/05/24 20:50:19 andvar Exp $ */
+/* $NetBSD: mfi.c,v 1.80 2024/02/02 22:26:58 andvar Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.79 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.80 2024/02/02 22:26:58 andvar Exp $");
 
 #include "bio.h"
 
@@ -3374,7 +3374,7 @@ mfi_tbolt_create_sgl(struct mfi_ccb *ccb, int flags)
  *
  * If this is not done right the RAID firmware will not remove a
  * pulled drive and the RAID won't go degraded etc.  Effectively,
- * stopping any RAID mangement to functions.
+ * stopping any RAID management to functions.
  *
  * Doing another LD sync, requires the use of an event since the
  * driver needs to do a mfi_wait_command and can't do that in an

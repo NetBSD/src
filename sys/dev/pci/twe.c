@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.110 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.111 2024/02/02 22:26:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.110 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.111 2024/02/02 22:26:58 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1014,7 +1014,7 @@ twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
 		}
 	}
 
-	/* Now enqueue the AEN for mangement tools. */
+	/* Now enqueue the AEN for management tools. */
 	s = splbio();
 
 	next = (sc->sc_aen_head + 1) % TWE_AEN_Q_LENGTH;

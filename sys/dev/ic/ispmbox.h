@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.58 2023/09/21 09:31:50 msaitoh Exp $ */
+/* $NetBSD: ispmbox.h,v 1.59 2024/02/02 22:26:58 andvar Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1928,7 +1928,7 @@ typedef struct {
 
 #define	NAFC_RCOUNT	0x80	/* increment resource count */
 #define NAFC_RST_CLRD	0x20	/* Clear LIP Reset */
-#define	NAFC_TVALID	0x10	/* task mangement response code is valid */
+#define	NAFC_TVALID	0x10	/* task management response code is valid */
 
 /*
  * ISP24XX Notify Acknowledge
