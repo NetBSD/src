@@ -18,7 +18,7 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay midirecord mixerctl \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mktemp mkubootimage \
-	moduli msgc msgs \
+	moduli monitor msgc msgs \
 	nbperf nc netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pr \
 	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
