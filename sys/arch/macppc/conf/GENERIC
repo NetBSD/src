@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.375 2022/08/07 02:52:27 simonb Exp $
+# $NetBSD: GENERIC,v 1.375.4.1 2024/02/02 18:29:18 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.375 $"
+#ident 		"GENERIC-$Revision: 1.375.4.1 $"
 
 maxusers	32
 
@@ -84,7 +84,7 @@ include "conf/filesystems.config"
 
 # File system options
 options 	APPLE_UFS	# Apple UFS support in FFS
-#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
