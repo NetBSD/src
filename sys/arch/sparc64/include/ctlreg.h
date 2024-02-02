@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.69 2023/08/10 20:02:56 andvar Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.70 2024/02/02 22:33:42 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -286,7 +286,7 @@
 
 /* SFSR bits for both D_SFSR and I_SFSR */
 #define	SFSR_ASI(x)		((x)>>16)
-#define	SFSR_FT_VA_OOR_2	0x02000 /* IMMU: jumpl or return to unsupportd VA */
+#define	SFSR_FT_VA_OOR_2	0x02000 /* IMMU: jumpl or return to unsupported VA */
 #define	SFSR_FT_VA_OOR_1	0x01000 /* fault at unsupported VA */
 #define	SFSR_FT_NFO		0x00800	/* DMMU: Access to page marked NFO */
 #define	SFSR_ILL_ASI		0x00400	/* DMMU: Illegal (unsupported) ASI */

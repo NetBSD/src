@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2014/04/03 17:07:07 martin Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2024/02/02 22:33:42 andvar Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2014/04/03 17:07:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2024/02/02 22:33:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,7 +94,7 @@ pcdp_cnprobe(struct consdev *cn)
 #if defined(DIAGNOSTIC)
 				if (tbl->revision < 3)
 					panic("PCDP found in HCDP rev.%d."
-					    " Maybe unsupport PCDP",
+					    " Maybe unsupported PCDP",
 					    tbl->revision);
 #endif
 				cn->cn_pri = CN_NORMAL;
