@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.295 2023/08/01 17:51:24 christos Exp $
+#	$NetBSD: shlib_version,v 1.296 2024/02/02 21:52:22 andvar Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -8,7 +8,7 @@
 # - libc/net: resolver update to BIND8/9?
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
 # - Crypto hashes have name overlap with libcrypto, rename them
-# - obsolete crypto hashes shold be booted out of libc
+# - obsolete crypto hashes should be booted out of libc
 # - libc/gen/setproctitle.c: remove __ps_strings hack
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
 # - lib/libc/net/iso_addr.c: remove

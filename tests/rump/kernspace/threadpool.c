@@ -1,4 +1,4 @@
-/*	$NetBSD: threadpool.c,v 1.5 2019/01/04 05:35:24 thorpej Exp $	*/
+/*	$NetBSD: threadpool.c,v 1.6 2024/02/02 21:52:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: threadpool.c,v 1.5 2019/01/04 05:35:24 thorpej Exp $");
+__RCSID("$NetBSD: threadpool.c,v 1.6 2024/02/02 21:52:23 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ rumptest_threadpool_job_cancel(void)
 		cv_wait(&data.cond, &data.mutex);
 	KASSERT(data.count == 1);
 
-	/* Job is already running (and is not finished); this shold fail. */
+	/* Job is already running (and is not finished); this should fail. */
 	rv = threadpool_cancel_job_async(pool, &data.job);
 	KASSERT(rv == false);
 
