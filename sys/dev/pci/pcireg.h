@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.168 2022/10/17 03:05:32 mrg Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.169 2024/02/02 22:19:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -2116,7 +2116,7 @@ struct pci_rom {
 #define	PCI_DPCCTL_DLACTECOR	__BIT(23)      /* DL_Active ERR_COR Enable */
 
 #define	PCI_DPC_STATESID 0x08	/* Status and Error Source ID Register */
-#define	PCI_DPCSTAT_TSTAT	__BIT(0)       /* DPC Trigger Staus */
+#define	PCI_DPCSTAT_TSTAT	__BIT(0)       /* DPC Trigger Status */
 #define	PCI_DPCSTAT_TREASON	__BITS(2, 1)   /* DPC Trigger Reason */
 #define	PCI_DPCSTAT_ISTAT	__BIT(3)       /* DPC Interrupt Status */
 #define	PCI_DPCSTAT_RPBUSY	__BIT(4)       /* DPC RP Busy */

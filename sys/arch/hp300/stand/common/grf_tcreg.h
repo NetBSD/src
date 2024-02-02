@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tcreg.h,v 1.2 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: grf_tcreg.h,v 1.3 2024/02/02 22:19:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@ struct tcboxfb {
   vu_short 	wheight;		/* block mover pixel height   0x4106 */
   /* Catseye */
   u_char	f19[0x4206-0x4106-2];
-  vu_short	rug_cmdstat;		/* RUG Command/Staus	      0x4206 */
+  vu_short	rug_cmdstat;		/* RUG Command/Status	      0x4206 */
   u_char	f20[0x4510-0x4206-2];
   vu_short	vb_select;		/* Vector/BitBlt Select	      0x4510 */
   vu_short	tcntrl;			/* Three Operand Control      0x4512 */
