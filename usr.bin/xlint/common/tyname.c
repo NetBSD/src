@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.60 2024/02/01 21:19:13 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.61 2024/02/02 16:25:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.60 2024/02/01 21:19:13 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.61 2024/02/02 16:25:58 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -94,7 +94,11 @@ intern(const char *name)
 	return n->ntn_name;
 }
 
+#if IS_LINT1
 void
+#else
+static void
+#endif
 buf_init(buffer *buf)
 {
 	buf->len = 0;
@@ -122,11 +126,13 @@ buf_add_mem(buffer *buf, const char *s, size_t n)
 	buf->data[buf->len] = '\0';
 }
 
+#if IS_LINT1
 void
 buf_add_char(buffer *buf, char c)
 {
 	buf_add_mem(buf, &c, 1);
 }
+#endif
 
 static void
 buf_add(buffer *buf, const char *s)
