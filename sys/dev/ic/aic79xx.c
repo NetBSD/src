@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.69 2023/08/01 20:50:11 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.70 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.69 2023/08/01 20:50:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.70 2024/02/02 22:39:10 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1871,7 +1871,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 		 * If we raise ATN and the target completes the entire
 		 * stream (P0 asserted during the last packet), the
 		 * hardware will ack all data and return to the ISTART
-		 * state.  When the target reponds to our ATN condition,
+		 * state.  When the target responds to our ATN condition,
 		 * LQIPHASE_LQ will be asserted.  We should respond to
 		 * this with an LQIRETRY to prepare for any future
 		 * packets.  NONPACKREQ will not be asserted again
@@ -7620,7 +7620,7 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 	 */
 	next_fifo = fifo = ahd_inb(ahd, DFFSTAT) & CURRFIFO;
 	if (next_fifo > CURRFIFO_1)
-		/* If disconneced, arbitrarily start with FIFO1. */
+		/* If disconnected, arbitrarily start with FIFO1. */
 		next_fifo = fifo = 0;
 	do {
 		next_fifo ^= CURRFIFO_1;
@@ -7900,7 +7900,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 					printf("Invalid Command IU Field\n");
 					break;
 				case SIU_PFC_TMF_NOT_SUPPORTED:
-					printf("TMF not supportd\n");
+					printf("TMF not supported\n");
 					break;
 				case SIU_PFC_TMF_FAILED:
 					printf("TMF failed\n");
@@ -8962,7 +8962,7 @@ ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *tbuf,
 }
 
 /*
- * Write count 16bit words from tbuf, into SEEPROM attache to the
+ * Write count 16bit words from tbuf, into SEEPROM attached to the
  * controller starting at 16bit word address start_addr, using the
  * controller's SEEPROM writing state machine.
  */
@@ -8986,7 +8986,7 @@ ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *tbuf,
 		return (error);
 
 	/*
-	 * Write the data.  If we don't get throught the loop at
+	 * Write the data.  If we don't get through the loop at
 	 * least once, the arguments were invalid.
 	 */
 	retval = EINVAL;

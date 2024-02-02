@@ -1,4 +1,4 @@
-/*	$NetBSD: sht3xreg.h,v 1.3 2022/05/28 10:36:23 andvar Exp $	*/
+/*	$NetBSD: sht3xreg.h,v 1.4 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -84,7 +84,7 @@
    the information in the datasheet was not enough to
    get it working.  A read of the registers appears to
    function just fine, but writes do not do anything, and
-   the chip does not indicate any errors occured.
+   the chip does not indicate any errors occurred.
 */
 #define SHT3X_READ_HIGH_ALERT_SET	0xE11F
 #define SHT3X_READ_HIGH_ALERT_CLEAR	0xE114

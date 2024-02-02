@@ -39,7 +39,7 @@
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.reg,v 1.43 2003/01/20 20:44:55 gibbs Exp $
  */
-VERSION = "$NetBSD: aic7xxx.reg,v 1.6 2022/01/25 22:01:34 andvar Exp $"
+VERSION = "$NetBSD: aic7xxx.reg,v 1.7 2024/02/02 22:39:10 andvar Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -470,7 +470,7 @@ register TARGID {
 }
 
 /*
- * Serial Port I/O Cabability register (p. 4-95 aic7860 Data Book)
+ * Serial Port I/O Capability register (p. 4-95 aic7860 Data Book)
  * Indicates if external logic has been attached to the chip to
  * perform the tasks of accessing a serial eeprom, testing termination
  * strength, and performing cable detection.  On the aic7860, most of

@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.9 2017/09/03 13:41:19 wiz Exp $ */
+/* $NetBSD: t_round.c,v 1.10 2024/02/02 22:39:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 /*
  * This tests for a bug in the initial implementation where
- * precision was lost in an internal substraction, leading to
+ * precision was lost in an internal subtraction, leading to
  * rounding into the wrong direction.
  */
 

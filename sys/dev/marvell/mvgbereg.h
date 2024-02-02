@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.9 2021/08/30 00:08:28 rin Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.10 2024/02/02 22:39:10 andvar Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -583,7 +583,7 @@
 #define MVGBE_PTXS_TBC(x)		(((x) & 0x3fff) << 16)
 
 /* Port TX queues Status Update (MVGBE_PTXSU) */
-					/* Number Of Written Descriptoes */
+					/* Number Of Written Descriptors */
 #define MVGBE_PTXSU_NOWD(x)		(((x) & 0xff) << 0)
 					/* Number Of Released Buffers */
 #define MVGBE_PTXSU_NORB(x)		(((x) & 0xff) << 16)
@@ -779,7 +779,7 @@
 /*
  * DMA descriptors
  *    Despite the documentation saying these descriptors only need to be
- *    aligned to 16-byte bondaries, 32-byte alignment seems to be required
+ *    aligned to 16-byte boundaries, 32-byte alignment seems to be required
  *    by the hardware.  We'll just pad them out to that to make it easier.
  */
 struct mvgbe_tx_desc {

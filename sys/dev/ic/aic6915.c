@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.45 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.46 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.45 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.46 2024/02/02 22:39:10 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -824,7 +824,7 @@ sf_tick(void *arg)
 /*
  * sf_stats_update:
  *
- *	Read the statitistics counters.
+ *	Read the statistics counters.
  */
 static void
 sf_stats_update(struct sf_softc *sc)
