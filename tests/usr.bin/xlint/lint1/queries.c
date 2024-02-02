@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.23 2024/01/28 08:54:27 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.24 2024/02/02 19:07:58 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -462,7 +462,11 @@ Q16(void)
 /* expect+1: invisible character U+0009 in character constant [Q17] */
 char Q17_char[] = { ' ', '\0', '	' };
 /* expect+1: invisible character U+0009 in string literal [Q17] */
-char Q17_string[] = " \0	";
+char Q17_char_string[] = " \0	";
+/* expect+1: invisible character U+0009 in character constant [Q17] */
+int Q17_wide[] = { L' ', L'\0', L'	' };
+/* expect+1: invisible character U+0009 in string literal [Q17] */
+int Q17_wide_string[] = L" \0	";
 
 /* For Q18, see queries_schar.c and queries_uchar.c. */
 

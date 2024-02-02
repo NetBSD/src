@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_254.c,v 1.5 2024/02/02 16:25:58 rillig Exp $	*/
+/*	$NetBSD: msg_254.c,v 1.6 2024/02/02 19:07:58 rillig Exp $	*/
 # 3 "msg_254.c"
 
 /* Test for message: newline in string or char constant [254] */
@@ -6,14 +6,22 @@
 /* lint1-flags: -tw -q17 */
 
 /*
- * The sequence backslash-newline is a GCC extension.
- * C99 does not allow it.
+ * A literal newline must not occur in a character constant or string literal.
  */
 
-/* expect+6: error: newline in string or char constant [254] */
-/* expect+5: error: unterminated string constant [258] */
-/* expect+4: error: syntax error '"' [249] */
-/* expect+4: error: newline in string or char constant [254] */
-/* expect+3: error: unterminated string constant [258] */
-"line1
-line2"
+/* expect+3: error: newline in string or char constant [254] */
+/* expect+2: error: unterminated character constant [253] */
+char char_incomplete = 'x
+;
+/* expect+3: error: newline in string or char constant [254] */
+/* expect+2: error: unterminated string constant [258] */
+char char_string_incomplete[] = "x
+;
+/* expect+3: error: newline in string or char constant [254] */
+/* expect+2: error: unterminated character constant [253] */
+int wide_incomplete = L'x
+;
+/* expect+3: error: newline in string or char constant [254] */
+/* expect+2: error: unterminated string constant [258] */
+int wide_string_incomplete[] = L"x
+;
