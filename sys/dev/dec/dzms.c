@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.24 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: dzms.c,v 1.25 2024/02/02 15:44:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.24 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.25 2024/02/02 15:44:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ dzms_attach(device_t parent, device_t self, void *aux)
 	ls = &dz->sc_dz[daa->daa_line];
 	dzms->dzms_ls = ls;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	a.accessops = &dzms_accessops;
 	a.accesscookie = dzms;
