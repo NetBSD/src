@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.14 2024/01/20 14:52:48 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.15 2024/02/02 22:00:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.14 2024/01/20 14:52:48 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.15 2024/02/02 22:00:32 andvar Exp $");
 #endif
 #endif
 
@@ -1092,7 +1092,7 @@ encode_bitsring(const char **bp, const char *end, unsigned char **labelp,
 				if (beg_blen == NULL) {
 					
 					if (c == '0') {
-						/* blen never begings with 0 */
+						/* blen never begins with 0 */
 						return (EINVAL);
 					}
 					beg_blen = cp;

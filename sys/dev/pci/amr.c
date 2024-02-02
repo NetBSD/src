@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.67 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.68 2024/02/02 22:00:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.67 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.68 2024/02/02 22:00:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	    amr->amr_sgls_paddr - amr->amr_dmamap->dm_segs[0].ds_addr);
 
 	/*
-	 * Allocate and initalise the command control blocks.
+	 * Allocate and initialise the command control blocks.
 	 */
 	ac = malloc(sizeof(*ac) * AMR_MAX_CMDS, M_DEVBUF, M_WAITOK | M_ZERO);
 	amr->amr_ccbs = ac;

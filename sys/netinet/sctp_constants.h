@@ -1,5 +1,5 @@
 /*	$KAME: sctp_constants.h,v 1.17 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_constants.h,v 1.4 2022/05/18 13:37:52 andvar Exp $ */
+/*	$NetBSD: sctp_constants.h,v 1.5 2024/02/02 22:00:34 andvar Exp $ */
 
 #ifndef __SCTP_CONSTANTS_H__
 #define __SCTP_CONSTANTS_H__
@@ -496,7 +496,7 @@
 
 #define SCTP_MAX_OUTSTANDING_DG	10000
 
-/* How many streams I request initally by default */
+/* How many streams I request initially by default */
 #define SCTP_OSTREAM_INITIAL 10
 
 #define SCTP_SEG_TO_RWND_UPD 32 /* How many smallest_mtu's need to increase before

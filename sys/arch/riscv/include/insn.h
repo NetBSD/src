@@ -1,4 +1,4 @@
-/* $NetBSD: insn.h,v 1.4 2021/04/19 07:55:59 dholland Exp $ */
+/* $NetBSD: insn.h,v 1.5 2024/02/02 22:00:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ union riscv_insn {
 #define INSN16_IMM_CS_D(insn) INSN16_IMM_CL_D(insn)
 #define INSN16_IMM_CS_Q(insn) INSN16_IMM_CL_Q(insn)
 
-/* CJ format immedate, sign extended */
+/* CJ format immediate, sign extended */
 #define INSN16_IMM_CJ_raw(insn) \
 	((((insn) & 0b0001000000000000) >> (12-11)) |	\
 	 (((insn) & 0b0000100000000000) >> (11-4)) |	\

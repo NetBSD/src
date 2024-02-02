@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.118 2023/10/06 09:53:02 martin Exp $	*/
+/*	$NetBSD: fault.c,v 1.119 2024/02/02 22:00:32 andvar Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.118 2023/10/06 09:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.119 2024/02/02 22:00:32 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -384,7 +384,7 @@ data_abort_handler(trapframe_t *tf)
 			/*
 			 * Force exit via userret()
 			 * This is necessary as the FPE is an extension to
-			 * userland that actually runs in a priveledged mode
+			 * userland that actually runs in a privileged mode
 			 * but uses USR mode permissions for its accesses.
 			 */
 			user = true;

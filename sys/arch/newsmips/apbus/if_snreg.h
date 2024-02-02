@@ -1,4 +1,4 @@
-/*      $NetBSD: if_snreg.h,v 1.1 1999/12/22 05:55:25 tsubai Exp $	*/
+/*      $NetBSD: if_snreg.h,v 1.2 2024/02/02 22:00:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -191,7 +191,7 @@
 #define TCR_CRSL        0x0080  /* carrier lost during transmission */
 #define TCR_EXC         0x0040  /* excessive collisions (>16) detected */
 #define TCR_OWC         0x0020  /* out of window (bad) collision occurred */
-#define TCR_PMB         0x0008  /* packet monitored bad - the tansmitted
+#define TCR_PMB         0x0008  /* packet monitored bad - the transmitted
                                  * packet had a bad source address or CRC */
 #define TCR_FU          0x0004  /* FIFO underrun (memory access failed) */
 #define TCR_BCM         0x0002  /* byte count mismatch (TXpkt.pkt_size

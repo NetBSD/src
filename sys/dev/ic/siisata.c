@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.50 2021/11/10 17:19:30 msaitoh Exp $ */
+/* $NetBSD: siisata.c,v 1.51 2024/02/02 22:00:33 andvar Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.50 2021/11/10 17:19:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.51 2024/02/02 22:00:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -642,7 +642,7 @@ siisata_channel_recover(struct ata_channel *chp, int flags, uint32_t tfd)
 	/*
 	 * If BSY or DRQ bits are set, must execute COMRESET to return
 	 * device to idle state. Otherwise, commands can be reissued
-	 * after reinitalization of port. After that, need to execute
+	 * after reinitialization of port. After that, need to execute
 	 * READ LOG EXT for NCQ to unblock device processing if COMRESET
 	 * was not done.
 	 */
