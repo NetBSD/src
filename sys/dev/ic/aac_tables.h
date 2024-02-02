@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_tables.h,v 1.5 2007/06/05 04:04:14 briggs Exp $	*/
+/*	$NetBSD: aac_tables.h,v 1.6 2024/02/02 22:43:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -73,7 +73,7 @@ const struct aac_code_lookup aac_command_status_table[] = {
 	{ "bad type",				10007 },
 	{ "jukebox",				10008 },
 	{ "not mounted",			10009 },
-	{ "in maintenace mode",			10010 },
+	{ "in maintenance mode",		10010 },
 	{ "stale ACL",				10011 },
 	{ NULL, 				0 },
 	{ "unknown command status",		0 }
