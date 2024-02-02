@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.82 2023/07/05 11:42:14 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.83 2024/02/02 23:30:39 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,8 +62,6 @@ configure_test_case()
 		}
 
 		function platform_has(prop) {
-			if (platform[prop] != "")
-				return prop == archsubdir
 			if (!match(prop, /^(schar|uchar|ilp32|lp64|int|long|ldbl64|ldbl96|ldbl128)$/)) {
 				printf("bad property '\''%s'\''\n", prop) > "/dev/stderr"
 				exit(1)
@@ -109,6 +107,14 @@ configure_test_case()
 	local config
 	config="$(awk "$awk" "$1")" || exit 1
 	eval "$config"
+
+	case "_${1%.c}_" in
+	*_utf8_*)
+		LC_ALL=en_US.UTF-8;;
+	*)
+		LC_ALL=C;;
+	esac
+	export LC_ALL
 }
 
 # shellcheck disable=SC2155
