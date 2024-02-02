@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_wide_string.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: lex_wide_string.c,v 1.5 2024/02/02 22:45:48 rillig Exp $	*/
 # 3 "lex_wide_string.c"
 
 /*
@@ -33,3 +33,12 @@ test(void)
 	/* expect+1: error: cannot concatenate wide and regular string literals [292] */
 	sink(L"wide" "plain");
 }
+
+/*
+ * Since lint always runs in the default "C" locale, it does not support any
+ * multibyte character encoding, thus treating each byte as a separate
+ * character. If lint were to support UTF-8, the array dimension would be 3
+ * instead of 7.
+ */
+/* expect+1: error: negative array dimension (-7) [20] */
+typedef int mblen[-(int)(sizeof(L"Ä😄") / sizeof(L""))];
