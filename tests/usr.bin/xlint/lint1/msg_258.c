@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_258.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_258.c,v 1.6 2024/02/02 16:05:37 rillig Exp $	*/
 # 3 "msg_258.c"
 
 // Test for message: unterminated string constant [258]
@@ -12,6 +12,7 @@ int dummy;
 //
 // "This string doesn't end in this line.
 
+/* expect+5: error: newline in string or char constant [254] */
 /* expect+4: error: unterminated string constant [258] */
 /* expect+3: error: syntax error '' [249] */
 /* expect+2: error: empty array declaration for 'str' [190] */
