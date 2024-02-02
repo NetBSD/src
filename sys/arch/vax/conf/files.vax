@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.125.30.1 2023/02/12 12:27:26 martin Exp $
+#	$NetBSD: files.vax,v 1.125.30.2 2024/02/02 18:27:51 martin Exp $
 #
 # new style config file for vax architecture
 #
@@ -186,7 +186,7 @@ file	arch/vax/vsa/ncr.c		si_vsbus
 include "dev/ata/files.ata"
 
 # Monochrome framebuffer on VS3100.
-device	smg: displaydev, wsemuldisplaydev
+device	smg: displaydev, wsemuldisplaydev, rasops1
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
 
