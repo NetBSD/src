@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.206 2024/02/01 21:19:13 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.207 2024/02/02 16:05:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.206 2024/02/01 21:19:13 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.207 2024/02/02 16:05:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -903,12 +903,9 @@ get_escaped_char(int delim)
 		return -1;
 	switch (c) {
 	case '\n':
-		if (!allow_c90) {
-			/* newline in string or char constant */
-			error(254);
-			return -2;
-		}
-		return c;
+		/* newline in string or char constant */
+		error(254);
+		return -2;
 	case '\0':
 		/* syntax error '%s' */
 		error(249, "EOF or null byte in literal");

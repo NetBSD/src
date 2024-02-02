@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.485 2024/02/01 18:37:06 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.486 2024/02/02 16:05:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.485 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.486 2024/02/02 16:05:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -187,7 +187,7 @@ is_either(const char *s, const char *a, const char *b)
 		    op_name($$->tn_op), type_name($$->tn_type));
 } <y_tnode>
 %printer { fprintf(yyo, "%zu to %zu", $$.lo, $$.hi); } <y_range>
-%printer { fprintf(yyo, "length %zu", $$->st_len); } <y_string>
+%printer { fprintf(yyo, "length %zu", $$->len); } <y_string>
 %printer {
 	fprintf(yyo, "%s *", type_qualifiers_string($$->qualifiers));
 } <y_qual_ptr>
