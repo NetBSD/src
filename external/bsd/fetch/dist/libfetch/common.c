@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.6 2024/01/03 11:40:38 riastradh Exp $	*/
+/*	$NetBSD: common.c,v 1.7 2024/02/02 22:19:05 christos Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -41,6 +41,13 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
+#if defined(HAVE_POLL_H) || defined(NETBSD)
+#include <poll.h>
+#define HAVE_POLL
+#elif HAVE_SYS_POLL_H
+#define HAVE_POLL
+#include <sys/poll.h>
+#endif
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -236,6 +243,9 @@ fetch_reopen(int sd)
 	conn->next_buf = NULL;
 	conn->next_len = 0;
 	conn->sd = sd;
+#ifdef HAVE_POLL
+	conn->buf_events = POLLIN;
+#endif
 	return (conn);
 }
 
@@ -316,6 +326,7 @@ fetch_connect(struct url *url, int af, int verbose)
 	if ((conn = fetch_reopen(sd)) == NULL) {
 		fetch_syserr();
 		close(sd);
+		return (NULL);
 	}
 	conn->cache_url = fetchCopyURL(url);
 	conn->cache_af = af;
@@ -398,7 +409,7 @@ void
 fetch_cache_put(conn_t *conn, int (*closecb)(conn_t *))
 {
 	conn_t *iter, *last, *oiter;
-	int global_count, host_count;
+	int global_count, host_count, added;
 
 	if (conn->cache_url == NULL || cache_global_limit == 0) {
 		(*closecb)(conn);
@@ -409,20 +420,23 @@ fetch_cache_put(conn_t *conn, int (*closecb)(conn_t *))
 	last = NULL;
 	for (iter = connection_cache; iter; ) {
 		++global_count;
-		if (strcmp(conn->cache_url->host, iter->cache_url->host) == 0)
+		added = !strcmp(conn->cache_url->host, iter->cache_url->host);
+		if (added)
 			++host_count;
 		if (global_count < cache_global_limit &&
-		    host_count < cache_per_host_limit)
+		    host_count < cache_per_host_limit) {
 			oiter = NULL;
-		else {
+			last = iter;
+		} else {
 			--global_count;
+			if (added)
+				--host_count;
 			if (last != NULL)
 				last->next_cached = iter->next_cached;
 			else
 				connection_cache = iter->next_cached;
 			oiter = iter;
 		}
-		last = iter;
 		iter = iter->next_cached;
 		if (oiter)
 			(*oiter->cache_close)(oiter);
@@ -437,7 +451,7 @@ fetch_cache_put(conn_t *conn, int (*closecb)(conn_t *))
  * Enable SSL on a connection.
  */
 int
-fetch_ssl(conn_t *conn, int verbose)
+fetch_ssl(conn_t *conn, const struct url *URL, int verbose)
 {
 
 #ifdef WITH_SSL
@@ -462,11 +476,17 @@ fetch_ssl(conn_t *conn, int verbose)
 		fprintf(stderr, "SSL context creation failed\n");
 		return (-1);
 	}
+	conn->buf_events = 0;
 	SSL_set_fd(conn->ssl, conn->sd);
-	if (!SSL_set_tlsext_host_name(conn->ssl, conn->cache_url->host)) {
-		fprintf(stderr, "SSL hostname setting failed\n"); 
+#if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
+	if (!SSL_set_tlsext_host_name(conn->ssl, (char *)(uintptr_t)URL->host))
+	{
+		fprintf(stderr,
+		    "TLS server name indication extension failed for host %s\n",
+		    URL->host);
 		return (-1);
 	}
+#endif
 	if (SSL_connect(conn->ssl) == -1){
 		ERR_print_errors_fp(stderr);
 		return (-1);
@@ -498,6 +518,17 @@ fetch_ssl(conn_t *conn, int verbose)
 #endif
 }
 
+#ifdef HAVE_POLL
+static int
+compute_timeout(const struct timeval *tv)
+{
+	struct timeval cur;
+
+	gettimeofday(&cur, NULL);
+	return (tv->tv_sec - cur.tv_sec) * 1000
+	    + (tv->tv_usec - cur.tv_usec) / 1000;
+}
+#endif
 
 /*
  * Read a character from a connection w/ timeout
@@ -505,8 +536,13 @@ fetch_ssl(conn_t *conn, int verbose)
 ssize_t
 fetch_read(conn_t *conn, char *buf, size_t len)
 {
-	struct timeval now, timeout, waittv;
+	struct timeval timeout_end;
+#ifdef HAVE_POLL
+	struct pollfd pfd;
+#else
 	fd_set readfds;
+#endif
+	int timeout_cur;
 	ssize_t rlen;
 	int r;
 
@@ -523,17 +559,41 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 	}
 
 	if (fetchTimeout) {
+#ifndef HAVE_POLL
 		FD_ZERO(&readfds);
-		gettimeofday(&timeout, NULL);
-		timeout.tv_sec += fetchTimeout;
+#endif
+		gettimeofday(&timeout_end, NULL);
+		timeout_end.tv_sec += fetchTimeout;
 	}
 
 	for (;;) {
+#ifdef HAVE_POLL
+		pfd.fd = conn->sd;
+		pfd.events = conn->buf_events;
+		if (fetchTimeout && pfd.events) {
+			do {
+				timeout_cur = compute_timeout(&timeout_end);
+				if (timeout_cur < 0) {
+					errno = ETIMEDOUT;
+					fetch_syserr();
+					return (-1);
+				}
+				errno = 0;
+				r = poll(&pfd, 1, timeout_cur);
+				if (r == -1) {
+					if (errno == EINTR && fetchRestartCalls)
+						continue;
+					fetch_syserr();
+					return (-1);
+				}
+			} while (pfd.revents == 0);
+#else
 		while (fetchTimeout && !FD_ISSET(conn->sd, &readfds)) {
+			struct timeval waittv, now;
 			FD_SET(conn->sd, &readfds);
 			gettimeofday(&now, NULL);
-			waittv.tv_sec = timeout.tv_sec - now.tv_sec;
-			waittv.tv_usec = timeout.tv_usec - now.tv_usec;
+			waittv.tv_sec = timeout_end.tv_sec - now.tv_sec;
+			waittv.tv_usec = timeout_end.tv_usec - now.tv_usec;
 			if (waittv.tv_usec < 0) {
 				waittv.tv_usec += 1000000;
 				waittv.tv_sec--;
@@ -551,11 +611,29 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 				fetch_syserr();
 				return (-1);
 			}
+#endif
 		}
 #ifdef WITH_SSL
-		if (conn->ssl != NULL)
-			rlen = SSL_read(conn->ssl, buf, (int)len);
-		else
+		if (conn->ssl != NULL) {
+			rlen = SSL_read(conn->ssl, buf, len);
+			if (rlen == -1) {
+				switch (SSL_get_error(conn->ssl, rlen)) {
+				case SSL_ERROR_WANT_READ:
+					conn->buf_events = POLLIN;
+					break;
+				case SSL_ERROR_WANT_WRITE:
+					conn->buf_events = POLLOUT;
+					break;
+				default:
+					errno = EIO;
+					fetch_syserr();
+					return -1;
+				}
+			} else {
+				/* Assume buffering on the SSL layer. */
+				conn->buf_events = 0;
+			}
+		} else
 #endif
 			rlen = read(conn->sd, buf, len);
 		if (rlen >= 0)
