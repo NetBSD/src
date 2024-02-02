@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.36 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: ka860.c,v 1.37 2024/02/02 22:00:33 andvar Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.36 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.37 2024/02/02 22:00:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ const struct cpu_dep ka860_calls = {
  * and then read the ESPD register.  
  *
  * NOTE:  In assmebly code, the mfpr instruction that reads the ESPD
- *	  register must immedately follow the mtpr instruction that setup
+ *	  register must immediately follow the mtpr instruction that setup
  *	  the ESPA register -- per the VENUS processor register spec.
  *
  * The scratchpad registers that are supplied for a single bit ECC 

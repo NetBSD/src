@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.118 2023/10/09 17:44:33 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.119 2024/02/02 22:00:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.118 2023/10/09 17:44:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.119 2024/02/02 22:00:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1327,7 +1327,7 @@ usbnet_if_init(struct ifnet *ifp)
 	 * XXX Grody for sys/net to call if_init to reinitialize.  This
 	 * should be an assertion, not a branch, but it will require
 	 * some tweaking of sys/net to avoid.  See also the comment in
-	 * usbnet_ifflags_cb about if_init vs uno_mcast on reinitalize.
+	 * usbnet_ifflags_cb about if_init vs uno_mcast on reinitialize.
 	 */
 	if (ifp->if_flags & IFF_RUNNING)
 		usbnet_stop(un, ifp, /*disable*/1/*XXX???*/);

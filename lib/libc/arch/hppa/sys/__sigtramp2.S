@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.7 2022/06/26 14:37:13 skrll Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.8 2024/02/02 22:00:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -61,7 +61,7 @@
 
 /*
  * The hppa signal trampoline is required to call the handler
- * possibily via a PLABEL.
+ * possibly via a PLABEL.
  *
  * On entry, stack looks like:
  *

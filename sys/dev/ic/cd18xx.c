@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.31 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.32 2024/02/02 22:00:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.31 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.32 2024/02/02 22:00:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -264,7 +264,7 @@ cd18xx_attach(struct cd18xx_softc *sc)
 #endif
 	cd18xx_write(sc, CD18xx_GSVR, CD18xx_GSVR_SETID(sc));
 
-	/* rx/tx/modem service match vectors, initalised by higher level */
+	/* rx/tx/modem service match vectors, initialised by higher level */
 	cd18xx_write(sc, CD18xx_MSMR, sc->sc_msmr | 0x80);
 	cd18xx_write(sc, CD18xx_TSMR, sc->sc_tsmr | 0x80);
 	cd18xx_write(sc, CD18xx_RSMR, sc->sc_rsmr | 0x80);
