@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.7 2021/11/10 15:55:35 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.8 2024/02/02 22:39:10 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -489,7 +489,7 @@
 #define MVXPE_PTXS_GET_PDC(x)		((x) & 0x3fff)
 
 /* Port TX queues Status Update (MVXPE_PTXSU) */
-					/* Number Of Written Descriptoes */
+					/* Number Of Written Descriptors */
 #define MVXPE_PTXSU_NOWD(x)		(((x) & 0xff) << 0)
 					/* Number Of Released Buffers */
 #define MVXPE_PTXSU_NORB(x)		(((x) & 0xff) << 16)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.21 2020/03/08 02:44:12 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.22 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -685,7 +685,7 @@ struct sip_desc {
 #define	SIP_TBICR	0xe0	/* TBI control register */
 #define	TBICR_MR_LOOPBACK   0x00004000	/* TBI PCS loopback enable */
 #define	TBICR_MR_AN_ENABLE  0x00001000	/* TBI autonegotiation enable */
-#define	TBICR_MR_RESTART_AN 0x00000200	/* restart TBI autoneogtiation */
+#define	TBICR_MR_RESTART_AN 0x00000200	/* restart TBI autonegotiation */
 
 #define	SIP_TBISR	0xe4	/* TBI status register */
 #define	TBISR_MR_LINK_STATUS 0x00000020	/* TBI link status */

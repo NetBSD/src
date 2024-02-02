@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $
+ * $Id: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4140,7 +4140,7 @@ ahc_build_free_scb_list(struct ahc_softc *ahc)
 		/*
 		 * Touch all SCB bytes to avoid parity errors
 		 * should one of our debugging routines read
-		 * an otherwise uninitiatlized byte.
+		 * an otherwise uninitialized byte.
 		 */
 		for (j = 0; j < scbsize; j++)
 			ahc_outb(ahc, SCB_BASE+j, 0xFF);

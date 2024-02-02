@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.16 2022/04/08 10:27:04 andvar Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.17 2024/02/02 22:39:09 andvar Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.16 2022/04/08 10:27:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.17 2024/02/02 22:39:09 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -388,7 +388,7 @@ sctp_process_init_ack(struct mbuf *m, int iphlen, int offset,
 	/*
 	 * Cancel the INIT timer, We do this first before queueing
 	 * the cookie. We always cancel at the primary to assume that
-	 * we are canceling the timer started by the INIT which always
+	 * we are cancelling the timer started by the INIT which always
 	 * goes to the primary.
 	 */
 	sctp_timer_stop(SCTP_TIMER_TYPE_INIT, stcb->sctp_ep, stcb,

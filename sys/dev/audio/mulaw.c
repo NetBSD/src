@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.5 2021/07/21 06:35:44 skrll Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.6 2024/02/02 22:39:10 andvar Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.5 2021/07/21 06:35:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.6 2024/02/02 22:39:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.5 2021/07/21 06:35:44 skrll Exp $");
  * About mulaw32 format.
  *
  * The format which I call ``mulaw32'' is only used in dev/tc/bba.c .
- * It is 8bit mu-law but 16bit left-shifted and its containter is 32bit.
+ * It is 8bit mu-law but 16bit left-shifted and its container is 32bit.
  * Not mu-law calculated in 32bit.
  *
  * When MULAW32 is not defined (it's default), this file outputs

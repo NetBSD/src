@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.31 2022/02/23 21:54:41 andvar Exp $ */
+/* $NetBSD: if_skreg.h,v 1.32 2024/02/02 22:39:10 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1856,16 +1856,16 @@ struct msk_status_desc {
 /* Source Address High #2 (SAH2) */
 #define YUKON_SAH2		0x0030	/* SA2[47:32] */
 
-/* Multicatst Address Hash Register 1 (MCAH1) */
+/* Multicast Address Hash Register 1 (MCAH1) */
 #define YUKON_MCAH1		0x0034
 
-/* Multicatst Address Hash Register 2 (MCAH2) */
+/* Multicast Address Hash Register 2 (MCAH2) */
 #define YUKON_MCAH2		0x0038
 
-/* Multicatst Address Hash Register 3 (MCAH3) */
+/* Multicast Address Hash Register 3 (MCAH3) */
 #define YUKON_MCAH3		0x003c
 
-/* Multicatst Address Hash Register 4 (MCAH4) */
+/* Multicast Address Hash Register 4 (MCAH4) */
 #define YUKON_MCAH4		0x0040
 
 /* Transmit Interrupt Register (TIR) */
