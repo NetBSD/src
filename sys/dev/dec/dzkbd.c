@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.30 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.31 2024/02/02 15:44:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.30 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.31 2024/02/02 15:44:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ dzkbd_attach(device_t parent, device_t self, void *aux)
 	dzi->dzi_ls = ls;
 	dzkbd->sc_itl = dzi;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	if (!isconsole) {
 		DELAY(100000);

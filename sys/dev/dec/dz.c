@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.43 2022/10/26 23:44:36 riastradh Exp $	*/
+/*	$NetBSD: dz.c,v 1.44 2024/02/02 15:44:43 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.43 2022/10/26 23:44:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.44 2024/02/02 15:44:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 		callout_init(&dzscan_ch, 0);
 		callout_reset(&dzscan_ch, hz, dzscan, NULL);
 	}
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /* Receiver Interrupt */
