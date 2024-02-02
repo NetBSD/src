@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.33 2022/10/16 16:26:35 rillig Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.34 2024/02/02 20:27:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.33 2022/10/16 16:26:35 rillig Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.34 2024/02/02 20:27:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,14 +99,15 @@ mount_cd9660_parseargs(int argc, char **argv,
 	struct iso_args *args, int *mntflags,
 	char *canon_dev, char *canon_dir)
 {
-	int ch, opts;
+	struct stat sb;
+	int ch, opts, set_gid, set_uid, set_mask, set_dirmask;
 	mntoptparse_t mp;
 	char *dev, *dir;
 
 	memset(args, 0, sizeof(*args));
-	*mntflags = opts = 0;
+	*mntflags = opts = set_gid = set_uid = set_mask = set_dirmask = 0;
 	optind = optreset = 1;
-	while ((ch = getopt(argc, argv, "egjo:r")) != -1)
+	while ((ch = getopt(argc, argv, "egG:jM:m:o:rU:")) != -1)
 		switch (ch) {
 		case 'e':
 			/* obsolete, retained for compatibility only, use
@@ -117,6 +118,19 @@ mount_cd9660_parseargs(int argc, char **argv,
 			/* obsolete, retained for compatibility only, use
 			 * -o gens */
 			opts |= ISOFSMNT_GENS;
+			break;
+		case 'G':
+			opts |= ISOFSMNT_GID;
+			args->gid = a_gid(optarg);
+			set_gid = 1;
+			break;
+		case 'm':
+			args->fmask = a_mask(optarg);
+			set_mask = 1;
+			break;
+		case 'M':
+			args->dmask = a_mask(optarg);
+			set_dirmask = 1;
 			break;
 		case 'j':
 			/* obsolete, retained fo compatibility only, use
@@ -134,6 +148,11 @@ mount_cd9660_parseargs(int argc, char **argv,
 			 * -o norrip */
 			opts |= ISOFSMNT_NORRIP;
 			break;
+		case 'U':
+			opts |= ISOFSMNT_UID;
+			args->uid = a_uid(optarg);
+			set_uid = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -144,6 +163,14 @@ mount_cd9660_parseargs(int argc, char **argv,
 
 	if (argc != 2)
 		usage();
+
+	if (set_mask && !set_dirmask) {
+		args->dmask = args->fmask;
+		set_dirmask = 1;
+	} else if (set_dirmask && !set_mask) {
+		args->fmask = args->dmask;
+		set_mask = 1;
+	}
 
 	dev = argv[0];
 	dir = argv[1];
@@ -159,6 +186,20 @@ mount_cd9660_parseargs(int argc, char **argv,
 		*mntflags |= MNT_RDONLY;
 	args->fspec = canon_dev;
 	args->flags = opts;
+
+	if (!set_gid || !set_uid || !set_mask) {
+		if (stat(dir, &sb) == -1)
+			err(1, "stat %s", dir);
+
+		if (!set_uid)
+			args->uid = sb.st_uid;
+		if (!set_gid)
+			args->gid = sb.st_gid;
+		if (!set_mask) {
+			args->fmask = args->dmask =
+				sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+		}
+	}
 }
 
 int
