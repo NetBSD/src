@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char.c,v 1.8 2024/01/19 19:23:34 rillig Exp $	*/
+/*	$NetBSD: lex_char.c,v 1.9 2024/02/02 19:07:58 rillig Exp $	*/
 # 3 "lex_char.c"
 
 /*
@@ -61,6 +61,18 @@ test(void)
 
 	/* U+000D carriage return */
 	sink('\r');
+
+	/* A double quote may be escaped or not, since C90. */
+	sink('"');
+	sink('\"');
+
+	/* A question mark may be escaped or not, since C90. */
+	sink('?');
+	sink('\?');
+
+	sink('\\');
+
+	sink('\'');
 }
 
 /*
