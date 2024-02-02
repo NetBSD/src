@@ -1,4 +1,4 @@
-/* $NetBSD: ti_motg.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_motg.c,v 1.5 2024/02/02 22:14:04 andvar Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_motg.c,v 1.5 2024/02/02 22:14:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static const struct device_compatible_entry compat_data[] = {
 };
 
 /*
- * motg device attachement and driver,
+ * motg device attachment and driver,
  * for the per-port part of the controller: TI-specific part, phy and
  * MI Mentor OTG.
  */

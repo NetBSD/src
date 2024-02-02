@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.29 2023/01/05 17:36:53 jakllsch Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.30 2024/02/02 22:14:04 andvar Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.29 2023/01/05 17:36:53 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.30 2024/02/02 22:14:04 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,7 +160,7 @@ secmodel_example_eval(const char *what, void *arg, void *ret)
 }
 
 /*
- * Module attachement/detachement routine. Whether the secmodel(9) is
+ * Module attachment/detachment routine. Whether the secmodel(9) is
  * builtin or loaded dynamically, it is in charge of initializing, starting
  * and stopping the module. See module(9).
  */
