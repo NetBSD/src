@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib_pci.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $ */
+/* $NetBSD: gcscpcib_pci.c,v 1.3 2024/02/02 22:14:04 andvar Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -22,10 +22,10 @@
 
 /*
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
- * machine-dependent attachement.
+ * machine-dependent attachment.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib_pci.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib_pci.c,v 1.3 2024/02/02 22:14:04 andvar Exp $");
 
 
 #include <sys/param.h>

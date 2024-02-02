@@ -1,4 +1,4 @@
-/* $NetBSD: igpio_acpi.c,v 1.2 2023/02/27 15:41:41 msaitoh Exp $ */
+/* $NetBSD: igpio_acpi.c,v 1.3 2024/02/02 22:14:05 andvar Exp $ */
 
 /*-
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igpio_acpi.c,v 1.2 2023/02/27 15:41:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igpio_acpi.c,v 1.3 2024/02/02 22:14:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -159,7 +159,7 @@ igpio_acpi_attach(device_t parent, device_t self, void *aux)
 
 	igpio_attach(&asc->sc_isc);
 	
-	/* If attachement failed */
+	/* If attachment failed */
 	if (asc->sc_isc.sc_banks == NULL) {
 		igpio_acpi_detach(self, 0);
 		goto done;
