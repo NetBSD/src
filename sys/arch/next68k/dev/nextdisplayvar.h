@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplayvar.h,v 1.6 2023/02/03 23:13:00 tsutsui Exp $ */
+/* $NetBSD: nextdisplayvar.h,v 1.7 2024/02/02 15:59:30 tsutsui Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -54,6 +54,7 @@ struct nextdisplay_config {
 	int dc_ht;			/* height of frame buffer */
 	int dc_depth;			/* depth of frame buffer */
 	int dc_rowbytes;		/* bytes in fb scan line */
+	int dc_cmsize;
 
 	struct raster dc_raster;	/* raster description */
 	struct rcons dc_rcons;		/* raster blitter control info */
@@ -67,6 +68,7 @@ struct nextdisplay_softc {
 	device_t sc_dev;
 
 	struct nextdisplay_config *sc_dc;
+	int sc_mode;
 
 	int nscreens;
 };

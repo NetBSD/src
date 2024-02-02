@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.30 2023/02/11 02:34:15 tsutsui Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.31 2024/02/02 15:59:30 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.30 2023/02/11 02:34:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.31 2024/02/02 15:59:30 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -170,6 +170,7 @@ nextdisplay_init(struct nextdisplay_config *dc, int color)
 	dc->dc_wid = 1120;
 	dc->dc_ht = 832;
 	dc->dc_depth = color ? 16 : 2;
+	dc->dc_cmsize = color ? 256 : 4;
 	dc->dc_rowbytes = (turbo ? 1120 : 1152) * dc->dc_depth / 8;
 
 	dc->dc_videobase = dc->dc_vaddr;
@@ -259,6 +260,8 @@ nextdisplay_attach(device_t parent, device_t self, void *aux)
 		INTR_ENABLE(NEXT_I_C16_VIDEO);
 	}
 
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+
 	/* initialize the raster */
 	waa.console = isconsole;
 	waa.scrdata = iscolor ?
@@ -294,6 +297,7 @@ nextdisplay_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 {
 	struct nextdisplay_softc *sc = v;
 	struct nextdisplay_config *dc = sc->sc_dc;
+	int new_mode;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -309,6 +313,25 @@ nextdisplay_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_GINFO:
+#define wsd_fbip ((struct wsdisplay_fbinfo *)data)
+		wsd_fbip->height = dc->dc_ht;
+		wsd_fbip->width = dc->dc_wid;
+		wsd_fbip->depth = dc->dc_depth;
+		wsd_fbip->cmsize = dc->dc_cmsize;
+#undef wsd_fbip
+                return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_rowbytes;
+		return 0;
+
+	case WSDISPLAYIO_SMODE:
+		new_mode = *(int *)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+		}
+		return 0;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 	case WSDISPLAYIO_GVIDEO:
@@ -326,10 +349,18 @@ nextdisplay_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 static paddr_t
 nextdisplay_mmap(void *v, void *vs, off_t offset, int prot)
 {
+	struct nextdisplay_softc *sc = v;
+	struct nextdisplay_config *dc = sc->sc_dc;
+	paddr_t cookie = -1;
 
-	/* XXX */
-	printf("nextdisplay_mmap: failed\n");
-	return -1;
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (offset >= 0 && offset < dc->dc_size)
+			cookie = m68k_btop(dc->dc_paddr + offset);
+		break;
+	}
+
+	return cookie;
 }
 
 int
