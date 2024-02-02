@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.62 2022/03/27 17:10:55 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.63 2024/02/02 20:27:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.62 2022/03/27 17:10:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.63 2024/02/02 20:27:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.62 2022/03/27 17:10:55 christos E
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
 #include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/cd9660_mount.h>
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_mount.h>
 
@@ -116,11 +117,22 @@ static int
 cd9660_check_permitted(struct vnode *vp, struct iso_node *ip, accmode_t accmode,
     kauth_cred_t cred)
 {
+	accmode_t file_mode;
+	uid_t uid;
+	gid_t gid;
+
+	file_mode = ip->inode.iso_mode & ALLPERMS;
+	file_mode &= (vp->v_type == VDIR) ? ip->i_mnt->im_dmask : ip->i_mnt->im_fmask;
+
+	uid = (ip->i_mnt->im_flags & ISOFSMNT_UID) ?
+	    ip->i_mnt->im_uid : ip->inode.iso_uid;
+	gid = (ip->i_mnt->im_flags & ISOFSMNT_GID) ?
+	    ip->i_mnt->im_gid : ip->inode.iso_gid;
 
 	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(accmode,
-	    vp->v_type, ip->inode.iso_mode & ALLPERMS), vp, NULL,
-	    genfs_can_access(vp, cred, ip->inode.iso_uid, ip->inode.iso_gid,
-	    ip->inode.iso_mode & ALLPERMS, NULL, accmode));
+	    vp->v_type, file_mode), vp, NULL,
+	    genfs_can_access(vp, cred, uid, gid,
+	    file_mode, NULL, accmode));
 }
 
 int
@@ -160,9 +172,12 @@ cd9660_getattr(void *v)
 	vap->va_fileid	= ip->i_number;
 
 	vap->va_mode	= ip->inode.iso_mode & ALLPERMS;
+	vap->va_mode &= (vp->v_type == VDIR) ? ip->i_mnt->im_dmask : ip->i_mnt->im_fmask;
 	vap->va_nlink	= ip->inode.iso_links;
-	vap->va_uid	= ip->inode.iso_uid;
-	vap->va_gid	= ip->inode.iso_gid;
+	vap->va_uid	= (ip->i_mnt->im_flags & ISOFSMNT_UID) ?
+	    ip->i_mnt->im_uid : ip->inode.iso_uid;
+	vap->va_gid	= (ip->i_mnt->im_flags & ISOFSMNT_GID) ?
+	    ip->i_mnt->im_gid : ip->inode.iso_gid;
 	vap->va_atime	= ip->inode.iso_atime;
 	vap->va_mtime	= ip->inode.iso_mtime;
 	vap->va_ctime	= ip->inode.iso_ctime;

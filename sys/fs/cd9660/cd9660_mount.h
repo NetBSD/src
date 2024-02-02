@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.6 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.7 2024/02/02 20:27:26 christos Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,10 @@ struct iso_args {
 	const char	*fspec;		/* block special device to mount */
 	struct	export_args30 _pad1; /* compat with old userland tools */
 	int	flags;			/* mounting flags, see below */
+	uid_t	uid;			/* uid that owns ISO-9660 files */
+	gid_t	gid;			/* gid that owns ISO-9660 files */
+	mode_t	fmask;			/* file mask to be applied for files */
+	mode_t	dmask;			/* file mask to be applied for directories */
 };
 #define	ISOFSMNT_NORRIP		0x00000001 /* disable Rock Ridge Ext.*/
 #define	ISOFSMNT_GENS		0x00000002 /* enable generation numbers */
@@ -52,6 +56,8 @@ struct iso_args {
 #define	ISOFSMNT_NOJOLIET	0x00000008 /* disable Joliet extensions */
 #define	ISOFSMNT_NOCASETRANS	0x00000010 /* do not make names lower case */
 #define	ISOFSMNT_RRCASEINS	0x00000020 /* case insensitive Rock Ridge */
+#define	ISOFSMNT_UID		0x00000100 /* override uid */
+#define	ISOFSMNT_GID		0x00000200 /* override gid */
 
 #define ISOFSMNT_BITS "\177\20" \
     "b\00norrip\0b\01gens\0b\02extatt\0b\03nojoliet\0" \

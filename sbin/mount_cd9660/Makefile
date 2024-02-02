@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/05 20:57:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.13 2024/02/02 20:27:26 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	mount_cd9660
-SRCS=	mount_cd9660.c pathadj.c
+SRCS=	mount_cd9660.c fattr.c pathadj.c
 MAN=	mount_cd9660.8
 
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
