@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.8 2024/02/02 22:33:42 andvar Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.7 2021/01/12 14:21:18 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.8 2024/02/02 22:33:42 andvar Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 			         strcmp(optarg, "bdz") == 0)
 				build_hash = bpz_compute;
 			else
-				errx(1, "Unsupport algorithm: %s", optarg);
+				errx(1, "Unsupported algorithm: %s", optarg);
 			break;
 		case 'c':
 			errno = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.57 2022/09/18 13:19:40 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.58 2024/02/02 22:33:42 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.57 2022/09/18 13:19:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.58 2024/02/02 22:33:42 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -467,7 +467,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 			opbc = STACR_OPBC_A100MHZ;
 			break;
 		}
-		aprint_error_dev(self, "unsupport OPB frequency %dMHz\n",
+		aprint_error_dev(self, "unsupported OPB frequency %dMHz\n",
 		    opb_freq / 1000 / 1000);
 		goto fail_5;
 	}

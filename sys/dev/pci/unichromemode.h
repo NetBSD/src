@@ -1,4 +1,4 @@
-/* $NetBSD: unichromemode.h,v 1.1 2006/08/02 01:44:09 jmcneill Exp $ */
+/* $NetBSD: unichromemode.h,v 1.2 2024/02/02 22:33:42 andvar Exp $ */
 
 /*
  * Copyright 1998-2006 VIA Technologies, Inc. All Rights Reserved.
@@ -243,7 +243,7 @@ struct io_reg KM400_ModeXregs[] = {
     {VIACR, CR33, 0xFF, 0x00},
     {VIACR, CR55, 0x80, 0x00},
     {VIACR, CR5D, 0x80, 0x00},
-    {VIACR, CR36, 0xFF, 0x01},          /* Power Mangement 3                   */
+    {VIACR, CR36, 0xFF, 0x01},          /* Power Management 3                   */
     {VIACR, CR62, 0xFF, 0x00},          /* Secondary Display Starting Address  */
     {VIACR, CR63, 0xFF, 0x00},          /* Secondary Display Starting Address  */
     {VIACR, CR64, 0xFF, 0x00},          /* Secondary Display Starting Address  */

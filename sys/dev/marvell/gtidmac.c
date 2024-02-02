@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.19 2023/06/19 08:40:30 msaitoh Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.20 2024/02/02 22:33:42 andvar Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.19 2023/06/19 08:40:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.20 2024/02/02 22:33:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1020,7 +1020,7 @@ gtidmac_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 			ccl |= GTIDMAC_CCLR_SBL_128B;
 		else
 			panic("gtidmac_setup: chan%d source:"
-			    " unsupport hold size", chan);
+			    " unsupported hold size", chan);
 	} else
 		ccl |= GTIDMAC_CCLR_SBL_128B;
 	if (size != (*dmamap_out)->dm_mapsize) {
