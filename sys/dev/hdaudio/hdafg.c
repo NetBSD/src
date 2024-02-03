@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.18.2.1 2020/04/25 10:40:45 martin Exp $ */
+/* $NetBSD: hdafg.c,v 1.18.2.2 2024/02/03 14:24:38 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18.2.1 2020/04/25 10:40:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18.2.2 2024/02/03 14:24:38 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -4223,9 +4223,12 @@ hdafg_freem(void *opaque, void *addr, size_t size)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_stream *st;
 
-	if (addr == DMA_KERNADDR(&ad->ad_playback->st_data))
+	if (ad == NULL)
+		return;
+
+	if (ad->ad_playback != NULL && addr == DMA_KERNADDR(&ad->ad_playback->st_data))
 		st = ad->ad_playback;
-	else if (addr == DMA_KERNADDR(&ad->ad_capture->st_data))
+	else if (ad->ad_capture != NULL && addr == DMA_KERNADDR(&ad->ad_capture->st_data))
 		st = ad->ad_capture;
 	else
 		return;
