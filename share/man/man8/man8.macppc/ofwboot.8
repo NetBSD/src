@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.14 2017/07/03 21:31:00 wiz Exp $
+.\"	$NetBSD: ofwboot.8,v 1.15 2024/02/03 14:15:51 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,11 +61,13 @@ because it is used to pass arguments to
 The Open Firmware
 .Ic boot
 command takes up to three arguments:
+.Bd -literal -offset indent
+.Ic boot Oo Ar boot-device Oo Ar boot-file Oc Oc Op Ar options
+.Ed
 .Pp
-.Ic boot
-.Op Ar boot-device Op Ar boot-file
-.Op Ar options
-.Bl -tag -width boot-device -compact
+where
+.Pp
+.Bl -tag -width ".Ar boot-device" -offset indent -compact
 .It Ar boot-device
 primary bootloader location
 .It Ar boot-file
@@ -78,46 +80,67 @@ The first argument,
 .Ar boot-device ,
 actually designates the primary bootloader location and its name in the
 form:
-.Dl boot-device:[partition-num],[bootloader-filename]
+.Bd -literal -offset indent
+.Sm off
+.Ar device Ic \&: Op Ar partition-num
+.Ic \&, Op Ar bootloader-filename
+.Sm on
+.Ed
+.Pp
 A typical example, from a PowerBook (FireWire), is
+.Pp
 .Dl /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,ofwboot.xcf
-.\" XXX: can't use Dq or Pq with : or ,
-Note that colon (`:') delimits the device to the left, and comma (`,')
-separates the boot loader filename from the first part.
+.Pp
+Note that colon
+.Pq Ql \&:
+delimits the device to the left, and comma
+.Pq Ql \&,
+separates the bootloader filename from the first part.
 For Open Firmware versions before 3, the primary bootloader is installed
 in partition
 .Dq zero ,
-and it is not necessary to specify the bootloader-filename.
-For Open Firmware version 3, you must specify the bootloader-filename.
+and it is not necessary to specify the
+.Ar bootloader-filename .
+For Open Firmware version 3, you must specify the bootloader filename.
 .Pp
-Open Firmware stores aliases to common devices in NVRAM.
-In the example above,
+Open Firmware stores aliases to common devices in
+.Tn NVRAM .
+In the example the above,
 .Pa /pci@f2000000/mac-io@17/ata-4@1f000/@0
 is the path on a PowerBook
-(FireWire) to the built-in ATA/100 hard drive.
+(FireWire) to the built-in
+.Tn ATA Ns /100
+hard drive.
 Use the
 .Ic devalias
 command in Open Firmware to print out a list of common device names on a
 particular model.
-The command above could then be simplified to:
+The
+.Ar boot-device
+above could then be simplified to:
+.Pp
 .Dl hd:9,ofwboot.xcf
 .Pp
-.Ar boot-loader-file-name
+.Ar bootloader-filename
 is usually
 .Nm ofwboot.xcf .
-(See also the
+See also the
 .Sx FILES
-section for further discussion.)
+section for further discussion.
 .Pp
-If omitted, the Open Firmware variable
-.Va boot-device
+If
+.Ar boot-device
+is omitted from the
+.Ic boot
+command, the Open Firmware variable
+.Ev boot-device
 is used.
 .Ss boot-file
 It may be necessary to specify the
 .Ar boot-file
 if Open Firmware does not know where to find the kernel.
 The default is to load the file named
-.Nm netbsd
+.Pa netbsd
 on partition
 .Dq Pa a
 from the device used to load the primary bootloader.
@@ -134,28 +157,42 @@ Systems with Open Firmware version 3 may need to specify the
 The syntax is similar to the
 .Ar boot-device
 argument:
-.Dl [boot-file-device:partition-num/][kernel-name]
-This is a little different, since a kernel-name may be specified without
-listing a boot-file-device and partition-num.
-Additionally, a boot-file-device and partition-num may need to be
-specified, while using the default kernel-name.
+.Bd -literal -offset indent
+.Sm off
+.Op Ar boot-file-device Ic \&: Ar partition-num\^ Ic \&/
+.Op Ar kernel-name
+.Sm on
+.Ed
 .Pp
-If no kernel-name is specified, the primary bootloader will try to find
-kernels named either
-.Ar netbsd
+This is a little different, since a kernel-name may be specified without
+listing a
+.Ar boot-file-device
+and
+.Ar partition-num .
+Additionally, a
+.Ar boot-file-device
+and
+.Ar partition-num
+may need to be specified, while using the default
+.Ar kernel-name .
+.Pp
+If no
+.Ar kernel-name
+is specified, the primary bootloader will try to find kernels named either
+.Pa netbsd
 or
-.Ar netbsd.gz
+.Pa netbsd.gz
 on the boot-device or (if specified) boot-file-device.
 .Ss options
 Possible options are:
-.Bl -tag -width xxxxx -compact
+.Bl -tag -width Fl
 .It Fl a
 ask for the boot device
 .It Fl s
 single-user mode boot
 .It Fl d
 debug mode
-.It Ar exit
+.It Cm exit
 exit to Open Firmware after processing arguments
 .El
 .Sh ENVIRONMENT
@@ -166,29 +203,31 @@ and
 Open Firmware should use when booting a system.
 If the user specifies arguments on the command line, these values
 are overridden.
-.Bl -tag -width boot-device -compact
-.It Va boot-device
+.Bl -tag -width Ev
+.It Ev boot-device
 used as the first argument
-.It Va boot-file
+.It Ev boot-file
 used as the second argument
-.It Va auto-boot?
+.It Ev auto-boot?
 setting this variable to
-.Ar false
+.Ic false
 will present the user with an Open Firmware command prompt after power-on
 reset.
 A value of
-.Ar true
+.Ic true
 will automatically boot the system using the variables
-.Va boot-device
+.Ev boot-device
 and
-.Va boot-file .
+.Ev boot-file .
 (This is not really related to the boot command, but is included for
 completeness.)
 .El
+.Pp
 To restore these variables to their default values, use the
 .Ic set-default
 Open Firmware command:
-.Ic set-default Ar boot-device
+.Pp
+.Dl set-default boot-device
 .Sh FILES
 The three files
 .Nm ofwboot ,
@@ -196,8 +235,9 @@ The three files
 and
 .Nm ofwboot.xcf
 are the same program, in different executable formats.
-.Bl -tag -width ofwboot.xcf
-.It ofwboot
+.Bl -tag -width ".Pa ofwboot.xcf"
+.
+.It Pa ofwboot
 .Nm
 is installed via
 .Xr installboot 8
@@ -208,14 +248,16 @@ location on the disk, partition
 For example, the following command might be used to boot from a SCSI device
 with ID 2:
 .Ic "0 >boot scsi-int/sd@2:0" .
-.It ofwboot.xcf
+.
+.It Pa ofwboot.xcf
 .Nm ofwboot.xcf
 is in XCOFF format.
 This file is used on all Open Firmware 3 systems, and on Open Firmware
 systems prior to 3 when the bootloader is not installed in partition
 .Dq zero ,
 such as from an ISO-9660 format CD-ROM.
-.It ofwboot.elf
+.
+.It Pa ofwboot.elf
 .Nm ofwboot.elf
 is in
 .Xr elf 5
@@ -226,7 +268,8 @@ as
 .Nm ofwboot.elf
 offers no additional functionality.
 It is only included for historical reasons.
-.It boot.fs
+.
+.It Pa boot.fs
 This 1.44 MB disk image contains everything necessary to boot and install
 .Nx .
 It includes the partition
@@ -247,52 +290,55 @@ on Unix, or
 on MacOS 9.1 or later, or
 .Ic suntar
 on any MacOS version to copy this image onto the media.
-.It netbsd
+.
+.It Pa netbsd
 production kernel, using the GENERIC set of devices which supports almost all
 hardware available for this platform.
-.It netbsd_GENERIC_MD.gz
+.
+.It Pa netbsd_GENERIC_MD.gz
 GENERIC kernel (the same as
 .Ar netbsd ) ,
 with RAM disk and
 .Ic sysinst
 included.
-.It NetBSD-{RELEASE}-macppc.iso
+.
+.It Pa NetBSD-{RELEASE}-macppc.iso
 bootable CDROM image for all supported systems.
 Usually located at
 .Pa ftp://ftp.NetBSD.org/pub/NetBSD/images/{RELEASE}/NetBSD-{RELEASE}-macppc.iso
 .El
 .Sh EXAMPLES
+.Pp
+In the following examples
+.Ql "0\~>\~"
+is the Open Firmware prompt.
 .Bl -item
+.
 .It
 Boot an Open Firmware 3 system, with
 .Ar netbsd
 installed on partition
 .Dq Pa a :
-.Bd -unfilled
-0 > boot hd:,ofwboot.xcf
-.Ed
+.Dl 0 > boot hd:,ofwboot.xcf
+.
 .It
 Boot into single user mode:
-.Bd -unfilled
-0 > boot hd:,ofwboot.xcf netbsd -s
-.Ed
+.Dl 0 > boot hd:,ofwboot.xcf netbsd -s
+.
 .It
 Boot from bootable CDROM with Open Firmware 3 or higher:
-.Bd -unfilled
-0 > boot cd:,\eofwboot.xcf netbsd.macppc
-.Ed
+.Dl 0 > boot cd:,\eofwboot.xcf netbsd.macppc
+.
 .It
 Boot from bootable CDROM (internal SCSI, id=3) of
 .Nx 1.5
 release with Open Firmware versions prior to 3:
-.Bd -unfilled
-0 > boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC
-.Ed
+.Dl 0 > boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC
+.
 .It
 Boot from floppy disk:
-.Bd -unfilled
-0 > boot fd:0
-.Ed
+.Dl 0 > boot fd:0
+.
 .It
 Boot from network, with bootps,
 .Xr bootptab 5 ,
@@ -300,24 +346,20 @@ Boot from network, with bootps,
 and
 .Xr nfsd 8
 server available:
-.Bd -unfilled
-0 > boot enet:0
-.Ed
+.Dl 0 > boot enet:0
+.
 .It
 Boot from network, but use internal root partition of second drive:
-.Bd -unfilled
-0 > boot enet:0 ultra1:0
-.Ed
+.Dl 0 > boot enet:0 ultra1:0
+.
 .It
 Boot MacOS, looking for the first available bootable disk:
-.Bd -unfilled
-0 > boot hd:,\e\e:tbxi
-.Ed
+.Dl 0 > boot hd:,\e\e:tbxi
+.
 .It
 Boot MacOS X residing on partition 10:
-.Bd -unfilled
-0 > boot hd:10,\e\e:tbxi
-.Ed
+.Dl 0 > boot hd:10,\e\e:tbxi
+.
 .El
 .Sh ERRORS
 .Bd -unfilled
@@ -377,15 +419,19 @@ can only boot from devices recognized by Open Firmware.
 Early PowerMacintosh systems (particularly the 7500) seem to have problems
 with netbooting.
 Adding an arp entry at the tftp server with
+.Pp
 .Dl arp -s booting-host-name its-ethernet-address
+.Pp
 may resolve this problem (see
 .Xr arp 8 ) .
 .Pp
-.Bd -unfilled
+Once boot failed,
+.Bd -literal -offset indent
 0 > boot CLAIM failed
  ok
 .Ed
-Once boot failed, successive boots may not be possible.
+.Pp
+successive boots may not be possible.
 You need to type
 .Ic reset-all
-or power-cycle to initialize Open Firmware.
+or power-cycle to re-initialize Open Firmware.
