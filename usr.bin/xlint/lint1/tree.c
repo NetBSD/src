@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.601 2024/02/01 21:19:13 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.602 2024/02/03 19:25:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.601 2024/02/01 21:19:13 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.602 2024/02/03 19:25:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -522,14 +522,19 @@ build_name(sym_t *sym, bool is_funcname)
 }
 
 tnode_t *
-build_string(buffer *strg)
+build_string(buffer *lit)
 {
-	size_t len = strg->len;
+	size_t value_len = lit->len;
+	if (lit->data != NULL) {
+		quoted_iterator it = { .start = 0 };
+		for (value_len = 0; quoted_next(lit, &it); value_len++)
+			continue;
+	}
 
 	type_t *tp = expr_zero_alloc(sizeof(*tp), "type");
 	tp->t_tspec = ARRAY;
-	tp->t_subt = gettyp(strg->data != NULL ? CHAR : WCHAR_TSPEC);
-	tp->t_dim = (int)(len + 1);
+	tp->t_subt = gettyp(lit->data != NULL ? CHAR : WCHAR_TSPEC);
+	tp->t_dim = (int)(value_len + 1);
 
 	tnode_t *n = expr_alloc_tnode();
 	n->tn_op = STRING;
@@ -537,15 +542,15 @@ build_string(buffer *strg)
 	n->tn_lvalue = true;
 
 	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string), "tnode.string");
-	n->tn_string->len = len;
+	n->tn_string->len = lit->len;
 
-	if (strg->data != NULL) {
-		n->tn_string->data = expr_zero_alloc(len + 1,
+	if (lit->data != NULL) {
+		n->tn_string->data = expr_zero_alloc(lit->len + 1,
 		    "tnode.string.data");
-		(void)memcpy(n->tn_string->data, strg->data, len + 1);
-		free(strg->data);
+		(void)memcpy(n->tn_string->data, lit->data, lit->len + 1);
+		free(lit->data);
 	}
-	free(strg);
+	free(lit);
 
 	return n;
 }

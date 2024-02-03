@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.214 2024/02/03 12:57:12 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.215 2024/02/03 19:25:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -396,6 +396,7 @@ void lex_comment(void);
 void lex_slash_slash_comment(void);
 void lex_unknown_character(int);
 int lex_input(void);
+bool quoted_next(const buffer *, quoted_iterator *);
 
 /*
  * ckbool.c
