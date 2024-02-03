@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_075.c,v 1.9 2024/02/03 18:58:05 rillig Exp $	*/
+/*	$NetBSD: msg_075.c,v 1.10 2024/02/03 19:18:36 rillig Exp $	*/
 # 3 "msg_075.c"
 
 // Test for message: overflow in hex escape [75]
@@ -20,40 +20,64 @@ char str[] = "\x12345678123456781234567812345678";
 /* C11 6.4.4.4p7 */
 char leading_zeroes = '\x0000000000000000000000000000020';
 
-char char_hex1 = '\xf';
-char char_hex2 = '\xff';
+char char_hex4bit = '\xf';
+char char_hex7bit = '\x7f';
+char char_hex8bit = '\xff';
 /* expect+1: warning: overflow in hex escape [75] */
-char char_hex3 = '\x100';
+char char_hex9bit = '\x100';
 /* expect+1: warning: overflow in hex escape [75] */
-char char_hex4 = '\xffff';
+char char_hex16bit = '\xffff';
 /* expect+1: warning: overflow in hex escape [75] */
-char char_hex5 = '\xfffff';
+char char_hex20bit = '\xfffff';
 /* expect+1: warning: overflow in hex escape [75] */
-char char_hex9 = '\xfffffffff';
+char char_hex31bit = '\x7fffffff';
+/* expect+1: warning: overflow in hex escape [75] */
+char char_hex32bit = '\xffffffff';
+/* expect+1: warning: overflow in hex escape [75] */
+char char_hex33bit = '\x1000000ff';
+/* expect+1: warning: overflow in hex escape [75] */
+char char_hex36bit = '\xfffffffff';
 
-int wide_hex1 = L'\xf';
-int wide_hex2 = L'\xff';
-int wide_hex3 = L'\x100';
-int wide_hex4 = L'\xffff';
-int wide_hex5 = L'\xfffff';
+int wide_hex4bit = L'\xf';
+int wide_hex7bit = L'\x7f';
+int wide_hex8bit = L'\xff';
+int wide_hex9bit = L'\x100';
+int wide_hex16bit = L'\xffff';
+int wide_hex20bit = L'\xfffff';
+int wide_hex31bit = L'\x7fffffff';
+int wide_hex32bit = L'\xffffffff';
 /* expect+1: warning: overflow in hex escape [75] */
-int wide_hex9 = L'\xfffffffff';
+int wide_hex33bit = L'\x1000000ff';
+/* expect+1: warning: overflow in hex escape [75] */
+int wide_hex36bit = L'\xfffffffff';
 
-char char_string_hex1[] = "\xf";
-char char_string_hex2[] = "\xff";
+char char_string_hex4bit[] = "\xf";
+char char_string_hex7bit[] = "\x7f";
+char char_string_hex8bit[] = "\xff";
 /* expect+1: warning: overflow in hex escape [75] */
-char char_string_hex3[] = "\x100";
+char char_string_hex9bit[] = "\x100";
 /* expect+1: warning: overflow in hex escape [75] */
-char char_string_hex4[] = "\xffff";
+char char_string_hex16bit[] = "\xffff";
 /* expect+1: warning: overflow in hex escape [75] */
-char char_string_hex5[] = "\xfffff";
+char char_string_hex20bit[] = "\xfffff";
 /* expect+1: warning: overflow in hex escape [75] */
-char char_string_hex9[] = "\xfffffffff";
+char char_string_hex31bit[] = "\x7fffffff";
+/* expect+1: warning: overflow in hex escape [75] */
+char char_string_hex32bit[] = "\xffffffff";
+/* expect+1: warning: overflow in hex escape [75] */
+char char_string_hex33bit[] = "\x1000000ff";
+/* expect+1: warning: overflow in hex escape [75] */
+char char_string_hex36[] = "\xfffffffff";
 
-int wide_string_hex1[] = L"\xf";
-int wide_string_hex2[] = L"\xff";
-int wide_string_hex3[] = L"\x100";
-int wide_string_hex4[] = L"\xffff";
-int wide_string_hex5[] = L"\xfffff";
+int wide_string_hex4bit[] = L"\xf";
+int wide_string_hex7bit[] = L"\x7f";
+int wide_string_hex8bit[] = L"\xff";
+int wide_string_hex9bit[] = L"\x100";
+int wide_string_hex16bit[] = L"\xffff";
+int wide_string_hex20bit[] = L"\xfffff";
+int wide_string_hex31bit[] = L"\x7fffffff";
+int wide_string_hex32bit[] = L"\xffffffff";
 /* expect+1: warning: overflow in hex escape [75] */
-int wide_string_hex9[] = L"\xfffffffff";
+int wide_string_hex33bit[] = L"\x1000000ff";
+/* expect+1: warning: overflow in hex escape [75] */
+int wide_string_hex36bit[] = L"\xfffffffff";
