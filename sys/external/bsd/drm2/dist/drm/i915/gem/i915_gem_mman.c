@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.21 2021/12/19 12:26:55 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.21.4.1 2024/02/03 11:15:12 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.21 2021/12/19 12:26:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.21.4.1 2024/02/03 11:15:12 martin Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -675,7 +675,7 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 
 	if (!i915_gem_object_has_pages(obj))
 		return;
-	for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
+	for (i = 0; i < obj->mm.pages->sgl->sg_npgs; i++) {
 		page = obj->mm.pages->sgl->sg_pgs[i];
 		vm_page = &page->p_vmp;
 		pmap_page_protect(vm_page, VM_PROT_NONE);

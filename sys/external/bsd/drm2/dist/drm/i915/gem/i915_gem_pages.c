@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pages.c,v 1.6 2021/12/19 12:00:57 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_pages.c,v 1.6.4.1 2024/02/03 11:15:12 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.6 2021/12/19 12:00:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.6.4.1 2024/02/03 11:15:12 martin Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_object.h"
@@ -42,6 +42,18 @@ void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 	}
 
 #ifndef __NetBSD__
+	/*
+	 * Paranoia: In NetBSD, a scatterlist is just an array of
+	 * pages, not an array of segments that might be larger than
+	 * pages, so the number of entries must exactly match the size
+	 * of the object (which should also be page-aligned).
+	 *
+	 * Both vm_fault_cpu and i915_gem_object_release_mmap_offset in
+	 * i915_gem_mman.c rely on this page array as such.
+	 */
+	KASSERTMSG(pages->sgl->sg_npgs == obj->base.size >> PAGE_SHIFT,
+	    "npgs=%zu size=%zu", pages->sgl->sg_npgs, obj->base.size);
+
 	obj->mm.get_page.sg_pos = pages->sgl;
 	obj->mm.get_page.sg_idx = 0;
 #endif

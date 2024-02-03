@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.5.4.1 2024/02/03 11:15:12 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.5.4.1 2024/02/03 11:15:12 martin Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -506,14 +506,13 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 {
 	struct drm_i915_private *i915 = to_i915(dev);
 	struct sg_table *st;
+	struct scatterlist *sg;
 #ifdef __NetBSD__
 	bus_dma_tag_t dmat = i915->drm.dmat;
 	bus_dma_segment_t *seg = NULL;
 	int nseg = 0, i;
 	bool loaded = false;
 	int ret;
-#else
-	struct scatterlist *sg;
 #endif
 
 	GEM_BUG_ON(range_overflows(offset, size, resource_size(&i915->dsm)));
@@ -526,11 +525,6 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	st = kmalloc(sizeof(*st), GFP_KERNEL);
 	if (st == NULL)
 		return ERR_PTR(-ENOMEM);
-
-	if (sg_alloc_table(st, 1, GFP_KERNEL)) {
-		kfree(st);
-		return ERR_PTR(-ENOMEM);
-	}
 
 #ifdef __NetBSD__
 	KASSERT((size % PAGE_SIZE) == 0);
@@ -547,6 +541,17 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 		    i*PAGE_SIZE;
 		seg[i].ds_len = PAGE_SIZE;
 	}
+
+	sg = NULL;
+
+	ret = sg_alloc_table_from_bus_dmamem(st, dmat, seg, nseg, GFP_KERNEL);
+	if (ret) {
+		DRM_ERROR("failed to alloc sg table for stolen object: %d\n",
+		    ret);
+		ret = -ENOMEM;
+		goto out;
+	}
+	sg = st->sgl;
 
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamap_create(dmat, size, nseg, PAGE_SIZE, 0,
@@ -569,14 +574,23 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	}
 	loaded = true;
 
-out:	if (ret) {
+out:	kmem_free(seg, nseg * sizeof(seg[0]));
+	if (ret) {
 		if (loaded)
 			bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
-		sg_free_table(st);
+		if (sg && sg->sg_dmamap)
+			bus_dmamap_destroy(dmat, sg->sg_dmamap);
+		if (sg)
+			sg_free_table(st);
 		kfree(st);
 		return ERR_PTR(ret);
 	}
 #else
+	if (sg_alloc_table(st, 1, GFP_KERNEL)) {
+		kfree(st);
+		return ERR_PTR(-ENOMEM);
+	}
+
 	sg = st->sgl;
 	sg->offset = 0;
 	sg->length = size;
