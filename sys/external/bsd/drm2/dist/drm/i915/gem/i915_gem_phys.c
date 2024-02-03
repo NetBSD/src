@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.8 2021/12/19 12:45:43 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.8.4.1 2024/02/03 11:15:12 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,91 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.8 2021/12/19 12:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.8.4.1 2024/02/03 11:15:12 martin Exp $");
+
+#ifdef __NetBSD__
+/*
+ * Make sure this block comes before any linux includes, so we don't
+ * get mixed up by the PAGE_MASK complementation.
+ */
+
+#include <sys/bus.h>
+
+#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+
+#include <machine/pmap_private.h> /* kvtopte, pmap_pte_clearbits */
+
+/*
+ * Version of bus_dmamem_map that uses pmap_kenter_pa, not pmap_enter,
+ * so that it isn't affected by pmap_page_protect on the physical
+ * address.  Adapted from sys/arch/x86/x86/bus_dma.c.
+ */
+static int
+bus_dmamem_kmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, void **kvap, int flags)
+{
+	vaddr_t va;
+	bus_addr_t addr;
+	int curseg;
+	const uvm_flag_t kmflags =
+	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	u_int pmapflags = PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE;
+
+	size = round_page(size);
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
+
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
+
+	if (va == 0)
+		return ENOMEM;
+
+	*kvap = (void *)va;
+
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		for (addr = segs[curseg].ds_addr;
+		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
+			if (size == 0)
+				panic("bus_dmamem_kmap: size botch");
+			pmap_kenter_pa(va, addr,
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    pmapflags);
+		}
+	}
+	pmap_update(pmap_kernel());
+
+	return 0;
+}
+
+static void
+bus_dmamem_kunmap(bus_dma_tag_t t, void *kva, size_t size)
+{
+	pt_entry_t *pte, opte;
+	vaddr_t va, sva, eva;
+
+	KASSERTMSG(((uintptr_t)kva & PGOFSET) == 0, "kva=%p", kva);
+
+	size = round_page(size);
+	sva = (vaddr_t)kva;
+	eva = sva + size;
+
+	/*
+	 * mark pages cacheable again.
+	 */
+	for (va = sva; va < eva; va += PAGE_SIZE) {
+		pte = kvtopte(va);
+		opte = *pte;
+		if ((opte & PTE_PCD) != 0)
+			pmap_pte_clearbits(pte, PTE_PCD);
+	}
+	pmap_kremove((vaddr_t)kva, size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
+}
+
+#endif
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -65,7 +149,7 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	if (ret)
 		return -ENOMEM;
 	KASSERT(rsegs == 1);
-	ret = -bus_dmamem_map(dmat, &obj->mm.u.phys.seg, 1,
+	ret = -bus_dmamem_kmap(dmat, &obj->mm.u.phys.seg, 1,
 	    roundup_pow_of_two(obj->base.size), &vaddr,
 	    BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (ret)
@@ -83,7 +167,12 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	if (!st)
 		goto err_pci;
 
+#ifdef __NetBSD__
+	if (sg_alloc_table_from_bus_dmamem(st, dmat, &obj->mm.u.phys.seg, 1,
+		GFP_KERNEL))
+#else
 	if (sg_alloc_table(st, 1, GFP_KERNEL))
+#endif
 		goto err_st;
 
 	sg = st->sgl;
@@ -151,7 +240,7 @@ err_st:
 err_pci:
 #ifdef __NetBSD__
 	if (vaddr) {
-		bus_dmamem_unmap(dmat, vaddr,
+		bus_dmamem_kunmap(dmat, vaddr,
 		    roundup_pow_of_two(obj->base.size));
 	}
 	obj->mm.u.phys.kva = NULL;
@@ -225,7 +314,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 	kfree(pages);
 
 #ifdef __NetBSD__
-	bus_dmamem_unmap(dmat, obj->mm.u.phys.kva,
+	bus_dmamem_kunmap(dmat, obj->mm.u.phys.kva,
 	    roundup_pow_of_two(obj->base.size));
 	obj->mm.u.phys.kva = NULL;
 	bus_dmamem_free(dmat, &obj->mm.u.phys.seg, 1);
