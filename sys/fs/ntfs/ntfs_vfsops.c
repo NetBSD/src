@@ -366,7 +366,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	ntmp->ntm_devvp = devvp;
 	ntmp->ntm_uid = argsp->uid;
 	ntmp->ntm_gid = argsp->gid;
-	ntmp->ntm_mode = argsp->mode;
+	ntmp->ntm_mode = argsp->mode & 0777;
 	ntmp->ntm_flag = argsp->flag;
 	mp->mnt_data = ntmp;
 
