@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.178 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.179 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13463,7 +13463,21 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20231007]
 	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
 		[msaitoh 20231019]
+	top(1): Add network in & out bytes to the top display. [mrg 20231021]
 	OpenSSL: Imported 3.0.12. [christos 20231025]
 	OpenSSH: Import 9.5. [christos 20231025]
 	newsmips: Add support for LCD-MONO framebuffer on NWS-32x0 laptop
 		machines. [tsutsui 20231104]
+	ena(4): MP-enable always, add RSS support, and reliability fixes.
+		[jdolecek 20231105]
+	iscsid(8): Handle IPv6 addresses. [mlelstv 20231125]
+	kernel: Import various bits of nouveau firmware for newer
+		nvidia graphics hardware. [bouyer 20231128]
+	OpenSSH: Import 9.6. [christos 20231220]
+	tzdata: Updated to 2023d (via 2023dgtz) [kre 20231223]
+	postfix(1): Import version 3.8.4. [christos 20231223]
+	postfix(1): Install postfix-tls-script (for "postfix tls")
+		[kim 20240101]
+	wm(4): Add some Meteor Lake devices (I219 V20-V21 and LM 20-21).
+		[msaitoh 20240118]
+	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]

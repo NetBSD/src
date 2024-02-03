@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3032 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3033 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -218,9 +218,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	lagg(4): Copy the MTU of lagg to interfaces added to lagg
 		[yamaguchi 20231018]
 	dhcpcd: Import version 10.0.4. [roy 20231019]
-	top(1): Add network in & out bytes to the top display. [mrg 20231021]
-	ena(4): MP-enable always, add RSS support, and reliability fixes.
-		[jdolecek 20231105]
 	gpioirq(4): allow multiple pins per gpioirq instance, add the ability
 		to use a /dev/gpioirqN device to get pin interrupts into
 		userland. [brad 20231105]
@@ -228,11 +225,8 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	sparc64: Support for virtio(4). [thorpej 20231119]
 	alpha: Support for virtio(4). [thorpej 20231119]
 	alpha: Support for crash(8). [thorpej 20231122]
-	iscsid(8): Handle IPv6 addresses. [mlelstv 20231125]
 	kernel: Replace the vdrain kernel thread with two threadpool jobs.
 		[hannken 20231127]
-	kernel: Import various bits of nouveau firmware for newer
-		nvidia graphics hardware. [bouyer 20231128]
 	kernel: Replace various usage of extent(9) with vmem(9).
 		[thorpej 20231201]
 	indent(1): Use line number of the token start in diagnostics
@@ -242,12 +236,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	kernel: Modularize compat90. [pgoyette 20231209]
 	libsa: Add NFSv3 support. [mlelstv 20231212]
 	dhcpcd: Import version 10.0.6. [roy 20231218]
-	OpenSSH: Import 9.6. [christos 20231220]
-	tzdata: Updated to 2023d (via 2023dgtz) [kre 20231223]
-	postfix(1): Import version 3.8.4. [christos 20231223]
 	tzcode: Updated to 2023d. [christos 20231223]
-	postfix(1): Install postfix-tls-script (for "postfix tls")
-		[kim 20240101]
 	gfpic(4): New driver for the Goldfish virtual programmable
 		interrupt controller. [thorpej 20240102]
 	gftty(4): New driver for the Goldfish virtual tty. [thorpej 20240102]
@@ -260,13 +249,10 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[christos 20240115]
 	riscv: Add a StarTech JH7100 SoC clock driver, seen in the Beagle-V
 		board. [skrll 20240116]
-	wm(4): Add some Meteor Lake devices (I219 V20-V21 and LM 20-21).
-		[msaitoh 20240118]
 	cpuctl(8): Recognize Intel Meteor Lake and Emerald Rapids.
 		[msaitoh 20240118]
 	m68k: Made many ports share common code for interrupt dispatch
 		and vector tables. [thorpej 20240118]
-	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]
 	libm: Import more long double functions from FreeBSD.
 		[christos 20240121]
 	terminfo: Import 20231209 [christos 20240127]
