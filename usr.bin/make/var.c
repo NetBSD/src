@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1095 2024/01/21 15:02:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1096 2024/02/03 00:20:23 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1095 2024/01/21 15:02:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1096 2024/02/03 00:20:23 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4147,12 +4147,12 @@ IsShortVarnameValid(char varname, const char *start)
 	if (!opts.strict)
 		return false;	/* XXX: Missing error message */
 
-	if (varname == '$')
+	if (varname == '$' && save_dollars)
 		Parse_Error(PARSE_FATAL,
 		    "To escape a dollar, use \\$, not $$, at \"%s\"", start);
 	else if (varname == '\0')
 		Parse_Error(PARSE_FATAL, "Dollar followed by nothing");
-	else
+	else if (save_dollars)
 		Parse_Error(PARSE_FATAL,
 		    "Invalid variable name '%c', at \"%s\"", varname, start);
 
