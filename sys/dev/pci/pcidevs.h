@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.30 2023/10/18 14:42:54 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.31 2024/02/03 11:31:24 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.30 2023/10/18 14:41:55 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.31 2024/02/03 11:30:32 martin Exp
  */
 
 /*
@@ -1495,6 +1495,7 @@
 #define	PCI_PRODUCT_ARECA_ARC1200	0x1200		/* ARC-1200 */
 #define	PCI_PRODUCT_ARECA_ARC1200_B	0x1201		/* ARC-1200 rev B */
 #define	PCI_PRODUCT_ARECA_ARC1202	0x1202		/* ARC-1202 */
+#define	PCI_PRODUCT_ARECA_ARC1203	0x1203		/* ARC-1203 */
 #define	PCI_PRODUCT_ARECA_ARC1210	0x1210		/* ARC-1210 */
 #define	PCI_PRODUCT_ARECA_ARC1214	0x1214		/* ARC-1214 */
 #define	PCI_PRODUCT_ARECA_ARC1220	0x1220		/* ARC-1220 */
@@ -1507,6 +1508,8 @@
 #define	PCI_PRODUCT_ARECA_ARC1680	0x1680		/* ARC-1680 */
 #define	PCI_PRODUCT_ARECA_ARC1681	0x1681		/* ARC-1681 */
 #define	PCI_PRODUCT_ARECA_ARC1880	0x1880		/* ARC-1880 */
+#define	PCI_PRODUCT_ARECA_ARC1884	0x1884		/* ARC-1884 */
+#define	PCI_PRODUCT_ARECA_ARC1886	0x1886		/* ARC-1886 */
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
@@ -3232,6 +3235,7 @@
 #define	PCI_PRODUCT_EXAR_XR17D152	0x0152		/* dual-channel Universal PCI UART */
 #define	PCI_PRODUCT_EXAR_XR17D154	0x0154		/* quad-channel Universal PCI UART */
 #define	PCI_PRODUCT_EXAR_XR17D158	0x0158		/* octal-channel Universal PCI UART */
+#define	PCI_PRODUCT_EXAR_XR17V354	0x0354		/* quad-channel Universal PCIe UART */
 
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
@@ -3939,6 +3943,7 @@
 #define	PCI_PRODUCT_INTEL_I219_V11	0x0d4d		/* I219-V (11) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM10	0x0d4e		/* I219-LM (10) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V10	0x0d4f		/* I219-V (10) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I225_IT	0x0d9f		/* I225-IT Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM12	0x0d53		/* I219-LM (12) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V12	0x0d55		/* I219-V (12) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM23	0x0dc5		/* I219-LM (23) Ethernet Connection */
@@ -4259,6 +4264,8 @@
 #define	PCI_PRODUCT_INTEL_I226_LM	0x125b		/* I226-LM Ethernet */
 #define	PCI_PRODUCT_INTEL_I226_V	0x125c		/* I226-V Ethernet */
 #define	PCI_PRODUCT_INTEL_I226_IT	0x125d		/* I226-IT Ethernet */
+#define	PCI_PRODUCT_INTEL_I221_V	0x125e		/* I221-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I226_BLANK_NVM	0x125f		/* I226 Ethernet Connection (blankNVM) */
 #define	PCI_PRODUCT_INTEL_C3K_X553_10G	0x1306		/* C3000 X553 10G Ethernet */
 #define	PCI_PRODUCT_INTEL_C3K_X553_1G	0x1307		/* C3000 X553 1G Ethernet */
 #define	PCI_PRODUCT_INTEL_82870P2_PPB	0x1460		/* 82870P2 P64H2 PCI-PCI Bridge */
@@ -4385,9 +4392,12 @@
 #define	PCI_PRODUCT_INTEL_C3K_X553_SGMII_L	0x15e5		/* C3000 X553 1GbE SGMII (non-10G SKU) */
 #define	PCI_PRODUCT_INTEL_I225_LM	0x15f2		/* I225 LM Ethernet */
 #define	PCI_PRODUCT_INTEL_I225_V	0x15f3		/* I225 V Ethernet */
+#define	PCI_PRODUCT_INTEL_I220_V	0x15f7		/* I220-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I225_BLANK_NVM	0x15fd		/* I225 Ethernet Connection (blankNVM) */
 #define	PCI_PRODUCT_INTEL_I219_LM15	0x15f4		/* I219-LM (15) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V15	0x15f5		/* I219-V (15) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I210_SGMII_WOF	0x15f6		/* I210 Ethernet (SGMII) */
+#define	PCI_PRODUCT_INTEL_I225_I	0x15f8		/* I225-I Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM14	0x15f9		/* I219-LM (14) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V14	0x15fa		/* I219-V (14) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM13	0x15fb		/* I219-LM (13) Ethernet Connection */
@@ -5420,6 +5430,9 @@
 #define	PCI_PRODUCT_INTEL_XE5_V3_SADBR1	0x2ffc		/* Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_SADBR2	0x2ffd		/* Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_SADBR3	0x2ffe		/* Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers */
+#define	PCI_PRODUCT_INTEL_I225_K	0x3100		/* I225-K Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I225_K2	0x3101		/* I225-K2 Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I226_K	0x3102		/* I226-K Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_3165_1	0x3165		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_3165_2	0x3166		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_GLK_IGD_1	0x3184		/* UHD Graphics 605 */
@@ -5956,7 +5969,7 @@
 #define	PCI_PRODUCT_INTEL_ADL_U9_2_4_HOST	0x460a		/* Alder Lake (U9,2+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_0	0x460d		/* Alder Lake PCIe G5 Root Port 0 (x16) */
 #define	PCI_PRODUCT_INTEL_ADL_XDCI	0x460e		/* Alder Lake USB-C Device (xDCI) */
-#define	PCI_PRODUCT_INTEL_ADL_S_2_0_HOST	0x4610		/* Alder Lake (S,2+0) Host */
+#define	PCI_PRODUCT_INTEL_ADL_S_2_0_HOST	0x4610		/* Alder Lake Refresh (S,2+0) Host */
 #define	PCI_PRODUCT_INTEL_ADL_N_8_HOST	0x4617		/* Alder Lake-N (0+8) Host */
 #define	PCI_PRODUCT_INTEL_ADL_U15_1_4_HOST	0x4619		/* Alder Lake (U15,1+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_U9_1_4_HOST	0x461a		/* Alder Lake (U9,1+4) Host */
@@ -5978,7 +5991,9 @@
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_3	0x463d		/* Alder Lake PCIe G4 Root Port 3 (x4) */
 #define	PCI_PRODUCT_INTEL_ADL_TBTDMA_0	0x463e		/* Alder Lake Thunderbolt DMA 0 */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE_1	0x463f		/* Alder Lake Thunderbolt PCIe 1 */
+#define	PCI_PRODUCT_INTEL_RPL_S_6_8_HOST_2	0x4640		/* Raptor Lake (S,6+8) Host */
 #define	PCI_PRODUCT_INTEL_ADL_H_6_8_HOST	0x4641		/* Alder Lake (H,6+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_6_4_HOST_2	0x4647		/* Raptor Lake (HX,6+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_6_4_HOST	0x4648		/* Alder Lake (S,6+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_H_6_4_HOST	0x4649		/* Alder Lake (H,6+4) Host */
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_RP_2	0x464d		/* Alder Lake PCIe G4 Root Port 2 (x4) */
@@ -6292,10 +6307,16 @@
 #define	PCI_PRODUCT_INTEL_ADL_N_GSPI_2	0x54fb		/* Alder Lake-N GSPI 2 */
 #define	PCI_PRODUCT_INTEL_ADL_N_ISH	0x54fc		/* Alder Lake-N Integrated Sensor Hub */
 #define	PCI_PRODUCT_INTEL_ADL_N_SCS_UFS	0x54ff		/* Alder Lake-N UFS */
+#define	PCI_PRODUCT_INTEL_I225_LMVP	0x5502		/* I225-LMvP Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I226_LMVP	0x5503		/* I226-LMvP Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM18	0x550a		/* I219-LM (18) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V18	0x550b		/* I219-V (18) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM19	0x550c		/* I219-LM (19) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V19	0x550d		/* I219-V (19) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM20	0x550e		/* I219-LM (20) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V20	0x550f		/* I219-V (20) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM21	0x5510		/* I219-LM (21) Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V21	0x5511		/* I219-V (21) Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_CORE7G_H_M_D_HOST_DRAM	0x5900		/* Core 7G (H, Mobile, Dual) Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_CORE7G_PCIE_X16	0x5901		/* Core 7G PCIe x16 */
 #define	PCI_PRODUCT_INTEL_CORE7G_S_GT1	0x5902		/* HD Graphics 610 (GT1) */
@@ -6499,6 +6520,8 @@
 #define	PCI_PRODUCT_INTEL_7HS_Z790_ESPI	0x7a04		/* Z790 eSPI */
 #define	PCI_PRODUCT_INTEL_7HS_H770_ESPI	0x7a05		/* H770 eSPI */
 #define	PCI_PRODUCT_INTEL_7HS_B760_ESPI	0x7a06		/* B760 eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_C266_ESPI	0x7a13		/* C266 eSPI */
+#define	PCI_PRODUCT_INTEL_7HS_C262_ESPI	0x7a14		/* C262 eSPI */
 #define	PCI_PRODUCT_INTEL_7HS_P2SB	0x7a20		/* 700 Series PCH P2SB */
 #define	PCI_PRODUCT_INTEL_7HS_PMC	0x7a21		/* 700 Series PCH PMC */
 #define	PCI_PRODUCT_INTEL_7HS_SMB	0x7a23		/* 700 Series PCH SMBus */
@@ -7425,7 +7448,12 @@
 #define	PCI_PRODUCT_INTEL_RPL_H_6_8_HOST	0xa706		/* Raptor Lake (H,6+8) Host */
 #define	PCI_PRODUCT_INTEL_RPL_H_4_8_HOST	0xa707		/* Raptor Lake (H,4+8) Host */
 #define	PCI_PRODUCT_INTEL_RPL_U_2_8_HOST	0xa708		/* Raptor Lake (U,2+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_PX_6_8_HOST	0xa709		/* Raptor Lake (PX,6+8) Host */
+#define	PCI_PRODUCT_INTEL_RPL_PX_4_8_HOST	0xa70a		/* Raptor Lake (PX,4+8) Host */
 #define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_0	0xa70d		/* Raptor Lake PCIe G5 Root Port 0 (x16) */
+#define	PCI_PRODUCT_INTEL_RPL_E_8_0_HOST	0xa711		/* Raptor Lake (E,8+0) Host */
+#define	PCI_PRODUCT_INTEL_RPL_E_6_0_HOST	0xa712		/* Raptor Lake (E,6+0) Host */
+#define	PCI_PRODUCT_INTEL_RPL_E_4_0_HOST	0xa713		/* Raptor Lake (E,4+0) Host */
 #define	PCI_PRODUCT_INTEL_RPL_H_4_4_HOST	0xa716		/* Raptor Lake (H,4+4) Host */
 #define	PCI_PRODUCT_INTEL_RPL_HX_6_4_HOST	0xa719		/* Raptor Lake (HX,6+4) Host */
 #define	PCI_PRODUCT_INTEL_RPL_U_2_4_HOST	0xa71b		/* Raptor Lake (U,2+4) Host */
@@ -7437,6 +7465,7 @@
 #define	PCI_PRODUCT_INTEL_RPL_HX_6_8_HOST	0xa72a		/* Raptor Lake (HX,6+8) Host */
 #define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_1	0xa72d		/* Raptor Lake PCIe G5 Root Port 1 (x8) */
 #define	PCI_PRODUCT_INTEL_RPL_TBTDMA_0	0xa73e		/* Raptor Lake Thunderbolt DMA 0 */
+#define	PCI_PRODUCT_INTEL_RPL_S_8_12_HOST	0xa740		/* Raptor Lake Refresh (S,8+12) Host */
 #define	PCI_PRODUCT_INTEL_RPL_PCIE_RP_2	0xa74d		/* Raptor Lake PCIe G4 Root Port 2 (x4) */
 #define	PCI_PRODUCT_INTEL_RPL_GNA	0xa74f		/* Raptor Lake Gauss Newton Algorithm */
 #define	PCI_PRODUCT_INTEL_RPL_TBTDMA_1	0xa76d		/* Raptor Lake Thunderbolt DMA 1 */
@@ -7661,6 +7690,7 @@
 #define	PCI_PRODUCT_MELLANOX_MT28908	0x101b		/* ConnectX-6 */
 #define	PCI_PRODUCT_MELLANOX_MT28908VF	0x101c		/* ConnectX-6 VF */
 #define	PCI_PRODUCT_MELLANOX_MT2892	0x101d		/* ConnectX-6 Dx */
+#define	PCI_PRODUCT_MELLANOX_MT2894	0x101f		/* ConnectX-6 Lx */
 #define	PCI_PRODUCT_MELLANOX_MT23108	0x5a44		/* InfiniHost (Tavor) */
 #define	PCI_PRODUCT_MELLANOX_MT23108_PCI	0x5a46		/* InfiniHost PCI Bridge (Tavor) */
 #define	PCI_PRODUCT_MELLANOX_MT25204_OLD	0x5e8c		/* InfiniHost III Lx (old Sinai) */
