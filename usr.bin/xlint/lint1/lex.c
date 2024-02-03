@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.209 2024/02/03 10:56:18 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.210 2024/02/03 12:57:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.209 2024/02/03 10:56:18 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.210 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -211,11 +211,8 @@ symbol_kind sym_kind;
 static unsigned int
 hash(const char *s)
 {
-	unsigned int v;
-	const char *p;
-
-	v = 0;
-	for (p = s; *p != '\0'; p++) {
+	unsigned int v = 0;
+	for (const char *p = s; *p != '\0'; p++) {
 		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
@@ -225,9 +222,7 @@ hash(const char *s)
 static void
 symtab_add(sym_t *sym)
 {
-	unsigned int h;
-
-	h = hash(sym->s_name);
+	unsigned int h = hash(sym->s_name);
 	if ((sym->s_symtab_next = symtab[h]) != NULL)
 		symtab[h]->s_symtab_ref = &sym->s_symtab_next;
 	sym->s_symtab_ref = &symtab[h];
@@ -345,7 +340,7 @@ debug_symtab(void)
 #endif
 
 static void
-add_keyword(const struct keyword *kw, bool leading, bool trailing)
+register_keyword(const struct keyword *kw, bool leading, bool trailing)
 {
 
 	const char *name;
@@ -402,7 +397,7 @@ is_keyword_known(const struct keyword *kw)
 
 /* Write all keywords to the symbol table. */
 void
-initscan(void)
+init_lex(void)
 {
 
 	size_t n = sizeof(keywords) / sizeof(keywords[0]);
@@ -411,11 +406,11 @@ initscan(void)
 		if (!is_keyword_known(kw))
 			continue;
 		if (kw->kw_plain)
-			add_keyword(kw, false, false);
+			register_keyword(kw, false, false);
 		if (kw->kw_leading)
-			add_keyword(kw, true, false);
+			register_keyword(kw, true, false);
 		if (kw->kw_both)
-			add_keyword(kw, true, true);
+			register_keyword(kw, true, true);
 	}
 }
 

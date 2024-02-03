@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.179 2024/01/06 15:05:24 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.180 2024/02/03 12:57:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.179 2024/01/06 15:05:24 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.180 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -156,17 +156,13 @@ begin_control_statement(control_statement_kind kind)
 void
 end_control_statement(control_statement_kind kind)
 {
-	control_statement *cs;
-	case_label_t *cl, *next;
-
-	lint_assert(cstmt != NULL);
-
 	while (cstmt->c_kind != kind)
 		cstmt = cstmt->c_surrounding;
 
-	cs = cstmt;
+	control_statement *cs = cstmt;
 	cstmt = cs->c_surrounding;
 
+	case_label_t *cl, *next;
 	for (cl = cs->c_case_labels; cl != NULL; cl = next) {
 		next = cl->cl_next;
 		free(cl);
@@ -212,17 +208,13 @@ check_statement_reachable(void)
 void
 begin_function(sym_t *fsym)
 {
-	int n;
-	bool dowarn;
-	sym_t *sym, *rdsym;
-
 	funcsym = fsym;
 
 	/*
 	 * Put all symbols declared in the parameter list back to the symbol
 	 * table.
 	 */
-	for (sym = dcs->d_func_proto_syms; sym != NULL;
+	for (sym_t *sym = dcs->d_func_proto_syms; sym != NULL;
 	    sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
 			lint_assert(sym->s_block_level == 1);
@@ -265,7 +257,7 @@ begin_function(sym_t *fsym)
 	 * Parameters in new-style function declarations need a name. ('void'
 	 * is already removed from the list of parameters.)
 	 */
-	n = 1;
+	int n = 1;
 	for (const sym_t *param = fsym->s_type->t_params;
 	    param != NULL; param = param->s_next) {
 		if (param->s_scl == ABSTRACT) {
@@ -284,9 +276,10 @@ begin_function(sym_t *fsym)
 	 */
 	dcs->d_func_def_pos = fsym->s_def_pos;
 
-	if ((rdsym = dcs->d_redeclared_symbol) != NULL) {
-
-		if (!check_redeclaration(fsym, (dowarn = false, &dowarn))) {
+	sym_t *rdsym = dcs->d_redeclared_symbol;
+	if (rdsym != NULL) {
+		bool dowarn = false;
+		if (!check_redeclaration(fsym, &dowarn)) {
 
 			/*
 			 * Print nothing if the newly defined function is
@@ -354,23 +347,14 @@ check_missing_return_value(void)
 	warning(217, funcsym->s_name);
 }
 
-/*
- * Called at the end of a function definition.
- */
 void
 end_function(void)
 {
-
 	if (reached) {
 		cstmt->c_had_return_noval = true;
 		check_missing_return_value();
 	}
 
-	/*
-	 * This warning is printed only if the return value was implicitly
-	 * declared to be int. Otherwise, the wrong return statement has
-	 * already printed a warning.
-	 */
 	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
 	    funcsym->s_return_type_implicit_int)
 		/* function '%s' has 'return expr' and 'return' */
@@ -383,27 +367,17 @@ end_function(void)
 	    param != NULL && n != 0; param = param->s_next, n--)
 		check_usage_sym(dcs->d_asm, param);
 
-	/*
-	 * Write the information about the function definition to the output
-	 * file. Inline functions explicitly declared extern are written as
-	 * declarations only.
-	 */
-	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
+	if (dcs->d_scl == EXTERN && funcsym->s_inline)
 		outsym(funcsym, funcsym->s_scl, DECL);
-	} else {
+	else
 		outfdef(funcsym, &dcs->d_func_def_pos,
 		    cstmt->c_had_return_value, funcsym->s_osdef,
 		    dcs->d_func_params);
-	}
 
 	/* clean up after syntax errors, see test stmt_for.c. */
 	while (dcs->d_enclosing != NULL)
 		dcs = dcs->d_enclosing;
 
-	/*
-	 * Remove all symbols declared during the parameter declaration from
-	 * the symbol table.
-	 */
 	lint_assert(dcs->d_enclosing == NULL);
 	lint_assert(dcs->d_kind == DLK_EXTERN);
 	symtab_remove_level(dcs->d_func_proto_syms);
@@ -418,12 +392,11 @@ void
 named_label(sym_t *sym)
 {
 
-	if (sym->s_set) {
+	if (sym->s_set)
 		/* label '%s' redefined */
 		error(194, sym->s_name);
-	} else {
+	else
 		mark_as_set(sym);
-	}
 
 	/* XXX: Assuming that each label is reachable is wrong. */
 	set_reached(true);
@@ -432,7 +405,6 @@ named_label(sym_t *sym)
 static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
-
 	if (switch_expr->tn_op != BITAND ||
 	    switch_expr->tn_right->tn_op != CON)
 		return;
@@ -441,10 +413,9 @@ check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 	uint64_t case_value = (uint64_t)case_expr->tn_val.u.integer;
 	uint64_t mask = (uint64_t)switch_expr->tn_right->tn_val.u.integer;
 
-	if ((case_value & ~mask) != 0) {
+	if ((case_value & ~mask) != 0)
 		/* statement not reached */
 		warning(193);
-	}
 }
 
 static void
@@ -466,12 +437,11 @@ check_case_label_enum(const tnode_t *tn, const control_statement *cs)
 }
 
 static void
-check_case_label(tnode_t *tn, control_statement *cs)
+check_case_label(tnode_t *tn)
 {
-	case_label_t *cl;
-	val_t *v;
-	val_t nv;
-	tspec_t t;
+	control_statement *cs;
+	for (cs = cstmt; cs != NULL && !cs->c_switch; cs = cs->c_surrounding)
+		continue;
 
 	if (cs == NULL) {
 		/* case not in switch */
@@ -505,38 +475,34 @@ check_case_label(tnode_t *tn, control_statement *cs)
 			warning(220);
 	}
 
-	t = tn->tn_type->t_tspec;
-	if (t == LONG || t == ULONG ||
-	    t == LLONG || t == ULLONG) {
-		if (!allow_c90)
-			/* case label must be of type 'int' in traditional C */
-			warning(203);
-	}
+	tspec_t t = tn->tn_type->t_tspec;
+	if ((t == LONG || t == ULONG || t == LLONG || t == ULLONG)
+	    && !allow_c90)
+		/* case label must be of type 'int' in traditional C */
+		warning(203);
 
-	/*
-	 * get the value of the expression and convert it to the type of the
-	 * switch expression
-	 */
-	v = integer_constant(tn, true);
+	val_t *v = integer_constant(tn, true);
+	val_t nv;
 	(void)memset(&nv, 0, sizeof(nv));
 	convert_constant(CASE, 0, cs->c_switch_type, &nv, v);
 	free(v);
 
 	/* look if we had this value already */
+	case_label_t *cl;
 	for (cl = cs->c_case_labels; cl != NULL; cl = cl->cl_next) {
 		if (cl->cl_val.u.integer == nv.u.integer)
 			break;
 	}
-	if (cl != NULL && is_uinteger(nv.v_tspec)) {
+	if (cl != NULL && is_uinteger(nv.v_tspec))
 		/* duplicate case '%lu' in switch */
 		error(200, (unsigned long)nv.u.integer);
-	} else if (cl != NULL) {
+	else if (cl != NULL)
 		/* duplicate case '%ld' in switch */
 		error(199, (long)nv.u.integer);
-	} else {
+	else {
 		check_getopt_case_label(nv.u.integer);
 
-		/* append the value to the list of case values */
+		/* Prepend the value to the list of case values. */
 		cl = xcalloc(1, sizeof(*cl));
 		cl->cl_val = nv;
 		cl->cl_next = cs->c_case_labels;
@@ -547,35 +513,26 @@ check_case_label(tnode_t *tn, control_statement *cs)
 void
 case_label(tnode_t *tn)
 {
-	control_statement *cs;
-
-	/* find the innermost switch statement */
-	for (cs = cstmt; cs != NULL && !cs->c_switch; cs = cs->c_surrounding)
-		continue;
-
-	check_case_label(tn, cs);
-
+	check_case_label(tn);
 	expr_free_all();
-
 	set_reached(true);
 }
 
 void
 default_label(void)
 {
-	control_statement *cs;
-
 	/* find the innermost switch statement */
+	control_statement *cs;
 	for (cs = cstmt; cs != NULL && !cs->c_switch; cs = cs->c_surrounding)
 		continue;
 
-	if (cs == NULL) {
+	if (cs == NULL)
 		/* default outside switch */
 		error(201);
-	} else if (cs->c_default) {
+	else if (cs->c_default)
 		/* duplicate default in switch */
 		error(202);
-	} else {
+	else {
 		if (reached && !suppress_fallthrough) {
 			if (hflag)
 				/* fallthrough on default statement */
@@ -590,7 +547,6 @@ default_label(void)
 static tnode_t *
 check_controlling_expression(tnode_t *tn)
 {
-
 	tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, false, tn);
@@ -616,7 +572,6 @@ check_controlling_expression(tnode_t *tn)
 void
 stmt_if_expr(tnode_t *tn)
 {
-
 	if (tn != NULL)
 		tn = check_controlling_expression(tn);
 	if (tn != NULL)
@@ -634,7 +589,6 @@ stmt_if_expr(tnode_t *tn)
 void
 stmt_if_then_stmt(void)
 {
-
 	cstmt->c_reached_end_of_then = reached;
 	/* XXX: what if inside 'if (0)'? */
 	set_reached(!cstmt->c_always_then);
@@ -656,9 +610,6 @@ stmt_if_else_stmt(bool els)
 void
 stmt_switch_expr(tnode_t *tn)
 {
-	tspec_t t;
-	type_t *tp;
-
 	if (tn != NULL)
 		tn = cconv(tn);
 	if (tn != NULL)
@@ -669,7 +620,7 @@ stmt_switch_expr(tnode_t *tn)
 		tn = NULL;
 	}
 	if (tn != NULL && !allow_c90) {
-		t = tn->tn_type->t_tspec;
+		tspec_t t = tn->tn_type->t_tspec;
 		if (t == LONG || t == ULONG || t == LLONG || t == ULLONG) {
 			/* switch expression must be of type 'int' in ... */
 			warning(271);
@@ -681,7 +632,7 @@ stmt_switch_expr(tnode_t *tn)
 	 * (*tp) is allocated on tree memory, the type must be duplicated. This
 	 * is not too complicated because it is only an integer type.
 	 */
-	tp = xcalloc(1, sizeof(*tp));
+	type_t *tp = xcalloc(1, sizeof(*tp));
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
 		if ((tp->t_is_enum = tn->tn_type->t_is_enum) != false)
@@ -763,8 +714,6 @@ stmt_switch_expr_stmt(void)
 void
 stmt_while_expr(tnode_t *tn)
 {
-	bool body_reached;
-
 	if (!reached) {
 		/* loop not entered at top */
 		warning(207);
@@ -778,7 +727,7 @@ stmt_while_expr(tnode_t *tn)
 	begin_control_statement(CS_WHILE);
 	cstmt->c_loop = true;
 	cstmt->c_maybe_endless = is_nonzero(tn);
-	body_reached = !is_zero(tn);
+	bool body_reached = !is_zero(tn);
 
 	check_getopt_begin_while(tn);
 	expr(tn, false, true, true, false);
@@ -789,13 +738,7 @@ stmt_while_expr(tnode_t *tn)
 void
 stmt_while_expr_stmt(void)
 {
-
-	/*
-	 * The end of the loop can be reached if it is no endless loop or there
-	 * was a break statement which was reached.
-	 */
 	set_reached(!cstmt->c_maybe_endless || cstmt->c_break);
-
 	check_getopt_end_while();
 	end_control_statement(CS_WHILE);
 }
@@ -803,7 +746,6 @@ stmt_while_expr_stmt(void)
 void
 stmt_do(void)
 {
-
 	if (!reached) {
 		/* loop not entered at top */
 		warning(207);
@@ -817,11 +759,6 @@ stmt_do(void)
 void
 stmt_do_while_expr(tnode_t *tn)
 {
-
-	/*
-	 * If there was a continue statement, the expression controlling the
-	 * loop is reached.
-	 */
 	if (cstmt->c_continue)
 		set_reached(true);
 
@@ -848,7 +785,6 @@ stmt_do_while_expr(tnode_t *tn)
 void
 stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
-
 	/*
 	 * If there is no initialization expression it is possible that it is
 	 * intended not to enter the loop at top.
@@ -890,18 +826,14 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 void
 stmt_for_exprs_stmt(void)
 {
-	pos_t cpos, cspos;
-	tnode_t *tn3;
-
 	if (cstmt->c_continue)
 		set_reached(true);
 
-	cpos = curr_pos;
-	cspos = csrc_pos;
-
-	/* Restore the tree memory for the reinitialization expression */
 	expr_restore_memory(cstmt->c_for_expr3_mem);
-	tn3 = cstmt->c_for_expr3;
+	tnode_t *tn3 = cstmt->c_for_expr3;
+
+	pos_t saved_curr_pos = curr_pos;
+	pos_t saved_csrc_pos = csrc_pos;
 	curr_pos = cstmt->c_for_expr3_pos;
 	csrc_pos = cstmt->c_for_expr3_csrc_pos;
 
@@ -912,17 +844,14 @@ stmt_for_exprs_stmt(void)
 		set_reached(true);
 	}
 
-	if (tn3 != NULL) {
+	if (tn3 != NULL)
 		expr(tn3, false, false, true, false);
-	} else {
+	else
 		expr_free_all();
-	}
 
-	curr_pos = cpos;
-	csrc_pos = cspos;
+	curr_pos = saved_curr_pos;
+	csrc_pos = saved_csrc_pos;
 
-	/* An endless loop without break will never terminate */
-	/* TODO: What if the loop contains a 'return'? */
 	set_reached(cstmt->c_break || !cstmt->c_maybe_endless);
 
 	end_control_statement(CS_FOR);
@@ -931,30 +860,23 @@ stmt_for_exprs_stmt(void)
 void
 stmt_goto(sym_t *lab)
 {
-
 	mark_as_used(lab, false, false);
-
 	check_statement_reachable();
-
 	set_reached(false);
 }
 
 void
 stmt_break(void)
 {
-	control_statement *cs;
-
-	cs = cstmt;
+	control_statement *cs = cstmt;
 	while (cs != NULL && !cs->c_loop && !cs->c_switch)
 		cs = cs->c_surrounding;
 
-	if (cs == NULL) {
+	if (cs == NULL)
 		/* break outside loop or switch */
 		error(208);
-	} else {
-		if (reached)
-			cs->c_break = true;
-	}
+	else if (reached)
+		cs->c_break = true;
 
 	if (bflag)
 		check_statement_reachable();
@@ -970,13 +892,12 @@ stmt_continue(void)
 	for (cs = cstmt; cs != NULL && !cs->c_loop; cs = cs->c_surrounding)
 		continue;
 
-	if (cs == NULL) {
+	if (cs == NULL)
 		/* continue outside loop */
 		error(209);
-	} else {
+	else
 		/* TODO: only if reachable, for symmetry with c_break */
 		cs->c_continue = true;
-	}
 
 	check_statement_reachable();
 
@@ -986,7 +907,6 @@ stmt_continue(void)
 static bool
 is_parenthesized(const tnode_t *tn)
 {
-
 	while (!tn->tn_parenthesized && tn->tn_op == COMMA)
 		tn = tn->tn_right;
 	return tn->tn_parenthesized && !tn->tn_sys;
@@ -995,7 +915,6 @@ is_parenthesized(const tnode_t *tn)
 static void
 check_return_value(bool sys, tnode_t *tn)
 {
-
 	if (any_query_enabled && is_parenthesized(tn)) {
 		/* parenthesized return value */
 		query_message(9);
@@ -1067,14 +986,9 @@ stmt_return(bool sys, tnode_t *tn)
 	set_reached(false);
 }
 
-/*
- * Do some cleanup after a global declaration or definition.
- * Especially remove information about unused lint comments.
- */
 void
 global_clean_up_decl(bool silent)
 {
-
 	if (nargusg != -1) {
 		if (!silent) {
 			/* comment ** %s ** must precede function definition */
@@ -1122,10 +1036,6 @@ global_clean_up_decl(bool silent)
 static void
 argsused(int n)
 {
-
-	if (n == -1)
-		n = 0;
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "ARGSUSED");
@@ -1135,17 +1045,13 @@ argsused(int n)
 		/* duplicate comment ** %s ** */
 		warning(281, "ARGSUSED");
 	}
-	nargusg = n;
+	nargusg = n != -1 ? n : 0;
 	argsused_pos = curr_pos;
 }
 
 static void
 varargs(int n)
 {
-
-	if (n == -1)
-		n = 0;
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "VARARGS");
@@ -1155,7 +1061,7 @@ varargs(int n)
 		/* duplicate comment ** %s ** */
 		warning(281, "VARARGS");
 	}
-	nvararg = n;
+	nvararg = n != -1 ? n : 0;
 	vapos = curr_pos;
 }
 
@@ -1166,10 +1072,6 @@ varargs(int n)
 static void
 printflike(int n)
 {
-
-	if (n == -1)
-		n = 0;
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "PRINTFLIKE");
@@ -1179,7 +1081,7 @@ printflike(int n)
 		/* duplicate comment ** %s ** */
 		warning(281, "PRINTFLIKE");
 	}
-	printflike_argnum = n;
+	printflike_argnum = n != -1 ? n : 0;
 	printflike_pos = curr_pos;
 }
 
@@ -1190,10 +1092,6 @@ printflike(int n)
 static void
 scanflike(int n)
 {
-
-	if (n == -1)
-		n = 0;
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "SCANFLIKE");
@@ -1203,14 +1101,13 @@ scanflike(int n)
 		/* duplicate comment ** %s ** */
 		warning(281, "SCANFLIKE");
 	}
-	scanflike_argnum = n;
+	scanflike_argnum = n != -1 ? n : 0;
 	scanflike_pos = curr_pos;
 }
 
 static void
 lintlib(void)
 {
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "LINTLIBRARY");
@@ -1228,7 +1125,6 @@ lintlib(void)
 static void
 protolib(int n)
 {
-
 	if (dcs->d_kind != DLK_EXTERN) {
 		/* comment ** %s ** must be outside function */
 		warning(280, "PROTOLIB");

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.390 2024/01/23 20:03:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.391 2024/02/03 12:57:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.390 2024/01/23 20:03:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.391 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,11 +64,8 @@ int enumval;
 decl_level *dcs;
 
 
-/*
- * initializes all global vars used in declarations
- */
 void
-initdecl(void)
+init_decl(void)
 {
 
 	/* declaration stack */

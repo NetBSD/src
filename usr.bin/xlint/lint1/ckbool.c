@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.28 2023/12/30 15:37:27 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.29 2024/02/03 12:57:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.28 2023/12/30 15:37:27 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.29 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: ckbool.c,v 1.28 2023/12/30 15:37:27 rillig Exp $");
 
 /*
  * The option -T treats _Bool as incompatible with all other scalar types.
- * See d_c99_bool_strict.c for the exact rules and for examples.
+ * See d_c99_bool_strict.c for the detailed rules and for examples.
  */
 
 
@@ -113,16 +113,15 @@ typeok_strict_bool_binary_compatible(op_t op, int arg,
 	if (is_typeok_strict_bool_binary(op, ln, lt, rn, rt))
 		return true;
 
-	if (op == FARG) {
+	if (op == FARG)
 		/* parameter %d expects '%s', gets passed '%s' */
 		error(334, arg, tspec_name(lt), tspec_name(rt));
-	} else if (op == RETURN) {
+	else if (op == RETURN)
 		/* function has return type '%s' but returns '%s' */
 		error(211, tspec_name(lt), tspec_name(rt));
-	} else {
+	else
 		/* operands of '%s' have incompatible types '%s' and '%s' */
 		error(107, op_name(op), tspec_name(lt), tspec_name(rt));
-	}
 
 	return false;
 }
@@ -136,16 +135,12 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			  const tnode_t *ln,
 			  const tnode_t *rn)
 {
-	tspec_t lt, rt;
-
 	ln = before_conversion(ln);
-	lt = ln->tn_type->t_tspec;
-
+	tspec_t lt = ln->tn_type->t_tspec;
+	tspec_t rt = NO_TSPEC;
 	if (rn != NULL) {
 		rn = before_conversion(rn);
 		rt = rn->tn_type->t_tspec;
-	} else {
-		rt = NO_TSPEC;
 	}
 
 	if (rn != NULL &&
@@ -202,26 +197,16 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 	return true;
 }
 
-/*
- * See if the node is valid as operand of an operator that compares its
- * operand with 0.
- */
 bool
 is_typeok_bool_compares_with_zero(const tnode_t *tn)
 {
-	tspec_t t;
-
 	while (tn->tn_op == COMMA)
 		tn = tn->tn_right;
 	tn = before_conversion(tn);
-	t = tn->tn_type->t_tspec;
 
-	if (t == BOOL)
-		return true;
-
-	if (tn->tn_sys && is_scalar(t))
-		return true;
-	return tn->tn_op == BITAND;
+	return tn->tn_type->t_tspec == BOOL
+	    || tn->tn_op == BITAND
+	    || (tn->tn_sys && is_scalar(tn->tn_type->t_tspec));
 }
 
 bool
