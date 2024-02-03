@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.100 2024/02/03 17:38:22 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.101 2024/02/03 18:44:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.100 2024/02/03 17:38:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.101 2024/02/03 18:44:43 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -222,18 +222,14 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct vnode *devvp;
-	struct iso_args *args = data;
+	struct iso_args aa, *args = data;
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
 	if (args == NULL)
 		return EINVAL;
 
-	if (*data_len == OSIZE) {
-		args->uid = 0;
-		args->gid = 0;
-		args->fmask = args->dmask = S_IRWXU|S_IRWXG|S_IRWXO;
-	} else if (*data_len < sizeof(*args))
+	if (*data_len != OSIZE && *data_len < sizeof(*args))
 		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -253,8 +249,15 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
+	if (*data_len == OSIZE) {
+		memcpy(&aa, args, OSIZE);
+		args->uid = args->gid = 0;
+		args->fmask = args->dmask = S_IRWXU|S_IRWXG|S_IRWXO;
+		args = &aa;
+	}
+
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
-		return (EROFS);
+		return EROFS;
 
 	if ((mp->mnt_flag & MNT_UPDATE) && args->fspec == NULL)
 		return EINVAL;
@@ -264,9 +267,9 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * and verify that it refers to a sensible block device.
 	 */
 	error = namei_simple_user(args->fspec,
-				NSM_FOLLOW_NOEMULROOT, &devvp);
+	    NSM_FOLLOW_NOEMULROOT, &devvp);
 	if (error != 0)
-		return (error);
+		return error;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -314,7 +317,7 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 fail:
 	VOP_UNLOCK(devvp);
 	vrele(devvp);
-	return (error);
+	return error;
 }
 
 /*
