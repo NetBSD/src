@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.47 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.netwinder,v 1.47.2.1 2024/02/03 14:05:47 martin Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -86,10 +86,12 @@
 ./usr/X11R7/lib/modules/libexa.so			xserver-exa-modules	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			xserver-exa-modules	xorg
 ./usr/X11R7/lib/modules/libexa_pic.a			xserver-obsolete	xorg,picinstall,obsolete
-./usr/X11R7/lib/modules/libfb.a				xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libfb.so			xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libfb.so.0			xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libfb_pic.a			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.a				xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libfb.so			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libfb.so.0 			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/libfb_pic.a			xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/libi2c.a			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c.so			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libi2c.so.0			xserver-obsolete	xorg,obsolete
@@ -110,10 +112,12 @@
 ./usr/X11R7/lib/modules/libshadowfb.so			xserver-shadowfb-modules	xorg
 ./usr/X11R7/lib/modules/libshadowfb.so.0		xserver-shadowfb-modules	xorg
 ./usr/X11R7/lib/modules/libshadowfb_pic.a		xserver-obsolete	xorg,picinstall,obsolete
-./usr/X11R7/lib/modules/libvbe.a			xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libvbe.so			xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libvbe.so.0			xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/libvbe_pic.a			xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe.a			xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/libvbe.so			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libvbe.so			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/libvbe.so.0			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libvbe.so.0			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/libvbe_pic.a			xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/libvgahw.a			xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/libvgahw.so			xserver-vgahw-modules	xorg
 ./usr/X11R7/lib/modules/libvgahw.so.0			xserver-vgahw-modules	xorg
