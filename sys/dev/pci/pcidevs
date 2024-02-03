@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289.2.30 2023/10/18 14:41:55 martin Exp $
+$NetBSD: pcidevs,v 1.1289.2.31 2024/02/03 11:30:32 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1488,6 +1488,7 @@ product ARECA ARC1170		0x1170	ARC-1170
 product ARECA ARC1200		0x1200	ARC-1200
 product ARECA ARC1200_B		0x1201	ARC-1200 rev B
 product ARECA ARC1202		0x1202	ARC-1202
+product ARECA ARC1203		0x1203	ARC-1203
 product ARECA ARC1210		0x1210	ARC-1210
 product ARECA ARC1214 		0x1214	ARC-1214
 product ARECA ARC1220		0x1220	ARC-1220
@@ -1500,6 +1501,8 @@ product ARECA ARC1381		0x1381	ARC-1381
 product ARECA ARC1680		0x1680	ARC-1680
 product ARECA ARC1681		0x1681	ARC-1681
 product ARECA ARC1880 		0x1880	ARC-1880
+product ARECA ARC1884 		0x1884	ARC-1884
+product ARECA ARC1886 		0x1886	ARC-1886
 
 /* ASIX Electronics products */
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
@@ -3225,6 +3228,7 @@ product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
 product EXAR XR17D152	0x0152	dual-channel Universal PCI UART
 product EXAR XR17D154	0x0154	quad-channel Universal PCI UART
 product EXAR XR17D158	0x0158	octal-channel Universal PCI UART
+product EXAR XR17V354	0x0354	quad-channel Universal PCIe UART
 
 /* FORE products */
 product FORE PCA200	0x0210	ATM PCA-200
@@ -3932,6 +3936,7 @@ product INTEL I219_LM11		0x0d4c	I219-LM (11) Ethernet Connection
 product INTEL I219_V11		0x0d4d	I219-V (11) Ethernet Connection
 product INTEL I219_LM10		0x0d4e	I219-LM (10) Ethernet Connection
 product INTEL I219_V10		0x0d4f	I219-V (10) Ethernet Connection
+product INTEL I225_IT		0x0d9f	I225-IT Ethernet Connection
 product INTEL I219_LM12		0x0d53	I219-LM (12) Ethernet Connection
 product INTEL I219_V12		0x0d55	I219-V (12) Ethernet Connection
 product INTEL I219_LM23		0x0dc5	I219-LM (23) Ethernet Connection
@@ -4252,6 +4257,8 @@ product INTEL 82439HX		0x1250	82439HX (TXC) System Controller
 product INTEL I226_LM		0x125b	I226-LM Ethernet
 product INTEL I226_V		0x125c	I226-V Ethernet
 product INTEL I226_IT		0x125d	I226-IT Ethernet
+product INTEL I221_V		0x125e	I221-V Ethernet Connection
+product INTEL I226_BLANK_NVM	0x125f	I226 Ethernet Connection (blankNVM)
 product INTEL C3K_X553_10G	0x1306	C3000 X553 10G Ethernet
 product INTEL C3K_X553_1G	0x1307	C3000 X553 1G Ethernet
 product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
@@ -4378,9 +4385,12 @@ product INTEL C3K_X553_SGMII	0x15e4	C3000 X553 1GbE SGMII (10G SKU)
 product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
 product INTEL I225_LM		0x15f2	I225 LM Ethernet
 product INTEL I225_V		0x15f3	I225 V Ethernet
+product INTEL I220_V		0x15f7	I220-V Ethernet Connection
+product INTEL I225_BLANK_NVM	0x15fd	I225 Ethernet Connection (blankNVM)
 product INTEL I219_LM15		0x15f4	I219-LM (15) Ethernet Connection
 product INTEL I219_V15		0x15f5	I219-V (15) Ethernet Connection
 product INTEL I210_SGMII_WOF	0x15f6	I210 Ethernet (SGMII)
+product INTEL I225_I		0x15f8	I225-I Ethernet Connection
 product INTEL I219_LM14		0x15f9	I219-LM (14) Ethernet Connection
 product INTEL I219_V14		0x15fa	I219-V (14) Ethernet Connection
 product INTEL I219_LM13		0x15fb	I219-LM (13) Ethernet Connection
@@ -5413,6 +5423,9 @@ product INTEL XE5_V3_BRA4	0x2ffb  Xeon E7 v3/Xeon E5 v3/Core i7 Buffered Ring Ag
 product INTEL XE5_V3_SADBR1	0x2ffc  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
 product INTEL XE5_V3_SADBR2	0x2ffd  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
 product INTEL XE5_V3_SADBR3	0x2ffe  Xeon E7 v3/Xeon E5 v3/Core i7 System Address Decoder & Broadcast Registers
+product INTEL I225_K		0x3100	I225-K Ethernet Connection
+product INTEL I225_K2		0x3101	I225-K2 Ethernet Connection
+product INTEL I226_K		0x3102	I226-K Ethernet Connection
 product INTEL WIFI_LINK_3165_1	0x3165	Dual Band Wireless AC 3165
 product INTEL WIFI_LINK_3165_2	0x3166	Dual Band Wireless AC 3165
 product INTEL GLK_IGD_1		0x3184	UHD Graphics 605
@@ -5949,7 +5962,7 @@ product INTEL ADL_U15_2_4_HOST	0x4609	Alder Lake (U15,2+4) Host
 product INTEL ADL_U9_2_4_HOST	0x460a	Alder Lake (U9,2+4) Host
 product INTEL ADL_PCIE_RP_0	0x460d	Alder Lake PCIe G5 Root Port 0 (x16)
 product INTEL ADL_XDCI		0x460e	Alder Lake USB-C Device (xDCI)
-product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake (S,2+0) Host
+product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake Refresh (S,2+0) Host
 product INTEL ADL_N_8_HOST	0x4617	Alder Lake-N (0+8) Host
 product INTEL ADL_U15_1_4_HOST	0x4619	Alder Lake (U15,1+4) Host
 product INTEL ADL_U9_1_4_HOST	0x461a	Alder Lake (U9,1+4) Host
@@ -5971,7 +5984,9 @@ product INTEL ADL_HX_6_8_HOST	0x463b	Alder Lake (HX,6+8) Host
 product INTEL ADL_PCIE_RP_3	0x463d	Alder Lake PCIe G4 Root Port 3 (x4)
 product INTEL ADL_TBTDMA_0	0x463e	Alder Lake Thunderbolt DMA 0
 product INTEL ADL_TBT_PCIE_1	0x463f	Alder Lake Thunderbolt PCIe 1
+product INTEL RPL_S_6_8_HOST_2	0x4640	Raptor Lake (S,6+8) Host
 product INTEL ADL_H_6_8_HOST	0x4641	Alder Lake (H,6+8) Host
+product INTEL RPL_HX_6_4_HOST_2	0x4647	Raptor Lake (HX,6+4) Host
 product INTEL ADL_S_6_4_HOST	0x4648	Alder Lake (S,6+4) Host
 product INTEL ADL_H_6_4_HOST	0x4649	Alder Lake (H,6+4) Host
 product INTEL ADL_PCIE_RP_2	0x464d	Alder Lake PCIe G4 Root Port 2 (x4)
@@ -6285,10 +6300,16 @@ product INTEL ADL_N_CNVI_4	0x54f3	Alder Lake-N CNVi WiFi
 product INTEL ADL_N_GSPI_2	0x54fb	Alder Lake-N GSPI 2
 product INTEL ADL_N_ISH		0x54fc	Alder Lake-N Integrated Sensor Hub
 product INTEL ADL_N_SCS_UFS	0x54ff	Alder Lake-N UFS
+product INTEL I225_LMVP		0x5502	I225-LMvP Ethernet Connection
+product INTEL I226_LMVP		0x5503	I226-LMvP Ethernet Connection
 product INTEL I219_LM18		0x550a	I219-LM (18) Ethernet Connection
 product INTEL I219_V18		0x550b	I219-V (18) Ethernet Connection
 product INTEL I219_LM19		0x550c	I219-LM (19) Ethernet Connection
 product INTEL I219_V19		0x550d	I219-V (19) Ethernet Connection
+product INTEL I219_LM20		0x550e	I219-LM (20) Ethernet Connection
+product INTEL I219_V20		0x550f	I219-V (20) Ethernet Connection
+product INTEL I219_LM21		0x5510	I219-LM (21) Ethernet Connection
+product INTEL I219_V21		0x5511	I219-V (21) Ethernet Connection
 product INTEL CORE7G_H_M_D_HOST_DRAM 0x5900 Core 7G (H, Mobile, Dual) Host Bridge, DRAM
 product INTEL CORE7G_PCIE_X16	0x5901	Core 7G PCIe x16
 product INTEL CORE7G_S_GT1	0x5902	HD Graphics 610 (GT1)
@@ -6492,6 +6513,8 @@ product INTEL I740		0x7800	i740 Graphics Accelerator
 product INTEL 7HS_Z790_ESPI	0x7a04	Z790 eSPI
 product INTEL 7HS_H770_ESPI	0x7a05	H770 eSPI
 product INTEL 7HS_B760_ESPI	0x7a06	B760 eSPI
+product INTEL 7HS_C266_ESPI	0x7a13	C266 eSPI
+product INTEL 7HS_C262_ESPI	0x7a14	C262 eSPI
 product INTEL 7HS_P2SB		0x7a20	700 Series PCH P2SB
 product INTEL 7HS_PMC		0x7a21	700 Series PCH PMC
 product INTEL 7HS_SMB		0x7a23	700 Series PCH SMBus
@@ -7418,7 +7441,12 @@ product INTEL RPL_S_6_4_HOST	0xa705	Raptor Lake (S,6+4) Host
 product INTEL RPL_H_6_8_HOST	0xa706	Raptor Lake (H,6+8) Host
 product INTEL RPL_H_4_8_HOST	0xa707	Raptor Lake (H,4+8) Host
 product INTEL RPL_U_2_8_HOST	0xa708	Raptor Lake (U,2+8) Host
+product INTEL RPL_PX_6_8_HOST	0xa709	Raptor Lake (PX,6+8) Host
+product INTEL RPL_PX_4_8_HOST	0xa70a	Raptor Lake (PX,4+8) Host
 product INTEL RPL_PCIE_RP_0	0xa70d	Raptor Lake PCIe G5 Root Port 0 (x16)
+product INTEL RPL_E_8_0_HOST	0xa711	Raptor Lake (E,8+0) Host
+product INTEL RPL_E_6_0_HOST	0xa712	Raptor Lake (E,6+0) Host
+product INTEL RPL_E_4_0_HOST	0xa713	Raptor Lake (E,4+0) Host
 product INTEL RPL_H_4_4_HOST	0xa716	Raptor Lake (H,4+4) Host
 product INTEL RPL_HX_6_4_HOST	0xa719	Raptor Lake (HX,6+4) Host
 product INTEL RPL_U_2_4_HOST	0xa71b	Raptor Lake (U,2+4) Host
@@ -7430,6 +7458,7 @@ product INTEL RPL_HX_8_12_HOST	0xa729	Raptor Lake (HX,8+12) Host
 product INTEL RPL_HX_6_8_HOST	0xa72a	Raptor Lake (HX,6+8) Host
 product INTEL RPL_PCIE_RP_1	0xa72d	Raptor Lake PCIe G5 Root Port 1 (x8)
 product INTEL RPL_TBTDMA_0	0xa73e	Raptor Lake Thunderbolt DMA 0
+product INTEL RPL_S_8_12_HOST	0xa740	Raptor Lake Refresh (S,8+12) Host
 product INTEL RPL_PCIE_RP_2	0xa74d	Raptor Lake PCIe G4 Root Port 2 (x4)
 product INTEL RPL_GNA		0xa74f	Raptor Lake Gauss Newton Algorithm
 product INTEL RPL_TBTDMA_1	0xa76d	Raptor Lake Thunderbolt DMA 1
@@ -7654,6 +7683,7 @@ product MELLANOX MT28800VF	0x101a	ConnectX-5 Ex VF
 product MELLANOX MT28908	0x101b	ConnectX-6
 product MELLANOX MT28908VF	0x101c	ConnectX-6 VF
 product MELLANOX MT2892		0x101d	ConnectX-6 Dx
+product MELLANOX MT2894		0x101f	ConnectX-6 Lx
 product MELLANOX MT23108	0x5a44	InfiniHost (Tavor)
 product MELLANOX MT23108_PCI	0x5a46	InfiniHost PCI Bridge (Tavor)
 product MELLANOX MT25204_OLD	0x5e8c	InfiniHost III Lx (old Sinai)
