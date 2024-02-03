@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.83 2024/02/01 18:37:06 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.84 2024/02/03 12:57:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.83 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.84 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -234,7 +234,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	const sym_t *args)
 {
 	int narg;
-	const sym_t *arg;
 
 	if (posp->p_file == csrc_pos.p_file) {
 		outint(posp->p_line);
@@ -298,11 +297,11 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	/* parameter types and return value */
 	if (osdef) {
 		narg = 0;
-		for (arg = args; arg != NULL; arg = arg->s_next)
+		for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
 			narg++;
 		outchar('f');
 		outint(narg);
-		for (arg = args; arg != NULL; arg = arg->s_next)
+		for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
 			outtype(arg->s_type);
 		outtype(fsym->s_type->t_subt);
 	} else {
@@ -323,8 +322,7 @@ void
 outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
 	tnode_t *args, *arg;
-	int narg, n, i;
-	tspec_t t;
+	int narg, i;
 
 	outint(csrc_pos.p_line);
 	outchar('c');		/* function call */
@@ -341,13 +339,14 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	for (arg = args; arg != NULL; arg = tn_ck_right(arg))
 		narg++;
 	/* information about arguments */
-	for (n = 1; n <= narg; n++) {
+	for (int n = 1; n <= narg; n++) {
 		/* the last argument is the top one in the tree */
 		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
 			continue;
 		arg = arg->tn_left;
 		if (arg->tn_op == CON) {
-			if (is_integer(t = arg->tn_type->t_tspec)) {
+			tspec_t t = arg->tn_type->t_tspec;
+			if (is_integer(t)) {
 				/*
 				 * XXX it would probably be better to
 				 * explicitly test the sign
@@ -382,7 +381,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	/* types of arguments */
 	outchar('f');
 	outint(narg);
-	for (n = 1; n <= narg; n++) {
+	for (int n = 1; n <= narg; n++) {
 		/* the last argument is the top one in the tree */
 		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
 			continue;

@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.20 2024/02/01 18:37:06 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.21 2024/02/03 12:57:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.20 2024/02/01 18:37:06 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.21 2024/02/03 12:57:12 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -109,31 +109,22 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 static void
 check_unlisted_option(char opt)
 {
-	char *optptr;
-
-	lint_assert(ck.options != NULL);
-
 	if (opt == ':' && ck.options[0] != ':')
 		goto warn;
 
-	optptr = strchr(ck.options, opt);
+	char *optptr = strchr(ck.options, opt);
 	if (optptr != NULL)
 		*optptr = ' ';
-	else if (opt != '?') {
+	else if (opt != '?')
 	warn:
 		/* option '%c' should be listed in the options string */
 		warning(339, opt);
-	}
 }
 
 static void
 check_unhandled_option(void)
 {
-	const char *opt;
-
-	lint_assert(ck.options != NULL);
-
-	for (opt = ck.options; *opt != '\0'; opt++) {
+	for (const char *opt = ck.options; *opt != '\0'; opt++) {
 		if (*opt == ' ' || *opt == ':')
 			continue;
 

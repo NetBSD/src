@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.213 2024/02/01 18:37:06 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.214 2024/02/03 12:57:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -83,7 +83,7 @@ extern bool in_system_header;
 extern symbol_kind sym_kind;
 extern FILE *yyin;
 
-void initscan(void);
+void init_lex(void);
 int64_t convert_integer(int64_t, tspec_t, unsigned int);
 void clear_warn_flags(void);
 sym_t *getsym(sbuf_t *);
@@ -205,7 +205,7 @@ extern decl_level *dcs;
 extern const char unnamed[];
 extern int enumval;
 
-void initdecl(void);
+void init_decl(void);
 type_t *gettyp(tspec_t);
 type_t *block_dup_type(const type_t *);
 type_t *expr_dup_type(const type_t *);
