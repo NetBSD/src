@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.207 2024/02/02 16:05:37 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.208 2024/02/03 10:01:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.207 2024/02/02 16:05:37 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.208 2024/02/03 10:01:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -761,7 +761,7 @@ lex_operator(int t, op_t o)
 static int prev_byte = -1;
 
 static int
-read_escaped_oct(int c)
+read_escaped_oct(int c, bool wide)
 {
 	int n = 3;
 	int value = 0;
@@ -770,7 +770,7 @@ read_escaped_oct(int c)
 		c = read_byte();
 	} while (--n > 0 && '0' <= c && c <= '7');
 	prev_byte = c;
-	if (value > TARG_UCHAR_MAX) {
+	if (value > TARG_UCHAR_MAX && !wide) {
 		/* character escape does not fit in character */
 		warning(76);
 		value &= CHAR_MASK;
@@ -779,19 +779,20 @@ read_escaped_oct(int c)
 }
 
 static unsigned int
-read_escaped_hex(int c)
+read_escaped_hex(int c, bool wide)
 {
 	if (!allow_c90)
 		/* \x undefined in traditional C */
 		warning(82);
-	unsigned int value = 0;
+	uint64_t value = 0;
+	uint64_t mask = value_bits(wide ? 32 : CHAR_SIZE);
 	int state = 0;		/* 0 = no digits, 1 = OK, 2 = overflow */
 	while (c = read_byte(), isxdigit(c)) {
 		c = isdigit(c) ? c - '0' : toupper(c) - 'A' + 10;
 		value = (value << 4) + c;
 		if (state == 2)
 			continue;
-		if ((value & ~CHAR_MASK) != 0) {
+		if ((value & ~mask) != 0) {
 			/* overflow in hex escape */
 			warning(75);
 			state = 2;
@@ -805,12 +806,12 @@ read_escaped_hex(int c)
 		error(74);
 	}
 	if (state == 2)
-		value &= CHAR_MASK;
-	return value;
+		value &= mask;
+	return (unsigned int)value;
 }
 
 static int
-read_escaped_backslash(int delim)
+read_escaped_backslash(int delim, bool wide)
 {
 	int c;
 
@@ -861,9 +862,9 @@ read_escaped_backslash(int delim)
 		/* FALLTHROUGH */
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
-		return read_escaped_oct(c);
+		return read_escaped_oct(c, wide);
 	case 'x':
-		return (int)read_escaped_hex(c);
+		return (int)read_escaped_hex(c, wide);
 	case '\n':
 		return -3;
 	case EOF:
@@ -890,7 +891,7 @@ read_escaped_backslash(int delim)
  * -2 if the EOF is reached, and the character otherwise.
  */
 static int
-get_escaped_char(int delim)
+get_escaped_char(int delim, bool wide)
 {
 
 	int c = prev_byte;
@@ -913,9 +914,9 @@ get_escaped_char(int delim)
 	case EOF:
 		return -2;
 	case '\\':
-		c = read_escaped_backslash(delim);
+		c = read_escaped_backslash(delim, wide);
 		if (c == -3)
-			return get_escaped_char(delim);
+			return get_escaped_char(delim, wide);
 		break;
 	default:
 		if (c != ' ' && (isspace(c) || iscntrl(c))) {
@@ -936,7 +937,7 @@ lex_character_constant(void)
 
 	n = 0;
 	val = 0;
-	while ((c = get_escaped_char('\'')) >= 0) {
+	while ((c = get_escaped_char('\'', false)) >= 0) {
 		val = (int)((unsigned int)val << CHAR_SIZE) + c;
 		n++;
 	}
@@ -982,7 +983,7 @@ lex_wide_character_constant(void)
 	nmax = MB_CUR_MAX;
 
 	n = 0;
-	while ((c = get_escaped_char('\'')) >= 0) {
+	while ((c = get_escaped_char('\'', true)) >= 0) {
 		if (n < nmax)
 			buf[n] = (char)c;
 		n++;
@@ -1260,7 +1261,7 @@ lex_string(void)
 	buf_init(buf);
 
 	int c;
-	while ((c = get_escaped_char('"')) >= 0)
+	while ((c = get_escaped_char('"', false)) >= 0)
 		buf_add_char(buf, (char)c);
 	if (c == -2)
 		/* unterminated string constant */
@@ -1278,7 +1279,7 @@ lex_wide_string(void)
 
 	buffer buf;
 	buf_init(&buf);
-	while ((c = get_escaped_char('"')) >= 0)
+	while ((c = get_escaped_char('"', true)) >= 0)
 		buf_add_char(&buf, (char)c);
 	if (c == -2)
 		/* unterminated string constant */
