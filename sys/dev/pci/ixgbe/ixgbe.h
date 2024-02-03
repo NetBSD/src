@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.86.4.4 2023/10/18 11:53:22 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.86.4.5 2024/02/03 11:58:53 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -325,7 +325,7 @@ struct ix_queue {
 	struct ixgbe_softc *sc;
 	u32              msix;           /* This queue's MSI-X vector */
 	u32              eitr_setting;
-	u32              me;
+	u8               me;
 	struct resource  *res;
 	int              busy;
 	struct tx_ring   *txr;
@@ -357,7 +357,7 @@ struct ix_queue {
 struct tx_ring {
 	struct ixgbe_softc	*sc;
 	kmutex_t		tx_mtx;
-	u32			me;
+	u8			me;
 	u32			tail;
 	int			busy;
 	union ixgbe_adv_tx_desc	*tx_base;
@@ -376,9 +376,11 @@ struct tx_ring {
 	void			*txr_si;
 	bool			txr_no_space; /* Like IFF_OACTIVE */
 
+#ifdef IXGBE_FDIR
 	/* Flow Director */
 	u16			atr_sample;
 	u16			atr_count;
+#endif
 
 	u64			bytes;  /* Used for AIM */
 	u64			packets;
@@ -405,15 +407,17 @@ struct tx_ring {
 struct rx_ring {
 	struct ixgbe_softc	*sc;
 	kmutex_t		rx_mtx;
-	u32			me;
+	u8			me;
 	u32			tail;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
 #ifdef LRO
 	struct lro_ctrl		lro;
-#endif /* LRO */
 	bool			lro_enabled;
+#endif /* LRO */
+#ifdef RSC
 	bool			hw_rsc;
+#endif
 	bool			vtag_strip;
 	bool			discard_multidesc;
 	u16			next_to_refresh;
@@ -435,10 +439,9 @@ struct rx_ring {
 	struct evcnt		rx_bytes;
 	struct evcnt		rx_discarded;
 	struct evcnt		no_mbuf;
+#ifdef RSC
 	u64			rsc_num;
-
-	/* Flow Director */
-	u64			flm;
+#endif
 };
 
 struct ixgbe_vf {
