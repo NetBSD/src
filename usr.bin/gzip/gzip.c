@@ -1,8 +1,7 @@
-/*	$NetBSD: gzip.c,v 1.121 2024/01/15 17:35:48 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.122 2024/02/03 22:40:29 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
- *    Matthew R. Green
+ * Copyright (c) 1997-2024 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
- 2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.121 2024/01/15 17:35:48 christos Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1997-2024 Matthew R. Green. "
+	    "All rights reserved.");
+__RCSID("$NetBSD: gzip.c,v 1.122 2024/02/03 22:40:29 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -173,7 +172,7 @@ static suffixes_t suffixes[] = {
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 #define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20170803";
+static	const char	gzip_version[] = "NetBSD gzip 20240203";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
