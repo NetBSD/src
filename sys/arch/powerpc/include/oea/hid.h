@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.13 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: hid.h,v 1.13.20.1 2024/02/03 11:47:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -81,8 +81,8 @@
 #define HID0_DCE	0x00004000  /* Enable d-cache */
 #define HID0_ILOCK	0x00002000  /* i-cache lock */
 #define HID0_DLOCK	0x00001000  /* d-cache lock */
-#define HID0_ICFI	0x00000800  /* i-cache flush invalidate */
-#define HID0_DCFI	0x00000400  /* d-cache flush invalidate */
+#define HID0_ICFI	0x00000800  /* i-cache flash invalidate */
+#define HID0_DCFI	0x00000400  /* d-cache flash invalidate */
 #define HID0_SPD	0x00000200  /* Disable speculative cache access */
 #define HID0_IFEM	0x00000100  /* Enable M-bit for I-fetch */
 #define HID0_XBSEN	0x00000100  /* Extended BAT block size enable (7455+) */

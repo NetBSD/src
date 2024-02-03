@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.126 2021/09/28 06:14:27 nia Exp $ */
+/* $NetBSD: wsconsio.h,v 1.126.4.1 2024/02/03 11:47:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -366,6 +366,7 @@ struct wsmouse_parameters {
 #define	WSDISPLAY_TYPE_PLATINUM	64	/* onboard fb in PowerMac 7200 */
 #define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 #define	WSDISPLAY_TYPE_SSDFB	66	/* ssdfb(4) */
+#define	WSDISPLAY_TYPE_HOLLYWOOD 67	/* Nintendo Wii "Hollywood" SoC */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -649,6 +650,7 @@ struct wsdisplayio_edid_info {
 #define WSFB_CI		1	/* colour indexed, see subtype */
 #define WSFB_GREYSCALE	2
 #define WSFB_YUV	3
+#define WSFB_YUY2	4
 
 struct wsdisplayio_fbinfo {
 	uint64_t fbi_fbsize;		/* framebuffer size in bytes */

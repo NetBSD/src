@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.90 2022/08/01 23:30:10 riastradh Exp $ */
+/*	$NetBSD: genfb.c,v 1.90.4.1 2024/02/03 11:47:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.90 2022/08/01 23:30:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.90.4.1 2024/02/03 11:47:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ struct genfb_private {
 	struct genfb_parameter_callback *sc_backlight;
 	struct genfb_parameter_callback *sc_brightness;
 	struct genfb_mode_callback *sc_modecb;
+	uint32_t *sc_devcmap;
 	int sc_backlight_level, sc_backlight_on;
 	void *sc_shadowfb;
 	bool sc_enable_shadowfb;
@@ -167,7 +168,7 @@ genfb_init(struct genfb_softc *sc)
 {
 	struct genfb_private *scp;
 	prop_dictionary_t dict;
-	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, br_cb, fbaddr;
+	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, br_cb, devcmap, fbaddr;
 	uint64_t fboffset;
 	bool console;
 
@@ -224,6 +225,13 @@ genfb_init(struct genfb_softc *sc)
 		sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
 
 	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
+
+	/* optional device colour map */
+	scp->sc_devcmap = NULL;
+	if (prop_dictionary_get_uint64(dict, "devcmap", &devcmap)) {
+		if (devcmap != 0)
+			scp->sc_devcmap = (uint32_t *)(uintptr_t)devcmap;
+	}
 
 	/* optional colour map callback */
 	scp->sc_cmcb = NULL;
@@ -720,6 +728,10 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	    WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 	    sc->sc_width / ri->ri_font->fontwidth);
+
+	if (scp->sc_devcmap != NULL) {
+		memcpy(ri->ri_devcmap, scp->sc_devcmap, sizeof(ri->ri_devcmap));
+	}
 
 	ri->ri_hw = scr;
 #if GENFB_GLYPHCACHE > 0

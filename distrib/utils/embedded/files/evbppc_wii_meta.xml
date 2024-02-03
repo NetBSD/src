@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>NetBSD</name>
+  <author>https://www.NetBSD.org</author>
+  <version></version>
+  <release_date></release_date>
+  <short_description>Free Unix-like operating system.</short_description>
+  <long_description>NetBSD is a free, fast, secure, and highly portable Unix-like Open Source operating system.</long_description>
+  <arguments>
+    <arg>root=ld0</arg>
+  </arguments>
+  <ahb_access/>
+</app>

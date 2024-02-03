@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.78 2021/09/25 08:54:30 maya Exp $
+# $NetBSD: mkimage,v 1.78.2.1 2024/02/03 11:47:08 martin Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -312,11 +312,11 @@ else
 
 		echo ${bar} Adding label ${bar}
 		make_label > ${tmp}/label
-		${DISKLABEL} -R -F ${image} ${tmp}/label
+		${DISKLABEL} -m -R -F ${image} ${tmp}/label
 	elif [ -n "${netbsdid}" ]; then
 		echo ${bar} Adding label ${bar}
 		make_label > ${tmp}/label
-		${DISKLABEL} -R -F ${image} ${tmp}/label
+		${DISKLABEL} -m -R -F ${image} ${tmp}/label
 
 		echo ${bar} Running fdisk ${bar}
 		${FDISK} -f -i ${image}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.33 2022/10/14 07:54:49 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.33.2.1 2024/02/03 11:47:06 martin Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ struct sdhc_softc {
 	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
 	void (*sc_vendor_hw_reset)(struct sdhc_softc *, struct sdhc_host *);
 	int (*sc_vendor_signal_voltage)(struct sdhc_softc *, int);
+
+	u_int			sc_write_delay; /* delay (us) after io write */
 };
 
 /* Host controller functions called by the attachment driver. */
