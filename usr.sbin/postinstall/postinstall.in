@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.51.2.1 2023/09/04 17:33:28 martin Exp $
+# $NetBSD: postinstall.in,v 1.51.2.2 2024/02/03 14:15:00 martin Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1685,7 +1685,6 @@ do_opensslcertsconf()
 	fix)	# If /etc/openssl/certs.conf is already there, nothing
 		# to do.
 		if [ -r "$certsconf" ]; then
-			msg "/etc/openssl/certs.conf already exists"
 			return 0
 		fi
 
