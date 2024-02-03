@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.212 2024/02/03 19:25:16 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.213 2024/02/03 20:10:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.212 2024/02/03 19:25:16 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.213 2024/02/03 20:10:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -931,8 +931,8 @@ hex_escape:
 static void
 check_quoted(const buffer *buf, bool complete, char delim)
 {
-	quoted_iterator it = { .start = 0 };
-	while (quoted_next(buf, &it)) {
+	quoted_iterator it = { .start = 0 }, prev = it;
+	for (; quoted_next(buf, &it); prev = it) {
 		if (it.missing_hex_digits)
 			/* no hex digits follow \x */
 			error(74);
@@ -975,6 +975,11 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			/* invisible character U+%04X in %s */
 			query_message(17, (unsigned)it.value, delim == '"'
 			    ? "string literal" : "character constant");
+		if (prev.octal_digits > 0 && prev.octal_digits < 3
+		    && !it.escaped && it.value >= '8' && it.value <= '9')
+			/* short octal escape '%.*s' followed by digit '%c' */
+			warning(356, (int)(prev.i - prev.start),
+			    buf->data + prev.start, buf->data[it.start]);
 	}
 	if (it.unescaped_newline)
 		/* newline in string or char constant */
