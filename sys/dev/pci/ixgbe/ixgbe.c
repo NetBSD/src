@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.29 2023/10/18 14:05:27 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.30 2024/02/03 12:13:32 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.29 2023/10/18 14:05:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.30 2024/02/03 12:13:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -720,7 +720,7 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 
 		txr->txr_no_space = false;
 
-		/* Disable Head Writeback */
+		/* Disable relax ordering */
 		/*
 		 * Note: for X550 series devices, these registers are actually
 		 * prefixed with TPH_ instead of DCA_, but the addresses and
@@ -1591,7 +1591,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	struct ixgbe_hw	      *hw = &sc->hw;
 	struct ixgbe_hw_stats *stats = &sc->stats.pf;
 	u32		      missed_rx = 0, bprc, lxontxc, lxofftxc;
-	u64		      total, total_missed_rx = 0;
+	u64		      total, total_missed_rx = 0, total_qprdc = 0;
 	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
@@ -1610,13 +1610,18 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRC(i), qprc[i]);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPTC(i), qptc[i]);
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			uint32_t qprdc;
+
 			IXGBE_EVC_ADD(&stats->qbrc[i],
 			    IXGBE_READ_REG(hw, IXGBE_QBRC_L(i)) +
 			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBRC_H(i)) << 32));
 			IXGBE_EVC_ADD(&stats->qbtc[i],
 			    IXGBE_READ_REG(hw, IXGBE_QBTC_L(i)) +
 			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBTC_H(i)) << 32));
-			IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRDC(i), qprdc[i]);
+			/* QPRDC will be added to iqdrops. */
+			qprdc = IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+			IXGBE_EVC_ADD(&stats->qprdc[i], qprdc);
+			total_qprdc += qprdc;
 		} else {
 			/* 82598 */
 			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBRC(i), qbrc[i]);
@@ -1750,7 +1755,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	ifp->if_collisions = 0;
 
 	/* Rx Errors */
-	ifp->if_iqdrops += total_missed_rx;
+	ifp->if_iqdrops += total_missed_rx + total_qprdc;
 
 	/*
 	 * Aggregate following types of errors as RX errors:
@@ -3567,7 +3572,7 @@ static int
 ixgbe_allocate_pci_resources(struct ixgbe_softc *sc,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype, csr;
+	pcireg_t memtype, csr;
 	device_t dev = sc->dev;
 	bus_addr_t addr;
 	int flags;
@@ -4119,6 +4124,7 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
+		txdctl &= ~IXGBE_TXDCTL_WTHRESH_MASK;
 		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		/*
 		 * When the internal queue falls below PTHRESH (32),

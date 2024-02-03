@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.125.2.24 2023/10/18 14:05:27 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.125.2.25 2024/02/03 12:13:33 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.24 2023/10/18 14:05:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.25 2024/02/03 12:13:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -829,7 +829,6 @@ ixv_init_locked(struct ixgbe_softc *sc)
 
 	/* Inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* And now turn on interrupts */
 	ixv_enable_intr(sc);
@@ -1478,7 +1477,7 @@ ixv_stop_locked(void *arg)
 	ixv_disable_intr(sc);
 
 	/* Tell the stack that the interface is no longer active */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	hw->mac.ops.reset_hw(hw);
 	sc->hw.adapter_stopped = FALSE;
@@ -1499,8 +1498,8 @@ static int
 ixv_allocate_pci_resources(struct ixgbe_softc *sc,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype, csr;
-	device_t	dev = sc->dev;
+	pcireg_t memtype, csr;
+	device_t dev = sc->dev;
 	bus_addr_t addr;
 	int flags;
 
@@ -1700,6 +1699,7 @@ ixv_initialize_transmit_units(struct ixgbe_softc *sc)
 
 		/* Set WTHRESH to 8, burst writeback */
 		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(j));
+		txdctl &= ~IXGBE_TXDCTL_WTHRESH_MASK;
 		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(j), txdctl);
 
