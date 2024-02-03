@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.66 2024/01/25 19:12:49 tsutsui Exp $ */
+/*	$NetBSD: smg.c,v 1.67 2024/02/03 16:35:10 tsutsui Exp $ */
 /*	$OpenBSD: smg.c,v 1.28 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.66 2024/01/25 19:12:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.67 2024/02/03 16:35:10 tsutsui Exp $");
 
 #include "dzkbd.h"
 #include "wsdisplay.h"
@@ -153,9 +153,6 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.66 2024/01/25 19:12:49 tsutsui Exp $");
 #define CUR_XBIAS	216	/* Add to cursor position */
 #define CUR_YBIAS	33
 
-static int	smg_match(device_t, cfdata_t, void *);
-static void	smg_attach(device_t, device_t, void *);
-
 struct	smg_screen {
 	struct rasops_info ss_ri;
 	uint8_t		*ss_addr;		/* frame buffer address */
@@ -166,14 +163,38 @@ struct	smg_screen {
 	uint16_t	ss_curmask[PCC_CURSOR_SIZE];
 };
 
-/* for console */
-static struct smg_screen smg_consscr;
-
 struct	smg_softc {
 	device_t sc_dev;
 	struct smg_screen *sc_scr;
 	int	sc_nscreens;
 };
+
+static int	smg_match(device_t, cfdata_t, void *);
+static void	smg_attach(device_t, device_t, void *);
+
+static int smg_setup_screen(struct smg_screen *);
+
+static int smg_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t smg_mmap(void *, void *, off_t, int);
+static int smg_alloc_screen(void *, const struct wsscreen_descr *,
+    void **, int *, int *, long *);
+static void smg_free_screen(void *, void *);
+static int smg_show_screen(void *, void *, int, void (*) (void *, int, int),
+    void *);
+
+static int smg_getcursor(struct smg_screen *, struct wsdisplay_cursor *);
+static int smg_setcursor(struct smg_screen *, struct wsdisplay_cursor *);
+static void smg_updatecursor(struct smg_screen *, u_int);
+
+static void smg_putchar(void *, int, int, u_int, long);
+static void smg_cursor(void *, int, int, int);
+static void smg_blockmove(struct rasops_info *, u_int, u_int, u_int, u_int,
+    u_int, int);
+static void smg_copycols(void *, int, int, int, int);
+static void smg_erasecols(void *, int, int, int, long);
+
+/* for console */
+static struct smg_screen smg_consscr;
 
 CFATTACH_DECL_NEW(smg, sizeof(struct smg_softc),
     smg_match, smg_attach, NULL, NULL);
@@ -191,14 +212,6 @@ static const struct wsscreen_list smg_screenlist = {
 	.screens = _smg_scrlist,
 };
 
-static int smg_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-static paddr_t smg_mmap(void *, void *, off_t, int);
-static int smg_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
-static void smg_free_screen(void *, void *);
-static int smg_show_screen(void *, void *, int, void (*) (void *, int, int),
-    void *);
-
 static const struct wsdisplay_accessops smg_accessops = {
 	.ioctl = smg_ioctl,
 	.mmap = smg_mmap,
@@ -207,18 +220,6 @@ static const struct wsdisplay_accessops smg_accessops = {
 	.show_screen = smg_show_screen,
 	.load_font = NULL
 };
-
-static void smg_putchar(void *, int, int, u_int, long);
-static void smg_cursor(void *, int, int, int);
-static void smg_blockmove(struct rasops_info *, u_int, u_int, u_int, u_int,
-    u_int, int);
-static void smg_copycols(void *, int, int, int, int);
-static void smg_erasecols(void *, int, int, int, long);
-
-static int smg_getcursor(struct smg_screen *, struct wsdisplay_cursor *);
-static int smg_setup_screen(struct smg_screen *);
-static int smg_setcursor(struct smg_screen *, struct wsdisplay_cursor *);
-static void smg_updatecursor(struct smg_screen *, u_int);
 
 static int
 smg_match(device_t parent, cfdata_t cf, void *aux)
@@ -843,7 +844,8 @@ smg_blockmove(struct rasops_info *ri, u_int sx, u_int y, u_int dx, u_int cx,
 
 				if (startmask) {
 					getandputrop(psrc, (sx & ALIGNMASK),
-					    (dx & ALIGNMASK), nstart, pdst, rop);
+					    (dx & ALIGNMASK), nstart, pdst,
+					    rop);
 					pdst++;
 					if (srcStartOver)
 						psrc++;
