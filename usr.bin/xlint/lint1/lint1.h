@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.212 2024/02/03 19:25:16 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.213 2024/02/03 19:37:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -178,8 +178,6 @@ struct lint1_type {
 #define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
 #define	t_params	t_u._t_params
-
-
 
 
 typedef enum {
