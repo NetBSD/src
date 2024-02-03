@@ -1,4 +1,4 @@
-/*	$NetBSD: gpx.c,v 1.1 2023/02/06 13:13:05 tsutsui Exp $ */
+/*	$NetBSD: gpx.c,v 1.2 2024/02/03 16:18:10 tsutsui Exp $ */
 /*	$OpenBSD: gpx.c,v 1.25 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
@@ -178,9 +178,6 @@ struct	ramdac8 {
 	uint16_t	omapdata;
 };
 
-static int gpx_match(device_t, cfdata_t, void *);
-static void gpx_attach(device_t, device_t, void *);
-
 struct	gpx_screen {
 	struct rasops_info ss_ri;
 	int		ss_console;
@@ -195,14 +192,45 @@ struct	gpx_screen {
 #endif
 };
 
-/* for console */
-struct gpx_screen gpx_consscr;
-
 struct	gpx_softc {
 	device_t sc_dev;
 	struct gpx_screen *sc_scr;
 	int	sc_nscreens;
 };
+
+static int gpx_match(device_t, cfdata_t, void *);
+static void gpx_attach(device_t, device_t, void *);
+
+static int gpx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t gpx_mmap(void *, void *, off_t, int);
+static int gpx_alloc_screen(void *, const struct wsscreen_descr *,
+    void **, int *, int *, long *);
+static void gpx_free_screen(void *, void *);
+static int gpx_show_screen(void *, void *, int,
+    void (*) (void *, int, int), void *);
+
+static void gpx_putchar(void *, int, int, u_int, long);
+static void gpx_copycols(void *, int, int, int, int);
+static void gpx_erasecols(void *, int, int, int, long);
+static void gpx_copyrows(void *, int, int, int);
+static void gpx_eraserows(void *, int, int, long);
+static void gpx_do_cursor(struct rasops_info *);
+
+static int gpx_wait(struct gpx_screen *, int);
+static int gpx_viper_write(struct gpx_screen *, u_int, uint16_t);
+static void gpx_reset_viper(struct gpx_screen *);
+static void gpx_clear_screen(struct gpx_screen *);
+static int gpx_setup_screen(struct gpx_screen *);
+static void gpx_upload_font(struct gpx_screen *);
+static void gpx_copyrect(struct gpx_screen *, int, int, int, int, int, int);
+static void gpx_fillrect(struct gpx_screen *, int, int, int, int, long, u_int);
+static int gpx_getcmap(struct gpx_screen *, struct wsdisplay_cmap *);
+static int gpx_putcmap(struct gpx_screen *, struct wsdisplay_cmap *);
+static void gpx_loadcmap(struct gpx_screen *, int, int);
+static void gpx_resetcmap(struct gpx_screen *);
+
+/* for console */
+struct gpx_screen gpx_consscr;
 
 CFATTACH_DECL_NEW(gpx, sizeof(struct gpx_softc),
     gpx_match, gpx_attach, NULL, NULL);
@@ -220,14 +248,6 @@ const struct wsscreen_list gpx_screenlist = {
 	_gpx_scrlist,
 };
 
-static int gpx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-static paddr_t gpx_mmap(void *, void *, off_t, int);
-static int gpx_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
-static void gpx_free_screen(void *, void *);
-static int gpx_show_screen(void *, void *, int,
-    void (*) (void *, int, int), void *);
-
 const struct wsdisplay_accessops gpx_accessops = {
 	.ioctl = gpx_ioctl,
 	.mmap = gpx_mmap,
@@ -237,31 +257,11 @@ const struct wsdisplay_accessops gpx_accessops = {
 	.load_font = NULL
 };
 
-static void gpx_clear_screen(struct gpx_screen *);
-static void gpx_copyrect(struct gpx_screen *, int, int, int, int, int, int);
-static void gpx_fillrect(struct gpx_screen *, int, int, int, int, long, u_int);
-static int gpx_getcmap(struct gpx_screen *, struct wsdisplay_cmap *);
-static void gpx_loadcmap(struct gpx_screen *, int, int);
-static int gpx_putcmap(struct gpx_screen *, struct wsdisplay_cmap *);
-static void gpx_resetcmap(struct gpx_screen *);
-static void gpx_reset_viper(struct gpx_screen *);
-static int gpx_setup_screen(struct gpx_screen *);
-static void gpx_upload_font(struct gpx_screen *);
-static int gpx_viper_write(struct gpx_screen *, u_int, uint16_t);
-static int gpx_wait(struct gpx_screen *, int);
-
-static void gpx_copycols(void *, int, int, int, int);
-static void gpx_copyrows(void *, int, int, int);
-static void gpx_do_cursor(struct rasops_info *);
-static void gpx_erasecols(void *, int, int, int, long);
-static void gpx_eraserows(void *, int, int, long);
-static void gpx_putchar(void *, int, int, u_int, long);
-
 /*
  * Autoconf glue
  */
 
-int
+static int
 gpx_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
@@ -331,7 +331,7 @@ gpx_match(device_t parent, cfdata_t match, void *aux)
 	return 20;
 }
 
-void
+static void
 gpx_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpx_softc *sc = device_private(self);
@@ -423,7 +423,7 @@ gpx_attach(device_t parent, device_t self, void *aux)
  * wsdisplay accessops
  */
 
-int
+static int
 gpx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct gpx_softc *sc = v;
@@ -472,14 +472,14 @@ gpx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	return 0;
 }
 
-paddr_t
+static paddr_t
 gpx_mmap(void *v, void *vs, off_t offset, int prot)
 {
 
 	return -1;
 }
 
-int
+static int
 gpx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *defattrp)
 {
@@ -498,7 +498,7 @@ gpx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	return 0;
 }
 
-void
+static void
 gpx_free_screen(void *v, void *cookie)
 {
 	struct gpx_softc *sc = v;
@@ -506,7 +506,7 @@ gpx_free_screen(void *v, void *cookie)
 	sc->sc_nscreens--;
 }
 
-int
+static int
 gpx_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
@@ -518,7 +518,7 @@ gpx_show_screen(void *v, void *cookie, int waitok,
  * wsdisplay emulops
  */
 
-void
+static void
 gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = v;
@@ -537,7 +537,8 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 	sy = GPX_HEIGHT - (1 + uc / ss->ss_gpr) * font->fontheight;
 
 	/* setup VIPER operand control registers */
-	while (gpx_viper_write(ss, CS_UPDATE_MASK, 0x00ff));
+	while (gpx_viper_write(ss, CS_UPDATE_MASK, 0x00ff))
+		continue;
 	gpx_viper_write(ss, SRC1_OCR_B,
 	    EXT_NONE | INT_SOURCE | ID | BAR_SHIFT_DELAY);
 	gpx_viper_write(ss, DST_OCR_B,
@@ -573,7 +574,7 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 	}
 }
 
-void
+static void
 gpx_copycols(void *v, int row, int src, int dst, int cnt)
 {
 	struct rasops_info *ri = v;
@@ -590,7 +591,7 @@ gpx_copycols(void *v, int row, int src, int dst, int cnt)
 	gpx_copyrect(ss, sx, y, dx, y, w, h);
 }
 
-void
+static void
 gpx_erasecols(void *v, int row, int col, int cnt, long attr)
 {
 	struct rasops_info *ri = v;
@@ -606,7 +607,7 @@ gpx_erasecols(void *v, int row, int col, int cnt, long attr)
 	gpx_fillrect(ss, x, y, dx, dy, attr, LF_R2); /* bg fill */
 }
 
-void
+static void
 gpx_copyrows(void *v, int src, int dst, int cnt)
 {
 	struct rasops_info *ri = v;
@@ -623,7 +624,7 @@ gpx_copyrows(void *v, int src, int dst, int cnt)
 	gpx_copyrect(ss, x, sy, x, dy, w, h);
 }
 
-void
+static void
 gpx_eraserows(void *v, int row, int cnt, long attr)
 {
 	struct rasops_info *ri = v;
@@ -639,7 +640,7 @@ gpx_eraserows(void *v, int row, int cnt, long attr)
 	gpx_fillrect(ss, x, y, dx, dy, attr, LF_R2); /* bg fill */
 }
 
-void
+static void
 gpx_do_cursor(struct rasops_info *ri)
 {
 	struct gpx_screen *ss = ri->ri_hw;
@@ -657,7 +658,7 @@ gpx_do_cursor(struct rasops_info *ri)
  * low-level programming routines
  */
 
-int
+static int
 gpx_wait(struct gpx_screen *ss, int bits)
 {
 	int i;
@@ -672,7 +673,7 @@ gpx_wait(struct gpx_screen *ss, int bits)
 	return i == 0;
 }
 
-int
+static int
 gpx_viper_write(struct gpx_screen *ss, u_int reg, uint16_t val)
 {
 	if (gpx_wait(ss, ADDRESS_COMPLETE) == 0 &&
@@ -689,7 +690,7 @@ gpx_viper_write(struct gpx_screen *ss, u_int reg, uint16_t val)
 }
 
 /* Initialize the damned beast. Straight from qdss. */
-void
+static void
 gpx_reset_viper(struct gpx_screen *ss)
 {
 	int i;
@@ -816,12 +817,18 @@ gpx_reset_viper(struct gpx_screen *ss)
 	gpx_viper_write(ss, VIPER_Z_LOAD | FOREGROUND_COLOR_Z, 255);
 	gpx_viper_write(ss, VIPER_Z_LOAD | BACKGROUND_COLOR_Z, 0);
 	/* initialize Operand Control Register banks for fill command */
-	gpx_viper_write(ss, SRC1_OCR_A, EXT_NONE | INT_M1_M2  | NO_ID | WAIT);
-	gpx_viper_write(ss, SRC2_OCR_A, EXT_NONE | INT_SOURCE | NO_ID | NO_WAIT);
-	gpx_viper_write(ss, DST_OCR_A, EXT_NONE | INT_NONE | NO_ID | NO_WAIT);
-	gpx_viper_write(ss, SRC1_OCR_B, EXT_NONE | INT_SOURCE | NO_ID | WAIT);
-	gpx_viper_write(ss, SRC2_OCR_B, EXT_NONE | INT_M1_M2  | NO_ID | NO_WAIT);
-	gpx_viper_write(ss, DST_OCR_B, EXT_NONE | INT_NONE | NO_ID | NO_WAIT);
+	gpx_viper_write(ss, SRC1_OCR_A,
+	    EXT_NONE | INT_M1_M2  | NO_ID | WAIT);
+	gpx_viper_write(ss, SRC2_OCR_A,
+	    EXT_NONE | INT_SOURCE | NO_ID | NO_WAIT);
+	gpx_viper_write(ss, DST_OCR_A,
+	    EXT_NONE | INT_NONE | NO_ID | NO_WAIT);
+	gpx_viper_write(ss, SRC1_OCR_B,
+	    EXT_NONE | INT_SOURCE | NO_ID | WAIT);
+	gpx_viper_write(ss, SRC2_OCR_B,
+	    EXT_NONE | INT_M1_M2  | NO_ID | NO_WAIT);
+	gpx_viper_write(ss, DST_OCR_B,
+	    EXT_NONE | INT_NONE | NO_ID | NO_WAIT);
 
 	/*
 	 * Init Logic Unit Function registers.
@@ -837,7 +844,7 @@ gpx_reset_viper(struct gpx_screen *ss)
 }
 
 /* Clear the whole screen. Straight from qdss. */
-void
+static void
 gpx_clear_screen(struct gpx_screen *ss)
 {
 
@@ -868,7 +875,7 @@ gpx_clear_screen(struct gpx_screen *ss)
 	ss->ss_adder->y_limit = GPX_VISHEIGHT;
 }
 
-int
+static int
 gpx_setup_screen(struct gpx_screen *ss)
 {
 	struct rasops_info *ri = &ss->ss_ri;
@@ -972,7 +979,7 @@ gpx_setup_screen(struct gpx_screen *ss)
  * is through the ID interface, which is slow and needs 16 bit wide data.
  * Adapted from qdss.
  */
-void
+static void
 gpx_upload_font(struct gpx_screen *ss)
 {
 	struct rasops_info *ri = &ss->ss_ri;
@@ -1004,7 +1011,7 @@ gpx_upload_font(struct gpx_screen *ss)
 	 * as many ``lines'' as necessary at the end of the display.
 	 */
 	ss->ss_gpr = MIN(GPX_WIDTH / (NBBY * font->stride), font->numchars);
-	if (ss->ss_gpr & 1)
+	if ((ss->ss_gpr & 1) != 0)
 		ss->ss_gpr--;
 	fontbits = font->data;
 	for (row = 1, remaining = font->numchars; remaining != 0;
@@ -1055,7 +1062,7 @@ gpx_upload_font(struct gpx_screen *ss)
 	}
 }
 
-void
+static void
 gpx_copyrect(struct gpx_screen *ss,
     int sx, int sy, int dx, int dy, int w, int h)
 {
@@ -1089,7 +1096,7 @@ gpx_copyrect(struct gpx_screen *ss,
 /*
  * Fill a rectangle with the given attribute and function (i.e. rop).
  */
-void
+static void
 gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
     u_int function)
 {
@@ -1097,7 +1104,8 @@ gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
-	while (gpx_viper_write(ss, CS_UPDATE_MASK, 0x00ff));
+	while (gpx_viper_write(ss, CS_UPDATE_MASK, 0x00ff))
+		continue;
 	gpx_viper_write(ss, MASK_1, 0xffff);
 	gpx_viper_write(ss, SOURCE, 0xffff);
 	gpx_viper_write(ss, VIPER_Z_LOAD | FOREGROUND_COLOR_Z, fg);
@@ -1128,7 +1136,7 @@ gpx_fillrect(struct gpx_screen *ss, int x, int y, int dx, int dy, long attr,
  * Colormap handling routines
  */
 
-int
+static int
 gpx_getcmap(struct gpx_screen *ss, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index, count = cm->count, i;
@@ -1163,7 +1171,7 @@ gpx_getcmap(struct gpx_screen *ss, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-int
+static int
 gpx_putcmap(struct gpx_screen *ss, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index, count = cm->count;
@@ -1192,7 +1200,7 @@ gpx_putcmap(struct gpx_screen *ss, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-void
+static void
 gpx_loadcmap(struct gpx_screen *ss, int from, int count)
 {
 	uint8_t *cmap = ss->ss_cmap;
@@ -1219,7 +1227,7 @@ gpx_loadcmap(struct gpx_screen *ss, int from, int count)
 	}
 }
 
-void
+static void
 gpx_resetcmap(struct gpx_screen *ss)
 {
 
