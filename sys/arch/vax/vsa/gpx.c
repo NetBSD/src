@@ -1,4 +1,4 @@
-/*	$NetBSD: gpx.c,v 1.2 2024/02/03 16:18:10 tsutsui Exp $ */
+/*	$NetBSD: gpx.c,v 1.3 2024/02/03 16:21:25 tsutsui Exp $ */
 /*	$OpenBSD: gpx.c,v 1.25 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
@@ -230,25 +230,25 @@ static void gpx_loadcmap(struct gpx_screen *, int, int);
 static void gpx_resetcmap(struct gpx_screen *);
 
 /* for console */
-struct gpx_screen gpx_consscr;
+static struct gpx_screen gpx_consscr;
 
 CFATTACH_DECL_NEW(gpx, sizeof(struct gpx_softc),
     gpx_match, gpx_attach, NULL, NULL);
 
-struct wsscreen_descr gpx_stdscreen = {
+static struct wsscreen_descr gpx_stdscreen = {
 	"std",
 };
 
-const struct wsscreen_descr *_gpx_scrlist[] = {
+static const struct wsscreen_descr *_gpx_scrlist[] = {
 	&gpx_stdscreen,
 };
 
-const struct wsscreen_list gpx_screenlist = {
+static const struct wsscreen_list gpx_screenlist = {
 	sizeof(_gpx_scrlist) / sizeof(struct wsscreen_descr *),
 	_gpx_scrlist,
 };
 
-const struct wsdisplay_accessops gpx_accessops = {
+static const struct wsdisplay_accessops gpx_accessops = {
 	.ioctl = gpx_ioctl,
 	.mmap = gpx_mmap,
 	.alloc_screen = gpx_alloc_screen,
