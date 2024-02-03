@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.32 2024/02/02 20:27:26 christos Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.33 2024/02/03 09:17:06 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,10 +66,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl G Ar gid
-.Op Fl m Ar mask
 .Op Fl M Ar mask
-.Op Fl U Ar uid
+.Op Fl m Ar mask
 .Op Fl o Ar options
+.Op Fl U Ar uid
 .Ar special node
 .Sh DESCRIPTION
 The
@@ -85,15 +85,17 @@ and
 are converted to absolute paths before use.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width 10n
 .It Fl G Ar group
 Set the group of the files in the file system to
 .Ar group .
 The default gid on non-Rockridge volumes is zero.
-.It Fl U Ar user
-Set the owner of the files in the file system to
-.Ar user .
-The default uid on non-Rockridge volumes is zero.
+.It Fl M Ar mask
+Specify the maximum file permissions for directories
+in the file system.
+See the
+.Fl m
+description for details.
 .It Fl m Ar mask
 Specify the maximum file permissions for files
 in the file system.
@@ -113,10 +115,6 @@ are used.
 The default
 .Ar mask
 on non-Rockridge volumes is 755.
-.It Fl M Ar mask
-Specify the maximum file permissions for directories
-in the file system.
-See the previous option's description for details.
 .It Fl o
 Options are specified with a
 .Fl o
@@ -166,23 +164,27 @@ For compatibility with Solaris only.
 Makes all lookups case-insensitive even for CD-ROMs with Rock-Ridge
 extensions (for Rock-Ridge, default is case-sensitive lookup).
 .El
+.It Fl U Ar user
+Set the owner of the files in the file system to
+.Ar user .
+The default uid on non-Rockridge volumes is zero.
 .El
 .Pp
 For compatibility with previous releases, following obsolete flags are
 still recognized:
-.Bl -tag -width indent
+.Bl -tag -width indent -compact -offset indent
 .It Fl e
 Same as
 .Fl o
 .Cm extatt .
-.It Fl j
-Same as
-.Fl o
-.Cm nojoliet .
 .It Fl g
 Same as
 .Fl o
 .Cm gens .
+.It Fl j
+Same as
+.Fl o
+.Cm nojoliet .
 .It Fl r
 Same as
 .Fl o
