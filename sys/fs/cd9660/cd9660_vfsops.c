@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.101 2024/02/03 18:44:43 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.102 2024/02/03 18:45:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.101 2024/02/03 18:44:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.102 2024/02/03 18:45:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -251,9 +251,9 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (*data_len == OSIZE) {
 		memcpy(&aa, args, OSIZE);
+		args = &aa;
 		args->uid = args->gid = 0;
 		args->fmask = args->dmask = S_IRWXU|S_IRWXG|S_IRWXO;
-		args = &aa;
 	}
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
