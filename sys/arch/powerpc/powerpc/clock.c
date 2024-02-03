@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2020/07/06 10:31:24 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.20.1 2024/02/03 11:47:08 martin Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2020/07/06 10:31:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.20.1 2024/02/03 11:47:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -232,7 +232,7 @@ delay(unsigned int n)
 #endif /* !_ARCH_PPC64 */
 	{
 		tb = mftb();
-		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+		tb += (n * 1000ULL + ns_per_tick - 1) / ns_per_tick;
 #ifdef _ARCH_PPC64
 		__asm volatile ("1: mftb %0; cmpld %0,%1; blt 1b;"
 			      : "=&r"(scratch) : "r"(tb)

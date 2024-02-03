@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2022/01/29 16:01:18 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10.2.1 2024/02/03 11:47:05 martin Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <util.h>
 
@@ -52,7 +53,19 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
+	struct utsname instsys;
+
 	(void)flags;
+
+	/*
+	 * Get the name of the install kernel we are running under and
+	 * enable the installation of the corresponding kernel.
+	 */
+	uname(&instsys);
+	if (strstr(instsys.version, "(INSTALL_WII")) {
+		set_kernel_set(EVBPPC_SET_KERNEL_WII);
+		set_noextract_set(EVBPPC_SET_KERNEL_WII);
+	}
 }
 
 bool

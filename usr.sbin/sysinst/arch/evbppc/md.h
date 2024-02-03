@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2019/10/02 11:16:02 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.3.8.1 2024/02/03 11:47:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,8 @@
  *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-WII"
+#define EVBPPC_SET_KERNEL_WII	SET_KERNEL_2
 
 /*
  * Machine-specific command to write a new label to a disk.

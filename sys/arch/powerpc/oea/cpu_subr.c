@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.108 2021/03/21 23:41:52 rin Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.108.16.1 2024/02/03 11:47:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.108 2021/03/21 23:41:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.108.16.1 2024/02/03 11:47:06 martin Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -151,6 +151,19 @@ static const struct fmttab cpu_7450_l3cr_formats[] = {
 	{ L3CR_L3CLK, L3CLK_60, " 6:1" },
 	{ L3CR_L3CLK, ~0, " ratio" },
 	{ 0, 0, NULL },
+};
+
+static const struct fmttab cpu_ibm750cl_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ 0, ~0, " 256KB" },
+	{ L2CR_L2WT, L2CR_L2WT, " WT" },
+	{ L2CR_L2WT, 0, " WB" },
+	{ L2CR_L2PE, L2CR_L2PE, " with ECC" },
+	{ 0, ~0, " L2 cache" },
+	{ 0, 0, NULL }
 };
 
 static const struct fmttab cpu_ibm750_l2cr_formats[] = {
@@ -1078,10 +1091,13 @@ cpu_config_l2cr(int pvr)
 		break;
 	case MPC750:
 		if ((pvr & 0xffffff00) == 0x00082200 /* IBM750CX */ ||
-		    (pvr & 0xffffef00) == 0x00082300 /* IBM750CXe */)
+		    (pvr & 0xffffef00) == 0x00082300 /* IBM750CXe */) {
 			cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
-		else
+		} else if ((pvr & 0xfffff0e0) == 0x00087000 /* IBM750CL */) {
+			cpu_fmttab_print(cpu_ibm750cl_l2cr_formats, l2cr);
+		} else {
 			cpu_fmttab_print(cpu_l2cr_formats, l2cr);
+		}
 		break;
 	case MPC7447A:
 	case MPC7457:

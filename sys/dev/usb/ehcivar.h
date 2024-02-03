@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.51 2022/03/13 11:29:21 riastradh Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.51.4.1 2024/02/03 11:47:07 martin Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ typedef struct ehci_softc {
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
 #define EHCIF_ETTF			0x02 /* Emb. Transaction Translater func. */
+#define EHCIF_32BIT_ACCESS		0x04 /* 32-bit MMIO access req'd */
 
 	uint32_t sc_cmd;		/* shadow of cmd reg during suspend */
 
@@ -235,17 +236,75 @@ typedef struct ehci_softc {
 	int (*sc_vendor_port_status)(struct ehci_softc *, uint32_t, int);
 } ehci_softc_t;
 
-#define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))
-#define EREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (a))
+static inline uint8_t
+ehci_read_1(struct ehci_softc *sc, u_int offset)
+{
+	if (ISSET(sc->sc_flags, EHCIF_32BIT_ACCESS)) {
+		uint32_t val;
+
+		val = bus_space_read_4(sc->iot, sc->ioh, offset & ~3);
+		return (val >> ((offset & 3) * NBBY)) & 0xff;
+	} else {
+		return bus_space_read_1(sc->iot, sc->ioh, offset);
+	}
+}
+
+static inline uint16_t
+ehci_read_2(struct ehci_softc *sc, u_int offset)
+{
+	if (ISSET(sc->sc_flags, EHCIF_32BIT_ACCESS)) {
+		uint32_t val;
+
+		val = bus_space_read_4(sc->iot, sc->ioh, offset & ~3);
+		return (val >> ((offset & 3) * NBBY)) & 0xffff;
+	} else {
+		return bus_space_read_2(sc->iot, sc->ioh, offset);
+	}
+}
+
+static inline void
+ehci_write_1(struct ehci_softc *sc, u_int offset, uint8_t data)
+{
+	if (ISSET(sc->sc_flags, EHCIF_32BIT_ACCESS)) {
+		const uint32_t mask = 0xffU << ((offset & 3) * NBBY);
+		uint32_t val;
+
+		val = bus_space_read_4(sc->iot, sc->ioh, offset & ~3);
+		val &= ~mask;
+		val |= __SHIFTIN(data, mask);
+		bus_space_write_4(sc->iot, sc->ioh, offset & ~3, val);
+	} else {
+		bus_space_write_1(sc->iot, sc->ioh, offset, data);
+	}
+}
+
+static inline void
+ehci_write_2(struct ehci_softc *sc, u_int offset, uint16_t data)
+{
+	if (ISSET(sc->sc_flags, EHCIF_32BIT_ACCESS)) {
+		const uint32_t mask = 0xffffU << ((offset & 3) * NBBY);
+		uint32_t val;
+
+		val = bus_space_read_4(sc->iot, sc->ioh, offset & ~3);
+		val &= ~mask;
+		val |= __SHIFTIN(data, mask);
+		bus_space_write_4(sc->iot, sc->ioh, offset & ~3, val);
+	} else {
+		bus_space_write_2(sc->iot, sc->ioh, offset, data);
+	}
+}
+
+#define EREAD1(sc, a) ehci_read_1((sc), (a))
+#define EREAD2(sc, a) ehci_read_2((sc), (a))
 #define EREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (a))
-#define EWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (a), (x))
-#define EWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (a), (x))
+#define EWRITE1(sc, a, x) ehci_write_1((sc), (a), (x))
+#define EWRITE2(sc, a, x) ehci_write_2((sc), (a), (x))
 #define EWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (a), (x))
-#define EOREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
-#define EOREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
+#define EOREAD1(sc, a) ehci_read_1((sc), (sc)->sc_offs+(a))
+#define EOREAD2(sc, a) ehci_read_2((sc), (sc)->sc_offs+(a))
 #define EOREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
-#define EOWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
-#define EOWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
+#define EOWRITE1(sc, a, x) ehci_write_1((sc), (sc)->sc_offs+(a), (x))
+#define EOWRITE2(sc, a, x) ehci_write_2((sc), (sc)->sc_offs+(a), (x))
 #define EOWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 
 int		ehci_init(ehci_softc_t *);
