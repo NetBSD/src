@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.84 2024/02/03 12:57:12 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.85 2024/02/03 19:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,8 +38,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.84 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.85 2024/02/03 19:25:16 rillig Exp $");
 #endif
+
+#include <stdlib.h>
 
 #include "lint1.h"
 
@@ -367,10 +369,17 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 		} else if (arg->tn_op == ADDR &&
 		    arg->tn_left->tn_op == STRING &&
 		    arg->tn_left->tn_string->data != NULL) {
-			/* constant string, write all format specifiers */
+			buffer buf;
+			buf_init(&buf);
+			quoted_iterator it = { .start = 0 };
+			while (quoted_next(arg->tn_left->tn_string, &it))
+				buf_add_char(&buf, (char)it.value);
+
+			/* string literal, write all format specifiers */
 			outchar('s');
 			outint(n);
-			outfstrg(arg->tn_left->tn_string->data);
+			outfstrg(buf.data);
+			free(buf.data);
 		}
 	}
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));

@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.69 2024/02/02 16:25:58 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.70 2024/02/03 19:25:16 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.69 2024/02/02 16:25:58 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.70 2024/02/03 19:25:16 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -235,11 +235,10 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_printf("\n");
 		break;
 	case STRING:
-		debug_printf(", length %zu", tn->tn_string->len);
 		if (tn->tn_string->data != NULL)
-			// TODO: May contain \0 or control characters.
-			debug_printf(", \"%s\"", tn->tn_string->data);
-		debug_printf("\n");
+			debug_printf(", %s\n", tn->tn_string->data);
+		else
+			debug_printf(", length %zu\n", tn->tn_string->len);
 		break;
 	default:
 		debug_printf("\n");

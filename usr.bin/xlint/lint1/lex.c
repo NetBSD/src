@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.211 2024/02/03 18:58:05 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.212 2024/02/03 19:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.211 2024/02/03 18:58:05 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.212 2024/02/03 19:25:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -753,191 +753,263 @@ lex_operator(int t, op_t o)
 	return t;
 }
 
-static int prev_byte = -1;
-
-static int
-read_escaped_oct(int c, bool wide)
+static buffer *
+read_quoted(bool *complete, bool wide, char delim)
 {
-	int n = 3;
-	int value = 0;
-	do {
-		value = (value << 3) + (c - '0');
-		c = read_byte();
-	} while (--n > 0 && '0' <= c && c <= '7');
-	prev_byte = c;
-	if (value > TARG_UCHAR_MAX && !wide) {
-		/* character escape does not fit in character */
-		warning(76);
-		value &= CHAR_MASK;
-	}
-	return value;
-}
+	buffer *buf = xcalloc(1, sizeof(*buf));
+	buf_init(buf);
+	if (wide)
+		buf_add_char(buf, 'L');
+	buf_add_char(buf, delim);
 
-static int64_t
-read_escaped_hex(int c, bool wide)
-{
-	if (!allow_c90)
-		/* \x undefined in traditional C */
-		warning(82);
-	uint64_t value = 0;
-	uint64_t mask = value_bits(wide ? 32 : CHAR_SIZE);
-	int state = 0;		/* 0 = no digits, 1 = OK, 2 = overflow */
-	while (c = read_byte(), isxdigit(c)) {
-		c = isdigit(c) ? c - '0' : toupper(c) - 'A' + 10;
-		value = (value << 4) + c;
-		if (state == 2)
-			continue;
-		if ((value & ~mask) != 0) {
-			/* overflow in hex escape */
-			warning(75);
-			state = 2;
-		} else {
-			state = 1;
+	for (;;) {
+		int c = read_byte();
+		if (c <= 0)
+			break;
+		buf_add_char(buf, (char)c);
+		if (c == '\n')
+			break;
+		if (c == delim) {
+			*complete = true;
+			return buf;
+		}
+		if (c == '\\') {
+			c = read_byte();
+			buf_add_char(buf, (char)(c <= 0 ? ' ' : c));
+			if (c <= 0)
+				break;
 		}
 	}
-	prev_byte = c;
-	if (state == 0) {
-		/* no hex digits follow \x */
-		error(74);
-	}
-	if (state == 2)
-		value &= mask;
-	return (int64_t)value;
+	*complete = false;
+	buf_add_char(buf, delim);
+	return buf;
 }
 
-static int64_t
-read_escaped_backslash(int delim, bool wide)
+bool
+quoted_next(const buffer *lit, quoted_iterator *it)
 {
-	int c;
+	const char *s = lit->data;
+	size_t len = lit->len;
 
-	switch (c = read_byte()) {
+	*it = (quoted_iterator){ .i = it->i, .start = it->i };
+
+	char delim = s[s[0] == 'L' ? 1 : 0];
+
+	bool in_the_middle = it->i > 0;
+	if (it->i == 0) {
+		it->start = s[0] == 'L' ? 2 : 1;
+		it->i = it->start;
+	}
+
+	for (;;) {
+		if (s[it->i] != delim)
+			break;
+		if (it->i + 1 == len)
+			return false;
+		it->next_literal = in_the_middle;
+		it->start += 2;
+		it->i += 2;
+	}
+
+again:
+	switch (s[it->i]) {
+	case '\\':
+		it->i++;
+		goto backslash;
+	case '\n':
+		it->unescaped_newline = true;
+		return false;
+	default:
+		it->value = (unsigned char)s[it->i++];
+		return true;
+	}
+
+backslash:
+	it->escaped = true;
+	if ('0' <= s[it->i] && s[it->i] <= '7')
+		goto octal_escape;
+	switch (s[it->i++]) {
+	case '\n':
+		goto again;
+	case 'a':
+		it->named_escape = true;
+		it->value = '\a';
+		it->invalid_escape = !allow_c90;
+		return true;
+	case 'b':
+		it->named_escape = true;
+		it->value = '\b';
+		return true;
+	case 'e':
+		it->named_escape = true;
+		it->value = '\033';
+		it->invalid_escape = !allow_gcc;
+		return true;
+	case 'f':
+		it->named_escape = true;
+		it->value = '\f';
+		return true;
+	case 'n':
+		it->named_escape = true;
+		it->value = '\n';
+		return true;
+	case 'r':
+		it->named_escape = true;
+		it->value = '\r';
+		return true;
+	case 't':
+		it->named_escape = true;
+		it->value = '\t';
+		return true;
+	case 'v':
+		it->named_escape = true;
+		it->value = '\v';
+		it->invalid_escape = !allow_c90;
+		return true;
+	case 'x':
+		goto hex_escape;
 	case '"':
-		if (!allow_c90 && delim == '\'')
-			/* \" inside character constants undef... */
-			warning(262);
-		return '"';
-	case '\'':
-		return '\'';
+		it->literal_escape = true;
+		it->value = '"';
+		it->invalid_escape = !allow_c90 && delim == '\'';
+		return true;
 	case '?':
-		if (!allow_c90)
+		it->literal_escape = true;
+		it->value = '?';
+		it->invalid_escape = !allow_c90;
+		return true;
+	default:
+		it->invalid_escape = true;
+		/* FALLTHROUGH */
+	case '\'':
+	case '\\':
+		it->literal_escape = true;
+		it->value = (unsigned char)s[it->i - 1];
+		return true;
+	}
+
+octal_escape:
+	it->octal_digits++;
+	it->value = s[it->i++] - '0';
+	if ('0' <= s[it->i] && s[it->i] <= '7') {
+		it->octal_digits++;
+		it->value = 8 * it->value + (s[it->i++] - '0');
+		if ('0' <= s[it->i] && s[it->i] <= '7') {
+			it->octal_digits++;
+			it->value = 8 * it->value + (s[it->i++] - '0');
+			it->overflow = it->value > TARG_UCHAR_MAX
+			    && s[0] != 'L';
+		}
+	}
+	return true;
+
+hex_escape:
+	for (;;) {
+		char ch = s[it->i];
+		unsigned digit_value;
+		if ('0' <= ch && ch <= '9')
+			digit_value = ch - '0';
+		else if ('A' <= ch && ch <= 'F')
+			digit_value = 10 + (ch - 'A');
+		else if ('a' <= ch && ch <= 'f')
+			digit_value = 10 + (ch - 'a');
+		else
+			break;
+
+		it->i++;
+		it->value = 16 * it->value + digit_value;
+		uint64_t limit = s[0] == 'L' ? TARG_UINT_MAX : TARG_UCHAR_MAX;
+		if (it->value > limit)
+			it->overflow = true;
+		if (it->hex_digits < 3)
+			it->hex_digits++;
+	}
+	it->missing_hex_digits = it->hex_digits == 0;
+	return true;
+}
+
+static void
+check_quoted(const buffer *buf, bool complete, char delim)
+{
+	quoted_iterator it = { .start = 0 };
+	while (quoted_next(buf, &it)) {
+		if (it.missing_hex_digits)
+			/* no hex digits follow \x */
+			error(74);
+		if (it.hex_digits > 0 && !allow_c90)
+			/* \x undefined in traditional C */
+			warning(82);
+		else if (!it.invalid_escape)
+			;
+		else if (it.value == '8' || it.value == '9')
+			/* bad octal digit '%c' */
+			warning(77, (int)it.value);
+		else if (it.literal_escape && it.value == '?')
 			/* \? undefined in traditional C */
 			warning(263);
-		return '?';
-	case '\\':
-		return '\\';
-	case 'a':
-		if (!allow_c90)
+		else if (it.literal_escape && it.value == '"')
+			/* \" inside character constants undefined in ... */
+			warning(262);
+		else if (it.named_escape && it.value == '\a')
 			/* \a undefined in traditional C */
 			warning(81);
-		return '\a';
-	case 'b':
-		return '\b';
-	case 'e':
-		if (!allow_gcc)
-			break;
-		/* Not in the C standard yet, compilers recognize it */
-		/* LINTED 79 */
-		return '\e';
-	case 'f':
-		return '\f';
-	case 'n':
-		return '\n';
-	case 'r':
-		return '\r';
-	case 't':
-		return '\t';
-	case 'v':
-		if (!allow_c90)
+		else if (it.named_escape && it.value == '\v')
 			/* \v undefined in traditional C */
 			warning(264);
-		return '\v';
-	case '8': case '9':
-		/* bad octal digit '%c' */
-		warning(77, c);
-		/* FALLTHROUGH */
-	case '0': case '1': case '2': case '3':
-	case '4': case '5': case '6': case '7':
-		return read_escaped_oct(c, wide);
-	case 'x':
-		return read_escaped_hex(c, wide);
-	case '\n':
-		return -3;
-	case EOF:
-		return -2;
-	default:
-		break;
+		else {
+			unsigned char ch = buf->data[it.i - 1];
+			if (isprint(ch))
+				/* dubious escape \%c */
+				warning(79, ch);
+			else
+				/* dubious escape \%o */
+				warning(80, ch);
+		}
+		if (it.overflow && it.hex_digits > 0)
+			/* overflow in hex escape */
+			warning(75);
+		if (it.overflow && it.octal_digits > 0)
+			/* character escape does not fit in character */
+			warning(76);
+		if (it.value < ' ' && !it.escaped && complete)
+			/* invisible character U+%04X in %s */
+			query_message(17, (unsigned)it.value, delim == '"'
+			    ? "string literal" : "character constant");
 	}
-	if (isprint(c))
-		/* dubious escape \%c */
-		warning(79, c);
-	else
-		/* dubious escape \%o */
-		warning(80, c);
-	return c;
-}
-
-/*
- * Read a character which is part of a character constant or of a string
- * and handle escapes.
- *
- * 'delim' is '\'' for character constants and '"' for string literals.
- *
- * Returns -1 if the end of the character constant or string is reached,
- * -2 if the EOF is reached, and the character otherwise.
- */
-static int64_t
-get_escaped_char(int delim, bool wide)
-{
-
-	int64_t c = prev_byte;
-	if (c != -1)
-		prev_byte = -1;
-	else
-		c = read_byte();
-
-	if (c == delim)
-		return -1;
-	switch (c) {
-	case '\n':
+	if (it.unescaped_newline)
 		/* newline in string or char constant */
 		error(254);
-		return -2;
-	case '\0':
-		/* syntax error '%s' */
-		error(249, "EOF or null byte in literal");
-		return -2;
-	case EOF:
-		return -2;
-	case '\\':
-		c = read_escaped_backslash(delim, wide);
-		if (c == -3)
-			return get_escaped_char(delim, wide);
-		break;
-	default:
-		if (c != ' ' && (isspace(c) || iscntrl(c))) {
-			/* invisible character U+%04X in %s */
-			query_message(17, (unsigned int)c, delim == '"'
-			    ? "string literal" : "character constant");
-		}
-	}
-	return c;
+	if (!complete && delim == '"')
+		/* unterminated string constant */
+		error(258);
+	if (!complete && delim == '\'')
+		/* unterminated character constant */
+		error(253);
+}
+
+static buffer *
+lex_quoted(char delim, bool wide)
+{
+	bool complete;
+	buffer *buf = read_quoted(&complete, wide, delim);
+	check_quoted(buf, complete, delim);
+	return buf;
 }
 
 /* Called if lex found a leading "'". */
 int
 lex_character_constant(void)
 {
+	buffer *buf = lex_quoted('\'', false);
 
 	size_t n = 0;
-	int64_t val = 0, c;
-	while ((c = get_escaped_char('\'', false)) >= 0) {
-		val = (int64_t)((uint64_t)val << CHAR_SIZE) + c;
+	uint64_t val = 0;
+	quoted_iterator it = { .start = 0 };
+	while (quoted_next(buf, &it)) {
+		val = (val << CHAR_SIZE) + it.value;
 		n++;
 	}
-	if (c == -2) {
-		/* unterminated character constant */
-		error(253);
-	} else if (n > sizeof(int) || (n > 1 && (pflag || hflag))) {
+	if (n > sizeof(int) || (n > 1 && (pflag || hflag))) {
 		/*
 		 * XXX: ^^ should rather be sizeof(TARG_INT). Luckily,
 		 * sizeof(int) is the same on all supported platforms.
@@ -947,17 +1019,19 @@ lex_character_constant(void)
 	} else if (n > 1) {
 		/* multi-character character constant */
 		warning(294);
-	} else if (n == 0) {
+	} else if (n == 0 && !it.unescaped_newline) {
 		/* empty character constant */
 		error(73);
 	}
-	if (n == 1)
-		val = convert_integer(val, CHAR, CHAR_SIZE);
+
+	int64_t cval = n == 1
+	    ? convert_integer((int64_t)val, CHAR, CHAR_SIZE)
+	    : (int64_t)val;
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
 	yylval.y_val->v_char_constant = true;
-	yylval.y_val->u.integer = val;
+	yylval.y_val->u.integer = cval;
 
 	return T_CON;
 }
@@ -968,22 +1042,20 @@ lex_character_constant(void)
 int
 lex_wide_character_constant(void)
 {
-	char buf[MB_LEN_MAX + 1];
-	size_t nmax = MB_CUR_MAX;
+	buffer *buf = lex_quoted('\'', true);
 
-	int64_t c;
-	size_t n = 0;
-	while ((c = get_escaped_char('\'', true)) >= 0) {
+	static char wbuf[MB_LEN_MAX + 1];
+	size_t n = 0, nmax = MB_CUR_MAX;
+
+	quoted_iterator it = { .start = 0 };
+	while (quoted_next(buf, &it)) {
 		if (n < nmax)
-			buf[n] = (char)c;
+			wbuf[n] = (char)it.value;
 		n++;
 	}
 
 	wchar_t wc = 0;
-	if (c == -2) {
-		/* unterminated character constant */
-		error(253);
-	} else if (n == 0) {
+	if (n == 0) {
 		/* empty character constant */
 		error(73);
 	} else if (n > nmax) {
@@ -991,9 +1063,9 @@ lex_wide_character_constant(void)
 		/* too many characters in character constant */
 		error(71);
 	} else {
-		buf[n] = '\0';
+		wbuf[n] = '\0';
 		(void)mbtowc(NULL, NULL, 0);
-		if (mbtowc(&wc, buf, nmax) < 0)
+		if (mbtowc(&wc, wbuf, nmax) < 0)
 			/* invalid multibyte character */
 			error(291);
 	}
@@ -1246,18 +1318,7 @@ clear_warn_flags(void)
 int
 lex_string(void)
 {
-	buffer *buf = xcalloc(1, sizeof(*buf));
-	buf_init(buf);
-
-	int64_t c;
-	while ((c = get_escaped_char('"', false)) >= 0)
-		buf_add_char(buf, (char)c);
-	if (c == -2)
-		/* unterminated string constant */
-		error(258);
-
-
-	yylval.y_string = buf;
+	yylval.y_string = lex_quoted('"', false);
 	return T_STRING;
 }
 
@@ -1283,20 +1344,18 @@ wide_length(const buffer *buf)
 int
 lex_wide_string(void)
 {
-	int64_t c;
+	buffer *buf = lex_quoted('"', true);
 
-	buffer buf;
-	buf_init(&buf);
-	while ((c = get_escaped_char('"', true)) >= 0)
-		buf_add_char(&buf, (char)c);
-	if (c == -2)
-		/* unterminated string constant */
-		error(258);
+	buffer str;
+	buf_init(&str);
+	quoted_iterator it = { .start = 0 };
+	while (quoted_next(buf, &it))
+		buf_add_char(&str, (char)it.value);
 
-	buffer *str = xcalloc(1, sizeof(*str));
-	str->len = wide_length(&buf);
+	free(buf->data);
+	*buf = (buffer) { .len = wide_length(&str) };
 
-	yylval.y_string = str;
+	yylval.y_string = buf;
 	return T_STRING;
 }
 

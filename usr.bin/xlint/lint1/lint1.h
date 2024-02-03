@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.211 2024/02/01 18:37:06 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.212 2024/02/03 19:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -311,9 +311,14 @@ typedef struct tnode {
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
 		val_t	_tn_val;	/* value if op == CON */
-		buffer	*_tn_string;	/* string if op == STRING; for wide
-					 * char strings, data is NULL but len
-					 * is valid */
+		buffer	*_tn_string;	/* string if op == STRING; for
+					 * character strings, 'data' points to
+					 * the concatenated string literals in
+					 * source form, and 'len' is the
+					 * length of the concatenation; for
+					 * wide strings, 'data' is NULL and
+					 * 'len' is the number of resulting
+					 * characters */
 	} tn_u;
 } tnode_t;
 
@@ -517,6 +522,22 @@ typedef enum {
 	LC_SCANFLIKE,
 	LC_VARARGS,
 } lint_comment;
+
+typedef struct {
+	size_t start;
+	size_t i;
+	uint64_t value;
+	bool escaped;		/* \n, \003, \x24 */
+	bool named_escape;	/* \a, \n, etc. */
+	bool literal_escape;	/* \?, \\, etc. */
+	uint8_t octal_digits;	/* 1 to 3; 0 means not applicable */
+	uint8_t hex_digits;	/* 1 to 3; 0 means not applicable */
+	bool next_literal;	/* when a new string literal begins */
+	bool invalid_escape;	/* single-character escape, recoverable */
+	bool overflow;		/* for octal and hex escapes */
+	bool missing_hex_digits;
+	bool unescaped_newline;	/* stops iterating */
+} quoted_iterator;
 
 #include "externs1.h"
 

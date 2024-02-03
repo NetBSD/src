@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.21 2024/02/03 12:57:12 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.22 2024/02/03 19:25:16 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.21 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.22 2024/02/03 19:25:16 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -100,7 +100,12 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 	    && last_arg->tn_left->tn_op == ADDR
 	    && last_arg->tn_left->tn_left->tn_op == STRING
 	    && (str = last_arg->tn_left->tn_left->tn_string)->data != NULL) {
-		*out_options = xstrdup(str->data);
+		buffer buf;
+		buf_init(&buf);
+		quoted_iterator it = { .start = 0 };
+		while (quoted_next(str, &it))
+			buf_add_char(&buf, (char)it.value);
+		*out_options = buf.data;
 		return true;
 	}
 	return false;
