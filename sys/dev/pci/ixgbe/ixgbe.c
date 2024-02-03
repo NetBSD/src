@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.324.2.6 2023/11/03 10:10:49 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.324.2.7 2024/02/03 11:58:53 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.6 2023/11/03 10:10:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.7 2024/02/03 11:58:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -723,7 +723,7 @@ ixgbe_initialize_transmit_units(struct ixgbe_softc *sc)
 
 		txr->txr_no_space = false;
 
-		/* Disable Head Writeback */
+		/* Disable relax ordering */
 		/*
 		 * Note: for X550 series devices, these registers are actually
 		 * prefixed with TPH_ instead of DCA_, but the addresses and
@@ -3612,7 +3612,7 @@ static int
 ixgbe_allocate_pci_resources(struct ixgbe_softc *sc,
     const struct pci_attach_args *pa)
 {
-	pcireg_t	memtype, csr;
+	pcireg_t memtype, csr;
 	device_t dev = sc->dev;
 	bus_addr_t addr;
 	int flags;
@@ -4157,6 +4157,7 @@ ixgbe_init_locked(struct ixgbe_softc *sc)
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
+		txdctl &= ~IXGBE_TXDCTL_WTHRESH_MASK;
 		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		/*
 		 * When the internal queue falls below PTHRESH (32),

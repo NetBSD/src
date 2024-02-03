@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.100.4.4 2023/10/18 11:53:22 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.100.4.5 2024/02/03 11:58:53 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,13 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.4 2023/10/18 11:53:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.5 2024/02/03 11:58:53 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 
 #include "ixgbe.h"
 
+#ifdef RSC
 /*
  * HW RSC control:
  *  this feature only works with
@@ -84,7 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.100.4.4 2023/10/18 11:53:22 martin Exp
  *  to enable.
  */
 static bool ixgbe_rsc_enable = FALSE;
+#endif
 
+#ifdef IXGBE_FDIR
 /*
  * For Flow Director: this is the
  * number of TX packets we sample
@@ -95,6 +98,7 @@ static bool ixgbe_rsc_enable = FALSE;
  * setting this to 0.
  */
 static int atr_sample_rate = 20;
+#endif
 
 #define IXGBE_M_ADJ(sc, rxr, mp)					\
 	if (sc->max_frame_size <= (rxr->mbuf_sz - ETHER_ALIGN))	\
@@ -122,8 +126,9 @@ static __inline void ixgbe_rx_input(struct rx_ring *, struct ifnet *,
 static int           ixgbe_dma_malloc(struct ixgbe_softc *, bus_size_t,
                                       struct ixgbe_dma_alloc *, int);
 static void          ixgbe_dma_free(struct ixgbe_softc *, struct ixgbe_dma_alloc *);
-
-static void	ixgbe_setup_hw_rsc(struct rx_ring *);
+#ifdef RSC
+static void	     ixgbe_setup_hw_rsc(struct rx_ring *);
+#endif
 
 /************************************************************************
  * ixgbe_legacy_start_locked - Transmit entry point
@@ -406,7 +411,7 @@ ixgbe_drain_all(struct ixgbe_softc *sc)
 static int
 ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 {
-	struct ixgbe_softc          *sc = txr->sc;
+	struct ixgbe_softc      *sc = txr->sc;
 	struct ixgbe_tx_buf     *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
 	struct ifnet	        *ifp = sc->ifp;
@@ -487,8 +492,8 @@ retry:
 	}
 
 	/*
-	 * Set up the appropriate offload context
-	 * this will consume the first descriptor
+	 * Set up the appropriate offload context if requested,
+	 * this may consume one TX descriptor.
 	 */
 	error = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
 	if (__predict_false(error)) {
@@ -624,8 +629,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 		goto fail;
 	}
 
-	txr->tx_buffers = malloc(sizeof(struct ixgbe_tx_buf) *
-	    sc->num_tx_desc, M_DEVBUF, M_WAITOK | M_ZERO);
+	txr->tx_buffers = kmem_zalloc(sizeof(struct ixgbe_tx_buf) *
+	    sc->num_tx_desc, KM_SLEEP);
 
 	/* Create the descriptor buffer dma maps */
 	txbuf = txr->tx_buffers;
@@ -715,9 +720,11 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 		txbuf->eop = NULL;
 	}
 
+#ifdef IXGBE_FDIR
 	/* Set the rate at which we sample packets */
 	if (sc->feat_en & IXGBE_FEATURE_FDIR)
 		txr->atr_sample = atr_sample_rate;
+#endif
 
 	/* Set number of descriptors available */
 	txr->tx_avail = sc->num_tx_desc;
@@ -754,7 +761,7 @@ ixgbe_free_transmit_structures(struct ixgbe_softc *sc)
 		ixgbe_dma_free(sc, &txr->txdma);
 		IXGBE_TX_LOCK_DESTROY(txr);
 	}
-	free(sc->tx_rings, M_DEVBUF);
+	kmem_free(sc->tx_rings, sizeof(struct tx_ring) * sc->num_queues);
 } /* ixgbe_free_transmit_structures */
 
 /************************************************************************
@@ -765,7 +772,7 @@ ixgbe_free_transmit_structures(struct ixgbe_softc *sc)
 static void
 ixgbe_free_transmit_buffers(struct tx_ring *txr)
 {
-	struct ixgbe_softc      *sc = txr->sc;
+	struct ixgbe_softc  *sc = txr->sc;
 	struct ixgbe_tx_buf *tx_buffer;
 	int                 i;
 
@@ -802,7 +809,8 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 		pcq_destroy(txr->txr_interq);
 	}
 	if (txr->tx_buffers != NULL) {
-		free(txr->tx_buffers, M_DEVBUF);
+		kmem_free(txr->tx_buffers,
+		    sizeof(struct ixgbe_tx_buf) * sc->num_tx_desc);
 		txr->tx_buffers = NULL;
 	}
 	if (txr->txtag != NULL) {
@@ -853,9 +861,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	/* Indicate the whole packet as payload when not doing TSO */
 	*olinfo_status |= mp->m_pkthdr.len << IXGBE_ADVTXD_PAYLEN_SHIFT;
-
-	/* Now ready a context descriptor */
-	TXD = (struct ixgbe_adv_tx_context_desc *)&txr->tx_base[ctxd];
 
 	/*
 	 * In advanced descriptors the vlan tag must
@@ -958,6 +963,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 no_offloads:
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
+
+	/* Now ready a context descriptor */
+	TXD = (struct ixgbe_adv_tx_context_desc *)&txr->tx_base[ctxd];
 
 	/* Now copy bits into descriptor */
 	TXD->vlan_macip_lens = htole32(vlan_macip_lens);
@@ -1108,6 +1116,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	union ixgbe_adv_tx_desc *txd;
 	u32			work, processed = 0;
 	u32			limit = sc->tx_process_limit;
+	u16			avail;
 
 	KASSERT(mutex_owned(&txr->tx_mtx));
 
@@ -1151,6 +1160,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	buf = &txr->tx_buffers[work];
 	txd = &txr->tx_base[work];
 	work -= txr->num_desc; /* The distance to ring end */
+	avail = txr->tx_avail;
 	ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    BUS_DMASYNC_POSTREAD);
 
@@ -1172,8 +1182,7 @@ ixgbe_txeof(struct tx_ring *txr)
 			buf->m_head = NULL;
 		}
 		buf->eop = NULL;
-		txr->txr_no_space = false;
-		++txr->tx_avail;
+		++avail;
 
 		/* We clean the range if multi segment */
 		while (txd != eop) {
@@ -1198,13 +1207,11 @@ ixgbe_txeof(struct tx_ring *txr)
 				m_freem(buf->m_head);
 				buf->m_head = NULL;
 			}
-			++txr->tx_avail;
+			++avail;
 			buf->eop = NULL;
 
 		}
-		++txr->packets;
 		++processed;
-		if_statinc(ifp, if_opackets);
 
 		/* Try the next packet */
 		++txd;
@@ -1224,6 +1231,12 @@ ixgbe_txeof(struct tx_ring *txr)
 
 	work += txr->num_desc;
 	txr->next_to_clean = work;
+	if (processed) {
+		txr->tx_avail = avail;
+		txr->txr_no_space = false;
+		txr->packets += processed;
+		if_statadd(ifp, if_opackets, processed);
+	}
 
 	/*
 	 * Queue Hang detection, we know there's
@@ -1248,6 +1261,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	return ((limit > 0) ? false : true);
 } /* ixgbe_txeof */
 
+#ifdef RSC
 /************************************************************************
  * ixgbe_rsc_count
  *
@@ -1324,6 +1338,7 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 
 	rxr->hw_rsc = TRUE;
 } /* ixgbe_setup_hw_rsc */
+#endif
 
 /************************************************************************
  * ixgbe_refresh_mbufs
@@ -1418,7 +1433,7 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 	int                 bsize, error;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * rxr->num_desc;
-	rxr->rx_buffers = malloc(bsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	rxr->rx_buffers = kmem_zalloc(bsize, KM_SLEEP);
 
 	error = ixgbe_dma_tag_create(
 	         /*      parent */ sc->osdep.dmat,
@@ -1496,8 +1511,8 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		slot = netmap_reset(na, NR_RX, rxr->me, 0);
 #endif /* DEV_NETMAP */
 
-	rsize = roundup2(sc->num_rx_desc *
-	    sizeof(union ixgbe_adv_rx_desc), DBA_ALIGN);
+	rsize = sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc);
+	KASSERT((rsize % DBA_ALIGN) == 0);
 	bzero((void *)rxr->rx_base, rsize);
 	/* Cache the size */
 	rxr->mbuf_sz = sc->rx_mbuf_sz;
@@ -1506,10 +1521,10 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	ixgbe_free_receive_ring(rxr);
 
 	/* Now replenish the mbufs */
-	for (int j = 0; j != rxr->num_desc; ++j) {
+	for (int i = 0; i < rxr->num_desc; i++) {
 		struct mbuf *mp;
 
-		rxbuf = &rxr->rx_buffers[j];
+		rxbuf = &rxr->rx_buffers[i];
 
 #ifdef DEV_NETMAP
 		/*
@@ -1520,14 +1535,14 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		 * an mbuf, so end the block with a continue;
 		 */
 		if ((sc->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], j);
+			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], i);
 			uint64_t paddr;
 			void *addr;
 
 			addr = PNMB(na, slot + sj, &paddr);
 			netmap_load_map(na, rxr->ptag, rxbuf->pmap, addr);
 			/* Update descriptor and the cached value */
-			rxr->rx_base[j].read.pkt_addr = htole64(paddr);
+			rxr->rx_base[i].read.pkt_addr = htole64(paddr);
 			rxbuf->addr = htole64(paddr);
 			continue;
 		}
@@ -1559,7 +1574,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
 		    0, mp->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 		/* Update the descriptor and the cached value */
-		rxr->rx_base[j].read.pkt_addr =
+		rxr->rx_base[i].read.pkt_addr =
 		    htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
@@ -1567,7 +1582,9 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = sc->num_rx_desc - 1; /* Fully allocated */
+#ifdef LRO
 	rxr->lro_enabled = FALSE;
+#endif
 	rxr->discard_multidesc = false;
 	IXGBE_EVC_STORE(&rxr->rx_copies, 0);
 #if 0 /* NetBSD */
@@ -1584,10 +1601,15 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/*
 	 * Now set up the LRO interface
 	 */
+#ifdef RSC
 	if (ixgbe_rsc_enable)
 		ixgbe_setup_hw_rsc(rxr);
+#endif
 #ifdef LRO
-	else if (ifp->if_capenable & IFCAP_LRO) {
+#ifdef RSC
+	else
+#endif
+	if (ifp->if_capenable & IFCAP_LRO) {
 		device_t dev = sc->dev;
 		int err = tcp_lro_init(lro);
 		if (err) {
@@ -1664,7 +1686,7 @@ ixgbe_free_receive_structures(struct ixgbe_softc *sc)
 		IXGBE_RX_LOCK_DESTROY(rxr);
 	}
 
-	free(sc->rx_rings, M_DEVBUF);
+	kmem_free(sc->rx_rings, sizeof(struct rx_ring) * sc->num_queues);
 } /* ixgbe_free_receive_structures */
 
 
@@ -1691,7 +1713,8 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 		}
 
 		if (rxr->rx_buffers != NULL) {
-			free(rxr->rx_buffers, M_DEVBUF);
+			kmem_free(rxr->rx_buffers,
+			    sizeof(struct ixgbe_rx_buf) * rxr->num_desc);
 			rxr->rx_buffers = NULL;
 		}
 	}
@@ -1854,7 +1877,10 @@ ixgbe_rxeof(struct ix_queue *que)
 
 		struct mbuf *sendmp, *mp;
 		struct mbuf *newmp;
-		u32         rsc, ptype;
+#ifdef RSC
+		u32         rsc;
+#endif
+		u32         ptype;
 		u16         len;
 		u16         vtag = 0;
 		bool        eop;
@@ -1889,7 +1915,9 @@ ixgbe_rxeof(struct ix_queue *que)
 		loopcount++;
 		sendmp = newmp = NULL;
 		nbuf = NULL;
+#ifdef RSC
 		rsc = 0;
+#endif
 		cur->wb.upper.status_error = 0;
 		rbuf = &rxr->rx_buffers[i];
 		mp = rbuf->buf;
@@ -1975,6 +2003,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			 * Figure out the next descriptor
 			 * of this frame.
 			 */
+#ifdef RSC
 			if (rxr->hw_rsc == TRUE) {
 				rsc = ixgbe_rsc_count(cur);
 				rxr->rsc_num += (rsc - 1);
@@ -1982,7 +2011,9 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (rsc) { /* Get hardware index */
 				nextp = ((staterr & IXGBE_RXDADV_NEXTP_MASK) >>
 				    IXGBE_RXDADV_NEXTP_SHIFT);
-			} else { /* Just sequential */
+			} else
+#endif
+			{ /* Just sequential */
 				nextp = i + 1;
 				if (nextp == sc->num_rx_desc)
 					nextp = 0;
@@ -2332,20 +2363,20 @@ ixgbe_allocate_queues(struct ixgbe_softc *sc)
 	int             txconf = 0, rxconf = 0;
 
 	/* First, allocate the top level queue structs */
-	sc->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->queues = kmem_zalloc(sizeof(struct ix_queue) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* Second, allocate the TX ring struct memory */
-	sc->tx_rings = malloc(sizeof(struct tx_ring) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->tx_rings = kmem_zalloc(sizeof(struct tx_ring) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* Third, allocate the RX ring */
-	sc->rx_rings = (struct rx_ring *)malloc(sizeof(struct rx_ring) *
-	    sc->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->rx_rings = kmem_zalloc(sizeof(struct rx_ring) * sc->num_queues,
+	    KM_SLEEP);
 
 	/* For the ring itself */
-	tsize = roundup2(sc->num_tx_desc * sizeof(union ixgbe_adv_tx_desc),
-	    DBA_ALIGN);
+	tsize = sc->num_tx_desc * sizeof(union ixgbe_adv_tx_desc);
+	KASSERT((tsize % DBA_ALIGN) == 0);
 
 	/*
 	 * Now set up the TX queues, txconf is needed to handle the
@@ -2401,8 +2432,8 @@ ixgbe_allocate_queues(struct ixgbe_softc *sc)
 	/*
 	 * Next the RX queues...
 	 */
-	rsize = roundup2(sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc),
-	    DBA_ALIGN);
+	rsize = sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc);
+	KASSERT((rsize % DBA_ALIGN) == 0);
 	for (int i = 0; i < sc->num_queues; i++, rxconf++) {
 		rxr = &sc->rx_rings[i];
 		/* Set up some basics */
@@ -2460,9 +2491,9 @@ err_rx_desc:
 err_tx_desc:
 	for (txr = sc->tx_rings; txconf > 0; txr++, txconf--)
 		ixgbe_dma_free(sc, &txr->txdma);
-	free(sc->rx_rings, M_DEVBUF);
-	free(sc->tx_rings, M_DEVBUF);
-	free(sc->queues, M_DEVBUF);
+	kmem_free(sc->rx_rings, sizeof(struct rx_ring) * sc->num_queues);
+	kmem_free(sc->tx_rings, sizeof(struct tx_ring) * sc->num_queues);
+	kmem_free(sc->queues, sizeof(struct ix_queue) * sc->num_queues);
 	return (error);
 } /* ixgbe_allocate_queues */
 
@@ -2484,5 +2515,5 @@ ixgbe_free_queues(struct ixgbe_softc *sc)
 		que = &sc->queues[i];
 		mutex_destroy(&que->dc_mtx);
 	}
-	free(sc->queues, M_DEVBUF);
+	kmem_free(sc->queues, sizeof(struct ix_queue) * sc->num_queues);
 } /* ixgbe_free_queues */
