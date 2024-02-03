@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2022/09/29 06:39:59 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.4.1 2024/02/03 12:48:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2022/09/29 06:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.4.1 2024/02/03 12:48:39 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1563,7 +1563,7 @@ hppa_pim_dump(int check_type, void *data, size_t size)
 		PIM_WORD("\n\n\tCheck Type", checks->pim_check_type,
 			PIM_CHECK_BITS);
 		PIM_WORD("\n\tCPU State", checks->pim_check_cpu_state,
-			PIM_CPU_BITS PIM_CPU_HPMC_BITS);
+			PIM_CPU_HPMC_BITS);
 		PIM_WORD("\n\tCache Check", checks->pim_check_cache,
 			PIM_CACHE_BITS);
 		PIM_WORD("\n\tTLB Check", checks->pim_check_tlb,
