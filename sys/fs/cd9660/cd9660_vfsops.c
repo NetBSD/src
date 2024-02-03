@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.99 2024/02/03 15:26:35 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.100 2024/02/03 17:38:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.99 2024/02/03 15:26:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.100 2024/02/03 17:38:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -192,8 +192,7 @@ cd9660_mountroot(void)
 	}
 
 	args.flags = ISOFSMNT_ROOT;
-	args.fmask = S_IRWXU|S_IRWXG|S_IRWXO;
-	args.dmask = S_IRWXU|S_IRWXG|S_IRWXO;
+	args.fmask = args.dmask = S_IRWXU|S_IRWXG|S_IRWXO;
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
 		vfs_unbusy(mp);
 		vfs_rele(mp);
@@ -205,11 +204,19 @@ cd9660_mountroot(void)
 	return (0);
 }
 
+/* Compat with pre uid/gid/fsize/dsize mount call */
+#define OSIZE sizeof(struct { \
+	const char *fspec; \
+	struct export_args30 _pad1; \
+	int flags; \
+})
+
 /*
  * VFS Operations.
  *
  * mount system call
  */
+
 int
 cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
@@ -221,15 +228,28 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (args == NULL)
 		return EINVAL;
-	if (*data_len < sizeof *args)
+
+	if (*data_len == OSIZE) {
+		args->uid = 0;
+		args->gid = 0;
+		args->fmask = args->dmask = S_IRWXU|S_IRWXG|S_IRWXO;
+	} else if (*data_len < sizeof(*args))
 		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if (imp == NULL)
 			return EIO;
+
 		args->fspec = NULL;
 		args->flags = imp->im_flags;
-		*data_len = sizeof (*args);
+		if (*data_len == OSIZE)
+			return 0;
+
+		args->uid = imp->im_uid;
+		args->gid = imp->im_gid;
+		args->fmask = imp->im_fmask;
+		args->dmask = imp->im_dmask;
+		*data_len = sizeof(*args);
 		return 0;
 	}
 
