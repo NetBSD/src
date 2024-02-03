@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.239 2022/10/29 21:06:48 mrg Exp $
+#	 $NetBSD: mi,v 1.239.2.1 2024/02/03 14:05:47 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -780,9 +780,12 @@
 ./usr/X11R7/include/xcb/xvmc.h				xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xf86drm.h				xcomp-libdrm-include	xorg
 ./usr/X11R7/include/xf86drmMode.h			xcomp-libdrm-include	xorg
-./usr/X11R7/include/xorg/BT.h				xcomp-obsolete	obsolete
-./usr/X11R7/include/xorg/IBM.h				xcomp-obsolete	obsolete
-./usr/X11R7/include/xorg/TI.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/xorg/BT.h				xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/BT.h				xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
+./usr/X11R7/include/xorg/IBM.h				xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/IBM.h				xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
+./usr/X11R7/include/xorg/TI.h				xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/TI.h				xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/XIstubs.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/Xprintf.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/afb.h				xcomp-obsolete	obsolete
@@ -790,8 +793,8 @@
 ./usr/X11R7/include/xorg/atKeynames.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/bstore.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/bstorestr.h			xcomp-obsolete	obsolete
-./usr/X11R7/include/xorg/bt829.h			xcomp-obsolete	xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/bt829.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/bt829.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/callback.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/cfb.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/cfb16.h			xcomp-obsolete	obsolete
@@ -815,7 +818,7 @@
 ./usr/X11R7/include/xorg/dbestruct.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/dgaproc.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/displaymode.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
-./usr/X11R7/include/xorg/dix-config.h			xcomp-xorg-server-include	xorg,obsolete
+./usr/X11R7/include/xorg/dix-config.h			xcomp-obsolete			xorg,obsolete
 ./usr/X11R7/include/xorg/dix.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/dixaccess.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/dixevents.h			xcomp-xorg-server-include	xorg
@@ -843,7 +846,7 @@
 ./usr/X11R7/include/xorg/fbpseudocolor.h		xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/fbrop.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/fi1236.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/fi1236.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/fi1236.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/fourcc.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/gc.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/gcstruct.h			xcomp-xorg-server-include	xorg
@@ -865,13 +868,13 @@
 ./usr/X11R7/include/xorg/mi.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/mibank.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/mibstore.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/mibstore.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/mibstore.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/micmap.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/micoord.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/mifillarc.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/mifillarc.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/mifillarc.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/mifpoly.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/mifpoly.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/mifpoly.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/migc.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/miline.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/mipict.h			xcomp-xorg-server-include	xorg
@@ -880,17 +883,17 @@
 ./usr/X11R7/include/xorg/misc.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/miscstruct.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/mispans.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/mispans.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/mispans.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/mistruct.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/misync.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/misyncfd.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/misyncshm.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/misyncstr.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/miwideline.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/miwideline.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/miwideline.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/mizerarc.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/msp3430.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/msp3430.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/msp3430.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/nonsdk_extinit.h		xcomp-xorg-server-include	xorg,xorg_server_ver=120
 ./usr/X11R7/include/xorg/opaque.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/optionstr.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120
@@ -924,19 +927,20 @@
 ./usr/X11R7/include/xorg/shadow.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/shadowfb.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/shmint.h			xcomp-xorg-server-include	xorg
-./usr/X11R7/include/xorg/site.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/xorg/site.h				xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/site.h				xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/swaprep.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/swaprep.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/swaprep.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/swapreq.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/swapreq.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/swapreq.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/tda8425.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/tda8425.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/tda8425.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/tda9850.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/tda9850.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/tda9850.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/tda9885.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/tda9885.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/tda9885.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/uda1380.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/uda1380.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/uda1380.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/validate.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/vbe.h				xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/vbeModes.h			xcomp-xorg-server-include	xorg
@@ -946,10 +950,10 @@
 ./usr/X11R7/include/xorg/window.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/windowstr.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xaa.h				xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/xaa.h				xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/xaa.h				xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xaaWrapper.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/xaalocal.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/xaalocal.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/xaalocal.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xaarop.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/xf4bpp.h			xcomp-obsolete	obsolete
@@ -971,10 +975,11 @@
 ./usr/X11R7/include/xorg/xf86Priv.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86Privstr.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86RAC.h			xcomp-obsolete	obsolete
-./usr/X11R7/include/xorg/xf86RamDac.h			xcomp-obsolete	obsolete
+./usr/X11R7/include/xorg/xf86RamDac.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/xf86RamDac.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xf86RandR12.h			xcomp-xorg-server-include	xorg
 ./usr/X11R7/include/xorg/xf86Rename.h			xcomp-xorg-server-include	xorg,xorg_server_ver=110
-./usr/X11R7/include/xorg/xf86Rename.h			xcomp-xorg-server-include	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/include/xorg/xf86Rename.h			xcomp-obsolete			xorg,obsolete,xorg_server_ver=120
 ./usr/X11R7/include/xorg/xf86Resources.h		xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/xf86Version.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/xorg/xf86Xinput.h			xcomp-xorg-server-include	xorg
