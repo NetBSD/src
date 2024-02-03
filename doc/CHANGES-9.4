@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.126 2024/01/14 15:34:17 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.127 2024/02/03 14:26:27 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4068,4 +4068,62 @@ external/bsd/iscsi/dist/src/lib/protocol.c	1.5
 	libiscsi: PR 57784: fix types of Time2Wait and Time2Retain in
 	logout decap.
 	[riastradh, ticket #1789]
+
+sys/dev/pci/pcidevs				1.1494,1.1498-1.1502
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Add Mellanox ConnectX-6 Lx.
+	- Add some newer Areca boards.
+	- Update Intel Raptor Lake devices.
+	- Add Intel C26[26] eSPI.
+	- Add Intel I219-LM20, LM21, V20 and V21.
+	- Add Intel I225/I226 series devices.
+	[msaitoh, ticket #1790]
+
+sys/dev/pci/if_wm.c				1.793
+
+	wm(4): add Intel I219-{LM,V}(20,21) support.
+	[msaitoh, ticket #1791]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.105-1.116 via patch
+sys/dev/pci/ixgbe/ixgbe.c			1.345-1.346,1.349 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.94-1.98
+sys/dev/pci/ixgbe/ixgbe_type.h			1.62
+sys/dev/pci/ixgbe/ixv.c 			1.193,1.195-1.196
+
+	- Clear the WTHRESH bit field before writing it.
+	- Optimize ixgbe_txeof().
+	- Use kmem_zalloc() instead of malloc(,M_ZERO).
+	- Add QPRDC(Queue Packet Receive Drop Count) into iqdrops.
+	- No functional change
+	  - Move assignment of TXD.
+	  - ixv(4): Remove unused IFF_OACTIVE.
+	  - Don't include the Flow Director related members to reduce the
+	    size of struct tx_ring. On amd64 and aarch64, the real size is
+	    not changed because of the alignment.
+	  - The descriptor ring size and the alignment are tested in the
+	    attach function, so it's not required to use
+	    roundup2(size, DBA_ALIGN).
+	  - Use #ifdef LRO more to reduce the size of struct rx_ring.
+	  - Change "me" from 32bit to 8bit because the max is 128.
+	    This commit doesn't change the real size of ix_queue, tx_ring
+	    and rx_ring because of the alignment.
+	  - Th RSC (hardware receive side coalescing) feature has been
+	    disabled all along, so enclose the code with #ifdef RSC.
+	  - Remove unused.
+	  - Modify for the readability.
+	  - Modify comment.
+	  - Fix comment. Whitespace.
+	[msaitoh, ticket #1792]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.43
+
+	ld@sdmmc(4): PR 57870: avoid deadlock on detach.
+	[riastradh, ticket #1793]
+
+sys/dev/hdaudio/hdafg.c				1.29
+
+	hdaudio(4): PR 57890: fix crash on shutdown with record-only devices.
+	[riastradh, ticket #1795]
 
