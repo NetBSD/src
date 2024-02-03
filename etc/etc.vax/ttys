@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.10 2019/09/25 23:09:24 abs Exp $
+#	$NetBSD: ttys,v 1.10.8.1 2024/02/03 14:34:44 martin Exp $
 #
 #	@(#)ttys	5.2 (Berkeley) 6/10/93
 #
@@ -10,14 +10,14 @@ console	"/usr/libexec/getty std.9600"	unknown	off secure
 constty	"/usr/libexec/getty std.9600"	unknown	on secure
 
 # Virtual terminals on VS3100 with "glass tty"
-#ttyw0	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw1	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw2	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw3	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw4	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw5	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw6	"/usr/libexec/getty std.9600"	sun on secure
-#ttyw7	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw0	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw1	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw2	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw3	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw4	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw5	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw6	"/usr/libexec/getty std.9600"	wsvt25 on secure
+#ttyw7	"/usr/libexec/getty std.9600"	wsvt25 on secure
 
 # DZ-11 lines, not frobbed by getty (keyboard/mouse may be sad)
 #tty00	"/usr/libexec/getty std.9600"	unknown	off secure
