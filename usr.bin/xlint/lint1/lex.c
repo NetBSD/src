@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.208 2024/02/03 10:01:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.209 2024/02/03 10:56:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.208 2024/02/03 10:01:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.209 2024/02/03 10:56:18 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1272,10 +1272,29 @@ lex_string(void)
 	return T_STRING;
 }
 
+static size_t
+wide_length(const buffer *buf)
+{
+
+	(void)mblen(NULL, 0);
+	size_t len = 0, i = 0;
+	while (i < buf->len) {
+		int n = mblen(buf->data + i, MB_CUR_MAX);
+		if (n == -1) {
+			/* invalid multibyte character */
+			error(291);
+			break;
+		}
+		i += n > 1 ? n : 1;
+		len++;
+	}
+	return len;
+}
+
 int
 lex_wide_string(void)
 {
-	int c, n;
+	int c;
 
 	buffer buf;
 	buf_init(&buf);
@@ -1285,34 +1304,8 @@ lex_wide_string(void)
 		/* unterminated string constant */
 		error(258);
 
-	/* get length of wide-character string */
-	(void)mblen(NULL, 0);
-	size_t wlen = 0;
-	for (size_t i = 0; i < buf.len; i += n, wlen++) {
-		if ((n = mblen(buf.data + i, MB_CUR_MAX)) == -1) {
-			/* invalid multibyte character */
-			error(291);
-			break;
-		}
-		if (n == 0)
-			n = 1;
-	}
-
-	wchar_t *ws = xcalloc(wlen + 1, sizeof(*ws));
-	size_t wi = 0;
-	/* convert from multibyte to wide char */
-	(void)mbtowc(NULL, NULL, 0);
-	for (size_t i = 0; i < buf.len; i += n, wi++) {
-		if ((n = mbtowc(&ws[wi], buf.data + i, MB_CUR_MAX)) == -1)
-			break;
-		if (n == 0)
-			n = 1;
-	}
-	free(buf.data);
-	free(ws);
-
 	buffer *str = xcalloc(1, sizeof(*str));
-	str->len = wlen;
+	str->len = wide_length(&buf);
 
 	yylval.y_string = str;
 	return T_STRING;
