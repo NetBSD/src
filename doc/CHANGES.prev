@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.179 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.180 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13468,8 +13468,13 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 9.5. [christos 20231025]
 	newsmips: Add support for LCD-MONO framebuffer on NWS-32x0 laptop
 		machines. [tsutsui 20231104]
+	newsmips: X.org server works with proper keymap with an updated
+		xf86-input-keyboard driver that supports getting keymap
+		via WSKBDIO_GETMAP ioctl(2). [tsutsui 20231107]
 	ena(4): MP-enable always, add RSS support, and reliability fixes.
 		[jdolecek 20231105]
+	gas(1): fix gas that doesn't handle MIPS1 FPR load hazard correctly.
+		[tsutsui 20231117]
 	iscsid(8): Handle IPv6 addresses. [mlelstv 20231125]
 	kernel: Import various bits of nouveau firmware for newer
 		nvidia graphics hardware. [bouyer 20231128]
@@ -13481,3 +13486,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	wm(4): Add some Meteor Lake devices (I219 V20-V21 and LM 20-21).
 		[msaitoh 20240118]
 	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]
+	vax: X.org server with xf86-video-wsfb works on smg(4) monochrome
+		framebuffer on VAXstation 3100. [tsutsui 20240126]
