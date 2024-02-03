@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.223 2024/01/20 10:02:31 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.224 2024/02/03 20:10:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.223 2024/01/20 10:02:31 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.224 2024/02/03 20:10:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -411,6 +411,7 @@ static const char *const msgs[] = {
 	"empty initializer braces require C23 or later",	      /* 353 */
 	"'_Static_assert' requires C11 or later",		      /* 354 */
 	"'_Static_assert' without message requires C23 or later",     /* 355 */
+	"short octal escape '%.*s' followed by digit '%c'",	      /* 356 */
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
