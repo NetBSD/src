@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.125 2022/07/17 10:10:45 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.125.4.1 2024/02/03 14:17:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.125 2022/07/17 10:10:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.125.4.1 2024/02/03 14:17:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ agp_i810_post_gtt_entry(struct agp_i810_softc *isc, off_t off)
 }
 
 static void
-agp_flush_cache_xc(void *a __unused, void *b __unused)
+agp_flush_cache_ipi(void *cookie __unused)
 {
 
 	agp_flush_cache();
@@ -204,11 +204,19 @@ agp_i810_chipset_flush(struct agp_i810_softc *isc)
 		 * XXX Come to think of it, do these chipsets appear in
 		 * any multi-CPU systems?
 		 */
-		if (cold)
+		if (cold) {
 			agp_flush_cache();
-		else
-			xc_wait(xc_broadcast(0, &agp_flush_cache_xc,
-				NULL, NULL));
+		} else {
+			/*
+			 * Caller may hold a spin lock, so use ipi(9)
+			 * rather than xcall(9) here.
+			 */
+			ipi_msg_t msg = { .func = agp_flush_cache_ipi };
+			kpreempt_disable();
+			ipi_broadcast(&msg, /*skip_self*/false);
+			ipi_wait(&msg);
+			kpreempt_enable();
+		}
 		WRITE4(AGP_I830_HIC, READ4(AGP_I830_HIC) | __BIT(31));
 		while (ISSET(READ4(AGP_I830_HIC), __BIT(31))) {
 			if (timo-- == 0)
