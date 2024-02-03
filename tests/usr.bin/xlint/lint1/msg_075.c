@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_075.c,v 1.8 2024/02/03 10:01:59 rillig Exp $	*/
+/*	$NetBSD: msg_075.c,v 1.9 2024/02/03 18:58:05 rillig Exp $	*/
 # 3 "msg_075.c"
 
 // Test for message: overflow in hex escape [75]
@@ -36,8 +36,7 @@ int wide_hex2 = L'\xff';
 int wide_hex3 = L'\x100';
 int wide_hex4 = L'\xffff';
 int wide_hex5 = L'\xfffff';
-/* expect+2: warning: overflow in hex escape [75] */
-/* expect+1: error: empty character constant [73] */
+/* expect+1: warning: overflow in hex escape [75] */
 int wide_hex9 = L'\xfffffffff';
 
 char char_string_hex1[] = "\xf";

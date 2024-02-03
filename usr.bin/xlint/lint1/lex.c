@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.210 2024/02/03 12:57:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.211 2024/02/03 18:58:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.210 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.211 2024/02/03 18:58:05 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -773,7 +773,7 @@ read_escaped_oct(int c, bool wide)
 	return value;
 }
 
-static unsigned int
+static int64_t
 read_escaped_hex(int c, bool wide)
 {
 	if (!allow_c90)
@@ -802,10 +802,10 @@ read_escaped_hex(int c, bool wide)
 	}
 	if (state == 2)
 		value &= mask;
-	return (unsigned int)value;
+	return (int64_t)value;
 }
 
-static int
+static int64_t
 read_escaped_backslash(int delim, bool wide)
 {
 	int c;
@@ -859,7 +859,7 @@ read_escaped_backslash(int delim, bool wide)
 	case '4': case '5': case '6': case '7':
 		return read_escaped_oct(c, wide);
 	case 'x':
-		return (int)read_escaped_hex(c, wide);
+		return read_escaped_hex(c, wide);
 	case '\n':
 		return -3;
 	case EOF:
@@ -885,11 +885,11 @@ read_escaped_backslash(int delim, bool wide)
  * Returns -1 if the end of the character constant or string is reached,
  * -2 if the EOF is reached, and the character otherwise.
  */
-static int
+static int64_t
 get_escaped_char(int delim, bool wide)
 {
 
-	int c = prev_byte;
+	int64_t c = prev_byte;
 	if (c != -1)
 		prev_byte = -1;
 	else
@@ -927,13 +927,11 @@ get_escaped_char(int delim, bool wide)
 int
 lex_character_constant(void)
 {
-	size_t n;
-	int val, c;
 
-	n = 0;
-	val = 0;
+	size_t n = 0;
+	int64_t val = 0, c;
 	while ((c = get_escaped_char('\'', false)) >= 0) {
-		val = (int)((unsigned int)val << CHAR_SIZE) + c;
+		val = (int64_t)((uint64_t)val << CHAR_SIZE) + c;
 		n++;
 	}
 	if (c == -2) {
@@ -954,7 +952,7 @@ lex_character_constant(void)
 		error(73);
 	}
 	if (n == 1)
-		val = (int)convert_integer(val, CHAR, CHAR_SIZE);
+		val = convert_integer(val, CHAR, CHAR_SIZE);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
@@ -970,22 +968,18 @@ lex_character_constant(void)
 int
 lex_wide_character_constant(void)
 {
-	static char buf[MB_LEN_MAX + 1];
-	size_t n, nmax;
-	int c;
-	wchar_t wc;
+	char buf[MB_LEN_MAX + 1];
+	size_t nmax = MB_CUR_MAX;
 
-	nmax = MB_CUR_MAX;
-
-	n = 0;
+	int64_t c;
+	size_t n = 0;
 	while ((c = get_escaped_char('\'', true)) >= 0) {
 		if (n < nmax)
 			buf[n] = (char)c;
 		n++;
 	}
 
-	wc = 0;
-
+	wchar_t wc = 0;
 	if (c == -2) {
 		/* unterminated character constant */
 		error(253);
@@ -1255,7 +1249,7 @@ lex_string(void)
 	buffer *buf = xcalloc(1, sizeof(*buf));
 	buf_init(buf);
 
-	int c;
+	int64_t c;
 	while ((c = get_escaped_char('"', false)) >= 0)
 		buf_add_char(buf, (char)c);
 	if (c == -2)
@@ -1289,7 +1283,7 @@ wide_length(const buffer *buf)
 int
 lex_wide_string(void)
 {
-	int c;
+	int64_t c;
 
 	buffer buf;
 	buf_init(&buf);
