@@ -1,4 +1,4 @@
-/*	$NetBSD: pim.h,v 1.2 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: pim.h,v 1.2.30.1 2024/02/03 12:46:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -138,10 +138,10 @@ struct hppa_pim_checks {
 #define	PIM_CHECK_ASSISTS	(1 << 28)
 #define	PIM_CHECK_BITS						\
 	"\177\020"		/* New bitmask format */	\
-	"b\040cache\0"		/* bit 31 */			\
-	"b\037tlb\0"		/* bit 30 */			\
-	"b\036bus\0"		/* bit 29 */			\
-	"b\035assists\0"	/* bit 28 */
+	"b\037cache\0"		/* bit 31 */			\
+	"b\036tlb\0"		/* bit 30 */			\
+	"b\035bus\0"		/* bit 29 */			\
+	"b\034assists\0"	/* bit 28 */
 
 	/*
 	 * The CPU State.  In addition to the common PIM_CPU_
@@ -157,13 +157,13 @@ struct hppa_pim_checks {
 #define	PIM_CPU_TRV	(1 << 25)
 #define	PIM_CPU_BITS						\
 	"\177\020"		/* New bitmask format */	\
-	"b\040iqv\0"		/* bit 31 */			\
-	"b\037iqf\0"		/* bit 30 */			\
-	"b\036ipv\0"		/* bit 29 */			\
-	"b\035grv\0"		/* bit 28 */			\
-	"b\034crv\0"		/* bit 27 */			\
-	"b\033srv\0"		/* bit 26 */			\
-	"b\032trv\0"		/* bit 25 */
+	"b\037iqv\0"		/* bit 31 */			\
+	"b\036iqf\0"		/* bit 30 */			\
+	"b\035ipv\0"		/* bit 29 */			\
+	"b\034grv\0"		/* bit 28 */			\
+	"b\033crv\0"		/* bit 27 */			\
+	"b\032srv\0"		/* bit 26 */			\
+	"b\031trv\0"		/* bit 25 */
 #define	PIM_CPU_HPMC_TL(cs)	(((cs) >> 4) & 0x3)
 #define	PIM_CPU_HPMC_HD		(1 << 3)
 #define	PIM_CPU_HPMC_SIS	(1 << 2)
@@ -189,14 +189,14 @@ struct hppa_pim_checks {
 #define	PIM_CACHE_PADD(cc)	((cc) & 0x000fffff)
 #define	PIM_CACHE_BITS						\
 	"\177\020"		/* New bitmask format */	\
-	"b\040icc\0"		/* bit 31 */			\
-	"b\039dcc\0"		/* bit 30 */			\
-	"b\038tc\0"		/* bit 29 */			\
-	"b\037dc\0"		/* bit 28 */			\
-	"b\036crg\0"		/* bit 27 */			\
-	"b\035lc\0"		/* bit 26 */			\
-	"b\034rcc\0"		/* bit 25 */			\
-	"f\000\032paddr\0"	/* bit 0 .. 23 */
+	"b\037icc\0"		/* bit 31 */			\
+	"b\036dcc\0"		/* bit 30 */			\
+	"b\035tc\0"		/* bit 29 */			\
+	"b\034dc\0"		/* bit 28 */			\
+	"b\033crg\0"		/* bit 27 */			\
+	"b\032lc\0"		/* bit 26 */			\
+	"b\031rcc\0"		/* bit 25 */			\
+	"f\000\030paddr\0"	/* bit 0 .. 23 */
 
 	/* The TLB Check word. */
 	uint32_t	pim_check_tlb;
@@ -207,11 +207,11 @@ struct hppa_pim_checks {
 #define	PIM_TLB_TNF	(1 << 27)
 #define	PIM_TLB_BITS						\
 	"\177\020"		/* New bitmask format */	\
-	"b\040itc\0"		/* bit 31 */			\
-	"b\039dtc\0"		/* bit 30 */			\
-	"b\038trg\0"		/* bit 29 */			\
-	"b\037tuc\0"		/* bit 28 */			\
-	"b\036tnf\0"		/* bit 27 */			\
+	"b\037itc\0"		/* bit 31 */			\
+	"b\036dtc\0"		/* bit 30 */			\
+	"b\035trg\0"		/* bit 29 */			\
+	"b\034tuc\0"		/* bit 28 */			\
+	"b\033tnf\0"		/* bit 27 */			\
 
 	/* The Bus Check word. */
 	uint32_t	pim_check_bus;
@@ -238,7 +238,7 @@ struct hppa_pim_checks {
 	uint32_t	pim_check_assist;
 #define	PIM_ASSIST_COC		(1 << 31)
 #define	PIM_ASSIST_SC		(1 << 30)
-#define	PIM_ASSIST_BITS		"\020\040COC\037SC"
+#define	PIM_ASSIST_BITS		"\020\037COC\036SC"
 
 	uint32_t	pim_check_reserved_1;
 
