@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.42 2022/05/16 10:03:23 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.42.4.1 2024/02/03 12:39:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.42 2022/05/16 10:03:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.42.4.1 2024/02/03 12:39:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -599,8 +599,23 @@ static int
 ld_sdmmc_cachesync(struct ld_softc *ld, bool poll)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+	struct sdmmc_softc *sdmmc = device_private(device_parent(ld->sc_dv));
 	struct ld_sdmmc_task *task;
 	int error = -1;
+
+	/*
+	 * If we come here through the sdmmc discovery task, we can't
+	 * wait for a new task because the new task can't even begin
+	 * until the sdmmc discovery task has completed.
+	 *
+	 * XXX This is wrong, because there may already be queued I/O
+	 * tasks ahead of us.  Fixing this properly requires doing
+	 * discovery in a separate thread.  But this should avoid the
+	 * deadlock of PR kern/57870 (https://gnats.NetBSD.org/57870)
+	 * until we do split that up.
+	 */
+	if (curlwp == sdmmc->sc_tskq_lwp)
+		return sdmmc_mem_flush_cache(sc->sc_sf, poll);
 
 	mutex_enter(&sc->sc_lock);
 
