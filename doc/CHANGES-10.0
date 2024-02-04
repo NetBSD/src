@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.191 2024/02/03 15:28:00 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.192 2024/02/04 11:09:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15443,3 +15443,20 @@ etc/etc.vax/ttys				1.11
 	tty lines.
 	[tsutsui, ticket #579]
 
+distrib/utils/embedded/files/creds_msdos	1.6
+
+	creds_msdos(8): roperly quote arguments.
+	[mrg, ticket #580]
+
+doc/CHANGES					(apply patch)
+
+	Sync CHANGES with CHANGES.prev in HEAD.
+	[tsutsui, ticket #581]
+
+usr.bin/gzip/gzip.1                             up to 1.32
+usr.bin/gzip/gzip.c                             up to 1.122
+usr.bin/gzip/unlz.c                             up to 1.8
+usr.bin/gzip/unpack.c                           up to 1.4
+
+	gzip(1): PR 57858, 57855: fix a few minor issues and cleanup.
+	[mrg, ticket #582]
