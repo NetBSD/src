@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.41 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.42 2024/02/04 05:43:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -7,7 +7,7 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology, Jared D. McNeill (jmcneill@invisible.ca),
- * Matthew R. Green (mrg@eterna.com.au), and Manuel Bouyer (bouyer@netbsd.org).
+ * Matthew R. Green (mrg@eterna23.net), and Manuel Bouyer (bouyer@netbsd.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.41 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.42 2024/02/04 05:43:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

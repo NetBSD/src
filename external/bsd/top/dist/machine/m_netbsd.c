@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -39,18 +39,18 @@
  *		Wolfram Schneider <wosch@cs.tu-berlin.de>
  *		Arne Helme <arne@acm.org>
  *		Luke Mewburn <lukem@NetBSD.org>
- *		matthew green <mrg@eterna.com.au>
+ *		matthew green <mrg@eterna23.net>
  *		Simon Burge <simonb@NetBSD.org>
  *		Tomas Svensson <ts@unix1.net>
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $
+ * $Id: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.29 2023/12/14 07:18:44 mrg Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $");
 #endif
 
 #include <sys/param.h>
