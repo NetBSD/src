@@ -10,7 +10,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.5 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: client.c,v 1.6 2024/02/04 21:42:24 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -2289,6 +2289,7 @@ process_prune_candidates (void)
     struct save_dir *p;
     struct save_dir *q;
 
+    processing = "prune";
     if (toplevel_wd)
     {
 	if (CVS_CHDIR (toplevel_wd) < 0)
