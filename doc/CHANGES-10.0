@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.192 2024/02/04 11:09:44 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.193 2024/02/04 11:29:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15460,3 +15460,13 @@ usr.bin/gzip/unpack.c                           up to 1.4
 
 	gzip(1): PR 57858, 57855: fix a few minor issues and cleanup.
 	[mrg, ticket #582]
+
+sys/kern/uipc_socket.c				1.308
+sys/kern/uipc_syscalls.c			1.211
+sys/net/if_gre.c				1.185
+sys/sys/socketvar.h				1.168
+
+	PR 55690: fix pipe2(2) ignoring 'flags' on kernels with
+	options PIPE_SOCKETPAIR.
+	[jdolecek, ticket #583]
+
