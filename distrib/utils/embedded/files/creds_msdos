@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: creds_msdos,v 1.5 2021/12/11 19:24:18 mrg Exp $
+# $NetBSD: creds_msdos,v 1.5.2.1 2024/02/04 10:59:54 martin Exp $
 #
 # Copyright (c) 2019 Matthew R. Green
 # All rights reserved.
@@ -153,7 +153,7 @@ creds_msdos_start()
 	if [ -f "${creds_file}" ]; then
 		while read type user args; do
 			# strip cr
-			local clean_args=$(echo "$args" | tr -d '\015')
+			local clean_args="$(echo "$args" | tr -d '\015')"
 			case "$type" in
 			\#*|'')
 				continue
