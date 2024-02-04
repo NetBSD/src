@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.182 2023/08/14 21:17:08 andvar Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.183 2024/02/04 05:43:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology, and Matthew R. Green (mrg@eterna.com.au).
+ * Carlstedt Research & Technology, and Matthew R. Green (mrg@eterna23.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.182 2023/08/14 21:17:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.183 2024/02/04 05:43:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

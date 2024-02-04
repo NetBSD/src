@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.128 2023/07/31 17:41:18 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.129 2024/02/04 05:43:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna23.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.128 2023/07/31 17:41:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.129 2024/02/04 05:43:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"

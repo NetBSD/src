@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.15 2022/03/13 11:28:52 riastradh Exp $ */
+/* $NetBSD: usbroothub.c,v 1.16 2024/02/04 05:43:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -7,7 +7,7 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology, Jared D. McNeill (jmcneill@invisible.ca),
- * Matthew R. Green (mrg@eterna.com.au) and Nick Hudson.
+ * Matthew R. Green (mrg@eterna23.net) and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.15 2022/03/13 11:28:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.16 2024/02/04 05:43:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */

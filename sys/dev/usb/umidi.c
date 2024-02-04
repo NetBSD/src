@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.89 2022/07/01 01:08:06 riastradh Exp $	*/
+/*	$NetBSD: umidi.c,v 1.90 2024/02/04 05:43:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -7,7 +7,7 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Takuya SHIOZAKI (tshiozak@NetBSD.org), (full-size transfers, extended
  * hw_if) Chapman Flack (chap@NetBSD.org), and Matthew R. Green
- * (mrg@eterna.com.au).
+ * (mrg@eterna23.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.89 2022/07/01 01:08:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.90 2024/02/04 05:43:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
