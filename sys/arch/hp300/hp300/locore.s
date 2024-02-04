@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 2024/02/04 18:52:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1033,7 +1033,7 @@ L_delay:
 #define BUSERR  0xfffffffc
 ASLOCAL(phys_badaddr)
 	ASRELOC(_bsave,%a3)
-	movl	BUSERR,%a3@		| save ROM bus errror handler
+	movl	BUSERR,%a3@		| save ROM bus error handler
 	ASRELOC(_ssave,%a3)
 	movl	%sp,%a3@		| and current stack pointer
 	ASRELOC(catchbad,%a3)

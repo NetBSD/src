@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.135 2023/07/28 18:19:01 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.136 2024/02/04 18:52:36 andvar Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -240,7 +240,7 @@ rump_symren: __archivebuild
 .endif
 
 # if we are called from lib build (RUMP_SYMREN is not specified),
-# build the arrrrchive.  otherwise just rename symbols.
+# build the archive.  otherwise just rename symbols.
 __archivebuild: .USE
 .if defined(RUMP_SYMREN) && defined(RUMPTOP)
 	@echo "ERROR: RUMP_SYMREN can only be used standalone"

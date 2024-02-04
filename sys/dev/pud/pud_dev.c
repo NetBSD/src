@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.7 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.8 2024/02/04 18:52:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.8 2024/02/04 18:52:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -185,7 +185,7 @@ pud_bdev_size(dev_t dev)
 #endif
 
 /*
- * Charrr devices
+ * Char devices
  */
 
 static dev_type_open(pud_cdev_open);
