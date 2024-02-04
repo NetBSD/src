@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.110 2020/04/13 19:23:18 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.111 2024/02/04 00:16:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.110 2020/04/13 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.111 2024/02/04 00:16:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ ntfs_mountroot(void)
 	args.flag = 0;
 	args.uid = 0;
 	args.gid = 0;
-	args.mode = 0777;
+	args.mode = S_IRWXU|S_IRWXG|S_IRWXO;
 
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
 		vfs_unbusy(mp);
@@ -366,7 +366,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	ntmp->ntm_devvp = devvp;
 	ntmp->ntm_uid = argsp->uid;
 	ntmp->ntm_gid = argsp->gid;
-	ntmp->ntm_mode = argsp->mode;
+	ntmp->ntm_mode = argsp->mode & (S_IRWXU|S_IRWXG|S_IRWXO);
 	ntmp->ntm_flag = argsp->flag;
 	mp->mnt_data = ntmp;
 
