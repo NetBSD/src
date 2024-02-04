@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.184 2022/09/03 02:47:59 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.184.4.1 2024/02/04 11:20:15 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.184 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.184.4.1 2024/02/04 11:20:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -435,6 +435,7 @@ static int
 gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 {
 	int fd, rc;
+	file_t *fp;
 	struct socket *so;
 	struct sockaddr_big sbig;
 	sa_family_t af;
@@ -443,14 +444,11 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	GRE_DPRINTF(sc, "enter\n");
 
 	af = sp->sp_src.ss_family;
-	rc = fsocreate(af, NULL, sp->sp_type, sp->sp_proto, &fd);
+	rc = fsocreate(af, &so, sp->sp_type, sp->sp_proto, &fd, &fp, NULL);
 	if (rc != 0) {
 		GRE_DPRINTF(sc, "fsocreate failed\n");
 		return rc;
 	}
-
-	if ((rc = fd_getsock(fd, &so)) != 0)
-		return rc;
 
 	memcpy(&sbig, &sp->sp_src, sizeof(sp->sp_src));
 	if ((rc = sobind(so, (struct sockaddr *)&sbig, curlwp)) != 0) {
@@ -484,10 +482,11 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 		rc = 0;
 	}
 out:
-	if (rc != 0)
-		fd_close(fd);
-	else  {
-		fd_putfile(fd);
+	if (rc != 0) {
+		soclose(so);
+		fd_abort(curproc, fp, fd);
+	} else  {
+		fd_affix(curproc, fp, fd);
 		*fdout = fd;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.302.4.1 2024/02/04 11:20:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.302.4.1 2024/02/04 11:20:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -568,44 +568,51 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 
 /*
  * fsocreate: create a socket and a file descriptor associated with it.
+ * Returns the allocated file structure in *fpp, but the descriptor
+ * is not visible yet for the process.
+ * Caller is responsible for calling fd_affix() for the returned *fpp once
+ * it's socket initialization is finished successfully, or fd_abort() if it's
+ * initialization fails.
+ * 
  *
- * => On success, write file descriptor to fdout and return zero.
- * => On failure, return non-zero; *fdout will be undefined.
+ * => On success, write file descriptor to *fdout and *fpp and return zero.
+ * => On failure, return non-zero; *fdout and *fpp will be undefined.
  */
 int
-fsocreate(int domain, struct socket **sop, int type, int proto, int *fdout)
+fsocreate(int domain, struct socket **sop, int type, int proto, int *fdout,
+    file_t **fpp, struct socket *lockso)
 {
 	lwp_t *l = curlwp;
 	int error, fd, flags;
 	struct socket *so;
-	struct file *fp;
+	file_t *fp;
 
-	if ((error = fd_allocfile(&fp, &fd)) != 0) {
+	flags = type & SOCK_FLAGS_MASK;
+	type &= ~SOCK_FLAGS_MASK;
+	error = socreate(domain, &so, type, proto, l, lockso);
+	if (error) {
 		return error;
 	}
-	flags = type & SOCK_FLAGS_MASK;
+
+	if ((error = fd_allocfile(&fp, &fd)) != 0) {
+		soclose(so);
+		return error;
+	}
 	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
 	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
-
-	type &= ~SOCK_FLAGS_MASK;
-	error = socreate(domain, &so, type, proto, l, NULL);
-	if (error) {
-		fd_abort(curproc, fp, fd);
-		return error;
-	}
 	if (flags & SOCK_NONBLOCK) {
 		so->so_state |= SS_NBIO;
 	}
 	fp->f_socket = so;
-	fd_affix(curproc, fp, fd);
 
 	if (sop != NULL) {
 		*sop = so;
 	}
 	*fdout = fd;
+	*fpp = fp;
 	return error;
 }
 
