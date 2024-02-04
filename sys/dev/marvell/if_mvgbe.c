@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.66 2022/05/21 10:33:05 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.66 2022/05/21 10:33:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.67 2024/02/04 18:52:36 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -921,7 +921,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 #ifdef MVGBE_EVENT_COUNTERS
 	/* Attach event counters. */
 	evcnt_attach_dynamic(&sc->sc_ev_rxoverrun, EVCNT_TYPE_MISC,
-	    NULL, device_xname(sc->sc_dev), "rxoverrrun");
+	    NULL, device_xname(sc->sc_dev), "rxoverrun");
 	evcnt_attach_dynamic(&sc->sc_ev_wdogsoft, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "wdogsoft");
 #endif

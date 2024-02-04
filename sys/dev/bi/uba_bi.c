@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.15 2009/11/23 02:13:45 rmind Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.16 2024/02/04 18:52:35 andvar Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.15 2009/11/23 02:13:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.16 2024/02/04 18:52:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,7 +76,7 @@ static	void bua_purge(struct uba_softc *, int);
 #define BUACSR_BUAEIE   0x00100000      /* bua error interrupt enable (?) */
 #define BUACSR_UPI      0x00020000      /* unibus power init */
 #define BUACSR_UREGDUMP 0x00010000      /* microdiag register dump */
-#define BUACSR_IERRNO   0x000000ff      /* mask for internal errror number */
+#define BUACSR_IERRNO   0x000000ff      /* mask for internal error number */
 
 /* bua_offset */
 #define BUAOFFSET_MASK  0x00003e00      /* hence max offset = 15872 */

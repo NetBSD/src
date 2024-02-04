@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_sspreg.h,v 1.3 2008/04/28 20:23:14 martin Exp $	*/
+/*      $NetBSD: sa11x0_sspreg.h,v 1.4 2024/02/04 18:52:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -65,4 +65,4 @@
 #define SR_BSY		0x08	/* SSP busy flag */
 #define SR_TFS		0x10	/* Transmit FIFO service request */
 #define SR_RFS		0x20	/* Receive FIFO service request */
-#define SR_ROR		0x40	/* Receive FIFO overrrun */
+#define SR_ROR		0x40	/* Receive FIFO overrun */
