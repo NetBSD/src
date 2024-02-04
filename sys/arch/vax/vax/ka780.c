@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.34 2023/12/17 18:39:02 andvar Exp $ */
+/*	$NetBSD: ka780.c,v 1.35 2024/02/04 18:47:27 andvar Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.34 2023/12/17 18:39:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.35 2024/02/04 18:47:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ struct mcr780 {
 #define M780EU_SYN(mcr)		((mcr)->mc_reg[3] & 0x7f)
 #define M780EU_ADDR(mcr)	(((mcr)->mc_reg[3] >> 11) & 0x1ffff)
 
-/* enable crd interrrupts */
+/* enable crd interrupts */
 void
 mem_sbi_attach(device_t parent, device_t self, void *aux)
 {
