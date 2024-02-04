@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.7 2021/09/10 21:52:17 rillig Exp $	*/
+/*	$NetBSD: unlz.c,v 1.7.2.1 2024/02/04 11:07:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -616,8 +616,6 @@ unlz(int fin, int fout, char *pre, size_t prelen, off_t *bytes_in)
 
 	char header[HDR_SIZE];
 
-	if (prelen > sizeof(header))
-		return -1;
 	if (pre && prelen)
 		memcpy(header, pre, prelen);
 	
