@@ -38,8 +38,10 @@ Parsing line 197: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 Global: .MAKEFLAGS =  -r -k -d 0 -d pv -d
 Global: .MAKEFLAGS =  -r -k -d 0 -d pv -d 0
-make: "varmod-indirect.mk" line 274: Unknown modifier "Z"
-make: "varmod-indirect.mk" line 274: Malformed conditional (0 && ${VAR:${M_invalid}})
+make: "varmod-indirect.mk" line 275: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 275: Malformed conditional (0 && ${VAR:${M_invalid}})
+make: "varmod-indirect.mk" line 287: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 287: Malformed conditional (0 && ${VAR:${M_invalid:@m@N*$m@:ts:}})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
