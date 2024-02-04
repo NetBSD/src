@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.7 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.8 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -241,11 +241,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	file(1): Upgraded to 5.39. [christos 20200614]
 	blocklist: import current version [christos 20200614]
 	dhcpcd: Import version 9.1.2 [roy 20200615]
-	evbmips: Create an "octeon.img.gz" bootable image for
-		evbmips64-eb release builds. [jmcneill 20200617]
 	evbarm: Add support for loading modules with the bootloader.
-		[jmcneill 20200221]
-	evbarm: Added boot.cfg support to efiboot [jmcneill 20200211]
+		[jmcneill 20200621]
+	evbarm: Added boot.cfg support to efiboot [jmcneill 20200621]
 	evbmips: Add ofctl(8) and /dev/openfirm support for Cavium
 		Octeon devices. [jmcneill 20200624]
 	mv(1): Add -h option to atomically replace a symlink to a
@@ -281,6 +279,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		ERLITE         -> OCTEON
 		INSTALL_ERLITE -> INSTALL_OCTEON
 		[simonb 20200715]
+	evbmips: Create an "octeon.img.gz" bootable image for
+		evbmips64-eb release builds. [jmcneill 20200717]
 	libc: Added ppoll() wrapper around native pollts(2) [kamil 20200717]
 	openresolv: Import version 3.11.0 [roy 20200722]
 	sun3: Add Xorg-Server-1.20'fied ancient monolithc Xsun servers.
@@ -511,7 +511,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		and humidity sensor [brad 20211003]
 	network: Make pktq_rps_hash() pluggable for each interface type.
 		[knakahara 20211011]
-	wm(4): Add Tiger Lake and newer devices (I219V 15-V9 and LM 16-19).
+	wm(4): Add Tiger Lake and newer devices (I219V 15-V19 and LM 16-19).
 		[msaitoh 20211013]
 	sgp40mox(4): Driver for the Sensirion SGP40 MOx gas sensor for air
 		quality [brad 20211014]
@@ -773,6 +773,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[tsutsui 20230105]
 	vax: Fix smg(4) monochrome framebuffer that has been broken since
 		NetBSD 4.0. [tsutsui 20230113]
+	aq(4): add support for AQC113-116 [ryo 20230114]
 	next68k: Fix "cannot input from keyboard" problem that has been broken
 		since NetBSD 7.0. [tsutsui 20230127]
 	next68k: Fix silent stall of esp(4) SCSI driver that has been broken
@@ -793,12 +794,64 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[nia 20230211]
 	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
 		modems [manu 20230213]
-	aq(4): add support for AQC113-116 [ryo 20230114]
+	ftp(1): Add option sslnoverify to control validation of SSL
+		certificates. Certificate validation is now enabled
+		by default. [mlelstv 20230225]
+	ftp(1): Add netrc processing to fetch-mode (URL on command line) to
+		enable options and autologin via netrc. [mlelstv 20230225]
+	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
+	tzdata: updated to 2023b (using the 2023bgtz fork) [kre 20230324]
+	tzdata: updated to 2023c (using the 2023cgtz fork) [kre 20230331]
+	ftp(1): Add timeout for SSL connection setup, defaulting to 60 seconds.
+		[lukem 20230505]
+	openssl(1): Imported 3.0.8. [christos 20230510]
+	mips: Bump the maximum text size for binaries from 64MB
+		to 128MB. [he 20230514]
+	OpenSSL: Imported 3.0.9. [christos 20230531]
 	lua: Import version 5.4.6.
 		Bumped shlib minor because of API/ABI changes. [nikita 20230608]
+	pam(8): Disable pam_krb5, pam_ksu by default. [riastradh 20230620]
+	gcc(1): Import GCC 10.5.  [mrg 20230710]
+	amdgpu(4): Enable display core logic. [riastradh 20230714]
+	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20230723]
+	x86: Add serial console support to efiboot via raw I/O port
+		access. [rin 20230724]
+	OpenSSH: Import 9.3. [christos 20230726]
+	u3g(4): Add support for D-Link DWM-222 4G LTS USB adapter.
+		[manu 20230804]
+	amd64: Build legacy VIA DRM UMS driver module by default,
+		this allows basic acceleration on VIA integrated graphics
+		with modload(8) viadrmums. [andvar 20230809]
+	libfido2: Import 1.13.0 [christos 20230811]
+	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
+		[knakahara,rin,msaitoh 20231006]
 	gcc.old: Initial import of major vax toolchain fix by Kalvis Duckmanton.
 		[rin 20231007]
-	igc(4): Add initial support to Intel I225/I226 series Ethernet devices.
-		[knakahara, rin, msaitoh 20231006]
+	eqos(4): Add support for Intel Elkhart Lake internal Ethernet devices.
+		[msaitoh 20231019]
 	build: Force MKSTRIPSYM=no if MKDEBUG=yes. [lukem 20231020]
-
+	top(1): Add network in & out bytes to the top display. [mrg 20231021]
+	OpenSSL: Imported 3.0.12. [christos 20231025]
+	OpenSSH: Import 9.5. [christos 20231025]
+	newsmips: Add support for LCD-MONO framebuffer on NWS-32x0 laptop
+		machines. [tsutsui 20231104]
+	newsmips: X.org server works with proper keymap with an updated
+		xf86-input-keyboard driver that supports getting keymap
+		via WSKBDIO_GETMAP ioctl(2). [tsutsui 20231107]
+	ena(4): MP-enable always, add RSS support, and reliability fixes.
+		[jdolecek 20231105]
+	gas(1): fix gas that doesn't handle MIPS1 FPR load hazard correctly.
+		[tsutsui 20231117]
+	iscsid(8): Handle IPv6 addresses. [mlelstv 20231125]
+	kernel: Import various bits of nouveau firmware for newer
+		nvidia graphics hardware. [bouyer 20231128]
+	OpenSSH: Import 9.6. [christos 20231220]
+	tzdata: Updated to 2023d (via 2023dgtz) [kre 20231223]
+	postfix(1): Import version 3.8.4. [christos 20231223]
+	postfix(1): Install postfix-tls-script (for "postfix tls")
+		[kim 20240101]
+	wm(4): Add some Meteor Lake devices (I219 V20-V21 and LM 20-21).
+		[msaitoh 20240118]
+	evbppc: Add support for the Nintendo Wii. [jmcneill 20240120]
+	vax: X.org server with xf86-video-wsfb works on smg(4) monochrome
+		framebuffer on VAXstation 3100. [tsutsui 20240126]
