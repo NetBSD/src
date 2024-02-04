@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.15 2024/02/04 08:51:57 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.16 2024/02/04 09:29:50 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -258,8 +258,9 @@ _:=	before ${UNDEF:${:UZ}} after
 
 # In parse-only mode, the indirect modifiers must not be evaluated.
 #
-# Before var.c 1.1096 from 2024-02-04, the expression for an indirect modifier
-# was evaluated.
+# Before var.c 1.1097 from 2024-02-04, the expression for an indirect modifier
+# was partially evaluated (only the variable value, without applying any
+# modifiers) and then interpreted as modifiers to the main expression.
 #
 # The expression ${:UZ} starts with the value "", and in parse-only mode, the
 # modifier ':UZ' does not modify the expression value.  This results in an
@@ -272,4 +273,16 @@ M_invalid=	Z
 # expect+2: Unknown modifier "Z"
 # expect+1: Malformed conditional (0 && ${VAR:${M_invalid}})
 .if 0 && ${VAR:${M_invalid}}
+.endif
+# The expression ${M_invalid} starts with the value "Z", and if its modifiers
+# were evaluated, would result in "N*Z", which is a valid modifier.  The
+# modifiers were not applied though, keeping the invalid value "Z".
+# FIXME: As of var.c 1.1096, the modifier ':S' _is_ actually evaluated.
+.if 0 && ${VAR:${M_invalid:S,^,N*,:ts:}}
+.endif
+# The ':@' modifier does not change the expression value in parse-only mode,
+# keeping the "Z".
+# expect+2: Unknown modifier "Z"
+# expect+1: Malformed conditional (0 && ${VAR:${M_invalid:@m@N*$m@:ts:}})
+.if 0 && ${VAR:${M_invalid:@m@N*$m@:ts:}}
 .endif
