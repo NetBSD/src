@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.206.4.1 2024/02/04 11:20:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.206.4.1 2024/02/04 11:20:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -111,10 +111,12 @@ sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
 		syscallarg(int)	protocol;
 	} */
 	int fd, error;
+	file_t *fp;
 
 	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
-	    SCARG(uap, protocol), &fd);
+	    SCARG(uap, protocol), &fd, &fp, NULL);
 	if (error == 0) {
+		fd_affix(l->l_proc, fp, fd);
 		*retval = fd;
 	}
 	return error;
@@ -402,34 +404,6 @@ do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 	return error;
 }
 
-static int
-makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
-    int domain, int proto, struct socket *soo)
-{
-	struct socket *so;
-	int error;
-
-	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0) {
-		return error;
-	}
-	if (flags & SOCK_NONBLOCK) {
-		so->so_state |= SS_NBIO;
-	}
-
-	if ((error = fd_allocfile(fp, fd)) != 0) {
-		soclose(so);
-		return error;
-	}
-	fd_set_exclose(l, *fd, (flags & SOCK_CLOEXEC) != 0);
-	(*fp)->f_flag = FREAD|FWRITE|
-	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
-	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
-	(*fp)->f_type = DTYPE_SOCKET;
-	(*fp)->f_ops = &socketops;
-	(*fp)->f_socket = so;
-	return 0;
-}
-
 int
 sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
     register_t *retval)
@@ -449,16 +423,14 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
 	int		domain = SCARG(uap, domain);
 	int		proto = SCARG(uap, protocol);
 
-	error = makesocket(l, &fp1, &fd, flags, type, domain, proto, NULL);
+	error = fsocreate(domain, &so1, type|flags, proto, &fd, &fp1, NULL);
 	if (error)
 		return error;
-	so1 = fp1->f_socket;
 	sv[0] = fd;
 
-	error = makesocket(l, &fp2, &fd, flags, type, domain, proto, so1);
+	error = fsocreate(domain, &so2, type|flags, proto, &fd, &fp2, so1);
 	if (error)
 		goto out;
-	so2 = fp2->f_socket;
 	sv[1] = fd;
 
 	solock(so1);
@@ -1297,33 +1269,36 @@ pipe1(struct lwp *l, int *fildes, int flags)
 {
 	file_t		*rf, *wf;
 	struct socket	*rso, *wso;
-	int		fd, error;
-	proc_t		*p;
+	int		error, soflags = 0;
+	unsigned	rfd, wfd;
+	proc_t		*p = l->l_proc;
 
 	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
 		return EINVAL;
-	p = curproc;
-	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL)) != 0)
-		return error;
-	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l, rso)) != 0)
+	if (flags & O_CLOEXEC)
+		soflags |= SOCK_CLOEXEC;
+	if (flags & O_NONBLOCK)
+		soflags |= SOCK_NONBLOCK;
+	if (flags & O_NOSIGPIPE)
+		soflags |= SOCK_NOSIGPIPE;
+
+	error = fsocreate(AF_LOCAL, &rso, SOCK_STREAM|soflags, 0, &rfd, &rf,
+	    NULL);
+	if (error)
 		goto free1;
-	/* remember this socket pair implements a pipe */
-	wso->so_state |= SS_ISAPIPE;
-	rso->so_state |= SS_ISAPIPE;
-	if ((error = fd_allocfile(&rf, &fd)) != 0)
+	error = fsocreate(AF_LOCAL, &wso, SOCK_STREAM|soflags, 0, &wfd, &wf,
+	    rso);
+	if (error)
 		goto free2;
-	fildes[0] = fd;
-	rf->f_flag = FREAD | flags;
-	rf->f_type = DTYPE_SOCKET;
-	rf->f_ops = &socketops;
-	rf->f_socket = rso;
-	if ((error = fd_allocfile(&wf, &fd)) != 0)
-		goto free3;
-	wf->f_flag = FWRITE | flags;
-	wf->f_type = DTYPE_SOCKET;
-	wf->f_ops = &socketops;
-	wf->f_socket = wso;
-	fildes[1] = fd;
+
+	/* make sure the descriptors are uni-directional */
+	rf->f_type = rf->f_type & ~(FWRITE);
+	wf->f_type = wf->f_type & ~(FREAD);
+
+	/* remember this socket pair implements a pipe */
+	rso->so_state |= SS_ISAPIPE;
+	wso->so_state |= SS_ISAPIPE;
+
 	solock(wso);
 	/*
 	 * Pipes must be readable when there is at least 1
@@ -1342,19 +1317,22 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	wso->so_snd.sb_lowat = PIPE_BUF;
 	error = unp_connect2(wso, rso);
 	sounlock(wso);
+
 	if (error != 0)
-		goto free4;
-	fd_affix(p, wf, fildes[1]);
-	fd_affix(p, rf, fildes[0]);
+		goto free3;
+
+	fd_affix(p, wf, wfd);
+	fd_affix(p, rf, rfd);
+	fildes[0] = rfd;
+	fildes[1] = wfd;
 	return (0);
- free4:
-	fd_abort(p, wf, fildes[1]);
  free3:
-	fd_abort(p, rf, fildes[0]);
- free2:
 	(void)soclose(wso);
- free1:
+	fd_abort(p, wf, wfd);
+ free2:
 	(void)soclose(rso);
+	fd_abort(p, rf, rfd);
+ free1:
 	return error;
 }
 #endif /* PIPE_SOCKETPAIR */
