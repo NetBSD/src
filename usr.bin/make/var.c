@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1097 2024/02/04 09:56:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1098 2024/02/04 10:03:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1097 2024/02/04 09:56:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1098 2024/02/04 10:03:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3863,7 +3863,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	DEBUG3(VAR, "Indirect modifier \"%s\" from \"%.*s\"\n",
 	    mods.str, (int)(p - *pp), *pp);
 
-	if (mods.str[0] != '\0') {
+	if (ModChain_ShouldEval(ch) && mods.str[0] != '\0') {
 		const char *modsp = mods.str;
 		ApplyModifiers(expr, &modsp, '\0', '\0');
 		if (Expr_Str(expr) == var_Error || *modsp != '\0') {
