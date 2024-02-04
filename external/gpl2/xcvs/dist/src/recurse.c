@@ -14,7 +14,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: recurse.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: recurse.c,v 1.4 2024/02/04 20:47:25 christos Exp $");
 
 #include "cvs.h"
 #include "save-cwd.h"
@@ -748,6 +748,7 @@ do_recursion (struct recursion_frame *frame)
     if (dirlist != NULL && filelist == NULL)
 	dodoneproc = 0;
 
+    processing = "scan";
     /*
      * If filelist or dirlist is already set, we don't look again. Otherwise,
      * find the files and directories
@@ -810,6 +811,8 @@ do_recursion (struct recursion_frame *frame)
 	}
     }
 
+    processing = "process";
+
     /* process the files (if any) */
     if (process_this_directory && filelist != NULL && frame->fileproc)
     {
@@ -858,6 +861,8 @@ do_recursion (struct recursion_frame *frame)
 	/* clean up */
 	dellist (&filelist);
     }
+
+    processing = "cleanup";
 
     /* call-back files done proc (if any) */
     if (process_this_directory && dodoneproc && frame->filesdoneproc != NULL)
