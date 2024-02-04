@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.174 2023/06/03 20:41:45 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.175 2024/02/04 20:50:30 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.174 2023/06/03 20:41:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.175 2024/02/04 20:50:30 andvar Exp $");
 #endif /* not lint */
 
 
@@ -4919,7 +4919,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 		refcnt = udf_rw16(udf_node->efe->link_cnt);
 	}
 #ifdef UDF_COMPLETE_DELETE
-	/* substract reference counter in attached node */
+	/* subtract reference counter in attached node */
 	refcnt -= 1;
 	if (udf_node->fe) {
 		udf_node->fe->link_cnt = udf_rw16(refcnt);
@@ -4934,7 +4934,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	if (fid->file_char & UDF_FILE_CHAR_DIR) {
 		int drefcnt;
 
-		/* substract reference counter in directory node */
+		/* subtract reference counter in directory node */
 		/* note subtract 2 (?) for its was also backreferenced */
 		if (dir_node->fe) {
 			drefcnt  = udf_rw16(dir_node->fe->link_cnt);
