@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1096 2024/02/03 00:20:23 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1097 2024/02/04 09:56:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1096 2024/02/03 00:20:23 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1097 2024/02/04 09:56:24 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2274,6 +2274,9 @@ ModifyWords(ModChain *ch,
 	size_t i;
 	Substring word;
 
+	if (!ModChain_ShouldEval(ch))
+		return;
+
 	if (oneBigWord) {
 		SepBuf_Init(&result, ch->sep);
 		/* XXX: performance: Substring_InitStr calls strlen */
@@ -2806,8 +2809,7 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 			goto invalid_argument;
 		*pp = p;
 	}
-	if (ModChain_ShouldEval(ch))
-		ModifyWords(ch, ModifyWord_Mtime, &args, ch->oneBigWord);
+	ModifyWords(ch, ModifyWord_Mtime, &args, ch->oneBigWord);
 	return args.rc;
 
 invalid_argument:
@@ -3552,8 +3554,7 @@ ApplyModifier_WordFunc(const char **pp, ModChain *ch,
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ModChain_ShouldEval(ch))
-		ModifyWords(ch, modifyWord, NULL, ch->oneBigWord);
+	ModifyWords(ch, modifyWord, NULL, ch->oneBigWord);
 
 	return AMR_OK;
 }

@@ -40,8 +40,10 @@ Global: .MAKEFLAGS =  -r -k -d 0 -d pv -d
 Global: .MAKEFLAGS =  -r -k -d 0 -d pv -d 0
 make: "varmod-indirect.mk" line 275: Unknown modifier "Z"
 make: "varmod-indirect.mk" line 275: Malformed conditional (0 && ${VAR:${M_invalid}})
-make: "varmod-indirect.mk" line 287: Unknown modifier "Z"
-make: "varmod-indirect.mk" line 287: Malformed conditional (0 && ${VAR:${M_invalid:@m@N*$m@:ts:}})
+make: "varmod-indirect.mk" line 282: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 282: Malformed conditional (0 && ${VAR:${M_invalid:S,^,N*,:ts:}})
+make: "varmod-indirect.mk" line 288: Unknown modifier "Z"
+make: "varmod-indirect.mk" line 288: Malformed conditional (0 && ${VAR:${M_invalid:@m@N*$m@:ts:}})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
