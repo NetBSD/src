@@ -878,6 +878,7 @@ char *expand_path (const char *name, const char *cvsroot, bool formatsafe,
 
 /* User variables.  */
 extern List *variable_list;
+extern const char *processing;
 
 /* cvsacl patch */
 extern int cvsacl (int argc, char **argv);

@@ -17,7 +17,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.8 2022/01/20 14:46:06 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2024/02/04 20:47:25 christos Exp $");
 
 #include "cvs.h"
 
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: main.c,v 1.8 2022/01/20 14:46:06 christos Exp $");
 const char *program_name;
 const char *program_path;
 const char *cvs_cmd_name;
+const char *processing = "init";
 
 const char *global_session_id; /* Random session ID */
 
@@ -516,8 +517,8 @@ show_status (int n)
 
 	if (getcwd(wd, sizeof(wd)) == NULL)
 		return;
-	n = snprintf(buf, sizeof(buf), "%s[%d]: working in %s\n", getprogname(),
-	    (int)getpid(), wd);
+	n = snprintf(buf, sizeof(buf), "%s[%d]: %s in %s\n", getprogname(),
+	    (int)getpid(), processing, wd);
 	if (n <= 0)
 		return;
 	write(ttyfd, buf, (size_t)n);
