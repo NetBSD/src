@@ -1,4 +1,4 @@
-/*	$NetBSD: tsreg.h,v 1.5 2017/05/22 17:22:29 ragge Exp $ */
+/*	$NetBSD: tsreg.h,v 1.6 2024/02/05 22:18:18 andvar Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  * The TSV05 Subsystem has four device registers that occupy only two
  * LSI-11 Bus word locations: a Data Buffer (TSDB), a Bus Address
  * Register (TSBA), a Status Register (TSSR), and an Extended Data
- * Bufffer (TSDBX). The TSDB is an 18-bit register that is ...
+ * Buffer (TSDBX). The TSDB is an 18-bit register that is ...
  */
 
 #ifdef notdef

@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.11 2010/11/22 23:02:16 dholland Exp $ */
+/*	$NetBSD: twareg.h,v 1.12 2024/02/05 22:18:17 andvar Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -226,7 +226,7 @@
 #define TWA_MAX_ATA_SG_ELEMENTS		60
 #define TWA_Q_LENGTH			TWA_INIT_MESSAGE_CREDITS
 #define TWA_MAX_RESET_TRIES		3
-#define TWA_SECTOR_SIZE			0x200	/* generic I/O bufffer */
+#define TWA_SECTOR_SIZE			0x200	/* generic I/O buffer */
 #define TWA_SENSE_DATA_LENGTH		18
 #define TWA_MICROSECOND                 1000000
 #define TWA_ERROR_LOGICAL_UNIT_NOT_SUPPORTED	0x010a

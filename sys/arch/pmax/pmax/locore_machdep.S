@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.25 2011/03/28 14:40:00 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.26 2024/02/05 22:18:17 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax sii DMA).
  *
- * The DMA bufffer can only be written one short at a time
+ * The DMA buffer can only be written one short at a time
  * (and takes ~14 cycles).
  *
  *	CopyToBuffer(src, dst, length)
@@ -93,7 +93,7 @@ END(CopyToBuffer)
 
 /*
  * Copy data from the DMA buffer.
- * The DMA bufffer can only be read one short at a time
+ * The DMA buffer can only be read one short at a time
  * (and takes ~12 cycles).
  *
  *	CopyFromBuffer(src, dst, length)

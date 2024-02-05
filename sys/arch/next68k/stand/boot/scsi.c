@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.14 2023/02/12 10:04:56 tsutsui Exp $        */
+/*      $NetBSD: scsi.c,v 1.15 2024/02/05 22:18:17 andvar Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -357,7 +357,7 @@ dma_start(char *addr, int len)
 
     PRINTF(("DMA start: %lx, %d byte.\n", (long)addr, len));
 
-    DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n",
+    DPRINTF(("dma_buffer: start: 0x%lx end: 0x%lx \n",
 				(long)dma_buffer,(long)DMA_ENDALIGN(char *, dma_buffer+len)));
 
     sc->dma_addr = addr;
