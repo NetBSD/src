@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.43 2022/08/01 07:37:18 mlelstv Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.44 2024/02/05 22:08:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -558,7 +558,7 @@ struct tulip_desc {
 						   descriptor, write status */
 #define	STATUS_DM_TS_SUSPENDED	0x00700000	/* Suspended */
 #define	STATUS_EB		0x03800000	/* error bits */
-#define	STATUS_EB_PARITY	0x00000000	/* parity errror */
+#define	STATUS_EB_PARITY	0x00000000	/* parity error */
 #define	STATUS_EB_MABT		0x00800000	/* master abort */
 #define	STATUS_EB_TABT		0x01000000	/* target abort */
 #define	STATUS_GPPI		0x04000000	/* GPIO interrupt (21142) */

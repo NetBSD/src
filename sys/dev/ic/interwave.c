@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.43 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: interwave.c,v 1.44 2024/02/05 22:08:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.43 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.44 2024/02/05 22:08:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ iwintr(void *arg)
 
 	/*
 	 * The proper order to do this seems to be to read CSR3 to get the
-	 * int cause and fifo over underrrun status, then deal with the ints
+	 * int cause and fifo over underrun status, then deal with the ints
 	 * (new DMA set up), and to clear ints by writing the respective bit
 	 * to 0.
 	 */

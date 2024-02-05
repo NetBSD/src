@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2024/02/05 22:08:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2024/02/05 22:08:04 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -280,7 +280,7 @@ intc_intr(int ssr, int spc, int ssp)
 	ih = EVTCODE_IH(evtcode);
 	KDASSERT(ih->ih_func);
 	/*
-	 * On entry, all interrrupts are disabled, and exception is enabled.
+	 * On entry, all interrupts are disabled, and exception is enabled.
 	 * Enable higher level interrupt here.
 	 */
 	_cpu_intr_resume(ih->ih_level);

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.42 2023/11/22 01:58:02 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.43 2024/02/05 22:08:04 andvar Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2023/11/22 01:58:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2024/02/05 22:08:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -220,7 +220,7 @@ ddb_trap(unsigned long a0, unsigned long a1, unsigned long a2, unsigned long ent
 
 	/*
 	 * Use SWPIPL directly; we want to avoid processing
-	 * software interrrupts when we go back.  Soft ints
+	 * software interrupts when we go back.  Soft ints
 	 * will be caught later, so not to worry.
 	 */
 	psl = alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
