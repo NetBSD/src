@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.54 2019/11/30 00:28:27 uwe Exp $
+.\"	$NetBSD: macros,v 1.55 2024/02/05 21:39:51 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,7 +169,7 @@
 .\" support for more than two pages, nor for right-margins.
 .\" Usage:
 .\"   .Bc [ncol]
-.\" Dependancies:
+.\" Dependencies:
 .\"  macro CF   page trap macro for bottom of column
 .\"  macro CZ   code duplication; handling of diversion interpolation.
 .\"  macro CC   diversion trap macro for subdividing into pages.

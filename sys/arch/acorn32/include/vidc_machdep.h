@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc_machdep.h,v 1.1 2001/10/05 22:27:53 reinoud Exp $	*/
+/*	$NetBSD: vidc_machdep.h,v 1.2 2024/02/05 21:39:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 /*
- * This should be private to the vidc directory but there are still dependancies
+ * This should be private to the vidc directory but there are still dependencies
  * between the vidc and the riscpc virtual console (struct vidc_mode) that
  * means this file must be exported to userland.
  * With the import of the new console code this will go away.
