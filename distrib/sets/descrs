@@ -491,7 +491,7 @@ comp-sysutil-catman	formatted manual pages for system utilities
 comp-sysutil-man	manual pages source for system utilities
 comp-sysutil-root	manual pages source for system utilities
 comp-sysutil-sbin	system utilities 
-comp-tpm-catman		formated manual pages for the Trusted Platform Module libraries
+comp-tpm-catman		formatted manual pages for the Trusted Platform Module libraries
 comp-tpm-debug		debugging symbols for the Trusted Platfor Module utilities and libraries
 comp-tpm-htmlman	HTML documentation for the Trusted Platform Module libraries
 comp-tpm-lib		libraries for the Trusted Platform Module
@@ -690,7 +690,7 @@ man-timed-catman	formatted manual pages for the timed(8) network time daemon
 man-timed-man	manual pages source for the timed(8) network time daemon
 man-tn3270-catman	formatted manual pages for utilities for connecting to IBM VM/CMS systems
 man-tn3270-man	manual pages source for utilities for connecting to IBM VM/CMS systems
-man-tpm-catman		formated manual pages for the Trusted Platform Module utilities
+man-tpm-catman		formatted manual pages for the Trusted Platform Module utilities
 man-tpm-htmlman		HTML documentation for the Trusted Platform Module utilities
 man-tpm-man		documentation for the Trusted Platform Module utilities
 man-util-catman	formatted manual pages for basic user utilities 

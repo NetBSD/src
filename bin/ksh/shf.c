@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.15 2021/11/06 06:40:33 msaitoh Exp $	*/
+/*	$NetBSD: shf.c,v 1.16 2024/02/05 21:20:09 andvar Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.15 2021/11/06 06:40:33 msaitoh Exp $");
+__RCSID("$NetBSD: shf.c,v 1.16 2024/02/05 21:20:09 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -843,7 +843,7 @@ shf_smprintf(const char *fmt, ...)
 #define FL_ZERO		0x040	/* `0' seen */
 #define FL_DOT		0x080	/* '.' seen */
 #define FL_UPPER	0x100	/* format character was uppercase */
-#define FL_NUMBER	0x200	/* a number was formated %[douxefg] */
+#define FL_NUMBER	0x200	/* a number was formatted %[douxefg] */
 
 
 #ifdef FP
