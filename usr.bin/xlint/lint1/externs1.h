@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.215 2024/02/03 19:25:16 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.216 2024/02/05 23:11:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -292,8 +292,8 @@ tnode_t *build_sizeof(const type_t *);
 tnode_t *build_offsetof(const type_t *, designation);
 tnode_t *build_alignof(const type_t *);
 tnode_t *cast(tnode_t *, bool, type_t *);
-tnode_t *build_function_argument(tnode_t *, tnode_t *);
-tnode_t *build_function_call(tnode_t *, bool, tnode_t *);
+void add_function_argument(function_call *, tnode_t *);
+tnode_t *build_function_call(tnode_t *, bool, function_call *);
 val_t *integer_constant(tnode_t *, bool);
 void expr(tnode_t *, bool, bool, bool, bool);
 void check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
@@ -408,7 +408,7 @@ bool fallback_symbol_strict_bool(sym_t *);
 /*
  * ckctype.c
  */
-void check_ctype_function_call(const tnode_t *, const tnode_t *);
+void check_ctype_function_call(const function_call *);
 void check_ctype_macro_invocation(const tnode_t *, const tnode_t *);
 
 /*

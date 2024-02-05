@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.602 2024/02/03 19:25:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.603 2024/02/05 23:11:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.602 2024/02/03 19:25:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.603 2024/02/05 23:11:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1629,10 +1629,17 @@ use(const tnode_t *tn)
 	case CON:
 	case STRING:
 		break;
+	case CALL:
+	case ICALL:;
+		const function_call *call = tn->tn_call;
+		if (call->args != NULL)
+			for (size_t i = 0, n = call->args_len; i < n; i++)
+				use(call->args[i]);
+		break;
 	default:
 		lint_assert(has_operands(tn));
 		use(tn->tn_left);
-		if (is_binary(tn) || tn->tn_op == PUSH)
+		if (is_binary(tn))
 			use(tn->tn_right);
 	}
 }
@@ -2574,13 +2581,13 @@ static bool
 is_direct_function_call(const tnode_t *tn, const char **out_name)
 {
 
-	if (!(tn->tn_op == CALL &&
-	    tn->tn_left->tn_op == ADDR &&
-	    tn->tn_left->tn_left->tn_op == NAME))
-		return false;
-
-	*out_name = tn->tn_left->tn_left->tn_sym->s_name;
-	return true;
+	if (tn->tn_op == CALL
+	    && tn->tn_call->func->tn_op == ADDR
+	    && tn->tn_call->func->tn_left->tn_op == NAME) {
+		*out_name = tn->tn_call->func->tn_left->tn_sym->s_name;
+		return true;
+	}
+	return false;
 }
 
 static bool
@@ -2622,14 +2629,9 @@ is_const_char_pointer(const tnode_t *tn)
 static bool
 is_first_arg_const_char_pointer(const tnode_t *tn)
 {
-	lint_assert(has_operands(tn));
-	const tnode_t *an = tn->tn_right;
-	if (an == NULL)
-		return false;
-
-	while (tn_ck_right(an) != NULL)
-		an = an->tn_right;
-	return is_const_char_pointer(an->tn_left);
+	return tn->tn_call->args != NULL
+	    && tn->tn_call->args_len >= 1
+	    && is_const_char_pointer(tn->tn_call->args[0]);
 }
 
 static bool
@@ -2642,13 +2644,9 @@ is_const_pointer(const tnode_t *tn)
 static bool
 is_second_arg_const_pointer(const tnode_t *tn)
 {
-	const tnode_t *an = tn_ck_right(tn);
-	if (an == NULL || tn_ck_right(an) == NULL)
-		return false;
-
-	while (tn_ck_right(an->tn_right) != NULL)
-		an = an->tn_right;
-	return is_const_pointer(an->tn_left);
+	return tn->tn_call->args_len >= 2
+	    && tn->tn_call->args != NULL
+	    && is_const_pointer(tn->tn_call->args[1]);
 }
 
 static void
@@ -4110,14 +4108,8 @@ invalid_cast:
 	return NULL;
 }
 
-/*
- * Create the node for a function argument.
- * All necessary conversions and type checks are done in
- * build_function_call because build_function_argument has no
- * information about the expected parameter types.
- */
-tnode_t *
-build_function_argument(tnode_t *args, tnode_t *arg)
+void
+add_function_argument(function_call *call, tnode_t *arg)
 {
 	/*
 	 * If there was a serious error in the expression for the argument,
@@ -4127,7 +4119,16 @@ build_function_argument(tnode_t *args, tnode_t *arg)
 	if (arg == NULL)
 		arg = build_integer_constant(INT, 0);
 
-	return build_op(PUSH, arg->tn_sys, arg->tn_type, arg, args);
+	if (call->args_len >= call->args_cap) {
+		call->args_cap += 8;
+		tnode_t **new_args = expr_zero_alloc(
+		    call->args_cap * sizeof(*call->args),
+		    "function_call.args");
+		memcpy(new_args, call->args,
+		    call->args_len * sizeof(*call->args));
+		call->args = new_args;
+	}
+	call->args[call->args_len++] = arg;
 }
 
 /*
@@ -4159,18 +4160,17 @@ check_prototype_argument(
  * Check types of all function arguments and insert conversions,
  * if necessary.
  */
-static tnode_t *
-check_function_arguments(type_t *ftp, tnode_t *args)
+static bool
+check_function_arguments(const function_call *call)
 {
+	type_t *ftp = call->func->tn_type->t_subt;
+
 	/* get # of parameters in the prototype */
 	int npar = 0;
 	for (const sym_t *p = ftp->t_params; p != NULL; p = p->s_next)
 		npar++;
 
-	/* get # of arguments in the function call */
-	int narg = 0;
-	for (const tnode_t *arg = args; arg != NULL; arg = tn_ck_right(arg))
-		narg++;
+	int narg = (int)call->args_len;
 
 	const sym_t *param = ftp->t_params;
 	if (ftp->t_proto && npar != narg && !(ftp->t_vararg && npar < narg)) {
@@ -4180,50 +4180,45 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 	}
 
 	for (int n = 1; n <= narg; n++) {
-
-		// The rightmost argument starts the argument list.
-		tnode_t *arg = args;
-		for (int i = narg; i > n; i--, arg = arg->tn_right)
-			continue;
+		tnode_t *arg = call->args[n - 1];
 
 		/* some things which are always not allowed */
-		tspec_t at = arg->tn_left->tn_type->t_tspec;
+		tspec_t at = arg->tn_type->t_tspec;
 		if (at == VOID) {
 			/* void expressions may not be arguments, arg #%d */
 			error(151, n);
-			return NULL;
+			return false;
 		}
 		if (is_struct_or_union(at) &&
-		    is_incomplete(arg->tn_left->tn_type)) {
+		    is_incomplete(arg->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
-			return NULL;
+			return false;
 		}
 		if (is_integer(at) &&
-		    arg->tn_left->tn_type->t_is_enum &&
-		    is_incomplete(arg->tn_left->tn_type)) {
+		    arg->tn_type->t_is_enum &&
+		    is_incomplete(arg->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			warning(152, n);
 		}
 
-		arg->tn_left = cconv(arg->tn_left);
+		arg = cconv(arg);
+		call->args[n - 1] = arg;
 
-		if (param != NULL) {
-			arg->tn_left = check_prototype_argument(
-			    n, param->s_type, arg->tn_left);
-		} else
-			arg->tn_left = promote(NOOP, true, arg->tn_left);
-		arg->tn_type = arg->tn_left->tn_type;
+		arg = param != NULL
+		    ? check_prototype_argument(n, param->s_type, arg)
+		    : promote(NOOP, true, arg);
+		call->args[n - 1] = arg;
 
 		if (param != NULL)
 			param = param->s_next;
 	}
 
-	return args;
+	return true;
 }
 
 tnode_t *
-build_function_call(tnode_t *func, bool sys, tnode_t *args)
+build_function_call(tnode_t *func, bool sys, function_call *call)
 {
 
 	if (func == NULL)
@@ -4232,9 +4227,11 @@ build_function_call(tnode_t *func, bool sys, tnode_t *args)
 	op_t fcop = func->tn_op == NAME && func->tn_type->t_tspec == FUNC
 	    ? CALL : ICALL;
 
-	check_ctype_function_call(func, args);
+	call->func = func;
+	check_ctype_function_call(call);
 
 	func = cconv(func);
+	call->func = func;
 
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
@@ -4243,9 +4240,15 @@ build_function_call(tnode_t *func, bool sys, tnode_t *args)
 		return NULL;
 	}
 
-	args = check_function_arguments(func->tn_type->t_subt, args);
+	if (!check_function_arguments(call))
+		call->args = NULL;
 
-	return build_op(fcop, sys, func->tn_type->t_subt->t_subt, func, args);
+	tnode_t *ntn = expr_alloc_tnode();
+	ntn->tn_op = fcop;
+	ntn->tn_type = func->tn_type->t_subt->t_subt;
+	ntn->tn_sys = sys;
+	ntn->tn_call = call;
+	return ntn;
 }
 
 /*
@@ -4482,9 +4485,7 @@ check_expr_call(const tnode_t *tn, const tnode_t *ln,
 }
 
 static void
-check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
-	      bool szof, bool fcall, bool vctx, bool cond,
-	      bool retval_discarded, bool eqwarn)
+check_expr_op(op_t op, const tnode_t *ln, bool szof, bool fcall, bool eqwarn)
 {
 	switch (op) {
 	case ADDR:
@@ -4493,7 +4494,6 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 	case LOAD:
 		check_expr_load(ln);
 		/* FALLTHROUGH */
-	case PUSH:
 	case INCBEF:
 	case DECBEF:
 	case INCAFT:
@@ -4514,9 +4514,6 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 		break;
 	case ASSIGN:
 		check_expr_assign(ln, szof);
-		break;
-	case CALL:
-		check_expr_call(tn, ln, szof, vctx, cond, retval_discarded);
 		break;
 	case EQ:
 		if (hflag && eqwarn)
@@ -4552,12 +4549,26 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	op_t op = tn->tn_op;
 	if (op == NAME || op == CON || op == STRING)
 		return;
+	if (op == CALL || op == ICALL) {
+		const function_call *call = tn->tn_call;
+		if (op == CALL)
+			check_expr_call(tn, call->func,
+			    szof, vctx, cond, retval_discarded);
+		bool discard = op == CVT && tn->tn_type->t_tspec == VOID;
+		check_expr_misc(call->func, false, false, false, op == CALL,
+		    discard, szof);
+		if (call->args != NULL) {
+			for (size_t i = 0, n = call->args_len; i < n; i++)
+				check_expr_misc(call->args[i],
+				    false, false, false, false, false, szof);
+		}
+		return;
+	}
 
 	lint_assert(has_operands(tn));
 	tnode_t *ln = tn->tn_left;
 	tnode_t *rn = tn->tn_right;
-	check_expr_op(tn, op, ln,
-	    szof, fcall, vctx, cond, retval_discarded, eqwarn);
+	check_expr_op(op, ln, szof, fcall, eqwarn);
 
 	const mod_t *mp = &modtab[op];
 	bool cvctx = mp->m_value_context;
@@ -4579,11 +4590,6 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	check_expr_misc(ln, cvctx, ccond, eq, op == CALL, discard, szof);
 
 	switch (op) {
-	case PUSH:
-		if (rn != NULL)
-			check_expr_misc(rn, false, false, eq, false, false,
-			    szof);
-		break;
 	case LOGAND:
 	case LOGOR:
 		check_expr_misc(rn, false, true, eq, false, false, szof);

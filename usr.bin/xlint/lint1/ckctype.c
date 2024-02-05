@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.9 2023/12/03 13:12:40 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.10 2024/02/05 23:11:22 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.9 2023/12/03 13:12:40 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.10 2024/02/05 23:11:22 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -120,15 +120,13 @@ check_ctype_arg(const char *func, const tnode_t *arg)
 }
 
 void
-check_ctype_function_call(const tnode_t *func, const tnode_t *args)
+check_ctype_function_call(const function_call *call)
 {
 
-	if (func->tn_op == NAME &&
-	    is_ctype_function(func->tn_sym->s_name) &&
-	    args != NULL &&
-	    tn_ck_left(args) != NULL &&
-	    args->tn_right == NULL)
-		check_ctype_arg(func->tn_sym->s_name, args->tn_left);
+	if (call->args_len == 1 && call->args != NULL &&
+	    call->func->tn_op == NAME &&
+	    is_ctype_function(call->func->tn_sym->s_name))
+		check_ctype_arg(call->func->tn_sym->s_name, call->args[0]);
 }
 
 void

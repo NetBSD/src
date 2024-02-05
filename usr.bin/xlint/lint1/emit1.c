@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.85 2024/02/03 19:25:16 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.86 2024/02/05 23:11:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.85 2024/02/03 19:25:16 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.86 2024/02/05 23:11:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -323,9 +323,6 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 void
 outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
-	tnode_t *args, *arg;
-	int narg, i;
-
 	outint(csrc_pos.p_line);
 	outchar('c');		/* function call */
 	outint(get_filename_id(curr_pos.p_file));
@@ -336,16 +333,11 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	 * flags; 'u' and 'i' must be last to make sure a letter is between the
 	 * numeric argument of a flag and the name of the function
 	 */
-	narg = 0;
-	args = tn_ck_right(tn);
-	for (arg = args; arg != NULL; arg = tn_ck_right(arg))
-		narg++;
+	const function_call *call = tn->tn_call;
+
 	/* information about arguments */
-	for (int n = 1; n <= narg; n++) {
-		/* the last argument is the top one in the tree */
-		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
-			continue;
-		arg = arg->tn_left;
+	for (size_t n = 1; call->args != NULL && n <= call->args_len; n++) {
+		const tnode_t *arg = call->args[n - 1];
 		if (arg->tn_op == CON) {
 			tspec_t t = arg->tn_type->t_tspec;
 			if (is_integer(t)) {
@@ -364,7 +356,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 					/* negative if cast to signed */
 					outchar('n');
 				}
-				outint(n);
+				outint((int)n);
 			}
 		} else if (arg->tn_op == ADDR &&
 		    arg->tn_left->tn_op == STRING &&
@@ -377,25 +369,20 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 
 			/* string literal, write all format specifiers */
 			outchar('s');
-			outint(n);
+			outint((int)n);
 			outfstrg(buf.data);
 			free(buf.data);
 		}
 	}
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
 
-	/* name of the called function */
-	outname(tn_ck_left(tn->tn_left)->tn_sym->s_name);
+	outname(call->func->tn_left->tn_sym->s_name);
 
 	/* types of arguments */
 	outchar('f');
-	outint(narg);
-	for (int n = 1; n <= narg; n++) {
-		/* the last argument is the top one in the tree */
-		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
-			continue;
-		outtype(arg->tn_left->tn_type);
-	}
+	outint((int)call->args_len);
+	for (size_t i = 0; call->args != NULL && i < call->args_len; i++)
+		outtype(call->args[i]->tn_type);
 	/* expected type of return value */
 	outtype(tn->tn_type);
 	outchar('\n');
