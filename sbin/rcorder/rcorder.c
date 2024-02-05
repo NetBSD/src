@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.18 2016/09/05 01:09:57 sevan Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.19 2024/02/05 21:39:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -232,7 +232,7 @@ strnode_add(strnodelist **listp, char *s, filenode *fnode)
 
 /*
  * below are the functions that deal with creating the lists
- * from the filename's given and the dependancies and provisions
+ * from the filename's given and the dependencies and provisions
  * in each of these files.  no ordering or checking is done here.
  */
 
@@ -662,7 +662,7 @@ keep_ok(filenode *fnode)
  *
  * NOTE: do_file() is called recursively from several places and cannot
  * safely free() anything related to items that may be recursed on.
- * Circular dependancies will cause problems if we do.
+ * Circular dependencies will cause problems if we do.
  */
 void
 do_file(filenode *fnode)

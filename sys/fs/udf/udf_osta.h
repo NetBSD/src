@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.h,v 1.4 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_osta.h,v 1.5 2024/02/05 21:39:52 andvar Exp $ */
 
 /*
  * Prototypes for the OSTA functions
@@ -24,7 +24,7 @@
 
 
 /***********************************************************************
- * The following two typedef's are to remove compiler dependancies.
+ * The following two typedef's are to remove compiler dependencies.
  * byte needs to be unsigned 8-bit, and unicode_t needs to be
  * unsigned 16-bit.
  */
