@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.30 2023/12/25 13:31:00 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.31 2024/02/05 21:46:05 andvar Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ RISCVREG_READ_SET_CLEAR_INLINE(sstatus)		// supervisor status register
 #define	 SR_FS_CLEAN	2		//   Clean
 #define	 SR_FS_DIRTY	3		//   Dirty
 			/* Bits 12-11 are WPRI */
-#define	SR_VS		__BITS(10, 9)	// User-mode extention state
+#define	SR_VS		__BITS(10, 9)	// User-mode extension state
 #define	 SR_VS_OFF	SR_FS_OFF	//   Off
 #define	 SR_VS_INITIAL	SR_FS_INITIAL	//   Initial
 #define	 SR_VS_CLEAN	SR_FS_CLEAN	//   Clean

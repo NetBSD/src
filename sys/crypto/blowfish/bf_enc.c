@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc.c,v 1.10 2005/12/11 12:20:48 christos Exp $	*/
+/*	$NetBSD: bf_enc.c,v 1.11 2024/02/05 21:46:06 andvar Exp $	*/
 
 /* crypto/bf/bf_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -59,14 +59,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.10 2005/12/11 12:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.c,v 1.11 2024/02/05 21:46:06 andvar Exp $");
 
 #include <sys/types.h>
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/blowfish/bf_locl.h>
 
 /* Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
- * (From LECTURE NOTES IN COIMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
+ * (From LECTURE NOTES IN COMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 

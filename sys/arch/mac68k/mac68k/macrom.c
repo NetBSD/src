@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.73 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: macrom.c,v 1.74 2024/02/05 21:46:05 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.73 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.74 2024/02/05 21:46:05 andvar Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -289,7 +289,7 @@ Count_Resources(u_int32_t rsrc_type)
 	    (long)rsrc_type, (long)rsrc);
 #endif
 	/*
-	 * Return a Count of all the ROM Resouces of the requested type.
+	 * Return a Count of all the ROM Resources of the requested type.
 	 */
 	if (ROMResourceMap == 0)
 		panic("Oops! Need ROM Resource Map ListHead address!");

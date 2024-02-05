@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.13 2022/05/28 21:14:56 andvar Exp $ */
+/* $NetBSD: udf_core.c,v 1.14 2024/02/05 21:46:05 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.13 2022/05/28 21:14:56 andvar Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.14 2024/02/05 21:46:05 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -886,7 +886,7 @@ udf_timestamp_to_timespec(struct timestamp *timestamp, struct timespec *timespec
 	 */
 	tz  = udf_rw16(timestamp->type_tz);
 	tz &= 0x0fff;				/* only lower 12 bits are significant */
-	if (tz & 0x0800)			/* sign extention */
+	if (tz & 0x0800)			/* sign extension */
 		tz |= 0xf000;
 
 	/* TODO check timezone conversion */

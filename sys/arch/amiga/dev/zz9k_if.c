@@ -1,4 +1,4 @@
-/*	$NetBSD: zz9k_if.c,v 1.1 2023/05/03 13:49:30 phx Exp $ */
+/*	$NetBSD: zz9k_if.c,v 1.2 2024/02/05 21:46:05 andvar Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zz9k_if.c,v 1.1 2023/05/03 13:49:30 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zz9k_if.c,v 1.2 2024/02/05 21:46:05 andvar Exp $");
 
 /* miscellaneous */
 #include <sys/types.h>			/* size_t */
@@ -258,7 +258,7 @@ zzif_start(struct ifnet *ifp)
 		/* make bpf happy */
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		
-		/* copy dequeued mbuf data to tranmit buffer of the ZZ9000 */
+		/* copy dequeued mbuf data to transmit buffer of the ZZ9000 */
 		for (struct mbuf *n = m; n != NULL; n = n->m_next) {
 			memcpy(frame, n->m_data, n->m_len);
 			frame += n->m_len;

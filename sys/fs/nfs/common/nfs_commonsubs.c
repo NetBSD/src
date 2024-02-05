@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonsubs.c,v 1.5 2022/10/07 19:56:31 andvar Exp $	*/
+/*	$NetBSD: nfs_commonsubs.c,v 1.6 2024/02/05 21:46:06 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonsubs.c 308708 2016-11-16 01:11:49Z cperciva "); */
-__RCSID("$NetBSD: nfs_commonsubs.c,v 1.5 2022/10/07 19:56:31 andvar Exp $");
+__RCSID("$NetBSD: nfs_commonsubs.c,v 1.6 2024/02/05 21:46:06 andvar Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -1793,7 +1793,7 @@ nfsv4_loadattr(struct nfsrv_descript *nd, vnode_t vp,
 				*retcmpp = NFSERR_ATTRNOTSUPP;
 			/*
 			 * and get out of the loop, since we can't parse
-			 * the unknown attrbute data.
+			 * the unknown attribute data.
 			 */
 			bitpos = NFSATTRBIT_MAX;
 			break;

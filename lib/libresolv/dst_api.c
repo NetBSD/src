@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.10 2022/11/02 20:38:21 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.11 2024/02/05 21:46:05 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.10 2022/11/02 20:38:21 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.11 2024/02/05 21:46:05 andvar Exp $");
 #endif
 
 
@@ -820,7 +820,7 @@ dst_key_to_buffer(DST_KEY *key, u_char *out_buff, int buf_len)
  *     pk_key  Structure that the key is returned in.
  *     in_id   Key identifier (tag)
  * Return
- *     1 if everthing works
+ *     1 if everything works
  *     0 if there is any problem
  */
 

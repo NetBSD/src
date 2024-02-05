@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.90 2023/08/01 07:04:16 mrg Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.91 2024/02/05 21:46:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -110,7 +110,7 @@ struct ether_header {
 	 (((etype) == ETHERTYPE_PPPOE) ? ETHER_PPPOE_ENCAP_LEN : 0))
 
 /*
- * Ethernet CRC32 polynomials (big- and little-endian verions).
+ * Ethernet CRC32 polynomials (big- and little-endian versions).
  */
 #define	ETHER_CRC_POLY_LE	0xedb88320
 #define	ETHER_CRC_POLY_BE	0x04c11db6

@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.9 2022/04/21 04:03:54 gutteridge Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.10 2024/02/05 21:46:05 andvar Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,7 @@ typedef struct {
 			/* fields in third byte */
 	unsigned	qr: 1;		/*%< response flag */
 	unsigned	opcode: 4;	/*%< purpose of message */
-	unsigned	aa: 1;		/*%< authoritive answer */
+	unsigned	aa: 1;		/*%< authoritative answer */
 	unsigned	tc: 1;		/*%< truncated message */
 	unsigned	rd: 1;		/*%< recursion desired */
 			/* fields in fourth byte */
@@ -78,7 +78,7 @@ typedef struct {
 			/* fields in third byte */
 	unsigned	rd :1;		/*%< recursion desired */
 	unsigned	tc :1;		/*%< truncated message */
-	unsigned	aa :1;		/*%< authoritive answer */
+	unsigned	aa :1;		/*%< authoritative answer */
 	unsigned	opcode :4;	/*%< purpose of message */
 	unsigned	qr :1;		/*%< response flag */
 			/* fields in fourth byte */

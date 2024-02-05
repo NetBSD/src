@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.95 2023/06/23 02:13:03 rin Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.96 2024/02/05 21:46:07 andvar Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.95 2023/06/23 02:13:03 rin Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.96 2024/02/05 21:46:07 andvar Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1090,7 +1090,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p, const char *linevars)
 	fprintf(outmk, " / %s$$/ { next };", lst->str);
     fprintf(outmk, " / main$$/ { print \"main _crunched_%s_stub\"; next };",
 	    p->ident);
-    /* gdb thinks these are C++ and ignores everthing after the first $$. */
+    /* gdb thinks these are C++ and ignores everything after the first $$. */
     fprintf(outmk, " { print $$3 \" \" $$3 \"$$$$from$$$$%s\" }' "
 	    "> %s.cro.syms\n", p->name, p->name);
     fprintf(outmk, "\t${OBJCOPY} --redefine-syms %s.cro.syms ", p->name);

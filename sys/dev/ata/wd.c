@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.468 2023/01/24 08:34:18 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.469 2024/02/05 21:46:06 andvar Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.468 2023/01/24 08:34:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.469 2024/02/05 21:46:06 andvar Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -436,7 +436,7 @@ wdattach(device_t parent, device_t self, void *aux)
 		    wd->sc_params.atap_sectors;
 		/*
 		 * LBA28 size is ignored for CHS addressing. Use a reasonable
-		 * value for debugging. The CHS values may be artifical and
+		 * value for debugging. The CHS values may be artificial and
 		 * are mostly ignored.
 		 */
 		if (wd->sc_capacity < 0xfffffff)

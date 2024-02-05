@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.2 2019/06/16 16:01:44 christos Exp $	*/
+/*	$NetBSD: xdr.h,v 1.3 2024/02/05 21:46:04 andvar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -93,8 +93,8 @@ enum xdr_op {
 /*
  * The XDR handle.
  * Contains operation which is being applied to the stream,
- * an operations vector for the paticular implementation (e.g. see xdr_mem.c),
- * and two private fields for the use of the particular impelementation.
+ * an operations vector for the particular implementation (e.g. see xdr_mem.c),
+ * and two private fields for the use of the particular implementation.
  */
 typedef struct __rpc_xdr {
 	enum xdr_op	x_op;		/* operation; fast additional param */
