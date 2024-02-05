@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.54 2023/12/20 06:13:59 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.55 2024/02/05 22:08:04 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.54 2023/12/20 06:13:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55 2024/02/05 22:08:04 andvar Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1345,7 +1345,7 @@ ieintr(void *arg)
     if (in_intr == 1)
 	panic ( "ie: INTERRUPT REENTERED\n" );
 
-    /* Clear the interrrupt */
+    /* Clear the interrupt */
     ie_cli (sc);
 
     setpage(sc, IE_IBASE + IE_SCB_OFF );

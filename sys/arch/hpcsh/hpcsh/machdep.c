@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2024/02/05 22:08:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2017/11/06 03:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2024/02/05 22:08:05 andvar Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -604,7 +604,7 @@ intc_intr(int ssr, int spc, int ssp)
 	ih = EVTCODE_IH(evtcode);
 	KDASSERT(ih->ih_func);
 	/*
-	 * On entry, all interrrupts are disabled,
+	 * On entry, all interrupts are disabled,
 	 * and exception is enabled for P3 access. (kernel stack is P3,
 	 * SH3 may or may not cause TLB miss when access stack.)
 	 * Enable higher level interrupt here.

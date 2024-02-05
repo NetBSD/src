@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.74 2022/12/12 16:53:30 chs Exp $	*/
+/*	$NetBSD: tape.c,v 1.75 2024/02/05 22:08:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.74 2022/12/12 16:53:30 chs Exp $");
+__RCSID("$NetBSD: tape.c,v 1.75 2024/02/05 22:08:04 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ setup(void)
  * Prompt user to load a new dump volume.
  * "Nextvol" is the next suggested volume to use.
  * This suggested volume is enforced when doing full
- * or incremental restores, but can be overrridden by
+ * or incremental restores, but can be overridden by
  * the user when only extracting a subset of the files.
  */
 void
