@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.37 2024/02/02 22:23:53 andvar Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.38 2024/02/05 21:46:06 andvar Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -140,7 +140,7 @@ struct dp8390_softc {
 #define DP8390_ATTACHED			0x0040	/* attach has succeeded */
 
 /*
- * ASIX AX88796 doesn't have remote DMA conmplete bit in ISR, so don't
+ * ASIX AX88796 doesn't have remote DMA complete bit in ISR, so don't
  * check ISR.RDC
  */
 #define DP8390_NO_REMOTE_DMA_COMPLETE	0x0080

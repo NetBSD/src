@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.96 2023/12/20 18:09:19 skrll Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.97 2024/02/05 21:46:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.96 2023/12/20 18:09:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.97 2024/02/05 21:46:06 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -4513,7 +4513,7 @@ ixl_get_link_status_poll(struct ixl_softc *sc, int *l)
 		return EIO;
 	}
 
-	/* It is unneccessary to hold lock */
+	/* It is unnecessary to hold lock */
 	link = ixl_set_link_status_locked(sc, &iaq);
 
 	if (l != NULL)

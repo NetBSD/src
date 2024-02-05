@@ -1,4 +1,4 @@
-/*	$NetBSD: service.c,v 1.4 2022/04/11 20:57:37 andvar Exp $	*/
+/*	$NetBSD: service.c,v 1.5 2024/02/05 21:46:07 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: service.c,v 1.4 2022/04/11 20:57:37 andvar Exp $");
+__RCSID("$NetBSD: service.c,v 1.5 2024/02/05 21:46:07 andvar Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -451,7 +451,7 @@ sdpd_valid_ssp(sdp_data_t *ssp)
  * order 16-bits are the beginning of the range and the low order 16-bits
  * are the ending
  *
- * The attrbute IDs should be listed in ascending order without duplication
+ * The attribute IDs should be listed in ascending order without duplication
  * of any attribute ID values but we don't worry about that, since if the
  * remote party messes up, their results will be messed up
  */

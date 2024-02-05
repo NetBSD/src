@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.39 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.40 2024/02/05 21:46:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -76,7 +76,7 @@ struct uvm_object {
  * memory objects don't have reference counts -- they never die).
  *
  * this value is used to detected kernel object mappings at uvm_unmap()
- * time.   normally when an object is unmapped its pages eventaully become
+ * time.   normally when an object is unmapped its pages eventually become
  * deactivated and then paged out and/or freed.    this is not useful
  * for kernel objects... when a kernel object is unmapped we always want
  * to free the resources associated with the mapping.   UVM_OBJ_KERN
