@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.70 2024/02/03 19:25:16 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.71 2024/02/05 23:11:22 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.70 2024/02/03 19:25:16 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.71 2024/02/05 23:11:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -240,6 +240,20 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		else
 			debug_printf(", length %zu\n", tn->tn_string->len);
 		break;
+	case CALL:
+	case ICALL:
+		debug_printf("\n");
+
+		debug_indent_inc();
+		const function_call *call = tn->tn_call;
+		debug_node(call->func);
+		if (call->args != NULL) {
+			for (size_t i = 0; i < call->args_len; i++)
+				debug_node(call->args[i]);
+		} else
+			debug_step("error in arguments");
+		debug_indent_dec();
+		break;
 	default:
 		debug_printf("\n");
 
@@ -249,7 +263,7 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_node(tn->tn_left);
 		if (op != INCBEF && op != INCAFT
 		    && op != DECBEF && op != DECAFT
-		    && op != CALL && op != ICALL && op != PUSH)
+		    && op != CALL && op != ICALL)
 			lint_assert(is_binary(tn) == (tn->tn_right != NULL));
 		if (tn->tn_right != NULL)
 			debug_node(tn->tn_right);

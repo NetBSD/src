@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.213 2024/02/03 19:37:02 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.214 2024/02/05 23:11:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -288,6 +288,13 @@ typedef struct sbuf {
 } sbuf_t;
 
 
+typedef struct {
+	struct tnode *func;
+	struct tnode **args;
+	size_t args_len;
+	size_t args_cap;
+} function_call;
+
 /*
  * tree node
  */
@@ -317,6 +324,7 @@ typedef struct tnode {
 					 * wide strings, 'data' is NULL and
 					 * 'len' is the number of resulting
 					 * characters */
+		function_call *_tn_call;
 	} tn_u;
 } tnode_t;
 
@@ -325,6 +333,7 @@ typedef struct tnode {
 #define tn_sym		tn_u._tn_sym
 #define	tn_val		tn_u._tn_val
 #define	tn_string	tn_u._tn_string
+#define tn_call		tn_u._tn_call
 
 struct generic_association {
 	type_t *ga_arg;		/* NULL means default or error */

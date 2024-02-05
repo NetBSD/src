@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.486 2024/02/02 16:05:37 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.487 2024/02/05 23:11:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.486 2024/02/02 16:05:37 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.487 2024/02/05 23:11:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -145,6 +145,7 @@ is_either(const char *s, const char *a, const char *b)
 	type_qualifiers y_type_qualifiers;
 	function_specifier y_function_specifier;
 	struct parameter_list y_parameter_list;
+	function_call *y_arguments;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	range_t	y_range;
@@ -298,7 +299,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_op>		point_or_arrow
-%type	<y_tnode>	argument_expression_list
+%type	<y_arguments>	argument_expression_list
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
 %type	<y_tnode>	expression_opt
@@ -558,7 +559,9 @@ postfix_expression:
 		$$ = build_unary(INDIR, $3, build_binary($1, PLUS, $3, $4));
 	}
 |	postfix_expression T_LPAREN sys T_RPAREN {
-		$$ = build_function_call($1, $3, NULL);
+		function_call *call =
+		    expr_zero_alloc(sizeof(*call), "function_call");
+		$$ = build_function_call($1, $3, call);
 	}
 |	postfix_expression T_LPAREN sys argument_expression_list T_RPAREN {
 		$$ = build_function_call($1, $3, $4);
@@ -643,10 +646,11 @@ point_or_arrow:			/* helper for 'postfix_expression' */
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
 	assignment_expression {
-		$$ = build_function_argument(NULL, $1);
+		$$ = expr_zero_alloc(sizeof(*$$), "function_call");
+		add_function_argument($$, $1);
 	}
 |	argument_expression_list T_COMMA assignment_expression {
-		$$ = build_function_argument($1, $3);
+		add_function_argument($1, $3);
 	}
 ;
 

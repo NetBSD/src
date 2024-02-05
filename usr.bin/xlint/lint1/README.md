@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.14 2023/09/14 21:08:12 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.15 2024/02/05 23:11:22 rillig Exp $)
 
 # Introduction
 
@@ -123,34 +123,31 @@ structure:
 
 ~~~text
  1: 'call' type 'int'
- 2:  '&' type 'pointer to function(pointer to const char, pointer to const char) returning int'
- 3:    'name' 'strcmp' with extern 'function(pointer to const char, pointer to const char) returning int'
- 4:  'push' type 'pointer to const char'
- 5:    'convert' type 'pointer to const char'
- 6:      '&' type 'pointer to char'
- 7:        'string' type 'array[5] of char', lvalue, length 4, "name"
- 8:    'push' type 'pointer to const char'
- 9:      'load' type 'pointer to const char'
-10:        '*' type 'pointer to const char', lvalue
-11:          '+' type 'pointer to pointer to const char'
-12:            'load' type 'pointer to pointer to const char'
-13:              'name' 'names' with auto 'pointer to pointer to const char', lvalue
-14:            '*' type 'long'
-15:              'convert' type 'long'
-16:                'load' type 'int'
-17:                  'name' 'i' with auto 'int', lvalue
-18:              'constant' type 'long', value 8
+ 2:   '&' type 'pointer to function(pointer to const char, pointer to const char) returning int'
+ 3:     'name' 'strcmp' with extern 'function(pointer to const char, pointer to const char) returning int'
+ 4:   'load' type 'pointer to const char'
+ 5:     '*' type 'pointer to const char', lvalue
+ 6:       '+' type 'pointer to pointer to const char'
+ 7:         'load' type 'pointer to pointer to const char'
+ 8:           'name' 'names' with auto 'pointer to pointer to const char', lvalue
+ 9:         '*' type 'long'
+10:           'convert' type 'long'
+11:             'load' type 'int'
+12:               'name' 'i' with auto 'int', lvalue
+13:           'constant' type 'long', value 8
+14:   'convert' type 'pointer to const char'
+15:     '&' type 'pointer to char'
+16:       'string' type 'array[5] of char', lvalue, "name"
 ~~~
 
-| Lines  | Notes                                                            |
-|--------|------------------------------------------------------------------|
-| 4, 8   | Each argument of the function call corresponds to a `PUSH` node. |
-| 5, 9   | The left operand of a `PUSH` node is the actual argument.        |
-| 8      | The right operand is the `PUSH` node of the previous argument.   |
-| 5, 9   | The arguments of a call are ordered from right to left.          |
-| 10, 11 | Array access is represented as `*(left + right)`.                |
-| 14, 18 | Array and struct offsets are in premultiplied form.              |
-| 18     | The size of a pointer on this platform is 8 bytes.               |
+| Lines      | Notes                                                       |
+|------------|-------------------------------------------------------------|
+| 1, 2, 4, 7 | A function call consists of the function and its arguments. |
+| 4, 14      | The arguments of a call are ordered from left to right.     |
+| 5, 6       | Array access is represented as `*(left + right)`.           |
+| 9, 13      | Array and struct offsets are in premultiplied form.         |
+| 9          | The type `ptrdiff_t` on this platform is `long`, not `int`. |
+| 13         | The size of a pointer on this platform is 8 bytes.          |
 
 See `debug_node` for how to interpret the members of `tnode_t`.
 

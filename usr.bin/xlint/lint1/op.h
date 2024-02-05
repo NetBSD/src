@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.26 2023/12/03 18:17:41 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.27 2024/02/05 23:11:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -119,13 +119,6 @@ typedef enum {
 	CVT,
 	ICALL,
 	LOAD,
-	/*
-	 * PUSH is a virtual node that is used to concatenate arguments in a
-	 * function call expression.  The PUSH nodes are ordered from right to
-	 * left.  For example, the function call f(17, 23) is represented as
-	 * CALL(f, PUSH(23, PUSH(17, NULL))).
-	 */
-	PUSH,
 	RETURN,
 	REAL,
 	IMAG,
