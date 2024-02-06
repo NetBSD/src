@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.20 2022/11/22 00:25:52 mlelstv Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.21 2024/02/06 20:25:11 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -107,7 +107,7 @@ resizedisk(gpt_t gpt, off_t sector, off_t size, bool quiet)
         mbr = mbrmap->map_data;
 
 	gpt->gpt = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
+	if (gpt->gpt == NULL) {
 		gpt_warnx(gpt, "No primary GPT header; run create or recover");
 		return -1;
 	}
