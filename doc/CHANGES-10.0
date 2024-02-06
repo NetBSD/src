@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.193 2024/02/04 11:29:46 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.194 2024/02/06 12:37:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15469,4 +15469,50 @@ sys/sys/socketvar.h				1.168
 	PR 55690: fix pipe2(2) ignoring 'flags' on kernels with
 	options PIPE_SOCKETPAIR.
 	[jdolecek, ticket #583]
+
+usr.bin/rpcinfo/rpcinfo.c			1.38
+
+	rpcinfo(8): use IANA registerd service name "sunrpc" instead
+	of "rpcbind".
+	[mlelstv, ticket #584]
+
+sys/dev/usb/ehci.c				1.321
+sys/dev/usb/ehcireg.h				1.38
+
+	ehci(4): fix DMA sync flags and ensure proper alignment of
+	hardware descriptors.
+	[jmcneill, ticket #585]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.38
+external/public-domain/tz/dist/NEWS             up to 1.1.1.45
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.37
+external/public-domain/tz/dist/africa           up to 1.1.1.33
+external/public-domain/tz/dist/asia             up to 1.12
+external/public-domain/tz/dist/australasia      up to 1.9
+external/public-domain/tz/dist/checknow.awk     up to 1.1.1.2
+external/public-domain/tz/dist/etcetera         up to 1.1.1.8
+external/public-domain/tz/dist/europe           up to 1.1.1.39
+external/public-domain/tz/dist/leap-seconds.list up to 1.7
+external/public-domain/tz/dist/leapseconds      up to 1.7
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.14
+external/public-domain/tz/dist/northamerica     up to 1.1.1.35
+external/public-domain/tz/dist/southamerica     up to 1.1.1.25
+external/public-domain/tz/dist/theory.html      up to 1.1.1.19
+external/public-domain/tz/dist/version          up to 1.12
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.9
+external/public-domain/tz/dist/zonenow.tab      up to 1.1.1.2
+doc/3RDPARTY					(manual edit)
+
+	Updated tzdata to 2024a.
+	[kre, ticket #586]
+
+sys/arch/evbppc/wii/dev/wiifb.c			1.6
+
+	wiifb(4): various fixes.
+	[jmcneill, ticket #587]
+
+sys/dev/pci/ppb.c				1.75
+
+	ppb(4): print out PCIe Gen5 link speed correctly
+	[rin, ticket #588]
 
