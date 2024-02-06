@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.37 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.37.50.1 2024/02/06 12:18:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ typedef uint32_t ehci_isoc_trans_t;
 typedef uint32_t ehci_isoc_bufr_ptr_t;
 
 /* Isochronous Transfer Descriptor */
+#define EHCI_ITD_ALIGN 32
 #define EHCI_ITD_NUFRAMES USB_UFRAMES_PER_FRAME
 #define EHCI_ITD_NBUFFERS 7
 typedef struct {
@@ -247,10 +248,10 @@ typedef struct {
 #define EHCI_ITD_GET_MULTI(x)	__SHIFTOUT((x), EHCI_ITD_MULTI_MASK)
 #define EHCI_ITD_SET_MULTI(x)	__SHIFTIN((x), EHCI_ITD_MULTI_MASK)
 	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[EHCI_ITD_NBUFFERS];
-} ehci_itd_t;
-#define EHCI_ITD_ALIGN 32
+} __aligned(EHCI_ITD_ALIGN) ehci_itd_t;
 
 /* Split Transaction Isochronous Transfer Descriptor */
+#define EHCI_SITD_ALIGN 32
 typedef struct {
 	volatile ehci_link_t	sitd_next;
 	volatile uint32_t	sitd_endp;
@@ -294,12 +295,12 @@ typedef struct {
 
 	volatile ehci_link_t	sitd_back;
 	volatile uint32_t	sitd_buffer_hi[EHCI_SITD_BUFFERS];
-} ehci_sitd_t;
-#define EHCI_SITD_ALIGN 32
+} __aligned(EHCI_SITD_ALIGN) ehci_sitd_t;
 
 /* Queue Element Transfer Descriptor */
 #define EHCI_QTD_NBUFFERS	5
 #define EHCI_QTD_MAXTRANSFER	(EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE)
+#define EHCI_QTD_ALIGN 32
 typedef struct {
 	volatile ehci_link_t	qtd_next;
 	volatile ehci_link_t	qtd_altnext;
@@ -338,10 +339,10 @@ typedef struct {
 #define	EHCI_QTD_SET_TOGGLE(x)	__SHIFTIN((x), EHCI_QTD_TOGGLE_MASK)
 	volatile ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
 	volatile ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
-} ehci_qtd_t;
-#define EHCI_QTD_ALIGN 32
+} __aligned(EHCI_QTD_ALIGN) ehci_qtd_t;
 
 /* Queue Head */
+#define EHCI_QH_ALIGN 32
 typedef struct {
 	volatile ehci_link_t	qh_link;
 	volatile uint32_t	qh_endp;
@@ -388,16 +389,26 @@ typedef struct {
 #define EHCI_QH_GET_MULT(x)	__SHIFTOUT((x), EHCI_QH_MULTI_MASK)
 #define EHCI_QH_SET_MULT(x)	__SHIFTIN((x), EHCI_QH_MULTI_MASK)
 	volatile ehci_link_t	qh_curqtd;
-	ehci_qtd_t		qh_qtd;
-} ehci_qh_t;
-#define EHCI_QH_ALIGN 32
+	/*
+	 * The QH descriptor contains a TD overlay, but it is not
+	 * 32-byte aligned, so declare the fields instead of embedding
+	 * a ehci_qtd_t directly.
+	 */
+	struct {
+		volatile ehci_link_t	qtd_next;
+		volatile ehci_link_t	qtd_altnext;
+		volatile uint32_t	qtd_status;
+		volatile ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
+		volatile ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
+	} qh_qtd;
+} __aligned(EHCI_QH_ALIGN) ehci_qh_t;
 
 /* Periodic Frame Span Traversal Node */
+#define EHCI_FSTN_ALIGN 32
 typedef struct {
 	volatile ehci_link_t	fstn_link;
 	volatile ehci_link_t	fstn_back;
-} ehci_fstn_t;
-#define EHCI_FSTN_ALIGN 32
+} __aligned(EHCI_FSTN_ALIGN) ehci_fstn_t;
 
 /* Debug Port */
 #define PCI_CAP_DEBUGPORT_OFFSET __BITS(28,16)
