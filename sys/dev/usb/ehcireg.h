@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.38 2024/02/05 23:07:42 jmcneill Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.39 2024/02/06 23:57:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -394,7 +394,7 @@ typedef struct {
 	 * 32-byte aligned, so declare the fields instead of embedding
 	 * a ehci_qtd_t directly.
 	 */
-	struct {
+	struct ehci_qh_qtd_t {
 		volatile ehci_link_t	qtd_next;
 		volatile ehci_link_t	qtd_altnext;
 		volatile uint32_t	qtd_status;
