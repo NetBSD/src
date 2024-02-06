@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.20 2023/08/12 18:05:51 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.21 2024/02/06 22:47:21 rillig Exp $
 
 --[[
 
@@ -16,7 +16,7 @@ local function load_messages()
 
   local f = assert(io.open("err.c"))
   for line in f:lines() do
-    local msg, id = line:match("%s*\"(.+)\",%s*/%*%s*(Q?%d+)%s*%*/$")
+    local msg, id = line:match("%s*\"(.+)\",%s*// (Q?%d+)$")
     if msg ~= nil then
       msgs[id] = msg
     end
