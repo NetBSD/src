@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.37 2013/05/24 23:09:45 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.37.38.1 2024/02/06 12:16:26 martin Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -569,7 +569,7 @@ get_inet_address(struct sockaddr_in *addr, const char *host)
 		} else {
 			(void)memset(&hints, 0, sizeof hints);
 			hints.ai_family = AF_INET;
-			if ((error = getaddrinfo(host, "rpcbind", &hints, &res))
+			if ((error = getaddrinfo(host, "sunrpc", &hints, &res))
 			    != 0) {
 				errx(1, "%s: %s", host, gai_strerror(error));
 			} else {
@@ -1628,7 +1628,7 @@ getclnthandle(const char *host, const struct netconfig *nconf,
 
 	/* Get the address of the rpcbind */
 	(void)memset(&hints, 0, sizeof hints);
-	if (getaddrinfo(host, "rpcbind", &hints, &res) != 0) {
+	if (getaddrinfo(host, "sunrpc", &hints, &res) != 0) {
 		rpc_createerr.cf_stat = RPC_N2AXLATEFAILURE;
 		return NULL;
 	}
