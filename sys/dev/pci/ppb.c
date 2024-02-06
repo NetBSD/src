@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.74 2021/10/10 23:28:36 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.74.4.1 2024/02/06 12:34:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.74 2021/10/10 23:28:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.74.4.1 2024/02/06 12:34:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.74 2021/10/10 23:28:36 msaitoh Exp $");
 	(PCIE_SLCSR_ABP | PCIE_SLCSR_PFD | PCIE_SLCSR_MSC |	\
 	 PCIE_SLCSR_PDC | PCIE_SLCSR_CC | PCIE_SLCSR_LACS)
 
-static const char pcie_linkspeed_strings[5][5] = {
-	"1.25", "2.5", "5.0", "8.0", "16.0"
+static const char pcie_linkspeed_strings[6][5] = {
+	"1.25", "2.5", "5.0", "8.0", "16.0", "32.0",
 };
 
 int	ppb_printevent = 0; /* Print event type if the value is not 0 */
