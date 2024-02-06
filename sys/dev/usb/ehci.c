@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.315.2.2 2023/10/30 17:45:10 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.315.2.3 2024/02/06 12:18:55 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.315.2.2 2023/10/30 17:45:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.315.2.3 2024/02/06 12:18:55 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3060,7 +3060,7 @@ ehci_append_sqtd(ehci_soft_qtd_t *sqtd, ehci_soft_qtd_t *prev)
 		prev->qtd.qtd_next = htole32(sqtd->physaddr);
 		prev->qtd.qtd_altnext = prev->qtd.qtd_next;
 		usb_syncmem(&prev->dma, prev->offs, sizeof(prev->qtd),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
 }
 
