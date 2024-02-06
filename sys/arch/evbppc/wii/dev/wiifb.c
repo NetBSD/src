@@ -1,4 +1,4 @@
-/* $NetBSD: wiifb.c,v 1.5.2.2 2024/02/03 11:47:04 martin Exp $ */
+/* $NetBSD: wiifb.c,v 1.5.2.3 2024/02/06 12:33:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5.2.2 2024/02/03 11:47:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5.2.3 2024/02/06 12:33:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: wiifb.c,v 1.5.2.2 2024/02/03 11:47:04 martin Exp $")
 #include "vireg.h"
 #include "viio.h"
 
-#define	WIIFB_ERROR_BLINK_INTERVAL	1000000
+#define WIIFB_ERROR_BLINK_INTERVAL	1000000
+
+#define WIIFB_TOP_BOTTOM_BORDER		16
+#define WIIFB_EFFECTIVE_START(p, w)	\
+	((uintptr_t)(p) + WIIFB_TOP_BOTTOM_BORDER * (w) * 2)
+#define WIIFB_EFFECTIVE_HEIGHT(h)	\
+	((h) - WIIFB_TOP_BOTTOM_BORDER * 2)
+
 
 struct wiifb_mode {
 	const char *		name;
@@ -151,6 +158,8 @@ wiifb_attach(device_t parent, device_t self, void *aux)
 	struct wiifb_softc *sc = device_private(self);
 	prop_dictionary_t dict = device_properties(self);
 	struct mainbus_attach_args *maa = aux;
+	u_int offset;
+	uint32_t *p;
 	int error;
 
 	sc->sc_gen.sc_dev = self;
@@ -162,15 +171,26 @@ wiifb_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_bits = mapiodev(XFB_START, XFB_SIZE, true);
 
+	/*
+	 * Paint the entire FB black. Use 4-byte accesses as the Wii will
+	 * ignore 1- and 2- byte writes to uncached memory.
+	 */
+	for (p = sc->sc_bits, offset = 0;
+	     offset < XFB_SIZE;
+	     offset += 4, p++) {
+		*p = 0x00800080;
+	}
+
 	wiifb_init(sc);
 	wiifb_set_mode(sc, sc->sc_format, sc->sc_interlaced);
 
 	prop_dictionary_set_uint32(dict, "width", sc->sc_curmode->width);
-	prop_dictionary_set_uint32(dict, "height", sc->sc_curmode->height);
+	prop_dictionary_set_uint32(dict, "height",
+	    WIIFB_EFFECTIVE_HEIGHT(sc->sc_curmode->height));
 	prop_dictionary_set_uint8(dict, "depth", 16);
 	prop_dictionary_set_uint32(dict, "address", XFB_START);
 	prop_dictionary_set_uint32(dict, "virtual_address",
-	    (uintptr_t)sc->sc_bits);
+	    WIIFB_EFFECTIVE_START(sc->sc_bits, sc->sc_curmode->width));
 	prop_dictionary_set_uint64(dict, "devcmap", (uintptr_t)wiifb_devcmap);
 
 	genfb_init(&sc->sc_gen);
@@ -212,12 +232,6 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 	u_int strides, reads;
 
 	modeidx = WIIFB_MODE_INDEX(format, interlaced);
-	if (modeidx >= WIIFB_NMODES || wiifb_modes[modeidx].name == NULL) {
-		panic("Unsupported format (0x%x) / interlaced (%d) settings",
-		    sc->sc_format, sc->sc_interlaced);
-	}
-	sc->sc_curmode = &wiifb_modes[modeidx];
-
 	if (modeidx == WIIFB_MODE_INDEX(VI_DCR_FMT_NTSC, 1)) {
 		/* NTSC 480i Magic numbers from YAGCD. */
 		WR2(sc, VI_VTR, 0x0f06);
@@ -252,6 +266,12 @@ wiifb_set_mode(struct wiifb_softc *sc, uint8_t format, bool interlaced)
 		 */
 		wii_slot_led_blink(WIIFB_ERROR_BLINK_INTERVAL);
 	}
+
+	if (modeidx >= WIIFB_NMODES || wiifb_modes[modeidx].name == NULL) {
+		panic("Unsupported format (0x%x) / interlaced (%d) settings",
+		    sc->sc_format, sc->sc_interlaced);
+	}
+	sc->sc_curmode = &wiifb_modes[modeidx];
 
 	/* Picture configuration */
 	strides = (sc->sc_curmode->width * 2) / (interlaced ? 16 : 32);
@@ -322,11 +342,12 @@ wiifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		 * devcmap, so fill out fbinfo manually instead of relying
 		 * on wsdisplayio_get_fbinfo.
 		 */
-		fbi->fbi_fbsize = XFB_SIZE;
 		fbi->fbi_fboffset = 0;
 		fbi->fbi_width = sc->sc_curmode->width;
-		fbi->fbi_height = sc->sc_curmode->height;
+		fbi->fbi_height =
+		    WIIFB_EFFECTIVE_HEIGHT(sc->sc_curmode->height);
 		fbi->fbi_stride = fbi->fbi_width * 2;
+		fbi->fbi_fbsize = fbi->fbi_height * fbi->fbi_stride;
 		fbi->fbi_bitsperpixel = 16;
 		fbi->fbi_pixeltype = WSFB_YUY2;
 		fbi->fbi_flags = WSFB_VRAM_IS_RAM;
@@ -384,11 +405,17 @@ static paddr_t
 wiifb_mmap(void *v, void *vs, off_t off, int prot)
 {
 	struct wiifb_softc *sc = v;
+	bus_addr_t start;
+	bus_size_t size;
 
-	if (off < 0 || off >= XFB_SIZE) {
+	start = WIIFB_EFFECTIVE_START(XFB_START, sc->sc_curmode->width);
+	size = WIIFB_EFFECTIVE_HEIGHT(sc->sc_curmode->height) *
+	       sc->sc_curmode->width * 2;
+
+	if (off < 0 || off >= size) {
 		return -1;
 	}
 
-	return bus_space_mmap(sc->sc_bst, XFB_START, off, prot,
+	return bus_space_mmap(sc->sc_bst, start, off, prot,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 }
