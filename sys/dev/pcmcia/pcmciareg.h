@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.11 2019/09/01 00:36:52 mlelstv Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.12 2024/02/07 04:02:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -61,7 +61,7 @@
 
 /*
  * the 2.1 docs have 0x02-0x07 as reserved, but the linux drivers list the
- * follwing tuple code values.  I have at least one card (3com 3c562
+ * following tuple code values.  I have at least one card (3com 3c562
  * lan+modem) which has a code 0x06 tuple, so I'm going to assume that these
  * are for real
  */
