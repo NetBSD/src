@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1098 2024/02/04 10:03:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1099 2024/02/07 06:43:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -124,10 +124,8 @@
  */
 
 #include <sys/stat.h>
-#ifndef NO_REGEX
 #include <sys/types.h>
 #include <regex.h>
-#endif
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -139,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1098 2024/02/04 10:03:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1099 2024/02/07 06:43:02 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1344,7 +1342,6 @@ ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 	SepBuf_AddRange(buf, word.start, end);
 }
 
-#ifdef SYSVVARSUB
 struct ModifyWord_SysVSubstArgs {
 	GNode *scope;
 	Substring lhsPrefix;
@@ -1384,7 +1381,6 @@ ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 
 	FStr_Done(&rhs);
 }
-#endif
 
 static const char *
 Substring_Find(Substring haystack, Substring needle)
@@ -1462,7 +1458,6 @@ nosub:
 	SepBuf_AddSubstring(buf, word);
 }
 
-#ifndef NO_REGEX
 /* Print the error caused by a regcomp or regexec call. */
 static void
 RegexError(int reerr, const regex_t *pat, const char *str)
@@ -1570,7 +1565,6 @@ ok:
 	if (*wp != '\0')
 		SepBuf_AddStr(buf, wp);
 }
-#endif
 
 
 struct ModifyWord_LoopArgs {
@@ -2888,8 +2882,6 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
-#ifndef NO_REGEX
-
 /* :C,from,to, */
 static ApplyModifierResult
 ApplyModifier_Regex(const char **pp, ModChain *ch)
@@ -2947,8 +2939,6 @@ done:
 	FStr_Done(&re);
 	return AMR_OK;
 }
-
-#endif
 
 /* :Q, :q */
 static ApplyModifierResult
@@ -3593,7 +3583,6 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
-#ifdef SYSVVARSUB
 /* Test whether the modifier has the form '<lhs>=<rhs>'. */
 static bool
 IsSysVModifier(const char *p, char startc, char endc)
@@ -3665,9 +3654,7 @@ done:
 	FStr_Done(&rhs);
 	return AMR_OK;
 }
-#endif
 
-#ifdef SUNSHCMD
 /* :sh */
 static ApplyModifierResult
 ApplyModifier_SunShell(const char **pp, ModChain *ch)
@@ -3690,7 +3677,6 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 
 	return AMR_OK;
 }
-#endif
 
 /*
  * In cases where the evaluation mode and the definedness are the "standard"
@@ -3772,10 +3758,8 @@ ApplyModifier(const char **pp, ModChain *ch)
 		return ApplyModifier_Words(pp, ch);
 	case '_':
 		return ApplyModifier_Remember(pp, ch);
-#ifndef NO_REGEX
 	case 'C':
 		return ApplyModifier_Regex(pp, ch);
-#endif
 	case 'D':
 	case 'U':
 		return ApplyModifier_Defined(pp, ch);
@@ -3808,10 +3792,8 @@ ApplyModifier(const char **pp, ModChain *ch)
 		return ApplyModifier_Range(pp, ch);
 	case 'S':
 		return ApplyModifier_Subst(pp, ch);
-#ifdef SUNSHCMD
 	case 's':
 		return ApplyModifier_SunShell(pp, ch);
-#endif
 	case 'T':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Tail);
 	case 't':
@@ -3900,12 +3882,10 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 
 	res = ApplyModifier(&p, ch);
 
-#ifdef SYSVVARSUB
 	if (res == AMR_UNKNOWN) {
 		assert(p == mod);
 		res = ApplyModifier_SysV(&p, ch);
 	}
-#endif
 
 	if (res == AMR_UNKNOWN) {
 		/*
