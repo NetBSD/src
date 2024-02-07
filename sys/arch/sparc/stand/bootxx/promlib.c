@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.11 2011/07/17 20:54:47 joerg Exp $ */
+/*	$NetBSD: promlib.c,v 1.12 2024/02/07 04:02:36 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Specially crafted scaled-down version of promlib for the first-stage
  * boot program.
  *
- * bootxx needs the follwoing PROM functions:
+ * bootxx needs the following PROM functions:
  *	prom_version()
  *	prom_getbootpath()
  *	prom_putchar()
