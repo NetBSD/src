@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.213 2024/02/03 20:10:10 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.214 2024/02/07 07:42:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.213 2024/02/03 20:10:10 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.214 2024/02/07 07:42:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -508,41 +508,7 @@ integer_constant_type(tspec_t t, uint64_t ui, int base, bool warned)
 			return UINT;
 		if (ui <= TARG_LONG_MAX)
 			return LONG;
-		if (ui <= TARG_ULONG_MAX && base != 10 && allow_c90)
-			return ULONG;
-		if (ui <= TARG_ULONG_MAX && !allow_c90)
-			return LONG;
-		if (!allow_c99) {
-			if (!warned)
-				/* integer constant out of range */
-				warning(252);
-			return allow_c90 ? ULONG : LONG;
-		}
-		if (ui <= TARG_LLONG_MAX)
-			return LLONG;
-		if (ui <= TARG_ULLONG_MAX && base != 10)
-			return ULLONG;
-		if (!warned)
-			/* integer constant out of range */
-			warning(252);
-		return ULLONG;
-	case UINT:
-		if (ui <= TARG_UINT_MAX)
-			return UINT;
-		if (ui <= TARG_ULONG_MAX)
-			return ULONG;
-		if (!allow_c99) {
-			if (!warned)
-				/* integer constant out of range */
-				warning(252);
-			return ULONG;
-		}
-		if (ui <= TARG_ULLONG_MAX)
-			return ULLONG;
-		if (!warned)
-			/* integer constant out of range */
-			warning(252);
-		return ULLONG;
+		/* FALLTHROUGH */
 	case LONG:
 		if (ui <= TARG_LONG_MAX)
 			return LONG;
@@ -554,29 +520,7 @@ integer_constant_type(tspec_t t, uint64_t ui, int base, bool warned)
 				warning(252);
 			return allow_c90 ? ULONG : LONG;
 		}
-		if (ui <= TARG_LLONG_MAX)
-			return LLONG;
-		if (ui <= TARG_ULLONG_MAX && base != 10)
-			return ULLONG;
-		if (!warned)
-			/* integer constant out of range */
-			warning(252);
-		return ULLONG;
-	case ULONG:
-		if (ui <= TARG_ULONG_MAX)
-			return ULONG;
-		if (!allow_c99) {
-			if (!warned)
-				/* integer constant out of range */
-				warning(252);
-			return ULONG;
-		}
-		if (ui <= TARG_ULLONG_MAX)
-			return ULLONG;
-		if (!warned)
-			/* integer constant out of range */
-			warning(252);
-		return ULLONG;
+		/* FALLTHROUGH */
 	case LLONG:
 		if (ui <= TARG_LLONG_MAX)
 			return LLONG;
@@ -586,6 +530,20 @@ integer_constant_type(tspec_t t, uint64_t ui, int base, bool warned)
 			/* integer constant out of range */
 			warning(252);
 		return allow_c90 ? ULLONG : LLONG;
+	case UINT:
+		if (ui <= TARG_UINT_MAX)
+			return UINT;
+		/* FALLTHROUGH */
+	case ULONG:
+		if (ui <= TARG_ULONG_MAX)
+			return ULONG;
+		if (!allow_c99) {
+			if (!warned)
+				/* integer constant out of range */
+				warning(252);
+			return ULONG;
+		}
+		/* FALLTHROUGH */
 	default:
 		if (ui <= TARG_ULLONG_MAX)
 			return ULLONG;
