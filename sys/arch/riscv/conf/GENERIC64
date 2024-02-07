@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.6 2024/01/20 08:05:37 skrll Exp $
+# $NetBSD: GENERIC64,v 1.7 2024/02/07 17:03:35 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -54,8 +54,8 @@ jh7100clkc* 	at fdt?	pass 2		# StarFive JH7100 clock controller
 
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
-sdmmc*		at sdmmcbus?
-bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
+sdmmc* 		at sdmmcbus?
+bwfm* 		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # USB
 jh71x0usb* 	at fdt?			# StarFive JH71x0 usb
@@ -64,7 +64,7 @@ jh71x0usb* 	at fdt?			# StarFive JH71x0 usb
 xhci* 		at fdt?			# XHCI
 usb* 		at usbus?
 include "dev/usb/usbdevices.config"
-midi*		at midibus?
+midi* 		at midibus?
 
 # Pull in optional local configuration - always at end
 cinclude 	"arch/riscv/conf/GENERIC64.local"
