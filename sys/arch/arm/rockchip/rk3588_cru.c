@@ -1,7 +1,7 @@
-/*	$NetBSD: rk3588_cru.c,v 1.2 2023/10/17 19:13:05 tnn Exp $	*/
+/*	$NetBSD: rk3588_cru.c,v 1.3 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2022 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3588_cru.c,v 1.2 2023/10/17 19:13:05 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3588_cru.c,v 1.3 2024/02/07 04:20:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

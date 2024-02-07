@@ -1,7 +1,7 @@
-/* $NetBSD: db_trace.c,v 1.23 2022/09/22 21:48:18 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23 2022/09/22 21:48:18 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>

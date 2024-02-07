@@ -1,7 +1,7 @@
-/* $NetBSD: procfs_machdep.c,v 1.5 2021/05/27 06:11:20 ryo Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.6 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*-
- * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2020 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5 2021/05/27 06:11:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

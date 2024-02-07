@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc.h,v 1.26 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.27 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

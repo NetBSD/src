@@ -1,7 +1,7 @@
-/*	$NetBSD: start.S,v 1.13 2022/08/23 05:31:12 ryo Exp $	*/
+/*	$NetBSD: start.S,v 1.14 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.13 2022/08/23 05:31:12 ryo Exp $")
+RCSID("$NetBSD: start.S,v 1.14 2024/02/07 04:20:26 msaitoh Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header

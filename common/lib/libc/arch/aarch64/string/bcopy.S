@@ -1,7 +1,7 @@
-/* $NetBSD: bcopy.S,v 1.3 2023/07/23 07:54:37 skrll Exp $ */
+/* $NetBSD: bcopy.S,v 1.4 2024/02/07 04:20:25 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$NetBSD: bcopy.S,v 1.3 2023/07/23 07:54:37 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.4 2024/02/07 04:20:25 msaitoh Exp $")
 #endif
 
 #if defined(MEMCOPY)

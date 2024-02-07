@@ -1,7 +1,7 @@
-/*	$NetBSD: if_enetreg.h,v 1.5 2022/06/27 22:41:28 andvar Exp $	*/
+/*	$NetBSD: if_enetreg.h,v 1.6 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2014 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

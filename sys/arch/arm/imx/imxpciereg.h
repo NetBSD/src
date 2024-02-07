@@ -1,7 +1,7 @@
-/*	$NetBSD: imxpciereg.h,v 1.3 2019/10/16 11:16:30 hkenken Exp $	*/
+/*	$NetBSD: imxpciereg.h,v 1.4 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2015 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

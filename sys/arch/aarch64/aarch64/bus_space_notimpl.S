@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.2 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

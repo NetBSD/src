@@ -1,7 +1,7 @@
-/* $NetBSD: db_disasm.c,v 1.11 2020/12/11 18:03:33 skrll Exp $ */
+/* $NetBSD: db_disasm.c,v 1.12 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2024/02/07 04:20:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"

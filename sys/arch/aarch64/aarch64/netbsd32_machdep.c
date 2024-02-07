@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/14 15:12:01 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/14 15:12:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

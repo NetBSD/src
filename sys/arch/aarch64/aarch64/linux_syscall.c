@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_syscall.c,v 1.2 2021/09/27 17:40:39 ryo Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.3 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2021 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2021/09/27 17:40:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3 2024/02/07 04:20:26 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"

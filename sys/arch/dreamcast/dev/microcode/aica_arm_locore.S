@@ -1,7 +1,7 @@
-/*	$NetBSD: aica_arm_locore.S,v 1.5 2022/09/25 21:26:22 ryo Exp $	*/
+/*	$NetBSD: aica_arm_locore.S,v 1.6 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2003 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2003 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

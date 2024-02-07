@@ -1,7 +1,7 @@
-/* $NetBSD: mesong12_clkc.h,v 1.1 2021/01/01 07:21:58 ryo Exp $ */
+/* $NetBSD: mesong12_clkc.h,v 1.2 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2021 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

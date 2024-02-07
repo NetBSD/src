@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.h,v 1.18 2021/08/30 23:20:00 jmcneill Exp $	*/
+/*	$NetBSD: machdep.h,v 1.19 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

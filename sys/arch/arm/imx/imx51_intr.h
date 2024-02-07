@@ -1,6 +1,6 @@
-/*	$NetBSD: imx51_intr.h,v 1.3 2022/06/25 13:24:35 jmcneill Exp $	*/
+/*	$NetBSD: imx51_intr.h,v 1.4 2024/02/07 04:20:26 msaitoh Exp $	*/
 /*-
- * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
+ * Copyright (c) 2009 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

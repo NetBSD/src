@@ -1,7 +1,7 @@
-/*	$NetBSD: imx6_ccmreg.h,v 1.2 2023/05/04 13:25:07 bouyer Exp $	*/
+/*	$NetBSD: imx6_ccmreg.h,v 1.3 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2014 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

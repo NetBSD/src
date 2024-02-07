@@ -1,7 +1,7 @@
-/*	$NetBSD: if_enetvar.h,v 1.8 2022/09/18 13:53:06 thorpej Exp $	*/
+/*	$NetBSD: if_enetvar.h,v 1.9 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2014 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

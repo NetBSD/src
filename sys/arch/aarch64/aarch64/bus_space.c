@@ -1,7 +1,7 @@
-/* $NetBSD: bus_space.c,v 1.17 2022/10/15 11:07:38 jmcneill Exp $ */
+/* $NetBSD: bus_space.c,v 1.18 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.17 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.18 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

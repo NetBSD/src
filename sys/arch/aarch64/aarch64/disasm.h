@@ -1,7 +1,7 @@
-/*	$NetBSD: disasm.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: disasm.h,v 1.2 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
