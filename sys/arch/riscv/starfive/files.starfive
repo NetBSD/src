@@ -1,4 +1,4 @@
-#	$NetBSD: files.starfive,v 1.2 2024/01/18 07:48:57 skrll Exp $
+#	$NetBSD: files.starfive,v 1.3 2024/02/07 17:17:59 skrll Exp $
 #
 # Configuration info for StarFive SoCs
 #
@@ -12,3 +12,8 @@ file	arch/riscv/starfive/jh7100_clkc.c		jh7100_clkc
 device	jh71x0usb
 attach	jh71x0usb at fdt with jh71x0_usb
 file	arch/riscv/starfive/jh71x0_usb.c		jh71x0_usb
+
+# JH7100 Pin control
+device	jh7100pinctrl
+attach	jh7100pinctrl at fdt with jh7100_pinctrl
+file	arch/riscv/starfive/jh7100_pinctrl.c		jh7100_pinctrl
