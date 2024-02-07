@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.361 2024/01/21 16:32:41 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.362 2024/02/07 07:21:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.361 2024/01/21 16:32:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.362 2024/02/07 07:21:22 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -394,7 +394,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 {
 	VarEvalMode emode;
 	const char *p;
-	bool atStart;
+	bool atStart;		/* true means an expression outside quotes */
 
 	emode = doEval && quoted ? VARE_WANTRES
 	    : doEval ? VARE_UNDEFERR
@@ -411,11 +411,6 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	}
 	par->p = p;
 
-	/*
-	 * If the '$' started the string literal (which means no quotes), and
-	 * the expression is followed by a space, a comparison operator or
-	 * the end of the expression, we are done.
-	 */
 	if (atStart && is_separator(par->p[0]))
 		return false;
 
@@ -509,26 +504,12 @@ EvalTruthy(CondParser *par, const char *value, bool quoted)
 {
 	double num;
 
-	/* For .ifxxx "...", check for non-empty string. */
 	if (quoted)
 		return value[0] != '\0';
-
-	/* For .ifxxx <number>, compare against zero */
 	if (TryParseNumber(value, &num))
 		return num != 0.0;
-
-	/*
-	 * For .if ${...}, check for non-empty string.  This is different
-	 * from the evaluation function from that .if variant, which would
-	 * test whether a variable of the given name were defined.
-	 */
-	/*
-	 * XXX: Whitespace should count as empty, just as in
-	 * CondParser_FuncCallEmpty.
-	 */
 	if (par->plain)
 		return value[0] != '\0';
-
 	return par->evalBare(value) != par->negateEvalBare;
 }
 
