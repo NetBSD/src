@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.214 2024/02/07 07:42:50 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.215 2024/02/07 08:00:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.214 2024/02/07 07:42:50 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.215 2024/02/07 08:00:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -423,15 +423,11 @@ init_lex(void)
 static int
 read_byte(void)
 {
-	int c;
+	int c = lex_input();
 
-	if ((c = lex_input()) == EOF)
-		return c;
-	if (c == '\0')
-		return EOF;	/* lex returns 0 on EOF. */
 	if (c == '\n')
 		lex_next_line();
-	return c;
+	return c == '\0' ? EOF : c;	/* lex returns 0 on EOF. */
 }
 
 static int
@@ -485,16 +481,16 @@ lex_name(const char *yytext, size_t yyleng)
 // Determines whether the constant is signed in traditional C but unsigned in
 // C90 and later.
 static bool
-is_unsigned_since_c90(tspec_t typ, uint64_t ui, int base)
+is_unsigned_since_c90(tspec_t t, uint64_t ui, int base)
 {
 	if (!(allow_trad && allow_c90))
 		return false;
-	if (typ == INT) {
+	if (t == INT) {
 		if (ui > TARG_INT_MAX && ui <= TARG_UINT_MAX && base != 10)
 			return true;
 		return ui > TARG_LONG_MAX;
 	}
-	return typ == LONG && ui > TARG_LONG_MAX;
+	return t == LONG && ui > TARG_LONG_MAX;
 }
 
 static tspec_t
@@ -657,17 +653,17 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		len--;
 
 	char c = cp[len - 1];
-	tspec_t typ;
+	tspec_t t;
 	if (c == 'f' || c == 'F') {
-		typ = imaginary ? FCOMPLEX : FLOAT;
+		t = imaginary ? FCOMPLEX : FLOAT;
 		len--;
 	} else if (c == 'l' || c == 'L') {
-		typ = imaginary ? LCOMPLEX : LDOUBLE;
+		t = imaginary ? LCOMPLEX : LDOUBLE;
 		len--;
 	} else
-		typ = imaginary ? DCOMPLEX : DOUBLE;
+		t = imaginary ? DCOMPLEX : DOUBLE;
 
-	if (!allow_c90 && typ != DOUBLE) {
+	if (!allow_c90 && t != DOUBLE) {
 		/* suffixes 'F' and 'L' are illegal in traditional C */
 		warning(98);
 	}
@@ -679,14 +675,14 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	if (errno != 0) {
 		/* floating-point constant out of range */
 		warning(248);
-	} else if (typ == FLOAT) {
+	} else if (t == FLOAT) {
 		ld = (float)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
 			warning(248);
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
-	} else if (typ == DOUBLE
+	} else if (t == DOUBLE
 	    || /* CONSTCOND */ LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
@@ -697,7 +693,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
-	yylval.y_val->v_tspec = typ;
+	yylval.y_val->v_tspec = t;
 	yylval.y_val->u.floating = ld;
 
 	return T_CON;
