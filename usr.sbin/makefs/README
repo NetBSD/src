@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 2022/10/26 21:56:19 andvar Exp $
+$NetBSD: README,v 1.9 2024/02/07 04:00:10 msaitoh Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -102,7 +102,7 @@ Each fs-specific module should have the following external interfaces:
 prepare_options and cleanup_options are optional and can be NULL.
 
 NOTE: All file system specific options are referenced via the fs_specific
-pointer from the fsinfo_t strucutre. It is up to the filesystem to allocate
+pointer from the fsinfo_t structure. It is up to the filesystem to allocate
 and free any data needed for this via the prepare and cleanup callbacks.
 
 Each fs-specific module will need to add its routines to the dispatch array
