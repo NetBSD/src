@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_trad.c,v 1.3 2024/01/28 08:26:07 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_trad.c,v 1.4 2024/02/07 22:59:28 rillig Exp $	*/
 # 3 "platform_ilp32_trad.c"
 
 /*
@@ -13,10 +13,12 @@ void *lex_integer[] = {
 	2147483647,
 	/* expect+1: ... integer 'int' ... */
 	0x7fffffff,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	2147483648,
 	/* expect+1: ... integer 'long' ... */
 	0x80000000,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	4294967295,
 	/* expect+1: ... integer 'long' ... */
