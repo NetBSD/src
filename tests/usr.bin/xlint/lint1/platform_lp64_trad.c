@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64_trad.c,v 1.3 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: platform_lp64_trad.c,v 1.4 2024/02/07 07:42:50 rillig Exp $	*/
 # 3 "platform_lp64_trad.c"
 
 /*
@@ -29,10 +29,12 @@ void *lex_integer[] = {
 	9223372036854775807,
 	/* expect+1: ... integer 'long' ... */
 	0x7fffffffffffffff,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	9223372036854775808,
 	/* expect+1: ... integer 'long' ... */
 	0x8000000000000000,
+	/* expect+2: warning: integer constant out of range [252] */
 	/* expect+1: ... integer 'long' ... */
 	18446744073709551615,
 	/* expect+1: ... integer 'long' ... */
