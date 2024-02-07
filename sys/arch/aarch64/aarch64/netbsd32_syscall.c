@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.1 2018/10/12 01:28:57 ryo Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.1 2018/10/12 01:28:57 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include "opt_compat_netbsd32.h"
 

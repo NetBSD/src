@@ -1,7 +1,7 @@
-/*	$NetBSD: if_enet.c,v 1.36 2022/09/18 13:53:06 thorpej Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.37 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2014 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.36 2022/09/18 13:53:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.37 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include "vlan.h"
 

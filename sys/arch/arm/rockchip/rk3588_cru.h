@@ -1,7 +1,7 @@
-/*	$NetBSD: rk3588_cru.h,v 1.2 2023/10/17 18:23:55 tnn Exp $	*/
+/*	$NetBSD: rk3588_cru.h,v 1.3 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2022 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

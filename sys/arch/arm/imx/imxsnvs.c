@@ -1,7 +1,7 @@
-/*	$NetBSD: imxsnvs.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imxsnvs.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2014 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * i.MX6,7 Secure Non-Volatile Storage
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxsnvs.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxsnvs.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include "locators.h"
 #include <sys/bus.h>

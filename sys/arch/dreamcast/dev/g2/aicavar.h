@@ -1,7 +1,7 @@
-/*	$NetBSD: aicavar.h,v 1.3 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: aicavar.h,v 1.4 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
+ * Copyright (c) 2003 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

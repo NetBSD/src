@@ -1,7 +1,7 @@
-/*	$NetBSD: aarch64.c,v 1.22 2023/02/03 08:08:33 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.23 2024/02/07 04:20:28 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.22 2023/02/03 08:08:33 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.23 2024/02/07 04:20:28 msaitoh Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_sigcode.S,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_sigcode.S,v 1.2 2024/02/07 04:20:28 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2021 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: linux32_sigcode.S,v 1.1 2021/11/25 03:08:04 ryo Exp $")
+RCSID("$NetBSD: linux32_sigcode.S,v 1.2 2024/02/07 04:20:28 msaitoh Exp $")
 
 #include <compat/linux32/linux32_syscall.h>
 

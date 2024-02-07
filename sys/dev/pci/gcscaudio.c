@@ -1,7 +1,7 @@
-/*	$NetBSD: gcscaudio.c,v 1.19 2020/02/29 06:25:33 isaki Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.20 2024/02/07 04:20:28 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
+ * Copyright (c) 2008 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.19 2020/02/29 06:25:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.20 2024/02/07 04:20:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

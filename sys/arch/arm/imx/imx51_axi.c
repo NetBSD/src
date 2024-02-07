@@ -1,7 +1,7 @@
-/*	$NetBSD: imx51_axi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.10 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
+ * Copyright (c) 2010 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.10 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

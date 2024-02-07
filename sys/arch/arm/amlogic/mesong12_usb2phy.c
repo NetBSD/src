@@ -1,7 +1,7 @@
-/* $NetBSD: mesong12_usb2phy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: mesong12_usb2phy.c,v 1.3 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2021 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesong12_usb2phy.c,v 1.2 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesong12_usb2phy.c,v 1.3 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.11 2021/09/18 21:34:56 uwe Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.12 2024/02/07 04:20:27 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
+ * Copyright (c) 2000 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.11 2021/09/18 21:34:56 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.12 2024/02/07 04:20:27 msaitoh Exp $")
 
 
 #define	reg_byte_swapped	r1

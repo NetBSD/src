@@ -1,7 +1,7 @@
-/*	$NetBSD: memcpy.S,v 1.2 2006/04/22 23:53:47 uwe Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.3 2024/02/07 04:20:25 msaitoh Exp $	*/
 
 /*
- * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
+ * Copyright (c) 2000 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memcpy.S,v 1.2 2006/04/22 23:53:47 uwe Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.3 2024/02/07 04:20:25 msaitoh Exp $")
 #endif
 
 #if !defined(MEMCOPY) && !defined(MEMMOVE) && !defined(BCOPY)

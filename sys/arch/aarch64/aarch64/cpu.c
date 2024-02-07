@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.73 2023/02/03 08:05:27 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.74 2024/02/07 04:20:26 msaitoh Exp $ */
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2017 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.73 2023/02/03 08:05:27 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.74 2024/02/07 04:20:26 msaitoh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"

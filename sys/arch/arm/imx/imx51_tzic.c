@@ -1,7 +1,7 @@
-/*	$NetBSD: imx51_tzic.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $	*/
+/*	$NetBSD: imx51_tzic.c,v 1.9 2024/02/07 04:20:26 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
+ * Copyright (c) 2010 SHIMIZU Ryo
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.9 2024/02/07 04:20:26 msaitoh Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 

@@ -1,7 +1,7 @@
-/* $NetBSD: rk3588_platform.h,v 1.1 2022/08/23 05:39:06 ryo Exp $ */
+/* $NetBSD: rk3588_platform.h,v 1.2 2024/02/07 04:20:27 msaitoh Exp $ */
 
 /*-
- * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2022 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof_top.c,v 1.10 2024/01/02 22:35:26 kre Exp $	*/
+/*	$NetBSD: tprof_top.c,v 1.11 2024/02/07 04:20:28 msaitoh Exp $	*/
 
 /*-
- * Copyright (c) 2022 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2022 Ryo Shimizu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_top.c,v 1.10 2024/01/02 22:35:26 kre Exp $");
+__RCSID("$NetBSD: tprof_top.c,v 1.11 2024/02/07 04:20:28 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
