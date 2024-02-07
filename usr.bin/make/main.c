@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.609 2024/01/07 01:33:57 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.610 2024/02/07 06:43:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.609 2024/01/07 01:33:57 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.610 2024/02/07 06:43:02 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1418,20 +1418,11 @@ main_Init(int argc, char **argv)
 #endif
 	Dir_Init();
 
-#ifdef POSIX
 	{
 		char *makeflags = explode(getenv("MAKEFLAGS"));
 		Main_ParseArgLine(makeflags);
 		free(makeflags);
 	}
-#else
-	/*
-	 * First snag any flags out of the MAKE environment variable.
-	 * (Note this is *not* MAKEFLAGS since /bin/make uses that and it's
-	 * in a different format).
-	 */
-	Main_ParseArgLine(getenv("MAKE"));
-#endif
 
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: getcwd: %s.\n",
@@ -2123,13 +2114,8 @@ Main_ExportMAKEFLAGS(bool first)
 	    "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
 	    SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
-	if (flags[0] != '\0') {
-#ifdef POSIX
+	if (flags[0] != '\0')
 		setenv("MAKEFLAGS", flags, 1);
-#else
-		setenv("MAKE", flags, 1);
-#endif
-	}
 }
 
 char *
