@@ -1,4 +1,4 @@
-/*	$NetBSD: blkdiscard.c,v 1.3 2024/01/25 02:42:17 mrg Exp $	*/
+/*	$NetBSD: blkdiscard.c,v 1.4 2024/02/08 20:51:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2022, 2024 Matthew R. Green
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (secure)
-		usage("blkdiscard: secure erase not yet implemnted\n");
+		usage("blkdiscard: secure erase not yet implemented\n");
 	if (zeroout) {
 		zeros = calloc(1, max_per_call);
 		if (!zeros)

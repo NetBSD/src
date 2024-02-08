@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_arm.S,v 1.6 2017/01/14 03:35:21 christos Exp $")
+RCSID("$NetBSD: strcpy_arm.S,v 1.7 2024/02/08 20:51:24 andvar Exp $")
 
 #ifdef STRLCPY
 #ifdef _LIBC
@@ -248,9 +248,9 @@ ENTRY(FUNCNAME)
 	 */
 	mov	r3, #24			/* assume NUL is in byte 3 */
 	tst	r5, #BYTE1		/* did we find a NUL in byte 1? */
-	subeq	r3, r3, #8		/*   yes, decremnt byte position */
+	subeq	r3, r3, #8		/*   yes, decrement byte position */
 	tstne	r5, #BYTE2		/*   no, did we find a NUL in byte 2? */
-	subeq	r3, r3, #8		/*   yes, decremnt byte position */
+	subeq	r3, r3, #8		/*   yes, decrement byte position */
 	tstne	r5, #BYTE3		/*   no, did we find a NUL in byte 3? */
 	bne	.Lincongruent_mainloop_load /*   no, no NUL encountered! */
 #endif

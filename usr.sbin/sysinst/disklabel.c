@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.51 2023/01/06 15:05:52 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.52 2024/02/08 20:51:24 andvar Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ disklabel_init_default_alignment(struct disklabel_disk_partitions *parts,
 	if (MD_DISKLABEL_SET_ALIGN_PRE(parts->ptn_alignment, track))
 		return;
 #endif
-	/* Use 1MB alignemnt for large (>128GB) disks */
+	/* Use 1MB alignment for large (>128GB) disks */
 	if (parts->dp.disk_size > HUGE_DISK_SIZE) {
 		parts->ptn_alignment = 2048;
 	} else if (parts->dp.disk_size > TINY_DISK_SIZE ||

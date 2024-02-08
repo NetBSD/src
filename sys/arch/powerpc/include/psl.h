@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.22 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: psl.h,v 1.23 2024/02/08 20:51:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@
 
 #define	PSL_601_MASK	~(PSL_VEC|PSL_POW|PSL_ILE|PSL_BE|PSL_RI|PSL_LE)
 
-/* The IBM 970 series does not implemnt LE mode */
+/* The IBM 970 series does not implement LE mode */
 #define PSL_970_MASK	~(PSL_ILE|PSL_LE)
 
 /*
