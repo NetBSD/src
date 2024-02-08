@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_51.h,v 1.3 2024/01/09 07:28:26 thorpej Exp $	*/
+/*	$NetBSD: mmu_51.h,v 1.4 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2023 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ struct mmu51_rootptr {
 #define	PSR51_I		__BIT(10)	/* Invalid */
 #define	PSR51_M		__BIT(9)	/* Modified */
 #define	PSR51_G		__BIT(8)	/* Gate */
-#define	PSR51_C		__BIT(7)	/* Globally Sharable */
+#define	PSR51_C		__BIT(7)	/* Globally Shareable */
 #define	PSR51_N		__BITS(0,2)	/* Number of levels */
 
 #ifdef _KERNEL

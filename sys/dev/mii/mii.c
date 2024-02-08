@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.58 2022/08/14 20:34:26 riastradh Exp $	*/
+/*	$NetBSD: mii.c,v 1.59 2024/02/08 20:11:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
  */
 
 /*
- * MII bus layer, glues MII-capable network interface drivers to sharable
+ * MII bus layer, glues MII-capable network interface drivers to shareable
  * PHY drivers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.58 2022/08/14 20:34:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.59 2024/02/08 20:11:55 andvar Exp $");
 
 #define	__IFMEDIA_PRIVATE
 

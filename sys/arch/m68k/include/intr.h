@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2024/01/19 20:55:42 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ do {									\
  * m68k interrupt priroity level (this is NOT an IPL_* value).  Otherwise.
  * the handler is registered at the specified vector.
  *
- * Vectored interrupts are not sharable.  The interrupt vector must be
+ * Vectored interrupts are not shareable.  The interrupt vector must be
  * within the platform's "user vector" region, which is generally defined
  * as vectors 64-255, although some platforms may use vectors that start
  * below 64 (in which case, that platform must define MACHINE_USERVEC_START

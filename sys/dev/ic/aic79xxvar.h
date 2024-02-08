@@ -1,7 +1,7 @@
-/*	$NetBSD: aic79xxvar.h,v 1.29 2021/10/15 22:32:28 andvar Exp $	*/
+/*	$NetBSD: aic79xxvar.h,v 1.30 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*
- * Core definitions and data structures sharable across OS platforms.
+ * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2002 Justin T. Gibbs.
  * Copyright (c) 2000-2002 Adaptec Inc.
