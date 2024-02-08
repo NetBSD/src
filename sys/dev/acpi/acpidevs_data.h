@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.26 2011/06/22 19:26:36 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.27 2024/02/08 10:05:01 andvar Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.35 2011/06/22 19:26:22 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.36 2019/05/28 08:59:34 msaitoh Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1434,7 +1434,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "ENE0100",
-	    "KB3924-based CIR Port Reciever",
+	    "KB3924-based CIR Port Receiver",
 	},
 	{
 	    "HPQ0004",
