@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.216 2024/02/08 20:45:20 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.217 2024/02/08 20:59:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.216 2024/02/08 20:45:20 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.217 2024/02/08 20:59:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -705,7 +705,7 @@ lex_operator(int t, op_t o)
 }
 
 static buffer *
-read_quoted(bool *complete, bool wide, char delim)
+read_quoted(bool *complete, char delim, bool wide)
 {
 	buffer *buf = xcalloc(1, sizeof(*buf));
 	buf_init(buf);
@@ -947,7 +947,7 @@ static buffer *
 lex_quoted(char delim, bool wide)
 {
 	bool complete;
-	buffer *buf = read_quoted(&complete, wide, delim);
+	buffer *buf = read_quoted(&complete, delim, wide);
 	check_quoted(buf, complete, delim);
 	return buf;
 }
