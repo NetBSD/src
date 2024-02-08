@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.26 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.27 2024/02/08 19:44:08 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.26 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.27 2024/02/08 19:44:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ amhphy_status(struct mii_softc *sc)
 
 		if (ssr & SSR_S) {
 			/*
-			 * This should't really ever happen, since it's
+			 * This shouldn't really ever happen, since it's
 			 * a 10BASE-T only PHY. But the bit exists, according
 			 * to the documentation, so we pay attention to it.
 			 */

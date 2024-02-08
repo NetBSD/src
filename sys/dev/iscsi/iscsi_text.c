@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.14 2023/11/25 10:08:27 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.15 2024/02/08 19:44:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -744,7 +744,7 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 
 		default:
 			cl = 0;
-			/* We should't be here... */
+			/* We shouldn't be here... */
 			DEBOUT(("Invalid type %d in put_parameter!\n",
 					entries[par->key].val));
 			break;
@@ -866,7 +866,7 @@ parameter_size(negotiation_parameter_t *par)
 			break;
 
 		default:
-			/* We should't be here... */
+			/* We shouldn't be here... */
 			DEBOUT(("Invalid type %d in parameter_size!\n",
 					entries[par->key].val));
 			break;
