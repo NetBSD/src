@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2024/02/08 18:25:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
  */
 
 #define _RISCV_BUS_DMA_PRIVATE
+#define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2024/02/08 18:25:58 skrll Exp $");
 
 #include <sys/param.h>
 
