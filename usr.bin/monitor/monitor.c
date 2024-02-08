@@ -1,3 +1,5 @@
+/*	$NetBSD$	*/
+
 /*
  * Copyright (c) 2008 The DragonFly Project.  All rights reserved.
  *
@@ -37,6 +39,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -44,14 +47,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <err.h>
 
 typedef struct monitor_elm {
 	const char *path;
 	int	fd;
 } *monitor_elm_t;
 
-static void usage(int exit_code);
-static void monitor_add(const char *path);
+static void usage(int);
+static void monitor_add(const char *);
 static void monitor_events(void);
 
 static int VerboseOpt;
@@ -63,12 +67,12 @@ static int MaxFiles;
 static monitor_elm_t *Elms;
 
 int
-main(int ac, char **av)
+main(int argc, char **argv)
 {
 	int ch;
 	int i;
 
-	while ((ch = getopt(ac, av, "qvx")) != -1) {
+	while ((ch = getopt(argc, argv, "qvx")) != -1) {
 		switch (ch) {
 		case 'q':
 			if (VerboseOpt > 0)
@@ -90,23 +94,21 @@ main(int ac, char **av)
 			/* not reached */
 		}
 	}
-	ac -= optind;
-	av += optind;
+	argc -= optind;
+	argv += optind;
 
-	if (ac < 1) {
+	if (argc < 1) {
 		usage(1);
 		/* not reached */
 	}
 
-	if ((KQueueFd = kqueue()) < 0) {
-		perror("kqueue");
-		exit(1);
-	}
+	if ((KQueueFd = kqueue()) < 0)
+		err(EXIT_FAILURE, "kqueue");
 	NumFiles = MaxFiles = 16;
 	Elms = calloc(MaxFiles, sizeof(monitor_elm_t));
 
-	for (i = 0; i < ac; ++i) {
-		monitor_add(av[i]);
+	for (i = 0; i < argc; ++i) {
+		monitor_add(argv[i]);
 	}
 	fflush(stdout);
 	do {
@@ -124,12 +126,13 @@ monitor_add(const char *path)
 	struct kevent kev;
 	int n;
 
-	elm = malloc(sizeof(*elm));
-	bzero(elm, sizeof(*elm));
+	elm = calloc(1, sizeof(*elm));
+	if (elm == NULL)
+		err(EXIT_FAILURE, "calloc");
 	elm->path = path;
 	elm->fd = open(path, O_RDONLY);
-	if (elm->fd < 0) {
-		printf("%s\tnot found\n", path);
+	if (elm->fd == -1) {
+		warn("%s", path);
 		return;
 	}
 	EV_SET(&kev, elm->fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
@@ -138,15 +141,13 @@ monitor_add(const char *path)
 		NOTE_OPEN | NOTE_CLOSE | NOTE_CLOSE_WRITE | NOTE_READ,
 		0, NULL);
 	n = kevent(KQueueFd, &kev, 1, NULL, 0, NULL);
-	if (n < 0) {
-		perror("kqueue");
-		exit(1);
-	}
+	if (n < 0)
+		err(EXIT_FAILURE, "kqueue");
 
 	if (elm->fd >= NumFiles) {
 		MaxFiles = (elm->fd + 16) * 3 / 2;
 		Elms = realloc(Elms, MaxFiles * sizeof(elm));
-		bzero(&Elms[NumFiles], (MaxFiles - NumFiles) * sizeof(elm));
+		memset(&Elms[NumFiles], 0, (MaxFiles - NumFiles) * sizeof(elm));
 		NumFiles = MaxFiles;
 	}
 	Elms[elm->fd] = elm;
@@ -176,8 +177,8 @@ monitor_events(void)
 		while (QuietOpt == 0 && (bno = ffs(kev->fflags)) > 0) {
 			printf(" ");
 			--bno;
-			kev->fflags &= ~(1 << bno);
-			switch (1 << bno) {
+			kev->fflags &= ~(__BIT(bno));
+			switch (__BIT(bno)) {
 			case NOTE_DELETE:
 				printf("delete");
 				break;
@@ -212,7 +213,7 @@ monitor_events(void)
 				printf("read");
 				break;
 			default:
-				printf("%08x", 1 << bno);
+				printf("%08x", (uint32_t)__BIT(bno));
 				break;
 			}
 		}
@@ -225,10 +226,10 @@ void
 usage(int exit_code)
 {
 	fprintf(stderr,
-		"monitor [-vx] files...\n"
-		"    -q      Be more quiet\n"
-		"    -v      Be more verbose\n"
-		"    -x      Exit after first event reported\n"
+	    "monitor [-qvx] files...\n"
+	    "    -q      Be more quiet\n"
+	    "    -v      Be more verbose\n"
+	    "    -x      Exit after first event reported\n"
 	);
 	exit(exit_code);
 }
