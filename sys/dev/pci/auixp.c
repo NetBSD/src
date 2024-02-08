@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.54 2022/08/27 05:35:17 skrll Exp $ */
+/* $NetBSD: auixp.c,v 1.55 2024/02/08 20:30:39 andvar Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -38,12 +38,12 @@
  *   codec support problem.
  * - 32 bit recording works but can't try out playing: see above.
  * - no suspend/resume support yet.
- * - multiple codecs are `supported' but not tested; the implemetation needs
+ * - multiple codecs are `supported' but not tested; the implementation needs
  *   some cleaning up.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.54 2022/08/27 05:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.55 2024/02/08 20:30:39 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>

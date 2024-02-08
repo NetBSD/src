@@ -1,4 +1,4 @@
-/*	$NetBSD: sbd_tr2.h,v 1.3 2019/08/21 04:51:41 msaitoh Exp $	*/
+/*	$NetBSD: sbd_tr2.h,v 1.4 2024/02/08 20:30:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _SBD_TR2_PRIVATE
-#error "Don't inlucde this file except for TR2 implemetation"
+#error "Don't include this file except for TR2 implementation"
 #endif /* !_SBD_TR2_PRIVATE */
 
 #ifndef _EWS4800MIPS_SBD_TR2_H_
