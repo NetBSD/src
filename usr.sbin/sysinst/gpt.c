@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.30 2022/12/15 14:54:27 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.31 2024/02/08 20:51:24 andvar Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1015,7 +1015,7 @@ gpt_get_part_alignment(const struct disk_partitions *parts)
 	if (parts->disk_size < 0)
 		return 1;
 
-	/* Use 1MB offset/alignemnt for large (>128GB) disks */
+	/* Use 1MB offset/alignment for large (>128GB) disks */
 	if (parts->disk_size > HUGE_DISK_SIZE)
 		return 2048;
 	else if (parts->disk_size > TINY_DISK_SIZE)

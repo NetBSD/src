@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.76 2023/12/20 05:08:34 thorpej Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.77 2024/02/08 20:51:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.76 2023/12/20 05:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.77 2024/02/08 20:51:24 andvar Exp $");
 
 #include "midi.h"
 
@@ -1083,7 +1083,7 @@ cs4280_set_dac_rate(struct cs428x_softc *sc, int rate)
 	 * playback rate may range from 8000Hz to 48000Hz
 	 *
 	 * play_phase_increment = floor(rate*65536*1024/48000)
-	 * px = round(rate*65536*1024 - play_phase_incremnt*48000)
+	 * px = round(rate*65536*1024 - play_phase_increment*48000)
 	 * py=floor(px/200)
 	 * play_sample_rate_correction = px - 200*py
 	 *

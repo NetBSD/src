@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.6 2021/10/12 19:08:04 christos Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.7 2024/02/08 20:51:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.6 2021/10/12 19:08:04 christos Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.7 2024/02/08 20:51:25 andvar Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -134,7 +134,7 @@ static struct key_handler {
 
 #define WAIT_WRN "Option 'wait' for internal service '%s' was inferred"
 
-/* Too Few Arguemnts (values) */
+/* Too Few Arguments (values) */
 #define TFA(key) ERR("Option '%s' has too few arguments", (key))
 
 /* Too Many Arguments (values) */

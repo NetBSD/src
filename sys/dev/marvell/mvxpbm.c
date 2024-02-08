@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbm.c,v 1.3 2021/12/05 03:04:41 msaitoh Exp $	*/
+/*	$NetBSD: mvxpbm.c,v 1.4 2024/02/08 20:51:24 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.3 2021/12/05 03:04:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvxpbm.c,v 1.4 2024/02/08 20:51:24 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -186,7 +186,7 @@ mvxpbm_alloc_buffer(struct mvxpbm_softc *sc)
 
 	/*
 	 * adjust bm_chunk_size, bm_chunk_header_size, bm_slotsize
-	 * to satisfy alignemnt restrictions. 
+	 * to satisfy alignment restrictions. 
 	 *
 	 *    <----------------  bm_slotsize [oct.] ------------------>
 	 *                               <--- bm_chunk_size[oct.] ---->

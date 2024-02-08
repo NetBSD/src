@@ -1,4 +1,4 @@
-.\"	$Id: 0.t,v 1.1 2001/07/04 05:29:25 itojun Exp $
+.\"	$Id: 0.t,v 1.2 2024/02/08 20:51:24 andvar Exp $
 .\"
 .EQ
 delim $$
@@ -7,7 +7,7 @@ delim $$
 .TL
 Mbuf issues in 4.4BSD IPv6/IPsec support
 .br
-\(em experiences from KAME IPv6/IPsec implemntation \(em
+\(em experiences from KAME IPv6/IPsec implementation \(em
 .AU
 Jun-ichiro itojun Hagino
 .AI
