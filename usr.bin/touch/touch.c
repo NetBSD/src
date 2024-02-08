@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.36 2024/02/08 02:53:40 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.37 2024/02/08 02:53:53 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,16 +39,19 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.36 2024/02/08 02:53:40 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.37 2024/02/08 02:53:53 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +66,7 @@ static void	stime_arg0(const char *, struct timespec *);
 static void	stime_arg1(char *, struct timespec *);
 static void	stime_arg2(const char *, int, struct timespec *);
 static void	stime_file(const char *, struct timespec *);
+static int	stime_posix(const char *, struct timespec *);
 __dead static void	usage(void);
 
 struct option touch_longopts[] = {
@@ -107,7 +111,8 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			timeset = 1;
-			stime_arg0(optarg, ts);
+			if (!stime_posix(optarg, ts))
+				stime_arg0(optarg, ts);
 			break;
 		case 'f':
 			break;
@@ -335,6 +340,147 @@ stime_file(const char *fname, struct timespec *tsp)
 		err(1, "%s", fname);
 	tsp[0] = sb.st_atimespec;
 	tsp[1] = sb.st_mtimespec;
+}
+
+static int
+stime_posix(const char *arg, struct timespec *tsp)
+{
+	struct tm tm;
+	const char *p;
+	char *ep;
+	int utc = 0;
+	long val;
+
+#define	isdigch(c)	(isdigit((int)((unsigned char)(c))))
+
+	if ((p = strchr(arg, '-')) == NULL)
+		return 0;
+	if (p - arg < 4)	/* at least 4 year digits required */
+		return 0;
+
+	if (!isdigch(arg[0]))	/* and the first must be a digit! */
+		return 0;
+
+	errno = 0;
+	val = strtol(arg, &ep, 10);		/* YYYY */
+	if (val < 0 || val > INT_MAX)
+		return 0;
+	if (*ep != '-')
+		return 0;
+	tm.tm_year = (int)val - 1900;
+
+	p = ep + 1;
+
+	if (!isdigch(*p))
+		return 0;
+	val = strtol(p, &ep, 10);		/* MM */
+	if (val < 1 || val > 12)
+		return 0;
+	if (*ep != '-' || ep != p + 2)
+		return 0;
+	tm.tm_mon = (int)val - 1;
+
+	p = ep + 1;
+
+	if (!isdigch(*p))
+		return 0;
+	val = strtol(p, &ep, 10);		/* DD */
+	if (val < 1 || val > 31)
+		return 0;
+	if ((*ep != 'T' && *ep != ' ') || ep != p + 2)
+		return 0;
+	tm.tm_mday = (int)val;
+
+	p = ep + 1;
+
+	if (!isdigch(*p))
+		return 0;
+	val = strtol(p, &ep, 10);		/* hh */
+	if (val < 0 || val > 23)
+		return 0;
+	if (*ep != ':' || ep != p + 2)
+		return 0;
+	tm.tm_hour = (int)val;
+
+	p = ep + 1;
+
+	if (!isdigch(*p))
+		return 0;
+	val = strtol(p, &ep, 10);		/* mm */
+	if (val < 0 || val > 59)
+		return 0;
+	if (*ep != ':' || ep != p + 2)
+		return 0;
+	tm.tm_min = (int)val;
+
+	p = ep + 1;
+
+	if (!isdigch(*p))
+		return 0;
+	val = strtol(p, &ep, 10);		/* ss (or in POSIX, SS) */
+	if (val < 0 || val > 60)
+		return 0;
+	if ((*ep != '.' && *ep != ',' && *ep != 'Z' && *ep != '\0') ||
+	      ep != p + 2)
+		return 0;
+	tm.tm_sec = (int)val;
+
+	if (*ep == ',' || *ep == '.') {
+		double frac;
+		ptrdiff_t fdigs;
+
+		p = ep + 1;
+		if (!isdigch(*p))
+			return 0;
+		val = strtol(p, &ep, 10);
+		if (val < 0)
+			return 0;
+		if (ep == p)	/* at least 1 digit required */
+			return 0;
+		if (*ep != 'Z' && *ep != '\0')
+			return 0;
+
+		if (errno != 0)
+			return 0;
+
+		fdigs = ep - p;
+		if (fdigs > 15) {
+			/* avoid being absurd */
+			/* don't want to risk 10^fdigs being INF */
+			if (val == 0)
+				fdigs = 1;
+			else while (fdigs > 15) {
+				val = (val + 5) / 10;
+				fdigs--;
+			}
+		}
+
+		frac = pow(10.0, (double)fdigs);
+
+		tsp[0].tv_nsec = tsp[1].tv_nsec =
+			(long)round(((double)val / frac) * 1000000000.0);
+	} else
+		tsp[0].tv_nsec = tsp[1].tv_nsec = 0;
+
+	if (*ep == 'Z') {
+		if (ep[1] != '\0')
+			return 0;
+		utc = 1;
+	}
+
+	if (errno != 0)
+		return 0;
+
+	tm.tm_isdst = -1;
+	if (utc)
+		tsp[0].tv_sec = tsp[1].tv_sec = timegm(&tm);
+	else
+		tsp[0].tv_sec = tsp[1].tv_sec = mktime(&tm);
+
+	if (errno != 0 && tsp[1].tv_sec == NO_TIME)
+		return 0;
+
+	return 1;
 }
 
 static void
