@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.215 2024/02/07 08:00:36 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.216 2024/02/08 20:45:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.215 2024/02/07 08:00:36 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.216 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -587,10 +587,9 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		if (u_suffix > 1)
 			u_suffix = 1;
 	}
-	if (!allow_c90 && u_suffix > 0) {
+	if (!allow_c90 && u_suffix > 0)
 		/* suffix 'U' is illegal in traditional C */
 		warning(97);
-	}
 	tspec_t ct = suffix_type[u_suffix][l_suffix];
 
 	bool warned = false;
@@ -604,10 +603,9 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		warned = true;
 	}
 
-	if (any_query_enabled && base == 8 && ui != 0) {
+	if (any_query_enabled && base == 8 && ui != 0)
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
-	}
 
 	bool ansiu = is_unsigned_since_c90(ct, ui, base);
 
@@ -663,19 +661,18 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	} else
 		t = imaginary ? DCOMPLEX : DOUBLE;
 
-	if (!allow_c90 && t != DOUBLE) {
+	if (!allow_c90 && t != DOUBLE)
 		/* suffixes 'F' and 'L' are illegal in traditional C */
 		warning(98);
-	}
 
 	errno = 0;
 	char *eptr;
 	long double ld = strtold(cp, &eptr);
 	lint_assert(eptr == cp + len);
-	if (errno != 0) {
+	if (errno != 0)
 		/* floating-point constant out of range */
 		warning(248);
-	} else if (t == FLOAT) {
+	else if (t == FLOAT) {
 		ld = (float)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
@@ -975,13 +972,12 @@ lex_character_constant(void)
 		 */
 		/* too many characters in character constant */
 		error(71);
-	} else if (n > 1) {
+	} else if (n > 1)
 		/* multi-character character constant */
 		warning(294);
-	} else if (n == 0 && !it.unescaped_newline) {
+	else if (n == 0 && !it.unescaped_newline)
 		/* empty character constant */
 		error(73);
-	}
 
 	int64_t cval = n == 1
 	    ? convert_integer((int64_t)val, CHAR, CHAR_SIZE)
@@ -1014,10 +1010,10 @@ lex_wide_character_constant(void)
 	}
 
 	wchar_t wc = 0;
-	if (n == 0) {
+	if (n == 0)
 		/* empty character constant */
 		error(73);
-	} else if (n > nmax) {
+	else if (n > nmax) {
 		n = nmax;
 		/* too many characters in character constant */
 		error(71);

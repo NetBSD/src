@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.258 2024/02/03 19:25:16 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.259 2024/02/08 20:45:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.258 2024/02/03 19:25:16 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.259 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -330,10 +330,9 @@ designator_type(const designator *dr, const type_t *tp)
 			lint_assert(dr->dr_subscript < (size_t)tp->t_dim);
 		return tp->t_subt;
 	default:
-		if (dr->dr_kind != DK_SCALAR) {
+		if (dr->dr_kind != DK_SCALAR)
 			/* syntax error '%s' */
 			error(249, "scalar type cannot use designator");
-		}
 		return tp;
 	}
 }
@@ -549,18 +548,17 @@ static void
 warn_too_many_initializers(designator_kind kind, const type_t *tp)
 {
 
-	if (kind == DK_MEMBER) {
+	if (kind == DK_MEMBER)
 		/* too many struct/union initializers */
 		error(172);
-	} else if (kind == DK_SUBSCRIPT) {
+	else if (kind == DK_SUBSCRIPT) {
 		lint_assert(tp->t_tspec == ARRAY);
 		lint_assert(!tp->t_incomplete_array);
 		/* too many array initializers, expected %d */
 		error(173, tp->t_dim);
-	} else {
+	} else
 		/* too many initializers */
 		error(174);
-	}
 }
 
 static bool
@@ -715,10 +713,9 @@ initialization_lbrace(initialization *in)
 	if (!allow_c90 && outer_bl == NULL)
 		check_trad_no_auto_aggregate(in->in_sym);
 
-	if (!allow_c90 && tp->t_tspec == UNION) {
+	if (!allow_c90 && tp->t_tspec == UNION)
 		/* initialization of union is illegal in traditional C */
 		warning(238);
-	}
 
 	if (is_struct_or_union(tp->t_tspec) && tp->t_sou->sou_incomplete) {
 		/* initialization of incomplete type '%s' */
@@ -894,10 +891,9 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 			continue;
 	}
 
-	if (!tp->t_incomplete_array && (size_t)tp->t_dim < len) {
+	if (!tp->t_incomplete_array && (size_t)tp->t_dim < len)
 		/* string literal too long (%lu) for target array (%lu) */
 		warning(187, (unsigned long)len, (unsigned long)tp->t_dim);
-	}
 
 	brace_level *bl = in->in_brace_level;
 	if (bl != NULL && bl->bl_designation.dn_len == 0)
