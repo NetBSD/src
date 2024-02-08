@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.33 2015/03/02 03:17:24 enami Exp $	*/
+/*	$NetBSD: touch.c,v 1.34 2024/02/08 02:53:13 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.33 2015/03/02 03:17:24 enami Exp $");
+__RCSID("$NetBSD: touch.c,v 1.34 2024/02/08 02:53:13 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt_long(argc, argv, "acd:fhmr:t:", touch_longopts,
 	    NULL)) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			aflag = 1;
 			break;
@@ -331,7 +331,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-acfhm] [-d|--date datetime] [-r|--reference file] [-t time] file ...\n",
-	    getprogname());
+	    "Usage: %s [-acfhm] [-d|--date datetime] [-r|--reference file]"
+	    " [-t time] file ...\n", getprogname());
 	exit(EXIT_FAILURE);
 }
