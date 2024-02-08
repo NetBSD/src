@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usbreg.h,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq_usbreg.h,v 1.2 2024/02/08 11:31:00 andvar Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -101,7 +101,7 @@
 #define	PORTSC_PTS_PHILIPS	__SHIFTIN(1, PORTSC_PTS)
 #define	PORTSC_PTS_ULPI		__SHIFTIN(2, PORTSC_PTS)
 #define	PORTSC_PTS_SERIAL	__SHIFTIN(3, PORTSC_PTS)
-#define	PORTSC_STS		__BIT(29)	/* serial transeiver select */
+#define	PORTSC_STS		__BIT(29)	/* serial transceiver select */
 #define	PORTSC_PTW		__BIT(28)	/* parallel transceiver width */
 #define	PORTSC_PTW_8		0
 #define	PORTSC_PTW_16		PORTSC_PTW

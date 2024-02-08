@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbreg.h,v 1.5 2016/05/17 06:44:46 ryo Exp $	*/
+/*	$NetBSD: imxusbreg.h,v 1.6 2024/02/08 11:31:00 andvar Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -101,7 +101,7 @@
 #define	PORTSC_PTS_SERIAL	__SHIFTIN(3,PORTSC_PTS)
 #define	PORTSC_PTS2		__BIT(25)	/* iMX6,7 */
 
-#define	PORTSC_STS	__BIT(29)	/* serial transeiver select */
+#define	PORTSC_STS	__BIT(29)	/* serial transceiver select */
 #define	PORTSC_PTW	__BIT(28)	/* parallel transceiver width */
 #define	PORTSC_PTW_8	0
 #define	PORTSC_PTW_16	PORTSC_PTW

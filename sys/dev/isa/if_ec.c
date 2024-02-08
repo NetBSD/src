@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.36 2019/05/29 06:21:57 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.37 2024/02/08 11:31:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.36 2019/05/29 06:21:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.37 2024/02/08 11:31:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ ec_attach(device_t parent, device_t self, void *aux)
 	/* Now we can use the NIC_{GET,PUT}() macros. */
 
 	/*
-	 * Reset NIC and ASIC.  Enable on-board transeiver throughout
+	 * Reset NIC and ASIC.  Enable on-board transceiver throughout
 	 * reset sequence since it will lock up if the cable isn't
 	 * connected if we don't.
 	 */
