@@ -1,7 +1,7 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.58 2021/08/22 19:56:15 andvar Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.59 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*
- * Core definitions and data structures sharable across OS platforms.
+ * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2000-2001 Adaptec Inc.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.58 2021/08/22 19:56:15 andvar Exp $
+ * $Id: aic7xxxvar.h,v 1.59 2024/02/08 20:11:56 andvar Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */

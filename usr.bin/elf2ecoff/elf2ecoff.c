@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.34 2023/03/06 21:39:06 andvar Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.35 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -314,7 +314,7 @@ usage:
 	ep.f.f_symptr = 0;
 	ep.f.f_nsyms = sizeof(struct ecoff32_symhdr);
 	ep.f.f_opthdr = sizeof ep.a;
-	ep.f.f_flags = 0x100f;	/* Stripped, not sharable. */
+	ep.f.f_flags = 0x100f;	/* Stripped, not shareable. */
 
 	memset(esecs, 0, sizeof(esecs));
 

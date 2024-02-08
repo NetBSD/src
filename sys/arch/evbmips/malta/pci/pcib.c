@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.24 2022/01/22 15:10:31 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.25 2024/02/08 20:11:56 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.24 2022/01/22 15:10:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.25 2024/02/08 20:11:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,7 +585,7 @@ pcib_isa_intr_alloc(void *v, int mask, int type, int *irq)
 			if (type != my_sc->sc_intrtab[i].intr_type)
 				continue;
 			/*
-			 * If the IRQ is sharable, count the number of
+			 * If the IRQ is shareable, count the number of
 			 * other handlers, and if it's smaller than the
 			 * last IRQ like this, remember it.
 			 */
@@ -600,7 +600,7 @@ pcib_isa_intr_alloc(void *v, int mask, int type, int *irq)
 			break;
 
 		case IST_PULSE:
-		/* This just isn't sharable. */
+		/* This just isn't shareable. */
 		continue;
 		}
 	}
