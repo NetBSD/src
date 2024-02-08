@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.37 2024/02/08 02:53:53 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.38 2024/02/08 02:54:07 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.37 2024/02/08 02:53:53 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.38 2024/02/08 02:54:07 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ static void	stime_arg1(char *, struct timespec *);
 static void	stime_arg2(const char *, int, struct timespec *);
 static void	stime_file(const char *, struct timespec *);
 static int	stime_posix(const char *, struct timespec *);
+static int	difftm(const struct tm *, const struct tm *);
 __dead static void	usage(void);
 
 struct option touch_longopts[] = {
@@ -233,7 +234,7 @@ stime_arg0(const char *arg, struct timespec *tsp)
 static void
 stime_arg1(char *arg, struct timespec *tsp)
 {
-	struct tm *t;
+	struct tm *t, tm;
 	time_t tmptime;
 	int yearset;
 	char *p;
@@ -290,8 +291,9 @@ stime_arg1(char *arg, struct timespec *tsp)
 	}
 
 	t->tm_isdst = -1;		/* Figure out DST. */
+	tm = *t;
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(t);
-	if (tsp[0].tv_sec == NO_TIME)
+	if (tsp[0].tv_sec == NO_TIME || difftm(t, &tm))
  terr:		errx(EXIT_FAILURE, "out of range or bad time specification:\n"
 		    "\t'%s' should be [[CC]YY]MMDDhhmm[.ss]", initarg);
 
@@ -301,7 +303,7 @@ stime_arg1(char *arg, struct timespec *tsp)
 static void
 stime_arg2(const char *arg, int year, struct timespec *tsp)
 {
-	struct tm *t;
+	struct tm *t, tm;
 	time_t tmptime;
 					/* Start with the current time. */
 	tmptime = tsp[0].tv_sec;
@@ -323,8 +325,9 @@ stime_arg2(const char *arg, int year, struct timespec *tsp)
 	t->tm_sec = 0;
 
 	t->tm_isdst = -1;		/* Figure out DST. */
+	tm = *t;
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(t);
-	if (tsp[0].tv_sec == NO_TIME)
+	if (tsp[0].tv_sec == NO_TIME || difftm(t, &tm))
 		errx(EXIT_FAILURE,
 		    "out of range or bad time specification: MMDDhhmm[YY]");
 
@@ -345,7 +348,7 @@ stime_file(const char *fname, struct timespec *tsp)
 static int
 stime_posix(const char *arg, struct timespec *tsp)
 {
-	struct tm tm;
+	struct tm tm, tms;
 	const char *p;
 	char *ep;
 	int utc = 0;
@@ -360,6 +363,8 @@ stime_posix(const char *arg, struct timespec *tsp)
 
 	if (!isdigch(arg[0]))	/* and the first must be a digit! */
 		return 0;
+
+	(void)memset(&tm, 0, sizeof tm);
 
 	errno = 0;
 	val = strtol(arg, &ep, 10);		/* YYYY */
@@ -472,15 +477,44 @@ stime_posix(const char *arg, struct timespec *tsp)
 		return 0;
 
 	tm.tm_isdst = -1;
+	tms = tm;
 	if (utc)
 		tsp[0].tv_sec = tsp[1].tv_sec = timegm(&tm);
 	else
 		tsp[0].tv_sec = tsp[1].tv_sec = mktime(&tm);
 
-	if (errno != 0 && tsp[1].tv_sec == NO_TIME)
+	if ((errno != 0 && tsp[1].tv_sec == NO_TIME) || difftm(&tm, &tms))
 		return 0;
 
 	return 1;
+}
+
+/*
+ * Determine whether 2 struct tn's are different
+ * return true (1) if theu are, false (0) otherwise.
+ *
+ * Note that we only consider the fields that are set
+ * for mktime() to use - if mktime() returns them
+ * differently than was set, then there was a problem
+ * with the setting.
+ */
+static int
+difftm(const struct tm *t1, const struct tm *t2)
+{
+#define CHK(fld) do {						\
+			if (t1->tm_##fld != t2->tm_##fld) {	\
+				return  1;			\
+			}					\
+		} while(/*CONSTCOND*/0)
+
+	CHK(year);
+	CHK(mon);
+	CHK(mday);
+	CHK(hour);
+	CHK(min);
+	CHK(sec);
+
+	return 0;
 }
 
 static void
