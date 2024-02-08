@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.37 2021/07/09 17:44:28 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.38 2024/02/08 18:10:34 christos Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -29,9 +29,13 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+HP300MKBOOT_TIMESTAMP=-t "${MKREPRO_TIMESTAMP}"
+.endif
+
 ${PROG}: ${PROGAOUT}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
-	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
+	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${HP300MKBOOT_TIMESTAMP} ${PROGAOUT}.bin ${PROG}
 	rm -f ${PROGAOUT}.bin
 
 .include "${S}/conf/newvers_stand.mk"
