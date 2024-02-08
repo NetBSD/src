@@ -1,4 +1,4 @@
-/* $NetBSD: jh7100_pinctrl.c,v 1.1 2024/02/07 17:17:59 skrll Exp $ */
+/* $NetBSD: jh7100_pinctrl.c,v 1.2 2024/02/08 07:13:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jh7100_pinctrl.c,v 1.1 2024/02/07 17:17:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jh7100_pinctrl.c,v 1.2 2024/02/08 07:13:10 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -222,7 +222,7 @@ jh7100_pinctrl_pin_properties(struct jh7100_pinctrl_softc *sc, int phandle,
 	case -1:
 		break;
 	default:
-		aprint_error_dev(sc->sc_dev, "invalid slew rate");
+		aprint_error_dev(sc->sc_dev, "invalid slew rate\n");
 	}
 
 	if (of_hasprop(phandle, "starfive,strong-pull-up")) {
@@ -322,7 +322,6 @@ jh7100_pinctrl_set_config_group(struct jh7100_pinctrl_softc *sc, int group)
 			jh7100_padctl_rmw(sc, sc->sc_padctl_gpio + pin_no,
 			    val, mask);
 		}
-
 	}
 }
 
@@ -413,7 +412,7 @@ jh7100_pinctrl_gpio_write(device_t dev, void *priv, int val, bool raw)
 
 	mutex_enter(&sc->sc_lock);
 	GPIOWR4(sc, GPO_DOUT_CFG(pin_no), val);
-	mutex_enter(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 static struct fdtbus_gpio_controller_func jh7100_pinctrl_gpio_funcs = {
@@ -446,7 +445,7 @@ jh7100_pinctrl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 
 	if (!of_hasprop(phandle, "gpio-controller")) {
-		aprint_error(": no gpio controller");
+		aprint_error(": no gpio controller\n");
 		return;
 	}
 
@@ -494,7 +493,7 @@ jh7100_pinctrl_attach(device_t parent, device_t self, void *aux)
 		sc->sc_padctl_gpio = PAD_FUNC_SHARE(0);
 		break;
 	default:
-		aprint_error_dev(sc->sc_dev, "invalid signal group %u", sel);
+		aprint_error_dev(sc->sc_dev, "invalid signal group %u\n", sel);
 		return;
 	}
 
