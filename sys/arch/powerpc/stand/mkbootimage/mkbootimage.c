@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.19 2016/01/21 17:14:05 christos Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.20 2024/02/08 17:57:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -105,9 +105,7 @@ static void usage(int);
 static int open_file(const char *, char *, Elf32_External_Ehdr *,
     struct stat *);
 static void check_mbr(int, char *);
-static int prep_build_image(char *, char *, char *, char *);
 static void rs6000_build_records(int);
-static int rs6000_build_image(char *, char *, char *, char *);
 int main(int, char **);
 
 
@@ -127,10 +125,10 @@ usage(int extended)
 	}
 #ifdef USE_SYSCTL
 	fprintf(stderr, "usage: %s [-Ilsv] [-m machine] [-b bootfile] "
-	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
+	    "[-k kernel] [-r rawdev] [-t epoch] bootimage\n", getprogname());
 #else
 	fprintf(stderr, "usage: %s [-Ilsv] -m machine [-b bootfile] "
-	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
+	    "[-k kernel] [-r rawdev] [-t epoch]  bootimage\n", getprogname());
 #endif
 	exit(1);
 }
@@ -163,7 +161,7 @@ open_file(const char *ftype, char *file, Elf32_External_Ehdr *hdr,
 	if (ELFGET16(hdr->e_machine) != EM_PPC)
 		errx(3, "input '%s' is not PowerPC exec binary", file);
 
-	return(fd);
+	return fd;
 }
 
 static void
@@ -680,7 +678,7 @@ bebox_write_header(int bebox_fd, int elf_image_len, int kern_img_len)
 }
 
 static int
-bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
+bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname, char *repro_timestamp)
 {
 	unsigned char *elf_img = NULL, *kern_img = NULL, *header_img = NULL;
 	int i, ch, tmp, kgzlen, err, hsize = BEBOX_HEADER_SIZE;
@@ -822,7 +820,11 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	*(int32_t *)(header_img + BEBOX_FILE_SIZE_ALIGN_OFFSET) =
 	    (int32_t)sa_htobe32(roundup(tmp, BEBOX_FILE_BLOCK_SIZE));
 
-	gettimeofday(&tp, 0);
+	if (repro_timestamp) {
+		tp.tv_sec = (time_t)atoll(repro_timestamp);
+		tp.tv_usec = 0;
+	} else
+		gettimeofday(&tp, 0);
 	for (offset = bebox_mtime_offset; *offset != -1; offset++)
 		*(int32_t *)(header_img + *offset) =
 		    (int32_t)sa_htobe32(tp.tv_sec);
@@ -848,6 +850,7 @@ main(int argc, char **argv)
 	int ch, lfloppyflag=0;
 	char *kernel = NULL, *boot = NULL, *rawdev = NULL, *outname = NULL;
 	char *march = NULL;
+	char *repro_timestamp = NULL;
 #ifdef USE_SYSCTL
 	char machine[SYS_NMLN];
 	int mib[2] = { CTL_HW, HW_MACHINE };
@@ -856,7 +859,7 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	kern_len = 0;
 
-	while ((ch = getopt(argc, argv, "b:Ik:lm:r:sv")) != -1)
+	while ((ch = getopt(argc, argv, "b:Ik:lm:r:st:v")) != -1)
 		switch (ch) {
 		case 'b':
 			boot = optarg;
@@ -879,6 +882,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			saloneflag = 1;
+			break;
+		case 't':
+			repro_timestamp = optarg;
 			break;
 		case 'v':
 			verboseflag = 1;
@@ -924,12 +930,13 @@ main(int argc, char **argv)
 	outname = argv[0];
 
 	if (strcmp(march, "prep") == 0)
-		return(prep_build_image(kernel, boot, rawdev, outname));
+		return prep_build_image(kernel, boot, rawdev, outname);
 	if (strcmp(march, "rs6000") == 0)
-		return(rs6000_build_image(kernel, boot, rawdev, outname));
+		return rs6000_build_image(kernel, boot, rawdev, outname);
 	if (strcmp(march, "bebox") == 0)
-		return(bebox_build_image(kernel, boot, rawdev, outname));
+		return bebox_build_image(kernel, boot, rawdev, outname,
+		    repro_timestamp);
 
 	usage(1);
-	return(0);
+	return 0;
 }
