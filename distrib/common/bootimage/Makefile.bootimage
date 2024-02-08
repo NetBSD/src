@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.32 2023/12/03 07:20:23 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.33 2024/02/08 18:14:02 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -235,8 +235,8 @@ FSCYLINDERS!=	expr ${FSSECTORS} / \( ${HEADS} \* ${SECTORS} \)
 SWAPCYLINDERS!=	expr ${SWAPSECTORS} / \( ${HEADS} \* ${SECTORS} \) || true
 
 .if ${USE_GPT} != "no"
-BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
-SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
 .endif
 
 #
@@ -525,11 +525,11 @@ ${WORKMBR}:
 	@echo creating GPT header and partition entries...
 	${RM} -f ${WORKMBR}
 	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} create
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${EFISECTORS} -t efi -l "EFI system"
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${FSSECTORS} -t ffs
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} create
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} add -a 1m -s ${EFISECTORS} -t efi -l "EFI system"
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} add -a 1m -s ${FSSECTORS} -t ffs
 .  if ${SWAPSECTORS} != 0
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${SWAPSECTORS} -t swap
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} add -a 1m -s ${SWAPSECTORS} -t swap
 .  endif
 .elif ${USE_MBR} != "no"
 	@echo creating MBR labels...
@@ -584,10 +584,10 @@ ${IMGBASE}.img:	${TARGET_BLOCKS}
 	${CAT} ${TARGET_BLOCKS} > ${WORKIMG}
 .if ${USE_GPT} != "no"
 .if ${USE_GPTMBR} != "no"
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2		\
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKIMG} biosboot -i 2		\
 	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
 .endif
-	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
+	${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKIMG} set -a bootme -i 2
 .endif	# USE_GPT != "no"
 .if ${USE_SUNLABEL} != "no"
 	@echo Creating sun disklabel...
