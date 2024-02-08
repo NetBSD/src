@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.35 2024/02/08 02:53:28 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.36 2024/02/08 02:53:40 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.35 2024/02/08 02:53:28 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.36 2024/02/08 02:53:40 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,10 +59,10 @@ __RCSID("$NetBSD: touch.c,v 1.35 2024/02/08 02:53:28 kre Exp $");
 #include <util.h>
 #include <getopt.h>
 
-static void	stime_arg0(char *, struct timespec *);
+static void	stime_arg0(const char *, struct timespec *);
 static void	stime_arg1(char *, struct timespec *);
-static void	stime_arg2(char *, int, struct timespec *);
-static void	stime_file(char *, struct timespec *);
+static void	stime_arg2(const char *, int, struct timespec *);
+static void	stime_file(const char *, struct timespec *);
 __dead static void	usage(void);
 
 struct option touch_longopts[] = {
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 static void
-stime_arg0(char *arg, struct timespec *tsp)
+stime_arg0(const char *arg, struct timespec *tsp)
 {
 	tsp[1].tv_sec = tsp[0].tv_sec = parsedate(arg, NULL, NULL);
 	if (tsp[0].tv_sec == NO_TIME)
@@ -294,7 +294,7 @@ stime_arg1(char *arg, struct timespec *tsp)
 }
 
 static void
-stime_arg2(char *arg, int year, struct timespec *tsp)
+stime_arg2(const char *arg, int year, struct timespec *tsp)
 {
 	struct tm *t;
 	time_t tmptime;
@@ -327,7 +327,7 @@ stime_arg2(char *arg, int year, struct timespec *tsp)
 }
 
 static void
-stime_file(char *fname, struct timespec *tsp)
+stime_file(const char *fname, struct timespec *tsp)
 {
 	struct stat sb;
 
