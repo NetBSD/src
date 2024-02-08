@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.59 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.60 2024/02/08 19:44:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.59 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.60 2024/02/08 19:44:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		offset = tables->msg_in[5];
 		options = tables->msg_in[7];
 		if (options != MSG_EXT_PPR_DT) {
-			/* should't happen */
+			/* shouldn't happen */
 			printf("%s: ppr negotiation for target %d: "
 			    "no DT option\n", device_xname(sc->sc_dev), target);
 			siop_target->status = TARST_ASYNC;
@@ -910,7 +910,7 @@ siop_iwr(struct siop_common_cmd *siop_cmd)
 		} else {
 			/*
 			 * now we really had a short xfer, by one byte.
-			 * handle it just as if we had a phase mistmatch
+			 * handle it just as if we had a phase mismatch
 			 * (there is a resid of one for this table).
 			 * Update scratcha1 to reflect the fact that
 			 * this xfer isn't complete.

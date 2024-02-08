@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.7 2023/06/19 08:40:30 msaitoh Exp $	*/
+/*	$NetBSD: siop.c,v 1.8 2024/02/08 19:44:08 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -444,7 +444,7 @@ reset:
 		}
 		return 1;
 	}
-	/* We just should't get there */
+	/* We just shouldn't get there */
 	panic("siop_intr: I shouldn't be there !");
 
 	return 1;
