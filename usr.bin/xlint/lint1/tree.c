@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.604 2024/02/08 20:45:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.605 2024/02/08 20:59:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.604 2024/02/08 20:45:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.605 2024/02/08 20:59:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -321,9 +321,8 @@ ic_expr(const tnode_t *tn)
 type_t *
 block_derive_type(type_t *tp, tspec_t t)
 {
-	type_t *tp2;
 
-	tp2 = block_zero_alloc(sizeof(*tp2), "type");
+	type_t *tp2 = block_zero_alloc(sizeof(*tp2), "type");
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -336,9 +335,8 @@ block_derive_type(type_t *tp, tspec_t t)
 type_t *
 expr_derive_type(type_t *tp, tspec_t t)
 {
-	type_t *tp2;
 
-	tp2 = expr_zero_alloc(sizeof(*tp2), "type");
+	type_t *tp2 = expr_zero_alloc(sizeof(*tp2), "type");
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -3806,55 +3804,48 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 		warn_constant_check_range_loss(op, arg, tp, ot);
 }
 
-/*-
- * Converts a typed constant to a constant of another type.
- *
- * op		operator which requires conversion
- * arg		if op is FARG, # of parameter
- * tp		type to which to convert the constant
- * nv		new constant
- * v		old constant
- */
+/* Converts a typed constant to a constant of another type. */
 void
-convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
+convert_constant(op_t op, int arg, const type_t *ntp, val_t *nv, val_t *ov)
 {
 	/*
-	 * TODO: make 'v' const; the name of this function does not suggest
-	 *  that it modifies 'v'.
+	 * TODO: make 'ov' const; the name of this function does not suggest
+	 *  that it modifies 'ov'.
 	 */
-	tspec_t ot = v->v_tspec;
-	tspec_t nt = nv->v_tspec = tp->t_tspec;
+	tspec_t ot = ov->v_tspec;
+	tspec_t nt = nv->v_tspec = ntp->t_tspec;
 	bool range_check = false;
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
 		nv->v_unsigned_since_c90 = false;
-		nv->u.integer = is_nonzero_val(v) ? 1 : 0;
+		nv->u.integer = is_nonzero_val(ov) ? 1 : 0;
 		return;
 	}
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE)
-		convert_constant_floating(op, arg, ot, tp, nt, v, nv);
-	else if (!convert_constant_to_floating(nt, nv, ot, v)) {
+		convert_constant_floating(op, arg, ot, ntp, nt, ov, nv);
+	else if (!convert_constant_to_floating(nt, nv, ot, ov)) {
 		range_check = true;	/* Check for lost precision. */
-		nv->u.integer = v->u.integer;
+		nv->u.integer = ov->u.integer;
 	}
 
-	if (allow_trad && allow_c90 && v->v_unsigned_since_c90 &&
+	if (allow_trad && allow_c90 && ov->v_unsigned_since_c90 &&
 	    (is_floating(nt) || (
 		(is_integer(nt) && !is_uinteger(nt) &&
 		    portable_rank_cmp(nt, ot) > 0)))) {
 		/* C90 treats constant as unsigned */
 		warning(157);
-		v->v_unsigned_since_c90 = false;
+		ov->v_unsigned_since_c90 = false;
 	}
 
 	if (is_integer(nt)) {
-		nv->u.integer = convert_integer(nv->u.integer, nt,
-		    tp->t_bitfield ? tp->t_bit_field_width : size_in_bits(nt));
+		unsigned int size = ntp->t_bitfield
+		    ? ntp->t_bit_field_width : size_in_bits(nt);
+		nv->u.integer = convert_integer(nv->u.integer, nt, size);
 	}
 
 	if (range_check && op != CVT)
-		convert_constant_check_range(ot, tp, nt, op, arg, v, nv);
+		convert_constant_check_range(ot, ntp, nt, op, arg, ov, nv);
 }
 
 tnode_t *
