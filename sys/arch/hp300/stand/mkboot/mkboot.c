@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.11 2014/10/11 05:33:25 dholland Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.12 2024/02/08 18:10:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.11 2014/10/11 05:33:25 dholland Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.12 2024/02/08 18:10:34 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: mkboot.c,v 1.11 2014/10/11 05:33:25 dholland Exp $");
 #include <time.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,11 +79,11 @@ __RCSID("$NetBSD: mkboot.c,v 1.11 2014/10/11 05:33:25 dholland Exp $");
 #define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
 #define lifstob(s)	((s) * SECTSIZE)
 
-int	lpflag;
-int	loadpoint;
+int	loadpoint = -1;
 struct  load ld;
 struct	lifvol lifv;
 struct	lifdir lifd[LIF_NUMDIR];
+time_t repro_epoch = 0;
 
 int	 main(int, char **);
 void	 bcddate(char *, char *);
@@ -110,24 +111,25 @@ int
 main(int argc, char **argv)
 {
 	char *n1, *n2, *n3;
-	int n, to;
+	int n, to, ch;
 	int count;
 
-	--argc;
-	++argv;
-	if (argc == 0)
-		usage();
-	if (!strcmp(argv[0], "-l")) {
-		argv++;
-		argc--;
-		if (argc == 0)
+
+	while ((ch = getopt(argc, argv, "l:t:")) != -1)
+		switch (ch) {
+		case 'l':
+			loadpoint = strtol(optarg, NULL, 0);
+			break;
+		case 't':
+			repro_epoch = (time_t)atoll(optarg);
+			break;
+		default:
 			usage();
-		sscanf(argv[0], "0x%x", &loadpoint);
-		lpflag++;
-		argv++;
-		argc--;
-	}
-	if (!lpflag || argc == 0)
+		}
+
+	argc -= optind;
+	argv += optind;
+	if (loadpoint == -1 || argc == 0)
 		usage();
 	n1 = argv[0];
 	argv++;
@@ -147,11 +149,8 @@ main(int argc, char **argv)
 	} else
 		n2 = n3 = NULL;
 
-	to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
-	if (to < 0) {
-		perror("open");
-		exit(1);
-	}
+	if ((to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1)
+		err(1, "Can't open `%s'", argv[0]);
 	/* clear possibly unused directory entries */
 	strncpy(lifd[1].dir_name, "          ", 10);
 	lifd[1].dir_type = htobe16(-1);
@@ -250,8 +249,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr,
-		"usage:	 mkboot -l loadpoint prog1 [ prog2 ] outfile\n");
+	fprintf(stderr, "Usage:	%s -l <loadpoint [-t <timestamp>] prog1 [ prog2 ] outfile\n", getprogname());
 	exit(1);
 }
 
