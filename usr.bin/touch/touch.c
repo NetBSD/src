@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.34 2024/02/08 02:53:13 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.35 2024/02/08 02:53:28 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.34 2024/02/08 02:53:13 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.35 2024/02/08 02:53:28 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,6 +73,12 @@ struct option touch_longopts[] = {
 	{ NULL,			0,			0,
 						0 },
 };
+
+#define	YEAR_BOUNDARY		69
+#define	LOW_YEAR_CENTURY	2000	/* for 2 digit years < YEAR_BOUNDARY */
+#define	HIGH_YEAR_CENTURY	1900	/* for 2 digit years >=  "  */
+
+#define	NO_TIME		((time_t)-1)	/* time_t might be unsigned */
 
 int
 main(int argc, char *argv[])
@@ -214,7 +220,7 @@ static void
 stime_arg0(char *arg, struct timespec *tsp)
 {
 	tsp[1].tv_sec = tsp[0].tv_sec = parsedate(arg, NULL, NULL);
-	if (tsp[0].tv_sec == -1)
+	if (tsp[0].tv_sec == NO_TIME)
 		errx(EXIT_FAILURE, "Could not parse `%s'", arg);
 	tsp[0].tv_nsec = tsp[1].tv_nsec = 0;
 }
@@ -226,11 +232,13 @@ stime_arg1(char *arg, struct timespec *tsp)
 	time_t tmptime;
 	int yearset;
 	char *p;
+	char *initarg = arg;
+
 					/* Start with the current time. */
 	tmptime = tsp[0].tv_sec;
 	if ((t = localtime(&tmptime)) == NULL)
 		err(EXIT_FAILURE, "localtime");
-					/* [[CC]YY]MMDDhhmm[.SS] */
+					/* [[CC]YY]MMDDhhmm[.ss] */
 	if ((p = strchr(arg, '.')) == NULL)
 		t->tm_sec = 0;		/* Seconds defaults to 0. */
 	else {
@@ -251,10 +259,12 @@ stime_arg1(char *arg, struct timespec *tsp)
 			t->tm_year += ATOI2(arg);
 		} else {
 			yearset = ATOI2(arg);
-			if (yearset < 69)
-				t->tm_year = yearset + 2000 - TM_YEAR_BASE;
+			if (yearset < YEAR_BOUNDARY)
+				t->tm_year = yearset +
+				    LOW_YEAR_CENTURY - TM_YEAR_BASE;
 			else
-				t->tm_year = yearset + 1900 - TM_YEAR_BASE;
+				t->tm_year = yearset +
+				    HIGH_YEAR_CENTURY - TM_YEAR_BASE;
 		}
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
@@ -276,9 +286,9 @@ stime_arg1(char *arg, struct timespec *tsp)
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(t);
-	if (tsp[0].tv_sec == -1)
-terr:		errx(EXIT_FAILURE,
-	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+	if (tsp[0].tv_sec == NO_TIME)
+ terr:		errx(EXIT_FAILURE, "out of range or bad time specification:\n"
+		    "\t'%s' should be [[CC]YY]MMDDhhmm[.ss]", initarg);
 
 	tsp[0].tv_nsec = tsp[1].tv_nsec = 0;
 }
@@ -300,18 +310,18 @@ stime_arg2(char *arg, int year, struct timespec *tsp)
 	t->tm_min = ATOI2(arg);
 	if (year) {
 		year = ATOI2(arg);
-		if (year < 69)
-			t->tm_year = year + 2000 - TM_YEAR_BASE;
+		if (year < YEAR_BOUNDARY)
+			t->tm_year = year + LOW_YEAR_CENTURY - TM_YEAR_BASE;
 		else
-			t->tm_year = year + 1900 - TM_YEAR_BASE;
+			t->tm_year = year + HIGH_YEAR_CENTURY - TM_YEAR_BASE;
 	}
 	t->tm_sec = 0;
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tsp[0].tv_sec = tsp[1].tv_sec = mktime(t);
-	if (tsp[0].tv_sec == -1)
+	if (tsp[0].tv_sec == NO_TIME)
 		errx(EXIT_FAILURE,
-	"out of range or illegal time specification: MMDDhhmm[yy]");
+		    "out of range or bad time specification: MMDDhhmm[YY]");
 
 	tsp[0].tv_nsec = tsp[1].tv_nsec = 0;
 }
