@@ -49,10 +49,10 @@
 #include <fcntl.h>
 #include <err.h>
 
-typedef struct monitor_elm {
+struct monitor_elm {
 	const char *path;
 	int	fd;
-} *monitor_elm_t;
+};
 
 static void usage(int);
 static void monitor_add(const char *);
@@ -62,9 +62,7 @@ static int VerboseOpt;
 static int QuietOpt;
 static int ExitOpt;
 static int KQueueFd;
-static int NumFiles;
-static int MaxFiles;
-static monitor_elm_t *Elms;
+static struct monitor_elm *Elms;
 
 int
 main(int argc, char **argv)
@@ -104,8 +102,9 @@ main(int argc, char **argv)
 
 	if ((KQueueFd = kqueue()) < 0)
 		err(EXIT_FAILURE, "kqueue");
-	NumFiles = MaxFiles = 16;
-	Elms = calloc(MaxFiles, sizeof(monitor_elm_t));
+	Elms = calloc(argc, sizeof(struct monitor_elm));
+	if (Elms == NULL)
+		err(EXIT_FAILURE, "calloc");
 
 	for (i = 0; i < argc; ++i) {
 		monitor_add(argv[i]);
@@ -122,20 +121,15 @@ static
 void
 monitor_add(const char *path)
 {
-	monitor_elm_t elm;
 	struct kevent kev;
-	int n;
+	int n, fd;
 
-	elm = calloc(1, sizeof(*elm));
-	if (elm == NULL)
-		err(EXIT_FAILURE, "calloc");
-	elm->path = path;
-	elm->fd = open(path, O_RDONLY);
-	if (elm->fd == -1) {
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
 		warn("%s", path);
 		return;
 	}
-	EV_SET(&kev, elm->fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
 		NOTE_DELETE | NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB |
 		NOTE_LINK | NOTE_RENAME | NOTE_REVOKE |
 		NOTE_OPEN | NOTE_CLOSE | NOTE_CLOSE_WRITE | NOTE_READ,
@@ -144,13 +138,8 @@ monitor_add(const char *path)
 	if (n < 0)
 		err(EXIT_FAILURE, "kqueue");
 
-	if (elm->fd >= NumFiles) {
-		MaxFiles = (elm->fd + 16) * 3 / 2;
-		Elms = realloc(Elms, MaxFiles * sizeof(elm));
-		memset(&Elms[NumFiles], 0, (MaxFiles - NumFiles) * sizeof(elm));
-		NumFiles = MaxFiles;
-	}
-	Elms[elm->fd] = elm;
+	Elms[fd].fd = fd;
+	Elms[fd].path = path;
 }
 
 static
@@ -159,7 +148,6 @@ monitor_events(void)
 {
 	struct kevent kev_array[1];
 	struct kevent *kev;
-	monitor_elm_t elm;
 	struct stat st;
 	int bno;
 	int i;
@@ -168,8 +156,7 @@ monitor_events(void)
 	n = kevent(KQueueFd, NULL, 0, kev_array, 1, NULL);
 	for (i = 0; i < n; ++i) {
 		kev = &kev_array[i];
-		elm = Elms[kev->ident];
-		printf("%-23s", elm->path);
+		printf("%-23s", Elms[kev->ident].path);
 		if (VerboseOpt && fstat(kev->ident, &st) == 0 &&
 		    S_ISREG(st.st_mode)) {
 			printf(" %10jd", (intmax_t)st.st_size);
