@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2010/10/17 11:19:53 kiyohara Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2024/02/08 17:57:54 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,8 +9,13 @@
 MDEC?=		${DESTDIR}/usr/mdec
 BOOTLOADER?=	${MDEC}/boot
 
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKBOOTIMAGE_TIMESTAMP=-t "${MKREPRO_TIMESTAMP}"
+.endif
+
+
 ${IMAGE}:
-	${TOOL_POWERPCMKBOOTIMAGE} -I -m ${MACHINE} -b ${BOOTLOADER} ${.TARGET}
+	${TOOL_POWERPCMKBOOTIMAGE} -I -m ${MACHINE} -b ${BOOTLOADER} ${MKBOOTIMAGE_TIMESTAMP} ${.TARGET}
 
 KFILES=	${IMAGE}
 
