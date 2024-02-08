@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.487 2024/02/05 23:11:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.488 2024/02/08 19:32:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.487 2024/02/05 23:11:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.488 2024/02/08 19:32:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -85,18 +85,6 @@ clear_warning_flags_loc(const char *file, size_t line)
 static void
 save_warning_flags_loc(const char *file, size_t line)
 {
-	/*
-	 * There used to be an assertion that saved_lwarn is
-	 * LWARN_NOTHING_SAVED here, but that triggered for the following
-	 * code:
-	 *
-	 * void function(int x) { if (x > 0) if (x > 1) return; }
-	 *
-	 * It didn't trigger if the inner 'if' was enclosed in braces though.
-	 *
-	 * TODO: If actually needed, add support for nested suppression of
-	 *  warnings.
-	 */
 	debug_step("%s:%zu: saving flags %d", file, line, lwarn);
 	saved_lwarn = lwarn;
 }
@@ -108,10 +96,6 @@ restore_warning_flags_loc(const char *file, size_t line)
 	if (saved_lwarn != LWARN_NOTHING_SAVED) {
 		lwarn = saved_lwarn;
 		debug_step("%s:%zu: restoring flags %d", file, line, lwarn);
-		/*
-		 * Do not set 'saved_lwarn = LWARN_NOTHING_SAVED' here, to
-		 * avoid triggering the assertion in save_warning_flags_loc.
-		 */
 	} else
 		clear_warning_flags_loc(file, line);
 }
@@ -179,6 +163,12 @@ is_either(const char *s, const char *a, const char *b)
 %printer {
 	fprintf(yyo, "%s", function_specifier_name($$));
 } <y_function_specifier>
+%printer {
+	size_t n = 0;
+	for (const sym_t *p = $$.first; p != NULL; p = p->s_next)
+		n++;
+	fprintf(yyo, "%zu parameter%s", n, n != 1 ? "s" : "");
+} <y_parameter_list>
 %printer { fprintf(yyo, "%s", type_name($$)); } <y_type>
 %printer {
 	if ($$ == NULL)
@@ -196,6 +186,19 @@ is_either(const char *s, const char *a, const char *b)
 %printer { fprintf(yyo, "%s", type_name($$->ga_arg)); } <y_generic>
 %printer { fprintf(yyo, "%d", $$.dim); } <y_array_size>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_in_system_header>
+%printer {
+	if ($$.dn_len == 0)
+		fprintf(yyo, "(empty)");
+	for (size_t i = 0; i < $$.dn_len; i++) {
+		const designator *dr = $$.dn_items + i;
+		if (dr->dr_kind == DK_MEMBER)
+			fprintf(yyo, ".%s", dr->dr_member->s_name);
+		else if (dr->dr_kind == DK_SUBSCRIPT)
+			fprintf(yyo, "[%zu]", dr->dr_subscript);
+		else
+			fprintf(yyo, "<scalar>");
+	}
+} <y_designation>
 */
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -1042,7 +1045,7 @@ braced_member_declaration_list:	/* see C99 6.7.2.1 */
 member_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
 	member_declaration_list T_RBRACE
 |	T_RBRACE {
-		/* XXX: This is not allowed by any C standard. */
+		/* XXX: Allowed since C23. */
 		$$ = NULL;
 	}
 ;
