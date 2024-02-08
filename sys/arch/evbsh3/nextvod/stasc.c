@@ -1,4 +1,4 @@
-/* $NetBSD: stasc.c,v 1.2 2020/07/20 01:06:33 uwe Exp $ */
+/* $NetBSD: stasc.c,v 1.3 2024/02/08 10:30:25 andvar Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * STMicroelectronics ST40 Asynchronous Serial Controller
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.2 2020/07/20 01:06:33 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.3 2024/02/08 10:30:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.2 2020/07/20 01:06:33 uwe Exp $");
 #define ASC_INT_STA_PE		0x0008 /* Rx: Parity Error */
 #define	ASC_INT_STA_THE		0x0004 /* Tx: Transmitter FIFO Half Empty */
 #define ASC_INT_STA_TE		0x0002 /* Tx: Transmitter Empty */
-#define ASC_INT_STA_RBF		0x0001 /* Rx: Reciever Buffer Full */
+#define ASC_INT_STA_RBF		0x0001 /* Rx: Receiver Buffer Full */
 
 
 
