@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.26 2016/12/24 15:49:18 abhinav Exp $
+.\"	$NetBSD: touch.1,v 1.27 2024/02/08 02:54:13 kre Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd December 24, 2016
+.Dd February 7, 2024
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -41,63 +41,181 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl acfhm
-.Op Fl d Ar human-datetime
-.Op Fl Fl date Ar human-datetime
-.Op Fl r Ar file
-.Op Fl Fl reference Ar file
+.Op Fl d Ar posix-datetime|human-datetime
+.Op Fl Fl \|date Ar posix-datetime|human-datetime
+.Op Fl r Ar ref-file
+.Op Fl Fl \|reference Ar ref-file
 .Op Fl t Ar datetime
 .Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-utility changes the access and modification times of files to the
-current time of day.
-If the file doesn't exist, it is created with default permissions.
+utility changes either or both of the access and modification times of the
+.Ar file Ns s
+to the time specified by the options, described below,
+or to the current time of day, if none of those options is present.
+If the file doesn't exist, it is first created with default permissions.
 .Pp
 The following options are available:
-.Bl -tag -width "-d human-datetime"
+.Bl -tag -compact -width Fl
+.Pp
 .It Fl a
-Change the access time of the file.
-The modification time of the file is not changed unless the
+Change the access time of the
+.Ar file .
+The modification time of the
+.Ar file
+is not changed unless the
 .Fl m
 flag is also specified.
+.Pp
 .It Fl c
-Do not create the file if it does not exist.
+Do not create the
+.Ar file
+if it does not exist.
 The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
+.Pp
+.It Fl d Ar posix-datetime
 .It Fl d Ar human-datetime
-.It Fl Fl date Ar human-datetime
-Parse
+.It Fl Fl \|date Ar posix-datetime
+.It Fl Fl \|date Ar human-datetime
+Attempt to parse the arg
+.Ar posix-datetime
+as a POSIX time string
+.Dq CCYY\-MM\-DDThh:mm:ss[.frac][Z]
+where the minus (or hyphen)
+.Pq Sq \&\-
+and colon
+.Pq Sq \&:
+characters are literals, and:
+.Bl -bullet -compact
+.It
+.Cm CCYY
+represents a 4 (or more) digit year number,
+.It
+.Cm MM
+represents a 2 digit month number (1\-12),
+.It
+.Cm DD
+represents a 2 digit day of the month (1\-31),
+.It
+.Cm T
+represents either the character
+.Sq T
+or a single space character (in which case the
+space, at least, may need to be quoted to the shell to
+avoid the arg being split into two words),
+.It
+.Cm hh
+represents a 2 digit hour of the day (00\-23),
+.It
+.Cm mm
+represents a 2 digit minute of the hour (00\-59),
+.It
+.Cm ss
+represents a 2 digit second of the minute (00\-60)
+where 60 indicates the occurrence of a leap second,
+which POSIX systems ignore, resulting in the following
+second being generated instead (:00 of the next minute),
+.It
+.Cm .frac
+represents optional factional seconds, where the
+.Sq \&.
+can be a period
+.Pq Sq \&.
+or a comma
+.Pq Sq \&,
+and
+.Cm frac
+gives one or more digits, interpreted as if
+in a floating-point representation of the seconds,
+so 
+.Dq \&.3
+represents three tenths of a second, and
+.Dq \&,17
+represents seventeen hundredths of a second, etc.
+Note that if the period or comma is given, there
+must be at least one following digit.
+If no fraction of a second is to be specified,
+also omit the period (or comma).
+If omitted, the fractional seconds are set to 0,
+so specifying
+.Dq \&.0
+or
+.Dq \&,0
+is identical to omitting the
+.Cm \&.frac
+field entirely,
+.It
+.Cm Z
+represents an optional literal
+.Sq Z
+character, indicating the the time given is to
+be considered as a Co-ordinated Universal Time (UTC) value.
+If omitted, the time is considered as being in the local
+timezone, as specified by the
+.Ev TZ
+environment variable.
+.El
+.Pp
+Note that parsing of this string is quite strict.
+If successfully parsed, the time to set will be that
+specified by this string.
+.Pp
+If the attempt to parse the string as a
+.Ar posix-datetime
+fails, then
+.Nm
+will attempt to parse it as a
 .Ar human-datetime
 using the human datetime parser
-.Xr parsedate 3 .
+.Xr parsedate 3 ,
+and use the result as the time to set.
+.Pp
 .It Fl f
 This flag has no effect; it is accepted for compatibility reasons.
+.Pp
 .It Fl h
-If
+If a
 .Ar file
-is a symbolic link, access and/or modification time of the link is changed.
+is a symbolic link, the access and/or modification time of the link is changed.
 This option implies
 .Fl c .
+.Pp
 .It Fl m
-Change the modification time of the file.
-The access time of the file is not changed unless the
+Change the modification time of the
+.Ar file .
+The access time of the
+.Ar file
+is not changed unless the
 .Fl a
 flag is also specified.
-.It Fl r Ar file
-.It Fl Fl reference Ar file
-Use the access and modifications times from
-.Ar file
+.Pp
+.It Fl r Ar ref-file
+.It Fl Fl \|reference Ar ref-file
+Use the access and modification times,
+as appropriate for the operation being performed,
+from
+.Ar ref-file
 instead of the current time of day.
+If the
+.Ar ref-file
+is a symbolic link,
+the times are taken from the file referenced by it.
+.Pp
 .It Fl t Ar datetime
-Change the access and modification times to the specified time.
+Change the access and modification times of the
+.Ar file Ns Pq s
+to the specified
+.Ar datetime.
 The argument
 .Ar datetime
 should be in the form
-.Dq [[CC]YY]MMDDhhmm[.SS]
-where each pair of letters represents the following:
+.Dq [[CC]YY]MMDDhhmm[.ss]
+where each pair of letters represents exactly 2 decimal digits,
+with the following interpretations:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
 .It Ar CC
@@ -110,7 +228,7 @@ is specified, but
 .Dq CC
 is not, a value for
 .Dq YY
-between 69 and 99 results in a
+between 69 and 99 (inclusive) results in a
 .Dq CC
 value of 19.
 Otherwise, a
@@ -124,21 +242,24 @@ The day of the month, from 1 to 31.
 The hour of the day, from 0 to 23.
 .It Ar mm
 The minute of the hour, from 0 to 59.
-.It Ar SS
+.It Ar ss
 The second of the minute, from 0 to 60 (permitting leap seconds).
 If
-.Ar SS
+.Ar ss
 is 60 and the resulting time,
 as affected by the
 .Ev TZ
 environment variable,
 does not refer to a leap second,
 the resulting time is one second after a time where
-.Ar SS
+.Ar ss
 is 59.
 If
-.Ar SS
-is not given a value, it is assumed to be zero.
+.Ar ss
+is not given a value, it is assumed to be zero, and the
+preceding period
+.Pq Sq \&.
+must be omitted.
 .El
 .Pp
 If the
@@ -148,8 +269,25 @@ and
 letter pairs are not specified, the values default to the current
 year.
 If the
-.Dq SS
-letter pair is not specified, the value defaults to 0.
+.Dq ss
+letter pair
+.Pq and the preceding period
+is not specified, the value defaults to 0.
+As an extension to the standard, any of the
+.Dq MM ,
+.Dq DD ,
+and
+.Dq hh
+fields may also be omitted, defaulting to the current
+time of day,
+but once any one of these letter pairs is given, all
+the following ones
+.Pq except Dq \&.ss
+are required.
+Fields must always be specified as 2 digits, even when
+the value is less than 10.
+Leading zeroes do not cause the value to be treated as octal,
+all conversions use decimal numbers.
 .El
 .Pp
 The
@@ -157,32 +295,76 @@ The
 .Fl r ,
 and
 .Fl t
-options are mutually exclusive.
-If more than one of these options is present, the last one is used.
+options are (nominally) mutually exclusive.
+If more than one of these options is present,
+each will be evaluated, and may cause an error,
+then the result from the last one specified is used.
+.Pp
+The options which specify any part of the time
+.Pq Fl d , Fl r , Fl t
+apply to both the access and modification times
+(with
+.Fl r
+obtaining those values independently from the
+.Ar ref-file ) ,
+though which is actually applied depends upon
+the
+.Fl a
+and
+.Fl m
+options.
 .Sh ENVIRONMENT
 .Bl -tag -width -iTZ
 .It Ev TZ
-The timezone to be used for interpreting the
+The time zone to be used for interpreting the
 .Ar datetime
 argument of the
 .Fl t
+option, and the default zone for the
+.Ar posix-datetime
+or
+.Ar human-datetime
+argument of the
+.Fl d
 option.
 .El
+.Sh EXAMPLES
+.Dl touch -h -r path path
+.Pp
+If
+.Ar path
+is a symbolic link, this will set the symbolic link's
+access and modify timestamps identical to those of the
+file to which it refers.
+If
+.Ar path
+is not a symbolic link,
+this will simply update the
+.Dq inode changed
+time
+.Pq Dq ctime
+of the
+.Ar path
+file to the current time of day.
+.Pp
+.Dl touch -m -d '-1 day' somefile
+.Pp
+Set the modify time for
+.Ar somefile
+to one day (24 hours) earlier than the current time.
 .Sh EXIT STATUS
 .Ex -std
 .Sh COMPATIBILITY
 The obsolescent form of
 .Nm ,
 where a time format is specified as the first argument, is supported.
-When no
-.Fl d ,
-.Fl r ,
-or
-.Fl t
-option is specified, there are at least two arguments, and the first
-argument is a string of digits either eight or ten characters in length,
+When none of the time setting options is specified,
+there are at least two arguments,
+and the first argument is a string of digits
+which is either eight or ten characters in length,
 the first argument is interpreted as a time specification of the form
-.Dq MMDDhhmm[YY] .
+.Dq MMDDhhmm[YY] 
+and applied to the remaining arguments interpreted as path names.
 .Pp
 The
 .Dq MM ,
@@ -192,20 +374,48 @@ and
 .Dq mm
 letter pairs are treated as their counterparts specified to the
 .Fl t
-option.
+option, except that none of these are optional.
 If the
 .Dq YY
-letter pair is in the range 69 to 99, the year is set to 1969 to 1999,
-otherwise, the year is set in the 21st century.
+letter pair is present, 
+it is interpret the same as
+.Dq YY
+in the
+.Fl t
+option with no
+.Dq CC
+specified, however here it appears last, rather than first.
+There are no equivalents to the
+.Dq CC
+or
+.Dq ss
+fields of
+.Fl t
+and the fractional seconds field is always set to zero.
 .Sh SEE ALSO
 .Xr utimes 2 ,
 .Xr parsedate 3
+.Sh "FUTURE PLANNING"
+Sometime in the middle of the 21st century, the default
+.Dq CC
+used in formats where that information is not present, or
+where those digits are not given, will be altered to
+make low year numbers represent the 22nd century, and high
+years the 21st century.
+The boundary between low and high is also expected to change.
+To avoid issues, always use formats which include the
+.Dq CC
+field, and always use it when
+.Dq YY
+is given.
 .Sh STANDARDS
 The
 .Nm
 utility is expected to be a superset of the
 .St -p1003.2
-specification.
+and
+.St -p1003.1-2008
+specifications.
 .Sh HISTORY
 A
 .Nm
