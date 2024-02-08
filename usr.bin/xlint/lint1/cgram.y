@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.488 2024/02/08 19:32:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.489 2024/02/08 20:45:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.488 2024/02/08 19:32:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.489 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -431,13 +431,12 @@ is_either(const char *s, const char *a, const char *b)
 program:
 	/* empty */ {
 		/* TODO: Make this an error in C99 mode as well. */
-		if (!allow_trad && !allow_c99) {
+		if (!allow_trad && !allow_c99)
 			/* empty translation unit */
 			error(272);
-		} else if (allow_c90) {
+		else if (allow_c90)
 			/* empty translation unit */
 			warning(272);
-		}
 	}
 |	translation_unit
 ;
@@ -464,10 +463,9 @@ identifier:
 string:
 	T_STRING
 |	string T_STRING {
-		if (!allow_c90) {
+		if (!allow_c90)
 			/* concatenated strings are illegal in traditional C */
 			warning(219);
-		}
 		$$ = cat_strings($1, $2);
 	}
 ;
@@ -670,10 +668,9 @@ unary_expression:
 		$$ = build_unary(INDIR, $2, $3);
 	}
 |	T_ADDITIVE sys cast_expression {
-		if (!allow_c90 && $1 == PLUS) {
+		if (!allow_c90 && $1 == PLUS)
 			/* unary '+' is illegal in traditional C */
 			warning(100);
-		}
 		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2, $3);
 	}
 |	T_COMPLEMENT sys cast_expression {
@@ -815,31 +812,28 @@ declaration_or_error:
 /* K&R ???, C90 ???, C99 6.7, C11 ???, C23 6.7 */
 declaration:
 	begin_type_declmods end_type T_SEMI {
-		if (dcs->d_scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF)
 			/* typedef declares no type name */
 			warning(72);
-		} else {
+		else
 			/* empty declaration */
 			warning(2);
-		}
 	}
 |	begin_type_declmods end_type notype_init_declarators T_SEMI {
-		if (dcs->d_scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF)
 			/* syntax error '%s' */
 			error(249, "missing base type for typedef");
-		} else {
+		else
 			/* old-style declaration; add 'int' */
 			error(1);
-		}
 	}
 |	begin_type_declaration_specifiers end_type T_SEMI {
-		if (dcs->d_scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF)
 			/* typedef declares no type name */
 			warning(72);
-		} else if (!dcs->d_nonempty_decl) {
+		else if (!dcs->d_nonempty_decl)
 			/* empty declaration */
 			warning(2);
-		}
 	}
 |	begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI
@@ -1196,13 +1190,12 @@ enum_declaration:		/* helper for C99 6.7.2.2 */
 enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 	enumerator_list
 |	enumerator_list T_COMMA {
-		if (!allow_c99 && !allow_trad) {
+		if (!allow_c99 && !allow_trad)
 			/* trailing ',' in enum declaration requires C99 ... */
 			error(54);
-		} else {
+		else
 			/* trailing ',' in enum declaration requires C99 ... */
 			c99ism(54);
-		}
 		$$ = $1;
 	}
 ;
@@ -1575,13 +1568,12 @@ vararg_parameter_type_list:	/* specific to lint */
 	}
 |	T_ELLIPSIS {
 		/* TODO: C99 6.7.5 makes this an error as well. */
-		if (!allow_trad && !allow_c99) {
+		if (!allow_trad && !allow_c99)
 			/* C90 to C17 require formal parameter before '...' */
 			error(84);
-		} else if (allow_c90) {
+		else if (allow_c90)
 			/* C90 to C17 require formal parameter before '...' */
 			warning(84);
-		}
 		$$ = (struct parameter_list){ .vararg = true };
 	}
 ;
@@ -2042,13 +2034,12 @@ external_declaration:		/* C99 6.9 */
 		 * TODO: Only allow this in GCC mode, not in plain C99.
 		 * This is one of the top 10 warnings in the NetBSD build.
 		 */
-		if (!allow_trad && !allow_c99) {
+		if (!allow_trad && !allow_c99)
 			/* empty declaration */
 			error(0);
-		} else if (allow_c90) {
+		else if (allow_c90)
 			/* empty declaration */
 			warning(0);
-		}
 	}
 ;
 
@@ -2064,13 +2055,12 @@ external_declaration:		/* C99 6.9 */
 top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 	begin_type end_type notype_init_declarators T_SEMI {
 		/* TODO: Make this an error in C99 mode as well. */
-		if (!allow_trad && !allow_c99) {
+		if (!allow_trad && !allow_c99)
 			/* old-style declaration; add 'int' */
 			error(1);
-		} else if (allow_c90) {
+		else if (allow_c90)
 			/* old-style declaration; add 'int' */
 			warning(1);
-		}
 	}
 |	declaration
 |	error T_SEMI {
@@ -2113,17 +2103,15 @@ function_definition:		/* C99 6.9.1 */
 
 func_declarator:
 	begin_type end_type notype_declarator {
-		if (!allow_trad) {
+		if (!allow_trad)
 			/* old-style declaration; add 'int' */
 			error(1);
-		}
 		$$ = $3;
 	}
 |	begin_type_declmods end_type notype_declarator {
-		if (!allow_trad) {
+		if (!allow_trad)
 			/* old-style declaration; add 'int' */
 			error(1);
-		}
 		$$ = $3;
 	}
 |	begin_type_declaration_specifiers end_type type_declarator {
@@ -2154,20 +2142,18 @@ arg_declaration:
 	}
 |	begin_type_declmods end_type notype_init_declarators T_SEMI
 |	begin_type_declaration_specifiers end_type T_SEMI {
-		if (!dcs->d_nonempty_decl) {
+		if (!dcs->d_nonempty_decl)
 			/* empty declaration */
 			warning(2);
-		} else {
+		else
 			/* '%s' declared in parameter declaration list */
 			warning(3, type_name(dcs->d_type));
-		}
 	}
 |	begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI {
-		if (dcs->d_nonempty_decl) {
+		if (dcs->d_nonempty_decl)
 			/* '%s' declared in parameter declaration list */
 			warning(3, type_name(dcs->d_type));
-		}
 	}
 |	begin_type_declmods error
 |	begin_type_declaration_specifiers error

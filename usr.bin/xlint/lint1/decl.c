@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.391 2024/02/03 12:57:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.392 2024/02/08 20:45:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.391 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.392 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -195,10 +195,9 @@ dcs_add_storage_class(scl_t sc)
 {
 
 	if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
-	    dcs->d_sign_mod != NO_TSPEC || dcs->d_rank_mod != NO_TSPEC) {
+	    dcs->d_sign_mod != NO_TSPEC || dcs->d_rank_mod != NO_TSPEC)
 		/* storage class after type is obsolescent */
 		warning(83);
-	}
 
 	if (dcs->d_scl == NO_SCL)
 		dcs->d_scl = sc;
@@ -674,10 +673,9 @@ dcs_merge_declaration_specifiers(void)
 		l = NO_TSPEC;
 		t = LDOUBLE;
 	}
-	if (t == LDOUBLE && !allow_c90) {
+	if (t == LDOUBLE && !allow_c90)
 		/* 'long double' is illegal in traditional C */
 		warning(266);
-	}
 	if (l == LONG && t == DCOMPLEX) {
 		l = NO_TSPEC;
 		t = LCOMPLEX;
@@ -701,14 +699,12 @@ dcs_end_type(void)
 
 	dcs_merge_declaration_specifiers();
 
-	if (dcs->d_multiple_storage_classes) {
+	if (dcs->d_multiple_storage_classes)
 		/* only one storage class allowed */
 		error(7);
-	}
-	if (dcs->d_invalid_type_combination) {
+	if (dcs->d_invalid_type_combination)
 		/* illegal type combination */
 		error(4);
-	}
 
 	dcs_adjust_storage_class();
 
@@ -757,10 +753,9 @@ length_in_bits(const type_t *tp, const char *name)
 	}
 
 	if (is_struct_or_union(tp->t_tspec)) {
-		if (is_incomplete(tp) && name != NULL) {
+		if (is_incomplete(tp) && name != NULL)
 			/* '%s' has incomplete type '%s' */
 			error(31, name, type_name(tp));
-		}
 		return (int)(elem * tp->t_sou->sou_size_in_bits);
 	}
 
@@ -1099,10 +1094,9 @@ declare_member(sym_t *dsym)
 	 * type the bit-field is packed in (it's ok)
 	 */
 	int sz = length_in_bits(dsym->s_type, dsym->s_name);
-	if (sz == 0 && t == ARRAY && dsym->s_type->t_dim == 0) {
+	if (sz == 0 && t == ARRAY && dsym->s_type->t_dim == 0)
 		/* zero-sized array '%s' in struct requires C99 or later */
 		c99ism(39, dsym->s_name);
-	}
 
 	dcs_add_member(dsym);
 
@@ -1235,13 +1229,13 @@ block_derive_array(type_t *stp, bool dim, int len)
 		tp->t_subt = gettyp(CHAR);
 	}
 #endif
-	if (len < 0) {
+	if (len < 0)
 		/* negative array dimension (%d) */
 		error(20, len);
-	} else if (len == 0 && dim) {
+	else if (len == 0 && dim)
 		/* zero sized array requires C99 or later */
 		c99ism(322);
-	} else if (len == 0 && !dim)
+	else if (len == 0 && !dim)
 		tp->t_incomplete_array = true;
 
 	debug_step("%s: '%s'", __func__, type_name(tp));
@@ -1299,10 +1293,9 @@ check_prototype_parameters(sym_t *args)
 	for (sym_t *sym = dcs->d_first_dlsym;
 	    sym != NULL; sym = sym->s_level_next) {
 		scl_t sc = sym->s_scl;
-		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
+		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG)
 			/* dubious tag declaration '%s %s' */
 			warning(85, tag_name(sc), sym->s_name);
-		}
 	}
 
 	for (sym_t *arg = args; arg != NULL; arg = arg->s_next) {
@@ -1405,10 +1398,9 @@ check_function_definition(sym_t *sym, bool msg)
 {
 
 	if (sym->s_osdef) {
-		if (msg) {
+		if (msg)
 			/* incomplete or misplaced function definition */
 			error(22);
-		}
 		sym->s_osdef = false;
 		sym->u.s_old_style_params = NULL;
 	}
@@ -1550,10 +1542,9 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 					warning(44, tag_name(scl),
 					    tag->s_name);
 				tag = pushdown(tag);
-			} else if (tag->s_scl != scl) {
+			} else if (tag->s_scl != scl)
 				/* base type is really '%s %s' */
 				warning(45, tag_name(tag->s_scl), tag->s_name);
-			}
 			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (decl) {
 			/* "struct a { ... } " */
@@ -1566,10 +1557,9 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			/* base type is really '%s %s' */
 			warning(45, tag_name(tag->s_scl), tag->s_name);
 			/* XXX: Why is this warning suppressed in C90 mode? */
-			if (allow_trad || allow_c99) {
+			if (allow_trad || allow_c99)
 				/* declaration of '%s %s' introduces ... */
 				warning(44, tag_name(scl), tag->s_name);
-			}
 			tag = pushdown(tag);
 			dcs->d_enclosing->d_nonempty_decl = true;
 		}
@@ -1699,13 +1689,12 @@ complete_struct_or_union(sym_t *first_member)
 	else
 		sou->sou_size_in_bits = dcs->d_sou_size_in_bits;
 
-	if (sou->sou_size_in_bits == 0) {
+	if (sou->sou_size_in_bits == 0)
 		/* zero sized %s is a C99 feature */
 		c99ism(47, tspec_name(tp->t_tspec));
-	} else if (!has_named_member(tp)) {
+	else if (!has_named_member(tp))
 		/* '%s' has no named members */
 		warning(65, type_name(tp));
-	}
 	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
@@ -1735,10 +1724,10 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	if (sym->s_scl != NO_SCL) {
 		if (sym->s_block_level == block_level) {
 			/* no hflag, because this is illegal */
-			if (sym->s_param) {
+			if (sym->s_param)
 				/* enumeration constant '%s' hides parameter */
 				warning(57, sym->s_name);
-			} else {
+			else {
 				/* redeclaration of '%s' */
 				error(27, sym->s_name);
 				/*
@@ -1761,10 +1750,9 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	sym->s_type = dcs->d_tag_type;
 	sym->u.s_enum_constant = val;
 
-	if (impl && val == TARG_INT_MIN) {
+	if (impl && val == TARG_INT_MIN)
 		/* enumeration value '%s' overflows */
 		warning(48, sym->s_name);
-	}
 
 	enumval = val == TARG_INT_MAX ? TARG_INT_MIN : val + 1;
 	debug_sym("enumeration_constant: ", sym, "\n");
@@ -1798,10 +1786,9 @@ check_extern_declaration(const sym_t *sym)
 	    sym->s_type->t_tspec == FUNC &&
 	    sym->s_scl == EXTERN &&
 	    sym->s_def == DECL &&
-	    !in_system_header) {
+	    !in_system_header)
 		/* redundant 'extern' in function declaration of '%s' */
 		query_message(13, sym->s_name);
-	}
 }
 
 /*
@@ -1823,10 +1810,10 @@ check_init(sym_t *sym)
 		return true;
 	}
 	if (sym->s_scl == EXTERN && sym->s_def == DECL) {
-		if (dcs->d_kind == DLK_EXTERN) {
+		if (dcs->d_kind == DLK_EXTERN)
 			/* cannot initialize extern declaration '%s' */
 			warning(26, sym->s_name);
-		} else {
+		else {
 			/* cannot initialize extern declaration '%s' */
 			error(26, sym->s_name);
 			return true;
@@ -1880,11 +1867,9 @@ check_old_style_definition(const sym_t *rdsym, const sym_t *dsym)
 	}
 
 end:
-	if (msg && rflag) {
+	if (msg && rflag)
 		/* old-style definition */
 		message_at(300, &rdsym->s_def_pos);
-	}
-
 	return msg;
 }
 
@@ -2015,17 +2000,17 @@ declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 		declare_extern(decl, has_initializer, renaming);
 	else if (dcs->d_kind == DLK_OLD_STYLE_PARAMS ||
 	    dcs->d_kind == DLK_PROTO_PARAMS) {
-		if (renaming != NULL) {
+		if (renaming != NULL)
 			/* symbol renaming can't be used on function ... */
 			error(310);
-		} else
+		else
 			(void)declare_parameter(decl, has_initializer);
 	} else {
 		lint_assert(dcs->d_kind == DLK_AUTO);
-		if (renaming != NULL) {
+		if (renaming != NULL)
 			/* symbol renaming can't be used on automatic ... */
 			error(311);
-		} else
+		else
 			declare_local(decl, has_initializer);
 	}
 	debug_printf("%s: ", __func__);
@@ -2324,10 +2309,9 @@ declare_parameter(sym_t *sym, bool has_initializer)
 		sym->s_param = true;
 	}
 
-	if (has_initializer) {
+	if (has_initializer)
 		/* cannot initialize parameter '%s' */
 		error(52, sym->s_name);
-	}
 
 	if (sym->s_type == NULL)	/* for c(void()) */
 		sym->s_type = gettyp(VOID);
@@ -2527,10 +2511,9 @@ check_func_old_style_parameters(void)
 				old_param = old_param->s_next;
 			}
 		}
-		if (msg && rflag) {
+		if (msg && rflag)
 			/* prototype declaration */
 			message_at(285, &dcs->d_redeclared_symbol->s_def_pos);
-		}
 
 		/* from now on the prototype is valid */
 		funcsym->s_osdef = false;
@@ -2578,20 +2561,16 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 			 * produced below
 			 */
 			if (!allow_c90) {
-				if (hflag) {
+				if (hflag)
 					/* declaration of '%s' hides ... */
 					warning(91, dsym->s_name);
-				}
 				rmsym(rdsym);
 			}
 		}
 
-	} else if (rdsym->s_block_level < block_level) {
-		if (hflag) {
-			/* declaration of '%s' hides earlier one */
-			warning(95, dsym->s_name);
-		}
-	}
+	} else if (rdsym->s_block_level < block_level && hflag)
+		/* declaration of '%s' hides earlier one */
+		warning(95, dsym->s_name);
 
 	if (rdsym->s_block_level == block_level) {
 		/* redeclaration of '%s' */
@@ -2664,10 +2643,9 @@ declare_local(sym_t *dsym, bool has_initializer)
 			dsym->s_scl = EXTERN;
 	}
 
-	if (dsym->s_scl == EXTERN) {
+	if (dsym->s_scl == EXTERN)
 		/* nested 'extern' declaration of '%s' */
 		warning(352, dsym->s_name);
-	}
 
 	if (dsym->s_type->t_tspec == FUNC) {
 		if (dsym->s_scl == STATIC) {
@@ -2735,10 +2713,9 @@ declare_local(sym_t *dsym, bool has_initializer)
 		set_first_typedef(dsym->s_type, dsym);
 	}
 
-	if (dsym->s_scl == STATIC && any_query_enabled) {
+	if (dsym->s_scl == STATIC && any_query_enabled)
 		/* static variable '%s' in function */
 		query_message(11, dsym->s_name);
-	}
 
 	debug_printf("%s: ", __func__);
 	debug_sym("", dsym, "\n");
@@ -2884,10 +2861,9 @@ check_parameter_usage(bool novar, const sym_t *arg)
 	if (novar)
 		return;
 
-	if (!arg->s_used && !vflag) {
+	if (!arg->s_used && !vflag)
 		/* parameter '%s' unused in function '%s' */
 		warning_at(231, &arg->s_def_pos, arg->s_name, funcsym->s_name);
-	}
 }
 
 static void
@@ -3028,14 +3004,12 @@ check_global_variable_size(const sym_t *sym)
 
 	if (sym->s_def != TDEF)
 		return;
-	if (sym->s_type->t_tspec == FUNC) {
+	if (sym->s_type->t_tspec == FUNC)
 		/* Maybe a syntax error after a function declaration. */
 		return;
-	}
-	if (sym->s_def == TDEF && sym->s_type->t_tspec == VOID) {
+	if (sym->s_def == TDEF && sym->s_type->t_tspec == VOID)
 		/* Prevent an internal error in length_in_bits below. */
 		return;
-	}
 
 	pos_t cpos = curr_pos;
 	curr_pos = sym->s_def_pos;
@@ -3064,34 +3038,30 @@ check_unused_static_global_variable(const sym_t *sym)
 			if (!sym->s_inline)
 				/* static function '%s' unused */
 				warning_at(236, &sym->s_def_pos, sym->s_name);
-		} else {
+		} else
 			/* static function '%s' declared but not defined */
 			warning_at(290, &sym->s_def_pos, sym->s_name);
-		}
-	} else if (!sym->s_set) {
+	} else if (!sym->s_set)
 		/* static variable '%s' unused */
 		warning_at(226, &sym->s_def_pos, sym->s_name);
-	} else {
+	else
 		/* static variable '%s' set but not used */
 		warning_at(307, &sym->s_def_pos, sym->s_name);
-	}
 }
 
 static void
 check_static_global_variable(const sym_t *sym)
 {
-	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF) {
+	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF)
 		/* static function '%s' called but not defined */
 		error_at(225, &sym->s_use_pos, sym->s_name);
-	}
 
 	if (!sym->s_used)
 		check_unused_static_global_variable(sym);
 
-	if (allow_c90 && sym->s_def == TDEF && sym->s_type->t_const) {
+	if (allow_c90 && sym->s_def == TDEF && sym->s_type->t_const)
 		/* const object '%s' should have initializer */
 		warning_at(227, &sym->s_def_pos, sym->s_name);
-	}
 }
 
 static void
@@ -3143,13 +3113,12 @@ print_previous_declaration(const sym_t *psym)
 	if (!rflag)
 		return;
 
-	if (psym->s_def == DEF || psym->s_def == TDEF) {
+	if (psym->s_def == DEF || psym->s_def == TDEF)
 		/* previous definition of '%s' */
 		message_at(261, &psym->s_def_pos, psym->s_name);
-	} else {
+	else
 		/* previous declaration of '%s' */
 		message_at(260, &psym->s_def_pos, psym->s_name);
-	}
 }
 
 /*

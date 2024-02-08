@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.180 2024/02/03 12:57:12 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.181 2024/02/08 20:45:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.180 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.181 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -621,10 +621,9 @@ stmt_switch_expr(tnode_t *tn)
 	}
 	if (tn != NULL && !allow_c90) {
 		tspec_t t = tn->tn_type->t_tspec;
-		if (t == LONG || t == ULONG || t == LLONG || t == ULLONG) {
+		if (t == LONG || t == ULONG || t == LLONG || t == ULLONG)
 			/* switch expression must be of type 'int' in ... */
 			warning(271);
-		}
 	}
 
 	/*
@@ -678,10 +677,9 @@ stmt_switch_expr_stmt(void)
 		}
 		for (cl = cstmt->c_case_labels; cl != NULL; cl = cl->cl_next)
 			nclab++;
-		if (hflag && eflag && nclab < nenum && !cstmt->c_default) {
+		if (hflag && eflag && nclab < nenum && !cstmt->c_default)
 			/* enumeration value(s) not handled in switch */
 			warning(206);
-		}
 	}
 
 	check_getopt_end_switch();
@@ -934,10 +932,9 @@ check_return_value(bool sys, tnode_t *tn)
 		while (rn->tn_op == CVT || rn->tn_op == PLUS)
 			rn = rn->tn_left;
 		if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
-		    rn->tn_left->tn_sym->s_scl == AUTO) {
+		    rn->tn_left->tn_sym->s_scl == AUTO)
 			/* '%s' returns pointer to automatic object */
 			warning(302, funcsym->s_name);
-		}
 	}
 
 	expr(retn, true, false, true, false);
@@ -990,31 +987,27 @@ void
 global_clean_up_decl(bool silent)
 {
 	if (nargusg != -1) {
-		if (!silent) {
+		if (!silent)
 			/* comment ** %s ** must precede function definition */
 			warning_at(282, &argsused_pos, "ARGSUSED");
-		}
 		nargusg = -1;
 	}
 	if (nvararg != -1) {
-		if (!silent) {
+		if (!silent)
 			/* comment ** %s ** must precede function definition */
 			warning_at(282, &vapos, "VARARGS");
-		}
 		nvararg = -1;
 	}
 	if (printflike_argnum != -1) {
-		if (!silent) {
+		if (!silent)
 			/* comment ** %s ** must precede function definition */
 			warning_at(282, &printflike_pos, "PRINTFLIKE");
-		}
 		printflike_argnum = -1;
 	}
 	if (scanflike_argnum != -1) {
-		if (!silent) {
+		if (!silent)
 			/* comment ** %s ** must precede function definition */
 			warning_at(282, &scanflike_pos, "SCANFLIKE");
-		}
 		scanflike_argnum = -1;
 	}
 
@@ -1041,10 +1034,9 @@ argsused(int n)
 		warning(280, "ARGSUSED");
 		return;
 	}
-	if (nargusg != -1) {
+	if (nargusg != -1)
 		/* duplicate comment ** %s ** */
 		warning(281, "ARGSUSED");
-	}
 	nargusg = n != -1 ? n : 0;
 	argsused_pos = curr_pos;
 }
@@ -1057,10 +1049,9 @@ varargs(int n)
 		warning(280, "VARARGS");
 		return;
 	}
-	if (nvararg != -1) {
+	if (nvararg != -1)
 		/* duplicate comment ** %s ** */
 		warning(281, "VARARGS");
-	}
 	nvararg = n != -1 ? n : 0;
 	vapos = curr_pos;
 }
@@ -1077,10 +1068,9 @@ printflike(int n)
 		warning(280, "PRINTFLIKE");
 		return;
 	}
-	if (printflike_argnum != -1) {
+	if (printflike_argnum != -1)
 		/* duplicate comment ** %s ** */
 		warning(281, "PRINTFLIKE");
-	}
 	printflike_argnum = n != -1 ? n : 0;
 	printflike_pos = curr_pos;
 }
@@ -1097,10 +1087,9 @@ scanflike(int n)
 		warning(280, "SCANFLIKE");
 		return;
 	}
-	if (scanflike_argnum != -1) {
+	if (scanflike_argnum != -1)
 		/* duplicate comment ** %s ** */
 		warning(281, "SCANFLIKE");
-	}
 	scanflike_argnum = n != -1 ? n : 0;
 	scanflike_pos = curr_pos;
 }

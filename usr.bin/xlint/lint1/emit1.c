@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.86 2024/02/05 23:11:22 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.87 2024/02/08 20:45:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.86 2024/02/05 23:11:22 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.87 2024/02/08 20:45:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -346,16 +346,15 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				 * explicitly test the sign
 				 */
 				int64_t si = arg->tn_val.u.integer;
-				if (si == 0) {
+				if (si == 0)
 					/* zero constant */
 					outchar('z');
-				} else if (!msb(si, t)) {
+				else if (!msb(si, t))
 					/* positive if cast to signed */
 					outchar('p');
-				} else {
+				else
 					/* negative if cast to signed */
 					outchar('n');
-				}
 				outint((int)n);
 			}
 		} else if (arg->tn_op == ADDR &&
