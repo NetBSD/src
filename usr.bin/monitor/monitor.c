@@ -48,6 +48,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <err.h>
+#include <vis.h>
 
 struct monitor_elm {
 	const char *path;
@@ -152,11 +153,17 @@ monitor_events(void)
 	int bno;
 	int i;
 	int n;
+	char *vispath;
+
+	vispath = malloc(PATH_MAX * 4 + 1);
+	if (vispath == NULL)
+		err(1, "malloc");
 
 	n = kevent(KQueueFd, NULL, 0, kev_array, 1, NULL);
 	for (i = 0; i < n; ++i) {
 		kev = &kev_array[i];
-		printf("%-23s", Elms[kev->ident].path);
+		(void) strvis(vispath, Elms[kev->ident].path, VIS_TAB | VIS_NL | VIS_CSTYLE);
+		printf("%-23s", vispath);
 		if (VerboseOpt && fstat(kev->ident, &st) == 0 &&
 		    S_ISREG(st.st_mode)) {
 			printf(" %10jd", (intmax_t)st.st_size);
