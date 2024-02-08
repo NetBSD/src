@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.2 2016/01/21 17:00:23 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.3 2024/02/08 19:24:43 christos Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -115,6 +115,7 @@ int cksum(int, int *, int);
 char *to_file;
 int loadpoint, verbose;
 u_long entry;
+time_t repro_epoch = 0;
 
 /*
  * Old Format:
@@ -140,13 +141,16 @@ main(int argc, char **argv)
 	struct hppa_lifvol *lifv = (struct hppa_lifvol *)buf;
 	struct hppa_lifdir *lifd = (struct hppa_lifdir *)(buf + HPPA_LIF_DIRSTART);
 
-	while ((c = getopt(argc, argv, "vl:")) != -1) {
+	while ((c = getopt(argc, argv, "l:t:v")) != -1) {
 		switch (c) {
+		case 'l':
+			loadpoint = strtol(optarg, NULL, 0);
+			break;
+		case 't':
+			repro_epoch = atoll(optarg);
+			break;
 		case 'v':
 			verbose++;
-			break;
-		case 'l':
-			sscanf(optarg, "0x%x", &loadpoint);
 			break;
 		default:
 			usage();
@@ -374,8 +378,8 @@ void __dead
 usage(void)
 {
 	fprintf(stderr,
-		"usage: %s [-v] [-l loadpoint] prog1 {progN} outfile\n",
-		getprogname());
+	    "Usage: %s [-v] [-l <loadpoint>] [-t <timestamp>] prog1 {progN} outfile\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -411,6 +415,12 @@ bcddate(char *file, char *toc)
 	struct stat statb;
 	struct tm *tm;
 
+	if (repro_epoch)
+		tm = gmtime(&repro_epoch);
+	else {
+		stat(file, &statb);
+		tm = localtime(&statb.st_ctime);
+	}
 	stat(file, &statb);
 	tm = localtime(&statb.st_ctime);
 	tm->tm_year %= 100;
