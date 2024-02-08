@@ -1,6 +1,6 @@
 #! /bin/sh -
 #
-# $NetBSD: newvers_rm.sh,v 1.2 2008/04/30 13:10:59 martin Exp $
+# $NetBSD: newvers_rm.sh,v 1.3 2024/02/08 19:28:42 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,10 +37,17 @@
 
 set -e
 
-r=`awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' $1`
-r=`echo $r | sed 's/\.\([0-9]\)$/.0\1/'`
+r=$(awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' $1)
+r=$(echo $r | sed 's/\.\([0-9]\)$/.0\1/')
 
-t=`date +"%d %b %Y"`
+
+if [ -n "$MKREPRO_TIMESTAMP" ]; then
+	# Try NetBSD date, fall back to GNU date.
+	t=$(date -u -r "$MKREPRO_TIMESTAMP" '+%d %b %Y' 2> /dev/null || \
+	    date -u -d "@$MKREPRO_TIMESTAMP" '+%d %b %Y')
+else
+       t=$(date +"%d %b %Y")
+fi
 
 echo "const char rmhelp[] = \"$2\\t${r} (${t})\";" > rmvers.c
 
