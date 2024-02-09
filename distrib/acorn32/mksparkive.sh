@@ -1,5 +1,5 @@
 #!/bin/sh -e
-#	$NetBSD: mksparkive.sh,v 1.8 2008/04/30 13:10:47 martin Exp $
+#	$NetBSD: mksparkive.sh,v 1.9 2024/02/09 15:34:34 christos Exp $
 #
 # Copyright (c) 2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,8 +63,8 @@ print2()
 	then
 		exit 1
 	fi
-	lowbyte=`expr $1 % 256 | xargs printf %02x`
-	highbyte=`expr $1 / 256 | xargs printf %02x`
+	lowbyte=$(expr $1 % 256 | xargs printf %02x)
+	highbyte=$(expr $1 / 256 | xargs printf %02x)
 	printf "\x$lowbyte\x$highbyte"
 }
 
@@ -74,8 +74,8 @@ print4()
 	then
 		exit 1
 	fi
-	print2 `expr $1 % 65536`
-	print2 `expr $1 / 65536`
+	print2 $(expr $1 % 65536)
+	print2 $(expr $1 / 65536)
 }
 
 makeheader()
@@ -83,18 +83,19 @@ makeheader()
 	filename="$1"
 	statfilename="$2"
 	realfilename="$3"
-	filetype=`printf %03s "$4"`
+	filetype=$(printf %03s "$4")
 	compressed="$5"
 	# length is only passed to length4, so we don't need to worry about
 	# extracting only the length here.
-	length=`wc -c "$filename"`
-	eval `${TOOL_STAT} -s "$statfilename"`
+	length=$(wc -c "$filename")
+	eval $(${TOOL_STAT} -s "$statfilename")
+	[ -n "${MKREPRO_TIMESTAMP}" ] && st_mtime=${MKREPRO_TIMESTAMP}
 	# centiseconds since 1st Jan 1900
-	timestamp=`expr $st_mtime \* 100 + 220898880000`
-	lowtype=`echo "$filetype" | sed s/.//`
-	hightype=`echo "$filetype" | sed s/..\$//`
-	highdate=`expr $timestamp / 4294967296 | xargs printf %02x`
-	lowdate=`expr $timestamp % 4294967296`
+	timestamp=$(expr $st_mtime \* 100 + 220898880000)
+	lowtype=$(echo "$filetype" | sed s/.//)
+	hightype=$(echo "$filetype" | sed s/..\$//)
+	highdate=$(expr $timestamp / 4294967296 | xargs printf %02x)
+	lowdate=$(expr $timestamp % 4294967296)
 
 	# Header version number
 	if [ "$compressed" -ne 0 ]
@@ -114,9 +115,9 @@ makeheader()
 	# CRC
 	if [ "$compressed" -ne 0 ]
 	then
-		print2 `${TOOL_SPARKCRC} "$statfilename"`
+		print2 $(${TOOL_SPARKCRC} "$statfilename")
 	else
-		print2 `${TOOL_SPARKCRC} "$filename"`
+		print2 $(${TOOL_SPARKCRC} "$filename")
 	fi
 	# Original file length
 	if [ "$compressed" -ne 0 ]
@@ -141,7 +142,7 @@ makearchive()
 {
 	for file in "$@"
 	do
-		temp=`${TOOL_MKTEMP} -t $progname` || exit 1
+		temp=$(${TOOL_MKTEMP} -t $progname) || exit 1
 		trap "rm -f $temp" 0
 		# Archive marker
 		printf \\x1a
@@ -151,10 +152,10 @@ makearchive()
 				-*)	echo "Invalid filename" >&2
 					exit 1
 					;;
-				*,???)	type=`echo "$file" | \
-					    sed "s/.*,\(...\)$/\1/"`
-					filename=`echo "$file" | \
-					    sed "s/,...$//"`
+				*,???)	type=$(echo "$file" | \
+					    sed "s/.*,\(...\)$/\1/")
+					filename=$(echo "$file" | \
+					    sed "s/,...$//")
 					;;
 				*)	type=fff
 					filename="$file"
@@ -166,18 +167,18 @@ makearchive()
 			# to indicate its choice of algorithm. Spark doesn't
 			# understand that, so it must be stripped.
 			compress -c "$file" | tail -c +3 >"$temp"
-			size1=`wc -c "$file" | awk '{print $1}'`
-			size2=`wc -c "$temp" | awk '{print $1}'`
+			size1=$(wc -c "$file" | awk '{print $1}')
+			size2=$(wc -c "$temp" | awk '{print $1}')
 			if [ $size1 -ge $size2 ]
 			then
 				makeheader "$temp" "$file" "$filename" "$type" 1
-				nbits=`dd if="$temp" bs=1 count=1 2>/dev/null| \
-				    od -t d1 | awk '{print $2}'`
+				nbits=$(dd if="$temp" bs=1 count=1 \
+				    2>/dev/null |  od -t d1 | awk '{print $2}')
 				if [ $nbits -ge 128 ]
 				then
-					nbits=`expr $nbits - 128`
+					nbits=$(expr $nbits - 128)
 				fi
-				printf \\x`printf %02x $nbits`
+				printf \\x$(printf %02x $nbits)
 				tail -c +2 "$temp"
 			else
 				makeheader "$file" "$file" "$filename" "$type" 0
@@ -188,7 +189,7 @@ makearchive()
 		then
 			(
 				cd "$file"
-				makearchive `ls -A` >$temp
+				makearchive $(ls -A) >$temp
 			)
 			if [ $? -ne 0 ]
 			then
@@ -206,7 +207,7 @@ makearchive()
 	printf \\x00
 }
 
-progname=`basename $0`
+progname=$(basename $0)
 
 if [ $# -eq 0 ]
 then
