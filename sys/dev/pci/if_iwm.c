@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.88 2023/09/21 09:31:50 msaitoh Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.89 2024/02/09 06:01:03 mlelstv Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.88 2023/09/21 09:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.89 2024/02/09 06:01:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1262,8 +1262,9 @@ iwm_free_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 		struct iwm_rx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
+			bus_size_t sz = data->m->m_pkthdr.len;
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			    sz, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
 			data->m = NULL;
@@ -1405,8 +1406,9 @@ iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 		struct iwm_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
+			bus_size_t sz = data->m->m_pkthdr.len;
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			    sz, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
 			data->m = NULL;
@@ -1436,8 +1438,9 @@ iwm_free_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 		struct iwm_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
+			bus_size_t sz = data->m->m_pkthdr.len;
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			    sz, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
 			data->m = NULL;
@@ -1517,7 +1520,7 @@ iwm_ict_reset(struct iwm_softc *sc)
 	iwm_disable_interrupts(sc);
 
 	memset(sc->ict_dma.vaddr, 0, IWM_ICT_SIZE);
-	bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0, IWM_ICT_SIZE,
+	bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0, sc->ict_dma.size,
 	    BUS_DMASYNC_PREWRITE);
 	sc->ict_cur = 0;
 
@@ -3766,7 +3769,7 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 	if (size <= MCLBYTES) {
 		MCLGET(m, M_DONTWAIT);
 	} else {
-		MEXTMALLOC(m, IWM_RBUF_SIZE, M_DONTWAIT);
+		MEXTMALLOC(m, size, M_DONTWAIT);
 	}
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
@@ -3778,7 +3781,7 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 		fatal = 1;
 	}
 
-	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
+	m->m_len = m->m_pkthdr.len = size;
 	err = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (err) {
@@ -4452,12 +4455,17 @@ iwm_cmd_done(struct iwm_softc *sc, int qid, int idx)
 	wakeup(&ring->desc[idx]);
 
 	if (((idx + ring->queued) % IWM_TX_RING_COUNT) != ring->cur) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "Some HCMDs skipped?: idx=%d queued=%d cur=%d\n",
 		    idx, ring->queued, ring->cur);
 	}
 
-	KASSERT(ring->queued > 0);
+	if (ring->queued == 0) {
+		splx(s);
+		device_printf(sc->sc_dev, "cmd_done with empty ring\n");
+		return;
+	}
+
 	if (--ring->queued == 0)
 		iwm_clear_cmd_in_flight(sc);
 
@@ -4785,7 +4793,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		    | ((seg->ds_len) << 4);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, m->m_pkthdr.len,
 	    BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map,
 	    (uint8_t *)cmd - (uint8_t *)ring->cmd, sizeof(*cmd),
