@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.19 2010/11/26 18:58:43 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.20 2024/02/09 20:55:15 andvar Exp $	*/
 /*	$KAME: ftp.c,v 1.23 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ ftp_copyresult(int src, int dst, enum state state)
 		if (!passivemode && rbuf[0] == '1') {
 			if (ftp_activeconn() < 0) {
 				n = snprintf(rbuf, sizeof(rbuf),
-				    "425 Cannot open data connetion\r\n");
+				    "425 Cannot open data connection\r\n");
 				if (n < 0 || n >= (int)sizeof(rbuf))
 					n = 0;
 			}
@@ -864,7 +864,7 @@ eprtparamfail:
 		*state = NONE;
 		if (ftp_passiveconn() < 0) {
 			return dprintf(src,
-			    "425 Cannot open data connetion\r\n");
+			    "425 Cannot open data connection\r\n");
 		} else {
 			/* simply relay the command */
 			return write(dst, rbuf, (size_t)n);
