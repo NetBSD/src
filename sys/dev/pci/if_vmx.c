@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.13 2023/08/28 09:50:12 msaitoh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.14 2024/02/09 18:39:52 andvar Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.13 2023/08/28 09:50:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.14 2024/02/09 18:39:52 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -754,7 +754,7 @@ vmxnet3_check_version(struct vmxnet3_softc *sc)
 	ver = vmxnet3_read_bar1(sc, VMXNET3_BAR1_UVRS);
 	if ((ver & 0x1) == 0) {
 		aprint_error_dev(sc->vmx_dev,
-		    "incompatiable UPT version 0x%x\n", ver);
+		    "incompatible UPT version 0x%x\n", ver);
 		return (ENOTSUP);
 	}
 	vmxnet3_write_bar1(sc, VMXNET3_BAR1_UVRS, 1);
