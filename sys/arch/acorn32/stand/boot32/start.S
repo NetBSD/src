@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.5 2021/08/20 20:25:26 andvar Exp $	*/
+/*	$NetBSD: start.S,v 1.6 2024/02/09 17:39:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk
@@ -247,7 +247,7 @@ flush_ID_cache_try:
 	add	r1, r1, r7						/* add offset				*/
 	mov	r0, r2							/* put configuration structure in r0	*/
 	mov	r2, r3
-	mov	r3, r4							/* L1 page discriptor			*/
+	mov	r3, r4							/* L1 page descriptor			*/
 	mov	r4, r5							/* kernel entry point			*/
 
 	mov	pc, r9							/* jump to page addr == relocate_code	*/

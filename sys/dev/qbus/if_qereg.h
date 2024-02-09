@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qereg.h,v 1.9 2005/12/11 12:23:29 christos Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.10 2024/02/09 17:39:34 andvar Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -114,7 +114,7 @@ struct qedevice {
 #define QE_RCV_INT	0x8000		/* Receiver interrupt		*/
 
 /*
- * Transmit and receive ring discriptor ---------------------------
+ * Transmit and receive ring descriptor ---------------------------
  *
  * The QNA uses the flag, status1 and the valid bit as a handshake/semiphore
  * mechinism.

@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.21 2023/05/10 00:11:32 riastradh Exp $ */
+/* $NetBSD: cxdtv.c,v 1.22 2024/02/09 17:39:33 andvar Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.21 2023/05/10 00:11:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.22 2024/02/09 17:39:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ static struct cxdtv_sram_ch cxdtv_sram_chs[] = {
 		.csc_iq = 0x180340, /* after last CMDS */
 		.csc_iqsz = 0x40, /* 16 dwords */
 		.csc_cdt = 0x180380, /* after iq */
-		.csc_cdtsz = 0x40, /* cluster discriptor space */
+		.csc_cdtsz = 0x40, /* cluster descriptor space */
 		.csc_fifo = 0x180400, /* after cdt */
 		.csc_fifosz = 0x001C00, /* let's just align this up */
 		.csc_risc = 0x182000, /* after fifo */
