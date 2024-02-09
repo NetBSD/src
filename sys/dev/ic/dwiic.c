@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.9 2022/10/19 22:34:10 riastradh Exp $ */
+/* $NetBSD: dwiic.c,v 1.10 2024/02/09 16:56:23 skrll Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.9 2022/10/19 22:34:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.10 2024/02/09 16:56:23 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -163,7 +163,7 @@ dwiic_attach(struct dwiic_softc *sc)
 	}
 
 	/* fetch timing parameters */
-	if (sc->ss_hcnt == 0) 
+	if (sc->ss_hcnt == 0)
 		sc->ss_hcnt = dwiic_read(sc, DW_IC_SS_SCL_HCNT);
 	if (sc->ss_lcnt == 0)
 		sc->ss_lcnt = dwiic_read(sc, DW_IC_SS_SCL_LCNT);
