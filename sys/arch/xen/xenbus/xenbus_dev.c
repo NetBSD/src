@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.19 2024/02/09 22:08:34 andvar Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.18 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.19 2024/02/09 22:08:34 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -102,7 +102,7 @@ xenbus_kernfs_init(void)
 /*
  * several process may open /kern/xen/xenbus in parallel.
  * In a transaction one or more write is followed by one or more read.
- * Unfortunably we don't get a file descriptor identifier down there,
+ * Unfortunately we don't get a file descriptor identifier down there,
  * which we could use to link a read() to a transaction started in a write().
  * To work around this we keep a list of lwp that opended the xenbus file.
  * This assumes that a single lwp won't open /kern/xen/xenbus more

@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_machdep.c,v 1.30 2023/10/12 11:33:38 skrll Exp $	*/
+/*	$NetBSD: npwr_fc_machdep.c,v 1.31 2024/02/09 22:08:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.30 2023/10/12 11:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.31 2024/02/09 22:08:32 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -380,7 +380,7 @@ initarm(void *arg)
 	 */
 
 	/*
-	 * Fetch the SDRAM start/size from the i80321 SDRAM configration
+	 * Fetch the SDRAM start/size from the i80321 SDRAM configuration
 	 * registers.
 	 */
 	i80321_sdram_bounds(&obio_bs_tag, VERDE_PMMR_BASE + VERDE_MCU_BASE,

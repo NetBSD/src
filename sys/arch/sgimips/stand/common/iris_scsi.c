@@ -1,4 +1,4 @@
-/*	$NetBSD: iris_scsi.c,v 1.1 2019/01/12 16:44:47 tsutsui Exp $	*/
+/*	$NetBSD: iris_scsi.c,v 1.2 2024/02/09 22:08:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018 Naruaki Etomi
@@ -302,7 +302,7 @@ wd33c93_selectbus(struct wd33c93_softc *sc, uint8_t *cbuf, size_t clen,
 	 * We only really need to do anything when the target goes to MSG out
 	 * If the device ignored ATN, it's probably old and brain-dead,
 	 * but we'll try to support it anyhow.
-	 * If it doesn't support message out, it definately doesn't
+	 * If it doesn't support message out, it definitely doesn't
 	 * support synchronous transfers, so no point in even asking...
 	 */
 
@@ -402,7 +402,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, uint8_t *cbuf, size_t clen,
 		/*
 		 * Should we transfer using PIO or DMA ?
 		 */
-		/* Perfrom transfer using PIO */
+		/* Perform transfer using PIO */
 		if (SBIC_PHASE(csr) == DATA_IN_PHASE){
 			/* data in */
 			resid = wd33c93_xfin(sc, buf, lenp);

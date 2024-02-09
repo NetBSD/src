@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvnreg.h,v 1.3 2022/05/20 13:55:17 nonaka Exp $	*/
+/*	$NetBSD: if_hvnreg.h,v 1.4 2024/02/09 22:08:34 andvar Exp $	*/
 /*	$OpenBSD: if_hvnreg.h,v 1.3 2016/09/14 17:48:28 mikeb Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #define HVN_NVS_RNDIS_MTYPE_CTRL	1
 
 /*
- * NVS message transacion status codes.
+ * NVS message transaction status codes.
  */
 #define HVN_NVS_STATUS_OK		1
 #define HVN_NVS_STATUS_FAILED		2

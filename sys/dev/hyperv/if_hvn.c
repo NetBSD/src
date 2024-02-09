@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.26 2023/12/20 18:09:18 skrll Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.27 2024/02/09 22:08:34 andvar Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.26 2023/12/20 18:09:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.27 2024/02/09 22:08:34 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -773,7 +773,7 @@ hvn_detach(device_t self, int flags)
 		hvn_stop_locked(ifp);
 	/*
 	 * NOTE:
-	 * hvn_stop() only suspends data, so managment
+	 * hvn_stop() only suspends data, so management
 	 * stuffs have to be suspended manually here.
 	 */
 	hvn_suspend_mgmt(sc);

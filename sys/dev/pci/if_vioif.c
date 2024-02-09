@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.109 2023/05/13 11:19:19 andvar Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.110 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.109 2023/05/13 11:19:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.110 2024/02/09 22:08:36 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1964,7 +1964,7 @@ done:
 }
 
 /*
- * Transmition implementation
+ * Transmission implementation
  */
 /* enqueue mbufs to send */
 static void

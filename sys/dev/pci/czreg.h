@@ -1,4 +1,4 @@
-/*	$NetBSD: czreg.h,v 1.3 2015/07/11 10:32:46 kamil Exp $	*/
+/*	$NetBSD: czreg.h,v 1.4 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -386,9 +386,9 @@ struct zfirm_block {
 #define	C_CM_TINACT		0x51	/* sets inactivity detection */
 #define	C_CM_IRQ_ENBL		0x52	/* enables generation of interrupts */
 #define	C_CM_IRQ_DSBL		0x53	/* disables generation of interrupts */
-#define	C_CM_ACK_ENBL		0x54	/* enables acknolowdged interrupt
+#define	C_CM_ACK_ENBL		0x54	/* enables acknowledged interrupt
 					   mode */
-#define	C_CM_ACK_DSBL		0x55	/* disables acknolowdged intr mode */
+#define	C_CM_ACK_DSBL		0x55	/* disables acknowledged intr mode */
 #define	C_CM_FLUSH_RX		0x56	/* flushes Rx buffer */
 #define	C_CM_FLUSH_TX		0x57	/* flushes Tx buffer */
 #define	C_CM_Q_ENABLE		0x58	/* enables queue access from the

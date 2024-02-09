@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.61 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.61 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -338,7 +338,7 @@ zyd_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cmdcv, "zydcmd");
 	SIMPLEQ_INIT(&sc->sc_rqh);
 
-	/* defer configrations after file system is ready to load firmware */
+	/* defer configuration after file system is ready to load firmware */
 	config_mountroot(self, zyd_attachhook);
 }
 

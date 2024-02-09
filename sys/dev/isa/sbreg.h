@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.32 2022/05/31 08:43:15 andvar Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.33 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -38,7 +38,7 @@
 /*
  * SoundBlaster register definitions.
  * See "The Developer Kit for Sound Blaster Series, User's Guide" for more
- * complete information (avialable from Creative Labs, Inc.).  We refer
+ * complete information (available from Creative Labs, Inc.).  We refer
  * to this documentation as "SBK".
  *
  * We handle two types of cards: the basic SB version 2.0+, and
@@ -183,7 +183,7 @@
  * input or DMA completion.  They seem to have neglected the fact
  * that it would be nice to have a MIDI transmission complete interrupt.
  * Worse, the DMA engine is half-duplex.  This means you need to do
- * (timed) programmed I/O to be able to record and play simulataneously.
+ * (timed) programmed I/O to be able to record and play simultaneously.
  */
 #define SB_DSP_DACWRITE		0x10	/* programmed I/O write to DAC */
 #define SB_DSP_WDMA		0x14	/* begin 8-bit linear DMA output */

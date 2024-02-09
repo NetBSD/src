@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.32 2022/02/09 22:30:27 andvar Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.32 2022/02/09 22:30:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -1954,7 +1954,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 		 */
 		if (acb->xs->xs_control & XS_CTL_POLL ||
 		    sc->sc_flags & SBICF_NODMA) {
-			/* Perfrom transfer using PIO */
+			/* Perform transfer using PIO */
 			int resid;
 
 			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", sc->target,

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.98 2022/03/13 22:18:56 andvar Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.99 2024/02/09 22:08:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.98 2022/03/13 22:18:56 andvar Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.99 2024/02/09 22:08:32 andvar Exp $")
 
 #include "assym.h"
 
@@ -1609,7 +1609,7 @@ END(MIPSX(cpu_switch_resume))
  * is wired to indicate writebuffer condition.  This code does busy-loop
  * while CU0 bit indicates false condition.
  *
- * For other hardwares which have the writebuffer logic is implemented
+ * For other hardware which have the writebuffer logic is implemented
  * in a system controller ASIC chip, wbflush operation would done
  * differently.
  */

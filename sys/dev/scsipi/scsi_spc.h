@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_spc.h,v 1.7 2022/01/27 18:37:02 jakllsch Exp $	*/
+/*	$NetBSD: scsi_spc.h,v 1.8 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ struct scsi_repsuppopcode {
 #define RSOC_ALL           0x00 /* report all */
 #define RSOC_ONE           0x01 /* report one */
 #define RSOC_ONESACD       0x02 /* report one or CHECK CONDITION */
-#define RSOC_ONESA         0x03 /* report one mark presense in data */
+#define RSOC_ONESA         0x03 /* report one mark presence in data */
 #define RSOC_RCTD          0x80 /* report timeouts */
 
 	u_int8_t reqopcode;

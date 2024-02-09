@@ -1,4 +1,4 @@
-/* $NetBSD: ciphyreg.h,v 1.6 2019/01/16 08:32:58 msaitoh Exp $ */
+/* $NetBSD: ciphyreg.h,v 1.7 2024/02/09 22:08:35 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -66,7 +66,7 @@
 #define CIPHY_1000STS2_SSDERR	0x0200	/* false carrier error detected */
 #define CIPHY_1000STS2_ESDERR	0x0100	/* premature end of stream error */
 #define CIPHY_1000STS2_CARREXT	0x0080	/* carrier extension err detected */
-#define CIPHY_1000STS2_BCM5400	0x0040	/* non-complient BCM5400 detected */
+#define CIPHY_1000STS2_BCM5400	0x0040	/* non-compliant BCM5400 detected */
 
 /* Bypass control register */
 #define CIPHY_MII_BYPASS	0x12

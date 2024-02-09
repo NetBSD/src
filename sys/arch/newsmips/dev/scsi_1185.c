@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.25 2023/11/04 18:13:25 tsutsui Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.26 2024/02/09 22:08:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.25 2023/11/04 18:13:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.26 2024/02/09 22:08:32 andvar Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -450,7 +450,7 @@ scintr_loop:
 
 	if (sc->int_stat2 & R3_SRST) {
 		/*
-		 * RST signal is drived
+		 * RST signal is derived
 		 */
 		sc->int_stat2 &= ~R3_SRST;
 		scsi_softreset(sc);

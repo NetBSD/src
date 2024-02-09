@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.18 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.19 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.18 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.19 2024/02/09 22:08:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ static void	oosiop_msgin(struct oosiop_softc *, struct oosiop_cb *);
 #define	DATAIN_TRAP	0xdead0001
 #define	DATAOUT_TRAP	0xdead0002
 
-/* Possible TP and SCF conbination */
+/* Possible TP and SCF combination */
 static const struct {
 	uint8_t		tp;
 	uint8_t		scf;

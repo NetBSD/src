@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.38 2023/10/17 16:06:36 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.39 2024/02/09 22:08:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.38 2023/10/17 16:06:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.39 2024/02/09 22:08:33 andvar Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -176,7 +176,7 @@ consinit(void)
 	if (vm_guest == VM_GUEST_XENPVH) {
 		if (xen_pvh_consinit() != 0)
 			return;
-		/* fallback to native console selection, usefull for dom0 PVH */
+		/* fallback to native console selection, useful for dom0 PVH */
 	}
 #endif
 	if (initted)

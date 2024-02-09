@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.21 2023/01/21 16:50:05 andvar Exp $ */
+/* $NetBSD: umcs.c,v 1.22 2024/02/09 22:08:37 andvar Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.21 2023/01/21 16:50:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.22 2024/02/09 22:08:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
 	}
 	DPRINTF(("Port %d set speed: %d (%02x / %d)\n", portno, rate, clk, divisor));
 
-	/* Set clock source for standard BAUD frequences */
+	/* Set clock source for standard BAUD frequencies */
 	err = umcs7840_get_reg(sc, spreg, &data);
 	if (err)
 		return err;
@@ -492,7 +492,7 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
 static int
 umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 {
-	/* Maximum speeds for standard frequences, when PLL is not used */
+	/* Maximum speeds for standard frequencies, when PLL is not used */
 	static const uint32_t umcs7840_baudrate_divisors[] =
 	    {0, 115200, 230400, 403200, 460800, 806400, 921600,
 	     1572864, 3145728,};

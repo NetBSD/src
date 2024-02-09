@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.67 2023/02/15 13:19:13 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.67 2023/02/15 13:19:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.68 2024/02/09 22:08:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,7 +735,7 @@ next:
 				offset++;
 				boffset++;
 			}
-			/* end of the line - draw all defered blanks, if any */
+			/* end of the line - draw all deferred blanks, if any */
 			if (start != -1) {
 				vdp->erasecols(ri, i, start, j - start, last_a);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.65 2022/10/26 23:46:24 riastradh Exp $	*/
+/*	$NetBSD: cz.c,v 1.66 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.65 2022/10/26 23:46:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.66 2024/02/09 22:08:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,7 @@ cz_intr(void *arg)
 		/* XXX - is this needed? */
 		(void)CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
 
-		/* now clear this interrupt, posslibly enabling another */
+		/* now clear this interrupt, possibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
 
 		if (cz->cz_ports == NULL) {

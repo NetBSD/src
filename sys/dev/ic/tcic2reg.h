@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2reg.h,v 1.5 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: tcic2reg.h,v 1.6 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -761,7 +761,7 @@
 #define	TCIC_MCTL_WSCNT_MASK	0x0f		/* wait state counter */
 
 /* Bits in the ICTL window registers */
-#define	TCIC_ICTL_ENA		(1 << 15)	/* enable this windo */
+#define	TCIC_ICTL_ENA		(1 << 15)	/* enable this window */
 #define	TCIC_ICTL_SS_SHIFT	12
 #define	TCIC_ICTL_SS_MASK	(7 << TCIC_ICTL_SS_SHIFT) /* which socket does this window map to */
 #define	TCIC_ICTL_AUTOSZ	0		/* auto size 8/16 bit acc. */

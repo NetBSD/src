@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.98 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.99 2024/02/09 22:08:34 andvar Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.98 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.99 2024/02/09 22:08:34 andvar Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -1090,7 +1090,7 @@ isp_fc_worker(void *arg)
 				/*
 				 * If we're now past our limit, release
 				 * the queues and let them come in and
-				 * either get HBA_SELTIMOUT or cause
+				 * either get HBA_SELTIMEOUT or cause
 				 * another freeze.
 				 */
 				isp->isp_osinfo.blocked = 1;

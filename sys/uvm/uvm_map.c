@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.410 2023/09/23 18:21:12 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.411 2024/02/09 22:08:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.410 2023/09/23 18:21:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.411 2024/02/09 22:08:38 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2885,7 +2885,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		}
 	} else {
 		copy_ok = 0;
-		/* replace defered until step 7 */
+		/* replace deferred until step 7 */
 	}
 
 	/*

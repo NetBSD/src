@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.65 2020/02/23 15:11:33 riastradh Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.65 2020/02/23 15:11:33 riastradh Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -665,7 +665,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	/*
 	 * Now that we know the number of blocks, run back through and
 	 * compute the data checksum.  (A bad data checksum is not enough
-	 * to prevent us from continuing, but it odes merit a warning.)
+	 * to prevent us from continuing, but it does merit a warning.)
 	 */
 	iip2 = SEGSUM_IINFOSTART(lfsp, sp);
 	fp = SEGSUM_FINFOBASE(lfsp, sp);

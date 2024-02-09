@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alcreg.h,v 1.9 2020/02/08 07:24:46 maxv Exp $	*/
+/*	$NetBSD: if_alcreg.h,v 1.10 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: if_alcreg.h,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1157,7 +1157,7 @@ struct smb {
 	uint32_t updated;
 };
 
-/* CMB(Coalesing message block) */
+/* CMB(Coalescing Message Block) */
 struct cmb {
 	uint32_t cons;
 };

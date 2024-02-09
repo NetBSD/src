@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphyreg.h,v 1.2 2017/07/18 08:22:55 msaitoh Exp $	*/
+/*	$NetBSD: ihphyreg.h,v 1.3 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 /* PHY Status Register */
 #define	IHPHY_MII_ESR		BME1000_REG(0, 26)
 #define	IHPHY_ESR_STANDBY	0x8000	/* PHY in standby */
-#define	IHPHY_ESR_ANEG_FAULT	0x6000	/* Autonegotation fault status */
+#define	IHPHY_ESR_ANEG_FAULT	0x6000	/* Autonegotiation fault status */
 #define	IHPHY_ESR_ANEG_STAT	0x1000	/* Autonegotiation status */
 #define	IHPHY_ESR_PAIR_SWAP	0x0800	/* Pair swap on pairs A and B */
 #define	IHPHY_ESR_POLARITY	0x0400	/* Polarity status */

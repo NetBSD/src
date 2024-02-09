@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.114 2023/01/29 15:17:51 thorpej Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.115 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.114 2023/01/29 15:17:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.115 2024/02/09 22:08:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3034,7 +3034,7 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * VScom PCI 100L
 	 * one com
-	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * The one I have defaults to a frequency of 14.7456 MHz which is
 	 * jumper J1 set to 2-3.
 	 */
 	{   "VScom PCI-100L",
@@ -3149,7 +3149,7 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * VScom PCI 100H, little sister of 800H, 1 com.
 	 * also com part of VScom 110H
-	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * The one I have defaults to a frequency of 14.7456 MHz which is
 	 * jumper J1 set to 2-3.
 	 */
 	{   "VScom PCI-100H",

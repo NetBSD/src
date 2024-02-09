@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.6 2022/05/24 20:50:20 andvar Exp $
+# $NetBSD: t_umount.sh,v 1.7 2024/02/09 22:08:38 andvar Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,7 +80,7 @@ EOF
 	cd "${mydir}"
 
 	test -e "${TMPMP}/under_the_mount" || \
-	    atf_fail "Original mount point disapeared!"
+	    atf_fail "Original mount point disappeared!"
 }
 umount_cleanup()
 {

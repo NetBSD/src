@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: gendevcalls.awk,v 1.1 2021/09/15 17:25:14 thorpej Exp $
+#	$NetBSD: gendevcalls.awk,v 1.2 2024/02/09 22:08:37 andvar Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -107,7 +107,7 @@ NR == 1 {
 	next
 }
 #
-# Subystem declaration.  We use this to generate header file guards,
+# Subsystem declaration.  We use this to generate header file guards,
 # as well as to sanity-check the method names when they are declared.
 #
 state == "expecting-subsystem" && \

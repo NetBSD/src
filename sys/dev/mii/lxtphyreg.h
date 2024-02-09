@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphyreg.h,v 1.2 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: lxtphyreg.h,v 1.3 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 	/* All bits user-defined */
 
 #define	MII_LXTPHY_IER		0x11	/* Interrupt Enable Register */
-#define	IER_MIIDRVLVL		0x0008	/* Rediced MII driver levels */
+#define	IER_MIIDRVLVL		0x0008	/* Reduced MII driver levels */
 #define	IER_LNK_CRITERIA	0x0004	/* Enhanced Link Loss Criteria */
 #define	IER_INTEN		0x0002	/* Interrupt Enable */
 #define	IER_TINT		0x0001	/* Force Interrupt */

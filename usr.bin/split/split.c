@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.32 2023/02/14 18:58:55 jschauma Exp $	*/
+/*	$NetBSD: split.c,v 1.33 2024/02/09 22:08:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.32 2023/02/14 18:58:55 jschauma Exp $");
+__RCSID("$NetBSD: split.c,v 1.33 2024/02/09 22:08:38 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -327,7 +327,7 @@ newfile(void)
 	quot = fnum;
 
 	/* If '-a' is not specified, then we automatically expand the
-	 * suffix length to accomodate splitting all input.  We do this
+	 * suffix length to accommodate splitting all input.  We do this
 	 * by moving the suffix pointer (fpnt) forward and incrementing
 	 * sfxlen by one, thereby yielding an additional two characters
 	 * and allowing all output files to sort such that 'cat *' yields

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.2 2024/01/09 04:16:25 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.3 2024/02/09 22:08:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * at the lext level, and the page (L3) tables contain the addresses
  * of the page descriptors, which may either contain the address of
  * a physical page (4K or 8K) directly, or point to an indirect
- * decriptor which points to the physical page.
+ * descriptor which points to the physical page.
  *
  * The L1 and L2 tables contain 128 4-byte descriptors, and are thus 512
  * bytes in size.  Each of the 128 L1 descriptors corresponds to a 32MB

@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.86 2022/09/24 18:12:43 thorpej Exp $ */
+/* $NetBSD: if_vge.c,v 1.87 2024/02/09 22:08:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.86 2022/09/24 18:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.87 2024/02/09 22:08:36 andvar Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1855,7 +1855,7 @@ vge_init(struct ifnet *ifp)
 
 	/*
 	 * Configure one-shot timer for microsecond
-	 * resulution and load it for 500 usecs.
+	 * resolution and load it for 500 usecs.
 	 */
 	CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_TIMER0_RES);
 	CSR_WRITE_2(sc, VGE_SSTIMER, 400);

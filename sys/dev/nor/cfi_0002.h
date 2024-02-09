@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.h,v 1.2 2011/07/19 20:52:10 cliff Exp $	*/
+/*	$NetBSD: cfi_0002.h,v 1.3 2024/02/09 22:08:35 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,7 +50,7 @@ struct cmdset_0002_query_data {
     uint8_t	acc_min;		/* Acc supply min voltage */
     uint8_t	acc_max;		/* Acc supply max voltage */
     uint8_t	wp_prot;		/* WP# protection */
-    uint8_t	prog_susp;		/* prpogram suspend */
+    uint8_t	prog_susp;		/* program suspend */
     uint8_t	unlock_bypass;		/* unlock bypass */
     uint8_t	sss_size;		/* secured silicon sector size (1<<N) */
     uint8_t	soft_feat;		/* software features */

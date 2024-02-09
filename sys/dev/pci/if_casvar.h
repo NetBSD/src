@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.8 2020/01/29 02:16:02 msaitoh Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.9 2024/02/09 22:08:35 andvar Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ struct cas_softc {
 };
 
 /*
- * This maccro determines whether we have a Cassini+.
+ * This macro determines whether we have a Cassini+.
  */
 #define	CAS_PLUS(sc)	(sc->sc_rev > 0x10)
 

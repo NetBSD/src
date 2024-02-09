@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.160 2022/06/25 02:46:15 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.161 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.160 2022/06/25 02:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.161 2024/02/09 22:08:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.160 2022/06/25 02:46:15 tsutsui Exp $")
  * the first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the RFA 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.  HOWEVER!  This means that the RFA is misaligned!
  */
 #define	RFA_ALIGNMENT_FUDGE	2

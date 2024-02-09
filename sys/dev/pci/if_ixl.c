@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.97 2024/02/05 21:46:06 andvar Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.98 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.97 2024/02/05 21:46:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.98 2024/02/09 22:08:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -4415,7 +4415,7 @@ ixl_get_phy_info(struct ixl_softc *sc)
 		goto done;
 	default:
 		aprint_error_dev(sc->sc_dev,
-		    "GET PHY ABILITIIES error %u\n", rv);
+		    "GET PHY ABILITIES error %u\n", rv);
 		goto done;
 	}
 

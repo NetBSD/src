@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.322 2024/02/06 23:57:41 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.323 2024/02/09 22:08:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.322 2024/02/06 23:57:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.323 2024/02/09 22:08:36 andvar Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3321,7 +3321,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 /****************/
 
 /*
- * Close a reqular pipe.
+ * Close a regular pipe.
  * Assumes that there are no pending transactions.
  */
 Static void

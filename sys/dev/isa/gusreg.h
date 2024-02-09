@@ -1,4 +1,4 @@
-/* $NetBSD: gusreg.h,v 1.10 2022/05/24 06:28:01 andvar Exp $ */
+/* $NetBSD: gusreg.h,v 1.11 2024/02/09 22:08:35 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
 #define GUSMASK_BOTH_RQ		0x40		/* Combine both RQ lines */
 
 /*
- * GUS bitmaks for DMA control
+ * GUS bitmasks for DMA control
  */
 
 #define GUSMASK_DMA_ENABLE	0x01		/* Enable DMA transfer */

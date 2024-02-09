@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.18 2022/06/29 15:56:58 mlelstv Exp $	*/
+/*	$NetBSD: aps.c,v 1.19 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.18 2022/06/29 15:56:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.19 2024/02/09 22:08:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.18 2022/06/29 15:56:58 mlelstv Exp $");
 
 /*
  * EC interface on Thinkpad Laptops, from Linux HDAPS driver notes.
- * From Renesans H8S/2140B Group Hardware Manual
+ * From Renesas H8S/2140B Group Hardware Manual
  * http://documentation.renesas.com/eng/products/mpumcu/rej09b0300_2140bhm.pdf
  *
  * EC uses LPC Channel 3 registers TWR0..15

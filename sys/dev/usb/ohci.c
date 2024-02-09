@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.324 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.325 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.324 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.325 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2168,7 +2168,7 @@ ohci_open(struct usbd_pipe *pipe)
 }
 
 /*
- * Close a reqular pipe.
+ * Close a regular pipe.
  * Assumes that there are no pending transactions.
  */
 void

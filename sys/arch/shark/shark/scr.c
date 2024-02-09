@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.36 2023/06/29 21:01:21 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.37 2024/02/09 22:08:33 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.36 2023/06/29 21:01:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.37 2024/02/09 22:08:33 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -3466,7 +3466,7 @@ static void scrClkStart(struct scr_softc * sc,int countPerTick)
 **
 **      scrClkAdj
 **
-**      Adjusts the frequence of the clock
+**      Adjusts the frequency of the clock
 **
 **  FORMAL PARAMETERS:
 **

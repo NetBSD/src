@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.15 2016/06/12 02:16:15 christos Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.16 2024/02/09 22:08:35 andvar Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -402,7 +402,7 @@ struct arc_fw_sysinfo {
 } __packed;
 
 /*
- * autconf(9) glue.
+ * autoconf(9) glue.
  */
 struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);

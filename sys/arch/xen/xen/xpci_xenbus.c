@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.26 2024/02/09 22:08:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.26 2024/02/09 22:08:33 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -565,7 +565,7 @@ endfor:
 	/*
 	 * Xen is lacking an important info: the domain:bus:dev:func
 	 * present in dev-xx in the store are real PCI bus:dev:func, and
-	 * xenback may present us fake ones, and unfortunably it's not
+	 * xenback may present us fake ones, and unfortunately it's not
 	 * the list of devices is not published in the store with this
 	 * information. So we have to scan all dev/func combination :(
 	 * the MI scan function isn't enough because it doesn't search

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.90 2022/12/24 15:23:02 andvar Exp $	*/
+/*	$NetBSD: ess.c,v 1.91 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.90 2022/12/24 15:23:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.91 2024/02/09 22:08:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,7 +750,7 @@ ess_identify(struct ess_softc *sc)
 	 *    register 0x69 independently of mixer register
 	 *    0x68. This determines which chip we have:
 	 *
-	 *    - can modify idependently indicates ES888
+	 *    - can modify independently indicates ES888
 	 *    - register 0x69 is an alias of 0x68 indicates ES1888
 	 */
 	reg1 = ess_read_mix_reg(sc, 0x68);

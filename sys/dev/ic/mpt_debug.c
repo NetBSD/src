@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.12 2022/05/31 08:43:15 andvar Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.13 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.12 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.13 2024/02/09 22:08:34 andvar Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -151,7 +151,7 @@ static const struct Error_Map IOC_SCSIState[] = {
 { MPI_SCSI_STATE_AUTOSENSE_FAILED,	"AutoSense_Failed" },
 { MPI_SCSI_STATE_NO_SCSI_STATUS,	"No_SCSI_Status" },
 { MPI_SCSI_STATE_TERMINATED,	   	"State_Terminated" },
-{ MPI_SCSI_STATE_RESPONSE_INFO_VALID,	"Repsonse_Info_Valid" },
+{ MPI_SCSI_STATE_RESPONSE_INFO_VALID,	"Response_Info_Valid" },
 { MPI_SCSI_STATE_QUEUE_TAG_REJECTED,	"Queue Tag Rejected" },
 { -1, 0},
 };

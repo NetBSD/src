@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.69 2024/01/08 18:37:24 chs Exp $	*/
+/*	$NetBSD: yds.c,v 1.70 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.69 2024/01/08 18:37:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.70 2024/02/09 22:08:36 andvar Exp $");
 
 #include "mpu.h"
 
@@ -1008,7 +1008,7 @@ yds_write_codec(void *sc_, uint8_t reg, uint16_t data)
 }
 
 /*
- * XXX: Must handle the secondary differntly!!
+ * XXX: Must handle the secondary differently!!
  */
 static int
 yds_reset_codec(void *sc_)

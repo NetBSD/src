@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.31 2021/10/26 00:05:38 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.32 2024/02/09 22:08:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -96,7 +96,7 @@ extern	int		ShNest;
  * matters for anything, just makes it easier to assign a different
  * command letter to each debug option.  We currently use only 18
  * so this could be reduced, but that is of no real benefit.  It can also
- * be increased, but that both limits the maximum value tha can be
+ * be increased, but that both limits the maximum value that can be
  * used with DBG_EXTRAS(), and causes problems with verbose option naming.
  */
 #define	DBG_VBOSE_SHIFT		27

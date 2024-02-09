@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.20 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -59,7 +59,7 @@
  * who brought patches based on the Linux driver with some simplification.
  */
 
-/* IRQ timer fequency limits */
+/* IRQ timer frequency limits */
 #define MAESTRO_MINFREQ	24
 #define MAESTRO_MAXFREQ	48000
 
