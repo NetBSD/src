@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.65 2022/09/18 12:43:41 thorpej Exp $ */
+/* $NetBSD: sbmac.c,v 1.66 2024/02/09 17:57:03 andvar Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.65 2022/09/18 12:43:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.66 2024/02/09 17:57:03 andvar Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2249,7 +2249,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	callout_init(&(sc->sc_tick_ch), 0);
 
 	/*
-	 * Read the ethernet address.  The firwmare left this programmed
+	 * Read the ethernet address.  The firmware left this programmed
 	 * for us in the ethernet address register for each mac.
 	 */
 
