@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2024/02/09 00:39:16 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2024/02/09 15:15:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.5 2024/02/09 00:39:16 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 2024/02/09 15:15:32 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -269,6 +269,8 @@ conf_gethostport(const char *f, size_t l, bool local, struct conf *c,
 #endif
 			port = &sin6->sin6_port;
 		}
+		if (!*pstr)
+			pstr = "*";
 	} else if (pstr != p || strchr(p, '.') || conf_is_interface(p)) {
 		if (pstr == p)
 			pstr = "*";
