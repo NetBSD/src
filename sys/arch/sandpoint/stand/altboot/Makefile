@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2021/03/24 02:53:16 rin Exp $
+#	$NetBSD: Makefile,v 1.19 2024/02/09 16:12:02 christos Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -56,13 +56,19 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKUBOOTIMAGE_TIMESTAMP=-t "${MKREPRO_TIMESTAMP}"
+.endif
+
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${PROG} ${PROG}.bin
 	${TOOL_MKUBOOTIMAGE} -A powerpc -T kernel -C none -O linux \
-	    -a 0x${RELOC} -n ${PROG} ${PROG}.bin ${PROG}.img
+	    -a 0x${RELOC} ${MKUBOOTIMAGE_TIMESTAMP} -n ${PROG} \
+	    ${PROG}.bin ${PROG}.img
+
 
 VERSIONFLAGS+=-k
 .include "${S}/conf/newvers_stand.mk"
