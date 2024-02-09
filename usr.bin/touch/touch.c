@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.38 2024/02/08 02:54:07 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.39 2024/02/09 23:41:48 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.38 2024/02/08 02:54:07 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.39 2024/02/09 23:41:48 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,8 @@ __RCSID("$NetBSD: touch.c,v 1.38 2024/02/08 02:54:07 kre Exp $");
 static void	stime_arg0(const char *, struct timespec *);
 static void	stime_arg1(char *, struct timespec *);
 static void	stime_arg2(const char *, int, struct timespec *);
-static void	stime_file(const char *, struct timespec *);
+static void	stime_file(const char *, struct timespec *,
+		   int (const char *, struct stat *));
 static int	stime_posix(const char *, struct timespec *);
 static int	difftm(const struct tm *, const struct tm *);
 __dead static void	usage(void);
@@ -101,7 +102,7 @@ main(int argc, char *argv[])
 	if (clock_gettime(CLOCK_REALTIME, &ts[0]))
 		err(1, "clock_gettime");
 
-	while ((ch = getopt_long(argc, argv, "acd:fhmr:t:", touch_longopts,
+	while ((ch = getopt_long(argc, argv, "acd:fhmR:r:t:", touch_longopts,
 	    NULL)) != -1)
 		switch (ch) {
 		case 'a':
@@ -123,9 +124,13 @@ main(int argc, char *argv[])
 		case 'm':
 			mflag = 1;
 			break;
+		case 'R':
+			timeset = 1;
+			stime_file(optarg, ts, lstat);
+			break;
 		case 'r':
 			timeset = 1;
-			stime_file(optarg, ts);
+			stime_file(optarg, ts, stat);
 			break;
 		case 't':
 			timeset = 1;
@@ -335,11 +340,12 @@ stime_arg2(const char *arg, int year, struct timespec *tsp)
 }
 
 static void
-stime_file(const char *fname, struct timespec *tsp)
+stime_file(const char *fname, struct timespec *tsp,
+    int statfunc(const char *, struct stat *))
 {
 	struct stat sb;
 
-	if (stat(fname, &sb))
+	if (statfunc(fname, &sb))
 		err(1, "%s", fname);
 	tsp[0] = sb.st_atimespec;
 	tsp[1] = sb.st_mtimespec;
@@ -521,7 +527,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-acfhm] [-d|--date datetime] [-r|--reference file]"
+	    "Usage: %s [-acfhm] [-d|--date datetime] [-R|-r|--reference file]"
 	    " [-t time] file ...\n", getprogname());
 	exit(EXIT_FAILURE);
 }

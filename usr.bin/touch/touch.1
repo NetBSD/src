@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.27 2024/02/08 02:54:13 kre Exp $
+.\"	$NetBSD: touch.1,v 1.28 2024/02/09 23:41:48 kre Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd February 7, 2024
+.Dd February 9, 2024
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl acfhm
 .Op Fl d Ar posix-datetime|human-datetime
 .Op Fl Fl \|date Ar posix-datetime|human-datetime
+.Op Fl R Ar ref-file
 .Op Fl r Ar ref-file
 .Op Fl Fl \|reference Ar ref-file
 .Op Fl t Ar datetime
@@ -193,6 +194,7 @@ is not changed unless the
 .Fl a
 flag is also specified.
 .Pp
+.It Fl R Ar ref-file
 .It Fl r Ar ref-file
 .It Fl Fl \|reference Ar ref-file
 Use the access and modification times,
@@ -203,7 +205,15 @@ instead of the current time of day.
 If the
 .Ar ref-file
 is a symbolic link,
+then if the
+.Fl R
+form of this option was used,
+the times are taken from the symbolic link itself,
+otherwise
 the times are taken from the file referenced by it.
+If
+.Ar ref-file
+is not a symbolic link, all three forms are identical.
 .Pp
 .It Fl t Ar datetime
 Change the access and modification times of the
@@ -292,6 +302,7 @@ all conversions use decimal numbers.
 .Pp
 The
 .Fl d ,
+.Fl R ,
 .Fl r ,
 and
 .Fl t
@@ -301,10 +312,12 @@ each will be evaluated, and may cause an error,
 then the result from the last one specified is used.
 .Pp
 The options which specify any part of the time
-.Pq Fl d , Fl r , Fl t
+.Pq Fl d , Fl R, Fl r , Fl t
 apply to both the access and modification times
 (with
 .Fl r
+and
+.Fl R
 obtaining those values independently from the
 .Ar ref-file ) ,
 though which is actually applied depends upon
@@ -421,5 +434,3 @@ A
 .Nm
 utility appeared in
 .At v7 .
-.Sh BUGS
-A symbolic link can't be a reference file of access and/or modification time.
