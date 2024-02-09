@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.47 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.48 2024/02/09 18:20:00 andvar Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.47 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.48 2024/02/09 18:20:00 andvar Exp $");
 
 #include "attimer.h"
 
@@ -118,7 +118,7 @@ pcppi_match(device_t parent, cfdata_t match, void *aux)
 	 *
 	 * We don't want to have any chance of changing speaker output (which
 	 * this test might, if it crashes in the middle, or something;
-	 * normally it's be to quick to produce anthing audible), but
+	 * normally it's too quick to produce anything audible), but
 	 * many "combo chip" mock-PPI's don't seem to support the top bit
 	 * of Port B as a settable bit.  The bottom bit has to be settable,
 	 * since the speaker driver hardware still uses it.
