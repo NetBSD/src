@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_acpi.c,v 1.2 2022/02/06 15:48:12 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_acpi.c,v 1.3 2024/02/09 16:53:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -27,16 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_acpi.c,v 1.2 2022/02/06 15:48:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_acpi.c,v 1.3 2024/02/09 16:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 
-#include <dev/ic/dwc_mmc_var.h>                                                 
-#include <dev/ic/dwc_mmc_reg.h>                                                 
-#include <dev/sdmmc/sdmmcchip.h>                                                
+#include <dev/ic/dwc_mmc_var.h>
+#include <dev/ic/dwc_mmc_reg.h>
+#include <dev/sdmmc/sdmmcchip.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
