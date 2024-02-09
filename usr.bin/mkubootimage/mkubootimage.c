@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.30 2020/02/08 13:27:00 ryo Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.31 2024/02/09 16:10:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.30 2020/02/08 13:27:00 ryo Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.31 2024/02/09 16:10:18 christos Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mkubootimage.c,v 1.30 2020/02/08 13:27:00 ryo Exp $");
 
 #include "uboot.h"
 #include "arm64.h"
+#include "crc32.h"
 
 #ifndef __arraycount
 #define __arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
@@ -61,9 +62,6 @@ enum image_format {
 	FMT_UIMG,	/* Legacy U-Boot image */
 	FMT_ARM64,	/* Linux ARM64 image (booti) */
 };
-
-extern uint32_t crc32(const void *, size_t);
-extern uint32_t crc32v(const struct iovec *, int);
 
 static enum uboot_image_os image_os = IH_OS_NETBSD;
 static enum uboot_image_arch image_arch = IH_ARCH_UNKNOWN;
@@ -264,12 +262,12 @@ get_comp_name(enum uboot_image_comp comp)
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: mkubootimage [-hu] -A "
-	    "<arm|arm64|i386|mips|mips64|or1k|powerpc|sh> -a address\n");
-	fprintf(stderr, "\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address]\n");
-	fprintf(stderr, "\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n");
-	fprintf(stderr, "\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n");
-	fprintf(stderr, "\tsource destination\n");
+	fprintf(stderr,
+"Usage: %s [-hu] -A <arm|arm64|i386|mips|mips64|or1k|powerpc|sh> -a address\n"
+"\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address] [-t timestamp]\n"
+"\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n"
+"\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n"
+"\tsource destination\n", getprogname());
 
 	exit(EXIT_FAILURE);
 }
@@ -298,7 +296,8 @@ dump_header_uimg(struct uboot_image_header *hdr)
 }
 
 static int
-generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
+generate_header_uimg(struct uboot_image_header *hdr, time_t repro_time,
+    int kernel_fd)
 {
 	uint8_t *p;
 	struct stat st;
@@ -323,7 +322,7 @@ generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 	}
 	if (image_type == IH_TYPE_SCRIPT) {
 		struct iovec iov[3];
-		dsize = st.st_size + (sizeof(uint32_t) * 2);
+		dsize = (uint32_t)(st.st_size + (sizeof(uint32_t) * 2));
 		size_buf[0] = htonl(st.st_size);
 		size_buf[1] = htonl(0);
 		iov[0].iov_base = &size_buf[0];
@@ -334,15 +333,15 @@ generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 		iov[2].iov_len = st.st_size;
 		crc = crc32v(iov, 3);
 	} else {
-		dsize = update_image ?
-		    (uint32_t)st.st_size - sizeof(*hdr) : (uint32_t)st.st_size;
+		dsize = update_image ? (uint32_t)(st.st_size - sizeof(*hdr)) :
+		    (uint32_t)st.st_size;
 		crc = crc32(p, st.st_size);
 	}
 	munmap(p, st.st_size);
 
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->ih_magic = htonl(image_magic);
-	hdr->ih_time = htonl(st.st_mtime);
+	hdr->ih_time = htonl(repro_time ? repro_time : st.st_mtime);
 	hdr->ih_size = htonl(dsize);
 	hdr->ih_load = htonl(image_loadaddr);
 	hdr->ih_ep = htonl(image_entrypoint);
@@ -462,8 +461,9 @@ main(int argc, char *argv[])
 	int kernel_fd, image_fd;
 	int ch;
 	unsigned long long num;
+	time_t repro_time = 0;
 
-	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:u")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:t:u")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
@@ -513,6 +513,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':	/* name */
 			image_name = strdup(optarg);
+			break;
+		case 't':       /* FS timestamp */
+			repro_time = atoll(optarg);
 			break;
 		case 'u':	/* update image */
 			update_image = 1;
@@ -584,7 +587,7 @@ main(int argc, char *argv[])
 
 	switch (image_format) {
 	case FMT_UIMG:
-		if (generate_header_uimg(&hdr_uimg, kernel_fd) != 0)
+		if (generate_header_uimg(&hdr_uimg, repro_time, kernel_fd) != 0)
 			return EXIT_FAILURE;
 
 		if (write_image(&hdr_uimg, sizeof(hdr_uimg),
