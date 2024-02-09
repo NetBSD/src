@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.12 2024/02/08 18:10:34 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.13 2024/02/09 16:18:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.12 2024/02/08 18:10:34 christos Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.13 2024/02/09 16:18:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 	write(to, &lifv, LIF_VOLSIZE);
 	lseek(to, LIF_DIRSTART, SEEK_SET);
 	write(to, lifd, LIF_DIRSIZE);
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 int
@@ -223,21 +223,18 @@ putfile(char *from, int to)
 {
 	int fd;
 	struct stat statb;
-	int nr;
+	ssize_t nr;
 	void *bp;
 
-	if ((fd = open(from, 0)) < 0) {
-		printf("error: unable to open file %s\n", from);
-		exit(1);
-	}
+	if ((fd = open(from, 0)) < 0)
+		err(EXIT_FAILURE, "Unable to open file `%s'", from);
 	fstat(fd, &statb);
 	ld.address = htobe32(loadpoint);
 	ld.count = htobe32(statb.st_size);
-	bp = malloc(statb.st_size);
-	if ((nr = read(fd, bp, statb.st_size)) < 0) {
-		printf("error: reading from file %s\n", from);
-		exit(1);
-	}
+	if ((bp = malloc(statb.st_size)) == NULL)
+		err(EXIT_FAILURE, "Can't allocate buffer");
+	if (read(fd, bp, statb.st_size) < 0)
+		err(EXIT_FAILURE, "Error reading from file `%s'", from);
 	(void)close(fd);
 	write(to, &ld, sizeof(ld));
 	write(to, bp, statb.st_size);
@@ -249,8 +246,9 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "Usage:	%s -l <loadpoint [-t <timestamp>] prog1 [ prog2 ] outfile\n", getprogname());
-	exit(1);
+	fprintf(stderr, "Usage:	%s -l <loadpoint> [-t <timestamp>] prog1 "
+	    "[ prog2 ] outfile\n", getprogname());
+	exit(EXIT_FAILURE);
 }
 
 char *
