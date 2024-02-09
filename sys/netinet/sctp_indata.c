@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.14 2024/01/15 19:44:07 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.15 2024/02/09 18:20:00 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.14 2024/01/15 19:44:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.15 2024/02/09 18:20:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1036,7 +1036,7 @@ sctp_is_all_msg_on_reasm(struct sctp_association *asoc, int *t_size)
 
 /*
  * Dump onto the re-assembly queue, in its proper place. After dumping on
- * the queue, see if anthing can be delivered. If so pull it off (or as much
+ * the queue, see if anything can be delivered. If so pull it off (or as much
  * as we can. If we run out of space then we must dump what we can and set
  * the appropriate flag to say we queued what we could.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.69 2023/09/21 09:31:49 msaitoh Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.70 2024/02/09 18:20:00 andvar Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.69 2023/09/21 09:31:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.70 2024/02/09 18:20:00 andvar Exp $");
 
 #include "opt_adb.h"
 
@@ -2225,7 +2225,7 @@ adb_reinit(void)
 			    (Ptr)0, (short)command);
 			delay(1000);
 
-			/* send TALK R3 - anthing at new address? */
+			/* send TALK R3 - anything at new address? */
 			command = ADBTALK(saveptr, 3);
 			send_string[0] = 0;
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
