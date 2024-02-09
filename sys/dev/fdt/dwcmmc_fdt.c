@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.21 2024/02/09 06:28:50 skrll Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.22 2024/02/09 08:50:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.21 2024/02/09 06:28:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.22 2024/02/09 08:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,7 +149,16 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_dmat = faa->faa_dmat;
+	if (sizeof(bus_addr_t) > 4) {
+		error = bus_dmatag_subregion(faa->faa_dmat, 0, __MASK(32),
+		    &sc->sc_dmat, BUS_DMA_WAITOK);
+		if (error != 0) {
+			aprint_error(": couldn't create DMA tag: %d\n", error);
+			return;
+		}
+	} else {
+		sc->sc_dmat = faa->faa_dmat;
+	}
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#" PRIx64 ": %d\n",
