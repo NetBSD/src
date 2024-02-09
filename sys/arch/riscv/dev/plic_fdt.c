@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.5 2024/02/09 18:39:53 andvar Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.5 2024/02/09 18:39:53 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -117,7 +117,7 @@ plic_fdt_attach_source(device_t self, int phandle, int context, int xref,
 	};
 
 	if (!of_compatible_match(xref, clint_compat_data)) {
-		aprint_error_dev(self, "incompatiable CLINT "
+		aprint_error_dev(self, "incompatible CLINT "
 		    "for PLIC for context %d\n", context);
 		return;
 	}
