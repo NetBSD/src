@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.8 2024/02/07 17:17:59 skrll Exp $
+# $NetBSD: GENERIC64,v 1.9 2024/02/09 08:51:49 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -58,6 +58,11 @@ jh7100pinctrl* 	at fdt? pass 2		# StarFive JH7100 pinctrl driver
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
 sdmmc* 		at sdmmcbus?
+ld0 		at sdmmc0
+ld1 		at sdmmc1
+ld2 		at sdmmc2
+ld3 		at sdmmc3
+ld* 		at sdmmc?
 bwfm* 		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # USB
