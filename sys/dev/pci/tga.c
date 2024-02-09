@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.92 2022/10/16 15:16:12 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.93 2024/02/09 22:08:36 andvar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.92 2022/10/16 15:16:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.93 2024/02/09 22:08:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1408,7 +1408,7 @@ tga_bt463_rd(void *v, u_int btreg)
 
 	/*
 	 * Strobe CE# (high->low->high) since status and data are latched on
-	 * the falling and rising edges (repsectively) of this active-low
+	 * the falling and rising edges (respectively) of this active-low
 	 * signal.
 	 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.12 2019/12/27 09:41:50 msaitoh Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.13 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@ struct wd33c93_tinfo {
 #define T_NOSYNC	0x10		/* Force ASYNC mode */
 #define T_NODISC	0x20		/* Don't allow disconnect */
 #define T_TAG		0x40		/* Turn on TAG QUEUEs */
-#define T_WANTSYNC	0x80		/* Negotiatious should aim for sync */
+#define T_WANTSYNC	0x80		/* Negotiations should aim for sync */
 	u_char	period;			/* Period suggestion */
 	u_char	offset;			/* Offset suggestion */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */

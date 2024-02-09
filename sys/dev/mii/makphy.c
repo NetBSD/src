@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.72 2022/01/06 07:39:10 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.73 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.72 2022/01/06 07:39:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.73 2024/02/09 22:08:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		mii_phy_setmedia(sc);
 
 		/*
-		 * If autonegitation is not enabled, we need a
+		 * If autonegotiation is not enabled, we need a
 		 * software reset for the settings to take effect.
 		 */
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_NONE)

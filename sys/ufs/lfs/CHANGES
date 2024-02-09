@@ -1,4 +1,4 @@
-#   $NetBSD: CHANGES,v 1.5 2005/12/11 12:25:26 christos Exp $
+#   $NetBSD: CHANGES,v 1.6 2024/02/09 22:08:38 andvar Exp $
 
 kernel:
 
@@ -71,7 +71,7 @@ kernel:
   would either be written in the wrong place, or overwrite other blocks.
 
 - The LFS buffer-header accounting, which triggers a partial-segment
-  write if too many buffer-headers are in use by the LFS subystem, has
+  write if too many buffer-headers are in use by the LFS subsystem, has
   been expanded to include *bytes* used in LFS buffers as well.
 
 - Reads of the Ifile, which almost always come from the cleaner, can no

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.97 2022/07/02 07:26:53 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.98 2024/02/09 22:08:35 andvar Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2625,7 +2625,7 @@ struct bge_gib {
  * The first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the data 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.29 2022/09/16 20:43:17 andvar Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.30 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.29 2022/09/16 20:43:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.30 2024/02/09 22:08:36 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1005,7 +1005,7 @@ lii_rxintr(struct lii_softc *sc)
 		}
 
 		m_set_rcvif(m, ifp);
-		/* Copy the packet withhout the FCS */
+		/* Copy the packet without the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
 

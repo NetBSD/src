@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: trm.c,v 1.44 2024/02/09 22:08:36 andvar Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.44 2024/02/09 22:08:36 andvar Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -1771,7 +1771,7 @@ trm_msgin_phase0(struct trm_softc *sc)
 	} else {
 		/*
 		 * when extend message in: sc->sc_state = TRM_EXTEND_MSGIN
-		 * Parsing incoming extented messages
+		 * Parsing incoming extended messages
 		 */
 		*sc->sc_msg++ = msgin_code;
 		sc->sc_msgcnt++;

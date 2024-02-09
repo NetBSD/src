@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.13 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.14 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ struct epic_fraglist {
  *	LAN2	[3-0]		n8
  *
  * The LAN address is automatically recalled from the EEPROM after a
- * hard reseet.
+ * hard reset.
  */
 
 #define	EPIC_IDCHK		0x4c /* BOARD ID/CHECKSUM */

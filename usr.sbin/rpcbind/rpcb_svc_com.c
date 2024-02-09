@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.27 2021/10/30 11:41:45 nia Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.28 2024/02/09 22:08:38 andvar Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -288,7 +288,7 @@ map_unset(RPCB *regp, const char *owner)
 	/*
 	 * We return 1 either when the entry was not there or it
 	 * was able to unset it.  It can come to this point only if
-	 * atleast one of the conditions is true.
+	 * at least one of the conditions is true.
 	 */
 	return (1);
 }

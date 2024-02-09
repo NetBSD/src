@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.30 2024/02/09 22:08:31 andvar Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.30 2024/02/09 22:08:31 andvar Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -1474,7 +1474,7 @@ tvhzto(struct timeval *tv)
  * void
  * rmc_delay_action(struct rm_class *cl) - This function is the generic CBQ
  *	delay action routine.  It is invoked via rmc_under_limit when the
- *	packet is discoverd to be overlimit.
+ *	packet is discovered to be overlimit.
  *
  *	If the delay action is result of borrow class being overlimit, then
  *	delay for the offtime of the borrowing class that is overlimit.

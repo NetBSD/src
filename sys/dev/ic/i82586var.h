@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.23 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.24 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  * driver in `sc_scb'.
  *
  * The following functions provide the glue necessary to deal with
- * host and bus idiosyncracies:
+ * host and bus idiosyncrasies:
  *
  *	hwreset		- board reset
  *	hwinit		- board initialization

@@ -1,8 +1,8 @@
-#	$NetBSD: std.ews4800mips,v 1.1 2005/12/29 15:20:08 tsutsui Exp $
+#	$NetBSD: std.ews4800mips,v 1.2 2024/02/09 22:08:32 andvar Exp $
 
 machine	ews4800mips mips
 makeoptions	MACHINE_ARCH="mipseb"
-include 	"conf/std"	# MI standart options
+include 	"conf/std"	# MI standard options
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts

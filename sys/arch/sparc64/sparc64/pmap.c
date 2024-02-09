@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.318 2023/12/20 05:33:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.319 2024/02/09 22:08:33 andvar Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2023/12/20 05:33:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319 2024/02/09 22:08:33 andvar Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.318 2023/12/20 05:33:59 thorpej Exp $");
 #define	MEG		(1<<20) /* 1MB */
 #define	KB		(1<<10)	/* 1KB */
 
-paddr_t cpu0paddr;		/* contigious phys memory preallocated for cpus */
+paddr_t cpu0paddr;		/* contiguous phys memory preallocated for cpus */
 
 /* These routines are in assembly to allow access thru physical mappings */
 extern int64_t pseg_get_real(struct pmap *, vaddr_t);

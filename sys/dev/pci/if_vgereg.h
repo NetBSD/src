@@ -1,4 +1,4 @@
-/* $NetBSD: if_vgereg.h,v 1.7 2021/08/26 21:33:36 andvar Exp $ */
+/* $NetBSD: if_vgereg.h,v 1.8 2024/02/09 22:08:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -443,7 +443,7 @@
 #define VGE_MIICMD_MOUT		0x08	/* data out pin enable */
 #define VGE_MIICMD_MDP		0x10	/* enable direct programming mode */
 #define VGE_MIICMD_WCMD		0x20	/* embedded mode write */
-#define VGE_MIICMD_RCMD		0x40	/* embadded mode read */
+#define VGE_MIICMD_RCMD		0x40	/* embedded mode read */
 #define VGE_MIICMD_MAUTO	0x80	/* enable autopolling */
 
 /* MII address register */

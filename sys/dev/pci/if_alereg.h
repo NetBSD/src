@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alereg.h,v 1.3 2019/09/03 14:29:26 msaitoh Exp $	*/
+/*	$NetBSD: if_alereg.h,v 1.4 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: if_alereg.h,v 1.2 2011/05/20 08:36:55 kevlo Exp $	*/
 
 /*-
@@ -779,7 +779,7 @@ struct tx_desc {
 /*
  * TODO : Should get real jumbo MTU size.
  * The hardware seems to have trouble in dealing with large
- * frame length. If you encounter unstability issue, use
+ * frame length. If you encounter instability issue, use
  * lower MTU size.
  */
 #define	ALE_JUMBO_FRAMELEN	8132

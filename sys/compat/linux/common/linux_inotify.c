@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.5 2023/08/24 19:51:24 christos Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.5 2023/08/24 19:51:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6 2024/02/09 22:08:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -528,7 +528,7 @@ linux_sys_inotify_add_watch(struct lwp *l,
 			/* Success! */
 			*retval = wd;
 
-			/* Resize ifd_nwds to accomodate wd. */
+			/* Resize ifd_nwds to accommodate wd. */
 			if (wd+1 > ifd->ifd_nwds) {
 				new_wds = kmem_zalloc(
 				    (wd+1) * sizeof(*ifd->ifd_wds), KM_SLEEP);

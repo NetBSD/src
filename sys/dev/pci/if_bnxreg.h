@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.29 2024/02/05 22:08:05 andvar Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.30 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -318,7 +318,7 @@ struct flash_spec {
 
 /****************************************************************************/
 /* Shared Memory layout							    */
-/* The BNX bootcode will initialize this data area with port configurtion   */
+/* The BNX bootcode will initialize this data area with port configuration  */
 /* information which can be accessed by the driver.			    */
 /****************************************************************************/
 

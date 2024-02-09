@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.5 1999/02/16 17:59:18 kleink Exp $
+#	$NetBSD: README,v 1.6 2024/02/09 22:08:30 andvar Exp $
 #	@(#)README	8.1 (Berkeley) 6/4/93
 
 This package implements a superset of the hsearch and dbm/ndbm libraries.
@@ -49,7 +49,7 @@ The man page ../man/db.3 explains the interface to the hashing system.
 The file hash.ps is a postscript copy of a paper explaining
 the history, implementation, and performance of the hash package.
 
-"bugs" or idiosyncracies
+"bugs" or idiosyncrasies
 
 If you have a lot of overflows, it is possible to run out of overflow
 pages.  Currently, this will cause a message to be printed on stderr.

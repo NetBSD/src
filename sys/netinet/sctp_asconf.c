@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.12 2019/06/25 15:33:56 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.13 2024/02/09 22:08:37 andvar Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.12 2019/06/25 15:33:56 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.13 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1678,7 +1678,7 @@ sctp_addr_mgmt_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		strlcpy(buf, IN6_PRINT(ip6buf, &sin6->sin6_addr), sizeof(buf));
 #endif /* SCTP_DEBUG */
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			/* we skip unspecifed addresses */
+			/* we skip unspecified addresses */
 #ifdef SCTP_DEBUG
 			if (sctp_debug_on & SCTP_DEBUG_ASCONF1) {
 				printf("addr_mgmt_assoc: unspecified IPv6 addr\n");
@@ -1730,7 +1730,7 @@ sctp_addr_mgmt_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		strlcpy(buf, inet_ntoa(sin->sin_addr), sizeof(buf));
 #endif /* SCTP_DEBUG */
 		if (sin->sin_addr.s_addr == 0) {
-			/* we skip unspecifed addresses */
+			/* we skip unspecified addresses */
 #ifdef SCTP_DEBUG
 			if (sctp_debug_on & SCTP_DEBUG_ASCONF1) {
 				printf("addr_mgmt_assoc: unspecified IPv4 addr\n");
@@ -2137,7 +2137,7 @@ sctp_find_valid_localaddr(struct sctp_tcb *stcb)
 
 				sin = (struct sockaddr_in *)ifa->ifa_addr;
 				if (sin->sin_addr.s_addr == 0) {
-					/* skip unspecifed addresses */
+					/* skip unspecified addresses */
 					continue;
 				}
 				if (stcb->asoc.ipv4_local_scope == 0 &&
@@ -2164,7 +2164,7 @@ sctp_find_valid_localaddr(struct sctp_tcb *stcb)
 
 				sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 				if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-					/* we skip unspecifed addresses */
+					/* we skip unspecified addresses */
 					continue;
 				}
 				if (stcb->asoc.local_scope == 0 &&

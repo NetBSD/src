@@ -50,7 +50,7 @@
 /* dmctl command is used to communicate with device-mapper driver in NetBSD
  * it uses libdm library to create and send required data to kernel.
  *
- * Main purpose of dmctl is to add posibility to use device-mapper driver
+ * Main purpose of dmctl is to add possibility to use device-mapper driver
  * from outside of LVM scope.
  */
 
@@ -123,7 +123,7 @@ static struct command commands[] = {
 	  NULL, DMCTL_CMD_REQ_DEVNAME,
 	  dmctl_dev_suspend },
 	{ "deps",
-	  "Print physical dependiences for dm device [dm device name].",
+	  "Print physical dependencies for dm device [dm device name].",
 	  NULL, DMCTL_CMD_REQ_DEVNAME,
 	  dmctl_dev_deps },
 	{ "reload",
@@ -379,7 +379,7 @@ dmctl_dev_remove(int argc __unused, char *argv[] __unused, libdm_task_t task)
 
 /*
  * Resume device which was suspended or created right now.
- * Replace table in "active slot" witg table in "inactive slot".
+ * Replace table in "active slot" with table in "inactive slot".
  */
 static int
 dmctl_dev_resume(int argc __unused, char *argv[] __unused, libdm_task_t task)
@@ -413,7 +413,7 @@ dmctl_dev_suspend(int argc __unused, char *argv[] __unused, libdm_task_t task)
 }
 
 /*
- * Get device dependiences from device-mapper. Device dependency is physical
+ * Get device dependencies from device-mapper. Device dependency is physical
  * device on which dm device depends.
  */
 static int
@@ -433,7 +433,7 @@ dmctl_dev_deps(int argc __unused, char *argv[] __unused, libdm_task_t task)
 
 	iter = libdm_cmd_iter_create(cmd);
 
-	printf("Device %s dependiences \n", dvname);
+	printf("Device %s dependencies \n", dvname);
 
 	while((dev_deps = libdm_cmd_get_deps(iter)) != 0)
 		printf("major: %d minor: %d\n", major(dev_deps), minor(dev_deps));

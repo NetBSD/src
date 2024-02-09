@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.27 2021/11/10 17:19:30 msaitoh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.28 2024/02/09 22:08:36 andvar Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.27 2021/11/10 17:19:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.28 2024/02/09 22:08:36 andvar Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -422,7 +422,7 @@ cmalo_detach(void *arg)
 	/* free firmware */
 	cmalo_fw_free(sc);
 
-	/* detach inferface */
+	/* detach interface */
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 
@@ -1287,7 +1287,7 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1385,7 +1385,7 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1498,7 +1498,7 @@ cmalo_cmd_set_auth(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1556,7 +1556,7 @@ cmalo_cmd_set_wep(struct malo_softc *sc, uint16_t index,
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1608,7 +1608,7 @@ cmalo_cmd_set_snmp(struct malo_softc *sc, uint16_t oid)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1639,7 +1639,7 @@ cmalo_cmd_set_radio(struct malo_softc *sc, uint16_t control)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1667,7 +1667,7 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1695,7 +1695,7 @@ cmalo_cmd_set_txpower(struct malo_softc *sc, int16_t txpower)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1738,7 +1738,7 @@ cmalo_cmd_set_antenna(struct malo_softc *sc, uint16_t action)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1770,7 +1770,7 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1797,7 +1797,7 @@ cmalo_cmd_set_macaddr(struct malo_softc *sc, uint8_t *macaddr)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1874,7 +1874,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;
@@ -1926,7 +1926,7 @@ cmalo_cmd_set_rate(struct malo_softc *sc, int rate)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return EIO;
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return 0;

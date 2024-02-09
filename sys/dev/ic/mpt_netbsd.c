@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.39 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.39 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.40 2024/02/09 22:08:34 andvar Exp $");
 
 #include "bio.h"
 
@@ -1358,7 +1358,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 
 	case MPI_EVENT_RESCAN:
 		/*
-		 * In general, thise means a device has been added
+		 * In general, this means a device has been added
 		 * to the loop.
 		 */
 		mpt_prt(mpt, "Rescan Port %d", (msg->Data[0] >> 8) & 0xff);

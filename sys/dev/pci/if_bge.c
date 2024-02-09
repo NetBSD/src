@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.389 2023/08/01 20:46:01 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.390 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.389 2023/08/01 20:46:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.390 2024/02/09 22:08:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -707,7 +707,7 @@ bge_ape_read_fw_ver(struct bge_softc *sc)
 
 	sc->bge_mfw_flags |= BGE_MFW_ON_APE;
 
-	/* Fetch the APE firwmare type and version. */
+	/* Fetch the APE firmware type and version. */
 	apedata = APE_READ_4(sc, BGE_APE_FW_VERSION);
 	features = APE_READ_4(sc, BGE_APE_FW_FEATURES);
 	if ((features & BGE_APE_FW_FEATURE_NCSI) != 0) {
@@ -2601,7 +2601,7 @@ bge_blockinit(struct bge_softc *sc)
 	 * The BD ring replenish thresholds control how often the
 	 * hardware fetches new BD's from the producer rings in host
 	 * memory.  Setting the value too low on a busy system can
-	 * starve the hardware and recue the throughpout.
+	 * starve the hardware and reduce the throughput.
 	 *
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
@@ -2737,7 +2737,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RXLP_CFG, 0x181);
 
 	/* 5718 step 29, 57XX step 58 */
-	/* Inialize RX list placement stats mask. */
+	/* Initialize RX list placement stats mask. */
 	if (BGE_IS_575X_PLUS(sc)) {
 		val = CSR_READ_4(sc, BGE_RXLP_STATS_ENABLE_MASK);
 		val &= ~BGE_RXLPSTATCONTROL_DACK_FIX;
@@ -3508,7 +3508,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * known bug which can't handle TSO if ethernet header + IP/TCP
 	 * header is greater than 80 bytes. The workaround for the TSO
 	 * bug exist but it seems it's too expensive than not using
-	 * TSO at all. Some hardwares also have the TSO bug so limit
+	 * TSO at all. Some hardware also have the TSO bug so limit
 	 * the TSO to the controllers that are not affected TSO issues
 	 * (e.g. 5755 or higher).
 	 */

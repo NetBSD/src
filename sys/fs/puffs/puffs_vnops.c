@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.225 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.226 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.225 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.226 2024/02/09 22:08:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1428,7 +1428,7 @@ puffs_vnop_reclaim(void *v)
 		notifyserver = false;
 
 	/*
-	 * purge info from kernel before issueing FAF, since we
+	 * purge info from kernel before issuing FAF, since we
 	 * don't really know when we'll get around to it after
 	 * that and someone might race us into node creation
 	 */

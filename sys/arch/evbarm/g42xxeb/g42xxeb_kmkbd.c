@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.17 2023/12/20 13:55:17 thorpej Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.18 2024/02/09 22:08:32 andvar Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.17 2023/12/20 13:55:17 thorpej Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.18 2024/02/09 22:08:32 andvar Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ const struct wskbd_mapdata kmkbd_keymapdata = {
 };
 
 /*
- * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * Hackish support for a bell on the PC Keyboard; when a suitable beeper
  * is found, it attaches itself into the pckbd driver here.
  */
 void	(*kmkbd_bell_fn)(void *, u_int, u_int, u_int, int);

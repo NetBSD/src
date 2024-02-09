@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.90 2021/10/24 20:00:11 andvar Exp $	*/
+/*	$NetBSD: i82586.c,v 1.91 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.90 2021/10/24 20:00:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.91 2024/02/09 22:08:34 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1323,7 +1323,7 @@ ie_run_tdr(struct ie_softc *sc, int cmd)
  * i82586_setup_bufs: set up the buffers
  *
  * We have a block of KVA at sc->buf_area which is of size sc->buf_area_sz.
- * this is to be used for the buffers.  The chip indexs its control data
+ * this is to be used for the buffers.  The chip indexes its control data
  * structures with 16 bit offsets, and it indexes actual buffers with
  * 24 bit addresses.   So we should allocate control buffers first so that
  * we don't overflow the 16 bit offset field.   The number of transmit

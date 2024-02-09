@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.S,v 1.1 2014/08/27 00:18:25 matt Exp $
+|	$NetBSD: vectors.S,v 1.2 2024/02/09 22:08:32 andvar Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -37,7 +37,7 @@
 |
 
 #include <machine/asm.h>
-RCSID("$NetBSD: vectors.S,v 1.1 2014/08/27 00:18:25 matt Exp $")
+RCSID("$NetBSD: vectors.S,v 1.2 2024/02/09 22:08:32 andvar Exp $")
 
 #define	BADTRAP16	\
 	VECTOR(badtrap) ; VECTOR(badtrap) ; \
@@ -130,7 +130,7 @@ GLOBAL(vectab)
 	VECTOR(badtrap)		/* 63: unassigned, reserved */
 
 	/*
-	 * Vectors are installed from 64-255 by the *intr_extablish() functions.
+	 * Vectors are installed from 64-255 by the *intr_establish() functions.
 	 */
 	BADTRAP16		/* 64-255: user interrupt vectors */
 	BADTRAP16		/* 64-255: user interrupt vectors */

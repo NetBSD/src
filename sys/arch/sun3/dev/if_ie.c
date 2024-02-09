@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.73 2021/10/24 20:00:11 andvar Exp $ */
+/*	$NetBSD: if_ie.c,v 1.74 2024/02/09 22:08:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.73 2021/10/24 20:00:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.74 2024/02/09 22:08:33 andvar Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1138,7 +1138,7 @@ run_tdr(struct ie_softc *sc, struct ie_tdr_cmd *cmd)
  * iememinit: set up the buffers
  *
  * we have a block of KVA at sc->buf_area which is of size sc->buf_area_sz.
- * this is to be used for the buffers.  the chip indexs its control data
+ * this is to be used for the buffers.  the chip indexes its control data
  * structures with 16 bit offsets, and it indexes actual buffers with
  * 24 bit addresses.   so we should allocate control buffers first so that
  * we don't overflow the 16 bit offset field.   The number of transmit

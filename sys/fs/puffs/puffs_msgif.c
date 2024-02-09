@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.106 2020/05/15 19:28:10 maxv Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.107 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.106 2020/05/15 19:28:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.107 2024/02/09 22:08:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -381,8 +381,8 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 
 	/*
 	 * To support cv_sig, yet another movie: check if there are signals
-	 * pending and we are issueing a non-FAF.  If so, return an error
-	 * directly UNLESS we are issueing INACTIVE/RECLAIM.  In that case,
+	 * pending and we are issuing a non-FAF.  If so, return an error
+	 * directly UNLESS we are issuing INACTIVE/RECLAIM.  In that case,
 	 * convert it to a FAF, fire off to the file server and return
 	 * an error.  Yes, this is bordering disgusting.  Barfbags are on me.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.16 2022/05/31 08:43:15 andvar Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.17 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -3710,7 +3710,7 @@ scratch_ram {
 
 	/*
 	 * The maximum amount of time to wait, when interrupt coalescing
-	 * is enabled, before issueing a CMDCMPLT interrupt for a completed
+	 * is enabled, before issuing a CMDCMPLT interrupt for a completed
 	 * command.
 	 */
 	INT_COALESCING_TIMER {

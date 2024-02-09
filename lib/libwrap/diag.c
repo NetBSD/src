@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.17 2019/01/12 19:08:24 christos Exp $	*/
+/*	$NetBSD: diag.c,v 1.18 2024/02/09 22:08:31 andvar Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.17 2019/01/12 19:08:24 christos Exp $");
+__RCSID("$NetBSD: diag.c,v 1.18 2024/02/09 22:08:31 andvar Exp $");
 #endif
 #endif
 
@@ -52,7 +52,7 @@ tcpd_diag(int severity, const char *tag, const char *fmt, va_list ap)
 	buf = __UNCONST(fmt);
     free(bufx);
 
-    /* contruct the tag for the log entry */
+    /* construct the tag for the log entry */
     if (tcpd_context.file)
 	syslog(severity, "%s: %s, line %d: %s",
 	    tag, tcpd_context.file, tcpd_context.line, buf);

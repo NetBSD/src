@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.112 2023/08/01 21:26:28 andvar Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.113 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.112 2023/08/01 21:26:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.113 2024/02/09 22:08:35 andvar Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -640,7 +640,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Configure byte swap and enable indirect register access.
 	 * Rely on CPU to do target byte swapping on big endian systems.
-	 * Access to registers outside of PCI configurtion space are not
+	 * Access to registers outside of PCI configuration space are not
 	 * valid until this is done.
 	 */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_MISC_CONFIG,
@@ -1409,7 +1409,7 @@ bnx_release_nvram_lock(struct bnx_softc *sc)
 	}
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
-		DBPRINT(sc, BNX_WARN, "Timeout reeasing NVRAM lock!\n");
+		DBPRINT(sc, BNX_WARN, "Timeout releasing NVRAM lock!\n");
 		return EBUSY;
 	}
 
@@ -5094,13 +5094,13 @@ bnx_mgmt_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
 
-/****************************************************************************/
-/* Encapsultes an mbuf cluster into the tx_bd chain structure and makes the */
-/* memory visible to the controller.                                        */
-/*                                                                          */
-/* Returns:                                                                 */
-/*   0 for success, positive value for failure.                             */
-/****************************************************************************/
+/*****************************************************************************/
+/* Encapsulates an mbuf cluster into the tx_bd chain structure and makes the */
+/* memory visible to the controller.                                         */
+/*                                                                           */
+/* Returns:                                                                  */
+/*   0 for success, positive value for failure.                              */
+/*****************************************************************************/
 int
 bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 {

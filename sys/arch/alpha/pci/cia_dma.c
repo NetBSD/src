@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.37 2021/07/19 01:06:14 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.38 2024/02/09 22:08:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.37 2021/07/19 01:06:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.38 2024/02/09 22:08:31 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,7 @@ cia_bus_dmamap_create_direct(
 		 * is greater than 1.  This is because many network
 		 * drivers allocate large contiguous blocks of memory
 		 * for control data structures, even though they won't
-		 * do any single DMA that crosses a page coundary.
+		 * do any single DMA that crosses a page boundary.
 		 *	-- thorpej@NetBSD.org, 2/5/2000
 		 */
 		map->_dm_flags |= DMAMAP_NO_COALESCE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_etreg.h,v 1.4 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_etreg.h,v 1.5 2024/02/09 22:08:35 andvar Exp $	*/
 /*	$OpenBSD: if_etreg.h,v 1.3 2008/06/08 06:18:07 jsg Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 #define ET_PCIV_ACK_LATENCY_256		416
 
 #define ET_PCIR_REPLAY_TIMER		0xc2
-#define ET_REPLAY_TIMER_RX_L0S_ADJ	250	/* XXX infered from default */
+#define ET_REPLAY_TIMER_RX_L0S_ADJ	250	/* XXX inferred from default */
 #define ET_PCIV_REPLAY_TIMER_128	(711 + ET_REPLAY_TIMER_RX_L0S_ADJ)
 #define ET_PCIV_REPLAY_TIMER_256	(1248 + ET_REPLAY_TIMER_RX_L0S_ADJ)
 

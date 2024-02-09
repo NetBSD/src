@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.23 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.24 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.23 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.24 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -981,7 +981,7 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 					struct sockaddr_in *sin;
 					sin = (struct sockaddr_in *)ifa->ifa_addr;
 					if (sin->sin_addr.s_addr == 0) {
-						/* we skip unspecifed addresses */
+						/* we skip unspecified addresses */
 						continue;
 					}
 					if ((ipv4_local_scope == 0) &&

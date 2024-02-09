@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphyreg.h,v 1.4 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: tlphyreg.h,v 1.5 2024/02/09 22:08:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -34,7 +34,7 @@
 #define	MII_TLPHY_ID	0x10	/* ThunderLAN PHY ID */
 #define	ID_10BASETAUI	0x0001	/* 10baseT/AUI PHY */
 
-#define	MII_TLPHY_CTRL	0x11	/* Control regiseter */
+#define	MII_TLPHY_CTRL	0x11	/* Control register */
 #define	CTRL_ILINK	0x8000	/* Ignore link */
 #define	CTRL_SWPOL	0x4000	/* swap polarity */
 #define	CTRL_AUISEL	0x2000	/* Select AUI */

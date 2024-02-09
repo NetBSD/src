@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.34 2023/09/13 15:58:13 bouyer Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.35 2024/02/09 22:08:37 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.34 2023/09/13 15:58:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.35 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1252,7 +1252,7 @@ sctp_is_v6_ifa_addr_acceptable (struct ifaddr *ifa, int loopscope, int loc_scope
 		return (NULL);
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-		/* we skip unspecifed addresses */
+		/* we skip unspecified addresses */
 		return (NULL);
 	}
 
@@ -2544,7 +2544,7 @@ int sctp_is_address_in_scope(struct ifaddr *ifa,
 		}
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			/* skip unspecifed addresses */
+			/* skip unspecified addresses */
 			return (0);
 		}
 		if (/*(local_scope == 0) && */

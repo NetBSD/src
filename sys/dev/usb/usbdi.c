@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.251 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.252 2024/02/09 22:08:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.251 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.252 2024/02/09 22:08:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1697,7 +1697,7 @@ usbd_xfer_timeout_task(void *cookie)
 	/*
 	 * After this point, no further timeout probing will happen for
 	 * the current incarnation of the timeout, so make the next
-	 * usbd_xfer_schedule_timout schedule a new callout.
+	 * usbd_xfer_schedule_timeout schedule a new callout.
 	 * usbd_xfer_probe_timeout has already processed any reset.
 	 */
 	KASSERT(!xfer->ux_timeout_reset);

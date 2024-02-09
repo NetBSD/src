@@ -189,7 +189,7 @@ mvspi_configure(void *cookie, int slave, int mode, int speed)
 	}
 
 	/* Find the best prescale configuration - less or equal:
-	 * SPI actual frecuency = core_clk / (SPR * (2 ^ SPPR))
+	 * SPI actual frequency = core_clk / (SPR * (2 ^ SPPR))
 	 * Try to find the minimal SPR and SPPR values that offer
 	 * the best prescale config.
 	 *

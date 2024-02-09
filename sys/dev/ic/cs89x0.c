@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.52 2022/09/18 17:21:18 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.53 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.52 2022/09/18 17:21:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.53 2024/02/09 22:08:34 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -881,7 +881,7 @@ cs_reset_chip(struct cs_softc *sc)
 	sc->sc_txbusy = FALSE;
 
 	/*
-	 * There was a delay(125); here, but it seems uneccesary 125 usec is
+	 * There was a delay(125); here, but it seems unnecessary 125 usec is
 	 * 1/8000 of a second, not 1/8 of a second. the data sheet advises
 	 * 1/10 of a second here, but the SI_BUSY and INIT_DONE loops below
 	 * should be sufficient.

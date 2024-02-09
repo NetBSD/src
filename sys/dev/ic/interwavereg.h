@@ -1,7 +1,7 @@
 #ifndef INTERWAVEREG_H
 #define INTERWAVEREG_H
 
-/*	$NetBSD: interwavereg.h,v 1.9 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: interwavereg.h,v 1.10 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@
 #define SYNTH_UP	  0x90		 /* Enables Synthesizer */
 #define SYNTH_DOWN	  0x10		 /* Disables Synthesizer */
 #define LMC_UP		  0xA0		 /* Enables LM Module */
-#define LMC_DOWN	  0x20		 /* Disbales LM Module */
+#define LMC_DOWN	  0x20		 /* Disables LM Module */
 #define XTAL24_UP	  0xC0		 /* Enables 24MHz Osc */
 #define XTAL24_DOWN	  0x40		 /* Disables 24MHz Osc */
 #define PPWRI		  0xF2		 /* PPWRI index */

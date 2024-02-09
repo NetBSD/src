@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.7 2016/01/01 19:14:45 jakllsch Exp $
+# $NetBSD: usb_hid_usages,v 1.8 2024/02/09 22:08:31 andvar Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -1569,7 +1569,7 @@
 	0x7B	Good Read Lamp Duration
 	0x7C	Good Read Lamp Intensity
 	0x7D	Good Read LED
-	0x7E	Good Read Tone Frequence
+	0x7E	Good Read Tone Frequency
 	0x7F	Good Read Tone Length
 	0x80	Good Read Tone Volume
 	0x82	No Read Message

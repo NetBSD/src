@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.44 2024/02/02 22:00:34 andvar Exp $ */
+/* $NetBSD: locore.S,v 1.45 2024/02/09 22:08:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ END(cpu_mpstart)
 
 
 toomanyharts:
-	PRINTS("too many harts, or hart id doens't exist in cpu_hart[]\n")
+	PRINTS("too many harts, or hart id doesn't exist in cpu_hart[]\n")
 1:	wfi
 	j	1b
 

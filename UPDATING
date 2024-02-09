@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.344 2023/09/24 16:33:41 gutteridge Exp $
+$NetBSD: UPDATING,v 1.345 2024/02/09 22:08:30 andvar Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -56,7 +56,7 @@ Recent changes:
 
 20230515:
 	New openssl build requires removal of the crypto/external/bsd/openssl
-	and tests/crypto/libcrypto subdirectories in the ${OBJDIR} hierachy.
+	and tests/crypto/libcrypto subdirectories in the ${OBJDIR} hierarchy.
 	Otherwise test results may be wrong due to wrong "golden" output
 	files being installed.
 

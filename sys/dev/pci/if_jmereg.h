@@ -1,4 +1,4 @@
-/* $NetBSD: if_jmereg.h,v 1.7 2021/12/05 03:43:50 msaitoh Exp $ */
+/* $NetBSD: if_jmereg.h,v 1.8 2024/02/09 22:08:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -79,7 +79,7 @@
 /* PCIe link error/status. */
 #define	JME_PCI_LES		0xD8
 
-/* propeietary register 0. */
+/* proprietary register 0. */
 #define	JME_PCI_PE0		0xE0
 #define	PE0_SPI_EXIST		0x00200000
 #define	PE0_PME_D0		0x00100000
@@ -786,7 +786,7 @@
 #define	APMC_DIS_CLKPM		0x00000002
 #define	APMC_DIS_CLKTX		0x00000001
 
-/* Packet completion coalesing status of Rx queue 0, 1, 2 and 3. */
+/* Packet completion coalescing status of Rx queue 0, 1, 2 and 3. */
 #define	JME_PCCSRX_BASE		0x80
 #define	JME_PCCSRX_END		0x8F
 #define	PCCSRX_REG(x)		(JME_PCCSRX_BASE + ((x) * 4))
@@ -795,7 +795,7 @@
 #define	PCCSRX_PKT_CNT_MASK	0x0000FF00
 #define	PCCSRX_PKT_CNT_SHIFT	8
 
-/* Packet completion coalesing status of Tx queue. */
+/* Packet completion coalescing status of Tx queue. */
 #define	JME_PCCSTX		0x90
 #define	PCCSTX_TO_MASK		0xFFFF0000
 #define	PCCSTX_TO_SHIFT		16

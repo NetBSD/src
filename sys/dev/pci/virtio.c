@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.79 2023/11/07 13:38:01 rin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.80 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.79 2023/11/07 13:38:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.80 2024/02/09 22:08:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ virtio_set_status(struct virtio_softc *sc, int status)
  *	virtio_reset(sc);	     // this will stop the device activity
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
- *	virtio_reinit_start(sc);     // dequeue prohibitted
+ *	virtio_reinit_start(sc);     // dequeue prohibited
  *	newfeatures = virtio_negotiate_features(sc, requestedfeatures);
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
@@ -670,7 +670,7 @@ virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * No way to disable the interrupt completely with
 		 * RingEventIdx. Instead advance used_event by half the
 		 * possible value. This won't happen soon and is far enough in
-		 * the past to not trigger a spurios interrupt.
+		 * the past to not trigger a spurious interrupt.
 		 */
 		*vq->vq_used_event = virtio_rw16(sc, vq->vq_used_idx + 0x8000);
 		vq_sync_aring_used(sc, vq, BUS_DMASYNC_PREWRITE);

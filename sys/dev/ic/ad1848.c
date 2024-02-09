@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.33 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.34 2024/02/09 22:08:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.33 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.34 2024/02/09 22:08:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ static const struct ad1848_mixerinfo {
 /*
  *  This function doesn't set the mute flags but does use them.
  *  The mute flags reflect the mutes that have been applied by the user.
- *  However, the driver occasionally wants to mute devices (e.g. when chaing
+ *  However, the driver occasionally wants to mute devices (e.g. when changing
  *  sampling rate). These operations should not affect the mute flags.
  */
 

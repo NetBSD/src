@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.16 2022/10/15 14:03:16 rin Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.17 2024/02/09 22:08:36 andvar Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -27,7 +27,7 @@
 
 /*
  * Registers definitions for PROMISE PDC20246/PDC20262 PCI IDE controller.
- * Unfortunably the HW docs are not publically available. I've been able
+ * Unfortunately the HW docs are not publicly available. I've been able
  * to get a partial one for the PDC20246, and a better one for the PDC20262
  * from Promise.
  */

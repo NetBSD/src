@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1310 2023/12/29 23:31:45 thorpej Exp $
+#	$NetBSD: files,v 1.1311 2024/02/09 22:08:34 andvar Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -364,7 +364,7 @@ defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
 defflag	opt_wlan.h		WLAN
 
-# Machine-independent device majors assignements
+# Machine-independent device majors assignments
 include "conf/majors"
 
 # generic attributes

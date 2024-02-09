@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.63 2021/12/31 14:25:23 riastradh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.64 2024/02/09 22:08:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.63 2021/12/31 14:25:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.64 2024/02/09 22:08:35 andvar Exp $");
 
 
 
@@ -2120,7 +2120,7 @@ dge_stop(struct ifnet *ifp, int disable)
 /*
  * dge_add_rxbuf:
  *
- *	Add a receive buffer to the indiciated descriptor.
+ *	Add a receive buffer to the indicated descriptor.
  */
 static int
 dge_add_rxbuf(struct dge_softc *sc, int idx)

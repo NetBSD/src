@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.6 2020/09/12 16:44:41 kamil Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.7 2024/02/09 22:08:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct stic_xcomm {
 #ifdef _KERNEL
 /*
  * stic_xmap: a description of the area returned by mapping the board.
- * sxm_xcomm and sxm_buf are physically contigious and of variable size as a
+ * sxm_xcomm and sxm_buf are physically contiguous and of variable size as a
  * whole; the combined size is learnt from stic_xinfo::sxi_buf_size.
  */
 struct stic_xmap {

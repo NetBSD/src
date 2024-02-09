@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.h,v 1.8 2009/01/14 02:20:45 mrg Exp $	*/
+/*	$NetBSD: swap.h,v 1.9 2024/02/09 22:08:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1998, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/syslimits.h>
 
-/* Thise structure is used to return swap information for userland */
+/* This structure is used to return swap information for userland */
 
 struct swapent {
 	dev_t	se_dev;			/* device id */

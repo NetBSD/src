@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.38 2023/07/16 19:09:07 christos Exp $ */
+/* $NetBSD: pckbd.c,v 1.39 2024/02/09 22:08:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2023/07/16 19:09:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.39 2024/02/09 22:08:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ const struct wskbd_mapdata pckbd_keymapdata = {
 };
 
 /*
- * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * Hackish support for a bell on the PC Keyboard; when a suitable beeper
  * is found, it attaches itself into the pckbd driver here.
  */
 void	(*pckbd_bell_fn)(void *, u_int, u_int, u_int, int);
