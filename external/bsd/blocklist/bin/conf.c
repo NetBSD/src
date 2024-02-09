@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2024/02/09 00:37:06 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2024/02/09 00:39:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.4 2024/02/09 00:37:06 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.5 2024/02/09 00:39:16 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -308,7 +308,7 @@ conf_gethostport(const char *f, size_t l, bool local, struct conf *c,
 		return -1;
 
 	if (port && c->c_port != FSTAR && c->c_port != FEQUAL)
-		*port = htons((in_port_t)c->c_port)
+		*port = htons((in_port_t)c->c_port);
 	return 0;
 out:
 	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad address [%s]", __func__, f, l, p);
