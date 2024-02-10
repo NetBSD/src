@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.64 2024/02/09 22:08:35 andvar Exp $	 */
+/* $NetBSD: if_bce.c,v 1.65 2024/02/10 09:30:06 andvar Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.64 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.65 2024/02/10 09:30:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ bce_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
+		 * didn't fit in the allotted number of segments, or we
 		 * were short on resources. If the packet will not fit,
 		 * it will be dropped. If short on resources, it will
 		 * be tried again later.

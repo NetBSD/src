@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.64 2022/09/21 20:24:42 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.65 2024/02/10 09:30:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.64 2022/09/21 20:24:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.65 2024/02/10 09:30:06 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -690,7 +690,7 @@ ste_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
+		 * didn't fit in the allotted number of segments, or we
 		 * were short on resources.  In this case, we'll copy
 		 * and try again.
 		 */

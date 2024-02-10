@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.377 2022/04/09 23:38:32 riastradh Exp $ */
+/*	$NetBSD: pmap.c,v 1.378 2024/02/10 09:30:06 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.377 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.378 2024/02/10 09:30:06 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -363,7 +363,7 @@ static bool	lock_available = false;	/* demap_lock has been initialized */
  * (sun4/4c)
  * A context is simply a small number that dictates which set of 4096
  * segment map entries the MMU uses.  The Sun 4c has eight (SS1,IPC) or
- * sixteen (SS2,IPX) such sets. These are alloted in an `almost MRU' fashion.
+ * sixteen (SS2,IPX) such sets. These are allotted in an `almost MRU' fashion.
  * (sun4m)
  * A context is simply a small number that indexes the context table, the
  * root-level page table mapping 4G areas. Each entry in this table points

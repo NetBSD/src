@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.135 2022/09/25 18:43:32 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.136 2024/02/10 09:30:06 andvar Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.135 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.136 2024/02/10 09:30:06 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1410,7 +1410,7 @@ next:
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we were
+		 * didn't fit in the allotted number of segments, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */

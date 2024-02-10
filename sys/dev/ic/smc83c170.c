@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.96 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.97 2024/02/10 09:30:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.96 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.97 2024/02/10 09:30:06 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -397,7 +397,7 @@ epic_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of frags, or we were
+		 * didn't fit in the allotted number of frags, or we were
 		 * short on resources.	In this case, we'll copy and try
 		 * again.
 		 */
