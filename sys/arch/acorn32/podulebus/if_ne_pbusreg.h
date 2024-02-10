@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbusreg.h,v 1.3 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: if_ne_pbusreg.h,v 1.4 2024/02/10 09:21:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define EM_DSR_POL	(1 << 3) /* Polarity of UTP link */
 #define EM_DSR_JAB	(1 << 4) /* Jabber state */
 #define EM_DSR_LNK	(1 << 5) /* Link state */
-#define EM_DSR_LBK	(1 << 6) /* Lookback mode */
+#define EM_DSR_LBK	(1 << 6) /* Loopback mode */
 #define EM_DSR_UTP	(1 << 7) /* Twisted pair selected */
 
 /* EtherLan 600 definitions */

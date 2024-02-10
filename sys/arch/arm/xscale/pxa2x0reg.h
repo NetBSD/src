@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.26 2021/12/26 16:08:20 andvar Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.27 2024/02/10 09:21:52 andvar Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -985,7 +985,7 @@ struct pxa2x0_dma_desc {
 #define  USBDC_UDCECR_DE	(1<<1)	/* Double-Buffering Enable */
 #define  USBDC_UDCECR_MPE	(1023<<2) /* Maximum Packet Size */
 #define  USBDC_UDCECR_ED	(1<<12)	/* USB Endpoint Direction */
-#define  USBDC_UDCECR_ET	(3<<13)	/* USB Enpoint Type */
+#define  USBDC_UDCECR_ET	(3<<13)	/* USB Endpoint Type */
 #define  USBDC_UDCECR_EN	(15<<15) /* Endpoint Number */
 #define  USBDC_UDCECR_AISN	(7<<19)	/* Alternate Interface Number */
 #define  USBDC_UDCECR_IN	(7<<22)	/* Interface Number */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2024/01/29 18:27:13 christos Exp $
+# $NetBSD: GENERIC,v 1.78 2024/02/10 09:21:52 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.77 $"
+#ident          "GENERIC-$Revision: 1.78 $"
 
 maxusers	16		# estimated number of users
 
@@ -280,7 +280,7 @@ wskbd*	at ukbd? console ? mux 1
 udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
 wsdisplay* at udl?
 
-# USB serial adpater
+# USB serial adapter
 ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices

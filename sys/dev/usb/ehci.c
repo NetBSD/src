@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.323 2024/02/09 22:08:36 andvar Exp $ */
+/*	$NetBSD: ehci.c,v 1.324 2024/02/10 09:21:53 andvar Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.323 2024/02/09 22:08:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.324 2024/02/10 09:21:53 andvar Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4212,7 +4212,7 @@ ehci_device_intr_abort(struct usbd_xfer *xfer)
 
 	/*
 	 * XXX - abort_xfer uses ehci_sync_hc, which syncs via the advance
-	 *       async doorbell. That's dependent on the async list, wheras
+	 *       async doorbell. That's dependent on the async list, whereas
 	 *       intr xfers are periodic, should not use this?
 	 */
 	usbd_xfer_abort(xfer);

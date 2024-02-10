@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.175 2024/02/04 20:50:30 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.176 2024/02/10 09:21:53 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.175 2024/02/04 20:50:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.176 2024/02/10 09:21:53 andvar Exp $");
 #endif /* not lint */
 
 
@@ -2087,7 +2087,7 @@ udf_process_vds(struct udf_mount *ump) {
 	}
 
 	/*
-	 * Determine sheduler error behaviour. For virtual partitions, update
+	 * Determine scheduler error behaviour. For virtual partitions, update
 	 * the trackinfo; for sparable partitions replace a whole block on the
 	 * sparable table. Always requeue.
 	 */
@@ -2098,7 +2098,7 @@ udf_process_vds(struct udf_mount *ump) {
 		ump->lvreadwrite = UDF_REMAP_BLOCK;
 
 	/*
-	 * Select our sheduler
+	 * Select our scheduler
 	 */
 	ump->strategy = &udf_strat_rmw;
 	if (n_virt || (ump->discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE))
@@ -2110,7 +2110,7 @@ udf_process_vds(struct udf_mount *ump) {
 		ump->strategy = &udf_strat_rmw;
 
 #if 0
-	/* read-only access won't benefit from the other shedulers */
+	/* read-only access won't benefit from the other schedulers */
 	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
 		ump->strategy = &udf_strat_direct;
 #endif
@@ -2130,7 +2130,7 @@ udf_process_vds(struct udf_mount *ump) {
 	snprintb(bits, sizeof(bits), UDFONERROR_BITS, ump->lvreadwrite);
 	DPRINTF(VOLUMES, ("\tactions on logvol errors %s\n", bits));
 
-	DPRINTF(VOLUMES, ("\tselected sheduler `%s`\n",
+	DPRINTF(VOLUMES, ("\tselected scheduler `%s`\n",
 		(ump->strategy == &udf_strat_direct) ? "Direct" :
 		(ump->strategy == &udf_strat_sequential) ? "Sequential" :
 		(ump->strategy == &udf_strat_rmw) ? "RMW" : "UNKNOWN!"));
@@ -6705,7 +6705,7 @@ udf_read_filebuf(struct udf_node *udf_node, struct buf *buf)
 	}
 #endif
 
-	/* request read-in of data from disc sheduler */
+	/* request read-in of data from disc scheduler */
 	buf->b_resid = buf->b_bcount;
 	for (sector = 0; sector < sectors; sector++) {
 		buf_offset = sector * sector_size;
@@ -6751,7 +6751,7 @@ udf_read_filebuf(struct udf_node *udf_node, struct buf *buf)
 			nestbuf->b_lblkno   = lblkno;
 			assert(nestbuf->b_vp == udf_node->vnode);
 
-			/* CD shedules on raw blkno */
+			/* CD schedules on raw blkno */
 			nestbuf->b_blkno      = rblk;
 			nestbuf->b_proc       = NULL;
 			nestbuf->b_rawblkno   = rblk;
@@ -6825,7 +6825,7 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	}
 	DPRINTF(WRITE, ("\tnot intern\n"));
 
-	/* request write out of data to disc sheduler */
+	/* request write out of data to disc scheduler */
 	buf->b_resid = buf->b_bcount;
 	for (lb_num = 0; lb_num < num_lb; lb_num++) {
 		buf_offset = lb_num * lb_size;
@@ -6865,7 +6865,7 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 		nestbuf->b_lblkno   = lblkno;
 		KASSERT(nestbuf->b_vp == udf_node->vnode);
 
-		/* CD shedules on raw blkno */
+		/* CD schedules on raw blkno */
 		nestbuf->b_blkno      = rblk;
 		nestbuf->b_proc       = NULL;
 		nestbuf->b_rawblkno   = rblk;

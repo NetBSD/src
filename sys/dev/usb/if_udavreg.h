@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.16 2019/08/10 02:32:27 mrg Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.17 2024/02/10 09:21:53 andvar Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 
 /*
@@ -63,8 +63,8 @@
 #define	 UDAV_NCR_WAKEEN	(1<<6) /* Wakeup Event Enable */
 #define	 UDAV_NCR_FCOL		(1<<4) /* Force Collision Mode */
 #define	 UDAV_NCR_FDX		(1<<3) /* Full-Duplex Mode (RO on Int. PHY) */
-#define	 UDAV_NCR_LBK1		(1<<2) /* Lookback Mode */
-#define	 UDAV_NCR_LBK0		(1<<1) /* Lookback Mode */
+#define	 UDAV_NCR_LBK1		(1<<2) /* Loopback Mode */
+#define	 UDAV_NCR_LBK0		(1<<1) /* Loopback Mode */
 #define	 UDAV_NCR_RST		(1<<0) /* Software reset */
 
 #define	UDAV_RCR		0x05 /* RX Control Register */

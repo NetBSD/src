@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.38 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.39 2024/02/10 09:21:53 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.38 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.39 2024/02/10 09:21:53 andvar Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -254,7 +254,7 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 	hdr->lock = 0;
 	rf_unlock_mutex2(hdr->mutex);
 
-	/* wakup anyone waiting on the parity stripe ID */
+	/* wakeup anyone waiting on the parity stripe ID */
 	cb = p->procWaitList;
 	p->procWaitList = NULL;
 	while (cb) {

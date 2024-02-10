@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.8 2024/02/09 22:08:31 andvar Exp $
+# $NetBSD: usb_hid_usages,v 1.9 2024/02/10 09:21:52 andvar Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -796,7 +796,7 @@
 	0x19F	AL Control Panel
 	0x1A0	AL Command Line Processor/Run
 	0x1A1	AL Process/Task Manager
-	0x1A2	AL Select Tast/Application
+	0x1A2	AL Select Task/Application
 	0x1A3	AL Next Task/Application
 	0x1A4	AL Previous Task/Application
 	0x1A5	AL Preemptive Halt Task/Application

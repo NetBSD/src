@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.23 2023/06/05 03:44:47 mlelstv Exp $ */
+/* $NetBSD: xhcireg.h,v 1.24 2024/02/10 09:21:53 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -92,7 +92,7 @@
 #define	 XHCI_HCC_PAE(x)	__SHIFTOUT((x), __BIT(8))	/* Parse All Event Data */
 #define	 XHCI_HCC_SPC(x)	__SHIFTOUT((x), __BIT(9))	/* Short packet */
 #define	 XHCI_HCC_SEC(x)	__SHIFTOUT((x), __BIT(10))	/* Stopped EDTLA */
-#define	 XHCI_HCC_CFC(x)	__SHIFTOUT((x), __BIT(11))	/* Configuous Frame ID */
+#define	 XHCI_HCC_CFC(x)	__SHIFTOUT((x), __BIT(11))	/* Contiguous Frame ID */
 #define	 XHCI_HCC_MAXPSASIZE_MASK __BITS(15, 12)	/* max pri. stream array size */
 #define	 XHCI_HCC_MAXPSASIZE(x)	__SHIFTOUT((x), XHCI_HCC_MAXPSASIZE_MASK)
 #define	 XHCI_HCC_XECP_MASK	__BITS(31, 16)		/* extended capabilities pointer */
@@ -258,7 +258,7 @@
 /* 5.4.9.2 */
 #define	 XHCI_PM2_L1S_MASK	__BITS(2, 0)	/* RO - L1 status */
 #define	 XHCI_PM2_L1S_GET(x)	__SHIFTOUT((x), XHCI_PM2_L1S_MASK)
-#define	 XHCI_PM2_RWE		__BIT(3)	/* RW - remote wakup enable */
+#define	 XHCI_PM2_RWE		__BIT(3)	/* RW - remote wakeup enable */
 #define	 XHCI_PM2_BESL_MASK	__BITS(7, 4)	/* RW - Best Effort Service Latency */
 #define	 XHCI_PM2_BESL_GET(x)	__SHIFTOUT((x), XHCI_PM2_BESL_MASK)
 #define	 XHCI_PM2_BESL_SET(x)	__SHIFTIN((x), XHCI_PM2_BESL_MASK)
