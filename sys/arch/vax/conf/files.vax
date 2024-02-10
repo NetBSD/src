@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.127 2024/01/17 16:33:56 tsutsui Exp $
+#	$NetBSD: files.vax,v 1.128 2024/02/10 18:43:52 andvar Exp $
 #
 # new style config file for vax architecture
 #
@@ -225,7 +225,7 @@ file	arch/vax/vsa/spx.c		spx needs-flag
 attach	le at vsbus with le_vsbus:	le24
 file	arch/vax/if/if_le_vsbus.c	le_vsbus
 
-# builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
+# builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
 #device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus

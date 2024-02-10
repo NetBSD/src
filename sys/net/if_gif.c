@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.158 2024/02/10 18:43:53 andvar Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.157 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.158 2024/02/10 18:43:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -863,7 +863,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		/*
 		 * calls gif_getref_variant() for other softcs to check
-		 * address pair duplicattion
+		 * address pair duplication
 		 */
 		bound = curlwp_bind();
 		error = gif_set_tunnel(&sc->gif_if, src, dst);

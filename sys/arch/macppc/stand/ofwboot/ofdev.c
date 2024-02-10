@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.30 2021/08/17 22:00:30 andvar Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.31 2024/02/10 18:43:51 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -464,7 +464,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		if (error == ERDLAB) {
 			if (partition)
 				/*
-				 * User specified a parititon,
+				 * User specified a partition,
 				 * but there is none
 				 */
 				goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2022/01/29 16:01:19 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.14 2024/02/10 18:43:54 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -587,7 +587,7 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 		return ask_reedit(parts);
 	}
 
-	/* check the fat12 parititons */
+	/* check the fat12 partitions */
 	if (pm->bootsize > 0 && pm->bootsize < (MIN_FAT12_BOOT/512)) {
 		if (quiet)
 			return 0;

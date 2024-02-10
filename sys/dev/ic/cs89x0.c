@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.53 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.54 2024/02/10 18:43:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.53 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.54 2024/02/10 18:43:52 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -302,7 +302,7 @@ static int cs_read_pktpg_from_eeprom(struct cs_softc *, int, uint16_t *);
  * worse is the next 'worse' state in the table.
  *
  * Transition to the next worse state happens automatically when a
- * transmittion underrun occurs.
+ * transmission underrun occurs.
  */
 struct cs_xmit_early {
 	uint16_t	txcmd;

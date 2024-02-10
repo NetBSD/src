@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.79 2023/01/27 09:33:43 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.80 2024/02/10 18:43:53 andvar Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.79 2023/01/27 09:33:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.80 2024/02/10 18:43:53 andvar Exp $");
 
 /*
  * IPsec input processing.
@@ -431,7 +431,7 @@ cantpull:
 	}
 
 	/*
-	 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+	 * There is no struct ifnet for tunnel mode IP-IP tunnel connection,
 	 * so we cannot write filtering rule to the inner packet.
 	 */
 	if (saidx->mode == IPSEC_MODE_TUNNEL)
@@ -586,7 +586,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 		}
 
 		/*
-		 * There is no struct ifnet for tunnel mode IP-IP tunnel connecttion,
+		 * There is no struct ifnet for tunnel mode IP-IP tunnel connection,
 		 * so we cannot write filtering rule to the inner packet.
 		 */
 		if (saidx->mode == IPSEC_MODE_TUNNEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.17 2021/06/29 22:40:54 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.18 2024/02/10 18:43:53 andvar Exp $	*/
 /*  from NetBSD: ulfs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.17 2021/06/29 22:40:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.18 2024/02/10 18:43:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -288,7 +288,7 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 
 	uele = ulfs_extattr_find_attr(ump, attrnamespace, attrname);
 	if (uele == NULL) {
-		printf("%s: atttribute %s created but not found!\n",
+		printf("%s: attribute %s created but not found!\n",
 		       __func__, attrname);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
 		*uelep = NULL;

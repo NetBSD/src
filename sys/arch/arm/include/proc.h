@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.19 2020/08/14 16:18:36 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.20 2024/02/10 18:43:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -48,7 +48,7 @@ struct mdlwp {
 	volatile uint32_t md_astpending;
 };
 
-/* Flags setttings for md_flags */
+/* Flags settings for md_flags */
 #define MDLWP_NOALIGNFLT	0x00000002	/* For EXEC_AOUT */
 #define MDLWP_VFPINTR		0x00000004	/* VFP used in intr */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.54 2023/02/22 21:49:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.55 2024/02/10 18:43:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.54 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.55 2024/02/10 18:43:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -285,7 +285,7 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 
 	uele = ufs_extattr_find_attr(ump, attrnamespace, attrname);
 	if (uele == NULL) {
-		printf("%s: atttribute `%s' created but not found!\n",
+		printf("%s: attribute `%s' created but not found!\n",
 		    __func__, attrname);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
 		*uelep = NULL;

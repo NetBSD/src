@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_macro_gram.y,v 1.3 2020/06/27 16:19:38 jdolecek Exp $	*/
+/*	$NetBSD: aicasm_macro_gram.y,v 1.4 2024/02/10 18:43:53 andvar Exp $	*/
 
 /*
  * Sub-parser for macro invocation in the Aic7xxx SCSI
@@ -140,7 +140,7 @@ add_macro_arg(const char *argtext, int argnum)
 	}
 	/*
 	 * Macro Invocation.  Find the appropriate argument and fill
-	 * in the replace ment text for this call.
+	 * in the replacement text for this call.
 	 */
 	i = 0;
 	STAILQ_FOREACH(marg, &macro_symbol->info.macroinfo->args, links) {

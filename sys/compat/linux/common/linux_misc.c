@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.262 2023/08/18 19:41:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.263 2024/02/10 18:43:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.262 2023/08/18 19:41:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.263 2024/02/10 18:43:52 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ linux_sys_waitid(struct lwp *l, const struct linux_sys_waitid_args *uap, registe
 }
 
 /*
- * Convert the opttions argument for wait4(2) and waitid(2) from what
+ * Convert the options argument for wait4(2) and waitid(2) from what
  * Linux wants to what NetBSD wants.
  */
 static int

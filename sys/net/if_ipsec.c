@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.35 2023/09/26 03:43:27 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.36 2024/02/10 18:43:53 andvar Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.35 2023/09/26 03:43:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.36 2024/02/10 18:43:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -900,7 +900,7 @@ if_ipsec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		/*
 		 * calls if_ipsec_getref_variant() for other softcs to check
-		 * address pair duplicattion
+		 * address pair duplication
 		 */
 		bound = curlwp_bind();
 		error = if_ipsec_set_tunnel(&sc->ipsec_if, src, dst);
