@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_xmm_s87.c,v 1.7 2020/10/15 17:43:30 mgorny Exp $	*/
+/*	$NetBSD: convert_xmm_s87.c,v 1.8 2024/02/10 09:24:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.7 2020/10/15 17:43:30 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: convert_xmm_s87.c,v 1.8 2024/02/10 09:24:17 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 	 * we must convert them to the correct format.
 	 *
 	 * This code is normally used when overwriting the processes
-	 * registers (in the pcb), so it musn't change any other fields.
+	 * registers (in the pcb), so it mustn't change any other fields.
 	 *
 	 * There is a lot of pad in 'struct fxsave', if the destination
 	 * is written to userspace, it must be zeroed first.
