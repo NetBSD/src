@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.23 2022/06/27 22:41:29 andvar Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.24 2024/02/10 08:36:04 andvar Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -57,7 +57,7 @@ PREFIX = "ahc_"
  * a later time.  This problem cannot be resolved by holding a single entry
  * in scratch ram since a reconnecting target can request sense and this will
  * create yet another SCB waiting for selection.  The solution used here is to
- * use byte 27 of the SCB as a psuedo-next pointer and to thread a list
+ * use byte 27 of the SCB as a pseudo-next pointer and to thread a list
  * of SCBs that are awaiting selection.  Since 0-0xfe are valid SCB indexes,
  * SCB_LIST_NULL is 0xff which is out of range.  An entry is also added to
  * this list everytime a request sense occurs or after completing a non-tagged

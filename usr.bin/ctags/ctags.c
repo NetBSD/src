@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.14 2023/07/20 20:00:07 lukem Exp $	*/
+/*	$NetBSD: ctags.c,v 1.15 2024/02/10 08:36:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.14 2023/07/20 20:00:07 lukem Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.15 2024/02/10 08:36:03 andvar Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -182,7 +182,7 @@ usage:		(void)fprintf(stderr,
 
 /*
  * init --
- *	this routine sets up the boolean psuedo-functions which work by
+ *	this routine sets up the boolean pseudo-functions which work by
  *	setting boolean flags dependent upon the corresponding character.
  *	Every char which is NOT in that string is false with respect to
  *	the pseudo-function.  Therefore, all of the array "_wht" is NO

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.16 2017/09/28 23:32:01 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.17 2024/02/10 08:36:04 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -72,7 +72,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.16 2017/09/28 23:32:01 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.17 2024/02/10 08:36:04 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -275,7 +275,7 @@ res_nopt(res_state statp,
 }
 
 /*
- * Construct variable data (RDATA) block for OPT psuedo-RR, append it
+ * Construct variable data (RDATA) block for OPT pseudo-RR, append it
  * to the buffer, then update the RDLEN field (previously set to zero by
  * res_nopt()) with the new RDATA length.
  */
