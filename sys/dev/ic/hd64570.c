@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.58 2024/02/10 08:24:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.57 2022/09/03 02:48:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.58 2024/02/10 08:24:51 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1756,7 +1756,7 @@ sca_frame_read_done(sca_port_t *scp)
 {
 	u_int16_t edesc_p;
 
-	/* update where our indicies are */
+	/* update where our indices are */
 	scp->sp_rxend = scp->sp_rxstart;
 	scp->sp_rxstart = (scp->sp_rxstart + 1) % scp->sp_nrxdesc;
 

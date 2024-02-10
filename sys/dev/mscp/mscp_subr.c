@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.48 2022/04/07 19:33:38 andvar Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.49 2024/02/10 08:24:51 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.48 2022/04/07 19:33:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.49 2024/02/10 08:24:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -372,7 +372,7 @@ mscp_init(struct mscp_softc *mi)
 
 	/*
 	 * While we are thinking about it, reset the next command
-	 * and response indicies.
+	 * and response indices.
 	 */
 	mi->mi_cmd.mri_next = 0;
 	mi->mi_rsp.mri_next = 0;

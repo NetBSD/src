@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.20 2022/11/25 13:02:51 tsutsui Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.21 2024/02/10 08:24:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,7 +150,7 @@ struct	rd_clearcmd {
 
 #define	RDNAMELEN	6
 
-/* SW ids -- indicies into rdidentinfo, order is arbitrary */
+/* SW ids -- indices into rdidentinfo, order is arbitrary */
 #define	RD7945A		0
 #define	RD9134D		1
 #define	RD9122S		2

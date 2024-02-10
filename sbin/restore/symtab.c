@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.30 2021/06/19 13:56:35 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.31 2024/02/10 08:24:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.30 2021/06/19 13:56:35 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.31 2024/02/10 08:24:50 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,7 +466,7 @@ dumpsymtable(const char *filename, int32_t checkpt)
 	}
 	clearerr(fd);
 	/*
-	 * Assign indicies to each entry
+	 * Assign indices to each entry
 	 * Write out the string entries
 	 */
 	for (i = UFS_WINO; i <= maxino; i++) {
