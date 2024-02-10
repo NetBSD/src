@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.40 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.41 2024/02/10 18:43:52 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.40 2022/04/04 19:33:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.41 2024/02/10 18:43:52 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -449,7 +449,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), sizeof(ifp->if_xname));
 
 	/*
-	 * Enable DMA engines and Initiazlie Device Registers.
+	 * Enable DMA engines and Initialize Device Registers.
 	 */
 	MVXPE_WRITE(sc, MVXPE_PRXINIT, 0x00000000);
 	MVXPE_WRITE(sc, MVXPE_PTXINIT, 0x00000000);

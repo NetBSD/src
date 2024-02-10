@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2023/01/06 18:14:56 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2024/02/10 18:43:54 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -270,7 +270,7 @@ md_update(struct install_partition_desc *install)
 		return 0;
 
 	/*
-	 * Check if there is a boot UFS parttion and it has the old bootloader.
+	 * Check if there is a boot UFS partition and it has the old bootloader.
 	 * We'll update bootloader only if the old one was installed.
 	 */
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,

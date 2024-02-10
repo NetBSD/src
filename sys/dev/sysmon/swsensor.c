@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.19 2021/12/31 11:05:41 riastradh Exp $ */
+/*	$NetBSD: swsensor.c,v 1.20 2024/02/10 18:43:53 andvar Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.19 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.20 2024/02/10 18:43:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -305,7 +305,7 @@ swsensor_init(void *arg)
 				continue;
 			}
 
-			/* Unrecognized dicttionary object */
+			/* Unrecognized dictionary object */
 #ifdef DEBUG
 			printf("%s: unknown attribute %s\n", __func__, key);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31 2024/02/10 18:43:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2024/02/10 18:43:52 andvar Exp $");
 
 #include "opt_mbr.h"
 
@@ -254,7 +254,7 @@ dkcksum_mmeye(struct disklabel *lp)
 #endif
 
 /*
- * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
+ * Scan MBR for  NetBSD partition.  Return NO_MBR_SIGNATURE if no MBR found
  * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
  * partition is found, return a pointer to it; else return  NULL.
  */

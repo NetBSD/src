@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.8 2006/09/13 06:47:28 uebayasi Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.9 2024/02/10 18:43:52 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -311,7 +311,7 @@ devopen(struct open_file *of, const char *name, char **file)
 
 		if (error == ERDLAB) {
 			if (partition)
-				/* User specified a parititon, but there is none */
+				/* User specified a partition, but there is none */
 				goto bad;
 			/* No, label, just use complete disk */
 			ofdev.partoff = 0;

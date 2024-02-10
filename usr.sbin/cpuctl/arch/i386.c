@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.142 2024/01/18 03:19:26 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.143 2024/02/10 18:43:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.142 2024/01/18 03:19:26 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.143 2024/02/10 18:43:53 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,11 +139,11 @@ static const char * const i386_intel_brand[] = {
 	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 	"",		    /* 0x10: Reserved */
-	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
+	"Mobile Genuine",   /* Mobile Genuine Intel (R) processor */
 	"Celeron M",	    /* Intel (R) Celeron (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 	"Celeron",	    /* Intel (R) Celeron (R) processor */
-	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
+	"Mobile Genuine",   /* Mobile Genuine Intel (R) processor */
 	"Pentium M",	    /* Intel (R) Pentium (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };

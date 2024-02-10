@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 2019/04/03 22:10:50 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 2024/02/10 18:43:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2019/04/03 22:10:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2024/02/10 18:43:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ static struct mbr_partition *
 mbr_findslice(struct mbr_partition* dp, struct buf *bp);
 
 /* 
- * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
+ * Scan MBR for  NetBSD partition.  Return NO_MBR_SIGNATURE if no MBR found
  * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
  * partition is found, return a pointer to it; else return  NULL.
  */
