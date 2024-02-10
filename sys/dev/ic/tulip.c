@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.210 2023/12/20 04:32:30 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.211 2024/02/10 09:30:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.210 2023/12/20 04:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.211 2024/02/10 09:30:06 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -725,7 +725,7 @@ tlp_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we were
+		 * didn't fit in the allotted number of segments, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 *

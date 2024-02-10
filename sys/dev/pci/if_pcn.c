@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.77 2022/09/24 18:12:42 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.77 2022/09/24 18:12:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78 2024/02/10 09:30:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -944,7 +944,7 @@ pcn_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
+		 * didn't fit in the allotted number of segments, or we
 		 * were short on resources.  In this case, we'll copy
 		 * and try again.
 		 */

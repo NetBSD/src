@@ -1,4 +1,4 @@
-/* $NetBSD: if_ae.c,v 1.42 2022/09/29 07:00:46 skrll Exp $ */
+/* $NetBSD: if_ae.c,v 1.43 2024/02/10 09:30:05 andvar Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.42 2022/09/29 07:00:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.43 2024/02/10 09:30:05 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -587,7 +587,7 @@ ae_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we were
+		 * didn't fit in the allotted number of segments, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */

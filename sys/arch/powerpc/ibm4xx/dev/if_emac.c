@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.58 2024/02/02 22:33:42 andvar Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.59 2024/02/10 09:30:05 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.58 2024/02/02 22:33:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.59 2024/02/10 09:30:05 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -707,7 +707,7 @@ emac_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
+		 * didn't fit in the allotted number of segments, or we
 		 * were short on resources.  In this case, we'll copy
 		 * and try again.
 		 */
