@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_ipmvar.h,v 1.1 2008/12/06 05:22:39 cliff Exp $	*/
+/*	$NetBSD: gemini_ipmvar.h,v 1.2 2024/02/10 08:24:50 andvar Exp $	*/
 
 #ifndef _GEMINI_IPMVAR_H_
 #define _GEMINI_IPMVAR_H_
@@ -9,7 +9,7 @@
  * - the queue gets located in memory shared between cores
  * - is mapped non-cached so SW coherency is not required.
  * - be sure ipm_queue_t starts on 32 bit (min) boundary to align descriptors
- * - note that indicies are 8 bit and NIPMDESC < (1<<8)
+ * - note that indices are 8 bit and NIPMDESC < (1<<8)
  *   be sure to adjust typedef if size is increased
  * - current sizes, typedef, and padding make sizeof(ipm_queue_t) == 4096
  */

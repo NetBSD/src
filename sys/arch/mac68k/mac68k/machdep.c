@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366 2024/01/03 12:43:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.367 2024/02/10 08:24:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366 2024/01/03 12:43:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.367 2024/02/10 08:24:51 andvar Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -396,7 +396,7 @@ cpu_startup(void)
 
 	vers = mac68k_machine.booter_version;
 	if (vers < CURRENTBOOTERVER) {
-		/* fix older booters with indicies, not versions */
+		/* fix older booters with indices, not versions */
 		if (vers < 100)
 			vers += 99;
 

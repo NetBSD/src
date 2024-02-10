@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.6 2011/02/08 20:20:27 rmind Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.7 2024/02/10 08:24:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@ struct	rd_rscmd {		/* different */
 #define RD2200AID	0x22F
 #define RD2203AID	0x230	/* yet another guess */
 
-/* SW ids -- indicies into rdidentinfo, order is arbitrary */
+/* SW ids -- indices into rdidentinfo, order is arbitrary */
 #define	RD7945A		0
 #define	RD9134D		1
 #define	RD9122S		2

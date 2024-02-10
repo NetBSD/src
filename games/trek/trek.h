@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.18 2009/08/12 08:54:54 dholland Exp $	*/
+/*	$NetBSD: trek.h,v 1.19 2024/02/10 08:24:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -337,7 +337,7 @@ extern struct Etc_struct Etc;
  *	scheduled event of each type.  Zero if no such event scheduled.
  */
 
-/* Klingon move indicies */
+/* Klingon move indices */
 #define KM_OB		0	/* Old quadrant, Before attack */
 #define KM_OA		1	/* Old quadrant, After attack */
 #define KM_EB		2	/* Enter quadrant, Before attack */

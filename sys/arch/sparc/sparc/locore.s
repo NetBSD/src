@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.284 2023/02/23 14:56:37 riastradh Exp $	*/
+/*	$NetBSD: locore.s,v 1.285 2024/02/10 08:24:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1405,7 +1405,7 @@ label:	b,a	1f; \
  * wmask[CWP] tells whether a `rett' would return into the invalid window.
  */
 	.data
-	.skip	32			! alignment byte & negative indicies
+	.skip	32			! alignment byte & negative indices
 uwtab:	.skip	32			! u_char uwtab[-31..31];
 wmask:	.skip	32			! u_char wmask[0..31];
 
