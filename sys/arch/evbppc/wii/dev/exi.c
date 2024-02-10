@@ -1,4 +1,4 @@
-/* $NetBSD: exi.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $ */
+/* $NetBSD: exi.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $");
 
 #define	EXI_CSR(n)		(0x00 + (n) * 0x14)
 #define	 EXI_CSR_CS		__BITS(9,7)
+#define	 EXI_CSR_CLK		__BITS(6,4)
 #define	EXI_MAR(n)		(0x04 + (n) * 0x14)
 #define	EXI_LENGTH(n)		(0x08 + (n) * 0x14)
 #define	EXI_CR(n)		(0x0c + (n) * 0x14)
@@ -162,7 +163,7 @@ exi_rescan(device_t self, const char *ifattr, const int *locs)
 				continue;
 			}
 
-			exi_select(chan, dev);
+			exi_select(chan, dev, EXI_FREQ_8MHZ);
 			exi_send_imm(chan, dev, &command, sizeof(command));
 			exi_recv_imm(chan, dev, &id, sizeof(id));
 			exi_unselect(chan);
@@ -199,7 +200,7 @@ exi_print(void *aux, const char *pnp)
 }
 
 void
-exi_select(uint8_t chan, uint8_t dev)
+exi_select(uint8_t chan, uint8_t dev, exi_freq_t freq)
 {
 	struct exi_channel *ch;
 	uint32_t val;
@@ -213,6 +214,8 @@ exi_select(uint8_t chan, uint8_t dev)
 	val = RD4(exi_softc, EXI_CSR(chan));
 	val &= ~EXI_CSR_CS;
 	val |= __SHIFTIN(__BIT(dev), EXI_CSR_CS);
+	val &= ~EXI_CSR_CLK;
+	val |= __SHIFTIN(freq, EXI_CSR_CLK);
 	WR4(exi_softc, EXI_CSR(chan), val);
 }
 
