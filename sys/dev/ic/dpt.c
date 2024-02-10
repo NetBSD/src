@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.78 2021/11/10 15:21:43 msaitoh Exp $	*/
+/*	$NetBSD: dpt.c,v 1.79 2024/02/10 09:24:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.78 2021/11/10 15:21:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.79 2024/02/10 09:24:17 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,7 @@ dpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (sc->sc_hbaid[chan->chan_channel] == periph->periph_target)
 			cp->cp_ctl0 |= CP_C0_INTERPRET;
 
-		/* Synchronous xfers musn't write-back through the cache. */
+		/* Synchronous xfers mustn't write-back through the cache. */
 		if (xs->bp != NULL)
 			if ((xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
 				cp->cp_ctl2 |= CP_C2_NO_CACHE;

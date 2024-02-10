@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.408 2023/10/05 19:06:30 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.409 2024/02/10 09:24:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.408 2023/10/05 19:06:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.409 2024/02/10 09:24:18 andvar Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2409,7 +2409,7 @@ proc_stop(struct proc *p, int signo)
 
 	/*
 	 * First off, set the stopping indicator and bring all sleeping
-	 * LWPs to a halt so they are included in p->p_nrlwps.  We musn't
+	 * LWPs to a halt so they are included in p->p_nrlwps.  We mustn't
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
 	p->p_sflag |= PS_STOPPING;

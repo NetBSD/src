@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.63 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.64 2024/02/10 09:24:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.63 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.64 2024/02/10 09:24:17 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -369,7 +369,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	if (context == NULL) {
 		memset(&ccb->ccb_context, 0, sizeof(struct cac_context));
 
-		/* Synchronous commands musn't wait. */
+		/* Synchronous commands mustn't wait. */
 		if ((*sc->sc_cl.cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
 			rv = EAGAIN;

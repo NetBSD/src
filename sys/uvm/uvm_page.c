@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.254 2023/09/23 18:20:20 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.255 2024/02/10 09:24:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.254 2023/09/23 18:20:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.255 2024/02/10 09:24:18 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -761,7 +761,7 @@ uvm_page_redim(int newncolors, int newnbuckets)
 	ocolors = uvmexp.ncolors;
 	obuckets = uvm.bucketcount;
 
-	/* Freelist cache musn't be enabled. */
+	/* Freelist cache mustn't be enabled. */
 	uvm_pgflcache_pause();
 
 	/* Make sure we should still do this. */
