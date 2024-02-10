@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.35 2023/12/24 16:12:55 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.36 2024/02/10 15:55:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.35 2023/12/24 16:12:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36 2024/02/10 15:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1467,7 +1467,7 @@ eqos_attach(struct eqos_softc *sc)
 	snpsver = ver & GMAC_MAC_VERSION_SNPSVER_MASK;
 
 	if ((snpsver < 0x51) || (snpsver > 0x52)) {
-		aprint_error(": EQOS version 0x%02xx not supported\n",
+		aprint_error(": EQOS version 0x%02x not supported\n",
 		    snpsver);
 		return ENXIO;
 	}
