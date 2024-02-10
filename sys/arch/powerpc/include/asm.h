@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.53 2022/01/07 22:59:32 andvar Exp $	*/
+/*	$NetBSD: asm.h,v 1.54 2024/02/10 08:36:04 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -319,7 +319,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 #endif /* _REGNAMES && (_KERNEL || _STANDALONE) */
 
 /*
- * Add some psuedo instructions to made sharing of assembly versions of
+ * Add some pseudo instructions to made sharing of assembly versions of
  * ILP32 and LP64 code possible.
  */
 #define ldint		lwz	/* not needed but for completeness */

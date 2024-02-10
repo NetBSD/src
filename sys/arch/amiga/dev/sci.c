@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.36 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: sci.c,v 1.37 2024/02/10 08:36:04 andvar Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.36 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.37 2024/02/10 08:36:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,7 +641,7 @@ scigo(struct sci_softc *dev, struct scsipi_xfer *xs)
 		case DATA_IN_PHASE:
 			if (count <= 0)
 				goto abort;
-			/* XXX use psuedo DMA if available */
+			/* XXX use pseudo DMA if available */
 			if (count >= 128 && dev->dma_xfer_in)
 				(*dev->dma_xfer_in)(dev, count, addr, phase);
 			else
@@ -652,7 +652,7 @@ scigo(struct sci_softc *dev, struct scsipi_xfer *xs)
 		case DATA_OUT_PHASE:
 			if (count <= 0)
 				goto abort;
-			/* XXX use psuedo DMA if available */
+			/* XXX use pseudo DMA if available */
 			if (count >= 128 && dev->dma_xfer_out)
 				(*dev->dma_xfer_out)(dev, count, addr, phase);
 			else
