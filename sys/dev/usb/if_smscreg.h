@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.8 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.9 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -58,7 +58,7 @@
  *      TX_CTRL_0 <12>     Last segment of frame indicator
  *      TX_CTRL_0 <10:0>   Buffer size (payload size)
  *
- *      TX_CTRL_1 <14>     Perform H/W checksuming on IP packets
+ *      TX_CTRL_1 <14>     Perform H/W checksumming on IP packets
  *      TX_CTRL_1 <13>     Disable automatic ethernet CRC generation
  *      TX_CTRL_1 <12>     Disable ethernet frame padding upto 64 bytes
  *      TX_CTRL_1 <10:0>   Packet byte length

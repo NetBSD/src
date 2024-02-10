@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.39 2022/07/12 02:03:57 thorpej Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.40 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.39 2022/07/12 02:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.40 2024/02/10 09:21:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -841,7 +841,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 	} else
 		media = IFM_ETHER | IFM_10_5;
 
-	/* Take the card out of lookback */
+	/* Take the card out of loopback */
 	bart_config = bus_space_read_1(iot, ioh, IX_CONFIG);
 	bart_config &= ~IX_BART_LOOPBACK;
 	bart_config |= IX_BART_MCS16_TEST; /* inb doesn't get bit! */

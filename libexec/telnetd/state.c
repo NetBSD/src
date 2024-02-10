@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.33 2023/09/22 15:28:36 shm Exp $	*/
+/*	$NetBSD: state.c,v 1.34 2024/02/10 09:21:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.33 2023/09/22 15:28:36 shm Exp $");
+__RCSID("$NetBSD: state.c,v 1.34 2024/02/10 09:21:52 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -593,7 +593,7 @@ willoption(int option)
 			 * respond WONT TM to the DO TM that we send to
 			 * check for kludge linemode.  When the WONT TM
 			 * arrives, linemode will be turned off and a
-			 * change propogated to the pty.  This change
+			 * change propagated to the pty.  This change
 			 * will cause us to process the new pty state
 			 * in localstat(), which will notice that
 			 * linemode is off and send a WILL ECHO

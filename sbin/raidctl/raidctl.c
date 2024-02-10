@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.82 2023/09/25 21:59:38 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.83 2024/02/10 09:21:52 andvar Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.82 2023/09/25 21:59:38 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.83 2024/02/10 09:21:52 andvar Exp $");
 #endif
 
 
@@ -1301,7 +1301,7 @@ rf_simple_create(int fd, int argc, char *argv[])
 			cfg.sectPerSU = 16;
 		}
 	} else if (level == 1) {
-		/* 128 blocks (64K per compnent) - 64K per stripe */
+		/* 128 blocks (64K per component) - 64K per stripe */
 		cfg.sectPerSU = 128;
 	} else if (level == 5) {
 		if (num_components == 3) {

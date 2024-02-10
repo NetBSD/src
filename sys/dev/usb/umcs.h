@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.h,v 1.5 2023/09/21 09:31:50 msaitoh Exp $ */
+/* $NetBSD: umcs.h,v 1.6 2024/02/10 09:21:53 andvar Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.h 252123 2013-06-23 20:19:51Z thomas $ */
 
 /*-
@@ -38,7 +38,7 @@
 #define	MCS7840_RDREQ		0x0d
 #define	MCS7840_WRREQ		0x0e
 
-/* Read/Wrtie EEPROM values */
+/* Read/Write EEPROM values */
 #define	MCS7840_EEPROM_RW_WVALUE	0x0900
 
 /*

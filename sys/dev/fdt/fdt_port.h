@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.6 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.7 2024/02/10 09:21:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -75,14 +75,14 @@ enum endpoint_type {
 
 
 /*
- * register a device's ports and enpoints into the provided fdt_device_ports.
+ * register a device's ports and endpoints into the provided fdt_device_ports.
  * when and endpoint is connected to a remote endpoint, dp_ep_connect
  * is called for the devices associated to both endpoints
  */
 int fdt_ports_register(struct fdt_device_ports *, device_t,
 					int, enum endpoint_type);
 
-/* various methods to retrieve an enpoint descriptor */
+/* various methods to retrieve an endpoint descriptor */
 struct fdt_endpoint *fdt_endpoint_get_from_phandle(int);
 struct fdt_endpoint *fdt_endpoint_get_from_index(struct fdt_device_ports *,
 							int, int);

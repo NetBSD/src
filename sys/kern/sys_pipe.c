@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.166 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.167 2024/02/10 09:21:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.166 2023/11/02 10:31:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.167 2024/02/10 09:21:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ pipeunlock(struct pipe *pipe)
 }
 
 /*
- * Select/poll wakup. This also sends SIGIO to peer connected to
+ * Select/poll wakeup. This also sends SIGIO to peer connected to
  * 'sigpipe' side of pipe.
  */
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: gpioirq.c,v 1.3 2023/11/10 13:17:17 brad Exp $ */
+/* $NetBSD: gpioirq.c,v 1.4 2024/02/10 09:21:52 andvar Exp $ */
 
 /*
  * Copyright (c) 2016, 2023 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioirq.c,v 1.3 2023/11/10 13:17:17 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioirq.c,v 1.4 2024/02/10 09:21:52 andvar Exp $");
 
 /*
  * GPIO driver that uses interrupts and can send that fact to userland.
@@ -163,7 +163,7 @@ gpioirq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpio = ga->ga_gpio;
 	sc->sc_map.pm_map = sc->_map;
 
-	/* Determine our pin configuation. */
+	/* Determine our pin configuration. */
 	sc->sc_npins = gpio_npins(mask);
 	if (sc->sc_npins == 0) {
 		sc->sc_npins = 1;

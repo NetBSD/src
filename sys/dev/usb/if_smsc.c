@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.93 2022/08/20 14:08:59 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.94 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -46,11 +46,11 @@
  * The chip supports both tx and rx offloading of UDP & TCP checksums, this
  * feature can be dynamically enabled/disabled.
  *
- * RX checksuming is performed across bytes after the IPv4 header to the end of
+ * RX checksumming is performed across bytes after the IPv4 header to the end of
  * the Ethernet frame, this means if the frame is padded with non-zero values
  * the H/W checksum will be incorrect, however the rx code compensates for this.
  *
- * TX checksuming is more complicated, the device requires a special header to
+ * TX checksumming is more complicated, the device requires a special header to
  * be prefixed onto the start of the frame which indicates the start and end
  * positions of the UDP or TCP frame.  This requires the driver to manually
  * go through the packet data and decode the headers prior to sending.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.93 2022/08/20 14:08:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.94 2024/02/10 09:21:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

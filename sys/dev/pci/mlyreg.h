@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyreg.h,v 1.8 2021/10/24 20:00:11 andvar Exp $	*/
+/*	$NetBSD: mlyreg.h,v 1.9 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1242,7 +1242,7 @@ union mly_cmd_packet {
  * PG6: 5.4.4 Doorbell 1
  *
  * Note that the documentation claims that these bits are set when the
- * status queue(s) are empty, wheras the Linux driver and experience
+ * status queue(s) are empty, whereas the Linux driver and experience
  * suggest they are set when there is status available.
  */
 #define	MLY_HM_STSREADY			(1<<0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.3 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.4 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -358,7 +358,7 @@
 #define MEM_BASE_MASK		0xFFF0
 
 
-/* Adpater Configuration from EEPROM */
+/* Adapter Configuration from EEPROM */
 
 #define ADPTR_CFG_MEDIA		0x0060
 #define ADPTR_CFG_10BASET	0x0020

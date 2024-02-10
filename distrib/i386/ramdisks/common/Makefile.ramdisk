@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.14 2019/08/22 04:25:38 kamil Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.15 2024/02/10 09:21:51 andvar Exp $
 
 NOSANITIZER=	# defined
 
@@ -32,7 +32,7 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${DISTRIBDIR}/common/services
 PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
-# This propogates through to the link of ramdiskbin
+# This propagates through to the link of ramdiskbin
 # The map file is useful when trying to prune the image
 LDFLAGS+=	-Wl,-Map,${CRUNCHBIN}.map,--cref
 CRUNCHENV+=	LDFLAGS=${LDFLAGS:Q}

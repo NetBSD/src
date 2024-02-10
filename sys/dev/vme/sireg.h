@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.3 2008/04/28 20:24:01 martin Exp $	*/
+/*	$NetBSD: sireg.h,v 1.4 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Register map for the VME SCSI-3 adpater (si)
+ * Register map for the VME SCSI-3 adapter (si)
  * The first part of this register map is an NCR5380
  * SCSI Bus Interface Controller (SBIC).  The rest is a
  * DMA controller and custom logic.

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.90 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.91 2024/02/10 09:21:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.90 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.91 2024/02/10 09:21:53 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -115,7 +115,7 @@ typedef struct {
 #define UMIDI_PACKET_SIZE 4
 
 /*
- * hierarchie
+ * hierarchy
  *
  * <-- parent	       child -->
  *

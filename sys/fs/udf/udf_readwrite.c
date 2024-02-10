@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.13 2021/12/05 04:32:36 msaitoh Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.14 2024/02/10 09:21:53 andvar Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.13 2021/12/05 04:32:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.14 2024/02/10 09:21:53 andvar Exp $");
 #endif /* not lint */
 
 
@@ -272,7 +272,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
  * Descriptors inside `logical space' i.e. inside logically mapped partitions
  * can never be longer than one logical sector.
  *
- * NOTE that these functions *can* be used by the sheduler backends to read
+ * NOTE that these functions *can* be used by the scheduler backends to read
  * node descriptors too.
  *
  * For reading, the size of allocated piece is returned in multiple of sector
@@ -323,7 +323,7 @@ udf_read_phys_sectors(struct udf_mount *ump, int what, void *blob,
 		/* identify this nestbuf */
 		nestbuf->b_lblkno   = lblkno;
 
-		/* CD shedules on raw blkno */
+		/* CD schedules on raw blkno */
 		nestbuf->b_blkno      = rblkno * blks;
 		nestbuf->b_proc       = NULL;
 		nestbuf->b_rawblkno   = rblkno * blks;
@@ -463,7 +463,7 @@ udf_write_phys_buf(struct udf_mount *ump, int what, struct buf *buf)
 		/* identify this nestbuf */
 		nestbuf->b_lblkno   = lblkno;
 
-		/* CD shedules on raw blkno */
+		/* CD schedules on raw blkno */
 		nestbuf->b_blkno      = rblkno * blks;
 		nestbuf->b_proc       = NULL;
 		nestbuf->b_rawblkno   = rblkno * blks;
