@@ -1,4 +1,4 @@
-/* $NetBSD: rtcsram.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $ */
+/* $NetBSD: rtcsram.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.1 2024/01/25 11:47:53 jmcneill Exp $")
 #include "exi.h"
 
 #define	WII_RTCSRAM_ID		0xfffff308
+#define	WII_RTCSRAM_FREQ	EXI_FREQ_8MHZ
 
 #define	RTC_BASE		0x20000000
 #define	SRAM_BASE		0x20000100
@@ -124,7 +125,7 @@ rtcsram_read_4(struct rtcsram_softc *sc, uint32_t offset)
 {
 	uint32_t val;
 
-	exi_select(sc->sc_chan, sc->sc_device);
+	exi_select(sc->sc_chan, sc->sc_device, WII_RTCSRAM_FREQ);
 	exi_send_imm(sc->sc_chan, sc->sc_device, &offset, sizeof(offset));
 	exi_recv_imm(sc->sc_chan, sc->sc_device, &val, sizeof(val));
 	exi_unselect(sc->sc_chan);
@@ -137,7 +138,7 @@ rtcsram_write_4(struct rtcsram_softc *sc, uint32_t offset, uint32_t val)
 {
 	offset |= WRITE_OFFSET;
 
-	exi_select(sc->sc_chan, sc->sc_device);
+	exi_select(sc->sc_chan, sc->sc_device, WII_RTCSRAM_FREQ);
 	exi_send_imm(sc->sc_chan, sc->sc_device, &offset, sizeof(offset));
 	exi_send_imm(sc->sc_chan, sc->sc_device, &val, sizeof(val));
 	exi_unselect(sc->sc_chan);
@@ -147,7 +148,7 @@ static void
 rtcsram_read_buf(struct rtcsram_softc *sc, uint32_t offset, void *data,
     size_t datalen)
 {
-	exi_select(sc->sc_chan, sc->sc_device);
+	exi_select(sc->sc_chan, sc->sc_device, WII_RTCSRAM_FREQ);
 	exi_send_imm(sc->sc_chan, sc->sc_device, &offset, sizeof(offset));
 	exi_recv_dma(sc->sc_chan, sc->sc_device, data, datalen);
 	exi_unselect(sc->sc_chan);

@@ -1,4 +1,4 @@
-/* $NetBSD: exi.h,v 1.1 2024/01/25 11:47:53 jmcneill Exp $ */
+/* $NetBSD: exi.h,v 1.2 2024/02/10 11:00:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,22 @@
 #ifndef _WII_DEV_EXI_H_
 #define _WII_DEV_EXI_H_
 
+typedef enum {
+	EXI_FREQ_1MHZ = 0,
+	EXI_FREQ_2MHZ = 1,
+	EXI_FREQ_4MHZ = 2,
+	EXI_FREQ_8MHZ = 3,
+	EXI_FREQ_16MHZ = 4,
+	EXI_FREQ_32MHZ = 5,
+} exi_freq_t;
+
 struct exi_attach_args {
 	uint32_t	eaa_id;
 	uint8_t		eaa_chan;
 	uint8_t		eaa_device;
 };
 
-void exi_select(uint8_t, uint8_t);
+void exi_select(uint8_t, uint8_t, exi_freq_t);
 void exi_unselect(uint8_t);
 void exi_send_imm(uint8_t, uint8_t, const void *, size_t);
 void exi_recv_imm(uint8_t, uint8_t, void *, size_t);
