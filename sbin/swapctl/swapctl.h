@@ -28,3 +28,6 @@
 
 /* pri, kflag, pflag, tflag, dolong (1 for long, 0 for short) */
 int list_swap(int, int, int, int, int, int);
+int is_linux_swap(const char *);
+char *add_wedge_linux_swap(const char *);
+int del_wedge_linux_swap(const char *);

@@ -473,6 +473,13 @@ add_swap(char *path, int priority)
 	if (nflag)
 		return 1;
 
+	if (is_linux_swap(spec)) {
+		char *wd = add_wedge_linux_swap(spec);
+		if (wd == NULL)
+			goto oops;
+		spec = wd;
+	}
+
 	if (swapctl(SWAP_ON, spec, priority) < 0) {
 oops:
 		warn("%s", path);
@@ -500,6 +507,10 @@ delete_swap(char *path)
 		return 1;
 
 	if (swapctl(SWAP_OFF, spec, pri) < 0) {
+		warn("%s", path);
+		return 0;
+	}
+	if (del_wedge_linux_swap(spec) < 0) {
 		warn("%s", path);
 		return 0;
 	}

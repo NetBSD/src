@@ -1,7 +1,7 @@
 #	$NetBSD: Makefile,v 1.5 2006/08/27 21:07:39 martin Exp $
 
 PROG=	swapctl
-SRCS=	swapctl.c swaplist.c
+SRCS=	swapctl.c swaplist.c swaplinux.c
 MAN=	swapctl.8
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
