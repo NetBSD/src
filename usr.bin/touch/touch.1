@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.28 2024/02/09 23:41:48 kre Exp $
+.\"	$NetBSD: touch.1,v 1.29 2024/02/10 00:19:30 kre Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd February 9, 2024
+.Dd February 10, 2024
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd change file access and modification times
 .Sh SYNOPSIS
 .Nm
-.Op Fl acfhm
+.Op Fl acDfhm
 .Op Fl d Ar posix-datetime|human-datetime
 .Op Fl Fl \|date Ar posix-datetime|human-datetime
 .Op Fl R Ar ref-file
@@ -77,6 +77,11 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
+.Pp 
+.It Fl D
+Do not attempt to adjust a
+.Ar file Ns 's
+times if they are already set to the values specified.
 .Pp
 .It Fl d Ar posix-datetime
 .It Fl d Ar human-datetime
@@ -359,6 +364,56 @@ time
 of the
 .Ar path
 file to the current time of day.
+.Pp
+.Dl touch -Dh -d human-datetime -t CCYYMMDDhhmm.ss -R file file
+.Pp
+Provided
+.Ar file
+exists, this parses the
+.Ar human-datetime
+and 
+.Ar CCYYMMDDhhmm.ss
+arguments,
+verifying that they would be suitable for use with
+.Nm ,
+then does nothing, as the final time specification
+.Pq Fl R 
+specifies to take the times from
+.Ar file
+and apply them to
+.Ar file
+itself, changing nothing, which the
+.Fl D
+option then prevents from actually occurring.
+That is, this merely tests that the
+.Ar human-datetime
+and
+.Ar datetime
+argumments to
+.Fl d
+and
+.Fl t
+respectively are valid, and could be used to specify a time.
+Use of both
+.Fl h
+and
+.Fl R
+means this works if
+.Ar file
+is a symbolic link,
+even one which does not reference an existing file,
+as well as if it is some other file type.
+Use of
+.Fl R
+requires that
+.Ar file
+exists,
+though if it does not, and an error is generated for that reason,
+the
+.Fl d
+and
+.Fl t
+arguments would have already been successfully processed.
 .Pp
 .Dl touch -m -d '-1 day' somefile
 .Pp

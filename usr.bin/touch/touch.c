@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.39 2024/02/09 23:41:48 kre Exp $	*/
+/*	$NetBSD: touch.c,v 1.40 2024/02/10 00:19:30 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.39 2024/02/09 23:41:48 kre Exp $");
+__RCSID("$NetBSD: touch.c,v 1.40 2024/02/10 00:19:30 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,18 +91,18 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	struct timespec ts[2];
-	int aflag, cflag, hflag, mflag, ch, fd, len, rval, timeset;
+	int aflag, cflag, Dflag, hflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
 	int (*change_file_times)(const char *, const struct timespec *);
 	int (*get_file_status)(const char *, struct stat *);
 
 	setlocale(LC_ALL, "");
 
-	aflag = cflag = hflag = mflag = timeset = 0;
+	aflag = cflag = Dflag = hflag = mflag = timeset = 0;
 	if (clock_gettime(CLOCK_REALTIME, &ts[0]))
 		err(1, "clock_gettime");
 
-	while ((ch = getopt_long(argc, argv, "acd:fhmR:r:t:", touch_longopts,
+	while ((ch = getopt_long(argc, argv, "acDd:fhmR:r:t:", touch_longopts,
 	    NULL)) != -1)
 		switch (ch) {
 		case 'a':
@@ -110,6 +110,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'D':
+			Dflag = 1;
 			break;
 		case 'd':
 			timeset = 1;
@@ -199,6 +202,11 @@ main(int argc, char *argv[])
 			ts[0] = sb.st_atimespec;
 		if (!mflag)
 			ts[1] = sb.st_mtimespec;
+
+		if (Dflag &&
+		    timespeccmp(&ts[0], &sb.st_atimespec, ==) &&
+		    timespeccmp(&ts[1], &sb.st_mtimespec, ==))
+			continue;
 
 		/* Try utimes(2). */
 		if (!(*change_file_times)(*argv, ts))
@@ -527,7 +535,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-acfhm] [-d|--date datetime] [-R|-r|--reference file]"
+	    "Usage: %s [-acDfhm] [-d|--date datetime] [-R|-r|--reference file]"
 	    " [-t time] file ...\n", getprogname());
 	exit(EXIT_FAILURE);
 }
