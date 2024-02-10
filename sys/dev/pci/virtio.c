@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.80 2024/02/09 22:08:36 andvar Exp $	*/
+/*	$NetBSD: virtio.c,v 1.81 2024/02/10 02:25:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.80 2024/02/09 22:08:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.81 2024/02/10 02:25:15 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1069,7 +1069,8 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
 	struct vring_desc_extra *vdx;
 	int i;
 
-	KASSERT(1 <= nsegs && nsegs <= vq->vq_num);
+	KASSERT(1 <= nsegs);
+	KASSERT(nsegs <= vq->vq_num);
 
 	vdx = &vq->vq_descx[slot];
 	vd = &vq->vq_desc[slot];
