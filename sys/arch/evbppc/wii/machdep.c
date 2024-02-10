@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2024/01/24 21:53:34 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2024/02/10 17:41:00 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2024/01/24 21:53:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/02/10 17:41:00 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -228,7 +228,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	extern u_long ticks_per_sec;
 	extern unsigned char edata[], end[];
 	extern struct wii_argv wii_argv;
-	uint32_t mem2_size;
+	uint32_t mem2_start, mem2_end;
 	register_t scratch;
 
 	memset(&edata, 0, end - edata); /* clear BSS */
@@ -240,7 +240,8 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		}
 	}
 
-	mem2_size = in32(GLOBAL_MEM2_SIZE);
+	mem2_start = in32(GLOBAL_MEM2_AVAIL_START) & ~0x80000000;
+	mem2_end = in32(GLOBAL_MEM2_AVAIL_END) & ~0x80000000;
 
 	/* MEM1 24MB 1T-SRAM */
 	physmemr[0].start = WII_MEM1_BASE;
@@ -248,7 +249,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 	/* MEM2 64MB GDDR3 */
 	physmemr[1].start = WII_MEM2_BASE;
-	physmemr[1].size = mem2_size;
+	physmemr[1].size = WII_MEM2_SIZE;
 
 	physmemr[2].size = 0;
 
@@ -259,16 +260,8 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	availmemr[0].size -= XFB_SIZE;
 
 	/* MEM2 available memory */
-	availmemr[1].start = physmemr[1].start;
-	availmemr[1].size = physmemr[1].size;
-	if (mem2_size != 0) {
-		/* DSP uses 16KB at the start of MEM2 */
-		availmemr[1].start += DSP_MEM_SIZE;
-		availmemr[1].size -= DSP_MEM_SIZE;
-		/* IPC and Starlet use memory at the end of MEM2 */
-		availmemr[1].size -= IPC_SIZE;
-		availmemr[1].size -= ARM_SIZE;
-	}
+	availmemr[1].start = mem2_start;
+	availmemr[1].size = mem2_end - mem2_start;
 
 	availmemr[2].size = 0;
 
