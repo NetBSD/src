@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.80 2023/12/20 18:09:19 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.81 2024/02/11 12:28:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.80 2023/12/20 18:09:19 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.81 2024/02/11 12:28:20 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1052,7 +1052,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		desc->ddesc_data = htole32(map->dm_segs[i].ds_addr);
 
 #ifdef DWC_GMAC_DEBUG
-		aprint_normal_dev(sc->sc_dev, "enqueing desc #%d data %08lx "
+		aprint_normal_dev(sc->sc_dev, "enqueuing desc #%d data %08lx "
 		    "len %lu\n", sc->sc_txq.t_cur,
 		    (unsigned long)map->dm_segs[i].ds_addr,
 		    (unsigned long)map->dm_segs[i].ds_len);
