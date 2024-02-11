@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.17 2022/09/18 18:26:53 thorpej Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.18 2024/02/11 12:25:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -45,12 +45,9 @@
 #endif
 
 /*
- * We could use 1024 DMA descriptors to fill up an 8k page (each is 16 byte).
- * However, on TX we probably will not need that many, and on RX we allocate
- * a full mbuf cluster for each, so secondary memory consumption will grow
- * rapidly.
- * So currently we waste half a page of dma memory and consume 512k Byte of
- * RAM for mbuf clusters.
+ * Rx and Tx Ring counts that map into single 4K page with 16byte descriptor
+ * size. For Rx a full mbuf cluster is allocated for each which consumes
+ * around 512k Byte of RAM for mbuf clusters.
  * XXX Maybe fine-tune later, or reconsider unsharing of RX/TX dmamap.
  */
 #define		AWGE_RX_RING_COUNT	256
