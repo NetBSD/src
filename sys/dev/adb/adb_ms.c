@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.21 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.22 2024/02/11 10:36:40 andvar Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.21 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.22 2024/02/11 10:36:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -341,7 +341,7 @@ adbms_init_turbo(struct adbms_softc *sc)
  * byte 1 assigns what which button does
  - 0x08 - button 1 - 1, button 2 - nothing
  - 0x09 - both buttons - 1
- - 0x0a - butoon 1 - 1, button 2 - toggle 1
+ - 0x0a - button 1 - 1, button 2 - toggle 1
  - 0x0b - button 1 - 1, button 2 - nothing
  - 0x0c - button 1 - 1, button 2 - 2
  - 0x0e - button 1 - 1, button 2 - 3

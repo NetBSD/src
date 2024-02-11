@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.34 2023/12/20 14:50:02 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.35 2024/02/11 10:36:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2023/12/20 14:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2024/02/11 10:36:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ __bs_map(bus_space_tag_t tx, bus_addr_t bpa, bus_size_t size, int flags,
 		if ((err = extent_alloc_region(t->extent, bpa, size, 
 		    EX_NOWAIT|EX_MALLOCOK))) {
 			DPRINTF(("\tbus_space_map: "
-			    "extent_alloc_regiion() failed\n"));
+			    "extent_alloc_region() failed\n"));
 			return (err);
 		}
 	}
