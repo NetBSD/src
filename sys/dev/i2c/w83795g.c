@@ -1,4 +1,4 @@
-/*	$NetBSD: w83795g.c,v 1.5 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: w83795g.c,v 1.6 2024/02/11 09:20:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83795g.c,v 1.5 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83795g.c,v 1.6 2024/02/11 09:20:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ w83795g_attach(device_t parent, device_t self, void *aux)
 	iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, W83795G_CONFIG, &conf, 0);
 	iic_smbus_read_byte(sc->sc_tag, sc->sc_addr, W83795G_DEVICE, &rev, 0);
 
-	aprint_normal(": Nuvaton W83795");
+	aprint_normal(": Nuvoton W83795");
 	if (conf & CONFIG_CONFIG48)
 		aprint_normal("ADG");
 	else
