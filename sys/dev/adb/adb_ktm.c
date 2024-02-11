@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.6 2022/10/06 19:38:54 andvar Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.7 2024/02/11 10:36:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.6 2022/10/06 19:38:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.7 2024/02/11 10:36:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -188,7 +188,7 @@ ktm_init(struct ktm_softc *sc)
  * byte 1 assigns what which button does
  - 0x08 - button 1 - 1, button 2 - nothing
  - 0x09 - both buttons - 1
- - 0x0a - butoon 1 - 1, button 2 - toggle 1
+ - 0x0a - button 1 - 1, button 2 - toggle 1
  - 0x0b - button 1 - 1, button 2 - nothing
  - 0x0c - button 1 - 1, button 2 - 2
  - 0x0e - button 1 - 1, button 2 - 3

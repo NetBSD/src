@@ -1,4 +1,4 @@
-/* $NetBSD: session.h,v 1.1 2022/01/22 07:53:06 pho Exp $ */
+/* $NetBSD: session.h,v 1.2 2024/02/11 10:36:40 andvar Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct fuse_session;
 /* Get a session from a fuse object. Appeared on FUSE 2.6. */
 struct fuse_session *fuse_get_session(struct fuse *f);
 
-/* Get the file descriptor for communicaiton with kernel. Appeared on
+/* Get the file descriptor for communication with kernel. Appeared on
  * FUSE 3.0. */
 int fuse_session_fd(struct fuse_session *se);
 

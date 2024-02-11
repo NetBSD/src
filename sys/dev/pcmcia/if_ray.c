@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.99 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.100 2024/02/11 10:36:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.99 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.100 2024/02/11 10:36:40 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1270,7 +1270,7 @@ ray_intr_start(struct ray_softc *sc)
 }
 
 /*
- * recevice a packet from the card
+ * receive a packet from the card
  */
 static void
 ray_recv(struct ray_softc *sc, bus_size_t ccs)
