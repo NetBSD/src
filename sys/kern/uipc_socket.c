@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.308 2024/02/03 19:05:14 jdolecek Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.309 2024/02/11 13:01:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.308 2024/02/03 19:05:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.309 2024/02/11 13:01:29 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.308 2024/02/03 19:05:14 jdolecek E
 #include "opt_somaxkva.h"
 #include "opt_multiprocessor.h"	/* XXX */
 #include "opt_sctp.h"
+#include "opt_pipe.h"
 #endif
 
 #include <sys/param.h>
@@ -2394,6 +2395,16 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	case EVFILT_WRITE:
 		kn->kn_fop = &sowrite_filtops;
 		sb = &so->so_snd;
+
+#ifdef PIPE_SOCKETPAIR
+		if (so->so_state & SS_ISAPIPE) {
+			/* Other end of pipe has been closed. */
+			if (so->so_state & SS_ISDISCONNECTED) {
+				sounlock(so);
+				return EBADF;
+			}
+		}
+#endif
 		break;
 	case EVFILT_EMPTY:
 		kn->kn_fop = &soempty_filtops;
