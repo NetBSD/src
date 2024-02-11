@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.13 2016/07/28 22:46:48 maya Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.14 2024/02/11 17:16:05 christos Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -49,6 +49,9 @@ MKUBOOTIMAGE=		mkubootimage
 MKUBOOTIMAGEARGS=	-A powerpc -T kernel
 MKUBOOTIMAGEARGS+=	-a $(TEXTADDR)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/openblocks600 ${_OSRELEASE}"
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKUBOOTIMAGEARGS+=	-t "${MKREPRO_TIMESTAMP}"
+.endif
 MKUBOOTIMAGEARGS_NONE=  ${MKUBOOTIMAGEARGS} -C none
 MKUBOOTIMAGEARGS_GZ=    ${MKUBOOTIMAGEARGS} -C gz
 
