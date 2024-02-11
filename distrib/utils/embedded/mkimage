@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.79 2024/01/20 21:35:59 jmcneill Exp $
+# $NetBSD: mkimage,v 1.80 2024/02/11 17:29:50 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,6 +190,10 @@ do
 	*)	usage;;
 	esac
 done
+if [ -n ${MKREPRO_TIMESTAMP} ]; then
+	timestamp_opt="-T ${MKREPRO_TIMESTAMP}"
+	volume_opt=",volume_id=$((${MKREPRO_TIMESTAMP} & 0xffff))"
+fi
 
 shift $(( $OPTIND - 1 ))
 if [ -n "$1" ]; then
@@ -246,7 +250,7 @@ if [ -n "${msdosid}" ]; then
 	*)	fat_opt=;;
 	esac
 	${MAKEFS} -N ${release}/etc -t msdos \
-	    -o "volume_label=NETBSD${fat_opt}" \
+	    -o "volume_label=NETBSD${fat_opt}${volume_opt}" ${timestamp_opt} \
 	    -O $((${init} / 2))m -s $((${boot} / 2))m \
 	    ${image} ${mnt}/boot
 fi
@@ -254,7 +258,7 @@ fi
 if [ -z "${bootonly}" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
 	${MAKEFS} -rx ${endian} -N ${release}/etc -t ffs \
-	    -O ${ffsoffset} \
+	    -O ${ffsoffset} ${timestamp_opt} \
 	    -o d=4096,f=8192,b=65536 -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
@@ -276,6 +280,7 @@ if $gpt; then
 	if $gpt_hybrid; then
 		gpt_flags="-H"
 	fi
+	gpt_flags="${gpt_flags} ${timestamp_opt}"
 	initsecs=$((${init} * 1024))
 	bootsecs=$((${boot} * 1024))
 	ffsstart="$(getsectors ${ffsoffset})"
@@ -328,7 +333,7 @@ fi
 if $compress; then
 	echo ${bar} Compressing image ${bar}
 	rm -f "${image}.gz"
-	${GZIP_CMD} -9 ${image}
+	${GZIP_CMD} -n -9 ${image}
 	image="${image}.gz"
 fi
 
