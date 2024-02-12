@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.32 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.33 2024/02/12 02:28:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.32 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.33 2024/02/12 02:28:28 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 			maxxfersize = MAXPHYS;
 		} else if (maxxfersize > MAXPHYS) {
 			aprint_normal_dev(sc->sc_dev,
-			    "Clip SEG_MAX from %dK to %dK\n",
+			    "Clip SIZE_MAX from %dK to %dK\n",
 			    maxxfersize / 1024,
 			    MAXPHYS / 1024);
 			maxxfersize = MAXPHYS;
