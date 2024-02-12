@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.80 2024/02/11 17:29:50 christos Exp $
+# $NetBSD: mkimage,v 1.81 2024/02/12 11:30:33 mlelstv Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,7 +190,7 @@ do
 	*)	usage;;
 	esac
 done
-if [ -n ${MKREPRO_TIMESTAMP} ]; then
+if [ -n "${MKREPRO_TIMESTAMP}" ]; then
 	timestamp_opt="-T ${MKREPRO_TIMESTAMP}"
 	volume_opt=",volume_id=$((${MKREPRO_TIMESTAMP} & 0xffff))"
 fi
