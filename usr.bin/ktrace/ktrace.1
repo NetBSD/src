@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.48 2023/05/06 10:45:14 uwe Exp $
+.\"	$NetBSD: ktrace.1,v 1.49 2024/02/12 22:53:21 gutteridge Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ translations, signal processing, and
 .Tn I/O .
 .Pp
 Once tracing is enabled on a process, trace data will be logged until
-either the process exits or the trace point is cleared.
+either the process exits or the tracepoint is cleared.
 A traced process can generate enormous amounts of log data quickly.
 It is strongly suggested that users memorize how to disable tracing before
 attempting to trace a process.
@@ -110,7 +110,7 @@ processes in the system.
 .It Fl c
 Clear
 .Pq disable
-the trace points associated with the specified file or processes.
+the tracepoints associated with the specified file or processes.
 .It Fl d
 Descendants; perform the operation for all current children of the
 designated processes.
@@ -183,7 +183,7 @@ Same as the
 .Fl R
 option, but use absolute timestamps instead.
 .It Fl t Ar trstr
-The string argument represents the kernel trace points, one per letter.
+The string argument represents the kernel tracepoints, one per letter.
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -compact
@@ -215,9 +215,9 @@ trace exec environment
 .It Cm w
 trace context switches
 .It Cm +
-trace the default set of trace points (c, e, i, n, s, u)
+trace the default set of tracepoints (c, e, i, n, s, u)
 .It Cm -
-do not trace following trace points
+do not trace following tracepoints
 .El
 .It Fl v Ar version
 Determines the
