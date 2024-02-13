@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.13 2023/06/26 22:03:00 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.14 2024/02/13 15:24:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2310,6 +2310,7 @@ create_node(isc_mem_t *mctx, const dns_name_t *name, dns_rbtnode_t **nodep) {
 	HASHVAL(node) = 0;
 
 	ISC_LINK_INIT(node, deadlink);
+	ISC_LINK_INIT(node, prunelink);
 
 	LOCKNUM(node) = 0;
 	WILD(node) = 0;
