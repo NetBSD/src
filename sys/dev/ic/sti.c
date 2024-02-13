@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.34 2024/02/01 06:50:36 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.35 2024/02/13 13:17:51 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.34 2024/02/01 06:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.35 2024/02/13 13:17:51 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -555,6 +555,12 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	scr->oheight = cfg.oheight;
 	scr->owidth = cfg.owidth;
 	memcpy(scr->name, cfg.name, sizeof(scr->name));
+
+	if (flags & STI_FBMODE) {
+		/* we're done here */
+		sti_init(scr, STI_FBMODE);
+		return 0;
+	}
 
 	if ((error = sti_init(scr, STI_TEXTMODE | flags))) {
 		aprint_error(": cannot initialize (%d)\n", error);
