@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.118 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.119 2024/02/13 21:39:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.118 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.119 2024/02/13 21:39:02 andvar Exp $");
 
 #define	PCICDEBUG
 
@@ -697,7 +697,7 @@ pcic_intr_socket(struct pcic_handle *h)
 		if ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 		    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 			if (h->laststate != PCIC_LASTSTATE_PRESENT) {
-				DPRINTF(("%s: enqueing INSERTION event\n",
+				DPRINTF(("%s: enqueuing INSERTION event\n",
 				    device_xname(h->ph_parent)));
 				pcic_queue_event(h, PCIC_EVENT_INSERTION);
 			}
@@ -709,7 +709,7 @@ pcic_intr_socket(struct pcic_handle *h)
 				    device_xname(h->ph_parent)));
 				pcic_deactivate_card(h);
 
-				DPRINTF(("%s: enqueing REMOVAL event\n",
+				DPRINTF(("%s: enqueuing REMOVAL event\n",
 				    device_xname(h->ph_parent)));
 				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
 			}

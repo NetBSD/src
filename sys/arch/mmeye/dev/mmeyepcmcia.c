@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.26 2023/09/29 21:23:33 andvar Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.27 2024/02/13 21:39:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.26 2023/09/29 21:23:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.27 2024/02/13 21:39:02 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -550,7 +550,7 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 		if ((statreg & MMEYEPCMCIA_IF_STATUS_CARDDETECT_MASK) ==
 		    MMEYEPCMCIA_IF_STATUS_CARDDETECT_PRESENT) {
 			if (h->laststate != MMEYEPCMCIA_LASTSTATE_PRESENT) {
-				DPRINTF(("%s: enqueing INSERTION event\n",
+				DPRINTF(("%s: enqueuing INSERTION event\n",
 						 device_xname(h->sc->dev)));
 				mmeyepcmcia_queue_event(h, MMEYEPCMCIA_EVENT_INSERTION);
 			}
@@ -562,7 +562,7 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 						 device_xname(h->sc->dev)));
 				mmeyepcmcia_deactivate_card(h);
 
-				DPRINTF(("%s: enqueing REMOVAL event\n",
+				DPRINTF(("%s: enqueuing REMOVAL event\n",
 						 device_xname(h->sc->dev)));
 				mmeyepcmcia_queue_event(h, MMEYEPCMCIA_EVENT_REMOVAL);
 			}
