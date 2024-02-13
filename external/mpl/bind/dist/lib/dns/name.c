@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.13 2024/02/13 15:21:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -190,6 +190,7 @@ dns_name_invalidate(dns_name_t *name) {
 	name->offsets = NULL;
 	name->buffer = NULL;
 	ISC_LINK_INIT(name, link);
+	INSIST(name->ht == NULL);
 }
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.10 2023/06/26 22:03:00 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.11 2024/02/13 15:21:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -425,9 +425,9 @@ dns_catz_zones_merge(dns_catz_zone_t *target, dns_catz_zone_t *newzone) {
 
 	dns_name_format(&target->name, czname, DNS_NAME_FORMATSIZE);
 
-	isc_ht_init(&toadd, target->catzs->mctx, 16);
+	isc_ht_init(&toadd, target->catzs->mctx, 16, ISC_HT_CASE_SENSITIVE);
 
-	isc_ht_init(&tomod, target->catzs->mctx, 16);
+	isc_ht_init(&tomod, target->catzs->mctx, 16, ISC_HT_CASE_SENSITIVE);
 
 	isc_ht_iter_create(newzone->entries, &iter1);
 
@@ -612,7 +612,7 @@ dns_catz_new_zones(dns_catz_zones_t **catzsp, dns_catz_zonemodmethods_t *zmm,
 
 	isc_refcount_init(&new_zones->refs, 1);
 
-	isc_ht_init(&new_zones->zones, mctx, 4);
+	isc_ht_init(&new_zones->zones, mctx, 4, ISC_HT_CASE_SENSITIVE);
 
 	isc_mem_attach(mctx, &new_zones->mctx);
 	new_zones->zmm = zmm;
@@ -664,7 +664,7 @@ dns_catz_new_zone(dns_catz_zones_t *catzs, dns_catz_zone_t **zonep,
 	dns_name_init(&new_zone->name, NULL);
 	dns_name_dup(name, catzs->mctx, &new_zone->name);
 
-	isc_ht_init(&new_zone->entries, catzs->mctx, 16);
+	isc_ht_init(&new_zone->entries, catzs->mctx, 16, ISC_HT_CASE_SENSITIVE);
 
 	new_zone->updatetimer = NULL;
 	result = isc_timer_create(catzs->timermgr, isc_timertype_inactive, NULL,

@@ -535,7 +535,6 @@ dns_message_clonebuffer
 dns_message_create
 dns_message_currentname
 dns_message_detach
-dns_message_find
 dns_message_findname
 dns_message_findtype
 dns_message_firstname
@@ -554,7 +553,6 @@ dns_message_gettsigkey
 dns_message_headertotext
 dns_message_logfmtpacket
 dns_message_logpacket
-dns_message_movename
 dns_message_nextname
 dns_message_parse
 dns_message_peekheader
