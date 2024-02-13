@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3034 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3035 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -256,4 +256,23 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	libm: Import more long double functions from FreeBSD.
 		[christos 20240121]
 	terminfo: Import 20231209 [christos 20240127]
+	evbppc: Add support for the PAL 576i video mode to wiifb(4).
+		[hgutch 20240127]
+	stat(1): Add symbolic flags printing from FreeBSD via Ricardo Branco.
+		[christos 20240129]
+	next68k: Add WSDISPLAY_GINFO, LINEBYTES, and SMODE ioctl(2)s and
+		mmap(2) support to nextdisplay(4). [tsutsui 20240202]
+	mount_cd9660(8): Add support for mount options mask,dirmask,uid,gid
+		(from Ricardo Branco) [christos 20240202]
 	tzdata: Updated to 2024a (using 2024agtz) [kre 20240205]
+	riscv: Add a driver for the StarFive JH7100 pin controller.
+		[skrll 20240207]
+	touch(1): Properly implement the POSIX format -d option. [kre 20240208]
+	touch(1): Add -R option, which is identical to -r, except that if the
+		reference file is a symbolic link, the times to use are taken
+		from those of the symbolic link itself. [kre 20240209]
+	touch(1): Add -D option, which causes the operation to be a no-op if no
+		change would be made (avoiding updating the file's ctime).
+		[kre 20240210]
+	hppa: Add gftfb(4), an initial driver for PCI Visualize EG cards.
+		[macallan 20240213]
