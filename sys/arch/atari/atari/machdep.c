@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 2023/12/07 16:56:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.190 2024/02/13 21:39:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2023/12/07 16:56:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2024/02/13 21:39:02 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -795,7 +795,7 @@ module_init_md(void)
  * Currently the only source of NMI interrupts on the Milan is the PLX9080.
  * On access errors to the PCI bus, an NMI is generated. This NMI is shorted
  * in locore in case of a PCI config cycle to a non-existing address to allow
- * for probes. On other occaisions, it ShouldNotHappen(TM).
+ * for probes. On other occasions, it ShouldNotHappen(TM).
  * Note: The handler in locore clears the errors, to make further PCI access
  * possible.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.42 2024/02/13 21:39:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.42 2024/02/13 21:39:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,7 +593,7 @@ tcic_intr_socket(struct tcic_handle *h)
 		if (delta & TCIC_SSTAT_CD) {
 			if (sstat & TCIC_SSTAT_CD) {
 				if (!(h->flags & TCIC_FLAG_CARDP)) {
-					DPRINTF(("%s: enqueing INSERTION event\n",
+					DPRINTF(("%s: enqueuing INSERTION event\n",
 					    device_xname(h->sc->sc_dev)));
 					tcic_queue_event(h, TCIC_EVENT_INSERTION);
 				}
@@ -604,7 +604,7 @@ tcic_intr_socket(struct tcic_handle *h)
 					    device_xname(h->sc->sc_dev)));
 					tcic_deactivate_card(h);
 
-					DPRINTF(("%s: enqueing REMOVAL event\n",
+					DPRINTF(("%s: enqueuing REMOVAL event\n",
 					    device_xname(h->sc->sc_dev)));
 					tcic_queue_event(h, TCIC_EVENT_REMOVAL);
 				}

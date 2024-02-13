@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.63 2023/08/03 03:10:23 rin Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.64 2024/02/13 21:39:02 andvar Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.63 2023/08/03 03:10:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.64 2024/02/13 21:39:02 andvar Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -702,7 +702,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 /*??? rvb */	svmp->vm_outSize = sizeof (struct coda_in_hdr);
 
 		if (codadebug)
-		    myprintf(("coda_call: enqueing signal msg (%d, %d)\n",
+		    myprintf(("coda_call: enqueuing signal msg (%d, %d)\n",
 			   svmp->vm_opcode, svmp->vm_unique));
 
 		/* insert at head of queue */
