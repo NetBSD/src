@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.1 2024/02/13 05:35:13 thorpej Exp $	*/
+/*	$NetBSD: sireg.h,v 1.2 2024/02/13 13:46:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@ struct si_regs {
 	u_short	dma_counth;	/* DMA count   (VME only) */
 	u_short	dma_countl;	/* (high word, low word)  */
 
-	u_int	pad0;		/* no-existent register */
+	/* AMD 9516 regs (OBIO only) see am9516.h */
+	u_short udc_data;	/* Am9516, reg data (OBIO only) */
+	u_short udc_addr;	/* Am9516, reg addr (OBIO only) */
 
 	u_short	fifo_data;	/* fifo data register */
 	u_short	fifo_count;	/* fifo count register */
@@ -83,6 +85,8 @@ struct si_regs {
 #define SIREG_DMA_ADDRL	(NCR5380REGS_SZ + 2)	/* DMA address, low word */
 #define SIREG_DMA_CNTH	(NCR5380REGS_SZ + 4)	/* DMA count, high word */
 #define SIREG_DMA_CNTL	(NCR5380REGS_SZ + 6)	/* DMA count, low word */
+#define SIREG_UDC_DATA	(NCR5380REGS_SZ + 8)	/* UDC reg data */
+#define SIREG_UDC_ADDR	(NCR5380REGS_SZ + 10)	/* UDC reg addr */
 #define SIREG_FIFO_DATA	(NCR5380REGS_SZ + 12)	/* FIFO data */
 #define SIREG_FIFO_CNT	(NCR5380REGS_SZ + 14)	/* FIFO count, low word */
 #define SIREG_CSR	(NCR5380REGS_SZ + 16)	/* Control/status register */
