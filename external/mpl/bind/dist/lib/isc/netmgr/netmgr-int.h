@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.8 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.9 2024/02/13 15:27:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -655,6 +655,7 @@ struct isc_nm {
 	isc_refcount_t references;
 	isc_mem_t *mctx;
 	int nworkers;
+	int nlisteners;
 	isc_mutex_t lock;
 	isc_condition_t wkstatecond;
 	isc_condition_t wkpausecond;

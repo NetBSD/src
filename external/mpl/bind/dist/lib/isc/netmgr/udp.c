@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.11 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.12 2024/02/13 15:27:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -138,7 +138,7 @@ isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
 	uv_os_sock_t fd = -1;
 
 	/*
-	 * We are creating mgr->nworkers duplicated sockets, one
+	 * We are creating mgr->nlisteners duplicated sockets, one
 	 * socket for each worker thread.
 	 */
 	sock = isc_mem_get(mgr->mctx, sizeof(isc_nmsocket_t));
@@ -148,7 +148,7 @@ isc_nm_listenudp(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nm_recv_cb_t cb,
 #if defined(WIN32)
 	sock->nchildren = 1;
 #else
-	sock->nchildren = mgr->nworkers;
+	sock->nchildren = mgr->nlisteners;
 #endif
 
 	children_size = sock->nchildren * sizeof(sock->children[0]);
@@ -849,7 +849,7 @@ isc_nm_udpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		isc__nm_put_netievent_udpconnect(mgr, event);
 	} else {
 		atomic_init(&sock->active, false);
-		sock->tid = isc_random_uniform(mgr->nworkers);
+		sock->tid = isc_random_uniform(mgr->nlisteners);
 		isc__nm_enqueue_ievent(&mgr->workers[sock->tid],
 				       (isc__netievent_t *)event);
 	}

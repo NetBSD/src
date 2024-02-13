@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.8 2024/02/13 15:27:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -483,6 +483,9 @@ isc_nm_tcpdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
  * The connected socket can only be accessed via the handle passed to
  * 'cb'.
  */
+
+#define ISC_NM_TASK_SLOW_OFFSET -2
+#define ISC_NM_TASK_SLOW(i)	(ISC_NM_TASK_SLOW_OFFSET - 1 - i)
 
 void
 isc_nm_task_enqueue(isc_nm_t *mgr, isc_task_t *task, int threadid);
