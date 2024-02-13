@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.11 2024/02/13 15:27:20 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.12 2024/02/13 15:34:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -360,7 +360,7 @@ isc__netmgr_create(isc_mem_t *mctx, uint32_t nworkers, isc_nm_t **netmgrp) {
 		mgr->workers_running++;
 		isc_thread_create(nm_thread, &mgr->workers[i], &worker->thread);
 
-		snprintf(name, sizeof(name), "net-%zu", i);
+		snprintf(name, sizeof(name), "net-%d", i);
 		isc_thread_setname(worker->thread, name);
 	}
 
