@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.7 2024/02/13 15:24:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -141,6 +141,12 @@ struct dns_rbtnode {
 	 * because we did not or could not obtain a write lock on the tree.
 	 */
 	ISC_LINK(dns_rbtnode_t) deadlink;
+
+	/*%
+	 * This linked list is used to store nodes from which tree pruning can
+	 * be started.
+	 */
+	ISC_LINK(dns_rbtnode_t) prunelink;
 
 	/*@{*/
 	/*!
