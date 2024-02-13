@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.24 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: si.c,v 1.25 2024/02/13 05:35:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.24 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.25 2024/02/13 05:35:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.24 2019/11/10 21:16:38 chs Exp $");
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include <dev/vme/sireg.h>
+#include <dev/sun/sireg.h>
 
 /*
  * Transfers smaller than this are done using PIO

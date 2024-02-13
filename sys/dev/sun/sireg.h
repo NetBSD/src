@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.4 2024/02/10 09:21:53 andvar Exp $	*/
+/*	$NetBSD: sireg.h,v 1.1 2024/02/13 05:35:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
