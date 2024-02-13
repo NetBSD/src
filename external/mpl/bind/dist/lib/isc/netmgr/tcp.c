@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.9 2024/02/13 15:27:21 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -325,7 +325,7 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 			isc__nm_connectcb(sock, req, result, false);
 		} else {
 			isc__nmsocket_clearcb(sock);
-			sock->tid = isc_random_uniform(mgr->nworkers);
+			sock->tid = isc_random_uniform(mgr->nlisteners);
 			isc__nm_connectcb(sock, req, result, true);
 		}
 		atomic_store(&sock->closed, true);
@@ -343,7 +343,7 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		isc__nm_put_netievent_tcpconnect(mgr, ievent);
 	} else {
 		atomic_init(&sock->active, false);
-		sock->tid = isc_random_uniform(mgr->nworkers);
+		sock->tid = isc_random_uniform(mgr->nlisteners);
 		isc__nm_enqueue_ievent(&mgr->workers[sock->tid],
 				       (isc__netievent_t *)ievent);
 	}
@@ -447,7 +447,7 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
 #if defined(WIN32)
 	sock->nchildren = 1;
 #else
-	sock->nchildren = mgr->nworkers;
+	sock->nchildren = mgr->nlisteners;
 #endif
 	children_size = sock->nchildren * sizeof(sock->children[0]);
 	sock->children = isc_mem_get(mgr->mctx, children_size);

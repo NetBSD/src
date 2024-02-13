@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.17 2023/06/26 22:03:00 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.18 2024/02/13 15:27:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10636,8 +10636,8 @@ dns_resolver_create(dns_view_t *view, isc_taskmgr_t *taskmgr,
 		 * Since we have a pool of tasks we bind them to task queues
 		 * to spread the load evenly
 		 */
-		result = isc_task_create_bound(taskmgr, 0,
-					       &res->buckets[i].task, i);
+		result = isc_task_create_bound(
+			taskmgr, 0, &res->buckets[i].task, ISC_NM_TASK_SLOW(i));
 		if (result != ISC_R_SUCCESS) {
 			isc_mutex_destroy(&res->buckets[i].lock);
 			goto cleanup_buckets;
