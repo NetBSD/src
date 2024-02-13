@@ -1,4 +1,4 @@
-/*	$NetBSD: ht_test.c,v 1.9 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: ht_test.c,v 1.10 2024/02/13 15:21:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ test_ht_full(int bits, uintptr_t count) {
 	isc_result_t result;
 	uintptr_t i;
 
-	isc_ht_init(&ht, test_mctx, bits);
+	isc_ht_init(&ht, test_mctx, bits, ISC_HT_CASE_SENSITIVE);
 	assert_non_null(ht);
 
 	for (i = 1; i < count; i++) {
@@ -208,7 +208,7 @@ test_ht_iterator() {
 	unsigned char key[16];
 	size_t tksize;
 
-	isc_ht_init(&ht, test_mctx, 16);
+	isc_ht_init(&ht, test_mctx, 16, ISC_HT_CASE_SENSITIVE);
 	assert_non_null(ht);
 	for (i = 1; i <= count; i++) {
 		/*

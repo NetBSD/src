@@ -1,4 +1,4 @@
-/*	$NetBSD: filter-aaaa.c,v 1.8 2023/01/25 21:43:24 christos Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.9 2024/02/13 15:21:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -352,7 +352,7 @@ plugin_register(const char *parameters, const void *cfg, const char *cfg_file,
 				       cfg_line, mctx, lctx, actx));
 	}
 
-	isc_ht_init(&inst->ht, mctx, 16);
+	isc_ht_init(&inst->ht, mctx, 16, ISC_HT_CASE_SENSITIVE);
 	isc_mutex_init(&inst->hlock);
 
 	/*
