@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.196 2024/02/14 15:08:52 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.197 2024/02/14 15:10:47 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15523,9 +15523,7 @@ sys/sys/param.h					(manually edited)
 
 usr.sbin/sysinst/label.c			1.51
 
-	PR 57927: when comparing old and new partition state during
-	renumbering, ignore differences in the install target flag -
-	the backend might have flipped it off already to ensure only
-	a single partition is marked as install target.
+	PR 57927: fix moving of the install target to a new
+ 	partition.
 	[martin, ticket #594]
 
