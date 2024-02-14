@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.46.2.2 2023/11/26 12:40:50 bouyer Exp $	*/
+/*	$NetBSD: label.c,v 1.46.2.3 2024/02/14 15:08:29 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.46.2.2 2023/11/26 12:40:50 bouyer Exp $");
+__RCSID("$NetBSD: label.c,v 1.46.2.3 2024/02/14 15:08:29 sborrill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -512,7 +512,8 @@ renumber_partitions(struct partition_usage_set *pset)
 		for (i = 0; i < pset->num; i++) {
 			if (pset->infos[i].cur_start != info.start)
 				continue;
-			if (pset->infos[i].cur_flags != info.flags)
+			if ((pset->infos[i].cur_flags & ~PTI_INSTALL_TARGET)
+			    != (info.flags & ~PTI_INSTALL_TARGET))
 				continue;
 			if ((info.fs_type != FS_UNUSED &&
 			    info.fs_type == pset->infos[i].fs_type) ||
