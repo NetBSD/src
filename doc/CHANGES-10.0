@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.195 2024/02/06 12:38:53 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.196 2024/02/14 15:08:52 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15520,3 +15520,12 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h					(manually edited)
 
 	Welcome to 10.0_RC4
+
+usr.sbin/sysinst/label.c			1.51
+
+	PR 57927: when comparing old and new partition state during
+	renumbering, ignore differences in the install target flag -
+	the backend might have flipped it off already to ensure only
+	a single partition is marked as install target.
+	[martin, ticket #594]
+
