@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3036 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3037 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -278,3 +278,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[macallan 20240213]
 	bind: Apply bind security patches: CVE-2023-4408 CVE-2023-5517
 		CVE-2023-5679 CVE-2023-6516 CVE-2023-50387 CVE-2023-50868
+		[christos 20240213]
