@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.12 2024/01/27 21:42:29 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.13 2024/02/14 20:51:17 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.12 2024/01/27 21:42:29 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.13 2024/02/14 20:51:17 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -573,36 +573,44 @@ ATF_TC_BODY(snprintb, tc)
 
 static void
 h_snprintb_m_loc(const char *file, size_t line,
-    const char *fmt, size_t fmtlen, uint64_t val, int line_max,
-    const char *res, size_t reslen)
+    size_t bufsize, const char *fmt, size_t fmtlen, uint64_t val, size_t max,
+    size_t exp_rv, const char *res, size_t reslen)
 {
 	char buf[1024];
 
-	int rv = snprintb_m(buf, sizeof(buf), fmt, val, line_max);
+	ATF_REQUIRE(bufsize > 1);
+	ATF_REQUIRE(bufsize <= sizeof(buf));
 
-	ATF_REQUIRE_MSG(rv >= 0, "formatting %jx with '%s' returns error %d",
+	memset(buf, 'Z', sizeof(buf));
+	int rv = snprintb_m(buf, bufsize, fmt, val, max);
+	ATF_REQUIRE_MSG(rv >= 0,
+	    "formatting %jx with '%s' returns error %d",
 	    (uintmax_t)val, vis_arr(fmt, fmtlen), rv);
 
-	size_t buflen = rv;
+	size_t total = rv;
 	ATF_CHECK_MSG(
-	    buflen == reslen && memcmp(buf, res, reslen) == 0,
+	    total == exp_rv && memcmp(buf, res, reslen) == 0,
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
 	    "\tvalue: %#jx\n"
+	    "\tmax: %zu\n"
 	    "\twant: %zu bytes %s\n"
 	    "\thave: %zu bytes %s\n",
 	    file, line,
 	    vis_arr(fmt, fmtlen),
 	    (uintmax_t)val,
-	    reslen, vis_arr(res, reslen),
-	    buflen, vis_arr(buf, buflen));
+	    max,
+	    exp_rv, vis_arr(res, reslen),
+	    total, vis_arr(buf, reslen));
 }
 
-#define	h_snprintb_m(fmt, val, line_max, res)				\
+#define	h_snprintb_m_len(bufsize, fmt, val, line_max, exp_rv, res)	\
 	h_snprintb_m_loc(__FILE__, __LINE__,				\
-	    fmt, sizeof(fmt) - 1, val, line_max,			\
-	    res, sizeof(res) - 1)
+	    bufsize, fmt, sizeof(fmt) - 1, val, line_max,		\
+	    exp_rv, res, sizeof(res) - 1)
+#define	h_snprintb_m(fmt, val, max, res)				\
+	h_snprintb_m_len(1024, fmt, val, max, sizeof(res) - 1, res)
 
 ATF_TC(snprintb_m);
 ATF_TC_HEAD(snprintb_m, tc)
@@ -611,6 +619,68 @@ ATF_TC_HEAD(snprintb_m, tc)
 }
 ATF_TC_BODY(snprintb_m, tc)
 {
+	// old-style format, small maximum line length
+	h_snprintb_m_len(
+	    68,
+	    "\020"
+	    "\001bit1"
+	    "\002bit2"
+	    "\003bit3",
+	    0xffff,
+	    6,
+	    143,
+	    /*   0 */ "0xffff>\0"
+	    /*   8 */ "0xffff<>\0"
+	    /*  17 */ "0xffffb>\0"
+	    /*  26 */ "0xffffi>\0"
+	    /*  35 */ "0xfffft>\0"
+	    /*  44 */ "0xffff1>\0"
+	    /*  53 */ "0xffff<>\0"
+	    /*  62 */ "0xff\0"
+	    /*  67 */ "ZZZ"
+	    /*  70 */ "ZZZZZZZZZZ"
+	    /*  80 */ "ZZZZZZZZZZ"
+	    /*  90 */ "ZZZZZZZZZZ"
+	    /* 100 */ "ZZZZZZZZZZ"
+	    /* 110 */ "ZZZZZZ"
+	    /* 116 */ "\0\0"	/* FIXME: out-of-bounds write */
+	    /* 118 */ "ZZ"
+	    /* 120 */ "ZZZZZZZZZZ"
+	    /* 130 */ "ZZZZZZZZZZ"
+	    /* 140 */ "ZZZZZZZZZZ"
+	);
+
+	// new-style format, small maximum line length
+	h_snprintb_m_len(
+	    68,
+	    "\177\020"
+	    "b\000bit1\0"
+	    "b\001bit2\0"
+	    "b\002bit3\0",
+	    0xffff,
+	    6,
+	    143,
+	    /*   0 */ "0xffff>\0"
+	    /*   8 */ "0xffff<>\0"
+	    /*  17 */ "0xffffb>\0"
+	    /*  26 */ "0xffffi>\0"
+	    /*  35 */ "0xfffft>\0"
+	    /*  44 */ "0xffff1>\0"
+	    /*  53 */ "0xffff<>\0"
+	    /*  62 */ "0xff\0"
+	    /*  67 */ "ZZZ"
+	    /*  70 */ "ZZZZZZZZZZ"
+	    /*  80 */ "ZZZZZZZZZZ"
+	    /*  90 */ "ZZZZZZZZZZ"
+	    /* 100 */ "ZZZZZZZZZZ"
+	    /* 110 */ "ZZZZZZ"
+	    /* 116 */ "\0\0"	/* FIXME: out-of-bounds write */
+	    /* 118 */ "ZZ"
+	    /* 120 */ "ZZZZZZZZZZ"
+	    /* 130 */ "ZZZZZZZZZZ"
+	    /* 140 */ "ZZZZZZZZZZ"
+	);
+
 	h_snprintb_m(
 	    "\177\020"
 	    "b\0LSB\0"
