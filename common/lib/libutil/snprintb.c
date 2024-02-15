@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -272,14 +272,14 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			}
 		}
 	}
-	l_len++;
-	if (sep != '<' && (size_t)(++t_len) < buflen)
-		*bp++ = '>';
+	if (sep != '<')
+		STORE('>');
 terminate:
-	*bp++ = '\0';
+	STORE('\0');
 	if (l_max != 0) {
-		t_len++;
-		*bp = '\0';
+		STORE('\0');
+		t_len--;
+		buf[buflen] = '\0';
 	}
 	return t_len;
 internal:
