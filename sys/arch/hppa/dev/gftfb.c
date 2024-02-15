@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.1 2024/02/13 13:40:13 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.2 2024/02/15 16:17:32 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -72,6 +72,7 @@ struct	gftfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
 	int sc_mode;
+	void (*sc_putchar)(void *, int, int, u_int, long);
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -90,6 +91,7 @@ void	gftfb_disable_rom_internal(struct gftfb_softc *);
 
 void 	gftfb_setup(struct gftfb_softc *);
 void 	gftfb_wait(struct gftfb_softc *);
+void	gftfb_wait_fifo(struct gftfb_softc *, uint32_t);
 
 #define	ngle_bt458_write(memt, memh, r, v) \
 	bus_space_write_stream_4(memt, memh, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
@@ -118,7 +120,6 @@ static void	gftfb_restore_palette(struct gftfb_softc *);
 static int 	gftfb_putpalreg(struct gftfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
-#if 0
 static void	gftfb_rectfill(struct gftfb_softc *, int, int, int, int,
 			    uint32_t);
 static void	gftfb_bitblt(void *, int, int, int, int, int,
@@ -126,12 +127,10 @@ static void	gftfb_bitblt(void *, int, int, int, int, int,
 
 static void	gftfb_cursor(void *, int, int, int);
 static void	gftfb_putchar(void *, int, int, u_int, long);
-static void	gftfb_putchar_aa(void *, int, int, u_int, long);
 static void	gftfb_copycols(void *, int, int, int, int);
 static void	gftfb_erasecols(void *, int, int, int, long);
 static void	gftfb_copyrows(void *, int, int, int);
 static void	gftfb_eraserows(void *, int, int, long);
-#endif
 
 struct wsdisplay_accessops gftfb_accessops = {
 	gftfb_ioctl,
@@ -241,10 +240,6 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-#if 0
-		gftfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-#endif
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
@@ -259,6 +254,10 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 #endif
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
+
+		gftfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	} else {
 		/*
@@ -718,12 +717,12 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-				//r128fb_init(sc);
-				gftfb_restore_palette(sc);
+				gftfb_setup(sc);
+				if (0) gftfb_restore_palette(sc);
 				//glyphcache_wipe(&sc->sc_gc);
-				//r128fb_rectfill(sc, 0, 0, sc->sc_width,
-				//    sc->sc_height, ms->scr_ri.ri_devcmap[
-				//    (ms->scr_defattr >> 16) & 0xff]);
+				gftfb_rectfill(sc, 0, 0, sc->sc_width,
+				    sc->sc_height, ms->scr_ri.ri_devcmap[
+				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
 			}
 		}
@@ -743,12 +742,20 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 static paddr_t
 gftfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
-#if 0
 	struct vcons_data *vd = v;
 	struct gftfb_softc *sc = vd->cookie;
+	struct sti_rom *rom = sc->sc_base.sc_rom;
 	paddr_t pa;
-#endif
-	return -1;
+
+	if (offset < 0 || offset >= sc->sc_scr.fblen)
+		return -1;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_DUMBFB)
+		return -1;
+
+	pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset, prot,
+	    BUS_SPACE_MAP_LINEAR);
+	return pa;
 }
 
 static void
@@ -764,7 +771,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = 2048;
 	ri->ri_flg = RI_CENTER;
 	if (scr->scr_flags & VCONS_SCREEN_IS_STATIC)
-		ri->ri_flg |= RI_FULLCLEAR | RI_CLEAR;
+		ri->ri_flg |= (RI_FULLCLEAR | RI_CLEAR);
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
 #if 0
 	if (sc->sc_depth == 8)
@@ -774,24 +781,19 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
 		      WSSCREEN_RESIZE;
-	scr->scr_flags |= VCONS_DONT_READ;
 	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
-#if 0
+	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = gftfb_copyrows;
 	ri->ri_ops.copycols = gftfb_copycols;
 	ri->ri_ops.eraserows = gftfb_eraserows;
 	ri->ri_ops.erasecols = gftfb_erasecols;
 	ri->ri_ops.cursor = gftfb_cursor;
-	if (FONT_IS_ALPHA(ri->ri_font)) {
-		ri->ri_ops.putchar = gftfb_putchar_aa;
-	} else
-		ri->ri_ops.putchar = gftfb_putchar;
-#endif
+	ri->ri_ops.putchar = gftfb_putchar;
 }
 
 static int
@@ -803,9 +805,6 @@ gftfb_putcmap(struct gftfb_softc *sc, struct wsdisplay_cmap *cm)
 	int i, error;
 	u_char rbuf[256], gbuf[256], bbuf[256];
 
-#ifdef R128FB_DEBUG
-	aprint_debug("putcmap: %d %d\n",index, count);
-#endif
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
@@ -892,4 +891,215 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80000100);
 	gftfb_setup_fb(sc);
 	return 0;
+}
+
+void
+gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	uint32_t reg;
+
+	do {
+		reg = bus_space_read_stream_4(memt, memh, NGLE_REG_34);
+	} while (reg < slots);
+}
+
+#define BA(F,C,S,A,J,B,I)						\
+	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+
+#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
+#define	    Otc04	2	/* Pixels in each longword transfer (4) */
+#define	    Otc32	5	/* Pixels in each longword transfer (32) */
+#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
+#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define	    BINovly	0x2	/* 8 bit overlay */
+#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
+#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
+#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
+#define	    BINattr	0xd	/* Attribute Bitmap */
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
+#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+#define	    DataDynamic	    0	/* Data register reloaded by direct access */
+#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+
+static void
+gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
+		      uint32_t bg)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	gftfb_wait_fifo(sc, 5);
+	/* transfer data */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_8, 0xffffffff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_35, bg);
+	/* plane mask */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
+	/* bitmap op */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
+	/* dst bitmap acces */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_11,
+	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
+	gftfb_wait_fifo(sc, 2);
+	/* dst XY */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_6, (x << 16) | y);
+	/* len XY start */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_9, (wi << 16) | he);
+
+}
+
+
+static void
+gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
+			    int he, int rop)
+{
+	struct gftfb_softc *sc = cookie;
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0x13a01000);
+	gftfb_wait_fifo(sc, 5);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_24, (xs << 16) | ys);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_7, (wi << 16) | he);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_25, (xd << 16) | yd);
+}
+
+static void
+gftfb_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		if (ri->ri_flg & RI_CURSOR) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			gftfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			gftfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		scr->scr_ri.ri_crow = row;
+		scr->scr_ri.ri_ccol = col;
+		scr->scr_ri.ri_flg &= ~RI_CURSOR;
+	}
+
+}
+
+static void
+gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+	gftfb_setup_fb(sc);
+	sc->sc_putchar(cookie, row, col, c, attr);
+}
+
+static void
+gftfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		gftfb_bitblt(sc, xs, y, xd, y, width, height, RopSrc);
+	}
+}
+
+static void
+gftfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+}
+
+static void
+gftfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		gftfb_bitblt(sc, x, ys, x, yd, width, height, RopSrc);
+	}
+}
+
+static void
+gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
 }
