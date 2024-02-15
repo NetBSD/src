@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.23 2024/02/15 22:37:10 rillig Exp $")
 
 # ifndef HAVE_SNPRINTB_M
 int
-snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
+snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	   size_t l_max)
 {
 	char *bp = buf, *s_bp = NULL;
@@ -75,7 +75,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	 * For safety; no other *s*printf() do this, but in the kernel
 	 * we don't usually check the return value
 	 */
-	(void)memset(buf, 0, buflen);
+	(void)memset(buf, 0, bufsize);
 #endif /* _KERNEL */
 
 	ch = *bitfmt++;
@@ -95,18 +95,18 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 
 	/* Reserve space for trailing blank line if needed */
 	if (l_max > 0)
-		buflen--;
+		bufsize--;
 
-	t_len = snprintf(bp, buflen, sbase, (uintmax_t)val);
+	t_len = snprintf(bp, bufsize, sbase, (uintmax_t)val);
 	if (t_len < 0)
 		goto internal;
 
 	v_len = l_len = t_len;
 
-	if ((size_t)t_len < buflen)
+	if ((size_t)t_len < bufsize)
 		bp += t_len;
 	else
-		bp += buflen - 1;
+		bp += bufsize - 1;
 
 	/*
 	 * If the value we printed was 0 and we're using the old-style format,
@@ -116,7 +116,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		goto terminate;
 
 #define STORE(c) do { l_len++;						\
-		   if ((size_t)(++t_len) < buflen)			\
+		   if ((size_t)(++t_len) < bufsize)			\
 		   	*bp++ = (c);					\
 		 } while ( /* CONSTCOND */ 0)
 
@@ -127,8 +127,8 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			bitfmt = s_fmt;					\
 		  }							\
 		  STORE('>'); STORE('\0');				\
-		  if ((size_t)t_len < buflen)				\
-			snprintf(bp, buflen - t_len, sbase, (uintmax_t)val);\
+		  if ((size_t)t_len < bufsize)				\
+			snprintf(bp, bufsize - t_len, sbase, (uintmax_t)val);\
 		  t_len += v_len; l_len = v_len; bp += v_len;		\
 		} while ( /* CONSTCOND */ 0)
 
@@ -168,12 +168,12 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		}
 #define FMTSTR(sb, f) 							\
 	do { 								\
-		f_len = snprintf(bp, buflen - t_len, sb, (uintmax_t)f);	\
+		f_len = snprintf(bp, bufsize - t_len, sb, (uintmax_t)f); \
 		if (f_len < 0) 						\
 			goto internal; 					\
 		t_len += f_len; 					\
 		l_len += f_len; 					\
-		if ((size_t)t_len < buflen) 				\
+		if ((size_t)t_len < bufsize) 				\
 			bp += f_len; 					\
 	} while (/*CONSTCOND*/0)
 
@@ -279,7 +279,7 @@ terminate:
 	if (l_max != 0) {
 		STORE('\0');
 		t_len--;
-		buf[buflen] = '\0';
+		buf[bufsize] = '\0';
 	}
 	return t_len;
 internal:
@@ -290,9 +290,9 @@ internal:
 }
 
 int
-snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
+snprintb(char *buf, size_t bufsize, const char *bitfmt, uint64_t val)
 {
-	return snprintb_m(buf, buflen, bitfmt, val, 0);
+	return snprintb_m(buf, bufsize, bitfmt, val, 0);
 }
 # endif /* ! HAVE_SNPRINTB_M */
 #endif /* ! _STANDALONE */
