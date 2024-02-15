@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.13 2024/02/14 20:51:17 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.14 2024/02/15 22:37:10 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.13 2024/02/14 20:51:17 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.14 2024/02/15 22:37:10 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -636,15 +636,12 @@ ATF_TC_BODY(snprintb_m, tc)
 	    /*  35 */ "0xfffft>\0"
 	    /*  44 */ "0xffff1>\0"
 	    /*  53 */ "0xffff<>\0"
-	    /*  62 */ "0xff\0"
-	    /*  67 */ "ZZZ"
+	    /*  62 */ "0xff\0\0ZZ"
 	    /*  70 */ "ZZZZZZZZZZ"
 	    /*  80 */ "ZZZZZZZZZZ"
 	    /*  90 */ "ZZZZZZZZZZ"
 	    /* 100 */ "ZZZZZZZZZZ"
-	    /* 110 */ "ZZZZZZ"
-	    /* 116 */ "\0\0"	/* FIXME: out-of-bounds write */
-	    /* 118 */ "ZZ"
+	    /* 110 */ "ZZZZZZZZZZ"
 	    /* 120 */ "ZZZZZZZZZZ"
 	    /* 130 */ "ZZZZZZZZZZ"
 	    /* 140 */ "ZZZZZZZZZZ"
@@ -667,15 +664,12 @@ ATF_TC_BODY(snprintb_m, tc)
 	    /*  35 */ "0xfffft>\0"
 	    /*  44 */ "0xffff1>\0"
 	    /*  53 */ "0xffff<>\0"
-	    /*  62 */ "0xff\0"
-	    /*  67 */ "ZZZ"
+	    /*  62 */ "0xff\0\0ZZ"
 	    /*  70 */ "ZZZZZZZZZZ"
 	    /*  80 */ "ZZZZZZZZZZ"
 	    /*  90 */ "ZZZZZZZZZZ"
 	    /* 100 */ "ZZZZZZZZZZ"
-	    /* 110 */ "ZZZZZZ"
-	    /* 116 */ "\0\0"	/* FIXME: out-of-bounds write */
-	    /* 118 */ "ZZ"
+	    /* 110 */ "ZZZZZZZZZZ"
 	    /* 120 */ "ZZZZZZZZZZ"
 	    /* 130 */ "ZZZZZZZZZZ"
 	    /* 140 */ "ZZZZZZZZZZ"
