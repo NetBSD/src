@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.14 2024/02/15 22:37:10 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.15 2024/02/15 23:48:51 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.14 2024/02/15 22:37:10 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.15 2024/02/15 23:48:51 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -42,16 +42,34 @@ __RCSID("$NetBSD: t_snprintb.c,v 1.14 2024/02/15 22:37:10 rillig Exp $");
 #include <atf-c.h>
 
 static const char *
-vis_arr(const char *arr, size_t arrlen)
+vis_arr(const char *arr, size_t arrsize)
 {
 	static char buf[6][1024];
 	static size_t i;
 
 	i = (i + 1) % (sizeof(buf) / sizeof(buf[0]));
-	int rv = strnvisx(buf[i], sizeof(buf[i]), arr, arrlen,
+	int rv = strnvisx(buf[i], sizeof(buf[i]), arr, arrsize,
 	    VIS_WHITE | VIS_OCTAL);
-	ATF_REQUIRE_MSG(rv >= 0, "strnvisx failed for length %zu", arrlen);
+	ATF_REQUIRE_MSG(rv >= 0, "strnvisx failed for size %zu", arrsize);
 	return buf[i];
+}
+
+static void
+check_unmodified_loc(const char *file, size_t line,
+    const char *arr, size_t begin, size_t end)
+{
+	size_t mod_begin = begin, mod_end = end;
+	while (mod_begin < mod_end && arr[mod_begin] == 'Z')
+		mod_begin++;
+	while (mod_begin < mod_end && arr[mod_end - 1] == 'Z')
+		mod_end--;
+	ATF_CHECK_MSG(
+	    mod_begin == mod_end,
+	    "failed:\n"
+	    "\ttest case: %s:%zu\n"
+	    "\tout-of-bounds write from %zu to %zu: %s\n",
+	    file, line,
+	    mod_begin, mod_end, vis_arr(arr + mod_begin, mod_end - mod_begin));
 }
 
 static void
@@ -65,6 +83,7 @@ h_snprintb_loc(const char *file, size_t line,
 	// behavior due to out-of-range 'bp'.
 	ATF_REQUIRE(bufsize > 0);
 	ATF_REQUIRE(bufsize <= sizeof(buf));
+	ATF_REQUIRE(reslen <= sizeof(buf));
 
 	memset(buf, 'Z', sizeof(buf));
 	int rv = snprintb(buf, bufsize, fmt, val);
@@ -85,6 +104,7 @@ h_snprintb_loc(const char *file, size_t line,
 	    (uintmax_t)val,
 	    exp_rv, vis_arr(res, reslen),
 	    rv, vis_arr(buf, reslen));
+	check_unmodified_loc(file, line, buf, reslen + 1, sizeof(buf));
 }
 
 #define	h_snprintb_len(bufsize, fmt, val, exp_rv, res)			\
@@ -569,6 +589,52 @@ ATF_TC_BODY(snprintb, tc)
 		    ch,
 		    expected);
 	}
+
+	// new-style format, small buffer
+#if 0
+	// FIXME: Calling snprintb with buffer size 0 invokes undefined
+	// behavior due to out-of-bounds 'bp' pointer.
+	h_snprintb_len(
+	    0, "\177\020", 0,
+	    1, "ZZZ");
+#endif
+	h_snprintb_len(
+	    1, "\177\020", 0,
+	    1, "\0ZZZ");
+	h_snprintb_len(
+	    2, "\177\020", 0,
+	    1, "0\0ZZZ");
+	h_snprintb_len(
+	    3, "\177\020", 0,
+	    1, "0\0ZZZ");
+	h_snprintb_len(
+	    3, "\177\020", 7,
+	    3, "0x\0ZZZ");
+	h_snprintb_len(
+	    4, "\177\020", 7,
+	    3, "0x7\0ZZZ");
+	h_snprintb_len(
+	    7, "\177\020b\000lsb\0", 7,
+	    8, "0x7<ls\0ZZZ");
+	h_snprintb_len(
+	    8, "\177\020b\000lsb\0", 7,
+	    8, "0x7<lsb\0ZZZ");
+	h_snprintb_len(
+	    9, "\177\020b\000lsb\0", 7,
+	    8, "0x7<lsb>\0ZZZ");
+	h_snprintb_len(
+	    9, "\177\020b\000one\0b\001two\0", 7,
+	    12, "0x7<one,\0ZZZ");
+	h_snprintb_len(
+	    10, "\177\020b\000one\0b\001two\0", 7,
+	    12, "0x7<one,t\0ZZZ");
+	h_snprintb_len(
+	    12, "\177\020b\000one\0b\001two\0", 7,
+	    12, "0x7<one,two\0ZZZ");
+	h_snprintb_len(
+	    13, "\177\020b\000one\0b\001two\0", 7,
+	    12, "0x7<one,two>\0ZZZ");
+
 }
 
 static void
@@ -580,6 +646,7 @@ h_snprintb_m_loc(const char *file, size_t line,
 
 	ATF_REQUIRE(bufsize > 1);
 	ATF_REQUIRE(bufsize <= sizeof(buf));
+	ATF_REQUIRE(reslen <= sizeof(buf));
 
 	memset(buf, 'Z', sizeof(buf));
 	int rv = snprintb_m(buf, bufsize, fmt, val, max);
@@ -603,6 +670,7 @@ h_snprintb_m_loc(const char *file, size_t line,
 	    max,
 	    exp_rv, vis_arr(res, reslen),
 	    total, vis_arr(buf, reslen));
+	check_unmodified_loc(file, line, buf, reslen + 1, sizeof(buf));
 }
 
 #define	h_snprintb_m_len(bufsize, fmt, val, line_max, exp_rv, res)	\
@@ -673,6 +741,17 @@ ATF_TC_BODY(snprintb_m, tc)
 	    /* 120 */ "ZZZZZZZZZZ"
 	    /* 130 */ "ZZZZZZZZZZ"
 	    /* 140 */ "ZZZZZZZZZZ"
+	);
+
+	// new-style format, buffer too small for description
+	h_snprintb_m_len(
+	    8,
+	    "\177\020"
+	    "b\000bit1\0",
+	    0x0001,
+	    64,
+	    10,
+	    "0x1<bi\0\0ZZZ"
 	);
 
 	h_snprintb_m(

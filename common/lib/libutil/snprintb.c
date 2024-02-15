@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.25 2024/02/15 23:48:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.25 2024/02/15 23:48:51 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.24 2024/02/15 22:48:58 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.25 2024/02/15 23:48:51 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -275,13 +275,16 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (sep != '<')
 		STORE('>');
 terminate:
-	STORE('\0');
-	if (l_max != 0) {
+	if (l_max > 0) {
+		bufsize++;
 		STORE('\0');
-		t_len--;
-		buf[bufsize] = '\0';
+		if ((size_t)t_len >= bufsize && bufsize > 1)
+			buf[bufsize - 2] = '\0';
 	}
-	return t_len;
+	STORE('\0');
+	if ((size_t)t_len >= bufsize && bufsize > 0)
+		buf[bufsize - 1] = '\0';
+	return t_len - 1;
 internal:
 #ifndef _KERNEL
 	errno = EINVAL;
