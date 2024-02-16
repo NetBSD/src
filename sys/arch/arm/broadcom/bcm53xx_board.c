@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.26 2024/02/16 15:11:17 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.27 2024/02/16 16:28:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.26 2024/02/16 15:11:17 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.27 2024/02/16 16:28:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,56 +140,6 @@ struct arm32_bus_dma_tag bcm53xx_bounce_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 #endif
-
-#ifdef BCM53XX_CONSOLE_EARLY
-#include <dev/ic/ns16550reg.h>
-#include <dev/ic/comreg.h>
-#include <dev/cons.h>
-
-static vaddr_t com_base;
-
-static inline uint32_t
-uart_read(bus_size_t o)
-{
-	return *(volatile uint8_t *)(com_base + o);
-}
-
-static inline void
-uart_write(bus_size_t o, uint32_t v)
-{
-	*(volatile uint8_t *)(com_base + o) = v;
-}
-
-static int
-bcm53xx_cngetc(dev_t dv)
-{
-        if ((uart_read(com_lsr) & LSR_RXRDY) == 0)
-		return -1;
-
-	return uart_read(com_data) & 0xff;
-}
-
-static void
-bcm53xx_cnputc(dev_t dv, int c)
-{
-	int timo = 150000;
-
-        while ((uart_read(com_lsr) & LSR_TXRDY) == 0 && --timo > 0)
-		;
-
-	uart_write(com_data, c);
-
-	timo = 150000;
-        while ((uart_read(com_lsr) & LSR_TSRE) == 0 && --timo > 0)
-		;
-}
-
-static struct consdev bcm53xx_earlycons = {
-	.cn_putc = bcm53xx_cnputc,
-	.cn_getc = bcm53xx_cngetc,
-	.cn_pollc = nullcnpollc,
-};
-#endif /* BCM53XX_CONSOLE_EARLY */
 
 psize_t
 bcm53xx_memprobe(void)
@@ -516,11 +466,6 @@ bcm53xx_bootstrap(vaddr_t iobase)
 {
 	struct bcm53xx_chip_state bcs;
 	int error;
-
-#ifdef BCM53XX_CONSOLE_EARLY
-	com_base = iobase + CCA_UART0_BASE;
-	cn_tab = &bcm53xx_earlycons;
-#endif
 
 	bcm53xx_ioreg_bsh = (bus_space_handle_t) iobase;
 	error = bus_space_map(bcm53xx_ioreg_bst, BCM53XX_IOREG_PBASE,

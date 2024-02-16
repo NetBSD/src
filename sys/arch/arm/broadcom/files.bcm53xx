@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm53xx,v 1.5 2018/09/21 12:04:06 skrll Exp $
+#	$NetBSD: files.bcm53xx,v 1.6 2024/02/16 16:28:49 skrll Exp $
 #
 # Configuration info for Broadcom BCM5301X ARM Peripherals
 #
@@ -15,7 +15,6 @@ file	arch/arm/broadcom/bcm53xx_board.c
 file	arch/arm/broadcom/bcmgen_space.c
 
 defparam opt_broadcom.h				MEMSIZE
-defflag opt_broadcom.h				BCM53XX_CONSOLE_EARLY
 defflag opt_broadcom.h				BCMETH_COUNTERS
 defflag opt_broadcom.h				BCM563XX
 defflag opt_broadcom.h				BCM5301X

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.39 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: BCM5301X,v 1.40 2024/02/16 16:28:50 skrll Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -20,7 +20,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #makeoptions	DEFCOPTS="-O0"
 options 	UVMHIST
 #options 	UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
-options 	BCM53XX_CONSOLE_EARLY
 options 	BCMETH_COUNTERS
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEX
@@ -29,6 +28,8 @@ options 	BCM5301X
 #options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 makeoptions	KERNEL_BASE_PHYS="0x80100000"
+#options 	VERBOSE_INIT_ARM
+options 	EARLYCONS=bcm53xx,CONSADDR=0x18000300
 
 # Architecture options
 
