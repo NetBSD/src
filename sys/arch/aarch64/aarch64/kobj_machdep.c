@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.8 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.9 2024/02/16 17:18:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.9 2024/02/16 17:18:19 andvar Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -190,7 +190,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	old = *where;
 #ifdef DDB
 	snprintf(disasmbuf, sizeof(disasmbuf), "%08x %s",
-	    le32toh(*insn), strdisasm((vaddr_t)insn), 0);
+	    le32toh(*insn), strdisasm((vaddr_t)insn, 0));
 #endif
 #endif /* KOBJ_MACHDEP_DEBUG */
 
