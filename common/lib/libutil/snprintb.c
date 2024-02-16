@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -63,7 +63,6 @@ int
 snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	   size_t line_max)
 {
-	char *bp = buf, *sep_bp = NULL;
 	const char *num_fmt, *cur_bitfmt, *sep_bitfmt = NULL;
 	char sep;
 	int restart = 0;
@@ -97,39 +96,33 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (line_max > 0)
 		bufsize--;
 
-	int val_len = snprintf(bp, bufsize, num_fmt, (uintmax_t)val);
+	int val_len = snprintf(buf, bufsize, num_fmt, (uintmax_t)val);
 	if (val_len < 0)
 		goto internal;
 
 	size_t total_len = val_len, line_len = val_len, sep_line_len = 0;
 
-	if (total_len < bufsize)
-		bp += total_len;
-	else
-		bp += bufsize - 1;
-
 #define	STORE(c) do {							\
+		if (total_len < bufsize)				\
+			buf[total_len] = (c);				\
+		total_len++;						\
 		line_len++;						\
-		if (++total_len < bufsize)				\
-			*bp++ = (c);					\
 	} while (0)
 
 #define	BACKUP() do {							\
-		if (sep_bp != NULL) {					\
-			bp = sep_bp;					\
-			sep_bp = NULL;					\
+		if (sep_line_len > 0) {					\
 			total_len -= line_len - sep_line_len;		\
+			sep_line_len = 0;				\
 			restart = 1;					\
 			bitfmt = sep_bitfmt;				\
 		}							\
 		STORE('>');						\
 		STORE('\0');						\
 		if (total_len < bufsize)				\
-			snprintf(bp, bufsize - total_len, num_fmt,	\
-			    (uintmax_t)val);				\
+			snprintf(buf + total_len, bufsize - total_len,	\
+			    num_fmt, (uintmax_t)val);			\
 		total_len += val_len;					\
 		line_len = val_len;					\
-		bp += val_len;						\
 	} while (0)
 
 #define	PUTSEP() do {							\
@@ -137,10 +130,8 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 			BACKUP();					\
 			STORE('<');					\
 		} else {						\
-			/* Remember separator location */		\
 			if (line_max > 0 && sep != '<') {		\
 				sep_line_len = line_len;		\
-				sep_bp = bp;				\
 				sep_bitfmt = cur_bitfmt;		\
 			}						\
 			STORE(sep);					\
@@ -170,15 +161,13 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	FMTSTR(sb, f) do {						\
-		size_t n = total_len < bufsize				\
-		    ? bufsize - total_len : 0;				\
+		char *bp = total_len < bufsize ? buf + total_len : NULL; \
+		size_t n = total_len < bufsize ? bufsize - total_len : 0; \
 		int fmt_len = snprintf(bp, n, sb, (uintmax_t)f);	\
 		if (fmt_len < 0)					\
 			goto internal;					\
 		total_len += fmt_len;					\
 		line_len += fmt_len;					\
-		if (total_len < bufsize)				\
-			bp += fmt_len;					\
 	} while (0)
 
 	sep = '<';
