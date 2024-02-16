@@ -1,4 +1,4 @@
-/* $NetBSD: bcm53xx_reg.h,v 1.19 2022/03/24 08:08:04 andvar Exp $ */
+/* $NetBSD: bcm53xx_reg.h,v 1.20 2024/02/16 15:11:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@
 #define CRU_GENPLL_CONTROL6		0x1158
 #define GENPLL_CONTROL6_PDIV		__BITS(26,24)	// = (n ? n : 8)
 #define GENPLL_CONTROL6_CH0_MDIV	__BITS(23,16)	// = (n ? n : 256), clk_mac
-#define GENPLL_CONTROL6_CH1_MDIV	__BITS(15,8)	// = (n ? n : 256), clk_robo 
+#define GENPLL_CONTROL6_CH1_MDIV	__BITS(15,8)	// = (n ? n : 256), clk_robo
 #define GENPLL_CONTROL6_CH2_MDIV	__BITS(7,0)	// = (n ? n : 256), clf_usb2
 #define CRU_GENPLL_CONTROL7		0x115c
 #define GENPLL_CONTROL7_CH3_MDIV	__BITS(23,16)	// = (n ? n : 256), clk_iproc
@@ -348,7 +348,7 @@
 #define USB2_CONTROL_KA			__BITS(24,22)
 #define USB2_CONTROL_KI			__BITS(31,19)
 #define USB2_CONTROL_KP			__BITS(18,15)
-#define USB2_CONTROL_PDIV		__BITS(14,12)	// = (n ? n : 8) 
+#define USB2_CONTROL_PDIV		__BITS(14,12)	// = (n ? n : 8)
 #define USB2_CONTROL_NDIV_INT		__BITS(11,2)	// = (n ? n : 1024)
 #define USB2_CONTROL_PLL_PCIEUSB3_RESET	__BIT(1)	// inverted 1=normal
 #define USB2_CONTROL_PLL_USB2_RESET	__BIT(0)	// inverted 1=normal
@@ -386,7 +386,7 @@
 
 #define DMU_LCPLL_CONTROL0	0x100
 #define DMU_LCPLL_CONTROL1	0x104
-#define LCPLL_CONTROL1_PDIV	__BITS(30,28)	// = (n ? n : 8) 
+#define LCPLL_CONTROL1_PDIV	__BITS(30,28)	// = (n ? n : 8)
 #define LCPLL_CONTROL1_NDIV_INT	__BITS(27,20)	// = (n ? n : 256)
 #define LCPLL_CONTROL1_NDIV_FRAC __BITS(19,0)	// = 1 / n
 /*
@@ -395,7 +395,7 @@
 #define DMU_LCPLL_CONTROL2	0x108
 #define LCPLL_CONTROL2_CH0_MDIV	__BITS(31,24)	// = (n ? n : 256), clk_pcie_ref
 #define LCPLL_CONTROL2_CH1_MDIV	__BITS(23,16)	// = (n ? n : 256), clk_sdio
-#define LCPLL_CONTROL2_CH2_MDIV	__BITS(15,8)	// = (n ? n : 256), clk_ddr 
+#define LCPLL_CONTROL2_CH2_MDIV	__BITS(15,8)	// = (n ? n : 256), clk_ddr
 #define LCPLL_CONTROL2_CH3_MDIV	__BITS(7,0)	// = (n ? n : 256), clf_dft
 
 #define DMU_CRU_RESET		0x200
@@ -651,7 +651,7 @@
 #define CLK_APB_DIV_TRIGGER_OVERRIDE	__BIT(0)
 
 #define ARMCORE_CLK_PLLARMA	0xc00
-#define CLK_PLLARMA_PDIV	__BITS(26,24)	// = (n ? n : 16(?)) 
+#define CLK_PLLARMA_PDIV	__BITS(26,24)	// = (n ? n : 16(?))
 #define CLK_PLLARMA_NDIV_INT	__BITS(17,8)	// = (n ? n : 1024)
 
 #define ARMCORE_CLK_PLLARMB	0xc04
@@ -777,7 +777,7 @@ struct gmac_rxdb {
 #define GMAC_BISTSTATUS		0x00c
 #define GMAC_INTSTATUS		0x020
 #define GMAC_INTMASK		0x024
-#define  TXQECCUNCORRECTED	__BIT(31)       
+#define  TXQECCUNCORRECTED	__BIT(31)
 #define  TXQECCCORRECTED	__BIT(30)
 #define  RXQECCUNCORRECTED	__BIT(29)
 #define  RXQECCCORRECTED	__BIT(28)
@@ -904,18 +904,18 @@ struct gmac_rxdb {
 #define  RX_LOW_LATENCY_EN	__BIT(11)
 #define  HD_ENA			__BIT(10)
 #define  TX_ADDR_INS		__BIT(9)
-#define  PAUSE_IGNORE		__BIT(8)   
-#define  PAUSE_FWD		__BIT(7)     
-#define  CRC_FWD		__BIT(6) 
-#define  PAD_EN			__BIT(5)    
-#define  PROMISC_EN		__BIT(4) 
+#define  PAUSE_IGNORE		__BIT(8)
+#define  PAUSE_FWD		__BIT(7)
+#define  CRC_FWD		__BIT(6)
+#define  PAD_EN			__BIT(5)
+#define  PROMISC_EN		__BIT(4)
 #define  ETH_SPEED		__BITS(3,2)
 #define  ETH_SPEED_10		0
 #define  ETH_SPEED_100		1
 #define  ETH_SPEED_1000		2
 #define  ETH_SPEED_2500		3
-#define  RX_ENA			__BIT(1) 
-#define  TX_ENA			__BIT(0) 
+#define  RX_ENA			__BIT(1)
+#define  TX_ENA			__BIT(0)
 #define UNIMAC_MAC_0		0x80c		// bits 16:47 of macaddr
 #define UNIMAC_MAC_1		0x810		// bits 0:15 of macaddr
 #define UNIMAC_FRAME_LEN	0x814

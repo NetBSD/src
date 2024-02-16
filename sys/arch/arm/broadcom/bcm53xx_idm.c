@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.3 2012/12/12 00:01:28 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.4 2024/02/16 15:11:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +59,7 @@ struct idm_info {
 static bool
 bcmeth_unreset(bus_space_tag_t bst, bus_space_handle_t bsh,
     const struct idm_info *idm)
-{ 
+{
 	/*
 	 * To enable any GMAC, we must enable all off them.
 	 */

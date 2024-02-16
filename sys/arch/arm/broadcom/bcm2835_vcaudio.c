@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.19 2023/04/30 14:20:23 mlelstv Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.20 2024/02/16 15:11:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.19 2023/04/30 14:20:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.20 2024/02/16 15:11:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,7 +88,7 @@ enum vcaudio_dest {
  *
  * Setting blocksize to 4 x 1600 means that we send approx 33ms of audio. We
  * prefill by two blocks before starting audio meaning we have 50ms of latency.
- * 
+ *
  * Six messages of 1600 bytes was chosen working back from a desired latency of
  * 50ms.
  */
