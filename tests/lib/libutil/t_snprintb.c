@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.15 2024/02/15 23:48:51 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.16 2024/02/16 01:19:53 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.15 2024/02/15 23:48:51 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.16 2024/02/16 01:19:53 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -104,13 +104,13 @@ h_snprintb_loc(const char *file, size_t line,
 	    (uintmax_t)val,
 	    exp_rv, vis_arr(res, reslen),
 	    rv, vis_arr(buf, reslen));
-	check_unmodified_loc(file, line, buf, reslen + 1, sizeof(buf));
+	check_unmodified_loc(file, line, buf, reslen, sizeof(buf));
 }
 
 #define	h_snprintb_len(bufsize, fmt, val, exp_rv, res)			\
 	h_snprintb_loc(__FILE__, __LINE__,				\
 	    bufsize, fmt, sizeof(fmt) - 1, val,				\
-	    exp_rv, res, sizeof(res) - 1)
+	    exp_rv, res, sizeof(res))
 #define	h_snprintb(fmt, val, res)					\
 	h_snprintb_len(1024, fmt, val, sizeof(res) - 1, res)
 
@@ -250,44 +250,44 @@ ATF_TC_BODY(snprintb, tc)
 	// behavior due to out-of-bounds 'bp' pointer.
 	h_snprintb_len(
 	    0, "\020", 0,
-	    1, "ZZZ");
+	    1, "");
 #endif
 	h_snprintb_len(
 	    1, "\020", 0,
-	    1, "\0ZZZ");
+	    1, "");
 	h_snprintb_len(
 	    2, "\020", 0,
-	    1, "0\0ZZZ");
+	    1, "0");
 	h_snprintb_len(
 	    3, "\020", 0,
-	    1, "0\0ZZZ");
+	    1, "0");
 	h_snprintb_len(
 	    3, "\020", 7,
-	    3, "0x\0ZZZ");
+	    3, "0x");
 	h_snprintb_len(
 	    4, "\020", 7,
-	    3, "0x7\0ZZZ");
+	    3, "0x7");
 	h_snprintb_len(
 	    7, "\020\001lsb", 7,
-	    8, "0x7<ls\0ZZZ");
+	    8, "0x7<ls");
 	h_snprintb_len(
 	    8, "\020\001lsb", 7,
-	    8, "0x7<lsb\0ZZZ");
+	    8, "0x7<lsb");
 	h_snprintb_len(
 	    9, "\020\001lsb", 7,
-	    8, "0x7<lsb>\0ZZZ");
+	    8, "0x7<lsb>");
 	h_snprintb_len(
 	    9, "\020\001one\002two", 7,
-	    12, "0x7<one,\0ZZZ");
+	    12, "0x7<one,");
 	h_snprintb_len(
 	    10, "\020\001one\002two", 7,
-	    12, "0x7<one,t\0ZZZ");
+	    12, "0x7<one,t");
 	h_snprintb_len(
 	    12, "\020\001one\002two", 7,
-	    12, "0x7<one,two\0ZZZ");
+	    12, "0x7<one,two");
 	h_snprintb_len(
 	    13, "\020\001one\002two", 7,
-	    12, "0x7<one,two>\0ZZZ");
+	    12, "0x7<one,two>");
 
 	// new-style format, single bits, octal
 	h_snprintb(
@@ -596,44 +596,44 @@ ATF_TC_BODY(snprintb, tc)
 	// behavior due to out-of-bounds 'bp' pointer.
 	h_snprintb_len(
 	    0, "\177\020", 0,
-	    1, "ZZZ");
+	    1, "");
 #endif
 	h_snprintb_len(
 	    1, "\177\020", 0,
-	    1, "\0ZZZ");
+	    1, "");
 	h_snprintb_len(
 	    2, "\177\020", 0,
-	    1, "0\0ZZZ");
+	    1, "0");
 	h_snprintb_len(
 	    3, "\177\020", 0,
-	    1, "0\0ZZZ");
+	    1, "0");
 	h_snprintb_len(
 	    3, "\177\020", 7,
-	    3, "0x\0ZZZ");
+	    3, "0x");
 	h_snprintb_len(
 	    4, "\177\020", 7,
-	    3, "0x7\0ZZZ");
+	    3, "0x7");
 	h_snprintb_len(
 	    7, "\177\020b\000lsb\0", 7,
-	    8, "0x7<ls\0ZZZ");
+	    8, "0x7<ls");
 	h_snprintb_len(
 	    8, "\177\020b\000lsb\0", 7,
-	    8, "0x7<lsb\0ZZZ");
+	    8, "0x7<lsb");
 	h_snprintb_len(
 	    9, "\177\020b\000lsb\0", 7,
-	    8, "0x7<lsb>\0ZZZ");
+	    8, "0x7<lsb>");
 	h_snprintb_len(
 	    9, "\177\020b\000one\0b\001two\0", 7,
-	    12, "0x7<one,\0ZZZ");
+	    12, "0x7<one,");
 	h_snprintb_len(
 	    10, "\177\020b\000one\0b\001two\0", 7,
-	    12, "0x7<one,t\0ZZZ");
+	    12, "0x7<one,t");
 	h_snprintb_len(
 	    12, "\177\020b\000one\0b\001two\0", 7,
-	    12, "0x7<one,two\0ZZZ");
+	    12, "0x7<one,two");
 	h_snprintb_len(
 	    13, "\177\020b\000one\0b\001two\0", 7,
-	    12, "0x7<one,two>\0ZZZ");
+	    12, "0x7<one,two>");
 
 }
 
@@ -670,13 +670,13 @@ h_snprintb_m_loc(const char *file, size_t line,
 	    max,
 	    exp_rv, vis_arr(res, reslen),
 	    total, vis_arr(buf, reslen));
-	check_unmodified_loc(file, line, buf, reslen + 1, sizeof(buf));
+	check_unmodified_loc(file, line, buf, reslen, sizeof(buf));
 }
 
 #define	h_snprintb_m_len(bufsize, fmt, val, line_max, exp_rv, res)	\
 	h_snprintb_m_loc(__FILE__, __LINE__,				\
 	    bufsize, fmt, sizeof(fmt) - 1, val, line_max,		\
-	    exp_rv, res, sizeof(res) - 1)
+	    exp_rv, res, sizeof(res))
 #define	h_snprintb_m(fmt, val, max, res)				\
 	h_snprintb_m_len(1024, fmt, val, max, sizeof(res) - 1, res)
 
@@ -697,22 +697,14 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xffff,
 	    6,
 	    143,
-	    /*   0 */ "0xffff>\0"
-	    /*   8 */ "0xffff<>\0"
-	    /*  17 */ "0xffffb>\0"
-	    /*  26 */ "0xffffi>\0"
-	    /*  35 */ "0xfffft>\0"
-	    /*  44 */ "0xffff1>\0"
-	    /*  53 */ "0xffff<>\0"
-	    /*  62 */ "0xff\0\0ZZ"
-	    /*  70 */ "ZZZZZZZZZZ"
-	    /*  80 */ "ZZZZZZZZZZ"
-	    /*  90 */ "ZZZZZZZZZZ"
-	    /* 100 */ "ZZZZZZZZZZ"
-	    /* 110 */ "ZZZZZZZZZZ"
-	    /* 120 */ "ZZZZZZZZZZ"
-	    /* 130 */ "ZZZZZZZZZZ"
-	    /* 140 */ "ZZZZZZZZZZ"
+	    "0xffff>\0"
+	    "0xffff<>\0"
+	    "0xffffb>\0"
+	    "0xffffi>\0"
+	    "0xfffft>\0"
+	    "0xffff1>\0"
+	    "0xffff<>\0"
+	    "0xff\0"
 	);
 
 	// new-style format, small maximum line length
@@ -725,33 +717,171 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xffff,
 	    6,
 	    143,
-	    /*   0 */ "0xffff>\0"
-	    /*   8 */ "0xffff<>\0"
-	    /*  17 */ "0xffffb>\0"
-	    /*  26 */ "0xffffi>\0"
-	    /*  35 */ "0xfffft>\0"
-	    /*  44 */ "0xffff1>\0"
-	    /*  53 */ "0xffff<>\0"
-	    /*  62 */ "0xff\0\0ZZ"
-	    /*  70 */ "ZZZZZZZZZZ"
-	    /*  80 */ "ZZZZZZZZZZ"
-	    /*  90 */ "ZZZZZZZZZZ"
-	    /* 100 */ "ZZZZZZZZZZ"
-	    /* 110 */ "ZZZZZZZZZZ"
-	    /* 120 */ "ZZZZZZZZZZ"
-	    /* 130 */ "ZZZZZZZZZZ"
-	    /* 140 */ "ZZZZZZZZZZ"
+	    "0xffff>\0"
+	    "0xffff<>\0"
+	    "0xffffb>\0"
+	    "0xffffi>\0"
+	    "0xfffft>\0"
+	    "0xffff1>\0"
+	    "0xffff<>\0"
+	    "0xff\0"
+	);
+
+	// new-style format, buffer too small for number
+	h_snprintb_m_len(
+	    2,
+	    "\177\020",
+	    0,
+	    64,
+	    2,
+	    "\0"
+	);
+
+	// new-style format, buffer too small for '<'
+	h_snprintb_m_len(
+	    6,
+	    "\177\020"
+	    "b\000lsb\0",
+	    0xff,
+	    64,
+	    10,
+	    "0xff\0"
 	);
 
 	// new-style format, buffer too small for description
 	h_snprintb_m_len(
-	    8,
+	    7,
 	    "\177\020"
-	    "b\000bit1\0",
-	    0x0001,
+	    "b\000lsb\0",
+	    0xff,
 	    64,
 	    10,
-	    "0x1<bi\0\0ZZZ"
+	    "0xff<\0"
+	);
+
+	// new-style format, buffer too small for complete description
+	h_snprintb_m_len(
+	    9,
+	    "\177\020"
+	    "b\000lsb\0",
+	    0xff,
+	    64,
+	    10,
+	    "0xff<ls\0"
+	);
+
+	// new-style format, buffer too small for '>'
+	h_snprintb_m_len(
+	    10,
+	    "\177\020"
+	    "b\000lsb\0",
+	    0xff,
+	    64,
+	    10,
+	    "0xff<lsb\0"
+	);
+
+	// new-style format, buffer too small for second line
+	h_snprintb_m_len(
+	    11,
+	    "\177\020"
+	    "b\000lsb\0"
+	    "b\001two\0",
+	    0xff,
+	    11,
+	    20,
+	    "0xff<lsb>\0"
+	);
+
+	// new-style format, buffer too small for number in line 2
+	h_snprintb_m_len(
+	    12,
+	    "\177\020"
+	    "b\000lsb\0"
+	    "b\001two\0",
+	    0xff,
+	    11,
+	    20,
+	    "0xff<lsb>\0"
+	    "\0"
+	);
+
+	// new-style format, buffer too small for complete number in line 2
+	h_snprintb_m_len(
+	    15,
+	    "\177\020"
+	    "b\000lsb\0"
+	    "b\001two\0",
+	    0xff,
+	    11,
+	    20,
+	    "0xff<lsb>\0"
+	    "0xf\0"		// XXX: incomplete number may be misleading
+	);
+
+	// new-style format, buffer too small for '<' in line 2
+	h_snprintb_m_len(
+	    16,
+	    "\177\020"
+	    "b\000lsb\0"
+	    "b\001two\0",
+	    0xff,
+	    11,
+	    20,
+	    "0xff<lsb>\0"
+	    "0xff\0"
+	);
+
+	// new-style format, buffer too small for description in line 2
+	h_snprintb_m_len(
+	    17,
+	    "\177\020"
+	    "b\000lsb\0"
+	    "b\001two\0",
+	    0xff,
+	    11,
+	    20,
+	    "0xff<lsb>\0"
+	    "0xff<\0"
+	);
+
+	// new-style format, line too small for unmatched field value
+	h_snprintb_m_len(
+	    30,
+	    "\177\020"
+	    "f\000\004bits\0"
+	        ":\000other\0",
+	    0xff,
+	    11,
+	    22,
+	    "0xff<bits=0xf>\0"	// XXX: line too long (14 > 11)
+	    "0xff#>\0"		// XXX: why '#'? unbalanced '<>'
+	);
+
+	// new-style format, line too small for field value
+	h_snprintb_m_len(
+	    30,
+	    "\177\020"
+	    "f\000\004bits\0"
+		":\017other\0",
+	    0xff,
+	    11,
+	    27,
+	    "0xff<bits=0xf>\0"	// XXX: line too long (14 > 11)
+	    "0xff#other>\0"	// XXX: unbalanced '<>'
+	);
+
+	// new-style format, buffer too small for fallback
+	h_snprintb_m_len(
+	    20,
+	    "\177\020"
+	    "f\000\004bits\0"
+		"*=fallback\0"
+	    "b\0024\0",
+	    0xff,
+	    64,
+	    26,
+	    "0xff<bits=0xf=fall\0"
 	);
 
 	h_snprintb_m(
@@ -766,7 +896,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0x800f0701,
 	    33,
 	    "0x800f0701<LSB,NIBBLE2=0>\0"
-	    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\0");
+	    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\0"
+	);
 
 	h_snprintb_m(
 	    "\177\020"
