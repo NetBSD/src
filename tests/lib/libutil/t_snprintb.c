@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.19 2024/02/16 19:20:38 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.20 2024/02/16 19:53:40 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.19 2024/02/16 19:20:38 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.20 2024/02/16 19:53:40 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -79,9 +79,6 @@ h_snprintb_loc(const char *file, size_t line,
 {
 	char buf[1024];
 
-	// Calling snprintb with bufsize == 0 invokes undefined
-	// behavior due to out-of-range 'bp'.
-	ATF_REQUIRE(bufsize > 0);
 	ATF_REQUIRE(bufsize <= sizeof(buf));
 	ATF_REQUIRE(reslen <= sizeof(buf));
 
@@ -90,8 +87,11 @@ h_snprintb_loc(const char *file, size_t line,
 	ATF_REQUIRE(rv >= 0);
 	size_t rlen = rv;
 
+	if (bufsize == 0 && reslen == 1)
+		reslen = 0;
 	ATF_CHECK_MSG(
-	    rv == exp_rv && memcmp(buf, res, reslen) == 0
+	    rv == exp_rv
+	    && memcmp(buf, res, reslen) == 0
 	    && buf[rlen < bufsize ? rlen : bufsize - 1] == '\0',
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
@@ -244,14 +244,10 @@ ATF_TC_BODY(snprintb, tc)
 	h_snprintb_error(
 	    "\377");
 
-	// old-style format, small buffer
-#if 0
-	// FIXME: Calling snprintb with buffer size 0 invokes undefined
-	// behavior due to out-of-bounds 'bp' pointer.
+	// old-style format, small buffers
 	h_snprintb_len(
 	    0, "\020", 0,
 	    1, "");
-#endif
 	h_snprintb_len(
 	    1, "\020", 0,
 	    1, "");
@@ -599,14 +595,10 @@ ATF_TC_BODY(snprintb, tc)
 		    expected);
 	}
 
-	// new-style format, small buffer
-#if 0
-	// FIXME: Calling snprintb with buffer size 0 invokes undefined
-	// behavior due to out-of-bounds 'bp' pointer.
+	// new-style format, small buffers
 	h_snprintb_len(
 	    0, "\177\020", 0,
 	    1, "");
-#endif
 	h_snprintb_len(
 	    1, "\177\020", 0,
 	    1, "");
@@ -653,7 +645,7 @@ h_snprintb_m_loc(const char *file, size_t line,
 {
 	char buf[1024];
 
-	ATF_REQUIRE(bufsize > 1);
+	ATF_REQUIRE(bufsize > 0);
 	ATF_REQUIRE(bufsize <= sizeof(buf));
 	ATF_REQUIRE(reslen <= sizeof(buf));
 
