@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.28 2023/04/21 15:04:47 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.29 2024/02/16 16:28:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.28 2023/04/21 15:04:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.29 2024/02/16 16:28:49 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -112,6 +112,12 @@ int comcnmode = CONMODE | CLOCAL;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
 #endif
 
 static void
@@ -273,9 +279,11 @@ initarm(void *arg)
 
 	cn_tab = &earlycons;
 
+	VPRINTF("devmap\n");
 	extern char ARM_BOOTSTRAP_LxPT[];
 	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
 
+	VPRINTF("bootstrap\n");
 	bcm53xx_bootstrap(KERNEL_IO_IOREG_VBASE);
 
 #ifdef MULTIPROCESSOR
@@ -286,7 +294,9 @@ initarm(void *arg)
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
+	VPRINTF("consinit ");
 	consinit();
+	VPRINTF("ok\n");
 
 	bcm53xx_cpu_softc_init(curcpu());
 	bcm53xx_print_clocks();
@@ -421,3 +431,20 @@ bcm53xx_system_reset(void)
 	bus_space_write_4(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh,
 	    MISC_WATCHDOG, 1);
 }
+
+void __noasan
+bcm53xx_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA (CONSADDR - BCM53XX_IOREG_PBASE + KERNEL_IO_IOREG_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = htole32(c);
+#endif
+}
+
