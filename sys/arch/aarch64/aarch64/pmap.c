@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1192,7 +1192,7 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 
 #ifdef PMAP_PV_DEBUG
 	printf("pv %p alias added va=%016lx -> pa=%016lx\n", pv, va, pa);
-	pv_dump(pp, printf);
+	pmap_db_mdpg_print(PHYS_TO_VM_PAGE(pa), printf);
 #endif
 
 	return 0;
