@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.28 2024/02/16 18:03:16 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.28 2024/02/16 18:03:16 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.28 2024/02/16 18:03:16 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.28 2024/02/16 18:03:16 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -206,7 +206,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		int matched = 1;
 		while (*bitfmt != '\0') {
 			char kind = *bitfmt++;
-			int bit = *bitfmt++;
+			uint8_t bit = *bitfmt++;
 			switch (kind) {
 			case 'b':
 				if (((val >> bit) & 1) == 0)
@@ -254,7 +254,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 				 * This only works for values in [0..255],
 				 * of course.
 				 */
-				if ((int)field != bit)
+				if (field != bit)
 					goto skip;
 				matched = 1;
 				if (kind == '=')
