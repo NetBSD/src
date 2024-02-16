@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.34 2024/02/16 21:25:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.34 2024/02/16 21:25:46 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.33 2024/02/16 19:53:40 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.34 2024/02/16 21:25:46 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -91,10 +91,6 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	default:
 		goto internal;
 	}
-
-	/* Reserve space for trailing blank line if needed */
-	if (line_max > 0)
-		bufsize--;
 
 	int val_len = snprintf(buf, bufsize, num_fmt, (uintmax_t)val);
 	if (val_len < 0)
@@ -268,13 +264,12 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (sep != '<')
 		STORE('>');
 	if (line_max > 0) {
-		bufsize++;
 		STORE('\0');
-		if (total_len >= bufsize && bufsize > 1)
+		if (bufsize >= 2 && total_len > bufsize - 2)
 			buf[bufsize - 2] = '\0';
 	}
 	STORE('\0');
-	if (total_len >= bufsize && bufsize > 0)
+	if (bufsize >= 1 && total_len > bufsize - 1)
 		buf[bufsize - 1] = '\0';
 	return (int)(total_len - 1);
 internal:
