@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.26 2024/02/16 01:57:50 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.27 2024/02/16 17:42:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.26 2024/02/16 01:57:50 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.27 2024/02/16 17:42:49 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.26 2024/02/16 01:57:50 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.26 2024/02/16 01:57:50 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.27 2024/02/16 17:42:49 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -61,14 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.26 2024/02/16 01:57:50 rillig Exp $")
 # ifndef HAVE_SNPRINTB_M
 int
 snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
-	   size_t l_max)
+	   size_t line_max)
 {
-	char *bp = buf, *s_bp = NULL;
-	const char *c_fmt, *s_fmt = NULL, *cur_fmt;
-	const char *sbase;
-	int bit, ch, t_len, s_len = 0, l_len, f_len, v_len, sep;
-	int restart = 0, matched = 1;
-	uint64_t field;
+	char *bp = buf, *sep_bp = NULL;
+	const char *c_fmt, *sep_fmt = NULL, *cur_fmt;
+	const char *num_fmt;
+	int ch, total_len, sep_line_len = 0, line_len, val_len, sep;
+	int restart = 0;
 
 #ifdef _KERNEL
 	/*
@@ -81,73 +80,70 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	ch = *bitfmt++;
 	switch (ch != '\177' ? ch : *bitfmt++) {
 	case 8:
-		sbase = "%#jo";
+		num_fmt = "%#jo";
 		break;
 	case 10:
-		sbase = "%ju";
+		num_fmt = "%ju";
 		break;
 	case 16:
-		sbase = "%#jx";
+		num_fmt = "%#jx";
 		break;
 	default:
 		goto internal;
 	}
 
 	/* Reserve space for trailing blank line if needed */
-	if (l_max > 0)
+	if (line_max > 0)
 		bufsize--;
 
-	t_len = snprintf(bp, bufsize, sbase, (uintmax_t)val);
-	if (t_len < 0)
+	total_len = snprintf(bp, bufsize, num_fmt, (uintmax_t)val);
+	if (total_len < 0)
 		goto internal;
 
-	v_len = l_len = t_len;
+	val_len = line_len = total_len;
 
-	if ((size_t)t_len < bufsize)
-		bp += t_len;
+	if ((size_t)total_len < bufsize)
+		bp += total_len;
 	else
 		bp += bufsize - 1;
 
-	/*
-	 * If the value we printed was 0 and we're using the old-style format,
-	 * we're done.
-	 */
 	if (val == 0 && ch != '\177')
-		goto terminate;
+		goto done;
 
 #define	STORE(c) do {							\
-		l_len++;						\
-		if ((size_t)(++t_len) < bufsize)			\
+		line_len++;						\
+		if ((size_t)(++total_len) < bufsize)			\
 			*bp++ = (c);					\
 	} while (0)
 
 #define	BACKUP() do {							\
-		if (s_bp != NULL) {					\
-			bp = s_bp;					\
-			s_bp = NULL;					\
-			t_len -= l_len - s_len;				\
+		if (sep_bp != NULL) {					\
+			bp = sep_bp;					\
+			sep_bp = NULL;					\
+			total_len -= line_len - sep_line_len;		\
 			restart = 1;					\
-			bitfmt = s_fmt;					\
+			bitfmt = sep_fmt;				\
 		}							\
 		STORE('>');						\
 		STORE('\0');						\
-		if ((size_t)t_len < bufsize)				\
-			snprintf(bp, bufsize - t_len, sbase, (uintmax_t)val);\
-		t_len += v_len;						\
-		l_len = v_len;						\
-		bp += v_len;						\
+		if ((size_t)total_len < bufsize)			\
+			snprintf(bp, bufsize - total_len, num_fmt,	\
+			    (uintmax_t)val);				\
+		total_len += val_len;					\
+		line_len = val_len;					\
+		bp += val_len;						\
 	} while (0)
 
 #define	PUTSEP() do {							\
-		if (l_max > 0 && (size_t)l_len >= l_max) {		\
+		if (line_max > 0 && (size_t)line_len >= line_max) {	\
 			BACKUP();					\
 			STORE('<');					\
 		} else {						\
 			/* Remember separator location */		\
-			if (l_max > 0 && sep != '<') {			\
-				s_len = l_len;				\
-				s_bp  = bp;				\
-				s_fmt = cur_fmt;			\
+			if (line_max > 0 && sep != '<') {		\
+				sep_line_len = line_len;		\
+				sep_bp = bp;				\
+				sep_fmt = cur_fmt;			\
 			}						\
 			STORE(sep);					\
 			restart = 0;					\
@@ -155,7 +151,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	PUTCHR(c) do {							\
-		if (l_max > 0 && (size_t)l_len >= l_max - 1) {		\
+		if (line_max > 0 && (size_t)line_len >= line_max - 1) {	\
 			BACKUP();					\
 			if (restart == 0)				\
 				STORE(c);				\
@@ -176,22 +172,20 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	FMTSTR(sb, f) do {						\
-		f_len = snprintf(bp, bufsize - t_len, sb, (uintmax_t)f); \
-		if (f_len < 0)						\
+		int fmt_len = snprintf(bp, bufsize - total_len, sb,	\
+		    (uintmax_t)f);					\
+		if (fmt_len < 0)					\
 			goto internal;					\
-		t_len += f_len;						\
-		l_len += f_len;						\
-		if ((size_t)t_len < bufsize)				\
-			bp += f_len;					\
+		total_len += fmt_len;					\
+		line_len += fmt_len;					\
+		if ((size_t)total_len < bufsize)			\
+			bp += fmt_len;					\
 	} while (0)
 
-	/*
-	 * Chris Torek's new bitmask format is identified by a leading \177
-	 */
 	sep = '<';
 	if (ch != '\177') {
-		/* old (standard) format. */
-		while ((bit = *bitfmt) != 0) {
+		/* old-style format, 32-bit, 1-origin. */
+		for (int bit; (bit = *bitfmt) != 0;) {
 			cur_fmt = bitfmt++;
 			if (val & (1U << (bit - 1))) {
 				PUTSEP();
@@ -199,7 +193,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 					continue;
 				sep = ',';
 				for (; (ch = *bitfmt) > ' '; ++bitfmt) {
-					PUTCHR(ch); 
+					PUTCHR(ch);
 					if (restart)
 						break;
 				}
@@ -208,10 +202,11 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 					continue;
 		}
 	} else {
-		/* new quad-capable format; also does fields. */
-		field = val;
+		/* new-style format, 64-bit, 0-origin; also does fields. */
+		uint64_t field = val;
+		int matched = 1;
 		while (c_fmt = bitfmt, (ch = *bitfmt++) != '\0') {
-			bit = *bitfmt++;	/* now 0-origin */
+			int bit = *bitfmt++;
 			switch (ch) {
 			case 'b':
 				if (((val >> bit) & 1) == 0)
@@ -228,9 +223,9 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 			case 'F':
 				matched = 0;
 				cur_fmt = c_fmt;
-				f_len = *bitfmt++;	/* field length */
+				int field_width = *bitfmt++;
 				field = (val >> bit) &
-				    (((uint64_t)1 << f_len) - 1);
+				    (((uint64_t)1 << field_width) - 1);
 				PUTSEP();
 				if (restart == 0)
 					sep = ',';
@@ -245,8 +240,9 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 				if (restart == 0)
 					PUTCHR('=');
 				if (restart == 0) {
-					FMTSTR(sbase, field);
-					if (l_max > 0 && (size_t)l_len > l_max)
+					FMTSTR(num_fmt, field);
+					if (line_max > 0
+					    && (size_t)line_len > line_max)
 						PUTCHR('#');
 				}
 				break;
@@ -282,17 +278,17 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	}
 	if (sep != '<')
 		STORE('>');
-terminate:
-	if (l_max > 0) {
+done:
+	if (line_max > 0) {
 		bufsize++;
 		STORE('\0');
-		if ((size_t)t_len >= bufsize && bufsize > 1)
+		if ((size_t)total_len >= bufsize && bufsize > 1)
 			buf[bufsize - 2] = '\0';
 	}
 	STORE('\0');
-	if ((size_t)t_len >= bufsize && bufsize > 0)
+	if ((size_t)total_len >= bufsize && bufsize > 0)
 		buf[bufsize - 1] = '\0';
-	return t_len - 1;
+	return total_len - 1;
 internal:
 #ifndef _KERNEL
 	errno = EINVAL;
