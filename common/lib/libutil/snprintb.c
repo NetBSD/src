@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -171,8 +171,9 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	FMTSTR(sb, f) do {						\
-		int fmt_len = snprintf(bp, bufsize - total_len, sb,	\
-		    (uintmax_t)f);					\
+		size_t n = (size_t)total_len < bufsize			\
+		    ? bufsize - total_len : 0;				\
+		int fmt_len = snprintf(bp, n, sb, (uintmax_t)f);	\
 		if (fmt_len < 0)					\
 			goto internal;					\
 		total_len += fmt_len;					\
