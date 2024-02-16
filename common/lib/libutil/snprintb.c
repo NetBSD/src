@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.29 2024/02/16 18:09:15 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.30 2024/02/16 18:17:10 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -184,7 +184,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	sep = '<';
 	if (old_style) {
 		/* old-style format, 32-bit, 1-origin. */
-		for (int bit; (bit = *bitfmt) != 0;) {
+		for (uint8_t bit; (bit = *bitfmt) != 0;) {
 			cur_bitfmt = bitfmt++;
 			if (val & (1U << (bit - 1))) {
 				PUTSEP();
@@ -205,7 +205,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		uint64_t field = val;
 		int matched = 1;
 		while (*bitfmt != '\0') {
-			char kind = *bitfmt++;
+			uint8_t kind = *bitfmt++;
 			uint8_t bit = *bitfmt++;
 			switch (kind) {
 			case 'b':
@@ -223,7 +223,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 			case 'F':
 				matched = 0;
 				cur_bitfmt = bitfmt - 2;
-				int field_width = *bitfmt++;
+				uint8_t field_width = *bitfmt++;
 				field = (val >> bit) &
 				    (((uint64_t)1 << field_width) - 1);
 				PUTSEP();
