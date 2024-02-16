@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.18 2024/02/16 18:13:47 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.19 2024/02/16 19:20:38 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.18 2024/02/16 18:13:47 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.19 2024/02/16 19:20:38 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -891,6 +891,32 @@ ATF_TC_BODY(snprintb_m, tc)
 	    64,
 	    26,
 	    "0xff<bits=0xf=fall\0"
+	);
+
+	// new-style format, buffer too small for numeric fallback
+	h_snprintb_m_len(
+	    20,
+	    "\177\020"
+	    "F\000\004\0"
+		"*fallback(%040jd)\0",
+	    0xff,
+	    64,
+	    57,
+	    "0xff<fallback(0000\0"
+	);
+
+	// new-style format, buffer too small for numeric fallback past buffer
+	h_snprintb_m_len(
+	    15,
+	    "\177\020"
+	    "F\000\004\0"
+		"*fallback(%010jd)\0"
+	    "F\004\004\0"
+		"*fallback(%010jd)\0",
+	    0xff,
+	    64,
+	    48,
+	    "0xff<fallback\0"
 	);
 
 	h_snprintb_m(
