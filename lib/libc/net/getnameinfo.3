@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.43 2024/02/15 15:08:23 jkoshy Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.44 2024/02/16 22:50:33 uwe Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
 .\"
@@ -23,17 +23,25 @@
 .Sh NAME
 .Nm getnameinfo
 .Nd socket address structure to hostname and service name
+.
 .Sh SYNOPSIS
 .In netdb.h
+.
 .Ft int
-.Fn getnameinfo "const struct sockaddr * restrict sa" "socklen_t salen" \
-    "char * restrict host" "socklen_t hostlen" "char * restrict serv" \
-    "socklen_t servlen" "int flags"
+.Fo getnameinfo
+.Fa "const struct sockaddr * restrict sa"
+.Fa "socklen_t salen"
+.Fa "char * restrict host"
+.Fa "socklen_t hostlen"
+.Fa "char * restrict serv"
+.Fa "socklen_t servlen" "int flags"
+.Fc
+.
 .Sh DESCRIPTION
 The
 .Fn getnameinfo
 function is used to convert a
-.Li sockaddr
+.Vt sockaddr
 structure to a pair of host name and service strings.
 It is a replacement for and provides more flexibility than the
 .Xr gethostbyaddr 3
@@ -44,20 +52,20 @@ functions and is the converse of the
 function.
 .Pp
 The
-.Li sockaddr
+.Vt sockaddr
 structure
 .Fa sa
 should point to a
-.Li sockaddr_in
+.Vt sockaddr_in
 (for IPv4),
-.Li sockaddr_in6
+.Vt sockaddr_in6
 (for IPv6),
-.Li sockaddr_atalk
+.Vt sockaddr_atalk
 (for AppleTalk),
-.Li sockaddr_link
+.Vt sockaddr_link
 (for link layer),
 or
-.Li sockaddr_local
+.Vt sockaddr_local
 (for local/unix)
 structures that are
 .Fa salen
@@ -85,14 +93,16 @@ as defined by
 .In netdb.h .
 If a length parameter is zero, no string will be stored.
 Otherwise, enough space must be provided to store the
-host name or service string plus a byte for the NUL terminator.
+host name or service string plus a byte for the
+.Tn NUL
+terminator.
 .Pp
 The
 .Fa flags
 argument is formed by
-.Sy OR Ns 'ing
+.Em or Ap ing
 the following values:
-.Bl -tag -width "NI_NUMERICHOSTXX"
+.Bl -tag -width Dv
 .It Dv NI_NOFQDN
 A fully qualified domain name is not required for local hosts.
 The local part of the fully qualified domain name is returned instead.
@@ -106,21 +116,23 @@ If the host name cannot be found in DNS and this flag is set,
 a non-zero error code is returned.
 If the host name is not found and the flag is not set, the
 address is returned in numeric form.
-.It NI_NUMERICSCOPE
+.It Dv NI_NUMERICSCOPE
 For IPv6 addresses the numeric form of the IPv6 scope identifier is
 returned.
 This flag is ignored for non-IPv6 addresses.
-.It NI_NUMERICSERV
+.It Dv NI_NUMERICSERV
 The service name is returned as a digit string representing the port number.
-.It NI_DGRAM
+.It Dv NI_DGRAM
 Specifies that the service being looked up is a datagram
 service, and causes
 .Xr getservbyport 3
 to be called with a second argument of
-.Dq udp
+.Li \*qudp\*q
 instead of its default of
-.Dq tcp .
-This is required for the few ports (512\-514) that have different services
+.Li \*qtcp\*q .
+This is required for the few ports
+.Pq 512\(en514
+that have different services
 for
 .Tn UDP
 and
@@ -128,17 +140,19 @@ and
 .El
 .Pp
 This implementation allows numeric IPv6 address notation with scope identifier,
-as documented in chapter 11 of draft-ietf-ipv6-scoping-arch-02.txt.
+as documented in chapter\~11 of draft-ietf-ipv6-scoping-arch-02.txt.
 IPv6 link-local address will appear as a string like
-.Dq Li fe80::1%ne0 .
+.Ql fe80::1%ne0 .
 Refer to
 .Xr getaddrinfo 3
 for more information.
+.
 .Sh RETURN VALUES
 .Fn getnameinfo
 returns zero on success or one of the error codes listed in
 .Xr gai_strerror 3
 if an error occurs.
+.
 .Sh EXAMPLES
 The following code tries to get a numeric host name, and service name,
 for a given socket address.
@@ -167,6 +181,7 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 }
 printf("host=%s\en", hbuf);
 .Ed
+.
 .Sh SEE ALSO
 .Xr gai_strerror 3 ,
 .Xr getaddrinfo 3 ,
@@ -205,6 +220,7 @@ printf("host=%s\en", hbuf);
 .%B "Proceedings of the FREENIX track: 2000 USENIX annual technical conference"
 .%D June 2000
 .Re
+.
 .Sh STANDARDS
 The
 .Fn getnameinfo
@@ -213,19 +229,25 @@ function is defined by the
 draft specification and documented in
 .Sy "RFC 2553" ,
 .Dq Basic Socket Interface Extensions for IPv6 .
+.
 .Sh CAVEATS
 .Fn getnameinfo
-can return both numeric and FQDN forms of the address specified in
+can return both numeric and
+.Tn FQDN
+forms of the address specified in
 .Fa sa .
 There is no return value that indicates whether the string returned in
 .Fa host
-is a result of binary to numeric-text translation (like
-.Xr inet_ntop 3 ) ,
-or is the result of a DNS reverse lookup.
-Because of this, malicious parties could set up a PTR record as follows:
-.Bd -literal -offset indent
-1.0.0.127.in-addr.arpa. IN PTR  10.1.1.1
-.Ed
+is a result of binary to numeric-text translation
+.Pq like Xr inet_ntop 3 ,
+or is the result of a
+.Tn DNS
+reverse lookup.
+Because of this, malicious parties could set up a
+.Tn PTR
+record as follows:
+.Pp
+.Dl 1.0.0.127.in-addr.arpa. IN PTR  10.1.1.1
 .Pp
 and trick the caller of
 .Fn getnameinfo
