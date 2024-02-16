@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.17 2024/02/16 18:09:16 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.18 2024/02/16 18:13:47 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.17 2024/02/16 18:09:16 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.18 2024/02/16 18:13:47 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -499,7 +499,7 @@ ATF_TC_BODY(snprintb, tc)
 		":\377all\0"
 		"*other\0",
 	    0xff00,
-	    "0xff00<other>");
+	    "0xff00<all>");
 
 	// new-style format, bit-fields with no match
 	h_snprintb(
