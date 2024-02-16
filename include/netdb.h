@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.71 2021/08/09 20:49:08 andvar Exp $	*/
+/*	$NetBSD: netdb.h,v 1.72 2024/02/16 11:13:59 jkoshy Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -296,7 +296,7 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
-#define	NI_WITHSCOPEID	0x00000020
+#define	NI_WITHSCOPEID	0x00000020	/* Obsolete. */
 #define	NI_NUMERICSCOPE	0x00000040
 
 /*%
