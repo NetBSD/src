@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.6 2022/10/15 11:07:38 jmcneill Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.6.2.1 2024/02/16 12:08:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.6 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.6.2.1 2024/02/16 12:08:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -417,7 +417,7 @@ bcmstb_setwin(struct bcmstb_softc *sc, int win, uint64_t pa, uint64_t ca,
 	STBRMW(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI(win),
 	    PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI_BASE,
 	    __SHIFTIN(base, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI_BASE));
-	
+
 	STBRMW(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI(win),
 	    PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI_LIMIT,
 	    __SHIFTIN(base, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI_LIMIT));
