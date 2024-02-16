@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.31 2024/02/16 19:20:38 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.32 2024/02/16 19:31:25 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -65,7 +65,6 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 {
 	char *bp = buf, *sep_bp = NULL;
 	const char *num_fmt, *cur_bitfmt, *sep_bitfmt = NULL;
-	int total_len, val_len, line_len, sep_line_len = 0;
 	char sep;
 	int restart = 0;
 
@@ -98,20 +97,20 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (line_max > 0)
 		bufsize--;
 
-	total_len = snprintf(bp, bufsize, num_fmt, (uintmax_t)val);
-	if (total_len < 0)
+	int val_len = snprintf(bp, bufsize, num_fmt, (uintmax_t)val);
+	if (val_len < 0)
 		goto internal;
 
-	val_len = line_len = total_len;
+	size_t total_len = val_len, line_len = val_len, sep_line_len = 0;
 
-	if ((size_t)total_len < bufsize)
+	if (total_len < bufsize)
 		bp += total_len;
 	else
 		bp += bufsize - 1;
 
 #define	STORE(c) do {							\
 		line_len++;						\
-		if ((size_t)(++total_len) < bufsize)			\
+		if (++total_len < bufsize)				\
 			*bp++ = (c);					\
 	} while (0)
 
@@ -125,7 +124,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		}							\
 		STORE('>');						\
 		STORE('\0');						\
-		if ((size_t)total_len < bufsize)			\
+		if (total_len < bufsize)				\
 			snprintf(bp, bufsize - total_len, num_fmt,	\
 			    (uintmax_t)val);				\
 		total_len += val_len;					\
@@ -134,7 +133,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	PUTSEP() do {							\
-		if (line_max > 0 && (size_t)line_len >= line_max) {	\
+		if (line_max > 0 && line_len >= line_max) {		\
 			BACKUP();					\
 			STORE('<');					\
 		} else {						\
@@ -150,7 +149,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	PUTCHR(c) do {							\
-		if (line_max > 0 && (size_t)line_len >= line_max - 1) {	\
+		if (line_max > 0 && line_len >= line_max - 1) {		\
 			BACKUP();					\
 			if (restart == 0)				\
 				STORE(c);				\
@@ -171,14 +170,14 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	} while (0)
 
 #define	FMTSTR(sb, f) do {						\
-		size_t n = (size_t)total_len < bufsize			\
+		size_t n = total_len < bufsize				\
 		    ? bufsize - total_len : 0;				\
 		int fmt_len = snprintf(bp, n, sb, (uintmax_t)f);	\
 		if (fmt_len < 0)					\
 			goto internal;					\
 		total_len += fmt_len;					\
 		line_len += fmt_len;					\
-		if ((size_t)total_len < bufsize)			\
+		if (total_len < bufsize)				\
 			bp += fmt_len;					\
 	} while (0)
 
@@ -243,7 +242,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 				if (restart == 0) {
 					FMTSTR(num_fmt, field);
 					if (line_max > 0
-					    && (size_t)line_len > line_max)
+					    && line_len > line_max)
 						PUTCHR('#');
 				}
 				break;
@@ -282,13 +281,13 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (line_max > 0) {
 		bufsize++;
 		STORE('\0');
-		if ((size_t)total_len >= bufsize && bufsize > 1)
+		if (total_len >= bufsize && bufsize > 1)
 			buf[bufsize - 2] = '\0';
 	}
 	STORE('\0');
-	if ((size_t)total_len >= bufsize && bufsize > 0)
+	if (total_len >= bufsize && bufsize > 0)
 		buf[bufsize - 1] = '\0';
-	return total_len - 1;
+	return (int)(total_len - 1);
 internal:
 #ifndef _KERNEL
 	errno = EINVAL;
