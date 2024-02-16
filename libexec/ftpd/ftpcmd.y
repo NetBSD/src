@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.95 2023/09/22 11:23:28 shm Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.96 2024/02/16 19:32:38 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.95 2023/09/22 11:23:28 shm Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.96 2024/02/16 19:32:38 jkoshy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1825,11 +1825,7 @@ port_check(const char *cmd, int family)
 {
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	char s1[NI_MAXHOST], s2[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
-#endif
 
 	if (epsvall) {
 		reply(501, "%s disallowed after EPSV ALL", cmd);
