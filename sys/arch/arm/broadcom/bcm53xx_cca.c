@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.5 2022/03/03 06:26:28 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.5.4.1 2024/02/16 12:07:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,7 +143,7 @@ bcmcca_intr(void *arg)
 		}
 	}
 	if (v & INTSTATUS_GPIOINT) {
-		
+
 	}
 	return rv;
 }

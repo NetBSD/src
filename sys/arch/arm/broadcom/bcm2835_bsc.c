@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.15 2020/03/31 12:23:17 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.15.22.1 2024/02/16 12:08:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.15 2020/03/31 12:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.15.22.1 2024/02/16 12:08:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -203,7 +203,7 @@ bsciic_next_state(struct bsciic_softc * const sc)
 	case BSC_EXEC_STATE_SEND_DATA:
 	case BSC_EXEC_STATE_RECV_DATA:
 		return BSC_EXEC_STATE_DONE;
-	
+
 	case BSC_EXEC_STATE_DONE:
 	case BSC_EXEC_STATE_ERROR:
 		return sc->sc_exec_state;

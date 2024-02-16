@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.25 2018/07/31 06:46:25 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.25.30.1 2024/02/16 12:07:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.25 2018/07/31 06:46:25 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.25.30.1 2024/02/16 12:07:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -328,7 +328,7 @@ bcm53xx_usb_clock_init(struct bcm53xx_clock_info *clk, uint32_t usb2_control)
 	const uint32_t ndiv = bcm53xx_value_wrap(usb2_control,
 	    USB2_CONTROL_NDIV_INT);
 
-	uint32_t usb_ref = (clk->clk_usb2 / pdiv) * ndiv; 
+	uint32_t usb_ref = (clk->clk_usb2 / pdiv) * ndiv;
 	if (usb_ref != USB2_REF_CLK) {
 		/*
 		 * USB Reference Clock isn't 1.92GHz.  So we need to modify
@@ -350,7 +350,7 @@ bcm53xx_usb_clock_init(struct bcm53xx_clock_info *clk, uint32_t usb2_control)
 		bus_space_write_4(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh,
 		    CRU_BASE + CRU_CLKSET_KEY, 0);
 
-		usb_ref = (clk->clk_usb2 / pdiv) * new_ndiv; 
+		usb_ref = (clk->clk_usb2 / pdiv) * new_ndiv;
 	}
 
 	clk->clk_usb_ref = usb_ref;
@@ -367,7 +367,7 @@ bcm53xx_clock_init(struct bcm53xx_clock_info *clk)
 /*
  * F(ddr) = ((1 / pdiv) * ndiv * CH2) / (post_div * 2)
  */
-static void 
+static void
 bcm53xx_get_ddr_freq(struct bcm53xx_clock_info *clk, uint32_t pll_status,
     uint32_t pll_dividers)
 {
@@ -402,7 +402,7 @@ bcm53xx_get_cpu_freq(struct bcm53xx_clock_info *clk,
 		clk->clk_apb = clk->clk_cpu / 4;
 		return;
 	}
-		
+
 	const u_int pdiv = bcm53xx_value_wrap(pllarma, CLK_PLLARMA_PDIV);
 	const u_int ndiv_int = bcm53xx_value_wrap(pllarma, CLK_PLLARMA_NDIV_INT);
 	const u_int ndiv_frac = __SHIFTOUT(pllarmb, CLK_PLLARMB_NDIV_FRAC);
@@ -605,13 +605,13 @@ bcm53xx_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simplest remedy is to replace with our
-		 * bus space used for the armcore registers (which armperiph uses). 
+		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = bcm53xx_armcore_bst;
 		return;
 	}
- 
+
 	/*
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
@@ -649,8 +649,8 @@ bcm53xx_srab_init(void)
 {
 	mutex_init(&srab_lock, MUTEX_DEFAULT, IPL_VM);
 
-	bcm53xx_srab_write_4(0x0079, 0x90);	// reset switch 
-	for (u_int port = 0; port < 8; port++) {        
+	bcm53xx_srab_write_4(0x0079, 0x90);	// reset switch
+	for (u_int port = 0; port < 8; port++) {
 		/* per port control: no stp */
 		bcm53xx_srab_write_4(port, 0x00);
 	}

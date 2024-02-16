@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.22 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.22.6.1 2024/02/16 12:07:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -271,7 +271,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "failed to establish interrupt #%zu (%zu)\n", i,
 			    loc->loc_intrs[0] + i);
-			while (i-- > 0) { 
+			while (i-- > 0) {
 				intr_disestablish(sc->sc_ih[i]);
 			}
 			return;
@@ -294,7 +294,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	 * This will force the device to negotiate to a max of gen1.
 	 */
 	if (cf->cf_flags & 1) {
-		bcmpax_conf_write(sc, 0, offset + PCIE_LCSR2, 1); 
+		bcmpax_conf_write(sc, 0, offset + PCIE_LCSR2, 1);
 	}
 
 	/*
@@ -302,7 +302,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	 */
 	offset += PCIE_LCSR;
 	for (size_t timo = 0;; timo++) {
-		const pcireg_t lcsr = bcmpax_conf_read(sc, 0, offset); 
+		const pcireg_t lcsr = bcmpax_conf_read(sc, 0, offset);
 		sc->sc_linkup = __SHIFTOUT(lcsr, PCIE_LCSR_NLW) != 0
 		    && (1 || (lcsr & PCIE_LCSR_DLACTIVE) != 0);
 		if (sc->sc_linkup || timo == 250) {
@@ -360,7 +360,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 
 	struct pcibus_attach_args pba;
 	memset(&pba, 0, sizeof(pba));
-		 
+
 	pba.pba_flags = sc->sc_pba_flags;
 	pba.pba_flags |= PCI_FLAGS_MEM_OKAY;
 	pba.pba_memt = sc->sc_bst;
@@ -397,7 +397,7 @@ bcmpax_decompose_tag(void *v, pcitag_t tag, int *busp, int *devp, int *funcp)
 		*devp = __SHIFTOUT(tag, CFG_ADDR_DEV);
 	if (funcp)
 		*funcp = __SHIFTOUT(tag, CFG_ADDR_FUNC);
-}       
+}
 
 static pcitag_t
 bcmpax_make_tag(void *v, int bus, int dev, int func)
@@ -424,7 +424,7 @@ bcmpax_conf_addr_write(struct bcmpax_softc *sc, pcitag_t tag)
 		bcmpax_write_4(sc, PCIE_CFG_ADDR, tag);
 		dsb(sy);
 		return PCIE_CFG_DATA;
-	} 
+	}
 	return 0;
 }
 
