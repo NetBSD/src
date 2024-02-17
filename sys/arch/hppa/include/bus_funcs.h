@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.1.66.1 2024/02/17 16:02:22 martin Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -56,19 +56,20 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	bus_space_read_4(t,h,o) (((t)->hbt_r4)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_8(t,h,o) (((t)->hbt_r8)((t)->hbt_cookie,(h),(o)))
 
+#define	bus_space_read_stream_1(t,h,o) (bus_space_read_1(t,h,o))
+#define	bus_space_read_stream_2(t,h,o) (((t)->hbt_rs2)((t)->hbt_cookie,(h),(o)))
+#define	bus_space_read_stream_4(t,h,o) (((t)->hbt_rs4)((t)->hbt_cookie,(h),(o)))
+#define	bus_space_read_stream_8(t,h,o) (((t)->hbt_rs8)((t)->hbt_cookie,(h),(o)))
+
 #define	bus_space_write_1(t,h,o,v) (((t)->hbt_w1)((t)->hbt_cookie,(h),(o),(v)))
 #define	bus_space_write_2(t,h,o,v) (((t)->hbt_w2)((t)->hbt_cookie,(h),(o),(v)))
 #define	bus_space_write_4(t,h,o,v) (((t)->hbt_w4)((t)->hbt_cookie,(h),(o),(v)))
 #define	bus_space_write_8(t,h,o,v) (((t)->hbt_w8)((t)->hbt_cookie,(h),(o),(v)))
 
-/* XXX fredette */
-#define	bus_space_read_stream_2	bus_space_read_2
-#define	bus_space_read_stream_4	bus_space_read_4
-#define	bus_space_read_stream_8	bus_space_read_8
-
-#define	bus_space_write_stream_2	bus_space_write_2
-#define	bus_space_write_stream_4	bus_space_write_4
-#define	bus_space_write_stream_8	bus_space_write_8
+#define	bus_space_write_stream_1(t,h,o,v) (bus_space_write_1(t,h,o,v))
+#define	bus_space_write_stream_2(t,h,o,v) (((t)->hbt_ws2)((t)->hbt_cookie,(h),(o),(v)))
+#define	bus_space_write_stream_4(t,h,o,v) (((t)->hbt_ws4)((t)->hbt_cookie,(h),(o),(v)))
+#define	bus_space_write_stream_8(t,h,o,v) (((t)->hbt_ws8)((t)->hbt_cookie,(h),(o),(v)))
 
 #define	bus_space_read_multi_1(t,h,o,a,c) \
 	(((t)->hbt_rm_1)((t)->hbt_cookie, (h), (o), (a), (c)))

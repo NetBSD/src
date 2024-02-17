@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.1 2024/02/17 16:02:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.1 2024/02/17 16:02:22 martin Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -714,7 +714,9 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	mbus_map, mbus_unmap, mbus_subregion, mbus_alloc, mbus_free,
 	mbus_barrier, mbus_vaddr, mbus_mmap,
 	mbus_r1,    mbus_r2,   mbus_r4,   mbus_r8,
+	            mbus_r2,   mbus_r4,   mbus_r8,
 	mbus_w1,    mbus_w2,   mbus_w4,   mbus_w8,
+	            mbus_w2,   mbus_w4,   mbus_w8,
 	mbus_rm_1,  mbus_rm_2, mbus_rm_4, mbus_rm_8,
 	mbus_wm_1,  mbus_wm_2, mbus_wm_4, mbus_wm_8,
 	mbus_sm_1,  mbus_sm_2, mbus_sm_4, mbus_sm_8,
