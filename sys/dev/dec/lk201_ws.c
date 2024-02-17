@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.10 2016/07/11 10:55:35 skrll Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.10.50.1 2024/02/17 16:17:17 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.10 2016/07/11 10:55:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.10.50.1 2024/02/17 16:17:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,17 +133,10 @@ lk201_decode(struct lk201_state *lks, int wantmulti, int datain, u_int *type, in
 	}
 
 	switch (datain) {
-#if 0
-	    case LK_KEY_UP:
-		for (i = 0; i < LK_KLL; i++)
-			lks->down_keys_list[i] = -1;
-		*type = WSCONS_EVENT_ALL_KEYS_UP;
-		return (1);
-#endif
 	    case LK_POWER_UP:
 		printf("lk201_decode: powerup detected\n");
 		lk201_init(lks);
-		return (0);
+		return LKD_NODATA;
 	    case LK_KDOWN_ERROR:
 	    case LK_POWER_ERROR:
 	    case LK_OUTPUT_ERROR:
@@ -152,7 +145,7 @@ lk201_decode(struct lk201_state *lks, int wantmulti, int datain, u_int *type, in
 		/* FALLTHRU */
 	    case LK_KEY_REPEAT: /* autorepeat handled by wskbd */
 	    case LK_MODE_CHANGE: /* ignore silently */
-		return (0);
+		return LKD_NODATA;
 	}
 
 
@@ -164,18 +157,18 @@ lk201_decode(struct lk201_state *lks, int wantmulti, int datain, u_int *type, in
 					*dataout = lks->down_keys_list[i] -
 					    MIN_LK201_KEY;
 					lks->down_keys_list[i] = -1;
-					return (LKD_MORE);
+					return LKD_MORE;
 				}
-			return (LKD_NODATA);
+			return LKD_NODATA;
 		} else {
 			for (i = 0; i < LK_KLL; i++)
 				lks->down_keys_list[i] = -1;
 			*type = WSCONS_EVENT_ALL_KEYS_UP;
-			return (LKD_COMPLETE);
+			return LKD_COMPLETE;
 		}
 	} else if (datain < MIN_LK201_KEY || datain > MAX_LK201_KEY) {
 		printf("lk201_decode: %x\n", datain);
-		return (0);
+		return LKD_NODATA;
 	}
 
 	*dataout = datain - MIN_LK201_KEY;
@@ -185,7 +178,7 @@ lk201_decode(struct lk201_state *lks, int wantmulti, int datain, u_int *type, in
 		if (lks->down_keys_list[i] == datain) {
 			*type = WSCONS_EVENT_KEY_UP;
 			lks->down_keys_list[i] = -1;
-			return (1);
+			return LKD_COMPLETE;
 		}
 		if (lks->down_keys_list[i] == -1 && freeslot == -1)
 			freeslot = i;
@@ -193,12 +186,12 @@ lk201_decode(struct lk201_state *lks, int wantmulti, int datain, u_int *type, in
 
 	if (freeslot == -1) {
 		printf("lk201_decode: down(%d) no free slot\n", datain);
-		return (0);
+		return LKD_NODATA;
 	}
 
 	*type = WSCONS_EVENT_KEY_DOWN;
 	lks->down_keys_list[freeslot] = datain;
-	return (1);
+	return LKD_COMPLETE;
 }
 
 void
