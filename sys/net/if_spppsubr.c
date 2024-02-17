@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.267 2023/03/25 21:35:49 andvar Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.268 2024/02/17 15:47:39 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.267 2023/03/25 21:35:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.268 2024/02/17 15:47:39 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -444,7 +444,6 @@ static void sppp_ipv6cp_scr(struct sppp *);
 static void sppp_pap_input(struct sppp *, struct mbuf *);
 static void sppp_pap_init(struct sppp *);
 static void sppp_pap_tlu(struct sppp *);
-static void sppp_pap_scr(struct sppp *);
 static void sppp_pap_scr(struct sppp *);
 
 static void sppp_chap_input(struct sppp *, struct mbuf *);
