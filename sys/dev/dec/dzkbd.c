@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.30 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.30.6.1 2024/02/17 16:17:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.30 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.30.6.1 2024/02/17 16:17:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ dzkbd_cngetc(void *v, u_int *type, int *data)
 
 	do {
 		c = dzgetc(dzi->dzi_ls);
-	} while (!lk201_decode(&dzi->dzi_ks, 0, c, type, data) == LKD_NODATA);
+	} while (lk201_decode(&dzi->dzi_ks, 0, c, type, data) == LKD_NODATA);
 }
 
 static void

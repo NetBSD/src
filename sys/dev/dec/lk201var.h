@@ -1,4 +1,4 @@
-/* $NetBSD: lk201var.h,v 1.7 2015/01/02 21:32:26 jklos Exp $ */
+/* $NetBSD: lk201var.h,v 1.7.50.1 2024/02/17 16:17:17 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -54,7 +54,7 @@ void lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
 void lk201_set_leds(struct lk201_state *, int);
 void lk201_set_keyclick(struct lk201_state *, int);
 
+/* Values returned by lk201_decode */
 #define LKD_NODATA	0x00
 #define LKD_COMPLETE	0x01
 #define LKD_MORE	0x02
-
