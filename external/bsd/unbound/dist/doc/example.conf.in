@@ -1,7 +1,7 @@
 #
 # Example configuration file.
 #
-# See unbound.conf(5) man page, version 1.16.3.
+# See unbound.conf(5) man page, version 1.19.1.
 #
 # this is a comment.
 
@@ -17,7 +17,7 @@ server:
 	# whitespace is not necessary, but looks cleaner.
 
 	# verbosity number, 0 is least verbose. 1 is default.
-	verbosity: 1
+	# verbosity: 1
 
 	# print statistics to the log (for every thread) every N seconds.
 	# Set to "" or 0 to disable. Default is disabled.
@@ -35,8 +35,13 @@ server:
 	# statistics-cumulative: no
 
 	# enable extended statistics (query types, answer codes, status)
-	# printed from unbound-control. default off, because of speed.
+	# printed from unbound-control. Default off, because of speed.
 	# extended-statistics: no
+
+	# Inhibits selected extended statistics (qtype, qclass, qopcode, rcode,
+	# rpz-actions) from printing if their value is 0.
+	# Default on.
+	# statistics-inhibit-zero: yes
 
 	# number of threads to create. 1 disables threading.
 	# num-threads: 1
@@ -50,6 +55,7 @@ server:
 	# interface: 192.0.2.154
 	# interface: 192.0.2.154@5003
 	# interface: 2001:DB8::5
+	# interface: eth0@5003
 
 	# enable this feature to copy the source address of queries to reply.
 	# Socket options are not supported on all platforms. experimental.
@@ -137,8 +143,8 @@ server:
 	# edns-buffer-size: 1232
 
 	# Maximum UDP response size (not applied to TCP response).
-	# Suggested values are 512 to 4096. Default is 4096. 65536 disables it.
-	# max-udp-size: 4096
+	# Suggested values are 512 to 4096. Default is 1232. 65536 disables it.
+	# max-udp-size: 1232
 
 	# max memory to use for stream(tcp and tls) waiting result buffers.
 	# stream-wait-size: 4m
@@ -171,6 +177,15 @@ server:
 	# The number of retries, per upstream nameserver in a delegation, when
 	# a throwaway response (also timeouts) is received.
 	# outbound-msg-retry: 5
+
+	# Hard limit on the number of outgoing queries Unbound will make while
+	# resolving a name, making sure large NS sets do not loop.
+	# It resets on query restarts (e.g., CNAME) and referrals.
+	# max-sent-count: 32
+
+	# Hard limit on the number of times Unbound is allowed to restart a
+	# query upon encountering a CNAME record.
+	# max-query-restarts: 11
 
 	# msec for waiting for an unknown server to reply.  Increase if you
 	# are behind a slow satellite link, to eg. 1128.
@@ -217,7 +232,8 @@ server:
 	# the maximum number of hosts that are cached (roundtrip, EDNS, lame).
 	# infra-cache-numhosts: 10000
 
-	# define a number of tags here, use with local-zone, access-control.
+	# define a number of tags here, use with local-zone, access-control,
+	# interface-*.
 	# repeat the define-tag statement to add additional tags.
 	# define-tag: "tag1 tag2 tag3"
 
@@ -226,6 +242,18 @@ server:
 
 	# Enable IPv6, "yes" or "no".
 	# do-ip6: yes
+
+	# If running unbound on an IPv6-only host, domains that only have
+	# IPv4 servers would become unresolveable.  If NAT64 is available in
+	# the network, unbound can use NAT64 to reach these servers with
+	# the following option.  This is NOT needed for enabling DNS64 on a
+	# system that has IPv4 connectivity.
+	# Consider also enabling prefer-ip6 to prefer native IPv6 connections
+	# to nameservers.
+	# do-nat64: no
+
+	# NAT64 prefix.  Defaults to using dns64-prefix value.
+	# nat64-prefix: 64:ff9b::0/96
 
 	# Enable UDP, "yes" or "no".
 	# do-udp: yes
@@ -258,6 +286,10 @@ server:
 	# Timeout for EDNS TCP keepalive, in msec.
 	# edns-tcp-keepalive-timeout: 120000
 
+	# UDP queries that have waited in the socket buffer for a long time
+	# can be dropped. Default is 0, disabled. In seconds, such as 3.
+	# sock-queue-timeout: 0
+
 	# Use systemd socket activation for UDP, TCP, and control sockets.
 	# use-systemd: no
 
@@ -273,9 +305,7 @@ server:
 	# allow_snoop (recursive and nonrecursive ok)
 	# deny_non_local (drop queries unless can be answered from local-data)
 	# refuse_non_local (like deny_non_local but polite error reply).
-	# access-control: 0.0.0.0/0 refuse
 	# access-control: 127.0.0.0/8 allow
-	# access-control: ::0/0 refuse
 	# access-control: ::1 allow
 	# access-control: ::ffff:127.0.0.1 allow
 
@@ -284,7 +314,7 @@ server:
 	# are tagged with one of these tags.
 	# access-control-tag: 192.0.2.0/24 "tag2 tag3"
 
-	# set action for particular tag for given access control element
+	# set action for particular tag for given access control element.
 	# if you have multiple tag values, the tag used to lookup the action
 	# is the first tag match between access-control-tag and local-zone-tag
 	# where "first" comes from the order of the define-tag values.
@@ -295,6 +325,58 @@ server:
 
 	# Set view for access control element
 	# access-control-view: 192.0.2.0/24 viewname
+
+	# Similar to 'access-control:' but for interfaces.
+	# Control which listening interfaces are allowed to accept (recursive)
+	# queries for this server.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the action.
+	# The actions are the same as 'access-control:' above.
+	# By default all the interfaces configured are refused.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-action: 192.0.2.153 allow
+	# interface-action: 192.0.2.154 allow
+	# interface-action: 192.0.2.154@5003 allow
+	# interface-action: 2001:DB8::5 allow
+	# interface-action: eth0@5003 allow
+
+	# Similar to 'access-control-tag:' but for interfaces.
+	# Tag interfaces with a list of tags (in "" with spaces between).
+	# Interfaces using these tags use localzones that are tagged with one
+	# of these tags.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the list of tags.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag: eth0@5003 "tag2 tag3"
+
+	# Similar to 'access-control-tag-action:' but for interfaces.
+	# Set action for particular tag for a given interface element.
+	# If you have multiple tag values, the tag used to lookup the action
+	# is the first tag match between interface-tag and local-zone-tag
+	# where "first" comes from the order of the define-tag values.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the tag and action.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag-action: eth0@5003 tag3 refuse
+
+	# Similar to 'access-control-tag-data:' but for interfaces.
+	# Set redirect data for a particular tag for an interface element.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the tag and the redirect data.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag-data: eth0@5003 tag2 "A 127.0.0.1"
+
+	# Similar to 'access-control-view:' but for interfaces.
+	# Set view for an interface element.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the view name.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-view: eth0@5003 viewname
 
 	# if given, a chroot(2) is done to the given directory.
 	# i.e. you can chroot to the working directory, for example,
@@ -436,6 +518,10 @@ server:
 	# advertised in the DS record.  If no, allows the weakest algorithm
 	# to validate the zone.
 	# harden-algo-downgrade: no
+
+	# Harden against unknown records in the authority section and the
+	# additional section.
+	# harden-unknown-additional: no
 
 	# Sent minimum amount of information to upstream servers to enhance
 	# privacy. Only sent minimum required labels of the QNAME and set QTYPE
@@ -597,6 +683,11 @@ server:
 	# that set CD but cannot validate themselves.
 	# ignore-cd-flag: no
 
+	# Disable the DO flag in outgoing requests. It is helpful for upstream
+	# devices that cannot handle DNSSEC information. But do not enable it
+	# otherwise, because it would stop DNSSEC validation.
+	# disable-edns-do: no
+
 	# Serve expired responses from cache, with serve-expired-reply-ttl in
 	# the response, and then attempt to fetch the data afresh.
 	# serve-expired: no
@@ -744,6 +835,8 @@ server:
 	# o always_transparent, always_refuse, always_nxdomain, always_nodata,
 	#   always_deny resolve in that way but ignore local data for
 	#   that name
+	# o block_a resolves all records normally but returns
+	#   NODATA for A queries and ignores local data for that name
 	# o always_null returns 0.0.0.0 or ::0 for any name in the zone.
 	# o noview breaks out of that view towards global local-zones.
 	#
@@ -849,6 +942,10 @@ server:
 
 	# Disable TLS for DNS-over-HTTP downstream service.
 	# http-notls-downstream: no
+
+	# The interfaces that use these listed port numbers will support and
+	# expect PROXYv2. For UDP and TCP/TLS interfaces.
+	# proxy-protocol-port: portno for each of the port numbers.
 
 	# DNS64 prefix. Must be specified when DNS64 is use.
 	# Enable dns64 in module-config.  Used to synthesize IPv6 from IPv4.
@@ -1129,6 +1226,8 @@ remote-control:
 #     backend: "testframe"
 #     # secret seed string to calculate hashed keys
 #     secret-seed: "default"
+#     # if the backend should be read from, but not written to.
+#     cachedb-no-store: no
 #
 #     # For "redis" backend:
 #     # (to enable, use --with-libhiredis to configure before compiling)
@@ -1136,10 +1235,16 @@ remote-control:
 #     redis-server-host: 127.0.0.1
 #     # redis server's TCP port
 #     redis-server-port: 6379
+#     # if the server uses a unix socket, set its path, or "" when not used.
+#     # redis-server-path: "/var/lib/redis/redis-server.sock"
+#     # if the server uses an AUTH password, specify here, or "" when not used.
+#     # redis-server-password: ""
 #     # timeout (in ms) for communication with the redis server
 #     redis-timeout: 100
 #     # set timeout on redis records based on DNS response TTL
 #     redis-expire-records: no
+#     # redis logical database to use, 0 is the default database.
+#     redis-logical-db: 0
 
 # IPSet
 # Add specify domain into set via ipset.
