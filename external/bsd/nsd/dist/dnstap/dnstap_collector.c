@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "namedb.h"
 #include "options.h"
+#include "remote.h"
 
 #include "udb.h"
 #include "rrl.h"
@@ -64,10 +65,24 @@ struct dt_collector* dt_collector_create(struct nsd* nsd)
 		int bufsz = buffer_capacity(dt_col->send_buffer);
 		sv[0] = -1; /* For receiving by parent (dnstap-collector) */
 		sv[1] = -1; /* For sending   by child  (server childs) */
-		if(socketpair(AF_UNIX, SOCK_DGRAM | SOCK_NONBLOCK, 0, sv) < 0) {
+		if(socketpair(AF_UNIX, SOCK_DGRAM
+#ifdef SOCK_NONBLOCK
+			| SOCK_NONBLOCK
+#endif
+			, 0, sv) < 0) {
 			error("dnstap_collector: cannot create communication channel: %s",
 				strerror(errno));
 		}
+#ifndef SOCK_NONBLOCK
+		if (fcntl(sv[0], F_SETFL, O_NONBLOCK) == -1) {
+			log_msg(LOG_ERR, "dnstap_collector receive fd fcntl "
+				"failed: %s", strerror(errno));
+		}
+		if (fcntl(sv[1], F_SETFL, O_NONBLOCK) == -1) {
+			log_msg(LOG_ERR, "dnstap_collector send fd fcntl "
+				"failed: %s", strerror(errno));
+		}
+#endif
 		if(setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &bufsz, sizeof(bufsz))) {
 			log_msg(LOG_ERR, "setting dnstap_collector "
 				"receive buffer size failed: %s", strerror(errno));
@@ -279,7 +294,12 @@ static void dt_init_dnstap(struct dt_collector* dt_col, struct nsd* nsd)
 			nsd->options->dnstap_socket_path += l;
 	}
 #endif
-	dt_col->dt_env = dt_create(nsd->options->dnstap_socket_path, num_workers);
+	dt_col->dt_env = dt_create(nsd->options->dnstap_socket_path,
+		nsd->options->dnstap_ip, num_workers, nsd->options->dnstap_tls,
+		nsd->options->dnstap_tls_server_name,
+		nsd->options->dnstap_tls_cert_bundle,
+		nsd->options->dnstap_tls_client_key_file,
+		nsd->options->dnstap_tls_client_cert_file);
 	if(!dt_col->dt_env) {
 		log_msg(LOG_ERR, "could not create dnstap env");
 		return;
@@ -308,6 +328,9 @@ static void dt_collector_cleanup(struct dt_collector* dt_col, struct nsd* nsd)
 		free(dt_col->inputs);
 	}
 	dt_collector_destroy(dt_col, nsd);
+	daemon_remote_delete(nsd->rc); /* ssl-delete secret keys */
+	nsd_options_destroy(nsd->options);
+	region_destroy(nsd->region);
 #endif
 }
 
@@ -413,7 +436,6 @@ void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 #endif
 		udb_base_free_keep_mmap(nsd->task[0]);
 		udb_base_free_keep_mmap(nsd->task[1]);
-		namedb_close_udb(nsd->db); /* keeps mmap */
 		namedb_close(nsd->db);
 
 		dt_collector_run(dt_col, nsd);

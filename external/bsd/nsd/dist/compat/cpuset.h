@@ -6,8 +6,8 @@
  * See LICENSE for the license.
  *
  */
-#ifndef _CPUSET_H_
-#define _CPUSET_H_
+#ifndef CPUSET_H
+#define CPUSET_H
 
 #ifdef HAVE_SCHED_H
 # include <sched.h>
@@ -76,4 +76,4 @@ size_t cpuset_size(const cpuset_t *set);
 
 void cpuset_or(cpuset_t *destset, const cpuset_t *srcset);
 
-#endif /* _CPUSET_H_ */
+#endif /* CPUSET_H */
