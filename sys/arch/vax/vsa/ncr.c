@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.51 2023/12/20 15:34:46 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.52 2024/02/17 17:41:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.51 2023/12/20 15:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.52 2024/02/17 17:41:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.51 2023/12/20 15:34:46 thorpej Exp $");
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/clock.h>
+#include <machine/ka420.h>
 
 #include "ioconf.h"
 
@@ -207,6 +208,16 @@ si_vsbus_attach(device_t parent, device_t self, void *aux)
 		target = 7;
 	else
 		target = (clk_page[0xbc/2] >> tweak) & 7;
+
+	/*
+	 * Explicitly enable upto 128KB "Big DMA" on KA420.
+	 * (It looks KA420 firmware doesn't enable it on network boot)
+	 */
+#define STC_MODE_OFF	(KA420_STC_MODE - KA420_SCS_BASE)
+	if (vax_boardtype == VAX_BTYP_420) {
+		bus_space_write_1(ncr_sc->sc_regt, ncr_sc->sc_regh,
+		    STC_MODE_OFF, 1);
+	}
 
 	aprint_normal("\n");
 	aprint_normal_dev(self, "NCR5380, SCSI ID %d\n", target);
