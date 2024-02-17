@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.127 2024/02/03 14:26:27 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.128 2024/02/17 16:10:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4126,4 +4126,32 @@ sys/dev/hdaudio/hdafg.c				1.29
 
 	hdaudio(4): PR 57890: fix crash on shutdown with record-only devices.
 	[riastradh, ticket #1795]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.38
+external/public-domain/tz/dist/NEWS             up to 1.1.1.45
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.37
+external/public-domain/tz/dist/africa           up to 1.1.1.33
+external/public-domain/tz/dist/asia             up to 1.12
+external/public-domain/tz/dist/australasia      up to 1.9
+external/public-domain/tz/dist/checknow.awk     up to 1.1.1.2
+external/public-domain/tz/dist/etcetera         up to 1.1.1.8
+external/public-domain/tz/dist/europe           up to 1.1.1.39
+external/public-domain/tz/dist/leap-seconds.list up to 1.7
+external/public-domain/tz/dist/leapseconds      up to 1.7
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.14
+external/public-domain/tz/dist/northamerica     up to 1.1.1.35
+external/public-domain/tz/dist/southamerica     up to 1.1.1.25
+external/public-domain/tz/dist/theory.html      up to 1.1.1.19
+external/public-domain/tz/dist/version          up to 1.12
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.9
+external/public-domain/tz/dist/zonenow.tab      up to 1.1.1.2
+doc/3RDPARTY					apply patch
+
+	Updated tzdata to 2024a.
+	[kre, ticket #1796]
+
+libexec/utmp_update/utmp_update.c		1.14
+
+	utmp_update(8): check for non-printable characters in ut_host.
+	[shm, ticket #1797]
 
