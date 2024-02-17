@@ -1,4 +1,4 @@
-#	$NetBSD: mk.bcm53xx,v 1.6 2019/01/21 07:26:14 skrll Exp $
+#	$NetBSD: mk.bcm53xx,v 1.7 2024/02/17 15:08:32 christos Exp $
 CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
 
 .if !empty(MACHINE_ARCH:M*eb)
@@ -13,6 +13,9 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(LOADADDRESS) -e $(LOADADDRESS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKUBOOTIMAGEARGS+=	-t "${MKREPRO_TIMESTAMP}"
+.endif
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
 MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
 
