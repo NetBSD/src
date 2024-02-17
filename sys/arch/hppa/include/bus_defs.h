@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2019/09/23 16:17:56 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2.26.1 2024/02/17 16:02:23 martin Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -73,10 +73,18 @@ struct hppa_bus_space_tag {
 	uint32_t (*hbt_r4)(void *, bus_space_handle_t, bus_size_t);
 	uint64_t (*hbt_r8)(void *, bus_space_handle_t, bus_size_t);
 
+	uint16_t (*hbt_rs2)(void *, bus_space_handle_t, bus_size_t);
+	uint32_t (*hbt_rs4)(void *, bus_space_handle_t, bus_size_t);
+	uint64_t (*hbt_rs8)(void *, bus_space_handle_t, bus_size_t);
+
 	void (*hbt_w1)(void *, bus_space_handle_t, bus_size_t, uint8_t);
 	void (*hbt_w2)(void *, bus_space_handle_t, bus_size_t, uint16_t);
 	void (*hbt_w4)(void *, bus_space_handle_t, bus_size_t, uint32_t);
 	void (*hbt_w8)(void *, bus_space_handle_t, bus_size_t, uint64_t);
+
+	void (*hbt_ws2)(void *, bus_space_handle_t, bus_size_t, uint16_t);
+	void (*hbt_ws4)(void *, bus_space_handle_t, bus_size_t, uint32_t);
+	void (*hbt_ws8)(void *, bus_space_handle_t, bus_size_t, uint64_t);
 
 	void (*hbt_rm_1)(void *v, bus_space_handle_t h,
 			      bus_size_t o, uint8_t *a, bus_size_t c);
