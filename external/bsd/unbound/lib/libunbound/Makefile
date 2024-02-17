@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2023/05/09 14:31:55 christos Exp $
+# $NetBSD: Makefile,v 1.9 2024/02/17 18:31:19 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -68,19 +68,23 @@ outside_network.c \
 packed_rrset.c \
 parse.c \
 parseutil.c \
+proxy_protocol.c \
 random.c \
 rbtree.c \
 regional.c \
 respip.c \
+rfc_1982.c \
 rpz.c \
 rrdef.c \
 rrset.c \
 rtt.c \
 sbuffer.c \
+siphash.c \
 slabhash.c \
 str2wire.c \
 tcp_conn_limit.c \
 timehist.c \
+timeval_func.c \
 tube.c \
 ub_event_pluggable.c \
 val_anchor.c \
