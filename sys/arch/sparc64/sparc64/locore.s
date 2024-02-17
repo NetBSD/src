@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.433 2023/03/01 08:18:39 riastradh Exp $	*/
+/*	$NetBSD: locore.s,v 1.434 2024/02/17 19:36:07 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5471,7 +5471,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	!! and already accessible here)
 	flushw
 	LDPTR	[%l7 + CI_CPCB], %l0		! load PCB/uarea pointer
-	set	USPACE - TF_SIZE - CC64FSZ, %l1
+	set	2*USPACE - TF_SIZE - CC64FSZ, %l1
  	add	%l1, %l0, %l0
 #ifdef _LP64
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
