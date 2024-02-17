@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.68 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.69 2024/02/17 14:54:47 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -778,7 +778,7 @@ struct tm *offtime(time_t const *, long);
 time_t timelocal(struct tm *);
 # endif
 # if TZ_TIME_T || !defined timeoff
-time_t timeoff(struct tm *, long);
+#  define EXTERN_TIMEOFF
 # endif
 # if TZ_TIME_T || !defined time2posix
 time_t time2posix(time_t);
@@ -790,7 +790,8 @@ time_t posix2time(time_t);
 
 /* Infer TM_ZONE on systems where this information is known, but suppress
    guessing if NO_TM_ZONE is defined.  Similarly for TM_GMTOFF.  */
-#if (defined __GLIBC__ \
+#if (200809 < _POSIX_VERSION \
+     || defined __GLIBC__ \
      || defined __tm_zone /* musl */ \
      || defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__ \
      || (defined __APPLE__ && defined __MACH__))
@@ -922,6 +923,19 @@ static_assert(! TYPE_SIGNED(time_t) || ! SIGNED_PADDING_CHECK_NEEDED
 # define UNINIT_TRAP 0
 #endif
 
+/* localtime.c sometimes needs access to timeoff if it is not already public.
+   tz_private_timeoff should be used only by localtime.c.  */
+#if (!defined EXTERN_TIMEOFF \
+     && defined TM_GMTOFF && (200809 < _POSIX_VERSION || ! UNINIT_TRAP))
+# ifndef timeoff
+#  define timeoff tz_private_timeoff
+# endif
+# define EXTERN_TIMEOFF
+#endif
+#ifdef EXTERN_TIMEOFF
+time_t timeoff(struct tm *, long);
+#endif
+
 #ifdef DEBUG
 # undef unreachable
 # define unreachable() abort()
@@ -982,6 +996,18 @@ enum {
 #define DAYSPERREPEAT		((int_fast32_t) 400 * 365 + 100 - 4 + 1)
 #define SECSPERREPEAT		((int_fast64_t) DAYSPERREPEAT * SECSPERDAY)
 #define AVGSECSPERYEAR		(SECSPERREPEAT / YEARSPERREPEAT)
+
+/* How many years to generate (in zic.c) or search through (in localtime.c).
+   This is two years larger than the obvious 400, to avoid edge cases.
+   E.g., suppose a non-POSIX.1-2017 rule applies from 2012 on with transitions
+   in March and September, plus one-off transitions in November 2013.
+   If zic looked only at the last 400 years, it would set max_year=2413,
+   with the intent that the 400 years 2014 through 2413 will be repeated.
+   The last transition listed in the tzfile would be in 2413-09,
+   less than 400 years after the last one-off transition in 2013-11.
+   Two years is not overkill for localtime.c, as a one-year bump
+   would mishandle 2023d's America/Ciudad_Juarez for November 2422.  */
+enum { years_of_observations = YEARSPERREPEAT + 2 };
 
 #ifndef TM_SUNDAY
 enum {
