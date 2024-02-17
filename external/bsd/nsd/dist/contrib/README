@@ -28,9 +28,12 @@ USE AT YOUR OWN RISK.
   You may also need to create a number of symbolic links under the names
   of the graphs you want to create (documented at head of file).
 
-* nsd.socket and nsd.service : example systemd service scripts for NSD.
-  They are copies from Unbound's service files, edited for NSD.
+* nsd.service : example systemd service script for NSD.
 
 * patch_for_s6_startup_and_other_service_supervisors.diff : patch to
   use -r option for nsd to signal readiness with READY_FD, from Cameron Nemo.
   Apply with patch -p0 < contrib/patch_for_s6_startup_and_other_service_supervisors.diff
+
+* autocomplete_nsd-control.bash : It completes options, all commands and zone
+  arguments for commands. From Christian Weiske. To use it, call:
+  source contrib/autocomplete_nsd-control.bash

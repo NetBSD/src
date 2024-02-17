@@ -272,6 +272,12 @@ zonefiles-write{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONEFILES_WRITE;
 dnstap{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP;}
 dnstap-enable{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_ENABLE;}
 dnstap-socket-path{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_SOCKET_PATH; }
+dnstap-ip{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_IP; }
+dnstap-tls{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_TLS; }
+dnstap-tls-server-name{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_TLS_SERVER_NAME; }
+dnstap-tls-cert-bundle{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_TLS_CERT_BUNDLE; }
+dnstap-tls-client-key-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_TLS_CLIENT_KEY_FILE; }
+dnstap-tls-client-cert-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_TLS_CLIENT_CERT_FILE; }
 dnstap-send-identity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_SEND_IDENTITY; }
 dnstap-send-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_SEND_VERSION; }
 dnstap-identity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_IDENTITY; }
@@ -298,6 +304,7 @@ tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCS
 tls-service-pem{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
 tls-port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
 tls-cert-bundle{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_CERT_BUNDLE; }
+proxy-protocol-port{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_PROXY_PROTOCOL_PORT; }
 answer-cookie{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ANSWER_COOKIE;}
 cookie-secret{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET;}
 cookie-secret-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET_FILE;}
