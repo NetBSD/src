@@ -627,6 +627,12 @@ parser_flush(void)
 	lexer_state = EXPECT_OWNER;
 }
 
+int at_eof(void)
+{
+	static int once = 1;
+	return (once = !once) ? 0 : NL;
+}
+
 #ifndef yy_set_bol /* compat definition, for flex 2.4.6 */
 #define yy_set_bol(at_bol) \
 	{ \
@@ -636,18 +642,18 @@ parser_flush(void)
 	}
 #endif
 	
-#line 638 "<stdout>"
+#line 644 "<stdout>"
 #define YY_NO_INPUT 1
-#line 121 "zlexer.lex"
+#line 127 "zlexer.lex"
 #ifndef YY_NO_UNPUT
 #define YY_NO_UNPUT 1
 #endif
 #ifndef YY_NO_INPUT
 #define YY_NO_INPUT 1
 #endif
-#line 647 "<stdout>"
+#line 653 "<stdout>"
 
-#line 649 "<stdout>"
+#line 655 "<stdout>"
 
 #define INITIAL 0
 #define incl 1
@@ -868,9 +874,9 @@ YY_DECL
 		}
 
 	{
-#line 143 "zlexer.lex"
+#line 149 "zlexer.lex"
 
-#line 872 "<stdout>"
+#line 878 "<stdout>"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -936,17 +942,17 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 144 "zlexer.lex"
+#line 150 "zlexer.lex"
 /* ignore */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 145 "zlexer.lex"
+#line 151 "zlexer.lex"
 { lexer_state = PARSING_RDATA; return DOLLAR_TTL; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 146 "zlexer.lex"
+#line 152 "zlexer.lex"
 { lexer_state = PARSING_RDATA; return DOLLAR_ORIGIN; }
 	YY_BREAK
 /*
@@ -955,7 +961,7 @@ YY_RULE_SETUP
 	 */
 case 4:
 YY_RULE_SETUP
-#line 152 "zlexer.lex"
+#line 158 "zlexer.lex"
 {
 	BEGIN(incl);
 	/* ignore case statement fallthrough on incl<EOF> flex rule */
@@ -963,10 +969,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
-#line 157 "zlexer.lex"
+#line 163 "zlexer.lex"
 YY_RULE_SETUP
 case YY_STATE_EOF(incl):
-#line 157 "zlexer.lex"
+#line 163 "zlexer.lex"
 {
 	int error_occurred = parser->error_occurred;
 	BEGIN(INITIAL);
@@ -978,7 +984,7 @@ case YY_STATE_EOF(incl):
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 165 "zlexer.lex"
+#line 171 "zlexer.lex"
 { 	
 	char *tmp;
 	domain_type *origin = parser->origin;
@@ -1042,25 +1048,30 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 226 "zlexer.lex"
+#line 232 "zlexer.lex"
 {
+	int eo = at_eof();
 	yy_set_bol(1); /* Set beginning of line, so "^" rules match.  */
 	if (include_stack_ptr == 0) {
+		if(eo == NL)
+			return eo;
 		yyterminate();
 	} else {
 		fclose(yyin);
 		pop_parser_state();
+		if(eo == NL)
+			return eo;
 	}
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 235 "zlexer.lex"
+#line 246 "zlexer.lex"
 { zc_warning("Unknown directive: %s", yytext); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 236 "zlexer.lex"
+#line 247 "zlexer.lex"
 {
 	LEXOUT((". "));
 	return parse_token('.', yytext, &lexer_state);
@@ -1068,7 +1079,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 240 "zlexer.lex"
+#line 251 "zlexer.lex"
 {
 	LEXOUT(("@ "));
 	return parse_token('@', yytext, &lexer_state);
@@ -1076,7 +1087,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 244 "zlexer.lex"
+#line 255 "zlexer.lex"
 {
 	LEXOUT(("\\# "));
 	return parse_token(URR, yytext, &lexer_state);
@@ -1085,7 +1096,7 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 248 "zlexer.lex"
+#line 259 "zlexer.lex"
 {
 	++parser->line;
 	if (!paren_open) { 
@@ -1100,7 +1111,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 259 "zlexer.lex"
+#line 270 "zlexer.lex"
 {
 	if (paren_open) {
 		zc_error("nested parentheses");
@@ -1113,7 +1124,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 268 "zlexer.lex"
+#line 279 "zlexer.lex"
 {
 	if (!paren_open) {
 		zc_error("closing parentheses without opening parentheses");
@@ -1126,7 +1137,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 277 "zlexer.lex"
+#line 288 "zlexer.lex"
 {
 	if (!paren_open && lexer_state == EXPECT_OWNER) {
 		lexer_state = PARSING_TTL_CLASS_TYPE;
@@ -1143,11 +1154,11 @@ YY_RULE_SETUP
 /* Bitlabels.  Strip leading and ending brackets.  */
 case 15:
 YY_RULE_SETUP
-#line 291 "zlexer.lex"
+#line 302 "zlexer.lex"
 { BEGIN(bitlabel); }
 	YY_BREAK
 case YY_STATE_EOF(bitlabel):
-#line 292 "zlexer.lex"
+#line 303 "zlexer.lex"
 {
 	zc_error("EOF inside bitlabel");
 	BEGIN(INITIAL);
@@ -1157,18 +1168,18 @@ case YY_STATE_EOF(bitlabel):
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 298 "zlexer.lex"
+#line 309 "zlexer.lex"
 { yymore(); }
 	YY_BREAK
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 299 "zlexer.lex"
+#line 310 "zlexer.lex"
 { ++parser->line; yymore(); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 300 "zlexer.lex"
+#line 311 "zlexer.lex"
 {
 	BEGIN(INITIAL);
 	yytext[yyleng - 1] = '\0';
@@ -1178,11 +1189,11 @@ YY_RULE_SETUP
 /* Quoted strings.  Strip leading and ending quotes.  */
 case 19:
 YY_RULE_SETUP
-#line 307 "zlexer.lex"
+#line 318 "zlexer.lex"
 { BEGIN(quotedstring); LEXOUT(("\" ")); }
 	YY_BREAK
 case YY_STATE_EOF(quotedstring):
-#line 308 "zlexer.lex"
+#line 319 "zlexer.lex"
 {
 	zc_error("EOF inside quoted string");
 	BEGIN(INITIAL);
@@ -1192,18 +1203,18 @@ case YY_STATE_EOF(quotedstring):
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 314 "zlexer.lex"
+#line 325 "zlexer.lex"
 { LEXOUT(("QSTR ")); yymore(); }
 	YY_BREAK
 case 21:
 /* rule 21 can match eol */
 YY_RULE_SETUP
-#line 315 "zlexer.lex"
+#line 326 "zlexer.lex"
 { ++parser->line; yymore(); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 316 "zlexer.lex"
+#line 327 "zlexer.lex"
 {
 	LEXOUT(("\" "));
 	BEGIN(INITIAL);
@@ -1214,7 +1225,7 @@ YY_RULE_SETUP
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 323 "zlexer.lex"
+#line 334 "zlexer.lex"
 {
 	/* Any allowed word.  */
 	return parse_token(STR, yytext, &lexer_state);
@@ -1222,7 +1233,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 327 "zlexer.lex"
+#line 338 "zlexer.lex"
 {
 	zc_error("unknown character '%c' (\\%03d) seen - is this a zonefile?",
 		 (int) yytext[0], (int) yytext[0]);
@@ -1230,10 +1241,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 331 "zlexer.lex"
+#line 342 "zlexer.lex"
 ECHO;
 	YY_BREAK
-#line 1235 "<stdout>"
+#line 1246 "<stdout>"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2202,7 +2213,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 331 "zlexer.lex"
+#line 342 "zlexer.lex"
 
 
 /*
