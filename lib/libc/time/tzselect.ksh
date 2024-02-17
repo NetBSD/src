@@ -3,7 +3,7 @@
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 #
-#	$NetBSD: tzselect.ksh,v 1.22 2023/09/16 18:40:26 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.23 2024/02/17 14:54:47 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -38,9 +38,13 @@ REPORT_BUGS_TO=tz@iana.org
 #	nawk <https://github.com/onetrueawk/awk>
 
 
+# This script does not want path expansion.
+set -f
+
 # Specify default values for environment variables if they are unset.
 : ${AWK=awk}
-: ${TZDIR=`pwd`}
+: ${PWD=`pwd`}
+: ${TZDIR=$PWD}
 
 # Output one argument as-is to standard output, with trailing newline.
 # Safer than 'echo', which can mishandle '\' or leading '-'.
@@ -111,7 +115,8 @@ then
 else
   doselect() {
     # Field width of the prompt numbers.
-    select_width=`expr $# : '.*'`
+    print_nargs_length="BEGIN {print length(\"$#\");}"
+    select_width=`$AWK "$print_nargs_length"`
 
     select_i=
 
@@ -122,14 +127,14 @@ else
 	select_i=0
 	for select_word
 	do
-	  select_i=`expr $select_i + 1`
+	  select_i=`$AWK "BEGIN { print $select_i + 1 }"`
 	  printf >&2 "%${select_width}d) %s\\n" $select_i "$select_word"
 	done ;;
       *[!0-9]*)
 	echo >&2 'Please enter a number in range.' ;;
       *)
 	if test 1 -le $select_i && test $select_i -le $#; then
-	  shift `expr $select_i - 1`
+	  shift `$AWK "BEGIN { print $select_i - 1 }"`
 	  select_result=$1
 	  break
 	fi
@@ -163,7 +168,7 @@ do
     esac
 done
 
-shift `expr $OPTIND - 1`
+shift `$AWK "BEGIN { print $OPTIND - 1 }"`
 case $# in
 0) ;;
 *) say >&2 "$0: $1: unknown argument"; exit 1 ;;
@@ -400,19 +405,24 @@ while
 	eval '
 	    doselect '"$quoted_continents"' \
 		"coord - I want to use geographical coordinates." \
-		"TZ - I want to specify the timezone using the Posix TZ format." \
+		"TZ - I want to specify the timezone using a POSIX.1-2017 TZ string." \
 		"time - I know local time already."
 	    continent=$select_result
 	    case $continent in
 	    Americas) continent=America;;
-	    *" "*) continent=`expr "$continent" : '\''\([^ ]*\)'\''`
+	    *)
+		# Get the first word of $continent.  Path expansion is disabled
+		# so this works even with "*", which should not happen.
+		IFS=" "
+		for continent in $continent ""; do break; done
+		IFS=$newline;;
 	    esac
 	'
 	esac
 
 	case $continent in
 	TZ)
-		# Ask the user for a Posix TZ string.  Check that it conforms.
+		# Ask the user for a POSIX.1-2017 TZ string.  Check that it conforms.
 		while
 			echo >&2 'Please enter the desired value' \
 				'of the TZ environment variable.'
@@ -436,7 +446,7 @@ while
 				exit 0
 			}'
 		do
-		    say >&2 "'$TZ' is not a conforming Posix timezone string."
+		    say >&2 "'$tz' is not a conforming POSIX.1-2017 timezone string."
 		done
 		TZ_for_date=$TZ;;
 	*)
@@ -456,7 +466,7 @@ while
 			    -v TZ_COUNTRY_TABLE="$TZ_COUNTRY_TABLE" \
 			    "$output_distances_or_times" <"$TZ_ZONE_TABLE" |
 		      sort -n |
-		      sed "${location_limit}q"
+		      $AWK "{print} NR == $location_limit { exit }"
 		    `
 		    regions=`$AWK \
 		      -v distance_table="$distance_table" '
@@ -640,15 +650,18 @@ while
 	do
 		TZdate=`LANG=C TZ="$TZ_for_date" date`
 		UTdate=`LANG=C TZ=UTC0 date`
-		TZsec=`expr "$TZdate" : '.*:\([0-5][0-9]\)'`
-		UTsec=`expr "$UTdate" : '.*:\([0-5][0-9]\)'`
-		case $TZsec in
-		$UTsec)
+		if $AWK '
+		      function getsecs(d) {
+			return match(d, /.*:[0-5][0-9]/) ? substr(d, RLENGTH - 1, 2) : ""
+		      }
+		      BEGIN { exit getsecs(ARGV[1]) != getsecs(ARGV[2]) }
+		   ' ="$TZdate" ="$UTdate"
+		then
 			extra_info="
 Selected time is now:	$TZdate.
 Universal Time is now:	$UTdate."
 			break
-		esac
+		fi
 	done
 
 

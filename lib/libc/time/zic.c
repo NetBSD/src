@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.90 2023/09/16 18:40:26 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.91 2024/02/17 14:54:47 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.90 2023/09/16 18:40:26 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.91 2024/02/17 14:54:47 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -46,6 +46,9 @@ static zic_t const
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 # define ZIC_MAX_ABBR_LEN_WO_WARN 6
 #endif /* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
+
+/* Minimum and maximum years, assuming signed 32-bit time_t.  */
+enum { YEAR_32BIT_MIN = 1901, YEAR_32BIT_MAX = 2038 };
 
 /* An upper bound on how much a format might grow due to concatenation.  */
 enum { FORMAT_LEN_GROWTH_BOUND = 5 };
@@ -105,7 +108,6 @@ struct rule {
 
 	zic_t		r_loyear;	/* for example, 1986 */
 	zic_t		r_hiyear;	/* for example, 1986 */
-	bool		r_lowasnum;
 	bool		r_hiwasnum;
 
 	int		r_month;	/* 0..11 */
@@ -345,7 +347,7 @@ enum {
 */
 
 enum {
-  YR_MINIMUM,
+  YR_MINIMUM, /* "minimum" is for backward compatibility only */
   YR_MAXIMUM,
   YR_ONLY
 };
@@ -429,12 +431,10 @@ static struct lookup const	lasts[] = {
 
 static struct lookup const	begin_years[] = {
 	{ "minimum",	YR_MINIMUM },
-	{ "maximum",	YR_MAXIMUM },
 	{ NULL,		0 }
 };
 
 static struct lookup const	end_years[] = {
-	{ "minimum",	YR_MINIMUM },
 	{ "maximum",	YR_MAXIMUM },
 	{ "only",	YR_ONLY },
 	{ NULL,		0 }
@@ -2165,13 +2165,12 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	*/
 	cp = loyearp;
 	lp = byword(cp, begin_years);
-	rp->r_lowasnum = lp == NULL;
-	if (!rp->r_lowasnum) switch (lp->l_value) {
+	if (lp) switch (lp->l_value) {
 		case YR_MINIMUM:
-			rp->r_loyear = ZIC_MIN;
-			break;
-		case YR_MAXIMUM:
-			rp->r_loyear = ZIC_MAX;
+			warning(_("FROM year \"%s\" is obsolete;"
+				  " treated as %d"),
+				cp, YEAR_32BIT_MIN - 1);
+			rp->r_loyear = YEAR_32BIT_MIN - 1;
 			break;
 		default: unreachable();
 	} else if (sscanf(cp, "%"SCNdZIC"%c", &rp->r_loyear, &xs) != 1) {
@@ -2182,9 +2181,6 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	lp = byword(cp, end_years);
 	rp->r_hiwasnum = lp == NULL;
 	if (!rp->r_hiwasnum) switch (lp->l_value) {
-		case YR_MINIMUM:
-			rp->r_hiyear = ZIC_MIN;
-			break;
 		case YR_MAXIMUM:
 			rp->r_hiyear = ZIC_MAX;
 			break;
@@ -2967,6 +2963,10 @@ rule_cmp(struct rule const *a, struct rule const *b)
 	return a->r_dayofmonth - b->r_dayofmonth;
 }
 
+/* Store into RESULT a POSIX.1-2017 TZ string that represent the future
+   predictions for the zone ZPFIRST with ZONECOUNT entries.  Return a
+   compatibility indicator (a TZDB release year) if successful, a
+   negative integer if no such TZ string exissts.  */
 static int
 stringzone(char *result, int resultlen, const struct zone *const zpfirst,
     const int zonecount)
@@ -3104,7 +3104,6 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	char *			envvar;
 	size_t			max_abbr_len;
 	size_t			max_envvar_len;
-	bool			prodstic; /* all rules are min to max */
 	int			compat;
 	bool			do_extend;
 	char			version;
@@ -3129,7 +3128,6 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	timecnt = 0;
 	typecnt = 0;
 	charcnt = 0;
-	prodstic = zonecount == 1;
 	/*
 	** Thanks to Earl Chew
 	** for noting the need to unconditionally initialize startttisstd.
@@ -3147,12 +3145,9 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 			updateminmax(zp->z_untilrule.r_loyear);
 		for (j = 0; j < zp->z_nrules; ++j) {
 			struct rule *rp = &zp->z_rules[j];
-			if (rp->r_lowasnum)
-				updateminmax(rp->r_loyear);
+			updateminmax(rp->r_loyear);
 			if (rp->r_hiwasnum)
 				updateminmax(rp->r_hiyear);
-			if (rp->r_lowasnum || rp->r_hiwasnum)
-				prodstic = false;
 		}
 	}
 	/*
@@ -3164,7 +3159,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	if (noise) {
 		if (!*envvar)
 			warning("%s %s",
-				_("no POSIX environment variable for zone"),
+				_("no POSIX.1-2017 environment variable"
+				  " for zone"),
 				zpfirst->z_name);
 		else if (compat != 0) {
 			/* Circa-COMPAT clients, and earlier clients, might
@@ -3176,37 +3172,12 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 		}
 	}
 	if (do_extend) {
-		/*
-		** Search through a couple of extra years past the obvious
-		** 400, to avoid edge cases.  For example, suppose a non-POSIX
-		** rule applies from 2012 onwards and has transitions in March
-		** and September, plus some one-off transitions in November
-		** 2013.  If zic looked only at the last 400 years, it would
-		** set max_year=2413, with the intent that the 400 years 2014
-		** through 2413 will be repeated.  The last transition listed
-		** in the tzfile would be in 2413-09, less than 400 years
-		** after the last one-off transition in 2013-11.  Two years
-		** might be overkill, but with the kind of edge cases
-		** available we're not sure that one year would suffice.
-		*/
-		enum { years_of_observations = YEARSPERREPEAT + 2 };
-
 		if (min_year >= ZIC_MIN + years_of_observations)
 			min_year -= years_of_observations;
 		else	min_year = ZIC_MIN;
 		if (max_year <= ZIC_MAX - years_of_observations)
 			max_year += years_of_observations;
 		else	max_year = ZIC_MAX;
-		/*
-		** Regardless of any of the above,
-		** for a "proDSTic" zone which specifies that its rules
-		** always have and always will be in effect,
-		** we only need one cycle to define the zone.
-		*/
-		if (prodstic) {
-			min_year = 1900;
-			max_year = min_year + years_of_observations;
-		}
 	}
 	max_year = max(max_year, (redundant_time / (SECSPERDAY * DAYSPERNYEAR)
 				  + EPOCH_YEAR + 1));
@@ -3214,10 +3185,10 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	if (want_bloat()) {
 	  /* For the benefit of older systems,
 	     generate data from 1900 through 2038.  */
-	  if (min_year > 1900)
-		min_year = 1900;
-	  if (max_year < 2038)
-		max_year = 2038;
+	  if (min_year > YEAR_32BIT_MIN - 1)
+		min_year = YEAR_32BIT_MIN - 1;
+	  if (max_year < YEAR_32BIT_MAX)
+		max_year = YEAR_32BIT_MAX;
 	}
 
 	if (min_time < lo_time || hi_time < max_time)
@@ -3437,8 +3408,8 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 	  attypes[lastatmax].dontmerge = true;
 	if (do_extend) {
 		/*
-		** If we're extending the explicitly listed observations
-		** for 400 years because we can't fill the POSIX-TZ field,
+		** If we're extending the explicitly listed observations for
+		** 400 years because we can't fill the POSIX.1-2017 TZ field,
 		** check whether we actually ended up explicitly listing
 		** observations through that period.  If there aren't any
 		** near the end of the 400-year period, add a redundant

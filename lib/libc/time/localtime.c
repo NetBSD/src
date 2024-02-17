@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.140 2024/01/20 14:52:49 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.141 2024/02/17 14:54:47 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,13 +12,13 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.140 2024/01/20 14:52:49 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.141 2024/02/17 14:54:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
 ** Leap second handling from Bradley White.
-** POSIX-style TZ environment variable handling from Guy Harris.
+** POSIX.1-1988 style TZ environment variable handling from Guy Harris.
 */
 
 /*LINTLIBRARY*/
@@ -115,7 +115,7 @@ static char const UNSPEC[] = "-00";
    for ttunspecified to work without crashing.  */
 enum { CHARS_EXTRA = max(sizeof UNSPEC, 2) - 1 };
 
-/* Limit to time zone abbreviation length in POSIX-style TZ strings.
+/* Limit to time zone abbreviation length in POSIX.1-2017-style TZ strings.
    This is distinct from TZ_MAX_CHARS, which limits TZif file contents.  */
 #ifndef TZNAME_MAXIMUM
 # define TZNAME_MAXIMUM 255
@@ -993,7 +993,8 @@ getoffset(register const char *strp, int_fast32_t *const offsetp)
 
 /*
 ** Given a pointer into a timezone string, extract a rule in the form
-** date[/time]. See POSIX section 8 for the format of "date" and "time".
+** date[/time]. See POSIX Base Definitions section 8.3 variable TZ
+** for the format of "date" and "time".
 ** If a valid rule is not found, return NULL.
 ** Otherwise, return a pointer to the first character not part of the rule.
 */
@@ -1137,7 +1138,7 @@ transtime(const int year, register const struct rule *const rulep,
 }
 
 /*
-** Given a POSIX section 8-style TZ string, fill in the rule tables as
+** Given a POSIX.1-2017-style TZ string, fill in the rule tables as
 ** appropriate.
 */
 
@@ -1264,7 +1265,7 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 			}
 
 			yearlim = yearbeg;
-			if (increment_overflow(&yearlim, YEARSPERREPEAT + 1))
+			if (increment_overflow(&yearlim, years_of_observations))
 			  yearlim = INT_MAX;
 			for (year = yearbeg; year < yearlim; year++) {
 				int_fast32_t
@@ -1301,7 +1302,7 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 				if (endtime < leaplo) {
 				  yearlim = year;
 				  if (increment_overflow(&yearlim,
-							 YEARSPERREPEAT + 1))
+							 years_of_observations))
 				    yearlim = INT_MAX;
 				}
 				if (increment_overflow_time
@@ -1313,7 +1314,7 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 			if (! timecnt) {
 				sp->ttis[0] = sp->ttis[1];
 				sp->typecnt = 1;	/* Perpetual DST.  */
-			} else if (YEARSPERREPEAT < year - yearbeg)
+			} else if (years_of_observations <= year - yearbeg)
 				sp->goback = sp->goahead = true;
 		} else {
 			register int_fast32_t	theirstdoffset;
@@ -1372,8 +1373,8 @@ tzparse(const char *name, struct state *sp, struct state const *basep)
 					/*
 					** Transitions from DST to DDST
 					** will effectively disappear since
-					** POSIX provides for only one DST
-					** offset.
+					** POSIX.1-2017 provides for only one
+					** DST offset.
 					*/
 					if (isdst && !sp->ttis[j].tt_ttisstd) {
 						sp->ats[i] += (time_t)
@@ -1556,7 +1557,8 @@ tzfree(timezone_t sp)
 **
 ** If successful and SETNAME is nonzero,
 ** set the applicable parts of tzname, timezone and altzone;
-** however, it's OK to omit this step if the timezone is POSIX-compatible,
+** however, it's OK to omit this step
+** if the timezone is compatible with POSIX.1-2017
 ** since in that case tzset should have already done this step correctly.
 ** SETNAME's type is int_fast32_t for compatibility with gmtsub,
 ** but it is actually a boolean and its value should be 0 or 1.
@@ -2465,15 +2467,18 @@ timelocal(struct tm *tmp)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
 	return mktime(tmp);
 }
-#else
+#endif
+
+#ifndef EXTERN_TIMEOFF
 # ifndef timeoff
 #  define timeoff my_timeoff /* Don't collide with OpenBSD 7.4 <time.h>.  */
 # endif
-static
+# define EXTERN_TIMEOFF static
 #endif
+
 /* This function is obsolescent and may disapper in future releases.
    Callers can instead use mktime_z with a fixed-offset zone.  */
-time_t
+EXTERN_TIMEOFF time_t
 timeoff(struct tm *tmp, long offset)
 {
   if (tmp)
