@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.67 2022/01/22 15:16:37 skrll Exp $
+.\" $NetBSD: bus_dma.9,v 1.68 2024/02/17 08:27:46 skrll Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2022
+.Dd February 17, 2024
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -436,14 +436,19 @@ One or more synchronization operation to perform.
 The following DMA synchronization operations are defined:
 .Bl -tag -width BUS_DMASYNC_POSTWRITE -compact
 .It Dv BUS_DMASYNC_PREREAD
-Perform any pre-read DMA cache and/or bounce operations.
+Perform any synchronization required prior to an update of host memory by the
+device.
 .It Dv BUS_DMASYNC_POSTREAD
-Perform any post-read DMA cache and/or bounce operations.
+Perform any synchronization required after an update of host memory by the
+device and prior to CPU access to host memory.
 .It Dv BUS_DMASYNC_PREWRITE
-Perform any pre-write DMA cache and/or bounce operations.
+Perform any synchronization required after an update of host memory by the CPU
+and prior to device access to host memory.
 .It Dv BUS_DMASYNC_POSTWRITE
-Perform any post-write DMA cache and/or bounce operations.
+Perform any synchronization required after device access to host memory.
 .El
+where each operation may involve cache flush/invalidation, bounce buffer
+copying, and/or memory barriers.
 .Pp
 More than one operation may performed in a given synchronization call.
 Mixing of
