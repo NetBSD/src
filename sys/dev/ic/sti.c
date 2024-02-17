@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.31 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: sti.c,v 1.31.6.1 2024/02/17 16:05:32 martin Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.31 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.31.6.1 2024/02/17 16:05:32 martin Exp $");
 
 #include "wsdisplay.h"
 
@@ -926,17 +926,30 @@ sti_init(struct sti_screen *scr, int mode)
 	KASSERT(rom != NULL);
 	memset(&a, 0, sizeof(a));
 
-	a.flags.flags = STI_INITF_WAIT | STI_INITF_EBET;
+	a.flags.flags = STI_INITF_WAIT | STI_INITF_PBET | STI_INITF_PBETI;
 	if ((mode & STI_TEXTMODE) != 0) {
 		a.flags.flags |= STI_INITF_TEXT | STI_INITF_CMB |
 		    STI_INITF_PBET | STI_INITF_PBETI | STI_INITF_ICMT;
+		a.in.text_planes = 1;
 	} else {
-		a.flags.flags |= STI_INITF_NTEXT;
+		a.flags.flags |= STI_INITF_TEXT | STI_INITF_NTEXT;
+		/* 
+		 * Request as many text palnes as STI will allow. 
+		 * The reason to do this - when switching to framebuffer mode
+		 * for X we need access to all planes. In theory STI should do
+		 * just that when we request access to both text and non-text
+		 * planes as above.
+		 * In reality though, at least on my PCI Visualize EG, some
+		 * planes and/or colour registers remain inaccessible if we
+		 * request only one text plane.
+		 * Clearly we're missing a register write or two here, but so
+		 * far I haven't found it.
+		 */
+		a.in.text_planes = 3;
 	}
 	if ((mode & STI_CLEARSCR) != 0)
 		a.flags.flags |= STI_INITF_CLEAR;
 
-	a.in.text_planes = 1;
 	a.in.ext_in = &a.ein;
 
 	DPRINTF(("%s: init,%p(%x, %p, %p, %p)\n",
@@ -1060,7 +1073,7 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 		case WSDISPLAYIO_MODE_DUMBFB:
 			if (scr->scr_wsmode != WSDISPLAYIO_MODE_DUMBFB) {
-				sti_init(scr, 0);
+				ret = sti_init(scr, 0);
 				if (scr->setupfb != NULL)
 					scr->setupfb(scr);
 				else
@@ -1487,7 +1500,7 @@ void	ngle_setup_attr_planes(struct sti_screen *scr);
 void	ngle_setup_bt458(struct sti_screen *scr);
 
 #define	ngle_bt458_write(memt, memh, r, v) \
-	bus_space_write_4(memt, memh, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
+	bus_space_write_stream_4(memt, memh, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
 
 void
 ngle_artist_setupfb(struct sti_screen *scr)
@@ -1504,10 +1517,10 @@ ngle_artist_setupfb(struct sti_screen *scr)
 	ngle_setup_attr_planes(scr);
 
 	ngle_setup_hw(memt, memh);
-	bus_space_write_4(memt, memh, NGLE_REG_21,
-	    bus_space_read_4(memt, memh, NGLE_REG_21) | 0x0a000000);
-	bus_space_write_4(memt, memh, NGLE_REG_27,
-	    bus_space_read_4(memt, memh, NGLE_REG_27) | 0x00800000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_21,
+	    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_27,
+	    bus_space_read_stream_4(memt, memh, NGLE_REG_27) | 0x00800000);
 }
 
 void
@@ -1566,19 +1579,19 @@ ngle_setup_attr_planes(struct sti_screen *scr)
 	bus_space_handle_t memh = rom->regh[2];
 
 	ngle_setup_hw(memt, memh);
-	bus_space_write_4(memt, memh, NGLE_REG_11, 0x2ea0d000);
-	bus_space_write_4(memt, memh, NGLE_REG_14, 0x23000302);
-	bus_space_write_4(memt, memh, NGLE_REG_12, scr->reg12_value);
-	bus_space_write_4(memt, memh, NGLE_REG_8, 0xffffffff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x2ea0d000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x23000302);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_12, scr->reg12_value);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_8, 0xffffffff);
 
-	bus_space_write_4(memt, memh, NGLE_REG_6, 0x00000000);
-	bus_space_write_4(memt, memh, NGLE_REG_9,
+	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x00000000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_9,
 	    (scr->scr_cfg.scr_width << 16) | scr->scr_cfg.scr_height);
-	bus_space_write_4(memt, memh, NGLE_REG_6, 0x05000000);
-	bus_space_write_4(memt, memh, NGLE_REG_9, 0x00040001);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x05000000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_9, 0x00040001);
 
 	ngle_setup_hw(memt, memh);
-	bus_space_write_4(memt, memh, NGLE_REG_12, 0x00000000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_12, 0x00000000);
 
 	ngle_setup_fb(memt, memh, scr->reg10_value);
 }
@@ -1602,22 +1615,24 @@ ngle_putcmap(struct sti_screen *scr, u_int idx, u_int count)
 	b = scr->scr_bcmap + idx;
 
 	ngle_setup_hw(memt, memh);
-	bus_space_write_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
-	bus_space_write_4(memt, memh, NGLE_REG_14, 0x03000300);
-	bus_space_write_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
 
 	while (count-- != 0) {
 		ngle_setup_hw(memt, memh);
-		bus_space_write_4(memt, memh, NGLE_REG_3, 0x400 | (idx << 2));
-		bus_space_write_4(memt, memh, NGLE_REG_4,
+		bus_space_write_stream_4(memt, memh, NGLE_REG_3,
+		    0x400 | (idx << 2));
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4,
 		    (*r << 16) | (*g << 8) | *b);
 
 		idx++;
 		r++, g++, b++;
 	}
 
-	bus_space_write_4(memt, memh, NGLE_REG_2, 0x400);
-	bus_space_write_4(memt, memh, scr->cmap_finish_register, cmap_finish);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0x400);
+	bus_space_write_stream_4(memt, memh, scr->cmap_finish_register,
+	    cmap_finish);
 	ngle_setup_fb(memt, memh, scr->reg10_value);
 
 
@@ -1641,8 +1656,8 @@ ngle_setup_fb(bus_space_tag_t memt, bus_space_handle_t memh, uint32_t reg10)
 {
 
 	ngle_setup_hw(memt, memh);
-	bus_space_write_4(memt, memh, NGLE_REG_10, reg10);
-	bus_space_write_4(memt, memh, NGLE_REG_14, 0x83000300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_10, reg10);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x83000300);
 	ngle_setup_hw(memt, memh);
 	bus_space_write_1(memt, memh, NGLE_REG_16b1, 1);
 }
