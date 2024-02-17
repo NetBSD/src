@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.24 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.25 2024/02/17 09:08:21 mlelstv Exp $	*/
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
@@ -147,7 +147,7 @@ struct ulfs_ufid {
 	uint16_t ufid_len;	/* Length of structure. */
 	uint16_t ufid_pad;	/* Force 32-bit alignment. */
 	uint32_t ufid_ino;	/* File number (ino). XXX should be 64 */
-	int32_t	  ufid_gen;	/* Generation number. */
+	int32_t  ufid_gen;	/* Generation number. */
 };
 /* Filehandle structure for exported LFSes */
 struct lfid {
