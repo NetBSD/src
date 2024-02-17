@@ -1,4 +1,4 @@
-#	$NetBSD: mk.generic,v 1.10 2020/08/29 19:06:18 jakllsch Exp $
+#	$NetBSD: mk.generic,v 1.11 2024/02/17 15:08:32 christos Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
@@ -14,6 +14,9 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 MKUBOOTIMAGEARGS=	-A arm -T kernel_noload -O linux -C none
 MKUBOOTIMAGEARGS+=	-e 0
 MKUBOOTIMAGEARGS+=	-n "NetBSD/${BOARDTYPE:U${MACHINE_ARCH}} ${_OSRELEASE}"
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKUBOOTIMAGEARGS+=	-t "${MKREPRO_TIMESTAMP}"
+.endif
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.img; \
