@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.13 2015/04/26 08:56:19 mlelstv Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.13.26.1 2024/02/17 16:07:38 martin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.13 2015/04/26 08:56:19 mlelstv Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.13.26.1 2024/02/17 16:07:38 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: utmp_update.c,v 1.13 2015/04/26 08:56:19 mlelstv Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <ctype.h>
 #include <utmpx.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,6 +81,7 @@ main(int argc, char *argv[])
 	int res;
 	uid_t euid, ruid;
 	char tty[MAXPATHLEN];
+	const char *p, *ep;
 
 	euid = geteuid();
 	ruid = getuid();
@@ -114,6 +116,12 @@ main(int argc, char *argv[])
 	default:
 		logerr(0, "Invalid utmpx type %d", (int)utx->ut_type);
 	}
+
+	p = utx->ut_host;
+	ep = p + sizeof(utx->ut_host);
+	for (; p < ep && *p; p++)
+		if (!isprint((unsigned char)*p))
+			logerr(0, "Non-printable characters in hostname");
 
 	if (ruid != 0) {
 		if ((pwd = getpwuid(ruid)) == NULL)
