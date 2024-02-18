@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.87 2024/02/18 22:29:56 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.88 2024/02/18 22:33:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ enum {
 /*
  * Global defines
  */
-#define	FTPBUFLEN	(4 * MAXPATHLEN)
+#define	FTPBUFLEN	(16 * 1024)
 #define	MAX_IN_PORT_T	0xffffU
 
 #define	HASHBYTES	1024	/* default mark for `hash' command */
