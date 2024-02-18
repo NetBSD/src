@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.20 2019/05/18 08:49:23 skrll Exp $
+#	$NetBSD: std.bcm53xx,v 1.20.28.1 2024/02/18 16:19:56 martin Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -28,5 +28,10 @@ options 	__HAVE_PCI_CONF_HOOK
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
 makeoptions	BOARDTYPE="bcm53xx"
+
+# Prevent the addition of a command line -DKERNEL_BASE_VOFFSET= as it
+# is done at runtime.
+makeoptions	KERNEL_VOFFSET_RUNTIME=1
+
 makeoptions	KERNEL_BASE_VIRT="0x80100000"
 makeoptions	LOADADDRESS="0x00100000"
