@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.22.6.1 2024/02/16 12:07:08 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.22.6.2 2024/02/18 16:19:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,9 +136,7 @@ bcmpax_ccb_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(cf->cf_name, loc->loc_name))
 		return 0;
 
-#ifdef DIAGNOSTIC
-	const int port = cf->cf_loc[BCMCCBCF_PORT];
-#endif
+	const int port __diagused = cf->cf_loc[BCMCCBCF_PORT];
 	KASSERT(port == BCMCCBCF_PORT_DEFAULT || port == loc->loc_port);
 
 	return 1;
