@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.151 2023/12/09 02:15:11 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.152 2024/02/18 22:29:56 christos Exp $
 .\"
 .\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd December 9, 2023
+.Dd February 18, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -69,6 +69,7 @@
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
+.Op Fl b Ar bufsize
 .Op Fl q Ar quittime
 .Op Fl r Ar retry
 .Op Fl s Ar srcaddr
@@ -201,6 +202,9 @@ implement passive mode properly.
 Causes
 .Nm
 to bypass normal login procedure, and use an anonymous login instead.
+.It Fl b Ar bufsize
+Change the input buffer size to
+.Ar bufsize .
 .It Fl d
 Enables debugging.
 .It Fl e

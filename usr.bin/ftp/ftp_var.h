@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.86 2021/09/10 21:52:17 rillig Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.87 2024/02/18 22:29:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -323,6 +323,7 @@ GLOBAL	int	 data;
 extern	struct cmd	cmdtab[];
 extern	struct option	optiontab[];
 
+extern	size_t ftp_buflen;
 
 #define	EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 #define	FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }

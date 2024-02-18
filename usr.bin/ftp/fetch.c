@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.238 2023/08/12 07:40:13 mlelstv Exp $	*/
+/*	$NetBSD: fetch.c,v 1.239 2024/02/18 22:29:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.238 2023/08/12 07:40:13 mlelstv Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.239 2024/02/18 22:29:56 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1116,15 +1116,17 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
     char **auth, struct urlinfo *ui)
 {
 	int			len, hcode, rv;
-	char			buf[FTPBUFLEN], *ep;
+	char			*buf = NULL, *ep;
 	const char		*cp, *token;
 	char			*location, *message;
 
 	*auth = message = location = NULL;
 
+	buf = ftp_malloc(ftp_buflen);
+
 	/* Read the response */
 	ep = buf;
-	switch (getresponse(fin, &ep, sizeof(buf), &hcode)) {
+	switch (getresponse(fin, &ep, ftp_buflen, &hcode)) {
 	case C_CLEANUP:
 		goto cleanup_fetch_url;
 	case C_IMPROPER:
@@ -1137,7 +1139,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 	/* Read the rest of the header. */
 
 	for (;;) {
-		if ((rv = getresponseline(fin, buf, sizeof(buf), &len)) != C_OK)
+		if ((rv = getresponseline(fin, buf, ftp_buflen, &len)) != C_OK)
 			goto cleanup_fetch_url;
 		if (len == 0)
 			break;
@@ -1265,6 +1267,7 @@ improper:
 	rv = C_IMPROPER;
 	goto out;
 out:
+	FREEPTR(buf);
 	FREEPTR(message);
 	FREEPTR(location);
 	return rv;
@@ -1279,7 +1282,7 @@ connectmethod(FETCH *fin, const char *url, const char *penv,
 	void *ssl;
 	int hcode, rv;
 	const char *cp;
-	char buf[FTPBUFLEN], *ep;
+	char *buf = NULL, *ep;
 	char *message = NULL;
 
 	print_connect(fin, oui);
@@ -1299,9 +1302,11 @@ connectmethod(FETCH *fin, const char *url, const char *penv,
 	}
 	alarmtimer(0);
 
+	buf = ftp_malloc(ftp_buflen);
+
 	/* Read the response */
 	ep = buf;
-	switch (getresponse(fin, &ep, sizeof(buf), &hcode)) {
+	switch (getresponse(fin, &ep, ftp_buflen, &hcode)) {
 	case C_CLEANUP:
 		goto cleanup_fetch_url;
 	case C_IMPROPER:
@@ -1313,7 +1318,7 @@ connectmethod(FETCH *fin, const char *url, const char *penv,
 
 	for (;;) {
 		int len;
-		if (getresponseline(fin, buf, sizeof(buf), &len) != C_OK)
+		if (getresponseline(fin, buf, ftp_buflen, &len) != C_OK)
 			goto cleanup_fetch_url;
 		if (len == 0)
 			break;
@@ -1364,6 +1369,7 @@ cleanup_fetch_url:
 	rv = C_CLEANUP;
 	goto out;
 out:
+	FREEPTR(buf);
 	FREEPTR(message);
 	return rv;
 }

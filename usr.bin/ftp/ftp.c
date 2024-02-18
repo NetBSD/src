@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.175 2023/05/05 15:46:06 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.176 2024/02/18 22:29:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.175 2023/05/05 15:46:06 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.176 2024/02/18 22:29:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ sigjmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
 char	pasv[BUFSIZ];	/* passive port for proxy data connection */
+size_t	ftp_buflen = FTPBUFLEN;
 
 static int empty(FILE *, FILE *, int);
 __dead static void abort_squared(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.129 2023/02/25 12:07:25 mlelstv Exp $	*/
+/*	$NetBSD: main.c,v 1.130 2024/02/18 22:29:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.129 2023/02/25 12:07:25 mlelstv Exp $");
+__RCSID("$NetBSD: main.c,v 1.130 2024/02/18 22:29:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, ":46AadefginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
+	while ((ch = getopt(argc, argv, ":46Aab:defginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -288,6 +288,12 @@ main(int volatile argc, char **volatile argv)
 
 		case 'a':
 			anonftp = 1;
+			break;
+
+		case 'b':
+			ftp_buflen = strtol(optarg, &ep, 0);
+			if (ftp_buflen < 1 || *ep != '\0')
+				errx(1, "Bad buflen value: %s", optarg);
 			break;
 
 		case 'd':
@@ -1089,6 +1095,7 @@ usage_help(void)
 "  -6            Only use IPv6 addresses\n"
 "  -A            Force active mode\n"
 "  -a            Use anonymous login\n"
+"  -b BUFLEN     Use BUFLEN bytes for fetch buffer\n"
 "  -d            Enable debugging\n"
 "  -e            Disable command-line editing\n"
 "  -f            Force cache reload for FTP or HTTP proxy transfers\n"
