@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.197 2024/02/14 15:10:47 sborrill Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.198 2024/02/18 16:32:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15506,7 +15506,7 @@ doc/3RDPARTY					(manual edit)
 	Updated tzdata to 2024a.
 	[kre, ticket #586]
 
-sys/arch/evbppc/wii/dev/wiifb.c			1.6
+sys/arch/evbppc/wii/dev/wiifb.c 		1.6
 
 	wiifb(4): various fixes.
 	[jmcneill, ticket #587]
@@ -15517,13 +15517,87 @@ sys/dev/pci/ppb.c				1.75
 	[rin, ticket #588]
 
 external/gpl2/groff/tmac/mdoc.local		(manually edited)
-sys/sys/param.h					(manually edited)
+sys/sys/param.h 				(manually edited)
 
 	Welcome to 10.0_RC4
 
 usr.sbin/sysinst/label.c			1.51
 
 	PR 57927: fix moving of the install target to a new
- 	partition.
+	partition.
 	[martin, ticket #594]
+
+sys/arch/arm/broadcom/bcm2835_bsc.c		1.16
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.20
+sys/arch/arm/broadcom/bcm2838_pcie.c		1.7
+sys/arch/arm/broadcom/bcm53xx_board.c		1.26
+sys/arch/arm/broadcom/bcm53xx_cca.c		1.6
+sys/arch/arm/broadcom/bcm53xx_idm.c		1.4
+sys/arch/arm/broadcom/bcm53xx_pax.c		1.24
+sys/arch/arm/broadcom/bcm53xx_reg.h		1.20
+
+	Trailing whitespace
+	[skrll, ticket #598]
+
+sys/dev/usb/ehci.c				1.322
+sys/dev/usb/ehcireg.h				1.39
+
+	ehci(4): fix the build for kernels with option EHCI_DEBUG.
+	[gutteridge, ticket #589]
+
+sys/arch/vax/vax/machdep.c			1.197
+
+	vax: include leds.h to make /dev/leds work.
+	[hans, ticket #590]
+
+external/bsd/blocklist/bin/blocklistd.conf.5	1.3
+external/bsd/blocklist/bin/conf.c		1.4-1.6
+external/bsd/blocklist/etc/blocklistd.conf	1.3
+
+	blocklistd(8): PR 57905: fix parsing of ipv6 addresses and
+	add examples to the documentation.
+	[markd, ticket #591]
+
+sys/arch/hppa/dev/dino.c			1.17
+sys/arch/hppa/dev/elroy.c			1.7
+sys/arch/hppa/hppa/mainbus.c			1.13
+sys/arch/hppa/include/bus_defs.h		1.3
+sys/arch/hppa/include/bus_funcs.h		1.2
+
+	hppa: add missing bus_space_*_stream() methods.
+	[macallan, ticket #592]
+
+sys/dev/ic/sti.c				1.32
+
+	hppa: sti(4): make this work properly on PCI Visualize EG.
+	[macallan, ticket #593]
+
+libexec/utmp_update/utmp_update.c		1.14
+
+	utmp_update(8): check for non-printable characters in ut_host.
+	[shm, ticket #595]
+
+sys/dev/dec/dzkbd.c				1.32
+sys/dev/dec/lk201_ws.c				1.11
+sys/dev/dec/lk201var.h				1.8
+
+	vax: fix keyboard console in polled mode on some machines.
+	[tsutsui, ticket #596]
+
+sys/arch/arm/broadcom/bcm53xx_eth.c		1.43
+sys/arch/arm/broadcom/bcm53xx_pax.c		1.23
+sys/arch/evbarm/conf/std.bcm53xx		1.21
+
+	evbarm: fix build of BCM5301X and BCM56340 kernels.
+	[skrll, ticket #597]
+
+sys/arch/arm/broadcom/bcm53xx_eth.c		1.44
+
+	evbarm: fix ethernet controller setup on BCM53XX.
+	[skrll, ticket #599]
+
+sys/dev/tc/zskbd.c				1.22
+
+	alpha, pmax: fix keyboard console in polled mode on some machines.
+	[tsutsui, ticket #600]
 
