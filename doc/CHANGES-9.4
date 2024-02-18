@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.129 2024/02/17 16:19:56 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.130 2024/02/18 16:31:06 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4161,4 +4161,9 @@ sys/dev/dec/lk201var.h				1.8
 
 	vax: fix keyboard console in polled mode on some machines.
 	[tsutsui, ticket #1798]
+
+sys/dev/tc/zskbd.c				1.22
+
+	alpha, pmax: fix keyboard console in polled mode on some machines.
+	[tsutsui, ticket #1799]
 
