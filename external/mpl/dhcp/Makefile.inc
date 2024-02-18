@@ -1,12 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.11 2021/08/19 11:50:56 christos Exp $
+# $NetBSD: Makefile.inc,v 1.12 2024/02/18 20:57:30 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
 .include <bsd.own.mk>
-
-LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
-LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
-
 
 USE_FORT?= yes	# network client/server
 CWARNFLAGS.clang+=	-Wno-tautological-compare \
@@ -14,7 +10,8 @@ CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-format-security -Wno-error=unused-const-variable
 
 DIST:=	${.PARSEDIR}/dist
-BIND:=	${.PARSEDIR}/../../mpl/bind/dist
+BIND:=	${.PARSEDIR}/bind
+BINDDIST=	${BIND}/dist
 .PATH:	${DIST}/${DHCPSRCDIR}
 
 COBJDIR!=cd ${.PARSEDIR}/lib/common && ${PRINTOBJDIR}
@@ -25,11 +22,11 @@ CPPFLAGS+=	-DDHCPv6
 .endif
 CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -I${DIST}/../include
-CPPFLAGS+= -I${BIND} -I${BIND}/includes -I${BIND}/../include
+CPPFLAGS+= -I${BINDDIST} -I${BINDDIST}/includes -I${BINDDIST}/../include
 .for dir in isc dns irs
-CPPFLAGS+= -I${BIND}/lib/${dir}/include
-CPPFLAGS+= -I${BIND}/lib/${dir}/unix/include
-CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/unix/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/pthreads/include
 .endfor
 CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
 LDADD+= ${COBJDIR}/libdhcp.a
@@ -41,10 +38,11 @@ LDADD+= ${OMOBJDIR}/libomapi.a
 # would be to install the libraries in /lib...
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -lirs -lisccfg -ldns -lisc
-LDADD+= -L${LIBUVOBJDIR} -luv
-DPADD+= ${LIBIRS} ${LIBISCCFG} ${LIBDNS} ${LIBISC} ${LIBUV}
-DPADD+= ${LIBUVOBJDIR}/libuv.a
+PROGDPLIBS+= irs ${BIND}/lib/libirs
+PROGDPLIBS+= isccfg ${BIND}/lib/libisccfg
+PROGDPLIBS+= dns ${BIND}/lib/libdns
+PROGDPLIBS+= isc ${BIND}/lib/libisc
+PROGDPLIBS+= uv ${NETBSDSRCDIR}/external/mit/libuv/lib
 LDADD+= -lexecinfo -lkvm -lpthread -lz
 DPADD+= ${LIBEXECINFO} ${LIBKVM} ${LIBPTHREAD} ${LIBZ}
 .if (${MKKERBEROS} != "no")
