@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.56 2023/12/28 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: makefs.c,v 1.57 2024/02/18 16:59:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.56 2023/12/28 12:13:55 tsutsui Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.57 2024/02/18 16:59:16 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -100,7 +100,8 @@ main(int argc, char *argv[])
 	fstype_t	*fstype;
 	fsinfo_t	 fsoptions;
 	fsnode		*root;
-	int	 	 ch, i, len;
+	int	 	 ch, i;
+	size_t		 len;
 	char		*specfile;
 
 	setprogname(argv[0]);
@@ -156,7 +157,7 @@ main(int argc, char *argv[])
 			len = strlen(optarg) - 1;
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
-				fsoptions.freeblockpc =
+				fsoptions.freeblockpc = (int)
 				    strsuftoll("free block percentage",
 					optarg, 0, 99);
 			} else {
@@ -167,14 +168,14 @@ main(int argc, char *argv[])
 			break;
 
 		case 'd':
-			debug = strtoll(optarg, NULL, 0);
+			debug = (int)strtoll(optarg, NULL, 0);
 			break;
 
 		case 'f':
 			len = strlen(optarg) - 1;
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
-				fsoptions.freefilepc =
+				fsoptions.freefilepc = (int)
 				    strsuftoll("free file percentage",
 					optarg, 0, 99);
 			} else {
@@ -351,6 +352,45 @@ set_option(const option_t *options, const char *option, char *buf, size_t len)
 	return retval;
 }
 
+void
+print_options(FILE *fp, const option_t *options)
+{
+	for (size_t i = 0; options[i].name != NULL; i++) {
+		fprintf(fp, "%s=", options[i].name);
+		switch (options[i].type) {
+		case OPT_BOOL:
+			fputs(*(bool *)options[i].value ? "true\n" : "false\n",
+			    fp); 
+			break;
+		case OPT_STRARRAY:
+		case OPT_STRPTR:
+		case OPT_STRBUF:
+			fprintf(fp, "%s\n", *(const char **)options[i].value);
+			break;
+		case OPT_INT64:
+			fprintf(fp, "%" PRIu64 "\n",
+			    *(uint64_t *)options[i].value);
+			break;
+		case OPT_INT32:
+			fprintf(fp, "%" PRIu32 "\n",
+			    *(uint32_t *)options[i].value);
+			break;
+		case OPT_INT16:
+			fprintf(fp, "%" PRIu16 "\n",
+			    *(uint16_t *)options[i].value);
+			break;
+		case OPT_INT8:
+			fprintf(fp, "%" PRIu8 "\n",
+			    *(uint8_t *)options[i].value);
+			break;
+		default:
+			warnx("Unknown type %d in option %s", options[i].type,
+			    options[i].name);
+			return;
+		}
+	}
+}
+
 int
 set_option_var(const option_t *options, const char *var, const char *val,
     char *buf, size_t len)
@@ -402,7 +442,7 @@ set_option_var(const option_t *options, const char *var, const char *val,
 			    val);
 			return 0;
 		}
-		return i;
+		return (int)i;
 	}
 	warnx("Unknown option `%s'", var);
 	return -1;
