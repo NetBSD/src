@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.57 2023/07/28 02:41:30 rin Exp $
+#	$NetBSD: Makefile.arm,v 1.58 2024/02/18 10:49:43 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,11 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "aarch64" && ${HAVE_GCC} != "no"
+. info (Building GENERIC instead of GENERIC64?)
+. error Don't build 32-bit kernel with 64-bit toolchain
+.endif
 
 ##
 ## (1) port identification
