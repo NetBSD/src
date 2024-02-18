@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.54 2024/02/17 14:54:47 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.55 2024/02/18 12:47:08 kre Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.54 2024/02/17 14:54:47 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.55 2024/02/18 12:47:08 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -381,15 +381,11 @@ label:
 					tm.tm_mday = t->tm_mday;
 					tm.tm_mon = t->tm_mon;
 					tm.tm_year = t->tm_year;
-#ifdef TM_GMTOFF
-					mkt = timeoff(&tm, t->TM_GMTOFF);
-#else
 					tm.tm_isdst = t->tm_isdst;
 #if defined TM_GMTOFF && ! UNINIT_TRAP
 					tm.TM_GMTOFF = t->TM_GMTOFF;
 #endif
 					mkt = mktime_z(sp, &tm);
-#endif
 					/* If mktime fails, %s expands to the
 					   value of (time_t) -1 as a failure
 					   marker; this is better in practice
