@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.23 2023/12/28 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: msdos.c,v 1.24 2024/02/18 16:58:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.23 2023/12/28 12:13:55 tsutsui Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.24 2024/02/18 16:58:51 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 	assert(msdos_opt != NULL);
 
 	if (debug & DEBUG_FS_PARSE_OPTS)
-		printf("msdos_parse_opts: got `%s'\n", option);
+		printf("%s: got `%s'\n", __func__, option);
 
 	rv = set_option(msdos_options, option, NULL, 0);
 	if (rv == -1)
@@ -134,10 +134,6 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 	else if (strcmp(msdos_options[rv].name, "hidden_sectors") == 0)
 		msdos_opt->hidden_sectors_set = 1;
 
-	if (stampst.st_ino) {
-		msdos_opt->timestamp_set = 1;
-		msdos_opt->timestamp = stampst.st_mtime;
-	}
 
 	return 1;
 }
@@ -171,6 +167,10 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		err(EXIT_FAILURE, "inconsistent sectorsize -S %u"
 		    "!= -o bytes_per_sector %u",
 		    fsopts->sectorsize, msdos_opt->options.bytes_per_sector);
+	}
+	if (stampst.st_ino) {
+		msdos_opt->options.timestamp_set = 1;
+		msdos_opt->options.timestamp = stampst.st_mtime;
 	}
 
 		/* create image */
