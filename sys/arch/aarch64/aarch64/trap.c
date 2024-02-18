@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $ */
+/* $NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014, 2023 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.51 2024/02/18 09:03:44 andvar Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -43,8 +43,8 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $");
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
-#ifdef KDB
-#include <sys/kdb.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.50 2023/10/04 20:28:05 ad Exp $");
 
 #include <arm/cpufunc.h>
 
-#ifdef KDB
+#ifdef KGDB
 #include <machine/db_machdep.h>
 #endif
 #ifdef DDB

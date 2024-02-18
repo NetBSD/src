@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.43 2023/04/20 08:28:02 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.44 2024/02/18 09:03:44 andvar Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -68,7 +68,7 @@ file	arch/aarch64/aarch64/db_interface.c		ddb|kgdb
 file	arch/aarch64/aarch64/db_trace.c			ddb
 file	arch/aarch64/aarch64/db_machdep.c		ddb
 file	arch/aarch64/aarch64/disasm.c			ddb
-file	arch/aarch64/aarch64/kgdb_machdep.c		kgdb
+#file	arch/aarch64/aarch64/kgdb_machdep.c		kgdb # XXX: not implemented
 
 # mainbus files
 device	mainbus { [addr = -1], [size = 0], [intr = -1] }
