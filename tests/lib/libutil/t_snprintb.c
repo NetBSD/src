@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.21 2024/02/19 23:22:03 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.22 2024/02/19 23:30:56 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.21 2024/02/19 23:22:03 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.22 2024/02/19 23:30:56 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -1462,7 +1462,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    24,
 	    "0xff<lo=0xf>\0"
-	    "0xfff=match\0");		// FIXME: incomplete
+	    "0xff<low-bits=0xf=match>\0");
 
 	// new style, line_max exceeded by unnamed bit-field number in line 1
 	h_snprintb_m(
@@ -1567,10 +1567,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0x800f0701,
 	    34,
 	    "0x800f0701<LSB,NIBBLE2=0>\0"
-	    // FIXME: The '\020\004' is wrong.
-	    // FIXME: The '=0xf' is missing.
-	    // FIXME: The '<' is in the wrong place.
-	    "0x800f0701f\020\004BURST=FIFTEEN<MSB>\0");
+	    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\0");
 
 	// new style, buffer too small for complete number in line 2
 	h_snprintb_m_len(
