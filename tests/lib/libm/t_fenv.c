@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.13 2023/11/06 13:48:12 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.14 2024/02/19 23:19:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.13 2023/11/06 13:48:12 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.14 2024/02/19 23:19:10 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -341,12 +341,43 @@ ATF_TC_BODY(feenableexcept, tc)
 	    (int)fpgetmask(), (int)FP_X_INV);
 }
 
+ATF_TC(fetestexcept_trap);
+ATF_TC_HEAD(fetestexcept_trap, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify fetestexcept doesn't affect the trapped excpetions");
+}
+ATF_TC_BODY(fetestexcept_trap, tc)
+{
+	int except;
+
+	fedisableexcept(FE_ALL_EXCEPT);
+	ATF_CHECK_EQ_MSG((except = fegetexcept()), 0,
+	    "fegetexcept()=0x%x", except);
+
+	(void)fetestexcept(FE_ALL_EXCEPT);
+	ATF_CHECK_EQ_MSG((except = fegetexcept()), 0,
+	    "fegetexcept()=0x%x", except);
+
+	feenableexcept(FE_ALL_EXCEPT);
+	ATF_CHECK_EQ_MSG((except = fegetexcept()), FE_ALL_EXCEPT,
+	    "fegetexcept()=0x%x FE_ALL_EXCEPT=0x%x", except, FE_ALL_EXCEPT);
+
+	(void)fetestexcept(FE_ALL_EXCEPT);
+#ifdef __x86_64__
+	atf_tc_expect_fail("PR port-amd64/57949");
+#endif
+	ATF_CHECK_EQ_MSG((except = fegetexcept()), FE_ALL_EXCEPT,
+	    "fegetexcept()=0x%x FE_ALL_EXCEPT=0x%x", except, FE_ALL_EXCEPT);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, fegetround);
 	ATF_TP_ADD_TC(tp, fesetround);
 	ATF_TP_ADD_TC(tp, fegetexcept);
 	ATF_TP_ADD_TC(tp, feenableexcept);
+	ATF_TP_ADD_TC(tp, fetestexcept_trap);
 
 	return atf_no_error();
 }
