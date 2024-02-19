@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.198 2024/02/18 16:32:54 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.199 2024/02/19 08:59:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15600,4 +15600,11 @@ sys/dev/tc/zskbd.c				1.22
 
 	alpha, pmax: fix keyboard console in polled mode on some machines.
 	[tsutsui, ticket #600]
+
+sys/arch/vax/vsa/ncr.c				1.52
+sys/arch/vax/vsa/vsbus.c			1.69
+
+	vax: fix SCSI tranfer corruption on VAXstation 3100/m30 (KA420)
+	on netboot.
+	[tsutsui, ticket #601]
 
