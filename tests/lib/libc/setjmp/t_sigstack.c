@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.4 2024/02/19 12:41:19 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.5 2024/02/19 12:41:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.4 2024/02/19 12:41:19 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.5 2024/02/19 12:41:27 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -76,7 +76,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 * On some architectures, this is broken.  Those that appear to
 	 * get this right are:
 	 *
-	 *	alpha, m68k, or1k, powerpc, powerpc64, riscv, vax
+	 *	aarch64, alpha, m68k, or1k, powerpc, powerpc64, riscv, vax
 	 */
 #if defined __arm__ || defined __hppa__ || defined __i386__ || \
     defined __ia64__ || defined __mips__ || defined __sh3__ || \
