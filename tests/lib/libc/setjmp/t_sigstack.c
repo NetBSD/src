@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.2 2024/02/19 04:33:21 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.3 2024/02/19 12:29:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.2 2024/02/19 04:33:21 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.3 2024/02/19 12:29:48 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -39,7 +39,10 @@ __RCSID("$NetBSD: t_sigstack.c,v 1.2 2024/02/19 04:33:21 riastradh Exp $");
 
 struct sigaltstack ss;
 jmp_buf jmp;
+sigjmp_buf sigjmp;
 unsigned nentries;
+const char *bailname;
+void (*bailfn)(void) __dead;
 
 static void
 on_sigusr1(int signo, siginfo_t *si, void *ctx)
@@ -81,10 +84,10 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 #endif
 	ATF_REQUIRE_MSG((sp < ss.ss_sp ||
 		sp > (void *)((char *)ss.ss_sp + ss.ss_size)),
-	    "longjmp failed to restore stack before allowing signal --"
+	    "%s failed to restore stack before allowing signal --"
 	    " interrupted stack pointer %p lies in sigaltstack"
 	    " [%p, %p), size 0x%zx",
-	    sp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
+	    bailname, sp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 
 	/*
 	 * First time through, we want to test whether longjmp restores
@@ -100,18 +103,16 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	/*
 	 * Jump back to the original context.
 	 */
-	longjmp(jmp, 1);
+	(*bailfn)();
 }
 
-ATF_TC(setjmp);
-ATF_TC_HEAD(setjmp, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test longjmp restores stack first, then signal mask");
-}
-ATF_TC_BODY(setjmp, tc)
+static void
+go(const char *name, void (*fn)(void) __dead)
 {
 	struct sigaction sa;
+
+	bailname = name;
+	bailfn = fn;
 
 	/*
 	 * Allocate a stack for the signal handler to run in, and
@@ -145,14 +146,6 @@ ATF_TC_BODY(setjmp, tc)
 	RL(sigaction(SIGUSR1, &sa, NULL));
 
 	/*
-	 * Set up a return point for the signal handler: when the
-	 * signal handler does longjmp(jmp, 1), it comes flying out of
-	 * here.
-	 */
-	if (setjmp(jmp) == 1)
-		return;
-
-	/*
 	 * Raise the signal to enter the signal handler the first time.
 	 */
 	RL(raise(SIGUSR1));
@@ -163,11 +156,71 @@ ATF_TC_BODY(setjmp, tc)
 	atf_tc_fail("unreachable");
 }
 
+static void __dead
+bail_longjmp(void)
+{
+
+	longjmp(jmp, 1);
+}
+
+ATF_TC(setjmp);
+ATF_TC_HEAD(setjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test longjmp restores stack first, then signal mask");
+}
+ATF_TC_BODY(setjmp, tc)
+{
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does longjmp(jmp, 1), it comes flying out of
+	 * here.
+	 */
+	if (setjmp(jmp) == 1)
+		return;
+
+	/*
+	 * Run the test with longjmp.
+	 */
+	go("longjmp", &bail_longjmp);
+}
+
+static void __dead
+bail_siglongjmp(void)
+{
+
+	siglongjmp(sigjmp, 1);
+}
+
+ATF_TC(sigsetjmp);
+ATF_TC_HEAD(sigsetjmp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test siglongjmp restores stack first, then signal mask");
+}
+ATF_TC_BODY(sigsetjmp, tc)
+{
+
+	/*
+	 * Set up a return point for the signal handler: when the
+	 * signal handler does siglongjmp(sigjmp, 1), it comes flying
+	 * out of here.
+	 */
+	if (sigsetjmp(sigjmp, /*savesigmask*/1) == 1)
+		return;
+
+	/*
+	 * Run the test with siglongjmp.
+	 */
+	go("siglongjmp", &bail_siglongjmp);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, setjmp);
-//	ATF_TP_ADD_TC(tp, sigsetjmp);
+	ATF_TP_ADD_TC(tp, sigsetjmp);
 
 	return atf_no_error();
 }
