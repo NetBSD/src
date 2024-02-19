@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.5 2024/02/19 12:41:27 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.6 2024/02/19 13:34:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.5 2024/02/19 12:41:27 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.6 2024/02/19 13:34:48 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: t_sigstack.c,v 1.5 2024/02/19 12:41:27 riastradh Exp $");
 
 #include "h_macros.h"
 
-struct sigaltstack ss;
+struct sigaltstack ss[3];
 jmp_buf jmp;
 sigjmp_buf sigjmp;
 unsigned nentries;
@@ -50,28 +50,33 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	ucontext_t *uc = ctx;
 	void *sp = (void *)(uintptr_t)_UC_MACHINE_SP(uc);
 	void *fp = __builtin_frame_address(0);
+	struct sigaltstack *ssp;
+
+	/*
+	 * Ensure we haven't re-entered the signal handler too many
+	 * times.  We should enter only twice.
+	 */
+	ATF_REQUIRE_MSG(nentries < 2,
+	    "%u recursive signal handler entries is too many in this test",
+	    nentries + 1);
 
 	/*
 	 * Ensure that the signal handler was called in the alternate
 	 * signal stack.
 	 */
-	ATF_REQUIRE_MSG(fp >= ss.ss_sp,
+	ssp = &ss[nentries];
+	ATF_REQUIRE_MSG((fp >= ssp->ss_sp &&
+		fp < (void *)((char *)ssp->ss_sp + ssp->ss_size)),
 	    "sigaltstack failed to take effect on entry %u --"
 	    " signal handler's frame pointer %p doesn't lie in sigaltstack"
 	    " [%p, %p), size 0x%zx",
 	    nentries,
-	    fp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
-	ATF_REQUIRE_MSG(fp < (void *)((char *)ss.ss_sp + ss.ss_size),
-	    "sigaltstack failed to take effect on entry %u --"
-	    " signal handler's frame pointer %p doesn't lie in sigaltstack"
-	    " [%p, %p), size 0x%zx",
-	    nentries,
-	    fp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
+	    fp, ssp->ss_sp, (char *)ssp->ss_sp + ssp->ss_size, ssp->ss_size);
 
 	/*
 	 * Ensure that if we enter the signal handler, we are entering
-	 * it from the original stack, not from the alternate signal
-	 * stack.
+	 * it from the original stack, not from any of the alternate
+	 * signal stacks.
 	 *
 	 * On some architectures, this is broken.  Those that appear to
 	 * get this right are:
@@ -84,13 +89,19 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	if (nentries > 0)
 		atf_tc_expect_fail("PR lib/57946");
 #endif
-	ATF_REQUIRE_MSG((sp < ss.ss_sp ||
-		sp > (void *)((char *)ss.ss_sp + ss.ss_size)),
-	    "%s failed to restore stack before allowing signal on entry %u--"
-	    " interrupted stack pointer %p lies in sigaltstack"
-	    " [%p, %p), size 0x%zx",
-	    nentries,
-	    bailname, sp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
+	for (ssp = &ss[0]; ssp < &ss[__arraycount(ss)]; ssp++) {
+		ATF_REQUIRE_MSG((sp < ssp->ss_sp ||
+			sp > (void *)((char *)ssp->ss_sp + ssp->ss_size)),
+		    "%s failed to restore stack"
+		    " before allowing signal on entry %u --"
+		    " interrupted stack pointer %p lies in sigaltstack %zd"
+		    " [%p, %p), size 0x%zx",
+		    bailname,
+		    nentries,
+		    sp, ssp - ss,
+		    ssp->ss_sp, (char *)ssp->ss_sp + ssp->ss_size,
+		    ssp->ss_size);
+	}
 
 	/*
 	 * First time through, we want to test whether longjmp restores
@@ -104,6 +115,15 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 		RL(raise(SIGUSR1));
 
 	/*
+	 * Set up the next sigaltstack.  We can't reuse the current one
+	 * for the next signal handler re-entry until the system clears
+	 * the SS_ONSTACK process state -- which normal return from
+	 * signal handler does, but which longjmp does not.  So to keep
+	 * it simple (ha), we just use another sigaltstack.
+	 */
+	RL(sigaltstack(&ss[nentries], NULL));
+
+	/*
 	 * Jump back to the original context.
 	 */
 	(*bailfn)();
@@ -113,19 +133,22 @@ static void
 go(const char *name, void (*fn)(void) __dead)
 {
 	struct sigaction sa;
+	unsigned i;
 
 	bailname = name;
 	bailfn = fn;
 
 	/*
 	 * Allocate a stack for the signal handler to run in, and
-	 * configure the system to use it.
+	 * configure the system to use the first one.
 	 *
 	 * XXX Should maybe use a guard page but this is simpler.
 	 */
-	ss.ss_size = SIGSTKSZ;
-	REQUIRE_LIBC(ss.ss_sp = malloc(ss.ss_size), NULL);
-	RL(sigaltstack(&ss, NULL));
+	for (i = 0; i < __arraycount(ss); i++) {
+		ss[i].ss_size = SIGSTKSZ;
+		REQUIRE_LIBC(ss[i].ss_sp = malloc(ss[i].ss_size), NULL);
+	}
+	RL(sigaltstack(&ss[0], NULL));
 
 	/*
 	 * Set up a test signal handler for SIGUSR1.  Allow all
