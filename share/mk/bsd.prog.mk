@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.347 2023/10/11 14:08:26 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.348 2024/02/19 20:39:38 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -403,6 +403,10 @@ DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
 .endif
 .endfor
 .endif									# }
+
+LDADD+=${LDADD_AFTER}
+DPADD+=${DPADD_AFTER}
+
 #
 # Per-program definitions and targets.
 #
