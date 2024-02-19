@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.1 2024/02/19 04:30:39 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.2 2024/02/19 04:33:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.1 2024/02/19 04:30:39 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.2 2024/02/19 04:33:21 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -140,7 +140,7 @@ ATF_TC_BODY(setjmp, tc)
 	 */
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = &on_sigusr1;
-	sigemptyset(&sa.sa_mask);
+	RL(sigemptyset(&sa.sa_mask));
 	sa.sa_flags = SA_SIGINFO|SA_ONSTACK;
 	RL(sigaction(SIGUSR1, &sa, NULL));
 
@@ -155,7 +155,7 @@ ATF_TC_BODY(setjmp, tc)
 	/*
 	 * Raise the signal to enter the signal handler the first time.
 	 */
-	raise(SIGUSR1);
+	RL(raise(SIGUSR1));
 
 	/*
 	 * If we ever reach this point, something went seriously wrong.
