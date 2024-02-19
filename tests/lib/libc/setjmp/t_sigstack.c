@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.6 2024/02/19 13:34:48 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.7 2024/02/19 19:43:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.6 2024/02/19 13:34:48 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.7 2024/02/19 19:43:27 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -91,7 +91,7 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 #endif
 	for (ssp = &ss[0]; ssp < &ss[__arraycount(ss)]; ssp++) {
 		ATF_REQUIRE_MSG((sp < ssp->ss_sp ||
-			sp > (void *)((char *)ssp->ss_sp + ssp->ss_size)),
+			sp >= (void *)((char *)ssp->ss_sp + ssp->ss_size)),
 		    "%s failed to restore stack"
 		    " before allowing signal on entry %u --"
 		    " interrupted stack pointer %p lies in sigaltstack %zd"
