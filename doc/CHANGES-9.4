@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.130 2024/02/18 16:31:06 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.131 2024/02/19 09:03:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4166,4 +4166,11 @@ sys/dev/tc/zskbd.c				1.22
 
 	alpha, pmax: fix keyboard console in polled mode on some machines.
 	[tsutsui, ticket #1799]
+
+sys/arch/vax/vsa/ncr.c				1.52
+sys/arch/vax/vsa/vsbus.c			1.69 (patch)
+
+	vax: fix SCSI tranfer corruption on VAXstation 3100/m30 (KA420)
+	on netboot.
+	[tsutsui, ticket #1800]
 
