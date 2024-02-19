@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.35 2024/02/17 10:23:30 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.35 2024/02/17 10:23:30 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.35 2024/02/17 10:23:30 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.35 2024/02/17 10:23:30 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -233,7 +233,8 @@ new_style(state *s)
 			matched = 1;
 			if (kind == '=')
 				put_chr(s, '=');
-			put_bitfmt(s);
+			if (s->restart == 0)
+				put_bitfmt(s);
 			break;
 		case '*':
 			s->bitfmt--;
