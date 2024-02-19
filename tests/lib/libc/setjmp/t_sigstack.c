@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.3 2024/02/19 12:29:48 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.4 2024/02/19 12:41:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.3 2024/02/19 12:29:48 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.4 2024/02/19 12:41:19 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -56,14 +56,16 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 * signal stack.
 	 */
 	ATF_REQUIRE_MSG(fp >= ss.ss_sp,
-	    "sigaltstack failed to take effect --"
+	    "sigaltstack failed to take effect on entry %u --"
 	    " signal handler's frame pointer %p doesn't lie in sigaltstack"
 	    " [%p, %p), size 0x%zx",
+	    nentries,
 	    fp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 	ATF_REQUIRE_MSG(fp < (void *)((char *)ss.ss_sp + ss.ss_size),
-	    "sigaltstack failed to take effect --"
+	    "sigaltstack failed to take effect on entry %u --"
 	    " signal handler's frame pointer %p doesn't lie in sigaltstack"
 	    " [%p, %p), size 0x%zx",
+	    nentries,
 	    fp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 
 	/*
@@ -84,9 +86,10 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 #endif
 	ATF_REQUIRE_MSG((sp < ss.ss_sp ||
 		sp > (void *)((char *)ss.ss_sp + ss.ss_size)),
-	    "%s failed to restore stack before allowing signal --"
+	    "%s failed to restore stack before allowing signal on entry %u--"
 	    " interrupted stack pointer %p lies in sigaltstack"
 	    " [%p, %p), size 0x%zx",
+	    nentries,
 	    bailname, sp, ss.ss_sp, (char *)ss.ss_sp + ss.ss_size, ss.ss_size);
 
 	/*
