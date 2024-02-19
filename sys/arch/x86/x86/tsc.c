@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.59 2024/02/19 09:22:31 mrg Exp $	*/
+/*	$NetBSD: tsc.c,v 1.60 2024/02/19 20:10:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.59 2024/02/19 09:22:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60 2024/02/19 20:10:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,6 @@ tsc_is_invariant(void)
 		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 		case 0x15:
 		case 0x16:
-			printf("%s: invariant %d (base fam %x)\n", __func__, invariant, CPUID_TO_FAMILY(ci->ci_signature));
 			return false;
 		}
 	}
