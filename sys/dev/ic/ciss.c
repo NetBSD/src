@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.55 2023/08/17 14:19:50 andvar Exp $	*/
+/*	$NetBSD: ciss.c,v 1.56 2024/02/19 14:54:04 msaitoh Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.55 2023/08/17 14:19:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.56 2024/02/19 14:54:04 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -426,6 +426,14 @@ ciss_attach(struct ciss_softc *sc)
 	aprint_normal("\n");
 
 	mutex_exit(&sc->sc_mutex_scratch);
+
+	if (sc->maxunits == 0) {
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		aprint_error_dev(sc->sc_dev,
+		    "No any LD. This driver can't attach.\n");
+		return -1;
+	}
 
 	callout_init(&sc->sc_hb, 0);
 	callout_setfunc(&sc->sc_hb, ciss_heartbeat, sc);
