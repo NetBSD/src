@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.152 2024/02/18 22:29:56 christos Exp $
+.\" 	$NetBSD: ftp.1,v 1.153 2024/02/19 00:15:20 christos Exp $
 .\"
 .\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,6 +205,8 @@ to bypass normal login procedure, and use an anonymous login instead.
 .It Fl b Ar bufsize
 Change the input buffer size to
 .Ar bufsize .
+The default is 
+.Dv 16K .
 .It Fl d
 Enables debugging.
 .It Fl e

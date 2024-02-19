@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.17 2024/02/18 22:29:56 christos Exp $	*/
+/*	$NetBSD: ssl.c,v 1.18 2024/02/19 00:15:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.17 2024/02/18 22:29:56 christos Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.18 2024/02/19 00:15:20 christos Exp $");
 #endif
 
 #include <err.h>
@@ -579,7 +579,7 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 				break;
 		}
 		if (errormsg)
-			*errormsg = "Input line is too long (specify -b > 4K)";
+			*errormsg = "Input line is too long (specify -b > 16K)";
 		fetch_clearerr(conn);
 		return -3;
 	}
