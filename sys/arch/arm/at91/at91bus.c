@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.29 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.30 2024/02/20 23:36:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.29 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.30 2024/02/20 23:36:01 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -260,7 +260,7 @@ at91bus_setup(BootConfig *mem)
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 #ifdef	VERBOSE_INIT_ARM
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	       physical_start, physical_end - 1);
 #endif
 

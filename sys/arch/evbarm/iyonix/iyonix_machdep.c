@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.5 2023/10/12 11:33:38 skrll Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.6 2024/02/20 23:36:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.5 2023/10/12 11:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.6 2024/02/20 23:36:02 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -518,7 +518,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 

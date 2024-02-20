@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.45 2023/10/12 11:33:38 skrll Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.46 2024/02/20 23:36:02 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.45 2023/10/12 11:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.46 2024/02/20 23:36:02 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -592,7 +592,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 
