@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.23 2024/02/20 19:49:10 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.24 2024/02/20 20:31:56 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.23 2024/02/20 19:49:10 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.24 2024/02/20 20:31:56 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -57,23 +57,6 @@ vis_arr(const char *arr, size_t arrsize)
 }
 
 static void
-check_unmodified_loc(const char *file, size_t line,
-    const char *arr, size_t begin, size_t end)
-{
-	while (begin < end && arr[begin] == 'Z')
-		begin++;
-	while (begin < end && arr[end - 1] == 'Z')
-		end--;
-	ATF_CHECK_MSG(
-	    begin == end,
-	    "failed:\n"
-	    "\ttest case: %s:%zu\n"
-	    "\tout-of-bounds write from %zu to %zu: %s\n",
-	    file, line,
-	    begin, end, vis_arr(arr + begin, end - begin));
-}
-
-static void
 h_snprintb_loc(const char *file, size_t line,
     size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
     int want_rv, const char *want_buf, size_t want_bufsize)
@@ -82,23 +65,27 @@ h_snprintb_loc(const char *file, size_t line,
 
 	ATF_REQUIRE(bufsize <= sizeof(buf));
 	ATF_REQUIRE(want_bufsize <= sizeof(buf));
-	if (bitfmtlen > 2 && bitfmt[0] == '\177')
-		ATF_REQUIRE_MSG(bitfmt[bitfmtlen - 1] == '\0',
-		    "%s:%zu: missing trailing '\\0' in bitfmt",
-		    file, line);
-	if (bufsize == 0 && want_bufsize == 1)
-		want_bufsize = 0;
+	ATF_REQUIRE_MSG(
+	    !(bitfmtlen > 2 && bitfmt[0] == '\177')
+	    || bitfmt[bitfmtlen - 1] == '\0',
+	    "%s:%zu: missing trailing '\\0' in new-style bitfmt",
+	    file, line);
+	if (bufsize == 0)
+		want_bufsize--;
 
 	memset(buf, 'Z', sizeof(buf));
 	int rv = snprintb(buf, bufsize, bitfmt, val);
 	ATF_REQUIRE(rv >= 0);
-	size_t rlen = rv;
+	size_t have_bufsize = sizeof(buf);
+	while (have_bufsize > 0 && buf[have_bufsize - 1] == 'Z')
+		have_bufsize--;
 
+	size_t urv = (size_t)rv;
 	ATF_CHECK_MSG(
 	    rv == want_rv
 	    && memcmp(buf, want_buf, want_bufsize) == 0
 	    && (bufsize < 1
-		|| buf[rlen < bufsize ? rlen : bufsize - 1] == '\0'),
+		|| buf[urv < bufsize ? urv : bufsize - 1] == '\0'),
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
@@ -109,8 +96,7 @@ h_snprintb_loc(const char *file, size_t line,
 	    vis_arr(bitfmt, bitfmtlen),
 	    (uintmax_t)val,
 	    want_rv, vis_arr(want_buf, want_bufsize),
-	    rv, vis_arr(buf, want_bufsize));
-	check_unmodified_loc(file, line, buf, want_bufsize, sizeof(buf));
+	    rv, vis_arr(buf, have_bufsize));
 }
 
 #define	h_snprintb_len(bufsize, bitfmt, val, want_rv, want_buf)		\
@@ -1093,7 +1079,7 @@ static void
 h_snprintb_m_loc(const char *file, size_t line,
     size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
     size_t max,
-    size_t want_rv, const char *want_buf, size_t want_bufsize)
+    int want_rv, const char *want_buf, size_t want_bufsize)
 {
 	char buf[1024];
 
@@ -1108,31 +1094,35 @@ h_snprintb_m_loc(const char *file, size_t line,
 	memset(buf, 'Z', sizeof(buf));
 	int rv = snprintb_m(buf, bufsize, bitfmt, val, max);
 	ATF_REQUIRE_MSG(rv >= 0,
-	    "formatting %jx with '%s' returns error %d",
+	    "%s:%zu: formatting %jx with '%s' returns error %d",
+	    file, line,
 	    (uintmax_t)val, vis_arr(bitfmt, bitfmtlen), rv);
 
-	size_t total = rv;
+	size_t have_bufsize = sizeof(buf);
+	while (have_bufsize > 0 && buf[have_bufsize - 1] == 'Z')
+		have_bufsize--;
+
+	size_t urv = (size_t)rv;
 	ATF_CHECK_MSG(
-	    total == want_rv
+	    rv == want_rv
 	    && memcmp(buf, want_buf, want_bufsize) == 0
 	    && (bufsize < 1
-		|| buf[total < bufsize ? total : bufsize - 1] == '\0')
+		|| buf[urv < bufsize ? urv : bufsize - 1] == '\0')
 	    && (bufsize < 2
-		|| buf[total < bufsize ? total - 1 : bufsize - 2] == '\0'),
+		|| buf[urv < bufsize ? urv - 1 : bufsize - 2] == '\0'),
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
 	    "\tvalue: %#jx\n"
 	    "\tmax: %zu\n"
-	    "\twant: %zu bytes %s\n"
-	    "\thave: %zu bytes %s\n",
+	    "\twant: %d bytes %s\n"
+	    "\thave: %d bytes %s\n",
 	    file, line,
 	    vis_arr(bitfmt, bitfmtlen),
 	    (uintmax_t)val,
 	    max,
 	    want_rv, vis_arr(want_buf, want_bufsize),
-	    total, vis_arr(buf, want_bufsize));
-	check_unmodified_loc(file, line, buf, want_bufsize, sizeof(buf));
+	    rv, vis_arr(buf, have_bufsize));
 }
 
 #define	h_snprintb_m_len(bufsize, bitfmt, val, line_max, want_rv, want_buf) \
@@ -1156,7 +1146,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "\020",
 	    0xff,
 	    1,
-	    "0xff\0");		// FIXME: line longer than line_max
+	    "#\0");
 
 	// old style, line_max exceeded by '<' in line 1
 	h_snprintb_m(
@@ -1172,17 +1162,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "\002bit2",
 	    0xff,
 	    4,
-	    "0xff>\0"		// FIXME: unbalanced angle brackets
-	    "0xff<>\0"		// FIXME: empty angle brackets
-	    "0xffb>\0"		// FIXME: partial description
-	    "0xffi>\0"
-	    "0xfft>\0"
-	    "0xff1>\0"
-	    "0xff<>\0"		// FIXME: empty angle brackets
-	    "0xffb>\0"		// FIXME: partial description
-	    "0xffi>\0"
-	    "0xfft>\0"
-	    "0xff2>\0");
+	    "0xf#\0"
+	    "0xf#\0");
 
 	// old style, line_max exceeded by '>' in line 1
 	h_snprintb_m(
@@ -1191,8 +1172,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "\0022",
 	    0xff,
 	    9,
-	    "0xff<bit>\0"
-	    "0xff1,2>\0");
+	    "0xff<bit#\0"
+	    "0xff<2>\0");
 
 	// old style, line_max exceeded by description in line 2
 	h_snprintb_m(
@@ -1202,8 +1183,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    8,
 	    "0xff<1>\0"
-	    "0xff<bi>\0"	// FIXME: incomplete description
-	    "0xfft2>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<bi#\0");
 
 	// old style, line_max exceeded by '>' in line 2
 	h_snprintb_m(
@@ -1213,8 +1193,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    9,
 	    "0xff<1>\0"
-	    "0xff<bit>\0"	// FIXME: incomplete description
-	    "0xff2>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<bit#\0");
 
 	// old style complete
 	h_snprintb_m(
@@ -1231,7 +1210,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "\177\020",
 	    0xff,
 	    1,
-	    "0xff\0");		// FIXME: line too long
+	    "#\0");
 
 	// new style, line_max exceeded by single-bit '<' in line 1
 	h_snprintb_m(
@@ -1239,11 +1218,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "b\000bit\0",
 	    0xff,
 	    4,
-	    "0xff>\0"		// FIXME: unbalanced angle brackets
-	    "0xff<>\0"
-	    "0xffb>\0"
-	    "0xffi>\0"
-	    "0xfft>\0");	// FIXME: line too long
+	    "0xf#\0");
 
 	// new style, line_max exceeded by single-bit description in line 1
 	h_snprintb_m(
@@ -1252,10 +1227,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "b\001two\0",
 	    0xff,
 	    8,
-	    "0xff<bi>\0"	// FIXME: incomplete description
-	    "0xfft0>\0"		// FIXME: unbalanced angle brackets
-	    "0xff<tw>\0"	// FIXME: incomplete description
-	    "0xffo>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<bi#\0"
+	    "0xff<tw#\0");
 
 	// new style, line_max exceeded by single-bit '>' in line 1
 	h_snprintb_m(
@@ -1264,9 +1237,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "b\001two\0",
 	    0xff,
 	    9,
-	    "0xff<bit>\0"	// FIXME: incomplete description
-	    "0xff0>\0"		// FIXME: empty angle brackets
-	    "0xff<two>\0");	// FIXME: incomplete description
+	    "0xff<bit#\0"
+	    "0xff<two>\0");
 
 	// new style, line_max exceeded by single-bit description in line 2
 	h_snprintb_m(
@@ -1276,8 +1248,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    9,
 	    "0xff<one>\0"
-	    "0xff<thr>\0"	// FIXME: incomplete description
-	    "0xffee>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<thr#\0");
 
 	// new style, line_max exceeded by single-bit '>' in line 2
 	h_snprintb_m(
@@ -1287,8 +1258,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    9,
 	    "0xff<one>\0"
-	    "0xff<fou>\0"	// FIXME: incomplete description
-	    "0xffr>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<fou#\0");
 
 	// new style, single-bit complete
 	h_snprintb_m(
@@ -1306,12 +1276,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "f\000\004lo\0",
 	    0xff,
 	    3,
-	    "0xff>\0"		// FIXME: unbalanced angle brackets
-	    "0xff<>\0"
-	    "0xffl>\0"		// FIXME: incomplete bit-field description
-	    "0xffo>\0"
-	    "0xff=0xf>\0"	// FIXME: line too long
-	    "0xff#>\0");
+	    "0x#\0");
 
 	// new style, line_max exceeded by named bit-field '<' in line 1
 	h_snprintb_m(
@@ -1319,12 +1284,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "f\000\004lo\0",
 	    0xff,
 	    4,
-	    "0xff>\0"		// FIXME: unbalanced angle brackets
-	    "0xff<>\0"
-	    "0xffl>\0"		// FIXME: incomplete bit-field description
-	    "0xffo>\0"
-	    "0xff=0xf>\0"	// FIXME: line too long
-	    "0xff#>\0");
+	    "0xf#\0");
 
 	// new style, line_max exceeded by named bit-field field description in line 1
 	h_snprintb_m(
@@ -1332,11 +1292,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "f\000\004lo\0",
 	    0xff,
 	    6,
-	    "0xff<>\0"
-	    "0xffl>\0"
-	    "0xffo>\0"		// FIXME: incomplete bit-field description
-	    "0xff=0xf>\0"	// FIXME: line too long
-	    "0xff#>\0");
+	    "0xff<#\0");
 
 	// new style, line_max exceeded by named bit-field '=' in line 1
 	h_snprintb_m(
@@ -1344,9 +1300,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "f\000\004lo\0",
 	    0xff,
 	    7,
-	    "0xff<l>\0"		// FIXME: unbalanced angle brackets
-	    "0xffo=0xf>\0"
-	    "0xff#>\0");
+	    "0xff<l#\0");
 
 	// new style, line_max exceeded by named bit-field value in line 1
 	h_snprintb_m(
@@ -1354,8 +1308,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "f\000\004lo\0",
 	    0xff,
 	    10,
-	    "0xff<lo=0xf>\0"	// FIXME: line too long
-	    "0xff#>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<lo=0#\0");
 
 	// new style, line_max exceeded by named bit-field '=' in line 1
 	h_snprintb_m(
@@ -1364,8 +1317,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		"=\017match\0",
 	    0xff,
 	    11,
-	    "0xff<lo=0xf>\0"	// FIXME: line too long
-	    "0xff=match>\0");	// FIXME: unbalanced angle brackets
+	    "0xff<lo=0x#\0");
 
 	// new style, line_max exceeded by named bit-field value description in line 1
 	h_snprintb_m(
@@ -1374,8 +1326,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		"=\017match\0",
 	    0xff,
 	    16,
-	    "0xff<lo=0xf=mat>\0"	// FIXME: incomplete field description
-	    "0xffch>\0");		// FIXME: unbalanced angle brackets
+	    "0xff<lo=0xf=mat#\0");
 
 	// new style, line_max exceeded by named bit-field '>' in line 1
 	h_snprintb_m(
@@ -1384,8 +1335,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		"=\017match\0",
 	    0xff,
 	    17,
-	    "0xff<lo=0xf=matc>\0"	// FIXME: incomplete field description
-	    "0xffh>\0");		// FIXME: unbalanced angle brackets
+	    "0xff<lo=0xf=matc#\0");
 
 	// new style, line_max exceeded by named bit-field description in line 2
 	h_snprintb_m(
@@ -1396,9 +1346,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    12,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bi>\0"
-	    "0xffts=0xf=>\0"
-	    "0xffmatch>\0");
+	    "0xff<low-bi#\0");
 
 	// new style, line_max exceeded by named bit-field '=' in line 2
 	h_snprintb_m(
@@ -1409,9 +1357,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    13,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bit>\0"
-	    "0xffs=0xf=ma>\0"
-	    "0xfftch>\0");
+	    "0xff<low-bit#\0");
 
 	// new style, line_max exceeded by named bit-field value in line 2
 	h_snprintb_m(
@@ -1422,8 +1368,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    16,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bits=0xf>\0"	// FIXME: line too long
-	    "0xff#=match>\0");
+	    "0xff<low-bits=0#\0");
 
 	// new style, line_max exceeded by named bit-field '=' in line 2
 	h_snprintb_m(
@@ -1434,8 +1379,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    17,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bits=0xf>\0"	// FIXME: line too long
-	    "0xff=match>\0");
+	    "0xff<low-bits=0x#\0");
 
 	// new style, line_max exceeded by named bit-field value description in line 2
 	h_snprintb_m(
@@ -1446,8 +1390,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    22,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bits=0xf=mat>\0"	// FIXME: incomplete description
-	    "0xffch>\0");
+	    "0xff<low-bits=0xf=mat#\0");
 
 	// new style, line_max exceeded by named bit-field '>' in line 2
 	h_snprintb_m(
@@ -1458,8 +1401,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    23,
 	    "0xff<lo=0xf>\0"
-	    "0xff<low-bits=0xf=matc>\0"	// FIXME: incomplete description
-	    "0xffh>\0");
+	    "0xff<low-bits=0xf=matc#\0");
 
 	// new style, named bit-field complete
 	h_snprintb_m(
@@ -1478,8 +1420,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "F\000\004\0",
 	    0xff,
 	    3,
-	    "0xff>\0"			// FIXME: unbalanced angle brackets
-	    "0xff<>\0");		// FIXME: empty angle brackets
+	    "0x#\0");
 
 	// new style, line_max exceeded by unnamed bit-field '<' in line 1
 	h_snprintb_m(
@@ -1487,8 +1428,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "F\000\004\0",
 	    0xff,
 	    4,
-	    "0xff>\0"			// FIXME: unbalanced angle brackets
-	    "0xff<>\0");		// FIXME: empty angle brackets
+	    "0xf#\0");
 
 	// new style, line_max exceeded by unnamed bit-field value description in line 1
 	h_snprintb_m(
@@ -1497,8 +1437,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017match\0",
 	    0xff,
 	    9,
-	    "0xff<mat>\0"
-	    "0xffch>\0");		// FIXME: unbalanced angle brackets
+	    "0xff<mat#\0");
 
 	// new style, line_max exceeded by unnamed bit-field '>' in line 1
 	h_snprintb_m(
@@ -1507,8 +1446,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017match\0",
 	    0xff,
 	    10,
-	    "0xff<matc>\0"		// FIXME: unbalanced angle brackets
-	    "0xffh>\0");		// FIXME: empty angle brackets
+	    "0xff<matc#\0");
 
 	// new style, line_max exceeded by unnamed bit-field value description in line 2
 	h_snprintb_m(
@@ -1518,8 +1456,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017match\0",
 	    0xff,
 	    10,
-	    "0xff<m1ma>\0"		// XXX: don't concatenate?
-	    "0xfftch>\0");
+	    "0xff<m1ma#\0");
 
 	// new style, line_max exceeded by unnamed bit-field '>' in line 2
 	h_snprintb_m(
@@ -1529,8 +1466,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017match\0",
 	    0xff,
 	    10,
-	    "0xff<m1ma>\0"		// XXX: don't concatenate?
-	    "0xfftch>\0");
+	    "0xff<m1ma#\0");
 
 	// new style unnamed bit-field complete
 	h_snprintb_m(
@@ -1540,8 +1476,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017match\0",
 	    0xff,
 	    11,
-	    "0xff<m1mat>\0"		// XXX: don't concatenate?
-	    "0xffch>\0");
+	    "0xff<m1mat#\0");
 
 	// new style, line_max exceeded by bit-field default
 	h_snprintb_m(
@@ -1550,7 +1485,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		"*=default\0",
 	    0xff,
 	    17,
-	    "0xff<f=0xf=default>\0");	// FIXME: line too long
+	    "0xff<f=0xf=defau#\0");
 
 	// new style, line_max exceeded by unmatched field value
 	h_snprintb_m(
@@ -1559,8 +1494,7 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\000other\0",
 	    0xff,
 	    11,
-	    "0xff<bits=0xf>\0"	// XXX: line too long (14 > 11)
-	    "0xff#>\0");	// XXX: why '#'? unbalanced '<>'
+	    "0xff<bits=#\0");
 
 	// manual page, new style bits and fields
 	h_snprintb_m(

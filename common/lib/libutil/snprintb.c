@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.36 2024/02/19 23:30:56 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -69,13 +69,8 @@ typedef struct {
 	const char *const num_fmt;
 	unsigned const val_len;
 	unsigned total_len;
-	unsigned line_len;
-
-	const char *cur_bitfmt;
-	int restart;
-
-	const char *sep_bitfmt;
-	unsigned sep_line_len;
+	unsigned line_pos;
+	unsigned comma_pos;
 	char sep;
 } state;
 
@@ -85,100 +80,77 @@ store(state *s, char c)
 	if (s->total_len < s->bufsize)
 		s->buf[s->total_len] = c;
 	s->total_len++;
-	s->line_len++;
+}
+
+static int
+store_num(state *s, const char *fmt, uintmax_t num)
+{
+	int num_len = s->total_len < s->bufsize
+	    ? snprintf(s->buf + s->total_len, s->bufsize - s->total_len,
+		fmt, num)
+	    : snprintf(NULL, 0, fmt, num);
+	if (num_len > 0)
+		s->total_len += num_len;
+	return num_len;
 }
 
 static void
-backup(state *s)
+put_eol(state *s)
 {
-	if (s->sep_line_len > 0) {
-		s->total_len -= s->line_len - s->sep_line_len;
-		s->sep_line_len = 0;
-		s->restart = 1;
-		s->bitfmt = s->sep_bitfmt;
+	if (s->total_len - s->line_pos > s->line_max) {
+		s->total_len = (unsigned)(s->line_pos + s->line_max - 1);
+		store(s, '#');
 	}
-	store(s, '>');
 	store(s, '\0');
-	if (s->total_len < s->bufsize)
-		snprintf(s->buf + s->total_len, s->bufsize - s->total_len,
-		    s->num_fmt, (uintmax_t)s->val);
-	s->total_len += s->val_len;
-	s->line_len = s->val_len;
+	s->line_pos = s->total_len;
+	s->comma_pos = 0;
+	s->sep = '<';
 }
 
 static void
 put_sep(state *s)
 {
-	if (s->line_max > 0 && s->line_len >= s->line_max) {
-		backup(s);
+	if (s->sep == ',') {
+		s->comma_pos = s->total_len;
+		store(s, ',');
+	} else {
 		store(s, '<');
-	} else {
-		if (s->line_max > 0 && s->sep != '<') {
-			s->sep_line_len = s->line_len;
-			s->sep_bitfmt = s->cur_bitfmt;
-		}
-		store(s, s->sep);
-		s->restart = 0;
+		s->sep = ',';
 	}
 }
 
 static void
-put_chr(state *s, char c)
+wrap_if_necessary(state *s, const char *bitfmt)
 {
-	if (s->line_max > 0 && s->line_len >= s->line_max - 1) {
-		backup(s);
-		if (s->restart == 0)
-			store(s, c);
-		else
-			s->sep = '<';
-	} else {
-		store(s, c);
-		s->restart = 0;
-	}
-}
-
-static void
-put_bitfmt(state *s)
-{
-	while (*s->bitfmt++ != 0) {
-		put_chr(s, s->bitfmt[-1]);
-		if (s->restart)
-			break;
+	if (s->line_max > 0
+	    && s->comma_pos > 0
+	    && s->total_len - s->line_pos >= s->line_max) {
+		s->total_len = s->comma_pos;
+		store(s, '>');
+		put_eol(s);
+		store_num(s, s->num_fmt, s->val);
+		s->bitfmt = bitfmt;
 	}
 }
 
 static int
-put_num(state *s, const char *fmt, uintmax_t v)
-{
-	char *bp = s->total_len < s->bufsize ? s->buf + s->total_len : NULL;
-	size_t n = s->total_len < s->bufsize ? s->bufsize - s->total_len : 0;
-	int fmt_len = snprintf(bp, n, fmt, v);
-	if (fmt_len >= 0) {
-		s->total_len += fmt_len;
-		s->line_len += fmt_len;
-	}
-	return fmt_len;
-}
-
-static void
 old_style(state *s)
 {
-	for (uint8_t bit; (bit = *s->bitfmt) != 0;) {
-		s->cur_bitfmt = s->bitfmt++;
+	while (*s->bitfmt != '\0') {
+		const char *cur_bitfmt = s->bitfmt;
+		uint8_t bit = *s->bitfmt;
+		if (bit > ' ')
+			return -1;
 		if (s->val & (1U << (bit - 1))) {
 			put_sep(s);
-			if (s->restart)
-				continue;
-			s->sep = ',';
-			for (; *s->bitfmt > ' '; ++s->bitfmt) {
-				put_chr(s, *s->bitfmt);
-				if (s->restart)
-					break;
-			}
+			while (*++s->bitfmt > ' ')
+				store(s, *s->bitfmt);
+			wrap_if_necessary(s, cur_bitfmt);
 		} else
-			for (; *s->bitfmt > ' '; ++s->bitfmt)
+			while (*++s->bitfmt > ' ')
 				continue;
 	}
+	return 0;
 }
 
 static int
@@ -186,66 +158,59 @@ new_style(state *s)
 {
 	uint64_t field = s->val;
 	int matched = 1;
+	const char *prev_bitfmt = s->bitfmt;
 	while (*s->bitfmt != '\0') {
+		const char *cur_bitfmt = s->bitfmt;
 		uint8_t kind = *s->bitfmt++;
 		uint8_t bit = *s->bitfmt++;
 		switch (kind) {
 		case 'b':
+			prev_bitfmt = cur_bitfmt;
 			if (((s->val >> bit) & 1) == 0)
-				goto skip;
-			s->cur_bitfmt = s->bitfmt - 2;
+				goto skip_description;
 			put_sep(s);
-			if (s->restart)
-				break;
-			put_bitfmt(s);
-			if (s->restart == 0)
-				s->sep = ',';
+			while (*s->bitfmt++ != '\0')
+				store(s, s->bitfmt[-1]);
+			wrap_if_necessary(s, cur_bitfmt);
 			break;
 		case 'f':
 		case 'F':
+			prev_bitfmt = cur_bitfmt;
 			matched = 0;
-			s->cur_bitfmt = s->bitfmt - 2;
-			uint8_t field_width = *s->bitfmt++;
 			field = (s->val >> bit) &
-			    (((uint64_t)1 << field_width) - 1);
+			    (((uint64_t)1 << (uint8_t)*s->bitfmt++) - 1);
 			put_sep(s);
-			if (s->restart == 0)
-				s->sep = ',';
 			if (kind == 'F')
-				goto skip;
-			if (s->restart == 0)
-				put_bitfmt(s);
-			if (s->restart == 0)
-				put_chr(s, '=');
-			if (s->restart == 0) {
-				if (put_num(s, s->num_fmt, field) < 0)
-					return -1;
-				if (s->line_max > 0
-				    && s->line_len > s->line_max)
-					put_chr(s, '#');
-			}
+				goto skip_description;
+			while (*s->bitfmt++ != '\0')
+				store(s, s->bitfmt[-1]);
+			store(s, '=');
+			store_num(s, s->num_fmt, field);
+			wrap_if_necessary(s, cur_bitfmt);
 			break;
 		case '=':
 		case ':':
 			/* Here "bit" is actually a value instead. */
 			if (field != bit)
-				goto skip;
+				goto skip_description;
 			matched = 1;
 			if (kind == '=')
-				put_chr(s, '=');
-			if (s->restart == 0)
-				put_bitfmt(s);
+				store(s, '=');
+			while (*s->bitfmt++ != '\0')
+				store(s, s->bitfmt[-1]);
+			wrap_if_necessary(s, prev_bitfmt);
 			break;
 		case '*':
 			s->bitfmt--;
-			if (!matched) {
-				matched = 1;
-				if (put_num(s, s->bitfmt, field) < 0)
-					return -1;
-			}
+			if (matched)
+				goto skip_description;
+			matched = 1;
+			if (store_num(s, s->bitfmt, field) < 0)
+				return -1;
+			wrap_if_necessary(s, prev_bitfmt);
 			/*FALLTHROUGH*/
 		default:
-		skip:
+		skip_description:
 			while (*s->bitfmt++ != '\0')
 				continue;
 			break;
@@ -300,20 +265,17 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		.num_fmt = num_fmt,
 		.val_len = val_len,
 		.total_len = val_len,
-		.line_len = val_len,
 
 		.sep = '<',
 	};
 
-	if (old)
-		old_style(&s);
-	else if (new_style(&s) < 0)
+	if ((old ? old_style(&s) : new_style(&s)) < 0)
 		goto internal;
 
 	if (s.sep != '<')
 		store(&s, '>');
 	if (s.line_max > 0) {
-		store(&s, '\0');
+		put_eol(&s);
 		if (s.bufsize >= 2 && s.total_len > s.bufsize - 2)
 			s.buf[s.bufsize - 2] = '\0';
 	}
