@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.34 2023/10/12 11:33:38 skrll Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.35 2024/02/20 23:36:01 andvar Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.34 2023/10/12 11:33:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.35 2024/02/20 23:36:01 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -458,7 +458,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 

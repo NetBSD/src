@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.21 2023/06/19 03:52:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.22 2024/02/20 23:36:02 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -551,7 +551,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 	printf("phys_end: 0x%08lx\n", physical_end);
 #endif
