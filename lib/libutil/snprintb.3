@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.32 2024/02/18 16:55:02 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.33 2024/02/20 20:38:54 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 18, 2024
+.Dd February 20, 2024
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -305,7 +305,7 @@ snprintb(buf, bufsize,
     "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
     "b\ex1fMSB\e0",
     0x800f0701)
-\(rA "0x800f0701<LSB,NIBBLE2=0x0,BURST=0xf=FIFTEEN,MSB>"
+\(rA "0x800f0701<LSB,NIBBLE2=0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
 .Pp
 The same example using snprintb_m:
@@ -316,7 +316,7 @@ snprintb_m(buf, bufsize,
     "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
     "b\ex1fMSB\e0",
     0x800f0701, 34)
-\(rA "0x800f0701<LSB,NIBBLE2=0x0>\e0"
+\(rA "0x800f0701<LSB,NIBBLE2=0>\e0"
    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
    ""
 .Ed
@@ -377,7 +377,7 @@ snprintb(buf, bufsize, MAP_FMT, 0x0d001234)
 \(rA "0xd001234<COPY,FIXED,RENAME,HASSEMAPHORE,ANONYMOUS,ALIGN=8KB>"
 
 snprintb(buf, bufsize, MAP_FMT, 0x2e000000)
-\(rA "0xd001234<0x2e000000<FILE,ALIGN=2^46>"
+\(rA "0x2e000000<FILE,ALIGN=2^46>"
 .Ed
 .Sh ERRORS
 .Fn snprintb
