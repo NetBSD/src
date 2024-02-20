@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.3 2024/02/20 11:37:43 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.4 2024/02/20 15:54:44 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -973,6 +973,23 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 }
 
 static void
+gftfb_nuke_cursor(struct rasops_info *ri)
+{
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gftfb_softc *sc = scr->scr_cookie;
+	int wi, he, x, y;
+		
+	if (ri->ri_flg & RI_CURSOR) {
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		gftfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+}
+
+static void
 gftfb_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri = cookie;
@@ -984,24 +1001,22 @@ gftfb_cursor(void *cookie, int on, int row, int col)
 	he = ri->ri_font->fontheight;
 	
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		if (ri->ri_flg & RI_CURSOR) {
-			x = ri->ri_ccol * wi + ri->ri_xorigin;
-			y = ri->ri_crow * he + ri->ri_yorigin;
-			gftfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
-			ri->ri_flg &= ~RI_CURSOR;
-		}
-		ri->ri_crow = row;
-		ri->ri_ccol = col;
 		if (on) {
-			x = ri->ri_ccol * wi + ri->ri_xorigin;
-			y = ri->ri_crow * he + ri->ri_yorigin;
+			if (ri->ri_flg & RI_CURSOR) {
+				gftfb_nuke_cursor(ri);
+			}
+			x = col * wi + ri->ri_xorigin;
+			y = row * he + ri->ri_yorigin;
 			gftfb_bitblt(sc, x, y, x, y, wi, he, RopInv);
 			ri->ri_flg |= RI_CURSOR;
 		}
-	} else {
-		scr->scr_ri.ri_crow = row;
-		scr->scr_ri.ri_ccol = col;
-		scr->scr_ri.ri_flg &= ~RI_CURSOR;
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+	} else
+	{
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		ri->ri_flg &= ~RI_CURSOR;
 	}
 
 }
@@ -1022,6 +1037,10 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	if (!CHAR_IN_FONT(c, font))
 		return;
+
+	if (row == ri->ri_crow && col == ri->ri_ccol) {
+		ri->ri_flg &= ~RI_CURSOR;
+	}
 
 	wi = font->fontwidth;
 	he = font->fontheight;
@@ -1062,12 +1081,21 @@ gftfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	int32_t xs, xd, y, width, height;
 	
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= srccol && ri->ri_ccol < (srccol + ncols)) &&
+		   (ri->ri_flg & RI_CURSOR)) {
+			gftfb_nuke_cursor(ri);
+		}
+
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
 		height = ri->ri_font->fontheight;
 		gftfb_bitblt(sc, xs, y, xd, y, width, height, RopSrc);
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= dstcol && ri->ri_ccol < (dstcol + ncols)))
+			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
 
@@ -1087,6 +1115,9 @@ gftfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+		if (ri->ri_crow == row && 
+		   (ri->ri_ccol >= startcol && ri->ri_ccol < (startcol + ncols)))
+			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
 
@@ -1099,12 +1130,18 @@ gftfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	int32_t x, ys, yd, width, height;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		if ((ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows)) &&
+		   (ri->ri_flg & RI_CURSOR)) {
+			gftfb_nuke_cursor(ri);
+		}
 		x = ri->ri_xorigin;
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
 		width = ri->ri_emuwidth;
 		height = ri->ri_font->fontheight * nrows;
 		gftfb_bitblt(sc, x, ys, x, yd, width, height, RopSrc);
+		if (ri->ri_crow >= dstrow && ri->ri_crow < (dstrow + nrows))
+			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
 
@@ -1124,5 +1161,8 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+
+		if (ri->ri_crow >= row && ri->ri_crow < (row + nrows))
+			ri->ri_flg &= ~RI_CURSOR;
 	}
 }
