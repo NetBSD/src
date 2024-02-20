@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.13 2024/02/09 16:18:12 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.14 2024/02/20 16:53:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.13 2024/02/09 16:18:12 christos Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.14 2024/02/20 16:53:22 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 	if ((to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1)
 		err(1, "Can't open `%s'", argv[0]);
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "          ", 10);
+	strncpy(lifd[1].dir_name, "          ", sizeof(lifd[1].dir_name));
 	lifd[1].dir_type = htobe16(-1);
 	lifd[1].dir_addr = htobe32(0);
 	lifd[1].dir_length = htobe32(0);
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 	/* record volume info */
 	lifv.vol_id = htobe16(VOL_ID);
-	strncpy(lifv.vol_label, "BOOT43", 6);
+	strncpy(lifv.vol_label, "BOOT43", sizeof(lifv.vol_label));
 	lifv.vol_addr = htobe32(btolifs(LIF_DIRSTART));
 	lifv.vol_oct = htobe16(VOL_OCT);
 	lifv.vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
@@ -223,7 +223,6 @@ putfile(char *from, int to)
 {
 	int fd;
 	struct stat statb;
-	ssize_t nr;
 	void *bp;
 
 	if ((fd = open(from, 0)) < 0)
@@ -261,9 +260,9 @@ lifname(char *str)
 	if ((cp = strrchr(str, '/')) != NULL)
 		str = ++cp;
 	for (i = 4; i < 9; i++) {
-		if (islower(*str))
-			lname[i] = toupper(*str);
-		else if (isalnum(*str) || *str == '_')
+		if (islower((unsigned char)*str))
+			lname[i] = toupper((unsigned char)*str);
+		else if (isalnum((unsigned char)*str) || *str == '_')
 			lname[i] = *str;
 		else
 			break;
@@ -280,8 +279,12 @@ bcddate(char *name, char *toc)
 	struct stat statb;
 	struct tm *tm;
 
-	stat(name, &statb);
-	tm = localtime(&statb.st_ctime);
+	if (repro_epoch)
+		tm = gmtime(&repro_epoch);
+	else {
+		stat(name, &statb);
+		tm = localtime(&statb.st_ctime);
+	}
 	*toc = ((tm->tm_mon+1) / 10) << 4;
 	*toc++ |= (tm->tm_mon+1) % 10;
 	*toc = (tm->tm_mday / 10) << 4;
