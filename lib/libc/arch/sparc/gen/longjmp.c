@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.4 2023/09/03 21:41:45 mrg Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.5 2024/02/20 00:09:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 /*
  * check that offsets in the above structures match their usage in the
  * setjmp() side of this setup.  a jmp_buf is the 12-word contents of
- * the sigcontexst structure, plus 2 more words for g4 and g7.
+ * the sigcontext structure, plus 2 more words for g4 and g7.
  */
 __CTASSERT(_SIZEOF_SC + _JB_G4 == offsetof(struct __jmp_buf,regs.g4));
 __CTASSERT(_SIZEOF_SC + _JB_G7 == offsetof(struct __jmp_buf,regs.g7));
