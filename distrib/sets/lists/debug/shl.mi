@@ -1,5 +1,7 @@
-# $NetBSD: shl.mi,v 1.336 2024/02/17 18:32:19 christos Exp $
+# $NetBSD: shl.mi,v 1.337 2024/02/20 14:13:45 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
+./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
+./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libblocklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
