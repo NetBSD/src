@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.2 2024/02/15 16:17:32 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.3 2024/02/20 11:37:43 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -76,6 +76,7 @@ struct	gftfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+	uint32_t sc_reg10;
 	glyphcache sc_gc;
 };
 
@@ -90,15 +91,12 @@ void	gftfb_enable_rom_internal(struct gftfb_softc *);
 void	gftfb_disable_rom_internal(struct gftfb_softc *);
 
 void 	gftfb_setup(struct gftfb_softc *);
-void 	gftfb_wait(struct gftfb_softc *);
-void	gftfb_wait_fifo(struct gftfb_softc *, uint32_t);
 
 #define	ngle_bt458_write(memt, memh, r, v) \
 	bus_space_write_stream_4(memt, memh, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
 
-void gftfb_setup_fb(struct gftfb_softc *);
 
-/* XXX these really need o go into their own header */
+/* XXX these really need to go into their own header */
 int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
@@ -143,6 +141,31 @@ struct wsdisplay_accessops gftfb_accessops = {
 	NULL	/* scroll */
 };
 
+#define BA(F,C,S,A,J,B,I)						\
+	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+
+#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
+#define	    Otc04	2	/* Pixels in each longword transfer (4) */
+#define	    Otc32	5	/* Pixels in each longword transfer (32) */
+#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
+#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define	    BINovly	0x2	/* 8 bit overlay */
+#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
+#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
+#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
+#define	    BINattr	0xd	/* Attribute Bitmap */
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
+#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+#define	    DataDynamic	    0	/* Data register reloaded by direct access */
+#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+
 int
 gftfb_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -165,7 +188,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	struct sti_rom *rom;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
-	unsigned long defattr;
+	unsigned long defattr = 0;
 	int ret, is_console = 0, i, j;
 	uint8_t cmap[768];
 
@@ -230,11 +253,10 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-#if 0
 	sc->sc_gc.gc_bitblt = gftfb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
-	sc->sc_gc.gc_rop = 0x0c;
-#endif
+	sc->sc_gc.gc_rop = RopSrc;
+
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
@@ -244,14 +266,14 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-#if 0
+
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
+				sc->sc_scr.fbheight - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-#endif
+
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 
@@ -270,14 +292,13 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 			    &defattr);
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-#if 0
+
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
+				sc->sc_scr.fbheight - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-#endif
 	}
 
 	j = 0;
@@ -597,7 +618,7 @@ gftfb_disable_rom(struct sti_softc *sc)
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
 
-void
+static inline void
 gftfb_wait(struct gftfb_softc *sc)
 {
 	struct sti_rom *rom = sc->sc_base.sc_rom;
@@ -612,7 +633,7 @@ gftfb_wait(struct gftfb_softc *sc)
 	} while (stat != 0);
 }
 
-void
+static inline void
 gftfb_setup_fb(struct gftfb_softc *sc)
 {
 	struct sti_rom *rom = sc->sc_base.sc_rom;
@@ -632,6 +653,8 @@ gftfb_setup(struct gftfb_softc *sc)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+
+	sc->sc_reg10 = 0;
 
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
@@ -719,7 +742,7 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				gftfb_setup(sc);
 				if (0) gftfb_restore_palette(sc);
-				//glyphcache_wipe(&sc->sc_gc);
+				glyphcache_wipe(&sc->sc_gc);
 				gftfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -769,15 +792,10 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER;
-	if (scr->scr_flags & VCONS_SCREEN_IS_STATIC)
-		ri->ri_flg |= (RI_FULLCLEAR | RI_CLEAR);
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | 
+		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
+
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
-#if 0
-	if (sc->sc_depth == 8)
-		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA |
-			      RI_PREFER_ALPHA;
-#endif
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
 		      WSSCREEN_RESIZE;
@@ -893,7 +911,7 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	return 0;
 }
 
-void
+static inline void
 gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
 {
 	struct sti_rom *rom = sc->sc_base.sc_rom;
@@ -905,31 +923,6 @@ gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
 		reg = bus_space_read_stream_4(memt, memh, NGLE_REG_34);
 	} while (reg < slots);
 }
-
-#define BA(F,C,S,A,J,B,I)						\
-	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
-
-#define IBOvals(R,M,X,S,D,L,B,F)					\
-	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
-
-#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
-#define	    Otc04	2	/* Pixels in each longword transfer (4) */
-#define	    Otc32	5	/* Pixels in each longword transfer (32) */
-#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
-#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
-#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
-#define	    BINovly	0x2	/* 8 bit overlay */
-#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
-#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
-#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
-#define	    BINattr	0xd	/* Attribute Bitmap */
-#define	    RopSrc 	0x3
-#define	    RopInv 	0xc
-#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
-#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
-#define	    DataDynamic	    0	/* Data register reloaded by direct access */
-#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
-#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
 
 static void
 gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
@@ -948,7 +941,7 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 	/* bitmap op */
 	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 
 	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
-	/* dst bitmap acces */
+	/* dst bitmap access */
 	bus_space_write_stream_4(memt, memh, NGLE_REG_11,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
 	gftfb_wait_fifo(sc, 2);
@@ -1020,14 +1013,44 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
-
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	int x, y, wi, he, rv = GC_NOPE;
+#if 0
+	uint32_t bg;
+#endif
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
 		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+#if 0
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	/* XXX
+	 * rectfill currently draws rectangles less than 32 pixels wide as
+	 * 32 pixels wide, no idea why. So until I figure that one out we 
+	 * draw blanks by software
+	 * bitblt doesn't seem to have this problem
+	 */
+	if (c == 0x20) {
+		gftfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+#endif
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
 	gftfb_setup_fb(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
+
+	if (rv == GC_ADD)
+		glyphcache_add(&sc->sc_gc, c, x, y);
 }
 
 static void
