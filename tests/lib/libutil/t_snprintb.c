@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.22 2024/02/19 23:30:56 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.23 2024/02/20 19:49:10 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.22 2024/02/19 23:30:56 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.23 2024/02/20 19:49:10 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -48,9 +48,11 @@ vis_arr(const char *arr, size_t arrsize)
 	static size_t i;
 
 	i = (i + 1) % (sizeof(buf) / sizeof(buf[0]));
-	int rv = strnvisx(buf[i], sizeof(buf[i]), arr, arrsize,
+	buf[i][0] = '"';
+	int rv = strnvisx(buf[i] + 1, sizeof(buf[i]) - 2, arr, arrsize,
 	    VIS_WHITE | VIS_OCTAL);
 	ATF_REQUIRE_MSG(rv >= 0, "strnvisx failed for size %zu", arrsize);
+	strcpy(buf[i] + 1 + rv, "\"");
 	return buf[i];
 }
 
@@ -95,7 +97,8 @@ h_snprintb_loc(const char *file, size_t line,
 	ATF_CHECK_MSG(
 	    rv == want_rv
 	    && memcmp(buf, want_buf, want_bufsize) == 0
-	    && buf[rlen < bufsize ? rlen : bufsize - 1] == '\0',
+	    && (bufsize < 1
+		|| buf[rlen < bufsize ? rlen : bufsize - 1] == '\0'),
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
@@ -1110,7 +1113,12 @@ h_snprintb_m_loc(const char *file, size_t line,
 
 	size_t total = rv;
 	ATF_CHECK_MSG(
-	    total == want_rv && memcmp(buf, want_buf, want_bufsize) == 0,
+	    total == want_rv
+	    && memcmp(buf, want_buf, want_bufsize) == 0
+	    && (bufsize < 1
+		|| buf[total < bufsize ? total : bufsize - 1] == '\0')
+	    && (bufsize < 2
+		|| buf[total < bufsize ? total - 1 : bufsize - 2] == '\0'),
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
