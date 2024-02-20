@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.12 2023/06/08 05:48:41 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.13 2024/02/20 09:53:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -53,9 +53,6 @@
 static inline int
 attr2idx(long attr)
 {
-	if ((attr & 0xf0f00ff8) != 0)
-		return -1;
-	
 	return (((attr >> 16) & 0x0f) | ((attr >> 20) & 0xf0));
 }
 
