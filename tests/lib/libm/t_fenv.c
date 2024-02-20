@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.14 2024/02/19 23:19:10 riastradh Exp $ */
+/* $NetBSD: t_fenv.c,v 1.15 2024/02/20 03:53:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.14 2024/02/19 23:19:10 riastradh Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.15 2024/02/20 03:53:48 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -364,9 +364,6 @@ ATF_TC_BODY(fetestexcept_trap, tc)
 	    "fegetexcept()=0x%x FE_ALL_EXCEPT=0x%x", except, FE_ALL_EXCEPT);
 
 	(void)fetestexcept(FE_ALL_EXCEPT);
-#ifdef __x86_64__
-	atf_tc_expect_fail("PR port-amd64/57949");
-#endif
 	ATF_CHECK_EQ_MSG((except = fegetexcept()), FE_ALL_EXCEPT,
 	    "fegetexcept()=0x%x FE_ALL_EXCEPT=0x%x", except, FE_ALL_EXCEPT);
 }
