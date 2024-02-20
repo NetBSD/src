@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.24 2024/02/20 20:31:56 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.25 2024/02/20 21:45:36 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.24 2024/02/20 20:31:56 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.25 2024/02/20 21:45:36 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -75,7 +75,9 @@ h_snprintb_loc(const char *file, size_t line,
 
 	memset(buf, 'Z', sizeof(buf));
 	int rv = snprintb(buf, bufsize, bitfmt, val);
-	ATF_REQUIRE(rv >= 0);
+	ATF_CHECK_MSG(rv >= 0, "%s:%zu: unexpected rv %d", file, line, rv);
+	if (rv < 0)
+		return;
 	size_t have_bufsize = sizeof(buf);
 	while (have_bufsize > 0 && buf[have_bufsize - 1] == 'Z')
 		have_bufsize--;
@@ -681,6 +683,15 @@ ATF_TC_BODY(snprintb, tc)
 	    0x3,
 	    "0x3<bit0,,bit1>");
 
+	// new style bit-field, '=', can never match
+	h_snprintb(
+	    "\177\020"
+	    "f\000\007f\0"
+		"=\200never\0"
+		"=\377never\0",
+	    0xff,
+	    "0xff<f=0x7f>");
+
 	// new style, two separate bit-fields
 	h_snprintb(
 	    "\177\020"
@@ -762,6 +773,18 @@ ATF_TC_BODY(snprintb, tc)
 		"*F(%ju)\0",
 	    0x1122,
 	    "0x1122<f=0x11=f(17),F(34)>");
+
+	// new style bit-field default, can never match
+	h_snprintb(
+	    "\177\020"
+	    "f\010\002f\0"
+		"=\000zero\0"
+		"=\001one\0"
+		"=\002two\0"
+		"=\003three\0"
+		"*other\0",
+	    0xff00,
+	    "0xff00<f=0x3=three>");
 
 	// new style bit-field default, invalid conversion specifier
 	//
