@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.16 2024/02/13 15:21:09 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.17 2024/02/21 22:52:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <isc/ht.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/utf8.h>
 #include <isc/util.h>
@@ -43,7 +44,7 @@
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
-#include <dns/result.h>
+#include <dns/soa.h>
 #include <dns/tsig.h>
 #include <dns/ttl.h>
 #include <dns/view.h>
@@ -301,10 +302,6 @@ newrdata(dns_message_t *msg) {
 	if (rdata == NULL) {
 		msgblock = msgblock_allocate(msg->mctx, sizeof(dns_rdata_t),
 					     RDATA_COUNT);
-		if (msgblock == NULL) {
-			return (NULL);
-		}
-
 		ISC_LIST_APPEND(msg->rdatas, msgblock, link);
 
 		rdata = msgblock_get(msgblock, dns_rdata_t);
@@ -335,19 +332,12 @@ newrdatalist(dns_message_t *msg) {
 	if (rdatalist == NULL) {
 		msgblock = msgblock_allocate(msg->mctx, sizeof(dns_rdatalist_t),
 					     RDATALIST_COUNT);
-		if (msgblock == NULL) {
-			return (NULL);
-		}
-
 		ISC_LIST_APPEND(msg->rdatalists, msgblock, link);
 
 		rdatalist = msgblock_get(msgblock, dns_rdatalist_t);
 	}
 out:
-	if (rdatalist != NULL) {
-		dns_rdatalist_init(rdatalist);
-	}
-
+	dns_rdatalist_init(rdatalist);
 	return (rdatalist);
 }
 
@@ -361,10 +351,6 @@ newoffsets(dns_message_t *msg) {
 	if (offsets == NULL) {
 		msgblock = msgblock_allocate(msg->mctx, sizeof(dns_offsets_t),
 					     OFFSET_COUNT);
-		if (msgblock == NULL) {
-			return (NULL);
-		}
-
 		ISC_LIST_APPEND(msg->offsets, msgblock, link);
 
 		offsets = msgblock_get(msgblock, dns_offsets_t);
@@ -529,11 +515,10 @@ msgresetsigs(dns_message_t *msg, bool replying) {
 		INSIST(dns_rdataset_isassociated(msg->sig0));
 		dns_rdataset_disassociate(msg->sig0);
 		isc_mempool_put(msg->rdspool, msg->sig0);
-		if (msg->sig0name != NULL) {
-			dns_message_puttempname(msg, &msg->sig0name);
-		}
 		msg->sig0 = NULL;
-		msg->sig0name = NULL;
+	}
+	if (msg->sig0name != NULL) {
+		dns_message_puttempname(msg, &msg->sig0name);
 	}
 }
 
@@ -661,6 +646,13 @@ msgreset(dns_message_t *msg, bool everything) {
 		ISC_LIST_UNLINK(msg->cleanup, dynbuf, link);
 		isc_buffer_free(&dynbuf);
 		dynbuf = next_dynbuf;
+	}
+
+	if (msg->order_arg.env != NULL) {
+		dns_aclenv_detach(&msg->order_arg.env);
+	}
+	if (msg->order_arg.acl != NULL) {
+		dns_acl_detach(&msg->order_arg.acl);
 	}
 
 	/*
@@ -869,7 +861,7 @@ dns_message_findtype(const dns_name_t *name, dns_rdatatype_t type,
 	     curr = ISC_LIST_PREV(curr, link))
 	{
 		if (curr->type == type && curr->covers == covers) {
-			if (ISC_UNLIKELY(rdataset != NULL)) {
+			if (rdataset != NULL) {
 				*rdataset = curr;
 			}
 			return (ISC_R_SUCCESS);
@@ -1116,10 +1108,6 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			goto cleanup;
 		}
 		rdataset = isc_mempool_get(msg->rdspool);
-		if (rdataset == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto cleanup;
-		}
 		dns_rdataset_init(rdataset);
 
 		/*
@@ -1128,11 +1116,41 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		 */
 		rdatalist->type = rdtype;
 		rdatalist->rdclass = rdclass;
-
 		result = dns_rdatalist_tordataset(rdatalist, rdataset);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 		rdataset->attributes |= DNS_RDATASETATTR_QUESTION;
+
+		/*
+		 * Skip the duplicity check for first rdataset
+		 */
+		if (ISC_LIST_EMPTY(name->list)) {
+			result = ISC_R_SUCCESS;
+			goto skip_rds_check;
+		}
+
+		/*
+		 * Can't ask the same question twice.
+		 */
+		if (name->ht == NULL) {
+			isc_ht_init(&name->ht, msg->mctx, 1,
+				    ISC_HT_CASE_SENSITIVE);
+			free_ht = true;
+
+			INSIST(ISC_LIST_HEAD(name->list) ==
+			       ISC_LIST_TAIL(name->list));
+
+			dns_rdataset_t *old_rdataset =
+				ISC_LIST_HEAD(name->list);
+
+			result = rds_hash_add(name->ht, old_rdataset, NULL);
+
+			INSIST(result == ISC_R_SUCCESS);
+		}
+		result = rds_hash_add(name->ht, rdataset, NULL);
+		if (result == ISC_R_EXISTS) {
+			DO_ERROR(DNS_R_FORMERR);
+		}
 
 		/*
 		 * Skip the duplicity check for first rdataset
@@ -1494,7 +1512,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			covers = dns_rdata_covers(rdata);
 			if (covers == 0) {
 				if (sectionid != DNS_SECTION_ADDITIONAL ||
-				    count != msg->counts[sectionid] - 1)
+				    count != msg->counts[sectionid] - 1 ||
+				    !dns_name_equal(name, dns_rootname))
 				{
 					DO_ERROR(DNS_R_BADSIG0);
 				} else {
@@ -1569,21 +1588,12 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		}
 
 		rdatalist = newrdatalist(msg);
-		if (rdatalist == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto cleanup;
-		}
-		dns_message_gettemprdataset(msg, &rdataset);
-		if (rdataset == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto cleanup;
-		}
-
 		rdatalist->type = rdtype;
 		rdatalist->covers = covers;
 		rdatalist->rdclass = rdclass;
 		rdatalist->ttl = ttl;
 
+		dns_message_gettemprdataset(msg, &rdataset);
 		RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset) ==
 			      ISC_R_SUCCESS);
 		dns_rdataset_setownercase(rdataset, name);
@@ -1913,6 +1923,7 @@ dns_message_renderbegin(dns_message_t *msg, dns_compress_t *cctx,
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(buffer != NULL);
+	REQUIRE(isc_buffer_length(buffer) < 65536);
 	REQUIRE(msg->buffer == NULL);
 	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
 
@@ -2068,6 +2079,18 @@ maybe_clear_ad(dns_message_t *msg, dns_section_t sectionid) {
 	}
 }
 
+static void
+update_min_section_ttl(dns_message_t *restrict msg,
+		       const dns_section_t sectionid,
+		       dns_rdataset_t *restrict rdataset) {
+	if (!msg->minttl[sectionid].is_set ||
+	    rdataset->ttl < msg->minttl[sectionid].ttl)
+	{
+		msg->minttl[sectionid].is_set = true;
+		msg->minttl[sectionid].ttl = rdataset->ttl;
+	}
+}
+
 isc_result_t
 dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			  unsigned int options) {
@@ -2167,6 +2190,9 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 				msg->counts[sectionid] += total;
 				return (result);
 			}
+
+			update_min_section_ttl(msg, sectionid, rdataset);
+
 			rdataset->attributes |= DNS_RDATASETATTR_RENDERED;
 		}
 	}
@@ -2262,6 +2288,9 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 				if (OPTOUT(rdataset)) {
 					msg->flags &= ~DNS_MESSAGEFLAG_AD;
 				}
+
+				update_min_section_ttl(msg, sectionid,
+						       rdataset);
 
 				rdataset->attributes |=
 					DNS_RDATASETATTR_RENDERED;
@@ -2518,6 +2547,9 @@ dns_message_renderreset(dns_message_t *msg) {
 		dns_rdataset_disassociate(msg->tsig);
 		dns_message_puttemprdataset(msg, &msg->tsig);
 	}
+	if (msg->sig0name != NULL) {
+		dns_message_puttempname(msg, &msg->sig0name);
+	}
 	if (msg->sig0 != NULL) {
 		dns_rdataset_disassociate(msg->sig0);
 		dns_message_puttemprdataset(msg, &msg->sig0);
@@ -2604,7 +2636,7 @@ dns_message_findname(dns_message_t *msg, dns_section_t section,
 	/*
 	 * And now look for the type.
 	 */
-	if (ISC_UNLIKELY(type == dns_rdatatype_any)) {
+	if (type == dns_rdatatype_any) {
 		return (ISC_R_SUCCESS);
 	}
 
@@ -2646,9 +2678,6 @@ dns_message_gettempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
 
 	fn = isc_mempool_get(msg->namepool);
-	if (fn == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
 	*item = dns_fixedname_initname(fn);
 
 	return (ISC_R_SUCCESS);
@@ -2660,10 +2689,6 @@ dns_message_gettemprdata(dns_message_t *msg, dns_rdata_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
 
 	*item = newrdata(msg);
-	if (*item == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -2673,10 +2698,6 @@ dns_message_gettemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
 
 	*item = isc_mempool_get(msg->rdspool);
-	if (*item == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	dns_rdataset_init(*item);
 	return (ISC_R_SUCCESS);
 }
@@ -2687,10 +2708,6 @@ dns_message_gettemprdatalist(dns_message_t *msg, dns_rdatalist_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
 
 	*item = newrdatalist(msg);
-	if (*item == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -4602,15 +4619,19 @@ dns_message_getrawmessage(dns_message_t *msg) {
 
 void
 dns_message_setsortorder(dns_message_t *msg, dns_rdatasetorderfunc_t order,
-			 dns_aclenv_t *env, const dns_acl_t *acl,
+			 dns_aclenv_t *env, dns_acl_t *acl,
 			 const dns_aclelement_t *elem) {
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE((order == NULL) == (env == NULL));
 	REQUIRE(env == NULL || (acl != NULL || elem != NULL));
 
 	msg->order = order;
-	msg->order_arg.env = env;
-	msg->order_arg.acl = acl;
+	if (env != NULL) {
+		dns_aclenv_attach(env, &msg->order_arg.env);
+	}
+	if (acl != NULL) {
+		dns_acl_attach(acl, &msg->order_arg.acl);
+	}
 	msg->order_arg.element = elem;
 }
 
@@ -4857,4 +4878,110 @@ dns_message_clonebuffer(dns_message_t *msg) {
 				msg->query.base, msg->query.length);
 		msg->free_query = 1;
 	}
+}
+
+static isc_result_t
+message_authority_soa_min(dns_message_t *msg, dns_ttl_t *pttl) {
+	isc_result_t result;
+	dns_rdataset_t *rdataset = NULL;
+	dns_name_t *name = NULL;
+
+	if (msg->counts[DNS_SECTION_AUTHORITY] == 0) {
+		return (ISC_R_NOTFOUND);
+	}
+
+	for (result = dns_message_firstname(msg, DNS_SECTION_AUTHORITY);
+	     result == ISC_R_SUCCESS;
+	     result = dns_message_nextname(msg, DNS_SECTION_AUTHORITY))
+	{
+		name = NULL;
+		dns_message_currentname(msg, DNS_SECTION_AUTHORITY, &name);
+		for (rdataset = ISC_LIST_HEAD(name->list); rdataset != NULL;
+		     rdataset = ISC_LIST_NEXT(rdataset, link))
+		{
+			isc_result_t tresult;
+
+			if ((rdataset->attributes &
+			     DNS_RDATASETATTR_RENDERED) == 0)
+			{
+				continue;
+			}
+
+			/* loop over the rdatas */
+			for (tresult = dns_rdataset_first(rdataset);
+			     tresult == ISC_R_SUCCESS;
+			     tresult = dns_rdataset_next(rdataset))
+			{
+				dns_name_t tmp;
+				isc_region_t r = { 0 };
+				dns_rdata_t rdata = DNS_RDATA_INIT;
+
+				dns_rdataset_current(rdataset, &rdata);
+
+				switch (rdata.type) {
+				case dns_rdatatype_soa:
+					/* SOA rdataset */
+					break;
+				case dns_rdatatype_none:
+					/*
+					 * Negative cache rdataset: we need
+					 * to inspect the rdata to determine
+					 * whether it's an SOA.
+					 */
+					dns_rdata_toregion(&rdata, &r);
+					dns_name_init(&tmp, NULL);
+					dns_name_fromregion(&tmp, &r);
+					isc_region_consume(&r, tmp.length);
+					if (r.length < 2) {
+						continue;
+					}
+					rdata.type = r.base[0] << 8 | r.base[1];
+					if (rdata.type != dns_rdatatype_soa) {
+						continue;
+					}
+					break;
+				default:
+					continue;
+				}
+
+				if (rdata.type == dns_rdatatype_soa) {
+					*pttl = ISC_MIN(
+						rdataset->ttl,
+						dns_soa_getminimum(&rdata));
+					return (ISC_R_SUCCESS);
+				}
+			}
+		}
+	}
+
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_message_minttl(dns_message_t *msg, const dns_section_t sectionid,
+		   dns_ttl_t *pttl) {
+	REQUIRE(DNS_MESSAGE_VALID(msg));
+	REQUIRE(pttl != NULL);
+
+	if (!msg->minttl[sectionid].is_set) {
+		return (ISC_R_NOTFOUND);
+	}
+
+	*pttl = msg->minttl[sectionid].ttl;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_message_response_minttl(dns_message_t *msg, dns_ttl_t *pttl) {
+	isc_result_t result;
+
+	REQUIRE(DNS_MESSAGE_VALID(msg));
+	REQUIRE(pttl != NULL);
+
+	result = dns_message_minttl(msg, DNS_SECTION_ANSWER, pttl);
+	if (result != ISC_R_SUCCESS) {
+		return (message_authority_soa_min(msg, pttl));
+	}
+
+	return (ISC_R_SUCCESS);
 }

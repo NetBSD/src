@@ -1,4 +1,4 @@
-/*	$NetBSD: siphash.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: siphash.h,v 1.7 2024/02/21 22:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 #pragma once
 
 #include <isc/lang.h>
-#include <isc/platform.h>
 #include <isc/types.h>
 
 #define ISC_SIPHASH24_KEY_LENGTH 128 / 8

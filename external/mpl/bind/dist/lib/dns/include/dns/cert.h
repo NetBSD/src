@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: cert.h,v 1.6 2024/02/21 22:52:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_CERT_H
-#define DNS_CERT_H 1
+#pragma once
 
 /*! \file dns/cert.h */
 
@@ -61,5 +60,3 @@ dns_cert_totext(dns_cert_t cert, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_CERT_H */

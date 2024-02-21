@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.10 2024/02/21 22:52:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -792,6 +792,7 @@ additionaldata_loc(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_loc);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

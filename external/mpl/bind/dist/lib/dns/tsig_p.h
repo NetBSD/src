@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_p.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: tsig_p.h,v 1.7 2024/02/21 22:52:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_TSIG_P_H
-#define DNS_TSIG_P_H
+#pragma once
 
 /*! \file */
 
@@ -41,5 +40,3 @@ bool
 dns__tsig_algallocated(const dns_name_t *algorithm);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TSIG_P_H */

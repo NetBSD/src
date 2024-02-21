@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.9 2024/02/21 22:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>
@@ -32,7 +33,6 @@
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/resolver.h>
-#include <dns/result.h>
 #include <dns/view.h>
 
 /*

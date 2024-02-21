@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: badcache.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_BADCACHE_H
-#define DNS_BADCACHE_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -150,5 +149,3 @@ dns_badcache_print(dns_badcache_t *bc, const char *cachename, FILE *fp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_BADCACHE_H */

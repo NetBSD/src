@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: ncache.c,v 1.9 2024/02/21 22:52:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -756,7 +756,7 @@ dns_ncache_current(dns_rdataset_t *ncacherdataset, dns_name_t *found,
 		raw += 2;
 		sigregion.base = raw;
 		dns_rdata_reset(&rdata);
-		dns_rdata_fromregion(&rdata, rdataset->rdclass, rdataset->type,
+		dns_rdata_fromregion(&rdata, ncacherdataset->rdclass, type,
 				     &sigregion);
 		(void)dns_rdata_tostruct(&rdata, &rrsig, NULL);
 		rdataset->covers = rrsig.covered;

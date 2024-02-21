@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2023  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2024  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,7 @@
 
 /*! \file */
 
-#ifndef DNS_ENUMTYPE_H
-#define DNS_ENUMTYPE_H 1
-
+#pragma once
 enum {
 	dns_rdatatype_none = 0,
 	dns_rdatatype_a = 1,
@@ -195,5 +193,3 @@ enum {
 #define dns_rdatatype_mailb	((dns_rdatatype_t)dns_rdatatype_mailb)
 #define dns_rdatatype_maila	((dns_rdatatype_t)dns_rdatatype_maila)
 #define dns_rdatatype_any	((dns_rdatatype_t)dns_rdatatype_any)
-
-#endif /* DNS_ENUMTYPE_H */

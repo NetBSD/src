@@ -1,4 +1,4 @@
-/*	$NetBSD: nta.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: nta.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_NTA_H
-#define DNS_NTA_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -198,12 +197,6 @@ dns_ntatable_totext(dns_ntatable_t *ntatable, const char *view,
  */
 
 isc_result_t
-dns_ntatable_dump(dns_ntatable_t *ntatable, FILE *fp);
-/*%<
- * Dump the NTA table to the file opened as 'fp'.
- */
-
-isc_result_t
 dns_ntatable_save(dns_ntatable_t *ntatable, FILE *fp);
 /*%<
  * Save the NTA table to the file opened as 'fp', for later loading.
@@ -216,5 +209,3 @@ dns_ntatable_shutdown(dns_ntatable_t *ntatable);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_NTA_H */

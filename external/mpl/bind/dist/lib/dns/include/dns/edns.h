@@ -1,4 +1,4 @@
-/*	$NetBSD: edns.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: edns.h,v 1.6 2024/02/21 22:52:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_EDNS_H
-#define DNS_EDNS_H 1
+#pragma once
 
 /*%
  * The maximum version on EDNS supported by this build.
@@ -27,5 +26,3 @@
  */
 #define DNS_EDNS_VERSION 1 /* draft-andrews-edns1 */
 #endif			   /* ifdef DRAFT_ANDREWS_EDNS1 */
-
-#endif /* ifndef DNS_EDNS_H */

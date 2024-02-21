@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.7 2024/02/21 22:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_REGION_H
-#define ISC_REGION_H 1
+#pragma once
 
 /*! \file isc/region.h */
 
@@ -96,5 +95,3 @@ isc_region_compare(isc_region_t *r1, isc_region_t *r2);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_REGION_H */

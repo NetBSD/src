@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.h,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: key_25.h,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_KEY_25_H
-#define GENERIC_KEY_25_H 1
+#pragma once
 
 /*!
  * \brief Per RFC2535 */
@@ -28,5 +27,3 @@ typedef struct dns_rdata_key {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_key_t;
-
-#endif /* GENERIC_KEY_25_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.h,v 1.6 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATASETITER_H
-#define DNS_RDATASETITER_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -162,5 +161,3 @@ dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATASETITER_H */

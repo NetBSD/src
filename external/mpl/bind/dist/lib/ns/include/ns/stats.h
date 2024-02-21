@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.7 2023/01/25 21:43:33 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.8 2024/02/21 22:52:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_STATS_H
-#define NS_STATS_H 1
+#pragma once
 
 /*! \file include/ns/stats.h */
 
@@ -139,5 +138,3 @@ ns_stats_update_if_greater(ns_stats_t *stats, isc_statscounter_t counter,
 
 isc_statscounter_t
 ns_stats_get_counter(ns_stats_t *stats, isc_statscounter_t counter);
-
-#endif /* NS_STATS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xsl_p.h,v 1.1.1.1 2024/02/21 21:54:34 christos Exp $	*/
+/*	$NetBSD: xsl_p.h,v 1.2 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

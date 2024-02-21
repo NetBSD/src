@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.c,v 1.1.1.1 2024/02/21 21:54:51 christos Exp $	*/
+/*	$NetBSD: openssl_shim.c,v 1.2 2024/02/21 22:52:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

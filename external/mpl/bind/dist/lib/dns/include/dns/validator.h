@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.8 2024/02/13 15:27:20 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.9 2024/02/21 22:52:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_VALIDATOR_H
-#define DNS_VALIDATOR_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -242,5 +241,3 @@ dns_validator_destroy(dns_validator_t **validatorp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_VALIDATOR_H */

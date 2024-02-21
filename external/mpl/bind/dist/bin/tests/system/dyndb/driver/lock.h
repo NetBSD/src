@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.4 2024/02/21 22:51:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LOCK_H_
-#define LOCK_H_
+#pragma once
 
 #include "instance.h"
 #include "util.h"
@@ -40,5 +39,3 @@ run_exclusive_enter(sample_instance_t *inst, isc_result_t *statep);
 
 void
 run_exclusive_exit(sample_instance_t *inst, isc_result_t state);
-
-#endif /* LOCK_H_ */

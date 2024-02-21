@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ninfo_56.c,v 1.9 2024/02/21 22:52:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -99,6 +99,7 @@ additionaldata_ninfo(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

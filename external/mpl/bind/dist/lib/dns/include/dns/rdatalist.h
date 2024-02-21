@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdatalist.h,v 1.6 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATALIST_H
-#define DNS_RDATALIST_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -121,5 +120,3 @@ dns_rdatalist_fromrdataset(dns_rdataset_t   *rdataset,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATALIST_H */

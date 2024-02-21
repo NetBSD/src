@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.h,v 1.4 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.5 2024/02/21 22:51:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,13 +15,10 @@
 
 #include <isc/fuzz.h>
 
-#ifndef NAMED_FUZZ_H
-#define NAMED_FUZZ_H
+#pragma once
 
 void
 named_fuzz_notify(void);
 
 void
 named_fuzz_setup(void);
-
-#endif /* NAMED_FUZZ_H */

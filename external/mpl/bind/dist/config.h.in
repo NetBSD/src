@@ -3,9 +3,6 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
-/* Define if you cannot bind() before connect() for TCP sockets. */
-#undef BROKEN_TCP_BIND_BEFORE_CONNECT
-
 /* dnsrps $librpz_name */
 #undef DNSRPS_LIBRPZ_PATH
 
@@ -21,29 +18,11 @@
 /* define if you want TCP_FASTOPEN enabled if available */
 #undef ENABLE_TCP_FASTOPEN
 
-/* Solaris hack to get select_large_fdset. */
-#undef FD_SETSIZE
-
-/* Define to nothing if C supports flexible array members, and to 1 if it does
-   not. That way, with a declaration like `struct s { int n; double
-   d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
-   compilers. When computing the size of such an object, don't use 'sizeof
-   (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
-   instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
-   MSVC and with C++ compilers. */
-#undef FLEXIBLE_ARRAY_MEMBER
-
-/* Define to 1 if you have the `arc4random' function. */
-#undef HAVE_ARC4RANDOM
-
-/* Define to 1 if you have the `arc4random_buf' function. */
-#undef HAVE_ARC4RANDOM_BUF
-
-/* Define to 1 if you have the `arc4random_uniform' function. */
-#undef HAVE_ARC4RANDOM_UNIFORM
-
 /* define if the ARM yield instruction is available */
 #undef HAVE_ARM_YIELD
+
+/* Define to 1 if you have the `backtrace_symbols' function. */
+#undef HAVE_BACKTRACE_SYMBOLS
 
 /* Define to 1 if you have the `BIO_read_ex' function. */
 #undef HAVE_BIO_READ_EX
@@ -57,8 +36,8 @@
 /* Define to 1 if the compiler supports __builtin_clz. */
 #undef HAVE_BUILTIN_CLZ
 
-/* Define to 1 if the compiler supports __builtin_expect. */
-#undef HAVE_BUILTIN_EXPECT
+/* define if the compiler supports __builtin_*_overflow(). */
+#undef HAVE_BUILTIN_OVERFLOW
 
 /* define if the compiler supports __builtin_unreachable(). */
 #undef HAVE_BUILTIN_UNREACHABLE
@@ -66,7 +45,7 @@
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
 
-/* Define if clock_gettime is available. */
+/* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
 /* Use CMocka */
@@ -87,47 +66,20 @@
    you don't. */
 #undef HAVE_DECL_UV_UDP_RECVMMSG
 
-/* Define to 1 if you have the <devpoll.h> header file. */
-#undef HAVE_DEVPOLL_H
-
 /* Define to 1 if you have the `DH_get0_key' function. */
 #undef HAVE_DH_GET0_KEY
-
-/* Define to 1 if you have the `dlclose' function. */
-#undef HAVE_DLCLOSE
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you have the `dlopen' function. */
-#undef HAVE_DLOPEN
-
-/* Define to 1 if you have the `dlsym' function. */
-#undef HAVE_DLSYM
-
 /* Define to 1 to enable dnstap support */
 #undef HAVE_DNSTAP
-
-/* Define to 1 if you have the `ECDSA_sign' function. */
-#undef HAVE_ECDSA_SIGN
 
 /* Define to 1 if you have the `ECDSA_SIG_get0' function. */
 #undef HAVE_ECDSA_SIG_GET0
 
-/* Define to 1 if you have the `ECDSA_verify' function. */
-#undef HAVE_ECDSA_VERIFY
-
-/* Define to 1 if you have the <editline/readline.h> header file. */
-#undef HAVE_EDITLINE_READLINE_H
-
-/* Define to 1 if you have the <edit/readline/history.h> header file. */
-#undef HAVE_EDIT_READLINE_HISTORY_H
-
-/* Define to 1 if you have the <edit/readline/readline.h> header file. */
-#undef HAVE_EDIT_READLINE_READLINE_H
-
-/* Define to 1 if you have the `epoll_create1' function. */
-#undef HAVE_EPOLL_CREATE1
+/* Define to 1 if you have the `ERR_get_error_all' function. */
+#undef HAVE_ERR_GET_ERROR_ALL
 
 /* Define to 1 if you have the `EVP_aes_128_ecb' function. */
 #undef HAVE_EVP_AES_128_ECB
@@ -144,14 +96,32 @@
 /* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
 #undef HAVE_EVP_CIPHER_CTX_NEW
 
+/* Define to 1 if you have the `EVP_DigestSignInit' function. */
+#undef HAVE_EVP_DIGESTSIGNINIT
+
+/* Define to 1 if you have the `EVP_DigestVerifyInit' function. */
+#undef HAVE_EVP_DIGESTVERIFYINIT
+
 /* Define to 1 if you have the `EVP_MD_CTX_free' function. */
 #undef HAVE_EVP_MD_CTX_FREE
+
+/* Define to 1 if you have the `EVP_MD_CTX_get0_md' function. */
+#undef HAVE_EVP_MD_CTX_GET0_MD
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #undef HAVE_EVP_MD_CTX_NEW
 
 /* Define to 1 if you have the `EVP_MD_CTX_reset' function. */
 #undef HAVE_EVP_MD_CTX_RESET
+
+/* Define to 1 if you have the `EVP_PKEY_eq' function. */
+#undef HAVE_EVP_PKEY_EQ
+
+/* Define to 1 if you have the `EVP_PKEY_get0_EC_KEY' function. */
+#undef HAVE_EVP_PKEY_GET0_EC_KEY
+
+/* Define to 1 if you have the `EVP_PKEY_new_raw_private_key' function. */
+#undef HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
 
 /* Define to 1 if you have the `EVP_sha1' function. */
 #undef HAVE_EVP_SHA1
@@ -167,6 +137,9 @@
 
 /* Define to 1 if you have the `EVP_sha512' function. */
 #undef HAVE_EVP_SHA512
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
@@ -189,6 +162,9 @@
 /* Define to 1 if the system has the `malloc' function attribute */
 #undef HAVE_FUNC_ATTRIBUTE_MALLOC
 
+/* Define to 1 if the system has the `noreturn' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_NORETURN
+
 /* Define to 1 if the system has the `returns_nonnull' function attribute */
 #undef HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
 
@@ -198,14 +174,11 @@
 /* Define to 1 if you have the `getc_unlocked' function. */
 #undef HAVE_GETC_UNLOCKED
 
-/* Define to 1 if you have the `getpassphrase' function. */
-#undef HAVE_GETPASSPHRASE
+/* Define to 1 if you have the <glob.h> header file. */
+#undef HAVE_GLOB_H
 
-/* Define to 1 if you have the `getrandom' function. */
-#undef HAVE_GETRANDOM
-
-/* Define to use gperftools CPU profiler. */
-#undef HAVE_GPERFTOOLS_PROFILER
+/* Define to 1 if you have the Kerberos Framework available */
+#undef HAVE_GSSAPI
 
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #undef HAVE_GSSAPI_GSSAPI_H
@@ -219,17 +192,8 @@
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
 
-/* Define to 1 if you have the `HMAC_CTX_free' function. */
-#undef HAVE_HMAC_CTX_FREE
-
-/* Define to 1 if you have the `HMAC_CTX_get_md' function. */
-#undef HAVE_HMAC_CTX_GET_MD
-
-/* Define to 1 if you have the `HMAC_CTX_new' function. */
-#undef HAVE_HMAC_CTX_NEW
-
-/* Define to 1 if you have the `HMAC_CTX_reset' function. */
-#undef HAVE_HMAC_CTX_RESET
+/* Define to 1 if you have the `gss_acquire_cred' function. */
+#undef HAVE_GSS_ACQUIRE_CRED
 
 /* Define to 1 if you have the <idn2.h> header file. */
 #undef HAVE_IDN2_H
@@ -240,35 +204,29 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if jemalloc is available */
+#undef HAVE_JEMALLOC
+
+/* Define to 1 if you have the <jemalloc/jemalloc.h> header file. */
+#undef HAVE_JEMALLOC_JEMALLOC_H
+
 /* Use json-c library */
 #undef HAVE_JSON_C
-
-/* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
-#undef HAVE_KERBEROSV5_KRB5_H
-
-/* Define to 1 if you have the `kqueue' function. */
-#undef HAVE_KQUEUE
 
 /* Define to 1 if you have the <krb5.h> header file. */
 #undef HAVE_KRB5_H
 
+/* Define to 1 if you have the `krb5_init_context' function. */
+#undef HAVE_KRB5_INIT_CONTEXT
+
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
 #undef HAVE_KRB5_KRB5_H
-
-/* define if system have backtrace function */
-#undef HAVE_LIBCTRACE
 
 /* Define if libidn2 was found */
 #undef HAVE_LIBIDN2
 
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
-
-/* Define to 1 if you have the `scf' library (-lscf). */
-#undef HAVE_LIBSCF
-
-/* Define to 1 if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
+/* Build with DNS-over-HTTPS support */
+#undef HAVE_LIBNGHTTP2
 
 /* Use libxml2 library */
 #undef HAVE_LIBXML2
@@ -279,20 +237,23 @@
 /* Define to 1 if you have the <linux/rtnetlink.h> header file. */
 #undef HAVE_LINUX_RTNETLINK_H
 
-/* Define if lmdb was found */
+/* Use lmdb library */
 #undef HAVE_LMDB
-
-/* Define to 1 if you have the <locale.h> header file. */
-#undef HAVE_LOCALE_H
 
 /* define if extended attributes for malloc are available */
 #undef HAVE_MALLOC_EXT_ATTR
 
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+/* Define to 1 if you have the <malloc_np.h> header file. */
+#undef HAVE_MALLOC_NP_H
 
-/* Define to 1 if you have the `mmap' function. */
-#undef HAVE_MMAP
+/* Define to 1 if you have the `malloc_size' function. */
+#undef HAVE_MALLOC_SIZE
+
+/* Define to 1 if you have the `malloc_usable_size' function. */
+#undef HAVE_MALLOC_USABLE_SIZE
+
+/* Define to 1 if you have the <minix/config.h> header file. */
+#undef HAVE_MINIX_CONFIG_H
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 #undef HAVE_NET_IF6_H
@@ -324,6 +285,9 @@
 /* Define to 1 if you have the `pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 
+/* Define to 1 if you have the `pthread_barrier_init' function. */
+#undef HAVE_PTHREAD_BARRIER_INIT
+
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
 
@@ -348,14 +312,14 @@
 /* Define to 1 if you have the `pthread_yield_np' function. */
 #undef HAVE_PTHREAD_YIELD_NP
 
-/* Define to 1 if you have the `readline' function. */
-#undef HAVE_READLINE
+/* Build with editline support */
+#undef HAVE_READLINE_EDITLINE
 
-/* Define to 1 if you have the <readline/history.h> header file. */
-#undef HAVE_READLINE_HISTORY_H
+/* Build with libedit support */
+#undef HAVE_READLINE_LIBEDIT
 
-/* Define to 1 if you have the <readline/readline.h> header file. */
-#undef HAVE_READLINE_READLINE_H
+/* Build with readline support */
+#undef HAVE_READLINE_READLINE
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
@@ -375,9 +339,6 @@
 /* Define to 1 if you have the `seteuid' function. */
 #undef HAVE_SETEUID
 
-/* Define to 1 if you have the `setlocale' function. */
-#undef HAVE_SETLOCALE
-
 /* Define to 1 if you have the `setresgid' function. */
 #undef HAVE_SETRESGID
 
@@ -386,6 +347,12 @@
 
 /* define if the SPARC pause instruction is available */
 #undef HAVE_SPARC_PAUSE
+
+/* Define to 1 if you have the `SSL_CTX_set1_cert_store' function. */
+#undef HAVE_SSL_CTX_SET1_CERT_STORE
+
+/* Define to 1 if you have the `SSL_CTX_set_keylog_callback' function. */
+#undef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
 
 /* Define to 1 if you have the `SSL_CTX_set_min_proto_version' function. */
 #undef HAVE_SSL_CTX_SET_MIN_PROTO_VERSION
@@ -398,6 +365,9 @@
 
 /* Define to 1 if you have the `SSL_read_ex' function. */
 #undef HAVE_SSL_READ_EX
+
+/* Define to 1 if you have the `SSL_SESSION_is_resumable' function. */
+#undef HAVE_SSL_SESSION_IS_RESUMABLE
 
 /* Define to 1 if you have the `SSL_write_ex' function. */
 #undef HAVE_SSL_WRITE_EX
@@ -414,8 +384,14 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <stdnoreturn.h> header file. */
+#undef HAVE_STDNORETURN_H
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
@@ -440,9 +416,6 @@
 
 /* Define to 1 if you have the <sys/capability.h> header file. */
 #undef HAVE_SYS_CAPABILITY_H
-
-/* Define to 1 if you have the <sys/devpoll.h> header file. */
-#undef HAVE_SYS_DEVPOLL_H
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
@@ -471,17 +444,8 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <sys/un.h> header file. */
-#undef HAVE_SYS_UN_H
-
 /* Define to 1 if you have the <threads.h> header file. */
 #undef HAVE_THREADS_H
-
-/* Define if thread_local keyword is available */
-#undef HAVE_THREAD_LOCAL
-
-/* Define if Thread-Local Storage is available */
-#undef HAVE_TLS
 
 /* Define to 1 if you have the `TLS_client_method' function. */
 #undef HAVE_TLS_CLIENT_METHOD
@@ -504,26 +468,17 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* define if the compiler supports _Unwind_Backtrace() */
-#undef HAVE_UNWIND_BACKTRACE
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the `X509_STORE_up_ref' function. */
+#undef HAVE_X509_STORE_UP_REF
 
 /* Use zlib library */
 #undef HAVE_ZLIB
 
 /* define if __atomic builtins are not available */
 #undef HAVE___ATOMIC
-
-/* Define if __thread keyword is available */
-#undef HAVE___THREAD
-
-/* Define if you want to use inline buffers */
-#undef ISC_BUFFER_USEINLINE
-
-/* Define to allow building of objects for dlopen(). */
-#undef ISC_DLZ_DLOPEN
-
-/* define if the linker supports --wrap option */
-#undef LD_WRAP
 
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
@@ -538,11 +493,26 @@
    */
 #undef NEED_SECURE_DIRECTORY
 
+/* Name of package */
+#undef PACKAGE
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
+/* make or Visual Studio */
+#undef PACKAGE_BUILDER
+
+/* Either 'defaults' or used ./configure options */
+#undef PACKAGE_CONFIGARGS
+
+/* An extra string to print after PACKAGE_STRING */
+#undef PACKAGE_DESCRIPTION
+
 /* Define to the full name of this package. */
 #undef PACKAGE_NAME
+
+/* A short hash from git */
+#undef PACKAGE_SRCID
 
 /* Define to the full name and version of this package. */
 #undef PACKAGE_STRING
@@ -556,47 +526,35 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* define the default PKCS11 library path */
-#undef PK11_LIB_LOCATION
+/* BIND 9 Extra part of the version */
+#undef PACKAGE_VERSION_EXTRA
 
-/* Sets which flag to pass to open/fcntl to make non-blocking
-   (O_NDELAY/O_NONBLOCK). */
-#undef PORT_NONBLOCK
+/* BIND 9 Major part of the version */
+#undef PACKAGE_VERSION_MAJOR
+
+/* BIND 9 Minor part of the version */
+#undef PACKAGE_VERSION_MINOR
+
+/* BIND 9 Patch part of the version */
+#undef PACKAGE_VERSION_PATCH
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
-/* Exit code for skipped tests */
-#undef SKIPPED_TEST_EXIT_CODE
-
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
+/* If the compiler supports a TLS storage class, define it to that here */
+#undef TLS
 
 /* Define to use default system tuning. */
 #undef TUNE_LARGE
 
-/* define if we can use backtrace */
-#undef USE_BACKTRACE
-
 /* Enable DNS Response Policy Service API */
 #undef USE_DNSRPS
-
-/* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
-   non-blocking. */
-#undef USE_FIONBIO_IOCTL
-
-/* Define if libtool is used for compilation */
-#undef USE_LIBTOOL
-
-/* define if OpenSSL is used for Public-Key Cryptography */
-#undef USE_OPENSSL
-
-/* define if PKCS11 is used for Public-Key Cryptography */
-#undef USE_PKCS11
 
 /* Define if you want to use pthread rwlock implementation */
 #undef USE_PTHREAD_RWLOCK
@@ -605,29 +563,101 @@
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
 #endif
+/* Enable general extensions on macOS.  */
+#ifndef _DARWIN_C_SOURCE
+# undef _DARWIN_C_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
 /* Enable GNU extensions on systems that have them.  */
 #ifndef _GNU_SOURCE
 # undef _GNU_SOURCE
 #endif
-/* Enable threading extensions on Solaris.  */
+/* Enable X/Open compliant socket functions that do not require linking
+   with -lxnet on HP-UX 11.11.  */
+#ifndef _HPUX_ALT_XOPEN_SOCKET_API
+# undef _HPUX_ALT_XOPEN_SOCKET_API
+#endif
+/* Identify the host operating system as Minix.
+   This macro does not affect the system headers' behavior.
+   A future release of Autoconf may stop defining this macro.  */
+#ifndef _MINIX
+# undef _MINIX
+#endif
+/* Enable general extensions on NetBSD.
+   Enable NetBSD compatibility extensions on Minix.  */
+#ifndef _NETBSD_SOURCE
+# undef _NETBSD_SOURCE
+#endif
+/* Enable OpenBSD compatibility extensions on NetBSD.
+   Oddly enough, this does nothing on OpenBSD.  */
+#ifndef _OPENBSD_SOURCE
+# undef _OPENBSD_SOURCE
+#endif
+/* Define to 1 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_SOURCE
+# undef _POSIX_SOURCE
+#endif
+/* Define to 2 if needed for POSIX-compatible behavior.  */
+#ifndef _POSIX_1_SOURCE
+# undef _POSIX_1_SOURCE
+#endif
+/* Enable POSIX-compatible threading on Solaris.  */
 #ifndef _POSIX_PTHREAD_SEMANTICS
 # undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-5:2014.  */
+#ifndef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+# undef __STDC_WANT_IEC_60559_ATTRIBS_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-1:2014.  */
+#ifndef __STDC_WANT_IEC_60559_BFP_EXT__
+# undef __STDC_WANT_IEC_60559_BFP_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-2:2015.  */
+#ifndef __STDC_WANT_IEC_60559_DFP_EXT__
+# undef __STDC_WANT_IEC_60559_DFP_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-4:2015.  */
+#ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+# undef __STDC_WANT_IEC_60559_FUNCS_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TS 18661-3:2015.  */
+#ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
+# undef __STDC_WANT_IEC_60559_TYPES_EXT__
+#endif
+/* Enable extensions specified by ISO/IEC TR 24731-2:2010.  */
+#ifndef __STDC_WANT_LIB_EXT2__
+# undef __STDC_WANT_LIB_EXT2__
+#endif
+/* Enable extensions specified by ISO/IEC 24747:2009.  */
+#ifndef __STDC_WANT_MATH_SPEC_FUNCS__
+# undef __STDC_WANT_MATH_SPEC_FUNCS__
 #endif
 /* Enable extensions on HP NonStop.  */
 #ifndef _TANDEM_SOURCE
 # undef _TANDEM_SOURCE
 #endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# undef __EXTENSIONS__
+/* Enable X/Open extensions.  Define to 500 only if necessary
+   to make mbstate_t available.  */
+#ifndef _XOPEN_SOURCE
+# undef _XOPEN_SOURCE
 #endif
 
 
 /* the default value of dnssec-validation option */
 #undef VALIDATION_DEFAULT
 
+/* Version number of package */
+#undef VERSION
+
 /* Define to enable very verbose query trace logging. */
 #undef WANT_QUERYTRACE
+
+/* Define to enable single-query tracing. */
+#undef WANT_SINGLETRACE
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -641,11 +671,6 @@
 # endif
 #endif
 
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
-
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
@@ -654,16 +679,6 @@
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES
-
-/* Define to 1 if on MINIX. */
-#undef _MINIX
-
-/* Define to 2 if the system does not provide POSIX.1 features except with
-   this defined. */
-#undef _POSIX_1_SOURCE
-
-/* Define to 1 if you need to in order for `stat' and other things to work. */
-#undef _POSIX_SOURCE
 
 /* Select RFC3542 IPv6 API on macOS */
 #undef __APPLE_USE_RFC_3542
@@ -682,6 +697,10 @@
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef ssize_t
+
+/* Define if the compiler uses a different keyword than thread_local for TLS
+   variables */
+#undef thread_local
 
 /* Define to the type of an unsigned integer type wide enough to hold a
    pointer, if such a type exists, and if the system does not define it. */

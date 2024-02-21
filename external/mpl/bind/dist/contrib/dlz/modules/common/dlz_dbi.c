@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.8 2022/09/23 12:15:27 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.9 2024/02/21 22:51:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -476,7 +476,7 @@ get_parameter_value(const char *input, const char *key) {
 
 	for (i = 0; i < 255; i++) {
 		value[i] = keystart[keylen + i];
-		if (isspace(value[i]) || value[i] == '\0') {
+		if (isspace((unsigned char)value[i]) || value[i] == '\0') {
 			value[i] = '\0';
 			break;
 		}

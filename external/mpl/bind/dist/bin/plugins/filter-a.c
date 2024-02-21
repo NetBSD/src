@@ -1,4 +1,4 @@
-/*	$NetBSD: filter-a.c,v 1.1.1.1 2024/02/21 21:54:10 christos Exp $	*/
+/*	$NetBSD: filter-a.c,v 1.2 2024/02/21 22:51:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

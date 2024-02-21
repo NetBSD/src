@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/08/03 17:23:36 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2024/02/21 22:50:56 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -11,8 +11,6 @@ DIST=${IDIST}/bin/rndc
 CPPFLAGS+= -I${DIST}/include \
         -DRNDC_CONFFILE=\"${SYSCONFDIR}/rndc.conf\" \
 	-DRNDC_KEYFILE=\"${SYSCONFDIR}/rndc.key\" \
-
-rndc.o: ${VERSIONFILE}
 
 .PATH: ${DIST} ${IDIST}/doc/man
 

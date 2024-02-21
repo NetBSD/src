@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.7 2023/01/25 21:43:26 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.8 2024/02/21 22:51:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -143,18 +143,18 @@ main(int argc, char **argv) {
 		case 'w':
 			seconds = strtod(optarg, &p);
 			if (seconds <= 0 || *p != '\0') {
-				fputs(USAGE, stderr);
+				fprintf(stderr, USAGE);
 				return (1);
 			}
 			usleep((int)(seconds * 1000.0 * 1000.0));
 			return (0);
 
 		default:
-			fputs(USAGE, stderr);
+			fprintf(stderr, USAGE);
 			return (1);
 		}
 	}
-	fputs(USAGE, stderr);
+	fprintf(stderr, USAGE);
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.14 2024/02/13 15:27:20 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.15 2024/02/21 22:52:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/util.h>
@@ -40,7 +41,6 @@
 #include <dns/rdataset.h>
 #include <dns/rdatatype.h>
 #include <dns/resolver.h>
-#include <dns/result.h>
 #include <dns/validator.h>
 #include <dns/view.h>
 
@@ -574,7 +574,7 @@ fetch_callback_ds(isc_task_t *task, isc_event_t *event) {
 			 */
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "falling back to insecurity proof (%s)",
-				      dns_result_totext(eresult));
+				      isc_result_totext(eresult));
 			result = proveunsecure(val, false, false);
 			if (result != DNS_R_WAIT) {
 				validator_done(val, result);
@@ -582,8 +582,8 @@ fetch_callback_ds(isc_task_t *task, isc_event_t *event) {
 		} else if (eresult == DNS_R_SERVFAIL) {
 			goto unexpected;
 		} else if (eresult != DNS_R_CNAME &&
-			   isdelegation(dns_fixedname_name(&devent->foundname),
-					&val->frdataset, eresult))
+			   isdelegation(devent->foundname, &val->frdataset,
+					eresult))
 		{
 			/*
 			 * Failed to find a DS while trying to prove
@@ -1505,7 +1505,7 @@ again:
 			 * for the NSEC3 NOQNAME proof.
 			 */
 			closest = dns_fixedname_name(&val->closest);
-			dns_name_copynf(wild, closest);
+			dns_name_copy(wild, closest);
 			labels = dns_name_countlabels(closest) - 1;
 			dns_name_getlabelsequence(closest, 1, labels, closest);
 			val->attributes |= VALATTR_NEEDNOQNAME;
@@ -2240,7 +2240,7 @@ findnsec3proofs(dns_validator_t *val) {
 		validator_log(val, ISC_LOG_DEBUG(3),
 			      "closest encloser from wildcard signature '%s'",
 			      namebuf);
-		dns_name_copynf(dns_fixedname_name(&val->closest), closest);
+		dns_name_copy(dns_fixedname_name(&val->closest), closest);
 		closestp = NULL;
 		setclosestp = NULL;
 	} else {
@@ -2689,7 +2689,7 @@ seek_ds(dns_validator_t *val, isc_result_t *resp) {
 	dns_name_t *tname = dns_fixedname_initname(&val->fname);
 
 	if (val->labels == dns_name_countlabels(val->event->name)) {
-		dns_name_copynf(val->event->name, tname);
+		dns_name_copy(val->event->name, tname);
 	} else {
 		dns_name_split(val->event->name, val->labels, NULL, tname);
 	}
@@ -2925,7 +2925,7 @@ proveunsecure(dns_validator_t *val, bool have_ds, bool resume) {
 	 */
 	val->attributes |= VALATTR_INSECURITY;
 
-	dns_name_copynf(val->event->name, secroot);
+	dns_name_copy(val->event->name, secroot);
 
 	/*
 	 * If this is a response to a DS query, we need to look in

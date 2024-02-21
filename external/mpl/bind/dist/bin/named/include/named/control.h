@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.8 2024/02/21 22:51:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_CONTROL_H
-#define NAMED_CONTROL_H 1
+#pragma once
 
 /*! \file
  * \brief
@@ -109,5 +108,3 @@ named_controls_shutdown(named_controls_t *controls);
 isc_result_t
 named_control_docommand(isccc_sexpr_t *message, bool readonly,
 			isc_buffer_t **text);
-
-#endif /* NAMED_CONTROL_H */

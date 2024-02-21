@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.7 2023/01/25 21:43:23 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.8 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,10 +20,10 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <dns/result.h>
 #include <dns/tsig.h>
 
 #include <isccfg/cfg.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2023  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2024  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,7 @@
 
 /*! \file */
 
-#ifndef DNS_ENUMCLASS_H
-#define DNS_ENUMCLASS_H 1
-
+#pragma once
 enum {
 	dns_rdataclass_reserved0 = 0,
 #define dns_rdataclass_reserved0 \
@@ -36,4 +34,3 @@ enum {
 #define dns_rdataclass_any	((dns_rdataclass_t)dns_rdataclass_any)
 };
 
-#endif /* DNS_ENUMCLASS_H */

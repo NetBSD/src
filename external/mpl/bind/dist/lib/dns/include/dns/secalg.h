@@ -1,4 +1,4 @@
-/*	$NetBSD: secalg.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: secalg.h,v 1.6 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_SECALG_H
-#define DNS_SECALG_H 1
+#pragma once
 
 /*! \file dns/secalg.h */
 
@@ -70,5 +69,3 @@ dns_secalg_format(dns_secalg_t alg, char *cp, unsigned int size);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_SECALG_H */

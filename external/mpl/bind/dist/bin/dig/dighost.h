@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.h,v 1.1.1.1 2024/02/21 21:54:10 christos Exp $	*/
+/*	$NetBSD: dighost.h,v 1.2 2024/02/21 22:51:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -271,7 +271,7 @@ extern bool free_now;
 extern bool debugging, debugtiming, memdebugging;
 extern bool keep_open;
 
-extern char *progname;
+extern const char *progname;
 extern int tries;
 extern int fatalexit;
 extern bool verbose;
