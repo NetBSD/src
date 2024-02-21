@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.92 2022/05/23 19:52:34 andvar Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.93 2024/02/21 23:23:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.92 2022/05/23 19:52:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.93 2024/02/21 23:23:06 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -472,8 +472,8 @@ initarm(void *arg)
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	/* Tell the user about the memory */
-	printf("physmemory: %"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
+	printf("physmemory: 0x%"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n",
+	    physmem, physical_start, physical_end - 1);
 
 	/*
 	 * Okay, we need to allocate some fixed page tables to get the
