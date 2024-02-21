@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3040 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3041 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -282,3 +282,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	tzcode: Updated to 2024a. [christos 20240217]
 	nsd: Import 4.8.0. [christos 20240217]
 	unbound(8): Import 1.19.1. [christos 20240217]
+	bind: Import 9.18.24 [christos 20240221]
