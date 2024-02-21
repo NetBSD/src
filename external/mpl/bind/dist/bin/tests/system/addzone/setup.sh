@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 cp -f ns1/redirect.db.1 ns1/redirect.db
 cp -f ns2/redirect.db.1 ns2/redirect.db

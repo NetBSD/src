@@ -11,15 +11,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f */K* */dsset-* */*.signed
-rm -f dig.out*
+set -e
+
+rm -f ./dig.out*
+rm -f ns*/*.signed
+rm -f ns*/K*
+rm -f ns*/dsset-*
+rm -f ns*/managed-keys.bind*
+rm -f ns*/named.conf
+rm -f ns*/named.lock
+rm -f ns*/named.memstats
+rm -f ns*/named.run
 rm -f ns*/root.db
 rm -f ns*/signer.err
-rm -f ns*/named.run
-rm -f ns*/named.memstats
-rm -f ns*/named.lock
-rm -f ns*/managed-keys.bind*
 rm -f ns*/trusted.conf
 rm -f ns*/example.com.db
-rm -f ns*/named.conf
 rm -f *-supported.file

@@ -27,28 +27,27 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "RNDC" "8" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "RNDC" "8" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 rndc \- name server control utility
 .SH SYNOPSIS
 .sp
-\fBrndc\fP [\fB\-b\fP source\-address] [\fB\-c\fP config\-file] [\fB\-k\fP key\-file] [\fB\-s\fP server] [\fB\-p\fP port] [\fB\-q\fP] [\fB\-r\fP] [\fB\-V\fP] [\fB\-y\fP key_id] [[\fB\-4\fP] | [\fB\-6\fP]] {command}
+\fBrndc\fP [\fB\-b\fP source\-address] [\fB\-c\fP config\-file] [\fB\-k\fP key\-file] [\fB\-s\fP server] [\fB\-p\fP port] [\fB\-q\fP] [\fB\-r\fP] [\fB\-V\fP] [\fB\-y\fP server_key] [[\fB\-4\fP] | [\fB\-6\fP]] {command}
 .SH DESCRIPTION
 .sp
-\fBrndc\fP controls the operation of a name server; it supersedes the
-\fBndc\fP utility. If \fBrndc\fP is
+\fBrndc\fP controls the operation of a name server. If \fBrndc\fP is
 invoked with no command line options or arguments, it prints a short
 summary of the supported commands and the available options and their
 arguments.
 .sp
 \fBrndc\fP communicates with the name server over a TCP connection,
 sending commands authenticated with digital signatures. In the current
-versions of \fBrndc\fP and \fBnamed\fP, the only supported authentication
+versions of \fBrndc\fP and \fI\%named\fP, the only supported authentication
 algorithms are HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224,
 HMAC\-SHA256 (default), HMAC\-SHA384, and HMAC\-SHA512. They use a shared
 secret on each end of the connection, which provides TSIG\-style
 authentication for the command request and the name server\(aqs response.
-All commands sent over the channel must be signed by a key_id known to
+All commands sent over the channel must be signed by a server_key known to
 the server.
 .sp
 \fBrndc\fP reads a configuration file to determine how to contact the name
@@ -56,53 +55,73 @@ server and decide what algorithm and key it should use.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \fB\-4\fP
+.B \-4
 This option indicates use of IPv4 only.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-6\fP
+.B \-6
 This option indicates use of IPv6 only.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-b source\-address\fP
+.B \-b source\-address
 This option indicates \fBsource\-address\fP as the source address for the connection to the
 server. Multiple instances are permitted, to allow setting of both the
 IPv4 and IPv6 source addresses.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-c config\-file\fP
+.B \-c config\-file
 This option indicates \fBconfig\-file\fP as the configuration file instead of the default,
-\fB/etc/rndc.conf\fP\&.
+\fB@sysconfdir@/rndc.conf\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-k key\-file\fP
+.B \-k key\-file
 This option indicates \fBkey\-file\fP as the key file instead of the default,
-\fB/etc/rndc.key\fP\&. The key in \fB/etc/rndc.key\fP is used to
+\fB@sysconfdir@/rndc.key\fP\&. The key in \fB@sysconfdir@/rndc.key\fP is used to
 authenticate commands sent to the server if the config\-file does not
 exist.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-s server\fP
+.B \-s server
 \fBserver\fP is the name or address of the server which matches a server
 statement in the configuration file for \fBrndc\fP\&. If no server is
 supplied on the command line, the host named by the default\-server
 clause in the options statement of the \fBrndc\fP configuration file
 is used.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-p port\fP
+.B \-p port
 This option instructs BIND 9 to send commands to TCP port \fBport\fP instead of its default control
 channel port, 953.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-q\fP
+.B \-q
 This option sets quiet mode, where message text returned by the server is not printed
 unless there is an error.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-r\fP
-This option instructs \fBrndc\fP to print the result code returned by \fBnamed\fP
+.B \-r
+This option instructs \fBrndc\fP to print the result code returned by \fI\%named\fP
 after executing the requested command (e.g., ISC_R_SUCCESS,
 ISC_R_FAILURE, etc.).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-V\fP
+.B \-V
 This option enables verbose logging.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-y key_id\fP
-This option indicates use of the key \fBkey_id\fP from the configuration file. For control message validation to succeed, \fBkey_id\fP must be known
-by \fBnamed\fP with the same algorithm and secret string. If no \fBkey_id\fP is specified,
+.B \-y server_key
+This option indicates use of the key \fBserver_key\fP from the configuration file. For control message validation to succeed, \fBserver_key\fP must be known
+by \fI\%named\fP with the same algorithm and secret string. If no \fBserver_key\fP is specified,
 \fBrndc\fP first looks for a key clause in the server statement of
 the server being used, or if no server statement is present for that
 host, then in the default\-key clause of the options statement. Note that
@@ -118,32 +137,34 @@ without arguments.
 Currently supported commands are:
 .INDENT 0.0
 .TP
-.B \fBaddzone\fP \fIzone\fP [\fIclass\fP [\fIview\fP]] \fIconfiguration\fP
+.B addzone zone [class [view]] configuration
 This command adds a zone while the server is running. This command requires the
 \fBallow\-new\-zones\fP option to be set to \fByes\fP\&. The configuration
 string specified on the command line is the zone configuration text
-that would ordinarily be placed in \fBnamed.conf\fP\&.
+that would ordinarily be placed in \fI\%named.conf\fP\&.
 .sp
 The configuration is saved in a file called \fBviewname.nzf\fP (or, if
-\fBnamed\fP is compiled with liblmdb, an LMDB database file called
+\fI\%named\fP is compiled with liblmdb, an LMDB database file called
 \fBviewname.nzd\fP). \fBviewname\fP is the name of the view, unless the view
 name contains characters that are incompatible with use as a file
 name, in which case a cryptographic hash of the view name is used
-instead. When \fBnamed\fP is restarted, the file is loaded into
+instead. When \fI\%named\fP is restarted, the file is loaded into
 the view configuration so that zones that were added can persist
 after a restart.
 .sp
 This sample \fBaddzone\fP command adds the zone \fBexample.com\fP to
 the default view:
 .sp
-\fBrndc addzone example.com \(aq{ type master; file \(dqexample.com.db\(dq; };\(aq\fP
+\fBrndc addzone example.com \(aq{ type primary; file \(dqexample.com.db\(dq; };\(aq\fP
 .sp
 (Note the brackets around and semi\-colon after the zone configuration
 text.)
 .sp
-See also \fBrndc delzone\fP and \fBrndc modzone\fP\&.
+See also \fI\%rndc delzone\fP and \fI\%rndc modzone\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBdelzone\fP [\fB\-clean\fP] \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B delzone [\-clean] zone [class [view]]
 This command deletes a zone while the server is running.
 .sp
 If the \fB\-clean\fP argument is specified, the zone\(aqs master file (and
@@ -154,14 +175,16 @@ are reported in the output of the \fBrndc delzone\fP command.)
 .sp
 If the zone was originally added via \fBrndc addzone\fP, then it is
 removed permanently. However, if it was originally configured in
-\fBnamed.conf\fP, then that original configuration remains in place;
+\fI\%named.conf\fP, then that original configuration remains in place;
 when the server is restarted or reconfigured, the zone is
 recreated. To remove it permanently, it must also be removed from
-\fBnamed.conf\fP\&.
+\fI\%named.conf\fP\&.
 .sp
-See also \fBrndc addzone\fP and \fBrndc modzone\fP\&.
+See also \fI\%rndc addzone\fP and \fI\%rndc modzone\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBdnssec\fP ( \fB\-status\fP | \fB\-rollover\fP \fB\-key\fP id [\fB\-alg\fP \fIalgorithm\fP] [\fB\-when\fP \fItime\fP] | \fB\-checkds\fP [\fB\-key\fP \fIid\fP [\fB\-alg\fP \fIalgorithm\fP]] [\fB\-when\fP \fItime\fP] ( \fIpublished\fP | \fIwithdrawn\fP )) \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B dnssec (\-status | \-rollover \-key id [\-alg algorithm] [\-when time] | \-checkds [\-key id [\-alg algorithm]] [\-when time]  published | withdrawn)) zone [class [view]]
 This command allows you to interact with the \(dqdnssec\-policy\(dq of a given
 zone.
 .sp
@@ -171,7 +194,7 @@ zone.
 \fBrndc dnssec \-rollover\fP allows you to schedule key rollover for a
 specific key (overriding the original key lifetime).
 .sp
-\fBrndc dnssec \-checkds\fP informs \fBnamed\fP that the DS for
+\fBrndc dnssec \-checkds\fP informs \fI\%named\fP that the DS for
 a specified zone\(aqs key\-signing key has been confirmed to be published
 in, or withdrawn from, the parent zone. This is required in order to
 complete a KSK rollover.  The \fB\-key id\fP and \fB\-alg algorithm\fP arguments
@@ -181,12 +204,14 @@ The time of publication or withdrawal for the DS is set to the current
 time by default, but can be overridden to a specific time with the
 argument \fB\-when time\fP, where \fBtime\fP is expressed in YYYYMMDDHHMMSS
 notation.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBdnstap\fP ( \fB\-reopen\fP | \fB\-roll\fP [\fInumber\fP] )
+.B dnstap (\-reopen | \-roll [number])
 This command closes and re\-opens DNSTAP output files.
 .sp
 \fBrndc dnstap \-reopen\fP allows
-the output file to be renamed externally, so that \fBnamed\fP can
+the output file to be renamed externally, so that \fI\%named\fP can
 truncate and re\-open it.
 .sp
 \fBrndc dnstap \-roll\fP causes the output file
@@ -194,48 +219,62 @@ to be rolled automatically, similar to log files. The most recent
 output file has \(dq.0\(dq appended to its name; the previous most recent
 output file is moved to \(dq.1\(dq, and so on. If \fBnumber\fP is specified, then
 the number of backup log files is limited to that number.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBdumpdb\fP [\fB\-all\fP | \fB\-cache\fP | \fB\-zones\fP | \fB\-adb\fP | \fB\-bad\fP | \fB\-expired\fP | \fB\-fail\fP] [\fIview ...\fP]
+.B dumpdb [\-all | \-cache | \-zones | \-adb | \-bad | \-expired | \-fail] [view ...]
 This command dumps the server\(aqs caches (default) and/or zones to the dump file for
 the specified views. If no view is specified, all views are dumped.
 (See the \fBdump\-file\fP option in the BIND 9 Administrator Reference
 Manual.)
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBflush\fP
+.B flush
 This command flushes the server\(aqs cache.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBflushname\fP \fIname\fP [\fIview\fP]
+.B flushname name [view]
 This command flushes the given name from the view\(aqs DNS cache and, if applicable,
 from the view\(aqs nameserver address database, bad server cache, and
 SERVFAIL cache.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBflushtree\fP \fIname\fP [\fIview\fP]
+.B flushtree name [view]
 This command flushes the given name, and all of its subdomains, from the view\(aqs
 DNS cache, address database, bad server cache, and SERVFAIL cache.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBfreeze\fP [\fIzone\fP [\fIclass\fP [\fIview\fP]]]
+.B freeze [zone [class [view]]]
 This command suspends updates to a dynamic zone. If no zone is specified, then all
 zones are suspended. This allows manual edits to be made to a zone
 normally updated by dynamic update, and causes changes in the
 journal file to be synced into the master file. All dynamic update
 attempts are refused while the zone is frozen.
 .sp
-See also \fBrndc thaw\fP\&.
+See also \fI\%rndc thaw\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBhalt\fP [\fB\-p\fP]
+.B halt [\-p]
 This command stops the server immediately. Recent changes made through dynamic
 update or IXFR are not saved to the master files, but are rolled
 forward from the journal files when the server is restarted. If
-\fB\-p\fP is specified, \fBnamed\fP\(aqs process ID is returned. This allows
-an external process to determine when \fBnamed\fP has completed
+\fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned. This allows
+an external process to determine when \fI\%named\fP has completed
 halting.
 .sp
-See also \fBrndc stop\fP\&.
+See also \fI\%rndc stop\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBloadkeys\fP [\fIzone\fP [\fIclass\fP [\fIview\fP]]]
+.B loadkeys [zone [class [view]]]
 This command fetches all DNSSEC keys for the given zone from the key directory. If
 they are within their publication period, they are merged into the
-zone\(aqs DNSKEY RRset. Unlike \fBrndc sign\fP, however, the zone is not
+zone\(aqs DNSKEY RRset. Unlike \fI\%rndc sign\fP, however, the zone is not
 immediately re\-signed by the new keys, but is allowed to
 incrementally re\-sign over time.
 .sp
@@ -243,8 +282,10 @@ This command requires that the zone be configured with a \fBdnssec\-policy\fP, o
 that the \fBauto\-dnssec\fP zone option be set to \fBmaintain\fP, and also requires the
 zone to be configured to allow dynamic DNS. (See \(dqDynamic Update Policies\(dq in
 the Administrator Reference Manual for more details.)
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBmanaged\-keys\fP (\fIstatus\fP | \fIrefresh\fP | \fIsync\fP | \fIdestroy\fP) [\fIclass\fP [\fIview\fP]]
+.B managed\-keys (status | refresh | sync | destroy) [class [view]]
 This command inspects and controls the \(dqmanaged\-keys\(dq database which handles
 \fI\%RFC 5011\fP DNSSEC trust anchor maintenance. If a view is specified, these
 commands are applied to that view; otherwise, they are applied to all
@@ -271,11 +312,11 @@ This command should be used only with extreme caution.
 .sp
 Existing keys that are already trusted are not deleted from
 memory; DNSSEC validation can continue after this command is used.
-However, key maintenance operations cease until \fBnamed\fP is
+However, key maintenance operations cease until \fI\%named\fP is
 restarted or reconfigured, and all existing key maintenance states
 are deleted.
 .sp
-Running \fBrndc reconfig\fP or restarting \fBnamed\fP immediately
+Running \fI\%rndc reconfig\fP or restarting \fI\%named\fP immediately
 after this command causes key maintenance to be reinitialized
 from scratch, just as if the server were being started for the
 first time. This is primarily intended for testing, but it may
@@ -283,48 +324,56 @@ also be used, for example, to jumpstart the acquisition of new
 keys in the event of a trust anchor rollover, or as a brute\-force
 repair for key maintenance problems.
 .UNINDENT
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBmodzone\fP \fIzone\fP [\fIclass\fP [\fIview\fP]] \fIconfiguration\fP
+.B modzone zone [class [view]] configuration
 This command modifies the configuration of a zone while the server is running. This
 command requires the \fBallow\-new\-zones\fP option to be set to \fByes\fP\&.
 As with \fBaddzone\fP, the configuration string specified on the
 command line is the zone configuration text that would ordinarily be
-placed in \fBnamed.conf\fP\&.
+placed in \fI\%named.conf\fP\&.
 .sp
-If the zone was originally added via \fBrndc addzone\fP, the
+If the zone was originally added via \fI\%rndc addzone\fP, the
 configuration changes are recorded permanently and are still
 in effect after the server is restarted or reconfigured. However, if
-it was originally configured in \fBnamed.conf\fP, then that original
+it was originally configured in \fI\%named.conf\fP, then that original
 configuration remains in place; when the server is restarted or
 reconfigured, the zone reverts to its original configuration. To
 make the changes permanent, it must also be modified in
-\fBnamed.conf\fP\&.
+\fI\%named.conf\fP\&.
 .sp
-See also \fBrndc addzone\fP and \fBrndc delzone\fP\&.
+See also \fI\%rndc addzone\fP and \fI\%rndc delzone\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBnotify\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B notify zone [class [view]]
 This command resends NOTIFY messages for the zone.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBnotrace\fP
+.B notrace
 This command sets the server\(aqs debugging level to 0.
 .sp
-See also \fBrndc trace\fP\&.
+See also \fI\%rndc trace\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBnta\fP [( \fB\-class\fP \fIclass\fP | \fB\-dump\fP | \fB\-force\fP | \fB\-remove\fP | \fB\-lifetime\fP \fIduration\fP)] \fIdomain\fP [\fIview\fP]
+.B nta [(\-class class | \-dump | \-force | \-remove | \-lifetime duration)] domain [view]
 This command sets a DNSSEC negative trust anchor (NTA) for \fBdomain\fP, with a
 lifetime of \fBduration\fP\&. The default lifetime is configured in
-\fBnamed.conf\fP via the \fBnta\-lifetime\fP option, and defaults to one
+\fI\%named.conf\fP via the \fBnta\-lifetime\fP option, and defaults to one
 hour. The lifetime cannot exceed one week.
 .sp
 A negative trust anchor selectively disables DNSSEC validation for
 zones that are known to be failing because of misconfiguration rather
 than an attack. When data to be validated is at or below an active
-NTA (and above any other configured trust anchors), \fBnamed\fP
+NTA (and above any other configured trust anchors), \fI\%named\fP
 aborts the DNSSEC validation process and treats the data as insecure
 rather than bogus. This continues until the NTA\(aqs lifetime has
 elapsed.
 .sp
-NTAs persist across restarts of the \fBnamed\fP server. The NTAs for a
+NTAs persist across restarts of the \fI\%named\fP server. The NTAs for a
 view are saved in a file called \fBname.nta\fP, where \fBname\fP is the name
 of the view; if it contains characters that are incompatible with
 use as a file name, a cryptographic hash is generated from the name of
@@ -342,7 +391,7 @@ If \fB\-dump\fP is used, any other arguments are ignored and a list
 of existing NTAs is printed. Note that this may include NTAs that are
 expired but have not yet been cleaned up.
 .sp
-Normally, \fBnamed\fP periodically tests to see whether data below
+Normally, \fI\%named\fP periodically tests to see whether data below
 an NTA can now be validated (see the \fBnta\-recheck\fP option in the
 Administrator Reference Manual for details). If data can be
 validated, then the NTA is regarded as no longer necessary and is
@@ -360,25 +409,31 @@ All of these options can be shortened, i.e., to \fB\-l\fP, \fB\-r\fP,
 Unrecognized options are treated as errors. To refer to a domain or
 view name that begins with a hyphen, use a double\-hyphen (\-\-) on the
 command line to indicate the end of options.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBquerylog\fP [(\fIon\fP | \fIoff\fP)]
+.B querylog [(on | off)]
 This command enables or disables query logging. For backward compatibility, this
 command can also be used without an argument to toggle query logging
 on and off.
 .sp
 Query logging can also be enabled by explicitly directing the
 \fBqueries\fP \fBcategory\fP to a \fBchannel\fP in the \fBlogging\fP section
-of \fBnamed.conf\fP, or by specifying \fBquerylog yes;\fP in the
-\fBoptions\fP section of \fBnamed.conf\fP\&.
+of \fI\%named.conf\fP, or by specifying \fBquerylog yes;\fP in the
+\fBoptions\fP section of \fI\%named.conf\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBreconfig\fP
+.B reconfig
 This command reloads the configuration file and loads new zones, but does not reload
 existing zone files even if they have changed. This is faster than a
-full \fBreload\fP when there is a large number of zones, because it
+full \fI\%rndc reload\fP when there is a large number of zones, because it
 avoids the need to examine the modification times of the zone files.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBrecursing\fP
-This command dumps the list of queries \fBnamed\fP is currently
+.B recursing
+This command dumps the list of queries \fI\%named\fP is currently
 recursing on, and the list of domains to which iterative queries
 are currently being sent.
 .sp
@@ -396,30 +451,44 @@ cumulative over time; whenever the number of active fetches for
 a domain drops to zero, the counter for that domain is deleted,
 and the next time a fetch is sent to that domain, it is recreated
 with the counters set to zero).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBrefresh\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B refresh zone [class [view]]
 This command schedules zone maintenance for the given zone.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBreload\fP
+.B reload
 This command reloads the configuration file and zones.
+.INDENT 7.0
 .TP
-.B \fBreload\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
-This command reloads the given zone.
+.B zone [class [view]]
+.UNINDENT
+.sp
+If a zone is specified, this command reloads only the given zone.
+If no zone is specified, the reloading happens asynchronously.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBretransfer\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B retransfer zone [class [view]]
 This command retransfers the given secondary zone from the primary server.
 .sp
 If the zone is configured to use \fBinline\-signing\fP, the signed
 version of the zone is discarded; after the retransfer of the
 unsigned version is complete, the signed version is regenerated
 with new signatures.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBscan\fP
+.B scan
 This command scans the list of available network interfaces for changes, without
-performing a full \fBreconfig\fP or waiting for the
+performing a full \fI\%rndc reconfig\fP or waiting for the
 \fBinterface\-interval\fP timer.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBsecroots\fP [\fB\-\fP] [\fIview\fP ...]
+.B secroots [\-] [view ...]
 This command dumps the security roots (i.e., trust anchors configured via
 \fBtrust\-anchors\fP, or the \fBmanaged\-keys\fP or \fBtrusted\-keys\fP statements
 [both deprecated], or \fBdnssec\-validation auto\fP) and negative trust anchors
@@ -432,30 +501,34 @@ If the first argument is \fB\-\fP, then the output is returned via the
 \fBrndc\fP response channel and printed to the standard output.
 Otherwise, it is written to the secroots dump file, which defaults to
 \fBnamed.secroots\fP, but can be overridden via the \fBsecroots\-file\fP
-option in \fBnamed.conf\fP\&.
+option in \fI\%named.conf\fP\&.
 .sp
-See also \fBrndc managed\-keys\fP\&.
+See also \fI\%rndc managed\-keys\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBserve\-stale\fP (\fBon\fP | \fBoff\fP | \fBreset\fP | \fBstatus\fP) [\fIclass\fP [\fIview\fP]]
-This command enables, disables, resets, or reports the current status of the serving
-of stale answers as configured in \fBnamed.conf\fP\&.
+.B serve\-stale (on | off | reset | status) [class [view]]
+This command enables, disables, resets, or reports the current status of
+the serving of stale answers as configured in \fI\%named.conf\fP\&.
 .sp
-If serving of stale answers is disabled by \fBrndc\-serve\-stale off\fP,
-then it remains disabled even if \fBnamed\fP is reloaded or
-reconfigured. \fBrndc serve\-stale reset\fP restores the setting as
-configured in \fBnamed.conf\fP\&.
+If serving of stale answers is disabled by \fBrndc\-serve\-stale off\fP, then it
+remains disabled even if \fI\%named\fP is reloaded or reconfigured. \fBrndc
+serve\-stale reset\fP restores the setting as configured in \fI\%named.conf\fP\&.
 .sp
-\fBrndc serve\-stale status\fP reports whether serving of stale
-answers is currently enabled, disabled by the configuration, or
-disabled by \fBrndc\fP\&. It also reports the values of
+\fBrndc serve\-stale status\fP reports whether caching and serving of stale
+answers is currently enabled or disabled. It also reports the values of
 \fBstale\-answer\-ttl\fP and \fBmax\-stale\-ttl\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBshowzone\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B showzone zone [class [view]]
 This command prints the configuration of a running zone.
 .sp
-See also \fBrndc zonestatus\fP\&.
+See also \fI\%rndc zonestatus\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBsign\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B sign zone [class [view]]
 This command fetches all DNSSEC keys for the given zone from the key directory (see
 the \fBkey\-directory\fP option in the BIND 9 Administrator Reference
 Manual). If they are within their publication period, they are merged into
@@ -468,9 +541,11 @@ and also requires the zone to be configured to allow dynamic DNS. (See
 \(dqDynamic Update Policies\(dq in the BIND 9 Administrator Reference Manual for more
 details.)
 .sp
-See also \fBrndc loadkeys\fP\&.
+See also \fI\%rndc loadkeys\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBsigning\fP [(\fB\-list\fP | \fB\-clear\fP \fIkeyid/algorithm\fP | \fB\-clear\fP \fIall\fP | \fB\-nsec3param\fP ( \fIparameters\fP | none ) | \fB\-serial\fP \fIvalue\fP ) \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B signing [(\-list | \-clear keyid/algorithm | \-clear all | \-nsec3param (parameters | none) | \-serial value) zone [class [view]]
 This command lists, edits, or removes the DNSSEC signing\-state records for the
 specified zone. The status of ongoing DNSSEC operations, such as
 signing or generating NSEC3 chains, is stored in the zone in the form
@@ -498,7 +573,7 @@ depending on whether the opt\-out bit in the NSEC3
 chain should be set. \fBiterations\fP defines the number of additional times to apply
 the algorithm when generating an NSEC3 hash. The \fBsalt\fP is a string
 of data expressed in hexadecimal, a hyphen (\fB\-\fP) if no salt is to be
-used, or the keyword \fBauto\fP, which causes \fBnamed\fP to generate a
+used, or the keyword \fBauto\fP, which causes \fI\%named\fP to generate a
 random 64\-bit salt.
 .sp
 The only recommended configuration is \fBrndc signing \-nsec3param 1 0 0 \- zone\fP,
@@ -520,32 +595,42 @@ replaces it with NSEC.
 \fBvalue\fP\&. If the value would cause the serial number to go backwards, it
 is rejected. The primary use of this parameter is to set the serial number on inline
 signed zones.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBstats\fP
+.B stats
 This command writes server statistics to the statistics file. (See the
 \fBstatistics\-file\fP option in the BIND 9 Administrator Reference
 Manual.)
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBstatus\fP
+.B status
 This command displays the status of the server. Note that the number of zones includes
 the internal \fBbind/CH\fP zone and the default \fB\&./IN\fP hint zone, if
 there is no explicit root zone configured.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBstop\fP \fB\-p\fP
+.B stop \-p
 This command stops the server, making sure any recent changes made through dynamic
 update or IXFR are first saved to the master files of the updated
-zones. If \fB\-p\fP is specified, \fBnamed(8)\(ga\(aqs process ID is returned.
-This allows an external process to determine when \(ga\(ganamed\fP has
+zones. If \fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned.
+This allows an external process to determine when \fI\%named\fP has
 completed stopping.
 .sp
-See also \fBrndc halt\fP\&.
+See also \fI\%rndc halt\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBsync\fP \fB\-clean\fP [\fIzone\fP [\fIclass\fP [\fIview\fP]]]
+.B sync \-clean [zone [class [view]]]
 This command syncs changes in the journal file for a dynamic zone to the master
 file. If the \(dq\-clean\(dq option is specified, the journal file is also
 removed. If no zone is specified, then all zones are synced.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtcp\-timeouts\fP [\fIinitial\fP \fIidle\fP \fIkeepalive\fP \fIadvertised\fP]
+.B tcp\-timeouts [initial idle keepalive advertised]
 When called without arguments, this command displays the current values of the
 \fBtcp\-initial\-timeout\fP, \fBtcp\-idle\-timeout\fP,
 \fBtcp\-keepalive\-timeout\fP, and \fBtcp\-advertised\-timeout\fP options.
@@ -553,8 +638,10 @@ When called with arguments, these values are updated. This allows an
 administrator to make rapid adjustments when under a
 denial\-of\-service (DoS) attack. See the descriptions of these options in the BIND 9
 Administrator Reference Manual for details of their use.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBthaw\fP [\fIzone\fP [\fIclass\fP [\fIview\fP]]]
+.B thaw [zone [class [view]]]
 This command enables updates to a frozen dynamic zone. If no zone is specified,
 then all frozen zones are enabled. This causes the server to reload
 the zone from disk, and re\-enables dynamic updates after the load has
@@ -562,35 +649,50 @@ completed. After a zone is thawed, dynamic updates are no longer
 refused. If the zone has changed and the \fBixfr\-from\-differences\fP
 option is in use, the journal file is updated to reflect
 changes in the zone. Otherwise, if the zone has changed, any existing
-journal file is removed.
+journal file is removed.  If no zone is specified, the reloading happens
+asynchronously.
 .sp
-See also \fBrndc freeze\fP\&.
+See also \fI\%rndc freeze\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtrace\fP
-This command increments the server\(aqs debugging level by one.
+.B trace [level]
+If no level is specified, this command increments the server\(aqs debugging
+level by one.
+.INDENT 7.0
 .TP
-.B \fBtrace\fP \fIlevel\fP
-This command sets the server\(aqs debugging level to an explicit value.
+.B level
+If specified, this command sets the server\(aqs debugging level to the
+provided value.
+.UNINDENT
 .sp
-See also \fBrndc notrace\fP\&.
+See also \fI\%rndc notrace\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtsig\-delete\fP \fIkeyname\fP [\fIview\fP]
+.B tsig\-delete keyname [view]
 This command deletes a given TKEY\-negotiated key from the server. This does not
 apply to statically configured TSIG keys.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtsig\-list\fP
+.B tsig\-list
 This command lists the names of all TSIG keys currently configured for use by
-\fBnamed\fP in each view. The list includes both statically configured keys and
+\fI\%named\fP in each view. The list includes both statically configured keys and
 dynamic TKEY\-negotiated keys.
+.UNINDENT
+.INDENT 0.0
 .TP
-\fBvalidation\fP (\fBon\fP | \fBoff\fP | \fBstatus\fP) [\fIview\fP ...]\(ga\(ga
+.B validation (on | off | status) [view ...]
 This command enables, disables, or checks the current status of DNSSEC validation. By
 default, validation is enabled.
 .sp
 The cache is flushed when validation is turned on or off to avoid using data
 that might differ between states.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBzonestatus\fP \fIzone\fP [\fIclass\fP [\fIview\fP]]
+.B zonestatus zone [class [view]]
 This command displays the current status of the given zone, including the master
 file name and any include files from which it was loaded, when it was
 most recently loaded, the current serial number, the number of nodes,
@@ -598,11 +700,11 @@ whether the zone supports dynamic updates, whether the zone is DNSSEC
 signed, whether it uses automatic DNSSEC key management or inline
 signing, and the scheduled refresh or expiry times for the zone.
 .sp
-See also \fBrndc showzone\fP\&.
+See also \fI\%rndc showzone\fP\&.
 .UNINDENT
 .sp
-\fBrndc\fP commands that specify zone names, such as \fBreload\fP,
-\fBretransfer\fP, or \fBzonestatus\fP, can be ambiguous when applied to zones
+\fBrndc\fP commands that specify zone names, such as \fI\%reload\fP
+\fI\%retransfer\fP, or \fI\%zonestatus\fP, can be ambiguous when applied to zones
 of type \fBredirect\fP\&. Redirect zones are always called \fB\&.\fP, and can be
 confused with zones of type \fBhint\fP or with secondary copies of the root
 zone. To specify a redirect zone, use the special zone name
@@ -610,18 +712,18 @@ zone. To specify a redirect zone, use the special zone name
 would specify a zone called \(dq\-redirect\(dq.)
 .SH LIMITATIONS
 .sp
-There is currently no way to provide the shared secret for a \fBkey_id\fP
+There is currently no way to provide the shared secret for a \fBserver_key\fP
 without using the configuration file.
 .sp
 Several error messages could be clearer.
 .SH SEE ALSO
 .sp
-\fBrndc.conf(5)\fP, \fBrndc\-confgen(8)\fP,
-\fBnamed(8)\fP, \fBnamed.conf(5)\fP, \fBndc(8)\fP, BIND 9 Administrator
+\fI\%rndc.conf(5)\fP, \fI\%rndc\-confgen(8)\fP,
+\fI\%named(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator
 Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

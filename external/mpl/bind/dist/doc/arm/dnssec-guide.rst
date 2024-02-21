@@ -9,6 +9,8 @@
 .. See the COPYRIGHT file distributed with this work for additional
 .. information regarding copyright ownership.
 
+.. _dnssec_guide:
+
 DNSSEC Guide
 ============
 

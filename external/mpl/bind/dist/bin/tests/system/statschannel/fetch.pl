@@ -28,7 +28,7 @@ my %options={};
 getopts("s:p:", \%options);
 
 my $addr = "10.53.0.2";
-$addr = $options{a} if defined $options{a};
+$addr = $options{s} if defined $options{s};
 
 my $path = 'xml/v3';
 if (@ARGV >= 1) {

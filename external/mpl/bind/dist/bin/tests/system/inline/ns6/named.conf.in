@@ -13,7 +13,7 @@
 
 // NS6
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -30,11 +30,12 @@ options {
 	recursion yes;
 	notify yes;
 	notify-delay 0;
+	dnssec-validation yes;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 include "trusted.conf";

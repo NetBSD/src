@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "RNDC.CONF" "5" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "RNDC.CONF" "5" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 rndc.conf \- rndc configuration file
 .SH SYNOPSIS
@@ -35,9 +35,9 @@ rndc.conf \- rndc configuration file
 \fBrndc.conf\fP
 .SH DESCRIPTION
 .sp
-\fBrndc.conf\fP is the configuration file for \fBrndc\fP, the BIND 9 name
+\fBrndc.conf\fP is the configuration file for \fI\%rndc\fP, the BIND 9 name
 server control utility. This file has a similar structure and syntax to
-\fBnamed.conf\fP\&. Statements are enclosed in braces and terminated with a
+\fI\%named.conf\fP\&. Statements are enclosed in braces and terminated with a
 semi\-colon. Clauses in the statements are also semi\-colon terminated.
 The usual comment styles are supported:
 .sp
@@ -47,13 +47,13 @@ C++ style: // to end of line
 .sp
 Unix style: # to end of line
 .sp
-\fBrndc.conf\fP is much simpler than \fBnamed.conf\fP\&. The file uses three
+\fBrndc.conf\fP is much simpler than \fI\%named.conf\fP\&. The file uses three
 statements: an options statement, a server statement, and a key
 statement.
 .sp
 The \fBoptions\fP statement contains five clauses. The \fBdefault\-server\fP
 clause is followed by the name or address of a name server. This host
-is used when no name server is given as an argument to \fBrndc\fP\&.
+is used when no name server is given as an argument to \fI\%rndc\fP\&.
 The \fBdefault\-key\fP clause is followed by the name of a key, which is
 identified by a \fBkey\fP statement. If no \fBkeyid\fP is provided on the
 rndc command line, and no \fBkey\fP clause is found in a matching
@@ -78,14 +78,14 @@ IPv4 and IPv6 source address, respectively.
 .sp
 The \fBkey\fP statement begins with an identifying string, the name of the
 key. The statement has two clauses. \fBalgorithm\fP identifies the
-authentication algorithm for \fBrndc\fP to use; currently only HMAC\-MD5
+authentication algorithm for \fI\%rndc\fP to use; currently only HMAC\-MD5
 (for compatibility), HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256 (default),
 HMAC\-SHA384, and HMAC\-SHA512 are supported. This is followed by a secret
 clause which contains the base\-64 encoding of the algorithm\(aqs
 authentication key. The base\-64 string is enclosed in double quotes.
 .sp
 There are two common ways to generate the base\-64 string for the secret.
-The BIND 9 program \fBrndc\-confgen\fP can be used to generate a random
+The BIND 9 program \fI\%rndc\-confgen\fP can be used to generate a random
 key, or the \fBmmencode\fP program, also known as \fBmimencode\fP, can be
 used to generate a base\-64 string from known input. \fBmmencode\fP does
 not ship with BIND 9 but is available on many systems. See the Example
@@ -156,7 +156,7 @@ key testkey {
 .UNINDENT
 .UNINDENT
 .sp
-In the above example, \fBrndc\fP by default uses the server at
+In the above example, \fI\%rndc\fP by default uses the server at
 localhost (127.0.0.1) and the key called \(dqsamplekey\(dq. Commands to the
 localhost server use the \(dqsamplekey\(dq key, which must also be defined
 in the server\(aqs configuration file with the same name and secret. The
@@ -164,16 +164,16 @@ key statement indicates that \(dqsamplekey\(dq uses the HMAC\-SHA256 algorithm
 and its secret clause contains the base\-64 encoding of the HMAC\-SHA256
 secret enclosed in double quotes.
 .sp
-If \fBrndc \-s testserver\fP is used, then \fBrndc\fP connects to the server
+If \fI\%rndc \-s testserver\fP is used, then \fI\%rndc\fP connects to the server
 on localhost port 5353 using the key \(dqtestkey\(dq.
 .sp
-To generate a random secret with \fBrndc\-confgen\fP:
+To generate a random secret with \fI\%rndc\-confgen\fP:
 .sp
-\fBrndc\-confgen\fP
+\fI\%rndc\-confgen\fP
 .sp
 A complete \fBrndc.conf\fP file, including the randomly generated key,
 is written to the standard output. Commented\-out \fBkey\fP and
-\fBcontrols\fP statements for \fBnamed.conf\fP are also printed.
+\fBcontrols\fP statements for \fI\%named.conf\fP are also printed.
 .sp
 To generate a base\-64 secret with \fBmmencode\fP:
 .sp
@@ -182,15 +182,15 @@ To generate a base\-64 secret with \fBmmencode\fP:
 .sp
 The name server must be configured to accept rndc connections and to
 recognize the key specified in the \fBrndc.conf\fP file, using the
-controls statement in \fBnamed.conf\fP\&. See the sections on the
+controls statement in \fI\%named.conf\fP\&. See the sections on the
 \fBcontrols\fP statement in the BIND 9 Administrator Reference Manual for
 details.
 .SH SEE ALSO
 .sp
-\fBrndc(8)\fP, \fBrndc\-confgen(8)\fP, \fBmmencode(1)\fP, BIND 9 Administrator Reference Manual.
+\fI\%rndc(8)\fP, \fI\%rndc\-confgen(8)\fP, \fBmmencode(1)\fP, BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

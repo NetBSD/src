@@ -156,7 +156,7 @@ sub handleUDP {
                                         $tsig->{"request_mac"} =
                                                 unpack("H*", $rmac);
                                 }
-                                
+
 				$packet->sign_tsig($tsig);
 			}
                         last;
@@ -258,10 +258,10 @@ sub handleTCP {
 		($packet, $err) = new Net::DNS::Packet(\$buf, 0);
 		$err and die $err;
 	}
-	
+
 	$packet->header->qr(1);
 	$packet->header->aa(1);
-	
+
 	my @questions = $packet->question;
 	my $qname = $questions[0]->qname;
 	my $qtype = $questions[0]->qtype;
@@ -291,7 +291,7 @@ sub handleTCP {
 			}
 			if(defined($key_name) && defined($key_data)) {
 				# sign the packet
-				print "  Signing the data with " . 
+				print "  Signing the data with " .
                                       "$key_name/$key_data\n";
 
                                 my $tsig = Net::DNS::RR->
@@ -314,7 +314,7 @@ sub handleTCP {
                                         $tsig->{"request_mac"} =
                                                 unpack("H*", $rmac);
                                 }
-                                
+
                                 $tsig->sign_func($signer) if defined($signer);
 				$packet->sign_tsig($tsig);
                                 $signer = \&sign_tcp_continuation;

@@ -24,6 +24,7 @@ options {
 	recursion no;
 	notify yes;
 	notify-delay 0;
+	dnssec-validation no;
 };
 
 zone "noixfr" {

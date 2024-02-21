@@ -73,7 +73,7 @@ The database for this module uses the following schema:
  - writeable: set to true if the zone can be updated via DDNS
 
 'ZoneData' contains the individual records within the zone:
- - zone_id: the 'id' from the corresponding record in Zones 
+ - zone_id: the 'id' from the corresponding record in Zones
  - name: domain name, relative to the zone apex. (Data at the zone
    apex itself may use a blank name or "@".)
  - type: the RR type, expressed as text

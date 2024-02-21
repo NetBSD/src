@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key example {
+	algorithm hmac-sha256;
+	secret "aaaaaaaaaaaaaaaaaaaaaaaa";
+};
+
+server 0.0.0.0 {
+	bogus no;
+	edns no;
+	edns-udp-size 512;
+	edns-version 0;
+	keys example;
+	max-udp-size 512;
+	notify-source 0.0.0.0;
+	padding 512;
+	provide-ixfr no;
+	query-source 0.0.0.0;
+	request-expire no;
+	request-ixfr no;
+	request-nsid no;
+	send-cookie no;
+	tcp-keepalive no;
+	tcp-only no;
+	transfer-format one-answer;
+	transfer-source 0.0.0.0;
+	transfers 1;
+};
+
+server :: {
+	bogus no;
+	edns no;
+	edns-udp-size 512;
+	edns-version 0;
+	keys example;
+	max-udp-size 512;
+	notify-source-v6 ::;
+	padding 512;
+	provide-ixfr no;
+	query-source-v6 ::;
+	request-expire no;
+	request-ixfr no;
+	request-nsid no;
+	send-cookie no;
+	tcp-keepalive no;
+	tcp-only no;
+	transfer-format one-answer;
+	transfer-source-v6 ::;
+	transfers 1;
+};

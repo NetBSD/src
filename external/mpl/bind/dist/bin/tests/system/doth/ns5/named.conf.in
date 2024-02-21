@@ -1,0 +1,83 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+# We need a separate instance for the "rndc reconfig" test in order to
+# ensure that it does not use ephemeral keys (these are costly to
+# generate) and creates a minimal amount of TLS contexts, reducing the
+# time needed for startup/reconfiguration. Long
+# startup/reconfiguration was known to cause timeout issues in the CI
+# system, where many tests run in parallel.
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.5;
+	notify-source 10.53.0.5;
+	transfer-source 10.53.0.5;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	https-port @HTTPSPORT@;
+	http-port @HTTPPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.5; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	ixfr-from-differences yes;
+	check-integrity no;
+	dnssec-validation yes;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+# Let's reuse the same entry multiple times to see if transfers will succeed
+
+tls tls-v1.2 {
+	protocols { TLSv1.2; };
+	prefer-server-ciphers yes;
+};
+
+zone "example12" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT7@ tls tls-v1.2; };
+	file "example12.db";
+	allow-transfer { any; };
+};
+
+zone "example13" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT7@ tls tls-v1.2; };
+	file "example13.db";
+	allow-transfer { any; };
+};
+
+zone "example14" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT7@ tls tls-v1.2; };
+	file "example14.db";
+	allow-transfer { any; };
+};
+
+zone "example15" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT7@ tls tls-v1.2; };
+	file "example15.db";
+	allow-transfer { any; };
+};

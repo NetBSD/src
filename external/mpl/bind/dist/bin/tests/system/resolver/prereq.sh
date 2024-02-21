@@ -11,21 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
-if $PERL -e 'use Net::DNS;' 2>/dev/null
-then
-    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION eq "0.76" || $Net::DNS::VERSION eq "0.77");' 2>/dev/null
-    then
-	:
-    else
-	echo_i "Net::DNS version 0.76 and 0.77 have a bug that causes this test to fail: please update." >&2
-	exit 1
-    fi
-else
-    echo_i "This test requires the Net::DNS library." >&2
-    exit 1
+if ! ${PERL} -MNet::DNS -e ''; then
+  echo_i "perl Net::DNS module is required"
+  exit 1
 fi
 
 exit 0

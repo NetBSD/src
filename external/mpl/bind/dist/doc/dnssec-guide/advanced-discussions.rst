@@ -342,7 +342,7 @@ In contrast, for a small zone the difference is operationally negligible
 and the drawbacks outweigh the benefits.
 
 If NSEC3 opt-out is truly essential for a zone, the following
-configuration can be added to ``dnssec-policy``; for example, to create an
+configuration can be added to :any:`dnssec-policy`; for example, to create an
 NSEC3 chain using the SHA-1 hash algorithm, with the opt-out flag,
 no additional iterations, and no extra salt, use:
 
@@ -883,9 +883,9 @@ roll over DNSKEYs to a new algorithm, e.g., from RSASHA1 (algorithm 5 or
 7) to RSASHA256 (algorithm 8). The algorithm rollover steps must be followed with
 care to avoid breaking DNSSEC validation.
 
-If you are managing DNSSEC by using the ``dnssec-policy`` configuration,
-``named`` handles the rollover for you. Simply change the algorithm
-for the relevant keys, and ``named`` uses the new algorithm when the
+If you are managing DNSSEC by using the :any:`dnssec-policy` configuration,
+:iscman:`named` handles the rollover for you. Simply change the algorithm
+for the relevant keys, and :iscman:`named` uses the new algorithm when the
 key is next rolled. It performs a smooth transition to the new
 algorithm, ensuring that the zone remains valid throughout rollover.
 
@@ -893,20 +893,20 @@ If you are using other methods to sign the zone, the administrator needs to do m
 with other key rollovers, when the zone is a primary zone, an algorithm
 rollover can be accomplished using dynamic updates or automatic key
 rollovers. For secondary zones, only automatic key rollovers are
-possible, but the ``dnssec-settime`` utility can be used to control the
+possible, but the :iscman:`dnssec-settime` utility can be used to control the
 timing.
 
 In any case, the first step is to put DNSKEYs in place using the new algorithm.
 You must generate the ``K*`` files for the new algorithm and put
-them in the zone's key directory, where ``named`` can access them. Take
+them in the zone's key directory, where :iscman:`named` can access them. Take
 care to set appropriate ownership and permissions on the keys. If the
-``auto-dnssec`` zone option is set to ``maintain``, ``named``
+:any:`auto-dnssec` zone option is set to ``maintain``, :iscman:`named`
 automatically signs the zone with the new keys, based on their timing
-metadata when the ``dnssec-loadkeys-interval`` elapses or when you issue the
-``rndc loadkeys`` command. Otherwise, for primary zones, you can use
-``nsupdate`` to add the new DNSKEYs to the zone; this causes ``named``
+metadata when the :any:`dnssec-loadkeys-interval` elapses or when you issue the
+:option:`rndc loadkeys` command. Otherwise, for primary zones, you can use
+:iscman:`nsupdate` to add the new DNSKEYs to the zone; this causes :iscman:`named`
 to use them to sign the zone. For secondary zones, e.g., on a
-"bump in the wire" signing server, ``nsupdate`` cannot be used.
+"bump in the wire" signing server, :iscman:`nsupdate` cannot be used.
 
 Once the zone has been signed by the new DNSKEYs (and you have waited
 for at least one TTL period), you must inform the parent zone and any trust
@@ -922,17 +922,17 @@ repositories. You must then allow another maximum TTL interval to elapse
 so that the old DS records disappear from all resolver caches.
 
 The next step is to remove the DNSKEYs using the old algorithm from your
-zone. Again this can be accomplished using ``nsupdate`` to delete the
+zone. Again this can be accomplished using :iscman:`nsupdate` to delete the
 old DNSKEYs (for primary zones only) or by automatic key rollover when
-``auto-dnssec`` is set to ``maintain``. You can cause the automatic key
-rollover to take place immediately by using the ``dnssec-settime``
+:any:`auto-dnssec` is set to ``maintain``. You can cause the automatic key
+rollover to take place immediately by using the :iscman:`dnssec-settime`
 utility to set the *Delete* date on all keys to any time in the past.
-(See the ``dnssec-settime -D <date/offset>`` option.)
+(See the :option:`dnssec-settime -D date/offset <dnssec-settime -D>` option.)
 
-After adjusting the timing metadata, the ``rndc loadkeys`` command
-causes ``named`` to remove the DNSKEYs and
+After adjusting the timing metadata, the :option:`rndc loadkeys` command
+causes :iscman:`named` to remove the DNSKEYs and
 RRSIGs for the old algorithm from the zone. Note also that with the
-``nsupdate`` method, removing the DNSKEYs also causes ``named`` to
+:iscman:`nsupdate` method, removing the DNSKEYs also causes :iscman:`named` to
 remove the associated RRSIGs automatically.
 
 Once you have verified that the old DNSKEYs and RRSIGs have been removed
@@ -953,9 +953,9 @@ environment.
 
 When you have both DNSSEC and dynamic updates in your environment,
 updating zone data works the same way as with traditional (insecure)
-DNS: you can use ``rndc freeze`` before editing the zone file, and
-``rndc thaw`` when you have finished editing, or you can use the
-command ``nsupdate`` to add, edit, or remove records like this:
+DNS: you can use :option:`rndc freeze` before editing the zone file, and
+:option:`rndc thaw` when you have finished editing, or you can use the
+command :iscman:`nsupdate` to add, edit, or remove records like this:
 
 ::
 
@@ -965,10 +965,10 @@ command ``nsupdate`` to add, edit, or remove records like this:
    > send
    > quit
 
-The examples provided in this guide make ``named`` automatically
+The examples provided in this guide make :iscman:`named` automatically
 re-sign the zone whenever its content has changed. If you decide to sign
 your own zone file manually, you need to remember to execute the
-``dnssec-signzone`` command whenever your zone file has been updated.
+:iscman:`dnssec-signzone` command whenever your zone file has been updated.
 
 As far as system resources and performance are concerned, be mindful that
 with a DNSSEC zone that changes frequently, every time the zone

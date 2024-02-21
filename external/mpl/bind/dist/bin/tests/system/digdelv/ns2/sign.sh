@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../../conf.sh
 
 set -e
 
@@ -20,10 +20,10 @@ ksk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone example.)
 
 cp example.db.in example.db
 
-"$SIGNER" -Sz -f example.db -o example example.db.in > /dev/null 2>&1
+"$SIGNER" -Sz -f example.db -o example example.db.in >/dev/null 2>&1
 
-keyfile_to_key_id "$ksk" > keyid
-grep -Ev '^;' < "$ksk.key" | cut -f 7- -d ' ' > keydata
+keyfile_to_key_id "$ksk" >keyid
+grep -Ev '^;' <"$ksk.key" | cut -f 7- -d ' ' >keydata
 
-keyfile_to_initial_keys "$ksk" > ../ns3/anchor.dnskey
-keyfile_to_initial_ds "$ksk" > ../ns3/anchor.ds
+keyfile_to_initial_keys "$ksk" >../ns3/anchor.dnskey
+keyfile_to_initial_ds "$ksk" >../ns3/anchor.ds

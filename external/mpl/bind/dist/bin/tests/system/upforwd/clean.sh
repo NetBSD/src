@@ -17,7 +17,7 @@
 
 rm -f dig.out.ns1* dig.out.ns2 dig.out.ns1 dig.out.ns3 dig.out.ns1.after
 rm -f ns1/*.jnl ns2/*.jnl ns3/*.jnl ns1/example.db ns2/*.bk ns3/*.bk
-rm -f ns3/nomaster1.db
+rm -f ns3/noprimary1.db
 rm -f ns3/dnstap.out*
 rm -f ns3/dnstap.conf
 rm -f dnstap.out*

@@ -23,6 +23,7 @@ options {
 	notify yes;
 	ixfr-from-differences yes;
 	check-integrity no;
+	dnssec-validation no;
 };
 
 

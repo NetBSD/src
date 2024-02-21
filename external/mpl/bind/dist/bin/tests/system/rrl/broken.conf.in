@@ -23,6 +23,7 @@ options {
 	listen-on { 10.53.0.5; };
 	listen-on-v6 { none; };
 	notify no;
+	dnssec-validation no;
 
 	rate-limit {
 	    responses-per-second 2;

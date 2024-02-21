@@ -26,6 +26,19 @@ options {
 	dnssec-validation yes;
 };
 
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+statistics-channels {
+	inet 10.53.0.1 port @EXTRAPORT1@ allow { any; };
+};
+
 zone "." {
 	type primary;
 	file "root.db.signed";
@@ -36,9 +49,24 @@ zone "example" {
 	file "example.db.signed";
 };
 
+zone "insecure.example" {
+	type primary;
+	file "insecure.example.db.signed";
+};
+
 zone "dnamed" {
 	type primary;
 	file "dnamed.db.signed";
+};
+
+zone "minimal" {
+	type primary;
+	file "minimal.db.signed";
+};
+
+zone "soa-without-dnskey" {
+	type primary;
+	file "soa-without-dnskey.db.signed";
 };
 
 include "trusted.conf";

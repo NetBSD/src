@@ -11,4 +11,4 @@
 
 @ 3600 SOA . . 1 86400 3600 86400 3600
 @ 3600 IN NS invalid.
-version IN TXT "1"
+version IN TXT "2"

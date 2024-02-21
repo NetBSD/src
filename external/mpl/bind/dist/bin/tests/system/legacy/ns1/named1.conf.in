@@ -21,14 +21,11 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
-	max-udp-size 4096;
-	edns-udp-size 4096;
-	nocookie-udp-size 4096;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {

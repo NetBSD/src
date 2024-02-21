@@ -1,0 +1,21 @@
+key <string> {
+	algorithm <string>;
+	secret <string>;
+}; // may occur multiple times
+
+options {
+	default-key <string>;
+	default-port <integer>;
+	default-server <string>;
+	default-source-address ( <ipv4_address> | * );
+	default-source-address-v6 ( <ipv6_address> | * );
+};
+
+server <string> {
+	addresses { ( <quoted_string> [ port <integer> ] | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ); ... };
+	key <string>;
+	port <integer>;
+	source-address ( <ipv4_address> | * );
+	source-address-v6 ( <ipv6_address> | * );
+}; // may occur multiple times
+

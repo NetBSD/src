@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: arpaname
+.. program:: arpaname
 .. _man_arpaname:
 
 arpaname - translate IP addresses to the corresponding ARPA names
@@ -24,7 +26,7 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``arpaname`` translates IP addresses (IPv4 and IPv6) to the
+:program:`arpaname` translates IP addresses (IPv4 and IPv6) to the
 corresponding IN-ADDR.ARPA or IP6.ARPA names.
 
 See Also

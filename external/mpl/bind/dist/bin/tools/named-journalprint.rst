@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: named-journalprint
+.. program:: named-journalprint
 .. _man_named-journalprint:
 
 named-journalprint - print zone journal in human-readable form
@@ -24,26 +26,26 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``named-journalprint`` scans the contents of a zone journal file,
+:program:`named-journalprint` scans the contents of a zone journal file,
 printing it in a human-readable form, or, optionally, converting it
 to a different journal file format.
 
-Journal files are automatically created by ``named`` when changes are
-made to dynamic zones (e.g., by ``nsupdate``). They record each addition
+Journal files are automatically created by :iscman:`named` when changes are
+made to dynamic zones (e.g., by :iscman:`nsupdate`). They record each addition
 or deletion of a resource record, in binary format, allowing the changes
 to be re-applied to the zone when the server is restarted after a
 shutdown or crash. By default, the name of the journal file is formed by
 appending the extension ``.jnl`` to the name of the corresponding zone
 file.
 
-``named-journalprint`` converts the contents of a given journal file
+:program:`named-journalprint` converts the contents of a given journal file
 into a human-readable text format. Each line begins with ``add`` or ``del``,
 to indicate whether the record was added or deleted, and continues with
 the resource record in master-file format.
 
 The ``-c`` (compact) option provides a mechanism to reduce the size of
 a journal by removing (most/all) transactions prior to the specified
-serial number. Note: this option *must not* be used while ``named`` is
+serial number. Note: this option *must not* be used while :iscman:`named` is
 running, and can cause data loss if the zone file has not been updated
 to contain the data being removed from the journal. Use with extreme caution.
 
@@ -56,9 +58,9 @@ replaced.  ``-d`` writes out the journal in the format used by
 versions of BIND up to 9.16.11; ``-u`` writes it out in the format used
 by versions since 9.16.13. (9.16.12 is omitted due to a journal-formatting
 bug in that release.) Note that these options *must not* be used while
-``named`` is running.
+:iscman:`named` is running.
 
 See Also
 ~~~~~~~~
 
-:manpage:`named(8)`, :manpage:`nsupdate(1)`, BIND 9 Administrator Reference Manual.
+:iscman:`named(8) <named>`, :iscman:`nsupdate(1) <nsupdate>`, BIND 9 Administrator Reference Manual.

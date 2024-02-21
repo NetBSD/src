@@ -11,23 +11,22 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 zone=.
 infile=root.db.in
 zonefile=root.db
 
-cp ../ns2/dsset-example.in dsset-example$TP
+cp ../ns2/dsset-example.in dsset-example.
 
-keyname=`$KEYGEN -q -a RSASHA256 -b 2048 -n zone $zone`
+keyname=$($KEYGEN -q -a RSASHA256 -b 2048 -n zone $zone)
 
-cat $infile $keyname.key > $zonefile
+cat $infile $keyname.key >$zonefile
 
-$SIGNER -P -g -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile >/dev/null
 
 # Configure the resolving server with a static key.
-keyfile_to_static_ds $keyname > trusted.conf
+keyfile_to_static_ds $keyname >trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 

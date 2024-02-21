@@ -26,7 +26,7 @@
 prefix = /usr
 libdir = $(prefix)/lib/bind9
 
-CFLAGS=-fPIC -g -I../include
+CFLAGS += -fPIC -g -I../include
 BDB_LIBS=-ldb
 
 all: dlz_bdbhpt_dynamic.so

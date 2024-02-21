@@ -1,1 +1,1 @@
--c named.conf -m record -T nosyslog -d 99 -D logfileconfig-ns1 -X named.lock -U 4 -L named_deflog
+-c named.conf -m record -T nosyslog -f -d 99 -D logfileconfig-ns1 -X named.lock -U 4 -L named_deflog

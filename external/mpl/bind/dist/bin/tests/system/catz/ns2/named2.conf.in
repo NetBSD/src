@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -28,32 +28,97 @@ options {
 	notify no;
 	recursion no;
 	serial-query-rate 100;
-	# removed catalog-zone option, otherwise this is
+	dnssec-validation no;
+};
+
+view "default" {
+
+	# Removed catalog-zone option, otherwise this is
 	# identical to named1.conf.in
+
+	zone "dom-existing.example" {
+	    type primary;
+	    file "dom-existing.example.db";
+	};
+
+	zone "dom-existing-forward.example" {
+	    type forward;
+	    forward only;
+	    forwarders { 10.53.0.1; };
+	};
+
+	zone "dom-existing-forward-off.example" {
+	    type forward;
+	    forward only;
+	    forwarders { };
+	};
+
+	zone "catalog1.example" {
+		type secondary;
+		file "catalog1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog2.example" {
+		type secondary;
+		file "catalog2.example.db";
+		primaries { 10.53.0.3; };
+	};
+
+	zone "catalog3.example" {
+		type secondary;
+		file "catalog3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog4.example" {
+		type secondary;
+		file "catalog4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# No "version" property
+	zone "catalog-bad1.example" {
+		type secondary;
+		file "catalog-bad1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Unsupported "version" property
+	zone "catalog-bad2.example" {
+		type secondary;
+		file "catalog-bad2.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Two RRs in TXT RRset for the "version" property
+	zone "catalog-bad3.example" {
+		type secondary;
+		file "catalog-bad3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Type A "version" property
+	zone "catalog-bad4.example" {
+		type secondary;
+		file "catalog-bad4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
 };
 
-zone "catalog1.example" {
-	type secondary;
-	file "catalog1.example.db";
-	primaries { 10.53.0.1; };
-};
+view "ch" ch {
 
-zone "catalog2.example" {
-	type secondary;
-	file "catalog2.example.db";
-	primaries { 10.53.0.3; };
-};
+	# Removed catalog-zone option, otherwise this is
+	# identical to named1.conf.in
 
-zone "catalog3.example" {
-	type secondary;
-	file "catalog3.example.db";
-	primaries { 10.53.0.1; };
-};
+	# Non-IN class catalog zone
+	zone "catalog-bad5.example" ch {
+		type secondary;
+		file "catalog-bad5.example.db";
+		primaries { 10.53.0.1; };
+	};
 
-zone "catalog4.example" {
-	type secondary;
-	file "catalog4.example.db";
-	primaries { 10.53.0.1; };
 };
 
 key tsig_key. {

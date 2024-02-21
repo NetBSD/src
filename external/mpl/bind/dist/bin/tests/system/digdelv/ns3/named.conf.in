@@ -12,7 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.3 dscp 1;
+	query-source address 10.53.0.3;
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
@@ -24,5 +24,5 @@ options {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };

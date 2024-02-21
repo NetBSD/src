@@ -1,0 +1,389 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "DNSSEC-KEYGEN" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
+.SH NAME
+dnssec-keygen \- DNSSEC key generation tool
+.SH SYNOPSIS
+.sp
+\fBdnssec\-keygen\fP [\fB\-3\fP] [\fB\-A\fP date/offset] [\fB\-a\fP algorithm] [\fB\-b\fP keysize] [\fB\-C\fP] [\fB\-c\fP class] [\fB\-D\fP date/offset] [\fB\-d\fP bits] [\fB\-D\fP sync date/offset] [\fB\-E\fP engine] [\fB\-f\fP flag] [\fB\-G\fP] [\fB\-g\fP generator] [\fB\-h\fP] [\fB\-I\fP date/offset] [\fB\-i\fP interval] [\fB\-K\fP directory] [\fB\-k\fP policy] [\fB\-L\fP ttl] [\fB\-l\fP file] [\fB\-n\fP nametype] [\fB\-P\fP date/offset] [\fB\-P\fP sync date/offset] [\fB\-p\fP protocol] [\fB\-q\fP] [\fB\-R\fP date/offset] [\fB\-S\fP key] [\fB\-s\fP strength] [\fB\-T\fP rrtype] [\fB\-t\fP type] [\fB\-V\fP] [\fB\-v\fP level] {name}
+.SH DESCRIPTION
+.sp
+\fBdnssec\-keygen\fP generates keys for DNSSEC (Secure DNS), as defined in
+\fI\%RFC 2535\fP and \fI\%RFC 4034\fP\&. It can also generate keys for use with TSIG
+(Transaction Signatures) as defined in \fI\%RFC 2845\fP, or TKEY (Transaction
+Key) as defined in \fI\%RFC 2930\fP\&.
+.sp
+The \fBname\fP of the key is specified on the command line. For DNSSEC
+keys, this must match the name of the zone for which the key is being
+generated.
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-3
+This option uses an NSEC3\-capable algorithm to generate a DNSSEC key. If this
+option is used with an algorithm that has both NSEC and NSEC3
+versions, then the NSEC3 version is selected; for example,
+\fBdnssec\-keygen \-3 \-a RSASHA1\fP specifies the NSEC3RSASHA1 algorithm.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a algorithm
+This option selects the cryptographic algorithm. For DNSSEC keys, the value of
+\fBalgorithm\fP must be one of RSASHA1, NSEC3RSASHA1, RSASHA256,
+RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448. For
+TKEY, the value must be DH (Diffie\-Hellman); specifying this value
+automatically sets the \fI\%\-T KEY\fP option as well.
+.sp
+These values are case\-insensitive. In some cases, abbreviations are
+supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
+ECDSAP384SHA384. If RSASHA1 is specified along with the \fI\%\-3\fP
+option, NSEC3RSASHA1 is used instead.
+.sp
+This parameter \fImust\fP be specified except when using the \fI\%\-S\fP
+option, which copies the algorithm from the predecessor key.
+.sp
+In prior releases, HMAC algorithms could be generated for use as TSIG
+keys, but that feature was removed in BIND 9.13.0. Use
+\fI\%tsig\-keygen\fP to generate TSIG keys.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b keysize
+This option specifies the number of bits in the key. The choice of key size
+depends on the algorithm used: RSA keys must be between 1024 and 4096
+bits; Diffie\-Hellman keys must be between 128 and 4096 bits. Elliptic
+curve algorithms do not need this parameter.
+.sp
+If the key size is not specified, some algorithms have pre\-defined
+defaults. For example, RSA keys for use as DNSSEC zone\-signing keys
+have a default size of 1024 bits; RSA keys for use as key\-signing
+keys (KSKs, generated with \fI\%\-f KSK\fP) default to 2048 bits.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-C
+This option enables compatibility mode, which generates an old\-style key, without any timing
+metadata. By default, \fBdnssec\-keygen\fP includes the key\(aqs
+creation date in the metadata stored with the private key; other
+dates may be set there as well, including publication date, activation date,
+etc. Keys that include this data may be incompatible with older
+versions of BIND; the \fI\%\-C\fP option suppresses them.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c class
+This option indicates that the DNS record containing the key should have the
+specified class. If not specified, class IN is used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-d bits
+This option specifies the key size in bits. For the algorithms RSASHA1, NSEC3RSASA1, RSASHA256, and
+RSASHA512 the key size must be between 1024 and 4096 bits; DH size is between 128
+and 4096 bits. This option is ignored for algorithms ECDSAP256SHA256,
+ECDSAP384SHA384, ED25519, and ED448.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-E engine
+This option specifies the cryptographic hardware to use, when applicable.
+.sp
+When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+engine identifier that drives the cryptographic accelerator or
+hardware service module (usually \fBpkcs11\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f flag
+This option sets the specified flag in the flag field of the KEY/DNSKEY record.
+The only recognized flags are KSK (Key\-Signing Key) and REVOKE.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-G
+This option generates a key, but does not publish it or sign with it. This option is
+incompatible with \fI\%\-P\fP and \fI\%\-A\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-g generator
+This option indicates the generator to use if generating a Diffie\-Hellman key. Allowed
+values are 2 and 5. If no generator is specified, a known prime from
+\fI\%RFC 2539\fP is used if possible; otherwise the default is 2.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+This option prints a short summary of the options and arguments to
+\fBdnssec\-keygen\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-K directory
+This option sets the directory in which the key files are to be written.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-k policy
+This option creates keys for a specific \fBdnssec\-policy\fP\&. If a policy uses multiple keys,
+\fBdnssec\-keygen\fP generates multiple keys. This also
+creates a \(dq.state\(dq file to keep track of the key state.
+.sp
+This option creates keys according to the \fBdnssec\-policy\fP configuration, hence
+it cannot be used at the same time as many of the other options that
+\fBdnssec\-keygen\fP provides.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-L ttl
+This option sets the default TTL to use for this key when it is converted into a
+DNSKEY RR. This is the TTL used when the key is imported into a zone,
+unless there was already a DNSKEY RRset in
+place, in which case the existing TTL takes precedence. If this
+value is not set and there is no existing DNSKEY RRset, the TTL
+defaults to the SOA TTL. Setting the default TTL to \fB0\fP or \fBnone\fP
+is the same as leaving it unset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l file
+This option provides a configuration file that contains a \fBdnssec\-policy\fP statement
+(matching the policy set with \fI\%\-k\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-n nametype
+This option specifies the owner type of the key. The value of \fBnametype\fP must
+either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY
+(for a key associated with a host (KEY)), USER (for a key associated
+with a user (KEY)), or OTHER (DNSKEY). These values are
+case\-insensitive. The default is ZONE for DNSKEY generation.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-p protocol
+This option sets the protocol value for the generated key, for use with
+\fI\%\-T KEY\fP\&. The protocol is a number between 0 and 255. The default
+is 3 (DNSSEC). Other possible values for this argument are listed in
+\fI\%RFC 2535\fP and its successors.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q
+This option sets quiet mode, which suppresses unnecessary output, including progress
+indication. Without this option, when \fBdnssec\-keygen\fP is run
+interactively to generate an RSA or DSA key pair, it prints a
+string of symbols to \fBstderr\fP indicating the progress of the key
+generation. A \fB\&.\fP indicates that a random number has been found which
+passed an initial sieve test; \fB+\fP means a number has passed a single
+round of the Miller\-Rabin primality test; and a space ( ) means that the
+number has passed all the tests and is a satisfactory key.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-S key
+This option creates a new key which is an explicit successor to an existing key.
+The name, algorithm, size, and type of the key are set to match
+the existing key. The activation date of the new key is set to
+the inactivation date of the existing one. The publication date is
+set to the activation date minus the prepublication interval,
+which defaults to 30 days.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s strength
+This option specifies the strength value of the key. The strength is a number
+between 0 and 15, and currently has no defined purpose in DNSSEC.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-T rrtype
+This option specifies the resource record type to use for the key. \fBrrtype\fP
+must be either DNSKEY or KEY. The default is DNSKEY when using a
+DNSSEC algorithm, but it can be overridden to KEY for use with
+SIG(0).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t type
+This option indicates the type of the key for use with \fI\%\-T KEY\fP\&. \fBtype\fP
+must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF. The default
+is AUTHCONF. AUTH refers to the ability to authenticate data, and
+CONF to the ability to encrypt data.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V
+This option prints version information.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v level
+This option sets the debugging level.
+.UNINDENT
+.SH TIMING OPTIONS
+.sp
+Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS
+(which is the format used inside key files),
+or \(aqDay Mon DD HH:MM:SS YYYY\(aq (as printed by \fBdnssec\-settime \-p\fP),
+or UNIX epoch time (as printed by \fBdnssec\-settime \-up\fP),
+or the literal \fBnow\fP\&.
+.sp
+The argument can be followed by \fB+\fP or \fB\-\fP and an offset from the
+given time. The literal \fBnow\fP can be omitted before an offset. The
+offset can be followed by one of the suffixes \fBy\fP, \fBmo\fP, \fBw\fP,
+\fBd\fP, \fBh\fP, or \fBmi\fP, so that it is computed in years (defined as
+365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour
+days), weeks, days, hours, or minutes, respectively. Without a suffix,
+the offset is computed in seconds.
+.sp
+To unset a date, use \fBnone\fP, \fBnever\fP, or \fBunset\fP\&.
+.INDENT 0.0
+.TP
+.B \-P date/offset
+This option sets the date on which a key is to be published to the zone. After
+that date, the key is included in the zone but is not used
+to sign it. If not set, and if the \fI\%\-G\fP option has not been used, the
+default is the current date.
+.INDENT 7.0
+.TP
+.B sync date/offset
+This option sets the date on which CDS and CDNSKEY records that match this key
+are to be published to the zone.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-A date/offset
+This option sets the date on which the key is to be activated. After that date,
+the key is included in the zone and used to sign it. If not set,
+and if the \fI\%\-G\fP option has not been used, the default is the current date. If set,
+and \fI\%\-P\fP is not set, the publication date is set to the
+activation date minus the prepublication interval.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-R date/offset
+This option sets the date on which the key is to be revoked. After that date, the
+key is flagged as revoked. It is included in the zone and
+is used to sign it.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-I date/offset
+This option sets the date on which the key is to be retired. After that date, the
+key is still included in the zone, but it is not used to
+sign it.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-D date/offset
+This option sets the date on which the key is to be deleted. After that date, the
+key is no longer included in the zone. (However, it may remain in the key
+repository.)
+.INDENT 7.0
+.TP
+.B sync date/offset
+This option sets the date on which the CDS and CDNSKEY records that match this
+key are to be deleted.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-i interval
+This option sets the prepublication interval for a key. If set, then the
+publication and activation dates must be separated by at least this
+much time. If the activation date is specified but the publication
+date is not, the publication date defaults to this much time
+before the activation date; conversely, if the publication date is
+specified but not the activation date, activation is set to
+this much time after publication.
+.sp
+If the key is being created as an explicit successor to another key,
+then the default prepublication interval is 30 days; otherwise it is
+zero.
+.sp
+As with date offsets, if the argument is followed by one of the
+suffixes \fBy\fP, \fBmo\fP, \fBw\fP, \fBd\fP, \fBh\fP, or \fBmi\fP, the interval is
+measured in years, months, weeks, days, hours, or minutes,
+respectively. Without a suffix, the interval is measured in seconds.
+.UNINDENT
+.SH GENERATED KEYS
+.sp
+When \fBdnssec\-keygen\fP completes successfully, it prints a string of the
+form \fBKnnnn.+aaa+iiiii\fP to the standard output. This is an
+identification string for the key it has generated.
+.INDENT 0.0
+.IP \(bu 2
+\fBnnnn\fP is the key name.
+.IP \(bu 2
+\fBaaa\fP is the numeric representation of the algorithm.
+.IP \(bu 2
+\fBiiiii\fP is the key identifier (or footprint).
+.UNINDENT
+.sp
+\fBdnssec\-keygen\fP creates two files, with names based on the printed
+string. \fBKnnnn.+aaa+iiiii.key\fP contains the public key, and
+\fBKnnnn.+aaa+iiiii.private\fP contains the private key.
+.sp
+The \fB\&.key\fP file contains a DNSKEY or KEY record. When a zone is being
+signed by \fI\%named\fP or \fI\%dnssec\-signzone \-S\fP, DNSKEY records are
+included automatically. In other cases, the \fB\&.key\fP file can be
+inserted into a zone file manually or with an \fB$INCLUDE\fP statement.
+.sp
+The \fB\&.private\fP file contains algorithm\-specific fields. For obvious
+security reasons, this file does not have general read permission.
+.SH EXAMPLE
+.sp
+To generate an ECDSAP256SHA256 zone\-signing key for the zone
+\fBexample.com\fP, issue the command:
+.sp
+\fBdnssec\-keygen \-a ECDSAP256SHA256 example.com\fP
+.sp
+The command prints a string of the form:
+.sp
+\fBKexample.com.+013+26160\fP
+.sp
+In this example, \fBdnssec\-keygen\fP creates the files
+\fBKexample.com.+013+26160.key\fP and \fBKexample.com.+013+26160.private\fP\&.
+.sp
+To generate a matching key\-signing key, issue the command:
+.sp
+\fBdnssec\-keygen \-a ECDSAP256SHA256 \-f KSK example.com\fP
+.SH SEE ALSO
+.sp
+\fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual, \fI\%RFC 2539\fP,
+\fI\%RFC 2845\fP, \fI\%RFC 4034\fP\&.
+.SH AUTHOR
+Internet Systems Consortium
+.SH COPYRIGHT
+2024, Internet Systems Consortium
+.\" Generated by docutils manpage writer.
+.

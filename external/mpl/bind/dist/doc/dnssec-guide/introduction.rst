@@ -41,7 +41,7 @@ Who May Not Want to Read this Guide?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are already operating a DNSSEC-signed zone, you may not learn
-much from the first half of this document, and you may want to start with 
+much from the first half of this document, and you may want to start with
 :ref:`dnssec_advanced_discussions`. If you want to
 learn about details of the protocol extension, such as data fields and flags,
 or the new record types, this document can help you get started but it
@@ -219,9 +219,9 @@ trust one key: the root key.
 .. _dnssec_12_steps:
 
 The 12-Step DNSSEC Validation Process (Simplified)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following example shows the 12 steps of the DNSSEC validating process 
+The following example shows the 12 steps of the DNSSEC validating process
 at a very high level, looking up the name ``www.isc.org`` :
 
 .. figure:: ../dnssec-guide/img/dnssec-12-steps.png
@@ -306,7 +306,7 @@ at a very high level, looking up the name ``www.isc.org`` :
 .. _chain_of_trust:
 
 Chain of Trust
-^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~
 
 But what about the root server itself? Who do we go to verify root's
 keys? There's no parent zone for root. In security, you have to trust
@@ -372,7 +372,7 @@ want to consider deploying DNSSEC:
 .. [#]
    The Office of Management and Budget (OMB) for the US government
    published `a memo in
-   2008 <https://www.whitehouse.gov/sites/whitehouse.gov/files/omb/memoranda/2008/m08-23.pdf>`__,
+   2008 <https://georgewbush-whitehouse.archives.gov/omb/memoranda/fy2008/m08-23.pdf>`__,
    requesting all ``.gov`` subdomains to be DNSSEC-signed by December
    2009. This explains why ``.gov`` is the most-deployed DNSSEC domain
    currently, with `around 90% of subdomains

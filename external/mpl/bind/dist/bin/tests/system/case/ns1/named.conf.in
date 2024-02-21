@@ -24,6 +24,7 @@ options {
 	ixfr-from-differences yes;
 	check-integrity no;
 	minimal-responses no;
+	dnssec-validation no;
 };
 
 zone "example" {

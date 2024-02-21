@@ -21,5 +21,6 @@ rm -f diff.out*
 rm -f good-kasp.conf.in
 rm -f good-server-christmas-tree.conf
 rm -f good.conf.in good.conf.out badzero.conf *.out
+rm -rf keys
 rm -f ns*/named.lock
 rm -rf test.keydir

@@ -100,7 +100,7 @@ Visible DNSSEC Validation Symptoms
 
 After determining the query path, it is necessary to
 determine whether the problem is actually related to DNSSEC
-validation. You can use the ``+cd`` flag in ``dig`` to disable
+validation. You can use the :option:`dig +cd` flag to disable
 validation, as described in
 :ref:`how_do_i_know_validation_problem`.
 
@@ -132,14 +132,14 @@ server at 192.168.1.7:
    ;; WHEN: Wed Mar 18 15:12:49 GMT 2020
    ;; MSG SIZE  rcvd: 72
 
-With ``delv``, a "resolution failed" message is output instead:
+With :iscman:`delv`, a "resolution failed" message is output instead:
 
 ::
 
    $ delv @10.53.0.3 www.example.org. A +rtrace
    ;; fetch: www.example.org/A
    ;; resolution failed: SERVFAIL
-   
+
 BIND 9 logging features may be useful when trying to identify
 DNSSEC errors.
 
@@ -148,7 +148,7 @@ DNSSEC errors.
 Basic Logging
 ~~~~~~~~~~~~~
 
-DNSSEC validation error messages show up in ``syslog`` as a
+DNSSEC validation error messages show up in :any:`syslog` as a
 query error by default. Here is an example of what it may look like:
 
 ::
@@ -173,11 +173,11 @@ logging is thus not recommended for production servers.
 
 With that said, sometimes it may become necessary to temporarily enable
 BIND debug logging to see more details of how and whether DNSSEC is
-validating. DNSSEC-related messages are not recorded in ``syslog`` by default,
-even if query log is enabled; only DNSSEC errors show up in ``syslog``.
+validating. DNSSEC-related messages are not recorded in :any:`syslog` by default,
+even if query log is enabled; only DNSSEC errors show up in :any:`syslog`.
 
 The example below shows how to enable debug level 3 (to see full DNSSEC
-validation messages) in BIND 9 and have it sent to ``syslog``:
+validation messages) in BIND 9 and have it sent to :any:`syslog`:
 
 ::
 
@@ -205,7 +205,7 @@ The example below shows how to log DNSSEC messages to their own file
 
 After turning on debug logging and restarting BIND, a large
 number of log messages appear in
-``syslog``. The example below shows the log messages as a result of
+:any:`syslog`. The example below shows the log messages as a result of
 successfully looking up and validating the domain name ``ftp.isc.org``.
 
 ::
@@ -279,7 +279,7 @@ Below is an example attempting to resolve the A record for a test domain
 name ``www.example.net``. From the user's perspective, as described in
 :ref:`how_do_i_know_validation_problem`, only a SERVFAIL
 message is returned. On the validating resolver, we see the
-following messages in ``syslog``:
+following messages in :any:`syslog`:
 
 ::
 
@@ -318,9 +318,9 @@ shortened for ease of display):
 
 Next, we query for the DNSKEY and RRSIG of ``example.net`` to see if
 there's anything wrong. Since we are having trouble validating, we
-can use the ``+cd`` option to temporarily disable checking and return
+can use the :option:`dig +cd` option to temporarily disable checking and return
 results, even though they do not pass the validation tests. The
-``+multiline`` option tells ``dig`` to print the type, algorithm type,
+:option:`dig +multiline` option causes :iscman:`dig` to print the type, algorithm type,
 and key id for DNSKEY records. Again,
 some long strings are shortened for ease of display:
 
@@ -404,7 +404,7 @@ Unable to Load Keys
 ^^^^^^^^^^^^^^^^^^^
 
 This is a simple yet common issue. If the key files are present but
-unreadable by ``named`` for some reason, the ``syslog`` returns clear error
+unreadable by :iscman:`named` for some reason, the :any:`syslog` returns clear error
 messages, as shown below:
 
 ::
@@ -415,7 +415,7 @@ messages, as shown below:
    named[32447]: zone example.com/IN (signed): next key event: 27-Nov-2014 20:04:36.521
 
 However, if no keys are found, the error is not as obvious. Below shows
-the ``syslog`` messages after executing ``rndc
+the :any:`syslog` messages after executing ``rndc
 reload`` with the key files missing from the key directory:
 
 ::
@@ -435,7 +435,7 @@ reload`` with the key files missing from the key directory:
    named[32516]: zone example.com/IN (signed): next key event: 27-Nov-2014 20:07:09.292
 
 This happens to look exactly the same as if the keys were present and
-readable, and appears to indicate that ``named`` loaded the keys and signed the zone. It
+readable, and appears to indicate that :iscman:`named` loaded the keys and signed the zone. It
 even generates the internal (raw) files:
 
 ::
@@ -444,7 +444,7 @@ even generates the internal (raw) files:
    # ls
    example.com.db  example.com.db.jbk  example.com.db.signed
 
-If ``named`` really loaded the keys and signed the zone, you should see
+If :iscman:`named` really loaded the keys and signed the zone, you should see
 the following files:
 
 ::
@@ -462,8 +462,8 @@ Invalid Trust Anchors
 ^^^^^^^^^^^^^^^^^^^^^
 
 In most cases, you never need to explicitly configure trust
-anchors. ``named`` supplies the current root trust anchor and,
-with the default setting of ``dnssec-validation``, updates it on the
+anchors. :iscman:`named` supplies the current root trust anchor and,
+with the default setting of :any:`dnssec-validation`, updates it on the
 infrequent occasions when it is changed.
 
 However, in some circumstances you may need to explicitly configure
@@ -509,7 +509,7 @@ shows an example of querying a recursive server 10.53.0.3:
    ;; QUESTION SECTION:
    ;www.example.org.       IN  A
 
-``delv`` shows a similar result:
+:iscman:`delv` shows a similar result:
 
 ::
 
@@ -540,28 +540,28 @@ BIND 9.11 introduced Negative Trust Anchors (NTAs) as a means to
 *temporarily* disable DNSSEC validation for a zone when you know that
 the zone's DNSSEC is misconfigured.
 
-NTAs are added using the ``rndc`` command, e.g.:
+NTAs are added using the :iscman:`rndc` command, e.g.:
 
 ::
 
    $ rndc nta example.com
     Negative trust anchor added: example.com/_default, expires 19-Mar-2020 19:57:42.000
-    
+
 
 The list of currently configured NTAs can also be examined using
-``rndc``, e.g.:
+:iscman:`rndc`, e.g.:
 
 ::
 
    $ rndc nta -dump
     example.com/_default: expiry 19-Mar-2020 19:57:42.000
-    
+
 
 The default lifetime of an NTA is one hour, although by default, BIND
 polls the zone every five minutes to see if the zone correctly
 validates, at which point the NTA automatically expires. Both the
 default lifetime and the polling interval may be configured via
-``named.conf``, and the lifetime can be overridden on a per-zone basis
+:iscman:`named.conf`, and the lifetime can be overridden on a per-zone basis
 using the ``-lifetime duration`` parameter to ``rndc nta``. Both timer
 values have a permitted maximum value of one week.
 
@@ -570,7 +570,7 @@ values have a permitted maximum value of one week.
 NSEC3 Troubleshooting
 ~~~~~~~~~~~~~~~~~~~~~
 
-BIND includes a tool called ``nsec3hash`` that runs through the same
+BIND includes a tool called :iscman:`nsec3hash` that runs through the same
 steps as a validating resolver, to generate the correct hashed name
 based on NSEC3PARAM parameters. The command takes the following
 parameters in order: salt, algorithm, iterations, and domain. For

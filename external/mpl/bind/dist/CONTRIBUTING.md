@@ -102,22 +102,7 @@ Twitter, or Facebook.
 
 ### Reporting possible security issues
 
-If you think you may be seeing a potential security vulnerability in BIND
-(for example, a crash with REQUIRE, INSIST, or ASSERT failure), please
-report it immediately by emailing to security-officer@isc.org. Plain-text
-e-mail is not a secure choice for communications concerning undisclosed
-security issues so please encrypt your communications to us if possible,
-using the [ISC Security Officer public key](https://www.isc.org/pgpkey/).
-
-Do not discuss undisclosed security vulnerabilities on any public mailing list.
-ISC has a long history of handling reported vulnerabilities promptly and
-effectively and we respect and acknowledge responsible reporters.
-
-ISC's Security Vulnerability Disclosure Policy is documented at
-[https://kb.isc.org/docs/aa-00861](https://kb.isc.org/docs/aa-00861).
-
-If you have a crash, you may want to consult
-["What to do if your BIND or DHCP server has crashed."](https://kb.isc.org/docs/aa-00340)
+See `SECURITY.md`.
 
 ### <a name="contrib"></a>Contributing code
 

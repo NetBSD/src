@@ -82,3 +82,23 @@ dnssec-policy "migrate-nomatch-alglen" {
 	parent-propagation-delay pt1h;
 	parent-ds-ttl 7200;
 };
+
+/*
+ * This policy tests migration from existing KSK and ZSK to CSK.
+ * The keys clause matches the default policy.
+ */
+dnssec-policy "migrate-nomatch-kzc" {
+	dnskey-ttl 300;
+
+	keys {
+		csk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	// Together 12h
+	zone-propagation-delay 3600;
+	max-zone-ttl 11h;
+
+	// Together 3h
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};

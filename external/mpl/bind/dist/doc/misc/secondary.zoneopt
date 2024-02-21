@@ -1,0 +1,65 @@
+zone <string> [ <class> ] {
+	type secondary;
+	allow-notify { <address_match_element>; ... };
+	allow-query { <address_match_element>; ... };
+	allow-query-on { <address_match_element>; ... };
+	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
+	allow-update-forwarding { <address_match_element>; ... };
+	also-notify [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	alt-transfer-source ( <ipv4_address> | * ) ; // deprecated
+	alt-transfer-source-v6 ( <ipv6_address> | * ) ; // deprecated
+	auto-dnssec ( allow | maintain | off ); // deprecated
+	check-names ( fail | warn | ignore );
+	database <string>;
+	dialup ( notify | notify-passive | passive | refresh | <boolean> ); // deprecated
+	dlz <string>;
+	dnskey-sig-validity <integer>;
+	dnssec-dnskey-kskonly <boolean>;
+	dnssec-loadkeys-interval <integer>;
+	dnssec-policy <string>;
+	dnssec-update-mode ( maintain | no-resign );
+	file <quoted_string>;
+	forward ( first | only );
+	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
+	inline-signing <boolean>;
+	ixfr-from-differences <boolean>;
+	journal <quoted_string>;
+	key-directory <quoted_string>;
+	masterfile-format ( raw | text );
+	masterfile-style ( full | relative );
+	max-ixfr-ratio ( unlimited | <percentage> );
+	max-journal-size ( default | unlimited | <sizeval> );
+	max-records <integer>;
+	max-refresh-time <integer>;
+	max-retry-time <integer>;
+	max-transfer-idle-in <integer>;
+	max-transfer-idle-out <integer>;
+	max-transfer-time-in <integer>;
+	max-transfer-time-out <integer>;
+	min-refresh-time <integer>;
+	min-retry-time <integer>;
+	multi-master <boolean>;
+	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-delay <integer>;
+	notify-source ( <ipv4_address> | * ) ;
+	notify-source-v6 ( <ipv6_address> | * ) ;
+	notify-to-soa <boolean>;
+	nsec3-test-zone <boolean>; // test only
+	parental-agents [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	parental-source ( <ipv4_address> | * ) ;
+	parental-source-v6 ( <ipv6_address> | * ) ;
+	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	request-expire <boolean>;
+	request-ixfr <boolean>;
+	sig-signing-nodes <integer>;
+	sig-signing-signatures <integer>;
+	sig-signing-type <integer>;
+	sig-validity-interval <integer> [ <integer> ];
+	transfer-source ( <ipv4_address> | * ) ;
+	transfer-source-v6 ( <ipv6_address> | * ) ;
+	try-tcp-refresh <boolean>;
+	update-check-ksk <boolean>;
+	use-alt-transfer-source <boolean>; // deprecated
+	zero-no-soa-ttl <boolean>;
+	zone-statistics ( full | terse | none | <boolean> );
+};
