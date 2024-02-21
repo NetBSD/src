@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2023/12/17 18:46:42 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2024/02/21 20:31:57 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -288,8 +288,6 @@ main(int argc, char **argv)
 	if (has_colors()) {
 		start_color();
 		do_coloring(clr_arg.fg,clr_arg.bg);
-	} else {
-		remove_color_options();
 	}
 	msg_window(mainwin);
 
@@ -309,6 +307,10 @@ main(int argc, char **argv)
 	select_language(msg_cat_dir);
 	get_kb_encoding();
 	init_lang();
+
+	/* remove some invalid menu entries */
+	if (!has_colors())
+		remove_color_options();
 
 	/* Menu processing */
 	if (partman_go)
