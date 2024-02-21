@@ -1,9 +1,10 @@
-/*	$NetBSD: gftfb.c,v 1.5 2024/02/21 13:04:01 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.6 2024/02/21 13:24:40 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
+ ^                     2024 Michael Lorenz
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +18,11 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * a native driver for HP Visualize EG PCI graphics cards
+ * STI portions are from Miodrag Vallat's sti_pci.c
  */
 
 #include <sys/param.h>
@@ -974,15 +980,17 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
 
-	gftfb_wait(sc);
-	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0x13a01000);
+	if (sc->sc_hwmode != HW_BLIT) {
+		gftfb_wait(sc);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0x13a01000);
+		sc->sc_hwmode = HW_BLIT;
+	}
 	gftfb_wait_fifo(sc, 5);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_24, (xs << 16) | ys);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_7, (wi << 16) | he);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_25, (xd << 16) | yd);
-	sc->sc_hwmode = HW_BLIT;
 }
 
 static void
