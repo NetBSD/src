@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.4 2024/02/20 15:54:44 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.5 2024/02/21 13:04:01 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -76,7 +76,10 @@ struct	gftfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
-	uint32_t sc_reg10;
+	uint32_t sc_hwmode;
+#define HW_FB	0
+#define HW_FILL	1
+#define HW_BLIT	2
 	glyphcache sc_gc;
 };
 
@@ -645,6 +648,7 @@ gftfb_setup_fb(struct gftfb_softc *sc)
 	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x83000300);
 	gftfb_wait(sc);
 	bus_space_write_1(memt, memh, NGLE_REG_16b1, 1);
+	sc->sc_hwmode = HW_FB;
 }
 
 void
@@ -654,7 +658,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
 
-	sc->sc_reg10 = 0;
+	sc->sc_hwmode = HW_FB;
 
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
@@ -674,6 +678,10 @@ gftfb_setup(struct gftfb_softc *sc)
 	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x00000000);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_9,
 	    (sc->sc_scr.scr_cfg.scr_width << 16) | sc->sc_scr.scr_cfg.scr_height);
+	/*
+	 * blit into offscreen memory to force flush previous - apparently 
+	 * some chips have a bug this works around
+	 */
 	bus_space_write_stream_4(memt, memh, NGLE_REG_6, 0x05000000);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_9, 0x00040001);
 
@@ -682,6 +690,7 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	gftfb_setup_fb(sc);
 
+	/* make sure video output is enabled */
 	gftfb_wait(sc);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_21,
 	    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
@@ -741,7 +750,7 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				gftfb_setup(sc);
-				if (0) gftfb_restore_palette(sc);
+				gftfb_restore_palette(sc);
 				glyphcache_wipe(&sc->sc_gc);
 				gftfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
@@ -932,19 +941,22 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
 
-	gftfb_wait_fifo(sc, 5);
-	/* transfer data */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_8, 0xffffffff);
+	if (sc->sc_hwmode != HW_FILL) {
+		gftfb_wait_fifo(sc, 4);
+		/* transfer data */
+		bus_space_write_stream_4(memt, memh, NGLE_REG_8, 0xffffffff);
+		/* plane mask */
+		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
+		/* bitmap op */
+		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 
+		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
+		/* dst bitmap access */
+		bus_space_write_stream_4(memt, memh, NGLE_REG_11,
+		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
+		sc->sc_hwmode = HW_FILL;
+	}
+	gftfb_wait_fifo(sc, 3);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_35, bg);
-	/* plane mask */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xff);
-	/* bitmap op */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 
-	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
-	/* dst bitmap access */
-	bus_space_write_stream_4(memt, memh, NGLE_REG_11,
-	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
-	gftfb_wait_fifo(sc, 2);
 	/* dst XY */
 	bus_space_write_stream_4(memt, memh, NGLE_REG_6, (x << 16) | y);
 	/* len XY start */
@@ -970,6 +982,7 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	bus_space_write_stream_4(memt, memh, NGLE_REG_24, (xs << 16) | ys);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_7, (wi << 16) | he);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_25, (xd << 16) | yd);
+	sc->sc_hwmode = HW_BLIT;
 }
 
 static void
@@ -1065,7 +1078,7 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
-	gftfb_setup_fb(sc);
+	if (sc->sc_hwmode != HW_FB) gftfb_setup_fb(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
 
 	if (rv == GC_ADD)
