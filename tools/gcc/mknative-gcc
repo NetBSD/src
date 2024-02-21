@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.117 2023/07/31 01:48:37 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.118 2024/02/21 08:24:46 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -251,8 +251,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
-			cxx17_sources \
 			cxx11_sources \
+			cxx17_sources \
+			cxx20_sources \
 			cxx98_sources
 
 		# libsupc++
@@ -271,6 +272,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/src/c++17/Makefile \
 			libc__17convenience_la_SOURCES | \
 			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/src/c++20/Makefile \
+			libc__20convenience_la_SOURCES | \
+			sed -e 's/^G_libc__20convenience_la_SOURCES=/G_CPP20_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | \
 			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/'
