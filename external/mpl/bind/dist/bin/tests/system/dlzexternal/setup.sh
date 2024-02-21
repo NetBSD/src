@@ -11,9 +11,8 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
-$DDNSCONFGEN -q -z example.nil > ns1/ddns.key
+$TSIGKEYGEN ddns-key.example.nil >ns1/ddns.key
 
 copy_setports ns1/named.conf.in ns1/named.conf

@@ -1,0 +1,183 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls local {
+	key-file "../CA/certs/srv02.crt01.example.com.key";
+	cert-file "../CA/certs/srv02.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+http local {
+	endpoints { "/dns-query"; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	https-port @HTTPSPORT@;
+	http-port @HTTPPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on tls local { 10.53.0.2; };             // DoT
+	listen-on-v6 tls local { fd92:7065:b8e:ffff::2; };
+	listen-on tls local http local { 10.53.0.2; };  // DoH
+	listen-on-v6 tls local http local { fd92:7065:b8e:ffff::2; };
+	listen-on tls none http local { 10.53.0.2; };   // unencrypted DoH
+	listen-on-v6 tls none http local { fd92:7065:b8e:ffff::2; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	ixfr-from-differences yes;
+	check-integrity no;
+	dnssec-validation yes;
+	transfers-in 100;
+	transfers-out 100;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+tls tls-example-primary {
+	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
+	ca-file "../CA/CA.pem";
+};
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-example-primary; };
+	file "example.db";
+	allow-transfer { any; };
+};
+
+# the server's certificate does not contain SubjectAltName, which is required for DoT
+tls tls-example-primary-no-san {
+	remote-hostname "srv01.crt02-no-san.example.com"; // enable Strict TLS
+	ca-file "../CA/CA.pem";
+};
+
+zone "example3" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT2@ tls tls-example-primary-no-san; };
+	file "example3.db";
+	allow-transfer { any; };
+};
+
+# As you can see, the "remote-hostname" is missing, but "ca-file" is
+# specified. As the result, the primaries server certificate will be
+# verified using the IP address instead of hostname. That is fine,
+# because the server certificate is issued with IP address in the
+# SubjectAltName section.
+tls tls-example-primary-strict-tls-no-hostname {
+	ca-file "../CA/CA.pem"; // enable Strict TLS
+};
+
+zone "example4" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-example-primary-strict-tls-no-hostname; };
+	file "example4.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-strict-tls-ipv4 {
+	remote-hostname "10.53.0.1"; # the IP is in the server's cert SAN
+	ca-file "../CA/CA.pem"; # enable Strict TLS
+};
+
+zone "example5" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-example-primary-strict-tls-ipv4; };
+	file "example5.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-strict-tls-ipv6 {
+	remote-hostname "fd92:7065:b8e:ffff::1"; # the IP is in the server's cert SAN
+	ca-file "../CA/CA.pem"; # enable Strict TLS
+};
+
+zone "example6" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-example-primary-strict-tls-ipv6; };
+	file "example6.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-strict-tls-wrong-host {
+	remote-hostname "not-present.example.com"; # this is not present in the server's cert SAN
+	ca-file "../CA/CA.pem"; # enable Strict TLS
+};
+
+zone "example7" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-example-primary-strict-tls-wrong-host; };
+	file "example7.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-strict-tls-expired {
+	remote-hostname "srv01.crt03-expired.example.com";
+	ca-file "../CA/CA.pem";
+};
+
+zone "example8" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT4@ tls tls-example-primary-strict-tls-expired; };
+	file "example8.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-mutual-tls {
+    remote-hostname "srv01.crt01.example.com";
+	ca-file "../CA/CA.pem";
+	cert-file "../CA/certs/srv01.client02-ns2.example.com.pem";
+	key-file "../CA/certs/srv01.client02-ns2.example.com.key";
+};
+
+zone "example9" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT5@ tls tls-example-primary-mutual-tls; };
+	file "example9.db";
+	allow-transfer { any; };
+};
+
+zone "example10" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT5@ tls tls-example-primary; };
+	file "example10.db";
+	allow-transfer { any; };
+};
+
+tls tls-example-primary-mutual-tls-expired {
+    remote-hostname "srv01.crt01.example.com";
+	ca-file "../CA/CA.pem";
+	cert-file "../CA/certs/srv01.client03-ns2-expired.example.com.pem";
+	key-file "../CA/certs/srv01.client03-ns2-expired.example.com.key";
+};
+
+zone "example11" {
+	type secondary;
+	primaries { 10.53.0.1 port @EXTRAPORT5@ tls tls-example-primary-mutual-tls-expired; };
+	file "example11.db";
+	allow-transfer { any; };
+};

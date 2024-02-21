@@ -22,12 +22,13 @@ options {
 	recursion no;
 	notify yes;
 	minimal-responses no;
+	dnssec-validation no;
 	@TKEY_CONFIGURATION@
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 key subkey {
@@ -55,7 +56,7 @@ zone "example.com" {
 };
 
 zone "denyname.example" {
-	type master;
+	type primary;
 	file "denyname.example.db";
 	update-policy {
 		deny subkey name denyname.example;

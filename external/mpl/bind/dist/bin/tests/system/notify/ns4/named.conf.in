@@ -21,11 +21,12 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify yes;
+	dnssec-validation no;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "x21" {

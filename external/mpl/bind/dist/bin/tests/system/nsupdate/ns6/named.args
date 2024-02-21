@@ -1,1 +1,1 @@
--D nsupdate-ns6 -m record,size,mctx -c named.conf -d 99 -X named.lock -g -U 4 -T maxcachesize=2097152 -T fixedlocal
+-D nsupdate-ns6 -m record -c named.conf -d 99 -X named.lock -g -U 4 -T maxcachesize=2097152 -T fixedlocal

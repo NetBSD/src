@@ -1,0 +1,21 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+zone1.com.				      86400 IN SOA	dns1.zone1.com. hostmaster.zone1.com. 2001062501 21600 3600 604800 86400
+zone1.com.				      86400 IN NS	dns1.zone1.com.
+zone1.com.				      86400 IN NS	dns2.zone1.com.
+zone1.com.				      86400 IN A	10.53.0.1
+zone1.com.				      86400 IN MX	10 mail1.zone1.com.
+zone1.com.				      86400 IN MX	20 mail2.zone1.com.
+dns1.zone1.com.				      86400 IN A	10.53.0.1
+dns2.zone1.com.				      86400 IN A	10.53.0.2
+mail1.zone1.com.			      86400 IN A	10.53.0.1
+mail2.zone1.com.			      86400 IN A	10.53.0.2

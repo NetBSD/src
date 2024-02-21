@@ -40,7 +40,7 @@ described in :ref:`how_to_test_recursive_server`.
 
 In earlier versions of BIND, including 9.11-ESV, DNSSEC
 validation must be explicitly enabled. To do this, you only need to
-add one line to the ``options`` section of your configuration file:
+add one line to the :namedconf:ref:`options` section of your configuration file:
 
 ::
 
@@ -50,7 +50,7 @@ add one line to the ``options`` section of your configuration file:
         ...
     };
 
-Restart ``named`` or run ``rndc reconfig``, and your recursive server is
+Restart :iscman:`named` or run :option:`rndc reconfig`, and your recursive server is
 now happily validating each DNS response. If this does not work for you,
 you may have some other network-related configurations that need to be
 adjusted. Take a look at :ref:`network_requirements` to make sure your network
@@ -116,28 +116,28 @@ confirm that it is in fact validating DNS responses.
 
 .. _using_dig_to_verify:
 
-Using ``dig`` to Verify
-^^^^^^^^^^^^^^^^^^^^^^^
+Using :iscman:`dig` to Verify
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Web-based DNSSEC-verification tools often employ JavaScript. If you don't trust the
 JavaScript magic that the web-based tools rely on, you can take matters
 into your own hands and use a command-line DNS tool to check your
 validating resolver yourself.
 
-While ``nslookup`` is popular, partly because it comes pre-installed on
-most systems, it is not DNSSEC-aware. ``dig``, on the other hand, fully
+While :iscman:`nslookup` is popular, partly because it comes pre-installed on
+most systems, it is not DNSSEC-aware. :iscman:`dig`, on the other hand, fully
 supports the DNSSEC standard and comes as a part of BIND. If you do not
-have ``dig`` already installed on your system, install it by downloading
+have :iscman:`dig` already installed on your system, install it by downloading
 it from ISC's `website <https://www.isc.org/download>`__. ISC provides pre-compiled
 Windows versions on its website.
 
-``dig`` is a flexible tool for interrogating DNS name servers. It
+:iscman:`dig` is a flexible tool for interrogating DNS name servers. It
 performs DNS lookups and displays the answers that are returned from the
 name servers that were queried. Most seasoned DNS administrators use
-``dig`` to troubleshoot DNS problems because of its flexibility, ease of
+:iscman:`dig` to troubleshoot DNS problems because of its flexibility, ease of
 use, and clarity of output.
 
-The example below shows how to use ``dig`` to query the name server 10.53.0.1
+The example below shows how to use :iscman:`dig` to query the name server 10.53.0.1
 for the A record for ``ftp.isc.org`` when DNSSEC validation is enabled
 (i.e. the default). The address 10.53.0.1 is only used as an example;
 replace it with the actual address or host name of your
@@ -198,7 +198,7 @@ file, i.e.:
    };
 
 If the server is restarted (to ensure a clean cache) and the same
-``dig`` command executed, the result is very similar:
+:iscman:`dig` command executed, the result is very similar:
 
 ::
 
@@ -230,7 +230,7 @@ If the server is restarted (to ensure a clean cache) and the same
    ;; MSG SIZE  rcvd: 187
 
 However, this time there is no ``ad`` flag in the header. Although
-``dig`` is still returning the DNSSEC-related resource records, it is
+:iscman:`dig` is still returning the DNSSEC-related resource records, it is
 not checking them, and thus cannot vouch for the authenticity of the answer.
 If you do carry out this test, remember to re-enable DNSSEC validation
 (by removing the ``dnssec-validation no;`` line from the configuration
@@ -278,7 +278,7 @@ name fails:
    ;; MSG SIZE  rcvd: 78
 
 On the other hand, if DNSSEC validation is disabled (by adding the
-statement ``dnssec-validation no;`` to the ``options`` clause in the
+statement ``dnssec-validation no;`` to the :namedconf:ref:`options` clause in the
 configuration file), the lookup succeeds:
 
 ::
@@ -320,10 +320,10 @@ How Do I Know I Have a Validation Problem?
 
 Since all DNSSEC validation failures result in a general ``SERVFAIL``
 message, how do we know if it was really a validation error?
-Fortunately, there is a flag in ``dig``, (``+cd``, for "checking
+Fortunately, there is a flag in :iscman:`dig`, ("CD" for "checking
 disabled") which tells the server to disable DNSSEC validation. If
 you receive a ``SERVFAIL`` message, re-run the query a second time
-and set the ``+cd`` flag. If the query succeeds with ``+cd``, but
+and set the :option:`dig +cd` flag. If the query succeeds with :option:`dig +cd`, but
 ends in ``SERVFAIL`` without it, you know you are dealing with a
 validation problem. So using the previous example of
 ``www.dnssec-failed.org`` and with DNSSEC validation enabled in the
@@ -370,8 +370,8 @@ take a closer look at what DNSSEC validation actually does, and some other optio
 
 .. _dnssec_validation_explained:
 
-``dnssec-validation``
-^^^^^^^^^^^^^^^^^^^^^
+:any:`dnssec-validation`
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -380,9 +380,9 @@ take a closer look at what DNSSEC validation actually does, and some other optio
    };
 
 This “auto” line enables automatic DNSSEC trust anchor configuration
-using the ``managed-keys`` feature. In this case, no manual key
+using the :any:`managed-keys` feature. In this case, no manual key
 configuration is needed. There are three possible choices for the
-``dnssec-validation`` option:
+:any:`dnssec-validation` option:
 
 -  *yes*: DNSSEC validation is enabled, but a trust anchor must be
    manually configured. No validation actually takes place until
@@ -394,11 +394,11 @@ configuration is needed. There are three possible choices for the
 -  *auto*: DNSSEC validation is enabled, and a default trust anchor
    (included as part of BIND 9) for the DNS root zone is used. This is the
    default; BIND automatically does this if there is no
-   ``dnssec-validation`` line in the configuration file.
+   :any:`dnssec-validation` line in the configuration file.
 
 Let's discuss the difference between *yes* and *auto*. If set to
 *yes*, the trust anchor must be manually defined and maintained
-using the ``trust-anchors`` statement (with either the ``static-key`` or
+using the :any:`trust-anchors` statement (with either the ``static-key`` or
 ``static-ds`` modifier) in the configuration file; if set to
 *auto* (the default, and as shown in the example), then no further
 action should be required as BIND includes a copy [#]_ of the root key.
@@ -563,7 +563,7 @@ the client.
 .. [#]
    BIND technically includes two copies of the root key: one is in
    ``bind.keys.h`` and is built into the executable, and one is in
-   ``bind.keys`` as a ``trust-anchors`` statement. The two copies of the
+   ``bind.keys`` as a :any:`trust-anchors` statement. The two copies of the
    key are identical.
 
 .. _trust_anchors_description:
@@ -647,7 +647,7 @@ anchor) configured. How did it get here, and how do we maintain it?
 
 If you followed the recommendation in
 :ref:`easy_start_guide_for_recursive_servers`, by setting
-``dnssec-validation`` to *auto*, there is nothing left to do.
+:any:`dnssec-validation` to *auto*, there is nothing left to do.
 BIND already includes a copy of the root key (in the file
 ``bind.keys``), and automatically updates it when the root key
 changes. [#]_ It looks something like this:
@@ -666,7 +666,7 @@ changes. [#]_ It looks something like this:
    };
 
 You can, of course, decide to manage this key manually yourself.
-First, you need to make sure that ``dnssec-validation`` is set
+First, you need to make sure that :any:`dnssec-validation` is set
 to *yes* rather than *auto*:
 
 ::
@@ -677,7 +677,7 @@ to *yes* rather than *auto*:
 
 Then, download the root key manually from a trustworthy source, such as
 `<https://www.isc.org/bind-keys>`__. Finally, take the root key you
-manually downloaded and put it into a ``trust-anchors`` statement as
+manually downloaded and put it into a :any:`trust-anchors` statement as
 shown below:
 
 ::
@@ -693,7 +693,7 @@ shown below:
                    R1AkUTV74bU=";
    };
 
-While this ``trust-anchors`` statement and the one in the ``bind.keys``
+While this :any:`trust-anchors` statement and the one in the ``bind.keys``
 file appear similar, the definition of the key in ``bind.keys`` has the
 ``initial-key`` modifier, whereas in the statement in the configuration
 file, that is replaced by ``static-key``. There is an important
@@ -717,7 +717,7 @@ process. Thereafter, BIND uses the managed keys database
 
 Explicit management of keys was common in the early days of DNSSEC, when
 neither the root zone nor many top-level domains were signed. Since
-then, `over 90% <https://stats.research.icann.org/dns/tld_report/>`__ of
+then, `over 90% <https://ithi.research.icann.org/graph-m7.html>`__ of
 the top-level domains have been signed, including all the largest ones.
 Unless you have a particular need to manage keys yourself, it is best to
 use the BIND defaults and let the software manage the root key.
@@ -744,7 +744,7 @@ larger packets over UDP. To support EDNS, both the DNS server
 and the network need to be properly prepared to support the larger
 packet sizes and multiple fragments.
 
-This is important for DNSSEC, since the ``+do`` bit that signals
+This is important for DNSSEC, since the :option:`dig +do` bit that signals
 DNSSEC-awareness is carried within EDNS, and DNSSEC responses are larger
 than traditional DNS ones. If DNS servers and the network environment cannot
 support large UDP packets, it will cause retransmission over TCP, or the
@@ -765,8 +765,8 @@ EDNS on DNS Servers
 For many years, BIND has had EDNS enabled by default,
 and the UDP packet size is set to a maximum of 4096 bytes. The DNS
 administrator should not need to perform any reconfiguration. You can
-use ``dig`` to verify that your server supports EDNS and see the UDP packet
-size it allows with this ``dig`` command:
+use :iscman:`dig` to verify that your server supports EDNS and see the UDP packet
+size it allows with this :iscman:`dig` command:
 
 ::
 

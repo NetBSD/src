@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -22,6 +22,7 @@ options {
 	notify-source 10.53.0.4;
 	transfer-source 10.53.0.4;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { fd92:7065:b8e:ffff::4; };
@@ -30,12 +31,22 @@ options {
 	recursion no;
 	serial-query-rate 100;
 	ixfr-from-differences yes; // GL #3777
+	dnssec-validation no;
 
 	catalog-zones {
+		zone "catalog-tls.example"
+			min-update-interval 1s
+			default-primaries { 10.53.0.1 key tsig_key tls ephemeral; };
 		zone "catalog-self.example"
 			min-update-interval 1s
-			default-masters { 10.53.0.4; };
+			default-primaries { 10.53.0.4; };
 	};
+};
+
+zone "catalog-tls.example" {
+	type secondary;
+	file "catalog-tls.example.db";
+	primaries { 10.53.0.1 key tsig_key tls ephemeral; };
 };
 
 zone "catalog-self.example" {

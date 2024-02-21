@@ -16,7 +16,7 @@
 # the standard input, in the form of a series of bytes in hexadecimal.
 # Whitespace is ignored, as is anything following a '#' symbol.
 #
-# For example, the following input would generate normal query for 
+# For example, the following input would generate normal query for
 # isc.org/NS/IN":
 #
 #     # QID:

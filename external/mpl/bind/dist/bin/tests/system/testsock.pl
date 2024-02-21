@@ -15,6 +15,8 @@
 
 require 5.001;
 
+use Cwd 'abs_path';
+use File::Basename;
 use Socket;
 use Getopt::Long;
 
@@ -27,7 +29,16 @@ my @ids;
 if ($id != 0) {
 	@ids = ($id);
 } else {
-	@ids = (1..8);
+	my $dir = dirname(abs_path($0));
+	my $fn = "$dir/ifconfig.sh.in";
+	open FH, "< $fn" or die "open < $fn: $!\n";
+	while (<FH>) {
+		@ids = (1..$1)
+		    if /^max=(\d+)\s*$/;
+	}
+	close FH;
+	die "could not find max IP address in $fn\n"
+	    unless @ids > 1;
 }
 
 foreach $id (@ids) {

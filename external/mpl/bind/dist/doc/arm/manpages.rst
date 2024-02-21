@@ -21,9 +21,6 @@ Manual Pages
 .. include:: ../../bin/dnssec/dnssec-cds.rst
 .. include:: ../../bin/dnssec/dnssec-dsfromkey.rst
 .. include:: ../../bin/dnssec/dnssec-importkey.rst
-.. include:: ../../bin/python/dnssec-checkds.rst
-.. include:: ../../bin/python/dnssec-coverage.rst
-.. include:: ../../bin/python/dnssec-keymgr.rst
 .. include:: ../../bin/dnssec/dnssec-keyfromlabel.rst
 .. include:: ../../bin/dnssec/dnssec-keygen.rst
 .. include:: ../../bin/dnssec/dnssec-revoke.rst
@@ -45,10 +42,6 @@ Manual Pages
 .. include:: ../../bin/tools/nsec3hash.rst
 .. include:: ../../bin/dig/nslookup.rst
 .. include:: ../../bin/nsupdate/nsupdate.rst
-.. include:: ../../bin/pkcs11/pkcs11-destroy.rst
-.. include:: ../../bin/pkcs11/pkcs11-keygen.rst
-.. include:: ../../bin/pkcs11/pkcs11-list.rst
-.. include:: ../../bin/pkcs11/pkcs11-tokens.rst
 .. include:: ../../bin/confgen/rndc-confgen.rst
 .. include:: ../../bin/rndc/rndc.conf.rst
 .. include:: ../../bin/rndc/rndc.rst

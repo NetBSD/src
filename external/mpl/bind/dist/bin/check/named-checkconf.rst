@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: named-checkconf
+.. program:: named-checkconf
 .. _man_named-checkconf:
 
 named-checkconf - named configuration file syntax checking tool
@@ -24,72 +26,83 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``named-checkconf`` checks the syntax, but not the semantics, of a
-``named`` configuration file. The file, along with all files included by it, is parsed and checked for syntax
+:program:`named-checkconf` checks the syntax, but not the semantics, of a
+:iscman:`named` configuration file. The file, along with all files included by it, is parsed and checked for syntax
 errors. If no file is specified,
-``/etc/named.conf`` is read by default.
+|named_conf| is read by default.
 
-Note: files that ``named`` reads in separate parser contexts, such as
+Note: files that :iscman:`named` reads in separate parser contexts, such as
 ``rndc.key`` and ``bind.keys``, are not automatically read by
-``named-checkconf``. Configuration errors in these files may cause
-``named`` to fail to run, even if ``named-checkconf`` was successful.
-However, ``named-checkconf`` can be run on these files explicitly.
+:program:`named-checkconf`. Configuration errors in these files may cause
+:iscman:`named` to fail to run, even if :program:`named-checkconf` was successful.
+However, :program:`named-checkconf` can be run on these files explicitly.
 
 Options
 ~~~~~~~
 
-``-h``
+.. option:: -h
+
    This option prints the usage summary and exits.
 
-``-j``
-   When loading a zonefile, this option instructs ``named`` to read the journal if it exists.
+.. option:: -j
 
-``-l``
+   When loading a zonefile, this option instructs :iscman:`named` to read the journal if it exists.
+
+.. option:: -l
+
    This option lists all the configured zones. Each line of output contains the zone
    name, class (e.g. IN), view, and type (e.g. primary or secondary).
 
-``-c``
+.. option:: -c
+
    This option specifies that only the "core" configuration should be checked. This suppresses the loading of
    plugin modules, and causes all parameters to ``plugin`` statements to
    be ignored.
 
-``-i``
+.. option:: -i
+
    This option ignores warnings on deprecated options.
 
-``-p``
-   This option prints out the ``named.conf`` and included files in canonical form if
-   no errors were detected. See also the ``-x`` option.
+.. option:: -p
 
-``-t directory``
-   This option instructs ``named`` to chroot to ``directory``, so that ``include`` directives in the
+   This option prints out the :iscman:`named.conf` and included files in canonical form if
+   no errors were detected. See also the :option:`-x` option.
+
+.. option:: -t directory
+
+   This option instructs :iscman:`named` to chroot to ``directory``, so that ``include`` directives in the
    configuration file are processed as if run by a similarly chrooted
-   ``named``.
+   :iscman:`named`.
 
-``-v``
-   This option prints the version of the ``named-checkconf`` program and exits.
+.. option:: -v
 
-``-x``
+   This option prints the version of the :program:`named-checkconf` program and exits.
+
+.. option:: -x
+
    When printing the configuration files in canonical form, this option obscures
    shared secrets by replacing them with strings of question marks
-   (``?``). This allows the contents of ``named.conf`` and related files
+   (``?``). This allows the contents of :iscman:`named.conf` and related files
    to be shared - for example, when submitting bug reports -
    without compromising private data. This option cannot be used without
-   ``-p``.
+   :option:`-p`.
 
-``-z``
-   This option performs a test load of all zones of type ``primary`` found in ``named.conf``.
+.. option:: -z
 
-``filename``
+   This option performs a test load of all zones of type ``primary`` found in :iscman:`named.conf`.
+
+.. option:: filename
+
    This indicates the name of the configuration file to be checked. If not specified,
-   it defaults to ``/etc/named.conf``.
+   it defaults to |named_conf|.
 
 Return Values
 ~~~~~~~~~~~~~
 
-``named-checkconf`` returns an exit status of 1 if errors were detected
+:program:`named-checkconf` returns an exit status of 1 if errors were detected
 and 0 otherwise.
 
 See Also
 ~~~~~~~~
 
-:manpage:`named(8)`, :manpage:`named-checkzone(8)`, BIND 9 Administrator Reference Manual.
+:iscman:`named(8) <named>`, :iscman:`named-checkzone(8) <named-checkzone>`, BIND 9 Administrator Reference Manual.

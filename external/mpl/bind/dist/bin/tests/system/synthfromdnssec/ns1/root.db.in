@@ -14,6 +14,11 @@ $TTL 3600
 @		NS	ns1
 ns1		A	10.53.0.1
 example		NS	ns1.example
+fun		NS	ns1.example
 ns1.example	A	10.53.0.1
 dnamed		NS	ns1.dnamed
 ns1.dnamed	A	10.53.0.1
+minimal		NS	ns1.minimal
+ns1.minimal	A	10.53.0.1
+soa-without-dnskey NS	ns1.soa-without-dnskey
+ns1.soa-without-dnskey A 10.53.0.1

@@ -50,6 +50,33 @@ key "sha512" {
 	algorithm hmac-sha512;
 };
 
+# hmac-md5-legacy key appended by setup.sh at the end
+
+key "hmac-sha1-legacy" {
+       algorithm "hmac-sha1";
+       secret "TxGx9XBp6Pp5yYAOKXdERA==";
+};
+
+key "hmac-sha224-legacy" {
+       algorithm "hmac-sha224";
+       secret "H8Hyw718rLqToQFRLAeFWQ==";
+};
+
+key "hmac-sha256-legacy" {
+       algorithm "hmac-sha256";
+       secret "fdT9hiPov4ThMEfRv1FNmA==";
+};
+
+key "hmac-sha384-legacy" {
+       algorithm "hmac-sha384";
+       secret "fnshFIjQTLFap6+j2JGBkA==";
+};
+
+key "hmac-sha512-legacy" {
+       algorithm "hmac-sha512";
+       secret "BZwNLICp2tj4hi6gil41eg==";
+};
+
 # md5-trunc key appended by setup.sh at the end
 
 key "sha1-trunc" {

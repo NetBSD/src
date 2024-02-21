@@ -14,9 +14,9 @@
 // NS6
 
 options {
-	query-source address 10.53.0.6 dscp 10;
-	notify-source 10.53.0.6 dscp 11;
-	transfer-source 10.53.0.6 dscp 12;
+	query-source address 10.53.0.6;
+	notify-source 10.53.0.6;
+	transfer-source 10.53.0.6;
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.6; };
@@ -30,6 +30,7 @@ options {
 	 * has a exclude list.
 	 */
 	root-delegation-only exclude { "a"; };
+	max-udp-size 4096;
 };
 
 zone "." {
@@ -93,7 +94,7 @@ zone "targetns" {
 
 key rndc_key {
         secret "1234abcd8765";
-        algorithm hmac-sha256;
+        algorithm @DEFAULT_HMAC@;
 };
 
 controls {

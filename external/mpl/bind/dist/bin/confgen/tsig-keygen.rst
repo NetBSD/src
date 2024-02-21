@@ -13,6 +13,8 @@
 
 .. BEWARE: Do not forget to edit also ddns-confgen.rst!
 
+.. iscman:: tsig-keygen
+.. program:: tsig-keygen
 .. _man_tsig-keygen:
 
 tsig-keygen - TSIG key generation tool
@@ -25,9 +27,9 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``tsig-keygen`` is an utility that generates keys for use in TSIG signing.
+:program:`tsig-keygen` is an utility that generates keys for use in TSIG signing.
 The resulting keys can be used, for example, to secure dynamic DNS updates
-to a zone, or for the ``rndc`` command channel.
+to a zone, or for the :iscman:`rndc` command channel.
 
 A domain name can be specified on the command line to be used as the name
 of the generated key. If no name is specified, the default is ``tsig-key``.
@@ -35,16 +37,18 @@ of the generated key. If no name is specified, the default is ``tsig-key``.
 Options
 ~~~~~~~
 
-``-a algorithm``
+.. option:: -a algorithm
+
    This option specifies the algorithm to use for the TSIG key. Available
    choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256, hmac-sha384,
    and hmac-sha512. The default is hmac-sha256. Options are
    case-insensitive, and the "hmac-" prefix may be omitted.
 
-``-h``
+.. option:: -h
+
    This option prints a short summary of options and arguments.
 
 See Also
 ~~~~~~~~
 
-:manpage:`nsupdate(1)`, :manpage:`named.conf(5)`, :manpage:`named(8)`, BIND 9 Administrator Reference Manual.
+:iscman:`nsupdate(1) <nsupdate>`, :iscman:`named.conf(5) <named.conf>`, :iscman:`named(8) <named>`, BIND 9 Administrator Reference Manual.

@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../../conf.sh
 
 set -e
 
@@ -20,19 +20,19 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && $SHELL sign.sh )
+(cd ../ns2 && $SHELL sign.sh)
 
-cp "../ns2/dsset-example$TP" .
+cp "../ns2/dsset-example." .
 
 keyname=$($KEYGEN -q -a "${DEFAULT_ALGORITHM}" -b "${DEFAULT_BITS}" -n zone $zone)
 
-cat "$infile" "$keyname.key" > "$zonefile"
+cat "$infile" "$keyname.key" >"$zonefile"
 
-$SIGNER -P -g -o $zone $zonefile > /dev/null
+$SIGNER -P -g -o $zone $zonefile >/dev/null
 
 # Configure the resolving server with a static key.
-keyfile_to_static_ds "$keyname" > trusted.conf
+keyfile_to_static_ds "$keyname" >trusted.conf
 cp trusted.conf ../ns2/trusted.conf
 
 # ...or with an initializing key.
-keyfile_to_initial_ds "$keyname" > managed.conf
+keyfile_to_initial_ds "$keyname" >managed.conf

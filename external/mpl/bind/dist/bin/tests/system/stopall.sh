@@ -15,10 +15,8 @@
 # Stop all hanging processes from any system tests.
 #
 
-SYSTEMTESTTOP=.
-. $SYSTEMTESTTOP/conf.sh
+. ./conf.sh
 
-for d in $SUBDIRS
-do
-   $SHELL stop.sh $d
+for d in $SUBDIRS; do
+  $SHELL stop.sh $d
 done

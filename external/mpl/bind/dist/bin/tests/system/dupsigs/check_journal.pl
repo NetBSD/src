@@ -197,11 +197,6 @@ if( @changeset ) {
             if( $n_signing_keys == 0 ) {
                 print "at serial $newserial $rrsig_id went unsigned\n";
             }
-            elsif( $rrsig_id =~ /:DNSKEY$/ ) {
-                if( $n_signing_keys != 2 ) {
-                    print "at serial $newserial $rrsig_id was signed $n_signing_keys time(s) when it should have been signed twice\n";
-                }
-            }
             elsif( $n_signing_keys > 1 ) {
                 my @signing_keys = sort { $a <=> $b } keys %{ $rrsig_db{$rrsig_id} };
                 print "at serial $newserial $rrsig_id was signed too many times, keys (@signing_keys)\n";

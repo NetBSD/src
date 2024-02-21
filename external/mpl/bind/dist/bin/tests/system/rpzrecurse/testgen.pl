@@ -121,7 +121,7 @@ sub mkconf {
 
         print $conf_fh $policy_option;
 
-        print $conf_fh map { qq{    zone "$_->[0]" { type master; file "db.$_->[0]"; };\n} } @zones;
+        print $conf_fh map { qq{    zone "$_->[0]" { type primary; file "db.$_->[0]"; };\n} } @zones;
 
         print $conf_fh $boilerplate_end;
     }

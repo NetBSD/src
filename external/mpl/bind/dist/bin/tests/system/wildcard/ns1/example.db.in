@@ -21,3 +21,5 @@ _ssh._tcp.host1.example. 3600     SRV   0 0 22 host1.example.
 _ssh._tcp.host2.example. 3600     SRV   0 0 22 host2.example.
 subdel.example.          3600     NS    ns.example.com.
 subdel.example.          3600     NS    ns.example.net.
+
+_foo._udp.*.example.	 3600 IN  SRV   0 1 9 old-slow-box.example.

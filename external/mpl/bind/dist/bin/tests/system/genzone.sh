@@ -14,18 +14,18 @@
 #
 # Set up a test zone
 #
-# Usage: genzone.sh master-server-number secondary-server-number...
+# Usage: genzone.sh primary-server-number secondary-server-number...
 #
-# e.g., "genzone.sh 2 3 4" means ns2 is the master and ns3, ns4
+# e.g., "genzone.sh 2 3 4" means ns2 is the primary and ns3, ns4
 # are secondaries.
 #
 
-master="$1"
+primary="$1"
 
 cat <<EOF
 \$TTL 3600
 
-@		86400	IN SOA	ns${master} hostmaster (
+@		86400	IN SOA	ns${primary} hostmaster (
 					1397051952 ; "SER0"
 					5
 					5
@@ -33,9 +33,8 @@ cat <<EOF
 					3600 )
 EOF
 
-for n
-do
-	cat <<EOF
+for n; do
+  cat <<EOF
 @			NS	ns${n}
 ns${n}			A	10.53.0.${n}
 EOF
@@ -96,7 +95,7 @@ hinfo02			HINFO	PC NetBSD
 
 ; type 14
 minfo01			MINFO	rmailbx emailbx
-minfo02			MINFO	. . 
+minfo02			MINFO	. .
 
 ; type 15
 mx01			MX	10 mail
@@ -121,7 +120,7 @@ txt15			TXT	"bar\\;"
 
 ; type 17
 rp01			RP	mbox-dname txt-dname
-rp02			RP	. . 
+rp02			RP	. .
 
 ; type 18
 afsdb01			AFSDB	0 hostname
@@ -154,7 +153,7 @@ nsap-ptr01		NSAP-PTR .
 
 ; type 24
 ;sig01			SIG	NXT 1 3 ( 3600 20000102030405
-;				19961211100908 2143 foo.nil. 
+;				19961211100908 2143 foo.nil.
 ;				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45I
 ;				kskceFGgiWCn/GxHhai6VAuHAoNUz4YoU1t
 ;				VfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY= )
@@ -205,7 +204,7 @@ atma03			ATMA	1234567890abcdef
 atma04			ATMA	f.e.d.c.b.a.0.9.8.7.6.5.4.3.2.1
 
 ; type 35
-naptr01			NAPTR   0 0 "" "" "" . 
+naptr01			NAPTR   0 0 "" "" "" .
 naptr02			NAPTR   65535 65535 blurgh blorf blllbb foo.
 naptr02			NAPTR   65535 65535 "blurgh" "blorf" "blllbb" foo.
 
@@ -214,7 +213,7 @@ kx01			KX	10 kdc
 kx02			KX	10 .
 
 ; type 37
-cert01			CERT	65534 65535 254 ( 
+cert01			CERT	65534 65535 254 (
 				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45I
 				kskceFGgiWCn/GxHhai6VAuHAoNUz4YoU1t
 				VfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY= )
@@ -266,7 +265,7 @@ ipseckey05		IPSECKEY	( 10 2 2
 
 ; type 46
 rrsig01			RRSIG	NSEC 1 3 ( 3600 20000102030405
-				19961211100908 2143 foo.nil. 
+				19961211100908 2143 foo.nil.
 				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45I
 				kskceFGgiWCn/GxHhai6VAuHAoNUz4YoU1t
 				VfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY= )
@@ -503,7 +502,7 @@ svcb1			SVCB	1 . port=60
 
 ; keydata (internal type used for managed keys)
 keydata			TYPE65533	\# 0
-keydata			TYPE65533	\# 6 010203040506 
+keydata			TYPE65533	\# 6 010203040506
 keydata			TYPE65533	\# 18 010203040506010203040506010203040506
 
 ; type 65535 (reserved)

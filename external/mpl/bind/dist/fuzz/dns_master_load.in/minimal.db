@@ -1,0 +1,4 @@
+.	SOA ns1. hostmaster.warn.example. (
+	    1 3600 1200 604800 3600 )
+	NS  ns1.
+ns1. 555 IN A 10.53.0.1

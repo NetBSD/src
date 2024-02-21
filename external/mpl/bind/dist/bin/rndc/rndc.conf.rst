@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: rndc.conf
+.. program:: rndc.conf
 .. _man_rndc.conf:
 
 rndc.conf - rndc configuration file
@@ -24,9 +26,9 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``rndc.conf`` is the configuration file for ``rndc``, the BIND 9 name
+:program:`rndc.conf` is the configuration file for :iscman:`rndc`, the BIND 9 name
 server control utility. This file has a similar structure and syntax to
-``named.conf``. Statements are enclosed in braces and terminated with a
+:iscman:`named.conf`. Statements are enclosed in braces and terminated with a
 semi-colon. Clauses in the statements are also semi-colon terminated.
 The usual comment styles are supported:
 
@@ -36,13 +38,13 @@ C++ style: // to end of line
 
 Unix style: # to end of line
 
-``rndc.conf`` is much simpler than ``named.conf``. The file uses three
+:program:`rndc.conf` is much simpler than :iscman:`named.conf`. The file uses three
 statements: an options statement, a server statement, and a key
 statement.
 
 The ``options`` statement contains five clauses. The ``default-server``
 clause is followed by the name or address of a name server. This host
-is used when no name server is given as an argument to ``rndc``.
+is used when no name server is given as an argument to :iscman:`rndc`.
 The ``default-key`` clause is followed by the name of a key, which is
 identified by a ``key`` statement. If no ``keyid`` is provided on the
 rndc command line, and no ``key`` clause is found in a matching
@@ -67,14 +69,14 @@ IPv4 and IPv6 source address, respectively.
 
 The ``key`` statement begins with an identifying string, the name of the
 key. The statement has two clauses. ``algorithm`` identifies the
-authentication algorithm for ``rndc`` to use; currently only HMAC-MD5
+authentication algorithm for :iscman:`rndc` to use; currently only HMAC-MD5
 (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256 (default),
 HMAC-SHA384, and HMAC-SHA512 are supported. This is followed by a secret
 clause which contains the base-64 encoding of the algorithm's
 authentication key. The base-64 string is enclosed in double quotes.
 
 There are two common ways to generate the base-64 string for the secret.
-The BIND 9 program ``rndc-confgen`` can be used to generate a random
+The BIND 9 program :iscman:`rndc-confgen` can be used to generate a random
 key, or the ``mmencode`` program, also known as ``mimencode``, can be
 used to generate a base-64 string from known input. ``mmencode`` does
 not ship with BIND 9 but is available on many systems. See the Example
@@ -118,7 +120,7 @@ Example
          };
 
 
-In the above example, ``rndc`` by default uses the server at
+In the above example, :iscman:`rndc` by default uses the server at
 localhost (127.0.0.1) and the key called "samplekey". Commands to the
 localhost server use the "samplekey" key, which must also be defined
 in the server's configuration file with the same name and secret. The
@@ -126,16 +128,16 @@ key statement indicates that "samplekey" uses the HMAC-SHA256 algorithm
 and its secret clause contains the base-64 encoding of the HMAC-SHA256
 secret enclosed in double quotes.
 
-If ``rndc -s testserver`` is used, then ``rndc`` connects to the server
+If :option:`rndc -s testserver <rndc -s>` is used, then :iscman:`rndc` connects to the server
 on localhost port 5353 using the key "testkey".
 
-To generate a random secret with ``rndc-confgen``:
+To generate a random secret with :iscman:`rndc-confgen`:
 
-``rndc-confgen``
+:iscman:`rndc-confgen`
 
-A complete ``rndc.conf`` file, including the randomly generated key,
+A complete :program:`rndc.conf` file, including the randomly generated key,
 is written to the standard output. Commented-out ``key`` and
-``controls`` statements for ``named.conf`` are also printed.
+``controls`` statements for :iscman:`named.conf` are also printed.
 
 To generate a base-64 secret with ``mmencode``:
 
@@ -145,12 +147,12 @@ Name Server Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The name server must be configured to accept rndc connections and to
-recognize the key specified in the ``rndc.conf`` file, using the
-controls statement in ``named.conf``. See the sections on the
+recognize the key specified in the :program:`rndc.conf` file, using the
+controls statement in :iscman:`named.conf`. See the sections on the
 ``controls`` statement in the BIND 9 Administrator Reference Manual for
 details.
 
 See Also
 ~~~~~~~~
 
-:manpage:`rndc(8)`, :manpage:`rndc-confgen(8)`, :manpage:`mmencode(1)`, BIND 9 Administrator Reference Manual.
+:iscman:`rndc(8) <rndc>`, :iscman:`rndc-confgen(8) <rndc-confgen>`, :manpage:`mmencode(1)`, BIND 9 Administrator Reference Manual.

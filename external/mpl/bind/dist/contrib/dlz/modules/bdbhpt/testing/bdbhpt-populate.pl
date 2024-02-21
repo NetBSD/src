@@ -65,10 +65,10 @@ foreach my $zone (@zones) {
         my $ttl = $r->{ttl};
         my $type = $r->{type};
         my $data = $r->{data};
-        
+
         $data =~ s/\%zone\%/$zone/g;
         $data =~ s/\%driver\%/bdbhpt-dynamic/g;
-        
+
         my $row_name  = "$zone $name";
         my $row_value = "$replId $name $ttl $type $data";
         if ($dns_data->db_put($row_name, $row_value) != 0) {
@@ -183,7 +183,7 @@ sub validate_record {
     foreach my $t (@TYPES) {
         $VALID_TYPE->{$t} = 1;
     }
-    
+
     if (!defined $r->{name} || $r->{name} eq '') {
         die "Record name must be set";
     }

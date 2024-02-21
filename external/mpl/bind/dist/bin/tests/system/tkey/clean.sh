@@ -11,10 +11,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f dig.out.* rndc.out.* ns1/named.conf
-rm -f K* ns1/K*
-rm -f */named.memstats
-rm -f */named.run
-rm -f ns1/_default.tsigkeys
-rm -f ns*/named.lock
+set -e
+
+rm -f ./K*
+rm -f ./dig.out.*
+rm -f ./rndc.out.*
+rm -f ns*/K*
+rm -f ns*/_default.tsigkeys
 rm -f ns*/managed-keys.bind*
+rm -f ns*/named.conf
+rm -f ns*/named.conf-e
+rm -f ns*/named.lock
+rm -f ns*/named.memstats
+rm -f ns*/named.run

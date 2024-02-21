@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: named-rrchecker
+.. program:: named-rrchecker
 .. _man_named-rrchecker:
 
 named-rrchecker - syntax checker for individual DNS resource records
@@ -24,32 +26,37 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``named-rrchecker`` reads a individual DNS resource record from standard
+:program:`named-rrchecker` reads a individual DNS resource record from standard
 input and checks whether it is syntactically correct.
 
 Options
 ~~~~~~~
 
-``-h``
+.. option:: -h
+
    This option prints out the help menu.
 
-``-o origin``
+.. option:: -o origin
+
    This option specifies the origin to be used when interpreting
    the record.
 
-``-p``
+.. option:: -p
+
    This option prints out the resulting record in canonical form. If there
    is no canonical form defined, the record is printed in unknown
    record format.
 
-``-u``
+.. option:: -u
+
    This option prints out the resulting record in unknown record form.
 
-``-C``, ``-T``, and ``-P``
+.. option:: -C, -T, -P
+
    These options print out the known class, standard type,
    and private type mnemonics, respectively.
 
 See Also
 ~~~~~~~~
 
-:rfc:`1034`, :rfc:`1035`, :manpage:`named(8)`.
+:rfc:`1034`, :rfc:`1035`, :iscman:`named(8) <named>`.

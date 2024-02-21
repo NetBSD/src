@@ -12,9 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.2 dscp 1;
-	notify-source 10.53.0.2 dscp 2;
-	transfer-source 10.53.0.2 dscp 3;
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.2; };

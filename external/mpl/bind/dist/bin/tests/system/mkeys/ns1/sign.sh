@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 zone=sub.tld
 zonefile=sub.tld.db
@@ -20,8 +19,8 @@ zonefile=sub.tld.db
 keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk $zone)
 zskkeyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -q $zone)
 
-$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
-keyfile_to_initial_ds $keyname > island.conf
+$SIGNER -Sg -o $zone $zonefile >/dev/null 2>/dev/null
+keyfile_to_initial_ds $keyname >island.conf
 cp island.conf ../ns5/island.conf
 
 zone=tld
@@ -30,7 +29,7 @@ zonefile=tld.db
 keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk $zone)
 zskkeyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -q $zone)
 
-$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
+$SIGNER -Sg -o $zone $zonefile >/dev/null 2>/dev/null
 
 zone=.
 zonefile=root.db
@@ -38,18 +37,18 @@ zonefile=root.db
 keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk $zone)
 zskkeyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -q $zone)
 
-$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
+$SIGNER -Sg -o $zone $zonefile >/dev/null 2>/dev/null
 
 # Configure the resolving server with an initializing key.
-keyfile_to_initial_ds $keyname > managed.conf
+keyfile_to_initial_ds $keyname >managed.conf
 cp managed.conf ../ns2/managed.conf
 cp managed.conf ../ns4/managed.conf
 cp managed.conf ../ns5/managed.conf
 
 # Configure broken trust anchor for ns3
 # Rotate each nibble in the digest by -1
-$DSFROMKEY $keyname.key |
-awk '!/^; /{
+$DSFROMKEY $keyname.key \
+  | awk '!/^; /{
             printf "trust-anchors {\n"
             printf "\t\""$1"\" initial-ds "
             printf $4 " " $5 " " $6 " \""
@@ -77,10 +76,10 @@ awk '!/^; /{
 	    }
 	    printf "\";\n"
 	    printf "};\n"
-	}' > ../ns3/broken.conf
+	}' >../ns3/broken.conf
 
 # Configure a static key to be used by delv.
-keyfile_to_static_ds $keyname > trusted.conf
+keyfile_to_static_ds $keyname >trusted.conf
 
 # Prepare an unsupported algorithm key.
 unsupportedkey=Kunknown.+255+00000
@@ -89,6 +88,6 @@ cp unsupported.key "${unsupportedkey}.key"
 #
 #  Save keyname and keyid for managed key id test.
 #
-echo "$keyname" > managed.key
-echo "$zskkeyname" > zone.key
-keyfile_to_key_id $keyname > managed.key.id
+echo "$keyname" >managed.key
+echo "$zskkeyname" >zone.key
+keyfile_to_key_id $keyname >managed.key.id

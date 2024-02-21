@@ -18,6 +18,7 @@ options {
 	listen-on port @PORT@ { 10.53.0.5; };
 	pid-file "named.pid";
 	nxdomain-redirect signed;
+	dnssec-validation no;
 };
 
 zone "." {

@@ -11,16 +11,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 zone=.
 rm -f K.+*+*.key
 rm -f K.+*+*.private
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
-$SIGNER -S -x -T 1200 -o ${zone} root.db > signer.out
+$SIGNER -S -x -T 1200 -o ${zone} root.db >signer.out
 [ $? = 0 ] || cat signer.out
 
-keyfile_to_static_ds $keyname > trusted.conf
+keyfile_to_static_ds $keyname >trusted.conf
 cp trusted.conf ../ns6/trusted.conf

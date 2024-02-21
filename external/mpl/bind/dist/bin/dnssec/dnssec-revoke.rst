@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: dnssec-revoke
+.. program:: dnssec-revoke
 .. _man_dnssec-revoke:
 
 dnssec-revoke - set the REVOKED bit on a DNSSEC key
@@ -24,48 +26,53 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``dnssec-revoke`` reads a DNSSEC key file, sets the REVOKED bit on the
+:program:`dnssec-revoke` reads a DNSSEC key file, sets the REVOKED bit on the
 key as defined in :rfc:`5011`, and creates a new pair of key files
 containing the now-revoked key.
 
 Options
 ~~~~~~~
 
-``-h``
+.. option:: -h
+
    This option emits a usage message and exits.
 
-``-K directory``
+.. option:: -K directory
+
    This option sets the directory in which the key files are to reside.
 
-``-r``
+.. option:: -r
+
    This option indicates to remove the original keyset files after writing the new keyset files.
 
-``-v level``
+.. option:: -v level
+
    This option sets the debugging level.
 
-``-V``
+.. option:: -V
+
    This option prints version information.
 
-``-E engine``
+.. option:: -E engine
+
    This option specifies the cryptographic hardware to use, when applicable.
 
    When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
    engine identifier that drives the cryptographic accelerator or
-   hardware service module (usually ``pkcs11``). When BIND is
-   built with native PKCS#11 cryptography (``--enable-native-pkcs11``), it
-   defaults to the path of the PKCS#11 provider library specified via
-   ``--with-pkcs11``.
+   hardware service module (usually ``pkcs11``).
 
-``-f``
-   This option indicates a forced overwrite and causes ``dnssec-revoke`` to write the new key pair,
+.. option:: -f
+
+   This option indicates a forced overwrite and causes :program:`dnssec-revoke` to write the new key pair,
    even if a file already exists matching the algorithm and key ID of
    the revoked key.
 
-``-R``
+.. option:: -R
+
    This option prints the key tag of the key with the REVOKE bit set, but does not
    revoke the key.
 
 See Also
 ~~~~~~~~
 
-:manpage:`dnssec-keygen(8)`, BIND 9 Administrator Reference Manual, :rfc:`5011`.
+:iscman:`dnssec-keygen(8) <dnssec-keygen>`, BIND 9 Administrator Reference Manual, :rfc:`5011`.

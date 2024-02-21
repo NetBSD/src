@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 # NOTE: The number of signing keys generated below is not coincidental.  More
 # details can be found in the comment inside ns7/named.conf.

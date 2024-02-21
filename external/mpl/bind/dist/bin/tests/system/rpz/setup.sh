@@ -15,34 +15,39 @@
 
 set -e
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 QPERF=$($SHELL qperf.sh)
 
 USAGE="$0: [-DNx]"
 DEBUG=
 while getopts "DNx" c; do
-    case $c in
-	x) set -x; DEBUG=-x ;;
-        D) TEST_DNSRPS="-D" ;;
-	N) PARTIAL=-P ;;
-	*) echo "$USAGE" 1>&2; exit 1 ;;
-    esac
+  case $c in
+    x)
+      set -x
+      DEBUG=-x
+      ;;
+    D) TEST_DNSRPS="-D" ;;
+    N) PARTIAL=-P ;;
+    *)
+      echo "$USAGE" 1>&2
+      exit 1
+      ;;
+  esac
 done
 shift $((OPTIND - 1))
 if test "$#" -ne 0; then
-    echo "$USAGE" 1>&2
-    exit 1
+  echo "$USAGE" 1>&2
+  exit 1
 fi
 
 if [ ${NOCLEAN:-unset} = unset ]; then
-    $SHELL clean.sh $PARTIAL $DEBUG
+  $SHELL clean.sh $PARTIAL $DEBUG
 fi
 
 for dir in ns*; do
-    touch $dir/named.run
-    nextpart $dir/named.run > /dev/null
+  touch $dir/named.run
+  nextpart $dir/named.run >/dev/null
 done
 
 copy_setports ns1/named.conf.in ns1/named.conf
@@ -59,7 +64,7 @@ copy_setports ns10/named.conf.in ns10/named.conf
 copy_setports dnsrpzd.conf.in dnsrpzd.conf
 
 # decide whether to test DNSRPS
-# Note that dnsrps.conf and dnsrps-slave.conf are included in named.conf
+# Note that dnsrps.conf and dnsrps-secondary.conf are included in named.conf
 # and differ from dnsrpz.conf which is used by dnsrpzd.
 $SHELL ../ckdnsrps.sh -A $TEST_DNSRPS $DEBUG
 test -z "$(grep 'dnsrps-enable yes' dnsrps.conf)" && TEST_DNSRPS=
@@ -71,7 +76,7 @@ test -z "$(grep 'dnsrps-enable yes' dnsrps.conf)" && TEST_DNSRPS=
 #	    drop,tcp-only} are used to check policy overrides in named.conf.
 #   NO-OP is an obsolete synonym for PASSHTRU
 for NM in '' -2 -given -disabled -passthru -no-op -nodata -nxdomain -cname -wildcname -garden -drop -tcp-only; do
-    sed -e "/SOA/s/blx/bl$NM/g" ns3/base.db >ns3/bl$NM.db
+  sed -e "/SOA/s/blx/bl$NM/g" ns3/base.db >ns3/bl$NM.db
 done
 #  bl zones are dynamically updated.  Add one zone that is updated manually.
 cp ns3/manual-update-rpz.db.in ns3/manual-update-rpz.db
@@ -87,13 +92,13 @@ cp ns5/expire.conf.in ns5/expire.conf
 # $2=domain name
 # $3=input zone file
 # $4=output file
-signzone () {
-    KEYNAME=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -K $1 $2)
-    cat $1/$3 $1/$KEYNAME.key > $1/tmp
-    $SIGNER -P -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
-    sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trust-anchors {"\1" static-key \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
-    DSFILENAME=dsset-${2}${TP}
-    rm $DSFILENAME $1/tmp
+signzone() {
+  KEYNAME=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -K $1 $2)
+  cat $1/$3 $1/$KEYNAME.key >$1/tmp
+  $SIGNER -P -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
+  sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trust-anchors {"\1" static-key \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
+  DSFILENAME=dsset-${2}.
+  rm $DSFILENAME $1/tmp
 }
 signzone ns2 tld2s base-tld2s.db tld2s.db
 
@@ -141,20 +146,20 @@ ns1.x.rpz-nsdname	CNAME	.
 EOF
 
 if test -n "$QPERF"; then
-    # Do not build the full zones if we will not use them.
-    $PERL -e 'for ($val = 1; $val <= 65535; ++$val) {
+  # Do not build the full zones if we will not use them.
+  $PERL -e 'for ($val = 1; $val <= 65535; ++$val) {
 	printf("host-%05d\tA    192.168.%d.%d\n", $val, $val/256, $val%256);
 	}' >>ns5/example.db
 
-    echo >>ns5/bl.db
-    echo "; rewrite some names" >>ns5/bl.db
-    $PERL -e 'for ($val = 2; $val <= 65535; $val += 69) {
+  echo >>ns5/bl.db
+  echo "; rewrite some names" >>ns5/bl.db
+  $PERL -e 'for ($val = 2; $val <= 65535; $val += 69) {
 	printf("host-%05d.example.tld5\tCNAME\t.\n", $val);
 	}' >>ns5/bl.db
 
-    echo >>ns5/bl.db
-    echo "; rewrite with some not entirely trivial patricia trees" >>ns5/bl.db
-    $PERL -e 'for ($val = 3; $val <= 65535; $val += 69) {
+  echo >>ns5/bl.db
+  echo "; rewrite with some not entirely trivial patricia trees" >>ns5/bl.db
+  $PERL -e 'for ($val = 3; $val <= 65535; $val += 69) {
 	printf("32.%d.%d.168.192.rpz-ip  \tCNAME\t.\n",
 		$val%256, $val/256);
 	}' >>ns5/bl.db
@@ -173,8 +178,8 @@ cp ns6/bl.tld2s.db.in ns6/bl.tld2s.db
 
 # Run dnsrpzd to get the license and prime the static policy zones
 if test -n "$TEST_DNSRPS"; then
-   DNSRPZD="$(../rpz/dnsrps -p)"
-   cd ns3
-   "$DNSRPZ" -D../dnsrpzd.rpzf -S../dnsrpzd.sock -C../dnsrpzd.conf \
-             -w 0 -dddd -L stdout >./dnsrpzd.run 2>&1
+  DNSRPZD="$(../rpz/dnsrps -p)"
+  cd ns3
+  "$DNSRPZ" -D../dnsrpzd.rpzf -S../dnsrpzd.sock -C../dnsrpzd.conf \
+    -w 0 -dddd -L stdout >./dnsrpzd.run 2>&1
 fi

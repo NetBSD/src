@@ -1,15 +1,19 @@
+############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
+############################################################################
 
+from pathlib import Path
 import re
+import sys
 
 from typing import List, Tuple
 
@@ -36,6 +40,44 @@ except ImportError:
 
 
 GITLAB_BASE_URL = "https://gitlab.isc.org/isc-projects/bind9/-/"
+KNOWLEDGEBASE_BASE_URL = "https://kb.isc.org/docs/"
+
+
+# Custom Sphinx role enabling automatic hyperlinking to security advisory in
+# ISC Knowledgebase
+class CVERefRole(ReferenceRole):
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+        super().__init__()
+
+    def run(self) -> Tuple[List[Node], List[system_message]]:
+        cve_identifier = "(CVE-%s)" % self.target
+
+        target_id = "index-%s" % self.env.new_serialno("index")
+        entries = [
+            ("single", "ISC Knowledgebase; " + cve_identifier, target_id, "", None)
+        ]
+
+        index = addnodes.index(entries=entries)
+        target = nodes.target("", "", ids=[target_id])
+        self.inliner.document.note_explicit_target(target)
+
+        try:
+            refuri = self.base_url + "cve-%s" % self.target
+            reference = nodes.reference(
+                "", "", internal=False, refuri=refuri, classes=["cve"]
+            )
+            if self.has_explicit_title:
+                reference += nodes.strong(self.title, self.title)
+            else:
+                reference += nodes.strong(cve_identifier, cve_identifier)
+        except ValueError:
+            error_text = "invalid ISC Knowledgebase identifier %s" % self.target
+            msg = self.inliner.reporter.error(error_text, line=self.lineno)
+            prb = self.inliner.problematic(self.rawtext, self.rawtext, msg)
+            return [prb], [msg]
+
+        return [index, target, reference], []
 
 
 # Custom Sphinx role enabling automatic hyperlinking to GitLab issues/MRs.
@@ -80,10 +122,9 @@ class GitLabRefRole(ReferenceRole):
 
 
 def setup(app):
+    roles.register_local_role("cve", CVERefRole(KNOWLEDGEBASE_BASE_URL))
     roles.register_local_role("gl", GitLabRefRole(GITLAB_BASE_URL))
     app.add_crossref_type("iscman", "iscman", "pair: %s; manual page")
-    # ignore :option: references to simplify doc backports to v9_16 branch
-    app.add_role_to_domain("std", "option", roles.code_role)
 
 
 #
@@ -97,12 +138,10 @@ def setup(app):
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+# documentation root, make it absolute.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+sys.path.append(str(Path(__file__).resolve().parent / "_ext"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "misc"))
 
 # -- Project information -----------------------------------------------------
 
@@ -111,20 +150,20 @@ project = "BIND 9"
 copyright = "2023, Internet Systems Consortium"
 author = "Internet Systems Consortium"
 
-version_vars = {}
-with open("../../version", encoding="utf-8") as version_file:
-    for line in version_file:
-        match = re.match(r"(?P<key>[A-Z]+)=(?P<val>.*)", line)
+m4_vars = {}
+with open("../../configure.ac", encoding="utf-8") as configure_ac:
+    for line in configure_ac:
+        match = re.match(
+            r"m4_define\(\[(?P<key>bind_VERSION_[A-Z]+)\], (?P<val>[^)]*)\)dnl", line
+        )
         if match:
-            version_vars[match.group("key")] = match.group("val")
+            m4_vars[match.group("key")] = match.group("val")
 
-version = "%s.%s.%s%s%s%s" % (
-    version_vars["MAJORVER"],
-    version_vars["MINORVER"],
-    version_vars["PATCHVER"],
-    version_vars["RELEASETYPE"],
-    version_vars["RELEASEVER"],
-    version_vars["EXTENSIONS"],
+version = "%s.%s.%s%s" % (
+    m4_vars["bind_VERSION_MAJOR"],
+    m4_vars["bind_VERSION_MINOR"],
+    m4_vars["bind_VERSION_PATCH"],
+    m4_vars["bind_VERSION_EXTRA"],
 )
 release = version
 
@@ -133,7 +172,7 @@ release = version
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ["namedconf", "rndcconf"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -141,23 +180,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [
-    "_build",
-    "Thumbs.db",
-    ".DS_Store",
-    "*.grammar.rst",
-    "*.zoneopts.rst",
-    "build.rst",
-    "catz.rst",
-    "dlz.rst",
-    "dnssec.rst",
-    "dyndb.rst",
-    "logging-categories.rst",
-    "managed-keys.rst",
-    "pkcs11.rst",
-    "platforms.rst",
-    "plugins.rst",
-]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 
 # The master toctree document.
 master_doc = "index"
@@ -170,6 +193,10 @@ master_doc = "index"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+
+# -- Options for EPUB output -------------------------------------------------
+
+epub_basename = "Bv9ARM"
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_engine = "xelatex"
@@ -186,3 +213,17 @@ latex_documents = [
 ]
 
 latex_logo = "isc-logo.pdf"
+
+#
+# The rst_epilog will be completely overwritten from the Makefile,
+# the definition here is provided purely for situations when
+# sphinx-build is run by hand.
+#
+rst_epilog = """
+.. |rndc_conf| replace:: ``/etc/rndc.conf``
+.. |rndc_key| replace:: ``/etc/rndc.key``
+.. |named_conf| replace:: ``/etc/named.conf``
+.. |bind_keys| replace:: ``/etc/bind.keys``
+.. |named_pid| replace:: ``/run/named.pid``
+.. |session_key| replace:: ``/run/session.key``
+"""

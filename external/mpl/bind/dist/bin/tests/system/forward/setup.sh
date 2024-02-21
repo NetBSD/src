@@ -11,7 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-. "$SYSTEMTESTTOP/conf.sh"
+. ../conf.sh
 
 $SHELL clean.sh
 copy_setports ns1/named.conf.in ns1/named.conf
@@ -25,6 +25,6 @@ copy_setports ns9/named1.conf.in ns9/named.conf
 copy_setports ns10/named.conf.in ns10/named.conf
 
 (
-    cd ns1
-    $SHELL sign.sh
+  cd ns1
+  $SHELL sign.sh
 )

@@ -56,8 +56,9 @@ if (!$test) {
 }
 
 # Global variables
-my $topdir = abs_path($ENV{'SYSTEMTESTTOP'});
-my $testdir = abs_path($topdir . "/" . $test);
+my $builddir = $ENV{'builddir'};
+my $srcdir = $ENV{'srcdir'};
+my $testdir = "$builddir/$test";
 
 if (! -d $testdir) {
 	die "No test directory: \"$testdir\"\n";
@@ -133,8 +134,6 @@ exit($errors);
 sub server_lock_file {
 	my ( $server ) = @_;
 
-	return if (defined($ENV{'CYGWIN'}) && $ENV{'CYGWIN'});
-
 	return $testdir . "/" . $server . "/named.lock" if ($server =~ /^ns/);
 	return if ($server =~ /^ans/);
 
@@ -190,13 +189,13 @@ sub stop_rndc {
 	my $how = $halt ? "halt" : "stop";
 
 	# Ugly, but should work.
-	system("$RNDC -c ../common/rndc.conf -s $ip -p $port $how | sed 's/^/I:$test:$server /'");
+	system("$RNDC -c ../_common/rndc.conf -s $ip -p $port $how | sed 's/^/I:$test:$server /'");
 	return;
 }
 
 sub server_died {
 	my ( $server, $signal ) = @_;
-	
+
 	print "I:$test:$server died before a SIG$signal was sent\n";
 	$errors = 1;
 
@@ -215,13 +214,7 @@ sub send_signal {
 
 	my $result = 0;
 
-	if (!$ans && ($^O eq 'cygwin' || $^O eq 'msys')) {
-		my $killout = `/bin/kill -f -$signal $pid 2>&1`;
-		chomp($killout);
-		$result = 1 if ($killout eq '');
-	} else {
-		$result = kill $signal, $pid;
-	}
+	$result = kill $signal, $pid;
 	return $result;
 }
 
@@ -256,12 +249,8 @@ sub pid_file_exists {
 
 	# If we're here, the PID file hasn't been cleaned up yet
 	if (send_signal(0, $pid) == 0) {
-		# XXX: on windows this is likely to result in a
-		# false positive, so don't bother reporting the error.
-		if (!defined($ENV{'CYGWIN'}) || !$ENV{'CYGWIN'}) {
-			print "I:$test:$server crashed on shutdown\n";
-			$errors = 1;
-		}
+		print "I:$test:$server crashed on shutdown\n";
+		$errors = 1;
 		return;
 	}
 

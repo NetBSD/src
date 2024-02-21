@@ -18,6 +18,7 @@ options {
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
 	pid-file "named.pid";
+	dnssec-validation no;
 };
 
 zone "signing.test" {

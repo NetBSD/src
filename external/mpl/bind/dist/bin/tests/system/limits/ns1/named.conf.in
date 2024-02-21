@@ -22,6 +22,7 @@ options {
 	recursion no;
 	notify yes;
 	minimal-responses no;
+	dnssec-validation no;
 };
 
 zone "." {

@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 zone=nsec3param.test.
 infile=nsec3param.test.db.in
@@ -23,7 +22,7 @@ keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -P -3 - -H 1 -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -3 - -H 1 -o $zone -k $keyname1 $zonefile $keyname2 >/dev/null
 
 zone=dnskey.test.
 infile=dnskey.test.db.in
@@ -34,7 +33,7 @@ keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -P -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -o $zone -k $keyname1 $zonefile $keyname2 >/dev/null
 
 zone=delegation.test.
 infile=delegation.test.db.in
@@ -45,7 +44,7 @@ keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -3 $zone)
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -A -3 - -P -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -A -3 - -P -o $zone -k $keyname1 $zonefile $keyname2 >/dev/null
 
 # Just copy multisigner.db.in because it is signed with dnssec-policy.
 cp multisigner.test.db.in multisigner.test.db

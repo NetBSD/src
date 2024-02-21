@@ -9,6 +9,13 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
+;
+; The configured root server is intentionally bad here,
+; so we can count queries "on fly", priming and the other
+; counters that would be immediately resolved if the root
+; nameservers would work.
+;
+
 $TTL 999999
 .			 IN NS	d.root-servers.nil.
 d.root-servers.nil.	 IN A	10.53.0.4

@@ -19,3 +19,9 @@ $TTL 300	; 5 minutes
 				)
 			NS	ns10
 ns10			A	10.53.0.10
+single.any.self-srv	SRV	0 0 0 machine.example.com.
+many.any.self-srv	SRV	0 0 0 machine.example.com.
+many.any.self-srv	SRV	0 0 0 notmachine.example.com.
+single.srv.self-srv	SRV	0 0 0 machine.example.com.
+many.srv.self-srv	SRV	0 0 0 machine.example.com.
+many.srv.self-srv	SRV	0 0 0 notmachine.example.com.

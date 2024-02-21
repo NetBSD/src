@@ -32,14 +32,14 @@ options {
 	nsdname-enable yes
 	min-update-interval 0;
 
-	include "../dnsrps-slave.conf";
+	include "../dnsrps-secondary.conf";
 };
 
 logging { category rpz { default_debug; }; };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {

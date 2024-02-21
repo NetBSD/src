@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +noauth +nocomm +nocmd -p ${PORT}"
 
@@ -31,21 +32,21 @@ EOF
 $DIG $DIGOPTS a.example. @10.53.0.1 -b 10.53.0.1 >test1.dig
 # Note that this can't use digcomp.pl because here, the ordering of the
 # result RRs is significant.
-$DIFF test1.dig test1.good || status=1
+diff test1.dig test1.good || status=1
 
 echo_i "test 1-element sortlist statement and undocumented BIND 8 features"
-	cat <<EOF >test2.good
+cat <<EOF >test2.good
 b.example.		300	IN	A	10.53.0.$n
 EOF
 
-$DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.2 | sed 1q | \
-        grep -E '10.53.0.(2|3)$' > test2.out &&
-$DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.3 | sed 1q | \
-        grep -E '10.53.0.(2|3)$' >> test2.out &&
-$DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.4 | sed 1q | \
-        grep -E '10.53.0.4$' >> test2.out &&
-$DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.5 | sed 1q | \
-        grep -E '10.53.0.5$' >> test2.out || status=1
+$DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.2 | sed 1q \
+  | grep -E '10.53.0.(2|3)$' >test2.out \
+  && $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.3 | sed 1q \
+  | grep -E '10.53.0.(2|3)$' >>test2.out \
+  && $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.4 | sed 1q \
+  | grep -E '10.53.0.4$' >>test2.out \
+  && $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.5 | sed 1q \
+  | grep -E '10.53.0.5$' >>test2.out || status=1
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

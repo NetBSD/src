@@ -27,7 +27,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -35,41 +35,41 @@ controls {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "test.example.org" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "l0" {
-	type master;
+	type primary;
 	file "db.l0";
 };
 
 zone "l1.l0" {
-	type master;
+	type primary;
 	file "db.l1.l0";
 };
 
 zone "l2.l1.l0" {
-	type master;
+	type primary;
 	file "does-not-exist";
 };
 
 zone "test1.example.net" {
-	type master;
+	type primary;
 	file "test1.example.net.db";
 };
 
 zone "test2.example.net" {
-	type master;
+	type primary;
 	file "test2.example.net.db";
 };
 
 zone "example.com" {
-	type master;
+	type primary;
 	file "example.com.db";
 };

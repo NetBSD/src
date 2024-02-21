@@ -11,6 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f test.* good1.db.map good1.db.raw named-compilezone
+rm -f test.* good1.db.raw named-compilezone
 rm -f ns*/named.lock
 rm -f zones/bad-tsig.db
+rm -f zones/zone1_*.txt

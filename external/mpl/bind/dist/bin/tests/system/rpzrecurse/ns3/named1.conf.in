@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -36,8 +36,8 @@ options {
 	include "../dnsrps.conf";
 };
 
-zone "policy" { type master; file "policy.db"; };
+zone "policy" { type primary; file "policy.db"; };
 
-zone "example.tld" { type master; file "example.db"; };
+zone "example.tld" { type primary; file "example.db"; };
 
-zone "." { type master; file "root.db"; };
+zone "." { type primary; file "root.db"; };

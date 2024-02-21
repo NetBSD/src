@@ -15,6 +15,7 @@ import sys
 import signal
 import socket
 import select
+import struct
 from datetime import datetime, timedelta
 import time
 import functools
@@ -30,6 +31,73 @@ from dns.name import *
 def logquery(type, qname):
     with open("qlog", "a") as f:
         f.write("%s %s\n", type, qname)
+
+
+# Create a UDP listener
+def udp_listen(ip, port, is_ipv6=False):
+    try:
+        udp = socket.socket(
+            socket.AF_INET6 if is_ipv6 else socket.AF_INET, socket.SOCK_DGRAM
+        )
+        try:
+            udp.bind((ip, port))
+        except:
+            udp.close()
+            udp = None
+    except:
+        udp = None
+
+    if udp is None and not is_ipv6:
+        raise socket.error("Can not create an IPv4 UDP listener")
+
+    return udp
+
+
+# Create a TCP listener
+def tcp_listen(ip, port, is_ipv6=False):
+    try:
+        tcp = socket.socket(
+            socket.AF_INET6 if is_ipv6 else socket.AF_INET, socket.SOCK_STREAM
+        )
+        try:
+            tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            tcp.bind((ip, port))
+            tcp.listen(100)
+        except:
+            tcp.close()
+            tcp = None
+    except:
+        tcp = None
+
+    if tcp is None and not is_ipv6:
+        raise socket.error("Can not create an IPv4 TCP listener")
+
+    return tcp
+
+
+############################################################################
+# Control channel - send "1" or "0" to enable or disable the "silent" mode.
+############################################################################
+silent = False
+
+
+def ctrl_channel(msg):
+    global silent
+
+    msg = msg.splitlines().pop(0)
+    print("Received control message: %s" % msg)
+
+    if len(msg) != 1:
+        return
+
+    if silent:
+        if msg == b"0":
+            silent = False
+            print("Silent mode was disabled")
+    else:
+        if msg == b"1":
+            silent = True
+            print("Silent mode was enabled")
 
 
 ############################################################################
@@ -85,18 +153,19 @@ try:
 except:
     port = 5300
 
-query4_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-query4_socket.bind((ip4, port))
-havev6 = True
 try:
-    query6_socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-    try:
-        query6_socket.bind((ip6, port))
-    except:
-        query6_socket.close()
-        havev6 = False
+    ctrlport = int(os.environ["EXTRAPORT1"])
 except:
-    havev6 = False
+    ctrlport = 5300
+
+ctrl4_tcp = tcp_listen(ip4, ctrlport)
+query4_udp = udp_listen(ip4, port)
+query6_udp = udp_listen(ip6, port, is_ipv6=True)
+query4_tcp = tcp_listen(ip4, port)
+query6_tcp = tcp_listen(ip6, port, is_ipv6=True)
+
+havev6 = query6_udp is not None and query6_tcp is not None
+
 signal.signal(signal.SIGTERM, sigterm)
 
 f = open("ans.pid", "w")
@@ -106,15 +175,19 @@ f.close()
 
 running = True
 
+print("Listening on %s port %d" % (ip4, ctrlport))
 print("Listening on %s port %d" % (ip4, port))
 if havev6:
     print("Listening on %s port %d" % (ip6, port))
+
 print("Ctrl-c to quit")
 
 if havev6:
-    input = [query4_socket, query6_socket]
+    input = [ctrl4_tcp, query4_udp, query6_udp, query4_tcp, query6_tcp]
 else:
-    input = [query4_socket]
+    input = [ctrl4_tcp, query4_udp, query4_tcp]
+
+hung_conns = []
 
 while running:
     try:
@@ -127,17 +200,73 @@ while running:
         break
 
     for s in inputready:
-        if s == query4_socket or s == query6_socket:
+        if s == ctrl4_tcp:
+            print("Control channel connected")
+            conn = None
+            try:
+                # Handle control channel input
+                conn, addr = s.accept()
+                msg = conn.recv(1)
+                if msg:
+                    ctrl_channel(msg)
+                conn.close()
+            except s.timeout:
+                pass
+            if conn:
+                conn.close()
+        elif s == query4_tcp or s == query6_tcp:
             print(
-                "Query received on %s" % (ip4 if s == query4_socket else ip6), end=" "
+                "TCP query received on %s" % (ip4 if s == query4_tcp else ip6), end=" "
+            )
+            conn = None
+            try:
+                # Handle incoming queries
+                conn, addr = s.accept()
+                if not silent:
+                    # get TCP message length
+                    msg = conn.recv(2)
+                    if len(msg) != 2:
+                        print("NO RESPONSE (can not read the message length)")
+                        conn.close()
+                        continue
+                    length = struct.unpack(">H", msg[:2])[0]
+                    msg = conn.recv(length)
+                    if len(msg) != length:
+                        print("NO RESPONSE (can not read the message)")
+                        conn.close()
+                        continue
+                    rsp = create_response(msg)
+                    if rsp:
+                        print(dns.rcode.to_text(rsp.rcode()))
+                        wire = rsp.to_wire()
+                        conn.send(struct.pack(">H", len(wire)))
+                        conn.send(wire)
+                    else:
+                        print("NO RESPONSE (can not create a response)")
+                else:
+                    # Do not respond and hang the connection.
+                    print("NO RESPONSE (silent mode)")
+                    hung_conns.append(conn)
+                    continue
+            except socket.error as e:
+                print("NO RESPONSE (error: %s)" % str(e))
+            if conn:
+                conn.close()
+        elif s == query4_udp or s == query6_udp:
+            print(
+                "UDP query received on %s" % (ip4 if s == query4_udp else ip6), end=" "
             )
             # Handle incoming queries
             msg = s.recvfrom(65535)
-            rsp = create_response(msg[0])
-            if rsp:
-                print(dns.rcode.to_text(rsp.rcode()))
-                s.sendto(rsp.to_wire(), msg[1])
+            if not silent:
+                rsp = create_response(msg[0])
+                if rsp:
+                    print(dns.rcode.to_text(rsp.rcode()))
+                    s.sendto(rsp.to_wire(), msg[1])
+                else:
+                    print("NO RESPONSE (can not create a response)")
             else:
-                print("NO RESPONSE")
+                # Do not respond.
+                print("NO RESPONSE (silent mode)")
     if not running:
         break

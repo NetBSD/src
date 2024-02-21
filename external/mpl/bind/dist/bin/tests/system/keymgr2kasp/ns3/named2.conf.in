@@ -25,11 +25,12 @@ options {
 	listen-on-v6 { none; };
 	allow-transfer { any; };
 	recursion no;
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -84,4 +85,11 @@ zone "migrate-nomatch-alglen.kasp" {
 	file "migrate-nomatch-alglen.kasp.db";
 	allow-update { any; };
 	dnssec-policy "migrate-nomatch-alglen";
+};
+
+zone "migrate-nomatch-kzc.kasp" {
+	type primary;
+	file "migrate-nomatch-kzc.kasp.db";
+	inline-signing yes;
+	dnssec-policy "migrate-nomatch-kzc";
 };
