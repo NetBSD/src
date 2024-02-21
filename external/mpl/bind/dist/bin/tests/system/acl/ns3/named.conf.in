@@ -23,6 +23,7 @@ options {
 	notify no;
 	allow-new-zones yes;
 	allow-transfer { none; };
+	dnssec-validation no;
 };
 
 controls {
@@ -31,5 +32,5 @@ controls {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };

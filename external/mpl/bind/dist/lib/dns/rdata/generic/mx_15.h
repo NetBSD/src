@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: mx_15.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_MX_15_H
-#define GENERIC_MX_15_H 1
+#pragma once
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t common;
@@ -23,5 +22,3 @@ typedef struct dns_rdata_mx {
 	uint16_t pref;
 	dns_name_t mx;
 } dns_rdata_mx_t;
-
-#endif /* GENERIC_MX_15_H */

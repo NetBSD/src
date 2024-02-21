@@ -28,5 +28,5 @@ include "../ns1/trusted.conf";
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };

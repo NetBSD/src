@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.h,v 1.1.1.5 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_RATELIMITER_H
-#define ISC_RATELIMITER_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -146,5 +145,3 @@ isc_ratelimiter_release(isc_ratelimiter_t *rl);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RATELIMITER_H */

@@ -83,8 +83,9 @@ if (!$test) {
 }
 
 # Global variables
-my $topdir = abs_path($ENV{'SYSTEMTESTTOP'});
-my $testdir = abs_path($topdir . "/" . $test);
+my $builddir = $ENV{'builddir'};
+my $srcdir = $ENV{'srcdir'};
+my $testdir = "$builddir/$test";
 
 if (! -d $testdir) {
 	die "No test directory: \"$testdir\"\n";
@@ -172,7 +173,7 @@ sub check_ns_port {
 	my $tries = 0;
 
 	while (1) {
-		my $return = system("$PERL $topdir/testsock.pl -p $port $options");
+		my $return = system("$PERL $srcdir/testsock.pl -p $port $options");
 
 		if ($return == 0) {
 			last;
@@ -185,7 +186,7 @@ sub check_ns_port {
 			print "I:$test:server sockets not available\n";
 			print "I:$test:failed\n";
 
-			system("$PERL $topdir/stop.pl $test"); # Is this the correct behavior?
+			system("$PERL $srcdir/stop.pl $test"); # Is this the correct behavior?
 
 			exit 1;
 		}
@@ -204,24 +205,24 @@ sub start_server {
 	my $child = `$command`;
 	chomp($child);
 
-	# wait up to 14 seconds for the server to start and to write the
+	# wait up to 90 seconds for the server to start and to write the
 	# pid file otherwise kill this server and any others that have
 	# already been started
 	my $tries = 0;
 	while (!-s $pid_file) {
-		if (++$tries > 140) {
+		if (++$tries > 900) {
 			print "I:$test:Couldn't start server $command (pid=$child)\n";
 			print "I:$test:failed\n";
 			kill "ABRT", $child if ("$child" ne "");
 			chdir "$testdir";
-			system "$PERL $topdir/stop.pl $test";
+			system "$PERL $srcdir/stop.pl $test";
 			exit 1;
 		}
 		sleep 0.1;
 	}
 
 	# go back to the top level directory
-	chdir $topdir;
+	chdir $builddir;
 }
 
 sub construct_ns_command {
@@ -229,22 +230,13 @@ sub construct_ns_command {
 
 	my $command;
 
-	if ($ENV{'USE_VALGRIND'}) {
-		$command = "valgrind -q --gen-suppressions=all --num-callers=48 --fullpath-after= --log-file=named-$server-valgrind-%p.log ";
-
-		if ($ENV{'USE_VALGRIND'} eq 'helgrind') {
-			$command .= "--tool=helgrind ";
-		} else {
-			$command .= "--tool=memcheck --track-origins=yes --leak-check=full ";
-		}
-
-		$command .= "$NAMED -m none -M external ";
+	if ($taskset) {
+		$command = "taskset $taskset $NAMED ";
+	} elsif ($ENV{'USE_RR'}) {
+		$ENV{'_RR_TRACE_DIR'} = ".";
+		$command = "rr record --chaos $NAMED ";
 	} else {
-		if ($taskset) {
-			$command = "taskset $taskset $NAMED ";
-		} else {
-			$command = "$NAMED ";
-		}
+		$command = "$NAMED ";
 	}
 
 	my $args_file = $testdir . "/" . $server . "/" . "named.args";
@@ -269,7 +261,7 @@ sub construct_ns_command {
 	} else {
 		$command .= "-D $test-$server ";
 		$command .= "-X named.lock ";
-		$command .= "-m record,size,mctx ";
+		$command .= "-m record ";
 
 		foreach my $t_option(
 			"dropedns", "ednsformerr", "ednsnotimp", "ednsrefused",
@@ -336,7 +328,7 @@ sub construct_ans_command {
 	} elsif (-e "$testdir/$server/ans.pl") {
 		$command = "$PERL ans.pl";
 	} else {
-		$command = "$PERL $topdir/ans.pl 10.53.0.$n";
+		$command = "$PERL $srcdir/ans.pl 10.53.0.$n";
 	}
 
 	if ($options) {
@@ -401,7 +393,7 @@ sub verify_ns_server {
 			print "I:$test:server $server seems to have not started\n";
 			print "I:$test:failed\n";
 
-			system("$PERL $topdir/stop.pl $test");
+			system("$PERL $srcdir/stop.pl $test");
 
 			exit 1;
 		}
@@ -441,7 +433,7 @@ sub verify_ns_server {
 			print "I:$test:no response from $server\n";
 			print "I:$test:failed\n";
 
-			system("$PERL $topdir/stop.pl $test");
+			system("$PERL $srcdir/stop.pl $test");
 
 			exit 1;
 		}

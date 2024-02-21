@@ -1,4 +1,4 @@
-/*	$NetBSD: eui48_108.c,v 1.1.1.6 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: eui48_108.c,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -163,6 +163,7 @@ additionaldata_eui48(ARGS_ADDLDATA) {
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

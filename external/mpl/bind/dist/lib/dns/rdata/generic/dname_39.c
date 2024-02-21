@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.c,v 1.1.1.6 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: dname_39.c,v 1.1.1.7 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -157,7 +157,7 @@ tostruct_dname(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&dname->dname, NULL);
-	RETERR(name_duporclone(&name, mctx, &dname->dname));
+	name_duporclone(&name, mctx, &dname->dname);
 	dname->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -179,11 +179,12 @@ freestruct_dname(ARGS_FREESTRUCT) {
 
 static isc_result_t
 additionaldata_dname(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_dname);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_dname);
 
 	return (ISC_R_SUCCESS);
 }

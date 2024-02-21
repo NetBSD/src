@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.6 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_KEYVALUES_H
-#define DNS_KEYVALUES_H 1
+#pragma once
 
 /*! \file dns/keyvalues.h */
 
@@ -105,5 +104,3 @@
 
 #define DNS_KEY_ED25519SIZE 32
 #define DNS_KEY_ED448SIZE   57
-
-#endif /* DNS_KEYVALUES_H */

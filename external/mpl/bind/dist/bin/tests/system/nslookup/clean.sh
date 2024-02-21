@@ -13,6 +13,7 @@
 
 rm -f ns1/example.db
 rm -f nslookup.out*
+rm -f nslookup.err*
 rm -f ns*/named.lock
 rm -f ns*/named.memstats
 rm -f ns*/named.run

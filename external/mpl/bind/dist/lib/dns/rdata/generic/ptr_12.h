@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.h,v 1.1.1.4 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: ptr_12.h,v 1.1.1.5 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,10 @@
  */
 
 /* */
-#ifndef GENERIC_PTR_12_H
-#define GENERIC_PTR_12_H 1
+#pragma once
 
 typedef struct dns_rdata_ptr {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t ptr;
 } dns_rdata_ptr_t;
-
-#endif /* GENERIC_PTR_12_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.h,v 1.1.1.5 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_HEX_H
-#define ISC_HEX_H 1
+#pragma once
 
 /*! \file isc/hex.h */
 
@@ -99,5 +98,3 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_HEX_H */

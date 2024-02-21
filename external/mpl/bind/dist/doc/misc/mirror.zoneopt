@@ -3,19 +3,18 @@ zone <string> [ <class> ] {
 	allow-notify { <address_match_element>; ... };
 	allow-query { <address_match_element>; ... };
 	allow-query-on { <address_match_element>; ... };
-	allow-transfer { <address_match_element>; ... };
+	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
 	allow-update-forwarding { <address_match_element>; ... };
-	also-notify [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
-	alt-transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-	alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
+	also-notify [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	alt-transfer-source ( <ipv4_address> | * ) ; // deprecated
+	alt-transfer-source-v6 ( <ipv6_address> | * ) ; // deprecated
 	check-names ( fail | warn | ignore );
 	database <string>;
 	file <quoted_string>;
 	ixfr-from-differences <boolean>;
 	journal <quoted_string>;
-	masterfile-format ( map | raw | text );
+	masterfile-format ( raw | text );
 	masterfile-style ( full | relative );
-	masters [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
 	max-ixfr-ratio ( unlimited | <percentage> );
 	max-journal-size ( default | unlimited | <sizeval> );
 	max-records <integer>;
@@ -30,15 +29,15 @@ zone <string> [ <class> ] {
 	multi-master <boolean>;
 	notify ( explicit | master-only | primary-only | <boolean> );
 	notify-delay <integer>;
-	notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-	notify-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-	primaries [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+	notify-source ( <ipv4_address> | * ) ;
+	notify-source-v6 ( <ipv6_address> | * ) ;
+	primaries [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
 	request-expire <boolean>;
 	request-ixfr <boolean>;
-	transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-	transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
+	transfer-source ( <ipv4_address> | * ) ;
+	transfer-source-v6 ( <ipv6_address> | * ) ;
 	try-tcp-refresh <boolean>;
-	use-alt-transfer-source <boolean>;
+	use-alt-transfer-source <boolean>; // deprecated
 	zero-no-soa-ttl <boolean>;
 	zone-statistics ( full | terse | none | <boolean> );
 };

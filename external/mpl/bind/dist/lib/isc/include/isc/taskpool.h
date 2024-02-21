@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool.h,v 1.1.1.6 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: taskpool.h,v 1.1.1.7 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_TASKPOOL_H
-#define ISC_TASKPOOL_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -136,5 +135,3 @@ isc_taskpool_destroy(isc_taskpool_t **poolp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_TASKPOOL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.1.1.9 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.1.1.10 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -339,6 +339,7 @@ additionaldata_ds(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

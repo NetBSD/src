@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: x25_19.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_X25_19_H
-#define GENERIC_X25_19_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -25,5 +24,3 @@ typedef struct dns_rdata_x25 {
 	unsigned char *x25;
 	uint8_t x25_len;
 } dns_rdata_x25_t;
-
-#endif /* GENERIC_X25_19_H */

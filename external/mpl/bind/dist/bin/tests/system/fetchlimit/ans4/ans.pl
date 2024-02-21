@@ -78,6 +78,10 @@ for (;;) {
 	}
 
 	if ($donotrespond == 0) {
+		if (index($qname, "latency") == 0) {
+			# 50ms latency
+			select(undef, undef, undef, 0.05);
+		}
 		$sock->send($packet->data);
 		print "RESPONSE:\n";
 		$packet->print;

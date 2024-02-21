@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.c,v 1.1.1.7 2023/01/25 20:36:47 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -577,6 +577,7 @@ additionaldata_caa(ARGS_ADDLDATA) {
 	REQUIRE(rdata->length >= 3U);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

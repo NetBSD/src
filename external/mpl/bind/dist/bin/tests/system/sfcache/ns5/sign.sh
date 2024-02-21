@@ -12,10 +12,10 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../../conf.sh
 
 set -e
 
 keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone ".")
 
-keyfile_to_static_ds "$keyname" > trusted.conf
+keyfile_to_static_ds "$keyname" >trusted.conf

@@ -11,6 +11,8 @@
 
 .. highlight: console
 
+.. iscman:: named-nzd2nzf
+.. program:: named-nzd2nzf
 .. _man_named-nzd2nzf:
 
 named-nzd2nzf - convert an NZD database to NZF text format
@@ -24,16 +26,17 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-``named-nzd2nzf`` converts an NZD database to NZF format and prints it
+:program:`named-nzd2nzf` converts an NZD database to NZF format and prints it
 to standard output. This can be used to review the configuration of
-zones that were added to ``named`` via ``rndc addzone``. It can also be
+zones that were added to :iscman:`named` via :option:`rndc addzone`. It can also be
 used to restore the old file format when rolling back from a newer
 version of BIND to an older version.
 
 Arguments
 ~~~~~~~~~
 
-``filename``
+.. option:: filename
+
    This is the name of the ``.nzd`` file whose contents should be printed.
 
 See Also

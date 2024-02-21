@@ -13,7 +13,7 @@
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -30,6 +30,8 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dump-file "named_dump3.db";
+	stale-cache-enable yes;
+	dnssec-validation no;
 };
 
 zone "." {

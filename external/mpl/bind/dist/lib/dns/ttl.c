@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.1.1.7 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.1.1.8 2024/02/21 21:54:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,10 +26,10 @@
 #include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <dns/result.h>
 #include <dns/ttl.h>
 
 #define RETERR(x)                        \

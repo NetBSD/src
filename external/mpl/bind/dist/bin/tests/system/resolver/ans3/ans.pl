@@ -107,6 +107,11 @@ sub handleQuery {
 	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {
 		$packet->header->aa(1);
 		$packet->header->rcode(NXDOMAIN);
+	} elsif ($qname =~ /lame\.example\.org/) {
+		$packet->header->ad(0);
+		$packet->header->aa(0);
+		$packet->push("authority", new Net::DNS::RR("lame.example.org 300 NS ns.lame.example.org"));
+		$packet->push("additional", new Net::DNS::RR("ns.lame.example.org 300 A 10.53.0.3"));
 	} elsif ($qname eq "large-referral.example.net") {
 		for (my $i = 1; $i < 1000; $i++) {
 			$packet->push("authority", new Net::DNS::RR("large-referral.example.net 300 NS ns" . $i . ".fake.redirect.com"));
@@ -134,6 +139,9 @@ sub handleQuery {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
 				       " 300 A 10.53.0.3"));
+	} elsif ($qname =~ /\.partial-formerr/) {
+		$packet->push("answer",
+			      new Net::DNS::RR($qname .  " 1 A 10.53.0.3"));
 	} else {
 		$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
 	}

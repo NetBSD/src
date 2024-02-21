@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: cert_37.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CERT_37_H
-#define GENERIC_CERT_37_H 1
+#pragma once
 
 /*% RFC2538 */
 typedef struct dns_rdata_cert {
@@ -26,5 +25,3 @@ typedef struct dns_rdata_cert {
 	uint16_t length;
 	unsigned char *certificate;
 } dns_rdata_cert_t;
-
-#endif /* GENERIC_CERT_37_H */

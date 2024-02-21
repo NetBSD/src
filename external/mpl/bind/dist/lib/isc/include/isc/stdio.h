@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.1.1.5 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_STDIO_H
-#define ISC_STDIO_H 1
+#pragma once
 
 /*! \file isc/stdio.h */
 
@@ -72,5 +71,3 @@ isc_stdio_sync(FILE *f);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_STDIO_H */

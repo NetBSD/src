@@ -155,15 +155,19 @@ except:
     port = 5300
 
 query4_udp1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+query4_udp1.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 query4_udp1.bind((ip4_addr1, port))
 query4_tcp1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+query4_tcp1.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 query4_tcp1.bind((ip4_addr1, port))
 query4_tcp1.listen(1)
 query4_tcp1.settimeout(1)
 
 query4_udp2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+query4_udp2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 query4_udp2.bind((ip4_addr2, port))
 query4_tcp2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+query4_tcp2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 query4_tcp2.bind((ip4_addr2, port))
 query4_tcp2.listen(1)
 query4_tcp2.settimeout(1)
@@ -175,15 +179,19 @@ query6_tcp1 = None
 query6_tcp2 = None
 try:
     query6_udp1 = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    query6_udp1.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     query6_udp1.bind((ip6_addr1, port))
     query6_tcp1 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    query6_tcp1.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     query6_tcp1.bind((ip6_addr1, port))
     query6_tcp1.listen(1)
     query6_tcp1.settimeout(1)
 
     query6_udp2 = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    query6_udp2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     query6_udp2.bind((ip6_addr2, port))
     query6_tcp2 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    query6_tcp2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     query6_tcp2.bind((ip6_addr2, port))
     query6_tcp2.listen(1)
     query6_tcp2.settimeout(1)

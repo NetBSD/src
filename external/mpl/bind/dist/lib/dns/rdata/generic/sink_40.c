@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.c,v 1.1.1.6 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: sink_40.c,v 1.1.1.7 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -246,6 +246,7 @@ additionaldata_sink(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sink);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

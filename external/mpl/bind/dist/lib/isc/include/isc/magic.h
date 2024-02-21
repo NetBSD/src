@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: magic.h,v 1.1.1.5 2024/02/21 21:54:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,10 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_MAGIC_H
-#define ISC_MAGIC_H 1
-
-#include <isc/likely.h>
+#pragma once
 
 /*! \file isc/magic.h */
 
@@ -30,10 +27,7 @@ typedef struct {
  * The intent of this is to allow magic numbers to be checked even though
  * the object is otherwise opaque.
  */
-#define ISC_MAGIC_VALID(a, b)       \
-	(ISC_LIKELY((a) != NULL) && \
-	 ISC_LIKELY(((const isc__magic_t *)(a))->magic == (b)))
+#define ISC_MAGIC_VALID(a, b) \
+	((a) != NULL && ((const isc__magic_t *)(a))->magic == (b))
 
 #define ISC_MAGIC(a, b, c, d) ((a) << 24 | (b) << 16 | (c) << 8 | (d))
-
-#endif /* ISC_MAGIC_H */

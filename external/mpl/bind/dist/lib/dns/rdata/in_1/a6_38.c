@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -375,7 +375,7 @@ tostruct_in_a6(ARGS_TOSTRUCT) {
 	if (a6->prefixlen != 0) {
 		dns_name_init(&name, NULL);
 		dns_name_fromregion(&name, &r);
-		RETERR(name_duporclone(&name, mctx, &a6->prefix));
+		name_duporclone(&name, mctx, &a6->prefix);
 	}
 	a6->mctx = mctx;
 	return (ISC_R_SUCCESS);
@@ -405,6 +405,7 @@ additionaldata_in_a6(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

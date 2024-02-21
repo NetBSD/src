@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.h,v 1.1.1.4 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: statschannel.h,v 1.1.1.5 2024/02/21 21:54:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_STATSCHANNEL_H
-#define NAMED_STATSCHANNEL_H 1
+#pragma once
 
 /*! \file
  * \brief
@@ -52,5 +51,3 @@ named_stats_dump(named_server_t *server, FILE *fp);
 /*%<
  * Dump statistics counters managed by the server to the file fp.
  */
-
-#endif /* NAMED_STATSCHANNEL_H */

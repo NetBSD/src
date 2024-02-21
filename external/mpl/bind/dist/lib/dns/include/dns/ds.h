@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.1.1.6 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: ds.h,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DS_H
-#define DNS_DS_H 1
+#pragma once
 
 #include <isc/lang.h>
 
@@ -66,5 +65,3 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DS_H */

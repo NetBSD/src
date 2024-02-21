@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: regex.h,v 1.1.1.5 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_REGEX_H
-#define ISC_REGEX_H 1
+#pragma once
 
 /*! \file isc/regex.h */
 
@@ -34,5 +33,3 @@ isc_regex_validate(const char *expression);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_REGEX_H */

@@ -31,6 +31,8 @@ if (!$localport) { $localport = 5300; }
 
 my $udpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
    LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
+my $tcpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
+   LocalPort => $localport, Proto => "tcp", Listen => 5, Reuse => 1) or die "$!";
 
 print "listening on $server_addr:$localport.\n";
 
@@ -49,6 +51,7 @@ for (;;) {
 
 	$rin = '';
 	vec($rin, fileno($udpsock), 1) = 1;
+	vec($rin, fileno($tcpsock), 1) = 1;
 
 	select($rout = $rin, undef, undef, undef);
 
@@ -56,5 +59,7 @@ for (;;) {
 		printf "UDP request\n";
 		my $buf;
 		$udpsock->recv($buf, 512);
+	} elsif (vec($rout, fileno($tcpsock), 1)) {
+		printf "TCP request\n";
 	}
 }

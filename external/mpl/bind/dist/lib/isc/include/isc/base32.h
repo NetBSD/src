@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.h,v 1.1.1.5 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: base32.h,v 1.1.1.6 2024/02/21 21:54:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_BASE32_H
-#define ISC_BASE32_H 1
+#pragma once
 
 /*! \file */
 
@@ -144,5 +143,3 @@ isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_BASE32_H */

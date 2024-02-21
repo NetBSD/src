@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: soa.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_SOA_H
-#define DNS_SOA_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -94,5 +93,3 @@ dns_soa_setminimum(uint32_t val, dns_rdata_t *rdata);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_SOA_H */

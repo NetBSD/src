@@ -13,7 +13,7 @@
 
 // NS3
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -32,6 +32,7 @@ options {
 	try-tcp-refresh no;
 	notify-delay 0;
 	allow-new-zones yes;
+	dnssec-validation no;
 };
 
 zone "bits" {
@@ -55,11 +56,11 @@ zone "noixfr" {
 	file "noixfr.bk";
 };
 
-zone "master" {
+zone "primary" {
 	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
-	file "master.db";
+	file "primary.db";
 	notify explicit;
 	also-notify {
 		10.53.0.3;
@@ -110,6 +111,7 @@ zone "externalkey" {
 	type primary;
 	inline-signing yes;
 	auto-dnssec maintain;
+	dnssec-dnskey-kskonly no;
 	allow-update { any; };
 	file "externalkey.db";
 };

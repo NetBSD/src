@@ -27,11 +27,12 @@ options {
 	allow-transfer { any; };
 	recursion no;
 	key-directory ".";
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -48,21 +49,21 @@ zone "dynamic2inline.kasp" {
 
 /* These zones are going insecure. */
 zone "step1.going-insecure.kasp" {
-	type master;
+	type primary;
 	file "step1.going-insecure.kasp.db";
 	inline-signing yes;
 	dnssec-policy "unsigning";
 };
 
 zone "step1.going-insecure-dynamic.kasp" {
-	type master;
+	type primary;
 	file "step1.going-insecure-dynamic.kasp.db";
 	dnssec-policy "unsigning";
 	allow-update { any; };
 };
 
 zone "step1.going-straight-to-none.kasp" {
-	type master;
+	type primary;
 	file "step1.going-straight-to-none.kasp.db";
 	inline-signing yes;
 	dnssec-policy "default";

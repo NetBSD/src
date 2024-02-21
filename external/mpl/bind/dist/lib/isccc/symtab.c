@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.1.1.6 2023/01/25 20:36:50 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.7 2024/02/21 21:54:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,9 +37,9 @@
 
 #include <isc/assertions.h>
 #include <isc/magic.h>
+#include <isc/result.h>
 #include <isc/string.h>
 
-#include <isccc/result.h>
 #include <isccc/symtab.h>
 #include <isccc/util.h>
 

@@ -11,17 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
-
-$FEATURETEST --have-dlopen ||  {
-        echo_i "dlopen() not supported - skipping dlzexternal test"
-        exit 255
-}
+. ../conf.sh
 
 $FEATURETEST --tsan && {
-	echo_i "TSAN - skipping dlzexternal test"
-        exit 255
+  echo_i "TSAN - skipping dlzexternal test"
+  exit 255
 }
 
 exit 0

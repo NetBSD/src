@@ -1,4 +1,4 @@
-/*	$NetBSD: counter.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: counter.h,v 1.1.1.5 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_COUNTER_H
-#define ISC_COUNTER_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -85,5 +84,3 @@ isc_counter_detach(isc_counter_t **counterp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_COUNTER_H */

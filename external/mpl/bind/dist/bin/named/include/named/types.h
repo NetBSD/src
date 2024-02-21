@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.4 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.5 2024/02/21 21:54:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_TYPES_H
-#define NAMED_TYPES_H 1
+#pragma once
 
 /*! \file */
 
@@ -39,5 +38,3 @@ typedef enum {
 	NAMED_RELOAD_IN_PROGRESS,
 	NAMED_RELOAD_FAILED,
 } named_reload_t;
-
-#endif /* NAMED_TYPES_H */

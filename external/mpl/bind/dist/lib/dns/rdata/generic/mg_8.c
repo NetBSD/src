@@ -1,4 +1,4 @@
-/*	$NetBSD: mg_8.c,v 1.1.1.6 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: mg_8.c,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ tostruct_mg(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&mg->mg, NULL);
-	RETERR(name_duporclone(&name, mctx, &mg->mg));
+	name_duporclone(&name, mctx, &mg->mg);
 	mg->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -182,6 +182,7 @@ additionaldata_mg(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 	UNUSED(rdata);
+	UNUSED(owner);
 
 	return (ISC_R_SUCCESS);
 }

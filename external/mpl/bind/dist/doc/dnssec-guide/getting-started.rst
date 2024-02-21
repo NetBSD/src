@@ -19,7 +19,7 @@ Getting Started
 Software Requirements
 ~~~~~~~~~~~~~~~~~~~~~
 
-This guide assumes BIND 9.16.9 or newer, although the more elaborate manual
+This guide assumes BIND 9.18.0 or newer, although the more elaborate manual
 procedures do work with all versions of BIND later than 9.9.
 
 We recommend running the latest stable version to get the most

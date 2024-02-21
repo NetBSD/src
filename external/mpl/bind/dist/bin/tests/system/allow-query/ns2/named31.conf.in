@@ -29,6 +29,7 @@ options {
 	listen-on-v6 { none; };
 	recursion no;
 	allow-query { key one; };
+	dnssec-validation no;
 };
 
 include "controls.conf";
@@ -39,7 +40,7 @@ view "internal" {
 
 	zone "." {
 		type hint;
-		file "../../common/root.hint";
+		file "../../_common/root.hint";
 	};
 
 	zone "normal.example" {

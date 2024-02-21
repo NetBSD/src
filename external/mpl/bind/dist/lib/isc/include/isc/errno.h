@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.1.1.3 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: errno.h,v 1.1.1.4 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_ERRNO_H
-#define ISC_ERRNO_H 1
+#pragma once
 
 /*! \file isc/file.h */
 
@@ -28,5 +27,3 @@ isc_errno_toresult(int err);
  * \brief Convert a POSIX errno value to an ISC result code.
  */
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_ERRNO_H */

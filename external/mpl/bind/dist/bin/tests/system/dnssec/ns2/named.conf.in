@@ -30,7 +30,7 @@ options {
 
 key rndc_key {
         secret "1234abcd8765";
-        algorithm hmac-sha256;
+        algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -39,7 +39,7 @@ controls {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "trusted" {
@@ -119,6 +119,7 @@ zone "cds-x.secure" {
 
 zone "cds-update.secure" {
 	type primary;
+	dnssec-dnskey-kskonly no;
 	file "cds-update.secure.db.signed";
 	allow-update { any; };
 };
@@ -132,6 +133,7 @@ zone "cds-kskonly.secure" {
 
 zone "cds-auto.secure" {
 	type primary;
+	dnssec-dnskey-kskonly no;
 	file "cds-auto.secure.db.signed";
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -149,6 +151,7 @@ zone "cdnskey-x.secure" {
 
 zone "cdnskey-update.secure" {
 	type primary;
+	dnssec-dnskey-kskonly no;
 	file "cdnskey-update.secure.db.signed";
 	allow-update { any; };
 };
@@ -162,6 +165,7 @@ zone "cdnskey-kskonly.secure" {
 
 zone "cdnskey-auto.secure" {
 	type primary;
+	dnssec-dnskey-kskonly no;
 	file "cdnskey-auto.secure.db.signed";
 	auto-dnssec maintain;
 	allow-update { any; };
@@ -185,7 +189,7 @@ zone "corp" {
 };
 
 zone "hours-vs-days" {
-	type master;
+	type primary;
 	file "hours-vs-days.db.signed";
 	auto-dnssec maintain;
 	/* validity 500 days, resign in 499 days */
@@ -194,7 +198,7 @@ zone "hours-vs-days" {
 };
 
 zone "too-many-iterations" {
-	type master;
+	type primary;
 	file "too-many-iterations.db.signed";
 };
 

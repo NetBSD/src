@@ -1,0 +1,1 @@
+ -m record -c named.conf -d 99 -f -D rpzextra-ns3 -X named.lock -U 4 -T maxcachesize=2097152

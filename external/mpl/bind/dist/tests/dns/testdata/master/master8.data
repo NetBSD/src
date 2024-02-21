@@ -1,0 +1,4 @@
+;
+; master6.data contains a good zone file
+;
+$include testdata/master/master6.data

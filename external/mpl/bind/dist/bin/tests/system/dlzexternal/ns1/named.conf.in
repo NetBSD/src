@@ -23,11 +23,12 @@ options {
 	allow-transfer { !10.53.0.1; any; };
 	recursion no;
 	notify yes;
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 include "ddns.key";
@@ -36,7 +37,37 @@ controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-include "dlzs.conf";
+dlz "example one" {
+	database "dlopen ../driver/.libs/dlzexternal.so example.nil";
+};
+
+dlz "example two" {
+	database "dlopen ../driver/.libs/dlzexternal.so alternate.nil";
+};
+
+dlz "example three" {
+	database "dlopen ../driver/.libs/dlzexternal.so example.org";
+};
+
+dlz "example four" {
+	// Long zone name to trigger ISC_R_NOSPACE in dns_sdlz_putrr.
+        database "dlopen ../driver/.libs/dlzexternal.so 123456789.123456789.123456789.123456789.123456789.example.foo";
+};
+
+dlz "unsearched1" {
+	database "dlopen ../driver/.libs/dlzexternal.so other.nil";
+	search no;
+};
+
+dlz "unsearched2" {
+	database "dlopen ../driver/.libs/dlzexternal.so zone.nil";
+	search no;
+};
+
+dlz redzone {
+	database "dlopen ../driver/.libs/dlzexternal.so .";
+	search no;
+};
 
 zone zone.nil {
 	type primary;

@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.4 2022/09/23 12:09:23 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.1.5 2024/02/21 21:54:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,6 @@
 #include <isc/result.h>
 
 #include <isccc/base64.h>
-#include <isccc/result.h>
 #include <isccc/util.h>
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.c,v 1.1.1.6 2023/01/25 20:36:50 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.1.1.7 2024/02/21 21:54:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,9 +37,9 @@
 
 #include <isc/assertions.h>
 #include <isc/print.h>
+#include <isc/result.h>
 
 #include <isccc/alist.h>
-#include <isccc/result.h>
 #include <isccc/sexpr.h>
 #include <isccc/util.h>
 

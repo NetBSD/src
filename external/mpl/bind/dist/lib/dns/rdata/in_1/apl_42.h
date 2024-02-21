@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: apl_42.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef IN_1_APL_42_H
-#define IN_1_APL_42_H 1
+#pragma once
 
 typedef struct dns_rdata_apl_ent {
 	bool negative;
@@ -51,5 +50,3 @@ dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
 
 unsigned int
 dns_rdata_apl_count(const dns_rdata_in_apl_t *apl);
-
-#endif /* IN_1_APL_42_H */

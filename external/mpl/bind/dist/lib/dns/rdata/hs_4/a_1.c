@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.1.1.8 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef RDATA_HS_4_A_1_C
-#define RDATA_HS_4_A_1_C
+#pragma once
 
 #include <isc/net.h>
 
@@ -186,6 +185,7 @@ additionaldata_hs_a(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
@@ -233,5 +233,3 @@ static int
 casecompare_hs_a(ARGS_COMPARE) {
 	return (compare_hs_a(rdata1, rdata2));
 }
-
-#endif /* RDATA_HS_4_A_1_C */

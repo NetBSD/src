@@ -15,6 +15,17 @@ $TTL 600
 @	IN MX	0 mail
 ns	IN A	10.53.0.6
 mail	IN A	10.53.0.6
+www	IN HTTPS 0 http-server
+http-server IN A 10.53.0.6
+https-loop IN HTTPS 0 https-next
+https-loop IN A 10.53.0.6
+https-next IN HTTPS 0 https-loop
+https-next IN A 10.53.0.7
+https-cname IN HTTPS 0 cname-server
+cname-server IN CNAME cname-next
+cname-next IN CNAME http-server
+https-cname-loop IN HTTPS 0 https-cname-loop0
+https-cname-loop0 IN CNAME https-cname-loop0
 fetch 10 IN TXT A short ttl
 non-zero 10 IN TXT A short ttl
 zero 0  IN TXT	A zero ttl

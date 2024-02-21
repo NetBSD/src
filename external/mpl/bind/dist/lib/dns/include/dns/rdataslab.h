@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATASLAB_H
-#define DNS_RDATASLAB_H 1
+#pragma once
 
 /*! \file dns/rdataslab.h
  * \brief
@@ -171,5 +170,3 @@ dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATASLAB_H */

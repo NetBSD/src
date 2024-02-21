@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.c,v 1.1.1.7 2023/01/25 20:36:47 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -352,7 +352,7 @@ tostruct_amtrelay(ARGS_TOSTRUCT) {
 
 	case 3:
 		dns_name_fromregion(&name, &region);
-		RETERR(name_duporclone(&name, mctx, &amtrelay->gateway));
+		name_duporclone(&name, mctx, &amtrelay->gateway);
 		isc_region_consume(&region, name_length(&name));
 		break;
 
@@ -397,6 +397,7 @@ additionaldata_amtrelay(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_amtrelay);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

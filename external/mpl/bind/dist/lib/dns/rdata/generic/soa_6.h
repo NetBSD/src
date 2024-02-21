@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: soa_6.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_SOA_6_H
-#define GENERIC_SOA_6_H 1
+#pragma once
 
 typedef struct dns_rdata_soa {
 	dns_rdatacommon_t common;
@@ -28,5 +27,3 @@ typedef struct dns_rdata_soa {
 	uint32_t expire;  /*%< host order */
 	uint32_t minimum; /*%< host order */
 } dns_rdata_soa_t;
-
-#endif /* GENERIC_SOA_6_H */

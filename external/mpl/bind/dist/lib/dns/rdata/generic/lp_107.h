@@ -1,4 +1,4 @@
-/*	$NetBSD: lp_107.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: lp_107.h,v 1.1.1.6 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_LP_107_H
-#define GENERIC_LP_107_H 1
+#pragma once
 
 typedef struct dns_rdata_lp {
 	dns_rdatacommon_t common;
@@ -23,5 +22,3 @@ typedef struct dns_rdata_lp {
 	uint16_t pref;
 	dns_name_t lp;
 } dns_rdata_lp_t;
-
-#endif /* GENERIC_LP_107_H */

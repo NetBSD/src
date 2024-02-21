@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -186,6 +186,7 @@ additionaldata_in_dhcid(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

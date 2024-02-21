@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: l32_105.h,v 1.1.1.6 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,10 @@
  */
 
 /* */
-#ifndef GENERIC_L32_105_H
-#define GENERIC_L32_105_H 1
+#pragma once
 
 typedef struct dns_rdata_l32 {
 	dns_rdatacommon_t common;
 	uint16_t pref;
 	struct in_addr l32;
 } dns_rdata_l32_t;
-
-#endif /* GENERIC_L32_105_H */

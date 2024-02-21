@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructsuf.h,v 1.1.1.4 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: rdatastructsuf.h,v 1.1.1.5 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,5 +14,3 @@
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATASTRUCT_H */

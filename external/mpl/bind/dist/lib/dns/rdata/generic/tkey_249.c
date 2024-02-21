@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey_249.c,v 1.1.1.7 2023/01/25 20:36:47 christos Exp $	*/
+/*	$NetBSD: tkey_249.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -439,7 +439,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	dns_name_init(&alg, NULL);
 	dns_name_fromregion(&alg, &sr);
 	dns_name_init(&tkey->algorithm, NULL);
-	RETERR(name_duporclone(&alg, mctx, &tkey->algorithm));
+	name_duporclone(&alg, mctx, &tkey->algorithm);
 	isc_region_consume(&sr, name_length(&tkey->algorithm));
 
 	/*
@@ -532,11 +532,12 @@ freestruct_tkey(ARGS_FREESTRUCT) {
 
 static isc_result_t
 additionaldata_tkey(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_tkey);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_tkey);
 
 	return (ISC_R_SUCCESS);
 }

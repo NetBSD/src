@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -26,6 +26,7 @@ options {
 	listen-on { 10.53.0.7; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	notify yes;
 	ixfr-from-differences secondary;
 	check-integrity no;
@@ -33,7 +34,7 @@ options {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "primary2" {

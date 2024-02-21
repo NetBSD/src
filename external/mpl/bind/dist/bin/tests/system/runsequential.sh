@@ -18,10 +18,8 @@
 # is the only one running on an IP address.
 #
 
-SYSTEMTESTTOP=.
-. $SYSTEMTESTTOP/conf.sh
+. ./conf.sh
 
-for d in $SEQUENTIALDIRS
-do
-    $SHELL run.sh "${@}" $d 2>&1 | tee test.output.$d
+for d in $SEQUENTIALDIRS; do
+  $SHELL legacy.run.sh "${@}" "$d" 2>&1 | tee "test.output.$d"
 done

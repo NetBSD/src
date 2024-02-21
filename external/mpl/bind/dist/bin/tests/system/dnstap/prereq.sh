@@ -14,7 +14,7 @@
 . ../conf.sh
 
 $FEATURETEST --enable-dnstap || {
-	echo_i "This test requires dnstap support." >&2
-	exit 255
+  echo_i "This test requires dnstap support." >&2
+  exit 255
 }
 exit 0

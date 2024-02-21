@@ -1,4 +1,4 @@
-/*	$NetBSD: dsdigest.h,v 1.1.1.4 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: dsdigest.h,v 1.1.1.5 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DSDIGEST_H
-#define DNS_DSDIGEST_H 1
+#pragma once
 
 /*! \file dns/dsdigest.h */
 
@@ -70,5 +69,3 @@ dns_dsdigest_format(dns_dsdigest_t typ, char *cp, unsigned int size);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DSDIGEST_H */

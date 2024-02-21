@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.h,v 1.1.1.5 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: tkeyconf.h,v 1.1.1.6 2024/02/21 21:54:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_TKEYCONF_H
-#define NAMED_TKEYCONF_H 1
+#pragma once
 
 /*! \file */
 
@@ -44,5 +43,3 @@ named_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* NAMED_TKEYCONF_H */

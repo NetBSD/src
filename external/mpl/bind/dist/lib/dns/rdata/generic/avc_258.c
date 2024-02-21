@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: avc_258.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -99,6 +99,7 @@ additionaldata_avc(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

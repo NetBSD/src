@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_example.c,v 1.1.1.4 2022/09/23 12:09:14 christos Exp $	*/
+/*	$NetBSD: dlz_example.c,v 1.1.1.5 2024/02/21 21:54:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -711,9 +711,7 @@ modrdataset(struct dlz_example_data *state, const char *name,
 	char *full_name, *dclass, *type, *data, *ttlstr, *buf;
 	char absolute[1024];
 	isc_result_t result;
-#if defined(WIN32) || defined(_REENTRANT)
 	char *saveptr = NULL;
-#endif /* if defined(WIN32) || defined(_REENTRANT) */
 
 	buf = strdup(rdatastr);
 	if (buf == NULL) {

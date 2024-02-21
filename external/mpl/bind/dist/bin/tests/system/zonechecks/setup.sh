@@ -11,24 +11,23 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 $SHELL clean.sh
 
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 
-$SHELL ../genzone.sh 1 > ns1/primary.db
-$SHELL ../genzone.sh 1 > ns1/duplicate.db
+$SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 1 >ns1/primary.db
+$SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 1 >ns1/duplicate.db
 cp bigserial.db ns1/
 cd ns1
 touch primary.db.signed
-echo '$INCLUDE "primary.db.signed"' >> primary.db
-$KEYGEN -a ${DEFAULT_ALGORITHM} -q primary.example > /dev/null 2>&1
-$KEYGEN -a ${DEFAULT_ALGORITHM} -qfk primary.example > /dev/null 2>&1
-$SIGNER -SD -o primary.example primary.db > /dev/null \
-    2> signer.err || cat signer.err
-echo '$INCLUDE "soa.db"' > reload.db
-echo '@ 0 NS .' >> reload.db
-echo '@ 0 SOA . . 1 0 0 0 0' > soa.db
+echo '$INCLUDE "primary.db.signed"' >>primary.db
+$KEYGEN -a ${DEFAULT_ALGORITHM} -q primary.example >/dev/null 2>&1
+$KEYGEN -a ${DEFAULT_ALGORITHM} -qfk primary.example >/dev/null 2>&1
+$SIGNER -SD -o primary.example primary.db >/dev/null \
+  2>signer.err || cat signer.err
+echo '$INCLUDE "soa.db"' >reload.db
+echo '@ 0 NS .' >>reload.db
+echo '@ 0 SOA . . 1 0 0 0 0' >soa.db

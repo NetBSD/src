@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey_249.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: tkey_249.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TKEY_249_H
-#define GENERIC_TKEY_249_H 1
+#pragma once
 
 /*!
  *  \brief Per draft-ietf-dnsind-tkey-00.txt */
@@ -32,5 +31,3 @@ typedef struct dns_rdata_tkey {
 	uint16_t otherlen;
 	unsigned char *other;
 } dns_rdata_tkey_t;
-
-#endif /* GENERIC_TKEY_249_H */

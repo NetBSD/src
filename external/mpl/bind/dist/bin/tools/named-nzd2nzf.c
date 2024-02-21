@@ -1,4 +1,4 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.1.1.7 2022/09/23 12:09:13 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.1.1.8 2024/02/21 21:54:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,6 @@
 
 #include <isc/print.h>
 
-#include <dns/lmdb.h>
 #include <dns/view.h>
 
 int

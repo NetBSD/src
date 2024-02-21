@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.h,v 1.1.1.5 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_COMPRESS_H
-#define DNS_COMPRESS_H 1
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -300,5 +299,3 @@ dns_decompress_type(dns_decompress_t *dctx);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_COMPRESS_H */

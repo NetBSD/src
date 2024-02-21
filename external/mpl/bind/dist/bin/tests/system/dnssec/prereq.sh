@@ -11,35 +11,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../conf.sh
 
-set -e
-
-if test -n "$PYTHON"
-then
-    if $PYTHON -c "import dns" 2> /dev/null
-    then
-        :
-    else
-        echo_i "This test requires the dnspython module." >&2
-        exit 1
-    fi
-else
-    echo_i "This test requires Python and the dnspython module." >&2
-    exit 1
+if ! ${PYTHON} -c 'import dns'; then
+  echo_i "python dns module is required"
+  exit 1
 fi
 
-if "$PERL" -e 'use Net::DNS;' 2>/dev/null
-then
-    # shellcheck disable=SC2016
-    if "$PERL" -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.70);' 2>/dev/null
-    then
-        :
-    else
-        echo_i "Net::DNS versions 0.69 to 0.70 have bugs that cause this test to fail: please update." >&2
-        exit 1
-    fi
+if ! ${PERL} -MNet::DNS -e ''; then
+  echo_i "perl Net::DNS module is required"
+  exit 1
 fi
 
 exit 0

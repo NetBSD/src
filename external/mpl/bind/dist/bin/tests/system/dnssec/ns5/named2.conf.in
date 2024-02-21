@@ -15,7 +15,7 @@
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -31,6 +31,7 @@ options {
 	listen-on { 10.53.0.5; 127.0.0.1; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation yes;
 };
 
 view root {

@@ -1,0 +1,46 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 3600
+minimal.		3600	SOA	ns1.minimal. hostmaster.minimal. (
+					1          ; serial
+					3600       ; refresh (1 hour)
+					1200       ; retry (20 minutes)
+					604800     ; expire (1 week)
+					3600       ; minimum (1 hour)
+					)
+			3600	NS	ns1.minimal.
+			3600	NSEC	badtypemap.minimal. NS SOA RRSIG NSEC DNSKEY
+; bad NSEC type map without RRSIG or NSEC
+badtypemap.minimal.	3600	NSEC	black.minimal. A
+badtypemap.minimal.	3600	A	1.2.3.4
+badtypemap.minimal.	3600	AAAA	2002::1
+; cloudflare black lie
+black.minimal.		3600	NSEC	\000.black.minimal. RRSIG NSEC
+;
+dnamed.minimal.		3600	DNAME	dnamed.
+			3600	NSEC	insecure.minimal. DNAME RRSIG NSEC
+insecure.minimal.	3600	NS	ns1.insecure.minimal.
+			3600	NSEC	nodata.minimal. NS RRSIG NSEC
+nodata.minimal.		3600	TXT	"nodata"
+			3600	NSEC	ns1.minimal. TXT RRSIG NSEC
+; incomplete chain pointing at non-existent ns2.minimal
+ns1.minimal.		3600	A	10.53.0.1
+			3600	NSEC	ns2.minimal. A RRSIG NSEC
+; minimal response for nxdomain.minimal.
+nxdomaia.minimal.	3600	NSEC	nxdomaiz.minimal. RRSIG NSEC
+;
+*.wild-a.minimal.	3600	A	1.2.3.4
+			3600	NSEC	*.wild-cname.minimal. A RRSIG NSEC
+*.wild-cname.minimal.	3600	CNAME	ns1.minimal.
+			3600	NSEC	minimal. CNAME RRSIG NSEC
+; glue
+ns1.insecure.minimal.	3600	A	10.53.0.1

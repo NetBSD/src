@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.c,v 1.1.1.5 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: tsec.c,v 1.1.1.6 2024/02/21 21:54:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,11 +14,9 @@
  */
 
 #include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
-
-#include <dns/result.h>
 #include <dns/tsec.h>
 #include <dns/tsig.h>
 

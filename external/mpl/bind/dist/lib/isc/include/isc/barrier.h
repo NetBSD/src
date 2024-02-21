@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.1.1.2 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: barrier.h,v 1.1.1.3 2024/02/21 21:54:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
 
 #include <isc/util.h>
 
-#if __SANITIZE_THREAD__ && !defined(WIN32)
+#if HAVE_PTHREAD_BARRIER_INIT
 
 #include <pthread.h>
 

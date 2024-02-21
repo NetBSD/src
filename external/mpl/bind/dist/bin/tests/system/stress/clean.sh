@@ -11,13 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f reload.pid
-
-rm -f ns?/zones.conf
 rm -f ns?/zone*.bk
-
-rm -f ns1/delegations.db
-rm -f ns1/root.db
 
 rm -f ns2/zone0*.db
 rm -f ns2/zone0*.jnl

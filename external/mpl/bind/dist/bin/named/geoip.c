@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.1.1.5 2022/09/23 12:09:08 christos Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.6 2024/02/21 21:54:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <maxminddb.h>
 #endif /* if defined(HAVE_GEOIP2) */
 
+#include <isc/dir.h>
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>

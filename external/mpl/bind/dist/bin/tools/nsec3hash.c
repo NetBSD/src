@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.1.1.5 2022/09/23 12:09:13 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.1.1.6 2024/02/21 21:54:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/attributes.h>
 #include <isc/base32.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -36,8 +37,8 @@
 
 const char *program = "nsec3hash";
 
-ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *format, ...) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+fatal(const char *format, ...);
 
 static void
 fatal(const char *format, ...) {
@@ -59,7 +60,7 @@ check_result(isc_result_t result, const char *message) {
 }
 
 static void
-usage() {
+usage(void) {
 	fprintf(stderr, "Usage: %s salt algorithm iterations domain\n",
 		program);
 	fprintf(stderr, "       %s -r algorithm flags iterations salt domain\n",

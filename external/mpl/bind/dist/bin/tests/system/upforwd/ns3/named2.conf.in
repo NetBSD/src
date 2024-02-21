@@ -16,10 +16,13 @@ options {
 	notify-source 10.53.0.3;
 	transfer-source 10.53.0.3;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.3; };
+	listen-on tls ephemeral { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	notify yes;
 	update-quota 1;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.1.1.7 2023/01/25 20:36:47 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.1.1.8 2024/02/21 21:54:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -201,6 +201,7 @@ additionaldata_isdn(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_isdn);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.1.1.7 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.1.1.8 2024/02/21 21:54:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <isc/buffer.h>
 #include <isc/md.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/util.h>
 
 #include <dns/ds.h>
@@ -27,7 +28,6 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdatastruct.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
 

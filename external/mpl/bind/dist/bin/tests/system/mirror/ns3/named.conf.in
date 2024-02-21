@@ -13,7 +13,7 @@
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -32,11 +32,12 @@ options {
 	allow-query-cache { 10.53.0.1; };
 	trust-anchor-telemetry yes;
 	allow-new-zones yes;
+	dnssec-validation yes;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "." {

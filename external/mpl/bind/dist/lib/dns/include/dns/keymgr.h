@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.h,v 1.1.1.5 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_KEYMGR_H
-#define DNS_KEYMGR_H 1
+#pragma once
 
 /*! \file dns/keymgr.h */
 
@@ -132,5 +131,3 @@ dns_keymgr_status(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_KEYMGR_H */

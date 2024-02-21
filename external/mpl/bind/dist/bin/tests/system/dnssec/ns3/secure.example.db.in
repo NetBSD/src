@@ -47,3 +47,8 @@ rrsigonly		A	10.0.0.29
 cnameandkey		CNAME	@
 cnamenokey		CNAME	@
 dnameandkey		DNAME	@
+
+mixedcase		A	10.0.0.30
+mixedCASE		TXT	"mixed case"
+MIXEDcase		AAAA	2002::
+mIxEdCaSe		LOC	37 52 56.788 N 121 54 55.02 W 1120m 10m 100m 10m

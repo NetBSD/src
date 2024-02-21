@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.1.1.6 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_TKEY_H
-#define DNS_TKEY_H 1
+#pragma once
 
 /*! \file dns/tkey.h */
 
@@ -244,5 +243,3 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TKEY_H */

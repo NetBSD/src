@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_TIME_H
-#define DNS_TIME_H 1
+#pragma once
 
 /*! \file dns/time.h */
 
@@ -71,5 +70,3 @@ dns_time64_from32(uint32_t value);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TIME_H */

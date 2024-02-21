@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.1.1.7 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.1.1.8 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -176,7 +176,7 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&nsec->next, NULL);
-	RETERR(name_duporclone(&name, mctx, &nsec->next));
+	name_duporclone(&name, mctx, &nsec->next);
 
 	nsec->len = region.length;
 	nsec->typebits = mem_maybedup(mctx, region.base, region.length);
@@ -217,6 +217,7 @@ additionaldata_nsec(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

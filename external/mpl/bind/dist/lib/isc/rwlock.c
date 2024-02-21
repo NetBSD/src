@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.1.1.10 2023/01/25 20:36:48 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.1.1.11 2024/02/21 21:54:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,6 @@
 
 #include <isc/atomic.h>
 #include <isc/magic.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/util.h>
@@ -211,8 +210,7 @@ isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 	rwl->readers_waiting = 0;
 	atomic_init(&rwl->write_granted, 0);
 	if (read_quota != 0) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "read quota is not supported");
+		UNEXPECTED_ERROR("read quota is not supported");
 	}
 	if (write_quota == 0) {
 		write_quota = RWLOCK_DEFAULT_WRITE_QUOTA;

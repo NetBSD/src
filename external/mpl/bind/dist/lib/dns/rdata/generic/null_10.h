@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: null_10.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_NULL_10_H
-#define GENERIC_NULL_10_H 1
+#pragma once
 
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t common;
@@ -23,5 +22,3 @@ typedef struct dns_rdata_null {
 	uint16_t length;
 	unsigned char *data;
 } dns_rdata_null_t;
-
-#endif /* GENERIC_NULL_10_H */

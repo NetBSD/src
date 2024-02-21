@@ -1,4 +1,4 @@
-/*	$NetBSD: print.h,v 1.1.1.5 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: print.h,v 1.1.1.6 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_PRINT_H
-#define ISC_PRINT_H 1
+#pragma once
 
 /*! \file isc/print.h */
 
@@ -24,12 +23,9 @@
 
 #include <isc/formatcheck.h> /* Required for ISC_FORMAT_PRINTF() macro. */
 #include <isc/lang.h>
-#include <isc/platform.h>
 
 /***
  *** Functions
  ***/
 
 #include <stdio.h>
-
-#endif /* ISC_PRINT_H */

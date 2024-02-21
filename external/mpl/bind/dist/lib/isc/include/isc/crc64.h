@@ -1,4 +1,4 @@
-/*	$NetBSD: crc64.h,v 1.1.1.4 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: crc64.h,v 1.1.1.5 2024/02/21 21:54:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_CRC64_H
-#define ISC_CRC64_H 1
+#pragma once
 
 /*! \file isc/crc64.h
  * \brief CRC64 in C
@@ -56,5 +55,3 @@ isc_crc64_final(uint64_t *crc);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_CRC64_H */

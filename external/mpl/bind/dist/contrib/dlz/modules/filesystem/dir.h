@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.1.1.3 2022/09/23 12:09:14 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.1.1.4 2024/02/21 21:54:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -9,6 +9,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  */
+
+#pragma once
 
 #include <dirent.h>
 #include <sys/types.h>

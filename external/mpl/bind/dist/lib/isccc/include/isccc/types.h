@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.5 2022/09/23 12:09:23 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.6 2024/02/21 21:54:46 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ISCCC_TYPES_H
-#define ISCCC_TYPES_H 1
+#pragma once
 
 /*! \file isccc/types.h */
 
@@ -53,5 +52,3 @@ typedef struct isccc_region {
 	unsigned char *rstart;
 	unsigned char *rend;
 } isccc_region_t;
-
-#endif /* ISCCC_TYPES_H */

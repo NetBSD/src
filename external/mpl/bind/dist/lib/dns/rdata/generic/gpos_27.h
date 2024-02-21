@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: gpos_27.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_GPOS_27_H
-#define GENERIC_GPOS_27_H 1
+#pragma once
 
 /*!
  *  \brief per RFC1712 */
@@ -29,5 +28,3 @@ typedef struct dns_rdata_gpos {
 	uint8_t lat_len;
 	uint8_t alt_len;
 } dns_rdata_gpos_t;
-
-#endif /* GENERIC_GPOS_27_H */

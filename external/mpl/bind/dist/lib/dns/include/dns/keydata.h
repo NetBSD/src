@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata.h,v 1.1.1.5 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: keydata.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_KEYDATA_H
-#define DNS_KEYDATA_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -49,5 +48,3 @@ dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
 		       isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_KEYDATA_H */
