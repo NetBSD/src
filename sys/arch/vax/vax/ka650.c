@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.38 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: ka650.c,v 1.39 2024/02/21 23:23:06 andvar Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.38 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.39 2024/02/21 23:23:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ ka650_conf(void)
 
 	ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
-		printf("physmem(%"PRIxPSIZE") > qbmbr(0x%x)\n",
+		printf("physmem(0x%"PRIxPSIZE") > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
