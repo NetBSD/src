@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.426 2024/02/20 14:13:45 christos Exp $
+# $NetBSD: mi,v 1.427 2024/02/21 22:53:47 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1083,7 +1083,7 @@
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
-./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
@@ -1358,6 +1358,7 @@
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete,compatfile
+./usr/libdata/debug/usr/sbin/tsig-keygen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/unbound-anchor.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-checkconf.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-control.debug	base-netutil-debug	debug,unbound
