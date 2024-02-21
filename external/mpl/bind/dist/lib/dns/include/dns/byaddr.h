@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.7 2024/02/21 22:52:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_BYADDR_H
-#define DNS_BYADDR_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -150,5 +149,3 @@ dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_BYADDR_H */

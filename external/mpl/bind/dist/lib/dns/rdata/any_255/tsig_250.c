@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.9 2024/02/21 22:52:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -467,7 +467,7 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	dns_name_init(&alg, NULL);
 	dns_name_fromregion(&alg, &sr);
 	dns_name_init(&tsig->algorithm, NULL);
-	RETERR(name_duporclone(&alg, mctx, &tsig->algorithm));
+	name_duporclone(&alg, mctx, &tsig->algorithm);
 
 	isc_region_consume(&sr, name_length(&tsig->algorithm));
 
@@ -572,6 +572,7 @@ additionaldata_any_tsig(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_any);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

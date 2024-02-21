@@ -1,4 +1,4 @@
-/*	$NetBSD: smimea_53.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: smimea_53.h,v 1.5 2024/02/21 22:52:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,9 +13,6 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SMIMEA_53_H
-#define GENERIC_SMIMEA_53_H 1
+#pragma once
 
 typedef struct dns_rdata_tlsa dns_rdata_smimea_t;
-
-#endif /* GENERIC_SMIMEA_53_H */

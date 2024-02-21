@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.8 2024/02/21 22:52:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -176,6 +176,7 @@ additionaldata_nid(ARGS_ADDLDATA) {
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.h,v 1.5 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: builtin.h,v 1.6 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_BUILTIN_H
-#define NAMED_BUILTIN_H 1
+#pragma once
 
 /*! \file */
 
@@ -25,5 +24,3 @@ named_builtin_init(void);
 
 void
 named_builtin_deinit(void);
-
-#endif /* NAMED_BUILTIN_H */

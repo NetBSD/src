@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.9 2024/02/21 22:52:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -182,6 +182,7 @@ additionaldata_l32(ARGS_ADDLDATA) {
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

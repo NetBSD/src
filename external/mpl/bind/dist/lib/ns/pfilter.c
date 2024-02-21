@@ -1,5 +1,4 @@
 
-#include <isc/platform.h>
 #include <isc/util.h>
 #include <ns/types.h>
 #include <ns/client.h>

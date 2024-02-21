@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.1 2024/02/21 21:54:33 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.2 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

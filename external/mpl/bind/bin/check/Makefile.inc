@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2020/08/03 17:23:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2024/02/21 22:50:55 christos Exp $
 
 LDADD+=-lns
 DPADD+=${LIBNS}
@@ -15,4 +15,4 @@ CHECK=${IDIST}/bin/check
 
 PROG=${BASE}
 SRCS=${BASE}.c check-tool.c
-MAN=${BASE}.8
+MAN?=${BASE}.1

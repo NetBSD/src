@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.5 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.6 2024/02/21 22:51:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -251,7 +251,7 @@ activate_zone(sample_instance_t *inst, dns_zone_t *raw) {
 	result = publish_zone(inst, raw);
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_log(raw, ISC_LOG_ERROR, "cannot add zone to view: %s",
-			     dns_result_totext(result));
+			     isc_result_totext(result));
 		goto cleanup;
 	}
 

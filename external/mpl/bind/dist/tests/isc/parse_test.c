@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: parse_test.c,v 1.2 2024/02/21 22:52:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

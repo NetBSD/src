@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.11 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.12 2024/02/21 22:52:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -420,6 +420,7 @@ additionaldata_key(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_key);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

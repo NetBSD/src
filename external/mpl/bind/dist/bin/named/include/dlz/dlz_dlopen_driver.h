@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dlopen_driver.h,v 1.5 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.h,v 1.6 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,12 +13,10 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DLZ_DLOPEN_DRIVER_H
-#define DLZ_DLOPEN_DRIVER_H
+#pragma once
 
 isc_result_t
 dlz_dlopen_init(isc_mem_t *mctx);
 
 void
 dlz_dlopen_clear(void);
-#endif /* ifndef DLZ_DLOPEN_DRIVER_H */

@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:24 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/02/21 22:50:55 christos Exp $
 
-SUBDIR= rndc-confgen ddns-confgen
+SUBDIR= rndc-confgen tsig-keygen
 
 .include <bsd.subdir.mk>

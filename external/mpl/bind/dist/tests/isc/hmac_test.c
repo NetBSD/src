@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_test.c,v 1.1.1.1 2024/02/21 21:54:54 christos Exp $	*/
+/*	$NetBSD: hmac_test.c,v 1.2 2024/02/21 22:52:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

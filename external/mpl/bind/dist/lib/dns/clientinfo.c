@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: clientinfo.c,v 1.7 2024/02/21 22:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,11 +27,15 @@ dns_clientinfomethods_init(dns_clientinfomethods_t *methods,
 }
 
 void
-dns_clientinfo_init(dns_clientinfo_t *ci, void *data, dns_ecs_t *ecs,
-		    void *versionp) {
+dns_clientinfo_init(dns_clientinfo_t *ci, void *data, void *versionp) {
 	ci->version = DNS_CLIENTINFO_VERSION;
 	ci->data = data;
 	ci->dbversion = versionp;
+	dns_ecs_init(&ci->ecs);
+}
+
+void
+dns_clientinfo_setecs(dns_clientinfo_t *ci, dns_ecs_t *ecs) {
 	if (ecs != NULL) {
 		ci->ecs = *ecs;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.10 2024/02/13 15:21:09 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.11 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_NAME_H
-#define DNS_NAME_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -148,8 +147,8 @@ struct dns_name {
 #define DNS_NAME_CHECKMX	0x0010 /*%< Used by rdata. */
 #define DNS_NAME_CHECKMXFAIL	0x0020 /*%< Used by rdata. */
 
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_rootname;
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_wildcardname;
+extern const dns_name_t *dns_rootname;
+extern const dns_name_t *dns_wildcardname;
 
 /*%<
  * DNS_NAME_INITNONABSOLUTE and DNS_NAME_INITABSOLUTE are macros for
@@ -700,9 +699,6 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  * Notes:
  * \li	Decompression policy is controlled by 'dctx'.
  *
- * \li	If DNS_NAME_DOWNCASE is set, any uppercase letters in 'source' will be
- *	downcased when they are copied into 'target'.
- *
  * Security:
  *
  * \li	*** WARNING ***
@@ -723,13 +719,12 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  *
  * \li	'dctx' is a valid decompression context.
  *
+ * \li	DNS_NAME_DOWNCASE is not set.
+ *
  * Ensures:
  *
  *	If result is success:
- * \li	 	If 'target' is not NULL, 'name' is attached to it.
- *
- * \li		Uppercase letters are downcased in the copy iff
- *		DNS_NAME_DOWNCASE is set in options.
+ * \li		If 'target' is not NULL, 'name' is attached to it.
  *
  * \li		The current location in source is advanced, and the used space
  *		in target is updated.
@@ -742,7 +737,6 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  * \li	Bad Form: Compression type not allowed
  * \li	Bad Form: Bad compression pointer
  * \li	Bad Form: Input too short
- * \li	Resource Limit: Too many compression pointers
  * \li	Resource Limit: Not enough space in buffer
  */
 
@@ -1240,33 +1234,12 @@ dns_name_settotextfilter(dns_name_totextfilter_t *proc);
  * Includes space for the terminating NULL.
  */
 
-isc_result_t
-dns_name_copy(const dns_name_t *source, dns_name_t *dest, isc_buffer_t *target);
-/*%<
- * Copies the name in 'source' into 'dest'.  The name data is copied to
- * the 'target' buffer, which is then set as the buffer for 'dest'.
- *
- * Requires:
- * \li	'source' is a valid name.
- *
- * \li	'dest' is an initialized name.
- *
- * \li	'target' is an initialized buffer.
- *
- * Ensures:
- *
- *\li	On success, the used space in target is updated.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOSPACE
- */
-
 void
-dns_name_copynf(const dns_name_t *source, dns_name_t *dest);
+dns_name_copy(const dns_name_t *source, dns_name_t *dest);
 /*%<
  * Copies the name in 'source' into 'dest'.  The name data is copied to
- * the dedicated buffer for 'dest'.
+ * the dedicated buffer for 'dest'. (If copying to a name that doesn't
+ * have a dedicated buffer, use dns_name_setbuffer() first.)
  *
  * Requires:
  * \li	'source' is a valid name.
@@ -1405,5 +1378,3 @@ ISC_LANG_ENDDECLS
 #define dns_name_split(n, l, p, s) DNS_NAME_SPLIT(n, l, p, s)
 
 #endif /* DNS_NAME_USEINLINE */
-
-#endif /* DNS_NAME_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2023  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2024  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,8 +28,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATASTRUCT_H
-#define DNS_RDATASTRUCT_H 1
+#pragma once
 
 #include <isc/lang.h>
 #include <isc/sockaddr.h>
@@ -65,15 +64,12 @@ typedef struct dns_rdatacommon {
  */
 
 /* */
-#ifndef IN_1_A_1_H
-#define IN_1_A_1_H 1
+#pragma once
 
 typedef struct dns_rdata_in_a {
 	dns_rdatacommon_t common;
 	struct in_addr in_addr;
 } dns_rdata_in_a_t;
-
-#endif /* IN_1_A_1_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -90,8 +86,7 @@ typedef struct dns_rdata_in_a {
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/mx_15.h */
 
-#ifndef CH_3_A_1_H
-#define CH_3_A_1_H 1
+#pragma once
 
 typedef uint16_t ch_addr_t;
 
@@ -103,8 +98,6 @@ typedef struct dns_rdata_ch_a {
 	ch_addr_t ch_addr;	/* chaos address (16 bit) network
 				 * order */
 } dns_rdata_ch_a_t;
-
-#endif /* CH_3_A_1_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -119,15 +112,12 @@ typedef struct dns_rdata_ch_a {
  */
 
 /* */
-#ifndef HS_4_A_1_H
-#define HS_4_A_1_H 1
+#pragma once
 
 typedef struct dns_rdata_hs_a {
 	dns_rdatacommon_t common;
 	struct in_addr in_addr;
 } dns_rdata_hs_a_t;
-
-#endif /* HS_4_A_1_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -142,16 +132,13 @@ typedef struct dns_rdata_hs_a {
  */
 
 /* */
-#ifndef GENERIC_NS_2_H
-#define GENERIC_NS_2_H 1
+#pragma once
 
 typedef struct dns_rdata_ns {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t name;
 } dns_rdata_ns_t;
-
-#endif /* GENERIC_NS_2_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -166,16 +153,13 @@ typedef struct dns_rdata_ns {
  */
 
 /* */
-#ifndef GENERIC_MD_3_H
-#define GENERIC_MD_3_H 1
+#pragma once
 
 typedef struct dns_rdata_md {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t md;
 } dns_rdata_md_t;
-
-#endif /* GENERIC_MD_3_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -190,16 +174,13 @@ typedef struct dns_rdata_md {
  */
 
 /* */
-#ifndef GENERIC_MF_4_H
-#define GENERIC_MF_4_H 1
+#pragma once
 
 typedef struct dns_rdata_mf {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t mf;
 } dns_rdata_mf_t;
-
-#endif /* GENERIC_MF_4_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -213,16 +194,13 @@ typedef struct dns_rdata_mf {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CNAME_5_H
-#define GENERIC_CNAME_5_H 1
+#pragma once
 
 typedef struct dns_rdata_cname {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t cname;
 } dns_rdata_cname_t;
-
-#endif /* GENERIC_CNAME_5_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -237,8 +215,7 @@ typedef struct dns_rdata_cname {
  */
 
 /* */
-#ifndef GENERIC_SOA_6_H
-#define GENERIC_SOA_6_H 1
+#pragma once
 
 typedef struct dns_rdata_soa {
 	dns_rdatacommon_t common;
@@ -251,8 +228,6 @@ typedef struct dns_rdata_soa {
 	uint32_t expire;  /*%< host order */
 	uint32_t minimum; /*%< host order */
 } dns_rdata_soa_t;
-
-#endif /* GENERIC_SOA_6_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -267,16 +242,13 @@ typedef struct dns_rdata_soa {
  */
 
 /* */
-#ifndef GENERIC_MB_7_H
-#define GENERIC_MB_7_H 1
+#pragma once
 
 typedef struct dns_rdata_mb {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t mb;
 } dns_rdata_mb_t;
-
-#endif /* GENERIC_MB_7_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -291,16 +263,13 @@ typedef struct dns_rdata_mb {
  */
 
 /* */
-#ifndef GENERIC_MG_8_H
-#define GENERIC_MG_8_H 1
+#pragma once
 
 typedef struct dns_rdata_mg {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t mg;
 } dns_rdata_mg_t;
-
-#endif /* GENERIC_MG_8_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -315,16 +284,13 @@ typedef struct dns_rdata_mg {
  */
 
 /* */
-#ifndef GENERIC_MR_9_H
-#define GENERIC_MR_9_H 1
+#pragma once
 
 typedef struct dns_rdata_mr {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t mr;
 } dns_rdata_mr_t;
-
-#endif /* GENERIC_MR_9_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -339,8 +305,7 @@ typedef struct dns_rdata_mr {
  */
 
 /* */
-#ifndef GENERIC_NULL_10_H
-#define GENERIC_NULL_10_H 1
+#pragma once
 
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t common;
@@ -348,8 +313,6 @@ typedef struct dns_rdata_null {
 	uint16_t length;
 	unsigned char *data;
 } dns_rdata_null_t;
-
-#endif /* GENERIC_NULL_10_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -363,8 +326,7 @@ typedef struct dns_rdata_null {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_WKS_11_H
-#define IN_1_WKS_11_H 1
+#pragma once
 
 typedef struct dns_rdata_in_wks {
 	dns_rdatacommon_t common;
@@ -374,8 +336,6 @@ typedef struct dns_rdata_in_wks {
 	unsigned char *map;
 	uint16_t map_len;
 } dns_rdata_in_wks_t;
-
-#endif /* IN_1_WKS_11_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -390,16 +350,13 @@ typedef struct dns_rdata_in_wks {
  */
 
 /* */
-#ifndef GENERIC_PTR_12_H
-#define GENERIC_PTR_12_H 1
+#pragma once
 
 typedef struct dns_rdata_ptr {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t ptr;
 } dns_rdata_ptr_t;
-
-#endif /* GENERIC_PTR_12_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -413,8 +370,7 @@ typedef struct dns_rdata_ptr {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_HINFO_13_H
-#define GENERIC_HINFO_13_H 1
+#pragma once
 
 typedef struct dns_rdata_hinfo {
 	dns_rdatacommon_t common;
@@ -424,8 +380,6 @@ typedef struct dns_rdata_hinfo {
 	uint8_t cpu_len;
 	uint8_t os_len;
 } dns_rdata_hinfo_t;
-
-#endif /* GENERIC_HINFO_13_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -440,8 +394,7 @@ typedef struct dns_rdata_hinfo {
  */
 
 /* */
-#ifndef GENERIC_MINFO_14_H
-#define GENERIC_MINFO_14_H 1
+#pragma once
 
 typedef struct dns_rdata_minfo {
 	dns_rdatacommon_t common;
@@ -449,8 +402,6 @@ typedef struct dns_rdata_minfo {
 	dns_name_t rmailbox;
 	dns_name_t emailbox;
 } dns_rdata_minfo_t;
-
-#endif /* GENERIC_MINFO_14_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -465,8 +416,7 @@ typedef struct dns_rdata_minfo {
  */
 
 /* */
-#ifndef GENERIC_MX_15_H
-#define GENERIC_MX_15_H 1
+#pragma once
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t common;
@@ -474,8 +424,6 @@ typedef struct dns_rdata_mx {
 	uint16_t pref;
 	dns_name_t mx;
 } dns_rdata_mx_t;
-
-#endif /* GENERIC_MX_15_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -490,8 +438,7 @@ typedef struct dns_rdata_mx {
  */
 
 /* */
-#ifndef GENERIC_TXT_16_H
-#define GENERIC_TXT_16_H 1
+#pragma once
 
 typedef struct dns_rdata_txt_string {
 	uint8_t length;
@@ -520,8 +467,6 @@ dns_rdata_txt_next(dns_rdata_txt_t *);
 
 isc_result_t
 dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
-
-#endif /* GENERIC_TXT_16_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -535,8 +480,7 @@ dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_RP_17_H
-#define GENERIC_RP_17_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -547,8 +491,6 @@ typedef struct dns_rdata_rp {
 	dns_name_t mail;
 	dns_name_t text;
 } dns_rdata_rp_t;
-
-#endif /* GENERIC_RP_17_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -562,8 +504,7 @@ typedef struct dns_rdata_rp {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_AFSDB_18_H
-#define GENERIC_AFSDB_18_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -574,8 +515,6 @@ typedef struct dns_rdata_afsdb {
 	uint16_t subtype;
 	dns_name_t server;
 } dns_rdata_afsdb_t;
-
-#endif /* GENERIC_AFSDB_18_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -589,8 +528,7 @@ typedef struct dns_rdata_afsdb {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_X25_19_H
-#define GENERIC_X25_19_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -601,8 +539,6 @@ typedef struct dns_rdata_x25 {
 	unsigned char *x25;
 	uint8_t x25_len;
 } dns_rdata_x25_t;
-
-#endif /* GENERIC_X25_19_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -616,8 +552,7 @@ typedef struct dns_rdata_x25 {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_ISDN_20_H
-#define GENERIC_ISDN_20_H 1
+#pragma once
 
 /*!
  * \brief Per RFC1183 */
@@ -630,8 +565,6 @@ typedef struct dns_rdata_isdn {
 	uint8_t isdn_len;
 	uint8_t subaddress_len;
 } dns_rdata_isdn_t;
-
-#endif /* GENERIC_ISDN_20_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -645,8 +578,7 @@ typedef struct dns_rdata_isdn {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_RT_21_H
-#define GENERIC_RT_21_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -657,8 +589,6 @@ typedef struct dns_rdata_rt {
 	uint16_t preference;
 	dns_name_t host;
 } dns_rdata_rt_t;
-
-#endif /* GENERIC_RT_21_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -672,8 +602,7 @@ typedef struct dns_rdata_rt {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_NSAP_22_H
-#define IN_1_NSAP_22_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1706 */
@@ -684,8 +613,6 @@ typedef struct dns_rdata_in_nsap {
 	unsigned char *nsap;
 	uint16_t nsap_len;
 } dns_rdata_in_nsap_t;
-
-#endif /* IN_1_NSAP_22_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -699,8 +626,7 @@ typedef struct dns_rdata_in_nsap {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_NSAP_PTR_23_H
-#define IN_1_NSAP_PTR_23_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1348.  Obsoleted in RFC 1706 - use PTR instead. */
@@ -710,8 +636,6 @@ typedef struct dns_rdata_in_nsap_ptr {
 	isc_mem_t *mctx;
 	dns_name_t owner;
 } dns_rdata_in_nsap_ptr_t;
-
-#endif /* IN_1_NSAP_PTR_23_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -725,8 +649,7 @@ typedef struct dns_rdata_in_nsap_ptr {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SIG_24_H
-#define GENERIC_SIG_24_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2535 */
@@ -745,8 +668,6 @@ typedef struct dns_rdata_sig_t {
 	uint16_t siglen;
 	unsigned char *signature;
 } dns_rdata_sig_t;
-
-#endif /* GENERIC_SIG_24_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -760,8 +681,7 @@ typedef struct dns_rdata_sig_t {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_KEY_25_H
-#define GENERIC_KEY_25_H 1
+#pragma once
 
 /*!
  * \brief Per RFC2535 */
@@ -775,8 +695,6 @@ typedef struct dns_rdata_key {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_key_t;
-
-#endif /* GENERIC_KEY_25_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -790,8 +708,7 @@ typedef struct dns_rdata_key {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_PX_26_H
-#define IN_1_PX_26_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2163 */
@@ -803,8 +720,6 @@ typedef struct dns_rdata_in_px {
 	dns_name_t map822;
 	dns_name_t mapx400;
 } dns_rdata_in_px_t;
-
-#endif /* IN_1_PX_26_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -818,8 +733,7 @@ typedef struct dns_rdata_in_px {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_GPOS_27_H
-#define GENERIC_GPOS_27_H 1
+#pragma once
 
 /*!
  *  \brief per RFC1712 */
@@ -834,8 +748,6 @@ typedef struct dns_rdata_gpos {
 	uint8_t lat_len;
 	uint8_t alt_len;
 } dns_rdata_gpos_t;
-
-#endif /* GENERIC_GPOS_27_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -849,8 +761,7 @@ typedef struct dns_rdata_gpos {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_AAAA_28_H
-#define IN_1_AAAA_28_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1886 */
@@ -859,8 +770,6 @@ typedef struct dns_rdata_in_aaaa {
 	dns_rdatacommon_t common;
 	struct in6_addr in6_addr;
 } dns_rdata_in_aaaa_t;
-
-#endif /* IN_1_AAAA_28_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -874,8 +783,7 @@ typedef struct dns_rdata_in_aaaa {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_LOC_29_H
-#define GENERIC_LOC_29_H 1
+#pragma once
 
 /*!
  * \brief Per RFC1876 */
@@ -896,8 +804,6 @@ typedef struct dns_rdata_loc {
 		dns_rdata_loc_0_t v0;
 	} v;
 } dns_rdata_loc_t;
-
-#endif /* GENERIC_LOC_29_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -911,8 +817,7 @@ typedef struct dns_rdata_loc {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NXT_30_H
-#define GENERIC_NXT_30_H 1
+#pragma once
 
 /*!
  *  \brief RFC2535 */
@@ -924,8 +829,6 @@ typedef struct dns_rdata_nxt {
 	unsigned char *typebits;
 	uint16_t len;
 } dns_rdata_nxt_t;
-
-#endif /* GENERIC_NXT_30_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -939,8 +842,7 @@ typedef struct dns_rdata_nxt {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_EID_31_H
-#define IN_1_EID_31_H 1
+#pragma once
 
 /*!
  *  \brief http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
@@ -952,8 +854,6 @@ typedef struct dns_rdata_in_eid {
 	unsigned char *eid;
 	uint16_t eid_len;
 } dns_rdata_in_eid_t;
-
-#endif /* IN_1_EID_31_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -967,8 +867,7 @@ typedef struct dns_rdata_in_eid {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_NIMLOC_32_H
-#define IN_1_NIMLOC_32_H 1
+#pragma once
 
 /*!
  *  \brief http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
@@ -980,8 +879,6 @@ typedef struct dns_rdata_in_nimloc {
 	unsigned char *nimloc;
 	uint16_t nimloc_len;
 } dns_rdata_in_nimloc_t;
-
-#endif /* IN_1_NIMLOC_32_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -995,8 +892,7 @@ typedef struct dns_rdata_in_nimloc {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_SRV_33_H
-#define IN_1_SRV_33_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2782 */
@@ -1009,8 +905,6 @@ typedef struct dns_rdata_in_srv {
 	uint16_t port;
 	dns_name_t target;
 } dns_rdata_in_srv_t;
-
-#endif /* IN_1_SRV_33_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1024,8 +918,7 @@ typedef struct dns_rdata_in_srv {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_ATMA_22_H
-#define IN_1_ATMA_22_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1706 */
@@ -1037,8 +930,6 @@ typedef struct dns_rdata_in_atma {
 	unsigned char *atma;
 	uint16_t atma_len;
 } dns_rdata_in_atma_t;
-
-#endif /* IN_1_ATMA_22_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1052,8 +943,7 @@ typedef struct dns_rdata_in_atma {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NAPTR_35_H
-#define GENERIC_NAPTR_35_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2915 */
@@ -1071,8 +961,6 @@ typedef struct dns_rdata_naptr {
 	uint8_t regexp_len;
 	dns_name_t replacement;
 } dns_rdata_naptr_t;
-
-#endif /* GENERIC_NAPTR_35_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1086,8 +974,7 @@ typedef struct dns_rdata_naptr {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_KX_36_H
-#define IN_1_KX_36_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2230 */
@@ -1098,8 +985,6 @@ typedef struct dns_rdata_in_kx {
 	uint16_t preference;
 	dns_name_t exchange;
 } dns_rdata_in_kx_t;
-
-#endif /* IN_1_KX_36_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1113,8 +998,7 @@ typedef struct dns_rdata_in_kx {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CERT_37_H
-#define GENERIC_CERT_37_H 1
+#pragma once
 
 /*% RFC2538 */
 typedef struct dns_rdata_cert {
@@ -1126,8 +1010,6 @@ typedef struct dns_rdata_cert {
 	uint16_t length;
 	unsigned char *certificate;
 } dns_rdata_cert_t;
-
-#endif /* GENERIC_CERT_37_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1141,8 +1023,7 @@ typedef struct dns_rdata_cert {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_A6_38_H
-#define IN_1_A6_38_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2874 */
@@ -1154,8 +1035,6 @@ typedef struct dns_rdata_in_a6 {
 	uint8_t prefixlen;
 	struct in6_addr in6_addr;
 } dns_rdata_in_a6_t;
-
-#endif /* IN_1_A6_38_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1169,8 +1048,7 @@ typedef struct dns_rdata_in_a6 {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNAME_39_H
-#define GENERIC_DNAME_39_H 1
+#pragma once
 
 /*!
  *  \brief per RFC2672 */
@@ -1180,8 +1058,6 @@ typedef struct dns_rdata_dname {
 	isc_mem_t *mctx;
 	dns_name_t dname;
 } dns_rdata_dname_t;
-
-#endif /* GENERIC_DNAME_39_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1195,8 +1071,7 @@ typedef struct dns_rdata_dname {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SINK_40_H
-#define GENERIC_SINK_40_H 1
+#pragma once
 
 typedef struct dns_rdata_sink_t {
 	dns_rdatacommon_t common;
@@ -1207,8 +1082,6 @@ typedef struct dns_rdata_sink_t {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_sink_t;
-
-#endif /* GENERIC_SINK_40_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1222,8 +1095,7 @@ typedef struct dns_rdata_sink_t {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_OPT_41_H
-#define GENERIC_OPT_41_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2671 */
@@ -1256,8 +1128,6 @@ dns_rdata_opt_next(dns_rdata_opt_t *);
 
 isc_result_t
 dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
-
-#endif /* GENERIC_OPT_41_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1272,8 +1142,7 @@ dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
  */
 
 /* */
-#ifndef IN_1_APL_42_H
-#define IN_1_APL_42_H 1
+#pragma once
 
 typedef struct dns_rdata_apl_ent {
 	bool negative;
@@ -1309,8 +1178,6 @@ dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
 
 unsigned int
 dns_rdata_apl_count(const dns_rdata_in_apl_t *apl);
-
-#endif /* IN_1_APL_42_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1324,8 +1191,7 @@ dns_rdata_apl_count(const dns_rdata_in_apl_t *apl);
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DS_43_H
-#define GENERIC_DS_43_H 1
+#pragma once
 
 /*!
  *  \brief per draft-ietf-dnsext-delegation-signer-05.txt */
@@ -1338,8 +1204,6 @@ typedef struct dns_rdata_ds {
 	uint16_t length;
 	unsigned char *digest;
 } dns_rdata_ds_t;
-
-#endif /* GENERIC_DS_43_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1356,8 +1220,7 @@ typedef struct dns_rdata_ds {
 /*!
  *  \brief Per RFC 4255 */
 
-#ifndef GENERIC_SSHFP_44_H
-#define GENERIC_SSHFP_44_H 1
+#pragma once
 
 typedef struct dns_rdata_sshfp {
 	dns_rdatacommon_t common;
@@ -1367,8 +1230,6 @@ typedef struct dns_rdata_sshfp {
 	uint16_t length;
 	unsigned char *digest;
 } dns_rdata_sshfp_t;
-
-#endif /* GENERIC_SSHFP_44_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1382,8 +1243,7 @@ typedef struct dns_rdata_sshfp {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_IPSECKEY_45_H
-#define GENERIC_IPSECKEY_45_H 1
+#pragma once
 
 typedef struct dns_rdata_ipseckey {
 	dns_rdatacommon_t common;
@@ -1397,8 +1257,6 @@ typedef struct dns_rdata_ipseckey {
 	unsigned char *key;
 	uint16_t keylength;
 } dns_rdata_ipseckey_t;
-
-#endif /* GENERIC_IPSECKEY_45_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1412,8 +1270,7 @@ typedef struct dns_rdata_ipseckey {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNSSIG_46_H
-#define GENERIC_DNSSIG_46_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2535 */
@@ -1431,8 +1288,6 @@ typedef struct dns_rdata_rrsig {
 	uint16_t siglen;
 	unsigned char *signature;
 } dns_rdata_rrsig_t;
-
-#endif /* GENERIC_DNSSIG_46_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1446,8 +1301,7 @@ typedef struct dns_rdata_rrsig {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NSEC_47_H
-#define GENERIC_NSEC_47_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 3845 */
@@ -1459,8 +1313,6 @@ typedef struct dns_rdata_nsec {
 	unsigned char *typebits;
 	uint16_t len;
 } dns_rdata_nsec_t;
-
-#endif /* GENERIC_NSEC_47_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1474,16 +1326,13 @@ typedef struct dns_rdata_nsec {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNSKEY_48_H
-#define GENERIC_DNSKEY_48_H 1
+#pragma once
 
 /*!
  *  \brief per RFC2535
  */
 
 typedef struct dns_rdata_key dns_rdata_dnskey_t;
-
-#endif /* GENERIC_DNSKEY_48_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1498,8 +1347,7 @@ typedef struct dns_rdata_key dns_rdata_dnskey_t;
  */
 
 /* */
-#ifndef IN_1_DHCID_49_H
-#define IN_1_DHCID_49_H 1
+#pragma once
 
 typedef struct dns_rdata_in_dhcid {
 	dns_rdatacommon_t common;
@@ -1507,8 +1355,6 @@ typedef struct dns_rdata_in_dhcid {
 	unsigned char *dhcid;
 	unsigned int length;
 } dns_rdata_in_dhcid_t;
-
-#endif /* IN_1_DHCID_49_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1522,8 +1368,7 @@ typedef struct dns_rdata_in_dhcid {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NSEC3_50_H
-#define GENERIC_NSEC3_50_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 5155 */
@@ -1619,8 +1464,6 @@ typedef struct dns_rdata_nsec3 {
  * nameservers.
  */
 #define DNS_NSEC3FLAG_NONSEC 0x10U
-
-#endif /* GENERIC_NSEC3_50_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1634,8 +1477,7 @@ typedef struct dns_rdata_nsec3 {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NSEC3PARAM_51_H
-#define GENERIC_NSEC3PARAM_51_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 5155 */
@@ -1651,8 +1493,6 @@ typedef struct dns_rdata_nsec3param {
 	unsigned char salt_length;
 	unsigned char *salt;
 } dns_rdata_nsec3param_t;
-
-#endif /* GENERIC_NSEC3PARAM_51_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1666,8 +1506,7 @@ typedef struct dns_rdata_nsec3param {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TLSA_52_H
-#define GENERIC_TLSA_52_H 1
+#pragma once
 
 /*!
  *  \brief per rfc6698.txt
@@ -1681,8 +1520,6 @@ typedef struct dns_rdata_tlsa {
 	uint16_t length;
 	unsigned char *data;
 } dns_rdata_tlsa_t;
-
-#endif /* GENERIC_TLSA_52_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1696,12 +1533,9 @@ typedef struct dns_rdata_tlsa {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SMIMEA_53_H
-#define GENERIC_SMIMEA_53_H 1
+#pragma once
 
 typedef struct dns_rdata_tlsa dns_rdata_smimea_t;
-
-#endif /* GENERIC_SMIMEA_53_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1715,8 +1549,7 @@ typedef struct dns_rdata_tlsa dns_rdata_smimea_t;
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_HIP_5_H
-#define GENERIC_HIP_5_H 1
+#pragma once
 
 /* RFC 5205 */
 
@@ -1742,8 +1575,6 @@ dns_rdata_hip_next(dns_rdata_hip_t *);
 
 void
 dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
-
-#endif /* GENERIC_HIP_5_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1758,8 +1589,7 @@ dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
  */
 
 /* */
-#ifndef GENERIC_NINFO_56_H
-#define GENERIC_NINFO_56_H 1
+#pragma once
 
 typedef struct dns_rdata_txt_string dns_rdata_ninfo_string_t;
 
@@ -1778,8 +1608,6 @@ dns_rdata_ninfo_next(dns_rdata_ninfo_t *);
 
 isc_result_t
 dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
-
-#endif /* GENERIC_NINFO_16_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1793,12 +1621,9 @@ dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_RKEY_57_H
-#define GENERIC_RKEY_57_H 1
+#pragma once
 
 typedef struct dns_rdata_key dns_rdata_rkey_t;
-
-#endif /* GENERIC_RKEY_57_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1816,8 +1641,7 @@ typedef struct dns_rdata_key dns_rdata_rkey_t;
  * http://www.iana.org/assignments/dns-parameters/TALINK/talink-completed-template
  */
 
-#ifndef GENERIC_TALINK_58_H
-#define GENERIC_TALINK_58_H 1
+#pragma once
 
 typedef struct dns_rdata_talink {
 	dns_rdatacommon_t common;
@@ -1825,8 +1649,6 @@ typedef struct dns_rdata_talink {
 	dns_name_t prev;
 	dns_name_t next;
 } dns_rdata_talink_t;
-
-#endif /* GENERIC_TALINK_58_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1840,13 +1662,10 @@ typedef struct dns_rdata_talink {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CDS_59_H
-#define GENERIC_CDS_59_H 1
+#pragma once
 
 /* CDS records have the same RDATA fields as DS records. */
 typedef struct dns_rdata_ds dns_rdata_cds_t;
-
-#endif /* GENERIC_CDS_59_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1860,13 +1679,10 @@ typedef struct dns_rdata_ds dns_rdata_cds_t;
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CDNSKEY_60_H
-#define GENERIC_CDNSKEY_60_H 1
+#pragma once
 
 /* CDNSKEY records have the same RDATA fields as DNSKEY records. */
 typedef struct dns_rdata_key dns_rdata_cdnskey_t;
-
-#endif /* GENERIC_CDNSKEY_60_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1880,8 +1696,7 @@ typedef struct dns_rdata_key dns_rdata_cdnskey_t;
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_OPENPGPKEY_61_H
-#define GENERIC_OPENPGPKEY_61_H 1
+#pragma once
 
 typedef struct dns_rdata_openpgpkey {
 	dns_rdatacommon_t common;
@@ -1889,8 +1704,6 @@ typedef struct dns_rdata_openpgpkey {
 	uint16_t length;
 	unsigned char *keyring;
 } dns_rdata_openpgpkey_t;
-
-#endif /* GENERIC_OPENPGPKEY_61_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1904,8 +1717,7 @@ typedef struct dns_rdata_openpgpkey {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CSYNC_62_H
-#define GENERIC_CSYNC_62_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 7477
@@ -1919,8 +1731,6 @@ typedef struct dns_rdata_csync {
 	unsigned char *typebits;
 	uint16_t len;
 } dns_rdata_csync_t;
-
-#endif /* GENERIC_CSYNC_62_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1934,8 +1744,7 @@ typedef struct dns_rdata_csync {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_ZONEMD_63_H
-#define GENERIC_ZONEMD_63_H 1
+#pragma once
 
 /* Known digest type(s). */
 #define DNS_ZONEMD_DIGEST_SHA384 (1)
@@ -1953,8 +1762,6 @@ typedef struct dns_rdata_zonemd {
 	unsigned char *digest;
 	uint16_t length;
 } dns_rdata_zonemd_t;
-
-#endif /* GENERIC_ZONEMD_63_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -1968,8 +1775,7 @@ typedef struct dns_rdata_zonemd {
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_SVCB_64_H
-#define IN_1_SVCB_64_H 1
+#pragma once
 
 /*!
  *  \brief Per draft-ietf-dnsop-svcb-https-02
@@ -1993,8 +1799,6 @@ dns_rdata_in_svcb_next(dns_rdata_in_svcb_t *);
 
 void
 dns_rdata_in_svcb_current(dns_rdata_in_svcb_t *, isc_region_t *);
-
-#endif /* IN_1_SVCB_64_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2008,8 +1812,7 @@ dns_rdata_in_svcb_current(dns_rdata_in_svcb_t *, isc_region_t *);
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_HTTPS_65_H
-#define IN_1_HTTPS_65_H 1
+#pragma once
 
 /*!
  *  \brief Per draft-ietf-dnsop-svcb-https-02
@@ -2028,8 +1831,6 @@ dns_rdata_in_https_next(dns_rdata_in_https_t *);
 
 void
 dns_rdata_in_https_current(dns_rdata_in_https_t *, isc_region_t *);
-
-#endif /* IN_1_HTTPS_65_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2043,8 +1844,7 @@ dns_rdata_in_https_current(dns_rdata_in_https_t *, isc_region_t *);
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SPF_99_H
-#define GENERIC_SPF_99_H 1
+#pragma once
 
 typedef struct dns_rdata_spf_string {
 	uint8_t length;
@@ -2064,7 +1864,6 @@ typedef struct dns_rdata_spf {
  * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
  * via rdatastructpre.h and rdatastructsuf.h.
  */
-#endif /* GENERIC_SPF_99_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2079,16 +1878,13 @@ typedef struct dns_rdata_spf {
  */
 
 /* */
-#ifndef GENERIC_NID_104_H
-#define GENERIC_NID_104_H 1
+#pragma once
 
 typedef struct dns_rdata_nid {
 	dns_rdatacommon_t common;
 	uint16_t pref;
 	unsigned char nid[8];
 } dns_rdata_nid_t;
-
-#endif /* GENERIC_NID_104_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2103,16 +1899,13 @@ typedef struct dns_rdata_nid {
  */
 
 /* */
-#ifndef GENERIC_L32_105_H
-#define GENERIC_L32_105_H 1
+#pragma once
 
 typedef struct dns_rdata_l32 {
 	dns_rdatacommon_t common;
 	uint16_t pref;
 	struct in_addr l32;
 } dns_rdata_l32_t;
-
-#endif /* GENERIC_L32_105_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2127,16 +1920,13 @@ typedef struct dns_rdata_l32 {
  */
 
 /* */
-#ifndef GENERIC_L64_106_H
-#define GENERIC_L64_106_H 1
+#pragma once
 
 typedef struct dns_rdata_l64 {
 	dns_rdatacommon_t common;
 	uint16_t pref;
 	unsigned char l64[8];
 } dns_rdata_l64_t;
-
-#endif /* GENERIC_L64_106_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2151,8 +1941,7 @@ typedef struct dns_rdata_l64 {
  */
 
 /* */
-#ifndef GENERIC_LP_107_H
-#define GENERIC_LP_107_H 1
+#pragma once
 
 typedef struct dns_rdata_lp {
 	dns_rdatacommon_t common;
@@ -2160,8 +1949,6 @@ typedef struct dns_rdata_lp {
 	uint16_t pref;
 	dns_name_t lp;
 } dns_rdata_lp_t;
-
-#endif /* GENERIC_LP_107_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2176,15 +1963,12 @@ typedef struct dns_rdata_lp {
  */
 
 /* */
-#ifndef GENERIC_EUI48_108_H
-#define GENERIC_EUI48_108_H 1
+#pragma once
 
 typedef struct dns_rdata_eui48 {
 	dns_rdatacommon_t common;
 	unsigned char eui48[6];
 } dns_rdata_eui48_t;
-
-#endif /* GENERIC_EUI48_10k_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2199,15 +1983,12 @@ typedef struct dns_rdata_eui48 {
  */
 
 /* */
-#ifndef GENERIC_EUI64_109_H
-#define GENERIC_EUI64_109_H 1
+#pragma once
 
 typedef struct dns_rdata_eui64 {
 	dns_rdatacommon_t common;
 	unsigned char eui64[8];
 } dns_rdata_eui64_t;
-
-#endif /* GENERIC_EUI64_10k_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2221,8 +2002,7 @@ typedef struct dns_rdata_eui64 {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TKEY_249_H
-#define GENERIC_TKEY_249_H 1
+#pragma once
 
 /*!
  *  \brief Per draft-ietf-dnsind-tkey-00.txt */
@@ -2240,8 +2020,6 @@ typedef struct dns_rdata_tkey {
 	uint16_t otherlen;
 	unsigned char *other;
 } dns_rdata_tkey_t;
-
-#endif /* GENERIC_TKEY_249_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2255,8 +2033,7 @@ typedef struct dns_rdata_tkey {
  * information regarding copyright ownership.
  */
 
-#ifndef ANY_255_TSIG_250_H
-#define ANY_255_TSIG_250_H 1
+#pragma once
 
 /*% RFC2845 */
 typedef struct dns_rdata_any_tsig {
@@ -2272,8 +2049,6 @@ typedef struct dns_rdata_any_tsig {
 	uint16_t otherlen;
 	unsigned char *other;
 } dns_rdata_any_tsig_t;
-
-#endif /* ANY_255_TSIG_250_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2287,8 +2062,7 @@ typedef struct dns_rdata_any_tsig {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_URI_256_H
-#define GENERIC_URI_256_H 1
+#pragma once
 
 typedef struct dns_rdata_uri {
 	dns_rdatacommon_t common;
@@ -2298,8 +2072,6 @@ typedef struct dns_rdata_uri {
 	unsigned char *target;
 	uint16_t tgt_len;
 } dns_rdata_uri_t;
-
-#endif /* GENERIC_URI_256_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2313,8 +2085,7 @@ typedef struct dns_rdata_uri {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CAA_257_H
-#define GENERIC_CAA_257_H 1
+#pragma once
 
 typedef struct dns_rdata_caa {
 	dns_rdatacommon_t common;
@@ -2325,8 +2096,6 @@ typedef struct dns_rdata_caa {
 	unsigned char *value;
 	uint16_t value_len;
 } dns_rdata_caa_t;
-
-#endif /* GENERIC_CAA_257_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2340,8 +2109,7 @@ typedef struct dns_rdata_caa {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_AVC_258_H
-#define GENERIC_AVC_258_H 1
+#pragma once
 
 typedef dns_rdata_txt_string_t dns_rdata_avc_string_t;
 
@@ -2358,7 +2126,6 @@ typedef struct dns_rdata_avc {
  * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
  * via rdatastructpre.h and rdatastructsuf.h.
  */
-#endif /* GENERIC_AVC_258_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2372,8 +2139,7 @@ typedef struct dns_rdata_avc {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DOA_259_H
-#define GENERIC_DOA_259_H 1
+#pragma once
 
 typedef struct dns_rdata_doa {
 	dns_rdatacommon_t common;
@@ -2386,8 +2152,6 @@ typedef struct dns_rdata_doa {
 	uint8_t location;
 	uint8_t mediatype_len;
 } dns_rdata_doa_t;
-
-#endif /* GENERIC_DOA_259_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2401,8 +2165,7 @@ typedef struct dns_rdata_doa {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_AMTRELAY_260_H
-#define GENERIC_AMTRELAY_260_H 1
+#pragma once
 
 typedef struct dns_rdata_amtrelay {
 	dns_rdatacommon_t common;
@@ -2416,8 +2179,6 @@ typedef struct dns_rdata_amtrelay {
 	unsigned char *data;	  /* gateway type > 3 */
 	uint16_t length;
 } dns_rdata_amtrelay_t;
-
-#endif /* GENERIC_AMTRELAY_260_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2431,15 +2192,12 @@ typedef struct dns_rdata_amtrelay {
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TA_32768_H
-#define GENERIC_TA_32768_H 1
+#pragma once
 
 /*
  * TA records are identical to DS records.
  */
 typedef struct dns_rdata_ds dns_rdata_ta_t;
-
-#endif /* GENERIC_TA_32768_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2454,12 +2212,9 @@ typedef struct dns_rdata_ds dns_rdata_ta_t;
  */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
-#ifndef GENERIC_DLV_32769_H
-#define GENERIC_DLV_32769_H 1
+#pragma once
 
 typedef struct dns_rdata_ds dns_rdata_dlv_t;
-
-#endif /* GENERIC_DLV_32769_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2473,8 +2228,7 @@ typedef struct dns_rdata_ds dns_rdata_dlv_t;
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_KEYDATA_65533_H
-#define GENERIC_KEYDATA_65533_H 1
+#pragma once
 
 typedef struct dns_rdata_keydata {
 	dns_rdatacommon_t common;
@@ -2488,8 +2242,6 @@ typedef struct dns_rdata_keydata {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_keydata_t;
-
-#endif /* GENERIC_KEYDATA_65533_H */
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
@@ -2504,5 +2256,3 @@ typedef struct dns_rdata_keydata {
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATASTRUCT_H */

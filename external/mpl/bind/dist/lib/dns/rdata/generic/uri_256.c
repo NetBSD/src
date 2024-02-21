@@ -1,4 +1,4 @@
-/*	$NetBSD: uri_256.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.8 2024/02/21 22:52:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -272,6 +272,7 @@ additionaldata_uri(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

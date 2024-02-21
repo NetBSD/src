@@ -1,8 +1,0 @@
-@@
-expression E;
-int R;
-@@
-
-  R = E(...);
-- UV_RUNTIME_CHECK(...);
-+ UV_RUNTIME_CHECK(E, R);

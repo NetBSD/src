@@ -1,4 +1,4 @@
-/*	$NetBSD: update.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: update.h,v 1.7 2024/02/21 22:52:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_UPDATE_H
-#define DNS_UPDATE_H 1
+#pragma once
 
 /*! \file dns/update.h */
 
@@ -73,5 +72,3 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_update_state_t **state);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_UPDATE_H */

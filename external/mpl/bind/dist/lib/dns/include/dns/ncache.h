@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: ncache.h,v 1.7 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_NCACHE_H
-#define DNS_NCACHE_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -185,5 +184,3 @@ dns_ncache_current(dns_rdataset_t *ncacherdataset, dns_name_t *found,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_NCACHE_H */

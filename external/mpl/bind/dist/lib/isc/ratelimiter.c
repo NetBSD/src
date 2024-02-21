@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.c,v 1.8 2023/06/26 22:03:01 christos Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.9 2024/02/21 22:52:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -262,7 +262,7 @@ isc_ratelimiter_shutdown(isc_ratelimiter_t *rl) {
 	isc_task_attach(rl->task, &task);
 
 	result = isc_timer_reset(rl->timer, isc_timertype_inactive, NULL, NULL,
-				 false);
+				 true);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_timer_destroy(&rl->timer);
 

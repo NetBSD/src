@@ -1,4 +1,4 @@
-/*	$NetBSD: serial.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: serial.h,v 1.7 2024/02/21 22:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_SERIAL_H
-#define ISC_SERIAL_H 1
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -70,5 +69,3 @@ isc_serial_ne(uint32_t a, uint32_t b);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_SERIAL_H */

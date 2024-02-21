@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataclass.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdataclass.h,v 1.6 2024/02/21 22:52:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATACLASS_H
-#define DNS_RDATACLASS_H 1
+#pragma once
 
 /*! \file dns/rdataclass.h */
 
@@ -92,5 +91,3 @@ dns_rdataclass_format(dns_rdataclass_t rdclass, char *array, unsigned int size);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATACLASS_H */

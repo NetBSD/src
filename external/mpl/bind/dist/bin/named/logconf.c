@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.8 2023/06/26 22:02:59 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.9 2024/02/21 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -329,6 +329,7 @@ named_logconfig(isc_logconfig_t *logconfig, const cfg_obj_t *logstmt) {
 
 	if (logconfig != NULL) {
 		named_log_setdefaultchannels(logconfig);
+		named_log_setdefaultsslkeylogfile(logconfig);
 	}
 
 	(void)cfg_map_get(logstmt, "channel", &channels);

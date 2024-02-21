@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.7 2023/01/25 21:43:26 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.8 2024/02/21 22:51:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@ beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 	UNUSED(db);
 	UNUSED(callbacks);
 
-	fatal_error("current implementation should never call beginload()");
+	FATAL_ERROR("current implementation should never call beginload()");
 
 	/* Not reached */
 	return (ISC_R_SUCCESS);
@@ -151,19 +151,10 @@ endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 	UNUSED(db);
 	UNUSED(callbacks);
 
-	fatal_error("current implementation should never call endload()");
+	FATAL_ERROR("current implementation should never call endload()");
 
 	/* Not reached */
 	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-serialize(dns_db_t *db, dns_dbversion_t *version, FILE *file) {
-	sampledb_t *sampledb = (sampledb_t *)db;
-
-	REQUIRE(VALID_SAMPLEDB(sampledb));
-
-	return (dns_db_serialize(sampledb->rbtdb, version, file));
 }
 
 static isc_result_t
@@ -174,7 +165,7 @@ dump(dns_db_t *db, dns_dbversion_t *version, const char *filename,
 	UNUSED(filename);
 	UNUSED(masterformat);
 
-	fatal_error("current implementation should never call dump()");
+	FATAL_ERROR("current implementation should never call dump()");
 
 	/* Not reached */
 	return (ISC_R_SUCCESS);
@@ -402,12 +393,12 @@ issecure(dns_db_t *db) {
 }
 
 static unsigned int
-nodecount(dns_db_t *db) {
+nodecount(dns_db_t *db, dns_dbtree_t tree) {
 	sampledb_t *sampledb = (sampledb_t *)db;
 
 	REQUIRE(VALID_SAMPLEDB(sampledb));
 
-	return (dns_db_nodecount(sampledb->rbtdb));
+	return (dns_db_nodecount(sampledb->rbtdb, tree));
 }
 
 /*
@@ -574,57 +565,28 @@ hashsize(dns_db_t *db) {
  * determine which implementation of dns_db_*() function to call.
  */
 static dns_dbmethods_t sampledb_methods = {
-	attach,
-	detach,
-	beginload,
-	endload,
-	serialize,
-	dump,
-	currentversion,
-	newversion,
-	attachversion,
-	closeversion,
-	findnode,
-	find,
-	findzonecut,
-	attachnode,
-	detachnode,
-	expirenode,
-	printnode,
-	createiterator,
-	findrdataset,
-	allrdatasets,
-	addrdataset,
-	subtractrdataset,
-	deleterdataset,
-	issecure,
-	nodecount,
-	ispersistent,
-	overmem,
-	settask,
-	getoriginnode,
-	transfernode,
-	getnsec3parameters,
-	findnsec3node,
-	setsigningtime,
-	getsigningtime,
-	resigned,
-	isdnssec,
-	getrrsetstats,
+	attach,		detach,		beginload,
+	endload,	dump,		currentversion,
+	newversion,	attachversion,	closeversion,
+	findnode,	find,		findzonecut,
+	attachnode,	detachnode,	expirenode,
+	printnode,	createiterator, findrdataset,
+	allrdatasets,	addrdataset,	subtractrdataset,
+	deleterdataset, issecure,	nodecount,
+	ispersistent,	overmem,	settask,
+	getoriginnode,	transfernode,	getnsec3parameters,
+	findnsec3node,	setsigningtime, getsigningtime,
+	resigned,	isdnssec,	getrrsetstats,
 	NULL, /* rpz_attach */
 	NULL, /* rpz_ready */
-	findnodeext,
-	findext,
-	setcachestats,
-	hashsize,
-	NULL, /* nodefullname */
-	NULL, /* getsize */
-	NULL, /* setservestalettl */
-	NULL, /* getservestalettl */
-	NULL, /* setservestalerefresh */
-	NULL, /* getservestalerefresh */
-	NULL, /* setgluecachestats */
-	NULL  /* adjusthashsize */
+	findnodeext,	findext,	setcachestats,
+	hashsize,	NULL, /* nodefullname */
+	NULL,		      /* getsize */
+	NULL,		      /* setservestalettl */
+	NULL,		      /* getservestalettl */
+	NULL,		      /* setservestalerefresh */
+	NULL,		      /* getservestalerefresh */
+	NULL,		      /* setgluecachestats */
 };
 
 /* Auxiliary driver functions. */

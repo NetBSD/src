@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2022/09/23 12:15:20 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2024/02/21 22:51:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,7 @@ notify(const char *fmt, ...) {
 		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
-		fputs("\n", stderr);
+		fprintf(stderr, "\n");
 	}
 }
 

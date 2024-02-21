@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.10 2024/02/21 22:52:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -236,6 +236,7 @@ additionaldata_txt(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
