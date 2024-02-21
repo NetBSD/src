@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.20 2022/07/22 07:09:25 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.21 2024/02/21 09:06:56 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -18,20 +18,24 @@ LIBSTDCXX_MACHINE_ARCH=${GCC_MACHINE_ARCH}
 # Deal with renamed sources.  Needs to match a loop in libstdc++-v3/Makefile.
 BUILD_CPP98_SOURCES=	${G_CPP98_SOURCES:Ncodecvt.cc} \
 			c98-codecvt.cc
-BUILD_CPP11_SOURCES=	${G_CPP11_SOURCES:Ncodecvt.cc:Ncow-string-inst.cc:Nostream-inst.cc:Nstring-inst.cc} \
+BUILD_CPP11_SOURCES=	${G_CPP11_SOURCES:Ncodecvt.cc:Ncow-string-inst.cc:Nostream-inst.cc:Nstring-inst.cc:Nsstream-inst.cc} \
 			c11-codecvt.cc \
 			c11-cow-string-inst.cc \
 			c11-ostream-inst.cc \
-			c11-string-inst.cc
+			c11-string-inst.cc \
+			c11-sstream-inst.cc
 BUILD_CPP17_SOURCES=	${G_CPP17_SOURCES:Ncow-string-inst.cc:Nostream-inst.cc:Nstring-inst.cc} \
 			c17-cow-string-inst.cc \
 			c17-ostream-inst.cc \
 			c17-string-inst.cc
+BUILD_CPP20_SOURCES=	${G_CPP20_SOURCES:Nsstream-inst.cc} \
+			c20-sstream-inst.cc
 
 LIBSTDCXXSRCS=	${G_SRC_SOURCES} \
 		${BUILD_CPP98_SOURCES} \
 		${BUILD_CPP11_SOURCES} \
-		${BUILD_CPP17_SOURCES}
+		${BUILD_CPP17_SOURCES} \
+		${BUILD_CPP20_SOURCES}
 # XXX XXX dir.o doesn't have <deque> stuff properly, leave it out for now
 #LIBSTDCXXSRCS+=	${G_FILESYSTEM_SOURCES}
 
@@ -92,6 +96,10 @@ COPTS.${_f}+=	-std=gnu++1z
 
 .for _f in ${BUILD_CPP17_SOURCES}
 COPTS.${_f}+=	-std=gnu++17 -fimplicit-templates
+.endfor
+
+.for _f in ${BUILD_CPP20_SOURCES}
+COPTS.${_f}+=	-std=gnu++20 -fimplicit-templates
 .endfor
 
 .for _f in dir ops fs_dir fs_ops cow-fs_dir cow-fs_ops
