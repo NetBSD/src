@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.26 2023/05/17 09:54:59 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.27 2024/02/22 14:11:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.26 2023/05/17 09:54:59 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.27 2024/02/22 14:11:52 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -594,7 +594,8 @@ mke2fs(const char *fsys, int fi, int fo)
 	fld_width = verbosity < 4 ? 1 : snprintf(NULL, 0, "%" PRIu64,
 	    (uint64_t)cgbase(&sblock, ncg - 1));
 	/* Get terminal width */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0 &&
+	    winsize.ws_col != 0)
 		max_cols = winsize.ws_col;
 	else
 		max_cols = 80;
