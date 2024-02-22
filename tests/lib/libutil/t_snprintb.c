@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.26 2024/02/22 18:26:16 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.27 2024/02/22 21:04:24 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.26 2024/02/22 18:26:16 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.27 2024/02/22 21:04:24 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -57,80 +57,76 @@ vis_arr(const char *arr, size_t arrsize)
 }
 
 static void
-h_snprintb_loc(const char *file, size_t line,
+check_snprintb_m(const char *file, size_t line,
     size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
+    size_t line_max,
     int want_rv, const char *want_buf, size_t want_bufsize)
 {
 	char buf[1024];
 
 	ATF_REQUIRE(bufsize <= sizeof(buf));
 	ATF_REQUIRE(want_bufsize <= sizeof(buf));
-	ATF_REQUIRE_MSG(
-	    !(bitfmtlen > 2 && bitfmt[0] == '\177')
-	    || bitfmt[bitfmtlen - 1] == '\0',
-	    "%s:%zu: missing trailing '\\0' in new-style bitfmt",
-	    file, line);
+	if (bitfmtlen > 2 && bitfmt[0] == '\177')
+		ATF_REQUIRE_MSG(
+		    bitfmt[bitfmtlen - 1] == '\0',
+		    "%s:%zu: missing trailing '\\0' in new-style bitfmt",
+		    file, line);
 	if (bufsize == 0)
-		want_bufsize--;
+		want_bufsize = 0;
 
 	memset(buf, 'Z', sizeof(buf));
-	int rv = snprintb(buf, bufsize, bitfmt, val);
-	ATF_CHECK_MSG(rv >= 0, "%s:%zu: unexpected rv %d", file, line, rv);
-	if (rv < 0)
-		return;
+	int rv = snprintb_m(buf, bufsize, bitfmt, val, line_max);
+
 	size_t have_bufsize = sizeof(buf);
 	while (have_bufsize > 0 && buf[have_bufsize - 1] == 'Z')
 		have_bufsize--;
+	if (rv > 0 && (unsigned)rv < have_bufsize
+	    && buf[rv - 1] == '\0' && buf[rv] == '\0')
+		have_bufsize = rv + 1;
+	if (rv < 0)
+		for (size_t i = have_bufsize; i >= 2; i--)
+			if (buf[i - 2] == '\0' && buf[i - 1] == '\0')
+				have_bufsize = i;
 
-	size_t urv = (size_t)rv;
 	ATF_CHECK_MSG(
 	    rv == want_rv
 	    && memcmp(buf, want_buf, want_bufsize) == 0
-	    && (bufsize < 1
-		|| buf[urv < bufsize ? urv : bufsize - 1] == '\0'),
+	    && (line_max == 0 || have_bufsize < 2
+		|| buf[have_bufsize - 2] == '\0')
+	    && (have_bufsize < 1 || buf[have_bufsize - 1] == '\0'),
 	    "failed:\n"
 	    "\ttest case: %s:%zu\n"
 	    "\tformat: %s\n"
 	    "\tvalue: %#jx\n"
+	    "\tline_max: %zu\n"
 	    "\twant: %d bytes %s\n"
 	    "\thave: %d bytes %s\n",
 	    file, line,
 	    vis_arr(bitfmt, bitfmtlen),
 	    (uintmax_t)val,
+	    line_max,
 	    want_rv, vis_arr(want_buf, want_bufsize),
 	    rv, vis_arr(buf, have_bufsize));
 }
 
-#define	h_snprintb_len(bufsize, bitfmt, val, want_rv, want_buf)		\
-	h_snprintb_loc(__FILE__, __LINE__,				\
-	    bufsize, bitfmt, sizeof(bitfmt) - 1, val,			\
+#define	h_snprintb_m_len(bufsize, bitfmt, val, line_max,		\
+	    want_rv, want_buf)						\
+	check_snprintb_m(__FILE__, __LINE__,				\
+	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, line_max,		\
 	    want_rv, want_buf, sizeof(want_buf))
+
 #define	h_snprintb(bitfmt, val, want_buf)				\
-	h_snprintb_len(1024, bitfmt, val, sizeof(want_buf) - 1, want_buf)
+	h_snprintb_m_len(1024, bitfmt, val, 0, sizeof(want_buf) - 1, want_buf)
 
-static void
-h_snprintb_error_loc(const char *file, size_t line,
-    const char *bitfmt, size_t bitfmtlen)
-{
-	char buf[1024];
+#define	h_snprintb_len(bufsize, bitfmt, val, want_rv, want_buf)		\
+	h_snprintb_m_len(bufsize, bitfmt, val, 0, want_rv, want_buf)
 
-	memset(buf, 'Z', sizeof(buf));
-	int rv = snprintb(buf, sizeof(buf), bitfmt, 0);
-	size_t buflen = rv;
+#define	h_snprintb_error(bitfmt, want_buf)				\
+	h_snprintb_m_len(1024, bitfmt, 0, 0, -1, want_buf)
 
-	ATF_REQUIRE(rv >= -1);
-	ATF_CHECK_MSG(rv == -1,
-	    "expected error but got success:\n"
-	    "\ttest case: %s:%zu\n"
-	    "\tformat: %s\n"
-	    "\tresult: %zu bytes %s\n",
-	    file, line,
-	    vis_arr(bitfmt, bitfmtlen),
-	    buflen, vis_arr(buf, buflen));
-}
-
-#define	h_snprintb_error(bitfmt)					\
-	h_snprintb_error_loc(__FILE__, __LINE__, bitfmt, sizeof(bitfmt) - 1)
+#define	h_snprintb_m(bitfmt, val, line_max, want_buf)			\
+	h_snprintb_m_len(1024, bitfmt, val, line_max,			\
+	    sizeof(want_buf) - 1, want_buf)
 
 ATF_TC(snprintb);
 ATF_TC_HEAD(snprintb, tc)
@@ -186,15 +182,18 @@ ATF_TC_BODY(snprintb, tc)
 
 	// style and number base, old style, invalid base 0
 	h_snprintb_error(
-	    "");
+	    "",
+	    "#");
 
 	// style and number base, old style, invalid base 2
 	h_snprintb_error(
-	    "\002");
+	    "\002",
+	    "#");
 
 	// style and number base, old style, invalid base 255 or -1
 	h_snprintb_error(
-	    "\377");
+	    "\377",
+	    "#");
 
 	// style and number base, new style, octal, zero value
 	//
@@ -242,15 +241,18 @@ ATF_TC_BODY(snprintb, tc)
 
 	// style and number base, new style, invalid number base 0
 	h_snprintb_error(
-	    "\177");
+	    "\177",
+	    "#");
 
 	// style and number base, new style, invalid number base 2
 	h_snprintb_error(
-	    "\177\002");
+	    "\177\002",
+	    "#");
 
 	// style and number base, new style, invalid number base 255 or -1
 	h_snprintb_error(
-	    "\177\377");
+	    "\177\377",
+	    "#");
 
 	// old style, from lsb to msb
 	h_snprintb(
@@ -265,7 +267,8 @@ ATF_TC_BODY(snprintb, tc)
 	// old style, invalid bit number, at the beginning
 	h_snprintb_error(
 	    "\020"
-	    "\041invalid");
+	    "\041invalid",
+	    "0#");
 
 	// old style, invalid bit number, in the middle
 	//
@@ -317,10 +320,17 @@ ATF_TC_BODY(snprintb, tc)
 	// old style, buffer size 0
 	//
 	// With the buffer size being 0, the buffer is not modified at all.
-	// In kernel mode, the buffer is zeroed out and thus must not be null.
 	h_snprintb_len(
 	    0, "\020", 0,
 	    1, "");
+
+	// old style, buffer size 0, null buffer
+	//
+	// If the buffer size is 0, the buffer may be NULL.
+	int null_rv_old = snprintb(NULL, 0, "\020\001lsb", 0x01);
+	ATF_CHECK_MSG(
+	    null_rv_old == 8,
+	    "want length 8, have %d", null_rv_old);
 
 	// old style, buffer too small for value
 	h_snprintb_len(
@@ -387,6 +397,14 @@ ATF_TC_BODY(snprintb, tc)
 	    13, "\020\001one\002two", 7,
 	    12, "0x7<one,two>");
 
+	// new style, buffer size 0, null buffer
+	//
+	// If the buffer size is 0, the buffer may be NULL.
+	int null_rv_new = snprintb(NULL, 0, "\177\020b\000lsb\0", 0x01);
+	ATF_CHECK_MSG(
+	    null_rv_new == 8,
+	    "want length 8, have %d", null_rv_new);
+
 	// new style single bits
 	h_snprintb(
 	    "\177\020"
@@ -422,10 +440,12 @@ ATF_TC_BODY(snprintb, tc)
 	// new style single bits, bit number too large
 	h_snprintb_error(
 	    "\177\020"
-	    "b\100too-high\0");
+	    "b\100too-high\0",
+	    "0#");
 	h_snprintb_error(
 	    "\177\020"
-	    "b\377too-high\0");
+	    "b\377too-high\0",
+	    "0#");
 
 	// new style single bits, non-printable description
 	//
@@ -507,7 +527,8 @@ ATF_TC_BODY(snprintb, tc)
 	// new style bit-field, from 0 width 65
 	h_snprintb_error(
 	    "\177\020"
-	    "f\000\101uint65\0");
+	    "f\000\101uint65\0",
+	    "0#");
 
 	// new style bit-field, from 1 width 8
 	h_snprintb(
@@ -560,14 +581,16 @@ ATF_TC_BODY(snprintb, tc)
 	// The beginning of the bit-field is out of bounds, the end is fine.
 	h_snprintb_error(
 	    "\177\020"
-	    "f\100\000uint0\0");
+	    "f\100\000uint0\0",
+	    "0#");
 
 	// new style bit-field, from 65 width 0
 	//
 	// The beginning and end of the bit-field are out of bounds.
 	h_snprintb_error(
 	    "\177\020"
-	    "f\101\000uint0\0");
+	    "f\101\000uint0\0",
+	    "0#");
 
 	// new style bit-field, empty field description
 	//
@@ -1084,64 +1107,6 @@ ATF_TC_BODY(snprintb, tc)
 	    12, "0x7<one,two>");
 }
 
-static void
-h_snprintb_m_loc(const char *file, size_t line,
-    size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
-    size_t max,
-    int want_rv, const char *want_buf, size_t want_bufsize)
-{
-	char buf[1024];
-
-	ATF_REQUIRE(bufsize > 0);
-	ATF_REQUIRE(bufsize <= sizeof(buf));
-	ATF_REQUIRE(want_bufsize <= sizeof(buf));
-	if (bitfmtlen > 2 && bitfmt[0] == '\177')
-		ATF_REQUIRE_MSG(bitfmt[bitfmtlen - 1] == '\0',
-		    "%s:%zu: missing trailing '\\0' in bitfmt",
-		    file, line);
-
-	memset(buf, 'Z', sizeof(buf));
-	int rv = snprintb_m(buf, bufsize, bitfmt, val, max);
-	ATF_REQUIRE_MSG(rv >= 0,
-	    "%s:%zu: formatting %jx with '%s' returns error %d",
-	    file, line,
-	    (uintmax_t)val, vis_arr(bitfmt, bitfmtlen), rv);
-
-	size_t have_bufsize = sizeof(buf);
-	while (have_bufsize > 0 && buf[have_bufsize - 1] == 'Z')
-		have_bufsize--;
-
-	size_t urv = (size_t)rv;
-	ATF_CHECK_MSG(
-	    rv == want_rv
-	    && memcmp(buf, want_buf, want_bufsize) == 0
-	    && (bufsize < 1
-		|| buf[urv < bufsize ? urv : bufsize - 1] == '\0')
-	    && (bufsize < 2
-		|| buf[urv < bufsize ? urv - 1 : bufsize - 2] == '\0'),
-	    "failed:\n"
-	    "\ttest case: %s:%zu\n"
-	    "\tformat: %s\n"
-	    "\tvalue: %#jx\n"
-	    "\tmax: %zu\n"
-	    "\twant: %d bytes %s\n"
-	    "\thave: %d bytes %s\n",
-	    file, line,
-	    vis_arr(bitfmt, bitfmtlen),
-	    (uintmax_t)val,
-	    max,
-	    want_rv, vis_arr(want_buf, want_bufsize),
-	    rv, vis_arr(buf, have_bufsize));
-}
-
-#define	h_snprintb_m_len(bufsize, bitfmt, val, line_max, want_rv, want_buf) \
-	h_snprintb_m_loc(__FILE__, __LINE__,				\
-	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, line_max,		\
-	    want_rv, want_buf, sizeof(want_buf))
-#define	h_snprintb_m(bitfmt, val, line_max, want_buf)			\
-	h_snprintb_m_len(1024, bitfmt, val, line_max,			\
-	    sizeof(want_buf) - 1, want_buf)
-
 ATF_TC(snprintb_m);
 ATF_TC_HEAD(snprintb_m, tc)
 {
@@ -1159,20 +1124,21 @@ ATF_TC_BODY(snprintb_m, tc)
 
 	// old style, line_max exceeded by '<' in line 1
 	h_snprintb_m(
-	    "\020",
+	    "\020"
+	    "\001lsb",
 	    0xff,
 	    4,
-	    "0xff\0");
+	    "0xf#\0");
 
-	// old style, line_max exceeded by description in line 1
+	// old style, line_max exceeded by description
 	h_snprintb_m(
 	    "\020"
 	    "\001bit1"
 	    "\002bit2",
 	    0xff,
-	    4,
-	    "0xf#\0"
-	    "0xf#\0");
+	    7,
+	    "0xff<b#\0"
+	    "0xff<b#\0");
 
 	// old style, line_max exceeded by '>' in line 1
 	h_snprintb_m(
@@ -1295,7 +1261,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    4,
 	    "0xf#\0");
 
-	// new style, line_max exceeded by named bit-field field description in line 1
+	// new style, line_max exceeded by named bit-field field description
+	// in line 1
 	h_snprintb_m(
 	    "\177\020"
 	    "f\000\004lo\0",
@@ -1328,7 +1295,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    11,
 	    "0xff<lo=0x#\0");
 
-	// new style, line_max exceeded by named bit-field value description in line 1
+	// new style, line_max exceeded by named bit-field value description in
+	// line 1
 	h_snprintb_m(
 	    "\177\020"
 	    "f\000\004lo\0"
@@ -1390,7 +1358,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    "0xff<lo=0xf>\0"
 	    "0xff<low-bits=0x#\0");
 
-	// new style, line_max exceeded by named bit-field value description in line 2
+	// new style, line_max exceeded by named bit-field value description
+	// in line 2
 	h_snprintb_m(
 	    "\177\020"
 	    "f\000\004lo\0"
@@ -1439,7 +1408,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    4,
 	    "0xf#\0");
 
-	// new style, line_max exceeded by unnamed bit-field value description in line 1
+	// new style, line_max exceeded by unnamed bit-field value description
+	// in line 1
 	h_snprintb_m(
 	    "\177\020"
 	    "F\000\004\0"
@@ -1457,7 +1427,8 @@ ATF_TC_BODY(snprintb_m, tc)
 	    10,
 	    "0xff<matc#\0");
 
-	// new style, line_max exceeded by unnamed bit-field value description in line 2
+	// new style, line_max exceeded by unnamed bit-field value description
+	// in line 2
 	h_snprintb_m(
 	    "\177\020"
 	    "F\000\004\0"
@@ -1484,8 +1455,8 @@ ATF_TC_BODY(snprintb_m, tc)
 		":\017m1\0"
 		":\017match\0",
 	    0xff,
-	    11,
-	    "0xff<m1mat#\0");
+	    13,
+	    "0xff<m1match>\0");
 
 	// new style, line_max exceeded by bit-field default
 	h_snprintb_m(
