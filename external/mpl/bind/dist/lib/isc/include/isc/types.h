@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2024/02/21 22:52:31 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2024/02/22 12:43:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,8 +78,13 @@ typedef struct isc_sockaddr	 isc_sockaddr_t;      /*%< Socket Address */
 typedef ISC_LIST(isc_sockaddr_t) isc_sockaddrlist_t;  /*%< Socket Address List
 						       * */
 typedef struct isc_stats    isc_stats_t;	      /*%< Statistics */
+#ifdef _LP64
 typedef int_fast64_t	    isc_statscounter_t;
 typedef atomic_int_fast64_t isc_atomic_statscounter_t;
+#else
+typedef int_fast32_t	    isc_statscounter_t;
+typedef atomic_int_fast32_t isc_atomic_statscounter_t;
+#endif
 typedef struct isc_symtab   isc_symtab_t;	/*%< Symbol Table */
 typedef struct isc_task	    isc_task_t;		/*%< Task */
 typedef ISC_LIST(isc_task_t) isc_tasklist_t;	/*%< Task List */
