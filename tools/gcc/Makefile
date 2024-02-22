@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2023/10/07 12:12:58 rin Exp $
+#	$NetBSD: Makefile,v 1.110 2024/02/22 02:40:21 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -267,16 +267,21 @@ PREV_GCC=
 
 CLEANFILES+=	PREV_GCC
 
+# Include the local NetBSD GCC version so that bumps to it trigger rebuilds.
+NETBSD_GCC_VERSION_NOSPACE= ${NETBSD_GCC_VERSION:S/ /-/gW}
+
 realall realdepend: .MAKE
-.if !empty(PREV_GCC) && "${PREV_GCC}" != "${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}"
+.if !empty(PREV_GCC) && "${PREV_GCC}" != "${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}-${NETBSD_GCC_VERSION_NOSPACE}"
 	@echo "*** WARNING: GCC has changed version?"
 	@echo "*** PREV_GCC '${PREV_GCC}'"
-	@echo "***     !=  EXTERNAL_GCC_SUBDIR-HAVE_GCC '${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}'"
+	@echo "*** NETBSD_GCC_VERSION_NOSPACE '${NETBSD_GCC_VERSION_NOSPACE}'"
+	@echo "***     !=  EXTERNAL_GCC_SUBDIR-HAVE_GCC-NETBSD_GCC_VERSION_NOSPACE:"
+	@echo "***     !=  '${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}-${NETBSD_GCC_VERSION_NOSPACE}'"
 	@echo "*** Cleaning mis-matched tools/gcc"
 	rm -f PREV_GCC
 	(cd ${.CURDIR} && ${MAKE} cleandir)
 .endif
-	echo ${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC} >PREV_GCC
+	echo ${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}-${NETBSD_GCC_VERSION_NOSPACE} >PREV_GCC
 
 clean: clean.native
 clean.native:
