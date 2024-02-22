@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.37 2024/02/20 20:31:56 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -67,7 +67,6 @@ typedef struct {
 	size_t const line_max;
 
 	const char *const num_fmt;
-	unsigned const val_len;
 	unsigned total_len;
 	unsigned line_pos;
 	unsigned comma_pos;
@@ -161,12 +160,15 @@ new_style(state *s)
 	const char *prev_bitfmt = s->bitfmt;
 	while (*s->bitfmt != '\0') {
 		const char *cur_bitfmt = s->bitfmt;
-		uint8_t kind = *s->bitfmt++;
-		uint8_t bit = *s->bitfmt++;
+		uint8_t kind = cur_bitfmt[0];
 		switch (kind) {
 		case 'b':
 			prev_bitfmt = cur_bitfmt;
-			if (((s->val >> bit) & 1) == 0)
+			uint8_t b_bit = cur_bitfmt[1];
+			if (b_bit >= 64)
+				return -1;
+			s->bitfmt += 2;
+			if (((s->val >> b_bit) & 1) == 0)
 				goto skip_description;
 			put_sep(s);
 			while (*s->bitfmt++ != '\0')
@@ -177,8 +179,16 @@ new_style(state *s)
 		case 'F':
 			prev_bitfmt = cur_bitfmt;
 			matched = 0;
-			field = (s->val >> bit) &
-			    (((uint64_t)1 << (uint8_t)*s->bitfmt++) - 1);
+			uint8_t f_lsb = cur_bitfmt[1];
+			if (f_lsb >= 64)
+				return -1;
+			uint8_t f_width = cur_bitfmt[2];
+			if (f_width > 64)
+				return -1;
+			field = s->val >> f_lsb;
+			if (f_width < 64)
+				field &= ((uint64_t) 1 << f_width) - 1;
+			s->bitfmt += 3;
 			put_sep(s);
 			if (kind == 'F')
 				goto skip_description;
@@ -190,8 +200,9 @@ new_style(state *s)
 			break;
 		case '=':
 		case ':':
-			/* Here "bit" is actually a value instead. */
-			if (field != bit)
+			s->bitfmt += 2;
+			uint8_t cmp = cur_bitfmt[1];
+			if (field != cmp)
 				goto skip_description;
 			matched = 1;
 			if (kind == '=')
@@ -201,7 +212,7 @@ new_style(state *s)
 			wrap_if_necessary(s, prev_bitfmt);
 			break;
 		case '*':
-			s->bitfmt--;
+			s->bitfmt++;
 			if (matched)
 				goto skip_description;
 			matched = 1;
@@ -210,6 +221,7 @@ new_style(state *s)
 			wrap_if_necessary(s, prev_bitfmt);
 			/*FALLTHROUGH*/
 		default:
+			s->bitfmt += 2;
 		skip_description:
 			while (*s->bitfmt++ != '\0')
 				continue;
@@ -263,9 +275,7 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		.line_max = line_max,
 
 		.num_fmt = num_fmt,
-		.val_len = val_len,
 		.total_len = val_len,
-
 		.sep = '<',
 	};
 
