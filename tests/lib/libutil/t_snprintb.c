@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.25 2024/02/20 21:45:36 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.26 2024/02/22 18:26:16 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.25 2024/02/20 21:45:36 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.26 2024/02/22 18:26:16 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -263,11 +263,9 @@ ATF_TC_BODY(snprintb, tc)
 	    "0xffffffff80000001<bit1,bit32>");
 
 	// old style, invalid bit number, at the beginning
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb_error(
 	    "\020"
 	    "\041invalid");
-#endif
 
 	// old style, invalid bit number, in the middle
 	//
@@ -421,17 +419,13 @@ ATF_TC_BODY(snprintb, tc)
 	    0xff,
 	    "0xff<lsb,,,msb>");
 
-	// new style single bits, invalid
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
+	// new style single bits, bit number too large
 	h_snprintb_error(
 	    "\177\020"
 	    "b\100too-high\0");
-#endif
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb_error(
 	    "\177\020"
 	    "b\377too-high\0");
-#endif
 
 	// new style single bits, non-printable description
 	//
@@ -503,21 +497,17 @@ ATF_TC_BODY(snprintb, tc)
 	    "0xaaaa5555aaaa5555<uint63=0x2aaa5555aaaa5555>");
 
 	// new style bit-field, from 0 width 64
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb(
 	    "\177\020"
 	    "f\000\100uint64\0"
 		"=\125match\0",
 	    0xaaaa5555aaaa5555,
 	    "0xaaaa5555aaaa5555<uint64=0xaaaa5555aaaa5555>");
-#endif
 
 	// new style bit-field, from 0 width 65
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb_error(
 	    "\177\020"
 	    "f\000\101uint65\0");
-#endif
 
 	// new style bit-field, from 1 width 8
 	h_snprintb(
@@ -568,20 +558,16 @@ ATF_TC_BODY(snprintb, tc)
 	// new style bit-field, from 64 width 0
 	//
 	// The beginning of the bit-field is out of bounds, the end is fine.
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb_error(
 	    "\177\020"
 	    "f\100\000uint0\0");
-#endif
 
 	// new style bit-field, from 65 width 0
 	//
 	// The beginning and end of the bit-field are out of bounds.
-#if 0 /* undefined behavior due to out-of-bounds bit shift */
 	h_snprintb_error(
 	    "\177\020"
 	    "f\101\000uint0\0");
-#endif
 
 	// new style bit-field, empty field description
 	//
