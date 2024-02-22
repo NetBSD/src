@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2024/02/22 02:40:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.111 2024/02/22 02:47:26 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -35,7 +35,6 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/support/send-pr.html \
 			--with-pkgversion="NetBSD ${NETBSD_GCC_VERSION}" \
 			--with-system-zlib \
-			--without-isl \
 			--enable-__cxa_atexit \
 			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads \
@@ -58,12 +57,21 @@ COMMON_CONFIGURE_ARGS+=	--enable-fix-cortex-a53-835769 \
 COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 .endif
 
+# We nabled isl support for GCC 12.  Move into normal segment when
+# removing GCC 10.
+.if ${HAVE_GCC} < 12
+ISL_CONFIGURE_ARGS+=	--without-isl
+.else
+ISL_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
+.endif
+
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 CONFIGURE_ARGS+= \
 		--with-sysroot=${DESTDIR} \
 		--with-mpc=${TOOLDIR} \
 		--with-mpfr=${TOOLDIR} \
 		--with-gmp=${TOOLDIR} \
+		${ISL_CONFIGURE_ARGS} \
 		--disable-nls \
 		${MULTILIB_ARGS} \
 		${SOFTFLOAT_ARGS} \
