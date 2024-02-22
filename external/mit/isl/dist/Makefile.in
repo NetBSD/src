@@ -1652,8 +1652,12 @@ $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENC
 	$(SHELL) ./config.status --recheck
 
 $(top_srcdir)/configure:  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configure:
 	$(am__cd) $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_aclocal.m4:
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
 
@@ -1665,6 +1669,8 @@ stamp-h1: $(srcdir)/isl_config.h.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status isl_config.h
 $(srcdir)/isl_config.h.in:  $(am__configure_deps) 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_isl_config.h.in:
 	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
 	rm -f stamp-h1
 	touch $@
