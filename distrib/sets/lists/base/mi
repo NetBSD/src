@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1332 2024/02/22 00:58:49 christos Exp $
+# $NetBSD: mi,v 1.1333 2024/02/22 01:13:42 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1477,6 +1477,7 @@
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
+./usr/sbin/dnssec-cds				base-bind-bin
 ./usr/sbin/dnssec-dsfromkey			base-bind-bin
 ./usr/sbin/dnssec-importkey			base-bind-bin
 ./usr/sbin/dnssec-keyfromlabel			base-bind-bin

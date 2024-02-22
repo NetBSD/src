@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1770 2024/02/22 00:58:49 christos Exp $
+# $NetBSD: mi,v 1.1771 2024/02/22 01:13:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -147,6 +147,7 @@
 ./usr/share/man/cat1/dns-sd.0			man-mdns-catman		mdns,.cat
 ./usr/share/man/cat1/dnskeygen.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
+./usr/share/man/cat1/dnssec-cds.0		man-bind-catman		.cat
 ./usr/share/man/cat1/dnssec-dsfromkey.0		man-bind-catman		.cat
 ./usr/share/man/cat1/dnssec-importkey.0		man-bind-catman		.cat
 ./usr/share/man/cat1/dnssec-keyfromlabel.0	man-bind-catman		.cat
@@ -3638,6 +3639,7 @@
 ./usr/share/man/html1/dirname.html		man-util-htmlman	html
 ./usr/share/man/html1/dirs.html			man-util-htmlman	html
 ./usr/share/man/html1/dns-sd.html			man-mdns-htmlman	mdns,html
+./usr/share/man/html1/dnssec-cds.html		man-bind-htmlman	html
 ./usr/share/man/html1/dnssec-dsfromkey.html	man-bind-htmlman	html
 ./usr/share/man/html1/dnssec-importkey.html	man-bind-htmlman	html
 ./usr/share/man/html1/dnssec-keyfromlabel.html	man-bind-htmlman	html
@@ -6743,6 +6745,7 @@
 ./usr/share/man/man1/dns-sd.1			man-mdns-man		mdns,.man
 ./usr/share/man/man1/dnskeygen.1		man-obsolete		obsolete
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
+./usr/share/man/man1/dnssec-cds.1		man-bind-man		.man
 ./usr/share/man/man1/dnssec-dsfromkey.1		man-bind-man		.man
 ./usr/share/man/man1/dnssec-importkey.1		man-bind-man		.man
 ./usr/share/man/man1/dnssec-keyfromlabel.1	man-bind-man		.man
