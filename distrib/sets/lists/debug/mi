@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.428 2024/02/22 00:58:49 christos Exp $
+# $NetBSD: mi,v 1.429 2024/02/22 01:13:43 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1089,6 +1089,7 @@
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/dnssec-cds.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		debug
