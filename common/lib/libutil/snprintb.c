@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.38 2024/02/22 18:26:15 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -219,7 +219,7 @@ new_style(state *s)
 			if (store_num(s, s->bitfmt, field) < 0)
 				return -1;
 			wrap_if_necessary(s, prev_bitfmt);
-			/*FALLTHROUGH*/
+			goto skip_description;
 		default:
 			s->bitfmt += 2;
 		skip_description:
@@ -231,6 +231,19 @@ new_style(state *s)
 	return 0;
 }
 
+static void
+finish_buffer(state *s)
+{
+	if (s->line_max > 0) {
+		put_eol(s);
+		if (s->bufsize >= 2 && s->total_len > s->bufsize - 2)
+			s->buf[s->bufsize - 2] = '\0';
+	}
+	store(s, '\0');
+	if (s->bufsize >= 1 && s->total_len > s->bufsize - 1)
+		s->buf[s->bufsize - 1] = '\0';
+}
+
 int
 snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	   size_t line_max)
@@ -240,9 +253,9 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	 * For safety; no other *s*printf() do this, but in the kernel
 	 * we don't usually check the return value
 	 */
-	(void)memset(buf, 0, bufsize);
+	if (bufsize > 0)
+		(void)memset(buf, 0, bufsize);
 #endif /* _KERNEL */
-
 
 	int old = *bitfmt != '\177';
 	if (!old)
@@ -260,12 +273,8 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		num_fmt = "%#jx";
 		break;
 	default:
-		goto internal;
+		num_fmt = NULL;
 	}
-
-	int val_len = snprintf(buf, bufsize, num_fmt, (uintmax_t)val);
-	if (val_len < 0)
-		goto internal;
 
 	state s = {
 		.buf = buf,
@@ -275,28 +284,26 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 		.line_max = line_max,
 
 		.num_fmt = num_fmt,
-		.total_len = val_len,
 		.sep = '<',
 	};
+	if (num_fmt == NULL)
+		goto internal;
+
+	store_num(&s, num_fmt, val);
 
 	if ((old ? old_style(&s) : new_style(&s)) < 0)
 		goto internal;
 
 	if (s.sep != '<')
 		store(&s, '>');
-	if (s.line_max > 0) {
-		put_eol(&s);
-		if (s.bufsize >= 2 && s.total_len > s.bufsize - 2)
-			s.buf[s.bufsize - 2] = '\0';
-	}
-	store(&s, '\0');
-	if (s.bufsize >= 1 && s.total_len > s.bufsize - 1)
-		s.buf[s.bufsize - 1] = '\0';
+	finish_buffer(&s);
 	return (int)(s.total_len - 1);
 internal:
 #ifndef _KERNEL
 	errno = EINVAL;
 #endif
+	store(&s, '#');
+	finish_buffer(&s);
 	return -1;
 }
 
