@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1769 2024/02/21 22:53:48 christos Exp $
+# $NetBSD: mi,v 1.1770 2024/02/22 00:58:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -330,6 +330,7 @@
 ./usr/share/man/cat1/md2.0			man-util-catman		.cat
 ./usr/share/man/cat1/md4.0			man-util-catman		.cat
 ./usr/share/man/cat1/md5.0			man-util-catman		.cat
+./usr/share/man/cat1/mdig.0			man-bind-catman		.cat
 ./usr/share/man/cat1/merge.0			man-util-catman		.cat
 ./usr/share/man/cat1/mesg.0			man-util-catman		.cat
 ./usr/share/man/cat1/midiplay.0			man-audio-catman	.cat
@@ -368,6 +369,7 @@
 ./usr/share/man/cat1/named-checkzone.0		man-bind-catman		.cat
 ./usr/share/man/cat1/named-compilezone.0	man-bind-catman		.cat
 ./usr/share/man/cat1/named-journalprint.0	man-bind-catman		.cat
+./usr/share/man/cat1/named-rrchecker.0		man-bind-catman		.cat
 ./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	.cat
 ./usr/share/man/cat1/nc.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
@@ -3806,6 +3808,7 @@
 ./usr/share/man/html1/md2.html			man-util-htmlman	html
 ./usr/share/man/html1/md4.html			man-util-htmlman	html
 ./usr/share/man/html1/md5.html			man-util-htmlman	html
+./usr/share/man/html1/mdig.html			man-bind-htmlman	html
 ./usr/share/man/html1/merge.html		man-util-htmlman	html
 ./usr/share/man/html1/mesg.html			man-util-htmlman	html
 ./usr/share/man/html1/midiplay.html		man-audio-htmlman	html
@@ -3843,6 +3846,7 @@
 ./usr/share/man/html1/named-checkzone.html	man-bind-htmlman	html
 ./usr/share/man/html1/named-compilezone.html	man-bind-htmlman	html
 ./usr/share/man/html1/named-journalprint.html	man-bind-htmlman	html
+./usr/share/man/html1/named-rrchecker.html	man-bind-htmlman	html
 ./usr/share/man/html1/nbsvtool.html		man-crypto-htmlman	html
 ./usr/share/man/html1/nc.html			man-netutil-htmlman	html
 ./usr/share/man/html1/netgroup.html		man-nis-htmlman		html
@@ -6922,6 +6926,7 @@
 ./usr/share/man/man1/md2.1			man-util-man		.man
 ./usr/share/man/man1/md4.1			man-util-man		.man
 ./usr/share/man/man1/md5.1			man-util-man		.man
+./usr/share/man/man1/mdig.1			man-bind-man		.man
 ./usr/share/man/man1/merge.1			man-util-man		.man
 ./usr/share/man/man1/mesg.1			man-util-man		.man
 ./usr/share/man/man1/midiplay.1			man-audio-man		.man
@@ -6960,6 +6965,7 @@
 ./usr/share/man/man1/named-checkzone.1		man-bind-man		.man
 ./usr/share/man/man1/named-compilezone.1	man-bind-man		.man
 ./usr/share/man/man1/named-journalprint.1	man-bind-man		.man
+./usr/share/man/man1/named-rrchecker.1		man-bind-man		.man
 ./usr/share/man/man1/nbsvtool.1			man-crypto-man		.man
 ./usr/share/man/man1/nc.1			man-netutil-man		.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man

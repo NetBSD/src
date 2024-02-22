@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.427 2024/02/21 22:53:47 christos Exp $
+# $NetBSD: mi,v 1.428 2024/02/22 00:58:49 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -673,6 +673,7 @@
 ./usr/libdata/debug/usr/bin/makeinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/man.debug		comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/mandoc.debug	comp-mdocml-debug	debug
+./usr/libdata/debug/usr/bin/mdig.debug		comp-bind-debug		debug
 ./usr/libdata/debug/usr/bin/menuc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/merge.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mesg.debug		comp-util-debug		debug
@@ -1199,6 +1200,7 @@
 ./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-journalprint.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/named-rrchecker.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	binutils,debug
 ./usr/libdata/debug/usr/sbin/ndbootd.debug	comp-bootserver-debug	debug
