@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.128.2.1 2023/06/22 08:14:35 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.128.2.2 2024/02/23 18:54:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -856,6 +856,9 @@ struct livengood_tcpip_ctxdesc {
 /* flags used starting with 82575 ... */
 #define	RXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
 #define	RXDCTL_SWFLSH        0x04000000 /* Rx Desc. write-back flushing */
+
+#define	WMREG_RQDPC(x)	(((x) < 4) ? (0x2830 + (0x100 * (x))) :		\
+	    (0xc030 + (0x40 * (x)))) /* Receive Queue Drop Packet Count */
 
 #define	WMREG_OLD_RDTR1	0x0130	/* Receive Delay Timer (ring 1) */
 #define	WMREG_OLD_RDBA1_LO 0x0138 /* Receive Descriptor Base Low (ring 1) */
