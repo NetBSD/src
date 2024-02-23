@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215 2023/11/30 06:29:33 rin Exp $
+#	$NetBSD: Makefile,v 1.216 2024/02/23 05:34:41 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -31,6 +31,9 @@ TOOLCHAIN_BITS+= gmake .WAIT
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
+.  if (defined(HAVE_GCC) && ${HAVE_GCC} >= 12)
+TOOLCHAIN_BITS+= isl .WAIT
+.  endif
 . endif
 
 TOOLCHAIN_BITS+= binutils .WAIT
