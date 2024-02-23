@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.219 2024/02/17 16:14:05 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.220 2024/02/23 18:18:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4273,4 +4273,10 @@ libexec/utmp_update/utmp_update.c		1.14
 
 	utmp_update(8): check for non-printable characters in ut_host.
 	[shm, ticket #1936]
+
+lib/libm/arch/x86_64/fenv.c			1.11
+tests/lib/libm/t_fenv.c				1.14,1.15
+
+	libm: PR 57949: fix spurious side effects in fetestexcept.
+	[riastradh, ticket #1937]
 
