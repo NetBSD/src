@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.64 2023/08/04 07:38:53 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.65 2024/02/23 22:03:45 andvar Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.64 2023/08/04 07:38:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.65 2024/02/23 22:03:45 andvar Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -609,7 +609,7 @@ SYSCTL_SETUP(ubsec_sysctl_init, "ubsec sysctl")
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ubsec",
-		SYSCTL_DESCR("ubsec opetions"),
+		SYSCTL_DESCR("ubsec options"),
 		NULL, 0, NULL, 0,
 		CTL_HW, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
