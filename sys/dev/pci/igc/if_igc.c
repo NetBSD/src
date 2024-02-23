@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.3.2.3 2023/10/14 06:49:37 martin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.3.2.4 2024/02/23 18:41:02 martin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.3 2023/10/14 06:49:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.4 2024/02/23 18:41:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1112,11 +1112,35 @@ igc_update_counters(struct igc_softc *sc)
 
 	/* Mac statistics */
 	struct igc_hw *hw = &sc->hw;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint64_t iqdrops = 0;
 
 	for (int cnt = 0; cnt < IGC_MAC_COUNTERS; cnt++) {
-		IGC_MAC_COUNTER_ADD(sc, cnt, igc_read_mac_counter(hw,
-		    igc_mac_counters[cnt].reg, igc_mac_counters[cnt].is64));
+		uint64_t val;
+		bus_size_t regaddr = igc_mac_counters[cnt].reg;
+
+		val = igc_read_mac_counter(hw, regaddr,
+		    igc_mac_counters[cnt].is64);
+		IGC_MAC_COUNTER_ADD(sc, cnt, val);
+		/* XXX Count MPC to iqdrops. */
+		if (regaddr == IGC_MPC)
+			iqdrops += val;
 	}
+
+	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
+		uint32_t val;
+
+		/* XXX RQDPC should be visible via evcnt(9). */
+		val = IGC_READ_REG(hw, IGC_RQDPC(iq));
+
+		/* RQDPC is not cleard on read. */
+		if (val != 0)
+			IGC_WRITE_REG(hw, IGC_RQDPC(iq), 0);
+		iqdrops += val;
+	}
+
+	if (iqdrops != 0)
+		if_statadd(ifp, if_iqdrops, iqdrops);
 #endif
 }
 
@@ -2518,6 +2542,9 @@ igc_update_link_status(struct igc_softc *sc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct igc_hw *hw = &sc->hw;
 
+	if (hw->mac.get_link_status == true)
+		igc_check_for_link(hw);
+
 	if (IGC_READ_REG(&sc->hw, IGC_STATUS) & IGC_STATUS_LU) {
 		if (sc->link_active == 0) {
 			igc_get_speed_and_duplex(hw, &sc->link_speed,
@@ -3817,7 +3844,7 @@ igc_print_devinfo(struct igc_softc *sc)
 	struct igc_hw *hw = &sc->hw;
 	struct igc_phy_info *phy = &hw->phy;
 	u_int oui, model, rev;
-	uint16_t id1, id2, nvm_ver, phy_ver;
+	uint16_t id1, id2, nvm_ver, phy_ver, etk_lo, etk_hi;
 	char descr[MII_MAX_DESCR_LEN];
 
 	/* Print PHY Info */
@@ -3829,23 +3856,26 @@ igc_print_devinfo(struct igc_softc *sc)
 	rev = MII_REV(id2);
 	mii_get_descr(descr, sizeof(descr), oui, model);
 	if (descr[0])
-		aprint_normal_dev(dev, "PHY: %s, rev. %d\n",
+		aprint_normal_dev(dev, "PHY: %s, rev. %d",
 		    descr, rev);
 	else
 		aprint_normal_dev(dev,
-		    "PHY OUI 0x%06x, model 0x%04x, rev. %d\n",
+		    "PHY OUI 0x%06x, model 0x%04x, rev. %d",
 		    oui, model, rev);
 
-	/* Get NVM version */
+	/* PHY FW version */
+	phy->ops.read_reg(hw, 0x1e, &phy_ver);
+	aprint_normal(", PHY FW version 0x%04hx\n", phy_ver);
+
+	/* NVM version */
 	hw->nvm.ops.read(hw, NVM_VERSION, 1, &nvm_ver);
 
-	/* Get PHY FW version */
-	phy->ops.read_reg(hw, 0x1e, &phy_ver);
+	/* EtrackID */
+	hw->nvm.ops.read(hw, NVM_ETKID_LO, 1, &etk_lo);
+	hw->nvm.ops.read(hw, NVM_ETKID_HI, 1, &etk_hi);
 
-	aprint_normal_dev(dev, "ROM image version %x.%02x",
+	aprint_normal_dev(dev,
+	    "NVM image version %x.%02x, EtrackID %04hx%04hx\n",
 	    (nvm_ver & NVM_VERSION_MAJOR) >> NVM_VERSION_MAJOR_SHIFT,
-	    (nvm_ver & NVM_VERSION_MINOR));
-	aprint_debug("(0x%04hx)", nvm_ver);
-
-	aprint_normal(", PHY FW version 0x%04hx\n", phy_ver);
+	    nvm_ver & NVM_VERSION_MINOR, etk_hi, etk_lo);
 }

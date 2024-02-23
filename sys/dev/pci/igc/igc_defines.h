@@ -1,4 +1,4 @@
-/*	$NetBSD: igc_defines.h,v 1.2.2.2 2023/10/08 13:19:34 martin Exp $	*/
+/*	$NetBSD: igc_defines.h,v 1.2.2.3 2024/02/23 18:41:02 martin Exp $	*/
 /*	$OpenBSD: igc_defines.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
 
 /*-
@@ -982,6 +982,8 @@
 #define NVM_CFG				0x0012
 #define NVM_ALT_MAC_ADDR_PTR		0x0037
 #define NVM_CHECKSUM_REG		0x003F
+#define NVM_ETKID_LO			0x0042
+#define NVM_ETKID_HI			0x0043
 
 #define IGC_NVM_CFG_DONE_PORT_0	0x040000 /* MNG config cycle done */
 #define IGC_NVM_CFG_DONE_PORT_1	0x080000 /* ...for second port */
