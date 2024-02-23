@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.324.2.7 2024/02/03 11:58:53 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.324.2.8 2024/02/23 18:35:59 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.7 2024/02/03 11:58:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324.2.8 2024/02/23 18:35:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1637,7 +1637,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	struct ixgbe_hw	      *hw = &sc->hw;
 	struct ixgbe_hw_stats *stats = &sc->stats.pf;
 	u32		      missed_rx = 0, bprc, lxontxc, lxofftxc;
-	u64		      total, total_missed_rx = 0;
+	u64		      total, total_missed_rx = 0, total_qprdc = 0;
 	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
@@ -1656,13 +1656,18 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRC(i), qprc[i]);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPTC(i), qptc[i]);
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
+			uint32_t qprdc;
+
 			IXGBE_EVC_ADD(&stats->qbrc[i],
 			    IXGBE_READ_REG(hw, IXGBE_QBRC_L(i)) +
 			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBRC_H(i)) << 32));
 			IXGBE_EVC_ADD(&stats->qbtc[i],
 			    IXGBE_READ_REG(hw, IXGBE_QBTC_L(i)) +
 			    ((u64)IXGBE_READ_REG(hw, IXGBE_QBTC_H(i)) << 32));
-			IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRDC(i), qprdc[i]);
+			/* QPRDC will be added to iqdrops. */
+			qprdc = IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+			IXGBE_EVC_ADD(&stats->qprdc[i], qprdc);
+			total_qprdc += qprdc;
 		} else {
 			/* 82598 */
 			IXGBE_EVC_REGADD(hw, stats, IXGBE_QBRC(i), qbrc[i]);
@@ -1793,7 +1798,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	 * normal RX counters are prepared in ether_input().
 	 */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_iqdrops, total_missed_rx);
+	if_statadd_ref(nsr, if_iqdrops, total_missed_rx + total_qprdc);
 
 	/*
 	 * Aggregate following types of errors as RX errors:
