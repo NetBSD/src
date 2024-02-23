@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.19 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.20 2024/02/23 21:09:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,11 @@
 #define NS_CLIENT_DROPPORT 1
 #endif /* ifndef NS_CLIENT_DROPPORT */
 
+#ifdef _LP64
 atomic_uint_fast64_t ns_client_requests = 0;
+#else
+atomic_uint_fast32_t ns_client_requests = 0;
+#endif
 
 static void
 clientmgr_attach(ns_clientmgr_t *source, ns_clientmgr_t **targetp);

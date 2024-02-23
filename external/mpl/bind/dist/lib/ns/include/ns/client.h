@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.15 2024/02/21 22:52:46 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.16 2024/02/23 21:09:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -273,7 +273,11 @@ struct ns_client {
  */
 #define NS_FAILCACHE_CD 0x01
 
+#ifdef _LP64
 extern atomic_uint_fast64_t ns_client_requests;
+#else
+extern atomic_uint_fast32_t ns_client_requests;
+#endif
 
 /***
  *** Functions
