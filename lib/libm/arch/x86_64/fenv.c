@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $ */
+/* $NetBSD: fenv.c,v 1.10.2.1 2024/02/23 18:09:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.10.2.1 2024/02/23 18:09:23 martin Exp $");
 
 #include "namespace.h"
 
@@ -259,7 +259,6 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 int
 fetestexcept(int excepts)
 {
-	fenv_t fenv;
 	uint32_t mxcsr;
 	uint16_t status;
 	int ex;
@@ -268,17 +267,10 @@ fetestexcept(int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 
-	/* Store the current x87 floating-point environment */
-	memset(&fenv, 0, sizeof(fenv));
-
-	__fnstenv(&fenv);
 	__fnstsw(&status);
-
-	/* Store the MXCSR register state */
-	__stmxcsr(&fenv.mxcsr);
 	__stmxcsr(&mxcsr);
 
-	return ((fenv.x87.status | fenv.mxcsr) & ex);
+	return ((status | mxcsr) & ex);
 }
 
 /*
