@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.17 2021/08/30 12:52:32 christos Exp $	*/
+/*	$NetBSD: mcount.c,v 1.18 2024/02/23 13:32:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.17 2021/08/30 12:52:32 christos Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.18 2024/02/23 13:32:28 christos Exp $");
 #endif
 #endif
 
@@ -127,6 +127,7 @@ _MCOUNT_DECL(u_long, u_long)
  * perform this optimization.
  */
 /* _mcount; may be static, inline, etc */
+/*LINTED unused*/
 _MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
 	u_short *frompcindex;
