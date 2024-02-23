@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.131 2024/02/19 09:03:14 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.132 2024/02/23 19:47:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -4173,4 +4173,21 @@ sys/arch/vax/vsa/vsbus.c			1.69 (patch)
 	vax: fix SCSI tranfer corruption on VAXstation 3100/m30 (KA420)
 	on netboot.
 	[tsutsui, ticket #1800]
+
+lib/libm/arch/x86_64/fenv.c			1.11
+tests/lib/libm/t_fenv.c				1.14,1.15
+
+	libm: PR 57949: fix spurious side effects in fetestexcept.
+	[riastradh, ticket #1801]
+
+sys/dev/pci/if_wm.c                     1.794-1.798 via patch
+sys/dev/pci/if_wmreg.h                  1.131
+
+        - Add RQDPC(Receive Queue Drop Packet Count) to iqdrops.
+        - Drop frames if the RX descriptor ring has no room on multiqueue
+          system.
+        - Improve dmesg output.
+          - Print RX packet buffer size.
+          - Fix the upper 16bit of Image Unique ID(EtrackID).
+	[msaitoh, ticket #1802]
 
