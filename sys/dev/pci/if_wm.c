@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767.2.6 2024/02/03 12:01:59 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767.2.7 2024/02/23 18:45:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.6 2024/02/03 12:01:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.7 2024/02/23 18:45:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -2721,6 +2721,10 @@ alloc_retry:
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
+
+	/* sc->sc_pba is set in wm_reset(). */
+	aprint_verbose_dev(sc->sc_dev, "RX packet buffer size: %uKB\n",
+	    sc->sc_pba);
 
 	/*
 	 * Check for I21[01] PLL workaround.
@@ -15328,16 +15332,17 @@ printver:
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
 			int rv;
+			uint16_t oid0, oid1;
 
 			off += NVM_COMBO_VER_OFF;
-			rv = wm_nvm_read(sc, off + 1, 1, &uid1);
-			rv |= wm_nvm_read(sc, off, 1, &uid0);
-			if ((rv == 0) && (uid0 != 0) && (uid0 != 0xffff)
-			    && (uid1 != 0) && (uid1 != 0xffff)) {
+			rv = wm_nvm_read(sc, off + 1, 1, &oid1);
+			rv |= wm_nvm_read(sc, off, 1, &oid0);
+			if ((rv == 0) && (oid0 != 0) && (oid0 != 0xffff)
+			    && (oid1 != 0) && (oid1 != 0xffff)) {
 				/* 16bits */
-				major = uid0 >> 8;
-				build = (uid0 << 8) | (uid1 >> 8);
-				patch = uid1 & 0x00ff;
+				major = oid0 >> 8;
+				build = (oid0 << 8) | (oid1 >> 8);
+				patch = oid1 & 0x00ff;
 				aprint_verbose(", option ROM Version %d.%d.%d",
 				    major, build, patch);
 			}
