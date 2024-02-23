@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.199 2024/02/19 08:59:48 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.200 2024/02/23 19:48:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15607,4 +15607,47 @@ sys/arch/vax/vsa/vsbus.c			1.69
 	vax: fix SCSI tranfer corruption on VAXstation 3100/m30 (KA420)
 	on netboot.
 	[tsutsui, ticket #601]
+
+distrib/amd64/ramdisks/Makefile			1.5
+
+	amd64: PR 57948: build ramdisk-zfsroot by default.
+	[riastradh, ticket #602]
+
+lib/libm/arch/x86_64/fenv.c			1.11
+tests/lib/libm/t_fenv.c				1.14,1.15
+
+	libm: PR 57949: fix spurious side effects in fetestexcept.
+	[riastradh, ticket #603]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.349
+
+	ixg(4): add QPRDC (Queue Packet Receive Drop Count) to
+	the interfaces "dropped on input" error count.
+	[msaitoh, ticket #604]
+
+sys/dev/pci/igc/if_igc.c			1.10-1.13
+sys/dev/pci/igc/igc_defines.h			1.3
+
+	igc(4):
+        - Count iqdrops (dropped on input errors).
+        - Add missing igc_check_for_link() call. It's required
+          to set the collision distance, configure flow control
+          from the negotiated result and set the LTR thresholds.
+	[msaitoh, ticket #605]
+
+sys/dev/pci/if_wm.c				1.794,1.798
+
+	wm(4): improve dmesg output.
+	 - Print RX packet buffer size.
+	 - Fix the upper 16bit of Image Unique ID(EtrackID).
+	[msaitoh, ticket #606]
+
+sys/dev/pci/if_wm.c				1.795-1.797
+sys/dev/pci/if_wmreg.h				1.131
+
+	wm(4):
+	- Add RQDPC(Receive Queue Drop Packet Count) to iqdrops.
+	- Drop frames if the RX descriptor ring has no room on
+	  multiqueue system
+	[msaitoh, ticket #607]
 
