@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.407 2020/10/21 13:31:51 christos Exp $
+#	$NetBSD: files.i386,v 1.408 2024/02/23 22:10:39 andvar Exp $
 #
 # new style config file for i386 architecture
 #
@@ -25,7 +25,7 @@ defflag	opt_xserver.h	XSERVER XSERVER_DDB
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
-# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+# The PHYSMEM_MAX_{SIZE,ADDR} options
 defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 # PCI BIOS options
