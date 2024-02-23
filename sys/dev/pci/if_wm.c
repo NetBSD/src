@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767.2.7 2024/02/23 18:45:46 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767.2.8 2024/02/23 18:54:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.7 2024/02/23 18:45:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.8 2024/02/23 18:54:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -460,9 +460,9 @@ struct wm_rxqueue {
 	/* RX event counters */
 	WM_Q_EVCNT_DEFINE(rxq, intr);	/* Interrupts */
 	WM_Q_EVCNT_DEFINE(rxq, defer);	/* Rx deferred processing */
-
 	WM_Q_EVCNT_DEFINE(rxq, ipsum);	/* IP checksums checked */
 	WM_Q_EVCNT_DEFINE(rxq, tusum);	/* TCP/UDP cksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, qdrop);	/* Rx queue drop packet */
 #endif
 };
 
@@ -6639,6 +6639,7 @@ wm_update_stats(struct wm_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
 	    cexterr;
+	uint64_t total_qdrop = 0;
 
 	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
 	symerrc = CSR_READ(sc, WMREG_SYMERRC);
@@ -6787,6 +6788,22 @@ wm_update_stats(struct wm_softc *sc)
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
 		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
 		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
+#ifdef WM_EVENT_COUNTERS
+		for (int i = 0; i < sc->sc_nqueues; i++) {
+			struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+			uint32_t rqdpc;
+
+			rqdpc = CSR_READ(sc, WMREG_RQDPC(i));
+			/*
+			 * On I210 and newer device, the RQDPC register is not
+			 * cleard on read.
+			 */
+			if ((rqdpc != 0) && (sc->sc_type >= WM_T_I210))
+				CSR_WRITE(sc, WMREG_RQDPC(i), 0);
+			WM_Q_EVCNT_ADD(rxq, qdrop, rqdpc);
+			total_qdrop += rqdpc;
+		}
+#endif
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
@@ -6815,7 +6832,7 @@ wm_update_stats(struct wm_softc *sc)
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
 	 */
-	if_statadd_ref(nsr, if_iqdrops, mpc);
+	if_statadd_ref(nsr, if_iqdrops, mpc + total_qdrop);
 	IF_STAT_PUTREF(ifp);
 }
 
@@ -6833,6 +6850,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_Q_EVCNT_STORE(rxq, defer, 0);
 		WM_Q_EVCNT_STORE(rxq, ipsum, 0);
 		WM_Q_EVCNT_STORE(rxq, tusum, 0);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_EVCNT_STORE(rxq, qdrop, 0);
 	}
 
 	/* TX queues */
@@ -8195,9 +8214,10 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_INTR_EVCNT_ATTACH(rxq, intr, rxq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(rxq, defer, rxq, i, xname);
-
 		WM_Q_MISC_EVCNT_ATTACH(rxq, ipsum, rxq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(rxq, tusum, rxq, i, xname);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_MISC_EVCNT_ATTACH(rxq, qdrop, rxq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		rx_done++;
@@ -8248,6 +8268,8 @@ wm_free_txrx_queues(struct wm_softc *sc)
 		WM_Q_EVCNT_DETACH(rxq, defer, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, ipsum, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, tusum, rxq, i);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_EVCNT_DETACH(rxq, qdrop, rxq, i);
 #endif /* WM_EVENT_COUNTERS */
 
 		wm_free_rx_buffer(sc, rxq);
@@ -8437,6 +8459,8 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 		    rxq->rxq_descsize * rxq->rxq_ndesc);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			uint32_t srrctl;
+
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
 				panic("%s: MCLBYTES %d unsupported for 82575 "
 				    "or higher\n", __func__, MCLBYTES);
@@ -8445,9 +8469,17 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 			 * Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF
 			 * only.
 			 */
-			CSR_WRITE(sc, WMREG_SRRCTL(qid),
-			    SRRCTL_DESCTYPE_ADV_ONEBUF
-			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
+			srrctl = SRRCTL_DESCTYPE_ADV_ONEBUF
+			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT);
+			/*
+			 * Drop frames if the RX descriptor ring has no room.
+			 * This is enabled only on multiqueue system to avoid
+			 * bad influence to other queues.
+			 */
+			if (sc->sc_nqueues > 1)
+				srrctl |= SRRCTL_DROP_EN;
+			CSR_WRITE(sc, WMREG_SRRCTL(qid), srrctl);
+
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_QUEUE_ENABLE
 			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
 			    | RXDCTL_WTHRESH(1));
