@@ -12,8 +12,14 @@
 
 #include <sys/cdefs.h>
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(remquof, _remquof)
+#endif
 
 static const float Zero[] = {0.0, -0.0,};
 

@@ -10,6 +10,9 @@
  */
 
 #include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <float.h>
 #include <machine/ieee.h>
 #include <stdint.h>

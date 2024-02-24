@@ -12,10 +12,16 @@
 
 #include <sys/cdefs.h>
 
+#include "namespace.h"
+
 #include <float.h>
 
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(remquo, _remquo)
+#endif
 
 static const double Zero[] = {0.0, -0.0,};
 
