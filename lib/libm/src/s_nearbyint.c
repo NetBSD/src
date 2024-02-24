@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nearbyint.c,v 1.4 2017/05/06 18:02:52 christos Exp $	*/
+/*	$NetBSD: s_nearbyint.c,v 1.5 2024/02/24 15:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nearbyint.c,v 1.2 2008/01/14 02:12:06 das Exp $");
 #else
-__RCSID("$NetBSD: s_nearbyint.c,v 1.4 2017/05/06 18:02:52 christos Exp $");
+__RCSID("$NetBSD: s_nearbyint.c,v 1.5 2024/02/24 15:16:53 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -54,13 +54,11 @@ fn(type x)			\
 	fenv_t env;		\
 				\
 	fegetenv(&env);		\
-	ret = rint(x);		\
+	ret = rintl(x);		\
 	fesetenv(&env);		\
 	return (ret);		\
 }
 
 DECL(double, nearbyint, rint)
 DECL(float, nearbyintf, rintf)
-#ifdef __HAVE_LONG_DOUBLE
 DECL(long double, nearbyintl, rintl)
-#endif

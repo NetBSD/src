@@ -1,4 +1,4 @@
-/*	$NetBSD: s_fabsl.c,v 1.4 2021/12/05 04:22:50 msaitoh Exp $	*/
+/*	$NetBSD: s_fabsl.c,v 1.5 2024/02/24 15:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_fabsl.c,v 1.4 2021/12/05 04:22:50 msaitoh Exp $");
+__RCSID("$NetBSD: s_fabsl.c,v 1.5 2024/02/24 15:16:53 christos Exp $");
 
 #include <math.h>
 #include <machine/ieee.h>
@@ -45,5 +45,11 @@ fabsl(long double x)
 	ux.extu_ext.ext_sign = 0;
 
 	return (ux.extu_ld);
+}
+#else
+long double
+fabsl(long double x)
+{
+	return fabs(x);
 }
 #endif

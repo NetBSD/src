@@ -1,4 +1,4 @@
-/*	$NetBSD: s_logl.c,v 1.3 2024/01/27 05:50:42 ryoon Exp $	*/
+/*	$NetBSD: s_logl.c,v 1.4 2024/02/24 15:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,15 +30,13 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_logl.c,v 1.3 2024/01/27 05:50:42 ryoon Exp $");
+__RCSID("$NetBSD: s_logl.c,v 1.4 2024/02/24 15:16:53 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include "math.h"
 #include <machine/float.h>
 #include <machine/ieee.h>
-
-#ifdef __HAVE_LONG_DOUBLE
 
 #ifdef __weak_alias
 __weak_alias(logl, _logl)
@@ -47,6 +45,7 @@ __weak_alias(log2l, _log2l)
 __weak_alias(log1pl, _log1pl)
 #endif
 
+#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/s_logl.c"
@@ -58,16 +57,27 @@ __weak_alias(log1pl, _log1pl)
 
 #else
 
-#ifdef __weak_alias
-__weak_alias(log10l, log10)
-__weak_alias(log2l, log2)
-__weak_alias(log1pl, log1p)
-#endif
-
 long double
 logl(long double l)
 {
 	return log(l);
 }
 
+long double
+log10l(long double l)
+{
+	return log10(l);
+}
+
+long double
+log2l(long double l)
+{
+	return log2(l);
+}
+
+long double
+log1pl(long double l)
+{
+	return log1p(l);
+}
 #endif

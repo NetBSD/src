@@ -24,9 +24,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
-
 __weak_alias(asinl, _asinl)
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/invtrig.h"
@@ -90,5 +90,9 @@ asinl(long double x)
 	if(expsign>0) return t; else return -t;    
 }
 #else
-__weak_alias(asinl, _asin)
+long double
+asinl(long double x)
+{
+	return asin(x);
+}
 #endif

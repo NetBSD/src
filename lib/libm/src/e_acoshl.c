@@ -22,8 +22,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(acoshl, _acoshl)
+
+#ifdef __HAVE_LONG_DOUBLE
 
 /*
  * See e_acosh.c for complete comments.
@@ -92,6 +93,9 @@ acoshl(long double x)
 	}
 }
 #else
-
-__weak_alias(acoshl, acosh)
+long double
+acoshl(long double x)
+{
+	return acosh(x);
+}
 #endif

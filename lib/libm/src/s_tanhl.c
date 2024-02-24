@@ -20,8 +20,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(tanhl, _tanhl)
+
+#ifdef __HAVE_LONG_DOUBLE
 /*
  * See s_tanh.c for complete comments.
  *
@@ -182,5 +183,10 @@ tanhl(long double x)
 	RETURNI(s*z);
 }
 #else
-__weak_alias(tanhl, tanh)
+
+long double
+tanhl(long double x)
+{
+	return tanh(x);
+}
 #endif
