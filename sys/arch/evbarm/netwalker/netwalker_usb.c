@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.8 2020/01/15 10:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.8.24.1 2024/02/24 13:10:18 martin Exp $");
 
 #include "locators.h"
 
@@ -61,7 +61,7 @@ struct netwalker_usbc_softc {
 
 static int	imxusbc_match(device_t, cfdata_t, void *);
 static void	imxusbc_attach(device_t, device_t, void *);
-static void	netwalker_usb_init(struct imxehci_softc *);
+static void	netwalker_usb_init(struct imxehci_softc *, uintptr_t);
 
 static void	init_otg(struct imxehci_softc *);
 static void	init_h1(struct imxehci_softc *);
@@ -103,7 +103,7 @@ imxusbc_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-netwalker_usb_init(struct imxehci_softc *sc)
+netwalker_usb_init(struct imxehci_softc *sc, uintptr_t data)
 {
 	switch (sc->sc_unit) {
 	case 0:	/* OTG controller */

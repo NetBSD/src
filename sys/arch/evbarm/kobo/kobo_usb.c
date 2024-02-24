@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_usb.c,v 1.3 2019/07/24 11:20:55 hkenken Exp $	*/
+/*	$NetBSD: kobo_usb.c,v 1.3.28.1 2024/02/24 13:10:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.3 2019/07/24 11:20:55 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.3.28.1 2024/02/24 13:10:18 martin Exp $");
 
 #include "opt_imx.h"
 
@@ -64,7 +64,7 @@ struct kobo_usbc_softc {
 
 static int	imxusbc_match(device_t, cfdata_t, void *);
 static void	imxusbc_attach(device_t, device_t, void *);
-static void	kobo_usb_init(struct imxehci_softc *);
+static void	kobo_usb_init(struct imxehci_softc *, uintptr_t);
 
 static void	init_otg(struct imxehci_softc *);
 static void	init_h1(struct imxehci_softc *);
@@ -105,7 +105,7 @@ imxusbc_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-kobo_usb_init(struct imxehci_softc *sc)
+kobo_usb_init(struct imxehci_softc *sc, uintptr_t data)
 {
 	switch (sc->sc_unit) {
 	case 0:	/* OTG controller */
