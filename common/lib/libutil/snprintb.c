@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.40 2024/02/24 12:40:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.40 2024/02/24 12:40:00 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.39 2024/02/22 21:04:23 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.40 2024/02/24 12:40:00 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -142,11 +142,11 @@ old_style(state *s)
 			return -1;
 		if (s->val & (1U << (bit - 1))) {
 			put_sep(s);
-			while (*++s->bitfmt > ' ')
+			while ((uint8_t)*++s->bitfmt > ' ')
 				store(s, *s->bitfmt);
 			wrap_if_necessary(s, cur_bitfmt);
 		} else
-			while (*++s->bitfmt > ' ')
+			while ((uint8_t)*++s->bitfmt > ' ')
 				continue;
 	}
 	return 0;
