@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.14 2024/02/20 16:53:22 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.15 2024/02/24 15:34:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,16 +38,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\
+The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.14 2024/02/20 16:53:22 christos Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.15 2024/02/24 15:34:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,6 +89,10 @@ void	 bcddate(char *, char *);
 char	*lifname(char *);
 int	 putfile(char *, int);
 void	 usage(void);
+
+#define CLEAR(a, b, c)	\
+__CTASSERT(sizeof(b) - 1 == c); \
+memcpy((a), (b), (c))
 
 /*
  * Old Format:
@@ -152,7 +155,7 @@ main(int argc, char **argv)
 	if ((to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1)
 		err(1, "Can't open `%s'", argv[0]);
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "          ", sizeof(lifd[1].dir_name));
+	CLEAR(lifd[1].dir_name, "          ", sizeof(lifd[1].dir_name));
 	lifd[1].dir_type = htobe16(-1);
 	lifd[1].dir_addr = htobe32(0);
 	lifd[1].dir_length = htobe32(0);
@@ -161,7 +164,7 @@ main(int argc, char **argv)
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 	/* record volume info */
 	lifv.vol_id = htobe16(VOL_ID);
-	strncpy(lifv.vol_label, "BOOT43", sizeof(lifv.vol_label));
+	CLEAR(lifv.vol_label, "BOOT43", sizeof(lifv.vol_label));
 	lifv.vol_addr = htobe32(btolifs(LIF_DIRSTART));
 	lifv.vol_oct = htobe16(VOL_OCT);
 	lifv.vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
