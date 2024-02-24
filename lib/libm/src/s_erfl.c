@@ -1,4 +1,4 @@
-/* 	$NetBSD: s_erfl.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
+/* 	$NetBSD: s_erfl.c,v 1.3 2024/02/24 15:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_erfl.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
+__RCSID("$NetBSD: s_erfl.c,v 1.3 2024/02/24 15:16:53 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -39,11 +39,12 @@ __RCSID("$NetBSD: s_erfl.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 #include <machine/ieee.h>
 
 
-#ifdef __HAVE_LONG_DOUBLE
-
 #ifdef __weak_alias
 __weak_alias(erfl,_erfl)
+__weak_alias(erfcl,_erfcl)
 #endif
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/s_erfl.c"
@@ -55,8 +56,16 @@ __weak_alias(erfl,_erfl)
 
 #else
 
-#ifdef __weak_alias
-__weak_alias(erfl, erf)
-#endif
+long double
+erfcl(long double x)
+{
+	return erfc(x);
+}
+
+long double
+erfl(long double x)
+{
+	return erf(x);
+}
 
 #endif

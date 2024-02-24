@@ -1,4 +1,4 @@
-/* 	$NetBSD: b_tgammal.c,v 1.2 2024/01/23 15:45:07 christos Exp $	*/
+/* 	$NetBSD: b_tgammal.c,v 1.3 2024/02/24 15:16:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: b_tgammal.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
+__RCSID("$NetBSD: b_tgammal.c,v 1.3 2024/02/24 15:16:53 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -38,12 +38,11 @@ __RCSID("$NetBSD: b_tgammal.c,v 1.2 2024/01/23 15:45:07 christos Exp $");
 #include <machine/float.h>
 #include <machine/ieee.h>
 
-
-#ifdef __HAVE_LONG_DOUBLE
-
 #ifdef __weak_alias
 __weak_alias(tgammal,_tgammal)
 #endif
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/b_tgammal.c"
@@ -55,8 +54,10 @@ __weak_alias(tgammal,_tgammal)
 
 #else
 
-#ifdef __weak_alias
-__weak_alias(tgammal, tgamma)
-#endif
+long double     
+tgammal(long double x)
+{  
+	return tgamma(x);
+}
 
 #endif

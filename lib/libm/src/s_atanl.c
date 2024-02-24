@@ -19,8 +19,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(atanl, _atanl)
+
+#ifdef __HAVE_LONG_DOUBLE
 
 /*
  * See comments in s_atan.c.
@@ -99,5 +100,9 @@ atanl(long double x)
 	}
 }
 #else
-__weak_alias(atanl, atan)
+long double
+atanl(long double x)
+{
+	return atan(x);
+}
 #endif

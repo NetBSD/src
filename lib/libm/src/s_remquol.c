@@ -17,6 +17,10 @@
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
+__weak_alias(remquol, _remquol)
+#endif
+
 #ifdef __HAVE_LONG_DOUBLE
 
 #define	BIAS (LDBL_MAX_EXP - 1)
@@ -174,4 +178,12 @@ fixup:
 	*quo = (sxy ? -q : q);
 	return x;
 }
+#else
+
+long double
+remquol(long double x, long double y, int *quo)
+{
+	return remquo(x, y, quo);
+}
+
 #endif

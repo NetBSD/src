@@ -22,8 +22,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(atanhl, _atanhl)
+
+#ifdef __HAVE_LONG_DOUBLE
 /*
  * See e_atanh.c for complete comments.
  *
@@ -76,5 +77,9 @@ atanhl(long double x)
 	RETURNI((hx & 0x8000) == 0 ? t : -t);
 }
 #else
-__weak_alias(atanhl, atanh)
+long double
+atanhl(long double x)
+{
+	return atanh(x);
+}
 #endif

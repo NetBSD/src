@@ -21,8 +21,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(asinhl, _asinhl)
+
+#ifdef __HAVE_LONG_DOUBLE
 
 /*
  * See s_asinh.c for complete comments.
@@ -94,5 +95,9 @@ asinhl(long double x)
 	RETURNI((hx & 0x8000) == 0 ? w : -w);
 }
 #else
-__weak_alias(asinhl, asinh)
+long double
+asinhl(long double x)
+{
+	return asinh(x);
+}
 #endif

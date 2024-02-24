@@ -24,8 +24,9 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
 __weak_alias(acosl, _acosl)
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/invtrig.h"
@@ -99,5 +100,9 @@ acosl(long double x)
 	}
 }
 #else
-__weak_alias(acosl, acos)
+long double
+acosl(long double x)
+{
+	return acos(x);
+}
 #endif
