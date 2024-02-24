@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.18 2024/01/21 18:53:18 christos Exp $ */
+/* $NetBSD: namespace.h,v 1.19 2024/02/24 19:32:09 mrg Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -36,6 +36,10 @@
 #define asin _asin
 #define asinf _asinf
 #define asinl _asinl
+
+#define remquo _remquo
+#define remquof _remquof
+#define remquol _remquol
 
 #define casin _casin
 #define casinf _casinf

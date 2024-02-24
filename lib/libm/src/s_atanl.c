@@ -19,7 +19,9 @@
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
 __weak_alias(atanl, _atanl)
+#endif
 
 #ifdef __HAVE_LONG_DOUBLE
 
