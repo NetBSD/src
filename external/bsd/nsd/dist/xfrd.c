@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <inttypes.h>
 #include "xfrd.h"
 #include "xfrd-tcp.h"
 #include "xfrd-disk.h"
@@ -196,9 +197,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd->notify_waiting_last = NULL;
 	xfrd->notify_udp_num = 0;
 
-#ifdef HAVE_SSL
 	daemon_remote_attach(xfrd->nsd->rc, xfrd);
-#endif
 
 	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle, nsd->options->xfrd_tcp_max, nsd->options->xfrd_tcp_pipeline);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
@@ -357,9 +356,7 @@ xfrd_shutdown()
 	if(xfrd->nsd->options->zonefiles_write) {
 		event_del(&xfrd->write_timer);
 	}
-#ifdef HAVE_SSL
 	daemon_remote_close(xfrd->nsd->rc); /* close sockets of rc */
-#endif
 	/* close sockets */
 	RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones)
 	{
@@ -406,8 +403,8 @@ xfrd_shutdown()
 	/* unlink xfr files in not-yet-done task file */
 	xfrd_clean_pending_tasks(xfrd->nsd, xfrd->nsd->task[xfrd->nsd->mytask]);
 	xfrd_del_tempdir(xfrd->nsd);
-#ifdef HAVE_SSL
 	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
+#ifdef HAVE_SSL
 	if (xfrd->nsd->tls_ctx)
 		SSL_CTX_free(xfrd->nsd->tls_ctx);
 #  ifdef HAVE_TLS_1_3
@@ -573,7 +570,10 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	xfrd_xfr_type* xfr;
 	xfrd_xfr_type* prev_xfr;
 	enum soainfo_hint hint;
-	time_t before, acquired = 0;
+#ifndef NDEBUG
+	time_t before;
+#endif
+	time_t acquired = 0;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: process SOAINFO %s",
 		dname_to_string(task->zname, 0)));
 	zone = (xfrd_zone_type*)rbtree_search(xfrd->zones, task->zname);
@@ -585,7 +585,9 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			hint == soainfo_bad ? "kept" : "lost"));
 		soa_ptr = NULL;
 		/* discard all updates */
+#ifndef NDEBUG
 		before = xfrd_time();
+#endif
 	} else {
 		uint8_t* p = (uint8_t*)task->zname + dname_total_size(
 			task->zname);
@@ -620,7 +622,9 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			(unsigned)ntohl(soa.serial)));
 		/* discard all updates received before initial reload unless
 		   reload was successful */
+#ifndef NDEBUG
 		before = xfrd->reload_cmd_first_sent;
+#endif
 	}
 
 	if(!zone) {
@@ -865,7 +869,6 @@ xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
 void
 xfrd_free_namedb(struct nsd* nsd)
 {
-	namedb_close_udb(nsd->db);
 	namedb_close(nsd->db);
 	nsd->db = 0;
 }
@@ -1300,7 +1303,7 @@ xfrd_handle_incoming_soa(xfrd_zone_type* zone,
 		return;
 
 	if(zone->soa_disk_acquired) {
-		int cmp = compare_serial(soa->serial, zone->soa_disk.serial);
+		int cmp = compare_serial(ntohl(soa->serial), ntohl(zone->soa_disk.serial));
 
 		/* soa is from an update if serial equals soa_disk.serial or
 		   serial is less than soa_disk.serial and the acquired time is
@@ -1317,9 +1320,17 @@ xfrd_handle_incoming_soa(xfrd_zone_type* zone,
 		}
 
 		/* soa in disk has been loaded in memory */
-		log_msg(LOG_INFO, "zone %s serial %u is updated to %u",
-			zone->apex_str, (unsigned)ntohl(zone->soa_nsd.serial),
-			(unsigned)ntohl(soa->serial));
+		{
+			uint32_t soa_serial, soa_nsd_serial;
+			soa_serial = ntohl(soa->serial);
+			soa_nsd_serial = ntohl(zone->soa_nsd.serial);
+			if (compare_serial(soa_serial, soa_nsd_serial) > 0)
+				log_msg(LOG_INFO, "zone %s serial %"PRIu32" is updated to %"PRIu32,
+					zone->apex_str, soa_nsd_serial, soa_serial);
+			else
+				log_msg(LOG_INFO, "zone %s serial is updated to %"PRIu32,
+					zone->apex_str, soa_serial);
+		}
 		zone->soa_nsd = *soa;
 		zone->soa_nsd_acquired = acquired;
 		xfrd->write_zonefile_needed = 1;
@@ -2246,6 +2257,7 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 	xfrd_soa_type soa;
 	enum xfrd_packet_result res;
         uint64_t xfrfile_size;
+	assert(zone->latest_xfr);
 
 	/* parse and check the packet - see if it ends the xfr */
 	switch((res=xfrd_parse_received_xfr_packet(zone, packet, &soa)))
@@ -2282,7 +2294,6 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 					zone->master->ip_address_spec));
 			}
 			if (res == xfrd_packet_notimpl
-				&& zone->latest_xfr
 				&& zone->latest_xfr->query_type == TYPE_IXFR)
 				return res;
 			else
@@ -2356,8 +2367,8 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 	zone->soa_disk = soa;
 	if(zone->soa_notified_acquired && (
 		zone->soa_notified.serial == 0 ||
-		compare_serial(htonl(zone->soa_disk.serial),
-		htonl(zone->soa_notified.serial)) >= 0))
+		compare_serial(ntohl(zone->soa_disk.serial),
+		ntohl(zone->soa_notified.serial)) >= 0))
 	{
 		zone->soa_notified_acquired = 0;
 	}
@@ -2679,24 +2690,6 @@ xfrd_get_temp_buffer()
 	return xfrd->packet;
 }
 
-#ifdef BIND8_STATS
-/** process stat info task */
-static void
-xfrd_process_stat_info_task(xfrd_state_type* xfrd, struct task_list_d* task)
-{
-	size_t i;
-	stc_type* p = (void*)((char*)task->zname + sizeof(struct nsdst));
-	stats_add(&xfrd->nsd->st, (struct nsdst*)task->zname);
-	for(i=0; i<xfrd->nsd->child_count; i++) {
-		xfrd->nsd->children[i].query_count += *p++;
-	}
-	/* got total, now see if users are interested in these statistics */
-#ifdef HAVE_SSL
-	daemon_remote_process_stats(xfrd->nsd->rc);
-#endif
-}
-#endif /* BIND8_STATS */
-
 #ifdef USE_ZONE_STATS
 /** process zonestat inc task */
 static void
@@ -2713,18 +2706,13 @@ xfrd_process_zonestat_inc_task(xfrd_state_type* xfrd, struct task_list_d* task)
 static void
 xfrd_handle_taskresult(xfrd_state_type* xfrd, struct task_list_d* task)
 {
-#ifndef BIND8_STATS
+#ifndef USE_ZONE_STATS
 	(void)xfrd;
 #endif
 	switch(task->task_type) {
 	case task_soa_info:
 		xfrd_process_soa_info_task(task);
 		break;
-#ifdef BIND8_STATS
-	case task_stat_info:
-		xfrd_process_stat_info_task(xfrd, task);
-		break;
-#endif /* BIND8_STATS */
 #ifdef USE_ZONE_STATS
 	case task_zonestat_inc:
 		xfrd_process_zonestat_inc_task(xfrd, task);

@@ -36,6 +36,7 @@ static SSL_CTX*
 create_ssl_context()
 {
 	SSL_CTX *ctx;
+	unsigned char protos[] = { 3, 'd', 'o', 't' };
 	ctx = SSL_CTX_new(TLS_client_method());
 	if (!ctx) {
 		log_msg(LOG_ERR, "xfrd tls: Unable to create SSL ctxt");
@@ -49,6 +50,12 @@ create_ssl_context()
 	else if (!SSL_CTX_set_min_proto_version(ctx, TLS1_3_VERSION)) {
 		SSL_CTX_free(ctx);
 		log_msg(LOG_ERR, "xfrd tls: Unable to set minimum TLS version 1.3");
+		return NULL;
+	}
+
+	if (SSL_CTX_set_alpn_protos(ctx, protos, sizeof(protos)) != 0) {
+		SSL_CTX_free(ctx);
+		log_msg(LOG_ERR, "xfrd tls: Unable to set ALPN protocols");
 		return NULL;
 	}
 	return ctx;
@@ -1261,9 +1268,12 @@ conn_read_ssl(struct xfrd_tcp* tcp, SSL* ssl)
 			}
 			if(err == SSL_ERROR_ZERO_RETURN) {
 				/* EOF */
-				return 0;
+				return -1;
 			}
-			log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
+			if(err == SSL_ERROR_SYSCALL)
+				log_msg(LOG_ERR, "ssl_read returned error SSL_ERROR_SYSCALL with received %zd: %s", received, strerror(errno));
+			else
+				log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
 		}
 		if(received == -1) {
 			if(errno == EAGAIN || errno == EINTR) {
@@ -1310,9 +1320,12 @@ conn_read_ssl(struct xfrd_tcp* tcp, SSL* ssl)
 		int err = SSL_get_error(ssl, received);
 		if(err == SSL_ERROR_ZERO_RETURN) {
 			/* EOF */
-			return 0;
+			return -1;
 		}
-		log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
+		if(err == SSL_ERROR_SYSCALL)
+			log_msg(LOG_ERR, "ssl_read returned error SSL_ERROR_SYSCALL with received %zd: %s", received, strerror(errno));
+		else
+			log_msg(LOG_ERR, "ssl_read returned error %d with received %zd", err, received);
 	}
 	if(received == -1) {
 		if(errno == EAGAIN || errno == EINTR) {
@@ -1455,7 +1468,10 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 #endif
 		ret = conn_read(tcp);
 	if(ret == -1) {
-		log_msg(LOG_ERR, "xfrd: failed reading tcp %s", strerror(errno));
+		if(errno != 0)
+			log_msg(LOG_ERR, "xfrd: failed reading tcp %s", strerror(errno));
+		else
+			log_msg(LOG_ERR, "xfrd: failed reading tcp: closed");
 		xfrd_tcp_pipe_stop(tp);
 		return;
 	}

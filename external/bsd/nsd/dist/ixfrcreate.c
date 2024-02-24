@@ -533,16 +533,14 @@ static int process_marktypes(struct ixfr_store* store, struct zone* zone,
 	/* walk through the rrsets in the zone, if it is not in the
 	 * marktypes list, then it is new and an added RRset */
 	rrset_type* s;
-	size_t atmarktype = 0;
 	qsort(marktypes, marktypes_used, sizeof(marktypes[0]), &sort_uint16);
 	for(s=domain->rrsets; s; s=s->next) {
 		uint16_t tp;
 		if(s->zone != zone)
 			continue;
 		tp = rrset_rrtype(s);
-		if(atmarktype < marktypes_used && marktypes[atmarktype]==tp) {
+		if(bsearch(&tp, marktypes, marktypes_used, sizeof(marktypes[0]), &sort_uint16)) {
 			/* the item is in the marked list, skip it */
-			atmarktype++;
 			continue;
 		}
 		if(!process_add_rrset(store, domain, s))
@@ -947,8 +945,7 @@ static int ixfr_perform_init(struct ixfr_create* ixfrcr, struct zone* zone,
 		return 0;
 	}
 	ixfrcr->new_serial = zone_get_current_serial(zone);
-	*store = ixfr_store_start(zone, store_mem, ixfrcr->old_serial,
-		ixfrcr->new_serial);
+	*store = ixfr_store_start(zone, store_mem);
 	if(!ixfr_create_store_newsoa(*store, zone)) {
 		fclose(*spool);
 		ixfr_store_free(*store);

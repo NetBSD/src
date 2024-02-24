@@ -142,7 +142,7 @@
 
 /* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
    don't. */
-#define HAVE_DECL_REALLOCARRAY 0
+#define HAVE_DECL_REALLOCARRAY 1
 
 /* Define to 1 if you have the declaration of `redisConnect', and to 0 if you
    don't. */
@@ -225,7 +225,7 @@
 
 /* Define to 1 if you have the `EVP_default_properties_is_fips_enabled'
    function. */
-/* #undef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED */
+#define HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED 1
 
 /* Define to 1 if you have the `EVP_DigestVerify' function. */
 #define HAVE_EVP_DIGESTVERIFY 1
@@ -237,7 +237,7 @@
 #define HAVE_EVP_ENCRYPTINIT_EX 1
 
 /* Define to 1 if you have the `EVP_MAC_CTX_set_params' function. */
-/* #undef HAVE_EVP_MAC_CTX_SET_PARAMS */
+#define HAVE_EVP_MAC_CTX_SET_PARAMS 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #define HAVE_EVP_MD_CTX_NEW 1
@@ -267,7 +267,7 @@
 #define HAVE_FCNTL 1
 
 /* Define to 1 if you have the `FIPS_mode' function. */
-#define HAVE_FIPS_MODE 1
+/* #undef HAVE_FIPS_MODE */
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
@@ -298,6 +298,9 @@
 
 /* Define to 1 if you have the `getrlimit' function. */
 #define HAVE_GETRLIMIT 1
+
+/* Define to 1 if you have the `gettid' function. */
+/* #undef HAVE_GETTID */
 
 /* Define to 1 if you have the `glob' function. */
 #define HAVE_GLOB 1
@@ -362,6 +365,9 @@
 /* Define if we have LibreSSL */
 /* #undef HAVE_LIBRESSL */
 
+/* Define to 1 if you have the <linux/net_tstamp.h> header file. */
+/* #undef HAVE_LINUX_NET_TSTAMP_H */
+
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
 
@@ -423,7 +429,7 @@
 #define HAVE_OPENSSL_CONF_H 1
 
 /* Define to 1 if you have the <openssl/core_names.h> header file. */
-/* #undef HAVE_OPENSSL_CORE_NAMES_H */
+#define HAVE_OPENSSL_CORE_NAMES_H 1
 
 /* Define to 1 if you have the <openssl/dh.h> header file. */
 #define HAVE_OPENSSL_DH_H 1
@@ -444,7 +450,7 @@
 #define HAVE_OPENSSL_INIT_SSL 1
 
 /* Define to 1 if you have the <openssl/param_build.h> header file. */
-/* #undef HAVE_OPENSSL_PARAM_BUILD_H */
+#define HAVE_OPENSSL_PARAM_BUILD_H 1
 
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
@@ -456,7 +462,13 @@
 #define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the `OSSL_PARAM_BLD_new' function. */
-/* #undef HAVE_OSSL_PARAM_BLD_NEW */
+#define HAVE_OSSL_PARAM_BLD_NEW 1
+
+/* Define to 1 if you have the `poll' function. */
+#define HAVE_POLL 1
+
+/* Define to 1 if you have the <poll.h> header file. */
+#define HAVE_POLL_H 1
 
 /* Define if you have POSIX threads libraries and header files. */
 #define HAVE_PTHREAD 1
@@ -553,7 +565,7 @@
 
 /* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_evp_cb'
    function. */
-/* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
+#define HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB 1
 
 /* Define to 1 if you have the `SSL_get0_alpn_selected' function. */
 #define HAVE_SSL_GET0_ALPN_SELECTED 1
@@ -562,7 +574,7 @@
 #define HAVE_SSL_GET0_PEERNAME 1
 
 /* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
-/* #undef HAVE_SSL_GET1_PEER_CERTIFICATE */
+#define HAVE_SSL_GET1_PEER_CERTIFICATE 1
 
 /* Define to 1 if you have the `SSL_set1_host' function. */
 #define HAVE_SSL_SET1_HOST 1
@@ -761,7 +773,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.16.3"
+#define PACKAGE_STRING "unbound 1.19.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -770,7 +782,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.16.3"
+#define PACKAGE_VERSION "1.19.1"
 
 /* default pidfile location */
 #define PIDFILE "/var/run/unbound.pid"
@@ -793,7 +805,7 @@
 #define ROOT_CERT_FILE CHROOT_DIR "/etc/unbound/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,16,3,0
+#define RSRC_PACKAGE_VERSION 1,19,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR CHROOT_DIR "/etc/unbound"
@@ -801,11 +813,30 @@
 /* Shared data */
 #define SHARE_DIR CHROOT_DIR "/etc/unbound"
 
+#ifdef _LP64
+/* The size of `pthread_t', as computed by sizeof. */
+#define SIZEOF_PTHREAD_T 8
+
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
+#else
+/* The size of `pthread_t', as computed by sizeof. */
+#define SIZEOF_PTHREAD_T 4
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 4
+#endif
 
 /* The size of `time_t', as computed by sizeof. */
 #define SIZEOF_TIME_T 8
+
+#ifdef _LP64
+/* The size of `unsigned long', as computed by sizeof. */
+#define SIZEOF_UNSIGNED_LONG 8
+#else
+/* The size of `unsigned long', as computed by sizeof. */
+#define SIZEOF_UNSIGNED_LONG 4
+#endif
 
 /* define if (v)snprintf does not return length needed, (but length used) */
 /* #undef SNPRINTF_RET_BROKEN */
@@ -878,6 +909,14 @@
 
 /* Define if you enable libevent */
 #define USE_LIBEVENT 1
+
+/* Define this to enable use of /proc/sys/net/ipv4/ip_local_port_range as a
+   default outgoing port range. This is only for the libunbound on Linux and
+   does not affect unbound resolving daemon itself. This may severely limit
+   the number of available outgoing ports and thus decrease randomness. Define
+   this only when the target system restricts (e.g. some of SELinux enabled
+   distributions) the use of non-ephemeral ports. */
+/* #undef USE_LINUX_IP_LOCAL_PORT_RANGE */
 
 /* Define if you want to use internal select based events */
 /* #undef USE_MINI_EVENT */
@@ -965,6 +1004,9 @@
    this defined. */
 /* #undef _POSIX_1_SOURCE */
 
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+/* #undef _POSIX_SOURCE */
+
 /* defined to use gcc ansi snprintf and sscanf that understands %lld when
    compiled for windows. */
 /* #undef __USE_MINGW_ANSI_STDIO */
@@ -1046,15 +1088,15 @@
 
 #if defined(OMITTED__D_GNU_SOURCE) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_BSD_SOURCE) && !defined(_BSD_SOURCE)
 #define _BSD_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_DEFAULT_SOURCE) && !defined(_DEFAULT_SOURCE)
 #define _DEFAULT_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D__EXTENSIONS__) && !defined(__EXTENSIONS__)
 #define __EXTENSIONS__ 1
@@ -1062,23 +1104,23 @@
 
 #if defined(OMITTED__D_POSIX_C_SOURCE_200112) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112
-#endif 
+#endif
 
 #if defined(OMITTED__D_XOPEN_SOURCE_600) && !defined(_XOPEN_SOURCE)
 #define _XOPEN_SOURCE 600
-#endif 
+#endif
 
 #if defined(OMITTED__D_XOPEN_SOURCE_EXTENDED_1) && !defined(_XOPEN_SOURCE_EXTENDED)
 #define _XOPEN_SOURCE_EXTENDED 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_ALL_SOURCE) && !defined(_ALL_SOURCE)
 #define _ALL_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_LARGEFILE_SOURCE_1) && !defined(_LARGEFILE_SOURCE)
 #define _LARGEFILE_SOURCE 1
-#endif 
+#endif
 
 
 
@@ -1162,7 +1204,7 @@
 #endif
 
 
- 
+
 #ifdef HAVE_ATTR_FORMAT
 #  define ATTR_FORMAT(archetype, string_index, first_to_check) \
     __attribute__ ((format (archetype, string_index, first_to_check)))
@@ -1272,7 +1314,7 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #ifdef HAVE_WINSOCK2_H
 #define FD_SET_T (u_int)
 #else
-#define FD_SET_T 
+#define FD_SET_T
 #endif
 
 

@@ -470,6 +470,14 @@ struct eap_peer_config {
 	 * 1 = use cryptobinding if server supports it
 	 * 2 = require cryptobinding
 	 *
+	 * phase2_auth option can be used to control Phase 2 (i.e., within TLS
+	 * tunnel) behavior for PEAP:
+	 * 0 = do not require Phase 2 authentication
+	 * 1 = require Phase 2 authentication when client certificate
+	 *  (private_key/client_cert) is no used and TLS session resumption was
+	 *  not used (default)
+	 * 2 = require Phase 2 authentication in all cases
+	 *
 	 * EAP-WSC (WPS) uses following options: pin=Device_Password and
 	 * uuid=Device_UUID
 	 *

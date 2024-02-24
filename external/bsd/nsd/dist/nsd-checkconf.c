@@ -420,7 +420,6 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(tcp_reject_overflow, o);
 		SERV_GET_BIN(log_only_syslog, o);
 		/* str */
-		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
 		SERV_GET_STR(version, o);
 		SERV_GET_STR(nsid, o);
@@ -468,6 +467,12 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 #ifdef USE_DNSTAP
 		SERV_GET_BIN(dnstap_enable, o);
 		SERV_GET_STR(dnstap_socket_path, o);
+		SERV_GET_STR(dnstap_ip, o);
+		SERV_GET_BIN(dnstap_tls, o);
+		SERV_GET_STR(dnstap_tls_server_name, o);
+		SERV_GET_STR(dnstap_tls_cert_bundle, o);
+		SERV_GET_STR(dnstap_tls_client_key_file, o);
+		SERV_GET_STR(dnstap_tls_client_cert_file, o);
 		SERV_GET_BIN(dnstap_send_identity, o);
 		SERV_GET_BIN(dnstap_send_version, o);
 		SERV_GET_STR(dnstap_identity, o);
@@ -495,6 +500,12 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 			pattern_options_type* p;
 			RBTREE_FOR(p, pattern_options_type*, opt->patterns)
 				quote(p->pname);
+			return;
+		}
+		if(strcasecmp(o, "proxy_protocol_port") == 0) {
+			struct proxy_protocol_port_list* p;
+			for(p = opt->proxy_protocol_port; p; p = p->next)
+				printf("%d\n", p->port);
 			return;
 		}
 		printf("Server option not handled: %s\n", o);
@@ -600,7 +611,6 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tdrop-updates: %s\n", opt->drop_updates?"yes":"no");
 	printf("\ttcp-reject-overflow: %s\n",
 		opt->tcp_reject_overflow ? "yes" : "no");
-	print_string_var("database:", opt->database);
 	print_string_var("identity:", opt->identity);
 	print_string_var("version:", opt->version);
 	print_string_var("nsid:", opt->nsid);
@@ -694,11 +704,22 @@ config_test_print_server(nsd_options_type* opt)
 		print_string_var("cookie-secret:", opt->cookie_secret);
 	if (opt->cookie_secret_file)
 		print_string_var("cookie-secret-file:", opt->cookie_secret_file);
+	if(opt->proxy_protocol_port) {
+		struct proxy_protocol_port_list* p;
+		for(p = opt->proxy_protocol_port; p; p = p->next)
+			printf("\tproxy-protocol-port: %d\n", p->port);
+	}
 
 #ifdef USE_DNSTAP
 	printf("\ndnstap:\n");
 	printf("\tdnstap-enable: %s\n", opt->dnstap_enable?"yes":"no");
 	print_string_var("dnstap-socket-path:", opt->dnstap_socket_path);
+	print_string_var("dnstap-ip:", opt->dnstap_ip);
+	printf("\tdnstap-tls: %s\n", opt->dnstap_tls?"yes":"no");
+	print_string_var("dnstap-tls-server-name:", opt->dnstap_tls_server_name);
+	print_string_var("dnstap-tls-cert-bundle:", opt->dnstap_tls_cert_bundle);
+	print_string_var("dnstap-tls-client-key-file:", opt->dnstap_tls_client_key_file);
+	print_string_var("dnstap-tls-client-cert-file:", opt->dnstap_tls_client_cert_file);
 	printf("\tdnstap-send-identity: %s\n", opt->dnstap_send_identity?"yes":"no");
 	printf("\tdnstap-send-version: %s\n", opt->dnstap_send_version?"yes":"no");
 	print_string_var("dnstap-identity:", opt->dnstap_identity);
@@ -779,13 +800,6 @@ additional_checks(nsd_options_type* opt, const char* filename)
 			errors ++;
 			continue;
 		}
-#ifndef ROOT_SERVER
-		/* Is it a root zone? Are we a root server then? Idiot proof. */
-		if(dname->label_count == 1) {
-			fprintf(stderr, "%s: not configured as a root server.\n", filename);
-			errors ++;
-		}
-#endif
 		if(zone->pattern->allow_notify && !zone->pattern->request_xfr) {
 			fprintf(stderr, "%s: zone %s has allow-notify but no request-xfr"
 				" items. Where can it get a zone transfer when a notify "
@@ -846,11 +860,6 @@ additional_checks(nsd_options_type* opt, const char* filename)
 		if (!file_inside_chroot(opt->pidfile, opt->chroot)) {
 			fprintf(stderr, "%s: pidfile %s is not relative to chroot %s.\n",
 				filename, opt->pidfile, opt->chroot);
-			errors ++;
-                }
-		if (!file_inside_chroot(opt->database, opt->chroot)) {
-			fprintf(stderr, "%s: database %s is not relative to chroot %s.\n",
-				filename, opt->database, opt->chroot);
 			errors ++;
                 }
 		if (!file_inside_chroot(opt->xfrdfile, opt->chroot)) {

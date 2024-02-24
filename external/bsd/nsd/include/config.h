@@ -33,10 +33,10 @@
 #define DBFILE CHROOTDIR "/var/db/nsd/nsd.db"
 
 /* Whether ERR_load_SSL_strings is deprecated */
-/* #undef DEPRECATED_ERR_LOAD_SSL_STRINGS */
+#define DEPRECATED_ERR_LOAD_SSL_STRINGS 1
 
 /* Whether SHA1_Init is deprecated */
-/* #undef DEPRECATED_SHA1_INIT */
+#define DEPRECATED_SHA1_INIT 1
 
 /* default dnstap socket path */
 /* #undef DNSTAP_SOCKET_PATH */
@@ -109,7 +109,7 @@
 
 /* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
    don't. */
-#define HAVE_DECL_REALLOCARRAY 0
+#define HAVE_DECL_REALLOCARRAY 1
 
 /* Define to 1 if you have the declaration of `SSL_CTX_set_ecdh_auto', and to
    0 if you don't. */
@@ -557,13 +557,13 @@
 #define NSEC3 /**/
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "nsd-bugs@nlnetlabs.nl"
+#define PACKAGE_BUGREPORT "https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.6.0"
+#define PACKAGE_STRING "NSD 4.8.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -844,6 +844,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 
 #ifdef HAVE_TIME_H
 #include <time.h>

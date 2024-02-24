@@ -36,8 +36,8 @@
  * that ai_family is AF_INET. Don't use it for another purpose.
  */
 
-#ifndef _FAKE_RFC2553_H
-#define _FAKE_RFC2553_H
+#ifndef FAKE_RFC2553_H
+#define FAKE_RFC2553_H
 
 #include <config.h>
 #include <sys/types.h>
@@ -177,5 +177,5 @@ int getnameinfo(const struct sockaddr *, size_t, char *, size_t,
     char *, size_t, int);
 #endif /* !HAVE_GETNAMEINFO */
 
-#endif /* !_FAKE_RFC2553_H */
+#endif /* !FAKE_RFC2553_H */
 
