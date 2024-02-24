@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.12 2021/03/20 22:10:17 cheusov Exp $");
+__RCSID("$NetBSD: seq.c,v 1.13 2024/02/24 10:10:04 mlelstv Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: seq.c,v 1.12 2021/03/20 22:10:17 cheusov Exp $");
 
 const char *decimal_point = ".";	/* default */
 char default_format[] = { "%g" };	/* default */
+char default_format_fmt[] = { "%%.%uf" };
+#define MAXPRECISION 40
 
 /* Prototypes */
 
@@ -65,8 +67,28 @@ int decimal_places(const char *);
 int numeric(const char *);
 int valid_format(const char *);
 
-char *generate_format(double, double, double, int, char);
+unsigned get_precision(const char *, unsigned);
+char *generate_format(double, double, double, int, char, char *);
 char *unescape(char *);
+
+unsigned
+get_precision(const char *number, unsigned minprec)
+{
+	const char *p;
+	unsigned prec;
+
+	p = strstr(number, decimal_point);
+	if (p) {
+		prec = strlen(number) - (p - number);
+		if (prec > 0)
+			prec -= 1;
+		if (prec > MAXPRECISION)
+			prec = MAXPRECISION;
+	} else
+		prec = 0;
+
+	return prec < minprec ? minprec : prec;
+}
 
 /*
  * The seq command will print out a numeric sequence from 1, the default,
@@ -79,6 +101,7 @@ main(int argc, char *argv[])
 {
 	int c = 0, errflg = 0;
 	int equalize = 0;
+	unsigned prec;
 	double first = 1.0;
 	double last = 0.0;
 	double incr = 0.0;
@@ -87,6 +110,8 @@ main(int argc, char *argv[])
 	const char *sep = "\n";
 	const char *term = "\n";
 	char pad = ZERO;
+	char buf[6]; /* %.MAXPRECISIONf */
+
 
 	/* Determine the locale's decimal point. */
 	locale = localeconv();
@@ -136,12 +161,16 @@ main(int argc, char *argv[])
 	}
 
 	last = e_atof(argv[argc - 1]);
+	prec = get_precision(argv[argc - 1], 0);
 
-	if (argc > 1)
+	if (argc > 1) {
 		first = e_atof(argv[0]);
+		prec = get_precision(argv[0], prec);
+	}
 	
 	if (argc > 2) {
 		incr = e_atof(argv[1]);
+		prec = get_precision(argv[1], prec);
 		/* Plan 9/GNU don't do zero */
 		if (incr == 0.0)
 			errx(1, "zero %screment", (first < last)? "in" : "de");
@@ -167,8 +196,15 @@ main(int argc, char *argv[])
 	         * XXX to be bug for bug compatible with Plan 9 add a
 		 * newline if none found at the end of the format string.
 		 */
-	} else
-		fmt = generate_format(first, incr, last, equalize, pad);
+	} else {
+		if (prec == 0)
+			fmt = default_format;
+		else {
+			sprintf(buf, default_format_fmt, prec);
+			fmt = buf;
+		}
+		fmt = generate_format(first, incr, last, equalize, pad, fmt);
+	}
 
 	if (incr > 0) {
 		printf(fmt, first);
@@ -428,14 +464,15 @@ decimal_places(const char *number)
  * when "%g" prints as "%e" (this way no width adjustments are made)
  */
 char *
-generate_format(double first, double incr, double last, int equalize, char pad)
+generate_format(double first, double incr, double last,
+    int equalize, char pad, char *deffmt)
 {
 	static char buf[256];
 	char cc = '\0';
 	int precision, width1, width2, places;
 
 	if (equalize == 0)
-		return (default_format);
+		return deffmt;
 
 	/* figure out "last" value printed */
 	if (first > last)
@@ -443,12 +480,12 @@ generate_format(double first, double incr, double last, int equalize, char pad)
 	else
 		last = first + incr * floor((last - first) / incr);
 
-	sprintf(buf, "%g", incr);
+	sprintf(buf, deffmt, incr);
 	if (strchr(buf, 'e'))
 		cc = 'e';
 	precision = decimal_places(buf);
 
-	width1 = sprintf(buf, "%g", first);
+	width1 = sprintf(buf, deffmt, first);
 	if (strchr(buf, 'e'))
 		cc = 'e';
 	if ((places = decimal_places(buf)))
@@ -456,7 +493,7 @@ generate_format(double first, double incr, double last, int equalize, char pad)
 
 	precision = MAX(places, precision);
 
-	width2 = sprintf(buf, "%g", last);
+	width2 = sprintf(buf, deffmt, last);
 	if (strchr(buf, 'e'))
 		cc = 'e';
 	if ((places = decimal_places(buf)))
