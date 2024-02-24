@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.27 2024/02/22 21:04:24 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.28 2024/02/24 12:40:00 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.27 2024/02/22 21:04:24 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.28 2024/02/24 12:40:00 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -300,9 +300,10 @@ ATF_TC_BODY(snprintb, tc)
 	h_snprintb(
 	    "\020"
 	    "\001least significant"
-	    "\002horizontal\ttab",
+	    "\002horizontal\ttab"
+	    "\003\xC3\xA4",
 	    0xff,
-	    "0xff<least,horizontal>");
+	    "0xff<least,horizontal,\xC3\xA4>");
 
 	// old style, empty description
 	//
