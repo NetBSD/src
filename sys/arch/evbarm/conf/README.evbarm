@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.39 2022/10/29 13:24:35 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.40 2024/02/24 08:56:07 andvar Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -39,7 +39,6 @@ MV2120		2011/07/20	HP Media Vault MV2011 Marvell Orion board
 NAPPI		2002/07/15	Netwise APlication Platform Board
 NETWALKER	2010/11/13	Sharp NetWalker
 NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")
-OMAP5EVM	2013/07/16	TI OMAP 5 based boards
 OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OPENBLOCKS_AX3	2013/09/30	Plat'Home. OpenBlockS AX3
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
