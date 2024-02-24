@@ -49,6 +49,7 @@
 #include "util/locks.h"
 #include "util/log.h"
 #include "util/net_help.h"
+#include "util/proxy_protocol.h"
 #include "util/data/msgencode.h"
 #include "util/data/msgparse.h"
 #include "util/data/msgreply.h"
@@ -71,29 +72,31 @@ static void usage(char* argv[])
 	printf("usage: %s [options] name type class ...\n", argv[0]);
 	printf("	sends the name-type-class queries over TCP.\n");
 	printf("-f server	what ipaddr@portnr to send the queries to\n");
+	printf("-p client	what ipaddr@portnr to include in PROXYv2\n");
 	printf("-u 		use UDP. No retries are attempted.\n");
 	printf("-n 		do not wait for an answer.\n");
 	printf("-a 		print answers as they arrive.\n");
 	printf("-d secs		delay after connection before sending query\n");
 	printf("-s		use ssl\n");
 	printf("-h 		this help text\n");
+	printf("IXFR=N 		for the type, sends ixfr query with serial N.\n");
+	printf("NOTIFY[=N] 	for the type, sends notify. Can set new zone serial N.\n");
 	exit(1);
 }
 
 /** open TCP socket to svr */
 static int
-open_svr(const char* svr, int udp)
+open_svr(const char* svr, int udp, struct sockaddr_storage* addr,
+	socklen_t* addrlen)
 {
-	struct sockaddr_storage addr;
-	socklen_t addrlen;
 	int fd = -1;
 	/* svr can be ip@port */
-	memset(&addr, 0, sizeof(addr));
-	if(!extstrtoaddr(svr, &addr, &addrlen)) {
+	memset(addr, 0, sizeof(*addr));
+	if(!extstrtoaddr(svr, addr, addrlen, UNBOUND_DNS_PORT)) {
 		printf("fatal: bad server specs '%s'\n", svr);
 		exit(1);
 	}
-	fd = socket(addr_is_ip6(&addr, addrlen)?PF_INET6:PF_INET,
+	fd = socket(addr_is_ip6(addr, *addrlen)?PF_INET6:PF_INET,
 		udp?SOCK_DGRAM:SOCK_STREAM, 0);
 	if(fd == -1) {
 #ifndef USE_WINSOCK
@@ -103,7 +106,7 @@ open_svr(const char* svr, int udp)
 #endif
 		exit(1);
 	}
-	if(connect(fd, (struct sockaddr*)&addr, addrlen) < 0) {
+	if(connect(fd, (struct sockaddr*)addr, *addrlen) < 0) {
 #ifndef USE_WINSOCK
 		perror("connect() error");
 #else
@@ -114,13 +117,39 @@ open_svr(const char* svr, int udp)
 	return fd;
 }
 
+/** Append a SOA record with serial number */
+static void
+write_soa_serial_to_buf(sldns_buffer* buf, struct query_info* qinfo,
+	uint32_t serial)
+{
+	sldns_buffer_set_position(buf, sldns_buffer_limit(buf));
+	sldns_buffer_set_limit(buf, sldns_buffer_capacity(buf));
+	/* Write compressed reference to the query */
+	sldns_buffer_write_u16(buf, PTR_CREATE(LDNS_HEADER_SIZE));
+	sldns_buffer_write_u16(buf, LDNS_RR_TYPE_SOA);
+	sldns_buffer_write_u16(buf, qinfo->qclass);
+	sldns_buffer_write_u32(buf, 3600); /* TTL */
+	sldns_buffer_write_u16(buf, 1+1+4*5); /* rdatalen */
+	sldns_buffer_write_u8(buf, 0); /* primary "." */
+	sldns_buffer_write_u8(buf, 0); /* email "." */
+	sldns_buffer_write_u32(buf, serial); /* serial */
+	sldns_buffer_write_u32(buf, 0); /* refresh */
+	sldns_buffer_write_u32(buf, 0); /* retry */
+	sldns_buffer_write_u32(buf, 0); /* expire */
+	sldns_buffer_write_u32(buf, 0); /* minimum */
+	sldns_buffer_flip(buf);
+}
+
 /** write a query over the TCP fd */
 static void
-write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id, 
+write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
+	sldns_buffer* proxy_buf, int pp2_parsed,
 	const char* strname, const char* strtype, const char* strclass)
 {
 	struct query_info qinfo;
-	uint16_t len;
+	size_t proxy_buf_limit = sldns_buffer_limit(proxy_buf);
+	int have_serial = 0, is_notify = 0;
+	uint32_t serial = 0;
 	/* qname */
 	qinfo.qname = sldns_str2wire_dname(strname, &qinfo.qname_len);
 	if(!qinfo.qname) {
@@ -128,9 +157,32 @@ write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
 		exit(1);
 	}
 
-	/* qtype and qclass */
-	qinfo.qtype = sldns_get_rr_type_by_name(strtype);
+	/* qtype */
+	if(strncasecmp(strtype, "IXFR=", 5) == 0) {
+		serial = (uint32_t)atoi(strtype+5);
+		have_serial = 1;
+		qinfo.qtype = LDNS_RR_TYPE_IXFR;
+	} else if(strcasecmp(strtype, "NOTIFY") == 0) {
+		is_notify = 1;
+		qinfo.qtype = LDNS_RR_TYPE_SOA;
+	} else if(strncasecmp(strtype, "NOTIFY=", 7) == 0) {
+		serial = (uint32_t)atoi(strtype+7);
+		have_serial = 1;
+		is_notify = 1;
+		qinfo.qtype = LDNS_RR_TYPE_SOA;
+	} else {
+		qinfo.qtype = sldns_get_rr_type_by_name(strtype);
+		if(qinfo.qtype == 0 && strcmp(strtype, "TYPE0") != 0) {
+			printf("cannot parse query type: '%s'\n", strtype);
+			exit(1);
+		}
+	}
+	/* qclass */
 	qinfo.qclass = sldns_get_rr_class_by_name(strclass);
+	if(qinfo.qclass == 0 && strcmp(strclass, "CLASS0") != 0) {
+		printf("cannot parse query class: '%s'\n", strclass);
+		exit(1);
+	}
 
 	/* clear local alias */
 	qinfo.local_alias = NULL;
@@ -139,6 +191,21 @@ write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
 	qinfo_query_encode(buf, &qinfo);
 	sldns_buffer_write_u16_at(buf, 0, id);
 	sldns_buffer_write_u16_at(buf, 2, BIT_RD);
+
+	if(have_serial && qinfo.qtype == LDNS_RR_TYPE_IXFR) {
+		/* Attach serial to SOA record in the authority section. */
+		write_soa_serial_to_buf(buf, &qinfo, serial);
+		LDNS_NSCOUNT_SET(sldns_buffer_begin(buf), 1);
+	}
+	if(is_notify) {
+		LDNS_OPCODE_SET(sldns_buffer_begin(buf), LDNS_PACKET_NOTIFY);
+		LDNS_RD_CLR(sldns_buffer_begin(buf));
+		LDNS_AA_SET(sldns_buffer_begin(buf));
+		if(have_serial) {
+			write_soa_serial_to_buf(buf, &qinfo, serial);
+			LDNS_ANCOUNT_SET(sldns_buffer_begin(buf), 1);
+		}
+	}
 
 	if(1) {
 		/* add EDNS DO */
@@ -152,9 +219,27 @@ write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
 			attach_edns_record(buf, &edns);
 	}
 
+	/* we need to send the PROXYv2 information in every UDP message */
+	if(udp && pp2_parsed) {
+		/* append the proxy_buf with the buf's content
+		 * and use that for sending */
+		if(sldns_buffer_capacity(proxy_buf) <
+			sldns_buffer_limit(proxy_buf) +
+			sldns_buffer_limit(buf)) {
+			printf("buffer too small for packet + proxy");
+			exit(1);
+		}
+		sldns_buffer_clear(proxy_buf);
+		sldns_buffer_skip(proxy_buf, proxy_buf_limit);
+		sldns_buffer_write(proxy_buf, sldns_buffer_begin(buf),
+			sldns_buffer_limit(buf));
+		sldns_buffer_flip(proxy_buf);
+		buf = proxy_buf;
+	}
+
 	/* send it */
 	if(!udp) {
-		len = (uint16_t)sldns_buffer_limit(buf);
+		uint16_t len = (uint16_t)sldns_buffer_limit(buf);
 		len = htons(len);
 		if(ssl) {
 			if(SSL_write(ssl, (void*)&len, (int)sizeof(len)) <= 0) {
@@ -167,7 +252,7 @@ write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
 #ifndef USE_WINSOCK
 				perror("send() len failed");
 #else
-				printf("send len: %s\n", 
+				printf("send len: %s\n",
 					wsa_strerror(WSAGetLastError()));
 #endif
 				exit(1);
@@ -182,17 +267,20 @@ write_q(int fd, int udp, SSL* ssl, sldns_buffer* buf, uint16_t id,
 		}
 	} else {
 		if(send(fd, (void*)sldns_buffer_begin(buf),
-			sldns_buffer_limit(buf), 0) < 
+			sldns_buffer_limit(buf), 0) <
 			(ssize_t)sldns_buffer_limit(buf)) {
 #ifndef USE_WINSOCK
 			perror("send() data failed");
 #else
-			printf("send data: %s\n", wsa_strerror(WSAGetLastError()));
+			printf("send data: %s\n",
+				wsa_strerror(WSAGetLastError()));
 #endif
 			exit(1);
 		}
 	}
 
+	/* reset the proxy_buf for next packet */
+	sldns_buffer_set_limit(proxy_buf, proxy_buf_limit);
 	free(qinfo.qname);
 }
 
@@ -224,7 +312,7 @@ recv_one(int fd, int udp, SSL* ssl, sldns_buffer* buf)
 #ifndef USE_WINSOCK
 				perror("read() len failed");
 #else
-				printf("read len: %s\n", 
+				printf("read len: %s\n",
 					wsa_strerror(WSAGetLastError()));
 #endif
 				exit(1);
@@ -243,12 +331,12 @@ recv_one(int fd, int udp, SSL* ssl, sldns_buffer* buf)
 			if(r != (int)len)
 				fatal_exit("ssl_read %d of %d", r, len);
 		} else {
-			if(recv(fd, (void*)sldns_buffer_begin(buf), len, 0) < 
+			if(recv(fd, (void*)sldns_buffer_begin(buf), len, 0) <
 				(ssize_t)len) {
 #ifndef USE_WINSOCK
 				perror("read() data failed");
 #else
-				printf("read data: %s\n", 
+				printf("read data: %s\n",
 					wsa_strerror(WSAGetLastError()));
 #endif
 				exit(1);
@@ -257,12 +345,12 @@ recv_one(int fd, int udp, SSL* ssl, sldns_buffer* buf)
 	} else {
 		ssize_t l;
 		sldns_buffer_clear(buf);
-		if((l=recv(fd, (void*)sldns_buffer_begin(buf), 
+		if((l=recv(fd, (void*)sldns_buffer_begin(buf),
 			sldns_buffer_capacity(buf), 0)) < 0) {
 #ifndef USE_WINSOCK
 			perror("read() data failed");
 #else
-			printf("read data: %s\n", 
+			printf("read data: %s\n",
 				wsa_strerror(WSAGetLastError()));
 #endif
 			exit(1);
@@ -324,17 +412,47 @@ static int get_random(void)
 	return (int)arc4random();
 }
 
+/* parse the pp2_client and populate the proxy_buffer
+ * It doesn't populate the destination parts. */
+static int parse_pp2_client(const char* pp2_client, int udp,
+	sldns_buffer* proxy_buf)
+{
+	struct sockaddr_storage pp2_addr;
+	size_t bytes_written;
+	socklen_t pp2_addrlen = 0;
+	memset(&pp2_addr, 0, sizeof(pp2_addr));
+	if(*pp2_client == 0) return 0;
+	if(!extstrtoaddr(pp2_client, &pp2_addr, &pp2_addrlen, UNBOUND_DNS_PORT)) {
+		printf("fatal: bad proxy client specs '%s'\n", pp2_client);
+		exit(1);
+	}
+	sldns_buffer_clear(proxy_buf);
+	bytes_written = pp2_write_to_buf(sldns_buffer_begin(proxy_buf),
+		sldns_buffer_remaining(proxy_buf), &pp2_addr, !udp);
+	sldns_buffer_set_position(proxy_buf, bytes_written);
+	sldns_buffer_flip(proxy_buf);
+	return 1;
+}
+
 /** send the TCP queries and print answers */
 static void
-send_em(const char* svr, int udp, int usessl, int noanswer, int onarrival,
-	int delay, int num, char** qs)
+send_em(const char* svr, const char* pp2_client, int udp, int usessl,
+	int noanswer, int onarrival, int delay, int num, char** qs)
 {
-	sldns_buffer* buf = sldns_buffer_new(65553);
-	int fd = open_svr(svr, udp);
-	int i, wait_results = 0;
+	struct sockaddr_storage svr_addr;
+	socklen_t svr_addrlen;
+	int fd = open_svr(svr, udp, &svr_addr, &svr_addrlen);
+	int i, wait_results = 0, pp2_parsed;
 	SSL_CTX* ctx = NULL;
 	SSL* ssl = NULL;
-	if(!buf) fatal_exit("out of memory");
+	sldns_buffer* buf = sldns_buffer_new(65553);
+	sldns_buffer* proxy_buf = sldns_buffer_new(65553);
+	if(!buf || !proxy_buf) {
+		sldns_buffer_free(buf);
+		sldns_buffer_free(proxy_buf);
+		fatal_exit("out of memory");
+	}
+	pp2_parsed = parse_pp2_client(pp2_client, udp, proxy_buf);
 	if(usessl) {
 		ctx = connect_sslctx_create(NULL, NULL, NULL, 0);
 		if(!ctx) fatal_exit("cannot create ssl ctx");
@@ -348,7 +466,7 @@ send_em(const char* svr, int udp, int usessl, int noanswer, int onarrival,
 			r = SSL_get_error(ssl, r);
 			if(r != SSL_ERROR_WANT_READ &&
 				r != SSL_ERROR_WANT_WRITE) {
-				log_crypto_err("could not ssl_handshake");
+				log_crypto_err_io("could not ssl_handshake", r);
 				exit(1);
 			}
 		}
@@ -361,6 +479,28 @@ send_em(const char* svr, int udp, int usessl, int noanswer, int onarrival,
 			}
 		}
 	}
+	/* Send the PROXYv2 information once per stream */
+	if(!udp && pp2_parsed) {
+		if(ssl) {
+			if(SSL_write(ssl, (void*)sldns_buffer_begin(proxy_buf),
+				(int)sldns_buffer_limit(proxy_buf)) <= 0) {
+				log_crypto_err("cannot SSL_write");
+				exit(1);
+			}
+		} else {
+			if(send(fd, (void*)sldns_buffer_begin(proxy_buf),
+				sldns_buffer_limit(proxy_buf), 0) <
+				(ssize_t)sldns_buffer_limit(proxy_buf)) {
+#ifndef USE_WINSOCK
+				perror("send() data failed");
+#else
+				printf("send data: %s\n",
+					wsa_strerror(WSAGetLastError()));
+#endif
+				exit(1);
+			}
+		}
+	}
 	for(i=0; i<num; i+=3) {
 		if (delay != 0) {
 #ifdef HAVE_SLEEP
@@ -370,8 +510,9 @@ send_em(const char* svr, int udp, int usessl, int noanswer, int onarrival,
 #endif
 		}
 		printf("\nNext query is %s %s %s\n", qs[i], qs[i+1], qs[i+2]);
-		write_q(fd, udp, ssl, buf, (uint16_t)get_random(), qs[i],
-			qs[i+1], qs[i+2]);
+		write_q(fd, udp, ssl, buf, (uint16_t)get_random(), proxy_buf,
+			pp2_parsed,
+			qs[i], qs[i+1], qs[i+2]);
 		/* print at least one result */
 		if(onarrival) {
 			wait_results += 1; /* one more answer to fetch */
@@ -390,6 +531,7 @@ send_em(const char* svr, int udp, int usessl, int noanswer, int onarrival,
 	}
 	sock_close(fd);
 	sldns_buffer_free(buf);
+	sldns_buffer_free(proxy_buf);
 	printf("orderly exit\n");
 }
 
@@ -418,10 +560,11 @@ extern int optind;
 extern char* optarg;
 
 /** main program for streamtcp */
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
 	int c;
 	const char* svr = "127.0.0.1";
+	const char* pp2_client = "";
 	int udp = 0;
 	int noanswer = 0;
 	int onarrival = 0;
@@ -451,10 +594,15 @@ int main(int argc, char** argv)
 	if(argc == 1) {
 		usage(argv);
 	}
-	while( (c=getopt(argc, argv, "af:hnsud:")) != -1) {
+	while( (c=getopt(argc, argv, "af:p:hnsud:")) != -1) {
 		switch(c) {
 			case 'f':
 				svr = optarg;
+				break;
+			case 'p':
+				pp2_client = optarg;
+				pp_init(&sldns_write_uint16,
+					&sldns_write_uint32);
 				break;
 			case 'a':
 				onarrival = 1;
@@ -508,7 +656,7 @@ int main(int argc, char** argv)
 		(void)OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
 #endif
 	}
-	send_em(svr, udp, usessl, noanswer, onarrival, delay, argc, argv);
+	send_em(svr, pp2_client, udp, usessl, noanswer, onarrival, delay, argc, argv);
 	checklock_stop();
 #ifdef USE_WINSOCK
 	WSACleanup();

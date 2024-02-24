@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _DNS_H_
-#define _DNS_H_
+#ifndef DNS_H
+#define DNS_H
 
 enum rr_section {
 	QUESTION_SECTION,
@@ -174,7 +174,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define SVCB_KEY_IPV4HINT		4
 #define SVCB_KEY_ECH		5
 #define SVCB_KEY_IPV6HINT		6
-#define SVCPARAMKEY_COUNT 7
+#define SVCB_KEY_DOHPATH		7
+#define SVCPARAMKEY_COUNT 8
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
@@ -304,4 +305,4 @@ operator++(rr_section_type &lhs)
 }
 #endif /* __cplusplus */
 
-#endif /* _DNS_H_ */
+#endif /* DNS_H */

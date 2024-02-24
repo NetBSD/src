@@ -231,6 +231,12 @@ static int eap_tls_params_from_conf(struct eap_sm *sm,
 
 	sm->ext_cert_check = !!(params->flags & TLS_CONN_EXT_CERT_CHECK);
 
+	if (!phase2)
+		data->client_cert_conf = params->client_cert ||
+			params->client_cert_blob ||
+			params->private_key ||
+			params->private_key_blob;
+
 	return 0;
 }
 

@@ -4,22 +4,22 @@
  * Copyright (c) 2007, NLnet Labs. All rights reserved.
  *
  * This software is open source.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
+ *
  * Neither the name of the NLNET LABS nor the names of its contributors may
  * be used to endorse or promote products derived from this software without
  * specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -60,6 +60,7 @@
 #ifndef NET_EVENT_H
 #define NET_EVENT_H
 
+#include <sys/time.h>
 #include "dnscrypt/dnscrypt.h"
 #ifdef HAVE_NGHTTP2_NGHTTP2_H
 #include <nghttp2/nghttp2.h>
@@ -83,7 +84,7 @@ struct internal_timer; /* A sub struct of the comm_timer super struct */
 enum listen_type;
 
 /** callback from communication point function type */
-typedef int comm_point_callback_type(struct comm_point*, void*, int, 
+typedef int comm_point_callback_type(struct comm_point*, void*, int,
 	struct comm_reply*);
 
 /** to pass no_error to callback function */
@@ -91,7 +92,7 @@ typedef int comm_point_callback_type(struct comm_point*, void*, int,
 /** to pass closed connection to callback function */
 #define NETEVENT_CLOSED -1
 /** to pass timeout happened to callback function */
-#define NETEVENT_TIMEOUT -2 
+#define NETEVENT_TIMEOUT -2
 /** to pass fallback from capsforID to callback function; 0x20 failed */
 #define NETEVENT_CAPSFAIL -3
 /** to pass done transfer to callback function; http file is complete */
@@ -102,6 +103,8 @@ typedef int comm_point_callback_type(struct comm_point*, void*, int,
 
 /** timeout to slow accept calls when not possible, in msec. */
 #define NETEVENT_SLOW_ACCEPT_TIME 2000
+/** timeout to slow down log print, so it does not spam the logs, in sec */
+#define SLOW_LOG_TIME 10
 
 /**
  * A communication point dispatcher. Thread specific.
@@ -126,10 +129,11 @@ struct comm_reply {
 	/** the comm_point with fd to send reply on to. */
 	struct comm_point* c;
 	/** the address (for UDP based communication) */
-	struct sockaddr_storage addr;
+	struct sockaddr_storage remote_addr;
 	/** length of address */
-	socklen_t addrlen;
-	/** return type 0 (none), 4(IP4), 6(IP6) */
+	socklen_t remote_addrlen;
+	/** return type 0 (none), 4(IP4), 6(IP6)
+	 *  used only with listen_type_udp_ancil* */
 	int srctype;
 	/* DnsCrypt context */
 #ifdef USE_DNSCRYPT
@@ -153,10 +157,17 @@ struct comm_reply {
 		pktinfo;
 	/** max udp size for udp packets */
 	size_t max_udp_size;
+	/* if set, the request came through a proxy */
+	int is_proxied;
+	/** the client address
+	 *  the same as remote_addr if not proxied */
+	struct sockaddr_storage client_addr;
+	/** the original address length */
+	socklen_t client_addrlen;
 };
 
-/** 
- * Communication point to the network 
+/**
+ * Communication point to the network
  * These behaviours can be accomplished by setting the flags
  * and passing return values from the callback.
  *    udp frontside: called after readdone. sendafter.
@@ -196,7 +207,7 @@ struct comm_point {
 	int max_tcp_count;
 	/** current number of tcp handler in-use for this accept socket */
 	int cur_tcp_count;
-	/** malloced array of tcp handlers for a tcp-accept, 
+	/** malloced array of tcp handlers for a tcp-accept,
 	    of size max_tcp_count. */
 	struct comm_point** tcp_handlers;
 	/** linked list of free tcp_handlers to use for new queries.
@@ -261,9 +272,9 @@ struct comm_point {
 	/** is this a UDP, TCP-accept or TCP socket. */
 	enum comm_point_type {
 		/** UDP socket - handle datagrams. */
-		comm_udp, 
+		comm_udp,
 		/** TCP accept socket - only creates handlers if readable. */
-		comm_tcp_accept, 
+		comm_tcp_accept,
 		/** TCP handler socket - handle byteperbyte readwrite. */
 		comm_tcp,
 		/** HTTP handler socket */
@@ -272,15 +283,28 @@ struct comm_point {
 		comm_local,
 		/** raw - not DNS format - for pipe readers and writers */
 		comm_raw
-	} 
+	}
 		/** variable with type of socket, UDP,TCP-accept,TCP,pipe */
 		type;
+
+	/* -------- PROXYv2 ------- */
+	/** if set, PROXYv2 is expected on this connection */
+	int pp2_enabled;
+	/** header state for the PROXYv2 header (for TCP) */
+	enum {
+		/** no header encounter yet */
+		pp2_header_none = 0,
+		/** read the static part of the header */
+		pp2_header_init,
+		/** read the full header */
+		pp2_header_done
+	} pp2_header_state;
 
 	/* ---------- Behaviour ----------- */
 	/** if set the connection is NOT closed on delete. */
 	int do_not_close;
 
-	/** if set, the connection is closed on error, on timeout, 
+	/** if set, the connection is closed on error, on timeout,
 	    and after read/write completes. No callback is done. */
 	int tcp_do_close;
 
@@ -360,15 +384,16 @@ struct comm_point {
 	/** number of queries outstanding on this socket, used by
 	 * outside network for udp ports */
 	int inuse;
-
+	/** the timestamp when the packet was received by the kernel */
+	struct timeval recv_tv;
 	/** callback when done.
 	    tcp_accept does not get called back, is NULL then.
 	    If a timeout happens, callback with timeout=1 is called.
-	    If an error happens, callback is called with error set 
+	    If an error happens, callback is called with error set
 	    nonzero. If not NETEVENT_NOERROR, it is an errno value.
 	    If the connection is closed (by remote end) then the
 	    callback is called with error set to NETEVENT_CLOSED=-1.
-	    If a timeout happens on the connection, the error is set to 
+	    If a timeout happens on the connection, the error is set to
 	    NETEVENT_TIMEOUT=-2.
 	    The reply_info can be copied if the reply needs to happen at a
 	    later time. It consists of a struct with commpoint and address.
@@ -376,7 +401,7 @@ struct comm_point {
 	    Note the reply information is temporary and must be copied.
 	    NULL is passed for_reply info, in cases where error happened.
 
-	    declare as: 
+	    declare as:
 	    int my_callback(struct comm_point* c, void* my_arg, int error,
 		struct comm_reply *reply_info);
 
@@ -423,14 +448,14 @@ struct comm_signal {
 
 /**
  * Create a new comm base.
- * @param sigs: if true it attempts to create a default loop for 
+ * @param sigs: if true it attempts to create a default loop for
  *   signal handling.
  * @return: the new comm base. NULL on error.
  */
 struct comm_base* comm_base_create(int sigs);
 
 /**
- * Create comm base that uses the given ub_event_base (underlying pluggable 
+ * Create comm base that uses the given ub_event_base (underlying pluggable
  * event mechanism pointer).
  * @param base: underlying pluggable event base.
  * @return: the new comm base. NULL on error.
@@ -494,8 +519,9 @@ struct ub_event_base* comm_base_internal(struct comm_base* b);
  * Create an UDP comm point. Calls malloc.
  * setups the structure with the parameters you provide.
  * @param base: in which base to alloc the commpoint.
- * @param fd : file descriptor of open UDP socket.
+ * @param fd: file descriptor of open UDP socket.
  * @param buffer: shared buffer by UDP sockets from this thread.
+ * @param pp2_enabled: if the comm point will support PROXYv2.
  * @param callback: callback function pointer.
  * @param callback_arg: will be passed to your callback function.
  * @param socket: and opened socket properties will be passed to your callback function.
@@ -503,7 +529,7 @@ struct ub_event_base* comm_base_internal(struct comm_base* b);
  * Sets timeout to NULL. Turns off TCP options.
  */
 struct comm_point* comm_point_create_udp(struct comm_base* base,
-	int fd, struct sldns_buffer* buffer, 
+	int fd, struct sldns_buffer* buffer, int pp2_enabled,
 	comm_point_callback_type* callback, void* callback_arg, struct unbound_socket* socket);
 
 /**
@@ -511,8 +537,9 @@ struct comm_point* comm_point_create_udp(struct comm_base* base,
  * Uses recvmsg instead of recv to get udp message.
  * setups the structure with the parameters you provide.
  * @param base: in which base to alloc the commpoint.
- * @param fd : file descriptor of open UDP socket.
+ * @param fd: file descriptor of open UDP socket.
  * @param buffer: shared buffer by UDP sockets from this thread.
+ * @param pp2_enabled: if the comm point will support PROXYv2.
  * @param callback: callback function pointer.
  * @param callback_arg: will be passed to your callback function.
  * @param socket: and opened socket properties will be passed to your callback function.
@@ -520,7 +547,7 @@ struct comm_point* comm_point_create_udp(struct comm_base* base,
  * Sets timeout to NULL. Turns off TCP options.
  */
 struct comm_point* comm_point_create_udp_ancil(struct comm_base* base,
-	int fd, struct sldns_buffer* buffer, 
+	int fd, struct sldns_buffer* buffer, int pp2_enabled,
 	comm_point_callback_type* callback, void* callback_arg, struct unbound_socket* socket);
 
 /**
@@ -542,6 +569,7 @@ struct comm_point* comm_point_create_udp_ancil(struct comm_base* base,
  * 	or NULL to not create those structures in the tcp handlers.
  * @param port_type: the type of port we are creating a TCP listener for. Used
  * 	to select handler type to use.
+ * @param pp2_enabled: if the comm point will support PROXYv2.
  * @param callback: callback function pointer for TCP handlers.
  * @param callback_arg: will be passed to your callback function.
  * @param socket: and opened socket properties will be passed to your callback function.
@@ -555,7 +583,7 @@ struct comm_point* comm_point_create_tcp(struct comm_base* base,
 	uint32_t http_max_streams, char* http_endpoint,
 	struct tcl_list* tcp_conn_limit,
 	size_t bufsize, struct sldns_buffer* spoolbuf,
-	enum listen_type port_type,
+	enum listen_type port_type, int pp2_enabled,
 	comm_point_callback_type* callback, void* callback_arg, struct unbound_socket* socket);
 
 /**
@@ -593,7 +621,7 @@ struct comm_point* comm_point_create_http_out(struct comm_base* base,
  * @return: the commpoint or NULL on error.
  */
 struct comm_point* comm_point_create_local(struct comm_base* base,
-	int fd, size_t bufsize, 
+	int fd, size_t bufsize,
 	comm_point_callback_type* callback, void* callback_arg);
 
 /**
@@ -606,7 +634,7 @@ struct comm_point* comm_point_create_local(struct comm_base* base,
  * @return: the commpoint or NULL on error.
  */
 struct comm_point* comm_point_create_raw(struct comm_base* base,
-	int fd, int writing, 
+	int fd, int writing,
 	comm_point_callback_type* callback, void* callback_arg);
 
 /**
@@ -696,7 +724,7 @@ size_t comm_point_get_mem(struct comm_point* c);
  * @param cb_arg: user callback argument.
  * @return: the new timer or NULL on error.
  */
-struct comm_timer* comm_timer_create(struct comm_base* base, 
+struct comm_timer* comm_timer_create(struct comm_base* base,
 	void (*cb)(void*), void* cb_arg);
 
 /**
@@ -766,7 +794,7 @@ void comm_signal_delete(struct comm_signal* comsig);
  *	if -1, error message has been printed if necessary, simply drop
  *	out of the reading handler.
  */
-int comm_point_perform_accept(struct comm_point* c, 
+int comm_point_perform_accept(struct comm_point* c,
 	struct sockaddr_storage* addr, socklen_t* addrlen);
 
 /**** internal routines ****/
@@ -775,7 +803,7 @@ int comm_point_perform_accept(struct comm_point* c,
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for udp comm point.
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -785,7 +813,7 @@ void comm_point_udp_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for udp ancillary data comm point.
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -795,7 +823,7 @@ void comm_point_udp_ancil_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for tcp accept comm point
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -805,7 +833,7 @@ void comm_point_tcp_accept_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for tcp data comm point
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -815,7 +843,7 @@ void comm_point_tcp_handle_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for tcp data comm point
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -929,7 +957,7 @@ void http2_stream_add_meshstate(struct http2_stream* h2_stream,
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for timer comm.
  * @param fd: file descriptor (always -1).
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_timer structure.
  */
@@ -939,7 +967,7 @@ void comm_timer_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * handle libevent callback for signal comm.
  * @param fd: file descriptor (used for the signal number).
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the internal commsignal structure.
  */
@@ -949,7 +977,7 @@ void comm_signal_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * libevent callback for AF_UNIX fds
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -959,7 +987,7 @@ void comm_point_local_handle_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * libevent callback for raw fd access.
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */
@@ -969,7 +997,7 @@ void comm_point_raw_handle_callback(int fd, short event, void* arg);
  * This routine is published for checks and tests, and is only used internally.
  * libevent callback for timeout on slow accept.
  * @param fd: file descriptor.
- * @param event: event bits from libevent: 
+ * @param event: event bits from libevent:
  *	EV_READ, EV_WRITE, EV_SIGNAL, EV_TIMEOUT.
  * @param arg: the comm_point structure.
  */

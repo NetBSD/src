@@ -1306,8 +1306,8 @@ az_remove_rr(struct auth_zone* z, uint8_t* rr, size_t rr_len,
 		auth_data_delete(node);
 	}
 	if(z->rpz) {
-		rpz_remove_rr(z->rpz, z->namelen, dname, dname_len, rr_type,
-			rr_class, rdata, rdatalen);
+		rpz_remove_rr(z->rpz, z->name, z->namelen, dname, dname_len,
+			rr_type, rr_class, rdata, rdatalen);
 	}
 	return 1;
 }
@@ -2475,6 +2475,7 @@ az_find_ce(struct auth_zone* z, struct query_info* qinfo,
 	struct auth_rrset** rrset)
 {
 	struct auth_data* n = node;
+	struct auth_rrset* lookrrset;
 	*ce = NULL;
 	*rrset = NULL;
 	if(!node_exact) {
@@ -2497,21 +2498,23 @@ az_find_ce(struct auth_zone* z, struct query_info* qinfo,
 		/* see if the current candidate has issues */
 		/* not zone apex and has type NS */
 		if(n->namelen != z->namelen &&
-			(*rrset=az_domain_rrset(n, LDNS_RR_TYPE_NS)) &&
+			(lookrrset=az_domain_rrset(n, LDNS_RR_TYPE_NS)) &&
 			/* delegate here, but DS at exact the dp has notype */
 			(qinfo->qtype != LDNS_RR_TYPE_DS || 
 			n->namelen != qinfo->qname_len)) {
 			/* referral */
 			/* this is ce and the lowernode is nonexisting */
 			*ce = n;
-			return 0;
+			*rrset = lookrrset;
+			node_exact = 0;
 		}
 		/* not equal to qname and has type DNAME */
 		if(n->namelen != qinfo->qname_len &&
-			(*rrset=az_domain_rrset(n, LDNS_RR_TYPE_DNAME))) {
+			(lookrrset=az_domain_rrset(n, LDNS_RR_TYPE_DNAME))) {
 			/* this is ce and the lowernode is nonexisting */
 			*ce = n;
-			return 0;
+			*rrset = lookrrset;
+			node_exact = 0;
 		}
 
 		if(*ce == NULL && !domain_has_only_nsec3(n)) {
@@ -2756,6 +2759,7 @@ az_change_dnames(struct dns_msg* msg, uint8_t* oldname, uint8_t* newname,
 			== 0) {
 			msg->rep->rrsets[i]->rk.dname = newname;
 			msg->rep->rrsets[i]->rk.dname_len = newlen;
+			msg->rep->rrsets[i]->entry.hash = rrset_key_hash(&msg->rep->rrsets[i]->rk);
 		}
 	}
 }
@@ -3699,7 +3703,7 @@ addr_matches_master(struct auth_master* master, struct sockaddr_storage* addr,
 	/* compare address (but not port number, that is the destination
 	 * port of the master, the port number of the received notify is
 	 * allowed to by any port on that master) */
-	if(extstrtoaddr(master->host, &a, &alen) &&
+	if(extstrtoaddr(master->host, &a, &alen, UNBOUND_DNS_PORT) &&
 		sockaddr_cmp_addr(addr, addrlen, &a, alen)==0) {
 		*fromhost = master;
 		return 1;
@@ -5381,7 +5385,7 @@ xfr_transfer_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 	struct edns_data edns;
 	sldns_buffer* buf = env->scratch_buffer;
 	if(!master) return 0;
-	if(extstrtoaddr(master->host, &addr, &addrlen)) {
+	if(extstrtoaddr(master->host, &addr, &addrlen, UNBOUND_DNS_PORT)) {
 		/* not needed, host is in IP addr format */
 		return 0;
 	}
@@ -5419,6 +5423,8 @@ xfr_transfer_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 	edns.opt_list_out = NULL;
 	edns.opt_list_inplace_cb_out = NULL;
 	edns.padding_block_size = 0;
+	edns.cookie_present = 0;
+	edns.cookie_valid = 0;
 	if(sldns_buffer_capacity(buf) < 65535)
 		edns.udp_size = (uint16_t)sldns_buffer_capacity(buf);
 	else	edns.udp_size = 65535;
@@ -6572,7 +6578,7 @@ xfr_probe_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 	struct edns_data edns;
 	sldns_buffer* buf = env->scratch_buffer;
 	if(!master) return 0;
-	if(extstrtoaddr(master->host, &addr, &addrlen)) {
+	if(extstrtoaddr(master->host, &addr, &addrlen, UNBOUND_DNS_PORT)) {
 		/* not needed, host is in IP addr format */
 		return 0;
 	}
@@ -6612,6 +6618,8 @@ xfr_probe_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 	edns.opt_list_out = NULL;
 	edns.opt_list_inplace_cb_out = NULL;
 	edns.padding_block_size = 0;
+	edns.cookie_present = 0;
+	edns.cookie_valid = 0;
 	if(sldns_buffer_capacity(buf) < 65535)
 		edns.udp_size = (uint16_t)sldns_buffer_capacity(buf);
 	else	edns.udp_size = 65535;
@@ -7509,7 +7517,7 @@ static void add_rrlist_rrsigs_into_data(struct packed_rrset_data* data,
 		size_t j;
 		if(!rrlist[i])
 			continue;
-		if(rrlist[i] && rrlist[i]->type == LDNS_RR_TYPE_ZONEMD &&
+		if(rrlist[i]->type == LDNS_RR_TYPE_ZONEMD &&
 			query_dname_compare(z->name, node->name)==0) {
 			/* omit RRSIGs over type ZONEMD at apex */
 			continue;
@@ -7766,6 +7774,7 @@ static int zonemd_dnssec_verify_rrset(struct auth_zone* z,
 	enum sec_status sec;
 	struct val_env* ve;
 	int m;
+	int verified = 0;
 	m = modstack_find(mods, "validator");
 	if(m == -1) {
 		auth_zone_log(z->name, VERB_ALGO, "zonemd dnssec verify: have "
@@ -7789,7 +7798,7 @@ static int zonemd_dnssec_verify_rrset(struct auth_zone* z,
 			"zonemd: verify %s RRset with DNSKEY", typestr);
 	}
 	sec = dnskeyset_verify_rrset(env, ve, &pk, dnskey, sigalg, why_bogus, NULL,
-		LDNS_SECTION_ANSWER, NULL);
+		LDNS_SECTION_ANSWER, NULL, &verified);
 	if(sec == sec_status_secure) {
 		return 1;
 	}

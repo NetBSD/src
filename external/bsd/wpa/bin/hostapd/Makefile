@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15.6.1 2023/08/11 13:42:58 martin Exp $
+# $NetBSD: Makefile,v 1.15.6.2 2024/02/24 13:06:54 martin Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -246,7 +246,7 @@ SRCS+=  tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
 SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 COPTS.dpp.c+= -Wno-error=deprecated-declarations
 COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
 COPTS.fips_prf_openssl.c+= -Wno-error=deprecated-declarations

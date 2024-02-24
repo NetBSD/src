@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.3.2.1 2023/08/12 12:39:52 martin Exp $
+# $NetBSD: Makefile,v 1.3.2.2 2024/02/24 13:06:26 martin Exp $
 
 LIBISPRIVATE=yes
 .include <bsd.init.mk>
 
-.PATH: ${NSD}/compat
+.PATH: ${NSD}/compat ${NSD}/util
 
 CPPFLAGS+=-I${NSD} -I${NSD}/../include
 
@@ -27,6 +27,7 @@ nsec3.c \
 options.c \
 packet.c \
 popen3.c \
+proxy_protocol.c \
 query.c \
 radtree.c \
 radtree.c \
@@ -38,8 +39,6 @@ siphash.c \
 tsig-openssl.c \
 tsig.c \
 udb.c \
-udbradtree.c \
-udbzone.c \
 util.c \
 verify.c
 

@@ -261,7 +261,8 @@ static int pktcompression_write_dname(struct buffer* packet,
 /* write an RR into the packet with compression for domain names,
  * return 0 and resets position if it does not fit in the packet. */
 static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
-	struct pktcompression* pcomp, const uint8_t* rr, size_t rrlen)
+	struct pktcompression* pcomp, const uint8_t* rr, size_t rrlen,
+	uint16_t total_added)
 {
 	size_t oldpos = buffer_position(packet);
 	size_t rdpos;
@@ -271,10 +272,21 @@ static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
 	size_t i;
 	rrtype_descriptor_type* descriptor;
 
-	if(buffer_position(packet) > MAX_COMPRESSION_OFFSET
-		|| query_overflow(query)) {
-		/* we are past the maximum length */
-		return 0;
+	if(total_added == 0) {
+		size_t oldmaxlen = query->maxlen;
+		/* RR > 16K can be first RR */
+		query->maxlen = (query->tcp?TCP_MAX_MESSAGE_LEN:UDP_MAX_MESSAGE_LEN);
+		if(query_overflow(query)) {
+			query->maxlen = oldmaxlen;
+			return 0;
+		}
+		query->maxlen = oldmaxlen;
+	} else {
+		if(buffer_position(packet) > MAX_COMPRESSION_OFFSET
+			|| query_overflow(query)) {
+			/* we are past the maximum length */
+			return 0;
+		}
 	}
 
 	/* write owner */
@@ -401,10 +413,21 @@ static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
 	}
 	/* write compressed rdata length */
 	buffer_write_u16_at(packet, rdpos, buffer_position(packet)-rdpos-2);
-	if(query_overflow(query)) {
-		/* we are past the maximum length */
-		buffer_set_position(packet, oldpos);
-		return 0;
+	if(total_added == 0) {
+		size_t oldmaxlen = query->maxlen;
+		query->maxlen = (query->tcp?TCP_MAX_MESSAGE_LEN:UDP_MAX_MESSAGE_LEN);
+		if(query_overflow(query)) {
+			query->maxlen = oldmaxlen;
+			buffer_set_position(packet, oldpos);
+			return 0;
+		}
+		query->maxlen = oldmaxlen;
+	} else {
+		if(query_overflow(query)) {
+			/* we are past the maximum length */
+			buffer_set_position(packet, oldpos);
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -658,7 +681,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 		 * the final SOA of the result of the IXFR */
 		if(ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_end_data->newsoa,
-			query->ixfr_end_data->newsoa_len)) {
+			query->ixfr_end_data->newsoa_len, total_added)) {
 			query->ixfr_count_newsoa = query->ixfr_end_data->newsoa_len;
 			total_added++;
 			query->ixfr_pos_of_newsoa = buffer_position(query->packet);
@@ -672,7 +695,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 	if(query->ixfr_count_oldsoa < query->ixfr_data->oldsoa_len) {
 		if(ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->oldsoa,
-			query->ixfr_data->oldsoa_len)) {
+			query->ixfr_data->oldsoa_len, total_added)) {
 			query->ixfr_count_oldsoa = query->ixfr_data->oldsoa_len;
 			total_added++;
 		} else {
@@ -687,7 +710,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			query->ixfr_data->del_len, query->ixfr_count_del);
 		if(rrlen && ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->del + query->ixfr_count_del,
-			rrlen)) {
+			rrlen, total_added)) {
 			query->ixfr_count_del += rrlen;
 			total_added++;
 		} else {
@@ -703,7 +726,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			query->ixfr_data->add_len, query->ixfr_count_add);
 		if(rrlen && ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->add + query->ixfr_count_add,
-			rrlen)) {
+			rrlen, total_added)) {
 			query->ixfr_count_add += rrlen;
 			total_added++;
 		} else {
@@ -797,6 +820,8 @@ query_state_type query_ixfr(struct nsd *nsd, struct query *query)
 			/* we have no ixfr information for the zone, make an AXFR */
 			if(query->tsig_prepare_it)
 				query->tsig_sign_it = 1;
+			VERBOSITY(2, (LOG_INFO, "ixfr fallback to axfr, no ixfr info for zone: %s",
+				dname_to_string(query->qname, NULL)));
 			return query_axfr(nsd, query, 0);
 		}
 		ixfr_data = zone_ixfr_find_serial(zone->ixfr, qserial);
@@ -804,6 +829,8 @@ query_state_type query_ixfr(struct nsd *nsd, struct query *query)
 			/* the specific version is not available, make an AXFR */
 			if(query->tsig_prepare_it)
 				query->tsig_sign_it = 1;
+			VERBOSITY(2, (LOG_INFO, "ixfr fallback to axfr, no history for serial for zone: %s",
+				dname_to_string(query->qname, NULL)));
 			return query_axfr(nsd, query, 0);
 		}
 		/* see if the IXFRs connect to the next IXFR, and if it ends
@@ -812,6 +839,8 @@ query_state_type query_ixfr(struct nsd *nsd, struct query *query)
 			end_serial != current_serial) {
 			if(query->tsig_prepare_it)
 				query->tsig_sign_it = 1;
+			VERBOSITY(2, (LOG_INFO, "ixfr fallback to axfr, incomplete history from this serial for zone: %s",
+				dname_to_string(query->qname, NULL)));
 			return query_axfr(nsd, query, 0);
 		}
 
@@ -919,15 +948,12 @@ size_t ixfr_data_size(struct ixfr_data* data)
 }
 
 struct ixfr_store* ixfr_store_start(struct zone* zone,
-	struct ixfr_store* ixfr_store_mem, uint32_t old_serial,
-	uint32_t new_serial)
+	struct ixfr_store* ixfr_store_mem)
 {
 	struct ixfr_store* ixfr_store = ixfr_store_mem;
 	memset(ixfr_store, 0, sizeof(*ixfr_store));
 	ixfr_store->zone = zone;
 	ixfr_store->data = xalloc_zero(sizeof(*ixfr_store->data));
-	ixfr_store->data->oldserial = old_serial;
-	ixfr_store->data->newserial = new_serial;
 	return ixfr_store;
 }
 
@@ -1116,12 +1142,12 @@ static void store_soa(uint8_t* soa, struct zone* zone, uint32_t ttl,
 	write_uint32(sp, minimum);
 }
 
-void ixfr_store_add_newsoa(struct ixfr_store* ixfr_store,
-	struct buffer* packet, size_t ttlpos)
+void ixfr_store_add_newsoa(struct ixfr_store* ixfr_store, uint32_t ttl,
+	struct buffer* packet, size_t rrlen)
 {
 	size_t oldpos, sz = 0;
-	uint32_t ttl, serial, refresh, retry, expire, minimum;
-	uint16_t rdlen_uncompressed, rdlen_wire;
+	uint32_t serial, refresh, retry, expire, minimum;
+	uint16_t rdlen_uncompressed;
 	int primns_len = 0, email_len = 0;
 	uint8_t primns[MAXDOMAINLEN + 1], email[MAXDOMAINLEN + 1];
 
@@ -1133,24 +1159,11 @@ void ixfr_store_add_newsoa(struct ixfr_store* ixfr_store,
 		ixfr_store->data->newsoa_len = 0;
 	}
 	oldpos = buffer_position(packet);
-	buffer_set_position(packet, ttlpos);
 
 	/* calculate the length */
 	sz = domain_dname(ixfr_store->zone->apex)->name_size;
-	sz += 2 /* type */ + 2 /* class */;
-	/* read ttl */
-	if(!buffer_available(packet, 4/*ttl*/+2/*rdlen*/)) {
-		/* not possible already parsed, but fail nicely anyway */
-		log_msg(LOG_ERR, "ixfr_store: not enough space in packet");
-		ixfr_store_cancel(ixfr_store);
-		buffer_set_position(packet, oldpos);
-		return;
-	}
-	ttl = buffer_read_u32(packet);
-	sz += 4;
-	rdlen_wire = buffer_read_u16(packet);
-	sz += 2;
-	if(!buffer_available(packet, rdlen_wire)) {
+	sz += 2 /* type */ + 2 /* class */ + 4 /* ttl */ + 2 /* rdlen */;
+	if(!buffer_available(packet, rrlen)) {
 		/* not possible already parsed, but fail nicely anyway */
 		log_msg(LOG_ERR, "ixfr_store: not enough rdata space in packet");
 		ixfr_store_cancel(ixfr_store);
@@ -1165,6 +1178,8 @@ void ixfr_store_add_newsoa(struct ixfr_store* ixfr_store,
 		return;
 	}
 	rdlen_uncompressed = primns_len + email_len + 4 + 4 + 4 + 4 + 4;
+
+	ixfr_store->data->newserial = serial;
 
 	/* store the soa record */
 	ixfr_store->data->newsoa = xalloc(sz);
@@ -1217,6 +1232,8 @@ void ixfr_store_add_oldsoa(struct ixfr_store* ixfr_store, uint32_t ttl,
 		return;
 	}
 	rdlen_uncompressed = primns_len + email_len + 4 + 4 + 4 + 4 + 4;
+
+	ixfr_store->data->oldserial = serial;
 
 	/* store the soa record */
 	ixfr_store->data->oldsoa = xalloc(sz);
@@ -1362,8 +1379,13 @@ int ixfr_store_add_newsoa_rdatas(struct ixfr_store* ixfr_store,
 	uint32_t ttl, rdata_atom_type* rdatas, ssize_t rdata_num)
 {
 	size_t capacity = 0;
+	uint32_t serial;
 	if(ixfr_store->cancelled)
 		return 1;
+	if(rdata_num < 2 || rdata_atom_size(rdatas[2]) < 4)
+		return 0;
+	memcpy(&serial, rdata_atom_data(rdatas[2]), sizeof(serial));
+	ixfr_store->data->newserial = ntohl(serial);
 	if(!ixfr_putrr(dname, type, klass, ttl, rdatas, rdata_num,
 		&ixfr_store->data->newsoa, &ixfr_store->data->newsoa_len,
 		&ixfr_store->add_capacity))
@@ -1420,6 +1442,23 @@ int ixfr_store_delrr_uncompressed(struct ixfr_store* ixfr_store,
 		&ixfr_store->data->del_len, &ixfr_store->del_capacity);
 }
 
+static size_t skip_dname(uint8_t* rdata, size_t rdata_len)
+{
+	for (size_t index=0; index < rdata_len; ) {
+		uint8_t label_size = rdata[index];
+		if (label_size == 0) {
+			return index + 1;
+		} else if ((label_size & 0xc0) != 0) {
+			return (index + 1 < rdata_len) ? index + 2 : 0;
+		} else {
+			/* loop breaks if index exceeds rdata_len */
+			index += label_size + 1;
+		}
+	}
+
+	return 0;
+}
+
 int ixfr_store_oldsoa_uncompressed(struct ixfr_store* ixfr_store,
 	uint8_t* dname, size_t dname_len, uint16_t type, uint16_t klass,
 	uint32_t ttl, uint8_t* rdata, size_t rdata_len)
@@ -1431,6 +1470,20 @@ int ixfr_store_oldsoa_uncompressed(struct ixfr_store* ixfr_store,
 		ttl, rdata, rdata_len, &ixfr_store->data->oldsoa,
 		&ixfr_store->data->oldsoa_len, &capacity))
 		return 0;
+	{
+		uint32_t serial;
+		size_t index, count = 0;
+		if (!(count = skip_dname(rdata, rdata_len)))
+			return 0;
+		index = count;
+		if (!(count = skip_dname(rdata+index, rdata_len-index)))
+			return 0;
+		index += count;
+		if (rdata_len - index < 4)
+			return 0;
+		memcpy(&serial, rdata+index, sizeof(serial));
+		ixfr_store->data->oldserial = ntohl(serial);
+	}
 	ixfr_trim_capacity(&ixfr_store->data->oldsoa,
 		&ixfr_store->data->oldsoa_len, &capacity);
 	return 1;

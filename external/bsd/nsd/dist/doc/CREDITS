@@ -2,7 +2,7 @@ The NSD was primarily developed by NLnet Labs on request from and close
 cooperation with RIPE NCC, as an alternative name server software to be
 run on the root name server RIPE NCC operates.
 
-Below is the NSD team (nsd-team@nlnetlabs.nl) in alphabetical order:
+Below is the NSD team in alphabetical order:
 
 Alexis Yushin, NLnet Labs       - design and implementation for NSD 1.0.x 
                                   and 1.1.x.
