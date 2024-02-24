@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.7 2020/01/02 22:27:15 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.8 2024/02/24 12:04:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.7 2020/01/02 22:27:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.8 2024/02/24 12:04:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,10 +123,11 @@ pxartc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RCNR);
 	tv->tv_usec = 0;
 #ifdef PXARTC_DEBUG
+	struct clock_ymdhms dt;
 	DPRINTF(("%s: RCNR = %08llx\n", device_xname(sc->sc_dev),
 	    tv->tv_sec));
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	DPRINTF(("%s: %02lld/%02d/%02d %02d:%02d:%02d\n",
 	    device_xname(sc->sc_dev),
 	    dt.dt_year, dt.dt_mon, dt.dt_day,
 	    dt.dt_hour, dt.dt_min, dt.dt_sec));
@@ -140,10 +141,11 @@ pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 	struct pxartc_softc *sc = ch->cookie;
 
 #ifdef PXARTC_DEBUG
+	struct clock_ymdhms dt;
 	DPRINTF(("%s: RCNR = %08llx\n", device_xname(sc->sc_dev),
 	    tv->tv_sec));
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	DPRINTF(("%s: %02lld/%02d/%02d %02d:%02d:%02d\n",
 	    device_xname(sc->sc_dev),
 	    dt.dt_year, dt.dt_mon, dt.dt_day,
 	    dt.dt_hour, dt.dt_min, dt.dt_sec));
@@ -157,7 +159,7 @@ pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 		DPRINTF(("%s: new RCNR = %08x\n", device_xname(sc->sc_dev),
 		    cntr));
 		clock_secs_to_ymdhms(cntr, &dt);
-		DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+		DPRINTF(("%s: %02lld/%02d/%02d %02d:%02d:%02d\n",
 		    device_xname(sc->sc_dev),
 		    dt.dt_year, dt.dt_mon, dt.dt_day,
 		    dt.dt_hour, dt.dt_min, dt.dt_sec));
@@ -191,7 +193,7 @@ pxartc_wristwatch_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 	dt->dt_mon = (yearr >> RYCR_MONTH_SHIFT) & RYCR_MONTH_MASK;
 	dt->dt_year = (yearr >> RYCR_YEAR_SHIFT) & RYCR_YEAR_MASK;
 
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	DPRINTF(("%s: %02lld/%02d/%02d %02d:%02d:%02d\n",
 	    device_xname(sc->sc_dev),
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec));
@@ -210,7 +212,7 @@ pxartc_wristwatch_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 	DPRINTF(("%s: pxartc_wristwatch_settime()\n",
 		 device_xname(sc->sc_dev)));
 
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	DPRINTF(("%s: %02lld/%02d/%02d %02d:%02d:%02d\n",
 	    device_xname(sc->sc_dev),
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec));
@@ -242,7 +244,7 @@ pxartc_wristwatch_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 #ifdef PXARTC_DEBUG
 	{
 		struct clock_ymdhms dummy;
-		pxartc_wristwatch_gettime(sc, &dummy);
+		pxartc_wristwatch_gettime(ch, &dummy);
 	}
 #endif
 
