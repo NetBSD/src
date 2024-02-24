@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.311 2022/11/15 10:47:39 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.312 2024/02/24 21:39:05 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.311 2022/11/15 10:47:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.312 2024/02/24 21:39:05 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1355,8 +1355,8 @@ arp_llinfo_output(struct ifnet *ifp, __unused const union l3addr *daddr,
 		if (sip.s_addr == INADDR_ANY) {
 			char ipbuf[INET_ADDRSTRLEN];
 
-			log(LOG_DEBUG, "source can't be "
-			    "determined: dst=%s\n",
+			log(LOG_DEBUG, "%s: source can't be "
+			    "determined: dst=%s\n", __func__,
 			    IN_PRINT(ipbuf, &tip));
 			return;
 		}
