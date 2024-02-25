@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist_p.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdatalist_p.h,v 1.5.2.1 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATALIST_P_H
-#define DNS_RDATALIST_P_H
+#pragma once
 
 /*! \file */
 
@@ -63,5 +62,3 @@ void
 isc__rdatalist_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATALIST_P_H */

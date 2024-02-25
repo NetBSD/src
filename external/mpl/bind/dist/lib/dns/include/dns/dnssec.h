@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.8.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DNSSEC_H
-#define DNS_DNSSEC_H 1
+#pragma once
 
 /*! \file dns/dnssec.h */
 
@@ -31,7 +30,7 @@
 
 ISC_LANG_BEGINDECLS
 
-LIBDNS_EXTERNAL_DATA extern isc_stats_t *dns_dnssec_stats;
+extern isc_stats_t *dns_dnssec_stats;
 
 /*%< Maximum number of keys supported in a zone. */
 #define DNS_MAXZONEKEYS 32
@@ -329,7 +328,8 @@ isc_result_t
 dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 		      dns_dnsseckeylist_t *removed, const dns_name_t *origin,
 		      dns_ttl_t hint_ttl, dns_diff_t *diff, isc_mem_t *mctx,
-		      void (*report)(const char *, ...));
+		      void (*report)(const char *, ...)
+			      ISC_FORMAT_PRINTF(1, 2));
 /*%<
  * Update the list of keys in 'keys' with new key information in 'newkeys'.
  *
@@ -399,5 +399,3 @@ dns_dnssec_matchdskey(dns_name_t *name, dns_rdata_t *dsrdata,
  *\li	Other values indicate error
  */
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DNSSEC_H */

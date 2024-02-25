@@ -1,0 +1,250 @@
+#!/bin/sh
+#
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+#
+# Run a system test.
+#
+
+top_builddir=@top_builddir@
+builddir=@abs_builddir@
+srcdir=@abs_srcdir@
+
+# shellcheck source=conf.sh
+. ${builddir}/conf.sh
+
+if [ "$CI_SERVER" != "yes" ] && [ "$(id -u)" -eq "0" ] && [ "@DEVELOPER_MODE@" != "yes" ]; then
+  echofail "Refusing to run test as root. Build with --enable-developer to override." >&2
+  exit 1
+fi
+
+export builddir
+export srcdir
+
+date_with_args() (
+  date "+%Y-%m-%dT%T%z"
+)
+
+stopservers=true
+# baseport == 0 means random
+baseport=0
+
+if [ "${SYSTEMTEST_NO_CLEAN:-0}" -eq 1 ]; then
+  clean=false
+else
+  clean=true
+fi
+
+restart=false
+while getopts "sknp:-:t" OPT; do
+  if [ "$OPT" = "-" ] && [ -n "$OPTARG" ]; then
+    OPT="${OPTARG%%=*}"
+    OPTARG="${OPTARG#$OPT}"
+    OPTARG="${OPTARG#=}"
+  fi
+
+  # shellcheck disable=SC2214
+  case "$OPT" in
+    k | keep) stopservers=false ;;
+    n | noclean) clean=false ;;
+    p | port) baseport=$OPTARG ;;
+    s | skip) exit 0 ;;
+    t | restart) restart=true ;;
+    -) break ;;
+    *)
+      echo "invalid option" >&2
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [ $# -eq 0 ]; then
+  echofail "Usage: $0 [-k] [-n] [-p <PORT>] test-directory [test-options]" >&2
+  exit 1
+fi
+
+systest=$(basename "${1%%/}")
+shift
+
+if [ ! -d "${srcdir}/$systest" ]; then
+  echofail "$0: $systest: no such test" >&2
+  exit 1
+fi
+
+if [ "${srcdir}" != "${builddir}" ]; then
+  if [ ! -d _common ] || [ ! -r _common/.prepared ]; then
+    cp -a "${srcdir}/_common" "${builddir}"
+  fi
+  # Some tests require additional files to work for out-of-tree test runs.
+  for file in ckdnsrps.sh conftest.py digcomp.pl ditch.pl fromhex.pl get_core_dumps.sh kasp.sh packet.pl start.pl stop.pl testcrypto.sh; do
+    if [ ! -r "${file}" ]; then
+      cp -a "${srcdir}/${file}" "${builddir}"
+    fi
+  done
+  if [ ! -d "$systest" ] || [ ! -r "$systest/.prepared" ]; then
+    mkdir -p "${builddir}/$systest"
+    cp -a "${srcdir}/$systest" "${builddir}/"
+    touch "$systest/.prepared"
+  fi
+fi
+
+if [ ! -d "${systest}" ]; then
+  echofail "$0: $systest: no such test" >&2
+  exit 1
+fi
+
+# Determine which ports to use for this system test.
+eval "$(cd "${srcdir}" && ./get_ports.sh -p "$baseport" -t "$systest")"
+
+# Start all servers used by the system test.  Ensure all log files written
+# during a system test (tests.sh + potentially multiple *.py scripts) are
+# retained for each run by calling start.pl with the --restart command-line
+# option for all invocations except the first one.
+start_servers() {
+  echoinfo "I:$systest:starting servers"
+  if $restart || [ "$run" -gt 0 ]; then
+    restart_opt="--restart"
+  fi
+  if ! $PERL start.pl ${restart_opt} --port "$PORT" "$systest"; then
+    echoinfo "I:$systest:starting servers failed"
+    return 1
+  fi
+}
+
+stop_servers() {
+  if $stopservers; then
+    echoinfo "I:$systest:stopping servers"
+    if ! $PERL stop.pl "$systest"; then
+      echoinfo "I:$systest:stopping servers failed"
+      return 1
+    fi
+  fi
+}
+
+echostart "S:$systest:$(date_with_args)"
+echoinfo "T:$systest:1:A"
+echoinfo "A:$systest:System test $systest"
+echoinfo "I:$systest:PORTS:${PORT},${TLSPORT},${HTTPPORT},${HTTPSPORT},${EXTRAPORT1},${EXTRAPORT2},${EXTRAPORT3},${EXTRAPORT4},${EXTRAPORT5},${EXTRAPORT6},${EXTRAPORT7},${EXTRAPORT8},${CONTROLPORT}"
+
+$PERL ${srcdir}/testsock.pl -p "$PORT" || {
+  echowarn "I:$systest:Network interface aliases not set up.  Skipping test."
+  echowarn "R:$systest:FAIL"
+  echoend "E:$systest:$(date_with_args)"
+  exit 1
+}
+
+# Check for test-specific prerequisites.
+test ! -f "$systest/prereq.sh" || (cd "${systest}" && $SHELL prereq.sh "$@")
+result=$?
+
+if [ $result -eq 0 ]; then
+  : prereqs ok
+else
+  echowarn "I:$systest:Prerequisites missing, skipping test."
+  echowarn "R:$systest:SKIPPED"
+  echoend "E:$systest:$(date_with_args)"
+  exit 0
+fi
+
+# Clean up files left from any potential previous runs except when
+# started with the --restart option.
+if ! $restart; then
+  if test -f "$systest/clean.sh"; then
+    if ! (cd "${systest}" && $SHELL clean.sh "$@"); then
+      echowarn "I:$systest:clean.sh script failed"
+      echofail "R:$systest:FAIL"
+      echoend "E:$systest:$(date_with_args)"
+      exit 1
+    fi
+  fi
+fi
+
+# Set up any dynamically generated test data
+if test -f "$systest/setup.sh"; then
+  if ! (cd "${systest}" && $SHELL setup.sh "$@"); then
+    echowarn "I:$systest:setup.sh script failed"
+    echofail "R:$systest:FAIL"
+    echoend "E:$systest:$(date_with_args)"
+    exit 1
+  fi
+fi
+
+status=0
+run=0
+# Run the tests
+if [ -r "$systest/tests.sh" ]; then
+  if start_servers; then
+    (cd "$systest" && $SHELL tests.sh "$@")
+    status=$?
+    run=$((run + 1))
+    stop_servers || status=1
+  else
+    status=1
+  fi
+fi
+
+if [ "$run" -eq "0" ]; then
+  echoinfo "I:$systest:No tests were found and run"
+  status=255
+fi
+
+if $stopservers; then
+  :
+else
+  exit $status
+fi
+
+$SHELL get_core_dumps.sh "$systest" || status=1
+
+print_outstanding_files() {
+  if test -d ${srcdir}/../../../.git; then
+    git status -su --ignored "${systest}/" 2>/dev/null \
+      | sed -n -e 's|^?? \(.*\)|I:'"${systest}"':file \1 not removed|p' \
+        -e 's|^!! \(.*/named.run\)$|I:'"${systest}"':file \1 not removed|p' \
+        -e 's|^!! \(.*/named.memstats\)$|I:'"${systest}"':file \1 not removed|p'
+  fi
+}
+
+print_outstanding_files_oot() {
+  if test -d ${srcdir}/../../../.git; then
+    git -C "${srcdir}/${systest}" ls-files | sed "s|^|${systest}/|" >gitfiles.txt
+    find "${systest}/" -type f ! -name .prepared ! -name Makefile >testfiles.txt
+    grep -F -x -v -f gitfiles.txt testfiles.txt
+    rm -f gitfiles.txt testfiles.txt
+  fi
+}
+
+if [ $status -ne 0 ]; then
+  echofail "R:$systest:FAIL"
+else
+  echopass "R:$systest:PASS"
+  if $clean && ! $restart; then
+    (cd "${systest}" && $SHELL clean.sh "$@")
+    if [ "${srcdir}" = "${builddir}" ]; then
+      print_outstanding_files
+    else
+      print_outstanding_files_oot | xargs rm -f
+      find "${systest}/" \( -type d -empty \) -delete 2>/dev/null
+    fi
+  fi
+fi
+
+NAMED_RUN_LINES_THRESHOLD=200000
+find "${systest}" -type f -name "named.run" -exec wc -l {} \; | awk "\$1 > ${NAMED_RUN_LINES_THRESHOLD} { print \$2 }" | sort | while read -r LOG_FILE; do
+  echowarn "I:${systest}:${LOG_FILE} contains more than ${NAMED_RUN_LINES_THRESHOLD} lines, consider tweaking the test to limit disk I/O"
+done
+
+echoend "E:$systest:$(date_with_args)"
+
+exit $status

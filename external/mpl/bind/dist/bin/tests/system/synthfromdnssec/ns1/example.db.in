@@ -16,4 +16,10 @@ ns1		A	10.53.0.1
 nodata		TXT	nodata
 *.wild-a	A	1.2.3.4
 *.wild-cname 	CNAME	ns1
+*.wild-1-nsec	A	1.2.3.4
+*.wild-2-nsec 	A	1.2.3.4
+_x.wild-2-nsec	TXT	a name beween wild-2-nsec and a.wild-2-nsec
+*.wild-2-nsec-afterdata 	A	1.2.3.4
+*.wild-2-nsec-afterdata 	AAAA	2002::1
+_x.wild-2-nsec-afterdata	TXT	a name beween wild-2-nsec-afterdata and a.wild-2-nsec-afterdata
 dnamed		DNAME	dnamed.

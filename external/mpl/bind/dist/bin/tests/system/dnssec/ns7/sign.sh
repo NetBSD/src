@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../../conf.sh
 
 set -e
 
@@ -25,7 +25,7 @@ zonefile=split-rrsig.db
 k1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 k2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 
-cat "$infile" "$k1.key" "$k2.key" > "$zonefile"
+cat "$infile" "$k1.key" "$k2.key" >"$zonefile"
 
 # The awk script below achieves two goals:
 #
@@ -37,8 +37,8 @@ cat "$infile" "$k1.key" "$k2.key" > "$zonefile"
 # - it places a copy of one of the RRSIG(SOA) records somewhere else than at the
 #   zone apex; the test then checks whether such signatures are automatically
 #   removed from the zone after it is loaded.
-"$SIGNER" -P -3 - -A -o "$zone" -O full -f "$zonefile.unsplit" -e now-3600 -s now-7200 "$zonefile" > /dev/null 2>&1
+"$SIGNER" -P -3 - -A -o "$zone" -O full -f "$zonefile.unsplit" -e now-3600 -s now-7200 "$zonefile" >/dev/null 2>&1
 awk 'BEGIN { r = ""; }
      $4 == "RRSIG" && $5 == "SOA" && r == "" { r = $0; next; }
      { print }
-     END { print r; print "not-at-zone-apex." r; }' "$zonefile.unsplit" > "$zonefile.signed"
+     END { print r; print "not-at-zone-apex." r; }' "$zonefile.unsplit" >"$zonefile.signed"

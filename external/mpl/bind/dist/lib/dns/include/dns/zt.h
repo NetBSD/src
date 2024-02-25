@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.h,v 1.6.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: zt.h,v 1.6.2.2 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ZT_H
-#define DNS_ZT_H 1
+#pragma once
 
 /*! \file dns/zt.h */
 
@@ -123,14 +122,13 @@ dns_zt_detach(dns_zt_t **ztp);
  */
 
 void
-dns_zt_flushanddetach(dns_zt_t **ztp);
+dns_zt_flush(dns_zt_t *ztp);
 /*%<
- * Detach the given zonetable, if the reference count goes to zero the
- * zonetable will be flushed and then freed.  In either case 'ztp' is
- * set to NULL.
+ * Schedule flushing of the given zonetable, when reference count goes
+ * to zero.
  *
  * Requires:
- * \li	'*ztp' to be valid
+ * \li	'ztp' to be valid
  */
 
 void
@@ -167,7 +165,7 @@ dns_zt_asyncload(dns_zt_t *zt, bool newonly, dns_zt_allloaded_t alldone,
 isc_result_t
 dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze);
 /*%<
- * Freeze/thaw updates to master zones.
+ * Freeze/thaw updates to primary zones.
  * Any pending updates will be flushed.
  * Zones will be reloaded on thaw.
  */
@@ -222,5 +220,3 @@ dns_zt_setviewrevert(dns_zt_t *zt);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ZT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: hip_55.h,v 1.6.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_HIP_5_H
-#define GENERIC_HIP_5_H 1
+#pragma once
 
 /* RFC 5205 */
 
@@ -40,5 +39,3 @@ dns_rdata_hip_next(dns_rdata_hip_t *);
 
 void
 dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
-
-#endif /* GENERIC_HIP_5_H */

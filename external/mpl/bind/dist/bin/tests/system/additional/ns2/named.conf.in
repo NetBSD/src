@@ -22,6 +22,7 @@ options {
 	listen-on-v6 { none; };
 	notify no;
 	minimal-responses yes;
+	dnssec-validation no;
 };
 
 zone "." {

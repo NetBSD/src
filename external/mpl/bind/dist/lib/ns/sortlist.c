@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.c,v 1.6.2.1 2023/08/11 13:43:40 martin Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.6.2.2 2024/02/25 15:47:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,25 +16,23 @@
 /*! \file */
 
 #include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/util.h>
 
 #include <dns/acl.h>
 #include <dns/message.h>
-#include <dns/result.h>
 
 #include <ns/server.h>
 #include <ns/sortlist.h>
 
 ns_sortlisttype_t
 ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
-		  const void **argp) {
-	unsigned int i;
-
+		  void **argp) {
 	if (acl == NULL) {
 		goto dont_sort;
 	}
 
-	for (i = 0; i < acl->length; i++) {
+	for (size_t i = 0; i < acl->length; i++) {
 		/*
 		 * 'e' refers to the current 'top level statement'
 		 * in the sortlist (see ARM).
@@ -42,7 +40,7 @@ ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
 		dns_aclelement_t *e = &acl->elements[i];
 		dns_aclelement_t *try_elt;
 		dns_aclelement_t *order_elt = NULL;
-		const dns_aclelement_t *matched_elt = NULL;
+		dns_aclelement_t *matched_elt = NULL;
 
 		if (e->type == dns_aclelementtype_nestedacl) {
 			dns_acl_t *inner = e->nestedacl;
@@ -67,45 +65,62 @@ ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
 			try_elt = e;
 		}
 
-		if (dns_aclelement_match(clientaddr, NULL, try_elt, env,
-					 &matched_elt))
+		if (!dns_aclelement_match(
+			    clientaddr, NULL, try_elt, env,
+			    (const dns_aclelement_t **)&matched_elt))
 		{
-			if (order_elt != NULL) {
-				if (order_elt->type ==
-				    dns_aclelementtype_nestedacl)
-				{
-					*argp = order_elt->nestedacl;
-					return (NS_SORTLISTTYPE_2ELEMENT);
-				} else if (order_elt->type ==
-						   dns_aclelementtype_localhost &&
-					   env->localhost != NULL)
-				{
-					*argp = env->localhost;
-					return (NS_SORTLISTTYPE_2ELEMENT);
-				} else if (order_elt->type ==
-						   dns_aclelementtype_localnets &&
-					   env->localnets != NULL)
-				{
-					*argp = env->localnets;
-					return (NS_SORTLISTTYPE_2ELEMENT);
-				} else {
-					/*
-					 * BIND 8 allows a bare IP prefix as
-					 * the 2nd element of a 2-element
-					 * sortlist statement.
-					 */
-					*argp = order_elt;
-					return (NS_SORTLISTTYPE_1ELEMENT);
-				}
-			} else {
-				INSIST(matched_elt != NULL);
-				*argp = matched_elt;
-				return (NS_SORTLISTTYPE_1ELEMENT);
+			continue;
+		}
+
+		if (order_elt == NULL) {
+			INSIST(matched_elt != NULL);
+			*argp = matched_elt;
+			return (NS_SORTLISTTYPE_1ELEMENT);
+		}
+
+		if (order_elt->type == dns_aclelementtype_nestedacl) {
+			dns_acl_t *inner = NULL;
+			dns_acl_attach(order_elt->nestedacl, &inner);
+			*argp = inner;
+			return (NS_SORTLISTTYPE_2ELEMENT);
+		}
+
+		if (order_elt->type == dns_aclelementtype_localhost) {
+			dns_acl_t *inner = NULL;
+			RWLOCK(&env->rwlock, isc_rwlocktype_read);
+			if (env->localhost != NULL) {
+				dns_acl_attach(env->localhost, &inner);
+			}
+			RWUNLOCK(&env->rwlock, isc_rwlocktype_read);
+
+			if (inner != NULL) {
+				*argp = inner;
+				return (NS_SORTLISTTYPE_2ELEMENT);
 			}
 		}
+
+		if (order_elt->type == dns_aclelementtype_localnets) {
+			dns_acl_t *inner = NULL;
+			RWLOCK(&env->rwlock, isc_rwlocktype_read);
+			if (env->localnets != NULL) {
+				dns_acl_attach(env->localnets, &inner);
+			}
+			RWUNLOCK(&env->rwlock, isc_rwlocktype_read);
+			if (inner != NULL) {
+				*argp = inner;
+				return (NS_SORTLISTTYPE_2ELEMENT);
+			}
+		}
+
+		/*
+		 * BIND 8 allows a bare IP prefix as
+		 * the 2nd element of a 2-element
+		 * sortlist statement.
+		 */
+		*argp = order_elt;
+		return (NS_SORTLISTTYPE_1ELEMENT);
 	}
 
-	/* No match; don't sort. */
 dont_sort:
 	*argp = NULL;
 	return (NS_SORTLISTTYPE_NONE);
@@ -114,7 +129,7 @@ dont_sort:
 int
 ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg) {
 	const dns_sortlist_arg_t *sla = (const dns_sortlist_arg_t *)arg;
-	const dns_aclenv_t *env = sla->env;
+	dns_aclenv_t *env = sla->env;
 	const dns_acl_t *sortacl = sla->acl;
 	int match;
 
@@ -131,7 +146,7 @@ ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg) {
 int
 ns_sortlist_addrorder1(const isc_netaddr_t *addr, const void *arg) {
 	const dns_sortlist_arg_t *sla = (const dns_sortlist_arg_t *)arg;
-	const dns_aclenv_t *env = sla->env;
+	dns_aclenv_t *env = sla->env;
 	const dns_aclelement_t *element = sla->element;
 
 	if (dns_aclelement_match(addr, NULL, element, env, NULL)) {
@@ -144,7 +159,7 @@ ns_sortlist_addrorder1(const isc_netaddr_t *addr, const void *arg) {
 void
 ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
 			isc_netaddr_t *client_addr,
-			dns_addressorderfunc_t *orderp, const void **argp) {
+			dns_addressorderfunc_t *orderp, void **argp) {
 	ns_sortlisttype_t sortlisttype;
 
 	sortlisttype = ns_sortlist_setup(sortlist_acl, env, client_addr, argp);
@@ -160,10 +175,9 @@ ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
 		*orderp = NULL;
 		break;
 	default:
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "unexpected return from ns_sortlist_setup(): "
-				 "%d",
-				 sortlisttype);
+		UNEXPECTED_ERROR(
+			"unexpected return from ns_sortlist_setup(): %d",
+			sortlisttype);
 		break;
 	}
 }

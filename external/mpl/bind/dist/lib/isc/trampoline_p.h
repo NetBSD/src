@@ -1,4 +1,4 @@
-/*	$NetBSD: trampoline_p.h,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: trampoline_p.h,v 1.3.2.1 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,7 +82,7 @@ isc_threadresult_t
 isc__trampoline_run(isc_threadarg_t arg);
 /*%<
  * Run the thread trampoline, this will get passed to the actual
- * pthread_create() (or Windows equivalent), initialize the isc_tid_v.
+ * pthread_create(), initialize the isc_tid_v.
  *
  * Requires:
  *\li	'arg' is a valid isc_trampoline_t

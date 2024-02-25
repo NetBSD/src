@@ -11,22 +11,21 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 keys_to_trust=""
 
 for zonename in sub.example example initially-unavailable; do
-	zone=$zonename
-	infile=$zonename.db.in
-	zonefile=$zonename.db
+  zone=$zonename
+  infile=$zonename.db.in
+  zonefile=$zonename.db
 
-	keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2> /dev/null)
-	keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
+  keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2>/dev/null)
+  keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2>/dev/null)
 
-	cat $infile $keyname1.key $keyname2.key > $zonefile
+  cat $infile $keyname1.key $keyname2.key >$zonefile
 
-	$SIGNER -P -g -o $zone $zonefile > /dev/null
+  $SIGNER -P -g -o $zone $zonefile >/dev/null
 done
 
 # Only add the key for "initially-unavailable" to the list of keys trusted by
@@ -40,9 +39,9 @@ zone=verify-csk
 infile=verify.db.in
 zonefile=verify-csk.db
 
-keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
-cat $infile $keyname.key > $zonefile
-$SIGNER -P -o $zone $zonefile > /dev/null
+keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2>/dev/null)
+cat $infile $keyname.key >$zonefile
+$SIGNER -P -o $zone $zonefile >/dev/null
 keys_to_trust="$keys_to_trust $keyname"
 
 # Prepare remaining zones used in the test.
@@ -51,30 +50,30 @@ UPDATED_SERIAL_BAD=$((ORIGINAL_SERIAL + 1))
 UPDATED_SERIAL_GOOD=$((ORIGINAL_SERIAL + 2))
 
 for variant in addzone axfr ixfr load reconfig untrusted; do
-	zone=verify-$variant
-	infile=verify.db.in
-	zonefile=verify-$variant.db
+  zone=verify-$variant
+  infile=verify.db.in
+  zonefile=verify-$variant.db
 
-	keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2> /dev/null)
-	keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
+  keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2>/dev/null)
+  keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2>/dev/null)
 
-	cat $infile $keyname1.key $keyname2.key > $zonefile
+  cat $infile $keyname1.key $keyname2.key >$zonefile
 
-	# Prepare a properly signed version of the zone ("*.original.signed").
-	$SIGNER -P -o $zone $zonefile > /dev/null
-	cp $zonefile.signed $zonefile.original.signed
-	# Prepare a version of the zone with a bogus SOA RRSIG ("*.bad.signed").
-	sed "s/${ORIGINAL_SERIAL}/${UPDATED_SERIAL_BAD}/;" $zonefile.signed > $zonefile.bad.signed
-	# Prepare another properly signed version of the zone ("*.good.signed").
-	sed "s/${ORIGINAL_SERIAL}/${UPDATED_SERIAL_GOOD}/;" $zonefile > $zonefile.good
-	$SIGNER -P -o $zone $zonefile.good > /dev/null
-	rm -f $zonefile.good
+  # Prepare a properly signed version of the zone ("*.original.signed").
+  $SIGNER -P -o $zone $zonefile >/dev/null
+  cp $zonefile.signed $zonefile.original.signed
+  # Prepare a version of the zone with a bogus SOA RRSIG ("*.bad.signed").
+  sed "s/${ORIGINAL_SERIAL}/${UPDATED_SERIAL_BAD}/;" $zonefile.signed >$zonefile.bad.signed
+  # Prepare another properly signed version of the zone ("*.good.signed").
+  sed "s/${ORIGINAL_SERIAL}/${UPDATED_SERIAL_GOOD}/;" $zonefile >$zonefile.good
+  $SIGNER -P -o $zone $zonefile.good >/dev/null
+  rm -f $zonefile.good
 
-	# Except for the "verify-untrusted" zone, declare the KSK used for
-	# signing the zone to be a trust anchor for ns3.
-	if [ "$variant" != "untrusted" ]; then
-		keys_to_trust="$keys_to_trust $keyname1"
-	fi
+  # Except for the "verify-untrusted" zone, declare the KSK used for
+  # signing the zone to be a trust anchor for ns3.
+  if [ "$variant" != "untrusted" ]; then
+    keys_to_trust="$keys_to_trust $keyname1"
+  fi
 done
 
-keyfile_to_static_ds $keys_to_trust > trusted-mirror.conf
+keyfile_to_static_ds $keys_to_trust >trusted-mirror.conf

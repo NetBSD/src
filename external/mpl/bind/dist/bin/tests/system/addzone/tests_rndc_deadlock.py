@@ -22,7 +22,7 @@ def run_rndc(server, rndc_command):
     rndc = os.getenv("RNDC")
     port = os.getenv("CONTROLPORT")
 
-    cmdline = [rndc, "-c", "../common/rndc.conf", "-p", port, "-s", server]
+    cmdline = [rndc, "-c", "../_common/rndc.conf", "-p", port, "-s", server]
     cmdline.extend(rndc_command)
 
     subprocess.check_output(cmdline, stderr=subprocess.STDOUT, timeout=10)
@@ -34,11 +34,11 @@ def rndc_loop(test_state, domain):
     until the test is considered finished, ignoring errors
     """
     rndc_commands = [
-        ["addzone", domain, '{ type master; file "example.db"; };'],
+        ["addzone", domain, '{ type primary; file "example.db"; };'],
         [
             "modzone",
             domain,
-            '{ type master; file "example.db"; allow-transfer { any; }; };',
+            '{ type primary; file "example.db"; allow-transfer { any; }; };',
         ],
         ["delzone", domain],
     ]

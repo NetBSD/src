@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rootns.h,v 1.5.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ROOTNS_H
-#define DNS_ROOTNS_H 1
+#pragma once
 
 /*! \file dns/rootns.h */
 
@@ -37,5 +36,3 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ROOTNS_H */

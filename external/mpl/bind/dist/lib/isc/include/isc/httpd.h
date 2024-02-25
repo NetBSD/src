@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: httpd.h,v 1.6.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_HTTPD_H
-#define ISC_HTTPD_H 1
+#pragma once
 
 /*! \file */
 
@@ -26,62 +25,41 @@
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/types.h>
-
-/*%
- * HTTP urls.  These are the URLs we manage, and the function to call to
- * provide the data for it.  We pass in the base url (so the same function
- * can handle multiple requests), and a structure to fill in to return a
- * result to the client.  We also pass in a pointer to be filled in for
- * the data cleanup function.
- */
-struct isc_httpdurl {
-	char		  *url;
-	isc_httpdaction_t *action;
-	void		  *action_arg;
-	bool		   isstatic;
-	isc_time_t	   loadtime;
-	ISC_LINK(isc_httpdurl_t) link;
-};
+#include <isc/url.h>
 
 #define HTTPD_EVENTCLASS ISC_EVENTCLASS(4300)
 #define HTTPD_SHUTDOWN	 (HTTPD_EVENTCLASS + 0x0001)
 
-#define ISC_HTTPDMGR_FLAGSHUTTINGDOWN 0x00000001
+#define ISC_HTTPDMGR_SHUTTINGDOWN 0x00000001
 
-/*
- * Create a new http daemon which will send, once every time period,
- * a http-like header followed by HTTP data.
- */
+typedef isc_result_t(isc_httpdaction_t)(
+	const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo, void *arg,
+	unsigned int *retcode, const char **retmsg, const char **mimetype,
+	isc_buffer_t *body, isc_httpdfree_t **freecb, void **freecb_args);
+
+typedef bool(isc_httpdclientok_t)(const isc_sockaddr_t *, void *);
+
 isc_result_t
-isc_httpdmgr_create(isc_mem_t *mctx, isc_socket_t *sock, isc_task_t *task,
+isc_httpdmgr_create(isc_nm_t *nm, isc_mem_t *mctx, isc_sockaddr_t *addr,
 		    isc_httpdclientok_t	 *client_ok,
-		    isc_httpdondestroy_t *ondestory, void *cb_arg,
-		    isc_timermgr_t *tmgr, isc_httpdmgr_t **httpdp);
+		    isc_httpdondestroy_t *ondestroy, void *cb_arg,
+		    isc_httpdmgr_t **httpdmgrp);
 
 void
 isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdp);
 
 isc_result_t
-isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url,
+isc_httpdmgr_addurl(isc_httpdmgr_t *httpdmgr, const char *url, bool isstatic,
 		    isc_httpdaction_t *func, void *arg);
-
-isc_result_t
-isc_httpdmgr_addurl2(isc_httpdmgr_t *httpdmgr, const char *url, bool isstatic,
-		     isc_httpdaction_t *func, void *arg);
-
-isc_result_t
-isc_httpd_response(isc_httpd_t *httpd);
-
-isc_result_t
-isc_httpd_addheader(isc_httpd_t *httpd, const char *name, const char *val);
-
-isc_result_t
-isc_httpd_addheaderuint(isc_httpd_t *httpd, const char *name, int val);
-
-isc_result_t
-isc_httpd_endheaders(isc_httpd_t *httpd);
 
 void
 isc_httpd_setfinishhook(void (*fn)(void));
 
-#endif /* ISC_HTTPD_H */
+bool
+isc_httpdurl_isstatic(const isc_httpdurl_t *url);
+
+const isc_time_t *
+isc_httpdurl_loadtime(const isc_httpdurl_t *url);
+
+const isc_time_t *
+isc_httpd_if_modified_since(const isc_httpd_t *httpd);

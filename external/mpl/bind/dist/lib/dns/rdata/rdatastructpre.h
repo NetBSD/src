@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructpre.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdatastructpre.h,v 1.6.2.1 2024/02/25 15:47:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATASTRUCT_H
-#define DNS_RDATASTRUCT_H 1
+#pragma once
 
 #include <isc/lang.h>
 #include <isc/sockaddr.h>

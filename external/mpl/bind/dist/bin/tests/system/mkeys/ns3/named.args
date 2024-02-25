@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 99 -D mkeys-ns3 -X named.lock -g -T maxcachesize=2097152 -T mkeytimers=5/10/20
+-m record -c named.conf -d 99 -D mkeys-ns3 -X named.lock -g -T maxcachesize=2097152 -T mkeytimers=5/10/20

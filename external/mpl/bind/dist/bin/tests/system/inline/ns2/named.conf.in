@@ -13,7 +13,7 @@
 
 // NS2
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -31,6 +31,7 @@ options {
 	notify yes;
 	notify-delay 0;
 	allow-new-zones yes;
+	dnssec-validation no;
 };
 
 zone "bits" {

@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache.c,v 1.6.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: badcache.c,v 1.6.2.2 2024/02/25 15:46:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,6 @@
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/string.h>
@@ -31,6 +30,7 @@
 #include <isc/util.h>
 
 #include <dns/badcache.h>
+#include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/rdatatype.h>
 #include <dns/types.h>
@@ -61,7 +61,8 @@ struct dns_bcentry {
 	isc_time_t expire;
 	uint32_t flags;
 	unsigned int hashval;
-	dns_name_t name;
+	dns_fixedname_t fname;
+	dns_name_t *name;
 };
 
 static void
@@ -187,8 +188,7 @@ badcache_resize(dns_badcache_t *bc, isc_time_t *now) {
 		for (bad = bc->table[i]; bad != NULL; bad = next) {
 			next = bad->next;
 			if (isc_time_compare(&bad->expire, now) < 0) {
-				isc_mem_put(bc->mctx, bad,
-					    sizeof(*bad) + bad->name.length);
+				isc_mem_put(bc->mctx, bad, sizeof(*bad));
 				atomic_fetch_sub_relaxed(&bc->count, 1);
 			} else {
 				bad->next = newtable[bad->hashval % newsize];
@@ -235,7 +235,7 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 	prev = NULL;
 	for (bad = bc->table[hash]; bad != NULL; bad = next) {
 		next = bad->next;
-		if (bad->type == type && dns_name_equal(name, &bad->name)) {
+		if (bad->type == type && dns_name_equal(name, bad->name)) {
 			if (update) {
 				bad->expire = *expire;
 				bad->flags = flags;
@@ -248,8 +248,7 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 			} else {
 				prev->next = bad->next;
 			}
-			isc_mem_put(bc->mctx, bad,
-				    sizeof(*bad) + bad->name.length);
+			isc_mem_put(bc->mctx, bad, sizeof(*bad));
 			atomic_fetch_sub_relaxed(&bc->count, 1);
 		} else {
 			prev = bad;
@@ -257,18 +256,22 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 	}
 
 	if (bad == NULL) {
+		unsigned count;
 		isc_buffer_t buffer;
-		bad = isc_mem_get(bc->mctx, sizeof(*bad) + name->length);
-		bad->type = type;
-		bad->hashval = hashval;
-		bad->expire = *expire;
-		bad->flags = flags;
+
+		bad = isc_mem_get(bc->mctx, sizeof(*bad));
+		*bad = (dns_bcentry_t){ .type = type,
+					.hashval = hashval,
+					.expire = *expire,
+					.flags = flags,
+					.next = bc->table[hash] };
+
 		isc_buffer_init(&buffer, bad + 1, name->length);
-		dns_name_init(&bad->name, NULL);
-		dns_name_copy(name, &bad->name, &buffer);
-		bad->next = bc->table[hash];
+		bad->name = dns_fixedname_initname(&bad->fname);
+		dns_name_copy(name, bad->name);
 		bc->table[hash] = bad;
-		unsigned count = atomic_fetch_add_relaxed(&bc->count, 1);
+
+		count = atomic_fetch_add_relaxed(&bc->count, 1);
 		if ((count > bc->size * 8) ||
 		    (count < bc->size * 2 && bc->size > bc->minsize))
 		{
@@ -330,12 +333,11 @@ dns_badcache_find(dns_badcache_t *bc, const dns_name_t *name,
 				bc->table[hash] = bad->next;
 			}
 
-			isc_mem_put(bc->mctx, bad,
-				    sizeof(*bad) + bad->name.length);
+			isc_mem_put(bc->mctx, bad, sizeof(*bad));
 			atomic_fetch_sub(&bc->count, 1);
 			continue;
 		}
-		if (bad->type == type && dns_name_equal(name, &bad->name)) {
+		if (bad->type == type && dns_name_equal(name, bad->name)) {
 			if (flagp != NULL) {
 				*flagp = bad->flags;
 			}
@@ -355,8 +357,7 @@ skip:
 		bad = bc->table[i];
 		if (bad != NULL && isc_time_compare(&bad->expire, now) < 0) {
 			bc->table[i] = bad->next;
-			isc_mem_put(bc->mctx, bad,
-				    sizeof(*bad) + bad->name.length);
+			isc_mem_put(bc->mctx, bad, sizeof(*bad));
 			atomic_fetch_sub_relaxed(&bc->count, 1);
 		}
 		UNLOCK(&bc->tlocks[i]);
@@ -377,8 +378,7 @@ dns_badcache_flush(dns_badcache_t *bc) {
 	for (i = 0; atomic_load_relaxed(&bc->count) > 0 && i < bc->size; i++) {
 		for (entry = bc->table[i]; entry != NULL; entry = next) {
 			next = entry->next;
-			isc_mem_put(bc->mctx, entry,
-				    sizeof(*entry) + entry->name.length);
+			isc_mem_put(bc->mctx, entry, sizeof(*entry));
 			atomic_fetch_sub_relaxed(&bc->count, 1);
 		}
 		bc->table[i] = NULL;
@@ -409,15 +409,14 @@ dns_badcache_flushname(dns_badcache_t *bc, const dns_name_t *name) {
 		int n;
 		next = bad->next;
 		n = isc_time_compare(&bad->expire, &now);
-		if (n < 0 || dns_name_equal(name, &bad->name)) {
+		if (n < 0 || dns_name_equal(name, bad->name)) {
 			if (prev == NULL) {
 				bc->table[hash] = bad->next;
 			} else {
 				prev->next = bad->next;
 			}
 
-			isc_mem_put(bc->mctx, bad,
-				    sizeof(*bad) + bad->name.length);
+			isc_mem_put(bc->mctx, bad, sizeof(*bad));
 			atomic_fetch_sub_relaxed(&bc->count, 1);
 		} else {
 			prev = bad;
@@ -455,15 +454,14 @@ dns_badcache_flushtree(dns_badcache_t *bc, const dns_name_t *name) {
 		for (bad = bc->table[i]; bad != NULL; bad = next) {
 			next = bad->next;
 			n = isc_time_compare(&bad->expire, &now);
-			if (n < 0 || dns_name_issubdomain(&bad->name, name)) {
+			if (n < 0 || dns_name_issubdomain(bad->name, name)) {
 				if (prev == NULL) {
 					bc->table[i] = bad->next;
 				} else {
 					prev->next = bad->next;
 				}
 
-				isc_mem_put(bc->mctx, bad,
-					    sizeof(*bad) + bad->name.length);
+				isc_mem_put(bc->mctx, bad, sizeof(*bad));
 				atomic_fetch_sub_relaxed(&bc->count, 1);
 			} else {
 				prev = bad;
@@ -506,13 +504,12 @@ dns_badcache_print(dns_badcache_t *bc, const char *cachename, FILE *fp) {
 					bc->table[i] = bad->next;
 				}
 
-				isc_mem_put(bc->mctx, bad,
-					    sizeof(*bad) + bad->name.length);
+				isc_mem_put(bc->mctx, bad, sizeof(*bad));
 				atomic_fetch_sub_relaxed(&bc->count, 1);
 				continue;
 			}
 			prev = bad;
-			dns_name_format(&bad->name, namebuf, sizeof(namebuf));
+			dns_name_format(bad->name, namebuf, sizeof(namebuf));
 			dns_rdatatype_format(bad->type, typebuf,
 					     sizeof(typebuf));
 			t = isc_time_microdiff(&bad->expire, &now);

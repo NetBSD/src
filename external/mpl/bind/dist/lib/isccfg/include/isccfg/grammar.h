@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.h,v 1.7.2.1 2023/08/11 13:43:39 martin Exp $	*/
+/*	$NetBSD: grammar.h,v 1.7.2.2 2024/02/25 15:47:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISCCFG_GRAMMAR_H
-#define ISCCFG_GRAMMAR_H 1
+#pragma once
 
 /*! \file isccfg/grammar.h */
 
@@ -28,6 +27,7 @@
 #include <isc/types.h>
 
 #include <isccfg/cfg.h>
+#include <isccfg/duration.h>
 
 /*
  * Definitions shared between the configuration parser
@@ -38,27 +38,23 @@
 #define CFG_CLAUSEFLAG_MULTI 0x00000001
 /*% Clause is obsolete (logs a warning, but is not a fatal error) */
 #define CFG_CLAUSEFLAG_OBSOLETE 0x00000002
-/*% Clause is not implemented, and may never be */
-#define CFG_CLAUSEFLAG_NOTIMP 0x00000004
-/*% Clause is not implemented yet */
-#define CFG_CLAUSEFLAG_NYI 0x00000008
-/*% Default value has changed since earlier release */
-#define CFG_CLAUSEFLAG_NEWDEFAULT 0x00000010
+/* obsolete: #define CFG_CLAUSEFLAG_NOTIMP 0x00000004 */
+/* obsolete: #define CFG_CLAUSEFLAG_NYI 0x00000008 */
+/* obsolete: #define CFG_CLAUSEFLAG_NEWDEFAULT 0x00000010 */
 /*%
  * Clause needs to be interpreted during parsing
  * by calling a callback function, like the
  * "directory" option.
  */
 #define CFG_CLAUSEFLAG_CALLBACK 0x00000020
-/*% A option that is only used in testing. */
+/*% An option that is only used in testing. */
 #define CFG_CLAUSEFLAG_TESTONLY 0x00000040
 /*% A configuration option that was not configured at compile time. */
 #define CFG_CLAUSEFLAG_NOTCONFIGURED 0x00000080
-/*% A option for a experimental feature. */
+/*% An option for an experimental feature. */
 #define CFG_CLAUSEFLAG_EXPERIMENTAL 0x00000100
-/*% A configuration option that is ineffective due to
- * compile time options, but is harmless. */
-#define CFG_CLAUSEFLAG_NOOP 0x00000200
+/*% An option that should be omited from the documentation */
+#define CFG_CLAUSEFLAG_NODOC 0x00000200
 /*% Clause will be obsolete in a future release (logs a warning) */
 #define CFG_CLAUSEFLAG_DEPRECATED 0x00000400
 /*% Clause has been obsolete so long that it's now a fatal error */
@@ -84,11 +80,8 @@ typedef struct cfg_clausedef	 cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;
 typedef struct cfg_printer	 cfg_printer_t;
 typedef ISC_LIST(cfg_listelt_t) cfg_list_t;
-typedef struct cfg_map	    cfg_map_t;
-typedef struct cfg_rep	    cfg_rep_t;
-typedef struct cfg_duration cfg_duration_t;
-
-#define CFG_DURATION_MAXLEN 80
+typedef struct cfg_map cfg_map_t;
+typedef struct cfg_rep cfg_rep_t;
 
 /*
  * Function types for configuration object methods
@@ -163,25 +156,6 @@ struct cfg_netprefix {
 };
 
 /*%
- * A configuration object to store ISO 8601 durations.
- */
-struct cfg_duration {
-	/*
-	 * The duration is stored in multiple parts:
-	 * [0] Years
-	 * [1] Months
-	 * [2] Weeks
-	 * [3] Days
-	 * [4] Hours
-	 * [5] Minutes
-	 * [6] Seconds
-	 */
-	uint32_t parts[7];
-	bool	 iso8601;
-	bool	 unlimited;
-};
-
-/*%
  * A configuration data representation.
  */
 struct cfg_rep {
@@ -207,10 +181,10 @@ struct cfg_obj {
 		isc_sockaddr_t	 sockaddr;
 		struct {
 			isc_sockaddr_t sockaddr;
-			isc_dscp_t     dscp;
+			int32_t	       dscp;
 		} sockaddrdscp;
-		cfg_netprefix_t netprefix;
-		cfg_duration_t	duration;
+		cfg_netprefix_t	  netprefix;
+		isccfg_duration_t duration;
 	} value;
 	isc_refcount_t references; /*%< reference counter */
 	const char    *file;
@@ -298,6 +272,7 @@ struct cfg_parser {
 #define CFG_ADDR_V6OK	    0x00000004
 #define CFG_ADDR_WILDOK	    0x00000008
 #define CFG_ADDR_DSCPOK	    0x00000010
+#define CFG_ADDR_PORTOK	    0x00000020
 #define CFG_ADDR_MASK	    (CFG_ADDR_V6OK | CFG_ADDR_V4OK)
 /*@}*/
 
@@ -305,51 +280,51 @@ struct cfg_parser {
 /*%
  * Predefined data representation types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_uint32;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_uint64;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_string;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_boolean;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_map;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_list;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_tuple;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_sockaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_netprefix;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_void;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_fixedpoint;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_percentage;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_duration;
+extern cfg_rep_t cfg_rep_uint32;
+extern cfg_rep_t cfg_rep_uint64;
+extern cfg_rep_t cfg_rep_string;
+extern cfg_rep_t cfg_rep_boolean;
+extern cfg_rep_t cfg_rep_map;
+extern cfg_rep_t cfg_rep_list;
+extern cfg_rep_t cfg_rep_tuple;
+extern cfg_rep_t cfg_rep_sockaddr;
+extern cfg_rep_t cfg_rep_netprefix;
+extern cfg_rep_t cfg_rep_void;
+extern cfg_rep_t cfg_rep_fixedpoint;
+extern cfg_rep_t cfg_rep_percentage;
+extern cfg_rep_t cfg_rep_duration;
 /*@}*/
 
 /*@{*/
 /*%
  * Predefined configuration object types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_boolean;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint32;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint64;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_qstring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_astring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ustring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sstring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bracketed_aml;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bracketed_text;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_optional_bracketed_text;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddrdscp;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4wild;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr6;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr6wild;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netprefix;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_void;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_token;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_unsupported;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_fixedpoint;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_percentage;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_duration;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_duration_or_unlimited;
+extern cfg_type_t cfg_type_boolean;
+extern cfg_type_t cfg_type_uint32;
+extern cfg_type_t cfg_type_uint64;
+extern cfg_type_t cfg_type_qstring;
+extern cfg_type_t cfg_type_astring;
+extern cfg_type_t cfg_type_ustring;
+extern cfg_type_t cfg_type_sstring;
+extern cfg_type_t cfg_type_bracketed_aml;
+extern cfg_type_t cfg_type_bracketed_text;
+extern cfg_type_t cfg_type_optional_bracketed_text;
+extern cfg_type_t cfg_type_keyref;
+extern cfg_type_t cfg_type_sockaddr;
+extern cfg_type_t cfg_type_sockaddrdscp;
+extern cfg_type_t cfg_type_netaddr;
+extern cfg_type_t cfg_type_netaddr4;
+extern cfg_type_t cfg_type_netaddr4wild;
+extern cfg_type_t cfg_type_netaddr6;
+extern cfg_type_t cfg_type_netaddr6wild;
+extern cfg_type_t cfg_type_netprefix;
+extern cfg_type_t cfg_type_void;
+extern cfg_type_t cfg_type_token;
+extern cfg_type_t cfg_type_unsupported;
+extern cfg_type_t cfg_type_fixedpoint;
+extern cfg_type_t cfg_type_percentage;
+extern cfg_type_t cfg_type_duration;
+extern cfg_type_t cfg_type_duration_or_unlimited;
 /*@}*/
 
 isc_result_t
@@ -401,9 +376,6 @@ cfg_lookingat_netaddr(cfg_parser_t *pctx, unsigned int flags);
 
 isc_result_t
 cfg_parse_rawport(cfg_parser_t *pctx, unsigned int flags, in_port_t *port);
-
-isc_result_t
-cfg_parse_dscp(cfg_parser_t *pctx, isc_dscp_t *dscp);
 
 isc_result_t
 cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
@@ -618,5 +590,3 @@ cfg_print_indent(cfg_printer_t *pctx);
 /*%<
  * Print the necessary indent required by the current settings of 'pctx'.
  */
-
-#endif /* ISCCFG_GRAMMAR_H */

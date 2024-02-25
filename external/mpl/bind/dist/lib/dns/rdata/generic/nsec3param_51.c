@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.8.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -276,6 +276,7 @@ additionaldata_nsec3param(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

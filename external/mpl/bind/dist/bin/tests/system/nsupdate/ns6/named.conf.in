@@ -22,11 +22,12 @@ options {
 	recursion no;
 	notify yes;
 	minimal-responses no;
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -36,5 +37,5 @@ controls {
 zone "in-addr.arpa" {
 	type primary;
 	file "in-addr.db";
-	update-policy {	grant * tcp-self . PTR; };
+	update-policy {	grant * tcp-self . PTR(1) ANY(2) A; };
 };

@@ -15,10 +15,10 @@
 # Clean up after zone transfer tests.
 #
 
-rm -f */named.conf
-rm -f */named.memstats
-rm -f */named.port
-rm -f */named.run */named.run.prev
+rm -f ./*/named.conf
+rm -f ./*/named.memstats
+rm -f ./*/named.port
+rm -f ./*/named.run ./*/named.run.prev
 rm -f awk.out.ns?.test*
 rm -f dig.out.?.ns5.test*
 rm -f dig.out.ns2.test*

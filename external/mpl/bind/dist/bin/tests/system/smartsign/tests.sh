@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 status=0
 
@@ -66,7 +67,7 @@ pksk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $pzone)
 
 echo_i "setting child's activation time"
 # using now+30s to fix RT 24561
-$SETTIME -A now+30s $cksk2 > /dev/null
+$SETTIME -A now+30s $cksk2 >/dev/null
 
 echo_i "signing child zone"
 czoneout=$($SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile)
@@ -90,14 +91,14 @@ pkid=$(keyfile_to_key_id $pksk)
 
 echo_i "checking dnssec-signzone output matches expectations"
 ret=0
-echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
-echo "$pzoneout" | grep 'ZSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
-echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' > /dev/null || ret=1
-echo "$czoneout" | grep 'ZSKs: 1 active, 2 stand-by, 0 revoked' > /dev/null || ret=1
+echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' >/dev/null || ret=1
+echo "$pzoneout" | grep 'ZSKs: 1 active, 0 stand-by, 0 revoked' >/dev/null || ret=1
+echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' >/dev/null || ret=1
+echo "$czoneout" | grep 'ZSKs: 1 active, 2 stand-by, 0 revoked' >/dev/null || ret=1
 if [ $ret != 0 ]; then
-	echo_i "parent $pzoneout"
-	echo_i "child $czoneout"
-	echo_i "failed";
+  echo_i "parent $pzoneout"
+  echo_i "child $czoneout"
+  echo_i "failed"
 fi
 status=$((status + ret))
 
@@ -106,81 +107,81 @@ ret=0
 # use an alternate output file so -x doesn't interfere with later checks
 pzoneout=$($SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile)
 czoneout=$($SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile)
-echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
-echo "$pzoneout" | grep 'ZSKs: 1 active, 0 present, 0 revoked' > /dev/null || ret=1
-echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' > /dev/null || ret=1
-echo "$czoneout" | grep 'ZSKs: 1 active, 2 present, 0 revoked' > /dev/null || ret=1
+echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' >/dev/null || ret=1
+echo "$pzoneout" | grep 'ZSKs: 1 active, 0 present, 0 revoked' >/dev/null || ret=1
+echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' >/dev/null || ret=1
+echo "$czoneout" | grep 'ZSKs: 1 active, 2 present, 0 revoked' >/dev/null || ret=1
 if [ $ret != 0 ]; then
-	echo_i "parent $pzoneout"
-	echo_i "child $czoneout"
-	echo_i "failed";
+  echo_i "parent $pzoneout"
+  echo_i "child $czoneout"
+  echo_i "failed"
 fi
 status=$((status + ret))
 
 echo_i "checking parent zone DNSKEY set"
 ret=0
-grep "key id = $pzid" $pfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected parent ZSK id = $pzid"
+grep "key id = $pzid" $pfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected parent ZSK id = $pzid"
 }
-grep "key id = $pkid" $pfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected parent KSK id = $pkid"
+grep "key id = $pkid" $pfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected parent KSK id = $pkid"
 }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "checking parent zone DS records"
 ret=0
-awk '$2 == "DS" {print $3}' $pfile.signed > dsset.out
-grep -w "$ckactive" dsset.out > /dev/null || ret=1
-grep -w "$ckpublished" dsset.out > /dev/null || ret=1
+awk '$2 == "DS" {print $3}' $pfile.signed >dsset.out
+grep -w "$ckactive" dsset.out >/dev/null || ret=1
+grep -w "$ckpublished" dsset.out >/dev/null || ret=1
 # revoked key should not be there, hence the &&
-grep -w "$ckprerevoke" dsset.out > /dev/null && ret=1
-grep -w "$ckrevoked" dsset.out > /dev/null && ret=1
+grep -w "$ckprerevoke" dsset.out >/dev/null && ret=1
+grep -w "$ckrevoked" dsset.out >/dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "checking child zone DNSKEY set"
 ret=0
-grep "key id = $ckactive\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child KSK id = $ckactive"
+grep "key id = $ckactive\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child KSK id = $ckactive"
 }
-grep "key id = $ckpublished\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child prepublished KSK id = $ckpublished"
+grep "key id = $ckpublished\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child prepublished KSK id = $ckpublished"
 }
-grep "key id = $ckrevoked\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child revoked KSK id = $ckrevoked"
+grep "key id = $ckrevoked\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child revoked KSK id = $ckrevoked"
 }
-grep "key id = $czactive\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child ZSK id = $czactive"
+grep "key id = $czactive\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child ZSK id = $czactive"
 }
-grep "key id = $czpublished\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child prepublished ZSK id = $czpublished"
+grep "key id = $czpublished\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child prepublished ZSK id = $czpublished"
 }
-grep "key id = $czinactive\$" $cfile.signed > /dev/null || {
-	ret=1
-	echo_i "missing expected child inactive ZSK id = $czinactive"
+grep "key id = $czinactive\$" $cfile.signed >/dev/null || {
+  ret=1
+  echo_i "missing expected child inactive ZSK id = $czinactive"
 }
 # should not be there, hence the &&
-grep "key id = $ckprerevoke\$" $cfile.signed > /dev/null && {
-	ret=1
-	echo_i "found unexpected child pre-revoke ZSK id = $ckprerevoke"
+grep "key id = $ckprerevoke\$" $cfile.signed >/dev/null && {
+  ret=1
+  echo_i "found unexpected child pre-revoke ZSK id = $ckprerevoke"
 }
-grep "key id = $czgenerated\$" $cfile.signed > /dev/null && {
-	ret=1
-	echo_i "found unexpected child generated ZSK id = $czgenerated"
+grep "key id = $czgenerated\$" $cfile.signed >/dev/null && {
+  ret=1
+  echo_i "found unexpected child generated ZSK id = $czgenerated"
 }
-grep "key id = $czpredecessor\$" $cfile.signed > /dev/null && {
-	echo_i "found unexpected ZSK predecessor id = $czpredecessor (ignored)"
+grep "key id = $czpredecessor\$" $cfile.signed >/dev/null && {
+  echo_i "found unexpected ZSK predecessor id = $czpredecessor (ignored)"
 }
-grep "key id = $czsuccessor\$" $cfile.signed > /dev/null && {
-	echo_i "found unexpected ZSK successor id = $czsuccessor (ignored)"
+grep "key id = $czsuccessor\$" $cfile.signed >/dev/null && {
+  echo_i "found unexpected ZSK successor id = $czsuccessor (ignored)"
 }
 #grep "key id = $czpredecessor\$" $cfile.signed > /dev/null && ret=1
 #grep "key id = $czsuccessor\$" $cfile.signed > /dev/null && ret=1
@@ -189,29 +190,29 @@ status=$((status + ret))
 
 echo_i "checking key TTLs are correct"
 ret=0
-grep "${czone}. 30 IN" ${czsk1}.key > /dev/null 2>&1 || ret=1
-grep "${czone}. 30 IN" ${cksk1}.key > /dev/null 2>&1 || ret=1
-grep "${czone}. IN" ${czsk2}.key > /dev/null 2>&1 || ret=1
-$SETTIME -L 45 ${czsk2} > /dev/null
-grep "${czone}. 45 IN" ${czsk2}.key > /dev/null 2>&1 || ret=1
-$SETTIME -L 0 ${czsk2} > /dev/null
-grep "${czone}. IN" ${czsk2}.key > /dev/null 2>&1 || ret=1
+grep "${czone}. 30 IN" ${czsk1}.key >/dev/null 2>&1 || ret=1
+grep "${czone}. 30 IN" ${cksk1}.key >/dev/null 2>&1 || ret=1
+grep "${czone}. IN" ${czsk2}.key >/dev/null 2>&1 || ret=1
+$SETTIME -L 45 ${czsk2} >/dev/null
+grep "${czone}. 45 IN" ${czsk2}.key >/dev/null 2>&1 || ret=1
+$SETTIME -L 0 ${czsk2} >/dev/null
+grep "${czone}. IN" ${czsk2}.key >/dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "checking key TTLs were imported correctly"
 ret=0
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 30 {r = 1} END {exit r}' \
-        ${cfile}.signed || ret=1
+  ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "re-signing and checking imported TTLs again"
 ret=0
-$SETTIME -L 15 ${czsk2} > /dev/null
+$SETTIME -L 15 ${czsk2} >/dev/null
 czoneout=$($SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile)
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 15 {r = 1} END {exit r}' \
-        ${cfile}.signed || ret=1
+  ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -221,108 +222,159 @@ status=$((status + ret))
 echo_i "checking child zone signatures"
 ret=0
 # check DNSKEY signatures first
-awk '$2 == "RRSIG" && $3 == "DNSKEY" { getline; print $3 }' $cfile.signed > dnskey.sigs
+awk '$2 == "RRSIG" && $3 == "DNSKEY" { getline; print $3 }' $cfile.signed >dnskey.sigs
 sub=0
-grep -w "$ckactive" dnskey.sigs > /dev/null || sub=1
-if [ $sub != 0 ]; then echo_i "missing ckactive $ckactive (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckactive" dnskey.sigs >/dev/null || sub=1
+if [ $sub != 0 ]; then
+  echo_i "missing ckactive $ckactive (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckrevoked" dnskey.sigs > /dev/null || sub=1
-if [ $sub != 0 ]; then echo_i "missing ckrevoke $ckrevoke (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckrevoked" dnskey.sigs >/dev/null || sub=1
+if [ $sub != 0 ]; then
+  echo_i "missing ckrevoke $ckrevoke (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czactive" dnskey.sigs > /dev/null || sub=1
-if [ $sub != 0 ]; then echo_i "missing czactive $czactive (dnskey)"; ret=1; fi
+grep -w "$czactive" dnskey.sigs >/dev/null || sub=1
+if [ $sub != 0 ]; then
+  echo_i "missing czactive $czactive (dnskey)"
+  ret=1
+fi
 # should not be there:
-echo $ret > /dev/null
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckprerevoke" dnskey.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckprerevoke $ckprerevoke (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckprerevoke" dnskey.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckprerevoke $ckprerevoke (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckpublished" dnskey.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckpublished $ckpublished (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckpublished" dnskey.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckpublished $ckpublished (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czpublished" dnskey.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czpublished $czpublished (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czpublished" dnskey.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czpublished $czpublished (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czinactive" dnskey.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czinactive $czinactive (dnskey)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czinactive" dnskey.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czinactive $czinactive (dnskey)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czgenerated" dnskey.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czgenerated $czgenerated (dnskey)"; ret=1; fi
+grep -w "$czgenerated" dnskey.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czgenerated $czgenerated (dnskey)"
+  ret=1
+fi
 # now check other signatures first
-awk '$2 == "RRSIG" && $3 != "DNSKEY" && $3 != "CDNSKEY" && $3 != "CDS" { getline; print $3 }' $cfile.signed | sort -un > other.sigs
+awk '$2 == "RRSIG" && $3 != "DNSKEY" && $3 != "CDNSKEY" && $3 != "CDS" { getline; print $3 }' $cfile.signed | sort -un >other.sigs
 # should not be there:
-echo $ret > /dev/null
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckactive" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckactive $ckactive (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckactive" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckactive $ckactive (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckpublished" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckpublished $ckpublished (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckpublished" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckpublished $ckpublished (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckprerevoke" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckprerevoke $ckprerevoke (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckprerevoke" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckprerevoke $ckprerevoke (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$ckrevoked" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found ckrevoked $ckrevoked (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$ckrevoked" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found ckrevoked $ckrevoked (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czpublished" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czpublished $czpublished (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czpublished" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czpublished $czpublished (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czinactive" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czinactive $czinactive (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czinactive" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czinactive $czinactive (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czgenerated" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czgenerated $czgenerated (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czgenerated" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czgenerated $czgenerated (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czpredecessor" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czpredecessor $czpredecessor (other)"; ret=1; fi
-echo $ret > /dev/null
+grep -w "$czpredecessor" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czpredecessor $czpredecessor (other)"
+  ret=1
+fi
+echo $ret >/dev/null
 sync
 sub=0
-grep -w "$czsuccessor" other.sigs > /dev/null && sub=1
-if [ $sub != 0 ]; then echo_i "found czsuccessor $czsuccessor (other)"; ret=1; fi
+grep -w "$czsuccessor" other.sigs >/dev/null && sub=1
+if [ $sub != 0 ]; then
+  echo_i "found czsuccessor $czsuccessor (other)"
+  ret=1
+fi
 if [ $ret != 0 ]; then
-    sed 's/^/I:dnskey sigs: /' < dnskey.sigs
-    sed 's/^/I:other sigs: /' < other.sigs
-    echo_i "failed";
+  sed 's/^/I:dnskey sigs: /' <dnskey.sigs
+  sed 's/^/I:other sigs: /' <other.sigs
+  echo_i "failed"
 fi
 status=$((status + ret))
 
 echo_i "checking RRSIG expiry date correctness"
-dnskey_expiry=$($CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
-              awk '$4 == "RRSIG" && $5 == "DNSKEY" {print $9; exit}' |
-              cut -c1-10)
-soa_expiry=$($CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
-           awk '$4 == "RRSIG" && $5 == "SOA" {print $9; exit}' |
-           cut -c1-10)
+dnskey_expiry=$($CHECKZONE -o - $czone $cfile.signed 2>/dev/null \
+  | awk '$4 == "RRSIG" && $5 == "DNSKEY" {print $9; exit}' \
+  | cut -c1-10)
+soa_expiry=$($CHECKZONE -o - $czone $cfile.signed 2>/dev/null \
+  | awk '$4 == "RRSIG" && $5 == "SOA" {print $9; exit}' \
+  | cut -c1-10)
 [ $dnskey_expiry -gt $soa_expiry ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -335,14 +387,14 @@ mv $cfile.new $cfile.signed
 
 echo_i "checking dnssec-signzone output matches expectations"
 ret=0
-echo "$czoneout2" | grep 'KSKs: 2 active, 0 stand-by, 1 revoked' > /dev/null || ret=1
+echo "$czoneout2" | grep 'KSKs: 2 active, 0 stand-by, 1 revoked' >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "checking child zone signatures again"
 ret=0
-awk '$2 == "RRSIG" && $3 == "DNSKEY" { getline; print $3 }' $cfile.signed > dnskey.sigs
-grep -w "$ckpublished" dnskey.sigs > /dev/null || ret=1
+awk '$2 == "RRSIG" && $3 == "DNSKEY" { getline; print $3 }' $cfile.signed >dnskey.sigs
+grep -w "$ckpublished" dnskey.sigs >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -356,8 +408,8 @@ status=$((status + ret))
 # this also checks that the future sync record is not yet published
 echo_i "checking sync record deletion"
 ret=0
-$SETTIME -P now -A now -Dsync now ${cksk5} > /dev/null
-$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed > /dev/null
+$SETTIME -P now -A now -Dsync now ${cksk5} >/dev/null
+$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed >/dev/null
 mv $cfile.new $cfile.signed
 awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed && ret=1
 awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed && ret=1

@@ -26,7 +26,7 @@
 prefix = /usr
 libdir = $(prefix)/lib/bind9
 
-CFLAGS=-fPIC -g -I../include
+CFLAGS += -fPIC -g -I../include
 
 all: dlz_filesystem_dynamic.so
 

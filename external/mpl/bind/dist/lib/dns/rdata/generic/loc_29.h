@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: loc_29.h,v 1.6.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_LOC_29_H
-#define GENERIC_LOC_29_H 1
+#pragma once
 
 /*!
  * \brief Per RFC1876 */
@@ -35,5 +34,3 @@ typedef struct dns_rdata_loc {
 		dns_rdata_loc_0_t v0;
 	} v;
 } dns_rdata_loc_t;
-
-#endif /* GENERIC_LOC_29_H */

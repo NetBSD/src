@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.11.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: rcode.c,v 1.11.2.2 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,8 +28,6 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
-
 #include <dns/cert.h>
 #include <dns/ds.h>
 #include <dns/dsdigest.h>
@@ -37,7 +35,6 @@
 #include <dns/keyvalues.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
 #include <dns/secproto.h>
 

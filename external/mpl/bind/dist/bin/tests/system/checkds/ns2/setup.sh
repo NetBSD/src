@@ -17,18 +17,19 @@
 echo_i "ns2/setup.sh"
 
 for subdomain in dspublished reference missing-dspublished bad-dspublished \
-		 multiple-dspublished incomplete-dspublished bad2-dspublished \
-		 dswithdrawn missing-dswithdrawn bad-dswithdrawn \
-		 multiple-dswithdrawn incomplete-dswithdrawn bad2-dswithdrawn
-do
-	cp "../ns9/dsset-$subdomain.checkds$TP" .
+  multiple-dspublished incomplete-dspublished bad2-dspublished \
+  resolver-dspublished \
+  dswithdrawn missing-dswithdrawn bad-dswithdrawn \
+  multiple-dswithdrawn incomplete-dswithdrawn bad2-dswithdrawn \
+  resolver-dswithdrawn; do
+  cp "../ns9/dsset-$subdomain.checkds." .
 done
 
 zone="checkds"
 infile="checkds.db.infile"
 zonefile="checkds.db"
 
-CSK=$($KEYGEN -k default $zone 2> keygen.out.$zone)
-cat template.db.in "${CSK}.key" > "$infile"
-private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
-$SIGNER -S -g -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone 2>&1
+CSK=$($KEYGEN -k default $zone 2>keygen.out.$zone)
+cat template.db.in "${CSK}.key" >"$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >>"$infile"
+$SIGNER -S -g -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile >signer.out.$zone 2>&1

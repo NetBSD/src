@@ -1,4 +1,4 @@
-/*	$NetBSD: svcb_64.h,v 1.2 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: svcb_64.h,v 1.2.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_SVCB_64_H
-#define IN_1_SVCB_64_H 1
+#pragma once
 
 /*!
  *  \brief Per draft-ietf-dnsop-svcb-https-02
@@ -38,5 +37,3 @@ dns_rdata_in_svcb_next(dns_rdata_in_svcb_t *);
 
 void
 dns_rdata_in_svcb_current(dns_rdata_in_svcb_t *, isc_region_t *);
-
-#endif /* IN_1_SVCB_64_H */

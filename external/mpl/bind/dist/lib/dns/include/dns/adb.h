@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.6.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ADB_H
-#define DNS_ADB_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -222,7 +221,6 @@ struct dns_adbaddrinfo {
 
 	isc_sockaddr_t sockaddr; /*%< [rw] */
 	unsigned int   srtt;	 /*%< [rw] microsecs */
-	isc_dscp_t     dscp;
 
 	unsigned int	flags; /*%< [rw] */
 	dns_adbentry_t *entry; /*%< private */
@@ -610,19 +608,6 @@ dns_adb_getudpsize(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
  *\li	addr be valid.
  */
 
-unsigned int
-dns_adb_probesize(dns_adb_t *adb, dns_adbaddrinfo_t *addr, int lookups);
-/*%
- * Return suggested EDNS UDP size based on observed responses / failures.
- * 'lookups' is the number of times the current lookup has been attempted.
- *
- * Requires:
- *
- *\li	adb be valid.
- *
- *\li	addr be valid.
- */
-
 void
 dns_adb_plainresponse(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
 /*%
@@ -648,22 +633,9 @@ dns_adb_timeout(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
  */
 
 void
-dns_adb_ednsto(dns_adb_t *adb, dns_adbaddrinfo_t *addr, unsigned int size);
+dns_adb_ednsto(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
 /*%
- * Record a failed EDNS UDP response and the advertised EDNS UDP buffer size
- * used.
- *
- * Requires:
- *
- *\li	adb be valid.
- *
- *\li	addr be valid.
- */
-
-bool
-dns_adb_noedns(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
-/*%
- * Return whether EDNS should be disabled for this server.
+ * Record a EDNS UDP query failed.
  *
  * Requires:
  *
@@ -833,5 +805,3 @@ dns_adb_endudpfetch(dns_adb_t *adb, dns_adbaddrinfo_t *addr);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ADB_H */

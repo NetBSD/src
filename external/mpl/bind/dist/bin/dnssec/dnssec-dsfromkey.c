@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.10 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.10.2.1 2024/02/25 15:43:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
+#include <isc/dir.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -41,13 +44,8 @@
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -218,7 +216,7 @@ loadkey(char *filename, unsigned char *key_buf, unsigned int key_buf_size,
 	rdclass = dst_key_class(key);
 
 	name = dns_fixedname_initname(&fixed);
-	dns_name_copynf(dst_key_name(key), name);
+	dns_name_copy(dst_key_name(key), name);
 
 	dst_key_free(&key);
 }
@@ -328,8 +326,8 @@ emits(bool showall, bool cds, dns_rdata_t *rdata) {
 	}
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
@@ -338,7 +336,7 @@ usage(void) {
 	fprintf(stderr, "    %s [options] -f zonefile [zonename]\n\n", program);
 	fprintf(stderr, "    %s [options] -s dnsname\n\n", program);
 	fprintf(stderr, "    %s [-h|-V]\n\n", program);
-	fprintf(stderr, "Version: %s\n", VERSION);
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 	fprintf(stderr, "Options:\n"
 			"    -1: digest algorithm SHA-1\n"
 			"    -2: digest algorithm SHA-256\n"
@@ -382,11 +380,6 @@ main(int argc, char **argv) {
 	}
 
 	isc_mem_create(&mctx);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 

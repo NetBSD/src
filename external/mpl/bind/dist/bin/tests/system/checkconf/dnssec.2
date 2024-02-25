@@ -1,8 +1,8 @@
-.\"	$NetBSD: dnssec.2,v 1.4 2022/09/23 12:15:24 christos Exp $
+.\"	$NetBSD: dnssec.2,v 1.4.2.1 2024/02/25 15:43:36 martin Exp $
 .\"
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
- * 
+ *
  * SPDX-License-Identifier: MPL-2.0
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -15,15 +15,22 @@
 
 view view1 {
 	match-clients { any; };
-	dnssec-validation yes;
 };
 
 view view2 {
 	match-clients { none; };
-	dnssec-validation auto;
 };
 
 view view3 {
 	match-clients { none; };
-	auto-dnssec maintain;
+	dnssec-validation auto;
+};
+
+view view4 {
+	match-clients { none; };
+};
+
+view view5 {
+	match-clients { none; };
+	auto-dnssec off;
 };

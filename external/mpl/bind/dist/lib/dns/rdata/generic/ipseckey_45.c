@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.9 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.9.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -393,7 +393,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	case 3:
 		dns_name_init(&ipseckey->gateway, NULL);
 		dns_name_fromregion(&name, &region);
-		RETERR(name_duporclone(&name, mctx, &ipseckey->gateway));
+		name_duporclone(&name, mctx, &ipseckey->gateway);
 		isc_region_consume(&region, name_length(&name));
 		break;
 	}
@@ -444,6 +444,7 @@ additionaldata_ipseckey(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

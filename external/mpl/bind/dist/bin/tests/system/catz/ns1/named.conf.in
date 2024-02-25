@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -22,44 +22,116 @@ options {
 	notify-source 10.53.0.1;
 	transfer-source 10.53.0.1;
 	port @PORT@;
+	tls-port @TLSPORT@;
 	allow-new-zones yes;
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on port @EXTRAPORT1@ { 10.53.0.1; };
+	listen-on tls ephemeral { 10.53.0.1; };
 	listen-on-v6 { none; };
 	notify no;
 	recursion no;
 	allow-transfer { any; };
+	dnssec-validation no;
 };
 
-zone "catalog1.example" {
-	type primary;
-	file "catalog1.example.db";
-	allow-transfer { any; };
-	allow-update { any; };
-	also-notify { 10.53.0.2; };
-	notify explicit;
+view "default" {
+
+	zone "catalog1.example" {
+		type primary;
+		file "catalog1.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	/* catalog2 is provided by the ns3 primary */
+
+	zone "catalog3.example" {
+		type primary;
+		file "catalog3.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	zone "catalog4.example" {
+		type primary;
+		file "catalog4.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	/* catalog5 is missing on purpose */
+
+	# No "version" property
+	zone "catalog-bad1.example" {
+		type primary;
+		file "catalog-bad1.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	# Unsupported "version" property
+	zone "catalog-bad2.example" {
+		type primary;
+		file "catalog-bad2.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	# Two RRs in TXT RRset for the "version" property
+	zone "catalog-bad3.example" {
+		type primary;
+		file "catalog-bad3.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	# Type A "version" property
+	zone "catalog-bad4.example" {
+		type primary;
+		file "catalog-bad4.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
+	# A catalog zone that requires TLS to be used
+	zone "catalog-tls.example" {
+		type primary;
+		file "catalog-tls.example.db";
+		allow-transfer transport tls { key tsig_key; };
+		allow-update { any; };
+		also-notify { 10.53.0.4; };
+		notify explicit;
+	};
 };
 
-zone "catalog3.example" {
-	type primary;
-	file "catalog3.example.db";
-	allow-transfer { any; };
-	allow-update { any; };
-	also-notify { 10.53.0.2; };
-	notify explicit;
-};
+view "ch" ch {
 
-zone "catalog4.example" {
-	type primary;
-	file "catalog4.example.db";
-	allow-transfer { any; };
-	allow-update { any; };
-	also-notify { 10.53.0.2; };
-	notify explicit;
-};
+	# Non-IN class catalog zone
+	zone "catalog-bad5.example" ch {
+		type primary;
+		file "catalog-bad5.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
 
-/* catalog5 is missing on purpose */
+};
 
 key tsig_key. {
 	secret "LSAnCU+Z";

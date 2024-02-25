@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu_external.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: ssu_external.c,v 1.6.2.1 2024/02/25 15:46:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,12 +22,9 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <unistd.h>
-
-#ifdef ISC_PLATFORM_HAVESYSUNH
 #include <sys/socket.h>
 #include <sys/un.h>
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
+#include <unistd.h>
 
 #include <isc/magic.h>
 #include <isc/mem.h>
@@ -62,7 +59,6 @@ ssu_e_log(int level, const char *fmt, ...) {
 static int
 ux_socket_connect(const char *path) {
 	int fd = -1;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	struct sockaddr_un addr;
 
 	REQUIRE(path != NULL);
@@ -98,7 +94,6 @@ ux_socket_connect(const char *path) {
 		close(fd);
 		return (-1);
 	}
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	return (fd);
 }
 

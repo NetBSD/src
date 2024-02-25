@@ -12,9 +12,9 @@
  */
 
 options {
-	query-source address 10.53.0.7 dscp 1;
-	notify-source 10.53.0.7 dscp 2;
-	transfer-source 10.53.0.7 dscp 3;
+	query-source address 10.53.0.7;
+	notify-source 10.53.0.7;
+	transfer-source 10.53.0.7;
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.7; };
@@ -23,6 +23,7 @@ options {
 	answer-cookie no;
 	send-cookie yes;
 	nocookie-udp-size 512;
+	dnssec-validation no;
 };
 
 zone "." {

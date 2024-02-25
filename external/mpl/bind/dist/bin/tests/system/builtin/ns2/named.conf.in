@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -28,4 +28,5 @@ options {
 	recursion yes;
 	notify no;
 	server-id hostname;
+	dnssec-validation no;
 };

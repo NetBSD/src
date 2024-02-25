@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: netscope.h,v 1.6.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_NETSCOPE_H
-#define ISC_NETSCOPE_H 1
+#pragma once
 
 /*! \file isc/netscope.h */
 
@@ -37,5 +36,3 @@ isc_result_t
 isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_NETSCOPE_H */

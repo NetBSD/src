@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.9.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: host.c,v 1.9.2.2 2024/02/25 15:43:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/commandline.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
@@ -39,7 +40,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
 
-#include <dig/dig.h>
+#include "dighost.h"
 
 static bool short_form = true, listed_server = false;
 static bool default_lookups = true;
@@ -102,37 +103,39 @@ rcode_totext(dns_rcode_t rcode) {
 	return (totext.deconsttext);
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-show_usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+show_usage(void);
 
 static void
 show_usage(void) {
-	fputs("Usage: host [-aCdilrTvVw] [-c class] [-N ndots] [-t type] [-W "
-	      "time]\n"
-	      "            [-R number] [-m flag] [-p port] hostname [server]\n"
-	      "       -a is equivalent to -v -t ANY\n"
-	      "       -A is like -a but omits RRSIG, NSEC, NSEC3\n"
-	      "       -c specifies query class for non-IN data\n"
-	      "       -C compares SOA records on authoritative nameservers\n"
-	      "       -d is equivalent to -v\n"
-	      "       -l lists all hosts in a domain, using AXFR\n"
-	      "       -m set memory debugging flag (trace|record|usage)\n"
-	      "       -N changes the number of dots allowed before root lookup "
-	      "is done\n"
-	      "       -p specifies the port on the server to query\n"
-	      "       -r disables recursive processing\n"
-	      "       -R specifies number of retries for UDP packets\n"
-	      "       -s a SERVFAIL response should stop query\n"
-	      "       -t specifies the query type\n"
-	      "       -T enables TCP/IP mode\n"
-	      "       -U enables UDP mode\n"
-	      "       -v enables verbose output\n"
-	      "       -V print version number and exit\n"
-	      "       -w specifies to wait forever for a reply\n"
-	      "       -W specifies how long to wait for a reply\n"
-	      "       -4 use IPv4 query transport only\n"
-	      "       -6 use IPv6 query transport only\n",
-	      stderr);
+	fprintf(stderr,
+		"Usage: host [-aCdilrTvVw] [-c class] [-N ndots] [-t type] [-W "
+		"time]\n"
+		"            [-R number] [-m flag] [-p port] hostname "
+		"[server]\n"
+		"       -a is equivalent to -v -t ANY\n"
+		"       -A is like -a but omits RRSIG, NSEC, NSEC3\n"
+		"       -c specifies query class for non-IN data\n"
+		"       -C compares SOA records on authoritative nameservers\n"
+		"       -d is equivalent to -v\n"
+		"       -l lists all hosts in a domain, using AXFR\n"
+		"       -m set memory debugging flag (trace|record|usage)\n"
+		"       -N changes the number of dots allowed before root "
+		"lookup "
+		"is done\n"
+		"       -p specifies the port on the server to query\n"
+		"       -r disables recursive processing\n"
+		"       -R specifies number of retries for UDP packets\n"
+		"       -s a SERVFAIL response should stop query\n"
+		"       -t specifies the query type\n"
+		"       -T enables TCP/IP mode\n"
+		"       -U enables UDP mode\n"
+		"       -v enables verbose output\n"
+		"       -V print version number and exit\n"
+		"       -w specifies to wait forever for a reply\n"
+		"       -W specifies how long to wait for a reply\n"
+		"       -4 use IPv4 query transport only\n"
+		"       -6 use IPv6 query transport only\n");
 	exit(1);
 }
 
@@ -371,7 +374,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 		dns_rdataset_current(rdataset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &cname, NULL);
 		check_result(result, "dns_rdata_tostruct");
-		dns_name_copynf(&cname.cname, qname);
+		dns_name_copy(&cname.cname, qname);
 		dns_rdata_freestruct(&cname);
 	}
 }
@@ -434,7 +437,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 
 		/* Add AAAA and MX lookups. */
 		name = dns_fixedname_initname(&fixed);
-		dns_name_copynf(query->lookup->name, name);
+		dns_name_copy(query->lookup->name, name);
 		chase_cnamechain(msg, name);
 		dns_name_format(name, namestr, sizeof(namestr));
 		lookup = clone_lookup(query->lookup, false);
@@ -582,7 +585,7 @@ static const char *optstring = "46aAc:dilnm:p:rst:vVwCDN:R:TUW:";
 /*% version */
 static void
 version(void) {
-	fputs("host " VERSION "\n", stderr);
+	fprintf(stderr, "host %s\n", PACKAGE_VERSION);
 }
 
 static void
@@ -853,6 +856,7 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 			break;
 		case 'p':
 			port = atoi(isc_commandline_argument);
+			port_set = true;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: opt_41.h,v 1.6.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_OPT_41_H
-#define GENERIC_OPT_41_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2671 */
@@ -47,5 +46,3 @@ dns_rdata_opt_next(dns_rdata_opt_t *);
 
 isc_result_t
 dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
-
-#endif /* GENERIC_OPT_41_H */

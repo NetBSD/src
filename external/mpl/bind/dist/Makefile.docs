@@ -1,0 +1,63 @@
+SPHINX_V = $(SPHINX_V_@AM_V@)
+SPHINX_V_ = $(SPHINX_V_@AM_DEFAULT_V@)
+SPHINX_V_0 = -q
+SPHINX_V_1 = -n
+SPHINX_W = -W
+
+AM_V_SPHINX = $(AM_V_SPHINX_@AM_V@)
+AM_V_SPHINX_ = $(AM_V_SPHINX_@AM_DEFAULT_V@)
+AM_V_SPHINX_0 = @echo "  SPHINX   $@";
+
+SPHINXBUILDDIR = $(builddir)/_build
+
+LF = \n
+RNDC_CONF = .. |rndc_conf| replace:: ``$(sysconfdir)/rndc.conf``
+RNDC_KEY = .. |rndc_key| replace:: ``$(sysconfdir)/rndc.key``
+NAMED_CONF = .. |named_conf| replace:: ``$(sysconfdir)/named.conf``
+BIND_KEYS = .. |bind_keys| replace:: ``$(sysconfdir)/bind.keys``
+NAMED_PID = .. |named_pid| replace:: ``$(runstatedir)/named.pid``
+SESSION_KEY = .. |session_key| replace:: ``$(runstatedir)/session.key``
+
+export RST_EPILOG = $(RNDC_CONF)$(LF)$(RNDC_KEY)$(LF)$(NAMED_CONF)$(LF)$(BIND_KEYS)$(LF)$(NAMED_PID)$(LF)$(SESSION_KEY)
+
+common_SPHINXOPTS =			\
+	$(SPHINX_W)			\
+	-c $(srcdir)			\
+	-a				\
+	$(SPHINX_V)
+
+# The "today" variable set below is not directly used in the ARM, but its value
+# is implicitly inserted on the title page of the PDF file produced by Sphinx.
+ALLSPHINXOPTS =					\
+	$(common_SPHINXOPTS)			\
+	-D today="$(RELEASE_DATE)"		\
+	-D rst_epilog="$$(printf "$${RST_EPILOG}")"	\
+	$(SPHINXOPTS)				\
+	$(srcdir)
+
+_ = @
+man_RNDC_CONF = .. |rndc_conf| replace:: ``$(_)sysconfdir$(_)/rndc.conf``
+man_RNDC_KEY = .. |rndc_key| replace:: ``$(_)sysconfdir$(_)/rndc.key``
+man_NAMED_CONF = .. |named_conf| replace:: ``$(_)sysconfdir$(_)/named.conf``
+man_BIND_KEYS = .. |bind_keys| replace:: ``$(_)sysconfdir$(_)/bind.keys``
+man_NAMED_PID = .. |named_pid| replace:: ``$(_)runstatedir$(_)/named.pid``
+man_SESSION_KEY = .. |session_key| replace:: ``$(_)runstatedir$(_)/session.key``
+
+export man_RST_EPILOG = $(man_RNDC_CONF)$(LF)$(man_RNDC_KEY)$(LF)$(man_NAMED_CONF)$(LF)$(man_BIND_KEYS)$(LF)$(man_NAMED_PID)$(LF)$(man_SESSION_KEY)
+
+man_SPHINXOPTS =				\
+	$(common_SPHINXOPTS)			\
+	-D version="@""PACKAGE_VERSION@"	\
+	-D today="@""RELEASE_DATE@"		\
+	-D release="@""PACKAGE_VERSION@"	\
+	-D rst_epilog="$$(printf "$${man_RST_EPILOG}")"	\
+	$(SPHINXOPTS)				\
+	$(srcdir)
+
+AM_V_SED = $(AM_V_SED_@AM_V@)
+AM_V_SED_ = $(AM_V_SED_@AM_DEFAULT_V@)
+AM_V_SED_0 = @echo "  SED $@";
+
+AM_V_CFG_TEST = $(AM_V_CFG_TEST_@AM_V@)
+AM_V_CFG_TEST_ = $(AM_V_CFG_TEST_@AM_DEFAULT_V@)
+AM_V_CFG_TEST_0 = @echo "  CFG_GEN $@";

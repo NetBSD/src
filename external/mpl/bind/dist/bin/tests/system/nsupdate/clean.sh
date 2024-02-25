@@ -31,6 +31,7 @@ rm -f ns1/example.db ns1/unixtime.db ns1/yyyymmddvv.db ns1/update.db ns1/other.d
 rm -f ns1/many.test.db
 rm -f ns1/maxjournal.db
 rm -f ns1/md5.key ns1/sha1.key ns1/sha224.key ns1/sha256.key ns1/sha384.key
+rm -f ns1/legacy157.key ns1/legacy161.key ns1/legacy162.key ns1/legacy163.key ns1/legacy164.key ns1/legacy165.key
 rm -f ns1/sample.db
 rm -f ns1/sha512.key ns1/ddns.key
 rm -f ns10/_default.tsigkeys
@@ -62,6 +63,7 @@ rm -f ns9/denyname.example.db
 rm -f ns9/example.com.db
 rm -f ns9/in-addr.db
 rm -f perl.update_test.out
+rm -f nsupdate.alg-*
 rm -f nsupdate.out*
 rm -f typelist.out.*
 rm -f update.out.*

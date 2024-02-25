@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: afsdb_18.c,v 1.7.2.1 2024/02/25 15:47:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -223,7 +223,7 @@ tostruct_afsdb(ARGS_TOSTRUCT) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 
-	RETERR(name_duporclone(&name, mctx, &afsdb->server));
+	name_duporclone(&name, mctx, &afsdb->server);
 	afsdb->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -251,12 +251,14 @@ additionaldata_afsdb(ARGS_ADDLDATA) {
 
 	REQUIRE(rdata->type == dns_rdatatype_afsdb);
 
+	UNUSED(owner);
+
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	isc_region_consume(&region, 2);
 	dns_name_fromregion(&name, &region);
 
-	return ((add)(arg, &name, dns_rdatatype_a));
+	return ((add)(arg, &name, dns_rdatatype_a, NULL));
 }
 
 static isc_result_t

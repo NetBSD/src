@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: geoip.h,v 1.7.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_GEOIP_H
-#define DNS_GEOIP_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -112,5 +111,3 @@ dns_geoip_match(const isc_netaddr_t	    *reqaddr,
 ISC_LANG_ENDDECLS
 
 #endif /* HAVE_GEOIP2 */
-
-#endif /* DNS_GEOIP_H */

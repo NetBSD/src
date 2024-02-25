@@ -1,4 +1,4 @@
-/*	$NetBSD: url.c,v 1.3.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: url.c,v 1.3.2.2 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,7 +46,7 @@
 #ifndef BIT_AT
 #define BIT_AT(a, i)                                    \
 	(!!((unsigned int)(a)[(unsigned int)(i) >> 3] & \
-	    (1 << ((unsigned int)(i)&7))))
+	    (1 << ((unsigned int)(i) & 7))))
 #endif
 
 #if HTTP_PARSER_STRICT
@@ -203,7 +203,8 @@ typedef enum {
 #define IS_URL_CHAR(c)	(BIT_AT(normal_url_char, (unsigned char)c))
 #define IS_HOST_CHAR(c) (isalnum((unsigned char)c) || (c) == '.' || (c) == '-')
 #else
-#define IS_URL_CHAR(c) (BIT_AT(normal_url_char, (unsigned char)c) || ((c)&0x80))
+#define IS_URL_CHAR(c) \
+	(BIT_AT(normal_url_char, (unsigned char)c) || ((c) & 0x80))
 #define IS_HOST_CHAR(c) \
 	(isalnum((unsigned char)c) || (c) == '.' || (c) == '-' || (c) == '_')
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: doa_259.h,v 1.6.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DOA_259_H
-#define GENERIC_DOA_259_H 1
+#pragma once
 
 typedef struct dns_rdata_doa {
 	dns_rdatacommon_t common;
@@ -27,5 +26,3 @@ typedef struct dns_rdata_doa {
 	uint8_t location;
 	uint8_t mediatype_len;
 } dns_rdata_doa_t;
-
-#endif /* GENERIC_DOA_259_H */

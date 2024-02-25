@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.7 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.7.2.1 2024/02/25 15:46:50 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/result.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>
@@ -30,7 +31,6 @@
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/resolver.h>
-#include <dns/result.h>
 #include <dns/view.h>
 
 struct dns_lookup {
@@ -94,7 +94,7 @@ start_fetch(dns_lookup_t *lookup) {
 	return (result);
 }
 
-static isc_result_t
+static void
 build_event(dns_lookup_t *lookup) {
 	dns_name_t *name = NULL;
 	dns_rdataset_t *rdataset = NULL;
@@ -119,8 +119,6 @@ build_event(dns_lookup_t *lookup) {
 	lookup->event->name = name;
 	lookup->event->rdataset = rdataset;
 	lookup->event->sigrdataset = sigrdataset;
-
-	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
@@ -144,10 +142,10 @@ view_find(dns_lookup_t *lookup, dns_name_t *foundname) {
 
 static void
 lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 	bool want_restart;
 	bool send_event;
-	dns_name_t *name, *fname, *prefix;
+	dns_name_t *name = NULL, *fname = NULL, *prefix = NULL;
 	dns_fixedname_t foundname, fixed;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	unsigned int nlabels;
@@ -160,7 +158,6 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 
 	LOCK(&lookup->lock);
 
-	result = ISC_R_SUCCESS;
 	name = dns_fixedname_name(&lookup->name);
 
 	do {
@@ -206,12 +203,10 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 			}
 		} else if (event != NULL) {
 			result = event->result;
-			fname = dns_fixedname_name(&event->foundname);
+			fname = event->foundname;
 			dns_resolver_destroyfetch(&lookup->fetch);
 			INSIST(event->rdataset == &lookup->rdataset);
 			INSIST(event->sigrdataset == &lookup->sigrdataset);
-		} else {
-			fname = NULL; /* Silence compiler warning. */
 		}
 
 		/*
@@ -223,7 +218,7 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 
 		switch (result) {
 		case ISC_R_SUCCESS:
-			result = build_event(lookup);
+			build_event(lookup);
 			if (event == NULL) {
 				break;
 			}
@@ -251,7 +246,7 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 			if (result != ISC_R_SUCCESS) {
 				break;
 			}
-			dns_name_copynf(&cname.cname, name);
+			dns_name_copy(&cname.cname, name);
 			dns_rdata_freestruct(&cname);
 			want_restart = true;
 			send_event = false;
@@ -392,7 +387,7 @@ dns_lookup_create(isc_mem_t *mctx, const dns_name_t *name, dns_rdatatype_t type,
 
 	dns_fixedname_init(&lookup->name);
 
-	dns_name_copynf(name, dns_fixedname_name(&lookup->name));
+	dns_name_copy(name, dns_fixedname_name(&lookup->name));
 
 	lookup->type = type;
 	lookup->view = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.3.2.1 2023/08/11 13:43:01 martin Exp $	*/
+/*	$NetBSD: resolve.c,v 1.3.2.2 2024/02/25 15:43:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,30 +13,28 @@
  * information regarding copyright ownership.
  */
 
-#ifndef WIN32
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif /* ifndef WIN32 */
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
-#include <isc/lib.h>
 #include <isc/managers.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
@@ -44,20 +42,68 @@
 #include <dns/client.h>
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
-#include <dns/lib.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
 
 #include <dst/dst.h>
 
 #include <irs/resconf.h>
 
-static char *algname;
+/*
+ * Global contexts
+ */
+
+isc_mem_t *ctxs_mctx = NULL;
+isc_appctx_t *ctxs_actx = NULL;
+isc_nm_t *ctxs_netmgr = NULL;
+isc_taskmgr_t *ctxs_taskmgr = NULL;
+isc_timermgr_t *ctxs_timermgr = NULL;
+
+static void
+ctxs_destroy(void) {
+	isc_managers_destroy(&ctxs_netmgr, &ctxs_taskmgr, &ctxs_timermgr);
+
+	if (ctxs_actx != NULL) {
+		isc_appctx_destroy(&ctxs_actx);
+	}
+
+	if (ctxs_mctx != NULL) {
+		isc_mem_destroy(&ctxs_mctx);
+	}
+}
+
+static isc_result_t
+ctxs_init(void) {
+	isc_result_t result;
+
+	isc_mem_create(&ctxs_mctx);
+
+	result = isc_appctx_create(ctxs_mctx, &ctxs_actx);
+	if (result != ISC_R_SUCCESS) {
+		goto fail;
+	}
+
+	isc_managers_create(ctxs_mctx, 1, 0, &ctxs_netmgr, &ctxs_taskmgr,
+			    &ctxs_timermgr);
+
+	result = isc_app_ctxstart(ctxs_actx);
+	if (result != ISC_R_SUCCESS) {
+		goto fail;
+	}
+
+	return (ISC_R_SUCCESS);
+
+fail:
+	ctxs_destroy();
+
+	return (result);
+}
+
+static char *algname = NULL;
 
 static isc_result_t
 printdata(dns_rdataset_t *rdataset, dns_name_t *owner) {
@@ -83,8 +129,8 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner) {
 	return (ISC_R_SUCCESS);
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
@@ -97,8 +143,7 @@ usage(void) {
 }
 
 static void
-set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep,
-	isc_mem_t **mctxp) {
+set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep) {
 	isc_result_t result;
 	dns_fixedname_t fkeyname;
 	unsigned int namelen;
@@ -112,8 +157,6 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr, bool is_sep,
 	isc_textregion_t tr;
 	isc_region_t r;
 	dns_secalg_t alg;
-
-	isc_mem_create(mctxp);
 
 	if (algname != NULL) {
 		tr.base = algname;
@@ -180,7 +223,6 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	isc_sockaddr_t sa;
 	isc_sockaddrlist_t servers;
 	isc_result_t result;
-	unsigned int namelen;
 	isc_buffer_t b;
 	dns_fixedname_t fname;
 	dns_name_t *name = NULL;
@@ -205,7 +247,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *port,
 	ISC_LIST_APPEND(servers, &sa, link);
 
 	if (name_space != NULL) {
-		namelen = strlen(name_space);
+		unsigned int namelen = strlen(name_space);
 		isc_buffer_constinit(&b, name_space, namelen);
 		isc_buffer_add(&b, namelen);
 		name = dns_fixedname_initname(&fname);
@@ -240,20 +282,13 @@ main(int argc, char *argv[]) {
 	isc_buffer_t b;
 	dns_fixedname_t qname0;
 	unsigned int namelen;
-	dns_name_t *qname, *name;
+	dns_name_t *qname = NULL, *name = NULL;
 	dns_rdatatype_t type = dns_rdatatype_a;
-	dns_rdataset_t *rdataset;
+	dns_rdataset_t *rdataset = NULL;
 	dns_namelist_t namelist;
-	isc_mem_t *keymctx = NULL;
 	unsigned int clientopt, resopt = 0;
 	bool is_sep = false;
 	const char *port = "53";
-	isc_mem_t *mctx = NULL;
-	isc_appctx_t *actx = NULL;
-	isc_nm_t *netmgr = NULL;
-	isc_taskmgr_t *taskmgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
-	isc_timermgr_t *timermgr = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
 	isc_sockaddr_t a4, a6;
@@ -362,39 +397,21 @@ main(int argc, char *argv[]) {
 		altserveraddr = cp + 1;
 	}
 
-	isc_lib_register();
-	result = dns_lib_init();
+	result = ctxs_init();
 	if (result != ISC_R_SUCCESS) {
-		fprintf(stderr, "dns_lib_init failed: %u\n", result);
+		goto cleanup;
+	}
+
+	result = dst_lib_init(ctxs_mctx, NULL);
+	if (result != ISC_R_SUCCESS) {
+		fprintf(stderr, "dst_lib_init failed: %u\n", result);
 		exit(1);
 	}
 
-	isc_mem_create(&mctx);
-
-	result = isc_appctx_create(mctx, &actx);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_app_ctxstart(actx);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_socketmgr_create(mctx, &socketmgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_timermgr_create(mctx, &timermgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
 	clientopt = 0;
-	result = dns_client_create(mctx, actx, taskmgr, socketmgr, timermgr,
-				   clientopt, &client, addr4, addr6);
+	result = dns_client_create(ctxs_mctx, ctxs_actx, ctxs_taskmgr,
+				   ctxs_netmgr, ctxs_timermgr, clientopt,
+				   &client, addr4, addr6);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_client_create failed: %u, %s\n", result,
 			isc_result_totext(result));
@@ -406,7 +423,8 @@ main(int argc, char *argv[]) {
 		irs_resconf_t *resconf = NULL;
 		isc_sockaddrlist_t *nameservers;
 
-		result = irs_resconf_load(mctx, "/etc/resolv.conf", &resconf);
+		result = irs_resconf_load(ctxs_mctx, "/etc/resolv.conf",
+					  &resconf);
 		if (result != ISC_R_SUCCESS && result != ISC_R_FILENOTFOUND) {
 			fprintf(stderr, "irs_resconf_load failed: %u\n",
 				result);
@@ -438,7 +456,7 @@ main(int argc, char *argv[]) {
 					"while key name is provided\n");
 			exit(1);
 		}
-		set_key(client, keynamestr, keystr, is_sep, &keymctx);
+		set_key(client, keynamestr, keystr, is_sep);
 	}
 
 	/* Construct qname */
@@ -460,7 +478,7 @@ main(int argc, char *argv[]) {
 				    resopt, &namelist);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "resolution failed: %s\n",
-			dns_result_totext(result));
+			isc_result_totext(result));
 	}
 	for (name = ISC_LIST_HEAD(namelist); name != NULL;
 	     name = ISC_LIST_NEXT(name, link))
@@ -478,26 +496,12 @@ main(int argc, char *argv[]) {
 
 	/* Cleanup */
 cleanup:
-	dns_client_destroy(&client);
+	if (client != NULL) {
+		dns_client_detach(&client);
+	}
 
-	if (taskmgr != NULL) {
-		isc_managers_destroy(&netmgr, &taskmgr);
-	}
-	if (timermgr != NULL) {
-		isc_timermgr_destroy(&timermgr);
-	}
-	if (socketmgr != NULL) {
-		isc_socketmgr_destroy(&socketmgr);
-	}
-	if (actx != NULL) {
-		isc_appctx_destroy(&actx);
-	}
-	isc_mem_detach(&mctx);
-
-	if (keynamestr != NULL) {
-		isc_mem_destroy(&keymctx);
-	}
-	dns_lib_shutdown();
+	ctxs_destroy();
+	dst_lib_destroy();
 
 	return (0);
 }

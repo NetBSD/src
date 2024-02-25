@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: px_26.c,v 1.7.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -252,7 +252,6 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 	dns_rdata_in_px_t *px = target;
 	dns_name_t name;
 	isc_region_t region;
-	isc_result_t result;
 
 	REQUIRE(rdata->type == dns_rdatatype_px);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -272,21 +271,14 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 
 	dns_name_init(&px->map822, NULL);
-	RETERR(name_duporclone(&name, mctx, &px->map822));
+	name_duporclone(&name, mctx, &px->map822);
 	isc_region_consume(&region, name_length(&px->map822));
 
 	dns_name_init(&px->mapx400, NULL);
-	result = name_duporclone(&name, mctx, &px->mapx400);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	name_duporclone(&name, mctx, &px->mapx400);
 
 	px->mctx = mctx;
-	return (result);
-
-cleanup:
-	dns_name_free(&px->map822, mctx);
-	return (ISC_R_NOMEMORY);
+	return (ISC_R_SUCCESS);
 }
 
 static void
@@ -312,6 +304,7 @@ additionaldata_in_px(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

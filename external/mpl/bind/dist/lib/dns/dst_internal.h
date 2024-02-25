@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.8.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,12 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <openssl/dh.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/rsa.h>
+
 #include <isc/buffer.h>
 #include <isc/hmac.h>
 #include <isc/lang.h>
@@ -44,35 +50,9 @@
 #include <isc/stdtime.h>
 #include <isc/types.h>
 
-#if USE_PKCS11
-#include <pk11/pk11.h>
-#include <pk11/site.h>
-#endif /* USE_PKCS11 */
-
-#include <openssl/dh.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/rsa.h>
-
 #include <dns/time.h>
 
 #include <dst/dst.h>
-
-#ifdef GSSAPI
-#ifdef WIN32
-/*
- * MSVC does not like macros in #include lines.
- */
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_krb5.h>
-#else /* ifdef WIN32 */
-#include ISC_PLATFORM_GSSAPIHEADER
-#ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER
-#include ISC_PLATFORM_GSSAPI_KRB5_HEADER
-#endif /* ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER */
-#endif /* ifdef WIN32 */
-#endif /* ifdef GSSAPI */
 
 ISC_LANG_BEGINDECLS
 
@@ -120,12 +100,7 @@ struct dst_key {
 		void *generic;
 		dns_gss_ctx_id_t gssctx;
 		DH *dh;
-#if USE_OPENSSL
 		EVP_PKEY *pkey;
-#endif /* if USE_OPENSSL */
-#if USE_PKCS11
-		pk11_object_t *pkey;
-#endif /* if USE_PKCS11 */
 		dst_hmac_key_t *hmac_key;
 	} keydata; /*%< pointer to key in crypto pkg fmt */
 
@@ -171,9 +146,6 @@ struct dst_context {
 		dst_gssapi_signverifyctx_t *gssctx;
 		isc_hmac_t *hmac_ctx;
 		EVP_MD_CTX *evp_md_ctx;
-#if USE_PKCS11
-		pk11_context_t *pk11_ctx;
-#endif /* if USE_PKCS11 */
 	} ctxdata;
 };
 
@@ -225,7 +197,6 @@ struct dst_func {
  */
 isc_result_t
 dst__openssl_init(const char *engine);
-#define dst__pkcs11_init pk11_initialize
 
 isc_result_t
 dst__hmacmd5_init(struct dst_func **funcp);
@@ -241,7 +212,6 @@ isc_result_t
 dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t
 dst__openssldh_init(struct dst_func **funcp);
-#if USE_OPENSSL
 isc_result_t
 dst__opensslrsa_init(struct dst_func **funcp, unsigned char algorithm);
 isc_result_t
@@ -250,28 +220,16 @@ dst__opensslecdsa_init(struct dst_func **funcp);
 isc_result_t
 dst__openssleddsa_init(struct dst_func **funcp);
 #endif /* HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448 */
-#endif /* USE_OPENSSL */
-#if USE_PKCS11
-isc_result_t
-dst__pkcs11rsa_init(struct dst_func **funcp);
-isc_result_t
-dst__pkcs11dsa_init(struct dst_func **funcp);
-isc_result_t
-dst__pkcs11ecdsa_init(struct dst_func **funcp);
-isc_result_t
-dst__pkcs11eddsa_init(struct dst_func **funcp);
-#endif /* USE_PKCS11 */
-#ifdef GSSAPI
+#if HAVE_GSSAPI
 isc_result_t
 dst__gssapi_init(struct dst_func **funcp);
-#endif /* GSSAPI */
+#endif /* HAVE_GSSAPI*/
 
 /*%
  * Destructors
  */
 void
 dst__openssl_destroy(void);
-#define dst__pkcs11_destroy pk11_finalize
 
 /*%
  * Memory allocators using the DST memory pool.
@@ -282,6 +240,16 @@ void
 dst__mem_free(void *ptr);
 void *
 dst__mem_realloc(void *ptr, size_t size);
+
+/*%
+ * Secure private file handling
+ */
+FILE *
+dst_key_open(char *tmpname, mode_t mode);
+isc_result_t
+dst_key_close(char *tmpname, FILE *fp, char *filename);
+isc_result_t
+dst_key_cleanup(char *tmpname, FILE *fp);
 
 ISC_LANG_ENDDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: rrsig_46.h,v 1.6.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNSSIG_46_H
-#define GENERIC_DNSSIG_46_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2535 */
@@ -32,5 +31,3 @@ typedef struct dns_rdata_rrsig {
 	uint16_t siglen;
 	unsigned char *signature;
 } dns_rdata_rrsig_t;
-
-#endif /* GENERIC_DNSSIG_46_H */

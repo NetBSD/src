@@ -11,11 +11,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 $SHELL clean.sh
 
-$SHELL ../genzone.sh 1 >ns1/example.db
+$SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 1 >ns1/example.db
 
 copy_setports ns1/named.conf.in ns1/named.conf

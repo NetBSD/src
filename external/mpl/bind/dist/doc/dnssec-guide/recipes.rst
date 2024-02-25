@@ -53,8 +53,8 @@ on them.
 
 Using the method described in
 :ref:`easy_start_guide_for_authoritative_servers`, we just need to
-add a ``dnssec-policy`` statement to the relevant zone clause. This is
-what the ``named.conf`` zone statement looks like on the primary server, 192.168.1.1:
+add a :any:`dnssec-policy` statement to the relevant zone clause. This is
+what the :iscman:`named.conf` zone statement looks like on the primary server, 192.168.1.1:
 
 ::
 
@@ -73,7 +73,7 @@ custom policy, define the policy in the configuration
 file and select it in the zone statement (as described in
 :ref:`signing_custom_policy`).
 
-On the secondary servers, ``named.conf`` does not need to be updated,
+On the secondary servers, :iscman:`named.conf` does not need to be updated,
 and it looks like this:
 
 ::
@@ -133,7 +133,7 @@ the parent zone. This server is configured as secondary to the hidden
 primary 192.168.1.1 to receive the unsigned data; then, using keys
 accessible to this middle box, to sign data on the fly; and finally, to send out the
 signed data via zone transfer to the other three DNS secondaries. Its
-``named.conf`` zone statement looks like this:
+:iscman:`named.conf` zone statement looks like this:
 
 ::
 
@@ -153,7 +153,7 @@ and use a custom policy.)
 
 Finally, on the three secondary servers, the configuration should be updated
 to receive a zone transfer from 192.168.1.5 (the middle box) instead of
-from 192.168.1.1 (the hidden primary). If using BIND, the ``named.conf`` file looks
+from 192.168.1.1 (the hidden primary). If using BIND, the :iscman:`named.conf` file looks
 like this:
 
 ::
@@ -169,12 +169,12 @@ like this:
 Rollovers
 ~~~~~~~~~
 
-If you are signing your zone using a ``dnssec-policy`` statement, this
+If you are signing your zone using a :any:`dnssec-policy` statement, this
 section is not really relevant to you. In the policy statement, you set how long
 you want your keys to be valid for, the time
 taken for information to propagate through your zone, the time it takes
 for your parent zone to register a new DS record, etc., and that's more
-or less it. ``named`` implements everything for you automatically, apart from
+or less it. :iscman:`named` implements everything for you automatically, apart from
 uploading the new DS records to your parent zone - which is covered in
 :ref:`signing_easy_start_upload_to_parent_zone`. (Some
 screenshots from a session where a KSK is uploaded to the parent zone
@@ -229,26 +229,26 @@ generate a successor key (51623):
 
    ./Kexample.com.+008+17694.private
    # dnssec-keygen -S Kexample.com.+008+17694
-   Generating key pair..++++++ ...........++++++ 
+   Generating key pair..++++++ ...........++++++
    Kexample.com.+008+51623
 
 The first command gets us into the key directory
 ``/etc/bind/keys/example.com/``, where keys for ``example.com`` are
 stored.
 
-The second, ``dnssec-settime``, sets an inactive (``-I``) date of January 1,
-2021, and a deletion (``-D``) date of February 1, 2021, for the current ZSK
+The second, :iscman:`dnssec-settime`, sets an inactive (:option:`-I <dnssec-settime -I>`) date of January 1,
+2021, and a deletion (:option:`-D <dnssec-settime -D>`) date of February 1, 2021, for the current ZSK
 (``Kexample.com.+008+17694``).
 
-The third command, ``dnssec-keygen``, creates a successor key, using
+The third command, :iscman:`dnssec-keygen`, creates a successor key, using
 the exact same parameters (algorithms, key sizes, etc.) as the current
 ZSK. The new ZSK created in our example is ``Kexample.com.+008+51623``.
 
-Make sure the successor keys are readable by ``named``.
+Make sure the successor keys are readable by :iscman:`named`.
 
-``named``'s logging messages indicate when the next
+:iscman:`named`'s logging messages indicate when the next
 key checking event is scheduled to occur, the frequency of which can be
-controlled by ``dnssec-loadkeys-interval``. The log message looks like
+controlled by :any:`dnssec-loadkeys-interval`. The log message looks like
 this:
 
 ::
@@ -261,7 +261,7 @@ file:
 ::
 
    # cd /etc/bind/keys/example.com
-   # cat Kexample.com.+008+51623.key 
+   # cat Kexample.com.+008+51623.key
    ; This is a zone-signing key, keyid 11623, for example.com.
    ; Created: 20201130160024 (Mon Dec  1 00:00:24 2020)
    ; Publish: 20201202000000 (Fri Dec  2 08:00:00 2020)
@@ -325,7 +325,7 @@ the new ZSK is in effect:
 
 These are all the manual tasks you need to perform for a ZSK rollover.
 If you have followed the configuration examples in this guide of using
-``inline-signing`` and ``auto-dnssec``, everything else is automated for
+:any:`inline-signing` and :any:`auto-dnssec`, everything else is automated for
 you by BIND.
 
 Day of ZSK Rollover
@@ -378,9 +378,9 @@ One Month After ZSK Rollover
 
 Again, technically there is nothing you need to do on this day,
 but it doesn't hurt to verify that the old ZSK (17694) is now completely
-gone from your zone. ``named`` will not touch
+gone from your zone. :iscman:`named` will not touch
 ``Kexample.com.+008+17694.private`` and ``Kexample.com.+008+17694.key``
-on your file system. Running the same ``dig`` command for DNSKEY should
+on your file system. Running the same :iscman:`dig` command for DNSKEY should
 suffice:
 
 ::
@@ -480,7 +480,7 @@ DS record based on the new key, 23550:
    ./Kexample.com.+007+24848.key
    ./Kexample.com.+007+24848.private
    # dnssec-keygen -S Kexample.com.+007+24848
-   Generating key pair.......................................................................................++ ...................................++ 
+   Generating key pair.......................................................................................++ ...................................++
    Kexample.com.+007+23550
    # dnssec-dsfromkey -a SHA-1 Kexample.com.+007+23550.key
    example.com. IN DS 23550 7 1 54FCF030AA1C79C0088FDEC1BD1C37DAA2E70DFB
@@ -489,23 +489,23 @@ The first command gets us into the key directory
 ``/etc/bind/keys/example.com/``, where keys for ``example.com`` are
 stored.
 
-The second, ``dnssec-settime``, sets an inactive (``-I``) date of January 1,
-2021, and a deletion (``-D``) date of February 1, 2021 for the current KSK
+The second, :iscman:`dnssec-settime`, sets an inactive (:option:`-I <dnssec-settime -I>`) date of January 1,
+2021, and a deletion (:option:`-D <dnssec-settime -D>`) date of February 1, 2021 for the current KSK
 (``Kexample.com.+007+24848``).
 
-The third command, ``dnssec-keygen``, creates a successor key, using
+The third command, :iscman:`dnssec-keygen`, creates a successor key, using
 the exact same parameters (algorithms, key sizes, etc.) as the current
 KSK. The new key pair created in our example is ``Kexample.com.+007+23550``.
 
-The fourth and final command, ``dnssec-dsfromkey``, creates a DS record
+The fourth and final command, :iscman:`dnssec-dsfromkey`, creates a DS record
 from the new KSK (23550), using SHA-1 as the digest type. Again, in
 practice most people generate two DS records for both supported digest
 types (SHA-1 and SHA-256), but for our example here we are only using
 one to keep the output small and hopefully clearer.
 
-Make sure the successor keys are readable by ``named``.
+Make sure the successor keys are readable by :iscman:`named`.
 
-The ``syslog`` message indicates when the next key
+The :any:`syslog` message indicates when the next key
 checking event is. The log message looks like this:
 
 ::
@@ -693,7 +693,7 @@ One Month After KSK Rollover
 ++++++++++++++++++++++++++++
 
 While the removal of the old DNSKEY from the zone should be automated by
-``named``, the removal of the DS record is manual. You should make sure
+:iscman:`named`, the removal of the DS record is manual. You should make sure
 the old DNSKEY record is gone from your zone first, by querying for the
 DNSKEY records of the zone; this time we expect not to see
 the key with an ID of 24828:
@@ -780,7 +780,7 @@ Migrating from NSEC to NSEC3
 
 This recipe describes how to transition from using NSEC to NSEC3, as described
 in :ref:`advanced_discussions_proof_of_nonexistence`. This recipe
-assumes that the zones are already signed, and that ``named`` is configured
+assumes that the zones are already signed, and that :iscman:`named` is configured
 according to the steps described in
 :ref:`easy_start_guide_for_authoritative_servers`.
 
@@ -795,7 +795,7 @@ according to the steps described in
    NSEC3 will fall back to treating the zone as unsecured (rather than
    "bogus"), as described in Section 2 of :rfc:`5155`.
 
-To enable NSEC3, update your ``dnssec-policy`` and add the desired NSEC3
+To enable NSEC3, update your :any:`dnssec-policy` and add the desired NSEC3
 parameters. The example below enables NSEC3 for zones with the ``standard``
 DNSSEC policy, using 0 additional iterations, no opt-out, and a zero-length salt:
 
@@ -805,7 +805,7 @@ DNSSEC policy, using 0 additional iterations, no opt-out, and a zero-length salt
         nsec3param iterations 0 optout no salt-length 0;
     };
 
-Then reconfigure the server with ``rndc``. You can tell that it worked if you
+Then reconfigure the server with :iscman:`rndc`. You can tell that it worked if you
 see the following debug log messages:
 
 ::
@@ -838,8 +838,8 @@ parameters, please see :ref:`advanced_discussions_nsec3param`.
 Migrating from NSEC3 to NSEC
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Migrating from NSEC3 back to NSEC is easy; just remove the ``nsec3param``
-configuration option from your ``dnssec-policy`` and reconfigure the name
+Migrating from NSEC3 back to NSEC is easy; just remove the :any:`nsec3param`
+configuration option from your :any:`dnssec-policy` and reconfigure the name
 server. You can tell that it worked if you see these messages in the log:
 
 ::
@@ -971,7 +971,7 @@ To undo NSEC3 opt-out, change the configuration again:
 .. note::
 
    NSEC3 hashes the plain text domain name, and we can compute our own
-   hashes using the tool ``nsec3hash``. For example, to compute the
+   hashes using the tool :iscman:`nsec3hash`. For example, to compute the
    hashed name for ``www.example.com`` using the parameters we listed
    above, we can execute this command:
 
@@ -1000,7 +1000,7 @@ Here is what :iscman:`named.conf` looks like when it is signed:
        inline-signing yes;
    };
 
-To indicate the reversion to unsigned, change the ``dnssec-policy`` line:
+To indicate the reversion to unsigned, change the :any:`dnssec-policy` line:
 
 .. code-block:: none
   :emphasize-lines: 4
@@ -1069,7 +1069,7 @@ showing how to remove DS records using the
       Revert to Unsigned Step #4
 
 When the DS records have been removed from the parent zone, use
-``rndc dnssec -checkds -key <id> withdrawn example.com`` to tell ``named`` that
+:option:`rndc dnssec -checkds -key id withdrawn example.com <rndc dnssec>` to tell :iscman:`named` that
 the DS is removed, and the remaining DNSSEC records will be removed in a timely
 manner. Or, if parental agents are configured, the DNSSEC records will be
 automatically removed after BIND has seen that the parental agents no longer
@@ -1079,6 +1079,6 @@ After a while, the zone is reverted back to the traditional, insecure DNS
 format. This can be verified by checking that all DNSKEY and RRSIG records have been
 removed from the zone.
 
-The ``dnssec-policy`` line can then be removed from :iscman:`named.conf` and
+The :any:`dnssec-policy` line can then be removed from :iscman:`named.conf` and
 the zone reloaded. The zone will no longer be subject to any DNSSEC
 maintenance.

@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.6.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: string.c,v 1.6.2.2 2024/02/25 15:47:18 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,6 @@
 #include <string.h>
 
 #include <isc/string.h> /* IWYU pragma: keep */
-#include <isc/util.h>
 
 #if !defined(HAVE_STRLCPY)
 size_t
@@ -121,7 +120,7 @@ strlcat(char *dst, const char *src, size_t size) {
 #if !defined(HAVE_STRNSTR)
 char *
 strnstr(const char *s, const char *find, size_t slen) {
-	char c, sc, *r;
+	char c, sc;
 	size_t len;
 
 	if ((c = *find++) != '\0') {
@@ -136,16 +135,11 @@ strnstr(const char *s, const char *find, size_t slen) {
 		} while (strncmp(s, find, len) != 0);
 		s--;
 	}
-	DE_CONST(s, r);
-	return (r);
+	return ((char *)s);
 }
 #endif
 
 int
 isc_string_strerror_r(int errnum, char *buf, size_t buflen) {
-#if defined(_WIN32) || defined(_WIN64)
-	return (strerror_s(buf, buflen, errnum));
-#else  /* if defined(_WIN32) || defined(_WIN64) */
 	return (strerror_r(errnum, buf, buflen));
-#endif /* if defined(_WIN32) || defined(_WIN64) */
 }

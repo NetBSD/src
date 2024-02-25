@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "HOST" "1" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "HOST" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 host \- DNS lookup utility
 .SH SYNOPSIS
@@ -49,115 +49,153 @@ server or servers listed in \fB/etc/resolv.conf\fP\&.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \fB\-4\fP
-This option specifies that only IPv4 should be used for query transport. See also the \fB\-6\fP option.
+.B \-4
+This option specifies that only IPv4 should be used for query transport. See also the \fI\%\-6\fP option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-6\fP
-This option specifies that only IPv6 should be used for query transport. See also the \fB\-4\fP option.
+.B \-6
+This option specifies that only IPv6 should be used for query transport. See also the \fI\%\-4\fP option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-a\fP
-The \fB\-a\fP (\(dqall\(dq) option is normally equivalent to \fB\-v \-t ANY\fP\&. It
-also affects the behavior of the \fB\-l\fP list zone option.
+.B \-a
+The \fI\%\-a\fP (\(dqall\(dq) option is normally equivalent to \fI\%\-v\fP \fI\%\-t ANY\fP\&. It
+also affects the behavior of the \fI\%\-l\fP list zone option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-A\fP
-The \fB\-A\fP (\(dqalmost all\(dq) option is equivalent to \fB\-a\fP, except that RRSIG,
+.B \-A
+The \fI\%\-A\fP (\(dqalmost all\(dq) option is equivalent to \fI\%\-a\fP, except that RRSIG,
 NSEC, and NSEC3 records are omitted from the output.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-c class\fP
+.B \-c class
 This option specifies the query class, which can be used to lookup HS (Hesiod) or CH (Chaosnet)
 class resource records. The default class is IN (Internet).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-C\fP
-This option indicates that \fBnamed\fP should check consistency, meaning that \fBhost\fP queries the SOA records for zone
+.B \-C
+This option indicates that \fI\%named\fP should check consistency, meaning that \fBhost\fP queries the SOA records for zone
 \fBname\fP from all the listed authoritative name servers for that
 zone. The list of name servers is defined by the NS records that are
 found for the zone.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-d\fP
-This option prints debugging traces, and is equivalent to the \fB\-v\fP verbose option.
+.B \-d
+This option prints debugging traces, and is equivalent to the \fI\%\-v\fP verbose option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-l\fP
-This option tells \fBnamed\fP to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
+.B \-l
+This option tells \fI\%named\fP to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
 \fBname\fP and prints out the NS, PTR, and address records (A/AAAA).
 .sp
-Together, the \fB\-l \-a\fP options print all records in the zone.
+Together, the \fI\%\-l\fP \fI\%\-a\fP options print all records in the zone.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-N ndots\fP
+.B \-N ndots
 This option specifies the number of dots (\fBndots\fP) that have to be in \fBname\fP for it to be
 considered absolute. The default value is that defined using the
 \fBndots\fP statement in \fB/etc/resolv.conf\fP, or 1 if no \fBndots\fP statement
 is present. Names with fewer dots are interpreted as relative names,
 and are searched for in the domains listed in the \fBsearch\fP or
 \fBdomain\fP directive in \fB/etc/resolv.conf\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-p port\fP
+.B \-p port
 This option specifies the port to query on the server. The default is 53.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-r\fP
+.B \-r
 This option specifies a non\-recursive query; setting this option clears the RD (recursion
 desired) bit in the query. This means that the name server
-receiving the query does not attempt to resolve \fBname\fP\&. The \fB\-r\fP
+receiving the query does not attempt to resolve \fBname\fP\&. The \fI\%\-r\fP
 option enables \fBhost\fP to mimic the behavior of a name server by
 making non\-recursive queries, and expecting to receive answers to
 those queries that can be referrals to other name servers.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-R number\fP
+.B \-R number
 This option specifies the number of retries for UDP queries. If \fBnumber\fP is negative or zero,
 the number of retries is silently set to 1. The default value is 1, or
 the value of the \fBattempts\fP option in \fB/etc/resolv.conf\fP, if set.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-s\fP
-This option tells \fBnamed\fP \fInot\fP to send the query to the next nameserver if any server responds
+.B \-s
+This option tells \fI\%named\fP \fInot\fP to send the query to the next nameserver if any server responds
 with a SERVFAIL response, which is the reverse of normal stub
 resolver behavior.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-t type\fP
+.B \-t type
 This option specifies the query type. The \fBtype\fP argument can be any recognized query type:
 CNAME, NS, SOA, TXT, DNSKEY, AXFR, etc.
 .sp
 When no query type is specified, \fBhost\fP automatically selects an
 appropriate query type. By default, it looks for A, AAAA, and MX
-records. If the \fB\-C\fP option is given, queries are made for SOA
+records. If the \fI\%\-C\fP option is given, queries are made for SOA
 records. If \fBname\fP is a dotted\-decimal IPv4 address or
 colon\-delimited IPv6 address, \fBhost\fP queries for PTR records.
 .sp
 If a query type of IXFR is chosen, the starting serial number can be
 specified by appending an equals sign (=), followed by the starting serial
-number, e.g., \fB\-t IXFR=12345678\fP\&.
+number, e.g., \fI\%\-t IXFR=12345678\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-T\fP; \fB\-U\fP
+.B \-T, \-U
 This option specifies TCP or UDP. By default, \fBhost\fP uses UDP when making queries; the
-\fB\-T\fP option makes it use a TCP connection when querying the name
+\fI\%\-T\fP option makes it use a TCP connection when querying the name
 server. TCP is automatically selected for queries that require
 it, such as zone transfer (AXFR) requests. Type \fBANY\fP queries default
-to TCP, but can be forced to use UDP initially via \fB\-U\fP\&.
+to TCP, but can be forced to use UDP initially via \fI\%\-U\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-m flag\fP
+.B \-m flag
 This option sets memory usage debugging: the flag can be \fBrecord\fP, \fBusage\fP, or
-\fBtrace\fP\&. The \fB\-m\fP option can be specified more than once to set
+\fBtrace\fP\&. The \fI\%\-m\fP option can be specified more than once to set
 multiple flags.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-v\fP
-This option sets verbose output, and is equivalent to the \fB\-d\fP debug option. Verbose output
+.B \-v
+This option sets verbose output, and is equivalent to the \fI\%\-d\fP debug option. Verbose output
 can also be enabled by setting the \fBdebug\fP option in
 \fB/etc/resolv.conf\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-V\fP
+.B \-V
 This option prints the version number and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-w\fP
+.B \-w
 This option sets \(dqwait forever\(dq: the query timeout is set to the maximum possible. See
-also the \fB\-W\fP option.
+also the \fI\%\-W\fP option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-W wait\fP
-This options sets the length of the wait timeout, indicating that \fBnamed\fP should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
+.B \-W wait
+This options sets the length of the wait timeout, indicating that \fI\%named\fP should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
 less than 1, the wait interval is set to 1 second.
 .sp
 By default, \fBhost\fP waits for 5 seconds for UDP responses and 10
 seconds for TCP connections. These defaults can be overridden by the
 \fBtimeout\fP option in \fB/etc/resolv.conf\fP\&.
 .sp
-See also the \fB\-w\fP option.
+See also the \fI\%\-w\fP option.
 .UNINDENT
 .SH IDN SUPPORT
 .sp
@@ -173,10 +211,10 @@ when \fBhost\fP runs.
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\fBdig(1)\fP, \fBnamed(8)\fP\&.
+\fI\%dig(1)\fP, \fI\%named(8)\fP\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

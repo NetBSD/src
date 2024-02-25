@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.12.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.12.2.2 2024/02/25 15:46:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,11 +24,10 @@
 #include <isc/dir.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
 
 #include <dns/db.h>
 #include <dns/diff.h>
@@ -42,13 +41,10 @@
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
-#include <dns/result.h>
 #include <dns/stats.h>
 #include <dns/tsig.h> /* for DNS_TSIG_FUDGE */
 
-#include <dst/result.h>
-
-LIBDNS_EXTERNAL_DATA isc_stats_t *dns_dnssec_stats;
+isc_stats_t *dns_dnssec_stats;
 
 #define is_response(msg) ((msg->flags & DNS_MESSAGEFLAG_QR) != 0)
 
@@ -975,7 +971,11 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 	sig.labels = 0; /* the root name */
 	sig.originalttl = 0;
 
-	isc_stdtime_get(&now);
+	if (msg->fuzzing) {
+		now = msg->fuzztime;
+	} else {
+		isc_stdtime_get(&now);
+	}
 	sig.timesigned = now - DNS_TSIG_FUDGE;
 	sig.timeexpire = now + DNS_TSIG_FUDGE;
 
@@ -1120,7 +1120,12 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 		goto failure;
 	}
 
-	isc_stdtime_get(&now);
+	if (msg->fuzzing) {
+		now = msg->fuzztime;
+	} else {
+		isc_stdtime_get(&now);
+	}
+
 	if (isc_serial_lt((uint32_t)now, sig.timesigned)) {
 		result = DNS_R_SIGFUTURE;
 		msg->sig0status = dns_tsigerror_badtime;
@@ -1486,6 +1491,7 @@ dns_dnssec_findmatchingkeys(const dns_name_t *origin, const char *directory,
 		case DST_ALG_HMACSHA256:
 		case DST_ALG_HMACSHA384:
 		case DST_ALG_HMACSHA512:
+		case DST_ALG_DH:
 			if (result == DST_R_BADKEYTYPE) {
 				continue;
 			}
@@ -1892,7 +1898,8 @@ failure:
 
 static isc_result_t
 publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
-	    dns_ttl_t ttl, isc_mem_t *mctx, void (*report)(const char *, ...)) {
+	    dns_ttl_t ttl, isc_mem_t *mctx,
+	    void (*report)(const char *, ...) ISC_FORMAT_PRINTF(1, 2)) {
 	isc_result_t result;
 	unsigned char buf[DST_KEY_MAXSIZE];
 	char keystr[DST_KEY_FORMATSIZE];
@@ -1909,7 +1916,8 @@ publish_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	if (key->prepublish && ttl > key->prepublish) {
 		isc_stdtime_t now;
 
-		report("Key %s: Delaying activation to match the DNSKEY TTL.",
+		report("Key %s: Delaying activation to match the DNSKEY TTL "
+		       "(%u).",
 		       keystr, ttl);
 
 		isc_stdtime_get(&now);
@@ -1926,14 +1934,16 @@ failure:
 static isc_result_t
 remove_key(dns_diff_t *diff, dns_dnsseckey_t *key, const dns_name_t *origin,
 	   dns_ttl_t ttl, isc_mem_t *mctx, const char *reason,
-	   void (*report)(const char *, ...)) {
+	   void (*report)(const char *, ...) ISC_FORMAT_PRINTF(1, 2)) {
 	isc_result_t result;
 	unsigned char buf[DST_KEY_MAXSIZE];
 	dns_rdata_t dnskey = DNS_RDATA_INIT;
 	char alg[80];
+	char namebuf[DNS_NAME_FORMATSIZE];
 
 	dns_secalg_format(dst_key_alg(key->key), alg, sizeof(alg));
-	report("Removing %s key %d/%s from DNSKEY RRset.", reason,
+	dns_name_format(dst_key_name(key->key), namebuf, sizeof(namebuf));
+	report("Removing %s key %s/%d/%s from DNSKEY RRset.", reason, namebuf,
 	       dst_key_id(key->key), alg);
 
 	RETERR(make_dnskey(key->key, buf, sizeof(buf), &dnskey));
@@ -2246,7 +2256,8 @@ isc_result_t
 dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 		      dns_dnsseckeylist_t *removed, const dns_name_t *origin,
 		      dns_ttl_t hint_ttl, dns_diff_t *diff, isc_mem_t *mctx,
-		      void (*report)(const char *, ...)) {
+		      void (*report)(const char *, ...)
+			      ISC_FORMAT_PRINTF(1, 2)) {
 	isc_result_t result;
 	dns_dnsseckey_t *key, *key1, *key2, *next;
 	bool found_ttl = false;

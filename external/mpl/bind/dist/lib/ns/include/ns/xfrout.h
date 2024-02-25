@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.h,v 1.5 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: xfrout.h,v 1.5.2.1 2024/02/25 15:47:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_XFROUT_H
-#define NS_XFROUT_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -31,5 +30,3 @@
 
 void
 ns_xfr_start(ns_client_t *client, dns_rdatatype_t xfrtype);
-
-#endif /* NS_XFROUT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.7.2.1 2023/08/11 13:43:01 martin Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.7.2.2 2024/02/25 15:43:13 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,11 +22,11 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/message.h>
-#include <dns/result.h>
 
 int parseflags = 0;
 isc_mem_t *mctx = NULL;
@@ -42,7 +42,7 @@ printmessage(dns_message_t *msg);
 static void
 CHECKRESULT(isc_result_t result, const char *msg) {
 	if (result != ISC_R_SUCCESS) {
-		printf("%s: %s\n", msg, dns_result_totext(result));
+		printf("%s: %s\n", msg, isc_result_totext(result));
 
 		exit(1);
 	}
@@ -132,12 +132,6 @@ main(int argc, char *argv[]) {
 			if (strcasecmp(isc_commandline_argument, "usage") == 0)
 			{
 				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
-			}
-			if (strcasecmp(isc_commandline_argument, "size") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGSIZE;
-			}
-			if (strcasecmp(isc_commandline_argument, "mctx") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGCTX;
 			}
 			break;
 		default:
@@ -295,7 +289,7 @@ process_message(isc_buffer_t *source) {
 	}
 
 	if (dorender) {
-		unsigned char b2[64 * 1024];
+		unsigned char b2[65535];
 		isc_buffer_t buffer;
 		dns_compress_t cctx;
 

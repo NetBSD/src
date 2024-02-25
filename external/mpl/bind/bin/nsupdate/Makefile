@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/08/03 17:23:36 christos Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2024/02/25 15:42:53 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -11,7 +11,5 @@ DIST=${IDIST}/bin/nsupdate
 .PATH: ${DIST} ${IDIST}/doc/man
 DPADD+=${LIBEDIT} ${LIBTERMINFO}
 LDADD+=-ledit -lterminfo
-
-nsupdate.o: ${VERSIONFILE}
 
 .include <bsd.prog.mk>

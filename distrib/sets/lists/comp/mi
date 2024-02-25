@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.3 2024/01/14 15:17:11 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.4 2024/02/25 15:47:58 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4317,7 +4317,7 @@
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-ldns.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
 ./usr/libdata/lint/llib-ldwarf.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
@@ -4336,9 +4336,9 @@
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lirs.ln			comp-bind-lintlib	lint
-./usr/libdata/lint/llib-lisc.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisc.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
-./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lisccfg.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
 ./usr/libdata/lint/llib-lisns.ln		comp-isns-lintlib	lint
 ./usr/libdata/lint/llib-ljemalloc.ln		comp-c-lintlib		lint
@@ -4363,7 +4363,7 @@
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lnetpgpverify.ln	comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
-./usr/libdata/lint/llib-lns.ln			comp-bind-lintlib		lint
+./usr/libdata/lint/llib-lns.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lnvmm.ln		comp-c-lintlib		nvmm,lint
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete

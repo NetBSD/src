@@ -25,10 +25,10 @@ copy_setports ns3/kasp.conf.in ns3/kasp.conf
 
 # Setup zones
 (
-	cd ns3
-	$SHELL setup.sh
+  cd ns3
+  $SHELL setup.sh
 )
 (
-	cd ns4
-	$SHELL setup.sh
+  cd ns4
+  $SHELL setup.sh
 )

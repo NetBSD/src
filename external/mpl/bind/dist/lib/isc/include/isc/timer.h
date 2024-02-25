@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.7.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: timer.h,v 1.7.2.2 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_TIMER_H
-#define ISC_TIMER_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -268,58 +267,7 @@ isc_timer_gettype(isc_timer_t *timer);
  *\li	'timer' to be a valid timer.
  */
 
-isc_result_t
-isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
-/*%<
- * Create a timer manager.
- *
- * Notes:
- *
- *\li	All memory will be allocated in memory context 'mctx'.
- *
- * Requires:
- *
- *\li	'mctx' is a valid memory context.
- *
- *\li	'managerp' points to a NULL isc_timermgr_t.
- *
- * Ensures:
- *
- *\li	'*managerp' is a valid isc_timermgr_t.
- *
- * Returns:
- *
- *\li	Success
- *\li	No memory
- *\li	Unexpected error
- */
-
-void
-isc_timermgr_destroy(isc_timermgr_t **managerp);
-/*%<
- * Destroy a timer manager.
- *
- * Notes:
- *
- *\li	This routine blocks until there are no timers left in the manager,
- *	so if the caller holds any timer references using the manager, it
- *	must detach them before calling isc_timermgr_destroy() or it will
- *	block forever.
- *
- * Requires:
- *
- *\li	'*managerp' is a valid isc_timermgr_t.
- *
- * Ensures:
- *
- *\li	*managerp == NULL
- *
- *\li	All resources used by the manager have been freed.
- */
-
 void
 isc_timermgr_poke(isc_timermgr_t *m);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_TIMER_H */

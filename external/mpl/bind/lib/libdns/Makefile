@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2023/08/11 13:43:41 martin Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2024/02/25 15:47:57 martin Exp $
 
+NOLINT=yes	# XXX
 LIB=dns
 #USE_SHLIBDIR=   yes
 
@@ -8,14 +9,13 @@ LIB=dns
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=	${IDIST}/lib/dns
-.include "${DIST}/mapapi"
+#.include "${DIST}/mapapi"
 
 LIBDPLIBS+=	isc	${.CURDIR}/../libisc
 
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/dns -I${DIST}
 CPPFLAGS+=	-I${IDIST}/lib/isc
-CPPFLAGS+=	-DMAPAPI=\"${MAPAPI}\" -DMAJOR=\"${MAJORVER}.${MINORVER}\"
 
 CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 
@@ -23,7 +23,7 @@ CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 .endfor
 
-DNSSEC_SRCS=	dst_api.c dst_parse.c dst_result.c \
+DNSSEC_SRCS=	dst_api.c dst_parse.c \
 	gssapictx.c hmac_link.c key.c openssl_link.c \
 	openssldh_link.c opensslrsa_link.c \
 	opensslecdsa_link.c openssleddsa_link.c
@@ -45,17 +45,17 @@ LINTFLAGS+=	-X 132	# conversion from '%s' to '%s' may lose accuracy
 LINTFLAGS+=	-X 298	# conversion from '%s' to '%s' may lose accuracy, arg #%d
 
 SRCS=	acl.c adb.c badcache.c byaddr.c cache.c callbacks.c catz.c \
-	clientinfo.c compress.c client.c dyndb.c tsec.c ecdb.c ecs.c \
-	db.c dbiterator.c dbtable.c diff.c dispatch.c dlz.c dns64.c dnsrps.c \
+	clientinfo.c compress.c client.c dyndb.c tsec.c ecs.c \
+	db.c dbiterator.c diff.c dispatch.c dlz.c dns64.c dnsrps.c \
 	dnssec.c \
 	ds.c fixedname.c forward.c ipkeylist.c iptable.c journal.c \
-	kasp.c keydata.c keymgr.c keytable.c lib.c log.c \
+	kasp.c keydata.c keymgr.c keytable.c log.c \
 	lookup.c master.c masterdump.c message.c name.c ncache.c nsec.c \
-	nsec3.c nta.c order.c peer.c portlist.c rbt.c rbtdb.c \
+	nsec3.c nta.c order.c peer.c rbt.c rbtdb.c \
 	rcode.c rdata.c rdatalist.c rdataset.c rdatasetiter.c rdataslab.c \
 	request.c resolver.c result.c rootns.c rpz.c rriterator.c rrl.c sdb.c \
-	soa.c ssu.c ssu_external.c stats.c tcpmsg.c time.c timer.c tkey.c \
-	tsig.c ttl.c private.c validator.c version.c view.c xfrin.c zone.c \
+	soa.c ssu.c ssu_external.c stats.c time.c tkey.c transport.c \
+	tsig.c ttl.c private.c validator.c view.c xfrin.c zone.c \
 	zonekey.c zoneverify.c zt.c sdlz.c update.c ${DNSSEC_SRCS}
 
 COPTS.openssl_link.c+= -Wno-error=deprecated-declarations

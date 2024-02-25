@@ -35,8 +35,8 @@ The response is converted to DNS wire format by named.  This conversion,
 and the lack of any internal caching, places significant limits on the
 query performance of DLZ modules.  Consequently, DLZ is not recommended
 for use on high-volume servers.  However, it can be used in a hidden
-master configuration, with slaves retrieving zone updates via AXFR.
-(Note, however, that DLZ has no built-in support for DNS notify; slaves
+primary configuration, with secondaries retrieving zone updates via AXFR.
+(Note, however, that DLZ has no built-in support for DNS notify; secondaries
 are not automatically informed of changes to the zones in the database.)
 
 CONFIGURING DLZ:

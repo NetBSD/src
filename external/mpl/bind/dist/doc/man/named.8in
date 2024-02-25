@@ -27,12 +27,12 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "NAMED" "8" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "NAMED" "8" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 named \- Internet domain name server
 .SH SYNOPSIS
 .sp
-\fBnamed\fP [ [\fB\-4\fP] | [\fB\-6\fP] ] [\fB\-c\fP config\-file] [\fB\-C\fP] [\fB\-d\fP debug\-level] [\fB\-D\fP string] [\fB\-E\fP engine\-name] [\fB\-f\fP] [\fB\-g\fP] [\fB\-L\fP logfile] [\fB\-M\fP option] [\fB\-m\fP flag] [\fB\-n\fP #cpus] [\fB\-p\fP port] [\fB\-s\fP] [\fB\-S\fP #max\-socks] [\fB\-t\fP directory] [\fB\-U\fP #listeners] [\fB\-u\fP user] [\fB\-v\fP] [\fB\-V\fP] [\fB\-X\fP lock\-file] [\fB\-x\fP cache\-file]
+\fBnamed\fP [ [\fB\-4\fP] | [\fB\-6\fP] ] [\fB\-c\fP config\-file] [\fB\-C\fP] [\fB\-d\fP debug\-level] [\fB\-D\fP string] [\fB\-E\fP engine\-name] [\fB\-f\fP] [\fB\-g\fP] [\fB\-L\fP logfile] [\fB\-M\fP option] [\fB\-m\fP flag] [\fB\-n\fP #cpus] [\fB\-p\fP port] [\fB\-s\fP] [\fB\-t\fP directory] [\fB\-U\fP #listeners] [\fB\-u\fP user] [\fB\-v\fP] [\fB\-V\fP] [\fB\-X\fP lock\-file]
 .SH DESCRIPTION
 .sp
 \fBnamed\fP is a Domain Name System (DNS) server, part of the BIND 9
@@ -40,79 +40,82 @@ distribution from ISC. For more information on the DNS, see \fI\%RFC 1033\fP,
 \fI\%RFC 1034\fP, and \fI\%RFC 1035\fP\&.
 .sp
 When invoked without arguments, \fBnamed\fP reads the default
-configuration file \fB/etc/named.conf\fP, reads any initial data, and
+configuration file \fB@sysconfdir@/named.conf\fP, reads any initial data, and
 listens for queries.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \fB\-4\fP
-This option tells \fBnamed\fP to use only IPv4, even if the host machine is capable of IPv6. \fB\-4\fP and
-\fB\-6\fP are mutually exclusive.
+.B \-4
+This option tells \fBnamed\fP to use only IPv4, even if the host machine is capable of IPv6. \fI\%\-4\fP and
+\fI\%\-6\fP are mutually exclusive.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-6\fP
-This option tells \fBnamed\fP to use only IPv6, even if the host machine is capable of IPv4. \fB\-4\fP and
-\fB\-6\fP are mutually exclusive.
+.B \-6
+This option tells \fBnamed\fP to use only IPv6, even if the host machine is capable of IPv4. \fI\%\-4\fP and
+\fI\%\-6\fP are mutually exclusive.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-c config\-file\fP
+.B \-c config\-file
 This option tells \fBnamed\fP to use \fBconfig\-file\fP as its configuration file instead of the default,
-\fB/etc/named.conf\fP\&. To ensure that the configuration file
+\fB@sysconfdir@/named.conf\fP\&. To ensure that the configuration file
 can be reloaded after the server has changed its working directory
 due to to a possible \fBdirectory\fP option in the configuration file,
 \fBconfig\-file\fP should be an absolute pathname.
 .UNINDENT
-.sp
-\fB\-C\fP
 .INDENT 0.0
-.INDENT 3.5
+.TP
+.B \-C
 This option prints out the default built\-in configuration and exits.
 .sp
 NOTE: This is for debugging purposes only and is not an
-accurate representation of the actual configuration used by \fBnamed\fP
+accurate representation of the actual configuration used by \fI\%named\fP
 at runtime.
-.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-d debug\-level\fP
+.B \-d debug\-level
 This option sets the daemon\(aqs debug level to \fBdebug\-level\fP\&. Debugging traces from
 \fBnamed\fP become more verbose as the debug level increases.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-D string\fP
+.B \-D string
 This option specifies a string that is used to identify a instance of \fBnamed\fP
 in a process listing. The contents of \fBstring\fP are not examined.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-E engine\-name\fP
+.B \-E engine\-name
 When applicable, this option specifies the hardware to use for cryptographic
 operations, such as a secure key store used for signing.
 .sp
 When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
 engine identifier that drives the cryptographic accelerator or
-hardware service module (usually \fBpkcs11\fP). When BIND is
-built with native PKCS#11 cryptography (\fB\-\-enable\-native\-pkcs11\fP), it
-defaults to the path of the PKCS#11 provider library specified via
-\fB\-\-with\-pkcs11\fP\&.
+hardware service module (usually \fBpkcs11\fP).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-f\fP
+.B \-f
 This option runs the server in the foreground (i.e., do not daemonize).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-g\fP
+.B \-g
 This option runs the server in the foreground and forces all logging to \fBstderr\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-L logfile\fP
+.B \-L logfile
 This option sets the log to the file \fBlogfile\fP by default, instead of the system log.
 .UNINDENT
-.sp
-\fB\-M option\fP
 .INDENT 0.0
-.INDENT 3.5
+.TP
+.B \-M option
 This option sets the default (comma\-separated) memory context
 options. The possible flags are:
-.INDENT 0.0
-.IP \(bu 2
-\fBexternal\fP: use system\-provided memory allocation functions; this
-is the implicit default.
-.IP \(bu 2
-\fBinternal\fP: use the internal memory manager.
+.INDENT 7.0
 .IP \(bu 2
 \fBfill\fP: fill blocks of memory with tag values when they are
 allocated or freed, to assist debugging of memory problems; this is
@@ -124,30 +127,38 @@ implicit default unless \fBnamed\fP has been compiled with
 \fB\-\-enable\-developer\fP\&.
 .UNINDENT
 .UNINDENT
-.UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-m flag\fP
+.B \-m flag
 This option turns on memory usage debugging flags. Possible flags are \fBusage\fP,
 \fBtrace\fP, \fBrecord\fP, \fBsize\fP, and \fBmctx\fP\&. These correspond to the
 \fBISC_MEM_DEBUGXXXX\fP flags described in \fB<isc/mem.h>\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-n #cpus\fP
-This option controls the number of CPUs that \fBnamed\fP assumes the
-presence of. If not specified, \fBnamed\fP tries to determine the
-number of CPUs present automatically; if it fails, a single CPU is
-assumed to be present.
-.sp
-\fBnamed\fP creates two threads per each CPU present (one thread for
-receiving and sending client traffic and another thread for sending
-and receiving resolver traffic) and then on top of that a single
-thread for handling time\-based events.
+.B \-n #cpus
+This option creates \fB#cpus\fP worker threads to take advantage of multiple CPUs. If
+not specified, \fBnamed\fP tries to determine the number of CPUs
+present and creates one thread per CPU. If it is unable to determine
+the number of CPUs, a single worker thread is created.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-p port\fP
-This option listens for queries on \fBport\fP\&. If not specified, the default is
-port 53.
+.B \-p value
+This option specifies the port(s) on which the server will listen
+for queries. If \fBvalue\fP is of the form \fB<portnum>\fP or
+\fBdns=<portnum>\fP, the server will listen for DNS queries on
+\fBportnum\fP; if not not specified, the default is port 53. If
+\fBvalue\fP is of the form \fBtls=<portnum>\fP, the server will
+listen for TLS queries on \fBportnum\fP; the default is 853.
+If \fBvalue\fP is of the form \fBhttps=<portnum>\fP, the server will
+listen for HTTPS queries on \fBportnum\fP; the default is 443.
+If \fBvalue\fP is of the form \fBhttp=<portnum>\fP, the server will
+listen for HTTP queries on \fBportnum\fP; the default is 80.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-s\fP
+.B \-s
 This option writes memory usage statistics to \fBstdout\fP on exit.
 .UNINDENT
 .sp
@@ -160,10 +171,8 @@ removed or changed in a future release.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-S #max\-socks\fP
-This option allows \fBnamed\fP to use up to \fB#max\-socks\fP sockets. The default value is
-21000 on systems built with default configuration options, and 4096
-on systems built with \fBconfigure \-\-with\-tuning=small\fP\&.
+.B \-S #max\-socks
+This option is deprecated and no longer has any function.
 .UNINDENT
 .sp
 \fBWARNING:\fP
@@ -182,7 +191,7 @@ for its internal use.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-t directory\fP
+.B \-t directory
 This option tells \fBnamed\fP to chroot to \fBdirectory\fP after processing the command\-line arguments, but
 before reading the configuration file.
 .UNINDENT
@@ -190,7 +199,7 @@ before reading the configuration file.
 \fBWARNING:\fP
 .INDENT 0.0
 .INDENT 3.5
-This option should be used in conjunction with the \fB\-u\fP option,
+This option should be used in conjunction with the \fI\%\-u\fP option,
 as chrooting a process running as root doesn\(aqt enhance security on
 most systems; the way \fBchroot\fP is defined allows a process
 with root privileges to escape a chroot jail.
@@ -198,18 +207,19 @@ with root privileges to escape a chroot jail.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-U #listeners\fP
+.B \-U #listeners
 This option tells \fBnamed\fP the number of \fB#listeners\fP worker threads to listen on, for incoming UDP packets on
 each address. If not specified, \fBnamed\fP calculates a default
 value based on the number of detected CPUs: 1 for 1 CPU, and the
 number of detected CPUs minus one for machines with more than 1 CPU.
 This cannot be increased to a value higher than the number of CPUs.
-If \fB\-n\fP has been set to a higher value than the number of detected
-CPUs, then \fB\-U\fP may be increased as high as that value, but no
-higher. On Windows, the number of UDP listeners is hardwired to 1 and
-this option has no effect.
+If \fI\%\-n\fP has been set to a higher value than the number of detected
+CPUs, then \fI\%\-U\fP may be increased as high as that value, but no
+higher.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-u user\fP
+.B \-u user
 This option sets the setuid to \fBuser\fP after completing privileged operations, such as
 creating sockets that listen on privileged ports.
 .UNINDENT
@@ -220,7 +230,7 @@ creating sockets that listen on privileged ports.
 On Linux, \fBnamed\fP uses the kernel\(aqs capability mechanism to drop
 all root privileges except the ability to \fBbind\fP to a
 privileged port and set process resource limits. Unfortunately,
-this means that the \fB\-u\fP option only works when \fBnamed\fP is run
+this means that the \fI\%\-u\fP option only works when \fBnamed\fP is run
 on kernel 2.2.18 or later, or kernel 2.3.99\-pre3 or later, since
 previous kernels did not allow privileges to be retained after
 \fBsetuid\fP\&.
@@ -228,34 +238,27 @@ previous kernels did not allow privileges to be retained after
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \fB\-v\fP
+.B \-v
 This option reports the version number and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-V\fP
+.B \-V
 This option reports the version number, build options, supported
 cryptographics algorithms, and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-X lock\-file\fP
+.B \-X lock\-file
 This option acquires a lock on the specified file at runtime; this helps to
 prevent duplicate \fBnamed\fP instances from running simultaneously.
 Use of this option overrides the \fBlock\-file\fP option in
-\fBnamed.conf\fP\&. If set to \fBnone\fP, the lock file check is disabled.
-.TP
-.B \fB\-x cache\-file\fP
-This option loads data from \fBcache\-file\fP into the cache of the default view.
-.UNINDENT
-.sp
-\fBWARNING:\fP
-.INDENT 0.0
-.INDENT 3.5
-This option must not be used in normal operations. It is only of interest to BIND 9
-developers and may be removed or changed in a future release.
-.UNINDENT
+\fI\%named.conf\fP\&. If set to \fBnone\fP, the lock file check is disabled.
 .UNINDENT
 .SH SIGNALS
 .sp
 In routine operation, signals should not be used to control the
-nameserver; \fBrndc\fP should be used instead.
+nameserver; \fI\%rndc\fP should be used instead.
 .INDENT 0.0
 .TP
 .B SIGHUP
@@ -279,18 +282,18 @@ in the script used to start the \fBnamed\fP process.
 .SH FILES
 .INDENT 0.0
 .TP
-.B \fB/etc/named.conf\fP
+.B \fB@sysconfdir@/named.conf\fP
 The default configuration file.
 .TP
-.B \fB/var/run/named/named.pid\fP
+.B \fB@runstatedir@/named.pid\fP
 The default process\-id file.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%RFC 1033\fP, \fI\%RFC 1034\fP, \fI\%RFC 1035\fP, \fBnamed\-checkconf(8)\fP, \fBnamed\-checkzone(8)\fP, \fBrndc(8)\fP, \fBnamed.conf(5)\fP, BIND 9 Administrator Reference Manual.
+\fI\%RFC 1033\fP, \fI\%RFC 1034\fP, \fI\%RFC 1035\fP, \fI\%named\-checkconf(8)\fP, \fI\%named\-checkzone(8)\fP, \fI\%rndc(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

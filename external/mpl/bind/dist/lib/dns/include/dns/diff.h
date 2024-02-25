@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.6.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DIFF_H
-#define DNS_DIFF_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -280,5 +279,3 @@ dns_diff_print(dns_diff_t *diff, FILE *file);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DIFF_H */

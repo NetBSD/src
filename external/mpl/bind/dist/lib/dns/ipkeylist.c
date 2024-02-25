@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkeylist.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: ipkeylist.c,v 1.6.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,8 +28,8 @@ dns_ipkeylist_init(dns_ipkeylist_t *ipkl) {
 	ipkl->count = 0;
 	ipkl->allocated = 0;
 	ipkl->addrs = NULL;
-	ipkl->dscps = NULL;
 	ipkl->keys = NULL;
+	ipkl->tlss = NULL;
 	ipkl->labels = NULL;
 }
 
@@ -48,11 +48,6 @@ dns_ipkeylist_clear(isc_mem_t *mctx, dns_ipkeylist_t *ipkl) {
 			    ipkl->allocated * sizeof(isc_sockaddr_t));
 	}
 
-	if (ipkl->dscps != NULL) {
-		isc_mem_put(mctx, ipkl->dscps,
-			    ipkl->allocated * sizeof(isc_dscp_t));
-	}
-
 	if (ipkl->keys != NULL) {
 		for (i = 0; i < ipkl->allocated; i++) {
 			if (ipkl->keys[i] == NULL) {
@@ -64,6 +59,20 @@ dns_ipkeylist_clear(isc_mem_t *mctx, dns_ipkeylist_t *ipkl) {
 			isc_mem_put(mctx, ipkl->keys[i], sizeof(dns_name_t));
 		}
 		isc_mem_put(mctx, ipkl->keys,
+			    ipkl->allocated * sizeof(dns_name_t *));
+	}
+
+	if (ipkl->tlss != NULL) {
+		for (i = 0; i < ipkl->allocated; i++) {
+			if (ipkl->tlss[i] == NULL) {
+				continue;
+			}
+			if (dns_name_dynamic(ipkl->tlss[i])) {
+				dns_name_free(ipkl->tlss[i], mctx);
+			}
+			isc_mem_put(mctx, ipkl->tlss[i], sizeof(dns_name_t));
+		}
+		isc_mem_put(mctx, ipkl->tlss,
 			    ipkl->allocated * sizeof(dns_name_t *));
 	}
 
@@ -105,11 +114,6 @@ dns_ipkeylist_copy(isc_mem_t *mctx, const dns_ipkeylist_t *src,
 
 	memmove(dst->addrs, src->addrs, src->count * sizeof(isc_sockaddr_t));
 
-	if (src->dscps != NULL) {
-		memmove(dst->dscps, src->dscps,
-			src->count * sizeof(isc_dscp_t));
-	}
-
 	if (src->keys != NULL) {
 		for (i = 0; i < src->count; i++) {
 			if (src->keys[i] != NULL) {
@@ -119,6 +123,19 @@ dns_ipkeylist_copy(isc_mem_t *mctx, const dns_ipkeylist_t *src,
 				dns_name_dup(src->keys[i], mctx, dst->keys[i]);
 			} else {
 				dst->keys[i] = NULL;
+			}
+		}
+	}
+
+	if (src->tlss != NULL) {
+		for (i = 0; i < src->count; i++) {
+			if (src->tlss[i] != NULL) {
+				dst->tlss[i] = isc_mem_get(mctx,
+							   sizeof(dns_name_t));
+				dns_name_init(dst->tlss[i], NULL);
+				dns_name_dup(src->tlss[i], mctx, dst->tlss[i]);
+			} else {
+				dst->tlss[i] = NULL;
 			}
 		}
 	}
@@ -143,8 +160,8 @@ dns_ipkeylist_copy(isc_mem_t *mctx, const dns_ipkeylist_t *src,
 isc_result_t
 dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	isc_sockaddr_t *addrs = NULL;
-	isc_dscp_t *dscps = NULL;
 	dns_name_t **keys = NULL;
+	dns_name_t **tlss = NULL;
 	dns_name_t **labels = NULL;
 
 	REQUIRE(ipkl != NULL);
@@ -155,8 +172,8 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	}
 
 	addrs = isc_mem_get(mctx, n * sizeof(isc_sockaddr_t));
-	dscps = isc_mem_get(mctx, n * sizeof(isc_dscp_t));
 	keys = isc_mem_get(mctx, n * sizeof(dns_name_t *));
+	tlss = isc_mem_get(mctx, n * sizeof(dns_name_t *));
 	labels = isc_mem_get(mctx, n * sizeof(dns_name_t *));
 
 	if (ipkl->addrs != NULL) {
@@ -169,16 +186,6 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	memset(&ipkl->addrs[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(isc_sockaddr_t));
 
-	if (ipkl->dscps != NULL) {
-		memmove(dscps, ipkl->dscps,
-			ipkl->allocated * sizeof(isc_dscp_t));
-		isc_mem_put(mctx, ipkl->dscps,
-			    ipkl->allocated * sizeof(isc_dscp_t));
-	}
-	ipkl->dscps = dscps;
-	memset(&ipkl->dscps[ipkl->allocated], 0,
-	       (n - ipkl->allocated) * sizeof(isc_dscp_t));
-
 	if (ipkl->keys) {
 		memmove(keys, ipkl->keys,
 			ipkl->allocated * sizeof(dns_name_t *));
@@ -187,6 +194,16 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	}
 	ipkl->keys = keys;
 	memset(&ipkl->keys[ipkl->allocated], 0,
+	       (n - ipkl->allocated) * sizeof(dns_name_t *));
+
+	if (ipkl->tlss) {
+		memmove(tlss, ipkl->tlss,
+			ipkl->allocated * sizeof(dns_name_t *));
+		isc_mem_put(mctx, ipkl->tlss,
+			    ipkl->allocated * sizeof(dns_name_t *));
+	}
+	ipkl->tlss = tlss;
+	memset(&ipkl->tlss[ipkl->allocated], 0,
 	       (n - ipkl->allocated) * sizeof(dns_name_t *));
 
 	if (ipkl->labels != NULL) {
@@ -203,7 +220,7 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n) {
 	return (ISC_R_SUCCESS);
 
 	isc_mem_put(mctx, addrs, n * sizeof(isc_sockaddr_t));
-	isc_mem_put(mctx, dscps, n * sizeof(isc_dscp_t));
+	isc_mem_put(mctx, tlss, n * sizeof(dns_name_t *));
 	isc_mem_put(mctx, keys, n * sizeof(dns_name_t *));
 	isc_mem_put(mctx, labels, n * sizeof(dns_name_t *));
 

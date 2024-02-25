@@ -1,2 +1,2 @@
 # this server only has 127.0.0.1 in its localhost/localnets ACLs
--m record,size,mctx -c named.conf -d 99 -D allow-query-ns3 -X named.lock -g -T maxcachesize=2097152 -T fixedlocal
+-m record -c named.conf -d 99 -D allow-query-ns3 -X named.lock -g -T maxcachesize=2097152 -T fixedlocal

@@ -11,17 +11,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
-fail=0
-
-if $PERL -e 'use File::Fetch;' 2>/dev/null
-then
-        :
-else
-    echo_i "This test requires the File::Fetch library." >&2
-    fail=1
+if ! ${PERL} -MNet::DNS -e ''; then
+  echo_i "perl Net::DNS module is required"
+  exit 1
 fi
 
-exit $fail
+if ! ${PERL} -MFile::Fetch -e ''; then
+  echo_i "perl File::Fetch module is required"
+  exit 1
+fi
+
+exit 0

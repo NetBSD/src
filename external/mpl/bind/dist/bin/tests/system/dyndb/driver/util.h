@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.4 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.4.2.1 2024/02/25 15:44:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,8 +33,7 @@
  * Memory allocation and error handling utilities.
  */
 
-#ifndef _LD_UTIL_H_
-#define _LD_UTIL_H_
+#pragma once
 
 #include <isc/mem.h>
 
@@ -83,5 +82,3 @@
 #define MEM_PUT_AND_DETACH(target_ptr)                        \
 	isc_mem_putanddetach(&(target_ptr)->mctx, target_ptr, \
 			     sizeof(*(target_ptr)))
-
-#endif /* !_LD_UTIL_H_ */

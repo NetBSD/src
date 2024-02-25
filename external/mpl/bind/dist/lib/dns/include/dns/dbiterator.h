@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dbiterator.h,v 1.6.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DBITERATOR_H
-#define DNS_DBITERATOR_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -291,5 +290,3 @@ dns_dbiterator_setcleanmode(dns_dbiterator_t *iterator, bool mode);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DBITERATOR_H */

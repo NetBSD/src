@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.6.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_MASTER_H
-#define DNS_MASTER_H 1
+#pragma once
 
 /*! \file dns/master.h */
 
@@ -39,7 +38,7 @@
 #define DNS_MASTER_NOINCLUDE 0x00000004 /*%< Disallow $INCLUDE directives. */
 #define DNS_MASTER_ZONE	     0x00000008 /*%< Loading a zone master file. */
 #define DNS_MASTER_HINT	     0x00000010 /*%< Loading a hint master file. */
-#define DNS_MASTER_SLAVE     0x00000020 /*%< Loading a slave master file. */
+#define DNS_MASTER_SECONDARY 0x00000020 /*%< Secondary master file. */
 #define DNS_MASTER_CHECKNS                    \
 	0x00000040 /*%<                       \
 		    * Check NS records to see \
@@ -83,9 +82,7 @@ ISC_LANG_BEGINDECLS
 /* Common header */
 struct dns_masterrawheader {
 	uint32_t format;       /* must be
-				* dns_masterformat_raw
-				* or
-				* dns_masterformat_map */
+				* dns_masterformat_raw */
 	uint32_t version;      /* compatibility for future
 				* extensions */
 	uint32_t dumptime;     /* timestamp on creation
@@ -94,7 +91,7 @@ struct dns_masterrawheader {
 	uint32_t sourceserial; /* Source serial number (used
 				* by inline-signing zones) */
 	uint32_t lastxfrin;    /* timestamp of last transfer
-				* (used by slave zones) */
+				* (used by secondary zones) */
 };
 
 /* The structure for each RRset */
@@ -262,5 +259,3 @@ dns_master_initrawheader(dns_masterrawheader_t *header);
  * values to zero.
  */
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_MASTER_H */

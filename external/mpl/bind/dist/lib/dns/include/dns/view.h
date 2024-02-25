@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.8.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: view.h,v 1.8.2.2 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_VIEW_H
-#define DNS_VIEW_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -77,6 +76,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/rpz.h>
 #include <dns/rrl.h>
+#include <dns/transport.h>
 #include <dns/types.h>
 #include <dns/zt.h>
 
@@ -115,6 +115,7 @@ struct dns_view {
 	bool	     cacheshared;
 
 	/* Configurable data. */
+	dns_transport_list_t *transports;
 	dns_tsig_keyring_t   *statickeys;
 	dns_tsig_keyring_t   *dynamickeys;
 	dns_peerlist_t	     *peers;
@@ -152,6 +153,8 @@ struct dns_view {
 	dns_rbt_t	     *denyanswernames;
 	dns_rbt_t	     *answernames_exclude;
 	dns_rrl_t	     *rrl;
+	dns_rbt_t	     *sfd;
+	isc_rwlock_t	      sfd_lock;
 	bool		      provideixfr;
 	bool		      requestnsid;
 	bool		      sendcookie;
@@ -165,7 +168,7 @@ struct dns_view {
 	dns_ttl_t	      prefetch_trigger;
 	dns_ttl_t	      prefetch_eligible;
 	in_port_t	      dstport;
-	dns_aclenv_t	      aclenv;
+	dns_aclenv_t	     *aclenv;
 	dns_rdatatype_t	      preferred_glue;
 	bool		      flush;
 	dns_namelist_t	     *delonly;
@@ -253,6 +256,19 @@ struct dns_view {
 #define DNS_VIEWATTR_RESSHUTDOWN 0x01
 #define DNS_VIEWATTR_ADBSHUTDOWN 0x02
 #define DNS_VIEWATTR_REQSHUTDOWN 0x04
+
+#ifdef HAVE_LMDB
+#define DNS_LMDB_COMMON_FLAGS (MDB_CREATE | MDB_NOSUBDIR | MDB_NOLOCK)
+#ifndef __OpenBSD__
+#define DNS_LMDB_FLAGS (DNS_LMDB_COMMON_FLAGS)
+#else /* __OpenBSD__ */
+/*
+ * OpenBSD does not have a unified buffer cache, which requires both reads and
+ * writes to be performed using mmap().
+ */
+#define DNS_LMDB_FLAGS (DNS_LMDB_COMMON_FLAGS | MDB_WRITEMAP)
+#endif /* __OpenBSD__ */
+#endif /* HAVE_LMDB */
 
 isc_result_t
 dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
@@ -382,9 +398,9 @@ dns_view_createzonetable(dns_view_t *view);
 
 isc_result_t
 dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
-			unsigned int ntasks, unsigned int ndisp,
-			isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
-			unsigned int options, dns_dispatchmgr_t *dispatchmgr,
+			unsigned int ntasks, unsigned int ndisp, isc_nm_t *nm,
+			isc_timermgr_t *timermgr, unsigned int options,
+			dns_dispatchmgr_t *dispatchmgr,
 			dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6);
 /*%<
  * Create a resolver and address database for the view.
@@ -396,7 +412,7 @@ dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
  *\li	'view' does not have a resolver already.
  *
  *\li	The requirements of dns_resolver_create() apply to 'taskmgr',
- *	'ntasks', 'socketmgr', 'timermgr', 'options', 'dispatchv4', and
+ *	'ntasks', 'nm', 'timermgr', 'options', 'dispatchv4', and
  *	'dispatchv6'.
  *
  * Returns:
@@ -443,6 +459,9 @@ dns_view_sethints(dns_view_t *view, dns_db_t *hints);
  *
  * \li    	The hints database of 'view' is 'hints'.
  */
+
+void
+dns_view_settransports(dns_view_t *view, dns_transport_list_t *list);
 
 void
 dns_view_setkeyring(dns_view_t *view, dns_tsig_keyring_t *ring);
@@ -808,6 +827,10 @@ dns_view_asyncload(dns_view_t *view, bool newonly, dns_zt_allloaded_t callback,
  */
 
 isc_result_t
+dns_view_gettransport(dns_view_t *view, const dns_transport_type_t type,
+		      const dns_name_t *name, dns_transport_t **transportp);
+
+isc_result_t
 dns_view_gettsig(dns_view_t *view, const dns_name_t *keyname,
 		 dns_tsigkey_t **keyp);
 /*%<
@@ -934,7 +957,7 @@ dns_view_flushname(dns_view_t *view, const dns_name_t *name);
  *	other returns are failures.
  */
 
-isc_result_t
+void
 dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name);
 /*%<
  * Add the given name to the delegation only table.
@@ -948,7 +971,7 @@ dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name);
  *\li	#ISC_R_NOMEMORY
  */
 
-isc_result_t
+void
 dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name);
 /*%<
  * Add the given name to be excluded from the root-delegation-only.
@@ -999,7 +1022,7 @@ dns_view_getrootdelonly(dns_view_t *view);
 isc_result_t
 dns_view_freezezones(dns_view_t *view, bool freeze);
 /*%<
- * Freeze/thaw updates to master zones.
+ * Freeze/thaw updates to primary zones.
  *
  * Requires:
  * \li	'view' is valid.
@@ -1356,6 +1379,40 @@ dns_view_staleanswerenabled(dns_view_t *view);
  *\li	'view' to be valid.
  */
 
-ISC_LANG_ENDDECLS
+void
+dns_view_sfd_add(dns_view_t *view, const dns_name_t *name);
+/*%<
+ * Add 'name' to the synth-from-dnssec namespace tree for the
+ * view.  If the tree does not already exist create it.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ *\li	'name' to be valid.
+ */
 
-#endif /* DNS_VIEW_H */
+void
+dns_view_sfd_del(dns_view_t *view, const dns_name_t *name);
+/*%<
+ * Delete 'name' to the synth-from-dnssec namespace tree for
+ * the view when the count of previous adds and deletes becomes
+ * zero.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ *\li	'name' to be valid.
+ */
+
+void
+dns_view_sfd_find(dns_view_t *view, const dns_name_t *name,
+		  dns_name_t *foundname);
+/*%<
+ * Find the enclosing name to the synth-from-dnssec namespace tree for 'name'
+ * in the specified view.
+ *
+ * Requires:
+ *\li	'view' to be valid.
+ *\li	'name' to be valid.
+ *\li	'foundname' to be valid with a buffer sufficient to hold the name.
+ */
+
+ISC_LANG_ENDDECLS

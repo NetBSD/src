@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "DIG" "1" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "DIG" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 dig \- DNS lookup utility
 .SH SYNOPSIS
@@ -49,7 +49,7 @@ than \fBdig\fP\&.
 Although \fBdig\fP is normally used with command\-line arguments, it also
 has a batch mode of operation for reading lookup requests from a file. A
 brief summary of its command\-line arguments and options is printed when
-the \fB\-h\fP option is given. The BIND 9
+the \fI\%\-h\fP option is given. The BIND 9
 implementation of \fBdig\fP allows multiple lookups to be issued from the
 command line.
 .sp
@@ -62,12 +62,12 @@ performs an NS query for \(dq.\(dq (the root).
 .sp
 It is possible to set per\-user defaults for \fBdig\fP via
 \fB${HOME}/.digrc\fP\&. This file is read and any options in it are applied
-before the command\-line arguments. The \fB\-r\fP option disables this
+before the command\-line arguments. The \fI\%\-r\fP option disables this
 feature, for scripts that need predictable behavior.
 .sp
 The IN and CH class names overlap with the IN and CH top\-level domain
-names. Either use the \fB\-t\fP and \fB\-c\fP options to specify the type and
-class, use the \fB\-q\fP to specify the domain name, or use \(dqIN.\(dq and
+names. Either use the \fI\%\-t\fP and \fI\%\-c\fP options to specify the type and
+class, use the \fI\%\-q\fP to specify the domain name, or use \(dqIN.\(dq and
 \(dqCH.\(dq when looking up these top\-level domains.
 .SH SIMPLE USAGE
 .sp
@@ -86,7 +86,7 @@ dig @server name type
 where:
 .INDENT 0.0
 .TP
-.B \fBserver\fP
+.B server
 is the name or IP address of the name server to query. This can be an
 IPv4 address in dotted\-decimal notation or an IPv6 address in
 colon\-delimited notation. When the supplied \fBserver\fP argument is a
@@ -95,16 +95,20 @@ server.
 .sp
 If no \fBserver\fP argument is provided, \fBdig\fP consults
 \fB/etc/resolv.conf\fP; if an address is found there, it queries the
-name server at that address. If either of the \fB\-4\fP or \fB\-6\fP
+name server at that address. If either of the \fI\%\-4\fP or \fI\%\-6\fP
 options are in use, then only addresses for the corresponding
 transport are tried. If no usable addresses are found, \fBdig\fP
 sends the query to the local host. The reply from the name server
 that responds is displayed.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBname\fP
+.B name
 is the name of the resource record that is to be looked up.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtype\fP
+.B type
 indicates what type of query is required \- ANY, A, MX, SIG, etc.
 \fBtype\fP can be any valid query type. If no \fBtype\fP argument is
 supplied, \fBdig\fP performs a lookup for an A record.
@@ -112,57 +116,84 @@ supplied, \fBdig\fP performs a lookup for an A record.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \fB\-4\fP
+.B \-4
 This option indicates that only IPv4 should be used.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-6\fP
+.B \-6
 This option indicates that only IPv6 should be used.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-b address[#port]\fP
+.B \-b address[#port]
 This option sets the source IP address of the query. The \fBaddress\fP must be a
 valid address on one of the host\(aqs network interfaces, or \(dq0.0.0.0\(dq
 or \(dq::\(dq. An optional port may be specified by appending \fB#port\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-c class\fP
+.B \-c class
 This option sets the query class. The default \fBclass\fP is IN; other classes are
 HS for Hesiod records or CH for Chaosnet records.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-f file\fP
+.B \-f file
 This option sets batch mode, in which \fBdig\fP reads a list of lookup requests to process from
 the given \fBfile\fP\&. Each line in the file should be organized in the
 same way it would be presented as a query to \fBdig\fP using the
 command\-line interface.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-k keyfile\fP
-This option tells \fBnamed\fP to sign queries using TSIG using a key read from the given file. Key
-files can be generated using \fBtsig\-keygen\fP\&. When using TSIG
-authentication with \fBdig\fP, the name server that is queried needs to
-know the key and algorithm that is being used. In BIND, this is done
-by providing appropriate \fBkey\fP and \fBserver\fP statements in
-\fBnamed.conf\fP\&.
+.B \-h
+Print a usage summary.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-m\fP
+.B \-k keyfile
+This option tells \fBdig\fP to sign queries using TSIG or
+SIG(0) using a key read from the given file. Key files can be
+generated using \fI\%tsig\-keygen\fP\&. When using TSIG authentication
+with \fBdig\fP, the name server that is queried needs to
+know the key and algorithm that is being used. In BIND, this is
+done by providing appropriate \fBkey\fP and \fBserver\fP statements
+in \fI\%named.conf\fP for TSIG and by looking up the KEY record
+in zone data for SIG(0).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-m
 This option enables memory usage debugging.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-p port\fP
+.B \-p port
 This option sends the query to a non\-standard port on the server, instead of the
 default port 53. This option is used to test a name server that
 has been configured to listen for queries on a non\-standard port
 number.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-q name\fP
+.B \-q name
 This option specifies the domain name to query. This is useful to distinguish the \fBname\fP
 from other arguments.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-r\fP
+.B \-r
 This option indicates that options from \fB${HOME}/.digrc\fP should not be read. This is useful for
 scripts that need predictable behavior.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-t type\fP
+.B \-t type
 This option indicates the resource record type to query, which can be any valid query type. If
 it is a resource record type supported in BIND 9, it can be given by
 the type mnemonic (such as \fBNS\fP or \fBAAAA\fP). The default query type is
-\fBA\fP, unless the \fB\-x\fP option is supplied to indicate a reverse
+\fBA\fP, unless the \fI\%\-x\fP option is supplied to indicate a reverse
 lookup. A zone transfer can be requested by specifying a type of
 AXFR. When an incremental zone transfer (IXFR) is required, set the
 \fBtype\fP to \fBixfr=N\fP\&. The incremental zone transfer contains
@@ -172,24 +203,32 @@ SOA record was \fBN\fP\&.
 All resource record types can be expressed as \fBTYPEnn\fP, where \fBnn\fP is
 the number of the type. If the resource record type is not supported
 in BIND 9, the result is displayed as described in \fI\%RFC 3597\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-u\fP
+.B \-u
 This option indicates that print query times should be provided in microseconds instead of milliseconds.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-v\fP
+.B \-v
 This option prints the version number and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-x addr\fP
+.B \-x addr
 This option sets simplified reverse lookups, for mapping addresses to names. The
 \fBaddr\fP is an IPv4 address in dotted\-decimal notation, or a
-colon\-delimited IPv6 address. When the \fB\-x\fP option is used, there is no
+colon\-delimited IPv6 address. When the \fI\%\-x\fP option is used, there is no
 need to provide the \fBname\fP, \fBclass\fP, and \fBtype\fP arguments.
 \fBdig\fP automatically performs a lookup for a name like
 \fB94.2.0.192.in\-addr.arpa\fP and sets the query type and class to PTR
 and IN respectively. IPv6 addresses are looked up using nibble format
 under the IP6.ARPA domain.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-y [hmac:]keyname:secret\fP
+.B \-y [hmac:]keyname:secret
 This option signs queries using TSIG with the given authentication key.
 \fBkeyname\fP is the name of the key, and \fBsecret\fP is the
 base64\-encoded shared secret. \fBhmac\fP is the name of the key algorithm;
@@ -202,8 +241,8 @@ not specified, the default is \fBhmac\-md5\fP; if MD5 was disabled, the default 
 \fBNOTE:\fP
 .INDENT 0.0
 .INDENT 3.5
-Only the \fB\-k\fP option should be used, rather than the \fB\-y\fP option,
-because with \fB\-y\fP the shared secret is supplied as a command\-line
+Only the \fI\%\-k\fP option should be used, rather than the \fI\%\-y\fP option,
+because with \fI\%\-y\fP the shared secret is supplied as a command\-line
 argument in clear text. This may be visible in the output from \fBps1\fP or
 in a history file maintained by the user\(aqs shell.
 .UNINDENT
@@ -221,21 +260,27 @@ Each query option is identified by a keyword preceded by a plus sign
 the string \fBno\fP to negate the meaning of that keyword. Other keywords
 assign values to options, like the timeout interval. They have the form
 \fB+keyword=value\fP\&. Keywords may be abbreviated, provided the
-abbreviation is unambiguous; for example, \fB+cd\fP is equivalent to
-\fB+cdflag\fP\&. The query options are:
+abbreviation is unambiguous; for example, \fI\%+cd\fP is equivalent to
+\fI\%+cdflag\fP\&. The query options are:
 .INDENT 0.0
 .TP
-.B \fB+[no]aaflag\fP
-This option is a synonym for \fB+[no]aaonly\fP\&.
+.B +aaflag, +noaaflag
+This option is a synonym for \fI\%+aaonly\fP, \fI\%+noaaonly\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]aaonly\fP
+.B +aaonly, +noaaonly
 This option sets the \fBaa\fP flag in the query.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]additional\fP
+.B +additional, +noadditional
 This option displays [or does not display] the additional section of a reply. The
 default is to display it.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]adflag\fP
+.B +adflag, +noadflag
 This option sets [or does not set] the AD (authentic data) bit in the query. This
 requests the server to return whether all of the answer and authority
 sections have been validated as secure, according to the security
@@ -243,193 +288,312 @@ policy of the server. \fBAD=1\fP indicates that all records have been
 validated as secure and the answer is not from a OPT\-OUT range. \fBAD=0\fP
 indicates that some part of the answer was insecure or not validated.
 This bit is set by default.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]all\fP
+.B +all, +noall
 This option sets or clears all display flags.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]answer\fP
+.B +answer, +noanswer
 This option displays [or does not display] the answer section of a reply. The default
 is to display it.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]authority\fP
+.B +authority, +noauthority
 This option displays [or does not display] the authority section of a reply. The
 default is to display it.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]badcookie\fP
+.B +badcookie, +nobadcookie
 This option retries the lookup with a new server cookie if a BADCOOKIE response is
 received.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]besteffort\fP
+.B +besteffort, +nobesteffort
 This option attempts to display the contents of messages which are malformed. The
 default is to not display malformed answers.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+bufsize[=B]\fP
-This option sets the UDP message buffer size advertised using EDNS0
-to \fBB\fP bytes.  The maximum and minimum sizes of this buffer are
-65535 and 0, respectively.  \fB+bufsize=0\fP disables EDNS (use
-\fB+bufsize=0 +edns\fP to send an EDNS message with an advertised size
-of 0 bytes). \fB+bufsize\fP restores the default buffer size.
+.B +bufsize[=B]
+This option sets the UDP message buffer size advertised using EDNS0 to
+\fBB\fP bytes.  The maximum and minimum sizes of this buffer are 65535 and
+0, respectively.  \fB+bufsize\fP restores the default buffer size.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]cdflag\fP
+.B +cd, +cdflag, +nocdflag
 This option sets [or does not set] the CD (checking disabled) bit in the query. This
 requests the server to not perform DNSSEC validation of responses.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]class\fP
+.B +class, +noclass
 This option displays [or does not display] the CLASS when printing the record.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]cmd\fP
+.B +cmd, +nocmd
 This option toggles the printing of the initial comment in the output, identifying the
 version of \fBdig\fP and the query options that have been applied. This option
 always has a global effect; it cannot be set globally and then overridden on a
 per\-lookup basis. The default is to print this comment.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]comments\fP
+.B +comments, +nocomments
 This option toggles the display of some comment lines in the output, with
 information about the packet header and OPT pseudosection, and the names of
 the response section. The default is to print these comments.
 .sp
 Other types of comments in the output are not affected by this option, but
 can be controlled using other command\-line switches. These include
-\fB+[no]cmd\fP, \fB+[no]question\fP, \fB+[no]stats\fP, and \fB+[no]rrcomments\fP\&.
+\fI\%+cmd\fP, \fI\%+question\fP, \fI\%+stats\fP, and \fI\%+rrcomments\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]cookie=####\fP
+.B +cookie=####, +nocookie
 This option sends [or does not send] a COOKIE EDNS option, with an optional value. Replaying a COOKIE
 from a previous response allows the server to identify a previous
 client. The default is \fB+cookie\fP\&.
 .sp
-\fB+cookie\fP is also set when \fB+trace\fP is set to better emulate the
+\fB+cookie\fP is also set when \fI\%+trace\fP is set to better emulate the
 default queries from a nameserver.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]crypto\fP
+.B +crypto, +nocrypto
 This option toggles the display of cryptographic fields in DNSSEC records. The
 contents of these fields are unnecessary for debugging most DNSSEC
 validation failures and removing them makes it easier to see the
 common failures. The default is to display the fields. When omitted,
 they are replaced by the string \fB[omitted]\fP or, in the DNSKEY case, the
 key ID is displayed as the replacement, e.g. \fB[ key id = value ]\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]defname\fP
-This option, which is deprecated, is treated as a synonym for \fB+[no]search\fP\&.
+.B +defname, +nodefname
+This option, which is deprecated, is treated as a synonym for
+\fI\%+search\fP, \fI\%+nosearch\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]dnssec\fP
+.B +dns64prefix, +nodns64prefix
+Lookup IPV4ONLY.ARPA AAAA and print any DNS64 prefixes found.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +dnssec, +do, +nodnssec, +nodo
 This option requests that DNSSEC records be sent by setting the DNSSEC OK (DO) bit in
 the OPT record in the additional section of the query.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+domain=somename\fP
+.B +domain=somename
 This option sets the search list to contain the single domain \fBsomename\fP, as if
 specified in a \fBdomain\fP directive in \fB/etc/resolv.conf\fP, and
-enables search list processing as if the \fB+search\fP option were
+enables search list processing as if the \fI\%+search\fP option were
 given.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+dscp=value\fP
-This option sets the DSCP code point to be used when sending the query. Valid DSCP
-code points are in the range [0...63]. By default no code point is
-explicitly set.
+.B +dscp=value
+This option formerly set the DSCP value used when sending a query.
+It is now obsolete, and has no effect.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]edns[=#]\fP
+.B +edns[=#], +noedns
 This option specifies the EDNS version to query with. Valid values are 0 to 255.
 Setting the EDNS version causes an EDNS query to be sent.
 \fB+noedns\fP clears the remembered EDNS version. EDNS is set to 0 by
 default.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ednsflags[=#]\fP
+.B +ednsflags[=#], +noednsflags
 This option sets the must\-be\-zero EDNS flags bits (Z bits) to the specified value.
 Decimal, hex, and octal encodings are accepted. Setting a named flag
 (e.g., DO) is silently ignored. By default, no Z bits are set.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ednsnegotiation\fP
+.B +ednsnegotiation, +noednsnegotiation
 This option enables/disables EDNS version negotiation. By default, EDNS version
 negotiation is enabled.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ednsopt[=code[:value]]\fP
+.B +ednsopt[=code[:value]], +noednsopt
 This option specifies the EDNS option with code point \fBcode\fP and an optional payload
 of \fBvalue\fP as a hexadecimal string. \fBcode\fP can be either an EDNS
 option name (for example, \fBNSID\fP or \fBECS\fP) or an arbitrary
 numeric value. \fB+noednsopt\fP clears the EDNS options to be sent.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]expire\fP
+.B +expire, +noexpire
 This option sends an EDNS Expire option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]fail\fP
-This option indicates that \fBnamed\fP should try [or not try] the next server if a SERVFAIL is received. The default is
+.B +fail, +nofail
+This option indicates that \fI\%named\fP should try [or not try] the next server if a SERVFAIL is received. The default is
 to not try the next server, which is the reverse of normal stub
 resolver behavior.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]header\-only\fP
+.B +fuzztime[=value], +nofuzztime
+This option allows the signing time to be specified when generating
+signed messages.  If a value is specified it is the seconds since
+00:00:00 January 1, 1970 UTC ignoring leap seconds.  If no value
+is specified 1646972129 (Fri 11 Mar 2022 04:15:29 UTC) is used.
+The default is \fB+nofuzztime\fP and the current time is used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +header\-only, +noheader\-only
 This option sends a query with a DNS header without a question section. The
 default is to add a question section. The query type and query name
 are ignored when this is set.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]identify\fP
-This option shows [or does not show] the IP address and port number that supplied
-the answer, when the \fB+short\fP option is enabled. If short form
-answers are requested, the default is not to show the source address
-and port number of the server that provided the answer.
+.B +https[=value], +nohttps
+This option indicates whether to use DNS over HTTPS (DoH) when querying
+name servers.  When this option is in use, the port number defaults to 443.
+The HTTP POST request mode is used when sending the query.
+.sp
+If \fBvalue\fP is specified, it will be used as the HTTP endpoint in the
+query URI; the default is \fB/dns\-query\fP\&. So, for example, \fBdig
+@example.com +https\fP will use the URI \fBhttps://example.com/dns\-query\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]idnin\fP
+.B +https\-get[=value], +nohttps\-get
+Similar to \fI\%+https\fP, except that the HTTP GET request mode is used
+when sending the query.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +https\-post[=value], +nohttps\-post
+Same as \fI\%+https\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +http\-plain[=value], +nohttp\-plain
+Similar to \fI\%+https\fP, except that HTTP queries will be sent over a
+non\-encrypted channel. When this option is in use, the port number
+defaults to 80 and the HTTP request mode is POST.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +http\-plain\-get[=value], +nohttp\-plain\-get
+Similar to \fI\%+http\-plain\fP, except that the HTTP request mode is GET.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +http\-plain\-post[=value], +nohttp\-plain\-post
+Same as \fI\%+http\-plain\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +identify, +noidentify
+This option shows [or does not show] the IP address and port number that
+supplied the answer, when the \fI\%+short\fP option is enabled. If short
+form answers are requested, the default is not to show the source
+address and port number of the server that provided the answer.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +idnin, +noidnin
 This option processes [or does not process] IDN domain names on input. This requires
 \fBIDN SUPPORT\fP to have been enabled at compile time.
 .sp
 The default is to process IDN input when standard output is a tty.
 The IDN processing on input is disabled when \fBdig\fP output is redirected
 to files, pipes, and other non\-tty file descriptors.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]idnout\fP
+.B +idnout, +noidnout
 This option converts [or does not convert] puny code on output. This requires
 \fBIDN SUPPORT\fP to have been enabled at compile time.
 .sp
 The default is to process puny code on output when standard output is
 a tty. The puny code processing on output is disabled when \fBdig\fP output
 is redirected to files, pipes, and other non\-tty file descriptors.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ignore\fP
+.B +ignore, +noignore
 This option ignores [or does not ignore] truncation in UDP responses instead of retrying with TCP. By
 default, TCP retries are performed.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]keepalive\fP
+.B +keepalive, +nokeepalive
 This option sends [or does not send] an EDNS Keepalive option.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]keepopen\fP
+.B +keepopen, +nokeepopen
 This option keeps [or does not keep] the TCP socket open between queries, and reuses it rather than
 creating a new TCP socket for each lookup. The default is
 \fB+nokeepopen\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]mapped\fP
-This option allows [or does not allow] mapped IPv4\-over\-IPv6 addresses to be used. The default is
-\fB+mapped\fP\&.
-.TP
-.B \fB+[no]multiline\fP
+.B +multiline, +nomultiline
 This option prints [or does not print] records, like the SOA records, in a verbose multi\-line format
 with human\-readable comments. The default is to print each record on
 a single line to facilitate machine parsing of the \fBdig\fP output.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+ndots=D\fP
+.B +ndots=D
 This option sets the number of dots (\fBD\fP) that must appear in \fBname\fP for
 it to be considered absolute. The default value is that defined using
 the \fBndots\fP statement in \fB/etc/resolv.conf\fP, or 1 if no \fBndots\fP
 statement is present. Names with fewer dots are interpreted as
 relative names, and are searched for in the domains listed in the
 \fBsearch\fP or \fBdomain\fP directive in \fB/etc/resolv.conf\fP if
-\fB+search\fP is set.
+\fI\%+search\fP is set.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]nsid\fP
+.B +nsid, +nonsid
 When enabled, this option includes an EDNS name server ID request when sending a query.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]nssearch\fP
+.B +nssearch, +nonssearch
 When this option is set, \fBdig\fP attempts to find the authoritative
 name servers for the zone containing the name being looked up, and
 display the SOA record that each name server has for the zone.
 Addresses of servers that did not respond are also printed.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]onesoa\fP
+.B +onesoa, +noonesoa
 When enabled, this option prints only one (starting) SOA record when performing an AXFR. The
 default is to print both the starting and ending SOA records.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]opcode=value\fP
+.B +opcode=value, +noopcode
 When enabled, this option sets (restores) the DNS message opcode to the specified value. The
 default value is QUERY (0).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+padding=value\fP
+.B +padding=value
 This option pads the size of the query packet using the EDNS Padding option to
 blocks of \fBvalue\fP bytes. For example, \fB+padding=32\fP causes a
 48\-byte query to be padded to 64 bytes. The default block size is 0,
@@ -437,73 +601,113 @@ which disables padding; the maximum is 512. Values are ordinarily
 expected to be powers of two, such as 128; however, this is not
 mandatory. Responses to padded queries may also be padded, but only
 if the query uses TCP or DNS COOKIE.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]qr\fP
+.B +qid=value
+This option specifies the query ID to use when sending queries.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +qr, +noqr
 This option toggles the display of the query message as it is sent. By default, the query
 is not printed.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]question\fP
+.B +question, +noquestion
 This option toggles the display of the question section of a query when an answer is
 returned. The default is to print the question section as a comment.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]raflag\fP
+.B +raflag, +noraflag
 This option sets [or does not set] the RA (Recursion Available) bit in the query. The
 default is \fB+noraflag\fP\&. This bit is ignored by the server for
 QUERY.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]rdflag\fP
-This option is a synonym for \fB+[no]recurse\fP\&.
+.B +rdflag, +nordflag
+This option is a synonym for \fI\%+recurse\fP, \fI\%+norecurse\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]recurse\fP
+.B +recurse, +norecurse
 This option toggles the setting of the RD (recursion desired) bit in the query.
 This bit is set by default, which means \fBdig\fP normally sends
 recursive queries. Recursion is automatically disabled when the
-\fB+nssearch\fP or \fB+trace\fP query option is used.
+\fI\%+nssearch\fP or \fI\%+trace\fP query option is used.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+retry=T\fP
+.B +retry=T
 This option sets the number of times to retry UDP and TCP queries to server to \fBT\fP
-instead of the default, 2.  Unlike \fB+tries\fP, this does not include
+instead of the default, 2.  Unlike \fI\%+tries\fP, this does not include
 the initial query.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]rrcomments\fP
+.B +rrcomments, +norrcomments
 This option toggles the display of per\-record comments in the output (for example,
 human\-readable key information about DNSKEY records). The default is
 not to print record comments unless multiline mode is active.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]search\fP
+.B +search, +nosearch
 This option uses [or does not use] the search list defined by the searchlist or domain
 directive in \fBresolv.conf\fP, if any. The search list is not used by
 default.
 .sp
 \fBndots\fP from \fBresolv.conf\fP (default 1), which may be overridden by
-\fB+ndots\fP, determines whether the name is treated as relative
+\fI\%+ndots\fP, determines whether the name is treated as relative
 and hence whether a search is eventually performed.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]short\fP
+.B +short, +noshort
 This option toggles whether a terse answer is provided. The default is to print the answer in a verbose
 form. This option always has a global effect; it cannot be set globally and
 then overridden on a per\-lookup basis.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]showsearch\fP
+.B +showbadcookie, +noshowbadcookie
+This option toggles whether to show the message containing the
+BADCOOKIE rcode before retrying the request or not. The default
+is to not show the messages.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +showsearch, +noshowsearch
 This option performs [or does not perform] a search showing intermediate results.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]sigchase\fP
-This feature is now obsolete and has been removed; use \fBdelv\fP
+.B +sigchase, +nosigchase
+This feature is now obsolete and has been removed; use \fI\%delv\fP
 instead.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+split=W\fP
+.B +split=W
 This option splits long hex\- or base64\-formatted fields in resource records into
 chunks of \fBW\fP characters (where \fBW\fP is rounded up to the nearest
 multiple of 4). \fB+nosplit\fP or \fB+split=0\fP causes fields not to be
 split at all. The default is 56 characters, or 44 characters when
 multiline mode is active.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]stats\fP
+.B +stats, +nostats
 This option toggles the printing of statistics: when the query was made, the size of the
 reply, etc. The default behavior is to print the query statistics as a
 comment after each lookup.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]subnet=addr[/prefix\-length]\fP
+.B +subnet=addr[/prefix\-length], +nosubnet
 This option sends [or does not send] an EDNS CLIENT\-SUBNET option with the specified IP
 address or network prefix.
 .sp
@@ -511,27 +715,68 @@ address or network prefix.
 sends an EDNS CLIENT\-SUBNET option with an empty address and a source
 prefix\-length of zero, which signals a resolver that the client\(aqs
 address information must \fInot\fP be used when resolving this query.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]tcflag\fP
+.B +tcflag, +notcflag
 This option sets [or does not set] the TC (TrunCation) bit in the query. The default is
 \fB+notcflag\fP\&. This bit is ignored by the server for QUERY.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]tcp\fP
-This option uses [or does not use] TCP when querying name servers.
-The default behavior is to use UDP unless a type \fBany\fP or
-\fBixfr=N\fP query is requested, in which case the default is TCP.
-AXFR queries always use TCP. To prevent retry over TCP when TC=1
-is returned from a UDP query, use \fB+ignore\fP\&.
+.B +tcp, +notcp
+This option indicates whether to use TCP when querying name
+servers.  The default behavior is to use UDP unless a type \fBany\fP
+or \fBixfr=N\fP query is requested, in which case the default is
+TCP. AXFR queries always use TCP. To prevent retry over TCP when
+TC=1 is returned from a UDP query, use \fB+ignore\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+timeout=T\fP
+.B +timeout=T
 This option sets the timeout for a query to \fBT\fP seconds. The default timeout is
 5 seconds. An attempt to set \fBT\fP to less than 1 is silently set to 1.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]topdown\fP
-This feature is related to \fBdig +sigchase\fP, which is obsolete and
-has been removed. Use \fBdelv\fP instead.
+.B +tls, +notls
+This option indicates whether to use DNS over TLS (DoT) when querying
+name servers. When this option is in use, the port number defaults
+to 853.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]trace\fP
+.B +tls\-ca[=file\-name], +notls\-ca
+This option enables remote server TLS certificate validation for
+DNS transports, relying on TLS. Certificate authorities
+certificates are loaded from the specified PEM file
+(\fBfile\-name\fP). If the file is not specified, the default
+certificates from the global certificates store are used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +tls\-certfile=file\-name, +tls\-keyfile=file\-name, +notls\-certfile, +notls\-keyfile
+These options set the state of certificate\-based client
+authentication for DNS transports, relying on TLS. Both certificate
+chain file and private key file are expected to be in PEM format.
+Both options must be specified at the same time.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +tls\-hostname=hostname, +notls\-hostname
+This option makes \fBdig\fP use the provided hostname during remote
+server TLS certificate verification. Otherwise, the DNS server name
+is used. This option has no effect if \fI\%+tls\-ca\fP is not specified.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +topdown, +notopdown
+This feature is related to \fI\%dig +sigchase\fP, which is obsolete and
+has been removed. Use \fI\%delv\fP instead.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B +trace, +notrace
 This option toggles tracing of the delegation path from the root name servers for
 the name being looked up. Tracing is disabled by default. When
 tracing is enabled, \fBdig\fP makes iterative queries to resolve the
@@ -542,53 +787,64 @@ lookup.
 If \fB@server\fP is also specified, it affects only the initial query for
 the root zone name servers.
 .sp
-\fB+dnssec\fP is also set when \fB+trace\fP is set, to better emulate the
+\fI\%+dnssec\fP is also set when \fI\%+trace\fP is set, to better emulate the
 default queries from a name server.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+tries=T\fP
+.B +tries=T
 This option sets the number of times to try UDP and TCP queries to server to \fBT\fP
 instead of the default, 3. If \fBT\fP is less than or equal to zero,
 the number of tries is silently rounded up to 1.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+trusted\-key=####\fP
-This option formerly specified trusted keys for use with \fBdig +sigchase\fP\&. This
-feature is now obsolete and has been removed; use \fBdelv\fP instead.
+.B +trusted\-key=####
+This option formerly specified trusted keys for use with \fI\%dig +sigchase\fP\&. This
+feature is now obsolete and has been removed; use \fI\%delv\fP instead.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ttlid\fP
+.B +ttlid, +nottlid
 This option displays [or does not display] the TTL when printing the record.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ttlunits\fP
+.B +ttlunits, +nottlunits
 This option displays [or does not display] the TTL in friendly human\-readable time
 units of \fBs\fP, \fBm\fP, \fBh\fP, \fBd\fP, and \fBw\fP, representing seconds, minutes,
-hours, days, and weeks. This implies \fB+ttlid\fP\&.
+hours, days, and weeks. This implies \fI\%+ttlid\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]unexpected\fP
-This option accepts [or does not accept] answers from unexpected sources.  By default, \fBdig\fP
-will not accept a reply from a source other than the one to which it sent the
-query.
-.TP
-.B \fB+[no]unknownformat\fP
+.B +unknownformat, +nounknownformat
 This option prints all RDATA in unknown RR type presentation format (\fI\%RFC 3597\fP).
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]vc\fP
+.B +vc, +novc
 This option uses [or does not use] TCP when querying name servers. This alternate
-syntax to \fB+[no]tcp\fP is provided for backwards compatibility. The
+syntax to \fI\%+tcp\fP is provided for backwards compatibility. The
 \fBvc\fP stands for \(dqvirtual circuit.\(dq
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]yaml\fP
-When enabled, this option prints the responses (and, if \fB+qr\fP is in use, also the
+.B +yaml, +noyaml
+When enabled, this option prints the responses (and, if \fI\%+qr\fP is in use, also the
 outgoing queries) in a detailed YAML format.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]zflag\fP
+.B +zflag, +nozflag
 This option sets [or does not set] the last unassigned DNS header flag in a DNS query.
 This flag is off by default.
 .UNINDENT
 .SH MULTIPLE QUERIES
 .sp
 The BIND 9 implementation of \fBdig\fP supports specifying multiple
-queries on the command line (in addition to supporting the \fB\-f\fP batch
+queries on the command line (in addition to supporting the \fI\%\-f\fP batch
 file option). Each of those queries can be supplied with its own set of
 flags, options, and query options.
 .sp
@@ -601,8 +857,8 @@ query.
 A global set of query options, which should be applied to all queries,
 can also be supplied. These global query options must precede the first
 tuple of name, class, type, options, flags, and query options supplied
-on the command line. Any global query options (except \fB+[no]cmd\fP and
-\fB+[no]short\fP options) can be overridden by a query\-specific set of
+on the command line. Any global query options (except \fI\%+cmd\fP and
+\fI\%+short\fP options) can be overridden by a query\-specific set of
 query options. For example:
 .INDENT 0.0
 .INDENT 3.5
@@ -618,8 +874,8 @@ dig +qr www.isc.org any \-x 127.0.0.1 isc.org ns +noqr
 shows how \fBdig\fP can be used from the command line to make three
 lookups: an ANY query for \fBwww.isc.org\fP, a reverse lookup of 127.0.0.1,
 and a query for the NS records of \fBisc.org\fP\&. A global query option of
-\fB+qr\fP is applied, so that \fBdig\fP shows the initial query it made for
-each lookup. The final query has a local query option of \fB+noqr\fP which
+\fI\%+qr\fP is applied, so that \fBdig\fP shows the initial query it made for
+each lookup. The final query has a local query option of \fI\%+noqr\fP which
 means that \fBdig\fP does not print the initial query when it looks up the
 NS records for \fBisc.org\fP\&.
 .SH IDN SUPPORT
@@ -629,7 +885,7 @@ support, it can accept and display non\-ASCII domain names. \fBdig\fP
 appropriately converts character encoding of a domain name before sending
 a request to a DNS server or displaying a reply from the server.
 To turn off IDN support, use the parameters
-\fB+noidnin\fP and \fB+noidnout\fP, or define the \fBIDN_DISABLE\fP environment
+\fI\%+idnin\fP and \fI\%+idnout\fP, or define the \fBIDN_DISABLE\fP environment
 variable.
 .SH RETURN CODES
 .sp
@@ -658,13 +914,13 @@ Internal error
 \fB${HOME}/.digrc\fP
 .SH SEE ALSO
 .sp
-\fBdelv(1)\fP, \fBhost(1)\fP, \fBnamed(8)\fP, \fBdnssec\-keygen(8)\fP, \fI\%RFC 1035\fP\&.
+\fI\%delv(1)\fP, \fI\%host(1)\fP, \fI\%named(8)\fP, \fI\%dnssec\-keygen(8)\fP, \fI\%RFC 1035\fP\&.
 .SH BUGS
 .sp
 There are probably too many query options.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

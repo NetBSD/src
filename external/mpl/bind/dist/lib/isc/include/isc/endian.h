@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.5.2.1 2024/02/25 15:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,30 +33,6 @@
 #define be64toh(x) betoh64(x)
 #define le64toh(x) letoh64(x)
 #endif /* !be16toh */
-
-#elif defined(_WIN32)
-
-/*
- * Windows is always little-endian and has its own byte-swapping routines, so
- * use these.
- */
-
-#include <stdlib.h>
-
-#define htobe16(x) _byteswap_ushort(x)
-#define htole16(x) (x)
-#define be16toh(x) _byteswap_ushort(x)
-#define le16toh(x) (x)
-
-#define htobe32(x) _byteswap_ulong(x)
-#define htole32(x) (x)
-#define be32toh(x) _byteswap_ulong(x)
-#define le32toh(x) (x)
-
-#define htobe64(x) _byteswap_uint64(x)
-#define htole64(x) (x)
-#define be64toh(x) _byteswap_uint64(x)
-#define le64toh(x) (x)
 
 #elif defined __APPLE__
 
@@ -112,29 +88,29 @@
 #include <inttypes.h>
 
 #ifndef bswap_16
-#define bswap_16(x)                                 \
-	((uint16_t)((((uint16_t)(x)&0xff00) >> 8) | \
-		    (((uint16_t)(x)&0x00ff) << 8)))
+#define bswap_16(x)                                   \
+	((uint16_t)((((uint16_t)(x) & 0xff00) >> 8) | \
+		    (((uint16_t)(x) & 0x00ff) << 8)))
 #endif /* !bswap_16 */
 
 #ifndef bswap_32
-#define bswap_32(x)                                      \
-	((uint32_t)((((uint32_t)(x)&0xff000000) >> 24) | \
-		    (((uint32_t)(x)&0x00ff0000) >> 8) |  \
-		    (((uint32_t)(x)&0x0000ff00) << 8) |  \
-		    (((uint32_t)(x)&0x000000ff) << 24)))
+#define bswap_32(x)                                        \
+	((uint32_t)((((uint32_t)(x) & 0xff000000) >> 24) | \
+		    (((uint32_t)(x) & 0x00ff0000) >> 8) |  \
+		    (((uint32_t)(x) & 0x0000ff00) << 8) |  \
+		    (((uint32_t)(x) & 0x000000ff) << 24)))
 #endif /* !bswap_32 */
 
 #ifndef bswap_64
-#define bswap_64(x)                                                 \
-	((uint64_t)((((uint64_t)(x)&0xff00000000000000ULL) >> 56) | \
-		    (((uint64_t)(x)&0x00ff000000000000ULL) >> 40) | \
-		    (((uint64_t)(x)&0x0000ff0000000000ULL) >> 24) | \
-		    (((uint64_t)(x)&0x000000ff00000000ULL) >> 8) |  \
-		    (((uint64_t)(x)&0x00000000ff000000ULL) << 8) |  \
-		    (((uint64_t)(x)&0x0000000000ff0000ULL) << 24) | \
-		    (((uint64_t)(x)&0x000000000000ff00ULL) << 40) | \
-		    (((uint64_t)(x)&0x00000000000000ffULL) << 56)))
+#define bswap_64(x)                                                   \
+	((uint64_t)((((uint64_t)(x) & 0xff00000000000000ULL) >> 56) | \
+		    (((uint64_t)(x) & 0x00ff000000000000ULL) >> 40) | \
+		    (((uint64_t)(x) & 0x0000ff0000000000ULL) >> 24) | \
+		    (((uint64_t)(x) & 0x000000ff00000000ULL) >> 8) |  \
+		    (((uint64_t)(x) & 0x00000000ff000000ULL) << 8) |  \
+		    (((uint64_t)(x) & 0x0000000000ff0000ULL) << 24) | \
+		    (((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
+		    (((uint64_t)(x) & 0x00000000000000ffULL) << 56)))
 #endif /* !bswap_64 */
 
 #ifndef htobe16

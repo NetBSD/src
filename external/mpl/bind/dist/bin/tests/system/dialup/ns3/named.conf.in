@@ -32,9 +32,9 @@ zone "." {
 };
 
 zone "example." {
-	type slave;
+	type secondary;
 	dialup refresh;
 	notify no;
 	file "example.bk";
-	masters { 10.53.0.2; };
+	primaries { 10.53.0.2; };
 };

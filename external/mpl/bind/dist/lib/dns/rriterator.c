@@ -1,4 +1,4 @@
-/*	$NetBSD: rriterator.c,v 1.6.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: rriterator.c,v 1.6.2.2 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -29,7 +30,6 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/result.h>
 #include <dns/rriterator.h>
 
 /***

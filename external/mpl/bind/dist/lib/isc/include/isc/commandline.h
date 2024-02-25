@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: commandline.h,v 1.6.2.1 2024/02/25 15:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,29 +13,28 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_COMMANDLINE_H
-#define ISC_COMMANDLINE_H 1
+#pragma once
 
 /*! \file isc/commandline.h */
 
 #include <stdbool.h>
 
 #include <isc/lang.h>
-#include <isc/platform.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
 /*% Index into parent argv vector. */
-LIBISC_EXTERNAL_DATA extern int isc_commandline_index;
+extern int isc_commandline_index;
 /*% Character checked for validity. */
-LIBISC_EXTERNAL_DATA extern int isc_commandline_option;
+extern int isc_commandline_option;
 /*% Argument associated with option. */
-LIBISC_EXTERNAL_DATA extern char *isc_commandline_argument;
+extern char *isc_commandline_argument;
 /*% For printing error messages. */
-LIBISC_EXTERNAL_DATA extern char *isc_commandline_progname;
+extern char *isc_commandline_progname;
 /*% Print error message. */
-LIBISC_EXTERNAL_DATA extern bool isc_commandline_errprint;
+extern bool isc_commandline_errprint;
 /*% Reset getopt. */
-LIBISC_EXTERNAL_DATA extern bool isc_commandline_reset;
+extern bool isc_commandline_reset;
 
 ISC_LANG_BEGINDECLS
 
@@ -57,5 +56,3 @@ isc_commandline_strtoargv(isc_mem_t *mctx, char *s, unsigned int *argcp,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_COMMANDLINE_H */

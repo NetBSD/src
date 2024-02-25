@@ -1,4 +1,4 @@
-/*	$NetBSD: smf_globals.h,v 1.5 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: smf_globals.h,v 1.5.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_SMF_GLOBALS_H
-#define NAMED_SMF_GLOBALS_H 1
+#pragma once
 
 #include <libscf.h>
 
@@ -39,5 +38,3 @@ named_smf_get_instance(char **name, int debug, isc_mem_t *mctx);
 
 #undef EXTERN
 #undef INIT
-
-#endif /* NAMED_SMF_GLOBALS_H */

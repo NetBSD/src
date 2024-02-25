@@ -1,0 +1,21 @@
+$TTL 300	; 5 minutes
+@			SOA	mname1. . (
+				2000062101 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	a1
+$DATE 20210101000000
+
+a1		123	A	\# 4 0A000001
+a2		456	A	\# 4 0A000001
+
+txt1			TXT	\# 6 0568656C6C6F
+txt2			TXT	"hello"
+txt3			TXT	\# 6 0568656C6C6F
+txt4			TXT	"hello"
+
+unk1                    TYPE123 \# 1 00
+unk2            	TYPE123 \# 1 00

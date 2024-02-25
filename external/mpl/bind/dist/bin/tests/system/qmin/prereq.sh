@@ -11,21 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
-if test -n "$PYTHON"
-then
-    if $PYTHON -c "import dns" 2> /dev/null
-    then
-        :
-    else
-        echo_i "This test requires the dnspython module." >&2
-        exit 1
-    fi
-else
-    echo_i "This test requires Python and the dnspython module." >&2
-    exit 1
+if ! ${PYTHON} -c 'import dns'; then
+  echo_i "python dns module is required"
+  exit 1
 fi
 
 exit 0

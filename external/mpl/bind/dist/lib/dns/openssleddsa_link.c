@@ -1,4 +1,4 @@
-/*	$NetBSD: openssleddsa_link.c,v 1.7.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: openssleddsa_link.c,v 1.7.2.2 2024/02/25 15:46:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,7 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#if !USE_PKCS11
+/*! \file */
 
 #if HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448
 
@@ -23,9 +23,9 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#if !defined(OPENSSL_NO_ENGINE)
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
 #include <openssl/engine.h>
-#endif /* if !defined(OPENSSL_NO_ENGINE) */
+#endif /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 
 #include <isc/mem.h>
 #include <isc/result.h>
@@ -34,8 +34,6 @@
 #include <isc/util.h>
 
 #include <dns/keyvalues.h>
-
-#include <dst/result.h>
 
 #include "dst_internal.h"
 #include "dst_openssl.h"
@@ -225,7 +223,7 @@ openssleddsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		key->key_alg == DST_ALG_ED448);
 
 	if (ctx == NULL) {
-		return (ISC_R_NOMEMORY);
+		return (dst__openssl_toresult(ISC_R_NOMEMORY));
 	}
 
 #if HAVE_OPENSSL_ED25519
@@ -289,7 +287,7 @@ openssleddsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (false);
 	}
 
-	status = EVP_PKEY_cmp(pkey1, pkey2);
+	status = EVP_PKEY_eq(pkey1, pkey2);
 	if (status == 1) {
 		return (true);
 	}
@@ -503,7 +501,7 @@ eddsa_check(EVP_PKEY *pkey, EVP_PKEY *pubpkey) {
 	if (pubpkey == NULL) {
 		return (ISC_R_SUCCESS);
 	}
-	if (EVP_PKEY_cmp(pkey, pubpkey) == 1) {
+	if (EVP_PKEY_eq(pkey, pubpkey) == 1) {
 		return (ISC_R_SUCCESS);
 	}
 	return (ISC_R_FAILURE);
@@ -600,7 +598,7 @@ err:
 static isc_result_t
 openssleddsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		       const char *pin) {
-#if !defined(OPENSSL_NO_ENGINE)
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
 	isc_result_t ret;
 	ENGINE *e;
 	EVP_PKEY *pkey = NULL, *pubpkey = NULL;
@@ -661,13 +659,13 @@ err:
 		EVP_PKEY_free(pkey);
 	}
 	return (ret);
-#else  /* if !defined(OPENSSL_NO_ENGINE) */
+#else  /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 	UNUSED(key);
 	UNUSED(engine);
 	UNUSED(label);
 	UNUSED(pin);
 	return (DST_R_NOENGINE);
-#endif /* if !defined(OPENSSL_NO_ENGINE) */
+#endif /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 }
 
 static dst_func_t openssleddsa_functions = {
@@ -704,7 +702,3 @@ dst__openssleddsa_init(dst_func_t **funcp) {
 }
 
 #endif /* HAVE_OPENSSL_ED25519 || HAVE_OPENSSL_ED448 */
-
-#endif /* !USE_PKCS11 */
-
-/*! \file */

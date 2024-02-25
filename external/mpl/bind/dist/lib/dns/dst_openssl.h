@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_openssl.h,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.5.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DST_OPENSSL_H
-#define DST_OPENSSL_H 1
+#pragma once
 
 #include <openssl/bn.h>
 #include <openssl/conf.h>
@@ -62,14 +61,9 @@ isc_result_t
 dst__openssl_toresult3(isc_logcategory_t *category, const char *funcname,
 		       isc_result_t fallback);
 
-#if !defined(OPENSSL_NO_ENGINE)
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
 ENGINE *
 dst__openssl_getengine(const char *engine);
-#else /* if !defined(OPENSSL_NO_ENGINE) */
-#define dst__openssl_getengine(x) NULL
-#endif /* if !defined(OPENSSL_NO_ENGINE) */
+#endif /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DST_OPENSSL_H */
-/*! \file */

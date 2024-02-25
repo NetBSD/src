@@ -1,4 +1,4 @@
-/*	$NetBSD: bit.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: bit.h,v 1.6.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_BIT_H
-#define DNS_BIT_H 1
+#pragma once
 
 /*! \file dns/bit.h */
 
@@ -26,5 +25,3 @@ typedef uint64_t dns_bitset_t;
 #define DNS_BIT_CLEAR(bit, bitset) (*(bitset) &= ~((dns_bitset_t)1 << (bit)))
 #define DNS_BIT_CHECK(bit, bitset) \
 	((*(bitset) & ((dns_bitset_t)1 << (bit))) == ((dns_bitset_t)1 << (bit)))
-
-#endif /* DNS_BIT_H */

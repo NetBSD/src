@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../../conf.sh
 
 zone=example.com.
 infile=example.com.db.in
@@ -26,12 +27,11 @@ cp $infile $zonefile
 
 if [ -f ../ed25519-supported.file ]; then
 
-	for i in Xexample.com.+015+03613 Xexample.com.+015+35217
-	do
-		cp "$i.key" "$(echo $i.key | sed s/X/K/)"
-		cp "$i.private" "$(echo $i.private | sed s/X/K/)"
-		cat "$(echo $i.key | sed s/X/K/)" >> "$zonefile"
-	done
+  for i in Xexample.com.+015+03613 Xexample.com.+015+35217; do
+    cp "$i.key" "$(echo $i.key | sed s/X/K/)"
+    cp "$i.private" "$(echo $i.private | sed s/X/K/)"
+    cat "$(echo $i.key | sed s/X/K/)" >>"$zonefile"
+  done
 fi
 
-$SIGNER -P -z -s $starttime -e $endtime -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
+$SIGNER -P -z -s "$starttime" -e "$endtime" -o "$zone" "$zonefile" >/dev/null 2>signer.err || cat signer.err

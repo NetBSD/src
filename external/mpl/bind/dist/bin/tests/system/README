@@ -14,17 +14,18 @@ Introduction
 This directory holds a simple test environment for running bind9 system tests
 involving multiple name servers.
 
-With the exception of "common" (which holds configuration information common to
-multiple tests) and "win32" (which holds files needed to run the tests in a
-Windows environment), each directory holds a set of scripts and configuration
-files to test different parts of BIND.  The directories are named for the
-aspect of BIND they test, for example:
+Each system test directory holds a set of scripts and configuration files to
+test different parts of BIND.  The directories are named for the aspect of BIND
+they test, for example:
 
   dnssec/       DNSSEC tests
   forward/      Forwarding tests
   glue/         Glue handling tests
 
 etc.
+
+A system test directory must start with an alphabetic character and may not
+contain any special characters. Only hyphen may be used as a word separator.
 
 Typically each set of tests sets up 2-5 name servers and then performs one or
 more tests against them.  Within the test subdirectory, each name server has a
@@ -68,18 +69,58 @@ then run
 ... as root.
 
 
-Running the System Tests
+Running the System Tests with pytest
 ===
+
+The pytest system test runner is currently in development, but it is the
+recommended way to run tests. Please report issues to QA.
+
+Running an Individual Test
+---
+
+pytest -k <test-name>
+
+Note that in comparison to the legacy test runner, some additional tests might
+be picked up when specifying just the system test directory name. To check
+which tests will be executed, you can use the `--collect-only` option. You
+might also be able to find a more specific test name to provide to ensure only
+your desired test is executed. See help for `-k` option in `pytest --help` for
+more info.
+
+It is also possible to run a single individual pytest test case. For example,
+you can use the name test_sslyze_dot to execute just the test_sslyze_dot()
+function from doth/tests_sslyze.py. The entire needed setup and teardown will
+be handled by the framework.
+
+Running All the System Tests
+---
+
+Issuing plain `pytest` command without any argument will execute all tests
+sequenatially. To execute them in parallel, ensure you have pytest-xdist
+installed and run:
+
+pytest -n <number-of-workers>
+
+
+Running the System Tests Using the Legacy Runner
+===
+
+!!! WARNING !!!
+---
+The legacy way to run system tests is currently being reworked into a pytest
+system test runner described in the previous section. The contents of this
+section might be out of date and no longer applicable. Please try and use the
+pytest runner if possible and report issues and missing features.
 
 Running an Individual Test
 ---
 The tests can be run individually using the following command:
 
-    sh run.sh [flags] <test-name> [<test-arguments>]
+    sh legacy.run.sh [flags] <test-name> [<test-arguments>]
 
 e.g.
 
-    sh run.sh [flags] notify
+    sh legacy.run.sh [flags] notify
 
 Optional flags are:
 
@@ -121,10 +162,10 @@ To run all the system tests, enter the command:
     sh runall.sh [-c] [-n] [numproc]
 
 The optional flag "-c" forces colored output (by default system test output is
-not printed in color due to run.sh being piped through "tee").
+not printed in color due to legacy.run.sh being piped through "tee").
 
-The optional flag "-n" has the same effect as it does for "run.sh" - it causes
-the retention of all output files from all tests.
+The optional flag "-n" has the same effect as it does for "legacy.run.sh" - it
+causes the retention of all output files from all tests.
 
 The optional "numproc" argument specifies the maximum number of tests that can
 run in parallel.  The default is 1, which means that all of the tests run
@@ -195,7 +236,7 @@ structure:
 
 e.g.
 
-    I:catz:checking that dom1.example is not served by master (1)
+    I:catz:checking that dom1.example is not served by primary (1)
 
 The meanings of the fields are as follows:
 
@@ -244,9 +285,9 @@ Re-Running the Tests
 ---
 If there is a requirement to re-run a test (or the entire test suite), the
 files produced by the tests should be deleted first.  Normally, these files are
-deleted if the test succeeds but are retained on error.  The run.sh script
-automatically calls a given test's clean.sh script before invoking its setup.sh
-script.
+deleted if the test succeeds but are retained on error.  The legacy.run.sh
+script automatically calls a given test's clean.sh script before invoking its
+setup.sh script.
 
 Deletion of the files produced by the set of tests (e.g. after the execution
 of "runall.sh") can be carried out using the command:
@@ -284,10 +325,12 @@ setup.sh    Run after prereq.sh, this sets up the preconditions for the tests.
 
 tests.sh    Runs the actual tests.  This file is mandatory.
 
+tests_sh_xyz.py  A glue file for the pytest runner for executing shell tests.
+
 clean.sh    Run at the end to clean up temporary files, but only if the test
             was completed successfully and its running was not inhibited by the
-	    "-n" switch being passed to "run.sh".  Otherwise the temporary
-	    files are left in place for inspection.
+            "-n" switch being passed to "legacy.run.sh".  Otherwise the
+            temporary files are left in place for inspection.
 
 ns<N>       These subdirectories contain test name servers that can be queried
 	    or can interact with each other.  The value of N indicates the
@@ -306,8 +349,8 @@ ans<N>      Like ns[X], but these are simple mock name servers implemented in
 Port Usage
 ---
 In order for the tests to run in parallel, each test requires a unique set of
-ports.  These are specified by the "-p" option passed to "run.sh", which sets
-environment variables that the scripts listed above can reference.
+ports.  These are specified by the "-p" option passed to "legacy.run.sh", which
+sets environment variables that the scripts listed above can reference.
 
 The convention used in the system tests is that the number passed is the start
 of a range of 100 ports.  The test is free to use the ports as required,
@@ -359,10 +402,10 @@ General
 directory.
 
 2. Arguments can be only passed to the script if the test is being run as a
-one-off with "run.sh".  In this case, everything on the command line after the
-name of the test is passed to each script.  For example, the command:
+one-off with "legacy.run.sh".  In this case, everything on the command line
+after the name of the test is passed to each script.  For example, the command:
 
-    sh run.sh -p 12300 mytest -D xyz
+    sh legacy.run.sh -p 12300 mytest -D xyz
 
 ... will run "mytest" with a port range of 12300 to 12399.  Each of the
 framework scripts provided by the test will be invoked using the remaining
@@ -378,12 +421,10 @@ a run of the full test suite (e.g. the tests are started with "runall.sh").
 
 3.  Each script should start with the following lines:
 
-    SYSTEMTESTTOP=..
-    . $SYSTEMTESTTOP/conf.sh
+    . ../conf.sh
 
 "conf.sh" defines a series of environment variables together with functions
-useful for the test scripts. (conf.sh.win32 is the Windows equivalent of this
-file.)
+useful for the test scripts.
 
 
 prereq.sh
@@ -451,14 +492,14 @@ This is the main test file and the contents depend on the test.  The contents
 are completely up to the developer, although most test scripts have a form
 similar to the following for each sub-test:
 
-    1. n=`expr $n + 1`
+    1. n=$((n + 1))
     2. echo_i "prime cache nodata.example ($n)"
     3. ret=0
     4. $DIG -p ${PORT} @10.53.0.1 nodata.example TXT > dig.out.test$n
     5. grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
     6. grep "ANSWER: 0," dig.out.test$n > /dev/null || ret=1
     7. if [ $ret != 0 ]; then echo_i "failed"; fi
-    8. status=`expr $status + $ret`
+    8. status=$((status + ret))
 
 1.  Increment the test number "n" (initialized to zero at the start of the
     script).
@@ -505,6 +546,17 @@ e.  Retain a count of test failures and return this as the exit status from
     the script.
 
 
+tests_sh_xyz.py
+---------------
+This glue file is required by the pytest runner in order to find and execute
+the shell tests in tests.sh.
+
+Replace the "xyz" with the system test name and create the file with the
+following contents.
+
+    def test_xyz(run_tests_sh):
+        run_tests_sh()
+
 clean.sh
 ---
 The inverse of "setup.sh", this is invoked by the framework to clean up the
@@ -535,8 +587,8 @@ Ideally, the directory numbers should start at 1 and work upwards.
 When running a test, the servers are started using "start.sh" (which is nothing
 more than a wrapper for start.pl).  The options for "start.pl" are documented
 in the header for that file, so will not be repeated here.  In summary, when
-invoked by "run.sh", start.pl looks for directories named "nsN" or "ansN" in
-the test directory and starts the servers it finds there.
+invoked by "legacy.run.sh", start.pl looks for directories named "nsN" or
+"ansN" in the test directory and starts the servers it finds there.
 
 
 "named" Command-Line Options
@@ -556,7 +608,7 @@ By default, start.pl starts a "named" server with the following options:
     -g              Runs the server in the foreground and logs everything to
                     stderr.
 
-    -m record,size,mctx
+    -m record
                     Turns on these memory usage debugging flags.
 
     -U 4            Uses four listeners.
@@ -633,8 +685,8 @@ the options available are listed in the file's header and will not be repeated
 here.
 
 In summary though, the nameservers for a given test, if left running by
-specifying the "-k" flag to "run.sh" when the test is started, can be stopped
-by the command:
+specifying the "-k" flag to "legacy.run.sh" when the test is started, can be
+stopped by the command:
 
     sh stop.sh <test-name> [server]
 
@@ -651,10 +703,6 @@ SEQUENTIALDIRS variables as appropriate.  The former is used for tests that
 can run in parallel with other tests, the latter for tests that are unable to
 do so.
 
-* conf.sh.win32 This is the Windows equivalent of conf.sh.in.  The name of the
-test should be added to the PARALLELDIRS or SEQUENTIALDIRS variables as
-appropriate.
-
 * Makefile.in The name of the test should be added to one of the the PARALLEL
 or SEQUENTIAL variables.
 
@@ -662,25 +710,111 @@ or SEQUENTIAL variables.
 need to edit multiple files to add a test.)
 
 
-Valgrind
+rr
 ---
-When running system tests, named can be run under Valgrind.  The output from
-Valgrind are sent to per-process files that can be reviewed after the test has
-completed.  To enable this, set the USE_VALGRIND environment variable to
-"helgrind" to run the Helgrind tool, or any other value to run the Memcheck
-tool.  To use "helgrind" effectively, build BIND with --disable-atomic.
 
+When running system tests, named can be run under the rr tool. rr records a
+trace to the $system_test/nsX/named-Y/ directory, which can be later used to
+replay named. To enable this, execute start.pl with the USE_RR environment
+variable set.
 
-Maintenance Notes
+Developer Notes for pytest runner
+===
+
+Test discovery and collection
+---
+There are two distinct types of system tests. The first is a shell script
+tests.sh containing individual test cases executed sequentially and the
+success/failure is determined by return code. The second type is a regular
+pytest file which contains test functions.
+
+Dealing with the regular pytest files doesn't require any special consideration
+as long as the naming conventions are met. Discovering the tests.sh tests is
+more complicated.
+
+The chosen solution is to add a bit of glue for each system test. For every
+tests.sh, there is an accompanying tests_sh_*.py file that contains a test
+function which utilizes a custom run_tests_sh fixture to call the tests.sh
+script. Other solutions were tried and eventually rejected. While this
+introduces a bit of extra glue, it is the most portable, compatible and least
+complex solution.
+
+Module scope
+---
+Pytest fixtures can have a scope. The "module" scope is the most important for
+our use. A module is a python file which contains test functions. Every system
+test directory may contain multiple modules (i.e. tests_*.py files)!
+
+The server setup/teardown is done for a module. Bundling test cases together
+inside a single module may save some resources. However, test cases inside a
+single module can't be executed in parallel.
+
+It is possible to execute different modules defined within a single system test
+directory in parallel. This is possible thanks to executing the tests inside a
+temporary directory and proper port assignment to ensure there won't be any
+conflicts.
+
+Test logging
+---
+Each module has a separate log which will be saved as pytest.log.txt in the
+temporary directory in which the test is executed. This log includes messages
+for this module setup/teardown as well as any logging from the tests using the
+`logger` fixture. Logging level DEBUG and above will be present in this log.
+
+In general, any log messages using INFO or above will also be printed out
+during pytest execution. In CI, the pytest output is also saved to
+pytest.out.txt in the bin/tests/system directory.
+
+Parallel execution
+---
+As mentioned in the previous section, test cases inside a single module can't
+be executed in parallel. To put it differently, all tests cases inside the same
+module must be performed by the same worker/thread. Otherwise, server
+setup/teardown fixtures won't be shared and runtime issues due to port
+collisions are likely to occur.
+
+Pytest-xdist is used for executing pytest test cases in parallel using the `-n
+N_WORKERS` option. By default, xdist will distribute any test case to any
+worker, which would lead to the issue described above. Therefore, conftest.py
+enforces equivalent of `--dist loadscope` option which ensures that test cases
+within the same (module) scope will be handled by the same worker. Parallelism
+is automatically disabled when xdist.scheduler.loadscope library is not
+available.
+
+$ pytest -n auto
+
+Test selection
+---
+It is possible to run just a single pytest test case from any module. Use
+standard pytest facility to select the desired test case(s), i.e. pass a
+sufficiently unique identifier for `-k` parameter. You can also check which
+tests will be executed by using the `--collect-only` flag to debug your `-k`
+expression.
+
+Compatibility with older pytest version
+---
+Keep in mind that the pytest runner must work with ancient versions of pytest.
+When implementing new features, it is advisable to check feature support in
+pytest and pytest-xdist in older distributions first.
+
+As a general rule, any changes to the pytest runner need to keep working on all
+platforms in CI that use the pytest runner. As of 2023-01-13, the oldest
+supported version is whatever is available in EL8.
+
+We may need to add more compat code eventually to handle breaking upstream
+changes. For example, using request.fspath attribute is already deprecatred in
+latest pytest.
+
+Maintenance Notes for legacy runner
 ===
 This section is aimed at developers maintaining BIND's system test framework.
 
 Notes on Parallel Execution
 ---
-Although execution of an individual test is controlled by "run.sh", which
-executes the above shell scripts (and starts the relevant servers) for each
-test, the running of all tests in the test suite is controlled by the Makefile.
-("runall.sh" does little more than invoke "make" on the Makefile.)
+Although execution of an individual test is controlled by "legacy.run.sh",
+which executes the above shell scripts (and starts the relevant servers) for
+each test, the running of all tests in the test suite is controlled by the
+Makefile. ("runall.sh" does little more than invoke "make" on the Makefile.)
 
 All system tests are capable of being run in parallel.  For this to work, each
 test needs to use a unique set of ports.  To avoid the need to define which
@@ -690,7 +824,7 @@ the ports are assigned when the tests are run.  This is achieved by having the
 when "make check" is run, and contains a target for each test of the form:
 
     <test-name>:
-        @$(SHELL) run.sh -p <baseport> <test-name>
+        @$(SHELL) legacy.run.sh -p <baseport> <test-name>
 
 The <baseport> is unique and the values of <baseport> for each test are
 separated by at least 100 ports.
@@ -714,7 +848,7 @@ If the test fails, all these files are retained.  But if the test succeeds,
 they are cleaned up at different times:
 
 1. Files generated by the test itself are cleaned up by the test's own
-"clean.sh", which is called from "run.sh".
+"clean.sh", which is called from "legacy.run.sh".
 
 2. Files that may not be cleaned up if named exits abnormally can be removed
 using the "cleanall.sh" script.

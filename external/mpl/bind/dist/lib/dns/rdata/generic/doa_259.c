@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.7.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -312,11 +312,12 @@ freestruct_doa(ARGS_FREESTRUCT) {
 
 static isc_result_t
 additionaldata_doa(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_doa);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_doa);
 
 	return (ISC_R_SUCCESS);
 }

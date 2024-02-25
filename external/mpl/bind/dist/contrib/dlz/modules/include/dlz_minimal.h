@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_minimal.h,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_minimal.h,v 1.5.2.1 2024/02/25 15:45:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,21 +25,18 @@
  * tree.
  */
 
-#ifndef DLZ_MINIMAL_H
-#define DLZ_MINIMAL_H 1
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#ifdef ISC_PLATFORM_HAVESYSUNH
-#include <sys/un.h>
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 typedef unsigned int isc_result_t;
 typedef uint32_t     dns_ttl_t;
@@ -125,9 +122,7 @@ typedef struct isc_sockaddr {
 		struct sockaddr	    sa;
 		struct sockaddr_in  sin;
 		struct sockaddr_in6 sin6;
-#ifdef ISC_PLATFORM_HAVESYSUNH
-		struct sockaddr_un sunix;
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
+		struct sockaddr_un  sunix;
 	} type;
 	unsigned int length;
 	void	    *link;
@@ -138,9 +133,7 @@ typedef struct isc_netaddr {
 	union {
 		struct in_addr	in;
 		struct in6_addr in6;
-#ifdef ISC_PLATFORM_HAVESYSUNH
-		char un[sizeof(((struct sockaddr_un *)0)->sun_path)];
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
+		char		un[sizeof(((struct sockaddr_un *)0)->sun_path)];
 	} type;
 	uint32_t zone;
 } isc_netaddr_t;
@@ -334,5 +327,3 @@ dlz_subrdataset(const char *name, const char *rdatastr, void *dbdata,
 isc_result_t
 dlz_delrdataset(const char *name, const char *type, void *dbdata,
 		void *version);
-
-#endif /* DLZ_MINIMAL_H */

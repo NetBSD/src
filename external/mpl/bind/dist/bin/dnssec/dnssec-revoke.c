@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.7.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.7.2.2 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,23 +20,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/keyvalues.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -44,22 +41,15 @@ const char *program = "dnssec-revoke";
 
 static isc_mem_t *mctx = NULL;
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s [options] keyfile\n\n", program);
-	fprintf(stderr, "Version: %s\n", VERSION);
-#if USE_PKCS11
-	fprintf(stderr,
-		"    -E engine:    specify PKCS#11 provider "
-		"(default: %s)\n",
-		PK11_LIB_LOCATION);
-#else  /* if USE_PKCS11 */
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 	fprintf(stderr, "    -E engine:    specify OpenSSL engine\n");
-#endif /* if USE_PKCS11 */
 	fprintf(stderr, "    -f:           force overwrite\n");
 	fprintf(stderr, "    -h:           help\n");
 	fprintf(stderr, "    -K directory: use directory for key files\n");
@@ -96,11 +86,6 @@ main(int argc, char **argv) {
 	}
 
 	isc_mem_create(&mctx);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 

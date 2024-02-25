@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.6.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,15 +16,14 @@
 /*! \file dns/log.h
  */
 
-#ifndef DNS_LOG_H
-#define DNS_LOG_H 1
+#pragma once
 
 #include <isc/lang.h>
 #include <isc/log.h>
 
-LIBDNS_EXTERNAL_DATA extern isc_log_t	     *dns_lctx;
-LIBDNS_EXTERNAL_DATA extern isc_logcategory_t dns_categories[];
-LIBDNS_EXTERNAL_DATA extern isc_logmodule_t   dns_modules[];
+extern isc_log_t	*dns_lctx;
+extern isc_logcategory_t dns_categories[];
+extern isc_logmodule_t	 dns_modules[];
 
 #define DNS_LOGCATEGORY_NOTIFY	 (&dns_categories[0])
 #define DNS_LOGCATEGORY_DATABASE (&dns_categories[1])
@@ -45,6 +44,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t   dns_modules[];
 #define DNS_LOGCATEGORY_DNSTAP		(&dns_categories[16])
 #define DNS_LOGCATEGORY_ZONELOAD	(&dns_categories[17])
 #define DNS_LOGCATEGORY_NSID		(&dns_categories[18])
+#define DNS_LOGCATEGORY_RPZ_PASSTHRU	(&dns_categories[19])
 
 /* Backwards compatibility. */
 #define DNS_LOGCATEGORY_GENERAL ISC_LOGCATEGORY_GENERAL
@@ -112,5 +112,3 @@ dns_log_setcontext(isc_log_t *lctx);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_LOG_H */

@@ -11,17 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
-$FEATURETEST --have-dlopen ||  {
-        echo_i "dlopen() not supported - skipping dyndb test"
-        exit 255
-}
-
-$FEATURETEST --tsan &&  {
-        echo_i "TSAN - skipping dyndb test"
-        exit 255
+$FEATURETEST --tsan && {
+  echo_i "TSAN - skipping dyndb test"
+  exit 255
 }
 
 exit 0

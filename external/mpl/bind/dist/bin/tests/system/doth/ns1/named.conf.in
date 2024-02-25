@@ -1,0 +1,197 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+http local {
+	endpoints { "/dns-query"; "/alter"; };
+	listener-clients 100;
+};
+
+tls tls-forward-secrecy {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers yes;
+	key-file "../CA/certs/srv01.crt01.example.com.key";
+	cert-file "../CA/certs/srv01.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+tls tls-pfs-aes256 {
+	protocols { TLSv1.2; };
+	ciphers "AES256:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers yes;
+	key-file "../CA/certs/srv01.crt01.example.com.key";
+	cert-file "../CA/certs/srv01.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+tls tls-no-subject-alt-name {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers yes;
+	key-file "../CA/certs/srv01.crt02-no-san.example.com.key";
+	cert-file "../CA/certs/srv01.crt02-no-san.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+tls tls-expired {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers yes;
+	key-file "../CA/certs/srv01.crt03-expired.example.com.key";
+	cert-file "../CA/certs/srv01.crt03-expired.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+tls tls-forward-secrecy-mutual-tls {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers yes;
+	key-file "../CA/certs/srv01.crt01.example.com.key";
+	cert-file "../CA/certs/srv01.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+	ca-file "../CA/CA.pem";
+};
+
+options {
+	port @PORT@;
+	tls-port @TLSPORT@;
+	https-port @HTTPSPORT@;
+	http-port @HTTPPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on tls tls-forward-secrecy { 10.53.0.1; };             // DoT
+	listen-on-v6 tls tls-forward-secrecy { fd92:7065:b8e:ffff::1;};
+	listen-on tls ephemeral http local { 10.53.0.1; };  // DoH
+	listen-on-v6 tls ephemeral http local { fd92:7065:b8e:ffff::1; };
+	listen-on tls none http local { 10.53.0.1; };       // unencrypted DoH
+	listen-on-v6 tls none http local { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 { none; };
+	listen-on port @EXTRAPORT1@ tls tls-pfs-aes256 { 10.53.0.1; };             // DoT
+	listen-on-v6 port @EXTRAPORT1@ tls tls-pfs-aes256 { fd92:7065:b8e:ffff::1;};
+	listen-on port @EXTRAPORT2@ tls tls-no-subject-alt-name { 10.53.0.1; };             // DoT
+	listen-on port @EXTRAPORT3@ tls tls-no-subject-alt-name http local { 10.53.0.1; };  // DoH
+	listen-on port @EXTRAPORT4@ tls tls-expired { 10.53.0.1; };             // DoT
+	listen-on port @EXTRAPORT5@ tls tls-forward-secrecy-mutual-tls { 10.53.0.1; }; // DoT
+	listen-on port @EXTRAPORT6@ tls tls-forward-secrecy-mutual-tls http local { 10.53.0.1; }; // DoH
+	listen-on port @EXTRAPORT7@ tls tls-forward-secrecy { 10.53.0.1; }; // DoT
+	recursion no;
+	notify explicit;
+	also-notify { 10.53.0.2 port @PORT@; };
+	statistics-file "named.stats";
+	dnssec-validation yes;
+	tcp-initial-timeout 1200;
+	transfers-in 100;
+	transfers-out 100;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+	allow-transfer port @TLSPORT@ transport tls { any; };
+};
+
+zone "example" {
+	type primary;
+	file "example.db";
+	allow-transfer port @TLSPORT@ transport tls { any; };
+};
+
+zone "example2" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT1@ transport tls { any; };
+};
+
+zone "example3" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT3@ transport tls { any; };
+};
+
+zone "example4" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
+};
+
+zone "example5" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
+};
+
+zone "example6" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
+};
+
+zone "example7" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
+};
+
+zone "example8" {
+	type primary;
+	file "example.db";
+	allow-transfer transport tls { any; };
+};
+
+zone "example9" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT5@ transport tls { any; };
+};
+
+zone "example10" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT5@ transport tls { any; };
+};
+
+zone "example11" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT5@ transport tls { any; };
+};
+
+zone "example12" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT7@ transport tls { any; };
+};
+
+zone "example13" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT7@ transport tls { any; };
+};
+
+zone "example14" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT7@ transport tls { any; };
+};
+
+zone "example15" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT7@ transport tls { any; };
+};

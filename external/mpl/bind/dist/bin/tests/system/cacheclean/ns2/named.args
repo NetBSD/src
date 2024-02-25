@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 3 -D cacheclean-ns2 -X named.lock -g -T maxcachesize=2097152
+-m record -c named.conf -d 3 -D cacheclean-ns2 -X named.lock -g -T maxcachesize=2097152

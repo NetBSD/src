@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.h,v 1.6 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.6.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_ZONECONF_H
-#define NAMED_ZONECONF_H 1
+#pragma once
 
 /*! \file */
 
@@ -77,5 +76,3 @@ named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase, dns_zone_t *zone,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* NAMED_ZONECONF_H */

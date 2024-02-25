@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.10 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.10.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,90 +13,271 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_RESULT_H
-#define ISC_RESULT_H 1
+#pragma once
 
 /*! \file isc/result.h */
 
+#include <inttypes.h>
+
 #include <isc/lang.h>
-#include <isc/types.h>
 
-#define ISC_R_SUCCESS	       0	    /*%< success */
-#define ISC_R_NOMEMORY	       1	    /*%< out of memory */
-#define ISC_R_TIMEDOUT	       2	    /*%< timed out */
-#define ISC_R_NOTHREADS	       3	    /*%< no available threads */
-#define ISC_R_ADDRNOTAVAIL     4	    /*%< address not available */
-#define ISC_R_ADDRINUSE	       5	    /*%< address in use */
-#define ISC_R_NOPERM	       6	    /*%< permission denied */
-#define ISC_R_NOCONN	       7	    /*%< no pending connections */
-#define ISC_R_NETUNREACH       8	    /*%< network unreachable */
-#define ISC_R_HOSTUNREACH      9	    /*%< host unreachable */
-#define ISC_R_NETDOWN	       10	    /*%< network down */
-#define ISC_R_HOSTDOWN	       11	    /*%< host down */
-#define ISC_R_CONNREFUSED      12	    /*%< connection refused */
-#define ISC_R_NORESOURCES      13	    /*%< not enough free resources */
-#define ISC_R_EOF	       14	    /*%< end of file */
-#define ISC_R_BOUND	       15	    /*%< socket already bound */
-#define ISC_R_RELOAD	       16	    /*%< reload */
-#define ISC_R_SUSPEND	       ISC_R_RELOAD /*%< alias of 'reload' */
-#define ISC_R_LOCKBUSY	       17	    /*%< lock busy */
-#define ISC_R_EXISTS	       18	    /*%< already exists */
-#define ISC_R_NOSPACE	       19	    /*%< ran out of space */
-#define ISC_R_CANCELED	       20	    /*%< operation canceled */
-#define ISC_R_NOTBOUND	       21	    /*%< socket is not bound */
-#define ISC_R_SHUTTINGDOWN     22	    /*%< shutting down */
-#define ISC_R_NOTFOUND	       23	    /*%< not found */
-#define ISC_R_UNEXPECTEDEND    24	    /*%< unexpected end of input */
-#define ISC_R_FAILURE	       25	    /*%< generic failure */
-#define ISC_R_IOERROR	       26	    /*%< I/O error */
-#define ISC_R_NOTIMPLEMENTED   27	    /*%< not implemented */
-#define ISC_R_UNBALANCED       28	    /*%< unbalanced parentheses */
-#define ISC_R_NOMORE	       29	    /*%< no more */
-#define ISC_R_INVALIDFILE      30	    /*%< invalid file */
-#define ISC_R_BADBASE64	       31	    /*%< bad base64 encoding */
-#define ISC_R_UNEXPECTEDTOKEN  32	    /*%< unexpected token */
-#define ISC_R_QUOTA	       33	    /*%< quota reached */
-#define ISC_R_UNEXPECTED       34	    /*%< unexpected error */
-#define ISC_R_ALREADYRUNNING   35	    /*%< already running */
-#define ISC_R_IGNORE	       36	    /*%< ignore */
-#define ISC_R_MASKNONCONTIG    37	    /*%< addr mask not contiguous */
-#define ISC_R_FILENOTFOUND     38	    /*%< file not found */
-#define ISC_R_FILEEXISTS       39	    /*%< file already exists */
-#define ISC_R_NOTCONNECTED     40	    /*%< socket is not connected */
-#define ISC_R_RANGE	       41	    /*%< out of range */
-#define ISC_R_NOENTROPY	       42	    /*%< out of entropy */
-#define ISC_R_MULTICAST	       43	    /*%< invalid use of multicast */
-#define ISC_R_NOTFILE	       44	    /*%< not a file */
-#define ISC_R_NOTDIRECTORY     45	    /*%< not a directory */
-#define ISC_R_EMPTY	       46	    /*%< queue is empty */
-#define ISC_R_FAMILYMISMATCH   47	    /*%< address family mismatch */
-#define ISC_R_FAMILYNOSUPPORT  48	    /*%< AF not supported */
-#define ISC_R_BADHEX	       49	    /*%< bad hex encoding */
-#define ISC_R_TOOMANYOPENFILES 50	    /*%< too many open files */
-#define ISC_R_NOTBLOCKING      51	    /*%< not blocking */
-#define ISC_R_UNBALANCEDQUOTES 52	    /*%< unbalanced quotes */
-#define ISC_R_INPROGRESS       53	    /*%< operation in progress */
-#define ISC_R_CONNECTIONRESET  54	    /*%< connection reset */
-#define ISC_R_SOFTQUOTA	       55	    /*%< soft quota reached */
-#define ISC_R_BADNUMBER	       56	    /*%< not a valid number */
-#define ISC_R_DISABLED	       57	    /*%< disabled */
-#define ISC_R_MAXSIZE	       58	    /*%< max size */
-#define ISC_R_BADADDRESSFORM   59	    /*%< invalid address format */
-#define ISC_R_BADBASE32	       60	    /*%< bad base32 encoding */
-#define ISC_R_UNSET	       61	    /*%< unset */
-#define ISC_R_MULTIPLE	       62	    /*%< multiple */
-#define ISC_R_WOULDBLOCK       63	    /*%< would block */
-#define ISC_R_COMPLETE	       64	    /*%< complete */
-#define ISC_R_CRYPTOFAILURE    65	    /*%< cryptography library failure */
-#define ISC_R_DISCQUOTA	       66	    /*%< disc quota */
-#define ISC_R_DISCFULL	       67	    /*%< disc full */
-#define ISC_R_DEFAULT	       68	    /*%< default */
-#define ISC_R_IPV4PREFIX       69	    /*%< IPv4 prefix */
-#define ISC_R_TLSERROR	       70	    /*%< TLS error */
-#define ISC_R_HTTP2ALPNERROR   71	    /*%< ALPN for HTTP/2 failed */
+typedef enum isc_result {
+	ISC_R_SUCCESS,		      /*%< success */
+	ISC_R_NOMEMORY,		      /*%< out of memory */
+	ISC_R_TIMEDOUT,		      /*%< timed out */
+	ISC_R_NOTHREADS,	      /*%< no available threads */
+	ISC_R_ADDRNOTAVAIL,	      /*%< address not available */
+	ISC_R_ADDRINUSE,	      /*%< address in use */
+	ISC_R_NOPERM,		      /*%< permission denied */
+	ISC_R_NOCONN,		      /*%< no pending connections */
+	ISC_R_NETUNREACH,	      /*%< network unreachable */
+	ISC_R_HOSTUNREACH,	      /*%< host unreachable */
+	ISC_R_NETDOWN,		      /*%< network down */
+	ISC_R_HOSTDOWN,		      /*%< host down */
+	ISC_R_CONNREFUSED,	      /*%< connection refused */
+	ISC_R_NORESOURCES,	      /*%< not enough free resources */
+	ISC_R_EOF,		      /*%< end of file */
+	ISC_R_BOUND,		      /*%< socket already bound */
+	ISC_R_RELOAD,		      /*%< reload */
+	ISC_R_SUSPEND = ISC_R_RELOAD, /*%< alias of 'reload' */
+	ISC_R_LOCKBUSY,		      /*%< lock busy */
+	ISC_R_EXISTS,		      /*%< already exists */
+	ISC_R_NOSPACE,		      /*%< ran out of space */
+	ISC_R_CANCELED,		      /*%< operation canceled */
+	ISC_R_NOTBOUND,		      /*%< socket is not bound */
+	ISC_R_SHUTTINGDOWN,	      /*%< shutting down */
+	ISC_R_NOTFOUND,		      /*%< not found */
+	ISC_R_UNEXPECTEDEND,	      /*%< unexpected end of input */
+	ISC_R_FAILURE,		      /*%< generic failure */
+	ISC_R_IOERROR,		      /*%< I/O error */
+	ISC_R_NOTIMPLEMENTED,	      /*%< not implemented */
+	ISC_R_UNBALANCED,	      /*%< unbalanced parentheses */
+	ISC_R_NOMORE,		      /*%< no more */
+	ISC_R_INVALIDFILE,	      /*%< invalid file */
+	ISC_R_BADBASE64,	      /*%< bad base64 encoding */
+	ISC_R_UNEXPECTEDTOKEN,	      /*%< unexpected token */
+	ISC_R_QUOTA,		      /*%< quota reached */
+	ISC_R_UNEXPECTED,	      /*%< unexpected error */
+	ISC_R_ALREADYRUNNING,	      /*%< already running */
+	ISC_R_IGNORE,		      /*%< ignore */
+	ISC_R_MASKNONCONTIG,	      /*%< addr mask not contiguous */
+	ISC_R_FILENOTFOUND,	      /*%< file not found */
+	ISC_R_FILEEXISTS,	      /*%< file already exists */
+	ISC_R_NOTCONNECTED,	      /*%< socket is not connected */
+	ISC_R_RANGE,		      /*%< out of range */
+	ISC_R_NOENTROPY,	      /*%< out of entropy */
+	ISC_R_MULTICAST,	      /*%< invalid use of multicast */
+	ISC_R_NOTFILE,		      /*%< not a file */
+	ISC_R_NOTDIRECTORY,	      /*%< not a directory */
+	ISC_R_EMPTY,		      /*%< queue is empty */
+	ISC_R_FAMILYMISMATCH,	      /*%< address family mismatch */
+	ISC_R_FAMILYNOSUPPORT,	      /*%< AF not supported */
+	ISC_R_BADHEX,		      /*%< bad hex encoding */
+	ISC_R_TOOMANYOPENFILES,	      /*%< too many open files */
+	ISC_R_NOTBLOCKING,	      /*%< not blocking */
+	ISC_R_UNBALANCEDQUOTES,	      /*%< unbalanced quotes */
+	ISC_R_INPROGRESS,	      /*%< operation in progress */
+	ISC_R_CONNECTIONRESET,	      /*%< connection reset */
+	ISC_R_SOFTQUOTA,	      /*%< soft quota reached */
+	ISC_R_BADNUMBER,	      /*%< not a valid number */
+	ISC_R_DISABLED,		      /*%< disabled */
+	ISC_R_MAXSIZE,		      /*%< max size */
+	ISC_R_BADADDRESSFORM,	      /*%< invalid address format */
+	ISC_R_BADBASE32,	      /*%< bad base32 encoding */
+	ISC_R_UNSET,		      /*%< unset */
+	ISC_R_MULTIPLE,		      /*%< multiple */
+	ISC_R_WOULDBLOCK,	      /*%< would block */
+	ISC_R_COMPLETE,		      /*%< complete */
+	ISC_R_CRYPTOFAILURE,	      /*%< cryptography library failure */
+	ISC_R_DISCQUOTA,	      /*%< disc quota */
+	ISC_R_DISCFULL,		      /*%< disc full */
+	ISC_R_DEFAULT,		      /*%< default */
+	ISC_R_IPV4PREFIX,	      /*%< IPv4 prefix */
+	ISC_R_TLSERROR,		      /*%< TLS error */
+	ISC_R_TLSBADPEERCERT, /*%< TLS peer certificate verification failed */
+	ISC_R_HTTP2ALPNERROR, /*%< ALPN for HTTP/2 failed */
+	ISC_R_DOTALPNERROR,   /*%< ALPN for DoT failed */
+	ISC_R_INVALIDPROTO,   /*%< invalid protocol */
 
-/*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 72
+	DNS_R_LABELTOOLONG,
+	DNS_R_BADESCAPE,
+	DNS_R_EMPTYLABEL,
+	DNS_R_BADDOTTEDQUAD,
+	DNS_R_INVALIDNS,
+	DNS_R_UNKNOWN,
+	DNS_R_BADLABELTYPE,
+	DNS_R_BADPOINTER,
+	DNS_R_TOOMANYHOPS,
+	DNS_R_DISALLOWED,
+	DNS_R_EXTRATOKEN,
+	DNS_R_EXTRADATA,
+	DNS_R_TEXTTOOLONG,
+	DNS_R_NOTZONETOP,
+	DNS_R_SYNTAX,
+	DNS_R_BADCKSUM,
+	DNS_R_BADAAAA,
+	DNS_R_NOOWNER,
+	DNS_R_NOTTL,
+	DNS_R_BADCLASS,
+	DNS_R_NAMETOOLONG,
+	DNS_R_PARTIALMATCH,
+	DNS_R_NEWORIGIN,
+	DNS_R_UNCHANGED,
+	DNS_R_BADTTL,
+	DNS_R_NOREDATA,
+	DNS_R_CONTINUE,
+	DNS_R_DELEGATION,
+	DNS_R_GLUE,
+	DNS_R_DNAME,
+	DNS_R_CNAME,
+	DNS_R_BADDB,
+	DNS_R_ZONECUT,
+	DNS_R_BADZONE,
+	DNS_R_MOREDATA,
+	DNS_R_UPTODATE,
+	DNS_R_TSIGVERIFYFAILURE,
+	DNS_R_TSIGERRORSET,
+	DNS_R_SIGINVALID,
+	DNS_R_SIGEXPIRED,
+	DNS_R_SIGFUTURE,
+	DNS_R_KEYUNAUTHORIZED,
+	DNS_R_INVALIDTIME,
+	DNS_R_EXPECTEDTSIG,
+	DNS_R_UNEXPECTEDTSIG,
+	DNS_R_INVALIDTKEY,
+	DNS_R_HINT,
+	DNS_R_DROP,
+	DNS_R_NOTLOADED,
+	DNS_R_NCACHENXDOMAIN,
+	DNS_R_NCACHENXRRSET,
+	DNS_R_WAIT,
+	DNS_R_NOTVERIFIEDYET,
+	DNS_R_NOIDENTITY,
+	DNS_R_NOJOURNAL,
+	DNS_R_ALIAS,
+	DNS_R_USETCP,
+	DNS_R_NOVALIDSIG,
+	DNS_R_NOVALIDNSEC,
+	DNS_R_NOTINSECURE,
+	DNS_R_UNKNOWNSERVICE,
+	DNS_R_RECOVERABLE,
+	DNS_R_UNKNOWNOPT,
+	DNS_R_UNEXPECTEDID,
+	DNS_R_SEENINCLUDE,
+	DNS_R_NOTEXACT,
+	DNS_R_BLACKHOLED,
+	DNS_R_BADALG,
+	DNS_R_METATYPE,
+	DNS_R_CNAMEANDOTHER,
+	DNS_R_SINGLETON,
+	DNS_R_HINTNXRRSET,
+	DNS_R_NOMASTERFILE,
+	DNS_R_UNKNOWNPROTO,
+	DNS_R_CLOCKSKEW,
+	DNS_R_BADIXFR,
+	DNS_R_NOTAUTHORITATIVE,
+	DNS_R_NOVALIDKEY,
+	DNS_R_OBSOLETE,
+	DNS_R_FROZEN,
+	DNS_R_UNKNOWNFLAG,
+	DNS_R_EXPECTEDRESPONSE,
+	DNS_R_NOVALIDDS,
+	DNS_R_NSISADDRESS,
+	DNS_R_REMOTEFORMERR,
+	DNS_R_TRUNCATEDTCP,
+	DNS_R_LAME,
+	DNS_R_UNEXPECTEDRCODE,
+	DNS_R_UNEXPECTEDOPCODE,
+	DNS_R_CHASEDSSERVERS,
+	DNS_R_EMPTYNAME,
+	DNS_R_EMPTYWILD,
+	DNS_R_BADBITMAP,
+	DNS_R_FROMWILDCARD,
+	DNS_R_BADOWNERNAME,
+	DNS_R_BADNAME,
+	DNS_R_DYNAMIC,
+	DNS_R_UNKNOWNCOMMAND,
+	DNS_R_MUSTBESECURE,
+	DNS_R_COVERINGNSEC,
+	DNS_R_MXISADDRESS,
+	DNS_R_DUPLICATE,
+	DNS_R_INVALIDNSEC3,
+	DNS_R_NOTPRIMARY,
+	DNS_R_BROKENCHAIN,
+	DNS_R_EXPIRED,
+	DNS_R_NOTDYNAMIC,
+	DNS_R_BADEUI,
+	DNS_R_NTACOVERED,
+	DNS_R_BADCDS,
+	DNS_R_BADCDNSKEY,
+	DNS_R_OPTERR,
+	DNS_R_BADDNSTAP,
+	DNS_R_BADTSIG,
+	DNS_R_BADSIG0,
+	DNS_R_TOOMANYRECORDS,
+	DNS_R_VERIFYFAILURE,
+	DNS_R_ATZONETOP,
+	DNS_R_NOKEYMATCH,
+	DNS_R_TOOMANYKEYS,
+	DNS_R_KEYNOTACTIVE,
+	DNS_R_NSEC3ITERRANGE,
+	DNS_R_NSEC3SALTRANGE,
+	DNS_R_NSEC3BADALG,
+	DNS_R_NSEC3RESALT,
+	DNS_R_INCONSISTENTRR,
+	DNS_R_NOALPN,
+
+	DST_R_UNSUPPORTEDALG,
+	DST_R_CRYPTOFAILURE,
+	/* compat */
+	DST_R_OPENSSLFAILURE = DST_R_CRYPTOFAILURE,
+	DST_R_NOCRYPTO,
+	DST_R_NULLKEY,
+	DST_R_INVALIDPUBLICKEY,
+	DST_R_INVALIDPRIVATEKEY,
+	DST_R_WRITEERROR,
+	DST_R_INVALIDPARAM,
+	DST_R_SIGNFAILURE,
+	DST_R_VERIFYFAILURE,
+	DST_R_NOTPUBLICKEY,
+	DST_R_NOTPRIVATEKEY,
+	DST_R_KEYCANNOTCOMPUTESECRET,
+	DST_R_COMPUTESECRETFAILURE,
+	DST_R_NORANDOMNESS,
+	DST_R_BADKEYTYPE,
+	DST_R_NOENGINE,
+	DST_R_EXTERNALKEY,
+
+	DNS_R_NOERROR,
+	DNS_R_FORMERR,
+	DNS_R_SERVFAIL,
+	DNS_R_NXDOMAIN,
+	DNS_R_NOTIMP,
+	DNS_R_REFUSED,
+	DNS_R_YXDOMAIN,
+	DNS_R_YXRRSET,
+	DNS_R_NXRRSET,
+	DNS_R_NOTAUTH,
+	DNS_R_NOTZONE,
+	DNS_R_RCODE11,
+	DNS_R_RCODE12,
+	DNS_R_RCODE13,
+	DNS_R_RCODE14,
+	DNS_R_RCODE15,
+	DNS_R_BADVERS,
+	DNS_R_BADCOOKIE = DNS_R_NOERROR + 23,
+
+	ISCCC_R_UNKNOWNVERSION,
+	ISCCC_R_SYNTAX,
+	ISCCC_R_BADAUTH,
+	ISCCC_R_EXPIRED,
+	ISCCC_R_CLOCKSKEW,
+	ISCCC_R_DUPLICATE,
+	ISCCC_R_MAXDEPTH,
+
+	ISC_R_NRESULTS, /*% The number of results. */
+	ISC_R_MAKE_ENUM_32BIT = INT32_MAX,
+} isc_result_t;
 
 ISC_LANG_BEGINDECLS
 
@@ -111,14 +292,4 @@ const char *isc_result_toid(isc_result_t);
  * "ISC_R_SUCCESS".
  */
 
-isc_result_t
-isc_result_register(unsigned int base, unsigned int nresults, const char **text,
-		    int set);
-
-isc_result_t
-isc_result_registerids(unsigned int base, unsigned int nresults,
-		       const char **ids, int set);
-
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RESULT_H */

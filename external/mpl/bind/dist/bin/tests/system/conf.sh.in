@@ -1,11 +1,11 @@
 #!/bin/sh
-
+#
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
@@ -17,110 +17,114 @@
 #
 
 # Find the top of the BIND9 tree.
-export TOP=@abs_top_builddir@
+export TOP_BUILDDIR=@abs_top_builddir@
 export TOP_SRCDIR=@abs_top_srcdir@
 
 # Provide TMPDIR variable for tests that need it.
 export TMPDIR=${TMPDIR:-/tmp}
 
-# This is not the windows build.
-export CYGWIN=""
-
-export ARPANAME=$TOP/bin/tools/arpaname
-export CDS=$TOP/bin/dnssec/dnssec-cds
-export CHECKCONF=$TOP/bin/check/named-checkconf
-export CHECKDS=$TOP/bin/python/dnssec-checkds
-export CHECKZONE=$TOP/bin/check/named-checkzone
-export COVERAGE=$TOP/bin/python/dnssec-coverage
-export DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
-export DELV=$TOP/bin/delv/delv
-export DIG=$TOP/bin/dig/dig
-export DNSTAPREAD=$TOP/bin/tools/dnstap-read
-export DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
-export FEATURETEST=$TOP/bin/tests/system/feature-test
+export ARPANAME=$TOP_BUILDDIR/bin/tools/arpaname
+export CDS=$TOP_BUILDDIR/bin/dnssec/dnssec-cds
+export CHECKCONF=$TOP_BUILDDIR/bin/check/named-checkconf
+export CHECKZONE=$TOP_BUILDDIR/bin/check/named-checkzone
+if [ -z "$TSAN_OPTIONS" ]; then # workaround for GL#4119
+  export DELV=$TOP_BUILDDIR/bin/delv/delv
+  export RESOLVE=$TOP_BUILDDIR/bin/tests/system/resolve
+else
+  export DELV=:
+  export RESOLVE=:
+fi
+export DIG=$TOP_BUILDDIR/bin/dig/dig
+export DNSTAPREAD=$TOP_BUILDDIR/bin/tools/dnstap-read
+export DSFROMKEY=$TOP_BUILDDIR/bin/dnssec/dnssec-dsfromkey
+export FEATURETEST=$TOP_BUILDDIR/bin/tests/system/feature-test
 export FSTRM_CAPTURE=@FSTRM_CAPTURE@
-export HOST=$TOP/bin/dig/host
-export IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
-export JOURNALPRINT=$TOP/bin/tools/named-journalprint
-export KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
-export KEYGEN=$TOP/bin/dnssec/dnssec-keygen
-export KEYMGR=$TOP/bin/python/dnssec-keymgr
-export MDIG=$TOP/bin/tools/mdig
-export NAMED=$TOP/bin/named/named
-export NSEC3HASH=$TOP/bin/tools/nsec3hash
-export NSLOOKUP=$TOP/bin/dig/nslookup
-export NSUPDATE=$TOP/bin/nsupdate/nsupdate
-export NZD2NZF=$TOP/bin/tools/named-nzd2nzf
-export PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
-export PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-export PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-export RESOLVE=$TOP/bin/tests/system/resolve
-export REVOKE=$TOP/bin/dnssec/dnssec-revoke
-export RNDC=$TOP/bin/rndc/rndc
-export RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
-export RRCHECKER=$TOP/bin/tools/named-rrchecker
-export SETTIME=$TOP/bin/dnssec/dnssec-settime
-export SIGNER=$TOP/bin/dnssec/dnssec-signzone
-export TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
-export VERIFY=$TOP/bin/dnssec/dnssec-verify
-export WIRETEST=$TOP/bin/tests/wire_test
+export HOST=$TOP_BUILDDIR/bin/dig/host
+export IMPORTKEY=$TOP_BUILDDIR/bin/dnssec/dnssec-importkey
+export JOURNALPRINT=$TOP_BUILDDIR/bin/tools/named-journalprint
+export KEYFRLAB=$TOP_BUILDDIR/bin/dnssec/dnssec-keyfromlabel
+export KEYGEN=$TOP_BUILDDIR/bin/dnssec/dnssec-keygen
+export MDIG=$TOP_BUILDDIR/bin/tools/mdig
+export NAMED=$TOP_BUILDDIR/bin/named/named
+export NSEC3HASH=$TOP_BUILDDIR/bin/tools/nsec3hash
+export NSLOOKUP=$TOP_BUILDDIR/bin/dig/nslookup
+export NSUPDATE=$TOP_BUILDDIR/bin/nsupdate/nsupdate
+export NZD2NZF=$TOP_BUILDDIR/bin/tools/named-nzd2nzf
+export REVOKE=$TOP_BUILDDIR/bin/dnssec/dnssec-revoke
+export RNDC=$TOP_BUILDDIR/bin/rndc/rndc
+export RNDCCONFGEN=$TOP_BUILDDIR/bin/confgen/rndc-confgen
+export RRCHECKER=$TOP_BUILDDIR/bin/tools/named-rrchecker
+export SETTIME=$TOP_BUILDDIR/bin/dnssec/dnssec-settime
+export SIGNER=$TOP_BUILDDIR/bin/dnssec/dnssec-signzone
+export TSIGKEYGEN=$TOP_BUILDDIR/bin/confgen/tsig-keygen
+export VERIFY=$TOP_BUILDDIR/bin/dnssec/dnssec-verify
+export WIRETEST=$TOP_BUILDDIR/bin/tests/wire_test
 
-export BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
-export GENCHECK=$TOP/bin/tests/system/rndc/gencheck
-export KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
-export KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
-export MAKEJOURNAL=$TOP/bin/tests/makejournal
-export PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
+export BIGKEY=$TOP_BUILDDIR/bin/tests/system/rsabigexponent/bigkey
+export GENCHECK=$TOP_BUILDDIR/bin/tests/system/rndc/gencheck
+export KEYCREATE=$TOP_BUILDDIR/bin/tests/system/tkey/keycreate
+export KEYDELETE=$TOP_BUILDDIR/bin/tests/system/tkey/keydelete
+export MAKEJOURNAL=$TOP_BUILDDIR/bin/tests/system/makejournal
+export PIPEQUERIES=$TOP_BUILDDIR/bin/tests/system/pipelined/pipequeries
 
 # we don't want a KRB5_CONFIG setting breaking the tests
 export KRB5_CONFIG=/dev/null
 # use local keytab instead of default /etc/krb5.keytab
 export KRB5_KTNAME=dns.keytab
 
-# Things that are different on Windows
-export KILL=kill
-export DIFF=diff
-export DOS2UNIX=true
-# There's no trailing period on Windows
-export TP=.
-
+#
 # Programs detected by configure
 # Variables will be empty if no program was found by configure
+#
 export SHELL=@SHELL@
 export CURL=@CURL@
+export NC=@NC@
 export XMLLINT=@XMLLINT@
 export XSLTPROC=@XSLTPROC@
 export PYTEST=@PYTEST@
 
-# Windows process management leave empty
-export PSSUSPEND=
-
 #
 # Interpreters for system tests detected by configure
 #
-export PERL=@PERL@
+export PERL=$(command -v "@PERL@" || true)
 if ! test -x "$PERL"; then
-    echo "Perl interpreter is required for system tests."
-    exit 77
+  echo "Perl interpreter is required for system tests."
+  exit 77
 fi
-export PYTHON=@PYTHON@
+export PYTHON=$(command -v "@PYTHON@" || true)
+if ! test -x "$PYTHON"; then
+  echo "Python interpreter is required for system tests."
+  exit 77
+fi
 
-#
-# Determine if we support various optional features.
-#
-export CRYPTO=@CRYPTO@
-
-
-# Load common values shared between windows and unix/linux.
-. $TOP/bin/tests/system/conf.sh.common
+# Load common values
+. $TOP_SRCDIR/bin/tests/system/conf.sh.common
 
 #
 # Construct the lists of tests to run
 #
-SEQUENTIAL_UNIX="@PKCS11_TEST@"
+SEQUENTIAL_UNIX=""
 SEQUENTIALDIRS="$SEQUENTIAL_COMMON $SEQUENTIAL_UNIX"
 
-PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ cookie logfileconfig"
+PARALLEL_UNIX="@DNSTAP@
+chain
+checkds
+cookie
+dlzexternal
+dnssec
+dyndb
+enginepkcs11
+filter-aaaa
+kasp
+keyfromlabel
+keymgr2kasp
+legacy
+logfileconfig
+nzd2nzf
+pipelined
+qmin
+shutdown
+tcp"
 PARALLELDIRS="$PARALLEL_COMMON $PARALLEL_UNIX"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"

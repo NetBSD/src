@@ -12,7 +12,7 @@
  */
 
 key rndc_key {
-	algorithm       hmac-sha256;
+	algorithm       @DEFAULT_HMAC@;
 	secret          "1234abcd8765";
 };
 
@@ -21,14 +21,15 @@ controls {
 };
 
 options {
-	query-source address 10.53.0.1 dscp 1;
-	notify-source 10.53.0.1 dscp 2;
-	transfer-source 10.53.0.1 dscp 3;
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
 	port @PORT@;
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation no;
 	deny-answer-addresses { 192.0.2.0/24; 2001:db8:beef::/48; }
 		 except-from { "example.org"; };
 	deny-answer-aliases { "example.org"; }

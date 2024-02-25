@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.8.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: a_1.c,v 1.8.2.2 2024/02/25 15:47:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -190,6 +190,7 @@ additionaldata_in_a(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zonekey.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: zonekey.h,v 1.6.2.1 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ZONEKEY_H
-#define DNS_ZONEKEY_H 1
+#pragma once
 
 /*! \file dns/zonekey.h */
 
@@ -36,5 +35,3 @@ dns_zonekey_iszonekey(dns_rdata_t *keyrdata);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ZONEKEY_H */

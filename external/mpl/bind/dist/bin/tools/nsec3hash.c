@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.6 2022/09/23 12:15:26 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.6.2.1 2024/02/25 15:45:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/attributes.h>
 #include <isc/base32.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -36,8 +37,8 @@
 
 const char *program = "nsec3hash";
 
-ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *format, ...) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+fatal(const char *format, ...);
 
 static void
 fatal(const char *format, ...) {

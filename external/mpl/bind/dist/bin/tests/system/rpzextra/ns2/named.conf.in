@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key rndc_key {
+    secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	listen-on { 10.53.0.2; };
+	pid-file "named.pid";
+	notify no;
+	dnssec-validation no;
+	allow-query { any; };
+};
+
+zone "allowed" {
+    type primary;
+	file "allowed.db";
+	allow-transfer { none; };
+};
+
+zone "baddomain" {
+    type primary;
+    file "baddomain.db";
+    allow-transfer { none; };
+};
+
+zone "gooddomain" {
+    type primary;
+    file "gooddomain.db";
+    allow-transfer { none; };
+};
+
+zone "rpz-external.local" {
+    type primary;
+    file "rpz-external.local.db";
+    allow-transfer { any; };
+};

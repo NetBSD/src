@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.9 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.9.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -293,6 +293,7 @@ additionaldata_tlsa(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rbtdb.h,v 1.5.2.1 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RBTDB_H
-#define DNS_RBTDB_H 1
+#pragma once
 
 #include <isc/lang.h>
 
@@ -50,5 +49,3 @@ dns_rbtdb_create(isc_mem_t *mctx, const dns_name_t *base, dns_dbtype_t type,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RBTDB_H */

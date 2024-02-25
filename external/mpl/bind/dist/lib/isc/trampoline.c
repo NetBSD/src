@@ -1,4 +1,4 @@
-/*	$NetBSD: trampoline.c,v 1.2 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: trampoline.c,v 1.2.2.1 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <isc/thread.h>
 #include <isc/util.h>
 
+#include "mem_p.h"
 #include "trampoline_p.h"
 
 #define ISC__TRAMPOLINE_UNUSED 0
@@ -37,13 +38,9 @@ struct isc__trampoline {
 };
 
 /*
- * We can't use isc_mem API here, because it's called too
- * early and when the isc_mem_debugging flags are changed
- * later and ISC_MEM_DEBUGSIZE or ISC_MEM_DEBUGCTX flags are
- * added, neither isc_mem_put() nor isc_mem_free() can be used
- * to free up the memory allocated here because the flags were
- * not set when calling isc_mem_get() or isc_mem_allocate()
- * here.
+ * We can't use isc_mem API here, because it's called too early and the
+ * isc_mem_debugging flags can be changed later causing mismatch between flags
+ * used for isc_mem_get() and isc_mem_put().
  *
  * Since this is a single allocation at library load and deallocation at library
  * unload, using the standard allocator without the tracking is fine for this
@@ -57,19 +54,9 @@ struct isc__trampoline {
 
 static uv_mutex_t isc__trampoline_lock;
 static isc__trampoline_t **trampolines;
-#if defined(HAVE_THREAD_LOCAL)
-#include <threads.h>
 thread_local size_t isc_tid_v = SIZE_MAX;
-#elif defined(HAVE___THREAD)
-__thread size_t isc_tid_v = SIZE_MAX;
-#elif HAVE___DECLSPEC_THREAD
-__declspec(thread) size_t isc_tid_v = SIZE_MAX;
-#endif /* if defined(HAVE_THREAD_LOCAL) */
 static size_t isc__trampoline_min = 1;
 static size_t isc__trampoline_max = 65;
-
-static isc_once_t start_once = ISC_ONCE_INIT;
-static isc_once_t stop_once = ISC_ONCE_INIT;
 
 static isc__trampoline_t *
 isc__trampoline_new(int tid, isc_threadfunc_t start, isc_threadarg_t arg) {
@@ -86,8 +73,8 @@ isc__trampoline_new(int tid, isc_threadfunc_t start, isc_threadarg_t arg) {
 	return (trampoline);
 }
 
-static void
-do_init(void) {
+void
+isc__trampoline_initialize(void) {
 	uv_mutex_init(&isc__trampoline_lock);
 
 	trampolines = calloc(isc__trampoline_max, sizeof(trampolines[0]));
@@ -106,12 +93,7 @@ do_init(void) {
 }
 
 void
-isc__trampoline_initialize(void) {
-	isc_once_do(&start_once, do_init);
-}
-
-static void
-do_shutdown(void) {
+isc__trampoline_shutdown(void) {
 	/*
 	 * When the program using the library exits abruptly and the library
 	 * gets unloaded, there might be some existing trampolines from unjoined
@@ -120,11 +102,6 @@ do_shutdown(void) {
 	 * of resources here, including the lock.
 	 */
 	free(trampolines[0]);
-}
-
-void
-isc__trampoline_shutdown(void) {
-	isc_once_do(&stop_once, do_shutdown);
 }
 
 isc__trampoline_t *
@@ -174,7 +151,7 @@ isc__trampoline_detach(isc__trampoline_t *trampoline) {
 		isc__trampoline_min = trampoline->tid;
 	}
 
-	free(trampoline->jemalloc_enforce_init);
+	isc__mem_free_noctx(trampoline->jemalloc_enforce_init, 8);
 	free(trampoline);
 
 	uv_mutex_unlock(&isc__trampoline_lock);
@@ -200,7 +177,7 @@ isc__trampoline_attach(isc__trampoline_t *trampoline) {
 	 * so that an optimizing compiler does not strip away such a pair of
 	 * malloc() + free() calls altogether, as it would foil the fix.
 	 */
-	trampoline->jemalloc_enforce_init = malloc(8);
+	trampoline->jemalloc_enforce_init = isc__mem_alloc_noctx(8);
 	uv_mutex_unlock(&isc__trampoline_lock);
 }
 

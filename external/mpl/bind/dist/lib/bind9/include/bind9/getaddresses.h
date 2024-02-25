@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.h,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: getaddresses.h,v 1.5.2.1 2024/02/25 15:46:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef BIND9_GETADDRESSES_H
-#define BIND9_GETADDRESSES_H 1
+#pragma once
 
 /*! \file bind9/getaddresses.h */
 
@@ -52,5 +51,3 @@ bind9_getaddresses(const char *hostname, in_port_t port, isc_sockaddr_t *addrs,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* BIND9_GETADDRESSES_H */

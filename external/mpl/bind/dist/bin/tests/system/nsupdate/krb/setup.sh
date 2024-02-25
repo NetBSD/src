@@ -13,7 +13,7 @@
 
 set -x
 
-PWD=`pwd`
+PWD=$(pwd)
 
 KRB5_CONFIG="${PWD}/krb5.conf"
 export KRB5_CONFIG
@@ -21,11 +21,11 @@ export KRB5_CONFIG
 KRB5_KDC_PROFILE=${PWD}/krb5kdc
 export KRB5_KDC_PROFILE
 
-now=`date +%s`
-lifetime=`expr 2147483647 - $now`
-lifetime=`expr $lifetime / 3600 / 24 - 30`
+now=$(date +%s)
+lifetime=$((2147483647 - now))
+lifetime=$((lifetime / 3600 / 24 - 30))
 
-cat << EOF > "${KRB5_CONFIG}"
+cat <<EOF >"${KRB5_CONFIG}"
 [libdefaults]
    default_realm = EXAMPLE.COM
    dns_lookup_kdc = false
@@ -56,7 +56,7 @@ rm -rf ${KRB5_KDC_PROFILE}
 mkdir -p ${KRB5_KDC_PROFILE}
 chmod 700 ${KRB5_KDC_PROFILE}
 
-cat << EOF > "${KRB5_KDC_PROFILE}"/kdc.conf
+cat <<EOF >"${KRB5_KDC_PROFILE}"/kdc.conf
 [kdcdefaults]
   kdc_ports = 50000
   kdc_tcp_ports = 50000
@@ -83,7 +83,6 @@ EOF
 krb5kdc -n &
 krb5kdcpid=$!
 #trap "kill $krb5kdcpid; wait; trap 0; exit" 0 15
-
 
 kadmin.local addprinc -maxlife ${lifetime}d -randkey DNS/ns7.example.com@EXAMPLE.COM
 kadmin.local addprinc -maxlife ${lifetime}d -randkey DNS/ns8.example.com@EXAMPLE.COM

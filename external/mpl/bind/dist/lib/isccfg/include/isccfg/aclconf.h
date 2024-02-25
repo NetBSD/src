@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.7.2.1 2024/02/25 15:47:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISCCFG_ACLCONF_H
-#define ISCCFG_ACLCONF_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -92,5 +91,3 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCFG_ACLCONF_H */

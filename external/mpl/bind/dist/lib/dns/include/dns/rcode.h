@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rcode.h,v 1.5.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RCODE_H
-#define DNS_RCODE_H 1
+#pragma once
 
 /*! \file dns/rcode.h */
 
@@ -108,5 +107,3 @@ dns_hashalg_fromtext(unsigned char *hashalg, isc_textregion_t *source);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RCODE_H */

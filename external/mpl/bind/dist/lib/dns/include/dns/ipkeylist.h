@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkeylist.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: ipkeylist.h,v 1.6.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_IPKEYLIST_H
-#define DNS_IPKEYLIST_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -23,13 +22,13 @@
 #include <dns/types.h>
 
 /*%
- * A structure holding a list of addresses, dscps and keys.  Used to
- * store masters for a slave zone, created by parsing config options.
+ * A structure holding a list of addresses and keys.  Used to store
+ * primaries for a secondary zone, created by parsing config options.
  */
 struct dns_ipkeylist {
 	isc_sockaddr_t *addrs;
-	isc_dscp_t     *dscps;
 	dns_name_t    **keys;
+	dns_name_t    **tlss;
 	dns_name_t    **labels;
 	uint32_t	count;
 	uint32_t	allocated;
@@ -88,5 +87,3 @@ dns_ipkeylist_resize(isc_mem_t *mctx, dns_ipkeylist_t *ipkl, unsigned int n);
  * \li	#ISC_R_SUCCESS if success
  * \li	#ISC_R_NOMEMORY if there's no memory, ipkeylist is left untouched
  */
-
-#endif /* ifndef DNS_IPKEYLIST_H */

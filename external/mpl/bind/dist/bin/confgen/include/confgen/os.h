@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.5 2022/09/23 12:15:20 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.5.2.1 2024/02/25 15:43:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,7 @@
 
 /*! \file */
 
-#ifndef RNDC_OS_H
-#define RNDC_OS_H 1
+#pragma once
 
 #include <stdio.h>
 
@@ -34,5 +33,3 @@ set_user(FILE *fd, const char *user);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ifndef RNDC_OS_H */

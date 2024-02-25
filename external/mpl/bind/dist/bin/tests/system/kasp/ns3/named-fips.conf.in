@@ -27,6 +27,7 @@ options {
 	allow-transfer { any; };
 	recursion no;
 	dnssec-policy "rsasha256";
+	dnssec-validation no;
 };
 
 key rndc_key {
@@ -46,6 +47,15 @@ zone "default.kasp" {
 	file "default.kasp.db";
 	inline-signing yes;
 	dnssec-policy "default";
+};
+
+/* A zone with special characters. */
+zone "i-am.\":\;?&[]\@!\$*+,|=\.\(\)special.kasp." {
+        type primary;
+        file "i-am.special.kasp.db";
+        check-names ignore;
+	inline-signing yes;
+        dnssec-policy "default";
 };
 
 /* checkds: Zone with one KSK. */
@@ -145,6 +155,18 @@ zone "dynamic-inline-signing.kasp" {
 	inline-signing yes;
 };
 
+/*
+ * A dynamic inline-signed zone with dnssec-policy with DNSSEC records in the
+ * raw version of the zone.
+ */
+zone "dynamic-signed-inline-signing.kasp" {
+	type primary;
+	file "dynamic-signed-inline-signing.kasp.db.signed";
+	key-directory "keys";
+	dnssec-policy "default";
+	allow-update { any; };
+};
+
 /* An inline-signed zone with dnssec-policy. */
 zone "inline-signing.kasp" {
 	type primary;
@@ -238,6 +260,17 @@ zone "max-zone-ttl.kasp" {
 	file "max-zone-ttl.kasp.db";
 	inline-signing yes;
 	dnssec-policy "ttl";
+};
+
+/*
+ * Zone for testing GL #2375: Three is a crowd.
+ */
+zone "three-is-a-crowd.kasp" {
+	type primary;
+	file "three-is-a-crowd.kasp.db";
+	inline-signing yes;
+	/* Use same policy as KSK rollover test zones. */
+	dnssec-policy "ksk-doubleksk";
 };
 
 /*

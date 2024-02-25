@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_list.h,v 1.5.2.1 2023/08/11 13:43:31 martin Exp $	*/
+/*	$NetBSD: dlz_list.h,v 1.5.2.2 2024/02/25 15:45:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,8 +18,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef DLZ_LIST_H
-#define DLZ_LIST_H 1
+#pragma once
 
 #define DLZ_LIST(type)             \
 	struct {                   \
@@ -71,5 +70,3 @@
 		(elt)->link.prev = (void *)(-1);                        \
 		(elt)->link.next = (void *)(-1);                        \
 	} while (0)
-
-#endif /* DLZ_LIST_H */

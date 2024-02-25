@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.9 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.9.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_QUOTA_H
-#define ISC_QUOTA_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -64,6 +63,7 @@ struct isc_quota {
 	atomic_uint_fast32_t waiting;
 	isc_mutex_t	     cblock;
 	ISC_LIST(isc_quota_cb_t) cbs;
+	ISC_LINK(isc_quota_t) link;
 };
 
 void
@@ -154,5 +154,3 @@ isc_quota_detach(isc_quota_t **p);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_QUOTA_H */

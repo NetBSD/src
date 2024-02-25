@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsconf.c,v 1.5 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: dnsconf.c,v 1.5.2.1 2024/02/25 15:47:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,6 @@ static cfg_clausedef_t dnsconf_clauses[] = {
 
 static cfg_clausedef_t *dnsconf_clausesets[] = { dnsconf_clauses, NULL };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_dnsconf = {
-	"dnsconf",	 cfg_parse_mapbody, cfg_print_mapbody,
-	cfg_doc_mapbody, &cfg_rep_map,	    dnsconf_clausesets
-};
+cfg_type_t cfg_type_dnsconf = { "dnsconf",	   cfg_parse_mapbody,
+				cfg_print_mapbody, cfg_doc_mapbody,
+				&cfg_rep_map,	   dnsconf_clausesets };

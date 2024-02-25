@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.7.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: stats.c,v 1.7.2.2 2024/02/25 15:46:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -369,10 +369,11 @@ void
 dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 			      dnssecsignstats_type_t operation) {
 	uint32_t kval;
-	int num_keys = isc_stats_ncounters(stats->counters) /
-		       dnssecsign_block_size;
 
 	REQUIRE(DNS_STATS_VALID(stats) && stats->type == dns_statstype_dnssec);
+
+	int num_keys = isc_stats_ncounters(stats->counters) /
+		       dnssecsign_block_size;
 
 	/* Shift algorithm in front of key tag, which is 16 bits */
 	kval = (uint32_t)(alg << 16 | id);
@@ -416,10 +417,11 @@ dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
 void
 dns_dnssecsignstats_clear(dns_stats_t *stats, dns_keytag_t id, uint8_t alg) {
 	uint32_t kval;
-	int num_keys = isc_stats_ncounters(stats->counters) /
-		       dnssecsign_block_size;
 
 	REQUIRE(DNS_STATS_VALID(stats) && stats->type == dns_statstype_dnssec);
+
+	int num_keys = isc_stats_ncounters(stats->counters) /
+		       dnssecsign_block_size;
 
 	/* Shift algorithm in front of key tag, which is 16 bits */
 	kval = (uint32_t)(alg << 16 | id);
@@ -629,7 +631,7 @@ dns_rcodestats_dump(dns_stats_t *stats, dns_rcodestats_dumper_t dump_fn,
 /***
  *** Obsolete variables and functions follow:
  ***/
-LIBDNS_EXTERNAL_DATA const char *dns_statscounter_names[DNS_STATS_NCOUNTERS] = {
+const char *dns_statscounter_names[DNS_STATS_NCOUNTERS] = {
 	"success",   "referral", "nxrrset",   "nxdomain",
 	"recursion", "failure",	 "duplicate", "dropped"
 };

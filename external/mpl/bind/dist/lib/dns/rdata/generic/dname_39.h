@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: dname_39.h,v 1.5.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNAME_39_H
-#define GENERIC_DNAME_39_H 1
+#pragma once
 
 /*!
  *  \brief per RFC2672 */
@@ -24,5 +23,3 @@ typedef struct dns_rdata_dname {
 	isc_mem_t *mctx;
 	dns_name_t dname;
 } dns_rdata_dname_t;
-
-#endif /* GENERIC_DNAME_39_H */

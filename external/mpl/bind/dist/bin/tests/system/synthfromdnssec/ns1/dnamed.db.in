@@ -10,7 +10,8 @@
 ; information regarding copyright ownership.
 
 $TTL 3600
-@		SOA	ns1 hostmaster 1 3600 1200 604800 3600
+@		SOA	ns1 hostmaster 1 3600 1200 604800 5
 @		NS	ns1
 ns1		A	10.53.0.1
 a		A	10.53.0.1
+dname		DNAME	example.

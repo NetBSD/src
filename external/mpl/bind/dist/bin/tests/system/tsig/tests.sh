@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 DIGOPTS="+tcp +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
 
@@ -28,65 +29,71 @@ sha512="jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4f
 
 status=0
 
-if $FEATURETEST --md5
-then
-	echo_i "fetching using hmac-md5 (old form)"
-	ret=0
-	$DIG $DIGOPTS example.nil. -y "md5:$md5" @10.53.0.1 soa > dig.out.md5.old || ret=1
-	grep -i "md5.*TSIG.*NOERROR" dig.out.md5.old > /dev/null || ret=1
-	if [ $ret -eq 1 ] ; then
-		echo_i "failed"; status=1
-	fi
+if $FEATURETEST --md5; then
+  echo_i "fetching using hmac-md5 (old form)"
+  ret=0
+  $DIG $DIGOPTS example.nil. -y "md5:$md5" @10.53.0.1 soa >dig.out.md5.old || ret=1
+  grep -i "md5.*TSIG.*NOERROR" dig.out.md5.old >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
+  fi
 
-	echo_i "fetching using hmac-md5 (new form)"
-	ret=0
-	$DIG $DIGOPTS example.nil. -y "hmac-md5:md5:$md5" @10.53.0.1 soa > dig.out.md5.new || ret=1
-	grep -i "md5.*TSIG.*NOERROR" dig.out.md5.new > /dev/null || ret=1
-	if [ $ret -eq 1 ] ; then
-		echo_i "failed"; status=1
-	fi
+  echo_i "fetching using hmac-md5 (new form)"
+  ret=0
+  $DIG $DIGOPTS example.nil. -y "hmac-md5:md5:$md5" @10.53.0.1 soa >dig.out.md5.new || ret=1
+  grep -i "md5.*TSIG.*NOERROR" dig.out.md5.new >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
+  fi
 else
-	echo_i "skipping using hmac-md5"
+  echo_i "skipping using hmac-md5"
 fi
 
 echo_i "fetching using hmac-sha1"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha1:sha1:$sha1" @10.53.0.1 soa > dig.out.sha1 || ret=1
-grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha1:sha1:$sha1" @10.53.0.1 soa >dig.out.sha1 || ret=1
+grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha224"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha224:sha224:$sha224" @10.53.0.1 soa > dig.out.sha224 || ret=1
-grep -i "sha224.*TSIG.*NOERROR" dig.out.sha224 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha224:sha224:$sha224" @10.53.0.1 soa >dig.out.sha224 || ret=1
+grep -i "sha224.*TSIG.*NOERROR" dig.out.sha224 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha256"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha256:sha256:$sha256" @10.53.0.1 soa > dig.out.sha256 || ret=1
-grep -i "sha256.*TSIG.*NOERROR" dig.out.sha256 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha256:sha256:$sha256" @10.53.0.1 soa >dig.out.sha256 || ret=1
+grep -i "sha256.*TSIG.*NOERROR" dig.out.sha256 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha384"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha384:sha384:$sha384" @10.53.0.1 soa > dig.out.sha384 || ret=1
-grep -i "sha384.*TSIG.*NOERROR" dig.out.sha384 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha384:sha384:$sha384" @10.53.0.1 soa >dig.out.sha384 || ret=1
+grep -i "sha384.*TSIG.*NOERROR" dig.out.sha384 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha512"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha512:sha512:$sha512" @10.53.0.1 soa > dig.out.sha512 || ret=1
-grep -i "sha512.*TSIG.*NOERROR" dig.out.sha512 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha512:sha512:$sha512" @10.53.0.1 soa >dig.out.sha512 || ret=1
+grep -i "sha512.*TSIG.*NOERROR" dig.out.sha512 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 #
@@ -94,168 +101,245 @@ fi
 #	Truncated TSIG
 #
 #
-if $FEATURETEST --md5
-then
-	echo_i "fetching using hmac-md5 (trunc)"
-	ret=0
-	$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5-trunc:$md5" @10.53.0.1 soa > dig.out.md5.trunc || ret=1
-	grep -i "md5-trunc.*TSIG.*NOERROR" dig.out.md5.trunc > /dev/null || ret=1
-	if [ $ret -eq 1 ] ; then
-		echo_i "failed"; status=1
-	fi
+if $FEATURETEST --md5; then
+  echo_i "fetching using hmac-md5 (trunc)"
+  ret=0
+  $DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5-trunc:$md5" @10.53.0.1 soa >dig.out.md5.trunc || ret=1
+  grep -i "md5-trunc.*TSIG.*NOERROR" dig.out.md5.trunc >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
+  fi
 else
-	echo_i "skipping using hmac-md5 (trunc)"
+  echo_i "skipping using hmac-md5 (trunc)"
 fi
 
 echo_i "fetching using hmac-sha1 (trunc)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha1-80:sha1-trunc:$sha1" @10.53.0.1 soa > dig.out.sha1.trunc || ret=1
-grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha1-80:sha1-trunc:$sha1" @10.53.0.1 soa >dig.out.sha1.trunc || ret=1
+grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1.trunc >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha224 (trunc)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha224-112:sha224-trunc:$sha224" @10.53.0.1 soa > dig.out.sha224.trunc || ret=1
-grep -i "sha224-trunc.*TSIG.*NOERROR" dig.out.sha224.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha224-112:sha224-trunc:$sha224" @10.53.0.1 soa >dig.out.sha224.trunc || ret=1
+grep -i "sha224-trunc.*TSIG.*NOERROR" dig.out.sha224.trunc >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha256 (trunc)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha256-128:sha256-trunc:$sha256" @10.53.0.1 soa > dig.out.sha256.trunc || ret=1
-grep -i "sha256-trunc.*TSIG.*NOERROR" dig.out.sha256.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha256-128:sha256-trunc:$sha256" @10.53.0.1 soa >dig.out.sha256.trunc || ret=1
+grep -i "sha256-trunc.*TSIG.*NOERROR" dig.out.sha256.trunc >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha384 (trunc)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha384-192:sha384-trunc:$sha384" @10.53.0.1 soa > dig.out.sha384.trunc || ret=1
-grep -i "sha384-trunc.*TSIG.*NOERROR" dig.out.sha384.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha384-192:sha384-trunc:$sha384" @10.53.0.1 soa >dig.out.sha384.trunc || ret=1
+grep -i "sha384-trunc.*TSIG.*NOERROR" dig.out.sha384.trunc >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha512-256 (trunc)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha512-256:sha512-trunc:$sha512" @10.53.0.1 soa > dig.out.sha512.trunc || ret=1
-grep -i "sha512-trunc.*TSIG.*NOERROR" dig.out.sha512.trunc > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha512-256:sha512-trunc:$sha512" @10.53.0.1 soa >dig.out.sha512.trunc || ret=1
+grep -i "sha512-trunc.*TSIG.*NOERROR" dig.out.sha512.trunc >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
-
 
 #
 #
 #	Check for bad truncation.
 #
 #
-if $FEATURETEST --md5
-then
-	echo_i "fetching using hmac-md5-80 (BADTRUNC)"
-	ret=0
-	$DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5:$md5" @10.53.0.1 soa > dig.out.md5-80 || ret=1
-	grep -i "md5.*TSIG.*BADTRUNC" dig.out.md5-80 > /dev/null || ret=1
-	if [ $ret -eq 1 ] ; then
-		echo_i "failed"; status=1
-	fi
+if $FEATURETEST --md5; then
+  echo_i "fetching using hmac-md5-80 (BADTRUNC)"
+  ret=0
+  $DIG $DIGOPTS example.nil. -y "hmac-md5-80:md5:$md5" @10.53.0.1 soa >dig.out.md5-80 || ret=1
+  grep -i "md5.*TSIG.*BADTRUNC" dig.out.md5-80 >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
+  fi
 else
-	echo_i "skipping using hmac-md5-80 (BADTRUNC)"
+  echo_i "skipping using hmac-md5-80 (BADTRUNC)"
 fi
 
 echo_i "fetching using hmac-sha1-80 (BADTRUNC)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha1-80:sha1:$sha1" @10.53.0.1 soa > dig.out.sha1-80 || ret=1
-grep -i "sha1.*TSIG.*BADTRUNC" dig.out.sha1-80 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha1-80:sha1:$sha1" @10.53.0.1 soa >dig.out.sha1-80 || ret=1
+grep -i "sha1.*TSIG.*BADTRUNC" dig.out.sha1-80 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha224-112 (BADTRUNC)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha224-112:sha224:$sha224" @10.53.0.1 soa > dig.out.sha224-112 || ret=1
-grep -i "sha224.*TSIG.*BADTRUNC" dig.out.sha224-112 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha224-112:sha224:$sha224" @10.53.0.1 soa >dig.out.sha224-112 || ret=1
+grep -i "sha224.*TSIG.*BADTRUNC" dig.out.sha224-112 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha256-128 (BADTRUNC)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha256-128:sha256:$sha256" @10.53.0.1 soa > dig.out.sha256-128 || ret=1
-grep -i "sha256.*TSIG.*BADTRUNC" dig.out.sha256-128 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha256-128:sha256:$sha256" @10.53.0.1 soa >dig.out.sha256-128 || ret=1
+grep -i "sha256.*TSIG.*BADTRUNC" dig.out.sha256-128 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha384-192 (BADTRUNC)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha384-192:sha384:$sha384" @10.53.0.1 soa > dig.out.sha384-192 || ret=1
-grep -i "sha384.*TSIG.*BADTRUNC" dig.out.sha384-192 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha384-192:sha384:$sha384" @10.53.0.1 soa >dig.out.sha384-192 || ret=1
+grep -i "sha384.*TSIG.*BADTRUNC" dig.out.sha384-192 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "fetching using hmac-sha512-256 (BADTRUNC)"
 ret=0
-$DIG $DIGOPTS example.nil. -y "hmac-sha512-256:sha512:$sha512" @10.53.0.1 soa > dig.out.sha512-256 || ret=1
-grep -i "sha512.*TSIG.*BADTRUNC" dig.out.sha512-256 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "hmac-sha512-256:sha512:$sha512" @10.53.0.1 soa >dig.out.sha512-256 || ret=1
+grep -i "sha512.*TSIG.*BADTRUNC" dig.out.sha512-256 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "attempting fetch with bad tsig algorithm"
 ret=0
-$DIG $DIGOPTS example.nil. -y "badalgo:invalid:$sha512" @10.53.0.1 soa > dig.out.badalgo 2>&1 || ret=1
-grep -i "Couldn't create key invalid: algorithm is unsupported" dig.out.badalgo > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG $DIGOPTS example.nil. -y "badalgo:invalid:$sha512" @10.53.0.1 soa >dig.out.badalgo 2>&1 || ret=1
+grep -i "Couldn't create key invalid: algorithm is unsupported" dig.out.badalgo >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "checking both OPT and TSIG records are returned when TC=1"
 ret=0
-$DIG -p ${PORT} +ignore +bufsize=512 large.example.nil -y "hmac-sha1:sha1:$sha1" @10.53.0.1 txt > dig.out.large 2>&1 || ret=1
-grep "flags:.* tc[ ;]" dig.out.large > /dev/null || ret=1
-grep "status: NOERROR" dig.out.large > /dev/null || ret=1
-grep "EDNS:" dig.out.large > /dev/null || ret=1
-grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1 > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-	echo_i "failed"; status=1
+$DIG -p ${PORT} +ignore +bufsize=512 large.example.nil -y "hmac-sha1:sha1:$sha1" @10.53.0.1 txt >dig.out.large 2>&1 || ret=1
+grep "flags:.* tc[ ;]" dig.out.large >/dev/null || ret=1
+grep "status: NOERROR" dig.out.large >/dev/null || ret=1
+grep "EDNS:" dig.out.large >/dev/null || ret=1
+grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "check that dnssec-keygen won't generate TSIG keys"
 ret=0
-$KEYGEN -a hmac-sha256 -b 128 -n host example.net > keygen.out3 2>&1 && ret=1
-grep "unknown algorithm" keygen.out3 > /dev/null || ret=1
+$KEYGEN -a hmac-sha256 -b 128 -n host example.net >keygen.out3 2>&1 && ret=1
+grep "unknown algorithm" keygen.out3 >/dev/null || ret=1
 
 echo_i "check that a 'BADTIME' response with 'QR=0' is handled as a request"
 ret=0
-$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp < badtime > /dev/null || ret=1
-$DIG -p ${PORT} @10.53.0.1 version.bind txt ch > dig.out.verify || ret=1
-grep "status: NOERROR" dig.out.verify > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-    echo_i "failed"; status=1
+$PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp <badtime >/dev/null || ret=1
+$DIG -p ${PORT} @10.53.0.1 version.bind txt ch >dig.out.verify || ret=1
+grep "status: NOERROR" dig.out.verify >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
-if "$PERL" -e 'use Net::DNS; use Net::DNS::Packet;' > /dev/null 2>&1
-then
+if "$PERL" -e 'use Net::DNS; use Net::DNS::Packet;' >/dev/null 2>&1; then
   echo_i "check that TSIG in the wrong place returns FORMERR"
   ret=0
-  $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t udp -d < badlocation > packet.out
-  grep "rcode  = FORMERR" packet.out > /dev/null || ret=1
-  if [ $ret -eq 1 ] ; then
-    echo_i "failed"; status=1
+  $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t udp -d <badlocation >packet.out
+  grep "rcode  = FORMERR" packet.out >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
   fi
 fi
 
 echo_i "check that a malformed truncated response to a TSIG query is handled"
 ret=0
-$DIG -p $PORT @10.53.0.1 bad-tsig > dig.out.bad-tsig || ret=1
-grep "status: SERVFAIL" dig.out.bad-tsig > /dev/null || ret=1
-if [ $ret -eq 1 ] ; then
-    echo_i "failed"; status=1
+$DIG -p $PORT @10.53.0.1 bad-tsig >dig.out.bad-tsig || ret=1
+grep "status: SERVFAIL" dig.out.bad-tsig >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
+fi
+
+if $FEATURETEST --md5; then
+  echo_i "fetching using hmac-md5 (legacy)"
+  ret=0
+  $DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-md5-legacy.+*.key @10.53.0.1 soa >dig.out.md5.legacy 2>&1 || ret=1
+  grep -i "md5.*TSIG.*NOERROR" dig.out.md5.legacy >/dev/null || ret=1
+  grep "Use of K\* file pairs for HMAC is deprecated" dig.out.md5.legacy >/dev/null || ret=1
+  if [ $ret -eq 1 ]; then
+    echo_i "failed"
+    status=1
+  fi
+else
+  echo_i "skipping using hmac-md5"
+fi
+
+echo_i "fetching using hmac-sha1 (legacy)"
+ret=0
+$DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-sha1-legacy.+*.key @10.53.0.1 soa >dig.out.sha1.legacy 2>&1 || ret=1
+grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1.legacy >/dev/null || ret=1
+grep "Use of K\* file pairs for HMAC is deprecated" dig.out.sha1.legacy >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
+fi
+
+echo_i "fetching using hmac-sha224 (legacy)"
+ret=0
+$DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-sha224-legacy.+*.key @10.53.0.1 soa >dig.out.sha224 2>&1 || ret=1
+grep -i "sha224.*TSIG.*NOERROR" dig.out.sha224 >/dev/null || ret=1
+grep "Use of K\* file pairs for HMAC is deprecated" dig.out.sha224 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
+fi
+
+echo_i "fetching using hmac-sha256 (legacy)"
+ret=0
+$DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-sha256-legacy.*.key @10.53.0.1 soa >dig.out.sha256 2>&1 || ret=1
+grep -i "sha256.*TSIG.*NOERROR" dig.out.sha256 >/dev/null || ret=1
+grep "Use of K\* file pairs for HMAC is deprecated" dig.out.sha256 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
+fi
+
+echo_i "fetching using hmac-sha384 (legacy)"
+ret=0
+$DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-sha384-legacy.*.key @10.53.0.1 soa >dig.out.sha384 2>&1 || ret=1
+grep -i "sha384.*TSIG.*NOERROR" dig.out.sha384 >/dev/null || ret=1
+grep "Use of K\* file pairs for HMAC is deprecated" dig.out.sha384 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
+fi
+
+echo_i "fetching using hmac-sha512 (legacy)"
+ret=0
+$DIG $DIGOPTS example.nil. -k ns1/legacy/Khmac-sha512-legacy.*.key @10.53.0.1 soa >dig.out.sha512 2>&1 || ret=1
+grep "Use of K\* file pairs for HMAC is deprecated" dig.out.sha512 >/dev/null || ret=1
+grep -i "sha512.*TSIG.*NOERROR" dig.out.sha512 >/dev/null || ret=1
+if [ $ret -eq 1 ]; then
+  echo_i "failed"
+  status=1
 fi
 
 echo_i "exit status: $status"

@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.6.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_RESOURCE_H
-#define ISC_RESOURCE_H 1
+#pragma once
 
 /*! \file isc/resource.h */
 
@@ -88,5 +87,3 @@ isc_resource_getcurlimit(isc_resource_t resource, isc_resourcevalue_t *value);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RESOURCE_H */

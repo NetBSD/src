@@ -222,17 +222,15 @@ def algorithms_env(algs: AlgorithmSet) -> Dict[str, str]:
 
 
 def main():
-    disable_checking = int(os.getenv("DISABLE_ALGORITHM_SUPPORT_CHECKING", "0"))
     try:
         algs = ALGORITHM_SETS[ALGORITHM_SET]
-        if not disable_checking:
-            algs = filter_supported(algs)
+        algs = filter_supported(algs)
         algs = select_random(algs)
         algs_env = algorithms_env(algs)
     except Exception:
         # if anything goes wrong, the conf.sh ignores error codes, so make sure
         # we set an environment variable to an error value that can be checked
-        # later by run.sh
+        # later by the test runner and/or tests themselves
         print("export ALGORITHM_SET=error")
         raise
     for name, value in algs_env.items():

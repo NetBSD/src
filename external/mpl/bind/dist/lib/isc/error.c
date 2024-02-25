@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.6.2.1 2024/02/25 15:47:16 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,12 +23,12 @@
 
 /*% Default unexpected callback. */
 static void
-default_unexpected_callback(const char *, int, const char *, va_list)
-	ISC_FORMAT_PRINTF(3, 0);
+default_unexpected_callback(const char *, int, const char *, const char *,
+			    va_list) ISC_FORMAT_PRINTF(4, 0);
 
 /*% Default fatal callback. */
 static void
-default_fatal_callback(const char *, int, const char *, va_list)
+default_fatal_callback(const char *, int, const char *, const char *, va_list)
 	ISC_FORMAT_PRINTF(3, 0);
 
 /*% unexpected_callback */
@@ -54,42 +54,39 @@ isc_error_setfatal(isc_errorcallback_t cb) {
 }
 
 void
-isc_error_unexpected(const char *file, int line, const char *format, ...) {
+isc_error_unexpected(const char *file, int line, const char *func,
+		     const char *format, ...) {
 	va_list args;
 
 	va_start(args, format);
-	(unexpected_callback)(file, line, format, args);
+	(unexpected_callback)(file, line, func, format, args);
 	va_end(args);
 }
 
 void
-isc_error_fatal(const char *file, int line, const char *format, ...) {
+isc_error_fatal(const char *file, int line, const char *func,
+		const char *format, ...) {
 	va_list args;
 
 	va_start(args, format);
-	(fatal_callback)(file, line, format, args);
+	(fatal_callback)(file, line, func, format, args);
 	va_end(args);
 	abort();
 }
 
-void
-isc_error_runtimecheck(const char *file, int line, const char *expression) {
-	isc_error_fatal(file, line, "RUNTIME_CHECK(%s) failed", expression);
-}
-
 static void
-default_unexpected_callback(const char *file, int line, const char *format,
-			    va_list args) {
-	fprintf(stderr, "%s:%d: ", file, line);
+default_unexpected_callback(const char *file, int line, const char *func,
+			    const char *format, va_list args) {
+	fprintf(stderr, "%s:%d:%s(): ", file, line, func);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
 	fflush(stderr);
 }
 
 static void
-default_fatal_callback(const char *file, int line, const char *format,
-		       va_list args) {
-	fprintf(stderr, "%s:%d: fatal error: ", file, line);
+default_fatal_callback(const char *file, int line, const char *func,
+		       const char *format, va_list args) {
+	fprintf(stderr, "%s:%d:%s(): fatal error: ", file, line, func);
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
 	fflush(stderr);

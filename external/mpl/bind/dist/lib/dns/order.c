@@ -1,4 +1,4 @@
-/*	$NetBSD: order.c,v 1.7.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: order.c,v 1.7.2.2 2024/02/25 15:46:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -83,7 +83,7 @@ dns_order_add(dns_order_t *order, const dns_name_t *name,
 	ent = isc_mem_get(order->mctx, sizeof(*ent));
 
 	dns_fixedname_init(&ent->name);
-	dns_name_copynf(name, dns_fixedname_name(&ent->name));
+	dns_name_copy(name, dns_fixedname_name(&ent->name));
 	ent->rdtype = rdtype;
 	ent->rdclass = rdclass;
 	ent->mode = mode;

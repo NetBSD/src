@@ -11,15 +11,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../conf.sh
 
-set -e
-
-if $PERL -e 'use Net::DNS;' 2>/dev/null
-then
-    :
-else
-    echo_i "This test requires the Net::DNS library." >&2
-    exit 1
+if ! ${PYTHON} -c 'import dns'; then
+  echo_i "python dns module is required"
+  exit 1
 fi
+
+if ! ${PERL} -MNet::DNS -e ''; then
+  echo_i "perl Net::DNS module is required"
+  exit 1
+fi
+
+exit 0

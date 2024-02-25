@@ -1,0 +1,62 @@
+zone <string> [ <class> ] {
+	type primary;
+	allow-query { <address_match_element>; ... };
+	allow-query-on { <address_match_element>; ... };
+	allow-transfer [ port <integer> ] [ transport <string> ] { <address_match_element>; ... };
+	allow-update { <address_match_element>; ... };
+	also-notify [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	alt-transfer-source ( <ipv4_address> | * ) ; // deprecated
+	alt-transfer-source-v6 ( <ipv6_address> | * ) ; // deprecated
+	auto-dnssec ( allow | maintain | off ); // deprecated
+	check-dup-records ( fail | warn | ignore );
+	check-integrity <boolean>;
+	check-mx ( fail | warn | ignore );
+	check-mx-cname ( fail | warn | ignore );
+	check-names ( fail | warn | ignore );
+	check-sibling <boolean>;
+	check-spf ( warn | ignore );
+	check-srv-cname ( fail | warn | ignore );
+	check-wildcard <boolean>;
+	database <string>;
+	dialup ( notify | notify-passive | passive | refresh | <boolean> ); // deprecated
+	dlz <string>;
+	dnskey-sig-validity <integer>;
+	dnssec-dnskey-kskonly <boolean>;
+	dnssec-loadkeys-interval <integer>;
+	dnssec-policy <string>;
+	dnssec-secure-to-insecure <boolean>;
+	dnssec-update-mode ( maintain | no-resign );
+	file <quoted_string>;
+	forward ( first | only );
+	forwarders [ port <integer> ]  { ( <ipv4_address> | <ipv6_address> ) [ port <integer> ]; ... };
+	inline-signing <boolean>;
+	ixfr-from-differences <boolean>;
+	journal <quoted_string>;
+	key-directory <quoted_string>;
+	masterfile-format ( raw | text );
+	masterfile-style ( full | relative );
+	max-ixfr-ratio ( unlimited | <percentage> );
+	max-journal-size ( default | unlimited | <sizeval> );
+	max-records <integer>;
+	max-transfer-idle-out <integer>;
+	max-transfer-time-out <integer>;
+	max-zone-ttl ( unlimited | <duration> );
+	notify ( explicit | master-only | primary-only | <boolean> );
+	notify-delay <integer>;
+	notify-source ( <ipv4_address> | * ) ;
+	notify-source-v6 ( <ipv6_address> | * ) ;
+	notify-to-soa <boolean>;
+	nsec3-test-zone <boolean>; // test only
+	parental-agents [ port <integer> ]  { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ] [ tls <string> ]; ... };
+	parental-source ( <ipv4_address> | * ) ;
+	parental-source-v6 ( <ipv6_address> | * ) ;
+	serial-update-method ( date | increment | unixtime );
+	sig-signing-nodes <integer>;
+	sig-signing-signatures <integer>;
+	sig-signing-type <integer>;
+	sig-validity-interval <integer> [ <integer> ];
+	update-check-ksk <boolean>;
+	update-policy ( local | { ( deny | grant ) <string> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | krb5-subdomain-self-rhs | ms-self | ms-selfsub | ms-subdomain | ms-subdomain-self-rhs | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <string> ] <rrtypelist>; ... } );
+	zero-no-soa-ttl <boolean>;
+	zone-statistics ( full | terse | none | <boolean> );
+};

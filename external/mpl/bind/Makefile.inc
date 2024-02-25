@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2021/08/19 11:50:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.1 2024/02/25 15:42:51 martin Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -14,25 +14,16 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
 
 .include <bsd.own.mk>
 
-LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
+LIBUVDIR=	${NETBSDSRCDIR}/external/mit/libuv
 LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
-
-NAMED_USE_OPENSSL?=yes
-
-.if exists(${NETBSDSRCDIR}/sys/sys/atomic.h)
-NAMED_USE_PTHREADS?=yes
-.else
-NAMED_USE_PTHREADS?=no
-.endif
+CPPFLAGS+=	-I${LIBUVDIR}/dist/include
+CFLAGS+=	-std=gnu18
+LINTFLAGS+=	-Ac11
 
 BIND_SRCDIR:=	${.PARSEDIR}
 IDIST=		${BIND_SRCDIR}/dist
 BIND_HTMLDIR=	/usr/share/doc/reference/ref8/bind9
 
-VERSIONFILE=${IDIST}/version
-.include "${VERSIONFILE}"
-
-VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 
@@ -47,16 +38,8 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 	-I${IDIST}/lib/isc/include -I${IDIST}/lib/isc/unix/include \
 	-I${IDIST}/lib/isccfg/include \
 	-I${IDIST}/lib/isccc/include \
-	-DNS_LOCALSTATEDIR=\"${LOCALSTATEDIR}\" \
-	-DNS_SYSCONFDIR=\"${SYSCONFDIR}\" \
 	-DSESSION_KEYFILE=\"${LOCALSTATEDIR}/run/named/session.key\" \
-	-DNAMED_CONFFILE=\"${SYSCONFDIR}/named.conf\" \
-	-DVERSION=\"${VERSION}\" -DBIND9
-
-.if (${USE_INET6} != "no")
-CPPFLAGS+=	-DWANT_IPV6
-CPPFLAGS+=	-DALLOW_FILTER_AAAA
-.endif
+	-DNAMED_CONFFILE=\"${SYSCONFDIR}/named.conf\"
 
 .if defined(HAVE_GCC)
 COPTS+=	-Wno-pointer-sign
@@ -83,36 +66,18 @@ DPADD+=		${LIBISCCC} ${LIBISC}
 DPADD+=		${LIBUVOBJDIR}/libuv.a
 DPADD+=		${LIBEXECINFO} ${LIBKVM} ${LIBZ}
 .endif
-.else
-CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
-	   -DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
 .endif
-#CPPFLAGS+= -DUSE_MEMIMPREGISTER -DUSE_APPIMPREGISTER -DUSE_SOCKETIMPREGISTER \
-#    -DUSE_TIMERIMPREGISTER
 
 LDADD+=-lblocklist
 DPADD+=${LIBBLOCKLIST}
 
-.if ${NAMED_USE_PTHREADS} == "yes"
-# XXX: Not ready yet
-# CPPFLAGS+=	-DISC_PLATFORM_USE_NATIVE_RWLOCKS
-CPPFLAGS+=	-DISC_PLATFORM_USETHREADS
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lpthread
 DPADD+= ${LIBPTHREAD}
 .else
 LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
-.endif
 
-.if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
-.if ${HAVE_OPENSSL} == 10
-CPPFLAGS+=-DHAVE_OPENSSL_GOST
-.endif
-.if ${MKKERBEROS} != "no"
-CPPFLAGS+=-DGSSAPI
-.endif
 .if ${MKKERBEROS} != "no"
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
@@ -123,6 +88,7 @@ LIBDPLIBS+=	$L ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/lib$L
 .endfor
 .endif
 .endif
+
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lssl -lcrypto -lcrypt
 DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
@@ -131,15 +97,10 @@ LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR
 .endif
 .endif
 
-.if ${NAMED_USE_PTHREADS} == "yes"
-CPPFLAGS+=-DISC_PLATFORM_USETHREADS -I${IDIST}/lib/isc/pthreads/include
-.else
-CPPFLAGS+=-I${IDIST}/lib/isc/nothreads/include
-.endif
+CPPFLAGS+=-I${IDIST}/lib/isc/pthreads/include
 
 .if exists(${.PARSEDIR}/../Makefile.inc)
 .include "${.PARSEDIR}/../Makefile.inc"
-.endif
 .endif
 
 COPTS+=	-fcommon

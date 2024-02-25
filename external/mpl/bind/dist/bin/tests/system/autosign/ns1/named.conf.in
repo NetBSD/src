@@ -28,7 +28,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -42,6 +42,7 @@ zone "." {
 	allow-query { any; };
 	allow-update { any; };
 	auto-dnssec maintain;
+	dnssec-dnskey-kskonly no;
 };
 
 include "trusted.conf";

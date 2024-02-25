@@ -25,6 +25,7 @@ options {
 	check-integrity no;
 	no-case-compress { 10.53.0.2; };
 	minimal-responses no;
+	dnssec-validation no;
 };
 
 zone "example" {

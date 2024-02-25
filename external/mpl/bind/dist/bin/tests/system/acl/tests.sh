@@ -11,49 +11,64 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
-RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p ${CONTROLPORT} -s"
+RNDCCMD="$RNDC -c ../_common/rndc.conf -p ${CONTROLPORT} -s"
 
 status=0
 t=0
 
 echo_i "testing basic ACL processing"
 # key "one" should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
-
+  @10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 # any other key should be fine
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 copy_setports ns2/named2.conf.in ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
 
 # prefix 10/8 should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 # any other address should work, as long as it sends key "one"
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 127.0.0.1 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 127.0.0.1 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 127.0.0.1 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 127.0.0.1 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 echo_i "testing nested ACL processing"
 # all combinations of 10.53.0.{1|2} with key {one|two}, should succeed
@@ -62,45 +77,66 @@ rndc_reload ns2 10.53.0.2
 sleep 5
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.2 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.2 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # but only one or the other should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 127.0.0.1 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 127.0.0.1 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $tt failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.2 axfr >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $tt failed"
+  status=1
+}
 
 # and other values? right out
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 127.0.0.1 axfr -y "${DEFAULT_HMAC}:three:1234abcd8765" > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 127.0.0.1 axfr -y "${DEFAULT_HMAC}:three:1234abcd8765" >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 # now we only allow 10.53.0.1 *and* key one, or 10.53.0.2 *and* key two
 copy_setports ns2/named4.conf.in ns2/named.conf
@@ -108,63 +144,82 @@ rndc_reload ns2 10.53.0.2
 sleep 5
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.2 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should succeed
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 && { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 && {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.2 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.2 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.1 axfr -y two:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 # should fail
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 10.53.0.3 axfr -y one:1234abcd8765 > dig.out.${t}
-grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.3 axfr -y one:1234abcd8765 >dig.out.${t}
+grep "^;" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 echo_i "testing allow-query-on ACL processing"
 copy_setports ns2/named5.conf.in ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
-t=`expr $t + 1`
+t=$((t + 1))
 $DIG -p ${PORT} +tcp soa example. \
-	@10.53.0.2 -b 10.53.0.3 > dig.out.${t}
-grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
+  @10.53.0.2 -b 10.53.0.3 >dig.out.${t}
+grep "status: NOERROR" dig.out.${t} >/dev/null 2>&1 || {
+  echo_i "test $t failed"
+  status=1
+}
 
 echo_i "testing blackhole ACL processing"
-t=`expr $t + 1`
+t=$((t + 1))
 ret=0
 $DIG -p ${PORT} +tcp soa example. \
-	@10.53.0.2 -b 10.53.0.3 > dig.out.1.${t}
-grep "status: NOERROR" dig.out.1.${t} > /dev/null 2>&1 || ret=1
+  @10.53.0.2 -b 10.53.0.3 >dig.out.1.${t}
+grep "status: NOERROR" dig.out.1.${t} >/dev/null 2>&1 || ret=1
 $DIG -p ${PORT} +tcp soa example. \
-	@10.53.0.2 -b 10.53.0.8 > dig.out.2.${t}
-grep "status: NOERROR" dig.out.2.${t} > /dev/null 2>&1 && ret=1
-grep "communications error" dig.out.2.${t} > /dev/null 2>&1 || ret=1
+  @10.53.0.2 -b 10.53.0.8 >dig.out.2.${t} && ret=1
+grep "status: NOERROR" dig.out.2.${t} >/dev/null 2>&1 && ret=1
+grep "communications error" dig.out.2.${t} >/dev/null 2>&1 || ret=1
 $DIG -p ${PORT} soa example. \
-	@10.53.0.2 -b 10.53.0.3 > dig.out.3.${t}
-grep "status: NOERROR" dig.out.3.${t} > /dev/null 2>&1 || ret=1
+  @10.53.0.2 -b 10.53.0.3 >dig.out.3.${t}
+grep "status: NOERROR" dig.out.3.${t} >/dev/null 2>&1 || ret=1
 $DIG -p ${PORT} soa example. \
-	@10.53.0.2 -b 10.53.0.8 > dig.out.4.${t}
-grep "status: NOERROR" dig.out.4.${t} > /dev/null 2>&1 && ret=1
-grep "connection timed out" dig.out.4.${t} > /dev/null 2>&1 || ret=1
+  @10.53.0.2 -b 10.53.0.8 >dig.out.4.${t} && ret=1
+grep "status: NOERROR" dig.out.4.${t} >/dev/null 2>&1 && ret=1
+grep "timed out" dig.out.4.${t} >/dev/null 2>&1 || ret=1
+grep ";; no servers could be reached" dig.out.4.${t} >/dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
+status=$((status + ret))
 
 # AXFR tests against ns3
 
@@ -174,26 +229,26 @@ echo_i "calling addzone example.com on ns3"
 $RNDCCMD 10.53.0.3 addzone 'example.com {type primary; file "example.db"; }; '
 sleep 1
 
-t=`expr $t + 1`
+t=$((t + 1))
 ret=0
 echo_i "checking AXFR of example.com from ns3 with ACL allow-transfer { none; }; (${t})"
-$DIG -p ${PORT} @10.53.0.3 example.com axfr > dig.out.${t} 2>&1
+$DIG -p ${PORT} @10.53.0.3 example.com axfr >dig.out.${t} 2>&1
 grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "calling rndc reconfig"
 rndc_reconfig ns3 10.53.0.3
 
 sleep 1
 
-t=`expr $t + 1`
+t=$((t + 1))
 ret=0
 echo_i "re-checking AXFR of example.com from ns3 with ACL allow-transfer { none; }; (${t})"
-$DIG -p ${PORT} @10.53.0.3 example.com axfr > dig.out.${t} 2>&1
+$DIG -p ${PORT} @10.53.0.3 example.com axfr >dig.out.${t} 2>&1
 grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
+status=$((status + ret))
 
 # AXFR tests against ns4
 
@@ -203,26 +258,26 @@ echo_i "calling addzone example.com on ns4"
 $RNDCCMD 10.53.0.4 addzone 'example.com {type primary; file "example.db"; }; '
 sleep 1
 
-t=`expr $t + 1`
+t=$((t + 1))
 ret=0
 echo_i "checking AXFR of example.com from ns4 with ACL allow-transfer { none; }; (${t})"
-$DIG -p ${PORT} @10.53.0.4 example.com axfr > dig.out.${t} 2>&1
+$DIG -p ${PORT} @10.53.0.4 example.com axfr >dig.out.${t} 2>&1
 grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "calling rndc reconfig"
 rndc_reconfig ns4 10.53.0.4
 
 sleep 1
 
-t=`expr $t + 1`
+t=$((t + 1))
 ret=0
 echo_i "re-checking AXFR of example.com from ns4 with ACL allow-transfer { none; }; (${t})"
-$DIG -p ${PORT} @10.53.0.4 example.com axfr > dig.out.${t} 2>&1
+$DIG -p ${PORT} @10.53.0.4 example.com axfr >dig.out.${t} 2>&1
 grep "Transfer failed." dig.out.${t} >/dev/null 2>&1 || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

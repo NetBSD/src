@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.7.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_MASTERDUMP_H
-#define DNS_MASTERDUMP_H 1
+#pragma once
 
 /*! \file dns/masterdump.h */
 
@@ -130,34 +129,32 @@ ISC_LANG_BEGINDECLS
  * tab stop for the TTL.  The class is only printed for the first
  * rrset in the file and shares a tab stop with the RR type.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_default;
+extern const dns_master_style_t dns_master_style_default;
 
 /*%
  * A master file style that dumps zones to a very generic format easily
  * imported/checked with external tools.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_full;
+extern const dns_master_style_t dns_master_style_full;
 
 /*%
  * A master file style that prints explicit TTL values on each
  * record line, never using $TTL statements.  The TTL has a tab
  * stop of its own, but the class and type share one.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t
-	dns_master_style_explicitttl;
+extern const dns_master_style_t dns_master_style_explicitttl;
 
 /*%
  * A master style format designed for cache files.  It prints explicit TTL
  * values on each record line and never uses $ORIGIN or relative names.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_cache;
+extern const dns_master_style_t dns_master_style_cache;
 
 /*%
  * A master style format designed for cache files.  The same as above but
  * this also prints expired entries.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t
-	dns_master_style_cache_with_expired;
+extern const dns_master_style_t dns_master_style_cache_with_expired;
 
 /*%
  * A master style that prints name, ttl, class, type, and value on
@@ -165,32 +162,32 @@ LIBDNS_EXTERNAL_DATA extern const dns_master_style_t
  * Intended for generating master files which can be easily parsed
  * by perl scripts and similar applications.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_simple;
+extern const dns_master_style_t dns_master_style_simple;
 
 /*%
  * The style used for debugging, "dig" output, etc.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_debug;
+extern const dns_master_style_t dns_master_style_debug;
 
 /*%
  * Similar to dns_master_style_debug but data is prepended with ";"
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_comment;
+extern const dns_master_style_t dns_master_style_comment;
 
 /*%
  * Similar to dns_master_style_debug but data is indented with "\t" (tab)
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_indent;
+extern const dns_master_style_t dns_master_style_indent;
 
 /*%
  * The style used for dumping "key" zones.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_keyzone;
+extern const dns_master_style_t dns_master_style_keyzone;
 
 /*%
  * YAML-compatible output
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_yaml;
+extern const dns_master_style_t dns_master_style_yaml;
 
 /***
  ***	Functions
@@ -362,5 +359,3 @@ void
 dns_master_styledestroy(dns_master_style_t **style, isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_MASTERDUMP_H */

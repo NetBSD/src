@@ -1,4 +1,4 @@
-/*	$NetBSD: cdnskey_60.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: cdnskey_60.h,v 1.4.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,10 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CDNSKEY_60_H
-#define GENERIC_CDNSKEY_60_H 1
+#pragma once
 
 /* CDNSKEY records have the same RDATA fields as DNSKEY records. */
 typedef struct dns_rdata_key dns_rdata_cdnskey_t;
-
-#endif /* GENERIC_CDNSKEY_60_H */

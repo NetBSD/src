@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.7.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: tcp.c,v 1.7.2.2 2024/02/25 15:47:24 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,7 +87,7 @@ stop_tcp_child(isc_nmsocket_t *sock);
 
 static void
 failed_accept_cb(isc_nmsocket_t *sock, isc_result_t eresult) {
-	REQUIRE(sock->accepting);
+	REQUIRE(atomic_load(&sock->accepting));
 	REQUIRE(sock->server);
 
 	/*
@@ -101,7 +101,7 @@ failed_accept_cb(isc_nmsocket_t *sock, isc_result_t eresult) {
 
 	isc__nmsocket_detach(&sock->server);
 
-	sock->accepting = false;
+	atomic_store(&sock->accepting, false);
 
 	switch (eresult) {
 	case ISC_R_NOTCONNECTED:
@@ -146,29 +146,28 @@ tcp_connect_direct(isc_nmsocket_t *sock, isc__nm_uvreq_t *req) {
 	r = uv_tcp_open(&sock->uv_handle.tcp, sock->fd);
 	if (r != 0) {
 		isc__nm_closesocket(sock->fd);
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_OPENFAIL]);
+		isc__nm_incstats(sock, STATID_OPENFAIL);
 		goto done;
 	}
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_OPEN]);
+	isc__nm_incstats(sock, STATID_OPEN);
 
 	if (req->local.length != 0) {
 		r = uv_tcp_bind(&sock->uv_handle.tcp, &req->local.type.sa, 0);
 		if (r != 0) {
-			isc__nm_incstats(sock->mgr,
-					 sock->statsindex[STATID_BINDFAIL]);
+			isc__nm_incstats(sock, STATID_BINDFAIL);
 			goto done;
 		}
 	}
+
+	isc__nm_set_network_buffers(sock->mgr, &sock->uv_handle.handle);
 
 	uv_handle_set_data(&req->uv_req.handle, req);
 	r = uv_tcp_connect(&req->uv_req.connect, &sock->uv_handle.tcp,
 			   &req->peer.type.sa, tcp_connect_cb);
 	if (r != 0) {
-		isc__nm_incstats(sock->mgr,
-				 sock->statsindex[STATID_CONNECTFAIL]);
+		isc__nm_incstats(sock, STATID_CONNECTFAIL);
 		goto done;
 	}
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CONNECT]);
 
 	uv_handle_set_data((uv_handle_t *)&sock->read_timer,
 			   &req->uv_req.connect);
@@ -222,7 +221,7 @@ isc__nm_async_tcpconnect(isc__networker_t *worker, isc__netievent_t *ev0) {
 
 static void
 tcp_connect_cb(uv_connect_t *uvreq, int status) {
-	isc_result_t result;
+	isc_result_t result = ISC_R_UNSET;
 	isc__nm_uvreq_t *req = NULL;
 	isc_nmsocket_t *sock = uv_handle_get_data((uv_handle_t *)uvreq->handle);
 	struct sockaddr_storage ss;
@@ -230,9 +229,6 @@ tcp_connect_cb(uv_connect_t *uvreq, int status) {
 
 	REQUIRE(VALID_NMSOCK(sock));
 	REQUIRE(sock->tid == isc_nm_tid());
-
-	isc__nmsocket_timer_stop(sock);
-	uv_handle_set_data((uv_handle_t *)&sock->read_timer, sock);
 
 	req = uv_handle_get_data((uv_handle_t *)uvreq);
 
@@ -242,29 +238,52 @@ tcp_connect_cb(uv_connect_t *uvreq, int status) {
 	if (atomic_load(&sock->timedout)) {
 		result = ISC_R_TIMEDOUT;
 		goto error;
-	}
-
-	if (!atomic_load(&sock->connecting)) {
+	} else if (!atomic_load(&sock->connecting)) {
 		/*
 		 * The connect was cancelled from timeout; just clean up
 		 * the req.
 		 */
 		isc__nm_uvreq_put(&req, sock);
 		return;
+	} else if (isc__nm_closing(sock)) {
+		/* Network manager shutting down */
+		result = ISC_R_SHUTTINGDOWN;
+		goto error;
 	} else if (isc__nmsocket_closing(sock)) {
-		/* Socket was closed midflight by isc__nm_tcp_shutdown() */
+		/* Connection canceled */
 		result = ISC_R_CANCELED;
 		goto error;
 	} else if (status == UV_ETIMEDOUT) {
 		/* Timeout status code here indicates hard error */
 		result = ISC_R_TIMEDOUT;
 		goto error;
+	} else if (status == UV_EADDRINUSE) {
+		/*
+		 * On FreeBSD the TCP connect() call sometimes results in a
+		 * spurious transient EADDRINUSE. Try a few more times before
+		 * giving up.
+		 */
+		if (--req->connect_tries > 0) {
+			r = uv_tcp_connect(&req->uv_req.connect,
+					   &sock->uv_handle.tcp,
+					   &req->peer.type.sa, tcp_connect_cb);
+			if (r != 0) {
+				result = isc__nm_uverr2result(r);
+				goto error;
+			}
+			return;
+		}
+		result = isc__nm_uverr2result(status);
+		goto error;
 	} else if (status != 0) {
 		result = isc__nm_uverr2result(status);
 		goto error;
 	}
 
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CONNECT]);
+	isc__nmsocket_timer_stop(sock);
+	uv_handle_set_data((uv_handle_t *)&sock->read_timer, sock);
+
+	isc__nm_incstats(sock, STATID_CONNECT);
 	r = uv_tcp_getpeername(&sock->uv_handle.tcp, (struct sockaddr *)&ss,
 			       &(int){ sizeof(ss) });
 	if (r != 0) {
@@ -280,7 +299,6 @@ tcp_connect_cb(uv_connect_t *uvreq, int status) {
 	isc__nm_connectcb(sock, req, ISC_R_SUCCESS, false);
 
 	return;
-
 error:
 	isc__nm_failed_connect_cb(sock, req, result, false);
 }
@@ -325,13 +343,16 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 			isc__nm_connectcb(sock, req, result, false);
 		} else {
 			isc__nmsocket_clearcb(sock);
-			sock->tid = isc_random_uniform(mgr->nworkers);
+			sock->tid = isc_random_uniform(mgr->nlisteners);
 			isc__nm_connectcb(sock, req, result, true);
 		}
 		atomic_store(&sock->closed, true);
 		isc__nmsocket_detach(&sock);
 		return;
 	}
+
+	(void)isc__nm_socket_min_mtu(sock->fd, sa_family);
+	(void)isc__nm_socket_tcp_maxseg(sock->fd, NM_MAXSEG);
 
 	ievent = isc__nm_get_netievent_tcpconnect(mgr, sock, req);
 
@@ -343,7 +364,7 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		isc__nm_put_netievent_tcpconnect(mgr, ievent);
 	} else {
 		atomic_init(&sock->active, false);
-		sock->tid = isc_random_uniform(mgr->nworkers);
+		sock->tid = isc_random_uniform(mgr->nlisteners);
 		isc__nm_enqueue_ievent(&mgr->workers[sock->tid],
 				       (isc__netievent_t *)ievent);
 	}
@@ -365,18 +386,17 @@ isc__nm_tcp_lb_socket(isc_nm_t *mgr, sa_family_t sa_family) {
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 	(void)isc__nm_socket_incoming_cpu(sock);
+	(void)isc__nm_socket_v6only(sock, sa_family);
 
 	/* FIXME: set mss */
 
 	result = isc__nm_socket_reuse(sock);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
-#ifndef _WIN32
 	if (mgr->load_balance_sockets) {
 		result = isc__nm_socket_reuse_lb(sock);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	}
-#endif
 
 	return (sock);
 }
@@ -401,10 +421,6 @@ start_tcp_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 	csock->pquota = sock->pquota;
 	isc_quota_cb_init(&csock->quotacb, quota_accept_cb, csock);
 
-#ifdef _WIN32
-	UNUSED(fd);
-	csock->fd = isc__nm_tcp_lb_socket(mgr, iface->type.sa.sa_family);
-#else
 	if (mgr->load_balance_sockets) {
 		UNUSED(fd);
 		csock->fd = isc__nm_tcp_lb_socket(mgr,
@@ -412,7 +428,6 @@ start_tcp_child(isc_nm_t *mgr, isc_sockaddr_t *iface, isc_nmsocket_t *sock,
 	} else {
 		csock->fd = dup(fd);
 	}
-#endif
 	REQUIRE(csock->fd >= 0);
 
 	ievent = isc__nm_get_netievent_tcplisten(mgr, csock);
@@ -444,11 +459,7 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
 	isc__nmsocket_init(sock, mgr, isc_nm_tcplistener, iface);
 
 	atomic_init(&sock->rchildren, 0);
-#if defined(WIN32)
-	sock->nchildren = 1;
-#else
-	sock->nchildren = mgr->nworkers;
-#endif
+	sock->nchildren = mgr->nlisteners;
 	children_size = sock->nchildren * sizeof(sock->children[0]);
 	sock->children = isc_mem_get(mgr->mctx, children_size);
 	memset(sock->children, 0, children_size);
@@ -464,11 +475,9 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
 	sock->tid = 0;
 	sock->fd = -1;
 
-#ifndef _WIN32
 	if (!mgr->load_balance_sockets) {
 		fd = isc__nm_tcp_lb_socket(mgr, iface->type.sa.sa_family);
 	}
-#endif
 
 	isc_barrier_init(&sock->startlistening, sock->nchildren);
 
@@ -483,11 +492,9 @@ isc_nm_listentcp(isc_nm_t *mgr, isc_sockaddr_t *iface,
 		start_tcp_child(mgr, iface, sock, fd, isc_nm_tid());
 	}
 
-#ifndef _WIN32
 	if (!mgr->load_balance_sockets) {
 		isc__nm_closesocket(fd);
 	}
-#endif
 
 	LOCK(&sock->lock);
 	while (atomic_load(&sock->rchildren) != sock->nchildren) {
@@ -533,7 +540,8 @@ isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 	REQUIRE(sock->parent != NULL);
 	REQUIRE(sock->tid == isc_nm_tid());
 
-	/* TODO: set min mss */
+	(void)isc__nm_socket_min_mtu(sock->fd, sa_family);
+	(void)isc__nm_socket_tcp_maxseg(sock->fd, NM_MAXSEG);
 
 	r = uv_tcp_init(&worker->loop, &sock->uv_handle.tcp);
 	UV_RUNTIME_CHECK(uv_tcp_init, r);
@@ -551,29 +559,20 @@ isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 	r = uv_tcp_open(&sock->uv_handle.tcp, sock->fd);
 	if (r < 0) {
 		isc__nm_closesocket(sock->fd);
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_OPENFAIL]);
+		isc__nm_incstats(sock, STATID_OPENFAIL);
 		goto done;
 	}
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_OPEN]);
+	isc__nm_incstats(sock, STATID_OPEN);
 
 	if (sa_family == AF_INET6) {
 		flags = UV_TCP_IPV6ONLY;
 	}
 
-#ifdef _WIN32
-	r = isc_uv_tcp_freebind(&sock->uv_handle.tcp, &sock->iface.type.sa,
-				flags);
-	if (r < 0) {
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_BINDFAIL]);
-		goto done;
-	}
-#else
 	if (mgr->load_balance_sockets) {
 		r = isc_uv_tcp_freebind(&sock->uv_handle.tcp,
 					&sock->iface.type.sa, flags);
 		if (r < 0) {
-			isc__nm_incstats(sock->mgr,
-					 sock->statsindex[STATID_BINDFAIL]);
+			isc__nm_incstats(sock, STATID_BINDFAIL);
 			goto done;
 		}
 	} else {
@@ -581,7 +580,7 @@ isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 			r = isc_uv_tcp_freebind(&sock->uv_handle.tcp,
 						&sock->iface.type.sa, flags);
 			if (r < 0) {
-				isc__nm_incstats(sock->mgr, STATID_BINDFAIL);
+				isc__nm_incstats(sock, STATID_BINDFAIL);
 				goto done;
 			}
 			sock->parent->uv_handle.tcp.flags =
@@ -593,7 +592,8 @@ isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 				sock->parent->uv_handle.tcp.flags;
 		}
 	}
-#endif
+
+	isc__nm_set_network_buffers(sock->mgr, &sock->uv_handle.handle);
 
 	/*
 	 * The callback will run in the same thread uv_listen() was called
@@ -606,7 +606,7 @@ isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0) {
 			      ISC_LOGMODULE_NETMGR, ISC_LOG_ERROR,
 			      "uv_listen failed: %s",
 			      isc_result_totext(isc__nm_uverr2result(r)));
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_BINDFAIL]);
+		isc__nm_incstats(sock, STATID_BINDFAIL);
 		goto done;
 	}
 
@@ -651,8 +651,7 @@ tcp_connection_cb(uv_stream_t *server, int status) {
 		result = isc_quota_attach_cb(ssock->pquota, &quota,
 					     &ssock->quotacb);
 		if (result == ISC_R_QUOTA) {
-			isc__nm_incstats(ssock->mgr,
-					 ssock->statsindex[STATID_ACCEPTFAIL]);
+			isc__nm_incstats(ssock, STATID_ACCEPTFAIL);
 			goto done;
 		}
 	}
@@ -739,8 +738,6 @@ isc__nm_tcp_read(isc_nmhandle_t *handle, isc_nm_recv_cb_t cb, void *cbarg) {
 
 	REQUIRE(sock->type == isc_nm_tcpsocket);
 	REQUIRE(sock->statichandle == handle);
-	REQUIRE(sock->tid == isc_nm_tid());
-	REQUIRE(!sock->recv_read);
 
 	sock->recv_cb = cb;
 	sock->recv_cbarg = cbarg;
@@ -784,7 +781,7 @@ isc__nm_async_tcpstartread(isc__networker_t *worker, isc__netievent_t *ev0) {
 	}
 
 	if (result != ISC_R_SUCCESS) {
-		sock->reading = true;
+		atomic_store(&sock->reading, true);
 		isc__nm_tcp_failed_read_cb(sock, result);
 		return;
 	}
@@ -847,7 +844,7 @@ isc__nm_tcp_resumeread(isc_nmhandle_t *handle) {
 	}
 
 	if (!isc__nmsocket_active(sock)) {
-		sock->reading = true;
+		atomic_store(&sock->reading, true);
 		isc__nm_tcp_failed_read_cb(sock, ISC_R_CANCELED);
 		return;
 	}
@@ -871,7 +868,7 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 
 	REQUIRE(VALID_NMSOCK(sock));
 	REQUIRE(sock->tid == isc_nm_tid());
-	REQUIRE(sock->reading);
+	REQUIRE(atomic_load(&sock->reading));
 	REQUIRE(buf != NULL);
 
 	if (isc__nmsocket_closing(sock)) {
@@ -881,8 +878,7 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 
 	if (nread < 0) {
 		if (nread != UV_EOF) {
-			isc__nm_incstats(sock->mgr,
-					 sock->statsindex[STATID_RECVFAIL]);
+			isc__nm_incstats(sock, STATID_RECVFAIL);
 		}
 
 		isc__nm_tcp_failed_read_cb(sock, isc__nm_uverr2result(nread));
@@ -910,7 +906,7 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	isc__nm_readcb(sock, req, ISC_R_SUCCESS);
 
 	/* The readcb could have paused the reading */
-	if (sock->reading) {
+	if (atomic_load(&sock->reading)) {
 		/* The timer will be updated */
 		isc__nmsocket_timer_restart(sock);
 	}
@@ -989,7 +985,7 @@ accept_connection(isc_nmsocket_t *ssock, isc_quota_t *quota) {
 	csock->recv_cb = ssock->recv_cb;
 	csock->recv_cbarg = ssock->recv_cbarg;
 	csock->quota = quota;
-	csock->accepting = true;
+	atomic_init(&csock->accepting, true);
 
 	worker = &csock->mgr->workers[isc_nm_tid()];
 
@@ -1040,9 +1036,9 @@ accept_connection(isc_nmsocket_t *ssock, isc_quota_t *quota) {
 		goto failure;
 	}
 
-	csock->accepting = false;
+	atomic_store(&csock->accepting, false);
 
-	isc__nm_incstats(csock->mgr, csock->statsindex[STATID_ACCEPT]);
+	isc__nm_incstats(csock, STATID_ACCEPT);
 
 	csock->read_timeout = atomic_load(&csock->mgr->init);
 
@@ -1115,7 +1111,7 @@ tcp_send_cb(uv_write_t *req, int status) {
 	isc_nm_timer_detach(&uvreq->timer);
 
 	if (status < 0) {
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_SENDFAIL]);
+		isc__nm_incstats(sock, STATID_SENDFAIL);
 		isc__nm_failed_send_cb(sock, uvreq,
 				       isc__nm_uverr2result(status));
 		return;
@@ -1147,7 +1143,7 @@ isc__nm_async_tcpsend(isc__networker_t *worker, isc__netievent_t *ev0) {
 
 	result = tcp_send_direct(sock, uvreq);
 	if (result != ISC_R_SUCCESS) {
-		isc__nm_incstats(sock->mgr, sock->statsindex[STATID_SENDFAIL]);
+		isc__nm_incstats(sock, STATID_SENDFAIL);
 		isc__nm_failed_send_cb(sock, uvreq, result);
 	}
 }
@@ -1195,7 +1191,7 @@ tcp_stop_cb(uv_handle_t *handle) {
 		UNREACHABLE();
 	}
 
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CLOSE]);
+	isc__nm_incstats(sock, STATID_CLOSE);
 
 	atomic_store(&sock->listening, false);
 
@@ -1214,7 +1210,7 @@ tcp_close_sock(isc_nmsocket_t *sock) {
 		UNREACHABLE();
 	}
 
-	isc__nm_incstats(sock->mgr, sock->statsindex[STATID_CLOSE]);
+	isc__nm_incstats(sock, STATID_CLOSE);
 
 	if (sock->server != NULL) {
 		isc__nmsocket_detach(&sock->server);
@@ -1391,7 +1387,7 @@ isc__nm_tcp_shutdown(isc_nmsocket_t *sock) {
 		return;
 	}
 
-	if (sock->accepting) {
+	if (atomic_load(&sock->accepting)) {
 		return;
 	}
 
@@ -1403,7 +1399,11 @@ isc__nm_tcp_shutdown(isc_nmsocket_t *sock) {
 	}
 
 	if (sock->statichandle != NULL) {
-		isc__nm_tcp_failed_read_cb(sock, ISC_R_CANCELED);
+		if (isc__nm_closing(sock)) {
+			isc__nm_failed_read_cb(sock, ISC_R_SHUTTINGDOWN, false);
+		} else {
+			isc__nm_failed_read_cb(sock, ISC_R_CANCELED, false);
+		}
 		return;
 	}
 

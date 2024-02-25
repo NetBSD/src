@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.8.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef _DNSTAP_H
-#define _DNSTAP_H
+#pragma once
 
 /*****
 ***** Module Info
@@ -394,5 +393,3 @@ dns_dt_close(dns_dthandle_t **handlep);
  *
  *\li	'*handlep' is not NULL
  */
-
-#endif /* _DNSTAP_H */

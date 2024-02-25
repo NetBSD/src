@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.h,v 1.5 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: sortlist.h,v 1.5.2.1 2024/02/25 15:47:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_SORTLIST_H
-#define NS_SORTLIST_H 1
+#pragma once
 
 /*! \file */
 
@@ -40,7 +39,7 @@ typedef enum {
 
 ns_sortlisttype_t
 ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
-		  const void **argp);
+		  void **argp);
 /*%<
  * Find the sortlist statement in 'acl' (for ACL environment 'env')
  * that applies to 'clientaddr', if any.
@@ -73,7 +72,7 @@ ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg);
 void
 ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
 			isc_netaddr_t	       *client_addr,
-			dns_addressorderfunc_t *orderp, const void **argp);
+			dns_addressorderfunc_t *orderp, void **argp);
 /*%<
  * Find the sortlist statement in 'acl' that applies to 'clientaddr', if any.
  * If a sortlist statement applies, return in '*orderp' a pointer to a function
@@ -81,5 +80,3 @@ ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
  * '*argp' an argument to pass to said function.  If no sortlist statement
  * applies, set '*orderp' and '*argp' to NULL.
  */
-
-#endif /* NS_SORTLIST_H */

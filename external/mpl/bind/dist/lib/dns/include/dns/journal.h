@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: journal.h,v 1.7.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_JOURNAL_H
-#define DNS_JOURNAL_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -339,5 +338,3 @@ dns_journal_set_sourceserial(dns_journal_t *j, uint32_t sourceserial);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_JOURNAL_H */

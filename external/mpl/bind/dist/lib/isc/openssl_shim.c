@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: openssl_shim.c,v 1.6.2.1 2024/02/25 15:47:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,72 +55,12 @@ EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx) {
 }
 #endif /* if !HAVE_EVP_CIPHER_CTX_FREE */
 
-#if !HAVE_EVP_MD_CTX_NEW
-EVP_MD_CTX *
-EVP_MD_CTX_new(void) {
-	EVP_MD_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
-	if (ctx != NULL) {
-		memset(ctx, 0, sizeof(*ctx));
-	}
-	return (ctx);
-}
-#endif /* if !HAVE_EVP_MD_CTX_NEW */
-
-#if !HAVE_EVP_MD_CTX_FREE
-void
-EVP_MD_CTX_free(EVP_MD_CTX *ctx) {
-	if (ctx != NULL) {
-		EVP_MD_CTX_cleanup(ctx);
-		OPENSSL_free(ctx);
-	}
-}
-#endif /* if !HAVE_EVP_MD_CTX_FREE */
-
 #if !HAVE_EVP_MD_CTX_RESET
 int
 EVP_MD_CTX_reset(EVP_MD_CTX *ctx) {
 	return (EVP_MD_CTX_cleanup(ctx));
 }
 #endif /* if !HAVE_EVP_MD_CTX_RESET */
-
-#if !HAVE_HMAC_CTX_NEW
-HMAC_CTX *
-HMAC_CTX_new(void) {
-	HMAC_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-	if (ctx != NULL) {
-		if (!HMAC_CTX_reset(ctx)) {
-			HMAC_CTX_free(ctx);
-			return (NULL);
-		}
-	}
-	return (ctx);
-}
-#endif /* if !HAVE_HMAC_CTX_NEW */
-
-#if !HAVE_HMAC_CTX_FREE
-void
-HMAC_CTX_free(HMAC_CTX *ctx) {
-	if (ctx != NULL) {
-		HMAC_CTX_cleanup(ctx);
-		OPENSSL_free(ctx);
-	}
-}
-#endif /* if !HAVE_HMAC_CTX_FREE */
-
-#if !HAVE_HMAC_CTX_RESET
-int
-HMAC_CTX_reset(HMAC_CTX *ctx) {
-	HMAC_CTX_cleanup(ctx);
-	return (1);
-}
-#endif /* if !HAVE_HMAC_CTX_RESET */
-
-#if !HAVE_HMAC_CTX_GET_MD
-const EVP_MD *
-HMAC_CTX_get_md(const HMAC_CTX *ctx) {
-	return (ctx->md);
-}
-#endif /* if !HAVE_HMAC_CTX_GET_MD */
 
 #if !HAVE_SSL_READ_EX
 int
@@ -231,3 +171,30 @@ OPENSSL_cleanup(void) {
 	return;
 }
 #endif
+
+#if !HAVE_SSL_CTX_UP_REF
+int
+SSL_CTX_up_ref(SSL_CTX *ctx) {
+	return (CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX) > 0);
+}
+#endif /* !HAVE_SSL_CTX_UP_REF */
+
+#if !HAVE_X509_STORE_UP_REF
+
+int
+X509_STORE_up_ref(X509_STORE *store) {
+	return (CRYPTO_add(&store->references, 1, CRYPTO_LOCK_X509_STORE) > 0);
+}
+
+#endif /* !HAVE_OPENSSL_CLEANUP */
+
+#if !HAVE_SSL_CTX_SET1_CERT_STORE
+
+void
+SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store) {
+	(void)X509_STORE_up_ref(store);
+
+	SSL_CTX_set_cert_store(ctx, store);
+}
+
+#endif /* !HAVE_SSL_CTX_SET1_CERT_STORE */

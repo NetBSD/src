@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.5.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,14 +13,22 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_OS_H
-#define ISC_OS_H 1
+#pragma once
 
 /*! \file isc/os.h */
-
 #include <isc/lang.h>
+#include <isc/types.h>
+
+#include <sys/stat.h>
 
 ISC_LANG_BEGINDECLS
+
+/*%<
+ * Hardcode the L1 cacheline size of the CPU to 64, this is checked in
+ * the os.c library constructor if operating system provide means to
+ * get the L1 cacheline size using sysconf().
+ */
+#define ISC_OS_CACHELINE_SIZE 64
 
 unsigned int
 isc_os_ncpus(void);
@@ -29,6 +37,18 @@ isc_os_ncpus(void);
  * be determined.
  */
 
-ISC_LANG_ENDDECLS
+unsigned long
+isc_os_cacheline(void);
+/*%<
+ * Return L1 cacheline size of the CPU.
+ * If L1 cache is greater than ISC_OS_CACHELINE_SIZE, ensure it is used
+ * instead of constant. Is common on ppc64le architecture.
+ */
 
-#endif /* ISC_OS_H */
+mode_t
+isc_os_umask(void);
+/*%<
+ * Return umask of the current process as initialized at the program start
+ */
+
+ISC_LANG_ENDDECLS

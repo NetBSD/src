@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.7.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -164,7 +164,7 @@ tostruct_in_nsap_ptr(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&nsap_ptr->owner, NULL);
-	RETERR(name_duporclone(&name, mctx, &nsap_ptr->owner));
+	name_duporclone(&name, mctx, &nsap_ptr->owner);
 	nsap_ptr->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -191,6 +191,7 @@ additionaldata_in_nsap_ptr(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

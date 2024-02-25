@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.7.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_CONFIG_H
-#define NAMED_CONFIG_H 1
+#pragma once
 
 /*! \file */
 
@@ -58,12 +57,11 @@ named_config_getzonetype(const cfg_obj_t *zonetypeobj);
 isc_result_t
 named_config_getiplist(const cfg_obj_t *config, const cfg_obj_t *list,
 		       in_port_t defport, isc_mem_t *mctx,
-		       isc_sockaddr_t **addrsp, isc_dscp_t **dscpsp,
-		       uint32_t *countp);
+		       isc_sockaddr_t **addrsp, uint32_t *countp);
 
 void
 named_config_putiplist(isc_mem_t *mctx, isc_sockaddr_t **addrsp,
-		       isc_dscp_t **dscpsp, uint32_t count);
+		       uint32_t count);
 
 isc_result_t
 named_config_getremotesdef(const cfg_obj_t *cctx, const char *list,
@@ -75,7 +73,8 @@ named_config_getipandkeylist(const cfg_obj_t *config, const char *listtype,
 			     dns_ipkeylist_t *ipkl);
 
 isc_result_t
-named_config_getport(const cfg_obj_t *config, in_port_t *portp);
+named_config_getport(const cfg_obj_t *config, const char *type,
+		     in_port_t *portp);
 
 isc_result_t
 named_config_getkeyalgorithm(const char *str, const dns_name_t **name,
@@ -83,8 +82,3 @@ named_config_getkeyalgorithm(const char *str, const dns_name_t **name,
 isc_result_t
 named_config_getkeyalgorithm2(const char *str, const dns_name_t **name,
 			      unsigned int *typep, uint16_t *digestbits);
-
-isc_result_t
-named_config_getdscp(const cfg_obj_t *config, isc_dscp_t *dscpp);
-
-#endif /* NAMED_CONFIG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.13.2.1 2023/08/11 13:43:40 martin Exp $	*/
+/*	$NetBSD: client.h,v 1.13.2.2 2024/02/25 15:47:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_CLIENT_H
-#define NS_CLIENT_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -65,7 +64,6 @@
 #include <isc/buffer.h>
 #include <isc/magic.h>
 #include <isc/netmgr.h>
-#include <isc/platform.h>
 #include <isc/quota.h>
 #include <isc/stdtime.h>
 
@@ -75,7 +73,6 @@
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rdatatype.h>
-#include <dns/tcpmsg.h>
 #include <dns/types.h>
 
 #include <ns/query.h>
@@ -149,34 +146,28 @@ struct ns_clientmgr {
 	unsigned int magic;
 
 	isc_mem_t      *mctx;
+	isc_mem_t      *send_mctx;
 	ns_server_t    *sctx;
 	isc_taskmgr_t  *taskmgr;
 	isc_timermgr_t *timermgr;
-	isc_task_t     *excl;
 	isc_refcount_t	references;
-	int		ncpus;
+	int		tid;
 
 	/* Attached by clients, needed for e.g. recursion */
-	isc_task_t **taskpool;
+	isc_task_t *task;
 
-	ns_interface_t *interface;
-
-	/* Lock covers manager state. */
-	isc_mutex_t lock;
-	bool	    exiting;
+	dns_aclenv_t *aclenv;
 
 	/* Lock covers the recursing list */
 	isc_mutex_t   reclock;
 	client_list_t recursing; /*%< Recursing clients */
-
-	/*%< mctx pool for clients. */
-	isc_mem_t **mctxpool;
 };
 
 /*% nameserver client structure */
 struct ns_client {
 	unsigned int	 magic;
 	isc_mem_t	*mctx;
+	int		 tid;
 	bool		 allocated; /* Do we need to free it? */
 	ns_server_t	*sctx;
 	ns_clientmgr_t	*manager;
@@ -196,12 +187,15 @@ struct ns_client {
 	isc_nmhandle_t *prefetchhandle; /* Waiting for prefetch / rpzfetch */
 	isc_nmhandle_t *updatehandle;	/* Waiting for update callback */
 	unsigned char  *tcpbuf;
+	size_t		tcpbuf_size;
 	dns_message_t  *message;
 	unsigned char  *sendbuf;
 	dns_rdataset_t *opt;
+	dns_ednsopt_t  *ede;
 	uint16_t	udpsize;
 	uint16_t	extflags;
 	int16_t		ednsversion; /* -1 noedns */
+	uint16_t	additionaldepth;
 	void (*cleanup)(ns_client_t *);
 	ns_query_t    query;
 	isc_time_t    requesttime;
@@ -220,7 +214,6 @@ struct ns_client {
 	dns_ecs_t ecs; /*%< EDNS client subnet sent by client */
 
 	struct in6_pktinfo pktinfo;
-	isc_dscp_t	   dscp;
 	/*%
 	 * Information about recent FORMERR response(s), for
 	 * FORMERR loop avoidance.  This is separate for each
@@ -280,11 +273,11 @@ struct ns_client {
  */
 #define NS_FAILCACHE_CD 0x01
 
-#if (defined(_WIN32) && !defined(_WIN64)) || !defined(_LP64)
-LIBNS_EXTERNAL_DATA extern atomic_uint_fast32_t ns_client_requests;
-#else  /* if defined(_WIN32) && !defined(_WIN64) */
-LIBNS_EXTERNAL_DATA extern atomic_uint_fast64_t ns_client_requests;
-#endif /* if defined(_WIN32) && !defined(_WIN64) */
+#ifdef _LP64
+extern atomic_uint_fast64_t ns_client_requests;
+#else
+extern atomic_uint_fast32_t ns_client_requests;
+#endif
 
 /***
  *** Functions
@@ -321,6 +314,12 @@ ns_client_error(ns_client_t *client, isc_result_t result);
  */
 
 void
+ns_client_extendederror(ns_client_t *client, uint16_t code, const char *text);
+/*%<
+ * Set extended error with INFO-CODE <code> and EXTRA-TEXT <text>.
+ */
+
+void
 ns_client_drop(ns_client_t *client, isc_result_t result);
 /*%<
  * Log the reason the current client request has failed; no response
@@ -348,8 +347,8 @@ ns_client_settimeout(ns_client_t *client, unsigned int seconds);
  */
 
 isc_result_t
-ns_clientmgr_create(isc_mem_t *mctx, ns_server_t *sctx, isc_taskmgr_t *taskmgr,
-		    isc_timermgr_t *timermgr, ns_interface_t *ifp, int ncpus,
+ns_clientmgr_create(ns_server_t *sctx, isc_taskmgr_t *taskmgr,
+		    isc_timermgr_t *timermgr, dns_aclenv_t *aclenv, int tid,
 		    ns_clientmgr_t **managerp);
 /*%<
  * Create a client manager.
@@ -359,13 +358,13 @@ void
 ns_clientmgr_shutdown(ns_clientmgr_t *manager);
 /*%<
  * Shutdown a client manager and all ns_client_t objects
- * managed by it.
+ * managed by it
  */
 
 void
-ns_clientmgr_destroy(ns_clientmgr_t **managerp);
+ns_clientmgr_detach(ns_clientmgr_t **managerp);
 /*%<
- * Destroy a client manager.
+ * Detach from a client manager.
  */
 
 isc_sockaddr_t *
@@ -583,5 +582,3 @@ ns__client_put_cb(void *client0);
  * Free all resources allocated to this client object, so that
  * it can be freed.
  */
-
-#endif /* NS_CLIENT_H */

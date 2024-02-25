@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 cp -f ns1/dynamic.db.in ns1/dynamic.db
 copy_setports ns1/named.conf.in ns1/named.conf

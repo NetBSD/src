@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.10.2.1 2023/08/11 13:43:30 martin Exp $	*/
+/*	$NetBSD: mdig.c,v 1.10.2.2 2024/02/25 15:45:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/base64.h>
 #include <isc/hash.h>
 #include <isc/hex.h>
@@ -27,16 +28,17 @@
 #include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/net.h>
+#include <isc/netmgr.h>
 #include <isc/nonce.h>
 #include <isc/parseint.h>
 #include <isc/portset.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>
-#include <isc/timer.h>
+#include <isc/time.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
@@ -51,11 +53,8 @@
 #include <dns/rdatatype.h>
 #include <dns/request.h>
 #include <dns/resolver.h>
-#include <dns/result.h>
 #include <dns/types.h>
 #include <dns/view.h>
-
-#include <dst/result.h>
 
 #include <bind9/getaddresses.h>
 
@@ -88,10 +87,6 @@
 #define UDPTIMEOUT 5
 #define MAXTRIES   0xffffffff
 
-#define NS_PER_US  1000	   /*%< Nanoseconds per microsecond. */
-#define US_PER_SEC 1000000 /*%< Microseconds per second. */
-#define US_PER_MS  1000	   /*%< Microseconds per millisecond. */
-
 static isc_mem_t *mctx = NULL;
 static dns_requestmgr_t *requestmgr = NULL;
 static const char *batchname = NULL;
@@ -123,7 +118,6 @@ static isc_sockaddr_t srcaddr;
 static char *server = NULL;
 static isc_sockaddr_t dstaddr;
 static in_port_t port = 53;
-static isc_dscp_t dscp = -1;
 static unsigned char cookie_secret[33];
 static int onfly = 0;
 static char hexcookie[81];
@@ -645,7 +639,7 @@ sendquery(struct query *query, isc_task_t *task) {
 		unsigned char cookie[40];
 
 		if (query->udpsize == 0) {
-			query->udpsize = 4096;
+			query->udpsize = 1232;
 		}
 		if (query->edns < 0) {
 			query->edns = 0;
@@ -757,14 +751,15 @@ sendquery(struct query *query, isc_task_t *task) {
 
 	options = 0;
 	if (tcp_mode) {
-		options |= DNS_REQUESTOPT_TCP | DNS_REQUESTOPT_SHARE;
+		options |= DNS_REQUESTOPT_TCP;
 	}
+
 	request = NULL;
-	result = dns_request_createvia(
-		requestmgr, message, have_src ? &srcaddr : NULL, &dstaddr, dscp,
+	result = dns_request_create(
+		requestmgr, message, have_src ? &srcaddr : NULL, &dstaddr,
 		options, NULL, query->timeout, query->udptimeout,
 		query->udpretries, task, recvresponse, message, &request);
-	CHECK("dns_request_createvia4", result);
+	CHECK("dns_request_create", result);
 
 	return (ISC_R_SUCCESS);
 }
@@ -788,120 +783,116 @@ sendqueries(isc_task_t *task, isc_event_t *event) {
 	return;
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
-	fputs("Usage: mdig @server {global-opt} host\n"
-	      "           {local-opt} [ host {local-opt} [...]]\n",
-	      stderr);
-	fputs("\nUse \"mdig -h\" (or \"mdig -h | more\") "
-	      "for complete list of options\n",
-	      stderr);
+	fprintf(stderr, "Usage: mdig @server {global-opt} host\n"
+			"           {local-opt} [ host {local-opt} [...]]\n"
+			"\nUse \"mdig -h\" (or \"mdig -h | more\") "
+			"for complete list of options\n");
 	exit(1);
 }
 
 /*% help */
 static void
 help(void) {
-	fputs("Usage: mdig @server {global-opt} host\n"
-	      "           {local-opt} [ host {local-opt} [...]]\n",
-	      stdout);
-	fputs("Where:\n"
-	      " anywhere opt    is one of:\n"
-	      "                 -f filename         (batch mode)\n"
-	      "                 -h                  (print help and exit)\n"
-	      "                 -v                  (print version and exit)\n"
-	      " global opt      is one of:\n"
-	      "                 -4                  (use IPv4 query transport "
-	      "only)\n"
-	      "                 -6                  (use IPv6 query transport "
-	      "only)\n"
-	      "                 -b address[#port]   (bind to source "
-	      "address/port)\n"
-	      "                 -p port             (specify port number)\n"
-	      "                 -m                  (enable memory usage "
-	      "debugging)\n"
-	      "                 +[no]dscp[=###]     (Set the DSCP value to ### "
-	      "[0..63])\n"
-	      "                 +[no]vc             (TCP mode)\n"
-	      "                 +[no]tcp            (TCP mode, alternate "
-	      "syntax)\n"
-	      "                 +[no]besteffort     (Try to parse even illegal "
-	      "messages)\n"
-	      "                 +[no]cl             (Control display of class "
-	      "in records)\n"
-	      "                 +[no]comments       (Control display of "
-	      "comment lines)\n"
-	      "                 +[no]rrcomments     (Control display of "
-	      "per-record "
-	      "comments)\n"
-	      "                 +[no]crypto         (Control display of "
-	      "cryptographic "
-	      "fields in records)\n"
-	      "                 +[no]question       (Control display of "
-	      "question)\n"
-	      "                 +[no]answer         (Control display of "
-	      "answer)\n"
-	      "                 +[no]authority      (Control display of "
-	      "authority)\n"
-	      "                 +[no]additional     (Control display of "
-	      "additional)\n"
-	      "                 +[no]short          (Disable everything except "
-	      "short\n"
-	      "                                      form of answer)\n"
-	      "                 +[no]ttlid          (Control display of ttls "
-	      "in records)\n"
-	      "                 +[no]ttlunits       (Display TTLs in "
-	      "human-readable units)\n"
-	      "                 +[no]unknownformat  (Print RDATA in RFC 3597 "
-	      "\"unknown\" format)\n"
-	      "                 +[no]all            (Set or clear all display "
-	      "flags)\n"
-	      "                 +[no]multiline      (Print records in an "
-	      "expanded format)\n"
-	      "                 +[no]split=##       (Split hex/base64 fields "
-	      "into chunks)\n"
-	      " local opt       is one of:\n"
-	      "                 -c class            (specify query class)\n"
-	      "                 -t type             (specify query type)\n"
-	      "                 -x dot-notation     (shortcut for reverse "
-	      "lookups)\n"
-	      "                 +timeout=###        (Set query timeout) "
-	      "[UDP=5,TCP=10]\n"
-	      "                 +udptimeout=###     (Set timeout before UDP "
-	      "retry)\n"
-	      "                 +tries=###          (Set number of UDP "
-	      "attempts) [3]\n"
-	      "                 +retry=###          (Set number of UDP "
-	      "retries) [2]\n"
-	      "                 +bufsize=###        (Set EDNS0 Max UDP packet "
-	      "size)\n"
-	      "                 +subnet=addr        (Set edns-client-subnet "
-	      "option)\n"
-	      "                 +[no]edns[=###]     (Set EDNS version) [0]\n"
-	      "                 +ednsflags=###      (Set EDNS flag bits)\n"
-	      "                 +ednsopt=###[:value] (Send specified EDNS "
-	      "option)\n"
-	      "                 +noednsopt          (Clear list of +ednsopt "
-	      "options)\n"
-	      "                 +[no]recurse        (Recursive mode)\n"
-	      "                 +[no]aaonly         (Set AA flag in query "
-	      "(+[no]aaflag))\n"
-	      "                 +[no]adflag         (Set AD flag in query)\n"
-	      "                 +[no]cdflag         (Set CD flag in query)\n"
-	      "                 +[no]zflag          (Set Z flag in query)\n"
-	      "                 +[no]dnssec         (Request DNSSEC records)\n"
-	      "                 +[no]expire         (Request time to expire)\n"
-	      "                 +[no]cookie[=###]   (Send a COOKIE option)\n"
-	      "                 +[no]nsid           (Request Name Server ID)\n",
-	      stdout);
+	printf("Usage: mdig @server {global-opt} host\n"
+	       "           {local-opt} [ host {local-opt} [...]]\n"
+	       "Where:\n"
+	       " anywhere opt    is one of:\n"
+	       "                 -f filename         (batch mode)\n"
+	       "                 -h                  (print help and exit)\n"
+	       "                 -v                  (print version and exit)\n"
+	       " global opt      is one of:\n"
+	       "                 -4                  (use IPv4 query transport "
+	       "only)\n"
+	       "                 -6                  (use IPv6 query transport "
+	       "only)\n"
+	       "                 -b address[#port]   (bind to source "
+	       "address/port)\n"
+	       "                 -p port             (specify port number)\n"
+	       "                 -m                  (enable memory usage "
+	       "debugging)\n"
+	       "                 +[no]vc             (TCP mode)\n"
+	       "                 +[no]tcp            (TCP mode, alternate "
+	       "syntax)\n"
+	       "                 +[no]besteffort     (Try to parse even "
+	       "illegal "
+	       "messages)\n"
+	       "                 +[no]cl             (Control display of class "
+	       "in records)\n"
+	       "                 +[no]comments       (Control display of "
+	       "comment lines)\n"
+	       "                 +[no]rrcomments     (Control display of "
+	       "per-record "
+	       "comments)\n"
+	       "                 +[no]crypto         (Control display of "
+	       "cryptographic "
+	       "fields in records)\n"
+	       "                 +[no]question       (Control display of "
+	       "question)\n"
+	       "                 +[no]answer         (Control display of "
+	       "answer)\n"
+	       "                 +[no]authority      (Control display of "
+	       "authority)\n"
+	       "                 +[no]additional     (Control display of "
+	       "additional)\n"
+	       "                 +[no]short          (Disable everything "
+	       "except "
+	       "short\n"
+	       "                                      form of answer)\n"
+	       "                 +[no]ttlid          (Control display of ttls "
+	       "in records)\n"
+	       "                 +[no]ttlunits       (Display TTLs in "
+	       "human-readable units)\n"
+	       "                 +[no]unknownformat  (Print RDATA in RFC 3597 "
+	       "\"unknown\" format)\n"
+	       "                 +[no]all            (Set or clear all display "
+	       "flags)\n"
+	       "                 +[no]multiline      (Print records in an "
+	       "expanded format)\n"
+	       "                 +[no]split=##       (Split hex/base64 fields "
+	       "into chunks)\n"
+	       " local opt       is one of:\n"
+	       "                 -c class            (specify query class)\n"
+	       "                 -t type             (specify query type)\n"
+	       "                 -x dot-notation     (shortcut for reverse "
+	       "lookups)\n"
+	       "                 +timeout=###        (Set query timeout) "
+	       "[UDP=5,TCP=10]\n"
+	       "                 +udptimeout=###     (Set timeout before UDP "
+	       "retry)\n"
+	       "                 +tries=###          (Set number of UDP "
+	       "attempts) [3]\n"
+	       "                 +retry=###          (Set number of UDP "
+	       "retries) [2]\n"
+	       "                 +bufsize=###        (Set EDNS0 Max UDP packet "
+	       "size)\n"
+	       "                 +subnet=addr        (Set edns-client-subnet "
+	       "option)\n"
+	       "                 +[no]edns[=###]     (Set EDNS version) [0]\n"
+	       "                 +ednsflags=###      (Set EDNS flag bits)\n"
+	       "                 +ednsopt=###[:value] (Send specified EDNS "
+	       "option)\n"
+	       "                 +noednsopt          (Clear list of +ednsopt "
+	       "options)\n"
+	       "                 +[no]recurse        (Recursive mode)\n"
+	       "                 +[no]aaonly         (Set AA flag in query "
+	       "(+[no]aaflag))\n"
+	       "                 +[no]adflag         (Set AD flag in query)\n"
+	       "                 +[no]cdflag         (Set CD flag in query)\n"
+	       "                 +[no]zflag          (Set Z flag in query)\n"
+	       "                 +[no]dnssec         (Request DNSSEC records)\n"
+	       "                 +[no]expire         (Request time to expire)\n"
+	       "                 +[no]cookie[=###]   (Send a COOKIE option)\n"
+	       "                 +[no]nsid           (Request Name "
+	       "Server ID)\n");
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *format, ...)
-	ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 
 static void
 fatal(const char *format, ...) {
@@ -1328,18 +1319,10 @@ plus_option(char *option, struct query *query, bool global) {
 			query->dnssec = state;
 			break;
 		case 's': /* dscp */
+			/* obsolete */
 			FULLCHECK("dscp");
-			GLOBAL();
-			if (!state) {
-				dscp = -1;
-				break;
-			}
-			if (value == NULL) {
-				goto need_value;
-			}
-			result = parse_uint(&num, value, 0x3f, "DSCP");
-			CHECK("parse_uint(DSCP)", result);
-			dscp = num;
+			fprintf(stderr, ";; +dscp option is obsolete "
+					"and has no effect");
 			break;
 		default:
 			goto invalid_option;
@@ -1464,7 +1447,6 @@ plus_option(char *option, struct query *query, bool global) {
 				result = parse_uint(&query->udpretries, value,
 						    MAXTRIES - 1, "udpretries");
 				CHECK("parse_uint(udpretries)", result);
-				query->udpretries++;
 				break;
 			default:
 				goto invalid_option;
@@ -1585,8 +1567,8 @@ plus_option(char *option, struct query *query, bool global) {
 			result = parse_uint(&query->udpretries, value, MAXTRIES,
 					    "udpretries");
 			CHECK("parse_uint(udpretries)", result);
-			if (query->udpretries == 0) {
-				query->udpretries = 1;
+			if (query->udpretries > 0) {
+				query->udpretries -= 1;
 			}
 			break;
 		case 't':
@@ -1732,7 +1714,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 			 */
 			break;
 		case 'v':
-			fputs("mDiG " VERSION "\n", stderr);
+			fprintf(stderr, "mDiG %s\n", PACKAGE_VERSION);
 			exit(0);
 			break;
 		}
@@ -1828,7 +1810,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 }
 
 static struct query *
-clone_default_query() {
+clone_default_query(void) {
 	struct query *query;
 
 	query = isc_mem_allocate(mctx, sizeof(struct query));
@@ -1954,7 +1936,7 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 		default_query.ecs_addr = NULL;
 		default_query.timeout = 0;
 		default_query.udptimeout = 0;
-		default_query.udpretries = 3;
+		default_query.udpretries = 2;
 		ISC_LINK_INIT(&default_query, link);
 	}
 
@@ -2118,18 +2100,13 @@ main(int argc, char *argv[]) {
 	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_task_t *task = NULL;
-	isc_timermgr_t *timermgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
 	dns_dispatchmgr_t *dispatchmgr = NULL;
-	unsigned int attrs, attrmask;
 	dns_dispatch_t *dispatchvx = NULL;
 	dns_view_t *view = NULL;
-	int ns;
 	unsigned int i;
+	int ns;
 
 	RUNCHECK(isc_app_start());
-
-	dns_result_register();
 
 	if (isc_net_probeipv4() == ISC_R_SUCCESS) {
 		have_ipv4 = true;
@@ -2144,7 +2121,6 @@ main(int argc, char *argv[]) {
 	preparse_args(argc, argv);
 
 	isc_mem_create(&mctx);
-
 	isc_log_create(mctx, &lctx, &lcfg);
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
@@ -2174,33 +2150,23 @@ main(int argc, char *argv[]) {
 		fatal("can't choose between IPv4 and IPv6");
 	}
 
-	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
+	isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr, NULL);
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
-	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
-	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
-	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, netmgr, &dispatchmgr));
 
 	set_source_ports(dispatchmgr);
 
-	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY;
-
 	if (have_ipv4) {
 		isc_sockaddr_any(&bind_any);
-		attrs |= DNS_DISPATCHATTR_IPV4;
 	} else {
 		isc_sockaddr_any6(&bind_any);
-		attrs |= DNS_DISPATCHATTR_IPV6;
 	}
-	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
-		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
-				     have_src ? &srcaddr : &bind_any, 4096, 100,
-				     100, 17, 19, attrs, attrmask,
-				     &dispatchvx));
+	RUNCHECK(dns_dispatch_createudp(
+		dispatchmgr, have_src ? &srcaddr : &bind_any, &dispatchvx));
+
 	RUNCHECK(dns_requestmgr_create(
-		mctx, timermgr, socketmgr, taskmgr, dispatchmgr,
-		have_ipv4 ? dispatchvx : NULL, have_ipv6 ? dispatchvx : NULL,
-		&requestmgr));
+		mctx, taskmgr, dispatchmgr, have_ipv4 ? dispatchvx : NULL,
+		have_ipv6 ? dispatchvx : NULL, &requestmgr));
 
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
 
@@ -2241,14 +2207,12 @@ main(int argc, char *argv[]) {
 	dns_requestmgr_detach(&requestmgr);
 
 	dns_dispatch_detach(&dispatchvx);
-	dns_dispatchmgr_destroy(&dispatchmgr);
-
-	isc_socketmgr_destroy(&socketmgr);
-	isc_timermgr_destroy(&timermgr);
+	dns_dispatchmgr_detach(&dispatchmgr);
 
 	isc_task_shutdown(task);
 	isc_task_detach(&task);
-	isc_managers_destroy(&netmgr, &taskmgr);
+
+	isc_managers_destroy(&netmgr, &taskmgr, NULL);
 
 	dst_lib_destroy();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.8.2.1 2024/02/25 15:47:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -432,8 +432,10 @@ additionaldata_in_apl(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
-	(void)add;
-	(void)arg;
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(add);
+	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }

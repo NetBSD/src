@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: tsec.h,v 1.5.2.1 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_TSEC_H
-#define DNS_TSEC_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -130,5 +129,3 @@ dns_tsec_getkey(dns_tsec_t *tsec, void *keyp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TSEC_H */

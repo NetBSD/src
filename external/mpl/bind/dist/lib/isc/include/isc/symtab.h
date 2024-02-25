@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: symtab.h,v 1.6.2.1 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_SYMTAB_H
-#define ISC_SYMTAB_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -136,5 +135,3 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type);
 unsigned int
 isc_symtab_count(isc_symtab_t *symtab);
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_SYMTAB_H */

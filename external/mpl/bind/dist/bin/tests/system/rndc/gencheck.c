@@ -1,4 +1,4 @@
-/*	$NetBSD: gencheck.c,v 1.5 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: gencheck.c,v 1.5.2.1 2024/02/25 15:45:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ main(int argc, char **argv) {
 	length = 0;
 
 	if (argc != 2) {
-		fputs(USAGE, stderr);
+		fprintf(stderr, USAGE);
 		goto out;
 	}
 

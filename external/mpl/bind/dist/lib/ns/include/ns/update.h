@@ -1,4 +1,4 @@
-/*	$NetBSD: update.h,v 1.5 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: update.h,v 1.5.2.1 2024/02/25 15:47:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_UPDATE_H
-#define NS_UPDATE_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -29,7 +28,8 @@
  *** Imports
  ***/
 
-#include <dns/result.h>
+#include <isc/result.h>
+
 #include <dns/types.h>
 
 /***
@@ -43,5 +43,3 @@
 void
 ns_update_start(ns_client_t *client, isc_nmhandle_t *handle,
 		isc_result_t sigresult);
-
-#endif /* NS_UPDATE_H */

@@ -156,13 +156,13 @@ sub handleUDP {
 	foreach $r (@rules) {
 		my $pattern = $r->{pattern};
 		my($dbtype, $key_name, $key_data) = split(/ /,$pattern);
-		print "[handleUDP] $dbtype, $key_name, $key_data \n";
+		print "[handleUDP] $dbtype, $key_name, $key_data\n";
 		if ("$qname $qtype" =~ /$dbtype/) {
 			my $a;
 			foreach $a (@{$r->{answer}}) {
 				$packet->push("answer", $a);
 			}
-			if(defined($key_name) && defined($key_data)) {
+			if (defined($key_name) && defined($key_data)) {
 				my $tsig;
 				# Sign the packet
 				print "  Signing the response with " .
@@ -202,7 +202,7 @@ sub handleUDP {
 							 $prev_tsig->mac);
 					}
 				}
-				
+
 				$packet->sign_tsig($tsig);
 			}
 			last;
@@ -250,7 +250,7 @@ sub packetlen {
 	} else {
 		($header, $offset) = Net::DNS::Header->parse(\$data);
 	}
-		
+
 	for (1 .. $header->qdcount) {
 		if ($decode) {
 			($q, $offset) =
@@ -336,7 +336,7 @@ sub handleTCP {
 		($request, $err) = new Net::DNS::Packet(\$buf, 0);
 		$err and die $err;
 	}
-	
+
 	my @questions = $request->question;
 	my $qname = $questions[0]->qname;
 	my $qtype = $questions[0]->qtype;
@@ -368,23 +368,23 @@ sub handleTCP {
 	my $r;
 	foreach $r (@rules) {
 		my $pattern = $r->{pattern};
-		my($dbtype, $key_name, $key_data, $extra) = split(/ /,$pattern);
-		print "[handleTCP] $dbtype, $key_name, $key_data \n";
+		my($dbtype, $key_name, $key_data, $tname) = split(/ /,$pattern);
+		print "[handleTCP] $dbtype, $key_name, $key_data, $tname \n";
 		if ("$qname $qtype" =~ /$dbtype/) {
 			$count_these++;
 			my $a;
 			foreach $a (@{$r->{answer}}) {
 				$packet->push("answer", $a);
 			}
-			if(defined($key_name) && $key_name eq "bad-id") {
+			if (defined($key_name) && $key_name eq "bad-id") {
 				$packet->header->id(($id+50)%0xffff);
 				$key_name = $key_data;
-				$key_data = $extra;
+				($key_data, $tname) = split(/ /,$tname)
 			}
 			if (defined($key_name) && defined($key_data)) {
 				my $tsig;
 				# sign the packet
-				print "  Signing the data with " . 
+				print "  Signing the data with " .
 				      "$key_name/$key_data\n";
 
 				if ($Net::DNS::VERSION < 0.69) {
@@ -426,7 +426,7 @@ sub handleTCP {
 							 $prev_tsig->mac);
 					}
 				}
-				
+
 				$tsig->sign_func($signer) if defined($signer);
 				$tsig->continuation($continuation) if
 					 ($Net::DNS::VERSION >= 0.71 &&
@@ -448,7 +448,10 @@ sub handleTCP {
 			}
 			#$packet->print;
 			push(@results,$packet->data);
-			$packet = new Net::DNS::Packet($qname, $qtype, $qclass);
+			if ($tname eq "") {
+				$tname = $qname;
+			}
+			$packet = new Net::DNS::Packet($tname, $qtype, $qclass);
 			$packet->header->qr(1);
 			$packet->header->aa(1);
 			$packet->header->id($id);

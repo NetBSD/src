@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.h,v 1.6 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.6.2.1 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,14 +13,13 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNSSECTOOL_H
-#define DNSSECTOOL_H 1
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/attributes.h>
 #include <isc/log.h>
-#include <isc/platform.h>
 #include <isc/stdtime.h>
 
 #include <dns/rdatastruct.h>
@@ -46,13 +45,8 @@ extern uint8_t dtype[8];
 
 typedef void(fatalcallback_t)(void);
 
-#ifndef CPPCHECK
-ISC_PLATFORM_NORETURN_PRE void
-fatal(const char *format, ...)
-	ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
-#else /* CPPCHECK */
-#define fatal(...) exit(1)
-#endif
+noreturn void
+fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 
 void
 setfatalcallback(fatalcallback_t *callback);
@@ -63,8 +57,8 @@ check_result(isc_result_t result, const char *message);
 void
 vbprintf(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 
-ISC_PLATFORM_NORETURN_PRE void
-version(const char *program) ISC_PLATFORM_NORETURN_POST;
+noreturn void
+version(const char *program);
 
 void
 sig_format(dns_rdata_rrsig_t *sig, char *cp, unsigned int size);
@@ -110,12 +104,3 @@ key_collision(dst_key_t *key, dns_name_t *name, const char *dir,
 
 bool
 isoptarg(const char *arg, char **argv, void (*usage)(void));
-
-#ifdef _WIN32
-void
-InitSockets(void);
-void
-DestroySockets(void);
-#endif /* ifdef _WIN32 */
-
-#endif /* DNSSEC_DNSSECTOOL_H */

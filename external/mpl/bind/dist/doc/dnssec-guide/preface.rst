@@ -35,7 +35,7 @@ some examples of tools to verify that the resolver is properly validating
 answers.
 
 :ref:`dnssec_signing` explains how to set up a basic signed
-authoritative zone, details the relationship between a child and a parent zone, 
+authoritative zone, details the relationship between a child and a parent zone,
 and discusses ongoing maintenance tasks.
 
 :ref:`dnssec_troubleshooting` provides some tips on how to analyze

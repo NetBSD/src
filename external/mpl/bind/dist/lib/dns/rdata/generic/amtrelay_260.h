@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.h,v 1.4.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_AMTRELAY_260_H
-#define GENERIC_AMTRELAY_260_H 1
+#pragma once
 
 typedef struct dns_rdata_amtrelay {
 	dns_rdatacommon_t common;
@@ -28,5 +27,3 @@ typedef struct dns_rdata_amtrelay {
 	unsigned char *data;	  /* gateway type > 3 */
 	uint16_t length;
 } dns_rdata_amtrelay_t;
-
-#endif /* GENERIC_AMTRELAY_260_H */

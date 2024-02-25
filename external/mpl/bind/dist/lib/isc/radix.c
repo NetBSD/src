@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.7.2.1 2023/08/11 13:43:37 martin Exp $	*/
+/*	$NetBSD: radix.c,v 1.7.2.2 2024/02/25 15:47:18 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -696,13 +696,13 @@ isc_radix_remove(isc_radix_tree_t *radix, isc_radix_node_t *node) {
 		return;
 	}
 
-	isc_mem_put(radix->mctx, node, sizeof(*node));
-	radix->num_active_node--;
-
 	if (parent->r == node) {
 		parent->r = child;
 	} else {
 		INSIST(parent->l == node);
 		parent->l = child;
 	}
+
+	isc_mem_put(radix->mctx, node, sizeof(*node));
+	radix->num_active_node--;
 }

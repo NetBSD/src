@@ -9,6 +9,9 @@
 .. See the COPYRIGHT file distributed with this work for additional
 .. information regarding copyright ownership.
 
+.. meta::
+   :google-site-verification: 0-DMrB_qDynsvXBKJhpsS5m8l5oVea8Qe2ojkudjtCY
+
 *************************************
 BIND 9 Administrator Reference Manual
 *************************************
@@ -17,15 +20,17 @@ BIND 9 Administrator Reference Manual
    :numbered:
    :maxdepth: 2
 
-   introduction
-   requirements
-   configuration
+   chapter1
+   chapter2
+   chapter3
+   chapter4
+   chapter5
+   chapter6
+   chapter7
    reference
-   dnssec.inc
-   advanced
-   security
-   troubleshooting
-   
+   chapter9
+   chapter10
+
 .. toctree::
    :caption: Appendices
    :name: appendices

@@ -1,4 +1,4 @@
-/*	$NetBSD: lp_107.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: lp_107.c,v 1.7.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,7 +168,7 @@ tostruct_lp(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 2);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&lp->lp, NULL);
-	RETERR(name_duporclone(&name, mctx, &lp->lp));
+	name_duporclone(&name, mctx, &lp->lp);
 	lp->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -197,16 +197,18 @@ additionaldata_lp(ARGS_ADDLDATA) {
 
 	REQUIRE(rdata->type == dns_rdatatype_lp);
 
+	UNUSED(owner);
+
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	isc_region_consume(&region, 2);
 	dns_name_fromregion(&name, &region);
 
-	result = (add)(arg, &name, dns_rdatatype_l32);
+	result = (add)(arg, &name, dns_rdatatype_l32, NULL);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
-	return ((add)(arg, &name, dns_rdatatype_l64));
+	return ((add)(arg, &name, dns_rdatatype_l64, NULL));
 }
 
 static isc_result_t

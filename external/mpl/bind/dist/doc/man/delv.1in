@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "DELV" "1" "@RELEASE_DATE@" "@BIND9_VERSION@" "BIND 9"
+.TH "DELV" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
 .SH NAME
 delv \- DNS lookup and validation utility
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ delv \- DNS lookup and validation utility
 .SH DESCRIPTION
 .sp
 \fBdelv\fP is a tool for sending DNS queries and validating the results,
-using the same internal resolver and validator logic as \fBnamed\fP\&.
+using the same internal resolver and validator logic as \fI\%named\fP\&.
 .sp
 \fBdelv\fP sends to a specified name server all queries needed to
 fetch and validate the requested data; this includes the original
@@ -84,7 +84,7 @@ delv @server name type
 where:
 .INDENT 0.0
 .TP
-.B \fBserver\fP
+.B server
 is the name or IP address of the name server to query. This can be an
 IPv4 address in dotted\-decimal notation or an IPv6 address in
 colon\-delimited notation. When the supplied \fBserver\fP argument is a
@@ -94,16 +94,20 @@ DNSSEC).
 .sp
 If no \fBserver\fP argument is provided, \fBdelv\fP consults
 \fB/etc/resolv.conf\fP; if an address is found there, it queries the
-name server at that address. If either of the \fB\-4\fP or \fB\-6\fP
+name server at that address. If either of the \fI\%\-4\fP or \fI\%\-6\fP
 options is in use, then only addresses for the corresponding
 transport are tried. If no usable addresses are found, \fBdelv\fP
 sends queries to the localhost addresses (127.0.0.1 for IPv4, ::1
 for IPv6).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBname\fP
+.B name
 is the domain name to be looked up.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fBtype\fP
+.B type
 indicates what type of query is required \- ANY, A, MX, etc.
 \fBtype\fP can be any valid query type. If no \fBtype\fP argument is
 supplied, \fBdelv\fP performs a lookup for an A record.
@@ -111,92 +115,118 @@ supplied, \fBdelv\fP performs a lookup for an A record.
 .SH OPTIONS
 .INDENT 0.0
 .TP
-.B \fB\-a anchor\-file\fP
+.B \-a anchor\-file
 This option specifies a file from which to read DNSSEC trust anchors. The default
-is \fB/etc/bind.keys\fP, which is included with BIND 9 and contains one
+is \fB@sysconfdir@/bind.keys\fP, which is included with BIND 9 and contains one
 or more trust anchors for the root zone (\(dq.\(dq).
 .sp
 Keys that do not match the root zone name are ignored. An alternate
-key name can be specified using the \fB+root=NAME\fP options.
+key name can be specified using the \fI\%+root\fP option.
 .sp
 Note: When reading the trust anchor file, \fBdelv\fP treats \fBtrust\-anchors\fP,
 \fBinitial\-key\fP, and \fBstatic\-key\fP identically. That is, for a managed key,
 it is the \fIinitial\fP key that is trusted; \fI\%RFC 5011\fP key management is not
 supported. \fBdelv\fP does not consult the managed\-keys database maintained by
-\fBnamed\fP, which means that if either of the keys in \fB/etc/bind.keys\fP is
-revoked and rolled over, \fB/etc/bind.keys\fP must be updated to
+\fI\%named\fP, which means that if either of the keys in \fB@sysconfdir@/bind.keys\fP is
+revoked and rolled over, \fB@sysconfdir@/bind.keys\fP must be updated to
 use DNSSEC validation in \fBdelv\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-b address\fP
+.B \-b address
 This option sets the source IP address of the query to \fBaddress\fP\&. This must be
 a valid address on one of the host\(aqs network interfaces, or \fB0.0.0.0\fP,
 or \fB::\fP\&. An optional source port may be specified by appending
 \fB#<port>\fP
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-c class\fP
+.B \-c class
 This option sets the query class for the requested data. Currently, only class
 \(dqIN\(dq is supported in \fBdelv\fP and any other value is ignored.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-d level\fP
+.B \-d level
 This option sets the systemwide debug level to \fBlevel\fP\&. The allowed range is
 from 0 to 99. The default is 0 (no debugging). Debugging traces from
 \fBdelv\fP become more verbose as the debug level increases. See the
-\fB+mtrace\fP, \fB+rtrace\fP, and \fB+vtrace\fP options below for
+\fI\%+mtrace\fP, \fI\%+rtrace\fP, and \fI\%+vtrace\fP options below for
 additional debugging details.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-h\fP
+.B \-h
 This option displays the \fBdelv\fP help usage output and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-i\fP
+.B \-i
 This option sets insecure mode, which disables internal DNSSEC validation. (Note,
 however, that this does not set the CD bit on upstream queries. If the
 server being queried is performing DNSSEC validation, then it does
 not return invalid data; this can cause \fBdelv\fP to time out. When it
 is necessary to examine invalid data to debug a DNSSEC problem, use
-\fBdig +cd\fP\&.)
+\fI\%dig +cd\fP\&.)
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-m\fP
+.B \-m
 This option enables memory usage debugging.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-p port#\fP
+.B \-p port#
 This option specifies a destination port to use for queries, instead of the
 standard DNS port number 53. This option is used with a name
 server that has been configured to listen for queries on a
 non\-standard port number.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-q name\fP
+.B \-q name
 This option sets the query name to \fBname\fP\&. While the query name can be
-specified without using the \fB\-q\fP option, it is sometimes necessary to
+specified without using the \fI\%\-q\fP option, it is sometimes necessary to
 disambiguate names from types or classes (for example, when looking
 up the name \(dqns\(dq, which could be misinterpreted as the type NS, or
 \(dqch\(dq, which could be misinterpreted as class CH).
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-t type\fP
+.B \-t type
 This option sets the query type to \fBtype\fP, which can be any valid query type
 supported in BIND 9 except for zone transfer types AXFR and IXFR. As
-with \fB\-q\fP, this is useful to distinguish query\-name types or classes
+with \fI\%\-q\fP, this is useful to distinguish query\-name types or classes
 when they are ambiguous. It is sometimes necessary to disambiguate
 names from types.
 .sp
-The default query type is \(dqA\(dq, unless the \fB\-x\fP option is supplied
+The default query type is \(dqA\(dq, unless the \fI\%\-x\fP option is supplied
 to indicate a reverse lookup, in which case it is \(dqPTR\(dq.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-v\fP
+.B \-v
 This option prints the \fBdelv\fP version and exits.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-x addr\fP
+.B \-x addr
 This option performs a reverse lookup, mapping an address to a name. \fBaddr\fP
 is an IPv4 address in dotted\-decimal notation, or a colon\-delimited
-IPv6 address. When \fB\-x\fP is used, there is no need to provide the
+IPv6 address. When \fI\%\-x\fP is used, there is no need to provide the
 \fBname\fP or \fBtype\fP arguments; \fBdelv\fP automatically performs a
 lookup for a name like \fB11.12.13.10.in\-addr.arpa\fP and sets the
 query type to PTR. IPv6 addresses are looked up using nibble format
 under the IP6.ARPA domain.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-4\fP
+.B \-4
 This option forces \fBdelv\fP to only use IPv4.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB\-6\fP
+.B \-6
 This option forces \fBdelv\fP to only use IPv6.
 .UNINDENT
 .SH QUERY OPTIONS
@@ -211,7 +241,7 @@ assign values to options like the timeout interval. They have the form
 \fB+keyword=value\fP\&. The query options are:
 .INDENT 0.0
 .TP
-.B \fB+[no]cdflag\fP
+.B +cdflag, +nocdflag
 This option controls whether to set the CD (checking disabled) bit in queries
 sent by \fBdelv\fP\&. This may be useful when troubleshooting DNSSEC
 problems from behind a validating resolver. A validating resolver
@@ -219,16 +249,22 @@ blocks invalid responses, making it difficult to retrieve them
 for analysis. Setting the CD flag on queries causes the resolver
 to return invalid responses, which \fBdelv\fP can then validate
 internally and report the errors in detail.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]class\fP
+.B +class, +noclass
 This option controls whether to display the CLASS when printing a record. The
 default is to display the CLASS.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]ttl\fP
+.B +ttl, +nottl
 This option controls whether to display the TTL when printing a record. The
 default is to display the TTL.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]rtrace\fP
+.B +rtrace, +nortrace
 This option toggles resolver fetch logging. This reports the name and type of each
 query sent by \fBdelv\fP in the process of carrying out the resolution
 and validation process, including the original query
@@ -237,109 +273,139 @@ of trust for DNSSEC validation.
 .sp
 This is equivalent to setting the debug level to 1 in the \(dqresolver\(dq
 logging category. Setting the systemwide debug level to 1 using the
-\fB\-d\fP option produces the same output, but affects other
+\fI\%\-d\fP option produces the same output, but affects other
 logging categories as well.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]mtrace\fP
+.B +mtrace, +nomtrace
 This option toggles message logging. This produces a detailed dump of the
 responses received by \fBdelv\fP in the process of carrying out the
 resolution and validation process.
 .sp
 This is equivalent to setting the debug level to 10 for the \(dqpackets\(dq
 module of the \(dqresolver\(dq logging category. Setting the systemwide
-debug level to 10 using the \fB\-d\fP option produces the same
+debug level to 10 using the \fI\%\-d\fP option produces the same
 output, but affects other logging categories as well.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]vtrace\fP
+.B +vtrace, +novtrace
 This option toggles validation logging. This shows the internal process of the
 validator as it determines whether an answer is validly signed,
 unsigned, or invalid.
 .sp
 This is equivalent to setting the debug level to 3 for the
 \(dqvalidator\(dq module of the \(dqdnssec\(dq logging category. Setting the
-systemwide debug level to 3 using the \fB\-d\fP option produces the
+systemwide debug level to 3 using the \fI\%\-d\fP option produces the
 same output, but affects other logging categories as well.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]short\fP
+.B +short, +noshort
 This option toggles between verbose and terse answers. The default is to print the answer in a
 verbose form.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]comments\fP
+.B +comments, +nocomments
 This option toggles the display of comment lines in the output. The default is to
 print comments.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]rrcomments\fP
+.B +rrcomments, +norrcomments
 This option toggles the display of per\-record comments in the output (for example,
 human\-readable key information about DNSKEY records). The default is
 to print per\-record comments.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]crypto\fP
+.B +crypto, +nocrypto
 This option toggles the display of cryptographic fields in DNSSEC records. The
 contents of these fields are unnecessary to debug most DNSSEC
 validation failures and removing them makes it easier to see the
 common failures. The default is to display the fields. When omitted,
 they are replaced by the string \fB[omitted]\fP or, in the DNSKEY case, the
 key ID is displayed as the replacement, e.g. \fB[ key id = value ]\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]trust\fP
+.B +trust, +notrust
 This option controls whether to display the trust level when printing a record.
 The default is to display the trust level.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]split[=W]\fP
+.B +split[=W], +nosplit
 This option splits long hex\- or base64\-formatted fields in resource records into
 chunks of \fBW\fP characters (where \fBW\fP is rounded up to the nearest
 multiple of 4). \fB+nosplit\fP or \fB+split=0\fP causes fields not to be
 split at all. The default is 56 characters, or 44 characters when
 multiline mode is active.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]all\fP
-This option sets or clears the display options \fB+[no]comments\fP,
-\fB+[no]rrcomments\fP, and \fB+[no]trust\fP as a group.
+.B +all, +noall
+This option sets or clears the display options \fI\%+comments\fP,
+\fI\%+rrcomments\fP, and \fI\%+trust\fP as a group.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]multiline\fP
+.B +multiline, +nomultiline
 This option prints long records (such as RRSIG, DNSKEY, and SOA records) in a
 verbose multi\-line format with human\-readable comments. The default
 is to print each record on a single line, to facilitate machine
 parsing of the \fBdelv\fP output.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]dnssec\fP
+.B +dnssec, +nodnssec
 This option indicates whether to display RRSIG records in the \fBdelv\fP output.
-The default is to do so. Note that (unlike in \fBdig\fP) this does
+The default is to do so. Note that (unlike in \fI\%dig\fP) this does
 \fInot\fP control whether to request DNSSEC records or to
 validate them. DNSSEC records are always requested, and validation
-always occurs unless suppressed by the use of \fB\-i\fP or
-\fB+noroot\fP\&.
+always occurs unless suppressed by the use of \fI\%\-i\fP or
+\fI\%+noroot\fP\&.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]root[=ROOT]\fP
+.B +root[=ROOT], +noroot
 This option indicates whether to perform conventional DNSSEC validation, and if so,
 specifies the name of a trust anchor. The default is to validate using a
 trust anchor of \(dq.\(dq (the root zone), for which there is a built\-in key. If
-specifying a different trust anchor, then \fB\-a\fP must be used to specify a
+specifying a different trust anchor, then \fI\%\-a\fP must be used to specify a
 file containing the key.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]tcp\fP
+.B +tcp, +notcp
 This option controls whether to use TCP when sending queries. The default is to
 use UDP unless a truncated response has been received.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]unknownformat\fP
+.B +unknownformat, +nounknownformat
 This option prints all RDATA in unknown RR\-type presentation format (\fI\%RFC 3597\fP).
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \fB+[no]yaml\fP
+.B +yaml, +noyaml
 This option prints response data in YAML format.
 .UNINDENT
 .SH FILES
 .sp
-\fB/etc/bind.keys\fP
+\fB@sysconfdir@/bind.keys\fP
 .sp
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\fBdig(1)\fP, \fBnamed(8)\fP, \fI\%RFC 4034\fP, \fI\%RFC 4035\fP, \fI\%RFC 4431\fP, \fI\%RFC 5074\fP, \fI\%RFC 5155\fP\&.
+\fI\%dig(1)\fP, \fI\%named(8)\fP, \fI\%RFC 4034\fP, \fI\%RFC 4035\fP, \fI\%RFC 4431\fP, \fI\%RFC 5074\fP, \fI\%RFC 5155\fP\&.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2023, Internet Systems Consortium
+2024, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.h,v 1.6.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_IPSECKEY_45_H
-#define GENERIC_IPSECKEY_45_H 1
+#pragma once
 
 typedef struct dns_rdata_ipseckey {
 	dns_rdatacommon_t common;
@@ -28,5 +27,3 @@ typedef struct dns_rdata_ipseckey {
 	unsigned char *key;
 	uint16_t keylength;
 } dns_rdata_ipseckey_t;
-
-#endif /* GENERIC_IPSECKEY_45_H */

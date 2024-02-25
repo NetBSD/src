@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64_109.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.7.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -166,6 +166,7 @@ additionaldata_eui64(ARGS_ADDLDATA) {
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

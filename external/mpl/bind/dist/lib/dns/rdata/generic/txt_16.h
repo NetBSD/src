@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: txt_16.h,v 1.6.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_TXT_16_H
-#define GENERIC_TXT_16_H 1
+#pragma once
 
 typedef struct dns_rdata_txt_string {
 	uint8_t length;
@@ -44,5 +43,3 @@ dns_rdata_txt_next(dns_rdata_txt_t *);
 
 isc_result_t
 dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
-
-#endif /* GENERIC_TXT_16_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlv_32769.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: dlv_32769.h,v 1.5.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,9 +14,6 @@
  */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
-#ifndef GENERIC_DLV_32769_H
-#define GENERIC_DLV_32769_H 1
+#pragma once
 
 typedef struct dns_rdata_ds dns_rdata_dlv_t;
-
-#endif /* GENERIC_DLV_32769_H */

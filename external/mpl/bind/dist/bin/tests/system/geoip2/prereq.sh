@@ -11,11 +11,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 $FEATURETEST --have-geoip2 || {
-	echo_i "This test requires GeoIP support." >&2
-	exit 255
+  echo_i "This test requires GeoIP support." >&2
+  exit 255
 }
 exit 0

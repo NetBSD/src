@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.6.2.1 2023/08/11 13:43:39 martin Exp $	*/
+/*	$NetBSD: cc.c,v 1.6.2.2 2024/02/25 15:47:30 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,14 +41,12 @@
 #include <isc/assertions.h>
 #include <isc/hmac.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/safe.h>
-
-#include <pk11/site.h>
 
 #include <isccc/alist.h>
 #include <isccc/base64.h>
 #include <isccc/cc.h>
-#include <isccc/result.h>
 #include <isccc/sexpr.h>
 #include <isccc/symtab.h>
 #include <isccc/symtype.h>
@@ -56,6 +54,10 @@
 
 #define MAX_TAGS     256
 #define DUP_LIFETIME 900
+#ifndef ISCCC_MAXDEPTH
+#define ISCCC_MAXDEPTH \
+	10 /* Big enough for rndc which just sends a string each way. */
+#endif
 
 typedef isccc_sexpr_t *sexpr_ptr;
 
@@ -255,13 +257,13 @@ list_towire(isccc_sexpr_t *list, isc_buffer_t **buffer) {
 }
 
 static isc_result_t
-sign(unsigned char *data, unsigned int length, unsigned char *hmac,
+sign(unsigned char *data, unsigned int length, unsigned char *out,
      uint32_t algorithm, isccc_region_t *secret) {
 	const isc_md_type_t *md_type;
 	isc_result_t result;
 	isccc_region_t source, target;
 	unsigned char digest[ISC_MAX_MD_SIZE];
-	unsigned int digestlen;
+	unsigned int digestlen = sizeof(digest);
 	unsigned char digestb64[HSHA_LENGTH + 4];
 
 	source.rstart = digest;
@@ -304,9 +306,9 @@ sign(unsigned char *data, unsigned int length, unsigned char *hmac,
 		return (result);
 	}
 	if (algorithm == ISCCC_ALG_HMACMD5) {
-		PUT_MEM(digestb64, HMD5_LENGTH, hmac);
+		PUT_MEM(digestb64, HMD5_LENGTH, out);
 	} else {
-		PUT_MEM(digestb64, HSHA_LENGTH, hmac);
+		PUT_MEM(digestb64, HSHA_LENGTH, out);
 	}
 	return (ISC_R_SUCCESS);
 }
@@ -382,9 +384,9 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 	isccc_region_t source;
 	isccc_region_t target;
 	isc_result_t result;
-	isccc_sexpr_t *_auth, *hmac;
+	isccc_sexpr_t *_auth, *hmacvalue;
 	unsigned char digest[ISC_MAX_MD_SIZE];
-	unsigned int digestlen;
+	unsigned int digestlen = sizeof(digest);
 	unsigned char digestb64[HSHA_LENGTH * 4];
 
 	/*
@@ -395,11 +397,11 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 		return (ISC_R_FAILURE);
 	}
 	if (algorithm == ISCCC_ALG_HMACMD5) {
-		hmac = isccc_alist_lookup(_auth, "hmd5");
+		hmacvalue = isccc_alist_lookup(_auth, "hmd5");
 	} else {
-		hmac = isccc_alist_lookup(_auth, "hsha");
+		hmacvalue = isccc_alist_lookup(_auth, "hsha");
 	}
-	if (!isccc_sexpr_binaryp(hmac)) {
+	if (!isccc_sexpr_binaryp(hmacvalue)) {
 		return (ISC_R_FAILURE);
 	}
 	/*
@@ -452,7 +454,7 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 		isccc_region_t *region;
 		unsigned char *value;
 
-		region = isccc_sexpr_tobinary(hmac);
+		region = isccc_sexpr_tobinary(hmacvalue);
 		if ((region->rend - region->rstart) != HMD5_LENGTH) {
 			return (ISCCC_R_BADAUTH);
 		}
@@ -465,7 +467,7 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 		unsigned char *value;
 		uint32_t valalg;
 
-		region = isccc_sexpr_tobinary(hmac);
+		region = isccc_sexpr_tobinary(hmacvalue);
 
 		/*
 		 * Note: with non-MD5 algorithms, there's an extra octet
@@ -488,18 +490,24 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 
 static isc_result_t
 table_fromwire(isccc_region_t *source, isccc_region_t *secret,
-	       uint32_t algorithm, isccc_sexpr_t **alistp);
+	       uint32_t algorithm, unsigned int depth, isccc_sexpr_t **alistp);
 
 static isc_result_t
-list_fromwire(isccc_region_t *source, isccc_sexpr_t **listp);
+list_fromwire(isccc_region_t *source, unsigned int depth,
+	      isccc_sexpr_t **listp);
 
 static isc_result_t
-value_fromwire(isccc_region_t *source, isccc_sexpr_t **valuep) {
+value_fromwire(isccc_region_t *source, unsigned int depth,
+	       isccc_sexpr_t **valuep) {
 	unsigned int msgtype;
 	uint32_t len;
 	isccc_sexpr_t *value;
 	isccc_region_t active;
 	isc_result_t result;
+
+	if (depth > ISCCC_MAXDEPTH) {
+		return (ISCCC_R_MAXDEPTH);
+	}
 
 	if (REGION_SIZE(*source) < 1 + 4) {
 		return (ISC_R_UNEXPECTEDEND);
@@ -521,9 +529,9 @@ value_fromwire(isccc_region_t *source, isccc_sexpr_t **valuep) {
 			result = ISC_R_NOMEMORY;
 		}
 	} else if (msgtype == ISCCC_CCMSGTYPE_TABLE) {
-		result = table_fromwire(&active, NULL, 0, valuep);
+		result = table_fromwire(&active, NULL, 0, depth + 1, valuep);
 	} else if (msgtype == ISCCC_CCMSGTYPE_LIST) {
-		result = list_fromwire(&active, valuep);
+		result = list_fromwire(&active, depth + 1, valuep);
 	} else {
 		result = ISCCC_R_SYNTAX;
 	}
@@ -533,7 +541,7 @@ value_fromwire(isccc_region_t *source, isccc_sexpr_t **valuep) {
 
 static isc_result_t
 table_fromwire(isccc_region_t *source, isccc_region_t *secret,
-	       uint32_t algorithm, isccc_sexpr_t **alistp) {
+	       uint32_t algorithm, unsigned int depth, isccc_sexpr_t **alistp) {
 	char key[256];
 	uint32_t len;
 	isc_result_t result;
@@ -542,6 +550,10 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 	unsigned char *checksum_rstart;
 
 	REQUIRE(alistp != NULL && *alistp == NULL);
+
+	if (depth > ISCCC_MAXDEPTH) {
+		return (ISCCC_R_MAXDEPTH);
+	}
 
 	checksum_rstart = NULL;
 	first_tag = true;
@@ -559,7 +571,7 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 		GET_MEM(key, len, source->rstart);
 		key[len] = '\0'; /* Ensure NUL termination. */
 		value = NULL;
-		result = value_fromwire(source, &value);
+		result = value_fromwire(source, depth + 1, &value);
 		if (result != ISC_R_SUCCESS) {
 			goto bad;
 		}
@@ -597,14 +609,19 @@ bad:
 }
 
 static isc_result_t
-list_fromwire(isccc_region_t *source, isccc_sexpr_t **listp) {
+list_fromwire(isccc_region_t *source, unsigned int depth,
+	      isccc_sexpr_t **listp) {
 	isccc_sexpr_t *list, *value;
 	isc_result_t result;
+
+	if (depth > ISCCC_MAXDEPTH) {
+		return (ISCCC_R_MAXDEPTH);
+	}
 
 	list = NULL;
 	while (!REGION_EMPTY(*source)) {
 		value = NULL;
-		result = value_fromwire(source, &value);
+		result = value_fromwire(source, depth + 1, &value);
 		if (result != ISC_R_SUCCESS) {
 			isccc_sexpr_free(&list);
 			return (result);
@@ -636,7 +653,7 @@ isccc_cc_fromwire(isccc_region_t *source, isccc_sexpr_t **alistp,
 		return (ISCCC_R_UNKNOWNVERSION);
 	}
 
-	return (table_fromwire(source, secret, algorithm, alistp));
+	return (table_fromwire(source, secret, algorithm, 0, alistp));
 }
 
 static isc_result_t

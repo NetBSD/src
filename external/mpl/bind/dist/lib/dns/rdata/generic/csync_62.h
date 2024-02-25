@@ -1,4 +1,4 @@
-/*	$NetBSD: csync_62.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: csync_62.h,v 1.6.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CSYNC_62_H
-#define GENERIC_CSYNC_62_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 7477
@@ -28,5 +27,3 @@ typedef struct dns_rdata_csync {
 	unsigned char *typebits;
 	uint16_t len;
 } dns_rdata_csync_t;
-
-#endif /* GENERIC_CSYNC_62_H */

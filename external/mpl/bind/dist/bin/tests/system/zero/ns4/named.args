@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 1 -D zero-ns4 -X named.lock -g -T maxcachesize=2097152
+-m record -c named.conf -d 1 -D zero-ns4 -X named.lock -g -T maxcachesize=2097152

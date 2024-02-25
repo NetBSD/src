@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.10.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: gen.c,v 1.10.2.2 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,38 +15,22 @@
 
 /*! \file */
 
-#ifdef WIN32
-/*
- * Silence compiler warnings about using strcpy and friends.
- */
-#define _CRT_SECURE_NO_DEPRECATE 1
-/*
- * We use snprintf which was defined late in Windows even it is in C99.
- */
-#if _MSC_VER < 1900
-#define snprintf _snprintf
-#endif /* if _MSC_VER < 1900 */
-#endif /* ifdef WIN32 */
-
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024
 #endif /* ifndef PATH_MAX */
-
-#ifdef WIN32
-#include "gen-win32.h"
-#else /* ifdef WIN32 */
-#include "gen-unix.h"
-#endif /* ifdef WIN32 */
 
 #ifndef ULLONG_MAX
 #define ULLONG_MAX (~0ULL)
@@ -99,7 +83,7 @@
 #define COMPARETYPE  "rdata1->type"
 #define COMPAREDEF   "use_default = true"
 
-#define ADDITIONALDATAARGS  "rdata, add, arg"
+#define ADDITIONALDATAARGS  "rdata, owner, add, arg"
 #define ADDITIONALDATACLASS "rdata->rdclass"
 #define ADDITIONALDATATYPE  "rdata->type"
 #define ADDITIONALDATADEF   "use_default = true"
@@ -148,7 +132,7 @@ static const char copyright[] = "/*\n"
 #define TYPENAMES     256
 #define TYPECLASSLEN  20 /* DNS mnemonic size. Must be less than 100. */
 #define TYPECLASSBUF  (TYPECLASSLEN + 1)
-#define TYPECLASSFMT  "%" STR(TYPECLASSLEN) "[-0-9a-z]_%d"
+#define TYPECLASSFMT  "%" STR(TYPECLASSLEN) "[-0-9a-z]_%u"
 #define ATTRIBUTESIZE 256
 
 static struct cc {
@@ -176,6 +160,11 @@ static struct ttnam {
 
 static int maxtype = -1;
 
+typedef struct {
+	DIR *handle;
+	char *filename;
+} isc_dir_t;
+
 static char *
 upper(char *);
 static char *
@@ -184,11 +173,59 @@ static void
 doswitch(const char *, const char *, const char *, const char *, const char *,
 	 const char *);
 static void
-add(int, const char *, int, const char *, const char *);
+add(unsigned int, const char *, int, const char *, const char *);
 static void
-sd(int, const char *, const char *, char);
+sd(unsigned int, const char *, const char *, char);
 static void
 insert_into_typenames(int, const char *, const char *);
+
+static bool
+start_directory(const char *path, isc_dir_t *dir) {
+	dir->handle = opendir(path);
+
+	if (dir->handle != NULL) {
+		return (true);
+	} else {
+		return (false);
+	}
+}
+
+static bool
+next_file(isc_dir_t *dir) {
+	struct dirent *dirent;
+
+	dir->filename = NULL;
+
+	if (dir->handle != NULL) {
+		errno = 0;
+		dirent = readdir(dir->handle);
+		if (dirent != NULL) {
+			dir->filename = dirent->d_name;
+		} else {
+			if (errno != 0) {
+				fprintf(stderr,
+					"Error: reading directory: %s\n",
+					strerror(errno));
+				exit(1);
+			}
+		}
+	}
+
+	if (dir->filename != NULL) {
+		return (true);
+	} else {
+		return (false);
+	}
+}
+
+static void
+end_directory(isc_dir_t *dir) {
+	if (dir->handle != NULL) {
+		(void)closedir(dir->handle);
+	}
+
+	dir->handle = NULL;
+}
 
 /*%
  * If you use more than 10 of these in, say, a printf(), you'll have problems.
@@ -244,61 +281,60 @@ doswitch(const char *name, const char *function, const char *args,
 
 	for (tt = types; tt != NULL; tt = tt->next) {
 		if (first) {
-			fprintf(stdout, "\n#define %s \\\n", name);
-			fprintf(stdout, "\tswitch (%s) { \\\n" /*}*/, tsw);
+			printf("\n#define %s \\\n", name);
+			printf("\tswitch (%s) { \\\n" /*}*/, tsw);
 			first = 0;
 		}
 		if (tt->type != lasttype && subswitch) {
 			if (res == NULL) {
-				fprintf(stdout, "\t\tdefault: break; \\\n");
+				printf("\t\tdefault: break; \\\n");
 			} else {
-				fprintf(stdout, "\t\tdefault: %s; break; \\\n",
-					res);
+				printf("\t\tdefault: %s; break; \\\n", res);
 			}
-			fputs(/*{*/ "\t\t} \\\n", stdout);
-			fputs("\t\tbreak; \\\n", stdout);
+			printf("\t\t} \\\n");
+			printf("\t\tbreak; \\\n");
 			subswitch = 0;
 		}
 		if (tt->rdclass && tt->type != lasttype) {
-			fprintf(stdout, "\tcase %d: switch (%s) { \\\n" /*}*/,
-				tt->type, csw);
+			printf("\tcase %d: switch (%s) { \\\n" /*}*/, tt->type,
+			       csw);
 			subswitch = 1;
 		}
 		if (tt->rdclass == 0) {
-			fprintf(stdout, "\tcase %d:%s %s_%s(%s); break;",
-				tt->type, result, function,
-				funname(tt->typebuf, buf1), args);
+			printf("\tcase %d:%s %s_%s(%s); break;", tt->type,
+			       result, function, funname(tt->typebuf, buf1),
+			       args);
 		} else {
-			fprintf(stdout, "\t\tcase %d:%s %s_%s_%s(%s); break;",
-				tt->rdclass, result, function,
-				funname(tt->classbuf, buf1),
-				funname(tt->typebuf, buf2), args);
+			printf("\t\tcase %d:%s %s_%s_%s(%s); break;",
+			       tt->rdclass, result, function,
+			       funname(tt->classbuf, buf1),
+			       funname(tt->typebuf, buf2), args);
 		}
-		fputs(" \\\n", stdout);
+		printf(" \\\n");
 		lasttype = tt->type;
 	}
 	if (subswitch) {
 		if (res == NULL) {
-			fprintf(stdout, "\t\tdefault: break; \\\n");
+			printf("\t\tdefault: break; \\\n");
 		} else {
-			fprintf(stdout, "\t\tdefault: %s; break; \\\n", res);
+			printf("\t\tdefault: %s; break; \\\n", res);
 		}
-		fputs(/*{*/ "\t\t} \\\n", stdout);
-		fputs("\t\tbreak; \\\n", stdout);
+		printf("\t\t} \\\n");
+		printf("\t\tbreak; \\\n");
 	}
 	if (first) {
 		if (res == NULL) {
-			fprintf(stdout, "\n#define %s\n", name);
+			printf("\n#define %s\n", name);
 		} else {
-			fprintf(stdout, "\n#define %s %s;\n", name, res);
+			printf("\n#define %s %s;\n", name, res);
 		}
 	} else {
 		if (res == NULL) {
-			fprintf(stdout, "\tdefault: break; \\\n");
+			printf("\tdefault: break; \\\n");
 		} else {
-			fprintf(stdout, "\tdefault: %s; break; \\\n", res);
+			printf("\tdefault: %s; break; \\\n", res);
 		}
-		fputs(/*{*/ "\t}\n", stdout);
+		printf("\t}\n");
 	}
 }
 
@@ -392,7 +428,7 @@ insert_into_typenames(int type, const char *typebuf, const char *attr) {
 }
 
 static void
-add(int rdclass, const char *classbuf, int type, const char *typebuf,
+add(unsigned int rdclass, const char *classbuf, int type, const char *typebuf,
     const char *dirbuf) {
 	struct tt *newtt = (struct tt *)malloc(sizeof(*newtt));
 	struct tt *tt, *oldtt;
@@ -490,10 +526,12 @@ add(int rdclass, const char *classbuf, int type, const char *typebuf,
 }
 
 static void
-sd(int rdclass, const char *classbuf, const char *dirbuf, char filetype) {
-	char buf[TYPECLASSLEN + sizeof("_65535.h")];
+sd(unsigned int rdclass, const char *classbuf, const char *dirbuf,
+   char filetype) {
+	char buf[TYPECLASSLEN + sizeof("_4294967295.h")];
 	char typebuf[TYPECLASSBUF];
-	int type, n;
+	unsigned int type;
+	int n;
 	isc_dir_t dir;
 
 	if (!start_directory(dirbuf, &dir)) {
@@ -504,15 +542,22 @@ sd(int rdclass, const char *classbuf, const char *dirbuf, char filetype) {
 		if (sscanf(dir.filename, TYPECLASSFMT, typebuf, &type) != 2) {
 			continue;
 		}
-		if ((type > 65535) || (type < 0)) {
-			continue;
-		}
 
-		n = snprintf(buf, sizeof(buf), "%s_%d.%c", typebuf, type,
+		/*
+		 * sscanf accepts leading sign and zeros before type so
+		 * compare the scanned items against the filename. Filter
+		 * out mismatches. Also filter out bad file extensions.
+		 */
+		n = snprintf(buf, sizeof(buf), "%s_%u.%c", typebuf, type,
 			     filetype);
 		INSIST(n > 0 && (unsigned)n < sizeof(buf));
 		if (strcmp(buf, dir.filename) != 0) {
 			continue;
+		}
+		if (type > 65535) {
+			fprintf(stderr, "Error: type value > 65535 (%s)\n",
+				dir.filename);
+			exit(1);
 		}
 		add(rdclass, classbuf, type, typebuf, dirbuf);
 	}
@@ -540,7 +585,7 @@ int
 main(int argc, char **argv) {
 	char buf[PATH_MAX];
 	char srcdir[PATH_MAX];
-	int rdclass;
+	unsigned int rdclass;
 	char classbuf[TYPECLASSBUF];
 	struct tt *tt;
 	struct cc *cc;
@@ -571,7 +616,7 @@ main(int argc, char **argv) {
 	}
 
 	srcdir[0] = '\0';
-	while ((c = isc_commandline_parse(argc, argv, "cdits:F:P:S:")) != -1) {
+	while ((c = getopt(argc, argv, "cdits:F:P:S:")) != -1) {
 		switch (c) {
 		case 'c':
 			code = 0;
@@ -606,26 +651,24 @@ main(int argc, char **argv) {
 			filetype = 'h';
 			break;
 		case 's':
-			if (strlen(isc_commandline_argument) >
+			if (strlen(optarg) >
 			    PATH_MAX - 2 * TYPECLASSLEN -
 				    sizeof("/rdata/_65535_65535"))
 			{
-				fprintf(stderr, "\"%s\" too long\n",
-					isc_commandline_argument);
+				fprintf(stderr, "\"%s\" too long\n", optarg);
 				exit(1);
 			}
-			n = snprintf(srcdir, sizeof(srcdir), "%s/",
-				     isc_commandline_argument);
+			n = snprintf(srcdir, sizeof(srcdir), "%s/", optarg);
 			INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 			break;
 		case 'F':
-			file = isc_commandline_argument;
+			file = optarg;
 			break;
 		case 'P':
-			prefix = isc_commandline_argument;
+			prefix = optarg;
 			break;
 		case 'S':
-			suffix = isc_commandline_argument;
+			suffix = optarg;
 			break;
 		case '?':
 			exit(1);
@@ -644,15 +687,22 @@ main(int argc, char **argv) {
 		{
 			continue;
 		}
-		if ((rdclass > 65535) || (rdclass < 0)) {
-			continue;
-		}
 
-		n = snprintf(buf, sizeof(buf), "%srdata/%s_%d", srcdir,
+		/*
+		 * sscanf accepts leading sign and zeros before type so
+		 * compare the scanned items against the filename. Filter
+		 * out mismatches.
+		 */
+		n = snprintf(buf, sizeof(buf), "%srdata/%s_%u", srcdir,
 			     classbuf, rdclass);
 		INSIST(n > 0 && (unsigned)n < sizeof(buf));
 		if (strcmp(buf + 6 + strlen(srcdir), dir.filename) != 0) {
 			continue;
+		}
+		if (rdclass > 65535) {
+			fprintf(stderr, "Error: class value > 65535 (%s)\n",
+				dir.filename);
+			exit(1);
 		}
 		sd(rdclass, classbuf, buf, filetype);
 	}
@@ -718,23 +768,22 @@ main(int argc, char **argv) {
 	}
 
 	if (!depend) {
-		fprintf(stdout, copyright, year);
+		printf(copyright, year);
 	}
 
 	if (code) {
-		fputs("#ifndef DNS_CODE_H\n", stdout);
-		fputs("#define DNS_CODE_H 1\n\n", stdout);
+		printf("#pragma once\n");
 
-		fputs("#include <stdbool.h>\n", stdout);
-		fputs("#include <isc/result.h>\n\n", stdout);
-		fputs("#include <dns/name.h>\n\n", stdout);
+		printf("#include <stdbool.h>\n");
+		printf("#include <isc/result.h>\n\n");
+		printf("#include <dns/name.h>\n\n");
 
 		for (tt = types; tt != NULL; tt = tt->next) {
-			fprintf(stdout, "#include \"%s/%s_%d.c\"\n", tt->dirbuf,
-				tt->typebuf, tt->type);
+			printf("#include \"%s/%s_%d.c\"\n", tt->dirbuf,
+			       tt->typebuf, tt->type);
 		}
 
-		fputs("\n\n", stdout);
+		printf("\n\n");
 
 		doswitch("FROMTEXTSWITCH", "fromtext", FROMTEXTARGS,
 			 FROMTEXTTYPE, FROMTEXTCLASS, FROMTEXTDEF);
@@ -804,23 +853,22 @@ main(int argc, char **argv) {
 		 * Here, walk the list from top to bottom, calculating
 		 * the hash (mod 256) for each name.
 		 */
-		fprintf(stdout, "#define RDATATYPE_COMPARE(_s, _d, _tn, _n, "
-				"_tp) \\\n");
-		fprintf(stdout, "\tdo { \\\n");
-		fprintf(stdout, "\t\tif (sizeof(_s) - 1 == _n && \\\n"
-				"\t\t    strncasecmp(_s,(_tn),"
-				"(sizeof(_s) - 1)) == 0) { \\\n");
-		fprintf(stdout, "\t\t\tif ((dns_rdatatype_attributes(_d) & "
-				"DNS_RDATATYPEATTR_RESERVED) != 0) \\\n");
-		fprintf(stdout, "\t\t\t\treturn (ISC_R_NOTIMPLEMENTED); \\\n");
-		fprintf(stdout, "\t\t\t*(_tp) = _d; \\\n");
-		fprintf(stdout, "\t\t\treturn (ISC_R_SUCCESS); \\\n");
-		fprintf(stdout, "\t\t} \\\n");
-		fprintf(stdout, "\t} while (0)\n\n");
+		printf("#define RDATATYPE_COMPARE(_s, _d, _tn, _n, _tp) \\\n");
+		printf("\tdo { \\\n");
+		printf("\t\tif (sizeof(_s) - 1 == _n && \\\n"
+		       "\t\t    strncasecmp(_s,(_tn),"
+		       "(sizeof(_s) - 1)) == 0) { \\\n");
+		printf("\t\t\tif ((dns_rdatatype_attributes(_d) & "
+		       "DNS_RDATATYPEATTR_RESERVED) != 0) \\\n");
+		printf("\t\t\t\treturn (ISC_R_NOTIMPLEMENTED); \\\n");
+		printf("\t\t\t*(_tp) = _d; \\\n");
+		printf("\t\t\treturn (ISC_R_SUCCESS); \\\n");
+		printf("\t\t} \\\n");
+		printf("\t} while (0)\n\n");
 
-		fprintf(stdout, "#define RDATATYPE_FROMTEXT_SW(_hash,"
-				"_typename,_length,_typep) \\\n");
-		fprintf(stdout, "\tswitch (_hash) { \\\n");
+		printf("#define RDATATYPE_FROMTEXT_SW(_hash,"
+		       "_typename,_length,_typep) \\\n");
+		printf("\tswitch (_hash) { \\\n");
 		for (i = 0; i <= maxtype; i++) {
 			ttn = find_typename(i);
 			if (ttn == NULL) {
@@ -835,7 +883,7 @@ main(int argc, char **argv) {
 			}
 
 			hash = HASH(ttn->typebuf);
-			fprintf(stdout, "\t\tcase %u: \\\n", hash);
+			printf("\t\tcase %u: \\\n", hash);
 
 			/*
 			 * Find all other entries that happen to match
@@ -847,33 +895,31 @@ main(int argc, char **argv) {
 					continue;
 				}
 				if (hash == HASH(ttn2->typebuf)) {
-					fprintf(stdout,
-						"\t\t\t"
-						"RDATATYPE_COMPARE"
-						"(\"%s\", %d, _typename, "
-						" _length, _typep); \\\n",
-						ttn2->typebuf, ttn2->type);
+					printf("\t\t\tRDATATYPE_COMPARE"
+					       "(\"%s\", %d, _typename, "
+					       " _length, _typep); \\\n",
+					       ttn2->typebuf, ttn2->type);
 					ttn2->sorted = 1;
 				}
 			}
-			fprintf(stdout, "\t\t\tbreak; \\\n");
+			printf("\t\t\tbreak; \\\n");
 		}
-		fprintf(stdout, "\t}\n");
+		printf("\t}\n");
 
-		fprintf(stdout, "#define RDATATYPE_ATTRIBUTE_SW \\\n");
-		fprintf(stdout, "\tswitch (type) { \\\n");
+		printf("#define RDATATYPE_ATTRIBUTE_SW \\\n");
+		printf("\tswitch (type) { \\\n");
 		for (i = 0; i <= maxtype; i++) {
 			ttn = find_typename(i);
 			if (ttn == NULL) {
 				continue;
 			}
-			fprintf(stdout, "\tcase %d: return (%s); \\\n", i,
-				upper(ttn->attr));
+			printf("\tcase %d: return (%s); \\\n", i,
+			       upper(ttn->attr));
 		}
-		fprintf(stdout, "\t}\n");
+		printf("\t}\n");
 
-		fprintf(stdout, "#define RDATATYPE_TOTEXT_SW \\\n");
-		fprintf(stdout, "\tswitch (type) { \\\n");
+		printf("#define RDATATYPE_TOTEXT_SW \\\n");
+		printf("\tswitch (type) { \\\n");
 		for (i = 0; i <= maxtype; i++) {
 			ttn = find_typename(i);
 			if (ttn == NULL) {
@@ -888,91 +934,80 @@ main(int argc, char **argv) {
 			if (i == 65533U) {
 				continue;
 			}
-			fprintf(stdout,
-				"\tcase %d: return "
-				"(str_totext(\"%s\", target)); \\\n",
-				i, upper(ttn->typebuf));
+			printf("\tcase %d: return "
+			       "(str_totext(\"%s\", target)); \\\n",
+			       i, upper(ttn->typebuf));
 		}
-		fprintf(stdout, "\t}\n");
-
-		fputs("#endif /* DNS_CODE_H */\n", stdout);
+		printf("\t}\n");
 	} else if (type_enum) {
 		char *s;
 
-		fprintf(stdout, "#ifndef DNS_ENUMTYPE_H\n");
-		fprintf(stdout, "#define DNS_ENUMTYPE_H 1\n\n");
+		printf("#pragma once\n");
 
-		fprintf(stdout, "enum {\n");
-		fprintf(stdout, "\tdns_rdatatype_none = 0,\n");
+		printf("enum {\n");
+		printf("\tdns_rdatatype_none = 0,\n");
 
 		lasttype = 0;
 		for (tt = types; tt != NULL; tt = tt->next) {
 			if (tt->type != lasttype) {
-				fprintf(stdout, "\tdns_rdatatype_%s = %d,\n",
-					funname(tt->typebuf, buf1),
-					lasttype = tt->type);
+				printf("\tdns_rdatatype_%s = %d,\n",
+				       funname(tt->typebuf, buf1),
+				       lasttype = tt->type);
 			}
 		}
 
-		fprintf(stdout, "\tdns_rdatatype_ixfr = 251,\n");
-		fprintf(stdout, "\tdns_rdatatype_axfr = 252,\n");
-		fprintf(stdout, "\tdns_rdatatype_mailb = 253,\n");
-		fprintf(stdout, "\tdns_rdatatype_maila = 254,\n");
-		fprintf(stdout, "\tdns_rdatatype_any = 255\n");
+		printf("\tdns_rdatatype_ixfr = 251,\n");
+		printf("\tdns_rdatatype_axfr = 252,\n");
+		printf("\tdns_rdatatype_mailb = 253,\n");
+		printf("\tdns_rdatatype_maila = 254,\n");
+		printf("\tdns_rdatatype_any = 255\n");
 
-		fprintf(stdout, "};\n\n");
+		printf("};\n\n");
 
-		fprintf(stdout, "#define dns_rdatatype_none\t"
-				"((dns_rdatatype_t)dns_rdatatype_none)\n");
+		printf("#define dns_rdatatype_none\t"
+		       "((dns_rdatatype_t)dns_rdatatype_none)\n");
 
 		for (tt = types; tt != NULL; tt = tt->next) {
 			if (tt->type != lasttype) {
 				s = funname(tt->typebuf, buf1);
-				fprintf(stdout,
-					"#define dns_rdatatype_%s\t%s"
-					"((dns_rdatatype_t)dns_rdatatype_%s)"
-					"\n",
-					s, strlen(s) < 2U ? "\t" : "", s);
+				printf("#define dns_rdatatype_%s\t%s"
+				       "((dns_rdatatype_t)dns_rdatatype_%s)\n",
+				       s, strlen(s) < 2U ? "\t" : "", s);
 				lasttype = tt->type;
 			}
 		}
 
-		fprintf(stdout, "#define dns_rdatatype_ixfr\t"
-				"((dns_rdatatype_t)dns_rdatatype_ixfr)\n");
-		fprintf(stdout, "#define dns_rdatatype_axfr\t"
-				"((dns_rdatatype_t)dns_rdatatype_axfr)\n");
-		fprintf(stdout, "#define dns_rdatatype_mailb\t"
-				"((dns_rdatatype_t)dns_rdatatype_mailb)\n");
-		fprintf(stdout, "#define dns_rdatatype_maila\t"
-				"((dns_rdatatype_t)dns_rdatatype_maila)\n");
-		fprintf(stdout, "#define dns_rdatatype_any\t"
-				"((dns_rdatatype_t)dns_rdatatype_any)\n");
-
-		fprintf(stdout, "\n#endif /* DNS_ENUMTYPE_H */\n");
+		printf("#define dns_rdatatype_ixfr\t"
+		       "((dns_rdatatype_t)dns_rdatatype_ixfr)\n");
+		printf("#define dns_rdatatype_axfr\t"
+		       "((dns_rdatatype_t)dns_rdatatype_axfr)\n");
+		printf("#define dns_rdatatype_mailb\t"
+		       "((dns_rdatatype_t)dns_rdatatype_mailb)\n");
+		printf("#define dns_rdatatype_maila\t"
+		       "((dns_rdatatype_t)dns_rdatatype_maila)\n");
+		printf("#define dns_rdatatype_any\t"
+		       "((dns_rdatatype_t)dns_rdatatype_any)\n");
 	} else if (class_enum) {
 		char *s;
 		int classnum;
 
-		fprintf(stdout, "#ifndef DNS_ENUMCLASS_H\n");
-		fprintf(stdout, "#define DNS_ENUMCLASS_H 1\n\n");
+		printf("#pragma once\n");
 
-		fprintf(stdout, "enum {\n");
+		printf("enum {\n");
 
-		fprintf(stdout, "\tdns_rdataclass_reserved0 = 0,\n");
-		fprintf(stdout, "#define dns_rdataclass_reserved0 \\\n\t\t\t\t"
-				"((dns_rdataclass_t)dns_rdataclass_reserved0)"
-				"\n");
+		printf("\tdns_rdataclass_reserved0 = 0,\n");
+		printf("#define dns_rdataclass_reserved0 \\\n\t\t\t\t"
+		       "((dns_rdataclass_t)dns_rdataclass_reserved0)\n");
 
-#define PRINTCLASS(name, num)                                                \
-	do {                                                                 \
-		s = funname(name, buf1);                                     \
-		classnum = num;                                              \
-		fprintf(stdout, "\tdns_rdataclass_%s = %d%s\n", s, classnum, \
-			classnum != 255 ? "," : "");                         \
-		fprintf(stdout,                                              \
-			"#define dns_rdataclass_%s\t"                        \
-			"((dns_rdataclass_t)dns_rdataclass_%s)\n",           \
-			s, s);                                               \
+#define PRINTCLASS(name, num)                                       \
+	do {                                                        \
+		s = funname(name, buf1);                            \
+		classnum = num;                                     \
+		printf("\tdns_rdataclass_%s = %d%s\n", s, classnum, \
+		       classnum != 255 ? "," : "");                 \
+		printf("#define dns_rdataclass_%s\t"                \
+		       "((dns_rdataclass_t)dns_rdataclass_%s)\n",   \
+		       s, s);                                       \
 	} while (0)
 
 		for (cc = classes; cc != NULL; cc = cc->next) {
@@ -986,13 +1021,12 @@ main(int argc, char **argv) {
 
 #undef PRINTCLASS
 
-		fprintf(stdout, "};\n\n");
-		fprintf(stdout, "#endif /* DNS_ENUMCLASS_H */\n");
+		printf("};\n\n");
 	} else if (structs) {
 		if (prefix != NULL) {
 			if ((fd = fopen(prefix, "r")) != NULL) {
 				while (fgets(buf, sizeof(buf), fd) != NULL) {
-					fputs(buf, stdout);
+					printf("%s", buf);
 				}
 				fclose(fd);
 			}
@@ -1002,7 +1036,7 @@ main(int argc, char **argv) {
 				 tt->typebuf, tt->type);
 			if ((fd = fopen(buf, "r")) != NULL) {
 				while (fgets(buf, sizeof(buf), fd) != NULL) {
-					fputs(buf, stdout);
+					printf("%s", buf);
 				}
 				fclose(fd);
 			}
@@ -1010,15 +1044,15 @@ main(int argc, char **argv) {
 		if (suffix != NULL) {
 			if ((fd = fopen(suffix, "r")) != NULL) {
 				while (fgets(buf, sizeof(buf), fd) != NULL) {
-					fputs(buf, stdout);
+					printf("%s", buf);
 				}
 				fclose(fd);
 			}
 		}
 	} else if (depend) {
 		for (tt = types; tt != NULL; tt = tt->next) {
-			fprintf(stdout, "%s:\t%s/%s_%d.h\n", file, tt->dirbuf,
-				tt->typebuf, tt->type);
+			printf("%s:\t%s/%s_%d.h\n", file, tt->dirbuf,
+			       tt->typebuf, tt->type);
 		}
 	}
 

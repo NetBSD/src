@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.h,v 1.5.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NSEC3PARAM_51_H
-#define GENERIC_NSEC3PARAM_51_H 1
+#pragma once
 
 /*!
  * \brief Per RFC 5155 */
@@ -30,5 +29,3 @@ typedef struct dns_rdata_nsec3param {
 	unsigned char salt_length;
 	unsigned char *salt;
 } dns_rdata_nsec3param_t;
-
-#endif /* GENERIC_NSEC3PARAM_51_H */

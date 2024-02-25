@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.5 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.5.2.1 2024/02/25 15:47:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ISCCC_EVENTS_H
-#define ISCCC_EVENTS_H 1
+#pragma once
 
 /*! \file isccc/events.h */
 
@@ -44,5 +43,3 @@
 
 #define ISCCC_EVENT_FIRSTEVENT (ISC_EVENTCLASS_ISCCC + 0)
 #define ISCCC_EVENT_LASTEVENT  (ISC_EVENTCLASS_ISCCC + 65535)
-
-#endif /* ISCCC_EVENTS_H */

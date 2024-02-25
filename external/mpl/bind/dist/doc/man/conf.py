@@ -1,16 +1,15 @@
+############################################################################
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
-
-import datetime
-from docutils.parsers.rst import roles
+############################################################################
 
 #
 # Configuration file for the Sphinx documentation builder.
@@ -33,6 +32,8 @@ from docutils.parsers.rst import roles
 
 project = "BIND 9"
 # pylint: disable=wrong-import-position
+import datetime
+
 year = datetime.datetime.now().year
 # pylint: disable=redefined-builtin
 copyright = "%d, Internet Systems Consortium" % year
@@ -81,61 +82,40 @@ man_pages = [
         "dnssec-cds",
         "change DS records for a child zone based on CDS/CDNSKEY",
         author,
-        8,
+        1,
     ),
-    (
-        "dnssec-checkds",
-        "dnssec-checkds",
-        "DNSSEC delegation consistency checking tool",
-        author,
-        8,
-    ),
-    (
-        "dnssec-coverage",
-        "dnssec-coverage",
-        "checks future DNSKEY coverage for a zone",
-        author,
-        8,
-    ),
-    ("dnssec-dsfromkey", "dnssec-dsfromkey", "DNSSEC DS RR generation tool", author, 8),
+    ("dnssec-dsfromkey", "dnssec-dsfromkey", "DNSSEC DS RR generation tool", author, 1),
     (
         "dnssec-importkey",
         "dnssec-importkey",
         "import DNSKEY records from external systems so they can be managed",
         author,
-        8,
+        1,
     ),
     (
         "dnssec-keyfromlabel",
         "dnssec-keyfromlabel",
         "DNSSEC key generation tool",
         author,
-        8,
+        1,
     ),
-    ("dnssec-keygen", "dnssec-keygen", "DNSSEC key generation tool", author, 8),
-    (
-        "dnssec-keymgr",
-        "dnssec-keymgr",
-        "ensure correct DNSKEY coverage based on a defined policy",
-        author,
-        8,
-    ),
+    ("dnssec-keygen", "dnssec-keygen", "DNSSEC key generation tool", author, 1),
     (
         "dnssec-revoke",
         "dnssec-revoke",
         "set the REVOKED bit on a DNSSEC key",
         author,
-        8,
+        1,
     ),
     (
         "dnssec-settime",
         "dnssec-settime",
         "set the key timing metadata for a DNSSEC key",
         author,
-        8,
+        1,
     ),
-    ("dnssec-signzone", "dnssec-signzone", "DNSSEC zone signing tool", author, 8),
-    ("dnssec-verify", "dnssec-verify", "DNSSEC zone verification tool", author, 8),
+    ("dnssec-signzone", "dnssec-signzone", "DNSSEC zone signing tool", author, 1),
+    ("dnssec-verify", "dnssec-verify", "DNSSEC zone verification tool", author, 1),
     (
         "dnstap-read",
         "dnstap-read",
@@ -150,6 +130,13 @@ man_pages = [
         author,
         8,
     ),
+    (
+        "filter-a",
+        "filter-a",
+        "filter A in DNS responses when AAAA is present",
+        author,
+        8,
+    ),
     ("host", "host", "DNS lookup utility", author, 1),
     ("mdig", "mdig", "DNS pipelined lookup utility", author, 1),
     (
@@ -157,35 +144,35 @@ man_pages = [
         "named-checkconf",
         "named configuration file syntax checking tool",
         author,
-        8,
+        1,
     ),
     (
         "named-checkzone",
         "named-checkzone",
         "zone file validity checking or converting tool",
         author,
-        8,
+        1,
     ),
     (
         "named-compilezone",
         "named-compilezone",
         "zone file validity checking or converting tool",
         author,
-        8,
+        1,
     ),
     (
         "named-journalprint",
         "named-journalprint",
         "print zone journal in human-readable form",
         author,
-        8,
+        1,
     ),
     (
         "named-nzd2nzf",
         "named-nzd2nzf",
         "convert an NZD database to NZF text format",
         author,
-        8,
+        1,
     ),
     (
         "named-rrchecker",
@@ -196,21 +183,29 @@ man_pages = [
     ),
     ("named.conf", "named.conf", "configuration file for **named**", author, 5),
     ("named", "named", "Internet domain name server", author, 8),
-    ("nsec3hash", "nsec3hash", "generate NSEC3 hash", author, 8),
+    ("nsec3hash", "nsec3hash", "generate NSEC3 hash", author, 1),
     ("nslookup", "nslookup", "query Internet name servers interactively", author, 1),
     ("nsupdate", "nsupdate", "dynamic DNS update utility", author, 1),
-    ("pkcs11-destroy", "pkcs11-destroy", "destroy PKCS#11 objects", author, 8),
-    ("pkcs11-keygen", "pkcs11-keygen", "generate keys on a PKCS#11 device", author, 8),
-    ("pkcs11-list", "pkcs11-list", "list PKCS#11 objects", author, 8),
-    ("pkcs11-tokens", "pkcs11-tokens", "list PKCS#11 available tokens", author, 8),
     ("rndc-confgen", "rndc-confgen", "rndc key generation tool", author, 8),
     ("rndc.conf", "rndc.conf", "rndc configuration file", author, 5),
     ("rndc", "rndc", "name server control utility", author, 8),
     ("tsig-keygen", "tsig-keygen", "TSIG key generation tool", author, 8),
 ]
 
+#
+# The rst_epilog will be completely overwritten from the Makefile,
+# the definition here is provided purely for situations when
+# sphinx-build is run by hand.
+#
+rst_epilog = """
+.. |rndc_conf| replace:: ``@sysconfdir@/rndc.conf``
+.. |rndc_key| replace:: ``@sysconfdir@/rndc.key``
+.. |named_conf| replace:: ``@sysconfdir@/named.conf``
+.. |bind_keys| replace:: ``@sysconfdir@/bind.keys``
+.. |named_pid| replace:: ``@runstatedir@/named.pid``
+.. |session_key| replace:: ``@runstatedir@/session.key``
+"""
+
 
 def setup(app):
     app.add_crossref_type("iscman", "iscman", "pair: %s; manual page")
-    # ignore :option: references to simplify doc backports to v9_16 branch
-    app.add_role_to_domain("std", "option", roles.code_role)

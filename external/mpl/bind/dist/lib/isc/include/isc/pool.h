@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.5.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_OBJPOOL_H
-#define ISC_OBJPOOL_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -139,5 +138,3 @@ isc_pool_destroy(isc_pool_t **poolp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_OBJPOOL_H */

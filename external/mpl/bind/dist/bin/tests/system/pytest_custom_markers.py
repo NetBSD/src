@@ -40,3 +40,21 @@ have_libxml2 = pytest.mark.skipif(
 have_json_c = pytest.mark.skipif(
     not feature_test("--have-json-c"), reason="json-c support disabled in the build"
 )
+
+
+try:
+    import flaky as flaky_pkg
+except ModuleNotFoundError:
+    # In case the flaky package is not installed, run the tests as usual
+    # without any attempts to re-run them.
+    # pylint: disable=unused-argument
+    def flaky(*args, **kwargs):
+        """Mock decorator that doesn't do anything special, just returns the function."""
+
+        def wrapper(wrapped_obj):
+            return wrapped_obj
+
+        return wrapper
+
+else:
+    flaky = flaky_pkg.flaky

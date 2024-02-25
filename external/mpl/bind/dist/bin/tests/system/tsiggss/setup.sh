@@ -11,12 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 $SHELL clean.sh
 
 copy_setports ns1/named.conf.in ns1/named.conf
 
-key=`$KEYGEN -Cq -K ns1 -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n HOST -T KEY key.example.nil.`
-cat ns1/example.nil.db.in ns1/${key}.key > ns1/example.nil.db
+key=$($KEYGEN -Cq -K ns1 -a $DEFAULT_ALGORITHM -b $DEFAULT_BITS -n HOST -T KEY key.example.nil.)
+cat ns1/example.nil.db.in ns1/${key}.key >ns1/example.nil.db

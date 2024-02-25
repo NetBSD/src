@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2020/08/03 17:23:35 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2.6.1 2024/02/25 15:42:53 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,5 @@ DNSSEC=${IDIST}/bin/dnssec
 
 PROG=${BASE}
 SRCS=${BASE}.c dnssectool.c
-MAN=${BASE}.8
+MAN?=${BASE}.1
 ${BASE}.o: ${VERSIONFILE}

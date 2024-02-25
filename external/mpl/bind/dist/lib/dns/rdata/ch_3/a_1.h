@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.6.2.1 2024/02/25 15:47:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,7 @@
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/mx_15.h */
 
-#ifndef CH_3_A_1_H
-#define CH_3_A_1_H 1
+#pragma once
 
 typedef uint16_t ch_addr_t;
 
@@ -29,5 +28,3 @@ typedef struct dns_rdata_ch_a {
 	ch_addr_t ch_addr;	/* chaos address (16 bit) network
 				 * order */
 } dns_rdata_ch_a_t;
-
-#endif /* CH_3_A_1_H */

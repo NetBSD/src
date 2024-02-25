@@ -24,11 +24,11 @@ options {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
 	type stub;
 	file "example.db";
-    masters { 10.53.0.4 port @PORT@; };
+	primaries { 10.53.0.4 port @PORT@; };
 };

@@ -14,6 +14,7 @@
 # pylint: disable=unused-variable
 
 import socket
+import struct
 import time
 
 import pytest
@@ -21,6 +22,7 @@ import pytest
 pytest.importorskip("dns", minversion="2.0.0")
 import dns.message
 import dns.query
+
 
 TIMEOUT = 10
 
@@ -38,6 +40,50 @@ def create_socket(host, port):
     sock = socket.create_connection((host, port), timeout=10)
     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
     return sock
+
+
+def test_tcp_garbage(named_port):
+    with create_socket("10.53.0.7", named_port) as sock:
+        msg = create_msg("a.example.", "A")
+        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
+        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+
+        wire = msg.to_wire()
+        assert len(wire) > 0
+
+        # Send DNS message shorter than DNS message header (12),
+        # this should cause the connection to be terminated
+        sock.send(struct.pack("!H", 11))
+        sock.send(struct.pack("!s", b"0123456789a"))
+
+        with pytest.raises(EOFError):
+            try:
+                (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
+                (response, rtime) = dns.query.receive_tcp(sock, timeout())
+            except ConnectionError as e:
+                raise EOFError from e
+
+
+def test_tcp_garbage_response(named_port):
+    with create_socket("10.53.0.7", named_port) as sock:
+        msg = create_msg("a.example.", "A")
+        (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
+        (response, rtime) = dns.query.receive_tcp(sock, timeout())
+
+        wire = msg.to_wire()
+        assert len(wire) > 0
+
+        # Send DNS response instead of DNS query, this should cause
+        # the connection to be terminated
+
+        rmsg = dns.message.make_response(msg)
+        (sbytes, stime) = dns.query.send_tcp(sock, rmsg, timeout())
+
+        with pytest.raises(EOFError):
+            try:
+                (response, rtime) = dns.query.receive_tcp(sock, timeout())
+            except ConnectionError as e:
+                raise EOFError from e
 
 
 # Regression test for CVE-2022-0396

@@ -1,4 +1,4 @@
-/*	$NetBSD: strerr.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: strerr.h,v 1.5.2.1 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,12 @@
 /*! \file isc/strerr.h */
 
 #include <isc/string.h>
+
+/***
+ *** Default strerror_r buffer size
+ ***/
+
+#define ISC_STRERRORSIZE 128
 
 #if defined(strerror_r)
 #undef strerror_r

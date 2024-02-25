@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rrl.h,v 1.6.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RRL_H
-#define DNS_RRL_H 1
+#pragma once
 
 /*
  * Rate limit DNS responses.
@@ -270,5 +269,3 @@ isc_result_t
 dns_rrl_init(dns_rrl_t **rrlp, dns_view_t *view, int min_entries);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RRL_H */

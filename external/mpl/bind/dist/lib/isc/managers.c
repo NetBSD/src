@@ -1,4 +1,4 @@
-/*	$NetBSD: managers.c,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: managers.c,v 1.3.2.1 2024/02/25 15:47:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,13 +18,16 @@
 
 #include "netmgr_p.h"
 #include "task_p.h"
+#include "timer_p.h"
 
 isc_result_t
 isc_managers_create(isc_mem_t *mctx, size_t workers, size_t quantum,
-		    isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp) {
+		    isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp,
+		    isc_timermgr_t **timermgrp) {
 	isc_result_t result;
-	isc_taskmgr_t *taskmgr = NULL;
 	isc_nm_t *netmgr = NULL;
+	isc_taskmgr_t *taskmgr = NULL;
+	isc_timermgr_t *timermgr = NULL;
 
 	REQUIRE(netmgrp != NULL && *netmgrp == NULL);
 	isc__netmgr_create(mctx, workers, &netmgr);
@@ -36,27 +39,38 @@ isc_managers_create(isc_mem_t *mctx, size_t workers, size_t quantum,
 		INSIST(netmgr != NULL);
 		result = isc__taskmgr_create(mctx, quantum, netmgr, &taskmgr);
 		if (result != ISC_R_SUCCESS) {
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "isc_managers_create() failed: %s",
+			UNEXPECTED_ERROR("isc_taskmgr_create() failed: %s",
 					 isc_result_totext(result));
 			goto fail;
 		}
 		*taskmgrp = taskmgr;
 	}
 
+	REQUIRE(timermgrp == NULL || *timermgrp == NULL);
+	if (timermgrp != NULL) {
+		result = isc__timermgr_create(mctx, &timermgr);
+		if (result != ISC_R_SUCCESS) {
+			UNEXPECTED_ERROR("isc_timermgr_create() failed: %s",
+					 isc_result_totext(result));
+			goto fail;
+		}
+		*timermgrp = timermgr;
+	}
+
 	return (ISC_R_SUCCESS);
 fail:
-	isc_managers_destroy(netmgrp, taskmgrp);
+	isc_managers_destroy(netmgrp, taskmgrp, timermgrp);
 
 	return (result);
 }
 
 void
-isc_managers_destroy(isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp) {
+isc_managers_destroy(isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp,
+		     isc_timermgr_t **timermgrp) {
 	/*
 	 * If we have a taskmgr to clean up, then we must also have a netmgr.
 	 */
-	REQUIRE(taskmgrp != NULL || netmgrp == NULL);
+	REQUIRE(taskmgrp == NULL || netmgrp != NULL);
 
 	/*
 	 * The sequence of operations here is important:
@@ -93,5 +107,13 @@ isc_managers_destroy(isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp) {
 	 */
 	if (netmgrp != NULL) {
 		isc__netmgr_destroy(netmgrp);
+	}
+
+	/*
+	 * 5. Clean up the remaining managers.
+	 */
+	if (timermgrp != NULL) {
+		INSIST(*timermgrp != NULL);
+		isc__timermgr_destroy(timermgrp);
 	}
 }

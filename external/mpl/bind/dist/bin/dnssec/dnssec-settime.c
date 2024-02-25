@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.6.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.6.2.2 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,25 +22,22 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
 
 #include <dns/keyvalues.h>
 #include <dns/log.h>
-#include <dns/result.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -48,26 +45,16 @@ const char *program = "dnssec-settime";
 
 static isc_mem_t *mctx = NULL;
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s [options] keyfile\n\n", program);
-	fprintf(stderr, "Version: %s\n", VERSION);
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 	fprintf(stderr, "General options:\n");
-#if USE_PKCS11
-	fprintf(stderr,
-		"    -E engine:          specify PKCS#11 provider "
-		"(default: %s)\n",
-		PK11_LIB_LOCATION);
-#elif defined(USE_PKCS11)
-	fprintf(stderr, "    -E engine:          specify OpenSSL engine "
-			"(default \"pkcs11\")\n");
-#else  /* if USE_PKCS11 */
 	fprintf(stderr, "    -E engine:          specify OpenSSL engine\n");
-#endif /* if USE_PKCS11 */
 	fprintf(stderr, "    -f:                 force update of old-style "
 			"keys\n");
 	fprintf(stderr, "    -K directory:       set key file location\n");
@@ -264,11 +251,6 @@ main(int argc, char **argv) {
 	isc_mem_create(&mctx);
 
 	setup_logging(mctx, &log);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 

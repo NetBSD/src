@@ -1,4 +1,4 @@
-/*	$NetBSD: opcode.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: opcode.h,v 1.5.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_OPCODE_H
-#define DNS_OPCODE_H 1
+#pragma once
 
 /*! \file dns/opcode.h */
 
@@ -44,5 +43,3 @@ dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_OPCODE_H */

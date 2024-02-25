@@ -1,0 +1,152 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "DNSSEC-IMPORTKEY" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
+.SH NAME
+dnssec-importkey \- import DNSKEY records from external systems so they can be managed
+.SH SYNOPSIS
+.sp
+\fBdnssec\-importkey\fP [\fB\-K\fP directory] [\fB\-L\fP ttl] [\fB\-P\fP date/offset] [\fB\-P\fP sync date/offset] [\fB\-D\fP date/offset] [\fB\-D\fP sync date/offset] [\fB\-h\fP] [\fB\-v\fP level] [\fB\-V\fP] {keyfile}
+.sp
+\fBdnssec\-importkey\fP {\fB\-f\fP filename} [\fB\-K\fP directory] [\fB\-L\fP ttl] [\fB\-P\fP date/offset] [\fB\-P\fP sync date/offset] [\fB\-D\fP date/offset] [\fB\-D\fP sync date/offset] [\fB\-h\fP] [\fB\-v\fP level] [\fB\-V\fP] [dnsname]
+.SH DESCRIPTION
+.sp
+\fBdnssec\-importkey\fP reads a public DNSKEY record and generates a pair
+of .key/.private files. The DNSKEY record may be read from an
+existing .key file, in which case a corresponding .private file is
+generated, or it may be read from any other file or from the standard
+input, in which case both .key and .private files are generated.
+.sp
+The newly created .private file does \fInot\fP contain private key data, and
+cannot be used for signing. However, having a .private file makes it
+possible to set publication (\fI\%\-P\fP) and deletion (\fI\%\-D\fP) times for the
+key, which means the public key can be added to and removed from the
+DNSKEY RRset on schedule even if the true private key is stored offline.
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-f filename
+This option indicates the zone file mode. Instead of a public keyfile name, the argument is the
+DNS domain name of a zone master file, which can be read from
+\fBfilename\fP\&. If the domain name is the same as \fBfilename\fP, then it may be
+omitted.
+.sp
+If \fBfilename\fP is set to \fB\(dq\-\(dq\fP, then the zone data is read from the
+standard input.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-K directory
+This option sets the directory in which the key files are to reside.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-L ttl
+This option sets the default TTL to use for this key when it is converted into a
+DNSKEY RR. This is the TTL used when the key is imported into a zone,
+unless there was already a DNSKEY RRset in
+place, in which case the existing TTL takes precedence. Setting the default TTL to \fB0\fP or \fBnone\fP
+removes it from the key.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+This option emits a usage message and exits.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v level
+This option sets the debugging level.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V
+This option prints version information.
+.UNINDENT
+.SH TIMING OPTIONS
+.sp
+Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
+(which is the format used inside key files),
+or \(aqDay Mon DD HH:MM:SS YYYY\(aq (as printed by \fBdnssec\-settime \-p\fP),
+or UNIX epoch time (as printed by \fBdnssec\-settime \-up\fP),
+or the literal \fBnow\fP\&.
+.sp
+The argument can be followed by \fB+\fP or \fB\-\fP and an offset from the
+given time. The literal \fBnow\fP can be omitted before an offset. The
+offset can be followed by one of the suffixes \fBy\fP, \fBmo\fP, \fBw\fP,
+\fBd\fP, \fBh\fP, or \fBmi\fP, so that it is computed in years (defined as
+365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour
+days), weeks, days, hours, or minutes, respectively. Without a suffix,
+the offset is computed in seconds.
+.sp
+To explicitly prevent a date from being set, use \fBnone\fP, \fBnever\fP,
+or \fBunset\fP\&.
+.sp
+All these formats are case\-insensitive.
+.INDENT 0.0
+.TP
+.B \-P date/offset
+This option sets the date on which a key is to be published to the zone. After
+that date, the key is included in the zone but is not used
+to sign it.
+.INDENT 7.0
+.TP
+.B sync date/offset
+This option sets the date on which CDS and CDNSKEY records that match this key
+are to be published to the zone.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-D date/offset
+This option sets the date on which the key is to be deleted. After that date, the
+key is no longer included in the zone. (However, it may remain in the key
+repository.)
+.INDENT 7.0
+.TP
+.B sync date/offset
+This option sets the date on which the CDS and CDNSKEY records that match this
+key are to be deleted.
+.UNINDENT
+.UNINDENT
+.SH FILES
+.sp
+A keyfile can be designed by the key identification \fBKnnnn.+aaa+iiiii\fP
+or the full file name \fBKnnnn.+aaa+iiiii.key\fP, as generated by
+\fI\%dnssec\-keygen\fP\&.
+.SH SEE ALSO
+.sp
+\fI\%dnssec\-keygen(8)\fP, \fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual,
+\fI\%RFC 5011\fP\&.
+.SH AUTHOR
+Internet Systems Consortium
+.SH COPYRIGHT
+2024, Internet Systems Consortium
+.\" Generated by docutils manpage writer.
+.

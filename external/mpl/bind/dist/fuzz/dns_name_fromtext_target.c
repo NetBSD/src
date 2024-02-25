@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_name_fromtext_target.c,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dns_name_fromtext_target.c,v 1.5.2.1 2024/02/25 15:46:11 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,26 +22,33 @@
 #include <dns/fixedname.h>
 #include <dns/name.h>
 
+#include "fuzz.h"
+
+bool debug = false;
+
 int
-LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
+LLVMFuzzerInitialize(int *argc __attribute__((unused)),
+		     char ***argv __attribute__((unused))) {
+	return (0);
+}
 
 int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	isc_buffer_t buf;
 	isc_result_t result;
 	dns_fixedname_t origin;
-	char *de_const;
-
-	if (size < 5) {
-		return (0);
-	}
 
 	dns_fixedname_init(&origin);
-	DE_CONST(data, de_const);
-	isc_buffer_init(&buf, (void *)de_const, size);
+
+	isc_buffer_constinit(&buf, data, size);
 	isc_buffer_add(&buf, size);
+	isc_buffer_setactive(&buf, size);
+
 	result = dns_name_fromtext(dns_fixedname_name(&origin), &buf,
 				   dns_rootname, 0, NULL);
-	UNUSED(result);
+	if (debug) {
+		fprintf(stderr, "dns_name_fromtext: %s\n",
+			isc_result_totext(result));
+	}
 	return (0);
 }

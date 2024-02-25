@@ -11,10 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-set -eu
+set -e
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
+
+set -u
 
 touch empty
 
@@ -38,20 +39,22 @@ id2=$id2
 EOF
 
 tac() {
-	$PERL -e 'print reverse <>'
+  $PERL -e 'print reverse <>'
 }
 
 convert() {
-	key=$1
-	n=$2
-	$DSFROMKEY -12 $key >DS.$n
-	grep " ${DEFAULT_ALGORITHM_NUMBER} 1 " DS.$n >DS.$n-1
-	grep " ${DEFAULT_ALGORITHM_NUMBER} 2 " DS.$n >DS.$n-2
-	sed 's/ IN DS / IN CDS /' <DS.$n >>CDS.$n
-	sed 's/ IN DNSKEY / IN CDNSKEY /' <$key.key >CDNSKEY.$n
-	sed 's/ IN DS / 3600 IN DS /' <DS.$n >DS.ttl$n
-	sed 's/ IN DS / 7200 IN DS /' <DS.$n >DS.ttlong$n
-	tac <DS.$n >DS.rev$n
+  key=$1
+  n=$2
+  $DSFROMKEY -12 $key >DS.$n
+  grep " ${DEFAULT_ALGORITHM_NUMBER} 1 " DS.$n >DS.$n-1
+  grep " ${DEFAULT_ALGORITHM_NUMBER} 2 " DS.$n >DS.$n-2
+  sed 's/ IN DS / IN CDS /' <DS.$n >>CDS.$n
+  sed 's/ IN DS / IN CDS /' <DS.$n-1 >>CDS.$n-1
+  sed 's/ IN DS / IN CDS /' <DS.$n-2 >>CDS.$n-2
+  sed 's/ IN DNSKEY / IN CDNSKEY /' <$key.key >CDNSKEY.$n
+  sed 's/ IN DS / 3600 IN DS /' <DS.$n >DS.ttl$n
+  sed 's/ IN DS / 7200 IN DS /' <DS.$n >DS.ttlong$n
+  tac <DS.$n >DS.rev$n
 }
 convert $key1 1
 convert $key2 2
@@ -83,9 +86,9 @@ cat UP.add2 UP.del1 | sed 3d >UP.swap
 sed 's/ add \(.*\) IN DS / add \1 3600 IN DS /' <UP.swap >UP.swapttl
 
 sign() {
-	cat >db.$1
-	$SIGNER >/dev/null \
-		 -S -O full -o $Z -f sig.$1 db.$1
+  cat >db.$1
+  $SIGNER >/dev/null \
+    -S -O full -o $Z -f sig.$1 db.$1
 }
 
 sign null <<EOF
@@ -112,20 +115,24 @@ tac <sig.cds.1 >sig.cds.rev1
 
 cat db.null CDNSKEY.2 | sign cdnskey.2
 cat db.null CDS.2 CDNSKEY.2 | sign cds.cdnskey.2
+cat db.null CDS.1 CDNSKEY.2 | sign cds1.cdnskey2
+
+cat db.null CDS.2-1 | sign cds.2.sha1
+cat db.null CDS.2-1 CDNSKEY.2 | sign cds.cdnskey.2.sha1
 
 $mangle '\s+IN\s+RRSIG\s+CDS .* '$idz' '$Z'\. ' \
-	<sig.cds.1 >brk.rrsig.cds.zsk
+  <sig.cds.1 >brk.rrsig.cds.zsk
 $mangle '\s+IN\s+RRSIG\s+CDS .* '$id1' '$Z'\. ' \
-	<sig.cds.1 >brk.rrsig.cds.ksk
+  <sig.cds.1 >brk.rrsig.cds.ksk
 
-$mangle " IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} 1 " <db.cds.1 |
-sign cds-mangled
+$mangle " IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} 1 " <db.cds.1 \
+  | sign cds-mangled
 
 bad=$($PERL -le "print ($id1 ^ 255);")
-sed "s/IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} 1 /IN CDS $bad ${DEFAULT_ALGORITHM_NUMBER} 1 /" <db.cds.1 |
-sign bad-digests
+sed "s/IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} 1 /IN CDS $bad ${DEFAULT_ALGORITHM_NUMBER} 1 /" <db.cds.1 \
+  | sign bad-digests
 
-sed "/IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} /p;s//IN CDS $bad $ALTERNATIVE_ALGORITHM_NUMBER /" <db.cds.1 |
-sign bad-algos
+sed "/IN CDS $id1 ${DEFAULT_ALGORITHM_NUMBER} /p;s//IN CDS $bad $ALTERNATIVE_ALGORITHM_NUMBER /" <db.cds.1 \
+  | sign bad-algos
 
 rm -f dsset-*

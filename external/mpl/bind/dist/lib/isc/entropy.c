@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.6.2.1 2024/02/25 15:47:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
 void
 isc_entropy_get(void *buf, size_t buflen) {
 	if (RAND_bytes(buf, buflen) < 1) {
-		FATAL_ERROR(__FILE__, __LINE__, "RAND_bytes(): %s",
+		FATAL_ERROR("RAND_bytes(): %s",
 			    ERR_error_string(ERR_get_error(), NULL));
 	}
 }

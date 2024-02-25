@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.6.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.6.2.2 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,24 +29,20 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdbool.h>
-#ifndef WIN32
 #include <arpa/inet.h>
-#endif /* WIN32 */
+#include <stdbool.h>
 
 #include <isc/buffer.h>
 #include <isc/hmac.h>
+#include <isc/lex.h>
 #include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/nonce.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
-
-#include <dst/result.h>
 
 #include "dst_internal.h"
 #ifdef HAVE_FIPS_MODE
@@ -109,7 +105,17 @@
 	}                                                                      \
 	static isc_result_t hmac##alg##_parse(                                 \
 		dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {            \
-		return (hmac_parse(ISC_MD_##alg, key, lexer, pub));            \
+		const char *file = isc_lex_getsourcename(lexer);               \
+		isc_result_t result;                                           \
+		result = hmac_parse(ISC_MD_##alg, key, lexer, pub);            \
+		if (result == ISC_R_SUCCESS && file != NULL) {                 \
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,       \
+				      DNS_LOGMODULE_CRYPTO, ISC_LOG_WARNING,   \
+				      "%s: Use of K* file pairs for HMAC is "  \
+				      "deprecated\n",                          \
+				      file);                                   \
+		}                                                              \
+		return (result);                                               \
 	}                                                                      \
 	static dst_func_t hmac##alg##_functions = {                            \
 		hmac##alg##_createctx,                                         \
@@ -208,8 +214,8 @@ static isc_result_t
 hmac_sign(const dst_context_t *dctx, isc_buffer_t *sig) {
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
 	REQUIRE(ctx != NULL);
-	unsigned int digestlen;
 	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen = sizeof(digest);
 
 	if (isc_hmac_final(ctx, digest, &digestlen) != ISC_R_SUCCESS) {
 		return (DST_R_OPENSSLFAILURE);
@@ -231,8 +237,8 @@ hmac_sign(const dst_context_t *dctx, isc_buffer_t *sig) {
 static isc_result_t
 hmac_verify(const dst_context_t *dctx, const isc_region_t *sig) {
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
-	unsigned int digestlen;
 	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen = sizeof(digest);
 
 	REQUIRE(ctx != NULL);
 

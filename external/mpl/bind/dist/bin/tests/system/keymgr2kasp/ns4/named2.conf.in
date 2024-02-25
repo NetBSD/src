@@ -24,11 +24,12 @@ options {
 	allow-transfer { any; };
 	recursion no;
 	key-directory ".";
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -70,7 +71,7 @@ view "ext" {
         match-clients { key "external"; };
 
 	zone "view-rsasha256.kasp" {
-		type master;
+		type primary;
 		file "view-rsasha256.kasp.ext.db";
 		inline-signing yes;
 		dnssec-policy "rsasha256";
@@ -81,7 +82,7 @@ view "int" {
         match-clients { key "internal"; };
 
 	zone "view-rsasha256.kasp" {
-		type master;
+		type primary;
 		file "view-rsasha256.kasp.int.db";
 		inline-signing yes;
 		dnssec-policy "rsasha256";

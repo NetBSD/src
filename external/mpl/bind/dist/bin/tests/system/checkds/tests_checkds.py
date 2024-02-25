@@ -30,13 +30,18 @@ import dns.rdatatype
 import dns.resolver
 
 
+pytestmark = pytest.mark.skipif(
+    sys.version_info < (3, 7), reason="Python >= 3.7 required [GL #3001]"
+)
+
+
 def has_signed_apex_nsec(zone, response):
     has_nsec = False
     has_rrsig = False
 
     ttl = 300
     nextname = "a."
-    types = "NS SOA RRSIG NSEC DNSKEY CDS CDNSKEY"
+    types = "NS SOA RRSIG NSEC DNSKEY"
     match = "{0} {1} IN NSEC {2}{0} {3}".format(zone, ttl, nextname, types)
     sig = "{0} {1} IN RRSIG NSEC 13 2 300".format(zone, ttl)
 
@@ -346,9 +351,20 @@ def test_checkds_dspublished(named_port):
     )
     keystate_check(parent, "bad2-dspublished.checkds.", "!DSPublish")
 
+    # Check with resolver parental-agent.
+    zone_check(server, "resolver-dspublished.checkds.")
+    wait_for_log(
+        "ns9/named.run",
+        "zone resolver-dspublished.checkds/IN (signed): checkds: "
+        "DS response from 10.53.0.3",
+    )
+    keystate_check(parent, "resolver-dspublished.checkds.", "DSPublish")
+
     # TBD: DS published in all parents, but one has bogus signature.
 
     # TBD: Check with TSIG
+
+    # TBD: Check with TLS
 
 
 def test_checkds_dswithdrawn(named_port):
@@ -441,5 +457,14 @@ def test_checkds_dswithdrawn(named_port):
         "bad DS response from 10.53.0.6",
     )
     keystate_check(parent, "bad2-dswithdrawn.checkds.", "!DSRemoved")
+
+    # Check with resolver parental-agent.
+    zone_check(server, "resolver-dswithdrawn.checkds.")
+    wait_for_log(
+        "ns9/named.run",
+        "zone resolver-dswithdrawn.checkds/IN (signed): checkds: "
+        "empty DS response from 10.53.0.8",
+    )
+    keystate_check(parent, "resolver-dswithdrawn.checkds.", "DSRemoved")
 
     # TBD: DS withdrawn from all parents, but one has bogus signature.

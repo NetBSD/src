@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7.2.1 2023/08/11 13:43:37 martin Exp $	*/
+/*	$NetBSD: log.c,v 1.7.2.2 2024/02/25 15:47:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,19 +22,21 @@
 #include <stdlib.h>
 #include <sys/types.h> /* dev_t FreeBSD 2.1 */
 #include <time.h>
+#include <unistd.h>
 
 #include <isc/atomic.h>
 #include <isc/dir.h>
+#include <isc/errno.h>
 #include <isc/file.h>
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/stat.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
+#include <isc/thread.h>
 #include <isc/time.h>
 #include <isc/util.h>
 
@@ -48,6 +50,8 @@
 #define WRLOCK(lp)   RWLOCK(lp, isc_rwlocktype_write);
 #define RDUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_read);
 #define WRUNLOCK(lp) RWUNLOCK(lp, isc_rwlocktype_write);
+
+static thread_local bool forcelog = false;
 
 /*
  * XXXDCL make dynamic?
@@ -179,21 +183,20 @@ static const int syslog_map[] = { LOG_DEBUG,   LOG_INFO, LOG_NOTICE,
  * be overridden.  Since the default is always looked up as the first
  * channellist in the log context, it must come first in isc_categories[].
  */
-LIBISC_EXTERNAL_DATA isc_logcategory_t isc_categories[] = { { "default",
-							      0 }, /* "default
-								      must come
-								      first. */
-							    { "general", 0 },
-							    { NULL, 0 } };
+isc_logcategory_t isc_categories[] = { { "default", 0 }, /* "default
+							    must come
+							    first. */
+				       { "general", 0 },
+				       { "sslkeylog", 0 },
+				       { NULL, 0 } };
 
 /*!
- * See above comment for categories on LIBISC_EXTERNAL_DATA, and apply it to
- * modules.
+ * See above comment for categories, and apply it to modules.
  */
-LIBISC_EXTERNAL_DATA isc_logmodule_t isc_modules[] = {
-	{ "socket", 0 }, { "time", 0 },	  { "interface", 0 }, { "timer", 0 },
-	{ "file", 0 },	 { "netmgr", 0 }, { "other", 0 },     { NULL, 0 }
-};
+isc_logmodule_t isc_modules[] = { { "socket", 0 },    { "time", 0 },
+				  { "interface", 0 }, { "timer", 0 },
+				  { "file", 0 },      { "netmgr", 0 },
+				  { "other", 0 },     { NULL, 0 } };
 
 /*!
  * This essentially constant structure must be filled in at run time,
@@ -205,7 +208,7 @@ static isc_logchannellist_t default_channel;
 /*!
  * libisc logs to this context.
  */
-LIBISC_EXTERNAL_DATA isc_log_t *isc_lctx = NULL;
+isc_log_t *isc_lctx = NULL;
 
 /*!
  * Forward declarations.
@@ -1020,49 +1023,42 @@ sync_highest_level(isc_log_t *lctx, isc_logconfig_t *lcfg) {
 
 static isc_result_t
 greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
-	char *bname, *digit_end;
-	const char *dirname;
+	char *digit_end;
+	char dirbuf[PATH_MAX + 1];
+	const char *bname;
+	const char *dirname = ".";
 	int version, greatest = -1;
-	size_t bnamelen;
 	isc_dir_t dir;
 	isc_result_t result;
-	char sep = '/';
-#ifdef _WIN32
-	char *bname2;
-#endif /* ifdef _WIN32 */
+	size_t bnamelen;
 
-	/*
-	 * It is safe to DE_CONST the file.name because it was copied
-	 * with isc_mem_strdup().
-	 */
-	bname = strrchr(file->name, sep);
-#ifdef _WIN32
-	bname2 = strrchr(file->name, '\\');
-	if ((bname != NULL && bname2 != NULL && bname2 > bname) ||
-	    (bname == NULL && bname2 != NULL))
-	{
-		bname = bname2;
-		sep = '\\';
-	}
-#endif /* ifdef _WIN32 */
+	bname = strrchr(file->name, '/');
 	if (bname != NULL) {
-		*bname++ = '\0';
-		dirname = file->name;
+		/*
+		 * Copy the complete file name to dirbuf.
+		 */
+		size_t len = strlcpy(dirbuf, file->name, sizeof(dirbuf));
+		if (len >= sizeof(dirbuf)) {
+			result = ISC_R_NOSPACE;
+			syslog(LOG_ERR, "unable to remove log files: %s",
+			       isc_result_totext(result));
+			return (result);
+		}
+
+		/*
+		 * Truncate after trailing '/' so the code works for
+		 * files in the root directory.
+		 */
+		bname++;
+		dirbuf[bname - file->name] = '\0';
+		dirname = dirbuf;
 	} else {
-		DE_CONST(file->name, bname);
-		dirname = ".";
+		bname = file->name;
 	}
 	bnamelen = strlen(bname);
 
 	isc_dir_init(&dir);
 	result = isc_dir_open(&dir, dirname);
-
-	/*
-	 * Replace the file separator if it was taken out.
-	 */
-	if (bname != file->name) {
-		*(bname - 1) = sep;
-	}
 
 	/*
 	 * Return if the directory open failed.
@@ -1082,15 +1078,23 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 			 * Remove any backup files that exceed versions.
 			 */
 			if (*digit_end == '\0' && version >= versions) {
-				result = isc_file_remove(dir.entry.name);
-				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_FILENOTFOUND)
-				{
-					syslog(LOG_ERR,
-					       "unable to remove "
-					       "log file '%s': %s",
-					       dir.entry.name,
-					       isc_result_totext(result));
+				int n = unlinkat(dirfd(dir.handle),
+						 dir.entry.name, 0);
+				if (n < 0) {
+					result = isc_errno_toresult(errno);
+					if (result != ISC_R_SUCCESS &&
+					    result != ISC_R_FILENOTFOUND)
+					{
+						syslog(LOG_ERR,
+						       "unable to remove log "
+						       "file '%s%s': %s",
+						       bname == file->name
+							       ? ""
+							       : dirname,
+						       dir.entry.name,
+						       isc_result_totext(
+							       result));
+					}
 				}
 			} else if (*digit_end == '\0' && version > greatest) {
 				greatest = version;
@@ -1100,7 +1104,6 @@ greatest_version(isc_logfile_t *file, int versions, int *greatestp) {
 	isc_dir_close(&dir);
 
 	*greatestp = greatest;
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -1121,7 +1124,8 @@ insert_sort(int64_t to_keep[], int64_t versions, int64_t version) {
 }
 
 static int64_t
-last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
+last_to_keep(int64_t versions, isc_dir_t *dirp, const char *bname,
+	     size_t bnamelen) {
 	int64_t to_keep[ISC_LOG_MAX_VERSIONS] = { 0 };
 	int64_t version = 0;
 
@@ -1164,48 +1168,42 @@ last_to_keep(int64_t versions, isc_dir_t *dirp, char *bname, size_t bnamelen) {
 
 static isc_result_t
 remove_old_tsversions(isc_logfile_t *file, int versions) {
-	isc_result_t result;
-	char *bname = NULL, *digit_end = NULL;
-	const char *dirname = NULL;
+	char *digit_end;
+	char dirbuf[PATH_MAX + 1];
+	const char *bname;
+	const char *dirname = ".";
 	int64_t version, last = INT64_MAX;
-	size_t bnamelen;
 	isc_dir_t dir;
-	char sep = '/';
-#ifdef _WIN32
-	char *bname2;
-#endif /* ifdef _WIN32 */
-	/*
-	 * It is safe to DE_CONST the file.name because it was copied
-	 * with isc_mem_strdup().
-	 */
-	bname = strrchr(file->name, sep);
-#ifdef _WIN32
-	bname2 = strrchr(file->name, '\\');
-	if ((bname != NULL && bname2 != NULL && bname2 > bname) ||
-	    (bname == NULL && bname2 != NULL))
-	{
-		bname = bname2;
-		sep = '\\';
-	}
-#endif /* ifdef _WIN32 */
+	isc_result_t result;
+	size_t bnamelen;
+
+	bname = strrchr(file->name, '/');
 	if (bname != NULL) {
-		*bname++ = '\0';
-		dirname = file->name;
+		/*
+		 * Copy the complete file name to dirbuf.
+		 */
+		size_t len = strlcpy(dirbuf, file->name, sizeof(dirbuf));
+		if (len >= sizeof(dirbuf)) {
+			result = ISC_R_NOSPACE;
+			syslog(LOG_ERR, "unable to remove log files: %s",
+			       isc_result_totext(result));
+			return (result);
+		}
+
+		/*
+		 * Truncate after trailing '/' so the code works for
+		 * files in the root directory.
+		 */
+		bname++;
+		dirbuf[bname - file->name] = '\0';
+		dirname = dirbuf;
 	} else {
-		DE_CONST(file->name, bname);
-		dirname = ".";
+		bname = file->name;
 	}
 	bnamelen = strlen(bname);
 
 	isc_dir_init(&dir);
 	result = isc_dir_open(&dir, dirname);
-
-	/*
-	 * Replace the file separator if it was taken out.
-	 */
-	if (bname != file->name) {
-		*(bname - 1) = sep;
-	}
 
 	/*
 	 * Return if the directory open failed.
@@ -1216,36 +1214,39 @@ remove_old_tsversions(isc_logfile_t *file, int versions) {
 
 	last = last_to_keep(versions, &dir, bname, bnamelen);
 
-	/*
-	 * Then we remove all files that we don't want to_keep
-	 */
 	while (isc_dir_read(&dir) == ISC_R_SUCCESS) {
 		if (dir.entry.length > bnamelen &&
 		    strncmp(dir.entry.name, bname, bnamelen) == 0 &&
 		    dir.entry.name[bnamelen] == '.')
 		{
-			char *ename = &dir.entry.name[bnamelen + 1];
-			version = strtoull(ename, &digit_end, 10);
+			version = strtoull(&dir.entry.name[bnamelen + 1],
+					   &digit_end, 10);
 			/*
 			 * Remove any backup files that exceed versions.
 			 */
 			if (*digit_end == '\0' && version < last) {
-				result = isc_file_remove(dir.entry.name);
-				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_FILENOTFOUND)
-				{
-					syslog(LOG_ERR,
-					       "unable to remove "
-					       "log file '%s': %s",
-					       dir.entry.name,
-					       isc_result_totext(result));
+				int n = unlinkat(dirfd(dir.handle),
+						 dir.entry.name, 0);
+				if (n < 0) {
+					result = isc_errno_toresult(errno);
+					if (result != ISC_R_SUCCESS &&
+					    result != ISC_R_FILENOTFOUND)
+					{
+						syslog(LOG_ERR,
+						       "unable to remove log "
+						       "file '%s%s': %s",
+						       bname == file->name
+							       ? ""
+							       : dirname,
+						       dir.entry.name,
+						       isc_result_totext(
+							       result));
+					}
 				}
 			}
 		}
 	}
-
 	isc_dir_close(&dir);
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -1482,6 +1483,9 @@ isc_log_wouldlog(isc_log_t *lctx, int level) {
 	if (lctx == NULL) {
 		return (false);
 	}
+	if (forcelog) {
+		return (true);
+	}
 
 	int highest_level = atomic_load_acquire(&lctx->highest_level);
 	if (level <= highest_level) {
@@ -1513,6 +1517,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	bool printcategory, printmodule, printlevel, buffered;
 	isc_logchannel_t *channel;
 	isc_logchannellist_t *category_channels;
+	int_fast32_t dlevel;
 	isc_result_t result;
 
 	REQUIRE(lctx == NULL || VALID_CONTEXT(lctx));
@@ -1596,18 +1601,21 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		channel = category_channels->channel;
 		category_channels = ISC_LIST_NEXT(category_channels, link);
 
-		int_fast32_t dlevel = atomic_load_acquire(&lctx->debug_level);
-		if (((channel->flags & ISC_LOG_DEBUGONLY) != 0) && dlevel == 0)
-		{
-			continue;
-		}
-
-		if (channel->level == ISC_LOG_DYNAMIC) {
-			if (dlevel < level) {
+		if (!forcelog) {
+			dlevel = atomic_load_acquire(&lctx->debug_level);
+			if (((channel->flags & ISC_LOG_DEBUGONLY) != 0) &&
+			    dlevel == 0)
+			{
 				continue;
 			}
-		} else if (channel->level < level) {
-			continue;
+
+			if (channel->level == ISC_LOG_DYNAMIC) {
+				if (dlevel < level) {
+					continue;
+				}
+			} else if (channel->level < level) {
+				continue;
+			}
 		}
 
 		if ((channel->flags & ISC_LOG_PRINTTIME) != 0 &&
@@ -1895,4 +1903,9 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 unlock:
 	UNLOCK(&lctx->lock);
 	RDUNLOCK(&lctx->lcfg_rwl);
+}
+
+void
+isc_log_setforcelog(bool v) {
+	forcelog = v;
 }

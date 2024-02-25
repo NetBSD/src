@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.11.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: delv.c,v 1.11.2.2 2024/02/25 15:43:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,40 +13,34 @@
  * information regarding copyright ownership.
  */
 
-#include <bind.keys.h>
-
-#ifndef WIN32
 #include <arpa/inet.h>
+#include <bind.keys.h>
+#include <inttypes.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#endif /* ifndef WIN32 */
-
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/hex.h>
-#include <isc/lib.h>
 #include <isc/log.h>
 #include <isc/managers.h>
 #include <isc/md.h>
 #include <isc/mem.h>
-#ifdef WIN32
-#include <isc/ntpaths.h>
-#endif /* ifdef WIN32 */
+#include <isc/netmgr.h>
 #include <isc/parseint.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -57,7 +51,6 @@
 #include <dns/fixedname.h>
 #include <dns/keytable.h>
 #include <dns/keyvalues.h>
-#include <dns/lib.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
 #include <dns/name.h>
@@ -66,12 +59,10 @@
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
 #include <dns/view.h>
 
 #include <dst/dst.h>
-#include <dst/result.h>
 
 #include <isccfg/log.h>
 #include <isccfg/namedconf.h>
@@ -139,79 +130,88 @@ parse_uint(uint32_t *uip, const char *value, uint32_t max, const char *desc);
 
 static void
 usage(void) {
-	fputs("Usage:  delv [@server] {q-opt} {d-opt} [domain] [q-type] "
-	      "[q-class]\n"
-	      "Where:  domain	  is in the Domain Name System\n"
-	      "        q-class  is one of (in,hs,ch,...) [default: in]\n"
-	      "        q-type   is one of (a,any,mx,ns,soa,hinfo,axfr,txt,...) "
-	      "[default:a]\n"
-	      "        q-opt    is one of:\n"
-	      "                 -4                  (use IPv4 query transport "
-	      "only)\n"
-	      "                 -6                  (use IPv6 query transport "
-	      "only)\n"
-	      "                 -a anchor-file      (specify root trust "
-	      "anchor)\n"
-	      "                 -b address[#port]   (bind to source "
-	      "address/port)\n"
-	      "                 -c class            (option included for "
-	      "compatibility;\n"
-	      "                 -d level            (set debugging level)\n"
-	      "                 -h                  (print help and exit)\n"
-	      "                 -i                  (disable DNSSEC "
-	      "validation)\n"
-	      "                 -m                  (enable memory usage "
-	      "debugging)\n"
-	      "                 -p port             (specify port number)\n"
-	      "                 -q name             (specify query name)\n"
-	      "                 -t type             (specify query type)\n"
-	      "                                      only IN is supported)\n"
-	      "                 -v                  (print version and exit)\n"
-	      "                 -x dot-notation     (shortcut for reverse "
-	      "lookups)\n"
-	      "        d-opt    is of the form +keyword[=value], where keyword "
-	      "is:\n"
-	      "                 +[no]all            (Set or clear all display "
-	      "flags)\n"
-	      "                 +[no]class          (Control display of "
-	      "class)\n"
-	      "                 +[no]comments       (Control display of "
-	      "comment lines)\n"
-	      "                 +[no]crypto         (Control display of "
-	      "cryptographic\n"
-	      "                                      fields in records)\n"
-	      "                 +[no]dlv            (Obsolete)\n"
-	      "                 +[no]dnssec         (Display DNSSEC records)\n"
-	      "                 +[no]mtrace         (Trace messages received)\n"
-	      "                 +[no]multiline      (Print records in an "
-	      "expanded format)\n"
-	      "                 +[no]root           (DNSSEC validation trust "
-	      "anchor)\n"
-	      "                 +[no]rrcomments     (Control display of "
-	      "per-record "
-	      "comments)\n"
-	      "                 +[no]rtrace         (Trace resolver fetches)\n"
-	      "                 +[no]short          (Short form answer)\n"
-	      "                 +[no]split=##       (Split hex/base64 fields "
-	      "into chunks)\n"
-	      "                 +[no]tcp            (TCP mode)\n"
-	      "                 +[no]ttl            (Control display of ttls "
-	      "in records)\n"
-	      "                 +[no]trust          (Control display of trust "
-	      "level)\n"
-	      "                 +[no]unknownformat  (Print RDATA in RFC 3597 "
-	      "\"unknown\" format)\n"
-	      "                 +[no]vtrace         (Trace validation "
-	      "process)\n"
-	      "                 +[no]yaml           (Present the results as "
-	      "YAML)\n",
-	      stderr);
+	fprintf(stderr,
+		"Usage:  delv [@server] {q-opt} {d-opt} [domain] [q-type] "
+		"[q-class]\n"
+		"Where:  domain	  is in the Domain Name System\n"
+		"        q-class  is one of (in,hs,ch,...) [default: in]\n"
+		"        q-type   is one of "
+		"(a,any,mx,ns,soa,hinfo,axfr,txt,...) "
+		"[default:a]\n"
+		"        q-opt    is one of:\n"
+		"                 -4                  (use IPv4 query "
+		"transport "
+		"only)\n"
+		"                 -6                  (use IPv6 query "
+		"transport "
+		"only)\n"
+		"                 -a anchor-file      (specify root trust "
+		"anchor)\n"
+		"                 -b address[#port]   (bind to source "
+		"address/port)\n"
+		"                 -c class            (option included for "
+		"compatibility;\n"
+		"                 -d level            (set debugging level)\n"
+		"                 -h                  (print help and exit)\n"
+		"                 -i                  (disable DNSSEC "
+		"validation)\n"
+		"                 -m                  (enable memory usage "
+		"debugging)\n"
+		"                 -p port             (specify port number)\n"
+		"                 -q name             (specify query name)\n"
+		"                 -t type             (specify query type)\n"
+		"                                      only IN is supported)\n"
+		"                 -v                  (print version and "
+		"exit)\n"
+		"                 -x dot-notation     (shortcut for reverse "
+		"lookups)\n"
+		"        d-opt    is of the form +keyword[=value], where "
+		"keyword "
+		"is:\n"
+		"                 +[no]all            (Set or clear all "
+		"display "
+		"flags)\n"
+		"                 +[no]class          (Control display of "
+		"class)\n"
+		"                 +[no]comments       (Control display of "
+		"comment lines)\n"
+		"                 +[no]crypto         (Control display of "
+		"cryptographic\n"
+		"                                      fields in records)\n"
+		"                 +[no]dlv            (Obsolete)\n"
+		"                 +[no]dnssec         (Display DNSSEC "
+		"records)\n"
+		"                 +[no]mtrace         (Trace messages "
+		"received)\n"
+		"                 +[no]multiline      (Print records in an "
+		"expanded format)\n"
+		"                 +[no]root           (DNSSEC validation trust "
+		"anchor)\n"
+		"                 +[no]rrcomments     (Control display of "
+		"per-record "
+		"comments)\n"
+		"                 +[no]rtrace         (Trace resolver "
+		"fetches)\n"
+		"                 +[no]short          (Short form answer)\n"
+		"                 +[no]split=##       (Split hex/base64 fields "
+		"into chunks)\n"
+		"                 +[no]tcp            (TCP mode)\n"
+		"                 +[no]ttl            (Control display of ttls "
+		"in records)\n"
+		"                 +[no]trust          (Control display of "
+		"trust "
+		"level)\n"
+		"                 +[no]unknownformat  (Print RDATA in RFC 3597 "
+		"\"unknown\" format)\n"
+		"                 +[no]vtrace         (Trace validation "
+		"process)\n"
+		"                 +[no]yaml           (Present the results as "
+		"YAML)\n");
 	exit(1);
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *format, ...)
-	ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 
 static void
 fatal(const char *format, ...) {
@@ -817,14 +817,7 @@ setup_dnsseckeys(dns_client_t *client) {
 	}
 
 	if (filename == NULL) {
-#ifndef WIN32
-		filename = NS_SYSCONFDIR "/bind.keys";
-#else  /* ifndef WIN32 */
-		static char buf[MAX_PATH];
-		strlcpy(buf, isc_ntpaths_get(SYS_CONF_DIR), sizeof(buf));
-		strlcat(buf, "\\bind.keys", sizeof(buf));
-		filename = buf;
-#endif /* ifndef WIN32 */
+		filename = SYSCONFDIR "/bind.keys";
 	}
 
 	if (trust_anchor == NULL) {
@@ -1347,7 +1340,7 @@ dash_option(char *option, char *next, bool *open_type_class) {
 			/* handled in preparse_args() */
 			break;
 		case 'v':
-			fputs("delv " VERSION "\n", stderr);
+			fprintf(stderr, "delv %s\n", PACKAGE_VERSION);
 			exit(0);
 		default:
 			UNREACHABLE();
@@ -1736,16 +1729,13 @@ main(int argc, char *argv[]) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	dns_rdataset_t *rdataset;
 	dns_namelist_t namelist;
-	unsigned int resopt, clopt;
+	unsigned int resopt;
 	isc_appctx_t *actx = NULL;
 	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
 	dns_master_style_t *style = NULL;
-#ifndef WIN32
 	struct sigaction sa;
-#endif /* ifndef WIN32 */
 
 	progname = argv[0];
 	preparse_args(argc, argv);
@@ -1753,18 +1743,16 @@ main(int argc, char *argv[]) {
 	argc--;
 	argv++;
 
-	isc_lib_register();
-	result = dns_lib_init();
-	if (result != ISC_R_SUCCESS) {
-		fatal("dns_lib_init failed: %d", result);
-	}
-
 	isc_mem_create(&mctx);
 
+	result = dst_lib_init(mctx, NULL);
+	if (result != ISC_R_SUCCESS) {
+		fatal("dst_lib_init failed: %d", result);
+	}
+
 	CHECK(isc_appctx_create(mctx, &actx));
-	CHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
-	CHECK(isc_socketmgr_create(mctx, &socketmgr));
-	CHECK(isc_timermgr_create(mctx, &timermgr));
+
+	isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr, &timermgr);
 
 	parse_args(argc, argv);
 
@@ -1774,19 +1762,16 @@ main(int argc, char *argv[]) {
 
 	CHECK(isc_app_ctxstart(actx));
 
-#ifndef WIN32
 	/* Unblock SIGINT if it's been blocked by isc_app_ctxstart() */
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = SIG_DFL;
 	if (sigfillset(&sa.sa_mask) != 0 || sigaction(SIGINT, &sa, NULL) < 0) {
 		fatal("Couldn't set up signal handler");
 	}
-#endif /* ifndef WIN32 */
 
 	/* Create client */
-	clopt = DNS_CLIENTCREATEOPT_USECACHE;
-	result = dns_client_create(mctx, actx, taskmgr, socketmgr, timermgr,
-				   clopt, &client, srcaddr4, srcaddr6);
+	result = dns_client_create(mctx, actx, taskmgr, netmgr, timermgr, 0,
+				   &client, srcaddr4, srcaddr6);
 	if (result != ISC_R_SUCCESS) {
 		delv_log(ISC_LOG_ERROR, "dns_client_create: %s",
 			 isc_result_totext(result));
@@ -1866,17 +1851,11 @@ cleanup:
 		dns_master_styledestroy(&style, mctx);
 	}
 	if (client != NULL) {
-		dns_client_destroy(&client);
+		dns_client_detach(&client);
 	}
-	if (taskmgr != NULL) {
-		isc_managers_destroy(&netmgr, &taskmgr);
-	}
-	if (timermgr != NULL) {
-		isc_timermgr_destroy(&timermgr);
-	}
-	if (socketmgr != NULL) {
-		isc_socketmgr_destroy(&socketmgr);
-	}
+
+	isc_managers_destroy(&netmgr, &taskmgr, &timermgr);
+
 	if (actx != NULL) {
 		isc_appctx_destroy(&actx);
 	}
@@ -1885,7 +1864,7 @@ cleanup:
 	}
 	isc_mem_detach(&mctx);
 
-	dns_lib_shutdown();
+	dst_lib_destroy();
 
 	return (0);
 }

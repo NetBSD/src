@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.7.2.1 2024/02/25 15:47:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -99,34 +99,15 @@ static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond) {
 	void *tracebuf[BACKTRACE_MAXFRAME];
-	int i, nframes;
-	const char *logsuffix = ".";
-	const char *fname;
-	isc_result_t result;
-
-	result = isc_backtrace_gettrace(tracebuf, BACKTRACE_MAXFRAME, &nframes);
-	if (result == ISC_R_SUCCESS && nframes > 0) {
-		logsuffix = ", back trace";
-	}
+	int nframes = isc_backtrace(tracebuf, BACKTRACE_MAXFRAME);
 
 	fprintf(stderr, "%s:%d: %s(%s) failed%s\n", file, line,
-		isc_assertion_typetotext(type), cond, logsuffix);
+		isc_assertion_typetotext(type), cond,
+		(nframes > 0) ? ", back trace" : ".");
 
-	if (result == ISC_R_SUCCESS) {
-		for (i = 0; i < nframes; i++) {
-			unsigned long offset;
-
-			fname = NULL;
-			result = isc_backtrace_getsymbol(tracebuf[i], &fname,
-							 &offset);
-			if (result == ISC_R_SUCCESS) {
-				fprintf(stderr, "#%d %p in %s()+0x%lx\n", i,
-					tracebuf[i], fname, offset);
-			} else {
-				fprintf(stderr, "#%d %p in ??\n", i,
-					tracebuf[i]);
-			}
-		}
+	if (nframes > 0) {
+		isc_backtrace_symbols_fd(tracebuf, nframes, fileno(stderr));
 	}
+
 	fflush(stderr);
 }

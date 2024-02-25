@@ -1,4 +1,4 @@
-/*	$NetBSD: instance.h,v 1.5 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: instance.h,v 1.5.2.1 2024/02/25 15:44:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,8 +33,7 @@
  * Driver instance object.
  */
 
-#ifndef _LD_INSTANCE_H_
-#define _LD_INSTANCE_H_
+#pragma once
 
 #include <stdbool.h>
 
@@ -74,5 +73,3 @@ load_sample_instance_zones(sample_instance_t *inst);
 
 void
 destroy_sample_instance(sample_instance_t **sample_instp);
-
-#endif /* !_LD_INSTANCE_H_ */

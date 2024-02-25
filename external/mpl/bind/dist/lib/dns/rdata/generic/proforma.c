@@ -1,4 +1,4 @@
-/*	$NetBSD: proforma.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: proforma.c,v 1.7.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,8 +107,9 @@ static isc_result_t additionaldata_ #(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_proforma.c #);
 	REQUIRE(rdata->rdclass == #);
 
-	(void)add;
-	(void)arg;
+	UNUSED(owner);
+	UNUSED(add);
+	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: tlsa_52.h,v 1.6.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TLSA_52_H
-#define GENERIC_TLSA_52_H 1
+#pragma once
 
 /*!
  *  \brief per rfc6698.txt
@@ -28,5 +27,3 @@ typedef struct dns_rdata_tlsa {
 	uint16_t length;
 	unsigned char *data;
 } dns_rdata_tlsa_t;
-
-#endif /* GENERIC_TLSA_52_H */
