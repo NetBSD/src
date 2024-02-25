@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.10 2023/07/26 03:41:57 rin Exp $
+#	$NetBSD: Makefile.riscv,v 1.11 2024/02/25 14:27:41 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,18 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+
+.if !defined(LP64) && ${MACHINE_ARCH} == "riscv64"
+. info (Building GENERIC instead of GENERIC64?)
+. error Don't build 32-bit kernel with 64-bit toolchain
+.endif
+
+.if defined(LP64) && ${MACHINE_ARCH} == "riscv32"
+. info (Building GENERIC64 instead of GENERIC?)
+. error Don't build 64-bit kernel with 32-bit toolchain
+.endif
+
 
 ##
 ## (1) port identification
