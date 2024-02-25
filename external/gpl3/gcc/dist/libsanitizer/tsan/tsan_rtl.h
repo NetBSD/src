@@ -132,7 +132,7 @@ struct ScopedGlobalProcessor {
 
 // This struct is stored in TLS.
 struct ThreadState {
-  FastState fast_state;
+  FastState fast_state ALIGNED(SANITIZER_CACHE_LINE_SIZE);
   // Synch epoch represents the threads's epoch before the last synchronization
   // action. It allows to reduce number of shadow state updates.
   // For example, fast_synch_epoch=100, last write to addr X was at epoch=150,
