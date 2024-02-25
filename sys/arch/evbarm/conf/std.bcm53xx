@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.21 2024/02/13 19:07:42 skrll Exp $
+#	$NetBSD: std.bcm53xx,v 1.22 2024/02/25 14:19:08 skrll Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -9,6 +9,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 include		"arch/evbarm/conf/files.bcm53xx"
 
 options 	ARM_GENERIC_TODR
+options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
 options 	COM_TOLERANCE=40
 options 	CORTEX_PMC
