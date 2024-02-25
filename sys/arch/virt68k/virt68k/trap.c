@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2024/02/25 14:35:31 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2 2024/01/20 00:15:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.3 2024/02/25 14:35:31 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -554,7 +554,7 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 
 		va = trunc_page((vaddr_t)v);
 
-		if (map == kernel_map && va == 0) {
+		if (map == kernel_map && va == 0 && onfault == 0) {
 			printf("trap: bad kernel %s access at 0x%x\n",
 			    (ftype & VM_PROT_WRITE) ? "read/write" :
 			    "read", v);
