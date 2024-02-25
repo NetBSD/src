@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cdrom,v 1.1 2014/02/24 07:23:38 skrll Exp $
+#	$NetBSD: Makefile.cdrom,v 1.2 2024/02/25 16:49:32 christos Exp $
 
 BOOTFILE=		cdboot.lif
 
@@ -6,6 +6,10 @@ CDMAKEFSOPTIONS=	generic-bootimage=cdrom/${BOOTFILE}
 CDINSTKERNEL=		../../kernel
 CDKERNELS=		netbsd-RAMDISK	netbsd	# from ../instkernel
 
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKBOOT_TIMESTAMP=-t "${MKREPRO_TIMESTAMP}"
+.endif
+
 prepare_md_post:
 	${RM} -f cdrom/${BOOTFILE}
-	${TOOL_HPPAMKBOOT} ${DESTDIR}/usr/mdec/cdboot cdrom/${BOOTFILE}
+	${TOOL_HPPAMKBOOT} ${MKBOOT_TIMESTAMP} ${DESTDIR}/usr/mdec/cdboot cdrom/${BOOTFILE}
