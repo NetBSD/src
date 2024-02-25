@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2023/08/14 02:21:22 rin Exp $
+#	$NetBSD: Makefile,v 1.71 2024/02/25 00:28:02 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -188,6 +188,7 @@ genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo build-sor
 CLEANFILES+=	genmatch gimple-match.cc generic-match.cc
 
 .include "${.PARSEDIR}/../../Makefile.version_h"
+.include "${.PARSEDIR}/../Makefile.isl"
 
 tm_p.h: Makefile tm-preds.h
 	${_MKTARGET_CREATE}
