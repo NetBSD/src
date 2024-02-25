@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.309 2021/12/14 16:22:07 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.309.2.1 2024/02/25 16:51:13 martin Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -53,7 +53,7 @@ CXXFLAGS+=	${REPROFLAGS}
 
 # NetBSD sources use C99 style, with some GCC extensions.
 # Coverity does not like -std=gnu99
-.if !defined(COVERITY_TOP_CONFIG)
+.if !defined(COVERITY_TOP_CONFIG) && empty(CFLAGS:M*-std=*)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -std=gnu99 :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -std=gnu99 :}
 CFLAGS+=	${${ACTIVE_CC} == "pcc":? -std=gnu99 :}
