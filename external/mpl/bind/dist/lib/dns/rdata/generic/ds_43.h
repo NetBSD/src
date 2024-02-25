@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.h,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ds_43.h,v 1.7.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DS_43_H
-#define GENERIC_DS_43_H 1
+#pragma once
 
 /*!
  *  \brief per draft-ietf-dnsext-delegation-signer-05.txt */
@@ -27,5 +26,3 @@ typedef struct dns_rdata_ds {
 	uint16_t length;
 	unsigned char *digest;
 } dns_rdata_ds_t;
-
-#endif /* GENERIC_DS_43_H */

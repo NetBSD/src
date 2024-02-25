@@ -27,12 +27,12 @@ options {
 	querylog yes;
 
 	# let ns3 start dnsrpzd
-	include "../dnsrps-slave.conf";
+	include "../dnsrps-secondary.conf";
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {

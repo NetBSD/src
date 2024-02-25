@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.6.2.1 2024/02/25 15:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_HEAP_H
-#define ISC_HEAP_H 1
+#pragma once
 
 /*! \file isc/heap.h */
 
@@ -162,5 +161,3 @@ isc_heap_foreach(isc_heap_t *heap, isc_heapaction_t action, void *uap);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_HEAP_H */

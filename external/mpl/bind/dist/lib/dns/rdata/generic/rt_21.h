@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: rt_21.h,v 1.6.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_RT_21_H
-#define GENERIC_RT_21_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC1183 */
@@ -25,5 +24,3 @@ typedef struct dns_rdata_rt {
 	uint16_t preference;
 	dns_name_t host;
 } dns_rdata_rt_t;
-
-#endif /* GENERIC_RT_21_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.12.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: rdata.c,v 1.12.2.2 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <isc/mem.h>
 #include <isc/parseint.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -33,15 +34,16 @@
 #include <dns/compress.h>
 #include <dns/dsdigest.h>
 #include <dns/enumtype.h>
+#include <dns/fixedname.h>
 #include <dns/keyflags.h>
 #include <dns/keyvalues.h>
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
 #include <dns/secproto.h>
 #include <dns/time.h>
@@ -122,10 +124,11 @@
 
 #define CALL_FREESTRUCT source
 
-#define ARGS_ADDLDATA \
-	dns_rdata_t *rdata, dns_additionaldatafunc_t add, void *arg
+#define ARGS_ADDLDATA                                \
+	dns_rdata_t *rdata, const dns_name_t *owner, \
+		dns_additionaldatafunc_t add, void *arg
 
-#define CALL_ADDLDATA rdata, add, arg
+#define CALL_ADDLDATA rdata, owner, add, arg
 
 #define ARGS_DIGEST dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg
 
@@ -408,14 +411,13 @@ locator_pton(const char *src, unsigned char *dst) {
 	return (1);
 }
 
-static isc_result_t
+static void
 name_duporclone(const dns_name_t *source, isc_mem_t *mctx, dns_name_t *target) {
 	if (mctx != NULL) {
 		dns_name_dup(source, mctx, target);
 	} else {
 		dns_name_clone(source, target);
 	}
-	return (ISC_R_SUCCESS);
 }
 
 static void *
@@ -1273,8 +1275,8 @@ dns_rdata_freestruct(void *source) {
 }
 
 isc_result_t
-dns_rdata_additionaldata(dns_rdata_t *rdata, dns_additionaldatafunc_t add,
-			 void *arg) {
+dns_rdata_additionaldata(dns_rdata_t *rdata, const dns_name_t *owner,
+			 dns_additionaldatafunc_t add, void *arg) {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	bool use_default = false;
 
@@ -2059,7 +2061,7 @@ decvalue(char value) {
 	 * isascii() is valid for full range of int values, no need to
 	 * mask or cast.
 	 */
-	if (!isascii(value)) {
+	if (!isascii((unsigned char)value)) {
 		return (-1);
 	}
 	if ((s = strchr(decdigits, value)) == NULL) {
@@ -2105,7 +2107,7 @@ warn_badmx(isc_token_t *token, isc_lex_t *lexer,
 		line = isc_lex_getsourceline(lexer);
 		(*callbacks->warn)(callbacks, "%s:%u: warning: '%s': %s", file,
 				   line, DNS_AS_STR(*token),
-				   dns_result_totext(DNS_R_MXISADDRESS));
+				   isc_result_totext(DNS_R_MXISADDRESS));
 	}
 }
 
@@ -2122,7 +2124,7 @@ warn_badname(const dns_name_t *name, isc_lex_t *lexer,
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		(*callbacks->warn)(callbacks, "%s:%u: warning: %s: %s", file,
 				   line, namebuf,
-				   dns_result_totext(DNS_R_BADNAME));
+				   isc_result_totext(DNS_R_BADNAME));
 	}
 }
 
@@ -2139,35 +2141,35 @@ fromtext_error(void (*callback)(dns_rdatacallbacks_t *, const char *, ...),
 		case isc_tokentype_eol:
 			(*callback)(callbacks, "%s: %s:%lu: near eol: %s",
 				    "dns_rdata_fromtext", name, line,
-				    dns_result_totext(result));
+				    isc_result_totext(result));
 			break;
 		case isc_tokentype_eof:
 			(*callback)(callbacks, "%s: %s:%lu: near eof: %s",
 				    "dns_rdata_fromtext", name, line,
-				    dns_result_totext(result));
+				    isc_result_totext(result));
 			break;
 		case isc_tokentype_number:
 			(*callback)(callbacks, "%s: %s:%lu: near %lu: %s",
 				    "dns_rdata_fromtext", name, line,
 				    token->value.as_ulong,
-				    dns_result_totext(result));
+				    isc_result_totext(result));
 			break;
 		case isc_tokentype_string:
 		case isc_tokentype_qstring:
 			(*callback)(callbacks, "%s: %s:%lu: near '%s': %s",
 				    "dns_rdata_fromtext", name, line,
 				    DNS_AS_STR(*token),
-				    dns_result_totext(result));
+				    isc_result_totext(result));
 			break;
 		default:
 			(*callback)(callbacks, "%s: %s:%lu: %s",
 				    "dns_rdata_fromtext", name, line,
-				    dns_result_totext(result));
+				    isc_result_totext(result));
 			break;
 		}
 	} else {
 		(*callback)(callbacks, "dns_rdata_fromtext: %s:%lu: %s", name,
-			    line, dns_result_totext(result));
+			    line, isc_result_totext(result));
 	}
 }
 

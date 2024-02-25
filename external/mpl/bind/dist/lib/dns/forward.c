@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.7.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: forward.c,v 1.7.2.2 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,12 @@
 
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/rwlock.h>
 #include <isc/util.h>
 
 #include <dns/forward.h>
 #include <dns/rbt.h>
-#include <dns/result.h>
 #include <dns/types.h>
 
 struct dns_fwdtable {
@@ -129,7 +129,6 @@ dns_fwdtable_add(dns_fwdtable_t *fwdtable, const dns_name_t *name,
 	{
 		fwd = isc_mem_get(fwdtable->mctx, sizeof(*fwd));
 		fwd->addr = *sa;
-		fwd->dscp = -1;
 		ISC_LINK_INIT(fwd, link);
 		ISC_LIST_APPEND(forwarders->fwdrs, fwd, link);
 	}
@@ -165,10 +164,6 @@ dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name) {
 	result = dns_rbt_deletename(fwdtable->table, name, false);
 	RWUNLOCK(&fwdtable->rwlock, isc_rwlocktype_write);
 
-	if (result == DNS_R_PARTIALMATCH) {
-		result = ISC_R_NOTFOUND;
-	}
-
 	return (result);
 }
 
@@ -180,13 +175,8 @@ dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
 	REQUIRE(VALID_FWDTABLE(fwdtable));
 
 	RWLOCK(&fwdtable->rwlock, isc_rwlocktype_read);
-
 	result = dns_rbt_findname(fwdtable->table, name, 0, foundname,
 				  (void **)forwardersp);
-	if (result == DNS_R_PARTIALMATCH) {
-		result = ISC_R_SUCCESS;
-	}
-
 	RWUNLOCK(&fwdtable->rwlock, isc_rwlocktype_read);
 
 	return (result);

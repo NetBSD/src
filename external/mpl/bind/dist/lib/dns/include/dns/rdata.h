@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.8.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATA_H
-#define DNS_RDATA_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -598,8 +597,8 @@ dns_rdatatype_isknown(dns_rdatatype_t type);
  */
 
 isc_result_t
-dns_rdata_additionaldata(dns_rdata_t *rdata, dns_additionaldatafunc_t add,
-			 void *arg);
+dns_rdata_additionaldata(dns_rdata_t *rdata, const dns_name_t *owner,
+			 dns_additionaldatafunc_t add, void *arg);
 /*%<
  * Call 'add' for each name and type from 'rdata' which is subject to
  * additional section processing.
@@ -810,5 +809,3 @@ const char *
 dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATA_H */

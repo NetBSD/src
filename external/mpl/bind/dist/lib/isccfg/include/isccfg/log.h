@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.5 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.5.2.1 2024/02/25 15:47:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,16 +13,15 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISCCFG_LOG_H
-#define ISCCFG_LOG_H 1
+#pragma once
 
 /*! \file isccfg/log.h */
 
 #include <isc/lang.h>
 #include <isc/log.h>
 
-LIBISCCFG_EXTERNAL_DATA extern isc_logcategory_t cfg_categories[];
-LIBISCCFG_EXTERNAL_DATA extern isc_logmodule_t	 cfg_modules[];
+extern isc_logcategory_t cfg_categories[];
+extern isc_logmodule_t	 cfg_modules[];
 
 #define CFG_LOGCATEGORY_CONFIG (&cfg_categories[0])
 
@@ -47,5 +46,3 @@ cfg_log_init(isc_log_t *lctx);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCFG_LOG_H */

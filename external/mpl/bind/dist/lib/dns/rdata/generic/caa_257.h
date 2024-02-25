@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: caa_257.h,v 1.6.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_CAA_257_H
-#define GENERIC_CAA_257_H 1
+#pragma once
 
 typedef struct dns_rdata_caa {
 	dns_rdatacommon_t common;
@@ -25,5 +24,3 @@ typedef struct dns_rdata_caa {
 	unsigned char *value;
 	uint16_t value_len;
 } dns_rdata_caa_t;
-
-#endif /* GENERIC_CAA_257_H */

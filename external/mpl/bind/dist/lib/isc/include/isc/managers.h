@@ -1,4 +1,4 @@
-/*	$NetBSD: managers.h,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: managers.h,v 1.3.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,6 @@
 
 #include <isc/netmgr.h>
 #include <isc/result.h>
-#include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 
@@ -25,7 +24,9 @@ typedef struct isc_managers isc_managers_t;
 
 isc_result_t
 isc_managers_create(isc_mem_t *mctx, size_t workers, size_t quantum,
-		    isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp);
+		    isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp,
+		    isc_timermgr_t **timermgrp);
 
 void
-isc_managers_destroy(isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp);
+isc_managers_destroy(isc_nm_t **netmgrp, isc_taskmgr_t **taskmgrp,
+		     isc_timermgr_t **timermgrp);

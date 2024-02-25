@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.9 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.9.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -416,6 +416,7 @@ additionaldata_keydata(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

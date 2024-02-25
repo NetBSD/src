@@ -1,4 +1,4 @@
-/*	$NetBSD: ht.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: ht.h,v 1.6.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,7 @@
 
 /* ! \file */
 
-#ifndef ISC_HT_H
-#define ISC_HT_H 1
+#pragma once
 
 #include <inttypes.h>
 #include <string.h>
@@ -27,8 +26,14 @@
 typedef struct isc_ht	   isc_ht_t;
 typedef struct isc_ht_iter isc_ht_iter_t;
 
+enum { ISC_HT_CASE_SENSITIVE = 0x00, ISC_HT_CASE_INSENSITIVE = 0x01 };
+
 /*%
  * Initialize hashtable at *htp, using memory context and size of (1<<bits)
+ *
+ * If 'options' contains ISC_HT_CASE_INSENSITIVE, then upper- and lower-case
+ * letters in key values will generate the same hash values; this can be used
+ * when the key for a hash table is a DNS name.
  *
  * Requires:
  *\li	'htp' is not NULL and '*htp' is NULL.
@@ -37,7 +42,8 @@ typedef struct isc_ht_iter isc_ht_iter_t;
  *
  */
 void
-isc_ht_init(isc_ht_t **htp, isc_mem_t *mctx, uint8_t bits);
+isc_ht_init(isc_ht_t **htp, isc_mem_t *mctx, uint8_t bits,
+	    unsigned int options);
 
 /*%
  * Destroy hashtable, freeing everything
@@ -54,6 +60,7 @@ isc_ht_destroy(isc_ht_t **htp);
  *
  * Requires:
  *\li	'ht' is a valid hashtable
+ *\li   write-lock
  *
  * Returns:
  *\li	#ISC_R_NOMEMORY		-- not enough memory to create pool
@@ -61,7 +68,7 @@ isc_ht_destroy(isc_ht_t **htp);
  *\li	#ISC_R_SUCCESS		-- all is well.
  */
 isc_result_t
-isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
+isc_ht_add(isc_ht_t *ht, const unsigned char *key, const uint32_t keysize,
 	   void *value);
 
 /*%
@@ -72,27 +79,29 @@ isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
  *
  * Requires:
  * \li	'ht' is a valid hashtable
+ * \li  read-lock
  *
  * Returns:
  * \li	#ISC_R_SUCCESS		-- success
  * \li	#ISC_R_NOTFOUND		-- key not found
  */
 isc_result_t
-isc_ht_find(const isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
-	    void **valuep);
+isc_ht_find(const isc_ht_t *ht, const unsigned char *key,
+	    const uint32_t keysize, void **valuep);
 
 /*%
  * Delete node from hashtable
  *
  * Requires:
  *\li	ht is a valid hashtable
+ *\li   write-lock
  *
  * Returns:
  *\li	#ISC_R_NOTFOUND		-- key not found
  *\li	#ISC_R_SUCCESS		-- all is well
  */
 isc_result_t
-isc_ht_delete(isc_ht_t *ht, const unsigned char *key, uint32_t keysize);
+isc_ht_delete(isc_ht_t *ht, const unsigned char *key, const uint32_t keysize);
 
 /*%
  * Create an iterator for the hashtable; point '*itp' to it.
@@ -180,6 +189,5 @@ isc_ht_iter_currentkey(isc_ht_iter_t *it, unsigned char **key, size_t *keysize);
  * Requires:
  *\li	'ht' is a valid hashtable
  */
-unsigned int
-isc_ht_count(isc_ht_t *ht);
-#endif /* ifndef ISC_HT_H */
+size_t
+isc_ht_count(const isc_ht_t *ht);

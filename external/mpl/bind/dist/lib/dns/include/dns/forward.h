@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.6.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_FORWARD_H
-#define DNS_FORWARD_H 1
+#pragma once
 
 /*! \file dns/forward.h */
 
@@ -28,7 +27,6 @@ ISC_LANG_BEGINDECLS
 
 struct dns_forwarder {
 	isc_sockaddr_t addr;
-	isc_dscp_t     dscp;
 	ISC_LINK(dns_forwarder_t) link;
 };
 
@@ -89,6 +87,7 @@ dns_fwdtable_delete(dns_fwdtable_t *fwdtable, const dns_name_t *name);
  * Returns:
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND
+ * \li	#ISC_R_NOSPACE
  */
 
 isc_result_t
@@ -105,8 +104,10 @@ dns_fwdtable_find(dns_fwdtable_t *fwdtable, const dns_name_t *name,
  * \li	foundname to be NULL or a valid name with buffer.
  *
  * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOTFOUND
+ * \li	#ISC_R_SUCCESS         Success
+ * \li	#DNS_R_PARTIALMATCH    Superdomain found with data
+ * \li	#ISC_R_NOTFOUND        No match
+ * \li	#ISC_R_NOSPACE         Concatenating nodes to form foundname failed
  */
 
 void
@@ -122,5 +123,3 @@ dns_fwdtable_destroy(dns_fwdtable_t **fwdtablep);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_FORWARD_H */

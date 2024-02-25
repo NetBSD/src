@@ -26,7 +26,7 @@ rm -f ns2/*.queries
 rm -f ns2/named.[0-9]*.conf
 rm -f ns2/named.conf.header
 
-rm -f ns3/named2.conf
+rm -f ns3/named.conf
 rm -f ns3/named.run.prev
 
 rm -f dnsrps*.conf dnsrpzd*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nid_104.h,v 1.6.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,10 @@
  */
 
 /* */
-#ifndef GENERIC_NID_104_H
-#define GENERIC_NID_104_H 1
+#pragma once
 
 typedef struct dns_rdata_nid {
 	dns_rdatacommon_t common;
 	uint16_t pref;
 	unsigned char nid[8];
 } dns_rdata_nid_t;
-
-#endif /* GENERIC_NID_104_H */

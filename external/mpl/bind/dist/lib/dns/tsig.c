@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.11.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: tsig.c,v 1.11.2.2 2024/02/25 15:46:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,12 +23,11 @@
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/refcount.h>
+#include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/time.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
 
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
@@ -39,10 +38,7 @@
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
-#include <dns/result.h>
 #include <dns/tsig.h>
-
-#include <dst/result.h>
 
 #include "tsig_p.h"
 
@@ -62,13 +58,13 @@ static unsigned char hmacmd5_offsets[] = { 0, 9, 17, 21, 25 };
 
 static dns_name_t const hmacmd5 = DNS_NAME_INITABSOLUTE(hmacmd5_ndata,
 							hmacmd5_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacmd5_name = &hmacmd5;
+const dns_name_t *dns_tsig_hmacmd5_name = &hmacmd5;
 
 static unsigned char gsstsig_ndata[] = "\010gss-tsig";
 static unsigned char gsstsig_offsets[] = { 0, 9 };
 static dns_name_t const gsstsig = DNS_NAME_INITABSOLUTE(gsstsig_ndata,
 							gsstsig_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_gssapi_name = &gsstsig;
+const dns_name_t *dns_tsig_gssapi_name = &gsstsig;
 
 /*
  * Since Microsoft doesn't follow its own standard, we will use this
@@ -78,37 +74,37 @@ static unsigned char gsstsigms_ndata[] = "\003gss\011microsoft\003com";
 static unsigned char gsstsigms_offsets[] = { 0, 4, 14, 18 };
 static dns_name_t const gsstsigms = DNS_NAME_INITABSOLUTE(gsstsigms_ndata,
 							  gsstsigms_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
+const dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
 
 static unsigned char hmacsha1_ndata[] = "\011hmac-sha1";
 static unsigned char hmacsha1_offsets[] = { 0, 10 };
 static dns_name_t const hmacsha1 = DNS_NAME_INITABSOLUTE(hmacsha1_ndata,
 							 hmacsha1_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
+const dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
 
 static unsigned char hmacsha224_ndata[] = "\013hmac-sha224";
 static unsigned char hmacsha224_offsets[] = { 0, 12 };
 static dns_name_t const hmacsha224 = DNS_NAME_INITABSOLUTE(hmacsha224_ndata,
 							   hmacsha224_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
+const dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
 
 static unsigned char hmacsha256_ndata[] = "\013hmac-sha256";
 static unsigned char hmacsha256_offsets[] = { 0, 12 };
 static dns_name_t const hmacsha256 = DNS_NAME_INITABSOLUTE(hmacsha256_ndata,
 							   hmacsha256_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
+const dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
 
 static unsigned char hmacsha384_ndata[] = "\013hmac-sha384";
 static unsigned char hmacsha384_offsets[] = { 0, 12 };
 static dns_name_t const hmacsha384 = DNS_NAME_INITABSOLUTE(hmacsha384_ndata,
 							   hmacsha384_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
+const dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
 
 static unsigned char hmacsha512_ndata[] = "\013hmac-sha512";
 static unsigned char hmacsha512_offsets[] = { 0, 12 };
 static dns_name_t const hmacsha512 = DNS_NAME_INITABSOLUTE(hmacsha512_ndata,
 							   hmacsha512_offsets);
-LIBDNS_EXTERNAL_DATA const dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
+const dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
 
 static const struct {
 	const dns_name_t *name;
@@ -229,16 +225,22 @@ keyring_add(dns_tsig_keyring_t *ring, const dns_name_t *name,
 	}
 
 	result = dns_rbt_addname(ring->keys, name, tkey);
-	if (result == ISC_R_SUCCESS && tkey->generated) {
-		/*
-		 * Add the new key to the LRU list and remove the least
-		 * recently used key if there are too many keys on the list.
-		 */
-		ISC_LIST_APPEND(ring->lru, tkey, link);
-		if (ring->generated++ > ring->maxgenerated) {
-			remove_fromring(ISC_LIST_HEAD(ring->lru));
+	if (result == ISC_R_SUCCESS) {
+		if (tkey->generated) {
+			/*
+			 * Add the new key to the LRU list and remove the
+			 * least recently used key if there are too many
+			 * keys on the list.
+			 */
+			ISC_LIST_APPEND(ring->lru, tkey, link);
+			if (ring->generated++ > ring->maxgenerated) {
+				remove_fromring(ISC_LIST_HEAD(ring->lru));
+			}
 		}
+
+		tkey->ring = ring;
 	}
+
 	RWUNLOCK(&ring->lock, isc_rwlocktype_write);
 
 	return (result);
@@ -802,7 +804,12 @@ dns_tsig_sign(dns_message_t *msg) {
 	dns_name_init(&tsig.algorithm, NULL);
 	dns_name_clone(key->algorithm, &tsig.algorithm);
 
-	isc_stdtime_get(&now);
+	if (msg->fuzzing) {
+		now = msg->fuzztime;
+	} else {
+		isc_stdtime_get(&now);
+	}
+
 	tsig.timesigned = now + msg->timeadjust;
 	tsig.fudge = DNS_TSIG_FUDGE;
 
@@ -1026,7 +1033,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	if (ret != ISC_R_SUCCESS) {
 		goto cleanup_rdata;
 	}
-	dns_name_copynf(&key->name, owner);
+	dns_name_copy(&key->name, owner);
 
 	ret = dns_message_gettemprdatalist(msg, &datalist);
 	if (ret != ISC_R_SUCCESS) {
@@ -1170,7 +1177,11 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	/*
 	 * Get the current time.
 	 */
-	isc_stdtime_get(&now);
+	if (msg->fuzzing) {
+		now = msg->fuzztime;
+	} else {
+		isc_stdtime_get(&now);
+	}
 
 	/*
 	 * Find dns_tsigkey_t based on keyname.
@@ -1586,8 +1597,6 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		 * XXX Can TCP transfers be forwarded?  How would that
 		 * work?
 		 */
-		/* cppcheck-suppress uninitStructMember
-		 * symbolName=tsig.originalid */
 		id = htons(tsig.originalid);
 		memmove(&header[0], &id, 2);
 	}
@@ -1668,7 +1677,11 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		/*
 		 * Is the time ok?
 		 */
-		isc_stdtime_get(&now);
+		if (msg->fuzzing) {
+			now = msg->fuzztime;
+		} else {
+			isc_stdtime_get(&now);
+		}
 
 		if (now + msg->timeadjust > tsig.timesigned + tsig.fudge) {
 			msg->tsigstatus = dns_tsigerror_badtime;
@@ -1746,8 +1759,9 @@ isc_result_t
 dns_tsigkey_find(dns_tsigkey_t **tsigkey, const dns_name_t *name,
 		 const dns_name_t *algorithm, dns_tsig_keyring_t *ring) {
 	dns_tsigkey_t *key;
-	isc_stdtime_t now;
 	isc_result_t result;
+	isc_rwlocktype_t locktype = isc_rwlocktype_read;
+	isc_stdtime_t now;
 
 	REQUIRE(tsigkey != NULL);
 	REQUIRE(*tsigkey == NULL);
@@ -1759,25 +1773,30 @@ dns_tsigkey_find(dns_tsigkey_t **tsigkey, const dns_name_t *name,
 	RWUNLOCK(&ring->lock, isc_rwlocktype_write);
 
 	isc_stdtime_get(&now);
-	RWLOCK(&ring->lock, isc_rwlocktype_read);
+
+again:
+	RWLOCK(&ring->lock, locktype);
 	key = NULL;
 	result = dns_rbt_findname(ring->keys, name, 0, NULL, (void *)&key);
 	if (result == DNS_R_PARTIALMATCH || result == ISC_R_NOTFOUND) {
-		RWUNLOCK(&ring->lock, isc_rwlocktype_read);
+		RWUNLOCK(&ring->lock, locktype);
 		return (ISC_R_NOTFOUND);
 	}
 	if (algorithm != NULL && !dns_name_equal(key->algorithm, algorithm)) {
-		RWUNLOCK(&ring->lock, isc_rwlocktype_read);
+		RWUNLOCK(&ring->lock, locktype);
 		return (ISC_R_NOTFOUND);
 	}
 	if (key->inception != key->expire && isc_serial_lt(key->expire, now)) {
 		/*
 		 * The key has expired.
 		 */
-		RWUNLOCK(&ring->lock, isc_rwlocktype_read);
-		RWLOCK(&ring->lock, isc_rwlocktype_write);
+		if (locktype == isc_rwlocktype_read) {
+			RWUNLOCK(&ring->lock, locktype);
+			locktype = isc_rwlocktype_write;
+			goto again;
+		}
 		remove_fromring(key);
-		RWUNLOCK(&ring->lock, isc_rwlocktype_write);
+		RWUNLOCK(&ring->lock, locktype);
 		return (ISC_R_NOTFOUND);
 	}
 #if 0
@@ -1792,7 +1811,7 @@ dns_tsigkey_find(dns_tsigkey_t **tsigkey, const dns_name_t *name,
 	}
 #endif /* if 0 */
 	isc_refcount_increment(&key->refs);
-	RWUNLOCK(&ring->lock, isc_rwlocktype_read);
+	RWUNLOCK(&ring->lock, locktype);
 	adjust_lru(key);
 	*tsigkey = key;
 	return (ISC_R_SUCCESS);
@@ -1851,6 +1870,10 @@ isc_result_t
 dns_tsigkeyring_add(dns_tsig_keyring_t *ring, const dns_name_t *name,
 		    dns_tsigkey_t *tkey) {
 	isc_result_t result;
+
+	REQUIRE(VALID_TSIG_KEY(tkey));
+	REQUIRE(tkey->ring == NULL);
+	REQUIRE(name != NULL);
 
 	result = keyring_add(ring, name, tkey);
 	if (result == ISC_R_SUCCESS) {

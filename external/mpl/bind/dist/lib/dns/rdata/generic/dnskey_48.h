@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskey_48.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: dnskey_48.h,v 1.4.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,13 +13,10 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_DNSKEY_48_H
-#define GENERIC_DNSKEY_48_H 1
+#pragma once
 
 /*!
  *  \brief per RFC2535
  */
 
 typedef struct dns_rdata_key dns_rdata_dnskey_t;
-
-#endif /* GENERIC_DNSKEY_48_H */

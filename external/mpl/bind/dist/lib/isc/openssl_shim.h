@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: openssl_shim.h,v 1.6.2.1 2024/02/25 15:47:17 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,11 @@ CRYPTO_zalloc(size_t num, const char *file, int line);
 #define OPENSSL_zalloc(num) CRYPTO_zalloc(num, __FILE__, __LINE__)
 #endif
 
+#if !HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
+#define EVP_PKEY_new_raw_private_key(type, e, key, keylen) \
+	EVP_PKEY_new_mac_key(type, e, key, (int)(keylen))
+#endif /* if !HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY */
+
 #if !HAVE_EVP_CIPHER_CTX_NEW
 EVP_CIPHER_CTX *
 EVP_CIPHER_CTX_new(void);
@@ -42,13 +47,11 @@ EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
 #endif /* if !HAVE_EVP_CIPHER_CTX_FREE */
 
 #if !HAVE_EVP_MD_CTX_NEW
-EVP_MD_CTX *
-EVP_MD_CTX_new(void);
+#define EVP_MD_CTX_new EVP_MD_CTX_create
 #endif /* if !HAVE_EVP_MD_CTX_NEW */
 
 #if !HAVE_EVP_MD_CTX_FREE
-void
-EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+#define EVP_MD_CTX_free EVP_MD_CTX_destroy
 #endif /* if !HAVE_EVP_MD_CTX_FREE */
 
 #if !HAVE_EVP_MD_CTX_RESET
@@ -56,25 +59,9 @@ int
 EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 #endif /* if !HAVE_EVP_MD_CTX_RESET */
 
-#if !HAVE_HMAC_CTX_NEW
-HMAC_CTX *
-HMAC_CTX_new(void);
-#endif /* if !HAVE_HMAC_CTX_NEW */
-
-#if !HAVE_HMAC_CTX_FREE
-void
-HMAC_CTX_free(HMAC_CTX *ctx);
-#endif /* if !HAVE_HMAC_CTX_FREE */
-
-#if !HAVE_HMAC_CTX_RESET
-int
-HMAC_CTX_reset(HMAC_CTX *ctx);
-#endif /* if !HAVE_HMAC_CTX_RESET */
-
-#if !HAVE_HMAC_CTX_GET_MD
-const EVP_MD *
-HMAC_CTX_get_md(const HMAC_CTX *ctx);
-#endif /* if !HAVE_HMAC_CTX_GET_MD */
+#if !HAVE_EVP_MD_CTX_GET0_MD
+#define EVP_MD_CTX_get0_md EVP_MD_CTX_md
+#endif /* if !HAVE_EVP_MD_CTX_GET0_MD */
 
 #if !HAVE_SSL_READ_EX
 int
@@ -135,3 +122,18 @@ OPENSSL_cleanup(void);
 #if !HAVE_TLS_CLIENT_METHOD
 #define TLS_client_method SSLv23_client_method
 #endif
+
+#if !HAVE_SSL_CTX_UP_REF
+int
+SSL_CTX_up_ref(SSL_CTX *store);
+#endif /* !HAVE_SSL_CTX_UP_REF */
+
+#if !HAVE_X509_STORE_UP_REF
+int
+X509_STORE_up_ref(X509_STORE *v);
+#endif /* !HAVE_OPENSSL_CLEANUP */
+
+#if !HAVE_SSL_CTX_SET1_CERT_STORE
+void
+SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store);
+#endif /* !HAVE_SSL_CTX_SET1_CERT_STORE */

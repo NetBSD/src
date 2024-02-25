@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: srv_33.h,v 1.6.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_SRV_33_H
-#define IN_1_SRV_33_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2782 */
@@ -27,5 +26,3 @@ typedef struct dns_rdata_in_srv {
 	uint16_t port;
 	dns_name_t target;
 } dns_rdata_in_srv_t;
-
-#endif /* IN_1_SRV_33_H */

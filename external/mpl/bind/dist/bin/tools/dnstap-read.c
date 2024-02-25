@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap-read.c,v 1.8 2022/09/23 12:15:26 christos Exp $	*/
+/*	$NetBSD: dnstap-read.c,v 1.8.2.1 2024/02/25 15:45:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,11 +37,13 @@
 
 #include <protobuf-c/protobuf-c.h>
 
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/hex.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -50,9 +52,8 @@
 #include <dns/masterdump.h>
 #include <dns/message.h>
 #include <dns/name.h>
-#include <dns/result.h>
 
-#include "lib/dns/dnstap.pb-c.h"
+#include "dnstap.pb-c.h"
 
 isc_mem_t *mctx = NULL;
 bool memrecord = false;
@@ -72,8 +73,8 @@ const char *program = "dnstap-read";
 		}                                                     \
 	} while (0)
 
-ISC_PLATFORM_NORETURN_PRE static void
-fatal(const char *format, ...) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+fatal(const char *format, ...);
 
 static void
 fatal(const char *format, ...) {
@@ -328,7 +329,6 @@ int
 main(int argc, char *argv[]) {
 	isc_result_t result;
 	dns_message_t *message = NULL;
-	isc_buffer_t *b = NULL;
 	dns_dtdata_t *dt = NULL;
 	dns_dthandle_t *handle = NULL;
 	int rv = 0, ch;
@@ -363,8 +363,6 @@ main(int argc, char *argv[]) {
 
 	isc_mem_create(&mctx);
 
-	dns_result_register();
-
 	CHECKM(dns_dt_open(argv[0], dns_dtmode_file, mctx, &handle),
 	       "dns_dt_openfile");
 
@@ -383,17 +381,8 @@ main(int argc, char *argv[]) {
 		input.base = data;
 		input.length = datalen;
 
-		if (b != NULL) {
-			isc_buffer_free(&b);
-		}
-		isc_buffer_allocate(mctx, &b, 2048);
-		if (b == NULL) {
-			fatal("out of memory");
-		}
-
 		result = dns_dt_parse(mctx, &input, &dt);
 		if (result != ISC_R_SUCCESS) {
-			isc_buffer_free(&b);
 			continue;
 		}
 
@@ -421,9 +410,6 @@ cleanup:
 	}
 	if (message != NULL) {
 		dns_message_detach(&message);
-	}
-	if (b != NULL) {
-		isc_buffer_free(&b);
 	}
 	isc_mem_destroy(&mctx);
 

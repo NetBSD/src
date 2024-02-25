@@ -1,4 +1,4 @@
-/*	$NetBSD: minfo_14.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: minfo_14.h,v 1.5.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_MINFO_14_H
-#define GENERIC_MINFO_14_H 1
+#pragma once
 
 typedef struct dns_rdata_minfo {
 	dns_rdatacommon_t common;
@@ -23,5 +22,3 @@ typedef struct dns_rdata_minfo {
 	dns_name_t rmailbox;
 	dns_name_t emailbox;
 } dns_rdata_minfo_t;
-
-#endif /* GENERIC_MINFO_14_H */

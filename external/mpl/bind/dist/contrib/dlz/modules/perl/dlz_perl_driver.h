@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_perl_driver.h,v 1.3 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_perl_driver.h,v 1.3.2.1 2024/02/25 15:45:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,8 @@
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#pragma once
 
 #include <dlz_minimal.h>
 

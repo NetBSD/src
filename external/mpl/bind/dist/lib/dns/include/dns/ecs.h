@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: ecs.h,v 1.8.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ECS_H
-#define DNS_ECS_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -82,5 +81,3 @@ dns_ecs_format(const dns_ecs_t *ecs, char *buf, size_t size);
  * \li  'size' is at least DNS_ECS_FORMATSIZE
  */
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ECS_H */

@@ -27,7 +27,7 @@
  * one it was meant for.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };

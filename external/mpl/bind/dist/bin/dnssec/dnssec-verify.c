@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.6 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.6.2.1 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <time.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/base32.h>
 #include <isc/commandline.h>
 #include <isc/event.h>
@@ -31,6 +32,7 @@
 #include <isc/os.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/rwlock.h>
 #include <isc/serial.h>
 #include <isc/stdio.h>
@@ -57,16 +59,11 @@
 #include <dns/rdatasetiter.h>
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 #include <dns/soa.h>
 #include <dns/time.h>
 #include <dns/zoneverify.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -144,8 +141,8 @@ loadzone(char *file, char *origin, dns_rdataclass_t rdclass, dns_db_t **db) {
 	}
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
@@ -154,7 +151,7 @@ usage(void) {
 
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Version: %s\n", VERSION);
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 
 	fprintf(stderr, "Options: (default value in parenthesis) \n");
 	fprintf(stderr, "\t-v debuglevel (0)\n");
@@ -166,14 +163,7 @@ usage(void) {
 	fprintf(stderr, "\t\tfile format of input zonefile (text)\n");
 	fprintf(stderr, "\t-c class (IN)\n");
 	fprintf(stderr, "\t-E engine:\n");
-#if USE_PKCS11
-	fprintf(stderr,
-		"\t\tpath to PKCS#11 provider library "
-		"(default is %s)\n",
-		PK11_LIB_LOCATION);
-#else  /* if USE_PKCS11 */
 	fprintf(stderr, "\t\tname of an OpenSSL engine to use\n");
-#endif /* if USE_PKCS11 */
 	fprintf(stderr, "\t-x:\tDNSKEY record signed with KSKs only, "
 			"not ZSKs\n");
 	fprintf(stderr, "\t-z:\tAll records signed with KSKs\n");
@@ -212,12 +202,6 @@ main(int argc, char *argv[]) {
 			{
 				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
 			}
-			if (strcasecmp(isc_commandline_argument, "size") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGSIZE;
-			}
-			if (strcasecmp(isc_commandline_argument, "mctx") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGCTX;
-			}
 			break;
 		default:
 			break;
@@ -227,11 +211,6 @@ main(int argc, char *argv[]) {
 	check_result(isc_app_start(), "isc_app_start");
 
 	isc_mem_create(&mctx);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 

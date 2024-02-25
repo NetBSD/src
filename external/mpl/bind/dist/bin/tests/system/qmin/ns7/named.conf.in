@@ -24,13 +24,13 @@ options {
 	recursion yes;
 	qname-minimization relaxed;
 	querylog yes;
-	resolver-query-timeout 30;
+	resolver-query-timeout 30000; # 30 seconds
 	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -39,7 +39,7 @@ controls {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "fwd." IN {

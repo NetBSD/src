@@ -26,7 +26,7 @@
 prefix = /usr
 libdir = $(prefix)/lib/bind9
 
-CFLAGS=-fPIC -g -I../include
+CFLAGS += -fPIC -g -I../include
 SQLITE3_LIBS=-lsqlite3
 
 all: dlz_sqlite3_dynamic.so

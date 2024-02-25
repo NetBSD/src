@@ -1,4 +1,4 @@
-/*	$NetBSD: minfo_14.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.7.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,7 +203,6 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_rdata_minfo_t *minfo = target;
 	isc_region_t region;
 	dns_name_t name;
-	isc_result_t result;
 
 	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(minfo != NULL);
@@ -217,23 +216,14 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&minfo->rmailbox, NULL);
-	RETERR(name_duporclone(&name, mctx, &minfo->rmailbox));
+	name_duporclone(&name, mctx, &minfo->rmailbox);
 	isc_region_consume(&region, name_length(&name));
 
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&minfo->emailbox, NULL);
-	result = name_duporclone(&name, mctx, &minfo->emailbox);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	name_duporclone(&name, mctx, &minfo->emailbox);
 	minfo->mctx = mctx;
 	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (mctx != NULL) {
-		dns_name_free(&minfo->rmailbox, mctx);
-	}
-	return (ISC_R_NOMEMORY);
 }
 
 static void
@@ -257,6 +247,7 @@ additionaldata_minfo(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

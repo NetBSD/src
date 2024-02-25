@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.6.2.1 2024/02/25 15:47:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,22 +20,25 @@
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/string.h>
+#include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/kasp.h>
 #include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/nsec3.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
+#include <dns/ttl.h>
 
 #include <isccfg/cfg.h>
+#include <isccfg/duration.h>
 #include <isccfg/kaspconf.h>
 #include <isccfg/namedconf.h>
 
-#define DEFAULT_NSEC3PARAM_ITER	   5
-#define DEFAULT_NSEC3PARAM_SALTLEN 8
+#define DEFAULT_NSEC3PARAM_ITER	   0
+#define DEFAULT_NSEC3PARAM_SALTLEN 0
 
 /*
  * Utility function for getting a configuration option.
@@ -53,17 +56,36 @@ confget(cfg_obj_t const *const *maps, const char *name, const cfg_obj_t **obj) {
 }
 
 /*
+ * Utility function for parsing durations from string.
+ */
+static uint32_t
+parse_duration(const char *str) {
+	uint32_t time = 0;
+	isccfg_duration_t duration;
+	isc_result_t result;
+	isc_textregion_t tr;
+
+	DE_CONST(str, tr.base);
+	tr.length = strlen(tr.base);
+	result = isccfg_parse_duration(&tr, &duration);
+	if (result == ISC_R_SUCCESS) {
+		time = isccfg_duration_toseconds(&duration);
+	}
+	return (time);
+}
+
+/*
  * Utility function for configuring durations.
  */
 static uint32_t
-get_duration(const cfg_obj_t **maps, const char *option, uint32_t dfl) {
+get_duration(const cfg_obj_t **maps, const char *option, const char *dfl) {
 	const cfg_obj_t *obj;
 	isc_result_t result;
 	obj = NULL;
 
 	result = confget(maps, option, &obj);
 	if (result == ISC_R_NOTFOUND) {
-		return (dfl);
+		return (parse_duration(dfl));
 	}
 	INSIST(result == ISC_R_SUCCESS);
 	return (cfg_obj_asduration(obj));
@@ -74,7 +96,8 @@ get_duration(const cfg_obj_t **maps, const char *option, uint32_t dfl) {
  */
 static isc_result_t
 cfg_kaspkey_fromconfig(const cfg_obj_t *config, dns_kasp_t *kasp,
-		       isc_log_t *logctx) {
+		       isc_log_t *logctx, uint32_t ksk_min_lifetime,
+		       uint32_t zsk_min_lifetime) {
 	isc_result_t result;
 	dns_kasp_key_t *key = NULL;
 
@@ -94,6 +117,7 @@ cfg_kaspkey_fromconfig(const cfg_obj_t *config, dns_kasp_t *kasp,
 		const char *rolestr = NULL;
 		const cfg_obj_t *obj = NULL;
 		isc_consttextregion_t alg;
+		bool error = false;
 
 		rolestr = cfg_obj_asstring(cfg_tuple_get(config, "role"));
 		if (strcmp(rolestr, "ksk") == 0) {
@@ -109,6 +133,31 @@ cfg_kaspkey_fromconfig(const cfg_obj_t *config, dns_kasp_t *kasp,
 		obj = cfg_tuple_get(config, "lifetime");
 		if (cfg_obj_isduration(obj)) {
 			key->lifetime = cfg_obj_asduration(obj);
+		}
+		if (key->lifetime > 0) {
+			if (key->lifetime < 30 * (24 * 3600)) {
+				cfg_obj_log(obj, logctx, ISC_LOG_WARNING,
+					    "dnssec-policy: key lifetime is "
+					    "shorter than 30 days");
+			}
+			if ((key->role & DNS_KASP_KEY_ROLE_KSK) != 0 &&
+			    key->lifetime <= ksk_min_lifetime)
+			{
+				error = true;
+			}
+			if ((key->role & DNS_KASP_KEY_ROLE_ZSK) != 0 &&
+			    key->lifetime <= zsk_min_lifetime)
+			{
+				error = true;
+			}
+			if (error) {
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "dnssec-policy: key lifetime is "
+					    "shorter than the time it takes to "
+					    "do a rollover");
+				result = ISC_R_FAILURE;
+				goto cleanup;
+			}
 		}
 
 		obj = cfg_tuple_get(config, "algorithm");
@@ -253,9 +302,9 @@ cfg_nsec3param_fromconfig(const cfg_obj_t *config, dns_kasp_t *kasp,
 }
 
 isc_result_t
-cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
-		    isc_log_t *logctx, dns_kasplist_t *kasplist,
-		    dns_kasp_t **kaspp) {
+cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
+		    isc_mem_t *mctx, isc_log_t *logctx,
+		    dns_kasplist_t *kasplist, dns_kasp_t **kaspp) {
 	isc_result_t result;
 	const cfg_obj_t *maps[2];
 	const cfg_obj_t *koptions = NULL;
@@ -265,13 +314,21 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 	const char *kaspname = NULL;
 	dns_kasp_t *kasp = NULL;
 	size_t i = 0;
+	uint32_t sigrefresh = 0, sigvalidity = 0;
+	uint32_t dnskeyttl = 0, dsttl = 0, maxttl = 0;
+	uint32_t publishsafety = 0, retiresafety = 0;
+	uint32_t zonepropdelay = 0, parentpropdelay = 0;
+	uint32_t ipub = 0, iret = 0;
+	uint32_t ksk_min_lifetime = 0, zsk_min_lifetime = 0;
 
+	REQUIRE(config != NULL);
 	REQUIRE(kaspp != NULL && *kaspp == NULL);
 
-	kaspname = (name == NULL)
-			   ? cfg_obj_asstring(cfg_tuple_get(config, "name"))
-			   : name;
+	kaspname = cfg_obj_asstring(cfg_tuple_get(config, "name"));
 	INSIST(kaspname != NULL);
+
+	cfg_obj_log(config, logctx, ISC_LOG_DEBUG(1),
+		    "dnssec-policy: load policy '%s'", kaspname);
 
 	result = dns_kasplist_find(kasplist, kaspname, &kasp);
 
@@ -305,39 +362,94 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 	maps[i] = NULL;
 
 	/* Configuration: Signatures */
-	dns_kasp_setsigrefresh(kasp, get_duration(maps, "signatures-refresh",
-						  DNS_KASP_SIG_REFRESH));
-	dns_kasp_setsigvalidity(kasp, get_duration(maps, "signatures-validity",
-						   DNS_KASP_SIG_VALIDITY));
-	dns_kasp_setsigvalidity_dnskey(
-		kasp, get_duration(maps, "signatures-validity-dnskey",
-				   DNS_KASP_SIG_VALIDITY_DNSKEY));
+	sigrefresh = get_duration(maps, "signatures-refresh",
+				  DNS_KASP_SIG_REFRESH);
+	dns_kasp_setsigrefresh(kasp, sigrefresh);
+
+	sigvalidity = get_duration(maps, "signatures-validity-dnskey",
+				   DNS_KASP_SIG_VALIDITY_DNSKEY);
+	if (sigrefresh >= (sigvalidity * 0.9)) {
+		cfg_obj_log(
+			config, logctx, ISC_LOG_ERROR,
+			"dnssec-policy: policy '%s' signatures-refresh must be "
+			"at most 90%% of the signatures-validity-dnskey",
+			kaspname);
+		result = ISC_R_FAILURE;
+	}
+	dns_kasp_setsigvalidity_dnskey(kasp, sigvalidity);
+
+	sigvalidity = get_duration(maps, "signatures-validity",
+				   DNS_KASP_SIG_VALIDITY);
+	if (sigrefresh >= (sigvalidity * 0.9)) {
+		cfg_obj_log(
+			config, logctx, ISC_LOG_ERROR,
+			"dnssec-policy: policy '%s' signatures-refresh must be "
+			"at most 90%% of the signatures-validity",
+			kaspname);
+		result = ISC_R_FAILURE;
+	}
+	dns_kasp_setsigvalidity(kasp, sigvalidity);
+
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	/* Configuration: Zone settings */
+	maxttl = get_duration(maps, "max-zone-ttl", DNS_KASP_ZONE_MAXTTL);
+	dns_kasp_setzonemaxttl(kasp, maxttl);
+
+	zonepropdelay = get_duration(maps, "zone-propagation-delay",
+				     DNS_KASP_ZONE_PROPDELAY);
+	dns_kasp_setzonepropagationdelay(kasp, zonepropdelay);
+
+	/* Configuration: Parent settings */
+	dsttl = get_duration(maps, "parent-ds-ttl", DNS_KASP_DS_TTL);
+	dns_kasp_setdsttl(kasp, dsttl);
+
+	parentpropdelay = get_duration(maps, "parent-propagation-delay",
+				       DNS_KASP_PARENT_PROPDELAY);
+	dns_kasp_setparentpropagationdelay(kasp, parentpropdelay);
 
 	/* Configuration: Keys */
-	dns_kasp_setdnskeyttl(
-		kasp, get_duration(maps, "dnskey-ttl", DNS_KASP_KEY_TTL));
-	dns_kasp_setpublishsafety(kasp, get_duration(maps, "publish-safety",
-						     DNS_KASP_PUBLISH_SAFETY));
-	dns_kasp_setretiresafety(kasp, get_duration(maps, "retire-safety",
-						    DNS_KASP_RETIRE_SAFETY));
+	dnskeyttl = get_duration(maps, "dnskey-ttl", DNS_KASP_KEY_TTL);
+	dns_kasp_setdnskeyttl(kasp, dnskeyttl);
+
+	publishsafety = get_duration(maps, "publish-safety",
+				     DNS_KASP_PUBLISH_SAFETY);
+	dns_kasp_setpublishsafety(kasp, publishsafety);
+
+	retiresafety = get_duration(maps, "retire-safety",
+				    DNS_KASP_RETIRE_SAFETY);
+	dns_kasp_setretiresafety(kasp, retiresafety);
+
 	dns_kasp_setpurgekeys(
 		kasp, get_duration(maps, "purge-keys", DNS_KASP_PURGE_KEYS));
+
+	ipub = dnskeyttl + publishsafety + zonepropdelay;
+	iret = dsttl + retiresafety + parentpropdelay;
+	ksk_min_lifetime = ISC_MAX(ipub, iret);
+
+	iret = (sigvalidity - sigrefresh) + maxttl + retiresafety +
+	       zonepropdelay;
+	zsk_min_lifetime = ISC_MAX(ipub, iret);
 
 	(void)confget(maps, "keys", &keys);
 	if (keys != NULL) {
 		char role[256] = { 0 };
+		bool warn[256][2] = { { false } };
 		dns_kasp_key_t *kkey = NULL;
 
 		for (element = cfg_list_first(keys); element != NULL;
 		     element = cfg_list_next(element))
 		{
 			cfg_obj_t *kobj = cfg_listelt_value(element);
-			result = cfg_kaspkey_fromconfig(kobj, kasp, logctx);
+			result = cfg_kaspkey_fromconfig(kobj, kasp, logctx,
+							ksk_min_lifetime,
+							zsk_min_lifetime);
 			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
 			}
 		}
-		INSIST(!(dns_kasp_keylist_empty(kasp)));
 		dns_kasp_freeze(kasp);
 		for (kkey = ISC_LIST_HEAD(dns_kasp_keys(kasp)); kkey != NULL;
 		     kkey = ISC_LIST_NEXT(kkey, link))
@@ -346,17 +458,28 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 			INSIST(keyalg < ARRAY_SIZE(role));
 
 			if (dns_kasp_key_zsk(kkey)) {
+				if ((role[keyalg] & DNS_KASP_KEY_ROLE_ZSK) != 0)
+				{
+					warn[keyalg][0] = true;
+				}
 				role[keyalg] |= DNS_KASP_KEY_ROLE_ZSK;
 			}
 
 			if (dns_kasp_key_ksk(kkey)) {
+				if ((role[keyalg] & DNS_KASP_KEY_ROLE_KSK) != 0)
+				{
+					warn[keyalg][1] = true;
+				}
 				role[keyalg] |= DNS_KASP_KEY_ROLE_KSK;
 			}
 		}
 		dns_kasp_thaw(kasp);
 		for (i = 0; i < ARRAY_SIZE(role); i++) {
-			if (role[i] != 0 && role[i] != (DNS_KASP_KEY_ROLE_ZSK |
-							DNS_KASP_KEY_ROLE_KSK))
+			if (role[i] == 0) {
+				continue;
+			}
+			if (role[i] !=
+			    (DNS_KASP_KEY_ROLE_ZSK | DNS_KASP_KEY_ROLE_KSK))
 			{
 				cfg_obj_log(keys, logctx, ISC_LOG_ERROR,
 					    "dnssec-policy: algorithm %zu "
@@ -364,27 +487,71 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 					    i);
 				result = ISC_R_FAILURE;
 			}
+			if (warn[i][0]) {
+				cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+					    "dnssec-policy: algorithm %zu has "
+					    "multiple keys with ZSK role",
+					    i);
+			}
+			if (warn[i][1]) {
+				cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+					    "dnssec-policy: algorithm %zu has "
+					    "multiple keys with KSK role",
+					    i);
+			}
 		}
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-	} else if (strcmp(kaspname, "insecure") == 0) {
+	} else if (default_kasp) {
+		dns_kasp_key_t *key, *new_key;
+		/*
+		 * If there are no specific keys configured in the policy,
+		 * inherit from the default policy (except for the built-in
+		 * "insecure" policy).
+		 */
+		for (key = ISC_LIST_HEAD(dns_kasp_keys(default_kasp));
+		     key != NULL; key = ISC_LIST_NEXT(key, link))
+		{
+			/* Create a new key reference. */
+			new_key = NULL;
+			result = dns_kasp_key_create(kasp, &new_key);
+			if (result != ISC_R_SUCCESS) {
+				goto cleanup;
+			}
+
+			if (dns_kasp_key_ksk(key)) {
+				new_key->role |= DNS_KASP_KEY_ROLE_KSK;
+			}
+			if (dns_kasp_key_zsk(key)) {
+				new_key->role |= DNS_KASP_KEY_ROLE_ZSK;
+			}
+			new_key->lifetime = dns_kasp_key_lifetime(key);
+			new_key->algorithm = dns_kasp_key_algorithm(key);
+			new_key->length = dns_kasp_key_size(key);
+			dns_kasp_addkey(kasp, new_key);
+		}
+	}
+
+	if (strcmp(kaspname, "insecure") == 0) {
 		/* "dnssec-policy insecure": key list must be empty */
-		INSIST(strcmp(kaspname, "insecure") == 0);
 		INSIST(dns_kasp_keylist_empty(kasp));
-	} else {
-		/* No keys clause configured, use the "default". */
-		result = cfg_kaspkey_fromconfig(NULL, kasp, logctx);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
+	} else if (default_kasp != NULL) {
+		/* There must be keys configured. */
 		INSIST(!(dns_kasp_keylist_empty(kasp)));
 	}
 
 	/* Configuration: NSEC3 */
 	(void)confget(maps, "nsec3param", &nsec3);
 	if (nsec3 == NULL) {
-		dns_kasp_setnsec3(kasp, false);
+		if (default_kasp != NULL && dns_kasp_nsec3(default_kasp)) {
+			dns_kasp_setnsec3param(
+				kasp, dns_kasp_nsec3iter(default_kasp),
+				(dns_kasp_nsec3flags(default_kasp) == 0x01),
+				dns_kasp_nsec3saltlen(default_kasp));
+		} else {
+			dns_kasp_setnsec3(kasp, false);
+		}
 	} else {
 		dns_kasp_setnsec3(kasp, true);
 		result = cfg_nsec3param_fromconfig(nsec3, kasp, logctx);
@@ -392,20 +559,6 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 			goto cleanup;
 		}
 	}
-
-	/* Configuration: Zone settings */
-	dns_kasp_setzonemaxttl(
-		kasp, get_duration(maps, "max-zone-ttl", DNS_KASP_ZONE_MAXTTL));
-	dns_kasp_setzonepropagationdelay(
-		kasp, get_duration(maps, "zone-propagation-delay",
-				   DNS_KASP_ZONE_PROPDELAY));
-
-	/* Configuration: Parent settings */
-	dns_kasp_setdsttl(kasp,
-			  get_duration(maps, "parent-ds-ttl", DNS_KASP_DS_TTL));
-	dns_kasp_setparentpropagationdelay(
-		kasp, get_duration(maps, "parent-propagation-delay",
-				   DNS_KASP_PARENT_PROPDELAY));
 
 	/* Append it to the list for future lookups. */
 	ISC_LIST_APPEND(*kasplist, kasp, link);

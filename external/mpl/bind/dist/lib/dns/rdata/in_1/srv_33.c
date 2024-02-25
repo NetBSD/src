@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: srv_33.c,v 1.7.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -283,7 +283,7 @@ tostruct_in_srv(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 2);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&srv->target, NULL);
-	RETERR(name_duporclone(&name, mctx, &srv->target));
+	name_duporclone(&name, mctx, &srv->target);
 	srv->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -317,6 +317,8 @@ additionaldata_in_srv(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_srv);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
+	UNUSED(owner);
+
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	isc_region_consume(&region, 4);
@@ -328,7 +330,7 @@ additionaldata_in_srv(ARGS_ADDLDATA) {
 		return (ISC_R_SUCCESS);
 	}
 
-	result = (add)(arg, &name, dns_rdatatype_a);
+	result = (add)(arg, &name, dns_rdatatype_a, NULL);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
@@ -347,7 +349,8 @@ additionaldata_in_srv(ARGS_ADDLDATA) {
 		return (ISC_R_SUCCESS);
 	}
 
-	return ((add)(arg, dns_fixedname_name(&fixed), dns_rdatatype_tlsa));
+	return ((add)(arg, dns_fixedname_name(&fixed), dns_rdatatype_tlsa,
+		      NULL));
 }
 
 static isc_result_t

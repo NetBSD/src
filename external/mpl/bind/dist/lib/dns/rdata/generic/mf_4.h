@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: mf_4.h,v 1.5.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,13 +14,10 @@
  */
 
 /* */
-#ifndef GENERIC_MF_4_H
-#define GENERIC_MF_4_H 1
+#pragma once
 
 typedef struct dns_rdata_mf {
 	dns_rdatacommon_t common;
 	isc_mem_t *mctx;
 	dns_name_t mf;
 } dns_rdata_mf_t;
-
-#endif /* GENERIC_MF_4_H */

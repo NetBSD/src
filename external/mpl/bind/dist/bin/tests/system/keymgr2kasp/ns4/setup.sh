@@ -25,22 +25,22 @@ U="UNRETENTIVE"
 zone="view-rsasha256.kasp"
 algo="RSASHA256"
 num="8"
-echo "$zone" >> zones
+echo "$zone" >>zones
 
 # Set up zones in views with auto-dnssec maintain to migrate to dnssec-policy.
 # The keys for these zones are in use long enough that they should start a
 # rollover for the ZSK (P3M), but not long enough to initiate a KSK rollover (P1Y).
 ksktimes="-P -186d -A -186d -P sync -186d"
 zsktimes="-P -186d -A -186d"
-KSK=$($KEYGEN -a $algo -L 300 -b 2048 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a $algo -L 300 -b 2048        $zsktimes $zone 2> keygen.out.$zone.2)
+KSK=$($KEYGEN -a $algo -L 300 -b 2048 -f KSK $ksktimes $zone 2>keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $algo -L 300 -b 2048 $zsktimes $zone 2>keygen.out.$zone.2)
 
 echo_i "setting up zone $zone (external)"
 view="ext"
 zonefile="${zone}.${view}.db"
-cat template.$view.db.in "${KSK}.key" "${ZSK}.key" > "$zonefile"
+cat template.$view.db.in "${KSK}.key" "${ZSK}.key" >"$zonefile"
 
 echo_i "setting up zone $zone (internal)"
 view="int"
 zonefile="${zone}.${view}.db"
-cat template.$view.db.in "${KSK}.key" "${ZSK}.key" > "$zonefile"
+cat template.$view.db.in "${KSK}.key" "${ZSK}.key" >"$zonefile"

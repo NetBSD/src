@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.8.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: db.h,v 1.8.2.2 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DB_H
-#define DNS_DB_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -68,6 +67,11 @@
 
 ISC_LANG_BEGINDECLS
 
+/*%
+ * Tuning: external query load in packets per seconds.
+ */
+extern unsigned int dns_pps;
+
 /*****
 ***** Types
 *****/
@@ -78,8 +82,6 @@ typedef struct dns_dbmethods {
 	isc_result_t (*beginload)(dns_db_t	       *db,
 				  dns_rdatacallbacks_t *callbacks);
 	isc_result_t (*endload)(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
-	isc_result_t (*serialize)(dns_db_t *db, dns_dbversion_t *version,
-				  FILE *file);
 	isc_result_t (*dump)(dns_db_t *db, dns_dbversion_t *version,
 			     const char	       *filename,
 			     dns_masterformat_t masterformat);
@@ -136,7 +138,7 @@ typedef struct dns_dbmethods {
 				       dns_rdatatype_t	type,
 				       dns_rdatatype_t	covers);
 	bool (*issecure)(dns_db_t *db);
-	unsigned int (*nodecount)(dns_db_t *db);
+	unsigned int (*nodecount)(dns_db_t *db, dns_dbtree_t);
 	bool (*ispersistent)(dns_db_t *db);
 	void (*overmem)(dns_db_t *db, bool overmem);
 	void (*settask)(dns_db_t *db, isc_task_t *);
@@ -185,7 +187,6 @@ typedef struct dns_dbmethods {
 	isc_result_t (*setservestalerefresh)(dns_db_t *db, uint32_t interval);
 	isc_result_t (*getservestalerefresh)(dns_db_t *db, uint32_t *interval);
 	isc_result_t (*setgluecachestats)(dns_db_t *db, isc_stats_t *stats);
-	isc_result_t (*adjusthashsize)(dns_db_t *db, size_t size);
 } dns_dbmethods_t;
 
 typedef isc_result_t (*dns_dbcreatefunc_t)(isc_mem_t	    *mctx,
@@ -506,8 +507,6 @@ dns_db_beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
  *      suitable for loading records into 'db' from a raw or text zone
  *      file. callbacks->add_private will be a valid DB load context
  *      which should be used as 'arg' when callbacks->add is called.
- *      callbacks->deserialize will be a valid dns_deserialize_func_t
- *      suitable for loading 'db' from a map format zone file.
  *
  * Returns:
  *
@@ -572,26 +571,6 @@ dns_db_load(dns_db_t *db, const char *filename, dns_masterformat_t format,
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used, syntax errors in the master file, etc.
- */
-
-isc_result_t
-dns_db_serialize(dns_db_t *db, dns_dbversion_t *version, FILE *rbtfile);
-/*%<
- * Dump version 'version' of 'db' to map-format file 'filename'.
- *
- * Requires:
- *
- * \li	'db' is a valid database.
- *
- * \li	'version' is a valid version.
- *
- * Returns:
- *
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOMEMORY
- *
- * \li	Other results are possible, depending upon the database
- *	implementation used, OS file errors, etc.
  */
 
 isc_result_t
@@ -1384,9 +1363,9 @@ dns_db_overmem(dns_db_t *db, bool overmem);
  */
 
 unsigned int
-dns_db_nodecount(dns_db_t *db);
+dns_db_nodecount(dns_db_t *db, dns_dbtree_t tree);
 /*%<
- * Count the number of nodes in 'db'.
+ * Count the number of nodes in 'db' or its auxiliary trees.
  *
  * Requires:
  *
@@ -1409,24 +1388,6 @@ dns_db_hashsize(dns_db_t *db);
  * Returns:
  * \li	The number of buckets in the database's hash table, or
  *      0 if not implemented.
- */
-
-isc_result_t
-dns_db_adjusthashsize(dns_db_t *db, size_t size);
-/*%<
- * For database implementations using a hash table, adjust the size of
- * the hash table to store objects with a maximum total memory footprint
- * of 'size' bytes.  If 'size' is set to 0, it means no finite limit is
- * requested.
- *
- * Requires:
- *
- * \li	'db' is a valid database.
- * \li  'size' is maximum memory footprint of the database in bytes
- *
- * Returns:
- * \li	#ISC_R_SUCCESS	The registration succeeded
- * \li	#ISC_R_NOMEMORY	Out of memory
  */
 
 void
@@ -1798,5 +1759,3 @@ dns_db_setgluecachestats(dns_db_t *db, isc_stats_t *stats);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DB_H */

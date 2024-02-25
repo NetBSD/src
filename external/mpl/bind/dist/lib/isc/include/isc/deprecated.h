@@ -1,4 +1,4 @@
-/*	$NetBSD: deprecated.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: deprecated.h,v 1.5.2.1 2024/02/25 15:47:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,13 +13,10 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_DEPRECATED_H
-#define ISC_DEPRECATED_H
+#pragma once
 
 #if (__GNUC__ + 0) > 3
 #define ISC_DEPRECATED __attribute__((deprecated))
 #else		       /* if (__GNUC__ + 0) > 3 */
 #define ISC_DEPRECATED /* none */
 #endif		       /* __GNUC__ > 3*/
-
-#endif /* ifndef ISC_DEPRECATED_H */

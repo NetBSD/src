@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.7.2.1 2024/02/25 15:46:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,12 +22,12 @@
 
 #include <isc/print.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
-#include <dns/result.h>
 #include <dns/time.h>
 
 static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

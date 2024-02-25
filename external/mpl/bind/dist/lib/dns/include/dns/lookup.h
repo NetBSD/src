@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: lookup.h,v 1.5.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_LOOKUP_H
-#define DNS_LOOKUP_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -129,5 +128,3 @@ dns_lookup_destroy(dns_lookup_t **lookupp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_LOOKUP_H */

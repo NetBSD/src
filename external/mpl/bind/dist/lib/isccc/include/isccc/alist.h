@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.h,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: alist.h,v 1.6.2.1 2024/02/25 15:47:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ISCCC_ALIST_H
-#define ISCCC_ALIST_H 1
+#pragma once
 
 /*! \file isccc/alist.h */
 
@@ -87,5 +86,3 @@ isccc_alist_prettyprint(isccc_sexpr_t *sexpr, unsigned int indent,
 			FILE *stream);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCC_ALIST_H */

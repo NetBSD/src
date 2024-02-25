@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.7.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: task.h,v 1.7.2.2 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,18 +56,6 @@
  *
  * Purging calls isc_event_free() on the matching events.
  *
- * Unsending returns a list of events that matched the pattern.
- * The caller is then responsible for them.
- *
- * Consumers of events should purge, not unsend.
- *
- * Producers of events often want to remove events when the caller indicates
- * it is no longer interested in the object, e.g. by canceling a timer.
- * Sometimes this can be done by purging, but for some event types, the
- * calls to isc_event_free() cause deadlock because the event free routine
- * wants to acquire a lock the caller is already holding.  Unsending instead
- * of purging solves this problem.  As a general rule, producers should only
- * unsend events which they have sent.
  */
 
 /***
@@ -340,34 +328,6 @@ isc_task_purgeevent(isc_task_t *task, isc_event_t *event);
  */
 
 unsigned int
-isc_task_unsendrange(isc_task_t *task, void *sender, isc_eventtype_t first,
-		     isc_eventtype_t last, void *tag, isc_eventlist_t *events);
-/*%<
- * Remove events from a task's event queue.
- *
- * Requires:
- *
- *\li	'task' is a valid task.
- *
- *\li	last >= first.
- *
- *\li	*events is a valid list.
- *
- * Ensures:
- *
- *\li	Events in the event queue of 'task' whose sender is 'sender', whose
- *	type is >= first and <= last, and whose tag is 'tag' will be dequeued
- *	and appended to *events.
- *
- *\li	A sender of NULL will match any sender.  A NULL tag matches any
- *	tag.
- *
- * Returns:
- *
- *\li	The number of events unsent.
- */
-
-unsigned int
 isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag,
 		isc_eventlist_t *events);
 /*%<
@@ -535,7 +495,7 @@ isc_task_setquantum(isc_task_t *task, unsigned int quantum);
 /*%<
  * Set future 'task' quantum to 'quantum'.  The current 'task' quantum will be
  * kept for the current isc_task_run() loop, and will be changed for the next
- * run.  Therefore, the function is safe to use from the event callback as it
+ * run.  Therefore, the function is save to use from the event callback as it
  * will not affect the current event loop processing.
  */
 
@@ -570,41 +530,6 @@ isc_task_endexclusive(isc_task_t *task);
  * Requires:
  *\li	'task' is the calling task, and has obtained
  *		exclusive access by calling isc_task_spl().
- */
-
-void
-isc_task_pause(isc_task_t *task0);
-void
-isc_task_unpause(isc_task_t *task0);
-/*%<
- * Pause/unpause this task. Pausing a task removes it from the ready
- * queue if it is present there; this ensures that the task will not
- * run again until unpaused. This is necessary when the libuv network
- * thread executes a function which schedules task manager events; this
- * prevents the task manager from executing the next event in a task
- * before the network thread has finished.
- *
- * Requires:
- *\li	'task' is a valid task, and is not already paused or shutting down.
- */
-
-void
-isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t);
-void
-isc_task_getcurrenttimex(isc_task_t *task, isc_time_t *t);
-/*%<
- * Provide the most recent timestamp on the task.  The timestamp is considered
- * as the "current time".
- *
- * isc_task_getcurrentime() returns the time in one-second granularity;
- * isc_task_getcurrentimex() returns it in nanosecond granularity.
- *
- * Requires:
- *\li	'task' is a valid task.
- *\li	't' is a valid non NULL pointer.
- *
- * Ensures:
- *\li	'*t' has the "current time".
  */
 
 bool

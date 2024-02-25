@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_dynamic.c,v 1.5.2.1 2023/08/11 13:43:31 martin Exp $	*/
+/*	$NetBSD: dlz_ldap_dynamic.c,v 1.5.2.2 2024/02/25 15:45:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -71,11 +71,7 @@
  * many separate instances.
  */
 typedef struct {
-#if PTHREADS
 	db_list_t *db; /*%< handle to a list of DB */
-#else		       /* if PTHREADS */
-	dbinstance_t *db; /*%< handle to db */
-#endif		       /* if PTHREADS */
 	int method;    /*%< security authentication
 			* method */
 	char *user;    /*%< who is authenticating */
@@ -229,7 +225,6 @@ cleanup:
 	return (result);
 }
 
-#if PTHREADS
 /*%
  * Properly cleans up a list of database instances.
  * This function is only used when the driver is compiled for
@@ -300,7 +295,6 @@ dlz_ldap_find_avail_conn(ldap_instance_t *ldap) {
 		  count);
 	return (NULL);
 }
-#endif /* PTHREADS */
 
 static isc_result_t
 dlz_ldap_process_results(ldap_instance_t *db, LDAP *dbc, LDAPMessage *msg,
@@ -544,16 +538,8 @@ dlz_ldap_get_results(const char *zone, const char *record, const char *client,
 	int entries;
 
 	/* get db instance / connection */
-#if PTHREADS
 	/* find an available DBI from the list */
 	dbi = dlz_ldap_find_avail_conn(db);
-#else  /* PTHREADS */
-	/*
-	 * only 1 DBI - no need to lock instance lock either
-	 * only 1 thread in the whole process, no possible contention.
-	 */
-	dbi = (dbinstance_t *)(db->db);
-#endif /* PTHREADS */
 
 	/* if DBI is null, can't do anything else */
 	if (dbi == NULL) {
@@ -906,14 +892,9 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 	isc_result_t result = ISC_R_FAILURE;
 	ldap_instance_t *ldap = NULL;
 	dbinstance_t *dbi = NULL;
-	const char *helper_name;
-	int protocol;
-	int method;
-#if PTHREADS
-	int dbcount;
-	char *endp;
-	int i;
-#endif /* PTHREADS */
+	const char *helper_name = NULL;
+	int protocol, method, dbcount, i;
+	char *endp = NULL;
 	va_list ap;
 
 	UNUSED(dlzname);
@@ -932,13 +913,8 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 	}
 	va_end(ap);
 
-#if PTHREADS
 	/* if debugging, let user know we are multithreaded. */
 	ldap->log(ISC_LOG_DEBUG(1), "LDAP driver running multithreaded");
-#else  /* PTHREADS */
-	/* if debugging, let user know we are single threaded. */
-	ldap->log(ISC_LOG_DEBUG(1), "LDAP driver running single threaded");
-#endif /* PTHREADS */
 
 	if (argc < 9) {
 		ldap->log(ISC_LOG_ERROR, "LDAP driver requires at least "
@@ -980,8 +956,6 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 		goto cleanup;
 	}
 
-	/* multithreaded build can have multiple DB connections */
-#if PTHREADS
 	/* check how many db connections we should create */
 	dbcount = strtol(argv[1], &endp, 10);
 	if (*endp != '\0' || dbcount < 0) {
@@ -990,7 +964,6 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 					 "must be positive.");
 		goto cleanup;
 	}
-#endif /* if PTHREADS */
 
 	/* check that LDAP URL parameters make sense */
 	switch (argc) {
@@ -1050,7 +1023,6 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 		goto cleanup;
 	}
 
-#if PTHREADS
 	/* allocate memory for database connection list */
 	ldap->db = calloc(1, sizeof(db_list_t));
 	if (ldap->db == NULL) {
@@ -1066,7 +1038,6 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 	 * append each new DBI to the end of the list
 	 */
 	for (i = 0; i < dbcount; i++) {
-#endif /* PTHREADS */
 		/* how many queries were passed in from config file? */
 		switch (argc) {
 		case 9:
@@ -1104,17 +1075,9 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 			goto cleanup;
 		}
 
-#if PTHREADS
 		/* when multithreaded, build a list of DBI's */
 		DLZ_LINK_INIT(dbi, link);
 		DLZ_LIST_APPEND(*(ldap->db), dbi, link);
-#else  /* if PTHREADS */
-	/*
-	 * when single threaded, hold onto the one connection
-	 * instance.
-	 */
-	ldap->db = dbi;
-#endif /* if PTHREADS */
 		/* attempt to connect */
 		result = dlz_ldap_connect(ldap, dbi);
 
@@ -1131,16 +1094,10 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 		 * allocate memory
 		 */
 		case ISC_R_NOMEMORY:
-#if PTHREADS
 			ldap->log(ISC_LOG_ERROR,
 				  "LDAP driver could not allocate memory "
 				  "for connection number %u",
 				  i + 1);
-#else  /* if PTHREADS */
-		ldap->log(ISC_LOG_ERROR, "LDAP driver could not allocate "
-					 "memory "
-					 "for connection");
-#endif /* if PTHREADS */
 			goto cleanup;
 		/*
 		 * no perm means ldap_set_option could not set
@@ -1153,15 +1110,10 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 			goto cleanup;
 		/* failure means couldn't connect to ldap server */
 		case ISC_R_FAILURE:
-#if PTHREADS
 			ldap->log(ISC_LOG_ERROR,
 				  "LDAP driver could not bind "
 				  "connection number %u to server.",
 				  i + 1);
-#else  /* if PTHREADS */
-		ldap->log(ISC_LOG_ERROR, "LDAP driver could not "
-					 "bind connection to server.");
-#endif /* if PTHREADS */
 			goto cleanup;
 		/*
 		 * default should never happen.  If it does,
@@ -1174,11 +1126,9 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 			goto cleanup;
 		}
 
-#if PTHREADS
 		/* set DBI = null for next loop through. */
 		dbi = NULL;
 	}
-#endif /* PTHREADS */
 
 	/* set dbdata to the ldap_instance we created. */
 	*dbdata = ldap;
@@ -1195,19 +1145,10 @@ void
 dlz_destroy(void *dbdata) {
 	if (dbdata != NULL) {
 		ldap_instance_t *db = (ldap_instance_t *)dbdata;
-#if PTHREADS
 		/* cleanup the list of DBI's */
 		if (db->db != NULL) {
 			dlz_ldap_destroy_dblist((db_list_t *)(db->db));
 		}
-#else  /* PTHREADS */
-		if (db->db->dbconn != NULL) {
-			ldap_unbind_s((LDAP *)(db->db->dbconn));
-		}
-
-		/* destroy single DB instance */
-		destroy_dbinstance(db->db);
-#endif /* PTHREADS */
 
 		if (db->hosts != NULL) {
 			free(db->hosts);
@@ -1227,12 +1168,7 @@ dlz_destroy(void *dbdata) {
  */
 int
 dlz_version(unsigned int *flags) {
-	*flags |= DNS_SDLZFLAG_RELATIVERDATA;
-#if PTHREADS
-	*flags |= DNS_SDLZFLAG_THREADSAFE;
-#else  /* if PTHREADS */
-	*flags &= ~DNS_SDLZFLAG_THREADSAFE;
-#endif /* if PTHREADS */
+	*flags |= DNS_SDLZFLAG_RELATIVERDATA | DNS_SDLZFLAG_THREADSAFE;
 	return (DLZ_DLOPEN_VERSION);
 }
 

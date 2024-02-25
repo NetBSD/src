@@ -1,4 +1,4 @@
-/*	$NetBSD: clientinfo.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: clientinfo.h,v 1.7.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_CLIENTINFO_H
-#define DNS_CLIENTINFO_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -89,9 +88,17 @@ dns_clientinfomethods_init(dns_clientinfomethods_t  *methods,
 			   dns_clientinfo_sourceip_t sourceip);
 
 void
-dns_clientinfo_init(dns_clientinfo_t *ci, void *data, dns_ecs_t *ecs,
-		    void *versionp);
+dns_clientinfo_init(dns_clientinfo_t *ci, void *data, void *versionp);
+/*%<
+ * Initialize a clientinfo object, setting the data to 'data' and the
+ * database version to 'versionp'. ECS data is initialized to 0/0/0.
+ */
+
+void
+dns_clientinfo_setecs(dns_clientinfo_t *ci, dns_ecs_t *ecs);
+/*%<
+ * Set the ECS client data associated with a clientinfo object 'ci'.
+ * If 'ecs' is NULL, initialize ci->ecs to 0/0/0; otherwise copy it.
+ */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_CLIENTINFO_H */

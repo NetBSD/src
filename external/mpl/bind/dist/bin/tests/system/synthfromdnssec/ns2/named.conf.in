@@ -26,9 +26,32 @@ options {
 	dnssec-validation yes;
 };
 
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+statistics-channels {
+	inet 10.53.0.2 port @EXTRAPORT1@ allow { any; };
+};
+
 zone "." {
 	type hint;
 	file "root.hints";
+};
+
+zone "example.internal" {
+	type primary;
+	file "example.internal.db";
+};
+
+zone "example.internal2" {
+	type primary;
+	file "example.internal.db";
 };
 
 include "../ns1/trusted.conf";

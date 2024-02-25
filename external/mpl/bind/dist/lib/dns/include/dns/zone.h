@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.9.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: zone.h,v 1.9.2.2 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ZONE_H
-#define DNS_ZONE_H 1
+#pragma once
 
 /*! \file dns/zone.h */
 
@@ -29,8 +28,10 @@
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/rwlock.h>
+#include <isc/tls.h>
 
 #include <dns/catz.h>
+#include <dns/diff.h>
 #include <dns/master.h>
 #include <dns/masterdump.h>
 #include <dns/rdatastruct.h>
@@ -310,6 +311,23 @@ dns_zone_getfile(dns_zone_t *zone);
  *
  * Returns:
  *\li	Pointer to null-terminated file name, or NULL.
+ */
+
+isc_result_t
+dns_zone_setstream(dns_zone_t *zone, const FILE *stream,
+		   dns_masterformat_t format, const dns_master_style_t *style);
+/*%<
+ *    Sets the source stream from which the zone will load its database.
+ *
+ * Requires:
+ *\li	'zone' to be a valid zone.
+ *\li	'stream' to be a valid and open FILE *.
+ *\li	'zone->masterfile' to be NULL, since we should load data either from
+ *	'stream' or from a master file, but not both.
+ *
+ * Returns:
+ *\li	#ISC_R_NOMEMORY
+ *\li	#ISC_R_SUCCESS
  */
 
 void
@@ -630,14 +648,12 @@ dns_zone_maintenance(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
-isc_result_t
+void
 dns_zone_setprimaries(dns_zone_t *zone, const isc_sockaddr_t *primaries,
+		      dns_name_t **keynames, dns_name_t **tlsnames,
 		      uint32_t count);
-isc_result_t
-dns_zone_setprimarieswithkeys(dns_zone_t *zone, const isc_sockaddr_t *primaries,
-			      dns_name_t **keynames, uint32_t count);
 /*%<
- *	Set the list of master servers for the zone.
+ *	Set the list of primary servers for the zone.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -653,9 +669,10 @@ dns_zone_setprimarieswithkeys(dns_zone_t *zone, const isc_sockaddr_t *primaries,
  *\li      Any result dns_name_dup() can return, if keynames!=NULL
  */
 
-isc_result_t
+void
 dns_zone_setparentals(dns_zone_t *zone, const isc_sockaddr_t *parentals,
-		      dns_name_t **keynames, uint32_t count);
+		      dns_name_t **keynames, dns_name_t **tlsnames,
+		      uint32_t count);
 /*%<
  *	Set the list of parental agents for the zone.
  *
@@ -673,16 +690,31 @@ dns_zone_setparentals(dns_zone_t *zone, const isc_sockaddr_t *parentals,
  *\li      Any result dns_name_dup() can return, if keynames!=NULL
  */
 
-isc_result_t
+void
+dns_zone_setparentals(dns_zone_t *zone, const isc_sockaddr_t *parentals,
+		      dns_name_t **keynames, dns_name_t **tlsnames,
+		      uint32_t count);
+/*%<
+ *	Set the list of parental agents for the zone.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'parentals' array of isc_sockaddr_t with port set or NULL.
+ *\li	'count' the number of parentals.
+ *\li	'keynames' array of dns_name_t's for tsig keys or NULL.
+ *
+ *\li	If 'parentals' is NULL then 'count' must be zero.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOMEMORY
+ *\li      Any result dns_name_dup() can return, if keynames!=NULL
+ */
+
+void
 dns_zone_setalsonotify(dns_zone_t *zone, const isc_sockaddr_t *notify,
+		       dns_name_t **keynames, dns_name_t **tlsnames,
 		       uint32_t count);
-isc_result_t
-dns_zone_setalsonotifywithkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
-			       dns_name_t **keynames, uint32_t count);
-isc_result_t
-dns_zone_setalsonotifydscpkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
-			       const isc_dscp_t *dscps, dns_name_t **keynames,
-			       uint32_t count);
 /*%<
  *	Set the list of additional servers to be notified when
  *	a zone changes.	 To clear the list use 'count = 0'.
@@ -833,31 +865,6 @@ dns_zone_getaltxfrsource4(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_setxfrsource4dscp(dns_zone_t *zone, isc_dscp_t dscp);
-isc_result_t
-dns_zone_setaltxfrsource4dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the transfer/alt-transfer source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- */
-
-isc_dscp_t
-dns_zone_getxfrsource4dscp(dns_zone_t *zone);
-isc_dscp_t
-dns_zone_getaltxfrsource4dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the transfer/alt-transfer source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
 dns_zone_setxfrsource6(dns_zone_t *zone, const isc_sockaddr_t *xfrsource);
 isc_result_t
 dns_zone_setaltxfrsource6(dns_zone_t *zone, const isc_sockaddr_t *xfrsource);
@@ -884,31 +891,6 @@ dns_zone_getaltxfrsource6(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
-isc_dscp_t
-dns_zone_getxfrsource6dscp(dns_zone_t *zone);
-isc_dscp_t
-dns_zone_getaltxfrsource6dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the transfer/alt-transfer source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
-dns_zone_setxfrsource6dscp(dns_zone_t *zone, isc_dscp_t dscp);
-isc_result_t
-dns_zone_setaltxfrsource6dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the transfer/alt-transfer source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- */
-
 isc_result_t
 dns_zone_setparentalsrc4(dns_zone_t *zone, const isc_sockaddr_t *parentalsrc);
 /*%<
@@ -930,27 +912,6 @@ dns_zone_getparentalsrc4(dns_zone_t *zone);
  *
  * Require:
  *\li	'zone' to be a valid zone.
- */
-
-isc_dscp_t
-dns_zone_getparentalsrc4dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the IPv4 parental source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
-dns_zone_setparentalsrc4dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the IPv4 parental source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
  */
 
 isc_result_t
@@ -976,27 +937,6 @@ dns_zone_getparentalsrc6(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
-isc_dscp_t
-dns_zone_getparentalsrc6dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the IPv6 parental source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
-dns_zone_setparentalsrc6dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the IPv6 parental source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- */
-
 isc_result_t
 dns_zone_setnotifysrc4(dns_zone_t *zone, const isc_sockaddr_t *notifysrc);
 /*%<
@@ -1020,27 +960,6 @@ dns_zone_getnotifysrc4(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
-isc_dscp_t
-dns_zone_getnotifysrc4dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the IPv4 notify source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
-dns_zone_setnotifysrc4dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the IPv4 notify source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- */
-
 isc_result_t
 dns_zone_setnotifysrc6(dns_zone_t *zone, const isc_sockaddr_t *notifysrc);
 /*%<
@@ -1062,27 +981,6 @@ dns_zone_getnotifysrc6(dns_zone_t *zone);
  *
  * Require:
  *\li	'zone' to be a valid zone.
- */
-
-isc_dscp_t
-dns_zone_getnotifysrc6dscp(dns_zone_t *zone);
-/*%/
- * Get the DSCP value associated with the IPv6 notify source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-isc_result_t
-dns_zone_setnotifysrc6dscp(dns_zone_t *zone, isc_dscp_t dscp);
-/*%<
- * Set the DSCP value associated with the IPv6 notify source.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
  */
 
 void
@@ -1433,7 +1331,7 @@ dns_zone_getjournal(dns_zone_t *zone);
 dns_zonetype_t
 dns_zone_gettype(dns_zone_t *zone);
 /*%<
- * Returns the type of the zone (master/slave/etc.)
+ * Returns the type of the zone (primary/secondary/etc.)
  *
  * Requires:
  *\li	'zone' to be valid initialised zone.
@@ -1442,8 +1340,8 @@ dns_zone_gettype(dns_zone_t *zone);
 dns_zonetype_t
 dns_zone_getredirecttype(dns_zone_t *zone);
 /*%<
- * Returns whether the redirect zone is configured as a master or a
- * slave zone.
+ * Returns whether the redirect zone is configured as a primary or a
+ * secondary zone.
  *
  * Requires:
  *\li	'zone' to be valid initialised zone.
@@ -1662,7 +1560,7 @@ isc_result_t
 dns_zone_forwardupdate(dns_zone_t *zone, dns_message_t *msg,
 		       dns_updatecallback_t callback, void *callback_arg);
 /*%<
- * Forward 'msg' to each master in turn until we get an answer or we
+ * Forward 'msg' to each primary in turn until we get an answer or we
  * have exhausted the list of primaries. 'callback' will be called with
  * ISC_R_SUCCESS if we get an answer and the returned message will be
  * passed as 'answer_message', otherwise a non ISC_R_SUCCESS result code
@@ -1757,7 +1655,7 @@ dns_zone_getdnsseckeys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 
 isc_result_t
 dns_zonemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
-		   isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
+		   isc_timermgr_t *timermgr, isc_nm_t *netmgr,
 		   dns_zonemgr_t **zmgrp);
 /*%<
  * Create a zone manager.  Note: the zone manager will not be able to
@@ -1877,6 +1775,12 @@ dns_zonemgr_gettaskmgr(dns_zonemgr_t *zmgr);
  * Get the tasmkgr object attached to 'zmgr'.
  */
 
+isc_timermgr_t *
+dns_zonemgr_gettimermgr(dns_zonemgr_t *zmgr);
+/*%
+ * Get the timermgr object attached to 'zmgr'.
+ */
+
 void
 dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
@@ -1888,7 +1792,7 @@ dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, uint32_t value);
  */
 
 uint32_t
-dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
+dns_zonemgr_gettransfersin(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the maximum number of simultaneous transfers in allowed.
  *
@@ -1906,7 +1810,7 @@ dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, uint32_t value);
  */
 
 uint32_t
-dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
+dns_zonemgr_gettransfersperns(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the number of transfers allowed per nameserver.
  *
@@ -2044,6 +1948,18 @@ dns_zonemgr_unreachabledel(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
  *\li	'zmgr' to be a valid zone manager.
  *\li	'remote' to be a valid sockaddr.
  *\li	'local' to be a valid sockaddr.
+ */
+
+void
+dns_zonemgr_set_tlsctx_cache(dns_zonemgr_t	*zmgr,
+			     isc_tlsctx_cache_t *tlsctx_cache);
+/*%<
+ *	Set the TLS client context cache used for zone transfers via
+ *	encrypted transports (e.g. XoT).
+ *
+ * Requires:
+ *\li	'zmgr' is a valid zone manager.
+ *\li	'tlsctx_cache' is a valid TLS context cache.
  */
 
 void
@@ -2411,7 +2327,7 @@ dns_zone_isdynamic(dns_zone_t *zone, bool ignore_freeze);
  * master file (if any) is written by the server, rather than being
  * updated manually and read by the server.
  *
- * This is true for slave zones, stub zones, key zones, and zones that
+ * This is true for secondary zones, stub zones, key zones, and zones that
  * allow dynamic updates either by having an update policy ("ssutable")
  * or an "allow-update" ACL with a value other than exactly "{ none; }".
  *
@@ -2560,13 +2476,13 @@ dns_zone_getloadtime(dns_zone_t *zone, isc_time_t *loadtime);
 isc_result_t
 dns_zone_getrefreshtime(dns_zone_t *zone, isc_time_t *refreshtime);
 /*%
- * Return the time when the (slave) zone will need to be refreshed.
+ * Return the time when the (secondary) zone will need to be refreshed.
  */
 
 isc_result_t
 dns_zone_getexpiretime(dns_zone_t *zone, isc_time_t *expiretime);
 /*%
- * Return the time when the (slave) zone will expire.
+ * Return the time when the (secondary) zone will expire.
  */
 
 isc_result_t
@@ -2729,4 +2645,19 @@ dns_zonetype_name(dns_zonetype_t type);
  * Return the name of the zone type 'type'.
  */
 
-#endif /* DNS_ZONE_H */
+bool
+dns_zone_check_dnskey_nsec3(dns_zone_t *zone, dns_db_t *db,
+			    dns_dbversion_t *ver, dns_diff_t *diff,
+			    dst_key_t **keys, unsigned int numkeys);
+/**<
+ * Return whether the zone would enter an inconsistent state where NSEC only
+ * DNSKEYs are present along NSEC3 chains.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ * \li	'db'is not NULL.
+ *
+ * Returns:
+ * \li	'true' if the check passes, that is the zone remains consistent,
+ *	'false' if the zone would have NSEC only DNSKEYs and an NSEC3 chain.
+ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: url.h,v 1.3 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: url.h,v 1.3.2.1 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,10 @@
  * IN THE SOFTWARE.
  */
 
+#pragma once
+
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <isc/result.h>

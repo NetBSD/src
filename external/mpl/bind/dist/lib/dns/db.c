@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.8.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: db.c,v 1.8.2.2 2024/02/25 15:46:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/once.h>
+#include <isc/result.h>
 #include <isc/rwlock.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -38,7 +39,6 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/result.h>
 
 /***
  *** Private Types
@@ -61,6 +61,8 @@ struct dns_dbimplementation {
  */
 
 #include "rbtdb.h"
+
+unsigned int dns_pps = 0U;
 
 static ISC_LIST(dns_dbimplementation_t) implementations;
 static isc_rwlock_t implock;
@@ -336,15 +338,6 @@ dns_db_load(dns_db_t *db, const char *filename, dns_masterformat_t format,
 	}
 
 	return (result);
-}
-
-isc_result_t
-dns_db_serialize(dns_db_t *db, dns_dbversion_t *version, FILE *file) {
-	REQUIRE(DNS_DB_VALID(db));
-	if (db->methods->serialize == NULL) {
-		return (ISC_R_NOTIMPLEMENTED);
-	}
-	return ((db->methods->serialize)(db, version, file));
 }
 
 isc_result_t
@@ -820,10 +813,10 @@ freenode:
 }
 
 unsigned int
-dns_db_nodecount(dns_db_t *db) {
+dns_db_nodecount(dns_db_t *db, dns_dbtree_t tree) {
 	REQUIRE(DNS_DB_VALID(db));
 
-	return ((db->methods->nodecount)(db));
+	return ((db->methods->nodecount)(db, tree));
 }
 
 size_t
@@ -835,17 +828,6 @@ dns_db_hashsize(dns_db_t *db) {
 	}
 
 	return ((db->methods->hashsize)(db));
-}
-
-isc_result_t
-dns_db_adjusthashsize(dns_db_t *db, size_t size) {
-	REQUIRE(DNS_DB_VALID(db));
-
-	if (db->methods->adjusthashsize != NULL) {
-		return ((db->methods->adjusthashsize)(db, size));
-	}
-
-	return (ISC_R_NOTIMPLEMENTED);
 }
 
 void

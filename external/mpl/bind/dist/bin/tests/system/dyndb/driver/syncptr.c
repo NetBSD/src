@@ -1,4 +1,4 @@
-/*	$NetBSD: syncptr.c,v 1.6 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: syncptr.c,v 1.6.2.1 2024/02/25 15:44:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -159,7 +159,7 @@ syncptr_find_zone(sample_instance_t *inst, dns_rdata_t *rdata, dns_name_t *name,
 		break;
 
 	default:
-		fatal_error("unsupported address type 0x%x", rdata->type);
+		FATAL_ERROR("unsupported address type 0x%x", rdata->type);
 		break;
 	}
 
@@ -258,7 +258,7 @@ syncptr(sample_instance_t *inst, dns_name_t *name, dns_rdata_t *addr_rdata,
 	/* Reverse zone is managed by this driver, prepare PTR record */
 	pevent->zone = NULL;
 	dns_zone_attach(ptr_zone, &pevent->zone);
-	dns_name_copynf(name, dns_fixedname_name(&pevent->ptr_target_name));
+	dns_name_copy(name, dns_fixedname_name(&pevent->ptr_target_name));
 	dns_name_clone(dns_fixedname_name(&pevent->ptr_target_name),
 		       &ptr_struct.ptr);
 	dns_diff_init(inst->mctx, &pevent->diff);

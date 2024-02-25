@@ -19,3 +19,9 @@ $TTL 300	; 5 minutes
 				)
 			NS	ns10
 ns10			A	10.53.0.10
+single.any.self-ptr	PTR	machine.example.com.
+many.any.self-ptr	PTR	machine.example.com.
+many.any.self-ptr	PTR	notmachine.example.com.
+single.ptr.self-ptr	PTR	machine.example.com.
+many.ptr.self-ptr	PTR	machine.example.com.
+many.ptr.self-ptr	PTR	notmachine.example.com.

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.8 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.8.2.1 2024/02/25 15:43:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,15 +21,13 @@
 #include <isc/event.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
-#include <dns/result.h>
-
 #include <isccc/alist.h>
 #include <isccc/cc.h>
-#include <isccc/result.h>
 
 #include <named/control.h>
 #include <named/globals.h>
@@ -187,8 +185,7 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 		/* Do not flush master files */
 		named_server_flushonshutdown(named_g_server, false);
 		named_os_shutdownmsg(cmdline, *text);
-		isc_app_shutdown();
-		result = ISC_R_SUCCESS;
+		result = ISC_R_SHUTTINGDOWN;
 	} else if (command_compare(command, NAMED_COMMAND_STOP)) {
 		/*
 		 * "stop" is the same as "halt" except it does
@@ -205,8 +202,7 @@ named_control_docommand(isccc_sexpr_t *message, bool readonly,
 #endif /* ifdef HAVE_LIBSCF */
 		named_server_flushonshutdown(named_g_server, true);
 		named_os_shutdownmsg(cmdline, *text);
-		isc_app_shutdown();
-		result = ISC_R_SUCCESS;
+		result = ISC_R_SHUTTINGDOWN;
 	} else if (command_compare(command, NAMED_COMMAND_ADDZONE) ||
 		   command_compare(command, NAMED_COMMAND_MODZONE))
 	{

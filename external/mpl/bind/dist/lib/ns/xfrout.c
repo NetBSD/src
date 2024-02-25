@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.12.2.1 2023/08/11 13:43:40 martin Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.12.2.2 2024/02/25 15:47:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <isc/mem.h>
 #include <isc/netmgr.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/stats.h>
 #include <isc/util.h>
 
@@ -34,7 +35,6 @@
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/result.h>
 #include <dns/rriterator.h>
 #include <dns/soa.h>
 #include <dns/stats.h>
@@ -854,7 +854,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		/* zone table has a match */
 		switch (dns_zone_gettype(zone)) {
 		/*
-		 * Master, slave, and mirror zones are OK for transfer.
+		 * Primary, secondary, and mirror zones are OK for transfer.
 		 */
 		case dns_zone_primary:
 		case dns_zone_secondary:
@@ -978,23 +978,6 @@ got_soa:
 	if (reqtype == dns_rdatatype_ixfr) {
 		size_t jsize;
 		uint64_t dbsize;
-
-		/*
-		 * Outgoing IXFR may have been disabled for this peer
-		 * or globally.
-		 */
-		if ((client->attributes & NS_CLIENTATTR_TCP) != 0) {
-			bool provide_ixfr;
-
-			provide_ixfr = client->view->provideixfr;
-			if (peer != NULL) {
-				(void)dns_peer_getprovideixfr(peer,
-							      &provide_ixfr);
-			}
-			if (provide_ixfr == false) {
-				goto axfr_fallback;
-			}
-		}
 
 		if (!have_soa) {
 			FAILC(DNS_R_FORMERR, "IXFR request missing SOA");
@@ -1287,7 +1270,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	 * Note that although 65535-byte RRs are allowed in principle, they
 	 * cannot be zone-transferred (at least not if uncompressible),
 	 * because the message and RR headers would push the size of the
-	 * TCP message over the 65536 byte limit.
+	 * TCP message over the 65535 byte limit.
 	 */
 	mem = isc_mem_get(mctx, len);
 	isc_buffer_init(&xfr->buf, mem, len);
@@ -1473,7 +1456,7 @@ sendstream(xfrout_ctx_t *xfr) {
 			 * when compressed even if they do not fit when
 			 * uncompressed, but surely we don't want
 			 * to send such monstrosities to an unsuspecting
-			 * slave.
+			 * secondary.
 			 */
 			if (n_rrs == 0) {
 				xfrout_log(xfr, ISC_LOG_WARNING,
@@ -1584,6 +1567,22 @@ sendstream(xfrout_ctx_t *xfr) {
 		xfrout_log(xfr, ISC_LOG_DEBUG(8),
 			   "sending TCP message of %d bytes", used.length);
 
+		/* System test helper options to simulate network issues. */
+		if (ns_server_getoption(xfr->client->manager->sctx,
+					NS_SERVER_TRANSFERSLOWLY))
+		{
+			/* Sleep for a bit over a second. */
+			select(0, NULL, NULL, NULL,
+			       &(struct timeval){ 1, 1000 });
+		}
+		if (ns_server_getoption(xfr->client->manager->sctx,
+					NS_SERVER_TRANSFERSTUCK))
+		{
+			/* Sleep for a bit over a minute. */
+			select(0, NULL, NULL, NULL,
+			       &(struct timeval){ 60, 1000 });
+		}
+
 		isc_nmhandle_attach(xfr->client->handle,
 				    &xfr->client->sendhandle);
 		if (xfr->idletime > 0) {
@@ -1596,6 +1595,23 @@ sendstream(xfrout_ctx_t *xfr) {
 		xfr->cbytes = used.length;
 	} else {
 		xfrout_log(xfr, ISC_LOG_DEBUG(8), "sending IXFR UDP response");
+
+		/* System test helper options to simulate network issues. */
+		if (ns_server_getoption(xfr->client->manager->sctx,
+					NS_SERVER_TRANSFERSLOWLY))
+		{
+			/* Sleep for a bit over a second. */
+			select(0, NULL, NULL, NULL,
+			       &(struct timeval){ 1, 1000 });
+		}
+		if (ns_server_getoption(xfr->client->manager->sctx,
+					NS_SERVER_TRANSFERSTUCK))
+		{
+			/* Sleep for a bit over a minute. */
+			select(0, NULL, NULL, NULL,
+			       &(struct timeval){ 60, 1000 });
+		}
+
 		ns_client_send(xfr->client);
 		xfr->stream->methods->pause(xfr->stream);
 		isc_nmhandle_detach(&xfr->client->reqhandle);

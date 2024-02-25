@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.9.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.9.2.2 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,8 +37,10 @@
 
 #include <isc/app.h>
 #include <isc/atomic.h>
+#include <isc/attributes.h>
 #include <isc/base32.h>
 #include <isc/commandline.h>
+#include <isc/dir.h>
 #include <isc/event.h>
 #include <isc/file.h>
 #include <isc/hash.h>
@@ -50,6 +52,7 @@
 #include <isc/os.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/rwlock.h>
 #include <isc/safe.h>
 #include <isc/serial.h>
@@ -78,17 +81,12 @@
 #include <dns/rdatasetiter.h>
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
-#include <dns/result.h>
 #include <dns/soa.h>
 #include <dns/time.h>
 #include <dns/update.h>
 #include <dns/zoneverify.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -103,7 +101,7 @@ static int nsec_datatype = dns_rdatatype_nsec;
 		     "dns_dbiterator_current()")
 
 #define IS_NSEC3  (nsec_datatype == dns_rdatatype_nsec3)
-#define OPTOUT(x) (((x)&DNS_NSEC3FLAG_OPTOUT) != 0)
+#define OPTOUT(x) (((x) & DNS_NSEC3FLAG_OPTOUT) != 0)
 
 #define REVOKE(x) ((dst_key_flags(x) & DNS_KEYFLAG_REVOKE) != 0)
 
@@ -156,11 +154,11 @@ static dns_dbiterator_t *gdbiter; /* The database iterator */
 static dns_rdataclass_t gclass;	  /* The class */
 static dns_name_t *gorigin;	  /* The database origin */
 static int nsec3flags = 0;
-static dns_iterations_t nsec3iter = 10U;
+static dns_iterations_t nsec3iter = 0U;
 static unsigned char saltbuf[255];
 static unsigned char *gsalt = saltbuf;
 static size_t salt_length = 0;
-static isc_task_t *master = NULL;
+static isc_task_t *main_task = NULL;
 static unsigned int ntasks = 0;
 static atomic_bool shuttingdown;
 static atomic_bool finished;
@@ -204,7 +202,7 @@ savezonecut(dns_fixedname_t *fzonecut, dns_name_t *name) {
 	dns_name_t *result;
 
 	result = dns_fixedname_initname(fzonecut);
-	dns_name_copynf(name, result);
+	dns_name_copy(name, result);
 
 	return (result);
 }
@@ -462,6 +460,8 @@ expecttofindkey(dns_name_t *name) {
 	case DNS_R_CNAME:
 	case DNS_R_DNAME:
 		return (false);
+	default:
+		break;
 	}
 	dns_name_format(name, namestr, sizeof(namestr));
 	fatal("failure looking for '%s DNSKEY' in database: %s", namestr,
@@ -1595,7 +1595,7 @@ signapex(void) {
 }
 
 /*%
- * Assigns a node to a worker thread.  This is protected by the master task's
+ * Assigns a node to a worker thread.  This is protected by the main task's
  * lock.
  */
 static void
@@ -1761,7 +1761,7 @@ sign(isc_task_t *task, isc_event_t *event) {
 						sizeof(sevent_t));
 	wevent->node = node;
 	wevent->fname = fname;
-	isc_task_send(master, ISC_EVENT_PTR(&wevent));
+	isc_task_send(main_task, ISC_EVENT_PTR(&wevent));
 }
 
 /*%
@@ -2473,7 +2473,7 @@ nsec3ify(unsigned int hashalg, dns_iterations_t iterations,
 			break;
 		}
 		if (result == ISC_R_NOMORE) {
-			dns_name_copynf(gorigin, nextname);
+			dns_name_copy(gorigin, nextname);
 			done = true;
 		} else if (result != ISC_R_SUCCESS) {
 			fatal("iterating through the database failed: %s",
@@ -2612,7 +2612,7 @@ nsec3ify(unsigned int hashalg, dns_iterations_t iterations,
 			break;
 		}
 		if (result == ISC_R_NOMORE) {
-			dns_name_copynf(gorigin, nextname);
+			dns_name_copy(gorigin, nextname);
 			done = true;
 		} else if (result != ISC_R_SUCCESS) {
 			fatal("iterating through the database failed: %s",
@@ -3217,11 +3217,11 @@ print_version(FILE *fp) {
 		return;
 	}
 
-	fprintf(fp, "; dnssec_signzone version " VERSION "\n");
+	fprintf(fp, "; dnssec_signzone version %s\n", PACKAGE_VERSION);
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
@@ -3230,7 +3230,7 @@ usage(void) {
 
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Version: %s\n", VERSION);
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 
 	fprintf(stderr, "Options: (default value in parenthesis) \n");
 	fprintf(stderr, "\t-S:\tsmart signing: automatically finds key files\n"
@@ -3280,14 +3280,7 @@ usage(void) {
 	fprintf(stderr, "verify generated signatures\n");
 	fprintf(stderr, "\t-c class (IN)\n");
 	fprintf(stderr, "\t-E engine:\n");
-#if USE_PKCS11
-	fprintf(stderr,
-		"\t\tpath to PKCS#11 provider library "
-		"(default is %s)\n",
-		PK11_LIB_LOCATION);
-#else  /* if USE_PKCS11 */
 	fprintf(stderr, "\t\tname of an OpenSSL engine to use\n");
-#endif /* if USE_PKCS11 */
 	fprintf(stderr, "\t-P:\t");
 	fprintf(stderr, "disable post-sign verification\n");
 	fprintf(stderr, "\t-Q:\t");
@@ -3414,12 +3407,6 @@ main(int argc, char *argv[]) {
 			{
 				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
 			}
-			if (strcasecmp(isc_commandline_argument, "size") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGSIZE;
-			}
-			if (strcasecmp(isc_commandline_argument, "mctx") == 0) {
-				isc_mem_debugging |= ISC_MEM_DEBUGCTX;
-			}
 			break;
 		default:
 			break;
@@ -3427,20 +3414,11 @@ main(int argc, char *argv[]) {
 	}
 	isc_commandline_reset = true;
 
-#ifdef _WIN32
-	InitSockets();
-#endif /* ifdef _WIN32 */
-
 	masterstyle = &dns_master_style_explicitttl;
 
 	check_result(isc_app_start(), "isc_app_start");
 
 	isc_mem_create(&mctx);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 
@@ -3791,8 +3769,6 @@ main(int argc, char *argv[]) {
 	if (inputformatstr != NULL) {
 		if (strcasecmp(inputformatstr, "text") == 0) {
 			inputformat = dns_masterformat_text;
-		} else if (strcasecmp(inputformatstr, "map") == 0) {
-			inputformat = dns_masterformat_map;
 		} else if (strcasecmp(inputformatstr, "raw") == 0) {
 			inputformat = dns_masterformat_raw;
 		} else if (strncasecmp(inputformatstr, "raw=", 4) == 0) {
@@ -3810,8 +3786,6 @@ main(int argc, char *argv[]) {
 		} else if (strcasecmp(outputformatstr, "full") == 0) {
 			outputformat = dns_masterformat_text;
 			masterstyle = &dns_master_style_full;
-		} else if (strcasecmp(outputformatstr, "map") == 0) {
-			outputformat = dns_masterformat_map;
 		} else if (strcasecmp(outputformatstr, "raw") == 0) {
 			outputformat = dns_masterformat_raw;
 		} else if (strncasecmp(outputformatstr, "raw=", 4) == 0) {
@@ -3950,9 +3924,10 @@ main(int argc, char *argv[]) {
 		bool answer;
 
 		hash_length = dns_nsec3_hashlength(dns_hash_sha1);
-		hashlist_init(&hashlist, dns_db_nodecount(gdb) * 2,
+		hashlist_init(&hashlist,
+			      dns_db_nodecount(gdb, dns_dbtree_main) * 2,
 			      hash_length);
-		result = dns_nsec_nseconly(gdb, gversion, &answer);
+		result = dns_nsec_nseconly(gdb, gversion, NULL, &answer);
 		if (result == ISC_R_NOTFOUND) {
 			fprintf(stderr,
 				"%s: warning: NSEC3 generation "
@@ -4046,14 +4021,10 @@ main(int argc, char *argv[]) {
 	print_time(outfp);
 	print_version(outfp);
 
-	result = isc_managers_create(mctx, ntasks, 0, &netmgr, &taskmgr);
-	if (result != ISC_R_SUCCESS) {
-		fatal("failed to create task manager: %s",
-		      isc_result_totext(result));
-	}
+	isc_managers_create(mctx, ntasks, 0, &netmgr, &taskmgr, NULL);
 
-	master = NULL;
-	result = isc_task_create(taskmgr, 0, &master);
+	main_task = NULL;
+	result = isc_task_create(taskmgr, 0, &main_task);
 	if (result != ISC_R_SUCCESS) {
 		fatal("failed to create task: %s", isc_result_totext(result));
 	}
@@ -4083,7 +4054,7 @@ main(int argc, char *argv[]) {
 		 * processors if possible.
 		 */
 		for (i = 0; i < (int)ntasks; i++) {
-			result = isc_app_onrun(mctx, master, startworker,
+			result = isc_app_onrun(mctx, main_task, startworker,
 					       tasks[i]);
 			if (result != ISC_R_SUCCESS) {
 				fatal("failed to start task: %s",
@@ -4095,13 +4066,13 @@ main(int argc, char *argv[]) {
 			fatal("process aborted by user");
 		}
 	} else {
-		isc_task_detach(&master);
+		isc_task_detach(&main_task);
 	}
 	atomic_store(&shuttingdown, true);
 	for (i = 0; i < (int)ntasks; i++) {
 		isc_task_detach(&tasks[i]);
 	}
-	isc_managers_destroy(&netmgr, &taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr, NULL);
 	isc_mem_put(mctx, tasks, ntasks * sizeof(isc_task_t *));
 	postsign();
 	TIME_NOW(&sign_finish);
@@ -4192,8 +4163,5 @@ main(int argc, char *argv[]) {
 			    &sign_finish);
 	}
 
-#ifdef _WIN32
-	DestroySockets();
-#endif /* ifdef _WIN32 */
 	return (vresult == ISC_R_SUCCESS ? 0 : 1);
 }

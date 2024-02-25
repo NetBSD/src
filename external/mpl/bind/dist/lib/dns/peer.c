@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.c,v 1.9.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: peer.c,v 1.9.2.2 2024/02/25 15:46:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,54 @@
 #include <dns/name.h>
 #include <dns/peer.h>
 
+/***
+ *** Types
+ ***/
+
+struct dns_peerlist {
+	unsigned int magic;
+	isc_refcount_t refs;
+
+	isc_mem_t *mem;
+
+	ISC_LIST(dns_peer_t) elements;
+};
+
+struct dns_peer {
+	unsigned int magic;
+	isc_refcount_t refs;
+
+	isc_mem_t *mem;
+
+	isc_netaddr_t address;
+	unsigned int prefixlen;
+	bool bogus;
+	dns_transfer_format_t transfer_format;
+	uint32_t transfers;
+	bool support_ixfr;
+	bool provide_ixfr;
+	bool request_ixfr;
+	bool support_edns;
+	bool request_nsid;
+	bool send_cookie;
+	bool request_expire;
+	bool force_tcp;
+	bool tcp_keepalive;
+	bool check_axfr_id;
+	dns_name_t *key;
+	isc_sockaddr_t *transfer_source;
+	isc_sockaddr_t *notify_source;
+	isc_sockaddr_t *query_source;
+	uint16_t udpsize;    /* receive size */
+	uint16_t maxudp;     /* transmit size */
+	uint16_t padding;    /* pad block size */
+	uint8_t ednsversion; /* edns version */
+
+	uint32_t bitflags;
+
+	ISC_LINK(dns_peer_t) next;
+};
+
 /*%
  * Bit positions in the dns_peer_t structure flags field
  */
@@ -41,14 +89,11 @@
 #define SERVER_MAXUDP_BIT	   7
 #define REQUEST_NSID_BIT	   8
 #define SEND_COOKIE_BIT		   9
-#define NOTIFY_DSCP_BIT		   10
-#define TRANSFER_DSCP_BIT	   11
-#define QUERY_DSCP_BIT		   12
-#define REQUEST_EXPIRE_BIT	   13
-#define EDNS_VERSION_BIT	   14
-#define FORCE_TCP_BIT		   15
-#define SERVER_PADDING_BIT	   16
-#define REQUEST_TCP_KEEPALIVE_BIT  17
+#define REQUEST_EXPIRE_BIT	   10
+#define EDNS_VERSION_BIT	   11
+#define FORCE_TCP_BIT		   12
+#define SERVER_PADDING_BIT	   13
+#define REQUEST_TCP_KEEPALIVE_BIT  14
 
 static void
 peerlist_delete(dns_peerlist_t **list);
@@ -829,72 +874,6 @@ dns_peer_getpadding(dns_peer_t *peer, uint16_t *padding) {
 	} else {
 		return (ISC_R_NOTFOUND);
 	}
-}
-
-isc_result_t
-dns_peer_setnotifydscp(dns_peer_t *peer, isc_dscp_t dscp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscp < 64);
-
-	peer->notify_dscp = dscp;
-	DNS_BIT_SET(NOTIFY_DSCP_BIT, &peer->bitflags);
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getnotifydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscpp != NULL);
-
-	if (DNS_BIT_CHECK(NOTIFY_DSCP_BIT, &peer->bitflags)) {
-		*dscpp = peer->notify_dscp;
-		return (ISC_R_SUCCESS);
-	}
-	return (ISC_R_NOTFOUND);
-}
-
-isc_result_t
-dns_peer_settransferdscp(dns_peer_t *peer, isc_dscp_t dscp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscp < 64);
-
-	peer->transfer_dscp = dscp;
-	DNS_BIT_SET(TRANSFER_DSCP_BIT, &peer->bitflags);
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_gettransferdscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscpp != NULL);
-
-	if (DNS_BIT_CHECK(TRANSFER_DSCP_BIT, &peer->bitflags)) {
-		*dscpp = peer->transfer_dscp;
-		return (ISC_R_SUCCESS);
-	}
-	return (ISC_R_NOTFOUND);
-}
-
-isc_result_t
-dns_peer_setquerydscp(dns_peer_t *peer, isc_dscp_t dscp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscp < 64);
-
-	peer->query_dscp = dscp;
-	DNS_BIT_SET(QUERY_DSCP_BIT, &peer->bitflags);
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_peer_getquerydscp(dns_peer_t *peer, isc_dscp_t *dscpp) {
-	REQUIRE(DNS_PEER_VALID(peer));
-	REQUIRE(dscpp != NULL);
-
-	if (DNS_BIT_CHECK(QUERY_DSCP_BIT, &peer->bitflags)) {
-		*dscpp = peer->query_dscp;
-		return (ISC_R_SUCCESS);
-	}
-	return (ISC_R_NOTFOUND);
 }
 
 isc_result_t

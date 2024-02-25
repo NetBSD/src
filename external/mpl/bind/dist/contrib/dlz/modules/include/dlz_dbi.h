@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.h,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.h,v 1.5.2.1 2024/02/25 15:45:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,8 +28,7 @@
 #include <dlz_minimal.h>
 #include <dlz_pthread.h>
 
-#ifndef DLZ_DBI_H
-#define DLZ_DBI_H 1
+#pragma once
 
 /*
  * Types
@@ -105,5 +104,3 @@ destroy_dbinstance(dbinstance_t *dbi);
 
 char *
 get_parameter_value(const char *input, const char *key);
-
-#endif /* DLZ_DBI_H */

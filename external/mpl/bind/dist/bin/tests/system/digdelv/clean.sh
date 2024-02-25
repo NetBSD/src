@@ -17,6 +17,8 @@ rm -f ./*/anchor.*
 rm -f ./*/named.conf
 rm -f ./*/named.memstats
 rm -f ./*/named.run
+rm -f ./ans*/ans.run
+rm -f ./ans*/query.log
 rm -f ./delv.out.test*
 rm -f ./dig.out.*test*
 rm -f ./dig.out.mm.*

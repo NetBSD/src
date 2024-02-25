@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.8.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -487,7 +487,7 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	dns_name_init(&signer, NULL);
 	dns_name_fromregion(&signer, &sr);
 	dns_name_init(&sig->signer, NULL);
-	RETERR(name_duporclone(&signer, mctx, &sig->signer));
+	name_duporclone(&signer, mctx, &sig->signer);
 	isc_region_consume(&sr, name_length(&sig->signer));
 
 	/*
@@ -532,6 +532,7 @@ additionaldata_sig(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sig);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

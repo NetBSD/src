@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.8.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RESOLVER_H
-#define DNS_RESOLVER_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -51,8 +50,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/event.h>
 #include <isc/lang.h>
-#include <isc/socket.h>
 #include <isc/stats.h>
 
 #include <dns/fixedname.h>
@@ -78,7 +77,8 @@ typedef struct dns_fetchevent {
 	dns_dbnode_t	     *node;
 	dns_rdataset_t	     *rdataset;
 	dns_rdataset_t	     *sigrdataset;
-	dns_fixedname_t	      foundname;
+	dns_fixedname_t	      fname;
+	dns_name_t	     *foundname;
 	const isc_sockaddr_t *client;
 	dns_messageid_t	      id;
 	isc_result_t	      vresult;
@@ -92,53 +92,38 @@ typedef enum { dns_quotatype_zone = 0, dns_quotatype_server } dns_quotatype_t;
 /*
  * Options that modify how a 'fetch' is done.
  */
-#define DNS_FETCHOPT_TCP	 0x00000001 /*%< Use TCP. */
-#define DNS_FETCHOPT_UNSHARED	 0x00000002 /*%< See below. */
-#define DNS_FETCHOPT_RECURSIVE	 0x00000004 /*%< Set RD? */
-#define DNS_FETCHOPT_NOEDNS0	 0x00000008 /*%< Do not use EDNS. */
-#define DNS_FETCHOPT_FORWARDONLY 0x00000010 /*%< Only use forwarders. */
-#define DNS_FETCHOPT_NOVALIDATE	 0x00000020 /*%< Disable validation. */
-#define DNS_FETCHOPT_EDNS512                                       \
-	0x00000040			 /*%< Advertise a 512 byte \
-					  *   UDP buffer. */
-#define DNS_FETCHOPT_WANTNSID 0x00000080 /*%< Request NSID */
-#define DNS_FETCHOPT_PREFETCH 0x00000100 /*%< Do prefetch */
-#define DNS_FETCHOPT_NOCDFLAG 0x00000200 /*%< Don't set CD flag. */
-#define DNS_FETCHOPT_NONTA    0x00000400 /*%< Ignore NTA table. */
-/* RESERVED ECS				0x00000000 */
-/* RESERVED ECS				0x00001000 */
-/* RESERVED ECS				0x00002000 */
-/* RESERVED TCPCLIENT			0x00004000 */
-#define DNS_FETCHOPT_NOCACHED 0x00008000 /*%< Force cache update. */
-#define DNS_FETCHOPT_QMINIMIZE    \
-	0x00010000 /*%< Use qname \
-		    *    minimization. */
-#define DNS_FETCHOPT_NOFOLLOW        \
-	0x00020000 /*%< Don't follow \
-		    *   delegations */
-#define DNS_FETCHOPT_QMIN_STRICT            \
-	0x00040000 /*%< Do not work around  \
-		    *   servers that return \
-		    *   errors on non-empty \
-		    *   terminals. */
-#define DNS_FETCHOPT_QMIN_USE_A            \
-	0x00080000 /*%< Use A type queries \
-		    *   instead of NS when \
-		    *   doing minimization */
-#define DNS_FETCHOPT_QMIN_SKIP_IP6A      \
-	0x00100000 /*%< Skip some labels \
-		    *   when doing qname \
-		    *   minimization on  \
-		    *   ip6.arpa. */
-#define DNS_FETCHOPT_NOFORWARD                \
-	0x00200000 /*%< Do not use forwarders \
-		    *   if possible. */
+enum {
+	DNS_FETCHOPT_TCP = 1 << 0,	       /*%< Use TCP. */
+	DNS_FETCHOPT_UNSHARED = 1 << 1,	       /*%< See below. */
+	DNS_FETCHOPT_RECURSIVE = 1 << 2,       /*%< Set RD? */
+	DNS_FETCHOPT_NOEDNS0 = 1 << 3,	       /*%< Do not use EDNS. */
+	DNS_FETCHOPT_FORWARDONLY = 1 << 4,     /*%< Only use forwarders. */
+	DNS_FETCHOPT_NOVALIDATE = 1 << 5,      /*%< Disable validation. */
+	DNS_FETCHOPT_WANTNSID = 1 << 6,	       /*%< Request NSID */
+	DNS_FETCHOPT_PREFETCH = 1 << 7,	       /*%< Do prefetch */
+	DNS_FETCHOPT_NOCDFLAG = 1 << 8,	       /*%< Don't set CD flag. */
+	DNS_FETCHOPT_NONTA = 1 << 9,	       /*%< Ignore NTA table. */
+	DNS_FETCHOPT_NOCACHED = 1 << 10,       /*%< Force cache update. */
+	DNS_FETCHOPT_QMINIMIZE = 1 << 11,      /*%< Use qname minimization. */
+	DNS_FETCHOPT_NOFOLLOW = 1 << 12,       /*%< Don't retrieve the NS RRset
+						* from the child zone when a
+						* delegation is returned in
+						* response to a NS query. */
+	DNS_FETCHOPT_QMIN_STRICT = 1 << 13,    /*%< Do not work around servers
+						* that return errors on
+						* non-empty terminals. */
+	DNS_FETCHOPT_QMIN_SKIP_IP6A = 1 << 14, /*%< Skip some labels when
+						* doing qname minimization
+						* on ip6.arpa. */
+	DNS_FETCHOPT_NOFORWARD = 1 << 15,      /*%< Do not use forwarders if
+						* possible. */
+	DNS_FETCHOPT_TRYSTALE_ONTIMEOUT = 1 << 16,
 
-/* Reserved in use by adb.c		0x00400000 */
-#define DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
-#define DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
-#define DNS_FETCHOPT_EDNSVERSIONSHIFT	24
-#define DNS_FETCHOPT_TRYSTALE_ONTIMEOUT 0x01000000
+	/*% EDNS version bits: */
+	DNS_FETCHOPT_EDNSVERSIONSET = 1 << 23,
+	DNS_FETCHOPT_EDNSVERSIONSHIFT = 24,
+	DNS_FETCHOPT_EDNSVERSIONMASK = 0xff000000,
+};
 
 /*
  * Upper bounds of class of query RTT (ms).  Corresponds to
@@ -169,11 +154,10 @@ typedef enum { dns_quotatype_zone = 0, dns_quotatype_server } dns_quotatype_t;
 
 isc_result_t
 dns_resolver_create(dns_view_t *view, isc_taskmgr_t *taskmgr,
-		    unsigned int ntasks, unsigned int ndisp,
-		    isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
-		    unsigned int options, dns_dispatchmgr_t *dispatchmgr,
-		    dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
-		    dns_resolver_t **resp);
+		    unsigned int ntasks, unsigned int ndisp, isc_nm_t *nm,
+		    isc_timermgr_t *timermgr, unsigned int options,
+		    dns_dispatchmgr_t *dispatchmgr, dns_dispatch_t *dispatchv4,
+		    dns_dispatch_t *dispatchv6, dns_resolver_t **resp);
 
 /*%<
  * Create a resolver.
@@ -191,7 +175,7 @@ dns_resolver_create(dns_view_t *view, isc_taskmgr_t *taskmgr,
  *
  *\li	'ntasks' > 0.
  *
- *\li	'socketmgr' is a valid socket manager.
+ *\li	'nm' is a valid network manager.
  *
  *\li	'timermgr' is a valid timer manager.
  *
@@ -419,9 +403,6 @@ dns_resolver_dispatchv4(dns_resolver_t *resolver);
 dns_dispatch_t *
 dns_resolver_dispatchv6(dns_resolver_t *resolver);
 
-isc_socketmgr_t *
-dns_resolver_socketmgr(dns_resolver_t *resolver);
-
 isc_taskmgr_t *
 dns_resolver_taskmgr(dns_resolver_t *resolver);
 
@@ -443,7 +424,7 @@ dns_resolver_setlamettl(dns_resolver_t *resolver, uint32_t lame_ttl);
  *\li	'resolver' to be valid.
  */
 
-isc_result_t
+void
 dns_resolver_addalternate(dns_resolver_t *resolver, const isc_sockaddr_t *alt,
 			  const dns_name_t *name, in_port_t port);
 /*%<
@@ -671,23 +652,6 @@ dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
  */
 
 void
-dns_resolver_setquerydscp4(dns_resolver_t *resolver, isc_dscp_t dscp);
-isc_dscp_t
-dns_resolver_getquerydscp4(dns_resolver_t *resolver);
-
-void
-dns_resolver_setquerydscp6(dns_resolver_t *resolver, isc_dscp_t dscp);
-isc_dscp_t
-dns_resolver_getquerydscp6(dns_resolver_t *resolver);
-/*%
- * Get and set the DSCP values for the resolver's IPv4 and IPV6 query
- * sources.
- *
- * Requires:
- * \li	resolver to be valid.
- */
-
-void
 dns_resolver_setmaxdepth(dns_resolver_t *resolver, unsigned int maxdepth);
 unsigned int
 dns_resolver_getmaxdepth(dns_resolver_t *resolver);
@@ -745,5 +709,3 @@ dns_resolver_setfuzzing(void);
 #endif /* ifdef ENABLE_AFL */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RESOLVER_H */

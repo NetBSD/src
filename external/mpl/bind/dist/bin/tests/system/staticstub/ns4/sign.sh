@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 zone=sub.example
 infile=${zone}.db.in
@@ -21,6 +20,6 @@ zonefile=${zone}.db
 keyname1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 keyname2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -f KSK -n zone $zone)
 
-cat $infile $keyname1.key $keyname2.key > $zonefile
+cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -o $zone $zonefile > /dev/null
+$SIGNER -o $zone $zonefile >/dev/null

@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.h,v 1.5 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: logconf.h,v 1.5.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_LOGCONF_H
-#define NAMED_LOGCONF_H 1
+#pragma once
 
 /*! \file */
 
@@ -26,5 +25,3 @@ named_logconfig(isc_logconfig_t *logconf, const cfg_obj_t *logstmt);
  * Set up the logging configuration in '*logconf' according to
  * the named.conf data in 'logstmt'.
  */
-
-#endif /* NAMED_LOGCONF_H */

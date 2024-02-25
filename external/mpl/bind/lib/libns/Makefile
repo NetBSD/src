@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2021/02/19 16:42:24 christos Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2024/02/25 15:47:58 martin Exp $
 
+NOLINT=yes	# XXX
 LIB=ns
 #USE_SHLIBDIR=   yes
 
@@ -19,8 +20,8 @@ CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 #COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 #.endfor
 
-SRCS=	client.c hooks.c interfacemgr.c lib.c listenlist.c \
+SRCS=	client.c hooks.c interfacemgr.c listenlist.c \
 	log.c notify.c query.c server.c sortlist.c stats.c \
-	update.c version.c xfrout.c pfilter.c
+	update.c xfrout.c pfilter.c
 
 .include <bsd.lib.mk>

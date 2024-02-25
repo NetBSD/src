@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.7.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -210,6 +210,7 @@ additionaldata_in_nsap(ARGS_ADDLDATA) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

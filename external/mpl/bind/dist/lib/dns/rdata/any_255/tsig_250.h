@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: tsig_250.h,v 1.6.2.1 2024/02/25 15:47:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ANY_255_TSIG_250_H
-#define ANY_255_TSIG_250_H 1
+#pragma once
 
 /*% RFC2845 */
 typedef struct dns_rdata_any_tsig {
@@ -30,5 +29,3 @@ typedef struct dns_rdata_any_tsig {
 	uint16_t otherlen;
 	unsigned char *other;
 } dns_rdata_any_tsig_t;
-
-#endif /* ANY_255_TSIG_250_H */

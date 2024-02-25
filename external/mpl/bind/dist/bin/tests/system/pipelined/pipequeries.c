@@ -1,4 +1,4 @@
-/*	$NetBSD: pipequeries.c,v 1.7 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: pipequeries.c,v 1.7.2.1 2024/02/25 15:44:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,13 +27,12 @@
 #include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/net.h>
+#include <isc/netmgr.h>
 #include <isc/parseint.h>
-#include <isc/platform.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/socket.h>
 #include <isc/task.h>
-#include <isc/timer.h>
 #include <isc/util.h>
 
 #include <dns/dispatch.h>
@@ -47,8 +46,6 @@
 #include <dns/result.h>
 #include <dns/types.h>
 #include <dns/view.h>
-
-#include <dst/result.h>
 
 #define CHECK(str, x)                                        \
 	{                                                    \
@@ -75,7 +72,8 @@ static void
 recvresponse(isc_task_t *task, isc_event_t *event) {
 	dns_requestevent_t *reqev = (dns_requestevent_t *)event;
 	isc_result_t result;
-	dns_message_t *query = NULL, *response = NULL;
+	dns_message_t *query = NULL;
+	dns_message_t *response = NULL;
 	isc_buffer_t outbuf;
 	char output[1024];
 
@@ -98,7 +96,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 	CHECK("dns_request_getresponse", result);
 
 	if (response->rcode != dns_rcode_noerror) {
-		result = ISC_RESULTCLASS_DNSRCODE + response->rcode;
+		result = dns_result_fromrcode(response->rcode);
 		fprintf(stderr, "I:response rcode: %s\n",
 			isc_result_totext(result));
 		exit(-1);
@@ -173,10 +171,10 @@ sendquery(isc_task_t *task) {
 	ISC_LIST_APPEND(qname->list, qrdataset, link);
 	dns_message_addname(message, qname, DNS_SECTION_QUESTION);
 
-	result = dns_request_createvia(
-		requestmgr, message, have_src ? &srcaddr : NULL, &dstaddr, -1,
-		DNS_REQUESTOPT_TCP | DNS_REQUESTOPT_SHARE, NULL, TIMEOUT, 0, 0,
-		task, recvresponse, message, &request);
+	result = dns_request_create(requestmgr, message,
+				    have_src ? &srcaddr : NULL, &dstaddr,
+				    DNS_REQUESTOPT_TCP, NULL, TIMEOUT, 0, 0,
+				    task, recvresponse, message, &request);
 	CHECK("dns_request_create", result);
 
 	return (ISC_R_SUCCESS);
@@ -208,10 +206,7 @@ main(int argc, char *argv[]) {
 	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_task_t *task = NULL;
-	isc_timermgr_t *timermgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
 	dns_dispatchmgr_t *dispatchmgr = NULL;
-	unsigned int attrs, attrmask;
 	dns_dispatch_t *dispatchv4 = NULL;
 	dns_view_t *view = NULL;
 	uint16_t port = PORT;
@@ -251,8 +246,6 @@ main(int argc, char *argv[]) {
 		have_src = true;
 	}
 
-	dns_result_register();
-
 	isc_sockaddr_any(&bind_any);
 
 	result = ISC_R_FAILURE;
@@ -273,26 +266,16 @@ main(int argc, char *argv[]) {
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
 
-	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
+	isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr, NULL);
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
+	RUNCHECK(dns_dispatchmgr_create(mctx, netmgr, &dispatchmgr));
 
-	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
-	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
-	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
-
-	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY |
-		DNS_DISPATCHATTR_IPV4;
-	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
-		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
-				     have_src ? &srcaddr : &bind_any, 4096, 4,
-				     2, 3, 5, attrs, attrmask, &dispatchv4));
-	RUNCHECK(dns_requestmgr_create(mctx, timermgr, socketmgr, taskmgr,
-				       dispatchmgr, dispatchv4, NULL,
-				       &requestmgr));
+	RUNCHECK(dns_dispatch_createudp(
+		dispatchmgr, have_src ? &srcaddr : &bind_any, &dispatchv4));
+	RUNCHECK(dns_requestmgr_create(mctx, taskmgr, dispatchmgr, dispatchv4,
+				       NULL, &requestmgr));
 
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
-
 	RUNCHECK(isc_app_onrun(mctx, task, sendqueries, NULL));
 
 	(void)isc_app_run();
@@ -303,14 +286,12 @@ main(int argc, char *argv[]) {
 	dns_requestmgr_detach(&requestmgr);
 
 	dns_dispatch_detach(&dispatchv4);
-	dns_dispatchmgr_destroy(&dispatchmgr);
-
-	isc_socketmgr_destroy(&socketmgr);
-	isc_timermgr_destroy(&timermgr);
+	dns_dispatchmgr_detach(&dispatchmgr);
 
 	isc_task_shutdown(task);
 	isc_task_detach(&task);
-	isc_managers_destroy(&netmgr, &taskmgr);
+
+	isc_managers_destroy(&netmgr, &taskmgr, NULL);
 
 	dst_lib_destroy();
 

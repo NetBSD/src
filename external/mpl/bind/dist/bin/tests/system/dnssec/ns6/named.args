@@ -1,1 +1,1 @@
--m record,size,mctx -c named.conf -d 99 -D dnssec-ns6 -X named.lock -g -T maxcachesize=2097152 -T nonearest -T tat=1
+-m record -c named.conf -d 99 -D dnssec-ns6 -X named.lock -g -T maxcachesize=2097152 -T nonearest -T tat=1

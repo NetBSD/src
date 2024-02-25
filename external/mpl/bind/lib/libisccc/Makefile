@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/02/19 16:42:24 christos Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2024/02/25 15:47:57 martin Exp $
 
 LIB=isccc
 
@@ -12,7 +12,6 @@ DIST=	${IDIST}/lib/isccc
 
 .PATH.c:	${DIST}
 
-SRCS=	alist.c base64.c cc.c ccmsg.c result.c sexpr.c symtab.c \
-	version.c
+SRCS=	alist.c base64.c cc.c ccmsg.c sexpr.c symtab.c
 
 .include <bsd.lib.mk>

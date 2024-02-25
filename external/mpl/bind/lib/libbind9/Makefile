@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/02/19 16:42:23 christos Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2024/02/25 15:47:57 martin Exp $
 
 LIB=bind9
 
@@ -10,12 +10,10 @@ DIST=	${IDIST}/lib/bind9
 
 .PATH.c:	${DIST}
 
-SRCS=	check.c getaddresses.c version.c
+SRCS=	check.c getaddresses.c
 
 LIBDPLIBS+=	isc	${.CURDIR}/../libisc \
 		dns	${.CURDIR}/../libdns \
 		isccfg	${.CURDIR}/../libisccfg \
-
-version.o version.go version.pico version.po : ${VERSIONFILE}
 
 .include <bsd.lib.mk>

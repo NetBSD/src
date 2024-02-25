@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../../conf.sh
 
 echo_i "ns2/setup.sh"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: aes.c,v 1.6.2.1 2024/02/25 15:47:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,6 @@
 
 #include <isc/aes.h>
 #include <isc/assertions.h>
-#include <isc/platform.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>

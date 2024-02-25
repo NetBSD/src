@@ -26,10 +26,32 @@ options {
 	notify yes;
 };
 
-zone "." {
-	type hint;
-	file "../../common/root.hint";
+zone "zone000000.example" {
+	type secondary;
+	file "zone000000.example.bk";
+	primaries { 10.53.0.3; };
 };
 
-include "zones.conf";
+zone "zone000001.example" {
+	type secondary;
+	file "zone000001.example.bk";
+	primaries { 10.53.0.3; };
+};
 
+zone "zone000002.example" {
+	type secondary;
+	file "zone000002.example.bk";
+	primaries { 10.53.0.3; };
+};
+
+zone "zone000003.example" {
+	type secondary;
+	file "zone000003.example.bk";
+	primaries { 10.53.0.3; };
+};
+
+zone "zone000004.example" {
+	type secondary;
+	file "zone000004.example.bk";
+	primaries { 10.53.0.3; };
+};

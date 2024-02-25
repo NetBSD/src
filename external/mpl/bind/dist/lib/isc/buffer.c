@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.7.2.1 2023/08/11 13:43:37 martin Exp $	*/
+/*	$NetBSD: buffer.c,v 1.7.2.2 2024/02/25 15:47:15 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,24 +27,6 @@
 #include <isc/util.h>
 
 void
-isc__buffer_init(isc_buffer_t *b, void *base, unsigned int length) {
-	/*
-	 * Make 'b' refer to the 'length'-byte region starting at 'base'.
-	 * XXXDCL see the comment in buffer.h about base being const.
-	 */
-	ISC__BUFFER_INIT(b, base, length);
-}
-
-void
-isc__buffer_initnull(isc_buffer_t *b) {
-	/*
-	 * Initialize a new buffer which has no backing store.  This can
-	 * later be grown as needed and swapped in place.
-	 */
-	ISC__BUFFER_INIT(b, NULL, 0);
-}
-
-void
 isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length) {
 	/*
 	 * Re-initialize the buffer enough to reconfigure the base of the
@@ -68,122 +50,10 @@ isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length) {
 }
 
 void
-isc__buffer_invalidate(isc_buffer_t *b) {
-	/*
-	 * Make 'b' an invalid buffer.
-	 */
-	ISC__BUFFER_INVALIDATE(b);
-}
-
-void
 isc_buffer_setautorealloc(isc_buffer_t *b, bool enable) {
 	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->mctx != NULL);
 	b->autore = enable;
-}
-
-void
-isc__buffer_region(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the region of 'b'.
-	 */
-	ISC__BUFFER_REGION(b, r);
-}
-
-void
-isc__buffer_usedregion(const isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the used region of 'b'.
-	 */
-	ISC__BUFFER_USEDREGION(b, r);
-}
-
-void
-isc__buffer_availableregion(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the available region of 'b'.
-	 */
-	ISC__BUFFER_AVAILABLEREGION(b, r);
-}
-
-void
-isc__buffer_add(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Increase the 'used' region of 'b' by 'n' bytes.
-	 */
-	ISC__BUFFER_ADD(b, n);
-}
-
-void
-isc__buffer_subtract(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Decrease the 'used' region of 'b' by 'n' bytes.
-	 */
-	ISC__BUFFER_SUBTRACT(b, n);
-}
-
-void
-isc__buffer_clear(isc_buffer_t *b) {
-	/*
-	 * Make the used region empty.
-	 */
-	ISC__BUFFER_CLEAR(b);
-}
-
-void
-isc__buffer_consumedregion(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the consumed region of 'b'.
-	 */
-	ISC__BUFFER_CONSUMEDREGION(b, r);
-}
-
-void
-isc__buffer_remainingregion(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the remaining region of 'b'.
-	 */
-	ISC__BUFFER_REMAININGREGION(b, r);
-}
-
-void
-isc__buffer_activeregion(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the active region of 'b'.
-	 */
-	ISC__BUFFER_ACTIVEREGION(b, r);
-}
-
-void
-isc__buffer_setactive(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Sets the end of the active region 'n' bytes after current.
-	 */
-	ISC__BUFFER_SETACTIVE(b, n);
-}
-
-void
-isc__buffer_first(isc_buffer_t *b) {
-	/*
-	 * Make the consumed region empty.
-	 */
-	ISC__BUFFER_FIRST(b);
-}
-
-void
-isc__buffer_forward(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Increase the 'consumed' region of 'b' by 'n' bytes.
-	 */
-	ISC__BUFFER_FORWARD(b, n);
-}
-
-void
-isc__buffer_back(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Decrease the 'consumed' region of 'b' by 'n' bytes.
-	 */
-	ISC__BUFFER_BACK(b, n);
 }
 
 void
@@ -233,11 +103,6 @@ isc_buffer_getuint8(isc_buffer_t *b) {
 	return (result);
 }
 
-void
-isc__buffer_putuint8(isc_buffer_t *b, uint8_t val) {
-	ISC__BUFFER_PUTUINT8(b, val);
-}
-
 uint16_t
 isc_buffer_getuint16(isc_buffer_t *b) {
 	unsigned char *cp;
@@ -257,16 +122,6 @@ isc_buffer_getuint16(isc_buffer_t *b) {
 	result |= ((unsigned int)(cp[1]));
 
 	return (result);
-}
-
-void
-isc__buffer_putuint16(isc_buffer_t *b, uint16_t val) {
-	ISC__BUFFER_PUTUINT16(b, val);
-}
-
-void
-isc__buffer_putuint24(isc_buffer_t *b, uint32_t val) {
-	ISC__BUFFER_PUTUINT24(b, val);
 }
 
 uint32_t
@@ -290,11 +145,6 @@ isc_buffer_getuint32(isc_buffer_t *b) {
 	result |= ((unsigned int)(cp[3]));
 
 	return (result);
-}
-
-void
-isc__buffer_putuint32(isc_buffer_t *b, uint32_t val) {
-	ISC__BUFFER_PUTUINT32(b, val);
 }
 
 uint64_t
@@ -323,36 +173,6 @@ isc_buffer_getuint48(isc_buffer_t *b) {
 }
 
 void
-isc__buffer_putuint48(isc_buffer_t *b, uint64_t val) {
-	isc_result_t result;
-	uint16_t valhi;
-	uint32_t vallo;
-
-	REQUIRE(ISC_BUFFER_VALID(b));
-	if (ISC_UNLIKELY(b->autore)) {
-		result = isc_buffer_reserve(&b, 6);
-		REQUIRE(result == ISC_R_SUCCESS);
-	}
-	REQUIRE(isc_buffer_availablelength(b) >= 6);
-
-	valhi = (uint16_t)(val >> 32);
-	vallo = (uint32_t)(val & 0xFFFFFFFF);
-	ISC__BUFFER_PUTUINT16(b, valhi);
-	ISC__BUFFER_PUTUINT32(b, vallo);
-}
-
-void
-isc__buffer_putmem(isc_buffer_t *b, const unsigned char *base,
-		   unsigned int length) {
-	ISC__BUFFER_PUTMEM(b, base, length);
-}
-
-void
-isc__buffer_putstr(isc_buffer_t *b, const char *source) {
-	ISC__BUFFER_PUTSTR(b, source);
-}
-
-void
 isc_buffer_putdecint(isc_buffer_t *b, int64_t v) {
 	unsigned int l = 0;
 	unsigned char *cp;
@@ -364,7 +184,7 @@ isc_buffer_putdecint(isc_buffer_t *b, int64_t v) {
 	/* xxxwpk do it more low-level way ? */
 	l = snprintf(buf, 21, "%" PRId64, v);
 	RUNTIME_CHECK(l <= 21);
-	if (ISC_UNLIKELY(b->autore)) {
+	if (b->autore) {
 		result = isc_buffer_reserve(&b, l);
 		REQUIRE(result == ISC_R_SUCCESS);
 	}
@@ -401,7 +221,7 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r) {
 	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
-	if (ISC_UNLIKELY(b->autore)) {
+	if (b->autore) {
 		result = isc_buffer_reserve(&b, r->length);
 		if (result != ISC_R_SUCCESS) {
 			return (result);
@@ -439,8 +259,7 @@ isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
 
 isc_result_t
 isc_buffer_reserve(isc_buffer_t **dynbuffer, unsigned int size) {
-	unsigned char *bdata;
-	uint64_t len;
+	size_t len;
 
 	REQUIRE(dynbuffer != NULL);
 	REQUIRE(ISC_BUFFER_VALID(*dynbuffer));
@@ -467,18 +286,9 @@ isc_buffer_reserve(isc_buffer_t **dynbuffer, unsigned int size) {
 		return (ISC_R_NOMEMORY);
 	}
 
-	/*
-	 * XXXMUKS: This is far more expensive than plain realloc() as
-	 * it doesn't remap pages, but does ordinary copy. So is
-	 * isc_mem_reallocate(), which has additional issues.
-	 */
-	bdata = isc_mem_get((*dynbuffer)->mctx, (unsigned int)len);
-
-	memmove(bdata, (*dynbuffer)->base, (*dynbuffer)->length);
-	isc_mem_put((*dynbuffer)->mctx, (*dynbuffer)->base,
-		    (*dynbuffer)->length);
-
-	(*dynbuffer)->base = bdata;
+	(*dynbuffer)->base = isc_mem_reget((*dynbuffer)->mctx,
+					   (*dynbuffer)->base,
+					   (*dynbuffer)->length, len);
 	(*dynbuffer)->length = (unsigned int)len;
 
 	return (ISC_R_SUCCESS);
@@ -519,7 +329,7 @@ isc_buffer_printf(isc_buffer_t *b, const char *format, ...) {
 		return (ISC_R_FAILURE);
 	}
 
-	if (ISC_UNLIKELY(b->autore)) {
+	if (b->autore) {
 		result = isc_buffer_reserve(&b, n + 1);
 		if (result != ISC_R_SUCCESS) {
 			return (result);

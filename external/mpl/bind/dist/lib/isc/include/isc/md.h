@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.5.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,6 @@
 #pragma once
 
 #include <isc/lang.h>
-#include <isc/platform.h>
 #include <isc/result.h>
 #include <isc/types.h>
 

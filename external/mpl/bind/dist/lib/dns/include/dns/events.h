@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.7.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_EVENTS_H
-#define DNS_EVENTS_H 1
+#pragma once
 
 #include <isc/eventclass.h>
 
@@ -58,7 +57,7 @@
 #define DNS_EVENT_DISPATCHCONTROL    (ISC_EVENTCLASS_DNS + 32)
 #define DNS_EVENT_REQUESTCONTROL     (ISC_EVENTCLASS_DNS + 33)
 #define DNS_EVENT_DUMPQUANTUM	     (ISC_EVENTCLASS_DNS + 34)
-#define DNS_EVENT_IMPORTRECVDONE     (ISC_EVENTCLASS_DNS + 35)
+/* #define DNS_EVENT_IMPORTRECVDONE     (ISC_EVENTCLASS_DNS + 35) */
 #define DNS_EVENT_FREESTORAGE	     (ISC_EVENTCLASS_DNS + 36)
 #define DNS_EVENT_VIEWACACHESHUTDOWN (ISC_EVENTCLASS_DNS + 37)
 #define DNS_EVENT_ACACHECONTROL	     (ISC_EVENTCLASS_DNS + 38)
@@ -88,5 +87,3 @@
 
 #define DNS_EVENT_FIRSTEVENT (ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT  (ISC_EVENTCLASS_DNS + 65535)
-
-#endif /* DNS_EVENTS_H */

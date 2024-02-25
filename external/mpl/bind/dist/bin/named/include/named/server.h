@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.8 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.8.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_SERVER_H
-#define NAMED_SERVER_H 1
+#pragma once
 
 /*! \file */
 
@@ -25,6 +24,7 @@
 #include <isc/magic.h>
 #include <isc/quota.h>
 #include <isc/sockaddr.h>
+#include <isc/tls.h>
 #include <isc/types.h>
 
 #include <dns/acl.h>
@@ -86,9 +86,7 @@ struct named_server {
 	uint32_t interface_interval;
 	uint32_t heartbeat_interval;
 
-	isc_mutex_t  reload_event_lock;
-	isc_event_t *reload_event;
-	atomic_int   reload_status;
+	atomic_int reload_status;
 
 	bool flushonshutdown;
 
@@ -104,7 +102,7 @@ struct named_server {
 
 	named_statschannellist_t statschannels;
 
-	dns_tsigkey_t *sessionkey;
+	dst_key_t     *sessionkey;
 	char	      *session_keyfile;
 	dns_name_t    *session_keyname;
 	unsigned int   session_keyalg;
@@ -116,6 +114,9 @@ struct named_server {
 	dns_dtenv_t *dtenv; /*%< Dnstap environment */
 
 	char *lockfile;
+
+	isc_tlsctx_cache_t *tlsctx_server_cache;
+	isc_tlsctx_cache_t *tlsctx_client_cache;
 };
 
 #define NAMED_SERVER_MAGIC    ISC_MAGIC('S', 'V', 'E', 'R')
@@ -395,5 +396,3 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text);
 isc_result_t
 named_server_servestale(named_server_t *server, isc_lex_t *lex,
 			isc_buffer_t **text);
-
-#endif /* NAMED_SERVER_H */

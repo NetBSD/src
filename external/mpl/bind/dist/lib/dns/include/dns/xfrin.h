@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: xfrin.h,v 1.6.2.1 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_XFRIN_H
-#define DNS_XFRIN_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -30,7 +29,10 @@
  ***/
 
 #include <isc/lang.h>
+#include <isc/refcount.h>
+#include <isc/tls.h>
 
+#include <dns/transport.h>
 #include <dns/types.h>
 
 /***
@@ -50,20 +52,18 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_xfrin_create(dns_zone_t *zone, dns_rdatatype_t xfrtype,
-		 const isc_sockaddr_t *masteraddr,
-		 const isc_sockaddr_t *sourceaddr, isc_dscp_t dscp,
-		 dns_tsigkey_t *tsigkey, isc_mem_t *mctx,
-		 isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
-		 isc_task_t *task, dns_xfrindone_t done,
+		 const isc_sockaddr_t *primaryaddr,
+		 const isc_sockaddr_t *sourceaddr, dns_tsigkey_t *tsigkey,
+		 dns_transport_t *transport, isc_tlsctx_cache_t *tlsctx_cache,
+		 isc_mem_t *mctx, isc_nm_t *netmgr, dns_xfrindone_t done,
 		 dns_xfrin_ctx_t **xfrp);
 /*%<
  * Attempt to start an incoming zone transfer of 'zone'
- * from 'masteraddr', creating a dns_xfrin_ctx_t object to
+ * from 'primaryaddr', creating a dns_xfrin_ctx_t object to
  * manage it.  Attach '*xfrp' to the newly created object.
  *
- * Iff ISC_R_SUCCESS is returned, '*done' is guaranteed to be
- * called in the context of 'task', with 'zone' and a result
- * code as arguments when the transfer finishes.
+ * Iff ISC_R_SUCCESS is returned, '*done' is called with
+ * 'zone' and a result code as arguments when the transfer finishes.
  *
  * Requires:
  *\li	'xfrtype' is dns_rdatatype_axfr, dns_rdatatype_ixfr
@@ -96,5 +96,3 @@ dns_xfrin_attach(dns_xfrin_ctx_t *source, dns_xfrin_ctx_t **target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_XFRIN_H */

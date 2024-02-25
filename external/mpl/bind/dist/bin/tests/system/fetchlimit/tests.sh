@@ -11,190 +11,324 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../conf.sh
 
 DIGCMD="$DIG @10.53.0.3 -p ${PORT} +tcp +tries=1 +time=1"
-RNDCCMD="$RNDC -p ${CONTROLPORT} -s 10.53.0.3 -c ../common/rndc.conf"
+
+rndccmd() (
+  "$RNDC" -c ../_common/rndc.conf -p "${CONTROLPORT}" -s "$@"
+)
 
 burst() {
-    num=${3:-20}
-    rm -f burst.input.$$
-    while [ $num -gt 0 ]; do
-        num=$((num-1))
-        echo "${num}${1}${2}.lamesub.example A" >> burst.input.$$
-    done
-    $PERL ../ditch.pl -p ${PORT} -s 10.53.0.3 burst.input.$$
-    rm -f burst.input.$$
+  server=${1}
+  num=${4:-20}
+  rm -f burst.input.$$
+  while [ $num -gt 0 ]; do
+    num=$((num - 1))
+    if [ "${5}" = "dup" ]; then
+      # burst with duplicate queries
+      echo "${2}${3}.lamesub.example A" >>burst.input.$$
+    else
+      # burst with unique queries
+      echo "${num}${2}${3}.lamesub.example A" >>burst.input.$$
+    fi
+  done
+  $PERL ../ditch.pl -p ${PORT} -s ${server} burst.input.$$
+  rm -f burst.input.$$
 }
 
 stat() {
-    clients=`$RNDCCMD status | grep "recursive clients" | 
-            sed 's;.*: \([^/][^/]*\)/.*;\1;'`
-    echo_i "clients: $clients"
-    [ "$clients" = "" ] && return 1
-    [ "$clients" -ge $1 ] || return 1
-    [ "$clients" -le $2 ] || return 1
-    return 0
+  clients=$(rndccmd ${1} status | grep "recursive clients" \
+    | sed 's;.*: \([^/][^/]*\)/.*;\1;')
+  echo_i "clients: $clients"
+  [ "$clients" = "" ] && return 1
+  [ "$clients" -ge $2 ] || return 1
+  [ "$clients" -le $3 ] || return 1
+  return 0
 }
 
+_wait_for_message() (
+  nextpartpeek "$1" >wait_for_message.$n
+  grep -F "$2" wait_for_message.$n >/dev/null
+)
+
+wait_for_message() (
+  retry_quiet 20 _wait_for_message "$@"
+)
+
+n=0
 status=0
 
-echo_i "checking recursing clients are dropped at the per-server limit"
+n=$((n + 1))
+echo_i "checking recursing clients are dropped at the per-server limit ($n)"
 ret=0
 # make the server lame and restart
-$RNDCCMD flush
+rndccmd 10.53.0.3 flush
 touch ans4/norespond
 for try in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    burst a $try
-    # fetches-per-server is at 400, but at 20qps against a lame server,
-    # we'll reach 200 at the tenth second, and the quota should have been
-    # tuned to less than that by then.
-    [ $try -le 5 ] && low=$((try*10))
-    stat 20 200 || ret=1
-    [ $ret -eq 1 ] && break
-    sleep 1
+  burst 10.53.0.3 a $try
+  # fetches-per-server is at 400, but at 20qps against a lame server,
+  # we'll reach 200 at the tenth second, and the quota should have been
+  # tuned to less than that by then.
+  [ $try -le 5 ] && low=$((try * 10))
+  stat 10.53.0.3 20 200 || ret=1
+  [ $ret -eq 1 ] && break
+  sleep 1
 done
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
 
-echo_i "dumping ADB data"
-$RNDCCMD dumpdb -adb
-info=`grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/'`
+n=$((n + 1))
+echo_i "dumping ADB data ($n)"
+ret=0
+rndccmd 10.53.0.3 dumpdb -adb
+info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
 echo_i $info
 set -- $info
-quota=$5
-[ ${5:-200} -lt 200 ] || ret=1
+quota=$4
+[ ${4:-200} -lt 200 ] || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
 
-echo_i "checking servfail statistics"
+n=$((n + 1))
+echo_i "checking servfail statistics ($n)"
 ret=0
 rm -f ns3/named.stats
-$RNDCCMD stats
+rndccmd 10.53.0.3 stats
 for try in 1 2 3 4 5; do
-    [ -f ns3/named.stats ] && break
-    sleep 1
+  [ -f ns3/named.stats ] && break
+  sleep 1
 done
-sspill=`grep 'spilled due to server' ns3/named.stats | sed 's/\([0-9][0-9]*\) spilled.*/\1/'`
+sspill=$(grep 'spilled due to server' ns3/named.stats | sed 's/\([0-9][0-9]*\) spilled.*/\1/')
 [ -z "$sspill" ] && sspill=0
-fails=`grep 'queries resulted in SERVFAIL' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/'`
+fails=$(grep 'queries resulted in SERVFAIL' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/')
 [ -z "$fails" ] && fails=0
 [ "$fails" -ge "$sspill" ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
 
-echo_i "checking lame server recovery"
+n=$((n + 1))
+echo_i "checking lame server recovery ($n)"
 ret=0
-rm -f ans4/norespond
+test -f ans4/norespond && rm -f ans4/norespond
 for try in 1 2 3 4 5; do
-    burst b $try
-    stat 0 200 || ret=1
-    [ $ret -eq 1 ] && break
-    sleep 1
+  burst 10.53.0.3 b $try
+  stat 10.53.0.3 0 200 || ret=1
+  [ $ret -eq 1 ] && break
+  sleep 1
 done
-
-echo_i "dumping ADB data"
-$RNDCCMD dumpdb -adb
-info=`grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/'`
-echo_i $info
-set -- $info
-[ ${5:-${quota}} -lt $quota ] || ret=1
-quota=$5
-
-for try in 1 2 3 4 5 6 7 8 9 10; do
-    burst c $try
-    stat 0 20 || ret=1
-    [ $ret -eq 1 ] && break
-    sleep 1
-done
-
-echo_i "dumping ADB data"
-$RNDCCMD dumpdb -adb
-info=`grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/'`
-echo_i $info
-set -- $info
-[ ${5:-${quota}} -gt $quota ] || ret=1
-quota=$5
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "dumping ADB data ($n)"
+ret=0
+rndccmd 10.53.0.3 dumpdb -adb
+info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
+echo_i $info
+set -- $info
+[ ${4:-${quota}} -lt $quota ] || ret=1
+quota=$4
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking lame server recovery (continued) ($n)"
+ret=0
+for try in 1 2 3 4 5 6 7 8 9 10; do
+  burst 10.53.0.3 c $try
+  stat 10.53.0.3 0 20 || ret=1
+  [ $ret -eq 1 ] && break
+  sleep 1
+done
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "dumping ADB data ($n)"
+ret=0
+rndccmd 10.53.0.3 dumpdb -adb
+info=$(grep '10.53.0.4' ns3/named_dump.db | sed 's/.*\(atr [.0-9]*\).*\(quota [0-9]*\).*/\1 \2/')
+echo_i $info
+set -- $info
+[ ${4:-${quota}} -gt $quota ] || ret=1
+quota=$4
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
 
 copy_setports ns3/named2.conf.in ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
 
-echo_i "checking lame server clients are dropped at the per-domain limit"
+n=$((n + 1))
+echo_i "checking lame server clients are dropped at the per-domain limit ($n)"
 ret=0
 fail=0
 success=0
 touch ans4/norespond
 for try in 1 2 3 4 5; do
-    burst b $try 300
-    $DIGCMD a ${try}.example > dig.out.ns3.$try
-    grep "status: NOERROR" dig.out.ns3.$try > /dev/null 2>&1 && \
-            success=$((success+1))
-    grep "status: SERVFAIL" dig.out.ns3.$try > /dev/null 2>&1 && \
-            fail=$(($fail+1))
-    stat 30 50 || ret=1
-    [ $ret -eq 1 ] && break
-    $RNDCCMD recursing 2>&1 | sed 's/^/ns3 /' | cat_i
-    sleep 1
+  burst 10.53.0.3 b $try 300
+  $DIGCMD a ${try}.example >dig.out.ns3.$n.$try
+  grep "status: NOERROR" dig.out.ns3.$n.$try >/dev/null 2>&1 \
+    && success=$((success + 1))
+  grep "status: SERVFAIL" dig.out.ns3.$n.$try >/dev/null 2>&1 \
+    && fail=$(($fail + 1))
+  stat 10.53.0.3 30 50 || ret=1
+  [ $ret -eq 1 ] && break
+  rndccmd 10.53.0.3 recursing 2>&1 | sed 's/^/ns3 /' | cat_i
+  sleep 1
 done
 echo_i "$success successful valid queries, $fail SERVFAIL"
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
 
-echo_i "checking drop statistics"
+n=$((n + 1))
+echo_i "checking drop statistics ($n)"
+ret=0
 rm -f ns3/named.stats
-$RNDCCMD stats
+rndccmd 10.53.0.3 stats
 for try in 1 2 3 4 5; do
-    [ -f ns3/named.stats ] && break
-    sleep 1
+  [ -f ns3/named.stats ] && break
+  sleep 1
 done
-zspill=`grep 'spilled due to zone' ns3/named.stats | sed 's/\([0-9][0-9]*\) spilled.*/\1/'`
+zspill=$(grep 'spilled due to zone' ns3/named.stats | sed 's/\([0-9][0-9]*\) spilled.*/\1/')
 [ -z "$zspill" ] && zspill=0
-drops=`grep 'queries dropped' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/'`
+drops=$(grep 'queries dropped' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/')
 [ -z "$drops" ] && drops=0
 [ "$drops" -ge "$zspill" ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
 
 copy_setports ns3/named3.conf.in ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
 
-echo_i "checking lame server clients are dropped below the hard limit"
+n=$((n + 1))
+echo_i "checking lame server clients are dropped below the hard limit ($n)"
 ret=0
 fail=0
 exceeded=0
 success=0
 touch ans4/norespond
 for try in 1 2 3 4 5; do
-    burst b $try 400
-    $DIGCMD +time=2 a ${try}.example > dig.out.ns3.$try
-    stat 100 400 || exceeded=$((exceeded + 1))
-    grep "status: NOERROR" dig.out.ns3.$try > /dev/null 2>&1 && \
-            success=$((success+1))
-    grep "status: SERVFAIL" dig.out.ns3.$try > /dev/null 2>&1 && \
-            fail=$(($fail+1))
-    sleep 1
+  burst 10.53.0.3 b $try 400
+  $DIGCMD +time=2 a ${try}.example >dig.out.ns3.$n.$try
+  stat 10.53.0.3 1 400 || exceeded=$((exceeded + 1))
+  grep "status: NOERROR" dig.out.ns3.$n.$try >/dev/null 2>&1 \
+    && success=$((success + 1))
+  grep "status: SERVFAIL" dig.out.ns3.$n.$try >/dev/null 2>&1 \
+    && fail=$(($fail + 1))
+  sleep 1
 done
 echo_i "$success successful valid queries (expected 5)"
-[ "$success" -eq 5 ] || { echo_i "failed"; ret=1; }
+[ "$success" -eq 5 ] || {
+  echo_i "failed"
+  ret=1
+}
 echo_i "$fail SERVFAIL responses (expected 0)"
-[ "$fail" -eq 0 ] || { echo_i "failed"; ret=1; }
+[ "$fail" -eq 0 ] || {
+  echo_i "failed"
+  ret=1
+}
 echo_i "clients count exceeded 400 on $exceeded trials (expected 0)"
-[ "$exceeded" -eq 0 ] || { echo_i "failed"; ret=1; }
+[ "$exceeded" -eq 0 ] || {
+  echo_i "failed"
+  ret=1
+}
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
 
-echo_i "checking drop statistics"
+n=$((n + 1))
+echo_i "checking drop statistics ($n)"
+ret=0
 rm -f ns3/named.stats
-$RNDCCMD stats
-for try in 1 2 3 4 5; do
-    [ -f ns3/named.stats ] && break
-    sleep 1
-done
-drops=`grep 'queries dropped due to recursive client limit' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/'`
+touch ns3/named.stats
+rndccmd 10.53.0.3 stats
+wait_for_log 5 "queries dropped due to recursive client limit" ns3/named.stats || ret=1
+drops=$(grep 'queries dropped due to recursive client limit' ns3/named.stats | sed 's/\([0-9][0-9]*\) queries.*/\1/')
 [ "${drops:-0}" -ne 0 ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=$((status+ret))
+status=$((status + ret))
+
+nextpart ns5/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "checking clients are dropped at the clients-per-query limit ($n)"
+ret=0
+test -f ans4/norespond && rm -f ans4/norespond
+for try in 1 2 3 4 5; do
+  burst 10.53.0.5 latency $try 20 "dup"
+  sleep 1
+done
+wait_for_message ns5/named.run "clients-per-query increased to 10" || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking drop statistics ($n)"
+ret=0
+rm -f ns5/named.stats
+rndccmd 10.53.0.5 stats
+for try in 1 2 3 4 5; do
+  [ -f ns5/named.stats ] && break
+  sleep 1
+done
+zspill=$(grep 'spilled due to clients per query' ns5/named.stats | sed 's/ *\([0-9][0-9]*\) spilled.*/\1/')
+[ -z "$zspill" ] && zspill=0
+# ns5 configuration:
+#   clients-per-query 5
+#   max-clients-per-query 10
+# expected spills:
+#   15 (out of 20) spilled for the first burst, and 10 (out of 20) spilled for
+#   the next 4 bursts (because of auto-tuning): 15 + (4 * 10) == 55
+expected=55
+[ "$zspill" -eq "$expected" ] || ret=1
+echo_i "$zspill clients spilled (expected $expected)"
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "stop ns5"
+stop_server --use-rndc --port ${CONTROLPORT} ns5
+copy_setports ns5/named2.conf.in ns5/named.conf
+echo_i "start ns5"
+start_server --noclean --restart --port ${PORT} ns5
+
+nextpart ns5/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "checking clients are dropped at the clients-per-query limit with stale-answer-client-timeout ($n)"
+ret=0
+test -f ans4/norespond && rm -f ans4/norespond
+for try in 1 2 3 4 5; do
+  burst 10.53.0.5 latency $try 20 "dup"
+  sleep 1
+done
+wait_for_message ns5/named.run "clients-per-query increased to 10" || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking drop statistics ($n)"
+ret=0
+rm -f ns5/named.stats
+rndccmd 10.53.0.5 stats
+for try in 1 2 3 4 5; do
+  [ -f ns5/named.stats ] && break
+  sleep 1
+done
+zspill=$(grep 'spilled due to clients per query' ns5/named.stats | sed 's/ *\([0-9][0-9]*\) spilled.*/\1/')
+[ -z "$zspill" ] && zspill=0
+# ns5 configuration:
+#   clients-per-query 5
+#   max-clients-per-query 10
+# expected spills:
+#   15 (out of 20) spilled for the first burst, and 10 (out of 20) spilled for
+#   the next 4 bursts (because of auto-tuning): 15 + (4 * 10) == 55
+expected=55
+[ "$zspill" -eq "$expected" ] || ret=1
+echo_i "$zspill clients spilled (expected $expected)"
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

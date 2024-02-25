@@ -1,4 +1,4 @@
-/*	$NetBSD: uverr2result.c,v 1.5 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: uverr2result.c,v 1.5.2.1 2024/02/25 15:47:25 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,6 @@
 #include <uv.h>
 
 #include <isc/result.h>
-#include <isc/strerr.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -93,13 +92,15 @@ isc___nm_uverr2result(int uverr, bool dolog, const char *file,
 		return (ISC_R_MAXSIZE);
 	case UV_ENOTSUP:
 		return (ISC_R_FAMILYNOSUPPORT);
+	case UV_ENOPROTOOPT:
+	case UV_EPROTONOSUPPORT:
+		return (ISC_R_INVALIDPROTO);
 	default:
 		if (dolog) {
-			UNEXPECTED_ERROR(
-				file, line,
-				"unable to convert libuv "
-				"error code in %s to isc_result: %d: %s",
-				func, uverr, uv_strerror(uverr));
+			UNEXPECTED_ERROR("unable to convert libuv error code "
+					 "in %s (%s:%d) to isc_result: %d: %s",
+					 func, file, line, uverr,
+					 uv_strerror(uverr));
 		}
 		return (ISC_R_UNEXPECTED);
 	}

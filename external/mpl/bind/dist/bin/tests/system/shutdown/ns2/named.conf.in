@@ -13,7 +13,7 @@
 
 key rndc_key {
     secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -34,7 +34,7 @@ options {
 
 # 10.53.0.2 is authoritative for .test domain
 zone "test" {
-    type master;
+	type primary;
 	file "test.db";
 	allow-transfer { none; };
 };

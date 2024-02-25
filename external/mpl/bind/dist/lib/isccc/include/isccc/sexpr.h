@@ -1,4 +1,4 @@
-/*	$NetBSD: sexpr.h,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: sexpr.h,v 1.6.2.1 2024/02/25 15:47:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ISCCC_SEXPR_H
-#define ISCCC_SEXPR_H 1
+#pragma once
 
 /*! \file isccc/sexpr.h */
 
@@ -120,5 +119,3 @@ isccc_region_t *
 isccc_sexpr_tobinary(isccc_sexpr_t *sexpr);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCC_SEXPR_H */

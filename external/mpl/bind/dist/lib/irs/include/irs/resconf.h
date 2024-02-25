@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.h,v 1.5 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: resconf.h,v 1.5.2.1 2024/02/25 15:47:13 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,11 @@
  * information regarding copyright ownership.
  */
 
-#ifndef IRS_RESCONF_H
-#define IRS_RESCONF_H 1
+#pragma once
+
+#include <isc/lang.h>
+#include <isc/list.h>
+#include <isc/types.h>
 
 /*! \file
  *
@@ -24,7 +27,8 @@
  * modules.
  */
 
-#include <irs/types.h>
+/*%< resolv.conf configuration information */
+typedef struct irs_resconf irs_resconf_t;
 
 /*%
  * A DNS search list specified in the 'domain' or 'search' statements
@@ -115,6 +119,24 @@ irs_resconf_getndots(irs_resconf_t *conf);
  *\li	'conf' is a valid resconf object.
  */
 
-ISC_LANG_ENDDECLS
+unsigned int
+irs_resconf_getattempts(irs_resconf_t *conf);
+/*%<
+ * Return the 'attempts' value stored in 'conf'.
+ *
+ * Requires:
+ *
+ *\li	'conf' is a valid resconf object.
+ */
 
-#endif /* IRS_RESCONF_H */
+unsigned int
+irs_resconf_gettimeout(irs_resconf_t *conf);
+/*%<
+ * Return the 'timeout' value stored in 'conf'.
+ *
+ * Requires:
+ *
+ *\li	'conf' is a valid resconf object.
+ */
+
+ISC_LANG_ENDDECLS

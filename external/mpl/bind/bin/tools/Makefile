@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2024/02/25 15:42:54 martin Exp $
 
-SUBDIR= arpaname named-journalprint nsec3hash
+SUBDIR= arpaname mdig named-journalprint named-rrchecker nsec3hash
 
 .include "Makefile.inc"
 

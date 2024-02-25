@@ -21,15 +21,24 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	notify yes;
+	dnssec-validation no;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
 	type secondary;
 	primaries { 10.53.0.2; };
 	file "example.bk";
+	# non-responsive notify recipient (no reply, no ICMP errors)
+	also-notify { 10.53.10.53; };
+};
+
+zone "notify-source-port-test" {
+	type primary;
+	file "notify-source-port-test.db";
+	notify-source 10.53.0.3 port @EXTRAPORT2@;
 };

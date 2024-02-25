@@ -14,7 +14,7 @@
 testsock6() {
 	if test -n "$PERL" && $PERL -e "use IO::Socket::INET6;" 2> /dev/null
 	then
-		$PERL "$TOP/bin/tests/system/testsock6.pl" "$@"
+		$PERL "$TOP_SRCDIR/bin/tests/system/testsock6.pl" "$@"
 	else
 		false
 	fi
@@ -22,7 +22,6 @@ testsock6() {
 
 export LANG=C
 
-. ${TOP}/version
 
 #
 # Common lists of system tests to run.
@@ -31,10 +30,9 @@ export LANG=C
 # this reason, these must be run sequentially.
 #
 # Sequential tests that only run on unix/linux should be added to
-# SEQUENTIAL_UNIX in conf.sh.in; those that only run on windows should
-# be added to SEQUENTIAL_WINDOWS in conf.sh.win32.
+# SEQUENTIAL_UNIX in conf.sh.in
 #
-SEQUENTIAL_COMMON="ecdsa eddsa tkey"
+SEQUENTIAL_COMMON=""
 
 #
 # These tests can use ports assigned by the caller (other than 5300
@@ -42,119 +40,110 @@ SEQUENTIAL_COMMON="ecdsa eddsa tkey"
 # test, these tests can be run in parallel.
 #
 # Parallel tests that only run on unix/linux should be added to
-# PARALLEL_UNIX in conf.sh.in; those that only run on windows should
-# be added to PARALLEL_WINDOWS in conf.sh.win32.
+# PARALLEL_UNIX in conf.sh.in;
 #
 # Note: some of the longer-running tests such as serve-stale and
 # rpzrecurse are scheduled first, in order to get more benefit from
 # parallelism.
 #
-PARALLEL_COMMON="dnssec rpzrecurse serve-stale dupsigs \
-acl \
-additional \
-addzone \
-allow-query \
-auth \
-autosign \
-builtin \
-cacheclean \
-case \
-catz \
-cds \
-chain \
-checkconf \
-checkds \
-checknames \
-checkzone \
-database \
-digdelv \
-dlz \
-dlzexternal \
-dns64 \
-dscp \
-dsdigest \
-dyndb \
-ednscompliance \
-emptyzones \
-fetchlimit \
-filter-aaaa \
-formerr \
-forward \
-geoip2 \
-glue \
-idna \
-inline \
-integrity \
-ixfr \
-journal \
-kasp \
-keepalive \
-keymgr2kasp \
-legacy \
-limits \
-masterfile \
-masterformat \
-metadata \
-mirror \
-mkeys \
-names \
-notify \
-nsec3 \
-nslookup \
-nsupdate \
-nzd2nzf \
-padding \
-pending \
-pipelined \
-qmin \
-reclimit \
-redirect \
-resolver \
-rndc \
-rootkeysentinel \
-rpz \
-rrchecker \
-rrl \
-rrsetorder \
-rsabigexponent \
-runtime \
-sfcache \
-shutdown \
-smartsign \
-sortlist \
-spf \
-staticstub \
-statistics \
-statschannel \
-stub \
-synthfromdnssec \
-timeouts \
-tcp \
-tools \
-tsig \
-tsiggss \
-ttl \
-unknown \
-upforwd \
-verify \
-views \
-wildcard \
-xfer \
-xferquota \
-zero \
+PARALLEL_COMMON="
+rpzrecurse
+serve-stale
+dupsigs
+acl
+additional
+addzone
+allow-query
+auth
+autosign
+builtin
+cacheclean
+case
+catz
+cds
+checkconf
+checknames
+checkzone
+database
+digdelv
+dlz
+dns64
+dsdigest
+ecdsa
+eddsa
+ednscompliance
+emptyzones
+fetchlimit
+formerr
+forward
+geoip2
+glue
+idna
+include-multiplecfg
+inline
+integrity
+ixfr
+journal
+keepalive
+limits
+masterfile
+masterformat
+metadata
+mirror
+mkeys
+names
+notify
+nsec3
+nslookup
+nsupdate
+padding
+pending
+reclimit
+redirect
+resolver
+rndc
+rootkeysentinel
+rpz
+rrchecker
+rrl
+rrsetorder
+rsabigexponent
+runtime
+sfcache
+smartsign
+sortlist
+spf
+staticstub
+statistics
+statschannel
+stub
+synthfromdnssec
+tkey
+tools
+tsig
+tsiggss
+ttl
+unknown
+upforwd
+verify
+views
+wildcard
+xfer
+xferquota
+zero
 zonechecks"
 
 #
 # Set up color-coded test output
 #
 if [ ${SYSTEMTEST_FORCE_COLOR:-0} -eq 1 ] || test -t 1 && type tput > /dev/null 2>&1 && tput setaf 7 > /dev/null 2>&1 ; then
-    export COLOR_END=`tput setaf 4`    # blue
-    export COLOR_FAIL=`tput setaf 1`   # red
-    export COLOR_INFO=`tput bold`      # bold
-    export COLOR_NONE=`tput sgr0`
-    export COLOR_PASS=`tput setaf 2`   # green
-    export COLOR_START=`tput setaf 4`  # blue
-    export COLOR_WARN=`tput setaf 3`   # yellow
+    export COLOR_END=$(tput setaf 4)    # blue
+    export COLOR_FAIL=$(tput setaf 1)   # red
+    export COLOR_INFO=$(tput bold)      # bold
+    export COLOR_NONE=$(tput sgr0)
+    export COLOR_PASS=$(tput setaf 2)   # green
+    export COLOR_START=$(tput setaf 4)  # blue
+    export COLOR_WARN=$(tput setaf 3)   # yellow
 else
     # set to empty strings so printf succeeds
     export COLOR_END=''
@@ -166,7 +155,7 @@ else
     export COLOR_WARN=''
 fi
 
-export SYSTESTDIR="`basename $PWD`"
+export SYSTESTDIR="$(basename $PWD)"
 
 if type printf > /dev/null 2>&1
 then
@@ -257,8 +246,7 @@ cat_d() {
 }
 
 digcomp() {
-    output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
-    result=$?
+    { output=$($PERL $TOP_SRCDIR/bin/tests/system/digcomp.pl "$@"); result=$?; } || true
     [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
     return $result
 }
@@ -305,25 +293,10 @@ send() {
 # There are multiple algoritms sets to choose from (see get_algorithms.py). To
 # override the default choice, set the ALGORITHM_SET env var (see mkeys system
 # test for example).
-if test -x "$PYTHON" && test -x "$KEYGEN"; then
-    eval "$($PYTHON "$TOP_SRCDIR/bin/tests/system/get_algorithms.py")"
-else
-    # 9.16 workarounds
-    #   - for ./configure which calls bin/tests/system/cleanall.sh, which
-    #     includes this file before $KEYGEN is compiled
-    #   - for our Windows CI which lacks Python
-    DEFAULT_ALGORITHM=ECDSAP256SHA256
-    DEFAULT_ALGORITHM_NUMBER=13
-    DEFAULT_BITS=256
-    ALTERNATIVE_ALGORITHM=RSASHA256
-    ALTERNATIVE_ALGORITHM_NUMBER=8
-    ALTERNATIVE_BITS=1280
-    DISABLED_ALGORITHM=ECDSAP384SHA384
-    DISABLED_ALGORITHM_NUMBER=14
-    DISABLED_BITS=384
-fi
+eval "$($PYTHON "$TOP_SRCDIR/bin/tests/system/get_algorithms.py")"
 
 # Default HMAC algorithm.
+# also update _common/rndc.conf and _common/rndc.key when updating DEFAULT_HMAC
 export DEFAULT_HMAC=hmac-sha256
 
 #
@@ -507,7 +480,7 @@ nextpartreset() {
 # total number of lines read from that file so far to file descriptor 3
 nextpartread() {
     [ -f $1.prev ] || nextpartreset $1
-    prev=`cat $1.prev`
+    prev=$(cat $1.prev)
     awk "NR > $prev "'{ print }
 	 END          { print NR > "/dev/stderr" }' $1 2>&3
 }
@@ -532,6 +505,13 @@ _search_log() (
 	nextpart "$file" | grep -F -e "$msg" > /dev/null
 )
 
+# _search_log_re: same as _search_log but the message is an grep -E regex
+_search_log_re() (
+	msg="$1"
+	file="$2"
+	nextpart "$file" | grep -E -e "$msg" > /dev/null
+)
+
 # _search_log_peek: look for message $1 in file $2 with nextpartpeek().
 _search_log_peek() (
 	msg="$1"
@@ -549,7 +529,17 @@ wait_for_log() (
 	msg="$2"
 	file="$3"
 	retry_quiet "$timeout" _search_log "$msg" "$file" && return 0
-	echo_i "exceeded time limit waiting for '$msg' in $file"
+	echo_i "exceeded time limit waiting for literal '$msg' in $file"
+        return 1
+)
+
+# wait_for_log_re: same as wait_for_log, but the message is an grep -E regex
+wait_for_log_re() (
+	timeout="$1"
+	msg="$2"
+	file="$3"
+	retry_quiet "$timeout" _search_log_re "$msg" "$file" && return 0
+	echo_i "exceeded time limit waiting for regex '$msg' in $file"
         return 1
 )
 
@@ -560,7 +550,7 @@ wait_for_log_peek() (
 	msg="$2"
 	file="$3"
 	retry_quiet "$timeout" _search_log_peek "$msg" "$file" && return 0
-	echo_i "exceeded time limit waiting for '$msg' in $file"
+	echo_i "exceeded time limit waiting for literal '$msg' in $file"
         return 1
 )
 
@@ -614,23 +604,28 @@ _repeat() (
     return 0
 )
 
+_times() {
+	awk "BEGIN{ for(i = 1; i <= $1; i++) print i}";
+}
+
 rndc_reload() {
-    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
+    $RNDC -c ../_common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
     # reloading single zone is synchronous, if we're reloading whole server
     # we need to wait for reload to finish
     if [ -z "$3" ]; then
-	for __try in 0 1 2 3 4 5 6 7 8 9; do
-	    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
-	    sleep 1
-	done
+        for _ in $(_times 10); do
+            $RNDC -c ../_common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
+            sleep 1
+        done
     fi
 }
 
 rndc_reconfig() {
-    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
-    for __try in 0 1 2 3 4 5 6 7 8 9; do
-	$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
-	sleep 1
+    seconds=${3:-10}
+    $RNDC -c ../_common/rndc.conf -s "$2" -p "${CONTROLPORT}" reconfig 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
+    for _ in $(_times "$seconds"); do
+        "$RNDC" -c ../_common/rndc.conf -s "$2" -p "${CONTROLPORT}" status | grep "reload/reconfig in progress" > /dev/null || break
+        sleep 1
     done
 }
 
@@ -641,7 +636,7 @@ rndc_reconfig() {
 # arguments, if any, are appended to the rndc command line after "dumpdb".
 #
 # Control channel configuration for the name server instance to send the
-# command to must match the contents of bin/tests/system/common/rndc.conf.
+# command to must match the contents of bin/tests/system/_common/rndc.conf.
 #
 # rndc output is stored in a file called rndc.out.test${n}; the "n" variable is
 # required to be set by the calling tests.sh script.
@@ -656,7 +651,7 @@ rndc_dumpdb() {
 	__ip="10.53.0.$(echo "${__server}" | tr -c -d "0-9")"
 
 	shift
-	${RNDC} -c ../common/rndc.conf -p "${CONTROLPORT}" -s "${__ip}" dumpdb "$@" > "rndc.out.test${n}" 2>&1 || __ret=1
+	${RNDC} -c ../_common/rndc.conf -p "${CONTROLPORT}" -s "${__ip}" dumpdb "$@" > "rndc.out.test${n}" 2>&1 || __ret=1
 
 	for _ in 0 1 2 3 4 5 6 7 8 9
 	do
@@ -691,8 +686,8 @@ get_dig_xfer_stats() {
 # them to a format used by some system tests.
 get_named_xfer_stats() {
 	LOGFILE="$1"
-	PEER="`echo $2 | sed 's/\./\\\\./g'`"
-	ZONE="`echo $3 | sed 's/\./\\\\./g'`"
+	PEER="$(echo $2 | sed 's/\./\\./g')"
+	ZONE="$(echo $3 | sed 's/\./\\./g')"
 	MESSAGE="$4"
 	grep " ${PEER}#.*${MESSAGE}:" "${LOGFILE}" | \
 		sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) messages.*/messages=\1/p" | tail -1
@@ -706,38 +701,38 @@ get_named_xfer_stats() {
 #
 # Convenience function to copy a configuration file, replacing the tokens
 # QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
-# environment variables. (These values are set by "run.sh", which calls the
+# environment variables. (These values are set by test runner, which calls the
 # scripts invoking this function.)
 #
 # Usage:
 #   copy_setports infile outfile
 #
 copy_setports() {
-    # The indirect method of handling the substitution of the PORT variables
-    # (defining "atsign" then substituting for it in the "sed" statement) is
-    # required to prevent the "Configure" script (in the win32utils/ directory)
-    # from replacing the <at>PORT<at> substitution tokens when it processes
-    # this file and produces conf.sh.
-    atsign="@"
-    sed -e "s/${atsign}PORT${atsign}/${PORT}/g" \
-        -e "s/${atsign}EXTRAPORT1${atsign}/${EXTRAPORT1}/g" \
-        -e "s/${atsign}EXTRAPORT2${atsign}/${EXTRAPORT2}/g" \
-        -e "s/${atsign}EXTRAPORT3${atsign}/${EXTRAPORT3}/g" \
-        -e "s/${atsign}EXTRAPORT4${atsign}/${EXTRAPORT4}/g" \
-        -e "s/${atsign}EXTRAPORT5${atsign}/${EXTRAPORT5}/g" \
-        -e "s/${atsign}EXTRAPORT6${atsign}/${EXTRAPORT6}/g" \
-        -e "s/${atsign}EXTRAPORT7${atsign}/${EXTRAPORT7}/g" \
-        -e "s/${atsign}EXTRAPORT8${atsign}/${EXTRAPORT8}/g" \
-        -e "s/${atsign}CONTROLPORT${atsign}/${CONTROLPORT}/g" \
-        -e "s/${atsign}DEFAULT_ALGORITHM${atsign}/${DEFAULT_ALGORITHM}/g" \
-        -e "s/${atsign}DEFAULT_ALGORITHM_NUMBER${atsign}/${DEFAULT_ALGORITHM_NUMBER}/g" \
-        -e "s/${atsign}DEFAULT_BITS${atsign}/${DEFAULT_BITS}/g" \
-        -e "s/${atsign}ALTERNATIVE_ALGORITHM${atsign}/${ALTERNATIVE_ALGORITHM}/g" \
-        -e "s/${atsign}ALTERNATIVE_ALGORITHM_NUMBER${atsign}/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
-        -e "s/${atsign}ALTERNATIVE_BITS${atsign}/${ALTERNATIVE_BITS}/g" \
-        -e "s/${atsign}DEFAULT_HMAC${atsign}/${DEFAULT_HMAC}/g" \
-        -e "s/${atsign}DISABLED_ALGORITHM${atsign}/${DISABLED_ALGORITHM}/g" \
-        -e "s/${atsign}DISABLED_ALGORITHM_NUMBER${atsign}/${DISABLED_ALGORITHM_NUMBER}/g" \
-        -e "s/${atsign}DISABLED_BITS${atsign}/${DISABLED_BITS}/g" \
+    dir=$(echo "$TMPDIR" | sed 's/\//\\\//g')
+
+    sed -e "s/@TMPDIR@/${dir}/g" \
+        -e "s/@PORT@/${PORT}/g" \
+        -e "s/@TLSPORT@/${TLSPORT}/g" \
+        -e "s/@HTTPPORT@/${HTTPPORT}/g" \
+        -e "s/@HTTPSPORT@/${HTTPSPORT}/g" \
+        -e "s/@EXTRAPORT1@/${EXTRAPORT1}/g" \
+        -e "s/@EXTRAPORT2@/${EXTRAPORT2}/g" \
+        -e "s/@EXTRAPORT3@/${EXTRAPORT3}/g" \
+        -e "s/@EXTRAPORT4@/${EXTRAPORT4}/g" \
+        -e "s/@EXTRAPORT5@/${EXTRAPORT5}/g" \
+        -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
+        -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
+        -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
+        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" \
+        -e "s/@DEFAULT_ALGORITHM@/${DEFAULT_ALGORITHM}/g" \
+        -e "s/@DEFAULT_ALGORITHM_NUMBER@/${DEFAULT_ALGORITHM_NUMBER}/g" \
+        -e "s/@DEFAULT_BITS@/${DEFAULT_BITS}/g" \
+        -e "s/@ALTERNATIVE_ALGORITHM@/${ALTERNATIVE_ALGORITHM}/g" \
+        -e "s/@ALTERNATIVE_ALGORITHM_NUMBER@/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
+        -e "s/@ALTERNATIVE_BITS@/${ALTERNATIVE_BITS}/g" \
+        -e "s/@DEFAULT_HMAC@/${DEFAULT_HMAC}/g" \
+        -e "s/@DISABLED_ALGORITHM@/${DISABLED_ALGORITHM}/g" \
+        -e "s/@DISABLED_ALGORITHM_NUMBER@/${DISABLED_ALGORITHM_NUMBER}/g" \
+        -e "s/@DISABLED_BITS@/${DISABLED_BITS}/g" \
         $1 > $2
 }

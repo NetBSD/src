@@ -27,12 +27,12 @@ options {
 };
 
 zone "." {
-	type master;
+	type primary;
 	file "root.db";
 };
 
 zone "example." {
-	type master;
+	type primary;
 	notify explicit;
 	also-notify { 10.53.0.2; };
 	dialup yes;

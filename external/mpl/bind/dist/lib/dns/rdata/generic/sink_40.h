@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: sink_40.h,v 1.6.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SINK_40_H
-#define GENERIC_SINK_40_H 1
+#pragma once
 
 typedef struct dns_rdata_sink_t {
 	dns_rdatacommon_t common;
@@ -25,5 +24,3 @@ typedef struct dns_rdata_sink_t {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_sink_t;
-
-#endif /* GENERIC_SINK_40_H */

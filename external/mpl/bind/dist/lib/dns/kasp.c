@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.c,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: kasp.c,v 1.5.2.1 2024/02/25 15:46:50 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,47 +29,32 @@
 #include <dns/keyvalues.h>
 #include <dns/log.h>
 
+/* Default TTLsig (maximum zone ttl) */
+#define DEFAULT_TTLSIG 604800 /* one week */
+
 isc_result_t
 dns_kasp_create(isc_mem_t *mctx, const char *name, dns_kasp_t **kaspp) {
 	dns_kasp_t *kasp;
+	dns_kasp_t k = {
+		.magic = DNS_KASP_MAGIC,
+	};
 
 	REQUIRE(name != NULL);
 	REQUIRE(kaspp != NULL && *kaspp == NULL);
 
 	kasp = isc_mem_get(mctx, sizeof(*kasp));
+	*kasp = k;
+
 	kasp->mctx = NULL;
 	isc_mem_attach(mctx, &kasp->mctx);
-
 	kasp->name = isc_mem_strdup(mctx, name);
 	isc_mutex_init(&kasp->lock);
-	kasp->frozen = false;
-
 	isc_refcount_init(&kasp->references, 1);
 
 	ISC_LINK_INIT(kasp, link);
-
-	kasp->signatures_refresh = DNS_KASP_SIG_REFRESH;
-	kasp->signatures_validity = DNS_KASP_SIG_VALIDITY;
-	kasp->signatures_validity_dnskey = DNS_KASP_SIG_VALIDITY_DNSKEY;
-
 	ISC_LIST_INIT(kasp->keys);
 
-	kasp->dnskey_ttl = DNS_KASP_KEY_TTL;
-	kasp->publish_safety = DNS_KASP_PUBLISH_SAFETY;
-	kasp->retire_safety = DNS_KASP_RETIRE_SAFETY;
-	kasp->purge_keys = DNS_KASP_PURGE_KEYS;
-
-	kasp->zone_max_ttl = DNS_KASP_ZONE_MAXTTL;
-	kasp->zone_propagation_delay = DNS_KASP_ZONE_PROPDELAY;
-
-	kasp->parent_ds_ttl = DNS_KASP_DS_TTL;
-	kasp->parent_propagation_delay = DNS_KASP_PARENT_PROPDELAY;
-
-	kasp->nsec3 = false;
-
-	kasp->magic = DNS_KASP_MAGIC;
 	*kaspp = kasp;
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -257,10 +242,13 @@ dns_kasp_setretiresafety(dns_kasp_t *kasp, uint32_t value) {
 }
 
 dns_ttl_t
-dns_kasp_zonemaxttl(dns_kasp_t *kasp) {
+dns_kasp_zonemaxttl(dns_kasp_t *kasp, bool fallback) {
 	REQUIRE(DNS_KASP_VALID(kasp));
 	REQUIRE(kasp->frozen);
 
+	if (kasp->zone_max_ttl == 0 && fallback) {
+		return (DEFAULT_TTLSIG);
+	}
 	return (kasp->zone_max_ttl);
 }
 

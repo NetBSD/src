@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.7.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_LOG_H
-#define ISC_LOG_H 1
+#pragma once
 
 /*! \file isc/log.h */
 
@@ -25,7 +24,6 @@
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
-#include <isc/platform.h>
 #include <isc/types.h>
 
 /*@{*/
@@ -163,9 +161,9 @@ typedef union isc_logdestination {
  * definitions with indexes into its isc_logcategory structure corresponding to
  * the order of the names.
  */
-LIBISC_EXTERNAL_DATA extern isc_logcategory_t isc_categories[];
-LIBISC_EXTERNAL_DATA extern isc_log_t	     *isc_lctx;
-LIBISC_EXTERNAL_DATA extern isc_logmodule_t   isc_modules[];
+extern isc_logcategory_t isc_categories[];
+extern isc_log_t	*isc_lctx;
+extern isc_logmodule_t	 isc_modules[];
 /*@}*/
 
 /*@{*/
@@ -173,8 +171,9 @@ LIBISC_EXTERNAL_DATA extern isc_logmodule_t   isc_modules[];
  * Do not log directly to DEFAULT.  Use another category.  When in doubt,
  * use GENERAL.
  */
-#define ISC_LOGCATEGORY_DEFAULT (&isc_categories[0])
-#define ISC_LOGCATEGORY_GENERAL (&isc_categories[1])
+#define ISC_LOGCATEGORY_DEFAULT	  (&isc_categories[0])
+#define ISC_LOGCATEGORY_GENERAL	  (&isc_categories[1])
+#define ISC_LOGCATEGORY_SSLKEYLOG (&isc_categories[2])
 /*@}*/
 
 #define ISC_LOGMODULE_SOCKET	(&isc_modules[0])
@@ -845,6 +844,12 @@ isc_logfile_roll(isc_logfile_t *file);
  *\li	file is not NULL.
  */
 
-ISC_LANG_ENDDECLS
+void
+isc_log_setforcelog(bool v);
+/*%<
+ * Turn forced logging on/off for the current thread. This can be used to
+ * temporarily increase the debug level to maximum for the duration of
+ * a single task event.
+ */
 
-#endif /* ISC_LOG_H */
+ISC_LANG_ENDDECLS

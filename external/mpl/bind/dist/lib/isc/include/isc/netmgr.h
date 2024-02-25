@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.7.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,12 +20,11 @@
 #include <isc/mem.h>
 #include <isc/region.h>
 #include <isc/result.h>
+#include <isc/tls.h>
 #include <isc/types.h>
 
-#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/types.h>
-#endif
 
 #if defined(SO_REUSEPORT_LB) || (defined(SO_REUSEPORT) && defined(__linux__))
 #define HAVE_SO_REUSEPORT_LB 1
@@ -112,6 +111,37 @@ isc_nmsocket_close(isc_nmsocket_t **sockp);
  * sockets with active handles, the socket will be closed.
  */
 
+void
+isc_nmsocket_set_tlsctx(isc_nmsocket_t *listener, isc_tlsctx_t *tlsctx);
+/*%<
+ * Asynchronously replace the TLS context within the listener socket object.
+ * The function is intended to be used during reconfiguration.
+ *
+ * Requires:
+ * \li	'listener' is a pointer to a valid network manager listener socket
+ object with TLS support;
+ * \li	'tlsctx' is a valid pointer to a TLS context object.
+ */
+
+void
+isc_nmsocket_set_max_streams(isc_nmsocket_t *listener,
+			     const uint32_t  max_streams);
+/*%<
+ * Set the maximum allowed number of concurrent streams for accepted
+ * client connections. The implementation might be asynchronous
+ * depending on the listener socket type.
+ *
+ * The call is a no-op for any listener socket type that does not
+ * support concept of multiple sessions per a client
+ * connection. Currently, it works only for HTTP/2 listeners.
+ *
+ * Setting 'max_streams' to '0' instructs the listener that there is
+ * no limit for concurrent streams.
+ *
+ * Requires:
+ * \li	'listener' is a pointer to a valid network manager listener socket.
+ */
+
 #ifdef NETMGR_TRACE
 #define isc_nmhandle_attach(handle, dest) \
 	isc__nmhandle_attach(handle, dest, __FILE__, __LINE__, __func__)
@@ -177,6 +207,12 @@ isc_nmhandle_cleartimeout(isc_nmhandle_t *handle);
  * a TCPDNS socket wrapping a TCP connection), the timer is set for
  * both socket layers.
  */
+bool
+isc_nmhandle_timer_running(isc_nmhandle_t *handle);
+/*%<
+ * Return true if the timer for the socket connected to 'handle'
+ * is running.
+ */
 
 void
 isc_nmhandle_keepalive(isc_nmhandle_t *handle, bool value);
@@ -186,8 +222,8 @@ isc_nmhandle_keepalive(isc_nmhandle_t *handle, bool value);
  * When keepalive is active, we switch to using the keepalive timeout
  * to determine when to close a connection, rather than the idle timeout.
  *
- * This applies only to TCP-based DNS connections (i.e., TCPDNS).
- * On other types of connection it has no effect.
+ * This applies only to TCP-based DNS connections (i.e., TCPDNS or
+ * TLSDNS). On other types of connection it has no effect.
  */
 
 isc_sockaddr_t
@@ -241,6 +277,18 @@ isc_nm_udpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
  *
  * The connected socket can only be accessed via the handle passed to
  * 'cb'.
+ */
+
+isc_result_t
+isc_nm_routeconnect(isc_nm_t *mgr, isc_nm_cb_t cb, void *cbarg,
+		    size_t extrahandlesize);
+/*%<
+ * Open a route/netlink socket and call 'cb', so the caller can be
+ * begin listening for interface changes.  This behaves similarly to
+ * isc_nm_udpconnect().
+ *
+ * Returns ISC_R_NOTIMPLEMENTED on systems where route/netlink sockets
+ * are not supported.
  */
 
 void
@@ -382,8 +430,18 @@ isc_nm_listentcpdns(isc_nm_t *mgr, isc_sockaddr_t *iface,
  * 'quota' is passed to isc_nm_listentcp() when opening the raw TCP socket.
  */
 
+isc_result_t
+isc_nm_listentlsdns(isc_nm_t *mgr, isc_sockaddr_t *iface,
+		    isc_nm_recv_cb_t recv_cb, void *recv_cbarg,
+		    isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
+		    size_t extrahandlesize, int backlog, isc_quota_t *quota,
+		    isc_tlsctx_t *sslctx, isc_nmsocket_t **sockp);
+/*%<
+ * Same as isc_nm_listentcpdns but for an SSL (DoT) socket.
+ */
+
 void
-isc_nm_tcpdns_sequential(isc_nmhandle_t *handle);
+isc_nm_sequential(isc_nmhandle_t *handle);
 /*%<
  * Disable pipelining on this connection. Each DNS packet will be only
  * processed after the previous completes.
@@ -401,15 +459,6 @@ isc_nm_tcpdns_sequential(isc_nmhandle_t *handle);
  */
 
 void
-isc_nm_tcpdns_keepalive(isc_nmhandle_t *handle, bool value);
-/*%<
- * Enable/disable keepalive on this connection by setting it to 'value'.
- *
- * When keepalive is active, we switch to using the keepalive timeout
- * to determine when to close a connection, rather than the idle timeout.
- */
-
-void
 isc_nm_settimeouts(isc_nm_t *mgr, uint32_t init, uint32_t idle,
 		   uint32_t keepalive, uint32_t advertised);
 /*%<
@@ -417,6 +466,17 @@ isc_nm_settimeouts(isc_nm_t *mgr, uint32_t init, uint32_t idle,
  * for TCP connections, and the timeout value to advertise in responses using
  * the EDNS TCP Keepalive option (which should ordinarily be the same
  * as 'keepalive'), in milliseconds.
+ *
+ * Requires:
+ * \li	'mgr' is a valid netmgr.
+ */
+
+void
+isc_nm_setnetbuffers(isc_nm_t *mgr, int32_t recv_tcp, int32_t send_tcp,
+		     int32_t recv_udp, int32_t send_udp);
+/*%<
+ * If not 0, sets the SO_RCVBUF and SO_SNDBUF socket options for TCP and UDP
+ * respectively.
  *
  * Requires:
  * \li	'mgr' is a valid netmgr.
@@ -466,12 +526,27 @@ isc_nm_setstats(isc_nm_t *mgr, isc_stats_t *stats);
  *	full range of socket-related stats counter numbers.
  */
 
+isc_result_t
+isc_nm_checkaddr(const isc_sockaddr_t *addr, isc_socktype_t type);
+/*%<
+ * Check whether the specified address is available on the local system
+ * by opening a socket and immediately closing it.
+ *
+ * Requires:
+ *\li	'addr' is not NULL.
+ */
+
 void
 isc_nm_tcpdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 		     isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
 		     size_t extrahandlesize);
+void
+isc_nm_tlsdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
+		     isc_nm_cb_t cb, void *cbarg, unsigned int timeout,
+		     size_t extrahandlesize, isc_tlsctx_t *sslctx,
+		     isc_tlsctx_client_session_cache_t *client_sess_cache);
 /*%<
- * Establish a DNS client connection via a TCP connection, bound to
+ * Establish a DNS client connection via a TCP or TLS connection, bound to
  * the address 'local' and connected to the address 'peer'.
  *
  * When the connection is complete or has timed out, call 'cb' with
@@ -483,6 +558,205 @@ isc_nm_tcpdnsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
  * The connected socket can only be accessed via the handle passed to
  * 'cb'.
  */
+
+/*%<
+ * Returns 'true' iff 'handle' is associated with a socket of type
+ * 'isc_nm_tlsdnssocket'.
+ */
+
+bool
+isc_nm_is_http_handle(isc_nmhandle_t *handle);
+/*%<
+ * Returns 'true' iff 'handle' is associated with a socket of type
+ * 'isc_nm_httpsocket'.
+ */
+
+#if HAVE_LIBNGHTTP2
+
+#define ISC_NM_HTTP_DEFAULT_PATH "/dns-query"
+
+isc_result_t
+isc_nm_listentls(isc_nm_t *mgr, isc_sockaddr_t *iface,
+		 isc_nm_accept_cb_t accept_cb, void *accept_cbarg,
+		 size_t extrahandlesize, int backlog, isc_quota_t *quota,
+		 isc_tlsctx_t *sslctx, isc_nmsocket_t **sockp);
+
+void
+isc_nm_tlsconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
+		  isc_nm_cb_t cb, void *cbarg, isc_tlsctx_t *ctx,
+		  isc_tlsctx_client_session_cache_t *client_sess_cache,
+		  unsigned int timeout, size_t extrahandlesize);
+
+void
+isc_nm_httpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
+		   const char *uri, bool POST, isc_nm_cb_t cb, void *cbarg,
+		   isc_tlsctx_t			     *ctx,
+		   isc_tlsctx_client_session_cache_t *client_sess_cache,
+		   unsigned int timeout, size_t extrahandlesize);
+
+isc_result_t
+isc_nm_listenhttp(isc_nm_t *mgr, isc_sockaddr_t *iface, int backlog,
+		  isc_quota_t *quota, isc_tlsctx_t *ctx,
+		  isc_nm_http_endpoints_t *eps, uint32_t max_concurrent_streams,
+		  isc_nmsocket_t **sockp);
+
+isc_nm_http_endpoints_t *
+isc_nm_http_endpoints_new(isc_mem_t *mctx);
+/*%<
+ * Create a new, empty HTTP endpoints set object.
+ *
+ * Requires:
+ * \li 'mctx' a valid memory context object.
+ */
+
+isc_result_t
+isc_nm_http_endpoints_add(isc_nm_http_endpoints_t *restrict eps,
+			  const char *uri, const isc_nm_recv_cb_t cb,
+			  void *cbarg, const size_t extrahandlesize);
+/*%< Adds a new endpoint to the given HTTP endpoints set object.
+ *
+ * NOTE: adding an endpoint is allowed only if the endpoint object has
+ * not been passed to isc_nm_listenhttp() yet.
+ *
+ * Requires:
+ * \li 'eps' is a valid pointer to a valid isc_nm_http_endpoints_t
+ * object;
+ * \li 'uri' is a valid pointer to a string of length > 0;
+ * \li 'cb' is a valid pointer to a read callback function.
+ */
+
+void
+isc_nm_http_endpoints_attach(isc_nm_http_endpoints_t  *source,
+			     isc_nm_http_endpoints_t **targetp);
+/*%<
+ * Attaches to an HTTP endpoints set object.
+ *
+ * Requires:
+ * \li 'source' is a non-NULL pointer to a valid
+ * isc_nm_http_endpoints_t object;
+ * \li 'target' is a pointer to a pointer, containing NULL.
+ */
+
+void
+isc_nm_http_endpoints_detach(isc_nm_http_endpoints_t **restrict epsp);
+/*%<
+ * Detaches from an HTTP endpoints set object. When reference count
+ * reaches 0, the object get deleted.
+ *
+ * Requires:
+ * \li 'epsp' is a pointer to a pointer to a valid
+ * isc_nm_http_endpoints_t object.
+ */
+
+bool
+isc_nm_http_path_isvalid(const char *path);
+/*%<
+ * Returns 'true' if 'path' matches the format requirements for
+ * the path component of a URI as defined in RFC 3986 section 3.3.
+ */
+
+void
+isc_nm_http_makeuri(const bool https, const isc_sockaddr_t *sa,
+		    const char *hostname, const uint16_t http_port,
+		    const char *abs_path, char *outbuf,
+		    const size_t outbuf_len);
+/*%<
+ * Makes a URI connection string out of na isc_sockaddr_t object 'sa'
+ * or the specified 'hostname' and 'http_port'.
+ *
+ * Requires:
+ * \li 'abs_path' is a valid absolute HTTP path string;
+ * \li 'outbuf' is a valid pointer to a buffer which will get the result;
+ * \li 'outbuf_len' is a size of the result buffer and is greater than zero.
+ */
+
+void
+isc_nm_http_set_endpoints(isc_nmsocket_t	  *listener,
+			  isc_nm_http_endpoints_t *eps);
+/*%<
+ * Asynchronously replace the set of HTTP endpoints (paths) within
+ * the listener socket object.  The function is intended to be used
+ * during reconfiguration.
+ *
+ * Requires:
+ * \li	'listener' is a pointer to a valid network manager HTTP listener socket;
+ * \li	'eps' is a valid pointer to an HTTP endpoints set.
+ */
+
+#endif /* HAVE_LIBNGHTTP2 */
+
+void
+isc_nm_bad_request(isc_nmhandle_t *handle);
+/*%<
+ * Perform a transport protocol specific action on the handle in case of a
+ * bad/malformed incoming DNS message.
+ *
+ * NOTE: The function currently is no-op for any protocol except HTTP/2.
+ *
+ * Requires:
+ *  \li 'handle' is a valid netmgr handle object.
+ */
+
+isc_result_t
+isc_nm_xfr_checkperm(isc_nmhandle_t *handle);
+/*%<
+ * Check if it is permitted to do a zone transfer over the given handle.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS		Success, permission check passed successfully
+ * \li	#ISC_R_DOTALPNERROR	No permission because of ALPN tag mismatch
+ * \li	#ISC_R_NOPERM		No permission because of other restrictions
+ * \li  any other result indicates failure (i.e. no permission)
+ *
+ * Requires:
+ * \li	'handle' is a valid connection handle.
+ */
+
+void
+isc_nm_set_maxage(isc_nmhandle_t *handle, const uint32_t ttl);
+/*%<
+ * Set the minimal time to live from the server's response Answer
+ * section as a hint to the underlying transport.
+ *
+ * NOTE: The function currently is no-op for any protocol except HTTP/2.
+ *
+ * Requires:
+ *
+ * \li 'handle' is a valid netmgr handle object associated with an accepted
+ * connection.
+ */
+
+isc_nmsocket_type
+isc_nm_socket_type(const isc_nmhandle_t *handle);
+/*%<
+ * Returns the handle's underlying socket type.
+ *
+ * Requires:
+ *  \li 'handle' is a valid netmgr handle object.
+ */
+
+bool
+isc_nm_has_encryption(const isc_nmhandle_t *handle);
+/*%<
+ * Returns 'true' iff the handle's underlying transport does encryption.
+ *
+ * Requires:
+ *  \li 'handle' is a valid netmgr handle object.
+ */
+
+const char *
+isc_nm_verify_tls_peer_result_string(const isc_nmhandle_t *handle);
+/*%<
+ * Returns user-readable message describing TLS peer's certificate
+ * validation result. Returns 'NULL' for the transport handles for
+ * which peer verification was not performed.
+ *
+ * Requires:
+ *  \li 'handle' is a valid netmgr handle object.
+ */
+
+#define ISC_NM_TASK_SLOW_OFFSET -2
+#define ISC_NM_TASK_SLOW(i)	(ISC_NM_TASK_SLOW_OFFSET - 1 - i)
 
 void
 isc_nm_task_enqueue(isc_nm_t *mgr, isc_task_t *task, int threadid);

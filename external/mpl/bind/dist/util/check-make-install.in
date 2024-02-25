@@ -19,7 +19,6 @@ install_dir="${DESTDIR}@prefix@"
 
 headers_to_install() {
 	find "${abs_top_srcdir}/lib" -name "*.h" -or -name "*.h.in" |
-		grep -v -F /win32/ |
 		sed -n \
 		    -e "s|\.h\.in$|\.h|" \
 		    -e "s|.*include/|${DESTDIR}${includedir}/|p" |

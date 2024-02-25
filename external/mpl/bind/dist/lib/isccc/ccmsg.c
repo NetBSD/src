@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: ccmsg.c,v 1.6.2.1 2024/02/25 15:47:30 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,8 +34,9 @@
 #include <inttypes.h>
 
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/result.h>
-#include <isc/task.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <isccc/ccmsg.h>
@@ -45,111 +46,95 @@
 #define VALID_CCMSG(foo) ISC_MAGIC_VALID(foo, CCMSG_MAGIC)
 
 static void
-recv_length(isc_task_t *, isc_event_t *);
-static void
-recv_message(isc_task_t *, isc_event_t *);
-
-static void
-recv_length(isc_task_t *task, isc_event_t *ev_in) {
-	isc_socketevent_t *ev = (isc_socketevent_t *)ev_in;
-	isc_event_t *dev;
-	isccc_ccmsg_t *ccmsg = ev_in->ev_arg;
-	isc_region_t region;
-	isc_result_t result;
+recv_data(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
+	  void *arg) {
+	isccc_ccmsg_t *ccmsg = arg;
+	size_t size;
 
 	INSIST(VALID_CCMSG(ccmsg));
 
-	dev = &ccmsg->event;
+	switch (eresult) {
+	case ISC_R_SHUTTINGDOWN:
+	case ISC_R_CANCELED:
+	case ISC_R_EOF:
+		ccmsg->result = eresult;
+		goto done;
+	case ISC_R_SUCCESS:
+		if (region == NULL) {
+			ccmsg->result = ISC_R_EOF;
+			goto done;
+		}
+		ccmsg->result = ISC_R_SUCCESS;
+		break;
+	default:
+		ccmsg->result = eresult;
+		goto done;
+	}
 
-	if (ev->result != ISC_R_SUCCESS) {
-		ccmsg->result = ev->result;
-		goto send_and_free;
+	if (!ccmsg->length_received) {
+		if (region->length < sizeof(uint32_t)) {
+			ccmsg->result = ISC_R_UNEXPECTEDEND;
+			goto done;
+		}
+
+		ccmsg->size = ntohl(*(uint32_t *)region->base);
+
+		if (ccmsg->size == 0) {
+			ccmsg->result = ISC_R_UNEXPECTEDEND;
+			goto done;
+		}
+		if (ccmsg->size > ccmsg->maxsize) {
+			ccmsg->result = ISC_R_RANGE;
+			goto done;
+		}
+
+		isc_region_consume(region, sizeof(uint32_t));
+		isc_buffer_allocate(ccmsg->mctx, &ccmsg->buffer, ccmsg->size);
+
+		ccmsg->length_received = true;
 	}
 
 	/*
-	 * Success.
+	 * If there's no more data, wait for more
 	 */
-	ccmsg->size = ntohl(ccmsg->size);
-	if (ccmsg->size == 0) {
-		ccmsg->result = ISC_R_UNEXPECTEDEND;
-		goto send_and_free;
-	}
-	if (ccmsg->size > ccmsg->maxsize) {
-		ccmsg->result = ISC_R_RANGE;
-		goto send_and_free;
+	if (region->length == 0) {
+		return;
 	}
 
-	region.base = isc_mem_get(ccmsg->mctx, ccmsg->size);
-	region.length = ccmsg->size;
-	if (region.base == NULL) {
-		ccmsg->result = ISC_R_NOMEMORY;
-		goto send_and_free;
+	/* We have some data in the buffer, read it */
+
+	size = ISC_MIN(isc_buffer_availablelength(ccmsg->buffer),
+		       region->length);
+	isc_buffer_putmem(ccmsg->buffer, region->base, size);
+	isc_region_consume(region, size);
+
+	if (isc_buffer_usedlength(ccmsg->buffer) == ccmsg->size) {
+		ccmsg->result = ISC_R_SUCCESS;
+		goto done;
 	}
 
-	isc_buffer_init(&ccmsg->buffer, region.base, region.length);
-	result = isc_socket_recv(ccmsg->sock, &region, 0, task, recv_message,
-				 ccmsg);
-	if (result != ISC_R_SUCCESS) {
-		ccmsg->result = result;
-		goto send_and_free;
-	}
-
-	isc_event_free(&ev_in);
+	/* Wait for more data to come */
 	return;
 
-send_and_free:
-	isc_task_send(ccmsg->task, &dev);
-	ccmsg->task = NULL;
-	isc_event_free(&ev_in);
-	return;
-}
-
-static void
-recv_message(isc_task_t *task, isc_event_t *ev_in) {
-	isc_socketevent_t *ev = (isc_socketevent_t *)ev_in;
-	isc_event_t *dev;
-	isccc_ccmsg_t *ccmsg = ev_in->ev_arg;
-
-	(void)task;
-
-	INSIST(VALID_CCMSG(ccmsg));
-
-	dev = &ccmsg->event;
-
-	if (ev->result != ISC_R_SUCCESS) {
-		ccmsg->result = ev->result;
-		goto send_and_free;
-	}
-
-	ccmsg->result = ISC_R_SUCCESS;
-	isc_buffer_add(&ccmsg->buffer, ev->n);
-	ccmsg->address = ev->address;
-
-send_and_free:
-	isc_task_send(ccmsg->task, &dev);
-	ccmsg->task = NULL;
-	isc_event_free(&ev_in);
+done:
+	isc_nm_pauseread(handle);
+	ccmsg->cb(handle, ccmsg->result, ccmsg->cbarg);
 }
 
 void
-isccc_ccmsg_init(isc_mem_t *mctx, isc_socket_t *sock, isccc_ccmsg_t *ccmsg) {
+isccc_ccmsg_init(isc_mem_t *mctx, isc_nmhandle_t *handle,
+		 isccc_ccmsg_t *ccmsg) {
 	REQUIRE(mctx != NULL);
-	REQUIRE(sock != NULL);
+	REQUIRE(handle != NULL);
 	REQUIRE(ccmsg != NULL);
 
-	ccmsg->magic = CCMSG_MAGIC;
-	ccmsg->size = 0;
-	ccmsg->buffer.base = NULL;
-	ccmsg->buffer.length = 0;
-	ccmsg->maxsize = 4294967295U; /* Largest message possible. */
-	ccmsg->mctx = mctx;
-	ccmsg->sock = sock;
-	ccmsg->task = NULL;		  /* None yet. */
-	ccmsg->result = ISC_R_UNEXPECTED; /* None yet. */
-					  /*
-					   * Should probably initialize the
-					   *event here, but it can wait.
-					   */
+	*ccmsg = (isccc_ccmsg_t){
+		.magic = CCMSG_MAGIC,
+		.maxsize = 0xffffffffU, /* Largest message possible. */
+		.mctx = mctx,
+		.handle = handle,
+		.result = ISC_R_UNEXPECTED /* None yet. */
+	};
 }
 
 void
@@ -159,64 +144,36 @@ isccc_ccmsg_setmaxsize(isccc_ccmsg_t *ccmsg, unsigned int maxsize) {
 	ccmsg->maxsize = maxsize;
 }
 
-isc_result_t
-isccc_ccmsg_readmessage(isccc_ccmsg_t *ccmsg, isc_task_t *task,
-			isc_taskaction_t action, void *arg) {
-	isc_result_t result;
-	isc_region_t region;
-
+void
+isccc_ccmsg_readmessage(isccc_ccmsg_t *ccmsg, isc_nm_cb_t cb, void *cbarg) {
 	REQUIRE(VALID_CCMSG(ccmsg));
-	REQUIRE(task != NULL);
-	REQUIRE(ccmsg->task == NULL); /* not currently in use */
 
-	if (ccmsg->buffer.base != NULL) {
-		isc_mem_put(ccmsg->mctx, ccmsg->buffer.base,
-			    ccmsg->buffer.length);
-		ccmsg->buffer.base = NULL;
-		ccmsg->buffer.length = 0;
+	if (ccmsg->buffer != NULL) {
+		isc_buffer_free(&ccmsg->buffer);
 	}
 
-	ccmsg->task = task;
-	ccmsg->action = action;
-	ccmsg->arg = arg;
+	ccmsg->cb = cb;
+	ccmsg->cbarg = cbarg;
 	ccmsg->result = ISC_R_UNEXPECTED; /* unknown right now */
+	ccmsg->length_received = false;
 
-	ISC_EVENT_INIT(&ccmsg->event, sizeof(isc_event_t), 0, 0,
-		       ISCCC_EVENT_CCMSG, action, arg, ccmsg, NULL, NULL);
-
-	region.base = (unsigned char *)&ccmsg->size;
-	region.length = 4; /* uint32_t */
-	result = isc_socket_recv(ccmsg->sock, &region, 0, ccmsg->task,
-				 recv_length, ccmsg);
-
-	if (result != ISC_R_SUCCESS) {
-		ccmsg->task = NULL;
+	if (ccmsg->reading) {
+		isc_nm_resumeread(ccmsg->handle);
+	} else {
+		isc_nm_read(ccmsg->handle, recv_data, ccmsg);
+		ccmsg->reading = true;
 	}
-
-	return (result);
 }
 
 void
 isccc_ccmsg_cancelread(isccc_ccmsg_t *ccmsg) {
 	REQUIRE(VALID_CCMSG(ccmsg));
 
-	isc_socket_cancel(ccmsg->sock, NULL, ISC_SOCKCANCEL_RECV);
-}
-
-#if 0
-void
-isccc_ccmsg_freebuffer(isccc_ccmsg_t*ccmsg) {
-	REQUIRE(VALID_CCMSG(ccmsg));
-
-	if (ccmsg->buffer.base == NULL) {
-		return;
+	if (ccmsg->reading) {
+		isc_nm_cancelread(ccmsg->handle);
+		ccmsg->reading = false;
 	}
-
-	isc_mem_put(ccmsg->mctx,ccmsg->buffer.base,ccmsg->buffer.length);
-	ccmsg->buffer.base = NULL;
-	ccmsg->buffer.length = 0;
 }
-#endif /* if 0 */
 
 void
 isccc_ccmsg_invalidate(isccc_ccmsg_t *ccmsg) {
@@ -224,10 +181,7 @@ isccc_ccmsg_invalidate(isccc_ccmsg_t *ccmsg) {
 
 	ccmsg->magic = 0;
 
-	if (ccmsg->buffer.base != NULL) {
-		isc_mem_put(ccmsg->mctx, ccmsg->buffer.base,
-			    ccmsg->buffer.length);
-		ccmsg->buffer.base = NULL;
-		ccmsg->buffer.length = 0;
+	if (ccmsg->buffer != NULL) {
+		isc_buffer_free(&ccmsg->buffer);
 	}
 }

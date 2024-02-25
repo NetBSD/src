@@ -15,7 +15,7 @@ rm -f ./ns1/example.db.raw*
 rm -f ./ns1/example.db.compat
 rm -f ./ns1/example.db.serial.raw
 rm -f ./ns1/large.db ./ns1/large.db.raw
-rm -f ./ns1/example.db.map ./ns1/signed.db.map
+rm -f ./ns1/signed.db.raw
 rm -f ./ns1/session.key
 rm -f ./dig.out.*
 rm -f ./dig.out
@@ -27,8 +27,8 @@ rm -f ./ns2/transfer.db.*
 rm -f ./ns2/formerly-text.db
 rm -f ./ns2/db-*
 rm -f ./ns2/large.bk
-rm -f ./ns3/example.db.map ./ns3/dynamic.db.map
-rm -f ./baseline.txt ./text.* ./raw.* ./map.* ./badmap
+rm -f ./ns3/example.db.raw ./ns3/dynamic.db.raw
+rm -f ./baseline.txt ./text.* ./raw.*
 rm -f ./ns1/Ksigned.* ./ns1/dsset-signed. ./ns1/signed.db.signed
 rm -f ./rndc.out
 rm -f ./ns*/named.lock

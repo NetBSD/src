@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.7.2.1 2024/02/25 15:47:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,8 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ISCCC_UTIL_H
-#define ISCCC_UTIL_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -209,23 +208,3 @@
 		(r).rstart = (unsigned char *)s;   \
 		(r).rend = (r).rstart + strlen(s); \
 	} while (0)
-
-/*%
- * Use this to remove the const qualifier of a variable to assign it to
- * a non-const variable or pass it as a non-const function argument ...
- * but only when you are sure it won't then be changed!
- * This is necessary to sometimes shut up some compilers
- * (as with gcc -Wcast-qual) when there is just no other good way to avoid the
- * situation.
- */
-#define DE_CONST(konst, var)           \
-	do {                           \
-		union {                \
-			const void *k; \
-			void	   *v; \
-		} _u;                  \
-		_u.k = konst;          \
-		var = _u.v;            \
-	} while (0)
-
-#endif /* ISCCC_UTIL_H */

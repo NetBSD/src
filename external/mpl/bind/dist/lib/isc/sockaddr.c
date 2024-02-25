@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.10 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.10.2.1 2024/02/25 15:47:18 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,6 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#if defined(WIN32) || defined(WIN64)
-#include <malloc.h>
-#endif /* if defined(WIN32) || defined(WIN64) */
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
@@ -141,7 +138,6 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		snprintf(pbuf, sizeof(pbuf), "%u",
 			 ntohs(sockaddr->type.sin6.sin6_port));
 		break;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	case AF_UNIX:
 		plen = strlen(sockaddr->type.sunix.sun_path);
 		if (plen >= isc_buffer_availablelength(target)) {
@@ -161,7 +157,6 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		avail.base[0] = '\0';
 
 		return (ISC_R_SUCCESS);
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	default:
 		return (ISC_R_FAILURE);
 	}
@@ -241,8 +236,7 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, bool address_only) {
 		p = ntohs(sockaddr->type.sin6.sin6_port);
 		break;
 	default:
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "unknown address family: %d",
+		UNEXPECTED_ERROR("unknown address family: %d",
 				 (int)sockaddr->type.sa.sa_family);
 		s = (const unsigned char *)&sockaddr->type;
 		length = sockaddr->length;
@@ -348,7 +342,7 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr) {
 	case AF_INET6:
 		return (PF_INET6);
 	default:
-		FATAL_ERROR(__FILE__, __LINE__, "unknown address family: %d",
+		FATAL_ERROR("unknown address family: %d",
 			    (int)sockaddr->type.sa.sa_family);
 	}
 #endif /* if (AF_INET == PF_INET && AF_INET6 == PF_INET6) */
@@ -387,7 +381,7 @@ isc_sockaddr_setport(isc_sockaddr_t *sockaddr, in_port_t port) {
 		sockaddr->type.sin6.sin6_port = htons(port);
 		break;
 	default:
-		FATAL_ERROR(__FILE__, __LINE__, "unknown address family: %d",
+		FATAL_ERROR("unknown address family: %d",
 			    (int)sockaddr->type.sa.sa_family);
 	}
 }
@@ -404,7 +398,7 @@ isc_sockaddr_getport(const isc_sockaddr_t *sockaddr) {
 		port = ntohs(sockaddr->type.sin6.sin6_port);
 		break;
 	default:
-		FATAL_ERROR(__FILE__, __LINE__, "unknown address family: %d",
+		FATAL_ERROR("unknown address family: %d",
 			    (int)sockaddr->type.sa.sa_family);
 	}
 
@@ -470,7 +464,6 @@ isc_sockaddr_isnetzero(const isc_sockaddr_t *sockaddr) {
 
 isc_result_t
 isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	if (strlen(path) >= sizeof(sockaddr->type.sunix.sun_path)) {
 		return (ISC_R_NOSPACE);
 	}
@@ -480,11 +473,6 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	strlcpy(sockaddr->type.sunix.sun_path, path,
 		sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
-#else  /* ifdef ISC_PLATFORM_HAVESYSUNH */
-	UNUSED(sockaddr);
-	UNUSED(path);
-	return (ISC_R_NOTIMPLEMENTED);
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 }
 
 isc_result_t
@@ -498,11 +486,9 @@ isc_sockaddr_fromsockaddr(isc_sockaddr_t *isa, const struct sockaddr *sa) {
 	case AF_INET6:
 		length = sizeof(isa->type.sin6);
 		break;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	case AF_UNIX:
 		length = sizeof(isa->type.sunix);
 		break;
-#endif /* ifdef ISC_PLATFORM_HAVESYSUNH */
 	default:
 		return (ISC_R_NOTIMPLEMENTED);
 	}

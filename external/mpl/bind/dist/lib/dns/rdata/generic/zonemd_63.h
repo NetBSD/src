@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: zonemd_63.h,v 1.5.2.1 2024/02/25 15:47:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_ZONEMD_63_H
-#define GENERIC_ZONEMD_63_H 1
+#pragma once
 
 /* Known digest type(s). */
 #define DNS_ZONEMD_DIGEST_SHA384 (1)
@@ -32,5 +31,3 @@ typedef struct dns_rdata_zonemd {
 	unsigned char *digest;
 	uint16_t length;
 } dns_rdata_zonemd_t;
-
-#endif /* GENERIC_ZONEMD_63_H */

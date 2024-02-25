@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.8 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.8.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef _RADIX_H
-#define _RADIX_H
+#pragma once
 
 #include <inttypes.h>
 #include <string.h>
@@ -195,7 +194,7 @@ isc_radix_process(isc_radix_tree_t *radix, isc_radix_processfunc_t func);
  */
 
 #define RADIX_MAXBITS  128
-#define RADIX_NBIT(x)  (0x80 >> ((x)&0x7f))
+#define RADIX_NBIT(x)  (0x80 >> ((x) & 0x7f))
 #define RADIX_NBYTE(x) ((x) >> 3)
 
 #define RADIX_WALK(Xhead, Xnode)                              \
@@ -222,5 +221,3 @@ isc_radix_process(isc_radix_tree_t *radix, isc_radix_processfunc_t func);
 	}                                    \
 	}                                    \
 	while (0)
-
-#endif /* _RADIX_H */

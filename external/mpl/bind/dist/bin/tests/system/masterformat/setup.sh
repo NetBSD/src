@@ -12,7 +12,7 @@
 # information regarding copyright ownership.
 
 # shellcheck source=conf.sh
-. "$SYSTEMTESTTOP/conf.sh"
+. ../conf.sh
 
 $SHELL clean.sh
 
@@ -27,5 +27,5 @@ awk 'END {
 	 for (i = 0; i < 512; i++ ) { print "a TXT", i; }
 	 for (i = 0; i < 1024; i++ ) { print "b TXT", i; }
 	 for (i = 0; i < 2000; i++ ) { print "c TXT", i; }
-}' < /dev/null >> ns1/large.db
+}' </dev/null >>ns1/large.db
 cd ns1 && $SHELL compile.sh

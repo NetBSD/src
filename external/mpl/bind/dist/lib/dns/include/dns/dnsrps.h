@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dnsrps.h,v 1.6.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_DNSRPS_H
-#define DNS_DNSRPS_H
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -113,5 +112,3 @@ dns_dnsrps_rewrite_init(librpz_emsg_t *emsg, dns_rpz_st_t *st,
 #endif /* USE_DNSRPS */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_DNSRPS_H */

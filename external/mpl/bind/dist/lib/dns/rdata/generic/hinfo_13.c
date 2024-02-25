@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.7.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef RDATA_GENERIC_HINFO_13_C
-#define RDATA_GENERIC_HINFO_13_C
+#pragma once
 
 #define RRTYPE_HINFO_ATTRIBUTES (0)
 
@@ -173,9 +172,10 @@ static isc_result_t
 additionaldata_hinfo(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_hinfo);
 
+	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-	UNUSED(rdata);
 
 	return (ISC_R_SUCCESS);
 }
@@ -218,4 +218,3 @@ static int
 casecompare_hinfo(ARGS_COMPARE) {
 	return (compare_hinfo(rdata1, rdata2));
 }
-#endif /* RDATA_GENERIC_HINFO_13_C */

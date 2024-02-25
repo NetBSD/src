@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: avc_258.h,v 1.6.2.1 2024/02/25 15:47:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_AVC_258_H
-#define GENERIC_AVC_258_H 1
+#pragma once
 
 typedef dns_rdata_txt_string_t dns_rdata_avc_string_t;
 
@@ -31,4 +30,3 @@ typedef struct dns_rdata_avc {
  * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
  * via rdatastructpre.h and rdatastructsuf.h.
  */
-#endif /* GENERIC_AVC_258_H */

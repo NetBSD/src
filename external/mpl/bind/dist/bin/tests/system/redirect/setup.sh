@@ -11,8 +11,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
@@ -23,8 +22,8 @@ copy_setports ns6/named.conf.in ns6/named.conf
 
 cp ns2/redirect.db.in ns2/redirect.db
 cp ns2/example.db.in ns2/example.db
-( cd ns1 && $SHELL sign.sh )
+(cd ns1 && $SHELL sign.sh)
 
 cp ns4/example.db.in ns4/example.db
-( cd ns3 && $SHELL sign.sh )
-( cd ns5 && $SHELL sign.sh )
+(cd ns3 && $SHELL sign.sh)
+(cd ns5 && $SHELL sign.sh)

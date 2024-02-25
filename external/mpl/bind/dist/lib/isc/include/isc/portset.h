@@ -1,4 +1,4 @@
-/*	$NetBSD: portset.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: portset.h,v 1.6.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,8 +25,7 @@
  * in a place that can be accessed from multiple threads.
  */
 
-#ifndef ISC_PORTSET_H
-#define ISC_PORTSET_H 1
+#pragma once
 
 /***
  ***	Imports
@@ -136,5 +135,3 @@ isc_portset_removerange(isc_portset_t *portset, in_port_t port_lo,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_PORTSET_H */

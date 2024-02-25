@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.9 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.9.2.1 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DST_DST_H
-#define DST_DST_H 1
+#pragma once
 
 /*! \file dst/dst.h */
 
@@ -81,32 +80,43 @@ typedef enum dst_key_state {
 } dst_key_state_t;
 
 /* DST algorithm codes */
-#define DST_ALG_UNKNOWN	     0
-#define DST_ALG_RSA	     1 /* Used for parsing RSASHA1, RSASHA256 and RSASHA512 */
-#define DST_ALG_RSAMD5	     1
-#define DST_ALG_DH	     2
-#define DST_ALG_DSA	     3
-#define DST_ALG_ECC	     4
-#define DST_ALG_RSASHA1	     5
-#define DST_ALG_NSEC3DSA     6
-#define DST_ALG_NSEC3RSASHA1 7
-#define DST_ALG_RSASHA256    8
-#define DST_ALG_RSASHA512    10
-#define DST_ALG_ECCGOST	     12
-#define DST_ALG_ECDSA256     13
-#define DST_ALG_ECDSA384     14
-#define DST_ALG_ED25519	     15
-#define DST_ALG_ED448	     16
-#define DST_ALG_HMACMD5	     157
-#define DST_ALG_GSSAPI	     160
-#define DST_ALG_HMACSHA1     161 /* XXXMPA */
-#define DST_ALG_HMACSHA224   162 /* XXXMPA */
-#define DST_ALG_HMACSHA256   163 /* XXXMPA */
-#define DST_ALG_HMACSHA384   164 /* XXXMPA */
-#define DST_ALG_HMACSHA512   165 /* XXXMPA */
-#define DST_ALG_INDIRECT     252
-#define DST_ALG_PRIVATE	     254
-#define DST_MAX_ALGS	     256
+typedef enum dst_algorithm {
+	DST_ALG_UNKNOWN = 0,
+	DST_ALG_RSA = 1, /* Used for parsing RSASHA1, RSASHA256 and RSASHA512 */
+	DST_ALG_RSAMD5 = 1,
+	DST_ALG_DH = 2,
+	DST_ALG_DSA = 3,
+	DST_ALG_ECC = 4,
+	DST_ALG_RSASHA1 = 5,
+	DST_ALG_NSEC3DSA = 6,
+	DST_ALG_NSEC3RSASHA1 = 7,
+	DST_ALG_RSASHA256 = 8,
+	DST_ALG_RSASHA512 = 10,
+	DST_ALG_ECCGOST = 12,
+	DST_ALG_ECDSA256 = 13,
+	DST_ALG_ECDSA384 = 14,
+	DST_ALG_ED25519 = 15,
+	DST_ALG_ED448 = 16,
+
+	/*
+	 * Do not renumber HMAC algorithms as they are used externally to named
+	 * in legacy K* key pair files.
+	 * Do not add non HMAC between DST_ALG_HMACMD5 and DST_ALG_HMACSHA512.
+	 */
+	DST_ALG_HMACMD5 = 157,
+	DST_ALG_HMAC_FIRST = DST_ALG_HMACMD5,
+	DST_ALG_GSSAPI = 160,	  /* Internal use only. Exception. */
+	DST_ALG_HMACSHA1 = 161,	  /* XXXMPA */
+	DST_ALG_HMACSHA224 = 162, /* XXXMPA */
+	DST_ALG_HMACSHA256 = 163, /* XXXMPA */
+	DST_ALG_HMACSHA384 = 164, /* XXXMPA */
+	DST_ALG_HMACSHA512 = 165, /* XXXMPA */
+	DST_ALG_HMAC_LAST = DST_ALG_HMACSHA512,
+
+	DST_ALG_INDIRECT = 252,
+	DST_ALG_PRIVATE = 254,
+	DST_MAX_ALGS = 256,
+} dst_algorithm_t;
 
 /*% A buffer of this size is large enough to hold any key */
 #define DST_KEY_MAXSIZE 1280
@@ -118,10 +128,11 @@ typedef enum dst_key_state {
 #define DST_KEY_MAXTEXTSIZE 2048
 
 /*% 'Type' for dst_read_key() */
-#define DST_TYPE_KEY	 0x1000000 /* KEY key */
-#define DST_TYPE_PRIVATE 0x2000000
-#define DST_TYPE_PUBLIC	 0x4000000
-#define DST_TYPE_STATE	 0x8000000
+#define DST_TYPE_KEY	  0x1000000 /* KEY key */
+#define DST_TYPE_PRIVATE  0x2000000
+#define DST_TYPE_PUBLIC	  0x4000000
+#define DST_TYPE_STATE	  0x8000000
+#define DST_TYPE_TEMPLATE 0x10000000
 
 /* Key timing metadata definitions */
 #define DST_TIME_CREATED     0
@@ -473,6 +484,10 @@ dst_key_tofile(const dst_key_t *key, int type, const char *directory);
  */
 
 isc_result_t
+dst_key_fromdns_ex(const dns_name_t *name, dns_rdataclass_t rdclass,
+		   isc_buffer_t *source, isc_mem_t *mctx, bool no_rdata,
+		   dst_key_t **keyp);
+isc_result_t
 dst_key_fromdns(const dns_name_t *name, dns_rdataclass_t rdclass,
 		isc_buffer_t *source, isc_mem_t *mctx, dst_key_t **keyp);
 /*%<
@@ -775,11 +790,13 @@ dst_key_buildfilename(const dst_key_t *key, int type, const char *directory,
 /*%<
  * Generates the filename used by dst to store the specified key.
  * If directory is NULL, the current directory is assumed.
+ * If tmp is not NULL, generates a template for mkstemp().
  *
  * Requires:
  *\li	"key" is a valid key
  *\li	"type" is either DST_TYPE_PUBLIC, DST_TYPE_PRIVATE, or 0 for no suffix.
  *\li	"out" is a valid buffer
+ *\li	"tmp" is a valid buffer or NULL
  *
  * Ensures:
  *\li	the file name will be written to "out", and the used pointer will
@@ -1224,6 +1241,11 @@ dst_key_copy_metadata(dst_key_t *to, dst_key_t *from);
  *	'to' and 'from' to be valid.
  */
 
-ISC_LANG_ENDDECLS
+const char *
+dst_hmac_algorithm_totext(dst_algorithm_t alg);
+/*$<
+ * Return the name associtated with the HMAC algorithm 'alg'
+ * or return "unknown".
+ */
 
-#endif /* DST_DST_H */
+ISC_LANG_ENDDECLS

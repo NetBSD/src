@@ -20,6 +20,7 @@ options {
 	listen-on { 10.53.0.10; };
 	listen-on-v6 { none; };
 	minimal-responses no;
+	dnssec-validation no;
 };
 
 zone "net." {

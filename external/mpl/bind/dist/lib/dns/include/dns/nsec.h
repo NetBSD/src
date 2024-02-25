@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.6.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_NSEC_H
-#define DNS_NSEC_H 1
+#pragma once
 
 /*! \file dns/nsec.h */
 
@@ -22,6 +21,7 @@
 
 #include <isc/lang.h>
 
+#include <dns/diff.h>
 #include <dns/name.h>
 #include <dns/types.h>
 
@@ -63,11 +63,15 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  */
 
 isc_result_t
-dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, bool *answer);
+dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
+		  bool *answer);
 /*
  * Report whether the DNSKEY RRset has a NSEC only algorithm.  Unknown
  * algorithms are assumed to support NSEC3.  If DNSKEY is not found,
  * *answer is set to false, and ISC_R_NOTFOUND is returned.
+ * If 'diff' is provided, check if the NSEC only DNSKEY will be deleted.
+ * If so, and there are no other NSEC only DNSKEYs that will stay in 'db',
+ * consider the DNSKEY RRset to have no NSEC only DNSKEYs.
  *
  * Requires:
  * 	'answer' to be non NULL.
@@ -111,6 +115,14 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
  * Return ISC_R_IGNORE when the NSEC is not the appropriate one.
  */
 
-ISC_LANG_ENDDECLS
+bool
+dns_nsec_requiredtypespresent(dns_rdataset_t *rdataset);
+/*
+ * Return true if all the NSEC records in rdataset have both
+ * NSEC and RRSIG present.
+ *
+ * Requires:
+ * \li	rdataset to be a NSEC rdataset.
+ */
 
-#endif /* DNS_NSEC_H */
+ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.6 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.6.2.1 2024/02/25 15:47:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,17 +13,16 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NS_LOG_H
-#define NS_LOG_H 1
+#pragma once
 
 /*! \file */
 
 #include <isc/log.h>
 #include <isc/types.h>
 
-LIBNS_EXTERNAL_DATA extern isc_log_t	    *ns_lctx;
-LIBNS_EXTERNAL_DATA extern isc_logcategory_t ns_categories[];
-LIBNS_EXTERNAL_DATA extern isc_logmodule_t   ns_modules[];
+extern isc_log_t	*ns_lctx;
+extern isc_logcategory_t ns_categories[];
+extern isc_logmodule_t	 ns_modules[];
 
 #define NS_LOGCATEGORY_CLIENT	       (&ns_categories[0])
 #define NS_LOGCATEGORY_NETWORK	       (&ns_categories[1])
@@ -73,4 +72,3 @@ ns_log_setcontext(isc_log_t *lctx);
  * Requires:
  *\li	lctx is a valid logging context.
  */
-#endif /* NS_LOG_H */

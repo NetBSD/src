@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.8 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.8.2.1 2024/02/25 15:43:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <isc/app.h>
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/event.h>
@@ -39,28 +40,8 @@
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
 
-#include <dig/dig.h>
-
-#if defined(HAVE_READLINE)
-#if defined(HAVE_EDIT_READLINE_READLINE_H)
-#include <edit/readline/readline.h>
-#if defined(HAVE_EDIT_READLINE_HISTORY_H)
-#include <edit/readline/history.h>
-#endif /* if defined(HAVE_EDIT_READLINE_HISTORY_H) */
-#elif defined(HAVE_EDITLINE_READLINE_H)
-#include <editline/readline.h>
-#elif defined(HAVE_READLINE_READLINE_H)
-/* Prevent deprecated functions being declared. */
-#define _FUNCTION_DEF 1
-/* Ensure rl_message() gets prototype. */
-#define USE_VARARGS   1
-#define PREFER_STDARG 1
-#include <readline/readline.h>
-#if defined(HAVE_READLINE_HISTORY_H)
-#include <readline/history.h>
-#endif /* if defined(HAVE_READLINE_HISTORY_H) */
-#endif /* if defined(HAVE_EDIT_READLINE_READLINE_H) */
-#endif /* if defined(HAVE_READLINE) */
+#include "dighost.h"
+#include "readline.h"
 
 static bool short_form = true, tcpmode = false, tcpmode_set = false,
 	    identify = false, stats = true, comments = true,
@@ -134,8 +115,6 @@ static const char *rtypetext[] = {
 #define N_KNOWN_RRTYPES (sizeof(rtypetext) / sizeof(rtypetext[0]))
 
 static void
-flush_lookup_list(void);
-static void
 getinput(isc_task_t *task, isc_event_t *event);
 
 static char *
@@ -159,7 +138,6 @@ static void
 query_finished(void) {
 	isc_event_t *event = global_event;
 
-	flush_lookup_list();
 	debug("dighost_shutdown()");
 
 	if (!in_use) {
@@ -417,7 +395,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 		dns_rdataset_current(rdataset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &cname, NULL);
 		check_result(result, "dns_rdata_tostruct");
-		dns_name_copynf(&cname.cname, qname);
+		dns_name_copy(&cname.cname, qname);
 		dns_rdata_freestruct(&cname);
 	}
 }
@@ -474,7 +452,7 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 
 		/* Add AAAA lookup. */
 		name = dns_fixedname_initname(&fixed);
-		dns_name_copynf(query->lookup->name, name);
+		dns_name_copy(query->lookup->name, name);
 		chase_cnamechain(msg, name);
 		dns_name_format(name, namestr, sizeof(namestr));
 		lookup = clone_lookup(query->lookup, false);
@@ -606,6 +584,7 @@ set_port(const char *value) {
 	isc_result_t result = parse_uint(&n, value, 65535, "port");
 	if (result == ISC_R_SUCCESS) {
 		port = (uint16_t)n;
+		port_set = true;
 	}
 }
 
@@ -638,7 +617,7 @@ set_ndots(const char *value) {
 
 static void
 version(void) {
-	fputs("nslookup " VERSION "\n", stderr);
+	fprintf(stderr, "nslookup %s\n", PACKAGE_VERSION);
 }
 
 static void
@@ -795,6 +774,8 @@ addlookup(char *opt) {
 	lookup->recurse = recurse;
 	lookup->aaonly = aaonly;
 	lookup->retries = tries;
+	lookup->setqid = false;
+	lookup->qid = 0;
 	lookup->comments = comments;
 	if (lookup->rdtype == dns_rdatatype_any && !tcpmode_set) {
 		lookup->tcp_mode = true;
@@ -853,42 +834,31 @@ do_next_command(char *input) {
 
 static void
 get_next_command(void) {
-	char *buf;
-	char *ptr;
+	char cmdlinebuf[COMMSIZE];
+	char *cmdline, *ptr = NULL;
 
-	fflush(stdout);
-	buf = isc_mem_allocate(mctx, COMMSIZE);
 	isc_app_block();
 	if (interactive) {
-#ifdef HAVE_READLINE
-		ptr = readline("> ");
-		if (ptr != NULL) {
+		cmdline = ptr = readline("> ");
+		if (ptr != NULL && *ptr != 0) {
 			add_history(ptr);
 		}
-#else  /* ifdef HAVE_READLINE */
-		fputs("> ", stderr);
-		fflush(stderr);
-		ptr = fgets(buf, COMMSIZE, stdin);
-#endif /* ifdef HAVE_READLINE */
 	} else {
-		ptr = fgets(buf, COMMSIZE, stdin);
+		cmdline = fgets(cmdlinebuf, COMMSIZE, stdin);
 	}
 	isc_app_unblock();
-	if (ptr == NULL) {
+	if (cmdline == NULL) {
 		in_use = false;
 	} else {
-		do_next_command(ptr);
+		do_next_command(cmdline);
 	}
-#ifdef HAVE_READLINE
-	if (interactive) {
+	if (ptr != NULL) {
 		free(ptr);
 	}
-#endif /* ifdef HAVE_READLINE */
-	isc_mem_free(mctx, buf);
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
@@ -933,46 +903,6 @@ parse_args(int argc, char **argv) {
 				check_ra = false;
 			}
 		}
-	}
-}
-
-static void
-flush_lookup_list(void) {
-	dig_lookup_t *l, *lp;
-	dig_query_t *q, *qp;
-	dig_server_t *s, *sp;
-
-	lookup_counter = 0;
-	l = ISC_LIST_HEAD(lookup_list);
-	while (l != NULL) {
-		q = ISC_LIST_HEAD(l->q);
-		while (q != NULL) {
-			if (q->sock != NULL) {
-				isc_socket_cancel(q->sock, NULL,
-						  ISC_SOCKCANCEL_ALL);
-				isc_socket_detach(&q->sock);
-			}
-			isc_buffer_invalidate(&q->recvbuf);
-			isc_buffer_invalidate(&q->lengthbuf);
-			qp = q;
-			q = ISC_LIST_NEXT(q, link);
-			ISC_LIST_DEQUEUE(l->q, qp, link);
-			isc_mem_free(mctx, qp);
-		}
-		s = ISC_LIST_HEAD(l->my_server_list);
-		while (s != NULL) {
-			sp = s;
-			s = ISC_LIST_NEXT(s, link);
-			ISC_LIST_DEQUEUE(l->my_server_list, sp, link);
-			isc_mem_free(mctx, sp);
-		}
-		if (l->sendmsg != NULL) {
-			dns_message_detach(&l->sendmsg);
-		}
-		lp = l;
-		l = ISC_LIST_NEXT(l, link);
-		ISC_LIST_DEQUEUE(lookup_list, lp, link);
-		isc_mem_free(mctx, lp);
 	}
 }
 

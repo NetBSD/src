@@ -20,12 +20,13 @@ options {
 	listen-on { 10.53.0.2; 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation no;
 	notify yes;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -38,7 +39,7 @@ view "internal" {
 
 	zone "." {
 		type hint;
-		file "../../common/root.hint";
+		file "../../_common/root.hint";
 	};
 
 	zone "example" {
@@ -64,6 +65,7 @@ view "internal" {
 		key-directory "internal";
 		auto-dnssec maintain;
 		inline-signing yes;
+		dnssec-dnskey-kskonly no;
 	};
 };
 
@@ -72,7 +74,7 @@ view "external" {
 
 	zone "." {
 		type hint;
-		file "../../common/root.hint";
+		file "../../_common/root.hint";
 	};
 
 	zone "example" {
@@ -96,5 +98,6 @@ view "external" {
 		key-directory "external";
 		auto-dnssec maintain;
 		inline-signing yes;
+		dnssec-dnskey-kskonly no;
 	};
 };

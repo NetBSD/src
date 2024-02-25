@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.c,v 1.10 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dyndb.c,v 1.10.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,13 +13,8 @@
  * information regarding copyright ownership.
  */
 
-#if HAVE_DLFCN_H
-#include <dlfcn.h>
-#elif _WIN32
-#include <windows.h>
-#endif /* if HAVE_DLFCN_H */
-
 #include <string.h>
+#include <uv.h>
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
@@ -47,7 +42,7 @@
 typedef struct dyndb_implementation dyndb_implementation_t;
 struct dyndb_implementation {
 	isc_mem_t *mctx;
-	void *handle;
+	uv_lib_t handle;
 	dns_dyndb_register_t *register_func;
 	dns_dyndb_destroy_t *destroy_func;
 	char *name;
@@ -87,46 +82,45 @@ impfind(const char *name) {
 	return (NULL);
 }
 
-#if HAVE_DLFCN_H && HAVE_DLOPEN
 static isc_result_t
-load_symbol(void *handle, const char *filename, const char *symbol_name,
+load_symbol(uv_lib_t *handle, const char *filename, const char *symbol_name,
 	    void **symbolp) {
-	const char *errmsg;
 	void *symbol;
+	int r;
 
 	REQUIRE(handle != NULL);
 	REQUIRE(symbolp != NULL && *symbolp == NULL);
 
-	symbol = dlsym(handle, symbol_name);
-	if (symbol == NULL) {
-		errmsg = dlerror();
+	r = uv_dlsym(handle, symbol_name, &symbol);
+	if (r != 0) {
+		const char *errmsg = uv_dlerror(handle);
 		if (errmsg == NULL) {
 			errmsg = "returned function pointer is NULL";
 		}
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
 			      "failed to lookup symbol %s in "
-			      "dyndb module '%s': %s",
+			      "DynDB module '%s': %s",
 			      symbol_name, filename, errmsg);
 		return (ISC_R_FAILURE);
 	}
-	dlerror();
 
 	*symbolp = symbol;
 
 	return (ISC_R_SUCCESS);
 }
 
+static void
+unload_library(dyndb_implementation_t **impp);
+
 static isc_result_t
 load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 	     dyndb_implementation_t **impp) {
 	isc_result_t result;
-	void *handle = NULL;
 	dyndb_implementation_t *imp = NULL;
-	dns_dyndb_register_t *register_func = NULL;
-	dns_dyndb_destroy_t *destroy_func = NULL;
 	dns_dyndb_version_t *version_func = NULL;
 	int version;
+	int r;
 
 	REQUIRE(impp != NULL && *impp == NULL);
 
@@ -134,15 +128,29 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 		      ISC_LOG_INFO, "loading DynDB instance '%s' driver '%s'",
 		      instname, filename);
 
-	handle = dlopen(filename, RTLD_NOW | RTLD_LOCAL);
-	if (handle == NULL) {
+	imp = isc_mem_get(mctx, sizeof(*imp));
+	memset(imp, 0, sizeof(*imp));
+	isc_mem_attach(mctx, &imp->mctx);
+
+	imp->name = isc_mem_strdup(imp->mctx, instname);
+
+	INIT_LINK(imp, link);
+
+	r = uv_dlopen(filename, &imp->handle);
+	if (r != 0) {
+		const char *errmsg = uv_dlerror(&imp->handle);
+		if (errmsg == NULL) {
+			errmsg = "unknown error";
+		}
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
+			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
+			      "failed to dlopen() DynDB instance '%s' driver "
+			      "'%s': %s",
+			      instname, filename, errmsg);
 		CHECK(ISC_R_FAILURE);
 	}
 
-	/* Clear dlerror */
-	dlerror();
-
-	CHECK(load_symbol(handle, filename, "dyndb_version",
+	CHECK(load_symbol(&imp->handle, filename, "dyndb_version",
 			  (void **)&version_func));
 
 	version = version_func(NULL);
@@ -156,192 +164,44 @@ load_library(isc_mem_t *mctx, const char *filename, const char *instname,
 		CHECK(ISC_R_FAILURE);
 	}
 
-	CHECK(load_symbol(handle, filename, "dyndb_init",
-			  (void **)&register_func));
-	CHECK(load_symbol(handle, filename, "dyndb_destroy",
-			  (void **)&destroy_func));
-
-	imp = isc_mem_get(mctx, sizeof(dyndb_implementation_t));
-
-	imp->mctx = NULL;
-	isc_mem_attach(mctx, &imp->mctx);
-	imp->handle = handle;
-	imp->register_func = register_func;
-	imp->destroy_func = destroy_func;
-	imp->name = isc_mem_strdup(mctx, instname);
-
-	imp->inst = NULL;
-	INIT_LINK(imp, link);
+	CHECK(load_symbol(&imp->handle, filename, "dyndb_init",
+			  (void **)&imp->register_func));
+	CHECK(load_symbol(&imp->handle, filename, "dyndb_destroy",
+			  (void **)&imp->destroy_func));
 
 	*impp = imp;
-	imp = NULL;
-
-cleanup:
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
-			      "failed to dynamically load instance '%s' "
-			      "driver '%s': %s (%s)",
-			      instname, filename, dlerror(),
-			      isc_result_totext(result));
-	}
-	if (imp != NULL) {
-		isc_mem_putanddetach(&imp->mctx, imp,
-				     sizeof(dyndb_implementation_t));
-	}
-	if (result != ISC_R_SUCCESS && handle != NULL) {
-		dlclose(handle);
-	}
-
-	return (result);
-}
-
-static void
-unload_library(dyndb_implementation_t **impp) {
-	dyndb_implementation_t *imp;
-
-	REQUIRE(impp != NULL && *impp != NULL);
-
-	imp = *impp;
-	*impp = NULL;
-
-	isc_mem_free(imp->mctx, imp->name);
-	isc_mem_putanddetach(&imp->mctx, imp, sizeof(dyndb_implementation_t));
-}
-#elif _WIN32
-static isc_result_t
-load_symbol(HMODULE handle, const char *filename, const char *symbol_name,
-	    void **symbolp) {
-	void *symbol;
-
-	REQUIRE(handle != NULL);
-	REQUIRE(symbolp != NULL && *symbolp == NULL);
-
-	symbol = GetProcAddress(handle, symbol_name);
-	if (symbol == NULL) {
-		int errstatus = GetLastError();
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
-			      "failed to lookup symbol %s in "
-			      "dyndb module '%s': %d",
-			      symbol_name, filename, errstatus);
-		return (ISC_R_FAILURE);
-	}
-
-	*symbolp = symbol;
 
 	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-load_library(isc_mem_t *mctx, const char *filename, const char *instname,
-	     dyndb_implementation_t **impp) {
-	isc_result_t result;
-	HMODULE handle;
-	dyndb_implementation_t *imp = NULL;
-	dns_dyndb_register_t *register_func = NULL;
-	dns_dyndb_destroy_t *destroy_func = NULL;
-	dns_dyndb_version_t *version_func = NULL;
-	int version;
-
-	REQUIRE(impp != NULL && *impp == NULL);
-
-	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DYNDB,
-		      ISC_LOG_INFO, "loading DynDB instance '%s' driver '%s'",
-		      instname, filename);
-
-	handle = LoadLibraryA(filename);
-	if (handle == NULL) {
-		CHECK(ISC_R_FAILURE);
-	}
-
-	CHECK(load_symbol(handle, filename, "dyndb_version",
-			  (void **)&version_func));
-
-	version = version_func(NULL);
-	if (version < (DNS_DYNDB_VERSION - DNS_DYNDB_AGE) ||
-	    version > DNS_DYNDB_VERSION)
-	{
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
-			      "driver API version mismatch: %d/%d", version,
-			      DNS_DYNDB_VERSION);
-		CHECK(ISC_R_FAILURE);
-	}
-
-	CHECK(load_symbol(handle, filename, "dyndb_init",
-			  (void **)&register_func));
-	CHECK(load_symbol(handle, filename, "dyndb_destroy",
-			  (void **)&destroy_func));
-
-	imp = isc_mem_get(mctx, sizeof(dyndb_implementation_t));
-
-	imp->mctx = NULL;
-	isc_mem_attach(mctx, &imp->mctx);
-	imp->handle = handle;
-	imp->register_func = register_func;
-	imp->destroy_func = destroy_func;
-	imp->name = isc_mem_strdup(mctx, instname);
-
-	imp->inst = NULL;
-	INIT_LINK(imp, link);
-
-	*impp = imp;
-	imp = NULL;
 
 cleanup:
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
-			      DNS_LOGMODULE_DYNDB, ISC_LOG_ERROR,
-			      "failed to dynamically load instance '%s' "
-			      "driver '%s': %d (%s)",
-			      instname, filename, GetLastError(),
-			      isc_result_totext(result));
-	}
-	if (imp != NULL) {
-		isc_mem_putanddetach(&imp->mctx, imp,
-				     sizeof(dyndb_implementation_t));
-	}
-	if (result != ISC_R_SUCCESS && handle != NULL) {
-		FreeLibrary(handle);
-	}
-
-	return (result);
-}
-
-static void
-unload_library(dyndb_implementation_t **impp) {
-	dyndb_implementation_t *imp;
-
-	REQUIRE(impp != NULL && *impp != NULL);
-
-	imp = *impp;
-	*impp = NULL;
-
-	isc_mem_free(imp->mctx, imp->name);
-	isc_mem_putanddetach(&imp->mctx, imp, sizeof(dyndb_implementation_t));
-}
-#else  /* HAVE_DLFCN_H || _WIN32 */
-static isc_result_t
-load_library(isc_mem_t *mctx, const char *filename, const char *instname,
-	     dyndb_implementation_t **impp) {
-	UNUSED(mctx);
-	UNUSED(filename);
-	UNUSED(instname);
-	UNUSED(impp);
-
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE, DNS_LOGMODULE_DYNDB,
 		      ISC_LOG_ERROR,
-		      "dynamic database support is not implemented");
+		      "failed to dynamically load DynDB instance '%s' driver "
+		      "'%s': %s",
+		      instname, filename, isc_result_totext(result));
 
-	return (ISC_R_NOTIMPLEMENTED);
+	unload_library(&imp);
+
+	return (result);
 }
 
 static void
 unload_library(dyndb_implementation_t **impp) {
-	UNUSED(impp);
+	dyndb_implementation_t *imp;
+
+	REQUIRE(impp != NULL && *impp != NULL);
+
+	imp = *impp;
+	*impp = NULL;
+
+	/*
+	 * This is a resource leak, but there is nothing we can currently do
+	 * about it due to how configuration loading/reloading is designed.
+	 */
+	/* uv_dlclose(&imp->handle); */
+	isc_mem_free(imp->mctx, imp->name);
+	isc_mem_putanddetach(&imp->mctx, imp, sizeof(*imp));
 }
-#endif /* HAVE_DLFCN_H */
 
 isc_result_t
 dns_dyndb_load(const char *libname, const char *name, const char *parameters,
@@ -416,8 +276,12 @@ dns_dyndb_createctx(isc_mem_t *mctx, const void *hashinit, isc_log_t *lctx,
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
 	dctx = isc_mem_get(mctx, sizeof(*dctx));
+	*dctx = (dns_dyndbctx_t){
+		.timermgr = tmgr,
+		.hashinit = hashinit,
+		.lctx = lctx,
+	};
 
-	memset(dctx, 0, sizeof(*dctx));
 	if (view != NULL) {
 		dns_view_attach(view, &dctx->view);
 	}
@@ -427,10 +291,6 @@ dns_dyndb_createctx(isc_mem_t *mctx, const void *hashinit, isc_log_t *lctx,
 	if (task != NULL) {
 		isc_task_attach(task, &dctx->task);
 	}
-	dctx->timermgr = tmgr;
-	dctx->hashinit = hashinit;
-	dctx->lctx = lctx;
-	dctx->memdebug = &isc_mem_debugging;
 
 	isc_mem_attach(mctx, &dctx->mctx);
 	dctx->magic = DNS_DYNDBCTX_MAGIC;

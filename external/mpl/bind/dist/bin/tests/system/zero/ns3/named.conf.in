@@ -21,6 +21,7 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
+	servfail-ttl 0;
 };
 
 zone "." {

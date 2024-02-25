@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.7.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_RWLOCK_H
-#define ISC_RWLOCK_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -23,7 +22,6 @@
 #include <isc/atomic.h>
 #include <isc/condition.h>
 #include <isc/lang.h>
-#include <isc/platform.h>
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -105,5 +103,3 @@ void
 isc_rwlock_destroy(isc_rwlock_t *rwl);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RWLOCK_H */

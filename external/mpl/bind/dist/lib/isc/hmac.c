@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: hmac.c,v 1.5.2.1 2024/02/25 15:47:16 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,13 +13,13 @@
  * information regarding copyright ownership.
  */
 
-#include <openssl/hmac.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/opensslv.h>
 
 #include <isc/assertions.h>
 #include <isc/hmac.h>
 #include <isc/md.h>
-#include <isc/platform.h>
 #include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/types.h>
@@ -29,31 +29,56 @@
 
 isc_hmac_t *
 isc_hmac_new(void) {
-	HMAC_CTX *hmac = HMAC_CTX_new();
-	RUNTIME_CHECK(hmac != NULL);
-	return ((struct hmac *)hmac);
+	EVP_MD_CTX *hmac_st = EVP_MD_CTX_new();
+	RUNTIME_CHECK(hmac_st != NULL);
+	return ((isc_hmac_t *)hmac_st);
 }
 
 void
-isc_hmac_free(isc_hmac_t *hmac) {
-	if (ISC_UNLIKELY(hmac == NULL)) {
+isc_hmac_free(isc_hmac_t *hmac_st) {
+	if (hmac_st == NULL) {
 		return;
 	}
 
-	HMAC_CTX_free(hmac);
+	EVP_MD_CTX_free((EVP_MD_CTX *)hmac_st);
 }
 
 isc_result_t
-isc_hmac_init(isc_hmac_t *hmac, const void *key, size_t keylen,
+isc_hmac_init(isc_hmac_t *hmac_st, const void *key, const size_t keylen,
 	      const isc_md_type_t *md_type) {
-	REQUIRE(hmac != NULL);
+	EVP_PKEY *pkey;
+
+	REQUIRE(hmac_st != NULL);
 	REQUIRE(key != NULL);
+	REQUIRE(keylen <= INT_MAX);
 
 	if (md_type == NULL) {
 		return (ISC_R_NOTIMPLEMENTED);
 	}
 
-	if (HMAC_Init_ex(hmac, key, keylen, md_type, NULL) != 1) {
+	pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, keylen);
+	if (pkey == NULL) {
+		ERR_clear_error();
+		return (ISC_R_CRYPTOFAILURE);
+	}
+
+	if (EVP_DigestSignInit(hmac_st, NULL, md_type, NULL, pkey) != 1) {
+		EVP_PKEY_free(pkey);
+		ERR_clear_error();
+		return (ISC_R_CRYPTOFAILURE);
+	}
+
+	EVP_PKEY_free(pkey);
+
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_hmac_reset(isc_hmac_t *hmac_st) {
+	REQUIRE(hmac_st != NULL);
+
+	if (EVP_MD_CTX_reset(hmac_st) != 1) {
+		ERR_clear_error();
 		return (ISC_R_CRYPTOFAILURE);
 	}
 
@@ -61,25 +86,16 @@ isc_hmac_init(isc_hmac_t *hmac, const void *key, size_t keylen,
 }
 
 isc_result_t
-isc_hmac_reset(isc_hmac_t *hmac) {
-	REQUIRE(hmac != NULL);
+isc_hmac_update(isc_hmac_t *hmac_st, const unsigned char *buf,
+		const size_t len) {
+	REQUIRE(hmac_st != NULL);
 
-	if (HMAC_CTX_reset(hmac) != 1) {
-		return (ISC_R_CRYPTOFAILURE);
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_hmac_update(isc_hmac_t *hmac, const unsigned char *buf, const size_t len) {
-	REQUIRE(hmac != NULL);
-
-	if (ISC_UNLIKELY(buf == NULL || len == 0)) {
+	if (buf == NULL || len == 0) {
 		return (ISC_R_SUCCESS);
 	}
 
-	if (HMAC_Update(hmac, buf, len) != 1) {
+	if (EVP_DigestSignUpdate(hmac_st, buf, len) != 1) {
+		ERR_clear_error();
 		return (ISC_R_CRYPTOFAILURE);
 	}
 
@@ -87,62 +103,68 @@ isc_hmac_update(isc_hmac_t *hmac, const unsigned char *buf, const size_t len) {
 }
 
 isc_result_t
-isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
+isc_hmac_final(isc_hmac_t *hmac_st, unsigned char *digest,
 	       unsigned int *digestlen) {
-	REQUIRE(hmac != NULL);
+	REQUIRE(hmac_st != NULL);
 	REQUIRE(digest != NULL);
+	REQUIRE(digestlen != NULL);
 
-	if (HMAC_Final(hmac, digest, digestlen) != 1) {
+	size_t len = *digestlen;
+
+	if (EVP_DigestSignFinal(hmac_st, digest, &len) != 1) {
+		ERR_clear_error();
 		return (ISC_R_CRYPTOFAILURE);
 	}
+
+	*digestlen = (unsigned int)len;
 
 	return (ISC_R_SUCCESS);
 }
 
 const isc_md_type_t *
-isc_hmac_get_md_type(isc_hmac_t *hmac) {
-	REQUIRE(hmac != NULL);
+isc_hmac_get_md_type(isc_hmac_t *hmac_st) {
+	REQUIRE(hmac_st != NULL);
 
-	return (HMAC_CTX_get_md(hmac));
+	return (EVP_MD_CTX_get0_md(hmac_st));
 }
 
 size_t
-isc_hmac_get_size(isc_hmac_t *hmac) {
-	REQUIRE(hmac != NULL);
+isc_hmac_get_size(isc_hmac_t *hmac_st) {
+	REQUIRE(hmac_st != NULL);
 
-	return ((size_t)EVP_MD_size(HMAC_CTX_get_md(hmac)));
+	return ((size_t)EVP_MD_CTX_size(hmac_st));
 }
 
 int
-isc_hmac_get_block_size(isc_hmac_t *hmac) {
-	REQUIRE(hmac != NULL);
+isc_hmac_get_block_size(isc_hmac_t *hmac_st) {
+	REQUIRE(hmac_st != NULL);
 
-	return (EVP_MD_block_size(HMAC_CTX_get_md(hmac)));
+	return (EVP_MD_CTX_block_size(hmac_st));
 }
 
 isc_result_t
-isc_hmac(const isc_md_type_t *type, const void *key, const int keylen,
+isc_hmac(const isc_md_type_t *type, const void *key, const size_t keylen,
 	 const unsigned char *buf, const size_t len, unsigned char *digest,
 	 unsigned int *digestlen) {
 	isc_result_t res;
-	isc_hmac_t *hmac = isc_hmac_new();
+	isc_hmac_t *hmac_st = isc_hmac_new();
 
-	res = isc_hmac_init(hmac, key, keylen, type);
+	res = isc_hmac_init(hmac_st, key, keylen, type);
 	if (res != ISC_R_SUCCESS) {
 		goto end;
 	}
 
-	res = isc_hmac_update(hmac, buf, len);
+	res = isc_hmac_update(hmac_st, buf, len);
 	if (res != ISC_R_SUCCESS) {
 		goto end;
 	}
 
-	res = isc_hmac_final(hmac, digest, digestlen);
+	res = isc_hmac_final(hmac_st, digest, digestlen);
 	if (res != ISC_R_SUCCESS) {
 		goto end;
 	}
 end:
-	isc_hmac_free(hmac);
+	isc_hmac_free(hmac_st);
 
 	return (res);
 }

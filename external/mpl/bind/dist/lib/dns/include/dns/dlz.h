@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.6.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,8 +50,7 @@
 
 /*! \file dns/dlz.h */
 
-#ifndef DLZ_H
-#define DLZ_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -334,5 +333,3 @@ dns_dlz_ssumatch(dns_dlzdb_t *dlzdatabase, const dns_name_t *signer,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DLZ_H */

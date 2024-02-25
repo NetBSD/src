@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.7.2.1 2024/02/25 15:46:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_TYPES_H
-#define DNS_TYPES_H 1
+#pragma once
 
 /*! \file dns/types.h
  * \brief
@@ -45,6 +44,7 @@ typedef struct dns_byaddr	       dns_byaddr_t;
 typedef struct dns_catz_zonemodmethods dns_catz_zonemodmethods_t;
 typedef struct dns_catz_entry_options  dns_catz_options_t;
 typedef struct dns_catz_entry	       dns_catz_entry_t;
+typedef struct dns_catz_coo	       dns_catz_coo_t;
 typedef struct dns_catz_zone	       dns_catz_zone_t;
 typedef struct dns_catz_changed	       dns_catz_changed_t;
 typedef struct dns_catz_zones	       dns_catz_zones_t;
@@ -61,7 +61,6 @@ typedef struct dns_dbiterator	       dns_dbiterator_t;
 typedef void			       dns_dbload_t;
 typedef void			       dns_dbnode_t;
 typedef struct dns_dbonupdatelistener  dns_dbonupdatelistener_t;
-typedef struct dns_dbtable	       dns_dbtable_t;
 typedef void			       dns_dbversion_t;
 typedef struct dns_dlzimplementation   dns_dlzimplementation_t;
 typedef struct dns_dlzdb	       dns_dlzdb_t;
@@ -70,7 +69,6 @@ typedef struct dns_dyndbctx	      dns_dyndbctx_t;
 typedef struct dns_sdlzimplementation dns_sdlzimplementation_t;
 typedef struct dns_decompress	      dns_decompress_t;
 typedef struct dns_dispatch	      dns_dispatch_t;
-typedef struct dns_dispatchevent      dns_dispatchevent_t;
 typedef struct dns_dispatchlist	      dns_dispatchlist_t;
 typedef struct dns_dispatchset	      dns_dispatchset_t;
 typedef struct dns_dispatchmgr	      dns_dispatchmgr_t;
@@ -122,7 +120,6 @@ typedef unsigned char		  dns_offsets_t[128];
 typedef struct dns_order	  dns_order_t;
 typedef struct dns_peer		  dns_peer_t;
 typedef struct dns_peerlist	  dns_peerlist_t;
-typedef struct dns_portlist	  dns_portlist_t;
 typedef struct dns_rbt		  dns_rbt_t;
 typedef uint16_t		  dns_rcode_t;
 typedef struct dns_rdata	  dns_rdata_t;
@@ -161,13 +158,6 @@ typedef struct dns_zonemgr   dns_zonemgr_t;
 typedef struct dns_zt	     dns_zt_t;
 typedef struct dns_ipkeylist dns_ipkeylist_t;
 
-/*
- * If we are not using GSSAPI, define the types we use as opaque types here.
- */
-#ifndef GSSAPI
-typedef struct not_defined_gss_cred_id *gss_cred_id_t;
-typedef struct not_defined_gss_ctx     *gss_ctx_id_t;
-#endif /* ifndef GSSAPI */
 typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
 
 typedef enum { dns_hash_sha1 = 1 } dns_hash_t;
@@ -193,6 +183,12 @@ typedef enum {
 	dns_dbtype_cache = 1,
 	dns_dbtype_stub = 3
 } dns_dbtype_t;
+
+typedef enum {
+	dns_dbtree_main = 0,
+	dns_dbtree_nsec = 1,
+	dns_dbtree_nsec3 = 2
+} dns_dbtree_t;
 
 typedef enum {
 	dns_notifytype_no = 0,
@@ -221,7 +217,6 @@ typedef enum {
 	dns_masterformat_none = 0,
 	dns_masterformat_text = 1,
 	dns_masterformat_raw = 2,
-	dns_masterformat_map = 3
 } dns_masterformat_t;
 
 /*
@@ -409,7 +404,8 @@ typedef isc_result_t (*dns_addrdatasetfunc_t)(void *, const dns_name_t *,
 					      dns_rdataset_t *);
 
 typedef isc_result_t (*dns_additionaldatafunc_t)(void *, const dns_name_t *,
-						 dns_rdatatype_t);
+						 dns_rdatatype_t,
+						 dns_rdataset_t *);
 
 typedef isc_result_t (*dns_digestfunc_t)(void *, isc_region_t *);
 
@@ -433,8 +429,4 @@ typedef bool (*dns_isselffunc_t)(dns_view_t *, dns_tsigkey_t *,
 				 const isc_sockaddr_t *, const isc_sockaddr_t *,
 				 dns_rdataclass_t, void *);
 
-typedef isc_result_t (*dns_deserializefunc_t)(void *, FILE *, off_t);
-
 typedef void (*dns_nseclog_t)(void *val, int, const char *, ...);
-
-#endif /* DNS_TYPES_H */

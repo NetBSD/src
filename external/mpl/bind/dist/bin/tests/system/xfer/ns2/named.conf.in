@@ -20,6 +20,7 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	notify yes;
 	ixfr-from-differences yes;
 	check-integrity no;
@@ -27,7 +28,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -45,7 +46,7 @@ acl tzkey {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
@@ -71,4 +72,13 @@ zone "mapped" {
 	file "mapped.db";
 	masterfile-format text;
 	primaries { 10.53.0.100; };
+};
+
+zone "dot-fallback" {
+	type secondary;
+	file "dot-fallback.db";
+	primaries {
+		10.53.0.1 tls ephemeral;
+		10.53.0.1;
+	};
 };

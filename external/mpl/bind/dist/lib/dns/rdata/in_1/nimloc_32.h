@@ -1,4 +1,4 @@
-/*	$NetBSD: nimloc_32.h,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nimloc_32.h,v 1.5.2.1 2024/02/25 15:47:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef IN_1_NIMLOC_32_H
-#define IN_1_NIMLOC_32_H 1
+#pragma once
 
 /*!
  *  \brief http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
@@ -26,5 +25,3 @@ typedef struct dns_rdata_in_nimloc {
 	unsigned char *nimloc;
 	uint16_t nimloc_len;
 } dns_rdata_in_nimloc_t;
-
-#endif /* IN_1_NIMLOC_32_H */

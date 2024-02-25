@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.h,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: keydata_65533.h,v 1.7.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_KEYDATA_65533_H
-#define GENERIC_KEYDATA_65533_H 1
+#pragma once
 
 typedef struct dns_rdata_keydata {
 	dns_rdatacommon_t common;
@@ -28,5 +27,3 @@ typedef struct dns_rdata_keydata {
 	uint16_t datalen;
 	unsigned char *data;
 } dns_rdata_keydata_t;
-
-#endif /* GENERIC_KEYDATA_65533_H */

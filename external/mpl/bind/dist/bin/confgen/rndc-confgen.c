@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.6 2022/09/23 12:15:20 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.6.2.1 2024/02/25 15:43:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include <isc/assertions.h>
+#include <isc/attributes.h>
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
@@ -40,8 +41,6 @@
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
 
 #include <dns/keyvalues.h>
 #include <dns/name.h>
@@ -64,8 +63,8 @@ bool verbose = false;
 
 const char *keyfile, *keydef;
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(int status) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(int status);
 
 static void
 usage(int status) {
@@ -79,6 +78,7 @@ Usage:\n\
   -c keyfile:	 specify an alternate key file (requires -a)\n\
   -k keyname:	 the name as it will be used  in named.conf and rndc.conf\n\
   -p port:	 the port named will listen on and rndc will connect to\n\
+  -q:		 suppress printing written key path\n\
   -s addr:	 the address to which rndc should connect\n\
   -t chrootdir:	 write a keyfile in chrootdir as well (requires -a)\n\
   -u user:	 set the keyfile owner to \"user\" (requires -a)\n",
@@ -107,6 +107,7 @@ main(int argc, char **argv) {
 	char *chrootdir = NULL;
 	char *user = NULL;
 	bool keyonly = false;
+	bool quiet = false;
 	int len;
 
 	keydef = keyfile = RNDC_KEYFILE;
@@ -167,6 +168,9 @@ main(int argc, char **argv) {
 				      isc_commandline_argument);
 			}
 			break;
+		case 'q':
+			quiet = true;
+			break;
 		case 'r':
 			fatal("The -r option has been deprecated.");
 			break;
@@ -220,7 +224,7 @@ main(int argc, char **argv) {
 	if (keysize < 0) {
 		keysize = alg_bits(alg);
 	}
-	algname = alg_totext(alg);
+	algname = dst_hmac_algorithm_totext(alg);
 
 	isc_mem_create(&mctx);
 	isc_buffer_init(&key_txtbuffer, &key_txtsecret, sizeof(key_txtsecret));
@@ -230,6 +234,9 @@ main(int argc, char **argv) {
 	if (keyonly) {
 		write_key_file(keyfile, chrootdir == NULL ? user : NULL,
 			       keyname, &key_txtbuffer, alg);
+		if (!quiet) {
+			printf("wrote key file \"%s\"\n", keyfile);
+		}
 
 		if (chrootdir != NULL) {
 			char *buf;
@@ -239,6 +246,9 @@ main(int argc, char **argv) {
 				 (*keyfile != '/') ? "/" : "", keyfile);
 
 			write_key_file(buf, user, keyname, &key_txtbuffer, alg);
+			if (!quiet) {
+				printf("wrote key file \"%s\"\n", buf);
+			}
 			isc_mem_put(mctx, buf, len);
 		}
 	} else {

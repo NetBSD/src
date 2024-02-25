@@ -11,10 +11,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+set -e
 
-keyname=`$KEYGEN -T KEY -a DH -b 768 -n host server`
-keyid=$(keyfile_to_key_id $keyname)
-rm -f named.conf
-sed -e "s;KEYID;$keyid;" < named.conf.in > named.conf
+. ../../conf.sh
+
+keyname=$($KEYGEN -T KEY -a DH -b 768 -n host server)
+keyid=$(keyfile_to_key_id "$keyname")
+sed -i -e "s;KEYID;$keyid;" named.conf

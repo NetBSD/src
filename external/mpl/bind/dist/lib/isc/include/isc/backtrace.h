@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.h,v 1.5 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: backtrace.h,v 1.5.2.1 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,42 +26,23 @@
  * dumping a back trace on a fatal error, normally followed by self termination,
  * functions defined in this module generally doesn't employ assertion checks
  * (if it did, a program bug could cause infinite recursive calls to a
- * backtrace function).  These functions still perform minimal checks and return
- * ISC_R_FAILURE if they detect an error, but the caller should therefore be
- * very careful about the use of these functions, and generally discouraged to
- * use them except in an exit path.  The exception is
- * isc_backtrace_getsymbolfromindex(), which is expected to be used in a
- * non-error-handling context and validates arguments with assertion checks.
+ * backtrace function).
  */
 
-#ifndef ISC_BACKTRACE_H
-#define ISC_BACKTRACE_H 1
+#pragma once
 
 /***
  ***	Imports
  ***/
-
 #include <isc/types.h>
-
-/***
- *** Types
- ***/
-struct isc_backtrace_symmap {
-	void	   *addr;
-	const char *symbol;
-};
-
-LIBISC_EXTERNAL_DATA extern const int isc__backtrace_nsymbols;
-LIBISC_EXTERNAL_DATA extern const isc_backtrace_symmap_t
-	isc__backtrace_symtable[];
 
 /***
  *** Functions
  ***/
 
 ISC_LANG_BEGINDECLS
-isc_result_t
-isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes);
+int
+isc_backtrace(void **addrs, int maxaddrs);
 /*%<
  * Get a back trace of the running process above this function itself.  On
  * success, addrs[i] will store the address of the call point of the i-th
@@ -82,48 +63,41 @@ isc_backtrace_gettrace(void **addrs, int maxaddrs, int *nframes);
  *\li	#ISC_R_NOTIMPLEMENTED
  */
 
-isc_result_t
-isc_backtrace_getsymbolfromindex(int index, const void **addrp,
-				 const char **symbolp);
-/*%<
- * Returns the content of the internal symbol table of the given index.
- * On success, *addrsp and *symbolp point to the address and the symbol of
- * the 'index'th entry of the table, respectively.  If 'index' is not in the
- * range of the symbol table, ISC_R_RANGE will be returned.
+char **
+isc_backtrace_symbols(void *const *buffer, int size);
+/*
+ * isc_backtrace_symbols() attempts to transform a call stack obtained by
+ * backtrace() into an array of human-readable strings using dladdr().  The
+ * array of strings returned has size elements.  It is allocated using
+ * malloc() and should be released using free().  There is no need to free
+ * the individual strings in the array.
  *
- * Requires
+ * Notes:
  *
- *\li	'addrp' must be non NULL && '*addrp' == NULL.
- *
- *\li	'symbolp' must be non NULL && '*symbolp' == NULL.
+ *\li	On Windows, this is shim implementation using SymFromAddr()
+ *\li	On systems with backtrace_symbols(), it's just a thin wrapper
+ *\li	Otherwise, it returns NULL
+ *\li	See platform NOTES for backtrace_symbols
  *
  * Returns:
  *
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_RANGE
+ *\li	On success, backtrace_symbols() returns a pointer to the array
+ *\li	On error, NULL is returned.
  */
 
-isc_result_t
-isc_backtrace_getsymbol(const void *addr, const char **symbolp,
-			unsigned long *offsetp);
-/*%<
- * Searches the internal symbol table for the symbol that most matches the
- * given 'addr'.  On success, '*symbolp' will point to the name of function
- * to which the address 'addr' belong, and '*offsetp' will store the offset
- * from the function's entry address to 'addr'.
+void
+isc_backtrace_symbols_fd(void *const *buffer, int size, int fd);
+/*
+ * isc_backtrace_symbols_fd() performs the same operation as
+ * isc_backtrace_symbols(), but the resulting strings are immediately written to
+ * the file descriptor fd, and are not returned.  isc_backtrace_symbols_fd()
+ * does not call malloc(3), and so can be employed in situations where the
+ * latter function might fail.
  *
- * Requires (note that these are not ensured by assertion checks, see above):
+ * Notes:
  *
- *\li	'symbolp' must be non NULL && '*symbolp' == NULL.
- *
- *\li	'offsetp' must be non NULL.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_FAILURE
- *\li	#ISC_R_NOTFOUND
+ *\li	See isc_backtrace_symbols() notes
+ *\li	See platform NOTES for backtrace_symbols_fd for caveats
  */
+
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_BACKTRACE_H */

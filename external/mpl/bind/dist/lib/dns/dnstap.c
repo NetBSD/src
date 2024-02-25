@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.12 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.12.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,6 +63,7 @@
 #include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
 #include <isc/task.h>
 #include <isc/thread.h>
@@ -76,7 +77,6 @@
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rdataset.h>
-#include <dns/result.h>
 #include <dns/stats.h>
 #include <dns/types.h>
 #include <dns/view.h>
@@ -138,7 +138,7 @@ typedef struct ioq {
 	struct fstrm_iothr_queue *ioq;
 } dt__ioq_t;
 
-ISC_THREAD_LOCAL dt__ioq_t dt_ioq = { 0 };
+static thread_local dt__ioq_t dt_ioq = { 0 };
 
 static atomic_uint_fast32_t global_generation;
 

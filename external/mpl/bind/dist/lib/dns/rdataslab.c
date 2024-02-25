@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.6.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.6.2.2 2024/02/25 15:46:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,13 +20,13 @@
 
 #include <isc/mem.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/rdataslab.h>
-#include <dns/result.h>
 
 /*
  * The rdataslab structure allows iteration to occur in both load order

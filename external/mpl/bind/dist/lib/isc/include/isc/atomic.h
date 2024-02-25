@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.6.2.1 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,11 @@
 
 #if HAVE_STDATOMIC_H
 #include <stdatomic.h>
-#else /* if HAVE_STDATOMIC_H */
+#else
 #include <isc/stdatomic.h>
-#endif /* if HAVE_STDATOMIC_H */
+#endif
+
+#include <isc/util.h>
 
 /*
  * We define a few additional macros to make things easier
@@ -73,3 +75,7 @@
 #define atomic_compare_exchange_strong_acq_rel(o, e, d) \
 	atomic_compare_exchange_strong_explicit(        \
 		(o), (e), (d), memory_order_acq_rel, memory_order_acquire)
+
+/* compare/exchange that MUST succeed */
+#define atomic_compare_exchange_enforced(o, e, d) \
+	RUNTIME_CHECK(atomic_compare_exchange_strong((o), (e), (d)))

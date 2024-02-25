@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.c,v 1.6 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dns64.c,v 1.6.2.1 2024/02/25 15:46:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <isc/list.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
@@ -26,7 +27,6 @@
 #include <dns/dns64.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
-#include <dns/result.h>
 
 struct dns_dns64 {
 	unsigned char bits[16]; /*
@@ -130,7 +130,7 @@ dns_dns64_destroy(dns_dns64_t **dns64p) {
 
 isc_result_t
 dns_dns64_aaaafroma(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
-		    const dns_name_t *reqsigner, const dns_aclenv_t *env,
+		    const dns_name_t *reqsigner, dns_aclenv_t *env,
 		    unsigned int flags, unsigned char *a, unsigned char *aaaa) {
 	unsigned int nbytes, i;
 	isc_result_t result;
@@ -214,7 +214,7 @@ dns_dns64_unlink(dns_dns64list_t *list, dns_dns64_t *dns64) {
 
 bool
 dns_dns64_aaaaok(const dns_dns64_t *dns64, const isc_netaddr_t *reqaddr,
-		 const dns_name_t *reqsigner, const dns_aclenv_t *env,
+		 const dns_name_t *reqsigner, dns_aclenv_t *env,
 		 unsigned int flags, dns_rdataset_t *rdataset, bool *aaaaok,
 		 size_t aaaaoklen) {
 	struct in6_addr in6;
@@ -324,4 +324,163 @@ done:
 		}
 	}
 	return (found ? answer : true);
+}
+
+/*
+ * Posible mapping of IPV4ONLY.ARPA A records into AAAA records
+ * for valid RFC6052 prefixes.
+ */
+static struct {
+	const unsigned char aa[16]; /* mapped version of 192.0.0.170 */
+	const unsigned char ab[16]; /* mapped version of 192.0.0.171 */
+	const unsigned char mask[16];
+	const unsigned int plen;
+} const prefixes[6] = {
+	{ { 0, 0, 0, 0, 192, 0, 0, 170, 0, 0, 0, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 192, 0, 0, 171, 0, 0, 0, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0 },
+	  32 },
+	{ { 0, 0, 0, 0, 0, 192, 0, 0, 0, 170, 0, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 192, 0, 0, 0, 171, 0, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0 },
+	  40 },
+	{ { 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 170, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 171, 0, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0 },
+	  48 },
+	{ { 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 170, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 0, 171, 0, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0 },
+	  56 },
+	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 170, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 171, 0, 0, 0 },
+	  { 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0 },
+	  64 },
+	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 170 },
+	  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 0, 0, 171 },
+	  { 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255 },
+	  96 }
+};
+
+static unsigned int
+search(const dns_rdata_t *rd1, const dns_rdata_t *rd2, unsigned int plen) {
+	unsigned int i = 0, j;
+	const unsigned char *c, *m;
+
+	/*
+	 * Resume looking for another aa match?
+	 */
+	if (plen != 0U && rd2 == NULL) {
+		while (i < 6U) {
+			/* Post increment as we resume on next entry. */
+			if (prefixes[i++].plen == plen) {
+				break;
+			}
+		}
+	}
+
+	for (; i < 6U; i++) {
+		j = 0;
+		if (rd2 != NULL) {
+			/* Find the right entry. */
+			if (prefixes[i].plen != plen) {
+				continue;
+			}
+			/* Does the prefix match? */
+			while ((j * 8U) < plen) {
+				if (rd1->data[j] != rd2->data[j]) {
+					return (0);
+				}
+				j++;
+			}
+		}
+
+		/* Match well known mapped addresses. */
+		c = (rd2 == NULL) ? prefixes[i].aa : prefixes[i].ab;
+		m = prefixes[i].mask;
+		for (; j < 16U; j++) {
+			if ((rd1->data[j] & m[j]) != (c[j] & m[j])) {
+				break;
+			}
+		}
+		if (j == 16U) {
+			return (prefixes[i].plen);
+		}
+		if (rd2 != NULL) {
+			return (0);
+		}
+	}
+	return (0);
+}
+
+isc_result_t
+dns_dns64_findprefix(dns_rdataset_t *rdataset, isc_netprefix_t *prefix,
+		     size_t *len) {
+	dns_rdataset_t outer, inner;
+	unsigned int oplen, iplen;
+	size_t count = 0;
+	struct in6_addr ina6;
+	isc_result_t result;
+
+	REQUIRE(prefix != NULL && len != NULL && *len != 0U);
+	REQUIRE(rdataset != NULL && rdataset->type == dns_rdatatype_aaaa);
+
+	dns_rdataset_init(&outer);
+	dns_rdataset_init(&inner);
+	dns_rdataset_clone(rdataset, &outer);
+	dns_rdataset_clone(rdataset, &inner);
+
+	for (result = dns_rdataset_first(&outer); result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&outer))
+	{
+		dns_rdata_t rd1 = DNS_RDATA_INIT;
+		dns_rdataset_current(&outer, &rd1);
+		oplen = 0;
+	resume:
+		/* Look for a 192.0.0.170 match. */
+		oplen = search(&rd1, NULL, oplen);
+		if (oplen == 0) {
+			continue;
+		}
+
+		/* Look for the 192.0.0.171 match. */
+		for (result = dns_rdataset_first(&inner);
+		     result == ISC_R_SUCCESS;
+		     result = dns_rdataset_next(&inner))
+		{
+			dns_rdata_t rd2 = DNS_RDATA_INIT;
+
+			dns_rdataset_current(&inner, &rd2);
+			iplen = search(&rd2, &rd1, oplen);
+			if (iplen == 0) {
+				continue;
+			}
+			INSIST(iplen == oplen);
+			if (count >= *len) {
+				count++;
+				break;
+			}
+
+			/* We have a prefix. */
+			memset(ina6.s6_addr, 0, sizeof(ina6.s6_addr));
+			memmove(ina6.s6_addr, rd1.data, oplen / 8);
+			isc_netaddr_fromin6(&prefix[count].addr, &ina6);
+			prefix[count].prefixlen = oplen;
+			count++;
+			break;
+		}
+		/* Didn't find a match look for a different prefix length. */
+		if (result == ISC_R_NOMORE) {
+			goto resume;
+		}
+	}
+	if (count == 0U) {
+		return (ISC_R_NOTFOUND);
+	}
+	if (count > *len) {
+		*len = count;
+		return (ISC_R_NOSPACE);
+	}
+	*len = count;
+	return (ISC_R_SUCCESS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7.2.1 2023/08/11 13:42:59 martin Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7.2.2 2024/02/25 15:43:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,15 +20,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/region.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
 
 #include <dns/dnssec.h>
 #include <dns/fixedname.h>
@@ -36,14 +36,9 @@
 #include <dns/log.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
-#include <dns/result.h>
 #include <dns/secalg.h>
 
 #include <dst/dst.h>
-
-#if USE_PKCS11
-#include <pk11/result.h>
-#endif /* if USE_PKCS11 */
 
 #include "dnssectool.h"
 
@@ -51,14 +46,14 @@
 
 const char *program = "dnssec-keyfromlabel";
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(void) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(void);
 
 static void
 usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s -l label [options] name\n\n", program);
-	fprintf(stderr, "Version: %s\n", VERSION);
+	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 	fprintf(stderr, "Required options:\n");
 	fprintf(stderr, "    -l label: label of the key pair\n");
 	fprintf(stderr, "    name: owner of the key\n");
@@ -72,14 +67,7 @@ usage(void) {
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -c class (default: IN)\n");
 	fprintf(stderr, "    -E <engine>:\n");
-#if USE_PKCS11
-	fprintf(stderr,
-		"        path to PKCS#11 provider library "
-		"(default is %s)\n",
-		PK11_LIB_LOCATION);
-#else  /* if USE_PKCS11 */
 	fprintf(stderr, "        name of an OpenSSL engine to use\n");
-#endif /* if USE_PKCS11 */
 	fprintf(stderr, "    -f keyflag: KSK | REVOKE\n");
 	fprintf(stderr, "    -K directory: directory in which to place "
 			"key files\n");
@@ -172,11 +160,6 @@ main(int argc, char **argv) {
 	}
 
 	isc_mem_create(&mctx);
-
-#if USE_PKCS11
-	pk11_result_register();
-#endif /* if USE_PKCS11 */
-	dns_result_register();
 
 	isc_commandline_errprint = false;
 
@@ -627,12 +610,7 @@ main(int argc, char **argv) {
 	isc_buffer_init(&buf, filename, sizeof(filename) - 1);
 
 	/* associate the key */
-	ret = dst_key_fromlabel(name, alg, flags, protocol, rdclass,
-#if USE_PKCS11
-				"pkcs11",
-#else  /* if USE_PKCS11 */
-				engine,
-#endif /* if USE_PKCS11 */
+	ret = dst_key_fromlabel(name, alg, flags, protocol, rdclass, engine,
 				label, NULL, mctx, &key);
 
 	if (ret != ISC_R_SUCCESS) {

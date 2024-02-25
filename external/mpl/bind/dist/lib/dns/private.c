@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.7.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: private.c,v 1.7.2.2 2024/02/25 15:46:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,10 +41,10 @@
  * been requested to be built otherwise a NSEC chain needs to be built.
  */
 
-#define REMOVE(x)  (((x)&DNS_NSEC3FLAG_REMOVE) != 0)
-#define CREATE(x)  (((x)&DNS_NSEC3FLAG_CREATE) != 0)
-#define INITIAL(x) (((x)&DNS_NSEC3FLAG_INITIAL) != 0)
-#define NONSEC(x)  (((x)&DNS_NSEC3FLAG_NONSEC) != 0)
+#define REMOVE(x)  (((x) & DNS_NSEC3FLAG_REMOVE) != 0)
+#define CREATE(x)  (((x) & DNS_NSEC3FLAG_CREATE) != 0)
+#define INITIAL(x) (((x) & DNS_NSEC3FLAG_INITIAL) != 0)
+#define NONSEC(x)  (((x) & DNS_NSEC3FLAG_NONSEC) != 0)
 
 #define CHECK(x)                             \
 	do {                                 \

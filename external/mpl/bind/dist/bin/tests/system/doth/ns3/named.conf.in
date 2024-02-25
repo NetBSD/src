@@ -1,0 +1,79 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls local {
+	key-file "../CA/certs/srv03.crt01.example.com.key";
+	cert-file "../CA/certs/srv03.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+http local {
+	endpoints { "/dns-query"; };
+};
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	https-port @HTTPSPORT@;
+	http-port @HTTPPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on tls local { 10.53.0.3; };             // DoT
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	ixfr-from-differences yes;
+	check-integrity no;
+	dnssec-validation yes;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+tls tls-v1.2-pfs {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers no;
+};
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-v1.2-pfs; };
+	file "example.db";
+	allow-transfer { any; };
+};
+
+tls tls-pfs-aes-128 {
+	protocols { TLSv1.2; };
+	// AES128 does not match the setting on the server: AES256
+	ciphers "AES128:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers no;
+};
+
+zone "example2" {
+	type secondary;
+	primaries port @EXTRAPORT1@ { 10.53.0.1 tls tls-pfs-aes-128; };
+	file "example2.db";
+	allow-transfer { any; };
+};

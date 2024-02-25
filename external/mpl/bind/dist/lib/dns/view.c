@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.12.2.1 2023/08/11 13:43:35 martin Exp $	*/
+/*	$NetBSD: view.c,v 1.12.2.2 2024/02/25 15:46:54 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,15 +21,15 @@
 
 #ifdef HAVE_LMDB
 #include <lmdb.h>
-
-#include <dns/lmdb.h>
-#endif /* HAVE_LMDB */
+#endif /* ifdef HAVE_LMDB */
 
 #include <isc/atomic.h>
+#include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/lex.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/stats.h>
 #include <isc/string.h> /* Required for HP/UX (and others?) */
 #include <isc/task.h>
@@ -57,11 +57,11 @@
 #include <dns/rdataset.h>
 #include <dns/request.h>
 #include <dns/resolver.h>
-#include <dns/result.h>
 #include <dns/rpz.h>
 #include <dns/rrl.h>
 #include <dns/stats.h>
 #include <dns/time.h>
+#include <dns/transport.h>
 #include <dns/tsig.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
@@ -120,11 +120,12 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 
 	isc_mutex_init(&view->lock);
 
+	isc_rwlock_init(&view->sfd_lock, 0, 0);
+
 	view->zonetable = NULL;
 	result = dns_zt_create(mctx, rdclass, &view->zonetable);
 	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "dns_zt_create() failed: %s",
+		UNEXPECTED_ERROR("dns_zt_create() failed: %s",
 				 isc_result_totext(result));
 		result = ISC_R_UNEXPECTED;
 		goto cleanup_mutex;
@@ -135,8 +136,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 	view->fwdtable = NULL;
 	result = dns_fwdtable_create(mctx, &view->fwdtable);
 	if (result != ISC_R_SUCCESS) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "dns_fwdtable_create() failed: %s",
+		UNEXPECTED_ERROR("dns_fwdtable_create() failed: %s",
 				 isc_result_totext(result));
 		result = ISC_R_UNEXPECTED;
 		goto cleanup_zt;
@@ -158,6 +158,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 	atomic_init(&view->attributes,
 		    (DNS_VIEWATTR_RESSHUTDOWN | DNS_VIEWATTR_ADBSHUTDOWN |
 		     DNS_VIEWATTR_REQSHUTDOWN));
+	view->transports = NULL;
 	view->statickeys = NULL;
 	view->dynamickeys = NULL;
 	view->matchclients = NULL;
@@ -211,6 +212,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 	view->denyanswernames = NULL;
 	view->answernames_exclude = NULL;
 	view->rrl = NULL;
+	view->sfd = NULL;
 	view->provideixfr = true;
 	view->maxcachettl = 7 * 24 * 3600;
 	view->maxncachettl = 3 * 3600;
@@ -278,7 +280,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 		goto cleanup_order;
 	}
 
-	result = dns_aclenv_init(view->mctx, &view->aclenv);
+	result = dns_aclenv_create(view->mctx, &view->aclenv);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup_peerlist;
 	}
@@ -337,6 +339,7 @@ cleanup_zt:
 	}
 
 cleanup_mutex:
+	isc_rwlock_destroy(&view->sfd_lock);
 	isc_mutex_destroy(&view->lock);
 
 	if (view->nta_file != NULL) {
@@ -404,6 +407,9 @@ destroy(dns_view_t *view) {
 			}
 		}
 	}
+	if (view->transports != NULL) {
+		dns_transport_list_detach(&view->transports);
+	}
 	if (view->statickeys != NULL) {
 		dns_tsigkeyring_detach(&view->statickeys);
 	}
@@ -415,10 +421,12 @@ destroy(dns_view_t *view) {
 	}
 	dns_rrl_view_destroy(view);
 	if (view->rpzs != NULL) {
+		dns_rpz_shutdown_rpzs(view->rpzs);
 		dns_rpz_detach_rpzs(&view->rpzs);
 	}
 	if (view->catzs != NULL) {
-		dns_catz_catzs_detach(&view->catzs);
+		dns_catz_shutdown_catzs(view->catzs);
+		dns_catz_detach_catzs(&view->catzs);
 	}
 	for (dlzdb = ISC_LIST_HEAD(view->dlz_searched); dlzdb != NULL;
 	     dlzdb = ISC_LIST_HEAD(view->dlz_searched))
@@ -503,6 +511,9 @@ destroy(dns_view_t *view) {
 	}
 	if (view->answernames_exclude != NULL) {
 		dns_rbt_destroy(&view->answernames_exclude);
+	}
+	if (view->sfd != NULL) {
+		dns_rbt_destroy(&view->sfd);
 	}
 	if (view->delonly != NULL) {
 		dns_name_t *name;
@@ -591,11 +602,12 @@ destroy(dns_view_t *view) {
 	}
 #endif /* HAVE_LMDB */
 	dns_fwdtable_destroy(&view->fwdtable);
-	dns_aclenv_destroy(&view->aclenv);
+	dns_aclenv_detach(&view->aclenv);
 	if (view->failcache != NULL) {
 		dns_badcache_destroy(&view->failcache);
 	}
 	isc_mutex_destroy(&view->new_zone_lock);
+	isc_rwlock_destroy(&view->sfd_lock);
 	isc_mutex_destroy(&view->lock);
 	isc_refcount_destroy(&view->references);
 	isc_refcount_destroy(&view->weakrefs);
@@ -632,8 +644,10 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 
 	if (isc_refcount_decrement(&view->references) == 1) {
 		dns_zone_t *mkzone = NULL, *rdzone = NULL;
+		dns_zt_t *zt = NULL;
 
 		isc_refcount_destroy(&view->references);
+
 		if (!RESSHUTDOWN(view)) {
 			dns_resolver_shutdown(view->resolver);
 		}
@@ -643,14 +657,17 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 		if (!REQSHUTDOWN(view)) {
 			dns_requestmgr_shutdown(view->requestmgr);
 		}
+
 		LOCK(&view->lock);
+
 		if (view->zonetable != NULL) {
+			zt = view->zonetable;
+			view->zonetable = NULL;
 			if (view->flush) {
-				dns_zt_flushanddetach(&view->zonetable);
-			} else {
-				dns_zt_detach(&view->zonetable);
+				dns_zt_flush(zt);
 			}
 		}
+
 		if (view->managed_keys != NULL) {
 			mkzone = view->managed_keys;
 			view->managed_keys = NULL;
@@ -666,14 +683,19 @@ view_flushanddetach(dns_view_t **viewp, bool flush) {
 			}
 		}
 		if (view->catzs != NULL) {
-			dns_catz_catzs_detach(&view->catzs);
+			dns_catz_shutdown_catzs(view->catzs);
+			dns_catz_detach_catzs(&view->catzs);
 		}
 		if (view->ntatable_priv != NULL) {
 			dns_ntatable_shutdown(view->ntatable_priv);
 		}
 		UNLOCK(&view->lock);
 
-		/* Need to detach zones outside view lock */
+		/* Need to detach zt and zones outside view lock */
+		if (zt != NULL) {
+			dns_zt_detach(&zt);
+		}
+
 		if (mkzone != NULL) {
 			dns_zone_detach(&mkzone);
 		}
@@ -797,9 +819,9 @@ dns_view_createzonetable(dns_view_t *view) {
 
 isc_result_t
 dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
-			unsigned int ntasks, unsigned int ndisp,
-			isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
-			unsigned int options, dns_dispatchmgr_t *dispatchmgr,
+			unsigned int ntasks, unsigned int ndisp, isc_nm_t *nm,
+			isc_timermgr_t *timermgr, unsigned int options,
+			dns_dispatchmgr_t *dispatchmgr,
 			dns_dispatch_t *dispatchv4,
 			dns_dispatch_t *dispatchv6) {
 	isc_result_t result;
@@ -816,8 +838,8 @@ dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
 	}
 	isc_task_setname(view->task, "view", view);
 
-	result = dns_resolver_create(view, taskmgr, ntasks, ndisp, socketmgr,
-				     timermgr, options, dispatchmgr, dispatchv4,
+	result = dns_resolver_create(view, taskmgr, ntasks, ndisp, nm, timermgr,
+				     options, dispatchmgr, dispatchv4,
 				     dispatchv6, &view->resolver);
 	if (result != ISC_R_SUCCESS) {
 		isc_task_detach(&view->task);
@@ -829,9 +851,9 @@ dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
 	isc_refcount_increment(&view->weakrefs);
 
 	isc_mem_create(&mctx);
+	isc_mem_setname(mctx, "ADB");
 
 	result = dns_adb_create(mctx, view, timermgr, taskmgr, &view->adb);
-	isc_mem_setname(mctx, "ADB", NULL);
 	isc_mem_detach(&mctx);
 	if (result != ISC_R_SUCCESS) {
 		dns_resolver_shutdown(view->resolver);
@@ -842,11 +864,10 @@ dns_view_createresolver(dns_view_t *view, isc_taskmgr_t *taskmgr,
 	atomic_fetch_and(&view->attributes, ~DNS_VIEWATTR_ADBSHUTDOWN);
 	isc_refcount_increment(&view->weakrefs);
 
-	result = dns_requestmgr_create(view->mctx, timermgr, socketmgr,
-				       dns_resolver_taskmgr(view->resolver),
-				       dns_resolver_dispatchmgr(view->resolver),
-				       dispatchv4, dispatchv6,
-				       &view->requestmgr);
+	result = dns_requestmgr_create(
+		view->mctx, dns_resolver_taskmgr(view->resolver),
+		dns_resolver_dispatchmgr(view->resolver), dispatchv4,
+		dispatchv6, &view->requestmgr);
 	if (result != ISC_R_SUCCESS) {
 		dns_adb_shutdown(view->adb);
 		dns_resolver_shutdown(view->resolver);
@@ -890,6 +911,16 @@ dns_view_sethints(dns_view_t *view, dns_db_t *hints) {
 	REQUIRE(dns_db_iszone(hints));
 
 	dns_db_attach(hints, &view->hints);
+}
+
+void
+dns_view_settransports(dns_view_t *view, dns_transport_list_t *list) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(list != NULL);
+	if (view->transports != NULL) {
+		dns_transport_list_detach(&view->transports);
+	}
+	dns_transport_list_attach(list, &view->transports);
 }
 
 void
@@ -1382,7 +1413,7 @@ db_find:
 			 * We found an answer, but the cache may be better.
 			 */
 			zfname = dns_fixedname_name(&zfixedname);
-			dns_name_copynf(fname, zfname);
+			dns_name_copy(fname, zfname);
 			dns_rdataset_clone(rdataset, &zrdataset);
 			dns_rdataset_disassociate(rdataset);
 			if (sigrdataset != NULL &&
@@ -1446,9 +1477,9 @@ finish:
 				dns_rdataset_disassociate(sigrdataset);
 			}
 		}
-		dns_name_copynf(zfname, fname);
+		dns_name_copy(zfname, fname);
 		if (dcname != NULL) {
-			dns_name_copynf(zfname, dcname);
+			dns_name_copy(zfname, dcname);
 		}
 		dns_rdataset_clone(&zrdataset, rdataset);
 		if (sigrdataset != NULL &&
@@ -1473,7 +1504,7 @@ finish:
 			}
 			result = ISC_R_NOTFOUND;
 		} else if (dcname != NULL) {
-			dns_name_copynf(fname, dcname);
+			dns_name_copy(fname, dcname);
 		}
 	}
 
@@ -1607,6 +1638,22 @@ dns_view_gettsig(dns_view_t *view, const dns_name_t *keyname,
 }
 
 isc_result_t
+dns_view_gettransport(dns_view_t *view, const dns_transport_type_t type,
+		      const dns_name_t *name, dns_transport_t **transportp) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(transportp != NULL && *transportp == NULL);
+
+	dns_transport_t *transport = dns_transport_find(type, name,
+							view->transports);
+	if (transport == NULL) {
+		return (ISC_R_NOTFOUND);
+	}
+
+	*transportp = transport;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
 dns_view_getpeertsig(dns_view_t *view, const isc_netaddr_t *peeraddr,
 		     dns_tsigkey_t **keyp) {
 	isc_result_t result;
@@ -1723,7 +1770,7 @@ dns_view_flushnode(dns_view_t *view, const dns_name_t *name, bool tree) {
 	return (result);
 }
 
-isc_result_t
+void
 dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name) {
 	dns_name_t *item;
 	unsigned int hash;
@@ -1744,16 +1791,15 @@ dns_view_adddelegationonly(dns_view_t *view, const dns_name_t *name) {
 		item = ISC_LIST_NEXT(item, link);
 	}
 	if (item != NULL) {
-		return (ISC_R_SUCCESS);
+		return;
 	}
 	item = isc_mem_get(view->mctx, sizeof(*item));
 	dns_name_init(item, NULL);
 	dns_name_dup(name, view->mctx, item);
 	ISC_LIST_APPEND(view->delonly[hash], item, link);
-	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
+void
 dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name) {
 	dns_name_t *item;
 	unsigned int hash;
@@ -1774,13 +1820,12 @@ dns_view_excludedelegationonly(dns_view_t *view, const dns_name_t *name) {
 		item = ISC_LIST_NEXT(item, link);
 	}
 	if (item != NULL) {
-		return (ISC_R_SUCCESS);
+		return;
 	}
 	item = isc_mem_get(view->mctx, sizeof(*item));
 	dns_name_init(item, NULL);
 	dns_name_dup(name, view->mctx, item);
 	ISC_LIST_APPEND(view->rootexclude[hash], item, link);
-	return (ISC_R_SUCCESS);
 }
 
 bool
@@ -2341,7 +2386,7 @@ dns_view_searchdlz(dns_view_t *view, const dns_name_t *name,
 		 */
 		for (i = namelabels; i > minlabels && i > 1; i--) {
 			if (i == namelabels) {
-				dns_name_copynf(name, zonename);
+				dns_name_copy(name, zonename);
 			} else {
 				dns_name_split(name, i, NULL, zonename);
 			}
@@ -2571,12 +2616,12 @@ dns_view_setviewcommit(dns_view_t *view) {
 	if (view->managed_keys != NULL) {
 		dns_zone_attach(view->managed_keys, &managed_keys);
 	}
-	if (view->zonetable != NULL) {
-		dns_zt_setviewcommit(view->zonetable);
-	}
 
 	UNLOCK(&view->lock);
 
+	if (view->zonetable != NULL) {
+		dns_zt_setviewcommit(view->zonetable);
+	}
 	if (redirect != NULL) {
 		dns_zone_setviewcommit(redirect);
 		dns_zone_detach(&redirect);
@@ -2641,4 +2686,78 @@ dns_view_staleanswerenabled(dns_view_t *view) {
 	}
 
 	return (result);
+}
+
+static void
+free_sfd(void *data, void *arg) {
+	isc_mem_put(arg, data, sizeof(unsigned int));
+}
+
+void
+dns_view_sfd_add(dns_view_t *view, const dns_name_t *name) {
+	isc_result_t result;
+	dns_rbtnode_t *node = NULL;
+
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	RWLOCK(&view->sfd_lock, isc_rwlocktype_write);
+	if (view->sfd == NULL) {
+		result = dns_rbt_create(view->mctx, free_sfd, view->mctx,
+					&view->sfd);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	}
+
+	result = dns_rbt_addnode(view->sfd, name, &node);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS || result == ISC_R_EXISTS);
+	if (node->data != NULL) {
+		unsigned int *count = node->data;
+		(*count)++;
+	} else {
+		unsigned int *count = isc_mem_get(view->mctx,
+						  sizeof(unsigned int));
+		*count = 1;
+		node->data = count;
+	}
+	RWUNLOCK(&view->sfd_lock, isc_rwlocktype_write);
+}
+
+void
+dns_view_sfd_del(dns_view_t *view, const dns_name_t *name) {
+	isc_result_t result;
+	void *data = NULL;
+
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	RWLOCK(&view->sfd_lock, isc_rwlocktype_write);
+	INSIST(view->sfd != NULL);
+	result = dns_rbt_findname(view->sfd, name, 0, NULL, &data);
+	if (result == ISC_R_SUCCESS) {
+		unsigned int *count = data;
+		INSIST(count != NULL);
+		if (--(*count) == 0U) {
+			result = dns_rbt_deletename(view->sfd, name, false);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		}
+	}
+	RWUNLOCK(&view->sfd_lock, isc_rwlocktype_write);
+}
+
+void
+dns_view_sfd_find(dns_view_t *view, const dns_name_t *name,
+		  dns_name_t *foundname) {
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	if (view->sfd != NULL) {
+		isc_result_t result;
+		void *data = NULL;
+
+		RWLOCK(&view->sfd_lock, isc_rwlocktype_read);
+		result = dns_rbt_findname(view->sfd, name, 0, foundname, &data);
+		RWUNLOCK(&view->sfd_lock, isc_rwlocktype_read);
+		if (result != ISC_R_SUCCESS && result != DNS_R_PARTIALMATCH) {
+			dns_name_copy(dns_rootname, foundname);
+		}
+	} else {
+		dns_name_copy(dns_rootname, foundname);
+	}
 }

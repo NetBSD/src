@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapictx.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.9.2.1 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,25 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#if HAVE_GSSAPI_GSSAPI_H
+#include <gssapi/gssapi.h>
+#elif HAVE_GSSAPI_H
+#include <gssapi.h>
+#endif
+
+#if HAVE_GSSAPI_GSSAPI_KRB5_H
+#include <gssapi/gssapi_krb5.h>
+#elif HAVE_GSSAPI_KRB5_H
+#include <gssapi_krb5.h>
+#endif
+
+#if HAVE_KRB5_KRB5_H
+#include <krb5/krb5.h>
+#elif HAVE_KRB5_H
+#include <krb5.h>
+#endif
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
@@ -25,9 +44,9 @@
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/once.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -38,27 +57,13 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
-#include <dns/result.h>
 #include <dns/types.h>
 
 #include <dst/gssapi.h>
-#include <dst/result.h>
 
 #include "dst_internal.h"
 
-/*
- * Solaris8 apparently needs an explicit OID set, and Solaris10 needs
- * one for anything but Kerberos.  Supplying an explicit OID set
- * doesn't appear to hurt anything in other implementations, so we
- * always use one.  If we're not using our own SPNEGO implementation,
- * we include SPNEGO's OID.
- */
-#ifdef GSSAPI
-#ifdef WIN32
-#include <krb5/krb5.h>
-#else /* ifdef WIN32 */
-#include ISC_PLATFORM_KRB5HEADER
-#endif /* ifdef WIN32 */
+#if HAVE_GSSAPI
 
 #ifndef GSS_KRB5_MECHANISM
 static unsigned char krb5_mech_oid_bytes[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7,
@@ -123,7 +128,7 @@ name_to_gbuffer(const dns_name_t *name, isc_buffer_t *buffer,
 }
 
 static void
-log_cred(const dns_gss_cred_id_t cred) {
+log_cred(const gss_cred_id_t cred) {
 	OM_uint32 gret, minor, lifetime;
 	gss_name_t gname;
 	gss_buffer_desc gbuffer;
@@ -131,8 +136,7 @@ log_cred(const dns_gss_cred_id_t cred) {
 	const char *usage_text;
 	char buf[1024];
 
-	gret = gss_inquire_cred(&minor, (gss_cred_id_t)cred, &gname, &lifetime,
-				&usage, NULL);
+	gret = gss_inquire_cred(&minor, cred, &gname, &lifetime, &usage, NULL);
 	if (gret != GSS_S_COMPLETE) {
 		gss_log(3, "failed gss_inquire_cred: %s",
 			gss_error_tostring(gret, minor, buf, sizeof(buf)));
@@ -278,7 +282,7 @@ dst_gssapi_acquirecred(const dns_name_t *name, bool initiate,
 	OM_uint32 lifetime;
 	gss_cred_usage_t usage;
 	char buf[1024];
-	gss_OID_set mech_oid_set = NULL;
+	gss_OID_set mech_oid_set;
 
 	REQUIRE(cred != NULL && *cred == NULL);
 
@@ -676,7 +680,7 @@ dst_gssapi_acceptctx(dns_gss_cred_id_t cred, const char *gssapi_keytab,
 	}
 
 	if (gssapi_keytab != NULL) {
-#if defined(ISC_PLATFORM_GSSAPI_KRB5_HEADER) || defined(WIN32)
+#if HAVE_GSSAPI_GSSAPI_KRB5_H || HAVE_GSSAPI_KRB5_H
 		gret = gsskrb5_register_acceptor_identity(gssapi_keytab);
 		if (gret != GSS_S_COMPLETE) {
 			gss_log(3,
@@ -686,7 +690,7 @@ dst_gssapi_acceptctx(dns_gss_cred_id_t cred, const char *gssapi_keytab,
 				gss_error_tostring(gret, 0, buf, sizeof(buf)));
 			return (DNS_R_INVALIDTKEY);
 		}
-#else  /* if defined(ISC_PLATFORM_GSSAPI_KRB5_HEADER) || defined(WIN32) */
+#else
 		/*
 		 * Minimize memory leakage by only setting KRB5_KTNAME
 		 * if it needs to change.
@@ -706,7 +710,7 @@ dst_gssapi_acceptctx(dns_gss_cred_id_t cred, const char *gssapi_keytab,
 				return (ISC_R_NOMEMORY);
 			}
 		}
-#endif /* if defined(ISC_PLATFORM_GSSAPI_KRB5_HEADER) || defined(WIN32) */
+#endif
 	}
 
 	log_cred(cred);
@@ -857,7 +861,7 @@ gss_error_tostring(uint32_t major, uint32_t minor, char *buf, size_t buflen) {
 	return (buf);
 }
 
-#else  /* ifdef GSSAPI */
+#else
 
 isc_result_t
 dst_gssapi_acquirecred(const dns_name_t *name, bool initiate,
@@ -879,6 +883,7 @@ dst_gssapi_identitymatchesrealmkrb5(const dns_name_t *signer,
 	UNUSED(name);
 	UNUSED(realm);
 	UNUSED(subdomain);
+
 	return (false);
 }
 
@@ -890,6 +895,7 @@ dst_gssapi_identitymatchesrealmms(const dns_name_t *signer,
 	UNUSED(name);
 	UNUSED(realm);
 	UNUSED(subdomain);
+
 	return (false);
 }
 
@@ -944,7 +950,8 @@ gss_error_tostring(uint32_t major, uint32_t minor, char *buf, size_t buflen) {
 
 	return (buf);
 }
-#endif /* ifdef GSSAPI */
+
+#endif
 
 void
 gss_log(int level, const char *fmt, ...) {
@@ -955,5 +962,3 @@ gss_log(int level, const char *fmt, ...) {
 		       ISC_LOG_DEBUG(level), fmt, ap);
 	va_end(ap);
 }
-
-/*! \file */

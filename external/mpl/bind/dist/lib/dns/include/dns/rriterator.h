@@ -1,4 +1,4 @@
-/*	$NetBSD: rriterator.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rriterator.h,v 1.6.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RRITERATOR_H
-#define DNS_RRITERATOR_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -180,5 +179,3 @@ dns_rriterator_destroy(dns_rriterator_t *it);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RRITERATOR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.8.2.1 2024/02/25 15:47:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,7 @@
 
 /* RFC 5205 */
 
-#ifndef RDATA_GENERIC_HIP_5_C
-#define RDATA_GENERIC_HIP_5_C
+#pragma once
 
 #define RRTYPE_HIP_ATTRIBUTES (0)
 
@@ -385,11 +384,12 @@ freestruct_hip(ARGS_FREESTRUCT) {
 
 static isc_result_t
 additionaldata_hip(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_hip);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_hip);
 
 	return (ISC_R_SUCCESS);
 }
@@ -523,5 +523,3 @@ casecompare_hip(ARGS_COMPARE) {
 	}
 	return (isc_region_compare(&r1, &r2));
 }
-
-#endif /* RDATA_GENERIC_HIP_5_C */

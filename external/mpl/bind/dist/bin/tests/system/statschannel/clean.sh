@@ -11,8 +11,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+rm -f ./Kdnssec*
+rm -f bind9.xsl.1 bind9.xsl.2 bind9.xsl.3
 rm -f compressed.headers regular.headers compressed.out regular.out
 rm -f dig.out*
+rm -f nc.out* curl.out* header.in*
 rm -f ns*/managed-keys.bind*
 rm -f ns*/named.conf
 rm -f ns*/named.lock

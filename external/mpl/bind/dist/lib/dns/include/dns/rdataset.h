@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.9.2.1 2023/08/11 13:43:36 martin Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.9.2.2 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_RDATASET_H
-#define DNS_RDATASET_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -148,6 +147,14 @@ struct dns_rdataset {
 	const void  *private7;
 	/*@}*/
 };
+
+#define DNS_RDATASET_COUNT_UNDEFINED UINT32_MAX
+
+#define DNS_RDATASET_INIT                                                  \
+	{                                                                  \
+		.magic = DNS_RDATASET_MAGIC, .link = ISC_LINK_INITIALIZER, \
+		.count = DNS_RDATASET_COUNT_UNDEFINED                      \
+	}
 
 /*!
  * \def DNS_RDATASETATTR_RENDERED
@@ -448,6 +455,7 @@ dns_rdataset_towirepartial(dns_rdataset_t   *rdataset,
 
 isc_result_t
 dns_rdataset_additionaldata(dns_rdataset_t	    *rdataset,
+			    const dns_name_t	    *owner_name,
 			    dns_additionaldatafunc_t add, void *arg);
 /*%<
  * For each rdata in rdataset, call 'add' for each name and type in the
@@ -613,5 +621,3 @@ dns_trust_totext(dns_trust_t trust);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RDATASET_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.h,v 1.6 2022/09/23 12:15:20 christos Exp $	*/
+/*	$NetBSD: keygen.h,v 1.6.2.1 2024/02/25 15:43:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef RNDC_KEYGEN_H
-#define RNDC_KEYGEN_H 1
+#pragma once
 
 /*! \file */
 
@@ -42,5 +41,3 @@ int
 alg_bits(dns_secalg_t alg);
 
 ISC_LANG_ENDDECLS
-
-#endif /* RNDC_KEYGEN_H */

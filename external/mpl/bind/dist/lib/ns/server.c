@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7.2.1 2023/08/11 13:43:40 martin Exp $	*/
+/*	$NetBSD: server.c,v 1.7.2.2 2024/02/25 15:47:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,12 +51,19 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 
 	isc_mem_attach(mctx, &sctx->mctx);
 
+	/*
+	 * See here for more details:
+	 * https://github.com/jemalloc/jemalloc/issues/2483
+	 */
+
 	isc_refcount_init(&sctx->references, 1);
 
 	isc_quota_init(&sctx->xfroutquota, 10);
 	isc_quota_init(&sctx->tcpquota, 10);
 	isc_quota_init(&sctx->recursionquota, 100);
 	isc_quota_init(&sctx->updquota, 100);
+	ISC_LIST_INIT(sctx->http_quotas);
+	isc_mutex_init(&sctx->http_quotas_lock);
 
 	CHECKFATAL(dns_tkeyctx_create(mctx, &sctx->tkeyctx));
 
@@ -97,7 +104,6 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 
 	sctx->fuzztype = isc_fuzz_none;
 	sctx->fuzznotify = NULL;
-	sctx->gethostname = NULL;
 
 	sctx->matchingview = matchingview;
 	sctx->answercookie = true;
@@ -130,6 +136,7 @@ ns_server_detach(ns_server_t **sctxp) {
 
 	if (isc_refcount_decrement(&sctx->references) == 1) {
 		ns_altsecret_t *altsecret;
+		isc_quota_t *http_quota;
 
 		while ((altsecret = ISC_LIST_HEAD(sctx->altsecrets)) != NULL) {
 			ISC_LIST_UNLINK(sctx->altsecrets, altsecret, link);
@@ -140,6 +147,19 @@ ns_server_detach(ns_server_t **sctxp) {
 		isc_quota_destroy(&sctx->recursionquota);
 		isc_quota_destroy(&sctx->tcpquota);
 		isc_quota_destroy(&sctx->xfroutquota);
+
+		http_quota = ISC_LIST_HEAD(sctx->http_quotas);
+		while (http_quota != NULL) {
+			isc_quota_t *next = NULL;
+
+			next = ISC_LIST_NEXT(http_quota, link);
+			ISC_LIST_DEQUEUE(sctx->http_quotas, http_quota, link);
+			isc_quota_destroy(http_quota);
+			isc_mem_put(sctx->mctx, http_quota,
+				    sizeof(*http_quota));
+			http_quota = next;
+		}
+		isc_mutex_destroy(&sctx->http_quotas_lock);
 
 		if (sctx->server_id != NULL) {
 			isc_mem_free(sctx->mctx, sctx->server_id);
@@ -232,4 +252,15 @@ ns_server_getoption(ns_server_t *sctx, unsigned int option) {
 	REQUIRE(SCTX_VALID(sctx));
 
 	return ((sctx->options & option) != 0);
+}
+
+void
+ns_server_append_http_quota(ns_server_t *sctx, isc_quota_t *http_quota) {
+	REQUIRE(SCTX_VALID(sctx));
+	REQUIRE(http_quota != NULL);
+
+	LOCK(&sctx->http_quotas_lock);
+	ISC_LINK_INIT(http_quota, link);
+	ISC_LIST_APPEND(sctx->http_quotas, http_quota, link);
+	UNLOCK(&sctx->http_quotas_lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: keycreate.c,v 1.7 2022/09/23 12:15:26 christos Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.7.2.1 2024/02/25 15:45:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,16 +22,14 @@
 #include <isc/log.h>
 #include <isc/managers.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/nonce.h>
 #include <isc/print.h>
 #include <isc/random.h>
+#include <isc/result.h>
 #include <isc/sockaddr.h>
-#include <isc/socket.h>
 #include <isc/task.h>
-#include <isc/timer.h>
 #include <isc/util.h>
-
-#include <pk11/site.h>
 
 #include <dns/dispatch.h>
 #include <dns/fixedname.h>
@@ -44,8 +42,6 @@
 #include <dns/tsig.h>
 #include <dns/view.h>
 
-#include <dst/result.h>
-
 #define CHECK(str, x)                                        \
 	{                                                    \
 		if ((x) != ISC_R_SUCCESS) {                  \
@@ -57,8 +53,10 @@
 
 #define RUNCHECK(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
 
-#define PORT	5300
 #define TIMEOUT 30
+
+static char *ip_address = NULL;
+static int port = 0;
 
 static dst_key_t *ourkey = NULL;
 static isc_mem_t *mctx = NULL;
@@ -97,7 +95,7 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 	CHECK("dns_request_getresponse", result);
 
 	if (response->rcode != dns_rcode_noerror) {
-		result = ISC_RESULTCLASS_DNSRCODE + response->rcode;
+		result = dns_result_fromrcode(response->rcode);
 		fprintf(stderr, "I:response rcode: %s\n",
 			isc_result_totext(result));
 		exit(-1);
@@ -144,10 +142,10 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 
 	result = ISC_R_FAILURE;
-	if (inet_pton(AF_INET, "10.53.0.1", &inaddr) != 1) {
+	if (inet_pton(AF_INET, ip_address, &inaddr) != 1) {
 		CHECK("inet_pton", result);
 	}
-	isc_sockaddr_fromin(&address, &inaddr, PORT);
+	isc_sockaddr_fromin(&address, &inaddr, port);
 
 	dns_fixedname_init(&keyname);
 	isc_buffer_constinit(&namestr, "tkeytest.", 9);
@@ -182,9 +180,9 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 				       DNS_TSIG_HMACMD5_NAME, &nonce, 3600);
 	CHECK("dns_tkey_builddhquery", result);
 
-	result = dns_request_create(requestmgr, query, &address,
-				    DNS_REQUESTOPT_TCP, initialkey, TIMEOUT,
-				    task, recvquery, query, &request);
+	result = dns_request_create(requestmgr, query, NULL, &address,
+				    DNS_REQUESTOPT_TCP, initialkey, TIMEOUT, 0,
+				    0, task, recvquery, query, &request);
 	CHECK("dns_request_create", result);
 }
 
@@ -193,10 +191,6 @@ main(int argc, char *argv[]) {
 	char *ourkeyname = NULL;
 	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
-	isc_timermgr_t *timermgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
-	isc_socket_t *sock = NULL;
-	unsigned int attrs, attrmask;
 	isc_sockaddr_t bind_any;
 	dns_dispatchmgr_t *dispatchmgr = NULL;
 	dns_dispatch_t *dispatchv4 = NULL;
@@ -210,21 +204,17 @@ main(int argc, char *argv[]) {
 
 	RUNCHECK(isc_app_start());
 
-	if (argc < 2) {
+	if (argc < 4) {
 		fprintf(stderr, "I:no DH key provided\n");
 		exit(-1);
 	}
-	if (strcmp(argv[1], "-r") == 0) {
-		fprintf(stderr, "I:the -r option has been deprecated\n");
-		exit(-1);
-	}
-	ourkeyname = argv[1];
+	ip_address = argv[1];
+	port = atoi(argv[2]);
+	ourkeyname = argv[3];
 
-	if (argc >= 3) {
-		ownername_str = argv[2];
+	if (argc >= 5) {
+		ownername_str = argv[4];
 	}
-
-	dns_result_register();
 
 	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
 	isc_mem_create(&mctx);
@@ -233,22 +223,15 @@ main(int argc, char *argv[]) {
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
 
-	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
+	isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr, NULL);
+
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
-	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
-	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
-	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
+	RUNCHECK(dns_dispatchmgr_create(mctx, netmgr, &dispatchmgr));
+
 	isc_sockaddr_any(&bind_any);
-	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY |
-		DNS_DISPATCHATTR_IPV4;
-	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
-		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &bind_any,
-				     4096, 4, 2, 3, 5, attrs, attrmask,
-				     &dispatchv4));
-	RUNCHECK(dns_requestmgr_create(mctx, timermgr, socketmgr, taskmgr,
-				       dispatchmgr, dispatchv4, NULL,
-				       &requestmgr));
+	RUNCHECK(dns_dispatch_createudp(dispatchmgr, &bind_any, &dispatchv4));
+	RUNCHECK(dns_requestmgr_create(mctx, taskmgr, dispatchmgr, dispatchv4,
+				       NULL, &requestmgr));
 
 	RUNCHECK(dns_tsigkeyring_create(mctx, &ring));
 	RUNCHECK(dns_tkeyctx_create(mctx, &tctx));
@@ -256,9 +239,6 @@ main(int argc, char *argv[]) {
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
 	dns_view_setkeyring(view, ring);
 	dns_tsigkeyring_detach(&ring);
-
-	RUNCHECK(isc_socket_create(socketmgr, PF_INET, isc_sockettype_udp,
-				   &sock));
 
 	RUNCHECK(isc_app_onrun(mctx, task, sendquery, NULL));
 
@@ -275,13 +255,10 @@ main(int argc, char *argv[]) {
 	dns_requestmgr_shutdown(requestmgr);
 	dns_requestmgr_detach(&requestmgr);
 	dns_dispatch_detach(&dispatchv4);
-	dns_dispatchmgr_destroy(&dispatchmgr);
+	dns_dispatchmgr_detach(&dispatchmgr);
 	isc_task_shutdown(task);
 	isc_task_detach(&task);
-	isc_managers_destroy(&netmgr, &taskmgr);
-	isc_socket_detach(&sock);
-	isc_socketmgr_destroy(&socketmgr);
-	isc_timermgr_destroy(&timermgr);
+	isc_managers_destroy(&netmgr, &taskmgr, NULL);
 
 	dst_key_free(&ourkey);
 	dns_tsigkey_detach(&initialkey);

@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.10.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: journal.c,v 1.10.2.2 2024/02/25 15:46:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,9 +19,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -36,7 +38,6 @@
 #include <dns/log.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/result.h>
 #include <dns/soa.h>
 
 /*! \file
@@ -136,7 +137,7 @@ dns_db_createsoatuple(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 	dns_name_t *zonename;
 
 	zonename = dns_fixedname_initname(&fixed);
-	dns_name_copynf(dns_db_origin(db), zonename);
+	dns_name_copy(dns_db_origin(db), zonename);
 
 	node = NULL;
 	result = dns_db_findnode(db, zonename, false, &node);
@@ -169,7 +170,7 @@ dns_db_createsoatuple(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 freenode:
 	dns_db_detachnode(db, &node);
 nonode:
-	UNEXPECTED_ERROR(__FILE__, __LINE__, "missing SOA");
+	UNEXPECTED_ERROR("missing SOA");
 	return (result);
 }
 
@@ -2775,8 +2776,7 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, uint32_t serial,
 	}
 
 	/*
-	 * Close both journals before trying to rename files (this is
-	 * necessary on WIN32).
+	 * Close both journals before trying to rename files.
 	 */
 	dns_journal_destroy(&j1);
 	dns_journal_destroy(&j2);

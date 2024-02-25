@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394.2.4 2023/11/28 13:17:11 martin Exp $
+# $NetBSD: mi,v 1.394.2.5 2024/02/25 15:47:59 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -677,6 +677,7 @@
 ./usr/libdata/debug/usr/bin/makeinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/man.debug		comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/mandoc.debug	comp-mdocml-debug	debug
+./usr/libdata/debug/usr/bin/mdig.debug		comp-bind-debug		debug
 ./usr/libdata/debug/usr/bin/menuc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/merge.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mesg.debug		comp-util-debug		debug
@@ -1087,11 +1088,12 @@
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
-./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/dnssec-cds.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		debug
@@ -1203,6 +1205,7 @@
 ./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-journalprint.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/named-rrchecker.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	binutils,debug
 ./usr/libdata/debug/usr/sbin/ndbootd.debug	comp-bootserver-debug	debug
@@ -1362,6 +1365,7 @@
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete,compatfile
+./usr/libdata/debug/usr/sbin/tsig-keygen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/unbound-anchor.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-checkconf.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-control.debug	base-netutil-debug	debug,unbound

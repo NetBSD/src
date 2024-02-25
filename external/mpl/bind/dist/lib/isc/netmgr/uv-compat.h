@@ -1,4 +1,4 @@
-/*	$NetBSD: uv-compat.h,v 1.5 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: uv-compat.h,v 1.5.2.1 2024/02/25 15:47:25 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -74,7 +74,7 @@ uv_tcp_close_reset(uv_tcp_t *handle, uv_close_cb close_cb);
 #endif
 
 #if UV_VERSION_HEX < UV_VERSION(1, 34, 0)
-#define uv_sleep(msec) usleep(msec * 1000)
+#define uv_sleep(msec) usleep((msec) * 1000)
 #endif /* UV_VERSION_HEX < UV_VERSION(1, 34, 0) */
 
 #if UV_VERSION_HEX < UV_VERSION(1, 27, 0)

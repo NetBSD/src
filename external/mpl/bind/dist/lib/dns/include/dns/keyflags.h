@@ -1,4 +1,4 @@
-/*	$NetBSD: keyflags.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: keyflags.h,v 1.5.2.1 2024/02/25 15:46:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_KEYFLAGS_H
-#define DNS_KEYFLAGS_H 1
+#pragma once
 
 /*! \file dns/keyflags.h */
 
@@ -46,5 +45,3 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_KEYFLAGS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.6.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_CACHE_H
-#define DNS_CACHE_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -155,61 +154,6 @@ dns_cache_attachdb(dns_cache_t *cache, dns_db_t **dbp);
  * Ensures:
  *
  *\li	*dbp is attached to the database.
- */
-
-isc_result_t
-dns_cache_setfilename(dns_cache_t *cache, const char *filename);
-/*%<
- * If 'filename' is non-NULL, make the cache persistent.
- * The cache's data will be stored in the given file.
- * If 'filename' is NULL, make the cache non-persistent.
- * Files that are no longer used are not unlinked automatically.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOMEMORY
- *\li	Various file-related failures
- */
-
-isc_result_t
-dns_cache_load(dns_cache_t *cache);
-/*%<
- * If the cache has a file name, load the cache contents from the file.
- * Previous cache contents are not discarded.
- * If no file name has been set, do nothing and return success.
- *
- * MT:
- *\li	Multiple simultaneous attempts to load or dump the cache
- * 	will be serialized with respect to one another, but
- *	the cache may be read and updated while the dump is
- *	in progress.  Updates performed during loading
- *	may or may not be preserved, and reads may return
- * 	either the old or the newly loaded data.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *  \li    Various failures depending on the database implementation type
- */
-
-isc_result_t
-dns_cache_dump(dns_cache_t *cache);
-/*%<
- * If the cache has a file name, write the cache contents to disk,
- * overwriting any preexisting file.  If no file name has been set,
- * do nothing and return success.
- *
- * MT:
- *\li	Multiple simultaneous attempts to load or dump the cache
- * 	will be serialized with respect to one another, but
- *	the cache may be read and updated while the dump is
- *	in progress.  Updates performed during the dump may
- * 	or may not be reflected in the dumped file.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *  \li    Various failures depending on the database implementation type
  */
 
 isc_result_t
@@ -358,5 +302,3 @@ dns_cache_renderjson(dns_cache_t *cache, void *cstats0);
 #endif /* HAVE_JSON_C */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_CACHE_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.h,v 1.5 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: tsigconf.h,v 1.5.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_TSIGCONF_H
-#define NAMED_TSIGCONF_H 1
+#pragma once
 
 /*! \file */
 
@@ -42,5 +41,3 @@ named_tsigkeyring_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* NAMED_TSIGCONF_H */

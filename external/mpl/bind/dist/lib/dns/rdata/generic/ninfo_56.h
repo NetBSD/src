@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ninfo_56.h,v 1.4.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,8 +14,7 @@
  */
 
 /* */
-#ifndef GENERIC_NINFO_56_H
-#define GENERIC_NINFO_56_H 1
+#pragma once
 
 typedef struct dns_rdata_txt_string dns_rdata_ninfo_string_t;
 
@@ -34,5 +33,3 @@ dns_rdata_ninfo_next(dns_rdata_ninfo_t *);
 
 isc_result_t
 dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
-
-#endif /* GENERIC_NINFO_16_H */

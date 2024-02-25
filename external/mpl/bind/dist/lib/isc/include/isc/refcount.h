@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: refcount.h,v 1.6.2.1 2024/02/25 15:47:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,6 @@
 #include <isc/error.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
-#include <isc/platform.h>
 #include <isc/types.h>
 
 /*! \file isc/refcount.h
@@ -81,7 +80,6 @@ isc_refcount_increment0(isc_refcount_t *target) {
 #else /* _MSC_VER */
 #define isc_refcount_increment0(target)                    \
 	({                                                 \
-		/* cppcheck-suppress shadowVariable */     \
 		uint_fast32_t __v;                         \
 		__v = atomic_fetch_add_relaxed(target, 1); \
 		INSIST(__v < UINT32_MAX);                  \
@@ -105,7 +103,6 @@ isc_refcount_increment(isc_refcount_t *target) {
 #else /* _MSC_VER */
 #define isc_refcount_increment(target)                     \
 	({                                                 \
-		/* cppcheck-suppress shadowVariable */     \
 		uint_fast32_t __v;                         \
 		__v = atomic_fetch_add_relaxed(target, 1); \
 		INSIST(__v > 0 && __v < UINT32_MAX);       \
@@ -129,7 +126,6 @@ isc_refcount_decrement(isc_refcount_t *target) {
 #else /* _MSC_VER */
 #define isc_refcount_decrement(target)                     \
 	({                                                 \
-		/* cppcheck-suppress shadowVariable */     \
 		uint_fast32_t __v;                         \
 		__v = atomic_fetch_sub_acq_rel(target, 1); \
 		INSIST(__v > 0);                           \
@@ -154,5 +150,97 @@ isc_refcount_decrement(isc_refcount_t *target) {
 		uint_fast32_t _refs = isc_refcount_decrement(target); \
 		ISC_INSIST(_refs > 0);                                \
 	} while (0)
+
+#define ISC_REFCOUNT_TRACE_DECL(name)                                         \
+	name##_t *name##__ref(name##_t *ptr, const char *func,                \
+			      const char *file, unsigned int line);           \
+	void name##__unref(name##_t *ptr, const char *func, const char *file, \
+			   unsigned int line);                                \
+	void name##__attach(name##_t *ptr, name##_t **ptrp, const char *func, \
+			    const char *file, unsigned int line);             \
+	void name##__detach(name##_t **ptrp, const char *func,                \
+			    const char *file, unsigned int line)
+
+#define ISC_REFCOUNT_TRACE_IMPL(name, destroy)                                \
+	name##_t *name##__ref(name##_t *ptr, const char *func,                \
+			      const char *file, unsigned int line) {          \
+		REQUIRE(ptr != NULL);                                         \
+		uint_fast32_t refs =                                          \
+			isc_refcount_increment(&ptr->references) + 1;         \
+		fprintf(stderr,                                               \
+			"%s:%s:%s:%u:%p->references = %" PRIuFAST32 "\n",     \
+			__func__, func, file, line, ptr, refs);               \
+		return (ptr);                                                 \
+	}                                                                     \
+                                                                              \
+	void name##__unref(name##_t *ptr, const char *func, const char *file, \
+			   unsigned int line) {                               \
+		REQUIRE(ptr != NULL);                                         \
+		uint_fast32_t refs =                                          \
+			isc_refcount_decrement(&ptr->references) - 1;         \
+		if (refs == 0) {                                              \
+			destroy(ptr);                                         \
+		}                                                             \
+		fprintf(stderr,                                               \
+			"%s:%s:%s:%u:%p->references = %" PRIuFAST32 "\n",     \
+			__func__, func, file, line, ptr, refs);               \
+	}                                                                     \
+	void name##__attach(name##_t *ptr, name##_t **ptrp, const char *func, \
+			    const char *file, unsigned int line) {            \
+		REQUIRE(ptrp != NULL && *ptrp == NULL);                       \
+		uint_fast32_t refs =                                          \
+			isc_refcount_increment(&ptr->references) + 1;         \
+		fprintf(stderr,                                               \
+			"%s:%s:%s:%u:%p->references = %" PRIuFAST32 "\n",     \
+			__func__, func, file, line, ptr, refs);               \
+		*ptrp = ptr;                                                  \
+	}                                                                     \
+                                                                              \
+	void name##__detach(name##_t **ptrp, const char *func,                \
+			    const char *file, unsigned int line) {            \
+		REQUIRE(ptrp != NULL && *ptrp != NULL);                       \
+		name##_t *ptr = *ptrp;                                        \
+		*ptrp = NULL;                                                 \
+		uint_fast32_t refs =                                          \
+			isc_refcount_decrement(&ptr->references) - 1;         \
+		if (refs == 0) {                                              \
+			destroy(ptr);                                         \
+		}                                                             \
+		fprintf(stderr,                                               \
+			"%s:%s:%s:%u:%p->references = %" PRIuFAST32 "\n",     \
+			__func__, func, file, line, ptr, refs);               \
+	}
+
+#define ISC_REFCOUNT_DECL(name)                                  \
+	name##_t *name##_ref(name##_t *ptr);                     \
+	void	  name##_unref(name##_t *ptr);                   \
+	void	  name##_attach(name##_t *ptr, name##_t **ptrp); \
+	void	  name##_detach(name##_t **ptrp)
+
+#define ISC_REFCOUNT_IMPL(name, destroy)                             \
+	name##_t *name##_ref(name##_t *ptr) {                        \
+		REQUIRE(ptr != NULL);                                \
+		isc_refcount_increment(&ptr->references);            \
+		return (ptr);                                        \
+	}                                                            \
+                                                                     \
+	void name##_unref(name##_t *ptr) {                           \
+		REQUIRE(ptr != NULL);                                \
+		if (isc_refcount_decrement(&ptr->references) == 1) { \
+			destroy(ptr);                                \
+		}                                                    \
+	}                                                            \
+	void name##_attach(name##_t *ptr, name##_t **ptrp) {         \
+		REQUIRE(ptrp != NULL && *ptrp == NULL);              \
+		name##_ref(ptr);                                     \
+		*ptrp = ptr;                                         \
+	}                                                            \
+                                                                     \
+	void name##_detach(name##_t **ptrp) {                        \
+		REQUIRE(ptrp != NULL && *ptrp != NULL);              \
+		name##_t *ptr = *ptrp;                               \
+		*ptrp = NULL;                                        \
+		name##_unref(ptr);                                   \
+	}
 
 ISC_LANG_ENDDECLS

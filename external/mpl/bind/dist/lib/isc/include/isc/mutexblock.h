@@ -1,4 +1,4 @@
-/*	$NetBSD: mutexblock.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: mutexblock.h,v 1.6.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_MUTEXBLOCK_H
-#define ISC_MUTEXBLOCK_H 1
+#pragma once
 
 /*! \file isc/mutexblock.h */
 
@@ -55,5 +54,3 @@ isc_mutexblock_destroy(isc_mutex_t *block, unsigned int count);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_MUTEXBLOCK_H */

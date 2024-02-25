@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.7 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.7.2.1 2024/02/25 15:44:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,19 +46,19 @@
 
 #include <isc/commandline.h>
 #include <isc/hash.h>
-#include <isc/lib.h>
 #include <isc/mem.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
 #include <dns/dyndb.h>
-#include <dns/lib.h>
 #include <dns/types.h>
 
 #include "db.h"
 #include "instance.h"
 #include "log.h"
 #include "util.h"
+
+/* aliases for the exported symbols */
 
 dns_dyndb_destroy_t dyndb_destroy;
 dns_dyndb_register_t dyndb_init;
@@ -96,21 +96,6 @@ dyndb_init(isc_mem_t *mctx, const char *name, const char *parameters,
 
 	REQUIRE(name != NULL);
 	REQUIRE(dctx != NULL);
-
-	/*
-	 * Depending on how dlopen() was called, we may not have
-	 * access to named's global namespace, in which case we need
-	 * to initialize libisc/libdns. We check this by comparing
-	 * the value of isc_mem_debugging to the value passed via
-	 * the context object.
-	 */
-	if (dctx->memdebug != &isc_mem_debugging) {
-		isc_lib_register();
-		isc_log_setcontext(dctx->lctx);
-		dns_log_setcontext(dctx->lctx);
-		isc_hash_set_initializer(dctx->hashinit);
-		isc_mem_debugging = *(unsigned int *)dctx->memdebug;
-	}
 
 	s = isc_mem_strdup(mctx, parameters);
 

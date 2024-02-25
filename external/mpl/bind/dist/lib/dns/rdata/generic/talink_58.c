@@ -1,4 +1,4 @@
-/*	$NetBSD: talink_58.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: talink_58.c,v 1.7.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -166,7 +166,6 @@ tostruct_talink(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_talink_t *talink = target;
 	dns_name_t name;
-	isc_result_t result;
 
 	REQUIRE(rdata->type == dns_rdatatype_talink);
 	REQUIRE(talink != NULL);
@@ -182,24 +181,15 @@ tostruct_talink(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&talink->prev, NULL);
-	RETERR(name_duporclone(&name, mctx, &talink->prev));
+	name_duporclone(&name, mctx, &talink->prev);
 
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&talink->next, NULL);
-	result = name_duporclone(&name, mctx, &talink->next);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	name_duporclone(&name, mctx, &talink->next);
 
 	talink->mctx = mctx;
 	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (mctx != NULL) {
-		dns_name_free(&talink->prev, mctx);
-	}
-	return (ISC_R_NOMEMORY);
 }
 
 static void
@@ -220,11 +210,12 @@ freestruct_talink(ARGS_FREESTRUCT) {
 
 static isc_result_t
 additionaldata_talink(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_talink);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_talink);
 
 	return (ISC_R_SUCCESS);
 }

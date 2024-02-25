@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.7.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ tostruct_mf(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	dns_name_fromregion(&name, &r);
 	dns_name_init(&mf->mf, NULL);
-	RETERR(name_duporclone(&name, mctx, &mf->mf));
+	name_duporclone(&name, mctx, &mf->mf);
 	mf->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
@@ -183,11 +183,13 @@ additionaldata_mf(ARGS_ADDLDATA) {
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 
+	UNUSED(owner);
+
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 
-	return ((add)(arg, &name, dns_rdatatype_a));
+	return ((add)(arg, &name, dns_rdatatype_a, NULL));
 }
 
 static isc_result_t

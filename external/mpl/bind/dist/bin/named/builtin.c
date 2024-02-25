@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.c,v 1.5.2.1 2023/08/11 13:43:00 martin Exp $	*/
+/*	$NetBSD: builtin.c,v 1.5.2.2 2024/02/25 15:43:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <isc/result.h>
 #include <isc/util.h>
 
-#include <dns/result.h>
 #include <dns/sdb.h>
 
 #include <named/builtin.h>
@@ -37,17 +36,21 @@
 typedef struct builtin builtin_t;
 
 static isc_result_t
-do_version_lookup(dns_sdblookup_t *lookup);
-static isc_result_t
-do_hostname_lookup(dns_sdblookup_t *lookup);
-static isc_result_t
 do_authors_lookup(dns_sdblookup_t *lookup);
 static isc_result_t
-do_id_lookup(dns_sdblookup_t *lookup);
+do_dns64_lookup(dns_sdblookup_t *lookup);
 static isc_result_t
 do_empty_lookup(dns_sdblookup_t *lookup);
 static isc_result_t
-do_dns64_lookup(dns_sdblookup_t *lookup);
+do_hostname_lookup(dns_sdblookup_t *lookup);
+static isc_result_t
+do_id_lookup(dns_sdblookup_t *lookup);
+static isc_result_t
+do_ipv4only_lookup(dns_sdblookup_t *lookup);
+static isc_result_t
+do_ipv4reverse_lookup(dns_sdblookup_t *lookup);
+static isc_result_t
+do_version_lookup(dns_sdblookup_t *lookup);
 
 /*
  * We can't use function pointers as the db_data directly
@@ -61,12 +64,14 @@ struct builtin {
 	char *contact;
 };
 
-static builtin_t version_builtin = { do_version_lookup, NULL, NULL };
-static builtin_t hostname_builtin = { do_hostname_lookup, NULL, NULL };
 static builtin_t authors_builtin = { do_authors_lookup, NULL, NULL };
-static builtin_t id_builtin = { do_id_lookup, NULL, NULL };
-static builtin_t empty_builtin = { do_empty_lookup, NULL, NULL };
 static builtin_t dns64_builtin = { do_dns64_lookup, NULL, NULL };
+static builtin_t empty_builtin = { do_empty_lookup, NULL, NULL };
+static builtin_t hostname_builtin = { do_hostname_lookup, NULL, NULL };
+static builtin_t id_builtin = { do_id_lookup, NULL, NULL };
+static builtin_t ipv4only_builtin = { do_ipv4only_lookup, NULL, NULL };
+static builtin_t ipv4reverse_builtin = { do_ipv4reverse_lookup, NULL, NULL };
+static builtin_t version_builtin = { do_version_lookup, NULL, NULL };
 
 static dns_sdbimplementation_t *builtin_impl;
 static dns_sdbimplementation_t *dns64_impl;
@@ -93,7 +98,8 @@ static const unsigned char hex16[256] = {
 	1, 1,	1,   1,	  1,   1,   1,	 1,   1,   1,	1, 1, 1, 1, 1, 1  /*F0*/
 };
 
-const unsigned char decimal[] = "0123456789";
+static const unsigned char decimal[] = "0123456789";
+static const unsigned char ipv4only[] = "\010ipv4only\004arpa";
 
 static size_t
 dns64_rdata(unsigned char *v, size_t start, unsigned char *rdata) {
@@ -293,6 +299,17 @@ dns64_cname(const dns_name_t *zone, const dns_name_t *name,
 		 */
 		return (ISC_R_NOTFOUND);
 	}
+
+	/*
+	 * Reverse of 192.0.0.170 or 192.0.0.171 maps to ipv4only.arpa.
+	 */
+	if ((v[0] == 170 || v[0] == 171) && v[1] == 0 && v[2] == 0 &&
+	    v[3] == 192)
+	{
+		return (dns_sdb_putrdata(lookup, dns_rdatatype_ptr, 3600,
+					 ipv4only, sizeof(ipv4only)));
+	}
+
 	return (dns_sdb_putrdata(lookup, dns_rdatatype_cname, 600, rdata,
 				 (unsigned int)len));
 }
@@ -351,7 +368,7 @@ do_version_lookup(dns_sdblookup_t *lookup) {
 			return (put_txt(lookup, named_g_server->version));
 		}
 	} else {
-		return (put_txt(lookup, named_g_version));
+		return (put_txt(lookup, PACKAGE_VERSION));
 	}
 }
 
@@ -365,9 +382,8 @@ do_hostname_lookup(dns_sdblookup_t *lookup) {
 		}
 	} else {
 		char buf[256];
-		isc_result_t result = named_os_gethostname(buf, sizeof(buf));
-		if (result != ISC_R_SUCCESS) {
-			return (result);
+		if (gethostname(buf, sizeof(buf)) != 0) {
+			return (ISC_R_FAILURE);
 		}
 		return (put_txt(lookup, buf));
 	}
@@ -405,13 +421,10 @@ do_authors_lookup(dns_sdblookup_t *lookup) {
 
 static isc_result_t
 do_id_lookup(dns_sdblookup_t *lookup) {
-	if (named_g_server->sctx->gethostname != NULL) {
+	if (named_g_server->sctx->usehostname) {
 		char buf[256];
-		isc_result_t result;
-
-		result = named_g_server->sctx->gethostname(buf, sizeof(buf));
-		if (result != ISC_R_SUCCESS) {
-			return (result);
+		if (gethostname(buf, sizeof(buf)) != 0) {
+			return (ISC_R_FAILURE);
 		}
 		return (put_txt(lookup, buf));
 	} else if (named_g_server->sctx->server_id != NULL) {
@@ -431,6 +444,30 @@ static isc_result_t
 do_empty_lookup(dns_sdblookup_t *lookup) {
 	UNUSED(lookup);
 	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+do_ipv4only_lookup(dns_sdblookup_t *lookup) {
+	isc_result_t result;
+	unsigned char data[2][4] = { { 192, 0, 0, 170 }, { 192, 0, 0, 171 } };
+
+	for (int i = 0; i < 2; i++) {
+		result = dns_sdb_putrdata(lookup, dns_rdatatype_a, 3600,
+					  data[i], 4);
+		if (result != ISC_R_SUCCESS) {
+			return (result);
+		}
+	}
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+do_ipv4reverse_lookup(dns_sdblookup_t *lookup) {
+	isc_result_t result;
+
+	result = dns_sdb_putrdata(lookup, dns_rdatatype_ptr, 3600, ipv4only,
+				  sizeof(ipv4only));
+	return (result);
 }
 
 static isc_result_t
@@ -476,7 +513,10 @@ builtin_create(const char *zone, int argc, char **argv, void *driverdata,
 	UNUSED(zone);
 	UNUSED(driverdata);
 
-	if (strcmp(argv[0], "empty") == 0 || strcmp(argv[0], "dns64") == 0) {
+	if (strcmp(argv[0], "dns64") == 0 || strcmp(argv[0], "empty") == 0 ||
+	    strcmp(argv[0], "ipv4only") == 0 ||
+	    strcmp(argv[0], "ipv4reverse") == 0)
+	{
 		if (argc != 3) {
 			return (DNS_R_SYNTAX);
 		}
@@ -484,20 +524,27 @@ builtin_create(const char *zone, int argc, char **argv, void *driverdata,
 		return (DNS_R_SYNTAX);
 	}
 
-	if (strcmp(argv[0], "version") == 0) {
-		*dbdata = &version_builtin;
+	if (strcmp(argv[0], "authors") == 0) {
+		*dbdata = &authors_builtin;
 	} else if (strcmp(argv[0], "hostname") == 0) {
 		*dbdata = &hostname_builtin;
-	} else if (strcmp(argv[0], "authors") == 0) {
-		*dbdata = &authors_builtin;
 	} else if (strcmp(argv[0], "id") == 0) {
 		*dbdata = &id_builtin;
-	} else if (strcmp(argv[0], "empty") == 0 ||
-		   strcmp(argv[0], "dns64") == 0)
+	} else if (strcmp(argv[0], "version") == 0) {
+		*dbdata = &version_builtin;
+	} else if (strcmp(argv[0], "dns64") == 0 ||
+		   strcmp(argv[0], "empty") == 0 ||
+		   strcmp(argv[0], "ipv4only") == 0 ||
+		   strcmp(argv[0], "ipv4reverse") == 0)
 	{
 		builtin_t *empty;
 		char *server;
 		char *contact;
+
+		if (argc != 3) {
+			return (DNS_R_SYNTAX);
+		}
+
 		/*
 		 * We don't want built-in zones to fail.  Fallback to
 		 * the static configuration if memory allocation fails.
@@ -506,10 +553,14 @@ builtin_create(const char *zone, int argc, char **argv, void *driverdata,
 		server = isc_mem_strdup(named_g_mctx, argv[1]);
 		contact = isc_mem_strdup(named_g_mctx, argv[2]);
 		if (empty == NULL || server == NULL || contact == NULL) {
-			if (strcmp(argv[0], "empty") == 0) {
-				*dbdata = &empty_builtin;
-			} else {
+			if (strcmp(argv[0], "dns64") == 0) {
 				*dbdata = &dns64_builtin;
+			} else if (strcmp(argv[0], "empty") == 0) {
+				*dbdata = &empty_builtin;
+			} else if (strcmp(argv[0], "ipv4only") == 0) {
+				*dbdata = &ipv4only_builtin;
+			} else {
+				*dbdata = &ipv4reverse_builtin;
 			}
 			if (server != NULL) {
 				isc_mem_free(named_g_mctx, server);
@@ -522,11 +573,17 @@ builtin_create(const char *zone, int argc, char **argv, void *driverdata,
 					    sizeof(*empty));
 			}
 		} else {
-			if (strcmp(argv[0], "empty") == 0) {
+			if (strcmp(argv[0], "dns64") == 0) {
+				memmove(empty, &dns64_builtin,
+					sizeof(empty_builtin));
+			} else if (strcmp(argv[0], "empty") == 0) {
 				memmove(empty, &empty_builtin,
 					sizeof(empty_builtin));
+			} else if (strcmp(argv[0], "ipv4only") == 0) {
+				memmove(empty, &ipv4only_builtin,
+					sizeof(empty_builtin));
 			} else {
-				memmove(empty, &dns64_builtin,
+				memmove(empty, &ipv4reverse_builtin,
 					sizeof(empty_builtin));
 			}
 			empty->server = server;
@@ -549,9 +606,10 @@ builtin_destroy(const char *zone, void *driverdata, void **dbdata) {
 	/*
 	 * Don't free the static versions.
 	 */
-	if (*dbdata == &version_builtin || *dbdata == &hostname_builtin ||
-	    *dbdata == &authors_builtin || *dbdata == &id_builtin ||
-	    *dbdata == &empty_builtin || *dbdata == &dns64_builtin)
+	if (*dbdata == &authors_builtin || *dbdata == &dns64_builtin ||
+	    *dbdata == &empty_builtin || *dbdata == &hostname_builtin ||
+	    *dbdata == &id_builtin || *dbdata == &ipv4only_builtin ||
+	    *dbdata == &ipv4reverse_builtin || *dbdata == &version_builtin)
 	{
 		return;
 	}

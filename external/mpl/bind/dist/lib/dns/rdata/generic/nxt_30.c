@@ -1,4 +1,4 @@
-/*	$NetBSD: nxt_30.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.7.2.1 2024/02/25 15:47:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -255,7 +255,7 @@ tostruct_nxt(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&nxt->next, NULL);
-	RETERR(name_duporclone(&name, mctx, &nxt->next));
+	name_duporclone(&name, mctx, &nxt->next);
 
 	nxt->len = region.length;
 	nxt->typebits = mem_maybedup(mctx, region.base, region.length);
@@ -296,6 +296,7 @@ additionaldata_nxt(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nxt);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 

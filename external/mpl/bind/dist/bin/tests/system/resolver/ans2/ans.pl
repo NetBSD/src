@@ -113,6 +113,11 @@ for (;;) {
 	} elsif ($qname =~ /example\.net/) {
 		$packet->push("authority", new Net::DNS::RR("example.net 300 NS ns.example.net"));
 		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname =~ /lame\.example\.org/) {
+		$packet->header->ad(0);
+		$packet->header->aa(0);
+		$packet->push("authority", new Net::DNS::RR("lame.example.org 300 NS ns.lame.example.org"));
+		$packet->push("additional", new Net::DNS::RR("ns.lame.example.org 300 A 10.53.0.3"));
 	} elsif ($qname =~ /sub\.example\.org/) {
 		# Data for CNAME/DNAME filtering.  The final answers are
 		# expected to be accepted regardless of the filter setting.
@@ -126,6 +131,8 @@ for (;;) {
 		# Delegation to broken TLD.
 		$packet->push("authority", new Net::DNS::RR("broken 300 NS ns.broken"));
 		$packet->push("additional", new Net::DNS::RR("ns.broken 300 A 10.53.0.4"));
+	} elsif ($qname =~ /\.partial-formerr/) {
+		$packet->header->rcode("FORMERR");
 	} else {
 		# Data for the "bogus referrals" test
 		$packet->push("authority", new Net::DNS::RR("below.www.example.com 300 NS ns.below.www.example.com"));

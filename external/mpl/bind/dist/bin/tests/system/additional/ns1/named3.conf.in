@@ -26,7 +26,7 @@ options {
 	minimal-responses no-auth;
 };
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };

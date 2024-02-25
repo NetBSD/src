@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.8.2.1 2023/08/11 13:43:34 martin Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.8.2.2 2024/02/25 15:46:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,10 +28,11 @@
 
 #include <dns/db.h>
 #define LIBRPZ_LIB_OPEN DNSRPS_LIB_OPEN
+#include <isc/result.h>
+
 #include <dns/dnsrps.h>
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
-#include <dns/result.h>
 #include <dns/rpz.h>
 
 librpz_t *librpz;
@@ -616,7 +617,7 @@ rpsdb_finddb(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		nodep = &node;
 	}
 	rpsdb_findnode(db, name, false, nodep);
-	dns_name_copynf(name, foundname);
+	dns_name_copy(name, foundname);
 	return (rpsdb_findrdataset(db, *nodep, NULL, type, 0, 0, rdataset,
 				   sigrdataset));
 }
@@ -931,7 +932,6 @@ static dns_dbmethods_t rpsdb_db_methods = {
 	rpsdb_detach,
 	NULL, /* beginload */
 	NULL, /* endload */
-	NULL, /* serialize */
 	NULL, /* dump */
 	NULL, /* currentversion */
 	NULL, /* newversion */
@@ -977,7 +977,6 @@ static dns_dbmethods_t rpsdb_db_methods = {
 	NULL, /* setservestalerefresh */
 	NULL, /* getservestalerefresh */
 	NULL, /* setgluecachestats */
-	NULL  /* adjusthashsize */
 };
 
 static dns_rdatasetmethods_t rpsdb_rdataset_methods = {

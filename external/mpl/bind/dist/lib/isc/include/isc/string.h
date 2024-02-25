@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.6.2.1 2023/08/11 13:43:38 martin Exp $	*/
+/*	$NetBSD: string.h,v 1.6.2.2 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,8 +19,7 @@
 
 #include <string.h>
 
-#include "isc/lang.h"
-#include "isc/platform.h"
+#include <isc/lang.h>
 
 ISC_LANG_BEGINDECLS
 

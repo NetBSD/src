@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.6 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.6.2.1 2024/02/25 15:43:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_LOG_H
-#define NAMED_LOG_H 1
+#pragma once
 
 /*! \file */
 
@@ -63,6 +62,14 @@ named_log_setsafechannels(isc_logconfig_t *lcfg);
  * Like named_log_setdefaultchannels(), but omits any logging to files.
  */
 
+void
+named_log_setdefaultsslkeylogfile(isc_logconfig_t *lcfg);
+/*%
+ * If the SSLKEYLOGFILE environment variable is set, sets up a default
+ * logging channel for writing TLS pre-master secrets to the path stored
+ * in that environment variable (for debugging purposes).
+ */
+
 isc_result_t
 named_log_setdefaultcategory(isc_logconfig_t *lcfg);
 /*%
@@ -77,5 +84,3 @@ named_log_setunmatchedcategory(isc_logconfig_t *lcfg);
 
 void
 named_log_shutdown(void);
-
-#endif /* NAMED_LOG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: secproto.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: secproto.h,v 1.5.2.1 2024/02/25 15:46:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_SECPROTO_H
-#define DNS_SECPROTO_H 1
+#pragma once
 
 /*! \file dns/secproto.h */
 
@@ -63,5 +62,3 @@ dns_secproto_totext(dns_secproto_t secproto, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_SECPROTO_H */

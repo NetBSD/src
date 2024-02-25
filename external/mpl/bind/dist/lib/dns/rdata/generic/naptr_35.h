@@ -1,4 +1,4 @@
-/*	$NetBSD: naptr_35.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: naptr_35.h,v 1.6.2.1 2024/02/25 15:47:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_NAPTR_35_H
-#define GENERIC_NAPTR_35_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2915 */
@@ -32,5 +31,3 @@ typedef struct dns_rdata_naptr {
 	uint8_t regexp_len;
 	dns_name_t replacement;
 } dns_rdata_naptr_t;
-
-#endif /* GENERIC_NAPTR_35_H */

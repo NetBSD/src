@@ -1,4 +1,4 @@
-/*	$NetBSD: meminfo.h,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: meminfo.h,v 1.6.2.1 2024/02/25 15:47:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_MEMINFO_H
-#define ISC_MEMINFO_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -31,5 +30,3 @@ isc_meminfo_totalphys(void);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_MEMINFO_H */

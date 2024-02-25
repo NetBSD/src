@@ -1,4 +1,4 @@
-/*	$NetBSD: callbacks.h,v 1.5 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: callbacks.h,v 1.5.2.1 2024/02/25 15:46:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_CALLBACKS_H
-#define DNS_CALLBACKS_H 1
+#pragma once
 
 /*! \file dns/callbacks.h */
 
@@ -45,12 +44,6 @@ struct dns_rdatacallbacks {
 	dns_addrdatasetfunc_t add;
 
 	/*%
-	 * This is called when reading in a database image from a 'map'
-	 * format zone file.
-	 */
-	dns_deserializefunc_t deserialize;
-
-	/*%
 	 * dns_master_load*() call this when loading a raw zonefile,
 	 * to pass back information obtained from the file header
 	 */
@@ -69,7 +62,6 @@ struct dns_rdatacallbacks {
 	 * Private data handles for use by the above callback functions.
 	 */
 	void *add_private;
-	void *deserialize_private;
 	void *error_private;
 	void *warn_private;
 };
@@ -101,5 +93,3 @@ dns_rdatacallbacks_init_stdio(dns_rdatacallbacks_t *callbacks);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_CALLBACKS_H */

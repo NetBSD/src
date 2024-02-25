@@ -1,4 +1,4 @@
-/*	$NetBSD: app.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: app.h,v 1.7.2.1 2024/02/25 15:47:19 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_APP_H
-#define ISC_APP_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -86,6 +85,7 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
 /***
  *** Types
@@ -281,5 +281,3 @@ isc_appctx_destroy(isc_appctx_t **ctxp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_APP_H */

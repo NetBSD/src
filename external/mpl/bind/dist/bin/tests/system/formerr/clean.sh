@@ -11,9 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f nametoolong.out 
-rm -f twoquestions.out 
-rm -f noquestions.out 
+rm -f nametoolong.out
+rm -f twoquestions.out
+rm -f noquestions.out
 rm -f ns*/named.conf
 rm -f ns*/named.lock
 rm -f ns*/named.run

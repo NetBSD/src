@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.12.2.1 2023/08/11 13:43:00 martin Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.12.2.2 2024/02/25 15:43:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,10 +23,8 @@
 #include <isc/mem.h>
 #include <isc/once.h>
 #include <isc/print.h>
-#include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/string.h>
-#include <isc/task.h>
 #include <isc/util.h>
 
 #include <dns/cache.h>
@@ -56,13 +54,22 @@
 #define ISC_XMLCHAR (const xmlChar *)
 #endif /* HAVE_LIBXML2 */
 
-#include "bind9.xsl.h"
+#include "xsl_p.h"
 
-#define CHECK(m)                             \
-	do {                                 \
-		result = (m);                \
-		if (result != ISC_R_SUCCESS) \
-			goto error;          \
+#define STATS_XML_VERSION_MAJOR "3"
+#define STATS_XML_VERSION_MINOR "13"
+#define STATS_XML_VERSION	STATS_XML_VERSION_MAJOR "." STATS_XML_VERSION_MINOR
+
+#define STATS_JSON_VERSION_MAJOR "1"
+#define STATS_JSON_VERSION_MINOR "7"
+#define STATS_JSON_VERSION	 STATS_JSON_VERSION_MAJOR "." STATS_JSON_VERSION_MINOR
+
+#define CHECK(m)                               \
+	do {                                   \
+		result = (m);                  \
+		if (result != ISC_R_SUCCESS) { \
+			goto cleanup;          \
+		}                              \
 	} while (0)
 
 struct named_statschannel {
@@ -108,8 +115,8 @@ user_zonetype(dns_zone_t *zone) {
 		const dns_zonetype_t type;
 		const char *const string;
 	} typemap[] = { { dns_zone_none, "none" },
-			{ dns_zone_primary, "master" },
-			{ dns_zone_secondary, "slave" },
+			{ dns_zone_primary, "primary" },
+			{ dns_zone_secondary, "secondary" },
 			{ dns_zone_mirror, "mirror" },
 			{ dns_zone_stub, "stub" },
 			{ dns_zone_staticstub, "static-stub" },
@@ -181,11 +188,11 @@ static const char *gluecachestats_xmldesc[dns_gluecachestatscounter_max];
 #define gluecachestats_xmldesc	NULL
 #endif /* EXTENDED_STATS */
 
-#define TRY0(a)                     \
-	do {                        \
-		xmlrc = (a);        \
-		if (xmlrc < 0)      \
-			goto error; \
+#define TRY0(a)                       \
+	do {                          \
+		xmlrc = (a);          \
+		if (xmlrc < 0)        \
+			goto cleanup; \
 	} while (0)
 
 /*%
@@ -330,7 +337,7 @@ init_desc(void) {
 	SET_NSSTATDESC(badcookie, "sent badcookie response", "QryBADCOOKIE");
 	SET_NSSTATDESC(nxdomainsynth, "synthesized a NXDOMAIN response",
 		       "SynthNXDOMAIN");
-	SET_NSSTATDESC(nodatasynth, "syththesized a no-data response",
+	SET_NSSTATDESC(nodatasynth, "synthesized a no-data response",
 		       "SynthNODATA");
 	SET_NSSTATDESC(wildcardsynth, "synthesized a wildcard response",
 		       "SynthWILDCARD");
@@ -436,6 +443,8 @@ init_desc(void) {
 	SET_RESSTATDESC(zonequota, "spilled due to zone quota", "ZoneQuota");
 	SET_RESSTATDESC(serverquota, "spilled due to server quota",
 			"ServerQuota");
+	SET_RESSTATDESC(clientquota, "spilled due to clients per query quota",
+			"ClientQuota");
 	SET_RESSTATDESC(nextitem, "waited for next item", "NextItem");
 	SET_RESSTATDESC(priming, "priming queries", "Priming");
 
@@ -1436,7 +1445,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 	}
 	return (ISC_R_SUCCESS);
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at dump_counters()");
@@ -1499,7 +1508,7 @@ rdtypestat_dump(dns_rdatastatstype_t type, uint64_t val, void *arg) {
 	}
 	return;
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at rdtypestat_dump()");
@@ -1588,7 +1597,7 @@ rdatasetstats_dump(dns_rdatastatstype_t type, uint64_t val, void *arg) {
 	}
 	return;
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at rdatasetstats_dump()");
@@ -1643,7 +1652,7 @@ opcodestat_dump(dns_opcode_t code, uint64_t val, void *arg) {
 	return;
 
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at opcodestat_dump()");
@@ -1699,7 +1708,7 @@ rcodestat_dump(dns_rcode_t code, uint64_t val, void *arg) {
 	return;
 
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at rcodestat_dump()");
@@ -1752,7 +1761,7 @@ dnssecsignstat_dump(dns_keytag_t tag, uint64_t val, void *arg) {
 	}
 	return;
 #ifdef HAVE_LIBXML2
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed at dnssecsignstat_dump()");
@@ -1786,6 +1795,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	int xmlrc;
 	stats_dumparg_t dumparg;
 	const char *ztype;
+	isc_time_t timestamp;
 
 	statlevel = dns_zone_getstatlevel(zone);
 	if (statlevel == dns_zonestat_none) {
@@ -1825,15 +1835,10 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 
 	/*
 	 * Export zone timers to the statistics channel in XML format.  For
-	 * master zones, only include the loaded time.  For slave zones, also
-	 * include the expires and refresh times.
+	 * primary zones, only include the loaded time.  For secondary zones,
+	 * also include the expire and refresh times.
 	 */
-	isc_time_t timestamp;
-
-	result = dns_zone_getloadtime(zone, &timestamp);
-	if (result != ISC_R_SUCCESS) {
-		goto error;
-	}
+	CHECK(dns_zone_getloadtime(zone, &timestamp));
 
 	isc_time_formatISO8601(&timestamp, buf, 64);
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "loaded"));
@@ -1841,19 +1846,13 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	TRY0(xmlTextWriterEndElement(writer));
 
 	if (dns_zone_gettype(zone) == dns_zone_secondary) {
-		result = dns_zone_getexpiretime(zone, &timestamp);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dns_zone_getexpiretime(zone, &timestamp));
 		isc_time_formatISO8601(&timestamp, buf, 64);
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "expires"));
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
 		TRY0(xmlTextWriterEndElement(writer));
 
-		result = dns_zone_getrefreshtime(zone, &timestamp);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dns_zone_getrefreshtime(zone, &timestamp));
 		isc_time_formatISO8601(&timestamp, buf, 64);
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "refresh"));
 		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
@@ -1876,14 +1875,11 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 							 ISC_XMLCHAR "type",
 							 ISC_XMLCHAR "rcode"));
 
-			result = dump_counters(zonestats, isc_statsformat_xml,
-					       writer, NULL, nsstats_xmldesc,
-					       ns_statscounter_max,
-					       nsstats_index, nsstat_values,
-					       ISC_STATSDUMP_VERBOSE);
-			if (result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dump_counters(zonestats, isc_statsformat_xml,
+					    writer, NULL, nsstats_xmldesc,
+					    ns_statscounter_max, nsstats_index,
+					    nsstat_values,
+					    ISC_STATSDUMP_VERBOSE));
 			/* counters type="rcode"*/
 			TRY0(xmlTextWriterEndElement(writer));
 		}
@@ -1896,15 +1892,12 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 				writer, ISC_XMLCHAR "type",
 				ISC_XMLCHAR "gluecache"));
 
-			result = dump_counters(
+			CHECK(dump_counters(
 				gluecachestats, isc_statsformat_xml, writer,
 				NULL, gluecachestats_xmldesc,
 				dns_gluecachestatscounter_max,
 				gluecachestats_index, gluecachestats_values,
-				ISC_STATSDUMP_VERBOSE);
-			if (result != ISC_R_SUCCESS) {
-				goto error;
-			}
+				ISC_STATSDUMP_VERBOSE));
 			/* counters type="rcode"*/
 			TRY0(xmlTextWriterEndElement(writer));
 		}
@@ -1920,9 +1913,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 			dumparg.result = ISC_R_SUCCESS;
 			dns_rdatatypestats_dump(rcvquerystats, rdtypestat_dump,
 						&dumparg, 0);
-			if (dumparg.result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dumparg.result);
 
 			/* counters type="qtype"*/
 			TRY0(xmlTextWriterEndElement(writer));
@@ -1941,9 +1932,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 			dns_dnssecsignstats_dump(
 				dnssecsignstats, dns_dnssecsignstats_sign,
 				dnssecsignstat_dump, &dumparg, 0);
-			if (dumparg.result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dumparg.result);
 
 			/* counters type="dnssec-sign"*/
 			TRY0(xmlTextWriterEndElement(writer));
@@ -1959,9 +1948,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 			dns_dnssecsignstats_dump(
 				dnssecsignstats, dns_dnssecsignstats_refresh,
 				dnssecsignstat_dump, &dumparg, 0);
-			if (dumparg.result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dumparg.result);
 
 			/* counters type="dnssec-refresh"*/
 			TRY0(xmlTextWriterEndElement(writer));
@@ -1971,7 +1958,7 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	TRY0(xmlTextWriterEndElement(writer)); /* zone */
 
 	return (ISC_R_SUCCESS);
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "Failed at zone_xmlrender()");
@@ -2013,7 +2000,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 
 	writer = xmlNewTextWriterDoc(&doc, 0);
 	if (writer == NULL) {
-		goto error;
+		goto cleanup;
 	}
 	TRY0(xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL));
 	TRY0(xmlTextWriterWritePI(writer, ISC_XMLCHAR "xml-stylesheet",
@@ -2021,7 +2008,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 					      "href=\"/bind9.xsl\""));
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "statistics"));
 	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "version",
-					 ISC_XMLCHAR "3.11.1"));
+					 ISC_XMLCHAR STATS_XML_VERSION));
 
 	/* Set common fields for statistics dump */
 	dumparg.type = isc_statsformat_xml;
@@ -2039,7 +2026,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR nowstr));
 	TRY0(xmlTextWriterEndElement(writer)); /* current-time */
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "version"));
-	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR named_g_version));
+	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR PACKAGE_VERSION));
 	TRY0(xmlTextWriterEndElement(writer)); /* version */
 
 	if ((flags & STATS_XML_SERVER) != 0) {
@@ -2051,9 +2038,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 
 		dns_opcodestats_dump(server->sctx->opcodestats, opcodestat_dump,
 				     &dumparg, ISC_STATSDUMP_VERBOSE);
-		if (dumparg.result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dumparg.result);
 
 		TRY0(xmlTextWriterEndElement(writer));
 
@@ -2063,9 +2048,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 
 		dns_rcodestats_dump(server->sctx->rcodestats, rcodestat_dump,
 				    &dumparg, ISC_STATSDUMP_VERBOSE);
-		if (dumparg.result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dumparg.result);
 
 		TRY0(xmlTextWriterEndElement(writer));
 
@@ -2076,23 +2059,19 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		dumparg.result = ISC_R_SUCCESS;
 		dns_rdatatypestats_dump(server->sctx->rcvquerystats,
 					rdtypestat_dump, &dumparg, 0);
-		if (dumparg.result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dumparg.result);
+
 		TRY0(xmlTextWriterEndElement(writer)); /* counters */
 
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "nsstat"));
 
-		result = dump_counters(ns_stats_get(server->sctx->nsstats),
-				       isc_statsformat_xml, writer, NULL,
-				       nsstats_xmldesc, ns_statscounter_max,
-				       nsstats_index, nsstat_values,
-				       ISC_STATSDUMP_VERBOSE);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dump_counters(ns_stats_get(server->sctx->nsstats),
+				    isc_statsformat_xml, writer, NULL,
+				    nsstats_xmldesc, ns_statscounter_max,
+				    nsstats_index, nsstat_values,
+				    ISC_STATSDUMP_VERBOSE));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* /nsstat */
 
@@ -2100,14 +2079,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "zonestat"));
 
-		result = dump_counters(server->zonestats, isc_statsformat_xml,
-				       writer, NULL, zonestats_xmldesc,
-				       dns_zonestatscounter_max,
-				       zonestats_index, zonestat_values,
-				       ISC_STATSDUMP_VERBOSE);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dump_counters(server->zonestats, isc_statsformat_xml,
+				    writer, NULL, zonestats_xmldesc,
+				    dns_zonestatscounter_max, zonestats_index,
+				    zonestat_values, ISC_STATSDUMP_VERBOSE));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* /zonestat */
 
@@ -2118,13 +2093,11 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "resstat"));
-		result = dump_counters(
-			server->resolverstats, isc_statsformat_xml, writer,
-			NULL, resstats_xmldesc, dns_resstatscounter_max,
-			resstats_index, resstat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dump_counters(server->resolverstats, isc_statsformat_xml,
+				    writer, NULL, resstats_xmldesc,
+				    dns_resstatscounter_max, resstats_index,
+				    resstat_values, 0));
+
 		TRY0(xmlTextWriterEndElement(writer)); /* resstat */
 
 #ifdef HAVE_DNSTAP
@@ -2141,9 +2114,8 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 				dnstapstats_xmldesc, dns_dnstapcounter_max,
 				dnstapstats_index, dnstapstat_values, 0);
 			isc_stats_detach(&dnstapstats);
-			if (result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(result);
+
 			TRY0(xmlTextWriterEndElement(writer)); /* dnstap */
 		}
 #endif /* ifdef HAVE_DNSTAP */
@@ -2154,14 +2126,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "sockstat"));
 
-		result = dump_counters(server->sockstats, isc_statsformat_xml,
-				       writer, NULL, sockstats_xmldesc,
-				       isc_sockstatscounter_max,
-				       sockstats_index, sockstat_values,
-				       ISC_STATSDUMP_VERBOSE);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dump_counters(server->sockstats, isc_statsformat_xml,
+				    writer, NULL, sockstats_xmldesc,
+				    isc_sockstatscounter_max, sockstats_index,
+				    sockstat_values, ISC_STATSDUMP_VERBOSE));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* /sockstat */
 	}
@@ -2175,13 +2143,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "request-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->udpinstats4, isc_statsformat_xml, writer,
 			NULL, udpinsizestats_xmldesc, dns_sizecounter_in_max,
-			udpinsizestats_index, udpinsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			udpinsizestats_index, udpinsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 
@@ -2189,13 +2154,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "response-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->udpoutstats4, isc_statsformat_xml, writer,
 			NULL, udpoutsizestats_xmldesc, dns_sizecounter_out_max,
-			udpoutsizestats_index, udpoutsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			udpoutsizestats_index, udpoutsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 		TRY0(xmlTextWriterEndElement(writer)); /* </udp> */
@@ -2205,27 +2167,20 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "request-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->tcpinstats4, isc_statsformat_xml, writer,
 			NULL, tcpinsizestats_xmldesc, dns_sizecounter_in_max,
-			tcpinsizestats_index, tcpinsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			tcpinsizestats_index, tcpinsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
-
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "response-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->tcpoutstats4, isc_statsformat_xml, writer,
 			NULL, tcpoutsizestats_xmldesc, dns_sizecounter_out_max,
-			tcpoutsizestats_index, tcpoutsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			tcpoutsizestats_index, tcpoutsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 		TRY0(xmlTextWriterEndElement(writer)); /* </tcp> */
@@ -2237,13 +2192,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "request-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->udpinstats6, isc_statsformat_xml, writer,
 			NULL, udpinsizestats_xmldesc, dns_sizecounter_in_max,
-			udpinsizestats_index, udpinsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			udpinsizestats_index, udpinsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 
@@ -2251,13 +2203,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "response-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->udpoutstats6, isc_statsformat_xml, writer,
 			NULL, udpoutsizestats_xmldesc, dns_sizecounter_out_max,
-			udpoutsizestats_index, udpoutsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			udpoutsizestats_index, udpoutsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 		TRY0(xmlTextWriterEndElement(writer)); /* </udp> */
@@ -2267,13 +2216,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "request-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->tcpinstats6, isc_statsformat_xml, writer,
 			NULL, tcpinsizestats_xmldesc, dns_sizecounter_in_max,
-			tcpinsizestats_index, tcpinsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			tcpinsizestats_index, tcpinsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 
@@ -2281,13 +2227,10 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "response-size"));
 
-		result = dump_counters(
+		CHECK(dump_counters(
 			server->sctx->tcpoutstats6, isc_statsformat_xml, writer,
 			NULL, tcpoutsizestats_xmldesc, dns_sizecounter_out_max,
-			tcpoutsizestats_index, tcpoutsizestat_values, 0);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+			tcpoutsizestats_index, tcpoutsizestat_values, 0));
 
 		TRY0(xmlTextWriterEndElement(writer)); /* </counters> */
 		TRY0(xmlTextWriterEndElement(writer)); /* </tcp> */
@@ -2330,9 +2273,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 			dumparg.result = ISC_R_SUCCESS;
 			dns_rdatatypestats_dump(view->resquerystats,
 						rdtypestat_dump, &dumparg, 0);
-			if (dumparg.result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dumparg.result);
 		}
 		TRY0(xmlTextWriterEndElement(writer));
 
@@ -2341,14 +2282,11 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "resstats"));
 		if (view->resstats != NULL) {
-			result = dump_counters(
-				view->resstats, isc_statsformat_xml, writer,
-				NULL, resstats_xmldesc, dns_resstatscounter_max,
-				resstats_index, resstat_values,
-				ISC_STATSDUMP_VERBOSE);
-			if (result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dump_counters(view->resstats, isc_statsformat_xml,
+					    writer, NULL, resstats_xmldesc,
+					    dns_resstatscounter_max,
+					    resstats_index, resstat_values,
+					    ISC_STATSDUMP_VERBOSE));
 		}
 		TRY0(xmlTextWriterEndElement(writer)); /* </resstats> */
 
@@ -2362,9 +2300,7 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 			dumparg.result = ISC_R_SUCCESS;
 			dns_rdatasetstats_dump(cacherrstats, rdatasetstats_dump,
 					       &dumparg, 0);
-			if (dumparg.result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dumparg.result);
 			TRY0(xmlTextWriterEndElement(writer)); /* cache */
 		}
 
@@ -2373,14 +2309,11 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
 						 ISC_XMLCHAR "adbstat"));
 		if (view->adbstats != NULL) {
-			result = dump_counters(
-				view->adbstats, isc_statsformat_xml, writer,
-				NULL, adbstats_xmldesc, dns_adbstats_max,
-				adbstats_index, adbstat_values,
-				ISC_STATSDUMP_VERBOSE);
-			if (result != ISC_R_SUCCESS) {
-				goto error;
-			}
+			CHECK(dump_counters(view->adbstats, isc_statsformat_xml,
+					    writer, NULL, adbstats_xmldesc,
+					    dns_adbstats_max, adbstats_index,
+					    adbstat_values,
+					    ISC_STATSDUMP_VERBOSE));
 		}
 		TRY0(xmlTextWriterEndElement(writer)); /* </adbstats> */
 
@@ -2396,13 +2329,6 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 		view = ISC_LIST_NEXT(view, link);
 	}
 	TRY0(xmlTextWriterEndElement(writer)); /* /views */
-
-	if ((flags & STATS_XML_NET) != 0) {
-		TRY0(xmlTextWriterStartElement(writer,
-					       ISC_XMLCHAR "socketmgr"));
-		TRY0(isc_socketmgr_renderxml(named_g_socketmgr, writer));
-		TRY0(xmlTextWriterEndElement(writer)); /* /socketmgr */
-	}
 
 	if ((flags & STATS_XML_TASKS) != 0) {
 		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "taskmgr"));
@@ -2421,14 +2347,14 @@ generatexml(named_server_t *server, uint32_t flags, int *buflen,
 
 	xmlDocDumpFormatMemoryEnc(doc, buf, buflen, "UTF-8", 0);
 	if (*buf == NULL) {
-		goto error;
+		goto cleanup;
 	}
 
 	xmlFreeTextWriter(writer);
 	xmlFreeDoc(doc);
 	return (ISC_R_SUCCESS);
 
-error:
+cleanup:
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 		      "failed generating XML response");
@@ -2449,19 +2375,13 @@ wrap_xmlfree(isc_buffer_t *buffer, void *arg) {
 }
 
 static isc_result_t
-render_xml(uint32_t flags, const char *url, isc_httpdurl_t *urlinfo,
-	   const char *querystring, const char *headers, void *arg,
-	   unsigned int *retcode, const char **retmsg, const char **mimetype,
-	   isc_buffer_t *b, isc_httpdfree_t **freecb, void **freecb_args) {
+render_xml(uint32_t flags, void *arg, unsigned int *retcode,
+	   const char **retmsg, const char **mimetype, isc_buffer_t *b,
+	   isc_httpdfree_t **freecb, void **freecb_args) {
 	unsigned char *msg = NULL;
 	int msglen;
 	named_server_t *server = arg;
 	isc_result_t result;
-
-	UNUSED(url);
-	UNUSED(urlinfo);
-	UNUSED(headers);
-	UNUSED(querystring);
 
 	result = generatexml(server, flags, &msglen, &msg);
 
@@ -2483,91 +2403,91 @@ render_xml(uint32_t flags, const char *url, isc_httpdurl_t *urlinfo,
 }
 
 static isc_result_t
-render_xml_all(const char *url, isc_httpdurl_t *urlinfo,
-	       const char *querystring, const char *headers, void *arg,
-	       unsigned int *retcode, const char **retmsg,
+render_xml_all(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+	       void *arg, unsigned int *retcode, const char **retmsg,
 	       const char **mimetype, isc_buffer_t *b, isc_httpdfree_t **freecb,
 	       void **freecb_args) {
-	return (render_xml(STATS_XML_ALL, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_ALL, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_status(const char *url, isc_httpdurl_t *urlinfo,
-		  const char *querystring, const char *headers, void *arg,
-		  unsigned int *retcode, const char **retmsg,
+render_xml_status(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		  void *arg, unsigned int *retcode, const char **retmsg,
 		  const char **mimetype, isc_buffer_t *b,
 		  isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_xml(STATS_XML_STATUS, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_STATUS, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_server(const char *url, isc_httpdurl_t *urlinfo,
-		  const char *querystring, const char *headers, void *arg,
-		  unsigned int *retcode, const char **retmsg,
+render_xml_server(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		  void *arg, unsigned int *retcode, const char **retmsg,
 		  const char **mimetype, isc_buffer_t *b,
 		  isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_xml(STATS_XML_SERVER, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_SERVER, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_zones(const char *url, isc_httpdurl_t *urlinfo,
-		 const char *querystring, const char *headers, void *arg,
-		 unsigned int *retcode, const char **retmsg,
+render_xml_zones(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		 void *arg, unsigned int *retcode, const char **retmsg,
 		 const char **mimetype, isc_buffer_t *b,
 		 isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_xml(STATS_XML_ZONES, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_ZONES, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_net(const char *url, isc_httpdurl_t *urlinfo,
-	       const char *querystring, const char *headers, void *arg,
-	       unsigned int *retcode, const char **retmsg,
+render_xml_net(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+	       void *arg, unsigned int *retcode, const char **retmsg,
 	       const char **mimetype, isc_buffer_t *b, isc_httpdfree_t **freecb,
 	       void **freecb_args) {
-	return (render_xml(STATS_XML_NET, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_NET, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_tasks(const char *url, isc_httpdurl_t *urlinfo,
-		 const char *querystring, const char *headers, void *arg,
-		 unsigned int *retcode, const char **retmsg,
+render_xml_tasks(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		 void *arg, unsigned int *retcode, const char **retmsg,
 		 const char **mimetype, isc_buffer_t *b,
 		 isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_xml(STATS_XML_TASKS, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_TASKS, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_mem(const char *url, isc_httpdurl_t *urlinfo,
-	       const char *querystring, const char *headers, void *arg,
-	       unsigned int *retcode, const char **retmsg,
+render_xml_mem(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+	       void *arg, unsigned int *retcode, const char **retmsg,
 	       const char **mimetype, isc_buffer_t *b, isc_httpdfree_t **freecb,
 	       void **freecb_args) {
-	return (render_xml(STATS_XML_MEM, url, urlinfo, querystring, headers,
-			   arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_MEM, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 static isc_result_t
-render_xml_traffic(const char *url, isc_httpdurl_t *urlinfo,
-		   const char *querystring, const char *headers, void *arg,
-		   unsigned int *retcode, const char **retmsg,
+render_xml_traffic(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		   void *arg, unsigned int *retcode, const char **retmsg,
 		   const char **mimetype, isc_buffer_t *b,
 		   isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_xml(STATS_XML_TRAFFIC, url, urlinfo, querystring,
-			   headers, arg, retcode, retmsg, mimetype, b, freecb,
-			   freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_xml(STATS_XML_TRAFFIC, arg, retcode, retmsg, mimetype, b,
+			   freecb, freecb_args));
 }
 
 #endif /* HAVE_LIBXML2 */
@@ -2589,7 +2509,7 @@ render_xml_traffic(const char *url, isc_httpdurl_t *urlinfo,
 	do {                                     \
 		if (m == NULL) {                 \
 			result = ISC_R_NOMEMORY; \
-			goto error;              \
+			goto cleanup;            \
 		}                                \
 	} while (0)
 
@@ -2636,6 +2556,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	json_object *zonearray = (json_object *)arg;
 	json_object *zoneobj = NULL;
 	dns_zonestat_level_t statlevel;
+	isc_time_t timestamp;
 
 	statlevel = dns_zone_getstatlevel(zone);
 	if (statlevel == dns_zonestat_none) {
@@ -2662,34 +2583,23 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	}
 
 	/*
-	 * Export zone timers to the statistics channel in JSON format.  For
-	 * master zones, only include the loaded time.  For slave zones, also
-	 * include the expires and refresh times.
+	 * Export zone timers to the statistics channel in JSON format.
+	 * For primary zones, only include the loaded time.  For secondary
+	 * zones, also include the expire and refresh times.
 	 */
 
-	isc_time_t timestamp;
-
-	result = dns_zone_getloadtime(zone, &timestamp);
-	if (result != ISC_R_SUCCESS) {
-		goto error;
-	}
+	CHECK(dns_zone_getloadtime(zone, &timestamp));
 
 	isc_time_formatISO8601(&timestamp, buf, 64);
 	json_object_object_add(zoneobj, "loaded", json_object_new_string(buf));
 
 	if (dns_zone_gettype(zone) == dns_zone_secondary) {
-		result = dns_zone_getexpiretime(zone, &timestamp);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dns_zone_getexpiretime(zone, &timestamp));
 		isc_time_formatISO8601(&timestamp, buf, 64);
 		json_object_object_add(zoneobj, "expires",
 				       json_object_new_string(buf));
 
-		result = dns_zone_getrefreshtime(zone, &timestamp);
-		if (result != ISC_R_SUCCESS) {
-			goto error;
-		}
+		CHECK(dns_zone_getrefreshtime(zone, &timestamp));
 		isc_time_formatISO8601(&timestamp, buf, 64);
 		json_object_object_add(zoneobj, "refresh",
 				       json_object_new_string(buf));
@@ -2708,7 +2618,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 			json_object *counters = json_object_new_object();
 			if (counters == NULL) {
 				result = ISC_R_NOMEMORY;
-				goto error;
+				goto cleanup;
 			}
 
 			result = dump_counters(zonestats, isc_statsformat_json,
@@ -2717,7 +2627,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 					       nsstats_index, nsstat_values, 0);
 			if (result != ISC_R_SUCCESS) {
 				json_object_put(counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(counters)->count != 0) {
@@ -2733,7 +2643,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 			json_object *counters = json_object_new_object();
 			if (counters == NULL) {
 				result = ISC_R_NOMEMORY;
-				goto error;
+				goto cleanup;
 			}
 
 			result = dump_counters(
@@ -2743,7 +2653,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 				gluecachestats_index, gluecachestats_values, 0);
 			if (result != ISC_R_SUCCESS) {
 				json_object_put(counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(counters)->count != 0) {
@@ -2767,7 +2677,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 						&dumparg, 0);
 			if (dumparg.result != ISC_R_SUCCESS) {
 				json_object_put(counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(counters)->count != 0) {
@@ -2792,7 +2702,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 				dnssecsignstat_dump, &dumparg, 0);
 			if (dumparg.result != ISC_R_SUCCESS) {
 				json_object_put(sign_counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(sign_counters)->count != 0) {
@@ -2814,7 +2724,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 				dnssecsignstat_dump, &dumparg, 0);
 			if (dumparg.result != ISC_R_SUCCESS) {
 				json_object_put(refresh_counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(refresh_counters)->count !=
@@ -2833,7 +2743,7 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	zoneobj = NULL;
 	result = ISC_R_SUCCESS;
 
-error:
+cleanup:
 	if (zoneobj != NULL) {
 		json_object_put(zoneobj);
 	}
@@ -2881,7 +2791,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 	/*
 	 * These statistics are included no matter which URL we use.
 	 */
-	obj = json_object_new_string("1.5.1");
+	obj = json_object_new_string(STATS_JSON_VERSION);
 	CHECKMEM(obj);
 	json_object_object_add(bindstats, "json-stats-version", obj);
 
@@ -2902,7 +2812,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 	obj = json_object_new_string(nowstr);
 	CHECKMEM(obj);
 	json_object_object_add(bindstats, "current-time", obj);
-	obj = json_object_new_string(named_g_version);
+	obj = json_object_new_string(PACKAGE_VERSION);
 	CHECKMEM(obj);
 	json_object_object_add(bindstats, "version", obj);
 
@@ -2918,7 +2828,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 				     &dumparg, ISC_STATSDUMP_VERBOSE);
 		if (dumparg.result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -2937,7 +2847,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 				    &dumparg, ISC_STATSDUMP_VERBOSE);
 		if (dumparg.result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -2956,7 +2866,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 					rdtypestat_dump, &dumparg, 0);
 		if (dumparg.result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -2977,7 +2887,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 				       nsstats_index, nsstat_values, 0);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -2998,7 +2908,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 				       zonestats_index, zonestat_values, 0);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -3020,7 +2930,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 			resstats_index, resstat_values, 0);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -3045,7 +2955,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 			isc_stats_detach(&dnstapstats);
 			if (result != ISC_R_SUCCESS) {
 				json_object_put(counters);
-				goto error;
+				goto cleanup;
 			}
 
 			if (json_object_get_object(counters)->count != 0) {
@@ -3110,7 +3020,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 					if (result != ISC_R_SUCCESS) {
 						json_object_put(counters);
 						result = dumparg.result;
-						goto error;
+						goto cleanup;
 					}
 
 					json_object_object_add(res, "stats",
@@ -3130,7 +3040,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 					if (dumparg.result != ISC_R_SUCCESS) {
 						json_object_put(counters);
 						result = dumparg.result;
-						goto error;
+						goto cleanup;
 					}
 
 					json_object_object_add(res, "qtypes",
@@ -3150,7 +3060,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 					if (dumparg.result != ISC_R_SUCCESS) {
 						json_object_put(counters);
 						result = dumparg.result;
-						goto error;
+						goto cleanup;
 					}
 
 					json_object_object_add(res, "cache",
@@ -3164,7 +3074,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 							      counters);
 				if (result != ISC_R_SUCCESS) {
 					json_object_put(counters);
-					goto error;
+					goto cleanup;
 				}
 
 				json_object_object_add(res, "cachestats",
@@ -3185,7 +3095,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 					if (result != ISC_R_SUCCESS) {
 						json_object_put(counters);
 						result = dumparg.result;
-						goto error;
+						goto cleanup;
 					}
 
 					json_object_object_add(res, "adb",
@@ -3199,7 +3109,6 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 
 	if ((flags & STATS_JSON_NET) != 0) {
 		/* socket stat counters */
-		json_object *sockets;
 		counters = json_object_new_object();
 
 		dumparg.result = ISC_R_SUCCESS;
@@ -3211,7 +3120,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 				       sockstats_index, sockstat_values, 0);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(counters);
-			goto error;
+			goto cleanup;
 		}
 
 		if (json_object_get_object(counters)->count != 0) {
@@ -3220,17 +3129,6 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 		} else {
 			json_object_put(counters);
 		}
-
-		sockets = json_object_new_object();
-		CHECKMEM(sockets);
-
-		result = isc_socketmgr_renderjson(named_g_socketmgr, sockets);
-		if (result != ISC_R_SUCCESS) {
-			json_object_put(sockets);
-			goto error;
-		}
-
-		json_object_object_add(bindstats, "socketmgr", sockets);
 	}
 
 	if ((flags & STATS_JSON_TASKS) != 0) {
@@ -3240,7 +3138,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 		result = isc_taskmgr_renderjson(named_g_taskmgr, tasks);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(tasks);
-			goto error;
+			goto cleanup;
 		}
 
 		json_object_object_add(bindstats, "taskmgr", tasks);
@@ -3253,7 +3151,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 		result = isc_mem_renderjson(memory);
 		if (result != ISC_R_SUCCESS) {
 			json_object_put(memory);
-			goto error;
+			goto cleanup;
 		}
 
 		json_object_object_add(bindstats, "memory", memory);
@@ -3378,7 +3276,7 @@ generatejson(named_server_t *server, size_t *msglen, const char **msg,
 
 	result = ISC_R_SUCCESS;
 
-error:
+cleanup:
 	if (udpreq4 != NULL) {
 		json_object_put(udpreq4);
 	}
@@ -3414,21 +3312,15 @@ error:
 }
 
 static isc_result_t
-render_json(uint32_t flags, const char *url, isc_httpdurl_t *urlinfo,
-	    const char *querystring, const char *headers, void *arg,
-	    unsigned int *retcode, const char **retmsg, const char **mimetype,
-	    isc_buffer_t *b, isc_httpdfree_t **freecb, void **freecb_args) {
+render_json(uint32_t flags, void *arg, unsigned int *retcode,
+	    const char **retmsg, const char **mimetype, isc_buffer_t *b,
+	    isc_httpdfree_t **freecb, void **freecb_args) {
 	isc_result_t result;
 	json_object *bindstats = NULL;
 	named_server_t *server = arg;
 	const char *msg = NULL;
 	size_t msglen = 0;
 	char *p;
-
-	UNUSED(url);
-	UNUSED(urlinfo);
-	UNUSED(headers);
-	UNUSED(querystring);
 
 	result = generatejson(server, &msglen, &msg, &bindstats, flags);
 	if (result == ISC_R_SUCCESS) {
@@ -3450,165 +3342,148 @@ render_json(uint32_t flags, const char *url, isc_httpdurl_t *urlinfo,
 }
 
 static isc_result_t
-render_json_all(const char *url, isc_httpdurl_t *urlinfo,
-		const char *querystring, const char *headers, void *arg,
-		unsigned int *retcode, const char **retmsg,
+render_json_all(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		void *arg, unsigned int *retcode, const char **retmsg,
 		const char **mimetype, isc_buffer_t *b,
 		isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_ALL, url, urlinfo, querystring, headers,
-			    arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_ALL, arg, retcode, retmsg, mimetype, b,
+			    freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_status(const char *url, isc_httpdurl_t *urlinfo,
-		   const char *querystring, const char *headers, void *arg,
-		   unsigned int *retcode, const char **retmsg,
+render_json_status(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		   void *arg, unsigned int *retcode, const char **retmsg,
 		   const char **mimetype, isc_buffer_t *b,
 		   isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_STATUS, url, urlinfo, querystring,
-			    headers, arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_STATUS, arg, retcode, retmsg, mimetype,
+			    b, freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_server(const char *url, isc_httpdurl_t *urlinfo,
-		   const char *querystring, const char *headers, void *arg,
-		   unsigned int *retcode, const char **retmsg,
+render_json_server(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		   void *arg, unsigned int *retcode, const char **retmsg,
 		   const char **mimetype, isc_buffer_t *b,
 		   isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_SERVER, url, urlinfo, querystring,
-			    headers, arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_SERVER, arg, retcode, retmsg, mimetype,
+			    b, freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_zones(const char *url, isc_httpdurl_t *urlinfo,
-		  const char *querystring, const char *headers, void *arg,
-		  unsigned int *retcode, const char **retmsg,
+render_json_zones(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		  void *arg, unsigned int *retcode, const char **retmsg,
 		  const char **mimetype, isc_buffer_t *b,
 		  isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_ZONES, url, urlinfo, querystring,
-			    headers, arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_ZONES, arg, retcode, retmsg, mimetype, b,
+			    freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_mem(const char *url, isc_httpdurl_t *urlinfo,
-		const char *querystring, const char *headers, void *arg,
-		unsigned int *retcode, const char **retmsg,
+render_json_mem(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		void *arg, unsigned int *retcode, const char **retmsg,
 		const char **mimetype, isc_buffer_t *b,
 		isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_MEM, url, urlinfo, querystring, headers,
-			    arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_MEM, arg, retcode, retmsg, mimetype, b,
+			    freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_tasks(const char *url, isc_httpdurl_t *urlinfo,
-		  const char *querystring, const char *headers, void *arg,
-		  unsigned int *retcode, const char **retmsg,
+render_json_tasks(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		  void *arg, unsigned int *retcode, const char **retmsg,
 		  const char **mimetype, isc_buffer_t *b,
 		  isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_TASKS, url, urlinfo, querystring,
-			    headers, arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_TASKS, arg, retcode, retmsg, mimetype, b,
+			    freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_net(const char *url, isc_httpdurl_t *urlinfo,
-		const char *querystring, const char *headers, void *arg,
-		unsigned int *retcode, const char **retmsg,
+render_json_net(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		void *arg, unsigned int *retcode, const char **retmsg,
 		const char **mimetype, isc_buffer_t *b,
 		isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_NET, url, urlinfo, querystring, headers,
-			    arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_NET, arg, retcode, retmsg, mimetype, b,
+			    freecb, freecb_args));
 }
 
 static isc_result_t
-render_json_traffic(const char *url, isc_httpdurl_t *urlinfo,
-		    const char *querystring, const char *headers, void *arg,
-		    unsigned int *retcode, const char **retmsg,
+render_json_traffic(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo,
+		    void *arg, unsigned int *retcode, const char **retmsg,
 		    const char **mimetype, isc_buffer_t *b,
 		    isc_httpdfree_t **freecb, void **freecb_args) {
-	return (render_json(STATS_JSON_TRAFFIC, url, urlinfo, querystring,
-			    headers, arg, retcode, retmsg, mimetype, b, freecb,
-			    freecb_args));
+	UNUSED(httpd);
+	UNUSED(urlinfo);
+	return (render_json(STATS_JSON_TRAFFIC, arg, retcode, retmsg, mimetype,
+			    b, freecb, freecb_args));
 }
 
 #endif /* HAVE_JSON_C */
 
 static isc_result_t
-render_xsl(const char *url, isc_httpdurl_t *urlinfo, const char *querystring,
-	   const char *headers, void *args, unsigned int *retcode,
-	   const char **retmsg, const char **mimetype, isc_buffer_t *b,
-	   isc_httpdfree_t **freecb, void **freecb_args) {
+render_xsl(const isc_httpd_t *httpd, const isc_httpdurl_t *urlinfo, void *args,
+	   unsigned int *retcode, const char **retmsg, const char **mimetype,
+	   isc_buffer_t *b, isc_httpdfree_t **freecb, void **freecb_args) {
 	isc_result_t result;
-	char *_headers = NULL;
+	char *p = NULL;
 
-	UNUSED(url);
-	UNUSED(querystring);
+	UNUSED(httpd);
 	UNUSED(args);
 
 	*freecb = NULL;
 	*freecb_args = NULL;
 	*mimetype = "text/xslt+xml";
 
-	if (urlinfo->isstatic) {
-		isc_time_t when;
-		char *line, *saveptr;
-		const char *if_modified_since = "If-Modified-Since: ";
-		_headers = strdup(headers);
+	if (isc_httpdurl_isstatic(urlinfo)) {
+		time_t t1, t2;
+		const isc_time_t *when;
+		const isc_time_t *loadtime;
 
-		if (_headers == NULL) {
+		when = isc_httpd_if_modified_since(httpd);
+
+		if (isc_time_isepoch(when)) {
 			goto send;
 		}
 
-		saveptr = NULL;
-		for (line = strtok_r(_headers, "\n", &saveptr); line;
-		     line = strtok_r(NULL, "\n", &saveptr))
-		{
-			if (strncasecmp(line, if_modified_since,
-					strlen(if_modified_since)) == 0)
-			{
-				time_t t1, t2;
-				line += strlen(if_modified_since);
-				result = isc_time_parsehttptimestamp(line,
-								     &when);
-				if (result != ISC_R_SUCCESS) {
-					goto send;
-				}
-
-				result = isc_time_secondsastimet(&when, &t1);
-				if (result != ISC_R_SUCCESS) {
-					goto send;
-				}
-
-				result = isc_time_secondsastimet(
-					&urlinfo->loadtime, &t2);
-				if (result != ISC_R_SUCCESS) {
-					goto send;
-				}
-
-				if (t1 < t2) {
-					goto send;
-				}
-
-				*retcode = 304;
-				*retmsg = "Not modified";
-				goto end;
-			}
+		result = isc_time_secondsastimet(when, &t1);
+		if (result != ISC_R_SUCCESS) {
+			goto send;
 		}
+
+		loadtime = isc_httpdurl_loadtime(urlinfo);
+
+		result = isc_time_secondsastimet(loadtime, &t2);
+		if (result != ISC_R_SUCCESS) {
+			goto send;
+		}
+
+		if (t1 < t2) {
+			goto send;
+		}
+
+		*retcode = 304;
+		*retmsg = "Not modified";
+		goto end;
 	}
 
 send:
 	*retcode = 200;
 	*retmsg = "OK";
-	isc_buffer_reinit(b, xslmsg, strlen(xslmsg));
+	DE_CONST(xslmsg, p);
+	isc_buffer_reinit(b, p, strlen(xslmsg));
 	isc_buffer_add(b, strlen(xslmsg));
 end:
-	free(_headers);
 	return (ISC_R_SUCCESS);
 }
 
@@ -3656,7 +3531,7 @@ client_ok(const isc_sockaddr_t *fromaddr, void *arg) {
 
 static void
 destroy_listener(void *arg) {
-	named_statschannel_t *listener = arg;
+	named_statschannel_t *listener = (named_statschannel_t *)arg;
 
 	REQUIRE(listener != NULL);
 	REQUIRE(!ISC_LINK_LINKED(listener, link));
@@ -3674,22 +3549,15 @@ add_listener(named_server_t *server, named_statschannel_t **listenerp,
 	     isc_sockaddr_t *addr, cfg_aclconfctx_t *aclconfctx,
 	     const char *socktext) {
 	isc_result_t result;
-	named_statschannel_t *listener;
-	isc_task_t *task = NULL;
-	isc_socket_t *sock = NULL;
-	const cfg_obj_t *allow;
+	named_statschannel_t *listener = NULL;
+	const cfg_obj_t *allow = NULL;
 	dns_acl_t *new_acl = NULL;
+	int pf;
 
 	listener = isc_mem_get(server->mctx, sizeof(*listener));
-
-	listener->httpdmgr = NULL;
-	listener->address = *addr;
-	listener->acl = NULL;
-	listener->mctx = NULL;
+	*listener = (named_statschannel_t){ .address = *addr };
 	ISC_LINK_INIT(listener, link);
-
 	isc_mutex_init(&listener->lock);
-
 	isc_mem_attach(server->mctx, &listener->mctx);
 
 	allow = cfg_tuple_get(listen_params, "allow");
@@ -3700,104 +3568,96 @@ add_listener(named_server_t *server, named_statschannel_t **listenerp,
 	} else {
 		result = dns_acl_any(listener->mctx, &new_acl);
 	}
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	CHECK(result);
+
 	dns_acl_attach(new_acl, &listener->acl);
 	dns_acl_detach(&new_acl);
 
-	result = isc_task_create(named_g_taskmgr, 0, &task);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	isc_task_setname(task, "statchannel", NULL);
-
-	result = isc_socket_create(named_g_socketmgr, isc_sockaddr_pf(addr),
-				   isc_sockettype_tcp, &sock);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	isc_socket_setname(sock, "statchannel", NULL);
-
-#ifndef ISC_ALLOW_MAPPED
-	isc_socket_ipv6only(sock, true);
-#endif /* ifndef ISC_ALLOW_MAPPED */
-
-	result = isc_socket_bind(sock, addr, ISC_SOCKET_REUSEADDRESS);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
+	pf = isc_sockaddr_pf(&listener->address);
+	if ((pf == AF_INET && isc_net_probeipv4() != ISC_R_SUCCESS) ||
+	    (pf == AF_INET6 && isc_net_probeipv6() != ISC_R_SUCCESS))
+	{
+		CHECK(ISC_R_FAMILYNOSUPPORT);
 	}
 
-	result = isc_httpdmgr_create(server->mctx, sock, task, client_ok,
-				     destroy_listener, listener,
-				     named_g_timermgr, &listener->httpdmgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	CHECK(isc_httpdmgr_create(named_g_netmgr, server->mctx, addr, client_ok,
+				  destroy_listener, listener,
+				  &listener->httpdmgr));
 
 #ifdef HAVE_LIBXML2
-	isc_httpdmgr_addurl(listener->httpdmgr, "/", render_xml_all, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml", render_xml_all, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3", render_xml_all,
+	isc_httpdmgr_addurl(listener->httpdmgr, "/", false, render_xml_all,
 			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/status",
+	isc_httpdmgr_addurl(listener->httpdmgr, "/xml", false, render_xml_all,
+			    server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR, false,
+			    render_xml_all, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/status", false,
 			    render_xml_status, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/server",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/server", false,
 			    render_xml_server, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/zones",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/zones", false,
 			    render_xml_zones, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/net", render_xml_net,
-			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/tasks",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/net", false,
+			    render_xml_net, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/tasks", false,
 			    render_xml_tasks, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/mem", render_xml_mem,
-			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3/traffic",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/mem", false,
+			    render_xml_mem, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/xml/v" STATS_XML_VERSION_MAJOR "/traffic", false,
 			    render_xml_traffic, server);
 #endif /* ifdef HAVE_LIBXML2 */
 #ifdef HAVE_JSON_C
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json", render_json_all,
+	isc_httpdmgr_addurl(listener->httpdmgr, "/json", false, render_json_all,
 			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1", render_json_all,
-			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/status",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR, false,
+			    render_json_all, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/status", false,
 			    render_json_status, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/server",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/server", false,
 			    render_json_server, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/zones",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/zones", false,
 			    render_json_zones, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/tasks",
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/tasks", false,
 			    render_json_tasks, server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/net", render_json_net,
-			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/mem", render_json_mem,
-			    server);
-	isc_httpdmgr_addurl(listener->httpdmgr, "/json/v1/traffic",
-			    render_json_traffic, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/net", false,
+			    render_json_net, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/mem", false,
+			    render_json_mem, server);
+	isc_httpdmgr_addurl(listener->httpdmgr,
+			    "/json/v" STATS_JSON_VERSION_MAJOR "/traffic",
+			    false, render_json_traffic, server);
 #endif /* ifdef HAVE_JSON_C */
-	isc_httpdmgr_addurl2(listener->httpdmgr, "/bind9.xsl", true, render_xsl,
-			     server);
+	isc_httpdmgr_addurl(listener->httpdmgr, "/bind9.xsl", true, render_xsl,
+			    server);
 
 	*listenerp = listener;
 	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_NOTICE,
 		      "statistics channel listening on %s", socktext);
 
+	return (ISC_R_SUCCESS);
+
 cleanup:
-	if (result != ISC_R_SUCCESS) {
-		if (listener->acl != NULL) {
-			dns_acl_detach(&listener->acl);
-		}
-		isc_mutex_destroy(&listener->lock);
-		isc_mem_putanddetach(&listener->mctx, listener,
-				     sizeof(*listener));
+	if (listener->acl != NULL) {
+		dns_acl_detach(&listener->acl);
 	}
-	if (task != NULL) {
-		isc_task_detach(&task);
-	}
-	if (sock != NULL) {
-		isc_socket_detach(&sock);
-	}
+	isc_mutex_destroy(&listener->lock);
+	isc_mem_putanddetach(&listener->mctx, listener, sizeof(*listener));
 
 	return (result);
 }

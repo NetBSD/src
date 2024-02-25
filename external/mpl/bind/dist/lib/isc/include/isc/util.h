@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.14 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.14.2.1 2024/02/25 15:47:23 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_UTIL_H
-#define ISC_UTIL_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -81,7 +80,7 @@
 #if HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR && HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
 #define ISC_CONSTRUCTOR __attribute__((constructor))
 #define ISC_DESTRUCTOR	__attribute__((destructor))
-#elif WIN32
+#else
 #define ISC_CONSTRUCTOR
 #define ISC_DESTRUCTOR
 #endif
@@ -226,7 +225,6 @@
 /*%
  * Performance
  */
-#include <isc/likely.h>
 
 /* GCC defines __SANITIZE_ADDRESS__, so reuse the macro for clang */
 #if __has_feature(address_sanitizer)
@@ -248,7 +246,12 @@
 #elif __has_feature(c_static_assert)
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #else /* if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6) */
-#define STATIC_ASSERT(cond, msg) INSIST(cond)
+
+/* Courtesy of Joseph Quinsey: https://godbolt.org/z/K9RvWS */
+#define TOKENPASTE(a, b)	a##b /* "##" is the "Token Pasting Operator" */
+#define EXPAND_THEN_PASTE(a, b) TOKENPASTE(a, b) /* expand then paste */
+#define STATIC_ASSERT(x, msg) \
+	enum { EXPAND_THEN_PASTE(ASSERT_line_, __LINE__) = 1 / ((msg) && (x)) }
 #endif /* if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6) */
 
 #ifdef UNIT_TESTING
@@ -285,9 +288,7 @@ mock_assert(const int result, const char *const expression,
 	(((a) == (b)) ? (void)0 : (_assert_int_equal(a, b, f, l), abort()))
 #define _assert_int_not_equal(a, b, f, l) \
 	(((a) != (b)) ? (void)0 : (_assert_int_not_equal(a, b, f, l), abort()))
-#else /* UNIT_TESTING */
-
-#ifndef CPPCHECK
+#else			    /* UNIT_TESTING */
 
 /*
  * Assertions
@@ -305,58 +306,44 @@ mock_assert(const int result, const char *const expression,
 
 #define UNREACHABLE() ISC_UNREACHABLE()
 
-#else /* CPPCHECK */
-
-/*% Require Assertion */
-#define REQUIRE(e) \
-	if (!(e))  \
-	abort()
-/*% Ensure Assertion */
-#define ENSURE(e) \
-	if (!(e)) \
-	abort()
-/*% Insist Assertion */
-#define INSIST(e) \
-	if (!(e)) \
-	abort()
-/*% Invariant Assertion */
-#define INVARIANT(e) \
-	if (!(e))    \
-	abort()
-
-#define UNREACHABLE() abort()
-
-#endif /* CPPCHECK */
-
 #endif /* UNIT_TESTING */
 
 /*
  * Errors
  */
-#include <isc/error.h> /* Contractual promise. */
+#include <isc/error.h>	/* Contractual promise. */
+#include <isc/strerr.h> /* for ISC_STRERRORSIZE */
 
-/*% Unexpected Error */
-#define UNEXPECTED_ERROR isc_error_unexpected
-/*% Fatal Error */
-#define FATAL_ERROR isc_error_fatal
+#define UNEXPECTED_ERROR(...) \
+	isc_error_unexpected(__FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#define FATAL_ERROR(...) \
+	isc_error_fatal(__FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#define REPORT_SYSERROR(report, err, fmt, ...)                        \
+	{                                                             \
+		char strerr[ISC_STRERRORSIZE];                        \
+		strerror_r(err, strerr, sizeof(strerr));              \
+		report(__FILE__, __LINE__, __func__, fmt ": %s (%d)", \
+		       ##__VA_ARGS__, strerr, err);                   \
+	}
+
+#define UNEXPECTED_SYSERROR(err, ...) \
+	REPORT_SYSERROR(isc_error_unexpected, err, __VA_ARGS__)
+
+#define FATAL_SYSERROR(err, ...) \
+	REPORT_SYSERROR(isc_error_fatal, err, __VA_ARGS__)
 
 #ifdef UNIT_TESTING
 
-#define RUNTIME_CHECK(expression)                                             \
-	((!(expression))                                                      \
-		 ? (mock_assert(0, #expression, __FILE__, __LINE__), abort()) \
-		 : (void)0)
+#define RUNTIME_CHECK(cond) \
+	((cond) ? (void)0   \
+		: (mock_assert(0, #cond, __FILE__, __LINE__), abort()))
 
 #else /* UNIT_TESTING */
 
-#ifndef CPPCHECK
-/*% Runtime Check */
-#define RUNTIME_CHECK(cond) ISC_ERROR_RUNTIMECHECK(cond)
-#else /* ifndef CPPCHECK */
-#define RUNTIME_CHECK(e) \
-	if (!(e))        \
-	abort()
-#endif /* ifndef CPPCHECK */
+#define RUNTIME_CHECK(cond) \
+	((cond) ? (void)0 : FATAL_ERROR("RUNTIME_CHECK(%s) failed", #cond))
 
 #endif /* UNIT_TESTING */
 
@@ -376,72 +363,17 @@ mock_assert(const int result, const char *const expression,
 #define ISC_ALIGN(x, a) (((x) + (a)-1) & ~((uintmax_t)(a)-1))
 #endif /* ifdef __GNUC__ */
 
-#if HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
-#define ISC_ATTR_RETURNS_NONNULL __attribute__((returns_nonnull))
-#else
-#define ISC_ATTR_RETURNS_NONNULL
-#endif
-
-/*
- * Support for malloc attributes.
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_MALLOC
-/*
- * Indicates that a function is malloc-like, i.e., that the
- * pointer P returned by the function cannot alias any other
- * pointer valid when the function returns.
- */
-#define ISC_ATTR_MALLOC __attribute__((malloc))
-#if HAVE_MALLOC_EXT_ATTR
-/*
- * Associates deallocator as a suitable deallocation function
- * for pointers returned from the function marked with the attribute.
- */
-#define ISC_ATTR_DEALLOCATOR(deallocator) __attribute__((malloc(deallocator)))
-/*
- * Similar to ISC_ATTR_DEALLOCATOR, but allows to speficy an index "idx",
- * which denotes the positional argument to which when the pointer is passed
- * in calls to deallocator has the effect of deallocating it.
- */
-#define ISC_ATTR_DEALLOCATOR_IDX(deallocator, idx) \
-	__attribute__((malloc(deallocator, idx)))
-/*
- * Combines both ISC_ATTR_MALLOC and ISC_ATTR_DEALLOCATOR attributes.
- */
-#define ISC_ATTR_MALLOC_DEALLOCATOR(deallocator) \
-	__attribute__((malloc, malloc(deallocator)))
-/*
- * Similar to ISC_ATTR_MALLOC_DEALLOCATOR, but allows to speficy an index "idx",
- * which denotes the positional argument to which when the pointer is passed
- * in calls to deallocator has the effect of deallocating it.
- */
-#define ISC_ATTR_MALLOC_DEALLOCATOR_IDX(deallocator, idx) \
-	__attribute__((malloc, malloc(deallocator, idx)))
-#else /* #ifdef HAVE_MALLOC_EXT_ATTR */
-/*
- * There is support for malloc attribute but not for
- * extended attributes, so macros that combine attribute malloc
- * with a deallocator will only expand to malloc attribute.
- */
-#define ISC_ATTR_DEALLOCATOR(deallocator)
-#define ISC_ATTR_DEALLOCATOR_IDX(deallocator, idx)
-#define ISC_ATTR_MALLOC_DEALLOCATOR(deallocator)	  ISC_ATTR_MALLOC
-#define ISC_ATTR_MALLOC_DEALLOCATOR_IDX(deallocator, idx) ISC_ATTR_MALLOC
-#endif
-#else /* #ifdef HAVE_FUNC_ATTRIBUTE_MALLOC */
-/*
- * There is no support for malloc attribute.
- */
-#define ISC_ATTR_MALLOC
-#define ISC_ATTR_DEALLOCATOR(deallocator)
-#define ISC_ATTR_DEALLOCATOR_IDX(deallocator, idx)
-#define ISC_ATTR_MALLOC_DEALLOCATOR(deallocator)
-#define ISC_ATTR_MALLOC_DEALLOCATOR_IDX(deallocator, idx)
-#endif /* HAVE_FUNC_ATTRIBUTE_MALLOC */
-
 /*%
  * Misc
  */
 #include <isc/deprecated.h>
 
-#endif /* ISC_UTIL_H */
+/*%
+ * Swap
+ */
+#define ISC_SWAP(a, b)                    \
+	{                                 \
+		typeof(a) __tmp_swap = a; \
+		a = b;                    \
+		b = __tmp_swap;           \
+	}

@@ -23,11 +23,12 @@ options {
 	notify yes;
 	ixfr-from-differences yes;
 	check-integrity no;
+	dnssec-validation no;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "mx-cname-fail" {

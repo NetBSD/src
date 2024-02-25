@@ -1,4 +1,4 @@
-/*	$NetBSD: fixedname.h,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.6.2.1 2024/02/25 15:46:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_FIXEDNAME_H
-#define DNS_FIXEDNAME_H 1
+#pragma once
 
 /*****
 ***** Module Info
@@ -83,5 +82,3 @@ dns_name_t *
 dns_fixedname_initname(dns_fixedname_t *fixed);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_FIXEDNAME_H */

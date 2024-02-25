@@ -1,4 +1,4 @@
-/*	$NetBSD: ta_32768.h,v 1.4 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: ta_32768.h,v 1.4.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,12 +13,9 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_TA_32768_H
-#define GENERIC_TA_32768_H 1
+#pragma once
 
 /*
  * TA records are identical to DS records.
  */
 typedef struct dns_rdata_ds dns_rdata_ta_t;
-
-#endif /* GENERIC_TA_32768_H */

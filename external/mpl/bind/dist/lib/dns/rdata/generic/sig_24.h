@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.h,v 1.6 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: sig_24.h,v 1.6.2.1 2024/02/25 15:47:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,8 +13,7 @@
  * information regarding copyright ownership.
  */
 
-#ifndef GENERIC_SIG_24_H
-#define GENERIC_SIG_24_H 1
+#pragma once
 
 /*!
  *  \brief Per RFC2535 */
@@ -33,5 +32,3 @@ typedef struct dns_rdata_sig_t {
 	uint16_t siglen;
 	unsigned char *signature;
 } dns_rdata_sig_t;
-
-#endif /* GENERIC_SIG_24_H */
