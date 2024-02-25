@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.297 2023/09/06 23:44:43 riastradh Exp $
+#	$NetBSD: Makefile,v 1.298 2024/02/25 20:25:09 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -193,7 +193,7 @@ SUBDIR+=	.WAIT
 
 SUBDIR+=	libwrap
 
-.if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
+.if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no" && ${MKSANITIZER:Uno} == "yes")
 .for sanitizer in asan lsan ubsan
 .if exists(../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer})
 SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
