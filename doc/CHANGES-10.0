@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.201 2024/02/24 13:11:46 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.202 2024/02/25 13:18:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -15651,6 +15651,8 @@ sys/dev/pci/if_wmreg.h				1.131
 	  multiqueue system
 	[msaitoh, ticket #607]
 
+distrib/sets/lists/base/shl.mi			1.975
+distrib/sets/lists/debug/shl.mi			1.336
 external/bsd/nsd/dist/doc/NSD-VERIFY-MODS       up to 1.1.1.1
 external/bsd/nsd/dist/util/proxy_protocol.c     up to 1.1.1.1
 external/bsd/nsd/dist/util/proxy_protocol.h     up to 1.1.1.1
