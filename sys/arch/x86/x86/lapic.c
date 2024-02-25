@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.89 2022/09/07 00:40:19 knakahara Exp $	*/
+/*	$NetBSD: lapic.c,v 1.90 2024/02/25 18:27:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.89 2022/09/07 00:40:19 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.90 2024/02/25 18:27:54 andvar Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -534,7 +534,7 @@ lapic_get_timecount(struct timecounter *tc)
 	 *
 	 * If the current tick is almost the Initial Counter, explicitly
 	 * check for the pending interrupt bit as the interrupt delivery
-	 * could be asynchronious and compensate as well.
+	 * could be asynchronous and compensate as well.
 	 *
 	 * This can't be done without splhigh() as the calling code might
 	 * have masked the clockinterrupt already.
