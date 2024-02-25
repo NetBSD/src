@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.203 2024/02/25 15:54:33 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.204 2024/02/25 16:52:06 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21239,7 +21239,7 @@ external/mpl/bind/lib/libisccfg/Makefile        up to 1.4
 external/mpl/bind/lib/libisccfg/shlib_version   up to 1.13
 external/mpl/bind/lib/libns/Makefile            up to 1.6
 external/mpl/bind/lib/libns/shlib_version       up to 1.13
-
+share/mk/bsd.sys.mk				1.316
 	
 	named(8): update to bind 9.18.24, which fixes several
 	CVE and is a long term supported version.
