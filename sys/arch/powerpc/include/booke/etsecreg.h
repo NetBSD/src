@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.10 2022/05/11 14:58:00 andvar Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.11 2024/02/26 20:20:01 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -174,7 +174,7 @@ struct rxfcb {
 #define	DMACTRL_TBDSEN	__PPCBIT(25)	/* TxBD Data Snoop enable */
 #define	DMACTRL_GRS	__PPCBIT(27)	/* graceful receive stop */
 #define	DMACTRL_GTS	__PPCBIT(28)	/* graceful transmit stop */
-#define	DMACTRL_TOD	__PPCBIT(29)	/* Transmi On Demand for TxBD ring 0 */
+#define	DMACTRL_TOD	__PPCBIT(29)	/* Transmit On Demand for TxBD ring 0 */
 #define	DMACTRL_WWR	__PPCBIT(30)	/* Write With Response */
 #define	DMACTRL_WOP	__PPCBIT(31)	/* Wait or pool for TxBD ring 0 */
 #define	DMACTRL_DEFAULT	(DMACTRL_WOP|DMACTRL_WWR|DMACTRL_TDSEN|DMACTRL_TBDSEN)
