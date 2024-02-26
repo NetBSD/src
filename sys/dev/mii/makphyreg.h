@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.11 2020/08/03 07:25:59 msaitoh Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.12 2024/02/26 20:20:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 /* 88E1112 page 2 */
 #define	MAKPHY_MSCR		0x10	/* MAC specific control register */
-#define	MSCR_TX_FIFODEPTH	0xc000	/* Transmi FIFO Depth */
+#define	MSCR_TX_FIFODEPTH	0xc000	/* Transmit FIFO Depth */
 #define	MSCR_RX_FIFODEPTH	0x3000	/* Receive FIFO Depth */
 #define	MSCR_AUTOPREF_MASK	0x0c00	/* Autoselect preferred media mask */
 #define	MSCR_AUTOPREF_NO	0x0000	/*  No preference */
