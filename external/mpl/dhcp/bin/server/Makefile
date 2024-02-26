@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7.6.1 2024/02/24 13:06:55 martin Exp $
+# $NetBSD: Makefile,v 1.7.6.2 2024/02/26 10:31:27 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -16,11 +16,11 @@ FILES=	dhcpd.conf
 .endif
 
 .if !empty(MACHINE_ARCH:Msh3*) || ${MACHINE_ARCH} == "m68000"
-COPTS.ddns.c +=		${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.ddns.c +=		${GCC_NO_STRINGOP_OVERFLOW}
 .endif
 
 COPTS.omapi.c +=	-Wno-stack-protector
-COPTS.confpars.c+=	${CC_WNO_STRINGOP_TRUNCATION}
-COPTS.mdb6.c+=		${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.confpars.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.mdb6.c+=		${GCC_NO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>
