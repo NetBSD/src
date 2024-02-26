@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.8.1 2024/02/24 13:07:35 martin Exp $
+# $NetBSD: Makefile,v 1.2.8.2 2024/02/26 10:31:27 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -11,7 +11,7 @@ MAN    = dhcp-options.5 dhcp-eval.5
 
 DHCPSRCDIR=	common
 
-COPTS.discover.c+=	${CC_WNO_STRINGOP_TRUNCATION}
-COPTS.parse.c+=		${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.discover.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.parse.c+=		${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>
