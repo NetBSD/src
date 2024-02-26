@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1991 2024/02/25 15:33:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1992 2024/02/26 23:11:12 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1451,17 +1451,17 @@ for now, late 2021, do it manually).
 
 Package:	wpa_supplicant/hostapd
 Version:	2.9
-Current Vers:	2.9
+Current Vers:	2.10
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
-Date:		2021-02-28
+Date:		2024-02-26
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
 Location:	external/bsd/wpa/dist
 Notes:
-See /usr/src/external/bsd/wpa/NetBSD-upgrade for update instructions.
+See src/external/bsd/wpa/NetBSD-upgrade for update instructions.
 
 Package:	zlib
 Version:	1.2.13
