@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.204 2024/02/25 16:52:06 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.205 2024/02/26 08:36:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -19454,7 +19454,7 @@ external/mpl/bind/include/irs/platform.h        delete
 external/mpl/bind/include/isc/stdatomic.h       delete
 external/mpl/bind/include/isc/atomic.h          delete
 external/mpl/bind/include/isc/platform.h        delete
-external/mpl/bind/Makefile.inc                  up to 1.13
+external/mpl/bind/Makefile.inc                  up to 1.14
 external/mpl/bind/bin/check/Makefile.inc        up to 1.4
 external/mpl/bind/bin/check/named-checkzone/Makefile up to 1.2
 external/mpl/bind/bin/confgen/Makefile          up to 1.2
