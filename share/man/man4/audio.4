@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.104 2020/12/09 05:48:56 isaki Exp $
+.\"	$NetBSD: audio.4,v 1.105 2024/02/27 02:14:23 gutteridge Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,8 +120,8 @@ To achieve this, the audio driver has a small efficient encoding converter,
 a channel mixer, and a frequency converter.
 The frequency conversion adapts the simplest way
 (interpolation method for upward, and simple thinning method for downward)
-due to restriction in kernel resources and processing time.
-It will work well in most case but don't expect excessive quality.
+due to restrictions in kernel resources and processing time.
+It will work well in most cases but don't expect excessive quality.
 .Pp
 The audio device is normally accessed with
 .Xr read 2
@@ -148,8 +148,8 @@ calls can be used.
 Note that
 .Xr mmap 2
 no longer maps hardware buffers directly.
-Now it is achieved by emulation so don't expect any improvements excessively
-rather than normal
+Now it is achieved by emulation, so don't expect significant improvements 
+over normal
 .Xr write 2 .
 For historical reasons, only encodings that are not set
 .Dv AUDIO_ENCODINGFLAG_EMULATED
@@ -201,9 +201,9 @@ typedef struct audio_device {
 .Ed
 .It Dv AUDIO_GETENC (audio_encoding_t)
 This command is used iteratively to fetch sample encoding names and
-format ids into the input/output audio_encoding_t argument.
-The encoding returned by the command is user accessible encoding and
-is not hardware supported encoding.
+format IDs into the input/output audio_encoding_t argument.
+The encoding returned by the command is the user-accessible encoding,
+not the hardware-supported encoding.
 .Bd -literal
 typedef struct audio_encoding {
 	int index;      /* input: nth encoding */
@@ -247,8 +247,7 @@ the device is capable of audio capture.
 .It Dv AUDIO_GETOOFFS (audio_offset_t)
 This command fetches the current offset in the input(output) buffer where
 the track mixer will be putting(getting) data.
-It mostly useful when the device
-buffer is available in user space via the
+It mostly useful when the device buffer is available in user space via the
 .Xr mmap 2
 call.
 The information is returned in the
@@ -266,7 +265,7 @@ typedef struct audio_offset {
 .It Dv AUDIO_SETINFO (audio_info_t)
 Get or set audio information as encoded in the audio_info structure.
 For historical reasons, the audio_info structure has three different
-layer's parameters: track, track mixer and hardware rich mixer.
+layer's parameters: track, track mixer, and hardware rich mixer.
 .Bd -literal
 typedef struct audio_info {
 	struct	audio_prinfo play;   /* info for play (output) side */
@@ -412,11 +411,11 @@ ranges from 1000Hz to 192000Hz,
 regardless of frequency (ranges) supported by underlying driver.
 .Va channels
 depends your underlying driver.
-If the underlying driver only supports monaural (1channel)
-or stereo (2channels), you can specify 1 or 2 regardless of
+If the underlying driver only supports monaural (1 channel)
+or stereo (2 channels), you can specify 1 or 2 regardless of
 number of channels supported by underlying driver.
 If the underlying driver supports three or more channels, you can specify
-the number of channels supported by the underlying driver or less.
+the number of channels supported by the underlying driver or fewer.
 .Pp
 The
 .Va gain ,
@@ -672,8 +671,8 @@ commands.
 The
 .Va type
 field identifies the type of this mixer control.
-Enumeration types are typically used for on/off style controls (e.g. a
-mute control) or for input/output device selection (e.g. select
+Enumeration types are typically used for on/off style controls (e.g., a
+mute control) or for input/output device selection (e.g., select
 recording input source from CD, line in, or microphone).
 Set types are similar to enumeration types but any combination
 of the mask bits can be used.
@@ -685,8 +684,7 @@ The
 .Pq arbitrary
 value set by the hardware driver may be determined by examining the
 .Va mixer_class
-field of the class itself,
-a mixer of type
+field of the class itself, a mixer of type
 .Dv AUDIO_MIXER_CLASS .
 For example, a mixer controlling the input gain on the line in circuit
 would have a
@@ -700,12 +698,11 @@ of
 .Dq line
 .Dv ( AudioNline ) .
 Mixer controls which control audio circuitry for a particular audio
-source (e.g. line-in, CD in, DAC output) are collected under the input class,
-while those which control all audio sources (e.g. master volume,
+source (e.g., line-in, CD in, DAC output) are collected under the input class,
+while those which control all audio sources (e.g., master volume,
 equalization controls) are under the output class.
 Hardware devices capable of recording typically also have a record class,
-for controls that only affect recording,
-and also a monitor class.
+for controls that only affect recording, and also a monitor class.
 .Pp
 The
 .Va next
