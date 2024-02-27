@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2024/01/20 02:23:15 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2024/02/27 16:07:02 nat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,8 +149,10 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * what the interrupt stub puts on the stack before calling C code.
  */
 struct clockframe {
+#ifndef CLOCK_FORMAT0
 	/* regs saved on the stack by the interrupt stub */
 	u_int	cf_regs[4];	/* d0,d1,a0,a1 */
+#endif
 	/* hardware frame */
 	u_short	cf_sr;		/* sr at time of interrupt */
 	u_long	cf_pc;		/* pc at time of interrupt */
