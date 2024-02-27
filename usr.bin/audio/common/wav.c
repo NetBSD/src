@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.17 2024/02/27 20:40:29 gson Exp $	*/
+/*	$NetBSD: wav.c,v 1.18 2024/02/27 21:05:34 gson Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.17 2024/02/27 20:40:29 gson Exp $");
+__RCSID("$NetBSD: wav.c,v 1.18 2024/02/27 21:05:34 gson Exp $");
 #endif
 
 
@@ -374,7 +374,7 @@ wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 	abps = (double)align*ti->sample_rate / (double)1 + 0.5;
 
 	nsample = (datalen / ti->precision) / ti->sample_rate;
-	
+
 	/*
 	 * now we've calculated the info, write it out!
 	 */
