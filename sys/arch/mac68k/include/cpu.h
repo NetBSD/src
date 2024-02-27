@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106 2024/02/27 16:07:02 nat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,10 @@
 
 #ifndef _CPU_MACHINE_
 #define _CPU_MACHINE_
+
+#ifndef CLOCK_FORMAT0
+#define CLOCK_FORMAT0
+#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
