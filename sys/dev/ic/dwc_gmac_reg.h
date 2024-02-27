@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.21 2022/05/11 14:58:01 andvar Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.22 2024/02/27 08:21:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -133,9 +133,7 @@
 #define	AWIN_GMAC_DMA_CUR_RX_BUFADDR	0x1054
 #define	AWIN_GMAC_DMA_HWFEATURES	0x1058	/* not always implemented? */
 
-#define	GMAC_MII_PHY_SHIFT		11
 #define	GMAC_MII_PHY_MASK		__BITS(15,11)
-#define	GMAC_MII_REG_SHIFT		6
 #define	GMAC_MII_REG_MASK		__BITS(10,6)
 
 #define	GMAC_MII_BUSY			__BIT(0)
@@ -221,7 +219,6 @@ struct dwc_gmac_dev_dmadesc {
 /* for RX descriptors */
 #define	DDESC_STATUS_DAFILTERFAIL	__BIT(30)
 #define	DDESC_STATUS_FRMLENMSK		__BITS(29,16)
-#define	DDESC_STATUS_FRMLENSHIFT	16
 #define	DDESC_STATUS_RXERROR		__BIT(15)
 #define	DDESC_STATUS_RXTRUNCATED	__BIT(14)
 #define	DDESC_STATUS_SAFILTERFAIL	__BIT(13)
