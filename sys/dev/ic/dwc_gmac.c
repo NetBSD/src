@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.82 2024/02/27 08:25:38 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.83 2024/02/27 08:28:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.82 2024/02/27 08:25:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.83 2024/02/27 08:28:56 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -245,6 +245,17 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		aprint_normal_dev(sc->sc_dev,
 		    "HW feature mask: %x\n", hwft);
 	}
+
+	if (sizeof(bus_addr_t) > 4) {
+		int error = bus_dmatag_subregion(sc->sc_dmat, 0, __MASK(32),
+		    &sc->sc_dmat, BUS_DMA_WAITOK);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "failed to create DMA subregion\n");
+			return ENOMEM;
+		}
+	}
+
 	if (hwft & GMAC_DMA_FEAT_ENHANCED_DESC) {
 		aprint_normal_dev(sc->sc_dev,
 		    "Using enhanced descriptor format\n");
