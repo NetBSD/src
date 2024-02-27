@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.16 2023/04/15 12:39:44 mlelstv Exp $	*/
+/*	$NetBSD: wav.c,v 1.17 2024/02/27 20:40:29 gson Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.16 2023/04/15 12:39:44 mlelstv Exp $");
+__RCSID("$NetBSD: wav.c,v 1.17 2024/02/27 20:40:29 gson Exp $");
 #endif
 
 
@@ -108,7 +108,7 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	    strRIFF[4] = "RIFF",
 	    strWAVE[4] = "WAVE",
 	    strdata[4] = "data";
-		
+
 	if (sz < 32)
 		return (AUDIO_ENOENT);
 
