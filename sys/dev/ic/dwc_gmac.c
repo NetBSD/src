@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.81 2024/02/11 12:28:20 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.82 2024/02/27 08:25:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.81 2024/02/11 12:28:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.82 2024/02/27 08:25:38 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -147,12 +147,12 @@ static const struct dwc_gmac_desc_methods desc_methods_enhanced = {
 };
 
 
-#define	TX_DESC_OFFSET(N)	((AWGE_RX_RING_COUNT+(N)) \
-				    *sizeof(struct dwc_gmac_dev_dmadesc))
-#define	TX_NEXT(N)		(((N)+1) & (AWGE_TX_RING_COUNT-1))
+#define	TX_DESC_OFFSET(N)	((AWGE_RX_RING_COUNT + (N)) \
+				    * sizeof(struct dwc_gmac_dev_dmadesc))
+#define	TX_NEXT(N)		(((N) + 1) & (AWGE_TX_RING_COUNT - 1))
 
-#define RX_DESC_OFFSET(N)	((N)*sizeof(struct dwc_gmac_dev_dmadesc))
-#define	RX_NEXT(N)		(((N)+1) & (AWGE_RX_RING_COUNT-1))
+#define RX_DESC_OFFSET(N)	((N) * sizeof(struct dwc_gmac_dev_dmadesc))
+#define	RX_NEXT(N)		(((N) + 1) & (AWGE_RX_RING_COUNT - 1))
 
 
 
@@ -528,7 +528,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
-	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
+	    AWGE_RX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
 	    ring->r_physaddr);
@@ -558,7 +558,7 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
-	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
+	    AWGE_RX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ring->r_cur = ring->r_next = 0;
@@ -616,7 +616,7 @@ dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 	/* and next rings to the TX side */
 	sc->sc_txq.t_desc = sc->sc_rxq.r_desc + AWGE_RX_RING_COUNT;
 	sc->sc_txq.t_physaddr = sc->sc_rxq.r_physaddr +
-	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc);
+	    AWGE_RX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc);
 
 	return 0;
 
@@ -652,7 +652,7 @@ dwc_gmac_free_rx_ring(struct dwc_gmac_softc *sc, struct dwc_gmac_rx_ring *ring)
 		if (data->rd_map != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,
 			    AWGE_RX_RING_COUNT
-				*sizeof(struct dwc_gmac_dev_dmadesc),
+				* sizeof(struct dwc_gmac_dev_dmadesc),
 			    BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->rd_map);
 			bus_dmamap_destroy(sc->sc_dmat, data->rd_map);
@@ -671,10 +671,10 @@ dwc_gmac_alloc_tx_ring(struct dwc_gmac_softc *sc,
 	ring->t_queued = 0;
 	ring->t_cur = ring->t_next = 0;
 
-	memset(ring->t_desc, 0, AWGE_TX_RING_COUNT*sizeof(*ring->t_desc));
+	memset(ring->t_desc, 0, AWGE_TX_RING_COUNT * sizeof(*ring->t_desc));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(0),
-	    AWGE_TX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
+	    AWGE_TX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
 	    BUS_DMASYNC_POSTWRITE);
 
 	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
@@ -747,7 +747,7 @@ dwc_gmac_reset_tx_ring(struct dwc_gmac_softc *sc,
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(0),
-	    AWGE_TX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
+	    AWGE_TX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_TX_ADDR,
 	    sc->sc_txq.t_physaddr);
@@ -1179,11 +1179,11 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 #endif
 
 		/*
-		 * i+1 does not need to be a valid descriptor,
+		 * i + 1 does not need to be a valid descriptor,
 		 * this is just a special notion to just sync
 		 * a single tx descriptor (i)
 		 */
-		dwc_gmac_txdesc_sync(sc, i, i+1,
+		dwc_gmac_txdesc_sync(sc, i, i + 1,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		desc = &sc->sc_txq.t_desc[i];
@@ -1651,7 +1651,7 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
 		    "data: %08x next: %08x\n",
 		    i, sc->sc_txq.t_physaddr +
-			i*sizeof(struct dwc_gmac_dev_dmadesc),
+			i * sizeof(struct dwc_gmac_dev_dmadesc),
 		    le32toh(desc->ddesc_status0), le32toh(desc->ddesc_cntl1),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 	}
@@ -1670,7 +1670,7 @@ dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
 		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
 		    "data: %08x next: %08x\n",
 		    i, sc->sc_rxq.r_physaddr +
-			i*sizeof(struct dwc_gmac_dev_dmadesc),
+			i * sizeof(struct dwc_gmac_dev_dmadesc),
 		    le32toh(desc->ddesc_status0), le32toh(desc->ddesc_cntl1),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 	}
