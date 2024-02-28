@@ -5,13 +5,16 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Define to support binary insertion of leases into queues. */
-#define DELAYED_ACK 1
+/* #undef BINARY_LEASES */
 
 /* Define to compile debug-only DHCP software. */
 /* #undef DEBUG */
 
 /* Define to queue multiple DHCPACK replies per fsync. */
-/* #undef DELAYED_ACK */
+#define DELAYED_ACK 1
+
+/* Define to 1 to include DHCPv4 over DHCPv6 support. */
+/* #undef DHCP4o6 */
 
 /* Define to BIG_ENDIAN for MSB (Motorola or SPARC CPUs) or LITTLE_ENDIAN for
    LSB (Intel CPUs). */
@@ -96,6 +99,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
@@ -145,7 +151,7 @@
 #define PACKAGE_NAME "DHCP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "DHCP 4.4.2"
+#define PACKAGE_STRING "DHCP 4.4.3-P1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "dhcp"
@@ -154,7 +160,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.4.2"
+#define PACKAGE_VERSION "4.4.3-P1"
 
 /* Define to any value to include Ari's PARANOIA patch. */
 /* #undef PARANOIA */
@@ -206,7 +212,7 @@
 /* #undef USE_V4_PKTINFO */
 
 /* Version number of package */
-#define VERSION "4.3.3"
+#define VERSION "4.4.3-P1"
 
 /* tpacket_auxdata.tp_vlan_tci present */
 /* #undef VLAN_TCI_PRESENT */
