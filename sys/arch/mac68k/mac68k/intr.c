@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 2024/01/19 20:55:42 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.36 2024/02/28 13:05:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,13 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2024/01/19 20:55:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2024/02/28 13:05:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+
+#include <m68k/vectors.h>
 
 #include <machine/psc.h>
 #include <machine/viareg.h>
@@ -61,14 +63,14 @@ static int ((*intr_func[NISR])(void *)) = {
 	intr_noint
 };
 static void *intr_arg[NISR] = {
-	(void *)0,
-	(void *)1,
-	(void *)2,
-	(void *)3,
-	(void *)4,
-	(void *)5,
-	(void *)6,
-	(void *)7
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 #ifdef DEBUG
@@ -196,7 +198,7 @@ intr_disestablish(int ipl)
 		panic("intr_disestablish: bad ipl %d", ipl);
 
 	intr_func[ipl] = intr_noint;
-	intr_arg[ipl] = (void *)ipl;
+	intr_arg[ipl] = NULL;
 }
 
 /*
@@ -205,35 +207,19 @@ intr_disestablish(int ipl)
  *
  * XXX Note: see the warning in intr_establish()
  */
-#if __GNUC_PREREQ__(8, 0)
-/*
- * XXX rtclock_intr() requires this for unwinding stack frame.
- */
-#pragma GCC push_options
-#pragma GCC optimize "-fno-omit-frame-pointer"
-#endif
 void
-intr_dispatch(int evec)		/* format | vector offset */
+intr_dispatch(struct clockframe frame)
 {
-	int ipl, vec;
+	const int ipl = VECO_TO_VECI(frame.cf_vo) - VECI_INTRAV0;
 
 	intr_depth++;
-	vec = (evec & 0xfff) >> 2;
-#ifdef DIAGNOSTIC
-	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("intr_dispatch: bad vec 0x%x", vec);
-#endif
-	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;
 	curcpu()->ci_data.cpu_nintr++;
 
-	(void)(*intr_func[ipl])(intr_arg[ipl]);
+	(void)(*intr_func[ipl])(intr_arg[ipl] ? intr_arg[ipl] : &frame);
 	intr_depth--;
 }
-#if __GNUC_PREREQ__(8, 0)
-#pragma GCC pop_options
-#endif
 
 /*
  * Default interrupt handler:  do nothing.
@@ -243,8 +229,11 @@ intr_noint(void *arg)
 {
 #ifdef DEBUG
 	intr_depth++;
-	if (intr_debug)
-		printf("intr_noint: ipl %d\n", (int)arg);
+	if (intr_debug) {
+		const struct clockframe *frame = arg;
+		const int ipl = VECO_TO_VECI(frame->cf_vo) - VECI_INTRAV0;
+		printf("intr_noint: ipl %d\n", ipl);
+	}
 	intr_depth--;
 #endif
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.70 2024/02/09 18:20:00 andvar Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.71 2024/02/28 13:05:39 thorpej Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.70 2024/02/09 18:20:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.71 2024/02/28 13:05:39 thorpej Exp $");
 
 #include "opt_adb.h"
 
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.70 2024/02/09 18:20:00 andvar Exp $
 #include <machine/viareg.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
 #include <machine/iopreg.h>			/* required for IOP support */
+
+#include <m68k/vectors.h>
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
@@ -352,6 +354,17 @@ print_single(u_char *str)
 	printf_intr("\n");
 }
 #endif
+
+static inline void
+adb_process_serial_intrs(void)
+{
+	/* grab any serial interrupts (autovector IPL 4) */
+	struct clockframe dummy_frame = {
+		.cf_sr = PSL_S,
+		.cf_vo = VECI_TO_VECO(VECI_INTRAV4),
+	};
+	(void)intr_dispatch(dummy_frame);
+}
 
 void
 adb_cuda_tickle(void)
@@ -720,7 +733,7 @@ adb_intr_II(void *arg)
 
 	delay(ADB_DELAY);	/* yuck (don't remove) */
 
-	(void)intr_dispatch(0x70); /* grab any serial interrupts */
+	adb_process_serial_intrs();
 
 	if (ADB_INTR_IS_ON)
 		intr_on = 1;	/* save for later */
@@ -768,7 +781,7 @@ switch_start:
 			adbActionState = ADB_ACTION_IN;
 		}
 		delay(ADB_DELAY);
-		(void)intr_dispatch(0x70); /* grab any serial interrupts */
+		adb_process_serial_intrs();
 		goto switch_start;
 		break;
 	case ADB_ACTION_IDLE:
@@ -1262,7 +1275,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-		(void)intr_dispatch(0x70); /* grab any serial interrupts */
+		adb_process_serial_intrs();
 		break;
 
 	case ADB_ACTION_IN:
@@ -1276,7 +1289,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-		(void)intr_dispatch(0x70); /* grab any serial interrupts */
+		adb_process_serial_intrs();
 
 		if (1 == ending) {	/* end of message? */
 			ADB_SET_STATE_INACTIVE();	/* signal end of frame */
@@ -1323,7 +1336,7 @@ switch_start:
 				adbActionState = ADB_ACTION_OUT;	/* set next state */
 
 				delay(ADB_DELAY);	/* delay */
-				(void)intr_dispatch(0x70); /* grab any serial interrupts */
+				adb_process_serial_intrs();
 
 				if (ADB_INTR_IS_ON) {	/* ADB intr low during
 							 * write */
@@ -1364,13 +1377,13 @@ switch_start:
 			adbWriteDelay = 1;	/* must retry when done with
 						 * read */
 			delay(ADB_DELAY);	/* delay */
-			(void)intr_dispatch(0x70); /* grab any serial interrupts */
+			adb_process_serial_intrs();
 			goto switch_start;	/* process next state right
 						 * now */
 			break;
 		}
 		delay(ADB_DELAY);	/* required delay */
-		(void)intr_dispatch(0x70); /* grab any serial interrupts */
+		adb_process_serial_intrs();
 
 		if (adbOutputBuffer[0] == adbSentChars) {	/* check for done */
 			if (0 == adb_cmd_result(adbOutputBuffer)) {	/* do we expect data
