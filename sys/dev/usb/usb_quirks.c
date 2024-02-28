@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.107 2023/05/14 23:58:35 pgoyette Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.108 2024/02/28 21:52:40 dholland Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.107 2023/05/14 23:58:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.108 2024/02/28 21:52:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -399,7 +399,9 @@ Static const struct usbd_quirk_entry {
 	{ UQ_ALWAYS_ON, NULL }},
  { USB_VENDOR_PIXART,		USB_PRODUCT_PIXART_RPIMOUSE,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
- { USB_VENDOR_LOGITECH, 	USB_PRODUCT_LOGITECH_B100,		ANY,
+ { USB_VENDOR_LOGITECH, 	USB_PRODUCT_LOGITECH_B100_1,		ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+ { USB_VENDOR_LOGITECH, 	USB_PRODUCT_LOGITECH_B100_2,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
  { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_OPTUSBMOUSE,		ANY,		{ UQ_ALWAYS_ON, NULL }},
 /*
