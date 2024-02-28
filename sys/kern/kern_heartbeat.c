@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.11 2024/02/28 04:12:59 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.12 2024/02/28 04:14:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.11 2024/02/28 04:12:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.12 2024/02/28 04:14:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -132,8 +132,8 @@ void *heartbeat_sih			__read_mostly;
  *
  *	Called after the current CPU has been marked offline but before
  *	it has stopped running, or after IPL has been raised for
- *	polling-mode console input.  Nestable.  Reversed by
- *	heartbeat_resume.
+ *	polling-mode console input.  Nestable (but only 2^32 times, so
+ *	don't do this in a loop).  Reversed by heartbeat_resume.
  *
  *	Caller must be bound to the CPU, i.e., curcpu_stable() must be
  *	true.  This function does not assert curcpu_stable() since it
