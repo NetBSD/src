@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.813 2024/01/13 14:42:14 hgutch Exp $
+$NetBSD: usbdevs,v 1.814 2024/02/28 21:50:51 dholland Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2197,7 +2197,8 @@ product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH USBPS2MOUSE	0xc00e	USB-PS/2 Optical Mouse
 product LOGITECH MUV55A		0xc016	M-UV55a
 product LOGITECH UN58A		0xc030	iFeel Mouse
-product LOGITECH B100		0xc077	B100 Optical Mouse
+product LOGITECH B100_1		0xc05a	B100 Optical Mouse
+product LOGITECH B100_2		0xc077	B100 Optical Mouse
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
