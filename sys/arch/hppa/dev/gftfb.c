@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.7 2024/02/28 10:25:36 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.8 2024/02/28 14:12:12 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -91,7 +91,7 @@ struct	gftfb_softc {
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
-	uint32_t sc_pos;
+	int sc_video_on;
 	glyphcache sc_gc;
 };
 
@@ -147,6 +147,8 @@ static void	gftfb_eraserows(void *, int, int, long);
 
 static void	gftfb_move_cursor(struct gftfb_softc *, int, int);
 static int	gftfb_do_cursor(struct gftfb_softc *, struct wsdisplay_cursor *);
+
+static void	gftfb_set_video(struct gftfb_softc *, int);
 
 struct wsdisplay_accessops gftfb_accessops = {
 	gftfb_ioctl,
@@ -683,6 +685,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
 	sc->sc_enabled = 0;
+	sc->sc_video_on = 1;
 
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
@@ -824,6 +827,7 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
+				gftfb_set_video(sc, 1);
 			}
 		}
 		}
@@ -868,8 +872,14 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			return gftfb_do_cursor(sc, cursor);
 		}
-	}
 
+	case WSDISPLAYIO_SVIDEO:
+		gftfb_set_video(sc, *(int *)data);
+		return 0;
+	case WSDISPLAYIO_GVIDEO:
+		return sc->sc_video_on ? 
+		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+	}
 	return EPASSTHROUGH;
 }
 
@@ -1463,4 +1473,30 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 	}
 
 	return 0;
+}
+
+static void
+gftfb_set_video(struct gftfb_softc *sc, int on)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	if (sc->sc_video_on == on)
+		return;
+		
+	sc->sc_video_on = on;
+
+	gftfb_wait(sc);
+	if (on) {
+		bus_space_write_stream_4(memt, memh, NGLE_REG_21,
+		    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_27,
+		    bus_space_read_stream_4(memt, memh, NGLE_REG_27) | 0x00800000);
+	} else {
+		bus_space_write_stream_4(memt, memh, NGLE_REG_21,
+		    bus_space_read_stream_4(memt, memh, NGLE_REG_21) &  ~0x0a000000);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_27,
+		    bus_space_read_stream_4(memt, memh, NGLE_REG_27) & ~0x00800000);
+	}
 }
