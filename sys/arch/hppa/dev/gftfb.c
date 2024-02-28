@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.6 2024/02/21 13:24:40 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.7 2024/02/28 10:25:36 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -29,6 +29,7 @@
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -82,10 +83,15 @@ struct	gftfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+	kmutex_t sc_hwlock;
 	uint32_t sc_hwmode;
 #define HW_FB	0
 #define HW_FILL	1
 #define HW_BLIT	2
+	/* cursor stuff */
+	int sc_cursor_x, sc_cursor_y;
+	int sc_hot_x, sc_hot_y, sc_enabled;
+	uint32_t sc_pos;
 	glyphcache sc_gc;
 };
 
@@ -139,6 +145,9 @@ static void	gftfb_erasecols(void *, int, int, int, long);
 static void	gftfb_copyrows(void *, int, int, int);
 static void	gftfb_eraserows(void *, int, int, long);
 
+static void	gftfb_move_cursor(struct gftfb_softc *, int, int);
+static int	gftfb_do_cursor(struct gftfb_softc *, struct wsdisplay_cursor *);
+
 struct wsdisplay_accessops gftfb_accessops = {
 	gftfb_ioctl,
 	gftfb_mmap,
@@ -175,6 +184,8 @@ struct wsdisplay_accessops gftfb_accessops = {
 #define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
 #define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
 
+static inline void gftfb_wait_fifo(struct gftfb_softc *, uint32_t);
+
 int
 gftfb_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -208,6 +219,9 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_dev = self;
 	sc->sc_base.sc_enable_rom = gftfb_enable_rom;
 	sc->sc_base.sc_disable_rom = gftfb_disable_rom;
+
+	/* we can *not* be interrupted when doing colour map accesses */
+	mutex_init(&sc->sc_hwlock, MUTEX_DEFAULT, IPL_HIGH);
 
 	aprint_normal("\n");
 
@@ -663,8 +677,12 @@ gftfb_setup(struct gftfb_softc *sc)
 	struct sti_rom *rom = sc->sc_base.sc_rom;
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
+	int i;	
 
 	sc->sc_hwmode = HW_FB;
+	sc->sc_hot_x = 0;
+	sc->sc_hot_y = 0;
+	sc->sc_enabled = 0;
 
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
@@ -702,6 +720,50 @@ gftfb_setup(struct gftfb_softc *sc)
 	    bus_space_read_stream_4(memt, memh, NGLE_REG_21) | 0x0a000000);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_27,
 	    bus_space_read_stream_4(memt, memh, NGLE_REG_27) | 0x00800000);
+
+	/* initialize cursor sprite */
+	gftfb_wait(sc);
+	
+	/* cursor mask */
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A07000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+	for (i = 0; i < 64; i++) {
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0xffffffff);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_5, 0xffffffff);
+	}
+
+	/* cursor image */
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A06000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+	for (i = 0; i < 64; i++) {
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0xff00ff00);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_5, 0xff00ff00);
+	}
+
+	/* colour map */
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xBBE0F000);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0x000000ff);	/* BG */
+	bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0x00ff0000);	/* FG */
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80008004);
+	gftfb_setup_fb(sc);	
+
+	gftfb_move_cursor(sc, 100, 100);
+
 }
 
 static int
@@ -773,7 +835,41 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
+
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = sc->sc_cursor_x;
+			cp->y = sc->sc_cursor_y;
+		}
+		return 0;
+
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			gftfb_move_cursor(sc, cp->x, cp->y);
+		}
+		return 0;
+
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
+
+			cp->x = 64;
+			cp->y = 64;
+		}
+		return 0;
+
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cursor = (void *)data;
+
+			return gftfb_do_cursor(sc, cursor);
+		}
 	}
+
 	return EPASSTHROUGH;
 }
 
@@ -909,6 +1005,7 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	bus_space_tag_t memt = rom->memt;
 	bus_space_handle_t memh = rom->regh[2];
 
+	mutex_enter(&sc->sc_hwlock);
 	gftfb_wait(sc);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
@@ -923,6 +1020,7 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0x400);
 	bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80000100);
 	gftfb_setup_fb(sc);
+	mutex_exit(&sc->sc_hwlock);
 	return 0;
 }
 
@@ -1186,4 +1284,183 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		if (ri->ri_crow >= row && ri->ri_crow < (row + nrows))
 			ri->ri_flg &= ~RI_CURSOR;
 	}
+}
+
+/*
+ * cursor sprite handling
+ * like most hw info, xf86 3.3 -> nglehdw.h was used as documentation
+ * problem is, the PCI EG doesn't quite behave like an S9000_ID_ARTIST
+ * the cursor position register bahaves like the one on HCRX while using
+ * the same address as Artist, incuding the enable bit and weird handling
+ * of negative coordinates. The rest of it, colour map, sprite image etc.,
+ * behave like Artist.
+ */
+ 
+static void
+gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	uint32_t pos;
+
+	sc->sc_cursor_x = x;
+	x -= sc->sc_hot_x;
+	sc->sc_cursor_y = y;
+	y -= sc->sc_hot_y;
+
+	if (x < 0) x = 0x1000 - x;
+	if (y < 0) y = 0x1000 - y;
+	pos = (x << 16) | y;
+	if (sc->sc_enabled) pos |= 0x80000000;
+	gftfb_wait(sc);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_17, pos);
+	bus_space_write_stream_4(memt, memh, NGLE_REG_18, 0x80);
+}
+
+static int
+gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	struct sti_rom *rom = sc->sc_base.sc_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		sc->sc_enabled = cur->enable;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		gftfb_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		uint32_t rgb;
+		uint8_t r[2], g[2], b[2];
+
+		copyin(cur->cmap.blue, b, 2);
+		copyin(cur->cmap.green, g, 2);
+		copyin(cur->cmap.red, r, 2);
+		mutex_enter(&sc->sc_hwlock);
+		gftfb_wait(sc);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_10, 0xBBE0F000);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x03000300);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+		gftfb_wait(sc);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, 0);
+		rgb = (r[0] << 16) | (g[0] << 8) | b[0];
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, rgb);	/* BG */
+		rgb = (r[1] << 16) | (g[1] << 8) | b[1];
+		bus_space_write_stream_4(memt, memh, NGLE_REG_4, rgb);	/* FG */
+		bus_space_write_stream_4(memt, memh, NGLE_REG_2, 0);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_26, 0x80008004);
+		gftfb_setup_fb(sc);	
+		mutex_exit(&sc->sc_hwlock);
+
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		uint32_t buffer[128], latch, tmp;
+		int i;
+
+		copyin(cur->mask, buffer, 512);
+		gftfb_wait(sc);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A07000);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+		for (i = 0; i < 128; i += 2) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_stream_4(memt, memh, NGLE_REG_4, latch);
+			latch = 0;
+			tmp = buffer[i + 1] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i + 1] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i + 1] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i + 1] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i + 1] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i + 1] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i + 1] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i + 1] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_stream_4(memt, memh, NGLE_REG_5, latch);
+		}
+
+		copyin(cur->image, buffer, 512);
+		gftfb_wait(sc);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_14, 0x300);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_13, 0xffffffff);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_11, 0x28A06000);
+		bus_space_write_stream_4(memt, memh, NGLE_REG_3, 0);
+		for (i = 0; i < 128; i += 2) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_stream_4(memt, memh, NGLE_REG_4, latch);
+			latch = 0;
+			tmp = buffer[i + 1] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i + 1] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i + 1] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i + 1] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i + 1] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i + 1] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i + 1] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i + 1] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_stream_4(memt, memh, NGLE_REG_5, latch);
+		}
+		gftfb_setup_fb(sc);
+	}
+
+	return 0;
 }
