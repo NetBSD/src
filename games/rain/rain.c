@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.22 2020/10/14 18:32:04 nia Exp $	*/
+/*	$NetBSD: rain.c,v 1.23 2024/02/28 23:14:37 charlotte Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.22 2020/10/14 18:32:04 nia Exp $");
+__RCSID("$NetBSD: rain.c,v 1.23 2024/02/28 23:14:37 charlotte Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,8 @@ main(int argc, char **argv)
 		errx(0, "couldn't initialize screen");
 	cols = COLS - 4;
 	lines = LINES - 4;
+	if (cols == 0) cols++;
+	if (lines == 0) lines++;
 
 	(void)signal(SIGHUP, onsig);
 	(void)signal(SIGINT, onsig);
