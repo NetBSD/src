@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.23 2024/02/28 23:14:37 charlotte Exp $	*/
+/*	$NetBSD: rain.c,v 1.24 2024/02/28 23:24:52 charlotte Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.23 2024/02/28 23:14:37 charlotte Exp $");
+__RCSID("$NetBSD: rain.c,v 1.24 2024/02/28 23:24:52 charlotte Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,11 @@ __RCSID("$NetBSD: rain.c,v 1.23 2024/02/28 23:14:37 charlotte Exp $");
 #include <limits.h>
 
 static volatile sig_atomic_t sig_caught = 0;
+static long cols;
+static long lines;
 
 int main(int, char **);
+static void winupdate(void);
 static void onsig(int);
 
 
@@ -68,7 +71,6 @@ int
 main(int argc, char **argv)
 {
 	int x, y, j;
-	long cols, lines;
 	unsigned int delay = 120000;
 	unsigned long val = 0;
 	int ch;
@@ -95,10 +97,7 @@ main(int argc, char **argv)
 
 	if (!initscr())
 		errx(0, "couldn't initialize screen");
-	cols = COLS - 4;
-	lines = LINES - 4;
-	if (cols == 0) cols++;
-	if (lines == 0) lines++;
+	winupdate();
 
 	(void)signal(SIGHUP, onsig);
 	(void)signal(SIGINT, onsig);
@@ -113,6 +112,10 @@ main(int argc, char **argv)
 		if (sig_caught) {
 			(void)endwin();
 			exit(0);
+		}
+		if (is_term_resized(LINES, COLS)) {
+			resizeterm(LINES, COLS);
+			winupdate();
 		}
 		x = random() % cols + 2;
 		y = random() % lines + 2;
@@ -145,6 +148,15 @@ main(int argc, char **argv)
 		(void)refresh();
 		if (delay) (void)usleep(delay);
 	}
+}
+
+static void
+winupdate(void)
+{
+	cols = COLS - 4;
+	lines = LINES - 4;
+	if (cols == 0) cols++;
+	if (lines == 0) lines++;
 }
 
 /* ARGSUSED */
