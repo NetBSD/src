@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.10 2023/09/06 12:29:14 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.11 2024/02/28 04:12:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.10 2023/09/06 12:29:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.11 2024/02/28 04:12:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -132,24 +132,20 @@ void *heartbeat_sih			__read_mostly;
  *
  *	Called after the current CPU has been marked offline but before
  *	it has stopped running, or after IPL has been raised for
- *	polling-mode console input.  Binds to the current CPU as a side
- *	effect.  Nestable (but only up to 2^32 times, so don't do this
- *	in a loop).  Reversed by heartbeat_resume.
+ *	polling-mode console input.  Nestable.  Reversed by
+ *	heartbeat_resume.
+ *
+ *	Caller must be bound to the CPU, i.e., curcpu_stable() must be
+ *	true.  This function does not assert curcpu_stable() since it
+ *	is used in the ddb entry path, where any assertions risk
+ *	infinite regress into undebuggable chaos, so callers must be
+ *	careful.
  */
 void
 heartbeat_suspend(void)
 {
 	unsigned *p;
 
-	/*
-	 * We could use curlwp_bind, but we'd have to record whether we
-	 * were already bound or not to pass to curlwp_bindx in
-	 * heartbeat_resume.  Using kpreempt_disable is simpler and
-	 * unlikely to have any adverse consequences, since this only
-	 * happens when we're about to go into a tight polling loop at
-	 * raised IPL anyway.
-	 */
-	kpreempt_disable();
 	p = &curcpu()->ci_heartbeat_suspend;
 	atomic_store_relaxed(p, *p + 1);
 }
@@ -186,6 +182,9 @@ heartbeat_resume_cpu(struct cpu_info *ci)
  *	Called after the current CPU has started running but before it
  *	has been marked online, or when ending polling-mode input
  *	before IPL is restored.  Reverses heartbeat_suspend.
+ *
+ *	Caller must be bound to the CPU, i.e., curcpu_stable() must be
+ *	true.
  */
 void
 heartbeat_resume(void)
@@ -193,6 +192,8 @@ heartbeat_resume(void)
 	struct cpu_info *ci = curcpu();
 	unsigned *p;
 	int s;
+
+	KASSERT(curcpu_stable());
 
 	/*
 	 * Reset the state so nobody spuriously thinks we had a heart
@@ -204,7 +205,6 @@ heartbeat_resume(void)
 
 	p = &ci->ci_heartbeat_suspend;
 	atomic_store_relaxed(p, *p - 1);
-	kpreempt_enable();
 }
 
 /*
