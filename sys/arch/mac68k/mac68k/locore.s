@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.183 2024/01/17 12:33:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.184 2024/02/28 13:05:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -751,10 +751,7 @@ ENTRY_NOPROFILE(spurintr)
 
 ENTRY_NOPROFILE(intrhand)
 	INTERRUPT_SAVEREG
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
 	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
-	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
@@ -776,19 +773,17 @@ ENTRY_NOPROFILE(lev7intr)
  * saving the status register directly to the stack, but this would lose
  * badly on the 040.  Aligning the stack takes 10 more cycles than this
  * code does, so it's a good compromise.
+ *
+ * A pointer to the clockframe is passed as an argument in the usual
+ * fashion.
  */
 ENTRY_NOPROFILE(rtclock_intr)
+	movl	%sp@(4),%a1		| stash pointer to clockframe
 	movl	%d2,%sp@-		| save %d2
 	movw	%sr,%d2			| save SPL
-	movw	_C_LABEL(ipl2psl_table)+IPL_CLOCK*2,%sr
 					| raise SPL to splclock()
-	movl	%a6@,%a1		| unwind to frame in intr_dispatch
-					| XXX FIXME
-	lea	%a1@(28),%a1		| push pointer to interrupt frame
-	movl	%a1,%sp@-			| 28 = 16 for regs in intrhand,
-					|    + 4 for args to intr_dispatch
-					|    + 4 for return address to intrhand
-					|    + 4 for value of %A6
+	movw	_C_LABEL(ipl2psl_table)+IPL_CLOCK*2,%sr
+	movl	%a1,%sp@-		| push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	addql	#4,%sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance

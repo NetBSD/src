@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.76 2020/07/21 06:10:26 rin Exp $	*/
+/*	$NetBSD: via.c,v 1.77 2024/02/28 13:05:40 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.76 2020/07/21 06:10:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.77 2024/02/28 13:05:40 thorpej Exp $");
 
 #include "opt_mac68k.h"
 
@@ -239,15 +239,8 @@ via_set_modem(int onoff)
 		via_reg(VIA1, vBufA) &= ~DA1O_vSync;
 }
 
-#if __GNUC_PREREQ__(8, 0)
-/*
- * XXX rtclock_intr() requires this for unwinding stack frame.
- */
-#pragma GCC push_options
-#pragma GCC optimize "-fno-omit-frame-pointer"
-#endif
 void
-via1_intr(void *intr_arg)
+via1_intr(void *intr_arg /* struct clockframe * */)
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -269,16 +262,19 @@ via1_intr(void *intr_arg)
 	bitnum = 0;
 	do {
 		if (intbits & mask) {
-			via1itab[bitnum](via1iarg[bitnum]);
+			/*
+			 * We want to pass the clockframe on to
+			 * rtclock_intr().
+			 */
+			void *arg = via1itab[bitnum] == rtclock_intr
+			    ? intr_arg : via1iarg[bitnum];
+			via1itab[bitnum](arg);
 			/* via_reg(VIA1, vIFR) = mask; */
 		}
 		mask <<= 1;
 		++bitnum;
 	} while (intbits >= mask);
 }
-#if __GNUC_PREREQ__(8, 0)
-#pragma GCC pop_options
-#endif
 
 void
 via2_intr(void *intr_arg)
