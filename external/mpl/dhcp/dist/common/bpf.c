@@ -1,11 +1,11 @@
-/*	$NetBSD: bpf.c,v 1.3 2018/06/01 00:42:49 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.3.4.1 2024/02/29 11:39:17 martin Exp $	*/
 
 /* bpf.c
 
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.3 2018/06/01 00:42:49 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.3.4.1 2024/02/29 11:39:17 martin Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -366,7 +366,7 @@ void if_register_receive (info)
 		dhcp_bpf_relay_filter [10].k = ntohs (relay_port);
 	}
 #endif
-	p.bf_insns [8].k = ntohs (local_port);
+	p.bf_insns [8].k = ntohs (*libdhcp_callbacks.local_port);
 
 	if (ioctl (info -> rfdesc, BIOCSETF, &p) < 0)
 		log_fatal ("Can't install packet filter program: %m");
@@ -526,7 +526,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 		   physical layer that supports this, but WTH), skip this
 		   packet. */
 		if (offset < 0) {
-			interface->rbuf_offset = 
+			interface->rbuf_offset =
 				BPF_WORDALIGN(interface->rbuf_offset +
 					      hdr.bh_caplen);
 			continue;
@@ -541,7 +541,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
-			interface->rbuf_offset = 
+			interface->rbuf_offset =
 				BPF_WORDALIGN(interface->rbuf_offset +
 					      hdr.bh_caplen);
 			continue;
@@ -658,7 +658,7 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 * Loop through our interfaces finding a match.
 	 */
 	sa = NULL;
-	for (p = ifa; p != NULL; p = p->ifa_next) {
+	for (p=ifa; (p != NULL) && (sa == NULL); p = p->ifa_next) {
 		if (lladdr_active(s, name, p)) {
 		    	sa = (struct sockaddr_dl *)p->ifa_addr;
 			break;

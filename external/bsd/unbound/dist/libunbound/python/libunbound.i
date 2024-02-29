@@ -36,6 +36,9 @@
 %begin %{
 /* store state of warning output, restored at later pop */
 #pragma GCC diagnostic push
+/* ignore warnings for pragma below, where for older GCC it can produce a
+   warning if the cast-function-type warning is absent. */
+#pragma GCC diagnostic ignored "-Wpragmas"
 /* ignore gcc8 METH_NOARGS function cast warnings for swig function pointers */
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 %}
@@ -363,7 +366,7 @@ Result: ['74.125.43.147', '74.125.43.99', '74.125.43.103', '74.125.43.104']
                     ctx.debuglevel(3)
                     ctx.debugout(fw)
 
-                  Another option is to print the debug informations to stderr output
+                  Another option is to print the debug information to stderr output
 
                   ::
 
@@ -860,6 +863,9 @@ Result: ['74.125.43.147', '74.125.43.99', '74.125.43.103', '74.125.43.104']
 %inline %{
   //SWIG will see the ub_ctx as a class
   struct ub_ctx {
+          /* Dummy member, so the struct is not empty, MSVC complains about
+           * that. */
+          int dummy;
   };
 %}
 
@@ -916,7 +922,13 @@ int _ub_resolve_async(struct ub_ctx* ctx, char* name, int rrtype, int rrclass, v
       struct cb_data* id;
       id = (struct cb_data*) iddata;
       arglist = Py_BuildValue("(OiO)",id->data,status, SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ub_result, 0 |  0 ));   // Build argument list
+#if PY_MAJOR_VERSION <= 2 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
+      /* for python before 3.9 */
       fresult = PyEval_CallObject(id->func,arglist);     // Call Python
+#else
+      /* for python 3.9 and newer */
+      fresult = PyObject_Call(id->func,arglist,NULL);
+#endif
       Py_DECREF(id->func);
       Py_DECREF(id->data);
       free(id);
@@ -930,6 +942,8 @@ int _ub_resolve_async(struct ub_ctx* ctx, char* name, int rrtype, int rrclass, v
       int r;
       struct cb_data* id;
       id = (struct cb_data*) malloc(sizeof(struct cb_data));
+      if(!id)
+              return -2; /* UB_NOMEM */
       id->data = mydata;
       id->func = pyfunc;
    

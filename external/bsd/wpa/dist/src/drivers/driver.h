@@ -58,6 +58,16 @@
 #define HOSTAPD_CHAN_VHT_130_30 0x04000000
 #define HOSTAPD_CHAN_VHT_150_10 0x08000000
 
+/* Allowed bandwidth mask */
+enum hostapd_chan_width_attr {
+	HOSTAPD_CHAN_WIDTH_10   = BIT(0),
+	HOSTAPD_CHAN_WIDTH_20   = BIT(1),
+	HOSTAPD_CHAN_WIDTH_40P  = BIT(2),
+	HOSTAPD_CHAN_WIDTH_40M  = BIT(3),
+	HOSTAPD_CHAN_WIDTH_80   = BIT(4),
+	HOSTAPD_CHAN_WIDTH_160  = BIT(5),
+};
+
 /* Filter gratuitous ARP */
 #define WPA_DATA_FRAME_FILTER_FLAG_ARP BIT(0)
 /* Filter unsolicited Neighbor Advertisement */
@@ -92,6 +102,20 @@ enum reg_type {
 };
 
 /**
+ * struct hostapd_wmm_rule - WMM regulatory rule
+ * @min_cwmin: Lower bound of CW_min value
+ * @min_cwmax: Lower bound of CW_max value
+ * @min_aifs: Lower bound of AIFS value
+ * @max_txop: Upper bound of TXOP, value in units of 32 usec
+ */
+struct hostapd_wmm_rule {
+	int min_cwmin;
+	int min_cwmax;
+	int min_aifs;
+	int max_txop;
+};
+
+/**
  * struct hostapd_channel_data - Channel information
  */
 struct hostapd_channel_data {
@@ -109,6 +133,13 @@ struct hostapd_channel_data {
 	 * flag - Channel flags (HOSTAPD_CHAN_*)
 	 */
 	int flag;
+
+	/**
+	 * allowed_bw - Allowed channel width bitmask
+	 *
+	 * See enum hostapd_chan_width_attr.
+	 */
+	u32 allowed_bw;
 
 	/**
 	 * max_tx_power - Regulatory transmit power limit in dBm
@@ -139,33 +170,47 @@ struct hostapd_channel_data {
 	 * dfs_cac_ms - DFS CAC time in milliseconds
 	 */
 	unsigned int dfs_cac_ms;
+
+	/**
+	 * wmm_rules_valid - Indicates wmm_rules state
+	 */
+	int wmm_rules_valid;
+
+	/**
+	 * wmm_rules - WMM regulatory rules
+	 */
+	struct hostapd_wmm_rule wmm_rules[WMM_AC_NUM];
 };
 
-#define HE_MAX_NUM_SS 		8
-#define HE_MAX_PHY_CAPAB_SIZE	3
-
-/**
- * struct he_ppe_threshold - IEEE 802.11ax HE PPE Threshold
- */
-struct he_ppe_threshold {
-	u32 numss_m1;
-	u32 ru_count;
-	u32 ppet16_ppet8_ru3_ru0[HE_MAX_NUM_SS];
-};
+#define HE_MAX_MAC_CAPAB_SIZE	6
+#define HE_MAX_PHY_CAPAB_SIZE	11
+#define HE_MAX_MCS_CAPAB_SIZE	12
+#define HE_MAX_PPET_CAPAB_SIZE	25
 
 /**
  * struct he_capabilities - IEEE 802.11ax HE capabilities
  */
 struct he_capabilities {
 	u8 he_supported;
-	u32 phy_cap[HE_MAX_PHY_CAPAB_SIZE];
-	u32 mac_cap;
-	u32 mcs;
-	struct he_ppe_threshold ppet;
+	u8 phy_cap[HE_MAX_PHY_CAPAB_SIZE];
+	u8 mac_cap[HE_MAX_MAC_CAPAB_SIZE];
+	u8 mcs[HE_MAX_MCS_CAPAB_SIZE];
+	u8 ppet[HE_MAX_PPET_CAPAB_SIZE];
 };
 
 #define HOSTAPD_MODE_FLAG_HT_INFO_KNOWN BIT(0)
 #define HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN BIT(1)
+
+
+enum ieee80211_op_mode {
+	IEEE80211_MODE_INFRA = 0,
+	IEEE80211_MODE_IBSS = 1,
+	IEEE80211_MODE_AP = 2,
+	IEEE80211_MODE_MESH = 5,
+
+	/* only add new entries before IEEE80211_MODE_NUM */
+	IEEE80211_MODE_NUM
+};
 
 /**
  * struct hostapd_hw_modes - Supported hardware mode information
@@ -226,14 +271,9 @@ struct hostapd_hw_modes {
 	/**
 	 * he_capab - HE (IEEE 802.11ax) capabilities
 	 */
-	struct he_capabilities he_capab;
+	struct he_capabilities he_capab[IEEE80211_MODE_NUM];
 };
 
-
-#define IEEE80211_MODE_INFRA	0
-#define IEEE80211_MODE_IBSS	1
-#define IEEE80211_MODE_AP	2
-#define IEEE80211_MODE_MESH	5
 
 #define IEEE80211_CAP_ESS	0x0001
 #define IEEE80211_CAP_IBSS	0x0002
@@ -682,6 +722,11 @@ struct hostapd_freq_params {
 	int vht_enabled;
 
 	/**
+	 * he_enabled - Whether HE is enabled
+	 */
+	int he_enabled;
+
+	/**
 	 * center_freq1 - Segment 0 center frequency in MHz
 	 *
 	 * Valid for both HT and VHT.
@@ -914,10 +959,10 @@ struct wpa_driver_associate_params {
 	 * passphrase - RSN passphrase for PSK
 	 *
 	 * This value is made available only for WPA/WPA2-Personal (PSK) and
-	 * only for drivers that set WPA_DRIVER_FLAGS_4WAY_HANDSHAKE. This is
-	 * the 8..63 character ASCII passphrase, if available. Please note that
-	 * this can be %NULL if passphrase was not used to generate the PSK. In
-	 * that case, the psk field must be used to fetch the PSK.
+	 * only for drivers that set WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_PSK. This
+	 * is the 8..63 character ASCII passphrase, if available. Please note
+	 * that this can be %NULL if passphrase was not used to generate the
+	 * PSK. In that case, the psk field must be used to fetch the PSK.
 	 */
 	const char *passphrase;
 
@@ -925,9 +970,9 @@ struct wpa_driver_associate_params {
 	 * psk - RSN PSK (alternative for passphrase for PSK)
 	 *
 	 * This value is made available only for WPA/WPA2-Personal (PSK) and
-	 * only for drivers that set WPA_DRIVER_FLAGS_4WAY_HANDSHAKE. This is
-	 * the 32-octet (256-bit) PSK, if available. The driver wrapper should
-	 * be prepared to handle %NULL value as an error.
+	 * only for drivers that set WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_PSK. This
+	 * is the 32-octet (256-bit) PSK, if available. The driver wrapper
+	 * should be prepared to handle %NULL value as an error.
 	 */
 	const u8 *psk;
 
@@ -1029,6 +1074,14 @@ struct wpa_driver_associate_params {
 	int req_key_mgmt_offload;
 
 	/**
+	 * req_handshake_offload - Request EAPOL handshake offload
+	 *
+	 * Request EAPOL handshake offload for this connection if the device
+	 * supports it.
+	 */
+	int req_handshake_offload;
+
+	/**
 	 * Flag for indicating whether this association includes support for
 	 * RRM (Radio Resource Measurements)
 	 */
@@ -1103,6 +1156,11 @@ enum hide_ssid {
 	NO_SSID_HIDING,
 	HIDDEN_SSID_ZERO_LEN,
 	HIDDEN_SSID_ZERO_CONTENTS
+};
+
+enum ch_switch_state {
+	CH_SW_STARTED,
+	CH_SW_FINISHED
 };
 
 struct wowlan_triggers {
@@ -1367,6 +1425,23 @@ struct wpa_driver_ap_params {
 	 * service).
 	 */
 	int multicast_to_unicast;
+
+	/**
+	 * ftm_responder - Whether FTM responder is enabled
+	 */
+	int ftm_responder;
+
+	/**
+	 * lci - Binary data, the content of an LCI report IE with type 8 as
+	 * defined in IEEE Std 802.11-2016, 9.4.2.22.10
+	 */
+	const struct wpabuf *lci;
+
+	/**
+	 * civic - Binary data, the content of a measurement report IE with
+	 * type 11 as defined in IEEE Std 802.11-2016, 9.4.2.22.13
+	 */
+	const struct wpabuf *civic;
 };
 
 struct wpa_driver_mesh_bss_params {
@@ -1424,6 +1499,7 @@ struct wpa_driver_capa {
 #define WPA_DRIVER_CAPA_KEY_MGMT_FILS_SHA384    0x00002000
 #define WPA_DRIVER_CAPA_KEY_MGMT_FT_FILS_SHA256 0x00004000
 #define WPA_DRIVER_CAPA_KEY_MGMT_FT_FILS_SHA384 0x00008000
+#define WPA_DRIVER_CAPA_KEY_MGMT_SAE 		0x00010000
 	/** Bitfield of supported key management suites */
 	unsigned int key_mgmt;
 
@@ -1457,7 +1533,7 @@ struct wpa_driver_capa {
 #define WPA_DRIVER_FLAGS_DFS_OFFLOAD			0x00000004
 /** Driver takes care of RSN 4-way handshake internally; PMK is configured with
  * struct wpa_driver_ops::set_key using alg = WPA_ALG_PMK */
-#define WPA_DRIVER_FLAGS_4WAY_HANDSHAKE 0x00000008
+#define WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_8021X		0x00000008
 /** Driver is for a wired Ethernet interface */
 #define WPA_DRIVER_FLAGS_WIRED		0x00000010
 /** Driver provides separate commands for authentication and association (SME in
@@ -1579,6 +1655,10 @@ struct wpa_driver_capa {
 #define WPA_DRIVER_FLAGS_MFP_OPTIONAL		0x0040000000000000ULL
 /** Driver is a self-managed regulatory device */
 #define WPA_DRIVER_FLAGS_SELF_MANAGED_REGULATORY       0x0080000000000000ULL
+/** Driver supports FTM responder functionality */
+#define WPA_DRIVER_FLAGS_FTM_RESPONDER		0x0100000000000000ULL
+/** Driver support 4-way handshake offload for WPA-Personal */
+#define WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_PSK	0x0200000000000000ULL
 	u64 flags;
 
 #define FULL_AP_CLIENT_STATE_SUPP(drv_flags) \
@@ -1713,6 +1793,7 @@ struct hostapd_data;
 struct hostap_sta_driver_data {
 	unsigned long rx_packets, tx_packets;
 	unsigned long long rx_bytes, tx_bytes;
+	unsigned long long rx_airtime, tx_airtime;
 	int bytes_64bit; /* whether 64-bit byte counters are supported */
 	unsigned long current_tx_rate;
 	unsigned long current_rx_rate;
@@ -1722,6 +1803,8 @@ struct hostap_sta_driver_data {
 	unsigned long tx_retry_failed;
 	unsigned long tx_retry_count;
 	s8 last_ack_rssi;
+	unsigned long backlog_packets;
+	unsigned long backlog_bytes;
 	s8 signal;
 	u8 rx_vhtmcs;
 	u8 tx_vhtmcs;
@@ -1742,6 +1825,8 @@ struct hostapd_sta_add_params {
 	const struct ieee80211_vht_capabilities *vht_capabilities;
 	int vht_opmode_enabled;
 	u8 vht_opmode;
+	const struct ieee80211_he_capabilities *he_capab;
+	size_t he_capab_len;
 	u32 flags; /* bitmask of WPA_STA_* flags */
 	u32 flags_mask; /* unset bits in flags */
 #ifdef CONFIG_MESH
@@ -1902,17 +1987,6 @@ enum smps_mode {
 	SMPS_INVALID,
 };
 
-/* enum chan_width - Channel width definitions */
-enum chan_width {
-	CHAN_WIDTH_20_NOHT,
-	CHAN_WIDTH_20,
-	CHAN_WIDTH_40,
-	CHAN_WIDTH_80,
-	CHAN_WIDTH_80P80,
-	CHAN_WIDTH_160,
-	CHAN_WIDTH_UNKNOWN
-};
-
 #define WPA_INVALID_NOISE 9999
 
 /**
@@ -1940,6 +2014,26 @@ struct wpa_signal_info {
 	enum chan_width chanwidth;
 	int center_frq1;
 	int center_frq2;
+};
+
+/**
+ * struct wpa_channel_info - Information about the current channel
+ * @frequency: Center frequency of the primary 20 MHz channel
+ * @chanwidth: Width of the current operating channel
+ * @sec_channel: Location of the secondary 20 MHz channel (either +1 or -1).
+ *	This field is only filled in when using a 40 MHz channel.
+ * @center_frq1: Center frequency of frequency segment 0
+ * @center_frq2: Center frequency of frequency segment 1 (for 80+80 channels)
+ * @seg1_idx: Frequency segment 1 index when using a 80+80 channel. This is
+ *	derived from center_frq2 for convenience.
+ */
+struct wpa_channel_info {
+	u32 frequency;
+	enum chan_width chanwidth;
+	int sec_channel;
+	int center_frq1;
+	int center_frq2;
+	u8 seg1_idx;
 };
 
 /**
@@ -2108,17 +2202,19 @@ enum wpa_drv_update_connect_params_mask {
  *	use %WLAN_STATUS_UNSPECIFIED_FAILURE if wpa_supplicant cannot give
  *	the real status code for failures. Used only for the request interface
  *	from user space to the driver.
+ * @pmkid: Generated PMKID as part of external auth exchange (e.g., SAE).
  */
 struct external_auth {
 	enum {
 		EXT_AUTH_START,
 		EXT_AUTH_ABORT,
 	} action;
-	u8 bssid[ETH_ALEN];
-	u8 ssid[SSID_MAX_LEN];
+	const u8 *bssid;
+	const u8 *ssid;
 	size_t ssid_len;
 	unsigned int key_mgmt_suite;
 	u16 status;
+	const u8 *pmkid;
 };
 
 /**
@@ -2287,7 +2383,7 @@ struct wpa_driver_ops {
 	 *
 	 * Returns: 0 on success, -1 on failure
 	 */
-	int (*deauthenticate)(void *priv, const u8 *addr, int reason_code);
+	int (*deauthenticate)(void *priv, const u8 *addr, u16 reason_code);
 
 	/**
 	 * associate - Request driver to associate
@@ -2756,7 +2852,7 @@ struct wpa_driver_ops {
 	 * a Deauthentication frame to be sent to it.
 	 */
 	int (*sta_deauth)(void *priv, const u8 *own_addr, const u8 *addr,
-			  int reason);
+			  u16 reason);
 
 	/**
 	 * sta_disassoc - Disassociate a station (AP only)
@@ -2770,7 +2866,7 @@ struct wpa_driver_ops {
 	 * a Disassociation frame to be sent to it.
 	 */
 	int (*sta_disassoc)(void *priv, const u8 *own_addr, const u8 *addr,
-			    int reason);
+			    u16 reason);
 
 	/**
 	 * sta_remove - Remove a station entry (AP only)
@@ -2886,6 +2982,16 @@ struct wpa_driver_ops {
 	int (*sta_set_flags)(void *priv, const u8 *addr,
 			     unsigned int total_flags, unsigned int flags_or,
 			     unsigned int flags_and);
+
+	/**
+	 * sta_set_airtime_weight - Set station airtime weight (AP only)
+	 * @priv: Private driver interface data
+	 * @addr: Station address
+	 * @weight: New weight for station airtime assignment
+	 * Returns: 0 on success, -1 on failure
+	 */
+	int (*sta_set_airtime_weight)(void *priv, const u8 *addr,
+				      unsigned int weight);
 
 	/**
 	 * set_tx_queue_params - Set TX queue parameters
@@ -3378,6 +3484,14 @@ struct wpa_driver_ops {
 	int (*signal_poll)(void *priv, struct wpa_signal_info *signal_info);
 
 	/**
+	 * channel_info - Get parameters of the current operating channel
+	 * @priv: Private driver interface data
+	 * @channel_info: Channel info structure
+	 * Returns: 0 on success, negative (<0) on failure
+	 */
+	int (*channel_info)(void *priv, struct wpa_channel_info *channel_info);
+
+	/**
 	 * set_authmode - Set authentication algorithm(s) for static WEP
 	 * @priv: Private driver interface data
 	 * @authmode: 1=Open System, 2=Shared Key, 3=both
@@ -3658,7 +3772,7 @@ struct wpa_driver_ops {
 	/**
 	 * status - Get driver interface status information
 	 * @priv: Private driver interface data
-	 * @buf: Buffer for printing tou the status information
+	 * @buf: Buffer for printing the status information
 	 * @buflen: Maximum length of the buffer
 	 * Returns: Length of written status information or -1 on failure
 	 */
@@ -3780,6 +3894,14 @@ struct wpa_driver_ops {
 	 * Returns: 0 on success, -1 on failure (or if not supported)
 	 */
 	int (*set_transmit_next_pn)(void *priv, struct transmit_sa *sa);
+
+	/**
+	 * set_receive_lowest_pn - Set receive lowest PN
+	 * @priv: Private driver interface data
+	 * @sa: secure association
+	 * Returns: 0 on success, -1 on failure (or if not supported)
+	 */
+	int (*set_receive_lowest_pn)(void *priv, struct receive_sa *sa);
 
 	/**
 	 * create_receive_sc - create secure channel for receiving
@@ -3907,6 +4029,18 @@ struct wpa_driver_ops {
 	 * Returns 0 on success, -1 on failure
 	 */
 	int (*leave_mesh)(void *priv);
+
+	/**
+	 * probe_mesh_link - Inject a frame over direct mesh link to a given
+	 *	peer skipping the next_hop lookup from mpath table.
+	 * @priv: Private driver interface data
+	 * @addr: Peer MAC address
+	 * @eth: Ethernet frame to be sent
+	 * @len: Ethernet frame lengtn in bytes
+	 * Returns 0 on success, -1 on failure
+	 */
+	int (*probe_mesh_link)(void *priv, const u8 *addr, const u8 *eth,
+			       size_t len);
 
 	/**
 	 * do_acs - Automatically select channel
@@ -4092,6 +4226,30 @@ struct wpa_driver_ops {
 	 */
 	int (*send_external_auth_status)(void *priv,
 					 struct external_auth *params);
+
+	/**
+	 * set_4addr_mode - Set 4-address mode
+	 * @priv: Private driver interface data
+	 * @bridge_ifname: Bridge interface name
+	 * @val: 0 - disable 4addr mode, 1 - enable 4addr mode
+	 * Returns: 0 on success, < 0 on failure
+	 */
+	int (*set_4addr_mode)(void *priv, const char *bridge_ifname, int val);
+
+	/**
+	 * update_dh_ie - Update DH IE
+	 * @priv: Private driver interface data
+	 * @peer_mac: Peer MAC address
+	 * @reason_code: Reacon code
+	 * @ie: DH IE
+	 * @ie_len: DH IE length in bytes
+	 * Returns: 0 on success, -1 on failure
+	 *
+	 * This callback is used to let the driver know the DH processing result
+	 * and DH IE for a pending association.
+	 */
+	int (*update_dh_ie)(void *priv, const u8 *peer_mac, u16 reason_code,
+			    const u8 *ie, size_t ie_len);
 };
 
 /**
@@ -4466,6 +4624,15 @@ enum wpa_event_type {
 	EVENT_CH_SWITCH,
 
 	/**
+	 * EVENT_CH_SWITCH_STARTED - AP or GO started to switch channels
+	 *
+	 * This is a pre-switch event indicating the shortly following switch
+	 * of operating channels.
+	 *
+	 * Described in wpa_event_data.ch_switch
+	 */
+	EVENT_CH_SWITCH_STARTED,
+	/**
 	 * EVENT_WNM - Request WNM operation
 	 *
 	 * This event can be used to request a WNM operation to be performed.
@@ -4628,6 +4795,11 @@ enum wpa_event_type {
 	 * This event is emitted when an interface is added/removed for WDS STA.
 	 */
 	EVENT_WDS_STA_INTERFACE_STATUS,
+
+	/**
+	  * EVENT_UPDATE_DH - Notification of updated DH information
+	  */
+	EVENT_UPDATE_DH,
 };
 
 
@@ -5461,6 +5633,15 @@ union wpa_event_data {
 			INTERFACE_REMOVED
 		} istatus;
 	} wds_sta_interface;
+
+	/**
+	 * struct update_dh - Data for EVENT_UPDATE_DH
+	 */
+	struct update_dh {
+		const u8 *peer;
+		const u8 *ie;
+		size_t ie_len;
+	} update_dh;
 };
 
 /**
@@ -5533,6 +5714,8 @@ const char * event_to_string(enum wpa_event_type event);
 
 /* Convert chan_width to a string for logging and control interfaces */
 const char * channel_width_to_string(enum chan_width width);
+
+int channel_width_to_int(enum chan_width width);
 
 int ht_supported(const struct hostapd_hw_modes *mode);
 int vht_supported(const struct hostapd_hw_modes *mode);

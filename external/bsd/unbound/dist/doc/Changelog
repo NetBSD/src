@@ -1,6 +1,2508 @@
+2 November 2023: Wouter
+	- Set version number to 1.19.0.
+	- Tag for 1.19.0rc1 release.
+
+1 November 2023: George
+	- Mention flex and bison in README.md when building from repository
+	  source.
+
+1 November 2023: Wouter
+	- Fix SSL compile failure for definition in log_crypto_err_io_code_arg.
+	- Fix SSL compile failure for other missing definitions in
+	  log_crypto_err_io_code_arg.
+	- Fix compilation without openssl, remove unused function warning.
+
+31 October 2023: George
+	- Fix #941: dnscrypt doesn't work after upgrade to 1.18 with
+	  suggestion by dukeartem to also fix the udp_ancil with dnscrypt.
+
+30 October 2023: George
+	- Merge #930 from Stuart Henderson: add void to
+	  log_ident_revert_to_default declaration.
+
+30 October 2023: Wouter
+	- autoconf.
+
+24 October 2023: George
+	- Clearer configure text for missing protobuf-c development libraries.
+
+20 October 2023: Wouter
+	- Merge #951: Cachedb no store. The cachedb-no-store: yes option is
+	  used to stop cachedb from writing messages to the backend storage.
+	  It reads messages when data is available from the backend. The
+	  default is no.
+
+19 October 2023: Wouter
+	- Fix to print detailed errors when an SSL IO routine fails via
+	  SSL_get_error.
+
+18 October 2023: George
+	- Mailing list patches from Daniel Gröber for DNS64 fallback to plain
+	  AAAA when no A record exists for synthesis, and minor DNS64 code
+	  refactoring for better readability.
+	- Fixes for the DNS64 patches.
+	- Update the dns64_lookup.rpl test for the DNS64 fallback patch.
+	- Merge #955 from buevsan: fix ipset wrong behavior.
+	- Update testdata/ipset.tdir test for ipset fix.
+
+17 October 2023: Wouter
+	- Fix #954: Inconsistent RPZ handling for A record returned along with
+	  CNAME.
+
+16 October 2023: George
+	- Expose the script filename in the Python module environment 'mod_env'
+	  instead of the config_file structure which includes the linked list
+	  of scripts in a multi Python module setup; fixes #79.
+	- Expose the configured listening and outgoing interfaces, if any, as
+	  a list of strings in the Python 'config_file' class instead of the
+	  current Swig object proxy; fixes #79.
+	- For multi Python module setups, clean previously parsed module
+	  functions in __main__'s dictionary, if any, so that only current
+	  module functions are registered.
+
+13 October 2023: George
+	- Better fix for infinite loop when reading multiple lines of input on
+	  a broken remote control socket, by treating a zero byte line the
+	  same as transmission end. Addesses #947 and #948.
+
+12 October 2023: Wouter
+	- Merge #944: Disable EDNS DO.
+	  Disable the EDNS DO flag in upstream requests. This can be helpful
+	  for devices that cannot handle DNSSEC information. But it should not
+	  be enabled otherwise, because that would stop DNSSEC validation. The
+	  DNSSEC validation would not work for Unbound itself, and also not
+	  for downstream users. Default is no. The option
+	  is disable-edns-do: no
+
+11 October 2023: George
+	- Fix #850: [FR] Ability to use specific database in Redis, with new
+	  redis-logical-db configuration option.
+
+11 October 2023: Wouter
+	- Fix #949: "could not create control compt".
+	- Fix that cachedb does not warn when serve-expired is disabled about
+	  use of serve-expired-reply-ttl and serve-expired-client-timeout.
+	- Fix for #949: Fix pythonmod/ubmodule-tst.py for Python 3.x.
+
+10 October 2023: George
+	- Fix infinite loop when reading multiple lines of input on a broken
+	  remote control socket. Addesses #947 and #948.
+
+9 October 2023: Wouter
+	- Fix edns subnet so that queries with a source prefix of zero cause
+	  the recursor send no edns subnet option to the upstream.
+	- Fix that printout of EDNS options shows the EDNS cookie option by
+	  name.
+
+4 October 2023: Wouter
+	- Fix #946: Forwarder returns servfail on upstream response noerror no
+	  data.
+
+3 October 2023: George
+	- Merge #881: Generalise the proxy protocol code.
+
+2 October 2023: George
+	- Fix misplaced comment.
+
+22 September 2023: Wouter
+	- Fix #942: 1.18.0 libunbound DNS regression when built without
+	  OpenSSL.
+
+18 September 2023: Wouter
+	- Fix rpz tcp-only action with rpz triggers nsdname and nsip.
+
+15 September 2023: Wouter
+	- Merge #936: Check for c99 with autoconf versions prior to 2.70.
+	- Fix to remove two c99 notations.
+
+14 September 2023: Wouter
+	- Fix authority zone answers for obscured DNAMEs and delegations.
+
+8 September 2023: Wouter
+	- Fix send of udp retries when ENOBUFS is returned. It stops looping
+	  and also waits for the condition to go away. Reported by Florian
+	  Obser.
+
+7 September 2023: Wouter
+	- Fix to scrub resource records of type A and AAAA that have an
+	  inappropriate size. They are removed from responses.
+	- Fix to move msgparse_rrset_remove_rr code to util/msgparse.c.
+	- Fix to add EDE text when RRs have been removed due to length.
+	- Fix to set ede match in unit test for rr length removal.
+	- Fix to print EDE text in readable form in output logs.
+
+6 September 2023: Wouter
+	- Merge #931: Prevent warnings from -Wmissing-prototypes.
+
+31 August 2023: Wouter
+	- Fix autoconf 2.69 warnings in configure.
+	- Fix #927: unbound 1.18.0 make test error. Fix make test without SHA1.
+
+30 August 2023: Wouter
+	- Fix for WKS call to getservbyname that creates allocation on exit
+	  in unit test by testing numbers first and testing from the services
+	  list later.
+
+28 August 2023: Wouter
+	- Fix for version generation race condition that ignored changes.
+
+25 August 2023: Wouter
+	- Fix compile error on NetBSD in util/netevent.h.
+
+23 August 2023: Wouter
+	- Tag for 1.18.0rc1 release. This became the 1.18.0 release on
+	  30 aug 2023, with the fix from 25 aug, fix compile on NetBSD
+	  included. The repository continues with version 1.18.1.
+
+22 August 2023: Wouter
+	- Set version number to 1.18.0.
+
+21 August 2023: Wouter
+	- Debug Windows ci workflow.
+	- Fix windows ci workflow to install bison and flex.
+	- Fix for #925: unbound.service: Main process exited, code=killed,
+	  status=11/SEGV. Fixes cachedb configuration handling.
+	- Fix #923: processQueryResponse() THROWAWAY should be mindful of
+	  fail_reply.
+	- Fix unit test for unbound-control to work when threads are disabled,
+	  and fix cache dump check.
+
+18 August 2023: Wouter
+	- Fix for iter_dec_attempts that could cause a hang, part of
+	  capsforid and qname minimisation, depending on the settings.
+	- Fix uninitialized memory passed in padding bytes of cmsg to sendmsg.
+	- Fix stat_values test to work with dig that enables DNS cookies.
+
+17 August 2023: Wouter
+	- Merge PR #762: Downstream DNS Server Cookies a la RFC7873 and
+	  RFC9018. Create server cookies for clients that send client cookies.
+	  This needs to be explicitly turned on in the config file with:
+	  `answer-cookie: yes`. A `cookie-secret:` can be configured for
+	  anycast setups. Without one, a random cookie secret is generated.
+	  The acl option `allow_cookie` allows queries with either a valid
+	  cookie or over a stateful transport. The statistics output has
+	  `queries_cookie_valid` and `queries_cookie_client` and
+	  `queries_cookie_invalid` information. The `ip\-ratelimit\-cookie:`
+	  value determines a rate limit for queries with cookies, if desired.
+	- Fix regional_alloc_init for potential unaligned source of the copy.
+	- Fix ip_ratelimit test to work with dig that enables DNS cookies.
+
+2 August 2023: George
+	- Move a cache reply callback in worker.c closer to the cache reply
+	  generation.
+
+1 August 2023: George
+	- Merge #911 from natalie-reece: Exclude EDE before other EDNS options
+	  when there isn't enough space.
+	- For #911: Try to trim EXTRA-TEXT (and LDNS_EDE_OTHER options
+	  altogether) before giving up on attaching EDE options.
+	- More braces and formatting for Fix for EDNS EDE size calculation to
+	  avoid future bugs.
+	- Fix to use the now cached EDE, if any, for CD_bit queries.
+
+1 August 2023: Wouter
+	- Fix for EDNS EDE size calculation.
+
+31 July 2023: George
+	- Merge #790 from Tom Carpay: Add support for EDE caching in cachedb
+	  and subnetcache.
+
+31 July 2023: Wouter
+	- iana portlist update.
+
+30 July 2023: George
+	- Merge #759 from Tom Carpay: Add EDE (RFC8914) caching.
+
+28 July 2023: George
+	- Fix unused variable compile warning for kernel timestamps in
+	  netevent.c
+
+21 July 2023: George
+	- Merge #857 from eaglegai: fix potential memory leaks when errors
+	  happen.
+	- For #857: fix mixed declarations and code.
+	- Merge #118 from mibere: Changed verbosity level for Redis init &
+	  deinit.
+	- Merge #390 from Frank Riley: Add missing callbacks to the python
+	  module.
+	- Cleaner failure code for callback functions in interface.i.
+	- Merge #889 from borisVanhoof: Free memory in error case + remove
+	  unused function.
+	- For #889: use netcat-openbsd instead of netcat-traditional.
+	- For #889: Account for num_detached_states before possible
+	  mesh_state_delete when erroring out.
+
+20 July 2023: George
+	- Merge #909 from headshog: Numeric truncation when parsing TYPEXX and
+	  CLASSXX representation.
+	- For #909: Fix return values.
+	- Merge #901 from Sergei Trofimovich: config: improve handling of
+	  unknown modules.
+
+20 July 2023: Wouter
+	- For #909: Fix RR class comparison.
+
+14 July 2023: George
+	- More clear description of the different auth-zone behaviors on the
+	  man page.
+
+13 July 2023: George
+	- Merge #880 from chipitsine: services/authzone.c: remove redundant
+	  check.
+
+11 July 2023: George
+	- Merge #664 from tilan7763: Add prefetch support for subnet cache
+	  entries.
+	- For #664: Easier code flow for subnetcache prefetching.
+	- For #664: Add testcase.
+	- For #664: Rename subnet_prefetch tests to subnet_global_prefetch to
+	  differentiate from the new subnet prefetch support.
+
+3 July 2023: George
+	- Merge #739: Add SVCB dohpath support.
+	- Code cleanup for sldns_str2wire_svcparam_key_lookup.
+	- Merge #802: add validation EDEs to queries where the CD bit is set.
+	- For #802: Cleanup comments and add RCODE check for CD bit test case.
+	- Skip the 00-lint test. splint is not maintained; it either does not
+	  work or produces false positives. Static analysis is handled in the
+	  clang test.
+
+3 July 2023: Wouter
+	- Fix #906: warning: ‘Py_SetProgramName’ is deprecated.
+	- Fix dereference of NULL variable warning in mesh_do_callback.
+
+29 June 2023: George
+	- More fixes for reference counting for python module and clean up
+	  failure code.
+	- Merge #827 from rcmcdonald91: Eliminate unnecessary Python reloading
+	  which causes memory leaks.
+
+29 June 2023: Wouter
+	- Fix python modules with multiple scripts, by incrementing reference
+	  counts.
+
+27 June 2023: George
+	- Merge #892: Add cachedb hit stat. Introduces 'num.query.cachedb' as
+	  a new statistical counter.
+	- Remove warning about unknown cast-function-type warning pragma.
+
+22 June 2023: Wouter
+	- Merge #903: contrib: add yocto compatible init script.
+
+15 June 2023: Philip
+	- Fix for issue #887 (Timeouts to forward servers on BSD based
+	  system with ASLR)
+	- Probably fixes #516 (Stream reuse does not work on Windows) as well
+
+14 June 2023: George
+	- Properly handle all return values of worker_check_request during
+	  early EDE code.
+	- Do not check the incoming request more than once.
+
+12 June 2023: Wouter
+	- Merge #896: Fix: #895: pythonmodule: add all site-packages
+	  directories to sys.path.
+	- Fix #895: python + sysconfig gives ANOTHER path comparing to
+	  distutils.
+	- Fix for uncertain unit test for doh buffer size events.
+
+25 May 2023: Wouter
+	- Fix unbound-dnstap-socket printout when no query is present.
+	- Fix unbound-dnstap-socket time fraction conversion for printout.
+
+19 May 2023: Wouter
+	- Fix RPZ removal of client-ip, nsip, nsdname triggers from IXFR.
+	- Fix to remove unused variables from RPZ clientip data structure.
+
+16 May 2023: Wouter
+	- Fix #888: [FR] Use kernel timestamps for dnstap.
+	- Fix to print debug log for ancillary data with correct IP address.
+
+11 May 2023: Wouter
+	- Fix warning in windows compile, in set_recvtimestamp.
+
+4 May 2023: Wouter
+	- Fix #885: Error: util/configlexer.c: No such file or directory,
+	  adds error messages explaining to install flex and bison.
+	- Fix to remove unused whitespace from acx_nlnetlabs.m4 and config.h.
+	- Fix doxygen in addr_to_nat64 header definition.
+
+1 May 2023: George
+	- Merge #722 from David 'eqvinox' Lamparter: NAT64 support.
+	- For #722: minor fixes, formatting, refactoring.
+
+1 May 2023: Wouter
+	- Fix RPZ IP responses with trigger rpz-drop on cache entries, that
+	  they are dropped.
+
+26 April 2023: Philip
+	- Fix issue #860: Bad interaction with 0 TTL records and serve-expired
+
+26 April 2023: Wouter
+	- Merge #882 from vvfedorenko: Features/dropqueuedpackets, with
+	  sock-queue-timeout option that drops packets that have been in the
+	  socket queue for too long. Added statistics num.queries_timed_out
+	  and query.queue_time_us.max that track the socket queue timeouts.
+	- Fix for #882: small changes, date updated in Copyright for
+	  util/timeval_func.c and util/timeval_func.h. Man page entries and
+	  example entry.
+	- Fix for #882: document variable to stop doxygen warning.
+
+19 April 2023: Wouter
+	- Fix for #878: Invalid IP address in unbound.conf causes Segmentation
+	  Fault on OpenBSD.
+
+14 April 2023: Wouter
+	- Merge #875: change obsolete txt URL in unbound-anchor.c to point
+	  to RFC 7958, and Fix #874.
+
+13 April 2023: Wouter
+	- Fix build badge, from failing travis link to github ci action link.
+
+6 April 2023: Wouter
+	- Fix for #870: Add test case for the qname minimisation and CNAME.
+
+4 April 2023: Wouter
+	- Fix #870: NXDOMAIN instead of NOERROR rcode when asked for existing
+	  CNAME record.
+
+24 March 2023: Philip
+	- Fix issue #676: Unencrypted query is sent when
+	  forward-tls-upstream: yes is used without tls-cert-bundle
+	- Extra consistency check to make sure that when TLS is requested,
+	  either we set up a TLS connection or we return an error.
+
+21 March 2023: Philip
+	- Fix issue #851: reserved identifier violation 
+
+20 March 2023: Wouter
+	- iana portlist update.
+
+17 March 2023: George
+	- Fix #812, fix #846, by using the SSL_OP_IGNORE_UNEXPECTED_EOF option
+	  to ignore the unexpected eof while reading in openssl >= 3.
+
+16 March 2023: Wouter
+	- Fix ssl.h include brackets, instead of quotes.
+
+14 March 2023: Wouter
+	- Fix unbound-dnstap-socket test program to reply the finish frame
+	  over a TLS connection correctly.
+
+23 February 2023: Wouter
+	- Fix for #852: Completion of error handling.
+
+21 February 2023: Philip
+       - Fix #825: Unexpected behavior with client-subnet-always-forward
+         and serve-expired
+
+10 February 2023: George
+	- Clean up iterator/iterator.c::error_response_cache() and allow for
+	  better interaction with serve-expired, prefetch and cached error
+	  responses.
+
+9 February 2023: George
+	- Allow TTL refresh of expired error responses.
+	- Add testcase for refreshing expired error responses.
+
+9 February 2023: Wouter
+	- Fix to ignore entirely empty responses, and try at another authority.
+	  This turns completely empty responses, a type of noerror/nodata into
+	  a servfail, but they do not conform to RFC2308, and the retry can
+	  fetch improved content.
+	- Fix unit tests for spurious empty messages.
+	- Fix consistency of unit test without roundrobin answers for the
+	  cnametooptout unit test.
+	- Fix to git ignore the library symbol file that configure can create.
+
+8 February 2023: Wouter
+	- Fix #841: Unbound won't build with aaaa-filter-iterator.patch.
+
+30 January 2023: George
+	- Add duration variable for speed_local.test.
+
+26 January 2023: Wouter
+	- Fix acx_nlnetlabs.m4 for -Wstrict-prototypes.
+
+23 January 2023: George
+	- Fix #833: [FR] Ability to set the Redis password.
+
+23 January 2023: Wouter
+	- Fix #835: [FR] Ability to use Redis unix sockets.
+
+20 January 2023: Wouter
+	- Merge #819: Added new static zone type block_a to suppress all A
+	  queries for specific zones.
+
+19 January 2023: Wouter
+	- Set max-udp-size default to 1232. This is the same default value as
+	  the default value for edns-buffer-size. It restricts client edns
+	  buffer size choices, and makes unbound behave similar to other DNS
+	  resolvers. The new choice, down from 4096 means it is harder to get
+	  large responses from Unbound. Thanks to Xiang Li, from NISL Lab,
+	  Tsinghua University.
+	- Add harden-unknown-additional option. It removes
+	  unknown records from the authority section and additional section.
+	  Thanks to Xiang Li, from NISL Lab, Tsinghua University.
+	- Set default for harden-unknown-additional to no. So that it does
+	  not hamper future protocol developments.
+	- Fix test for new default.
+
+18 January 2023: Wouter
+	- Fix not following cleared RD flags potentially enables amplification
+	  DDoS attacks, reported by Xiang Li and Wei Xu from NISL Lab,
+	  Tsinghua University. The fix stops query loops, by refusing to send
+	  RD=0 queries to a forwarder, they still get answered from cache.
+
+13 January 2023: Wouter
+	- Merge #826: Аdd a metric about the maximum number of collisions in
+	  lrushah.
+	- Improve documentation for #826, describe the large collisions amount.
+
+9 January 2023: Wouter
+	- Fix python module install path detection.
+	- Fix python version detection in configure.
+
+6 January 2023: Wouter
+	- Fix #823: Response change to NODATA for some ANY queries since
+	  1.12, tested on 1.16.1.
+	- Fix wildcard in hyperlocal zone service degradation, reported
+	  by Sergey Kacheev. This fix is included in 1.17.1rc2.
+	  That became 1.17.1 on 12 Jan 2023, the code repo continues
+	  with 1.17.2. 1.17.1 excludes fix #823, it is included forwards.
+
+5 January 2023: Wouter
+	- Tag for 1.17.1 release.
+
+2 January 2023: Wouter
+	- Fix windows compile for libunbound subprocess reap comm point closes.
+	- Update github workflows to use checkout v3.
+
+14 December 2022: George
+	- Merge #569 from JINMEI Tatuya: add keep-cache option to
+	  'unbound-control reload' to keep caches.
+
+13 December 2022: George
+	- Expose 'statistics-inhibit-zero' as a configuration option; the
+	  default value retains Unbound's behavior.
+	- Expose 'max-sent-count' as a configuration option; the
+	  default value retains Unbound's behavior.
+	- Merge #461 from Christian Allred: Add max-query-restarts option.
+	  Exposes an internal configuration but the default value retains
+	  Unbound's behavior.
+
+13 December 2022: Wouter
+	- Merge #808: Wrap Makefile script's directory variables in quotes.
+	- Fix to wrap Makefile scripts directory in quotes for uninstall.
+
+1 December 2022: Wouter
+	- Fix #773: When used with systemd-networkd, unbound does not start
+	  until systemd-networkd-wait-online.service times out.
+
+30 November 2022: George
+	- Add SVCB and HTTPS to the types removed by 'unbound-control flush'.
+	- Clear documentation for interactivity between the subnet module and
+	  the serve-expired and prefetch configuration options.
+
+30 November 2022: Wouter
+	- Fix #782: Segmentation fault in stats.c:404.
+
+28 November 2022: Wouter
+	- Fix for the ignore of tcp events for closed comm points, preserve
+	  the use after free protection features.
+
+23 November 2022: Philip
+	- Merge #720 from jonathangray: fix use after free when
+	  WSACreateEvent() fails.
+
+22 November 2022: George
+	- Ignore expired error responses.
+
+11 November 2022: Wouter
+	- Fix #779: [doc] Missing documention in ub_resolve_event() for
+	  callback parameter was_ratelimited.
+
+9 November 2022: George
+	- Complementary fix for distutils.sysconfig deprecation in Python 3.10
+	  to commit 62c5039ab9da42713e006e840b7578e01d66e7f2.
+
+8 November 2022: Wouter
+	- Fix to ignore tcp events for closed comm points.
+	- Fix to make sure to not read again after a tcp comm point is closed.
+	- Fix #775: libunbound: subprocess reap causes parent process reap
+	  to hang.
+	- iana portlist update.
+
+21 October 2022: George
+	- Merge #767 from jonathangray: consistently use IPv4/IPv6 in
+	  unbound.conf.5.
+
+21 October 2022: Wouter
+	- Fix that cachedb does not store failures in the external cache.
+
+18 October 2022: George
+	- Clarify the use of MAX_SENT_COUNT in the iterator code.
+
+17 October 2022: Wouter
+	- testcode/dohclient sets log identity to its name.
+
+14 October 2022: Wouter
+	- Merge #768 from fobser: Arithmetic on a pointer to void is a GNU
+	  extension.
+	- In unit test, print python script name list correctly.
+
+13 October 2022: Wouter
+	- Tag for 1.17.0 release. The code repository continues with 1.17.1.
+
+11 October 2022: George
+	- Fix PROXYv2 header read for TCP connections when no proxied addresses
+	  are provided.
+
+7 October 2022: Wouter
+	- Tag for 1.17.0rc1 release.
+
+7 October 2022: George
+	- Fix to stop possible loops in the tcp reuse code (write_wait list
+	  and tcp_wait list). Based on analysis and patch from Prad Seniappan
+	  and Karthik Umashankar.
+	- Fix unit test to properly test the reuse_write_wait_pop function.
+
+6 October 2022: Wouter
+	- Fix to stop responses with TC flag from resulting in partial
+	  responses. It retries to fetch the data elsewhere, or fails the
+	  query and in depth fix removes the TC flag from the cached item.
+	- Fix proxy length debug output printout typecasts.
+
+5 October 2022: Wouter
+	- Fix dnscrypt compile for proxy protocol code changes.
+
+5 October 2022: George
+	- Use DEBUG_TDIR from environment in mini_tdir.sh for debugging.
+	- Fix string comparison in mini_tdir.sh.
+	- Make ede.tdir test more predictable by using static data.
+	- Fix checkconf test for dnscrypt and proxy port.
+
+4 October 2022: George
+	- Merge #764: Leniency for target discovery when under load (for
+	  NRDelegation changes).
+
+4 October 2022: Wouter
+	- Fix static analysis report to remove dead code from the
+	  rpz_callback_from_iterator_module function.
+	- Fix to clean up after the acl_interface unit test.
+
+3 October 2022: George
+	- Merge #760: PROXYv2 downstream support. (New proxy-protocol-port
+	  configuration option).
+
+3 October 2022: Wouter
+	- Fix to remove erroneous TC flag from TCP upstream.
+	- Fix test tdir skip report printout.
+	- Fix windows compile, the identifier interface is defined in headers.
+	- Fix to close errno block in comm_point_tcp_handle_read outside of
+	  ifdef.
+
+26 September 2022: George
+	- Better output for skipped tdir tests.
+
+21 September 2022: Wouter
+	- Patch for CVE-2022-3204 Non-Responsive Delegation Attack.
+	- This patch was released in 1.16.3, the code repository continues
+	  with the previous features and fixes for 1.17.0.
+	- Fix doxygen warning in respip.h.
+
+20 September 2022: George
+	- Convert tdir tests to use the new skip_test functionality.
+	- Remove unused testcode/mini_tpkg.sh file.
+
+16 September 2022: George
+	- Merge #753: ACL per interface. (New interface-* configuration
+	  options).
+
+2 September 2022: Wouter
+	- Remove include that was there for debug purposes.
+	- Fix to check pthread_t size after pthread has been detected.
+
+1 September 2022: Wouter
+	- Fix to update config tests to fix checking if nonblocking sockets
+	  work on OpenBSD.
+	- Slow down log frequency of write wait failures.
+	- Fix to set out of file descriptor warning to operational verbosity.
+	- Fix to log a verbose message at operational notice level if a
+	  thread is not responding, to stats requests. It is logged with
+	  thread identifiers.
+
+31 August 2022: Wouter
+	- Fix to avoid process wide fcntl calls mixed with nonblocking
+	  operations after a blocked write.
+	- Patch from Vadim Fedorenko that adds MSG_DONTWAIT to receive
+	  operations, so that instruction reordering does not cause mistakenly
+	  blocking socket operations.
+	- Fix to wait for blocked write on UDP sockets, with a timeout if it
+	  takes too long the packet is dropped.
+	- Fix for wait for udp send to stop when packet is successfully sent.
+
+22 August 2022: Wouter
+	- Fix #741: systemd socket activation fails on IPv6.
+
+12 August 2022: Wouter
+	- Fix to log accept error ENFILE and EMFILE errno, but slowly, once
+	  per 10 seconds. Also log accept failures when no slow down is used.
+
+5 August 2022: Wouter
+	- Fix #734 [FR] enable unbound-checkconf to detect more (basic)
+	  errors.
+
+4 August 2022: Wouter
+	- Fix ratelimit inconsistency, for ip-ratelimits the value is the
+	  amount allowed, like for ratelimits.
+
+2 August 2022: Wouter
+	- Fix edns subnet so that scope 0 answers only match sourcemask 0
+	  queries for answers from cache if from a query with sourcemask 0.
+	- Fix unittest for edns subnet change.
+	- Merge #730 from luisdallos: Fix startup failure on Windows 8.1 due
+	  to unsupported IPV6_USER_MTU socket option being set.
+
+1 August 2022: Wouter
+	- Fix the novel ghost domain issues CVE-2022-30698 and CVE-2022-30699.
+	- Tests for ghost domain fixes.
+	- Tag for 1.16.2 release. The code repo continues with 1.16.3.
+	- Fix #728: alloc_reg_obtain() core dump. Stop double
+	  alloc_reg_release when serviced_create fails.
+
+19 July 2022: George
+	- Update documentation for 'outbound-msg-retry:'.
+
+19 July 2022: Wouter
+	- Merge #718: Introduce infra-cache-max-rtt option to config max
+	  retransmit timeout.
+
+15 July 2022: Wouter
+	- Merge PR 714: Avoid treat normal hosts as unresponsive servers.
+	  And fixup the lock code.
+	- iana portlist update.
+
+12 July 2022: George
+	- For windows crosscompile, fix setting the IPV6_MTU socket option
+	  equivalent (IPV6_USER_MTU); allows cross compiling with latest
+	  cross-compiler versions.
+
+12 July 2022: Wouter
+	- Fix dname count in sldns parse type descriptor for SVCB and HTTPS.
+
+11 July 2022: Wouter
+	- Fix verbose EDE error printout.
+
+4 July 2022: George
+	- Fix bug introduced in 'improve val_sigcrypt.c::algo_needs_missing for
+	  one loop pass'.
+	- Merge PR #668 from Cristian Rodríguez: Set IP_BIND_ADDRESS_NO_PORT on
+	  outbound tcp sockets.
+
+4 July 2022: Wouter
+	- Tag for 1.16.1rc1 release. This became 1.16.1 on 11 July 2022.
+	  The code repo continues with version 1.16.2 under development.
+
+3 July 2022: George
+	- Merge PR #671 from Petr Menšík: Disable ED25519 and ED448 in FIPS
+	  mode on openssl3.
+	- Merge PR #660 from Petr Menšík: Sha1 runtime insecure.
+	- For #660: formatting, less verbose logging, add EDE information.
+	- Fix for correct openssl error when adding windows CA certificates to
+	  the openssl trust store.
+	- Improve val_sigcrypt.c::algo_needs_missing for one loop pass.
+	- Reintroduce documentation and more EDE support for
+	  val_sigcrypt.c::dnskeyset_verify_rrset_sig.
+
+1 July 2022: George
+	- Merge PR #706: NXNS fallback.
+	- From #706: Cached NXDOMAIN does not increase the target nx
+	  responses.
+	- From #706: Don't generate parent side queries if we already
+	  have the lame records in cache.
+	- From #706: When a lame address is the best choice, don't try to
+	  generate target queries when the missing targets are all lame.
+
+29 June 2022: Wouter
+	- iana portlist update.
+	- Fix detection of libz on windows compile with static option.
+	- Fix compile warning for windows compile.
+
+29 June 2022: George
+	- Add debug option to the mini_tdir.sh test code.
+	- Fix #704: [FR] Statistics counter for number of outgoing UDP queries
+	  sent; introduces 'num.query.udpout' to the 'unbound-control stats'
+	  command.
+	- Fix to not count cached NXDOMAIN for MAX_TARGET_NX.
+	- Allow fallback to the parent side when MAX_TARGET_NX is reached.
+	  This will also allow MAX_TARGET_NX more NXDOMAINs.
+
+28 June 2022: George
+	- Show the output of the exact .rpl run that failed with 'make test'.
+	- Fix for cached 0 TTL records to not trigger prefetching when
+	  serve-expired-client-timeout is set.
+
+28 June 2022: Wouter
+	- Fix test program dohclient close to use portability routine.
+
+23 June 2022: Tom
+	- Clarify -v flag manpage entry (#705)
+
+22 June 2022: Philip
+	- Fix #663: use after free issue with edns options.
+
+21 June 2022: Philip
+	- Fix for loading locally stored zones that have lines with blanks or
+	  blanks and comments.
+
+20 June 2022: George
+	- Remove unused LDNS function check for GOST Engine unloading.
+
+14 June 2022: George
+	- Merge PR #688: Rpz url notify issue.
+	- Note in the unbound.conf text that NOTIFY is allowed from the url:
+	  addresses for auth and rpz zones.
+
+3 June 2022: George
+	- Fix for edns client subnet to respect not looking in its cache when
+	  instructed to do so (e.g., prefetch).
+
+3 June 2022: Wouter
+	- makedist.sh picks up 32bit libssp-0.dll when 32bit compile.
+
+27 May 2022: Wouter
+	- Fix #684: [FTBS] configure script error with libmnl on openSUSE 15.3 (and possibly other distributions)
+	- Version is set to 1.16.0 for release. Release tag 1.16.0rc1. This
+	  became release 1.16.0 on 2 June 2022. The source code branch
+	  continues with version 1.16.1 under development.
+
+20 May 2022: Wouter
+	- Fix to silence test for ede error output to the console from the
+	  test setup script.
+	- Fix ede test to not use default pidfile, and use local interface.
+	- Fix some lint type warnings.
+
+18 May 2022: George
+	- Fix typos in config_set_option for the 'num-threads' and
+	  'ede-serve-expired' options.
+
+15 May 2022: George
+	- Fix #678: [FR] modify behaviour of unbound-control rpz_enable zone,
+	  by updating unbound-control's documentation.
+
+12 May 2022: George
+	- Fix #417: prefetch and ECS causing cache corruption when used
+	  together.
+
+12 May 2022: Wouter
+	- Merge #677: Allow using system certificates not only on Windows,
+	  from pemensik.
+	- For #677: Added tls-system-cert to config parser and documentation.
+
+11 May 2022: Wouter
+	- Fix #673: DNS over TLS: error: SSL_handshake syscall: No route to
+	  host.
+
+10 May 2022: George
+	- Fix Python build in non-source directory; based on patch by
+	  Michael Tokarev.
+
+6 May 2022: Tom
+	- Merge PR #604: Add basic support for EDE (RFC8914).
+
+28 April 2022: Wouter
+	- Fix #670: SERVFAIL problems with unbound 1.15.0 running on
+	  OpenBSD 7.1.
+
+8 April 2022: Wouter
+	- Fix zonemd check to allow unsupported algorithms to load.
+	  If there are only unsupported algorithms, or unsupported schemes,
+	  and no failed or successful other ZONEMD records, or malformed
+	  or bad ZONEMD records, the unsupported records allow the zone load.
+	- Fix zonemd unsupported algo check.
+	- Fix zonemd unsupported algo check reason to not copy to next record,
+	  and check for success for debug printout.
+	- Fix zonemd unsupported algo check to print unsupported reason before
+	  zeroing it.
+	- Fix zonemd unsupported algo check to set reason to NULL before the
+	  check routine, but after malformed checks, to get the correct NULL
+	  output when the digest matches.
+
+25 March 2022: Wouter
+	- Fix spelling error in comment in sldns_str2wire_svcparam_key_lookup.
+
+23 March 2022: Wouter
+	- Fix #651: [FR] Better logging for refused queries.
+
+18 March 2022: George
+	- Merge PR #648 from eaglegai: fix -q doesn't work when use with
+	  'unbound-control stats_shm'.
+
+17 March 2022: Wouter
+	- Fix to describe auth-zone and other configuration at the local-zone
+	  configuration option, to allow for more broadly view of the options.
+
+16 March 2022: Wouter
+	- Fix to ensure uniform handling of spaces and tabs when parsing RRs.
+
+9 March 2022: Wouter
+	- Merge #644: Make `install-lib` make target install the pkg-config
+	  file.
+
+7 March 2022: Wouter
+	- Fix configure for python to use sysutils, because distutils is
+	  deprecated. It uses sysutils when available, distutils otherwise.
+
+3 March 2022: Wouter
+	- Fix #637: Integer Overflow in sldns_str2period function.
+	- Fix for #637: fix integer overflow checks in sldns_str2period.
+
+2 March 2022: George
+	- Merge PR #632 from scottrw93: Match cnames in ipset.
+	- Various fixes for #632: variable initialisation, convert the qinfo
+	  to str once, accept trailing dot in the local-zone ipset option.
+
+2 March 2022: Wouter
+	- Fix compile warnings for printf ll format on mingw compile.
+
+1 March 2022: Wouter
+	- Fix pythonmod for change in iter_dp_is_useless function prototype.
+
+28 February 2022: George
+	- Fix #630: Unify the RPZ log messages.
+	- Merge #623 from rex4539: Fix typos.
+
+28 February 2022: Wouter
+	- Fix #633: Document unix domain socket support for unbound-control.
+	- Fix for #633: updated fix with new text.
+	- Fix edns client subnet to add the option based on the option list,
+	  so that it is not state dependent, after the state fix of #605 for
+	  double EDNS options.
+	- Fix for edns client subnet option add fix in removal code, from review.
+
+25 February 2022: Wouter
+	- Fix to detect that no IPv6 support means that IPv6 addresses are
+	  useless for delegation point lookups.
+	- update Makefile dependencies.
+	- Fix check interface existence for support detection in remote lookup.
+
+18 February 2022: Wouter
+	- Fix that address not available is squelched from the logs for
+	  udp connect failures. It is visible on verbosity 4 and more.
+	- Merge #631 from mollyim: Replace OpenSSL's ERR_PACK with
+	  ERR_GET_REASON.
+
+16 February 2022: Wouter
+	- Fix for #628: fix rpz-passthru for qname trigger by localzone type.
+
+15 February 2022: Wouter
+	- Fix #628: A rpz-passthru action is not ending RPZ zone processing.
+
+11 February 2022: Wouter
+	- Fix #624: Unable to stop Unbound in Windows console (does not
+	  respond to CTRL+C command).
+	- Fix #618: enabling interface-automatic disables DNS-over-TLS.
+	  Adds the option to list interface-automatic-ports.
+	- Remove debug info from #618 fix.
+
+7 February 2022: Wouter
+	- Fix that TCP interface does not use TLS when TLS is also configured.
+
+4 February 2022: Wouter
+	- Fix #412: cache invalidation issue with CNAME+A.
+
+3 February 2022: Wouter
+	- Fix for #611: Integer overflow in sldns_wire2str_pkt_scan.
+	- Tag for 1.15.0rc1 created. That became 1.15.0 on 10 feb 2022.
+	  The repository continues with version 1.15.1.
+
+2 February 2022: George
+	- Merge PR #532 from Shchelk: Fix: buffer overflow bug.
+	- Merge PR #616: Update ratelimit logic. It also introduces
+	  ratelimit-backoff and ip-ratelimit-backoff configuration options.
+	- Change aggressive-nsec default to yes.
+	- Merge PR #617: Update stub/forward-host notation to accept port and
+	  tls-auth-name.
+	- Update stream_ssl.tdir test to also use the new forward-host
+	  notation.
+
+2 February 2022: Wouter
+	- Update version number in repo to 1.15.0 for upcoming release,
+	  since it changes the aggressive-nsec default and the ratelimit change.
+	- Fix header comment for doxygen for authextstrtoaddr.
+	- please clang analyzer for loop in test code.
+	- Fix docker splint test to use more portable uname.
+	- Update contrib/aaaa-filter-iterator.patch with diff for current
+	  software version.
+
+1 February 2022: George
+	- Merge PR #603 from fobser: Use OpenSSL 1.1 API to access DSA and RSA
+	  internals.
+
+31 January 2022: George
+	- Fix review comment for use-after-free when failing to send UDP out.
+
+31 January 2022: Wouter
+	- iana portlist update.
+
+29 January 2022: George
+	- Fix tls-* and ssl-* documented alternate syntax to also be available
+	  through remote-control and unbound-checkconf.
+	- Better cleanup on failed DoT/DoH listening socket creation.
+
+26 January 2022: George
+	- Fix #599: [FR] RFC 9156 (obsoletes RFC 7816), by noting the new RFC
+	  document.
+
+26 January 2022: Wouter
+	- Test for NSID in SERVFAIL response due to DNSSEC bogus.
+
+25 January 2022: George
+	- Fix #588: Unbound 1.13.2 crashes due to p->pc is NULL in
+	  serviced_udp_callback.
+	- Merge PR #612: TCP race condition.
+
+25 January 2022: Wouter
+	- Fix #610: Undefine-shift in sldns_str2wire_hip_buf.
+
+19 January 2022: George
+	- For dnstap, do not wakeupnow right there. Instead zero the timer to
+	  force the wakeup callback asap.
+
+14 January 2022: George
+	- Merge PR #605:
+	  - Fix EDNS to upstream where the same option could be attached
+	     more than once.
+	  - Add a region to serviced_query for allocations.
+
+14 January 2022: Wouter
+	- Add rpz: for-downstream: yesno option, where the RPZ zone is
+	  authoritatively answered for, so the RPZ zone contents can be
+	  checked with DNS queries directed at the RPZ zone.
+	- For #602: Allow the module-config "subnetcache validator cachedb
+	  iterator".
+
+11 January 2022: George
+	- Fix prematurely terminated TCP queries when a reply has the same ID.
+
+7 January 2022: Wouter
+	- Merge #600 from pemensik: Change file mode before changing file
+	  owner.
+
+5 January 2022: Wouter
+	- Fix for #596: fix that rpz return message is returned and not just
+	  the rcode from the iterator return path. This fixes signal unset RA
+	  after a CNAME.
+	- Fix unit tests for rpz now that the AA flag returns successfully from
+	  the iterator loop.
+	- Fix for #596: add unit test for nsdname trigger and signal unset RA.
+	- Fix for #596: add unit test for nsip trigger and signal unset RA.
+	- Fix #598: Fix unbound-checkconf fatal error: module conf
+	  'respip dns64 validator iterator' is not known to work.
+	- Fix for #596: Fix rpz-signal-nxdomain-ra to work for clientip
+	  triggered operation.
+
+4 January 2022: Wouter
+	- Fix #596: unset the RA bit when a query is blocked by an unbound
+	  RPZ nxdomain reply. The option rpz-signal-nxdomain-ra allows to
+	  signal that a domain is externally blocked to clients when it
+	  is blocked with NXDOMAIN by unsetting RA.
+	- Fix to add test for rpz-signal-nxdomain-ra.
+	- Fix #596: only unset RA when NXDOMAIN is signalled.
+	- Fix that RPZ does not set RD flag on replies, it should be copied
+	  from the query.
+
+22 December 2021: George
+	- contrib/aaaa-filter-iterator.patch file renewed diff content to
+	  apply cleanly to the current coderepo for the current code version.
+
+20 December 2021: George
+	- Fix #591: Unbound-anchor manpage links to non-existent license file.
+
+13 December 2021: George
+	- Add missing configure flags for optional features in the
+	  documentation.
+	- Fix Unbound capitalization in the documentation.
+
+13 December 2021: Wouter
+	- Fix to pick up other class local zone information before unlock.
+
+10 December 2021: George
+	- Allow local-data for classes other than IN to inherit a configured
+	  local-zone's type if possible, instead of defaulting to type
+	  transparent as per the implicit rule.
+
+10 December 2021: Wouter
+	- Add code similar to fix for ldns for tab between strings, for
+	  consistency, the test case was not broken.
+
+6 December 2021: Wouter
+	- Merge PR #581 from fobser: Fix -Wmissing-prototypes and -Wshadow
+	  warnings in rpz.
+	- Fix validator debug output about DS support, print correct algorithm.
+
+3 December 2021: Wouter
+	- Fix compile warning for if_nametoindex on windows 64bit.
+
+1 December 2021: Wouter
+	- configure is set to 1.14.0, and release branch.
+	  This was released as version 1.14.0 on 9 Dec 2021, with the doxygen
+	  fix below included. The main branch continues as 1.14.1.
+	- Fix doc/unbound.doxygen to remove obsolete tag warning.
+
+1 December 2021: George
+	- Merge PR #511 from yan12125: Reduce unnecessary linking.
+	- Merge PR #493 from Jaap: Fix generation of libunbound.pc.
+	- Merge PR #555 from fobser: Allow interface names as scope-id in IPv6
+	  link-local addresses.
+	- Merge PR #562 from Willem: Reset keepalive per new tcp session.
+	- Merge PR #522 from sibeream: memory management violations fixed.
+	- Merge PR #530 from Shchelk: Fix: dereferencing a null pointer.
+	- Fix #454: listen_dnsport.c:825: error: ‘IPV6_TCLASS’ undeclared.
+	- Fix #574: Review fixes for size allocation.
+
+30 November 2021: Wouter
+	- Fix to remove git tracking and ci information from release tarballs.
+	- iana portlist update.
+
+29 November 2021: Wouter
+	- Merge PR #570 from rex4539: Fix typos.
+	- Fix for #570: regen aclocal.m4, fix configure.ac for spelling.
+	- Fix to make python module opt_list use opt_list_in.
+	- Fix #574: unbound-checkconf reports fatal error if interface names
+	  are used as value for interfaces:
+	- Fix #574: Review fixes for it.
+	- Fix #576: [FR] UB_* error codes in unbound.h
+	- Fix #574: Review fix for spelling.
+
+15 November 2021: Tom
+	- Improve EDNS option handling, now also works for synthesised
+	  responses such as local-data and server.id CH TXT responses.
+
+5 November 2021: George
+	- Fix for #558: fix loop in comm_point->tcp_free when a comm_point is
+	  reclaimed more than once during callbacks.
+	- Fix for #558: clear the UB_EV_TIMEOUT bit before adding an event.
+
+5 November 2021: Wouter
+	- Fix that forward-zone name is documented as the full name of the
+	  zone. It is not relative but a fully qualified domain name.
+	- Fix analyzer review failure in rpz action override code to not
+	  crash on unlocking the local zone lock.
+	- Fix to remove unused code from rpz resolve client and action
+	  function.
+	- Merge #565: unbound.service.in: Disable ProtectKernelTunables again.
+
+2 November 2021: Wouter
+	- Fix #552: Unbound assumes index.html exists on RPZ host.
+
+11 October 2021: Wouter
+	- Fix chaos replies to have truncation for short message lengths,
+	  or long reply strings.
+	- Fix to protect custom regional create against small values.
+
+4 October 2021: Wouter
+	- Fix to add example.conf note for outbound-msg-retry.
+
+27 September 2021: Wouter
+	- Implement RFC8375: Special-Use Domain 'home.arpa.'.
+
+21 September 2021: Wouter
+	- For crosscompile on windows, detect 64bit stackprotector library.
+	- Fix crosscompile shell syntax.
+	- Fix crosscompile windows to use libssp when it exists.
+	- For the windows compile script disable gost.
+	- Fix that on windows, use BIO_set_callback_ex instead of deprecated
+	  BIO_set_callback.
+	- Fix crosscompile script for the shared build flags.
+
+20 September 2021: Wouter
+	- Fix crosscompile on windows to work with openssl 3.0.0 the
+	  link with ws2_32 needs -l:libssp.a for __strcpy_chk.
+	  Also copy results from lib64 directory if needed.
+
+10 September 2021: Wouter
+	- Fix initialisation errors reported by gcc sanitizer.
+	- Fix lock debug code for gcc sanitizer reports.
+	- Fix more initialisation errors reported by gcc sanitizer.
+
+8 September 2021: Wouter
+	- Merged #41 from Moritz Schneider: made outbound-msg-retry
+	  configurable.
+	- Small fixes for #41: changelog, conflicts resolved,
+	  processQueryResponse takes an iterator env argument like other
+	  functions in the iterator, no colon in string for set_option,
+	  and some whitespace style, to make it similar to the rest.
+	- Fix for #41: change outbound retry to int to fix signed comparison
+	  warnings.
+	- Fix root_anchor test to check with new icannbundle date.
+
+3 September 2021: Wouter
+	- Fix #538: Fix subnetcache statistics.
+
+1 September 2021: Wouter
+	- Fix tcp fastopen failure when disabled, try normal connect instead.
+
+27 August 2021: Wouter
+	- Fix #533: Negative responses get cached even when setting
+	  cache-max-negative-ttl: 1
+
+25 August 2021: Wouter
+	- Merge #401: RPZ triggers. This add additional RPZ triggers,
+	  unbound supports a full set of rpz triggers, and this now
+	  includes nsdname, nsip and clientip triggers. Also actions
+	  are fully supported, and this now includes the tcp-only action.
+	- Fix #536: error: RPZ: name of record (drop.spamhaus.org.rpz.local.)
+	  to insert into RPZ.
+	- Fix the stream wait stream_wait_count_lock and http2 buffer locks
+	  setup and desetup from race condition.
+	- Fix RPZ locks. Do not unlock zones lock if requested and rpz find
+	  zone does not find the zone. Readlock the clientip that is found
+	  for ipbased triggers. Unlock the nsdname zone lock when done.
+	  Unlock zone and ip in rpz nsip and nsdname callback. Unlock
+	  authzone and localzone if clientip found in rpz worker call.
+	- Fix compile warning in libunbound for listen desetup routine.
+	- Fix asynclook unit test for setup of lockchecks before log.
+
+20 August 2021: Wouter
+	- Fix #529: Fix: log_assert does nothing if UNBOUND_DEBUG is
+	  undefined.
+	- Fix #531: Fix: passed to proc after free.
+
+17 August 2021: Wouter
+	- Fix that --with-ssl can use "/usr/include/openssl11" to pass the
+	  location of a different openssl version.
+	- Fix #527: not sending quad9 cert to syslog (and may be more).
+	- Fix sed script in ssldir split handling.
+
+16 August 2021: George
+	- Merge PR #528 from fobser: Make sldns_str2wire_svcparam_buf()
+	  static.
+
+16 August 2021: Wouter
+	- Fix to support harden-algo-downgrade for ZONEMD dnssec checks.
+
+13 August 2021: Wouter
+	- Support using system-wide crypto policies.
+	- Fix for #431: Squelch permission denied errors for udp connect,
+	  and udp send, they are visible at higher verbosity settings.
+	- Fix zonemd verification of key that is not in DNS but in the zone
+	  and needs a chain of trust.
+	- zonemd, fix order of bogus printout string manipulation.
+
+12 August 2021: George
+	- Merge PR #514, from ziollek: Docker environment for run tests.
+	- For #514: generate configure.
+
+12 August 2021: Wouter
+	- And 1.13.2rc1 became the 1.13.2 with the fix for the python module
+	  build. The current code repository continues with version 1.13.3.
+	- Add test tool readzone to .gitignore.
+	- Merge #521: Update mini_event.c.
+	- Merge #523: fix: free() call more than once with the same pointer.
+	- Merge #519: Support for selective enabling tcp-upstream for
+	  stub/forward zones.
+	- For #519: note stub-tcp-upstream and forward-tcp-upstream in
+	  the example configuration file.
+	- For #519: yacc and lex. And fix python bindings, and test program
+	  unbound-dnstap-socket.
+	- For #519: fix comments for doxygen.
+	- Fix to print error from unbound-anchor for writing to the key
+	  file, also when not verbose.
+
+5 August 2021: Wouter
+	- Tag for 1.13.2rc1 release.
+	- Fix #520: Unbound 1.13.2rc1 fails to build python module.
+
+4 August 2021: George
+	- Merge PR #415 from sibeream: Use
+	  /proc/sys/net/ipv4/ip_local_port_range to determine available outgoing
+	  ports. (New --enable-linux-ip-local-port-range configuration option)
+	- Bump MAX_RESTART_COUNT to 11 from 8; in relation to #438. This
+	  allows longer CNAME chains in Unbound.
+
+4 August 2021: Wouter
+	- In unit test use openssl set security level to allow keys in test.
+	- Fix static analysis warnings about localzone locks that are unused.
+	- Fix missing locks in zonemd unit test.
+	- Fix readzone compile under debug config.
+	- Fix out of sourcedir run of zonemd unit tests.
+	- Fix libnettle zonemd unit test.
+	- Fix unit test zonemd_reload for use in run_vm.
+
+3 August 2021: George
+	- Listen to read or write events after the SSL handshake.
+	  Sticky events on windows would stick on read when write was needed.
+
+3 August 2021: Wouter
+	- Merge PR #517 from dyunwei: #420 breaks the mesh reply list
+	  function that need to reuse the dns answer.
+	- Annotate assertion into error printout; we think it may be an
+	  error, but the situation looks harmless.
+	- Fix sign comparison warning on FreeBSD.
+
+2 August 2021: Wouter
+	- Prepare for OpenSSL 3.0.0 provider API usage, move the sldns
+	  keyraw functions to produce EVP_PKEY results.
+	- Move RSA and DSA to use OpenSSL 3.0.0 API.
+	- Move ECDSA functions to use OpenSSL 3.0.0 API.
+	- iana portlist update.
+	- Fix verbose printout failure in tcp reuse unit test.
+
+30 July 2021: Wouter
+	- Fix #515: Compilation against openssl 3.0.0 beta2 is failing to
+	  build unbound.
+	- For #515: Fix compilation with openssl 3.0.0 beta2, lib64 dir and
+	  SSL_get_peer_certificate.
+	- Move acx_nlnetlabs.m4 to version 41, with lib64 openssl dir check.
+
+26 July 2021: George
+	- Merge #513: Stream reuse, attempt to fix #411, #439, #469. This
+	  introduces a couple of fixes for the stream reuse functionality
+	  that could result in broken internal structures.
+
+26 July 2021: Wouter
+	- Merge #512: unbound.service.in: upgrade hardening to latest
+	  standards.
+	- Fix readzone unknown type print for memory resize.
+
+21 July 2021: Wouter
+	- Fix that ldns_zone_new_frm_fp_l counts the line number for an empty
+	  line after a comment.
+
+16 July 2021: George
+	- Introduce 'http-user-agent:' and 'hide-http-user-agent:' options.
+
+16 July 2021: Wouter
+	- Merge #510 from ndptech: Don't call a function which hasn't been
+	  defined.
+	- Fix for #510: in depth, use ifdefs for windows api event calls.
+	- Fix spelling in doc/unbound.doxygen comment.
+	- Fix spelling in localzone.h comment.
+	- Fix unbound-control local_data and local_datas to print detailed
+	  syntax errors.
+	- review fix to remove duplicate error printout.
+	- Insert header into testcode/readzone.c, it was missing.
+	- Fix from lint for ignored return value.
+	- Fix for older parsers for function call in serve expired get cached.
+
+6 July 2021: Wouter
+	- iana portlist update.
+
+5 July 2021: George
+	- Fix compiler warnings for #491.
+	- Fix clang-analysis warnings for testcode/readzone.c.
+
+4 July 2021: George
+	- Fix Wunused-result compile warnings.
+
+2 July 2021: Tom
+	- Merge PR #491: Add SVCB and HTTPS types and handling according to
+	  draft-ietf-dnsop-svcb-https.
+
+2 July 2021: Wouter
+	- Fix #506: Python Module Seems to Leak Memory if it Experiences an
+	  Unhandled Exception.
+
+25 June 2021: Wouter
+	- Fix up permissions on rpl data file in tests.
+	- Fix testbound newline treatment in moment_read and tempfile write.
+	- Fix configure grep for reuseport default for failure.
+	- Fix compat ctime_r return value
+	- Fix configure does not require pkg-config if not needed.
+	- Fix unit test in the ctime_r calls for autotrust and in testbound.
+	- Fix auth zone download on windows to unlink before rename.
+
+24 June 2021: Wouter
+	- Add analyzer and port compile github workflow.
+
+23 June 2021: Wouter
+	- Fix #503: DNS over HTTPS response truncated.
+	- Fix warnings reported by the gcc analyzer.
+
+21 June 2021: George
+	- Fix #495: Documentation or implementation of "verbosity" option.
+
+18 June 2021: Wouter
+	- Fix a number of warnings reported by the gcc analyzer.
+
+15 June 2021: George
+	- Merge #440 by kimheino: Various fixes to contrib/unbound_munin_ file.
+
+14 June 2021: Wouter
+	- Fix configure nonblocking test and onmingw test to use host.
+
+10 June 2021: Wouter
+	- Fix #500: SPEC file in version 1.13.1 references version 1.4;
+	  unable to build RPM from source.
+	- Fix contrib/unbound.spec, fixed url and comment.
+
+9 June 2021: George
+	- Merge #486 by fobster: Make VAL_MAX_RESTART_COUNT configurable.
+	- Generated lexer and parser for #486; updated example.conf.
+	- Fix #413 (based on patch by k-ronny): unbound: does not compile
+	  on macOS 11.1-x86_64 host.
+	- Use host_os instead of target_os in configure for Darwin8 build.
+
+8 June 2021: George
+	- Fix unused variable warning when compiling with --enable-dnstap.
+
+7 June 2021: George
+	- Merge #448 from shoeper: Update unbound-control.8.in, fix
+	  rpz_disable typo.
+	- Fix #425: Document auth-zone supports communication with DNS
+	  primary on nondefault port.
+
+1 June 2021: George
+	- Fix test for zonemd-check option.
+
+27 May 2021: Wouter
+	- Merge #496 from banburybill: Use build system endianness if
+	  available, otherwise try to work it out.
+	- zonemd-check: yesno option, default no, enables the processing
+	  of ZONEMD records for that zone.
+
+25 May 2021: Wouter
+	- Move the NSEC3 max iterations count in line with the 150 value
+	  used by BIND, Knot and PowerDNS. This sets the default value
+	  for it in the configuration to 150 for all key sizes.
+	- Fix #492: module-config respip missing in unbound.conf.5.in man
+	  page. Merges #494 from he32.
+	- For #492: Fix font highlighting for the man page on emacs.
+
+21 May 2021: Wouter
+	- Test code has -q option for quiet output.
+
+19 May 2021: George
+	- Fix for #411, #439, #469: Reset the DNS message ID when moving queries
+	  between TCP streams.
+	- Refactor for uniform way to produce random DNS message IDs.
+
+17 May 2021: Wouter
+	- Fix #489: Compile using MSYS2 MinGW 64-bit.
+
+12 May 2021: Wouter
+	- Fix that auth-zone zonefiles use last TTL if no TTL is specified.
+
+10 May 2021: Wouter
+	- Merge PR #487: ifdef RLIMIT_AS in recently added check.
+
+7 May 2021: Wouter
+	- Fix #485: Unbound occasionally reports broken stats.
+	- Add ./configure --with-deprecate-rsa-1024 that turns off RSA 1024.
+	- Remove case fallthrough from deprecate-rsa-1024 code.
+
+4 May 2021: George
+	- Fix for #367: only attempt to get the interface for queries that are no
+	  longer on the tcp_waiting_list.
+	- Add more logging for out-of-memory cases.
+
+4 May 2021: Wouter
+	- Merge #478: Allow configuration of TCP timeout while waiting for
+	  response.
+	- Fix to squelch tcp socket bind failures when the interface is gone.
+	- Rerun flex and bison.
+
+3 May 2021: Wouter
+	- Fix #481: Fix comment in configuration file.
+
+29 April 2021: Wouter
+	- Add that log-servfail prints an IP address and more information
+	  about one of the last failures for that query.
+
+28 April 2021: George
+	- Fix compiler warning for signed/unsigned comparison for
+	  max_reuse_tcp_queries.
+
+28 April 2021: Wouter
+	- Fix #474: always_null and others inside view.
+
+26 April 2021: Wouter
+	- Merge #470 from edevil: Allow configuration of persistent TCP
+	  connections.
+
+22 April 2021: Wouter
+	- Merge #466 from FGasper: Support OpenSSLs that lack
+	  SSL_get0_alpn_selected.
+	- Fix #468: OpenSSL 1.0.1 can no longer build Unbound.
+	- Further fix for #468: detect SSL_CTX_set_alpn_protos for build with
+	  OpenSSL 1.0.1.
+	- Fix that testcode dohclient has OpenSSL initialisation calls.
+
+13 April 2021: George
+	- Fix documentation comment for files previously residing in checkconf/.
+	- Remove unused functions worker_handle_reply and libworker_handle_reply.
+
+13 April 2021: Wouter
+	- Fix that nxdomain synthesis does not happen above the stub or
+	  forward definition.
+
+12 April 2021: George
+	- Fix (increase) verbosity level for iterator error log in
+	  processQueryTargets().
+
+12 April 2021: Wouter
+	- Fix permission denied sendto log, squelch the log messages
+	  unless high verbosity is set.
+
+9 April 2021: Wouter
+	- rebuild configure to set EXTRALINK to libunbound.la for #460.
+
+7 April 2021: Wouter
+	- Fix for #411: Depth protect for crash on deleted element timeout.
+
+1 April 2021: Wouter
+	- Merge #460 from orbea: build: Link with the libtool archive.
+	- Fix to stop IPv6 PMTU discovery.
+
+31 March 2021: George
+	- Clean makedist.sh.
+
+31 March 2021: Wouter
+	- Fix stack-protector change to not override other CFLAGS options.
+
+30 March 2021: George
+	- Disable the use of stack-protector for cross compiled 32-bit windows
+	  builds; relates to #444.
+
+25 March 2021: Wouter
+	- Fix #429: Also fix end of transfer for http download of auth zones.
+
+24 March 2021: Wouter
+	- Fix deprecation test to work for iOS TVOS and WatchOS, it uses
+	  CFLAGS and CPPFLAGS and also checks if the item is unavailable.
+	- Travis, fix script to fail when tasks fail.
+	- Travis, fix warning in ubsan compile.
+	- Fix configure Targetconfiditionals.h header check, to use compile.
+	- Fix that cachedb does not produce empty object files when disabled.
+
+23 March 2021: Wouter
+	- Travis enable all tests again. Clang analyzer only a couple times,
+	  when there is a difference. homebrew updates disabled, so it does
+	  not hang. removed trailing slashes from configure paths. Moved iOS
+	  tests to allow-failure.
+	- travis, analyzer disabled on test without debug, that does not
+	  run anway.  Turn off failing tests except one.  Update iOS test
+	  to xcode image 12.2.
+
+22 March 2021: George
+	- Fix unused-function warning when compiling with --enable-dnscrypt.
+	- Fix for #367: fix memory leak when cannot bind to listening port.
+	- Reformat pythonmod/pythonmod_utils.{c,h}.
+
+22 March 2021: Wouter
+	- Merge #449 from orbea: build: Add missing linker flags.
+	- iana portlist update.
+	- Comment out nonworking OSX and IOS travis tests, vm fails to start.
+	- Fix compile error in listen_dnsport on Android.
+	- Fix memory leak reported by asan in rpz SOA record query name.
+
+19 March 2021: Wouter
+	- Fix for #447: squelch connection refused tcp connection failures
+	  from the log, unless verbosity is high.
+
+17 March 2021: Wouter
+	- Fix #441: Minimal NSEC range not accepted for top level domains.
+
+11 March 2021: Wouter
+	- Fix parse of LOC RR type for decimetres.
+
+5 March 2021: Wouter
+	- Workaround for #439: prevent loops in the reuse rbtree.
+	- Debug output for #411 and #439: printout internal error and details.
+
+4 March 2021: Wouter
+	- iana portlist update.
+	- Fix spurious errors about "Could not generate request: out of
+	  memory".  The mesh detect cycle routine no longer wrongly stops
+	  the check when the calling mesh state is unique.
+
+26 February 2021: George
+	- Fix for #367: rc_ports don't have ub_sock; skip cleaning up.
+
+26 February 2021: Wouter
+	- Fix: Resolve interface names on control-interface too.
+
+25 February 2021: Wouter
+	- Merge PR #367 : DNSTAP log local address.  With code from PR #365
+	  and fixes #368 : dnstap does not log the DNS message ID for
+	  FORWARDER_QUERY.
+	- Fix to allow rpz with wildcard that applies to all TLDs at once.
+
+24 February 2021: George
+	- Fix #384: (1) A minor request to improve the log (2) A minor bug in one
+	  log message.
+	- ipsecmod: Better logging for detecting a cycle when attaching the
+	  A/AAAA subquery.
+
+24 February 2021: Wouter
+	- On startup of unbound it checks if rlimits on memory size look
+	  sufficient for the configured cache size, and logs warning if not.
+	- Fix function documentation.
+	- Fix unit test for added ulimit checks.
+	- spelling fix in header.
+
+23 February 2021: Wouter
+	- Fix for zonemd, that domain-insecure zones work without dnssec.
+	- Fix for zonemd, do not reject insecure result from trust anchor
+	  validation step in dnssec chain of trust.
+
+22 February 2021: Wouter
+	- Fix #431: Squelch permission denied errors for tcp connect
+	  and udp connect from the logs, unless at high verbosity.
+	- Fix for zonemd, that nxdomain for the chain of trust is allowed
+	  for island zones, it is treated as an insecure zone for verification.
+
+18 February 2021: Wouter
+	- Merge PR #317: ZONEMD Zone Verification, with RFC 8976 support.
+	  ZONEMD records are checked for zones loaded as auth-zone,
+	  with DNSSEC if available.  There is an added option
+	  zonemd-permissive-mode that makes it log but not fail wrong zones.
+	  With zonemd-reject-absence for an auth-zone the presence of a
+	  zonemd can be mandated for specific zones.
+	- Fix doxygen and pydoc warnings.
+	- Fix #429: rpz: url: with https: broken (regression in 1.13.1).
+	- rpz skip nsec3param records, and nicer log for unsupported actions.
+
+15 February 2021: Wouter
+	- Fix #422: IPv6 fallback issues when IPv6 is not properly
+	  enabled/configured.
+	- Fix to make tests work with support indicators set for iterator.
+	- Fix build on Python 3.10.
+
+10 February 2021: Wouter
+	- Merge PR #420 from dyunwei: DOH not responsing with
+	  "http2_query_read_done failure" logged.
+
+9 February 2021: Wouter
+	- Fix for Python 3.9, no longer use deprecated functions of
+	  PyEval_CallObject (now PyObject_Call), PyEval_InitThreads (now
+	  none), PyParser_SimpleParseFile (now Py_CompileString).
+
+4 February 2021: Wouter
+	- release 1.13.1rc2 tag on branch-1.13.1 with added changes of 2 feb.
+	  This became 1.13.1 release tag on 9 feb.  The main branch is set
+	  to version 1.13.2.
+
+2 February 2021: Wouter
+	- branch-1.13.1 is created, with release-1.13.1rc1 tag.
+	- Fix dynlibmod link on rhel8 for -ldl inclusion.
+	- Fix windows dependency on libssp.dll because of default stack
+	  protector in mingw.
+	- Fix indentation of root anchor for use by windows install script.
+
+1 February 2021: George
+	- Attempt to fix NULL keys in the reuse_tcp tree; relates to #411.
+
+29 January 2021: Wouter
+	- Fix for doxygen 1.8.20 compatibility.
+
+28 January 2021: Wouter
+	- Annotate that we ignore the return value of if_indextoname.
+	- Fix to use correct type for label count in rpz routine.
+	- Fix empty clause warning in config_file nsid parse.
+	- Fix to use correct type for label count in ipdnametoaddr rpz routine.
+	- Fix empty clause warning in edns pass for padding.
+	- Fix fwd ancil test post script when not supported.
+
+26 January 2021: George
+	- Merge PR #408 from fobser: Prevent a few more yacc clashes.
+	- Merge PR #275 from Roland van Rijswijk-Deij: Add feature to return the
+	  original instead of a decrementing TTL ('serve-original-ttl')
+	- Merge PR #355 from noloader: Make ICANN Update CA and DS Trust Anchor
+	  static data.
+	- Ignore cache blacklisting when trying to reply with expired data from
+	  cache (#394).
+
+26 January 2021: Wouter
+	- Fix compile of unbound-dnstap-socket without dnstap installed.
+
+22 January 2021: Willem
+	- Padding of queries and responses with DNS over TLS as specified in
+	  RFC7830 and RFC8467.
+
+22 January 2021: George
+	- Fix TTL of SOA record for negative answers (localzone and
+	  authzone data) to be the minimum of the SOA TTL and the SOA.MINIMUM.
+
+19 January 2021: Willem
+	- Support for RFC5001: DNS Name Server Identifier (NSID) Option
+	  with the nsid: option in unbound.conf
+
+18 January 2021: Wouter
+	- Fix #404: DNS query with small edns bufsize fail.
+	- Fix declaration before statement and signed comparison warning in
+	  dns64.
+
+15 January 2021: Wouter
+	- Merge #402 from fobser: Implement IPv4-Embedded addresses according
+	  to RFC6052.
+
+14 January 2021: Wouter
+	- Fix for #93: dynlibmodule import library is named libunbound.dll.a.
+
+13 January 2021: Wouter
+	- Merge #399 from xiangbao227: The lock of lruhash table should
+	  unlocked after markdel entry.
+	- Fix for #93: dynlibmodule link fix for Windows.
+
+12 January 2021: Wouter
+	- Fix #397: [Feature request] add new type always_null to local-zone
+	  similar to always_nxdomain.
+	- Fix so local zone types always_nodata and always_deny can be used
+	  from the config file.
+
+8 January 2021: Wouter
+	- Merge PR #391 from fhriley: Add start_time to reply callbacks so
+	  modules can compute the response time.
+	- For #391: use struct timeval* start_time for callback information.
+	- For #391: fix indentation.
+	- For #391: more double casts in python start time calculation.
+	- Add comment documentation.
+	- Fix clang analysis warning.
+
+6 January 2021: Wouter
+	- Fix #379: zone loading over HTTP appears to have buffer issues.
+	- Merge PR #395 from mptre: add missing null check.
+	- Fix #387: client-subnet-always-forward seems to effectively bypass
+	  any caching?
+
+5 January 2021: Wouter
+	- Fix #385: autoconf 2.70 impacts unbound build
+	- Merge PR #375 by fhriley: Add rpz_enable and rpz_disable commands
+	  to unbound-control.
+
+4 January 2021: Wouter
+	- For #376: Fix that comm point event is not double removed or double
+	  added to event map.
+	- iana portlist updated.
+
+16 December 2020: George
+	- Fix error cases when udp-connect is set and send() returns an error
+	  (modified patch from Xin Li @delphij).
+
+11 December 2020: Wouter
+	- Fix #371: unbound-control timeout when Unbound is not running.
+	- Fix to squelch permission denied and other errors from remote host,
+	  they are logged at higher verbosity but not on low verbosity.
+	- Merge PR #335 from fobser: Sprinkle in some static to prevent
+	  missing prototype warnings.
+	- Merge PR #373 from fobser: Warning: arithmetic on a pointer to void
+	  is a GNU extension.
+	- Fix missing prototypes in the code.
+
+3 December 2020: Wouter
+	- make depend.
+	- iana portlist updated.
+
+2 December 2020: Wouter
+	- Fix #360: for the additionally reported TCP Fast Open makes TCP
+	  connections fail, in that case we print a hint that this is
+	  happening with the error in the logs.
+	- Fix #356: deadlock when listening tcp.
+	- Fix unbound-dnstap-socket to not use log routine from interrupt
+	  handler and not print so frequently when invoked in sequence.
+	- Fix on windows to ignore connection failure on UDP, unless verbose.
+	- Fix for #283: fix stream reuse and tcp fast open.
+	- Fix update, with write event check with streamreuse and fastopen.
+
+1 December 2020: Wouter
+	- Fix #358: Squelch udp connect 'no route to host' errors on low
+	  verbosity.
+
+30 November 2020: Wouter
+	- Fix assertion failure on double callback when iterator loses
+	  interest in query at head of line that then has the tcp stream
+	  not kept for reuse.
+	- tag for the 1.13.0rc4 release.  This also became the 1.13.0
+	  release version on 3 dec 2020 with the streamreuse and fastopen
+	  fix from 2 dec 2020.  The code repo continues for 1.13.1 in
+	  development.
+
+27 November 2020: Wouter
+	- Fix compile warning for type cast in http2_submit_dns_response.
+	- Fix when use free buffer to initialize rbtree for stream reuse.
+	- Fix compile warnings for windows.
+	- Fix compile warnings in rpz initialization.
+	- Fix contrib/metrics.awk for FreeBSD awk compatibility.
+	- tag for the 1.13.0rc3 release.
+
+26 November 2020: Wouter
+	- Fix to omit UDP receive errors from log, if verbosity low.
+	  These happen because of udp-connect.
+	- For #352: contrib/metrics.awk for Prometheus style metrics output.
+	- Fix that after failed read, the readagain cannot activate.
+	- Clear readagain upon decommission of pending tcp structure.
+
+25 November 2020: Wouter
+	- with udp-connect ignore connection refused with UDP timeouts.
+	- Fix udp-connect on FreeBSD, do send calls on connected UDP socket.
+	- Better fix for reuse tree comparison for is-tls sockets.  Where
+	  the tree key identity is preserved after cleanup of the TLS state.
+	- Remove debug commands from reuse tests.
+	- Fix memory leak for edns client tag opcode config element.
+	- Attempt fix for libevent state in tcp reuse cases after a packet
+	  is written.
+	- Fix readagain and writeagain callback functions for comm point
+	  cleanup.
+	- tag for the 1.13.0rc2 release.
+
+24 November 2020: Wouter
+	- Merge PR #283 : Stream reuse.  This implements upstream stream
+	  reuse for performing several queries over the same TCP or TLS
+	  channel.
+	- set version of main branch to 1.13.0 for upcoming release.
+	- iana portlist updated.
+	- Fix one port unit test for udp-connect.
+	- tag for the 1.13.0rc1 release.
+	- Fix crash when TLS connection is closed prematurely, when
+	  reuse tree comparison is not properly identical to insertion.
+	- Fix padding of struct regional for 32bit systems.
+
+23 November 2020: George
+	- Merge PR #313 from Ralph Dolmans: Replace edns-client-tag with
+	  edns-client-string option.
+
+23 November 2020: Wouter
+	- Merge #351 from dvzrv: Add AF_NETLINK to set of allowed socket
+	  address families.
+	- Fix #350: with the AF_NETLINK permission, to fix 1.12.0 error:
+	  failed to list interfaces: getifaddrs: Address family not
+	  supported by protocol.
+	- Fix #347: IP_DONTFRAG broken on Apple xcode 12.2.
+	- Option to toggle udp-connect, default is enabled.
+	- Fix for #303 CVE-2020-28935 : Fix that symlink does not interfere
+	  with chown of pidfile.
+	- Further fix for it and retvalue 0 fix for it.
+
+12 November 2020: Wouter
+	- Fix to connect() to UDP destinations, default turned on,
+	  this lowers vulnerability to ICMP side channels.
+	- Retry for interfaces with unused ports if possible.
+
+10 November 2020: Wouter
+	- Fix #341: fixing a possible memory leak.
+	- Fix memory leak after fix for possible memory leak failure.
+	- Fix #343: Fail to build --with-libnghttp2 with error: 'SSIZE_MAX'
+	  undeclared.
+
+27 October 2020: Wouter
+	- In man page note that tls-cert-bundle is read before permission
+	  drop and chroot.
+
+22 October 2020: Wouter
+	- Fix #333: Unbound Segmentation Fault w/ log_info Functions From
+	  Python Mod.
+	- Fix that minimal-responses does not remove addresses from a priming
+	  query response.
+
+21 October 2020: George
+	- Fix #327: net/if.h check fails on some darwin versions; contribution by
+	  Joshua Root.
+	- Fix #320: potential memory corruption due to size miscomputation upton
+	  custom region alloc init.
+
+21 October 2020: Wouter
+	- Merge PR #228 : infra-keep-probing option to probe hosts that are
+	  down.  Add infra-keep-probing: yes option. Hosts that are down are
+	  probed more frequently.
+	  With the option turned on, it probes about every 120 seconds,
+	  eventually after exponential backoff, and that keeps that way. If
+	  traffic keeps up for the domain. It probes with one at a time, eg.
+	  one query is allowed to probe, other queries within that 120 second
+	  interval are turned away.
+
+19 October 2020: George
+	- Merge PR #324 from James Renken: Add modern X.509v3 extensions to
+	  unbound-control TLS certificates.
+	- Fix for PR #324 to attach the x509v3 extensions to the client
+	  certificate.
+
+19 October 2020: Ralph
+	- local-zone regional allocations outside of chunk
+
+19 October 2020: Wouter
+	- Fix that http settings have colon in set_option, for
+	  http-endpoint, http-max-streams, http-query-buffer-size,
+	  http-response-buffer-size, and http-nodelay.
+	- Fix memory leak of https port string when reading config.
+	- Fix #330: [Feature request] Add unencrypted DNS over HTTPS support.
+	  This adds the option http-notls-downstream: yesno to change that,
+	  and the dohclient test code has the -n option.
+	- Fix python documentation warning on functions.rst inplace_cb_reply.
+	- Fix dnstap test to wait for log timer to see if queries are logged.
+	- Log ip address when http session recv fails, eg. due to tls fail.
+	- Fix to set the tcp handler event toggle flag back to default when
+	  the handler structure is reused.
+	- Clean the fix for out of order TCP processing limits on number
+	  of queries.  It was tested to work.
+
+16 October 2020: Wouter
+	- Fix that the out of order TCP processing does not limit the
+	  number of outstanding queries over a connection.
+
+15 October 2020: George
+	- Fix that if there are reply callbacks for the given rcode, those
+	  are called per reply and a new message created if that was modified
+	  by the call.
+	- Pass the comm_reply information to the inplace_cb_reply* functions
+	  during the mesh state and update the documentation on that.
+
+15 October 2020: Wouter
+	- Merge PR #326 from netblue30: DoH: implement content-length
+	  header field
+	- DoH content length, simplify code, remove declaration after
+	  statement and fix cast warning.
+
+14 October 2020: Wouter
+	- Fix for python reply callback to see mesh state reply_list member,
+	  it only removes it briefly for the commpoint call so that it does
+	  not drop it and attempt to modify the reply list during reply.
+	- Fix that if there are on reply callbacks, those are called per
+	  reply and a new message created if that was modified by the call.
+	- Free up auth zone parse region after use for lookup of host
+
+13 October 2020: Wouter
+	- Fix #323: unbound testsuite fails on mock build in systemd-nspawn
+	  if systemd support is build.
+
+9 October 2020: Wouter
+	- Fix dnstap socket and the chroot not applied properly to the dnstap
+	  socket path.
+	- Fix warning in libnss compile, nss_buf2dsa is not used without DSA.
+
+8 October 2020: Wouter
+	- Tag for 1.12.0 release.
+	- Current repo is version 1.12.1 in development.
+	- Fix #319: potential memory leak on config failure, in rpz config.
+
+1 October 2020: Wouter
+	- Current repo is version 1.12.0 for release.  Tag for 1.12.0rc1.
+
+30 September 2020: Wouter
+	- Fix doh tests when not compiled in.
+	- Add dohclient test executable to gitignore.
+	- Fix stream_ssl, ssl_req_order and ssl_req_timeout tests for
+	  alloc check debug output.
+	- Easier kill of unbound-dnstap-socket tool in test.
+	- Fix memory leak of edns tags at libunbound context delete.
+	- Fix double loopexit for unbound-dnstap-socket after sigterm.
+
+29 September 2020: Ralph
+	- DNS Flag Day 2020: change edns-buffer-size default to 1232.
+
+28 September 2020: Wouter
+	- Fix unit test for dnstap changes, so that it waits for the timer.
+
+23 September 2020: Wouter
+	- Fix #305: dnstap logging significantly affects unbound performance
+	  (regression in 1.11).
+	- Fix #305: only wake up thread when threshold reached.
+	- Fix to ifdef fptr wlist item for dnstap.
+
+23 September 2020: Ralph
+	- Fix edns-client-tags get_option typo
+	- Add edns-client-tag-opcode option
+	- Use inclusive language in configuration
+
+21 September 2020: Ralph
+	- Fix #304: dnstap logging not recovering after dnstap process restarts
+
+21 September 2020: Wouter
+	- Merge PR #311 by luismerino: Dynlibmod leak.
+	- Error message is logged for dynlibmod malloc failures.
+	- iana portlist updated.
+
+18 September 2020: Wouter
+	- Fix that prefer-ip4 and prefer-ip6 can be get and set with
+	  unbound-control, with libunbound and the unbound-checkconf option
+	  output function.
+	- iana portlist updated.
+
+15 September 2020: George
+	- Introduce test for statistics.
+
+15 September 2020: Wouter
+	- Spelling fix.
+
+11 September 2020: Wouter
+	- Remove x file mode on ipset/ipset.c and h files.
+
+9 September 2020: Wouter
+	- Fix num.expired statistics output.
+
+31 August 2020: Wouter
+	- Merge PR #293: Add missing prototype.  Also refactor to use the new
+	  shorthand function to clean up the code.
+	- Refactor to use sock_strerr shorthand function.
+	- Fix #296: systemd nss-lookup.target is reached before unbound can
+	  successfully answer queries. Changed contrib/unbound.service.in.
+
+27 August 2020: Wouter
+	- Similar to NSD PR#113, implement that interface names can be used,
+	  eg. something like interface: eth0 is resolved at server start and
+	  uses the IP addresses for that named interface.
+	- Review fix, doxygen and assign null in case of error free.
+
+26 August 2020: George
+	- Update documentation in python example code.
+
+24 August 2020: Wouter
+	- Fix that dnstap reconnects do not spam the log with the repeated
+	  attempts.  Attempts on the timer are only logged on high verbosity,
+	  if they produce a connection failure error.
+	- Fix to apply chroot to dnstap-socket-path, if chroot is enabled.
+	- Change configure to use EVP_sha256 instead of HMAC_Update for
+	  openssl-3.0.0.
+
+20 August 2020: Ralph
+	- Fix stats double count issue (#289).
+
+13 August 2020: Ralph
+	- Create and init edns tags data for libunbound.
+
+10 August 2020: Ralph
+	- Merge (modified) PR #277, use EVP_MAC_CTX_set_params if available,
+	  by Vítězslav Čížek.
+
+10 August 2020: Wouter
+	- Fix #287: doc typo: "Additionaly".
+	- Rerun autoconf
+
+6 August 2020: Wouter
+	- Merge PR #284 and Fix #246: Remove DLV entirely from Unbound.
+	  The DLV has been decommisioned and in unbound 1.5.4, in 2015, there
+	  was advise to stop using it.  The current code base does not contain
+	  DLV code any more.  The use of dlv options displays a warning.
+
+5 August 2020: Wouter
+	- contrib/aaaa-filter-iterator.patch file renewed diff content to
+	  apply cleanly to the current coderepo for the current code version.
+
+5 August 2020: Ralph
+	- Merge PR #272: Add EDNS client tag functionality.
+
+4 August 2020: George
+	- Improve error log message when inserting rpz RR.
+	- Merge PR #280, Make tvOS & watchOS checks verify truthiness as well as
+	  definedness, by Felipe Gasper.
+
+4 August 2020: Wouter
+	- Fix mini_event.h on OpenBSD cannot find fd_set.
+
+31 July 2020: Wouter
+	- Fix doxygen comment for no ssl for tls session ticket key callback
+	  routine.
+
+27 July 2020: George
+	- Merge PR #268, draft-ietf-dnsop-serve-stale-10 has become RFC 8767 on
+	  March 2020, by and0x000.
+
+27 July 2020: Ralph
+	- Merge PR #269, Fix python module len() implementations, by Torbjörn
+	  Lönnemark
+
+27 July 2020: Wouter
+	- branch now named 1.11.1.  1.11.0rc1 became the 1.11.0 release.
+	- Merge PR #270 from cgzones: munin plugin: always exit 0 in autoconf
+
+20 July 2020: Wouter
+	- Fix streamtcp to print packet data to stdout.  This makes the
+	  stdout and stderr not mix together lines, when parsing its output.
+	- Fix contrib/fastrpz.patch to apply cleanly.  It fixes for changes
+	  due to added libdynmod, but it does not compile, it conflicts with
+	  new rpz code.
+	- branch now named 1.11.0 and 1.11.0rc1 tag.
+
+17 July 2020: Wouter
+	- Fix libnettle compile for session ticket key callback function
+	  changes.
+	- Fix lock dependency cycle in rpz zone config setup.
+
+17 July 2020: Ralph
+	- Merge PR #234 - Ensure proper alignment of cmsg buffers by Jérémie
+	  Courrèges-Anglas.
+	- Fix PR #234 log_assert sizeof to use union buffer.
+
+16 July 2020: Wouter
+	- Fix check conf test for referencing installation paths.
+	- Fix unused variable warning for clang analyzer.
+
+16 July 2020: George
+	- Introduce 'include-toplevel:' configuration option.
+
+16 July 2020: Ralph
+	- Add bidirectional frame streams support.
+
+8 July 2020: Wouter
+	- Fix add missing DSA header, for compilation without deprecated
+	  OpenSSL APIs.
+	- Fix to use SSL_CTX_set_tlsext_ticket_key_evp_cb in OpenSSL
+	  3.0.0-alpha4.
+	- Longer keys for the test set, this avoids weak crypto errors.
+
+7 July 2020: Wouter
+	- Fix #259: Fix unbound-checkconf does not check view existence.
+	  unbound-checkconf checks access-control-view, access-control-tags,
+	  access-control-tag-actions and access-control-tag-datas.
+	- Fix offset of error printout for access-control-tag-datas.
+	- Review fixes for checkconf #259 change.
+
+6 July 2020: Wouter
+	- run_vm cleanup better and removes trailing slash on single argument.
+
+29 June 2020: Wouter
+	- Move reply list clean for serve expired mesh callback to after
+	  the reply is sent, so that script callbacks have reply_info.
+	- Also move reply list clean for mesh callbacks to the scrip callback
+	  can see the reply_info.
+	- Fix for mesh accounting if the reply list already empty to begin
+	  with.
+	- Fix for mesh accounting when rpz decides to drop a reply with a
+	  tcp stream waiting for it.
+	- Review fix for number of detached states due to use of variable
+	  after end of loop.
+	- Fix tcp req info drop due to size call into mesh accounting
+	  removal of mesh state during mesh send reply.
+
+24 June 2020: Wouter
+	- iana portlist updated.
+	- doxygen file comments for dynlibmodule.
+
+17 June 2020: Wouter
+	- Fix default explanation in man page for qname-minimisation-strict.
+	- Fix display of event loop method with libev.
+
+8 June 2020: Wouter
+	- Mention tls name possible when tls is enabled for stub-addr in the
+	  man page.
+
+27 May 2020: George
+	- Merge PR #241 by Robert Edmonds: contrib/libunbound.pc.in: Do not use
+	  "Requires:".
+
+25 May 2020: George
+	- Update contrib/aaaa-filter-iterator.patch for the recent
+	  generate_sub_request() change and to apply cleanly.
+
+21 May 2020: George
+	- Fix for integer overflow when printing RDF_TYPE_TIME.
+
+19 May 2020: Wouter
+	- CVE-2020-12662 Unbound can be tricked into amplifying an incoming
+	  query into a large number of queries directed to a target.
+	- CVE-2020-12663 Malformed answers from upstream name servers can be
+	  used to make Unbound unresponsive.
+	- Release 1.10.1 is 1.10.0 with fixes, code repository continues,
+	  including those fixes, towards the next release.  Configure has
+	  version 1.10.2 version number in it.
+	- For PR #93: windows compile warnings removal
+	- windows compile warnings removal for ip dscp option code.
+	- For PR #93: unit test for dynlib module.
+
+18 May 2020: Wouter
+	- For PR #93: dynlibmod can handle reloads and deinit and inits again,
+	  with dlclose and dlopen of the library again.  Also for multiple
+	  modules.  Fix memory leak by not closing dlopened content.  Fix
+	  to allow one dynlibmod instance by unbound-checkconf.
+	- For PR #93: checkconf allows multiple dynlib in module-config, for
+	  a couple cases.
+	- For PR #93: checkconf allows python dynlib in module-config, for
+	  a couple cases.
+	- For PR #93: man page spelling reference fix.
+	- For PR #93: fix link of other executables for dynlibmod dependency.
+
+15 May 2020: Wouter
+	- Merge PR #93: Add dynamic library support.
+	- Fixed conflicts for PR #93 and make configure, yacc, lex.
+	- For PR #93: Fix warnings for dynlibmodule.
+
+15 May 2020: Ralph
+	- Cache ECS answers with longest scope of CNAME chain.
+
+22 April 2020: George
+	- Explicitly use 'rrset-roundrobin: no' for test cases.
+
+21 April 2020: Wouter
+	- Merge #225 from akhait: KSK-2010 has been revoked. It removes the
+	  KSK-2010 from the default list in unbound-anchor, now that the
+	  revocation period is over.  KSK-2017 is the only trust anchor in
+	  the shipped default now.
+
+21 April 2020: George
+	- Change default value for 'rrset-roundrobin' to yes.
+	- Fix tests for new rrset-roundrobin default.
+
+20 April 2020: Wouter
+	- Fix #222: --enable-rpath, fails to rpath python lib.
+	- Fix for count of reply states in the mesh.
+	- Remove unneeded was_mesh_reply check.
+
+17 April 2020: George
+	- Add SNI support on more TLS connections (fixes #193).
+	- Add SNI support to unbound-anchor.
+
+16 April 2020: George
+	- Add doxygen documentation for DSCP.
+
+16 April 2020: Wouter
+	- Fix help return code in unbound-control-setup script.
+	- Fix for posix shell syntax for trap in nsd-control-setup.
+	- Fix for posix shell syntax for trap in run_msg.sh test script.
+
+15 April 2020: George
+	- Fix #220: auth-zone section in config may lead to segfault.
+
+7 April 2020: Wouter
+	- Merge PR #214 from gearnode: unbound-control-setup recreate
+	  certificates.  With the -r option the certificates are created
+	  again, without it, only the files that do not exist are created.
+
+6 April 2020: Ralph
+	- Keep track of number of timeouts. Use this counter to determine if
+	  capsforid fallback should be started.
+
+6 April 2020: George
+	- More documentation for redis-expire-records option.
+
+1 April 2020: George
+	- Merge PR #206: Redis TTL, by Talkabout.
+
+30 March 2020: Wouter
+	- Merge PR #207: Clarify if-automatic listens on 0.0.0.0 and ::
+	- Merge PR #208: Fix uncached CLIENT_RESPONSE'es on stateful
+	  transports.
+
+27 March 2020: Wouter
+	- Merge PR #203 from noloader: Update README-Travis.md with current
+	  procedures.
+
+27 March 2020: Ralph
+	- Make unbound-control error returned on missing domain name more user
+	  friendly.
+
+26 March 2020: Ralph
+	- Fix RPZ concurrency issue when using auth_zone_reload.
+
+25 March 2020: George
+	- Merge PR #201 from noloader: Fix OpenSSL cross-compaile warnings.
+	- Fix on #201.
+
+24 March 2020: Wouter
+	- Merge PR #200 from yarikk: add ip-dscp option to specify the DSCP
+	  tag for outgoing packets.
+	- Fixes on #200.
+	- Travis fix for ios by omitting tools from install.
+
+23 March 2020: Wouter
+	- Fix compile on Solaris for unbound-checkconf.
+
+20 March 2020: George
+	- Merge PR #198 from fobser: Declare lz_enter_rr_into_zone() static, it's
+	  only used in this file.
+
+20 March 2020: Wouter
+	- Merge PR #197 from fobser: Make log_ident_revert_to_default() a
+	  proper prototype.
+
+19 March 2020: Ralph
+	- Merge PR#191: Update iOS testing on Travis, by Jeffrey Walton.
+	- Fix #158: open tls-session-ticket-keys as binary, for Windows. By
+	  Daisuke HIGASHI.
+	- Merge PR#134, Allow the kernel to provide random source ports. By
+	  Florian Obser.
+	- Log warning when using outgoing-port-permit and outgoing-port-avoid
+	  while explicit port randomisation is disabled.
+	- Merge PR#194: Add libevent testing to Travis, by Jeffrey Walton.
+	- Fix .travis.yml error, missing 'env' option.
+
+16 March 2020: Wouter
+	- Fix #192: In the unbound-checkconf tool, the module config of
+	  dns64 subnetcache respip validator iterator is whitelisted, it was
+	  reported it seems to work.
+
+12 March 2020: Wouter
+	- Fix compile of test tools without protobuf.
+
+11 March 2020: Ralph
+	- Add check to make sure RPZ records are subdomains of configured
+	  zone origin.
+
+11 March 2020: George
+	- Fix #189: mini_event.h:142:17: error: field 'ev_timeout' has incomplete
+	  type, by noloader.
+	- Changelog entry for (Fix #189, Merge PR #190).
+
+11 March 2020: Wouter
+	- Fix #188: unbound-control.c:882:6: error: 'execlp' is
+	  unavailable: not available on tvOS.
+
+6 March 2020: George
+	- Merge PR #186, fix #183: Fix unrecognized 'echo -n' option on OS X, by
+	  noloader
+
+5 March 2020: Wouter
+	- Fix PR #182 from noloader: Add iOS testing to Travis.
+
+4 March 2020: Ralph
+	- Update README-Travis.md (from PR #179), by Jeffrey Walton.
+
+4 March 2020: George
+	- Merge PR #181 from noloader: Fix OpenSSL -pie warning on Android.
+
+4 March 2020: Wouter
+	- Merge PR #180 from noloader: Avoid calling exit in Travis script.
+
+3 March 2020: George
+	- Upgrade config.guess(2020-01-01) and config.sub(2020-01-01).
+
+2 March 2020: Ralph
+	- Fix #175, Merge PR #176: fix link error when OpenSSL is configured
+ 	  with no-engine, thanks noloader.
+
+2 March 2020: George
+	- Fix compiler warning in dns64/dns64.c
+	- Merge PR #174: Add Android to Travis testing, by noloader.
+	- Move android build scripts to contrib/ and allow android tests to fail.
+
+2 March 2020: Wouter
+	- Fix #177: dnstap does not build on macOS.
+
+28 February 2020: Ralph
+	- Merge PR #172: Add IBM s390x arch for testing, by noloader.
+
+28 February 2020: Wouter
+	- Merge PR #173: updated makedist.sh for config.guess and
+	  config.sub and sha256 digest for gpg, by noloader.
+	- Merge PR #164: Framestreams, this branch implements dnstap
+	  unidirectional connectivity in unbound. This has a number of
+	  new features.
+
+	  The dependency on libfstrm is removed. The fstrm protocol code
+	  resides in dnstap/dnstap_fstrm.h and dnstap/dnstap_fstrm.c. This
+	  contains a brief definition of what unbound needs.
+
+	  The make unbound-dnstap-socket builds a debug tool,
+	  unbound-dnstap-socket. It can listen, accept multiple DNSTAP
+	  streams and print information. Commandline options control it.
+
+	  Unbound can reconnect if the unix domain socket file socket is
+	  closed. This uses exponential backoff after which it uses a
+	  one second timer to throttle cpu down. There is also support
+	  to use TCP and TLS for connecting to the log server. There
+	  are new config options to turn them on, in the dnstap section
+	  in the man page and example config file. dnstap-ip with IP
+	  address of server for TCP or TLS use. dnstap-tls to turn
+	  on TLS. And dnstap-tls-server-name, dnstap-tls-cert-bundle,
+	  dnstap-tls-client-key-file and dnstap-tls-client-cert-file
+	  to configure the certificates for server authentication and
+	  client authentication, or leave at "" to not use that.
+
+27 February 2020: George
+	- Merge PR #171: Add additional compilers and platforms to Travis
+	  testing, by noloader.
+
+27 February 2020: Wouter
+	- Fix #169: Fix warning for daemon/remote.c output may be truncated
+	  from snprintf.
+	- Fix #170: Fix gcc undefined sanitizer signed integer overflow
+	  warning in signature expiry RFC1982 serial number arithmetic.
+	- Fix more undefined sanitizer issues, in respip copy_rrset null
+	  dname, and in the client_info_compare routine for null memcmp.
+
+26 February 2020: Wouter
+	- iana portlist updated.
+
+25 February 2020: Wouter
+	- Fix #165: Add prefer-ip4: yesno config option to prefer ipv4 for
+	  using ipv4 filters, because the hosts ip6 netblock /64 is not owned
+	  by one operator, and thus reputation is shared.
+
+24 February 2020: George
+	- Merge PR #166: Fix typo in unbound.service.in, by glitsj16.
+
+20 February 2020: Wouter
+	- Updated contrib/unbound_smf23.tar.gz with Solaris SMF service for
+	  Unbound from Yuri Voinov.
+	- master branch has 1.10.1 version.
+
+18 February 2020: Wouter
+	- protect X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS with ifdef for
+	  different openssl versions.
+
+17 February 2020: Wouter
+	- changelog point where the tag for 1.10.0rc2 release is.  And with
+	  the unbound_smf23 commit added to it, that is the 1.10.0 release.
+
+17 February 2020: Ralph
+	- Add respip to supported module-config options in unbound-checkconf.
+
+17 February 2020: George
+	- Remove unused variable.
+
+17 February 2020: Wouter
+	- contrib/drop2rpz: perl script that converts the Spamhaus DROP-List
+	  in RPZ-Format, contributed by Andreas Schulze.
+
+14 February 2020: Wouter
+	- Fix spelling in unbound.conf.5.in.
+	- Stop unbound-checkconf from insisting that auth-zone and rpz
+	  zonefiles have to exist.  They can not exist, and download later.
+
+13 February 2020: Wouter
+	- tag for 1.10.0rc1 release.
+
+12 February 2020: Wouter
+	- Fix with libnettle make test with dsa disabled.
+	- Fix contrib/fastrpz.patch to apply cleanly.  Fix for serve-stale
+	  fixes, but it does not compile, conflicts with new rpz code.
+	- Fix to clean memory leak of respip_addr.lock when ip_tree deleted.
+	- Fix compile warning when threads disabled.
+	- updated version number to 1.10.0.
+
+10 February 2020: George
+	- Document 'ub_result.was_ratelimited' in libunbound.
+	- Fix use after free on log-identity after a reload; Fixes #163.
+
+6 February 2020: George
+	- Fix num_reply_states and num_detached_states counting with
+	  serve_expired_callback.
+	- Cleaner code in mesh_serve_expired_lookup.
+	- Document in unbound.conf manpage that configuration clauses can be
+	  repeated in the configuration file.
+
+6 February 2020: Wouter
+	- Fix num_reply_addr counting in mesh and tcp drop due to size
+	  after serve_stale commit.
+	- Fix to create and destroy rpz_lock in auth_zones structure.
+	- Fix to lock zone before adding rpz qname trigger.
+	- Fix to lock and release once in mesh_serve_expired_lookup.
+	- Fix to put braces around empty if body when threading is disabled.
+
+5 February 2020: George
+	- Added serve-stale functionality as described in
+	  draft-ietf-dnsop-serve-stale-10. `serve-expired-*` options can be used
+	  to configure the behavior.
+	- Updated cachedb to honor `serve-expired-ttl`; Fixes #107.
+	- Renamed statistic `num.zero_ttl` to `num.expired` as expired replies
+	  come with a configurable TTL value (`serve-expired-reply-ttl`).
+	- Fixed stats when replying with cached, cname-aliased records.
+	- Added missing default values for redis cachedb backend.
+
+3 February 2020: Ralph
+	- Add assertion to please static analyzer
+
+31 January 2020: Wouter
+	- Fix fclose on error in TLS session ticket code.
+
+30 January 2020: Ralph
+	- Fix memory leak in error condition remote.c
+	- Fix double free in error condition view.c
+	- Fix memory leak in do_auth_zone_transfer on success
+	- Merge RPZ support into master. Only QNAME and Response IP triggers are
+	  supported.
+	- Stop working on socket when socket() call returns an error.
+	- Check malloc return values in TLS session ticket code
+
+30 January 2020: Wouter
+	- Fix subnet tests for disabled DSA algorithm by default.
+	- Update contrib/fastrpz.patch for clean diff with current code.
+	- Merge PR#151: Fixes for systemd units, by Maryse47, Edmonds
+	  and Frzk.  Updates the unbound.service systemd file and adds
+	  a portable systemd service file.
+	- updated .gitignore for added contrib file.
+	- Add build rule for ipset to Makefile
+	- Add getentropy_freebsd.o to Makefile dependencies.
+
+29 January 2020: Ralph
+	- Merge PR#156 from Alexander Berkes; Added unbound-control
+	  view_local_datas_remove command.
+
+29 January 2020: Wouter
+	- Fix #157: undefined reference to `htobe64'.
+
+28 January 2020: Ralph
+	- Merge PR#147; change rfc reference for reserved top level dns names.
+
+28 January 2020: Wouter
+	- iana portlist updated.
+	- Fix to silence the tls handshake errors for broken pipe and reset
+	  by peer, unless verbosity is set to 2 or higher.
+
+27 January 2020: Ralph
+	- Merge PR#154; Allow use of libbsd functions with configure option
+	  --with-libbsd. By Robert Edmonds and Steven Chamberlain.
+	- Merge PR#148; Add some TLS stats to unbound_munin_. By Fredrik Pettai.
+
+27 January 2020: Wouter
+	- Merge PR#155 from Robert Edmonds: contrib/libunbound.pc.in: Fixes
+	  to Libs/Requires for crypto library dependencies.
+	- Fix #153: Disable validation for DSA algorithms.  RFC 8624
+	  compliance.
+
+23 January 2020: Wouter
+	- Merge PR#150 from Frzk: Systemd unit without chroot.  It add
+	  contrib/unbound_nochroot.service.in, a systemd file for use with
+	  chroot: "", see comments in the file, it uses systemd protections
+	  instead.
+
+14 January 2020: Wouter
+	- Removed the dnscrypt_queries and dnscrypt_queries_chacha tests,
+	  because dnscrypt-proxy (2.0.36) does not support the test setup
+	  any more, and also the config file format does not seem to have
+	  the appropriate keys to recreate that setup.
+	- Fix crash after reload where a stats lookup could reference old key
+	  cache and neg cache structures.
+	- Fix for memory leak when edns subnet config options are read when
+	  compiled without edns subnet support.
+	- Fix auth zone support for NSEC3 records without salt.
+
+10 January 2020: Wouter
+	- Fix the relationship between serve-expired and prefetch options,
+	  patch from Saksham Manchanda from Secure64.
+	- Fix unreachable code in ssl set options code.
+
+8 January 2020: Ralph
+	- Fix #138: stop binding pidfile inside chroot dir in systemd service
+	  file.
+
+8 January 2020: Wouter
+	- Fix 'make test' to work for --disable-sha1 configure option.
+	- Fix out-of-bounds null-byte write in sldns_bget_token_par while
+	  parsing type WKS, reported by Luis Merino from X41 D-Sec.
+	- Updated sldns_bget_token_par fix for also space for the zero
+	  delimiter after the character.  And update for more spare space.
+
+6 January 2020: George
+	- Downgrade compat/getentropy_solaris.c to version 1.4 from OpenBSD.
+	  The dl_iterate_phdr() function introduced in newer versions raises
+	  compilation errors on solaris 10.
+	- Changes to compat/getentropy_solaris.c for,
+	  ifdef stdint.h inclusion for older systems.
+	  ifdef sha2.h inclusion for older systems.
+
+6 January 2020: Wouter
+	- Merge #135 from Florian Obser: Use passed in neg and key cache
+	  if non-NULL.
+	- Fix #140: Document slave not downloading new zonefile upon update.
+
+16 December 2019: George
+	- Update mailing list URL.
+
+12 December 2019: Ralph
+	- Master is 1.9.7 in development.
+	- Fix typo to let serve-expired-ttl work with ub_ctx_set_option(), by
+	  Florian Obser
+
+10 December 2019: Wouter
+	- Fix to make auth zone IXFR to fallback to AXFR if a single
+	  response RR is received over TCP with the SOA in it.
+
 6 December 2019: Wouter
 	- Fix ipsecmod compile.
 	- Fix Makefile.in for ipset module compile, from Adi Prasaja.
+	- release-1.9.6 tag, which became the 1.9.6 release
 
 5 December 2019: Wouter
 	- unbound-fuzzers.tar.bz2: three programs for fuzzing, that are 1:1
@@ -2397,7 +4899,7 @@
 	- Fix that with openssl 1.1 control-use-cert: no uses less cpu, by
 	  using no encryption over the unix socket.
 
-22 Novenber 2016: Ralph
+22 November 2016: Ralph
 	- Make access-control-tag-data RDATA absolute. This makes the RDATA
 	  origin consistent between local-data and access-control-tag-data.
 	- Fix NSEC ENT wildcard check. Matching wildcard does not have to be a

@@ -43,6 +43,7 @@
 #define UTIL_DATA_MSGREPLY_H
 #include "util/storage/lruhash.h"
 #include "util/data/packed_rrset.h"
+#include "sldns/rrdef.h"
 struct sldns_buffer;
 struct comm_reply;
 struct alloc_cache;
@@ -168,6 +169,19 @@ struct reply_info {
 	enum sec_status security;
 
 	/**
+	 * EDE (rfc8914) code with reason for DNSSEC bogus status.
+	 * Used for caching the EDE.
+	 */
+	sldns_ede_code reason_bogus;
+
+        /**
+         * EDE (rfc8914) NULL-terminated string with human-readable reason
+	 * for DNSSEC bogus status.
+	 * Used for caching the EDE.
+         */
+        char* reason_bogus_str;
+
+	/**
 	 * Number of RRsets in each section.
 	 * The answer section. Add up the RRs in every RRset to calculate
 	 * the number of RRs, and the count for the dns packet. 
@@ -234,13 +248,15 @@ struct msgreply_entry {
  * @param ar: ar count
  * @param total: total rrset count (presumably an+ns+ar).
  * @param sec: security status of the reply info.
+ * @param reason_bogus: the Extended DNS Error for DNSSEC bogus status
  * @return the reply_info base struct with the array for putting the rrsets
  * in.  The array has been zeroed.  Returns NULL on malloc failure.
  */
 struct reply_info*
 construct_reply_info_base(struct regional* region, uint16_t flags, size_t qd,
-		time_t ttl, time_t prettl, time_t expttl, size_t an, size_t ns,
-		size_t ar, size_t total, enum sec_status sec);
+	time_t ttl, time_t prettl, time_t expttl, size_t an, size_t ns,
+	size_t ar, size_t total, enum sec_status sec,
+	sldns_ede_code reason_bogus);
 
 /** 
  * Parse wire query into a queryinfo structure, return 0 on parse error. 
@@ -382,6 +398,21 @@ struct reply_info* reply_info_copy(struct reply_info* rep,
 int reply_info_alloc_rrset_keys(struct reply_info* rep,
 	struct alloc_cache* alloc, struct regional* region);
 
+/*
+ * Create a new reply_info based on 'rep'.  The new info is based on
+ * the passed 'rep', but ignores any rrsets except for the first 'an_numrrsets'
+ * RRsets in the answer section.  These answer rrsets are copied to the
+ * new info, up to 'copy_rrsets' rrsets (which must not be larger than
+ * 'an_numrrsets').  If an_numrrsets > copy_rrsets, the remaining rrsets array
+ * entries will be kept empty so the caller can fill them later.  When rrsets
+ * are copied, they are shallow copied.  The caller must ensure that the
+ * copied rrsets are valid throughout its lifetime and must provide appropriate
+ * mutex if it can be shared by multiple threads.
+ */
+struct reply_info *
+make_new_reply_info(const struct reply_info* rep, struct regional* region,
+	size_t an_numrrsets, size_t copy_rrsets);
+
 /**
  * Copy a parsed rrset into given key, decompressing and allocating rdata.
  * @param pkt: packet for decompression
@@ -504,18 +535,6 @@ void log_query_info(enum verbosity_value v, const char* str,
 	struct query_info* qinf);
 
 /**
- * Append edns option to edns data structure
- * @param edns: the edns data structure to append the edns option to.
- * @param region: region to allocate the new edns option.
- * @param code: the edns option's code.
- * @param len: the edns option's length.
- * @param data: the edns option's data.
- * @return false on failure.
- */
-int edns_opt_append(struct edns_data* edns, struct regional* region,
-	uint16_t code, size_t len, uint8_t* data);
-
-/**
  * Append edns option to edns option list
  * @param list: the edns option list to append the edns option to.
  * @param code: the edns option's code.
@@ -525,7 +544,48 @@ int edns_opt_append(struct edns_data* edns, struct regional* region,
  * @return false on failure.
  */
 int edns_opt_list_append(struct edns_option** list, uint16_t code, size_t len,
-	uint8_t* data, struct regional* region);
+        uint8_t* data, struct regional* region);
+
+/**
+ * Append edns EDE option to edns options list
+ * @param LIST: the edns option list to append the edns option to.
+ * @param REGION: region to allocate the new edns option.
+ * @param CODE: the EDE code.
+ * @param TXT: Additional text for the option
+ */
+#define EDNS_OPT_LIST_APPEND_EDE(LIST, REGION, CODE, TXT) 		\
+	do {								\
+		struct {						\
+			uint16_t code;					\
+			char text[sizeof(TXT) - 1];			\
+		} ede = { htons(CODE), TXT };				\
+                verbose(VERB_ALGO, "attached EDE code: %d with"		\
+                        " message: %s", CODE, TXT);			\
+		edns_opt_list_append((LIST), LDNS_EDNS_EDE, 		\
+			sizeof(uint16_t) + sizeof(TXT) - 1,		\
+			(void *)&ede, (REGION));			\
+	} while(0)
+
+/**
+ * Append edns EDE option to edns options list
+ * @param list: the edns option list to append the edns option to.
+ * @param region: region to allocate the new edns option.
+ * @param code: the EDE code.
+ * @param txt: Additional text for the option
+ * @return false on failure.
+ */
+int edns_opt_list_append_ede(struct edns_option** list, struct regional* region,
+	sldns_ede_code code, const char *txt);
+
+/**
+ * Append edns keep alive option to edns options list
+ * @param list: the edns option list to append the edns option to.
+ * @param msec: the duration in msecs for the keep alive.
+ * @param region: region to allocate the new edns option.
+ * @return false on failure.
+ */
+int edns_opt_list_append_keepalive(struct edns_option** list, int msec,
+	struct regional* region);
 
 /**
  * Remove any option found on the edns option list that matches the code.
@@ -552,13 +612,16 @@ struct edns_option* edns_opt_list_find(struct edns_option* list, uint16_t code);
  * @param rep: Reply info. Could be NULL.
  * @param rcode: return code.
  * @param edns: edns data of the reply.
- * @param repinfo: comm_reply. NULL.
+ * @param repinfo: comm_reply. Reply information for a communication point.
  * @param region: region to store data.
+ * @param start_time: the start time of recursion, when the packet arrived,
+ * 	or the current time for cache responses.
  * @return false on failure (a callback function returned an error).
  */
 int inplace_cb_reply_call(struct module_env* env, struct query_info* qinfo,
 	struct module_qstate* qstate, struct reply_info* rep, int rcode,
-	struct edns_data* edns, struct comm_reply* repinfo, struct regional* region);
+	struct edns_data* edns, struct comm_reply* repinfo, struct regional* region,
+	struct timeval* start_time);
 
 /**
  * Call the registered functions in the inplace_cb_reply_cache linked list.
@@ -571,12 +634,15 @@ int inplace_cb_reply_call(struct module_env* env, struct query_info* qinfo,
  * @param edns: edns data of the reply. Edns input can be found here.
  * @param repinfo: comm_reply. Reply information for a communication point.
  * @param region: region to store data.
+ * @param start_time: the start time of recursion, when the packet arrived,
+ * 	or the current time for cache responses.
  * @return false on failure (a callback function returned an error).
  */
 int inplace_cb_reply_cache_call(struct module_env* env,
 	struct query_info* qinfo, struct module_qstate* qstate,
 	struct reply_info* rep, int rcode, struct edns_data* edns,
-	struct comm_reply* repinfo, struct regional* region);
+	struct comm_reply* repinfo, struct regional* region,
+	struct timeval* start_time);
 
 /**
  * Call the registered functions in the inplace_cb_reply_local linked list.
@@ -589,12 +655,15 @@ int inplace_cb_reply_cache_call(struct module_env* env,
  * @param edns: edns data of the reply. Edns input can be found here.
  * @param repinfo: comm_reply. Reply information for a communication point.
  * @param region: region to store data.
+ * @param start_time: the start time of recursion, when the packet arrived,
+ * 	or the current time for cache responses.
  * @return false on failure (a callback function returned an error).
  */
 int inplace_cb_reply_local_call(struct module_env* env,
 	struct query_info* qinfo, struct module_qstate* qstate,
 	struct reply_info* rep, int rcode, struct edns_data* edns,
-	struct comm_reply* repinfo, struct regional* region);
+	struct comm_reply* repinfo, struct regional* region,
+	struct timeval* start_time);
 
 /**
  * Call the registered functions in the inplace_cb_reply linked list.
@@ -608,12 +677,15 @@ int inplace_cb_reply_local_call(struct module_env* env,
  *	is NULL.
  * @param repinfo: comm_reply. Reply information for a communication point.
  * @param region: region to store data.
+ * @param start_time: the start time of recursion, when the packet arrived,
+ * 	or the current time for cache responses.
  * @return false on failure (a callback function returned an error).
  */
 int inplace_cb_reply_servfail_call(struct module_env* env,
 	struct query_info* qinfo, struct module_qstate* qstate,
 	struct reply_info* rep, int rcode, struct edns_data* edns,
-	struct comm_reply* repinfo, struct regional* region);
+	struct comm_reply* repinfo, struct regional* region,
+	struct timeval* start_time);
 
 /**
  * Call the registered functions in the inplace_cb_query linked list.
@@ -665,6 +737,12 @@ int inplace_cb_query_response_call(struct module_env* env,
  */
 struct edns_option* edns_opt_copy_region(struct edns_option* list,
 	struct regional* region);
+
+/**
+ * Copy a filtered edns option list allocated to the new region
+ */
+struct edns_option* edns_opt_copy_filter_region(struct edns_option* list,
+	uint16_t* filter_list, size_t filter_list_len, struct regional* region);
 
 /**
  * Copy edns option list allocated with malloc

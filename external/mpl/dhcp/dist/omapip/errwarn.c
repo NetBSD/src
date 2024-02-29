@@ -1,4 +1,4 @@
-/*	$NetBSD: errwarn.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: errwarn.c,v 1.2.6.1 2024/02/29 11:39:57 martin Exp $	*/
 
 /* errwarn.c
 
@@ -6,7 +6,7 @@
 
 /*
  * Copyright (c) 1995 RadioMail Corporation.
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,8 +22,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: errwarn.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: errwarn.c,v 1.2.6.1 2024/02/29 11:39:57 martin Exp $");
 
 #include "dhcpd.h"
 
@@ -50,16 +50,16 @@ int log_perror = 1;
 void (*log_cleanup) (void);
 
 #define CVT_BUF_MAX 1023
-static char mbuf [CVT_BUF_MAX + 1];
-static char fbuf [CVT_BUF_MAX + 1];
 
 /* Log an error message, then exit... */
 
 void log_fatal (const char * fmt, ... )
 {
   va_list list;
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
 
-  do_percentm (fbuf, fmt);
+  do_percentm (fbuf, sizeof fbuf, fmt);
 
   /* %Audit% This is log output. %2004.06.17,Safe%
    * If we truncate we hope the user can get a hint from the log.
@@ -96,9 +96,11 @@ void log_fatal (const char * fmt, ... )
 
 int log_error (const char * fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
-  do_percentm (fbuf, fmt);
+  do_percentm (fbuf, sizeof fbuf, fmt);
 
   /* %Audit% This is log output. %2004.06.17,Safe%
    * If we truncate we hope the user can get a hint from the log.
@@ -123,9 +125,11 @@ int log_error (const char * fmt, ...)
 
 int log_info (const char *fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
-  do_percentm (fbuf, fmt);
+  do_percentm (fbuf, sizeof fbuf, fmt);
 
   /* %Audit% This is log output. %2004.06.17,Safe%
    * If we truncate we hope the user can get a hint from the log.
@@ -150,9 +154,11 @@ int log_info (const char *fmt, ...)
 
 int log_debug (const char *fmt, ...)
 {
+  char mbuf [CVT_BUF_MAX + 1];
+  char fbuf [CVT_BUF_MAX + 1];
   va_list list;
 
-  do_percentm (fbuf, fmt);
+  do_percentm (fbuf, sizeof fbuf, fmt);
 
   /* %Audit% This is log output. %2004.06.17,Safe%
    * If we truncate we hope the user can get a hint from the log.
@@ -175,8 +181,9 @@ int log_debug (const char *fmt, ...)
 
 /* Find %m in the input string and substitute an error message string. */
 
-void do_percentm (obuf, ibuf)
+void do_percentm (obuf, obufsize, ibuf)
      char *obuf;
+     size_t obufsize;
      const char *ibuf;
 {
 	const char *s = ibuf;
@@ -196,13 +203,13 @@ void do_percentm (obuf, ibuf)
 				if (!m)
 					m = "<unknown error>";
 				len += strlen (m);
-				if (len > CVT_BUF_MAX)
+				if (len > obufsize - 1)
 					goto out;
 				strcpy (p - 1, m);
 				p += strlen (p);
 				++s;
 			} else {
-				if (++len > CVT_BUF_MAX)
+				if (++len > obufsize - 1)
 					goto out;
 				*p++ = *s++;
 			}
@@ -210,7 +217,7 @@ void do_percentm (obuf, ibuf)
 		} else {
 			if (*s == '%')
 				infmt = 1;
-			if (++len > CVT_BUF_MAX)
+			if (++len > obufsize - 1)
 				goto out;
 			*p++ = *s++;
 		}

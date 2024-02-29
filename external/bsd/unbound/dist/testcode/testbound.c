@@ -42,16 +42,22 @@
 #ifdef HAVE_TIME_H
 #  include <time.h>
 #endif
+#include <ctype.h>
 #include "testcode/testpkts.h"
 #include "testcode/replay.h"
 #include "testcode/fake_event.h"
 #include "daemon/remote.h"
+#include "libunbound/worker.h"
 #include "util/config_file.h"
 #include "sldns/keyraw.h"
-#include <ctype.h>
+#ifdef UB_ON_WINDOWS
+#include "winrc/win_svc.h"
+#endif
 
 /** signal that this is a testbound compile */
 #define unbound_testbound 1
+/** renamed main routine */
+int daemon_main(int argc, char* argv[]);
 /** 
  * include the main program from the unbound daemon.
  * rename main to daemon_main to call it
@@ -162,7 +168,7 @@ spool_temp_file_name(int* lineno, FILE* cfg, char* id)
 		id++;
 	if(*id == '\0') 
 		fatal_exit("TEMPFILE_NAME must have id, line %d", *lineno);
-	id[strlen(id)-1]=0; /* remove newline */
+	strip_end_white(id);
 	fake_temp_file("_temp_", id, line, sizeof(line));
 	fprintf(cfg, "\"%s\"\n", line);
 }
@@ -179,7 +185,7 @@ spool_temp_file(FILE* in, int* lineno, char* id)
 		id++;
 	if(*id == '\0') 
 		fatal_exit("TEMPFILE_CONTENTS must have id, line %d", *lineno);
-	id[strlen(id)-1]=0; /* remove newline */
+	strip_end_white(id);
 	fake_temp_file("_temp_", id, line, sizeof(line));
 	/* open file and spool to it */
 	spool = fopen(line, "w");
@@ -199,7 +205,7 @@ spool_temp_file(FILE* in, int* lineno, char* id)
 			char* tid = parse+17;
 			while(isspace((unsigned char)*tid))
 				tid++;
-			tid[strlen(tid)-1]=0; /* remove newline */
+			strip_end_white(tid);
 			fake_temp_file("_temp_", tid, l2, sizeof(l2));
 			snprintf(line, sizeof(line), "$INCLUDE %s\n", l2);
 		}
@@ -224,7 +230,7 @@ spool_auto_file(FILE* in, int* lineno, FILE* cfg, char* id)
 		id++;
 	if(*id == '\0') 
 		fatal_exit("AUTROTRUST_FILE must have id, line %d", *lineno);
-	id[strlen(id)-1]=0; /* remove newline */
+	strip_end_white(id);
 	fake_temp_file("_auto_", id, line, sizeof(line));
 	/* add option for the file */
 	fprintf(cfg, "server:	auto-trust-anchor-file: \"%s\"\n", line);
@@ -273,6 +279,7 @@ setup_config(FILE* in, int* lineno, int* pass_argc, char* pass_argv[])
 	fprintf(cfg, "		username: \"\"\n");
 	fprintf(cfg, "		pidfile: \"\"\n");
 	fprintf(cfg, "		val-log-level: 2\n");
+	fprintf(cfg, "		log-servfail: yes\n");
 	fprintf(cfg, "remote-control:	control-enable: no\n");
 	while(fgets(line, MAX_LINE_LEN-1, in)) {
 		parse = line;
@@ -333,7 +340,7 @@ setup_playback(const char* filename, int* pass_argc, char* pass_argv[])
 }
 
 /** remove config file at exit */
-void remove_configfile(void)
+static void remove_configfile(void)
 {
 	struct config_strlist* p;
 	for(p=cfgfiles; p; p=p->next)
@@ -362,7 +369,12 @@ main(int argc, char* argv[])
 	/* we do not want the test to depend on the timezone */
 	(void)putenv("TZ=UTC");
 	memset(pass_argv, 0, sizeof(pass_argv));
+#ifdef HAVE_SYSTEMD
+	/* we do not want the test to use systemd daemon startup notification*/
+	(void)unsetenv("NOTIFY_SOCKET");
+#endif /* HAVE_SYSTEMD */
 
+	checklock_start();
 	log_init(NULL, 0, NULL);
 	/* determine commandline options for the daemon */
 	pass_argc = 1;
@@ -547,22 +559,28 @@ void remote_get_opt_ssl(char* ATTR_UNUSED(str), void* ATTR_UNUSED(arg))
         log_assert(0);
 }
 
+#ifdef UB_ON_WINDOWS
 void wsvc_command_option(const char* ATTR_UNUSED(wopt), 
 	const char* ATTR_UNUSED(cfgfile), int ATTR_UNUSED(v), 
 	int ATTR_UNUSED(c))
 {
 	log_assert(0);
 }
+#endif
 
+#ifdef UB_ON_WINDOWS
 void wsvc_setup_worker(struct worker* ATTR_UNUSED(worker))
 {
 	/* do nothing */
 }
+#endif
 
+#ifdef UB_ON_WINDOWS
 void wsvc_desetup_worker(struct worker* ATTR_UNUSED(worker))
 {
 	/* do nothing */
 }
+#endif
 
 #ifdef UB_ON_WINDOWS
 void worker_win_stop_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
@@ -577,3 +595,23 @@ void wsvc_cron_cb(void* ATTR_UNUSED(arg))
 }
 #endif /* UB_ON_WINDOWS */
 
+int tcp_connect_errno_needs_log(struct sockaddr* ATTR_UNUSED(addr),
+	socklen_t ATTR_UNUSED(addrlen))
+{
+	return 1;
+}
+
+int squelch_err_ssl_handshake(unsigned long ATTR_UNUSED(err))
+{
+	return 0;
+}
+
+void listen_setup_locks(void)
+{
+	/* nothing */
+}
+
+void listen_desetup_locks(void)
+{
+	/* nothing */
+}

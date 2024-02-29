@@ -16,7 +16,6 @@
 #include "namedb.h"
 #include "nsd.h"
 #include "answer.h"
-#include "udbzone.h"
 #include "options.h"
 
 #define NSEC3_RDATA_BITMAP 5
@@ -119,6 +118,7 @@ nsec3_hash_and_store(zone_type* zone, const dname_type* dname, uint8_t* store)
 
 	detect_nsec3_params(zone->nsec3_param, &nsec3_salt,
 		&nsec3_saltlength, &nsec3_iterations);
+	assert(nsec3_iterations >= 0 && nsec3_iterations <= 65536);
 	iterated_hash((unsigned char*)store, nsec3_salt, nsec3_saltlength,
 		dname_name(dname), dname->name_size, nsec3_iterations);
 }
@@ -282,60 +282,12 @@ db_find_nsec3param(struct namedb* db, struct zone* z, struct rr* avoid_rr,
 	return NULL;
 }
 
-static struct rr*
-udb_zone_find_nsec3param(struct namedb* db, udb_base* udb, udb_ptr* uz,
-	struct zone* z, int checkchain)
-{
-	udb_ptr urr;
-	unsigned i;
-	rrset_type* rrset = domain_find_rrset(z->apex, z, TYPE_NSEC3PARAM);
-	if(!rrset) /* no NSEC3PARAM in mem */
-		return NULL;
-	udb_ptr_new(&urr, udb, &ZONE(uz)->nsec3param);
-	if(!urr.data || RR(&urr)->len < 5) {
-		/* no NSEC3PARAM in udb */
-		udb_ptr_unlink(&urr, udb);
-		return NULL;
-	}
-	/* find matching NSEC3PARAM RR in memory */
-	for(i=0; i<rrset->rr_count; i++) {
-		/* if this RR matches the udb RR then we are done */
-		rdata_atom_type* rd = rrset->rrs[i].rdatas;
-		if(rrset->rrs[i].rdata_count < 4) continue;
-		if(RR(&urr)->wire[0] == rdata_atom_data(rd[0])[0] && /*alg*/
-		   RR(&urr)->wire[1] == rdata_atom_data(rd[1])[0] && /*flg*/
-		   RR(&urr)->wire[2] == rdata_atom_data(rd[2])[0] && /*iter*/
-		   RR(&urr)->wire[3] == rdata_atom_data(rd[2])[1] &&
-		   RR(&urr)->wire[4] == rdata_atom_data(rd[3])[0] && /*slen*/
-		   RR(&urr)->len >= 5 + RR(&urr)->wire[4] &&
-		   memcmp(RR(&urr)->wire+5, rdata_atom_data(rd[3])+1,
-			rdata_atom_data(rd[3])[0]) == 0) {
-			udb_ptr_unlink(&urr, udb);
-			if(checkchain) {
-				z->nsec3_param = &rrset->rrs[i];
-				if(!check_apex_soa(db, z, 1))
-					return db_find_nsec3param(db, z,
-						NULL, checkchain);
-			}
-			return &rrset->rrs[i];
-		}
-	}
-	udb_ptr_unlink(&urr, udb);
-	return NULL;
-}
-
 void
-nsec3_find_zone_param(struct namedb* db, struct zone* zone, udb_ptr* z,
+nsec3_find_zone_param(struct namedb* db, struct zone* zone,
 	struct rr* avoid_rr, int checkchain)
 {
-	/* get nsec3param RR from udb */
-	if(db->udb)
-		zone->nsec3_param = udb_zone_find_nsec3param(db, db->udb,
-			z, zone, checkchain);
-	/* no db, get from memory, avoid using the rr that is going to be
-	 * deleted, avoid_rr */
-	else	zone->nsec3_param = db_find_nsec3param(db, zone, avoid_rr,
-			checkchain);
+	/* avoid using the rr that is going to be deleted, avoid_rr */
+	zone->nsec3_param = db_find_nsec3param(db, zone, avoid_rr, checkchain);
 }
 
 /* check params ok for one RR */
@@ -390,9 +342,34 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 			return (domain_type*)r->key;
 		}
 	}
-	if(zone->nsec3_last)
+	if(zone->nsec3_last && zone->nsec3_last != domain)
 		return zone->nsec3_last;
 	return NULL;
+}
+
+
+/** clear hash tree. Called from nsec3_clear_precompile() only. */
+static void
+hash_tree_clear(rbtree_type* tree)
+{
+	if(!tree) return;
+
+	/* Previously (before commit 4ca61188b3f7a0e077476875810d18a5d439871f
+	 * and/or svn commit 4776) prehashes and corresponding rbtree nodes
+	 * were part of struct nsec3_domain_data. Clearing the hash_tree would
+	 * then mean setting the key value of the nodes to NULL to indicate
+	 * absence of the prehash.
+	 * But since prehash structs are separatly allocated, this is no longer
+	 * necessary as currently the prehash structs are simply recycled and 
+	 * NULLed.
+	 *
+	 * rbnode_type* n;
+	 * for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
+	 *	n->key = NULL;
+	 * }
+	 */
+	tree->count = 0;
+	tree->root = RBTREE_NULL;
 }
 
 void
@@ -651,7 +628,7 @@ nsec3_precompile_newparam(namedb_type* db, zone_type* zone)
 			s = time(NULL);
 			VERBOSITY(1, (LOG_INFO, "nsec3 %s %d %%",
 				zone->opts->name,
-				(int)(c*((unsigned long)100)/n)));
+				(n==0)?0:(int)(c*((unsigned long)100)/n)));
 		}
 	}
 	region_destroy(tmpregion);
@@ -660,30 +637,17 @@ nsec3_precompile_newparam(namedb_type* db, zone_type* zone)
 void
 prehash_zone_complete(struct namedb* db, struct zone* zone)
 {
-	udb_ptr udbz;
-
 	/* robust clear it */
 	nsec3_clear_precompile(db, zone);
 	/* find zone settings */
 
 	assert(db && zone);
-	udbz.data = 0;
-	if(db->udb) {
-		if(!udb_zone_search(db->udb, &udbz, dname_name(domain_dname(
-			zone->apex)), domain_dname(zone->apex)->name_size)) {
-			udb_ptr_init(&udbz, db->udb); /* zero the ptr */
-		}
-	}
-	nsec3_find_zone_param(db, zone, &udbz, NULL, 1);
+	nsec3_find_zone_param(db, zone, NULL, 1);
 	if(!zone->nsec3_param || !check_apex_soa(db, zone, 0)) {
 		zone->nsec3_param = NULL;
 		zone->nsec3_last = NULL;
-		if(udbz.data)
-			udb_ptr_unlink(&udbz, db->udb);
 		return;
 	}
-	if(udbz.data)
-		udb_ptr_unlink(&udbz, db->udb);
 	nsec3_precompile_newparam(db, zone);
 }
 
@@ -951,6 +915,10 @@ nsec3_add_nonexist_proof(struct query* query, struct answer* answer,
 		VERBOSITY(3, (LOG_ERR, "nsec3 hash collision for name=%s hash=%s reverse=%s",
 			dname_to_string(to_prove, NULL), hashbuf, reversebuf));
 		RCODE_SET(query->packet, RCODE_SERVFAIL);
+		/* RFC 8914 - Extended DNS Errors
+		 * 4.21. Extended DNS Error Code 0 - Other */
+		ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+			EDE_OTHER, "NSEC3 hash collision");
 		return;
 	}
 	else
@@ -1023,12 +991,21 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 				!prev_par->nsec3->nsec3_is_exact);
 			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 				prev_par->nsec3->nsec3_cover);
+		} else {
+			/* the exact case was handled earlier, so this is
+			 * with a closest-encloser proof, if in the part
+			 * before the else the closest encloser proof is done,
+			 * then we do not need to add a DS here because
+			 * the optout proof is already complete. If not,
+			 * we add the nsec3 here to complete the closest
+			 * encloser proof with a next closer */
+			/* add optout range from parent zone */
+			/* note: no check of optout bit, resolver checks it */
+			if(domain->nsec3) {
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					domain->nsec3->nsec3_ds_parent_cover);
+			}
 		}
-		/* add optout range from parent zone */
-		/* note: no check of optout bit, resolver checks it */
-		if(domain->nsec3)
-			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
-				domain->nsec3->nsec3_ds_parent_cover);
 	}
 }
 
@@ -1051,6 +1028,17 @@ nsec3_answer_nodata(struct query* query, struct answer* answer,
 		}
 		/* query->zone must be the parent zone */
 		nsec3_add_ds_proof(query, answer, original, 0);
+		/* if the DS is from a wildcard match */
+		if (original==original->wildcard_child_closest_match
+			&& label_is_wildcard(dname_name(domain_dname(original)))) {
+			/* denial for wildcard is already there */
+			/* add parent proof to have a closest encloser proof for wildcard parent */
+			/* in other words: nsec3 matching closest encloser */
+			if(original->parent && original->parent->nsec3 &&
+				original->parent->nsec3->nsec3_is_exact)
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					original->parent->nsec3->nsec3_cover);
+		}
 	}
 	/* the nodata is result from a wildcard match */
 	else if (original==original->wildcard_child_closest_match
@@ -1150,6 +1138,10 @@ nsec3_answer_authoritative(struct domain** match, struct query *query,
 			/* wildcard exists below the domain */
 			/* wildcard and nsec3 domain clash. server failure. */
 			RCODE_SET(query->packet, RCODE_SERVFAIL);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.21. Extended DNS Error Code 0 - Other */
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(query->edns.ede,
+				EDE_OTHER, "Wildcard and NSEC3 domain clash");
 		}
 		return;
 	}

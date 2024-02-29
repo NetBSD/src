@@ -43,10 +43,10 @@
  * Both the server and the client(control tool) have their own keys.
  */
 #include "config.h"
-#ifdef HAVE_SSL
 
+#ifdef HAVE_SSL
 #ifdef HAVE_OPENSSL_SSL_H
-#include "openssl/ssl.h"
+#include <openssl/ssl.h>
 #endif
 #ifdef HAVE_OPENSSL_ERR_H
 #include <openssl/err.h>
@@ -54,10 +54,12 @@
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
 #endif
+#endif /* HAVE_SSL */
 #include <ctype.h>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <errno.h>
 #ifndef USE_MINI_EVENT
 #  ifdef HAVE_EVENT_H
 #    include <event.h>
@@ -91,6 +93,9 @@
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>
 #endif
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
 
 /** number of seconds timeout on incoming remote control handshake */
 #define REMOTE_CONTROL_TCP_TIMEOUT 120
@@ -118,17 +123,16 @@ struct rc_state {
 	struct timeval tval;
 	/** in the handshake part */
 	enum { rc_none, rc_hs_read, rc_hs_write } shake_state;
+#ifdef HAVE_SSL
 	/** the ssl state */
 	SSL* ssl;
+#endif
 	/** file descriptor */
 	int fd;
 	/** the rc this is part of */
 	struct daemon_remote* rc;
 	/** stats list next item */
 	struct rc_state* stats_next;
-	/** stats list indicator (0 is not part of stats list, 1 is stats,
-	 * 2 is stats_noreset. */
-	int in_stats_list;
 };
 
 /**
@@ -158,20 +162,22 @@ struct daemon_remote {
 	int max_active;
 	/** current commpoints busy; double linked, malloced */
 	struct rc_state* busy_list;
-	/** commpoints waiting for stats to complete (also in busy_list) */
-	struct rc_state* stats_list;
 	/** last time stats was reported */
 	struct timeval stats_time, boot_time;
+#ifdef HAVE_SSL
 	/** the SSL context for creating new SSL streams */
 	SSL_CTX* ctx;
+#endif
 };
 
 /**
  * Connection to print to, either SSL or plain over fd
  */
 struct remote_stream {
+#ifdef HAVE_SSL
 	/** SSL structure, nonNULL if using SSL */
 	SSL* ssl;
+#endif
 	/** file descriptor for plain transfer */
 	int fd;
 };
@@ -212,10 +218,14 @@ remote_accept_callback(int fd, short event, void* arg);
 static void
 remote_control_callback(int fd, short event, void* arg);
 
+#ifdef BIND8_STATS
+/* process the statistics and output them */
+static void process_stats(RES* ssl, xfrd_state_type* xfrd, int peek);
+#endif
 
 /** ---- end of private defines ---- **/
 
-
+#ifdef HAVE_SSL
 /** log ssl crypto err */
 static void
 log_crypto_err(const char* str)
@@ -230,6 +240,7 @@ log_crypto_err(const char* str)
 		log_msg(LOG_ERR, "and additionally crypto %s", buf);
 	}
 }
+#endif /* HAVE_SSL */
 
 #ifdef BIND8_STATS
 /** subtract timers and the values do not overflow or become negative */
@@ -249,53 +260,20 @@ timeval_subtract(struct timeval* d, const struct timeval* end,
 }
 #endif /* BIND8_STATS */
 
+#ifdef HAVE_SSL
 static int
 remote_setup_ctx(struct daemon_remote* rc, struct nsd_options* cfg)
 {
-	char* s_cert;
-	char* s_key;
-	rc->ctx = SSL_CTX_new(SSLv23_server_method());
+	char* s_cert = cfg->server_cert_file;
+	char* s_key = cfg->server_key_file;
+	rc->ctx = server_tls_ctx_setup(s_key, s_cert, s_cert);
 	if(!rc->ctx) {
-		log_crypto_err("could not SSL_CTX_new");
+		log_msg(LOG_ERR, "could not setup remote control TLS context");
 		return 0;
 	}
-	/* no SSLv2, SSLv3 because has defects */
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
-		!= SSL_OP_NO_SSLv2){
-		log_crypto_err("could not set SSL_OP_NO_SSLv2");
-		return 0;
-	}
-	if((SSL_CTX_set_options(rc->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
-		!= SSL_OP_NO_SSLv3){
-		log_crypto_err("could not set SSL_OP_NO_SSLv3");
-		return 0;
-	}
-	s_cert = cfg->server_cert_file;
-	s_key = cfg->server_key_file;
-	VERBOSITY(2, (LOG_INFO, "setup SSL certificates"));
-	if (!SSL_CTX_use_certificate_file(rc->ctx,s_cert,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-cert-file: %s", s_cert);
-		log_crypto_err("Error in SSL_CTX use_certificate_file");
-		return 0;
-	}
-	if(!SSL_CTX_use_PrivateKey_file(rc->ctx,s_key,SSL_FILETYPE_PEM)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX use_PrivateKey_file");
-		return 0;
-	}
-	if(!SSL_CTX_check_private_key(rc->ctx)) {
-		log_msg(LOG_ERR, "Error for server-key-file: %s", s_key);
-		log_crypto_err("Error in SSL_CTX check_private_key");
-		return 0;
-	}
-	if(!SSL_CTX_load_verify_locations(rc->ctx, s_cert, NULL)) {
-		log_crypto_err("Error setting up SSL_CTX verify locations");
-		return 0;
-	}
-	SSL_CTX_set_client_CA_list(rc->ctx, SSL_load_client_CA_file(s_cert));
-	SSL_CTX_set_verify(rc->ctx, SSL_VERIFY_PEER, NULL);
 	return 1;
 }
+#endif /* HAVE_SSL */
 
 struct daemon_remote*
 daemon_remote_create(struct nsd_options* cfg)
@@ -305,47 +283,21 @@ daemon_remote_create(struct nsd_options* cfg)
 	rc->max_active = 10;
 	assert(cfg->control_enable);
 
-	/* init SSL library */
-#ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
-	ERR_load_crypto_strings();
-#endif
-	ERR_load_SSL_strings();
-#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
-	OpenSSL_add_all_algorithms();
-#else
-	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
-		| OPENSSL_INIT_ADD_ALL_DIGESTS
-		| OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-#endif
-#if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_SSL)
-	(void)SSL_library_init();
-#else
-	OPENSSL_init_ssl(0, NULL);
-#endif
-
-	if(!RAND_status()) {
-		/* try to seed it */
-		unsigned char buf[256];
-		unsigned int v, seed=(unsigned)time(NULL) ^ (unsigned)getpid();
-		size_t i;
-		v = seed;
-		for(i=0; i<256/sizeof(v); i++) {
-			memmove(buf+i*sizeof(v), &v, sizeof(v));
-			v = v*seed + (unsigned int)i;
-		}
-		RAND_seed(buf, 256);
-		log_msg(LOG_WARNING, "warning: no entropy, seeding openssl PRNG with time");
-	}
-
 	if(options_remote_is_address(cfg)) {
+#ifdef HAVE_SSL
 		if(!remote_setup_ctx(rc, cfg)) {
 			daemon_remote_delete(rc);
 			return NULL;
 		}
 		rc->use_cert = 1;
+#else
+		log_msg(LOG_ERR, "Could not setup remote control: NSD was compiled without SSL.");
+#endif /* HAVE_SSL */
 	} else {
 		struct ip_address_option* o;
+#ifdef HAVE_SSL
 		rc->ctx = NULL;
+#endif
 		rc->use_cert = 0;
 		for(o = cfg->control_interface; o; o = o->next) {
 			if(o->address && o->address[0] != '/')
@@ -392,8 +344,10 @@ void daemon_remote_close(struct daemon_remote* rc)
 		np = p->next;
 		if(p->event_added)
 			event_del(&p->c);
+#ifdef HAVE_SSL
 		if(p->ssl)
 			SSL_free(p->ssl);
+#endif
 		close(p->c.ev_fd);
 		free(p);
 		p = np;
@@ -406,9 +360,11 @@ void daemon_remote_delete(struct daemon_remote* rc)
 {
 	if(!rc) return;
 	daemon_remote_close(rc);
+#ifdef HAVE_SSL
 	if(rc->ctx) {
 		SSL_CTX_free(rc->ctx);
 	}
+#endif
 	free(rc);
 }
 
@@ -442,6 +398,7 @@ create_tcp_accept_sock(struct addrinfo* addr, int* noproto)
 		setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0)
 	{
 		log_msg(LOG_ERR, "setsockopt(..., IPV6_V6ONLY, ...) failed: %s", strerror(errno));
+		close(s);
 		return -1;
 	}
 #endif
@@ -454,11 +411,13 @@ create_tcp_accept_sock(struct addrinfo* addr, int* noproto)
 	/* Bind it... */
 	if (bind(s, (struct sockaddr *)addr->ai_addr, addr->ai_addrlen) != 0) {
 		log_msg(LOG_ERR, "can't bind tcp socket: %s", strerror(errno));
+		close(s);
 		return -1;
 	}
 	/* Listen to it... */
 	if (listen(s, TCP_BACKLOG_REMOTE) == -1) {
 		log_msg(LOG_ERR, "can't listen: %s", strerror(errno));
+		close(s);
 		return -1;
 	}
 	return s;
@@ -497,6 +456,9 @@ add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
 		 */
 		if(fd != -1) {
 #ifdef HAVE_CHOWN
+			if(chmod(ip, (mode_t)(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1) {
+				VERBOSITY(3, (LOG_INFO, "cannot chmod control socket %s: %s", ip, strerror(errno)));
+			}
 			if (cfg->username && cfg->username[0] &&
 				nsd.uid != (uid_t)-1) {
 				if(chown(ip, nsd.uid, nsd.gid) == -1)
@@ -504,7 +466,6 @@ add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
 					  (unsigned)nsd.uid, (unsigned)nsd.gid,
 					  ip, strerror(errno)));
 			}
-			chmod(ip, (mode_t)(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
 #else
 			(void)cfg;
 #endif
@@ -512,9 +473,11 @@ add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
 	} else {
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+		/* if we had no interface ip name, "default" is what we
+		 * would do getaddrinfo for. */
 		if((r = getaddrinfo(ip, port, &hints, &res)) != 0 || !res) {
 			log_msg(LOG_ERR, "control interface %s:%s getaddrinfo: %s %s",
-				ip?ip:"default", port, gai_strerror(r),
+				ip, port, gai_strerror(r),
 #ifdef EAI_SYSTEM
 				r==EAI_SYSTEM?(char*)strerror(errno):""
 #else
@@ -593,6 +556,7 @@ daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd)
 	for(p = rc->accept_list; p; p = p->next) {
 		/* add event */
 		fd = p->c.ev_fd;
+		memset(&p->c, 0, sizeof(p->c));
 		event_set(&p->c, fd, EV_PERSIST|EV_READ, remote_accept_callback,
 			p);
 		if(event_base_set(xfrd->event_base, &p->c) != 0)
@@ -670,6 +634,7 @@ remote_accept_callback(int fd, short event, void* arg)
 	n->tval.tv_usec = 0L;
 	n->fd = newfd;
 
+	memset(&n->c, 0, sizeof(n->c));
 	event_set(&n->c, newfd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 		remote_control_callback, n);
 	if(event_base_set(xfrd->event_base, &n->c) != 0) {
@@ -694,6 +659,7 @@ remote_accept_callback(int fd, short event, void* arg)
 		}
 	}
 
+#ifdef HAVE_SSL
 	if(rc->ctx) {
 		n->shake_state = rc_hs_read;
 		n->ssl = SSL_new(rc->ctx);
@@ -715,10 +681,10 @@ remote_accept_callback(int fd, short event, void* arg)
 	} else {
 		n->ssl = NULL;
 	}
+#endif /* HAVE_SSL */
 
 	n->rc = rc;
 	n->stats_next = NULL;
-	n->in_stats_list = 0;
 	n->prev = NULL;
 	n->next = rc->busy_list;
 	if(n->next) n->next->prev = n;
@@ -739,43 +705,20 @@ state_list_remove_elem(struct rc_state** list, struct rc_state* todel)
 	if(todel->next) todel->next->prev = todel->prev;
 }
 
-/** delete from stats list */
-static void
-stats_list_remove_elem(struct rc_state** list, struct rc_state* todel)
-{
-	struct rc_state* prev = NULL;
-	struct rc_state* n = *list;
-	while(n) {
-		/* delete this one? */
-		if(n == todel) {
-			if(prev) prev->next = n->next;
-			else	(*list) = n->next;
-			/* go on and delete further elements */
-			/* prev = prev; */
-			n = n->next;
-			continue;
-		}
-
-		/* go to the next element */
-		prev = n;
-		n = n->next;
-	}
-}
-
 /** decrease active count and remove commpoint from busy list */
 static void
 clean_point(struct daemon_remote* rc, struct rc_state* s)
 {
-	if(s->in_stats_list)
-		stats_list_remove_elem(&rc->stats_list, s);
 	state_list_remove_elem(&rc->busy_list, s);
 	rc->active --;
 	if(s->event_added)
 		event_del(&s->c);
+#ifdef HAVE_SSL
 	if(s->ssl) {
 		SSL_shutdown(s->ssl);
 		SSL_free(s->ssl);
 	}
+#endif /* HAVE_SSL */
 	close(s->c.ev_fd);
 	free(s);
 }
@@ -783,10 +726,11 @@ clean_point(struct daemon_remote* rc, struct rc_state* s)
 static int
 ssl_print_text(RES* res, const char* text)
 {
-	int r;
 	if(!res) 
 		return 0;
+#ifdef HAVE_SSL
 	if(res->ssl) {
+		int r;
 		ERR_clear_error();
 		if((r=SSL_write(res->ssl, text, (int)strlen(text))) <= 0) {
 			if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
@@ -798,12 +742,15 @@ ssl_print_text(RES* res, const char* text)
 			return 0;
 		}
 	} else {
+#endif /* HAVE_SSL */
 		if(write_socket(res->fd, text, strlen(text)) <= 0) {
 			log_msg(LOG_ERR, "could not write: %s",
 				strerror(errno));
 			return 0;
 		}
+#ifdef HAVE_SSL
 	}
+#endif /* HAVE_SSL */
 	return 1;
 }
 
@@ -831,12 +778,15 @@ ssl_printf(RES* ssl, const char* format, ...)
 static int
 ssl_read_line(RES* res, char* buf, size_t max)
 {
-	int r;
 	size_t len = 0;
 	if(!res)
 		return 0;
 	while(len < max) {
+		buf[len] = 0; /* terminate for safety and please checkers */
+		/* this byte is written if we read a byte from the input */
+#ifdef HAVE_SSL
 		if(res->ssl) {
+			int r;
 			ERR_clear_error();
 			if((r=SSL_read(res->ssl, buf+len, 1)) <= 0) {
 				if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
@@ -847,6 +797,7 @@ ssl_read_line(RES* res, char* buf, size_t max)
 				return 0;
 			}
 		} else {
+#endif /* HAVE_SSL */
 			while(1) {
 				ssize_t rr = read(res->fd, buf+len, 1);
 				if(rr <= 0) {
@@ -862,7 +813,9 @@ ssl_read_line(RES* res, char* buf, size_t max)
 				}
 				break;
 			}
+#ifdef HAVE_SSL
 		}
+#endif /* HAVE_SSL */
 		if(buf[len] == '\n') {
 			/* return string without \n */
 			buf[len] = 0;
@@ -905,14 +858,14 @@ get_zone_arg(RES* ssl, xfrd_state_type* xfrd, char* arg,
 	}
 	dname = dname_parse(xfrd->region, arg);
 	if(!dname) {
-		ssl_printf(ssl, "error cannot parse zone name '%s'\n", arg);
+		(void)ssl_printf(ssl, "error cannot parse zone name '%s'\n", arg);
 		*zo = NULL;
 		return 0;
 	}
 	*zo = zone_options_find(xfrd->nsd->options, dname);
 	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
 	if(!*zo) {
-		ssl_printf(ssl, "error zone %s not configured\n", arg);
+		(void)ssl_printf(ssl, "error zone %s not configured\n", arg);
 		return 0;
 	}
 	return 1;
@@ -979,7 +932,7 @@ do_notify(RES* ssl, xfrd_state_type* xfrd, char* arg)
 			xfrd_notify_start(n, xfrd);
 			send_ok(ssl);
 		} else {
-			ssl_printf(ssl, "error zone does not have notify\n");
+			(void)ssl_printf(ssl, "error zone does not have notify\n");
 		}
 	} else {
 		struct notify_zone* n;
@@ -1005,13 +958,13 @@ do_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
 			xfrd_handle_notify_and_start_xfr(zone, NULL);
 			send_ok(ssl);
 		} else {
-			ssl_printf(ssl, "error zone not slave\n");
+			(void)ssl_printf(ssl, "error zone not slave\n");
 		}
 	} else {
 		RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones) {
 			xfrd_handle_notify_and_start_xfr(zone, NULL);
 		}
-		ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
+		(void)ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
 	}
 }
 
@@ -1046,13 +999,13 @@ do_force_transfer(RES* ssl, xfrd_state_type* xfrd, char* arg)
 			force_transfer_zone(zone);
 			send_ok(ssl);
 		} else {
-			ssl_printf(ssl, "error zone not slave\n");
+			(void)ssl_printf(ssl, "error zone not slave\n");
 		}
 	} else {
 		RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones) {
 			force_transfer_zone(zone);
 		}
-		ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
+		(void)ssl_printf(ssl, "ok, %lu zones\n", (unsigned long)xfrd->zones->count);
 	}
 }
 
@@ -1174,11 +1127,11 @@ do_verbosity(RES* ssl, char* str)
 {
 	int val = atoi(str);
 	if(strcmp(str, "") == 0) {
-		ssl_printf(ssl, "verbosity %d\n", verbosity);
+		(void)ssl_printf(ssl, "verbosity %d\n", verbosity);
 		return;
 	}
 	if(val == 0 && strcmp(str, "0") != 0) {
-		ssl_printf(ssl, "error in verbosity number syntax: %s\n", str);
+		(void)ssl_printf(ssl, "error in verbosity number syntax: %s\n", str);
 		return;
 	}
 	verbosity = val;
@@ -1202,7 +1155,7 @@ find_arg2(RES* ssl, char* arg, char** arg2)
 		return 1;
 	}
 	*arg2 = NULL;
-	ssl_printf(ssl, "error could not find next argument "
+	(void)ssl_printf(ssl, "error could not find next argument "
 		"after %s\n", arg);
 	return 0;
 }
@@ -1249,24 +1202,13 @@ do_status(RES* ssl, xfrd_state_type* xfrd)
 
 /** do the stats command */
 static void
-do_stats(struct daemon_remote* rc, int peek, struct rc_state* rs)
+do_stats(RES* ssl, xfrd_state_type* xfrd, int peek)
 {
 #ifdef BIND8_STATS
-	/* queue up to get stats after a reload is done (to gather statistics
-	 * from the servers) */
-	assert(!rs->in_stats_list);
-	if(peek) rs->in_stats_list = 2;
-	else	rs->in_stats_list = 1;
-	rs->stats_next = rc->stats_list;
-	rc->stats_list = rs;
-	/* block the tcp waiting for the reload */
-	event_del(&rs->c);
-	rs->event_added = 0;
-	/* force a reload */
-	xfrd_set_reload_now(xfrd);
+	process_stats(ssl, xfrd, peek);
 #else
-	(void)rc; (void)peek;
-	(void)ssl_printf(rs->ssl, "error no stats enabled at compile time\n");
+	(void)xfrd; (void)peek;
+	(void)ssl_printf(ssl, "error no stats enabled at compile time\n");
 #endif /* BIND8_STATS */
 }
 
@@ -1401,7 +1343,7 @@ perform_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	}
 
 	/* see if zone is a duplicate */
-	if( (zopt=zone_options_find(xfrd->nsd->options, dname)) ) {
+	if( zone_options_find(xfrd->nsd->options, dname) ) {
 		region_recycle(xfrd->region, (void*)dname,
 			dname_total_size(dname));
 		(void)ssl_printf(ssl, "zone %s already exists\n", arg);
@@ -1451,8 +1393,7 @@ perform_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		region_recycle(xfrd->region, (void*)dname,
 			dname_total_size(dname));
 		/* nothing to do */
-		if(!ssl_printf(ssl, "warning zone %s not present\n", arg))
-			return 0;
+		(void)ssl_printf(ssl, "warning zone %s not present\n", arg);
 		return 0;
 	}
 
@@ -1931,7 +1872,7 @@ do_repattern(RES* ssl, xfrd_state_type* xfrd)
 		while(l>0 && xfrd->nsd->chrootdir[l-1] == '/')
 			--l;
 		if(strncmp(xfrd->nsd->chrootdir, cfgfile, l) != 0) {
-			ssl_printf(ssl, "error %s is not relative to %s: "
+			(void)ssl_printf(ssl, "error %s is not relative to %s: "
 				"chroot prevents reread of config\n",
 				cfgfile, xfrd->nsd->chrootdir);
 			region_destroy(region);
@@ -1940,7 +1881,7 @@ do_repattern(RES* ssl, xfrd_state_type* xfrd)
 		cfgfile += l;
 	}
 
-	ssl_printf(ssl, "reconfig start, read %s\n", cfgfile);
+	(void)ssl_printf(ssl, "reconfig start, read %s\n", cfgfile);
 	opt = nsd_options_create(region);
 	if(!parse_options_file(opt, cfgfile, &print_ssl_cfg_err, &ssl)) {
 		/* error already printed */
@@ -1978,12 +1919,10 @@ do_print_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	} else {
 		struct key_options* key_opts = key_options_find(xfrd->nsd->options, arg);
 		if(!key_opts) {
-			if(!ssl_printf(ssl, "error: no such key with name: %s\n", arg))
-				return;
+			(void)ssl_printf(ssl, "error: no such key with name: %s\n", arg);
 			return;
 		} else {
-			if(!ssl_printf(ssl, "key: name: \"%s\" secret: \"%s\" algorithm: %s\n", arg, key_opts->secret, key_opts->algorithm))
-				return;
+			(void)ssl_printf(ssl, "key: name: \"%s\" secret: \"%s\" algorithm: %s\n", arg, key_opts->secret, key_opts->algorithm);
 		}
 	}
 }
@@ -1998,25 +1937,21 @@ do_update_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	struct key_options* key_opt;
 
 	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (keyname)\n");
 		return;
 	}
 	if(!find_arg2(ssl, arg, &arg2)) {
-		if(!ssl_printf(ssl, "error: missing argument (secret)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (secret)\n");
 		return;
 	}
 	key_opt = key_options_find(xfrd->nsd->options, arg);
 	if(!key_opt) {
-		if(!ssl_printf(ssl, "error: no such key with name: %s\n", arg))
-			return;
+		(void)ssl_printf(ssl, "error: no such key with name: %s\n", arg);
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
 	}
 	if(b64_pton(arg2, data, sizeof(data)) == -1) {
-		if(!ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2))
-			return;
+		(void)ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2);
 		memset(data, 0xdd, sizeof(data)); /* wipe secret */
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
@@ -2056,8 +1991,7 @@ do_add_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	struct key_options* new_key_opt;
 
 	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (keyname)\n");
 		return;
 	}
 	if(!find_arg3(ssl, arg, &arg2, &arg3)) {
@@ -2066,33 +2000,28 @@ do_add_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		strlcpy(algo, arg3, sizeof(algo));
 	}
 	if(!arg2) {
-		if(!ssl_printf(ssl, "error: missing argument (secret)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (secret)\n");
 		return;
 	}
 	if(key_options_find(xfrd->nsd->options, arg)) {
-		if(!ssl_printf(ssl, "error: key %s already exists\n", arg))
-			return;
+		(void)ssl_printf(ssl, "error: key %s already exists\n", arg);
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
 	}
 	if(b64_pton(arg2, data, sizeof(data)) == -1) {
-		if(!ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2))
-			return;
+		(void)ssl_printf(ssl, "error: the secret: %s is not in b64 format\n", arg2);
 		memset(data, 0xdd, sizeof(data)); /* wipe secret */
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
 	}
 	memset(data, 0xdd, sizeof(data)); /* wipe secret from temp buffer */
 	if(!dname_parse_wire(dname, arg)) {
-		if(!ssl_printf(ssl, "error: could not parse key name: %s\n", arg))
-			return;
+		(void)ssl_printf(ssl, "error: could not parse key name: %s\n", arg);
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
 	}
 	if(tsig_get_algorithm_by_name(algo) == NULL) {
-		if(!ssl_printf(ssl, "error: unknown algorithm: %s\n", algo))
-			return;
+		(void)ssl_printf(ssl, "error: unknown algorithm: %s\n", algo);
 		memset(arg2, 0xdd, strlen(arg2));
 		return;
 	}
@@ -2138,27 +2067,23 @@ do_assoc_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	struct key_options* key_opt;
 
 	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (zonename)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (zonename)\n");
 		return;
 	}
 	if(!find_arg2(ssl, arg, &arg2)) {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (keyname)\n");
 		return;
 	}
 
 	if(!get_zone_arg(ssl, xfrd, arg, &zone))
 		return;
 	if(!zone) {
-		if(!ssl_printf(ssl, "error: missing argument (zone)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (zone)\n");
 		return;
 	}
 	key_opt = key_options_find(xfrd->nsd->options, arg2);
 	if(!key_opt) {
-		if(!ssl_printf(ssl, "error: key: %s does not exist\n", arg2))
-			return;
+		(void)ssl_printf(ssl, "error: key: %s does not exist\n", arg2);
 		return;
 	}
 
@@ -2168,6 +2093,8 @@ do_assoc_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg)
 	zopt_set_acl_to_tsig(zone->pattern->request_xfr, region, arg2,
 		key_opt);
 	zopt_set_acl_to_tsig(zone->pattern->provide_xfr, region, arg2,
+		key_opt);
+	zopt_set_acl_to_tsig(zone->pattern->allow_query, region, arg2,
 		key_opt);
 
 	task_new_add_pattern(xfrd->nsd->task[xfrd->nsd->mytask],
@@ -2197,14 +2124,12 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 	struct key_options* key_opt;
 
 	if(*arg == '\0') {
-		if(!ssl_printf(ssl, "error: missing argument (keyname)\n"))
-			return;
+		(void)ssl_printf(ssl, "error: missing argument (keyname)\n");
 		return;
 	}
 	key_opt = key_options_find(xfrd->nsd->options, arg);
 	if(!key_opt) {
-		if(!ssl_printf(ssl, "key %s does not exist, nothing to be deleted\n", arg))
-			return;
+		(void)ssl_printf(ssl, "key %s does not exist, nothing to be deleted\n", arg);
 		return;
 	}
 	RBTREE_FOR(zone, struct zone_options*, xfrd->nsd->options->zone_options)
@@ -2212,7 +2137,8 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 		if(acl_contains_tsig_key(zone->pattern->allow_notify, arg) ||
 		   acl_contains_tsig_key(zone->pattern->notify, arg) ||
 		   acl_contains_tsig_key(zone->pattern->request_xfr, arg) ||
-		   acl_contains_tsig_key(zone->pattern->provide_xfr, arg)) {
+		   acl_contains_tsig_key(zone->pattern->provide_xfr, arg) ||
+		   acl_contains_tsig_key(zone->pattern->allow_query, arg)) {
 			if(!ssl_printf(ssl, "zone %s uses key %s\n",
 				zone->name, arg))
 				return;
@@ -2222,8 +2148,7 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 	}
 
 	if(used_key) {
-		if(!ssl_printf(ssl, "error: key: %s is in use and cannot be deleted\n", arg))
-			return;
+		(void)ssl_printf(ssl, "error: key: %s is in use and cannot be deleted\n", arg);
 		return;
 	} else {
 		remove_key(xfrd, arg);
@@ -2231,6 +2156,157 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 	}
 
 	send_ok(ssl);
+}
+
+/* returns `0` on failure */
+static int
+cookie_secret_file_dump(RES* ssl, nsd_type const* nsd) {
+	char const* secret_file = nsd->options->cookie_secret_file;
+	char secret_hex[NSD_COOKIE_SECRET_SIZE * 2 + 1];
+	FILE* f;
+	size_t i;
+	assert( secret_file != NULL );
+
+	/* open write only and truncate */
+	if((f = fopen(secret_file, "w")) == NULL ) {
+		(void)ssl_printf(ssl, "unable to open cookie secret file %s: %s",
+		                 secret_file, strerror(errno));
+		return 0;
+	}
+	for(i = 0; i < nsd->cookie_count; i++) {
+		struct cookie_secret const* cs = &nsd->cookie_secrets[i];
+		ssize_t const len = hex_ntop(cs->cookie_secret, NSD_COOKIE_SECRET_SIZE,
+			secret_hex, sizeof(secret_hex));
+		(void)len; /* silence unused variable warning with -DNDEBUG */
+		assert( len == NSD_COOKIE_SECRET_SIZE * 2 );
+		secret_hex[NSD_COOKIE_SECRET_SIZE * 2] = '\0';
+		fprintf(f, "%s\n", secret_hex);
+	}
+	explicit_bzero(secret_hex, sizeof(secret_hex));
+	fclose(f);
+	return 1;
+}
+
+static void
+do_activate_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
+	nsd_type* nsd = xrfd->nsd;
+	(void)arg;
+
+	if(nsd->cookie_count <= 1 ) {
+		(void)ssl_printf(ssl, "error: no staging cookie secret to activate\n");
+		return;
+	}
+	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
+		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
+		return;
+	}
+	if(!cookie_secret_file_dump(ssl, nsd)) {
+		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
+				nsd->options->cookie_secret_file);
+		return;
+	}
+	activate_cookie_secret(nsd);
+	(void)cookie_secret_file_dump(ssl, nsd);
+	task_new_activate_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
+	    xfrd->last_task);
+	xfrd_set_reload_now(xfrd);
+	send_ok(ssl);
+}
+
+static void
+do_drop_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
+	nsd_type* nsd = xrfd->nsd;
+	(void)arg;
+
+	if(nsd->cookie_count <= 1 ) {
+		(void)ssl_printf(ssl, "error: can not drop the currently active cookie secret\n");
+		return;
+	}
+	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
+		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
+		return;
+	}
+	if(!cookie_secret_file_dump(ssl, nsd)) {
+		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
+				nsd->options->cookie_secret_file);
+		return;
+	}
+	drop_cookie_secret(nsd);
+	(void)cookie_secret_file_dump(ssl, nsd);
+	task_new_drop_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
+	    xfrd->last_task);
+	xfrd_set_reload_now(xfrd);
+	send_ok(ssl);
+}
+
+static void
+do_add_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
+	nsd_type* nsd = xrfd->nsd;
+	uint8_t secret[NSD_COOKIE_SECRET_SIZE];
+
+	if(*arg == '\0') {
+		(void)ssl_printf(ssl, "error: missing argument (cookie_secret)\n");
+		return;
+	}
+	if(strlen(arg) != 32) {
+		explicit_bzero(arg, strlen(arg));
+		(void)ssl_printf(ssl, "invalid cookie secret: invalid argument length\n");
+		(void)ssl_printf(ssl, "please provide a 128bit hex encoded secret\n");
+		return;
+	}
+	if(hex_pton(arg, secret, NSD_COOKIE_SECRET_SIZE) != NSD_COOKIE_SECRET_SIZE ) {
+		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+		explicit_bzero(arg, strlen(arg));
+		(void)ssl_printf(ssl, "invalid cookie secret: parse error\n");
+		(void)ssl_printf(ssl, "please provide a 128bit hex encoded secret\n");
+		return;
+	}
+	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
+		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+		explicit_bzero(arg, strlen(arg));
+		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
+		return;
+	}
+	if(!cookie_secret_file_dump(ssl, nsd)) {
+		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+		explicit_bzero(arg, strlen(arg));
+		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
+				nsd->options->cookie_secret_file);
+		return;
+	}
+	add_cookie_secret(nsd, secret);
+	explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+	(void)cookie_secret_file_dump(ssl, nsd);
+	task_new_add_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
+	    xfrd->last_task, arg);
+	explicit_bzero(arg, strlen(arg));
+	xfrd_set_reload_now(xfrd);
+	send_ok(ssl);
+}
+
+static void
+do_print_cookie_secrets(RES* ssl, xfrd_state_type* xrfd, char* arg) {
+	nsd_type* nsd = xrfd->nsd;
+	char secret_hex[NSD_COOKIE_SECRET_SIZE * 2 + 1];
+	int i;
+	(void)arg;
+
+	/* (void)ssl_printf(ssl, "cookie_secret_count=%zu\n", nsd->cookie_count); */
+	for(i = 0; (size_t)i < nsd->cookie_count; i++) {
+		struct cookie_secret const* cs = &nsd->cookie_secrets[i];
+		ssize_t const len = hex_ntop(cs->cookie_secret, NSD_COOKIE_SECRET_SIZE,
+		                             secret_hex, sizeof(secret_hex));
+		(void)len; /* silence unused variable warning with -DNDEBUG */
+		assert( len == NSD_COOKIE_SECRET_SIZE * 2 );
+		secret_hex[NSD_COOKIE_SECRET_SIZE * 2] = '\0';
+		if (i == 0)
+			(void)ssl_printf(ssl, "active : %s\n",  secret_hex);
+		else if (nsd->cookie_count == 2)
+			(void)ssl_printf(ssl, "staging: %s\n",  secret_hex);
+		else
+			(void)ssl_printf(ssl, "staging[%d]: %s\n", i, secret_hex);
+	}
+	explicit_bzero(secret_hex, sizeof(secret_hex));
 }
 
 /** check for name with end-of-string, space or tab after it */
@@ -2242,7 +2318,7 @@ cmdcmp(char* p, const char* cmd, size_t len)
 
 /** execute a remote control command */
 static void
-execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
+execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd)
 {
 	char* p = skipwhite(cmd);
 	/* compare command */
@@ -2255,9 +2331,9 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 	} else if(cmdcmp(p, "status", 6)) {
 		do_status(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "stats_noreset", 13)) {
-		do_stats(rc, 1, rs);
+		do_stats(ssl, rc->xfrd, 1);
 	} else if(cmdcmp(p, "stats", 5)) {
-		do_stats(rc, 0, rs);
+		do_stats(ssl, rc->xfrd, 0);
 	} else if(cmdcmp(p, "log_reopen", 10)) {
 		do_log_reopen(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "addzone", 7)) {
@@ -2296,6 +2372,14 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 		do_assoc_tsig(ssl, rc->xfrd, skipwhite(p+10));
 	} else if(cmdcmp(p, "del_tsig", 8)) {
 		do_del_tsig(ssl, rc->xfrd, skipwhite(p+8));
+	} else if(cmdcmp(p, "add_cookie_secret", 17)) {
+		do_add_cookie_secret(ssl, rc->xfrd, skipwhite(p+17));
+	} else if(cmdcmp(p, "drop_cookie_secret", 18)) {
+		do_drop_cookie_secret(ssl, rc->xfrd, skipwhite(p+18));
+	} else if(cmdcmp(p, "print_cookie_secrets", 20)) {
+		do_print_cookie_secrets(ssl, rc->xfrd, skipwhite(p+20));
+	} else if(cmdcmp(p, "activate_cookie_secret", 22)) {
+		do_activate_cookie_secret(ssl, rc->xfrd, skipwhite(p+22));
 	} else {
 		(void)ssl_printf(ssl, "error unknown command '%s'\n", p);
 	}
@@ -2314,6 +2398,7 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	}
 
 	/* try to read magic UBCT[version]_space_ string */
+#ifdef HAVE_SSL
 	if(res->ssl) {
 		ERR_clear_error();
 		if((r=SSL_read(res->ssl, magic, (int)sizeof(magic)-1)) <= 0) {
@@ -2323,6 +2408,7 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 			return;
 		}
 	} else {
+#endif /* HAVE_SSL */
 		while(1) {
 			ssize_t rr = read(res->fd, magic, sizeof(magic)-1);
 			if(rr <= 0) {
@@ -2335,7 +2421,9 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 			r = (int)rr;
 			break;
 		}
+#ifdef HAVE_SSL
 	}
+#endif /* HAVE_SSL */
 	magic[7] = 0;
 	if( r != 7 || strncmp(magic, "NSDCT", 5) != 0) {
 		VERBOSITY(2, (LOG_INFO, "control connection has bad header"));
@@ -2351,15 +2439,17 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	if(strcmp(magic, pre) != 0) {
 		VERBOSITY(2, (LOG_INFO, "control connection had bad "
 			"version %s, cmd: %s", magic, buf));
-		ssl_printf(res, "error version mismatch\n");
+		(void)ssl_printf(res, "error version mismatch\n");
 		return;
 	}
-	VERBOSITY(2, (LOG_INFO, "control cmd: %s", buf));
+	/* always log control commands */
+	VERBOSITY(0, (LOG_INFO, "control cmd: %s", buf));
 
 	/* figure out what to do */
-	execute_cmd(rc, res, buf, s);
+	execute_cmd(rc, res, buf);
 }
 
+#ifdef HAVE_SSL
 /** handle SSL_do_handshake changes to the file descriptor to wait for later */
 static void
 remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
@@ -2372,6 +2462,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		}
 		s->shake_state = rc_hs_read;
 		event_del(&s->c);
+		memset(&s->c, 0, sizeof(s->c));
 		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_READ,
 			remote_control_callback, s);
 		if(event_base_set(xfrd->event_base, &s->c) != 0)
@@ -2386,6 +2477,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		}
 		s->shake_state = rc_hs_write;
 		event_del(&s->c);
+		memset(&s->c, 0, sizeof(s->c));
 		event_set(&s->c, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE,
 			remote_control_callback, s);
 		if(event_base_set(xfrd->event_base, &s->c) != 0)
@@ -2400,6 +2492,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		clean_point(rc, s);
 	}
 }
+#endif /* HAVE_SSL */
 
 static void
 remote_control_callback(int fd, short event, void* arg)
@@ -2407,14 +2500,15 @@ remote_control_callback(int fd, short event, void* arg)
 	RES res;
 	struct rc_state* s = (struct rc_state*)arg;
 	struct daemon_remote* rc = s->rc;
-	int r;
 	if( (event&EV_TIMEOUT) ) {
 		log_msg(LOG_ERR, "remote control timed out");
 		clean_point(rc, s);
 		return;
 	}
+#ifdef HAVE_SSL
 	if(s->ssl) {
 		/* (continue to) setup the SSL connection */
+		int r;
 		ERR_clear_error();
 		r = SSL_do_handshake(s->ssl);
 		if(r != 1) {
@@ -2424,10 +2518,12 @@ remote_control_callback(int fd, short event, void* arg)
 		}
 		s->shake_state = rc_none;
 	}
+#endif /* HAVE_SSL */
 
 	/* once handshake has completed, check authentication */
 	if (!rc->use_cert) {
 		VERBOSITY(3, (LOG_INFO, "unauthenticated remote control connection"));
+#ifdef HAVE_SSL
 	} else if(SSL_get_verify_result(s->ssl) == X509_V_OK) {
 		X509* x = SSL_get_peer_certificate(s->ssl);
 		if(!x) {
@@ -2438,6 +2534,7 @@ remote_control_callback(int fd, short event, void* arg)
 		}
 		VERBOSITY(3, (LOG_INFO, "remote control connection authenticated"));
 		X509_free(x);
+#endif /* HAVE_SSL */
 	} else {
 		VERBOSITY(2, (LOG_INFO, "remote control connection failed to "
 			"authenticate with client certificate"));
@@ -2446,14 +2543,14 @@ remote_control_callback(int fd, short event, void* arg)
 	}
 
 	/* if OK start to actually handle the request */
+#ifdef HAVE_SSL
 	res.ssl = s->ssl;
+#endif /* HAVE_SSL */
 	res.fd = fd;
 	handle_req(rc, s, &res);
 
-	if(!s->in_stats_list) {
-		VERBOSITY(3, (LOG_INFO, "remote control operation completed"));
-		clean_point(rc, s);
-	}
+	VERBOSITY(3, (LOG_INFO, "remote control operation completed"));
+	clean_point(rc, s);
 }
 
 #ifdef BIND8_STATS
@@ -2553,6 +2650,12 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 	/* ctcp6 */
 	if(!ssl_printf(ssl, "%s%snum.tcp6=%lu\n", n, d, (unsigned long)st->ctcp6))
 		return;
+	/* ctls */
+	if(!ssl_printf(ssl, "%s%snum.tls=%lu\n", n, d, (unsigned long)st->ctls))
+		return;
+	/* ctls6 */
+	if(!ssl_printf(ssl, "%s%snum.tls6=%lu\n", n, d, (unsigned long)st->ctls6))
+		return;
 
 	/* nona */
 	if(!ssl_printf(ssl, "%s%snum.answer_wo_aa=%lu\n", n, d,
@@ -2569,6 +2672,10 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 
 	/* number of requested-axfr, number of times axfr served to clients */
 	if(!ssl_printf(ssl, "%s%snum.raxfr=%lu\n", n, d, (unsigned long)st->raxfr))
+		return;
+
+	/* number of requested-ixfr, number of times ixfr served to clients */
+	if(!ssl_printf(ssl, "%s%snum.rixfr=%lu\n", n, d, (unsigned long)st->rixfr))
 		return;
 
 	/* truncated */
@@ -2596,7 +2703,8 @@ resize_zonestat(xfrd_state_type* xfrd, size_t num)
 }
 
 static void
-zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
+zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear,
+	struct nsdst** zonestats)
 {
 	struct zonestatname* n;
 	struct nsdst stat0, stat1;
@@ -2611,8 +2719,8 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 		 * the newly forked processes get the other block to use,
 		 * these blocks are mmapped and are currently in use to
 		 * add statistics to */
-		memcpy(&stat0, &xfrd->nsd->zonestat[0][n->id], sizeof(stat0));
-		memcpy(&stat1, &xfrd->nsd->zonestat[1][n->id], sizeof(stat1));
+		memcpy(&stat0, &zonestats[0][n->id], sizeof(stat0));
+		memcpy(&stat1, &zonestats[1][n->id], sizeof(stat1));
 		stats_add(&stat0, &stat1);
 		
 		/* save a copy of current (cumulative) stats in stat1 */
@@ -2640,7 +2748,7 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 		/* stat0 contains the details that we want to print */
 		if(!ssl_printf(ssl, "%s%snum.queries=%lu\n", name, ".",
 			(unsigned long)(stat0.qudp + stat0.qudp6 + stat0.ctcp +
-				stat0.ctcp6)))
+				stat0.ctcp6 + stat0.ctls + stat0.ctls6)))
 			return;
 		print_stat_block(ssl, name, ".", &stat0);
 	}
@@ -2648,7 +2756,8 @@ zonestat_print(RES* ssl, xfrd_state_type* xfrd, int clear)
 #endif /* USE_ZONE_STATS */
 
 static void
-print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
+print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear,
+	struct nsdst* st, struct nsdst** zonestats)
 {
 	size_t i;
 	stc_type total = 0;
@@ -2675,9 +2784,9 @@ print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 		return;
 
 	/* mem info, database on disksize */
-	if(!print_longnum(ssl, "size.db.disk=", xfrd->nsd->st.db_disk))
+	if(!print_longnum(ssl, "size.db.disk=", st->db_disk))
 		return;
-	if(!print_longnum(ssl, "size.db.mem=", xfrd->nsd->st.db_mem))
+	if(!print_longnum(ssl, "size.db.mem=", st->db_mem))
 		return;
 	if(!print_longnum(ssl, "size.xfrd.mem=", region_get_mem(xfrd->region)))
 		return;
@@ -2687,7 +2796,7 @@ print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 	if(!print_longnum(ssl, "size.config.mem=", region_get_mem(
 		xfrd->nsd->options->region)))
 		return;
-	print_stat_block(ssl, "", "", &xfrd->nsd->st);
+	print_stat_block(ssl, "", "", st);
 
 	/* zone statistics */
 	if(!ssl_printf(ssl, "zone.master=%lu\n",
@@ -2696,53 +2805,137 @@ print_stats(RES* ssl, xfrd_state_type* xfrd, struct timeval* now, int clear)
 	if(!ssl_printf(ssl, "zone.slave=%lu\n", (unsigned long)xfrd->zones->count))
 		return;
 #ifdef USE_ZONE_STATS
-	zonestat_print(ssl, xfrd, clear); /* per-zone statistics */
+	zonestat_print(ssl, xfrd, clear, zonestats); /* per-zone statistics */
 #else
-	(void)clear;
+	(void)clear; (void)zonestats;
 #endif
 }
 
+/* allocate stats temp arrays, for taking a coherent snapshot of the
+ * statistics values at that time. */
 static void
-clear_stats(xfrd_state_type* xfrd)
+process_stats_alloc(xfrd_state_type* xfrd, struct nsdst** stats,
+	struct nsdst** zonestats)
 {
-	size_t i;
-	uint64_t dbd = xfrd->nsd->st.db_disk;
-	uint64_t dbm = xfrd->nsd->st.db_mem;
-	for(i=0; i<xfrd->nsd->child_count; i++) {
-		xfrd->nsd->children[i].query_count = 0;
-	}
-	memset(&xfrd->nsd->st, 0, sizeof(struct nsdst));
-	/* zonestats are cleared by storing the cumulative value that
-	 * was last printed in the zonestat_clear array, and subtracting
-	 * that before the next stats printout */
-	xfrd->nsd->st.db_disk = dbd;
-	xfrd->nsd->st.db_mem = dbm;
+	*stats = xmallocarray(xfrd->nsd->child_count*2, sizeof(struct nsdst));
+#ifdef USE_ZONE_STATS
+	zonestats[0] = xmallocarray(xfrd->zonestat_safe, sizeof(struct nsdst));
+	zonestats[1] = xmallocarray(xfrd->zonestat_safe, sizeof(struct nsdst));
+#else
+	(void)zonestats;
+#endif
 }
 
-void
-daemon_remote_process_stats(struct daemon_remote* rc)
+/* grab a copy of the statistics, at this particular time. */
+static void
+process_stats_grab(xfrd_state_type* xfrd, struct timeval* stattime,
+	struct nsdst* stats, struct nsdst** zonestats)
 {
-	RES res;
-	struct rc_state* s;
-	struct timeval now;
-	if(!rc) return;
-	if(gettimeofday(&now, NULL) == -1)
+	if(gettimeofday(stattime, NULL) == -1)
 		log_msg(LOG_ERR, "gettimeofday: %s", strerror(errno));
-	/* pop one and give it stats */
-	while((s = rc->stats_list)) {
-		assert(s->in_stats_list);
-		res.ssl = s->ssl;
-		res.fd = s->fd;
-		print_stats(&res, rc->xfrd, &now, (s->in_stats_list == 1));
-		if(s->in_stats_list == 1) {
-			clear_stats(rc->xfrd);
-			rc->stats_time = now;
-		}
-		VERBOSITY(3, (LOG_INFO, "remote control stats printed"));
-		rc->stats_list = s->next;
-		s->in_stats_list = 0;
-		clean_point(rc, s);
+	memcpy(stats, xfrd->nsd->stat_map,
+		xfrd->nsd->child_count*2*sizeof(struct nsdst));
+#ifdef USE_ZONE_STATS
+	memcpy(zonestats[0], xfrd->nsd->zonestat[0],
+		xfrd->zonestat_safe*sizeof(struct nsdst));
+	memcpy(zonestats[1], xfrd->nsd->zonestat[1],
+		xfrd->zonestat_safe*sizeof(struct nsdst));
+#else
+	(void)zonestats;
+#endif
+}
+
+/* add the old and new processes stat values into the first part of the
+ * array of stats */
+static void
+process_stats_add_old_new(xfrd_state_type* xfrd, struct nsdst* stats)
+{
+	size_t i;
+	uint64_t dbd = stats[0].db_disk;
+	uint64_t dbm = stats[0].db_mem;
+	/* The old and new server processes have separate stat blocks,
+	 * and these are added up together. This results in the statistics
+	 * values per server-child. The reload task briefly forks both
+	 * old and new server processes. */
+	for(i=0; i<xfrd->nsd->child_count; i++) {
+		stats_add(&stats[i], &stats[xfrd->nsd->child_count+i]);
 	}
+	stats[0].db_disk = dbd;
+	stats[0].db_mem = dbm;
+}
+
+/* manage clearing of stats, a cumulative count of cleared statistics */
+static void
+process_stats_manage_clear(xfrd_state_type* xfrd, struct nsdst* stats,
+	int peek)
+{
+	struct nsdst st;
+	size_t i;
+	if(peek) {
+		/* Subtract the earlier resetted values from the numbers,
+		 * but do not reset the values that are retrieved now. */
+		if(!xfrd->stat_clear)
+			return; /* nothing to subtract */
+		for(i=0; i<xfrd->nsd->child_count; i++) {
+			/* subtract cumulative count that has been reset */
+			stats_subtract(&stats[i], &xfrd->stat_clear[i]);
+		}
+		return;
+	}
+	if(!xfrd->stat_clear)
+		xfrd->stat_clear = region_alloc_zero(xfrd->region,
+			sizeof(struct nsdst)*xfrd->nsd->child_count);
+	for(i=0; i<xfrd->nsd->child_count; i++) {
+		/* store cumulative count copy */
+		memcpy(&st, &stats[i], sizeof(st));
+		/* subtract cumulative count that has been reset */
+		stats_subtract(&stats[i], &xfrd->stat_clear[i]);
+		/* store cumulative count in the cleared value array */
+		memcpy(&xfrd->stat_clear[i], &st, sizeof(st));
+	}
+}
+
+/* add up the statistics to get the total over the server children. */
+static void
+process_stats_add_total(xfrd_state_type* xfrd, struct nsdst* total,
+	struct nsdst* stats)
+{
+	size_t i;
+	/* copy over the first one, with also the nonadded values. */
+	memcpy(total, &stats[0], sizeof(*total));
+	xfrd->nsd->children[0].query_count = stats[0].qudp + stats[0].qudp6
+		+ stats[0].ctcp + stats[0].ctcp6 + stats[0].ctls
+		+ stats[0].ctls6;
+	for(i=1; i<xfrd->nsd->child_count; i++) {
+		stats_add(total, &stats[i]);
+		xfrd->nsd->children[i].query_count = stats[i].qudp
+			+ stats[i].qudp6 + stats[i].ctcp + stats[i].ctcp6
+			+ stats[i].ctls + stats[i].ctls6;
+	}
+}
+
+/* process the statistics and output them */
+static void
+process_stats(RES* ssl, xfrd_state_type* xfrd, int peek)
+{
+	struct timeval stattime;
+	struct nsdst* stats, *zonestats[2], total;
+
+	process_stats_alloc(xfrd, &stats, zonestats);
+	process_stats_grab(xfrd, &stattime, stats, zonestats);
+	process_stats_add_old_new(xfrd, stats);
+	process_stats_manage_clear(xfrd, stats, peek);
+	process_stats_add_total(xfrd, &total, stats);
+	print_stats(ssl, xfrd, &stattime, !peek, &total, zonestats);
+	xfrd->nsd->rc->stats_time = stattime;
+
+	free(stats);
+#ifdef USE_ZONE_STATS
+	free(zonestats[0]);
+	free(zonestats[1]);
+#endif
+
+	VERBOSITY(3, (LOG_INFO, "remote control stats printed"));
 }
 #endif /* BIND8_STATS */
 
@@ -2806,5 +2999,3 @@ err:
 	return -1;
 #endif
 }
-
-#endif /* HAVE_SSL */

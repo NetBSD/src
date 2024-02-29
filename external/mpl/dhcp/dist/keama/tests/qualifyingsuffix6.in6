@@ -1,0 +1,8 @@
+# ddns-domainname (aka qualifying-suffix)
+
+ddns-domainname ".biz";
+
+# embedded
+class "foo" {
+    ddns-domainname ".bar";
+}

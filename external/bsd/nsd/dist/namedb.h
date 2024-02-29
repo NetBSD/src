@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _NAMEDB_H_
-#define	_NAMEDB_H_
+#ifndef NAMEDB_H
+#define	NAMEDB_H
 
 #include <stdio.h>
 
@@ -21,6 +21,7 @@ struct nsd_options;
 struct udb_base;
 struct udb_ptr;
 struct nsd;
+struct zone_ixfr;
 
 typedef union rdata_atom rdata_atom_type;
 typedef struct rrset rrset_type;
@@ -137,13 +138,18 @@ struct zone
 	rbtree_type* dshashtree; /* tree, ds-parent-hash domains */
 #endif
 	struct zone_options* opts;
+	struct zone_ixfr* ixfr;
 	char*        filename; /* set if read from file, which file */
 	char*        logstr; /* set for zone xfer, the log string */
 	struct timespec mtime; /* time of last modification */
 	unsigned     zonestatid; /* array index for zone stats */
 	unsigned     is_secure : 1; /* zone uses DNSSEC */
-	unsigned     is_ok : 1; /* zone has not expired. */
-	unsigned     is_changed : 1; /* zone was changed by AXFR */
+	unsigned     is_ok : 1; /* zone has not expired */
+	unsigned     is_changed : 1; /* zone changes must be written to disk */
+	unsigned     is_updated : 1; /* zone was changed by XFR */
+	unsigned     is_skipped : 1; /* subsequent zone updates are skipped */
+	unsigned     is_checked : 1; /* zone already verified */
+	unsigned     is_bad : 1; /* zone failed verification */
 } ATTR_PACKED;
 
 /* a RR in DNS */
@@ -231,7 +237,6 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*), domain_type* domain,
 	rbnode_type* node);
 void zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node);
-void hash_tree_clear(rbtree_type* tree);
 void hash_tree_delete(region_type* region, rbtree_type* tree);
 void prehash_clear(domain_table_type* table);
 void prehash_add(domain_table_type* table, domain_type* domain);
@@ -324,7 +329,6 @@ struct namedb
 	region_type*       region;
 	domain_table_type* domains;
 	struct radtree*    zonetree;
-	struct udb_base*   udb;
 	/* the timestamp on the ixfr.db file */
 	struct timeval	  diff_timestamp;
 	/* if diff_skip=1, diff_pos contains the nsd.diff place to continue */
@@ -364,12 +368,8 @@ zone_type *namedb_find_zone(namedb_type *db, const dname_type *dname);
  */
 void domain_table_deldomain(namedb_type* db, domain_type* domain);
 
-
 /** dbcreate.c */
-int udb_write_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
-void udb_del_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
-int write_zone_to_udb(struct udb_base* udb, zone_type* zone,
-	struct timespec* mtime, const char* file_str);
+int print_rrs(FILE* out, struct zone* zone);
 /** marshal rdata into buffer, must be MAX_RDLENGTH in size */
 size_t rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz);
 /* dbaccess.c */
@@ -378,9 +378,10 @@ int namedb_lookup (struct namedb* db,
 		   domain_type     **closest_match,
 		   domain_type     **closest_encloser);
 /* pass number of children (to alloc in dirty array */
-struct namedb *namedb_open(const char *filename, struct nsd_options* opt);
-void namedb_close_udb(struct namedb* db);
+struct namedb *namedb_open(struct nsd_options* opt);
 void namedb_close(struct namedb* db);
+/* free ixfr data stored for zones */
+void namedb_free_ixfr(struct namedb* db);
 void namedb_check_zonefiles(struct nsd* nsd, struct nsd_options* opt,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
 void namedb_check_zonefile(struct nsd* nsd, struct udb_base* taskudb,
@@ -388,8 +389,6 @@ void namedb_check_zonefile(struct nsd* nsd, struct udb_base* taskudb,
 /** zone one zonefile into memory and revert on parse error, write to udb */
 void namedb_read_zonefile(struct nsd* nsd, struct zone* zone,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
-void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
-	domain_type* domain);
 zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
         struct zone_options* zopt);
 void namedb_zone_delete(namedb_type* db, zone_type* zone);
@@ -443,4 +442,21 @@ rrset_rrclass(rrset_type* rrset)
 	return rrset->rrs[0].klass;
 }
 
-#endif
+/*
+ * zone_rr_iter can be used to iterate over all RRs in a given zone. the
+ * SOA RRSET is guaranteed to be returned first.
+ */
+typedef struct zone_rr_iter zone_rr_iter_type;
+
+struct zone_rr_iter {
+	zone_type *zone;
+	domain_type *domain;
+	rrset_type *rrset;
+	ssize_t index;
+};
+
+void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
+
+rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
+
+#endif /* NAMEDB_H */

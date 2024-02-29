@@ -47,10 +47,12 @@
 #include "services/cache/rrset.h"
 #include "services/cache/dns.h"
 #include "services/cache/infra.h"
+#include "services/outside_network.h"
 #include "util/data/msgreply.h"
 #include "util/regional.h"
 #include "util/net_help.h"
 #include "util/data/dname.h"
+#include "util/config_file.h"
 #include "iterator/iterator.h"
 #include "iterator/iter_delegpt.h"
 #include "iterator/iter_utils.h"
@@ -164,8 +166,7 @@ dump_msg_ref(RES* ssl, struct ub_packed_rrset_key* k)
 
 /** dump message entry */
 static int
-dump_msg(RES* ssl, struct query_info* k, struct reply_info* d, 
-	time_t now)
+dump_msg(RES* ssl, struct query_info* k, struct reply_info* d, time_t now)
 {
 	size_t i;
 	char* nm, *tp, *cl;
@@ -190,13 +191,15 @@ dump_msg(RES* ssl, struct query_info* k, struct reply_info* d,
 	}
 	
 	/* meta line */
-	if(!ssl_printf(ssl, "msg %s %s %s %d %d " ARG_LL "d %d %u %u %u\n",
+	if(!ssl_printf(ssl, "msg %s %s %s %d %d " ARG_LL "d %d %u %u %u %d %s\n",
 			nm, cl, tp,
 			(int)d->flags, (int)d->qdcount, 
 			(long long)(d->ttl-now), (int)d->security,
-			(unsigned)d->an_numrrsets, 
+			(unsigned)d->an_numrrsets,
 			(unsigned)d->ns_numrrsets,
-			(unsigned)d->ar_numrrsets)) {
+			(unsigned)d->ar_numrrsets,
+			(int)d->reason_bogus,
+			d->reason_bogus_str?d->reason_bogus_str:"")) {
 		free(nm);
 		free(tp);
 		free(cl);
@@ -385,7 +388,7 @@ move_into_cache(struct ub_packed_rrset_key* k,
 	struct rrset_ref ref;
 	uint8_t* p;
 
-	ak = alloc_special_obtain(&worker->alloc);
+	ak = alloc_special_obtain(worker->alloc);
 	if(!ak) {
 		log_warn("error out of memory");
 		return 0;
@@ -396,7 +399,7 @@ move_into_cache(struct ub_packed_rrset_key* k,
 	ak->rk.dname = (uint8_t*)memdup(k->rk.dname, k->rk.dname_len);
 	if(!ak->rk.dname) {
 		log_warn("error out of memory");
-		ub_packed_rrset_parsedelete(ak, &worker->alloc);
+		ub_packed_rrset_parsedelete(ak, worker->alloc);
 		return 0;
 	}
 	s = sizeof(*ad) + (sizeof(size_t) + sizeof(uint8_t*) + 
@@ -406,7 +409,7 @@ move_into_cache(struct ub_packed_rrset_key* k,
 	ad = (struct packed_rrset_data*)malloc(s);
 	if(!ad) {
 		log_warn("error out of memory");
-		ub_packed_rrset_parsedelete(ak, &worker->alloc);
+		ub_packed_rrset_parsedelete(ak, worker->alloc);
 		return 0;
 	}
 	p = (uint8_t*)ad;
@@ -429,7 +432,8 @@ move_into_cache(struct ub_packed_rrset_key* k,
 	ref.key = ak;
 	ref.id = ak->id;
 	(void)rrset_cache_update(worker->env.rrset_cache, &ref,
-		&worker->alloc, *worker->env.now);
+		worker->alloc, *worker->env.now);
+
 	return 1;
 }
 
@@ -630,6 +634,9 @@ load_msg(RES* ssl, sldns_buffer* buf, struct worker* worker)
 	long long ttl;
 	size_t i;
 	int go_on = 1;
+	int ede;
+	int consumed = 0;
+	char* ede_str = NULL;
 
 	regional_free_all(region);
 
@@ -644,11 +651,16 @@ load_msg(RES* ssl, sldns_buffer* buf, struct worker* worker)
 	}
 
 	/* read remainder of line */
-	if(sscanf(s, " %u %u " ARG_LL "d %u %u %u %u", &flags, &qdcount, &ttl, 
-		&security, &an, &ns, &ar) != 7) {
+	/* note the last space before any possible EDE text */
+	if(sscanf(s, " %u %u " ARG_LL "d %u %u %u %u %d %n", &flags, &qdcount, &ttl,
+		&security, &an, &ns, &ar, &ede, &consumed) != 8) {
 		log_warn("error cannot parse numbers: %s", s);
 		return 0;
 	}
+	/* there may be EDE text after the numbers */
+	if(consumed > 0 && (size_t)consumed < strlen(s))
+		ede_str = s + consumed;
+	memset(&rep, 0, sizeof(rep));
 	rep.flags = (uint16_t)flags;
 	rep.qdcount = (uint16_t)qdcount;
 	rep.ttl = (time_t)ttl;
@@ -663,6 +675,8 @@ load_msg(RES* ssl, sldns_buffer* buf, struct worker* worker)
 	rep.ns_numrrsets = (size_t)ns;
 	rep.ar_numrrsets = (size_t)ar;
 	rep.rrset_count = (size_t)an+(size_t)ns+(size_t)ar;
+	rep.reason_bogus = (sldns_ede_code)ede;
+	rep.reason_bogus_str = ede_str?(char*)regional_strdup(region, ede_str):NULL;
 	rep.rrsets = (struct ub_packed_rrset_key**)regional_alloc_zero(
 		region, sizeof(struct ub_packed_rrset_key*)*rep.rrset_count);
 
@@ -677,7 +691,8 @@ load_msg(RES* ssl, sldns_buffer* buf, struct worker* worker)
 	if(!go_on) 
 		return 1; /* skip this one, not all references satisfied */
 
-	if(!dns_cache_store(&worker->env, &qinf, &rep, 0, 0, 0, NULL, flags)) {
+	if(!dns_cache_store(&worker->env, &qinf, &rep, 0, 0, 0, NULL, flags,
+		*worker->env.now)) {
 		log_warn("error out of memory");
 		return 0;
 	}
@@ -848,13 +863,16 @@ int print_deleg_lookup(RES* ssl, struct worker* worker, uint8_t* nm,
 	while(1) {
 		dp = dns_cache_find_delegation(&worker->env, nm, nmlen, 
 			qinfo.qtype, qinfo.qclass, region, &msg, 
-			*worker->env.now);
+			*worker->env.now, 0, NULL, 0);
 		if(!dp) {
 			return ssl_printf(ssl, "no delegation from "
 				"cache; goes to configured roots\n");
 		}
 		/* go up? */
-		if(iter_dp_is_useless(&qinfo, BIT_RD, dp)) {
+		if(iter_dp_is_useless(&qinfo, BIT_RD, dp,
+			(worker->env.cfg->do_ip4 && worker->back->num_ip4 != 0),
+			(worker->env.cfg->do_ip6 && worker->back->num_ip6 != 0),
+			worker->env.cfg->do_nat64)) {
 			print_dp_main(ssl, dp, msg);
 			print_dp_details(ssl, worker, dp);
 			if(!ssl_printf(ssl, "cache delegation was "

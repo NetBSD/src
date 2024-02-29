@@ -42,6 +42,7 @@
 struct nsd_options;
 struct fstrm_io;
 struct fstrm_queue;
+struct dt_tls_writer;
 
 struct dt_env {
 	/** dnstap I/O thread */
@@ -66,6 +67,9 @@ struct dt_env {
 	unsigned log_auth_query_messages : 1;
 	/** whether to log Message/AUTH_RESPONSE */
 	unsigned log_auth_response_messages : 1;
+
+	/** tls writer object, or NULL */
+	struct dt_tls_writer* tls_writer;
 };
 
 /**
@@ -75,12 +79,23 @@ struct dt_env {
  * of the structure) to ensure lock-free access to its own per-worker circular
  * queue.  Duplicate the environment object if more than one worker needs to
  * share access to the dnstap I/O socket.
- * @param socket_path: path to dnstap logging socket, must be non-NULL.
+ * @param socket_path: path to dnstap logging socket, must be non-NULL if used.
+ * @param ip: if NULL or "" use socket path, otherwise IP or IP@port.
  * @param num_workers: number of worker threads, must be > 0.
+ * @param tls: set to true to use TLS, otherwise, TCP. Used when ip is set.
+ * @param tls_server_name: name for authenticating the upstream server, or
+ * 	NULL or "".
+ * @param tls_cert_bundle: pem bundle to verify server with. Or NULL or "".
+ * @param tls_client_key_file: key file for client authentication. Or NULL
+ * 	or "".
+ * @param tls_client_cert_file: cert file for client authentication. Or NULL
+ * 	or "".
  * @return dt_env object, NULL on failure.
  */
 struct dt_env *
-dt_create(const char *socket_path, unsigned num_workers);
+dt_create(const char *socket_path, char* ip, unsigned num_workers,
+	int tls, char* tls_server_name, char* tls_cert_bundle,
+	char* tls_client_key_file, char* tls_client_cert_file);
 
 /**
  * Apply config settings.
@@ -108,6 +123,7 @@ dt_delete(struct dt_env *env);
 /**
  * Create and send a new dnstap "Message" event of type AUTH_QUERY.
  * @param env: dnstap environment object.
+ * @param local_addr: address/port of server (local address).
  * @param addr: address/port of client.
  * @param is_tcp: true for tcp, false for udp.
  * @param zone: zone name, or NULL. in wireformat.
@@ -118,8 +134,10 @@ dt_delete(struct dt_env *env);
 void
 dt_msg_send_auth_query(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen);
@@ -127,6 +145,7 @@ dt_msg_send_auth_query(struct dt_env *env,
 /**
  * Create and send a new dnstap "Message" event of type AUTH_RESPONSE.
  * @param env: dnstap environment object.
+ * @param local_addr: address/port of server (local address).
  * @param addr: address/port of client.
  * @param is_tcp: true for tcp, false for udp.
  * @param zone: zone name, or NULL. in wireformat.
@@ -137,8 +156,10 @@ dt_msg_send_auth_query(struct dt_env *env,
 void
 dt_msg_send_auth_response(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen);

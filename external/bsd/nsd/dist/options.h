@@ -10,7 +10,6 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include "config.h"
 #include <stdarg.h>
 #include "region-allocator.h"
 #include "rbtree.h"
@@ -19,14 +18,24 @@ struct dname;
 struct tsig_key;
 struct buffer;
 struct nsd;
+struct proxy_protocol_port_list;
 
 typedef struct nsd_options nsd_options_type;
 typedef struct pattern_options pattern_options_type;
 typedef struct zone_options zone_options_type;
+typedef struct range_option range_option_type;
 typedef struct ip_address_option ip_address_option_type;
+typedef struct cpu_option cpu_option_type;
+typedef struct cpu_map_option cpu_map_option_type;
 typedef struct acl_options acl_options_type;
 typedef struct key_options key_options_type;
+typedef struct tls_auth_options tls_auth_options_type;
 typedef struct config_parser_state config_parser_state_type;
+
+#define VERIFY_ZONE_INHERIT (2)
+#define VERIFIER_FEED_ZONE_INHERIT (2)
+#define VERIFIER_TIMEOUT_INHERIT (-1)
+
 /*
  * Options global for nsd.
  */
@@ -56,22 +65,33 @@ struct nsd_options {
 	/* rbtree of keys defined, by name */
 	rbtree_type* keys;
 
+	/* rbtree of tls_auth defined, by name */
+	rbtree_type* tls_auths;
+
 	/* list of ip addresses to bind to (or NULL for all) */
 	struct ip_address_option* ip_addresses;
 
 	int ip_transparent;
 	int ip_freebind;
+	int send_buffer_size;
+	int receive_buffer_size;
 	int debug_mode;
 	int verbosity;
 	int hide_version;
+	int hide_identity;
+	int drop_updates;
 	int do_ip4;
 	int do_ip6;
-	const char* database;
 	const char* identity;
 	const char* version;
 	const char* logfile;
+	int log_only_syslog;
 	int server_count;
+	struct cpu_option* cpu_affinity;
+	struct cpu_map_option* service_cpu_affinity;
 	int tcp_count;
+	int tcp_reject_overflow;
+	int confine_to_zone;
 	int tcp_query_count;
 	int tcp_timeout;
 	int tcp_mss;
@@ -96,8 +116,26 @@ struct nsd_options {
 	int minimal_responses;
 	int refuse_any;
 	int reuseport;
+	/* max number of xfrd tcp sockets */
+	int xfrd_tcp_max;
+	/* max number of simultaneous requests on xfrd tcp socket */
+	int xfrd_tcp_pipeline;
 
-        /** remote control section. enable toggle. */
+	/* private key file for TLS */
+	char* tls_service_key;
+	/* ocsp stapling file for TLS */
+	char* tls_service_ocsp;
+	/* certificate file for TLS */
+	char* tls_service_pem;
+	/* TLS dedicated port */
+	const char* tls_port;
+	/* TLS certificate bundle */
+	const char* tls_cert_bundle;
+
+	/* proxy protocol port list */
+	struct proxy_protocol_port_list* proxy_protocol_port;
+
+	/** remote control section. enable toggle. */
 	int control_enable;
 	/** the interfaces the remote control should listen on */
 	struct ip_address_option* control_interface;
@@ -129,6 +167,18 @@ struct nsd_options {
 	int dnstap_enable;
 	/** dnstap socket path */
 	char* dnstap_socket_path;
+	/** dnstap IP, if "", it uses socket path. */
+	char* dnstap_ip;
+	/** dnstap TLS enable */
+	int dnstap_tls;
+	/** dnstap tls server authentication name */
+	char* dnstap_tls_server_name;
+	/** dnstap server cert bundle */
+	char* dnstap_tls_cert_bundle;
+	/** dnstap client key for client authentication */
+	char* dnstap_tls_client_key_file;
+	/** dnstap client cert for client authentication */
+	char* dnstap_tls_client_cert_file;
 	/** true to send "identity" via dnstap */
 	int dnstap_send_identity;
 	/** true to send "version" via dnstap */
@@ -142,13 +192,67 @@ struct nsd_options {
 	/** true to log dnstap AUTH_RESPONSE message events */
 	int dnstap_log_auth_response_messages;
 
+	/** do answer with server cookie when request contained cookie option */
+	int answer_cookie;
+	/** cookie secret */
+	char *cookie_secret;
+	/** path to cookie secret store */
+	char const* cookie_secret_file;
+	/** enable verify */
+	int verify_enable;
+	/** list of ip addresses used to serve zones for verification */
+	struct ip_address_option* verify_ip_addresses;
+	/** default port 5347 */
+	char *verify_port;
+	/** verify zones by default */
+	int verify_zones;
+	/** default command to verify zones with */
+	char **verifier;
+	/** maximum number of verifiers that may run simultaneously */
+	int verifier_count;
+	/** whether or not to feed the zone to the verifier over stdin */
+	uint8_t verifier_feed_zone;
+	/** maximum number of seconds that a verifier may take */
+	uint32_t verifier_timeout;
+
 	region_type* region;
+};
+
+struct range_option {
+	struct range_option* next;
+	int first;
+	int last;
 };
 
 struct ip_address_option {
 	struct ip_address_option* next;
 	char* address;
+	struct range_option* servers;
+	int dev;
+	int fib;
 };
+
+struct cpu_option {
+	struct cpu_option* next;
+	int cpu;
+};
+
+struct cpu_map_option {
+	struct cpu_map_option* next;
+	int service;
+	int cpu;
+};
+
+/*
+ * Defines for min_expire_time_expr value
+ */
+#define EXPIRE_TIME_HAS_VALUE     0
+#define EXPIRE_TIME_IS_DEFAULT    1
+#define REFRESHPLUSRETRYPLUS1     2
+#define REFRESHPLUSRETRYPLUS1_STR "refresh+retry+1"
+#define expire_time_is_default(x) (!(  (x) == REFRESHPLUSRETRYPLUS1 \
+                                    || (x) == EXPIRE_TIME_HAS_VALUE ))
+
 
 /*
  * Pattern of zone options, used to contain options for zone(s).
@@ -161,6 +265,7 @@ struct pattern_options {
 	struct acl_options* request_xfr;
 	struct acl_options* notify;
 	struct acl_options* provide_xfr;
+	struct acl_options* allow_query;
 	struct acl_options* outgoing_interface;
 	const char* zonestats;
 #ifdef RATELIMIT
@@ -180,8 +285,29 @@ struct pattern_options {
 	uint8_t max_retry_time_is_default;
 	uint32_t min_retry_time;
 	uint8_t min_retry_time_is_default;
+	uint32_t min_expire_time;
+	/* min_expir_time_expr is either a known value (REFRESHPLUSRETRYPLUS1
+	 * or EXPIRE_EXPR_HAS_VALUE) or else min_expire_time is the default.
+	 * This can be tested with expire_time_is_default(x) define.
+	 */
+	uint8_t min_expire_time_expr;
 	uint64_t size_limit_xfr;
 	uint8_t multi_master_check;
+	uint8_t store_ixfr;
+	uint8_t store_ixfr_is_default;
+	uint64_t ixfr_size;
+	uint8_t ixfr_size_is_default;
+	uint32_t ixfr_number;
+	uint8_t ixfr_number_is_default;
+	uint8_t create_ixfr;
+	uint8_t create_ixfr_is_default;
+	uint8_t verify_zone;
+	uint8_t verify_zone_is_default;
+	char **verifier;
+	uint8_t verifier_feed_zone;
+	uint8_t verifier_feed_zone_is_default;
+	int32_t verifier_timeout;
+	uint8_t verifier_timeout_is_default;
 } ATTR_PACKED;
 
 #define PATTERN_IMPLICIT_MARKER "_implicit_"
@@ -244,6 +370,10 @@ struct acl_options {
 	uint8_t blocked;
 	const char* key_name;
 	struct key_options* key_options;
+
+	/* tls_auth for XoT */
+	const char* tls_auth_name;
+	struct tls_auth_options* tls_auth_options;
 } ATTR_PACKED;
 
 /*
@@ -256,6 +386,24 @@ struct key_options {
 	char* secret;
 	struct tsig_key* tsig_key;
 } ATTR_PACKED;
+
+/*
+ * TLS Auth definition for XoT
+ */
+struct tls_auth_options {
+	rbnode_type node; /* key of tree is name */
+	char* name;
+	char* auth_domain_name;
+	char* client_cert;
+	char* client_key;
+	char* client_key_pw;
+};
+
+/* proxy protocol port option list */
+struct proxy_protocol_port_list {
+	struct proxy_protocol_port_list* next;
+	int port;
+};
 
 /** zone list free space */
 struct zonelist_free {
@@ -285,17 +433,12 @@ struct config_parser_state {
 	const char* chroot;
 	int line;
 	int errors;
-	int server_settings_seen;
 	struct nsd_options* opt;
-	struct pattern_options* current_pattern;
-	struct zone_options* current_zone;
-	struct key_options* current_key;
-	struct ip_address_option* current_ip_address_option;
-	struct acl_options* current_allow_notify;
-	struct acl_options* current_request_xfr;
-	struct acl_options* current_notify;
-	struct acl_options* current_provide_xfr;
-	struct acl_options* current_outgoing_interface;
+	struct pattern_options *pattern;
+	struct zone_options *zone;
+	struct key_options *key;
+	struct tls_auth_options *tls_auth;
+	struct ip_address_option *ip;
 	void (*err)(void*,const char*);
 	void* err_arg;
 };
@@ -339,6 +482,10 @@ int key_options_equal(struct key_options* p, struct key_options* q);
 void key_options_add_modify(struct nsd_options* opt, struct key_options* key);
 void key_options_setup(region_type* region, struct key_options* key);
 void key_options_desetup(region_type* region, struct key_options* key);
+/* TLS auth */
+struct tls_auth_options* tls_auth_options_create(region_type* region);
+void tls_auth_options_insert(struct nsd_options* opt, struct tls_auth_options* auth);
+struct tls_auth_options* tls_auth_options_find(struct nsd_options* opt, const char* name);
 /* read in zone list file. Returns false on failure */
 int parse_zone_list_file(struct nsd_options* opt);
 /* create zone entry and add to the zonelist file */
@@ -375,9 +522,15 @@ int acl_check_incoming(struct acl_options* acl, struct query* q,
 	struct acl_options** reason);
 int acl_addr_matches_host(struct acl_options* acl, struct acl_options* host);
 int acl_addr_matches(struct acl_options* acl, struct query* q);
+int acl_addr_matches_proxy(struct acl_options* acl, struct query* q);
 int acl_key_matches(struct acl_options* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);
-int acl_addr_match_range(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+int acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+int acl_addr_match_range_v4(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+
+/* check acl list for blocks on address, return 0 if none, -1 if blocked. */
+int acl_check_incoming_block_proxy(struct acl_options* acl, struct query* q,
+	struct acl_options** reason);
 
 /* returns true if acls are both from the same host */
 int acl_same_host(struct acl_options* a, struct acl_options* b);
@@ -398,8 +551,8 @@ const char* config_make_zonefile(struct zone_options* zone, struct nsd* nsd);
 #define ZONEC_PCT_COUNT 100000 /* elements before pct check is done */
 
 /* parsing helpers */
-void c_error(const char* msg);
-void c_error_msg(const char* fmt, ...) ATTR_FORMAT(printf, 1, 2);
+void c_error(const char* msg, ...) ATTR_FORMAT(printf, 1,2);
+int c_wrap(void);
 struct acl_options* parse_acl_info(region_type* region, char* ip,
 	const char* key);
 /* true if ipv6 address, false if ipv4 */
@@ -413,6 +566,18 @@ void nsd_options_destroy(struct nsd_options* opt);
 /* replace occurrences of one with two in buf, pass length of buffer */
 void replace_str(char* buf, size_t len, const char* one, const char* two);
 /* apply pattern to the existing pattern in the parser */
-void config_apply_pattern(const char* name);
+void config_apply_pattern(struct pattern_options *dest, const char* name);
+/* if the file is a directory, print a warning, because flex just exit()s
+ * when a fileread fails because it is a directory, helps the user figure
+ * out what just happened */
+void warn_if_directory(const char* filetype, FILE* f, const char* fname);
+/* resolve interface names in the options "ip-address:" (or "interface:")
+ * and "control-interface:" into the ip-addresses associated with those
+ * names. */
+void resolve_interface_names(struct nsd_options* options);
+
+/* See if the sockaddr port number is listed in the proxy protocol ports. */
+int sockaddr_uses_proxy_protocol_port(struct nsd_options* options,
+	struct sockaddr* addr);
 
 #endif /* OPTIONS_H */

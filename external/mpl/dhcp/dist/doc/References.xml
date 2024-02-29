@@ -109,10 +109,11 @@
 
       <address>
 	<postal>
-	  <street>950 Charter Street</street>
-	  <city>Redwood City</city>
-	  <region>CA</region>
-	  <code>94063</code>
+	  <street>PO Box 360</street>
+	  <city>Newmarket</city>
+	  <region>NH</region>
+	  <code>03857</code>
+	  <country>USA</country>
 	</postal>
       </address>
     </author>
@@ -124,14 +125,12 @@
 
       <address>
 	<postal>
-	  <street>950 Charter Street</street>
-	  <city>Redwood City</city>
-	  <region>CA</region>
-	  <code>94063</code>
+	  <street>PO Box 360</street>
+	  <city>Newmarket</city>
+	  <region>NH</region>
+	  <code>03857</code>
+	  <country>USA</country>
 	</postal>
-
-	<phone>+1 650 423 1345</phone>
-	<email>Tomasz_Mrugalski@isc.org</email>
       </address>
     </author>
 
@@ -148,7 +147,7 @@
     </abstract>
 
     <note title="Copyright Notice">
-	<t>Copyright (c) 2006-2017 by Internet Systems
+	<t>Copyright (C) 2006-2022 Internet Systems
 	  Consortium, Inc. ("ISC")</t>
 
 	<t>This Source Code Form is subject to the terms of the Mozilla Public
@@ -314,7 +313,7 @@
 	the need to implement many forms of Link Layer framing and above.
 	The software gets away with not having to implement IP routing
 	tables as well by simply utilizing the aforementioned 'fallback'
-	UDP socket when unicasting between two configured systems is 
+	UDP socket when unicasting between two configured systems is
 	needed.</t>
 
 	<t>Modern unixes have opened up some facilities that diminish how
@@ -527,7 +526,7 @@
 	  DHCP clients on given networks, so that one of the two servers may
 	  fail and be survived by a server that can act responsibly.</t>
 
-	  <t>Unfortunately it has been quite some years (2003) since the last 
+	  <t>Unfortunately it has been quite some years (2003) since the last
 	  time this document was edited, and the authors no longer show any
 	  interest in fielding comments or improving the document.</t>
 

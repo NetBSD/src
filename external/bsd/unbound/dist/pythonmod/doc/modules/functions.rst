@@ -60,7 +60,7 @@ EDNS options
 
 .. function:: edns_opt_list_remove(list, code);
 
-    Remove an ENDS option code from the list.
+    Remove an EDNS option code from the list.
     .. note:: All :class:`edns_option` with the code will be removed
 
     :param list: linked list of :class:`edns_option`
@@ -89,10 +89,10 @@ EDNS options
 Inplace callbacks
 -----------------
 
-.. function:: inplace_cb_reply(qinfo, qstate, rep, rcode, edns, opt_list_out, region)
+.. function:: inplace_cb_reply(qinfo, qstate, rep, rcode, edns, opt_list_out, region, \*\*kwargs)
 
     Function prototype for callback functions used in
-    `register_inplace_cb_reply`_, `register_inplace_cb_reply_cache`_,
+    `register_inplace_cb_reply`, `register_inplace_cb_reply_cache`,
     `register_inplace_cb_reply_local` and `register_inplace_cb_reply_servfail`.
 
     :param qinfo: :class:`query_info`
@@ -102,11 +102,14 @@ Inplace callbacks
     :param edns: :class:`edns_data`
     :param opt_list_out: :class:`edns_option`. EDNS option list to append options to.
     :param region: :class:`regional`
+    :param \*\*kwargs: Dictionary that may contain parameters added in a future
+        release. Current parameters:
+        ``repinfo``: :class:`comm_reply`. Reply information for a communication point.
 
 .. function:: inplace_cb_query(qinfo, flags, qstate, addr, zone, region)
 
     Function prototype for callback functions used in
-    `register_inplace_cb_query`_.
+    `register_inplace_cb_query`.
 
     :param qinfo: :class:`query_info`
     :param flags: query flags (integer)
@@ -119,7 +122,7 @@ Inplace callbacks
 
     Register py_cb as an inplace reply callback function.
 
-    :param py_cb: Python function that follows `inplace_cb_reply`_'s prototype. **Must** be callable.
+    :param py_cb: Python function that follows `inplace_cb_reply`'s prototype. **Must** be callable.
     :param env: :class:`module_env`
     :param id: Module ID.
     :return: True on success, False otherwise
@@ -129,7 +132,7 @@ Inplace callbacks
 
     Register py_cb as an inplace reply_cache callback function.
 
-    :param py_cb: Python function that follows `inplace_cb_reply`_'s prototype. **Must** be callable.
+    :param py_cb: Python function that follows `inplace_cb_reply`'s prototype. **Must** be callable.
     :param env: :class:`module_env`
     :param id: Module ID.
     :return: True on success, False otherwise
@@ -139,7 +142,7 @@ Inplace callbacks
 
     Register py_cb as an inplace reply_local callback function.
 
-    :param py_cb: Python function that follows `inplace_cb_reply`_'s prototype. **Must** be callable.
+    :param py_cb: Python function that follows `inplace_cb_reply`'s prototype. **Must** be callable.
     :param env: :class:`module_env`
     :param id: Module ID.
     :return: True on success, False otherwise
@@ -149,7 +152,7 @@ Inplace callbacks
 
     Register py_cb as an inplace reply_servfail callback function.
 
-    :param py_cb: Python function that follows `inplace_cb_reply`_'s prototype. **Must** be callable.
+    :param py_cb: Python function that follows `inplace_cb_reply`'s prototype. **Must** be callable.
     :param env: :class:`module_env`
     :param id: Module ID.
     :return: True on success, False otherwise
@@ -159,7 +162,7 @@ Inplace callbacks
 
     Register py_cb as an inplace query callback function.
 
-    :param py_cb: Python function that follows `inplace_cb_query`_'s prototype. **Must** be callable.
+    :param py_cb: Python function that follows `inplace_cb_query`'s prototype. **Must** be callable.
     :param env: :class:`module_env`
     :param id: Module ID.
     :return: True on success, False otherwise

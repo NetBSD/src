@@ -52,9 +52,9 @@ typedef struct udb_alloc udb_alloc;
 typedef uint64_t udb_void;
 
 /** convert relptr to usable pointer */
-#define UDB_REL(base, relptr) ((base) + (relptr))
+#define UDB_REL(base, relptr) ((void*)((char*)(base) + (relptr)))
 /** from system pointer to relative pointer */
-#define UDB_SYSTOREL(base, ptr) ((udb_void)((void*)(ptr) - (base)))
+#define UDB_SYSTOREL(base, ptr) ((udb_void)((char*)(ptr) - (char*)(base)))
 
 /** MAX 2**x exponent of alloced chunks, for 1Mbytes.  The smallest
  * chunk is 16bytes (8preamble+8data), so 0-3 is unused. */
@@ -198,7 +198,7 @@ struct udb_base {
 	udb_ptr** ram_hash;
 	/** size of the current udb_ptr hashtable array */
 	size_t ram_size;
-	/** mask for the curren udb_ptr hashtable lookups */
+	/** mask for the current udb_ptr hashtable lookups */
 	int ram_mask;
 	/** number of ptrs in ram, used to decide when to grow */
 	size_t ram_num;
@@ -218,14 +218,6 @@ typedef enum udb_chunk_type udb_chunk_type;
 enum udb_chunk_type {
 	udb_chunk_type_free = 0,
 	udb_chunk_type_data, /* alloced data */
-	udb_chunk_type_index,
-	udb_chunk_type_radtree,
-	udb_chunk_type_radnode,
-	udb_chunk_type_radarray,
-	udb_chunk_type_zone,
-	udb_chunk_type_domain,
-	udb_chunk_type_rrset,
-	udb_chunk_type_rr,
 	udb_chunk_type_task,
 	udb_chunk_type_internal
 };

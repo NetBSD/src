@@ -49,13 +49,12 @@
 #include "util/netevent.h"
 #include "util/log.h"
 
-#include <fstrm.h>
 #include <protobuf-c/protobuf-c.h>
 
 #include "dnstap/dnstap.h"
+#include "dnstap/dtstream.h"
 #include "dnstap/dnstap.pb-c.h"
 
-#define DNSTAP_CONTENT_TYPE		"protobuf:dnstap.Dnstap"
 #define DNSTAP_INITIAL_BUF_SIZE		256
 
 struct dt_msg {
@@ -90,13 +89,7 @@ dt_pack(const Dnstap__Dnstap *d, void **buf, size_t *sz)
 static void
 dt_send(const struct dt_env *env, void *buf, size_t len_buf)
 {
-	fstrm_res res;
-	if (!buf)
-		return;
-	res = fstrm_iothr_submit(env->iothr, env->ioq, buf, len_buf,
-				 fstrm_free_wrapper, NULL);
-	if (res != fstrm_res_success)
-		free(buf);
+	dt_msg_queue_submit(env->msgqueue, buf, len_buf);
 }
 
 static void
@@ -135,56 +128,37 @@ check_socket_file(const char* socket_path)
 }
 
 struct dt_env *
-dt_create(const char *socket_path, unsigned num_workers)
+dt_create(struct config_file* cfg)
 {
-#ifdef UNBOUND_DEBUG
-	fstrm_res res;
-#endif
 	struct dt_env *env;
-	struct fstrm_iothr_options *fopt;
-	struct fstrm_unix_writer_options *fuwopt;
-	struct fstrm_writer *fw;
-	struct fstrm_writer_options *fwopt;
 
-	verbose(VERB_OPS, "attempting to connect to dnstap socket %s",
-		socket_path);
-	log_assert(socket_path != NULL);
-	log_assert(num_workers > 0);
-	check_socket_file(socket_path);
+	if(cfg->dnstap && cfg->dnstap_socket_path && cfg->dnstap_socket_path[0] &&
+		(cfg->dnstap_ip==NULL || cfg->dnstap_ip[0]==0)) {
+		char* p = cfg->dnstap_socket_path;
+		if(cfg->chrootdir && cfg->chrootdir[0] && strncmp(p,
+			cfg->chrootdir, strlen(cfg->chrootdir)) == 0)
+			p += strlen(cfg->chrootdir);
+		verbose(VERB_OPS, "attempting to connect to dnstap socket %s",
+			p);
+		check_socket_file(p);
+	}
 
 	env = (struct dt_env *) calloc(1, sizeof(struct dt_env));
 	if (!env)
 		return NULL;
 
-	fwopt = fstrm_writer_options_init();
-#ifdef UNBOUND_DEBUG
-	res = 
-#else
-	(void)
-#endif
-	    fstrm_writer_options_add_content_type(fwopt,
-		DNSTAP_CONTENT_TYPE, sizeof(DNSTAP_CONTENT_TYPE) - 1);
-	log_assert(res == fstrm_res_success);
-
-	fuwopt = fstrm_unix_writer_options_init();
-	fstrm_unix_writer_options_set_socket_path(fuwopt, socket_path);
-
-	fw = fstrm_unix_writer_init(fuwopt, fwopt);
-	log_assert(fw != NULL);
-
-	fopt = fstrm_iothr_options_init();
-	fstrm_iothr_options_set_num_input_queues(fopt, num_workers);
-	env->iothr = fstrm_iothr_init(fopt, &fw);
-	if (env->iothr == NULL) {
-		verbose(VERB_DETAIL, "dt_create: fstrm_iothr_init() failed");
-		fstrm_writer_destroy(&fw);
+	env->dtio = dt_io_thread_create();
+	if(!env->dtio) {
+		log_err("malloc failure");
 		free(env);
-		env = NULL;
+		return NULL;
 	}
-	fstrm_iothr_options_destroy(&fopt);
-	fstrm_unix_writer_options_destroy(&fuwopt);
-	fstrm_writer_options_destroy(&fwopt);
-
+	if(!dt_io_thread_apply_cfg(env->dtio, cfg)) {
+		dt_io_thread_delete(env->dtio);
+		free(env);
+		return NULL;
+	}
+	dt_apply_cfg(env, cfg);
 	return env;
 }
 
@@ -270,12 +244,27 @@ dt_apply_cfg(struct dt_env *env, struct config_file *cfg)
 }
 
 int
-dt_init(struct dt_env *env)
+dt_init(struct dt_env *env, struct comm_base* base)
 {
-	env->ioq = fstrm_iothr_get_input_queue(env->iothr);
-	if (env->ioq == NULL)
+	env->msgqueue = dt_msg_queue_create(base);
+	if(!env->msgqueue) {
+		log_err("malloc failure");
 		return 0;
+	}
+	if(!dt_io_thread_register_queue(env->dtio, env->msgqueue)) {
+		log_err("malloc failure");
+		dt_msg_queue_delete(env->msgqueue);
+		env->msgqueue = NULL;
+		return 0;
+	}
 	return 1;
+}
+
+void
+dt_deinit(struct dt_env* env)
+{
+	dt_io_thread_unregister_queue(env->dtio, env->msgqueue);
+	dt_msg_queue_delete(env->msgqueue);
 }
 
 void
@@ -283,8 +272,7 @@ dt_delete(struct dt_env *env)
 {
 	if (!env)
 		return;
-	verbose(VERB_OPS, "closing dnstap socket");
-	fstrm_iothr_destroy(&env->iothr);
+	dt_io_thread_delete(env->dtio);
 	free(env->identity);
 	free(env->version);
 	free(env);
@@ -314,43 +302,74 @@ dt_fill_buffer(sldns_buffer *b, ProtobufCBinaryData *p, protobuf_c_boolean *has)
 
 static void
 dt_msg_fill_net(struct dt_msg *dm,
-		struct sockaddr_storage *ss,
+		struct sockaddr_storage *qs,
+		struct sockaddr_storage *rs,
 		enum comm_point_type cptype,
-		ProtobufCBinaryData *addr, protobuf_c_boolean *has_addr,
-		uint32_t *port, protobuf_c_boolean *has_port)
+		ProtobufCBinaryData *qaddr, protobuf_c_boolean *has_qaddr,
+		uint32_t *qport, protobuf_c_boolean *has_qport,
+		ProtobufCBinaryData *raddr, protobuf_c_boolean *has_raddr,
+		uint32_t *rport, protobuf_c_boolean *has_rport)
 {
-	log_assert(ss->ss_family == AF_INET6 || ss->ss_family == AF_INET);
-	if (ss->ss_family == AF_INET6) {
-		struct sockaddr_in6 *s = (struct sockaddr_in6 *) ss;
+	log_assert(qs->ss_family == AF_INET6 || qs->ss_family == AF_INET);
+	if (qs->ss_family == AF_INET6) {
+		struct sockaddr_in6 *q = (struct sockaddr_in6 *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET6;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = s->sin6_addr.s6_addr;
-		addr->len = 16; /* IPv6 */
-		*has_addr = 1;
+		qaddr->data = q->sin6_addr.s6_addr;
+		qaddr->len = 16; /* IPv6 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin6_port);
-		*has_port = 1;
-	} else if (ss->ss_family == AF_INET) {
-		struct sockaddr_in *s = (struct sockaddr_in *) ss;
+		*qport = ntohs(q->sin6_port);
+		*has_qport = 1;
+	} else if (qs->ss_family == AF_INET) {
+		struct sockaddr_in *q = (struct sockaddr_in *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = (uint8_t *) &s->sin_addr.s_addr;
-		addr->len = 4; /* IPv4 */
-		*has_addr = 1;
+		qaddr->data = (uint8_t *) &q->sin_addr.s_addr;
+		qaddr->len = 4; /* IPv4 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin_port);
-		*has_port = 1;
+		*qport = ntohs(q->sin_port);
+		*has_qport = 1;
 	}
+
+	/*
+	 * This block is to fill second set of fields in DNSTAP-message defined as request_/response_ names.
+	 * Additional responsive structure is: struct sockaddr_storage *rs
+	 */
+        if (rs && rs->ss_family == AF_INET6) {
+                struct sockaddr_in6 *r = (struct sockaddr_in6 *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = r->sin6_addr.s6_addr;
+                raddr->len = 16; /* IPv6 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(r->sin6_port);
+                *has_rport = 1;
+        } else if (rs && rs->ss_family == AF_INET) {
+                struct sockaddr_in *r = (struct sockaddr_in *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = (uint8_t *) &r->sin_addr.s_addr;
+                raddr->len = 4; /* IPv4 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(r->sin_port);
+                *has_rport = 1;
+        }
 
 	log_assert(cptype == comm_udp || cptype == comm_tcp);
 	if (cptype == comm_udp) {
@@ -367,13 +386,17 @@ dt_msg_fill_net(struct dt_msg *dm,
 void
 dt_msg_send_client_query(struct dt_env *env,
 			 struct sockaddr_storage *qsock,
+			 struct sockaddr_storage *rsock,
 			 enum comm_point_type cptype,
-			 sldns_buffer *qmsg)
+			 sldns_buffer *qmsg,
+			 struct timeval* tstamp)
 {
 	struct dt_msg dm;
 	struct timeval qtime;
 
-	gettimeofday(&qtime, NULL);
+	if(tstamp)
+		memcpy(&qtime, tstamp, sizeof(qtime));
+	else 	gettimeofday(&qtime, NULL);
 
 	/* type */
 	dt_msg_init(env, &dm, DNSTAP__MESSAGE__TYPE__CLIENT_QUERY);
@@ -386,11 +409,14 @@ dt_msg_send_client_query(struct dt_env *env,
 	/* query_message */
 	dt_fill_buffer(qmsg, &dm.m.query_message, &dm.m.has_query_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
+	/* socket_family, socket_protocol, query_address, query_port, response_address, response_port */
 	log_assert(cptype == comm_udp || cptype == comm_tcp);
-	dt_msg_fill_net(&dm, qsock, cptype,
+	dt_msg_fill_net(&dm, qsock, rsock, cptype,
 			&dm.m.query_address, &dm.m.has_query_address,
-			&dm.m.query_port, &dm.m.has_query_port);
+			&dm.m.query_port, &dm.m.has_query_port,
+			&dm.m.response_address, &dm.m.has_response_address,
+			&dm.m.response_port, &dm.m.has_response_port);
+
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);
@@ -399,6 +425,7 @@ dt_msg_send_client_query(struct dt_env *env,
 void
 dt_msg_send_client_response(struct dt_env *env,
 			    struct sockaddr_storage *qsock,
+			    struct sockaddr_storage *rsock,
 			    enum comm_point_type cptype,
 			    sldns_buffer *rmsg)
 {
@@ -418,11 +445,13 @@ dt_msg_send_client_response(struct dt_env *env,
 	/* response_message */
 	dt_fill_buffer(rmsg, &dm.m.response_message, &dm.m.has_response_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
+	/* socket_family, socket_protocol, query_address, query_port, response_address, response_port */
 	log_assert(cptype == comm_udp || cptype == comm_tcp);
-	dt_msg_fill_net(&dm, qsock, cptype,
+	dt_msg_fill_net(&dm, qsock, rsock, cptype,
 			&dm.m.query_address, &dm.m.has_query_address,
-			&dm.m.query_port, &dm.m.has_query_port);
+			&dm.m.query_port, &dm.m.has_query_port,
+                        &dm.m.response_address, &dm.m.has_response_address,
+                        &dm.m.response_port, &dm.m.has_response_port);
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);
@@ -431,6 +460,7 @@ dt_msg_send_client_response(struct dt_env *env,
 void
 dt_msg_send_outside_query(struct dt_env *env,
 			  struct sockaddr_storage *rsock,
+			  struct sockaddr_storage *qsock,
 			  enum comm_point_type cptype,
 			  uint8_t *zone, size_t zone_len,
 			  sldns_buffer *qmsg)
@@ -466,11 +496,13 @@ dt_msg_send_outside_query(struct dt_env *env,
 	/* query_message */
 	dt_fill_buffer(qmsg, &dm.m.query_message, &dm.m.has_query_message);
 
-	/* socket_family, socket_protocol, response_address, response_port */
+	/* socket_family, socket_protocol, response_address, response_port, query_address, query_port */
 	log_assert(cptype == comm_udp || cptype == comm_tcp);
-	dt_msg_fill_net(&dm, rsock, cptype,
+	dt_msg_fill_net(&dm, rsock, qsock, cptype,
 			&dm.m.response_address, &dm.m.has_response_address,
-			&dm.m.response_port, &dm.m.has_response_port);
+			&dm.m.response_port, &dm.m.has_response_port,
+			&dm.m.query_address, &dm.m.has_query_address,
+			&dm.m.query_port, &dm.m.has_query_port);
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);
@@ -478,18 +510,19 @@ dt_msg_send_outside_query(struct dt_env *env,
 
 void
 dt_msg_send_outside_response(struct dt_env *env,
-			     struct sockaddr_storage *rsock,
-			     enum comm_point_type cptype,
-			     uint8_t *zone, size_t zone_len,
-			     uint8_t *qbuf, size_t qbuf_len,
-			     const struct timeval *qtime,
-			     const struct timeval *rtime,
-			     sldns_buffer *rmsg)
+	struct sockaddr_storage *rsock,
+	struct sockaddr_storage *qsock,
+	enum comm_point_type cptype,
+	uint8_t *zone, size_t zone_len,
+	uint8_t *qbuf, size_t qbuf_len,
+	const struct timeval *qtime,
+	const struct timeval *rtime,
+	sldns_buffer *rmsg)
 {
 	struct dt_msg dm;
 	uint16_t qflags;
 
-	log_assert(qbuf_len >= sizeof(qflags));
+	(void)qbuf_len; log_assert(qbuf_len >= sizeof(qflags));
 	memcpy(&qflags, qbuf, sizeof(qflags));
 	qflags = ntohs(qflags);
 
@@ -522,11 +555,13 @@ dt_msg_send_outside_response(struct dt_env *env,
 	/* response_message */
 	dt_fill_buffer(rmsg, &dm.m.response_message, &dm.m.has_response_message);
 
-	/* socket_family, socket_protocol, response_address, response_port */
+	/* socket_family, socket_protocol, response_address, response_port, query_address, query_port */
 	log_assert(cptype == comm_udp || cptype == comm_tcp);
-	dt_msg_fill_net(&dm, rsock, cptype,
+	dt_msg_fill_net(&dm, rsock, qsock, cptype,
 			&dm.m.response_address, &dm.m.has_response_address,
-			&dm.m.response_port, &dm.m.has_response_port);
+			&dm.m.response_port, &dm.m.has_response_port,
+			&dm.m.query_address, &dm.m.has_query_address,
+			&dm.m.query_port, &dm.m.has_query_port);
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);

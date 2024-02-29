@@ -149,6 +149,30 @@ static sldns_lookup_table sldns_wireparse_errors_data[] = {
 	{ LDNS_WIREPARSE_ERR_SYNTAX_INTEGER_OVERFLOW, "Syntax error, integer overflow" },
 	{ LDNS_WIREPARSE_ERR_INCLUDE, "$INCLUDE directive was seen in the zone" },
 	{ LDNS_WIREPARSE_ERR_PARENTHESIS, "Parse error, parenthesis mismatch" },
+	{ LDNS_WIREPARSE_ERR_SVCB_UNKNOWN_KEY, "Unknown SvcParamKey"},
+	{ LDNS_WIREPARSE_ERR_SVCB_MISSING_PARAM, "SvcParam is missing a SvcParamValue"},
+	{ LDNS_WIREPARSE_ERR_SVCB_DUPLICATE_KEYS, "Duplicate SVCB key found"},
+	{ LDNS_WIREPARSE_ERR_SVCB_MANDATORY_TOO_MANY_KEYS, "Too many keys in mandatory" },
+	{ LDNS_WIREPARSE_ERR_SVCB_TOO_MANY_PARAMS,
+		"Too many SvcParams. Unbound only allows 63 entries" },
+	{ LDNS_WIREPARSE_ERR_SVCB_MANDATORY_MISSING_PARAM,
+		"Mandatory SvcParamKey is missing"},
+	{ LDNS_WIREPARSE_ERR_SVCB_MANDATORY_DUPLICATE_KEY,
+		"Keys in SvcParam mandatory MUST be unique" },
+	{ LDNS_WIREPARSE_ERR_SVCB_MANDATORY_IN_MANDATORY,
+		"mandatory MUST not be included as mandatory parameter" },
+	{ LDNS_WIREPARSE_ERR_SVCB_PORT_VALUE_SYNTAX,
+		"Could not parse port SvcParamValue" },
+	{ LDNS_WIREPARSE_ERR_SVCB_IPV4_TOO_MANY_ADDRESSES,
+		"Too many IPv4 addresses in ipv4hint" },
+	{ LDNS_WIREPARSE_ERR_SVCB_IPV6_TOO_MANY_ADDRESSES,
+		"Too many IPv6 addresses in ipv6hint" },
+	{ LDNS_WIREPARSE_ERR_SVCB_ALPN_KEY_TOO_LARGE,
+		"Alpn strings need to be smaller than 255 chars"},
+	{ LDNS_WIREPARSE_ERR_SVCB_NO_DEFAULT_ALPN_VALUE,
+		"No-default-alpn should not have a value" },
+	{ LDNS_WIREPARSE_ERR_SVCPARAM_BROKEN_RDATA,
+		"General SVCParam error" },
 	{ 0, NULL }
 };
 sldns_lookup_table* sldns_wireparse_errors = sldns_wireparse_errors_data;
@@ -168,11 +192,45 @@ static sldns_lookup_table sldns_edns_options_data[] = {
 	{ 6, "DHU" },
 	{ 7, "N3U" },
 	{ 8, "edns-client-subnet" },
+	{ 10, "COOKIE" },
 	{ 11, "edns-tcp-keepalive"},
 	{ 12, "Padding" },
+	{ 15, "EDE"},
 	{ 0, NULL}
 };
 sldns_lookup_table* sldns_edns_options = sldns_edns_options_data;
+
+/* From RFC8914 5.2 Table 3, the "Extended DNS Error Codes" registry. */
+static sldns_lookup_table sldns_edns_ede_codes_data[] = {
+	{ LDNS_EDE_NONE, "None" },
+	{ LDNS_EDE_OTHER, "Other Error" },
+	{ LDNS_EDE_UNSUPPORTED_DNSKEY_ALG, "Unsupported DNSKEY Algorithm" },
+	{ LDNS_EDE_UNSUPPORTED_DS_DIGEST, "Unsupported DS Digest Type" },
+	{ LDNS_EDE_STALE_ANSWER, "Stale Answer" },
+	{ LDNS_EDE_FORGED_ANSWER, "Forged Answer" },
+	{ LDNS_EDE_DNSSEC_INDETERMINATE, "DNSSEC Indeterminate" },
+	{ LDNS_EDE_DNSSEC_BOGUS, "DNSSEC Bogus" },
+	{ LDNS_EDE_SIGNATURE_EXPIRED, "Signature Expired" },
+	{ LDNS_EDE_SIGNATURE_NOT_YET_VALID, "Signature Not Yet Valid" },
+	{ LDNS_EDE_DNSKEY_MISSING, "DNSKEY Missing" },
+	{ LDNS_EDE_RRSIGS_MISSING, "RRSIGs Missing" },
+	{ LDNS_EDE_NO_ZONE_KEY_BIT_SET, "No Zone Key Bit Set" },
+	{ LDNS_EDE_NSEC_MISSING, "NSEC Missing" },
+	{ LDNS_EDE_CACHED_ERROR, "Cached Error" },
+	{ LDNS_EDE_NOT_READY, "Not Ready" },
+	{ LDNS_EDE_BLOCKED, "Blocked" },
+	{ LDNS_EDE_CENSORED, "Censored" },
+	{ LDNS_EDE_FILTERED, "Filtered" },
+	{ LDNS_EDE_PROHIBITED, "Prohibited" },
+	{ LDNS_EDE_STALE_NXDOMAIN_ANSWER, "Stale NXDOMAIN Answer" },
+	{ LDNS_EDE_NOT_AUTHORITATIVE, "Not Authoritative" },
+	{ LDNS_EDE_NOT_SUPPORTED, "Not Supported" },
+	{ LDNS_EDE_NO_REACHABLE_AUTHORITY, "No Reachable Authority" },
+	{ LDNS_EDE_NETWORK_ERROR, "Network Error" },
+	{ LDNS_EDE_INVALID_DATA, "Invalid Data" },
+	{ 0, NULL}
+};
+sldns_lookup_table* sldns_edns_ede_codes = sldns_edns_ede_codes_data;
 
 static sldns_lookup_table sldns_tsig_errors_data[] = {
 	{ LDNS_TSIG_ERROR_NOERROR, "NOERROR" },
@@ -195,6 +253,12 @@ static sldns_lookup_table sldns_tsig_errors_data[] = {
 	{ 0, NULL }
 };
 sldns_lookup_table* sldns_tsig_errors = sldns_tsig_errors_data;
+
+/* draft-ietf-dnsop-svcb-https-06: 6. Initial SvcParamKeys */
+const char *svcparamkey_strs[] = {
+	"mandatory", "alpn", "no-default-alpn", "port",
+	"ipv4hint", "ech", "ipv6hint", "dohpath"
+};
 
 char* sldns_wire2str_pkt(uint8_t* data, size_t len)
 {
@@ -456,7 +520,7 @@ int sldns_wire2str_rr_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen,
 	uint8_t* rr = *d;
 	size_t rrlen = *dlen, dname_off, rdlen, ordlen;
 	uint16_t rrtype = 0;
-	
+
 	if(*dlen >= 3 && (*d)[0]==0 &&
 		sldns_read_uint16((*d)+1)==LDNS_RR_TYPE_OPT) {
 		/* perform EDNS OPT processing */
@@ -787,6 +851,7 @@ int sldns_wire2str_dname_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen,
 	unsigned i, counter=0;
 	unsigned maxcompr = MAX_COMPRESS_PTRS; /* loop detection, max compr ptrs */
 	int in_buf = 1;
+	size_t dname_len = 0;
 	if(comprloop) {
 		if(*comprloop != 0)
 			maxcompr = 30; /* for like ipv6 reverse name, per label */
@@ -842,6 +907,16 @@ int sldns_wire2str_dname_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen,
 			labellen = (uint8_t)*dlen;
 		else if(!in_buf && pos+(size_t)labellen > pkt+pktlen)
 			labellen = (uint8_t)(pkt + pktlen - pos);
+		dname_len += ((size_t)labellen)+1;
+		if(dname_len > LDNS_MAX_DOMAINLEN) {
+			/* dname_len counts the uncompressed length we have
+			 * seen so far, and the domain name has become too
+			 * long, prevent the loop from printing overly long
+			 * content. */
+			w += sldns_str_print(s, slen,
+				"ErrorDomainNameTooLong");
+			return w;
+		}
 		for(i=0; i<(unsigned)labellen; i++) {
 			w += dname_char_print(s, slen, *pos++);
 		}
@@ -940,6 +1015,256 @@ int sldns_wire2str_ttl_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen)
 	return sldns_str_print(s, slen, "%u", (unsigned)ttl);
 }
 
+static int
+sldns_print_svcparamkey(char** s, size_t* slen, uint16_t svcparamkey)
+{
+	if (svcparamkey < SVCPARAMKEY_COUNT) {
+		return sldns_str_print(s, slen, "%s", svcparamkey_strs[svcparamkey]);
+	}
+	else {
+		return sldns_str_print(s, slen, "key%d", (int)svcparamkey);
+	}
+}
+
+static int sldns_wire2str_svcparam_port2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	int w = 0;
+
+	if (data_len != 2)
+		return -1; /* wireformat error, a short is 2 bytes */
+	w = sldns_str_print(s, slen, "=%d", (int)sldns_read_uint16(data));
+
+	return w;
+}
+
+static int sldns_wire2str_svcparam_ipv4hint2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	char ip_str[INET_ADDRSTRLEN + 1];
+
+	int w = 0;
+
+	assert(data_len > 0);
+
+	if ((data_len % LDNS_IP4ADDRLEN) == 0) {
+		if (inet_ntop(AF_INET, data, ip_str, sizeof(ip_str)) == NULL)
+			return -1; /* wireformat error, incorrect size or inet family */
+
+		w += sldns_str_print(s, slen, "=%s", ip_str);
+		data += LDNS_IP4ADDRLEN;
+
+		while ((data_len -= LDNS_IP4ADDRLEN) > 0) {
+			if (inet_ntop(AF_INET, data, ip_str, sizeof(ip_str)) == NULL)
+				return -1; /* wireformat error, incorrect size or inet family */
+
+			w += sldns_str_print(s, slen, ",%s", ip_str);
+			data += LDNS_IP4ADDRLEN;
+		}
+	} else
+		return -1;
+
+	return w;
+}
+
+static int sldns_wire2str_svcparam_ipv6hint2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	char ip_str[INET6_ADDRSTRLEN + 1];
+
+	int w = 0;
+
+	assert(data_len > 0);
+
+	if ((data_len % LDNS_IP6ADDRLEN) == 0) {
+		if (inet_ntop(AF_INET6, data, ip_str, sizeof(ip_str)) == NULL)
+			return -1; /* wireformat error, incorrect size or inet family */
+
+		w += sldns_str_print(s, slen, "=%s", ip_str);
+		data += LDNS_IP6ADDRLEN;
+
+		while ((data_len -= LDNS_IP6ADDRLEN) > 0) {
+			if (inet_ntop(AF_INET6, data, ip_str, sizeof(ip_str)) == NULL)
+				return -1; /* wireformat error, incorrect size or inet family */
+
+			w += sldns_str_print(s, slen, ",%s", ip_str);
+			data += LDNS_IP6ADDRLEN;
+		}
+	} else
+		return -1;
+
+	return w;
+}
+
+static int sldns_wire2str_svcparam_mandatory2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	int w = 0;
+
+	assert(data_len > 0);
+
+	if (data_len % sizeof(uint16_t))
+		return -1; /* wireformat error, data_len must be multiple of shorts */
+	w += sldns_str_print(s, slen, "=");
+	w += sldns_print_svcparamkey(s, slen, sldns_read_uint16(data));
+	data += 2;
+
+	while ((data_len -= sizeof(uint16_t))) {
+		w += sldns_str_print(s, slen, ",");
+		w += sldns_print_svcparamkey(s, slen, sldns_read_uint16(data));
+		data += 2;
+	}
+
+	return w;
+}
+
+static int sldns_wire2str_svcparam_alpn2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	uint8_t *dp = (void *)data;
+	int w = 0;
+
+	assert(data_len > 0); /* Guaranteed by sldns_wire2str_svcparam_scan */
+
+	w += sldns_str_print(s, slen, "=\"");
+	while (data_len) {
+		/* alpn is list of length byte (str_len) followed by a string of that size */
+		uint8_t i, str_len = *dp++;
+
+		if (str_len > --data_len)
+			return -1;
+
+		for (i = 0; i < str_len; i++) {
+			if (dp[i] == '"' || dp[i] == '\\')
+				w += sldns_str_print(s, slen, "\\\\\\%c", dp[i]);
+
+			else if (dp[i] == ',')
+				w += sldns_str_print(s, slen, "\\\\%c", dp[i]);
+
+			else if (!isprint(dp[i]))
+				w += sldns_str_print(s, slen, "\\%03u", (unsigned) dp[i]);
+
+			else
+				w += sldns_str_print(s, slen, "%c", dp[i]);
+		}
+		dp += str_len;
+		if ((data_len -= str_len))
+			w += sldns_str_print(s, slen, "%s", ",");
+	}
+	w += sldns_str_print(s, slen, "\"");
+
+	return w;
+}
+
+static int sldns_wire2str_svcparam_ech2str(char** s,
+	size_t* slen, uint16_t data_len, uint8_t* data)
+{
+	int size;
+	int w = 0;
+
+	assert(data_len > 0); /* Guaranteed by sldns_wire2str_svcparam_scan */
+
+	w += sldns_str_print(s, slen, "=\"");
+
+	if ((size = sldns_b64_ntop(data, data_len, *s, *slen)) < 0)
+		return -1;
+
+	(*s) += size;
+	(*slen) -= size;
+
+	w += sldns_str_print(s, slen, "\"");
+
+	return w + size;
+}
+
+int sldns_wire2str_svcparam_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen)
+{
+	uint8_t ch;
+	uint16_t svcparamkey, data_len;
+	int written_chars = 0;
+	int r, i;
+
+	/* verify that we have enough data to read svcparamkey and data_len */
+	if(*dlen < 4)
+		return -1;
+
+	svcparamkey = sldns_read_uint16(*d);
+	data_len = sldns_read_uint16(*d+2);
+	*d    += 4;
+	*dlen -= 4;
+
+	/* verify that we have data_len data */
+	if (data_len > *dlen)
+		return -1;
+
+	written_chars += sldns_print_svcparamkey(s, slen, svcparamkey);
+	if (!data_len) {
+
+	 	/* Some SvcParams MUST have values */
+	 	switch (svcparamkey) {
+	 	case SVCB_KEY_ALPN:
+	 	case SVCB_KEY_PORT:
+	 	case SVCB_KEY_IPV4HINT:
+	 	case SVCB_KEY_IPV6HINT:
+	 	case SVCB_KEY_MANDATORY:
+	 	case SVCB_KEY_DOHPATH:
+	 		return -1;
+	 	default:
+	 		return written_chars;
+	 	}
+	}
+
+	switch (svcparamkey) {
+	case SVCB_KEY_PORT:
+		r = sldns_wire2str_svcparam_port2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_IPV4HINT:
+		r = sldns_wire2str_svcparam_ipv4hint2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_IPV6HINT:
+		r = sldns_wire2str_svcparam_ipv6hint2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_MANDATORY:
+		r = sldns_wire2str_svcparam_mandatory2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_NO_DEFAULT_ALPN:
+		return -1;  /* wireformat error, should not have a value */
+	case SVCB_KEY_ALPN:
+		r = sldns_wire2str_svcparam_alpn2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_ECH:
+		r = sldns_wire2str_svcparam_ech2str(s, slen, data_len, *d);
+		break;
+	case SVCB_KEY_DOHPATH:
+		/* fallthrough */
+	default:
+		r = sldns_str_print(s, slen, "=\"");
+
+		for (i = 0; i < data_len; i++) {
+			ch = (*d)[i];
+
+			if (ch == '"' || ch == '\\')
+				r += sldns_str_print(s, slen, "\\%c", ch);
+
+			else if (!isprint(ch))
+				r += sldns_str_print(s, slen, "\\%03u", (unsigned) ch);
+
+			else
+				r += sldns_str_print(s, slen, "%c", ch);
+
+		}
+		r += sldns_str_print(s, slen, "\"");
+		break;
+	}
+	if (r <= 0)
+		return -1; /* wireformat error */
+
+	written_chars += r;
+	*d    += data_len;
+	*dlen -= data_len;
+	return written_chars;
+}
+
 int sldns_wire2str_rdf_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen,
 	int rdftype, uint8_t* pkt, size_t pktlen, int* comprloop)
 {
@@ -1017,6 +1342,8 @@ int sldns_wire2str_rdf_scan(uint8_t** d, size_t* dlen, char** s, size_t* slen,
 		return sldns_wire2str_tag_scan(d, dlen, s, slen);
 	case LDNS_RDF_TYPE_LONG_STR:
 		return sldns_wire2str_long_str_scan(d, dlen, s, slen);
+	case LDNS_RDF_TYPE_SVCPARAM:
+		return sldns_wire2str_svcparam_scan(d, dlen, s, slen);
 	case LDNS_RDF_TYPE_TSIGERROR:
 		return sldns_wire2str_tsigerror_scan(d, dlen, s, slen);
 	}
@@ -1260,7 +1587,7 @@ int sldns_wire2str_nsec_scan(uint8_t** d, size_t* dl, char** s, size_t* sl)
 	unsigned i, bit, window, block_len;
 	uint16_t t;
 	int w = 0;
-	
+
 	/* check for errors */
 	while(pl) {
 		if(pl < 2) return -1;
@@ -1940,6 +2267,52 @@ static int sldns_wire2str_edns_keepalive_print(char** s, size_t* sl,
 	return w;
 }
 
+int sldns_wire2str_edns_ede_print(char** s, size_t* sl,
+	uint8_t* data, size_t len)
+{
+	uint16_t ede_code;
+	int w = 0;
+	sldns_lookup_table *lt;
+	size_t i;
+	int printable;
+
+	if(len < 2) {
+		w += sldns_str_print(s, sl, "malformed ede ");
+		w += print_hex_buf(s, sl, data, len);
+		return w;
+	}
+
+	ede_code = sldns_read_uint16(data);
+	lt = sldns_lookup_by_id(sldns_edns_ede_codes, (int)ede_code);
+	if(lt && lt->name)
+		w += sldns_str_print(s, sl, "%s", lt->name);
+	else 	w += sldns_str_print(s, sl, "%d", (int)ede_code);
+
+	if(len == 2)
+		return w;
+
+	w += sldns_str_print(s, sl, " ");
+
+	/* If it looks like text, show it as text. */
+	printable=1;
+	for(i=2; i<len; i++) {
+		if(isprint((unsigned char)data[i]) || data[i] == '\t')
+			continue;
+		printable = 0;
+		break;
+	}
+	if(printable) {
+		w += sldns_str_print(s, sl, "\"");
+		for(i=2; i<len; i++) {
+			w += str_char_print(s, sl, data[i]);
+		}
+		w += sldns_str_print(s, sl, "\"");
+	} else {
+		w += print_hex_buf(s, sl, data+2, len-2);
+	}
+	return w;
+}
+
 int sldns_wire2str_edns_option_print(char** s, size_t* sl,
 	uint16_t option_code, uint8_t* optdata, size_t optlen)
 {
@@ -1973,6 +2346,9 @@ int sldns_wire2str_edns_option_print(char** s, size_t* sl,
 		break;
 	case LDNS_EDNS_PADDING:
 		w += print_hex_buf(s, sl, optdata, optlen);
+		break;
+	case LDNS_EDNS_EDE:
+		w += sldns_wire2str_edns_ede_print(s, sl, optdata, optlen);
 		break;
 	default:
 		/* unknown option code */

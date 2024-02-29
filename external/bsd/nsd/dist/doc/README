@@ -13,13 +13,15 @@
 3.4 ... Zone expiry of secondary zones
 3.5 ... Diagnosing NSD log entries
 3.6 ... Interfaces
+3.7 ... Tuning
+3.8 ... Zone verification
 4.0 Support and Feedback
 4.1 ... Your Support
 
 
 1.0 Introduction
 
-This is NSD Name Server Daemon (NSD) version 4.1.27.
+This is NSD Name Server Daemon (NSD) version 4.8.0.
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative RFC compliant 
 DNS nameserver. It was first conceived to allow for more genetic 
@@ -55,7 +57,7 @@ and uses a simple configuration file 'nsd.conf'.
 
 1.2 Quick build and install
 
-Step 1: Unpack the source with gtar -xzvf nsd-4.1.27.tar.gz
+Step 1: Unpack the source with gtar -xzvf nsd-4.8.0.tar.gz
 
 Step 2: Create user nsd or any other unprivileged user of your
         choice. In case of later make sure to use
@@ -109,9 +111,9 @@ Step 11: If desired add 'nsd-control write' to your superuser crontab to
 Use your favorite combination of tar and gnu zip to unpack the source,
 for example
 
-$ gtar -xzvf nsd-4.1.27.tar.gz
+$ gtar -xzvf nsd-4.8.0.tar.gz
 
-will unpack the source into the ./nsd-4.1.27 directory...
+will unpack the source into the ./nsd-4.8.0 directory...
 
 
 2.2 Configuring NSD
@@ -191,10 +193,6 @@ addition to standard configure options, one may use the following:
 
         Pathname to the NSD pidfile, default is platform specific,
         mostly /var/run/nsd.pid
-
-  --with-dbfile=path
-
-        Pathname to the NSD database, default is /etc/nsd/nsd.db
 
   --with-zonesdir=dir
 
@@ -693,6 +691,175 @@ all the interfaces as ip-address config file options.
 With the config file option ip-transparent you can allow NSD to bind to
 non local addresses.
 
+
+3.7 Tuning
+
+NSD is performant by design and most users will have little need for tuning
+it. For setups that do require every ounce of performance, NSD offers a number
+of configuration options.
+
+
+cpu-affinity, server-<N>-cpu-affinity and xfrd-cpu-affinity
+
+Modern computer systems have many cores available. By default the operating
+system's scheduling-algorithm determines which core a given task is allocated
+to. Processors build up state, like keeping frequently accessed data in cache
+memory, for the task (process/thread) that it is currently running. Whenever,
+a task switches cores, performance is degraded because the core it switched
+to has yet to build up said state. The cpu-affinity configuration options can
+be used to bind NSD to one or more cores.
+
+cpu-affinity can be used to designate a set of cores onto which NSD processes
+are scheduled. server-<N>-cpu-affinity and xfrd-cpu-affinity can be used to
+designate a specific core to each individual process. This improves L1/L2
+cache hits and reduces pipeline stalls/flushes.
+
+For example, a name server configured to fork two NSD servers that must run on
+dedicated cores 0 and 2, while the transfer daemon (xfrd) must run on core 1,
+the configuration becomes.
+
+	server:
+		server-count: 2
+		cpu-affinity: 0 1 2
+		server-1-cpu-affinity: 0
+		server-2-cpu-affinity: 2
+		xfrd-cpu-affinity: 1
+
+
+ip-address: x.x.x.x  servers=<N>
+
+ip-address options can be configured per (set of) server(s). Sockets that are
+configured for a specific server are closed by other servers on startup. This
+improves select/poll performance and avoids waking up multiple servers when a
+packet comes in.
+
+
+ip-address: x.x.x.x  bindtodevice=yes
+ip-address: x.x.x.x  setfib=<N>
+
+The bindtodevice attribute on Linux and the setfib ip-address attribute on
+FreeBSD can be used to skip the interface selection process in the kernel. This
+improves performance, and ensures responses written to the socket are pushed
+out the same interface the corresponding query came in on when multiple
+interfaces are configured to listen on the same subnet.
+
+The aforementioned options all complement eachother and best performance is
+achieved by assigning a socket to a single server that runs on a dedicated
+core and line that up with a dedicated network interface. Network interface
+interrupts are best handled by a core not designated to any NSD servers.
+
+	server:
+		server-count: 3
+		cpu-affinity: 0 1 2 4
+		server-1-cpu-affinity: 0
+		server-2-cpu-affinity: 1
+		server-3-cpu-affinity: 2
+		xfrd-cpu-affinity: 4
+		ip-address: 1.2.3.11  servers=1 setfib=1 bindtodevice=yes
+		ip-address: 1.2.3.12  servers=2 setfib=2 bindtodevice=yes
+		ip-address: 1.2.3.13  servers=3 setfib=3 bindtodevice=yes
+
+The number of NSD servers to fork and which cores are best used depends
+entirely on the hardware. cpu-affinity options are supported on Linux and
+FreeBSD.
+
+
+3.8 Zone verification
+
+NSD can be configured to verify a zone is correct before publishing it. This
+feature is primarily aimed at fortifying DNSSEC in the DNS
+notify/transfer-chain, but can be used to carry out any checks desired.
+
+An external verifier can be configured per zone. When a zone with verification
+enabled is received or updated via an (incremental) zone transfer, it will be
+submitted to the verifier for evaluation. If the verifier deems the updated
+zone correct (indicated with exit status 0), the zone will be served. NSD will
+discard the update and continue to serve the zone before the update if the
+exit status of the verifier is non-zero.
+
+Verifier options can be configured globally in the "verify:" clause, or
+specifically for a zone/pattern in the respective "zone:" and "pattern:"
+clauses. The global values are applied by default.
+
+The zone can be provided to the verifier in two ways.
+
+	1. The complete zone can be fed to the standard input of the verifier.
+
+	   This modus operandi is enabled by default and can be configured
+	   with the "verifier-feed-zone:" option.
+
+	   Examples for verifiers that read from the standard input are:
+	   "ldns-verify-zone -V2" (-V2 to suppress copying to stdout) or
+	   "validns -" (don't forget the dash (-) to read the zone from stdin).
+
+	2. The zone can be served to the verifier.
+
+	   This is disabled by default and can be enabled by configuring ip-
+	   addresses, with the "ip-address:" option in the "verify:" clause,
+	   on which the zone to be assessed will be served. Addresses can
+	   contain a port number to override the default, which is 5347 by
+	   default, but can be overridden with the "port:" option in the
+	   verify clause.
+
+	   For example to validate the SOA of a zone example.com by querying,
+	   with a certain DS record as the trust anchor (in file example.com.ds),
+	   the "verifier:" option could have the following value:
+	   "drill -S -k example.com.ds @localhost -p 5347 example.com SOA"
+
+A verifier is informed about the domain name of the zone to be verified and
+the accessibility of the system submitting the zone via environment variables.
+
+	VERIFY_ZONE
+		Domain name of the zone to be verified.
+
+	VERIFY_ZONE_ON_STDIN
+		Contains "yes" if the zone is fed over standard input,
+		otherwise "no".
+
+	VERIFY_IP_ADDRESSES
+		Contains a list of <ip-address>@<port>s on which the zone
+		to be verified can be queried.
+
+	VERIFY_IPV6_ADDRESS and VERIFY_IPV6_PORT
+                Contains the first configured IPv6 address and port.
+
+	VERIFY_IPV4_ADDRESS and VERIFY_IPV4_PORT
+		Contains the first configured IPv4 address and port.
+
+	VERIFY_IP_ADDRESS and VERIFY_PORT
+		Contains the first configured address and port.
+		IPv6 is preferred over IPv4.
+
+For each zone one verifier will be run at the same time, but when multiple
+to-be-verified zones are received, multiple verifiers may be run
+simultaneously. The number of verifiers that may be run simultaneously is
+configured with the "verifier-count:" option in the "verify:" clause and
+defaults to 1.
+
+The time a verifier may take can be configured with the "verifier-timeout:"
+option in the "verify:" clause (to make the general default) or in the "zone:"
+or "pattern:" clause to set it for a specific zone. When the time the verifier
+takes exceeds the timeout value, the zone to be verified will be considered
+bad. By default the value is 0, which means that the verifier may take as long
+as it needs.
+
+To enable verification for all zones.
+
+	verify:
+		enable: yes
+		verifier: <command>
+
+To enable verification only for a specific zone.
+
+	verify:
+		enable: yes
+		verify-zones: no
+
+	zone:
+		name: example.com
+		verify-zone: yes
+
+
 4.0 Support and Feedback
 
 NLnet Labs is committed to support NSD and its other software products on 
@@ -704,19 +871,17 @@ offered through a mailing lists and the 'bugzilla' web interface.
 If for any reason NLnet Labs would stop community support of NSD such 
 would be announced on our web pages at least two years in advance.
 
-The community mailing list nsd-users@nlnetlabs.nl can be used to discuss 
+The community mailing list nsd-users@lists.NLnetLabs.nl can be used to discuss
 issues with other users of NSD. Subscribe here
 
-	http://open.nlnetlabs.nl/mailman/listinfo/nsd-users	
+	http://lists.nlnetlabs.nl/mailman/listinfo/nsd-users
 
 NLnet Labs recognizes that in some corporate environments this commitment to
 community support is not sufficient and that support needs to be codified. 
 We therefore offer paid support contracts that come in 3 varieties. 
 
 More information about these support varieties can be found at 
-	<url on support varieties on www.nlnetlabs.nl>
-
-Alternatively you can contact mailto:nsd-support@nlnetlabs.nl .
+	https://nlnetlabs.nl/services/contracts/
 
 Support goes two ways.  By acquiring one of the support contracts you
 also support NLnet Labs to continue to participate in the development
@@ -725,11 +890,10 @@ the (IETF) standards process and by developing and maintaining
 reference implementations of standards and tools to support operation
 and deployment of new and existing Internet technology. 
 
-We are interested in our users and in the environment you use NSD. Please 
-drop us a mail when you use NSD. Indicate in what kind of operation you 
-deploy NSD and let us know what your positive and negative experiences are.
-http://www.nlnetlabs.nl/nsd  and  mailto:nsd-info@nlnetlabs.nl
-
+We are interested in our users and in the environment you use NSD. Please drop
+us a mail when you use NSD at users@NLnetLabs.nl. Indicate in what kind of
+operation you deploy NSD and let us know what your positive and negative
+experiences are.
 
 4.1 Your Support
 
@@ -755,5 +919,3 @@ that by giving us a donation. For small donations PayPal can be used. For
 larger and regular donations please contact us at users@NLnetLabs.nl. Also
 see http://www.nlnetlabs.nl/labs/contributors/.
 
-
-$Id: README,v 1.1.1.5 2019/05/25 19:44:44 christos Exp $

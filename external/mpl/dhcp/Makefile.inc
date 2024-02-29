@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2019/01/10 17:41:47 christos Exp $
+# $NetBSD: Makefile.inc,v 1.5.2.1 2024/02/29 11:38:36 martin Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -10,26 +10,22 @@ CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-format-security -Wno-error=unused-const-variable
 
 DIST:=	${.PARSEDIR}/dist
-BIND:=	${.PARSEDIR}/../../mpl/bind/dist
+BIND:=	${.PARSEDIR}/bind
+BINDDIST=	${BIND}/dist
 .PATH:	${DIST}/${DHCPSRCDIR}
-
-COBJDIR!=cd ${.PARSEDIR}/lib/common && ${PRINTOBJDIR}
-OMOBJDIR!=cd ${.PARSEDIR}/lib/omapip && ${PRINTOBJDIR}
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DDHCPv6
 .endif
 CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -I${DIST}/../include
-CPPFLAGS+= -I${BIND} -I${BIND}/includes -I${BIND}/../include
+CPPFLAGS+= -I${BINDDIST} -I${BINDDIST}/includes -I${BINDDIST}/../include
 .for dir in isc dns irs
-CPPFLAGS+= -I${BIND}/lib/${dir}/include
-CPPFLAGS+= -I${BIND}/lib/${dir}/unix/include
-CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/unix/include
+CPPFLAGS+= -I${BINDDIST}/lib/${dir}/pthreads/include
 .endfor
 CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
-LDADD+= ${COBJDIR}/libdhcp.a
-LDADD+= ${OMOBJDIR}/libomapi.a
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 # We link the libraries that are in /usr/lib and not in /lib statically
 # because dhclient is in /sbin and is needed before /usr is mounted in
@@ -37,21 +33,28 @@ LDADD+= ${OMOBJDIR}/libomapi.a
 # would be to install the libraries in /lib...
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -lirs -lisccfg -ldns -lisc
-LDADD+=-lpthread -lz
+PROGDPLIBS+= dhcp ${DIST}/../lib/common
+PROGDPLIBS+= omapi ${DIST}/../lib/omapip
+PROGDPLIBS+= irs ${BIND}/lib/libirs
+PROGDPLIBS+= isccfg ${BIND}/lib/libisccfg
+PROGDPLIBS+= dns ${BIND}/lib/libdns
+PROGDPLIBS+= isc ${BIND}/lib/libisc
+PROGDPLIBS+= uv ${NETBSDSRCDIR}/external/mit/libuv/lib
+PROGDPLIBS+= execinfo ${NETBSDSRCDIR}/lib/libexecinfo
+PROGDPLIBS+= kvm ${NETBSDSRCDIR}/lib/libkvm
+PROGDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
+PROGDPLIBS+= z ${NETBSDSRCDIR}/lib/libz
 .if (${MKKERBEROS} != "no")
-LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
-DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
+LDADD_AFTER+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
+DPADD_AFTER+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
 .endif
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
-LDADD+=-Wl,-Bdynamic
+LDADD_AFTER+=-Wl,-Bdynamic
 .endif
-LDADD+= -lcrypto -lipsec -lcrypt
-DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
+LDADD_AFTER+= -lssl -lcrypto -lipsec -lcrypt
+DPADD_AFTER+= ${LIBSSL} ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
-LDADD+=-Wl,-Bdynamic
+LDADD_AFTER+=-Wl,-Bdynamic
 .endif
-DPADD+= ${COBJDIR}/libdhcp.a
-DPADD+= ${OMOBJDIR}/libomapi.a
-DPADD+=	${LIBDNS} ${LIBISC}
-DPADD+= ${LIBPTHREAD} ${LIBZ}
+
+COPTS+=	-fcommon

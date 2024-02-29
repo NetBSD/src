@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2019/05/26 02:49:12 christos Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2024/02/29 11:41:15 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -68,18 +68,23 @@ outside_network.c \
 packed_rrset.c \
 parse.c \
 parseutil.c \
+proxy_protocol.c \
 random.c \
 rbtree.c \
 regional.c \
 respip.c \
+rfc_1982.c \
+rpz.c \
 rrdef.c \
 rrset.c \
 rtt.c \
 sbuffer.c \
+siphash.c \
 slabhash.c \
 str2wire.c \
 tcp_conn_limit.c \
 timehist.c \
+timeval_func.c \
 tube.c \
 ub_event_pluggable.c \
 val_anchor.c \
@@ -105,6 +110,9 @@ MAN=libunbound.3
 CLEANFILES+=libunbound.3
 
 libunbound.3: libunbound.3.in __subst
+
+COPTS.keyraw.c+= -Wno-error=deprecated-declarations
+COPTS.net_help.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
 

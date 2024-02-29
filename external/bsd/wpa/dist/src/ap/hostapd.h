@@ -9,6 +9,10 @@
 #ifndef HOSTAPD_H
 #define HOSTAPD_H
 
+#ifdef CONFIG_SQLITE
+#include <sqlite3.h>
+#endif /* CONFIG_SQLITE */
+
 #include "common/defs.h"
 #include "utils/list.h"
 #include "ap_config.h"
@@ -66,9 +70,7 @@ struct hapd_interfaces {
 	int eloop_initialized;
 
 #ifdef CONFIG_DPP
-	int dpp_init_done;
-	struct dl_list dpp_bootstrap; /* struct dpp_bootstrap_info */
-	struct dl_list dpp_configurator; /* struct dpp_configurator */
+	struct dpp_global *dpp;
 #endif /* CONFIG_DPP */
 };
 
@@ -127,6 +129,13 @@ struct hostapd_neighbor_entry {
 	/* LCI update time */
 	struct os_time lci_date;
 	int stationary;
+};
+
+struct hostapd_sae_commit_queue {
+	struct dl_list list;
+	int rssi;
+	size_t len;
+	u8 msg[];
 };
 
 /**
@@ -227,6 +236,10 @@ struct hostapd_data {
 	struct wps_stat wps_stats;
 #endif /* CONFIG_WPS */
 
+#ifdef CONFIG_MACSEC
+	struct ieee802_1x_kay *kay;
+#endif /* CONFIG_MACSEC */
+
 	struct hostapd_probereq_cb *probereq_cb;
 	size_t num_probereq_cb;
 
@@ -307,7 +320,10 @@ struct hostapd_data {
 	/** Key used for generating SAE anti-clogging tokens */
 	u8 sae_token_key[8];
 	struct os_reltime last_sae_token_key_update;
+	u16 sae_token_idx;
+	u16 sae_pending_token_idx[256];
 	int dot11RSNASAERetransPeriod; /* msec */
+	struct dl_list sae_commit_queue; /* struct hostapd_sae_commit_queue */
 #endif /* CONFIG_SAE */
 
 #ifdef CONFIG_TESTING_OPTIONS
@@ -371,6 +387,17 @@ struct hostapd_data {
 	unsigned int dpp_ignore_netaccesskey_mismatch:1;
 #endif /* CONFIG_TESTING_OPTIONS */
 #endif /* CONFIG_DPP */
+
+#ifdef CONFIG_AIRTIME_POLICY
+	unsigned int num_backlogged_sta;
+	unsigned int airtime_weight;
+#endif /* CONFIG_AIRTIME_POLICY */
+
+	u8 last_1x_eapol_key_replay_counter[8];
+
+#ifdef CONFIG_SQLITE
+	sqlite3 *rad_attr_db;
+#endif /* CONFIG_SQLITE */
 };
 
 
@@ -533,6 +560,12 @@ struct hostapd_iface {
 	unsigned int num_sta_seen;
 
 	u8 dfs_domain;
+#ifdef CONFIG_AIRTIME_POLICY
+	unsigned int airtime_quantum;
+#endif /* CONFIG_AIRTIME_POLICY */
+
+	/* Previous WMM element information */
+	struct hostapd_wmm_ac_params prev_wmm[WMM_AC_NUM];
 };
 
 /* hostapd.c */
@@ -599,7 +632,8 @@ int hostapd_probe_req_rx(struct hostapd_data *hapd, const u8 *sa, const u8 *da,
 			 const u8 *bssid, const u8 *ie, size_t ie_len,
 			 int ssi_signal);
 void hostapd_event_ch_switch(struct hostapd_data *hapd, int freq, int ht,
-			     int offset, int width, int cf1, int cf2);
+			     int offset, int width, int cf1, int cf2,
+			     int finished);
 struct survey_results;
 void hostapd_event_get_survey(struct hostapd_iface *iface,
 			      struct survey_results *survey_results);

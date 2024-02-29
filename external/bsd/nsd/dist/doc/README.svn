@@ -3,7 +3,7 @@ If you build NSD directly from the Subversion repository, you will need the
 
 On most systems, this can simply be done by using autoreconf:
 
-autoreconf
+autoreconf -fi
 
 This will call autoconf, autoheader, aclocal etc. After this you can build
 normally with configure and make, see the general README for further

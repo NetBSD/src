@@ -1,0 +1,17 @@
+{
+  # ddns-domainname (aka qualifying-suffix)
+  "Dhcp4": {
+    "dhcp-ddns": {
+      "qualifying-suffix": ".biz",
+      "enable-updates": true
+    },
+    "client-classes": [
+      # embedded
+      {
+        "name": "foo"
+//      /// Only global qualifying-suffix is supported
+//      "qualifying-suffix": ".bar"
+      }
+    ]
+  }
+}

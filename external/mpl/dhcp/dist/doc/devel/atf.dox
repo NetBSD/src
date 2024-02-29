@@ -29,44 +29,68 @@ Test Framework)</a> as a framework to run our unittests.
 @section testsAtf ATF unit-tests
 
 ATF stands for Automated Test Framework, and is the framework used for unit
-tests in ISC DHCP and BIND9. ATF sources can be downloaded from
-https://github.com/jmmv/kyua . ATF itself must be configured, compiled
-and then installed to be available during the DHCP configure procedure.
+tests in ISC DHCP.  Since ATF was created, a next generation QA toolchain
+called, Kyua, has beend developed that can execute ATF unit tests.  There are
+two approaches one can take to install the necessary software for executing
+ISC DHCP unit tests:
 
-There are three options for installing ATF.  1) Get the ATF sources and
-follow INSTALL file supplied with ATF sources (it's essentially the typical
-./configure && make && make install procedure).  2) install Kyua with the ATF
-compatibility package, or 3) use the ATF version included in bind sources.
+1) Install pre-Kyua release (0.19 or earlier) of ATF
 
-To configure and build the ATF from BIND you should set the "--with-atf" option
-to "bind".
+Using this approach is the simplest as it involves installing only ATF. However
+it requires using a version of ATF that is no longer maintained and which may
+eventually may be unavailable.
+
+ATF may be found here: https://github.com/jmmv/atf
+
+
+2) Install post-Kyua release of ATF (0.20 or later) and Kyua
+
+Using this approach requires the installation of more software as Kyua has
+dependencies that ATF lacks.  The advantage is that the version(s) that can
+be used are all still supported.
+
+Kyua may be found here: https://github.com/jmmv/kyua
+
+@subsection preKyuaATF Using pre-Kyua ATF
+
+This section describes how to install and use pre-Kyua ATF release to run
+ISC DHCP unit tests.  The most recent release of ATF that can be used without
+also needing Kyua, is ATF version 0.19.  While this version is still available
+and using it is least software to install to run ISC DHCP unit tests, there
+may come a point in time when this version is no longer available. It may be
+downloaded here: https://github.com/jmmv/atf/releases/tag/atf-0.19
+
+After downloading and unpacking the source, you'll need to configure
+it, build it, and then install it.  Note you'll need to include the
+"--enable-tools" option when configuring ATF.   The following would build
+and install it to /opt/atf/atf-0.19/local:
+
 @verbatim
-./configure --with-atf=bind
-@endverbatim
 
+$ cd /opt/atf
+$ tar -xvf $HOME/Downloads/atf-0.19.tar.gz
 
-Beginning with ATF version 0.16, it is necessary to include the following
-options --enable-tools and --disable-shared when configuring ATF:
+# While the --prefix is optional, you must specify --enable-tools
+# as a configure option
 
-@verbatim
-    configure --prefix=<prefix> --enable-tools --disable-shared
-@endverbatim
-
-ISC DHCP unittests will run with ATF releases upto 0.19.  Beginning with
-ATF 0.20, the tools, atf-run and atf-report required by ISC DHCP, were
-deprecated and are no longer included with ATF.
-
-The ATF successor, called Kyua, is being developed. As of August 2012,
-the latest available release of Kyua is 0.5. It claims to offer
-feature parity with ATF. Migration to Kyua may be planned some time in
-the future, but DHCP uses ATF for now. Such an upgrade should be done
-in coordination with BIND.
-
-To build and run the unit-tests, use the following:
-
-@verbatim
-$ ./configure --with-atf
+$ ./configure --prefix=/opt/atf/atf-0.19/local --enable-tools
 $ make
+$ sudo make install
+
+@endverbatim
+
+To build and run the ISC DHCP unit-tests, use the following:
+
+@verbatim
+$ git clone https://gitlab.isc.org/isc-projects/dhcp.git
+$ cd dhcp
+
+# Note because we used --prefix when configuraing ATF above, we
+# need to tell ISC DHCP configure where it is located.
+
+$ ./configure --with-atf=/opt/atf/atf-0.19/local
+
+# Run all of the unit tests via "make check"
 $ make check
 @endverbatim
 
@@ -75,25 +99,23 @@ subdirectory.  Note that if one or more tests in a unit test subdirectory fail
 the make process will stop.  To run all of the tests regardless of outcome,
 use "make -k check"
 
-The following syntax is supported as well:
-@verbatim
-$ ./configure --with-atf=/path/to/your/atf/install
-@endverbatim
+Note, If you installed ATF to its default location rather than using --prefix
+or you install the pkg-config .pc files for ATF, you should be able to
+simply specify "--with-atf" without a path when configuring ISC DHCP.
 
-but it seems to have troubles sometimes detecting ATF installation, at least
-with ATF 0.14 and Mac OS X 10.6.8.
-
-Each code directory (e.g. server/) that has unit-tests has a sub-directory
-named tests (e.g. server/tests). You can execute "make check" in that
-directory to run specific subset of tests.
+Each dhcp source sub-directory (e.g. server, common) that has unit-tests has a
+sub-directory named tests (e.g. server/tests). You can execute "make check" in
+that sub-directory to run its specific subset of tests.
 
 Unit-tests are grouped into suites, each suite being a separate
 executable. The typical way to run tests is:
 
 @verbatim
 $ atf-run | atf-report
-(This assumes atf-run and atf-report are in your path)
-or
+
+# (This assumes atf-run and atf-report are in your path)
+# or
+
 $ sh ../../tests/unittests.sh
 @endverbatim
 
@@ -114,6 +136,133 @@ parameter is the test case name. The binary will print out a warning
 that direct binary execution is not recommended as it won't be able to
 recover from crash.  However, such an approach is convenient for
 running the test under the debugger.
+
+@subsection KyuaPlusATF Using Kyua with ATF
+
+Kyua is a QA toolchain that has been layered on top of ATF.  The tools
+necessary to run ATF unit tests migrated from ATF to within Kyua beginning
+with ATF 0.20. This section includes instructions for building and running
+ISC DHCP with Kyua. Instructions are included for both Ubuntu 18.04 and MacOS.
+
+@subsubsection KyuaLinux Kyua Ubuntu 18.04 Instructions
+
+The following instructions are based on Ubuntu 18.04, but
+are typical of a linux distribution/installation. It installs all software
+into default locations for simplicity.  If you want to use
+custom installation paths, you may have to set additional environment
+variables, library paths, and the like.
+
+Before we install kyua, we must install its dependencies: lua, sqlite3,
+ATF, and lutok
+
+@verbatim
+
+# lua and sqlite3 have packages, we'll use them
+
+$ apt-get install liblua5.1-0-dev
+$ apt-get install libsqlite3-dev
+
+# Fetch, build, and install the latest version of ATF
+
+$ git clone https://github.com/jmmv/atf.git
+$ cd atf
+$ autoreconf --install --force
+$ ./configure
+$ make
+$ sudo make install
+$ cd ..
+
+# Fetch, build, and install the latest version of lutok
+
+$ git clone https://github.com/jmmv/lutok.git
+$ cd lutok
+
+# We must use -I argument to tell autoreconf where to find the ATF .m4 files
+$ autoreconf --install -s -I/usr/local/share/aclocal
+
+$ ./configure
+$ make
+$ sudo make install
+$ cd ..
+
+# Finally, we fetch, build and install the latest version of kyua
+
+$ git clone https://github.com/jmmv/kyua.git
+$ cd kyua
+
+# We must use -I argument to tell autoreconf where to find the ATF .m4 files
+$ autoreconf --install -s -I/usr/local/share/aclocal
+
+$ ./configure
+$ make
+$ sudo make install
+$ cd ..
+@endverbatim
+
+To build ISC DHCP with Kyua and run all the unit tests is the same:
+
+@verbatim
+$ git clone https://gitlab.isc.org/isc-projects/dhcp.git
+$ cd dhcp
+
+# Because we used default installations we simply enable unit tests with
+# --with-atf with no path value.
+
+$ ./configure --with-atf
+$ make
+
+# Run the ISC DHCP unit tests
+$ make check
+@endverbatim
+
+@subsubsection KyuaMacOS Kyua macOS Instructions
+
+The following instructions are for based on macOS Mojave (10.1.4.4).
+Before we install kyua, we must install its dependencies: pkgconfig, lutok,
+and ATF:
+
+@verbatim
+
+# install dependencies
+$ brew install pkgconfig
+$ brew install lutok
+
+# install atf so we can build kyua and dhcp with unit tests
+$ git clone https://github.com/jmmv/atf.git
+$ cd atf
+$ autoreconf --install --force
+$ ./configure --prefix=/opt/atf
+$ make
+$ sudo make install
+$ cd ..
+
+# configure kyua with atf
+$ git clone https://github.com/jmmv/kyua.git
+$ cd kyua
+$ autoreconf --install -s -I/opt/atf/share/aclocal
+$ ./configure --prefix=/opt/kyua
+$ make
+$ sudo make install
+$ cd ..
+@endverbatim
+
+To build ISC DHCP with Kyua and run all the unit tests is the same:
+
+@verbatim
+$ git clone https://gitlab.isc.org/isc-projects/dhcp.git
+$ cd dhcp
+
+# Because we used the prefix "/opt/atf" to install ATF we need to
+# add that path to --with-atf when we configure ISC DHCP.
+
+$ ./configure --with-atf=/opt/atf
+$ make
+
+# Add kyua to the path and then run the ISC DHCP unit tests
+# via "make check"
+$ export PATH=$PATH:/opt/kyua/bin
+$ make check
+@endverbatim
 
 @section testsAtfAdding Adding new unit-tests
 

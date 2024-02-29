@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _PACKET_H_
-#define _PACKET_H_
+#ifndef PACKET_H
+#define PACKET_H
 
 #include <sys/types.h>
 
@@ -140,7 +140,7 @@ struct query;
 #define	MAXRRSPP		10240    /* Maximum number of rr's per packet */
 #define MAX_COMPRESSED_DNAMES	MAXRRSPP /* Maximum number of compressed domains. */
 #define MAX_COMPRESSION_OFFSET  16383	 /* Compression pointers are 14 bit. */
-#define IPV4_MINIMAL_RESPONSE_SIZE 1460	 /* Recommended minimal edns size for IPv4 */
+#define IPV4_MINIMAL_RESPONSE_SIZE 1232	 /* Recommended minimal edns size for IPv4 */
 #define IPV6_MINIMAL_RESPONSE_SIZE 1220	 /* Recommended minimal edns size for IPv6 */
 
 /* use round robin rotation */
@@ -202,4 +202,4 @@ int packet_read_query_section(buffer_type *packet,
  * returns false on no-serial found or parse failure. */
 int packet_find_notify_serial(buffer_type *packet, uint32_t* serial);
 
-#endif /* _PACKET_H_ */
+#endif /* PACKET_H */

@@ -48,13 +48,16 @@
 #include "services/cache/rrset.h"
 #include "services/cache/infra.h"
 #include "services/authzone.h"
+#include "services/listen_dnsport.h"
 #include "util/data/msgreply.h"
 #include "util/storage/slabhash.h"
+#include "util/edns.h"
 #include "sldns/sbuffer.h"
 
 int 
 context_finalize(struct ub_ctx* ctx)
 {
+	int is_rpz = 0;
 	struct config_file* cfg = ctx->env->cfg;
 	verbosity = cfg->verbosity;
 	if(ctx_logfile_overridden && !ctx->logfile_override) {
@@ -67,16 +70,22 @@ context_finalize(struct ub_ctx* ctx)
 	} else {
 		log_init(cfg->logfile, cfg->use_syslog, NULL);
 	}
+	ctx->pipe_pid = getpid();
+	cfg_apply_local_port_policy(cfg, 65536);
 	config_apply(cfg);
 	if(!modstack_setup(&ctx->mods, cfg->module_conf, ctx->env))
 		return UB_INITFAIL;
+	listen_setup_locks();
 	log_edns_known_options(VERB_ALGO, ctx->env);
 	ctx->local_zones = local_zones_create();
 	if(!ctx->local_zones)
 		return UB_NOMEM;
 	if(!local_zones_apply_cfg(ctx->local_zones, cfg))
 		return UB_INITFAIL;
-	if(!auth_zones_apply_cfg(ctx->env->auth_zones, cfg, 1))
+	if(!auth_zones_apply_cfg(ctx->env->auth_zones, cfg, 1, &is_rpz,
+		ctx->env, &ctx->mods))
+		return UB_INITFAIL;
+	if(!edns_strings_apply_cfg(ctx->env->edns_strings, cfg))
 		return UB_INITFAIL;
 	if(!slabhash_is_size(ctx->env->msg_cache, cfg->msg_cache_size,
 		cfg->msg_cache_slabs)) {

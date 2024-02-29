@@ -25,6 +25,9 @@
 #include <login_cap.h>
 #endif /* HAVE_LOGIN_CAP_H */
 #endif /* HAVE_SETUSERCONTEXT */
+#ifdef HAVE_OPENSSL_RAND_H
+#include <openssl/rand.h>
+#endif
 
 #include <assert.h>
 #include <ctype.h>
@@ -41,15 +44,20 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "nsd.h"
 #include "options.h"
 #include "tsig.h"
 #include "remote.h"
 #include "xfrd-disk.h"
+#include "ipc.h"
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
 #endif
+#include "util/proxy_protocol.h"
 
 /* The server handler... */
 struct nsd nsd;
@@ -77,7 +85,6 @@ usage (void)
 #ifndef NDEBUG
 		"  -F facilities        Specify the debug facilities.\n"
 #endif /* NDEBUG */
-		"  -f database          Specify the database to load.\n"
 		"  -h                   Print this help information.\n"
 		, CONFIGFILE);
 	fprintf(stderr,
@@ -112,58 +119,527 @@ version(void)
 {
 	fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
 	fprintf(stderr, "Written by NLnet Labs.\n\n");
+	fprintf(stderr, "Configure line: %s\n", CONFCMDLINE);
+#ifdef USE_MINI_EVENT
+	fprintf(stderr, "Event loop: internal (uses select)\n");
+#else
+#  if defined(HAVE_EV_LOOP) || defined(HAVE_EV_DEFAULT_LOOP)
+	fprintf(stderr, "Event loop: %s %s (uses %s)\n",
+		"libev",
+		nsd_event_vs(),
+		nsd_event_method());
+#  else
+	fprintf(stderr, "Event loop: %s %s (uses %s)\n",
+		"libevent",
+		nsd_event_vs(),
+		nsd_event_method());
+#  endif
+#endif
+#ifdef HAVE_SSL
+	fprintf(stderr, "Linked with %s\n\n",
+#  ifdef SSLEAY_VERSION
+		SSLeay_version(SSLEAY_VERSION)
+#  else
+		OpenSSL_version(OPENSSL_VERSION)
+#  endif
+		);
+#endif
 	fprintf(stderr,
-		"Copyright (C) 2001-2006 NLnet Labs.  This is free software.\n"
+		"Copyright (C) 2001-2020 NLnet Labs.  This is free software.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
 		"FOR A PARTICULAR PURPOSE.\n");
 	exit(0);
 }
 
-void
-get_ip_port_frm_str(const char* arg, const char** hostname,
-        const char** port)
+static void
+setup_verifier_environment(void)
 {
-	/* parse src[@port] option */
-	char* delim = NULL;
-	if (arg) {
-		delim = strchr(arg, '@');
+	size_t i;
+	int ret, ip4, ip6;
+	char *buf, host[NI_MAXHOST], serv[NI_MAXSERV];
+	size_t size, cnt = 0;
+
+	/* allocate large enough buffer to hold a list of all ip addresses.
+	   ((" " + INET6_ADDRSTRLEN + "@" + "65535") * n) + "\0" */
+	size = ((INET6_ADDRSTRLEN + 1 + 5 + 1) * nsd.verify_ifs) + 1;
+	buf = xalloc(size);
+
+	ip4 = ip6 = 0;
+	for(i = 0; i < nsd.verify_ifs; i++) {
+		ret = getnameinfo(
+			(struct sockaddr *)&nsd.verify_udp[i].addr.ai_addr,
+			nsd.verify_udp[i].addr.ai_addrlen,
+			host, sizeof(host), serv, sizeof(serv),
+			NI_NUMERICHOST | NI_NUMERICSERV);
+		if(ret != 0) {
+			log_msg(LOG_ERR, "error in getnameinfo: %s",
+				gai_strerror(ret));
+			continue;
+		}
+		buf[cnt++] = ' ';
+		cnt += strlcpy(&buf[cnt], host, size - cnt);
+		assert(cnt < size);
+		buf[cnt++] = '@';
+		cnt += strlcpy(&buf[cnt], serv, size - cnt);
+		assert(cnt < size);
+#ifdef INET6
+		if (nsd.verify_udp[i].addr.ai_family == AF_INET6 && !ip6) {
+			setenv("VERIFY_IPV6_ADDRESS", host, 1);
+			setenv("VERIFY_IPV6_PORT", serv, 1);
+			setenv("VERIFY_IP_ADDRESS", host, 1);
+			setenv("VERIFY_PORT", serv, 1);
+			ip6 = 1;
+		} else
+#endif
+		if (!ip4) {
+			assert(nsd.verify_udp[i].addr.ai_family == AF_INET);
+			setenv("VERIFY_IPV4_ADDRESS", host, 1);
+			setenv("VERIFY_IPV4_PORT", serv, 1);
+			if (!ip6) {
+				setenv("VERIFY_IP_ADDRESS", host, 1);
+				setenv("VERIFY_PORT", serv, 1);
+			}
+			ip4 = 1;
+		}
 	}
 
-	if (delim) {
-		*delim = '\0';
-		*port = delim+1;
-	}
-	*hostname = arg;
+	setenv("VERIFY_IP_ADDRESSES", &buf[1], 1);
+	free(buf);
 }
 
-/* append interface to interface array (names, udp, tcp) */
-void
-add_interface(char*** nodes, struct nsd* nsd, char* ip)
+static void
+copyaddrinfo(struct nsd_addrinfo *dest, struct addrinfo *src)
 {
-	/* realloc the arrays */
-	if(nsd->ifs == 0) {
-		*nodes = xalloc_zero(sizeof(*nodes));
-		nsd->udp = xalloc_zero(sizeof(*nsd->udp));
-		nsd->tcp = xalloc_zero(sizeof(*nsd->udp));
+	dest->ai_flags = src->ai_flags;
+	dest->ai_family = src->ai_family;
+	dest->ai_socktype = src->ai_socktype;
+	dest->ai_addrlen = src->ai_addrlen;
+	memcpy(&dest->ai_addr, src->ai_addr, src->ai_addrlen);
+}
+
+static void
+setup_socket(
+	struct nsd_socket *sock, const char *node, const char *port,
+	struct addrinfo *hints)
+{
+	int ret;
+	char *host;
+	char host_buf[sizeof("65535") + INET6_ADDRSTRLEN + 1 /* '\0' */];
+	const char *service;
+	struct addrinfo *addr = NULL;
+
+	sock->fib = -1;
+	if(node) {
+		char *sep;
+
+		if (strlcpy(host_buf, node, sizeof(host_buf)) >= sizeof(host_buf)) {
+			error("cannot parse address '%s': %s", node,
+			    strerror(ENAMETOOLONG));
+		}
+
+		host = host_buf;
+		sep = strchr(host_buf, '@');
+		if(sep != NULL) {
+			*sep = '\0';
+			service = sep + 1;
+		} else {
+			service = port;
+		}
 	} else {
-		region_remove_cleanup(nsd->region, free, *nodes);
-		region_remove_cleanup(nsd->region, free, nsd->udp);
-		region_remove_cleanup(nsd->region, free, nsd->tcp);
-		*nodes = xrealloc(*nodes, (nsd->ifs+1)*sizeof(*nodes));
-		nsd->udp = xrealloc(nsd->udp, (nsd->ifs+1)*sizeof(*nsd->udp));
-		nsd->tcp = xrealloc(nsd->tcp, (nsd->ifs+1)*sizeof(*nsd->udp));
-		(*nodes)[nsd->ifs] = NULL;
-		memset(&nsd->udp[nsd->ifs], 0, sizeof(*nsd->udp));
-		memset(&nsd->tcp[nsd->ifs], 0, sizeof(*nsd->tcp));
+		host = NULL;
+		service = port;
 	}
-	region_add_cleanup(nsd->region, free, *nodes);
-	region_add_cleanup(nsd->region, free, nsd->udp);
-	region_add_cleanup(nsd->region, free, nsd->tcp);
 
-	/* add it */
-	(*nodes)[nsd->ifs] = ip;
-	++nsd->ifs;
+	if((ret = getaddrinfo(host, service, hints, &addr)) == 0) {
+		copyaddrinfo(&sock->addr, addr);
+		freeaddrinfo(addr);
+	} else {
+		error("cannot parse address '%s': getaddrinfo: %s %s",
+		      host ? host : "(null)",
+		      gai_strerror(ret),
+		      ret==EAI_SYSTEM ? strerror(errno) : "");
+	}
 }
+
+static void
+figure_socket_servers(
+	struct nsd_socket *sock, struct ip_address_option *ip)
+{
+	int i;
+	struct range_option *server;
+
+	sock->servers = xalloc_zero(nsd_bitset_size(nsd.child_count));
+	region_add_cleanup(nsd.region, free, sock->servers);
+	nsd_bitset_init(sock->servers, nsd.child_count);
+
+	if(!ip || !ip->servers) {
+		/* every server must listen on this socket */
+		for(i = 0; i < (int)nsd.child_count; i++) {
+			nsd_bitset_set(sock->servers, i);
+		}
+		return;
+	}
+
+	/* only specific servers must listen on this socket */
+	for(server = ip->servers; server; server = server->next) {
+		if(server->first == server->last) {
+			if(server->first <= 0) {
+				error("server %d specified for ip-address %s "
+				      "is invalid; server ranges are 1-based",
+				      server->first, ip->address);
+			} else if(server->last > (int)nsd.child_count) {
+				error("server %d specified for ip-address %s "
+				      "exceeds number of servers configured "
+				      "in server-count",
+				      server->first, ip->address);
+			}
+		} else {
+			/* parse_range must ensure range itself is valid */
+			assert(server->first < server->last);
+			if(server->first <= 0) {
+				error("server range %d-%d specified for "
+				      "ip-address %s is invalid; server "
+				      "ranges are 1-based",
+				      server->first, server->last, ip->address);
+			} else if(server->last > (int)nsd.child_count) {
+				error("server range %d-%d specified for "
+				      "ip-address %s exceeds number of servers "
+				      "configured in server-count",
+				      server->first, server->last, ip->address);
+			}
+		}
+		for(i = server->first - 1; i < server->last; i++) {
+			nsd_bitset_set(sock->servers, i);
+		}
+	}
+}
+
+static void
+figure_default_sockets(
+	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
+	const char *node, const char *udp_port, const char *tcp_port,
+	const struct addrinfo *hints)
+{
+	size_t i = 0, n = 1;
+	struct addrinfo ai[2] = { *hints, *hints };
+
+	assert(udp != NULL);
+	assert(tcp != NULL);
+	assert(ifs != NULL);
+
+	ai[0].ai_socktype = SOCK_DGRAM;
+	ai[1].ai_socktype = SOCK_STREAM;
+
+#ifdef INET6
+#ifdef IPV6_V6ONLY
+	if (hints->ai_family == AF_UNSPEC) {
+		ai[0].ai_family = AF_INET6;
+		ai[1].ai_family = AF_INET6;
+		n++;
+	}
+#endif /* IPV6_V6ONLY */
+#endif /* INET6 */
+
+	*udp = xalloc_zero((n + 1) * sizeof(struct nsd_socket));
+	*tcp = xalloc_zero((n + 1) * sizeof(struct nsd_socket));
+	region_add_cleanup(nsd.region, free, *udp);
+	region_add_cleanup(nsd.region, free, *tcp);
+
+#ifdef INET6
+	if(hints->ai_family == AF_UNSPEC) {
+		/*
+		 * With IPv6 we'd like to open two separate sockets, one for
+		 * IPv4 and one for IPv6, both listening to the wildcard
+		 * address (unless the -4 or -6 flags are specified).
+		 *
+		 * However, this is only supported on platforms where we can
+		 * turn the socket option IPV6_V6ONLY _on_. Otherwise we just
+		 * listen to a single IPv6 socket and any incoming IPv4
+		 * connections will be automatically mapped to our IPv6
+		 * socket.
+		 */
+#ifdef IPV6_V6ONLY
+		int r;
+		struct addrinfo *addrs[2] = { NULL, NULL };
+
+		if((r = getaddrinfo(node, udp_port, &ai[0], &addrs[0])) == 0 &&
+		   (r = getaddrinfo(node, tcp_port, &ai[1], &addrs[1])) == 0)
+		{
+			(*udp)[i].flags |= NSD_SOCKET_IS_OPTIONAL;
+			(*udp)[i].fib = -1;
+			copyaddrinfo(&(*udp)[i].addr, addrs[0]);
+			figure_socket_servers(&(*udp)[i], NULL);
+			(*tcp)[i].flags |= NSD_SOCKET_IS_OPTIONAL;
+			(*tcp)[i].fib = -1;
+			copyaddrinfo(&(*tcp)[i].addr, addrs[1]);
+			figure_socket_servers(&(*tcp)[i], NULL);
+			i++;
+		} else {
+			log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
+			  r == EAI_SYSTEM ? strerror(errno) : gai_strerror(r));
+		}
+
+		if(addrs[0])
+			freeaddrinfo(addrs[0]);
+		if(addrs[1])
+			freeaddrinfo(addrs[1]);
+
+		ai[0].ai_family = AF_INET;
+		ai[1].ai_family = AF_INET;
+#endif /* IPV6_V6ONLY */
+	}
+#endif /* INET6 */
+
+	*ifs = i + 1;
+	setup_socket(&(*udp)[i], node, udp_port, &ai[0]);
+	figure_socket_servers(&(*udp)[i], NULL);
+	setup_socket(&(*tcp)[i], node, tcp_port, &ai[1]);
+	figure_socket_servers(&(*tcp)[i], NULL);
+}
+
+#ifdef HAVE_GETIFADDRS
+static int
+find_device(
+	struct nsd_socket *sock,
+	const struct ifaddrs *ifa)
+{
+	for(; ifa != NULL; ifa = ifa->ifa_next) {
+		if((ifa->ifa_addr == NULL) ||
+		   (ifa->ifa_addr->sa_family != sock->addr.ai_family) ||
+		   ((ifa->ifa_flags & IFF_UP) == 0 ||
+		    (ifa->ifa_flags & IFF_LOOPBACK) != 0 ||
+		    (ifa->ifa_flags & IFF_RUNNING) == 0))
+		{
+			continue;
+		}
+
+#ifdef INET6
+		if(ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sa1, *sa2;
+			size_t sz = sizeof(struct in6_addr);
+			sa1 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			sa2 = (struct sockaddr_in6 *)&sock->addr.ai_addr;
+			if(memcmp(&sa1->sin6_addr, &sa2->sin6_addr, sz) == 0) {
+				break;
+			}
+		} else
+#endif
+		if(ifa->ifa_addr->sa_family == AF_INET) {
+			struct sockaddr_in *sa1, *sa2;
+			sa1 = (struct sockaddr_in *)ifa->ifa_addr;
+			sa2 = (struct sockaddr_in *)&sock->addr.ai_addr;
+			if(sa1->sin_addr.s_addr == sa2->sin_addr.s_addr) {
+				break;
+			}
+		}
+	}
+
+	if(ifa != NULL) {
+		size_t len = strlcpy(sock->device, ifa->ifa_name, sizeof(sock->device));
+		if(len < sizeof(sock->device)) {
+			char *colon = strchr(sock->device, ':');
+			if(colon != NULL)
+				*colon = '\0';
+			return 1;
+		}
+	}
+
+	return 0;
+}
+#endif /* HAVE_GETIFADDRS */
+
+static void
+figure_sockets(
+	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
+	struct ip_address_option *ips,
+	const char *node, const char *udp_port, const char *tcp_port,
+	const struct addrinfo *hints)
+{
+	size_t i = 0;
+	struct addrinfo ai = *hints;
+	struct ip_address_option *ip;
+#ifdef HAVE_GETIFADDRS
+	struct ifaddrs *ifa = NULL;
+#endif
+	int bind_device = 0;
+
+	if(!ips) {
+		figure_default_sockets(
+			udp, tcp, ifs, node, udp_port, tcp_port, hints);
+		return;
+	}
+
+	*ifs = 0;
+	for(ip = ips; ip; ip = ip->next) {
+		(*ifs)++;
+		bind_device |= (ip->dev != 0);
+	}
+
+#ifdef HAVE_GETIFADDRS
+	if(bind_device && getifaddrs(&ifa) == -1) {
+		error("getifaddrs failed: %s", strerror(errno));
+	}
+#endif
+
+	*udp = xalloc_zero((*ifs + 1) * sizeof(struct nsd_socket));
+	*tcp = xalloc_zero((*ifs + 1) * sizeof(struct nsd_socket));
+	region_add_cleanup(nsd.region, free, *udp);
+	region_add_cleanup(nsd.region, free, *tcp);
+
+	ai.ai_flags |= AI_NUMERICHOST;
+	for(ip = ips, i = 0; ip; ip = ip->next, i++) {
+		ai.ai_socktype = SOCK_DGRAM;
+		setup_socket(&(*udp)[i], ip->address, udp_port, &ai);
+		figure_socket_servers(&(*udp)[i], ip);
+		ai.ai_socktype = SOCK_STREAM;
+		setup_socket(&(*tcp)[i], ip->address, tcp_port, &ai);
+		figure_socket_servers(&(*tcp)[i], ip);
+		if(ip->fib != -1) {
+			(*udp)[i].fib = ip->fib;
+			(*tcp)[i].fib = ip->fib;
+		}
+#ifdef HAVE_GETIFADDRS
+		if(ip->dev != 0) {
+			(*udp)[i].flags |= NSD_BIND_DEVICE;
+			(*tcp)[i].flags |= NSD_BIND_DEVICE;
+			if(ifa != NULL && (find_device(&(*udp)[i], ifa) == 0 ||
+			                   find_device(&(*tcp)[i], ifa) == 0))
+			{
+				error("cannot find device for ip-address %s",
+				      ip->address);
+			}
+		}
+#endif
+	}
+
+	assert(i == *ifs);
+
+#ifdef HAVE_GETIFADDRS
+	if(ifa != NULL) {
+		freeifaddrs(ifa);
+	}
+#endif
+}
+
+/* print server affinity for given socket. "*" if socket has no affinity with
+   any specific server, "x-y" if socket has affinity with more than two
+   consecutively numbered servers, "x" if socket has affinity with a specific
+   server number, which is not necessarily just one server. e.g. "1 3" is
+   printed if socket has affinity with servers number one and three, but not
+   server number two. */
+static ssize_t
+print_socket_servers(struct nsd_socket *sock, char *buf, size_t bufsz)
+{
+	int i, x, y, z, n = (int)(sock->servers->size);
+	char *sep = "";
+	size_t off, tot;
+	ssize_t cnt = 0;
+
+	assert(bufsz != 0);
+
+	off = tot = 0;
+	x = y = z = -1;
+	for (i = 0; i <= n; i++) {
+		if (i == n || !nsd_bitset_isset(sock->servers, i)) {
+			cnt = 0;
+			if (i == n && x == -1) {
+				assert(y == -1);
+				assert(z == -1);
+				cnt = snprintf(buf, bufsz, "-");
+			} else if (y > z) {
+				assert(x > z);
+				if (x == 0 && y == (n - 1)) {
+					assert(z == -1);
+					cnt = snprintf(buf+off, bufsz-off,
+					               "*");
+				} else if (x == y) {
+					cnt = snprintf(buf+off, bufsz-off,
+					               "%s%d", sep, x+1);
+				} else if (x == (y - 1)) {
+					cnt = snprintf(buf+off, bufsz-off,
+					               "%s%d %d", sep, x+1, y+1);
+				} else {
+					assert(y > (x + 1));
+					cnt = snprintf(buf+off, bufsz-off,
+					               "%s%d-%d", sep, x+1, y+1);
+				}
+			}
+			z = i;
+			if (cnt > 0) {
+				tot += (size_t)cnt;
+				off = (tot < bufsz) ? tot : bufsz - 1;
+				sep = " ";
+			} else if (cnt < 0) {
+				return -1;
+			}
+		} else if (x <= z) {
+			x = y = i;
+		} else {
+			assert(x > z);
+			y = i;
+		}
+	}
+
+	return tot;
+}
+
+static void
+print_sockets(
+	struct nsd_socket *udp, struct nsd_socket *tcp, size_t ifs)
+{
+	char sockbuf[INET6_ADDRSTRLEN + 6 + 1];
+	char *serverbuf;
+	size_t i, serverbufsz, servercnt;
+	const char *fmt = "listen on ip-address %s (%s) with server(s): %s";
+	struct nsd_bitset *servers;
+
+	if(ifs == 0) {
+		return;
+	}
+
+	assert(udp != NULL);
+	assert(tcp != NULL);
+
+	servercnt = udp[0].servers->size;
+	serverbufsz = (((servercnt / 10) * servercnt) + servercnt) + 1;
+	serverbuf = xalloc(serverbufsz);
+
+	/* warn user of unused servers */
+	servers = xalloc(nsd_bitset_size(servercnt));
+	nsd_bitset_init(servers, (size_t)servercnt);
+
+	for(i = 0; i < ifs; i++) {
+		assert(udp[i].servers->size == servercnt);
+		addrport2str((void*)&udp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
+		print_socket_servers(&udp[i], serverbuf, serverbufsz);
+		nsd_bitset_or(servers, servers, udp[i].servers);
+		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "udp", serverbuf));
+		assert(tcp[i].servers->size == servercnt);
+		addrport2str((void*)&tcp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
+		print_socket_servers(&tcp[i], serverbuf, serverbufsz);
+		nsd_bitset_or(servers, servers, tcp[i].servers);
+		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "tcp", serverbuf));
+	}
+
+
+	/* warn user of unused servers */
+	for(i = 0; i < servercnt; i++) {
+		if(!nsd_bitset_isset(servers, i)) {
+			log_msg(LOG_WARNING, "server %zu will not listen on "
+			                     "any specified ip-address", i+1);
+		}
+	}
+	free(serverbuf);
+	free(servers);
+}
+
+#ifdef HAVE_CPUSET_T
+static void free_cpuset(void *ptr)
+{
+	cpuset_t *set = (cpuset_t *)ptr;
+	cpuset_destroy(set);
+}
+#endif
 
 /*
  * Fetch the nsd parent process id from the nsd pidfile
@@ -210,24 +686,43 @@ readpid(const char *file)
 int
 writepid(struct nsd *nsd)
 {
-	FILE * fd;
+	int fd;
 	char pidbuf[32];
+	size_t count = 0;
+	if(!nsd->pidfile || !nsd->pidfile[0])
+		return 0;
 
 	snprintf(pidbuf, sizeof(pidbuf), "%lu\n", (unsigned long) nsd->pid);
 
-	if ((fd = fopen(nsd->pidfile, "w")) ==  NULL ) {
+	if((fd = open(nsd->pidfile, O_WRONLY | O_CREAT | O_TRUNC
+#ifdef O_NOFOLLOW
+		| O_NOFOLLOW
+#endif
+		, 0644)) == -1) {
 		log_msg(LOG_ERR, "cannot open pidfile %s: %s",
 			nsd->pidfile, strerror(errno));
 		return -1;
 	}
 
-	if (!write_data(fd, pidbuf, strlen(pidbuf))) {
-		log_msg(LOG_ERR, "cannot write pidfile %s: %s",
-			nsd->pidfile, strerror(errno));
-		fclose(fd);
-		return -1;
+	while(count < strlen(pidbuf)) {
+		ssize_t r = write(fd, pidbuf+count, strlen(pidbuf)-count);
+		if(r == -1) {
+			if(errno == EAGAIN || errno == EINTR)
+				continue;
+			log_msg(LOG_ERR, "cannot write pidfile %s: %s",
+				nsd->pidfile, strerror(errno));
+			close(fd);
+			return -1;
+		} else if(r == 0) {
+			log_msg(LOG_ERR, "cannot write any bytes to "
+				"pidfile %s: write returns 0 bytes written",
+				nsd->pidfile);
+			close(fd);
+			return -1;
+		}
+		count += r;
 	}
-	fclose(fd);
+	close(fd);
 
 	if (chown(nsd->pidfile, nsd->uid, nsd->gid) == -1) {
 		log_msg(LOG_ERR, "cannot chown %u.%u %s: %s",
@@ -244,19 +739,25 @@ unlinkpid(const char* file)
 {
 	int fd = -1;
 
-	if (file) {
+	if (file && file[0]) {
 		/* truncate pidfile */
 		fd = open(file, O_WRONLY | O_TRUNC, 0644);
 		if (fd == -1) {
 			/* Truncate the pid file.  */
 			log_msg(LOG_ERR, "can not truncate the pid file %s: %s", file, strerror(errno));
-		} else 
+		} else {
 			close(fd);
+		}
 
 		/* unlink pidfile */
-		if (unlink(file) == -1)
-			log_msg(LOG_WARNING, "failed to unlink pidfile %s: %s",
-				file, strerror(errno));
+		if (unlink(file) == -1) {
+			/* this unlink may not work if the pidfile is located
+			 * outside of the chroot/workdir or we no longer
+			 * have permissions */
+			VERBOSITY(3, (LOG_WARNING,
+				"failed to unlink pidfile %s: %s",
+				file, strerror(errno)));
+		}
 	}
 }
 
@@ -332,16 +833,20 @@ bind8_stats (struct nsd *nsd)
 	char buf[MAXSYSLOGMSGLEN];
 	char *msg, *t;
 	int i, len;
+	struct nsdst st;
 
 	/* Current time... */
 	time_t now;
-	if(!nsd->st.period)
+	if(!nsd->st_period)
 		return;
 	time(&now);
 
+	memcpy(&st, nsd->st, sizeof(st));
+	stats_subtract(&st, &nsd->stat_proc);
+
 	/* NSTATS */
 	t = msg = buf + snprintf(buf, MAXSYSLOGMSGLEN, "NSTATS %lld %lu",
-				 (long long) now, (unsigned long) nsd->st.boot);
+				 (long long) now, (unsigned long) st.boot);
 	for (i = 0; i <= 255; i++) {
 		/* How much space left? */
 		if ((len = buf + MAXSYSLOGMSGLEN - t) < 32) {
@@ -350,8 +855,8 @@ bind8_stats (struct nsd *nsd)
 			len = buf + MAXSYSLOGMSGLEN - t;
 		}
 
-		if (nsd->st.qtype[i] != 0) {
-			t += snprintf(t, len, " %s=%lu", rrtype_to_string(i), nsd->st.qtype[i]);
+		if (st.qtype[i] != 0) {
+			t += snprintf(t, len, " %s=%lu", rrtype_to_string(i), st.qtype[i]);
 		}
 	}
 	if (t > msg)
@@ -360,31 +865,65 @@ bind8_stats (struct nsd *nsd)
 	/* XSTATS */
 	/* Only print it if we're in the main daemon or have anything to report... */
 	if (nsd->server_kind == NSD_SERVER_MAIN
-	    || nsd->st.dropped || nsd->st.raxfr || (nsd->st.qudp + nsd->st.qudp6 - nsd->st.dropped)
-	    || nsd->st.txerr || nsd->st.opcode[OPCODE_QUERY] || nsd->st.opcode[OPCODE_IQUERY]
-	    || nsd->st.wrongzone || nsd->st.ctcp + nsd->st.ctcp6 || nsd->st.rcode[RCODE_SERVFAIL]
-	    || nsd->st.rcode[RCODE_FORMAT] || nsd->st.nona || nsd->st.rcode[RCODE_NXDOMAIN]
-	    || nsd->st.opcode[OPCODE_UPDATE]) {
+	    || st.dropped || st.raxfr || st.rixfr || (st.qudp + st.qudp6 - st.dropped)
+	    || st.txerr || st.opcode[OPCODE_QUERY] || st.opcode[OPCODE_IQUERY]
+	    || st.wrongzone || st.ctcp + st.ctcp6 || st.rcode[RCODE_SERVFAIL]
+	    || st.rcode[RCODE_FORMAT] || st.nona || st.rcode[RCODE_NXDOMAIN]
+	    || st.opcode[OPCODE_UPDATE]) {
 
 		log_msg(LOG_INFO, "XSTATS %lld %lu"
-			" RR=%lu RNXD=%lu RFwdR=%lu RDupR=%lu RFail=%lu RFErr=%lu RErr=%lu RAXFR=%lu"
+			" RR=%lu RNXD=%lu RFwdR=%lu RDupR=%lu RFail=%lu RFErr=%lu RErr=%lu RAXFR=%lu RIXFR=%lu"
 			" RLame=%lu ROpts=%lu SSysQ=%lu SAns=%lu SFwdQ=%lu SDupQ=%lu SErr=%lu RQ=%lu"
 			" RIQ=%lu RFwdQ=%lu RDupQ=%lu RTCP=%lu SFwdR=%lu SFail=%lu SFErr=%lu SNaAns=%lu"
 			" SNXD=%lu RUQ=%lu RURQ=%lu RUXFR=%lu RUUpd=%lu",
-			(long long) now, (unsigned long) nsd->st.boot,
-			nsd->st.dropped, (unsigned long)0, (unsigned long)0, (unsigned long)0, (unsigned long)0,
-			(unsigned long)0, (unsigned long)0, nsd->st.raxfr, (unsigned long)0, (unsigned long)0,
-			(unsigned long)0, nsd->st.qudp + nsd->st.qudp6 - nsd->st.dropped, (unsigned long)0,
-			(unsigned long)0, nsd->st.txerr,
-			nsd->st.opcode[OPCODE_QUERY], nsd->st.opcode[OPCODE_IQUERY], nsd->st.wrongzone,
-			(unsigned long)0, nsd->st.ctcp + nsd->st.ctcp6,
-			(unsigned long)0, nsd->st.rcode[RCODE_SERVFAIL], nsd->st.rcode[RCODE_FORMAT],
-			nsd->st.nona, nsd->st.rcode[RCODE_NXDOMAIN],
-			(unsigned long)0, (unsigned long)0, (unsigned long)0, nsd->st.opcode[OPCODE_UPDATE]);
+			(long long) now, (unsigned long) st.boot,
+			st.dropped, (unsigned long)0, (unsigned long)0, (unsigned long)0, (unsigned long)0,
+			(unsigned long)0, (unsigned long)0, st.raxfr, st.rixfr, (unsigned long)0, (unsigned long)0,
+			(unsigned long)0, st.qudp + st.qudp6 - st.dropped, (unsigned long)0,
+			(unsigned long)0, st.txerr,
+			st.opcode[OPCODE_QUERY], st.opcode[OPCODE_IQUERY], st.wrongzone,
+			(unsigned long)0, st.ctcp + st.ctcp6,
+			(unsigned long)0, st.rcode[RCODE_SERVFAIL], st.rcode[RCODE_FORMAT],
+			st.nona, st.rcode[RCODE_NXDOMAIN],
+			(unsigned long)0, (unsigned long)0, (unsigned long)0, st.opcode[OPCODE_UPDATE]);
 	}
 
 }
 #endif /* BIND8_STATS */
+
+static
+int cookie_secret_file_read(nsd_type* nsd) {
+	char secret[NSD_COOKIE_SECRET_SIZE * 2 + 2/*'\n' and '\0'*/];
+	char const* file = nsd->options->cookie_secret_file;
+	FILE* f;
+	int corrupt = 0;
+	size_t count;
+
+	assert( nsd->options->cookie_secret_file != NULL );
+	f = fopen(file, "r");
+	/* a non-existing cookie file is not an error */
+	if( f == NULL ) { return errno != EPERM; }
+	/* cookie secret file exists and is readable */
+	nsd->cookie_count = 0;
+	for( count = 0; count < NSD_COOKIE_HISTORY_SIZE; count++ ) {
+		size_t secret_len = 0;
+		ssize_t decoded_len = 0;
+		if( fgets(secret, sizeof(secret), f) == NULL ) { break; }
+		secret_len = strlen(secret);
+		if( secret_len == 0 ) { break; }
+		assert( secret_len <= sizeof(secret) );
+		secret_len = secret[secret_len - 1] == '\n' ? secret_len - 1 : secret_len;
+		if( secret_len != NSD_COOKIE_SECRET_SIZE * 2 ) { corrupt++; break; }
+		/* needed for `hex_pton`; stripping potential `\n` */
+		secret[secret_len] = '\0';
+		decoded_len = hex_pton(secret, nsd->cookie_secrets[count].cookie_secret,
+		                       NSD_COOKIE_SECRET_SIZE);
+		if( decoded_len != NSD_COOKIE_SECRET_SIZE ) { corrupt++; break; }
+		nsd->cookie_count++;
+	}
+	fclose(f);
+	return corrupt == 0;
+}
 
 extern char *optarg;
 extern int optind;
@@ -401,11 +940,11 @@ main(int argc, char *argv[])
 	struct passwd *pwd = NULL;
 #endif /* HAVE_GETPWNAM */
 
-	struct addrinfo hints[2];
-	int hints_in_use = 1;
-	char** nodes = NULL; /* array of address strings, size nsd.ifs */
+	struct ip_address_option *ip;
+	struct addrinfo hints;
 	const char *udp_port = 0;
 	const char *tcp_port = 0;
+	const char *verify_port = 0;
 
 	const char *configfile = CONFIGFILE;
 
@@ -416,26 +955,25 @@ main(int argc, char *argv[])
 	/* Initialize the server handler... */
 	memset(&nsd, 0, sizeof(struct nsd));
 	nsd.region      = region_create(xalloc, free);
-	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
-	memset(&hints, 0, sizeof(*hints)*2);
-	hints[0].ai_family = DEFAULT_AI_FAMILY;
-	hints[0].ai_flags = AI_PASSIVE;
-	hints[1].ai_family = DEFAULT_AI_FAMILY;
-	hints[1].ai_flags = AI_PASSIVE;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = DEFAULT_AI_FAMILY;
+	hints.ai_flags = AI_PASSIVE;
 	nsd.identity	= 0;
 	nsd.version	= VERSION;
 	nsd.username	= 0;
 	nsd.chrootdir	= 0;
 	nsd.nsid 	= NULL;
 	nsd.nsid_len 	= 0;
+	nsd.cookie_count = 0;
 
 	nsd.child_count = 0;
 	nsd.maximum_tcp_count = 0;
 	nsd.current_tcp_count = 0;
-	nsd.grab_ip6_optional = 0;
 	nsd.file_rotation_ok = 0;
+
+	nsd.do_answer_cookie = 1;
 
 	/* Set up our default identity to gethostname(2) */
 	if (gethostname(hostname, MAXHOSTNAMELEN) == 0) {
@@ -447,6 +985,11 @@ main(int argc, char *argv[])
 		nsd.identity = IDENTITY;
 	}
 
+	/* Create region where options will be stored and set defaults */
+	nsd.options = nsd_options_create(region_create_custom(xalloc, free,
+		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
+		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
+
 	/* Parse the command line... */
 	while ((c = getopt(argc, argv, "46a:c:df:hi:I:l:N:n:P:p:s:u:t:X:V:v"
 #ifndef NDEBUG /* <mattthijs> only when configured with --enable-checking */
@@ -455,17 +998,22 @@ main(int argc, char *argv[])
 		)) != -1) {
 		switch (c) {
 		case '4':
-			hints[0].ai_family = AF_INET;
+			hints.ai_family = AF_INET;
 			break;
 		case '6':
 #ifdef INET6
-			hints[0].ai_family = AF_INET6;
+			hints.ai_family = AF_INET6;
 #else /* !INET6 */
 			error("IPv6 support not enabled.");
 #endif /* INET6 */
 			break;
 		case 'a':
-			add_interface(&nodes, &nsd, optarg);
+			ip = region_alloc_zero(
+				nsd.options->region, sizeof(*ip));
+			ip->address = region_strdup(
+				nsd.options->region, optarg);
+			ip->next = nsd.options->ip_addresses;
+			nsd.options->ip_addresses = ip;
 			break;
 		case 'c':
 			configfile = optarg;
@@ -474,7 +1022,6 @@ main(int argc, char *argv[])
 			nsd.debug = 1;
 			break;
 		case 'f':
-			nsd.dbfile = optarg;
 			break;
 		case 'h':
 			usage();
@@ -533,7 +1080,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 #ifdef BIND8_STATS
-			nsd.st.period = atoi(optarg);
+			nsd.st_period = atoi(optarg);
 #else /* !BIND8_STATS */
 			error("BIND 8 statistics not enabled.");
 #endif /* BIND8_STATS */
@@ -584,11 +1131,9 @@ main(int argc, char *argv[])
 	}
 	if(!tsig_init(nsd.region))
 		error("init tsig failed");
+	pp_init(&write_uint16, &write_uint32);
 
 	/* Read options */
-	nsd.options = nsd_options_create(region_create_custom(xalloc, free,
-		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
-		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
 	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
@@ -597,21 +1142,13 @@ main(int argc, char *argv[])
 			nsd.options->zonelistfile);
 	}
 	if(nsd.options->do_ip4 && !nsd.options->do_ip6) {
-		hints[0].ai_family = AF_INET;
+		hints.ai_family = AF_INET;
 	}
 #ifdef INET6
 	if(nsd.options->do_ip6 && !nsd.options->do_ip4) {
-		hints[0].ai_family = AF_INET6;
+		hints.ai_family = AF_INET6;
 	}
 #endif /* INET6 */
-	if(nsd.options->ip_addresses)
-	{
-		ip_address_option_type* ip = nsd.options->ip_addresses;
-		while(ip) {
-			add_interface(&nodes, &nsd, ip->address);
-			ip = ip->next;
-		}
-	}
 	if (verbosity == 0)
 		verbosity = nsd.options->verbosity;
 #ifndef NDEBUG
@@ -619,13 +1156,6 @@ main(int argc, char *argv[])
 		verbosity = nsd_debug_level;
 #endif /* NDEBUG */
 	if(nsd.options->debug_mode) nsd.debug=1;
-	if(!nsd.dbfile)
-	{
-		if(nsd.options->database)
-			nsd.dbfile = nsd.options->database;
-		else
-			nsd.dbfile = DBFILE;
-	}
 	if(!nsd.pidfile)
 	{
 		if(nsd.options->pidfile)
@@ -647,6 +1177,7 @@ main(int argc, char *argv[])
 	if(nsd.child_count == 0) {
 		nsd.child_count = nsd.options->server_count;
 	}
+
 #ifdef SO_REUSEPORT
 	if(nsd.options->reuseport && nsd.child_count > 1) {
 		nsd.reuseport = nsd.child_count;
@@ -661,6 +1192,9 @@ main(int argc, char *argv[])
 	nsd.outgoing_tcp_mss = nsd.options->outgoing_tcp_mss;
 	nsd.ipv4_edns_size = nsd.options->ipv4_edns_size;
 	nsd.ipv6_edns_size = nsd.options->ipv6_edns_size;
+#ifdef HAVE_SSL
+	nsd.tls_ctx = NULL;
+#endif
 
 	if(udp_port == 0)
 	{
@@ -672,9 +1206,14 @@ main(int argc, char *argv[])
 			tcp_port = TCP_PORT;
 		}
 	}
+	if(nsd.options->verify_port != 0) {
+		verify_port = nsd.options->verify_port;
+	} else {
+		verify_port = VERIFY_PORT;
+	}
 #ifdef BIND8_STATS
-	if(nsd.st.period == 0) {
-		nsd.st.period = nsd.options->statistics;
+	if(nsd.st_period == 0) {
+		nsd.st_period = nsd.options->statistics;
 	}
 #endif /* BIND8_STATS */
 #ifdef HAVE_CHROOT
@@ -710,6 +1249,36 @@ main(int argc, char *argv[])
 #endif /* IPV6 MTU) */
 #endif /* defined(INET6) */
 
+	nsd.do_answer_cookie = nsd.options->answer_cookie;
+	if (nsd.cookie_count > 0)
+		; /* pass */
+
+	else if (nsd.options->cookie_secret) {
+		ssize_t len = hex_pton(nsd.options->cookie_secret,
+			nsd.cookie_secrets[0].cookie_secret, NSD_COOKIE_SECRET_SIZE);
+		if (len != NSD_COOKIE_SECRET_SIZE ) {
+			error("A cookie secret must be a "
+			      "128 bit hex string");
+		}
+		nsd.cookie_count = 1;
+	} else {
+		size_t j;
+		size_t const cookie_secret_len = NSD_COOKIE_SECRET_SIZE;
+		/* Calculate a new random secret */
+		srandom(getpid() ^ time(NULL));
+
+		for( j = 0; j < NSD_COOKIE_HISTORY_SIZE; j++) {
+#if defined(HAVE_SSL)
+			if (!RAND_status()
+			    || !RAND_bytes(nsd.cookie_secrets[j].cookie_secret, cookie_secret_len))
+#endif
+			for (i = 0; i < cookie_secret_len; i++)
+				nsd.cookie_secrets[j].cookie_secret[i] = random_generate(256);
+		}
+		// XXX: all we have is a random cookie, still pretend we have one
+		nsd.cookie_count = 1;
+	}
+
 	if (nsd.nsid_len == 0 && nsd.options->nsid) {
 		if (strlen(nsd.options->nsid) % 2 != 0) {
 			error("the NSID must be a hex string of an even length.");
@@ -725,6 +1294,54 @@ main(int argc, char *argv[])
 	edns_init_nsid(&nsd.edns_ipv6, nsd.nsid_len);
 #endif /* defined(INET6) */
 
+#ifdef HAVE_CPUSET_T
+	nsd.use_cpu_affinity = (nsd.options->cpu_affinity != NULL);
+	if(nsd.use_cpu_affinity) {
+		int ncpus;
+		struct cpu_option* opt = nsd.options->cpu_affinity;
+
+		if((ncpus = number_of_cpus()) == -1) {
+			error("cannot retrieve number of cpus: %s",
+			      strerror(errno));
+		}
+		nsd.cpuset = cpuset_create();
+		region_add_cleanup(nsd.region, free_cpuset, nsd.cpuset);
+		for(; opt; opt = opt->next) {
+			assert(opt->cpu >= 0);
+			if(opt->cpu >= ncpus) {
+				error("invalid cpu %d specified in "
+				      "cpu-affinity", opt->cpu);
+			}
+			cpuset_set((cpuid_t)opt->cpu, nsd.cpuset);
+		}
+	}
+	if(nsd.use_cpu_affinity) {
+		int cpu;
+		struct cpu_map_option *opt
+			= nsd.options->service_cpu_affinity;
+
+		cpu = -1;
+		for(; opt && cpu == -1; opt = opt->next) {
+			if(opt->service == -1) {
+				cpu = opt->cpu;
+				assert(cpu >= 0);
+			}
+		}
+		nsd.xfrd_cpuset = cpuset_create();
+		region_add_cleanup(nsd.region, free_cpuset, nsd.xfrd_cpuset);
+		if(cpu == -1) {
+			cpuset_or(nsd.xfrd_cpuset,
+			          nsd.cpuset);
+		} else {
+			if(!cpuset_isset(cpu, nsd.cpuset)) {
+				error("cpu %d specified in xfrd-cpu-affinity "
+				      "is not specified in cpu-affinity", cpu);
+			}
+			cpuset_set((cpuid_t)cpu, nsd.xfrd_cpuset);
+		}
+	}
+#endif /* HAVE_CPUSET_T */
+
 	/* Number of child servers to fork.  */
 	nsd.children = (struct nsd_child *) region_alloc_array(
 		nsd.region, nsd.child_count, sizeof(struct nsd_child));
@@ -738,79 +1355,55 @@ main(int argc, char *argv[])
 		nsd.children[i].need_to_send_QUIT = 0;
 		nsd.children[i].need_to_exit = 0;
 		nsd.children[i].has_exited = 0;
-#ifdef  BIND8_STATS
+#ifdef BIND8_STATS
 		nsd.children[i].query_count = 0;
 #endif
+
+#ifdef HAVE_CPUSET_T
+		if(nsd.use_cpu_affinity) {
+			int cpu, server;
+			struct cpu_map_option *opt
+				= nsd.options->service_cpu_affinity;
+
+			cpu = -1;
+			server = i+1;
+			for(; opt && cpu == -1; opt = opt->next) {
+				if(opt->service == server) {
+					cpu = opt->cpu;
+					assert(cpu >= 0);
+				}
+			}
+			nsd.children[i].cpuset = cpuset_create();
+			region_add_cleanup(nsd.region,
+			                   free_cpuset,
+			                   nsd.children[i].cpuset);
+			if(cpu == -1) {
+				cpuset_or(nsd.children[i].cpuset,
+				          nsd.cpuset);
+			} else {
+				if(!cpuset_isset((cpuid_t)cpu, nsd.cpuset)) {
+					error("cpu %d specified in "
+					      "server-%d-cpu-affinity is not "
+					      "specified in cpu-affinity",
+					      cpu, server);
+				}
+				cpuset_set(
+					(cpuid_t)cpu, nsd.children[i].cpuset);
+			}
+		}
+#endif /* HAVE_CPUSET_T */
 	}
 
 	nsd.this_child = NULL;
 
-	/* We need at least one active interface */
-	if (nsd.ifs == 0) {
-		add_interface(&nodes, &nsd, NULL);
+	resolve_interface_names(nsd.options);
+	figure_sockets(&nsd.udp, &nsd.tcp, &nsd.ifs,
+		nsd.options->ip_addresses, NULL, udp_port, tcp_port, &hints);
 
-		/*
-		 * With IPv6 we'd like to open two separate sockets,
-		 * one for IPv4 and one for IPv6, both listening to
-		 * the wildcard address (unless the -4 or -6 flags are
-		 * specified).
-		 *
-		 * However, this is only supported on platforms where
-		 * we can turn the socket option IPV6_V6ONLY _on_.
-		 * Otherwise we just listen to a single IPv6 socket
-		 * and any incoming IPv4 connections will be
-		 * automatically mapped to our IPv6 socket.
-		 */
-#ifdef INET6
-		if (hints[0].ai_family == AF_UNSPEC) {
-#ifdef IPV6_V6ONLY
-			add_interface(&nodes, &nsd, NULL);
-			hints[0].ai_family = AF_INET6;
-			hints[1].ai_family = AF_INET;
-			hints_in_use = 2;
-			nsd.grab_ip6_optional = 1;
-#else /* !IPV6_V6ONLY */
-			hints[0].ai_family = AF_INET6;
-#endif	/* IPV6_V6ONLY */
-		}
-#endif /* INET6 */
-	}
-
-	/* Set up the address info structures with real interface/port data */
-	assert(nodes);
-	for (i = 0; i < nsd.ifs; ++i) {
-		int r;
-		const char* node = NULL;
-		const char* service = NULL;
-		int h = ((hints_in_use == 1)?0:i%hints_in_use);
-
-		/* We don't perform name-lookups */
-		if (nodes[i] != NULL)
-			hints[h].ai_flags |= AI_NUMERICHOST;
-		get_ip_port_frm_str(nodes[i], &node, &service);
-
-		hints[h].ai_socktype = SOCK_DGRAM;
-		if ((r=getaddrinfo(node, (service?service:udp_port), &hints[h], &nsd.udp[i].addr)) != 0) {
-#ifdef INET6
-			if(nsd.grab_ip6_optional && hints[0].ai_family == AF_INET6) {
-				log_msg(LOG_WARNING, "No IPv6, fallback to IPv4. getaddrinfo: %s",
-				r==EAI_SYSTEM?strerror(errno):gai_strerror(r));
-				continue;
-			}
-#endif
-			error("cannot parse address '%s': getaddrinfo: %s %s",
-				nodes[i]?nodes[i]:"(null)",
-				gai_strerror(r),
-				r==EAI_SYSTEM?strerror(errno):"");
-		}
-
-		hints[h].ai_socktype = SOCK_STREAM;
-		if ((r=getaddrinfo(node, (service?service:tcp_port), &hints[h], &nsd.tcp[i].addr)) != 0) {
-			error("cannot parse address '%s': getaddrinfo: %s %s",
-				nodes[i]?nodes[i]:"(null)",
-				gai_strerror(r),
-				r==EAI_SYSTEM?strerror(errno):"");
-		}
+	if(nsd.options->verify_enable) {
+		figure_sockets(&nsd.verify_udp, &nsd.verify_tcp, &nsd.verify_ifs,
+			nsd.options->verify_ip_addresses, "localhost", verify_port, verify_port, &hints);
+		setup_verifier_environment();
 	}
 
 	/* Parse the username into uid and gid */
@@ -867,9 +1460,6 @@ main(int argc, char *argv[])
 		} else if (!file_inside_chroot(nsd.pidfile, nsd.chrootdir)) {
 			error("pidfile %s is not relative to %s: chroot not possible",
 				nsd.pidfile, nsd.chrootdir);
-		} else if (!file_inside_chroot(nsd.dbfile, nsd.chrootdir)) {
-			error("database %s is not relative to %s: chroot not possible",
-				nsd.dbfile, nsd.chrootdir);
 		} else if (!file_inside_chroot(nsd.options->xfrdfile, nsd.chrootdir)) {
 			error("xfrdfile %s is not relative to %s: chroot not possible",
 				nsd.options->xfrdfile, nsd.chrootdir);
@@ -884,7 +1474,9 @@ main(int argc, char *argv[])
 
 	/* Set up the logging */
 	log_open(LOG_PID, FACILITY, nsd.log_filename);
-	if (!nsd.log_filename)
+	if(nsd.options->log_only_syslog)
+		log_set_log_function(log_only_syslog);
+	else if (!nsd.log_filename)
 		log_set_log_function(log_syslog);
 	else if (nsd.uid && nsd.gid) {
 		if(chown(nsd.log_filename, nsd.uid, nsd.gid) != 0)
@@ -894,22 +1486,35 @@ main(int argc, char *argv[])
 	log_msg(LOG_NOTICE, "%s starting (%s)", argv0, PACKAGE_STRING);
 
 	/* Do we have a running nsd? */
-	if ((oldpid = readpid(nsd.pidfile)) == -1) {
-		if (errno != ENOENT) {
-			log_msg(LOG_ERR, "can't read pidfile %s: %s",
-				nsd.pidfile, strerror(errno));
-		}
-	} else {
-		if (kill(oldpid, 0) == 0 || errno == EPERM) {
-			log_msg(LOG_WARNING,
-				"%s is already running as %u, continuing",
-				argv0, (unsigned) oldpid);
+	if(nsd.pidfile && nsd.pidfile[0]) {
+		if ((oldpid = readpid(nsd.pidfile)) == -1) {
+			if (errno != ENOENT) {
+				log_msg(LOG_ERR, "can't read pidfile %s: %s",
+					nsd.pidfile, strerror(errno));
+			}
 		} else {
-			log_msg(LOG_ERR,
-				"...stale pid file from process %u",
-				(unsigned) oldpid);
+			if (kill(oldpid, 0) == 0 || errno == EPERM) {
+				log_msg(LOG_WARNING,
+					"%s is already running as %u, continuing",
+					argv0, (unsigned) oldpid);
+			} else {
+				log_msg(LOG_ERR,
+					"...stale pid file from process %u",
+					(unsigned) oldpid);
+			}
 		}
 	}
+
+#ifdef HAVE_SETPROCTITLE
+	setproctitle("main");
+#endif
+#ifdef HAVE_CPUSET_T
+	if(nsd.use_cpu_affinity) {
+		set_cpu_affinity(nsd.cpuset);
+	}
+#endif
+
+	print_sockets(nsd.udp, nsd.tcp, nsd.ifs);
 
 	/* Setup the signal handling... */
 	action.sa_handler = sig_handler;
@@ -942,12 +1547,28 @@ main(int argc, char *argv[])
 			"not be started", argv0);
 	}
 #if defined(HAVE_SSL)
+	if(nsd.options->control_enable || (nsd.options->tls_service_key && nsd.options->tls_service_key[0])) {
+		perform_openssl_init();
+	}
+#endif /* HAVE_SSL */
 	if(nsd.options->control_enable) {
 		/* read ssl keys while superuser and outside chroot */
 		if(!(nsd.rc = daemon_remote_create(nsd.options)))
 			error("could not perform remote control setup");
 	}
+#if defined(HAVE_SSL)
+	if(nsd.options->tls_service_key && nsd.options->tls_service_key[0]
+	   && nsd.options->tls_service_pem && nsd.options->tls_service_pem[0]) {
+		if(!(nsd.tls_ctx = server_tls_ctx_create(&nsd, NULL,
+			nsd.options->tls_service_ocsp)))
+			error("could not set up tls SSL_CTX");
+	}
 #endif /* HAVE_SSL */
+
+	if(nsd.options->cookie_secret_file && nsd.options->cookie_secret_file[0]
+	   && !cookie_secret_file_read(&nsd) ) {
+		log_msg(LOG_ERR, "cookie secret file corrupt or not readable");
+	}
 
 	/* Unless we're debugging, fork... */
 	if (!nsd.debug) {
@@ -1014,10 +1635,8 @@ main(int argc, char *argv[])
 			if (nsd.log_filename[0] == '/')
 				nsd.log_filename += l;
 		}
-		if (nsd.pidfile[0] == '/')
+		if (nsd.pidfile && nsd.pidfile[0] == '/')
 			nsd.pidfile += l;
-		if (nsd.dbfile[0] == '/')
-			nsd.dbfile += l;
 		if (nsd.options->xfrdfile[0] == '/')
 			nsd.options->xfrdfile += l;
 		if (nsd.options->zonelistfile[0] == '/')
@@ -1103,13 +1722,9 @@ main(int argc, char *argv[])
 	options_zonestatnames_create(nsd.options);
 	server_zonestat_alloc(&nsd);
 #endif /* USE_ZONE_STATS */
-#ifdef USE_DNSTAP
-	if(nsd.options->dnstap_enable) {
-		nsd.dt_collector = dt_collector_create(&nsd);
-		dt_collector_start(nsd.dt_collector, &nsd);
-	}
-#endif /* USE_DNSTAP */
-
+#ifdef BIND8_STATS
+	server_stat_alloc(&nsd);
+#endif /* BIND8_STATS */
 	if(nsd.server_kind == NSD_SERVER_MAIN) {
 		server_prepare_xfrd(&nsd);
 		/* xfrd forks this before reading database, so it does not get
@@ -1117,6 +1732,12 @@ main(int argc, char *argv[])
 		server_start_xfrd(&nsd, 0, 0);
 		/* close zonelistfile in non-xfrd processes */
 		zone_list_close(nsd.options);
+#ifdef USE_DNSTAP
+		if(nsd.options->dnstap_enable) {
+			nsd.dt_collector = dt_collector_create(&nsd);
+			dt_collector_start(nsd.dt_collector, &nsd);
+		}
+#endif /* USE_DNSTAP */
 	}
 	if (server_prepare(&nsd) != 0) {
 		unlinkpid(nsd.pidfile);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/04/07 22:31:37 christos Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2024/02/29 11:40:00 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,5 +10,8 @@ SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 MAN    = dhcp-options.5 dhcp-eval.5
 
 DHCPSRCDIR=	common
+
+COPTS.discover.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.parse.c+=		${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>

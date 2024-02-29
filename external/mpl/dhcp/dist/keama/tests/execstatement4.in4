@@ -1,0 +1,7 @@
+# DHCPv4 executable statement config
+
+# empty configs are not accepted by Kea
+default-lease-time 1800;
+
+# impossible to convert statement statement
+break;

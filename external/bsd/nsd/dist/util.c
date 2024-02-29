@@ -16,10 +16,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif /* HAVE_SCHED_H */
+#ifdef HAVE_SYS_CPUSET_H
+#include <sys/cpuset.h>
+#endif /* HAVE_SYS_CPUSET_H */
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif /* HAVE_SYSLOG_H */
 #include <unistd.h>
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
 
 #include "util.h"
 #include "region-allocator.h"
@@ -27,6 +36,7 @@
 #include "namedb.h"
 #include "rdata.h"
 #include "zonec.h"
+#include "nsd.h"
 
 #ifdef USE_MMAP_ALLOC
 #include <sys/mman.h>
@@ -172,6 +182,17 @@ log_syslog(int priority, const char *message)
 }
 
 void
+log_only_syslog(int priority, const char *message)
+{
+#ifdef HAVE_SYSLOG_H
+	syslog(priority, "%s", message);
+#else /* !HAVE_SYSLOG_H */
+	/* no syslog, use stderr */
+	log_file(priority, message);
+#endif
+}
+
+void
 log_set_log_function(log_function_type *log_function)
 {
 	current_log_function = log_function;
@@ -246,6 +267,19 @@ lookup_by_id(lookup_table_type *table, int id)
 	return NULL;
 }
 
+char *
+xstrdup(const char *src)
+{
+	char *result = strdup(src);
+
+	if(!result) {
+		log_msg(LOG_ERR, "strdup failed: %s", strerror(errno));
+		exit(1);
+	}
+
+	return result;
+}
+
 void *
 xalloc(size_t size)
 {
@@ -260,9 +294,9 @@ xalloc(size_t size)
 
 void *
 xmallocarray(size_t num, size_t size)
-{  
+{
         void *result = reallocarray(NULL, num, size);
-   
+
         if (!result) {
                 log_msg(LOG_ERR, "reallocarray failed: %s", strerror(errno));
                 exit(1);
@@ -495,7 +529,7 @@ strtoserial(const char* nptr, const char** endptr)
 			i += (**endptr - '0');
 			break;
 		default:
-			break;
+			return 0;
 		}
 	}
 	serial += i;
@@ -681,10 +715,10 @@ b32_ntop(uint8_t const *src, size_t srclength, char *target, size_t targsize)
 	}
 	if(srclength)
 	{
-		if(targsize < strlen(buf)+1)
+		size_t tlen = strlcpy(target, buf, targsize);
+		if (tlen >= targsize)
 			return -1;
-		strlcpy(target, buf, targsize);
-		len += strlen(buf);
+		len += tlen;
 	}
 	else if(targsize < 1)
 		return -1;
@@ -831,7 +865,7 @@ mktime_from_utc(const struct tm *tm)
    http://www.tsfr.org/~orc/Code/bsd/bsd-current/cksum/crc.c.
    or http://gobsd.com/code/freebsd/usr.bin/cksum/crc.c
    The polynomial is 0x04c11db7L. */
-static u_long crctab[] = {
+static uint32_t crctab[] = {
 	0x0,
 	0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
 	0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6,
@@ -923,8 +957,15 @@ compare_serial(uint32_t a, uint32_t b)
 uint16_t
 qid_generate(void)
 {
+#ifdef HAVE_GETRANDOM
+	uint16_t r;
+	if(getrandom(&r, sizeof(r), 0) == -1) {
+		log_msg(LOG_ERR, "getrandom failed: %s", strerror(errno));
+		exit(1);
+	}
+	return r;
+#elif defined(HAVE_ARC4RANDOM)
     /* arc4random_uniform not needed because range is a power of 2 */
-#ifdef HAVE_ARC4RANDOM
     return (uint16_t) arc4random();
 #else
     return (uint16_t) random();
@@ -934,9 +975,16 @@ qid_generate(void)
 int
 random_generate(int max)
 {
-#ifdef HAVE_ARC4RANDOM_UNIFORM
+#ifdef HAVE_GETRANDOM
+	int r;
+	if(getrandom(&r, sizeof(r), 0) == -1) {
+		log_msg(LOG_ERR, "getrandom failed: %s", strerror(errno));
+		exit(1);
+	}
+	return (int)(((unsigned)r)%max);
+#elif defined(HAVE_ARC4RANDOM_UNIFORM)
     return (int) arc4random_uniform(max);
-#elif HAVE_ARC4RANDOM
+#elif defined(HAVE_ARC4RANDOM)
     return (int) (arc4random() % max);
 #else
     return (int) ((unsigned)random() % max);
@@ -1087,6 +1135,35 @@ addr2str(
 }
 
 void
+addrport2str(
+#ifdef INET6
+	struct sockaddr_storage *addr
+#else
+	struct sockaddr_in *addr
+#endif
+	, char* str, size_t len)
+{
+	char ip[256];
+#ifdef INET6
+	if (addr->ss_family == AF_INET6) {
+		if (!inet_ntop(AF_INET6,
+			&((struct sockaddr_in6 *)addr)->sin6_addr, ip, sizeof(ip)))
+			strlcpy(ip, "[unknown ip6, inet_ntop failed]", sizeof(ip));
+		/* append port number */
+		snprintf(str, len, "%s@%u", ip,
+			(unsigned)ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
+		return;
+	} else
+#endif
+	if (!inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
+		ip, sizeof(ip)))
+		strlcpy(ip, "[unknown ip4, inet_ntop failed]", sizeof(ip));
+	/* append port number */
+	snprintf(str, len, "%s@%u", ip,
+		(unsigned)ntohs(((struct sockaddr_in *)addr)->sin_port));
+}
+
+void
 append_trailing_slash(const char** dirname, region_type* region)
 {
 	int l = strlen(*dirname);
@@ -1120,3 +1197,97 @@ error(const char *format, ...)
 	exit(1);
 }
 
+#ifdef HAVE_CPUSET_T
+#if defined(HAVE_SYSCONF) && defined(_SC_NPROCESSORS_CONF)
+/* exists on Linux and FreeBSD */
+int number_of_cpus(void)
+{
+	return (int)sysconf(_SC_NPROCESSORS_CONF);
+}
+#else
+int number_of_cpus(void)
+{
+	return -1;
+}
+#endif
+#ifdef __gnu_hurd__
+/* HURD has no sched_setaffinity implementation, but links an always fail,
+ * with a linker error, we print an error when it is used */
+int set_cpu_affinity(cpuset_t *ATTR_UNUSED(set))
+{
+	log_err("sched_setaffinity: not available on this system");
+	return -1;
+}
+#elif defined(HAVE_SCHED_SETAFFINITY)
+/* Linux */
+int set_cpu_affinity(cpuset_t *set)
+{
+	assert(set != NULL);
+	return sched_setaffinity(getpid(), sizeof(*set), set);
+}
+#else
+/* FreeBSD */
+int set_cpu_affinity(cpuset_t *set)
+{
+	assert(set != NULL);
+	return cpuset_setaffinity(
+		CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, sizeof(*set), set);
+}
+#endif
+#endif /* HAVE_CPUSET_T */
+
+void add_cookie_secret(struct nsd* nsd, uint8_t* secret)
+{
+	/* New cookie secret becomes the staging secret (position 1)
+	 * unless there is no active cookie yet, then it becomes the active
+	 * secret.  If the NSD_COOKIE_HISTORY_SIZE > 2 then all staging cookies
+	 * are moved one position down.
+	 */
+	if(nsd->cookie_count == 0) {
+		memcpy( nsd->cookie_secrets->cookie_secret
+		       , secret, NSD_COOKIE_SECRET_SIZE);
+		nsd->cookie_count = 1;
+		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+		return;
+	}
+#if NSD_COOKIE_HISTORY_SIZE > 2
+	memmove( &nsd->cookie_secrets[2], &nsd->cookie_secrets[1]
+	       , sizeof(struct cookie_secret) * (NSD_COOKIE_HISTORY_SIZE - 2));
+#endif
+	memcpy( nsd->cookie_secrets[1].cookie_secret
+	      , secret, NSD_COOKIE_SECRET_SIZE);
+	nsd->cookie_count = nsd->cookie_count     < NSD_COOKIE_HISTORY_SIZE
+	                  ? nsd->cookie_count + 1 : NSD_COOKIE_HISTORY_SIZE;
+	explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
+}
+
+void activate_cookie_secret(struct nsd* nsd)
+{
+	uint8_t active_secret[NSD_COOKIE_SECRET_SIZE];
+	/* The staging secret becomes the active secret.
+	 * The active secret becomes a staging secret.
+	 * If the NSD_COOKIE_HISTORY_SIZE > 2 then all staging secrets are moved
+	 * one position up and the previously active secret becomes the last
+	 * staging secret.
+	 */
+	if(nsd->cookie_count < 2)
+		return;
+	memcpy( active_secret, nsd->cookie_secrets[0].cookie_secret
+	      , NSD_COOKIE_SECRET_SIZE);
+	memmove( &nsd->cookie_secrets[0], &nsd->cookie_secrets[1]
+	       , sizeof(struct cookie_secret) * (NSD_COOKIE_HISTORY_SIZE - 1));
+	memcpy( nsd->cookie_secrets[nsd->cookie_count - 1].cookie_secret
+	      , active_secret, NSD_COOKIE_SECRET_SIZE);
+	explicit_bzero(active_secret, NSD_COOKIE_SECRET_SIZE);
+}
+
+void drop_cookie_secret(struct nsd* nsd)
+{
+	/* Drops a staging cookie secret. If there are more than one, it will
+	 * drop the last staging secret. */
+	if(nsd->cookie_count < 2)
+		return;
+	explicit_bzero( nsd->cookie_secrets[nsd->cookie_count - 1].cookie_secret
+	              , NSD_COOKIE_SECRET_SIZE);
+	nsd->cookie_count -= 1;
+}

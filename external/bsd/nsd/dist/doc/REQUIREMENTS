@@ -1,4 +1,4 @@
-$Id: REQUIREMENTS,v 1.1.1.4 2019/05/25 19:44:44 christos Exp $
+$Id: REQUIREMENTS,v 1.1.1.4.2.1 2024/02/29 11:40:05 martin Exp $
 
 
 NSD Requirements and Specifications
@@ -411,7 +411,7 @@ C 4.1 Actions based on QTYPE of incoming Query.
 	      else 
 
 	        we are in an opt-in part of the zone and we should
-	        include the the NSEC RR of the last secured RR in the
+	        include the NSEC RR of the last secured RR in the
 	        zone and the corresponding RRSIG(NSEC) into the authority
 	        section of the answer.
 
@@ -495,7 +495,7 @@ C 4.1 Actions based on QTYPE of incoming Query.
   Note that on a QNAME match the NS records are not copied into the AUTH
   section (This is a requirement from step 4 'matching down the cache'
   from rfc1034 4.3.2).  This is a requirement only for caching
-  servers. BIND8 will copy the the NS in the Auth section for
+  servers. BIND8 will copy the NS in the Auth section for
   authoritative server too.
 
 
@@ -1053,5 +1053,5 @@ Appendix D. Changes to this file.
 - KEY->DNSKEY, SIG->RRSIG in the text, dnssec-bis style.
 
 ______________________________________________________________________
-$Id: REQUIREMENTS,v 1.1.1.4 2019/05/25 19:44:44 christos Exp $
+$Id: REQUIREMENTS,v 1.1.1.4.2.1 2024/02/29 11:40:05 martin Exp $
 

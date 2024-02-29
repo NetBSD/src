@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _QUERY_H_
-#define _QUERY_H_
+#ifndef QUERY_H
+#define QUERY_H
 
 #include <assert.h>
 #include <string.h>
@@ -17,11 +17,13 @@
 #include "nsd.h"
 #include "packet.h"
 #include "tsig.h"
+struct ixfr_data;
 
 enum query_state {
 	QUERY_PROCESSED,
 	QUERY_DISCARDED,
-	QUERY_IN_AXFR
+	QUERY_IN_AXFR,
+	QUERY_IN_IXFR
 };
 typedef enum query_state query_state_type;
 
@@ -37,11 +39,22 @@ struct query {
 	 * The address the query was received from.
 	 */
 #ifdef INET6
-	struct sockaddr_storage addr;
+	struct sockaddr_storage remote_addr;
 #else
-	struct sockaddr_in addr;
+	struct sockaddr_in remote_addr;
 #endif
-	socklen_t addrlen;
+	socklen_t remote_addrlen;
+
+	/* if set, the request came through a proxy */
+	int is_proxied;
+	/* the client address
+	 * the same as remote_addr if not proxied */
+#ifdef INET6
+	struct sockaddr_storage client_addr;
+#else
+	struct sockaddr_in client_addr;
+#endif
+	socklen_t client_addrlen;
 
 	/*
 	 * Maximum supported query size.
@@ -87,9 +100,9 @@ struct query {
 
 	/*
 	 * The number of CNAMES followed.  After a CNAME is followed
-	 * we no longer change the RCODE to NXDOMAIN and no longer add
-	 * SOA records to the authority section in case of NXDOMAIN
-	 * and NODATA.
+	 * we no longer clear AA for a delegation and do not REFUSE
+	 * or SERVFAIL if the destination zone of the CNAME does not exist,
+	 * or is configured but not present.
 	 * Also includes number of DNAMES followed.
 	 */
 	int cname_count;
@@ -116,6 +129,24 @@ struct query {
 	domain_type *axfr_current_domain;
 	rrset_type  *axfr_current_rrset;
 	uint16_t     axfr_current_rr;
+
+	/* Used for IXFR processing,
+	 * indicates if the zone transfer is done, connection can close. */
+	int ixfr_is_done;
+	/* the ixfr data that is processed */
+	struct ixfr_data* ixfr_data;
+	/* the ixfr data that is the last segment */
+	struct ixfr_data* ixfr_end_data;
+	/* ixfr count of newsoa bytes added, 0 none, len means done */
+	size_t ixfr_count_newsoa;
+	/* ixfr count of oldsoa bytes added, 0 none, len means done */
+	size_t ixfr_count_oldsoa;
+	/* ixfr count of del bytes added, 0 none, len means done */
+	size_t ixfr_count_del;
+	/* ixfr count of add bytes added, 0 none, len means done */
+	size_t ixfr_count_add;
+	/* position for the end of SOA record, for UDP truncation */
+	size_t ixfr_pos_of_newsoa;
 
 #ifdef RATELIMIT
 	/* if we encountered a wildcard, its domain */
@@ -184,7 +215,7 @@ void query_reset(query_type *query, size_t maxlen, int is_tcp);
 /*
  * Process a query and write the response in the query I/O buffer.
  */
-query_state_type query_process(query_type *q, nsd_type *nsd);
+query_state_type query_process(query_type *q, nsd_type *nsd, uint32_t *now_p);
 
 /*
  * Prepare the query structure for writing the response. The packet
@@ -197,7 +228,7 @@ void query_prepare_response(query_type *q);
 /*
  * Add EDNS0 information to the response if required.
  */
-void query_add_optional(query_type *q, nsd_type *nsd);
+void query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p);
 
 /*
  * Write an error response into the query structure with the indicated
@@ -210,4 +241,4 @@ query_overflow(query_type *q)
 {
 	return buffer_position(q->packet) > (q->maxlen - q->reserved_space);
 }
-#endif /* _QUERY_H_ */
+#endif /* QUERY_H */

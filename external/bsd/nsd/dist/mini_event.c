@@ -298,14 +298,18 @@ event_base_loopexit(struct event_base* base,
 	return 0;
 }
 
+int event_base_loopbreak(struct event_base * base)
+{
+	return event_base_loopexit(base, NULL);
+}
+
 /* free event base, free events yourself */
 void
 event_base_free(struct event_base* base)
 {
 	if(!base)
 		return;
-	if(base->times)
-		free(base->times);
+	/* base->times is allocated in region and is freed with the region */
 	if(base->fds)
 		free(base->fds);
 	if(base->signals)
@@ -362,7 +366,7 @@ event_add(struct event* ev, struct timeval* tv)
 		struct timeval* now = ev->ev_base->time_tv;
 		ev->ev_timeout.tv_sec = tv->tv_sec + now->tv_sec;
 		ev->ev_timeout.tv_usec = tv->tv_usec + now->tv_usec;
-		while(ev->ev_timeout.tv_usec > 1000000) {
+		while(ev->ev_timeout.tv_usec >= 1000000) {
 			ev->ev_timeout.tv_usec -= 1000000;
 			ev->ev_timeout.tv_sec++;
 		}

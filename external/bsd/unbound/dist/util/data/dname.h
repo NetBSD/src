@@ -197,6 +197,15 @@ int dname_lab_cmp(uint8_t* d1, int labs1, uint8_t* d2, int labs2, int* mlabs);
 int dname_lab_startswith(uint8_t* label, char* prefix, char** endptr);
 
 /**
+ * Check if dname contains label
+ * @param dname: dname
+ * @param dnamelen: length of dname
+ * @param label: label to be checked for presence in dname
+ * @return: 1 if dname has this label, 0 otherwise
+ */
+int dname_has_label(uint8_t* dname, size_t dnamelen, uint8_t* label);
+
+/**
  * See if domain name d1 is a strict subdomain of d2.
  * That is a subdomain, but not equal. 
  * @param d1: domain name, uncompressed wireformat
@@ -252,7 +261,7 @@ int dname_is_root(uint8_t* dname);
  * Snip off first label from a dname, returning the parent zone.
  * @param dname: from what to strip off. uncompressed wireformat.
  * @param len: length, adjusted to become less.
- * @return stripped off, or "." if input was ".".
+ * return stripped off, or "." if input was ".".
  */
 void dname_remove_label(uint8_t** dname, size_t* len);
 
@@ -262,7 +271,7 @@ void dname_remove_label(uint8_t** dname, size_t* len);
  * @param len: length, adjusted to become less.
  * @param n: number of labels to strip off (from the left).
  * 	if 0, nothing happens.
- * @return stripped off, or "." if input was ".".
+ * return stripped off, or "." if input was ".".
  */
 void dname_remove_labels(uint8_t** dname, size_t* len, int n);
 

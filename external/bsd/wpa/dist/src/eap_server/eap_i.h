@@ -160,6 +160,7 @@ struct eap_sm {
 	u8 *identity;
 	size_t identity_len;
 	char *serial_num;
+	char imsi[20];
 	/* Whether Phase 2 method should validate identity match */
 	int require_identity_match;
 	int lastId; /* Identifier used in the last EAP-Packet */
@@ -189,7 +190,10 @@ struct eap_sm {
 	} eap_fast_prov;
 	int pac_key_lifetime;
 	int pac_key_refresh_time;
+	int eap_teap_auth;
+	int eap_teap_pac_no_inner;
 	int eap_sim_aka_result_ind;
+	int eap_sim_id;
 	int tnc;
 	u16 pwd_group;
 	struct wps_context *wps;

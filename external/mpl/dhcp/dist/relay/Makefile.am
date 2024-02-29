@@ -1,3 +1,5 @@
+SUBDIRS = . tests
+
 AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"'
 
 sbin_PROGRAMS = dhcrelay
@@ -9,4 +11,3 @@ dhcrelay_LDADD = ../common/libdhcp.@A@ ../omapip/libomapi.@A@ \
 		 @BINDLIBISCDIR@/libisc.@A@
 man_MANS = dhcrelay.8
 EXTRA_DIST = $(man_MANS)
-

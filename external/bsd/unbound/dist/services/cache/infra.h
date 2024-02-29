@@ -114,6 +114,8 @@ struct infra_cache {
 	struct slabhash* hosts;
 	/** TTL value for host information, in seconds */
 	int host_ttl;
+	/** the hosts that are down are kept probed for recovery */
+	int infra_keep_probing;
 	/** hash table with query rates per name: rate_key, rate_data */
 	struct slabhash* domain_rates;
 	/** ratelimit settings for domains, struct domain_limit_data */
@@ -151,6 +153,8 @@ struct rate_key {
 
 /** ip ratelimit, 0 is off */
 extern int infra_ip_ratelimit;
+/** ip ratelimit for DNS Cookie clients, 0 is off */
+extern int infra_ip_ratelimit_cookie;
 
 /**
  * key for ip_ratelimit lookups, a source IP.
@@ -366,6 +370,7 @@ long long infra_get_host_rto(struct infra_cache* infra,
  * @param name: zone name
  * @param namelen: zone name length
  * @param timenow: what time it is now.
+ * @param backoff: if backoff is enabled.
  * @param qinfo: for logging, query name.
  * @param replylist: for logging, querier's address (if any).
  * @return 1 if it could be incremented. 0 if the increment overshot the
@@ -373,7 +378,7 @@ long long infra_get_host_rto(struct infra_cache* infra,
  * Failures like alloc failures are not returned (probably as 1).
  */
 int infra_ratelimit_inc(struct infra_cache* infra, uint8_t* name,
-	size_t namelen, time_t timenow, struct query_info* qinfo,
+	size_t namelen, time_t timenow, int backoff, struct query_info* qinfo,
 	struct comm_reply* replylist);
 
 /**
@@ -396,13 +401,15 @@ void infra_ratelimit_dec(struct infra_cache* infra, uint8_t* name,
  * @param name: zone name
  * @param namelen: zone name length
  * @param timenow: what time it is now.
+ * @param backoff: if backoff is enabled.
  * @return true if exceeded.
  */
 int infra_ratelimit_exceeded(struct infra_cache* infra, uint8_t* name,
-	size_t namelen, time_t timenow);
+	size_t namelen, time_t timenow, int backoff);
 
-/** find the maximum rate stored, not too old. 0 if no information. */
-int infra_rate_max(void* data, time_t now);
+/** find the maximum rate stored. 0 if no information.
+ *  When backoff is enabled look for the maximum in the whole RATE_WINDOW. */
+int infra_rate_max(void* data, time_t now, int backoff);
 
 /** find the ratelimit in qps for a domain. 0 if no limit for domain. */
 int infra_find_ratelimit(struct infra_cache* infra, uint8_t* name,
@@ -411,14 +418,17 @@ int infra_find_ratelimit(struct infra_cache* infra, uint8_t* name,
 /** Update query ratelimit hash and decide
  *  whether or not a query should be dropped.
  *  @param infra: infra cache
- *  @param repinfo: information about client
+ *  @param addr: client address
+ *  @param addrlen: client address length
  *  @param timenow: what time it is now.
+ *  @param has_cookie: if the request came with a DNS Cookie.
+ *  @param backoff: if backoff is enabled.
  *  @param buffer: with query for logging.
  *  @return 1 if it could be incremented. 0 if the increment overshot the
  *  ratelimit and the query should be dropped. */
 int infra_ip_ratelimit_inc(struct infra_cache* infra,
-	struct comm_reply* repinfo, time_t timenow,
-	struct sldns_buffer* buffer);
+	struct sockaddr_storage* addr, socklen_t addrlen, time_t timenow,
+	int has_cookie, int backoff, struct sldns_buffer* buffer);
 
 /**
  * Get memory used by the infra cache.

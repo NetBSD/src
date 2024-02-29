@@ -34,6 +34,9 @@
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  POSSIBILITY OF SUCH DAMAGE.
 '''
+
+import os
+
 #Try:
 # - dig @localhost nlnetlabs.nl +ednsopt=65002:
 #       This query *could* be answered from cache. If so, unbound will reply
@@ -43,7 +46,7 @@
 #       This query returns SERVFAIL as the txt record of bogus.nlnetlabs.nl is
 #       intentionally bogus. The reply will contain an empty EDNS option
 #       with option code 65003.
-#       Unbound will also log the source address(es) of the client(s) that made
+#       Unbound will also log the source address of the client that made
 #       the request.
 #       (unbound needs to be validating for this example to work)
 
@@ -91,8 +94,6 @@ def inplace_reply_callback(qinfo, qstate, rep, rcode, edns, opt_list_out,
     :param **kwargs: Dictionary that may contain parameters added in a future
                      release. Current parameters:
         ``repinfo``: Reply information for a communication point (comm_reply).
-                     It is None when the callback happens in the mesh
-                     states(modules).
 
     :return: True on success, False on failure.
 
@@ -121,8 +122,6 @@ def inplace_cache_callback(qinfo, qstate, rep, rcode, edns, opt_list_out,
     :param **kwargs: Dictionary that may contain parameters added in a future
                      release. Current parameters:
         ``repinfo``: Reply information for a communication point (comm_reply).
-                     It is None when the callback happens in the mesh
-                     states(modules).
 
     :return: True on success, False on failure.
 
@@ -173,8 +172,6 @@ def inplace_local_callback(qinfo, qstate, rep, rcode, edns, opt_list_out,
     :param **kwargs: Dictionary that may contain parameters added in a future
                      release. Current parameters:
         ``repinfo``: Reply information for a communication point (comm_reply).
-                     It is None when the callback happens in the mesh
-                     states(modules).
 
     :return: True on success, False on failure.
 
@@ -205,44 +202,26 @@ def inplace_servfail_callback(qinfo, qstate, rep, rcode, edns, opt_list_out,
     :param **kwargs: Dictionary that may contain parameters added in a future
                      release. Current parameters:
         ``repinfo``: Reply information for a communication point (comm_reply).
-                     It is None when the callback happens in the mesh
-                     states(modules).
 
     :return: True on success, False on failure.
 
     For demonstration purposes we want to reply with an empty EDNS code '65003'
-    and log the IP address(es) of the client(s).
+    and log the IP address of the client.
 
     """
     log_info("python: called back while servfail.")
-    # Append the example ENDS option
+    # Append the example EDNS option
     b = bytearray.fromhex("")
     edns_opt_list_append(opt_list_out, 65003, b, region)
 
-    # Log the client(s) IP address(es)
+    # Log the client's IP address
     comm_reply = kwargs['repinfo']
     if comm_reply:
-        # If it is not None this callback was called before the query reached
-        # the mesh states(modules). There is only one client associated with
-        # this query.
         addr = comm_reply.addr
         port = comm_reply.port
         addr_family = comm_reply.family
         log_info("python: Client IP: {}({}), port: {}"
                  "".format(addr, addr_family, port))
-    else:
-        # If it is not None this callback was called while the query is in the
-        # mesh states(modules). In this case they may be multiple clients
-        # waiting for this query.
-        # The following code is the same as with the resip.py example.
-        rl = qstate.mesh_info.reply_list
-        while (rl):
-            if rl.query_reply:
-                q = rl.query_reply
-                log_info("python: Client IP: {}({}), port: {}"
-                         "".format(q.addr, q.family, q.port))
-            rl = rl.next
-
 
     return True
 
@@ -266,6 +245,36 @@ def inplace_query_callback(qinfo, flags, qstate, addr, zone, region, **kwargs):
     return True
 
 
+def inplace_query_response_callback(qstate, response, **kwargs):
+    """
+    Function that will be registered as an inplace callback function.
+    It will be called after receiving a reply from a backend server.
+
+    :param qstate: module qstate. opt_lists are available here;
+    :param response: struct dns_msg. The reply received from the backend server;
+    :param **kwargs: Dictionary that may contain parameters added in a future
+                     release.
+    """
+    log_dns_msg(
+        "python: incoming reply from {}{}".format(qstate.reply.addr, os.linesep),
+        response.qinfo, response.rep
+    )
+    return True
+
+
+def inplace_edns_back_parsed_call(qstate, **kwargs):
+    """
+    Function that will be registered as an inplace callback function.
+    It will be called after EDNS is parsed on a reply from a backend server..
+
+    :param qstate: module qstate. opt_lists are available here;
+    :param **kwargs: Dictionary that may contain parameters added in a future
+                     release.
+    """
+    log_info("python: edns parsed")
+    return True
+
+
 def init_standard(id, env):
     """
     New version of the init function.
@@ -278,7 +287,7 @@ def init_standard(id, env):
              env.cfg.
 
     """
-    log_info("python: inited script {}".format(env.cfg.python_script))
+    log_info("python: inited script {}".format(mod_env['script']))
 
     # Register the inplace_reply_callback function as an inplace callback
     # function when answering a resolved query.
@@ -303,6 +312,16 @@ def init_standard(id, env):
     # Register the inplace_query_callback function as an inplace callback
     # before sending a query to a backend server.
     if not register_inplace_cb_query(inplace_query_callback, env, id):
+        return False
+
+    # Register the inplace_edns_back_parsed_call function as an inplace callback
+    # for when a reply is received from a backend server.
+    if not register_inplace_cb_query_response(inplace_query_response_callback, env, id):
+        return False
+
+    # Register the inplace_edns_back_parsed_call function as an inplace callback
+    # for when EDNS is parsed on a reply from a backend server.
+    if not register_inplace_cb_edns_back_parsed_call(inplace_edns_back_parsed_call, env, id):
         return False
 
     return True

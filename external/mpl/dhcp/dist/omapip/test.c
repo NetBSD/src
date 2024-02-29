@@ -1,11 +1,11 @@
-/*	$NetBSD: test.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.2.6.1 2024/02/29 11:39:57 martin Exp $	*/
 
 /* test.c
 
    Test code for omapip... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.2.6.1 2024/02/29 11:39:57 martin Exp $");
 
 #include "config.h"
 

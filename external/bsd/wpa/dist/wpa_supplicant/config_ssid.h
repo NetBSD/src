@@ -33,16 +33,28 @@
 #define DEFAULT_DISABLE_HT40 0
 #define DEFAULT_DISABLE_SGI 0
 #define DEFAULT_DISABLE_LDPC 0
+#define DEFAULT_TX_STBC -1 /* no change */
+#define DEFAULT_RX_STBC -1 /* no change */
 #define DEFAULT_DISABLE_MAX_AMSDU -1 /* no change */
 #define DEFAULT_AMPDU_FACTOR -1 /* no change */
 #define DEFAULT_AMPDU_DENSITY -1 /* no change */
 #define DEFAULT_USER_SELECTED_SIM 1
+#define DEFAULT_MAX_OPER_CHWIDTH -1
 
 struct psk_list_entry {
 	struct dl_list list;
 	u8 addr[ETH_ALEN];
 	u8 psk[32];
 	u8 p2p;
+};
+
+enum wpas_mode {
+	WPAS_MODE_INFRA = 0,
+	WPAS_MODE_IBSS = 1,
+	WPAS_MODE_AP = 2,
+	WPAS_MODE_P2P_GO = 3,
+	WPAS_MODE_P2P_GROUP_FORMATION = 4,
+	WPAS_MODE_MESH = 5,
 };
 
 /**
@@ -391,14 +403,7 @@ struct wpa_ssid {
 	 * CCMP, but not both), and psk must also be set (either directly or
 	 * using ASCII passphrase).
 	 */
-	enum wpas_mode {
-		WPAS_MODE_INFRA = 0,
-		WPAS_MODE_IBSS = 1,
-		WPAS_MODE_AP = 2,
-		WPAS_MODE_P2P_GO = 3,
-		WPAS_MODE_P2P_GROUP_FORMATION = 4,
-		WPAS_MODE_MESH = 5,
-	} mode;
+	enum wpas_mode mode;
 
 	/**
 	 * pbss - Whether to use PBSS. Relevant to DMG networks only.
@@ -457,6 +462,17 @@ struct wpa_ssid {
 	enum mfp_options ieee80211w;
 #endif /* CONFIG_IEEE80211W */
 
+#ifdef CONFIG_OCV
+	/**
+	 * ocv - Enable/disable operating channel validation
+	 *
+	 * If this parameter is set to 1, stations will exchange OCI element
+	 * to cryptographically verify the operating channel. Setting this
+	 * parameter to 0 disables this option. Default value: 0.
+	 */
+	int ocv;
+#endif /* CONFIG_OCV */
+
 	/**
 	 * frequency - Channel frequency in megahertz (MHz) for IBSS
 	 *
@@ -504,6 +520,8 @@ struct wpa_ssid {
 	int ht40;
 
 	int vht;
+
+	int he;
 
 	int max_oper_chwidth;
 
@@ -682,6 +700,22 @@ struct wpa_ssid {
 	 * By default (empty string): Use whatever the OS has configured.
 	 */
 	char *ht_mcs;
+
+	/**
+	 * tx_stbc - Indicate STBC support for TX streams
+	 *
+	 * Value: -1..1, by default (-1): use whatever the OS or card has
+	 * configured. See IEEE Std 802.11-2016, 9.4.2.56.2.
+	 */
+	int tx_stbc;
+
+	/**
+	 * rx_stbc - Indicate STBC support for RX streams
+	 *
+	 * Value: -1..3, by default (-1): use whatever the OS or card has
+	 * configured. See IEEE Std 802.11-2016, 9.4.2.56.2.
+	 */
+	int rx_stbc;
 #endif /* CONFIG_HT_OVERRIDES */
 
 #ifdef CONFIG_VHT_OVERRIDES
@@ -774,6 +808,33 @@ struct wpa_ssid {
 	int macsec_integ_only;
 
 	/**
+	 * macsec_replay_protect - Enable MACsec replay protection
+	 *
+	 * This setting applies only when MACsec is in use, i.e.,
+	 *  - macsec_policy is enabled
+	 *  - the key server has decided to enable MACsec
+	 *
+	 * 0: Replay protection disabled (default)
+	 * 1: Replay protection enabled
+	 */
+	int macsec_replay_protect;
+
+	/**
+	 * macsec_replay_window - MACsec replay protection window
+	 *
+	 * A window in which replay is tolerated, to allow receipt of frames
+	 * that have been misordered by the network.
+	 *
+	 * This setting applies only when MACsec replay protection active, i.e.,
+	 *  - macsec_replay_protect is enabled
+	 *  - the key server has decided to enable MACsec
+	 *
+	 * 0: No replay window, strict check (default)
+	 * 1..2^32-1: number of packets that could be misordered
+	 */
+	u32 macsec_replay_window;
+
+	/**
 	 * macsec_port - MACsec port (in SCI)
 	 *
 	 * Port component of the SCI.
@@ -792,14 +853,16 @@ struct wpa_ssid {
 	/**
 	 * mka_ckn - MKA pre-shared CKN
 	 */
-#define MACSEC_CKN_LEN 32
-	u8 mka_ckn[MACSEC_CKN_LEN];
+#define MACSEC_CKN_MAX_LEN 32
+	size_t mka_ckn_len;
+	u8 mka_ckn[MACSEC_CKN_MAX_LEN];
 
 	/**
 	 * mka_cak - MKA pre-shared CAK
 	 */
-#define MACSEC_CAK_LEN 16
-	u8 mka_cak[MACSEC_CAK_LEN];
+#define MACSEC_CAK_MAX_LEN 32
+	size_t mka_cak_len;
+	u8 mka_cak[MACSEC_CAK_MAX_LEN];
 
 #define MKA_PSK_SET_CKN BIT(0)
 #define MKA_PSK_SET_CAK BIT(1)
@@ -937,6 +1000,23 @@ struct wpa_ssid {
 	 * the selection attempts for OWE BSS exceed the configured threshold.
 	 */
 	int owe_transition_bss_select_count;
+
+	/**
+	 * multi_ap_backhaul_sta - Multi-AP backhaul STA
+	 * 0 = normal (non-Multi-AP) station
+	 * 1 = Multi-AP backhaul station
+	 */
+	int multi_ap_backhaul_sta;
+
+	/**
+	 * ft_eap_pmksa_caching - Whether FT-EAP PMKSA caching is allowed
+	 * 0 = do not try to use PMKSA caching with FT-EAP
+	 * 1 = try to use PMKSA caching with FT-EAP
+	 *
+	 * This controls whether to try to use PMKSA caching with FT-EAP for the
+	 * FT initial mobility domain association.
+	 */
+	int ft_eap_pmksa_caching;
 };
 
 #endif /* CONFIG_SSID_H */

@@ -1,0 +1,5 @@
+# void class declaration config
+
+# class declaration
+class "foobar" {
+}

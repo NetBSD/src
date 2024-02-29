@@ -61,6 +61,13 @@ typedef uint64_t rrset_id_type;
  * updated on encoding in a reply.  This flag is not expected to be set in
  * cached data. */
 #define PACKED_RRSET_FIXEDTTL 0x80000000
+/** This rrset is from RPZ. It is not real, it is synthesized data to block
+ * access. The flag makes lookups, from cache in iterator, ignore the fake
+ * items and only use actual data.  Eg. when the iterator looksup NS, CNAME,
+ * A and AAAA types, it then gets items without this flag that are the
+ * actual network. But messages with these records in it can be stored in
+ * the cache and retrieved for a reply. */
+#define PACKED_RRSET_RPZ 0x8
 
 /** number of rrs and rrsets for integer overflow protection.  More than
  * this is not really possible (64K packet has much less RRs and RRsets) in
@@ -88,6 +95,7 @@ struct packed_rrset_key {
 	 * 	o PACKED_RRSET_PARENT_SIDE
 	 * 	o PACKED_RRSET_SOA_NEG
 	 * 	o PACKED_RRSET_FIXEDTTL (not supposed to be cached)
+	 * 	o PACKED_RRSET_RPZ
 	 */
 	uint32_t flags;
 	/** the rrset type in network format */
@@ -233,6 +241,9 @@ enum sec_status {
  *	the ttl value to send changes due to time.
  */
 struct packed_rrset_data {
+	/** Timestamp added to TTLs in the packed data.
+	 * Needed to support serving original TTLs. */
+	time_t ttl_add;
 	/** TTL (in seconds like time()) of the rrset.
 	 * Same for all RRs see rfc2181(5.2).  */
 	time_t ttl;
@@ -445,5 +456,18 @@ struct ub_packed_rrset_key* packed_rrset_copy_region(
 struct ub_packed_rrset_key* packed_rrset_copy_alloc(
 	struct ub_packed_rrset_key* key, struct alloc_cache* alloc, 
 	time_t now);
+
+/**
+ * Find RR index in packed rrset
+ * Raw comparison, does not canonicalize RDATA
+ * @param d: packed rrset
+ * @param rdata: RDATA of RR to find
+ * @param len: length of rdata
+ * @param index: pointer to int to store index of found RR
+ * @return 1 if RR found, 0 otherwise
+ */
+int
+packed_rrset_find_rr(struct packed_rrset_data* d, uint8_t* rdata, size_t len,
+	size_t* index);
 
 #endif /* UTIL_DATA_PACKED_RRSET_H */

@@ -233,12 +233,7 @@ perfsetup(struct perfinfo* info)
 			addr_is_ip6(&info->dest, info->destlen)?
 			AF_INET6:AF_INET, SOCK_DGRAM, 0);
 		if(info->io[i].fd == -1) {
-#ifndef USE_WINSOCK
-			fatal_exit("socket: %s", strerror(errno));
-#else
-			fatal_exit("socket: %s", 
-				wsa_strerror(WSAGetLastError()));
-#endif
+			fatal_exit("socket: %s", sock_strerror(errno));
 		}
 		if(info->io[i].fd > info->maxfd)
 			info->maxfd = info->io[i].fd;
@@ -260,11 +255,7 @@ perffree(struct perfinfo* info)
 	if(!info) return;
 	if(info->io) {
 		for(i=0; i<info->io_num; i++) {
-#ifndef USE_WINSOCK
-			close(info->io[i].fd);
-#else
-			closesocket(info->io[i].fd);
-#endif
+			sock_close(info->io[i].fd);
 		}
 		free(info->io);
 	}
@@ -285,11 +276,7 @@ perfsend(struct perfinfo* info, size_t n, struct timeval* now)
 	/*log_hex("send", info->qlist_data[info->qlist_idx],
 		info->qlist_len[info->qlist_idx]);*/
 	if(r == -1) {
-#ifndef USE_WINSOCK
-		log_err("sendto: %s", strerror(errno));
-#else
-		log_err("sendto: %s", wsa_strerror(WSAGetLastError()));
-#endif
+		log_err("sendto: %s", sock_strerror(errno));
 	} else if(r != (ssize_t)info->qlist_len[info->qlist_idx]) {
 		log_err("partial sendto");
 	}
@@ -309,11 +296,7 @@ perfreply(struct perfinfo* info, size_t n, struct timeval* now)
 	r = recv(info->io[n].fd, (void*)sldns_buffer_begin(info->buf),
 		sldns_buffer_capacity(info->buf), 0);
 	if(r == -1) {
-#ifndef USE_WINSOCK
-		log_err("recv: %s", strerror(errno));
-#else
-		log_err("recv: %s", wsa_strerror(WSAGetLastError()));
-#endif
+		log_err("recv: %s", sock_strerror(errno));
 	} else {
 		info->by_rcode[LDNS_RCODE_WIRE(sldns_buffer_begin(
 			info->buf))]++;
@@ -475,9 +458,17 @@ qlist_parse_line(sldns_buffer* buf, char* p)
 	if(strcmp(tp, "IN") == 0 || strcmp(tp, "CH") == 0) {
 		qinfo.qtype = sldns_get_rr_type_by_name(cl);
 		qinfo.qclass = sldns_get_rr_class_by_name(tp);
+		if((qinfo.qtype == 0 && strcmp(cl, "TYPE0") != 0) ||
+			(qinfo.qclass == 0 && strcmp(tp, "CLASS0") != 0)) {
+			return 0;
+		}
 	} else {
 		qinfo.qtype = sldns_get_rr_type_by_name(tp);
 		qinfo.qclass = sldns_get_rr_class_by_name(cl);
+		if((qinfo.qtype == 0 && strcmp(tp, "TYPE0") != 0) ||
+			(qinfo.qclass == 0 && strcmp(cl, "CLASS0") != 0)) {
+			return 0;
+		}
 	}
 	if(fl[0] == '+') rec = 1;
 	else if(fl[0] == '-') rec = 0;
@@ -592,9 +583,9 @@ int main(int argc, char* argv[])
 	memset(&info, 0, sizeof(info));
 	info.io_num = 16;
 
+	checklock_start();
 	log_init(NULL, 0, NULL);
 	log_ident_set("perf");
-	checklock_start();
 #ifdef USE_WINSOCK
 	if((r = WSAStartup(MAKEWORD(2,2), &wsa_data)) != 0)
 		fatal_exit("WSAStartup failed: %s", wsa_strerror(r));
@@ -635,7 +626,7 @@ int main(int argc, char* argv[])
 		printf("error: pass server IP address on commandline.\n");
 		usage(nm);
 	}
-	if(!extstrtoaddr(argv[0], &info.dest, &info.destlen)) {
+	if(!extstrtoaddr(argv[0], &info.dest, &info.destlen, UNBOUND_DNS_PORT)) {
 		printf("Could not parse ip: %s\n", argv[0]);
 		exit(1);
 	}
