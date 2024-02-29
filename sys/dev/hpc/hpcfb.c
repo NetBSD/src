@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.65 2021/12/19 21:15:28 andvar Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.66 2024/02/29 22:01:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.65 2021/12/19 21:15:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.66 2024/02/29 22:01:57 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -695,7 +695,7 @@ hpcfb_refresh_screen(struct hpcfb_softc *sc)
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	int x, y;
 
-	DPRINTF(("hpcfb_refres_screen()\n"));
+	DPRINTF(("hpcfb_refresh_screen()\n"));
 	if (dc == NULL)
 		return;
 
