@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -19,6 +21,7 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation no;
 	notify yes;
 	forwarders { 10.53.0.2; };
 	forward only;
@@ -28,7 +31,7 @@ server 10.53.0.2 { tcp-only yes; };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -37,5 +40,5 @@ controls {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };

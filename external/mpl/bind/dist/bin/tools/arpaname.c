@@ -1,25 +1,24 @@
-/*	$NetBSD: arpaname.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.3.4.1 2024/02/29 12:33:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
+#include <stdio.h>
 
 #include <isc/net.h>
 #include <isc/print.h>
 
-#include <stdio.h>
-
-#define UNUSED(x) (void)&(x)
+#define UNUSED(x) (void)(x)
 
 int
 main(int argc, char *argv[]) {
@@ -30,21 +29,22 @@ main(int argc, char *argv[]) {
 
 	while (argv[1]) {
 		if (inet_pton(AF_INET6, argv[1], buf) == 1) {
-			for (i = 15; i >= 0; i--)
+			for (i = 15; i >= 0; i--) {
 				fprintf(stdout, "%X.%X.", buf[i] & 0xf,
 					(buf[i] >> 4) & 0xf);
+			}
 			fprintf(stdout, "IP6.ARPA\n");
 			argv++;
 			continue;
 		}
 		if (inet_pton(AF_INET, argv[1], buf) == 1) {
-			fprintf(stdout, "%u.%u.%u.%u.IN-ADDR.ARPA\n",
-				buf[3], buf[2], buf[1], buf[0]);
+			fprintf(stdout, "%u.%u.%u.%u.IN-ADDR.ARPA\n", buf[3],
+				buf[2], buf[1], buf[0]);
 			argv++;
 			continue;
 		}
 		return (1);
 	}
 	fflush(stdout);
-	return(ferror(stdout));
+	return (ferror(stdout));
 }

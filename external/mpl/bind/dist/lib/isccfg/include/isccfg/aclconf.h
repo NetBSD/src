@@ -1,35 +1,35 @@
-/*	$NetBSD: aclconf.h,v 1.3.4.1 2019/09/12 19:18:17 martin Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.3.4.2 2024/02/29 12:35:27 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISCCFG_ACLCONF_H
-#define ISCCFG_ACLCONF_H 1
+#pragma once
 
 #include <inttypes.h>
 
 #include <isc/lang.h>
 
-#include <isccfg/cfg.h>
-
 #include <dns/geoip.h>
 #include <dns/types.h>
+
+#include <isccfg/cfg.h>
 
 typedef struct cfg_aclconfctx {
 	ISC_LIST(dns_acl_t) named_acl_cache;
 	isc_mem_t *mctx;
-#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+#if defined(HAVE_GEOIP2)
 	dns_geoip_databases_t *geoip;
-#endif
+#endif /* if defined(HAVE_GEOIP2) */
 	isc_refcount_t references;
 } cfg_aclconfctx_t;
 
@@ -60,15 +60,14 @@ cfg_aclconfctx_attach(cfg_aclconfctx_t *src, cfg_aclconfctx_t **dest);
 
 isc_result_t
 cfg_acl_fromconfig(const cfg_obj_t *caml, const cfg_obj_t *cctx,
-		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
-		   isc_mem_t *mctx, unsigned int nest_level,
-		   dns_acl_t **target);
+		   isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
+		   unsigned int nest_level, dns_acl_t **target);
 
 isc_result_t
 cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
-		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
-		   isc_mem_t *mctx, unsigned int nest_level,
-		   uint16_t family, dns_acl_t **target);
+		    isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
+		    unsigned int nest_level, uint16_t family,
+		    dns_acl_t **target);
 /*
  * Construct a new dns_acl_t from configuration data in 'caml' and
  * 'cctx'.  Memory is allocated through 'mctx'.
@@ -85,8 +84,10 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
  * of a matching family (AF_INET or AF_INET6) may be configured.
  *
  * On success, attach '*target' to the new dns_acl_t object.
+ *
+ * Require:
+ *	'ctx' to be non NULL.
+ *	'*target' to be NULL or a valid dns_acl_t.
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCFG_ACLCONF_H */

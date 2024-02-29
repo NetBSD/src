@@ -1,59 +1,45 @@
-/*	$NetBSD: dlz_dbi.c,v 1.4.4.1 2019/09/12 19:18:12 martin Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.4.4.2 2024/02/29 12:33:08 martin Exp $	*/
+
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 and ISC
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * STICHTING NLNET BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
- *
  * The development of Dynamically Loadable Zones (DLZ) for Bind 9 was
  * conceived and contributed by Rob Butler.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and distribute this software for any purpose
+ * with or without fee is hereby granted, provided that the above copyright
+ * notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND ROB BUTLER
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * ROB BUTLER BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
- * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
- * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
- * USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * Copyright (C) 1999-2001, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
- * 
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
-
+#include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
 
-#include <dlz_minimal.h>
-#include <dlz_list.h>
 #include <dlz_dbi.h>
+#include <dlz_list.h>
+#include <dlz_minimal.h>
 #include <dlz_pthread.h>
 
 /*%
@@ -67,20 +53,22 @@ destroy_querylist(query_list_t **querylist) {
 	query_segment_t *nseg = NULL;
 
 	/* if query list is null, nothing to do */
-	if (*querylist == NULL)
+	if (*querylist == NULL) {
 		return;
+	}
 
 	/* start at the top of the list */
 	nseg = DLZ_LIST_HEAD(**querylist);
-	while (nseg != NULL) {	/* loop, until end of list */
+	while (nseg != NULL) { /* loop, until end of list */
 		tseg = nseg;
 		/*
 		 * free the query segment's text string but only if it
 		 * was really a query segment, and not a pointer to
 		 * %zone%, or %record%, or %client%
-		*/
-		if (tseg->cmd != NULL && tseg->direct == true)
+		 */
+		if (tseg->cmd != NULL && tseg->direct) {
 			free(tseg->cmd);
+		}
 		/* get the next query segment, before we destroy this one. */
 		nseg = DLZ_LIST_NEXT(nseg, link);
 		/* deallocate this query segment. */
@@ -93,9 +81,8 @@ destroy_querylist(query_list_t **querylist) {
 /*% constructs a query list by parsing a string into query segments */
 isc_result_t
 build_querylist(const char *query_str, char **zone, char **record,
-		char **client, query_list_t **querylist, unsigned int flags, 
-		log_t log)
-{
+		char **client, query_list_t **querylist, unsigned int flags,
+		log_t log) {
 	isc_result_t result;
 	bool foundzone = false;
 	bool foundrecord = false;
@@ -108,19 +95,21 @@ build_querylist(const char *query_str, char **zone, char **record,
 
 	/* if query string is null, or zero length */
 	if (query_str == NULL || strlen(query_str) < 1) {
-		if ((flags & REQUIRE_QUERY) == 0)
+		if ((flags & REQUIRE_QUERY) == 0) {
 			/* we don't need it were ok. */
 			return (ISC_R_SUCCESS);
-		else
+		} else {
 			/* we did need it, PROBLEM!!! */
 			return (ISC_R_FAILURE);
+		}
 	}
 
 	/* allocate memory for query list */
 	tql = calloc(1, sizeof(query_list_t));
 	/* couldn't allocate memory.  Problem!! */
-	if (tql == NULL)
+	if (tql == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	/* initialize the query segment list */
 	DLZ_LIST_INIT(*tql);
@@ -134,13 +123,12 @@ build_querylist(const char *query_str, char **zone, char **record,
 	}
 
 	/* loop through the string and chop it up */
-	for (token = strtok_r(right_str, "$", &temp_str);
-	     token;
+	for (token = strtok_r(right_str, "$", &temp_str); token;
 	     token = strtok_r(NULL, "$", &temp_str))
 	{
 		/* allocate memory for tseg */
 		tseg = calloc(1, sizeof(query_segment_t));
-		if (tseg  == NULL) {	/* no memory, clean everything up. */
+		if (tseg == NULL) { /* no memory, clean everything up. */
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
@@ -172,7 +160,7 @@ build_querylist(const char *query_str, char **zone, char **record,
 			 */
 			free(tseg->cmd);
 			/* set tseg->cmd to in-direct zone string */
-			tseg->cmd = (char**) zone;
+			tseg->cmd = (char **)zone;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly to a string */
 			tseg->direct = false;
@@ -185,7 +173,7 @@ build_querylist(const char *query_str, char **zone, char **record,
 			 */
 			free(tseg->cmd);
 			/* set tseg->cmd to in-direct record string */
-			tseg->cmd = (char**) record;
+			tseg->cmd = (char **)record;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly poinsts to a string */
 			tseg->direct = false;
@@ -198,7 +186,7 @@ build_querylist(const char *query_str, char **zone, char **record,
 			 */
 			free(tseg->cmd);
 			/* set tseg->cmd to in-direct record string */
-			tseg->cmd = (char**) client;
+			tseg->cmd = (char **)client;
 			tseg->strlen = 0;
 			/* tseg->cmd points in-directly poinsts to a string */
 			tseg->direct = false;
@@ -215,50 +203,52 @@ build_querylist(const char *query_str, char **zone, char **record,
 	 */
 
 	/* if this query requires %client%, make sure we found it */
-	if (((flags & REQUIRE_CLIENT) != 0) && (!foundclient) ) {
+	if (((flags & REQUIRE_CLIENT) != 0) && (!foundclient)) {
 		/* Write error message to log */
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Required token $client$ not found.");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Required token $client$ not "
+					   "found.");
+		}
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}
 
 	/* if this query requires %record%, make sure we found it */
-	if (((flags & REQUIRE_RECORD) != 0) && (!foundrecord) ) {
+	if (((flags & REQUIRE_RECORD) != 0) && (!foundrecord)) {
 		/* Write error message to log */
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Required token $record$ not found.");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Required token $record$ not "
+					   "found.");
+		}
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}
 
 	/* if this query requires %zone%, make sure we found it */
-	if (((flags & REQUIRE_ZONE) != 0) && (!foundzone) ) {
+	if (((flags & REQUIRE_ZONE) != 0) && (!foundzone)) {
 		/* Write error message to log */
-		if (log != NULL)
+		if (log != NULL) {
 			log(ISC_LOG_ERROR, "Required token $zone$ not found.");
+		}
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}
 
 	/* pass back the query list */
-	*querylist = (query_list_t *) tql;
+	*querylist = (query_list_t *)tql;
 
 	/* return success */
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	/* get rid of temp_str */
 	if (right_str != NULL) {
 		free(right_str);
 	}
 
- flag_fail:
+flag_fail:
 	/* get rid of what was build of the query list */
-	if (tql != NULL)
-		destroy_querylist(&tql);
+	destroy_querylist(&tql);
 	return (result);
 }
 
@@ -280,28 +270,31 @@ build_querystring(query_list_t *querylist) {
 		 * if this is a query segment, use the
 		 * precalculated string length
 		 */
-		if (tseg->direct == true)
+		if (tseg->direct) {
 			length += tseg->strlen;
-		else	/* calculate string length for dynamic segments. */
-			length += strlen(* (char**) tseg->cmd);
+		} else { /* calculate string length for dynamic segments. */
+			length += strlen(*(char **)tseg->cmd);
+		}
 		/* get the next segment */
 		tseg = DLZ_LIST_NEXT(tseg, link);
 	}
 
 	qs = malloc(length + 1);
-	if (qs == NULL)
+	if (qs == NULL) {
 		return (NULL);
+	}
 
 	*qs = '\0';
 	/* start at the top of the list again */
 	tseg = DLZ_LIST_HEAD(*querylist);
 	while (tseg != NULL) {
-		if (tseg->direct == true)
+		if (tseg->direct) {
 			/* query segments */
 			strcat(qs, tseg->cmd);
-		else
+		} else {
 			/* dynamic segments */
-			strcat(qs, * (char**) tseg->cmd);
+			strcat(qs, *(char **)tseg->cmd);
+		}
 		/* get the next segment */
 		tseg = DLZ_LIST_NEXT(tseg, link);
 	}
@@ -314,9 +307,7 @@ isc_result_t
 build_dbinstance(const char *allnodes_str, const char *allowxfr_str,
 		 const char *authority_str, const char *findzone_str,
 		 const char *lookup_str, const char *countzone_str,
-		 dbinstance_t **dbi, log_t log)
-{
-
+		 dbinstance_t **dbi, log_t log) {
 	isc_result_t result;
 	dbinstance_t *db = NULL;
 	int err;
@@ -324,10 +315,10 @@ build_dbinstance(const char *allnodes_str, const char *allowxfr_str,
 	/* allocate and zero memory for driver structure */
 	db = calloc(1, sizeof(dbinstance_t));
 	if (db == NULL) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not allocate memory for "
-			    "database instance object.");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not allocate memory for "
+					   "database instance object.");
+		}
 		return (ISC_R_NOMEMORY);
 	}
 	memset(db, 0, sizeof(dbinstance_t));
@@ -355,84 +346,88 @@ build_dbinstance(const char *allnodes_str, const char *allowxfr_str,
 
 	/* build the all nodes query list */
 	result = build_querylist(allnodes_str, &db->zone, &db->record,
-				 &db->client, &db->allnodes_q,
-				 REQUIRE_ZONE, log);
+				 &db->client, &db->allnodes_q, REQUIRE_ZONE,
+				 log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build all nodes query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build all nodes query "
+					   "list");
+		}
 		goto cleanup;
 	}
 
 	/* build the allow zone transfer query list */
 	result = build_querylist(allowxfr_str, &db->zone, &db->record,
 				 &db->client, &db->allowxfr_q,
-				 REQUIRE_ZONE | REQUIRE_CLIENT,
-				 log);
+				 REQUIRE_ZONE | REQUIRE_CLIENT, log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build allow xfr query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build allow xfr query "
+					   "list");
+		}
 		goto cleanup;
 	}
 
 	/* build the authority query, query list */
 	result = build_querylist(authority_str, &db->zone, &db->record,
-				 &db->client, &db->authority_q,
-				 REQUIRE_ZONE, log);
+				 &db->client, &db->authority_q, REQUIRE_ZONE,
+				 log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build authority query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build authority query "
+					   "list");
+		}
 		goto cleanup;
 	}
 
 	/* build findzone query, query list */
 	result = build_querylist(findzone_str, &db->zone, &db->record,
-				 &db->client, &db->findzone_q,
-				 REQUIRE_ZONE, log);
+				 &db->client, &db->findzone_q, REQUIRE_ZONE,
+				 log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build find zone query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build find zone query "
+					   "list");
+		}
 		goto cleanup;
 	}
 
 	/* build countzone query, query list */
 	result = build_querylist(countzone_str, &db->zone, &db->record,
-				 &db->client, &db->countzone_q,
-				 REQUIRE_ZONE, log);
+				 &db->client, &db->countzone_q, REQUIRE_ZONE,
+				 log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build count zone query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build count zone query "
+					   "list");
+		}
 		goto cleanup;
 	}
 
 	/* build lookup query, query list */
 	result = build_querylist(lookup_str, &db->zone, &db->record,
-				 &db->client, &db->lookup_q,
-				 REQUIRE_RECORD, log);
+				 &db->client, &db->lookup_q, REQUIRE_RECORD,
+				 log);
 	/* if unsuccessful, log err msg and cleanup */
 	if (result != ISC_R_SUCCESS) {
-		if (log != NULL)
-			log(ISC_LOG_ERROR,
-			    "Could not build lookup query list");
+		if (log != NULL) {
+			log(ISC_LOG_ERROR, "Could not build lookup query list");
+		}
 		goto cleanup;
 	}
 
 	/* pass back the db instance */
-	*dbi = (dbinstance_t *) db;
+	*dbi = (dbinstance_t *)db;
 
 	/* return success */
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	/* destroy whatever was build of the db instance */
 	destroy_dbinstance(db);
 	/* return failure */
@@ -450,35 +445,38 @@ destroy_dbinstance(dbinstance_t *dbi) {
 	destroy_querylist(&dbi->lookup_q);
 
 	/* get rid of the mutex */
-	(void) dlz_mutex_destroy(&dbi->lock);
+	(void)dlz_mutex_destroy(&dbi->lock);
 
 	/* return, and detach the memory */
 	free(dbi);
 }
 
 char *
-get_parameter_value(const char *input, const char* key) {
+get_parameter_value(const char *input, const char *key) {
 	int keylen;
 	char *keystart;
 	char value[255];
 	int i;
 
-	if (key == NULL || input == NULL || *input == '\0')
+	if (key == NULL || input == NULL || *input == '\0') {
 		return (NULL);
+	}
 
 	keylen = strlen(key);
 
-	if (keylen < 1)
+	if (keylen < 1) {
 		return (NULL);
+	}
 
 	keystart = strstr(input, key);
 
-	if (keystart == NULL)
+	if (keystart == NULL) {
 		return (NULL);
+	}
 
 	for (i = 0; i < 255; i++) {
 		value[i] = keystart[keylen + i];
-		if (isspace(value[i]) || value[i] == '\0') {
+		if (isspace((unsigned char)value[i]) || value[i] == '\0') {
 			value[i] = '\0';
 			break;
 		}

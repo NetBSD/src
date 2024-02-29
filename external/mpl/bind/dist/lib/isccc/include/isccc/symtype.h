@@ -1,16 +1,20 @@
-/*	$NetBSD: symtype.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
+/*	$NetBSD: symtype.h,v 1.2.6.1 2024/02/29 12:35:24 martin Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) 2001 Nominum, Inc.
+ */
+
+/*
+ * Copyright (C) 2001 Nominum, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,15 +29,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-#ifndef ISCCC_SYMTYPE_H
-#define ISCCC_SYMTYPE_H 1
+#pragma once
 
 /*! \file isccc/symtype.h */
 
-#define ISCCC_SYMTYPE_ZONESTATS			0x0001
-#define ISCCC_SYMTYPE_CCDUP			0x0002
-#define ISCCC_SYMTYPE_TELLSERVICE			0x0003
-#define ISCCC_SYMTYPE_TELLRESPONSE		0x0004
-
-#endif /* ISCCC_SYMTYPE_H */
+#define ISCCC_SYMTYPE_ZONESTATS	   0x0001
+#define ISCCC_SYMTYPE_CCDUP	   0x0002
+#define ISCCC_SYMTYPE_TELLSERVICE  0x0003
+#define ISCCC_SYMTYPE_TELLRESPONSE 0x0004

@@ -1,11 +1,13 @@
-/*	$NetBSD: aaaa_28.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.3.4.1 2024/02/29 12:34:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,7 +22,7 @@
 
 #define RRTYPE_AAAA_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_aaaa(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char addr[16];
@@ -38,31 +40,49 @@ fromtext_in_aaaa(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	if (inet_pton(AF_INET6, DNS_AS_STR(token), addr) != 1)
+	if (inet_pton(AF_INET6, DNS_AS_STR(token), addr) != 1) {
 		RETTOK(DNS_R_BADAAAA);
+	}
 	isc_buffer_availableregion(target, &region);
-	if (region.length < 16)
+	if (region.length < 16) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, addr, 16);
 	isc_buffer_add(target, 16);
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_aaaa(ARGS_TOTEXT) {
 	isc_region_t region;
-
-	UNUSED(tctx);
 
 	REQUIRE(rdata->type == dns_rdatatype_aaaa);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length == 16);
 
+	if ((tctx->flags & DNS_STYLEFLAG_EXPANDAAAA) != 0) {
+		char buf[5 * 8];
+		const char *sep = "";
+		int i, n;
+		unsigned int len = 0;
+
+		for (i = 0; i < 16; i += 2) {
+			INSIST(len < sizeof(buf));
+			n = snprintf(buf + len, sizeof(buf) - len, "%s%02x%02x",
+				     sep, rdata->data[i], rdata->data[i + 1]);
+			if (n < 0) {
+				return (ISC_R_FAILURE);
+			}
+			len += n;
+			sep = ":";
+		}
+		return (str_totext(buf, target));
+	}
 	dns_rdata_toregion(rdata, &region);
-	return (inet_totext(AF_INET6, &region, target));
+	return (inet_totext(AF_INET6, tctx->flags, &region, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_aaaa(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 	isc_region_t tregion;
@@ -77,10 +97,12 @@ fromwire_in_aaaa(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (sregion.length < 16)
+	if (sregion.length < 16) {
 		return (ISC_R_UNEXPECTEDEND);
-	if (tregion.length < 16)
+	}
+	if (tregion.length < 16) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 16);
 	isc_buffer_forward(source, 16);
@@ -88,7 +110,7 @@ fromwire_in_aaaa(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_aaaa(ARGS_TOWIRE) {
 	isc_region_t region;
 
@@ -99,14 +121,15 @@ towire_in_aaaa(ARGS_TOWIRE) {
 	REQUIRE(rdata->length == 16);
 
 	isc_buffer_availableregion(target, &region);
-	if (region.length < rdata->length)
+	if (region.length < rdata->length) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, 16);
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
+static int
 compare_in_aaaa(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -123,13 +146,13 @@ compare_in_aaaa(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_aaaa(ARGS_FROMSTRUCT) {
 	dns_rdata_in_aaaa_t *aaaa = source;
 
 	REQUIRE(type == dns_rdatatype_aaaa);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(aaaa != NULL);
 	REQUIRE(aaaa->common.rdtype == type);
 	REQUIRE(aaaa->common.rdclass == rdclass);
 
@@ -139,14 +162,14 @@ fromstruct_in_aaaa(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, aaaa->in6_addr.s6_addr, 16));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_aaaa(ARGS_TOSTRUCT) {
 	dns_rdata_in_aaaa_t *aaaa = target;
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_aaaa);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(aaaa != NULL);
 	REQUIRE(rdata->length == 16);
 
 	UNUSED(mctx);
@@ -162,30 +185,31 @@ tostruct_in_aaaa(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_aaaa(ARGS_FREESTRUCT) {
 	dns_rdata_in_aaaa_t *aaaa = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(aaaa != NULL);
 	REQUIRE(aaaa->common.rdclass == dns_rdataclass_in);
 	REQUIRE(aaaa->common.rdtype == dns_rdatatype_aaaa);
 
 	UNUSED(aaaa);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_aaaa(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_aaaa);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_aaaa(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -197,7 +221,7 @@ digest_in_aaaa(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_aaaa(ARGS_CHECKOWNER) {
 	dns_name_t prefix, suffix;
 
@@ -208,24 +232,25 @@ checkowner_in_aaaa(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 
 	/*
-	 * Handle Active Diretory gc._msdcs.<forest> name.
+	 * Handle Active Directory gc._msdcs.<forest> name.
 	 */
 	if (dns_name_countlabels(name) > 2U) {
 		dns_name_init(&prefix, NULL);
 		dns_name_init(&suffix, NULL);
-		dns_name_split(name, dns_name_countlabels(name) - 2,
-			       &prefix, &suffix);
+		dns_name_split(name, dns_name_countlabels(name) - 2, &prefix,
+			       &suffix);
 		if (dns_name_equal(&gc_msdcs, &prefix) &&
 		    dns_name_ishostname(&suffix, false))
+		{
 			return (true);
+		}
 	}
 
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline bool
+static bool
 checknames_in_aaaa(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_aaaa);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -236,8 +261,8 @@ checknames_in_aaaa(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_aaaa(ARGS_COMPARE) {
 	return (compare_in_aaaa(rdata1, rdata2));
 }
-#endif	/* RDATA_IN_1_AAAA_28_C */
+#endif /* RDATA_IN_1_AAAA_28_C */

@@ -1,16 +1,20 @@
-/*	$NetBSD: symtab.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: symtab.h,v 1.3.4.1 2024/02/29 12:35:24 martin Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) 2001 Nominum, Inc.
+ */
+
+/*
+ * Copyright (C) 2001 Nominum, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,13 +29,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-#ifndef ISCCC_SYMTAB_H
-#define ISCCC_SYMTAB_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isccc/symtab.h
  * \brief
@@ -76,6 +78,7 @@
 #include <stdbool.h>
 
 #include <isc/lang.h>
+
 #include <isccc/types.h>
 
 /***
@@ -83,18 +86,18 @@
  ***/
 
 typedef union isccc_symvalue {
-	void *				as_pointer;
-	int				as_integer;
-	unsigned int			as_uinteger;
+	void	    *as_pointer;
+	int	     as_integer;
+	unsigned int as_uinteger;
 } isccc_symvalue_t;
 
 typedef void (*isccc_symtabundefaction_t)(char *key, unsigned int type,
-					isccc_symvalue_t value, void *userarg);
+					  isccc_symvalue_t value,
+					  void		  *userarg);
 
-typedef bool (*isccc_symtabforeachaction_t)(char *key,
-						   unsigned int type,
-						   isccc_symvalue_t value,
-						   void *userarg);
+typedef bool (*isccc_symtabforeachaction_t)(char *key, unsigned int type,
+					    isccc_symvalue_t value,
+					    void	    *userarg);
 
 typedef enum {
 	isccc_symexists_reject = 0,
@@ -105,28 +108,28 @@ typedef enum {
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isccc_symtab_create(unsigned int size,
-		  isccc_symtabundefaction_t undefine_action, void *undefine_arg,
-		  bool case_sensitive, isccc_symtab_t **symtabp);
+isccc_symtab_create(unsigned int	      size,
+		    isccc_symtabundefaction_t undefine_action,
+		    void *undefine_arg, bool case_sensitive,
+		    isccc_symtab_t **symtabp);
 
 void
 isccc_symtab_destroy(isccc_symtab_t **symtabp);
 
 isc_result_t
 isccc_symtab_lookup(isccc_symtab_t *symtab, const char *key, unsigned int type,
-		  isccc_symvalue_t *value);
+		    isccc_symvalue_t *value);
 
 isc_result_t
 isccc_symtab_define(isccc_symtab_t *symtab, char *key, unsigned int type,
-		  isccc_symvalue_t value, isccc_symexists_t exists_policy);
+		    isccc_symvalue_t value, isccc_symexists_t exists_policy);
 
 isc_result_t
-isccc_symtab_undefine(isccc_symtab_t *symtab, const char *key, unsigned int type);
+isccc_symtab_undefine(isccc_symtab_t *symtab, const char *key,
+		      unsigned int type);
 
 void
 isccc_symtab_foreach(isccc_symtab_t *symtab, isccc_symtabforeachaction_t action,
-		   void *arg);
+		     void *arg);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCC_SYMTAB_H */

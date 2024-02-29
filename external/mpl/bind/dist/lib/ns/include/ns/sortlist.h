@@ -1,18 +1,19 @@
-/*	$NetBSD: sortlist.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: sortlist.h,v 1.2.6.1 2024/02/29 12:35:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NS_SORTLIST_H
-#define NS_SORTLIST_H 1
+#pragma once
 
 /*! \file */
 
@@ -24,8 +25,8 @@
 /*%
  * Type for callback functions that rank addresses.
  */
-typedef int
-(*dns_addressorderfunc_t)(const isc_netaddr_t *address, const void *arg);
+typedef int (*dns_addressorderfunc_t)(const isc_netaddr_t *address,
+				      const void	  *arg);
 
 /*%
  * Return value type for setup_sortlist.
@@ -37,8 +38,8 @@ typedef enum {
 } ns_sortlisttype_t;
 
 ns_sortlisttype_t
-ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env,
-		  isc_netaddr_t *clientaddr, const void **argp);
+ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
+		  void **argp);
 /*%<
  * Find the sortlist statement in 'acl' (for ACL environment 'env')
  * that applies to 'clientaddr', if any.
@@ -70,9 +71,8 @@ ns_sortlist_addrorder2(const isc_netaddr_t *addr, const void *arg);
 
 void
 ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
-			isc_netaddr_t *client_addr,
-			dns_addressorderfunc_t *orderp,
-			const void **argp);
+			isc_netaddr_t	       *client_addr,
+			dns_addressorderfunc_t *orderp, void **argp);
 /*%<
  * Find the sortlist statement in 'acl' that applies to 'clientaddr', if any.
  * If a sortlist statement applies, return in '*orderp' a pointer to a function
@@ -80,5 +80,3 @@ ns_sortlist_byaddrsetup(dns_acl_t *sortlist_acl, dns_aclenv_t *env,
  * '*argp' an argument to pass to said function.  If no sortlist statement
  * applies, set '*orderp' and '*argp' to NULL.
  */
-
-#endif /* NS_SORTLIST_H */

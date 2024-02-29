@@ -1,8 +1,10 @@
 ; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ;
+; SPDX-License-Identifier: MPL-2.0
+;
 ; This Source Code Form is subject to the terms of the Mozilla Public
-; License, v. 2.0. If a copy of the MPL was not distributed with this
-; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
 ;
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
@@ -45,3 +47,8 @@ rrsigonly		A	10.0.0.29
 cnameandkey		CNAME	@
 cnamenokey		CNAME	@
 dnameandkey		DNAME	@
+
+mixedcase		A	10.0.0.30
+mixedCASE		TXT	"mixed case"
+MIXEDcase		AAAA	2002::
+mIxEdCaSe		LOC	37 52 56.788 N 121 54 55.02 W 1120m 10m 100m 10m

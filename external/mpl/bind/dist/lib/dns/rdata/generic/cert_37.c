@@ -1,11 +1,13 @@
-/*	$NetBSD: cert_37.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.4.4.1 2024/02/29 12:34:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +20,7 @@
 
 #define RRTYPE_CERT_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_cert(ARGS_FROMTEXT) {
 	isc_token_t token;
 	dns_secalg_t secalg;
@@ -45,8 +47,9 @@ fromtext_cert(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -60,7 +63,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_cert(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -98,20 +101,23 @@ totext_cert(ARGS_TOTEXT) {
 	/*
 	 * Cert.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	} else {
+		RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
+					 target));
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_cert(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -123,14 +129,15 @@ fromwire_cert(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 5)
+	if (sr.length < 6) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_cert(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -143,7 +150,7 @@ towire_cert(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_cert(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -159,12 +166,12 @@ compare_cert(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_cert(ARGS_FROMSTRUCT) {
 	dns_rdata_cert_t *cert = source;
 
 	REQUIRE(type == dns_rdatatype_cert);
-	REQUIRE(source != NULL);
+	REQUIRE(cert != NULL);
 	REQUIRE(cert->common.rdtype == type);
 	REQUIRE(cert->common.rdclass == rdclass);
 
@@ -178,13 +185,13 @@ fromstruct_cert(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, cert->certificate, cert->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_cert(ARGS_TOSTRUCT) {
 	dns_rdata_cert_t *cert = target;
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_cert);
-	REQUIRE(target != NULL);
+	REQUIRE(cert != NULL);
 	REQUIRE(rdata->length != 0);
 
 	cert->common.rdclass = rdata->rdclass;
@@ -202,40 +209,44 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	cert->length = region.length;
 
 	cert->certificate = mem_maybedup(mctx, region.base, region.length);
-	if (cert->certificate == NULL)
+	if (cert->certificate == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	cert->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_cert(ARGS_FREESTRUCT) {
 	dns_rdata_cert_t *cert = source;
 
 	REQUIRE(cert != NULL);
 	REQUIRE(cert->common.rdtype == dns_rdatatype_cert);
 
-	if (cert->mctx == NULL)
+	if (cert->mctx == NULL) {
 		return;
+	}
 
-	if (cert->certificate != NULL)
+	if (cert->certificate != NULL) {
 		isc_mem_free(cert->mctx, cert->certificate);
+	}
 	cert->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_cert(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_cert(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -246,9 +257,8 @@ digest_cert(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_cert(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_cert);
 
 	UNUSED(name);
@@ -259,9 +269,8 @@ checkowner_cert(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_cert(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	UNUSED(rdata);
@@ -271,9 +280,8 @@ checknames_cert(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-
-static inline int
+static int
 casecompare_cert(ARGS_COMPARE) {
 	return (compare_cert(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_CERT_37_C */
+#endif /* RDATA_GENERIC_CERT_37_C */

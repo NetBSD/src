@@ -1,10 +1,12 @@
 #!/usr/bin/perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -29,6 +31,8 @@ if (!$localport) { $localport = 5300; }
 
 my $udpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
    LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
+my $tcpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
+   LocalPort => $localport, Proto => "tcp", Listen => 5, Reuse => 1) or die "$!";
 
 print "listening on $server_addr:$localport.\n";
 
@@ -47,6 +51,7 @@ for (;;) {
 
 	$rin = '';
 	vec($rin, fileno($udpsock), 1) = 1;
+	vec($rin, fileno($tcpsock), 1) = 1;
 
 	select($rout = $rin, undef, undef, undef);
 
@@ -54,5 +59,7 @@ for (;;) {
 		printf "UDP request\n";
 		my $buf;
 		$udpsock->recv($buf, 512);
+	} elsif (vec($rout, fileno($tcpsock), 1)) {
+		printf "TCP request\n";
 	}
 }

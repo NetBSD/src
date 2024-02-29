@@ -1,8 +1,10 @@
 ; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ;
+; SPDX-License-Identifier: MPL-2.0
+;
 ; This Source Code Form is subject to the terms of the Mozilla Public
-; License, v. 2.0. If a copy of the MPL was not distributed with this
-; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
 ;
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
@@ -26,8 +28,8 @@ ns4.bits.		A	10.53.0.4
 noixfr.			NS	ns3.noixfr.
 ns3.noixfr.		A	10.53.0.3
 
-master.			NS	ns3.master.
-ns3.master.		A	10.53.0.3
+primary.			NS	ns3.primary.
+ns3.primary.		A	10.53.0.3
 
 dynamic.			NS	ns3.dynamic.
 ns3.dynamic.		A	10.53.0.3

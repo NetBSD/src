@@ -1,11 +1,13 @@
-/*	$NetBSD: hooks.c,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: hooks.c,v 1.4.4.1 2024/02/29 12:35:29 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -13,17 +15,10 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-
-#if HAVE_DLFCN_H
-#include <dlfcn.h>
-#elif _WIN32
-#include <windows.h>
-#endif
+#include <uv.h>
 
 #include <isc/errno.h>
 #include <isc/list.h>
@@ -32,9 +27,8 @@
 #include <isc/mutex.h>
 #include <isc/print.h>
 #include <isc/result.h>
-#include <isc/platform.h>
-#include <isc/util.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 #include <dns/view.h>
 
@@ -42,33 +36,32 @@
 #include <ns/log.h>
 #include <ns/query.h>
 
-#define CHECK(op)						\
-	do {							\
-		result = (op);					\
-		if (result != ISC_R_SUCCESS) {			\
-			goto cleanup;				\
-		}						\
+#define CHECK(op)                              \
+	do {                                   \
+		result = (op);                 \
+		if (result != ISC_R_SUCCESS) { \
+			goto cleanup;          \
+		}                              \
 	} while (0)
 
 struct ns_plugin {
-       isc_mem_t		*mctx;
-       void			*handle;
-       void			*inst;
-       char			*modpath;
-       ns_plugin_check_t	*check_func;
-       ns_plugin_register_t	*register_func;
-       ns_plugin_destroy_t	*destroy_func;
-       LINK(ns_plugin_t)	link;
+	isc_mem_t *mctx;
+	uv_lib_t handle;
+	void *inst;
+	char *modpath;
+	ns_plugin_check_t *check_func;
+	ns_plugin_register_t *register_func;
+	ns_plugin_destroy_t *destroy_func;
+	LINK(ns_plugin_t) link;
 };
 
 static ns_hooklist_t default_hooktable[NS_HOOKPOINTS_COUNT];
-LIBNS_EXTERNAL_DATA ns_hooktable_t *ns__hook_table = &default_hooktable;
+ns_hooktable_t *ns__hook_table = &default_hooktable;
 
 isc_result_t
 ns_plugin_expandpath(const char *src, char *dst, size_t dstsize) {
 	int result;
 
-#ifndef WIN32
 	/*
 	 * On Unix systems, differentiate between paths and filenames.
 	 */
@@ -83,12 +76,6 @@ ns_plugin_expandpath(const char *src, char *dst, size_t dstsize) {
 		 */
 		result = snprintf(dst, dstsize, "%s/%s", NAMED_PLUGINDIR, src);
 	}
-#else
-	/*
-	 * On Windows, always copy 'src' do 'dst'.
-	 */
-	result = snprintf(dst, dstsize, "%s", src);
-#endif
 
 	if (result < 0) {
 		return (isc_errno_toresult(errno));
@@ -99,27 +86,18 @@ ns_plugin_expandpath(const char *src, char *dst, size_t dstsize) {
 	}
 }
 
-#if HAVE_DLFCN_H && HAVE_DLOPEN
 static isc_result_t
-load_symbol(void *handle, const char *modpath,
-	    const char *symbol_name, void **symbolp)
-{
+load_symbol(uv_lib_t *handle, const char *modpath, const char *symbol_name,
+	    void **symbolp) {
 	void *symbol = NULL;
+	int r;
 
 	REQUIRE(handle != NULL);
 	REQUIRE(symbolp != NULL && *symbolp == NULL);
 
-	/*
-	 * Clear any pre-existing error conditions before running dlsym().
-	 * (In this case, we expect dlsym() to return non-NULL values
-	 * and will always return an error if it returns NULL, but
-	 * this ensures that we'll report the correct error condition
-	 * if there is one.)
-	 */
-	dlerror();
-	symbol = dlsym(handle, symbol_name);
-	if (symbol == NULL) {
-		const char *errmsg = dlerror();
+	r = uv_dlsym(handle, symbol_name, &symbol);
+	if (r != 0) {
+		const char *errmsg = uv_dlerror(handle);
 		if (errmsg == NULL) {
 			errmsg = "returned function pointer is NULL";
 		}
@@ -136,38 +114,41 @@ load_symbol(void *handle, const char *modpath,
 	return (ISC_R_SUCCESS);
 }
 
+static void
+unload_plugin(ns_plugin_t **pluginp);
+
 static isc_result_t
 load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
 	isc_result_t result;
-	void *handle = NULL;
 	ns_plugin_t *plugin = NULL;
-	ns_plugin_check_t *check_func = NULL;
-	ns_plugin_register_t *register_func = NULL;
-	ns_plugin_destroy_t *destroy_func = NULL;
 	ns_plugin_version_t *version_func = NULL;
-	int version, flags;
+	int version;
+	int r;
 
 	REQUIRE(pluginp != NULL && *pluginp == NULL);
 
-	flags = RTLD_LAZY | RTLD_LOCAL;
-#if defined(RTLD_DEEPBIND) && !__SANITIZE_ADDRESS__
-	flags |= RTLD_DEEPBIND;
-#endif
+	plugin = isc_mem_get(mctx, sizeof(*plugin));
+	memset(plugin, 0, sizeof(*plugin));
+	isc_mem_attach(mctx, &plugin->mctx);
 
-	handle = dlopen(modpath, flags);
-	if (handle == NULL) {
-		const char *errmsg = dlerror();
+	plugin->modpath = isc_mem_strdup(plugin->mctx, modpath);
+
+	ISC_LINK_INIT(plugin, link);
+
+	r = uv_dlopen(modpath, &plugin->handle);
+	if (r != 0) {
+		const char *errmsg = uv_dlerror(&plugin->handle);
 		if (errmsg == NULL) {
 			errmsg = "unknown error";
 		}
 		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "failed to dlopen() plugin '%s': %s",
-			      modpath, errmsg);
-		return (ISC_R_FAILURE);
+			      "failed to dlopen() plugin '%s': %s", modpath,
+			      errmsg);
+		CHECK(ISC_R_FAILURE);
 	}
 
-	CHECK(load_symbol(handle, modpath, "plugin_version",
+	CHECK(load_symbol(&plugin->handle, modpath, "plugin_version",
 			  (void **)&version_func));
 
 	version = version_func();
@@ -176,170 +157,29 @@ load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
 	{
 		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "plugin API version mismatch: %d/%d",
-			      version, NS_PLUGIN_VERSION);
+			      "plugin API version mismatch: %d/%d", version,
+			      NS_PLUGIN_VERSION);
 		CHECK(ISC_R_FAILURE);
 	}
 
-	CHECK(load_symbol(handle, modpath, "plugin_check",
-			  (void **)&check_func));
-	CHECK(load_symbol(handle, modpath, "plugin_register",
-			  (void **)&register_func));
-	CHECK(load_symbol(handle, modpath, "plugin_destroy",
-			  (void **)&destroy_func));
-
-	plugin = isc_mem_get(mctx, sizeof(*plugin));
-	memset(plugin, 0, sizeof(*plugin));
-	isc_mem_attach(mctx, &plugin->mctx);
-	plugin->handle = handle;
-	plugin->modpath = isc_mem_strdup(plugin->mctx, modpath);
-	plugin->check_func = check_func;
-	plugin->register_func = register_func;
-	plugin->destroy_func = destroy_func;
-
-	ISC_LINK_INIT(plugin, link);
+	CHECK(load_symbol(&plugin->handle, modpath, "plugin_check",
+			  (void **)&plugin->check_func));
+	CHECK(load_symbol(&plugin->handle, modpath, "plugin_register",
+			  (void **)&plugin->register_func));
+	CHECK(load_symbol(&plugin->handle, modpath, "plugin_destroy",
+			  (void **)&plugin->destroy_func));
 
 	*pluginp = plugin;
-	plugin = NULL;
-
-cleanup:
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "failed to dynamically load "
-			      "plugin '%s': %s", modpath,
-			      isc_result_totext(result));
-
-		if (plugin != NULL) {
-			isc_mem_putanddetach(&plugin->mctx, plugin,
-					     sizeof(*plugin));
-		}
-
-		if (handle != NULL) {
-			(void) dlclose(handle);
-		}
-	}
-
-	return (result);
-}
-
-static void
-unload_plugin(ns_plugin_t **pluginp) {
-	ns_plugin_t *plugin = NULL;
-
-	REQUIRE(pluginp != NULL && *pluginp != NULL);
-
-	plugin = *pluginp;
-	*pluginp = NULL;
-
-	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_DEBUG(1),
-		      "unloading plugin '%s'", plugin->modpath);
-
-	if (plugin->inst != NULL) {
-		plugin->destroy_func(&plugin->inst);
-	}
-	if (plugin->handle != NULL) {
-		(void) dlclose(plugin->handle);
-	}
-	if (plugin->modpath != NULL) {
-		isc_mem_free(plugin->mctx, plugin->modpath);
-	}
-
-	isc_mem_putanddetach(&plugin->mctx, plugin, sizeof(*plugin));
-}
-#elif _WIN32
-static isc_result_t
-load_symbol(HMODULE handle, const char *modpath,
-	    const char *symbol_name, void **symbolp)
-{
-	void *symbol = NULL;
-
-	REQUIRE(handle != NULL);
-	REQUIRE(symbolp != NULL && *symbolp == NULL);
-
-	symbol = GetProcAddress(handle, symbol_name);
-	if (symbol == NULL) {
-		int errstatus = GetLastError();
-		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "failed to look up symbol %s in "
-			      "plugin '%s': %d",
-			      symbol_name, modpath, errstatus);
-		return (ISC_R_FAILURE);
-	}
-
-	*symbolp = symbol;
 
 	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
-	isc_result_t result;
-	HMODULE handle;
-	ns_plugin_t *plugin = NULL;
-	ns_plugin_register_t *register_func = NULL;
-	ns_plugin_destroy_t *destroy_func = NULL;
-	ns_plugin_version_t *version_func = NULL;
-	int version;
-
-	REQUIRE(pluginp != NULL && *pluginp == NULL);
-
-	handle = LoadLibraryA(modpath);
-	if (handle == NULL) {
-		CHECK(ISC_R_FAILURE);
-	}
-
-	CHECK(load_symbol(handle, modpath, "plugin_version",
-			  (void **)&version_func));
-
-	version = version_func();
-	if (version < (NS_PLUGIN_VERSION - NS_PLUGIN_AGE) ||
-	    version > NS_PLUGIN_VERSION)
-	{
-		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "plugin API version mismatch: %d/%d",
-			      version, NS_PLUGIN_VERSION);
-		CHECK(ISC_R_FAILURE);
-	}
-
-	CHECK(load_symbol(handle, modpath, "plugin_register",
-			  (void **)&register_func));
-	CHECK(load_symbol(handle, modpath, "plugin_destroy",
-			  (void **)&destroy_func));
-
-	plugin = isc_mem_get(mctx, sizeof(*plugin));
-	memset(plugin, 0, sizeof(*plugin));
-	isc_mem_attach(mctx, &plugin->mctx);
-	plugin->handle = handle;
-	plugin->modpath = isc_mem_strdup(plugin->mctx, modpath);
-	plugin->register_func = register_func;
-	plugin->destroy_func = destroy_func;
-
-	ISC_LINK_INIT(plugin, link);
-
-	*pluginp = plugin;
-	plugin = NULL;
 
 cleanup:
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-			      "failed to dynamically load "
-			      "plugin '%s': %d (%s)", modpath,
-			      GetLastError(), isc_result_totext(result));
+	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
+		      ISC_LOG_ERROR,
+		      "failed to dynamically load plugin '%s': %s", modpath,
+		      isc_result_totext(result));
 
-		if (plugin != NULL) {
-			isc_mem_putanddetach(&plugin->mctx, plugin,
-					     sizeof(*plugin));
-		}
-
-		if (handle != NULL) {
-			FreeLibrary(handle);
-		}
-	}
+	unload_plugin(&plugin);
 
 	return (result);
 }
@@ -353,50 +193,24 @@ unload_plugin(ns_plugin_t **pluginp) {
 	plugin = *pluginp;
 	*pluginp = NULL;
 
-	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_DEBUG(1),
-		      "unloading plugin '%s'", plugin->modpath);
+	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
+		      ISC_LOG_DEBUG(1), "unloading plugin '%s'",
+		      plugin->modpath);
 
 	if (plugin->inst != NULL) {
 		plugin->destroy_func(&plugin->inst);
 	}
-	if (plugin->handle != NULL) {
-		FreeLibrary(plugin->handle);
-	}
 
-	if (plugin->modpath != NULL) {
-		isc_mem_free(plugin->mctx, plugin->modpath);
-	}
-
+	uv_dlclose(&plugin->handle);
+	isc_mem_free(plugin->mctx, plugin->modpath);
 	isc_mem_putanddetach(&plugin->mctx, plugin, sizeof(*plugin));
 }
-#else	/* HAVE_DLFCN_H || _WIN32 */
-static isc_result_t
-load_plugin(isc_mem_t *mctx, const char *modpath, ns_plugin_t **pluginp) {
-	UNUSED(mctx);
-	UNUSED(modpath);
-	UNUSED(pluginp);
-
-	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_ERROR,
-		      "plugin support is not implemented");
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
-static void
-unload_plugin(ns_plugin_t **pluginp) {
-	UNUSED(pluginp);
-}
-#endif	/* HAVE_DLFCN_H */
 
 isc_result_t
-ns_plugin_register(const char *modpath, const char *parameters,
-		   const void *cfg, const char *cfg_file,
-		   unsigned long cfg_line,
+ns_plugin_register(const char *modpath, const char *parameters, const void *cfg,
+		   const char *cfg_file, unsigned long cfg_line,
 		   isc_mem_t *mctx, isc_log_t *lctx, void *actx,
-		   dns_view_t *view)
-{
+		   dns_view_t *view) {
 	isc_result_t result;
 	ns_plugin_t *plugin = NULL;
 
@@ -404,18 +218,16 @@ ns_plugin_register(const char *modpath, const char *parameters,
 	REQUIRE(lctx != NULL);
 	REQUIRE(view != NULL);
 
-	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_INFO,
-		      "loading plugin '%s'", modpath);
+	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
+		      ISC_LOG_INFO, "loading plugin '%s'", modpath);
 
 	CHECK(load_plugin(mctx, modpath, &plugin));
 
-	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL,
-		      NS_LOGMODULE_HOOKS, ISC_LOG_INFO,
-		      "registering plugin '%s'", modpath);
+	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
+		      ISC_LOG_INFO, "registering plugin '%s'", modpath);
 
-	CHECK(plugin->register_func(parameters, cfg, cfg_file, cfg_line,
-				    mctx, lctx, actx, view->hooktable,
+	CHECK(plugin->register_func(parameters, cfg, cfg_file, cfg_line, mctx,
+				    lctx, actx, view->hooktable,
 				    &plugin->inst));
 
 	ISC_LIST_APPEND(*(ns_plugins_t *)view->plugins, plugin, link);
@@ -429,17 +241,16 @@ cleanup:
 }
 
 isc_result_t
-ns_plugin_check(const char *modpath, const char *parameters,
-		const void *cfg, const char *cfg_file, unsigned long cfg_line,
-		isc_mem_t *mctx, isc_log_t *lctx, void *actx)
-{
+ns_plugin_check(const char *modpath, const char *parameters, const void *cfg,
+		const char *cfg_file, unsigned long cfg_line, isc_mem_t *mctx,
+		isc_log_t *lctx, void *actx) {
 	isc_result_t result;
 	ns_plugin_t *plugin = NULL;
 
 	CHECK(load_plugin(mctx, modpath, &plugin));
 
-	result = plugin->check_func(parameters, cfg, cfg_file, cfg_line,
-				  mctx, lctx, actx);
+	result = plugin->check_func(parameters, cfg, cfg_file, cfg_line, mctx,
+				    lctx, actx);
 
 cleanup:
 	if (plugin != NULL) {
@@ -485,15 +296,14 @@ ns_hooktable_free(isc_mem_t *mctx, void **tablep) {
 	*tablep = NULL;
 
 	for (i = 0; i < NS_HOOKPOINTS_COUNT; i++) {
-		for (hook = ISC_LIST_HEAD((*table)[i]);
-		     hook != NULL;
+		for (hook = ISC_LIST_HEAD((*table)[i]); hook != NULL;
 		     hook = next)
 		{
 			next = ISC_LIST_NEXT(hook, link);
 			ISC_LIST_UNLINK((*table)[i], hook, link);
 			if (hook->mctx != NULL) {
-				isc_mem_putanddetach(&hook->mctx,
-						     hook, sizeof(*hook));
+				isc_mem_putanddetach(&hook->mctx, hook,
+						     sizeof(*hook));
 			}
 		}
 	}
@@ -503,8 +313,7 @@ ns_hooktable_free(isc_mem_t *mctx, void **tablep) {
 
 void
 ns_hook_add(ns_hooktable_t *hooktable, isc_mem_t *mctx,
-	    ns_hookpoint_t hookpoint, const ns_hook_t *hook)
-{
+	    ns_hookpoint_t hookpoint, const ns_hook_t *hook) {
 	ns_hook_t *copy = NULL;
 
 	REQUIRE(hooktable != NULL);
@@ -546,10 +355,7 @@ ns_plugins_free(isc_mem_t *mctx, void **listp) {
 	list = *listp;
 	*listp = NULL;
 
-	for (plugin = ISC_LIST_HEAD(*list);
-	     plugin != NULL;
-	     plugin = next)
-	{
+	for (plugin = ISC_LIST_HEAD(*list); plugin != NULL; plugin = next) {
 		next = ISC_LIST_NEXT(plugin, link);
 		ISC_LIST_UNLINK(*list, plugin, link);
 		unload_plugin(&plugin);

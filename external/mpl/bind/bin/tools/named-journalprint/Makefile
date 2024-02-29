@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2024/02/29 12:28:02 martin Exp $
 
 BASE=	${.CURDIR:T}
+BINDIR=	/usr/sbin
 
 .include "${.CURDIR}/../Makefile.inc"
 

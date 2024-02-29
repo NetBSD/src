@@ -1,0 +1,14 @@
+$ORIGIN .
+$TTL 0	; 0 seconds
+@			IN SOA	. . (
+				29         ; serial
+				0          ; refresh (0 seconds)
+				0          ; retry (0 seconds)
+				0          ; expire (0 seconds)
+				0          ; minimum (0 seconds)
+				)
+			KEYDATA	20210611104535 19700101000000 19700101000000 0 0 0 (
+
+				) ; ZSK; alg = 0; key id = 0
+				; next refresh: Fri, 11 Jun 2021 10:45:35 GMT
+				; no trust

@@ -1,22 +1,23 @@
-/*	$NetBSD: xfrout.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: xfrout.h,v 1.2.6.1 2024/02/29 12:35:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NS_XFROUT_H
-#define NS_XFROUT_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -29,5 +30,3 @@
 
 void
 ns_xfr_start(ns_client_t *client, dns_rdatatype_t xfrtype);
-
-#endif /* NS_XFROUT_H */

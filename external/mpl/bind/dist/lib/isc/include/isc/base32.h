@@ -1,18 +1,19 @@
-/*	$NetBSD: base32.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: base32.h,v 1.3.4.1 2024/02/29 12:35:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_BASE32_H
-#define ISC_BASE32_H 1
+#pragma once
 
 /*! \file */
 
@@ -36,8 +37,8 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-isc_base32_totext(isc_region_t *source, int wordlength,
-		  const char *wordbreak, isc_buffer_t *target);
+isc_base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
+		  isc_buffer_t *target);
 isc_result_t
 isc_base32hex_totext(isc_region_t *source, int wordlength,
 		     const char *wordbreak, isc_buffer_t *target);
@@ -142,5 +143,3 @@ isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_BASE32_H */

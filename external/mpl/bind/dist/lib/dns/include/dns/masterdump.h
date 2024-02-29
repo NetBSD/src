@@ -1,19 +1,19 @@
-/*	$NetBSD: masterdump.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_MASTERDUMP_H
-#define DNS_MASTERDUMP_H 1
+#pragma once
 
 /*! \file dns/masterdump.h */
 
@@ -44,7 +44,7 @@ typedef struct dns_master_style dns_master_style_t;
  */
 
 /*% Omit the owner name when possible. */
-#define	DNS_STYLEFLAG_OMIT_OWNER        0x000010000ULL
+#define DNS_STYLEFLAG_OMIT_OWNER 0x000010000ULL
 
 /*%
  * Omit the TTL when possible.  If DNS_STYLEFLAG_TTL is
@@ -62,56 +62,59 @@ typedef struct dns_master_style dns_master_style_t;
  * versions of BIND which use the SOA MINTTL as a
  * default TTL value.
  */
-#define	DNS_STYLEFLAG_OMIT_TTL		0x000020000ULL
+#define DNS_STYLEFLAG_OMIT_TTL 0x000020000ULL
 
 /*% Omit the class when possible. */
-#define	DNS_STYLEFLAG_OMIT_CLASS	0x000040000ULL
+#define DNS_STYLEFLAG_OMIT_CLASS 0x000040000ULL
 
 /*% Output $TTL directives. */
-#define	DNS_STYLEFLAG_TTL		0x000080000ULL
+#define DNS_STYLEFLAG_TTL 0x000080000ULL
 
 /*%
  * Output $ORIGIN directives and print owner names relative to
  * the origin when possible.
  */
-#define	DNS_STYLEFLAG_REL_OWNER		0x000100000ULL
+#define DNS_STYLEFLAG_REL_OWNER 0x000100000ULL
 
 /*% Print domain names in RR data in relative form when possible.
-   For this to take effect, DNS_STYLEFLAG_REL_OWNER must also be set. */
-#define	DNS_STYLEFLAG_REL_DATA		0x000200000ULL
+ * For this to take effect, DNS_STYLEFLAG_REL_OWNER must also be set. */
+#define DNS_STYLEFLAG_REL_DATA 0x000200000ULL
 
 /*% Print the trust level of each rdataset. */
-#define	DNS_STYLEFLAG_TRUST		0x000400000ULL
+#define DNS_STYLEFLAG_TRUST 0x000400000ULL
 
 /*% Print negative caching entries. */
-#define	DNS_STYLEFLAG_NCACHE		0x000800000ULL
+#define DNS_STYLEFLAG_NCACHE 0x000800000ULL
 
 /*% Never print the TTL. */
-#define	DNS_STYLEFLAG_NO_TTL		0x001000000ULL
+#define DNS_STYLEFLAG_NO_TTL 0x001000000ULL
 
 /*% Never print the CLASS. */
-#define	DNS_STYLEFLAG_NO_CLASS		0x002000000ULL
+#define DNS_STYLEFLAG_NO_CLASS 0x002000000ULL
 
 /*% Report re-signing time. */
-#define	DNS_STYLEFLAG_RESIGN		0x004000000ULL
+#define DNS_STYLEFLAG_RESIGN 0x004000000ULL
 
 /*% Don't printout the cryptographic parts of DNSSEC records. */
-#define	DNS_STYLEFLAG_NOCRYPTO		0x008000000ULL
+#define DNS_STYLEFLAG_NOCRYPTO 0x008000000ULL
 
 /*% Comment out data by prepending with ";" */
-#define	DNS_STYLEFLAG_COMMENTDATA	0x010000000ULL
+#define DNS_STYLEFLAG_COMMENTDATA 0x010000000ULL
 
 /*% Print TTL with human-readable units. */
-#define DNS_STYLEFLAG_TTL_UNITS		0x020000000ULL
+#define DNS_STYLEFLAG_TTL_UNITS 0x020000000ULL
 
 /*% Indent output. */
-#define DNS_STYLEFLAG_INDENT		0x040000000ULL
+#define DNS_STYLEFLAG_INDENT 0x040000000ULL
 
 /*% Output in YAML style. */
-#define DNS_STYLEFLAG_YAML		0x080000000ULL
+#define DNS_STYLEFLAG_YAML 0x080000000ULL
 
 /*% Print ECS cache entries as comments (reserved for future use). */
-#define DNS_STYLEFLAG_ECSCACHE		0x100000000ULL
+#define DNS_STYLEFLAG_ECSCACHE 0x100000000ULL
+
+/*% Print expired cache entries. */
+#define DNS_STYLEFLAG_EXPIRED 0x200000000ULL
 
 ISC_LANG_BEGINDECLS
 
@@ -126,27 +129,32 @@ ISC_LANG_BEGINDECLS
  * tab stop for the TTL.  The class is only printed for the first
  * rrset in the file and shares a tab stop with the RR type.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_default;
+extern const dns_master_style_t dns_master_style_default;
 
 /*%
  * A master file style that dumps zones to a very generic format easily
  * imported/checked with external tools.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_full;
+extern const dns_master_style_t dns_master_style_full;
 
 /*%
  * A master file style that prints explicit TTL values on each
  * record line, never using $TTL statements.  The TTL has a tab
  * stop of its own, but the class and type share one.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t
-					dns_master_style_explicitttl;
+extern const dns_master_style_t dns_master_style_explicitttl;
 
 /*%
  * A master style format designed for cache files.  It prints explicit TTL
  * values on each record line and never uses $ORIGIN or relative names.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_cache;
+extern const dns_master_style_t dns_master_style_cache;
+
+/*%
+ * A master style format designed for cache files.  The same as above but
+ * this also prints expired entries.
+ */
+extern const dns_master_style_t dns_master_style_cache_with_expired;
 
 /*%
  * A master style that prints name, ttl, class, type, and value on
@@ -154,54 +162,32 @@ LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_cache;
  * Intended for generating master files which can be easily parsed
  * by perl scripts and similar applications.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_simple;
+extern const dns_master_style_t dns_master_style_simple;
 
 /*%
  * The style used for debugging, "dig" output, etc.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_debug;
+extern const dns_master_style_t dns_master_style_debug;
 
 /*%
  * Similar to dns_master_style_debug but data is prepended with ";"
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_comment;
+extern const dns_master_style_t dns_master_style_comment;
 
 /*%
- * Similar to dns_master_style_debug but data is indented with
- * dns_master_indentstr (defaults to tab).
+ * Similar to dns_master_style_debug but data is indented with "\t" (tab)
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_indent;
+extern const dns_master_style_t dns_master_style_indent;
 
 /*%
  * The style used for dumping "key" zones.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_keyzone;
+extern const dns_master_style_t dns_master_style_keyzone;
 
 /*%
  * YAML-compatible output
  */
-LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_yaml;
-
-/*%
- * The default indent string to prepend lines with when using
- * styleflag DNS_STYLEFLAG_INDENT or DNS_STYLEFLAG_YAML.
- * This is set to "\t" by default. The indent is repeated
- * 'dns_master_indent' times. This precedes everything else
- * on the line, including comment characters (;).
- *
- * XXX: Changing this value at runtime is not thread-safe.
- */
-LIBDNS_EXTERNAL_DATA extern const char *dns_master_indentstr;
-
-/*%
- * The number of copies of the indent string to put at the beginning
- * of the line when using DNS_STYLEFLAG_INDENT or DNS_STYLEFLAG_YAML.
- * This is set to 1 by default. It is increased and decreased
- * to adjust indentation levels when producing YAML output.
- *
- * XXX: This is not thread-safe.
- */
-LIBDNS_EXTERNAL_DATA extern unsigned int dns_master_indent;
+extern const dns_master_style_t dns_master_style_yaml;
 
 /***
  ***	Functions
@@ -256,30 +242,23 @@ dns_dumpctx_db(dns_dumpctx_t *dctx);
  *\li	'dctx' to be valid.
  */
 
-
 /*@{*/
 isc_result_t
-dns_master_dumptostreaminc(isc_mem_t *mctx, dns_db_t *db,
-			   dns_dbversion_t *version,
-			   const dns_master_style_t *style, FILE *f,
-			   isc_task_t *task, dns_dumpdonefunc_t done,
-			   void *done_arg, dns_dumpctx_t **dctxp);
+dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
+			     dns_dbversion_t	      *version,
+			     const dns_master_style_t *style, FILE *f,
+			     isc_task_t *task, dns_dumpdonefunc_t done,
+			     void *done_arg, dns_dumpctx_t **dctxp);
 
 isc_result_t
-dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db,
-			dns_dbversion_t *version,
+dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 			const dns_master_style_t *style,
-			dns_masterformat_t format,
+			dns_masterformat_t	  format,
 			dns_masterrawheader_t *header, FILE *f);
 /*%<
  * Dump the database 'db' to the steam 'f' in the specified format by
  * 'format'.  If the format is dns_masterformat_text (the RFC1035 format),
  * 'style' specifies the file style (e.g., &dns_master_style_default).
- *
- * dns_master_dumptostream() is an old form of dns_master_dumptostream3(),
- * which always specifies the dns_masterformat_text format.
- * dns_master_dumptostream2() is an old form which always specifies
- * a NULL header.
  *
  * If 'format' is dns_masterformat_raw, then 'header' can contain
  * information to be written to the file header.
@@ -293,7 +272,6 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db,
  *
  * Returns:
  *\li	ISC_R_SUCCESS
- *\li	ISC_R_CONTINUE	dns_master_dumptostreaminc() only.
  *\li	ISC_R_NOMEMORY
  *\li	Any database or rrset iterator error.
  *\li	Any dns_rdata_totext() error code.
@@ -303,15 +281,14 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db,
 /*@{*/
 
 isc_result_t
-dns_master_dumpinc(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
-		   const dns_master_style_t *style, const char *filename,
-		   isc_task_t *task, dns_dumpdonefunc_t done, void
-		   *done_arg, dns_dumpctx_t **dctxp,
-		   dns_masterformat_t format, dns_masterrawheader_t *header);
+dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
+		     const dns_master_style_t *style, const char *filename,
+		     isc_task_t *task, dns_dumpdonefunc_t done, void *done_arg,
+		     dns_dumpctx_t **dctxp, dns_masterformat_t format,
+		     dns_masterrawheader_t *header);
 
 isc_result_t
-dns_master_dump(isc_mem_t *mctx, dns_db_t *db,
-		dns_dbversion_t *version,
+dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 		const dns_master_style_t *style, const char *filename,
 		dns_masterformat_t format, dns_masterrawheader_t *header);
 
@@ -320,11 +297,6 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db,
  * 'format'.  If the format is dns_masterformat_text (the RFC1035 format),
  * 'style' specifies the file style (e.g., &dns_master_style_default).
  *
- * dns_master_dumpinc() and dns_master_dump() are old forms of _dumpinc3()
- * and _dump3(), respectively, which always specify the dns_masterformat_text
- * format.  dns_master_dumpinc2() and dns_master_dump2() are old forms which
- * always specify a NULL header.
- *
  * If 'format' is dns_masterformat_raw, then 'header' can contain
  * information to be written to the file header.
  *
@@ -332,7 +304,6 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db,
  *
  * Returns:
  *\li	ISC_R_SUCCESS
- *\li	ISC_R_CONTINUE	dns_master_dumpinc() only.
  *\li	ISC_R_NOMEMORY
  *\li	Any database or rrset iterator error.
  *\li	Any dns_rdata_totext() error code.
@@ -340,9 +311,9 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db,
 /*@}*/
 
 isc_result_t
-dns_master_rdatasettotext(const dns_name_t *owner_name,
-			  dns_rdataset_t *rdataset,
-			  const dns_master_style_t *style,
+dns_master_rdatasettotext(const dns_name_t	   *owner_name,
+			  dns_rdataset_t	   *rdataset,
+			  const dns_master_style_t *style, dns_indent_t *indent,
 			  isc_buffer_t *target);
 /*%<
  * Convert 'rdataset' to text format, storing the result in 'target'.
@@ -357,17 +328,16 @@ dns_master_rdatasettotext(const dns_name_t *owner_name,
  */
 
 isc_result_t
-dns_master_questiontotext(const dns_name_t *owner_name,
-			  dns_rdataset_t *rdataset,
+dns_master_questiontotext(const dns_name_t	   *owner_name,
+			  dns_rdataset_t	   *rdataset,
 			  const dns_master_style_t *style,
-			  isc_buffer_t *target);
+			  isc_buffer_t		   *target);
 
 isc_result_t
 dns_master_dumpnodetostream(isc_mem_t *mctx, dns_db_t *db,
-			    dns_dbversion_t *version,
-			    dns_dbnode_t *node, const dns_name_t *name,
-			    const dns_master_style_t *style,
-			    FILE *f);
+			    dns_dbversion_t *version, dns_dbnode_t *node,
+			    const dns_name_t	     *name,
+			    const dns_master_style_t *style, FILE *f);
 
 isc_result_t
 dns_master_dumpnode(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
@@ -378,16 +348,14 @@ dns_masterstyle_flags_t
 dns_master_styleflags(const dns_master_style_t *style);
 
 isc_result_t
-dns_master_stylecreate(dns_master_style_t **style,
-		       dns_masterstyle_flags_t flags,
-		       unsigned int ttl_column, unsigned int class_column,
-		       unsigned int type_column, unsigned int rdata_column,
-		       unsigned int line_length, unsigned int tab_width,
-		       unsigned int split_width, isc_mem_t *mctx);
+dns_master_stylecreate(dns_master_style_t    **style,
+		       dns_masterstyle_flags_t flags, unsigned int ttl_column,
+		       unsigned int class_column, unsigned int type_column,
+		       unsigned int rdata_column, unsigned int line_length,
+		       unsigned int tab_width, unsigned int split_width,
+		       isc_mem_t *mctx);
 
 void
 dns_master_styledestroy(dns_master_style_t **style, isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_MASTERDUMP_H */

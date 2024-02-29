@@ -1,18 +1,19 @@
-/*	$NetBSD: zoneconf.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.3.4.1 2024/02/29 12:28:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_ZONECONF_H
-#define NAMED_ZONECONF_H 1
+#pragma once
 
 /*! \file */
 
@@ -29,19 +30,18 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		     const cfg_obj_t *zconfig, cfg_aclconfctx_t *ac,
-		     dns_zone_t *zone, dns_zone_t *raw);
+		     dns_kasplist_t *kasplist, dns_zone_t *zone,
+		     dns_zone_t *raw);
 /*%<
  * Configure or reconfigure a zone according to the named.conf
- * data in 'cctx' and 'czone'.
+ * data.
  *
  * The zone origin is not configured, it is assumed to have been set
  * at zone creation time.
  *
  * Require:
- * \li	'lctx' to be initialized or NULL.
- * \li	'cctx' to be initialized or NULL.
  * \li	'ac' to point to an initialized cfg_aclconfctx_t.
- * \li	'czone' to be initialized.
+ * \li	'kasplist' to be initialized.
  * \li	'zone' to be initialized.
  */
 
@@ -54,11 +54,16 @@ named_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig);
  * and recreated, return false.
  */
 
+bool
+named_zone_inlinesigning(const cfg_obj_t *zconfig);
+/*%<
+ * Determine if zone uses inline-signing. This is true if inline-signing
+ * is set to yes.
+ */
+
 isc_result_t
-named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase,
-				   dns_zone_t *zone,
-				   dns_rdataclass_t rdclass,
-				   dns_name_t *name);
+named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase, dns_zone_t *zone,
+				   dns_rdataclass_t rdclass, dns_name_t *name);
 /*%>
  * configure a DLZ zone, setting up the database methods and calling
  * postload to load the origin values
@@ -71,5 +76,3 @@ named_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* NAMED_ZONECONF_H */

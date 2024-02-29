@@ -1,10 +1,12 @@
 #!/usr/bin/perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -14,13 +16,13 @@
 #
 use FileHandle;
 
-my $masterconf = new FileHandle("ns1/zones.conf", "w") or die;
-my $slaveconf  = new FileHandle("ns2/zones.conf", "w") or die;
+my $priconf = new FileHandle("ns1/zones.conf", "w") or die;
+my $secconf  = new FileHandle("ns2/zones.conf", "w") or die;
 
 for ($z = 0; $z < 300; $z++) {
     my $zn = sprintf("zone%06d.example", $z);
-    print $masterconf "zone \"$zn\" { type master; file \"$zn.db\"; };\n";
-    print $slaveconf  "zone \"$zn\" { type slave; file \"$zn.bk\"; masterfile-format text; masters { 10.53.0.1; }; };\n";
+    print $priconf "zone \"$zn\" { type primary; file \"$zn.db\"; };\n";
+    print $secconf  "zone \"$zn\" { type secondary; file \"$zn.bk\"; masterfile-format text; primaries { 10.53.0.1; }; };\n";
     my $fn = "ns1/$zn.db";
     my $f = new FileHandle($fn, "w") or die "open: $fn: $!";
     print $f "\$TTL 300

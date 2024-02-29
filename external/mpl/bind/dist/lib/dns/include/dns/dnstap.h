@@ -1,22 +1,23 @@
-/*	$NetBSD: dnstap.h,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.4.4.1 2024/02/29 12:34:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef _DNSTAP_H
-#define _DNSTAP_H
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -28,12 +29,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#ifdef HAVE_DNSTAP
-#include <fstrm.h>
-#include <protobuf-c/protobuf-c.h>
-#else
 struct fstrm_iothr_options;
-#endif /* HAVE_DNSTAP */
 
 #include <isc/log.h>
 #include <isc/refcount.h>
@@ -77,16 +73,13 @@ struct fstrm_iothr_options;
 #define DNS_DTTYPE_UQ 0x1000
 #define DNS_DTTYPE_UR 0x2000
 
-#define DNS_DTTYPE_QUERY \
-	(DNS_DTTYPE_SQ|DNS_DTTYPE_CQ|DNS_DTTYPE_AQ|\
-	 DNS_DTTYPE_RQ|DNS_DTTYPE_FQ|DNS_DTTYPE_TQ|\
-	 DNS_DTTYPE_UQ)
-#define DNS_DTTYPE_RESPONSE \
-	(DNS_DTTYPE_SR|DNS_DTTYPE_CR|DNS_DTTYPE_AR|\
-	 DNS_DTTYPE_RR|DNS_DTTYPE_FR|DNS_DTTYPE_TR|\
-	 DNS_DTTYPE_UR)
-#define DNS_DTTYPE_ALL \
-	(DNS_DTTYPE_QUERY|DNS_DTTYPE_RESPONSE)
+#define DNS_DTTYPE_QUERY                                                 \
+	(DNS_DTTYPE_SQ | DNS_DTTYPE_CQ | DNS_DTTYPE_AQ | DNS_DTTYPE_RQ | \
+	 DNS_DTTYPE_FQ | DNS_DTTYPE_TQ | DNS_DTTYPE_UQ)
+#define DNS_DTTYPE_RESPONSE                                              \
+	(DNS_DTTYPE_SR | DNS_DTTYPE_CR | DNS_DTTYPE_AR | DNS_DTTYPE_RR | \
+	 DNS_DTTYPE_FR | DNS_DTTYPE_TR | DNS_DTTYPE_UR)
+#define DNS_DTTYPE_ALL (DNS_DTTYPE_QUERY | DNS_DTTYPE_RESPONSE)
 
 typedef enum {
 	dns_dtmode_none = 0,
@@ -102,8 +95,8 @@ struct dns_dtdata {
 
 	void *frame;
 
-	bool query;
-	bool tcp;
+	bool		query;
+	bool		tcp;
 	dns_dtmsgtype_t type;
 
 	isc_time_t qtime;
@@ -115,7 +108,7 @@ struct dns_dtdata {
 	uint32_t qport;
 	uint32_t rport;
 
-	isc_region_t msgdata;
+	isc_region_t   msgdata;
 	dns_message_t *msg;
 
 	char namebuf[DNS_NAME_FORMATSIZE];
@@ -270,17 +263,9 @@ dns_dt_getstats(dns_dtenv_t *env, isc_stats_t **statsp);
  */
 
 void
-dns_dt_shutdown(void);
-/*%<
- * Shuts down dnstap and frees global resources. This function must only
- * be called immediately before server shutdown.
- */
-
-void
-dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype,
-	    isc_sockaddr_t *qaddr, isc_sockaddr_t *dstaddr,
-	    bool tcp, isc_region_t *zone, isc_time_t *qtime,
-	    isc_time_t *rtime, isc_buffer_t *buf);
+dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
+	    isc_sockaddr_t *dstaddr, bool tcp, isc_region_t *zone,
+	    isc_time_t *qtime, isc_time_t *rtime, isc_buffer_t *buf);
 /*%<
  * Sends a dnstap message to the log, if 'msgtype' is one of the message
  * types represented in 'view->dttypes'.
@@ -347,8 +332,8 @@ dns_dtdata_free(dns_dtdata_t **dp);
  */
 
 isc_result_t
-dns_dt_open(const char *filename, dns_dtmode_t mode,
-	    isc_mem_t *mctx, dns_dthandle_t **handlep);
+dns_dt_open(const char *filename, dns_dtmode_t mode, isc_mem_t *mctx,
+	    dns_dthandle_t **handlep);
 /*%<
  * Opens a dnstap framestream at 'filename' and stores a pointer to the
  * reader object in a dns_dthandle_t structure.
@@ -408,5 +393,3 @@ dns_dt_close(dns_dthandle_t **handlep);
  *
  *\li	'*handlep' is not NULL
  */
-
-#endif /* _DNSTAP_H */

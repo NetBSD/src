@@ -1,10 +1,12 @@
 #!/usr/bin/env perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -20,9 +22,14 @@ my $pidf = new IO::File "ans.pid", "w" or die "cannot open pid file: $!";
 print $pidf "$$\n" or die "cannot write pid file: $!";
 $pidf->close or die "cannot close pid file: $!";
 sub rmpid { unlink "ans.pid"; exit 1; };
+sub term { };
 
 $SIG{INT} = \&rmpid;
-$SIG{TERM} = \&rmpid;
+if ($Net::DNS::VERSION >= 1.42) {
+    $SIG{TERM} = \&term;
+} else {
+    $SIG{TERM} = \&rmpid;
+}
 
 my $count = 0;
 
@@ -55,7 +62,7 @@ sub reply_handler {
         $rcode = "REFUSED";
     }
 
-    # mark the answer as authoritive (by setting the 'aa' flag
+    # mark the answer as authoritative (by setting the 'aa' flag
     return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
 }
 
@@ -71,4 +78,11 @@ my $ns = Net::DNS::Nameserver->new(
     Verbose => $verbose,
 );
 
-$ns->main_loop;
+if ($Net::DNS::VERSION >= 1.42) {
+    $ns->start_server();
+    select(undef, undef, undef, undef);
+    $ns->stop_server();
+    unlink "ans.pid";
+} else {
+    $ns->main_loop;
+}

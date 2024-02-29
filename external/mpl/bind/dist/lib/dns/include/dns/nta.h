@@ -1,22 +1,23 @@
-/*	$NetBSD: nta.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: nta.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_NTA_H
-#define DNS_NTA_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -37,33 +38,34 @@
 #include <isc/task.h>
 #include <isc/timer.h>
 
-#include <dns/types.h>
 #include <dns/rdataset.h>
 #include <dns/resolver.h>
+#include <dns/types.h>
 #include <dns/view.h>
 
 ISC_LANG_BEGINDECLS
 
 struct dns_ntatable {
 	/* Unlocked. */
-	unsigned int		magic;
-	dns_view_t		*view;
-	isc_rwlock_t		rwlock;
-	isc_taskmgr_t		*taskmgr;
-	isc_timermgr_t		*timermgr;
-	isc_task_t		*task;
+	unsigned int	magic;
+	dns_view_t     *view;
+	isc_rwlock_t	rwlock;
+	isc_taskmgr_t  *taskmgr;
+	isc_timermgr_t *timermgr;
+	isc_task_t     *task;
+	/* Protected by atomics */
+	isc_refcount_t references;
 	/* Locked by rwlock. */
-	uint32_t		references;
-	dns_rbt_t		*table;
+	dns_rbt_t *table;
+	bool	   shuttingdown;
 };
 
-#define NTATABLE_MAGIC		ISC_MAGIC('N', 'T', 'A', 't')
-#define VALID_NTATABLE(nt) 	ISC_MAGIC_VALID(nt, NTATABLE_MAGIC)
+#define NTATABLE_MAGIC	   ISC_MAGIC('N', 'T', 'A', 't')
+#define VALID_NTATABLE(nt) ISC_MAGIC_VALID(nt, NTATABLE_MAGIC)
 
 isc_result_t
-dns_ntatable_create(dns_view_t *view,
-		    isc_taskmgr_t *taskmgr, isc_timermgr_t *timermgr,
-		    dns_ntatable_t **ntatablep);
+dns_ntatable_create(dns_view_t *view, isc_taskmgr_t *taskmgr,
+		    isc_timermgr_t *timermgr, dns_ntatable_t **ntatablep);
 /*%<
  * Create an NTA table in view 'view'.
  *
@@ -119,9 +121,8 @@ dns_ntatable_detach(dns_ntatable_t **ntatablep);
  */
 
 isc_result_t
-dns_ntatable_add(dns_ntatable_t *ntatable, const dns_name_t *name,
-		 bool force, isc_stdtime_t now,
-		 uint32_t lifetime);
+dns_ntatable_add(dns_ntatable_t *ntatable, const dns_name_t *name, bool force,
+		 isc_stdtime_t now, uint32_t lifetime);
 /*%<
  * Add a negative trust anchor to 'ntatable' for name 'name',
  * which will expire at time 'now' + 'lifetime'.  If 'force' is true,
@@ -196,16 +197,15 @@ dns_ntatable_totext(dns_ntatable_t *ntatable, const char *view,
  */
 
 isc_result_t
-dns_ntatable_dump(dns_ntatable_t *ntatable, FILE *fp);
-/*%<
- * Dump the NTA table to the file opened as 'fp'.
- */
-
-isc_result_t
 dns_ntatable_save(dns_ntatable_t *ntatable, FILE *fp);
 /*%<
  * Save the NTA table to the file opened as 'fp', for later loading.
  */
-ISC_LANG_ENDDECLS
 
-#endif /* DNS_NTA_H */
+void
+dns_ntatable_shutdown(dns_ntatable_t *ntatable);
+/*%<
+ * Cancel future checks to see if NTAs can be removed.
+ */
+
+ISC_LANG_ENDDECLS

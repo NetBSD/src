@@ -1,19 +1,19 @@
-/*	$NetBSD: sockaddr.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.3.4.1 2024/02/29 12:35:11 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_SOCKADDR_H
-#define ISC_SOCKADDR_H 1
+#pragma once
 
 /*! \file isc/sockaddr.h */
 
@@ -22,32 +22,37 @@
 #include <isc/lang.h>
 #include <isc/net.h>
 #include <isc/types.h>
-#ifdef ISC_PLATFORM_HAVESYSUNH
-#include <sys/un.h>
-#endif
 
+#include <sys/un.h>
+
+/*
+ * Any updates to this structure should also be applied in
+ * contrib/modules/dlz/dlz_minmal.h.
+ */
 struct isc_sockaddr {
 	union {
 		struct sockaddr		sa;
 		struct sockaddr_in	sin;
 		struct sockaddr_in6	sin6;
 		struct sockaddr_storage ss;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 		struct sockaddr_un	sunix;
-#endif
-	}				type;
-	unsigned int			length;		/* XXXRTH beginning? */
-	ISC_LINK(struct isc_sockaddr)	link;
+	} type;
+	unsigned int length; /* XXXRTH beginning? */
+	ISC_LINK(struct isc_sockaddr) link;
 };
 
-#define ISC_SOCKADDR_CMPADDR	  0x0001	/*%< compare the address
-						 *   sin_addr/sin6_addr */
-#define ISC_SOCKADDR_CMPPORT 	  0x0002	/*%< compare the port
-						 *   sin_port/sin6_port */
-#define ISC_SOCKADDR_CMPSCOPE     0x0004	/*%< compare the scope
-						 *   sin6_scope */
-#define ISC_SOCKADDR_CMPSCOPEZERO 0x0008	/*%< when comparing scopes
-						 *   zero scopes always match */
+#define ISC_SOCKADDR_CMPADDR            \
+	0x0001 /*%< compare the address \
+		*   sin_addr/sin6_addr */
+#define ISC_SOCKADDR_CMPPORT         \
+	0x0002 /*%< compare the port \
+		*   sin_port/sin6_port */
+#define ISC_SOCKADDR_CMPSCOPE         \
+	0x0004 /*%< compare the scope \
+		*   sin6_scope */
+#define ISC_SOCKADDR_CMPSCOPEZERO         \
+	0x0008 /*%< when comparing scopes \
+		*   zero scopes always match */
 
 ISC_LANG_BEGINDECLS
 
@@ -232,12 +237,14 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path);
  * \li	ISC_R_SUCCESS
  */
 
-#define ISC_SOCKADDR_FORMATSIZE \
-	sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX%SSSSSSSSSS#YYYYY")
+isc_result_t
+isc_sockaddr_fromsockaddr(isc_sockaddr_t *isa, const struct sockaddr *sa);
+
+#define ISC_SOCKADDR_FORMATSIZE                                            \
+	sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX%SSSSSSSSSS#" \
+	       "YYYYY")
 /*%<
  * Minimum size of array to pass to isc_sockaddr_format().
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_SOCKADDR_H */

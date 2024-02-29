@@ -1,0 +1,27 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@		SOA	ns hostmaster 2011012708 3600 1200 604800 1200
+		NS	ns
+ns		A	192.0.2.1
+
+svcb0		SVCB	0 example.net.
+svcb1		SVCB	1 . port=60 alpn=h3 ech="ZWFzdGVyIGVnZyE="
+svcb2		SVCB	2 . no-default-alpn alpn=alpn
+svcb3		SVCB	3 . ipv4hint="10.10.10.10"
+svcb4		SVCB	4 . ipv6hint="feed:a::bee"
+svcb5		SVCB	5 . key9999="something"
+svcb6		SVCB	6 . mandatory=port,alpn port=60 alpn=h3
+svcb7		SVCB	7 . mandatory=port,alpn port=60 alpn=h1,h3
+svcb8		SVCB	8 . mandatory=port,alpn port=60 alpn="h1\\,h2,h3"
+svcb9		SVCB	0 44._svbc.example.net.
+svcb10		SVCB	7 . alpn="h2,h3" dohpath=/{?dns}

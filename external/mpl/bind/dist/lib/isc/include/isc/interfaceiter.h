@@ -1,23 +1,23 @@
-/*	$NetBSD: interfaceiter.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: interfaceiter.h,v 1.3.4.1 2024/02/29 12:35:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_INTERFACEITER_H
-#define ISC_INTERFACEITER_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/interfaceiter.h
  * \brief Iterates over the list of network interfaces.
@@ -46,20 +46,22 @@
  */
 
 struct isc_interface {
-	char name[32];			/*%< Interface name, null-terminated. */
-	unsigned int af;		/*%< Address family. */
-	isc_netaddr_t address;		/*%< Local address. */
-	isc_netaddr_t netmask;		/*%< Network mask. */
-	isc_netaddr_t dstaddress; 	/*%< Destination address (point-to-point only). */
-	uint32_t flags;		/*%< Flags; see INTERFACE flags. */
+	char	      name[32];	  /*%< Interface name, null-terminated. */
+	unsigned int  af;	  /*%< Address family. */
+	isc_netaddr_t address;	  /*%< Local address. */
+	isc_netaddr_t netmask;	  /*%< Network mask. */
+	isc_netaddr_t dstaddress; /*%< Destination address
+				   * (point-to-point
+				   * only). */
+	uint32_t flags;		  /*%< Flags; see INTERFACE flags. */
 };
 
 /*@{*/
 /*! Interface flags. */
 
-#define INTERFACE_F_UP			0x00000001U
-#define INTERFACE_F_POINTTOPOINT	0x00000002U
-#define INTERFACE_F_LOOPBACK		0x00000004U
+#define INTERFACE_F_UP		 0x00000001U
+#define INTERFACE_F_POINTTOPOINT 0x00000002U
+#define INTERFACE_F_LOOPBACK	 0x00000004U
 /*@}*/
 
 /***
@@ -91,8 +93,7 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter);
  */
 
 isc_result_t
-isc_interfaceiter_current(isc_interfaceiter_t *iter,
-			  isc_interface_t *ifdata);
+isc_interfaceiter_current(isc_interfaceiter_t *iter, isc_interface_t *ifdata);
 /*!<
  * \brief Get information about the interface the iterator is currently
  * positioned at and store it at *ifdata.
@@ -126,5 +127,3 @@ isc_interfaceiter_destroy(isc_interfaceiter_t **iterp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_INTERFACEITER_H */

@@ -1,11 +1,13 @@
-/*	$NetBSD: md.h,v 1.2 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.2.6.1 2024/02/29 12:35:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -19,13 +21,10 @@
 #pragma once
 
 #include <isc/lang.h>
-#include <isc/platform.h>
-#include <isc/types.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
-#include <openssl/evp.h>
-
-typedef EVP_MD_CTX isc_md_t;
+typedef void isc_md_t;
 
 /**
  * isc_md_type_t:
@@ -38,19 +37,32 @@ typedef EVP_MD_CTX isc_md_t;
  *
  * Enumeration of supported message digest algorithms.
  */
-typedef const EVP_MD * isc_md_type_t;
+typedef void isc_md_type_t;
 
-#define ISC_MD_MD5    EVP_md5()
-#define ISC_MD_SHA1   EVP_sha1()
-#define ISC_MD_SHA224 EVP_sha224()
-#define ISC_MD_SHA256 EVP_sha256()
-#define ISC_MD_SHA384 EVP_sha384()
-#define ISC_MD_SHA512 EVP_sha512()
+#define ISC_MD_MD5    isc__md_md5()
+#define ISC_MD_SHA1   isc__md_sha1()
+#define ISC_MD_SHA224 isc__md_sha224()
+#define ISC_MD_SHA256 isc__md_sha256()
+#define ISC_MD_SHA384 isc__md_sha384()
+#define ISC_MD_SHA512 isc__md_sha512()
 
-#define ISC_MD5_DIGESTLENGTH    isc_md_type_get_size(ISC_MD_MD5)
-#define ISC_MD5_BLOCK_LENGTH    isc_md_type_get_block_size(ISC_MD_MD5)
-#define ISC_SHA1_DIGESTLENGTH   isc_md_type_get_size(ISC_MD_SHA1)
-#define ISC_SHA1_BLOCK_LENGTH   isc_md_type_get_block_size(ISC_MD_SHA1)
+const isc_md_type_t *
+isc__md_md5(void);
+const isc_md_type_t *
+isc__md_sha1(void);
+const isc_md_type_t *
+isc__md_sha224(void);
+const isc_md_type_t *
+isc__md_sha256(void);
+const isc_md_type_t *
+isc__md_sha384(void);
+const isc_md_type_t *
+isc__md_sha512(void);
+
+#define ISC_MD5_DIGESTLENGTH	isc_md_type_get_size(ISC_MD_MD5)
+#define ISC_MD5_BLOCK_LENGTH	isc_md_type_get_block_size(ISC_MD_MD5)
+#define ISC_SHA1_DIGESTLENGTH	isc_md_type_get_size(ISC_MD_SHA1)
+#define ISC_SHA1_BLOCK_LENGTH	isc_md_type_get_block_size(ISC_MD_SHA1)
 #define ISC_SHA224_DIGESTLENGTH isc_md_type_get_size(ISC_MD_SHA224)
 #define ISC_SHA224_BLOCK_LENGTH isc_md_type_get_block_size(ISC_MD_SHA224)
 #define ISC_SHA256_DIGESTLENGTH isc_md_type_get_size(ISC_MD_SHA256)
@@ -60,7 +72,7 @@ typedef const EVP_MD * isc_md_type_t;
 #define ISC_SHA512_DIGESTLENGTH isc_md_type_get_size(ISC_MD_SHA512)
 #define ISC_SHA512_BLOCK_LENGTH isc_md_type_get_block_size(ISC_MD_SHA512)
 
-#define ISC_MAX_MD_SIZE EVP_MAX_MD_SIZE
+#define ISC_MAX_MD_SIZE	   64U	/* EVP_MAX_MD_SIZE */
 #define ISC_MAX_BLOCK_SIZE 128U /* ISC_SHA512_BLOCK_LENGTH */
 
 /**
@@ -77,7 +89,7 @@ typedef const EVP_MD * isc_md_type_t;
  * at @digestlen, at most ISC_MAX_MD_SIZE bytes will be written.
  */
 isc_result_t
-isc_md(isc_md_type_t type, const unsigned char *buf, const size_t len,
+isc_md(const isc_md_type_t *type, const unsigned char *buf, const size_t len,
        unsigned char *digest, unsigned int *digestlen);
 
 /**
@@ -107,7 +119,7 @@ isc_md_free(isc_md_t *);
  * initialized before calling this function.
  */
 isc_result_t
-isc_md_init(isc_md_t *, const isc_md_type_t md_type);
+isc_md_init(isc_md_t *, const isc_md_type_t *md_type);
 
 /**
  * isc_md_reset:
@@ -154,7 +166,7 @@ isc_md_final(isc_md_t *md, unsigned char *digest, unsigned int *digestlen);
  * This function return the isc_md_type_t previously set for the supplied
  * message digest context or NULL if no isc_md_type_t has been set.
  */
-isc_md_type_t
+const isc_md_type_t *
 isc_md_get_md_type(isc_md_t *md);
 
 /**
@@ -182,7 +194,7 @@ isc_md_get_block_size(isc_md_t *md);
  * isc_md_type_t , i.e. the size of the hash.
  */
 size_t
-isc_md_type_get_size(isc_md_type_t md_type);
+isc_md_type_get_size(const isc_md_type_t *md_type);
 
 /**
  * isc_md_block_size:
@@ -191,4 +203,4 @@ isc_md_type_get_size(isc_md_type_t md_type);
  * isc_md_type_t.
  */
 size_t
-isc_md_type_get_block_size(isc_md_type_t md_type);
+isc_md_type_get_block_size(const isc_md_type_t *md_type);

@@ -1,23 +1,23 @@
-/*	$NetBSD: fixedname.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.3.4.1 2024/02/29 12:34:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_FIXEDNAME_H
-#define DNS_FIXEDNAME_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/fixedname.h
  * \brief
@@ -48,8 +48,8 @@
  */
 
 /*****
- ***** Imports
- *****/
+***** Imports
+*****/
 
 #include <isc/buffer.h>
 #include <isc/lang.h>
@@ -57,14 +57,14 @@
 #include <dns/name.h>
 
 /*****
- ***** Types
- *****/
+***** Types
+*****/
 
 struct dns_fixedname {
-	dns_name_t			name;
-	dns_offsets_t			offsets;
-	isc_buffer_t			buffer;
-	unsigned char			data[DNS_NAME_MAXWIRE];
+	dns_name_t    name;
+	dns_offsets_t offsets;
+	isc_buffer_t  buffer;
+	unsigned char data[DNS_NAME_MAXWIRE];
 };
 
 ISC_LANG_BEGINDECLS
@@ -82,5 +82,3 @@ dns_name_t *
 dns_fixedname_initname(dns_fixedname_t *fixed);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_FIXEDNAME_H */

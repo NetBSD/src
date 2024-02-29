@@ -1,28 +1,30 @@
-/*	$NetBSD: os.h,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.2.6.1 2024/02/29 12:28:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#ifndef RNDC_OS_H
-#define RNDC_OS_H 1
+#pragma once
+
+#include <stdio.h>
 
 #include <isc/lang.h>
-#include <stdio.h>
 
 ISC_LANG_BEGINDECLS
 
-int set_user(FILE *fd, const char *user);
+int
+set_user(FILE *fd, const char *user);
 /*%<
  * Set the owner of the file referenced by 'fd' to 'user'.
  * Returns:
@@ -31,5 +33,3 @@ int set_user(FILE *fd, const char *user);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif

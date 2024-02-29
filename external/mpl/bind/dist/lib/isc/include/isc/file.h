@@ -1,19 +1,19 @@
-/*	$NetBSD: file.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.3.4.1 2024/02/29 12:35:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_FILE_H
-#define ISC_FILE_H 1
+#pragma once
 
 /*! \file isc/file.h */
 
@@ -68,7 +68,8 @@ isc_file_getmodtime(const char *file, isc_time_t *time);
 isc_result_t
 isc_file_mktemplate(const char *path, char *buf, size_t buflen);
 /*!<
- * \brief Generate a template string suitable for use with isc_file_openunique().
+ * \brief Generate a template string suitable for use with
+ * isc_file_openunique().
  *
  * Notes:
  *\li	This function is intended to make creating temporary files
@@ -181,9 +182,9 @@ isc_file_rename(const char *oldname, const char *newname);
 bool
 isc_file_exists(const char *pathname);
 /*!<
- * \brief Return #true if the calling process can tell that the given file exists.
- * Will not return true if the calling process has insufficient privileges
- * to search the entire path.
+ * \brief Return #true if the calling process can tell that the given file
+ * exists. Will not return true if the calling process has insufficient
+ * privileges to search the entire path.
  */
 
 bool
@@ -310,8 +311,8 @@ isc_file_safecreate(const char *filename, FILE **fp);
  */
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, const char *path,
-		   char **dirname, char const **basename);
+isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+		   char const **basename);
 /*%<
  * Split a path into dirname and basename.  If 'path' contains no slash
  * (or, on windows, backslash), then '*dirname' is set to ".".
@@ -342,22 +343,6 @@ isc_file_getsizefd(int fd, off_t *size);
  *
  * Returns:
  * - ISC_R_SUCCESS on success
- */
-
-void *
-isc_file_mmap(void *addr, size_t len, int prot,
-	      int flags, int fd, off_t offset);
-/*%<
- * Portable front-end to mmap().  If mmap() is not defined on this
- * platform, then we simulate it by calling malloc() and read().
- * (In this event, the addr, prot, and flags parameters are ignored).
- */
-
-int
-isc_file_munmap(void *addr, size_t len);
-/*%<
- * Portable front-end to munmap().  If munmap() is not defined on
- * this platform, then we simply free the memory.
  */
 
 isc_result_t
@@ -396,5 +381,3 @@ isc_file_isdirwritable(const char *path);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_FILE_H */

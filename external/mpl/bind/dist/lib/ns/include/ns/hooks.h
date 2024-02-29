@@ -1,26 +1,30 @@
-/*	$NetBSD: hooks.h,v 1.4 2019/04/28 00:01:15 christos Exp $	*/
+/*	$NetBSD: hooks.h,v 1.4.4.1 2024/02/29 12:35:30 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NS_HOOKS_H
-#define NS_HOOKS_H 1
+#pragma once
 
 /*! \file */
 
 #include <stdbool.h>
 
+#include <isc/event.h>
 #include <isc/list.h>
 #include <isc/magic.h>
+#include <isc/mem.h>
 #include <isc/result.h>
+#include <isc/task.h>
 
 #include <dns/rdatatype.h>
 
@@ -180,13 +184,173 @@
  * ns_hook_add().  As the hook action returns NS_HOOK_CONTINUE,
  * query_foo() would also be logging the "Lorem ipsum dolor sit amet..."
  * message before returning ISC_R_COMPLETE.
+ *
+ * ASYNCHRONOUS EVENT HANDLING IN QUERY HOOKS
+ *
+ * Usually a hook action works synchronously; it completes some particular
+ * job in the middle of query processing, thus blocking the caller (and the
+ * worker thread handling the query).  But sometimes an action can be time
+ * consuming and the blocking behavior may not be acceptable.  For example,
+ * a hook may need to send some kind of query (like a DB lookup) to an
+ * external backend server and wait for the response to complete the hook's
+ * action.  Depending on the network condition, the external server's load,
+ * etc, it may take several seconds or more.
+ *
+ * In order to handle such a situation, a hook action can start an
+ * asynchronous event by calling ns_query_hookasync().  This is similar
+ * to ns_query_recurse(), but more generic.  ns_query_hookasync() will
+ * call the 'runasync' function with a specified 'arg' (both passed to
+ * ns_query_hookasync()) and a set of task and associated event arguments
+ * to be called to resume query handling upon completion of the
+ * asynchronous event.
+ *
+ * The implementation of 'runasync' is assumed to allocate and build an
+ * instance of ns_hook_resevent_t whose action, arg, and task are set to
+ * the passed values from ns_query_hookasync().  Other fields of
+ * ns_hook_resevent_t must be correctly set in the hook implementation
+ * by the time it's sent to the specified task:
+ *
+ * - hookpoint: the point from which the query handling should be resumed
+ *   (which should usually be the hook point that triggered the asynchronous
+ *   event).
+ * - origresult: the result code passed to the hook action that triggers the
+ *   asynchronous event through the 'resultp' pointer.  Some hook points need
+ *   this value to correctly resume the query handling.
+ * - saved_qctx: the 'qctx' passed to 'runasync'.  This holds some
+ *   intermediate data for resolving the query, and will be used to resume the
+ *   query handling.  The 'runasync' implementation must not modify it.
+ *
+ * The hook implementation should somehow maintain the created event
+ * instance so that it can eventually send the event.
+ *
+ * 'runasync' then creates an instance of ns_hookasync_t with specifying its
+ * own cancel and destroy function, and returns it to ns_query_hookasync()
+ * in the passed pointer.
+ *
+ * On return from ns_query_hookasync(), the hook action MUST return
+ * NS_HOOK_RETURN to suspend the query handling.
+ *
+ * On the completion of the asynchronous event, the hook implementation is
+ * supposed to send the resumeevent to the corresponding task.  The query
+ * module resumes the query handling so that the hook action of the
+ * specified hook point will be called, skipping some intermediate query
+ * handling steps.  So, typically, the same hook action will be called
+ * twice.  The hook implementation must somehow remember the context, and
+ * handle the second call to complete its action using the result of the
+ * asynchronous event.
+ *
+ * Example: assume the following hook-specific structure to manage
+ * asynchronous events:
+ *
+ * typedef struct hookstate {
+ * 	bool async;
+ *	ns_hook_resevent_t *rev
+ *	ns_hookpoint_t hookpoint;
+ *	isc_result_t origresult;
+ * } hookstate_t;
+ *
+ * 'async' is supposed to be true if and only if hook-triggered
+ * asynchronous processing is taking place.
+ *
+ * A hook action that uses an asynchronous event would look something
+ * like this:
+ *
+ * hook_recurse(void *hook_data, void *action_data, isc_result_t *resultp) {
+ *	hookstate_t *state = somehow_retrieve_from(action_data);
+ *	if (state->async) {
+ *		// just resumed from an asynchronous hook action.
+ *		// complete the hook's action using the result of the
+ *		// internal asynchronous event.
+ *		state->async = false;
+ *		return (NS_HOOK_CONTINUE);
+ *	}
+ *
+ *	// Initial call to the hook action.  Start the internal
+ *	// asynchronous event, and have the query module suspend
+ *	// its own handling by returning NS_HOOK_RETURN.
+ *	state->hookpoint = ...; // would be hook point for this hook
+ *	state->origresult = *resultp;
+ *	ns_query_hookasync(hook_data, runasync, state);
+ *	state->async = true;
+ *	return (NS_HOOK_RETURN);
+ * }
+ *
+ * And the 'runasync' function would be something like this:
+ *
+ * static isc_result_t
+ * runasync(query_ctx_t *qctx, void *arg, isc_taskaction_t action,
+ *	    void *evarg, isc_task_t *task, ns_hookasync_t **ctxp) {
+ * 	hookstate_t *state = arg;
+ *	ns_hook_resevent_t *rev = isc_event_allocate(
+ *		mctx, task, NS_EVENT_HOOKASYNCDONE, action, evarg,
+ *		sizeof(*rev));
+ *	ns_hookasync_t *ctx = isc_mem_get(mctx, sizeof(*ctx));
+ *
+ *	*ctx = (ns_hookasync_t){ .private = NULL };
+ *	isc_mem_attach(mctx, &ctx->mctx);
+ *	ctx->cancel = ...;  // set the cancel function, which cancels the
+ *			    // internal asynchronous event (if necessary).
+ *			    // it should eventually result in sending
+ *			    // the 'rev' event to the calling task.
+ *	ctx->destroy = ...; // set the destroy function, which frees 'ctx'
+ *
+ *	rev->hookpoint = state->hookpoint;
+ *	rev->origresult = state->origresult;
+ *	rev->saved_qctx = qctx;
+ *	rev->ctx = ctx;
+ *
+ *	state->rev = rev; // store the resume event so we can send it later
+ *
+ *	// initiate some asynchronous process here - for example, a
+ *	// recursive fetch.
+ *
+ *	*ctxp = ctx;
+ *	return (ISC_R_SUCCESS);
+ * }
+ *
+ * Finally, in the completion handler for the asynchronous process, we
+ * need to send a resumption event so that query processing can resume.
+ * For example, the completion handler might call this function:
+ *
+ * static void
+ * asyncproc_done(hookstate_t *state) {
+ *	isc_event_t *ev = (isc_event_t *)state->rev;
+ *	isc_task_send(ev->ev_sender, &ev);
+ * }
+ *
+ * Caveats:
+ * - On resuming from a hook-initiated asynchronous process, code in
+ *   the query module before the hook point needs to be exercised.
+ *   So if this part has side effects, it's possible that the resuming
+ *   doesn't work well.  Currently, NS_QUERY_RESPOND_ANY_FOUND is
+ *   explicitly prohibited to be used as the resume point.
+ * - In general, hooks other than those called at the beginning of the
+ *   caller function may not work safely with asynchronous processing for
+ *   the reason stated in the previous bullet.  For example, a hook action
+ *   for NS_QUERY_DONE_SEND may not be able to start an asychronous
+ *   function safely.
+ * - Hook-triggered asynchronous processing is not allowed to be running
+ *   while the standard DNS recursive fetch is taking place (starting
+ *   from a call to dns_resolver_createfetch()), as the two would be
+ *   using some of the same context resources.  For this reason the
+ *   NS_QUERY_NOTFOUND_RECURSE and NS_QUERY_ZEROTTL_RECURSE hook points
+ *   are explicitly prohibited from being used for asynchronous hook
+ *   actions.
+ * - Specifying multiple hook actions for the same hook point at the
+ *   same time may cause problems, as resumption from one hook action
+ *   could cause another hook to be called twice unintentionally.
+ *   It's generally not safe to assume such a use case works,
+ *   especially if the hooks are developed independently. (Note that
+ *   that's not necessarily specific to the use of asynchronous hook
+ *   actions. As long as hook actions have side effects, including
+ *   modifying the internal query state, it's not guaranteed safe
+ *   to use multiple independent hooks at the same time.)
  */
 
 /*!
- * Currently-defined hook points. So long as these are unique,
- * the order in which they are declared is unimportant, but
- * currently matches the order in which they are referenced in
- * query.c.
+ * Currently-defined hook points. So long as these are unique, the order in
+ * which they are declared is unimportant, but it currently matches the
+ * order in which they are referenced in query.c.
  */
 typedef enum {
 	/* hookpoints from query.c */
@@ -220,7 +384,7 @@ typedef enum {
 
 	/* XXX other files could be added later */
 
-	NS_HOOKPOINTS_COUNT	/* MUST BE LAST */
+	NS_HOOKPOINTS_COUNT /* MUST BE LAST */
 } ns_hookpoint_t;
 
 /*
@@ -232,13 +396,13 @@ typedef enum {
 	NS_HOOK_RETURN,
 } ns_hookresult_t;
 
-typedef ns_hookresult_t
-(*ns_hook_action_t)(void *arg, void *data, isc_result_t *resultp);
+typedef ns_hookresult_t (*ns_hook_action_t)(void *arg, void *data,
+					    isc_result_t *resultp);
 
 typedef struct ns_hook {
-	isc_mem_t *mctx;
+	isc_mem_t	*mctx;
 	ns_hook_action_t action;
-	void *action_data;
+	void		*action_data;
 	ISC_LINK(struct ns_hook) link;
 } ns_hook_t;
 
@@ -249,7 +413,40 @@ typedef ns_hooklist_t ns_hooktable_t[NS_HOOKPOINTS_COUNT];
  * ns__hook_table is a global hook table, which is used if view->hooktable
  * is NULL.  It's intended only for use by unit tests.
  */
-LIBNS_EXTERNAL_DATA extern ns_hooktable_t *ns__hook_table;
+extern ns_hooktable_t *ns__hook_table;
+
+typedef void (*ns_hook_cancelasync_t)(ns_hookasync_t *);
+typedef void (*ns_hook_destroyasync_t)(ns_hookasync_t **);
+
+/*%
+ * Context for a hook-initiated asynchronous process. This works
+ * similarly to dns_fetch_t.
+ */
+struct ns_hookasync {
+	isc_mem_t *mctx;
+
+	/*
+	 * The following two are equivalent to dns_resolver_cancelfetch and
+	 * dns_resolver_destroyfetch, respectively, but specified as function
+	 * pointers since they can be hook-specific.
+	 */
+	ns_hook_cancelasync_t  cancel;
+	ns_hook_destroyasync_t destroy;
+
+	void *private; /* hook-specific data */
+};
+
+/*
+ * isc_event to be sent on the completion of a hook-initiated asyncronous
+ * process, similar to dns_fetchevent_t.
+ */
+typedef struct ns_hook_resevent {
+	ISC_EVENT_COMMON(struct ns_hook_resevent);
+	ns_hookasync_t *ctx;	   /* asynchronous processing context */
+	ns_hookpoint_t	hookpoint; /* hook point from which to resume */
+	isc_result_t origresult; /* result code at the point of call to hook */
+	query_ctx_t *saved_qctx; /* qctx at the point of call to hook */
+} ns_hook_resevent_t;
 
 /*
  * Plugin API version
@@ -261,14 +458,13 @@ LIBNS_EXTERNAL_DATA extern ns_hooktable_t *ns__hook_table;
  */
 #ifndef NS_PLUGIN_VERSION
 #define NS_PLUGIN_VERSION 1
-#define NS_PLUGIN_AGE 0
-#endif
+#define NS_PLUGIN_AGE	  0
+#endif /* ifndef NS_PLUGIN_VERSION */
 
 typedef isc_result_t
-ns_plugin_register_t(const char *parameters,
-		     const void *cfg, const char *file, unsigned long line,
-		     isc_mem_t *mctx, isc_log_t *lctx, void *actx,
-		     ns_hooktable_t *hooktable, void **instp);
+ns_plugin_register_t(const char *parameters, const void *cfg, const char *file,
+		     unsigned long line, isc_mem_t *mctx, isc_log_t *lctx,
+		     void *actx, ns_hooktable_t *hooktable, void **instp);
 /*%<
  * Called when registering a new plugin.
  *
@@ -292,9 +488,9 @@ ns_plugin_destroy_t(void **instp);
  */
 
 typedef isc_result_t
-ns_plugin_check_t(const char *parameters,
-		  const void *cfg, const char *file, unsigned long line,
-		  isc_mem_t *mctx, isc_log_t *lctx, void *actx);
+ns_plugin_check_t(const char *parameters, const void *cfg, const char *file,
+		  unsigned long line, isc_mem_t *mctx, isc_log_t *lctx,
+		  void *actx);
 /*%<
  * Check the validity of 'parameters'.
  */
@@ -312,10 +508,10 @@ ns_plugin_version_t(void);
 /*%
  * Prototypes for API functions to be defined in each module.
  */
-ns_plugin_check_t plugin_check;
-ns_plugin_destroy_t plugin_destroy;
+ns_plugin_check_t    plugin_check;
+ns_plugin_destroy_t  plugin_destroy;
 ns_plugin_register_t plugin_register;
-ns_plugin_version_t plugin_version;
+ns_plugin_version_t  plugin_version;
 
 isc_result_t
 ns_plugin_expandpath(const char *src, char *dst, size_t dstsize);
@@ -333,8 +529,6 @@ ns_plugin_expandpath(const char *src, char *dst, size_t dstsize);
  *     path to the directory into which named plugins are installed will be
  *     prepended to it and the result will be stored in 'dst'.
  *
- * On Windows, 'src' is always copied to 'dst' verbatim.
- *
  * Returns:
  *\li	#ISC_R_SUCCESS	Success
  *\li	#ISC_R_NOSPACE	'dst' is not large enough to hold the output string
@@ -342,9 +536,8 @@ ns_plugin_expandpath(const char *src, char *dst, size_t dstsize);
  */
 
 isc_result_t
-ns_plugin_register(const char *modpath, const char *parameters,
-		   const void *cfg, const char *cfg_file,
-		   unsigned long cfg_line,
+ns_plugin_register(const char *modpath, const char *parameters, const void *cfg,
+		   const char *cfg_file, unsigned long cfg_line,
 		   isc_mem_t *mctx, isc_log_t *lctx, void *actx,
 		   dns_view_t *view);
 /*%<
@@ -363,9 +556,9 @@ ns_plugin_register(const char *modpath, const char *parameters,
  */
 
 isc_result_t
-ns_plugin_check(const char *modpath, const char *parameters,
-		const void *cfg, const char *cfg_file, unsigned long cfg_line,
-		isc_mem_t *mctx, isc_log_t *lctx, void *actx);
+ns_plugin_check(const char *modpath, const char *parameters, const void *cfg,
+		const char *cfg_file, unsigned long cfg_line, isc_mem_t *mctx,
+		isc_log_t *lctx, void *actx);
 /*%<
  * Open the plugin module at 'modpath' and check the validity of
  * 'parameters', logging any errors or warnings found, then
@@ -419,4 +612,3 @@ ns_hooktable_create(isc_mem_t *mctx, ns_hooktable_t **tablep);
 /*%<
  * Allocate and initialize a hook table.
  */
-#endif /* NS_HOOKS_H */

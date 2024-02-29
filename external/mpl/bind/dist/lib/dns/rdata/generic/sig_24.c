@@ -1,11 +1,13 @@
-/*	$NetBSD: sig_24.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.4.4.1 2024/02/29 12:34:45 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +20,7 @@
 
 #define RRTYPE_SIG_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_sig(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
@@ -44,10 +46,12 @@ fromtext_sig(ARGS_FROMTEXT) {
 	result = dns_rdatatype_fromtext(&covered, &token.value.as_textregion);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTIMPLEMENTED) {
 		i = strtol(DNS_AS_STR(token), &e, 10);
-		if (i < 0 || i > 65535)
+		if (i < 0 || i > 65535) {
 			RETTOK(ISC_R_RANGE);
-		if (*e != 0)
+		}
+		if (*e != 0) {
 			RETTOK(result);
+		}
 		covered = (dns_rdatatype_t)i;
 	}
 	RETERR(uint16_tobuffer(covered, target));
@@ -65,8 +69,9 @@ fromtext_sig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	c = (unsigned char)token.value.as_ulong;
 	RETERR(mem_tobuffer(target, &c, 1));
 
@@ -107,8 +112,9 @@ fromtext_sig(ARGS_FROMTEXT) {
 				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 	/*
@@ -117,7 +123,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_sig(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("4294967295")];
@@ -184,8 +190,9 @@ totext_sig(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 4);
 	RETERR(dns_time32_totext(exp, target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 
 	/*
@@ -219,18 +226,20 @@ totext_sig(ARGS_TOTEXT) {
 	 * Sig.
 	 */
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	} else {
+		RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
+					 target));
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_sig(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -252,8 +261,9 @@ fromwire_sig(ARGS_FROMWIRE) {
 	 * time signed: 4
 	 * key footprint: 2
 	 */
-	if (sr.length < 18)
+	if (sr.length < 18) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, 18);
 	RETERR(mem_tobuffer(target, sr.base, 18));
@@ -268,11 +278,14 @@ fromwire_sig(ARGS_FROMWIRE) {
 	 * Sig.
 	 */
 	isc_buffer_activeregion(source, &sr);
+	if (sr.length == 0) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_sig(ARGS_TOWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -309,7 +322,7 @@ towire_sig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_sig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -331,8 +344,9 @@ compare_sig(ARGS_COMPARE) {
 	r1.length = 18;
 	r2.length = 18;
 	order = isc_region_compare(&r1, &r2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	dns_name_init(&name1, NULL);
 	dns_name_init(&name2, NULL);
@@ -343,8 +357,9 @@ compare_sig(ARGS_COMPARE) {
 	dns_name_fromregion(&name1, &r1);
 	dns_name_fromregion(&name2, &r2);
 	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
@@ -352,12 +367,12 @@ compare_sig(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_sig(ARGS_FROMSTRUCT) {
 	dns_rdata_sig_t *sig = source;
 
 	REQUIRE(type == dns_rdatatype_sig);
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
 	REQUIRE(sig->signature != NULL || sig->siglen == 0);
@@ -411,14 +426,14 @@ fromstruct_sig(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sig->signature, sig->siglen));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_sig(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 	dns_rdata_sig_t *sig = target;
 	dns_name_t signer;
 
 	REQUIRE(rdata->type == dns_rdatatype_sig);
-	REQUIRE(target != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sig->common.rdclass = rdata->rdclass;
@@ -472,7 +487,7 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	dns_name_init(&signer, NULL);
 	dns_name_fromregion(&signer, &sr);
 	dns_name_init(&sig->signer, NULL);
-	RETERR(name_duporclone(&signer, mctx, &sig->signer));
+	name_duporclone(&signer, mctx, &sig->signer);
 	isc_region_consume(&sr, name_length(&sig->signer));
 
 	/*
@@ -480,49 +495,52 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	 */
 	sig->siglen = sr.length;
 	sig->signature = mem_maybedup(mctx, sr.base, sig->siglen);
-	if (sig->signature == NULL)
+	if (sig->signature == NULL) {
 		goto cleanup;
-
+	}
 
 	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL)
+cleanup:
+	if (mctx != NULL) {
 		dns_name_free(&sig->signer, mctx);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_sig(ARGS_FREESTRUCT) {
-	dns_rdata_sig_t *sig = (dns_rdata_sig_t *) source;
+	dns_rdata_sig_t *sig = (dns_rdata_sig_t *)source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_sig);
 
-	if (sig->mctx == NULL)
+	if (sig->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&sig->signer, sig->mctx);
-	if (sig->signature != NULL)
+	if (sig->signature != NULL) {
 		isc_mem_free(sig->mctx, sig->signature);
+	}
 	sig->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_sig(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sig);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_sig(ARGS_DIGEST) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sig);
 
 	UNUSED(rdata);
@@ -532,7 +550,7 @@ digest_sig(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline dns_rdatatype_t
+static dns_rdatatype_t
 covers_sig(dns_rdata_t *rdata) {
 	dns_rdatatype_t type;
 	isc_region_t r;
@@ -545,9 +563,8 @@ covers_sig(dns_rdata_t *rdata) {
 	return (type);
 }
 
-static inline bool
+static bool
 checkowner_sig(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_sig);
 
 	UNUSED(name);
@@ -558,9 +575,8 @@ checkowner_sig(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_sig(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sig);
 
 	UNUSED(rdata);
@@ -570,8 +586,8 @@ checknames_sig(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_sig(ARGS_COMPARE) {
 	return (compare_sig(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_SIG_24_C */
+#endif /* RDATA_GENERIC_SIG_24_C */

@@ -1,10 +1,12 @@
 #!/usr/bin/perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -58,7 +60,7 @@ sub assert {
     my ($cond, $explanation) = @_;
     if (!$cond) {
 	print "Test Failed: $explanation ***\n";
-	$failures++
+	$failures++;
     }
 }
 
@@ -79,6 +81,7 @@ sub test {
         assert($rcode eq $expected, "expected $expected, got $rcode");
     } else {
 	print "Update failed: ", $res->errorstring, "\n";
+	$failures++;
     }
 }
 
@@ -409,6 +412,14 @@ test("NOERROR", ["update", rr_add("u.$zone 300 TXT txt-not-in-nxt")]);
 test("NOERROR", ["update", rr_add("u.$zone 300 NS ns.u.$zone")]);
 
 test("NOERROR", ["update", rr_del("u.$zone NS ns.u.$zone")]);
+
+if ($Net::DNS::VERSION < 1.01) {
+    print "skipped Excessive NSEC3PARAM iterations; Net::DNS too old.\n";
+} else {
+    section("Excessive NSEC3PARAM iterations");
+    test("REFUSED", ["update", rr_add("$zone 300 NSEC3PARAM 1 0 151 -")]);
+    test("NOERROR", ["update", rr_add("$zone 300 NSEC3PARAM 1 0 150 -")]);
+}
 
 if ($failures) {
     print "$failures tests failed.\n";

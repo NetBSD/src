@@ -1,23 +1,23 @@
-/*	$NetBSD: app.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: app.h,v 1.3.4.1 2024/02/29 12:35:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_APP_H
-#define ISC_APP_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/app.h
  * \brief ISC Application Support
@@ -85,6 +85,7 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
 /***
  *** Types
@@ -92,27 +93,9 @@
 
 typedef isc_event_t isc_appevent_t;
 
-#define ISC_APPEVENT_FIRSTEVENT		(ISC_EVENTCLASS_APP + 0)
-#define ISC_APPEVENT_SHUTDOWN		(ISC_EVENTCLASS_APP + 1)
-#define ISC_APPEVENT_LASTEVENT		(ISC_EVENTCLASS_APP + 65535)
-
-/*%
- * This structure is actually just the common prefix of an application context
- * implementation's version of an isc_appctx_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  app implementations
- * may change the structure.  'magic' must be ISCAPI_APPCTX_MAGIC for any
- * of the isc_app_ routines to work.  app implementations must maintain
- * all app context invariants.
- */
-struct isc_appctx {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_APPCTX_MAGIC		ISC_MAGIC('A','a','p','c')
-#define ISCAPI_APPCTX_VALID(c)		((c) != NULL && \
-					 (c)->magic == ISCAPI_APPCTX_MAGIC)
+#define ISC_APPEVENT_FIRSTEVENT (ISC_EVENTCLASS_APP + 0)
+#define ISC_APPEVENT_SHUTDOWN	(ISC_EVENTCLASS_APP + 1)
+#define ISC_APPEVENT_LASTEVENT	(ISC_EVENTCLASS_APP + 65535)
 
 ISC_LANG_BEGINDECLS
 
@@ -186,10 +169,10 @@ isc_app_isrunning(void);
  *\li	false   App is not running.
  */
 
-isc_result_t
+void
 isc_app_ctxshutdown(isc_appctx_t *ctx);
 
-isc_result_t
+void
 isc_app_shutdown(void);
 /*!<
  * \brief Request application shutdown.
@@ -207,13 +190,13 @@ isc_app_shutdown(void);
  *\li	ISC_R_UNEXPECTED
  */
 
-isc_result_t
+void
 isc_app_ctxsuspend(isc_appctx_t *ctx);
 /*!<
  * \brief This has the same behavior as isc_app_ctxsuspend().
  */
 
-isc_result_t
+void
 isc_app_reload(void);
 /*!<
  * \brief Request application reload.
@@ -297,44 +280,4 @@ isc_appctx_destroy(isc_appctx_t **ctxp);
  *\li	*ctxp == NULL.
  */
 
-void
-isc_appctx_settaskmgr(isc_appctx_t *ctx, isc_taskmgr_t *taskmgr);
-/*!<
- * \brief Associate a task manager with an application context.
- *
- * This must be done before running tasks within the application context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'taskmgr' is a valid task manager.
- */
-
-void
-isc_appctx_setsocketmgr(isc_appctx_t *ctx, isc_socketmgr_t *socketmgr);
-/*!<
- * \brief Associate a socket manager with an application context.
- *
- * This must be done before handling socket events within the application
- * context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'socketmgr' is a valid socket manager.
- */
-
-void
-isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
-/*!<
- * \brief Associate a socket timer with an application context.
- *
- * This must be done before handling timer events within the application
- * context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'timermgr' is a valid timer manager.
- */
-
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_APP_H */

@@ -1,8 +1,10 @@
 ; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ;
+; SPDX-License-Identifier: MPL-2.0
+;
 ; This Source Code Form is subject to the terms of the Mozilla Public
-; License, v. 2.0. If a copy of the MPL was not distributed with this
-; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
 ;
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
@@ -26,3 +28,12 @@ no-questions.		NS	ns.no-questions.
 ns.no-questions.	A	10.53.0.8
 formerr-to-all.		NS	ns.formerr-to-all.
 ns.formerr-to-all.	A	10.53.0.8
+sourcens.		NS	ns.sourcens.
+ns.sourcens.		A	10.53.0.4
+targetns. 		NS	ns.targetns.
+ns.targetns.		A	10.53.0.6
+partial-formerr.	NS	ns.partial-formerr.
+ns.partial-formerr.	A	10.53.0.2
+ns.partial-formerr.	A	10.53.0.3
+options-formerr.	NS	ns.options-formerr.
+ns.options-formerr.	A	10.53.0.10

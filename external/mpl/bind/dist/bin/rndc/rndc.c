@@ -1,11 +1,13 @@
-/*	$NetBSD: rndc.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.3.4.1 2024/02/29 12:28:26 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -13,55 +15,60 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
 #include <isc/app.h>
+#include <isc/atomic.h>
+#include <isc/attributes.h>
 #include <isc/buffer.h>
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/log.h>
-#include <isc/net.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
+#include <isc/net.h>
+#include <isc/netmgr.h>
 #include <isc/print.h>
 #include <isc/random.h>
-#include <isc/socket.h>
+#include <isc/refcount.h>
+#include <isc/result.h>
 #include <isc/stdtime.h>
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
-
-#include <isccfg/namedconf.h>
+#include <dns/name.h>
 
 #include <isccc/alist.h>
 #include <isccc/base64.h>
 #include <isccc/cc.h>
 #include <isccc/ccmsg.h>
-#include <isccc/result.h>
 #include <isccc/sexpr.h>
 #include <isccc/types.h>
 #include <isccc/util.h>
 
-#include <dns/name.h>
+#include <isccfg/namedconf.h>
 
 #include <bind9/getaddresses.h>
 
 #include "util.h"
 
-#define SERVERADDRS 10
+#define SERVERADDRS  10
+#define RNDC_TIMEOUT 60 * 1000
 
-const char *progname;
+const char *progname = NULL;
 bool verbose;
 
-static const char *admin_conffile;
-static const char *admin_keyfile;
-static const char *version = VERSION;
+static isc_nm_t *netmgr = NULL;
+static isc_taskmgr_t *taskmgr = NULL;
+static isc_task_t *rndc_task = NULL;
+
+static const char *admin_conffile = NULL;
+static const char *admin_keyfile = NULL;
+static const char *version = PACKAGE_VERSION;
 static const char *servername = NULL;
 static isc_sockaddr_t serveraddrs[SERVERADDRS];
 static isc_sockaddr_t local4, local6;
@@ -69,27 +76,31 @@ static bool local4set = false, local6set = false;
 static int nserveraddrs;
 static int currentaddr = 0;
 static unsigned int remoteport = 0;
-static isc_socketmgr_t *socketmgr = NULL;
-static isc_buffer_t *databuf;
-static isccc_ccmsg_t ccmsg;
+static isc_buffer_t *databuf = NULL;
+static isccc_ccmsg_t rndc_ccmsg;
 static uint32_t algorithm;
 static isccc_region_t secret;
 static bool failed = false;
 static bool c_flag = false;
-static isc_mem_t *rndc_mctx;
-static int sends, recvs, connects;
-static char *command;
-static char *args;
+static isc_mem_t *rndc_mctx = NULL;
+static atomic_uint_fast32_t sends = 0;
+static atomic_uint_fast32_t recvs = 0;
+static atomic_uint_fast32_t connects = 0;
+static char *command = NULL;
+static char *args = NULL;
 static char program[256];
-static isc_socket_t *sock = NULL;
 static uint32_t serial;
 static bool quiet = false;
 static bool showresult = false;
+static bool shuttingdown = false;
+static isc_nmhandle_t *recvdone_handle = NULL;
+static isc_nmhandle_t *recvnonce_handle = NULL;
 
-static void rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task);
+static void
+rndc_startconnect(isc_sockaddr_t *addr);
 
-ISC_PLATFORM_NORETURN_PRE static void
-usage(int status) ISC_PLATFORM_NORETURN_POST;
+noreturn static void
+usage(int status);
 
 static void
 usage(int status) {
@@ -103,13 +114,25 @@ command is one of the following:\n\
 		Add zone to given view. Requires allow-new-zones option.\n\
   delzone [-clean] zone [class [view]]\n\
 		Removes zone from given view.\n\
+  dnssec -checkds [-key id [-alg algorithm]] [-when time] (published|withdrawn) zone [class [view]]\n\
+		Mark the DS record for the KSK of the given zone as seen\n\
+		in the parent.  If the zone has multiple KSKs, select a\n\
+		specific key by providing the keytag with -key id and\n\
+		optionally the key's algorithm with -alg algorithm.\n\
+		Requires the zone to have a dnssec-policy.\n\
+  dnssec -rollover -key id [-alg algorithm] [-when time] zone [class [view]]\n\
+		Rollover key with id of the given zone. Requires the zone\n\
+		to have a dnssec-policy.\n\
+  dnssec -status zone [class [view]]\n\
+		Show the DNSSEC signing state for the specified zone.\n\
+		Requires the zone to have a dnssec-policy.\n\
   dnstap -reopen\n\
 		Close, truncate and re-open the DNSTAP output file.\n\
-  dnstap -roll count\n\
+  dnstap -roll [count]\n\
 		Close, rename and re-open the DNSTAP output file(s).\n\
-  dumpdb [-all|-cache|-zones|-adb|-bad|-fail] [view ...]\n\
+  dumpdb [-all|-cache|-zones|-adb|-bad|-expired|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
-  flush 	Flushes all of the server's caches.\n\
+  flush         Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
   flushname name [view]\n\
 		Flush the given name from the server's cache(s)\n\
@@ -161,7 +184,7 @@ command is one of the following:\n\
   scan		Scan available network interfaces for changes.\n\
   secroots [view ...]\n\
 		Write security roots to the secroots file.\n\
-  serve-stale [ yes | no | reset | status ] [class [view]]\n\
+  serve-stale [ on | off | reset | status ] [class [view]]\n\
 		Control whether stale answers are returned\n\
   showzone zone [class [view]]\n\
 		Print a zone's configuration.\n\
@@ -205,7 +228,7 @@ command is one of the following:\n\
 		Delete a TKEY-negotiated TSIG key.\n\
   tsig-list	List all currently active TSIG keys, including both statically\n\
 		configured and TKEY-negotiated keys.\n\
-  validation [ yes | no | status ] [view]\n\
+  validation [ on | off | status ] [view]\n\
 		Enable / disable DNSSEC validation.\n\
   zonestatus zone [class [view]]\n\
 		Display the current status of a zone.\n\
@@ -251,166 +274,203 @@ get_addresses(const char *host, in_port_t port) {
 	isc_result_t result;
 	int found = 0, count;
 
+	REQUIRE(host != NULL);
+
 	if (*host == '/') {
 		result = isc_sockaddr_frompath(&serveraddrs[nserveraddrs],
 					       host);
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS) {
 			nserveraddrs++;
+		}
 	} else {
 		count = SERVERADDRS - nserveraddrs;
-		result = bind9_getaddresses(host, port,
-					    &serveraddrs[nserveraddrs],
-					    count, &found);
+		result = bind9_getaddresses(
+			host, port, &serveraddrs[nserveraddrs], count, &found);
 		nserveraddrs += found;
 	}
-	if (result != ISC_R_SUCCESS)
-		fatal("couldn't get address for '%s': %s",
-		      host, isc_result_totext(result));
+	if (result != ISC_R_SUCCESS) {
+		fatal("couldn't get address for '%s': %s", host,
+		      isc_result_totext(result));
+	}
 	INSIST(nserveraddrs > 0);
 }
 
 static void
-rndc_senddone(isc_task_t *task, isc_event_t *event) {
-	isc_socketevent_t *sevent = (isc_socketevent_t *)event;
+rndc_senddone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
+	isc_nmhandle_t *sendhandle = (isc_nmhandle_t *)arg;
 
-	UNUSED(task);
+	if (result != ISC_R_SUCCESS) {
+		fatal("send failed: %s", isc_result_totext(result));
+	}
 
-	sends--;
-	if (sevent->result != ISC_R_SUCCESS)
-		fatal("send failed: %s", isc_result_totext(sevent->result));
-	isc_event_free(&event);
-	if (sends == 0 && recvs == 0) {
-		isc_socket_detach(&sock);
-		isc_task_shutdown(task);
-		RUNTIME_CHECK(isc_app_shutdown() == ISC_R_SUCCESS);
+	REQUIRE(sendhandle == handle);
+	isc_nmhandle_detach(&sendhandle);
+
+	if (atomic_fetch_sub_release(&sends, 1) == 1 &&
+	    atomic_load_acquire(&recvs) == 0)
+	{
+		shuttingdown = true;
+		isc_task_detach(&rndc_task);
+		isc_app_shutdown();
 	}
 }
 
 static void
-rndc_recvdone(isc_task_t *task, isc_event_t *event) {
+rndc_recvdone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
+	isccc_ccmsg_t *ccmsg = (isccc_ccmsg_t *)arg;
 	isccc_sexpr_t *response = NULL;
-	isccc_sexpr_t *data;
+	isccc_sexpr_t *data = NULL;
 	isccc_region_t source;
 	char *errormsg = NULL;
 	char *textmsg = NULL;
-	isc_result_t result;
 
-	recvs--;
+	REQUIRE(ccmsg != NULL);
 
-	if (ccmsg.result == ISC_R_EOF)
-		fatal("connection to remote host closed\n"
-		      "This may indicate that\n"
-		      "* the remote server is using an older version of"
-		      " the command protocol,\n"
+	if (shuttingdown && (result == ISC_R_EOF || result == ISC_R_CANCELED)) {
+		atomic_fetch_sub_release(&recvs, 1);
+		if (handle != NULL) {
+			REQUIRE(recvdone_handle == handle);
+			isc_nmhandle_detach(&recvdone_handle);
+		}
+		return;
+	} else if (result == ISC_R_EOF) {
+		fatal("connection to remote host closed.\n"
+		      "* This may indicate that the\n"
+		      "* remote server is using an older\n"
+		      "* version of the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
-		      "* the clocks are not synchronized, or\n"
-		      "* the key is invalid.");
+		      "* the clocks are not synchronized,\n"
+		      "* the key signing algorithm is incorrect,\n"
+		      "* or the key is invalid.");
+	} else if (result != ISC_R_SUCCESS) {
+		fatal("recv failed: %s", isc_result_totext(result));
+	}
 
-	if (ccmsg.result != ISC_R_SUCCESS)
-		fatal("recv failed: %s", isc_result_totext(ccmsg.result));
-
-	source.rstart = isc_buffer_base(&ccmsg.buffer);
-	source.rend = isc_buffer_used(&ccmsg.buffer);
+	source.rstart = isc_buffer_base(ccmsg->buffer);
+	source.rend = isc_buffer_used(ccmsg->buffer);
 
 	DO("parse message",
 	   isccc_cc_fromwire(&source, &response, algorithm, &secret));
 
 	data = isccc_alist_lookup(response, "_data");
-	if (!isccc_alist_alistp(data))
+	if (!isccc_alist_alistp(data)) {
 		fatal("bad or missing data section in response");
+	}
 	result = isccc_cc_lookupstring(data, "err", &errormsg);
 	if (result == ISC_R_SUCCESS) {
 		failed = true;
-		fprintf(stderr, "%s: '%s' failed: %s\n",
-			progname, command, errormsg);
+		fprintf(stderr, "%s: '%s' failed: %s\n", progname, command,
+			errormsg);
+	} else if (result != ISC_R_NOTFOUND) {
+		fprintf(stderr, "%s: parsing response failed: %s\n", progname,
+			isc_result_totext(result));
 	}
-	else if (result != ISC_R_NOTFOUND)
-		fprintf(stderr, "%s: parsing response failed: %s\n",
-			progname, isc_result_totext(result));
 
 	result = isccc_cc_lookupstring(data, "text", &textmsg);
 	if (result == ISC_R_SUCCESS) {
-		if ((!quiet || failed) && strlen(textmsg) != 0U)
+		if ((!quiet || failed) && strlen(textmsg) != 0U) {
 			fprintf(failed ? stderr : stdout, "%s\n", textmsg);
-	} else if (result != ISC_R_NOTFOUND)
-		fprintf(stderr, "%s: parsing response failed: %s\n",
-			progname, isc_result_totext(result));
+		}
+	} else if (result != ISC_R_NOTFOUND) {
+		fprintf(stderr, "%s: parsing response failed: %s\n", progname,
+			isc_result_totext(result));
+	}
 
 	if (showresult) {
 		isc_result_t eresult;
 
 		result = isccc_cc_lookupuint32(data, "result", &eresult);
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS) {
 			printf("%s %u\n", isc_result_toid(eresult), eresult);
-		else
+		} else {
 			printf("NONE -1\n");
+		}
 	}
 
-	isc_event_free(&event);
 	isccc_sexpr_free(&response);
-	if (sends == 0 && recvs == 0) {
-		isc_socket_detach(&sock);
-		isc_task_shutdown(task);
-		RUNTIME_CHECK(isc_app_shutdown() == ISC_R_SUCCESS);
+
+	REQUIRE(recvdone_handle == handle);
+	isc_nmhandle_detach(&recvdone_handle);
+
+	if (atomic_fetch_sub_release(&recvs, 1) == 1 &&
+	    atomic_load_acquire(&sends) == 0)
+	{
+		shuttingdown = true;
+		isc_task_detach(&rndc_task);
+		isc_app_shutdown();
 	}
 }
 
 static void
-rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
+rndc_recvnonce(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
+	isccc_ccmsg_t *ccmsg = (isccc_ccmsg_t *)arg;
 	isccc_sexpr_t *response = NULL;
-	isccc_sexpr_t *_ctrl;
+	isc_nmhandle_t *sendhandle = NULL;
+	isccc_sexpr_t *_ctrl = NULL;
 	isccc_region_t source;
-	isc_result_t result;
 	uint32_t nonce;
 	isccc_sexpr_t *request = NULL;
 	isccc_time_t now;
 	isc_region_t r;
-	isccc_sexpr_t *data;
+	isccc_sexpr_t *data = NULL;
 	isc_buffer_t b;
 
-	recvs--;
+	REQUIRE(ccmsg != NULL);
 
-	if (ccmsg.result == ISC_R_EOF)
-		fatal("connection to remote host closed\n"
-		      "This may indicate that\n"
-		      "* the remote server is using an older version of"
-		      " the command protocol,\n"
+	if (shuttingdown && (result == ISC_R_EOF || result == ISC_R_CANCELED)) {
+		atomic_fetch_sub_release(&recvs, 1);
+		if (handle != NULL) {
+			REQUIRE(recvnonce_handle == handle);
+			isc_nmhandle_detach(&recvnonce_handle);
+		}
+		return;
+	} else if (result == ISC_R_EOF) {
+		fatal("connection to remote host closed.\n"
+		      "* This may indicate that the\n"
+		      "* remote server is using an older\n"
+		      "* version of the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
 		      "* the clocks are not synchronized,\n"
-		      "* the key signing algorithm is incorrect, or\n"
-		      "* the key is invalid.");
+		      "* the key signing algorithm is incorrect\n"
+		      "* or the key is invalid.");
+	} else if (result != ISC_R_SUCCESS) {
+		fatal("recv failed: %s", isc_result_totext(result));
+	}
 
-	if (ccmsg.result != ISC_R_SUCCESS)
-		fatal("recv failed: %s", isc_result_totext(ccmsg.result));
-
-	source.rstart = isc_buffer_base(&ccmsg.buffer);
-	source.rend = isc_buffer_used(&ccmsg.buffer);
+	source.rstart = isc_buffer_base(ccmsg->buffer);
+	source.rend = isc_buffer_used(ccmsg->buffer);
 
 	DO("parse message",
 	   isccc_cc_fromwire(&source, &response, algorithm, &secret));
 
 	_ctrl = isccc_alist_lookup(response, "_ctrl");
-	if (!isccc_alist_alistp(_ctrl))
+	if (!isccc_alist_alistp(_ctrl)) {
 		fatal("bad or missing ctrl section in response");
+	}
 	nonce = 0;
-	if (isccc_cc_lookupuint32(_ctrl, "_nonce", &nonce) != ISC_R_SUCCESS)
+	if (isccc_cc_lookupuint32(_ctrl, "_nonce", &nonce) != ISC_R_SUCCESS) {
 		nonce = 0;
+	}
 
 	isc_stdtime_get(&now);
 
 	DO("create message", isccc_cc_createmessage(1, NULL, NULL, ++serial,
 						    now, now + 60, &request));
 	data = isccc_alist_lookup(request, "_data");
-	if (data == NULL)
+	if (data == NULL) {
 		fatal("_data section missing");
-	if (isccc_cc_definestring(data, "type", args) == NULL)
+	}
+	if (isccc_cc_definestring(data, "type", args) == NULL) {
 		fatal("out of memory");
+	}
 	if (nonce != 0) {
 		_ctrl = isccc_alist_lookup(request, "_ctrl");
-		if (_ctrl == NULL)
+		if (_ctrl == NULL) {
 			fatal("_ctrl section missing");
-		if (isccc_cc_defineuint32(_ctrl, "_nonce", nonce) == NULL)
+		}
+		if (isccc_cc_defineuint32(_ctrl, "_nonce", nonce) == NULL) {
 			fatal("out of memory");
+		}
 	}
 
 	isc_buffer_clear(databuf);
@@ -426,58 +486,64 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 	r.base = databuf->base;
 	r.length = databuf->used;
 
-	isccc_ccmsg_cancelread(&ccmsg);
-	DO("schedule recv", isccc_ccmsg_readmessage(&ccmsg, task,
-						    rndc_recvdone, NULL));
-	recvs++;
-	DO("send message", isc_socket_send(sock, &r, task, rndc_senddone,
-					   NULL));
-	sends++;
+	isc_nmhandle_attach(handle, &recvdone_handle);
+	atomic_fetch_add_relaxed(&recvs, 1);
+	isccc_ccmsg_readmessage(ccmsg, rndc_recvdone, ccmsg);
 
-	isc_event_free(&event);
+	isc_nmhandle_attach(handle, &sendhandle);
+	atomic_fetch_add_relaxed(&sends, 1);
+	isc_nm_send(handle, &r, rndc_senddone, sendhandle);
+
+	REQUIRE(recvnonce_handle == handle);
+	isc_nmhandle_detach(&recvnonce_handle);
+	atomic_fetch_sub_release(&recvs, 1);
+
 	isccc_sexpr_free(&response);
 	isccc_sexpr_free(&request);
 	return;
 }
 
 static void
-rndc_connected(isc_task_t *task, isc_event_t *event) {
+rndc_connected(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
+	isccc_ccmsg_t *ccmsg = (isccc_ccmsg_t *)arg;
 	char socktext[ISC_SOCKADDR_FORMATSIZE];
-	isc_socketevent_t *sevent = (isc_socketevent_t *)event;
 	isccc_sexpr_t *request = NULL;
-	isccc_sexpr_t *data;
+	isccc_sexpr_t *data = NULL;
 	isccc_time_t now;
 	isc_region_t r;
 	isc_buffer_t b;
-	isc_result_t result;
+	isc_nmhandle_t *connhandle = NULL;
+	isc_nmhandle_t *sendhandle = NULL;
 
-	connects--;
+	REQUIRE(ccmsg != NULL);
 
-	if (sevent->result != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS) {
+		atomic_fetch_sub_release(&connects, 1);
 		isc_sockaddr_format(&serveraddrs[currentaddr], socktext,
 				    sizeof(socktext));
-		if (sevent->result != ISC_R_CANCELED &&
-		    ++currentaddr < nserveraddrs)
-		{
+		if (++currentaddr < nserveraddrs) {
 			notify("connection failed: %s: %s", socktext,
-			       isc_result_totext(sevent->result));
-			isc_socket_detach(&sock);
-			isc_event_free(&event);
-			rndc_startconnect(&serveraddrs[currentaddr], task);
+			       isc_result_totext(result));
+			rndc_startconnect(&serveraddrs[currentaddr]);
 			return;
-		} else
-			fatal("connect failed: %s: %s", socktext,
-			      isc_result_totext(sevent->result));
+		}
+
+		fatal("connect failed: %s: %s", socktext,
+		      isc_result_totext(result));
 	}
+
+	isc_nmhandle_attach(handle, &connhandle);
 
 	isc_stdtime_get(&now);
 	DO("create message", isccc_cc_createmessage(1, NULL, NULL, ++serial,
 						    now, now + 60, &request));
 	data = isccc_alist_lookup(request, "_data");
-	if (data == NULL)
+	if (data == NULL) {
 		fatal("_data section missing");
-	if (isccc_cc_definestring(data, "type", "null") == NULL)
+	}
+	if (isccc_cc_definestring(data, "type", "null") == NULL) {
 		fatal("out of memory");
+	}
 
 	isc_buffer_clear(databuf);
 	/* Skip the length field (4 bytes) */
@@ -492,64 +558,66 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 	r.base = databuf->base;
 	r.length = databuf->used;
 
-	isccc_ccmsg_init(rndc_mctx, sock, &ccmsg);
-	isccc_ccmsg_setmaxsize(&ccmsg, 1024 * 1024);
+	isccc_ccmsg_init(rndc_mctx, handle, ccmsg);
+	isccc_ccmsg_setmaxsize(ccmsg, 1024 * 1024);
 
-	DO("schedule recv", isccc_ccmsg_readmessage(&ccmsg, task,
-						    rndc_recvnonce, NULL));
-	recvs++;
-	DO("send message", isc_socket_send(sock, &r, task, rndc_senddone,
-					   NULL));
-	sends++;
-	isc_event_free(&event);
+	isc_nmhandle_attach(handle, &recvnonce_handle);
+	atomic_fetch_add_relaxed(&recvs, 1);
+	isccc_ccmsg_readmessage(ccmsg, rndc_recvnonce, ccmsg);
+
+	isc_nmhandle_attach(handle, &sendhandle);
+	atomic_fetch_add_relaxed(&sends, 1);
+	isc_nm_send(handle, &r, rndc_senddone, sendhandle);
+
+	isc_nmhandle_detach(&connhandle);
+	atomic_fetch_sub_release(&connects, 1);
+
 	isccc_sexpr_free(&request);
 }
 
 static void
-rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task) {
-	isc_result_t result;
-	int pf;
-	isc_sockettype_t type;
-
+rndc_startconnect(isc_sockaddr_t *addr) {
 	char socktext[ISC_SOCKADDR_FORMATSIZE];
+	isc_sockaddr_t *local = NULL;
 
 	isc_sockaddr_format(addr, socktext, sizeof(socktext));
 
 	notify("using server %s (%s)", servername, socktext);
 
-	pf = isc_sockaddr_pf(addr);
-	if (pf == AF_INET || pf == AF_INET6)
-		type = isc_sockettype_tcp;
-	else
-		type = isc_sockettype_unix;
-	DO("create socket", isc_socket_create(socketmgr, pf, type, &sock));
 	switch (isc_sockaddr_pf(addr)) {
 	case AF_INET:
-		DO("bind socket", isc_socket_bind(sock, &local4, 0));
+		local = &local4;
 		break;
 	case AF_INET6:
-		DO("bind socket", isc_socket_bind(sock, &local6, 0));
+		local = &local6;
 		break;
+	case AF_UNIX:
+		/*
+		 * TODO: support UNIX domain sockets in netgmr.
+		 */
+		fatal("UNIX domain sockets not currently supported");
 	default:
-		break;
+		UNREACHABLE();
 	}
-	DO("connect", isc_socket_connect(sock, addr, task, rndc_connected,
-					 NULL));
-	connects++;
+
+	atomic_fetch_add_relaxed(&connects, 1);
+	isc_nm_tcpconnect(netmgr, local, addr, rndc_connected, &rndc_ccmsg,
+			  RNDC_TIMEOUT, 0);
 }
 
 static void
 rndc_start(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 
+	UNUSED(task);
+
 	currentaddr = 0;
-	rndc_startconnect(&serveraddrs[currentaddr], task);
+	rndc_startconnect(&serveraddrs[currentaddr]);
 }
 
 static void
 parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
-	     cfg_parser_t **pctxp, cfg_obj_t **configp)
-{
+	     cfg_parser_t **pctxp, cfg_obj_t **configp) {
 	isc_result_t result;
 	const char *conffile = admin_conffile;
 	const cfg_obj_t *addresses = NULL;
@@ -572,19 +640,22 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	bool key_only = false;
 	const cfg_listelt_t *element;
 
-	if (! isc_file_exists(conffile)) {
+	if (!isc_file_exists(conffile)) {
 		conffile = admin_keyfile;
 		conftype = &cfg_type_rndckey;
 
-		if (c_flag)
+		if (c_flag) {
 			fatal("%s does not exist", admin_conffile);
+		}
 
-		if (! isc_file_exists(conffile))
-			fatal("neither %s nor %s was found",
-			      admin_conffile, admin_keyfile);
+		if (!isc_file_exists(conffile)) {
+			fatal("neither %s nor %s was found", admin_conffile,
+			      admin_keyfile);
+		}
 		key_only = true;
-	} else if (! c_flag && isc_file_exists(admin_keyfile)) {
-		fprintf(stderr, "WARNING: key file (%s) exists, but using "
+	} else if (!c_flag && isc_file_exists(admin_keyfile)) {
+		fprintf(stderr,
+			"WARNING: key file (%s) exists, but using "
 			"default configuration file (%s)\n",
 			admin_keyfile, admin_conffile);
 	}
@@ -595,36 +666,41 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	 * The parser will output its own errors, so DO() is not used.
 	 */
 	result = cfg_parse_file(*pctxp, conffile, conftype, &config);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("could not load rndc configuration");
-
-	if (!key_only)
-		(void)cfg_map_get(config, "options", &options);
-
-	if (key_only && servername == NULL)
-		servername = "127.0.0.1";
-	else if (servername == NULL && options != NULL) {
-		const cfg_obj_t *defserverobj = NULL;
-		(void)cfg_map_get(options, "default-server", &defserverobj);
-		if (defserverobj != NULL)
-			servername = cfg_obj_asstring(defserverobj);
 	}
 
-	if (servername == NULL)
+	if (!key_only) {
+		(void)cfg_map_get(config, "options", &options);
+	}
+
+	if (key_only && servername == NULL) {
+		servername = "127.0.0.1";
+	} else if (servername == NULL && options != NULL) {
+		const cfg_obj_t *defserverobj = NULL;
+		(void)cfg_map_get(options, "default-server", &defserverobj);
+		if (defserverobj != NULL) {
+			servername = cfg_obj_asstring(defserverobj);
+		}
+	}
+
+	if (servername == NULL) {
 		fatal("no server specified and no default");
+	}
 
 	if (!key_only) {
 		(void)cfg_map_get(config, "server", &servers);
 		if (servers != NULL) {
-			for (elt = cfg_list_first(servers);
-			     elt != NULL;
+			for (elt = cfg_list_first(servers); elt != NULL;
 			     elt = cfg_list_next(elt))
 			{
-				const char *name;
+				const char *name = NULL;
 				server = cfg_listelt_value(elt);
-				name = cfg_obj_asstring(cfg_map_getname(server));
-				if (strcasecmp(name, servername) == 0)
+				name = cfg_obj_asstring(
+					cfg_map_getname(server));
+				if (strcasecmp(name, servername) == 0) {
 					break;
+				}
 				server = NULL;
 			}
 		}
@@ -633,41 +709,46 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	/*
 	 * Look for the name of the key to use.
 	 */
-	if (keyname != NULL)
-		;		/* Was set on command line, do nothing. */
-	else if (server != NULL) {
+	if (keyname != NULL) {
+		/* Was set on command line, do nothing. */
+	} else if (server != NULL) {
 		DO("get key for server", cfg_map_get(server, "key", &defkey));
 		keyname = cfg_obj_asstring(defkey);
 	} else if (options != NULL) {
-		DO("get default key", cfg_map_get(options, "default-key",
-						  &defkey));
+		DO("get default key",
+		   cfg_map_get(options, "default-key", &defkey));
 		keyname = cfg_obj_asstring(defkey);
-	} else if (!key_only)
+	} else if (!key_only) {
 		fatal("no key for server and no default");
+	}
 
 	/*
 	 * Get the key's definition.
 	 */
-	if (key_only)
+	if (key_only) {
 		DO("get key", cfg_map_get(config, "key", &key));
-	else {
+	} else {
 		DO("get config key list", cfg_map_get(config, "key", &keys));
-		for (elt = cfg_list_first(keys);
-		     elt != NULL;
+		for (elt = cfg_list_first(keys); elt != NULL;
 		     elt = cfg_list_next(elt))
 		{
+			const char *name = NULL;
+
 			key = cfg_listelt_value(elt);
-			if (strcasecmp(cfg_obj_asstring(cfg_map_getname(key)),
-				       keyname) == 0)
+			name = cfg_obj_asstring(cfg_map_getname(key));
+			if (strcasecmp(name, keyname) == 0) {
 				break;
+			}
 		}
-		if (elt == NULL)
+		if (elt == NULL) {
 			fatal("no key definition for name %s", keyname);
+		}
 	}
 	(void)cfg_map_get(key, "secret", &secretobj);
 	(void)cfg_map_get(key, "algorithm", &algorithmobj);
-	if (secretobj == NULL || algorithmobj == NULL)
+	if (secretobj == NULL || algorithmobj == NULL) {
 		fatal("key must have algorithm and secret");
+	}
 
 	secretstr = cfg_obj_asstring(secretobj);
 	algorithmstr = cfg_obj_asstring(algorithmobj);
@@ -697,28 +778,32 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	/*
 	 * Find the port to connect to.
 	 */
-	if (remoteport != 0)
-		;		/* Was set on command line, do nothing. */
-	else {
-		if (server != NULL)
+	if (remoteport != 0) {
+		/* Was set on command line, do nothing. */
+	} else {
+		if (server != NULL) {
 			(void)cfg_map_get(server, "port", &defport);
-		if (defport == NULL && options != NULL)
+		}
+		if (defport == NULL && options != NULL) {
 			(void)cfg_map_get(options, "default-port", &defport);
+		}
 	}
 	if (defport != NULL) {
 		remoteport = cfg_obj_asuint32(defport);
-		if (remoteport > 65535 || remoteport == 0)
+		if (remoteport > 65535 || remoteport == 0) {
 			fatal("port %u out of range", remoteport);
-	} else if (remoteport == 0)
+		}
+	} else if (remoteport == 0) {
 		remoteport = NS_CONTROL_PORT;
+	}
 
-	if (server != NULL)
+	if (server != NULL) {
 		result = cfg_map_get(server, "addresses", &addresses);
-	else
+	} else {
 		result = ISC_R_NOTFOUND;
+	}
 	if (result == ISC_R_SUCCESS) {
-		for (element = cfg_list_first(addresses);
-		     element != NULL;
+		for (element = cfg_list_first(addresses); element != NULL;
 		     element = cfg_list_next(element))
 		{
 			isc_sockaddr_t sa;
@@ -734,25 +819,31 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 				obj = cfg_tuple_get(address, "port");
 				if (cfg_obj_isuint32(obj)) {
 					myport = cfg_obj_asuint32(obj);
-					if (myport > UINT16_MAX ||
-					    myport == 0)
+					if (myport > UINT16_MAX || myport == 0)
+					{
 						fatal("port %u out of range",
 						      myport);
-				} else
+					}
+				} else {
 					myport = remoteport;
-				if (nserveraddrs < SERVERADDRS)
-					get_addresses(name, (in_port_t) myport);
-				else
-					fprintf(stderr, "too many address: "
-						"%s: dropped\n", name);
+				}
+				if (nserveraddrs < SERVERADDRS) {
+					get_addresses(name, (in_port_t)myport);
+				} else {
+					fprintf(stderr,
+						"too many address: "
+						"%s: dropped\n",
+						name);
+				}
 				continue;
 			}
 			sa = *cfg_obj_assockaddr(address);
-			if (isc_sockaddr_getport(&sa) == 0)
+			if (isc_sockaddr_getport(&sa) == 0) {
 				isc_sockaddr_setport(&sa, remoteport);
-			if (nserveraddrs < SERVERADDRS)
+			}
+			if (nserveraddrs < SERVERADDRS) {
 				serveraddrs[nserveraddrs++] = sa;
-			else {
+			} else {
 				char socktext[ISC_SOCKADDR_FORMATSIZE];
 
 				isc_sockaddr_format(&sa, socktext,
@@ -805,8 +896,6 @@ int
 main(int argc, char **argv) {
 	isc_result_t result = ISC_R_SUCCESS;
 	bool show_final_mem = false;
-	isc_taskmgr_t *taskmgr = NULL;
-	isc_task_t *task = NULL;
 	isc_log_t *log = NULL;
 	isc_logconfig_t *logconfig = NULL;
 	isc_logdestination_t logdest;
@@ -821,8 +910,9 @@ main(int argc, char **argv) {
 	int i;
 
 	result = isc_file_progname(*argv, program, sizeof(program));
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		memmove(program, "rndc", 5);
+	}
 	progname = program;
 
 	admin_conffile = RNDC_CONFFILE;
@@ -832,8 +922,9 @@ main(int argc, char **argv) {
 	isc_sockaddr_any6(&local6);
 
 	result = isc_app_start();
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("isc_app_start() failed: %s", isc_result_totext(result));
+	}
 
 	isc_commandline_errprint = false;
 
@@ -854,12 +945,14 @@ main(int argc, char **argv) {
 			isc_net_disableipv4();
 			break;
 		case 'b':
-			if (inet_pton(AF_INET, isc_commandline_argument,
-				      &in) == 1) {
+			if (inet_pton(AF_INET, isc_commandline_argument, &in) ==
+			    1)
+			{
 				isc_sockaddr_fromin(&local4, &in, 0);
 				local4set = true;
 			} else if (inet_pton(AF_INET6, isc_commandline_argument,
-					     &in6) == 1) {
+					     &in6) == 1)
+			{
 				isc_sockaddr_fromin6(&local6, &in6, 0);
 				local6set = true;
 			}
@@ -884,9 +977,10 @@ main(int argc, char **argv) {
 
 		case 'p':
 			remoteport = atoi(isc_commandline_argument);
-			if (remoteport > 65535 || remoteport == 0)
+			if (remoteport > 65535 || remoteport == 0) {
 				fatal("port '%s' out of range",
 				      isc_commandline_argument);
+			}
 			break;
 
 		case 'q':
@@ -915,13 +1009,13 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 				usage(1);
 			}
-			/* FALLTHROUGH */
+			FALLTHROUGH;
 		case 'h':
 			usage(0);
 			break;
 		default:
-			fprintf(stderr, "%s: unhandled option -%c\n",
-				program, isc_commandline_option);
+			fprintf(stderr, "%s: unhandled option -%c\n", program,
+				isc_commandline_option);
 			exit(1);
 		}
 	}
@@ -929,38 +1023,40 @@ main(int argc, char **argv) {
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
 
-	if (argc < 1)
+	if (argv[0] == NULL) {
 		usage(1);
+	} else {
+		command = argv[0];
+		if (strcmp(command, "restart") == 0) {
+			fatal("'%s' is not implemented", command);
+		}
+		notify("%s", command);
+	}
 
 	serial = isc_random32();
 
-	DO("create memory context", isc_mem_create(0, 0, &rndc_mctx));
-	DO("create socket manager", isc_socketmgr_create(rndc_mctx, &socketmgr));
-	DO("create task manager", isc_taskmgr_create(rndc_mctx, 1, 0, &taskmgr));
-	DO("create task", isc_task_create(taskmgr, 0, &task));
+	isc_mem_create(&rndc_mctx);
+	isc_managers_create(rndc_mctx, 1, 0, &netmgr, &taskmgr, NULL);
+	DO("create task", isc_task_create(taskmgr, 0, &rndc_task));
 
-	DO("create logging context", isc_log_create(rndc_mctx, &log, &logconfig));
+	isc_nm_settimeouts(netmgr, RNDC_TIMEOUT, RNDC_TIMEOUT, RNDC_TIMEOUT, 0);
+
+	isc_log_create(rndc_mctx, &log, &logconfig);
 	isc_log_setcontext(log);
-	DO("setting log tag", isc_log_settag(logconfig, progname));
+	isc_log_settag(logconfig, progname);
 	logdest.file.stream = stderr;
 	logdest.file.name = NULL;
 	logdest.file.versions = ISC_LOG_ROLLNEVER;
 	logdest.file.maximum_size = 0;
-	DO("creating log channel",
-	   isc_log_createchannel(logconfig, "stderr",
-				 ISC_LOG_TOFILEDESC, ISC_LOG_INFO, &logdest,
-				 ISC_LOG_PRINTTAG|ISC_LOG_PRINTLEVEL));
-	DO("enabling log channel", isc_log_usechannel(logconfig, "stderr",
-						      NULL, NULL));
+	isc_log_createchannel(logconfig, "stderr", ISC_LOG_TOFILEDESC,
+			      ISC_LOG_INFO, &logdest,
+			      ISC_LOG_PRINTTAG | ISC_LOG_PRINTLEVEL);
+	DO("enabling log channel",
+	   isc_log_usechannel(logconfig, "stderr", NULL, NULL));
 
 	parse_config(rndc_mctx, log, keyname, &pctx, &config);
 
-	isccc_result_register();
-
-	command = *argv;
-
-	DO("allocate data buffer",
-	   isc_buffer_allocate(rndc_mctx, &databuf, 2048));
+	isc_buffer_allocate(rndc_mctx, &databuf, 2048);
 
 	/*
 	 * Convert argc/argv into a space-delimited command string
@@ -968,12 +1064,11 @@ main(int argc, char **argv) {
 	 * (if that were implemented).
 	 */
 	argslen = 0;
-	for (i = 0; i < argc; i++)
+	for (i = 0; i < argc; i++) {
 		argslen += strlen(argv[i]) + 1;
+	}
 
 	args = isc_mem_get(rndc_mctx, argslen);
-	if (args == NULL)
-		DO("isc_mem_get", ISC_R_NOMEMORY);
 
 	p = args;
 	for (i = 0; i < argc; i++) {
@@ -987,26 +1082,27 @@ main(int argc, char **argv) {
 	*p++ = '\0';
 	INSIST(p == args + argslen);
 
-	notify("%s", command);
+	if (nserveraddrs == 0 && servername != NULL) {
+		get_addresses(servername, (in_port_t)remoteport);
+	}
 
-	if (strcmp(command, "restart") == 0)
-		fatal("'%s' is not implemented", command);
-
-	if (nserveraddrs == 0)
-		get_addresses(servername, (in_port_t) remoteport);
-
-	DO("post event", isc_app_onrun(rndc_mctx, task, rndc_start, NULL));
+	DO("post event", isc_app_onrun(rndc_mctx, rndc_task, rndc_start, NULL));
 
 	result = isc_app_run();
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("isc_app_run() failed: %s", isc_result_totext(result));
+	}
 
-	if (connects > 0 || sends > 0 || recvs > 0)
-		isc_socket_cancel(sock, task, ISC_SOCKCANCEL_ALL);
+	isc_managers_destroy(&netmgr, &taskmgr, NULL);
 
-	isc_task_detach(&task);
-	isc_taskmgr_destroy(&taskmgr);
-	isc_socketmgr_destroy(&socketmgr);
+	/*
+	 * Note: when TCP connections are shut down, there will be a final
+	 * call to the isccc callback routine with &rndc_ccmsg as its
+	 * argument. We therefore need to delay invalidating it until
+	 * after the netmgr is closed down.
+	 */
+	isccc_ccmsg_invalidate(&rndc_ccmsg);
+
 	isc_log_destroy(&log);
 	isc_log_setcontext(NULL);
 
@@ -1014,19 +1110,18 @@ main(int argc, char **argv) {
 	cfg_parser_destroy(&pctx);
 
 	isc_mem_put(rndc_mctx, args, argslen);
-	isccc_ccmsg_invalidate(&ccmsg);
-
-	dns_name_destroy();
 
 	isc_buffer_free(&databuf);
 
-	if (show_final_mem)
+	if (show_final_mem) {
 		isc_mem_stats(rndc_mctx, stderr);
+	}
 
 	isc_mem_destroy(&rndc_mctx);
 
-	if (failed)
+	if (failed) {
 		return (1);
+	}
 
 	return (0);
 }

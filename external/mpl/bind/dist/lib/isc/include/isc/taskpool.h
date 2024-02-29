@@ -1,23 +1,23 @@
-/*	$NetBSD: taskpool.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: taskpool.h,v 1.3.4.1 2024/02/29 12:35:12 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_TASKPOOL_H
-#define ISC_TASKPOOL_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/taskpool.h
  * \brief A task pool is a mechanism for sharing a small number of tasks
@@ -31,7 +31,6 @@
  * could result from creating a separate task for each object.
  */
 
-
 /***
  *** Imports.
  ***/
@@ -44,19 +43,18 @@
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Types.
- *****/
+***** Types.
+*****/
 
 typedef struct isc_taskpool isc_taskpool_t;
 
 /*****
- ***** Functions.
- *****/
+***** Functions.
+*****/
 
 isc_result_t
-isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx,
-		    unsigned int ntasks, unsigned int quantum,
-		    isc_taskpool_t **poolp);
+isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx, unsigned int ntasks,
+		    unsigned int quantum, bool priv, isc_taskpool_t **poolp);
 /*%<
  * Create a task pool of "ntasks" tasks, each with quantum
  * "quantum".
@@ -95,8 +93,8 @@ isc_taskpool_size(isc_taskpool_t *pool);
  */
 
 isc_result_t
-isc_taskpool_expand(isc_taskpool_t **sourcep, unsigned int size,
-					isc_taskpool_t **targetp);
+isc_taskpool_expand(isc_taskpool_t **sourcep, unsigned int size, bool priv,
+		    isc_taskpool_t **targetp);
 
 /*%<
  * If 'size' is larger than the number of tasks in the pool pointed to by
@@ -136,19 +134,4 @@ isc_taskpool_destroy(isc_taskpool_t **poolp);
  * \li	'*poolp' is a valid task pool.
  */
 
-void
-isc_taskpool_setprivilege(isc_taskpool_t *pool, bool priv);
-/*%<
- * Set the privilege flag on all tasks in 'pool' to 'priv'.  If 'priv' is
- * true, then when the task manager is set into privileged mode, only
- * tasks wihin this pool will be able to execute.  (Note:  It is important
- * to turn the pool tasks' privilege back off before the last task finishes
- * executing.)
- *
- * Requires:
- * \li	'pool' is a valid task pool.
- */
-
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_TASKPOOL_H */

@@ -1,22 +1,23 @@
-/*	$NetBSD: badcache.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: badcache.h,v 1.3.4.1 2024/02/29 12:34:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_BADCACHE_H
-#define DNS_BADCACHE_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/badcache.h
  * \brief
@@ -76,8 +77,8 @@ dns_badcache_destroy(dns_badcache_t **bcp);
 
 void
 dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
-		 dns_rdatatype_t type, bool update,
-		 uint32_t flags, isc_time_t *expire);
+		 dns_rdatatype_t type, bool update, uint32_t flags,
+		 isc_time_t *expire);
 /*%
  * Adds a badcache entry to the badcache 'bc' for name 'name' and
  * type 'type'.  If an entry already exists, then it will be updated if
@@ -92,8 +93,7 @@ dns_badcache_add(dns_badcache_t *bc, const dns_name_t *name,
 
 bool
 dns_badcache_find(dns_badcache_t *bc, const dns_name_t *name,
-		  dns_rdatatype_t type, uint32_t *flagp,
-		  isc_time_t *now);
+		  dns_rdatatype_t type, uint32_t *flagp, isc_time_t *now);
 /*%
  * Returns true if a record is found in the badcache 'bc' matching
  * 'name' and 'type', with an expiration date later than 'now'.
@@ -149,5 +149,3 @@ dns_badcache_print(dns_badcache_t *bc, const char *cachename, FILE *fp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_BADCACHE_H */

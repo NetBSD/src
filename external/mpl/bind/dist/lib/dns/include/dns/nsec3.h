@@ -1,24 +1,25 @@
-/*	$NetBSD: nsec3.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_NSEC3_H
-#define DNS_NSEC3_H 1
+#pragma once
 
 #include <stdbool.h>
 
-#include <isc/lang.h>
 #include <isc/iterated_hash.h>
+#include <isc/lang.h>
+#include <isc/log.h>
 
 #include <dns/db.h>
 #include <dns/diff.h>
@@ -26,7 +27,8 @@
 #include <dns/rdatastruct.h>
 #include <dns/types.h>
 
-#define DNS_NSEC3_SALTSIZE 255
+#define DNS_NSEC3_SALTSIZE	255
+#define DNS_NSEC3_MAXITERATIONS 150U
 
 /*
  * hash = 1, flags =1, iterations = 2, salt length = 1, salt = 255 (max)
@@ -46,12 +48,12 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_nsec3_buildrdata(dns_db_t *db, dns_dbversion_t *version,
-		     dns_dbnode_t *node, unsigned int hashalg,
-		     unsigned int optin, unsigned int iterations,
-		     const unsigned char *salt, size_t salt_length,
-		     const unsigned char *nexthash, size_t hash_length,
-		     unsigned char *buffer, dns_rdata_t *rdata);
+dns_nsec3_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
+		     unsigned int hashalg, unsigned int optin,
+		     unsigned int iterations, const unsigned char *salt,
+		     size_t salt_length, const unsigned char *nexthash,
+		     size_t hash_length, unsigned char *buffer,
+		     dns_rdata_t *rdata);
 /*%<
  * Build the rdata of a NSEC3 record for the data at 'node'.
  * Note: 'node' is not the node where the NSEC3 record will be stored.
@@ -76,12 +78,18 @@ dns_nsec3_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  */
 
 isc_result_t
+dns_nsec3_generate_salt(unsigned char *salt, size_t saltlen);
+/*%<
+ * Generate a salt with the given salt length.
+ */
+
+isc_result_t
 dns_nsec3_hashname(dns_fixedname_t *result,
-		   unsigned char rethash[NSEC3_MAX_HASH_LENGTH],
-		   size_t *hash_length,
-		   const dns_name_t *name, const dns_name_t *origin,
-		   dns_hash_t hashalg, unsigned int iterations,
-		   const unsigned char *salt, size_t saltlength);
+		   unsigned char    rethash[NSEC3_MAX_HASH_LENGTH],
+		   size_t *hash_length, const dns_name_t *name,
+		   const dns_name_t *origin, dns_hash_t hashalg,
+		   unsigned int iterations, const unsigned char *salt,
+		   size_t saltlength);
 /*%<
  * Make a hashed domain name from an unhashed one. If rethash is not NULL
  * the raw hash is stored there.
@@ -102,20 +110,19 @@ dns_nsec3_supportedhash(dns_hash_t hash);
 
 isc_result_t
 dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
-		   const dns_name_t *name,
-		   const dns_rdata_nsec3param_t *nsec3param,
-		   dns_ttl_t nsecttl, bool unsecure, dns_diff_t *diff);
+		   const dns_name_t		*name,
+		   const dns_rdata_nsec3param_t *nsec3param, dns_ttl_t nsecttl,
+		   bool unsecure, dns_diff_t *diff);
 
 isc_result_t
 dns_nsec3_addnsec3s(dns_db_t *db, dns_dbversion_t *version,
-		    const dns_name_t *name, dns_ttl_t nsecttl,
-		    bool unsecure, dns_diff_t *diff);
+		    const dns_name_t *name, dns_ttl_t nsecttl, bool unsecure,
+		    dns_diff_t *diff);
 
 isc_result_t
 dns_nsec3_addnsec3sx(dns_db_t *db, dns_dbversion_t *version,
-		     const dns_name_t *name, dns_ttl_t nsecttl,
-		     bool unsecure, dns_rdatatype_t private,
-		     dns_diff_t *diff);
+		     const dns_name_t *name, dns_ttl_t nsecttl, bool unsecure,
+		     dns_rdatatype_t private, dns_diff_t *diff);
 /*%<
  * Add NSEC3 records for 'name', recording the change in 'diff'.
  * Adjust previous NSEC3 records, if any, to reflect the addition.
@@ -150,7 +157,7 @@ dns_nsec3_addnsec3sx(dns_db_t *db, dns_dbversion_t *version,
 
 isc_result_t
 dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version,
-		   const dns_name_t *name,
+		   const dns_name_t		*name,
 		   const dns_rdata_nsec3param_t *nsec3param, dns_diff_t *diff);
 
 isc_result_t
@@ -160,7 +167,7 @@ dns_nsec3_delnsec3s(dns_db_t *db, dns_dbversion_t *version,
 isc_result_t
 dns_nsec3_delnsec3sx(dns_db_t *db, dns_dbversion_t *version,
 		     const dns_name_t *name, dns_rdatatype_t private,
-		     dns_diff_t *diff);
+		     dns_diff_t	      *diff);
 /*%<
  * Remove NSEC3 records for 'name', recording the change in 'diff'.
  * Adjust previous NSEC3 records, if any, to reflect the removal.
@@ -185,13 +192,12 @@ dns_nsec3_delnsec3sx(dns_db_t *db, dns_dbversion_t *version,
  */
 
 isc_result_t
-dns_nsec3_active(dns_db_t *db, dns_dbversion_t *version,
-		 bool complete, bool *answer);
+dns_nsec3_active(dns_db_t *db, dns_dbversion_t *version, bool complete,
+		 bool *answer);
 
 isc_result_t
-dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version,
-		  bool complete, dns_rdatatype_t private,
-		  bool *answer);
+dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version, bool complete,
+		  dns_rdatatype_t private, bool *answer);
 /*%<
  * Check if there are any complete/to be built NSEC3 chains.
  * If 'complete' is true only complete chains will be recognized.
@@ -206,18 +212,10 @@ dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version,
  *	'answer' to be non NULL.
  */
 
-isc_result_t
-dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
-			isc_mem_t *mctx, unsigned int *iterationsp);
+unsigned int
+dns_nsec3_maxiterations(void);
 /*%<
- * Find the maximum permissible number of iterations allowed based on
- * the key strength.
- *
- * Requires:
- *	'db' to be valid.
- *	'version' to be valid or NULL.
- *	'mctx' to be valid.
- *	'iterationsp' to be non NULL.
+ * Return the maximum permissible number of NSEC3 iterations.
  */
 
 bool
@@ -233,8 +231,8 @@ dns_nsec3param_fromprivate(dns_rdata_t *src, dns_rdata_t *target,
 
 void
 dns_nsec3param_toprivate(dns_rdata_t *src, dns_rdata_t *target,
-			 dns_rdatatype_t privatetype,
-			 unsigned char *buf, size_t buflen);
+			 dns_rdatatype_t privatetype, unsigned char *buf,
+			 size_t buflen);
 /*%<
  * Convert a nsec3param rdata to a private rdata.
  *
@@ -256,8 +254,7 @@ dns_nsec3param_salttotext(dns_rdata_nsec3param_t *nsec3param, char *dst,
 
 isc_result_t
 dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
-			    dns_zone_t *zone, bool nonsec,
-			    dns_diff_t *diff);
+			    dns_zone_t *zone, bool nonsec, dns_diff_t *diff);
 
 /*%<
  * Mark NSEC3PARAM for deletion.
@@ -266,12 +263,9 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 isc_result_t
 dns_nsec3_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 			const dns_name_t *nsec3name, dns_rdataset_t *nsec3set,
-			dns_name_t *zonename, bool *exists,
-			bool *data, bool *optout,
-			bool *unknown, bool *setclosest,
+			dns_name_t *zonename, bool *exists, bool *data,
+			bool *optout, bool *unknown, bool *setclosest,
 			bool *setnearest, dns_name_t *closest,
 			dns_name_t *nearest, dns_nseclog_t logit, void *arg);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_NSEC3_H */

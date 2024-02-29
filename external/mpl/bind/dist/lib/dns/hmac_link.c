@@ -1,16 +1,20 @@
-/*	$NetBSD: hmac_link.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.3.4.1 2024/02/29 12:34:31 martin Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) Network Associates, Inc.
+ */
+
+/*
+ * Copyright (C) Network Associates, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,31 +29,25 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <config.h>
-
-#include <stdbool.h>
-#ifndef WIN32
 #include <arpa/inet.h>
-#endif /* WIN32 */
+#include <stdbool.h>
 
 #include <isc/buffer.h>
 #include <isc/hmac.h>
+#include <isc/lex.h>
 #include <isc/md.h>
+#include <isc/mem.h>
 #include <isc/nonce.h>
 #include <isc/random.h>
-#include <isc/mem.h>
+#include <isc/result.h>
 #include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
-
-#include <dst/result.h>
-
 #include "dst_internal.h"
 #ifdef HAVE_FIPS_MODE
-#include "dst_openssl.h"	/* FIPS_mode() prototype */
-#endif
+#include "dst_openssl.h" /* FIPS_mode() prototype */
+#endif			 /* ifdef HAVE_FIPS_MODE */
 #include "dst_parse.h"
 
 #define ISC_MD_md5    ISC_MD_MD5
@@ -59,109 +57,105 @@
 #define ISC_MD_sha384 ISC_MD_SHA384
 #define ISC_MD_sha512 ISC_MD_SHA512
 
-#define hmac_register_algorithm(alg)					\
-	static isc_result_t					\
-	hmac##alg##_createctx(dst_key_t *key,				\
-			      dst_context_t *dctx) {			\
-		return (hmac_createctx(ISC_MD_##alg, key, dctx));	\
-	}								\
-	static void						\
-	hmac##alg##_destroyctx(dst_context_t *dctx) {			\
-		hmac_destroyctx(dctx);					\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_adddata(dst_context_t *dctx,			\
-			    const isc_region_t *data) {			\
-		return (hmac_adddata(dctx, data));			\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_sign(dst_context_t *dctx,				\
-			 isc_buffer_t *sig) {				\
-		return (hmac_sign(dctx, sig));				\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_verify(dst_context_t *dctx,				\
-			   const isc_region_t *sig) {			\
-		return (hmac_verify(dctx, sig));			\
-	}								\
-	static bool						\
-	hmac##alg##_compare(const dst_key_t *key1,			\
-			    const dst_key_t *key2) {			\
-		return (hmac_compare(ISC_MD_##alg, key1, key2));	\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_generate(dst_key_t *key,				\
-			     int pseudorandom_ok,			\
-			     void (*callback)(int)) {			\
-		UNUSED(pseudorandom_ok);				\
-		UNUSED(callback);					\
-		return (hmac_generate(ISC_MD_##alg, key));		\
-	}								\
-	static bool						\
-	hmac##alg##_isprivate(const dst_key_t *key) {			\
-		return (hmac_isprivate(key));				\
-	}								\
-	static void						\
-	hmac##alg##_destroy(dst_key_t *key) {				\
-		hmac_destroy(key);					\
-	}								\
-	static isc_result_t						\
-	hmac##alg##_todns(const dst_key_t *key, isc_buffer_t *data) {	\
-		return (hmac_todns(key, data));				\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_fromdns(dst_key_t *key, isc_buffer_t *data) {	\
-		return (hmac_fromdns(ISC_MD_##alg, key, data));		\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_tofile(const dst_key_t *key, const char *directory) { \
-		return (hmac_tofile(ISC_MD_##alg, key, directory));	\
-	}								\
-	static isc_result_t					\
-	hmac##alg##_parse(dst_key_t *key, isc_lex_t *lexer,		\
-			  dst_key_t *pub) {				\
-		return(hmac_parse(ISC_MD_##alg, key, lexer, pub));	\
-	}								\
-	static dst_func_t hmac##alg##_functions = {			\
-		hmac##alg##_createctx,					\
-		NULL, /*%< createctx2 */				\
-		hmac##alg##_destroyctx,					\
-		hmac##alg##_adddata,					\
-		hmac##alg##_sign,					\
-		hmac##alg##_verify,					\
-		NULL, /*%< verify2 */					\
-		NULL, /*%< computesecret */				\
-		hmac##alg##_compare,					\
-		NULL, /*%< paramcompare */				\
-		hmac##alg##_generate,					\
-		hmac##alg##_isprivate,					\
-		hmac##alg##_destroy,					\
-		hmac##alg##_todns,					\
-		hmac##alg##_fromdns,					\
-		hmac##alg##_tofile,					\
-		hmac##alg##_parse,					\
-		NULL, /*%< cleanup */					\
-		NULL, /*%< fromlabel */					\
-		NULL, /*%< dump */					\
-		NULL, /*%< restore */					\
-	};								\
-	isc_result_t							\
-	dst__hmac##alg##_init(dst_func_t **funcp) {			\
-		REQUIRE(funcp != NULL);					\
-		if (*funcp == NULL) {					\
-			*funcp = &hmac##alg##_functions;		\
-		}							\
-		return (ISC_R_SUCCESS);					\
+#define hmac_register_algorithm(alg)                                           \
+	static isc_result_t hmac##alg##_createctx(dst_key_t *key,              \
+						  dst_context_t *dctx) {       \
+		return (hmac_createctx(ISC_MD_##alg, key, dctx));              \
+	}                                                                      \
+	static void hmac##alg##_destroyctx(dst_context_t *dctx) {              \
+		hmac_destroyctx(dctx);                                         \
+	}                                                                      \
+	static isc_result_t hmac##alg##_adddata(dst_context_t *dctx,           \
+						const isc_region_t *data) {    \
+		return (hmac_adddata(dctx, data));                             \
+	}                                                                      \
+	static isc_result_t hmac##alg##_sign(dst_context_t *dctx,              \
+					     isc_buffer_t *sig) {              \
+		return (hmac_sign(dctx, sig));                                 \
+	}                                                                      \
+	static isc_result_t hmac##alg##_verify(dst_context_t *dctx,            \
+					       const isc_region_t *sig) {      \
+		return (hmac_verify(dctx, sig));                               \
+	}                                                                      \
+	static bool hmac##alg##_compare(const dst_key_t *key1,                 \
+					const dst_key_t *key2) {               \
+		return (hmac_compare(ISC_MD_##alg, key1, key2));               \
+	}                                                                      \
+	static isc_result_t hmac##alg##_generate(                              \
+		dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {  \
+		UNUSED(pseudorandom_ok);                                       \
+		UNUSED(callback);                                              \
+		return (hmac_generate(ISC_MD_##alg, key));                     \
+	}                                                                      \
+	static bool hmac##alg##_isprivate(const dst_key_t *key) {              \
+		return (hmac_isprivate(key));                                  \
+	}                                                                      \
+	static void hmac##alg##_destroy(dst_key_t *key) { hmac_destroy(key); } \
+	static isc_result_t hmac##alg##_todns(const dst_key_t *key,            \
+					      isc_buffer_t *data) {            \
+		return (hmac_todns(key, data));                                \
+	}                                                                      \
+	static isc_result_t hmac##alg##_fromdns(dst_key_t *key,                \
+						isc_buffer_t *data) {          \
+		return (hmac_fromdns(ISC_MD_##alg, key, data));                \
+	}                                                                      \
+	static isc_result_t hmac##alg##_tofile(const dst_key_t *key,           \
+					       const char *directory) {        \
+		return (hmac_tofile(ISC_MD_##alg, key, directory));            \
+	}                                                                      \
+	static isc_result_t hmac##alg##_parse(                                 \
+		dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {            \
+		const char *file = isc_lex_getsourcename(lexer);               \
+		isc_result_t result;                                           \
+		result = hmac_parse(ISC_MD_##alg, key, lexer, pub);            \
+		if (result == ISC_R_SUCCESS && file != NULL) {                 \
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,       \
+				      DNS_LOGMODULE_CRYPTO, ISC_LOG_WARNING,   \
+				      "%s: Use of K* file pairs for HMAC is "  \
+				      "deprecated\n",                          \
+				      file);                                   \
+		}                                                              \
+		return (result);                                               \
+	}                                                                      \
+	static dst_func_t hmac##alg##_functions = {                            \
+		hmac##alg##_createctx,                                         \
+		NULL, /*%< createctx2 */                                       \
+		hmac##alg##_destroyctx,                                        \
+		hmac##alg##_adddata,                                           \
+		hmac##alg##_sign,                                              \
+		hmac##alg##_verify,                                            \
+		NULL, /*%< verify2 */                                          \
+		NULL, /*%< computesecret */                                    \
+		hmac##alg##_compare,                                           \
+		NULL, /*%< paramcompare */                                     \
+		hmac##alg##_generate,                                          \
+		hmac##alg##_isprivate,                                         \
+		hmac##alg##_destroy,                                           \
+		hmac##alg##_todns,                                             \
+		hmac##alg##_fromdns,                                           \
+		hmac##alg##_tofile,                                            \
+		hmac##alg##_parse,                                             \
+		NULL, /*%< cleanup */                                          \
+		NULL, /*%< fromlabel */                                        \
+		NULL, /*%< dump */                                             \
+		NULL, /*%< restore */                                          \
+	};                                                                     \
+	isc_result_t dst__hmac##alg##_init(dst_func_t **funcp) {               \
+		REQUIRE(funcp != NULL);                                        \
+		if (*funcp == NULL) {                                          \
+			*funcp = &hmac##alg##_functions;                       \
+		}                                                              \
+		return (ISC_R_SUCCESS);                                        \
 	}
 
 static isc_result_t
-hmac_fromdns(isc_md_type_t type, dst_key_t *key, isc_buffer_t *data);
+hmac_fromdns(const isc_md_type_t *type, dst_key_t *key, isc_buffer_t *data);
 
-struct dst_hmac_key  {
+struct dst_hmac_key {
 	uint8_t key[ISC_MAX_BLOCK_SIZE];
 };
 
-static inline isc_result_t
+static isc_result_t
 getkeybits(dst_key_t *key, struct dst_private_element *element) {
 	uint16_t *bits = (uint16_t *)element->data;
 
@@ -169,22 +163,22 @@ getkeybits(dst_key_t *key, struct dst_private_element *element) {
 		return (DST_R_INVALIDPRIVATEKEY);
 	}
 
-	key->key_bits =	ntohs(*bits);
+	key->key_bits = ntohs(*bits);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
-hmac_createctx(isc_md_type_t type, const dst_key_t *key,
-	       dst_context_t *dctx)
-{
+static isc_result_t
+hmac_createctx(const isc_md_type_t *type, const dst_key_t *key,
+	       dst_context_t *dctx) {
 	isc_result_t result;
 	const dst_hmac_key_t *hkey = key->keydata.hmac_key;
 	isc_hmac_t *ctx = isc_hmac_new(); /* Either returns or abort()s */
 
-	result = isc_hmac_init(ctx, hkey->key,
-			       isc_md_type_get_block_size(type), type);
+	result = isc_hmac_init(ctx, hkey->key, isc_md_type_get_block_size(type),
+			       type);
 	if (result != ISC_R_SUCCESS) {
+		isc_hmac_free(ctx);
 		return (DST_R_UNSUPPORTEDALG);
 	}
 
@@ -192,7 +186,7 @@ hmac_createctx(isc_md_type_t type, const dst_key_t *key,
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 hmac_destroyctx(dst_context_t *dctx) {
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
 	REQUIRE(ctx != NULL);
@@ -201,7 +195,7 @@ hmac_destroyctx(dst_context_t *dctx) {
 	dctx->ctxdata.hmac_ctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 hmac_adddata(const dst_context_t *dctx, const isc_region_t *data) {
 	isc_result_t result;
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
@@ -216,12 +210,12 @@ hmac_adddata(const dst_context_t *dctx, const isc_region_t *data) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 hmac_sign(const dst_context_t *dctx, isc_buffer_t *sig) {
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
 	REQUIRE(ctx != NULL);
-	unsigned int digestlen;
 	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen = sizeof(digest);
 
 	if (isc_hmac_final(ctx, digest, &digestlen) != ISC_R_SUCCESS) {
 		return (DST_R_OPENSSLFAILURE);
@@ -240,11 +234,11 @@ hmac_sign(const dst_context_t *dctx, isc_buffer_t *sig) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 hmac_verify(const dst_context_t *dctx, const isc_region_t *sig) {
 	isc_hmac_t *ctx = dctx->ctxdata.hmac_ctx;
-	unsigned int digestlen;
 	unsigned char digest[ISC_MAX_MD_SIZE];
+	unsigned int digestlen = sizeof(digest);
 
 	REQUIRE(ctx != NULL);
 
@@ -260,13 +254,14 @@ hmac_verify(const dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 	}
 
-	return (isc_safe_memequal(digest, sig->base, sig->length) ?
-		ISC_R_SUCCESS :
-		DST_R_VERIFYFAILURE);
+	return (isc_safe_memequal(digest, sig->base, sig->length)
+			? ISC_R_SUCCESS
+			: DST_R_VERIFYFAILURE);
 }
 
-static inline bool
-hmac_compare(isc_md_type_t type, const dst_key_t *key1, const dst_key_t *key2) {
+static bool
+hmac_compare(const isc_md_type_t *type, const dst_key_t *key1,
+	     const dst_key_t *key2) {
 	dst_hmac_key_t *hkey1, *hkey2;
 
 	hkey1 = key1->keydata.hmac_key;
@@ -282,8 +277,8 @@ hmac_compare(isc_md_type_t type, const dst_key_t *key1, const dst_key_t *key2) {
 				  isc_md_type_get_block_size(type)));
 }
 
-static inline isc_result_t
-hmac_generate(isc_md_type_t type, dst_key_t *key) {
+static isc_result_t
+hmac_generate(const isc_md_type_t *type, dst_key_t *key) {
 	isc_buffer_t b;
 	isc_result_t ret;
 	unsigned int bytes, len;
@@ -310,13 +305,13 @@ hmac_generate(isc_md_type_t type, dst_key_t *key) {
 	return (ret);
 }
 
-static inline bool
+static bool
 hmac_isprivate(const dst_key_t *key) {
 	UNUSED(key);
 	return (true);
 }
 
-static inline void
+static void
 hmac_destroy(dst_key_t *key) {
 	dst_hmac_key_t *hkey = key->keydata.hmac_key;
 	isc_safe_memwipe(hkey, sizeof(*hkey));
@@ -324,12 +319,11 @@ hmac_destroy(dst_key_t *key) {
 	key->keydata.hmac_key = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 hmac_todns(const dst_key_t *key, isc_buffer_t *data) {
+	REQUIRE(key != NULL && key->keydata.hmac_key != NULL);
 	dst_hmac_key_t *hkey = key->keydata.hmac_key;
 	unsigned int bytes;
-
-	REQUIRE(hkey != NULL);
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes) {
@@ -340,8 +334,8 @@ hmac_todns(const dst_key_t *key, isc_buffer_t *data) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
-hmac_fromdns(isc_md_type_t type, dst_key_t *key, isc_buffer_t *data) {
+static isc_result_t
+hmac_fromdns(const isc_md_type_t *type, dst_key_t *key, isc_buffer_t *data) {
 	dst_hmac_key_t *hkey;
 	unsigned int keylen;
 	isc_region_t r;
@@ -352,16 +346,14 @@ hmac_fromdns(isc_md_type_t type, dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	hkey = isc_mem_get(key->mctx, sizeof(dst_hmac_key_t));
-	if (hkey == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
 
 	memset(hkey->key, 0, sizeof(hkey->key));
 
 	/* Hash the key if the key is longer then chosen MD block size */
 	if (r.length > (unsigned int)isc_md_type_get_block_size(type)) {
-		if (isc_md(type, r.base, r.length, hkey->key, &keylen)
-		    != ISC_R_SUCCESS) {
+		if (isc_md(type, r.base, r.length, hkey->key, &keylen) !=
+		    ISC_R_SUCCESS)
+		{
 			isc_mem_put(key->mctx, hkey, sizeof(dst_hmac_key_t));
 			return (DST_R_OPENSSLFAILURE);
 		}
@@ -378,8 +370,8 @@ hmac_fromdns(isc_md_type_t type, dst_key_t *key, isc_buffer_t *data) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
-hmac__get_tag_key(isc_md_type_t type) {
+static int
+hmac__get_tag_key(const isc_md_type_t *type) {
 	if (type == ISC_MD_MD5) {
 		return (TAG_HMACMD5_KEY);
 	} else if (type == ISC_MD_SHA1) {
@@ -393,13 +385,12 @@ hmac__get_tag_key(isc_md_type_t type) {
 	} else if (type == ISC_MD_SHA512) {
 		return (TAG_HMACSHA512_KEY);
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
-static inline int
-hmac__get_tag_bits(isc_md_type_t type) {
+static int
+hmac__get_tag_bits(const isc_md_type_t *type) {
 	if (type == ISC_MD_MD5) {
 		return (TAG_HMACMD5_BITS);
 	} else if (type == ISC_MD_SHA1) {
@@ -413,13 +404,13 @@ hmac__get_tag_bits(isc_md_type_t type) {
 	} else if (type == ISC_MD_SHA512) {
 		return (TAG_HMACSHA512_BITS);
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
-static inline isc_result_t
-hmac_tofile(isc_md_type_t type, const dst_key_t *key, const char *directory) {
+static isc_result_t
+hmac_tofile(const isc_md_type_t *type, const dst_key_t *key,
+	    const char *directory) {
 	dst_hmac_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
@@ -450,8 +441,8 @@ hmac_tofile(isc_md_type_t type, const dst_key_t *key, const char *directory) {
 	return (dst__privstruct_writefile(key, &priv, directory));
 }
 
-static inline int
-hmac__to_dst_alg(isc_md_type_t type) {
+static int
+hmac__to_dst_alg(const isc_md_type_t *type) {
 	if (type == ISC_MD_MD5) {
 		return (DST_ALG_HMACMD5);
 	} else if (type == ISC_MD_SHA1) {
@@ -465,15 +456,13 @@ hmac__to_dst_alg(isc_md_type_t type) {
 	} else if (type == ISC_MD_SHA512) {
 		return (DST_ALG_HMACSHA512);
 	} else {
-		INSIST(0);
-		ISC_UNREACHABLE();
+		UNREACHABLE();
 	}
 }
 
-static inline isc_result_t
-hmac_parse(isc_md_type_t type, dst_key_t *key,
-	   isc_lex_t *lexer, dst_key_t *pub)
-{
+static isc_result_t
+hmac_parse(const isc_md_type_t *type, dst_key_t *key, isc_lex_t *lexer,
+	   dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;

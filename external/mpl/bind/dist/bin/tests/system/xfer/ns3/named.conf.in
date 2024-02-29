@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,12 +20,13 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion yes;
+	dnssec-validation no;
 	notify yes;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -37,19 +40,20 @@ key tsigzone. {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "example.bk";
 };
 
-zone "master" {
-	type slave;
-	masters { 10.53.0.6; };
-	file "master.bk";
+zone "primary" {
+	type secondary;
+        transfer-source 10.53.0.3 port @EXTRAPORT1@;
+	primaries { 10.53.0.6; };
+	file "primary.bk";
 };
 
 server 10.53.0.2 {
@@ -57,21 +61,21 @@ server 10.53.0.2 {
 };
 
 zone "tsigzone" {
-	type slave;
-	masters { 10.53.0.2; };
+	type secondary;
+	primaries { 10.53.0.2; };
 	file "tsigzone.bk";
 	allow-transfer { key tsigzone.; };
 };
 
 zone "mapped" {
-	type slave;
-	masters { 10.53.0.2; };
-	masterfile-format map;
+	type secondary;
+	primaries { 10.53.0.2; };
+	masterfile-format raw;
 	file "mapped.bk";
 };
 
 zone "xfer-stats" {
-	type slave;
-	masters { 10.53.0.1; };
+	type secondary;
+	primaries { 10.53.0.1; };
 	file "xfer-stats.bk";
 };

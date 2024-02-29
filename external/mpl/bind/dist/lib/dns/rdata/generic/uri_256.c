@@ -1,23 +1,24 @@
-/*	$NetBSD: uri_256.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.3.4.1 2024/02/29 12:34:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
 
 #define RRTYPE_URI_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_uri(ARGS_FROMTEXT) {
 	isc_token_t token;
 
@@ -34,8 +35,9 @@ fromtext_uri(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -43,22 +45,24 @@ fromtext_uri(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * Target URI
 	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token,
-				      isc_tokentype_qstring, false));
-	if (token.type != isc_tokentype_qstring)
+	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
+				      false));
+	if (token.type != isc_tokentype_qstring) {
 		RETTOK(DNS_R_SYNTAX);
+	}
 	RETTOK(multitxt_fromtext(&token.value.as_textregion, target));
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_uri(ARGS_TOTEXT) {
 	isc_region_t region;
 	unsigned short priority, weight;
@@ -94,7 +98,7 @@ totext_uri(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_uri(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -109,8 +113,9 @@ fromwire_uri(ARGS_FROMWIRE) {
 	 * Priority, weight
 	 */
 	isc_buffer_activeregion(source, &region);
-	if (region.length < 4)
+	if (region.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	/*
 	 * Priority, weight and target URI
@@ -119,7 +124,7 @@ fromwire_uri(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_uri(ARGS_TOWIRE) {
 	isc_region_t region;
 
@@ -132,7 +137,7 @@ towire_uri(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-static inline int
+static int
 compare_uri(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -151,8 +156,9 @@ compare_uri(ARGS_COMPARE) {
 	 * Priority
 	 */
 	order = memcmp(r1.base, r2.base, 2);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&r1, 2);
 	isc_region_consume(&r2, 2);
 
@@ -160,20 +166,21 @@ compare_uri(ARGS_COMPARE) {
 	 * Weight
 	 */
 	order = memcmp(r1.base, r2.base, 2);
-	if (order != 0)
+	if (order != 0) {
 		return (order < 0 ? -1 : 1);
+	}
 	isc_region_consume(&r1, 2);
 	isc_region_consume(&r2, 2);
 
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_uri(ARGS_FROMSTRUCT) {
 	dns_rdata_uri_t *uri = source;
 
 	REQUIRE(type == dns_rdatatype_uri);
-	REQUIRE(source != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(uri->common.rdtype == type);
 	REQUIRE(uri->common.rdclass == rdclass);
 	REQUIRE(uri->target != NULL && uri->tgt_len != 0);
@@ -197,13 +204,13 @@ fromstruct_uri(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, uri->target, uri->tgt_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_uri(ARGS_TOSTRUCT) {
 	dns_rdata_uri_t *uri = target;
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_uri);
-	REQUIRE(target != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(rdata->length != 0);
 
 	uri->common.rdclass = rdata->rdclass;
@@ -215,16 +222,18 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	/*
 	 * Priority
 	 */
-	if (sr.length < 2)
+	if (sr.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	uri->priority = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 
 	/*
 	 * Weight
 	 */
-	if (sr.length < 2)
+	if (sr.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	uri->weight = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 
@@ -233,40 +242,44 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	 */
 	uri->tgt_len = sr.length;
 	uri->target = mem_maybedup(mctx, sr.base, sr.length);
-	if (uri->target == NULL)
+	if (uri->target == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	uri->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_uri(ARGS_FREESTRUCT) {
-	dns_rdata_uri_t *uri = (dns_rdata_uri_t *) source;
+	dns_rdata_uri_t *uri = (dns_rdata_uri_t *)source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(uri->common.rdtype == dns_rdatatype_uri);
 
-	if (uri->mctx == NULL)
+	if (uri->mctx == NULL) {
 		return;
+	}
 
-	if (uri->target != NULL)
+	if (uri->target != NULL) {
 		isc_mem_free(uri->mctx, uri->target);
+	}
 	uri->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_uri(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_uri(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -277,9 +290,8 @@ digest_uri(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_uri(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_uri);
 
 	UNUSED(name);
@@ -290,9 +302,8 @@ checkowner_uri(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_uri(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	UNUSED(rdata);
@@ -302,7 +313,7 @@ checknames_uri(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_uri(ARGS_COMPARE) {
 	return (compare_uri(rdata1, rdata2));
 }

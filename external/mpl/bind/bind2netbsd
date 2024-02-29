@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.3.4.1 2019/10/17 19:34:13 martin Exp $
+#	$NetBSD: bind2netbsd,v 1.3.4.2 2024/02/29 12:27:58 martin Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 #	$ cvs -d cvs.netbsd.org:/cvsroot import src/external/mpl/bind/dist ISC bind-9-x-y
 #	Enter the new CHANGES portion as your commit message
 #	$ cd ../../../../../bind-9.x.y
-#	$ run ./configure --enable-dnsrps --enable-querytrace --enable-fixed-rrset
+#	$ run ./configure --enable-dnsrps --enable-querytrace --enable-fixed-rrset --without-python
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
 #	  /usr/src/external/mpl/bind/include
@@ -119,7 +119,21 @@ echo done
 echo "cleaning up CVS residue."
 (
 	cd $d
-	find . -type d -name "CVS" -print | xargs rm -r
+	find . -type d -name "CVS" -exec rm -r {} +
+)
+echo done
+
+echo "cleaning up GIT residue."
+(
+	cd $d
+	find . -type d -name ".gitattributes" -exec rm {} +
+)
+echo done
+
+echo "cleaning up clang-format residue."
+(
+	cd $d
+	find . -type d -name ".clang-format*" -exec rm {} +
 )
 echo done
 

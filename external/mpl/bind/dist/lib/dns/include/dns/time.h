@@ -1,19 +1,19 @@
-/*	$NetBSD: time.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3.4.1 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_TIME_H
-#define DNS_TIME_H 1
+#pragma once
 
 /*! \file dns/time.h */
 
@@ -47,7 +47,6 @@ dns_time32_fromtext(const char *source, uint32_t *target);
  * as per RFC2535.
  */
 
-
 isc_result_t
 dns_time64_totext(int64_t value, isc_buffer_t *target);
 /*%<
@@ -71,5 +70,3 @@ dns_time64_from32(uint32_t value);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TIME_H */

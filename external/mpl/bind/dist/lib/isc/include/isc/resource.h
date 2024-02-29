@@ -1,19 +1,19 @@
-/*	$NetBSD: resource.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.3.4.1 2024/02/29 12:35:11 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_RESOURCE_H
-#define ISC_RESOURCE_H 1
+#pragma once
 
 /*! \file isc/resource.h */
 
@@ -87,6 +87,3 @@ isc_resource_getcurlimit(isc_resource_t resource, isc_resourcevalue_t *value);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RESOURCE_H */
-

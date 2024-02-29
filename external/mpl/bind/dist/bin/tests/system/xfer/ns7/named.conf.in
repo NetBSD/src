@@ -1,15 +1,17 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-include "../../common/rndc.key";
+include "../../_common/rndc.key";
 
 controls {
 	inet 10.53.0.7 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -24,29 +26,30 @@ options {
 	listen-on { 10.53.0.7; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	notify yes;
-	ixfr-from-differences slave;
+	ixfr-from-differences secondary;
 	check-integrity no;
 };
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
-zone "master2" {
-	type master;
-	file "master2.db";
+zone "primary2" {
+	type primary;
+	file "primary2.db";
 };
 
-zone "slave" {
-	type slave;
-	masters { 10.53.0.1; };
-	file "slave.bk";
+zone "secondary" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	file "sec.bk";
 };
 
 zone "edns-expire" {
-	type slave;
-	masters { 10.53.0.6; };
+	type secondary;
+	primaries { 10.53.0.6; };
 	file "edns-expire.bk";
 };

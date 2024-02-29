@@ -1,8 +1,10 @@
 ; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ;
+; SPDX-License-Identifier: MPL-2.0
+;
 ; This Source Code Form is subject to the terms of the Mozilla Public
-; License, v. 2.0. If a copy of the MPL was not distributed with this
-; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
 ;
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
@@ -16,3 +18,5 @@ ns2	86400	AAAA    fd92:7065:b8e:ffff::2
 @       86400	AAAA 	1:2:3::4
 *       86400	A 	1.2.3.4
 *       86400	AAAA 	1:2:3::4
+; CVE-2021-25215 regression test data
+self	86400	DNAME	nil.

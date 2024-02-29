@@ -1,11 +1,13 @@
-/*	$NetBSD: server.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.3.4.1 2024/02/29 12:35:29 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -13,51 +15,55 @@
 
 /*! \file */
 
-#include <config.h>
-
 #include <stdbool.h>
 
 #include <isc/mem.h>
 #include <isc/stats.h>
 #include <isc/util.h>
 
-#include <dns/tkey.h>
 #include <dns/stats.h>
+#include <dns/tkey.h>
 
 #include <ns/query.h>
 #include <ns/server.h>
 #include <ns/stats.h>
 
-#define SCTX_MAGIC		ISC_MAGIC('S','c','t','x')
-#define SCTX_VALID(s)		ISC_MAGIC_VALID(s, SCTX_MAGIC)
+#define SCTX_MAGIC    ISC_MAGIC('S', 'c', 't', 'x')
+#define SCTX_VALID(s) ISC_MAGIC_VALID(s, SCTX_MAGIC)
 
-#define CHECKFATAL(op) 						\
-	do { result = (op);					\
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);		\
-	} while (0)						\
+#define CHECKFATAL(op)                                  \
+	do {                                            \
+		result = (op);                          \
+		RUNTIME_CHECK(result == ISC_R_SUCCESS); \
+	} while (0)
 
 isc_result_t
 ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
-		 ns_server_t **sctxp)
-{
+		 ns_server_t **sctxp) {
 	ns_server_t *sctx;
 	isc_result_t result;
 
 	REQUIRE(sctxp != NULL && *sctxp == NULL);
 
 	sctx = isc_mem_get(mctx, sizeof(*sctx));
-	if (sctx == NULL)
-		return (ISC_R_NOMEMORY);
 
 	memset(sctx, 0, sizeof(*sctx));
 
 	isc_mem_attach(mctx, &sctx->mctx);
+
+	/*
+	 * See here for more details:
+	 * https://github.com/jemalloc/jemalloc/issues/2483
+	 */
 
 	isc_refcount_init(&sctx->references, 1);
 
 	isc_quota_init(&sctx->xfroutquota, 10);
 	isc_quota_init(&sctx->tcpquota, 10);
 	isc_quota_init(&sctx->recursionquota, 100);
+	isc_quota_init(&sctx->updquota, 100);
+	ISC_LIST_INIT(sctx->http_quotas);
+	isc_mutex_init(&sctx->http_quotas_lock);
 
 	CHECKFATAL(dns_tkeyctx_create(mctx, &sctx->tkeyctx));
 
@@ -93,17 +99,11 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 	CHECKFATAL(isc_stats_create(mctx, &sctx->tcpoutstats6,
 				    dns_sizecounter_out_max));
 
-	sctx->initialtimo = 300;
-	sctx->idletimo = 300;
-	sctx->keepalivetimo = 300;
-	sctx->advertisedtimo = 300;
-
-	sctx->udpsize = 4096;
+	sctx->udpsize = 1232;
 	sctx->transfer_tcp_message_size = 20480;
 
 	sctx->fuzztype = isc_fuzz_none;
 	sctx->fuzznotify = NULL;
-	sctx->gethostname = NULL;
 
 	sctx->matchingview = matchingview;
 	sctx->answercookie = true;
@@ -136,55 +136,86 @@ ns_server_detach(ns_server_t **sctxp) {
 
 	if (isc_refcount_decrement(&sctx->references) == 1) {
 		ns_altsecret_t *altsecret;
-
-		sctx->magic = 0;
+		isc_quota_t *http_quota;
 
 		while ((altsecret = ISC_LIST_HEAD(sctx->altsecrets)) != NULL) {
 			ISC_LIST_UNLINK(sctx->altsecrets, altsecret, link);
 			isc_mem_put(sctx->mctx, altsecret, sizeof(*altsecret));
 		}
 
+		isc_quota_destroy(&sctx->updquota);
 		isc_quota_destroy(&sctx->recursionquota);
 		isc_quota_destroy(&sctx->tcpquota);
 		isc_quota_destroy(&sctx->xfroutquota);
 
-		if (sctx->server_id != NULL)
+		http_quota = ISC_LIST_HEAD(sctx->http_quotas);
+		while (http_quota != NULL) {
+			isc_quota_t *next = NULL;
+
+			next = ISC_LIST_NEXT(http_quota, link);
+			ISC_LIST_DEQUEUE(sctx->http_quotas, http_quota, link);
+			isc_quota_destroy(http_quota);
+			isc_mem_put(sctx->mctx, http_quota,
+				    sizeof(*http_quota));
+			http_quota = next;
+		}
+		isc_mutex_destroy(&sctx->http_quotas_lock);
+
+		if (sctx->server_id != NULL) {
 			isc_mem_free(sctx->mctx, sctx->server_id);
+		}
 
-		if (sctx->blackholeacl != NULL)
+		if (sctx->blackholeacl != NULL) {
 			dns_acl_detach(&sctx->blackholeacl);
-		if (sctx->keepresporder != NULL)
+		}
+		if (sctx->keepresporder != NULL) {
 			dns_acl_detach(&sctx->keepresporder);
-		if (sctx->tkeyctx != NULL)
+		}
+		if (sctx->tkeyctx != NULL) {
 			dns_tkeyctx_destroy(&sctx->tkeyctx);
+		}
 
-		if (sctx->nsstats != NULL)
+		if (sctx->nsstats != NULL) {
 			ns_stats_detach(&sctx->nsstats);
+		}
 
-		if (sctx->rcvquerystats != NULL)
+		if (sctx->rcvquerystats != NULL) {
 			dns_stats_detach(&sctx->rcvquerystats);
-		if (sctx->opcodestats != NULL)
+		}
+		if (sctx->opcodestats != NULL) {
 			dns_stats_detach(&sctx->opcodestats);
-		if (sctx->rcodestats != NULL)
+		}
+		if (sctx->rcodestats != NULL) {
 			dns_stats_detach(&sctx->rcodestats);
+		}
 
-		if (sctx->udpinstats4 != NULL)
+		if (sctx->udpinstats4 != NULL) {
 			isc_stats_detach(&sctx->udpinstats4);
-		if (sctx->tcpinstats4 != NULL)
+		}
+		if (sctx->tcpinstats4 != NULL) {
 			isc_stats_detach(&sctx->tcpinstats4);
-		if (sctx->udpoutstats4 != NULL)
+		}
+		if (sctx->udpoutstats4 != NULL) {
 			isc_stats_detach(&sctx->udpoutstats4);
-		if (sctx->tcpoutstats4 != NULL)
+		}
+		if (sctx->tcpoutstats4 != NULL) {
 			isc_stats_detach(&sctx->tcpoutstats4);
+		}
 
-		if (sctx->udpinstats6 != NULL)
+		if (sctx->udpinstats6 != NULL) {
 			isc_stats_detach(&sctx->udpinstats6);
-		if (sctx->tcpinstats6 != NULL)
+		}
+		if (sctx->tcpinstats6 != NULL) {
 			isc_stats_detach(&sctx->tcpinstats6);
-		if (sctx->udpoutstats6 != NULL)
+		}
+		if (sctx->udpoutstats6 != NULL) {
 			isc_stats_detach(&sctx->udpoutstats6);
-		if (sctx->tcpoutstats6 != NULL)
+		}
+		if (sctx->tcpoutstats6 != NULL) {
 			isc_stats_detach(&sctx->tcpoutstats6);
+		}
+
+		sctx->magic = 0;
 
 		isc_mem_putanddetach(&sctx->mctx, sctx, sizeof(*sctx));
 	}
@@ -201,45 +232,13 @@ ns_server_setserverid(ns_server_t *sctx, const char *serverid) {
 
 	if (serverid != NULL) {
 		sctx->server_id = isc_mem_strdup(sctx->mctx, serverid);
-		if (sctx->server_id == NULL)
-			return (ISC_R_NOMEMORY);
 	}
 
 	return (ISC_R_SUCCESS);
 }
 
 void
-ns_server_settimeouts(ns_server_t *sctx, unsigned int initial,
-		      unsigned int idle, unsigned int keepalive,
-		      unsigned int advertised)
-{
-	REQUIRE(SCTX_VALID(sctx));
-
-	sctx->initialtimo = initial;
-	sctx->idletimo = idle;
-	sctx->keepalivetimo = keepalive;
-	sctx->advertisedtimo = advertised;
-}
-
-void
-ns_server_gettimeouts(ns_server_t *sctx, unsigned int *initial,
-		      unsigned int *idle, unsigned int *keepalive,
-		      unsigned int *advertised)
-{
-	REQUIRE(SCTX_VALID(sctx));
-	REQUIRE(initial != NULL && idle != NULL &&
-		keepalive != NULL && advertised != NULL);
-
-	*initial = sctx->initialtimo;
-	*idle = sctx->idletimo;
-	*keepalive = sctx->keepalivetimo;
-	*advertised = sctx->advertisedtimo;
-}
-
-void
-ns_server_setoption(ns_server_t *sctx, unsigned int option,
-		    bool value)
-{
+ns_server_setoption(ns_server_t *sctx, unsigned int option, bool value) {
 	REQUIRE(SCTX_VALID(sctx));
 	if (value) {
 		sctx->options |= option;
@@ -253,4 +252,15 @@ ns_server_getoption(ns_server_t *sctx, unsigned int option) {
 	REQUIRE(SCTX_VALID(sctx));
 
 	return ((sctx->options & option) != 0);
+}
+
+void
+ns_server_append_http_quota(ns_server_t *sctx, isc_quota_t *http_quota) {
+	REQUIRE(SCTX_VALID(sctx));
+	REQUIRE(http_quota != NULL);
+
+	LOCK(&sctx->http_quotas_lock);
+	ISC_LINK_INIT(http_quota, link);
+	ISC_LIST_APPEND(sctx->http_quotas, http_quota, link);
+	UNLOCK(&sctx->http_quotas_lock);
 }

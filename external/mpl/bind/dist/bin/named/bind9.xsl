@@ -2,9 +2,10 @@
 <!--
  - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  -
+ - SPDX-License-Identifier: MPL-2.0
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at https://mozilla.org/MPL/2.0/.
  -
  - See the COPYRIGHT file distributed with this work for additional
  - information regarding copyright ownership.
@@ -12,7 +13,9 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
   <xsl:output method="html" indent="yes" version="4.0"/>
-  <xsl:template match="statistics[@version=&quot;3.11&quot;]">
+  <!-- the version number **below** must match version in bin/named/statschannel.c -->
+  <!-- don't forget to update "/xml/v<STATS_XML_VERSION_MAJOR>" in the HTTP endpoints listed below -->
+  <xsl:template match="statistics[@version=&quot;3.13&quot;]">
     <html>
       <head>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -21,6 +24,14 @@
               var wid=0;
               $('table.zones').each(function(i) { if( $(this).width() > wid ) wid = $(this).width(); return true; });
               $('table.zones').css('min-width', wid );
+              $("h2+table,h3+table,h4+table,h2+div,h3+div,h2+script,h3+script").prev().append(' <a class="tabletoggle" href="#" style="font-size:small">Show/Hide</a>');
+              $(".tabletoggle").click(function(){
+		 var n = $(this).closest("h2,h3,h4").next();
+		 if (n.is("script")) { n = n.next(); }
+	         if (n.is("div")) { n.toggleClass("hidden"); n = n.next(); }
+		 if (n.is("table")) { n.toggleClass("hidden"); }
+		 return false;
+	      });
           });
         </script>
 
@@ -88,6 +99,10 @@
       background-color: #ffffff;
       color: #000000;
       font-size: 10pt;
+     }
+
+     .hidden{
+      display: none;
      }
 
      .odd{
@@ -763,7 +778,7 @@
           <xsl:for-each select="views/view">
             <h3>Zones for View <xsl:value-of select="@name"/></h3>
             <table class="zones">
-              <thead><tr><th>Name</th><th>Class</th><th>Type</th><th>Serial</th></tr></thead>
+              <thead><tr><th>Name</th><th>Class</th><th>Type</th><th>Serial</th><th>Loaded</th><th>Expires</th><th>Refresh</th></tr></thead>
               <tbody>
                 <xsl:for-each select="zones/zone">
                   <xsl:variable name="css-class15">
@@ -776,7 +791,10 @@
                       <td><xsl:value-of select="@name"/></td>
                       <td><xsl:value-of select="@rdataclass"/></td>
                       <td><xsl:value-of select="type"/></td>
-                      <td><xsl:value-of select="serial"/></td></tr>
+                      <td><xsl:value-of select="serial"/></td>
+                      <td><xsl:value-of select="loaded"/></td>
+                      <td><xsl:value-of select="expires"/></td>
+                      <td><xsl:value-of select="refresh"/></td></tr>
                 </xsl:for-each>
               </tbody>
             </table>
@@ -912,55 +930,6 @@
               </xsl:if>
             </xsl:for-each>
           </xsl:for-each>
-        </xsl:if>
-        <xsl:if test="socketmgr/sockets/socket">
-          <h2>Network Status</h2>
-          <table class="netstat">
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>References</th>
-              <th>LocalAddress</th>
-              <th>PeerAddress</th>
-              <th>State</th>
-            </tr>
-            <xsl:for-each select="socketmgr/sockets/socket">
-              <xsl:sort select="id"/>
-              <xsl:variable name="css-class12">
-                <xsl:choose>
-                  <xsl:when test="position() mod 2 = 0">even</xsl:when>
-                  <xsl:otherwise>odd</xsl:otherwise>
-                </xsl:choose>
-              </xsl:variable>
-              <tr class="{$css-class12}">
-                <td>
-                  <xsl:value-of select="id"/>
-                </td>
-                <td>
-                  <xsl:value-of select="name"/>
-                </td>
-                <td>
-                  <xsl:value-of select="type"/>
-                </td>
-                <td>
-                  <xsl:value-of select="references"/>
-                </td>
-                <td>
-                  <xsl:value-of select="local-address"/>
-                </td>
-                <td>
-                  <xsl:value-of select="peer-address"/>
-                </td>
-                <td>
-                  <xsl:for-each select="states">
-                    <xsl:value-of select="."/>
-                  </xsl:for-each>
-                </td>
-              </tr>
-            </xsl:for-each>
-          </table>
-          <br/>
         </xsl:if>
         <xsl:if test="taskmgr/thread-model/type">
           <h2>Task Manager Configuration</h2>

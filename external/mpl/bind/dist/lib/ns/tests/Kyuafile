@@ -1,7 +1,0 @@
-syntax(2)
-test_suite('bind9')
-
-tap_test_program{name='listenlist_test'}
-tap_test_program{name='notify_test'}
-tap_test_program{name='plugin_test'}
-tap_test_program{name='query_test'}

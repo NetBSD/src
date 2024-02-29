@@ -1,19 +1,19 @@
-/*	$NetBSD: opcode.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: opcode.h,v 1.2.6.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_OPCODE_H
-#define DNS_OPCODE_H 1
+#pragma once
 
 /*! \file dns/opcode.h */
 
@@ -23,7 +23,8 @@
 
 ISC_LANG_BEGINDECLS
 
-isc_result_t dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
+isc_result_t
+dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
 /*%<
  * Put a textual representation of error 'opcode' into 'target'.
  *
@@ -42,5 +43,3 @@ isc_result_t dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_OPCODE_H */

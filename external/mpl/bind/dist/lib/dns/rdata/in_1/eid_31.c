@@ -1,11 +1,13 @@
-/*	$NetBSD: eid_31.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: eid_31.c,v 1.4.4.1 2024/02/29 12:34:48 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,9 +20,8 @@
 
 #define RRTYPE_EID_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_eid(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_eid);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -33,7 +34,7 @@ fromtext_in_eid(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_eid(ARGS_TOTEXT) {
 	isc_region_t region;
 
@@ -49,8 +50,8 @@ totext_in_eid(ARGS_TOTEXT) {
 	if (tctx->width == 0) {
 		RETERR(isc_hex_totext(&region, 60, "", target));
 	} else {
-		RETERR(isc_hex_totext(&region, tctx->width - 2,
-				      tctx->linebreak, target));
+		RETERR(isc_hex_totext(&region, tctx->width - 2, tctx->linebreak,
+				      target));
 	}
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
@@ -58,7 +59,7 @@ totext_in_eid(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_eid(ARGS_FROMWIRE) {
 	isc_region_t region;
 
@@ -80,7 +81,7 @@ fromwire_in_eid(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_eid(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_eid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
@@ -91,7 +92,7 @@ towire_in_eid(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_in_eid(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -108,13 +109,13 @@ compare_in_eid(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_eid(ARGS_FROMSTRUCT) {
 	dns_rdata_in_eid_t *eid = source;
 
 	REQUIRE(type == dns_rdatatype_eid);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(eid != NULL);
 	REQUIRE(eid->common.rdtype == type);
 	REQUIRE(eid->common.rdclass == rdclass);
 	REQUIRE(eid->eid != NULL || eid->eid_len == 0);
@@ -125,14 +126,14 @@ fromstruct_in_eid(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, eid->eid, eid->eid_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_eid(ARGS_TOSTRUCT) {
 	dns_rdata_in_eid_t *eid = target;
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_eid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(eid != NULL);
 	REQUIRE(rdata->length != 0);
 
 	eid->common.rdclass = rdata->rdclass;
@@ -150,11 +151,11 @@ tostruct_in_eid(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_eid(ARGS_FREESTRUCT) {
 	dns_rdata_in_eid_t *eid = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(eid != NULL);
 	REQUIRE(eid->common.rdclass == dns_rdataclass_in);
 	REQUIRE(eid->common.rdtype == dns_rdatatype_eid);
 
@@ -168,19 +169,20 @@ freestruct_in_eid(ARGS_FREESTRUCT) {
 	eid->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_eid(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_eid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_eid(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -192,9 +194,8 @@ digest_in_eid(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_eid(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_eid);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -206,9 +207,8 @@ checkowner_in_eid(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_in_eid(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_eid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -219,9 +219,9 @@ checknames_in_eid(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_eid(ARGS_COMPARE) {
 	return (compare_in_eid(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_EID_31_C */
+#endif /* RDATA_IN_1_EID_31_C */

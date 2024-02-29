@@ -1,11 +1,13 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.4.4.1 2024/02/29 12:34:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -16,9 +18,8 @@
 
 #define RRTYPE_OPENPGPKEY_ATTRIBUTES 0
 
-static inline isc_result_t
+static isc_result_t
 fromtext_openpgpkey(ARGS_FROMTEXT) {
-
 	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(type);
@@ -33,7 +34,7 @@ fromtext_openpgpkey(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_openpgpkey(ARGS_TOTEXT) {
 	isc_region_t sr;
 
@@ -45,25 +46,29 @@ totext_openpgpkey(ARGS_TOTEXT) {
 	/*
 	 * Keyring
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext("( ", target));
+	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0)   /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_base64_totext(&sr, 60, "", target));
-		else
+		} else {
 			RETERR(isc_base64_totext(&sr, tctx->width - 2,
 						 tctx->linebreak, target));
-	} else
+		}
+	} else {
 		RETERR(str_totext("[omitted]", target));
+	}
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_openpgpkey(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -78,13 +83,14 @@ fromwire_openpgpkey(ARGS_FROMWIRE) {
 	 * Keyring.
 	 */
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_openpgpkey(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -97,7 +103,7 @@ towire_openpgpkey(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_openpgpkey(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -113,12 +119,12 @@ compare_openpgpkey(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_openpgpkey(ARGS_FROMSTRUCT) {
 	dns_rdata_openpgpkey_t *sig = source;
 
 	REQUIRE(type == dns_rdatatype_openpgpkey);
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
 	REQUIRE(sig->keyring != NULL && sig->length != 0);
@@ -132,13 +138,13 @@ fromstruct_openpgpkey(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sig->keyring, sig->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 	dns_rdata_openpgpkey_t *sig = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
-	REQUIRE(target != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sig->common.rdclass = rdata->rdclass;
@@ -152,43 +158,47 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	 */
 	sig->length = sr.length;
 	sig->keyring = mem_maybedup(mctx, sr.base, sig->length);
-	if (sig->keyring == NULL)
+	if (sig->keyring == NULL) {
 		goto cleanup;
+	}
 
 	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
+cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_openpgpkey(ARGS_FREESTRUCT) {
-	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *) source;
+	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *)source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
 
-	if (sig->mctx == NULL)
+	if (sig->mctx == NULL) {
 		return;
+	}
 
-	if (sig->keyring != NULL)
+	if (sig->keyring != NULL) {
 		isc_mem_free(sig->mctx, sig->keyring);
+	}
 	sig->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_openpgpkey(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_openpgpkey(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -199,9 +209,8 @@ digest_openpgpkey(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_openpgpkey(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(name);
@@ -212,9 +221,8 @@ checkowner_openpgpkey(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_openpgpkey(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	UNUSED(rdata);
@@ -224,7 +232,7 @@ checknames_openpgpkey(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_openpgpkey(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -241,4 +249,4 @@ casecompare_openpgpkey(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-#endif	/* RDATA_GENERIC_OPENPGPKEY_61_C */
+#endif /* RDATA_GENERIC_OPENPGPKEY_61_C */

@@ -1,19 +1,19 @@
-/*	$NetBSD: heap.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: heap.h,v 1.3.4.1 2024/02/29 12:35:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_HEAP_H
-#define ISC_HEAP_H 1
+#pragma once
 
 /*! \file isc/heap.h */
 
@@ -48,7 +48,7 @@ typedef void (*isc_heapaction_t)(void *, void *);
 
 typedef struct isc_heap isc_heap_t;
 
-isc_result_t
+void
 isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
 		isc_heapindex_t index, unsigned int size_increment,
 		isc_heap_t **heapp);
@@ -73,10 +73,6 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
  *	used, which is currently 1024, allowing space for an additional 1024
  *	heap elements to be inserted before adding more space.
  *\li	"heapp" is not NULL, and "*heap" is NULL.
- *
- * Returns:
- *\li	ISC_R_SUCCESS		- success
- *\li	ISC_R_NOMEMORY		- insufficient memory
  */
 
 void
@@ -88,7 +84,7 @@ isc_heap_destroy(isc_heap_t **heapp);
  *\li	"heapp" is not NULL and "*heap" points to a valid isc_heap_t.
  */
 
-isc_result_t
+void
 isc_heap_insert(isc_heap_t *heap, void *elt);
 /*!<
  * \brief Inserts a new element into a heap.
@@ -165,5 +161,3 @@ isc_heap_foreach(isc_heap_t *heap, isc_heapaction_t action, void *uap);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_HEAP_H */

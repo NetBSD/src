@@ -1,0 +1,21 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN .
+$TTL 0	; 0 seconds
+@			IN SOA	. . (
+				2          ; serial
+				0          ; refresh (0 seconds)
+				0          ; retry (0 seconds)
+				0          ; expire (0 seconds)
+				0          ; minimum (0 seconds)
+				)
+			KEYDATA	20221028094934 19700101000000 19700101000000 0 0 0 ; placeholder

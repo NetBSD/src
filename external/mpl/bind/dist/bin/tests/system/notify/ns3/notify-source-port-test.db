@@ -1,0 +1,22 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+notify-source-port-test.	SOA	mname1. . (
+					1          ; serial
+					300        ; refresh (300 seconds)
+					300        ; retry (300 seconds)
+					1814400    ; expire (3 weeks)
+					3600       ; minimum (1 hour)
+				)
+notify-source-port-test.	NS	ns2.notify-source-port-test.
+ns2.notify-source-port-test.	A	10.53.0.2
+notify-source-port-test.	NS	ns3.notify-source-port-test.
+ns3.notify-source-port-test.	A	10.53.0.3

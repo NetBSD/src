@@ -1,16 +1,20 @@
-/*	$NetBSD: sexpr.h,v 1.3 2019/01/09 16:55:18 christos Exp $	*/
+/*	$NetBSD: sexpr.h,v 1.3.4.1 2024/02/29 12:35:24 martin Exp $	*/
 
 /*
- * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0 AND ISC
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
- *
- * Portions Copyright (C) 2001 Nominum, Inc.
+ */
+
+/*
+ * Copyright (C) 2001 Nominum, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,9 +29,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-#ifndef ISCCC_SEXPR_H
-#define ISCCC_SEXPR_H 1
+#pragma once
 
 /*! \file isccc/sexpr.h */
 
@@ -35,6 +37,7 @@
 #include <stdio.h>
 
 #include <isc/lang.h>
+
 #include <isccc/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -47,22 +50,22 @@ struct isccc_dottedpair {
 
 /*% iscc_sexpr structure */
 struct isccc_sexpr {
-	unsigned int			type;
+	unsigned int type;
 	union {
-		char *			as_string;
-		isccc_dottedpair_t	as_dottedpair;
-		isccc_region_t		as_region;
-	}				value;
+		char		  *as_string;
+		isccc_dottedpair_t as_dottedpair;
+		isccc_region_t	   as_region;
+	} value;
 };
 
-#define ISCCC_SEXPRTYPE_NONE		0x00	/*%< Illegal. */
-#define ISCCC_SEXPRTYPE_T			0x01
-#define ISCCC_SEXPRTYPE_STRING		0x02
-#define ISCCC_SEXPRTYPE_DOTTEDPAIR	0x03
-#define ISCCC_SEXPRTYPE_BINARY		0x04
+#define ISCCC_SEXPRTYPE_NONE	   0x00 /*%< Illegal. */
+#define ISCCC_SEXPRTYPE_T	   0x01
+#define ISCCC_SEXPRTYPE_STRING	   0x02
+#define ISCCC_SEXPRTYPE_DOTTEDPAIR 0x03
+#define ISCCC_SEXPRTYPE_BINARY	   0x04
 
-#define ISCCC_SEXPR_CAR(s)		(s)->value.as_dottedpair.car
-#define ISCCC_SEXPR_CDR(s)		(s)->value.as_dottedpair.cdr
+#define ISCCC_SEXPR_CAR(s) (s)->value.as_dottedpair.car
+#define ISCCC_SEXPR_CDR(s) (s)->value.as_dottedpair.cdr
 
 isccc_sexpr_t *
 isccc_sexpr_cons(isccc_sexpr_t *car, isccc_sexpr_t *cdr);
@@ -116,5 +119,3 @@ isccc_region_t *
 isccc_sexpr_tobinary(isccc_sexpr_t *sexpr);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISCCC_SEXPR_H */

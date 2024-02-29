@@ -1,26 +1,27 @@
-/*	$NetBSD: server.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.3.4.1 2024/02/29 12:35:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NS_SERVER_H
-#define NS_SERVER_H 1
+#pragma once
 
 /*! \file */
 
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <isc/log.h>
 #include <isc/fuzz.h>
+#include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/quota.h>
 #include <isc/random.h>
@@ -30,114 +31,109 @@
 #include <dns/acl.h>
 #include <dns/types.h>
 
+#include <ns/events.h>
 #include <ns/types.h>
 
-#define NS_EVENT_CLIENTCONTROL	(ISC_EVENTCLASS_NS + 0)
-
-#define NS_SERVER_LOGQUERIES	0x00000001U	/*%< log queries */
-#define NS_SERVER_NOAA		0x00000002U	/*%< -T noaa */
-#define NS_SERVER_NOSOA		0x00000004U	/*%< -T nosoa */
-#define NS_SERVER_NONEAREST	0x00000008U	/*%< -T nonearest */
-#define NS_SERVER_CLIENTTEST	0x00000010U	/*%< -T clienttest */
-#define NS_SERVER_NOEDNS	0x00000020U	/*%< -T noedns */
-#define NS_SERVER_DROPEDNS	0x00000040U	/*%< -T dropedns */
-#define NS_SERVER_NOTCP		0x00000080U	/*%< -T notcp */
-#define NS_SERVER_DISABLE4	0x00000100U	/*%< -6 */
-#define NS_SERVER_DISABLE6	0x00000200U	/*%< -4 */
-#define NS_SERVER_FIXEDLOCAL	0x00000400U	/*%< -T fixedlocal */
-#define NS_SERVER_SIGVALINSECS	0x00000800U	/*%< -T sigvalinsecs */
-#define NS_SERVER_EDNSFORMERR	0x00001000U	/*%< -T ednsformerr (STD13) */
-#define NS_SERVER_EDNSNOTIMP	0x00002000U	/*%< -T ednsnotimp */
-#define NS_SERVER_EDNSREFUSED	0x00004000U	/*%< -T ednsrefused */
+#define NS_SERVER_LOGQUERIES	 0x00000001U /*%< log queries */
+#define NS_SERVER_NOAA		 0x00000002U /*%< -T noaa */
+#define NS_SERVER_NOSOA		 0x00000004U /*%< -T nosoa */
+#define NS_SERVER_NONEAREST	 0x00000008U /*%< -T nonearest */
+#define NS_SERVER_NOEDNS	 0x00000020U /*%< -T noedns */
+#define NS_SERVER_DROPEDNS	 0x00000040U /*%< -T dropedns */
+#define NS_SERVER_NOTCP		 0x00000080U /*%< -T notcp */
+#define NS_SERVER_DISABLE4	 0x00000100U /*%< -6 */
+#define NS_SERVER_DISABLE6	 0x00000200U /*%< -4 */
+#define NS_SERVER_FIXEDLOCAL	 0x00000400U /*%< -T fixedlocal */
+#define NS_SERVER_SIGVALINSECS	 0x00000800U /*%< -T sigvalinsecs */
+#define NS_SERVER_EDNSFORMERR	 0x00001000U /*%< -T ednsformerr (STD13) */
+#define NS_SERVER_EDNSNOTIMP	 0x00002000U /*%< -T ednsnotimp */
+#define NS_SERVER_EDNSREFUSED	 0x00004000U /*%< -T ednsrefused */
+#define NS_SERVER_TRANSFERINSECS 0x00008000U /*%< -T transferinsecs */
+#define NS_SERVER_TRANSFERSLOWLY 0x00010000U /*%< -T transferslowly */
+#define NS_SERVER_TRANSFERSTUCK	 0x00020000U /*%< -T transferstuck */
 
 /*%
  * Type for callback function to get hostname.
  */
-typedef isc_result_t
-(*ns_hostnamecb_t)(char *buf, size_t len);
+typedef isc_result_t (*ns_hostnamecb_t)(char *buf, size_t len);
 
 /*%
  * Type for callback function to signal the fuzzer thread
  * when built with AFL.
  */
-typedef void
-(*ns_fuzzcb_t)(void);
+typedef void (*ns_fuzzcb_t)(void);
 
 /*%
  * Type for callback function to get the view that can answer a query.
  */
-typedef isc_result_t
-(*ns_matchview_t)(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
-		  dns_message_t *message, dns_aclenv_t *env,
-		  isc_result_t *sigresultp, dns_view_t **viewp);
+typedef isc_result_t (*ns_matchview_t)(
+	isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr, dns_message_t *message,
+	dns_aclenv_t *env, isc_result_t *sigresultp, dns_view_t **viewp);
 
 /*%
  * Server context.
  */
 struct ns_server {
-	unsigned int		magic;
-	isc_mem_t *		mctx;
+	unsigned int magic;
+	isc_mem_t   *mctx;
 
-	isc_refcount_t		references;
+	isc_refcount_t references;
 
 	/*% Server cookie secret and algorithm */
-	unsigned char		secret[32];
-	ns_cookiealg_t		cookiealg;
-	ns_altsecretlist_t	altsecrets;
-	bool			answercookie;
+	unsigned char	   secret[32];
+	ns_cookiealg_t	   cookiealg;
+	ns_altsecretlist_t altsecrets;
+	bool		   answercookie;
 
 	/*% Quotas */
-	isc_quota_t		recursionquota;
-	isc_quota_t		tcpquota;
-	isc_quota_t		xfroutquota;
+	isc_quota_t recursionquota;
+	isc_quota_t tcpquota;
+	isc_quota_t xfroutquota;
+	isc_quota_t updquota;
+	ISC_LIST(isc_quota_t) http_quotas;
+	isc_mutex_t http_quotas_lock;
 
 	/*% Test options and other configurables */
-	uint32_t		options;
-	unsigned int		delay;
+	uint32_t options;
 
-	unsigned int		initialtimo;
-	unsigned int		idletimo;
-	unsigned int		keepalivetimo;
-	unsigned int		advertisedtimo;
-
-	dns_acl_t		*blackholeacl;
-	dns_acl_t		*keepresporder;
-	uint16_t		udpsize;
-	uint16_t		transfer_tcp_message_size;
-	bool			interface_auto;
-	dns_tkeyctx_t *		tkeyctx;
+	dns_acl_t     *blackholeacl;
+	dns_acl_t     *keepresporder;
+	uint16_t       udpsize;
+	uint16_t       transfer_tcp_message_size;
+	bool	       interface_auto;
+	dns_tkeyctx_t *tkeyctx;
 
 	/*% Server id for NSID */
-	char *			server_id;
-	ns_hostnamecb_t		gethostname;
+	char *server_id;
+	bool  usehostname;
 
 	/*% Fuzzer callback */
-	isc_fuzztype_t		fuzztype;
-	ns_fuzzcb_t		fuzznotify;
+	isc_fuzztype_t fuzztype;
+	ns_fuzzcb_t    fuzznotify;
 
 	/*% Callback to find a matching view for a query */
-	ns_matchview_t		matchingview;
+	ns_matchview_t matchingview;
 
 	/*% Stats counters */
-	ns_stats_t *		nsstats;
-	dns_stats_t *		rcvquerystats;
-	dns_stats_t *		opcodestats;
-	dns_stats_t *		rcodestats;
+	ns_stats_t  *nsstats;
+	dns_stats_t *rcvquerystats;
+	dns_stats_t *opcodestats;
+	dns_stats_t *rcodestats;
 
-	isc_stats_t *		udpinstats4;
-	isc_stats_t *		udpoutstats4;
-	isc_stats_t *		udpinstats6;
-	isc_stats_t *		udpoutstats6;
+	isc_stats_t *udpinstats4;
+	isc_stats_t *udpoutstats4;
+	isc_stats_t *udpinstats6;
+	isc_stats_t *udpoutstats6;
 
-	isc_stats_t *		tcpinstats4;
-	isc_stats_t *		tcpoutstats4;
-	isc_stats_t *		tcpinstats6;
-	isc_stats_t *		tcpoutstats6;
+	isc_stats_t *tcpinstats4;
+	isc_stats_t *tcpoutstats4;
+	isc_stats_t *tcpinstats6;
+	isc_stats_t *tcpoutstats6;
 };
 
 struct ns_altsecret {
 	ISC_LINK(ns_altsecret_t) link;
-	unsigned char		secret[32];
+	unsigned char secret[32];
 };
 
 isc_result_t
@@ -178,23 +174,7 @@ ns_server_setserverid(ns_server_t *sctx, const char *serverid);
  */
 
 void
-ns_server_settimeouts(ns_server_t *sctx, unsigned int initial,
-		      unsigned int idle, unsigned int keepalive,
-		      unsigned int advertised);
-void
-ns_server_gettimeouts(ns_server_t *sctx, unsigned int *initial,
-		      unsigned int *idle, unsigned int *keepalive,
-		      unsigned int *advertised);
-/*%<
- * Set/get tcp-timeout values.
- *
- * Requires:
- *\li	'sctx' is valid.
- */
-
-void
-ns_server_setoption(ns_server_t *sctx, unsigned int option,
-		    bool value);
+ns_server_setoption(ns_server_t *sctx, unsigned int option, bool value);
 /*%<
  *	Set the given options on (if 'value' == #true)
  *	or off (if 'value' == #false).
@@ -211,4 +191,13 @@ ns_server_getoption(ns_server_t *sctx, unsigned int option);
  * Requires:
  *\li	'sctx' is valid.
  */
-#endif /* NS_SERVER_H */
+
+void
+ns_server_append_http_quota(ns_server_t *sctx, isc_quota_t *http_quota);
+/*%<
+ *	Add a quota to the list of HTTP quotas to destroy it safely later.
+ *
+ * Requires:
+ *\li	'sctx' is valid;
+ *\li	'http_quota' is not 'NULL'.
+ */

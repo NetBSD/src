@@ -1,32 +1,57 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+set -e
+
+. ../../conf.sh
 
 zone=.
 infile=root.db.in
 zonefile=root.db
 
-key1=`$KEYGEN -q -a ED25519 -n zone $zone`
-key2=`$KEYGEN -q -a ED25519 -n zone -f KSK $zone`
-#key2=`$KEYGEN -q -a ED448 -n zone -f KSK $zone`
-$DSFROMKEY -a sha-256 $key2.key > dsset-256
+echo_i "ns1/sign.sh"
 
-cat $infile $key1.key $key2.key > $zonefile
+cp $infile $zonefile
 
-$SIGNER -P -g -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
+if [ -f ../ed25519-supported.file ]; then
+  zsk25519=$($KEYGEN -q -a ED25519 -n zone "$zone")
+  ksk25519=$($KEYGEN -q -a ED25519 -n zone -f KSK "$zone")
+  cat "$ksk25519.key" "$zsk25519.key" >>"$zonefile"
+  $DSFROMKEY -a sha-256 "$ksk25519.key" >>dsset-256
+fi
 
-# Configure the resolving server with a trusted key.
-keyfile_to_trusted_keys $key1 > trusted.conf
-cp trusted.conf ../ns2/trusted.conf
+if [ -f ../ed448-supported.file ]; then
+  zsk448=$($KEYGEN -q -a ED448 -n zone "$zone")
+  ksk448=$($KEYGEN -q -a ED448 -n zone -f KSK "$zone")
+  cat "$ksk448.key" "$zsk448.key" >>"$zonefile"
+  $DSFROMKEY -a sha-256 "$ksk448.key" >>dsset-256
+fi
 
-cd ../ns2 && $SHELL sign.sh
+# Configure the resolving server with a static key.
+if [ -f ../ed25519-supported.file ]; then
+  keyfile_to_static_ds $ksk25519 >trusted.conf
+  cp trusted.conf ../ns2/trusted.conf
+else
+  keyfile_to_static_ds $ksk448 >trusted.conf
+  cp trusted.conf ../ns2/trusted.conf
+fi
+
+if [ -f ../ed448-supported.file ]; then
+  keyfile_to_static_ds $ksk448 >trusted.conf
+  cp trusted.conf ../ns3/trusted.conf
+else
+  keyfile_to_static_ds $ksk25519 >trusted.conf
+  cp trusted.conf ../ns3/trusted.conf
+fi
+
+$SIGNER -P -g -o "$zone" "$zonefile" >/dev/null 2>signer.err || cat signer.err

@@ -1,16 +1,17 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=..
-. $SYSTEMTESTTOP/conf.sh
+. ../conf.sh
 
 #
 # jnl and database files MUST be removed before we start
@@ -22,18 +23,33 @@ copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
-copy_setports ns7/named.conf.in ns7/named.conf
+copy_setports ns7/named1.conf.in ns7/named.conf
 copy_setports ns8/named.conf.in ns8/named.conf
-copy_setports ns9/named.conf.in ns9/named.conf
-copy_setports ns10/named.conf.in ns10/named.conf
+
+# If "tkey-gssapi-credential" is set in the configuration and GSSAPI support is
+# not available, named will refuse to start.  As the test system framework does
+# not support starting named instances conditionally, ensure that
+# "tkey-gssapi-credential" is only present in named.conf if GSSAPI support is
+# available.
+copy_setports ns9/named.conf.in ns9/named.conf.in.tkey
+copy_setports ns10/named.conf.in ns10/named.conf.in.tkey
+if $FEATURETEST --gssapi; then
+  sed 's|@TKEY_CONFIGURATION@|tkey-gssapi-credential "DNS/ns9.example.com@EXAMPLE.COM";|' ns9/named.conf.in.tkey >ns9/named.conf
+  sed 's|@TKEY_CONFIGURATION@|tkey-gssapi-credential "DNS/ns10.example.com@EXAMPLE.COM";|' ns10/named.conf.in.tkey >ns10/named.conf
+else
+  sed 's|@TKEY_CONFIGURATION@||' ns9/named.conf.in.tkey >ns9/named.conf
+  sed 's|@TKEY_CONFIGURATION@||' ns10/named.conf.in.tkey >ns10/named.conf
+fi
+rm -f ns9/named.conf.in.tkey
+rm -f ns10/named.conf.in.tkey
 
 copy_setports verylarge.in verylarge
 
 cp -f ns1/example1.db ns1/example.db
-sed 's/example.nil/other.nil/g' ns1/example1.db > ns1/other.db
-sed 's/example.nil/unixtime.nil/g' ns1/example1.db > ns1/unixtime.db
-sed 's/example.nil/yyyymmddvv.nil/g' ns1/example1.db > ns1/yyyymmddvv.db
-sed 's/example.nil/keytests.nil/g' ns1/example1.db > ns1/keytests.db
+sed 's/example.nil/other.nil/g' ns1/example1.db >ns1/other.db
+sed 's/example.nil/unixtime.nil/g' ns1/example1.db >ns1/unixtime.db
+sed 's/example.nil/yyyymmddvv.nil/g' ns1/example1.db >ns1/yyyymmddvv.db
+sed 's/example.nil/keytests.nil/g' ns1/example1.db >ns1/keytests.db
 cp -f ns3/example.db.in ns3/example.db
 cp -f ns3/too-big.test.db.in ns3/too-big.test.db
 
@@ -54,16 +70,34 @@ ns1.update.nil.         A       10.53.0.2
 ns2.update.nil.		AAAA	::1
 EOF
 
-$DDNSCONFGEN -q -z example.nil > ns1/ddns.key
+$TSIGKEYGEN ddns-key.example.nil >ns1/ddns.key
 
-$DDNSCONFGEN -q -a hmac-md5 -k md5-key -z keytests.nil > ns1/md5.key
-$DDNSCONFGEN -q -a hmac-sha1 -k sha1-key -z keytests.nil > ns1/sha1.key
-$DDNSCONFGEN -q -a hmac-sha224 -k sha224-key -z keytests.nil > ns1/sha224.key
-$DDNSCONFGEN -q -a hmac-sha256 -k sha256-key -z keytests.nil > ns1/sha256.key
-$DDNSCONFGEN -q -a hmac-sha384 -k sha384-key -z keytests.nil > ns1/sha384.key
-$DDNSCONFGEN -q -a hmac-sha512 -k sha512-key -z keytests.nil > ns1/sha512.key
+if $FEATURETEST --md5; then
+  $TSIGKEYGEN -a hmac-md5 md5-key >ns1/md5.key
+else
+  echo -n >ns1/md5.key
+fi
+$TSIGKEYGEN -a hmac-sha1 sha1-key >ns1/sha1.key
+$TSIGKEYGEN -a hmac-sha224 sha224-key >ns1/sha224.key
+$TSIGKEYGEN -a hmac-sha256 sha256-key >ns1/sha256.key
+$TSIGKEYGEN -a hmac-sha384 sha384-key >ns1/sha384.key
+$TSIGKEYGEN -a hmac-sha512 sha512-key >ns1/sha512.key
 
-(cd ns3; $SHELL -e sign.sh)
+if $FEATURETEST --md5; then
+  echo 'key "legacy-157" { algorithm "hmac-md5"; secret "mGcDSCx/fF121GOVJlITLg=="; };' >ns1/legacy157.key
+else
+  echo "/* MD5 NOT SUPPORTED */" >ns1/legacy157.key
+fi
+echo 'key "legacy-161" { algorithm "hmac-sha1"; secret "N80fGvcr8JifzRUJ62R4rQ=="; };' >ns1/legacy161.key
+echo 'key "legacy-162" { algorithm "hmac-sha224"; secret "nSIKzFAGS7/tvBs8JteI+Q=="; };' >ns1/legacy162.key
+echo 'key "legacy-163" { algorithm "hmac-sha256"; secret "CvaupxnDeES3HnlYhTq53w=="; };' >ns1/legacy163.key
+echo 'key "legacy-164" { algorithm "hmac-sha384"; secret "wDldBJwJrYfPoL1Pj4ucOQ=="; };' >ns1/legacy164.key
+echo 'key "legacy-165" { algorithm "hmac-sha512"; secret "OgZrTcEa8P76hVY+xyN7Wg=="; };' >ns1/legacy165.key
+
+(
+  cd ns3
+  $SHELL -e sign.sh
+)
 
 cp -f ns1/many.test.db.in ns1/many.test.db
 
@@ -80,5 +114,6 @@ cp -f ns8/in-addr.db.in ns8/in-addr.db
 cp -f ns8/example.com.db.in ns8/example.com.db
 cp -f ns9/in-addr.db.in ns9/in-addr.db
 cp -f ns9/example.com.db.in ns9/example.com.db
+cp -f ns9/example.com.db.in ns9/denyname.example.db
 cp -f ns10/in-addr.db.in ns10/in-addr.db
 cp -f ns10/example.com.db.in ns10/example.com.db

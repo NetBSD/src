@@ -1,0 +1,127 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	notify no;
+	recursion no;
+	serial-query-rate 100;
+	dnssec-validation no;
+};
+
+view "default" {
+
+	# Removed catalog-zone option, otherwise this is
+	# identical to named1.conf.in
+
+	zone "dom-existing.example" {
+	    type primary;
+	    file "dom-existing.example.db";
+	};
+
+	zone "dom-existing-forward.example" {
+	    type forward;
+	    forward only;
+	    forwarders { 10.53.0.1; };
+	};
+
+	zone "dom-existing-forward-off.example" {
+	    type forward;
+	    forward only;
+	    forwarders { };
+	};
+
+	zone "catalog1.example" {
+		type secondary;
+		file "catalog1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog2.example" {
+		type secondary;
+		file "catalog2.example.db";
+		primaries { 10.53.0.3; };
+	};
+
+	zone "catalog3.example" {
+		type secondary;
+		file "catalog3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog4.example" {
+		type secondary;
+		file "catalog4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# No "version" property
+	zone "catalog-bad1.example" {
+		type secondary;
+		file "catalog-bad1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Unsupported "version" property
+	zone "catalog-bad2.example" {
+		type secondary;
+		file "catalog-bad2.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Two RRs in TXT RRset for the "version" property
+	zone "catalog-bad3.example" {
+		type secondary;
+		file "catalog-bad3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Type A "version" property
+	zone "catalog-bad4.example" {
+		type secondary;
+		file "catalog-bad4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+};
+
+view "ch" ch {
+
+	# Removed catalog-zone option, otherwise this is
+	# identical to named1.conf.in
+
+	# Non-IN class catalog zone
+	zone "catalog-bad5.example" ch {
+		type secondary;
+		file "catalog-bad5.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+};
+
+key tsig_key. {
+	secret "LSAnCU+Z";
+	algorithm @DEFAULT_HMAC@;
+};

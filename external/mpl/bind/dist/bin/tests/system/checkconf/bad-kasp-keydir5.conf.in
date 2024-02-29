@@ -1,0 +1,52 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * In one view, the zone inherits the key-directory from the "view" level, while
+ * in the other it is set explicitly at the "zone" level. In both cases, the
+ * same key-directory is used, but the zone uses a different DNSSEC policy per
+ * view. This is a configuration error.
+ */
+
+key "keyforview1" {
+	algorithm @DEFAULT_HMAC@;
+	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
+};
+
+key "keyforview2" {
+	algorithm @DEFAULT_HMAC@;
+	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
+};
+
+view "example1" {
+	match-clients { key "keyforview1"; };
+
+	key-directory "keys";
+
+	zone "example.net" {
+		type primary;
+		dnssec-policy "default";
+		file "example1.db";
+	};
+};
+
+view "example2" {
+	match-clients { key "keyforview2"; };
+
+	zone "example.net" {
+		type primary;
+		dnssec-policy "insecure";
+		key-directory "keys";
+		file "example2.db";
+	};
+};

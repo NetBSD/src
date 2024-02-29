@@ -1,18 +1,19 @@
-/*	$NetBSD: namedconf.h,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.3.4.1 2024/02/29 12:35:27 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef ISCCFG_NAMEDCONF_H
-#define ISCCFG_NAMEDCONF_H 1
+#pragma once
 
 /*! \file isccfg/namedconf.h
  * \brief
@@ -24,31 +25,32 @@
 /*
  * Configuration object types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_namedconf;
+extern cfg_type_t cfg_type_namedconf;
 /*%< A complete named.conf file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bindkeys;
+extern cfg_type_t cfg_type_bindkeys;
 /*%< A bind.keys file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_newzones;
+extern cfg_type_t cfg_type_newzones;
 /*%< A new-zones file (for zones added by 'rndc addzone'). */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_addzoneconf;
+extern cfg_type_t cfg_type_addzoneconf;
 /*%< A single zone passed via the addzone rndc command. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndcconf;
+extern cfg_type_t cfg_type_rndcconf;
 /*%< A complete rndc.conf file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndckey;
+extern cfg_type_t cfg_type_rndckey;
 /*%< A complete rndc.key file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sessionkey;
+extern cfg_type_t cfg_type_sessionkey;
 /*%< A complete session.key file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
+extern cfg_type_t cfg_type_keyref;
 /*%< A key reference, used as an ACL element */
 
 /*%< Zone options */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_zoneopts;
+extern cfg_type_t cfg_type_zoneopts;
 
-#endif /* ISCCFG_NAMEDCONF_H */
+/*%< DNSSEC Key and Signing Policy options */
+extern cfg_type_t cfg_type_dnssecpolicyopts;

@@ -1,19 +1,17 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:24 christos Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2024/02/29 12:27:59 martin Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 PROG=	delv
 SRCS=	delv.c
 BINDIR=	/usr/bin
 
-.include "${.CURDIR}/../Makefile.inc"
-
 DIST=${IDIST}/bin/delv
-CPPFLAGS+= -I${DIST}/include -I${IDIST}/lib/irs/include
-LDADD+=    -lirs -lisccfg
+CPPFLAGS+=	-I${DIST}/include -I${IDIST}/lib/irs/include
+CPPFLAGS+=	-DSYSCONFDIR=\"${SYSCONFDIR}\"
+LDADD+=		-lirs -lisccfg
+DPADD+=		${LIBIRS} ${LIBISCCFG}
 
-delv.o: ${VERSIONFILE}
-
-.PATH: ${DIST}
+.PATH: ${DIST} ${IDIST}/doc/man
 
 .include <bsd.prog.mk>

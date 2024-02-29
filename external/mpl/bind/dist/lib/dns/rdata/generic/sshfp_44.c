@@ -1,16 +1,17 @@
-/*	$NetBSD: sshfp_44.c,v 1.4.4.1 2019/09/12 19:18:15 martin Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.4.4.2 2024/02/29 12:34:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /* RFC 4255 */
 
@@ -19,7 +20,7 @@
 
 #define RRTYPE_SSHFP_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_sshfp(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int len = -1;
@@ -37,8 +38,9 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -46,8 +48,9 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
@@ -70,7 +73,7 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	return (isc_hex_tobuffer(lexer, target, len));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_sshfp(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -106,20 +109,23 @@ totext_sshfp(ARGS_TOTEXT) {
 	/*
 	 * Digest.
 	 */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0) /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_hex_totext(&sr, 0, "", target));
-	else
-		RETERR(isc_hex_totext(&sr, tctx->width - 2,
-				      tctx->linebreak, target));
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	} else {
+		RETERR(isc_hex_totext(&sr, tctx->width - 2, tctx->linebreak,
+				      target));
+	}
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_sshfp(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -136,7 +142,8 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	}
 
 	if ((sr.base[1] == 1 && sr.length != ISC_SHA1_DIGESTLENGTH + 2) ||
-	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2)) {
+	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2))
+	{
 		return (DNS_R_FORMERR);
 	}
 
@@ -144,7 +151,7 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_sshfp(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -157,7 +164,7 @@ towire_sshfp(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_sshfp(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -173,12 +180,12 @@ compare_sshfp(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	dns_rdata_sshfp_t *sshfp = source;
 
 	REQUIRE(type == dns_rdatatype_sshfp);
-	REQUIRE(source != NULL);
+	REQUIRE(sshfp != NULL);
 	REQUIRE(sshfp->common.rdtype == type);
 	REQUIRE(sshfp->common.rdclass == rdclass);
 
@@ -191,13 +198,13 @@ fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sshfp->digest, sshfp->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_sshfp(ARGS_TOSTRUCT) {
 	dns_rdata_sshfp_t *sshfp = target;
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-	REQUIRE(target != NULL);
+	REQUIRE(sshfp != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sshfp->common.rdclass = rdata->rdclass;
@@ -213,40 +220,44 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	sshfp->length = region.length;
 
 	sshfp->digest = mem_maybedup(mctx, region.base, region.length);
-	if (sshfp->digest == NULL)
+	if (sshfp->digest == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	sshfp->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_sshfp(ARGS_FREESTRUCT) {
 	dns_rdata_sshfp_t *sshfp = source;
 
 	REQUIRE(sshfp != NULL);
 	REQUIRE(sshfp->common.rdtype == dns_rdatatype_sshfp);
 
-	if (sshfp->mctx == NULL)
+	if (sshfp->mctx == NULL) {
 		return;
+	}
 
-	if (sshfp->digest != NULL)
+	if (sshfp->digest != NULL) {
 		isc_mem_free(sshfp->mctx, sshfp->digest);
+	}
 	sshfp->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_sshfp(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_sshfp(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -257,9 +268,8 @@ digest_sshfp(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_sshfp(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_sshfp);
 
 	UNUSED(name);
@@ -270,9 +280,8 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_sshfp(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
 
 	UNUSED(rdata);
@@ -282,9 +291,9 @@ checknames_sshfp(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_sshfp(ARGS_COMPARE) {
 	return (compare_sshfp(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_SSHFP_44_C */
+#endif /* RDATA_GENERIC_SSHFP_44_C */

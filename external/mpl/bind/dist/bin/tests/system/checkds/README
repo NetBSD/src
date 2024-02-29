@@ -1,0 +1,26 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+SPDX-License-Identifier: MPL-2.0
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0.  If a copy of the MPL was not distributed with this
+file, you can obtain one at https://mozilla.org/MPL/2.0/.
+
+See the COPYRIGHT file distributed with this work for additional
+information regarding copyright ownership.
+
+The test setup for the checkds tests.
+
+These servers are parent servers:
+- ns2 is a primary authoritative server that serves the parent zone for zones
+  configured in ns9.
+- ns4 is the secondary server for ns2.
+- ns5 is a primary authoritative server that serves the parent zone for zones
+  configured in ns9, but this one does not publish DS records (to test cases
+  where the DS is missing).
+- ns6 is an authoritative server for a different zone, to test badly configured
+  parental agents.
+- ns7 is the secondary server for ns5.
+
+Finally, ns9 is the authoritative server for the various DNSSEC enabled test
+domains.

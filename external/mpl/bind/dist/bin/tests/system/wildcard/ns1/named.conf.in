@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,20 +22,22 @@ options {
 	recursion no;
 	dnssec-validation no;
 	notify yes;
-	dnssec-enable yes;
 };
 
-zone "." { type master; file "root.db.signed"; };
-
-zone "dlv" { type master; file "dlv.db.signed"; };
-
-zone "nsec" { type master; file "nsec.db.signed"; };
-zone "private.nsec" { type master; file "private.nsec.db.signed"; };
+zone "." { type primary; file "root.db.signed"; };
 
 /*
- * The contents of nsec3 and private.nsec3 are specially choosen to
- * have seperate NSEC3 records for the "no qname proof" and the
+ * RFC 4592 example zone.
+ */
+zone "allwild.test" { type primary; file "allwild.db"; };
+zone "example" { type primary; file "example.db"; };
+zone "nsec" { type primary; file "nsec.db.signed"; };
+zone "private.nsec" { type primary; file "private.nsec.db.signed"; };
+
+/*
+ * The contents of nsec3 and private.nsec3 are specially chosen to
+ * have separate NSEC3 records for the "no qname proof" and the
  * "closest encloser proof".
  */
-zone "nsec3" { type master; file "nsec3.db.signed"; };
-zone "private.nsec3" { type master; file "private.nsec3.db.signed"; };
+zone "nsec3" { type primary; file "nsec3.db.signed"; };
+zone "private.nsec3" { type primary; file "private.nsec3.db.signed"; };

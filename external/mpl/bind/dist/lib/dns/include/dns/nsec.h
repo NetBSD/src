@@ -1,19 +1,19 @@
-/*	$NetBSD: nsec.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_NSEC_H
-#define DNS_NSEC_H 1
+#pragma once
 
 /*! \file dns/nsec.h */
 
@@ -21,17 +21,18 @@
 
 #include <isc/lang.h>
 
-#include <dns/types.h>
+#include <dns/diff.h>
 #include <dns/name.h>
+#include <dns/types.h>
 
 #define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + 8192 + 512)
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
-		    dns_dbnode_t *node, const dns_name_t *target,
-		    unsigned char *buffer, dns_rdata_t *rdata);
+dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
+		    const dns_name_t *target, unsigned char *buffer,
+		    dns_rdata_t *rdata);
 /*%<
  * Build the rdata of a NSEC record.
  *
@@ -62,12 +63,15 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  */
 
 isc_result_t
-dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
+dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version, dns_diff_t *diff,
 		  bool *answer);
 /*
  * Report whether the DNSKEY RRset has a NSEC only algorithm.  Unknown
  * algorithms are assumed to support NSEC3.  If DNSKEY is not found,
  * *answer is set to false, and ISC_R_NOTFOUND is returned.
+ * If 'diff' is provided, check if the NSEC only DNSKEY will be deleted.
+ * If so, and there are no other NSEC only DNSKEYs that will stay in 'db',
+ * consider the DNSKEY RRset to have no NSEC only DNSKEYs.
  *
  * Requires:
  * 	'answer' to be non NULL.
@@ -98,8 +102,8 @@ dns_nsec_isset(const unsigned char *array, unsigned int type);
 isc_result_t
 dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
 		       const dns_name_t *nsecname, dns_rdataset_t *nsecset,
-		       bool *exists, bool *data,
-		       dns_name_t *wild, dns_nseclog_t log, void *arg);
+		       bool *exists, bool *data, dns_name_t *wild,
+		       dns_nseclog_t log, void *arg);
 /*%
  * Return ISC_R_SUCCESS if we can determine that the name doesn't exist
  * or we can determine whether there is data or not at the name.
@@ -111,6 +115,14 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
  * Return ISC_R_IGNORE when the NSEC is not the appropriate one.
  */
 
-ISC_LANG_ENDDECLS
+bool
+dns_nsec_requiredtypespresent(dns_rdataset_t *rdataset);
+/*
+ * Return true if all the NSEC records in rdataset have both
+ * NSEC and RRSIG present.
+ *
+ * Requires:
+ * \li	rdataset to be a NSEC rdataset.
+ */
 
-#endif /* DNS_NSEC_H */
+ISC_LANG_ENDDECLS

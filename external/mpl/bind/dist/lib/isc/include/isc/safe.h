@@ -1,29 +1,28 @@
-/*	$NetBSD: safe.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: safe.h,v 1.3.4.1 2024/02/29 12:35:11 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_SAFE_H
-#define ISC_SAFE_H 1
+#pragma once
 
 /*! \file isc/safe.h */
 
 #include <isc/lang.h>
 
-#include <openssl/crypto.h>
-
 ISC_LANG_BEGINDECLS
 
-#define isc_safe_memequal(s1, s2, n) !CRYPTO_memcmp(s1, s2, n)
+int
+isc_safe_memequal(const void *, const void *, size_t);
 
 /*%<
  * Returns true iff. two blocks of memory are equal, otherwise
@@ -31,7 +30,9 @@ ISC_LANG_BEGINDECLS
  *
  */
 
-#define isc_safe_memwipe(ptr, len) OPENSSL_cleanse(ptr, len)
+void
+isc_safe_memwipe(void *, size_t);
+
 /*%<
  * Clear the memory of length `len` pointed to by `ptr`.
  *
@@ -43,5 +44,3 @@ ISC_LANG_BEGINDECLS
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_SAFE_H */

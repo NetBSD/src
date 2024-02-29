@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -11,7 +13,7 @@
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -27,12 +29,23 @@ options {
 	listen-on { 10.53.0.3; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dump-file "named_dump3.db";
-	// This configuration has no serve-stale options set.
+	dnssec-validation no;
+	qname-minimization off;
+
+	stale-answer-enable yes;
+	stale-cache-enable yes;
+	stale-refresh-time 30;
+	stale-answer-client-timeout 1800;
+	max-cache-ttl 24h;
 };
 
 zone "." {
-	type slave;
-	masters { 10.53.0.1; };
-	file "root.bk";
+	type hint;
+	file "root.db";
+};
+
+zone "serve.stale" IN {
+	type primary;
+	notify no;
+	file "serve.stale.db";
 };

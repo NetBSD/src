@@ -1,11 +1,13 @@
-/*	$NetBSD: rrsig_46.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.4.4.1 2024/02/29 12:34:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -16,11 +18,11 @@
 #ifndef RDATA_GENERIC_RRSIG_46_C
 #define RDATA_GENERIC_RRSIG_46_C
 
-#define RRTYPE_RRSIG_ATTRIBUTES \
-	( DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
-	  DNS_RDATATYPEATTR_ATCNAME )
+#define RRTYPE_RRSIG_ATTRIBUTES                                     \
+	(DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH | \
+	 DNS_RDATATYPEATTR_ATCNAME)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_rrsig(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
@@ -46,10 +48,12 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	result = dns_rdatatype_fromtext(&covered, &token.value.as_textregion);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTIMPLEMENTED) {
 		i = strtol(DNS_AS_STR(token), &e, 10);
-		if (i < 0 || i > 65535)
+		if (i < 0 || i > 65535) {
 			RETTOK(ISC_R_RANGE);
-		if (*e != 0)
+		}
+		if (*e != 0) {
 			RETTOK(result);
+		}
 		covered = (dns_rdatatype_t)i;
 	}
 	RETERR(uint16_tobuffer(covered, target));
@@ -67,8 +71,9 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	c = (unsigned char)token.value.as_ulong;
 	RETERR(mem_tobuffer(target, &c, 1));
 
@@ -84,20 +89,24 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strlen(DNS_AS_STR(token)) <= 10U &&
-	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+	if (strlen(DNS_AS_STR(token)) <= 10U && *DNS_AS_STR(token) != '-' &&
+	    *DNS_AS_STR(token) != '+')
+	{
 		char *end;
 		unsigned long u;
 		uint64_t u64;
 
 		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
-		if (u == ULONG_MAX || *end != 0)
+		if (u == ULONG_MAX || *end != 0) {
 			RETTOK(DNS_R_SYNTAX);
-		if (u64 > 0xffffffffUL)
+		}
+		if (u64 > 0xffffffffUL) {
 			RETTOK(ISC_R_RANGE);
+		}
 		time_expire = u;
-	} else
+	} else {
 		RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
+	}
 	RETERR(uint32_tobuffer(time_expire, target));
 
 	/*
@@ -105,20 +114,24 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (strlen(DNS_AS_STR(token)) <= 10U &&
-	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+	if (strlen(DNS_AS_STR(token)) <= 10U && *DNS_AS_STR(token) != '-' &&
+	    *DNS_AS_STR(token) != '+')
+	{
 		char *end;
 		unsigned long u;
 		uint64_t u64;
 
 		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
-		if (u == ULONG_MAX || *end != 0)
+		if (u == ULONG_MAX || *end != 0) {
 			RETTOK(DNS_R_SYNTAX);
-		if (u64 > 0xffffffffUL)
+		}
+		if (u64 > 0xffffffffUL) {
 			RETTOK(ISC_R_RANGE);
+		}
 		time_signed = u;
-	} else
+	} else {
 		RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
+	}
 	RETERR(uint32_tobuffer(time_signed, target));
 
 	/*
@@ -135,8 +148,9 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 				      false));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
+	if (origin == NULL) {
 		origin = dns_rootname;
+	}
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 	/*
@@ -145,10 +159,10 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	return (isc_base64_tobuffer(lexer, target, -2));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_rrsig(ARGS_TOTEXT) {
 	isc_region_t sr;
-	char buf[sizeof("4294967295")];	/* Also TYPE65000. */
+	char buf[sizeof("4294967295")]; /* Also TYPE65000. */
 	dns_rdatatype_t covered;
 	unsigned long ttl;
 	unsigned long when;
@@ -202,8 +216,9 @@ totext_rrsig(ARGS_TOTEXT) {
 	snprintf(buf, sizeof(buf), "%lu", ttl);
 	RETERR(str_totext(buf, target));
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 	RETERR(str_totext(tctx->linebreak, target));
 
 	/*
@@ -244,21 +259,24 @@ totext_rrsig(ARGS_TOTEXT) {
 	 */
 	RETERR(str_totext(tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
-		if (tctx->width == 0)   /* No splitting */
+		if (tctx->width == 0) { /* No splitting */
 			RETERR(isc_base64_totext(&sr, 60, "", target));
-		else
+		} else {
 			RETERR(isc_base64_totext(&sr, tctx->width - 2,
 						 tctx->linebreak, target));
-	} else
+		}
+	} else {
 		RETERR(str_totext("[omitted]", target));
+	}
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_rrsig(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -280,8 +298,9 @@ fromwire_rrsig(ARGS_FROMWIRE) {
 	 * time signed: 4
 	 * key footprint: 2
 	 */
-	if (sr.length < 18)
+	if (sr.length < 18) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	isc_buffer_forward(source, 18);
 	RETERR(mem_tobuffer(target, sr.base, 18));
@@ -296,11 +315,14 @@ fromwire_rrsig(ARGS_FROMWIRE) {
 	 * Sig.
 	 */
 	isc_buffer_activeregion(source, &sr);
+	if (sr.length < 1) {
+		return (DNS_R_FORMERR);
+	}
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_rrsig(ARGS_TOWIRE) {
 	isc_region_t sr;
 	dns_name_t name;
@@ -337,7 +359,7 @@ towire_rrsig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_rrsig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -353,12 +375,12 @@ compare_rrsig(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_rrsig(ARGS_FROMSTRUCT) {
 	dns_rdata_rrsig_t *sig = source;
 
 	REQUIRE(type == dns_rdatatype_rrsig);
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
 	REQUIRE(sig->signature != NULL || sig->siglen == 0);
@@ -412,14 +434,14 @@ fromstruct_rrsig(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sig->signature, sig->siglen));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_rrsig(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 	dns_rdata_rrsig_t *sig = target;
 	dns_name_t signer;
 
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
-	REQUIRE(target != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sig->common.rdclass = rdata->rdclass;
@@ -473,7 +495,7 @@ tostruct_rrsig(ARGS_TOSTRUCT) {
 	dns_name_init(&signer, NULL);
 	dns_name_fromregion(&signer, &sr);
 	dns_name_init(&sig->signer, NULL);
-	RETERR(name_duporclone(&signer, mctx, &sig->signer));
+	name_duporclone(&signer, mctx, &sig->signer);
 	isc_region_consume(&sr, name_length(&sig->signer));
 
 	/*
@@ -481,49 +503,52 @@ tostruct_rrsig(ARGS_TOSTRUCT) {
 	 */
 	sig->siglen = sr.length;
 	sig->signature = mem_maybedup(mctx, sr.base, sig->siglen);
-	if (sig->signature == NULL)
+	if (sig->signature == NULL) {
 		goto cleanup;
-
+	}
 
 	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup:
-	if (mctx != NULL)
+cleanup:
+	if (mctx != NULL) {
 		dns_name_free(&sig->signer, mctx);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_rrsig(ARGS_FREESTRUCT) {
-	dns_rdata_rrsig_t *sig = (dns_rdata_rrsig_t *) source;
+	dns_rdata_rrsig_t *sig = (dns_rdata_rrsig_t *)source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_rrsig);
 
-	if (sig->mctx == NULL)
+	if (sig->mctx == NULL) {
 		return;
+	}
 
 	dns_name_free(&sig->signer, sig->mctx);
-	if (sig->signature != NULL)
+	if (sig->signature != NULL) {
 		isc_mem_free(sig->mctx, sig->signature);
+	}
 	sig->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_rrsig(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_rrsig(ARGS_DIGEST) {
-
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
 	UNUSED(rdata);
@@ -533,7 +558,7 @@ digest_rrsig(ARGS_DIGEST) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline dns_rdatatype_t
+static dns_rdatatype_t
 covers_rrsig(dns_rdata_t *rdata) {
 	dns_rdatatype_t type;
 	isc_region_t r;
@@ -546,9 +571,8 @@ covers_rrsig(dns_rdata_t *rdata) {
 	return (type);
 }
 
-static inline bool
+static bool
 checkowner_rrsig(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_rrsig);
 
 	UNUSED(name);
@@ -559,9 +583,8 @@ checkowner_rrsig(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_rrsig(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_rrsig);
 
 	UNUSED(rdata);
@@ -571,7 +594,7 @@ checknames_rrsig(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_rrsig(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -593,8 +616,9 @@ casecompare_rrsig(ARGS_COMPARE) {
 	r1.length = 18;
 	r2.length = 18;
 	order = isc_region_compare(&r1, &r2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	dns_name_init(&name1, NULL);
 	dns_name_init(&name2, NULL);
@@ -605,8 +629,9 @@ casecompare_rrsig(ARGS_COMPARE) {
 	dns_name_fromregion(&name1, &r1);
 	dns_name_fromregion(&name2, &r2);
 	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
+	if (order != 0) {
 		return (order);
+	}
 
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
@@ -614,4 +639,4 @@ casecompare_rrsig(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-#endif	/* RDATA_GENERIC_RRSIG_46_C */
+#endif /* RDATA_GENERIC_RRSIG_46_C */

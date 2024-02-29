@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "autosign" {
+
+	signatures-refresh P1W;
+	signatures-validity P2W;
+	signatures-validity-dnskey P2W;
+
+	dnskey-ttl 300;
+
+	keys {
+		ksk key-directory lifetime P2Y algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P1Y algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "enable-dnssec" {
+
+	signatures-refresh P1W;
+	signatures-validity P2W;
+	signatures-validity-dnskey P2W;
+
+	dnskey-ttl 300;
+	max-zone-ttl PT12H;
+	zone-propagation-delay PT5M;
+	retire-safety PT20M;
+	publish-safety PT5M;
+
+	parent-propagation-delay 1h;
+	parent-ds-ttl 2h;
+
+	keys {
+		csk lifetime unlimited algorithm @DEFAULT_ALGORITHM_NUMBER@;
+	};
+};
+
+dnssec-policy "zsk-prepub" {
+
+	signatures-refresh P1W;
+	signatures-validity P2W;
+	signatures-validity-dnskey P2W;
+
+	dnskey-ttl 3600;
+	publish-safety P1D;
+	retire-safety P2D;
+	purge-keys PT1H;
+
+	keys {
+		ksk key-directory lifetime P2Y  algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P30D algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	zone-propagation-delay PT1H;
+	max-zone-ttl 1d;
+};
+
+dnssec-policy "ksk-doubleksk" {
+
+	signatures-refresh P1W;
+	signatures-validity P2W;
+	signatures-validity-dnskey P2W;
+
+	dnskey-ttl 2h;
+	publish-safety P1D;
+	retire-safety P2D;
+	purge-keys PT1H;
+
+	keys {
+		ksk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P1Y  algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	zone-propagation-delay PT1H;
+	max-zone-ttl 1d;
+
+	parent-ds-ttl 3600;
+	parent-propagation-delay PT1H;
+};
+
+dnssec-policy "csk-roll" {
+
+	signatures-refresh P5D;
+	signatures-validity 30d;
+	signatures-validity-dnskey 30d;
+
+	dnskey-ttl 1h;
+	publish-safety PT1H;
+	retire-safety 2h;
+	purge-keys PT1H;
+
+	keys {
+		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	zone-propagation-delay 1h;
+	max-zone-ttl P1D;
+
+	parent-ds-ttl 1h;
+	parent-propagation-delay 1h;
+};
+
+dnssec-policy "csk-roll2" {
+
+	signatures-refresh 12h;
+	signatures-validity P1D;
+	signatures-validity-dnskey P1D;
+
+	dnskey-ttl 1h;
+	publish-safety PT1H;
+	retire-safety 1h;
+	purge-keys 0;
+
+	keys {
+		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	zone-propagation-delay PT1H;
+	max-zone-ttl 1d;
+
+	parent-ds-ttl PT1H;
+	parent-propagation-delay P1W;
+};

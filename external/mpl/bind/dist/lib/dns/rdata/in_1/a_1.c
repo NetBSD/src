@@ -1,11 +1,13 @@
-/*	$NetBSD: a_1.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.3.4.1 2024/02/29 12:34:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,7 +22,7 @@
 
 #define RRTYPE_A_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_a(ARGS_FROMTEXT) {
 	isc_token_t token;
 	struct in_addr addr;
@@ -38,17 +40,19 @@ fromtext_in_a(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 
-	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1)
+	if (inet_pton(AF_INET, DNS_AS_STR(token), &addr) != 1) {
 		RETTOK(DNS_R_BADDOTTEDQUAD);
+	}
 	isc_buffer_availableregion(target, &region);
-	if (region.length < 4)
+	if (region.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_a(ARGS_TOTEXT) {
 	isc_region_t region;
 
@@ -59,10 +63,10 @@ totext_in_a(ARGS_TOTEXT) {
 	UNUSED(tctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (inet_totext(AF_INET, &region, target));
+	return (inet_totext(AF_INET, tctx->flags, &region, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_a(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 	isc_region_t tregion;
@@ -77,10 +81,12 @@ fromwire_in_a(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (sregion.length < 4)
+	if (sregion.length < 4) {
 		return (ISC_R_UNEXPECTEDEND);
-	if (tregion.length < 4)
+	}
+	if (tregion.length < 4) {
 		return (ISC_R_NOSPACE);
+	}
 
 	memmove(tregion.base, sregion.base, 4);
 	isc_buffer_forward(source, 4);
@@ -88,7 +94,7 @@ fromwire_in_a(ARGS_FROMWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_a(ARGS_TOWIRE) {
 	isc_region_t region;
 
@@ -99,14 +105,15 @@ towire_in_a(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	isc_buffer_availableregion(target, &region);
-	if (region.length < rdata->length)
+	if (region.length < rdata->length) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
+static int
 compare_in_a(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -123,14 +130,14 @@ compare_in_a(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_a(ARGS_FROMSTRUCT) {
 	dns_rdata_in_a_t *a = source;
 	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_a);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(a != NULL);
 	REQUIRE(a->common.rdtype == type);
 	REQUIRE(a->common.rdclass == rdclass);
 
@@ -142,13 +149,13 @@ fromstruct_in_a(ARGS_FROMSTRUCT) {
 	return (uint32_tobuffer(n, target));
 }
 
-
-static inline isc_result_t
+static isc_result_t
 tostruct_in_a(ARGS_TOSTRUCT) {
 	dns_rdata_in_a_t *a = target;
 	uint32_t n;
 	isc_region_t region;
 
+	REQUIRE(a != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length == 4);
@@ -166,30 +173,31 @@ tostruct_in_a(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_a(ARGS_FREESTRUCT) {
 	dns_rdata_in_a_t *a = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(a != NULL);
 	REQUIRE(a->common.rdtype == dns_rdatatype_a);
 	REQUIRE(a->common.rdclass == dns_rdataclass_in);
 
 	UNUSED(a);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_a(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_a(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -201,9 +209,10 @@ digest_in_a(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_a(ARGS_CHECKOWNER) {
 	dns_name_t prefix, suffix;
+	unsigned int labels, i;
 
 	REQUIRE(type == dns_rdatatype_a);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -211,25 +220,49 @@ checkowner_in_a(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 
-	/*
-	 * Handle Active Diretory gc._msdcs.<forest> name.
-	 */
-	if (dns_name_countlabels(name) > 2U) {
+	labels = dns_name_countlabels(name);
+	if (labels > 2U) {
+		/*
+		 * Handle Active Directory gc._msdcs.<forest> name.
+		 */
 		dns_name_init(&prefix, NULL);
 		dns_name_init(&suffix, NULL);
-		dns_name_split(name, dns_name_countlabels(name) - 2,
-			       &prefix, &suffix);
+		dns_name_split(name, labels - 2, &prefix, &suffix);
 		if (dns_name_equal(&gc_msdcs, &prefix) &&
 		    dns_name_ishostname(&suffix, false))
+		{
 			return (true);
+		}
+
+		/*
+		 * Handle SPF exists targets when the seperating label is:
+		 * - "_spf" RFC7208, section 5.7
+		 * - "_spf_verify" RFC7208, Appendix D1
+		 * - "_spf_rate" RFC7208, Appendix D1
+		 */
+		for (i = 0; i < labels - 2; i++) {
+			dns_label_t label;
+			dns_name_getlabel(name, i, &label);
+			if ((label.length == 5 &&
+			     strncasecmp((char *)label.base, "\x04_spf", 5) ==
+				     0) ||
+			    (label.length == 12 &&
+			     strncasecmp((char *)label.base, "\x0b_spf_verify",
+					 12) == 0) ||
+			    (label.length == 10 &&
+			     strncasecmp((char *)label.base, "\x09_spf_rate",
+					 10) == 0))
+			{
+				return (true);
+			}
+		}
 	}
 
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline bool
+static bool
 checknames_in_a(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -240,9 +273,9 @@ checknames_in_a(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_a(ARGS_COMPARE) {
 	return (compare_in_a(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_A_1_C */
+#endif /* RDATA_IN_1_A_1_C */

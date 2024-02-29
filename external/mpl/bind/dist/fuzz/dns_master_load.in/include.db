@@ -1,0 +1,8 @@
+$ORIGIN .
+$TTL	120
+@		SOA	tld4.  hostmaster.ns.tld4. ( 1 3600 1200 604800 60 )
+		NS	ns
+ns		A	10.53.0.2
+$INCLUDE withoutorigin
+$INCLUDE withoutorigin origin
+

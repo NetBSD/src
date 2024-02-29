@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 3600
+soa-without-dnskey.	3600	SOA	ns1.soa-without-dnskey. hostmaster.soa-without-dnskey. (
+					1          ; serial
+					3600       ; refresh (1 hour)
+					1200       ; retry (20 minutes)
+					604800     ; expire (1 week)
+					3600       ; minimum (1 hour)
+					)
+			3600	NS	ns1.soa-without-dnskey.
+			3600	NSEC	ns1.soa-without-dnskey. NS SOA RRSIG NSEC
+ns1.soa-without-dnskey.	3600	A	10.53.0.1
+			3600	NSEC	soa-without-dnskey. A RRSIG NSEC

@@ -1,20 +1,19 @@
-/*	$NetBSD: assertions.c,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.3.4.1 2024/02/29 12:34:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +28,7 @@
  */
 #ifndef BACKTRACE_MAXFRAME
 #define BACKTRACE_MAXFRAME 128
-#endif
+#endif /* ifndef BACKTRACE_MAXFRAME */
 
 /*%
  * Forward.
@@ -47,20 +46,19 @@ static isc_assertioncallback_t isc_assertion_failed_cb = default_callback;
 /* coverity[+kill] */
 void
 isc_assertion_failed(const char *file, int line, isc_assertiontype_t type,
-		     const char *cond)
-{
+		     const char *cond) {
 	isc_assertion_failed_cb(file, line, type, cond);
 	abort();
-	/* NOTREACHED */
 }
 
 /*% Set callback. */
 void
 isc_assertion_setcallback(isc_assertioncallback_t cb) {
-	if (cb == NULL)
+	if (cb == NULL) {
 		isc_assertion_failed_cb = default_callback;
-	else
+	} else {
 		isc_assertion_failed_cb = cb;
+	}
 }
 
 /*% Type to Text */
@@ -87,7 +85,7 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
 		result = "INVARIANT";
 		break;
 	default:
-		result = NULL;
+		result = "UNKNOWN";
 	}
 	return (result);
 }
@@ -99,37 +97,17 @@ isc_assertion_typetotext(isc_assertiontype_t type) {
 /* coverity[+kill] */
 static void
 default_callback(const char *file, int line, isc_assertiontype_t type,
-		 const char *cond)
-{
+		 const char *cond) {
 	void *tracebuf[BACKTRACE_MAXFRAME];
-	int i, nframes;
-	const char *logsuffix = ".";
-	const char *fname;
-	isc_result_t result;
+	int nframes = isc_backtrace(tracebuf, BACKTRACE_MAXFRAME);
 
-	result = isc_backtrace_gettrace(tracebuf, BACKTRACE_MAXFRAME, &nframes);
-	if (result == ISC_R_SUCCESS && nframes > 0) {
-		logsuffix = ", back trace";
+	fprintf(stderr, "%s:%d: %s(%s) failed%s\n", file, line,
+		isc_assertion_typetotext(type), cond,
+		(nframes > 0) ? ", back trace" : ".");
+
+	if (nframes > 0) {
+		isc_backtrace_symbols_fd(tracebuf, nframes, fileno(stderr));
 	}
 
-	fprintf(stderr, "%s:%d: %s(%s) failed%s\n",
-		file, line, isc_assertion_typetotext(type), cond, logsuffix);
-
-	if (result == ISC_R_SUCCESS) {
-		for (i = 0; i < nframes; i++) {
-			unsigned long offset;
-
-			fname = NULL;
-			result = isc_backtrace_getsymbol(tracebuf[i], &fname,
-							 &offset);
-			if (result == ISC_R_SUCCESS) {
-				fprintf(stderr, "#%d %p in %s()+0x%lx\n", i,
-					tracebuf[i], fname, offset);
-			} else {
-				fprintf(stderr, "#%d %p in ??\n", i,
-					tracebuf[i]);
-			}
-		}
-	}
 	fflush(stderr);
 }

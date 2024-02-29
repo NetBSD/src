@@ -1,20 +1,21 @@
-/*	$NetBSD: notify.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.3.4.1 2024/02/29 12:35:29 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #include <isc/log.h>
 #include <isc/print.h>
+#include <isc/result.h>
 
 #include <dns/message.h>
 #include <dns/rdataset.h>
@@ -53,22 +54,27 @@ respond(ns_client_t *client, isc_result_t result) {
 	rcode = dns_result_torcode(result);
 
 	msg_result = dns_message_reply(message, true);
-	if (msg_result != ISC_R_SUCCESS)
-		msg_result = dns_message_reply(message, false);
 	if (msg_result != ISC_R_SUCCESS) {
-		ns_client_next(client, msg_result);
+		msg_result = dns_message_reply(message, false);
+	}
+	if (msg_result != ISC_R_SUCCESS) {
+		ns_client_drop(client, msg_result);
+		isc_nmhandle_detach(&client->reqhandle);
 		return;
 	}
 	message->rcode = rcode;
-	if (rcode == dns_rcode_noerror)
+	if (rcode == dns_rcode_noerror) {
 		message->flags |= DNS_MESSAGEFLAG_AA;
-	else
+	} else {
 		message->flags &= ~DNS_MESSAGEFLAG_AA;
+	}
+
 	ns_client_send(client);
+	isc_nmhandle_detach(&client->reqhandle);
 }
 
 void
-ns_notify_start(ns_client_t *client) {
+ns_notify_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	dns_message_t *request = client->message;
 	isc_result_t result;
 	dns_name_t *zonename;
@@ -77,6 +83,11 @@ ns_notify_start(ns_client_t *client) {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char tsigbuf[DNS_NAME_FORMATSIZE * 2 + sizeof(": TSIG '' ()")];
 	dns_tsigkey_t *tsigkey;
+
+	/*
+	 * Attach to the request handle
+	 */
+	isc_nmhandle_attach(handle, &client->reqhandle);
 
 	/*
 	 * Interpret the question section.
@@ -133,24 +144,25 @@ ns_notify_start(ns_client_t *client) {
 			snprintf(tsigbuf, sizeof(tsigbuf), ": TSIG '%s'",
 				 namebuf);
 		}
-	} else
+	} else {
 		tsigbuf[0] = '\0';
+	}
 
 	dns_name_format(zonename, namebuf, sizeof(namebuf));
 	result = dns_zt_find(client->view->zonetable, zonename, 0, NULL, &zone);
 	if (result == ISC_R_SUCCESS) {
 		dns_zonetype_t zonetype = dns_zone_gettype(zone);
 
-		if ((zonetype == dns_zone_master) ||
-		    (zonetype == dns_zone_slave) ||
+		if ((zonetype == dns_zone_primary) ||
+		    (zonetype == dns_zone_secondary) ||
 		    (zonetype == dns_zone_mirror) ||
 		    (zonetype == dns_zone_stub))
 		{
 			isc_sockaddr_t *from = ns_client_getsockaddr(client);
 			isc_sockaddr_t *to = ns_client_getdestaddr(client);
 			notify_log(client, ISC_LOG_INFO,
-				   "received notify for zone '%s'%s",
-				   namebuf, tsigbuf);
+				   "received notify for zone '%s'%s", namebuf,
+				   tsigbuf);
 			result = dns_zone_notifyreceive(zone, from, to,
 							request);
 			goto done;
@@ -162,8 +174,9 @@ ns_notify_start(ns_client_t *client) {
 		   namebuf, tsigbuf);
 	result = DNS_R_NOTAUTH;
 
- done:
-	if (zone != NULL)
+done:
+	if (zone != NULL) {
 		dns_zone_detach(&zone);
+	}
 	respond(client, result);
 }

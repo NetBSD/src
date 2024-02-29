@@ -1,8 +1,10 @@
 ; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 ;
+; SPDX-License-Identifier: MPL-2.0
+;
 ; This Source Code Form is subject to the terms of the Mozilla Public
-; License, v. 2.0. If a copy of the MPL was not distributed with this
-; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
 ;
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
@@ -13,9 +15,20 @@ $TTL 600
 @	IN MX	0 mail
 ns	IN A	10.53.0.6
 mail	IN A	10.53.0.6
+www	IN HTTPS 0 http-server
+http-server IN A 10.53.0.6
+https-loop IN HTTPS 0 https-next
+https-loop IN A 10.53.0.6
+https-next IN HTTPS 0 https-loop
+https-next IN A 10.53.0.7
+https-cname IN HTTPS 0 cname-server
+cname-server IN CNAME cname-next
+cname-next IN CNAME http-server
+https-cname-loop IN HTTPS 0 https-cname-loop0
+https-cname-loop0 IN CNAME https-cname-loop0
 fetch 10 IN TXT A short ttl
 non-zero 10 IN TXT A short ttl
 zero 0  IN TXT	A zero ttl
-$TTL 10
+$TTL 13
 ds 	IN NS	ns.ds
 ns.ds	IN A	10.53.0.6

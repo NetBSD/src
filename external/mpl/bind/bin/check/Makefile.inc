@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2018/08/14 11:52:41 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2.6.1 2024/02/29 12:27:58 martin Exp $
 
 LDADD+=-lns
 DPADD+=${LIBNS}
@@ -11,8 +11,8 @@ CPPFLAGS+=-DNAMED_CONFFILE=\"${SYSCONFDIR}/named.conf\"
 BINDIR=/usr/sbin
 CHECK=${IDIST}/bin/check
 
-.PATH: ${CHECK}
+.PATH: ${CHECK} ${IDIST}/doc/man
 
 PROG=${BASE}
 SRCS=${BASE}.c check-tool.c
-MAN=${BASE}.8
+MAN?=${BASE}.1
