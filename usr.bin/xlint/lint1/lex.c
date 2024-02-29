@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.217 2024/02/08 20:59:19 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.218 2024/02/29 21:37:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.217 2024/02/08 20:59:19 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.218 2024/02/29 21:37:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -481,84 +481,72 @@ lex_name(const char *yytext, size_t yyleng)
 // Determines whether the constant is signed in traditional C but unsigned in
 // C90 and later.
 static bool
-is_unsigned_since_c90(tspec_t t, uint64_t ui, int base)
+is_unsigned_since_c90(unsigned ls, uint64_t ui, int base)
 {
-	if (!(allow_trad && allow_c90))
+	if (ui <= TARG_INT_MAX)
 		return false;
-	if (t == INT) {
-		if (ui > TARG_INT_MAX && ui <= TARG_UINT_MAX && base != 10)
-			return true;
-		return ui > TARG_LONG_MAX;
-	}
-	return t == LONG && ui > TARG_LONG_MAX;
+	if (ls == 0 && ui <= TARG_UINT_MAX && base != 10)
+		return true;
+	return ls <= 1 && ui > TARG_LONG_MAX;
 }
 
 static tspec_t
-integer_constant_type(tspec_t t, uint64_t ui, int base, bool warned)
+integer_constant_type_signed(unsigned ls, uint64_t ui, int base, bool warned)
 {
-	switch (t) {
-	case INT:
-		if (ui <= TARG_INT_MAX)
-			return INT;
-		if (ui <= TARG_UINT_MAX && base != 10 && allow_c90)
-			return UINT;
-		if (ui <= TARG_LONG_MAX)
-			return LONG;
-		/* FALLTHROUGH */
-	case LONG:
-		if (ui <= TARG_LONG_MAX)
-			return LONG;
-		if (ui <= TARG_ULONG_MAX && base != 10)
-			return allow_c90 ? ULONG : LONG;
-		if (!allow_c99) {
-			if (!warned)
-				/* integer constant out of range */
-				warning(252);
-			return allow_c90 ? ULONG : LONG;
-		}
-		/* FALLTHROUGH */
-	case LLONG:
-		if (ui <= TARG_LLONG_MAX)
-			return LLONG;
-		if (ui <= TARG_ULLONG_MAX && base != 10)
-			return allow_c90 ? ULLONG : LLONG;
+	if (ls == 0 && ui <= TARG_INT_MAX)
+		return INT;
+	if (ls == 0 && ui <= TARG_UINT_MAX && base != 10 && allow_c90)
+		return UINT;
+	if (ls == 0 && ui <= TARG_LONG_MAX)
+		return LONG;
+
+	if (ls <= 1 && ui <= TARG_LONG_MAX)
+		return LONG;
+	if (ls <= 1 && ui <= TARG_ULONG_MAX && base != 10)
+		return allow_c90 ? ULONG : LONG;
+	if (ls <= 1 && !allow_c99) {
 		if (!warned)
 			/* integer constant out of range */
 			warning(252);
-		return allow_c90 ? ULLONG : LLONG;
-	case UINT:
-		if (ui <= TARG_UINT_MAX)
-			return UINT;
-		/* FALLTHROUGH */
-	case ULONG:
-		if (ui <= TARG_ULONG_MAX)
-			return ULONG;
-		if (!allow_c99) {
-			if (!warned)
-				/* integer constant out of range */
-				warning(252);
-			return ULONG;
-		}
-		/* FALLTHROUGH */
-	default:
-		if (ui <= TARG_ULLONG_MAX)
-			return ULLONG;
-		if (!warned)
-			/* integer constant out of range */
-			warning(252);
-		return ULLONG;
+		return allow_c90 ? ULONG : LONG;
 	}
+
+	if (ui <= TARG_LLONG_MAX)
+		return LLONG;
+	if (ui <= TARG_ULLONG_MAX && base != 10)
+		return allow_c90 ? ULLONG : LLONG;
+	if (!warned)
+		/* integer constant out of range */
+		warning(252);
+	return allow_c90 ? ULLONG : LLONG;
+}
+
+static tspec_t
+integer_constant_type_unsigned(unsigned l, uint64_t ui, bool warned)
+{
+	if (l == 0 && ui <= TARG_UINT_MAX)
+		return UINT;
+
+	if (l <= 1 && ui <= TARG_ULONG_MAX)
+		return ULONG;
+	if (l <= 1 && !allow_c99) {
+		if (!warned)
+			/* integer constant out of range */
+			warning(252);
+		return ULONG;
+	}
+
+	if (ui <= TARG_ULLONG_MAX)
+		return ULLONG;
+	if (!warned)
+		/* integer constant out of range */
+		warning(252);
+	return ULLONG;
 }
 
 int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
-	/* C11 6.4.4.1p5 */
-	static const tspec_t suffix_type[2][3] = {
-		{ INT,  LONG,  LLONG, },
-		{ UINT, ULONG, ULLONG, }
-	};
-
 	const char *cp = yytext;
 	size_t len = yyleng;
 
@@ -590,7 +578,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	if (!allow_c90 && u_suffix > 0)
 		/* suffix 'U' is illegal in traditional C */
 		warning(97);
-	tspec_t ct = suffix_type[u_suffix][l_suffix];
 
 	bool warned = false;
 	errno = 0;
@@ -607,14 +594,17 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
 
-	bool ansiu = is_unsigned_since_c90(ct, ui, base);
+	bool unsigned_since_c90 = allow_trad && allow_c90 && u_suffix == 0
+	    && is_unsigned_since_c90(l_suffix, ui, base);
 
-	tspec_t t = integer_constant_type(ct, ui, base, warned);
+	tspec_t t = u_suffix
+	    ? integer_constant_type_unsigned(l_suffix, ui, warned)
+	    : integer_constant_type_signed(l_suffix, ui, base, warned);
 	ui = (uint64_t)convert_integer((int64_t)ui, t, 0);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = t;
-	yylval.y_val->v_unsigned_since_c90 = ansiu;
+	yylval.y_val->v_unsigned_since_c90 = unsigned_since_c90;
 	yylval.y_val->u.integer = (int64_t)ui;
 
 	return T_CON;
