@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.220 2024/02/23 18:18:35 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.221 2024/02/29 10:47:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4279,4 +4279,16 @@ tests/lib/libm/t_fenv.c				1.14,1.15
 
 	libm: PR 57949: fix spurious side effects in fetestexcept.
 	[riastradh, ticket #1937]
+
+sys/dev/pci/if_wm.c			1.792,1.794-1.798 via patch
+sys/dev/pci/if_wmreg.h			1.131
+
+	- Add RQDPC(Receive Queue Drop Packet Count) to iqdrops.
+	- Drop frames if the RX descriptor ring has no room on multiqueue
+	  system.
+	- Improve dmesg output.
+	  - Print RX packet buffer size.
+	  - Fix the upper 16bit of Image Unique ID(EtrackID).
+	- Fix comment.
+	[msaitoh, ticket #1938]
 
