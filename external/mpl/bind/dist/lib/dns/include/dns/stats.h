@@ -1,18 +1,19 @@
-/*	$NetBSD: stats.h,v 1.3.4.1 2019/09/12 19:18:15 martin Exp $	*/
+/*	$NetBSD: stats.h,v 1.3.4.2 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_STATS_H
-#define DNS_STATS_H 1
+#pragma once
 
 /*! \file dns/stats.h */
 
@@ -70,9 +71,10 @@ enum {
 	dns_resstatscounter_badcookie = 40,
 	dns_resstatscounter_zonequota = 41,
 	dns_resstatscounter_serverquota = 42,
-	dns_resstatscounter_nextitem = 43,
-	dns_resstatscounter_priming = 44,
-	dns_resstatscounter_max = 45,
+	dns_resstatscounter_clientquota = 43,
+	dns_resstatscounter_nextitem = 44,
+	dns_resstatscounter_priming = 45,
+	dns_resstatscounter_max = 46,
 
 	/*
 	 * DNSSEC stats.
@@ -122,26 +124,27 @@ enum {
 	dns_cachestatscounter_querymisses = 4,
 	dns_cachestatscounter_deletelru = 5,
 	dns_cachestatscounter_deletettl = 6,
+	dns_cachestatscounter_coveringnsec = 7,
 
-	dns_cachestatscounter_max = 7,
+	dns_cachestatscounter_max = 8,
 
 	/*%
 	 * Query statistics counters (obsolete).
 	 */
-	dns_statscounter_success = 0,    /*%< Successful lookup */
-	dns_statscounter_referral = 1,   /*%< Referral result */
-	dns_statscounter_nxrrset = 2,    /*%< NXRRSET result */
-	dns_statscounter_nxdomain = 3,   /*%< NXDOMAIN result */
-	dns_statscounter_recursion = 4,  /*%< Recursion was used */
-	dns_statscounter_failure = 5,    /*%< Some other failure */
-	dns_statscounter_duplicate = 6,  /*%< Duplicate query */
-	dns_statscounter_dropped = 7,	 /*%< Duplicate query (dropped) */
+	dns_statscounter_success = 0,	/*%< Successful lookup */
+	dns_statscounter_referral = 1,	/*%< Referral result */
+	dns_statscounter_nxrrset = 2,	/*%< NXRRSET result */
+	dns_statscounter_nxdomain = 3,	/*%< NXDOMAIN result */
+	dns_statscounter_recursion = 4, /*%< Recursion was used */
+	dns_statscounter_failure = 5,	/*%< Some other failure */
+	dns_statscounter_duplicate = 6, /*%< Duplicate query */
+	dns_statscounter_dropped = 7,	/*%< Duplicate query (dropped) */
 
 	/*%
 	 * DNSTAP statistics counters.
 	 */
 	dns_dnstapcounter_success = 0,
-	dns_dnstapcounter_drop =  1,
+	dns_dnstapcounter_drop = 1,
 	dns_dnstapcounter_max = 2,
 
 	/*
@@ -452,13 +455,13 @@ enum {
  * ISC_STATSDUMP_VERBOSE should be used instead.  These two values are
  * intentionally defined to be the same value to ensure binary compatibility.
  */
-#define DNS_STATSDUMP_VERBOSE	0x00000001 /*%< dump 0-value counters */
-#endif
+#define DNS_STATSDUMP_VERBOSE 0x00000001 /*%< dump 0-value counters */
+#endif					 /* if 0 */
 
 /*%<
  * (Obsoleted)
  */
-LIBDNS_EXTERNAL_DATA extern const char *dns_statscounter_names[];
+extern const char *dns_statscounter_names[];
 
 /*%
  * Attributes for statistics counters of RRset and Rdatatype types.
@@ -483,24 +486,31 @@ LIBDNS_EXTERNAL_DATA extern const char *dns_statscounter_names[];
  *	RRset type counters only.  This indicates a record that is marked for
  *	removal.
  */
-#define DNS_RDATASTATSTYPE_ATTR_OTHERTYPE	0x0001
-#define DNS_RDATASTATSTYPE_ATTR_NXRRSET		0x0002
-#define DNS_RDATASTATSTYPE_ATTR_NXDOMAIN	0x0004
-#define DNS_RDATASTATSTYPE_ATTR_STALE		0x0008
-#define DNS_RDATASTATSTYPE_ATTR_ANCIENT		0x0010
+#define DNS_RDATASTATSTYPE_ATTR_OTHERTYPE 0x0001
+#define DNS_RDATASTATSTYPE_ATTR_NXRRSET	  0x0002
+#define DNS_RDATASTATSTYPE_ATTR_NXDOMAIN  0x0004
+#define DNS_RDATASTATSTYPE_ATTR_STALE	  0x0008
+#define DNS_RDATASTATSTYPE_ATTR_ANCIENT	  0x0010
 
 /*%<
  * Conversion macros among dns_rdatatype_t, attributes and isc_statscounter_t.
  */
-#define DNS_RDATASTATSTYPE_BASE(type)	((dns_rdatatype_t)((type) & 0xFFFF))
-#define DNS_RDATASTATSTYPE_ATTR(type)	((type) >> 16)
-#define DNS_RDATASTATSTYPE_VALUE(b, a)	(((a) << 16) | (b))
+#define DNS_RDATASTATSTYPE_BASE(type)  ((dns_rdatatype_t)((type) & 0xFFFF))
+#define DNS_RDATASTATSTYPE_ATTR(type)  ((type) >> 16)
+#define DNS_RDATASTATSTYPE_VALUE(b, a) (((a) << 16) | (b))
+
+/*%
+ * Types of DNSSEC sign statistics operations.
+ */
+typedef enum {
+	dns_dnssecsignstats_sign = 1,
+	dns_dnssecsignstats_refresh = 2
+} dnssecsignstats_type_t;
 
 /*%<
  * Types of dump callbacks.
  */
-typedef void (*dns_generalstats_dumper_t)(isc_statscounter_t, uint64_t,
-					  void *);
+typedef void (*dns_generalstats_dumper_t)(isc_statscounter_t, uint64_t, void *);
 typedef void (*dns_rdatatypestats_dumper_t)(dns_rdatastatstype_t, uint64_t,
 					    void *);
 typedef void (*dns_dnssecsignstats_dumper_t)(dns_keytag_t, uint64_t, void *);
@@ -690,9 +700,20 @@ dns_rcodestats_increment(dns_stats_t *stats, dns_opcode_t code);
  */
 
 void
-dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id);
+dns_dnssecsignstats_increment(dns_stats_t *stats, dns_keytag_t id, uint8_t alg,
+			      dnssecsignstats_type_t operation);
 /*%<
- * Increment the statistics counter for the DNSKEY 'id'.
+ * Increment the statistics counter for the DNSKEY 'id' with algorithm 'alg'.
+ * The 'operation' determines what counter is incremented.
+ *
+ * Requires:
+ *\li	'stats' is a valid dns_stats_t created by dns_dnssecsignstats_create().
+ */
+
+void
+dns_dnssecsignstats_clear(dns_stats_t *stats, dns_keytag_t id, uint8_t alg);
+/*%<
+ * Clear the statistics counter for the DNSKEY 'id' with algorithm 'alg'.
  *
  * Requires:
  *\li	'stats' is a valid dns_stats_t created by dns_dnssecsignstats_create().
@@ -743,9 +764,9 @@ dns_rdatasetstats_dump(dns_stats_t *stats, dns_rdatatypestats_dumper_t dump_fn,
  */
 
 void
-dns_dnssecsignstats_dump(dns_stats_t *stats,
-			 dns_dnssecsignstats_dumper_t dump_fn,
-			 void *arg, unsigned int options);
+dns_dnssecsignstats_dump(dns_stats_t *stats, dnssecsignstats_type_t operation,
+			 dns_dnssecsignstats_dumper_t dump_fn, void *arg,
+			 unsigned int options);
 /*%<
  * Dump the current statistics counters in a specified way.  For each counter
  * in stats, dump_fn is called with the corresponding type in the form of
@@ -804,5 +825,3 @@ dns_stats_freecounters(isc_mem_t *mctx, uint64_t **ctrp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_STATS_H */

@@ -1,19 +1,19 @@
-/*	$NetBSD: check-tool.h,v 1.3 2019/01/09 16:54:58 christos Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.3.4.1 2024/02/29 12:28:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef CHECK_TOOL_H
-#define CHECK_TOOL_H
+#pragma once
 
 /*! \file */
 
@@ -43,11 +43,6 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	  dns_masterformat_t fileformat, const dns_master_style_t *style,
 	  const uint32_t rawversion);
 
-#ifdef _WIN32
-void InitSockets(void);
-void DestroySockets(void);
-#endif
-
 extern int debug;
 extern const char *journal;
 extern bool nomerge;
@@ -57,5 +52,3 @@ extern bool dochecksrv;
 extern dns_zoneopt_t zone_options;
 
 ISC_LANG_ENDDECLS
-
-#endif

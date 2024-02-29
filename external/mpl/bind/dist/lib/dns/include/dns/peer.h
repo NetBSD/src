@@ -1,23 +1,23 @@
-/*	$NetBSD: peer.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: peer.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_PEER_H
-#define DNS_PEER_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/peer.h
  * \brief
@@ -34,64 +34,15 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/netaddr.h>
+#include <isc/refcount.h>
 
 #include <dns/types.h>
 
-#define DNS_PEERLIST_MAGIC	ISC_MAGIC('s','e','R','L')
-#define DNS_PEER_MAGIC		ISC_MAGIC('S','E','r','v')
+#define DNS_PEERLIST_MAGIC ISC_MAGIC('s', 'e', 'R', 'L')
+#define DNS_PEER_MAGIC	   ISC_MAGIC('S', 'E', 'r', 'v')
 
-#define DNS_PEERLIST_VALID(ptr)	ISC_MAGIC_VALID(ptr, DNS_PEERLIST_MAGIC)
+#define DNS_PEERLIST_VALID(ptr) ISC_MAGIC_VALID(ptr, DNS_PEERLIST_MAGIC)
 #define DNS_PEER_VALID(ptr)	ISC_MAGIC_VALID(ptr, DNS_PEER_MAGIC)
-
-/***
- *** Types
- ***/
-
-struct dns_peerlist {
-	unsigned int		magic;
-	uint32_t		refs;
-
-	isc_mem_t	       *mem;
-
-	ISC_LIST(dns_peer_t) elements;
-};
-
-struct dns_peer {
-	unsigned int		magic;
-	uint32_t		refs;
-
-	isc_mem_t	       *mem;
-
-	isc_netaddr_t		address;
-	unsigned int		prefixlen;
-	bool		bogus;
-	dns_transfer_format_t	transfer_format;
-	uint32_t		transfers;
-	bool		support_ixfr;
-	bool		provide_ixfr;
-	bool		request_ixfr;
-	bool		support_edns;
-	bool		request_nsid;
-	bool		send_cookie;
-	bool		request_expire;
-	bool		force_tcp;
-	bool		tcp_keepalive;
-	dns_name_t	       *key;
-	isc_sockaddr_t	       *transfer_source;
-	isc_dscp_t		transfer_dscp;
-	isc_sockaddr_t	       *notify_source;
-	isc_dscp_t		notify_dscp;
-	isc_sockaddr_t	       *query_source;
-	isc_dscp_t		query_dscp;
-	uint16_t		udpsize;		/* receive size */
-	uint16_t		maxudp;			/* transmit size */
-	uint16_t		padding;		/* pad block size */
-	uint8_t		ednsversion;		/* edns version */
-
-	uint32_t		bitflags;
-
-	ISC_LINK(dns_peer_t)	next;
-};
 
 /***
  *** Functions
@@ -215,7 +166,7 @@ isc_result_t
 dns_peer_setkey(dns_peer_t *peer, dns_name_t **keyval);
 
 isc_result_t
-dns_peer_settransfersource(dns_peer_t *peer,
+dns_peer_settransfersource(dns_peer_t		*peer,
 			   const isc_sockaddr_t *transfer_source);
 
 isc_result_t
@@ -252,28 +203,8 @@ isc_result_t
 dns_peer_getquerysource(dns_peer_t *peer, isc_sockaddr_t *query_source);
 
 isc_result_t
-dns_peer_setnotifydscp(dns_peer_t *peer, isc_dscp_t dscp);
-
-isc_result_t
-dns_peer_getnotifydscp(dns_peer_t *peer, isc_dscp_t *dscpp);
-
-isc_result_t
-dns_peer_settransferdscp(dns_peer_t *peer, isc_dscp_t dscp);
-
-isc_result_t
-dns_peer_gettransferdscp(dns_peer_t *peer, isc_dscp_t *dscpp);
-
-isc_result_t
-dns_peer_setquerydscp(dns_peer_t *peer, isc_dscp_t dscp);
-
-isc_result_t
-dns_peer_getquerydscp(dns_peer_t *peer, isc_dscp_t *dscpp);
-
-isc_result_t
 dns_peer_setednsversion(dns_peer_t *peer, uint8_t ednsversion);
 
 isc_result_t
 dns_peer_getednsversion(dns_peer_t *peer, uint8_t *ednsversion);
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_PEER_H */

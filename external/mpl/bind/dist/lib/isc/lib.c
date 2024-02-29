@@ -1,29 +1,57 @@
-/*	$NetBSD: lib.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.4.4.1 2024/02/29 12:35:01 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
 
-#include <config.h>
+#include <isc/mem.h>
+#include <isc/os.h>
+#include <isc/tls.h>
+#include <isc/util.h>
 
-#include <isc/bind9.h>
-#include <isc/lib.h>
+#include "config.h"
+#include "mem_p.h"
+#include "os_p.h"
+#include "tls_p.h"
+#include "trampoline_p.h"
+
+#ifndef ISC_CONSTRUCTOR
+#error Either __attribute__((constructor|destructor))__ or DllMain support needed to compile BIND 9.
+#endif
 
 /***
  *** Functions
  ***/
 
 void
-isc_lib_register(void) {
-	isc_bind9 = false;
+isc__initialize(void) ISC_CONSTRUCTOR;
+void
+isc__shutdown(void) ISC_DESTRUCTOR;
+
+void
+isc__initialize(void) {
+	isc__os_initialize();
+	isc__mem_initialize();
+	isc__tls_initialize();
+	isc__trampoline_initialize();
+	(void)isc_os_ncpus();
+}
+
+void
+isc__shutdown(void) {
+	isc__trampoline_shutdown();
+	isc__tls_shutdown();
+	isc__mem_shutdown();
+	isc__os_shutdown();
 }

@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -16,10 +18,11 @@ options {
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
 	pid-file "named.pid";
+	dnssec-validation no;
 };
 
 zone "signing.test" {
-	type master;
+	type primary;
 	masterfile-format text;
 	allow-update { any; };
 	file "signing.test.db";
@@ -27,5 +30,5 @@ zone "signing.test" {
 	key-directory "keys/signing.test";
 	inline-signing yes;
 	auto-dnssec maintain;
-	sig-validity-interval 120 30;
+	sig-validity-interval 20 5;
 };

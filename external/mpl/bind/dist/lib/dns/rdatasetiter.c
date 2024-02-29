@@ -1,20 +1,19 @@
-/*	$NetBSD: rdatasetiter.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.c,v 1.2.6.1 2024/02/29 12:34:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stddef.h>
 
@@ -61,15 +60,14 @@ dns_rdatasetiter_next(dns_rdatasetiter_t *iterator) {
 
 void
 dns_rdatasetiter_current(dns_rdatasetiter_t *iterator,
-			 dns_rdataset_t *rdataset)
-{
+			 dns_rdataset_t *rdataset) {
 	/*
 	 * Return the current rdataset.
 	 */
 
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(! dns_rdataset_isassociated(rdataset));
+	REQUIRE(!dns_rdataset_isassociated(rdataset));
 
 	iterator->methods->current(iterator, rdataset);
 }

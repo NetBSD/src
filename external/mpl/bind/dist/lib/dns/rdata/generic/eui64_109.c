@@ -1,11 +1,13 @@
-/*	$NetBSD: eui64_109.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.3.4.1 2024/02/29 12:34:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +20,7 @@
 
 #define RRTYPE_EUI64_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_eui64(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char eui64[8];
@@ -35,11 +37,13 @@ fromtext_eui64(ARGS_FROMTEXT) {
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	n = sscanf(DNS_AS_STR(token), "%2x-%2x-%2x-%2x-%2x-%2x-%2x-%2x",
-		   &l0, &l1, &l2, &l3, &l4, &l5, &l6, &l7);
+	n = sscanf(DNS_AS_STR(token), "%2x-%2x-%2x-%2x-%2x-%2x-%2x-%2x", &l0,
+		   &l1, &l2, &l3, &l4, &l5, &l6, &l7);
 	if (n != 8 || l0 > 255U || l1 > 255U || l2 > 255U || l3 > 255U ||
 	    l4 > 255U || l5 > 255U || l6 > 255U || l7 > 255U)
+	{
 		return (DNS_R_BADEUI);
+	}
 
 	eui64[0] = l0;
 	eui64[1] = l1;
@@ -52,7 +56,7 @@ fromtext_eui64(ARGS_FROMTEXT) {
 	return (mem_tobuffer(target, eui64, sizeof(eui64)));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_eui64(ARGS_TOTEXT) {
 	char buf[sizeof("xx-xx-xx-xx-xx-xx-xx-xx")];
 
@@ -61,16 +65,14 @@ totext_eui64(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	(void)snprintf(buf, sizeof(buf),
-		       "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
-		       rdata->data[0], rdata->data[1],
-		       rdata->data[2], rdata->data[3],
-		       rdata->data[4], rdata->data[5],
-		       rdata->data[6], rdata->data[7]);
+	(void)snprintf(
+		buf, sizeof(buf), "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+		rdata->data[0], rdata->data[1], rdata->data[2], rdata->data[3],
+		rdata->data[4], rdata->data[5], rdata->data[6], rdata->data[7]);
 	return (str_totext(buf, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_eui64(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 
@@ -82,15 +84,15 @@ fromwire_eui64(ARGS_FROMWIRE) {
 	UNUSED(dctx);
 
 	isc_buffer_activeregion(source, &sregion);
-	if (sregion.length != 8)
+	if (sregion.length != 8) {
 		return (DNS_R_FORMERR);
+	}
 	isc_buffer_forward(source, sregion.length);
 	return (mem_tobuffer(target, sregion.base, sregion.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_eui64(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
@@ -99,7 +101,7 @@ towire_eui64(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_eui64(ARGS_COMPARE) {
 	isc_region_t region1;
 	isc_region_t region2;
@@ -115,12 +117,12 @@ compare_eui64(ARGS_COMPARE) {
 	return (isc_region_compare(&region1, &region2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_eui64(ARGS_FROMSTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
 	REQUIRE(type == dns_rdatatype_eui64);
-	REQUIRE(source != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(eui64->common.rdtype == type);
 	REQUIRE(eui64->common.rdclass == rdclass);
 
@@ -130,12 +132,12 @@ fromstruct_eui64(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, eui64->eui64, sizeof(eui64->eui64)));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_eui64(ARGS_TOSTRUCT) {
 	dns_rdata_eui64_t *eui64 = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(target != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(mctx);
@@ -148,30 +150,30 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_eui64(ARGS_FREESTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(eui64->common.rdtype == dns_rdatatype_eui64);
 
 	return;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_eui64(ARGS_ADDLDATA) {
-
 	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_eui64(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -183,9 +185,8 @@ digest_eui64(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_eui64(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_eui64);
 
 	UNUSED(name);
@@ -196,9 +197,8 @@ checkowner_eui64(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_eui64(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
@@ -209,9 +209,9 @@ checknames_eui64(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_eui64(ARGS_COMPARE) {
 	return (compare_eui64(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_EUI64_109_C */
+#endif /* RDATA_GENERIC_EUI64_109_C */

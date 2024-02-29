@@ -1,23 +1,23 @@
-/*	$NetBSD: request.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: request.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_REQUEST_H
-#define DNS_REQUEST_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/request.h
  *
@@ -38,27 +38,25 @@
 
 #include <stdbool.h>
 
-#include <isc/lang.h>
 #include <isc/event.h>
+#include <isc/lang.h>
 
 #include <dns/types.h>
 
-#define DNS_REQUESTOPT_TCP 0x00000001U
-#define DNS_REQUESTOPT_CASE 0x00000002U
+#define DNS_REQUESTOPT_TCP     0x00000001U
+#define DNS_REQUESTOPT_CASE    0x00000002U
 #define DNS_REQUESTOPT_FIXEDID 0x00000004U
-#define DNS_REQUESTOPT_SHARE 0x00000008U
 
 typedef struct dns_requestevent {
 	ISC_EVENT_COMMON(struct dns_requestevent);
-	isc_result_t result;
+	isc_result_t   result;
 	dns_request_t *request;
 } dns_requestevent_t;
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_requestmgr_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
-		      isc_socketmgr_t *socketmgr, isc_taskmgr_t *taskmgr,
+dns_requestmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		      dns_dispatchmgr_t *dispatchmgr,
 		      dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
 		      dns_requestmgr_t **requestmgrp);
@@ -68,8 +66,6 @@ dns_requestmgr_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
  * Requires:
  *
  *\li	'mctx' is a valid memory context.
- *
- *\li	'timermgr' is a valid timer manager.
  *
  *\li	'socketmgr' is a valid socket manager.
  *
@@ -161,50 +157,12 @@ dns_requestmgr_detach(dns_requestmgr_t **requestmgrp);
 
 isc_result_t
 dns_request_create(dns_requestmgr_t *requestmgr, dns_message_t *message,
-		   const isc_sockaddr_t *address, unsigned int options,
-		   dns_tsigkey_t *key,
-		   unsigned int timeout, isc_task_t *task,
-		   isc_taskaction_t action, void *arg,
+		   const isc_sockaddr_t *srcaddr,
+		   const isc_sockaddr_t *destaddr, unsigned int options,
+		   dns_tsigkey_t *key, unsigned int timeout,
+		   unsigned int udptimeout, unsigned int udpretries,
+		   isc_task_t *task, isc_taskaction_t action, void *arg,
 		   dns_request_t **requestp);
-/*%<
- * Create and send a request.
- *
- * Notes:
- *
- *\li	'message' will be rendered and sent to 'address'.  If the
- *	#DNS_REQUESTOPT_TCP option is set, TCP will be used,
- *	#DNS_REQUESTOPT_SHARE option is set too, connecting TCP
- *	(vs. connected) will be shared too.  The request
- *	will timeout after 'timeout' seconds.
- *
- *\li	If the #DNS_REQUESTOPT_CASE option is set, use case sensitive
- *	compression.
- *
- *\li	When the request completes, successfully, due to a timeout, or
- *	because it was canceled, a completion event will be sent to 'task'.
- *
- * Requires:
- *
- *\li	'message' is a valid DNS message.
- *
- *\li	'address' is a valid sockaddr.
- *
- *\li	'timeout' > 0
- *
- *\li	'task' is a valid task.
- *
- *\li	requestp != NULL && *requestp == NULL
- */
-
-isc_result_t
-dns_request_createvia(dns_requestmgr_t *requestmgr, dns_message_t *message,
-		      const isc_sockaddr_t *srcaddr,
-		      const isc_sockaddr_t *destaddr,
-		      isc_dscp_t dscp, unsigned int options,
-		      dns_tsigkey_t *key, unsigned int timeout,
-		      unsigned int udptimeout, unsigned int udpretries,
-		      isc_task_t *task, isc_taskaction_t action, void *arg,
-		      dns_request_t **requestp);
 /*%<
  * Create and send a request.
  *
@@ -243,8 +201,7 @@ dns_request_createvia(dns_requestmgr_t *requestmgr, dns_message_t *message,
 isc_result_t
 dns_request_createraw(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 		      const isc_sockaddr_t *srcaddr,
-		      const isc_sockaddr_t *destaddr,
-		      isc_dscp_t dscp, unsigned int options,
+		      const isc_sockaddr_t *destaddr, unsigned int options,
 		      unsigned int timeout, unsigned int udptimeout,
 		      unsigned int udpretries, isc_task_t *task,
 		      isc_taskaction_t action, void *arg,
@@ -318,6 +275,20 @@ dns_request_getresponse(dns_request_t *request, dns_message_t *message,
  *
  *\li	Any result that dns_message_parse() can return.
  */
+isc_buffer_t *
+dns_request_getanswer(dns_request_t *request);
+/*
+ * Get the response to 'request' as a buffer.
+ *
+ * Requires:
+ *
+ *\li	'request' is a valid request for which the caller has received the
+ *	completion event.
+ *
+ * Returns:
+ *
+ *\li	a pointer to the answer buffer.
+ */
 
 bool
 dns_request_usedtcp(dns_request_t *request);
@@ -350,5 +321,3 @@ dns_request_destroy(dns_request_t **requestp);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_REQUEST_H */

@@ -1,10 +1,12 @@
 #!/usr/bin/perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -86,8 +88,11 @@ sub handleUDP {
 	# versions just get it completely wrong.
 
 	if ($qname eq "truncated.no-questions") {
-		# QR, AA, TC
+		# QR, AA, TC: forces TCP retry
 		return (pack("nnnnnn", $id, 0x8600, 0, 0, 0, 0));
+	} elsif ($qname eq "tcpalso.no-questions") {
+		# QR, REFUSED: forces TCP retry
+		return (pack("nnnnnn", $id, 0x8205, 0, 0, 0, 0));
 	}
 	# QR, AA
 	return (pack("nnnnnn", $id, 0x8400, 0, 0, 0, 0));
@@ -118,9 +123,15 @@ sub handleTCP {
 	$response->header->qr(1);
 	$response->header->aa(1);
 	$response->header->id($id);
-
 	$response->push("answer", new Net::DNS::RR("$qname 300 A 1.2.3.4"));
-	push(@results, $response->data);
+
+	if ($qname eq "tcpalso.no-questions") {
+		# for this qname we also return a bad reply over TCP
+		# QR, REFUSED, no question section
+		push (@results, pack("nnnnnn", $id, 0x8005, 0, 0, 0, 0));
+	} else {
+		push(@results, $response->data);
+	}
 
 	return \@results;
 }

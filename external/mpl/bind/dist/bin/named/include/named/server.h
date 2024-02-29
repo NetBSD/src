@@ -1,18 +1,19 @@
-/*	$NetBSD: server.h,v 1.4 2019/02/24 20:01:27 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.4.4.1 2024/02/29 12:28:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NAMED_SERVER_H
-#define NAMED_SERVER_H 1
+#pragma once
 
 /*! \file */
 
@@ -23,8 +24,8 @@
 #include <isc/magic.h>
 #include <isc/quota.h>
 #include <isc/sockaddr.h>
+#include <isc/tls.h>
 #include <isc/types.h>
-#include <isc/xml.h>
 
 #include <dns/acl.h>
 #include <dns/dnstap.h>
@@ -38,79 +39,88 @@
 
 #include <named/types.h>
 
-#define NAMED_EVENTCLASS		ISC_EVENTCLASS(0x4E43)
-#define NAMED_EVENT_RELOAD		(NAMED_EVENTCLASS + 0)
-#define NAMED_EVENT_DELZONE		(NAMED_EVENTCLASS + 1)
+#define NAMED_EVENTCLASS    ISC_EVENTCLASS(0x4E43)
+#define NAMED_EVENT_RELOAD  (NAMED_EVENTCLASS + 0)
+#define NAMED_EVENT_DELZONE (NAMED_EVENTCLASS + 1)
+#define NAMED_EVENT_COMMAND (NAMED_EVENTCLASS + 2)
+#define NAMED_EVENT_TATSEND (NAMED_EVENTCLASS + 3)
 
 /*%
  * Name server state.  Better here than in lots of separate global variables.
  */
 struct named_server {
-	unsigned int		magic;
-	isc_mem_t *		mctx;
+	unsigned int magic;
+	isc_mem_t   *mctx;
 
-	ns_server_t *		sctx;
+	ns_server_t *sctx;
 
-	isc_task_t *		task;
+	isc_task_t *task;
 
-	char *			statsfile;	/*%< Statistics file name */
-	char *			dumpfile;	/*%< Dump file name */
-	char *			secrootsfile;	/*%< Secroots file name */
-	char *			bindkeysfile;	/*%< bind.keys file name */
-	char *			recfile;	/*%< Recursive file name */
-	bool		version_set;	/*%< User has set version */
-	char *			version;	/*%< User-specified version */
-	bool		hostname_set;	/*%< User has set hostname */
-	char *			hostname;	/*%< User-specified hostname */
+	char *statsfile;    /*%< Statistics file name */
+	char *dumpfile;	    /*%< Dump file name */
+	char *secrootsfile; /*%< Secroots file name */
+	char *bindkeysfile; /*%< bind.keys file name
+			     * */
+	char *recfile;	    /*%< Recursive file name */
+	bool  version_set;  /*%< User has set version
+			     * */
+	char *version;	    /*%< User-specified version */
+	bool  hostname_set; /*%< User has set hostname
+			     * */
+	char *hostname;	    /*%< User-specified hostname
+			     * */
 
 	/* Server data structures. */
-	dns_loadmgr_t *		loadmgr;
-	dns_zonemgr_t *		zonemgr;
-	dns_viewlist_t		viewlist;
-	ns_interfacemgr_t *	interfacemgr;
-	dns_db_t *		in_roothints;
+	dns_loadmgr_t	  *loadmgr;
+	dns_zonemgr_t	  *zonemgr;
+	dns_viewlist_t	   viewlist;
+	dns_kasplist_t	   kasplist;
+	ns_interfacemgr_t *interfacemgr;
+	dns_db_t	  *in_roothints;
 
-	isc_timer_t *		interface_timer;
-	isc_timer_t *		heartbeat_timer;
-	isc_timer_t *		pps_timer;
-	isc_timer_t *		tat_timer;
+	isc_timer_t *interface_timer;
+	isc_timer_t *heartbeat_timer;
+	isc_timer_t *pps_timer;
+	isc_timer_t *tat_timer;
 
-	uint32_t		interface_interval;
-	uint32_t		heartbeat_interval;
+	uint32_t interface_interval;
+	uint32_t heartbeat_interval;
 
-	isc_mutex_t		reload_event_lock;
-	isc_event_t *		reload_event;
-	bool			reload_in_progress;
+	atomic_int reload_status;
 
-	bool		flushonshutdown;
+	bool flushonshutdown;
 
-	named_cachelist_t	cachelist;	/*%< Possibly shared caches */
-	isc_stats_t *		zonestats;	/*% Zone management stats */
-	isc_stats_t  *		resolverstats;	/*% Resolver stats */
-	isc_stats_t *		sockstats;	/*%< Socket stats */
+	named_cachelist_t cachelist; /*%< Possibly shared caches
+				      * */
+	isc_stats_t *zonestats;	     /*% Zone management stats */
+	isc_stats_t *resolverstats;  /*% Resolver stats */
+	isc_stats_t *sockstats;	     /*%< Socket stats */
 
-	named_controls_t *	controls;	/*%< Control channels */
-	unsigned int		dispatchgen;
-	named_dispatchlist_t	dispatches;
+	named_controls_t    *controls; /*%< Control channels */
+	unsigned int	     dispatchgen;
+	named_dispatchlist_t dispatches;
 
 	named_statschannellist_t statschannels;
 
-	dns_tsigkey_t		*sessionkey;
-	char			*session_keyfile;
-	dns_name_t		*session_keyname;
-	unsigned int		session_keyalg;
-	uint16_t		session_keybits;
-	bool		interface_auto;
-	unsigned char		secret[32];	/*%< Server Cookie Secret */
-	ns_cookiealg_t		cookiealg;
+	dst_key_t     *sessionkey;
+	char	      *session_keyfile;
+	dns_name_t    *session_keyname;
+	unsigned int   session_keyalg;
+	uint16_t       session_keybits;
+	bool	       interface_auto;
+	unsigned char  secret[32]; /*%< Server Cookie Secret */
+	ns_cookiealg_t cookiealg;
 
-	dns_dtenv_t		*dtenv;		/*%< Dnstap environment */
+	dns_dtenv_t *dtenv; /*%< Dnstap environment */
 
-	char *			lockfile;
+	char *lockfile;
+
+	isc_tlsctx_cache_t *tlsctx_server_cache;
+	isc_tlsctx_cache_t *tlsctx_client_cache;
 };
 
-#define NAMED_SERVER_MAGIC		ISC_MAGIC('S','V','E','R')
-#define NAMED_SERVER_VALID(s)		ISC_MAGIC_VALID(s, NAMED_SERVER_MAGIC)
+#define NAMED_SERVER_MAGIC    ISC_MAGIC('S', 'V', 'E', 'R')
+#define NAMED_SERVER_VALID(s) ISC_MAGIC_VALID(s, NAMED_SERVER_MAGIC)
 
 void
 named_server_create(isc_mem_t *mctx, named_server_t **serverp);
@@ -150,7 +160,7 @@ named_server_flushonshutdown(named_server_t *server, bool flush);
 
 isc_result_t
 named_server_reloadcommand(named_server_t *server, isc_lex_t *lex,
-			isc_buffer_t **text);
+			   isc_buffer_t **text);
 /*%<
  * Act on a "reload" command from the command channel.
  */
@@ -163,21 +173,21 @@ named_server_reconfigcommand(named_server_t *server);
 
 isc_result_t
 named_server_notifycommand(named_server_t *server, isc_lex_t *lex,
-			isc_buffer_t **text);
+			   isc_buffer_t **text);
 /*%<
  * Act on a "notify" command from the command channel.
  */
 
 isc_result_t
 named_server_refreshcommand(named_server_t *server, isc_lex_t *lex,
-			 isc_buffer_t **text);
+			    isc_buffer_t **text);
 /*%<
  * Act on a "refresh" command from the command channel.
  */
 
 isc_result_t
 named_server_retransfercommand(named_server_t *server, isc_lex_t *lex,
-			    isc_buffer_t **text);
+			       isc_buffer_t **text);
 /*%<
  * Act on a "retransfer" command from the command channel.
  */
@@ -219,7 +229,7 @@ named_server_dumpdb(named_server_t *server, isc_lex_t *lex,
  */
 isc_result_t
 named_server_dumpsecroots(named_server_t *server, isc_lex_t *lex,
-		       isc_buffer_t **text);
+			  isc_buffer_t **text);
 
 /*%
  * Change or increment the server debug level.
@@ -239,8 +249,7 @@ named_server_flushcache(named_server_t *server, isc_lex_t *lex);
  * flush all the names under the specified name.
  */
 isc_result_t
-named_server_flushnode(named_server_t *server, isc_lex_t *lex,
-		    bool tree);
+named_server_flushnode(named_server_t *server, isc_lex_t *lex, bool tree);
 
 /*%
  * Report the server's status.
@@ -259,14 +268,14 @@ named_server_tsiglist(named_server_t *server, isc_buffer_t **text);
  */
 isc_result_t
 named_server_tsigdelete(named_server_t *server, isc_lex_t *lex,
-		     isc_buffer_t **text);
+			isc_buffer_t **text);
 
 /*%
  * Enable or disable updates for a zone.
  */
 isc_result_t
-named_server_freeze(named_server_t *server, bool freeze,
-		 isc_lex_t *lex, isc_buffer_t **text);
+named_server_freeze(named_server_t *server, bool freeze, isc_lex_t *lex,
+		    isc_buffer_t **text);
 
 /*%
  * Dump zone updates to disk, optionally removing the journal file
@@ -332,6 +341,13 @@ named_server_signing(named_server_t *server, isc_lex_t *lex,
 		     isc_buffer_t **text);
 
 /*%
+ * Lists the DNSSEC status for a given zone.
+ */
+isc_result_t
+named_server_dnssec(named_server_t *server, isc_lex_t *lex,
+		    isc_buffer_t **text);
+
+/*%
  * Lists status information for a given zone (e.g., name, type, files,
  * load time, expiry, etc).
  */
@@ -344,8 +360,8 @@ named_server_zonestatus(named_server_t *server, isc_lex_t *lex,
  * duration, in a particular view if specified, or in all views.
  */
 isc_result_t
-named_server_nta(named_server_t *server, isc_lex_t *lex,
-		 bool readonly, isc_buffer_t **text);
+named_server_nta(named_server_t *server, isc_lex_t *lex, bool readonly,
+		 isc_buffer_t **text);
 
 /*%
  * Generates a test sequence that is only for use in system tests. The
@@ -380,5 +396,3 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text);
 isc_result_t
 named_server_servestale(named_server_t *server, isc_lex_t *lex,
 			isc_buffer_t **text);
-
-#endif /* NAMED_SERVER_H */

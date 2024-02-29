@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2019/09/12 19:18:19 martin Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2024/02/29 12:36:05 martin Exp $
 
+NOLINT=yes	# XXX
 LIB=ns
 #USE_SHLIBDIR=   yes
 
@@ -8,7 +9,6 @@ LIB=ns
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=	${IDIST}/lib/ns
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/ns -I${DIST}
@@ -20,8 +20,8 @@ CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 #COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 #.endfor
 
-SRCS=	client.c hooks.c interfacemgr.c lib.c listenlist.c \
+SRCS=	client.c hooks.c interfacemgr.c listenlist.c \
 	log.c notify.c query.c server.c sortlist.c stats.c \
-	update.c version.c xfrout.c pfilter.c
+	update.c xfrout.c pfilter.c
 
 .include <bsd.lib.mk>

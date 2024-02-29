@@ -1,19 +1,19 @@
-/*	$NetBSD: tsig.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.3.4.1 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_TSIG_H
-#define DNS_TSIG_H 1
+#pragma once
 
 /*! \file dns/tsig.h */
 
@@ -25,43 +25,41 @@
 #include <isc/stdio.h>
 #include <isc/stdtime.h>
 
-#include <pk11/site.h>
-
-#include <dns/types.h>
 #include <dns/name.h>
+#include <dns/types.h>
 
 #include <dst/dst.h>
 
 /*
  * Algorithms.
  */
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacmd5_name;
-#define DNS_TSIG_HMACMD5_NAME		dns_tsig_hmacmd5_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_gssapi_name;
-#define DNS_TSIG_GSSAPI_NAME		dns_tsig_gssapi_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_gssapims_name;
-#define DNS_TSIG_GSSAPIMS_NAME		dns_tsig_gssapims_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha1_name;
-#define DNS_TSIG_HMACSHA1_NAME		dns_tsig_hmacsha1_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha224_name;
-#define DNS_TSIG_HMACSHA224_NAME	dns_tsig_hmacsha224_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha256_name;
-#define DNS_TSIG_HMACSHA256_NAME	dns_tsig_hmacsha256_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha384_name;
-#define DNS_TSIG_HMACSHA384_NAME	dns_tsig_hmacsha384_name
-LIBDNS_EXTERNAL_DATA extern const dns_name_t *dns_tsig_hmacsha512_name;
-#define DNS_TSIG_HMACSHA512_NAME	dns_tsig_hmacsha512_name
+extern const dns_name_t *dns_tsig_hmacmd5_name;
+#define DNS_TSIG_HMACMD5_NAME dns_tsig_hmacmd5_name
+extern const dns_name_t *dns_tsig_gssapi_name;
+#define DNS_TSIG_GSSAPI_NAME dns_tsig_gssapi_name
+extern const dns_name_t *dns_tsig_gssapims_name;
+#define DNS_TSIG_GSSAPIMS_NAME dns_tsig_gssapims_name
+extern const dns_name_t *dns_tsig_hmacsha1_name;
+#define DNS_TSIG_HMACSHA1_NAME dns_tsig_hmacsha1_name
+extern const dns_name_t *dns_tsig_hmacsha224_name;
+#define DNS_TSIG_HMACSHA224_NAME dns_tsig_hmacsha224_name
+extern const dns_name_t *dns_tsig_hmacsha256_name;
+#define DNS_TSIG_HMACSHA256_NAME dns_tsig_hmacsha256_name
+extern const dns_name_t *dns_tsig_hmacsha384_name;
+#define DNS_TSIG_HMACSHA384_NAME dns_tsig_hmacsha384_name
+extern const dns_name_t *dns_tsig_hmacsha512_name;
+#define DNS_TSIG_HMACSHA512_NAME dns_tsig_hmacsha512_name
 
 /*%
  * Default fudge value.
  */
-#define DNS_TSIG_FUDGE			300
+#define DNS_TSIG_FUDGE 300
 
 struct dns_tsig_keyring {
-	dns_rbt_t *keys;
+	dns_rbt_t   *keys;
 	unsigned int writecount;
 	isc_rwlock_t lock;
-	isc_mem_t *mctx;
+	isc_mem_t   *mctx;
 	/*
 	 * LRU list of generated key along with a count of the keys on the
 	 * list and a maximum size.
@@ -69,31 +67,39 @@ struct dns_tsig_keyring {
 	unsigned int generated;
 	unsigned int maxgenerated;
 	ISC_LIST(dns_tsigkey_t) lru;
-	unsigned int references;
+	isc_refcount_t references;
 };
 
 struct dns_tsigkey {
 	/* Unlocked */
-	unsigned int		magic;		/*%< Magic number. */
-	isc_mem_t		*mctx;
-	dst_key_t		*key;		/*%< Key */
-	dns_name_t		name;		/*%< Key name */
-	const dns_name_t	*algorithm;	/*%< Algorithm name */
-	dns_name_t		*creator;	/*%< name that created secret */
-	bool		generated;	/*%< was this generated? */
-	isc_stdtime_t		inception;	/*%< start of validity period */
-	isc_stdtime_t		expire;		/*%< end of validity period */
-	dns_tsig_keyring_t	*ring;		/*%< the enclosing keyring */
-	isc_refcount_t		refs;		/*%< reference counter */
+	unsigned int	    magic; /*%< Magic number. */
+	isc_mem_t	   *mctx;
+	dst_key_t	   *key;       /*%< Key */
+	dns_name_t	    name;      /*%< Key name */
+	const dns_name_t   *algorithm; /*%< Algorithm name */
+	dns_name_t	   *creator;   /*%< name that created secret */
+	bool		    generated; /*%< was this generated? */
+	isc_stdtime_t	    inception; /*%< start of validity period */
+	isc_stdtime_t	    expire;    /*%< end of validity period */
+	dns_tsig_keyring_t *ring;      /*%< the enclosing keyring */
+	isc_refcount_t	    refs;      /*%< reference counter */
 	ISC_LINK(dns_tsigkey_t) link;
 };
 
-#define dns_tsigkey_identity(tsigkey) \
-	((tsigkey) == NULL ? NULL : \
-	 (tsigkey)->generated ? ((tsigkey)->creator) : \
-	 (&((tsigkey)->name)))
-
 ISC_LANG_BEGINDECLS
+
+const dns_name_t *
+dns_tsigkey_identity(const dns_tsigkey_t *tsigkey);
+/*%<
+ *	Returns the identity of the provided TSIG key.
+ *
+ *	Requires:
+ *\li		'tsigkey' is a valid TSIG key or NULL
+ *
+ *	Returns:
+ *\li		NULL if 'tsigkey' was NULL
+ *\li		identity of the provided TSIG key
+ */
 
 isc_result_t
 dns_tsigkey_create(const dns_name_t *name, const dns_name_t *algorithm,
@@ -239,7 +245,6 @@ dns_tsigkey_find(dns_tsigkey_t **tsigkey, const dns_name_t *name,
  *\li		#ISC_R_NOTFOUND
  */
 
-
 isc_result_t
 dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
 /*%<
@@ -261,13 +266,14 @@ dns_tsigkeyring_add(dns_tsig_keyring_t *ring, const dns_name_t *name,
  *      Place a TSIG key onto a key ring.
  *
  *	Requires:
- *\li		'ring', 'name' and 'tkey' are not NULL
+ *\li		'name' and 'ring' are not NULL
+ *\li		'tkey' is a valid TSIG key, which has not been
+ *		       added to any other keyrings
  *
  *	Returns:
  *\li		#ISC_R_SUCCESS
  *\li		Any other value indicates failure.
  */
-
 
 void
 dns_tsigkeyring_attach(dns_tsig_keyring_t *source, dns_tsig_keyring_t **target);
@@ -289,5 +295,3 @@ void
 dns_keyring_restore(dns_tsig_keyring_t *ring, FILE *fp);
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_TSIG_H */

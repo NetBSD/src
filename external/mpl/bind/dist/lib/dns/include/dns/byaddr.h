@@ -1,23 +1,23 @@
-/*	$NetBSD: byaddr.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.3.4.1 2024/02/29 12:34:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_BYADDR_H
-#define DNS_BYADDR_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/byaddr.h
  * \brief
@@ -42,8 +42,8 @@
  *\li	Drafts:	TBS
  */
 
-#include <isc/lang.h>
 #include <isc/event.h>
+#include <isc/lang.h>
 
 #include <dns/types.h>
 
@@ -58,8 +58,8 @@ ISC_LANG_BEGINDECLS
  */
 typedef struct dns_byaddrevent {
 	ISC_EVENT_COMMON(struct dns_byaddrevent);
-	isc_result_t			result;
-	dns_namelist_t			names;
+	isc_result_t   result;
+	dns_namelist_t names;
 } dns_byaddrevent_t;
 
 isc_result_t
@@ -149,5 +149,3 @@ dns_byaddr_createptrname(const isc_netaddr_t *address, unsigned int options,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_BYADDR_H */

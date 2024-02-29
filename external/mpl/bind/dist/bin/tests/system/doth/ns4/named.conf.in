@@ -1,0 +1,73 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+# We need a separate instance for the "rndc reconfig" test in order to
+# ensure that it does not use ephemeral keys (these are costly to
+# generate) and creates a minimal amount of TLS contexts, reducing the
+# time needed for startup/reconfiguration. Long
+# startup/reconfiguration was known to cause timeout issues in the CI
+# system, where many tests run in parallel.
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls local {
+	key-file "../CA/certs/srv04.crt01.example.com.key";
+	cert-file "../CA/certs/srv04.crt01.example.com.pem";
+	dhparam-file "../dhparam3072.pem";
+};
+
+http local {
+	endpoints { "/dns-query"; };
+};
+
+options {
+	query-source address 10.53.0.4;
+	notify-source 10.53.0.4;
+	transfer-source 10.53.0.4;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	https-port @HTTPSPORT@;
+	http-port @HTTPPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.4; };
+	listen-on tls local { 10.53.0.4; };             // DoT
+	listen-on tls local http local { 10.53.0.4; };  // DoH
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	ixfr-from-differences yes;
+	check-integrity no;
+	dnssec-validation yes;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+tls tls-v1.2-pfs {
+	protocols { TLSv1.2; };
+	ciphers "HIGH:!kRSA:!aNULL:!eNULL:!RC4:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!SHA1:!SHA256:!SHA384";
+	prefer-server-ciphers no;
+};
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-v1.2-pfs; };
+	file "example.db";
+	allow-transfer { any; };
+};

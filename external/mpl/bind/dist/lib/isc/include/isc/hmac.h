@@ -1,11 +1,13 @@
-/*	$NetBSD: hmac.h,v 1.2 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: hmac.h,v 1.2.6.1 2024/02/29 12:35:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,13 +22,10 @@
 
 #include <isc/lang.h>
 #include <isc/md.h>
-#include <isc/platform.h>
-#include <isc/types.h>
 #include <isc/result.h>
+#include <isc/types.h>
 
-#include <openssl/hmac.h>
-
-typedef HMAC_CTX isc_hmac_t;
+typedef void isc_hmac_t;
 
 /**
  * isc_hmac:
@@ -36,19 +35,20 @@ typedef HMAC_CTX isc_hmac_t;
  * @buf: data to hash
  * @len: length of the data to hash
  * @digest: the output buffer
- * @digestlen: the length of the data written to @digest
+ * @digestlen: in: the length of @digest
+ *             out: the length of the data written to @digest
  *
  * This function computes the message authentication code using a digest type
  * @type with key @key which is @keylen bytes long from data in @buf which is
  * @len bytes long, and places the output into @digest, which must have space
- * for the hash function output (use ISC_MAX_MD_SIZE if unsure).  If the
- * @digestlen parameter is not NULL then the number of bytes of data written
- * (i.e. the length of the digest) will be written to the @digestlen.
+ * for the hash function output (use ISC_MAX_MD_SIZE if unsure). @digestlen
+ * is used to pass in the length of the digest buffer and returns the length
+ * of digest written to @digest.
  */
 isc_result_t
-isc_hmac(isc_md_type_t type, const void *key, const int keylen,
-	 const unsigned char *buf, const size_t len,
-	 unsigned char *digest, unsigned int *digestlen);
+isc_hmac(const isc_md_type_t *type, const void *key, const size_t keylen,
+	 const unsigned char *buf, const size_t len, unsigned char *digest,
+	 unsigned int *digestlen);
 
 /**
  * isc_hmac_new:
@@ -79,8 +79,8 @@ isc_hmac_free(isc_hmac_t *hmac);
  */
 
 isc_result_t
-isc_hmac_init(isc_hmac_t *hmac, const void *key,
-	      size_t keylen, isc_md_type_t type);
+isc_hmac_init(isc_hmac_t *hmac, const void *key, const size_t keylen,
+	      const isc_md_type_t *type);
 
 /**
  * isc_hmac_reset:
@@ -108,13 +108,14 @@ isc_hmac_update(isc_hmac_t *hmac, const unsigned char *buf, const size_t len);
  * isc_hmac_final:
  * @hmac: HMAC context
  * @digest: the output buffer
- * @digestlen: the lenth of the data written to @digest
+ * @digestlen: in: the length of @digest
+ *             out: the length of the data written to @digest
  *
  * This function retrieves the message authentication code from @hmac and places
- * it in @digest, which must have space for the hash function output.  If the
- * @digestlen parameter is not NULL then the number of bytes of data written
- * (i.e. the length of the digest) will be written to the @digestlen.  After
- * calling this function no additional calls to isc_hmac_update() can be made.
+ * it in @digest, which must have space for the hash function output. @digestlen
+ * is used to pass in the length of the digest buffer and returns the length
+ * of digest written to @digest.  After calling this function no additional
+ * calls to isc_hmac_update() can be made.
  */
 isc_result_t
 isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
@@ -127,7 +128,7 @@ isc_hmac_final(isc_hmac_t *hmac, unsigned char *digest,
  * This function return the isc_md_type_t previously set for the supplied
  * HMAC context or NULL if no isc_md_type_t has been set.
  */
-isc_md_type_t
+const isc_md_type_t *
 isc_hmac_get_md_type(isc_hmac_t *hmac);
 
 /**

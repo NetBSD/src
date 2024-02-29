@@ -1,11 +1,13 @@
-/*	$NetBSD: random.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.3.4.1 2024/02/29 12:35:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -30,20 +32,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <config.h>
-
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <isc/platform.h>
+#include <isc/once.h>
 #include <isc/random.h>
 #include <isc/result.h>
+#include <isc/thread.h>
 #include <isc/types.h>
 #include <isc/util.h>
-
-#include <isc/once.h>
 
 #include "entropy_private.h"
 
@@ -62,56 +61,89 @@
  * the uint32_t random number provider because it is very fast and has
  * good enough properties for our usage pattern.
  */
-#include "xoshiro128starstar.c"
 
-#if defined(HAVE_TLS)
-#if defined(HAVE_THREAD_LOCAL)
-#include <threads.h>
+/*
+ * Written in 2018 by David Blackman and Sebastiano Vigna (vigna@acm.org)
+ *
+ * To the extent possible under law, the author has dedicated all
+ * copyright and related and neighboring rights to this software to the
+ * public domain worldwide. This software is distributed without any
+ * warranty.
+ *
+ * See <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+
+/*
+ * This is xoshiro128** 1.0, our 32-bit all-purpose, rock-solid generator.
+ * It has excellent (sub-ns) speed, a state size (128 bits) that is large
+ * enough for mild parallelism, and it passes all tests we are aware of.
+ *
+ * For generating just single-precision (i.e., 32-bit) floating-point
+ * numbers, xoshiro128+ is even faster.
+ *
+ * The state must be seeded so that it is not everywhere zero.
+ */
+static thread_local uint32_t seed[4] = { 0 };
+
+static uint32_t
+rotl(const uint32_t x, int k) {
+	return ((x << k) | (x >> (32 - k)));
+}
+
+static uint32_t
+next(void) {
+	uint32_t result_starstar, t;
+
+	result_starstar = rotl(seed[0] * 5, 7) * 9;
+	t = seed[1] << 9;
+
+	seed[2] ^= seed[0];
+	seed[3] ^= seed[1];
+	seed[1] ^= seed[2];
+	seed[0] ^= seed[3];
+
+	seed[2] ^= t;
+
+	seed[3] = rotl(seed[3], 11);
+
+	return (result_starstar);
+}
+
 static thread_local isc_once_t isc_random_once = ISC_ONCE_INIT;
-#elif defined(HAVE___THREAD)
-static __thread isc_once_t isc_random_once = ISC_ONCE_INIT;
-#elif defined(HAVE___DECLSPEC_THREAD)
-static __declspec( thread ) isc_once_t isc_random_once = ISC_ONCE_INIT;
-#else
-#error "Unknown method for defining a TLS variable!"
-#endif
-#else
-static isc_once_t isc_random_once = ISC_ONCE_INIT;
-#endif
 
 static void
 isc_random_initialize(void) {
-	int useed[4] = {0,0,0,1};
+	int useed[4] = { 0, 0, 0, 1 };
 #if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 	/*
 	 * Set a constant seed to help in problem reproduction should fuzzing
 	 * find a crash or a hang.  The seed array must be non-zero else
 	 * xoshiro128starstar will generate an infinite series of zeroes.
 	 */
-#else
+#else  /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 	isc_entropy_get(useed, sizeof(useed));
-#endif
-	memcpy(seed, useed, sizeof(seed));
+#endif /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
+	memmove(seed, useed, sizeof(seed));
 }
 
 uint8_t
 isc_random8(void) {
-	RUNTIME_CHECK(isc_once_do(&isc_random_once,
-				  isc_random_initialize) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_once_do(&isc_random_once, isc_random_initialize) ==
+		      ISC_R_SUCCESS);
 	return (next() & 0xff);
 }
 
 uint16_t
 isc_random16(void) {
-	RUNTIME_CHECK(isc_once_do(&isc_random_once,
-				  isc_random_initialize) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_once_do(&isc_random_once, isc_random_initialize) ==
+		      ISC_R_SUCCESS);
 	return (next() & 0xffff);
 }
 
 uint32_t
 isc_random32(void) {
-	RUNTIME_CHECK(isc_once_do(&isc_random_once,
-				  isc_random_initialize) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_once_do(&isc_random_once, isc_random_initialize) ==
+		      ISC_R_SUCCESS);
 	return (next());
 }
 
@@ -123,8 +155,8 @@ isc_random_buf(void *buf, size_t buflen) {
 	REQUIRE(buf != NULL);
 	REQUIRE(buflen > 0);
 
-	RUNTIME_CHECK(isc_once_do(&isc_random_once,
-				  isc_random_initialize) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_once_do(&isc_random_once, isc_random_initialize) ==
+		      ISC_R_SUCCESS);
 
 	for (i = 0; i + sizeof(r) <= buflen; i += sizeof(r)) {
 		r = next();
@@ -140,8 +172,8 @@ isc_random_uniform(uint32_t upper_bound) {
 	/* Copy of arc4random_uniform from OpenBSD */
 	uint32_t r, min;
 
-	RUNTIME_CHECK(isc_once_do(&isc_random_once,
-				  isc_random_initialize) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_once_do(&isc_random_once, isc_random_initialize) ==
+		      ISC_R_SUCCESS);
 
 	if (upper_bound < 2) {
 		return (0);
@@ -152,7 +184,7 @@ isc_random_uniform(uint32_t upper_bound) {
 #else  /* if (ULONG_MAX > 0xffffffffUL) */
 	/* Calculate (2**32 % upper_bound) avoiding 64-bit math */
 	if (upper_bound > 0x80000000) {
-		min = 1 + ~upper_bound;         /* 2**32 - upper_bound */
+		min = 1 + ~upper_bound; /* 2**32 - upper_bound */
 	} else {
 		/* (2**32 - (x * 2)) % x == 2**32 % x when x <= 2**31 */
 		min = ((0xffffffff - (upper_bound * 2)) + 1) % upper_bound;

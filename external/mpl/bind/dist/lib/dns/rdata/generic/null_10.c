@@ -1,11 +1,13 @@
-/*	$NetBSD: null_10.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: null_10.c,v 1.3.4.1 2024/02/29 12:34:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -16,7 +18,7 @@
 
 #define RRTYPE_NULL_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_null(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_null);
 
@@ -31,14 +33,14 @@ fromtext_null(ARGS_FROMTEXT) {
 	return (DNS_R_SYNTAX);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_null(ARGS_TOTEXT) {
 	REQUIRE(rdata->type == dns_rdatatype_null);
 
 	return (unknown_totext(rdata, tctx, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_null(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -54,7 +56,7 @@ fromwire_null(ARGS_FROMWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_null(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_null);
 
@@ -63,7 +65,7 @@ towire_null(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_null(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -77,12 +79,12 @@ compare_null(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_null(ARGS_FROMSTRUCT) {
 	dns_rdata_null_t *null = source;
 
 	REQUIRE(type == dns_rdatatype_null);
-	REQUIRE(source != NULL);
+	REQUIRE(null != NULL);
 	REQUIRE(null->common.rdtype == type);
 	REQUIRE(null->common.rdclass == rdclass);
 	REQUIRE(null->data != NULL || null->length == 0);
@@ -93,13 +95,13 @@ fromstruct_null(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, null->data, null->length));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_null(ARGS_TOSTRUCT) {
 	dns_rdata_null_t *null = target;
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_null);
-	REQUIRE(target != NULL);
+	REQUIRE(null != NULL);
 
 	null->common.rdclass = rdata->rdclass;
 	null->common.rdtype = rdata->type;
@@ -108,40 +110,44 @@ tostruct_null(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	null->length = r.length;
 	null->data = mem_maybedup(mctx, r.base, r.length);
-	if (null->data == NULL)
+	if (null->data == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	null->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_null(ARGS_FREESTRUCT) {
 	dns_rdata_null_t *null = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(null != NULL);
 	REQUIRE(null->common.rdtype == dns_rdatatype_null);
 
-	if (null->mctx == NULL)
+	if (null->mctx == NULL) {
 		return;
+	}
 
-	if (null->data != NULL)
+	if (null->data != NULL) {
 		isc_mem_free(null->mctx, null->data);
+	}
 	null->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_null(ARGS_ADDLDATA) {
+	REQUIRE(rdata->type == dns_rdatatype_null);
+
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_null);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_null(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -152,9 +158,8 @@ digest_null(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_null(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_null);
 
 	UNUSED(name);
@@ -165,9 +170,8 @@ checkowner_null(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_null(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_null);
 
 	UNUSED(rdata);
@@ -177,9 +181,9 @@ checknames_null(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_null(ARGS_COMPARE) {
 	return (compare_null(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_NULL_10_C */
+#endif /* RDATA_GENERIC_NULL_10_C */

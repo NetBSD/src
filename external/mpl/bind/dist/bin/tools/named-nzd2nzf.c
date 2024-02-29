@@ -1,32 +1,32 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.3 2019/01/09 16:55:05 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.3.4.1 2024/02/29 12:33:02 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#include <config.h>
-
 #ifndef HAVE_LMDB
 #error This program requires the LMDB library.
-#endif
+#endif /* ifndef HAVE_LMDB */
 
+#include <lmdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <lmdb.h>
-
-#include <dns/view.h>
 
 #include <isc/print.h>
 
+#include <dns/view.h>
+
 int
-main (int argc, char *argv[]) {
+main(int argc, char *argv[]) {
 	int status;
 	const char *path;
 	MDB_env *env = NULL;
@@ -86,14 +86,15 @@ main (int argc, char *argv[]) {
 		{
 			fprintf(stderr,
 				"named-nzd2nzf: empty column found in "
-				"database '%s'", path);
+				"database '%s'",
+				path);
 			exit(1);
 		}
 
 		/* zone zonename { config; }; */
-		printf("zone \"%.*s\" %.*s;\n",
-		       (int) key.mv_size, (char *) key.mv_data,
-		       (int) data.mv_size, (char *) data.mv_data);
+		printf("zone \"%.*s\" %.*s;\n", (int)key.mv_size,
+		       (char *)key.mv_data, (int)data.mv_size,
+		       (char *)data.mv_data);
 	}
 
 	mdb_cursor_close(cursor);

@@ -1,20 +1,19 @@
-/*	$NetBSD: nsec3_50.h,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: nsec3_50.h,v 1.3.4.1 2024/02/29 12:34:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef GENERIC_NSEC3_50_H
-#define GENERIC_NSEC3_50_H 1
-
+#pragma once
 
 /*!
  * \brief Per RFC 5155 */
@@ -22,17 +21,17 @@
 #include <isc/iterated_hash.h>
 
 typedef struct dns_rdata_nsec3 {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	dns_hash_t		hash;
-	unsigned char		flags;
-	dns_iterations_t	iterations;
-	unsigned char		salt_length;
-	unsigned char		next_length;
-	uint16_t		len;
-	unsigned char		*salt;
-	unsigned char		*next;
-	unsigned char		*typebits;
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	dns_hash_t hash;
+	unsigned char flags;
+	dns_iterations_t iterations;
+	unsigned char salt_length;
+	unsigned char next_length;
+	uint16_t len;
+	unsigned char *salt;
+	unsigned char *next;
+	unsigned char *typebits;
 } dns_rdata_nsec3_t;
 
 /*
@@ -110,5 +109,3 @@ typedef struct dns_rdata_nsec3 {
  * nameservers.
  */
 #define DNS_NSEC3FLAG_NONSEC 0x10U
-
-#endif /* GENERIC_NSEC3_50_H */

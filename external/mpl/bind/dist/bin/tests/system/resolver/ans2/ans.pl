@@ -1,10 +1,12 @@
 #!/usr/bin/perl
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -71,6 +73,15 @@ for (;;) {
 		# Data for the "cname + other data / 2" test: same RRs in opposite order
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 A 1.2.3.4"));
 		$packet->push("answer", new Net::DNS::RR("cname2.example.com 300 CNAME cname2.example.com"));
+	} elsif ($qname =~ /redirect\.com/) {
+		$packet->push("authority", new Net::DNS::RR("redirect.com 300 NS ns.redirect.com"));
+		$packet->push("additional", new Net::DNS::RR("ns.redirect.com 300 A 10.53.0.6"));
+	} elsif ($qname =~ /\.tld1/) {
+		$packet->push("authority", new Net::DNS::RR("tld1 300 NS ns.tld1"));
+		$packet->push("additional", new Net::DNS::RR("ns.tld1 300 A 10.53.0.6"));
+	} elsif ($qname =~ /\.tld2/) {
+		$packet->push("authority", new Net::DNS::RR("tld2 300 NS ns.tld2"));
+		$packet->push("additional", new Net::DNS::RR("ns.tld2 300 A 10.53.0.7"));
 	} elsif ($qname eq "org" && $qtype eq "NS") {
 		$packet->header->aa(1);
 		$packet->push("answer", new Net::DNS::RR("org 300 NS a.root-servers.nil."));
@@ -102,6 +113,11 @@ for (;;) {
 	} elsif ($qname =~ /example\.net/) {
 		$packet->push("authority", new Net::DNS::RR("example.net 300 NS ns.example.net"));
 		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname =~ /lame\.example\.org/) {
+		$packet->header->ad(0);
+		$packet->header->aa(0);
+		$packet->push("authority", new Net::DNS::RR("lame.example.org 300 NS ns.lame.example.org"));
+		$packet->push("additional", new Net::DNS::RR("ns.lame.example.org 300 A 10.53.0.3"));
 	} elsif ($qname =~ /sub\.example\.org/) {
 		# Data for CNAME/DNAME filtering.  The final answers are
 		# expected to be accepted regardless of the filter setting.
@@ -115,6 +131,8 @@ for (;;) {
 		# Delegation to broken TLD.
 		$packet->push("authority", new Net::DNS::RR("broken 300 NS ns.broken"));
 		$packet->push("additional", new Net::DNS::RR("ns.broken 300 A 10.53.0.4"));
+	} elsif ($qname =~ /\.partial-formerr/) {
+		$packet->header->rcode("FORMERR");
 	} else {
 		# Data for the "bogus referrals" test
 		$packet->push("authority", new Net::DNS::RR("below.www.example.com 300 NS ns.below.www.example.com"));

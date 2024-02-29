@@ -1,0 +1,19 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN stale.test.
+stale.test.		300	SOA	. . 0 0 0 0 0
+stale.test.		300	NS	ns.stale.test.
+ns.stale.test.		300	A	10.53.0.1
+cname1.stale.test.	1	CNAME	a1.stale.test.
+a1.stale.test.		1	A	192.0.2.1
+cname2.stale.test.	1	CNAME	a2.stale.test.
+a2.stale.test.		300	A	192.0.2.2

@@ -1,16 +1,17 @@
-/*	$NetBSD: nsec3param_51.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.3.4.1 2024/02/29 12:34:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -33,12 +34,12 @@
 #ifndef RDATA_GENERIC_NSEC3PARAM_51_C
 #define RDATA_GENERIC_NSEC3PARAM_51_C
 
-#include <isc/iterated_hash.h>
 #include <isc/base32.h>
+#include <isc/iterated_hash.h>
 
 #define RRTYPE_NSEC3PARAM_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_nsec3param(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned int flags = 0;
@@ -62,22 +63,25 @@ fromtext_nsec3param(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
 	flags = token.value.as_ulong;
-	if (flags > 255U)
+	if (flags > 255U) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(flags, target));
 
 	/* Iterations. */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffffU)
+	if (token.value.as_ulong > 0xffffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint16_tobuffer(token.value.as_ulong, target));
 
 	/* Salt. */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
-	if (token.value.as_textregion.length > (255*2))
+	if (token.value.as_textregion.length > (255 * 2)) {
 		RETTOK(DNS_R_TEXTTOOLONG);
+	}
 	if (strcmp(DNS_AS_STR(token), "-") == 0) {
 		RETERR(uint8_tobuffer(0, target));
 	} else {
@@ -88,7 +92,7 @@ fromtext_nsec3param(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_nsec3param(ARGS_TOTEXT) {
 	isc_region_t sr;
 	unsigned int i, j;
@@ -131,13 +135,14 @@ totext_nsec3param(ARGS_TOTEXT) {
 		sr.length = j;
 		RETERR(isc_hex_totext(&sr, 1, "", target));
 		sr.length = i - j;
-	} else
+	} else {
 		RETERR(str_totext("-", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_nsec3param(ARGS_FROMWIRE) {
 	isc_region_t sr, rr;
 	unsigned int saltlen;
@@ -153,20 +158,22 @@ fromwire_nsec3param(ARGS_FROMWIRE) {
 	rr = sr;
 
 	/* hash(1), flags(1), iterations(2), saltlen(1) */
-	if (sr.length < 5U)
+	if (sr.length < 5U) {
 		RETERR(DNS_R_FORMERR);
+	}
 	saltlen = sr.base[4];
 	isc_region_consume(&sr, 5);
 
-	if (sr.length < saltlen)
+	if (sr.length != saltlen) {
 		RETERR(DNS_R_FORMERR);
+	}
 	isc_region_consume(&sr, saltlen);
 	RETERR(mem_tobuffer(target, rr.base, rr.length));
 	isc_buffer_forward(source, rr.length);
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_nsec3param(ARGS_TOWIRE) {
 	isc_region_t sr;
 
@@ -179,7 +186,7 @@ towire_nsec3param(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
+static int
 compare_nsec3param(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -195,12 +202,12 @@ compare_nsec3param(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_nsec3param(ARGS_FROMSTRUCT) {
 	dns_rdata_nsec3param_t *nsec3param = source;
 
 	REQUIRE(type == dns_rdatatype_nsec3param);
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(nsec3param->common.rdtype == type);
 	REQUIRE(nsec3param->common.rdclass == rdclass);
 
@@ -211,18 +218,17 @@ fromstruct_nsec3param(ARGS_FROMSTRUCT) {
 	RETERR(uint8_tobuffer(nsec3param->flags, target));
 	RETERR(uint16_tobuffer(nsec3param->iterations, target));
 	RETERR(uint8_tobuffer(nsec3param->salt_length, target));
-	RETERR(mem_tobuffer(target, nsec3param->salt,
-			    nsec3param->salt_length));
+	RETERR(mem_tobuffer(target, nsec3param->salt, nsec3param->salt_length));
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_nsec3param(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_nsec3param_t *nsec3param = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-	REQUIRE(target != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nsec3param->common.rdclass = rdata->rdclass;
@@ -236,43 +242,48 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	nsec3param->iterations = uint16_consume_fromregion(&region);
 
 	nsec3param->salt_length = uint8_consume_fromregion(&region);
+	INSIST(nsec3param->salt_length == region.length);
 	nsec3param->salt = mem_maybedup(mctx, region.base,
 					nsec3param->salt_length);
-	if (nsec3param->salt == NULL)
+	if (nsec3param->salt == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 	isc_region_consume(&region, nsec3param->salt_length);
 
 	nsec3param->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_nsec3param(ARGS_FREESTRUCT) {
 	dns_rdata_nsec3param_t *nsec3param = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(nsec3param->common.rdtype == dns_rdatatype_nsec3param);
 
-	if (nsec3param->mctx == NULL)
+	if (nsec3param->mctx == NULL) {
 		return;
+	}
 
-	if (nsec3param->salt != NULL)
+	if (nsec3param->salt != NULL) {
 		isc_mem_free(nsec3param->mctx, nsec3param->salt);
+	}
 	nsec3param->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_nsec3param(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_nsec3param(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -282,22 +293,20 @@ digest_nsec3param(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_nsec3param(ARGS_CHECKOWNER) {
+	REQUIRE(type == dns_rdatatype_nsec3param);
 
-       REQUIRE(type == dns_rdatatype_nsec3param);
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
 
-       UNUSED(name);
-       UNUSED(type);
-       UNUSED(rdclass);
-       UNUSED(wildcard);
-
-       return (true);
+	return (true);
 }
 
-static inline bool
+static bool
 checknames_nsec3param(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
 
 	UNUSED(rdata);
@@ -307,9 +316,9 @@ checknames_nsec3param(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_nsec3param(ARGS_COMPARE) {
 	return (compare_nsec3param(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_NSEC3PARAM_51_C */
+#endif /* RDATA_GENERIC_NSEC3PARAM_51_C */

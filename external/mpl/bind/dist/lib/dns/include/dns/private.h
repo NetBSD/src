@@ -1,34 +1,34 @@
-/*	$NetBSD: private.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.3.4.1 2024/02/29 12:34:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 #include <stdbool.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>
 
-#include <dns/types.h>
 #include <dns/db.h>
+#include <dns/types.h>
 
-#ifndef DNS_PRIVATE_H
-#define DNS_PRIVATE_H
+#pragma once
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
-		   dns_rdatatype_t privatetype,
-		   bool *build_nsec, bool *build_nsec3);
+		   dns_rdatatype_t privatetype, bool *build_nsec,
+		   bool *build_nsec3);
 /*%<
  * Examine the NSEC, NSEC3PARAM and privatetype RRsets at the apex of the
  * database to determine which of NSEC or NSEC3 chains we are currently
@@ -66,5 +66,3 @@ dns_private_totext(dns_rdata_t *privaterdata, isc_buffer_t *buffer);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif

@@ -1,18 +1,19 @@
-/*	$NetBSD: ssu.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: ssu.h,v 1.3.4.1 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_SSU_H
-#define DNS_SSU_H 1
+#pragma once
 
 /*! \file dns/ssu.h */
 
@@ -22,6 +23,7 @@
 
 #include <dns/acl.h>
 #include <dns/types.h>
+
 #include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
@@ -30,11 +32,11 @@ typedef enum {
 	dns_ssumatchtype_name = 0,
 	dns_ssumatchtype_subdomain = 1,
 	dns_ssumatchtype_wildcard = 2,
-	dns_ssumatchtype_self	 = 3,
+	dns_ssumatchtype_self = 3,
 	dns_ssumatchtype_selfsub = 4,
 	dns_ssumatchtype_selfwild = 5,
 	dns_ssumatchtype_selfkrb5 = 6,
-	dns_ssumatchtype_selfms	 = 7,
+	dns_ssumatchtype_selfms = 7,
 	dns_ssumatchtype_subdomainms = 8,
 	dns_ssumatchtype_subdomainkrb5 = 9,
 	dns_ssumatchtype_tcpself = 10,
@@ -43,12 +45,19 @@ typedef enum {
 	dns_ssumatchtype_local = 13,
 	dns_ssumatchtype_selfsubms = 14,
 	dns_ssumatchtype_selfsubkrb5 = 15,
-	dns_ssumatchtype_max = 15,	/* max value */
+	dns_ssumatchtype_subdomainselfkrb5rhs = 16,
+	dns_ssumatchtype_subdomainselfmsrhs = 17,
+	dns_ssumatchtype_max = 17, /* max value */
 
-	dns_ssumatchtype_dlz = 16	/* intentionally higher than _max */
+	dns_ssumatchtype_dlz = 18 /* intentionally higher than _max */
 } dns_ssumatchtype_t;
 
-isc_result_t
+typedef struct dns_ssuruletype {
+	dns_rdatatype_t type; /* type allowed */
+	unsigned int	max;  /* maximum number of records allowed. */
+} dns_ssuruletype_t;
+
+void
 dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
 /*%<
  *	Creates a table that will be used to store simple-secure-update rules.
@@ -63,7 +72,7 @@ dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
  *\li		ISC_R_NOMEMORY
  */
 
-isc_result_t
+void
 dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
 		       dns_dlzdb_t *dlzdatabase);
 /*%<
@@ -100,11 +109,11 @@ dns_ssutable_detach(dns_ssutable_t **tablep);
  *			resources used by the table will be freed.
  */
 
-isc_result_t
+void
 dns_ssutable_addrule(dns_ssutable_t *table, bool grant,
 		     const dns_name_t *identity, dns_ssumatchtype_t matchtype,
 		     const dns_name_t *name, unsigned int ntypes,
-		     dns_rdatatype_t *types);
+		     dns_ssuruletype_t *types);
 /*%<
  *	Adds a new rule to a simple-secure-update rule table.  The rule
  *	either grants or denies update privileges of an identity (or set of
@@ -136,8 +145,9 @@ dns_ssutable_addrule(dns_ssutable_t *table, bool grant,
 bool
 dns_ssutable_checkrules(dns_ssutable_t *table, const dns_name_t *signer,
 			const dns_name_t *name, const isc_netaddr_t *addr,
-			bool tcp, const dns_aclenv_t *env,
-			dns_rdatatype_t type, const dst_key_t *key);
+			bool tcp, dns_aclenv_t *env, dns_rdatatype_t type,
+			const dns_name_t *target, const dst_key_t *key,
+			const dns_ssurule_t **rulep);
 /*%<
  *	Checks that the attempted update of (name, type) is allowed according
  *	to the rules specified in the simple-secure-update rule table.  If
@@ -178,21 +188,37 @@ dns_ssutable_checkrules(dns_ssutable_t *table, const dns_name_t *signer,
  *\li		if 'addr' is not NULL, 'env' is not NULL.
  */
 
+/*% Accessor functions to extract rule components */
+bool
+dns_ssurule_isgrant(const dns_ssurule_t *rule);
 
 /*% Accessor functions to extract rule components */
-bool	dns_ssurule_isgrant(const dns_ssurule_t *rule);
-/*% Accessor functions to extract rule components */
-dns_name_t *	dns_ssurule_identity(const dns_ssurule_t *rule);
-/*% Accessor functions to extract rule components */
-unsigned int	dns_ssurule_matchtype(const dns_ssurule_t *rule);
-/*% Accessor functions to extract rule components */
-dns_name_t *	dns_ssurule_name(const dns_ssurule_t *rule);
-/*% Accessor functions to extract rule components */
-unsigned int	dns_ssurule_types(const dns_ssurule_t *rule,
-				  dns_rdatatype_t **types);
+dns_name_t *
+dns_ssurule_identity(const dns_ssurule_t *rule);
 
-isc_result_t	dns_ssutable_firstrule(const dns_ssutable_t *table,
-				       dns_ssurule_t **rule);
+/*% Accessor functions to extract rule components */
+unsigned int
+dns_ssurule_matchtype(const dns_ssurule_t *rule);
+
+/*% Accessor functions to extract rule components */
+dns_name_t *
+dns_ssurule_name(const dns_ssurule_t *rule);
+
+/*% Accessor functions to extract rule components */
+unsigned int
+dns_ssurule_types(const dns_ssurule_t *rule, dns_ssuruletype_t **types);
+
+unsigned int
+dns_ssurule_max(const dns_ssurule_t *rule, dns_rdatatype_t type);
+/*%<
+ * Returns the maximum number of records configured for type `type`.
+ * If no maximum has been configured for `type` but one has been
+ * configured for ANY, return that value instead. Otherwise, return
+ * zero, which implies "unlimited".
+ */
+
+isc_result_t
+dns_ssutable_firstrule(const dns_ssutable_t *table, dns_ssurule_t **rule);
 /*%<
  * Initiates a rule iterator.  There is no need to maintain any state.
  *
@@ -201,8 +227,8 @@ isc_result_t	dns_ssutable_firstrule(const dns_ssutable_t *table,
  *\li	#ISC_R_NOMORE
  */
 
-isc_result_t	dns_ssutable_nextrule(dns_ssurule_t *rule,
-				      dns_ssurule_t **nextrule);
+isc_result_t
+dns_ssutable_nextrule(dns_ssurule_t *rule, dns_ssurule_t **nextrule);
 /*%<
  * Returns the next rule in the table.
  *
@@ -235,5 +261,3 @@ dns_ssu_mtypefromstring(const char *str, dns_ssumatchtype_t *mtype);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_SSU_H */

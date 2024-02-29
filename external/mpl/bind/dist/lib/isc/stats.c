@@ -1,20 +1,19 @@
-/*	$NetBSD: stats.c,v 1.4.4.1 2019/09/12 19:18:16 martin Exp $	*/
+/*	$NetBSD: stats.c,v 1.4.4.2 2024/02/29 12:35:03 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 #include <string.h>
@@ -23,39 +22,46 @@
 #include <isc/buffer.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
-#include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/refcount.h>
 #include <isc/stats.h>
 #include <isc/util.h>
 
-#define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
-#define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
+#define ISC_STATS_MAGIC	   ISC_MAGIC('S', 't', 'a', 't')
+#define ISC_STATS_VALID(x) ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
-#if (defined(_WIN32) && !defined(_WIN64)) || !defined(_LP64)
-typedef atomic_int_fast32_t isc_stat_t;
-#else
-typedef atomic_int_fast64_t isc_stat_t;
-#endif
+/*
+ * Statistics are counted with an atomic int_fast64_t but exported to functions
+ * taking uint64_t (isc_stats_dumper_t). A 128-bit native and fast architecture
+ * doesn't exist in reality so these two are the same thing in practise.
+ * However, a silent truncation happening silently in the future is still not
+ * acceptable.
+ */
+STATIC_ASSERT(sizeof(isc_statscounter_t) <= sizeof(uint64_t),
+	      "Exported statistics must fit into the statistic counter size");
 
 struct isc_stats {
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	isc_refcount_t		refs;
-	int			ncounters;
-	isc_stat_t		*counters;
+	unsigned int magic;
+	isc_mem_t *mctx;
+	isc_refcount_t references;
+	int ncounters;
+	isc_atomic_statscounter_t *counters;
 };
 
 static isc_result_t
 create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 	isc_stats_t *stats;
+	size_t counters_alloc_size;
 
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
 	stats = isc_mem_get(mctx, sizeof(*stats));
-	stats->counters = isc_mem_get(mctx, sizeof(isc_stat_t) * ncounters);
-	isc_refcount_init(&stats->refs, 1);
-	memset(stats->counters, 0, sizeof(isc_stat_t) * ncounters);
+	counters_alloc_size = sizeof(isc_atomic_statscounter_t) * ncounters;
+	stats->counters = isc_mem_get(mctx, counters_alloc_size);
+	isc_refcount_init(&stats->references, 1);
+	for (int i = 0; i < ncounters; i++) {
+		atomic_init(&stats->counters[i], 0);
+	}
 	stats->mctx = NULL;
 	isc_mem_attach(mctx, &stats->mctx);
 	stats->ncounters = ncounters;
@@ -70,7 +76,7 @@ isc_stats_attach(isc_stats_t *stats, isc_stats_t **statsp) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
-	isc_refcount_increment(&stats->refs);
+	isc_refcount_increment(&stats->references);
 	*statsp = stats;
 }
 
@@ -83,9 +89,11 @@ isc_stats_detach(isc_stats_t **statsp) {
 	stats = *statsp;
 	*statsp = NULL;
 
-	if (isc_refcount_decrement(&stats->refs) == 1) {
+	if (isc_refcount_decrement(&stats->references) == 1) {
+		isc_refcount_destroy(&stats->references);
 		isc_mem_put(stats->mctx, stats->counters,
-			    sizeof(isc_stat_t) * stats->ncounters);
+			    sizeof(isc_atomic_statscounter_t) *
+				    stats->ncounters);
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
 	}
 }
@@ -109,30 +117,26 @@ isc_stats_increment(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-	atomic_fetch_add_explicit(&stats->counters[counter], 1,
-				  memory_order_relaxed);
+	atomic_fetch_add_relaxed(&stats->counters[counter], 1);
 }
 
 void
 isc_stats_decrement(isc_stats_t *stats, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
-
-	atomic_fetch_sub_explicit(&stats->counters[counter], 1,
-				  memory_order_relaxed);
+	atomic_fetch_sub_release(&stats->counters[counter], 1);
 }
 
 void
-isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
-	       void *arg, unsigned int options)
-{
+isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn, void *arg,
+	       unsigned int options) {
 	int i;
 
 	REQUIRE(ISC_STATS_VALID(stats));
 
 	for (i = 0; i < stats->ncounters; i++) {
-		uint32_t counter = atomic_load_explicit(&stats->counters[i],
-							memory_order_relaxed);
+		isc_statscounter_t counter =
+			atomic_load_acquire(&stats->counters[i]);
 		if ((options & ISC_STATSDUMP_VERBOSE) == 0 && counter == 0) {
 			continue;
 		}
@@ -141,12 +145,65 @@ isc_stats_dump(isc_stats_t *stats, isc_stats_dumper_t dump_fn,
 }
 
 void
-isc_stats_set(isc_stats_t *stats, uint64_t val,
-	      isc_statscounter_t counter)
-{
+isc_stats_set(isc_stats_t *stats, uint64_t val, isc_statscounter_t counter) {
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-	atomic_store_explicit(&stats->counters[counter], val,
-			      memory_order_relaxed);
+	atomic_store_release(&stats->counters[counter], val);
+}
+
+void
+isc_stats_update_if_greater(isc_stats_t *stats, isc_statscounter_t counter,
+			    isc_statscounter_t value) {
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	isc_statscounter_t curr_value =
+		atomic_load_acquire(&stats->counters[counter]);
+	do {
+		if (curr_value >= value) {
+			break;
+		}
+	} while (!atomic_compare_exchange_weak_acq_rel(
+		&stats->counters[counter], &curr_value, value));
+}
+
+isc_statscounter_t
+isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter) {
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	return (atomic_load_acquire(&stats->counters[counter]));
+}
+
+void
+isc_stats_resize(isc_stats_t **statsp, int ncounters) {
+	isc_stats_t *stats;
+	size_t counters_alloc_size;
+	isc_atomic_statscounter_t *newcounters;
+
+	REQUIRE(statsp != NULL && *statsp != NULL);
+	REQUIRE(ISC_STATS_VALID(*statsp));
+	REQUIRE(ncounters > 0);
+
+	stats = *statsp;
+	if (stats->ncounters >= ncounters) {
+		/* We already have enough counters. */
+		return;
+	}
+
+	/* Grow number of counters. */
+	counters_alloc_size = sizeof(isc_atomic_statscounter_t) * ncounters;
+	newcounters = isc_mem_get(stats->mctx, counters_alloc_size);
+	for (int i = 0; i < ncounters; i++) {
+		atomic_init(&newcounters[i], 0);
+	}
+	for (int i = 0; i < stats->ncounters; i++) {
+		uint32_t counter = atomic_load_acquire(&stats->counters[i]);
+		atomic_store_release(&newcounters[i], counter);
+	}
+	isc_mem_put(stats->mctx, stats->counters,
+		    sizeof(isc_atomic_statscounter_t) * stats->ncounters);
+	stats->counters = newcounters;
+	stats->ncounters = ncounters;
 }

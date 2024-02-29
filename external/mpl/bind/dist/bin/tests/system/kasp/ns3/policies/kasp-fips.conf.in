@@ -1,0 +1,118 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "unlimited" {
+	dnskey-ttl 1234;
+
+	keys {
+		csk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "manual-rollover" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "multisigner-model2" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "migrate-to-dnssec-policy" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P6M algorithm 8;
+		zsk key-directory lifetime P6M algorithm 8;
+	};
+};
+
+dnssec-policy "rsasha256" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 8;
+		zsk key-directory lifetime P5Y  algorithm 8;
+		zsk key-directory lifetime P1Y  algorithm 8 3072;
+	};
+};
+
+dnssec-policy "rsasha512" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 10;
+		zsk key-directory lifetime P5Y  algorithm 10;
+		zsk key-directory lifetime P1Y  algorithm 10 3072;
+	};
+};
+
+dnssec-policy "ecdsa256" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 13;
+		zsk key-directory lifetime P5Y  algorithm 13;
+		zsk key-directory lifetime P1Y  algorithm 13 256;
+	};
+};
+
+dnssec-policy "ecdsa384" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 14;
+		zsk key-directory lifetime P5Y  algorithm 14;
+		zsk key-directory lifetime P1Y  algorithm 14 384;
+	};
+};
+
+dnssec-policy "checkds-ksk" {
+	dnskey-ttl 303;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "checkds-doubleksk" {
+	dnskey-ttl 303;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "checkds-csk" {
+	dnskey-ttl 303;
+
+	keys {
+		csk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "ttl" {
+	max-zone-ttl 299;
+};

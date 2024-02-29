@@ -1,55 +1,63 @@
 #!/bin/sh -e
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-SYSTEMTESTTOP=../..
-. $SYSTEMTESTTOP/conf.sh
+. ../../conf.sh
 
 # Have the child generate subdomain keys and pass DS sets to us.
-( cd ../ns3 && $SHELL keygen.sh )
+(cd ../ns3 && $SHELL keygen.sh)
 
-for subdomain in secure nsec3 autonsec3 optout rsasha256 rsasha512 nsec3-to-nsec oldsigs sync \
-    dname-at-apex-nsec3
-do
-	cp ../ns3/dsset-$subdomain.example$TP .
+for subdomain in secure nsec3 autonsec3 optout rsasha256 rsasha512 \
+  nsec3-to-nsec oldsigs sync dname-at-apex-nsec3 cds-delete \
+  cdnskey-delete; do
+  cp ../ns3/dsset-$subdomain.example. .
 done
 
 # Create keys and pass the DS to the parent.
 zone=example
 zonefile="${zone}.db"
 infile="${zonefile}.in"
-cat $infile dsset-*.example$TP > $zonefile
+cat $infile dsset-*.example. >$zonefile
 
-kskname=`$KEYGEN -a RSASHA1 -3 -q -fk $zone`
-$KEYGEN -a RSASHA1 -3 -q $zone > /dev/null
-$DSFROMKEY $kskname.key > dsset-${zone}$TP
+kskname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
+$KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone >/dev/null
+$DSFROMKEY $kskname.key >dsset-${zone}.
 
 # Create keys for a private secure zone.
 zone=private.secure.example
 zonefile="${zone}.db"
 infile="${zonefile}.in"
-ksk=`$KEYGEN -a RSASHA1 -3 -q -fk $zone`
-$KEYGEN -a RSASHA1 -3 -q $zone > /dev/null
-keyfile_to_trusted_keys $ksk > private.conf
+ksk=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
+$KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone >/dev/null
+keyfile_to_static_ds $ksk >private.conf
 cp private.conf ../ns4/private.conf
-$SIGNER -S -3 beef -A -o $zone -f $zonefile $infile > /dev/null 2>&1
+$SIGNER -S -3 beef -A -o $zone -f $zonefile $infile >/dev/null
 
 # Extract saved keys for the revoke-to-duplicate-key test
 zone=bar
 zonefile="${zone}.db"
 infile="${zonefile}.in"
-cat $infile > $zonefile
-for i in Xbar.+005+30676.key Xbar.+005+30804.key Xbar.+005+30676.private \
-	 Xbar.+005+30804.private
-do
-	cp $i `echo $i | sed s/X/K/`
+cat $infile >$zonefile
+for i in Xbar.+013+59973.key Xbar.+013+59973.private \
+  Xbar.+013+60101.key Xbar.+013+60101.private; do
+  cp $i $(echo $i | sed s/X/K/)
 done
-$KEYGEN -a RSASHA1 -q $zone > /dev/null
-$DSFROMKEY Kbar.+005+30804.key > dsset-bar$TP
+$KEYGEN -a ECDSAP256SHA256 -q $zone >/dev/null
+$DSFROMKEY Kbar.+013+60101.key >dsset-bar.
+
+# a zone with empty non-terminals.
+zone=optout-with-ent
+zonefile=optout-with-ent.db
+infile=optout-with-ent.db.in
+cat $infile >$zonefile
+kskname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
+$KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone >/dev/null

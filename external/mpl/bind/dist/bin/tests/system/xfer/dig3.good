@@ -1,0 +1,6 @@
+dot-fallback.		5	IN	SOA	ns1.dot-fallback. hostmaster.dot-fallback. 1 3600 3600 3600 3600
+dot-fallback.		5	IN	NS	ns1.dot-fallback.
+a01.dot-fallback.	5	IN	A	1.1.1.1
+a02.dot-fallback.	5	IN	A	255.255.255.255
+ns1.dot-fallback.	5	IN	A	10.53.0.1
+dot-fallback.		5	IN	SOA	ns1.dot-fallback. hostmaster.dot-fallback. 1 3600 3600 3600 3600

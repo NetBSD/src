@@ -1,19 +1,27 @@
-/*	$NetBSD: string.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.3.4.1 2024/02/29 12:35:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
 /*
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * Copyright (c) 2001 Mike Barcroft <mike@FreeBSD.org>
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,19 +50,16 @@
 
 /*! \file */
 
-#include <config.h>      // IWYU pragma: keep
-
 #ifdef _GNU_SOURCE
 #undef _GNU_SOURCE
-#endif
+#endif /* ifdef _GNU_SOURCE */
 #include <string.h>
 
-#include <isc/string.h>  // IWYU pragma: keep
+#include <isc/string.h> /* IWYU pragma: keep */
 
 #if !defined(HAVE_STRLCPY)
 size_t
-strlcpy(char *dst, const char *src, size_t size)
-{
+strlcpy(char *dst, const char *src, size_t size) {
 	char *d = dst;
 	const char *s = src;
 	size_t n = size;
@@ -71,20 +76,19 @@ strlcpy(char *dst, const char *src, size_t size)
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0U) {
 		if (size != 0U) {
-			*d = '\0';		/* NUL-terminate dst */
+			*d = '\0'; /* NUL-terminate dst */
 		}
-		while (*s++)
-			;
+		while (*s++) {
+		}
 	}
 
-	return(s - src - 1);	/* count does not include NUL */
+	return (s - src - 1); /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCPY) */
 
 #if !defined(HAVE_STRLCAT)
 size_t
-strlcat(char *dst, const char *src, size_t size)
-{
+strlcat(char *dst, const char *src, size_t size) {
 	char *d = dst;
 	const char *s = src;
 	size_t n = size;
@@ -98,7 +102,7 @@ strlcat(char *dst, const char *src, size_t size)
 	n = size - dlen;
 
 	if (n == 0U) {
-		return(dlen + strlen(s));
+		return (dlen + strlen(s));
 	}
 	while (*s != '\0') {
 		if (n != 1U) {
@@ -109,15 +113,33 @@ strlcat(char *dst, const char *src, size_t size)
 	}
 	*d = '\0';
 
-	return(dlen + (s - src));	/* count does not include NUL */
+	return (dlen + (s - src)); /* count does not include NUL */
 }
 #endif /* !defined(HAVE_STRLCAT) */
 
+#if !defined(HAVE_STRNSTR)
+char *
+strnstr(const char *s, const char *find, size_t slen) {
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if (slen-- < 1 || (sc = *s++) == '\0')
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+#endif
+
 int
 isc_string_strerror_r(int errnum, char *buf, size_t buflen) {
-#if defined(_WIN32) || defined(_WIN64)
-	return (strerror_s(buf, buflen, errnum));
-#else
 	return (strerror_r(errnum, buf, buflen));
-#endif
 }

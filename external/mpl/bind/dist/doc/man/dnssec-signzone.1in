@@ -1,0 +1,515 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "DNSSEC-SIGNZONE" "1" "@RELEASE_DATE@" "@PACKAGE_VERSION@" "BIND 9"
+.SH NAME
+dnssec-signzone \- DNSSEC zone signing tool
+.SH SYNOPSIS
+.sp
+\fBdnssec\-signzone\fP [\fB\-a\fP] [\fB\-c\fP class] [\fB\-d\fP directory] [\fB\-D\fP] [\fB\-E\fP engine] [\fB\-e\fP end\-time] [\fB\-f\fP output\-file] [\fB\-g\fP] [\fB\-h\fP] [\fB\-i\fP interval] [\fB\-I\fP input\-format] [\fB\-j\fP jitter] [\fB\-K\fP directory] [\fB\-k\fP key] [\fB\-L\fP serial] [\fB\-M\fP maxttl] [\fB\-N\fP soa\-serial\-format] [\fB\-o\fP origin] [\fB\-O\fP output\-format] [\fB\-P\fP] [\fB\-Q\fP] [\fB\-q\fP] [\fB\-R\fP] [\fB\-S\fP] [\fB\-s\fP start\-time] [\fB\-T\fP ttl] [\fB\-t\fP] [\fB\-u\fP] [\fB\-v\fP level] [\fB\-V\fP] [\fB\-X\fP extended end\-time] [\fB\-x\fP] [\fB\-z\fP] [\fB\-3\fP salt] [\fB\-H\fP iterations] [\fB\-A\fP] {zonefile} [key...]
+.SH DESCRIPTION
+.sp
+\fBdnssec\-signzone\fP signs a zone; it generates NSEC and RRSIG records
+and produces a signed version of the zone. The security status of
+delegations from the signed zone (that is, whether the child zones are
+secure) is determined by the presence or absence of a \fBkeyset\fP
+file for each child zone.
+.SH OPTIONS
+.INDENT 0.0
+.TP
+.B \-a
+This option verifies all generated signatures.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c class
+This option specifies the DNS class of the zone.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-C
+This option sets compatibility mode, in which a \fBkeyset\-zonename\fP file is generated in addition
+to \fBdsset\-zonename\fP when signing a zone, for use by older versions
+of \fBdnssec\-signzone\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-d directory
+This option indicates the directory where BIND 9 should look for \fBdsset\-\fP or \fBkeyset\-\fP files.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-D
+This option indicates that only those record types automatically managed by
+\fBdnssec\-signzone\fP, i.e., RRSIG, NSEC, NSEC3 and NSEC3PARAM records, should be included in the output.
+If smart signing (\fI\%\-S\fP) is used, DNSKEY records are also included.
+The resulting file can be included in the original zone file with
+\fB$INCLUDE\fP\&. This option cannot be combined with \fI\%\-O raw\fP
+or serial\-number updating.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-E engine
+This option specifies the hardware to use for cryptographic
+operations, such as a secure key store used for signing, when applicable.
+.sp
+When BIND 9 is built with OpenSSL, this needs to be set to the OpenSSL
+engine identifier that drives the cryptographic accelerator or
+hardware service module (usually \fBpkcs11\fP).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-g
+This option indicates that DS records for child zones should be generated from a \fBdsset\-\fP or \fBkeyset\-\fP
+file. Existing DS records are removed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-K directory
+This option specifies the directory to search for DNSSEC keys. If not
+specified, it defaults to the current directory.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-k key
+This option tells BIND 9 to treat the specified key as a key\-signing key, ignoring any key flags. This
+option may be specified multiple times.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-M maxttl
+This option sets the maximum TTL for the signed zone. Any TTL higher than \fBmaxttl\fP
+in the input zone is reduced to \fBmaxttl\fP in the output. This
+provides certainty as to the largest possible TTL in the signed zone,
+which is useful to know when rolling keys. The maxttl is the longest
+possible time before signatures that have been retrieved by resolvers
+expire from resolver caches. Zones that are signed with this
+option should be configured to use a matching \fBmax\-zone\-ttl\fP in
+\fI\%named.conf\fP\&. (Note: This option is incompatible with \fI\%\-D\fP,
+because it modifies non\-DNSSEC data in the output zone.)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s start\-time
+This option specifies the date and time when the generated RRSIG records become
+valid. This can be either an absolute or relative time. An absolute
+start time is indicated by a number in YYYYMMDDHHMMSS notation;
+20000530144500 denotes 14:45:00 UTC on May 30th, 2000. A relative
+start time is indicated by \fB+N\fP, which is N seconds from the current
+time. If no \fBstart\-time\fP is specified, the current time minus 1
+hour (to allow for clock skew) is used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-e end\-time
+This option specifies the date and time when the generated RRSIG records expire. As
+with \fBstart\-time\fP, an absolute time is indicated in YYYYMMDDHHMMSS
+notation. A time relative to the start time is indicated with \fB+N\fP,
+which is N seconds from the start time. A time relative to the
+current time is indicated with \fBnow+N\fP\&. If no \fBend\-time\fP is
+specified, 30 days from the start time is the default.
+\fBend\-time\fP must be later than \fBstart\-time\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-X extended end\-time
+This option specifies the date and time when the generated RRSIG records for the
+DNSKEY RRset expire. This is to be used in cases when the DNSKEY
+signatures need to persist longer than signatures on other records;
+e.g., when the private component of the KSK is kept offline and the
+KSK signature is to be refreshed manually.
+.sp
+As with \fBend\-time\fP, an absolute time is indicated in
+YYYYMMDDHHMMSS notation. A time relative to the start time is
+indicated with \fB+N\fP, which is N seconds from the start time. A time
+relative to the current time is indicated with \fBnow+N\fP\&. If no
+\fBextended end\-time\fP is specified, the value of \fBend\-time\fP is used
+as the default. (\fBend\-time\fP, in turn, defaults to 30 days from the
+start time.) \fBextended end\-time\fP must be later than \fBstart\-time\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f output\-file
+This option indicates the name of the output file containing the signed zone. The default
+is to append \fB\&.signed\fP to the input filename. If \fBoutput\-file\fP is
+set to \fB\-\fP, then the signed zone is written to the standard
+output, with a default output format of \fBfull\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+This option prints a short summary of the options and arguments to
+\fBdnssec\-signzone\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V
+This option prints version information.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-i interval
+This option indicates that, when a previously signed zone is passed as input, records may be
+re\-signed. The \fBinterval\fP option specifies the cycle interval as an
+offset from the current time, in seconds. If a RRSIG record expires
+after the cycle interval, it is retained; otherwise, it is considered
+to be expiring soon and it is replaced.
+.sp
+The default cycle interval is one quarter of the difference between
+the signature end and start times. So if neither \fBend\-time\fP nor
+\fBstart\-time\fP is specified, \fBdnssec\-signzone\fP generates
+signatures that are valid for 30 days, with a cycle interval of 7.5
+days. Therefore, if any existing RRSIG records are due to expire in
+less than 7.5 days, they are replaced.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-I input\-format
+This option sets the format of the input zone file. Possible formats are
+\fBtext\fP (the default), and \fBraw\fP\&. This option is primarily
+intended to be used for dynamic signed zones, so that the dumped zone
+file in a non\-text format containing updates can be signed directly.
+This option is not useful for non\-dynamic zones.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-j jitter
+When signing a zone with a fixed signature lifetime, all RRSIG
+records issued at the time of signing expire simultaneously. If the
+zone is incrementally signed, i.e., a previously signed zone is passed
+as input to the signer, all expired signatures must be regenerated
+at approximately the same time. The \fBjitter\fP option specifies a jitter
+window that is used to randomize the signature expire time, thus
+spreading incremental signature regeneration over time.
+.sp
+Signature lifetime jitter also, to some extent, benefits validators and
+servers by spreading out cache expiration, i.e., if large numbers of
+RRSIGs do not expire at the same time from all caches, there is
+less congestion than if all validators need to refetch at around the
+same time.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-L serial
+When writing a signed zone to \(dqraw\(dq format, this option sets the \(dqsource
+serial\(dq value in the header to the specified \fBserial\fP number. (This is
+expected to be used primarily for testing purposes.)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-n ncpus
+This option specifies the number of threads to use. By default, one thread is
+started for each detected CPU.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-N soa\-serial\-format
+This option sets the SOA serial number format of the signed zone. Possible formats are
+\fBkeep\fP (the default), \fBincrement\fP, \fBunixtime\fP, and
+\fBdate\fP\&.
+.INDENT 7.0
+.TP
+\fBkeep\fP
+This format indicates that the SOA serial number should not be modified.
+.TP
+\fBincrement\fP
+This format increments the SOA serial number using \fI\%RFC 1982\fP arithmetic.
+.TP
+\fBunixtime\fP
+This format sets the SOA serial number to the number of seconds
+since the beginning of the Unix epoch, unless the serial
+number is already greater than or equal to that value, in
+which case it is simply incremented by one.
+.TP
+\fBdate\fP
+This format sets the SOA serial number to today\(aqs date, in
+YYYYMMDDNN format, unless the serial number is already greater
+than or equal to that value, in which case it is simply
+incremented by one.
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-o origin
+This option sets the zone origin. If not specified, the name of the zone file is
+assumed to be the origin.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-O output\-format
+This option sets the format of the output file containing the signed
+zone. Possible formats are \fBtext\fP (the default), which is the standard
+textual representation of the zone; \fBfull\fP, which is text output in a
+format suitable for processing by external scripts; and \fBraw\fP and
+\fBraw=N\fP, which store the zone in binary formats for rapid loading by
+\fI\%named\fP\&. \fBraw=N\fP specifies the format version of the raw zone file:
+if N is 0, the raw file can be read by any version of \fI\%named\fP; if N is
+1, the file can be read by release 9.9.0 or higher. The default is 1.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-P
+This option disables post\-sign verification tests.
+.sp
+The post\-sign verification tests ensure that for each algorithm in
+use there is at least one non\-revoked self\-signed KSK key, that all
+revoked KSK keys are self\-signed, and that all records in the zone
+are signed by the algorithm. This option skips these tests.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-Q
+This option removes signatures from keys that are no longer active.
+.sp
+Normally, when a previously signed zone is passed as input to the
+signer, and a DNSKEY record has been removed and replaced with a new
+one, signatures from the old key that are still within their validity
+period are retained. This allows the zone to continue to validate
+with cached copies of the old DNSKEY RRset. The \fI\%\-Q\fP option forces
+\fBdnssec\-signzone\fP to remove signatures from keys that are no longer
+active. This enables ZSK rollover using the procedure described in
+\fI\%RFC 4641#4.2.1.1\fP (\(dqPre\-Publish Key Rollover\(dq).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q
+This option enables quiet mode, which suppresses unnecessary output. Without this option, when
+\fBdnssec\-signzone\fP is run it prints three pieces of information to standard output: the number of
+keys in use; the algorithms used to verify the zone was signed correctly and
+other status information; and the filename containing the signed
+zone. With the option that output is suppressed, leaving only the filename.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-R
+This option removes signatures from keys that are no longer published.
+.sp
+This option is similar to \fI\%\-Q\fP, except it forces
+\fBdnssec\-signzone\fP to remove signatures from keys that are no longer
+published. This enables ZSK rollover using the procedure described in
+\fI\%RFC 4641#4.2.1.2\fP (\(dqDouble Signature Zone Signing Key
+Rollover\(dq).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-S
+This option enables smart signing, which instructs \fBdnssec\-signzone\fP to search the key
+repository for keys that match the zone being signed, and to include
+them in the zone if appropriate.
+.sp
+When a key is found, its timing metadata is examined to determine how
+it should be used, according to the following rules. Each successive
+rule takes priority over the prior ones:
+.INDENT 7.0
+.INDENT 3.5
+If no timing metadata has been set for the key, the key is
+published in the zone and used to sign the zone.
+.sp
+If the key\(aqs publication date is set and is in the past, the key
+is published in the zone.
+.sp
+If the key\(aqs activation date is set and is in the past, the key is
+published (regardless of publication date) and used to sign the
+zone.
+.sp
+If the key\(aqs revocation date is set and is in the past, and the key
+is published, then the key is revoked, and the revoked key is used
+to sign the zone.
+.sp
+If either the key\(aqs unpublication or deletion date is set and
+in the past, the key is NOT published or used to sign the zone,
+regardless of any other metadata.
+.sp
+If the key\(aqs sync publication date is set and is in the past,
+synchronization records (type CDS and/or CDNSKEY) are created.
+.sp
+If the key\(aqs sync deletion date is set and is in the past,
+synchronization records (type CDS and/or CDNSKEY) are removed.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-T ttl
+This option specifies a TTL to be used for new DNSKEY records imported into the
+zone from the key repository. If not specified, the default is the
+TTL value from the zone\(aqs SOA record. This option is ignored when
+signing without \fI\%\-S\fP, since DNSKEY records are not imported from
+the key repository in that case. It is also ignored if there are any
+pre\-existing DNSKEY records at the zone apex, in which case new
+records\(aq TTL values are set to match them, or if any of the
+imported DNSKEY records had a default TTL value. In the event of a
+conflict between TTL values in imported keys, the shortest one is
+used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t
+This option prints statistics at completion.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-u
+This option updates the NSEC/NSEC3 chain when re\-signing a previously signed zone.
+With this option, a zone signed with NSEC can be switched to NSEC3,
+or a zone signed with NSEC3 can be switched to NSEC or to NSEC3 with
+different parameters. Without this option, \fBdnssec\-signzone\fP
+retains the existing chain when re\-signing.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v level
+This option sets the debugging level.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-x
+This option indicates that BIND 9 should only sign the DNSKEY, CDNSKEY, and CDS RRsets with key\-signing keys,
+and should omit signatures from zone\-signing keys. (This is similar to the
+\fBdnssec\-dnskey\-kskonly yes;\fP zone option in \fI\%named\fP\&.)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-z
+This option indicates that BIND 9 should ignore the KSK flag on keys when determining what to sign. This causes
+KSK\-flagged keys to sign all records, not just the DNSKEY RRset.
+(This is similar to the \fBupdate\-check\-ksk no;\fP zone option in
+\fI\%named\fP\&.)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-3 salt
+This option generates an NSEC3 chain with the given hex\-encoded salt. A dash
+(\-) can be used to indicate that no salt is to be used when
+generating the NSEC3 chain.
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+\fB\-3 \-\fP is the recommended configuration. Adding salt provides no practical benefits.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-H iterations
+This option indicates that, when generating an NSEC3 chain, BIND 9 should use this many iterations. The default
+is 0.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+Values greater than 0 cause interoperability issues and also increase the risk of CPU\-exhausting DoS attacks.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-A
+This option indicates that, when generating an NSEC3 chain, BIND 9 should set the OPTOUT flag on all NSEC3
+records and should not generate NSEC3 records for insecure delegations.
+.sp
+\fBWARNING:\fP
+.INDENT 7.0
+.INDENT 3.5
+Do not use this option unless all its implications are fully understood. This option is intended only for extremely large zones (comparable to \fBcom.\fP) with sparse secure delegations.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-AA
+This option turns the OPTOUT flag off for
+all records. This is useful when using the \fI\%\-u\fP option to modify an
+NSEC3 chain which previously had OPTOUT set.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B zonefile
+This option sets the file containing the zone to be signed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B key
+This option specifies which keys should be used to sign the zone. If no keys are
+specified, the zone is examined for DNSKEY records at the
+zone apex. If these records are found and there are matching private keys in
+the current directory, they are used for signing.
+.UNINDENT
+.SH EXAMPLE
+.sp
+The following command signs the \fBexample.com\fP zone with the
+ECDSAP256SHA256 key generated by \fI\%dnssec\-keygen\fP
+(Kexample.com.+013+17247). Because the \fI\%\-S\fP option is not being used,
+the zone\(aqs keys must be in the master file (\fBdb.example.com\fP). This
+invocation looks for \fBdsset\fP files in the current directory, so that
+DS records can be imported from them (\fI\%\-g\fP).
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+% dnssec\-signzone \-g \-o example.com db.example.com \e
+Kexample.com.+013+17247
+db.example.com.signed
+%
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+In the above example, \fBdnssec\-signzone\fP creates the file
+\fBdb.example.com.signed\fP\&. This file should be referenced in a zone
+statement in the \fI\%named.conf\fP file.
+.sp
+This example re\-signs a previously signed zone with default parameters.
+The private keys are assumed to be in the current directory.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+% cp db.example.com.signed db.example.com
+% dnssec\-signzone \-o example.com db.example.com
+db.example.com.signed
+%
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fI\%dnssec\-keygen(8)\fP, BIND 9 Administrator Reference Manual, \fI\%RFC 4033\fP,
+\fI\%RFC 4641\fP\&.
+.SH AUTHOR
+Internet Systems Consortium
+.SH COPYRIGHT
+2024, Internet Systems Consortium
+.\" Generated by docutils manpage writer.
+.

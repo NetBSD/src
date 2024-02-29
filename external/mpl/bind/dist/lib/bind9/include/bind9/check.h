@@ -1,19 +1,19 @@
-/*	$NetBSD: check.h,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: check.h,v 1.3.4.1 2024/02/29 12:34:28 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef BIND9_CHECK_H
-#define BIND9_CHECK_H 1
+#pragma once
 
 /*! \file bind9/check.h */
 
@@ -38,13 +38,15 @@ ISC_LANG_BEGINDECLS
 
 isc_result_t
 bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
-		      isc_log_t *logctx, isc_mem_t *mctx);
+		      bool nodeprecate, isc_log_t *logctx, isc_mem_t *mctx);
 /*%<
  * Check the syntactic validity of a configuration parse tree generated from
  * a named.conf file.
  *
  * If 'check_plugins' is true, load plugins and check the validity of their
  * parameters as well.
+ *
+ * If 'nodeprecate' is true, do not warn about deprecated configuration.
  *
  * Requires:
  *\li	config is a valid parse tree
@@ -63,5 +65,3 @@ bind9_check_key(const cfg_obj_t *config, isc_log_t *logctx);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* BIND9_CHECK_H */

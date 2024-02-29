@@ -1,11 +1,13 @@
-/*	$NetBSD: sink_40.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: sink_40.c,v 1.3.4.1 2024/02/29 12:34:45 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +20,7 @@
 
 #define RRTYPE_SINK_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_sink(ARGS_FROMTEXT) {
 	isc_token_t token;
 
@@ -33,28 +35,31 @@ fromtext_sink(ARGS_FROMTEXT) {
 	/* meaning */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/* coding */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/* subcoding */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
-	if (token.value.as_ulong > 0xffU)
+	if (token.value.as_ulong > 0xffU) {
 		RETTOK(ISC_R_RANGE);
+	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
-	return(isc_base64_tobuffer(lexer, target, -1));
+	return (isc_base64_tobuffer(lexer, target, -1));
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_sink(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("255 255 255")];
@@ -75,28 +80,32 @@ totext_sink(ARGS_TOTEXT) {
 	snprintf(buf, sizeof(buf), "%u %u %u", meaning, coding, subcoding);
 	RETERR(str_totext(buf, target));
 
-	if (sr.length == 0U)
+	if (sr.length == 0U) {
 		return (ISC_R_SUCCESS);
+	}
 
 	/* data */
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
+	}
 
 	RETERR(str_totext(tctx->linebreak, target));
 
-	if (tctx->width == 0)   /* No splitting */
+	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
+	} else {
+		RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
+					 target));
+	}
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" )", target));
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_sink(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
@@ -108,17 +117,17 @@ fromwire_sink(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 3)
+	if (sr.length < 3) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 
 	RETERR(mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_sink(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sink);
 	REQUIRE(rdata->length >= 3);
 
@@ -127,7 +136,7 @@ towire_sink(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_sink(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -143,12 +152,12 @@ compare_sink(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_sink(ARGS_FROMSTRUCT) {
 	dns_rdata_sink_t *sink = source;
 
 	REQUIRE(type == dns_rdatatype_sink);
-	REQUIRE(source != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(sink->common.rdtype == type);
 	REQUIRE(sink->common.rdclass == rdclass);
 
@@ -168,13 +177,13 @@ fromstruct_sink(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, sink->data, sink->datalen));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_sink(ARGS_TOSTRUCT) {
 	dns_rdata_sink_t *sink = target;
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_sink);
-	REQUIRE(target != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(rdata->length >= 3);
 
 	sink->common.rdclass = rdata->rdclass;
@@ -184,60 +193,67 @@ tostruct_sink(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &sr);
 
 	/* Meaning */
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	sink->meaning = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 
 	/* Coding */
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	sink->coding = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 
 	/* Subcoding */
-	if (sr.length < 1)
+	if (sr.length < 1) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
 	sink->subcoding = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 
 	/* Data */
 	sink->datalen = sr.length;
 	sink->data = mem_maybedup(mctx, sr.base, sink->datalen);
-	if (sink->data == NULL)
+	if (sink->data == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	sink->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_sink(ARGS_FREESTRUCT) {
-	dns_rdata_sink_t *sink = (dns_rdata_sink_t *) source;
+	dns_rdata_sink_t *sink = (dns_rdata_sink_t *)source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(sink->common.rdtype == dns_rdatatype_sink);
 
-	if (sink->mctx == NULL)
+	if (sink->mctx == NULL) {
 		return;
+	}
 
-	if (sink->data != NULL)
+	if (sink->data != NULL) {
 		isc_mem_free(sink->mctx, sink->data);
+	}
 	sink->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_sink(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_sink);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_sink(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -248,9 +264,8 @@ digest_sink(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_sink(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_sink);
 
 	UNUSED(name);
@@ -261,9 +276,8 @@ checkowner_sink(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_sink(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_sink);
 
 	UNUSED(rdata);
@@ -273,8 +287,8 @@ checknames_sink(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_sink(ARGS_COMPARE) {
 	return (compare_sink(rdata1, rdata2));
 }
-#endif	/* RDATA_GENERIC_SINK_40_C */
+#endif /* RDATA_GENERIC_SINK_40_C */

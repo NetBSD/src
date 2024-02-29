@@ -1,22 +1,25 @@
-/*	$NetBSD: fuzz.h,v 1.2 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.2.6.1 2024/02/29 12:33:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#include <config.h>
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include <isc/dir.h>
 #include <isc/lang.h>
 #include <isc/mem.h>
 #include <isc/once.h>
@@ -27,19 +30,18 @@
 
 ISC_LANG_BEGINDECLS
 
-int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
+extern bool debug;
 
-static isc_mem_t *mctx = NULL;
+int
+LLVMFuzzerInitialize(int *argc __attribute__((unused)),
+		     char ***argv __attribute__((unused)));
 
-static void __attribute__((constructor)) init(void) {
-	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
-	RUNTIME_CHECK(dst_lib_init(mctx, NULL) == ISC_R_SUCCESS);
-}
+int
+LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
-static void __attribute__((destructor)) deinit(void)
-{
-	dst_lib_destroy();
-	isc_mem_destroy(&mctx);
-}
+#define CHECK(x)                    \
+	if ((x) != ISC_R_SUCCESS) { \
+		return 0;           \
+	}
 
 ISC_LANG_ENDDECLS

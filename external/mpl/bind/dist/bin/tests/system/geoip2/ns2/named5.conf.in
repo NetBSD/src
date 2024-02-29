@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -26,7 +28,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -36,7 +38,7 @@ controls {
 view one {
 	match-clients { geoip region CA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example1.db";
 	};
 };
@@ -44,7 +46,7 @@ view one {
 view three {
 	match-clients { geoip region OK; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example3.db";
 	};
 };
@@ -52,7 +54,7 @@ view three {
 view four {
 	match-clients { geoip region VA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example4.db";
 	};
 };
@@ -60,7 +62,7 @@ view four {
 view five {
 	match-clients { geoip region GA; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example5.db";
 	};
 };
@@ -68,7 +70,7 @@ view five {
 view six {
 	match-clients { geoip region CO; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example6.db";
 	};
 };
@@ -76,7 +78,7 @@ view six {
 view seven {
 	match-clients { geoip region AK; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example7.db";
 	};
 };
@@ -84,7 +86,7 @@ view seven {
 view none {
 	match-clients { any; };
 	zone "example" {
-		type master;
+		type primary;
 		file "example.db.in";
 	};
 };

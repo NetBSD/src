@@ -1,23 +1,23 @@
-/*	$NetBSD: timer.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.3.4.1 2024/02/29 12:35:12 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_TIMER_H
-#define ISC_TIMER_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/timer.h
  * \brief Provides timers which are event sources in the task system.
@@ -62,18 +62,17 @@
  *	None.
  */
 
-
 /***
  *** Imports
  ***/
 
 #include <stdbool.h>
 
-#include <isc/types.h>
 #include <isc/event.h>
 #include <isc/eventclass.h>
 #include <isc/lang.h>
 #include <isc/time.h>
+#include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -83,54 +82,26 @@ ISC_LANG_BEGINDECLS
 
 /*% Timer Type */
 typedef enum {
-	isc_timertype_undefined = -1,	/*%< Undefined */
-	isc_timertype_ticker = 0, 	/*%< Ticker */
-	isc_timertype_once = 1, 	/*%< Once */
-	isc_timertype_limited = 2, 	/*%< Limited */
-	isc_timertype_inactive = 3 	/*%< Inactive */
+	isc_timertype_undefined = -1, /*%< Undefined */
+	isc_timertype_ticker = 0,     /*%< Ticker */
+	isc_timertype_once = 1,	      /*%< Once */
+	isc_timertype_limited = 2,    /*%< Limited */
+	isc_timertype_inactive = 3    /*%< Inactive */
 } isc_timertype_t;
 
-typedef struct isc_timerevent {
-	struct isc_event	common;
-	isc_time_t		due;
-} isc_timerevent_t;
+typedef struct isc_timerevent isc_timerevent_t;
 
-#define ISC_TIMEREVENT_FIRSTEVENT	(ISC_EVENTCLASS_TIMER + 0)
-#define ISC_TIMEREVENT_TICK		(ISC_EVENTCLASS_TIMER + 1)
-#define ISC_TIMEREVENT_IDLE		(ISC_EVENTCLASS_TIMER + 2)
-#define ISC_TIMEREVENT_LIFE		(ISC_EVENTCLASS_TIMER + 3)
-#define ISC_TIMEREVENT_LASTEVENT	(ISC_EVENTCLASS_TIMER + 65535)
-
-/*%
- * This structure is actually just the common prefix of a timer manager
- * object implementation's version of an isc_timermgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  timer implementations
- * may change the structure.  'magic' must be ISCAPI_TIMERMGR_MAGIC for any
- * of the isc_timer_ routines to work.  timer implementations must maintain
- * all timer invariants.
- */
-struct isc_timermgr {
-	unsigned int		impmagic;
-	unsigned int		magic;
+struct isc_timerevent {
+	struct isc_event common;
+	isc_time_t	 due;
+	ISC_LINK(isc_timerevent_t) ev_timerlink;
 };
 
-#define ISCAPI_TIMERMGR_MAGIC		ISC_MAGIC('A','t','m','g')
-#define ISCAPI_TIMERMGR_VALID(m)	((m) != NULL && \
-					 (m)->magic == ISCAPI_TIMERMGR_MAGIC)
-
-/*%
- * This is the common prefix of a timer object.  The same note as
- * that for the timermgr structure applies.
- */
-struct isc_timer {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_TIMER_MAGIC	ISC_MAGIC('A','t','m','r')
-#define ISCAPI_TIMER_VALID(s)	((s) != NULL && \
-				 (s)->magic == ISCAPI_TIMER_MAGIC)
+#define ISC_TIMEREVENT_FIRSTEVENT (ISC_EVENTCLASS_TIMER + 0)
+#define ISC_TIMEREVENT_TICK	  (ISC_EVENTCLASS_TIMER + 1)
+#define ISC_TIMEREVENT_IDLE	  (ISC_EVENTCLASS_TIMER + 2)
+#define ISC_TIMEREVENT_LIFE	  (ISC_EVENTCLASS_TIMER + 3)
+#define ISC_TIMEREVENT_LASTEVENT  (ISC_EVENTCLASS_TIMER + 65535)
 
 /***
  *** Timer and Timer Manager Functions
@@ -140,13 +111,9 @@ struct isc_timer {
  ***/
 
 isc_result_t
-isc_timer_create(isc_timermgr_t *manager,
-		 isc_timertype_t type,
-		 const isc_time_t *expires,
-		 const isc_interval_t *interval,
-		 isc_task_t *task,
-		 isc_taskaction_t action,
-		 void *arg,
+isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
+		 const isc_time_t *expires, const isc_interval_t *interval,
+		 isc_task_t *task, isc_taskaction_t action, void *arg,
 		 isc_timer_t **timerp);
 /*%<
  * Create a new 'type' timer managed by 'manager'.  The timers parameters
@@ -204,10 +171,8 @@ isc_timer_create(isc_timermgr_t *manager,
  */
 
 isc_result_t
-isc_timer_reset(isc_timer_t *timer,
-		isc_timertype_t type,
-		const isc_time_t *expires,
-		const isc_interval_t *interval,
+isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
+		const isc_time_t *expires, const isc_interval_t *interval,
 		bool purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given
@@ -262,25 +227,9 @@ isc_timer_touch(isc_timer_t *timer);
  */
 
 void
-isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp);
+isc_timer_destroy(isc_timer_t **timerp);
 /*%<
- * Attach *timerp to timer.
- *
- * Requires:
- *
- *\li	'timer' is a valid timer.
- *
- *\li	'timerp' points to a NULL timer.
- *
- * Ensures:
- *
- *\li	*timerp is attached to timer.
- */
-
-void
-isc_timer_detach(isc_timer_t **timerp);
-/*%<
- * Detach *timerp from its timer.
+ * Destroy *timerp.
  *
  * Requires:
  *
@@ -290,9 +239,6 @@ isc_timer_detach(isc_timer_t **timerp);
  *
  *\li	*timerp is NULL.
  *
- *\li	If '*timerp' is the last reference to the timer,
- *	then:
- *
  *\code
  *		The timer will be shutdown
  *
@@ -301,9 +247,13 @@ isc_timer_detach(isc_timer_t **timerp);
  *		All resources used by the timer have been freed
  *
  *		Any events already posted by the timer will be purged.
- *		Therefore, if isc_timer_detach() is called in the context
+ *		Therefore, if isc_timer_destroy() is called in the context
  *		of the timer's task, it is guaranteed that no more
  *		timer event callbacks will run after the call.
+ *
+ *		If this function is called from the timer event callback
+ *		the event itself must be destroyed before the timer
+ *		itself.
  *\endcode
  */
 
@@ -317,64 +267,7 @@ isc_timer_gettype(isc_timer_t *timer);
  *\li	'timer' to be a valid timer.
  */
 
-isc_result_t
-isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
-			 isc_timermgr_t **managerp);
-
-isc_result_t
-isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
-/*%<
- * Create a timer manager.  isc_timermgr_createinctx() also associates
- * the new manager with the specified application context.
- *
- * Notes:
- *
- *\li	All memory will be allocated in memory context 'mctx'.
- *
- * Requires:
- *
- *\li	'mctx' is a valid memory context.
- *
- *\li	'managerp' points to a NULL isc_timermgr_t.
- *
- *\li	'actx' is a valid application context (for createinctx()).
- *
- * Ensures:
- *
- *\li	'*managerp' is a valid isc_timermgr_t.
- *
- * Returns:
- *
- *\li	Success
- *\li	No memory
- *\li	Unexpected error
- */
-
 void
-isc_timermgr_destroy(isc_timermgr_t **managerp);
-/*%<
- * Destroy a timer manager.
- *
- * Notes:
- *
- *\li	This routine blocks until there are no timers left in the manager,
- *	so if the caller holds any timer references using the manager, it
- *	must detach them before calling isc_timermgr_destroy() or it will
- *	block forever.
- *
- * Requires:
- *
- *\li	'*managerp' is a valid isc_timermgr_t.
- *
- * Ensures:
- *
- *\li	*managerp == NULL
- *
- *\li	All resources used by the manager have been freed.
- */
-
-void isc_timermgr_poke(isc_timermgr_t *m);
+isc_timermgr_poke(isc_timermgr_t *m);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_TIMER_H */

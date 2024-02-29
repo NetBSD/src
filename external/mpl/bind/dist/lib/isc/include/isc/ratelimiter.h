@@ -1,23 +1,23 @@
-/*	$NetBSD: ratelimiter.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.3.4.1 2024/02/29 12:35:10 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_RATELIMITER_H
-#define ISC_RATELIMITER_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file isc/ratelimiter.h
  * \brief A rate limiter is a mechanism for dispatching events at a limited
@@ -38,8 +38,8 @@
 ISC_LANG_BEGINDECLS
 
 /*****
- ***** Functions.
- *****/
+***** Functions.
+*****/
 
 isc_result_t
 isc_ratelimiter_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
@@ -145,5 +145,3 @@ isc_ratelimiter_release(isc_ratelimiter_t *rl);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_RATELIMITER_H */

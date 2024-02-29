@@ -1,19 +1,19 @@
-/*	$NetBSD: hex.h,v 1.3 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.3.4.1 2024/02/29 12:35:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef ISC_HEX_H
-#define ISC_HEX_H 1
+#pragma once
 
 /*! \file isc/hex.h */
 
@@ -27,8 +27,8 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-isc_hex_totext(isc_region_t *source, int wordlength,
-	       const char *wordbreak, isc_buffer_t *target);
+isc_hex_totext(isc_region_t *source, int wordlength, const char *wordbreak,
+	       isc_buffer_t *target);
 /*!<
  * \brief Convert data into hex encoded text.
  *
@@ -98,5 +98,3 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_HEX_H */

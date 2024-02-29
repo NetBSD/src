@@ -1,11 +1,13 @@
-/*	$NetBSD: assertions.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.4.4.1 2024/02/29 12:35:06 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -14,12 +16,10 @@
 /*! \file isc/assertions.h
  */
 
-#ifndef ISC_ASSERTIONS_H
-#define ISC_ASSERTIONS_H 1
+#pragma once
 
+#include <isc/attributes.h>
 #include <isc/lang.h>
-#include <isc/likely.h>
-#include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -35,40 +35,41 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 					const char *);
 
 /* coverity[+kill] */
-ISC_PLATFORM_NORETURN_PRE
-void isc_assertion_failed(const char *, int, isc_assertiontype_t,
-			  const char *) ISC_PLATFORM_NORETURN_POST;
+noreturn void
+isc_assertion_failed(const char *, int, isc_assertiontype_t, const char *);
 
-void
-isc_assertion_setcallback(isc_assertioncallback_t);
+void isc_assertion_setcallback(isc_assertioncallback_t);
 
 const char *
 isc_assertion_typetotext(isc_assertiontype_t type);
 
-#define ISC_REQUIRE(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_require, \
-					 #cond), 0)))
+#define ISC_REQUIRE(cond)                                                  \
+	((void)((cond) ||                                                  \
+		((isc_assertion_failed)(__FILE__, __LINE__,                \
+					isc_assertiontype_require, #cond), \
+		 0)))
 
-#define ISC_ENSURE(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_ensure, \
-					 #cond), 0)))
+#define ISC_ENSURE(cond)                                                  \
+	((void)((cond) ||                                                 \
+		((isc_assertion_failed)(__FILE__, __LINE__,               \
+					isc_assertiontype_ensure, #cond), \
+		 0)))
 
-#define ISC_INSIST(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_insist, \
-					 #cond), 0)))
+#define ISC_INSIST(cond)                                                  \
+	((void)((cond) ||                                                 \
+		((isc_assertion_failed)(__FILE__, __LINE__,               \
+					isc_assertiontype_insist, #cond), \
+		 0)))
 
-#define ISC_INVARIANT(cond) \
-	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
-		 ((isc_assertion_failed)(__FILE__, __LINE__, \
-					 isc_assertiontype_invariant, \
-					 #cond), 0)))
+#define ISC_INVARIANT(cond)                                                  \
+	((void)((cond) ||                                                    \
+		((isc_assertion_failed)(__FILE__, __LINE__,                  \
+					isc_assertiontype_invariant, #cond), \
+		 0)))
+
+#define ISC_UNREACHABLE()                                                   \
+	(isc_assertion_failed(__FILE__, __LINE__, isc_assertiontype_insist, \
+			      "unreachable"),                               \
+	 __builtin_unreachable())
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_ASSERTIONS_H */

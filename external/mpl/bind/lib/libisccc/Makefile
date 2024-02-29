@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/02/24 20:01:33 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2024/02/29 12:36:04 martin Exp $
 
 LIB=isccc
 
@@ -9,11 +9,9 @@ LIB=isccc
 LIBDPLIBS+=	isc	${.CURDIR}/../libisc
 
 DIST=	${IDIST}/lib/isccc
-.include "${DIST}/api"
 
 .PATH.c:	${DIST}
 
-SRCS=	alist.c base64.c cc.c ccmsg.c result.c sexpr.c symtab.c \
-	version.c
+SRCS=	alist.c base64.c cc.c ccmsg.c sexpr.c symtab.c
 
 .include <bsd.lib.mk>

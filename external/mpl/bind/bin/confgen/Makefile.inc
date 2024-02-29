@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2018/08/12 13:02:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.6.1 2024/02/29 12:27:59 martin Exp $
 
 PROG=	${.CURDIR:T}
 SRCS=	${PROG}.c keygen.c util.c os.c
@@ -14,4 +14,4 @@ CPPFLAGS+= -I${DIST}/include \
 	-DRNDC_KEYFILE=\"${SYSCONFDIR}/rndc.key\" \
 
 
-.PATH: ${DIST} ${DIST}/unix
+.PATH: ${DIST} ${DIST}/unix ${IDIST}/doc/man

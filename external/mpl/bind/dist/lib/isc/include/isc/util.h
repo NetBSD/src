@@ -1,18 +1,19 @@
-/*	$NetBSD: util.h,v 1.5.4.1 2019/09/12 19:18:16 martin Exp $	*/
+/*	$NetBSD: util.h,v 1.5.4.2 2024/02/29 12:35:13 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_UTIL_H
-#define ISC_UTIL_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -29,6 +30,22 @@
  */
 
 /***
+ *** Clang Compatibility Macros
+ ***/
+
+#if !defined(__has_attribute)
+#define __has_attribute(x) 0
+#endif /* if !defined(__has_attribute) */
+
+#if !defined(__has_c_attribute)
+#define __has_c_attribute(x) 0
+#endif /* if !defined(__has_c_attribute) */
+
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif /* if !defined(__has_feature) */
+
+/***
  *** General Macros.
  ***/
 
@@ -42,21 +59,39 @@
  * }
  * \endcode
  */
-#define UNUSED(x)      (void)(x)
+#define UNUSED(x) (void)(x)
 
 #if __GNUC__ >= 8 && !defined(__clang__)
-#define ISC_NONSTRING	__attribute__((nonstring))
-#else
+#define ISC_NONSTRING __attribute__((nonstring))
+#else /* if __GNUC__ >= 8 && !defined(__clang__) */
 #define ISC_NONSTRING
 #endif /* __GNUC__ */
+
+#if __has_c_attribute(fallthrough)
+#define FALLTHROUGH [[fallthrough]]
+#elif __GNUC__ >= 7 && !defined(__clang__)
+#define FALLTHROUGH __attribute__((fallthrough))
+#else
+/* clang-format off */
+#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */
+/* clang-format on */
+#endif
+
+#if HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR && HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
+#define ISC_CONSTRUCTOR __attribute__((constructor))
+#define ISC_DESTRUCTOR	__attribute__((destructor))
+#else
+#define ISC_CONSTRUCTOR
+#define ISC_DESTRUCTOR
+#endif
 
 /*%
  * The opposite: silent warnings about stored values which are never read.
  */
-#define POST(x)        (void)(x)
+#define POST(x) (void)(x)
 
-#define ISC_MAX(a, b)  ((a) > (b) ? (a) : (b))
-#define ISC_MIN(a, b)  ((a) < (b) ? (a) : (b))
+#define ISC_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define ISC_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define ISC_CLAMP(v, x, y) ((v) < (x) ? (x) : ((v) > (y) ? (y) : (v)))
 
@@ -68,12 +103,17 @@
  * (as with gcc -Wcast-qual) when there is just no other good way to avoid the
  * situation.
  */
-#define DE_CONST(konst, var) \
-	do { \
-		union { const void *k; void *v; } _u; \
-		_u.k = konst; \
-		var = _u.v; \
-	} while (/*CONSTCOND*/0)
+#define DE_CONST(konst, var)           \
+	do {                           \
+		union {                \
+			const void *k; \
+			void	   *v; \
+		} _u;                  \
+		_u.k = konst;          \
+		var = _u.v;            \
+	} while (0)
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 /*%
  * Use this in translation units that would otherwise be empty, to
@@ -90,45 +130,50 @@
 
 #ifdef ISC_UTIL_TRACEON
 #define ISC_UTIL_TRACE(a) a
-#include <stdio.h>		/* Required for fprintf/stderr when tracing. */
-#else
+#include <stdio.h> /* Required for fprintf/stderr when tracing. */
+#else		   /* ifdef ISC_UTIL_TRACEON */
 #define ISC_UTIL_TRACE(a)
-#endif
+#endif /* ifdef ISC_UTIL_TRACEON */
 
-#include <isc/result.h>		/* Contractual promise. */
+#include <isc/result.h> /* Contractual promise. */
 
-#define LOCK(lp) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "LOCKING %p %s %d\n", \
-			       (lp), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_mutex_lock((lp)) == ISC_R_SUCCESS); \
-	ISC_UTIL_TRACE(fprintf(stderr, "LOCKED %p %s %d\n", \
-			       (lp), __FILE__, __LINE__)); \
-	} while (/*CONSTCOND*/0)
-#define UNLOCK(lp) do { \
-	RUNTIME_CHECK(isc_mutex_unlock((lp)) == ISC_R_SUCCESS); \
-	ISC_UTIL_TRACE(fprintf(stderr, "UNLOCKED %p %s %d\n", \
-			       (lp), __FILE__, __LINE__)); \
-	} while (/*CONSTCOND*/0)
+#define LOCK(lp)                                                           \
+	do {                                                               \
+		ISC_UTIL_TRACE(fprintf(stderr, "LOCKING %p %s %d\n", (lp), \
+				       __FILE__, __LINE__));               \
+		RUNTIME_CHECK(isc_mutex_lock((lp)) == ISC_R_SUCCESS);      \
+		ISC_UTIL_TRACE(fprintf(stderr, "LOCKED %p %s %d\n", (lp),  \
+				       __FILE__, __LINE__));               \
+	} while (0)
+#define UNLOCK(lp)                                                          \
+	do {                                                                \
+		RUNTIME_CHECK(isc_mutex_unlock((lp)) == ISC_R_SUCCESS);     \
+		ISC_UTIL_TRACE(fprintf(stderr, "UNLOCKED %p %s %d\n", (lp), \
+				       __FILE__, __LINE__));                \
+	} while (0)
 
-#define BROADCAST(cvp) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "BROADCAST %p %s %d\n", \
-			       (cvp), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_condition_broadcast((cvp)) == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
-#define SIGNAL(cvp) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "SIGNAL %p %s %d\n", \
-			       (cvp), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_condition_signal((cvp)) == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
-#define WAIT(cvp, lp) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "WAIT %p LOCK %p %s %d\n", \
-			       (cvp), \
-			       (lp), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_condition_wait((cvp), (lp)) == ISC_R_SUCCESS); \
-	ISC_UTIL_TRACE(fprintf(stderr, "WAITED %p LOCKED %p %s %d\n", \
-			       (cvp), \
-			       (lp), __FILE__, __LINE__)); \
-	} while (/*CONSTCOND*/0)
+#define BROADCAST(cvp)                                                        \
+	do {                                                                  \
+		ISC_UTIL_TRACE(fprintf(stderr, "BROADCAST %p %s %d\n", (cvp), \
+				       __FILE__, __LINE__));                  \
+		RUNTIME_CHECK(isc_condition_broadcast((cvp)) ==               \
+			      ISC_R_SUCCESS);                                 \
+	} while (0)
+#define SIGNAL(cvp)                                                          \
+	do {                                                                 \
+		ISC_UTIL_TRACE(fprintf(stderr, "SIGNAL %p %s %d\n", (cvp),   \
+				       __FILE__, __LINE__));                 \
+		RUNTIME_CHECK(isc_condition_signal((cvp)) == ISC_R_SUCCESS); \
+	} while (0)
+#define WAIT(cvp, lp)                                                         \
+	do {                                                                  \
+		ISC_UTIL_TRACE(fprintf(stderr, "WAIT %p LOCK %p %s %d\n",     \
+				       (cvp), (lp), __FILE__, __LINE__));     \
+		RUNTIME_CHECK(isc_condition_wait((cvp), (lp)) ==              \
+			      ISC_R_SUCCESS);                                 \
+		ISC_UTIL_TRACE(fprintf(stderr, "WAITED %p LOCKED %p %s %d\n", \
+				       (cvp), (lp), __FILE__, __LINE__));     \
+	} while (0)
 
 /*
  * isc_condition_waituntil can return ISC_R_TIMEDOUT, so we
@@ -137,156 +182,198 @@
  *  XXX Also, can't really debug this then...
  */
 
-#define WAITUNTIL(cvp, lp, tp) \
-	isc_condition_waituntil((cvp), (lp), (tp))
+#define WAITUNTIL(cvp, lp, tp) isc_condition_waituntil((cvp), (lp), (tp))
 
-#define RWLOCK(lp, t) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "RWLOCK %p, %d %s %d\n", \
-			       (lp), (t), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_rwlock_lock((lp), (t)) == ISC_R_SUCCESS); \
-	ISC_UTIL_TRACE(fprintf(stderr, "RWLOCKED %p, %d %s %d\n", \
-			       (lp), (t), __FILE__, __LINE__)); \
-	} while (/*CONSTCOND*/0)
-#define RWUNLOCK(lp, t) do { \
-	ISC_UTIL_TRACE(fprintf(stderr, "RWUNLOCK %p, %d %s %d\n", \
-			       (lp), (t), __FILE__, __LINE__)); \
-	RUNTIME_CHECK(isc_rwlock_unlock((lp), (t)) == ISC_R_SUCCESS); \
-	} while (/*CONSTCOND*/0)
+#define RWLOCK(lp, t)                                                         \
+	do {                                                                  \
+		ISC_UTIL_TRACE(fprintf(stderr, "RWLOCK %p, %d %s %d\n", (lp), \
+				       (t), __FILE__, __LINE__));             \
+		RUNTIME_CHECK(isc_rwlock_lock((lp), (t)) == ISC_R_SUCCESS);   \
+		ISC_UTIL_TRACE(fprintf(stderr, "RWLOCKED %p, %d %s %d\n",     \
+				       (lp), (t), __FILE__, __LINE__));       \
+	} while (0)
+#define RWUNLOCK(lp, t)                                                       \
+	do {                                                                  \
+		ISC_UTIL_TRACE(fprintf(stderr, "RWUNLOCK %p, %d %s %d\n",     \
+				       (lp), (t), __FILE__, __LINE__));       \
+		RUNTIME_CHECK(isc_rwlock_unlock((lp), (t)) == ISC_R_SUCCESS); \
+	} while (0)
 
 /*
  * List Macros.
  */
-#include <isc/list.h>		/* Contractual promise. */
+#include <isc/list.h> /* Contractual promise. */
 
-#define LIST(type)			ISC_LIST(type)
-#define INIT_LIST(type)			ISC_LIST_INIT(type)
-#define LINK(type)			ISC_LINK(type)
-#define INIT_LINK(elt, link)		ISC_LINK_INIT(elt, link)
-#define HEAD(list)			ISC_LIST_HEAD(list)
-#define TAIL(list)			ISC_LIST_TAIL(list)
-#define EMPTY(list)			ISC_LIST_EMPTY(list)
-#define PREV(elt, link)			ISC_LIST_PREV(elt, link)
-#define NEXT(elt, link)			ISC_LIST_NEXT(elt, link)
-#define APPEND(list, elt, link)		ISC_LIST_APPEND(list, elt, link)
-#define PREPEND(list, elt, link)	ISC_LIST_PREPEND(list, elt, link)
-#define UNLINK(list, elt, link)		ISC_LIST_UNLINK(list, elt, link)
-#define ENQUEUE(list, elt, link)	ISC_LIST_APPEND(list, elt, link)
-#define DEQUEUE(list, elt, link)	ISC_LIST_UNLINK(list, elt, link)
-#define INSERTBEFORE(li, b, e, ln)	ISC_LIST_INSERTBEFORE(li, b, e, ln)
-#define INSERTAFTER(li, a, e, ln)	ISC_LIST_INSERTAFTER(li, a, e, ln)
-#define APPENDLIST(list1, list2, link)	ISC_LIST_APPENDLIST(list1, list2, link)
+#define LIST(type)		       ISC_LIST(type)
+#define INIT_LIST(type)		       ISC_LIST_INIT(type)
+#define LINK(type)		       ISC_LINK(type)
+#define INIT_LINK(elt, link)	       ISC_LINK_INIT(elt, link)
+#define HEAD(list)		       ISC_LIST_HEAD(list)
+#define TAIL(list)		       ISC_LIST_TAIL(list)
+#define EMPTY(list)		       ISC_LIST_EMPTY(list)
+#define PREV(elt, link)		       ISC_LIST_PREV(elt, link)
+#define NEXT(elt, link)		       ISC_LIST_NEXT(elt, link)
+#define APPEND(list, elt, link)	       ISC_LIST_APPEND(list, elt, link)
+#define PREPEND(list, elt, link)       ISC_LIST_PREPEND(list, elt, link)
+#define UNLINK(list, elt, link)	       ISC_LIST_UNLINK(list, elt, link)
+#define ENQUEUE(list, elt, link)       ISC_LIST_APPEND(list, elt, link)
+#define DEQUEUE(list, elt, link)       ISC_LIST_UNLINK(list, elt, link)
+#define INSERTBEFORE(li, b, e, ln)     ISC_LIST_INSERTBEFORE(li, b, e, ln)
+#define INSERTAFTER(li, a, e, ln)      ISC_LIST_INSERTAFTER(li, a, e, ln)
+#define APPENDLIST(list1, list2, link) ISC_LIST_APPENDLIST(list1, list2, link)
 
 /*%
  * Performance
  */
-#include <isc/likely.h>
-
-#ifdef HAVE_BUILTIN_UNREACHABLE
-#define ISC_UNREACHABLE() __builtin_unreachable();
-#else
-#define ISC_UNREACHABLE()
-#endif
-
-#if !defined(__has_feature)
-#define __has_feature(x) 0
-#endif
 
 /* GCC defines __SANITIZE_ADDRESS__, so reuse the macro for clang */
 #if __has_feature(address_sanitizer)
 #define __SANITIZE_ADDRESS__ 1
-#endif
+#endif /* if __has_feature(address_sanitizer) */
+
+#if __has_feature(thread_sanitizer)
+#define __SANITIZE_THREAD__ 1
+#endif /* if __has_feature(thread_sanitizer) */
+
+#if __SANITIZE_THREAD__
+#define ISC_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#else /* if __SANITIZE_THREAD__ */
+#define ISC_NO_SANITIZE_THREAD
+#endif /* if __SANITIZE_THREAD__ */
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6)
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
 #elif __has_feature(c_static_assert)
 #define STATIC_ASSERT(cond, msg) _Static_assert(cond, msg)
-#else
-#define STATIC_ASSERT(cond, msg) INSIST(cond)
-#endif
+#else /* if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6) */
+
+/* Courtesy of Joseph Quinsey: https://godbolt.org/z/K9RvWS */
+#define TOKENPASTE(a, b)	a##b /* "##" is the "Token Pasting Operator" */
+#define EXPAND_THEN_PASTE(a, b) TOKENPASTE(a, b) /* expand then paste */
+#define STATIC_ASSERT(x, msg) \
+	enum { EXPAND_THEN_PASTE(ASSERT_line_, __LINE__) = 1 / ((msg) && (x)) }
+#endif /* if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 6) */
 
 #ifdef UNIT_TESTING
-extern void mock_assert(const int result, const char* const expression,
-			const char * const file, const int line);
+extern void
+mock_assert(const int result, const char *const expression,
+	    const char *const file, const int line);
 /*
  *	Allow clang to determine that the following code is not reached
  *	by calling abort() if the condition fails.  The abort() will
  *	never be executed as mock_assert() and _assert_true() longjmp
  *	or exit if the condition is false.
  */
-#define REQUIRE(expression)						\
-	((!(expression)) ?						\
-	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
-#define ENSURE(expression)						\
-	((!(int)(expression)) ?						\
-	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
-#define INSIST(expression)						\
-	((!(expression)) ?						\
-	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
-#define INVARIANT(expression)						\
-	((!(expression)) ?						\
-	(mock_assert(0, #expression, __FILE__, __LINE__), abort()) : (void)0)
+#define REQUIRE(expression)                                                   \
+	((!(expression))                                                      \
+		 ? (mock_assert(0, #expression, __FILE__, __LINE__), abort()) \
+		 : (void)0)
+#define ENSURE(expression)                                                    \
+	((!(int)(expression))                                                 \
+		 ? (mock_assert(0, #expression, __FILE__, __LINE__), abort()) \
+		 : (void)0)
+#define INSIST(expression)                                                    \
+	((!(expression))                                                      \
+		 ? (mock_assert(0, #expression, __FILE__, __LINE__), abort()) \
+		 : (void)0)
+#define INVARIANT(expression)                                                 \
+	((!(expression))                                                      \
+		 ? (mock_assert(0, #expression, __FILE__, __LINE__), abort()) \
+		 : (void)0)
+#define UNREACHABLE() \
+	(mock_assert(0, "unreachable", __FILE__, __LINE__), abort())
 #define _assert_true(c, e, f, l) \
 	((c) ? (void)0 : (_assert_true(0, e, f, l), abort()))
 #define _assert_int_equal(a, b, f, l) \
 	(((a) == (b)) ? (void)0 : (_assert_int_equal(a, b, f, l), abort()))
 #define _assert_int_not_equal(a, b, f, l) \
 	(((a) != (b)) ? (void)0 : (_assert_int_not_equal(a, b, f, l), abort()))
-#else /* UNIT_TESTING */
+#else			    /* UNIT_TESTING */
+
 /*
  * Assertions
  */
-#include <isc/assertions.h>	/* Contractual promise. */
+#include <isc/assertions.h> /* Contractual promise. */
 
 /*% Require Assertion */
-#define REQUIRE(e)			ISC_REQUIRE(e)
+#define REQUIRE(e)   ISC_REQUIRE(e)
 /*% Ensure Assertion */
-#define ENSURE(e)			ISC_ENSURE(e)
+#define ENSURE(e)    ISC_ENSURE(e)
 /*% Insist Assertion */
-#define INSIST(e)			ISC_INSIST(e)
+#define INSIST(e)    ISC_INSIST(e)
 /*% Invariant Assertion */
-#define INVARIANT(e)			ISC_INVARIANT(e)
+#define INVARIANT(e) ISC_INVARIANT(e)
+
+#define UNREACHABLE() ISC_UNREACHABLE()
 
 #endif /* UNIT_TESTING */
 
 /*
  * Errors
  */
-#include <isc/error.h>		/* Contractual promise. */
+#include <isc/error.h>	/* Contractual promise. */
+#include <isc/strerr.h> /* for ISC_STRERRORSIZE */
 
-/*% Unexpected Error */
-#define UNEXPECTED_ERROR		isc_error_unexpected
-/*% Fatal Error */
-#define FATAL_ERROR			isc_error_fatal
+#define UNEXPECTED_ERROR(...) \
+	isc_error_unexpected(__FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#define FATAL_ERROR(...) \
+	isc_error_fatal(__FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#define REPORT_SYSERROR(report, err, fmt, ...)                        \
+	{                                                             \
+		char strerr[ISC_STRERRORSIZE];                        \
+		strerror_r(err, strerr, sizeof(strerr));              \
+		report(__FILE__, __LINE__, __func__, fmt ": %s (%d)", \
+		       ##__VA_ARGS__, strerr, err);                   \
+	}
+
+#define UNEXPECTED_SYSERROR(err, ...) \
+	REPORT_SYSERROR(isc_error_unexpected, err, __VA_ARGS__)
+
+#define FATAL_SYSERROR(err, ...) \
+	REPORT_SYSERROR(isc_error_fatal, err, __VA_ARGS__)
 
 #ifdef UNIT_TESTING
 
-#define RUNTIME_CHECK(expression)					\
-	mock_assert((int)(expression), #expression, __FILE__, __LINE__)
+#define RUNTIME_CHECK(cond) \
+	((cond) ? (void)0   \
+		: (mock_assert(0, #cond, __FILE__, __LINE__), abort()))
 
 #else /* UNIT_TESTING */
 
-/*% Runtime Check */
-#define RUNTIME_CHECK(cond)		ISC_ERROR_RUNTIMECHECK(cond)
+#define RUNTIME_CHECK(cond) \
+	((cond) ? (void)0 : FATAL_ERROR("RUNTIME_CHECK(%s) failed", #cond))
 
 #endif /* UNIT_TESTING */
 
 /*%
  * Time
  */
-#define TIME_NOW(tp) 	RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)
+#define TIME_NOW(tp) RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)
+#define TIME_NOW_HIRES(tp) \
+	RUNTIME_CHECK(isc_time_now_hires((tp)) == ISC_R_SUCCESS)
 
 /*%
  * Alignment
  */
 #ifdef __GNUC__
-#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((typeof(x))(a) - 1))
-#else
-#define ISC_ALIGN(x, a) (((x) + (a) - 1) & ~((uintmax_t)(a) - 1))
-#endif
+#define ISC_ALIGN(x, a) (((x) + (a)-1) & ~((typeof(x))(a)-1))
+#else /* ifdef __GNUC__ */
+#define ISC_ALIGN(x, a) (((x) + (a)-1) & ~((uintmax_t)(a)-1))
+#endif /* ifdef __GNUC__ */
 
 /*%
  * Misc
  */
 #include <isc/deprecated.h>
 
-#endif /* ISC_UTIL_H */
+/*%
+ * Swap
+ */
+#define ISC_SWAP(a, b)                    \
+	{                                 \
+		typeof(a) __tmp_swap = a; \
+		a = b;                    \
+		b = __tmp_swap;           \
+	}

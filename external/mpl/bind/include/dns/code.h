@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 1998-2019  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2024  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 /***************
@@ -15,9 +15,7 @@
 
 /*! \file */
 
-#ifndef DNS_CODE_H
-#define DNS_CODE_H 1
-
+#pragma once
 #include <stdbool.h>
 #include <isc/result.h>
 
@@ -87,6 +85,8 @@
 #include "rdata/generic/openpgpkey_61.c"
 #include "rdata/generic/csync_62.c"
 #include "rdata/generic/zonemd_63.c"
+#include "rdata/in_1/svcb_64.c"
+#include "rdata/in_1/https_65.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/nid_104.c"
 #include "rdata/generic/l32_105.c"
@@ -229,6 +229,16 @@
 	case 61: result = fromtext_openpgpkey(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 62: result = fromtext_csync(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 63: result = fromtext_zonemd(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromtext_in_svcb(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromtext_in_https(rdclass, type, lexer, origin, options, target, callbacks); break; \
+		default: result = DNS_R_UNKNOWN; break; \
+		} \
+		break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 105: result = fromtext_l32(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -375,6 +385,16 @@
 	case 61: result = totext_openpgpkey(rdata, tctx, target); break; \
 	case 62: result = totext_csync(rdata, tctx, target); break; \
 	case 63: result = totext_zonemd(rdata, tctx, target); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = totext_in_svcb(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = totext_in_https(rdata, tctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 104: result = totext_nid(rdata, tctx, target); break; \
 	case 105: result = totext_l32(rdata, tctx, target); break; \
@@ -521,6 +541,16 @@
 	case 61: result = fromwire_openpgpkey(rdclass, type, source, dctx, options, target); break; \
 	case 62: result = fromwire_csync(rdclass, type, source, dctx, options, target); break; \
 	case 63: result = fromwire_zonemd(rdclass, type, source, dctx, options, target); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromwire_in_svcb(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromwire_in_https(rdclass, type, source, dctx, options, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
 	case 104: result = fromwire_nid(rdclass, type, source, dctx, options, target); break; \
 	case 105: result = fromwire_l32(rdclass, type, source, dctx, options, target); break; \
@@ -667,6 +697,16 @@
 	case 61: result = towire_openpgpkey(rdata, cctx, target); break; \
 	case 62: result = towire_csync(rdata, cctx, target); break; \
 	case 63: result = towire_zonemd(rdata, cctx, target); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = towire_in_svcb(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = towire_in_https(rdata, cctx, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 104: result = towire_nid(rdata, cctx, target); break; \
 	case 105: result = towire_l32(rdata, cctx, target); break; \
@@ -813,6 +853,16 @@
 	case 61: result = compare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = compare_csync(rdata1, rdata2); break; \
 	case 63: result = compare_zonemd(rdata1, rdata2); break; \
+	case 64: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_svcb(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata1->rdclass) { \
+		case 1: result = compare_in_https(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 104: result = compare_nid(rdata1, rdata2); break; \
 	case 105: result = compare_l32(rdata1, rdata2); break; \
@@ -959,6 +1009,16 @@
 	case 61: result = casecompare_openpgpkey(rdata1, rdata2); break; \
 	case 62: result = casecompare_csync(rdata1, rdata2); break; \
 	case 63: result = casecompare_zonemd(rdata1, rdata2); break; \
+	case 64: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_svcb(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_https(rdata1, rdata2); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
 	case 104: result = casecompare_nid(rdata1, rdata2); break; \
 	case 105: result = casecompare_l32(rdata1, rdata2); break; \
@@ -1105,6 +1165,16 @@
 	case 61: result = fromstruct_openpgpkey(rdclass, type, source, target); break; \
 	case 62: result = fromstruct_csync(rdclass, type, source, target); break; \
 	case 63: result = fromstruct_zonemd(rdclass, type, source, target); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = fromstruct_in_svcb(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = fromstruct_in_https(rdclass, type, source, target); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
 	case 105: result = fromstruct_l32(rdclass, type, source, target); break; \
@@ -1251,6 +1321,16 @@
 	case 61: result = tostruct_openpgpkey(rdata, target, mctx); break; \
 	case 62: result = tostruct_csync(rdata, target, mctx); break; \
 	case 63: result = tostruct_zonemd(rdata, target, mctx); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_svcb(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = tostruct_in_https(rdata, target, mctx); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 104: result = tostruct_nid(rdata, target, mctx); break; \
 	case 105: result = tostruct_l32(rdata, target, mctx); break; \
@@ -1397,6 +1477,16 @@
 	case 61: freestruct_openpgpkey(source); break; \
 	case 62: freestruct_csync(source); break; \
 	case 63: freestruct_zonemd(source); break; \
+	case 64: switch (common->rdclass) { \
+		case 1: freestruct_in_svcb(source); break; \
+		default: break; \
+		} \
+		break; \
+	case 65: switch (common->rdclass) { \
+		case 1: freestruct_in_https(source); break; \
+		default: break; \
+		} \
+		break; \
 	case 99: freestruct_spf(source); break; \
 	case 104: freestruct_nid(source); break; \
 	case 105: freestruct_l32(source); break; \
@@ -1424,146 +1514,156 @@
 #define ADDITIONALDATASWITCH \
 	switch (rdata->type) { \
 	case 1: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_a(rdata, add, arg); break; \
-		case 3: result = additionaldata_ch_a(rdata, add, arg); break; \
-		case 4: result = additionaldata_hs_a(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_a(rdata, owner, add, arg); break; \
+		case 3: result = additionaldata_ch_a(rdata, owner, add, arg); break; \
+		case 4: result = additionaldata_hs_a(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 2: result = additionaldata_ns(rdata, add, arg); break; \
-	case 3: result = additionaldata_md(rdata, add, arg); break; \
-	case 4: result = additionaldata_mf(rdata, add, arg); break; \
-	case 5: result = additionaldata_cname(rdata, add, arg); break; \
-	case 6: result = additionaldata_soa(rdata, add, arg); break; \
-	case 7: result = additionaldata_mb(rdata, add, arg); break; \
-	case 8: result = additionaldata_mg(rdata, add, arg); break; \
-	case 9: result = additionaldata_mr(rdata, add, arg); break; \
-	case 10: result = additionaldata_null(rdata, add, arg); break; \
+	case 2: result = additionaldata_ns(rdata, owner, add, arg); break; \
+	case 3: result = additionaldata_md(rdata, owner, add, arg); break; \
+	case 4: result = additionaldata_mf(rdata, owner, add, arg); break; \
+	case 5: result = additionaldata_cname(rdata, owner, add, arg); break; \
+	case 6: result = additionaldata_soa(rdata, owner, add, arg); break; \
+	case 7: result = additionaldata_mb(rdata, owner, add, arg); break; \
+	case 8: result = additionaldata_mg(rdata, owner, add, arg); break; \
+	case 9: result = additionaldata_mr(rdata, owner, add, arg); break; \
+	case 10: result = additionaldata_null(rdata, owner, add, arg); break; \
 	case 11: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_wks(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_wks(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 12: result = additionaldata_ptr(rdata, add, arg); break; \
-	case 13: result = additionaldata_hinfo(rdata, add, arg); break; \
-	case 14: result = additionaldata_minfo(rdata, add, arg); break; \
-	case 15: result = additionaldata_mx(rdata, add, arg); break; \
-	case 16: result = additionaldata_txt(rdata, add, arg); break; \
-	case 17: result = additionaldata_rp(rdata, add, arg); break; \
-	case 18: result = additionaldata_afsdb(rdata, add, arg); break; \
-	case 19: result = additionaldata_x25(rdata, add, arg); break; \
-	case 20: result = additionaldata_isdn(rdata, add, arg); break; \
-	case 21: result = additionaldata_rt(rdata, add, arg); break; \
+	case 12: result = additionaldata_ptr(rdata, owner, add, arg); break; \
+	case 13: result = additionaldata_hinfo(rdata, owner, add, arg); break; \
+	case 14: result = additionaldata_minfo(rdata, owner, add, arg); break; \
+	case 15: result = additionaldata_mx(rdata, owner, add, arg); break; \
+	case 16: result = additionaldata_txt(rdata, owner, add, arg); break; \
+	case 17: result = additionaldata_rp(rdata, owner, add, arg); break; \
+	case 18: result = additionaldata_afsdb(rdata, owner, add, arg); break; \
+	case 19: result = additionaldata_x25(rdata, owner, add, arg); break; \
+	case 20: result = additionaldata_isdn(rdata, owner, add, arg); break; \
+	case 21: result = additionaldata_rt(rdata, owner, add, arg); break; \
 	case 22: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_nsap(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_nsap(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
 	case 23: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_nsap_ptr(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_nsap_ptr(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 24: result = additionaldata_sig(rdata, add, arg); break; \
-	case 25: result = additionaldata_key(rdata, add, arg); break; \
+	case 24: result = additionaldata_sig(rdata, owner, add, arg); break; \
+	case 25: result = additionaldata_key(rdata, owner, add, arg); break; \
 	case 26: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_px(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_px(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 27: result = additionaldata_gpos(rdata, add, arg); break; \
+	case 27: result = additionaldata_gpos(rdata, owner, add, arg); break; \
 	case 28: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_aaaa(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_aaaa(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 29: result = additionaldata_loc(rdata, add, arg); break; \
-	case 30: result = additionaldata_nxt(rdata, add, arg); break; \
+	case 29: result = additionaldata_loc(rdata, owner, add, arg); break; \
+	case 30: result = additionaldata_nxt(rdata, owner, add, arg); break; \
 	case 31: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_eid(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_eid(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
 	case 32: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_nimloc(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_nimloc(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
 	case 33: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_srv(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_srv(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
 	case 34: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_atma(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_atma(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 35: result = additionaldata_naptr(rdata, add, arg); break; \
+	case 35: result = additionaldata_naptr(rdata, owner, add, arg); break; \
 	case 36: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_kx(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_kx(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 37: result = additionaldata_cert(rdata, add, arg); break; \
+	case 37: result = additionaldata_cert(rdata, owner, add, arg); break; \
 	case 38: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_a6(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_a6(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 39: result = additionaldata_dname(rdata, add, arg); break; \
-	case 40: result = additionaldata_sink(rdata, add, arg); break; \
-	case 41: result = additionaldata_opt(rdata, add, arg); break; \
+	case 39: result = additionaldata_dname(rdata, owner, add, arg); break; \
+	case 40: result = additionaldata_sink(rdata, owner, add, arg); break; \
+	case 41: result = additionaldata_opt(rdata, owner, add, arg); break; \
 	case 42: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_apl(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_apl(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 43: result = additionaldata_ds(rdata, add, arg); break; \
-	case 44: result = additionaldata_sshfp(rdata, add, arg); break; \
-	case 45: result = additionaldata_ipseckey(rdata, add, arg); break; \
-	case 46: result = additionaldata_rrsig(rdata, add, arg); break; \
-	case 47: result = additionaldata_nsec(rdata, add, arg); break; \
-	case 48: result = additionaldata_dnskey(rdata, add, arg); break; \
+	case 43: result = additionaldata_ds(rdata, owner, add, arg); break; \
+	case 44: result = additionaldata_sshfp(rdata, owner, add, arg); break; \
+	case 45: result = additionaldata_ipseckey(rdata, owner, add, arg); break; \
+	case 46: result = additionaldata_rrsig(rdata, owner, add, arg); break; \
+	case 47: result = additionaldata_nsec(rdata, owner, add, arg); break; \
+	case 48: result = additionaldata_dnskey(rdata, owner, add, arg); break; \
 	case 49: switch (rdata->rdclass) { \
-		case 1: result = additionaldata_in_dhcid(rdata, add, arg); break; \
+		case 1: result = additionaldata_in_dhcid(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 50: result = additionaldata_nsec3(rdata, add, arg); break; \
-	case 51: result = additionaldata_nsec3param(rdata, add, arg); break; \
-	case 52: result = additionaldata_tlsa(rdata, add, arg); break; \
-	case 53: result = additionaldata_smimea(rdata, add, arg); break; \
-	case 55: result = additionaldata_hip(rdata, add, arg); break; \
-	case 56: result = additionaldata_ninfo(rdata, add, arg); break; \
-	case 57: result = additionaldata_rkey(rdata, add, arg); break; \
-	case 58: result = additionaldata_talink(rdata, add, arg); break; \
-	case 59: result = additionaldata_cds(rdata, add, arg); break; \
-	case 60: result = additionaldata_cdnskey(rdata, add, arg); break; \
-	case 61: result = additionaldata_openpgpkey(rdata, add, arg); break; \
-	case 62: result = additionaldata_csync(rdata, add, arg); break; \
-	case 63: result = additionaldata_zonemd(rdata, add, arg); break; \
-	case 99: result = additionaldata_spf(rdata, add, arg); break; \
-	case 104: result = additionaldata_nid(rdata, add, arg); break; \
-	case 105: result = additionaldata_l32(rdata, add, arg); break; \
-	case 106: result = additionaldata_l64(rdata, add, arg); break; \
-	case 107: result = additionaldata_lp(rdata, add, arg); break; \
-	case 108: result = additionaldata_eui48(rdata, add, arg); break; \
-	case 109: result = additionaldata_eui64(rdata, add, arg); break; \
-	case 249: result = additionaldata_tkey(rdata, add, arg); break; \
+	case 50: result = additionaldata_nsec3(rdata, owner, add, arg); break; \
+	case 51: result = additionaldata_nsec3param(rdata, owner, add, arg); break; \
+	case 52: result = additionaldata_tlsa(rdata, owner, add, arg); break; \
+	case 53: result = additionaldata_smimea(rdata, owner, add, arg); break; \
+	case 55: result = additionaldata_hip(rdata, owner, add, arg); break; \
+	case 56: result = additionaldata_ninfo(rdata, owner, add, arg); break; \
+	case 57: result = additionaldata_rkey(rdata, owner, add, arg); break; \
+	case 58: result = additionaldata_talink(rdata, owner, add, arg); break; \
+	case 59: result = additionaldata_cds(rdata, owner, add, arg); break; \
+	case 60: result = additionaldata_cdnskey(rdata, owner, add, arg); break; \
+	case 61: result = additionaldata_openpgpkey(rdata, owner, add, arg); break; \
+	case 62: result = additionaldata_csync(rdata, owner, add, arg); break; \
+	case 63: result = additionaldata_zonemd(rdata, owner, add, arg); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_svcb(rdata, owner, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = additionaldata_in_https(rdata, owner, add, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 99: result = additionaldata_spf(rdata, owner, add, arg); break; \
+	case 104: result = additionaldata_nid(rdata, owner, add, arg); break; \
+	case 105: result = additionaldata_l32(rdata, owner, add, arg); break; \
+	case 106: result = additionaldata_l64(rdata, owner, add, arg); break; \
+	case 107: result = additionaldata_lp(rdata, owner, add, arg); break; \
+	case 108: result = additionaldata_eui48(rdata, owner, add, arg); break; \
+	case 109: result = additionaldata_eui64(rdata, owner, add, arg); break; \
+	case 249: result = additionaldata_tkey(rdata, owner, add, arg); break; \
 	case 250: switch (rdata->rdclass) { \
-		case 255: result = additionaldata_any_tsig(rdata, add, arg); break; \
+		case 255: result = additionaldata_any_tsig(rdata, owner, add, arg); break; \
 		default: use_default = true; break; \
 		} \
 		break; \
-	case 256: result = additionaldata_uri(rdata, add, arg); break; \
-	case 257: result = additionaldata_caa(rdata, add, arg); break; \
-	case 258: result = additionaldata_avc(rdata, add, arg); break; \
-	case 259: result = additionaldata_doa(rdata, add, arg); break; \
-	case 260: result = additionaldata_amtrelay(rdata, add, arg); break; \
-	case 32768: result = additionaldata_ta(rdata, add, arg); break; \
-	case 32769: result = additionaldata_dlv(rdata, add, arg); break; \
-	case 65533: result = additionaldata_keydata(rdata, add, arg); break; \
+	case 256: result = additionaldata_uri(rdata, owner, add, arg); break; \
+	case 257: result = additionaldata_caa(rdata, owner, add, arg); break; \
+	case 258: result = additionaldata_avc(rdata, owner, add, arg); break; \
+	case 259: result = additionaldata_doa(rdata, owner, add, arg); break; \
+	case 260: result = additionaldata_amtrelay(rdata, owner, add, arg); break; \
+	case 32768: result = additionaldata_ta(rdata, owner, add, arg); break; \
+	case 32769: result = additionaldata_dlv(rdata, owner, add, arg); break; \
+	case 65533: result = additionaldata_keydata(rdata, owner, add, arg); break; \
 	default: use_default = true; break; \
 	}
 
@@ -1689,6 +1789,16 @@
 	case 61: result = digest_openpgpkey(rdata, digest, arg); break; \
 	case 62: result = digest_csync(rdata, digest, arg); break; \
 	case 63: result = digest_zonemd(rdata, digest, arg); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = digest_in_svcb(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = digest_in_https(rdata, digest, arg); break; \
+		default: use_default = true; break; \
+		} \
+		break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 104: result = digest_nid(rdata, digest, arg); break; \
 	case 105: result = digest_l32(rdata, digest, arg); break; \
@@ -1835,6 +1945,16 @@
 	case 61: result = checkowner_openpgpkey(name, rdclass, type, wildcard); break; \
 	case 62: result = checkowner_csync(name, rdclass, type, wildcard); break; \
 	case 63: result = checkowner_zonemd(name, rdclass, type, wildcard); break; \
+	case 64: switch (rdclass) { \
+		case 1: result = checkowner_in_svcb(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 65: switch (rdclass) { \
+		case 1: result = checkowner_in_https(name, rdclass, type, wildcard); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
 	case 105: result = checkowner_l32(name, rdclass, type, wildcard); break; \
@@ -1981,6 +2101,16 @@
 	case 61: result = checknames_openpgpkey(rdata, owner, bad); break; \
 	case 62: result = checknames_csync(rdata, owner, bad); break; \
 	case 63: result = checknames_zonemd(rdata, owner, bad); break; \
+	case 64: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_svcb(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
+	case 65: switch (rdata->rdclass) { \
+		case 1: result = checknames_in_https(rdata, owner, bad); break; \
+		default: result = true; break; \
+		} \
+		break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 104: result = checknames_nid(rdata, owner, bad); break; \
 	case 105: result = checknames_l32(rdata, owner, bad); break; \
@@ -2017,9 +2147,6 @@
 
 #define RDATATYPE_FROMTEXT_SW(_hash,_typename,_length,_typep) \
 	switch (_hash) { \
-		case 16: \
-			RDATATYPE_COMPARE("reserved0", 0, _typename,  _length, _typep); \
-			break; \
 		case 34: \
 			RDATATYPE_COMPARE("a", 1, _typename,  _length, _typep); \
 			break; \
@@ -2196,6 +2323,12 @@
 		case 0: \
 			RDATATYPE_COMPARE("zonemd", 63, _typename,  _length, _typep); \
 			break; \
+		case 142: \
+			RDATATYPE_COMPARE("svcb", 64, _typename,  _length, _typep); \
+			break; \
+		case 247: \
+			RDATATYPE_COMPARE("https", 65, _typename,  _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename,  _length, _typep); \
 			break; \
@@ -2251,7 +2384,6 @@
 	}
 #define RDATATYPE_ATTRIBUTE_SW \
 	switch (type) { \
-	case 0: return (DNS_RDATATYPEATTR_RESERVED); \
 	case 1: return (RRTYPE_A_ATTRIBUTES); \
 	case 2: return (RRTYPE_NS_ATTRIBUTES); \
 	case 3: return (RRTYPE_MD_ATTRIBUTES); \
@@ -2314,6 +2446,8 @@
 	case 61: return (RRTYPE_OPENPGPKEY_ATTRIBUTES); \
 	case 62: return (RRTYPE_CSYNC_ATTRIBUTES); \
 	case 63: return (RRTYPE_ZONEMD_ATTRIBUTES); \
+	case 64: return (RRTYPE_SVCB_ATTRIBUTES); \
+	case 65: return (RRTYPE_HTTPS_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
 	case 100: return (0); \
 	case 101: return (0); \
@@ -2343,7 +2477,6 @@
 	}
 #define RDATATYPE_TOTEXT_SW \
 	switch (type) { \
-	case 0: return (str_totext("RESERVED0", target)); \
 	case 1: return (str_totext("A", target)); \
 	case 2: return (str_totext("NS", target)); \
 	case 3: return (str_totext("MD", target)); \
@@ -2406,6 +2539,8 @@
 	case 61: return (str_totext("OPENPGPKEY", target)); \
 	case 62: return (str_totext("CSYNC", target)); \
 	case 63: return (str_totext("ZONEMD", target)); \
+	case 64: return (str_totext("SVCB", target)); \
+	case 65: return (str_totext("HTTPS", target)); \
 	case 99: return (str_totext("SPF", target)); \
 	case 100: return (str_totext("UINFO", target)); \
 	case 101: return (str_totext("UID", target)); \
@@ -2432,4 +2567,3 @@
 	case 32768: return (str_totext("TA", target)); \
 	case 32769: return (str_totext("DLV", target)); \
 	}
-#endif /* DNS_CODE_H */

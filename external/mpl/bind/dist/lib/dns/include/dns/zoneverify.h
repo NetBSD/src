@@ -1,11 +1,13 @@
-/*	$NetBSD: zoneverify.h,v 1.2 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zoneverify.h,v 1.2.6.1 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -17,9 +19,9 @@
 
 #include <stdbool.h>
 
-#include <dns/types.h>
-
 #include <isc/types.h>
+
+#include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -44,7 +46,7 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_zoneverify_dnssec(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 		      dns_name_t *origin, dns_keytable_t *secroots,
-		      isc_mem_t *mctx, bool ignore_kskflag,
-		      bool keyset_kskonly);
+		      isc_mem_t *mctx, bool ignore_kskflag, bool keyset_kskonly,
+		      void (*report)(const char *, ...));
 
 ISC_LANG_ENDDECLS

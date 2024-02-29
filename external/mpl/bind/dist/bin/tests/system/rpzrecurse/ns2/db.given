@@ -1,0 +1,21 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN given.zone.
+$TTL 3600
+@               IN SOA ns.given.zone.  hostmaster.given.zone. 1 600 300 604800 3600
+                IN NS  ns.given.zone.
+
+ns.given.zone. IN A 127.0.0.1
+; this should be ignored as it matches an earlier passthru entry.
+example.com CNAME .
+; this should be ignored as it matches an earlier wildcard passthru entry.
+www.example.com CNAME .

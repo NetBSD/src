@@ -1,19 +1,23 @@
-/*	$NetBSD: resconf.h,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
+/*	$NetBSD: resconf.h,v 1.2.6.1 2024/02/29 12:34:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
+#pragma once
 
-#ifndef IRS_RESCONF_H
-#define IRS_RESCONF_H 1
+#include <isc/lang.h>
+#include <isc/list.h>
+#include <isc/types.h>
 
 /*! \file
  *
@@ -23,15 +27,16 @@
  * modules.
  */
 
-#include <irs/types.h>
+/*%< resolv.conf configuration information */
+typedef struct irs_resconf irs_resconf_t;
 
 /*%
  * A DNS search list specified in the 'domain' or 'search' statements
  * in the "resolv.conf" file.
  */
 typedef struct irs_resconf_search {
-	char					*domain;
-	ISC_LINK(struct irs_resconf_search)	link;
+	char *domain;
+	ISC_LINK(struct irs_resconf_search) link;
 } irs_resconf_search_t;
 
 typedef ISC_LIST(irs_resconf_search_t) irs_resconf_searchlist_t;
@@ -114,6 +119,24 @@ irs_resconf_getndots(irs_resconf_t *conf);
  *\li	'conf' is a valid resconf object.
  */
 
-ISC_LANG_ENDDECLS
+unsigned int
+irs_resconf_getattempts(irs_resconf_t *conf);
+/*%<
+ * Return the 'attempts' value stored in 'conf'.
+ *
+ * Requires:
+ *
+ *\li	'conf' is a valid resconf object.
+ */
 
-#endif /* IRS_RESCONF_H */
+unsigned int
+irs_resconf_gettimeout(irs_resconf_t *conf);
+/*%<
+ * Return the 'timeout' value stored in 'conf'.
+ *
+ * Requires:
+ *
+ *\li	'conf' is a valid resconf object.
+ */
+
+ISC_LANG_ENDDECLS

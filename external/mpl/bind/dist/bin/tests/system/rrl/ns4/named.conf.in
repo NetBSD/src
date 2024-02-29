@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -22,6 +24,7 @@ options {
 	notify no;
 	recursion yes;
 	dnssec-validation yes;
+	max-udp-size 4096;
 
 	rate-limit {
 	    responses-per-second 2;
@@ -37,7 +40,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 controls {
 	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
@@ -61,4 +64,4 @@ logging {
 
 zone "." { type hint; file "hints"; };
 
-zone "tld4."{ type master; file "tld4.db"; };
+zone "tld4."{ type primary; file "tld4.db"; };

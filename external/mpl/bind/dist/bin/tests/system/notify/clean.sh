@@ -1,10 +1,12 @@
 #!/bin/sh
-#
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
+# SPDX-License-Identifier: MPL-2.0
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
@@ -13,10 +15,10 @@
 # Clean up after zone transfer tests.
 #
 
-rm -f */named.conf
-rm -f */named.memstats
-rm -f */named.port
-rm -f */named.run */named.run.prev
+rm -f ./*/named.conf
+rm -f ./*/named.memstats
+rm -f ./*/named.port
+rm -f ./*/named.run ./*/named.run.prev
 rm -f awk.out.ns?.test*
 rm -f dig.out.?.ns5.test*
 rm -f dig.out.ns2.test*

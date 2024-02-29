@@ -1,11 +1,13 @@
-/*	$NetBSD: gpos_27.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: gpos_27.c,v 1.3.4.1 2024/02/29 12:34:42 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,7 +20,7 @@
 
 #define RRTYPE_GPOS_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_gpos(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int i;
@@ -33,14 +35,13 @@ fromtext_gpos(ARGS_FROMTEXT) {
 
 	for (i = 0; i < 3; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      false));
+					      isc_tokentype_qstring, false));
 		RETTOK(txt_fromtext(&token.value.as_textregion, target));
 	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_gpos(ARGS_TOTEXT) {
 	isc_region_t region;
 	int i;
@@ -54,14 +55,15 @@ totext_gpos(ARGS_TOTEXT) {
 
 	for (i = 0; i < 3; i++) {
 		RETERR(txt_totext(&region, true, target));
-		if (i != 2)
+		if (i != 2) {
 			RETERR(str_totext(" ", target));
+		}
 	}
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_gpos(ARGS_FROMWIRE) {
 	int i;
 
@@ -72,14 +74,14 @@ fromwire_gpos(ARGS_FROMWIRE) {
 	UNUSED(rdclass);
 	UNUSED(options);
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++) {
 		RETERR(txt_fromwire(source, target));
+	}
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_gpos(ARGS_TOWIRE) {
-
 	REQUIRE(rdata->type == dns_rdatatype_gpos);
 	REQUIRE(rdata->length != 0);
 
@@ -88,7 +90,7 @@ towire_gpos(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_gpos(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -104,12 +106,12 @@ compare_gpos(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_gpos(ARGS_FROMSTRUCT) {
 	dns_rdata_gpos_t *gpos = source;
 
 	REQUIRE(type == dns_rdatatype_gpos);
-	REQUIRE(source != NULL);
+	REQUIRE(gpos != NULL);
 	REQUIRE(gpos->common.rdtype == type);
 	REQUIRE(gpos->common.rdclass == rdclass);
 
@@ -124,13 +126,13 @@ fromstruct_gpos(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, gpos->altitude, gpos->alt_len));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_gpos(ARGS_TOSTRUCT) {
 	dns_rdata_gpos_t *gpos = target;
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_gpos);
-	REQUIRE(target != NULL);
+	REQUIRE(gpos != NULL);
 	REQUIRE(rdata->length != 0);
 
 	gpos->common.rdclass = rdata->rdclass;
@@ -141,71 +143,81 @@ tostruct_gpos(ARGS_TOSTRUCT) {
 	gpos->long_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	gpos->longitude = mem_maybedup(mctx, region.base, gpos->long_len);
-	if (gpos->longitude == NULL)
+	if (gpos->longitude == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 	isc_region_consume(&region, gpos->long_len);
 
 	gpos->lat_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	gpos->latitude = mem_maybedup(mctx, region.base, gpos->lat_len);
-	if (gpos->latitude == NULL)
+	if (gpos->latitude == NULL) {
 		goto cleanup_longitude;
+	}
 	isc_region_consume(&region, gpos->lat_len);
 
 	gpos->alt_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	if (gpos->lat_len > 0) {
-		gpos->altitude =
-			mem_maybedup(mctx, region.base, gpos->alt_len);
-		if (gpos->altitude == NULL)
+		gpos->altitude = mem_maybedup(mctx, region.base, gpos->alt_len);
+		if (gpos->altitude == NULL) {
 			goto cleanup_latitude;
-	} else
+		}
+	} else {
 		gpos->altitude = NULL;
+	}
 
 	gpos->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
- cleanup_latitude:
-	if (mctx != NULL && gpos->longitude != NULL)
+cleanup_latitude:
+	if (mctx != NULL && gpos->longitude != NULL) {
 		isc_mem_free(mctx, gpos->longitude);
+	}
 
- cleanup_longitude:
-	if (mctx != NULL && gpos->latitude != NULL)
+cleanup_longitude:
+	if (mctx != NULL && gpos->latitude != NULL) {
 		isc_mem_free(mctx, gpos->latitude);
+	}
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
+static void
 freestruct_gpos(ARGS_FREESTRUCT) {
 	dns_rdata_gpos_t *gpos = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(gpos != NULL);
 	REQUIRE(gpos->common.rdtype == dns_rdatatype_gpos);
 
-	if (gpos->mctx == NULL)
+	if (gpos->mctx == NULL) {
 		return;
+	}
 
-	if (gpos->longitude != NULL)
+	if (gpos->longitude != NULL) {
 		isc_mem_free(gpos->mctx, gpos->longitude);
-	if (gpos->latitude != NULL)
+	}
+	if (gpos->latitude != NULL) {
 		isc_mem_free(gpos->mctx, gpos->latitude);
-	if (gpos->altitude != NULL)
+	}
+	if (gpos->altitude != NULL) {
 		isc_mem_free(gpos->mctx, gpos->altitude);
+	}
 	gpos->mctx = NULL;
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_gpos(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_gpos);
 
 	UNUSED(rdata);
+	UNUSED(owner);
 	UNUSED(add);
 	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_gpos(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -216,9 +228,8 @@ digest_gpos(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_gpos(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_gpos);
 
 	UNUSED(name);
@@ -229,9 +240,8 @@ checkowner_gpos(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-static inline bool
+static bool
 checknames_gpos(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_gpos);
 
 	UNUSED(rdata);
@@ -241,9 +251,9 @@ checknames_gpos(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_gpos(ARGS_COMPARE) {
 	return (compare_gpos(rdata1, rdata2));
 }
 
-#endif	/* RDATA_GENERIC_GPOS_27_C */
+#endif /* RDATA_GENERIC_GPOS_27_C */

@@ -1,16 +1,17 @@
-/*	$NetBSD: apl_42.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.3.4.1 2024/02/29 12:34:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
-
 
 /* RFC3123 */
 
@@ -19,7 +20,7 @@
 
 #define RRTYPE_APL_ATTRIBUTES (0)
 
-static inline isc_result_t
+static isc_result_t
 fromtext_in_apl(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char addr[16];
@@ -42,47 +43,60 @@ fromtext_in_apl(ARGS_FROMTEXT) {
 	do {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, true));
-		if (token.type != isc_tokentype_string)
+		if (token.type != isc_tokentype_string) {
 			break;
+		}
 
 		cp = DNS_AS_STR(token);
 		neg = (*cp == '!');
-		if (neg)
+		if (neg) {
 			cp++;
+		}
 		afi = strtoul(cp, &ap, 10);
-		if (*ap++ != ':' || cp == ap)
+		if (*ap++ != ':' || cp == ap) {
 			RETTOK(DNS_R_SYNTAX);
-		if (afi > 0xffffU)
+		}
+		if (afi > 0xffffU) {
 			RETTOK(ISC_R_RANGE);
+		}
 		slash = strchr(ap, '/');
-		if (slash == NULL || slash == ap)
+		if (slash == NULL || slash == ap) {
 			RETTOK(DNS_R_SYNTAX);
+		}
 		RETTOK(isc_parse_uint8(&prefix, slash + 1, 10));
 		switch (afi) {
 		case 1:
 			*slash = '\0';
 			n = inet_pton(AF_INET, ap, addr);
 			*slash = '/';
-			if (n != 1)
+			if (n != 1) {
 				RETTOK(DNS_R_BADDOTTEDQUAD);
-			if (prefix > 32)
+			}
+			if (prefix > 32) {
 				RETTOK(ISC_R_RANGE);
-			for (len = 4; len > 0; len--)
-				if (addr[len - 1] != 0)
+			}
+			for (len = 4; len > 0; len--) {
+				if (addr[len - 1] != 0) {
 					break;
+				}
+			}
 			break;
 
 		case 2:
 			*slash = '\0';
 			n = inet_pton(AF_INET6, ap, addr);
 			*slash = '/';
-			if (n != 1)
+			if (n != 1) {
 				RETTOK(DNS_R_BADAAAA);
-			if (prefix > 128)
+			}
+			if (prefix > 128) {
 				RETTOK(ISC_R_RANGE);
-			for (len = 16; len > 0; len--)
-				if (addr[len - 1] != 0)
+			}
+			for (len = 16; len > 0; len--) {
+				if (addr[len - 1] != 0) {
 					break;
+				}
+			}
 			break;
 
 		default:
@@ -102,7 +116,7 @@ fromtext_in_apl(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 totext_in_apl(ARGS_TOTEXT) {
 	isc_region_t sr;
 	isc_region_t ir;
@@ -134,8 +148,8 @@ totext_in_apl(ARGS_TOTEXT) {
 		neg = (*sr.base & 0x80);
 		isc_region_consume(&sr, 1);
 		INSIST(len <= sr.length);
-		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep,
-			     neg ? "!" : "", afi);
+		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep, neg ? "!" : "",
+			     afi);
 		INSIST(n < (int)sizeof(txt));
 		RETERR(str_totext(txt, target));
 		switch (afi) {
@@ -144,7 +158,7 @@ totext_in_apl(ARGS_TOTEXT) {
 			INSIST(prefix <= 32);
 			memset(buf, 0, sizeof(buf));
 			memmove(buf, sr.base, len);
-			RETERR(inet_totext(AF_INET, &ir, target));
+			RETERR(inet_totext(AF_INET, tctx->flags, &ir, target));
 			break;
 
 		case 2:
@@ -152,7 +166,7 @@ totext_in_apl(ARGS_TOTEXT) {
 			INSIST(prefix <= 128);
 			memset(buf, 0, sizeof(buf));
 			memmove(buf, sr.base, len);
-			RETERR(inet_totext(AF_INET6, &ir, target));
+			RETERR(inet_totext(AF_INET6, tctx->flags, &ir, target));
 			break;
 
 		default:
@@ -167,7 +181,7 @@ totext_in_apl(ARGS_TOTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 fromwire_in_apl(ARGS_FROMWIRE) {
 	isc_region_t sr, sr2;
 	isc_region_t tr;
@@ -185,40 +199,46 @@ fromwire_in_apl(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_availableregion(target, &tr);
-	if (sr.length > tr.length)
+	if (sr.length > tr.length) {
 		return (ISC_R_NOSPACE);
+	}
 	sr2 = sr;
 
 	/* Zero or more items */
 	while (sr.length > 0) {
-		if (sr.length < 4)
+		if (sr.length < 4) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		afi = uint16_fromregion(&sr);
 		isc_region_consume(&sr, 2);
 		prefix = *sr.base;
 		isc_region_consume(&sr, 1);
 		len = (*sr.base & 0x7f);
 		isc_region_consume(&sr, 1);
-		if (len > sr.length)
+		if (len > sr.length) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		switch (afi) {
 		case 1:
-			if (prefix > 32 || len > 4)
+			if (prefix > 32 || len > 4) {
 				return (ISC_R_RANGE);
+			}
 			break;
 		case 2:
-			if (prefix > 128 || len > 16)
+			if (prefix > 128 || len > 16) {
 				return (ISC_R_RANGE);
+			}
 		}
-		if (len > 0 && sr.base[len - 1] == 0)
+		if (len > 0 && sr.base[len - 1] == 0) {
 			return (DNS_R_FORMERR);
+		}
 		isc_region_consume(&sr, len);
 	}
 	isc_buffer_forward(source, sr2.length);
 	return (mem_tobuffer(target, sr2.base, sr2.length));
 }
 
-static inline isc_result_t
+static isc_result_t
 towire_in_apl(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
@@ -228,7 +248,7 @@ towire_in_apl(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
+static int
 compare_in_apl(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
@@ -243,14 +263,14 @@ compare_in_apl(ARGS_COMPARE) {
 	return (isc_region_compare(&r1, &r2));
 }
 
-static inline isc_result_t
+static isc_result_t
 fromstruct_in_apl(ARGS_FROMSTRUCT) {
 	dns_rdata_in_apl_t *apl = source;
 	isc_buffer_t b;
 
 	REQUIRE(type == dns_rdatatype_apl);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(apl != NULL);
 	REQUIRE(apl->common.rdtype == type);
 	REQUIRE(apl->common.rdclass == rdclass);
 	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
@@ -258,14 +278,15 @@ fromstruct_in_apl(ARGS_FROMSTRUCT) {
 	isc_buffer_init(&b, apl->apl, apl->apl_len);
 	isc_buffer_add(&b, apl->apl_len);
 	isc_buffer_setactive(&b, apl->apl_len);
-	return(fromwire_in_apl(rdclass, type, &b, NULL, false, target));
+	return (fromwire_in_apl(rdclass, type, &b, NULL, false, target));
 }
 
-static inline isc_result_t
+static isc_result_t
 tostruct_in_apl(ARGS_TOSTRUCT) {
 	dns_rdata_in_apl_t *apl = target;
 	isc_region_t r;
 
+	REQUIRE(apl != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -276,26 +297,29 @@ tostruct_in_apl(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	apl->apl_len = r.length;
 	apl->apl = mem_maybedup(mctx, r.base, r.length);
-	if (apl->apl == NULL)
+	if (apl->apl == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
 
 	apl->offset = 0;
 	apl->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
+static void
 freestruct_in_apl(ARGS_FREESTRUCT) {
 	dns_rdata_in_apl_t *apl = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(apl != NULL);
 	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
 	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
 
-	if (apl->mctx == NULL)
+	if (apl->mctx == NULL) {
 		return;
-	if (apl->apl != NULL)
+	}
+	if (apl->apl != NULL) {
 		isc_mem_free(apl->mctx, apl->apl);
+	}
 	apl->mctx = NULL;
 }
 
@@ -311,8 +335,9 @@ dns_rdata_apl_first(dns_rdata_in_apl_t *apl) {
 	/*
 	 * If no APL return ISC_R_NOMORE.
 	 */
-	if (apl->apl == NULL)
+	if (apl->apl == NULL) {
 		return (ISC_R_NOMORE);
+	}
 
 	/*
 	 * Sanity check data.
@@ -337,8 +362,9 @@ dns_rdata_apl_next(dns_rdata_in_apl_t *apl) {
 	/*
 	 * No APL or have already reached the end return ISC_R_NOMORE.
 	 */
-	if (apl->apl == NULL || apl->offset == apl->apl_len)
+	if (apl->apl == NULL || apl->offset == apl->apl_len) {
 		return (ISC_R_NOMORE);
+	}
 
 	/*
 	 * Sanity check data.
@@ -368,8 +394,9 @@ dns_rdata_apl_current(dns_rdata_in_apl_t *apl, dns_rdata_apl_ent_t *ent) {
 	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
 	REQUIRE(apl->offset <= apl->apl_len);
 
-	if (apl->offset == apl->apl_len)
+	if (apl->offset == apl->apl_len) {
 		return (ISC_R_NOMORE);
+	}
 
 	/*
 	 * Sanity check data.
@@ -387,10 +414,11 @@ dns_rdata_apl_current(dns_rdata_in_apl_t *apl, dns_rdata_apl_ent_t *ent) {
 	ent->prefix = apl->apl[apl->offset + 2];
 	ent->length = length;
 	ent->negative = (apl->apl[apl->offset + 3] & 0x80);
-	if (ent->length != 0)
+	if (ent->length != 0) {
 		ent->data = &apl->apl[apl->offset + 4];
-	else
+	} else {
 		ent->data = NULL;
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -399,18 +427,20 @@ dns_rdata_apl_count(const dns_rdata_in_apl_t *apl) {
 	return (apl->apl_len);
 }
 
-static inline isc_result_t
+static isc_result_t
 additionaldata_in_apl(ARGS_ADDLDATA) {
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
-	(void)add;
-	(void)arg;
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(add);
+	UNUSED(arg);
 
 	return (ISC_R_SUCCESS);
 }
 
-static inline isc_result_t
+static isc_result_t
 digest_in_apl(ARGS_DIGEST) {
 	isc_region_t r;
 
@@ -422,9 +452,8 @@ digest_in_apl(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
-static inline bool
+static bool
 checkowner_in_apl(ARGS_CHECKOWNER) {
-
 	REQUIRE(type == dns_rdatatype_apl);
 	REQUIRE(rdclass == dns_rdataclass_in);
 
@@ -436,10 +465,8 @@ checkowner_in_apl(ARGS_CHECKOWNER) {
 	return (true);
 }
 
-
-static inline bool
+static bool
 checknames_in_apl(ARGS_CHECKNAMES) {
-
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
@@ -450,9 +477,9 @@ checknames_in_apl(ARGS_CHECKNAMES) {
 	return (true);
 }
 
-static inline int
+static int
 casecompare_in_apl(ARGS_COMPARE) {
 	return (compare_in_apl(rdata1, rdata2));
 }
 
-#endif	/* RDATA_IN_1_APL_42_C */
+#endif /* RDATA_IN_1_APL_42_C */

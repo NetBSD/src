@@ -1,80 +1,141 @@
-/*	$NetBSD: iterated_hash.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.3.4.1 2024/02/29 12:35:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#include <config.h>
-
 #include <stdio.h>
 
-#include <isc/md.h>
+#include <openssl/err.h>
+#include <openssl/opensslv.h>
+
 #include <isc/iterated_hash.h>
 #include <isc/util.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L || OPENSSL_API_LEVEL < 30000
+
+#include <openssl/sha.h>
+
 int
-isc_iterated_hash(unsigned char *out,
-		  const unsigned int hashalg, const int iterations,
-		  const unsigned char *salt, const int saltlength,
-		  const unsigned char *in, const int inlength)
-{
-	isc_md_t *md;
-	isc_result_t result;
+isc_iterated_hash(unsigned char *out, const unsigned int hashalg,
+		  const int iterations, const unsigned char *salt,
+		  const int saltlength, const unsigned char *in,
+		  const int inlength) {
+	REQUIRE(out != NULL);
+
 	int n = 0;
-	unsigned int outlength = 0;
 	size_t len;
 	const unsigned char *buf;
-
-	REQUIRE(out != NULL);
+	SHA_CTX ctx;
 
 	if (hashalg != 1) {
 		return (0);
 	}
 
-	if ((md = isc_md_new()) == NULL) {
+	buf = in;
+	len = inlength;
+
+	do {
+		if (SHA1_Init(&ctx) != 1) {
+			ERR_clear_error();
+			return (0);
+		}
+
+		if (SHA1_Update(&ctx, buf, len) != 1) {
+			ERR_clear_error();
+			return (0);
+		}
+
+		if (SHA1_Update(&ctx, salt, saltlength) != 1) {
+			ERR_clear_error();
+			return (0);
+		}
+
+		if (SHA1_Final(out, &ctx) != 1) {
+			ERR_clear_error();
+			return (0);
+		}
+
+		buf = out;
+		len = SHA_DIGEST_LENGTH;
+	} while (n++ < iterations);
+
+	return (SHA_DIGEST_LENGTH);
+}
+
+#else
+
+#include <openssl/evp.h>
+
+#include <isc/md.h>
+
+int
+isc_iterated_hash(unsigned char *out, const unsigned int hashalg,
+		  const int iterations, const unsigned char *salt,
+		  const int saltlength, const unsigned char *in,
+		  const int inlength) {
+	REQUIRE(out != NULL);
+
+	int n = 0;
+	size_t len;
+	unsigned int outlength = 0;
+	const unsigned char *buf;
+	EVP_MD_CTX *ctx;
+	;
+	EVP_MD *md;
+
+	if (hashalg != 1) {
 		return (0);
 	}
 
-	len = inlength;
+	ctx = EVP_MD_CTX_new();
+	RUNTIME_CHECK(ctx != NULL);
+	md = EVP_MD_fetch(NULL, "SHA1", NULL);
+	RUNTIME_CHECK(md != NULL);
+
 	buf = in;
+	len = inlength;
+
 	do {
-		result = isc_md_init(md, ISC_MD_SHA1);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+		if (EVP_DigestInit_ex(ctx, md, NULL) != 1) {
+			goto fail;
 		}
-		result = isc_md_update(md, buf, len);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (EVP_DigestUpdate(ctx, buf, len) != 1) {
+			goto fail;
 		}
-		result = isc_md_update(md, salt, saltlength);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (EVP_DigestUpdate(ctx, salt, saltlength) != 1) {
+			goto fail;
 		}
-		result = isc_md_final(md, out, &outlength);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (EVP_DigestFinal_ex(ctx, out, &outlength) != 1) {
+			goto fail;
 		}
-		result = isc_md_reset(md);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
-		}
+
 		buf = out;
 		len = outlength;
 	} while (n++ < iterations);
 
-	isc_md_free(md);
+	EVP_MD_CTX_free(ctx);
+	EVP_MD_free(md);
 
 	return (outlength);
-md_fail:
-	isc_md_free(md);
+
+fail:
+	EVP_MD_CTX_free(ctx);
+	EVP_MD_free(md);
+	ERR_clear_error();
 	return (0);
 }
-#undef RETERR
+
+#endif

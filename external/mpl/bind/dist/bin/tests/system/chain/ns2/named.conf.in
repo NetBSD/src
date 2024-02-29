@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -25,28 +27,48 @@ options {
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db.signed";
 	allow-update { any; };
 };
 
 zone "sub2.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };
 
 zone "signed-sub2.example" {
-	type master;
+	type primary;
 	file "sub.db";
 };
 
-zone "domain0.nil" { type master; file "generic.db"; };
-zone "domain1.nil" { type master; file "generic.db"; };
-zone "domain2.nil" { type master; file "generic.db"; };
-zone "domain3.nil" { type master; file "generic.db"; };
-zone "domain4.nil" { type master; file "generic.db"; };
-zone "domain5.nil" { type master; file "generic.db"; };
-zone "domain6.nil" { type master; file "generic.db"; };
-zone "domain7.nil" { type master; file "generic.db"; };
-zone "domain8.nil" { type master; file "generic.db"; };
-zone "domain9.nil" { type master; file "generic.db"; };
+zone "wildcard-secure.example" {
+	type primary;
+	file "wildcard-secure.example.db.signed";
+};
+
+zone "wildcard-nsec.example" {
+	type primary;
+	file "wildcard-nsec.example.db.signed";
+};
+
+zone "wildcard-nsec3.example" {
+	type primary;
+	file "wildcard-nsec3.example.db.signed";
+};
+
+zone "wildcard-nsec3-optout.example" {
+	type primary;
+	file "wildcard-nsec3-optout.example.db.signed";
+};
+
+zone "domain0.nil" { type primary; file "generic.db"; };
+zone "domain1.nil" { type primary; file "generic.db"; };
+zone "domain2.nil" { type primary; file "generic.db"; };
+zone "domain3.nil" { type primary; file "generic.db"; };
+zone "domain4.nil" { type primary; file "generic.db"; };
+zone "domain5.nil" { type primary; file "generic.db"; };
+zone "domain6.nil" { type primary; file "generic.db"; };
+zone "domain7.nil" { type primary; file "generic.db"; };
+zone "domain8.nil" { type primary; file "generic.db"; };
+zone "domain9.nil" { type primary; file "generic.db"; };

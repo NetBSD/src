@@ -1,20 +1,19 @@
-/*	$NetBSD: zonekey.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zonekey.c,v 1.3.4.1 2024/02/29 12:34:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <stdbool.h>
 
@@ -37,16 +36,21 @@ dns_zonekey_iszonekey(dns_rdata_t *keyrdata) {
 	REQUIRE(keyrdata != NULL);
 
 	result = dns_rdata_tostruct(keyrdata, &key, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		return (false);
+	}
 
-	if ((key.flags & DNS_KEYTYPE_NOAUTH) != 0)
+	if ((key.flags & DNS_KEYTYPE_NOAUTH) != 0) {
 		iszonekey = false;
-	if ((key.flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE)
+	}
+	if ((key.flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE) {
 		iszonekey = false;
+	}
 	if (key.protocol != DNS_KEYPROTO_DNSSEC &&
-	key.protocol != DNS_KEYPROTO_ANY)
+	    key.protocol != DNS_KEYPROTO_ANY)
+	{
 		iszonekey = false;
+	}
 
 	return (iszonekey);
 }

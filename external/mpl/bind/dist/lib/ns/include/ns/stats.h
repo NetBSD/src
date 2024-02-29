@@ -1,18 +1,19 @@
-/*	$NetBSD: stats.h,v 1.2 2018/08/12 13:02:41 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.2.6.1 2024/02/29 12:35:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef NS_STATS_H
-#define NS_STATS_H 1
+#pragma once
 
 /*! \file include/ns/stats.h */
 
@@ -104,7 +105,13 @@ enum {
 	ns_statscounter_prefetch = 63,
 	ns_statscounter_keytagopt = 64,
 
-	ns_statscounter_max = 65
+	ns_statscounter_tcphighwater = 65,
+
+	ns_statscounter_reclimitdropped = 66,
+
+	ns_statscounter_updatequota = 67,
+
+	ns_statscounter_max = 68,
 };
 
 void
@@ -125,4 +132,9 @@ ns_stats_decrement(ns_stats_t *stats, isc_statscounter_t counter);
 isc_stats_t *
 ns_stats_get(ns_stats_t *stats);
 
-#endif /* NS_STATS_H */
+void
+ns_stats_update_if_greater(ns_stats_t *stats, isc_statscounter_t counter,
+			   isc_statscounter_t value);
+
+isc_statscounter_t
+ns_stats_get_counter(ns_stats_t *stats, isc_statscounter_t counter);

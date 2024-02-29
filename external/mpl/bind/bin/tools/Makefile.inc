@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.6.1 2024/02/29 12:28:01 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,15 +6,15 @@
 
 TOOLS=${IDIST}/bin/tools
 
-.PATH: ${TOOLS}
+.PATH: ${TOOLS} ${IDIST}/doc/man
 
 PROG=${BASE}
 SRCS=${BASE}.c
-${BASE}.o: ${VERSIONFILE}
-.if exists(${TOOLS}/${BASE}.8)
-BINDIR=/usr/sbin
-MAN=${BASE}.8
-.elif exists(${TOOLS}/${BASE}.1)
-BINDIR=/usr/bin
 MAN=${BASE}.1
-.endif
+# Keep things where they used to be historically
+# Ideally since most utils have moved to section 1 man
+# pages, we should move them to /usr/bin too. But
+# those utils are only related to bind so moving them
+# to /usr/bin would just add clutter.
+# The following does not work, hard-code
+# BINDIR= ${${BASE} == "arpaname":? /usr/bin : /usr/sbin}

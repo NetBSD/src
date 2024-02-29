@@ -1,23 +1,23 @@
-/*	$NetBSD: soa.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: soa.h,v 1.3.4.1 2024/02/29 12:34:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_SOA_H
-#define DNS_SOA_H 1
+#pragma once
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file dns/soa.h
  * \brief
@@ -37,15 +37,13 @@
 
 ISC_LANG_BEGINDECLS
 
-#define DNS_SOA_BUFFERSIZE      ((2 * DNS_NAME_MAXWIRE) + (4 * 5))
+#define DNS_SOA_BUFFERSIZE ((2 * DNS_NAME_MAXWIRE) + (4 * 5))
 
 isc_result_t
 dns_soa_buildrdata(const dns_name_t *origin, const dns_name_t *contact,
-		   dns_rdataclass_t rdclass,
-		   uint32_t serial, uint32_t refresh,
-		   uint32_t retry, uint32_t expire,
-		   uint32_t minimum, unsigned char *buffer,
-		   dns_rdata_t *rdata);
+		   dns_rdataclass_t rdclass, uint32_t serial, uint32_t refresh,
+		   uint32_t retry, uint32_t expire, uint32_t minimum,
+		   unsigned char *buffer, dns_rdata_t *rdata);
 /*%<
  * Build the rdata of an SOA record.
  *
@@ -94,7 +92,4 @@ dns_soa_setminimum(uint32_t val, dns_rdata_t *rdata);
  *	rdata refers to the rdata of a well-formed SOA record.
  */
 
-
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_SOA_H */

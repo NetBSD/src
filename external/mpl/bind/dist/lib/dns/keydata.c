@@ -1,20 +1,19 @@
-/*	$NetBSD: keydata.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: keydata.c,v 1.3.4.1 2024/02/29 12:34:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
 /*! \file */
-
-#include <config.h>
 
 #include <inttypes.h>
 
@@ -23,14 +22,13 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/keydata.h>
 #include <dns/rdata.h>
 #include <dns/rdatastruct.h>
-#include <dns/keydata.h>
 
 isc_result_t
-dns_keydata_todnskey(dns_rdata_keydata_t *keydata,
-		     dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx)
-{
+dns_keydata_todnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
+		     isc_mem_t *mctx) {
 	REQUIRE(keydata != NULL && dnskey != NULL);
 
 	dnskey->common.rdtype = dns_rdatatype_dnskey;
@@ -42,12 +40,10 @@ dns_keydata_todnskey(dns_rdata_keydata_t *keydata,
 
 	dnskey->datalen = keydata->datalen;
 
-	if (mctx == NULL)
+	if (mctx == NULL) {
 		dnskey->data = keydata->data;
-	else {
+	} else {
 		dnskey->data = isc_mem_allocate(mctx, dnskey->datalen);
-		if (dnskey->data == NULL)
-			return (ISC_R_NOMEMORY);
 		memmove(dnskey->data, keydata->data, dnskey->datalen);
 	}
 
@@ -55,11 +51,9 @@ dns_keydata_todnskey(dns_rdata_keydata_t *keydata,
 }
 
 isc_result_t
-dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata,
-		       dns_rdata_dnskey_t *dnskey,
-		       uint32_t refresh, uint32_t addhd,
-		       uint32_t removehd, isc_mem_t *mctx)
-{
+dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata, dns_rdata_dnskey_t *dnskey,
+		       uint32_t refresh, uint32_t addhd, uint32_t removehd,
+		       isc_mem_t *mctx) {
 	REQUIRE(keydata != NULL && dnskey != NULL);
 
 	keydata->common.rdtype = dns_rdatatype_keydata;
@@ -73,12 +67,10 @@ dns_keydata_fromdnskey(dns_rdata_keydata_t *keydata,
 	keydata->algorithm = dnskey->algorithm;
 
 	keydata->datalen = dnskey->datalen;
-	if (mctx == NULL)
+	if (mctx == NULL) {
 		keydata->data = dnskey->data;
-	else {
+	} else {
 		keydata->data = isc_mem_allocate(mctx, keydata->datalen);
-		if (keydata->data == NULL)
-			return (ISC_R_NOMEMORY);
 		memmove(keydata->data, dnskey->data, keydata->datalen);
 	}
 

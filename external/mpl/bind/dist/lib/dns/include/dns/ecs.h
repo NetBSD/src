@@ -1,18 +1,19 @@
-/*	$NetBSD: ecs.h,v 1.4.4.1 2019/09/12 19:18:15 martin Exp $	*/
+/*	$NetBSD: ecs.h,v 1.4.4.2 2024/02/29 12:34:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-#ifndef DNS_ECS_H
-#define DNS_ECS_H 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -20,15 +21,32 @@
 #include <isc/netaddr.h>
 #include <isc/types.h>
 
+#include <dns/rdatatype.h>
 #include <dns/types.h>
 
+/*%
+ * Maximum scope values for IPv4 and IPv6.
+ */
+#ifndef ECS_MAX_V4_SCOPE
+#define ECS_MAX_V4_SCOPE 24
+#endif
+
+#ifndef ECS_MAX_V6_SCOPE
+#define ECS_MAX_V6_SCOPE 56
+#endif
+
+/*
+ * Any updates to this structure should also be applied in
+ * contrib/modules/dlz/dlz_minmal.h.
+ */
 struct dns_ecs {
 	isc_netaddr_t addr;
-	uint8_t source;
-	uint8_t scope;
+	uint8_t	      source;
+	uint8_t	      scope;
 };
 
-#define DNS_ECS_FORMATSIZE (ISC_NETADDR_FORMATSIZE + 8) /* <address>/NNN/NNN */
+/* <address>/NNN/NNN */
+#define DNS_ECS_FORMATSIZE (ISC_NETADDR_FORMATSIZE + 9)
 
 ISC_LANG_BEGINDECLS
 
@@ -41,8 +59,19 @@ dns_ecs_init(dns_ecs_t *ecs);
  * \li 'ecs' is not NULL and points to a valid dns_ecs structure.
  */
 
+bool
+dns_ecs_equals(const dns_ecs_t *ecs1, const dns_ecs_t *ecs2);
+/*%<
+ * Determine whether two ECS address prefixes are equal (except the
+ * scope prefix-length field).
+ *
+ * 'ecs1->source' must exactly match 'ecs2->source'; the address families
+ * must match; and the first 'ecs1->source' bits of the addresses must
+ * match. Subsequent address bits and the 'scope' values are ignored.
+ */
+
 void
-dns_ecs_format(dns_ecs_t *ecs, char *buf, size_t size);
+dns_ecs_format(const dns_ecs_t *ecs, char *buf, size_t size);
 /*%<
  * Format an ECS record as text. Result is guaranteed to be null-terminated.
  *
@@ -51,7 +80,4 @@ dns_ecs_format(dns_ecs_t *ecs, char *buf, size_t size);
  * \li  'buf' is not NULL.
  * \li  'size' is at least DNS_ECS_FORMATSIZE
  */
-
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_ECS_H */

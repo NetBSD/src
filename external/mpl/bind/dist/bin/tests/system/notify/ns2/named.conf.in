@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,11 +22,12 @@ options {
 	recursion no;
 	notify yes;
 	startup-notify-rate 5;
+	dnssec-validation no;
 };
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -33,38 +36,51 @@ controls {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 	// Check that named can handle a empty also-notify.
 	also-notify { /* empty */ };
 };
 
-masters noport { 10.53.0.4; };
-
+# use both 'primaries' and 'masters' to test that they
+# can work correctly together.
+primaries noport { 10.53.0.4; };
 masters x21 port @EXTRAPORT1@ { noport; };
 
-zone x1 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x2 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x3 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x4 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x5 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x6 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x7 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x8 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x9 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x10 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x11 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x12 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x13 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x14 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x15 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x16 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x17 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x18 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x19 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x20 { type master; file "generic.db"; also-notify { 10.53.0.3; }; };
-zone x21 { type master; file "x21.db"; allow-update { any; }; also-notify { x21; }; };
+zone x1 {
+	type primary;
+	file "generic.db";
+	also-notify { 10.53.0.3; };
+	notify-source 10.53.0.2 port @EXTRAPORT2@;
+	notify primary-only;
+};
+zone x2 {
+	type primary;
+	file "generic.db";
+	also-notify { 10.53.0.3; };
+	notify master-only; # test old syntax
+};
+
+zone x3 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x4 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x5 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x6 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x7 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x8 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x9 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x10 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x11 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x12 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x13 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x14 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x15 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x16 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x17 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x18 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x19 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x20 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
+zone x21 { type primary; file "x21.db"; allow-update { any; }; also-notify { x21; }; };

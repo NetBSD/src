@@ -1,26 +1,27 @@
-/*	$NetBSD: rbtdb.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rbtdb.h,v 1.2.6.1 2024/02/29 12:34:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
 
-
-#ifndef DNS_RBTDB_H
-#define DNS_RBTDB_H 1
+#pragma once
 
 #include <isc/lang.h>
+
 #include <dns/types.h>
 
 /*****
- ***** Module Info
- *****/
+***** Module Info
+*****/
 
 /*! \file
  * \brief
@@ -48,5 +49,3 @@ dns_rbtdb_create(isc_mem_t *mctx, const dns_name_t *base, dns_dbtype_t type,
  */
 
 ISC_LANG_ENDDECLS
-
-#endif /* DNS_RBTDB_H */

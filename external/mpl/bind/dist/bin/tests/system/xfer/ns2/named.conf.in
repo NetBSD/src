@@ -1,9 +1,11 @@
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *
+ * SPDX-License-Identifier: MPL-2.0
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
  *
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
@@ -18,6 +20,7 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion no;
+	dnssec-validation no;
 	notify yes;
 	ixfr-from-differences yes;
 	check-integrity no;
@@ -25,7 +28,7 @@ options {
 
 key rndc_key {
 	secret "1234abcd8765";
-	algorithm hmac-sha256;
+	algorithm @DEFAULT_HMAC@;
 };
 
 controls {
@@ -43,30 +46,39 @@ acl tzkey {
 
 zone "." {
 	type hint;
-	file "../../common/root.hint";
+	file "../../_common/root.hint";
 };
 
 zone "example" {
-	type master;
+	type primary;
 	file "example.db";
 };
 
 zone "tsigzone" {
-	type master;
+	type primary;
 	file "tsigzone.db";
 	allow-transfer { tzkey; };
 };
 
-zone "slave" {
-	type slave;
-	file "slave.db";
-	masters { 10.53.0.1; };
+zone "secondary" {
+	type secondary;
+	file "sec.db";
+	primaries { 10.53.0.1; };
 	masterfile-format text;
 };
 
 zone "mapped" {
-	type slave;
+	type secondary;
 	file "mapped.db";
 	masterfile-format text;
-	masters { 10.53.0.100; };
+	primaries { 10.53.0.100; };
+};
+
+zone "dot-fallback" {
+	type secondary;
+	file "dot-fallback.db";
+	primaries {
+		10.53.0.1 tls ephemeral;
+		10.53.0.1;
+	};
 };

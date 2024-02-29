@@ -1,4 +1,16 @@
 #!/usr/bin/perl -w
+
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
 use strict;
 use BerkeleyDB;
 use Getopt::Long;
@@ -28,7 +40,7 @@ if (!defined $input_file || $input_file eq '') {
 
 my $zone_list = $opt->{zones};
 if (!defined $zone_list || $zone_list eq '') {
-    usage('Please specify a space seperated list of zones');
+    usage('Please specify a space separated list of zones');
     exit 1;
 }
 
@@ -53,10 +65,10 @@ foreach my $zone (@zones) {
         my $ttl = $r->{ttl};
         my $type = $r->{type};
         my $data = $r->{data};
-        
+
         $data =~ s/\%zone\%/$zone/g;
         $data =~ s/\%driver\%/bdbhpt-dynamic/g;
-        
+
         my $row_name  = "$zone $name";
         my $row_value = "$replId $name $ttl $type $data";
         if ($dns_data->db_put($row_name, $row_value) != 0) {
@@ -128,7 +140,7 @@ sub usage {
     print STDERR "usage: $0 --bdb=<bdb-file> --input=<input-file> --zones=<zone-list>\n\n";
     print STDERR "\tbdb-file: The output BerkeleyDB file you wish to create and use with bdbhpt-dynamic\n\n";
     print STDERR "\tinput-file: The input text-file containing records to populate within your zones\n\n";
-    print STDERR "\tzone-list: The space-seperated list of zones you wish to create\n\n";
+    print STDERR "\tzone-list: The space-separated list of zones you wish to create\n\n";
 }
 
 sub populate_records {
@@ -171,7 +183,7 @@ sub validate_record {
     foreach my $t (@TYPES) {
         $VALID_TYPE->{$t} = 1;
     }
-    
+
     if (!defined $r->{name} || $r->{name} eq '') {
         die "Record name must be set";
     }
