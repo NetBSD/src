@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc106reg.h,v 1.4 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: mpc106reg.h,v 1.5 2024/02/29 22:02:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 	/* must be read with MPC106_PICR1_EXT_L2_EN :
 	 * L2_EN	L2_MP	Meaning
 	 * 0		00	Uniprocessor/none
-	 * 0		01	internal conrol/write-through
+	 * 0		01	internal control/write-through
 	 * 0		10	internal control/write-back
 	 * 0		11	Multiproc/none
 	 * 1		00	Uniprocessor/external L2
@@ -185,7 +185,7 @@
 #define  MPC106_MCRR2_EXT_ECM_ECC_EN	__BIT(18) /* ext. ECM ECC enable */
 #define  MPC106_MCRR2_ECC_EN	__BIT(17)	/* ECC enable */
 #define  MPC106_MCRR2_EDO	__BIT(16)	/* EDO enable */
-#define  MPC106_MCRR2_REFINT	__BITS(15,2)	/* refreash interval */
+#define  MPC106_MCRR2_REFINT	__BITS(15,2)	/* refresh interval */
 #define  MPC106_MCRR2_BUFMODE	__BIT(1)	/* buffer mode */
 #define  MPC106_MCRR2_RMW_PAR	__BIT(0)	/* RMW parity enable */
 #define	MPC106_MCCR3		0xf8	/* Memory control configuration 3 */
