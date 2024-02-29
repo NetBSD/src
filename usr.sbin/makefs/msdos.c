@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.24 2024/02/18 16:58:51 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.25 2024/02/29 08:13:52 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.24 2024/02/18 16:58:51 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.25 2024/02/29 08:13:52 tkusumi Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -226,8 +226,8 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
 	assert(fsopts != NULL);
 
 	for (cur = root->next; cur != NULL; cur = cur->next) {
-		if ((size_t)snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
-		    cur->name) >= sizeof(pbuf)) {
+		if ((size_t)snprintf(pbuf, sizeof(pbuf), "%s/%s/%s",
+		    cur->root, cur->path, cur->name) >= sizeof(pbuf)) {
 			warnx("path %s too long", pbuf);
 			return -1;
 		}
