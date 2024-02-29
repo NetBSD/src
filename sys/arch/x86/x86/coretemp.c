@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.39 2023/07/13 09:12:23 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.40 2024/02/29 01:59:11 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.39 2023/07/13 09:12:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.40 2024/02/29 01:59:11 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -318,7 +318,7 @@ notee:
 		tjmax = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
 		if ((tjmax < TJMAX_LIMIT_LOW) || (tjmax > TJMAX_LIMIT_HIGH))
 			aprint_error_dev(sc->sc_dev,
-			    "WARNING: Tjmax(%d) might exceeded the limit.\n",
+			    "WARNING: Tjmax(%d) might exceed the limit.\n",
 			    tjmax);
 		sc->sc_tjmax = tjmax;
 	}
