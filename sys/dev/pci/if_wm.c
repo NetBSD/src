@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.54 2024/02/03 12:04:06 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.55 2024/02/29 10:46:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.54 2024/02/03 12:04:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.55 2024/02/29 10:46:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -469,9 +469,9 @@ struct wm_rxqueue {
 	/* RX event counters */
 	WM_Q_EVCNT_DEFINE(rxq, intr);	/* Interrupts */
 	WM_Q_EVCNT_DEFINE(rxq, defer);	/* Rx deferred processing */
-
 	WM_Q_EVCNT_DEFINE(rxq, ipsum);	/* IP checksums checked */
 	WM_Q_EVCNT_DEFINE(rxq, tusum);	/* TCP/UDP cksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, qdrop);	/* Rx queue drop packet */
 #endif
 };
 
@@ -2692,6 +2692,10 @@ alloc_retry:
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
+
+	/* sc->sc_pba is set in wm_reset(). */
+	aprint_verbose_dev(sc->sc_dev, "RX packet buffer size: %uKB\n",
+	    sc->sc_pba);
 
 	/*
 	 * Check for I21[01] PLL workaround.
@@ -6526,6 +6530,7 @@ wm_update_stats(struct wm_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
 	    cexterr;
+	uint64_t total_qdrop = 0;
 
 	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
 	symerrc = CSR_READ(sc, WMREG_SYMERRC);
@@ -6674,6 +6679,22 @@ wm_update_stats(struct wm_softc *sc)
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
 		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
 		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
+#ifdef WM_EVENT_COUNTERS
+		for (int i = 0; i < sc->sc_nqueues; i++) {
+			struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+			uint32_t rqdpc;
+
+			rqdpc = CSR_READ(sc, WMREG_RQDPC(i));
+			/*
+			 * On I210 and newer device, the RQDPC register is not
+			 * cleard on read.
+			 */
+			if ((rqdpc != 0) && (sc->sc_type >= WM_T_I210))
+				CSR_WRITE(sc, WMREG_RQDPC(i), 0);
+			WM_Q_EVCNT_ADD(rxq, qdrop, rqdpc);
+			total_qdrop += rqdpc;
+		}
+#endif
 	}
 	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
@@ -6702,7 +6723,7 @@ wm_update_stats(struct wm_softc *sc)
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
 	 */
-	ifp->if_iqdrops += mpc;
+	ifp->if_iqdrops += mpc + total_qdrop;
 }
 
 void
@@ -6719,6 +6740,8 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_Q_EVCNT_STORE(rxq, defer, 0);
 		WM_Q_EVCNT_STORE(rxq, ipsum, 0);
 		WM_Q_EVCNT_STORE(rxq, tusum, 0);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_EVCNT_STORE(rxq, qdrop, 0);
 	}
 
 	/* TX queues */
@@ -8052,9 +8075,10 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_INTR_EVCNT_ATTACH(rxq, intr, rxq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(rxq, defer, rxq, i, xname);
-
 		WM_Q_MISC_EVCNT_ATTACH(rxq, ipsum, rxq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(rxq, tusum, rxq, i, xname);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_MISC_EVCNT_ATTACH(rxq, qdrop, rxq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		rx_done++;
@@ -8117,6 +8141,8 @@ wm_free_txrx_queues(struct wm_softc *sc)
 		WM_Q_EVCNT_DETACH(rxq, defer, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, ipsum, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, tusum, rxq, i);
+		if ((sc->sc_type >= WM_T_82575) && !WM_IS_ICHPCH(sc))
+			WM_Q_EVCNT_DETACH(rxq, qdrop, rxq, i);
 #endif /* WM_EVENT_COUNTERS */
 
 		wm_free_rx_buffer(sc, rxq);
@@ -8306,6 +8332,8 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 		    rxq->rxq_descsize * rxq->rxq_ndesc);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			uint32_t srrctl;
+
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
 				panic("%s: MCLBYTES %d unsupported for 82575 "
 				    "or higher\n", __func__, MCLBYTES);
@@ -8314,9 +8342,17 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 			 * Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF
 			 * only.
 			 */
-			CSR_WRITE(sc, WMREG_SRRCTL(qid),
-			    SRRCTL_DESCTYPE_ADV_ONEBUF
-			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
+			srrctl = SRRCTL_DESCTYPE_ADV_ONEBUF
+			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT);
+			/*
+			 * Drop frames if the RX descriptor ring has no room.
+			 * This is enabled only on multiqueue system to avoid
+			 * bad influence to other queues.
+			 */
+			if (sc->sc_nqueues > 1)
+				srrctl |= SRRCTL_DROP_EN;
+			CSR_WRITE(sc, WMREG_SRRCTL(qid), srrctl);
+
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_QUEUE_ENABLE
 			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
 			    | RXDCTL_WTHRESH(1));
@@ -10943,9 +10979,9 @@ wm_linkintr_msix(void *arg)
 	/*
 	 * XXX 82574 MSI-X mode workaround
 	 *
-	 * 82574 MSI-X mode causes receive overrun(RXO) interrupt as ICR_OTHER
-	 * MSI-X vector, furthermore it does not cause neigher ICR_RXQ(0) nor
-	 * ICR_RXQ(1) vector. So, we generate ICR_RXQ(0) and ICR_RXQ(1)
+	 * 82574 MSI-X mode causes a receive overrun(RXO) interrupt as an
+	 * ICR_OTHER MSI-X vector; furthermore it causes neither ICR_RXQ(0)
+	 * nor ICR_RXQ(1) vectors. So, we generate ICR_RXQ(0) and ICR_RXQ(1)
 	 * interrupts by writing WMREG_ICS to process receive packets.
 	 */
 	if (sc->sc_type == WM_T_82574 && ((reg & ICR_RXO) != 0)) {
@@ -14973,16 +15009,17 @@ printver:
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
 			int rv;
+			uint16_t oid0, oid1;
 
 			off += NVM_COMBO_VER_OFF;
-			rv = wm_nvm_read(sc, off + 1, 1, &uid1);
-			rv |= wm_nvm_read(sc, off, 1, &uid0);
-			if ((rv == 0) && (uid0 != 0) && (uid0 != 0xffff)
-			    && (uid1 != 0) && (uid1 != 0xffff)) {
+			rv = wm_nvm_read(sc, off + 1, 1, &oid1);
+			rv |= wm_nvm_read(sc, off, 1, &oid0);
+			if ((rv == 0) && (oid0 != 0) && (oid0 != 0xffff)
+			    && (oid1 != 0) && (oid1 != 0xffff)) {
 				/* 16bits */
-				major = uid0 >> 8;
-				build = (uid0 << 8) | (uid1 >> 8);
-				patch = uid1 & 0x00ff;
+				major = oid0 >> 8;
+				build = (oid0 << 8) | (oid1 >> 8);
+				patch = oid1 & 0x00ff;
 				aprint_verbose(", option ROM Version %d.%d.%d",
 				    major, build, patch);
 			}
