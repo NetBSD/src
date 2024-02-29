@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2024/02/21 22:52:54 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2024/02/29 20:41:52 christos Exp $
 
 NOLINT=yes # XXX
 LIB=isc
@@ -9,7 +9,6 @@ LIB=isc
 LIBUVDIR=${NETBSDSRCDIR}/external/mit/libuv
 LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${LIBUVDIR}/dist/include
-CFLAGS+=-std=gnu18
 
 .include "${.CURDIR}/../Makefile.inc"
 
