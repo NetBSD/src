@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.2.6.1 2024/02/29 11:39:19 martin Exp $	*/
 
 /* dhcpd.h
 
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -809,17 +809,27 @@ struct lease_state {
 #define SV_PERSIST_EUI_64_LEASES	91
 #endif
 #if defined (FAILOVER_PROTOCOL)
-#define SV_CHECK_SECS_BYTE_ORDER	91
+#define SV_CHECK_SECS_BYTE_ORDER	92
 #endif
-#define SV_DDNS_DUAL_STACK_MIXED_MODE	92
-#define SV_DDNS_GUARD_ID_MUST_MATCH 	93
-#define SV_DDNS_OTHER_GUARD_IS_DYNAMIC	94
-#define SV_RELEASE_ON_ROAM		95
-#define SV_LOCAL_ADDRESS6		96
-#define SV_BIND_LOCAL_ADDRESS6		97
+#define SV_DDNS_DUAL_STACK_MIXED_MODE	93
+#define SV_DDNS_GUARD_ID_MUST_MATCH 	94
+#define SV_DDNS_OTHER_GUARD_IS_DYNAMIC	95
+#define SV_RELEASE_ON_ROAM		96
+#define SV_LOCAL_ADDRESS6		97
+#define SV_BIND_LOCAL_ADDRESS6		98
+#define SV_PING_CLTT_SECS		99
+#define SV_PING_TIMEOUT_MS		100
 
 #if !defined (DEFAULT_PING_TIMEOUT)
 # define DEFAULT_PING_TIMEOUT 1
+#endif
+
+#if !defined (DEFAULT_PING_TIMEOUT_MS)
+# define DEFAULT_PING_TIMEOUT_MS 0
+#endif
+
+#if !defined (DEFAULT_PING_CLTT_SECS)
+# define DEFAULT_PING_CLTT_SECS 60  /* in seconds */
 #endif
 
 #if !defined (DEFAULT_DELAYED_ACK)
@@ -867,6 +877,10 @@ struct lease_state {
 
 #if !defined (DEFAULT_ABANDON_LEASE_TIME)
 # define DEFAULT_ABANDON_LEASE_TIME 86400
+#endif
+
+#if !defined (MIN_V6ONLY_WAIT)
+# define MIN_V6ONLY_WAIT 300
 #endif
 
 #define PLM_IGNORE 0
@@ -1196,7 +1210,8 @@ enum dhcp_state {
 	S_RENEWING = 6,
 	S_REBINDING = 7,
 	S_DECLINING = 8,
-	S_STOPPED = 9
+	S_STOPPED = 9,
+	S_V6ONLY = 10
 };
 
 /* Possible pending client operations. */
@@ -1385,6 +1400,7 @@ struct interface_info {
 	unsigned remote_id_len;		/* Length of Remote ID. */
 
 	char name [IFNAMSIZ];		/* Its name... */
+
 	int index;			/* Its if_nametoindex(). */
 	int rfdesc;			/* Its read file descriptor. */
 	int wfdesc;			/* Its write file descriptor, if
@@ -2301,7 +2317,7 @@ int parse_allow_deny (struct option_cache **, struct parse *, int);
 int parse_auth_key (struct data_string *, struct parse *);
 int parse_warn (struct parse *, const char *, ...) __sysloglike(2, 3);
 struct expression *parse_domain_list(struct parse *cfile, int);
-
+struct expression *parse_domain_name(struct parse *cfile);
 
 /* tree.c */
 extern struct binding_scope *global_scope;
@@ -2992,6 +3008,10 @@ void state_requesting (void *);
 void state_bound (void *);
 void state_stop (void *);
 void state_panic (void *);
+
+uint32_t check_v6only (struct packet *, struct client_state *);
+void start_v6only (struct client_state *, uint32_t);
+void finish_v6only (void *);
 
 void bind_lease (struct client_state *);
 
@@ -3913,4 +3933,3 @@ void libdhcp_callbacks_register(libdhcp_callbacks_t *);
 #define FIND_POND6_PERCENT(count, percent)	\
 	((count) > (POND_TRACK_MAX / 100) ?	\
 	 ((count) / 100) * (percent) : ((count) * (percent)) / 100)
-

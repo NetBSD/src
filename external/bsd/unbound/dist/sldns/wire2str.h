@@ -36,6 +36,8 @@ extern struct sldns_struct_lookup_table* sldns_opcodes;
 extern struct sldns_struct_lookup_table* sldns_edns_flags;
 /** EDNS option codes */
 extern struct sldns_struct_lookup_table* sldns_edns_options;
+/** EDNS EDE codes */
+extern struct sldns_struct_lookup_table* sldns_edns_ede_codes;
 /** error string from wireparse */
 extern struct sldns_struct_lookup_table* sldns_wireparse_errors;
 /** tsig errors are the rcodes with extra (higher) values */
@@ -59,7 +61,7 @@ char* sldns_wire2str_pkt(uint8_t* data, size_t len);
 char* sldns_wire2str_rr(uint8_t* rr, size_t len);
 
 /**
- * Conver wire dname to a string.
+ * Convert wire dname to a string.
  * @param dname: the dname in uncompressed wireformat.
  * @param dname_len: length of the dname.
  * @return string or NULL on failure.
@@ -493,6 +495,18 @@ int sldns_wire2str_opcode_buf(int opcode, char* str, size_t len);
  */
 int sldns_wire2str_dname_buf(uint8_t* dname, size_t dname_len, char* str,
 	size_t len);
+
+/**
+ * Convert wire SVCB to a string with user buffer.
+ * @param d: the SVCB data in uncompressed wireformat.
+ * @param dlen: length of the SVCB data.
+ * @param s: the string to write to.
+ * @param slen: length of string.
+ * @return the number of characters for this element, excluding zerobyte.
+ * 	Is larger or equal than str_len if output was truncated.
+ */
+int sldns_wire2str_svcparam_scan(uint8_t** d, size_t* dlen, char** s,
+	size_t* slen);
 
 /**
  * Scan wireformat rdf field to string, with user buffers.
@@ -1006,6 +1020,17 @@ int sldns_wire2str_edns_n3u_print(char** str, size_t* str_len,
  * @return number of characters (except null) needed to print.
  */
 int sldns_wire2str_edns_subnet_print(char** str, size_t* str_len,
+	uint8_t* option_data, size_t option_len);
+
+/**
+ * Print EDNS EDE option data to string. User buffers, moves string pointers.
+ * @param str: string buffer.
+ * @param str_len: length of string buffer.
+ * @param option_data: buffer with EDNS option code data.
+ * @param option_len: length of the data for this option.
+ * @return number of characters (except null) needed to print.
+ */
+int sldns_wire2str_edns_ede_print(char** str, size_t* str_len,
 	uint8_t* option_data, size_t option_len);
 
 /**

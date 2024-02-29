@@ -37,6 +37,7 @@ ipc_child_quit(struct nsd* nsd)
 {
 	/* call shutdown and quit routines */
 	nsd->mode = NSD_QUIT;
+	service_remaining_tcp(nsd);
 #ifdef	BIND8_STATS
 	bind8_stats(nsd);
 #endif /* BIND8_STATS */
@@ -49,6 +50,7 @@ ipc_child_quit(struct nsd* nsd)
 	region_destroy(nsd->server_region);
 #endif
 	server_shutdown(nsd);
+	/* ENOTREACH */
 	exit(0);
 }
 
@@ -91,20 +93,6 @@ child_handle_parent_command(int fd, short event, void* arg)
 			VERBOSITY(3, (LOG_INFO, "quit child write: %s",
 				strerror(errno)));
 		}
-		ipc_child_quit(data->nsd);
-		break;
-	case NSD_QUIT_WITH_STATS:
-#ifdef BIND8_STATS
-		DEBUG(DEBUG_IPC, 2, (LOG_INFO, "quit QUIT_WITH_STATS"));
-		/* reply with ack and stats and then quit */
-		if(!write_socket(fd, &mode, sizeof(mode))) {
-			log_msg(LOG_ERR, "cannot write quitwst to parent");
-		}
-		if(!write_socket(fd, &data->nsd->st, sizeof(data->nsd->st))) {
-			log_msg(LOG_ERR, "cannot write stats to parent");
-		}
-		fsync(fd);
-#endif /* BIND8_STATS */
 		ipc_child_quit(data->nsd);
 		break;
 	default:
@@ -206,11 +194,7 @@ debug_print_fwd_name(int ATTR_UNUSED(len), buffer_type* packet, int acl_num)
 static void
 send_quit_to_child(struct main_ipc_handler_data* data, int fd)
 {
-#ifdef BIND8_STATS
-	sig_atomic_t cmd = NSD_QUIT_WITH_STATS;
-#else
 	sig_atomic_t cmd = NSD_QUIT;
-#endif
 	if(write(fd, &cmd, sizeof(cmd)) == -1) {
 		if(errno == EAGAIN || errno == EINTR)
 			return; /* try again later */
@@ -267,6 +251,8 @@ stats_add(struct nsdst* total, struct nsdst* s)
 	total->qudp6 += s->qudp6;
 	total->ctcp += s->ctcp;
 	total->ctcp6 += s->ctcp6;
+	total->ctls += s->ctls;
+	total->ctls6 += s->ctls6;
 	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] += s->rcode[i];
 	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
@@ -280,6 +266,7 @@ stats_add(struct nsdst* total, struct nsdst* s)
 	total->ednserr += s->ednserr;
 	total->raxfr += s->raxfr;
 	total->nona += s->nona;
+	total->rixfr += s->rixfr;
 
 	total->db_disk = s->db_disk;
 	total->db_mem = s->db_mem;
@@ -298,6 +285,8 @@ stats_subtract(struct nsdst* total, struct nsdst* s)
 	total->qudp6 -= s->qudp6;
 	total->ctcp -= s->ctcp;
 	total->ctcp6 -= s->ctcp6;
+	total->ctls -= s->ctls;
+	total->ctls6 -= s->ctls6;
 	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] -= s->rcode[i];
 	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
@@ -311,25 +300,7 @@ stats_subtract(struct nsdst* total, struct nsdst* s)
 	total->ednserr -= s->ednserr;
 	total->raxfr -= s->raxfr;
 	total->nona -= s->nona;
-}
-
-#define FINAL_STATS_TIMEOUT 10 /* seconds */
-static void
-read_child_stats(struct nsd* nsd, struct nsd_child* child, int fd)
-{
-	struct nsdst s;
-	errno=0;
-	if(block_read(nsd, fd, &s, sizeof(s), FINAL_STATS_TIMEOUT)!=sizeof(s)) {
-		log_msg(LOG_ERR, "problems reading finalstats from server "
-			"%d: %s", (int)child->pid, strerror(errno));
-	} else {
-		stats_add(&nsd->st, &s);
-		child->query_count = s.qudp + s.qudp6 + s.ctcp + s.ctcp6;
-		/* we know that the child is going to close the connection
-		 * now (this is an ACK of the QUIT_W_STATS so we know the
-		 * child is done, no longer sending e.g. NOTIFY contents) */
-		child_is_done(nsd, fd);
-	}
+	total->rixfr -= s->rixfr;
 }
 #endif /* BIND8_STATS */
 
@@ -466,11 +437,6 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 	case NSD_QUIT:
 		data->nsd->mode = mode;
 		break;
-#ifdef BIND8_STATS
-	case NSD_QUIT_WITH_STATS:
-		read_child_stats(data->nsd, data->child, handler->fd);
-		break;
-#endif /* BIND8_STATS */
 	case NSD_STATS:
 		data->nsd->signal_hint_stats = 1;
 		break;
@@ -524,10 +490,10 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 	}
 	if (len == 0)
 	{
-		if(handler->fd != -1) {
-			close(handler->fd);
-			handler->fd = -1;
-		}
+		assert(handler->fd != -1); /* or read() would have failed */
+		close(handler->fd);
+		handler->fd = -1;
+
 		log_msg(LOG_ERR, "handle_reload_cmd: reload closed cmd channel");
 		nsd->reload_failed = 1;
 		return;
@@ -580,8 +546,8 @@ xfrd_send_reload_req(xfrd_state_type* xfrd)
 	task_remap(xfrd->nsd->task[xfrd->nsd->mytask]);
 	udb_ptr_init(xfrd->last_task, xfrd->nsd->task[xfrd->nsd->mytask]);
 	assert(udb_base_get_userdata(xfrd->nsd->task[xfrd->nsd->mytask])->data == 0);
-
-	xfrd_prepare_zones_for_reload();
+	if(!xfrd->reload_cmd_first_sent)
+		xfrd->reload_cmd_first_sent = xfrd_time();
 	xfrd->reload_cmd_last_sent = xfrd_time();
 	xfrd->need_to_send_reload = 0;
 	xfrd->can_send_reload = 0;
@@ -593,6 +559,7 @@ ipc_xfrd_set_listening(struct xfrd_state* xfrd, short mode)
 	int fd = xfrd->ipc_handler.ev_fd;
 	struct event_base* base = xfrd->event_base;
 	event_del(&xfrd->ipc_handler);
+	memset(&xfrd->ipc_handler, 0, sizeof(xfrd->ipc_handler));
 	event_set(&xfrd->ipc_handler, fd, mode, xfrd_handle_ipc, xfrd);
 	if(event_base_set(base, &xfrd->ipc_handler) != 0)
 		log_msg(LOG_ERR, "ipc: cannot set event_base");
@@ -750,9 +717,13 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: main sent shutdown cmd."));
 		xfrd->shutdown = 1;
 		break;
+	case NSD_RELOAD_FAILED:
+		xfrd->reload_failed = 1;
+		/* fall through */
 	case NSD_RELOAD_DONE:
 		/* reload has finished */
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv RELOAD_DONE"));
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv %s",
+			xfrd->reload_failed ? "RELOAD FAILED" : "RELOAD DONE"));
 		if(block_read(NULL, handler->ev_fd, &xfrd->reload_pid,
 			sizeof(pid_t), -1) != sizeof(pid_t)) {
 			log_msg(LOG_ERR, "xfrd cannot get reload_pid");
@@ -766,7 +737,15 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		xfrd->ipc_send_blocked = 0;
 		ipc_xfrd_set_listening(xfrd, EV_PERSIST|EV_READ|EV_WRITE);
 		xfrd_reopen_logfile();
-		xfrd_check_failed_updates();
+		if(!xfrd->reload_failed) {
+			xfrd_check_failed_updates();
+			xfrd->reload_cmd_first_sent = 0;
+		} else {
+			/* make reload happen again, right away */
+			xfrd_set_reload_now(xfrd);
+		}
+		xfrd_prepare_zones_for_reload();
+		xfrd->reload_failed = 0;
 		break;
 	case NSD_PASS_TO_XFRD:
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv PASS_TO_XFRD"));

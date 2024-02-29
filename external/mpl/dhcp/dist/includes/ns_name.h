@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_name.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: ns_name.h,v 1.2.6.1 2024/02/29 11:39:19 martin Exp $	*/
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,8 +17,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  */
@@ -33,6 +33,7 @@
  * <viraj_bais@ccm.fm.intel.com>
  */
 
+int MRns_name_len(const unsigned char *, const unsigned char *);
 int MRns_name_compress(const char *, u_char *, size_t, const unsigned char **,
 		       const unsigned char **);
 int MRns_name_unpack(const unsigned char *, const unsigned char *,

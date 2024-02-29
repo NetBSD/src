@@ -66,8 +66,9 @@ views_create(void)
 	return v;
 }
 
-/** This prototype is defined in in respip.h, but we want to avoid
-  * unnecessary dependencies */
+/* \noop (ignore this comment for doxygen)
+ * This prototype is defined in in respip.h, but we want to avoid
+ * unnecessary dependencies */
 void respip_set_delete(struct respip_set *set);
 
 void 
@@ -198,8 +199,6 @@ views_apply_cfg(struct views* vs, struct config_file* cfg)
 						log_err("failed to insert "
 							"default zones into "
 							"local-zone list");
-						free(nd_str);
-						free(nd_type);
 						lock_rw_unlock(&v->lock);
 						return 0;
 					}

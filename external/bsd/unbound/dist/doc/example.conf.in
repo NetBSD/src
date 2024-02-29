@@ -1,19 +1,23 @@
 #
 # Example configuration file.
 #
-# See unbound.conf(5) man page, version 1.9.6.
+# See unbound.conf(5) man page, version 1.19.1.
 #
 # this is a comment.
 
-#Use this to include other text into the file.
+# Use this anywhere in the file to include other text into this file.
 #include: "otherfile.conf"
+
+# Use this anywhere in the file to include other text, that explicitly starts a
+# clause, into this file. Text after this directive needs to start a clause.
+#include-toplevel: "otherfile.conf"
 
 # The server clause sets the main parameters.
 server:
 	# whitespace is not necessary, but looks cleaner.
 
 	# verbosity number, 0 is least verbose. 1 is default.
-	verbosity: 1
+	# verbosity: 1
 
 	# print statistics to the log (for every thread) every N seconds.
 	# Set to "" or 0 to disable. Default is disabled.
@@ -31,8 +35,13 @@ server:
 	# statistics-cumulative: no
 
 	# enable extended statistics (query types, answer codes, status)
-	# printed from unbound-control. default off, because of speed.
+	# printed from unbound-control. Default off, because of speed.
 	# extended-statistics: no
+
+	# Inhibits selected extended statistics (qtype, qclass, qopcode, rcode,
+	# rpz-actions) from printing if their value is 0.
+	# Default on.
+	# statistics-inhibit-zero: yes
 
 	# number of threads to create. 1 disables threading.
 	# num-threads: 1
@@ -46,10 +55,15 @@ server:
 	# interface: 192.0.2.154
 	# interface: 192.0.2.154@5003
 	# interface: 2001:DB8::5
+	# interface: eth0@5003
 
 	# enable this feature to copy the source address of queries to reply.
 	# Socket options are not supported on all platforms. experimental.
 	# interface-automatic: no
+
+	# instead of the default port, open additional ports separated by
+	# spaces when interface-automatic is enabled, by listing them here.
+	# interface-automatic-ports: ""
 
 	# port to answer queries from
 	# port: 53
@@ -70,18 +84,21 @@ server:
 	# Set this to yes to prefer ipv6 upstream servers over ipv4.
 	# prefer-ip6: no
 
+	# Prefer ipv4 upstream servers, even if ipv6 is available.
+	# prefer-ip4: no
+
 	# number of ports to allocate per thread, determines the size of the
 	# port range that can be open simultaneously.  About double the
 	# num-queries-per-thread, or, use as many as the OS will allow you.
 	# outgoing-range: 4096
 
-	# permit unbound to use this port number or port range for
+	# permit Unbound to use this port number or port range for
 	# making outgoing queries, using an outgoing interface.
 	# outgoing-port-permit: 32768
 
-	# deny unbound the use this of port number or port range for
+	# deny Unbound the use this of port number or port range for
 	# making outgoing queries, using an outgoing interface.
-	# Use this to make sure unbound does not grab a UDP port that some
+	# Use this to make sure Unbound does not grab a UDP port that some
 	# other server on this computer needs. The default is to avoid
 	# IANA-assigned port numbers.
 	# If multiple outgoing-port-permit and outgoing-port-avoid options
@@ -116,13 +133,18 @@ server:
 	# Linux only.  On Linux you also have ip-transparent that is similar.
 	# ip-freebind: no
 
+	# the value of the Differentiated Services Codepoint (DSCP)
+	# in the differentiated services field (DS) of the outgoing
+	# IP packets
+	# ip-dscp: 0
+
 	# EDNS reassembly buffer to advertise to UDP peers (the actual buffer
-	# is set with msg-buffer-size). 1472 can solve fragmentation (timeouts)
-	# edns-buffer-size: 4096
+	# is set with msg-buffer-size).
+	# edns-buffer-size: 1232
 
 	# Maximum UDP response size (not applied to TCP response).
-	# Suggested values are 512 to 4096. Default is 4096. 65536 disables it.
-	# max-udp-size: 4096
+	# Suggested values are 512 to 4096. Default is 1232. 65536 disables it.
+	# max-udp-size: 1232
 
 	# max memory to use for stream(tcp and tls) waiting result buffers.
 	# stream-wait-size: 4m
@@ -148,6 +170,22 @@ server:
 
 	# msec to wait before close of port on timeout UDP. 0 disables.
 	# delay-close: 0
+
+	# perform connect for UDP sockets to mitigate ICMP side channel.
+	# udp-connect: yes
+
+	# The number of retries, per upstream nameserver in a delegation, when
+	# a throwaway response (also timeouts) is received.
+	# outbound-msg-retry: 5
+
+	# Hard limit on the number of outgoing queries Unbound will make while
+	# resolving a name, making sure large NS sets do not loop.
+	# It resets on query restarts (e.g., CNAME) and referrals.
+	# max-sent-count: 32
+
+	# Hard limit on the number of times Unbound is allowed to restart a
+	# query upon encountering a CNAME record.
+	# max-query-restarts: 11
 
 	# msec for waiting for an unknown server to reply.  Increase if you
 	# are behind a slow satellite link, to eg. 1128.
@@ -180,6 +218,12 @@ server:
 	# minimum wait time for responses, increase if uplink is long. In msec.
 	# infra-cache-min-rtt: 50
 
+	# maximum wait time for responses. In msec.
+	# infra-cache-max-rtt: 120000
+
+	# enable to make server probe down hosts more frequently.
+	# infra-keep-probing: no
+
 	# the number of slabs to use for the Infrastructure cache.
 	# the number of slabs must be a power of 2.
 	# more slabs reduce lock contention, but fragment memory usage.
@@ -188,7 +232,8 @@ server:
 	# the maximum number of hosts that are cached (roundtrip, EDNS, lame).
 	# infra-cache-numhosts: 10000
 
-	# define a number of tags here, use with local-zone, access-control.
+	# define a number of tags here, use with local-zone, access-control,
+	# interface-*.
 	# repeat the define-tag statement to add additional tags.
 	# define-tag: "tag1 tag2 tag3"
 
@@ -197,6 +242,18 @@ server:
 
 	# Enable IPv6, "yes" or "no".
 	# do-ip6: yes
+
+	# If running unbound on an IPv6-only host, domains that only have
+	# IPv4 servers would become unresolveable.  If NAT64 is available in
+	# the network, unbound can use NAT64 to reach these servers with
+	# the following option.  This is NOT needed for enabling DNS64 on a
+	# system that has IPv4 connectivity.
+	# Consider also enabling prefer-ip6 to prefer native IPv6 connections
+	# to nameservers.
+	# do-nat64: no
+
+	# NAT64 prefix.  Defaults to using dns64-prefix value.
+	# nat64-prefix: 64:ff9b::0/96
 
 	# Enable UDP, "yes" or "no".
 	# do-udp: yes
@@ -229,11 +286,15 @@ server:
 	# Timeout for EDNS TCP keepalive, in msec.
 	# edns-tcp-keepalive-timeout: 120000
 
+	# UDP queries that have waited in the socket buffer for a long time
+	# can be dropped. Default is 0, disabled. In seconds, such as 3.
+	# sock-queue-timeout: 0
+
 	# Use systemd socket activation for UDP, TCP, and control sockets.
 	# use-systemd: no
 
 	# Detach from the terminal, run in background, "yes" or "no".
-	# Set the value to "no" when unbound runs as systemd service.
+	# Set the value to "no" when Unbound runs as systemd service.
 	# do-daemonize: yes
 
 	# control which clients are allowed to make (recursive) queries
@@ -244,9 +305,7 @@ server:
 	# allow_snoop (recursive and nonrecursive ok)
 	# deny_non_local (drop queries unless can be answered from local-data)
 	# refuse_non_local (like deny_non_local but polite error reply).
-	# access-control: 0.0.0.0/0 refuse
 	# access-control: 127.0.0.0/8 allow
-	# access-control: ::0/0 refuse
 	# access-control: ::1 allow
 	# access-control: ::ffff:127.0.0.1 allow
 
@@ -255,7 +314,7 @@ server:
 	# are tagged with one of these tags.
 	# access-control-tag: 192.0.2.0/24 "tag2 tag3"
 
-	# set action for particular tag for given access control element
+	# set action for particular tag for given access control element.
 	# if you have multiple tag values, the tag used to lookup the action
 	# is the first tag match between access-control-tag and local-zone-tag
 	# where "first" comes from the order of the define-tag values.
@@ -266,6 +325,58 @@ server:
 
 	# Set view for access control element
 	# access-control-view: 192.0.2.0/24 viewname
+
+	# Similar to 'access-control:' but for interfaces.
+	# Control which listening interfaces are allowed to accept (recursive)
+	# queries for this server.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the action.
+	# The actions are the same as 'access-control:' above.
+	# By default all the interfaces configured are refused.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-action: 192.0.2.153 allow
+	# interface-action: 192.0.2.154 allow
+	# interface-action: 192.0.2.154@5003 allow
+	# interface-action: 2001:DB8::5 allow
+	# interface-action: eth0@5003 allow
+
+	# Similar to 'access-control-tag:' but for interfaces.
+	# Tag interfaces with a list of tags (in "" with spaces between).
+	# Interfaces using these tags use localzones that are tagged with one
+	# of these tags.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the list of tags.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag: eth0@5003 "tag2 tag3"
+
+	# Similar to 'access-control-tag-action:' but for interfaces.
+	# Set action for particular tag for a given interface element.
+	# If you have multiple tag values, the tag used to lookup the action
+	# is the first tag match between interface-tag and local-zone-tag
+	# where "first" comes from the order of the define-tag values.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the tag and action.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag-action: eth0@5003 tag3 refuse
+
+	# Similar to 'access-control-tag-data:' but for interfaces.
+	# Set redirect data for a particular tag for an interface element.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the tag and the redirect data.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-tag-data: eth0@5003 tag2 "A 127.0.0.1"
+
+	# Similar to 'access-control-view:' but for interfaces.
+	# Set view for an interface element.
+	# The specified interfaces should be the same as the ones specified in
+	# 'interface:' followed by the view name.
+	# Note: any 'access-control*:' setting overrides all 'interface-*:'
+	# settings for targeted clients.
+	# interface-view: eth0@5003 viewname
 
 	# if given, a chroot(2) is done to the given directory.
 	# i.e. you can chroot to the working directory, for example,
@@ -286,7 +397,7 @@ server:
 	# The pid file can be absolute and outside of the chroot, it is
 	# written just prior to performing the chroot and dropping permissions.
 	#
-	# Additionally, unbound may need to access /dev/urandom (for entropy).
+	# Additionally, Unbound may need to access /dev/urandom (for entropy).
 	# How to do this is specific to your OS.
 	#
 	# If you give "" no chroot is performed. The path must not end in a /.
@@ -353,11 +464,21 @@ server:
 	# enable to not answer trustanchor.unbound queries.
 	# hide-trustanchor: no
 
+	# enable to not set the User-Agent HTTP header.
+	# hide-http-user-agent: no
+
 	# the identity to report. Leave "" or default to return hostname.
 	# identity: ""
 
 	# the version to report. Leave "" or default to return package version.
 	# version: ""
+
+	# NSID identity (hex string, or "ascii_somestring"). default disabled.
+	# nsid: "aabbccdd"
+
+	# User-Agent HTTP header to use. Leave "" or default to use package name
+	# and version.
+	# http-user-agent: ""
 
 	# the target fetch policy.
 	# series of integers describing the policy per dependency depth.
@@ -370,7 +491,7 @@ server:
 	# target-fetch-policy: "3 2 1 0 0"
 
 	# Harden against very small EDNS buffer sizes.
-	# harden-short-bufsize: no
+	# harden-short-bufsize: yes
 
 	# Harden against unseemly large queries.
 	# harden-large-queries: no
@@ -398,6 +519,10 @@ server:
 	# to validate the zone.
 	# harden-algo-downgrade: no
 
+	# Harden against unknown records in the authority section and the
+	# additional section.
+	# harden-unknown-additional: no
+
 	# Sent minimum amount of information to upstream servers to enhance
 	# privacy. Only sent minimum required labels of the QNAME and set QTYPE
 	# to A when possible.
@@ -411,7 +536,7 @@ server:
 
 	# Aggressive NSEC uses the DNSSEC NSEC chain to synthesize NXDOMAIN
 	# and other denials, using information from previous NXDOMAINs answers.
-	# aggressive-nsec: no
+	# aggressive-nsec: yes
 
 	# Use 0x20-encoded random bits in the query to foil spoof attempts.
 	# This feature is an experimental implementation of draft dns-0x20.
@@ -419,8 +544,8 @@ server:
 
 	# Domains (and domains in them) without support for dns-0x20 and
 	# the fallback fails because they keep sending different answers.
-	# caps-whitelist: "licdn.com"
-	# caps-whitelist: "senderbase.org"
+	# caps-exempt: "licdn.com"
+	# caps-exempt: "senderbase.org"
 
 	# Enforce privacy of these addresses. Strips them away from answers.
 	# It may cause DNSSEC validation to additionally mark it as bogus.
@@ -465,7 +590,7 @@ server:
 	# deny-any: no
 
 	# if yes, Unbound rotates RRSet order in response.
-	# rrset-roundrobin: no
+	# rrset-roundrobin: yes
 
 	# if yes, Unbound doesn't insert authority/additional sections
 	# into response messages when those sections are not required.
@@ -486,7 +611,8 @@ server:
 	# Use several entries, one per domain name, to track multiple zones.
 	#
 	# If you want to perform DNSSEC validation, run unbound-anchor before
-	# you start unbound (i.e. in the system boot scripts).  And enable:
+	# you start Unbound (i.e. in the system boot scripts).
+	# And then enable the auto-trust-anchor-file config item.
 	# Please note usage of unbound-anchor root anchor is at your own risk
 	# and under the terms of our LICENSE (see that file in the source).
 	# auto-trust-anchor-file: "@UNBOUND_ROOTKEY_FILE@"
@@ -496,11 +622,6 @@ server:
 
 	# Root key trust anchor sentinel (draft-ietf-dnsop-kskroll-sentinel)
 	# root-key-sentinel: yes
-
-	# File with DLV trusted keys. Same format as trust-anchor-file.
-	# There can be only one DLV configured, it is trusted from root down.
-	# DLV is going to be decommissioned.  Please do not use it any more.
-	# dlv-anchor-file: "dlv.isc.org.key"
 
 	# File with trusted keys for validation. Specify more than one file
 	# with several entries, one file per entry.
@@ -540,6 +661,10 @@ server:
 	# val-sig-skew-min: 3600
 	# val-sig-skew-max: 86400
 
+	# The maximum number the validator should restart validation with
+	# another authority in case of failed validation.
+	# val-max-restart: 5
+
 	# Should additional section of secure message also be kept clean of
 	# unsecure data. Useful to shield the users of this validator from
 	# potential bogus data in the additional section. All unsigned data
@@ -554,12 +679,17 @@ server:
 	# val-permissive-mode: no
 
 	# Ignore the CD flag in incoming queries and refuse them bogus data.
-	# Enable it if the only clients of unbound are legacy servers (w2008)
+	# Enable it if the only clients of Unbound are legacy servers (w2008)
 	# that set CD but cannot validate themselves.
 	# ignore-cd-flag: no
 
-	# Serve expired responses from cache, with TTL 0 in the response,
-	# and then attempt to fetch the data afresh.
+	# Disable the DO flag in outgoing requests. It is helpful for upstream
+	# devices that cannot handle DNSSEC information. But do not enable it
+	# otherwise, because it would stop DNSSEC validation.
+	# disable-edns-do: no
+
+	# Serve expired responses from cache, with serve-expired-reply-ttl in
+	# the response, and then attempt to fetch the data afresh.
 	# serve-expired: no
 	#
 	# Limit serving of expired responses to configured seconds after
@@ -571,6 +701,23 @@ server:
 	# that the expired records will be served as long as there are queries
 	# for it.
 	# serve-expired-ttl-reset: no
+	#
+	# TTL value to use when replying with expired data.
+	# serve-expired-reply-ttl: 30
+	#
+	# Time in milliseconds before replying to the client with expired data.
+	# This essentially enables the serve-stale behavior as specified in
+	# RFC 8767 that first tries to resolve before
+	# immediately responding with expired data.  0 disables this behavior.
+	# A recommended value is 1800.
+	# serve-expired-client-timeout: 0
+
+	# Return the original TTL as received from the upstream name server rather
+	# than the decrementing TTL as stored in the cache.  Enabling this feature
+	# does not impact cache expiry, it only changes the TTL Unbound embeds in
+	# responses to queries. Note that enabling this feature implicitly disables
+	# enforcement of the configured minimum and maximum TTL.
+	# serve-original-ttl: no
 
 	# Have the validator log failed validations for your diagnosis.
 	# 0: off. 1: A line per failed user query. 2: With reason and bad IP.
@@ -580,7 +727,10 @@ server:
 	# keysize. Keep this table very short, as linear search is done.
 	# A message with an NSEC3 with larger count is marked insecure.
 	# List in ascending order the keysize and count values.
-	# val-nsec3-keysize-iterations: "1024 150 2048 500 4096 2500"
+	# val-nsec3-keysize-iterations: "1024 150 2048 150 4096 150"
+
+	# if enabled, ZONEMD verification failures do not block the zone.
+	# zonemd-permissive-mode: no
 
 	# instruct the auto-trust-anchor-file probing to add anchors after ttl.
 	# add-holddown: 2592000 # 30 days
@@ -605,7 +755,7 @@ server:
 	# more slabs reduce lock contention, but fragment memory usage.
 	# key-cache-slabs: 4
 
-	# the amount of memory to use for the negative cache (used for DLV).
+	# the amount of memory to use for the negative cache.
 	# plain value in bytes or you can append k, m or G. default is "1Mb".
 	# neg-cache-size: 1m
 
@@ -618,6 +768,7 @@ server:
 	# local-zone: "localhost." nodefault
 	# local-zone: "127.in-addr.arpa." nodefault
 	# local-zone: "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa." nodefault
+	# local-zone: "home.arpa." nodefault
 	# local-zone: "onion." nodefault
 	# local-zone: "test." nodefault
 	# local-zone: "invalid." nodefault
@@ -657,9 +808,9 @@ server:
 	# Add example.com into ipset
 	# local-zone: "example.com" ipset
 
-	# If unbound is running service for the local host then it is useful
+	# If Unbound is running service for the local host then it is useful
 	# to perform lan-wide lookups to the upstream, and unblock the
-	# long list of local-zones above.  If this unbound is a dns server
+	# long list of local-zones above.  If this Unbound is a dns server
 	# for a network of computers, disabled is better and stops information
 	# leakage of local lan information.
 	# unblock-lan-zones: no
@@ -681,8 +832,12 @@ server:
 	# o inform acts like transparent, but logs client IP address
 	# o inform_deny drops queries and logs client IP address
 	# o inform_redirect redirects queries and logs client IP address
-	# o always_transparent, always_refuse, always_nxdomain, resolve in
-	#   that way but ignore local data for that name
+	# o always_transparent, always_refuse, always_nxdomain, always_nodata,
+	#   always_deny resolve in that way but ignore local data for
+	#   that name
+	# o block_a resolves all records normally but returns
+	#   NODATA for A queries and ignores local data for that name
+	# o always_null returns 0.0.0.0 or ::0 for any name in the zone.
 	# o noview breaks out of that view towards global local-zones.
 	#
 	# defaults are localhost address, reverse for 127.0.0.1 and ::1
@@ -716,17 +871,29 @@ server:
 	# add a netblock specific override to a localzone, with zone type
 	# local-zone-override: "example.com" 192.0.2.0/24 refuse
 
-	# service clients over TLS (on the TCP sockets), with plain DNS inside
-	# the TLS stream.  Give the certificate to use and private key.
+	# service clients over TLS (on the TCP sockets) with plain DNS inside
+	# the TLS stream, and over HTTPS using HTTP/2 as specified in RFC8484.
+	# Give the certificate to use and private key.
 	# default is "" (disabled).  requires restart to take effect.
 	# tls-service-key: "path/to/privatekeyfile.key"
 	# tls-service-pem: "path/to/publiccertfile.pem"
 	# tls-port: 853
+	# https-port: 443
 
 	# cipher setting for TLSv1.2
 	# tls-ciphers: "DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256"
 	# cipher setting for TLSv1.3
 	# tls-ciphersuites: "TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_8_SHA256:TLS_AES_128_CCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+
+	# Pad responses to padded queries received over TLS
+	# pad-responses: yes
+
+	# Padded responses will be padded to the closest multiple of this size.
+	# pad-responses-block-size: 468
+
+	# Use the SNI extension for TLS connections.  Default is yes.
+	# Changing the value requires a reload.
+	# tls-use-sni: yes
 
 	# Add the secret file for TLS Session Ticket.
 	# Secret file must be 80 bytes of random data.
@@ -745,9 +912,40 @@ server:
 
 	# Add system certs to the cert bundle, from the Windows Cert Store
 	# tls-win-cert: no
+	# and on other systems, the default openssl certificates
+	# tls-system-cert: no
+
+	# Pad queries over TLS upstreams
+	# pad-queries: yes
+
+	# Padded queries will be padded to the closest multiple of this size.
+	# pad-queries-block-size: 128
 
 	# Also serve tls on these port numbers (eg. 443, ...), by listing
 	# tls-additional-port: portno for each of the port numbers.
+
+	# HTTP endpoint to provide DNS-over-HTTPS service on.
+	# http-endpoint: "/dns-query"
+
+	# HTTP/2 SETTINGS_MAX_CONCURRENT_STREAMS value to use.
+	# http-max-streams: 100
+
+	# Maximum number of bytes used for all HTTP/2 query buffers.
+	# http-query-buffer-size: 4m
+
+	# Maximum number of bytes used for all HTTP/2 response buffers.
+	# http-response-buffer-size: 4m
+
+	# Set TCP_NODELAY socket option on sockets used for DNS-over-HTTPS
+	# service.
+	# http-nodelay: yes
+
+	# Disable TLS for DNS-over-HTTP downstream service.
+	# http-notls-downstream: no
+
+	# The interfaces that use these listed port numbers will support and
+	# expect PROXYv2. For UDP and TCP/TLS interfaces.
+	# proxy-protocol-port: portno for each of the port numbers.
 
 	# DNS64 prefix. Must be specified when DNS64 is use.
 	# Enable dns64 in module-config.  Used to synthesize IPv6 from IPv4.
@@ -769,6 +967,10 @@ server:
 	# 0 blocks when ratelimited, otherwise let 1/xth traffic through
 	# ratelimit-factor: 10
 
+	# Aggressive rate limit when the limit is reached and until demand has
+	# decreased in a 2 second rate window.
+	# ratelimit-backoff: no
+
 	# override the ratelimit for a specific domain name.
 	# give this setting multiple times to have multiple overrides.
 	# ratelimit-for-domain: example.com 1000
@@ -789,6 +991,10 @@ server:
 	# 0 blocks when ip is ratelimited, otherwise let 1/xth traffic through
 	# ip-ratelimit-factor: 10
 
+	# Aggressive rate limit when the limit is reached and until demand has
+	# decreased in a 2 second rate window.
+	# ip-ratelimit-backoff: no
+
 	# Limit the number of connections simultaneous from a netblock
 	# tcp-connection-limit: 192.0.2.0/24 12
 
@@ -798,7 +1004,15 @@ server:
 	# the number of servers that will be used in the fast server selection.
 	# fast-server-num: 3
 
-	# Specific options for ipsecmod. unbound needs to be configured with
+	# Enable to attach Extended DNS Error codes (RFC8914) to responses.
+	# ede: no
+
+	# Enable to attach an Extended DNS Error (RFC8914) Code 3 - Stale
+	# Answer as EDNS0 option to expired responses.
+	# Note that the ede option above needs to be enabled for this to work.
+	# ede-serve-expired: no
+
+	# Specific options for ipsecmod. Unbound needs to be configured with
 	# --enable-ipsecmod for these to take effect.
 	#
 	# Enable or disable ipsecmod (it still needs to be defined in
@@ -810,7 +1024,7 @@ server:
 	# listed in module-config (above).
 	# ipsecmod-hook: "./my_executable"
 	#
-	# When enabled unbound will reply with SERVFAIL if the return value of
+	# When enabled Unbound will reply with SERVFAIL if the return value of
 	# the ipsecmod-hook is not 0.
 	# ipsecmod-strict: no
 	#
@@ -822,9 +1036,16 @@ server:
 	# ipsecmod-ignore-bogus: no
 	#
 	# Domains for which ipsecmod will be triggered. If not defined (default)
-	# all domains are treated as being whitelisted.
-	# ipsecmod-whitelist: "example.com"
-	# ipsecmod-whitelist: "nlnetlabs.nl"
+	# all domains are treated as being allowed.
+	# ipsecmod-allow: "example.com"
+	# ipsecmod-allow: "nlnetlabs.nl"
+
+	# Timeout for REUSE entries in milliseconds.
+	# tcp-reuse-timeout: 60000
+	# Max number of queries on a reuse connection.
+	# max-reuse-tcp-queries: 200
+	# Timeout in milliseconds for TCP queries to auth servers.
+	# tcp-auth-query-timeout: 3000
 
 
 # Python config section. To enable:
@@ -836,6 +1057,17 @@ server:
 python:
 	# Script file to load
 	# python-script: "@UNBOUND_SHARE_DIR@/ubmodule-tst.py"
+
+# Dynamic library config section. To enable:
+# o use --with-dynlibmodule to configure before compiling.
+# o list dynlib in the module-config string (above) to enable.
+#   It can be placed anywhere, the dynlib module is only a very thin wrapper
+#   to load modules dynamically.
+# o and give a dynlib-file to run. If more than one dynlib entry is listed in
+#   the module-config then you need one dynlib-file per instance.
+dynlib:
+	# Script file to load
+	# dynlib-file: "@UNBOUND_SHARE_DIR@/dynlib.so"
 
 # Remote control config section.
 remote-control:
@@ -857,10 +1089,10 @@ remote-control:
 	# For local sockets this option is ignored, and TLS is not used.
 	# control-use-cert: "yes"
 
-	# unbound server key file.
+	# Unbound server key file.
 	# server-key-file: "@UNBOUND_RUN_DIR@/unbound_server.key"
 
-	# unbound server certificate file.
+	# Unbound server certificate file.
 	# server-cert-file: "@UNBOUND_RUN_DIR@/unbound_server.pem"
 
 	# unbound-control key file.
@@ -882,6 +1114,7 @@ remote-control:
 #	stub-addr: 192.0.2.68
 #	stub-prime: no
 #	stub-first: no
+#	stub-tcp-upstream: no
 #	stub-tls-upstream: no
 #	stub-no-cache: no
 # stub-zone:
@@ -899,6 +1132,7 @@ remote-control:
 # 	forward-addr: 192.0.2.68
 # 	forward-addr: 192.0.2.73@5355  # forward to port 5355.
 # 	forward-first: no
+# 	forward-tcp-upstream: no
 # 	forward-tls-upstream: no
 #	forward-no-cache: no
 # forward-zone:
@@ -911,27 +1145,27 @@ remote-control:
 # upstream (which saves a lookup to the upstream).  The first example
 # has a copy of the root for local usage.  The second serves example.org
 # authoritatively.  zonefile: reads from file (and writes to it if you also
-# download it), master: fetches with AXFR and IXFR, or url to zonefile.
-# With allow-notify: you can give additional (apart from masters) sources of
-# notifies.
+# download it), primary: fetches with AXFR and IXFR, or url to zonefile.
+# With allow-notify: you can give additional (apart from primaries and urls)
+# sources of notifies.
 # auth-zone:
 #	name: "."
-#	master: 199.9.14.201         # b.root-servers.net
-#	master: 192.33.4.12          # c.root-servers.net
-#	master: 199.7.91.13          # d.root-servers.net
-#	master: 192.5.5.241          # f.root-servers.net
-#	master: 192.112.36.4         # g.root-servers.net
-#	master: 193.0.14.129         # k.root-servers.net
-#	master: 192.0.47.132         # xfr.cjr.dns.icann.org
-#	master: 192.0.32.132         # xfr.lax.dns.icann.org
-#	master: 2001:500:200::b      # b.root-servers.net
-#	master: 2001:500:2::c        # c.root-servers.net
-#	master: 2001:500:2d::d       # d.root-servers.net
-#	master: 2001:500:2f::f       # f.root-servers.net
-#	master: 2001:500:12::d0d     # g.root-servers.net
-#	master: 2001:7fd::1          # k.root-servers.net
-#	master: 2620:0:2830:202::132 # xfr.cjr.dns.icann.org
-#	master: 2620:0:2d0:202::132  # xfr.lax.dns.icann.org
+#	primary: 199.9.14.201         # b.root-servers.net
+#	primary: 192.33.4.12          # c.root-servers.net
+#	primary: 199.7.91.13          # d.root-servers.net
+#	primary: 192.5.5.241          # f.root-servers.net
+#	primary: 192.112.36.4         # g.root-servers.net
+#	primary: 193.0.14.129         # k.root-servers.net
+#	primary: 192.0.47.132         # xfr.cjr.dns.icann.org
+#	primary: 192.0.32.132         # xfr.lax.dns.icann.org
+#	primary: 2001:500:200::b      # b.root-servers.net
+#	primary: 2001:500:2::c        # c.root-servers.net
+#	primary: 2001:500:2d::d       # d.root-servers.net
+#	primary: 2001:500:2f::f       # f.root-servers.net
+#	primary: 2001:500:12::d0d     # g.root-servers.net
+#	primary: 2001:7fd::1          # k.root-servers.net
+#	primary: 2620:0:2830:202::132 # xfr.cjr.dns.icann.org
+#	primary: 2620:0:2d0:202::132  # xfr.lax.dns.icann.org
 #	fallback-enabled: yes
 #	for-downstream: no
 #	for-upstream: yes
@@ -939,6 +1173,8 @@ remote-control:
 #	name: "example.org"
 #	for-downstream: yes
 #	for-upstream: yes
+#	zonemd-check: no
+#	zonemd-reject-absence: no
 #	zonefile: "example.org.zone"
 
 # Views
@@ -959,8 +1195,9 @@ remote-control:
 #	local-zone: "example.com" refuse
 
 # DNSCrypt
+# To enable, use --enable-dnscrypt to configure before compiling.
 # Caveats:
-# 1. the keys/certs cannot be produced by unbound. You can use dnscrypt-wrapper
+# 1. the keys/certs cannot be produced by Unbound. You can use dnscrypt-wrapper
 #   for this: https://github.com/cofyc/dnscrypt-wrapper/blob/master/README.md#usage
 # 2. dnscrypt channel attaches to an interface. you MUST set interfaces to
 #   listen on `dnscrypt-port` with the follo0wing snippet:
@@ -979,7 +1216,9 @@ remote-control:
 #     dnscrypt-provider-cert: /path/unbound-conf/keys2/1.cert
 
 # CacheDB
-# Enable external backend DB as auxiliary cache.  Specify the backend name
+# External backend DB as auxiliary cache.
+# To enable, use --enable-cachedb to configure before compiling.
+# Specify the backend name
 # (default is "testframe", which has no use other than for debugging and
 # testing) and backend-specific options.  The 'cachedb' module must be
 # included in module-config, just before the iterator module.
@@ -987,18 +1226,31 @@ remote-control:
 #     backend: "testframe"
 #     # secret seed string to calculate hashed keys
 #     secret-seed: "default"
+#     # if the backend should be read from, but not written to.
+#     cachedb-no-store: no
 #
 #     # For "redis" backend:
+#     # (to enable, use --with-libhiredis to configure before compiling)
 #     # redis server's IP address or host name
 #     redis-server-host: 127.0.0.1
 #     # redis server's TCP port
 #     redis-server-port: 6379
+#     # if the server uses a unix socket, set its path, or "" when not used.
+#     # redis-server-path: "/var/lib/redis/redis-server.sock"
+#     # if the server uses an AUTH password, specify here, or "" when not used.
+#     # redis-server-password: ""
 #     # timeout (in ms) for communication with the redis server
 #     redis-timeout: 100
+#     # set timeout on redis records based on DNS response TTL
+#     redis-expire-records: no
+#     # redis logical database to use, 0 is the default database.
+#     redis-logical-db: 0
 
 # IPSet
 # Add specify domain into set via ipset.
-# Note: To enable ipset needs run unbound as root user.
+# To enable:
+# o use --enable-ipset to configure before compiling;
+# o Unbound then needs to run as root user.
 # ipset:
 #     # set name for ip v4 addresses
 #     name-v4: "list-v4"
@@ -1006,3 +1258,58 @@ remote-control:
 #     name-v6: "list-v6"
 #
 
+# Dnstap logging support, if compiled in by using --enable-dnstap to configure.
+# To enable, set the dnstap-enable to yes and also some of
+# dnstap-log-..-messages to yes.  And select an upstream log destination, by
+# socket path, TCP or TLS destination.
+# dnstap:
+# 	dnstap-enable: no
+# 	# if set to yes frame streams will be used in bidirectional mode
+# 	dnstap-bidirectional: yes
+# 	dnstap-socket-path: "@DNSTAP_SOCKET_PATH@"
+# 	# if "" use the unix socket in dnstap-socket-path, otherwise,
+# 	# set it to "IPaddress[@port]" of the destination.
+# 	dnstap-ip: ""
+# 	# if set to yes if you want to use TLS to dnstap-ip, no for TCP.
+# 	dnstap-tls: yes
+# 	# name for authenticating the upstream server. or "" disabled.
+# 	dnstap-tls-server-name: ""
+# 	# if "", it uses the cert bundle from the main Unbound config.
+# 	dnstap-tls-cert-bundle: ""
+# 	# key file for client authentication, or "" disabled.
+# 	dnstap-tls-client-key-file: ""
+# 	# cert file for client authentication, or "" disabled.
+# 	dnstap-tls-client-cert-file: ""
+# 	dnstap-send-identity: no
+# 	dnstap-send-version: no
+# 	# if "" it uses the hostname.
+# 	dnstap-identity: ""
+# 	# if "" it uses the package version.
+# 	dnstap-version: ""
+# 	dnstap-log-resolver-query-messages: no
+# 	dnstap-log-resolver-response-messages: no
+# 	dnstap-log-client-query-messages: no
+# 	dnstap-log-client-response-messages: no
+# 	dnstap-log-forwarder-query-messages: no
+# 	dnstap-log-forwarder-response-messages: no
+
+# Response Policy Zones
+# RPZ policies. Applied in order of configuration. QNAME, Response IP
+# Address, nsdname, nsip and clientip triggers are supported. Supported
+# actions are: NXDOMAIN, NODATA, PASSTHRU, DROP, Local Data, tcp-only
+# and drop.  Policies can be loaded from a file, or using zone
+# transfer, or using HTTP. The respip module needs to be added
+# to the module-config, e.g.: module-config: "respip validator iterator".
+# rpz:
+#     name: "rpz.example.com"
+#     zonefile: "rpz.example.com"
+#     primary: 192.0.2.0
+#     allow-notify: 192.0.2.0/32
+#     url: http://www.example.com/rpz.example.org.zone
+#     rpz-action-override: cname
+#     rpz-cname-override: www.example.org
+#     rpz-log: yes
+#     rpz-log-name: "example policy"
+#     rpz-signal-nxdomain-ra: no
+#     for-downstream: no
+#     tags: "example"

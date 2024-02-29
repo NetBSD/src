@@ -1,0 +1,6 @@
+# user-class declaration config
+
+# user-class declaration
+user-class "foobar" {
+}
+

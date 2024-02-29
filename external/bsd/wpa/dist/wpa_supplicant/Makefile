@@ -55,7 +55,6 @@ ALL += systemd/wpa_supplicant.service
 ALL += systemd/wpa_supplicant@.service
 ALL += systemd/wpa_supplicant-nl80211@.service
 ALL += systemd/wpa_supplicant-wired@.service
-ALL += dbus/fi.epitest.hostap.WPASupplicant.service
 ALL += dbus/fi.w1.wpa_supplicant1.service
 ifdef CONFIG_BUILD_WPA_CLIENT_SO
 ALL += libwpa_client.so
@@ -240,6 +239,12 @@ CFLAGS += -DCONFIG_SUITEB192
 NEED_SHA384=y
 endif
 
+ifdef CONFIG_OCV
+CFLAGS += -DCONFIG_OCV
+OBJS += ../src/common/ocv.o
+CONFIG_IEEE80211W=y
+endif
+
 ifdef CONFIG_IEEE80211W
 CFLAGS += -DCONFIG_IEEE80211W
 NEED_SHA256=y
@@ -270,6 +275,7 @@ CFLAGS += -DCONFIG_SAE
 OBJS += ../src/common/sae.o
 NEED_ECC=y
 NEED_DH_GROUPS=y
+NEED_DRAGONFLY=y
 endif
 
 ifdef CONFIG_DPP
@@ -286,6 +292,9 @@ NEED_SHA512=y
 NEED_JSON=y
 NEED_GAS_SERVER=y
 NEED_BASE64=y
+ifdef CONFIG_DPP2
+CFLAGS += -DCONFIG_DPP2
+endif
 endif
 
 ifdef CONFIG_OWE
@@ -662,6 +671,23 @@ CONFIG_IEEE8021X_EAPOL=y
 NEED_T_PRF=y
 endif
 
+ifdef CONFIG_EAP_TEAP
+# EAP-TEAP
+ifeq ($(CONFIG_EAP_TEAP), dyn)
+CFLAGS += -DEAP_TEAP_DYNAMIC
+EAPDYN += ../src/eap_peer/eap_teap.so
+EAPDYN += ../src/eap_common/eap_teap_common.o
+else
+CFLAGS += -DEAP_TEAP
+OBJS += ../src/eap_peer/eap_teap.o ../src/eap_peer/eap_teap_pac.o
+OBJS += ../src/eap_common/eap_teap_common.o
+endif
+TLS_FUNCS=y
+CONFIG_IEEE8021X_EAPOL=y
+NEED_T_PRF=y
+NEED_SHA384=y
+endif
+
 ifdef CONFIG_EAP_PAX
 # EAP-PAX
 ifeq ($(CONFIG_EAP_PAX), dyn)
@@ -712,6 +738,7 @@ OBJS += ../src/eap_peer/eap_pwd.o ../src/eap_common/eap_pwd_common.o
 CONFIG_IEEE8021X_EAPOL=y
 NEED_SHA256=y
 NEED_ECC=y
+NEED_DRAGONFLY=y
 endif
 
 ifdef CONFIG_EAP_EKE
@@ -850,6 +877,9 @@ OBJS += ../src/pae/ieee802_1x_cp.o
 OBJS += ../src/pae/ieee802_1x_kay.o
 OBJS += ../src/pae/ieee802_1x_key.o
 OBJS += ../src/pae/ieee802_1x_secy_ops.o
+ifdef CONFIG_AP
+OBJS += ../src/ap/wpa_auth_kay.o
+endif
 endif
 
 ifdef CONFIG_IEEE8021X_EAPOL
@@ -1015,6 +1045,10 @@ ifdef CONFIG_SMARTCARD
 CFLAGS += -DCONFIG_SMARTCARD
 endif
 
+ifdef NEED_DRAGONFLY
+OBJS += ../src/common/dragonfly.o
+endif
+
 ifdef MS_FUNCS
 OBJS += ../src/crypto/ms_funcs.o
 NEED_DES=y
@@ -1027,7 +1061,8 @@ endif
 
 ifdef TLS_FUNCS
 NEED_DES=y
-# Shared TLS functions (needed for EAP_TLS, EAP_PEAP, EAP_TTLS, and EAP_FAST)
+# Shared TLS functions (needed for EAP_TLS, EAP_PEAP, EAP_TTLS, EAP_FAST, and
+# EAP_TEAP)
 OBJS += ../src/eap_peer/eap_tls_common.o
 ifndef CONFIG_FIPS
 NEED_TLS_PRF=y
@@ -1526,6 +1561,9 @@ endif
 ifdef CONFIG_NO_RANDOM_POOL
 CFLAGS += -DCONFIG_NO_RANDOM_POOL
 else
+ifdef CONFIG_GETRANDOM
+CFLAGS += -DCONFIG_GETRANDOM
+endif
 OBJS += ../src/crypto/random.o
 endif
 
@@ -1567,35 +1605,17 @@ endif
 OBJS += ctrl_iface.o ctrl_iface_$(CONFIG_CTRL_IFACE).o
 endif
 
-ifdef CONFIG_CTRL_IFACE_DBUS
-DBUS=y
-DBUS_CFLAGS += -DCONFIG_CTRL_IFACE_DBUS -DDBUS_API_SUBJECT_TO_CHANGE
-DBUS_OBJS += dbus/dbus_old.o dbus/dbus_old_handlers.o
-ifdef CONFIG_WPS
-DBUS_OBJS += dbus/dbus_old_handlers_wps.o
-endif
-DBUS_OBJS += dbus/dbus_dict_helpers.o
-ifndef DBUS_LIBS
-DBUS_LIBS := $(shell $(PKG_CONFIG) --libs dbus-1)
-endif
-ifndef DBUS_INCLUDE
-DBUS_INCLUDE := $(shell $(PKG_CONFIG) --cflags dbus-1)
-endif
-DBUS_CFLAGS += $(DBUS_INCLUDE)
-DBUS_INTERFACE=fi.epitest.hostap.WPASupplicant
-endif
-
 ifdef CONFIG_CTRL_IFACE_DBUS_NEW
-DBUS=y
-DBUS_CFLAGS += -DCONFIG_CTRL_IFACE_DBUS_NEW
-DBUS_OBJS ?= dbus/dbus_dict_helpers.o
-DBUS_OBJS += dbus/dbus_new_helpers.o
-DBUS_OBJS += dbus/dbus_new.o dbus/dbus_new_handlers.o
+CFLAGS += -DCONFIG_CTRL_IFACE_DBUS_NEW
+OBJS += dbus/dbus_dict_helpers.o
+OBJS += dbus/dbus_new_helpers.o
+OBJS += dbus/dbus_new.o dbus/dbus_new_handlers.o
+OBJS += dbus/dbus_common.o
 ifdef CONFIG_WPS
-DBUS_OBJS += dbus/dbus_new_handlers_wps.o
+OBJS += dbus/dbus_new_handlers_wps.o
 endif
 ifdef CONFIG_P2P
-DBUS_OBJS += dbus/dbus_new_handlers_p2p.o
+OBJS += dbus/dbus_new_handlers_p2p.o
 endif
 ifndef DBUS_LIBS
 DBUS_LIBS := $(shell $(PKG_CONFIG) --libs dbus-1)
@@ -1604,21 +1624,12 @@ ifndef DBUS_INCLUDE
 DBUS_INCLUDE := $(shell $(PKG_CONFIG) --cflags dbus-1)
 endif
 ifdef CONFIG_CTRL_IFACE_DBUS_INTRO
-DBUS_OBJS += dbus/dbus_new_introspect.o
-DBUS_CFLAGS += -DCONFIG_CTRL_IFACE_DBUS_INTRO
+OBJS += dbus/dbus_new_introspect.o
+CFLAGS += -DCONFIG_CTRL_IFACE_DBUS_INTRO
 endif
-DBUS_CFLAGS += $(DBUS_INCLUDE)
-DBUS_INTERFACE=fi.w1.wpa_supplicant1
-endif
-
-ifdef DBUS
-DBUS_CFLAGS += -DCONFIG_DBUS
-DBUS_OBJS += dbus/dbus_common.o
-endif
-
-OBJS += $(DBUS_OBJS)
-CFLAGS += $(DBUS_CFLAGS)
+CFLAGS += $(DBUS_INCLUDE)
 LIBS += $(DBUS_LIBS)
+endif
 
 ifdef CONFIG_READLINE
 OBJS_c += ../src/utils/edit_readline.o
@@ -1981,13 +1992,11 @@ else
 endif
 
 %.service: %.service.in
-	$(Q)sed -e 's|\@BINDIR\@|$(BINDIR)|g' \
-		-e 's|\@DBUS_INTERFACE\@|$(DBUS_INTERFACE)|g' $< >$@
+	$(Q)sed -e 's|\@BINDIR\@|$(BINDIR)|g' $< >$@
 	@$(E) "  sed" $<
 
 %@.service: %.service.arg.in
-	$(Q)sed -e 's|\@BINDIR\@|$(BINDIR)|g' \
-		-e 's|\@DBUS_INTERFACE\@|$(DBUS_INTERFACE)|g' $< >$@
+	$(Q)sed -e 's|\@BINDIR\@|$(BINDIR)|g' $< >$@
 	@$(E) "  sed" $<
 
 wpa_supplicant.exe: wpa_supplicant

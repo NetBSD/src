@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: ddns.c,v 1.2.6.1 2024/02/29 11:39:58 martin Exp $	*/
 
 /* ddns.c
 
@@ -6,7 +6,7 @@
 
 /*
  *
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2000-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,8 +22,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: ddns.c,v 1.2.6.1 2024/02/29 11:39:58 martin Exp $");
 
 #include "dhcpd.h"
 #include <dns/result.h>
@@ -1292,9 +1292,10 @@ ddns_update_lease_ptr(struct lease    *lease,
 					    file, line);
 #endif
 			/*
-			 * never reached. update_lease_failed
-			 * calls log_fatal.
+			 * not reached when update_lease_failed is called,
+			 * it calls log_fatal.
 			 */
+			ipv6_pool_dereference(&pool, MDL);
 			return(ISC_R_FAILURE);
 		}
 		ipv6_pool_dereference(&pool, MDL);

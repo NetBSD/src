@@ -45,6 +45,7 @@ struct packed_rrset_data;
 struct regional;
 struct ub_packed_rrset_key;
 #include "util/storage/lruhash.h"
+#include "sldns/rrdef.h"
 
 /**
  * A key entry for the validator.
@@ -80,6 +81,8 @@ struct key_entry_data {
 	struct packed_rrset_data* rrset_data;
 	/** not NULL sometimes to give reason why bogus */
 	char* reason;
+        /** not NULL to give reason why bogus */
+        sldns_ede_code reason_bogus;
 	/** list of algorithms signalled, ends with 0, or NULL */
 	uint8_t* algo;
 	/** DNS RR type of the rrset data (host order) */
@@ -117,9 +120,11 @@ struct key_entry_key* key_entry_copy_toregion(struct key_entry_key* kkey,
 /**
  * Copy a key entry, malloced.
  * @param kkey: the key entry key (and data pointer) to copy.
+ * @param copy_reason: if the reason string needs to be copied (allocated).
  * @return newly allocated entry or NULL on a failure to allocate memory.
  */
-struct key_entry_key* key_entry_copy(struct key_entry_key* kkey);
+struct key_entry_key* key_entry_copy(struct key_entry_key* kkey,
+	int copy_reason);
 
 /**
  * See if this is a null entry. Does not do locking.
@@ -143,14 +148,6 @@ int key_entry_isgood(struct key_entry_key* kkey);
 int key_entry_isbad(struct key_entry_key* kkey);
 
 /**
- * Set reason why a key is bad.
- * @param kkey: bad key.
- * @param reason: string to attach, you must allocate it.
- *    Not safe to call twice unless you deallocate it yourself.
- */
-void key_entry_set_reason(struct key_entry_key* kkey, char* reason);
-
-/**
  * Get reason why a key is bad.
  * @param kkey: bad key
  * @return pointer to string.
@@ -159,17 +156,27 @@ void key_entry_set_reason(struct key_entry_key* kkey, char* reason);
 char* key_entry_get_reason(struct key_entry_key* kkey);
 
 /**
+ * Get the EDE (RFC8914) code why a key is bad. Can return LDNS_EDE_NONE.
+ * @param kkey: bad key
+ * @return the ede code.
+ */
+sldns_ede_code key_entry_get_reason_bogus(struct key_entry_key* kkey);
+
+/**
  * Create a null entry, in the given region.
  * @param region: where to allocate
  * @param name: the key name
  * @param namelen: length of name
  * @param dclass: class of key entry. (host order);
  * @param ttl: what ttl should the key have. relative.
+ * @param reason_bogus: accompanying EDE code.
+ * @param reason: accompanying NULL-terminated EDE string (or NULL).
  * @param now: current time (added to ttl).
  * @return new key entry or NULL on alloc failure
  */
 struct key_entry_key* key_entry_create_null(struct regional* region,
-	uint8_t* name, size_t namelen, uint16_t dclass, time_t ttl, 
+	uint8_t* name, size_t namelen, uint16_t dclass, time_t ttl,
+	sldns_ede_code reason_bogus, const char* reason,
 	time_t now);
 
 /**
@@ -180,12 +187,16 @@ struct key_entry_key* key_entry_create_null(struct regional* region,
  * @param dclass: class of key entry. (host order);
  * @param rrset: data for key entry. This is copied to the region.
  * @param sigalg: signalled algorithm list (or NULL).
+ * @param reason_bogus: accompanying EDE code (usually LDNS_EDE_NONE).
+ * @param reason: accompanying NULL-terminated EDE string (or NULL).
  * @param now: current time (added to ttl of rrset)
  * @return new key entry or NULL on alloc failure
  */
 struct key_entry_key* key_entry_create_rrset(struct regional* region,
-        uint8_t* name, size_t namelen, uint16_t dclass, 
-	struct ub_packed_rrset_key* rrset, uint8_t* sigalg, time_t now);
+	uint8_t* name, size_t namelen, uint16_t dclass,
+	struct ub_packed_rrset_key* rrset, uint8_t* sigalg,
+	sldns_ede_code reason_bogus, const char* reason,
+	time_t now);
 
 /**
  * Create a bad entry, in the given region.
@@ -194,11 +205,14 @@ struct key_entry_key* key_entry_create_rrset(struct regional* region,
  * @param namelen: length of name
  * @param dclass: class of key entry. (host order);
  * @param ttl: what ttl should the key have. relative.
+ * @param reason_bogus: accompanying EDE code.
+ * @param reason: accompanying NULL-terminated EDE string (or NULL).
  * @param now: current time (added to ttl).
  * @return new key entry or NULL on alloc failure
  */
 struct key_entry_key* key_entry_create_bad(struct regional* region,
 	uint8_t* name, size_t namelen, uint16_t dclass, time_t ttl,
+	sldns_ede_code reason_bogus, const char* reason,
 	time_t now);
 
 /**

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/04/07 22:31:37 christos Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2024/02/29 11:38:37 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,12 @@ FILESDIR= /usr/share/examples/dhcp
 FILES=	dhcpd.conf
 .endif
 
+.if !empty(MACHINE_ARCH:Msh3*) || ${MACHINE_ARCH} == "m68000"
+COPTS.ddns.c +=		${CC_WNO_STRINGOP_OVERFLOW}
+.endif
+
 COPTS.omapi.c +=	-Wno-stack-protector
+COPTS.confpars.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.mdb6.c+=		${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>

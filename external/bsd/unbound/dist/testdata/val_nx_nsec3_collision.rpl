@@ -7,6 +7,7 @@ server:
 	qname-minimisation: "no"
 	fake-sha1: yes
 	trust-anchor-signaling: no
+	rrset-roundrobin: no
 
 stub-zone:
 	name: "."
@@ -154,6 +155,9 @@ REPLY RD DO
 SECTION QUESTION
 www.example.com. IN A
 ENTRY_END
+
+; Allow validation resuming for NSEC3 hash calculations
+STEP 2 TIME_PASSES ELAPSE 0.05
 
 ; recursion happens here.
 STEP 10 CHECK_ANSWER

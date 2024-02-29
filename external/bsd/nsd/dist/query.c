@@ -218,7 +218,9 @@ query_reset(query_type *q, size_t maxlen, int is_tcp)
 	 *     one proof per wildcard and for nx domain).
 	 */
 	region_free_all(q->region);
-	q->addrlen = sizeof(q->addr);
+	q->remote_addrlen = (socklen_t)sizeof(q->remote_addr);
+	q->client_addrlen = (socklen_t)sizeof(q->client_addr);
+	q->is_proxied = 0;
 	q->maxlen = maxlen;
 	q->reserved_space = 0;
 	buffer_clear(q->packet);
@@ -244,6 +246,13 @@ query_reset(query_type *q, size_t maxlen, int is_tcp)
 	q->axfr_current_domain = NULL;
 	q->axfr_current_rrset = NULL;
 	q->axfr_current_rr = 0;
+
+	q->ixfr_is_done = 0;
+	q->ixfr_data = NULL;
+	q->ixfr_count_newsoa = 0;
+	q->ixfr_count_oldsoa = 0;
+	q->ixfr_count_del = 0;
+	q->ixfr_count_add = 0;
 
 #ifdef RATELIMIT
 	q->wildcard_domain = NULL;
@@ -335,7 +344,7 @@ process_edns(nsd_type* nsd, struct query *q)
 		if (!q->tcp && q->edns.maxlen > UDP_MAX_MESSAGE_LEN) {
 			size_t edns_size;
 #if defined(INET6)
-			if (q->addr.ss_family == AF_INET6) {
+			if (q->client_addr.ss_family == AF_INET6) {
 				edns_size = nsd->ipv6_edns_size;
 			} else
 #endif
@@ -354,7 +363,7 @@ process_edns(nsd_type* nsd, struct query *q)
 			 * IPv6 will not automatically fragment in
 			 * this case (unlike IPv4).
 			 */
-			if (q->addr.ss_family == AF_INET6
+			if (q->client_addr.ss_family == AF_INET6
 			    && q->maxlen > IPV6_MIN_MTU)
 			{
 				q->maxlen = IPV6_MIN_MTU;
@@ -382,7 +391,7 @@ process_tsig(struct query* q)
 	if(q->tsig.status == TSIG_OK) {
 		if(!tsig_from_query(&q->tsig)) {
 			char a[128];
-			addr2str(&q->addr, a, sizeof(a));
+			addr2str(&q->client_addr, a, sizeof(a));
 			log_msg(LOG_ERR, "query: bad tsig (%s) for key %s from %s",
 				tsig_error(q->tsig.error_code),
 				dname_to_string(q->tsig.key_name, NULL), a);
@@ -394,7 +403,7 @@ process_tsig(struct query* q)
 		tsig_update(&q->tsig, q->packet, buffer_limit(q->packet));
 		if(!tsig_verify(&q->tsig)) {
 			char a[128];
-			addr2str(&q->addr, a, sizeof(a));
+			addr2str(&q->client_addr, a, sizeof(a));
 			log_msg(LOG_ERR, "query: bad tsig signature for key %s from %s",
 				dname_to_string(q->tsig.key->name, NULL), a);
 			return NSD_RC_NOTAUTH;
@@ -435,6 +444,24 @@ answer_notify(struct nsd* nsd, struct query *query)
 		return query_error(query, rc);
 
 	/* check if it passes acl */
+	if(query->is_proxied && acl_check_incoming_block_proxy(
+		zone_opt->pattern->allow_notify, query, &why) == -1) {
+		/* the proxy address is blocked */
+		if (verbosity >= 2) {
+			char address[128], proxy[128];
+			addr2str(&query->client_addr, address, sizeof(address));
+			addr2str(&query->remote_addr, proxy, sizeof(proxy));
+			VERBOSITY(2, (LOG_INFO, "notify for %s from %s via proxy %s refused because of proxy, %s %s",
+				dname_to_string(query->qname, NULL),
+				address, proxy,
+				(why?why->ip_address_spec:"."),
+				(why ? ( why->nokey    ? "NOKEY"
+				       : why->blocked  ? "BLOCKED"
+				       : why->key_name )
+				     : "no acl matches")));
+		}
+		return query_error(query, NSD_RC_REFUSE);
+	}
 	if((acl_num = acl_check_incoming(zone_opt->pattern->allow_notify, query,
 		&why)) != -1)
 	{
@@ -476,7 +503,7 @@ answer_notify(struct nsd* nsd, struct query *query)
 		if(verbosity >= 1) {
 			uint32_t serial = 0;
 			char address[128];
-			addr2str(&query->addr, address, sizeof(address));
+			addr2str(&query->client_addr, address, sizeof(address));
 			if(packet_find_notify_serial(query->packet, &serial))
 			  VERBOSITY(1, (LOG_INFO, "notify for %s from %s serial %u",
 				dname_to_string(query->qname, NULL), address,
@@ -503,12 +530,15 @@ answer_notify(struct nsd* nsd, struct query *query)
 
 	if (verbosity >= 2) {
 		char address[128];
-		addr2str(&query->addr, address, sizeof(address));
-		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s%s",
+		addr2str(&query->client_addr, address, sizeof(address));
+		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s %s",
 			dname_to_string(query->qname, NULL),
 			address,
-			why?why->key_name:"no acl matches",
-			why?why->ip_address_spec:"."));
+			(why?why->ip_address_spec:"."),
+			(why ? ( why->nokey    ? "NOKEY"
+			       : why->blocked  ? "BLOCKED"
+			       : why->key_name )
+			     : "no acl matches")));
 	}
 
 	return query_error(query, NSD_RC_REFUSE);
@@ -530,13 +560,20 @@ answer_chaos(struct nsd *nsd, query_type *q)
 		    (q->qname->name_size ==  15
 		     && memcmp(dname_name(q->qname), "\010hostname\004bind", 15) == 0))
 		{
-			/* Add ID */
-			query_addtxt(q,
+			if(!nsd->options->hide_identity) {
+				/* Add ID */
+				query_addtxt(q,
 				     buffer_begin(q->packet) + QHEADERSZ,
 				     CLASS_CH,
 				     0,
 				     nsd->identity);
-			ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+				ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+			} else {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+				/* RFC8914 - Extended DNS Errors
+				 * 4.19. Extended DNS Error Code 18 - Prohibited */
+				q->edns.ede = EDE_PROHIBITED;
+			}
 		} else if ((q->qname->name_size == 16
 			    && memcmp(dname_name(q->qname), "\007version\006server", 16) == 0) ||
 			   (q->qname->name_size == 14
@@ -552,13 +589,23 @@ answer_chaos(struct nsd *nsd, query_type *q)
 				ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
 			} else {
 				RCODE_SET(q->packet, RCODE_REFUSE);
+				/* RFC8914 - Extended DNS Errors
+				 * 4.19. Extended DNS Error Code 18 - Prohibited */
+				q->edns.ede = EDE_PROHIBITED;
 			}
 		} else {
 			RCODE_SET(q->packet, RCODE_REFUSE);
+			/* RFC8914 - Extended DNS Errors
+			 * 4.22. Extended DNS Error Code 21 - Not Supported */
+			q->edns.ede = EDE_NOT_SUPPORTED;
+
 		}
 		break;
 	default:
 		RCODE_SET(q->packet, RCODE_REFUSE);
+		/* RFC8914 - Extended DNS Errors
+		 * 4.22. Extended DNS Error Code 21 - Not Supported */
+		q->edns.ede = EDE_NOT_SUPPORTED;
 		break;
 	}
 
@@ -721,7 +768,7 @@ add_rrset(struct query   *query,
 #if defined(INET6)
 		/* if query over IPv6, swap A and AAAA; put AAAA first */
 		add_additional_rrsets(query, answer, rrset, 0, 1,
-			(query->addr.ss_family == AF_INET6)?
+			(query->client_addr.ss_family == AF_INET6)?
 			swap_aaaa_additional_rr_types:
 			default_additional_rr_types);
 #else
@@ -767,14 +814,29 @@ query_synthesize_cname(struct query* q, struct answer* answer, const dname_type*
 	   their (not allocated yet) parents */
 	/* any domains below src are not_existing (because of DNAME at src) */
 	int i;
+	size_t j;
 	domain_type* cname_domain;
 	domain_type* cname_dest;
 	rrset_type* rrset;
 
-	/* allocate source part */
 	domain_type* lastparent = src;
 	assert(q && answer && from_name && to_name && src && to_closest_encloser);
 	assert(to_closest_match);
+
+	/* check for loop by duplicate CNAME rrset synthesized */
+	for(j=0; j<answer->rrset_count; ++j) {
+		if(answer->section[j] == ANSWER_SECTION &&
+			answer->rrsets[j]->rr_count == 1 &&
+			answer->rrsets[j]->rrs[0].type == TYPE_CNAME &&
+			dname_compare(domain_dname(answer->rrsets[j]->rrs[0].owner), from_name) == 0 &&
+			answer->rrsets[j]->rrs[0].rdata_count == 1 &&
+			dname_compare(domain_dname(answer->rrsets[j]->rrs[0].rdatas->domain), to_name) == 0) {
+			DEBUG(DEBUG_QUERY,2, (LOG_INFO, "loop for synthesized CNAME rrset for query %s", dname_to_string(q->qname, NULL)));
+			return 0;
+		}
+	}
+
+	/* allocate source part */
 	for(i=0; i < from_name->label_count - domain_dname(src)->label_count; i++)
 	{
 		domain_type* newdom = query_get_tempdomain(q);
@@ -840,7 +902,9 @@ query_synthesize_cname(struct query* q, struct answer* answer, const dname_type*
 	rrset->rrs->rdatas->domain = cname_dest;
 
 	if(!add_rrset(q, answer, ANSWER_SECTION, cname_domain, rrset)) {
-		log_msg(LOG_ERR, "could not add synthesized CNAME rrset to packet");
+		DEBUG(DEBUG_QUERY,2, (LOG_INFO, "could not add synthesized CNAME rrset to packet for query %s", dname_to_string(q->qname, NULL)));
+		/* failure to add CNAME; likely is a loop, the same twice */
+		return 0;
 	}
 
 	return cname_dest->number;
@@ -914,9 +978,7 @@ answer_soa(struct query *query, answer_type *answer)
 static void
 answer_nodata(struct query *query, answer_type *answer, domain_type *original)
 {
-	if (query->cname_count == 0) {
-		answer_soa(query, answer);
-	}
+	answer_soa(query, answer);
 
 #ifdef NSEC3
 	if (query->edns.dnssec_ok && query->zone->nsec3_param) {
@@ -953,7 +1015,16 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 	rrset_type *rrset;
 
 	if (q->qtype == TYPE_ANY) {
-		int added = 0;
+		rrset_type *preferred_rrset = NULL;
+		rrset_type *normal_rrset = NULL;
+		rrset_type *non_preferred_rrset = NULL;
+
+		/*
+		 * Minimize response size for ANY, with one RRset
+		 * according to RFC 8482(4.1).
+		 * Prefers popular and not large rtypes (A,AAAA,...)
+		 * lowering large ones (DNSKEY,RRSIG,...).
+		 */
 		for (rrset = domain_find_any_rrset(domain, q->zone); rrset; rrset = rrset->next) {
 			if (rrset->zone == q->zone
 #ifdef NSEC3
@@ -968,14 +1039,32 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 				 && zone_is_secure(q->zone)
 				 && rrset_rrtype(rrset) == TYPE_RRSIG))
 			{
-				add_rrset(q, answer, ANSWER_SECTION, domain, rrset);
-				++added;
-				/* minimize response size with one RR,
-				 * according to RFC 8482(4.1). */
-				break;
+				switch(rrset_rrtype(rrset)) {
+					case TYPE_A:
+					case TYPE_AAAA:
+					case TYPE_SOA:
+					case TYPE_MX:
+					case TYPE_PTR:
+						preferred_rrset = rrset;
+						break;
+					case TYPE_DNSKEY:
+					case TYPE_RRSIG:
+					case TYPE_NSEC:
+						non_preferred_rrset = rrset;
+						break;
+					default:
+						normal_rrset = rrset;
+				}
+				if (preferred_rrset) break;
 			}
 		}
-		if (added == 0) {
+		if (preferred_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, preferred_rrset);
+		} else if (normal_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, normal_rrset);
+		} else if (non_preferred_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, non_preferred_rrset);
+		} else {
 			answer_nodata(q, answer, original);
 			return;
 		}
@@ -1045,6 +1134,7 @@ answer_authoritative(struct nsd   *nsd,
 	domain_type *match;
 	domain_type *original = closest_match;
 	domain_type *dname_ce;
+	domain_type *wildcard_child;
 	rrset_type *rrset;
 
 #ifdef NSEC3
@@ -1065,8 +1155,11 @@ answer_authoritative(struct nsd   *nsd,
 	} else if ((rrset=domain_find_rrset(closest_encloser, q->zone, TYPE_DNAME))) {
 		/* process DNAME */
 		const dname_type* name = qname;
+		domain_type* src = closest_encloser;
 		domain_type *dest = rdata_atom_domain(rrset->rrs[0].rdatas[0]);
-		int added;
+		const dname_type* newname;
+		size_t newnum = 0;
+		zone_type* origzone = q->zone;
 		assert(rrset->rr_count > 0);
 		if(domain_number != 0) /* we followed CNAMEs or DNAMEs */
 			name = domain_dname(closest_match);
@@ -1075,43 +1168,49 @@ answer_authoritative(struct nsd   *nsd,
 			domain_to_string(closest_encloser)));
 		DEBUG(DEBUG_QUERY,2, (LOG_INFO, "->dest is %s",
 			domain_to_string(dest)));
-		/* if the DNAME set is not added we have a loop, do not follow */
-		added = add_rrset(q, answer, ANSWER_SECTION, closest_encloser, rrset);
-		if(added) {
-			domain_type* src = closest_encloser;
-			const dname_type* newname = dname_replace(q->region, name,
-				domain_dname(src), domain_dname(dest));
-			size_t newnum = 0;
-			zone_type* origzone = q->zone;
-			++q->cname_count;
-			if(!newname) { /* newname too long */
-				RCODE_SET(q->packet, RCODE_YXDOMAIN);
+		if(!add_rrset(q, answer, ANSWER_SECTION, closest_encloser, rrset)) {
+			/* stop if DNAME loops, when added second time */
+			if(dname_is_subdomain(domain_dname(dest), domain_dname(src))) {
 				return;
 			}
-			DEBUG(DEBUG_QUERY,2, (LOG_INFO, "->result is %s", dname_to_string(newname, NULL)));
-			/* follow the DNAME */
-			(void)namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
-			/* synthesize CNAME record */
-			newnum = query_synthesize_cname(q, answer, name, newname,
-				src, closest_encloser, &closest_match, rrset->rrs[0].ttl);
-			if(!newnum) {
-				/* could not synthesize the CNAME. */
-				/* return previous CNAMEs to make resolver recurse for us */
-				return;
-			}
-
-			answer_lookup_zone(nsd, q, answer, newnum,
-				closest_match == closest_encloser,
-				closest_match, closest_encloser, newname);
-			q->zone = origzone;
 		}
-		if(!added)  /* log the error so operator can find looping recursors */
-			log_msg(LOG_INFO, "DNAME processing stopped due to loop, qname %s",
-				dname_to_string(q->qname, NULL));
+		newname = dname_replace(q->region, name,
+			domain_dname(src), domain_dname(dest));
+		++q->cname_count;
+		if(!newname) { /* newname too long */
+			RCODE_SET(q->packet, RCODE_YXDOMAIN);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.21. Extended DNS Error Code 0 - Other */
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(q->edns.ede,
+				EDE_OTHER, "DNAME expansion became too large");
+			return;
+		}
+		DEBUG(DEBUG_QUERY,2, (LOG_INFO, "->result is %s", dname_to_string(newname, NULL)));
+		/* follow the DNAME */
+		(void)namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
+		/* synthesize CNAME record */
+		newnum = query_synthesize_cname(q, answer, name, newname,
+			src, closest_encloser, &closest_match, rrset->rrs[0].ttl);
+		if(!newnum) {
+			/* could not synthesize the CNAME. */
+			/* return previous CNAMEs to make resolver recurse for us */
+			return;
+		}
+		if(q->qtype == TYPE_CNAME) {
+			/* The synthesized CNAME is the answer to
+			 * that query, same as BIND does for query
+			 * of type CNAME */
+			return;
+		}
+
+		answer_lookup_zone(nsd, q, answer, newnum,
+			closest_match == closest_encloser,
+			closest_match, closest_encloser, newname);
+		q->zone = origzone;
 		return;
-	} else if (domain_wildcard_child(closest_encloser)) {
+	} else if ((wildcard_child=domain_wildcard_child(closest_encloser))!=NULL &&
+		wildcard_child->is_existing) {
 		/* Generate the domain from the wildcard.  */
-		domain_type *wildcard_child = domain_wildcard_child(closest_encloser);
 #ifdef RATELIMIT
 		q->wildcard_domain = wildcard_child;
 #endif
@@ -1215,20 +1314,102 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	size_t domain_number, int exact, domain_type *closest_match,
 	domain_type *closest_encloser, const dname_type *qname)
 {
+	zone_type* origzone = q->zone;
 	q->zone = domain_find_zone(nsd->db, closest_encloser);
 	if (!q->zone) {
 		/* no zone for this */
-		if(q->cname_count == 0)
+		if(q->cname_count == 0) {
 			RCODE_SET(q->packet, RCODE_REFUSE);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.21. Extended DNS Error Code 20 - Not Authoritative */
+			q->edns.ede = EDE_NOT_AUTHORITATIVE;
+		}
 		return;
 	}
 	assert(closest_encloser); /* otherwise, no q->zone would be found */
+	if(q->zone->opts && q->zone->opts->pattern
+	&& q->zone->opts->pattern->allow_query) {
+		struct acl_options *why = NULL;
+
+		/* check if it passes acl */
+		if(q->is_proxied && acl_check_incoming_block_proxy(
+			q->zone->opts->pattern->allow_query, q, &why) == -1) {
+			/* the proxy address is blocked */
+			if (verbosity >= 2) {
+				char address[128], proxy[128];
+				addr2str(&q->client_addr, address, sizeof(address));
+				addr2str(&q->remote_addr, proxy, sizeof(proxy));
+				VERBOSITY(2, (LOG_INFO, "query %s from %s via proxy %s refused because of proxy, %s %s",
+					dname_to_string(q->qname, NULL),
+					address, proxy,
+					(why?why->ip_address_spec:"."),
+					(why ? ( why->nokey    ? "NOKEY"
+					      : why->blocked  ? "BLOCKED"
+					      : why->key_name )
+					    : "no acl matches")));
+			}
+			/* no zone for this */
+			if(q->cname_count == 0) {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+				/* RFC8914 - Extended DNS Errors
+				 * 4.19. Extended DNS Error Code 18 - Prohibited */
+				q->edns.ede = EDE_PROHIBITED;
+			}
+			return;
+		}
+		if(acl_check_incoming(
+		   q->zone->opts->pattern->allow_query, q, &why) != -1) {
+			assert(why);
+			DEBUG(DEBUG_QUERY,1, (LOG_INFO, "query %s passed acl %s %s",
+				dname_to_string(q->qname, NULL),
+				why->ip_address_spec,
+				why->nokey?"NOKEY":
+				(why->blocked?"BLOCKED":why->key_name)));
+		} else {
+			if (verbosity >= 2) {
+				char address[128];
+				addr2str(&q->client_addr, address, sizeof(address));
+				VERBOSITY(2, (LOG_INFO, "query %s from %s refused, %s %s",
+					dname_to_string(q->qname, NULL),
+					address,
+					why ? ( why->nokey    ? "NOKEY"
+					      : why->blocked  ? "BLOCKED"
+					      : why->key_name )
+					    : "no acl matches",
+					why?why->ip_address_spec:"."));
+			}
+			/* no zone for this */
+			if(q->cname_count == 0) {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+				/* RFC8914 - Extended DNS Errors
+				 * 4.19. Extended DNS Error Code 18 - Prohibited */
+				q->edns.ede = EDE_PROHIBITED;
+			}
+			return;
+		}
+	}
 	if(!q->zone->apex || !q->zone->soa_rrset) {
 		/* zone is configured but not loaded */
-		if(q->cname_count == 0)
+		if(q->cname_count == 0) {
 			RCODE_SET(q->packet, RCODE_SERVFAIL);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.15. Extended DNS Error Code 14 - Not Ready */
+			q->edns.ede = EDE_NOT_READY;
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(q->edns.ede,
+			    EDE_NOT_READY, "Zone is configured but not loaded");
+		}
 		return;
 	}
+
+	/*
+	 * If confine-to-zone is set to yes do not return additional
+	 * information for a zone with a different apex from the query zone.
+	*/
+	if (nsd->options->confine_to_zone &&
+	   (origzone != NULL && dname_compare(domain_dname(origzone->apex), domain_dname(q->zone->apex)) != 0)) {
+		return;
+	}
+
 	/* now move up the closest encloser until it exists, previous
 	 * (possibly empty) closest encloser was useful to finding the zone
 	 * (for empty zones too), but now we want actual data nodes */
@@ -1253,8 +1434,14 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 			q->zone = zone;
 			if(!q->zone->apex || !q->zone->soa_rrset) {
 				/* zone is configured but not loaded */
-				if(q->cname_count == 0)
+				if(q->cname_count == 0) {
 					RCODE_SET(q->packet, RCODE_SERVFAIL);
+					/* RFC 8914 - Extended DNS Errors
+					 * 4.15. Extended DNS Error Code 14 - Not Ready */
+					ASSIGN_EDE_CODE_AND_STRING_LITERAL(
+					   q->edns.ede, EDE_NOT_READY,
+					   "Zone is configured but not loaded");
+				}
 				return;
 			}
 		}
@@ -1263,8 +1450,13 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	/* see if the zone has expired (for secondary zones) */
 	if(q->zone && q->zone->opts && q->zone->opts->pattern &&
 		q->zone->opts->pattern->request_xfr != 0 && !q->zone->is_ok) {
-		if(q->cname_count == 0)
+		if(q->cname_count == 0) {
 			RCODE_SET(q->packet, RCODE_SERVFAIL);
+			/* RFC 8914 - Extended DNS Errors
+			 * 4.25. Extended DNS Error Code 24 - Invalid Data */
+			ASSIGN_EDE_CODE_AND_STRING_LITERAL(q->edns.ede,
+				EDE_INVALID_DATA, "Zone has expired");
+		}
 		return;
 	}
 
@@ -1287,6 +1479,7 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 		}
 
 		if (!q->delegation_domain
+		    || !q->delegation_rrset
 		    || (exact && q->qtype == TYPE_DS && closest_encloser == q->delegation_domain))
 		{
 			if (q->qclass == CLASS_ANY) {
@@ -1358,7 +1551,7 @@ query_prepare_response(query_type *q)
  *
  */
 query_state_type
-query_process(query_type *q, nsd_type *nsd)
+query_process(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	/* The query... */
 	nsd_rc_type rc;
@@ -1381,6 +1574,8 @@ query_process(query_type *q, nsd_type *nsd)
 	q->opcode = OPCODE(q->packet);
 	if(q->opcode != OPCODE_QUERY && q->opcode != OPCODE_NOTIFY) {
 		if(query_ratelimit_err(nsd))
+			return QUERY_DISCARDED;
+		if(nsd->options->drop_updates && q->opcode == OPCODE_UPDATE)
 			return QUERY_DISCARDED;
 		return query_error(q, NSD_RC_IMPL);
 	}
@@ -1406,6 +1601,25 @@ query_process(query_type *q, nsd_type *nsd)
 
 	/* Dont bother to answer more than one question at once... */
 	if (QDCOUNT(q->packet) != 1) {
+		if(QDCOUNT(q->packet) == 0 && ANCOUNT(q->packet) == 0 &&
+			NSCOUNT(q->packet) == 0 && ARCOUNT(q->packet) == 1 &&
+			buffer_limit(q->packet) >= QHEADERSZ+OPT_LEN+
+			OPT_RDATA) {
+			/* add edns section to answer */
+			buffer_set_position(q->packet, QHEADERSZ);
+			if (edns_parse_record(&q->edns, q->packet, q, nsd)) {
+				if(process_edns(nsd, q) == NSD_RC_OK) {
+					int opcode = OPCODE(q->packet);
+					(void)query_error(q, NSD_RC_FORMAT);
+					query_add_optional(q, nsd, now_p);
+					FLAGS_SET(q->packet, FLAGS(q->packet) & 0x0100U);
+						/* Preserve the RD flag. Clear the rest. */
+					OPCODE_SET(q->packet, opcode);
+					QR_SET(q->packet);
+					return QUERY_PROCESSED;
+				}
+			}
+		}
 		FLAGS_SET(q->packet, 0);
 		return query_formerr(q, nsd);
 	}
@@ -1418,29 +1632,31 @@ query_process(query_type *q, nsd_type *nsd)
 		return query_formerr(q, nsd);
 	}
 	if(q->qtype==TYPE_IXFR && NSCOUNT(q->packet) > 0) {
-		int i; /* skip ixfr soa information data here */
-		for(i=0; i< NSCOUNT(q->packet); i++)
+		unsigned int i; /* skip ixfr soa information data here */
+		unsigned int nscount = (unsigned)NSCOUNT(q->packet);
+		/* define a bound on the number of extraneous records allowed,
+		 * we expect 1, a SOA serial record, and no more.
+		 * perhaps RRSIGs (but not needed), otherwise we do not
+		 * understand what this means.  We do not want too many
+		 * because the high iteration counts slow down. */
+		if(nscount > 64) return query_formerr(q, nsd);
+		for(i=0; i< nscount; i++)
 			if(!packet_skip_rr(q->packet, 0))
 				return query_formerr(q, nsd);
 	}
 
 	arcount = ARCOUNT(q->packet);
-	if (arcount > 0) {
-		/* According to draft-ietf-dnsext-rfc2671bis-edns0-10:
-		 * "The placement flexibility for the OPT RR does not
-		 * override the need for the TSIG or SIG(0) RRs to be
-		 * the last in the additional section whenever they are
-		 * present."
-		 * So we should not have to check for TSIG RR before
-		 * OPT RR. Keep the code for backwards compatibility.
-		 */
-
-		/* see if tsig is before edns record */
-		if (!tsig_parse_rr(&q->tsig, q->packet))
-			return query_formerr(q, nsd);
-		if(q->tsig.status != TSIG_NOT_PRESENT)
-			--arcount;
-	}
+	/* A TSIG RR is not allowed before the EDNS OPT RR.
+	 * In RFC6891 (about EDNS) it says:
+	 * "The placement flexibility for the OPT RR does not
+	 * override the need for the TSIG or SIG(0) RRs to be
+	 * the last in the additional section whenever they are
+	 * present."
+	 * And in RFC8945 (about TSIG) it says:
+	 * "If multiple TSIG records are detected or a TSIG record is
+	 * present in any other position, the DNS message is dropped
+	 * and a response with RCODE 1 (FORMERR) MUST be returned."
+	 */
 	/* See if there is an OPT RR. */
 	if (arcount > 0) {
 		if (edns_parse_record(&q->edns, q->packet, q, nsd))
@@ -1479,8 +1695,21 @@ query_process(query_type *q, nsd_type *nsd)
 		 * BADVERS is created with Ext. RCODE, followed by RCODE.
 		 * Ext. RCODE is set to 1, RCODE must be 0 (getting 0x10 = 16).
 		 * Thus RCODE = NOERROR = NSD_RC_OK. */
-		return query_error(q, NSD_RC_OK);
+		RCODE_SET(q->packet, NSD_RC_OK);
+		buffer_clear(q->packet);
+		buffer_set_position(q->packet,
+			QHEADERSZ + 4 + q->qname->name_size);
+		QR_SET(q->packet);
+		AD_CLR(q->packet);
+		QDCOUNT_SET(q->packet, 1);
+		ANCOUNT_SET(q->packet, 0);
+		NSCOUNT_SET(q->packet, 0);
+		ARCOUNT_SET(q->packet, 0);
+		return QUERY_PROCESSED;
 	}
+
+	if (q->edns.cookie_status == COOKIE_UNVERIFIED)
+		cookie_verify(q, nsd, now_p);
 
 	query_prepare_response(q);
 
@@ -1488,12 +1717,15 @@ query_process(query_type *q, nsd_type *nsd)
 		if (q->qclass == CLASS_CH) {
 			return answer_chaos(nsd, q);
 		} else {
-			return query_error(q, NSD_RC_REFUSE);
+			/* RFC8914 - Extended DNS Errors
+			 * 4.22. Extended DNS Error Code 21 - Not Supported */
+			q->edns.ede = EDE_NOT_SUPPORTED;
+			return query_error(q, RCODE_REFUSE);
 		}
 	}
-
 	query_state = answer_axfr_ixfr(nsd, q);
-	if (query_state == QUERY_PROCESSED || query_state == QUERY_IN_AXFR) {
+	if (query_state == QUERY_PROCESSED || query_state == QUERY_IN_AXFR
+		|| query_state == QUERY_IN_IXFR) {
 		return query_state;
 	}
 	if(q->qtype == TYPE_ANY && nsd->options->refuse_any && !q->tcp) {
@@ -1507,11 +1739,11 @@ query_process(query_type *q, nsd_type *nsd)
 }
 
 void
-query_add_optional(query_type *q, nsd_type *nsd)
+query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	struct edns_data *edns = &nsd->edns_ipv4;
 #if defined(INET6)
-	if (q->addr.ss_family == AF_INET6) {
+	if (q->client_addr.ss_family == AF_INET6) {
 		edns = &nsd->edns_ipv6;
 	}
 #endif
@@ -1525,6 +1757,14 @@ query_add_optional(query_type *q, nsd_type *nsd)
 		if (q->edns.dnssec_ok)	edns->ok[7] = 0x80;
 		else			edns->ok[7] = 0x00;
 		buffer_write(q->packet, edns->ok, OPT_LEN);
+
+		/* Add Extended DNS Error (RFC8914)
+		 * to verify that we stay in bounds */
+		if (q->edns.ede >= 0)
+			q->edns.opt_reserved_space +=
+				6 + ( q->edns.ede_text_len
+			            ? q->edns.ede_text_len : 0);
+
 		if(q->edns.opt_reserved_space == 0 || !buffer_available(
 			q->packet, 2+q->edns.opt_reserved_space)) {
 			/* fill with NULLs */
@@ -1538,6 +1778,29 @@ query_add_optional(query_type *q, nsd_type *nsd)
 				buffer_write(q->packet, edns->nsid, OPT_HDR);
 				/* nsid payload */
 				buffer_write(q->packet, nsd->nsid, nsd->nsid_len);
+			}
+			if(q->edns.cookie_status != COOKIE_NOT_PRESENT) {
+				/* cookie opt header */
+				buffer_write(q->packet, edns->cookie, OPT_HDR);
+				/* cookie payload */
+				cookie_create(q, nsd, now_p);
+				buffer_write(q->packet, q->edns.cookie, 24);
+			}
+			/* Append Extended DNS Error (RFC8914) option if needed */
+			if (q->edns.ede >= 0) { /* < 0 means no EDE */
+				/* OPTION-CODE */
+				buffer_write_u16(q->packet, EDE_CODE);
+				/* OPTION-LENGTH */
+				buffer_write_u16(q->packet,
+					2 + ( q->edns.ede_text_len
+					    ? q->edns.ede_text_len : 0));
+				/* INFO-CODE */
+				buffer_write_u16(q->packet, q->edns.ede);
+				/* EXTRA-TEXT */
+				if (q->edns.ede_text_len)
+					buffer_write(q->packet,
+							q->edns.ede_text,
+							q->edns.ede_text_len);
 			}
 		}
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) + 1);

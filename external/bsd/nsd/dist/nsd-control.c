@@ -42,11 +42,26 @@
  */
 
 #include "config.h"
-#ifdef HAVE_SSL
+#include <stdio.h>
+#include <stdlib.h>
+
+struct region;
+struct domain_table;
+struct zone;
+struct domain;
+int zonec_parse_string(struct region* ATTR_UNUSED(region),
+	struct domain_table* ATTR_UNUSED(domains),
+	struct zone* ATTR_UNUSED(zone), char* ATTR_UNUSED(str),
+	struct domain** ATTR_UNUSED(parsed), int* ATTR_UNUSED(num_rrs))
+{
+	return 0;
+}
 
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#ifdef HAVE_SSL
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
 #endif
@@ -56,16 +71,30 @@
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
 #endif
+#endif /* HAVE_SSL */
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+#include <fcntl.h>
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
 #endif
 #include "util.h"
 #include "tsig.h"
 #include "options.h"
+#include "zonec.h"
 
-static void usage() ATTR_NORETURN;
+static void usage(void) ATTR_NORETURN;
+#ifdef HAVE_SSL
 static void ssl_err(const char* s) ATTR_NORETURN;
 static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+#else
+/* define SSL to use as a boolean to turn it off in function calls. */
+#define SSL int
+#endif
+
+/** timeout to wait for connection over stream, in msec */
+#define NSD_CONTROL_CONNECT_TIMEOUT 5000
 
 /** Give nsd-control usage, and exit (1). */
 static void
@@ -106,9 +135,14 @@ usage()
 	printf("  add_tsig <name> <secret> [algo] add new key with the given parameters\n");
 	printf("  assoc_tsig <zone> <key_name>	associate <zone> with given tsig <key_name> name\n");
 	printf("  del_tsig <key_name>		delete tsig <key_name> from configuration\n");
+	printf("  add_cookie_secret <secret>	add (or replace) a new cookie secret <secret>\n");
+	printf("  drop_cookie_secret		drop a staging cookie secret\n");
+	printf("  activate_cookie_secret	make a staging cookie secret active\n");
+	printf("  print_cookie_secrets		show all cookie secrets with their status\n");
 	exit(1);
 }
 
+#ifdef HAVE_SSL
 /** exit with ssl error */
 static void ssl_err(const char* s)
 {
@@ -122,9 +156,7 @@ static void ssl_path_err(const char* s, const char *path)
 {
 	unsigned long err;
 	err = ERR_peek_error();
-	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
-		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
-		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS) {
 		fprintf(stderr, "error: %s\n%s: %s\n",
 			s, path, ERR_reason_error_string(err));
 		exit(1);
@@ -157,12 +189,20 @@ setup_ctx(struct nsd_options* cfg)
         ctx = SSL_CTX_new(SSLv23_client_method());
 	if(!ctx)
 		ssl_err("could not allocate SSL_CTX pointer");
+#if SSL_OP_NO_SSLv2 != 0
         if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
 		!= SSL_OP_NO_SSLv2)
 		ssl_err("could not set SSL_OP_NO_SSLv2");
+#endif
         if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* disable client renegotiation */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_RENEGOTIATION) &
+		SSL_OP_NO_RENEGOTIATION) != SSL_OP_NO_RENEGOTIATION)
+		ssl_err("could not set SSL_OP_NO_RENEGOTIATION");
+#endif
 	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM))
 		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
 	if(!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
@@ -175,6 +215,22 @@ setup_ctx(struct nsd_options* cfg)
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 	return ctx;
+}
+#endif /* HAVE_SSL */
+
+/** check connect error */
+static void
+checkconnecterr(int err, const char* svr, int port, int statuscmd)
+{
+	if(!port) fprintf(stderr, "error: connect (%s): %s\n", svr,
+		strerror(err));
+	else fprintf(stderr, "error: connect (%s@%d): %s\n", svr, port,
+		strerror(err));
+	if(err == ECONNREFUSED && statuscmd) {
+		printf("nsd is stopped\n");
+		exit(3);
+	}
+	exit(1);
 }
 
 /** contact the server with TCP connect */
@@ -229,6 +285,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		addrfamily = AF_LOCAL;
 		port = 0;
 #endif
+#ifdef INET6
 	} else if(strchr(svr, ':')) {
 		struct sockaddr_in6 sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in6);
@@ -241,6 +298,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		}
 		memcpy(&addr, &sa, addrlen);
 		addrfamily = AF_INET6;
+#endif
 	} else { /* ip4 */
 		struct sockaddr_in sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in);
@@ -260,21 +318,58 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		fprintf(stderr, "socket: %s\n", strerror(errno));
 		exit(1);
 	}
+	if(fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		fprintf(stderr, "error: set nonblocking: fcntl: %s",
+			strerror(errno));
+	}
 	if(connect(fd, (struct sockaddr*)&addr, addrlen) < 0) {
-		int err = errno;
-		if(!port) fprintf(stderr, "error: connect (%s): %s\n", svr,
-			strerror(err));
-		else fprintf(stderr, "error: connect (%s@%d): %s\n", svr, port,
-			strerror(err));
-		if(err == ECONNREFUSED && statuscmd) {
-			printf("nsd is stopped\n");
-			exit(3);
+		if(errno != EINPROGRESS) {
+			checkconnecterr(errno, svr, port, statuscmd);
 		}
-		exit(1);
+	}
+	while(1) {
+		fd_set rset, wset, eset;
+		struct timeval tv;
+		FD_ZERO(&rset);
+		FD_SET(fd, &rset);
+		FD_ZERO(&wset);
+		FD_SET(fd, &wset);
+		FD_ZERO(&eset);
+		FD_SET(fd, &eset);
+		tv.tv_sec = NSD_CONTROL_CONNECT_TIMEOUT/1000;
+		tv.tv_usec= (NSD_CONTROL_CONNECT_TIMEOUT%1000)*1000;
+		if(select(fd+1, &rset, &wset, &eset, &tv) == -1) {
+			fprintf(stderr, "select: %s\n", strerror(errno));
+			exit(1);
+		}
+		if(!FD_ISSET(fd, &rset) && !FD_ISSET(fd, &wset) &&
+			!FD_ISSET(fd, &eset)) {
+			fprintf(stderr, "timeout: could not connect to server\n");
+			exit(1);
+		} else {
+			/* check nonblocking connect error */
+			int error = 0;
+			socklen_t len = (socklen_t)sizeof(error);
+			if(getsockopt(fd, SOL_SOCKET, SO_ERROR, (void*)&error,
+				&len) < 0) {
+				error = errno; /* on solaris errno is error */
+			}
+			if(error != 0) {
+				if(error == EINPROGRESS || error == EWOULDBLOCK)
+					continue; /* try again later */
+				checkconnecterr(error, svr, port, statuscmd);
+			}
+		}
+		break;
+	}
+	if(fcntl(fd, F_SETFL, 0) == -1) {
+		fprintf(stderr, "error: set blocking: fcntl: %s",
+			strerror(errno));
 	}
 	return fd;
 }
 
+#ifdef HAVE_SSL
 /** setup SSL on the connection */
 static SSL*
 setup_ssl(SSL_CTX* ctx, int fd)
@@ -310,12 +405,14 @@ setup_ssl(SSL_CTX* ctx, int fd)
 	X509_free(x);
 	return ssl;
 }
+#endif /* HAVE_SSL */
 
 /** read from ssl or fd, fatalexit on error, 0 EOF, 1 success */
 static int
 remote_read(SSL* ssl, int fd, char* buf, size_t len)
 {
 	if(ssl) {
+#ifdef HAVE_SSL
 		int r;
 		ERR_clear_error();
 		if((r = SSL_read(ssl, buf, (int)len-1)) <= 0) {
@@ -326,6 +423,7 @@ remote_read(SSL* ssl, int fd, char* buf, size_t len)
 			ssl_err("could not SSL_read");
 		}
 		buf[r] = 0;
+#endif /* HAVE_SSL */
 	} else {
 		ssize_t rr = read(fd, buf, len-1);
 		if(rr <= 0) {
@@ -347,8 +445,10 @@ static void
 remote_write(SSL* ssl, int fd, const char* buf, size_t len)
 {
 	if(ssl) {
+#ifdef HAVE_SSL
 		if(SSL_write(ssl, buf, (int)len) <= 0)
 			ssl_err("could not SSL_write");
+#endif /* HAVE_SSL */
 	} else {
 		if(write(fd, buf, len) < (ssize_t)len) {
 			fprintf(stderr, "could not write: %s\n",
@@ -412,8 +512,10 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 {
 	struct nsd_options* opt;
 	int fd, ret;
-	SSL_CTX* ctx;
-	SSL* ssl;
+#ifdef HAVE_SSL
+	SSL_CTX* ctx = NULL;
+#endif
+	SSL* ssl = NULL;
 
 	/* read config */
 	if(!(opt = nsd_options_create(region_create(xalloc, free)))) {
@@ -427,18 +529,32 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 	}
 	if(!opt->control_enable)
 		fprintf(stderr, "warning: control-enable is 'no' in the config file.\n");
+	resolve_interface_names(opt);
+#ifdef HAVE_SSL
 	ctx = setup_ctx(opt);
+#else
+	if(options_remote_is_address(opt)) {
+		fprintf(stderr, "error: NSD was compiled without SSL.\n");
+		exit(1);
+	}
+#endif /* HAVE_SSL */
 
 	/* contact server */
 	fd = contact_server(svr, opt, argc>0&&strcmp(argv[0],"status")==0);
+#ifdef HAVE_SSL
 	ssl = setup_ssl(ctx, fd);
+#endif
 
 	/* send command */
 	ret = go_cmd(ssl, fd, argc, argv);
 
+#ifdef HAVE_SSL
 	if(ssl) SSL_free(ssl);
+#endif
 	close(fd);
+#ifdef HAVE_SSL
 	if(ctx) SSL_CTX_free(ctx);
+#endif
 	region_destroy(opt->region);
 	return ret;
 }
@@ -454,16 +570,15 @@ int main(int argc, char* argv[])
 	int c;
 	const char* cfgfile = CONFIGFILE;
 	char* svr = NULL;
-#ifdef USE_WINSOCK
-	int r;
-	WSADATA wsa_data;
-#endif
 	log_init("nsd-control");
 
+#ifdef HAVE_SSL
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
+#if defined(HAVE_ERR_LOAD_SSL_STRINGS) && !defined(DEPRECATED_ERR_LOAD_SSL_STRINGS)
 	ERR_load_SSL_strings();
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
 #else
@@ -490,6 +605,7 @@ int main(int argc, char* argv[])
                 RAND_seed(buf, 256);
 		fprintf(stderr, "warning: no entropy, seeding openssl PRNG with time\n");
 	}
+#endif /* HAVE_SSL */
 
 	/* parse the options */
 	while( (c=getopt(argc, argv, "c:s:h")) != -1) {
@@ -511,8 +627,11 @@ int main(int argc, char* argv[])
 	if(argc == 0)
 		usage();
 	if(argc >= 1 && strcmp(argv[0], "start")==0) {
-		if(execl(NSD_START_PATH, "nsd", "-c", cfgfile, 
-			(char*)NULL) < 0) {
+		const char *path;
+		if((path = getenv("NSD_PATH")) == NULL) {
+			path = NSD_START_PATH;
+		}
+		if(execl(path, "nsd", "-c", cfgfile, (char*)NULL) < 0) {
 			fprintf(stderr, "could not exec %s: %s\n",
 				NSD_START_PATH, strerror(errno));
 			exit(1);
@@ -521,11 +640,3 @@ int main(int argc, char* argv[])
 
 	return go(cfgfile, svr, argc, argv);
 }
-
-#else /* HAVE_SSL */
-int main(void)
-{
-	printf("error: NSD was compiled without SSL.\n");
-	return 1;
-}
-#endif /* HAVE_SSL */

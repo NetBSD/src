@@ -1,11 +1,11 @@
-/*	$NetBSD: omapip_p.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: omapip_p.h,v 1.2.6.1 2024/02/29 11:39:20 martin Exp $	*/
 
 /* omapip_p.h
 
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -61,6 +61,9 @@
 
 #include <dst/dst.h>
 #include "result.h"
+
+/* Uncomment this to enable protocol level debug logs */
+/* #define DEBUG_PROTOCOL 1 */
 
 #include <omapip/convert.h>
 #include <omapip/hash.h>
@@ -136,7 +139,7 @@ typedef struct __omapi_remote_auth {
 
 typedef struct __omapi_protocol_object {
 	OMAPI_OBJECT_PREAMBLE;
-	u_int32_t header_size;		
+	u_int32_t header_size;
 	u_int32_t protocol_version;
 	u_int32_t next_xid;
 
@@ -286,7 +289,8 @@ void log_fatal (const char *, ...) __sysloglike(1, 2) ISC_DHCP_NORETURN;
 int log_error (const char *, ...) __sysloglike(1, 2);
 int log_info (const char *, ...) __sysloglike(1, 2);
 int log_debug (const char *, ...) __sysloglike(1, 2);
-void do_percentm (char *obuf, const char *ibuf);
+
+void do_percentm (char *obuf, size_t obufsiz, const char *ibuf);
 
 isc_result_t uerr2isc (int);
 isc_result_t ns_rcode_to_isc (int);

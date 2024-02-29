@@ -192,13 +192,13 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 	}
 
 	/* init completion */
-	udb->glob_data = (udb_glob_d*)(udb->base+sizeof(uint64_t));
+	udb->glob_data = (udb_glob_d*)((char*)udb->base+sizeof(uint64_t));
 	r = 0;
 	/* cannot be dirty because that is goto fail above */
 	if(udb->glob_data->dirty_alloc != udb_dirty_clean)
 		r = 1;
 	udb->alloc = udb_alloc_create(udb, (udb_alloc_d*)(
-		(void*)udb->glob_data+sizeof(*udb->glob_data)));
+		(char*)udb->glob_data+sizeof(*udb->glob_data)));
 	if(!udb->alloc) {
 		log_msg(LOG_ERR, "out of memory");
 		udb_base_free(udb);
@@ -555,10 +555,10 @@ udb_base_remap(udb_base* udb, udb_alloc* alloc, uint64_t nsize)
 		/* fix up realpointers in udb and alloc */
 		/* but mremap may have been nice and not move the base */
 		udb->base = nb;
-		udb->glob_data = (udb_glob_d*)(nb+sizeof(uint64_t));
+		udb->glob_data = (udb_glob_d*)((char*)nb+sizeof(uint64_t));
 		/* use passed alloc pointer because the udb->alloc may not
 		 * be initialized yet */
-		alloc->disk = (udb_alloc_d*)((void*)udb->glob_data
+		alloc->disk = (udb_alloc_d*)((char*)udb->glob_data
 			+sizeof(*udb->glob_data));
 	}
 	udb->base_size = nsize;
@@ -630,7 +630,7 @@ int udb_exp_size(uint64_t a)
 	}
 	assert( x>=0 && x<=63);
 	assert( ((uint64_t)1<<x) >= a);
-	assert( x==0 || ((uint64_t)1<<(x-1)) < a);
+	assert( x==0 || /* <<x-1 without negative number analyzer complaints: */ (((uint64_t)1<<x)>>1) < a);
 	return x;
 }
 
@@ -798,7 +798,7 @@ regen_ptrlist(void* base, udb_base* udb, udb_alloc* alloc,
 		if(exp == UDB_EXP_XL) {
 			assert(at != rb_old); /* should have been freed */
 			regen_its_ptrs(base, udb, atp,
-				((void*)atp)+sizeof(udb_xl_chunk_d),
+				((char*)atp)+sizeof(udb_xl_chunk_d),
 				sz-sizeof(udb_xl_chunk_d) - sizeof(uint64_t)*2,
 				rb_old, rb_new);
 			at += sz;
@@ -807,7 +807,7 @@ regen_ptrlist(void* base, udb_base* udb, udb_alloc* alloc,
 		} else { /* data chunk */
 			assert(at != rb_old); /* should have been freed */
 			regen_its_ptrs(base, udb, atp,
-				((void*)atp)+sizeof(udb_chunk_d),
+				((char*)atp)+sizeof(udb_chunk_d),
 				sz-sizeof(udb_chunk_d)-1, rb_old, rb_new);
 			at += sz;
 		}
@@ -1149,7 +1149,7 @@ grow_extra_check(udb_alloc* alloc, uint64_t ge)
 	return ge;
 }
 
-/** see if free space is enogh to warrant shrink (while file is open) */
+/** see if free space is enough to warrant shrink (while file is open) */
 static int
 enough_free(udb_alloc* alloc)
 {
@@ -1280,12 +1280,15 @@ static int
 udb_alloc_exp_needed(size_t sz)
 {
 	uint64_t asz = sz + sizeof(udb_chunk_d) + 1;
+	int exp;
 	if(asz > UDB_ALLOC_CHUNK_SIZE) {
 		return UDB_EXP_XL;
 	} else if(asz <= UDB_ALLOC_CHUNK_MINSIZE) {
 		return UDB_ALLOC_CHUNK_MINEXP;
 	}
-	return udb_exp_size(asz);
+	exp = udb_exp_size(asz);
+	assert(exp <= UDB_ALLOC_CHUNKS_MAX);
+	return exp;
 }
 
 udb_void udb_alloc_space(udb_alloc* alloc, size_t sz)

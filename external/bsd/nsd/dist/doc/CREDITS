@@ -2,7 +2,7 @@ The NSD was primarily developed by NLnet Labs on request from and close
 cooperation with RIPE NCC, as an alternative name server software to be
 run on the root name server RIPE NCC operates.
 
-Below is the NSD team (nsd-team@nlnetlabs.nl) in alphabetical order:
+Below is the NSD team in alphabetical order:
 
 Alexis Yushin, NLnet Labs       - design and implementation for NSD 1.0.x 
                                   and 1.1.x.
@@ -24,6 +24,7 @@ Aaron Glenn                                     - DragonflyBSD, BSD/sparc64 test
 Ben Laurie                                      - NSEC3 patch.
 Bin Zhang                                       - NSD 3 prerelease testing.
 Colm MacCárthaigh,                              - IPv6 binding and cleanups.
+Greg Bock                                       - confine-to-zone feature.
 Farkas Levente                                  - rpm specfile improvements.
 Jakob Schlyter, Kirei                           - chroot and several other patches
 Jun-ichiro itojun Hagino, IIJLab                - IPv6 transport

@@ -1,11 +1,11 @@
-/*	$NetBSD: isclib.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: isclib.h,v 1.2.6.1 2024/02/29 11:39:20 martin Exp $	*/
 
 /* isclib.h
 
    connections to the isc and dns libraries */
 
 /*
- * Copyright (c) 2009-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  *
@@ -54,6 +54,7 @@
 #include <isc/lex.h>
 #include <isc/lib.h>
 #include <isc/app.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/parseint.h>
 #include <isc/socket.h>
@@ -93,8 +94,10 @@
 typedef struct dhcp_context {
 	isc_mem_t	*mctx;
 	isc_appctx_t	*actx;
-	int              actx_started;
+	int              actx_started; // ISC_TRUE if ctxstart has been called
+	int              actx_running; // ISC_TRUE if ctxrun has been called
 	isc_taskmgr_t	*taskmgr;
+	isc_nm_t	*netmgr;
 	isc_task_t	*task;
 	isc_socketmgr_t *socketmgr;
 	isc_timermgr_t	*timermgr;
@@ -140,6 +143,8 @@ void isclib_cleanup(void);
 void dhcp_signal_handler(int signal);
 extern int shutdown_signal;
 
+#if defined (NSUPDATE)
 isc_result_t dns_client_init(void);
+#endif /* defined NSUPDATE */
 
 #endif /* ISCLIB_H */

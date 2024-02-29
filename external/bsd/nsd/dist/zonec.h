@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _ZONEC_H_
-#define _ZONEC_H_
+#ifndef ZONEC_H
+#define ZONEC_H
 
 #include "namedb.h"
 
@@ -47,7 +47,6 @@ struct zparser {
 	zone_type *current_zone;
 	domain_type *origin;
 	domain_type *prev_dname;
-	domain_type *default_apex;
 
 	int error_occurred;
 	unsigned int errors;
@@ -112,13 +111,16 @@ uint16_t *zparser_conv_algorithm(region_type *region, const char *algstr);
 uint16_t *zparser_conv_certificate_type(region_type *region,
 					const char *typestr);
 uint16_t *zparser_conv_apl_rdata(region_type *region, char *str);
+uint16_t *zparser_conv_svcbparam(region_type *region,
+	const char *key, size_t key_len, const char *value, size_t value_len);
 
 void parse_unknown_rdata(uint16_t type, uint16_t *wireformat);
 
 uint32_t zparser_ttl2int(const char *ttlstr, int* error);
 void zadd_rdata_wireformat(uint16_t *data);
 void zadd_rdata_txt_wireformat(uint16_t *data, int first);
-void zadd_rdata_txt_clean_wireformat();
+void zadd_rdata_txt_clean_wireformat(void);
+void zadd_rdata_svcb_check_wireformat(void);
 void zadd_rdata_domain(domain_type *domain);
 
 void set_bitnsec(uint8_t  bits[NSEC_WINDOW_COUNT][NSEC_WINDOW_BITS_SIZE],
@@ -143,5 +145,9 @@ unsigned int zonec_read(const char *name, const char *zonefile, zone_type* zone)
  * The string must end with a newline after the RR. */
 int zonec_parse_string(region_type* region, domain_table_type* domains,
 	zone_type* zone, char* str, domain_type** parsed, int* num_rrs);
+/** check SSHFP type for failures and emit warnings */
+void check_sshfp(void);
+void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
+	domain_type* domain);
 
-#endif /* _ZONEC_H_ */
+#endif /* ZONEC_H */

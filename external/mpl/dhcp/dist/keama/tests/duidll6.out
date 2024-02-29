@@ -1,0 +1,9 @@
+{
+  # LL server duid config
+  # LL server duid declaration
+  "Dhcp6": {
+    "server-id": {
+      "type": "LL"
+    }
+  }
+}

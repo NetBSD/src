@@ -1,7 +1,7 @@
-/*	$NetBSD: isclib.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
+/*	$NetBSD: isclib.c,v 1.3.2.1 2024/02/29 11:39:57 martin Exp $	*/
 
 /*
- * Copyright(c) 2009-2017 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(C) 2009-2022 Internet Systems Consortium, Inc.("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.3.2.1 2024/02/29 11:39:57 martin Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the library but need the fdwatchcommand
@@ -87,7 +87,7 @@ dhcp_dns_client_setservers(void)
 	}
 	return (result);
 }
-#endif
+#endif /* defined NSUPDATE */
 
 void
 isclib_cleanup(void)
@@ -95,7 +95,7 @@ isclib_cleanup(void)
 #if defined (NSUPDATE)
 	if (dhcp_gbl_ctx.dnsclient != NULL)
 		dns_client_destroy((dns_client_t **)&dhcp_gbl_ctx.dnsclient);
-#endif
+#endif /* defined NSUPDATE */
 
 	if (dhcp_gbl_ctx.task != NULL) {
 		isc_task_shutdown(dhcp_gbl_ctx.task);
@@ -109,7 +109,8 @@ isclib_cleanup(void)
 		isc_socketmgr_destroy(&dhcp_gbl_ctx.socketmgr);
 
 	if (dhcp_gbl_ctx.taskmgr != NULL)
-		isc_taskmgr_destroy(&dhcp_gbl_ctx.taskmgr);
+		isc_managers_destroy(&dhcp_gbl_ctx.netmgr,
+				     &dhcp_gbl_ctx.taskmgr);
 
 	if (dhcp_gbl_ctx.actx_started != ISC_FALSE) {
 		isc_app_ctxfinish(dhcp_gbl_ctx.actx);
@@ -139,6 +140,35 @@ handle_signal(int sig, void (*handler)(int)) {
 	}
 }
 
+/* Callback passed to isc_app_ctxonrun
+ *
+ * BIND9 context code will invoke this handler once the context has
+ * entered the running state.  We use it to set a global marker so that
+ * we can tell if the context is running.  Several of the isc_app_
+ * calls REQUIRE that the context is running and we need a way to
+ * know that.
+ *
+ * We also check to see if we received a shutdown signal prior to
+ * the context entering the run state.  If we did, then we can just
+ * simply shut the context down now.  This closes the relatively
+ * small window between start up and entering run via the call
+ * to dispatch().
+ *
+ */
+static void
+set_ctx_running(isc_task_t *task, isc_event_t *event) {
+    IGNORE_UNUSED(task);
+	dhcp_gbl_ctx.actx_running = ISC_TRUE;
+
+	if (shutdown_signal) {
+		// We got signaled shutdown before we entered running state.
+		// Now that we've reached running state, shut'er down.
+		isc_app_ctxsuspend(dhcp_gbl_ctx.actx);
+	}
+
+        isc_event_free(&event);
+}
+
 isc_result_t
 dhcp_context_create(int flags,
 		    struct in_addr  *local4,
@@ -146,6 +176,9 @@ dhcp_context_create(int flags,
 	isc_result_t result;
 
 	if ((flags & DHCP_CONTEXT_PRE_DB) != 0) {
+		dhcp_gbl_ctx.actx_started = ISC_FALSE;
+		dhcp_gbl_ctx.actx_running = ISC_FALSE;
+
 		/*
 		 * Set up the error messages, this isn't the right place
 		 * for this call but it is convienent for now.
@@ -156,7 +189,7 @@ dhcp_context_create(int flags,
 		}
 
 		memset(&dhcp_gbl_ctx, 0, sizeof (dhcp_gbl_ctx));
-	
+
 		isc_lib_register();
 
 #if 0
@@ -169,56 +202,56 @@ dhcp_context_create(int flags,
 		 * the lib inits in case we aren't doing NSUPDATE
 		 * in which case dst needs a memory context
 		 */
-		result = isc_mem_create(0, 0, &dhcp_gbl_ctx.mctx);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
-
+		isc_mem_create(&dhcp_gbl_ctx.mctx);
 
 #if defined (NSUPDATE)
 		result = dns_lib_init();
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
-#else
+#else /* defined NSUPDATE */
 		/* The dst library is inited as part of dns_lib_init, we don't
 		 * need it if NSUPDATE is enabled */
 		result = dst_lib_init(dhcp_gbl_ctx.mctx, NULL, 0);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-#endif
+#endif /* defined NSUPDATE */
 
 		result = isc_appctx_create(dhcp_gbl_ctx.mctx,
 					   &dhcp_gbl_ctx.actx);
+
+		result = isc_managers_create(dhcp_gbl_ctx.mctx, 2, 0,
+		    &dhcp_gbl_ctx.netmgr, &dhcp_gbl_ctx.taskmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
-						 dhcp_gbl_ctx.actx,
-						 1, 0,
-						 &dhcp_gbl_ctx.taskmgr);
+		result = isc_socketmgr_create(dhcp_gbl_ctx.mctx,
+					      &dhcp_gbl_ctx.socketmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_socketmgr_createinctx(dhcp_gbl_ctx.mctx,
-						   dhcp_gbl_ctx.actx,
-						   &dhcp_gbl_ctx.socketmgr);
+		result = isc_timermgr_create(dhcp_gbl_ctx.mctx,
+					     &dhcp_gbl_ctx.timermgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_timermgr_createinctx(dhcp_gbl_ctx.mctx,
-						  dhcp_gbl_ctx.actx,
-						  &dhcp_gbl_ctx.timermgr);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
-
-		result = isc_task_create(dhcp_gbl_ctx.taskmgr, 0, &dhcp_gbl_ctx.task);
+		result = isc_task_create(dhcp_gbl_ctx.taskmgr, 0,
+					 &dhcp_gbl_ctx.task);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
 		result = isc_app_ctxstart(dhcp_gbl_ctx.actx);
 		if (result != ISC_R_SUCCESS)
-			return (result);
+			goto cleanup;
+
 		dhcp_gbl_ctx.actx_started = ISC_TRUE;
+
+		// Install the onrun callback.
+		result = isc_app_ctxonrun(dhcp_gbl_ctx.actx, dhcp_gbl_ctx.mctx,
+					  dhcp_gbl_ctx.task, set_ctx_running,
+					  dhcp_gbl_ctx.actx);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
 
 		/* Not all OSs support suppressing SIGPIPE through socket
 		 * options, so set the sigal action to be ignore.  This allows
@@ -253,7 +286,7 @@ dhcp_context_create(int flags,
 			result = dns_client_init();
 		}
 	}
-#endif
+#endif /* defined NSUPDATE */
 
 	return(ISC_R_SUCCESS);
 
@@ -284,7 +317,7 @@ dhcp_isc_name(unsigned char   *namestr,
 	isc_buffer_t b;
 	isc_result_t result;
 
-	namelen = strlen((char *)namestr); 
+	namelen = strlen((char *)namestr);
 	isc_buffer_init(&b, namestr, namelen);
 	isc_buffer_add(&b, namelen);
 	dns_fixedname_init(namefix);
@@ -342,38 +375,37 @@ isclib_make_dst_key(char          *inname,
  * @param signal signal code that we received
  */
 void dhcp_signal_handler(int signal) {
-	isc_appctx_t *ctx = dhcp_gbl_ctx.actx;
-	int prev = shutdown_signal;
-
-	if (prev != 0) {
+	if (shutdown_signal != 0) {
 		/* Already in shutdown. */
 		return;
 	}
+
 	/* Possible race but does it matter? */
 	shutdown_signal = signal;
 
-	/* Use reload (aka suspend) for easier dispatch() reenter. */
-	if (ctx) {
-		(void) isc_app_ctxsuspend(ctx);
+	/* If the application context is running tell it to shut down */
+	if (dhcp_gbl_ctx.actx_running == ISC_TRUE) {
+		(void) isc_app_ctxsuspend(dhcp_gbl_ctx.actx);
 	}
 }
 
+#if defined (NSUPDATE)
 isc_result_t dns_client_init() {
 	isc_result_t result;
 	if (dhcp_gbl_ctx.dnsclient == NULL) {
-		result = dns_client_createx(dhcp_gbl_ctx.mctx,
-					     dhcp_gbl_ctx.actx,
-					     dhcp_gbl_ctx.taskmgr,
-					     dhcp_gbl_ctx.socketmgr,
-					     dhcp_gbl_ctx.timermgr,
-					     0,
-					     &dhcp_gbl_ctx.dnsclient,
-					     (dhcp_gbl_ctx.use_local4 ?
-					      &dhcp_gbl_ctx.local4_sockaddr
-					      : NULL),
-					     (dhcp_gbl_ctx.use_local6 ?
-					      &dhcp_gbl_ctx.local6_sockaddr
-					      : NULL));
+		result = dns_client_create(dhcp_gbl_ctx.mctx,
+					   dhcp_gbl_ctx.actx,
+					   dhcp_gbl_ctx.taskmgr,
+					   dhcp_gbl_ctx.socketmgr,
+					   dhcp_gbl_ctx.timermgr,
+					   0,
+					   &dhcp_gbl_ctx.dnsclient,
+					   (dhcp_gbl_ctx.use_local4 ?
+					    &dhcp_gbl_ctx.local4_sockaddr
+					    : NULL),
+					   (dhcp_gbl_ctx.use_local6 ?
+					    &dhcp_gbl_ctx.local6_sockaddr
+					    : NULL));
 
 		if (result != ISC_R_SUCCESS) {
 			log_error("Unable to create DNS client context:"
@@ -394,3 +426,4 @@ isc_result_t dns_client_init() {
 
 	return ISC_R_SUCCESS;
 }
+#endif /* defined (NSUPDATE) */

@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-# Copyright (c) 2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2007-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 #   Internet Systems Consortium, Inc.
-#   950 Charter Street
-#   Redwood City, CA 94063
+#   PO Box 360
+#   Newmarket, NH 03857 USA
 #   <info@isc.org>
 #   https://www.isc.org/
 
@@ -94,7 +94,7 @@ my @docsis_oro = ( $DOCSIS_OPT_TFTP_SERVERS );
 $vsio .= pack("nnC*", $DOCSIS_OPT_ORO, 0+@docsis_oro, @docsis_oro);
 
 # TLV5 data: CMTS DOCSIS version number 3.0 (required by DOCSIS)
-my $tlv5_data = "\x01\x02\x03\x0";  
+my $tlv5_data = "\x01\x02\x03\x0";
 $vsio .= pack("nn", $DOCSIS_OPT_TLV5, length($tlv5_data)) . $tlv5_data;
 
 # DOCSIS Device (required by DOCSIS)
@@ -129,10 +129,10 @@ do {
 	socket(SOCK, PF_INET6, SOCK_DGRAM, getprotobyname('udp')) || die;
 	my $addr = inet_pton(AF_INET6, $All_DHCP_Servers);
 	my $packet = $msg->packet();
-	my $send_ret = send(SOCK, $packet, 0, 
+	my $send_ret = send(SOCK, $packet, 0,
 			    pack_sockaddr_in6($server_port, $addr));
 	if (not defined($send_ret)) {
-		printf STDERR 
+		printf STDERR
 			"Error \%d sending DHCPv6 Solicit message;\n\%s\n",
 			0+$ERRNO, $ERRNO;
 		exit(1);
@@ -153,7 +153,7 @@ do {
 	}
 
 	my $rt_end_time = time() + $RT;
-	if (defined($mrd_end_time) && ($mrd_end_time > $rt_end_time)) { 
+	if (defined($mrd_end_time) && ($mrd_end_time > $rt_end_time)) {
 		$rt_end_time = $mrd_end_time;
 	}
 
@@ -170,11 +170,11 @@ do {
 		if (@ready) {
 			my $reply;
 			my $recv_ret;
-	
+
 			$recv_ret = recv(SOCK, $reply, 1500, 0);
 			if (not defined $recv_ret) {
-				printf STDERR 
-					"Error \%d receiving DHCPv6 " . 
+				printf STDERR
+					"Error \%d receiving DHCPv6 " .
 						"message;\n\%s\n",
 					0+$ERRNO, $ERRNO;
 				exit(1);
@@ -188,16 +188,16 @@ do {
 		}
 	}
 
-} until ($reply_msg || 
+} until ($reply_msg ||
 	 (($MRC != 0) && ($count > $MRC)) ||
 	 (defined($mrd_end_time) && ($mrd_end_time > time())));
 
 unless ($reply_msg) {
 	if (($MRC != 0) && ($count >= $MRC)) {
-		print STDERR 
+		print STDERR
 			"No reply after maximum retransmission count.\n";
 	} else {
-		print STDERR 
+		print STDERR
 			"No reply after maximum retransmission duration.\n";
 	}
 }
@@ -212,4 +212,3 @@ if ($reply_msg && ($reply_msg->{msg_type} == $MSG_REPLY)) {
 #print Dumper($msg->packet()), "\n";
 #
 #print "packet length: ", length($msg->packet()), "\n";
-

@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _DNS_H_
-#define _DNS_H_
+#ifndef DNS_H
+#define DNS_H
 
 enum rr_section {
 	QUESTION_SECTION,
@@ -141,6 +141,9 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_CDNSKEY	60	/* RFC 7344 */
 #define TYPE_OPENPGPKEY 61	/* RFC 7929 */
 #define TYPE_CSYNC	62	/* RFC 7477 */
+#define TYPE_ZONEMD	63	/* draft-ietf-dnsop-dns-zone-digest */
+#define TYPE_SVCB	64	/* draft-ietf-dnsop-svcb-https-03 */
+#define TYPE_HTTPS	65	/* draft-ietf-dnsop-svcb-https-03 */
 
 #define TYPE_SPF        99      /* RFC 4408 */
 
@@ -163,6 +166,16 @@ typedef enum nsd_rc nsd_rc_type;
 
 #define TYPE_DLV	32769	/* RFC 4431 */
 #define PSEUDO_TYPE_DLV	RRTYPE_DESCRIPTORS_LENGTH
+
+#define SVCB_KEY_MANDATORY		0
+#define SVCB_KEY_ALPN			1
+#define SVCB_KEY_NO_DEFAULT_ALPN	2
+#define SVCB_KEY_PORT			3
+#define SVCB_KEY_IPV4HINT		4
+#define SVCB_KEY_ECH		5
+#define SVCB_KEY_IPV6HINT		6
+#define SVCB_KEY_DOHPATH		7
+#define SVCPARAMKEY_COUNT 8
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
@@ -203,7 +216,8 @@ enum rdata_wireformat
 	RDATA_WF_ILNP64,             /* 64-bit uncompressed IPv6 address.  */
 	RDATA_WF_EUI48,	             /* 48-bit address.  */
 	RDATA_WF_EUI64,              /* 64-bit address.  */
-	RDATA_WF_LONG_TEXT           /* Long (>255) text string. */
+	RDATA_WF_LONG_TEXT,          /* Long (>255) text string. */
+	RDATA_WF_SVCPARAM            /* SvcParam <key>[=<value>] */
 };
 typedef enum rdata_wireformat rdata_wireformat_type;
 
@@ -242,6 +256,7 @@ enum rdata_zoneformat
 	RDATA_ZF_EUI64,		/* EUI64 address.  */
 	RDATA_ZF_LONG_TEXT,	/* Long (>255) text string. */
 	RDATA_ZF_TAG,		/* Text string without quotes. */
+	RDATA_ZF_SVCPARAM,	/* SvcParam <key>[=<value>] */
 	RDATA_ZF_UNKNOWN	/* Unknown data.  */
 };
 typedef enum rdata_zoneformat rdata_zoneformat_type;
@@ -290,4 +305,4 @@ operator++(rr_section_type &lhs)
 }
 #endif /* __cplusplus */
 
-#endif /* _DNS_H_ */
+#endif /* DNS_H */

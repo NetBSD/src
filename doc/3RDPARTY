@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1640.2.30 2024/02/17 11:32:19 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1640.2.31 2024/02/29 11:38:36 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,12 +139,12 @@ Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
 
 Package:	unbound
-Version:	1.9.6
-Current Vers:	1.9.6
+Version:	1.19.1
+Current Vers:	1.19.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2019-12-15
+Date:		2024-02-17
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -154,12 +154,12 @@ Use cleantags to import
 run configure and update config files in include
 
 Package:	nsd
-Version:	4.1.27
-Current Vers:	4.1.27
+Version:	4.8.0
+Current Vers:	4.8.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2019-05-25
+Date:		2024-02-17
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
@@ -324,12 +324,12 @@ distribution into the netbsd format.  The script can be found in
 src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
-Version:	4.4.1
-Current Vers:	4.4.1
+Version:	4.4.3-P1
+Current Vers:	4.4.3-P1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
-Date:		2019-01-09
+Date:		2022-10-05
 Mailing List:	dhcp-server@isc.org
 Mailing List:	dhcp-client@isc.org
 Mailing List:	dhcp-announce@isc.org
@@ -1418,8 +1418,8 @@ is too much inertia to apply them. Check for .gitignore files.
 For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
-Version:	2.7
-Current Vers:	2.7
+Version:	2.9
+Current Vers:	2.10
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/

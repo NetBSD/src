@@ -1,0 +1,7 @@
+# option definition config
+
+# options
+option space foobar;
+
+# compressed list of FQDNs are forbidden in DHCPv6
+option foobar.compressed-list code 1 = domain-list compressed;

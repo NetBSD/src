@@ -1,0 +1,11 @@
+{
+  # void class declaration config
+  # class declaration
+  "Dhcp4": {
+    "client-classes": [
+      {
+        "name": "foobar"
+      }
+    ]
+  }
+}

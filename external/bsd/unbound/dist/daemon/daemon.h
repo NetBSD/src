@@ -99,8 +99,12 @@ struct daemon {
 	void* listen_sslctx, *connect_sslctx;
 	/** num threads allocated */
 	int num;
+	/** num threads allocated in the previous config or 0 at first */
+	int old_num;
 	/** the worker entries */
 	struct worker** workers;
+	/** per-worker allocation cache */
+	struct alloc_cache **worker_allocs;
 	/** do we need to exit unbound (or is it only a reload?) */
 	int need_to_exit;
 	/** master random table ; used for port div between threads on reload*/
@@ -113,6 +117,8 @@ struct daemon {
 	struct module_stack mods;
 	/** access control, which client IPs are allowed to connect */
 	struct acl_list* acl;
+	/** access control, which interfaces are allowed to connect */
+	struct acl_list* acl_interface;
 	/** TCP connection limit, limit connections from client IPs */
 	struct tcl_list* tcl;
 	/** local authority zones */
@@ -132,10 +138,14 @@ struct daemon {
 	struct respip_set* respip_set;
 	/** some response-ip tags or actions are configured if true */
 	int use_response_ip;
+	/** some RPZ policies are configured */
+	int use_rpz;
 #ifdef USE_DNSCRYPT
 	/** the dnscrypt environment */
 	struct dnsc_env* dnscenv;
 #endif
+	/** reuse existing cache on reload if other conditions allow it. */
+	int reuse_cache;
 };
 
 /**

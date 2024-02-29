@@ -1,5 +1,5 @@
 /*
- * checkconf/worker_cb.c - fake callback routines to make fptr_wlist work
+ * smallapp/worker_cb.c - fake callback routines to make fptr_wlist work
  *
  * Copyright (c) 2007, NLnet Labs. All rights reserved.
  *
@@ -46,6 +46,9 @@
 #include "util/fptr_wlist.h"
 #include "util/log.h"
 #include "services/mesh.h"
+#ifdef USE_DNSTAP
+#include "dnstap/dtstream.h"
+#endif
 
 void worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube),
 	uint8_t* ATTR_UNUSED(buffer), size_t ATTR_UNUSED(len),
@@ -57,14 +60,6 @@ void worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube),
 int worker_handle_request(struct comm_point* ATTR_UNUSED(c), 
 	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
         struct comm_reply* ATTR_UNUSED(repinfo))
-{
-	log_assert(0);
-	return 0;
-}
-
-int worker_handle_reply(struct comm_point* ATTR_UNUSED(c), 
-	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
-        struct comm_reply* ATTR_UNUSED(reply_info))
 {
 	log_assert(0);
 	return 0;
@@ -102,10 +97,12 @@ void worker_sighandler(int ATTR_UNUSED(sig), void* ATTR_UNUSED(arg))
 struct outbound_entry* worker_send_query(
 	struct query_info* ATTR_UNUSED(qinfo), uint16_t ATTR_UNUSED(flags),
 	int ATTR_UNUSED(dnssec), int ATTR_UNUSED(want_dnssec),
-	int ATTR_UNUSED(nocaps), struct sockaddr_storage* ATTR_UNUSED(addr),
+	int ATTR_UNUSED(nocaps), int ATTR_UNUSED(check_ratelimit),
+	struct sockaddr_storage* ATTR_UNUSED(addr),
 	socklen_t ATTR_UNUSED(addrlen), uint8_t* ATTR_UNUSED(zone),
-	size_t ATTR_UNUSED(zonelen), int ATTR_UNUSED(ssl_upstream),
-	char* ATTR_UNUSED(tls_auth_name), struct module_qstate* ATTR_UNUSED(q))
+	size_t ATTR_UNUSED(zonelen), int ATTR_UNUSED(tcp_upstream), int ATTR_UNUSED(ssl_upstream),
+	char* ATTR_UNUSED(tls_auth_name), struct module_qstate* ATTR_UNUSED(q),
+	int* ATTR_UNUSED(was_ratelimited))
 {
 	log_assert(0);
 	return 0;
@@ -134,18 +131,12 @@ worker_alloc_cleanup(void* ATTR_UNUSED(arg))
 struct outbound_entry* libworker_send_query(
 	struct query_info* ATTR_UNUSED(qinfo), uint16_t ATTR_UNUSED(flags),
 	int ATTR_UNUSED(dnssec), int ATTR_UNUSED(want_dnssec),
-	int ATTR_UNUSED(nocaps), struct sockaddr_storage* ATTR_UNUSED(addr),
+	int ATTR_UNUSED(nocaps), int ATTR_UNUSED(check_ratelimit),
+	struct sockaddr_storage* ATTR_UNUSED(addr),
 	socklen_t ATTR_UNUSED(addrlen), uint8_t* ATTR_UNUSED(zone),
-	size_t ATTR_UNUSED(zonelen), int ATTR_UNUSED(ssl_upstream),
-	char* ATTR_UNUSED(tls_auth_name), struct module_qstate* ATTR_UNUSED(q))
-{
-	log_assert(0);
-	return 0;
-}
-
-int libworker_handle_reply(struct comm_point* ATTR_UNUSED(c), 
-	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
-        struct comm_reply* ATTR_UNUSED(reply_info))
+	size_t ATTR_UNUSED(zonelen), int ATTR_UNUSED(tcp_upstream), int ATTR_UNUSED(ssl_upstream),
+	char* ATTR_UNUSED(tls_auth_name), struct module_qstate* ATTR_UNUSED(q),
+	int* ATTR_UNUSED(was_ratelimited))
 {
 	log_assert(0);
 	return 0;
@@ -248,3 +239,19 @@ void remote_get_opt_ssl(char* ATTR_UNUSED(str), void* ATTR_UNUSED(arg))
 {
         log_assert(0);
 }
+
+#ifdef USE_DNSTAP
+void dtio_tap_callback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+#ifdef USE_DNSTAP
+void dtio_mainfdcallback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif

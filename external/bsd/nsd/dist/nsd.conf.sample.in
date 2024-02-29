@@ -15,23 +15,70 @@ server:
 	# Number of NSD servers to fork.  Put the number of CPUs to use here.
 	# server-count: 1
 
-	# uncomment to specify specific interfaces to bind (default are the
-	# wildcard interfaces 0.0.0.0 and ::0).
+	# Set overall CPU affinity for NSD processes on Linux and FreeBSD.
+	# Any server/xfrd CPU affinity value will be masked by this value.
+	# cpu-affinity: 0 1 2 3
+
+	# Bind NSD server(s), configured by server-count (1-based), to a
+	# dedicated core. Single core affinity improves L1/L2 cache hits and
+	# reduces pipeline stalls/flushes.
+	#
+	# server-1-cpu-affinity: 0
+	# server-2-cpu-affinity: 1
+	# ...
+	# server-<N>-cpu-affinity: 2
+
+	# Bind xfrd to a dedicated core.
+	# xfrd-cpu-affinity: 3
+
+	# Specify specific interfaces to bind (default are the wildcard
+	# interfaces 0.0.0.0 and ::0).
 	# For servers with multiple IP addresses, list them one by one,
 	# or the source address of replies could be wrong.
 	# Use ip-transparent to be able to list addresses that turn on later.
 	# ip-address: 1.2.3.4
 	# ip-address: 1.2.3.4@5678
 	# ip-address: 12fe::8ef0
+	#
+	# IP addresses can be configured per-server to avoid waking up more
+	# than one server when a packet comes in (thundering herd problem) or
+	# to partition sockets across servers to improve select/poll
+	# performance.
+	#
+	# ip-address: 1.2.3.4       servers="1-2 3"
+	# ip-address: 1.2.3.4@5678  servers="4-5 6"
+	#
+	# When several interfaces are configured to listen on the same subnet,
+	# care must be taken to ensure responses go out the same interface the
+	# corresponding query came in on to avoid problems with load balancers
+	# and VLAN tagged interfaces. Linux offers the SO_BINDTODEVICE socket
+	# option to bind a socket to a specified device. For FreeBSD, to
+	# achieve the same result, specify the routing table to use after the
+	# IP address to use SO_SETFIB.
+	#
+	# Complement with socket partitioning and CPU affinity for attack
+	# mitigation benefits. i.e. only a single core is maxed out if a
+	# specific IP address is under attack.
+	#
+	# ip-address: 1.2.3.4       setfib=0  bindtodevice=yes
+	# ip-address: 1.2.3.5@6789  setfib=1  bindtodevice=yes
 
 	# Allow binding to non local addresses. Default no.
 	# ip-transparent: no
 
-	# Allow binding to addresses that are down.  Default no.
+	# Allow binding to addresses that are down. Default no.
 	# ip-freebind: no
 
-	# use the reuseport socket option for performance. Default no.
+	# Use SO_REUSEPORT socket option for performance. Default no.
 	# reuseport: no
+
+	# override maximum socket send buffer size.  Default of 0 results in
+	# send buffer size being set to 1048576 (bytes).
+	# send-buffer-size: 1048576
+
+	# override maximum socket receive buffer size. Default of 0 results in
+	# receive buffer size being set to 1048576 (bytes).
+	# receive-buffer-size: 1048576
 
 	# enable debug mode, does not fork daemon process into the background.
 	# debug-mode: no
@@ -53,29 +100,28 @@ server:
 	# username: @user@
 
 	# Run NSD in a chroot-jail.
-	# make sure to have pidfile and database reachable from there.
+	# make sure to have pidfile reachable from there.
 	# by default, no chroot-jail is used.
 	# chroot: "@configdir@"
 
 	# The directory for zonefile: files.  The daemon chdirs here.
 	# zonesdir: "@zonesdir@"
-	
+
 	# the list of dynamically added zones.
 	# zonelistfile: "@zonelistfile@"
-
-	# the database to use
-	# if set to "" then no disk-database is used, less memory usage.
-	# database: "@dbfile@"
 
 	# log messages to file. Default to stderr and syslog (with
 	# facility LOG_DAEMON).  stderr disappears when daemon goes to bg.
 	# logfile: "@logfile@"
 
+	# log only to syslog.
+	# log-only-syslog: no
+
 	# File to store pid for nsd in.
 	# pidfile: "@pidfile@"
 
 	# The file where secondary zone refresh and expire timeouts are kept.
-	# If you delete this file, all secondary zones are forced to be 
+	# If you delete this file, all secondary zones are forced to be
 	# 'refreshing' (as if nsd got a notify).  Set to "" to disable.
 	# xfrdfile: "@xfrdfile@"
 
@@ -84,6 +130,12 @@ server:
 
 	# don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
 	# hide-version: no
+
+	# don't answer HOSTNAME.BIND and ID.SERVER CHAOS class queries
+	# hide-identity: no
+
+	# Drop UPDATE queries
+	# drop-updates: no
 
 	# version string the server responds with for chaos queries.
 	# default is 'NSD x.y.z' with the server's version number.
@@ -97,6 +149,11 @@ server:
 
 	# Maximum number of concurrent TCP connections per server.
 	# tcp-count: 100
+
+	# Accept (and immediately close) TCP connections after maximum number
+	# of connections is reached to prevent kernel connection queue from
+	# growing.
+	# tcp-reject-overflow: no
 
 	# Maximum number of queries served on a single TCP connection.
 	# By default 0, which means no maximum.
@@ -113,11 +170,20 @@ server:
 	# Default is 0, system default MSS.
 	# outgoing-tcp-mss: 0
 
+	# reduce these settings to save memory for NSD, to about
+	# xfrd-tcp-max: 32 and xfrd-tcp-pipeline: 128, also rrl-size: 1000
+	# other memory is determined by server-count, tcp-count and zone data
+	# max number of sockets used for outgoing zone transfers.
+	# Increase this to allow more sockets for zone transfers.
+	# xfrd-tcp-max: 128
+	# max number of simultaneous outgoing zone transfers over one socket.
+	# xfrd-tcp-pipeline: 128
+
 	# Preferred EDNS buffer size for IPv4.
-	# ipv4-edns-size: 4096
+	# ipv4-edns-size: 1232
 
 	# Preferred EDNS buffer size for IPv6.
-	# ipv6-edns-size: 4096
+	# ipv6-edns-size: 1232
 
 	# statistics are produced every number of seconds. Prints to log.
 	# Default is 0, meaning no statistics are produced.
@@ -125,7 +191,7 @@ server:
 
 	# Number of seconds between reloads triggered by xfrd.
 	# xfrd-reload-timeout: 1
-	
+
 	# log timestamp in ascii (y-m-d h:m:s.msec), yes is default.
 	# log-time-ascii: yes
 
@@ -135,14 +201,19 @@ server:
 	# minimal-responses only emits extra data for referrals.
 	# minimal-responses: no
 
+	# Do not return additional information if the apex zone of the
+	# additional information is configured but does not match the apex zone
+	# of the initial query.
+	# confine-to-zone: no
+
 	# refuse queries of type ANY.  For stopping floods.
 	# refuse-any: no
 
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
-	
+
 	# write changed zonefiles to disk, every N seconds.
-	# default is 0(disabled) or 3600(if database is "").
+	# default is 3600.
 	# zonefiles-write: 3600
 
 	# RRLconfig
@@ -165,11 +236,11 @@ server:
 	# rrl-slip: 2
 
 	# Response Rate Limiting, IPv4 prefix length. Addresses are
-	# grouped by netblock. 
+	# grouped by netblock.
 	# rrl-ipv4-prefix-length: 24
 
 	# Response Rate Limiting, IPv6 prefix length. Addresses are
-	# grouped by netblock. 
+	# grouped by netblock.
 	# rrl-ipv6-prefix-length: 64
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source)
@@ -177,11 +248,66 @@ server:
 	# rrl-whitelist-ratelimit: 2000
 	# RRLend
 
+	# Service clients over TLS (on the TCP sockets), with plain DNS inside
+	# the TLS stream. Give the certificate to use and private key.
+	# Default is "" (disabled). Requires restart to take effect.
+	# tls-service-key: "path/to/privatekeyfile.key"
+	# tls-service-pem: "path/to/publiccertfile.pem"
+	# tls-service-ocsp: "path/to/ocsp.pem"
+	# tls-port: 853
+	
+	# Certificates used to authenticate connections made upstream for
+	# Transfers over TLS (XoT). Default is "" (default verify locations).
+	# tls-cert-bundle: "path/to/ca-bundle.pem"
+
+	# The interfaces that use these listed port numbers will support and
+	# expect PROXYv2. For UDP and TCP/TLS interfaces.
+	# proxy-protocol-port: portno for each of the port numbers.
+
+verify:
+	# Enable zone verification. Default is no.
+	# enable: no
+
+	# Port to answer verifier queries on. Default is 5347.
+	# port: 5347
+
+	# Interfaces to bind for zone verification (default are the localhost
+	# interfaces, usually 127.0.0.1 and ::1). To bind to to multiple IP
+	# addresses, list them one by one. Socket options cannot be specified
+	# for verify ip-address options.
+	# ip-address: 127.0.0.1
+	# ip-address: 127.0.0.1@5347
+	# ip-address: ::1
+
+	# Verify zones by default. Default is yes.
+	# verify-zones: yes
+
+	# Command to execute for zone verification.
+	# verifier: ldns-verify-zone
+	# verifier: validns -
+	# verifier: drill -k <keyfile> @127.0.0.1 -p 5347 example.com SOA
+
+	# Maximum number of verifiers to run concurrently. Default is 1.
+	# verifier-count: 1
+
+	# Feed updated zone to verifier over standard input. Default is yes.
+	# verifier-feed-zone: yes
+
+	# Number of seconds before verifier is killed (0 is forever).
+	# verifier-timeout: 0
+
 # DNSTAP config section, if compiled with that
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
 	# dnstap-enable: no
-	# dnstap-socket-path: "/var/run/dnstap.sock"
+	# dnstap-socket-path: "@dnstap_socket_path@"
+	# for dnstap-ip, "" is disabled, use TCP or TLS with like 127.0.0.1@3333
+	# dnstap-ip: ""
+	# dnstap-tls: yes
+	# dnstap-tls-server-name: ""
+	# dnstap-tls-cert-bundle: "path/to/bundle.pem"
+	# dnstap-tls-client-key-file: ""
+	# dnstap-tls-client-cert-file: ""
 	# dnstap-send-identity: no
 	# dnstap-send-version: no
 	# dnstap-identity: ""
@@ -196,10 +322,14 @@ remote-control:
 	# control-enable: no
 
 	# what interfaces are listened to for control, default is on localhost.
+	# interfaces can be specified by IP address or interface name.
+	# with an interface name, all IP addresses associated with that
+	# interface are used.
 	# with an absolute path, a unix local named pipe is used for control
 	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
+	# control-interface: lo
 
 	# port number for remote control operations (uses TLS over TCP).
 	# control-port: 8952
@@ -231,9 +361,25 @@ remote-control:
 	# e.g. from dd if=/dev/random of=/dev/stdout count=1 bs=32 | base64
 	#secret: "K2tf3TRjvQkVCmJF3/Z9vA=="
 
+# The tls-auth clause establishes authentication attributes to use when 
+# authenticating the far end of an outgoing TLS connection in access control 
+# lists used for XFR-over-TLS. If authentication fails, the XFR request will not
+# be made. Support for TLS 1.3 is required for XFR-over-TLS. It has the 
+# following attributes:
+#
+# tls-auth:
+	# The tls-auth name. Used to refer to this TLS auth information in the access control list.
+	#name: "tls-authname"
+	# The authentication domain name as defined in RFC8310.
+	#auth-domain-name: "example.com"
+
+	# Client certificate and private key for Mutual TLS authentication
+	#client-cert: "path/to/clientcert.pem"
+	#client-key: "path/to/clientkey.key"
+	#client-key-pw: "password"
 
 # Patterns have zone configuration and they are shared by one or more zones.
-# 
+#
 # pattern:
 	# name by which the pattern is referred to
 	#name: "myzones"
@@ -246,6 +392,13 @@ remote-control:
 	# for example "%s.zone" or "zones/%1/%2/%3/%s" or "secondary/%z/%s"
 	#zonefile: "%s.zone"
 	
+	# The allow-query allows an access control list to be specified
+	# for a zone to be queried. Without an allow-query option, any
+	# IP address is allowed to send queries for the zone.
+	# This could be useful for example to not leak content from a zone
+	# which is only offered for transfer to secondaries over TLS.
+	#allow-query: 192.0.2.0/24 NOKEY
+
 	# If no master and slave access control elements are provided,
 	# this zone will not be served to/from other servers.
 
@@ -259,6 +412,14 @@ remote-control:
 	#provide-xfr: 192.0.2.0/24 my_tsig_key_name
 	# set the number of retries for notify.
 	#notify-retry: 5
+	# if yes, store and provide IXFRs.
+	#store-ixfr: no
+	# number of IXFR versions to store, at most.
+	#ixfr-number: 5
+	# size in bytes of max storage to use for IXFR versions.
+	#ixfr-size: 1048576
+	# if yes, create IXFR when a zonefile is read by the server.
+	#create-ixfr: no
 
 	# uncomment to provide AXFR to all the world
 	# provide-xfr: 0.0.0.0/0 NOKEY
@@ -269,9 +430,11 @@ remote-control:
 	# By default, a slave will request a zone transfer with IXFR/TCP.
 	# If you want to make use of IXFR/UDP use: UDP addr tsigkey
 	# for a master that only speaks AXFR (like NSD) use AXFR addr tsigkey
+	# If you want to require use of XFR-over-TLS use: addr tsigkey tlsauthname
 	#request-xfr: 192.0.2.2 the_tsig_key_name
-	# Attention: You cannot use UDP and AXFR together. AXFR is always over 
-	# TCP. If you use UDP, we higly recommend you to deploy TSIG.
+	#request-xfr: 192.0.2.2 the_tsig_key_name the_tls_auth_name
+	# Attention: You cannot use UDP and AXFR together. AXFR is always over
+	# TCP. If you use UDP, we highly recommend you to deploy TSIG.
 	# Allow AXFR fallback if the master does not support IXFR. Default
 	# is yes.
 	#allow-axfr-fallback: yes
@@ -283,6 +446,11 @@ remote-control:
 	#min-refresh-time: 0
 	#max-retry-time: 1209600
 	#min-retry-time: 0
+	# Lower bound of expire interval in seconds.  The value can be "refresh+retry+1"
+	# in which case the lower bound of expire interval is the sum of the refresh and
+	# retry values (limited to the bounds given with the above parameters), plus 1.
+	#min-expire-time: 0
+
 	# Slave server tries zone transfer to all masters and picks highest
 	# zone version available, for when masters have different versions.
 	#multi-master-check: no
@@ -296,24 +464,41 @@ remote-control:
 	# zonestats: "%s"
 
 	# if you give another pattern name here, at this point the settings
-	# from that pattern are inserted into this one (as if it were a 
+	# from that pattern are inserted into this one (as if it were a
 	# macro).  The statement can be given in between other statements,
 	# because the order of access control elements can make a difference
 	# (which master to request from first, which slave to notify first).
 	#include-pattern: "common-masters"
 
+	# Verify zone before publishing.
+	# Default is value of verify-zones in verify.
+	# verify-zone: yes
+
+	# Command to execute for zone verification.
+	# Default is verifier in verify.
+	# verifier: ldns-verify-zone
+	# verifier: validns -
+	# verifier: drill -k <keyfile> @127.0.0.1 -p 5347 example.com SOA
+
+	# Feed updated zone to verifier over standard input.
+	# Default is value of verifier-feed-zone in verify.
+	# verifier-feed-zone: yes
+
+	# Number of seconds before verifier is killed (0 is forever).
+	# Default is verifier-timeout in verify.
+	# verifier-timeout: 0
 
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.
 #
 # zone:
- 	# name: "example.com"
- 	# you can give a pattern here, all the settings from that pattern
- 	# are then inserted at this point
- 	# include-pattern: "master"
- 	# You can also specify (additional) options directly for this zone.
- 	# zonefile: "example.com.zone"
- 	# request-xfr: 192.0.2.1 example.com.key
+	# name: "example.com"
+	# you can give a pattern here, all the settings from that pattern
+	# are then inserted at this point
+	# include-pattern: "master"
+	# You can also specify (additional) options directly for this zone.
+	# zonefile: "example.com.zone"
+	# request-xfr: 192.0.2.1 example.com.key
 
 	# RRLconfig
 	# Response Rate Limiting, whitelist types

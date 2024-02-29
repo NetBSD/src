@@ -109,7 +109,9 @@ dname_make_wire_from_packet(uint8_t *buf, buffer_type *packet,
 	const uint8_t *label;
 	ssize_t mark = -1;
 
-	memset(visited, 0, (buffer_limit(packet)+7)/8);
+	if(sizeof(visited)<(buffer_limit(packet)+7)/8)
+		memset(visited, 0, sizeof(visited));
+	else	memset(visited, 0, (buffer_limit(packet)+7)/8);
 
 	while (!done) {
 		if (!buffer_available(packet, 1)) {
@@ -241,6 +243,7 @@ int dname_parse_wire(uint8_t* dname, const char* name)
 		}
 		*h = label_length;
 		h = p;
+		p++;
 	}
 
 	/* Add root label.  */
@@ -414,7 +417,7 @@ dname_to_string(const dname_type *dname, const dname_type *origin)
 		++src;
 		for (j = 0; j < len; ++j) {
 			uint8_t ch = *src++;
-			if (isalnum((unsigned char)ch) || ch == '-' || ch == '_') {
+			if (isalnum((unsigned char)ch) || ch == '-' || ch == '_' || ch == '*') {
 				*dst++ = ch;
 			} else if (ch == '.' || ch == '\\') {
 				*dst++ = '\\';
@@ -510,7 +513,7 @@ char* wirelabel2str(const uint8_t* label)
 	lablen = *label++;
 	while(lablen--) {
 		uint8_t ch = *label++;
-		if (isalnum((unsigned char)ch) || ch == '-' || ch == '_') {
+		if (isalnum((unsigned char)ch) || ch == '-' || ch == '_' || ch == '*') {
 			*p++ = ch;
 		} else if (ch == '.' || ch == '\\') {
 			*p++ = '\\';

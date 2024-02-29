@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2017/01/07 19:51:22 christos Exp $
+# $NetBSD: Makefile,v 1.1.18.1 2024/02/29 11:40:06 martin Exp $
 
 PROG=nsd
 
@@ -17,5 +17,7 @@ zparser.c
 
 MAN+=${PROG}.conf.5
 ${PROG}.conf.5: ${PROG}.conf.5.in __subst
+
+COPTS.server.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>

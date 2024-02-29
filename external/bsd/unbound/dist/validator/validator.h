@@ -45,11 +45,13 @@
 #include "util/module.h"
 #include "util/data/msgreply.h"
 #include "validator/val_utils.h"
+#include "validator/val_nsec3.h"
 struct val_anchors;
 struct key_cache;
 struct key_entry_key;
 struct val_neg_cache;
 struct config_strlist;
+struct comm_timer;
 
 /**
  * This is the TTL to use when a trust anchor fails to prime. A trust anchor
@@ -64,14 +66,11 @@ struct config_strlist;
  */
 #define BOGUS_KEY_TTL	60 /* seconds */
 
-/** max number of query restarts, number of IPs to probe */
-#define VAL_MAX_RESTART_COUNT 5
-
 /** Root key sentinel is ta preamble */
 #define SENTINEL_IS		"root-key-sentinel-is-ta-"
 /** Root key sentinel is not ta preamble */
 #define SENTINEL_NOT		"root-key-sentinel-not-ta-"
-/** Root key sentinal keytag length */
+/** Root key sentinel keytag length */
 #define SENTINEL_KEYTAG_LEN	5
 
 /**
@@ -94,6 +93,9 @@ struct val_env {
 
 	/** clock skew max for signatures */
 	int32_t skew_max;
+
+	/** max number of query restarts, number of IPs to probe */
+	int max_restart;
 
 	/** TTL for bogus data; used instead of untrusted TTL from data.
 	 * Bogus data will not be verified more often than this interval. 
@@ -137,8 +139,6 @@ enum val_state {
 	VAL_VALIDATE_STATE,
 	/** finish up */
 	VAL_FINISHED_STATE,
-	/** DLV lookup state, processing DLV queries */
-	VAL_DLVLOOKUP_STATE
 };
 
 /**
@@ -218,26 +218,18 @@ struct val_qstate {
 	/** true if this state is waiting to prime a trust anchor */
 	int wait_prime_ta;
 
-	/** have we already checked the DLV? */
-	int dlv_checked;
-	/** The name for which the DLV is looked up. For the current message
-	 * or for the current RRset (for CNAME, REFERRAL types).
-	 * If there is signer name, that may be it, else a domain name */
-	uint8_t* dlv_lookup_name;
-	/** length of dlv lookup name */
-	size_t dlv_lookup_name_len;
-	/** Name at which chain of trust stopped with insecure, starting DLV
-	 * DLV must result in chain going further down */
-	uint8_t* dlv_insecure_at;
-	/** length of dlv insecure point name */
-	size_t dlv_insecure_at_len;
-	/** status of DLV lookup. Indication to VAL_DLV_STATE what to do */
-	enum dlv_status {
-		dlv_error, /* server failure */
-		dlv_success, /* got a DLV */
-		dlv_ask_higher, /* ask again */
-		dlv_there_is_no_dlv /* got no DLV, sure of it */
-	} dlv_status;
+	/** State to continue with RRSIG validation in a message later */
+	int msg_signatures_state;
+	/** The rrset index for the msg signatures to continue from */
+	size_t msg_signatures_index;
+	/** Cache table for NSEC3 hashes */
+	struct nsec3_cache_table nsec3_cache_table;
+	/** DS message from sub if it got suspended from NSEC3 calculations */
+	struct dns_msg* sub_ds_msg;
+	/** The timer to resume processing msg signatures */
+	struct comm_timer* suspend_timer;
+	/** Number of suspends */
+	int suspend_count;
 };
 
 /**
@@ -284,5 +276,8 @@ void val_clear(struct module_qstate* qstate, int id);
  * @return memory in use in bytes.
  */
 size_t val_get_mem(struct module_env* env, int id);
+
+/** Timer callback for msg signatures continue timer */
+void validate_suspend_timer_cb(void* arg);
 
 #endif /* VALIDATOR_VALIDATOR_H */

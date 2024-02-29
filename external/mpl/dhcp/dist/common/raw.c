@@ -1,4 +1,4 @@
-/*	$NetBSD: raw.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: raw.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $	*/
 
 /* raw.c
 
@@ -18,7 +18,7 @@
    Sigh. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -34,15 +34,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: raw.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: raw.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $");
 
 #include "dhcpd.h"
 
@@ -60,7 +60,7 @@ void if_register_send (info)
 
 	/* Set up the address we're going to connect to. */
 	name.sin_family = AF_INET;
-	name.sin_port = relay_port ? relay_port : local_port;
+	name.sin_port = relay_port ? relay_port : *libdhcp_callbacks.local_port;
 	name.sin_addr.s_addr = htonl (INADDR_BROADCAST);
 	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 

@@ -1,0 +1,15 @@
+{
+  # option definition config
+  # options
+  "Dhcp4": {
+    "option-def": [
+      {
+        "space": "foobar",
+        "name": "encap",
+        "code": 1,
+        "type": "empty",
+        "encapsulate": "xyz"
+      }
+    ]
+  }
+}

@@ -76,10 +76,18 @@ static const char* zone_example_com =
 "out.example.com.	3600	IN	CNAME	www.example.com.\n"
 "plan.example.com.	3600	IN	CNAME	nonexist.example.com.\n"
 "redir.example.com.	3600	IN	DNAME	redir.example.org.\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"obscured.redir2.example.com.	3600	IN	A	10.0.0.12\n"
+"under2.redir2.example.com.	3600	IN	DNAME	redir3.example.net.\n"
+"doubleobscured.under2.redir2.example.com.	3600	IN	A	10.0.0.13\n"
 "sub.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
 "sub.example.com.	3600	IN	NS	ns2.sub.example.com.\n"
 "ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
 "ns2.sub.example.com.	3600	IN	AAAA	2001::7\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+"obscured.sub2.example.com.	3600	IN	A	10.0.0.10\n"
+"under.sub2.example.com.	3600	IN	NS	ns.under.sub2.example.com.\n"
+"doubleobscured.under.sub2.example.com.	3600	IN	A	10.0.0.11\n"
 "*.wild.example.com.	3600	IN	A	10.0.0.8\n"
 "*.wild2.example.com.	3600	IN	CNAME	www.example.com.\n"
 "*.wild3.example.com.	3600	IN	A	10.0.0.8\n"
@@ -281,6 +289,54 @@ static struct q_ans example_com_queries[] = {
 "foo.abc.redir.example.com.	0	IN	CNAME	foo.abc.redir.example.org.\n"
 	},
 
+	{ "example.com", "redir2.example.com. DNAME", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+	},
+
+	{ "example.com", "abc.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"abc.redir2.example.com.	0	IN	CNAME	abc.redir2.example.org.\n"
+	},
+
+	{ "example.com", "obscured.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"obscured.redir2.example.com.	0	IN	CNAME	obscured.redir2.example.org.\n"
+	},
+
+	{ "example.com", "under2.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"under2.redir2.example.com.	0	IN	CNAME	under2.redir2.example.org.\n"
+	},
+
+	{ "example.com", "doubleobscured.under2.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"doubleobscured.under2.redir2.example.com.	0	IN	CNAME	doubleobscured.under2.redir2.example.org.\n"
+	},
+
+	{ "example.com", "foo.doubleobscured.under2.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"foo.doubleobscured.under2.redir2.example.com.	0	IN	CNAME	foo.doubleobscured.under2.redir2.example.org.\n"
+	},
+
+	{ "example.com", "foo.under2.redir2.example.com. A", "",
+";flags QR AA rcode NOERROR\n"
+";answer section\n"
+"redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
+"foo.under2.redir2.example.com.	0	IN	CNAME	foo.under2.redir2.example.org.\n"
+	},
+
 	{ "example.com", "sub.example.com. NS", "",
 ";flags QR rcode NOERROR\n"
 ";authority section\n"
@@ -355,6 +411,78 @@ static struct q_ans example_com_queries[] = {
 ";additional section\n"
 "ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
 "ns2.sub.example.com.	3600	IN	AAAA	2001::7\n"
+	},
+
+	{ "example.com", "sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "sub2.example.com. NS", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "obscured.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "abc.obscured.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "under.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "under.sub2.example.com. NS", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "abc.under.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "doubleobscured.under.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
+	},
+
+	{ "example.com", "abc.doubleobscured.under.sub2.example.com. A", "",
+";flags QR rcode NOERROR\n"
+";authority section\n"
+"sub2.example.com.	3600	IN	NS	ns1.sub.example.com.\n"
+";additional section\n"
+"ns1.sub.example.com.	3600	IN	A	10.0.0.6\n"
 	},
 
 	{ "example.com", "wild.example.com. A", "",
@@ -468,8 +596,13 @@ tmpfilecleanup(void)
 	int i;
 	char buf[256];
 	for(i=0; i<tempno; i++) {
+#ifdef USE_WINSOCK
+		snprintf(buf, sizeof(buf), "unbound.unittest.%u.%d",
+			(unsigned)getpid(), i);
+#else
 		snprintf(buf, sizeof(buf), "/tmp/unbound.unittest.%u.%d",
 			(unsigned)getpid(), i);
+#endif
 		if(vbmp) printf("cleanup: unlink %s\n", buf);
 		unlink(buf);
 	}
@@ -483,8 +616,13 @@ create_tmp_file(const char* s)
 	char *fname;
 	FILE *out;
 	size_t r;
+#ifdef USE_WINSOCK
+	snprintf(buf, sizeof(buf), "unbound.unittest.%u.%d",
+		(unsigned)getpid(), tempno++);
+#else
 	snprintf(buf, sizeof(buf), "/tmp/unbound.unittest.%u.%d",
 		(unsigned)getpid(), tempno++);
+#endif
 	fname = strdup(buf);
 	if(!fname) fatal_exit("out of memory");
 	/* if no string, just make the name */
@@ -517,8 +655,8 @@ del_tmp_file(char* fname)
 }
 
 /** Add zone from file for testing */
-static struct auth_zone*
-addzone(struct auth_zones* az, const char* name, char* fname)
+struct auth_zone*
+authtest_addzone(struct auth_zones* az, const char* name, char* fname)
 {
 	struct auth_zone* z;
 	size_t nmlen;
@@ -593,7 +731,7 @@ check_read_exact(const char* name, const char* zone)
 
 	az = auth_zones_create();
 	unit_assert(az);
-	z = addzone(az, name, fname);
+	z = authtest_addzone(az, name, fname);
 	unit_assert(z);
 	outf = create_tmp_file(NULL);
 	if(!auth_zone_write_file(z, outf)) {
@@ -844,7 +982,7 @@ check_queries(const char* name, const char* zone, struct q_ans* queries)
 	fname = create_tmp_file(zone);
 	az = auth_zones_create();
 	if(!az) fatal_exit("out of memory");
-	z = addzone(az, name, fname);
+	z = authtest_addzone(az, name, fname);
 	if(!z) fatal_exit("could not read zone for queries test");
 	del_tmp_file(fname);
 

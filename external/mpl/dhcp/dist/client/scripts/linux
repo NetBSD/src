@@ -400,6 +400,14 @@ case "$reason" in
 
         ;;
 
+    V6ONLY)
+        if [ -n "$old_ip_address" ]; then
+            # flush leased IP
+            ${ip} -4 addr flush dev ${interface} label ${interface}
+        fi
+
+        ;;
+
     ### DHCPv6 Handlers
     # TODO handle prefix change: ?based on ${old_ip6_prefix} and ${new_ip6_prefix}?
 
@@ -411,7 +419,7 @@ case "$reason" in
         interface_up_wait_time=5
         for i in $(seq 0 ${interface_up_wait_time})
         do
-            ifconfig ${interface} | grep RUNNING >/dev/null 2>&1
+            ${ip} link show dev ${interface} | grep -q LOWER_UP 2>&1
             if [ $? -eq 0 ]; then
                 break;
             fi

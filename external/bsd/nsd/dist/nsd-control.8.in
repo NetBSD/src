@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Mar 25, 2019" "NLnet Labs" "nsd 4.1.27"
+.TH "nsd\-control" "8" "Dec  6, 2023" "NLnet Labs" "nsd 4.8.0"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -35,8 +35,11 @@ There are several commands that the server understands.
 .TP
 .B start
 Start the server. Simply execs \fInsd\fR(8).  The nsd executable 
-is searched for in the \fBPATH\fR set in the environment.  It is started 
-with the config file specified using \fI\-c\fR or the default config file.
+is not searched for in the \fBPATH\fR set in the environment.  Instead the
+default location relative to the installation prefix specified at
+compile-time.  The executable location can be overridden by setting
+\fINSD_PATH\fR in the environment.  It is started with the config file
+specified using \fI\-c\fR or the default config file.
 .TP
 .B stop
 Stop the server. The server daemon exits.
@@ -107,7 +110,8 @@ For bulk removals.
 Write zonefiles to disk, or the given zonefile to disk.  Zones that have
 changed (via AXFR or IXFR) are written, or if the zonefile has not been
 created yet then it is created.  Directory components of the zonefile
-path are created if necessary.
+path are created if necessary. With argument that zone is written if it
+was modified, without argument, all modified zones are written.
 .TP
 .B notify [<zone>]
 Send NOTIFY messages to slave servers.  Sends to the IP addresses
@@ -116,7 +120,8 @@ server.  Usually NSD sends NOTIFY messages right away when a master zone
 serial is updated.  If a zone is given, notifies are sent for that zone.
 These slave servers are supposed to initiate a zone transfer request
 later (to this server or another master), this can be allowed via
-the 'provide\-xfr:' acl list configuration.
+the 'provide\-xfr:' acl list configuration. With argument that zone is
+processed, without argument, all zones are processed.
 .TP
 .B transfer [<zone>]
 Attempt to update slave zones that are hosted on this server by contacting
@@ -125,13 +130,15 @@ If a zone is given, that zone is updated.  Usually NSD receives a NOTIFY
 from the masters (configured via 'allow\-notify:' acl list) that a new zone
 serial has to be transferred.  For zones with no content, NSD may have backed
 off from asking often because the masters did not respond, but this command
-will reset the backoff to its initial timeout, for frequent retries.
+will reset the backoff to its initial timeout, for frequent retries. With
+argument that zone is transferred, without argument, all zones are transferred.
 .TP
 .B force_transfer [<zone>]
 Force update slave zones that are hosted on this server.  Even if the
 master hosts the same serial number of the zone, a full AXFR is performed
 to fetch it.  If you want to use IXFR and check that the serial number
-increases, use the 'transfer' command.
+increases, use the 'transfer' command. With argument that zone is
+transferred, without argument, all zones are transferred.
 .TP
 .B zonestatus [<zone>]
 Print state of the zone, the serial numbers and since when they have
@@ -142,7 +149,8 @@ zone is up\-to\-date), 'expired' (slave zone has expired), 'refreshing' (slave
 zone has transfers active).  The serial numbers printed are
 the 'served\-serial' (currently active), the 'commit\-serial' (is in reload),
 the 'notified\-serial' (got notify, busy fetching the data).  The serial
-numbers are only printed if such a serial number is available.
+numbers are only printed if such a serial number is available. With argument
+that zone is printed, without argument, all zones are printed.
 .TP
 .B serverpid
 Prints the PID of the server process.  This is used for statistics (and
@@ -177,6 +185,41 @@ given key.
 Delete the TSIG key with the given name.  Prints error if the key is still
 in use by some zone.  The changes are only in-memory and are gone next
 restart, for lasting changes edit the nsd.conf file or a file included from it.
+.TP
+.B add_cookie_secret <secret>
+Add or replace a cookie secret persistently. <secret> needs to be an 128 bit
+hex string.
+
+Cookie secrets can be either \fIactive\fR or \fIstaging\fR. \fIActive\fR cookie
+secrets are used to create DNS Cookies, but verification of a DNS Cookie
+succeeds with any of the \fIactive\fR or \fIstaging\fR cookie secrets. The
+state of the current cookie secrets can be printed with the
+\fBprint_cookie_secrets\fR command.
+
+When there are no cookie secrets configured yet, the <secret> is added as
+\fIactive\fR. If there is already an \fIactive\fR cookie secret, the <secret>
+is added as \fIstaging\fR or replacing an existing \fIstaging\fR secret.
+
+To "roll" a cookie secret used in an anycast set. The new secret has to be
+added as staging secret to \fBall\fR nodes in the anycast set. When \fBall\fR
+nodes can verify DNS Cookies with the new secret, the new secret can be
+activated with the \fBactivate_cookie_secret\fR command. After \fBall\fR nodes
+have the new secret \fIactive\fR for at least one hour, the previous secret can
+be dropped with the \fBdrop_cookie_secret\fR command.
+
+Persistence is accomplished by writing to a file which if configured with the
+\fBcookie\-secret\-file\fR option in the server section of the config file.
+The default value for that is: @configdir@/nsd_cookiesecrets.txt .
+.TP
+.B drop_cookie_secret
+Drop the \fIstaging\fR cookie secret.
+.TP
+.B activate_cookie_secret
+Make the current \fIstaging\fR cookie secret \fIactive\fR, and the current
+\fIactive\fR cookie secret \fIstaging\fR.
+.TP
+.B print_cookie_secrets
+Show the current configured cookie secrets with their status.
 .SH "EXIT CODE"
 The nsd\-control program exits with status code 1 on error, 0 on success.
 .SH "SET UP"
@@ -192,7 +235,7 @@ After running the script as root, turn on \fBcontrol\-enable\fR in
 The \fIstats\fR command shows a number of statistic counters.
 .TP
 .I num.queries
-number of queries received (the tcp and udp queries added up).
+number of queries received (the tls, tcp and udp queries added up).
 .TP
 .I serverX.queries
 number of queries handled by the server process.  The number of
@@ -253,6 +296,12 @@ number of connections over TCP ip4.
 .I num.tcp6
 number of connections over TCP ip6.
 .TP
+.I num.tls
+number of connections over TLS ip4.  TLS queries are not part of num.tcp.
+.TP
+.I num.tls6
+number of connections over TLS ip6.  TLS queries are not part of num.tcp6.
+.TP
 .I num.answer_wo_aa
 number of answers with NOERROR rcode and without AA flag, this includes the referrals.
 .TP
@@ -264,6 +313,9 @@ number of answers for which the transmit failed.
 .TP
 .I num.raxfr
 number of AXFR requests from clients (that got served with reply).
+.TP
+.I num.rixfr
+number of IXFR requests from clients (that got served with reply).
 .TP
 .I num.truncated
 number of answers with TC flag set.

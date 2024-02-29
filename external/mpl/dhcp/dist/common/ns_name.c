@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_name.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $	*/
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,14 +17,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $");
 
 #include <sys/types.h>
 
@@ -51,6 +51,39 @@ static int		dn_find(const u_char *, const u_char *,
 				const u_char * const *);
 
 /* Public. */
+
+/*
+ * MRns_name_len(eom, src)
+ *	Compute the length of encoded uncompressed domain name.
+ * return:
+ *	-1 if it fails, or to be consumed octets if it succeeds.
+ */
+int
+MRns_name_len(const u_char *eom, const u_char *src)
+{
+	const u_char *srcp;
+	unsigned n;
+	int len;
+
+	len = -1;
+	srcp = src;
+	if (srcp >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
+	/* Fetch next label in domain name. */
+	while ((n = *srcp++) != 0) {
+		/* Limit checks. */
+		if (srcp + n >= eom) {
+			errno = EMSGSIZE;
+			return (-1);
+		}
+		srcp += n;
+	}
+	if (len < 0)
+		len = srcp - src;
+	return (len);
+}
 
 /*
  * MRns_name_ntop(src, dst, dstsiz)
@@ -466,7 +499,7 @@ cleanup:
 			*lpp = NULL;
 		errno = EMSGSIZE;
 		return (-1);
-	} 
+	}
 	return (dstp - dst);
 }
 
@@ -484,7 +517,7 @@ MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 {
 	u_char tmp[NS_MAXCDNAME];
 	int n;
-	
+
 	if ((n = MRns_name_unpack(msg, eom, src, tmp, sizeof tmp)) == -1)
 		return (-1);
 	if (MRns_name_ntop(tmp, dst, dstsiz) == -1)

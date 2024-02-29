@@ -1,0 +1,3 @@
+# IPv6 addresses config
+
+option dhcp6.name-servers 2001::, 200a::0bF, 2001::192.168.0.1;

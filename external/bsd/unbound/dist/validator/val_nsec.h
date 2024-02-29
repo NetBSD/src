@@ -44,6 +44,7 @@
 #ifndef VALIDATOR_VAL_NSEC_H
 #define VALIDATOR_VAL_NSEC_H
 #include "util/data/packed_rrset.h"
+#include "sldns/rrdef.h"
 struct val_env;
 struct module_env;
 struct module_qstate;
@@ -65,6 +66,7 @@ struct key_entry_key;
  * @param kkey: key entry to use for verification of signatures.
  * @param proof_ttl: if secure, the TTL of how long this proof lasts.
  * @param reason: string explaining why bogus.
+ * @param reason_bogus: relevant EDE code for validation failure.
  * @param qstate: qstate with region.
  * @return security status.
  *	SECURE: proved absence of DS.
@@ -75,7 +77,8 @@ struct key_entry_key;
 enum sec_status val_nsec_prove_nodata_dsreply(struct module_env* env,
 	struct val_env* ve, struct query_info* qinfo, 
 	struct reply_info* rep, struct key_entry_key* kkey,
-	time_t* proof_ttl, char** reason, struct module_qstate* qstate);
+	time_t* proof_ttl, char** reason, sldns_ede_code* reason_bogus,
+	struct module_qstate* qstate);
 
 /** 
  * nsec typemap check, takes an NSEC-type bitmap as argument, checks for type.
@@ -157,19 +160,6 @@ uint8_t* nsec_closest_encloser(uint8_t* qname,
  */
 int val_nsec_proves_no_wc(struct ub_packed_rrset_key* nsec, uint8_t* qname, 
 	size_t qnamelen);
-
-/**
- * Determine the DLV result, what to do with NSEC DLV reply.
- * @param qinfo: what was queried for.
- * @param rep: the nonpositive reply.
- * @param nm: dlv lookup name, to adjust for new lookup name (if needed).
- * @param nm_len: length of lookup name.
- * @return 0 on error, 1 if a higher point is found.
- * 	If the higher point is above the dlv repo anchor, the qname does 
- * 	not exist.
- */
-int val_nsec_check_dlv(struct query_info* qinfo,
-	struct reply_info* rep, uint8_t** nm, size_t* nm_len);
 
 /**
  * Determine if an nsec proves an insecure delegation towards the qname.

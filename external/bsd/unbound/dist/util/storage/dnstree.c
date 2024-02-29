@@ -71,6 +71,14 @@ int addr_tree_compare(const void* k1, const void* k2)
         return 0;
 }
 
+int addr_tree_addrport_compare(const void* k1, const void* k2)
+{
+	struct addr_tree_node* n1 = (struct addr_tree_node*)k1;
+	struct addr_tree_node* n2 = (struct addr_tree_node*)k2;
+	return sockaddr_cmp(&n1->addr, n1->addrlen, &n2->addr,
+		n2->addrlen);
+}
+
 void name_tree_init(rbtree_type* tree)
 {
 	rbtree_init(tree, &name_tree_compare);
@@ -79,6 +87,11 @@ void name_tree_init(rbtree_type* tree)
 void addr_tree_init(rbtree_type* tree)
 {
 	rbtree_init(tree, &addr_tree_compare);
+}
+
+void addr_tree_addrport_init(rbtree_type* tree)
+{
+	rbtree_init(tree, &addr_tree_addrport_compare);
 }
 
 int name_tree_insert(rbtree_type* tree, struct name_tree_node* node, 
@@ -104,11 +117,12 @@ int addr_tree_insert(rbtree_type* tree, struct addr_tree_node* node,
 	return rbtree_insert(tree, &node->node) != NULL;
 }
 
-void addr_tree_init_parents(rbtree_type* tree)
+void addr_tree_init_parents_node(struct addr_tree_node* node)
 {
-        struct addr_tree_node* node, *prev = NULL, *p;
+	struct addr_tree_node* prev = NULL, *p;
         int m;
-        RBTREE_FOR(node, struct addr_tree_node*, tree) {
+	for(; (rbnode_type*)node != RBTREE_NULL;
+		node = (struct addr_tree_node*)rbtree_next((rbnode_type*)node)) {
                 node->parent = NULL;
                 if(!prev || prev->addrlen != node->addrlen) {
                         prev = node;
@@ -128,6 +142,12 @@ void addr_tree_init_parents(rbtree_type* tree)
                         }
                 prev = node;
         }
+}
+
+void addr_tree_init_parents(rbtree_type* tree)
+{
+	addr_tree_init_parents_node(
+			(struct addr_tree_node*)rbtree_first(tree));
 }
 
 void name_tree_init_parents(rbtree_type* tree)

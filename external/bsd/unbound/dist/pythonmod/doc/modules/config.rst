@@ -129,7 +129,7 @@ config_file
    
    .. attribute:: ifs
    
-      Interface description strings (IP addresses).
+      List of interface description strings (IP addresses).
 
    .. attribute:: num_out_ifs
    
@@ -138,7 +138,7 @@ config_file
 
    .. attribute:: out_ifs
    
-      Outgoing interface description strings (IP addresses).
+      List of outgoing interface description strings (IP addresses).
       
    .. attribute:: root_hints
    
@@ -256,14 +256,6 @@ config_file
    
       Files with trusted DNSKEYs in named.conf format, list.
    
-   .. attribute:: dlv_anchor_file
-   
-      DLV anchor file.
-   
-   .. attribute:: dlv_anchor_list
-   
-      DLV anchor inline.
-
    .. attribute:: max_ttl
    
       The number of seconds maximal TTL used for RRsets and messages.
@@ -347,4 +339,5 @@ config_file
 
    .. attribute:: python_script
    
-      Python script file.
+      Linked list of Python script files.
+      Deprecated; `mod_env['script']` should be used instead.

@@ -30,7 +30,7 @@ EXTRA_DIST = RELNOTES LICENSE configure.ac+lt config+lt \
 	     doc/devel/mainpage.dox doc/devel/omapi.dox doc/devel/qa.dox \
 	     client/tests/Atffile common/tests/Atffile server/tests/Atffile \
 	     client/tests/Kyuafile common/tests/Kyuafile server/tests/Kyuafile \
-         m4/README
+         m4/README CONTRIBUTING.md
 
 if HAVE_BINDDIR
 EXTRA_DIST += bind/Makefile.in bind/bind.tar.gz bind/version.tmp
@@ -39,6 +39,8 @@ endif
 # Use an autoconf substitution vs an automake conditional here
 # to fool automake when the bind directory does not exist.
 SUBDIRS = @BINDSUBDIR@ includes tests common omapip client dhcpctl relay server
+
+DIST_SUBDIRS = $(SUBDIRS) keama
 
 nobase_include_HEADERS = dhcpctl/dhcpctl.h
 

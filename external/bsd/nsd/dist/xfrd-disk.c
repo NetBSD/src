@@ -289,6 +289,13 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			zone->state = xfrd_zone_refreshing;
 			xfrd_set_refresh_now(zone);
 		}
+		if(timeout != 0 && filetime + timeout < (uint32_t)xfrd_time()) {
+			/* timeout is in the past, refresh the zone */
+			timeout = 0;
+			if(zone->state == xfrd_zone_ok)
+				zone->state = xfrd_zone_refreshing;
+			xfrd_set_refresh_now(zone);
+		}
 
 		/* There is a soa && current time is past expiry point */
 		if(soa_disk_acquired_read!=0 &&
@@ -304,7 +311,8 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			&& zone->soa_nsd.serial == soa_nsd_read.serial) {
 			xfrd_deactivate_zone(zone);
 			zone->state = state;
-			xfrd_set_timer(zone, timeout);
+			xfrd_set_timer(zone,
+				within_refresh_bounds(zone, timeout));
 		}	
 		if((zone->soa_nsd_acquired == 0 && soa_nsd_acquired_read == 0 &&
 			soa_disk_acquired_read == 0) ||
@@ -313,20 +321,21 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			 * storm of attempts on some master servers */
 			xfrd_deactivate_zone(zone);
 			zone->state = state;
-			xfrd_set_timer(zone, timeout);
+			xfrd_set_timer(zone,
+				within_retry_bounds(zone, timeout));
 		}
 
 		/* handle as an incoming SOA. */
 		incoming_soa = zone->soa_nsd;
 		incoming_acquired = zone->soa_nsd_acquired;
 		zone->soa_nsd = soa_nsd_read;
-		zone->soa_disk = soa_disk_read;
-		zone->soa_notified = soa_notified_read;
 		zone->soa_nsd_acquired = soa_nsd_acquired_read;
-		/* we had better use what we got from starting NSD, not
-		 * what we store in this file, because the actual zone
-		 * contents trumps the contents of this cache */
-		/* zone->soa_disk_acquired = soa_disk_acquired_read; */
+		/* use soa and soa_acquired from starting NSD, not what is stored in
+		 * the state file, because the actual zone contents trumps the contents
+		 * of this cache */
+		zone->soa_disk = incoming_soa;
+		zone->soa_disk_acquired = incoming_acquired;
+		zone->soa_notified = soa_notified_read;
 		zone->soa_notified_acquired = soa_notified_acquired_read;
 		if (zone->state == xfrd_zone_expired)
 		{

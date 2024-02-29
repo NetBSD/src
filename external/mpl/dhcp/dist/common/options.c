@@ -1,11 +1,11 @@
-/*	$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $	*/
 
 /* options.c
 
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -40,6 +40,8 @@ struct option *vendor_cfg_option;
 
 static int pretty_text(char **, char *, const unsigned char **,
 			 const unsigned char *, int);
+static int pretty_dname(char **, char *, const unsigned char *,
+			 const unsigned char *);
 static int pretty_domain(char **, char *, const unsigned char **,
 			 const unsigned char *);
 static int prepare_option_buffer(struct universe *universe, struct buffer *bp,
@@ -128,8 +130,8 @@ int parse_option_buffer (options, buffer, length, universe)
 	unsigned len, offset;
 	unsigned code;
 	struct option_cache *op = NULL, *nop = NULL;
-	struct buffer *bp = (struct buffer *)0;
-	struct option *option = NULL;
+	struct buffer *bp = NULL;
+	struct option *option;
 	char *reason = "general failure";
 
 	if (!buffer_allocate (&bp, length, MDL)) {
@@ -141,6 +143,7 @@ int parse_option_buffer (options, buffer, length, universe)
 	for (offset = 0;
 	     (offset + universe->tag_size) <= length &&
 	     (code = universe->get_tag(buffer + offset)) != universe->end; ) {
+		option = NULL;
 		offset += universe->tag_size;
 
 		/* Pad options don't have a length - just skip them. */
@@ -177,13 +180,16 @@ int parse_option_buffer (options, buffer, length, universe)
 
 		offset += universe->length_size;
 
-		option_code_hash_lookup(&option, universe->code_hash, &code,
-					0, MDL);
+		if (!option_code_hash_lookup(&option, universe->code_hash,
+		    &code, 0, MDL)) {
+			log_error("Can't find option with code %u", code);
+		}
 
 		/* If the length is outrageous, the options are bad. */
 		if (offset + len > length) {
 			/* Avoid reference count overflow */
-			option_dereference(&option, MDL);
+			if (option)
+				option_dereference(&option, MDL);
 			reason = "option length exceeds option buffer length";
 		      bogus:
 			log_error("parse_option_buffer: malformed option "
@@ -214,7 +220,8 @@ int parse_option_buffer (options, buffer, length, universe)
 			/* non-compliant clients can send it
 			 * we'll just drop it and go on */
 			log_debug ("Ignoring empty DHO_HOST_NAME option");
-			option_dereference(&option, MDL);
+			if (option)
+				option_dereference(&option, MDL);
 			offset += len;
 			continue;
 		}
@@ -228,6 +235,7 @@ int parse_option_buffer (options, buffer, length, universe)
 				log_error("parse_option_buffer: "
 					  "save_option_buffer failed");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 		} else if (universe->concat_duplicates) {
@@ -239,6 +247,7 @@ int parse_option_buffer (options, buffer, length, universe)
 					     MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 			/* Copy old option to new data object. */
@@ -263,6 +272,7 @@ int parse_option_buffer (options, buffer, length, universe)
 			if (!option_cache_allocate(&nop, MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 
@@ -277,7 +287,8 @@ int parse_option_buffer (options, buffer, length, universe)
 			option_cache_dereference(&nop, MDL);
 		}
 
-		option_dereference(&option, MDL);
+		if (option)
+			option_dereference(&option, MDL);
 		offset += len;
 	}
 	buffer_dereference (&bp, MDL);
@@ -454,16 +465,16 @@ int fqdn_universe_decode (struct option_state *options,
 		while (s < &bp -> data[0] + length + 2) {
 			len = *s;
 			if (len > 63) {
-				log_info ("fancy bits in fqdn option");
-				return 0;
+				log_info ("label length exceeds 63 in fqdn option");
+				goto bad;
 			}
 			if (len == 0) {
 				terminated = 1;
 				break;
 			}
 			if (s + len > &bp -> data [0] + length + 3) {
-				log_info ("fqdn tag longer than buffer");
-				return 0;
+				log_info ("fqdn label longer than buffer");
+				goto bad;
 			}
 
 			if (first_len == 0) {
@@ -1408,8 +1419,9 @@ store_options(int *ocount,
 				(option_space_encapsulate
 				 (&encapsulation, packet, lease, client_state,
 				  in_options, cfg_options, scope, &name));
-			data_string_forget (&name, MDL);
 		    }
+
+		    data_string_forget (&name, MDL);
 		}
 	    }
 
@@ -1629,8 +1641,8 @@ format_has_text(format)
 	p = format;
 	while (*p != '\0') {
 		switch (*p++) {
-		    case 'd':
 		    case 't':
+		    case 'k':
 			return 1;
 
 			/* These symbols are arbitrary, not fixed or
@@ -1643,6 +1655,7 @@ format_has_text(format)
 		    case 'X':
 		    case 'x':
 		    case 'D':
+		    case 'd':
 			return 0;
 
 		    case 'c':
@@ -1761,6 +1774,7 @@ format_min_length(format, oc)
 		    case 'A': /* Array of all that precedes. */
 		    case 'a': /* Array of preceding symbol. */
 		    case 'Z': /* nothing. */
+		    case 'k': /* key name */
 			return min_len;
 
 		    case 'c': /* Compress flag for D atom. */
@@ -1885,9 +1899,26 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 			numhunk = -2;
 			break;
 		      case 'd':
-			fmtbuf[l] = 't';
-			/* Fall Through ! */
+			/* Should not be optional, array or compressed */
+			if ((option->format[i+1] == 'o') ||
+			    (option->format[i+1] == 'a') ||
+			    (option->format[i+1] == 'A') ||
+			    (option->format[i+1] == 'c')) {
+				log_error("%s: Illegal use of domain name: %s",
+					  option->name,
+					  &(option->format[i-1]));
+				fmtbuf[l + 1] = 0;
+			}
+			k = MRns_name_len(data + len, data + hunksize);
+			if (k == -1) {
+				log_error("Invalid domain name.");
+				return "<error>";
+			}
+			hunksize += k;
+			break;
+
 		      case 't':
+		      case 'k':
 			fmtbuf[l + 1] = 0;
 			numhunk = -2;
 			break;
@@ -2031,6 +2062,7 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 		for (; j < numelem; j++) {
 			switch (fmtbuf [j]) {
 			      case 't':
+			      case 'k':
 				/* endbuf-1 leaves room for NULL. */
 				k = pretty_text(&op, endbuf - 1, &dp,
 						data + len, emit_quotes);
@@ -2039,6 +2071,18 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 					break;
 				}
 				*op = 0;
+				break;
+			      case 'd': /* RFC1035 format name */
+				k = MRns_name_len(data + len, dp);
+				/* Already tested... */
+				if (k == -1) {
+					log_error("invalid domain name.");
+					return "<error>";
+				}
+				pretty_dname(&op, endbuf-1, dp, data + len);
+				/* pretty_dname does not add the nul */
+				*op = '\0';
+				dp += k;
 				break;
 			      case 'D': /* RFC1035 format name list */
 				for( ; dp < (data + len) ; dp += k) {
@@ -3439,8 +3483,7 @@ int fqdn_option_space_encapsulate (result, packet, lease, client_state,
 	}
       exit:
 	for (i = 1; i <= FQDN_SUBOPTION_COUNT; i++) {
-		if (results [i].len)
-			data_string_forget (&results [i], MDL);
+		data_string_forget (&results[i], MDL);
 	}
 	buffer_dereference (&bp, MDL);
 	if (!status)
@@ -3599,8 +3642,7 @@ fqdn6_option_space_encapsulate(struct data_string *result,
 
       exit:
 	for (i = 1 ; i <= FQDN_SUBOPTION_COUNT ; i++) {
-		if (results[i].len)
-			data_string_forget(&results[i], MDL);
+		data_string_forget(&results[i], MDL);
 	}
 
 	return rval;
@@ -4289,6 +4331,56 @@ pretty_text(char **dst, char *dend, const unsigned char **src,
 }
 
 static int
+pretty_dname(char **dst, char *dend, const unsigned char *src,
+	     const unsigned char *send)
+{
+	const unsigned char *tend;
+	const unsigned char *srcp = src;
+	int count = 0;
+	int tsiz, status;
+
+	if (dst == NULL || dend == NULL || src == NULL || send == NULL ||
+	    *dst == NULL || ((*dst + 1) > dend) || (src >= send))
+		return -1;
+
+	do {
+		/* Continue loop until end of src buffer. */
+		if (srcp >= send)
+			break;
+
+		/* Consume tag size. */
+		tsiz = *srcp;
+		srcp++;
+
+		/* At root, finis. */
+		if (tsiz == 0)
+			break;
+
+		tend = srcp + tsiz;
+
+		/* If the tag exceeds the source buffer, it's illegal.
+		 * This should also trap compression pointers (which should
+		 * not be in these buffers).
+		 */
+		if (tend > send)
+			return -1;
+
+		/* dend-1 leaves room for a trailing dot and quote. */
+		status = pretty_escape(dst, dend-1, &srcp, tend);
+
+		if ((status == -1) || ((*dst + 1) > dend))
+			return -1;
+
+		**dst = '.';
+		(*dst)++;
+		count += status + 1;
+	}
+	while(1);
+
+	return count;
+}
+
+static int
 pretty_domain(char **dst, char *dend, const unsigned char **src,
 	      const unsigned char *send)
 {
@@ -4371,6 +4463,8 @@ add_option(struct option_state *options,
 	if (!option_cache_allocate(&oc, MDL)) {
 		log_error("No memory for option cache adding %s (option %d).",
 			  option->name, option_num);
+		/* Get rid of reference created during hash lookup. */
+		option_dereference(&option, MDL);
 		return 0;
 	}
 
@@ -4382,6 +4476,8 @@ add_option(struct option_state *options,
 			     MDL)) {
 		log_error("No memory for constant data adding %s (option %d).",
 			  option->name, option_num);
+		/* Get rid of reference created during hash lookup. */
+		option_dereference(&option, MDL);
 		option_cache_dereference(&oc, MDL);
 		return 0;
 	}
@@ -4389,6 +4485,9 @@ add_option(struct option_state *options,
 	option_reference(&(oc->option), option, MDL);
 	save_option(&dhcp_universe, options, oc);
 	option_cache_dereference(&oc, MDL);
+
+	/* Get rid of reference created during hash lookup. */
+	option_dereference(&option, MDL);
 
 	return 1;
 }
@@ -4500,8 +4599,10 @@ void parse_vendor_option(packet, lease, client_state, in_options,
 			      in_options, out_options, scope, oc, MDL);
 
 	/* No name, all done */
-	if (name.len == 0)
+	if (name.len == 0) {
+		data_string_forget(&name, MDL);
 		return;
+	}
 
 	/* Get any vendor option information from the request */
 	oc = lookup_option(&dhcp_universe, in_options, code);

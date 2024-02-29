@@ -55,7 +55,7 @@
 #       Return True on success, False on failure.
 #
 #   edns_opt_list_remove(edns_opt_list, code):
-#       Remove all occurences of the given EDNS option code from the
+#       Remove all occurrences of the given EDNS option code from the
 #           edns_opt_list.
 #       Return True when at least one EDNS option was removed, False otherwise.
 #
@@ -80,7 +80,7 @@ def init_standard(id, env):
     ..note:: The previously accessible configuration options can now be found in
              env.cfg.
     """
-    log_info("python: inited script {}".format(env.cfg.python_script))
+    log_info("python: inited script {}".format(mod_env['script']))
 
     # Register EDNS option 65001 as a known EDNS option.
     if not register_edns_option(env, 65001, bypass_cache_stage=True,

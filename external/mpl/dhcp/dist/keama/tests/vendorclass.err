@@ -1,0 +1,6 @@
+# vendor-class declaration config
+
+# vendor-class declaration
+vendor-class "foobar" {
+}
+

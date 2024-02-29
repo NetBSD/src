@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcp-options.5,v 1.2 2018/04/07 22:37:29 christos Exp $
+.\"	$NetBSD: dhcp-options.5,v 1.2.6.1 2024/02/29 11:39:17 martin Exp $
 .\"
 .\"	Id: dhcp-options.5,v 1.50 2011/05/20 13:48:32 tomasz Exp 
 .\"
-.\" Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -18,8 +18,8 @@
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"   Internet Systems Consortium, Inc.
-.\"   950 Charter Street
-.\"   Redwood City, CA 94063
+.\"   PO Box 360
+.\"   Newmarket, NH 03857 USA
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
 .\"
@@ -55,7 +55,14 @@ The
 data type can be entered either as an explicit IP
 address (e.g., 239.254.197.10) or as a domain name (e.g.,
 haagen.isc.org).  When entering a domain name, be sure that that
-domain name resolves to a single IP address.
+domain name resolves to a single IP address. Additionally, please
+note the software (dhcpd or dhclient) will only attempt to resolve
+the domain name the first time the option is needed. For example, if
+the next-server option is defined as a domain name, dhcpd will
+attempt to resolve it while responding to the first client query
+dhcpd receives after startup. Should the domain's address subsequently
+change, the software has to be restarted in order to pick up the
+change.
 .PP
 The
 .B ip6-address
@@ -843,7 +850,7 @@ information.
 .B option \fBpxe-system-type\fR \fIuint16\fR [\fB, \fIuint16\fR ... ]\fB;\fR
 .RS 0.25i
 .PP
-A list of one ore more 16-bit integers which allows a client to specify its 
+A list of one ore more 16-bit integers which allows a client to specify its
 pre-boot architecture type(s).
 .PP
 This option is included based on RFC 4578.
@@ -1236,6 +1243,14 @@ This option is included based on RFC 5986.
 The domain name of the LoST server for the client to use.
 .PP
 This option is included based on RFC 5223.
+.RE
+.PP
+.B option \fBv6-only-preferred\fR \fIuint32\fR\fB;\fR
+.RS 0.25i
+.PP
+The number of seconds the client should disable DHCPv4 for.
+.PP
+This option and its use by the client are specified in RFC 8925.
 .RE
 .PP
 .B option \fBvendor-class-identifier\fR \fIstring\fR\fB;\fR

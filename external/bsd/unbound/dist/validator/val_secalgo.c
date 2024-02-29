@@ -54,6 +54,11 @@
 #error "Need crypto library to do digital signature cryptography"
 #endif
 
+/** fake DSA support for unit tests */
+int fake_dsa = 0;
+/** fake SHA1 support for unit tests */
+int fake_sha1 = 0;
+
 /* OpenSSL implementation */
 #ifdef HAVE_SSL
 #ifdef HAVE_OPENSSL_ERR_H
@@ -72,10 +77,9 @@
 #include <openssl/engine.h>
 #endif
 
-/** fake DSA support for unit tests */
-int fake_dsa = 0;
-/** fake SHA1 support for unit tests */
-int fake_sha1 = 0;
+#if defined(HAVE_OPENSSL_DSA_H) && defined(USE_DSA)
+#include <openssl/dsa.h>
+#endif
 
 /**
  * Output a libcrypto openssl error to the logfile.
@@ -91,6 +95,23 @@ log_crypto_error(const char* str, unsigned long e)
 	/* buf now contains */
 	/* error:[error code]:[library name]:[function name]:[reason string] */
 	log_err("%s crypto %s", str, buf);
+}
+
+/**
+ * Output a libcrypto openssl error to the logfile as a debug message.
+ * @param level: debug level to use in verbose() call
+ * @param str: string to add to it.
+ * @param e: the error to output, error number from ERR_get_error().
+ */
+static void
+log_crypto_verbose(enum verbosity_value level, const char* str, unsigned long e)
+{
+	char buf[128];
+	/* or use ERR_error_string if ERR_error_string_n is not avail TODO */
+	ERR_error_string_n(e, buf, sizeof(buf));
+	/* buf now contains */
+	/* error:[error code]:[library name]:[function name]:[reason string] */
+	verbose(level, "%s crypto %s", str, buf);
 }
 
 /* return size of digest if supported, or 0 otherwise */
@@ -137,6 +158,69 @@ secalgo_hash_sha256(unsigned char* buf, size_t len, unsigned char* res)
 #endif
 }
 
+/** hash structure for keeping track of running hashes */
+struct secalgo_hash {
+	/** the openssl message digest context */
+	EVP_MD_CTX* ctx;
+};
+
+/** create secalgo hash with hash type */
+static struct secalgo_hash* secalgo_hash_create_md(const EVP_MD* md)
+{
+	struct secalgo_hash* h;
+	if(!md)
+		return NULL;
+	h = calloc(1, sizeof(*h));
+	if(!h)
+		return NULL;
+	h->ctx = EVP_MD_CTX_create();
+	if(!h->ctx) {
+		free(h);
+		return NULL;
+	}
+	if(!EVP_DigestInit_ex(h->ctx, md, NULL)) {
+		EVP_MD_CTX_destroy(h->ctx);
+		free(h);
+		return NULL;
+	}
+	return h;
+}
+
+struct secalgo_hash* secalgo_hash_create_sha384(void)
+{
+	return secalgo_hash_create_md(EVP_sha384());
+}
+
+struct secalgo_hash* secalgo_hash_create_sha512(void)
+{
+	return secalgo_hash_create_md(EVP_sha512());
+}
+
+int secalgo_hash_update(struct secalgo_hash* hash, uint8_t* data, size_t len)
+{
+	return EVP_DigestUpdate(hash->ctx, (unsigned char*)data,
+		(unsigned int)len);
+}
+
+int secalgo_hash_final(struct secalgo_hash* hash, uint8_t* result,
+        size_t maxlen, size_t* resultlen)
+{
+	if(EVP_MD_CTX_size(hash->ctx) > (int)maxlen) {
+		*resultlen = 0;
+		log_err("secalgo_hash_final: hash buffer too small");
+		return 0;
+	}
+	*resultlen = EVP_MD_CTX_size(hash->ctx);
+	return EVP_DigestFinal_ex(hash->ctx, result, NULL);
+}
+
+void secalgo_hash_delete(struct secalgo_hash* hash)
+{
+	if(!hash) return;
+	EVP_MD_CTX_destroy(hash->ctx);
+	free(hash);
+}
+
 /**
  * Return size of DS digest according to its hash algorithm.
  * @param algo: DS digest algo.
@@ -148,6 +232,10 @@ ds_digest_size_supported(int algo)
 	switch(algo) {
 		case LDNS_SHA1:
 #if defined(HAVE_EVP_SHA1) && defined(USE_SHA1)
+#ifdef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED
+			if (EVP_default_properties_is_fips_enabled(NULL))
+				return 0;
+#endif
 			return SHA_DIGEST_LENGTH;
 #else
 			if(fake_sha1) return 20;
@@ -258,7 +346,11 @@ dnskey_algo_id_is_supported(int id)
 	case LDNS_RSASHA1:
 	case LDNS_RSASHA1_NSEC3:
 #ifdef USE_SHA1
+#ifdef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED
+		return !EVP_default_properties_is_fips_enabled(NULL);
+#else
 		return 1;
+#endif
 #else
 		if(fake_sha1) return 1;
 		return 0;
@@ -274,14 +366,21 @@ dnskey_algo_id_is_supported(int id)
 	case LDNS_ECDSAP256SHA256:
 	case LDNS_ECDSAP384SHA384:
 #endif
+#if (defined(HAVE_EVP_SHA256) && defined(USE_SHA2)) || (defined(HAVE_EVP_SHA512) && defined(USE_SHA2)) || defined(USE_ECDSA)
+		return 1;
+#endif
 #ifdef USE_ED25519
 	case LDNS_ED25519:
 #endif
 #ifdef USE_ED448
 	case LDNS_ED448:
 #endif
-#if (defined(HAVE_EVP_SHA256) && defined(USE_SHA2)) || (defined(HAVE_EVP_SHA512) && defined(USE_SHA2)) || defined(USE_ECDSA) || defined(USE_ED25519) || defined(USE_ED448)
+#if defined(USE_ED25519) || defined(USE_ED448)
+#ifdef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED
+		return !EVP_default_properties_is_fips_enabled(NULL);
+#else
 		return 1;
+#endif
 #endif
 
 #ifdef USE_GOST
@@ -446,29 +545,13 @@ static int
 setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type, 
 	unsigned char* key, size_t keylen)
 {
-#if defined(USE_DSA) && defined(USE_SHA1)
-	DSA* dsa;
-#endif
-	RSA* rsa;
-
 	switch(algo) {
 #if defined(USE_DSA) && defined(USE_SHA1)
 		case LDNS_DSA:
 		case LDNS_DSA_NSEC3:
-			*evp_key = EVP_PKEY_new();
+			*evp_key = sldns_key_dsa2pkey_raw(key, keylen);
 			if(!*evp_key) {
-				log_err("verify: malloc failure in crypto");
-				return 0;
-			}
-			dsa = sldns_key_buf2dsa_raw(key, keylen);
-			if(!dsa) {
-				verbose(VERB_QUERY, "verify: "
-					"sldns_key_buf2dsa_raw failed");
-				return 0;
-			}
-			if(EVP_PKEY_assign_DSA(*evp_key, dsa) == 0) {
-				verbose(VERB_QUERY, "verify: "
-					"EVP_PKEY_assign_DSA failed");
+				verbose(VERB_QUERY, "verify: sldns_key_dsa2pkey failed");
 				return 0;
 			}
 #ifdef HAVE_EVP_DSS1
@@ -491,20 +574,9 @@ setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type,
 #if defined(HAVE_EVP_SHA512) && defined(USE_SHA2)
 		case LDNS_RSASHA512:
 #endif
-			*evp_key = EVP_PKEY_new();
+			*evp_key = sldns_key_rsa2pkey_raw(key, keylen);
 			if(!*evp_key) {
-				log_err("verify: malloc failure in crypto");
-				return 0;
-			}
-			rsa = sldns_key_buf2rsa_raw(key, keylen);
-			if(!rsa) {
-				verbose(VERB_QUERY, "verify: "
-					"sldns_key_buf2rsa_raw SHA failed");
-				return 0;
-			}
-			if(EVP_PKEY_assign_RSA(*evp_key, rsa) == 0) {
-				verbose(VERB_QUERY, "verify: "
-					"EVP_PKEY_assign_RSA SHA failed");
+				verbose(VERB_QUERY, "verify: sldns_key_rsa2pkey SHA failed");
 				return 0;
 			}
 
@@ -528,20 +600,9 @@ setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type,
 #endif /* defined(USE_SHA1) || (defined(HAVE_EVP_SHA256) && defined(USE_SHA2)) || (defined(HAVE_EVP_SHA512) && defined(USE_SHA2)) */
 
 		case LDNS_RSAMD5:
-			*evp_key = EVP_PKEY_new();
+			*evp_key = sldns_key_rsa2pkey_raw(key, keylen);
 			if(!*evp_key) {
-				log_err("verify: malloc failure in crypto");
-				return 0;
-			}
-			rsa = sldns_key_buf2rsa_raw(key, keylen);
-			if(!rsa) {
-				verbose(VERB_QUERY, "verify: "
-					"sldns_key_buf2rsa_raw MD5 failed");
-				return 0;
-			}
-			if(EVP_PKEY_assign_RSA(*evp_key, rsa) == 0) {
-				verbose(VERB_QUERY, "verify: "
-					"EVP_PKEY_assign_RSA MD5 failed");
+				verbose(VERB_QUERY, "verify: sldns_key_rsa2pkey MD5 failed");
 				return 0;
 			}
 			*digest_type = EVP_md5();
@@ -623,6 +684,36 @@ setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type,
 	return 1;
 }
 
+static void
+digest_ctx_free(EVP_MD_CTX* ctx, EVP_PKEY *evp_key,
+	unsigned char* sigblock, int dofree, int docrypto_free)
+{
+#ifdef HAVE_EVP_MD_CTX_NEW
+	EVP_MD_CTX_destroy(ctx);
+#else
+	EVP_MD_CTX_cleanup(ctx);
+	free(ctx);
+#endif
+	EVP_PKEY_free(evp_key);
+	if(dofree) free(sigblock);
+	else if(docrypto_free) OPENSSL_free(sigblock);
+}
+
+static enum sec_status
+digest_error_status(const char *str)
+{
+	unsigned long e = ERR_get_error();
+#ifdef EVP_R_INVALID_DIGEST
+	if (ERR_GET_LIB(e) == ERR_LIB_EVP &&
+		ERR_GET_REASON(e) == EVP_R_INVALID_DIGEST) {
+		log_crypto_verbose(VERB_ALGO, str, e);
+		return sec_status_indeterminate;
+	}
+#endif
+	log_crypto_verbose(VERB_QUERY, str, e);
+	return sec_status_unchecked;
+}
+
 /**
  * Check a canonical sig+rrset and signature against a dnskey
  * @param buf: buffer with data to verify, the first rrsig part and the
@@ -634,10 +725,11 @@ setup_key_digest(int algo, EVP_PKEY** evp_key, const EVP_MD** digest_type,
  * @param keylen: length of keydata.
  * @param reason: bogus reason in more detail.
  * @return secure if verification succeeded, bogus on crypto failure,
- *	unchecked on format errors and alloc failures.
+ *	unchecked on format errors and alloc failures, indeterminate
+ *	if digest is not supported by the crypto library (openssl3+ only).
  */
 enum sec_status
-verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock, 
+verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock,
 	unsigned int sigblock_len, unsigned char* key, unsigned int keylen,
 	char** reason)
 {
@@ -706,62 +798,36 @@ verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock,
 	}
 #ifndef HAVE_EVP_DIGESTVERIFY
 	if(EVP_DigestInit(ctx, digest_type) == 0) {
-		verbose(VERB_QUERY, "verify: EVP_DigestInit failed");
-#ifdef HAVE_EVP_MD_CTX_NEW
-		EVP_MD_CTX_destroy(ctx);
-#else
-		EVP_MD_CTX_cleanup(ctx);
-		free(ctx);
-#endif
-		EVP_PKEY_free(evp_key);
-		if(dofree) free(sigblock);
-		else if(docrypto_free) OPENSSL_free(sigblock);
-		return sec_status_unchecked;
+		enum sec_status sec;
+		sec = digest_error_status("verify: EVP_DigestInit failed");
+		digest_ctx_free(ctx, evp_key, sigblock,
+			dofree, docrypto_free);
+		return sec;
 	}
 	if(EVP_DigestUpdate(ctx, (unsigned char*)sldns_buffer_begin(buf), 
 		(unsigned int)sldns_buffer_limit(buf)) == 0) {
-		verbose(VERB_QUERY, "verify: EVP_DigestUpdate failed");
-#ifdef HAVE_EVP_MD_CTX_NEW
-		EVP_MD_CTX_destroy(ctx);
-#else
-		EVP_MD_CTX_cleanup(ctx);
-		free(ctx);
-#endif
-		EVP_PKEY_free(evp_key);
-		if(dofree) free(sigblock);
-		else if(docrypto_free) OPENSSL_free(sigblock);
+		log_crypto_verbose(VERB_QUERY, "verify: EVP_DigestUpdate failed",
+			ERR_get_error());
+		digest_ctx_free(ctx, evp_key, sigblock,
+			dofree, docrypto_free);
 		return sec_status_unchecked;
 	}
 
 	res = EVP_VerifyFinal(ctx, sigblock, sigblock_len, evp_key);
 #else /* HAVE_EVP_DIGESTVERIFY */
 	if(EVP_DigestVerifyInit(ctx, NULL, digest_type, NULL, evp_key) == 0) {
-		verbose(VERB_QUERY, "verify: EVP_DigestVerifyInit failed");
-#ifdef HAVE_EVP_MD_CTX_NEW
-		EVP_MD_CTX_destroy(ctx);
-#else
-		EVP_MD_CTX_cleanup(ctx);
-		free(ctx);
-#endif
-		EVP_PKEY_free(evp_key);
-		if(dofree) free(sigblock);
-		else if(docrypto_free) OPENSSL_free(sigblock);
-		return sec_status_unchecked;
+		enum sec_status sec;
+		sec = digest_error_status("verify: EVP_DigestVerifyInit failed");
+		digest_ctx_free(ctx, evp_key, sigblock,
+			dofree, docrypto_free);
+		return sec;
 	}
 	res = EVP_DigestVerify(ctx, sigblock, sigblock_len,
 		(unsigned char*)sldns_buffer_begin(buf),
 		sldns_buffer_limit(buf));
 #endif
-#ifdef HAVE_EVP_MD_CTX_NEW
-	EVP_MD_CTX_destroy(ctx);
-#else
-	EVP_MD_CTX_cleanup(ctx);
-	free(ctx);
-#endif
-	EVP_PKEY_free(evp_key);
-
-	if(dofree) free(sigblock);
-	else if(docrypto_free) OPENSSL_free(sigblock);
+	digest_ctx_free(ctx, evp_key, sigblock,
+		dofree, docrypto_free);
 
 	if(res == 1) {
 		return sec_status_secure;
@@ -817,6 +883,64 @@ void
 secalgo_hash_sha256(unsigned char* buf, size_t len, unsigned char* res)
 {
 	(void)HASH_HashBuf(HASH_AlgSHA256, res, buf, (unsigned long)len);
+}
+
+/** the secalgo hash structure */
+struct secalgo_hash {
+	/** hash context */
+	HASHContext* ctx;
+};
+
+/** create hash struct of type */
+static struct secalgo_hash* secalgo_hash_create_type(HASH_HashType tp)
+{
+	struct secalgo_hash* h = calloc(1, sizeof(*h));
+	if(!h)
+		return NULL;
+	h->ctx = HASH_Create(tp);
+	if(!h->ctx) {
+		free(h);
+		return NULL;
+	}
+	return h;
+}
+
+struct secalgo_hash* secalgo_hash_create_sha384(void)
+{
+	return secalgo_hash_create_type(HASH_AlgSHA384);
+}
+
+struct secalgo_hash* secalgo_hash_create_sha512(void)
+{
+	return secalgo_hash_create_type(HASH_AlgSHA512);
+}
+
+int secalgo_hash_update(struct secalgo_hash* hash, uint8_t* data, size_t len)
+{
+	HASH_Update(hash->ctx, (unsigned char*)data, (unsigned int)len);
+	return 1;
+}
+
+int secalgo_hash_final(struct secalgo_hash* hash, uint8_t* result,
+        size_t maxlen, size_t* resultlen)
+{
+	unsigned int reslen = 0;
+	if(HASH_ResultLenContext(hash->ctx) > (unsigned int)maxlen) {
+		*resultlen = 0;
+		log_err("secalgo_hash_final: hash buffer too small");
+		return 0;
+	}
+	HASH_End(hash->ctx, (unsigned char*)result, &reslen,
+		(unsigned int)maxlen);
+	*resultlen = (size_t)reslen;
+	return 1;
+}
+
+void secalgo_hash_delete(struct secalgo_hash* hash)
+{
+	if(!hash) return;
+	HASH_Destroy(hash->ctx);
+	free(hash);
 }
 
 size_t
@@ -986,6 +1110,7 @@ static SECKEYPublicKey* nss_buf2ecdsa(unsigned char* key, size_t len, int algo)
 	return pk;
 }
 
+#if defined(USE_DSA) && defined(USE_SHA1)
 static SECKEYPublicKey* nss_buf2dsa(unsigned char* key, size_t len)
 {
 	SECKEYPublicKey* pk;
@@ -1046,6 +1171,7 @@ static SECKEYPublicKey* nss_buf2dsa(unsigned char* key, size_t len)
 	}
 	return pk;
 }
+#endif /* USE_DSA && USE_SHA1 */
 
 static SECKEYPublicKey* nss_buf2rsa(unsigned char* key, size_t len)
 {
@@ -1445,6 +1571,82 @@ secalgo_hash_sha256(unsigned char* buf, size_t len, unsigned char* res)
 	_digest_nettle(SHA256_DIGEST_SIZE, (uint8_t*)buf, len, res);
 }
 
+/** secalgo hash structure */
+struct secalgo_hash {
+	/** if it is 384 or 512 */
+	int active;
+	/** context for sha384 */
+	struct sha384_ctx ctx384;
+	/** context for sha512 */
+	struct sha512_ctx ctx512;
+};
+
+struct secalgo_hash* secalgo_hash_create_sha384(void)
+{
+	struct secalgo_hash* h = calloc(1, sizeof(*h));
+	if(!h)
+		return NULL;
+	h->active = 384;
+	sha384_init(&h->ctx384);
+	return h;
+}
+
+struct secalgo_hash* secalgo_hash_create_sha512(void)
+{
+	struct secalgo_hash* h = calloc(1, sizeof(*h));
+	if(!h)
+		return NULL;
+	h->active = 512;
+	sha512_init(&h->ctx512);
+	return h;
+}
+
+int secalgo_hash_update(struct secalgo_hash* hash, uint8_t* data, size_t len)
+{
+	if(hash->active == 384) {
+		sha384_update(&hash->ctx384, len, data);
+	} else if(hash->active == 512) {
+		sha512_update(&hash->ctx512, len, data);
+	} else {
+		return 0;
+	}
+	return 1;
+}
+
+int secalgo_hash_final(struct secalgo_hash* hash, uint8_t* result,
+        size_t maxlen, size_t* resultlen)
+{
+	if(hash->active == 384) {
+		if(SHA384_DIGEST_SIZE > maxlen) {
+			*resultlen = 0;
+			log_err("secalgo_hash_final: hash buffer too small");
+			return 0;
+		}
+		*resultlen = SHA384_DIGEST_SIZE;
+		sha384_digest(&hash->ctx384, SHA384_DIGEST_SIZE,
+			(unsigned char*)result);
+	} else if(hash->active == 512) {
+		if(SHA512_DIGEST_SIZE > maxlen) {
+			*resultlen = 0;
+			log_err("secalgo_hash_final: hash buffer too small");
+			return 0;
+		}
+		*resultlen = SHA512_DIGEST_SIZE;
+		sha512_digest(&hash->ctx512, SHA512_DIGEST_SIZE,
+			(unsigned char*)result);
+	} else {
+		*resultlen = 0;
+		return 0;
+	}
+	return 1;
+}
+
+void secalgo_hash_delete(struct secalgo_hash* hash)
+{
+	if(!hash) return;
+	free(hash);
+}
+
 /**
  * Return size of DS digest according to its hash algorithm.
  * @param algo: DS digest algo.
@@ -1509,13 +1711,21 @@ dnskey_algo_id_is_supported(int id)
 {
 	/* uses libnettle */
 	switch(id) {
-#if defined(USE_DSA) && defined(USE_SHA1)
 	case LDNS_DSA:
 	case LDNS_DSA_NSEC3:
+#if defined(USE_DSA) && defined(USE_SHA1)
+		return 1;
+#else
+		if(fake_dsa || fake_sha1) return 1;
+		return 0;
 #endif
-#ifdef USE_SHA1
 	case LDNS_RSASHA1:
 	case LDNS_RSASHA1_NSEC3:
+#ifdef USE_SHA1
+		return 1;
+#else
+		if(fake_sha1) return 1;
+		return 0;
 #endif
 #ifdef USE_SHA2
 	case LDNS_RSASHA256:
@@ -1738,6 +1948,7 @@ _verify_nettle_ecdsa(sldns_buffer* buf, unsigned int digest_size, unsigned char*
 			res &= nettle_ecdsa_verify (&pubkey, SHA256_DIGEST_SIZE, digest, &signature);
 			mpz_clear(x);
 			mpz_clear(y);
+			nettle_ecc_point_clear(&pubkey);
 			break;
 		}
 		case SHA384_DIGEST_SIZE:
@@ -1819,6 +2030,15 @@ verify_canonrrset(sldns_buffer* buf, int algo, unsigned char* sigblock,
 		*reason = "null signature";
 		return sec_status_bogus;
 	}
+
+#ifndef USE_DSA
+	if((algo == LDNS_DSA || algo == LDNS_DSA_NSEC3) &&(fake_dsa||fake_sha1))
+		return sec_status_secure;
+#endif
+#ifndef USE_SHA1
+	if(fake_sha1 && (algo == LDNS_DSA || algo == LDNS_DSA_NSEC3 || algo == LDNS_RSASHA1 || algo == LDNS_RSASHA1_NSEC3))
+		return sec_status_secure;
+#endif
 
 	switch(algo) {
 #if defined(USE_DSA) && defined(USE_SHA1)

@@ -17,28 +17,75 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 		PYTHON_VERSION=`$PYTHON -c "import sys; \
 			print(sys.version.split()[[0]])"`
 	fi
+	# calculate the version number components.
+	[
+	v="$PYTHON_VERSION"
+	PYTHON_VERSION_MAJOR=`echo $v | sed 's/[^0-9].*//'`
+	if test -z "$PYTHON_VERSION_MAJOR"; then PYTHON_VERSION_MAJOR="0"; fi
+	v=`echo $v | sed -e 's/^[0-9]*$//' -e 's/[0-9]*[^0-9]//'`
+	PYTHON_VERSION_MINOR=`echo $v | sed 's/[^0-9].*//'`
+	if test -z "$PYTHON_VERSION_MINOR"; then PYTHON_VERSION_MINOR="0"; fi
+	v=`echo $v | sed -e 's/^[0-9]*$//' -e 's/[0-9]*[^0-9]//'`
+	PYTHON_VERSION_PATCH=`echo $v | sed 's/[^0-9].*//'`
+	if test -z "$PYTHON_VERSION_PATCH"; then PYTHON_VERSION_PATCH="0"; fi
+	]
 
-        #
-        # Check if you have distutils, else fail
-        #
-        AC_MSG_CHECKING([for the distutils Python package])
-        if ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`; then
+	# For some systems, sysconfig exists, but has the wrong paths,
+	# on Debian 10, for python 2.7 and 3.7. So, we check the version,
+	# and for older versions try distutils.sysconfig first. For newer
+	# versions>=3.10, where distutils.sysconfig is deprecated, use
+	# sysconfig first and then attempt the other one.
+	py_distutils_first="no"
+	if test $PYTHON_VERSION_MAJOR -lt 3; then
+		py_distutils_first="yes"
+	fi
+	if test $PYTHON_VERSION_MAJOR -eq 3 -a $PYTHON_VERSION_MINOR -lt 10; then
+		py_distutils_first="yes"
+	fi
+
+	# Check if you have the first module
+	if test "$py_distutils_first" = "yes"; then m="distutils"; else m="sysconfig"; fi
+	sysconfig_module=""
+	AC_MSG_CHECKING([for the $m Python module])
+        if ac_modulecheck_result1=`$PYTHON -c "import $m" 2>&1`; then
                 AC_MSG_RESULT([yes])
-        else
+		sysconfig_module="$m"
+	else
                 AC_MSG_RESULT([no])
-                AC_MSG_ERROR([cannot import Python module "distutils".
-Please check your Python installation. The error was:
-$ac_distutils_result])
-                PYTHON_VERSION=""
-        fi
+	fi
+
+	# if not found, try the other one.
+	if test -z "$sysconfig_module"; then
+		if test "$py_distutils_first" = "yes"; then m2="sysconfig"; else m2="distutils"; fi
+		AC_MSG_CHECKING([for the $m2 Python module])
+		if ac_modulecheck_result2=`$PYTHON -c "import $m2" 2>&1`; then
+			AC_MSG_RESULT([yes])
+			sysconfig_module="$m2"
+		else
+			AC_MSG_RESULT([no])
+			AC_MSG_ERROR([cannot import Python module "$m", or "$m2".
+	Please check your Python installation. The errors are:
+	$m
+	$ac_modulecheck_result1
+	$m2
+	$ac_modulecheck_result2])
+			PYTHON_VERSION=""
+		fi
+	fi
+	if test "$sysconfig_module" = "distutils"; then sysconfig_module="distutils.sysconfig"; fi
 
         #
         # Check for Python include path
         #
         AC_MSG_CHECKING([for Python include path])
         if test -z "$PYTHON_CPPFLAGS"; then
-                python_path=`$PYTHON -c "import distutils.sysconfig; \
-                        print(distutils.sysconfig.get_python_inc());"`
+		if test "$sysconfig_module" = "sysconfig"; then
+			python_path=`$PYTHON -c 'import sysconfig; \
+				print(sysconfig.get_path("include"));'`
+		else
+			python_path=`$PYTHON -c "import distutils.sysconfig; \
+				print(distutils.sysconfig.get_python_inc());"`
+		fi
                 if test -n "${python_path}"; then
                         python_path="-I$python_path"
                 fi
@@ -52,19 +99,29 @@ $ac_distutils_result])
         #
         AC_MSG_CHECKING([for Python library path])
         if test -z "$PYTHON_LDFLAGS"; then
-                PYTHON_LDFLAGS=`$PYTHON -c "from distutils.sysconfig import *; \
+                PYTHON_LDFLAGS=`$PYTHON -c "from $sysconfig_module import *; \
                         print('-L'+get_config_var('LIBDIR')+' -L'+get_config_var('LIBDEST')+' '+get_config_var('BLDLIBRARY'));"`
         fi
         AC_MSG_RESULT([$PYTHON_LDFLAGS])
         AC_SUBST([PYTHON_LDFLAGS])
+
+        if test -z "$PYTHON_LIBDIR"; then
+                PYTHON_LIBDIR=`$PYTHON -c "from $sysconfig_module import *; \
+                        print(get_config_var('LIBDIR'));"`
+        fi
 
         #
         # Check for site packages
         #
         AC_MSG_CHECKING([for Python site-packages path])
         if test -z "$PYTHON_SITE_PKG"; then
-                PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
-                        print(distutils.sysconfig.get_python_lib(1,0));"`
+		if test "$sysconfig_module" = "sysconfig"; then
+			PYTHON_SITE_PKG=`$PYTHON -c 'import sysconfig; \
+				print(sysconfig.get_path("platlib"));'`
+		else
+			PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
+				print(distutils.sysconfig.get_python_lib(1,0));"`
+		fi
         fi
         AC_MSG_RESULT([$PYTHON_SITE_PKG])
         AC_SUBST([PYTHON_SITE_PKG])
@@ -80,11 +137,11 @@ $ac_distutils_result])
 
         LIBS="$LIBS $PYTHON_LDFLAGS"
         CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
-        AC_TRY_LINK([
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                 #include <Python.h>
-        ],[
+        ]],[[
                 Py_Initialize();
-        ],[pythonexists=yes],[pythonexists=no])
+        ]])],[pythonexists=yes],[pythonexists=no])
 
         AC_MSG_RESULT([$pythonexists])
 

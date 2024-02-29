@@ -53,6 +53,15 @@
 #include "dnstap/dnstap.h"
 #include "dnstap/dnstap.pb-c.h"
 
+#ifdef HAVE_SSL
+#ifdef HAVE_OPENSSL_SSL_H
+#include <openssl/ssl.h>
+#endif
+#ifdef HAVE_OPENSSL_ERR_H
+#include <openssl/err.h>
+#endif
+#endif
+
 #define DNSTAP_CONTENT_TYPE		"protobuf:dnstap.Dnstap"
 #define DNSTAP_INITIAL_BUF_SIZE		256
 
@@ -120,6 +129,380 @@ dt_msg_init(const struct dt_env *env,
 	}
 }
 
+#ifdef HAVE_SSL
+/** TLS writer object for fstrm. */
+struct dt_tls_writer {
+	/* ip address */
+	char* ip;
+	/* if connected already */
+	int connected;
+	/* file descriptor */
+	int fd;
+	/* TLS context */
+	SSL_CTX* ctx;
+	/* SSL transport */
+	SSL* ssl;
+	/* the server name to authenticate */
+	char* tls_server_name;
+};
+
+void log_crypto_err(const char* str); /* in server.c */
+
+/* Create TLS writer object for fstrm. */
+static struct dt_tls_writer*
+tls_writer_init(char* ip, char* tls_server_name, char* tls_cert_bundle,
+	char* tls_client_key_file, char* tls_client_cert_file)
+{
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)calloc(1,
+		sizeof(*dtw));
+	if(!dtw) return NULL;
+	dtw->fd = -1;
+	dtw->ip = strdup(ip);
+	if(!dtw->ip) {
+		free(dtw);
+		return NULL;
+	}
+	dtw->ctx = SSL_CTX_new(SSLv23_client_method());
+	if(!dtw->ctx) {
+		log_msg(LOG_ERR, "dnstap: SSL_CTX_new failed");
+		free(dtw->ip);
+		free(dtw);
+		return NULL;
+	}
+#if SSL_OP_NO_SSLv2 != 0
+	if((SSL_CTX_set_options(dtw->ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
+		!= SSL_OP_NO_SSLv2) {
+		log_msg(LOG_ERR, "dnstap: could not set SSL_OP_NO_SSLv2");
+		SSL_CTX_free(dtw->ctx);
+		free(dtw->ip);
+		free(dtw);
+		return NULL;
+	}
+#endif
+	if((SSL_CTX_set_options(dtw->ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
+		!= SSL_OP_NO_SSLv3) {
+		log_msg(LOG_ERR, "dnstap: could not set SSL_OP_NO_SSLv3");
+		SSL_CTX_free(dtw->ctx);
+		free(dtw->ip);
+		free(dtw);
+		return NULL;
+	}
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* disable client renegotiation */
+	if((SSL_CTX_set_options(dtw->ctx, SSL_OP_NO_RENEGOTIATION) &
+		SSL_OP_NO_RENEGOTIATION) != SSL_OP_NO_RENEGOTIATION) {
+		log_msg(LOG_ERR, "dnstap: could not set SSL_OP_NO_RENEGOTIATION");
+		SSL_CTX_free(dtw->ctx);
+		free(dtw->ip);
+		free(dtw);
+		return NULL;
+	}
+#endif
+	if(tls_client_key_file && tls_client_key_file[0]) {
+		if(!SSL_CTX_use_certificate_chain_file(dtw->ctx,
+			tls_client_cert_file)) {
+			log_msg(LOG_ERR, "dnstap: SSL_CTX_use_certificate_chain_file failed for %s", tls_client_cert_file);
+			SSL_CTX_free(dtw->ctx);
+			free(dtw->ip);
+			free(dtw);
+			return NULL;
+		}
+		if(!SSL_CTX_use_PrivateKey_file(dtw->ctx, tls_client_key_file,
+			SSL_FILETYPE_PEM)) {
+			log_msg(LOG_ERR, "dnstap: SSL_CTX_use_PrivateKey_file failed for %s", tls_client_key_file);
+			SSL_CTX_free(dtw->ctx);
+			free(dtw->ip);
+			free(dtw);
+			return NULL;
+		}
+		if(!SSL_CTX_check_private_key(dtw->ctx)) {
+			log_msg(LOG_ERR, "dnstap: SSL_CTX_check_private_key failed for %s", tls_client_key_file);
+			SSL_CTX_free(dtw->ctx);
+			free(dtw->ip);
+			free(dtw);
+			return NULL;
+		}
+	}
+	if(tls_cert_bundle && tls_cert_bundle[0]) {
+		if(!SSL_CTX_load_verify_locations(dtw->ctx, tls_cert_bundle, NULL)) {
+			log_msg(LOG_ERR, "dnstap: SSL_CTX_load_verify_locations failed for %s", tls_cert_bundle);
+			SSL_CTX_free(dtw->ctx);
+			free(dtw->ip);
+			free(dtw);
+			return NULL;
+		}
+		if(SSL_CTX_set_default_verify_paths(dtw->ctx) != 1) {
+			log_msg(LOG_ERR, "dnstap: SSL_CTX_set_default_verify_paths failed");
+			SSL_CTX_free(dtw->ctx);
+			free(dtw->ip);
+			free(dtw);
+			return NULL;
+		}
+		SSL_CTX_set_verify(dtw->ctx, SSL_VERIFY_PEER, NULL);
+	}
+	if(tls_server_name) {
+		dtw->tls_server_name = strdup(tls_server_name);
+		if(!dtw->tls_server_name) {
+				log_msg(LOG_ERR, "dnstap: strdup failed");
+				SSL_CTX_free(dtw->ctx);
+				free(dtw->ip);
+				free(dtw);
+				return NULL;
+		}
+	}
+	return dtw;
+}
+
+/* Delete TLS writer object */
+static void
+tls_writer_delete(struct dt_tls_writer* dtw)
+{
+	if(!dtw)
+		return;
+	if(dtw->ssl)
+		SSL_shutdown(dtw->ssl);
+	SSL_free(dtw->ssl);
+	dtw->ssl = NULL;
+	SSL_CTX_free(dtw->ctx);
+	if(dtw->fd != -1) {
+		close(dtw->fd);
+		dtw->fd = -1;
+	}
+	free(dtw->ip);
+	free(dtw->tls_server_name);
+	free(dtw);
+}
+
+/* The fstrm writer destroy callback for TLS */
+static fstrm_res
+dt_tls_writer_destroy(void* obj)
+{
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)obj;
+	tls_writer_delete(dtw);
+	return fstrm_res_success;
+}
+
+/* The fstrm writer open callback for TLS */
+static fstrm_res
+dt_tls_writer_open(void* obj)
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	char* svr, *at = NULL;
+	int port = 3333;
+	int addrfamily;
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)obj;
+	X509* x;
+
+	/* skip action if already connected */
+	if(dtw->connected)
+		return fstrm_res_success;
+
+	/* figure out port number */
+	svr = dtw->ip;
+	at = strchr(svr, '@');
+	if(at != NULL) {
+		*at = 0;
+		port = atoi(at+1);
+	}
+
+	/* parse addr */
+	memset(&addr, 0, sizeof(addr));
+#ifdef INET6
+	if(strchr(svr, ':')) {
+		struct sockaddr_in6 sa;
+		addrlen = (socklen_t)sizeof(struct sockaddr_in6);
+		memset(&sa, 0, addrlen);
+		sa.sin6_family = AF_INET6;
+		sa.sin6_port = (in_port_t)htons((uint16_t)port);
+		if(inet_pton((int)sa.sin6_family, svr, &sa.sin6_addr) <= 0) {
+			log_msg(LOG_ERR, "dnstap: could not parse IP: %s", svr);
+			if(at != NULL)
+				*at = '@';
+			return fstrm_res_failure;
+		}
+		memcpy(&addr, &sa, addrlen);
+		addrfamily = AF_INET6;
+	} else
+#else
+		if(1)
+#endif
+	{
+		struct sockaddr_in sa;
+		addrlen = (socklen_t)sizeof(struct sockaddr_in);
+		memset(&sa, 0, addrlen);
+		sa.sin_family = AF_INET;
+		sa.sin_port = (in_port_t)htons((uint16_t)port);
+		if(inet_pton((int)sa.sin_family, svr, &sa.sin_addr) <= 0) {
+			log_msg(LOG_ERR, "dnstap: could not parse IP: %s", svr);
+			if(at != NULL)
+				*at = '@';
+			return fstrm_res_failure;
+		}
+		memcpy(&addr, &sa, addrlen);
+		addrfamily = AF_INET;
+	}
+	if(at != NULL)
+		*at = '@';
+
+	/* open socket */
+	dtw->fd = socket(addrfamily, SOCK_STREAM, 0);
+	if(dtw->fd == -1) {
+		log_msg(LOG_ERR, "dnstap: socket failed: %s", strerror(errno));
+		return fstrm_res_failure;
+	}
+	if(connect(dtw->fd, (struct sockaddr*)&addr, addrlen) < 0) {
+		log_msg(LOG_ERR, "dnstap: connect failed: %s", strerror(errno));
+		return fstrm_res_failure;
+	}
+	dtw->connected = 1;
+
+	/* setup SSL */
+	dtw->ssl = SSL_new(dtw->ctx);
+	if(!dtw->ssl) {
+		log_msg(LOG_ERR, "dnstap: SSL_new failed");
+		return fstrm_res_failure;
+	}
+	SSL_set_connect_state(dtw->ssl);
+	(void)SSL_set_mode(dtw->ssl, SSL_MODE_AUTO_RETRY);
+	if(!SSL_set_fd(dtw->ssl, dtw->fd)) {
+		log_msg(LOG_ERR, "dnstap: SSL_set_fd failed");
+		return fstrm_res_failure;
+	}
+	if(dtw->tls_server_name && dtw->tls_server_name[0]) {
+		if(!SSL_set1_host(dtw->ssl, dtw->tls_server_name)) {
+			log_msg(LOG_ERR, "dnstap: TLS setting of hostname %s failed to %s",
+				dtw->tls_server_name, dtw->ip);
+			return fstrm_res_failure;
+		}
+	}
+
+	/* handshake */
+	while(1) {
+		int r;
+		ERR_clear_error();
+		if( (r=SSL_do_handshake(dtw->ssl)) == 1)
+			break;
+		r = SSL_get_error(dtw->ssl, r);
+		if(r != SSL_ERROR_WANT_READ && r != SSL_ERROR_WANT_WRITE) {
+			if(r == SSL_ERROR_ZERO_RETURN) {
+				log_msg(LOG_ERR, "dnstap: EOF on SSL_do_handshake");
+				return fstrm_res_failure;
+			}
+			if(r == SSL_ERROR_SYSCALL) {
+				log_msg(LOG_ERR, "dnstap: SSL_do_handshake failed: %s", strerror(errno));
+				return fstrm_res_failure;
+			}
+			log_crypto_err("dnstap: SSL_do_handshake failed");
+			return fstrm_res_failure;
+		}
+		/* wants to be called again */
+	}
+
+	/* check authenticity of server */
+	if(SSL_get_verify_result(dtw->ssl) != X509_V_OK) {
+		log_crypto_err("SSL verification failed");
+		return fstrm_res_failure;
+	}
+	x = SSL_get_peer_certificate(dtw->ssl);
+	if(!x) {
+		log_crypto_err("Server presented no peer certificate");
+		return fstrm_res_failure;
+	}
+	X509_free(x);
+
+	return fstrm_res_success;
+}
+
+/* The fstrm writer close callback for TLS */
+static fstrm_res
+dt_tls_writer_close(void* obj)
+{
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)obj;
+	if(dtw->connected) {
+		dtw->connected = 0;
+		if(dtw->ssl)
+			SSL_shutdown(dtw->ssl);
+		SSL_free(dtw->ssl);
+		dtw->ssl = NULL;
+		if(dtw->fd != -1) {
+			close(dtw->fd);
+			dtw->fd = -1;
+		}
+		return fstrm_res_success;
+	}
+	return fstrm_res_failure;
+}
+
+/* The fstrm writer read callback for TLS */
+static fstrm_res
+dt_tls_writer_read(void* obj, void* buf, size_t nbytes)
+{
+	/* want to read nbytes of data */
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)obj;
+	size_t nread = 0;
+	if(!dtw->connected)
+		return fstrm_res_failure;
+	while(nread < nbytes) {
+		int r;
+		ERR_clear_error();
+		if((r = SSL_read(dtw->ssl, ((char*)buf)+nread, nbytes-nread)) <= 0) {
+			r = SSL_get_error(dtw->ssl, r);
+			if(r == SSL_ERROR_ZERO_RETURN) {
+				log_msg(LOG_ERR, "dnstap: EOF from %s",
+					dtw->ip);
+				return fstrm_res_failure;
+			}
+			if(r == SSL_ERROR_SYSCALL) {
+				log_msg(LOG_ERR, "dnstap: read %s: %s",
+					dtw->ip, strerror(errno));
+				return fstrm_res_failure;
+			}
+			if(r == SSL_ERROR_SSL) {
+				log_crypto_err("dnstap: could not SSL_read");
+				return fstrm_res_failure;
+			}
+			log_msg(LOG_ERR, "dnstap: SSL_read failed with err %d",
+				r);
+			return fstrm_res_failure;
+		}
+		nread += r;
+	}
+	return fstrm_res_success;
+}
+
+/* The fstrm writer write callback for TLS */
+static fstrm_res
+dt_tls_writer_write(void* obj, const struct iovec* iov, int iovcnt)
+{
+	struct dt_tls_writer* dtw = (struct dt_tls_writer*)obj;
+	int i;
+	if(!dtw->connected)
+		return fstrm_res_failure;
+	for(i=0; i<iovcnt; i++) {
+		if(SSL_write(dtw->ssl, iov[i].iov_base, (int)(iov[i].iov_len)) <= 0) {
+			log_crypto_err("dnstap: could not SSL_write");
+			return fstrm_res_failure;
+		}
+	}
+	return fstrm_res_success;
+}
+
+/* Create the fstrm writer object for TLS */
+static struct fstrm_writer*
+dt_tls_make_writer(struct fstrm_writer_options* fwopt,
+	struct dt_tls_writer* dtw)
+{
+	struct fstrm_rdwr* rdwr = fstrm_rdwr_init(dtw);
+	fstrm_rdwr_set_destroy(rdwr, dt_tls_writer_destroy);
+	fstrm_rdwr_set_open(rdwr, dt_tls_writer_open);
+	fstrm_rdwr_set_close(rdwr, dt_tls_writer_close);
+	fstrm_rdwr_set_read(rdwr, dt_tls_writer_read);
+	fstrm_rdwr_set_write(rdwr, dt_tls_writer_write);
+	return fstrm_writer_init(fwopt, &rdwr);
+}
+#endif /* HAVE_SSL */
+
 /* check that the socket file can be opened and exists, print error if not */
 static void
 check_socket_file(const char* socket_path)
@@ -133,22 +516,30 @@ check_socket_file(const char* socket_path)
 }
 
 struct dt_env *
-dt_create(const char *socket_path, unsigned num_workers)
+dt_create(const char *socket_path, char* ip, unsigned num_workers,
+	int tls, char* tls_server_name, char* tls_cert_bundle,
+	char* tls_client_key_file, char* tls_client_cert_file)
 {
 #ifndef NDEBUG
 	fstrm_res res;
 #endif
 	struct dt_env *env;
 	struct fstrm_iothr_options *fopt;
-	struct fstrm_unix_writer_options *fuwopt;
+	struct fstrm_unix_writer_options *fuwopt = NULL;
+	struct fstrm_tcp_writer_options *ftwopt = NULL;
 	struct fstrm_writer *fw;
 	struct fstrm_writer_options *fwopt;
 
-	VERBOSITY(1, (LOG_INFO, "attempting to connect to dnstap socket %s",
-		socket_path));
-	assert(socket_path != NULL);
 	assert(num_workers > 0);
-	check_socket_file(socket_path);
+	if(ip == NULL || ip[0] == 0) {
+		VERBOSITY(1, (LOG_INFO, "attempting to connect to dnstap socket %s",
+			socket_path));
+		assert(socket_path != NULL);
+		check_socket_file(socket_path);
+	} else {
+		VERBOSITY(1, (LOG_INFO, "attempting to connect to dnstap %ssocket %s",
+			(tls?"tls ":""), ip));
+	}
 
 	env = (struct dt_env *) calloc(1, sizeof(struct dt_env));
 	if (!env)
@@ -164,10 +555,50 @@ dt_create(const char *socket_path, unsigned num_workers)
 		DNSTAP_CONTENT_TYPE, sizeof(DNSTAP_CONTENT_TYPE) - 1);
 	assert(res == fstrm_res_success);
 
-	fuwopt = fstrm_unix_writer_options_init();
-	fstrm_unix_writer_options_set_socket_path(fuwopt, socket_path);
-
-	fw = fstrm_unix_writer_init(fuwopt, fwopt);
+	if(ip == NULL || ip[0] == 0) {
+		fuwopt = fstrm_unix_writer_options_init();
+		fstrm_unix_writer_options_set_socket_path(fuwopt, socket_path);
+	} else {
+		char* at = strchr(ip, '@');
+		if(!tls) {
+			ftwopt = fstrm_tcp_writer_options_init();
+			if(at == NULL) {
+				fstrm_tcp_writer_options_set_socket_address(ftwopt, ip);
+				fstrm_tcp_writer_options_set_socket_port(ftwopt, "3333");
+			} else {
+				*at = 0;
+				fstrm_tcp_writer_options_set_socket_address(ftwopt, ip);
+				fstrm_tcp_writer_options_set_socket_port(ftwopt, at+1);
+				*at = '@';
+			}
+		} else {
+#ifdef HAVE_SSL
+			env->tls_writer = tls_writer_init(ip, tls_server_name,
+				tls_cert_bundle, tls_client_key_file,
+				tls_client_cert_file);
+#else
+			(void)tls_server_name;
+			(void)tls_cert_bundle;
+			(void)tls_client_key_file;
+			(void)tls_client_cert_file;
+			log_msg(LOG_ERR, "dnstap: tls enabled but compiled without ssl.");
+#endif
+			if(!env->tls_writer) {
+				log_msg(LOG_ERR, "dt_create: tls_writer_init() failed");
+				fstrm_writer_options_destroy(&fwopt);
+				free(env);
+				return NULL;
+			}
+		}
+	}
+	if(ip == NULL || ip[0] == 0)
+		fw = fstrm_unix_writer_init(fuwopt, fwopt);
+	else if(!tls)
+		fw = fstrm_tcp_writer_init(ftwopt, fwopt);
+#ifdef HAVE_SSL
+	else
+		fw = dt_tls_make_writer(fwopt, env->tls_writer);
+#endif
 	assert(fw != NULL);
 
 	fopt = fstrm_iothr_options_init();
@@ -180,7 +611,11 @@ dt_create(const char *socket_path, unsigned num_workers)
 		env = NULL;
 	}
 	fstrm_iothr_options_destroy(&fopt);
-	fstrm_unix_writer_options_destroy(&fuwopt);
+
+	if(ip == NULL || ip[0] == 0)
+		fstrm_unix_writer_options_destroy(&fuwopt);
+	else if(!tls)
+		fstrm_tcp_writer_options_destroy(&ftwopt);
 	fstrm_writer_options_destroy(&fwopt);
 
 	return env;
@@ -292,50 +727,85 @@ dt_fill_buffer(uint8_t* pkt, size_t pktlen, ProtobufCBinaryData *p, protobuf_c_b
 static void
 dt_msg_fill_net(struct dt_msg *dm,
 #ifdef INET6
-		struct sockaddr_storage *ss,
+		struct sockaddr_storage *rs,
+		struct sockaddr_storage *qs,
 #else
-		struct sockaddr_in *ss,
+		struct sockaddr_in *rs,
+		struct sockaddr_in *qs,
 #endif
 		int is_tcp,
-		ProtobufCBinaryData *addr, protobuf_c_boolean *has_addr,
-		uint32_t *port, protobuf_c_boolean *has_port)
+		ProtobufCBinaryData *raddr, protobuf_c_boolean *has_raddr,
+		uint32_t *rport, protobuf_c_boolean *has_rport,
+		ProtobufCBinaryData *qaddr, protobuf_c_boolean *has_qaddr,
+		uint32_t *qport, protobuf_c_boolean *has_qport)
+
 {
 #ifdef INET6
-	assert(ss->ss_family == AF_INET6 || ss->ss_family == AF_INET);
-	if (ss->ss_family == AF_INET6) {
-		struct sockaddr_in6 *s = (struct sockaddr_in6 *) ss;
+	assert(qs->ss_family == AF_INET6 || qs->ss_family == AF_INET);
+	if (qs->ss_family == AF_INET6) {
+		struct sockaddr_in6 *s = (struct sockaddr_in6 *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET6;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = s->sin6_addr.s6_addr;
-		addr->len = 16; /* IPv6 */
-		*has_addr = 1;
+		qaddr->data = s->sin6_addr.s6_addr;
+		qaddr->len = 16; /* IPv6 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin6_port);
-		*has_port = 1;
-	} else if (ss->ss_family == AF_INET) {
+		*qport = ntohs(s->sin6_port);
+		*has_qport = 1;
+	} else if (qs->ss_family == AF_INET) {
 #else
-	if (ss->sin_family == AF_INET) {
+	if (qs->sin_family == AF_INET) {
 #endif /* INET6 */
-		struct sockaddr_in *s = (struct sockaddr_in *) ss;
+		struct sockaddr_in *s = (struct sockaddr_in *) qs;
 
 		/* socket_family */
 		dm->m.socket_family = DNSTAP__SOCKET_FAMILY__INET;
 		dm->m.has_socket_family = 1;
 
 		/* addr: query_address or response_address */
-		addr->data = (uint8_t *) &s->sin_addr.s_addr;
-		addr->len = 4; /* IPv4 */
-		*has_addr = 1;
+		qaddr->data = (uint8_t *) &s->sin_addr.s_addr;
+		qaddr->len = 4; /* IPv4 */
+		*has_qaddr = 1;
 
 		/* port: query_port or response_port */
-		*port = ntohs(s->sin_port);
-		*has_port = 1;
+		*qport = ntohs(s->sin_port);
+		*has_qport = 1;
 	}
+
+#ifdef INET6
+        assert(rs->ss_family == AF_INET6 || rs->ss_family == AF_INET);
+        if (rs->ss_family == AF_INET6) {
+                struct sockaddr_in6 *s = (struct sockaddr_in6 *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = s->sin6_addr.s6_addr;
+                raddr->len = 16; /* IPv6 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(s->sin6_port);
+                *has_rport = 1;
+        } else if (rs->ss_family == AF_INET) {
+#else
+        if (rs->sin_family == AF_INET) {
+#endif /* INET6 */
+                struct sockaddr_in *s = (struct sockaddr_in *) rs;
+
+                /* addr: query_address or response_address */
+                raddr->data = (uint8_t *) &s->sin_addr.s_addr;
+                raddr->len = 4; /* IPv4 */
+                *has_raddr = 1;
+
+                /* port: query_port or response_port */
+                *rport = ntohs(s->sin_port);
+                *has_rport = 1;
+        }
+
 
 	if (!is_tcp) {
 		/* socket_protocol */
@@ -351,8 +821,10 @@ dt_msg_fill_net(struct dt_msg *dm,
 void
 dt_msg_send_auth_query(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen)
@@ -380,10 +852,13 @@ dt_msg_send_auth_query(struct dt_env *env,
 	/* query_message */
 	dt_fill_buffer(pkt, pktlen, &dm.m.query_message, &dm.m.has_query_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
-	dt_msg_fill_net(&dm, addr, is_tcp,
+	/* socket_family, socket_protocol, query_address, query_port, reponse_address (local_address), response_port (local_port) */
+	dt_msg_fill_net(&dm, local_addr, addr, is_tcp,
+			&dm.m.response_address, &dm.m.has_response_address,
+			&dm.m.response_port, &dm.m.has_response_port,
 			&dm.m.query_address, &dm.m.has_query_address,
 			&dm.m.query_port, &dm.m.has_query_port);
+
 
 	if (dt_pack(&dm.d, &dm.buf, &dm.len_buf))
 		dt_send(env, dm.buf, dm.len_buf);
@@ -392,8 +867,10 @@ dt_msg_send_auth_query(struct dt_env *env,
 void
 dt_msg_send_auth_response(struct dt_env *env,
 #ifdef INET6
+	struct sockaddr_storage* local_addr,
 	struct sockaddr_storage* addr,
 #else
+	struct sockaddr_in* local_addr,
 	struct sockaddr_in* addr,
 #endif
 	int is_tcp, uint8_t* zone, size_t zonelen, uint8_t* pkt, size_t pktlen)
@@ -421,8 +898,10 @@ dt_msg_send_auth_response(struct dt_env *env,
 	/* response_message */
 	dt_fill_buffer(pkt, pktlen, &dm.m.response_message, &dm.m.has_response_message);
 
-	/* socket_family, socket_protocol, query_address, query_port */
-	dt_msg_fill_net(&dm, addr, is_tcp,
+	/* socket_family, socket_protocol, query_address, query_port, response_address (local_address), response_port (local_port)  */
+	dt_msg_fill_net(&dm, local_addr, addr, is_tcp,
+			&dm.m.response_address, &dm.m.has_response_address,
+			&dm.m.response_port, &dm.m.has_response_port,
 			&dm.m.query_address, &dm.m.has_query_address,
 			&dm.m.query_port, &dm.m.has_query_port);
 

@@ -66,6 +66,10 @@ push_parser_state(FILE *input)
 static void
 pop_parser_state(void)
 {
+	if (parser->filename)
+		region_recycle(parser->region, (void *)parser->filename,
+			strlen(parser->filename)+1);
+
 	--include_stack_ptr;
 	parser->filename = zparser_stack[include_stack_ptr].filename;
 	parser->line = zparser_stack[include_stack_ptr].line;
@@ -101,6 +105,12 @@ parser_flush(void)
 	lexer_state = EXPECT_OWNER;
 }
 
+int at_eof(void)
+{
+	static int once = 1;
+	return (once = !once) ? 0 : NL;
+}
+
 #ifndef yy_set_bol /* compat definition, for flex 2.4.6 */
 #define yy_set_bol(at_bol) \
 	{ \
@@ -126,7 +136,7 @@ SPACE   [ \t]
 LETTER  [a-zA-Z]
 NEWLINE [\n\r]
 ZONESTR [^ \t\n\r();.\"\$]|\\.|\\\n
-CHARSTR [^ \t\n\r();.]|\\.|\\\n
+CHARSTR [^ \t\n\r();.\"]|\\.|\\\n
 QUOTE   \"
 DOLLAR  \$
 COMMENT ;
@@ -220,12 +230,17 @@ ANY     [^\"\n\\]|\\.
 	parser->error_occurred = error_occurred;
 }
 <INITIAL><<EOF>>	{
+	int eo = at_eof();
 	yy_set_bol(1); /* Set beginning of line, so "^" rules match.  */
 	if (include_stack_ptr == 0) {
+		if(eo == NL)
+			return eo;
 		yyterminate();
 	} else {
 		fclose(yyin);
 		pop_parser_state();
+		if(eo == NL)
+			return eo;
 	}
 }
 ^{DOLLAR}{LETTER}+	{ zc_warning("Unknown directive: %s", yytext); }
@@ -307,13 +322,13 @@ ANY     [^\"\n\\]|\\.
 	yyrestart(yyin); /* this is so that lex does not give an internal err */
 	yyterminate();
 }
-<quotedstring>{ANY}*	{ LEXOUT(("STR ")); yymore(); }
+<quotedstring>{ANY}*	{ LEXOUT(("QSTR ")); yymore(); }
 <quotedstring>\n 	{ ++parser->line; yymore(); }
 <quotedstring>{QUOTE} {
 	LEXOUT(("\" "));
 	BEGIN(INITIAL);
 	yytext[yyleng - 1] = '\0';
-	return parse_token(STR, yytext, &lexer_state);
+	return parse_token(QSTR, yytext, &lexer_state);
 }
 
 {ZONESTR}({CHARSTR})* {
