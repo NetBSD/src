@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.57 2023/01/05 18:29:45 jakllsch Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.58 2024/03/01 22:01:03 andvar Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.57 2023/01/05 18:29:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.58 2024/03/01 22:01:03 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -922,7 +922,7 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_DEVICE_GPIO_PINSET:
 		/*
-		 * root can access gpio pins, secmodel_securlevel can veto
+		 * root can access gpio pins, secmodel_securelevel can veto
 		 * this decision.
 		 */
 		if (isroot)
