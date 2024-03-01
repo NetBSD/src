@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.35 2023/10/05 19:10:18 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.36 2024/03/01 04:32:38 mrg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.35 2023/10/05 19:10:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.36 2024/03/01 04:32:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -75,6 +75,8 @@ idle_loop(void *dummy)
 		KASSERT(l == curlwp);
 		KASSERT(CURCPU_IDLE_P());
 		KASSERT(l->l_priority == PRI_IDLE);
+		KASSERTMSG(l->l_nopreempt == 0, "lwp %p nopreempt %d",
+		    l, l->l_nopreempt);
 
 		sched_idle();
 		if (!sched_curcpu_runnable_p()) {
