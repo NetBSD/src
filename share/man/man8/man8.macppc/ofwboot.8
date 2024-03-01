@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.15 2024/02/03 14:15:51 uwe Exp $
+.\"	$NetBSD: ofwboot.8,v 1.16 2024/03/01 22:35:56 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 18, 2001
+.Dd March 1, 2024
 .Dt OFWBOOT 8 macppc
 .Os
 .Sh NAME
@@ -315,6 +315,10 @@ is the Open Firmware prompt.
 .Bl -item
 .
 .It
+Boot the default installation into single user mode.
+.Dl 0 > boot -s
+.
+.It
 Boot an Open Firmware 3 system, with
 .Ar netbsd
 installed on partition
@@ -322,8 +326,19 @@ installed on partition
 .Dl 0 > boot hd:,ofwboot.xcf
 .
 .It
-Boot into single user mode:
-.Dl 0 > boot hd:,ofwboot.xcf netbsd -s
+Boot the kernel named
+.Pa netbsd.new
+from partition
+.Dq Pa a
+.Pq Ql 0
+of the hard disk into
+.Xr ddb 4
+using
+.Tn ELF
+version of
+.Nm
+from the USB flash drive:
+.Dl 0 > boot usb0/disk:,\eofwboot.elf hd:0/netbsd.new -d
 .
 .It
 Boot from bootable CDROM with Open Firmware 3 or higher:
