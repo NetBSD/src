@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.218 2024/02/29 21:37:10 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.219 2024/03/01 17:14:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.218 2024/02/29 21:37:10 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.219 2024/03/01 17:14:34 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -597,7 +597,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool unsigned_since_c90 = allow_trad && allow_c90 && u_suffix == 0
 	    && is_unsigned_since_c90(l_suffix, ui, base);
 
-	tspec_t t = u_suffix
+	tspec_t t = u_suffix > 0
 	    ? integer_constant_type_unsigned(l_suffix, ui, warned)
 	    : integer_constant_type_signed(l_suffix, ui, base, warned);
 	ui = (uint64_t)convert_integer((int64_t)ui, t, 0);
