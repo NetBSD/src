@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.5 2023/01/19 19:55:27 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.6 2024/03/01 17:47:05 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -80,15 +80,6 @@ SKIP.debug-src=		yes
 TESTS+=			maxpathlen
 CPPFLAGS.maxpathlen=	-DMAXPATHLEN=20
 SKIP.maxpathlen=	yes
-
-# In this variant, the unit tests using the modifier ':C' fail, as expected.
-#
-TESTS+=			no-regex
-CPPFLAGS.no-regex=	-DNO_REGEX
-SKIP_TESTS.no-regex=	archive cond-short deptgt-makeflags dollar export-all
-SKIP_TESTS.no-regex+=	moderrs modmatch modmisc var-eval-short
-SKIP_TESTS.no-regex+=	varmod-select-words varmod-subst varmod-subst-regex
-SKIP_TESTS.no-regex+=	varname-dot-make-pid varname-dot-make-ppid
 
 # NetBSD 8.0 x86_64 says:
 # In file included from /usr/include/sys/param.h:115:0,
