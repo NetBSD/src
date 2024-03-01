@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.75 2023/08/04 12:24:36 riastradh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.76 2024/03/01 04:32:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.75 2023/08/04 12:24:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.76 2024/03/01 04:32:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -569,6 +569,8 @@ softint_execute(lwp_t *l, int s)
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
 	KASSERT(si->si_active);
+	KASSERTMSG(l->l_nopreempt == 0, "lwp %p nopreempt %d",
+	    l, l->l_nopreempt);
 
 	/*
 	 * Note: due to priority inheritance we may have interrupted a
@@ -616,6 +618,10 @@ softint_execute(lwp_t *l, int s)
 		KASSERTMSG(l->l_blcnt == 0,
 		    "%s: sh_func=%p leaked %d biglocks",
 		    __func__, sh->sh_func, curlwp->l_blcnt);
+		/* Diagnostic: check that LWP nopreempt remains zero. */
+		KASSERTMSG(l->l_nopreempt == 0,
+		    "%s: lwp %p nopreempt %d func %p",
+		    __func__, l, l->l_nopreempt, sh->sh_func);
 
 		(void)splhigh();
 	}
