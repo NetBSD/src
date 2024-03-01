@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.219 2024/03/01 17:14:34 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.220 2024/03/01 21:52:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.219 2024/03/01 17:14:34 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.220 2024/03/01 21:52:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -872,7 +872,7 @@ hex_escape:
 static void
 check_quoted(const buffer *buf, bool complete, char delim)
 {
-	quoted_iterator it = { .start = 0 }, prev = it;
+	quoted_iterator it = { .i = 0 }, prev = it;
 	for (; quoted_next(buf, &it); prev = it) {
 		if (it.missing_hex_digits)
 			/* no hex digits follow \x */
@@ -950,7 +950,7 @@ lex_character_constant(void)
 
 	size_t n = 0;
 	uint64_t val = 0;
-	quoted_iterator it = { .start = 0 };
+	quoted_iterator it = { .i = 0 };
 	while (quoted_next(buf, &it)) {
 		val = (val << CHAR_SIZE) + it.value;
 		n++;
@@ -992,7 +992,7 @@ lex_wide_character_constant(void)
 	static char wbuf[MB_LEN_MAX + 1];
 	size_t n = 0, nmax = MB_CUR_MAX;
 
-	quoted_iterator it = { .start = 0 };
+	quoted_iterator it = { .i = 0 };
 	while (quoted_next(buf, &it)) {
 		if (n < nmax)
 			wbuf[n] = (char)it.value;
@@ -1293,7 +1293,7 @@ lex_wide_string(void)
 
 	buffer str;
 	buf_init(&str);
-	quoted_iterator it = { .start = 0 };
+	quoted_iterator it = { .i = 0 };
 	while (quoted_next(buf, &it))
 		buf_add_char(&str, (char)it.value);
 
