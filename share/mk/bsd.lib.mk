@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.379.2.1 2019/09/01 10:44:22 martin Exp $
+#	$NetBSD: bsd.lib.mk,v 1.379.2.2 2024/03/01 11:43:31 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -30,7 +30,7 @@ MKLINT:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
 MKSTATICLIB:=	no
-. else
+. elif ${LIBISPRIVATE} != "pic"
 MKPIC:=		no
 . endif
 MKPROFILE:=	no
@@ -67,7 +67,13 @@ LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 LDADD+=		-l${_lib}
 .else
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
-DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so	# Don't use _LIB_PREFIX
+.if exists(${LIBDO.${_lib}}/lib${_lib}_pic.a)
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}_pic.a
+.elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.so
+.else
+DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.a
+.endif
 .endif
 .endfor
 .endif									# }
@@ -118,6 +124,7 @@ print-shlib-teeny:
 	@false
 .endif
 
+.if ${LIBISPRIVATE} == "no"
 .if defined(SHLIB_MAJOR) && !empty(SHLIB_MAJOR)				# {
 .if defined(SHLIB_MINOR) && !empty(SHLIB_MINOR)
 .if defined(SHLIB_TEENY) && !empty(SHLIB_TEENY)
@@ -129,6 +136,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
 SHLIB_FULLVERSION=${SHLIB_MAJOR}
 .endif
 .endif									# }
+.endif
 
 # add additional suffixes not exported.
 # .po is used for profiling object files.

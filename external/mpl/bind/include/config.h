@@ -80,7 +80,7 @@
 #define HAVE_ECDSA_SIG_GET0 1
 
 /* Define to 1 if you have the `ERR_get_error_all' function. */
-#define HAVE_ERR_GET_ERROR_ALL 1
+/* #undef HAVE_ERR_GET_ERROR_ALL */
 
 /* Define to 1 if you have the `EVP_aes_128_ecb' function. */
 #define HAVE_EVP_AES_128_ECB 1
@@ -107,7 +107,7 @@
 #define HAVE_EVP_MD_CTX_FREE 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_get0_md' function. */
-#define HAVE_EVP_MD_CTX_GET0_MD 1
+/* #undef HAVE_EVP_MD_CTX_GET0_MD */
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #define HAVE_EVP_MD_CTX_NEW 1
@@ -116,7 +116,7 @@
 #define HAVE_EVP_MD_CTX_RESET 1
 
 /* Define to 1 if you have the `EVP_PKEY_eq' function. */
-#define HAVE_EVP_PKEY_EQ 1
+/* #undef HAVE_EVP_PKEY_EQ */
 
 /* Define to 1 if you have the `EVP_PKEY_get0_EC_KEY' function. */
 #define HAVE_EVP_PKEY_GET0_EC_KEY 1
