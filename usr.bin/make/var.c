@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1100 2024/03/01 16:41:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1101 2024/03/01 17:53:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -137,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1100 2024/03/01 16:41:42 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1101 2024/03/01 17:53:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -612,9 +612,9 @@ ExportVarEnv(Var *v, GNode *scope)
 	expr = str_concat3("${", name, "}");
 	val = Var_Subst(expr, scope, VARE_WANTRES);
 	if (scope != SCOPE_GLOBAL) {
-		/* we will need to re-rexport the Global version */
+		/* we will need to re-export the global version */
 		v = VarFind(name, SCOPE_GLOBAL, false);
-		if (v)
+		if (v != NULL)
 			v->exported = false;
 	}
 	/* TODO: handle errors */
