@@ -1,4 +1,4 @@
-# $NetBSD: var-scope-local.mk,v 1.9 2023/12/20 09:03:09 rillig Exp $
+# $NetBSD: var-scope-local.mk,v 1.10 2024/03/01 20:15:59 sjg Exp $
 #
 # Tests for target-local variables, such as ${.TARGET} or $@.  These variables
 # are relatively short-lived as they are created just before making the
@@ -200,12 +200,14 @@ var-scope-local-default.o \
 var-scope-local-subst.o \
 var-scope-local-shell.o:
 	: Making ${.TARGET} with VAR="${VAR}".
+	@echo "${.TARGET} env has VAR='$$VAR'"
 
 # Target-local variables are enabled by default.  Force them to be enabled
 # just in case a test above has disabled them.
 .MAKE.TARGET_LOCAL_VARIABLES= yes
 
 VAR=	global
+.export VAR
 
 # If the sources of a dependency line look like a variable assignment, make
 # treats them as such.  There is only a single variable assignment per
@@ -264,6 +266,7 @@ var-scope-local-shell.o: VAR != echo output
 # expect: : var-scope-local-use.o uses .USE VAR="global"
 a_use: .USE VAR=use
 	: ${.TARGET} uses .USE VAR="${VAR}"
+	@echo "${.TARGET} env has VAR='$$VAR'"
 
 all: var-scope-local-use.o
 var-scope-local-use.o: a_use
