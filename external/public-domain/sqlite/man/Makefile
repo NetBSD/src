@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/09/04 23:17:24 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2024/03/01 15:47:59 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -119,6 +119,7 @@ sqlite3_filename_database.3 \
 sqlite3_finalize.3 \
 sqlite3_get_autocommit.3 \
 sqlite3_get_auxdata.3 \
+sqlite3_get_clientdata.3 \
 sqlite3_get_table.3 \
 sqlite3_index_info.3 \
 sqlite3_initialize.3 \
@@ -226,6 +227,7 @@ sqlite3changegroup_add.3 \
 sqlite3changegroup_delete.3 \
 sqlite3changegroup_new.3 \
 sqlite3changegroup_output.3 \
+sqlite3changegroup_schema.3 \
 sqlite3changeset_apply.3 \
 sqlite3changeset_apply_strm.3 \
 sqlite3changeset_concat.3 \
@@ -239,6 +241,7 @@ sqlite3changeset_old.3 \
 sqlite3changeset_op.3 \
 sqlite3changeset_pk.3 \
 sqlite3changeset_start.3 \
+sqlite3changeset_upgrade.3 \
 sqlite3rebaser_configure.3 \
 sqlite3rebaser_create.3 \
 sqlite3rebaser_delete.3 \

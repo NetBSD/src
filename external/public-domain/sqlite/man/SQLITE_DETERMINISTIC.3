@@ -1,11 +1,12 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE_DETERMINISTIC 3
 .Os
 .Sh NAME
 .Nm SQLITE_DETERMINISTIC ,
 .Nm SQLITE_DIRECTONLY ,
 .Nm SQLITE_SUBTYPE ,
-.Nm SQLITE_INNOCUOUS
+.Nm SQLITE_INNOCUOUS ,
+.Nm SQLITE_RESULT_SUBTYPE
 .Nd function flags
 .Sh SYNOPSIS
 .In sqlite3.h
@@ -13,6 +14,7 @@
 .Fd #define SQLITE_DIRECTONLY
 .Fd #define SQLITE_SUBTYPE
 .Fd #define SQLITE_INNOCUOUS
+.Fd #define SQLITE_RESULT_SUBTYPE
 .Sh DESCRIPTION
 These constants may be ORed together with the preferred text encoding
 as the fourth argument to
@@ -78,28 +80,50 @@ application-defined functions unless the function has been carefully
 audited and found to be free of potentially security-adverse side-effects
 and information-leaks.
 .It SQLITE_SUBTYPE
-The SQLITE_SUBTYPE flag indicates to SQLite that a function may call
+The SQLITE_SUBTYPE flag indicates to SQLite that a function might call
 .Fn sqlite3_value_subtype
 to inspect the sub-types of its arguments.
-Specifying this flag makes no difference for scalar or aggregate user
-functions.
-However, if it is not specified for a user-defined window function,
-then any sub-types belonging to arguments passed to the window function
-may be discarded before the window function is called (i.e. sqlite3_value_subtype()
-will always return 0).
+This flag instructs SQLite to omit some corner-case optimizations that
+might disrupt the operation of the
+.Fn sqlite3_value_subtype
+function, causing it to return zero rather than the correct subtype().
+SQL functions that invokes
+.Fn sqlite3_value_subtype
+should have this property.
+If the SQLITE_SUBTYPE property is omitted, then the return value from
+.Fn sqlite3_value_subtype
+might sometimes be zero even though a non-zero subtype was specified
+by the function argument expression.
+.It SQLITE_RESULT_SUBTYPE
+The SQLITE_RESULT_SUBTYPE flag indicates to SQLite that a function
+might call
+.Fn sqlite3_result_subtype
+to cause a sub-type to be associated with its result.
+Every function that invokes
+.Fn sqlite3_result_subtype
+should have this property.
+If it does not, then the call to
+.Fn sqlite3_result_subtype
+might become a no-op if the function is used as term in an expression index.
+On the other hand, SQL functions that never invoke
+.Fn sqlite3_result_subtype
+should avoid setting this property, as the purpose of this property
+is to disable certain optimizations that are incompatible with subtypes.
 .El
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5509.
+interface documentation at line 5513.
 .Bd -literal
 #define SQLITE_DETERMINISTIC    0x000000800
 #define SQLITE_DIRECTONLY       0x000080000
 #define SQLITE_SUBTYPE          0x000100000
 #define SQLITE_INNOCUOUS        0x000200000
+#define SQLITE_RESULT_SUBTYPE   0x001000000
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_create_function 3 ,
+.Xr sqlite3_result_subtype 3 ,
 .Xr sqlite3_value_subtype 3 ,
 .Xr SQLITE_DBCONFIG_MAINDBNAME 3 ,
 .Xr SQLITE_UTF8 3

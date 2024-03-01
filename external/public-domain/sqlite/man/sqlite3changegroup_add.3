@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3CHANGEGROUP_ADD 3
 .Os
 .Sh NAME
@@ -68,17 +68,22 @@ If the new changeset contains changes to a table that is already present
 in the changegroup, then the number of columns and the position of
 the primary key columns for the table must be consistent.
 If this is not the case, this function fails with SQLITE_SCHEMA.
+Except, if the changegroup object has been configured with a database
+schema using the sqlite3changegroup_schema() API, then it is possible
+to combine changesets with different numbers of columns for a single
+table, provided that they are otherwise compatible.
+.Pp
 If the input changeset appears to be corrupt and the corruption is
 detected, SQLITE_CORRUPT is returned.
 Or, if an out-of-memory condition occurs during processing, this function
 returns SQLITE_NOMEM.
+.Pp
 In all cases, if an error occurs the state of the final contents of
 the changegroup is undefined.
-.Pp
 If no error occurs, SQLITE_OK is returned.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 11727.
+interface documentation at line 11900.
 .Bd -literal
 SQLITE_API int sqlite3changegroup_add(sqlite3_changegroup*, int nData, void *pData);
 .Ed

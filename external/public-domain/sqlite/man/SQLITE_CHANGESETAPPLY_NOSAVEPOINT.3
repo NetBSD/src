@@ -1,16 +1,18 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE_CHANGESETAPPLY_NOSAVEPOINT 3
 .Os
 .Sh NAME
 .Nm SQLITE_CHANGESETAPPLY_NOSAVEPOINT ,
 .Nm SQLITE_CHANGESETAPPLY_INVERT ,
-.Nm SQLITE_CHANGESETAPPLY_IGNORENOOP
+.Nm SQLITE_CHANGESETAPPLY_IGNORENOOP ,
+.Nm SQLITE_CHANGESETAPPLY_FKNOACTION
 .Nd flags for sqlite3changeset_apply_v2
 .Sh SYNOPSIS
 .In sqlite3.h
 .Fd #define SQLITE_CHANGESETAPPLY_NOSAVEPOINT
 .Fd #define SQLITE_CHANGESETAPPLY_INVERT
 .Fd #define SQLITE_CHANGESETAPPLY_IGNORENOOP
+.Fd #define SQLITE_CHANGESETAPPLY_FKNOACTION
 .Sh DESCRIPTION
 The following flags may passed via the 9th parameter to sqlite3changeset_apply_v2
 and sqlite3changeset_apply_v2_strm:
@@ -44,13 +46,19 @@ an insert change if all fields of the conflicting row match the row
 being inserted.
 .El
 .Pp
+.It SQLITE_CHANGESETAPPLY_FKNOACTION
+If this flag it set, then all foreign key constraints in the target
+database behave as if they were declared with "ON UPDATE NO ACTION
+ON DELETE NO ACTION", even if they are actually CASCADE, RESTRICT,
+SET NULL or SET DEFAULT.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 12033.
+interface documentation at line 12211.
 .Bd -literal
 #define SQLITE_CHANGESETAPPLY_NOSAVEPOINT   0x0001
 #define SQLITE_CHANGESETAPPLY_INVERT        0x0002
 #define SQLITE_CHANGESETAPPLY_IGNORENOOP    0x0004
+#define SQLITE_CHANGESETAPPLY_FKNOACTION    0x0008
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3changeset_apply 3 ,

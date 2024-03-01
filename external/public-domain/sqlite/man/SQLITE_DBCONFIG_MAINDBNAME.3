@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE_DBCONFIG_MAINDBNAME 3
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ Usually, when a database in wal mode is closed or detached from a database
 handle, SQLite checks if this will mean that there are now no connections
 at all to the database.
 If so, it performs a checkpoint operation before closing the connection.
-This option may be used to override this behaviour.
+This option may be used to override this behavior.
 The first parameter passed to this operation is an integer - positive
 to disable checkpoints-on-close, or zero (the default) to enable them,
 and negative to leave the setting unchanged.

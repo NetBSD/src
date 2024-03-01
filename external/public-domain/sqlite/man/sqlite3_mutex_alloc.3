@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_MUTEX_ALLOC 3
 .Os
 .Sh NAME
@@ -144,8 +144,11 @@ more than once, the behavior is undefined.
 Some systems (for example, Windows 95) do not support the operation
 implemented by sqlite3_mutex_try().
 On those systems, sqlite3_mutex_try() will always return SQLITE_BUSY.
-The SQLite core only ever uses sqlite3_mutex_try() as an optimization
+In most cases the SQLite core only uses sqlite3_mutex_try() as an optimization,
 so this is acceptable behavior.
+The exceptions are unix builds that set the SQLITE_ENABLE_SETLK_TIMEOUT
+build option.
+In that case a working sqlite3_mutex_try() is required.
 .Pp
 The sqlite3_mutex_leave() routine exits a mutex that was previously
 entered by the same thread.
@@ -158,7 +161,7 @@ behaves as a no-op.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7836.
+interface documentation at line 7944.
 .Bd -literal
 SQLITE_API sqlite3_mutex *sqlite3_mutex_alloc(int);
 SQLITE_API void sqlite3_mutex_free(sqlite3_mutex*);

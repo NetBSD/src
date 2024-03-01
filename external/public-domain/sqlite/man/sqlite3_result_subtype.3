@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_RESULT_SUBTYPE 3
 .Os
 .Sh NAME
@@ -19,11 +19,26 @@ Only the lower 8 bits of the subtype T are preserved in current versions
 of SQLite; higher order bits are discarded.
 The number of subtype bytes preserved by SQLite might increase in future
 releases of SQLite.
+.Pp
+Every application-defined SQL function
+that invokes this interface should include the SQLITE_RESULT_SUBTYPE
+property in its text encoding argument when the SQL function is registered.
+If the SQLITE_RESULT_SUBTYPE property is omitted
+from the function that invokes sqlite3_result_subtype(), then in some
+cases the sqlite3_result_subtype() might fail to set the result subtype.
+.Pp
+If SQLite is compiled with -DSQLITE_STRICT_SUBTYPE=1, then any SQL
+function that invokes the sqlite3_result_subtype() interface and that
+does not have the SQLITE_RESULT_SUBTYPE property will raise an error.
+Future versions of SQLite might enable -DSQLITE_STRICT_SUBTYPE=1 by
+default.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6128.
+interface documentation at line 6218.
 .Bd -literal
 SQLITE_API void sqlite3_result_subtype(sqlite3_context*,unsigned int);
 .Ed
 .Sh SEE ALSO
-.Xr sqlite3_context 3
+.Xr sqlite3_context 3 ,
+.Xr sqlite3_create_function 3 ,
+.Xr SQLITE_DETERMINISTIC 3

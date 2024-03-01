@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_MODULE 3
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@ The content of this structure must not change while it is registered
 with any database connection.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7169.
+interface documentation at line 7273.
 .Bd -literal
 struct sqlite3_module {
   int iVersion;
@@ -61,6 +61,10 @@ struct sqlite3_module {
   /* The methods above are in versions 1 and 2 of the sqlite_module object.
   ** Those below are for version 3 and greater. */
   int (*xShadowName)(const char*);
+  /* The methods above are in versions 1 through 3 of the sqlite_module object.
+  ** Those below are for version 4 and greater. */
+  int (*xIntegrity)(sqlite3_vtab *pVTab, const char *zSchema,
+                    const char *zTabName, int mFlags, char **pzErr);
 };
 .Ed
 .Sh SEE ALSO

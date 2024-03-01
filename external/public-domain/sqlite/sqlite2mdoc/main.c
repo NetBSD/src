@@ -251,7 +251,7 @@ static	int nofile;
 static	int filename;
 
 static void
-decl_function_add(struct parse *p, char **etext,
+decl_function_add(struct parse *p __unused, char **etext,
 	size_t *etextsz, const char *cp, size_t len)
 {
 
@@ -271,7 +271,7 @@ decl_function_add(struct parse *p, char **etext,
 }
 
 static void
-decl_function_copy(struct parse *p, char **etext,
+decl_function_copy(struct parse *p __unused, char **etext,
 	size_t *etextsz, const char *cp, size_t len)
 {
 

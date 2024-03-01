@@ -1,11 +1,11 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE_TXN_NONE 3
 .Os
 .Sh NAME
 .Nm SQLITE_TXN_NONE ,
 .Nm SQLITE_TXN_READ ,
 .Nm SQLITE_TXN_WRITE
-.Nd allowed return values from [sqlite3_txn_state()]
+.Nd allowed return values from sqlite3_txn_state()
 .Sh SYNOPSIS
 .In sqlite3.h
 .Fd #define SQLITE_TXN_NONE
@@ -37,7 +37,7 @@ The transaction state will change to to SQLITE_TXN_NONE at the next
 ROLLBACK or COMMIT.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6569.
+interface documentation at line 6673.
 .Bd -literal
 #define SQLITE_TXN_NONE  0
 #define SQLITE_TXN_READ  1
