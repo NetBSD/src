@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1992 2024/02/26 23:11:12 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.1993 2024/03/01 15:49:41 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1327,16 +1327,16 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	sqlite
-Version:	3.43.0
-Current Vers:	3.45.0
+Version:	3.45.1
+Current Vers:	3.45.1
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2024-01-16
+Date: 		2024-03-01
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
 Notes:
-Run cleantags before importing because sqlite3.c has an RCSID
+See README file
 
 
 Package:	TestFloat
