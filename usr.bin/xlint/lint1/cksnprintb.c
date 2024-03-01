@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.1 2024/03/01 19:40:45 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.2 2024/03/01 21:52:48 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.1 2024/03/01 19:40:45 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.2 2024/03/01 21:52:48 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -266,7 +266,7 @@ check_snprintb(const tnode_t *expr)
 	if (!match_snprintb_call(expr->tn_call, &fmt, &value))
 		return;
 
-	quoted_iterator it = { .start = 0 };
+	quoted_iterator it = { .i = 0 };
 	if (!quoted_next(fmt, &it)) {
 		/* missing new-style '\177' or old-style number base */
 		warning(359);

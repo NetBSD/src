@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.87 2024/02/08 20:45:20 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.88 2024/03/01 21:52:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.87 2024/02/08 20:45:20 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.88 2024/03/01 21:52:48 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -362,7 +362,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 		    arg->tn_left->tn_string->data != NULL) {
 			buffer buf;
 			buf_init(&buf);
-			quoted_iterator it = { .start = 0 };
+			quoted_iterator it = { .i = 0 };
 			while (quoted_next(arg->tn_left->tn_string, &it))
 				buf_add_char(&buf, (char)it.value);
 
