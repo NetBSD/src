@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_UNLOCK_NOTIFY 3
 .Os
 .Sh NAME
@@ -56,8 +56,8 @@ If sqlite3_unlock_notify() is called when the blocked connection already
 has a registered unlock-notify callback, then the new callback replaces
 the old.
 If sqlite3_unlock_notify() is called with a NULL pointer as its second
-argument, then any existing unlock-notify callback is cancelled.
-The blocked connections unlock-notify callback may also be cancelled
+argument, then any existing unlock-notify callback is canceled.
+The blocked connections unlock-notify callback may also be canceled
 by closing the blocked connection using
 .Fn sqlite3_close .
 The unlock-notify callback is not reentrant.
@@ -136,7 +136,7 @@ Otherwise, in the special "DROP TABLE/INDEX" case, the extended error
 code is just SQLITE_LOCKED.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9204.
+interface documentation at line 9316.
 .Bd -literal
 SQLITE_API int sqlite3_unlock_notify(
   sqlite3 *pBlocked,                          /* Waiting connection */

@@ -1,0 +1,49 @@
+.Dd January 24, 2024
+.Dt SQLITE3CHANGEGROUP_SCHEMA 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_schema
+.Nd add a schema to a changegroup
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_schema
+.Fa "sqlite3_changegroup*"
+.Fa "sqlite3*"
+.Fa "const char *zDb"
+.Fc
+.Sh DESCRIPTION
+This method may be used to optionally enforce the rule that the changesets
+added to the changegroup handle must match the schema of database zDb
+("main", "temp", or the name of an attached database).
+If sqlite3changegroup_add() is called to add a changeset that is not
+compatible with the configured schema, SQLITE_SCHEMA is returned and
+the changegroup object is left in an undefined state.
+.Pp
+A changeset schema is considered compatible with the database schema
+in the same way as for sqlite3changeset_apply().
+Specifically, for each table in the changeset, there exists a database
+table with:
+.Bl -bullet
+.It
+The name identified by the changeset, and
+.It
+at least as many columns as recorded in the changeset, and
+.It
+the primary key columns in the same position as recorded in the changeset.
+.El
+.Pp
+The output of the changegroup object always has the same schema as
+the database nominated using this function.
+In cases where changesets passed to sqlite3changegroup_add() have fewer
+columns than the corresponding table in the database schema, these
+are filled in using the default column values from the database schema.
+This makes it possible to combined changesets that have different numbers
+of columns for a single table within a changegroup, provided that they
+are otherwise compatible.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11868.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_schema(sqlite3_changegroup*, sqlite3*, const char *zDb);
+.Ed

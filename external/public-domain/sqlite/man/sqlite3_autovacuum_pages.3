@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_AUTOVACUUM_PAGES 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ There is only one autovacuum pages callback per database connection.
 Each call to the sqlite3_autovacuum_pages() interface overrides all
 previous invocations for that database connection.
 If the callback argument (C) to sqlite3_autovacuum_pages(D,C,P,X) is
-a NULL pointer, then the autovacuum steps callback is cancelled.
+a NULL pointer, then the autovacuum steps callback is canceled.
 The return value from sqlite3_autovacuum_pages() is normally SQLITE_OK,
 but might be some other error code if something goes wrong.
 The current implementation will only return SQLITE_OK or SQLITE_MISUSE,
@@ -71,7 +71,7 @@ nFreePage;     }
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6668.
+interface documentation at line 6772.
 .Bd -literal
 SQLITE_API int sqlite3_autovacuum_pages(
   sqlite3 *db,

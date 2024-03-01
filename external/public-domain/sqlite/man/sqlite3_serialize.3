@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_SERIALIZE 3
 .Os
 .Sh NAME
@@ -43,6 +43,13 @@ with the same values of D and S.
 The size of the database is written into *P even if the SQLITE_SERIALIZE_NOCOPY
 bit is set but no contiguous copy of the database exists.
 .Pp
+After the call, if the SQLITE_SERIALIZE_NOCOPY bit had been set, the
+returned buffer content will remain accessible and unchanged until
+either the next write operation on the connection or when the connection
+is closed, and applications must not modify the buffer.
+If the bit had been clear, the returned buffer will not be accessed
+by SQLite after the call.
+.Pp
 A call to sqlite3_serialize(D,S,P,F) might return NULL even if the
 SQLITE_SERIALIZE_NOCOPY bit is omitted from argument F if a memory
 allocation error occurs.
@@ -51,7 +58,7 @@ This interface is omitted if SQLite is compiled with the SQLITE_OMIT_DESERIALIZE
 option.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10524.
+interface documentation at line 10636.
 .Bd -literal
 SQLITE_API unsigned char *sqlite3_serialize(
   sqlite3 *db,           /* The database connection */

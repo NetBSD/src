@@ -1,4 +1,4 @@
-.Dd August 24, 2023
+.Dd January 24, 2024
 .Dt SQLITE3_BLOB_CLOSE 3
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@ If an error occurs while committing the transaction, an error code
 is returned and the transaction rolled back.
 .Pp
 Calling this function with an argument that is not a NULL pointer or
-an open blob handle results in undefined behaviour.
+an open blob handle results in undefined behavior.
 Calling this routine with a null pointer (such as would be returned
 by a failed call to
 .Fn sqlite3_blob_open )
@@ -33,7 +33,7 @@ values returned by the sqlite3_errcode() and sqlite3_errmsg() functions
 are set before returning.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7693.
+interface documentation at line 7801.
 .Bd -literal
 SQLITE_API int sqlite3_blob_close(sqlite3_blob *);
 .Ed
