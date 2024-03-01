@@ -1,0 +1,35 @@
+/*	$NetBSD: msg_372.c,v 1.1 2024/03/01 19:39:29 rillig Exp $	*/
+# 3 "msg_372.c"
+
+// Test for message: field width '%.*s' (%ju) in '%.*s' out of range 0..%u [372]
+
+/*
+ * In new-style formats, the width of a bit-field must be between 0 (an empty
+ * bit-field) and 64 (a bit-field spanning the whole value).
+ */
+
+/* lint1-extra-flags: -X 351 */
+
+typedef typeof(sizeof(0)) size_t;
+typedef unsigned long long uint64_t;
+
+int snprintb(char*, size_t, const char*, uint64_t);
+
+void
+example(uint64_t u64)
+{
+	char buf[64];
+
+	/* expect+11: warning: field width '\101' (65) in 'f\000\101all+1\0' out of range 0..64 [372] */
+	/* expect+10: warning: bit field end 65 in 'f\000\101all+1\0' out of range 0..64 [373] */
+	/* expect+9: warning: bit field end 65 in 'f\001\100oob64\0' out of range 0..64 [373] */
+	/* expect+8: warning: field width '\377' (255) in 'f\010\377oob64\0' out of range 0..64 [372] */
+	/* expect+7: warning: bit field end 263 in 'f\010\377oob64\0' out of range 0..64 [373] */
+	snprintb(buf, sizeof(buf),
+	    "\177\020"
+	    "f\000\100all\0"
+	    "f\000\101all+1\0"
+	    "f\001\100oob64\0"
+	    "f\010\377oob64\0",
+	    u64);
+}

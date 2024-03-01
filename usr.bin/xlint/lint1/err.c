@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.225 2024/02/06 22:47:21 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.226 2024/03/01 19:39:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.225 2024/02/06 22:47:21 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.226 2024/03/01 19:39:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -412,6 +412,25 @@ static const char *const msgs[] = {
 	"'_Static_assert' requires C11 or later",			// 354
 	"'_Static_assert' without message requires C23 or later",	// 355
 	"short octal escape '%.*s' followed by digit '%c'",		// 356
+	"hex escape '%.*s' mixes uppercase and lowercase digits",	// 357
+	"hex escape '%.*s' has more than 2 digits",			// 358
+	"missing new-style '\\177' or old-style number base",		// 359
+	"missing new-style number base after '\\177'",			// 360
+	"number base '%.*s' is %ju, should be 8, 10 or 16",		// 361
+	"old-style format contains '\\0'",				// 362
+	"non-printing character '%.*s' in description '%.*s'",		// 363
+	"missing bit position after '%.*s'",				// 364
+	"missing field width after '%.*s'",				// 365
+	"missing '\\0' at the end of '%.*s'",				// 366
+	"empty description in '%.*s'",					// 367
+	"missing comparison value after directive '%.*s'",		// 368
+	"bit position '%.*s' in '%.*s' should be escaped as octal or hex", // 369
+	"field width '%.*s' in '%.*s' should be escaped as octal or hex", // 370
+	"bit position '%.*s' (%ju) in '%.*s' out of range %u..%u",	// 371
+	"field width '%.*s' (%ju) in '%.*s' out of range 0..%u",	// 372
+	"bit field end %ju in '%.*s' out of range 0..64",		// 373
+	"unknown directive '%.*s'",					// 374
+	"comparison value '%.*s' (%ju) exceeds field width %ju",	// 375
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
