@@ -204,7 +204,7 @@
 #define HAVE_GETPWNAM 1
 
 /* Define to 1 if you have the `getrandom' function. */
-#define HAVE_GETRANDOM 1
+/* #undef HAVE_GETRANDOM */
 
 /* Define to 1 if you have the `glob' function. */
 #define HAVE_GLOB 1
@@ -307,7 +307,7 @@
 #define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the `ppoll' function. */
-#define HAVE_PPOLL 1
+/* #undef HAVE_PPOLL */
 
 /* Define to 1 if you have the `pselect' function. */
 #define HAVE_PSELECT 1
@@ -460,7 +460,7 @@
 #define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/random.h> header file. */
-#define HAVE_SYS_RANDOM_H 1
+/* #undef HAVE_SYS_RANDOM_H */
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1

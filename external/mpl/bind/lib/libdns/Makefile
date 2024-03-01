@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2024/02/29 12:36:03 martin Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2024/03/01 11:43:30 martin Exp $
 
 NOLINT=yes	# XXX
 LIB=dns
@@ -26,7 +26,7 @@ COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 DNSSEC_SRCS=	dst_api.c dst_parse.c \
 	gssapictx.c hmac_link.c key.c openssl_link.c \
 	openssldh_link.c opensslrsa_link.c \
-	opensslecdsa_link.c openssleddsa_link.c
+	opensslecdsa_link.c openssleddsa_link.c openssl_shim.c
 .if ${MKKERBEROS} != "no"
 DNSSEC_SRCS+=	gssapi_link.c
 

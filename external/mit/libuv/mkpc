@@ -1,0 +1,27 @@
+#!/bin/sh
+#	$NetBSD: mkpc,v 1.1.8.2 2024/03/01 11:43:31 martin Exp $
+
+set +x
+getversion() {
+	(echo '#include "uv/version.h"';
+	    echo UV_VERSION_MAJOR.UV_VERSION_MINOR.UV_VERSION_PATCH) |
+	    eval "$CPP $CPPFLAGS" -I$1 | grep -v '#' | tr -d ' '
+}
+VERSION="$(getversion $1)"
+echo ${VERSION} 1>&2
+
+cat << EOF | sed -e s/@VERSION@/${VERSION}/
+# \$NetBSD: mkpc,v 1.1.8.2 2024/03/01 11:43:31 martin Exp $
+prefix=/usr
+exec_prefix=/usr
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: libuv
+Version: @VERSION@
+Description: multi-platform support library with a focus on asynchronous I/O.
+URL: http://libuv.org/
+
+Libs: -luv -lkvm  
+Cflags:
+EOF

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4.4.2 2024/02/29 12:27:58 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.4.4.3 2024/03/01 11:43:30 martin Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -17,7 +17,7 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
 LIBUVDIR=	${NETBSDSRCDIR}/external/mit/libuv
 LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${LIBUVDIR}/dist/include
-CFLAGS+=	-std=gnu18
+CFLAGS+=	-std=gnu11
 LINTFLAGS+=	-Ac11
 
 BIND_SRCDIR:=	${.PARSEDIR}
@@ -68,7 +68,7 @@ DPADD+=		${LIBEXECINFO} ${LIBKVM} ${LIBZ}
 .endif
 .endif
 
-LDADD+=-lblocklist
+LDADD+=-lblacklist
 DPADD+=${LIBBLOCKLIST}
 
 .if !defined (LIB) || empty(LIB)

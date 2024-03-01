@@ -225,7 +225,7 @@
 
 /* Define to 1 if you have the `EVP_default_properties_is_fips_enabled'
    function. */
-#define HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED 1
+/* #undef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED */
 
 /* Define to 1 if you have the `EVP_DigestVerify' function. */
 #define HAVE_EVP_DIGESTVERIFY 1
@@ -237,7 +237,7 @@
 #define HAVE_EVP_ENCRYPTINIT_EX 1
 
 /* Define to 1 if you have the `EVP_MAC_CTX_set_params' function. */
-#define HAVE_EVP_MAC_CTX_SET_PARAMS 1
+/* #undef HAVE_EVP_MAC_CTX_SET_PARAMS */
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #define HAVE_EVP_MD_CTX_NEW 1
@@ -429,7 +429,7 @@
 #define HAVE_OPENSSL_CONF_H 1
 
 /* Define to 1 if you have the <openssl/core_names.h> header file. */
-#define HAVE_OPENSSL_CORE_NAMES_H 1
+/* #undef HAVE_OPENSSL_CORE_NAMES_H */
 
 /* Define to 1 if you have the <openssl/dh.h> header file. */
 #define HAVE_OPENSSL_DH_H 1
@@ -450,7 +450,7 @@
 #define HAVE_OPENSSL_INIT_SSL 1
 
 /* Define to 1 if you have the <openssl/param_build.h> header file. */
-#define HAVE_OPENSSL_PARAM_BUILD_H 1
+/* #undef HAVE_OPENSSL_PARAM_BUILD_H */
 
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
@@ -462,7 +462,7 @@
 #define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the `OSSL_PARAM_BLD_new' function. */
-#define HAVE_OSSL_PARAM_BLD_NEW 1
+/* #undef HAVE_OSSL_PARAM_BLD_NEW */
 
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1
@@ -565,7 +565,7 @@
 
 /* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_evp_cb'
    function. */
-#define HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB 1
+/* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
 
 /* Define to 1 if you have the `SSL_get0_alpn_selected' function. */
 #define HAVE_SSL_GET0_ALPN_SELECTED 1
@@ -574,7 +574,7 @@
 #define HAVE_SSL_GET0_PEERNAME 1
 
 /* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
-#define HAVE_SSL_GET1_PEER_CERTIFICATE 1
+/* #undef HAVE_SSL_GET1_PEER_CERTIFICATE */
 
 /* Define to 1 if you have the `SSL_set1_host' function. */
 #define HAVE_SSL_SET1_HOST 1
