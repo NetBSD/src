@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1099 2024/02/07 06:43:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1100 2024/03/01 16:41:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -137,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1099 2024/02/07 06:43:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1100 2024/03/01 16:41:42 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -590,7 +590,7 @@ MayExport(const char *name)
 }
 
 static bool
-ExportVarEnv(Var *v)
+ExportVarEnv(Var *v, GNode *scope)
 {
 	const char *name = v->name.str;
 	char *val = v->val.data;
@@ -610,7 +610,13 @@ ExportVarEnv(Var *v)
 
 	/* XXX: name is injected without escaping it */
 	expr = str_concat3("${", name, "}");
-	val = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
+	val = Var_Subst(expr, scope, VARE_WANTRES);
+	if (scope != SCOPE_GLOBAL) {
+		/* we will need to re-rexport the Global version */
+		v = VarFind(name, SCOPE_GLOBAL, false);
+		if (v)
+			v->exported = false;
+	}
 	/* TODO: handle errors */
 	setenv(name, val, 1);
 	free(val);
@@ -657,19 +663,21 @@ ExportVarLiteral(Var *v)
  * Internal variables are not exported.
  */
 static bool
-ExportVar(const char *name, VarExportMode mode)
+ExportVar(const char *name, GNode *scope, VarExportMode mode)
 {
 	Var *v;
 
 	if (!MayExport(name))
 		return false;
 
-	v = VarFind(name, SCOPE_GLOBAL, false);
+	v = VarFind(name, scope, false);
+	if (v == NULL && scope != SCOPE_GLOBAL)
+		v = VarFind(name, SCOPE_GLOBAL, false);
 	if (v == NULL)
 		return false;
 
 	if (mode == VEM_ENV)
-		return ExportVarEnv(v);
+		return ExportVarEnv(v, scope);
 	else if (mode == VEM_PLAIN)
 		return ExportVarPlain(v);
 	else
@@ -681,7 +689,7 @@ ExportVar(const char *name, VarExportMode mode)
  * re-exported.
  */
 void
-Var_ReexportVars(void)
+Var_ReexportVars(GNode *scope)
 {
 	char *xvarnames;
 
@@ -705,7 +713,7 @@ Var_ReexportVars(void)
 		HashIter_Init(&hi, &SCOPE_GLOBAL->vars);
 		while (HashIter_Next(&hi) != NULL) {
 			Var *var = hi.entry->value;
-			ExportVar(var->name.str, VEM_ENV);
+			ExportVar(var->name.str, scope, VEM_ENV);
 		}
 		return;
 	}
@@ -718,7 +726,7 @@ Var_ReexportVars(void)
 		size_t i;
 
 		for (i = 0; i < varnames.len; i++)
-			ExportVar(varnames.words[i], VEM_ENV);
+			ExportVar(varnames.words[i], scope, VEM_ENV);
 		Words_Free(varnames);
 	}
 	free(xvarnames);
@@ -736,7 +744,7 @@ ExportVars(const char *varnames, bool isExport, VarExportMode mode)
 
 	for (i = 0; i < words.len; i++) {
 		const char *varname = words.words[i];
-		if (!ExportVar(varname, mode))
+		if (!ExportVar(varname, SCOPE_GLOBAL, mode))
 			continue;
 
 		if (var_exportedVars == VAR_EXPORTED_NONE)
@@ -961,7 +969,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		DEBUG4(VAR, "%s: %s = %s%s\n",
 		    scope->name, name, val, ValueDescription(val));
 		if (v->exported)
-			ExportVar(name, VEM_PLAIN);
+			ExportVar(name, scope, VEM_PLAIN);
 	}
 
 	if (scope == SCOPE_CMDLINE) {
