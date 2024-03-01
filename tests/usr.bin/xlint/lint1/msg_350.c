@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_350.c,v 1.3 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_350.c,v 1.4 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_350.c"
 
-// Test for message 350: '_Atomic' requires C11 or later [350]
+// Test for message: '_Atomic' requires C11 or later [350]
 
 /*
  * The keyword '_Atomic' was added in C11.  This test ensures that in C99

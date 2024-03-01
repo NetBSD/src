@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.21 2024/02/06 22:47:21 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.22 2024/03/01 17:22:55 rillig Exp $
 
 --[[
 
@@ -118,10 +118,10 @@ local function check_test_files(msgs)
     local msgid = filename:match("^msg_(%d%d%d)")
     if msgs[msgid] then
       local unescaped_msg = msgs[msgid]:gsub("\\(.)", "%1")
-      local expected_text = ("%s [%s]"):format(unescaped_msg, msgid)
+      local expected_text = ("Test for message: %s [%s]"):format(unescaped_msg, msgid)
       local fullname = ("%s/%s"):format(testdir, filename)
       if not file_contains(fullname, expected_text) then
-        print_error("%s must contain: %s", fullname, expected_text)
+        print_error("%s must contain: // %s", fullname, expected_text)
       end
     end
   end

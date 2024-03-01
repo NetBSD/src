@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_352.c,v 1.2 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_352.c,v 1.3 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_352.c"
 
-// Test for message 352: nested 'extern' declaration of '%s' [352]
+// Test for message: nested 'extern' declaration of '%s' [352]
 
 /*
  * C allows to declare external functions or objects inside function bodies,

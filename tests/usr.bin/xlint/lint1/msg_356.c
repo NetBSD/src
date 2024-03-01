@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_356.c,v 1.1 2024/02/03 20:10:11 rillig Exp $	*/
+/*	$NetBSD: msg_356.c,v 1.2 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_356.c"
 
-// Test for message 356: short octal escape '%.*s' followed by digit '%c' [356]
+// Test for message: short octal escape '%.*s' followed by digit '%c' [356]
 
 /* lint1-extra-flags: -X 351 */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_354.c,v 1.1 2023/08/03 18:48:42 rillig Exp $	*/
+/*	$NetBSD: msg_354.c,v 1.2 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_354.c"
 
-// Test for message 354: '_Static_assert' requires C11 or later [354]
+// Test for message: '_Static_assert' requires C11 or later [354]
 //
 // See also:
 //	c23.c

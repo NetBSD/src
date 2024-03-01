@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_353.c,v 1.4 2023/07/14 08:53:52 rillig Exp $	*/
+/*	$NetBSD: msg_353.c,v 1.5 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_353.c"
 
-// Test for message 353: empty initializer braces require C23 or later [353]
+// Test for message: empty initializer braces require C23 or later [353]
 //
 // See also:
 //	c23.c

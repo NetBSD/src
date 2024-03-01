@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_351.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_351.c,v 1.8 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_351.c"
 
-// Test for message 351: missing%s header declaration for '%s' [351]
+// Test for message: missing%s header declaration for '%s' [351]
 
 /*
  * Warn about declarations or definitions for functions or objects that are

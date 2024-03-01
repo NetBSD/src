@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_355.c,v 1.1 2023/08/03 18:48:42 rillig Exp $	*/
+/*	$NetBSD: msg_355.c,v 1.2 2024/03/01 17:22:55 rillig Exp $	*/
 # 3 "msg_355.c"
 
-// Test for message 355: '_Static_assert' without message requires C23 or later [355]
+// Test for message: '_Static_assert' without message requires C23 or later [355]
 //
 // See also:
 //	c23.c
