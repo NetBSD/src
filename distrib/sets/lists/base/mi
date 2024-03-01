@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1209.2.11 2024/02/29 12:36:06 martin Exp $
+# $NetBSD: mi,v 1.1209.2.12 2024/03/01 14:28:51 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1292,6 +1292,7 @@
 ./usr/lib/lua					base-sys-usr		compatfile
 ./usr/lib/lua/5.1				base-obsolete		obsolete
 ./usr/lib/lua/5.3				base-sys-usr		compatfile
+./usr/lib/named					base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/postfix				base-postfix-usr
 ./usr/lib/runemodule				base-obsolete		obsolete

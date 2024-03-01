@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1649.2.12 2024/02/29 12:36:08 martin Exp $
+# $NetBSD: mi,v 1.1649.2.13 2024/03/01 14:28:52 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2461,7 +2461,6 @@
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/certctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cesfic/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman	.cat
@@ -8627,7 +8626,6 @@
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man		.man
-./usr/share/man/man8/certctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cesfic/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/cgdconfig.8		man-sysutil-man		.man
