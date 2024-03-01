@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.605 2024/02/08 20:59:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.606 2024/03/01 19:39:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.605 2024/02/08 20:59:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.606 2024/03/01 19:39:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4444,6 +4444,7 @@ check_expr_call(const tnode_t *tn, const tnode_t *ln,
 	lint_assert(ln->tn_left->tn_op == NAME);
 	if (!szof && !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
 		outcall(tn, vctx || cond, retval_discarded);
+	check_snprintb(tn);
 }
 
 static void
