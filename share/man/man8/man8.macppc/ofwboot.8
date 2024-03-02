@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.16 2024/03/01 22:35:56 uwe Exp $
+.\"	$NetBSD: ofwboot.8,v 1.17 2024/03/02 00:03:20 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,7 +330,6 @@ Boot the kernel named
 .Pa netbsd.new
 from partition
 .Dq Pa a
-.Pq Ql 0
 of the hard disk into
 .Xr ddb 4
 using
@@ -338,7 +337,7 @@ using
 version of
 .Nm
 from the USB flash drive:
-.Dl 0 > boot usb0/disk:,\eofwboot.elf hd:0/netbsd.new -d
+.Dl 0 > boot usb0/disk:,\eofwboot.elf hd/netbsd.new -d
 .
 .It
 Boot from bootable CDROM with Open Firmware 3 or higher:
