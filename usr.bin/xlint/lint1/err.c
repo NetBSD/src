@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.227 2024/03/02 09:32:18 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.228 2024/03/02 11:56:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.227 2024/03/02 09:32:18 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.228 2024/03/02 11:56:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -431,6 +431,7 @@ static const char *const msgs[] = {
 	"bit field end %ju in '%.*s' out of range 0..64",		// 373
 	"unknown directive '%.*s'",					// 374
 	"comparison value '%.*s' (%ju) exceeds field width %ju",	// 375
+	"'%.*s' overlaps earlier '%.*s' on bit %u",			// 376
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];

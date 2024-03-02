@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_370.c,v 1.1 2024/03/01 19:39:29 rillig Exp $	*/
+/*	$NetBSD: msg_370.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
 # 3 "msg_370.c"
 
 // Test for message: field width '%.*s' in '%.*s' should be escaped as octal or hex [370]
@@ -34,6 +34,7 @@ example(uint64_t u64)
 	    "f\t\ttab\0"
 	    "f\n\nnewline\0",
 	    u64);
+	/* expect-1: warning: 'f\n\nnewline\0' overlaps earlier 'f\t\ttab\0' on bit 10 [376] */
 
 	/* expect+11: warning: bit position ' ' in 'F  space\0' should be escaped as octal or hex [369] */
 	/* expect+10: warning: field width ' ' in 'F  space\0' should be escaped as octal or hex [370] */
@@ -47,4 +48,5 @@ example(uint64_t u64)
 	    "F\t\ttab\0"
 	    "F\n\nnewline\0",
 	    u64);
+	/* expect-1: warning: 'F\n\nnewline\0' overlaps earlier 'F\t\ttab\0' on bit 10 [376] */
 }
