@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.194 2020/10/21 13:31:50 christos Exp $
+# $NetBSD: files.alpha,v 1.195 2024/03/02 19:57:57 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -96,9 +96,13 @@ device	tlsbmem
 attach	tlsbmem at tlsb
 file	arch/alpha/tlsb/tlsbmem.c	tlsbmem
 
+#
+# GBus support
+#
+
 device	gbus { offset = -1 }
 attach	gbus at tlsb
-file	arch/alpha/tlsb/gbus.c		gbus
+file	arch/alpha/gbus/gbus.c		gbus
 
 #
 # MCBUS support
@@ -316,7 +320,6 @@ attach	fdc at sableio with fdc_sableio
 file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
 
 # CPU support files
-file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500 | dec_2100a_a500
 file	arch/alpha/pci/pci_up1000.c	api_up1000
@@ -358,12 +361,12 @@ file	arch/alpha/pci/sio_pic.c	sio | pceb
 device	mcclock: mc146818
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
-attach	mcclock at gbus with mcclock_tlsb
+attach	mcclock at gbus with mcclock_gbus
 attach	mcclock at jensenio with mcclock_jensenio
 file	arch/alpha/alpha/mcclock.c	mcclock
 file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
-file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
+file	arch/alpha/gbus/mcclock_gbus.c	mcclock_gbus
 file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 
 
@@ -401,6 +404,7 @@ file	dev/bus_dma/bus_dmamem_common.c
 file	arch/alpha/alpha/promcons.c
 
 # CPU support
+file	arch/alpha/alpha/dec_2000_300.c		dec_2000_300
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
 file	arch/alpha/alpha/dec_2100_a500.c	dec_2100_a500 | dec_2100a_a500
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300

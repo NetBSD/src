@@ -1,4 +1,4 @@
-/* $NetBSD: gbusreg.h,v 1.2 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: gbusvar.h,v 1.1 2024/03/02 19:57:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,9 +31,12 @@
  */
 
 /*
- * Register definitions for the Gbus found on TurboLaser CPU modules.
+ * Autoconfiguration definitions for the Gbus found on TurboLaser CPU modules.
  */
 
-#define GBUS_DUART0_OFFSET	0x10000000		/* duart 0 */
-#define GBUS_DUART1_OFFSET	0x11000000		/* duart 1 */
-#define GBUS_CLOCK_OFFSET	0x20000000		/* clock */
+#include <sys/bus.h>
+
+struct gbus_attach_args {
+	const char *ga_name;		/* name of device */
+	bus_addr_t  ga_offset;		/* offset from Gbus base */
+};
