@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.88 2024/03/01 21:52:48 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.89 2024/03/02 09:32:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.88 2024/03/01 21:52:48 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.89 2024/03/02 09:32:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -185,7 +185,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	 */
 	if (sc != EXTERN && !(sc == STATIC && sym->s_type->t_tspec == FUNC))
 		return;
-	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp */
+	if (isdigit((unsigned char)sym->s_name[0]))	/* 00000000_tmp */
 		return;
 
 	outint(csrc_pos.p_line);
@@ -392,7 +392,7 @@ static void
 outqchar(char c)
 {
 
-	if (ch_isprint(c) && c != '\\' && c != '"' && c != '\'') {
+	if (isprint((unsigned char)c) && c != '\\' && c != '"' && c != '\'') {
 		outchar(c);
 		return;
 	}
@@ -466,7 +466,7 @@ outfstrg(const char *cp)
 		}
 
 		/* numeric field width */
-		while (ch_isdigit(c)) {
+		while (isdigit((unsigned char)c)) {
 			outchar(c);
 			c = *cp++;
 		}
@@ -479,7 +479,7 @@ outfstrg(const char *cp)
 				outchar(c);
 				c = *cp++;
 			} else {
-				while (ch_isdigit(c)) {
+				while (isdigit((unsigned char)c)) {
 					outchar(c);
 					c = *cp++;
 				}
@@ -533,7 +533,7 @@ outfstrg(const char *cp)
 void
 outusg(const sym_t *sym)
 {
-	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp, from mktempsym */
+	if (isdigit((unsigned char)sym->s_name[0]))	/* see mktempsym */
 		return;
 
 	outint(csrc_pos.p_line);

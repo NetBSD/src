@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.393 2024/02/08 20:59:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.394 2024/03/02 09:32:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.393 2024/02/08 20:59:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.394 2024/03/02 09:32:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1776,7 +1776,7 @@ check_extern_declaration(const sym_t *sym)
 	    dcs->d_redeclared_symbol == NULL &&
 	    ends_with(curr_pos.p_file, ".c") &&
 	    allow_c90 &&
-	    !ch_isdigit(sym->s_name[0]) &&	/* see mktempsym */
+	    !isdigit((unsigned char)sym->s_name[0]) &&	/* see mktempsym */
 	    strcmp(sym->s_name, "main") != 0) {
 		/* missing%s header declaration for '%s' */
 		warning(351, sym->s_type->t_tspec == FUNC ? "" : " 'extern'",
@@ -2873,7 +2873,7 @@ check_variable_usage(bool novar, const sym_t *sym)
 	lint_assert(block_level != 0);
 
 	/* example at file scope: int c = ({ return 3; }); */
-	if (sym->s_block_level == 0 && ch_isdigit(sym->s_name[0]))
+	if (sym->s_block_level == 0 && isdigit((unsigned char)sym->s_name[0]))
 		return;
 
 	/* errors in expressions easily cause lots of these warnings */
