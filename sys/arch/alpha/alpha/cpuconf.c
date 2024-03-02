@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.37 2019/04/08 00:47:21 thorpej Exp $ */
+/* $NetBSD: cpuconf.c,v 1.38 2024/03/02 20:15:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,13 +60,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.37 2019/04/08 00:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.38 2024/03/02 20:15:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/cpuconf.h>
 #include <machine/rpb.h>
+
+#include "opt_dec_kn7aa.h"
+#ifdef DEC_KN7AA
+extern void dec_kn7aa_init(void);
+#else
+#define	dec_kn7aa_init		platform_not_configured
+#endif
 
 #include "opt_dec_3000_500.h"
 #ifdef DEC_3000_500
@@ -208,7 +215,7 @@ extern void dec_2000_300_init(void);
 static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_ADU, "Alpha Demo Unit"),
 	cpu_notsupp(ST_DEC_4000, "DEC 4000 (``Cobra'')"),
-	cpu_notsupp(ST_DEC_7000, "DEC 7000 (``Ruby'')"),
+	cpu_init(ST_DEC_7000, dec_kn7aa_init, "DEC_KN7AA"),
 	cpu_init(ST_DEC_3000_500, dec_3000_500_init, "DEC_3000_500"),
 	cpu_init(ST_DEC_2000_300, dec_2000_300_init, "DEC_2000_300"),
 	cpu_init(ST_DEC_3000_300, dec_3000_300_init, "DEC_3000_300"),

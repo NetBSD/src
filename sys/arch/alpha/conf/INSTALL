@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.118 2021/07/23 14:38:58 thorpej Exp $
+# $NetBSD: INSTALL,v 1.119 2024/03/02 20:15:33 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -29,6 +29,7 @@ options 	DEC_AXPPCI_33	# NoName:	AXPpci33, Multia, etc.
 options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
+options 	DEC_KN7AA	# KN7AA:	DEC 7000 and 10000
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 options 	DEC_550		# Miata:	Digital Personal Workstation

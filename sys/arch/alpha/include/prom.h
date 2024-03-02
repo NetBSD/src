@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.16 2020/10/03 17:31:46 thorpej Exp $ */
+/* $NetBSD: prom.h,v 1.17 2024/03/02 20:15:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -121,10 +121,11 @@ void	hwrpb_restart_setup(void);
 #ifdef _KERNEL
 
 #ifdef _KERNEL_OPT
+#include "opt_dec_kn7aa.h"
 #include "opt_dec_kn8ae.h"
 
-#if defined(DEC_KN8AE)
-#define _PROM_MAY_USE_PROM_CONSOLE
+#if defined(DEC_KN7AA) || defined(DEC_KN8AE)
+#define _PROM_MAY_USE_PROM_CONSOLE	/* XXX */
 #endif /* DEC_KN8AE */
 #endif /* _KERNEL_OPT */
 
