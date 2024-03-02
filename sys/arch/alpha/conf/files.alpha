@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.195 2024/03/02 19:57:57 thorpej Exp $
+# $NetBSD: files.alpha,v 1.196 2024/03/02 20:15:33 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -19,6 +19,7 @@ defflag		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 defflag		DEC_EB164	# EB164:	AlphaPC 164
 defflag		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 defflag		DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
+defflag		DEC_KN7AA	# KN7AA:	DEC 7000 and 10000
 defflag		DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 defflag		DEC_KN300	# KN300:	AlphaServer 4X00
 defflag		DEC_1000	# Mikasa etc:	AlphaServer 1000
@@ -416,6 +417,7 @@ file	arch/alpha/alpha/dec_eb164.c		dec_eb164
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus
 file	arch/alpha/alpha/dec_eb66.c		dec_eb66
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
+file	arch/alpha/alpha/dec_kn7aa.c		dec_kn7aa
 file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae
 file	arch/alpha/alpha/dec_kn300.c		dec_kn300
 file	arch/alpha/alpha/api_up1000.c		api_up1000
