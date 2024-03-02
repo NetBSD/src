@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.25 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.25 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.25 2021/08/07 16:18:41 thorpej Exp $");
 #include <machine/rpb.h>
 #include <machine/pte.h>
 
-#include <alpha/tlsb/gbusreg.h>
-#include <alpha/tlsb/gbusvar.h>
+#include <alpha/gbus/gbusreg.h>
+#include <alpha/gbus/gbusvar.h>
 
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>

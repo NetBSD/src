@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.18 2021/05/07 22:46:11 thorpej Exp $ */
+/* $NetBSD: mcclock_gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.18 2021/05/07 22:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.18 2021/05/07 22:46:11 thorpej Ex
 
 #include <sys/bus.h>
 
-#include <alpha/tlsb/gbusvar.h>
+#include <alpha/gbus/gbusvar.h>
 
 #include <alpha/tlsb/tlsbreg.h>		/* XXX */
 
@@ -68,7 +68,7 @@ struct mcclock_tlsb_softc {
 static int	mcclock_tlsb_match(device_t, cfdata_t, void *);
 static void	mcclock_tlsb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mcclock_tlsb, sizeof(struct mcclock_tlsb_softc),
+CFATTACH_DECL_NEW(mcclock_gbus, sizeof(struct mcclock_tlsb_softc),
     mcclock_tlsb_match, mcclock_tlsb_attach, NULL, NULL);
 
 static void	mcclock_tlsb_write(struct mc146818_softc *, u_int, u_int);
