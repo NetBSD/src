@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_375.c,v 1.1 2024/03/01 19:39:29 rillig Exp $	*/
+/*	$NetBSD: msg_375.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
 # 3 "msg_375.c"
 
 // Test for message: comparison value '%.*s' (%ju) exceeds field width %ju [375]
@@ -30,7 +30,7 @@ example(uint64_t u64)
 		"=\01715\0"
 		"=\02016\0"
 		"=\37716\0"
-	    "F\000\004low\0"
+	    "F\004\004low\0"
 		":\01715\0"
 		":\02016\0"
 		":\37716\0",
