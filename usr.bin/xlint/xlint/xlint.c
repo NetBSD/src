@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.122 2024/01/20 12:02:10 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.123 2024/03/02 09:32:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.122 2024/01/20 12:02:10 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.123 2024/03/02 09:32:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -257,9 +257,9 @@ static bool
 is_safe_shell(char ch)
 {
 
-	return ch_isalnum(ch) || ch == '%' || ch == '+' || ch == ',' ||
-	    ch == '-' || ch == '.' || ch == '/' || ch == ':' ||
-	    ch == '=' || ch == '@' || ch == '_';
+	return isalnum((unsigned char)ch)
+	    || ch == '%' || ch == '+' || ch == ',' || ch == '-' || ch == '.'
+	    || ch == '/' || ch == ':' || ch == '=' || ch == '@' || ch == '_';
 }
 
 static void

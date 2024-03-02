@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.220 2024/03/01 21:52:48 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.221 2024/03/02 09:32:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.220 2024/03/01 21:52:48 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.221 2024/03/02 09:32:18 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1034,11 +1034,11 @@ parse_line_directive_flags(const char *p,
 	*is_system = false;
 
 	while (*p != '\0') {
-		while (ch_isspace(*p))
+		while (isspace((unsigned char)*p))
 			p++;
 
 		const char *word = p;
-		while (*p != '\0' && !ch_isspace(*p))
+		while (*p != '\0' && !isspace((unsigned char)*p))
 			p++;
 		size_t len = (size_t)(p - word);
 
@@ -1082,8 +1082,9 @@ lex_directive(const char *yytext)
 	while (*p == ' ' || *p == '\t')
 		p++;
 
-	if (!ch_isdigit(*p)) {
-		if (strncmp(p, "pragma", 6) == 0 && ch_isspace(p[6]))
+	if (!isdigit((unsigned char)*p)) {
+		if (strncmp(p, "pragma", 6) == 0
+		    && isspace((unsigned char)p[6]))
 			return;
 		goto error;
 	}
@@ -1178,12 +1179,12 @@ lex_comment(void)
 	l = 0;
 	while (c != EOF && l < sizeof(keywd) - 1 &&
 	    (isalpha(c) || isspace(c))) {
-		if (islower(c) && l > 0 && ch_isupper(keywd[0]))
+		if (islower(c) && l > 0 && isupper((unsigned char)keywd[0]))
 			break;
 		keywd[l++] = (char)c;
 		c = read_byte();
 	}
-	while (l > 0 && ch_isspace(keywd[l - 1]))
+	while (l > 0 && isspace((unsigned char)keywd[l - 1]))
 		l--;
 	keywd[l] = '\0';
 
