@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3042 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3043 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -284,3 +284,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	unbound(8): Import 1.19.1. [christos 20240217]
 	bind: Import 9.18.24 [christos 20240221]
 	sqlite3(1): Import 3.45.1. [christos 20240301]
+	elftoolchain: Import svn r4037. [christos 20240303]

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1994 2024/03/03 04:35:44 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.1995 2024/03/03 17:43:32 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1635,17 +1635,18 @@ Notes:
 		Need to feed back local changes
 
 Package:	elftoolchain (libelf/libdwarf)
-Version:	FreeBSD-2016-02-19-r295822
+Version:	r4037
 Current Vers:	0.7.1
 Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
 Archive Site:	none
 Home Page:	http://elftoolchain.sourceforge.net
+Date:		2024-03-03
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	sys/external/bsd/elftoolchain/dist
 Notes:
-		Run prepare-import.sh; next time use svn id.
+		See README we use the svn id as the tag.
 
 Package:	timeout
 Version:	FreeBSD-2014-07-16 r268763
