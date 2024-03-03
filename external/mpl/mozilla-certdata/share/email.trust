@@ -5,7 +5,6 @@ Certum_Root_CA
 Comodo_AAA_Services_root
 QuoVadis_Root_CA_2
 QuoVadis_Root_CA_3
-Security_Communication_Root_CA
 XRamp_Global_CA_Root
 Go_Daddy_Class_2_CA
 Starfield_Class_2_CA
@@ -24,9 +23,6 @@ certSIGN_ROOT_CA
 NetLock_Arany_Class_Gold
 Microsec_e-Szigno_Root_CA_2009
 GlobalSign_Root_CA_-_R3
-Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068
-Chambers_of_Commerce_Root_-_2008
-Global_Chambersign_Root_-_2008
 Certum_Trusted_Network_CA
 TWCA_Root_Certification_Authority
 Security_Communication_RootCA2
@@ -66,7 +62,6 @@ D-TRUST_Root_CA_3_2013
 SSL.com_Root_Certification_Authority_RSA
 SSL.com_Root_Certification_Authority_ECC
 GlobalSign_Root_CA_-_R6
-OISTE_WISeKey_Global_Root_GC_CA
 UCA_Global_G2_Root
 Certigna_Root_CA
 emSign_Root_CA_-_G1
@@ -85,7 +80,6 @@ Certum_EC-384_CA
 Certum_Trusted_Root_CA
 HARICA_Client_RSA_Root_CA_2021
 HARICA_Client_ECC_Root_CA_2021
-Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1
 GlobalSign_ECC_Root_CA_-_R4
 GTS_Root_R1
 GTS_Root_R2
@@ -107,3 +101,9 @@ SSL.com_Client_ECC_Root_CA_2022
 SSL.com_Client_RSA_Root_CA_2022
 Atos_TrustedRoot_Root_CA_ECC_G2_2020
 Atos_TrustedRoot_Root_CA_RSA_G2_2020
+TrustAsia_Global_Root_CA_G3
+TrustAsia_Global_Root_CA_G4
+D-Trust_SBR_Root_CA_1_2022
+D-Trust_SBR_Root_CA_2_2022
+Telekom_Security_SMIME_ECC_Root_2021
+Telekom_Security_SMIME_RSA_Root_2023
