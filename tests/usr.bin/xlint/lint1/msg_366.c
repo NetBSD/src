@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_366.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_366.c,v 1.3 2024/03/03 10:27:18 rillig Exp $	*/
 # 3 "msg_366.c"
 
 // Test for message: missing '\0' at the end of '%.*s' [366]
@@ -24,18 +24,20 @@ example(unsigned u32)
 {
 	char buf[64];
 
-	/* expect+4: warning: redundant '\0' at the end of new-style format [377] */
+	/* expect+4: warning: redundant '\0' at the end of the format [377] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "\0",
 	    u32);
 
+	/* expect+5: warning: empty description in 'b\007' [367] */
 	/* expect+4: warning: missing '\0' at the end of 'b\007' [366] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "b\007",
 	    u32);
 
+	/* expect+5: warning: empty description in 'f\007\000' [367] */
 	/* expect+4: warning: missing '\0' at the end of 'f\007\000' [366] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"

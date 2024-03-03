@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_364.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_364.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
 # 3 "msg_364.c"
 
 // Test for message: missing bit position after '%.*s' [364]
@@ -26,6 +26,7 @@ example(unsigned u32)
 	    "b",
 	    u32);
 
+	/* expect+5: warning: empty description in 'b\007' [367] */
 	/* expect+4: warning: missing '\0' at the end of 'b\007' [366] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"

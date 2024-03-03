@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.4 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.5 2024/03/03 10:27:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.4 2024/03/03 00:50:41 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.5 2024/03/03 10:27:18 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -180,6 +180,40 @@ check_reachable(checker *ck, uint64_t dir_lsb, uint64_t width,
 	}
 }
 
+static void
+parse_description(const checker *ck, quoted_iterator *it,
+		  bool *seen_null, bool *descr_empty)
+{
+	bool new_style = ck->new_style;
+
+	quoted_iterator first = *it;
+	(void)quoted_next(ck->fmt, &first);
+	size_t descr_start = first.start, descr_end = descr_start;
+
+	for (quoted_iterator peek = *it; quoted_next(ck->fmt, &peek);) {
+		if (new_style && peek.value == 0) {
+			*seen_null = true;
+			*it = peek;
+			break;
+		}
+		if (!new_style && peek.value == 0)
+			/* old-style format contains '\0' */
+			warning(362);
+		if (!new_style && peek.value <= 32)
+			break;
+		*it = peek;
+		descr_end = peek.i;
+		if (peek.escaped && !isprint((unsigned char)peek.value)) {
+			/* non-printing character '%.*s' in description ... */
+			warning(363,
+			    len(*it), start(*it, ck->fmt),
+			    (int)(descr_end - descr_start),
+			    ck->fmt->data + descr_start);
+		}
+	}
+	*descr_empty = descr_start == descr_end;
+}
+
 static bool
 check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		checker *ck)
@@ -218,16 +252,11 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	quoted_iterator cmp = *it;
 
 	bool has_default = new_style && dir.value == '*';
-	if (has_default && !quoted_next(fmt, it)) {
-		/* missing '\0' at the end of '%.*s' */
-		warning(366, range(dir, *it), start(dir, fmt));
-		return false;
-	}
 
-	if (new_style && dir.value == '\0') {
+	if (dir.value == '\0') {
 		quoted_iterator end = *it;
 		if (!quoted_next(fmt, &end)) {
-			/* redundant '\0' at the end of new-style format */
+			/* redundant '\0' at the end of the format */
 			warning(377);
 			return false;
 		}
@@ -239,44 +268,9 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		return false;
 	}
 
-	if (!quoted_next(fmt, it)) {
-		if (new_style && dir.value != '*')
-			/* missing '\0' at the end of '%.*s' */
-			warning(366, range(dir, *it), start(dir, fmt));
-		else
-			/* empty description in '%.*s' */
-			warning(367, range(dir, *it), start(dir, fmt));
-		return false;
-	}
-	quoted_iterator descr = *it;
-
-	quoted_iterator prev = *it;
-	for (;;) {
-		if (new_style && it->value == 0)
-			break;
-		if (!new_style && it->value == 0)
-			/* old-style format contains '\0' */
-			warning(362);
-		if (!new_style && it->value <= 32) {
-			*it = prev;
-			break;
-		}
-		if (it->escaped && !isprint((unsigned char)it->value)) {
-			/* non-printing character '%.*s' in description ... */
-			warning(363,
-			    len(*it), start(*it, fmt),
-			    range(descr, *it), start(descr, fmt));
-		}
-		prev = *it;
-		if (!quoted_next(fmt, it)) {
-			if (new_style) {
-				/* missing '\0' at the end of '%.*s' */
-				warning(366, range(dir, prev),
-				    start(dir, fmt));
-			}
-			break;
-		}
-	}
+	bool needs_descr = !(new_style && dir.value == 'F');
+	bool seen_null = false, descr_empty = false;
+	parse_description(ck, it, &seen_null, &descr_empty);
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);
@@ -311,8 +305,8 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		warning(373, val(bit) + val(width),
 		    range(dir, *it), start(dir, fmt));
 	}
-	if (has_cmp && ck->field_width < 64
-	    && cmp.value & ~(uint64_t)0 << ck->field_width) {
+	if (has_cmp && ck->field_width > 0 && ck->field_width < 64
+	    && cmp.value & ~value_bits((unsigned)ck->field_width)) {
 		/* comparison value '%.*s' (%ju) exceeds maximum field ... */
 		warning(375, len(cmp), start(cmp, fmt), val(cmp),
 		    (uintmax_t)value_bits((unsigned)ck->field_width));
@@ -325,9 +319,13 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		uint64_t w = has_width ? width.value : 1;
 		check_reachable(ck, bit.value, w, dir.start, it->i);
 	}
-	if (descr.i == prev.i && dir.value != 'F') {
+	if (needs_descr && descr_empty) {
 		/* empty description in '%.*s' */
 		warning(367, range(dir, *it), start(dir, fmt));
+	}
+	if (new_style && !seen_null) {
+		/* missing '\0' at the end of '%.*s' */
+		warning(366, range(dir, *it), start(dir, fmt));
 	}
 
 	if (has_width)

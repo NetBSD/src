@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.229 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.230 2024/03/03 10:27:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.229 2024/03/03 00:50:41 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.230 2024/03/03 10:27:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -432,7 +432,7 @@ static const char *const msgs[] = {
 	"unknown directive '%.*s'",					// 374
 	"comparison value '%.*s' (%ju) exceeds maximum field value %ju", // 375
 	"'%.*s' overlaps earlier '%.*s' on bit %u",			// 376
-	"redundant '\\0' at the end of new-style format",		// 377
+	"redundant '\\0' at the end of the format",			// 377
 	"directive '%.*s' is unreachable by input value",		// 378
 };
 

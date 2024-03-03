@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_365.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_365.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
 # 3 "msg_365.c"
 
 // Test for message: missing field width after '%.*s' [365]
@@ -25,6 +25,7 @@ example(unsigned u32)
 	    "f\000",
 	    u32);
 
+	/* expect+5: warning: empty description in 'f\007\010' [367] */
 	/* expect+4: warning: missing '\0' at the end of 'f\007\010' [366] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
