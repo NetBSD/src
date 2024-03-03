@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.5 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.6 2024/03/03 13:09:22 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.5 2024/03/03 10:27:18 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.6 2024/03/03 13:09:22 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -47,6 +47,8 @@ typedef struct {
 	bool new_style;
 	const buffer *fmt;
 	const tnode_t *value;
+
+	quoted_iterator it;
 	uint64_t field_width;
 	uint64_t covered;
 	unsigned covered_start[64];
@@ -141,7 +143,7 @@ check_overlap(checker *ck, uint64_t dir_lsb, uint64_t width,
 	uint64_t field_mask = value_bits((unsigned)width) << lsb;
 	uint64_t overlap = ck->covered & field_mask;
 	if (overlap == 0)
-		goto done;
+		goto update_covered;
 
 	for (unsigned i = lsb; i < 64; i++) {
 		if (!(overlap & bit(i)))
@@ -155,7 +157,7 @@ check_overlap(checker *ck, uint64_t dir_lsb, uint64_t width,
 		break;
 	}
 
-done:
+update_covered:
 	ck->covered |= field_mask;
 	for (unsigned i = lsb; i < 64; i++) {
 		if (field_mask & bit(i)) {
@@ -174,39 +176,31 @@ check_reachable(checker *ck, uint64_t dir_lsb, uint64_t width,
 		return;
 
 	uint64_t field_mask = value_bits((unsigned)width) << lsb;
-	if (!(possible_bits(ck->value) & field_mask)) {
+	if (!(possible_bits(ck->value) & field_mask))
 		/* directive '%.*s' is unreachable by input value */
 		warning(378, (int)(end - start), ck->fmt->data + start);
-	}
 }
 
 static void
-parse_description(const checker *ck, quoted_iterator *it,
-		  bool *seen_null, bool *descr_empty)
+parse_description(checker *ck, bool *seen_null, bool *descr_empty)
 {
-	bool new_style = ck->new_style;
-
-	quoted_iterator first = *it;
+	quoted_iterator first = ck->it;
 	(void)quoted_next(ck->fmt, &first);
 	size_t descr_start = first.start, descr_end = descr_start;
 
-	for (quoted_iterator peek = *it; quoted_next(ck->fmt, &peek);) {
-		if (new_style && peek.value == 0) {
+	for (quoted_iterator peek = ck->it; quoted_next(ck->fmt, &peek);) {
+		if (!ck->new_style && peek.value <= 32)
+			break;
+		ck->it = peek;
+		if (ck->new_style && peek.value == 0) {
 			*seen_null = true;
-			*it = peek;
 			break;
 		}
-		if (!new_style && peek.value == 0)
-			/* old-style format contains '\0' */
-			warning(362);
-		if (!new_style && peek.value <= 32)
-			break;
-		*it = peek;
 		descr_end = peek.i;
 		if (peek.escaped && !isprint((unsigned char)peek.value)) {
 			/* non-printing character '%.*s' in description ... */
 			warning(363,
-			    len(*it), start(*it, ck->fmt),
+			    len(ck->it), start(ck->it, ck->fmt),
 			    (int)(descr_end - descr_start),
 			    ck->fmt->data + descr_start);
 		}
@@ -215,9 +209,11 @@ parse_description(const checker *ck, quoted_iterator *it,
 }
 
 static bool
-check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
-		checker *ck)
+check_directive(checker *ck)
 {
+	bool new_style = ck->new_style;
+	const buffer *fmt = ck->fmt;
+	quoted_iterator *it = &ck->it;
 
 	if (!quoted_next(fmt, it))
 		return false;
@@ -263,14 +259,17 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	}
 
 	if (!has_bit && !has_cmp && !has_default) {
-		/* unknown directive '%.*s' */
+		/* unknown directive '%.*s', must be one of 'bfF=:*' */
 		warning(374, len(dir), start(dir, fmt));
 		return false;
 	}
+	if (new_style && dir.escaped)
+		/* directive '%.*s' should not be escaped */
+		warning(362, len(dir), start(dir, fmt));
 
 	bool needs_descr = !(new_style && dir.value == 'F');
 	bool seen_null = false, descr_empty = false;
-	parse_description(ck, it, &seen_null, &descr_empty);
+	parse_description(ck, &seen_null, &descr_empty);
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);
@@ -293,12 +292,11 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		    range(dir, *it), start(dir, fmt),
 		    new_style ? 0 : 1, new_style ? 63 : 32);
 	}
-	if (has_width && width.value > (new_style ? 64 : 32)) {
-		/* field width '%.*s' (%ju) in '%.*s' out of range 0..%u */
+	if (has_width && width.value > 64) {
+		/* field width '%.*s' (%ju) in '%.*s' out of range 0..64 */
 		warning(372,
 		    len(width), start(width, fmt), val(width),
-		    range(dir, *it), start(dir, fmt),
-		    new_style ? 64 : 32);
+		    range(dir, *it), start(dir, fmt));
 	}
 	if (has_width && bit.value + width.value > 64) {
 		/* bit field end %ju in '%.*s' out of range 0..64 */
@@ -314,19 +312,14 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	if (has_bit) {
 		uint64_t w = has_width ? width.value : 1;
 		check_overlap(ck, bit.value, w, dir.start, it->i);
-	}
-	if (has_bit) {
-		uint64_t w = has_width ? width.value : 1;
 		check_reachable(ck, bit.value, w, dir.start, it->i);
 	}
-	if (needs_descr && descr_empty) {
+	if (needs_descr && descr_empty)
 		/* empty description in '%.*s' */
 		warning(367, range(dir, *it), start(dir, fmt));
-	}
-	if (new_style && !seen_null) {
+	if (new_style && !seen_null)
 		/* missing '\0' at the end of '%.*s' */
 		warning(366, range(dir, *it), start(dir, fmt));
-	}
 
 	if (has_width)
 		ck->field_width = width.value;
@@ -341,30 +334,29 @@ check_snprintb(const tnode_t *expr)
 	if (!match_snprintb_call(expr->tn_call, &fmt, &value))
 		return;
 
-	quoted_iterator it = { .i = 0 };
-	if (!quoted_next(fmt, &it)) {
-		/* missing new-style '\177' or old-style number base */
-		warning(359);
-		return;
-	}
-	bool new_style = it.value == '\177';
-	if (new_style && !quoted_next(fmt, &it)) {
-		/* missing new-style number base after '\177' */
-		warning(360);
-		return;
-	}
-	if (it.value != 8 && it.value != 10 && it.value != 16) {
-		/* number base '%.*s' is %ju, must be 8, 10 or 16 */
-		warning(361, len(it), start(it, fmt), val(it));
-		return;
-	}
-
 	checker ck = {
-		.new_style = new_style,
 		.fmt = fmt,
 		.value = value,
 		.field_width = 64,
 	};
-	while (check_directive(fmt, &it, new_style, &ck))
+
+	if (!quoted_next(fmt, &ck.it)) {
+		/* missing new-style '\177' or old-style number base */
+		warning(359);
+		return;
+	}
+	ck.new_style = ck.it.value == '\177';
+	if (ck.new_style && !quoted_next(fmt, &ck.it)) {
+		/* missing new-style number base after '\177' */
+		warning(360);
+		return;
+	}
+	if (ck.it.value != 8 && ck.it.value != 10 && ck.it.value != 16) {
+		/* number base '%.*s' is %ju, must be 8, 10 or 16 */
+		warning(361, len(ck.it), start(ck.it, fmt), val(ck.it));
+		return;
+	}
+
+	while (check_directive(&ck))
 		continue;
 }

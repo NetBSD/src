@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.230 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.231 2024/03/03 13:09:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.230 2024/03/03 10:27:18 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.231 2024/03/03 13:09:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -417,7 +417,7 @@ static const char *const msgs[] = {
 	"missing new-style '\\177' or old-style number base",		// 359
 	"missing new-style number base after '\\177'",			// 360
 	"number base '%.*s' is %ju, must be 8, 10 or 16",		// 361
-	"old-style format contains '\\0'",				// 362
+	"directive '%.*s' should not be escaped",			// 362
 	"non-printing character '%.*s' in description '%.*s'",		// 363
 	"missing bit position after '%.*s'",				// 364
 	"missing field width after '%.*s'",				// 365
@@ -427,9 +427,9 @@ static const char *const msgs[] = {
 	"bit position '%.*s' in '%.*s' should be escaped as octal or hex", // 369
 	"field width '%.*s' in '%.*s' should be escaped as octal or hex", // 370
 	"bit position '%.*s' (%ju) in '%.*s' out of range %u..%u",	// 371
-	"field width '%.*s' (%ju) in '%.*s' out of range 0..%u",	// 372
+	"field width '%.*s' (%ju) in '%.*s' out of range 0..64",	// 372
 	"bit field end %ju in '%.*s' out of range 0..64",		// 373
-	"unknown directive '%.*s'",					// 374
+	"unknown directive '%.*s', must be one of 'bfF=:*'",		// 374
 	"comparison value '%.*s' (%ju) exceeds maximum field value %ju", // 375
 	"'%.*s' overlaps earlier '%.*s' on bit %u",			// 376
 	"redundant '\\0' at the end of the format",			// 377

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_373.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: msg_373.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_373.c"
 
 // Test for message: bit field end %ju in '%.*s' out of range 0..64 [373]
@@ -33,5 +33,12 @@ example(uint64_t u64)
 	    "f\000\101all+1\0"
 	    "f\001\100oob64\0"
 	    "f\010\377oob64\0",
+	    u64);
+
+	/* expect+5: warning: bit position '\377' (255) in 'f\377\002wrap-around\0' out of range 0..63 [371] */
+	/* expect+4: warning: bit field end 257 in 'f\377\002wrap-around\0' out of range 0..64 [373] */
+	snprintb(buf, sizeof(buf),
+	    "\177\020"
+	    "f\377\002wrap-around\0",
 	    u64);
 }

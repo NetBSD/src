@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_362.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_362.c,v 1.2 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_362.c"
 
-// Test for message: old-style format contains '\0' [362]
+// Test for message: directive '%.*s' should not be escaped [362]
 
 /*
- * The old-style format uses 1-based bit positions, from 1 up to 32.
- * A null character would prematurely end the format argument.
+ * Since the characters used for the directive type are chosen to be easily
+ * readable, it doesn't make sense to obfuscate them.
  */
 
 /* lint1-extra-flags: -X 351 */
@@ -20,9 +20,14 @@ example(unsigned u32)
 {
 	char buf[64];
 
-	/* expect+1: warning: bit position '\000' (0) in '\000lsb' out of range 1..32 [371] */
-	snprintb(buf, sizeof(buf), "\020\000lsb\037msb", u32);
-	/* expect+2: warning: old-style format contains '\0' [362] */
-	/* expect+1: warning: bit position '\000' (0) in '\000lsb' out of range 1..32 [371] */
-	snprintb(buf, sizeof(buf), "\020\037msb\000lsb", u32);
+	/* expect+9: warning: directive '\142' should not be escaped [362] */
+	/* expect+8: warning: bit position 'o' in '\142old-style-lsb\0' should be escaped as octal or hex [369] */
+	/* expect+7: warning: bit position 'o' (111) in '\142old-style-lsb\0' out of range 0..63 [371] */
+	/* expect+6: warning: unknown directive '\001', must be one of 'bfF=:*' [374] */
+	snprintb(buf, sizeof(buf),
+	    "\177\020"
+	    "\142old-style-lsb\0"
+	    "\001old-style-lsb\0"
+	    "\142\000old-style-lsb\0",
+	    u32);
 }
