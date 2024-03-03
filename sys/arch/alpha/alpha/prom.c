@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.58 2020/10/03 17:31:46 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.59 2024/03/03 19:56:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.58 2020/10/03 17:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.59 2024/03/03 19:56:29 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -89,7 +89,7 @@ bool
 prom_uses_prom_console(void)
 {
 #ifdef _PROM_MAY_USE_PROM_CONSOLE
-	return (cputype == ST_DEC_21000);
+	return (cputype == ST_DEC_7000 || cputype == ST_DEC_21000);
 #else
 	return false;
 #endif
