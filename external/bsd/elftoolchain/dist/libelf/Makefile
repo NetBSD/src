@@ -1,6 +1,6 @@
-# Id: Makefile 2605 2012-10-02 17:52:20Z jkoshy 
+# Id: Makefile 3925 2021-03-07 12:16:49Z jkoshy
 
-TOP=	${.CURDIR}/..
+TOP=	..
 
 LIB=	elf
 
@@ -15,6 +15,7 @@ SRCS=	elf.c							\
 	elf_getarsym.c						\
 	elf_getbase.c						\
 	elf_getident.c						\
+	elf_getversion.c					\
 	elf_hash.c						\
 	elf_kind.c						\
 	elf_memory.c						\
@@ -51,6 +52,7 @@ SRCS=	elf.c							\
 	libelf_checksum.c					\
 	libelf_data.c						\
 	libelf_ehdr.c						\
+	libelf_elfmachine.c					\
 	libelf_extended.c					\
 	libelf_memory.c						\
 	libelf_open.c						\
@@ -88,6 +90,7 @@ MAN=	elf.3							\
 	elf_getshnum.3						\
 	elf_getshdrstrndx.3					\
 	elf_getshstrndx.3					\
+	elf_getversion.3					\
 	elf_hash.3						\
 	elf_kind.3						\
 	elf_memory.3						\
