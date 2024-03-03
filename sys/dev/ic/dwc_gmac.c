@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.84 2024/03/03 10:02:11 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.85 2024/03/03 10:09:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.84 2024/03/03 10:02:11 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.85 2024/03/03 10:09:42 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -540,7 +540,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
 	    AWGE_RX_RING_COUNT * sizeof(struct dwc_gmac_dev_dmadesc),
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
 	    ring->r_physaddr);
 
