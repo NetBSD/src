@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_374.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_374.c,v 1.3 2024/03/03 10:27:18 rillig Exp $	*/
 # 3 "msg_374.c"
 
 // Test for message: unknown directive '%.*s' [374]
@@ -32,7 +32,7 @@ example(uint64_t u64)
 	    "\00012345\0",
 	    u64);
 
-	/* expect+5: warning: redundant '\0' at the end of new-style format [377] */
+	/* expect+5: warning: redundant '\0' at the end of the format [377] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "b\00012345\0"
