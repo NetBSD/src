@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_358.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_358.c,v 1.2 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_358.c"
 
 // Test for message: hex escape '%.*s' has more than 2 digits [358]
@@ -49,4 +49,13 @@ examples(unsigned u32, uint64_t u64)
 	snprintb(buf, sizeof(buf),
 	    "\177\020f\x00\x02bit\0",
 	    u64);
+
+	// In this example from the snprintb manual page, the descriptions
+	// that start with a hexadecimal digit must be separated from the
+	// hexadecimal escape sequence for the bit position.
+	snprintb(buf, sizeof(buf),
+	    "\20\x10NOTBOOT\x0f" "FPP\x0eSDVMA\x0cVIDEO"
+	    "\x0bLORES\x0a" "FPA\x09" "DIAG\x07" "CACHE"
+	    "\x06IOCACHE\x05LOOPBACK\x04" "DBGCACHE",
+	    u32);
 }

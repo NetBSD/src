@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_372.c,v 1.2 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: msg_372.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_372.c"
 
-// Test for message: field width '%.*s' (%ju) in '%.*s' out of range 0..%u [372]
+// Test for message: field width '%.*s' (%ju) in '%.*s' out of range 0..64 [372]
 
 /*
  * In new-style formats, the width of a bit-field must be between 0 (an empty

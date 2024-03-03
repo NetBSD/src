@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_363.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_363.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_363.c"
 
 // Test for message: non-printing character '%.*s' in description '%.*s' [363]
@@ -29,9 +29,7 @@ old_style_description(unsigned u32)
 	    "\001non\tprint\nable\377",
 	    u32);
 
-	/* expect+8: warning: old-style format contains '\0' [362] */
-	/* expect+7: warning: bit position '\000' (0) in '\000print' out of range 1..32 [371] */
-	/* expect+6: warning: old-style format contains '\0' [362] */
+	/* expect+6: warning: bit position '\000' (0) in '\000print' out of range 1..32 [371] */
 	/* expect+5: warning: bit position '\n' in '\nable' should be escaped as octal or hex [369] */
 	/* expect+4: warning: redundant '\0' at the end of the format [377] */
 	snprintb(buf, sizeof(buf),

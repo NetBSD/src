@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_377.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_377.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
 # 3 "msg_377.c"
 
 // Test for message: redundant '\0' at the end of the format [377]
@@ -23,8 +23,6 @@ example(unsigned u32, uint64_t u64)
 {
 	char buf[64];
 
-	/* expect+9: warning: old-style format contains '\0' [362] */
-	/* expect+8: warning: old-style format contains '\0' [362] */
 	/* expect+7: warning: bit position '\000' (0) in '\000out-of-range' out of range 1..32 [371] */
 	/* expect+6: warning: redundant '\0' at the end of the format [377] */
 	snprintb(buf, sizeof(buf),
