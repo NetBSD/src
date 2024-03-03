@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.83 2024/02/27 08:28:56 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.84 2024/03/03 10:02:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.83 2024/02/27 08:28:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.84 2024/03/03 10:02:11 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -718,20 +718,20 @@ dwc_gmac_txdesc_sync(struct dwc_gmac_softc *sc, int start, int end, int ops)
 	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    TX_DESC_OFFSET(start),
-		    TX_DESC_OFFSET(end)-TX_DESC_OFFSET(start),
+		    TX_DESC_OFFSET(end) - TX_DESC_OFFSET(start),
 		    ops);
 		return;
 	}
 	/* sync from 'start' to end of ring */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(start),
-	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT)-TX_DESC_OFFSET(start),
+	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT) - TX_DESC_OFFSET(start),
 	    ops);
 	if (TX_DESC_OFFSET(end) - TX_DESC_OFFSET(0) > 0) {
 		/* sync from start of ring to 'end' */
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    TX_DESC_OFFSET(0),
-		    TX_DESC_OFFSET(end)-TX_DESC_OFFSET(0),
+		    TX_DESC_OFFSET(end) - TX_DESC_OFFSET(0),
 		    ops);
 	}
 }
