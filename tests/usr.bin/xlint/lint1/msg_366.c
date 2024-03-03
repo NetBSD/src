@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_366.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_366.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
 # 3 "msg_366.c"
 
 // Test for message: missing '\0' at the end of '%.*s' [366]
@@ -24,7 +24,7 @@ example(unsigned u32)
 {
 	char buf[64];
 
-	/* expect+4: warning: unknown directive '\0' [374] */
+	/* expect+4: warning: redundant '\0' at the end of new-style format [377] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "\0",

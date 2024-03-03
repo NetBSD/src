@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_376.c,v 1.1 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: msg_376.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
 # 3 "msg_376.c"
 
 // Test for message: '%.*s' overlaps earlier '%.*s' on bit %u [376]
@@ -32,7 +32,7 @@ example(unsigned u32, uint64_t u64)
 	    "\x21oob",
 	    u32);
 
-	// In the new-style format, bit positions are 1-based.
+	// In the new-style format, bit positions are 0-based.
 	/* expect+10: warning: 'b\x00lsb\0' overlaps earlier 'b\000lsb\0' on bit 0 [376] */
 	/* expect+9: warning: 'b\x3fmsb\0' overlaps earlier 'b\077msb\0' on bit 63 [376] */
 	/* expect+8: warning: bit position '\x40' (64) in 'b\x40oob\0' out of range 0..63 [371] */

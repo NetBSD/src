@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.3 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.4 2024/03/03 00:50:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.3 2024/03/02 11:56:37 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.4 2024/03/03 00:50:41 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -46,10 +46,11 @@ __RCSID("$NetBSD: cksnprintb.c,v 1.3 2024/03/02 11:56:37 rillig Exp $");
 typedef struct {
 	bool new_style;
 	const buffer *fmt;
+	const tnode_t *value;
 	uint64_t field_width;
 	uint64_t covered;
-	size_t covered_start[64];
-	size_t covered_end[64];
+	unsigned covered_start[64];
+	unsigned covered_end[64];
 } checker;
 
 static bool
@@ -133,9 +134,9 @@ static void
 check_overlap(checker *ck, uint64_t dir_lsb, uint64_t width,
 	      size_t start, size_t end)
 {
-	if (dir_lsb >= 64 || width == 0 || width > 64)
-		return;
 	unsigned lsb = (unsigned)(ck->new_style ? dir_lsb : dir_lsb - 1);
+	if (lsb >= 64 || width == 0 || width > 64)
+		return;
 
 	uint64_t field_mask = value_bits((unsigned)width) << lsb;
 	uint64_t overlap = ck->covered & field_mask;
@@ -158,9 +159,24 @@ done:
 	ck->covered |= field_mask;
 	for (unsigned i = lsb; i < 64; i++) {
 		if (field_mask & bit(i)) {
-			ck->covered_start[i] = start;
-			ck->covered_end[i] = end;
+			ck->covered_start[i] = (unsigned)start;
+			ck->covered_end[i] = (unsigned)end;
 		}
+	}
+}
+
+static void
+check_reachable(checker *ck, uint64_t dir_lsb, uint64_t width,
+		size_t start, size_t end)
+{
+	unsigned lsb = (unsigned)(ck->new_style ? dir_lsb : dir_lsb - 1);
+	if (lsb >= 64 || width == 0 || width > 64)
+		return;
+
+	uint64_t field_mask = value_bits((unsigned)width) << lsb;
+	if (!(possible_bits(ck->value) & field_mask)) {
+		/* directive '%.*s' is unreachable by input value */
+		warning(378, (int)(end - start), ck->fmt->data + start);
 	}
 }
 
@@ -177,7 +193,7 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	    || dir.value == 'b' || dir.value == 'f' || dir.value == 'F';
 	if (has_bit && new_style && !quoted_next(fmt, it)) {
 		/* missing bit position after '%.*s' */
-		warning(364, len(dir), start(dir, fmt));
+		warning(364, range(dir, *it), start(dir, fmt));
 		return false;
 	}
 	/* LINTED 86 "automatic 'bit' hides external declaration" */
@@ -187,7 +203,7 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	    && (dir.value == 'f' || dir.value == 'F');
 	if (has_width && !quoted_next(fmt, it)) {
 		/* missing field width after '%.*s' */
-		warning(365, range(dir, bit), start(dir, fmt));
+		warning(365, range(dir, *it), start(dir, fmt));
 		return false;
 	}
 	quoted_iterator width = *it;
@@ -196,7 +212,7 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	    && (dir.value == '=' || dir.value == ':');
 	if (has_cmp && !quoted_next(fmt, it)) {
 		/* missing comparison value after directive '%.*s' */
-		warning(368, range(dir, bit), start(dir, fmt));
+		warning(368, range(dir, *it), start(dir, fmt));
 		return false;
 	}
 	quoted_iterator cmp = *it;
@@ -206,6 +222,15 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 		/* missing '\0' at the end of '%.*s' */
 		warning(366, range(dir, *it), start(dir, fmt));
 		return false;
+	}
+
+	if (new_style && dir.value == '\0') {
+		quoted_iterator end = *it;
+		if (!quoted_next(fmt, &end)) {
+			/* redundant '\0' at the end of new-style format */
+			warning(377);
+			return false;
+		}
 	}
 
 	if (!has_bit && !has_cmp && !has_default) {
@@ -288,13 +313,17 @@ check_directive(const buffer *fmt, quoted_iterator *it, bool new_style,
 	}
 	if (has_cmp && ck->field_width < 64
 	    && cmp.value & ~(uint64_t)0 << ck->field_width) {
-		/* comparison value '%.*s' (%ju) exceeds field width %ju */
+		/* comparison value '%.*s' (%ju) exceeds maximum field ... */
 		warning(375, len(cmp), start(cmp, fmt), val(cmp),
-		    (uintmax_t)ck->field_width);
+		    (uintmax_t)value_bits((unsigned)ck->field_width));
 	}
 	if (has_bit) {
 		uint64_t w = has_width ? width.value : 1;
 		check_overlap(ck, bit.value, w, dir.start, it->i);
+	}
+	if (has_bit) {
+		uint64_t w = has_width ? width.value : 1;
+		check_reachable(ck, bit.value, w, dir.start, it->i);
 	}
 	if (descr.i == prev.i && dir.value != 'F') {
 		/* empty description in '%.*s' */
@@ -327,7 +356,7 @@ check_snprintb(const tnode_t *expr)
 		return;
 	}
 	if (it.value != 8 && it.value != 10 && it.value != 16) {
-		/* number base '%.*s' is %ju, should be 8, 10 or 16 */
+		/* number base '%.*s' is %ju, must be 8, 10 or 16 */
 		warning(361, len(it), start(it, fmt), val(it));
 		return;
 	}
@@ -335,6 +364,7 @@ check_snprintb(const tnode_t *expr)
 	checker ck = {
 		.new_style = new_style,
 		.fmt = fmt,
+		.value = value,
 		.field_width = 64,
 	};
 	while (check_directive(fmt, &it, new_style, &ck))

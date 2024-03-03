@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_360.c,v 1.1 2024/03/01 19:39:28 rillig Exp $	*/
+/*	$NetBSD: msg_360.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
 # 3 "msg_360.c"
 
 // Test for message: missing new-style number base after '\177' [360]
@@ -23,6 +23,6 @@ new_style_number_base(void)
 
 	/* expect+1: warning: missing new-style number base after '\177' [360] */
 	snprintb(buf, sizeof(buf), "\177", 0);
-	/* expect+1: warning: number base '\002' is 2, should be 8, 10 or 16 [361] */
+	/* expect+1: warning: number base '\002' is 2, must be 8, 10 or 16 [361] */
 	snprintb(buf, sizeof(buf), "\177\002", 0);
 }
