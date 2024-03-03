@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1993 2024/03/01 15:49:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1994 2024/03/03 04:35:44 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2327,12 +2327,12 @@ Location:	share/wscons/fonts
 Notes:
 
 Package:	mozilla-certdata
-Version:	2023-07-19 (f479bdba756c78ef9355a48c88744c69fdb4768e)
-Current Vers:	2024-01-31 (a6efd358880291357a62d58586f9a218d47ad98b)
+Version:	2024-02-12 (a6efd358880291357a62d58586f9a218d47ad98b)
+Current Vers:	2024-02-12 (a6efd358880291357a62d58586f9a218d47ad98b)
 Maintainer:	Mozilla
 Archive Site:	https://hg.mozilla.org/projects/nss/log/tip/lib/ckfw/builtins/certdata.txt
 Home Page:	https://wiki.mozilla.org/CA
-Date:		2024-02-01
+Date:		2024-02-12
 Mailing List:	
 License:	MPL
 Responsible:	riastradh, security-team
