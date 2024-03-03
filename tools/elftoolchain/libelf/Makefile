@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2022/04/18 14:11:44 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.2 2024/03/03 17:37:58 christos Exp $
 
 HOSTLIB=	elf
 
@@ -37,6 +37,7 @@ SRCS=		elf_begin.c						\
 		libelf_checksum.c					\
 		libelf_data.c						\
 		libelf_ehdr.c libelf_extended.c				\
+		libelf_elfmachine.c 					\
 		libelf_memory.c						\
 		libelf_open.c						\
 		libelf_phdr.c						\
