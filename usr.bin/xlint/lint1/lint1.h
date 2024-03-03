@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.214 2024/02/05 23:11:22 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.215 2024/03/03 16:09:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -532,7 +532,7 @@ typedef enum {
 
 typedef struct {
 	size_t start;
-	size_t i;
+	size_t end;
 	uint64_t value;
 	bool escaped;		/* \n, \003, \x24 */
 	bool named_escape;	/* \a, \n, etc. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.608 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.609 2024/03/03 16:09:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.608 2024/03/03 00:50:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.609 2024/03/03 16:09:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -529,7 +529,7 @@ build_string(buffer *lit)
 {
 	size_t value_len = lit->len;
 	if (lit->data != NULL) {
-		quoted_iterator it = { .i = 0 };
+		quoted_iterator it = { .end = 0 };
 		for (value_len = 0; quoted_next(lit, &it); value_len++)
 			continue;
 	}
