@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_363.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
+/*	$NetBSD: msg_363.c,v 1.4 2024/03/03 16:09:01 rillig Exp $	*/
 # 3 "msg_363.c"
 
 // Test for message: non-printing character '%.*s' in description '%.*s' [363]
@@ -27,6 +27,18 @@ old_style_description(unsigned u32)
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\001non\tprint\nable\377",
+	    u32);
+
+	/* expect+10: warning: non-printing character '\177' in description '\177' [363] */
+	/* expect+9: warning: non-printing character '\177' in description 'aa""""\177' [363] */
+	/* expect+8: warning: non-printing character '\177' in description 'bb""\177' [363] */
+	/* expect+7: warning: non-printing character '\177' in description 'cc\177' [363] */
+	snprintb(buf, sizeof(buf),
+	    "\020"
+	    "\002""\177"
+	    "\003aa""""\177"
+	    "\004""bb""\177"
+	    "\005""""cc\177",
 	    u32);
 
 	/* expect+6: warning: bit position '\000' (0) in '\000print' out of range 1..32 [371] */

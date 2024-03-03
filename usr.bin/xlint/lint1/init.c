@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.260 2024/03/01 21:52:48 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.261 2024/03/03 16:09:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.260 2024/03/01 21:52:48 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.261 2024/03/03 16:09:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -886,7 +886,7 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 
 	size_t len = tn->tn_string->len;
 	if (tn->tn_string->data != NULL) {
-		quoted_iterator it = { .i = 0 };
+		quoted_iterator it = { .end = 0 };
 		for (len = 0; quoted_next(tn->tn_string, &it); len++)
 			continue;
 	}

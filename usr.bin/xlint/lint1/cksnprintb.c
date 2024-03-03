@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.6 2024/03/03 13:09:22 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.7 2024/03/03 16:09:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.6 2024/03/03 13:09:22 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.7 2024/03/03 16:09:01 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -90,13 +90,13 @@ match_snprintb_call(const function_call *call,
 static int
 len(quoted_iterator it)
 {
-	return (int)(it.i - it.start);
+	return (int)(it.end - it.start);
 }
 
 static int
 range(quoted_iterator start, quoted_iterator end)
 {
-	return (int)(end.i - start.start);
+	return (int)(end.end - start.start);
 }
 
 static const char *
@@ -117,7 +117,7 @@ check_hex_escape(const buffer *buf, quoted_iterator it)
 	if (it.hex_digits > 1) {
 		bool upper = false;
 		bool lower = false;
-		for (size_t i = it.start + 2; i < it.i; i++) {
+		for (size_t i = it.start + 2; i < it.end; i++) {
 			if (isupper((unsigned char)buf->data[i]))
 				upper = true;
 			if (islower((unsigned char)buf->data[i]))
@@ -181,31 +181,28 @@ check_reachable(checker *ck, uint64_t dir_lsb, uint64_t width,
 		warning(378, (int)(end - start), ck->fmt->data + start);
 }
 
-static void
-parse_description(checker *ck, bool *seen_null, bool *descr_empty)
+static bool
+parse_description(checker *ck)
 {
-	quoted_iterator first = ck->it;
-	(void)quoted_next(ck->fmt, &first);
-	size_t descr_start = first.start, descr_end = descr_start;
+	size_t descr_start = 0 /* dummy */;
+	bool seen_descr = false;
+	quoted_iterator it = ck->it;
+	uint64_t end_marker = ck->new_style ? 0 : 32;
 
-	for (quoted_iterator peek = ck->it; quoted_next(ck->fmt, &peek);) {
-		if (!ck->new_style && peek.value <= 32)
-			break;
-		ck->it = peek;
-		if (ck->new_style && peek.value == 0) {
-			*seen_null = true;
-			break;
-		}
-		descr_end = peek.i;
-		if (peek.escaped && !isprint((unsigned char)peek.value)) {
+	while (quoted_next(ck->fmt, &it) && it.value > end_marker) {
+		ck->it = it;
+		if (!seen_descr)
+			descr_start = it.start;
+		seen_descr = true;
+		if (it.escaped && !isprint((unsigned char)it.value)) {
 			/* non-printing character '%.*s' in description ... */
 			warning(363,
-			    len(ck->it), start(ck->it, ck->fmt),
-			    (int)(descr_end - descr_start),
+			    len(it), start(it, ck->fmt),
+			    (int)(it.end - descr_start),
 			    ck->fmt->data + descr_start);
 		}
 	}
-	*descr_empty = descr_start == descr_end;
+	return seen_descr;
 }
 
 static bool
@@ -268,8 +265,9 @@ check_directive(checker *ck)
 		warning(362, len(dir), start(dir, fmt));
 
 	bool needs_descr = !(new_style && dir.value == 'F');
-	bool seen_null = false, descr_empty = false;
-	parse_description(ck, &seen_null, &descr_empty);
+	bool seen_descr = parse_description(ck);
+	bool seen_null = new_style
+	    && quoted_next(ck->fmt, &ck->it) && ck->it.value == 0;
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);
@@ -311,10 +309,10 @@ check_directive(checker *ck)
 	}
 	if (has_bit) {
 		uint64_t w = has_width ? width.value : 1;
-		check_overlap(ck, bit.value, w, dir.start, it->i);
-		check_reachable(ck, bit.value, w, dir.start, it->i);
+		check_overlap(ck, bit.value, w, dir.start, it->end);
+		check_reachable(ck, bit.value, w, dir.start, it->end);
 	}
-	if (needs_descr && descr_empty)
+	if (needs_descr && !seen_descr)
 		/* empty description in '%.*s' */
 		warning(367, range(dir, *it), start(dir, fmt));
 	if (new_style && !seen_null)
