@@ -55,6 +55,7 @@ SRCS=	elf.c							\
 	libelf_checksum.c					\
 	libelf_data.c						\
 	libelf_ehdr.c						\
+	libelf_elfmachine.c					\
 	libelf_extended.c					\
 	libelf_memory.c						\
 	libelf_open.c						\
