@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_reloc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_reloc.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,51 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_reloc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: libdwarf_reloc.c 3198 2015-05-14 18:36:19Z emaste");
-
-#ifndef R_386_32
-#define R_386_32	1
-#endif
-#ifndef R_X86_64_64
-#define R_X86_64_64	1
-#endif
-#ifndef R_X86_64_32
-#define R_X86_64_32	10
-#endif
-#ifndef R_SPARC_UA32
-#define R_SPARC_UA32	23
-#endif
-#ifndef R_SPARC_UA64
-#define R_SPARC_UA64	54
-#endif
-#ifndef R_PPC_ADDR32
-#define R_PPC_ADDR32	1
-#endif
-#ifndef R_ARM_ABS32
-#define R_ARM_ABS32	2
-#endif
-#ifndef R_MIPS_32
-#define R_MIPS_32	2
-#endif
-#ifndef R_MIPS_64
-#define R_MIPS_64	18
-#endif
-#ifndef R_IA_64_DIR32LSB
-#define R_IA_64_DIR32LSB	0x25
-#endif
-#ifndef R_IA_64_DIR64LSB
-#define R_IA_64_DIR64LSB	0x27
-#endif
-#ifndef R_IA_64_SECREL32LSB
-#define R_IA_64_SECREL32LSB	0x65
-#endif
-#ifndef R_AARCH64_ABS64
-#define R_AARCH64_ABS64		257
-#endif
-#ifndef R_AARCH64_ABS32
-#define R_AARCH64_ABS32		258
-#endif
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_reloc.c 3741 2019-06-07 06:32:01Z jkoshy");
 
 Dwarf_Unsigned
 _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
@@ -90,11 +47,13 @@ _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
 	case DW_ISA_SPARC:
 		return (is64 ? R_SPARC_UA64 : R_SPARC_UA32);
 	case DW_ISA_PPC:
-		return (R_PPC_ADDR32);
+		return (is64 ? R_PPC64_ADDR64 : R_PPC_ADDR32);
 	case DW_ISA_ARM:
 		return (R_ARM_ABS32);
 	case DW_ISA_MIPS:
 		return (is64 ? R_MIPS_64 : R_MIPS_32);
+	case DW_ISA_RISCV:
+		return (is64 ? R_RISCV_64 : R_RISCV_32);
 	case DW_ISA_IA64:
 		return (is64 ? R_IA_64_DIR64LSB : R_IA_64_DIR32LSB);
 	default:
@@ -141,10 +100,22 @@ _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 		if (rel_type == R_PPC_ADDR32)
 			return (4);
 		break;
+	case EM_PPC64:
+		if (rel_type == R_PPC_ADDR32)
+			return (4);
+		else if (rel_type == R_PPC64_ADDR64)
+			return (8);
+		break;
 	case EM_MIPS:
 		if (rel_type == R_MIPS_32)
 			return (4);
 		else if (rel_type == R_MIPS_64)
+			return (8);
+		break;
+	case EM_RISCV:
+		if (rel_type == R_RISCV_32)
+			return (4);
+		else if (rel_type == R_RISCV_64)
 			return (8);
 		break;
 	case EM_IA_64:

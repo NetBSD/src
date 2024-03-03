@@ -1,4 +1,5 @@
-/*	$NetBSD: dwarf_sections.c,v 1.3 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_sections.c,v 1.4 2024/03/03 17:37:32 christos Exp $	*/
+
 /*-
  * Copyright (c) 2014 Kai Wang
  * All rights reserved.
@@ -27,14 +28,14 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_sections.c,v 1.3 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: dwarf_sections.c 3226 2015-06-23 13:00:16Z emaste");
+__RCSID("$NetBSD: dwarf_sections.c,v 1.4 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: dwarf_sections.c 3902 2020-11-24 21:17:41Z jkoshy");
 
 #define	SET(N, V)				\
 	do {					\
 		if ((N) != NULL)		\
 			*(N) = (V);		\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 int
 dwarf_get_section_max_offsets_b(Dwarf_Debug dbg, Dwarf_Unsigned *debug_info,

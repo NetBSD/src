@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_open.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: libelf_open.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -30,6 +30,7 @@
 # include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -45,8 +46,8 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: libelf_open.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_open.c 3007 2014-03-22 08:10:14Z jkoshy");
+__RCSID("$NetBSD: libelf_open.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_open.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 #define	_LIBELF_INITSIZE	(64*1024)
 
@@ -162,7 +163,7 @@ _libelf_open_object(int fd, Elf_Cmd c, int reporterror)
 	if (c == ELF_C_WRITE) {
 		if ((e = _libelf_allocate_elf()) != NULL) {
 			_libelf_init_elf(e, ELF_K_ELF);
-			e->e_byteorder = _libelf_host_byteorder();
+			e->e_byteorder = LIBELF_PRIVATE(byteorder);
 			e->e_fd = fd;
 			e->e_cmd = c;
 			if (!S_ISREG(mode))

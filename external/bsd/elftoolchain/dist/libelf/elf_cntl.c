@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_cntl.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_cntl.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,12 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_cntl.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_cntl.c 2225 2011-11-26 18:55:54Z jkoshy");
+__RCSID("$NetBSD: elf_cntl.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: elf_cntl.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 int
 elf_cntl(Elf *e, Elf_Cmd c)

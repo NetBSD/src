@@ -1,5 +1,4 @@
-/*	$NetBSD: elf_types.m4,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
-
+dnl 	$NetBSD: elf_types.m4,v 1.4 2024/03/03 17:37:33 christos Exp $
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: elf_types.m4 321 2009-03-07 16:59:14Z jkoshy 
+ * Id: elf_types.m4 321 2009-03-07 16:59:14Z jkoshy
  */
 
 /*

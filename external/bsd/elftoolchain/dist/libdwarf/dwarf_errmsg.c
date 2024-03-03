@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_errmsg.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_errmsg.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_errmsg.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: dwarf_errmsg.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
 ELFTC_VCSID("Id: dwarf_errmsg.c 2975 2014-01-21 20:08:04Z kaiwang27");
 
 static const char *_libdwarf_errors[] = {

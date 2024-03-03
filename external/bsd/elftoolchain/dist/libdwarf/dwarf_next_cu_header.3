@@ -1,6 +1,6 @@
-.\"	$NetBSD: dwarf_next_cu_header.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
+.\"	$NetBSD: dwarf_next_cu_header.3,v 1.6 2024/03/03 17:37:31 christos Exp $
 .\"
-.\" Copyright (c) 2010,2014 Kai Wang
+.\" Copyright (c) 2010,2014,2023 Kai Wang
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,15 +24,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_next_cu_header.3 3963 2022-03-12 16:07:32Z jkoshy
+.\" Id: dwarf_next_cu_header.3 4013 2023-10-14 22:40:50Z kaiwang27
 .\"
-.Dd December 21, 2014
+.Dd October 15, 2023
 .Dt DWARF_NEXT_CU_HEADER 3
 .Os
 .Sh NAME
 .Nm dwarf_next_cu_header ,
 .Nm dwarf_next_cu_header_b ,
-.Nm dwarf_next_cu_header_c
+.Nm dwarf_next_cu_header_c ,
+.Nm dwarf_next_cu_header_d
 .Nd step through compilation units in a DWARF debug context
 .Sh LIBRARY
 .Lb libdwarf
@@ -75,14 +76,33 @@
 .Fa "Dwarf_Unsigned *cu_next_offset"
 .Fa "Dwarf_Error *err"
 .Fc
+.Ft int
+.Fo dwarf_next_cu_header_d
+.Fa "Dwarf_Debug dbg"
+.Fa "Dwarf_Bool is_info"
+.Fa "Dwarf_Unsigned *cu_length"
+.Fa "Dwarf_Half *cu_version"
+.Fa "Dwarf_Off *cu_abbrev_offset"
+.Fa "Dwarf_Half *cu_pointer_size"
+.Fa "Dwarf_Half *cu_offset_size"
+.Fa "Dwarf_Half *cu_extension_size"
+.Fa "Dwarf_Sig8 *type_signature"
+.Fa "Dwarf_Unsigned *type_offset"
+.Fa "Dwarf_Unsigned *cu_next_offset"
+.Fa "Dwarf_Half *cu_type"
+.Fa "Dwarf_Error *err"
+.Fc
 .Sh DESCRIPTION
 These functions are used to step through compilation or type units
 associated with a DWARF debug context, optionally returning information
 about the unit.
 .Pp
 Function
-.Fn dwarf_next_cu_header_c
+.Fn dwarf_next_cu_header_d
 is the API recommended for new application code.
+Function
+.Fn dwarf_next_cu_header_c
+can not return the unit type defined by the DWARF5 standard.
 Function
 .Fn dwarf_next_cu_header
 and
@@ -90,8 +110,8 @@ and
 can only operate on compilation units associated with the
 .Dq \&.debug_info
 section.
-They are less general than function
-.Fn dwarf_next_cu_header_c ,
+The earlier revisions are less general than function
+.Fn dwarf_next_cu_header_d ,
 and are deprecated for use by new application code.
 .Pp
 Argument
@@ -163,9 +183,20 @@ or the offset of the next type unit header in the
 .Dq \&.debug_types
 section.
 Argument
+.Fa cu_type
+should point to a location that will be set to the
+type of the compilation unit.
+Argument
 .Fa err
 should point to a location that will hold an error descriptor in case
 of an error.
+.Pp
+Function
+.Fn dwarf_next_cu_header_c
+is identical to function
+.Fn dwarf_next_cu_header_d
+except that it does not provide argument
+.Fa cu_type .
 .Pp
 Function
 .Fn dwarf_next_cu_header_b
@@ -197,7 +228,8 @@ may be used for any of the arguments
 .Fa cu_extension_size ,
 .Fa type_signature ,
 .Fa type_offset ,
-.Fa cu_next_offset
+.Fa cu_next_offset ,
+.Fa cu_type
 and
 .Fa err
 if the caller is not interested in the respective value.
@@ -214,7 +246,7 @@ Subsequent calls to the function will iterate through the remaining
 compilation units in the section.
 On stepping past the last compilation unit in the section,
 function
-.Fn dwarf_next_cu_header_c
+.Fn dwarf_next_cu_header_d
 returns
 .Dv DW_DLV_NO_ENTRY
 and resets its internal state.
@@ -227,7 +259,7 @@ an internal pointer associated with the context will point to the first
 .Dq \&.debug_types
 section found in the debug object.
 The first call to function
-.Fn dwarf_next_cu_header_c
+.Fn dwarf_next_cu_header_d
 for the debug context with argument
 .Fa is_info
 set to 0 will return information about the first
@@ -238,7 +270,7 @@ Subsequent calls to the function will iterate through the remaining
 type units in the section.
 On stepping past the last type unit in the debug context,
 function
-.Fn dwarf_next_cu_header_c
+.Fn dwarf_next_cu_header_d
 returns
 .Dv DW_DLV_NO_ENTRY
 and resets its internal state.
@@ -255,7 +287,7 @@ can be called to move the internal pointer to the next
 .Dq \&.debug_types
 section.
 As a result, subsequent calls of the function
-.Fn dwarf_next_cu_header_c
+.Fn dwarf_next_cu_header_d
 will operate on the new
 .Dq \&.debug_types
 section.

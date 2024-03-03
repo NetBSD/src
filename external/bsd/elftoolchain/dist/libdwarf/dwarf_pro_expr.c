@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_pro_expr.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_pro_expr.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_pro_expr.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: dwarf_pro_expr.c 2074 2011-10-27 03:34:33Z jkoshy");
+__RCSID("$NetBSD: dwarf_pro_expr.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: dwarf_pro_expr.c 3801 2020-02-07 02:05:54Z emaste");
 
 static struct _Dwarf_P_Expr_Entry *
 _dwarf_add_expr(Dwarf_P_Expr expr, Dwarf_Small opcode, Dwarf_Unsigned val1,
@@ -39,10 +39,10 @@ _dwarf_add_expr(Dwarf_P_Expr expr, Dwarf_Small opcode, Dwarf_Unsigned val1,
 	Dwarf_Debug dbg;
 	int len;
 
-	dbg = expr != NULL ? expr->pe_dbg : NULL;
+	dbg = expr->pe_dbg;
 
-	if (_dwarf_loc_expr_add_atom(expr->pe_dbg, NULL, NULL, opcode, val1,
-	    val2, &len, error) != DW_DLE_NONE)
+	if (_dwarf_loc_expr_add_atom(dbg, NULL, NULL, opcode, val1, val2, &len,
+	    error) != DW_DLE_NONE)
 		return (NULL);
 	assert(len > 0);
 
@@ -70,7 +70,7 @@ _dwarf_expr_into_block(Dwarf_P_Expr expr, Dwarf_Error *error)
 	Dwarf_Debug dbg;
 	int len, pos, ret;
 
-	dbg = expr != NULL ? expr->pe_dbg : NULL;
+	dbg = expr->pe_dbg;
 
 	if (expr->pe_block != NULL) {
 		free(expr->pe_block);
@@ -91,7 +91,7 @@ _dwarf_expr_into_block(Dwarf_P_Expr expr, Dwarf_Error *error)
 	pos = 0;
 	STAILQ_FOREACH(ee, &expr->pe_eelist, ee_next) {
 		assert((Dwarf_Unsigned) pos < expr->pe_length);
-		ret = _dwarf_loc_expr_add_atom(expr->pe_dbg,
+		ret = _dwarf_loc_expr_add_atom(dbg,
 		    &expr->pe_block[pos], &expr->pe_block[expr->pe_length],
 		    ee->ee_loc.lr_atom, ee->ee_loc.lr_number,
 		    ee->ee_loc.lr_number2, &len, error);

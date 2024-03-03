@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_die.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_die.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,7 +29,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_die.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: dwarf_die.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
 ELFTC_VCSID("Id: dwarf_die.c 3039 2014-05-18 15:10:56Z kaiwang27");
 
 int

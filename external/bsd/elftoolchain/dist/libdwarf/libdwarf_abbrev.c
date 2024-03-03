@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_abbrev.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_abbrev.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_abbrev.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: libdwarf_abbrev.c 3136 2014-12-24 16:04:38Z kaiwang27");
+__RCSID("$NetBSD: libdwarf_abbrev.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_abbrev.c 4008 2023-10-12 18:17:06Z kaiwang27");
 
 int
 _dwarf_abbrev_add(Dwarf_CU cu, uint64_t entry, uint64_t tag, uint8_t children,
@@ -62,15 +62,14 @@ _dwarf_abbrev_add(Dwarf_CU cu, uint64_t entry, uint64_t tag, uint8_t children,
 		HASH_ADD(ab_hh, cu->cu_abbrev_hash, ab_entry,
 		    sizeof(ab->ab_entry), ab);
 
-	if (abp != NULL)
-		*abp = ab;
-
+	*abp = ab;
 	return (DW_DLE_NONE);
 }
 
 int
 _dwarf_attrdef_add(Dwarf_Debug dbg, Dwarf_Abbrev ab, uint64_t attr,
-    uint64_t form, uint64_t adoff, Dwarf_AttrDef *adp, Dwarf_Error *error)
+    uint64_t form, int64_t ic, uint64_t adoff, Dwarf_AttrDef *adp,
+    Dwarf_Error *error)
 {
 	Dwarf_AttrDef ad;
 
@@ -87,6 +86,7 @@ _dwarf_attrdef_add(Dwarf_Debug dbg, Dwarf_Abbrev ab, uint64_t attr,
 	/* Initialise the attribute definition structure. */
 	ad->ad_attrib	= attr;
 	ad->ad_form	= form;
+	ad->ad_const	= ic;
 	ad->ad_offset	= adoff;
 
 	/* Add the attribute definition to the list in the abbrev. */
@@ -112,15 +112,14 @@ _dwarf_abbrev_parse(Dwarf_Debug dbg, Dwarf_CU cu, Dwarf_Unsigned *offset,
 	uint64_t aboff;
 	uint64_t adoff;
 	uint64_t tag;
+	int64_t ic;
 	uint8_t children;
 	int ret;
 
 	assert(abp != NULL);
 
 	ds = _dwarf_find_section(dbg, ".debug_abbrev");
-	assert(ds != NULL);
-
-	if (*offset >= ds->ds_size)
+	if (ds == NULL || *offset >= ds->ds_size)
 		return (DW_DLE_NO_ENTRY);
 
 	aboff = *offset;
@@ -147,9 +146,19 @@ _dwarf_abbrev_parse(Dwarf_Debug dbg, Dwarf_CU cu, Dwarf_Unsigned *offset,
 		adoff = *offset;
 		attr = _dwarf_read_uleb128(ds->ds_data, offset);
 		form = _dwarf_read_uleb128(ds->ds_data, offset);
+		if (form == DW_FORM_implicit_const) {
+			/*
+			 * DWARF5 7.5.3: atrribute definition with the form
+			 * DW_FORM_implicit_const contains a third part, a
+			 * signed LEB128 value indicating a constant value.
+			 * No value is needed to store in the .debug_info
+			 * as a result.
+			 */
+			ic = _dwarf_read_sleb128(ds->ds_data, offset);
+		}
 		if (attr != 0)
 			if ((ret = _dwarf_attrdef_add(dbg, *abp, attr,
-			    form, adoff, NULL, error)) != DW_DLE_NONE)
+			    form, ic, adoff, NULL, error)) != DW_DLE_NONE)
 				return (ret);
 	} while (attr != 0);
 

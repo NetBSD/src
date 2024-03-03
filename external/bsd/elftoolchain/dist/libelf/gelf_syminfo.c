@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_syminfo.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: gelf_syminfo.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -37,8 +37,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_syminfo.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: gelf_syminfo.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: gelf_syminfo.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: gelf_syminfo.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 GElf_Syminfo *
 gelf_getsyminfo(Elf_Data *ed, int ndx, GElf_Syminfo *dst)
@@ -74,9 +74,9 @@ gelf_getsyminfo(Elf_Data *ed, int ndx, GElf_Syminfo *dst)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_SYMINFO, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_SYMINFO, ec, e->e_version)) == 0)
+		return (NULL);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
@@ -135,9 +135,9 @@ gelf_update_syminfo(Elf_Data *ed, int ndx, GElf_Syminfo *gs)
 		return (0);
 	}
 
-	msz = _libelf_msize(ELF_T_SYMINFO, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_SYMINFO, ec, e->e_version)) == 0)
+		return (0);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {

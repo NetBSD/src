@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_abbrev.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_abbrev.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_abbrev.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: dwarf_abbrev.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
 ELFTC_VCSID("Id: dwarf_abbrev.c 2072 2011-10-27 03:26:49Z jkoshy");
 
 int

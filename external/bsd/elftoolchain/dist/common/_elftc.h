@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.9 2022/05/03 16:47:15 jkoshy Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.10 2024/03/03 17:37:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy

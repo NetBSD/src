@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.5 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: libelf.h,v 1.6 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: libelf.h 3174 2015-03-27 17:13:41Z emaste 
+ * Id: libelf.h 3984 2022-05-06 11:22:42Z jkoshy
  */
 
 #ifndef	_LIBELF_H_
@@ -36,7 +36,11 @@
 #endif
 
 
-#if HAVE_NBTOOL_CONFIG_H
+#ifdef BUILTIN_ELF_HEADERS
+# include <sys/types.h>
+# include <stdint.h>
+# include "elfdefinitions.h"
+#elif HAVE_NBTOOL_CONFIG_H
 # include <nbinclude/sys/exec_elf.h>
 #elif defined(__NetBSD__)
 # include <sys/types.h>
@@ -46,7 +50,7 @@
 # include <sys/elf32.h>
 # include <sys/elf64.h>
 #else
-# error "Unsupported platform"
+  #error "No valid elf headers"
 #endif
 
 /* Library private data structures */
@@ -222,6 +226,7 @@ int		elf_getshdrnum(Elf *_elf, size_t *_dst);
 int		elf_getshnum(Elf *_elf, size_t *_dst);	/* Deprecated */
 int		elf_getshdrstrndx(Elf *_elf, size_t *_dst);
 int		elf_getshstrndx(Elf *_elf, size_t *_dst); /* Deprecated */
+unsigned int	elf_getversion(Elf *_elf);
 unsigned long	elf_hash(const void *_name);
 Elf_Kind	elf_kind(Elf *_elf);
 Elf		*elf_memory(char *_image, size_t _size);

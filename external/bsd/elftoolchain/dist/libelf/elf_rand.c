@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_rand.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_rand.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,22 +26,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <ar.h>
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_rand.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_rand.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: elf_rand.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
 
 off_t
 elf_rand(Elf *ar, off_t offset)
 {
 	struct ar_hdr *arh;
+	off_t offset_of_member;
 
 	if (ar == NULL || ar->e_kind != ELF_K_AR ||
 	    (offset & 1) || offset < SARMAG ||
-	    (size_t) offset + sizeof(struct ar_hdr) >= ar->e_rawsize) {
+	    offset >= ar->e_rawsize) {
+		LIBELF_SET_ERROR(ARGUMENT, 0);
+		return 0;
+	}
+
+	offset_of_member = offset + (off_t) sizeof(struct ar_hdr);
+
+	if (offset_of_member <= 0 || /* Numeric overflow. */
+	    offset_of_member >= ar->e_rawsize) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return 0;
 	}

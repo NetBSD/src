@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_ehdr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: gelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -41,8 +41,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_ehdr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: gelf_ehdr.c 3177 2015-03-30 18:19:41Z emaste");
+__RCSID("$NetBSD: gelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: gelf_ehdr.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 Elf32_Ehdr *
 elf32_getehdr(Elf *e)

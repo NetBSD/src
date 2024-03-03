@@ -1,4 +1,4 @@
-/*	$NetBSD: elfdefinitions.h,v 1.7 2021/04/29 17:38:08 jkoshy Exp $	*/
+/*	$NetBSD: elfdefinitions.h,v 1.8 2024/03/03 17:37:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010,2021 Joseph Koshy

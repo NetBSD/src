@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_next.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_next.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -38,8 +38,7 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_next.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_next.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: elf_next.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
 
 Elf_Cmd
 elf_next(Elf *e)
@@ -68,6 +67,20 @@ elf_next(Elf *e)
 	 */
 	parent->e_u.e_ar.e_next = (next >= (off_t) parent->e_rawsize) ?
 	    (off_t) 0 : next;
+
+	/*
+	 * Return an error if the 'e_next' field falls outside the current
+	 * file.
+	 *
+	 * This check is performed after updating the parent descriptor's
+	 * 'e_next' field so that the next call to elf_begin(3) will terminate
+	 * traversal of a too-small archive even if client code forgets to
+	 * check the return value from elf_next(3).
+	 */
+	if (next > (off_t) parent->e_rawsize) {
+		LIBELF_SET_ERROR(ARGUMENT, 0);
+		return (ELF_C_NULL);
+	}
 
 	return (ELF_C_READ);
 }

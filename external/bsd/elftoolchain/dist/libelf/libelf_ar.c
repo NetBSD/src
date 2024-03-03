@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: libelf_ar.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
@@ -41,8 +41,8 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-__RCSID("$NetBSD: libelf_ar.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_ar.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: libelf_ar.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_ar.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 #define	LIBELF_NALLOC_SIZE	16
 
@@ -73,7 +73,7 @@ ELFTC_VCSID("Id: libelf_ar.c 3174 2015-03-27 17:13:41Z emaste");
  * table where the actual file name of the object starts.  Strings in
  * the string table are padded to start on even addresses.
  *
- * In the BSD format, file names can be upto 16 characters.  File
+ * In the BSD format, file names can be up to 16 characters.  File
  * names shorter than 16 characters are padded to 16 characters using
  * (ASCII) space characters.  File names with embedded spaces and file
  * names longer than 16 characters are stored immediately after the
@@ -132,8 +132,16 @@ _libelf_ar_gethdr(Elf *e)
 	arh = (struct ar_hdr *) (uintptr_t) e->e_hdr.e_rawhdr;
 
 	assert((uintptr_t) arh >= (uintptr_t) parent->e_rawfile + SARMAG);
-	assert((uintptr_t) arh <= (uintptr_t) parent->e_rawfile +
-	    parent->e_rawsize - sizeof(struct ar_hdr));
+
+	/*
+	 * There needs to be enough space remaining in the file for the
+	 * archive header.
+	 */
+	if ((uintptr_t) arh > (uintptr_t) parent->e_rawfile +
+	    (uintptr_t) parent->e_rawsize - sizeof(struct ar_hdr)) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
 
 	if ((eh = malloc(sizeof(Elf_Arhdr))) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, 0);
@@ -208,8 +216,8 @@ Elf *
 _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 {
 	Elf *e;
-	off_t next;
 	size_t nsz, sz;
+	off_t next, end;
 	struct ar_hdr *arh;
 	char *member, *namelen;
 
@@ -226,6 +234,17 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 
 	assert((next & 1) == 0);
 
+	/*
+	 * There needs to be enough space in the file to contain an
+	 * ar(1) header.
+	 */
+	end = next + (off_t) sizeof(struct ar_hdr);
+	if ((uintmax_t) end < (uintmax_t) next || /* Overflow. */
+	    end > (off_t) elf->e_rawsize) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
+
 	arh = (struct ar_hdr *) (elf->e_rawfile + next);
 
 	/*
@@ -233,6 +252,17 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 	 */
 	if (_libelf_ar_get_number(arh->ar_size, sizeof(arh->ar_size), 10,
 	    &sz) == 0) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
+
+	/*
+	 * Check if the archive member that follows will fit in the
+	 * containing archive.
+	 */
+	end += (off_t) sz;
+	if (end < next || /* Overflow. */
+	    end > (off_t) elf->e_rawsize) {
 		LIBELF_SET_ERROR(ARCHIVE, 0);
 		return (NULL);
 	}
@@ -289,13 +319,14 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 #define	GET_LONG(P, V)do {				\
 		memcpy(&(V), (P), sizeof(long));	\
 		(P) += sizeof(long);			\
-	} while (/*CONSTCOND*/0)
+	} while (/* CONSTCOND */ 0)
 
 Elf_Arsym *
 _libelf_ar_process_bsd_symtab(Elf *e, size_t *count)
 {
 	Elf_Arsym *symtab, *sym;
-	unsigned int n, nentries;
+	unsigned int n;
+	size_t nentries;
 	unsigned char *end, *p, *p0, *s, *s0;
 	const size_t entrysize = 2 * sizeof(long);
 	long arraysize, fileoffset, stroffset, strtabsize;
@@ -352,7 +383,7 @@ _libelf_ar_process_bsd_symtab(Elf *e, size_t *count)
 		GET_LONG(p, fileoffset);
 
 		if (stroffset < 0 || fileoffset <  0 ||
-		    (size_t) fileoffset >= e->e_rawsize)
+		    (off_t) fileoffset >= e->e_rawsize)
 			goto symtaberror;
 
 		s = s0 + stroffset;
@@ -399,7 +430,7 @@ symtaberror:
 		(V) += (P)[1]; (V) <<= 8;	\
 		(V) += (P)[2]; (V) <<= 8;	\
 		(V) += (P)[3];			\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #define	INTSZ	4
 
@@ -443,7 +474,7 @@ _libelf_ar_process_svr4_symtab(Elf *e, size_t *count)
 			goto symtaberror;
 
 		GET_WORD(p, off);
-		if (off >= e->e_rawsize)
+		if ((off_t) off >= e->e_rawsize)
 			goto symtaberror;
 
 		sym->as_off = (off_t) off;

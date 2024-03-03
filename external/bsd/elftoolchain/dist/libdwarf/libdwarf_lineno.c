@@ -1,7 +1,7 @@
-/*	$NetBSD: libdwarf_lineno.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
- * Copyright (c) 2009,2010 Kai Wang
+ * Copyright (c) 2009,2010,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,42 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_lineno.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: libdwarf_lineno.c 3164 2015-02-19 01:20:12Z kaiwang27");
+__RCSID("$NetBSD: libdwarf_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_lineno.c 4019 2023-10-22 03:06:17Z kaiwang27");
+
+static int
+_dwarf_lineno_make_fullpath(Dwarf_Debug dbg, Dwarf_LineInfo li,
+    Dwarf_LineFile lf, const char *compdir, Dwarf_Error *error)
+{
+	const char *dirname;
+	int slen;
+
+	/* Make full pathname if need. */
+	if (*lf->lf_fname != '/') {
+		dirname = compdir;
+		if (lf->lf_dirndx > 0)
+			dirname = li->li_incdirs[lf->lf_dirndx - 1];
+		if (dirname != NULL) {
+			slen = strlen(dirname) + strlen(lf->lf_fname) + 2;
+			if ((lf->lf_fullpath = malloc(slen)) == NULL) {
+				DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
+				return (DW_DLE_MEMORY);
+			}
+			snprintf(lf->lf_fullpath, slen, "%s/%s", dirname,
+			    lf->lf_fname);
+		}
+	}
+
+	return (DW_DLE_NONE);
+}
 
 static int
 _dwarf_lineno_add_file(Dwarf_LineInfo li, uint8_t **p, const char *compdir,
     Dwarf_Error *error, Dwarf_Debug dbg)
 {
 	Dwarf_LineFile lf;
-	const char *dirname;
 	uint8_t *src;
-	int slen;
+	int ret;
 
 	src = *p;
 
@@ -57,21 +82,10 @@ _dwarf_lineno_add_file(Dwarf_LineInfo li, uint8_t **p, const char *compdir,
 		return (DW_DLE_DIR_INDEX_BAD);
 	}
 
-	/* Make full pathname if need. */
-	if (*lf->lf_fname != '/') {
-		dirname = compdir;
-		if (lf->lf_dirndx > 0)
-			dirname = li->li_incdirs[lf->lf_dirndx - 1];
-		if (dirname != NULL) {
-			slen = strlen(dirname) + strlen(lf->lf_fname) + 2;
-			if ((lf->lf_fullpath = malloc(slen)) == NULL) {
-				free(lf);
-				DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
-				return (DW_DLE_MEMORY);
-			}
-			snprintf(lf->lf_fullpath, slen, "%s/%s", dirname,
-			    lf->lf_fname);
-		}
+	ret = _dwarf_lineno_make_fullpath(dbg, li, lf, compdir, error);
+	if (ret != DW_DLE_NONE) {
+		free(lf);
+		return (ret);
 	}
 
 	lf->lf_mtime = _dwarf_decode_uleb128(&src);
@@ -250,6 +264,175 @@ prog_fail:
 #undef	ADDRESS
 }
 
+struct lnct {
+	unsigned type;
+	unsigned form;
+};
+
+
+static int
+_dwarf_lineno_parse_lnct_desc(Dwarf_Debug dbg, int fmt, struct lnct **lnct,
+    uint8_t *data, uint64_t *offsetp, Dwarf_Error *error)
+{
+	int i;
+
+	if (fmt == 0) {
+		*lnct = NULL;
+		return (DW_DLE_NONE);
+	}
+
+	if ((*lnct = calloc(fmt, sizeof(struct lnct))) == NULL) {
+		DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
+		return (DW_DLE_MEMORY);
+	}
+	for (i = 0; i < fmt; i++) {
+		(*lnct)[i].type = _dwarf_read_uleb128(data, offsetp);
+		(*lnct)[i].form = _dwarf_read_uleb128(data, offsetp);
+	}
+
+	return (DW_DLE_NONE);
+}
+
+static int
+_dwarf_lineno_lnct_path(Dwarf_Debug dbg, char **fname, unsigned form,
+    uint8_t *data, uint64_t size, uint64_t *offsetp, int dwarf_size,
+    Dwarf_Error *error)
+{
+	Dwarf_Unsigned sp;
+	int ret;
+
+	ret = DW_DLE_NONE;
+
+	switch (form) {
+	case DW_FORM_string:
+		*fname = _dwarf_read_string(data, size, offsetp);
+		break;
+	case DW_FORM_strp:
+		sp = dbg->read(data, offsetp, dwarf_size);
+		*fname = _dwarf_strtab_get_table(dbg) + sp;
+		break;
+	case DW_FORM_line_strp:
+		sp = dbg->read(data, offsetp, dwarf_size);
+		*fname = _dwarf_strtab_get_line_table(dbg) + sp;
+		break;
+	case DW_FORM_strp_sup:
+		sp = dbg->read(data, offsetp, dwarf_size);
+		*fname = NULL;	/* TODO: support sup string table. */
+		break;
+	default:
+		ret = DW_DLE_LNCT_DESC_BAD;
+		DWARF_SET_ERROR(dbg, error, ret);
+		break;
+	}
+
+	return (ret);
+}
+
+static int
+_dwarf_lineno_lnct_dirndx(Dwarf_Debug dbg, Dwarf_Unsigned *dirndx,
+    unsigned form, uint8_t *data, uint64_t *offsetp, Dwarf_Error *error)
+{
+	int ret;
+
+	ret = DW_DLE_NONE;
+
+	switch (form) {
+	case DW_FORM_data1:
+		*dirndx = dbg->read(data, offsetp, 1);
+		break;
+	case DW_FORM_data2:
+		*dirndx = dbg->read(data, offsetp, 2);
+		break;
+	case DW_FORM_udata:
+		*dirndx = _dwarf_read_uleb128(data, offsetp);
+		break;
+	default:
+		ret = DW_DLE_LNCT_DESC_BAD;
+		DWARF_SET_ERROR(dbg, error, ret);
+		break;
+	}
+
+	return (ret);
+}
+
+static int
+_dwarf_lineno_lnct_timestamp(Dwarf_Debug dbg, Dwarf_Unsigned *ts,
+    unsigned form, uint8_t *data, uint64_t *offsetp, Dwarf_Error *error)
+{
+	int ret;
+
+	ret = DW_DLE_NONE;
+
+	switch (form) {
+	case DW_FORM_udata:
+		*ts = _dwarf_read_uleb128(data, offsetp);
+		break;
+	case DW_FORM_data4:
+		*ts = dbg->read(data, offsetp, 4);
+		break;
+	case DW_FORM_data8:
+		*ts = dbg->read(data, offsetp, 8);
+		break;
+	case DW_FORM_block:
+		/* TODO: Not supported. */
+	default:
+		ret = DW_DLE_LNCT_DESC_BAD;
+		DWARF_SET_ERROR(dbg, error, ret);
+		break;
+	}
+
+	return (ret);
+}
+
+static int
+_dwarf_lineno_lnct_size(Dwarf_Debug dbg, Dwarf_Unsigned *sz, unsigned form,
+    uint8_t *data, uint64_t *offsetp, Dwarf_Error *error)
+{
+	int ret;
+
+	ret = DW_DLE_NONE;
+
+	switch (form) {
+	case DW_FORM_udata:
+		*sz = _dwarf_read_uleb128(data, offsetp);
+		break;
+	case DW_FORM_data1:
+		*sz = dbg->read(data, offsetp, 1);
+		break;
+	case DW_FORM_data2:
+		*sz = dbg->read(data, offsetp, 2);
+		break;
+	case DW_FORM_data4:
+		*sz = dbg->read(data, offsetp, 4);
+		break;
+	case DW_FORM_data8:
+		*sz = dbg->read(data, offsetp, 8);
+		break;
+	default:
+		ret = DW_DLE_LNCT_DESC_BAD;
+		DWARF_SET_ERROR(dbg, error, ret);
+		break;
+	}
+
+	return (ret);
+}
+
+static int
+_dwarf_lineno_lnct_md5(Dwarf_Debug dbg, Dwarf_Form_Data16 *md5,
+    unsigned form, uint8_t *data, uint64_t *offsetp, Dwarf_Error *error)
+{
+
+	if (form != DW_FORM_data16) {
+		DWARF_SET_ERROR(dbg, error, DW_DLE_LNCT_DESC_BAD);
+		return (DW_DLE_LNCT_DESC_BAD);
+	}
+
+	memcpy(md5->fd_data, data + *offsetp, 16);
+	offsetp += 16;
+
+	return (DW_DLE_NONE);
+}
+
 int
 _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 {
@@ -259,10 +442,11 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 	Dwarf_Attribute at;
 	Dwarf_LineInfo li;
 	Dwarf_LineFile lf, tlf;
+	struct lnct *lnct;
 	const char *compdir;
 	uint64_t length, hdroff, endoff;
 	uint8_t *p;
-	int dwarf_size, i, ret;
+	int dwarf_size, fmt, i, j, ret;
 
 	cu = die->die_cu;
 	assert(cu != NULL);
@@ -282,6 +466,8 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 	if (at != NULL) {
 		switch (at->at_form) {
 		case DW_FORM_strp:
+		case DW_FORM_strp_sup:
+		case DW_FORM_line_strp:
 			compdir = at->u[1].s;
 			break;
 		case DW_FORM_string:
@@ -314,11 +500,15 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 	 */
 	li->li_length = length;
 	endoff = offset + length;
-	li->li_version = dbg->read(ds->ds_data, &offset, 2); /* FIXME: verify version */
+	li->li_version = dbg->read(ds->ds_data, &offset, 2);
+	if (li->li_version == 5) {
+		(void) dbg->read(ds->ds_data, &offset, 1); /* TODO */
+		(void) dbg->read(ds->ds_data, &offset, 1); /* TODO */
+	}
 	li->li_hdrlen = dbg->read(ds->ds_data, &offset, dwarf_size);
 	hdroff = offset;
 	li->li_minlen = dbg->read(ds->ds_data, &offset, 1);
-	if (li->li_version == 4)
+	if (li->li_version >= 4)
 		li->li_maxop = dbg->read(ds->ds_data, &offset, 1);
 	li->li_defstmt = dbg->read(ds->ds_data, &offset, 1);
 	li->li_lbase = dbg->read(ds->ds_data, &offset, 1);
@@ -347,67 +537,210 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 		li->li_oplen[i] = dbg->read(ds->ds_data, &offset, 1);
 
 	/*
-	 * Check how many strings in the include dir string array.
+	 * Directory and filename parser for DWARF4 and below.
 	 */
-	length = 0;
-	p = ds->ds_data + offset;
-	while (*p != '\0') {
-		while (*p++ != '\0')
-			;
-		length++;
-	}
-	li->li_inclen = length;
+	if (li->li_version <= 4) {
 
-	/* Sanity check. */
-	if (p - ds->ds_data > (int) ds->ds_size) {
-		ret = DW_DLE_DEBUG_LINE_LENGTH_BAD;
-		DWARF_SET_ERROR(dbg, error, ret);
-		goto fail_cleanup;
-	}
-
-	if (length != 0) {
-		if ((li->li_incdirs = malloc(length * sizeof(char *))) ==
-		    NULL) {
-			ret = DW_DLE_MEMORY;
-			DWARF_SET_ERROR(dbg, error, ret);
-			goto fail_cleanup;
+		/*
+		 * Check how many strings in the include dir string array.
+		 */
+		length = 0;
+		p = ds->ds_data + offset;
+		while (*p != '\0') {
+			while (*p++ != '\0')
+				;
+			length++;
 		}
-	}
+		li->li_inclen = length;
 
-	/* Fill in include dir array. */
-	i = 0;
-	p = ds->ds_data + offset;
-	while (*p != '\0') {
-		li->li_incdirs[i++] = (char *) p;
-		while (*p++ != '\0')
-			;
-	}
-
-	p++;
-
-	/*
-	 * Process file list.
-	 */
-	while (*p != '\0') {
-		ret = _dwarf_lineno_add_file(li, &p, compdir, error, dbg);
-		if (ret != DW_DLE_NONE)
-			goto fail_cleanup;
+		/* Sanity check. */
 		if (p - ds->ds_data > (int) ds->ds_size) {
 			ret = DW_DLE_DEBUG_LINE_LENGTH_BAD;
 			DWARF_SET_ERROR(dbg, error, ret);
 			goto fail_cleanup;
 		}
+
+		if (length != 0) {
+			if ((li->li_incdirs = malloc(length * sizeof(char *))) ==
+			    NULL) {
+				ret = DW_DLE_MEMORY;
+				DWARF_SET_ERROR(dbg, error, ret);
+				goto fail_cleanup;
+			}
+		}
+
+		/* Fill in include dir array. */
+		i = 0;
+		p = ds->ds_data + offset;
+		while (*p != '\0') {
+			li->li_incdirs[i++] = (char *) p;
+			while (*p++ != '\0')
+				;
+		}
+
+		p++;
+
+		/*
+		 * Process file list.
+		 */
+		while (*p != '\0') {
+			ret = _dwarf_lineno_add_file(li, &p, compdir, error, dbg);
+			if (ret != DW_DLE_NONE)
+				goto fail_cleanup;
+			if (p - ds->ds_data > (int) ds->ds_size) {
+				ret = DW_DLE_DEBUG_LINE_LENGTH_BAD;
+				DWARF_SET_ERROR(dbg, error, ret);
+				goto fail_cleanup;
+			}
+		}
+
+		p++;
+
+		/* Sanity check. */
+		if (p - ds->ds_data - hdroff != li->li_hdrlen) {
+			ret = DW_DLE_DEBUG_LINE_LENGTH_BAD;
+			DWARF_SET_ERROR(dbg, error, ret);
+			goto fail_cleanup;
+		}
+
+		goto lnprog;
 	}
 
-	p++;
+	/*
+	 * DWARF5 has completely overhauled the dir/source file information
+	 * fields, which are incompatible with DWARF4 or lower.
+	 */
 
-	/* Sanity check. */
-	if (p - ds->ds_data - hdroff != li->li_hdrlen) {
-		ret = DW_DLE_DEBUG_LINE_LENGTH_BAD;
+	lnct = NULL;
+	fmt = dbg->read(ds->ds_data, &offset, 1);
+	if ((ret = _dwarf_lineno_parse_lnct_desc(dbg, fmt, &lnct, ds->ds_data,
+	    &offset, error)) != DW_DLE_NONE)
+		goto fail_cleanup;
+
+	li->li_inclen = dbg->read(ds->ds_data, &offset, 1);
+	if (li->li_inclen == 0) {
+		if (fmt > 0) {
+			free(lnct);
+			ret = DW_DLE_DIR_COUNT_BAD;
+			DWARF_SET_ERROR(dbg, error, ret);
+			goto fail_cleanup;
+		}
+
+		goto file_entries;
+	}
+
+	if (fmt == 0) {
+		ret = DW_DLE_DIR_COUNT_BAD;
 		DWARF_SET_ERROR(dbg, error, ret);
 		goto fail_cleanup;
 	}
+	if ((li->li_incdirs = malloc(length * sizeof(char *))) == NULL) {
+		free(lnct);
+		ret = DW_DLE_MEMORY;
+		DWARF_SET_ERROR(dbg, error, ret);
+		goto fail_cleanup;
+	}
+	for (i = 0; i < li->li_inclen; i++) {
+		for (j = 0; j < fmt; j++) {
+			if (lnct[j].type != DW_LNCT_path) {
+				free(lnct);
+				ret = DW_DLE_LNCT_DESC_BAD;
+				DWARF_SET_ERROR(dbg, error, ret);
+				goto fail_cleanup;
+			}
 
+			ret = _dwarf_lineno_lnct_path(dbg, &li->li_incdirs[i],
+			    lnct[j].form, ds->ds_data, ds->ds_size, &offset,
+			    dwarf_size, error);
+			if (ret != DW_DLE_NONE) {
+				free(lnct);
+				goto fail_cleanup;
+			}
+		}
+	}
+	if (lnct)
+		free(lnct);
+
+file_entries:
+
+	lnct = NULL;
+	fmt = dbg->read(ds->ds_data, &offset, 1);
+	if ((ret = _dwarf_lineno_parse_lnct_desc(dbg, fmt, &lnct, ds->ds_data,
+	    &offset, error)) != DW_DLE_NONE)
+		goto fail_cleanup;
+
+	li->li_lflen = dbg->read(ds->ds_data, &offset, 1);
+	if (li->li_lflen == 0) {
+		if (fmt > 0) {
+			free(lnct);
+			ret = DW_DLE_FILE_COUNT_BAD;
+			DWARF_SET_ERROR(dbg, error, ret);
+			goto fail_cleanup;
+		}
+
+		p = ds->ds_data + offset;
+		goto lnprog;
+	}
+
+	for (i = 0; i < li->li_lflen; i++) {
+		if ((lf = malloc(sizeof(struct _Dwarf_LineFile))) == NULL) {
+			free(lnct);
+			ret = DW_DLE_MEMORY;
+			DWARF_SET_ERROR(dbg, error, ret);
+			goto fail_cleanup;
+		}
+		for (j = 0; j < fmt; j++) {
+			switch (lnct[j].type) {
+			case DW_LNCT_path:
+				ret = _dwarf_lineno_lnct_path(dbg,
+				    &lf->lf_fname, lnct[j].form, ds->ds_data,
+				    ds->ds_size, &offset, dwarf_size, error);
+				break;
+			case DW_LNCT_directory_index:
+				ret = _dwarf_lineno_lnct_dirndx(dbg,
+				    &lf->lf_dirndx, lnct[j].form, ds->ds_data,
+				    &offset, error);
+				break;
+			case DW_LNCT_timestamp:
+				ret = _dwarf_lineno_lnct_timestamp(dbg,
+				    &lf->lf_mtime, lnct[j].form, ds->ds_data,
+				    &offset, error);
+				break;
+			case DW_LNCT_size:
+				ret = _dwarf_lineno_lnct_size(dbg,
+				    &lf->lf_size, lnct[j].form, ds->ds_data,
+				    &offset, error);
+				break;
+			case DW_LNCT_MD5:
+				ret = _dwarf_lineno_lnct_md5(dbg,
+				    &lf->lf_md5, lnct[j].form, ds->ds_data,
+				    &offset, error);
+				break;
+			default:
+				ret = DW_DLE_LNCT_DESC_BAD;
+				DWARF_SET_ERROR(dbg, error, ret);
+				break;
+			}
+			if (ret != DW_DLE_NONE) {
+				free(lf);
+				free(lnct);
+				goto fail_cleanup;
+			}
+		}
+		ret = _dwarf_lineno_make_fullpath(dbg, li, lf, compdir, error);
+		if (ret != DW_DLE_NONE) {
+			free(lf);
+			free(lnct);
+			goto fail_cleanup;
+		}
+		STAILQ_INSERT_TAIL(&li->li_lflist, lf, lf_next);
+	}
+	if (lnct)
+		free(lnct);
+
+	p = ds->ds_data + offset;
+
+lnprog:
 	/*
 	 * Process line number program.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_fsize.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: gelf_fsize.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,13 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <gelf.h>
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_fsize.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: gelf_fsize.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: gelf_fsize.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: gelf_fsize.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 size_t
 elf32_fsize(Elf_Type t, size_t c, unsigned int v)

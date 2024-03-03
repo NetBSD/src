@@ -1,8 +1,8 @@
-/*	$NetBSD: dwarf_dump.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_dump.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2009 Kai Wang
+ * Copyright (c) 2009,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_dump.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: dwarf_dump.c 3052 2014-05-26 20:36:24Z kaiwang27");
+__RCSID("$NetBSD: dwarf_dump.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
+ELFTC_VCSID("Id: dwarf_dump.c 4012 2023-10-13 01:15:02Z kaiwang27");
 
 int
 dwarf_get_ACCESS_name(unsigned access, const char **s)
@@ -65,6 +65,10 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_accessibility"; break;
 	case DW_AT_address_class:
 		*s = "DW_AT_address_class"; break;
+	case DW_AT_addr_base:
+		*s = "DW_AT_addr_base"; break;
+	case DW_AT_alignment:
+		*s = "DW_AT_alignment"; break;
 	case DW_AT_artificial:
 		*s = "DW_AT_artificial"; break;
 	case DW_AT_allocated:
@@ -87,6 +91,32 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_byte_stride"; break;
 	case DW_AT_calling_convention:
 		*s = "DW_AT_calling_convention"; break;
+	case DW_AT_call_all_calls:
+		*s = "DW_AT_call_all_calls"; break;
+	case DW_AT_call_all_source_calls:
+		*s = "DW_AT_call_all_source_calls"; break;
+	case DW_AT_call_all_tail_calls:
+		*s = "DW_AT_call_all_tail_calls"; break;
+	case DW_AT_call_data_location:
+		*s = "DW_AT_call_data_location"; break;
+	case DW_AT_call_data_value:
+		*s = "DW_AT_call_data_value"; break;
+	case DW_AT_call_origin:
+		*s = "DW_AT_call_origin"; break;
+	case DW_AT_call_parameter:
+		*s = "DW_AT_call_parameter"; break;
+	case DW_AT_call_pc:
+		*s = "DW_AT_call_pc"; break;
+	case DW_AT_call_return_pc:
+		*s = "DW_AT_call_return_pc"; break;
+	case DW_AT_call_tail_call:
+		*s = "DW_AT_call_tail_call"; break;
+	case DW_AT_call_target:
+		*s = "DW_AT_call_target"; break;
+	case DW_AT_call_target_clobbered:
+		*s = "DW_AT_call_target_clobbered"; break;
+	case DW_AT_call_value:
+		*s = "DW_AT_call_value"; break;
 	case DW_AT_common_reference:
 		*s = "DW_AT_common_reference"; break;
 	case DW_AT_comp_dir:
@@ -125,6 +155,10 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_decimal_scale"; break;
 	case DW_AT_decimal_sign:
 		*s = "DW_AT_decimal_sign"; break;
+	case DW_AT_defaulted:
+		*s = "DW_AT_defaulted"; break;
+	case DW_AT_deleted:
+		*s = "DW_AT_deleted"; break;
 	case DW_AT_description:
 		*s = "DW_AT_description"; break;
 	case DW_AT_digit_count:
@@ -135,6 +169,8 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_discr_list"; break;
 	case DW_AT_discr_value:
 		*s = "DW_AT_discr_value"; break;
+	case DW_AT_dwo_name:
+		*s = "DW_AT_dwo_name"; break;
 	case DW_AT_element_list:
 		*s = "DW_AT_element_list"; break;
 	case DW_AT_encoding:
@@ -149,6 +185,8 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_extension"; break;
 	case DW_AT_explicit:
 		*s = "DW_AT_explicit"; break;
+	case DW_AT_export_symbols:
+		*s = "DW_AT_export_symbols"; break;
 	case DW_AT_endianity:
 		*s = "DW_AT_endianity"; break;
 	case DW_AT_elemental:
@@ -177,10 +215,14 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_lo_user"; break;
 	case DW_AT_location:
 		*s = "DW_AT_location"; break;
+	case DW_AT_loclists_base:
+		*s = "DW_AT_loclists_base"; break;
 	case DW_AT_low_pc:
 		*s = "DW_AT_low_pc"; break;
 	case DW_AT_lower_bound:
 		*s = "DW_AT_lower_bound"; break;
+	case DW_AT_macros:
+		*s = "DW_AT_macros"; break;
 	case DW_AT_macro_info:
 		*s = "DW_AT_macro_info"; break;
 	case DW_AT_main_subprogram:
@@ -193,6 +235,8 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_name"; break;
 	case DW_AT_namelist_item:
 		*s = "DW_AT_namelist_item"; break;
+	case DW_AT_noreturn:
+		*s = "DW_AT_noreturn"; break;
 	case DW_AT_ordering:
 		*s = "DW_AT_ordering"; break;
 	case DW_AT_object_pointer:
@@ -207,12 +251,20 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_picture_string"; break;
 	case DW_AT_pure:
 		*s = "DW_AT_pure"; break;
+	case DW_AT_reference:
+		*s = "DW_AT_reference"; break;
 	case DW_AT_return_addr:
 		*s = "DW_AT_return_addr"; break;
 	case DW_AT_ranges:
 		*s = "DW_AT_ranges"; break;
+	case DW_AT_rank:
+		*s = "DW_AT_rank"; break;
 	case DW_AT_recursive:
 		*s = "DW_AT_recursive"; break;
+	case DW_AT_rnglists_base:
+		*s = "DW_AT_rnglists_base"; break;
+	case DW_AT_rvalue_reference:
+		*s = "DW_AT_rvalue_reference"; break;
 	case DW_AT_segment:
 		*s = "DW_AT_segment"; break;
 	case DW_AT_sibling:
@@ -229,6 +281,12 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_stmt_list"; break;
 	case DW_AT_string_length:
 		*s = "DW_AT_string_length"; break;
+	case DW_AT_string_length_bit_size:
+		*s = "DW_AT_string_length_bit_size"; break;
+	case DW_AT_string_length_byte_size:
+		*s = "DW_AT_string_length_byte_size"; break;
+	case DW_AT_str_offsets_base:
+		*s = "DW_AT_str_offsets_base"; break;
 	case DW_AT_subscr_data:
 		*s = "DW_AT_subscr_data"; break;
 	case DW_AT_small:
@@ -265,6 +323,40 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_body_begin"; break;
 	case DW_AT_body_end:
 		*s = "DW_AT_body_end"; break;
+	case DW_AT_MIPS_fde:
+		*s = "DW_AT_MIPS_fde"; break;
+	case DW_AT_MIPS_loop_begin:
+		*s = "DW_AT_MIPS_loop_begin"; break;
+	case DW_AT_MIPS_tail_loop_begin:
+		*s = "DW_AT_MIPS_tail_loop_begin"; break;
+	case DW_AT_MIPS_epilog_begin:
+		*s = "DW_AT_MIPS_epilog_begin"; break;
+	case DW_AT_MIPS_loop_unroll_factor:
+		*s = "DW_AT_MIPS_loop_unroll_factor"; break;
+	case DW_AT_MIPS_software_pipeline_depth:
+		*s = "DW_AT_MIPS_software_pipeline_depth"; break;
+	case DW_AT_MIPS_linkage_name:
+		*s = "DW_AT_MIPS_linkage_name"; break;
+	case DW_AT_MIPS_stride:
+		*s = "DW_AT_MIPS_stride"; break;
+	case DW_AT_MIPS_abstract_name:
+		*s = "DW_AT_MIPS_abstract_name"; break;
+	case DW_AT_MIPS_clone_origin:
+		*s = "DW_AT_MIPS_clone_origin"; break;
+	case DW_AT_MIPS_has_inlines:
+		*s = "DW_AT_MIPS_has_inlines"; break;
+	case DW_AT_MIPS_stride_byte:
+		*s = "DW_AT_MIPS_stride_byte"; break;
+	case DW_AT_MIPS_stride_elem:
+		*s = "DW_AT_MIPS_stride_elem"; break;
+	case DW_AT_MIPS_ptr_dopetype:
+		*s = "DW_AT_MIPS_ptr_dopetype"; break;
+	case DW_AT_MIPS_allocatable_dopetype:
+		*s = "DW_AT_MIPS_allocatable_dopetype"; break;
+	case DW_AT_MIPS_assumed_shape_dopetype:
+		*s = "DW_AT_MIPS_assumed_shape_dopetype"; break;
+	case DW_AT_MIPS_assumed_size:
+		*s = "DW_AT_MIPS_assumed_size"; break;
 	case DW_AT_GNU_vector:
 		*s = "DW_AT_GNU_vector"; break;
 	case DW_AT_GNU_guarded_by:
@@ -301,6 +393,32 @@ dwarf_get_AT_name(unsigned attr, const char **s)
 		*s = "DW_AT_GNU_all_call_sites"; break;
 	case DW_AT_GNU_all_source_call_sites:
 		*s = "DW_AT_GNU_all_source_call_sites"; break;
+	case DW_AT_APPLE_optimized:
+		*s = "DW_AT_APPLE_optimized"; break;
+	case DW_AT_APPLE_flags:
+		*s = "DW_AT_APPLE_flags"; break;
+	case DW_AT_APPLE_isa:
+		*s = "DW_AT_APPLE_isa"; break;
+	case DW_AT_APPLE_block:
+		*s = "DW_AT_APPLE_block"; break;
+	case DW_AT_APPLE_major_runtime_vers:
+		*s = "DW_AT_APPLE_major_runtime_vers"; break;
+	case DW_AT_APPLE_runtime_class:
+		*s = "DW_AT_APPLE_runtime_class"; break;
+	case DW_AT_APPLE_omit_frame_ptr:
+		*s = "DW_AT_APPLE_omit_frame_ptr"; break;
+	case DW_AT_APPLE_property_name:
+		*s = "DW_AT_APPLE_property_name"; break;
+	case DW_AT_APPLE_property_getter:
+		*s = "DW_AT_APPLE_property_getter"; break;
+	case DW_AT_APPLE_property_setter:
+		*s = "DW_AT_APPLE_property_setter"; break;
+	case DW_AT_APPLE_property_attribute:
+		*s = "DW_AT_APPLE_property_attribute"; break;
+	case DW_AT_APPLE_objc_complete_type:
+		*s = "DW_AT_APPLE_objc_complete_type"; break;
+	case DW_AT_APPLE_property:
+		*s = "DW_AT_APPLE_property"; break;
 	default:
 		return (DW_DLV_NO_ENTRY);
 	}
@@ -477,6 +595,16 @@ dwarf_get_FORM_name(unsigned form, const char **s)
 	switch (form) {
 	case DW_FORM_addr:
 		*s = "DW_FORM_addr"; break;
+	case DW_FORM_addrx:
+		*s = "DW_FORM_addrx"; break;
+	case DW_FORM_addrx1:
+		*s = "DW_FORM_addrx1"; break;
+	case DW_FORM_addrx2:
+		*s = "DW_FORM_addrx2"; break;
+	case DW_FORM_addrx3:
+		*s = "DW_FORM_addrx3"; break;
+	case DW_FORM_addrx4:
+		*s = "DW_FORM_addrx4"; break;
 	case DW_FORM_block:
 		*s = "DW_FORM_block"; break;
 	case DW_FORM_block1:
@@ -493,14 +621,22 @@ dwarf_get_FORM_name(unsigned form, const char **s)
 		*s = "DW_FORM_data4"; break;
 	case DW_FORM_data8:
 		*s = "DW_FORM_data8"; break;
+	case DW_FORM_data16:
+		*s = "DW_FORM_data16"; break;
 	case DW_FORM_exprloc:
 		*s = "DW_FORM_exprloc"; break;
 	case DW_FORM_flag:
 		*s = "DW_FORM_flag"; break;
 	case DW_FORM_flag_present:
 		*s = "DW_FORM_flag_present"; break;
+	case DW_FORM_implicit_const:
+		*s = "DW_FORM_implicit_const"; break;
 	case DW_FORM_indirect:
 		*s = "DW_FORM_indirect"; break;
+	case DW_FORM_line_strp:
+		*s = "DW_FORM_line_strp"; break;
+	case DW_FORM_loclistx:
+		*s = "DW_FORM_loclistx"; break;
 	case DW_FORM_ref1:
 		*s = "DW_FORM_ref1"; break;
 	case DW_FORM_ref2:
@@ -513,8 +649,14 @@ dwarf_get_FORM_name(unsigned form, const char **s)
 		*s = "DW_FORM_ref_addr"; break;
 	case DW_FORM_ref_sig8:
 		*s = "DW_FORM_ref_sig8"; break;
+	case DW_FORM_ref_sup4:
+		*s = "DW_FORM_ref_sup4"; break;
+	case DW_FORM_ref_sup8:
+		*s = "DW_FORM_ref_sup8"; break;
 	case DW_FORM_ref_udata:
 		*s = "DW_FORM_ref_udata"; break;
+	case DW_FORM_rnglistx:
+		*s = "DW_FORM_rnglistx"; break;
 	case DW_FORM_sdata:
 		*s = "DW_FORM_sdata"; break;
 	case DW_FORM_sec_offset:
@@ -523,6 +665,18 @@ dwarf_get_FORM_name(unsigned form, const char **s)
 		*s = "DW_FORM_string"; break;
 	case DW_FORM_strp:
 		*s = "DW_FORM_strp"; break;
+	case DW_FORM_strp_sup:
+		*s = "DW_FORM_strp_sup"; break;
+	case DW_FORM_strx:
+		*s = "DW_FORM_strx"; break;
+	case DW_FORM_strx1:
+		*s = "DW_FORM_strx1"; break;
+	case DW_FORM_strx2:
+		*s = "DW_FORM_strx2"; break;
+	case DW_FORM_strx3:
+		*s = "DW_FORM_strx3"; break;
+	case DW_FORM_strx4:
+		*s = "DW_FORM_strx4"; break;
 	case DW_FORM_udata:
 		*s = "DW_FORM_udata"; break;
 	default:
@@ -548,7 +702,7 @@ dwarf_get_DS_name(unsigned ds, const char **s)
 	case DW_DS_leading_separate:
 		*s = "DW_DS_leading_separate"; break;
 	case DW_DS_trailing_separate:
-		*s = "DW_DS_trailing_separate";
+		*s = "DW_DS_trailing_separate"; break;
 	default:
 		return (DW_DLV_NO_ENTRY);
 	}
@@ -731,8 +885,46 @@ dwarf_get_LANG_name(unsigned lang, const char **s)
 		*s = "DW_LANG_UPC"; break;
 	case DW_LANG_D:
 		*s = "DW_LANG_D"; break;
+	case DW_LANG_Python:
+		*s = "DW_LANG_Python"; break;
+	case DW_LANG_OpenCL:
+		*s = "DW_LANG_OpenCL"; break;
+	case DW_LANG_Go:
+		*s = "DW_LANG_Go"; break;
+	case DW_LANG_Modula3:
+		*s = "DW_LANG_Modula3"; break;
+	case DW_LANG_Haskell:
+		*s = "DW_LANG_Haskell"; break;
+	case DW_LANG_C_plus_plus_03:
+		*s = "DW_LANG_C_plus_plus_03"; break;
+	case DW_LANG_C_plus_plus_11:
+		*s = "DW_LANG_C_plus_plus_11"; break;
+	case DW_LANG_OCaml:
+		*s = "DW_LANG_OCaml"; break;
+	case DW_LANG_Rust:
+		*s = "DW_LANG_Rust"; break;
+	case DW_LANG_C11:
+		*s = "DW_LANG_C11"; break;
+	case DW_LANG_Swift:
+		*s = "DW_LANG_Swift"; break;
+	case DW_LANG_Julia:
+		*s = "DW_LANG_Julia"; break;
+	case DW_LANG_Dylan:
+		*s = "DW_LANG_Dylan"; break;
+	case DW_LANG_C_plus_plus_14:
+		*s = "DW_LANG_C_plus_plus_14"; break;
+	case DW_LANG_Fortran03:
+		*s = "DW_LANG_Fortran03"; break;
+	case DW_LANG_Fortran08:
+		*s = "DW_LANG_Fortran08"; break;
+	case DW_LANG_RenderScript:
+		*s = "DW_LANG_RenderScript"; break;
+	case DW_LANG_BLISS:
+		*s = "DW_LANG_BLISS"; break;
 	case DW_LANG_lo_user:
 		*s = "DW_LANG_lo_user"; break;
+	case DW_LANG_Mips_Assembler:
+		*s = "DW_LANG_Mips_Assembler"; break;
 	case DW_LANG_hi_user:
 		*s = "DW_LANG_hi_user"; break;
 	default:
@@ -1205,12 +1397,20 @@ dwarf_get_TAG_name(unsigned tag, const char **s)
 		*s = "DW_TAG_access_declaration"; break;
 	case DW_TAG_array_type:
 		*s = "DW_TAG_array_type"; break;
+	case DW_TAG_atomic_type:
+		*s = "DW_TAG_atomic_type"; break;
 	case DW_TAG_base_type:
 		*s = "DW_TAG_base_type"; break;
+	case DW_TAG_call_site:
+		*s = "DW_TAG_call_site"; break;
+	case DW_TAG_call_site_parameter:
+		*s = "DW_TAG_call_site_parameter"; break;
 	case DW_TAG_catch_block:
 		*s = "DW_TAG_catch_block"; break;
 	case DW_TAG_class_type:
 		*s = "DW_TAG_class_type"; break;
+	case DW_TAG_coarray_type:
+		*s = "DW_TAG_coarray_type"; break;
 	case DW_TAG_common_block:
 		*s = "DW_TAG_common_block"; break;
 	case DW_TAG_common_inclusion:
@@ -1225,6 +1425,8 @@ dwarf_get_TAG_name(unsigned tag, const char **s)
 		*s = "DW_TAG_constant"; break;
 	case DW_TAG_dwarf_procedure:
 		*s = "DW_TAG_dwarf_procedure"; break;
+	case DW_TAG_dynamic_type:
+		*s = "DW_TAG_dynamic_type"; break;
 	case DW_TAG_entry_point:
 		*s = "DW_TAG_entry_point"; break;
 	case DW_TAG_enumeration_type:
@@ -1235,6 +1437,10 @@ dwarf_get_TAG_name(unsigned tag, const char **s)
 		*s = "DW_TAG_formal_parameter"; break;
 	case DW_TAG_friend:
 		*s = "DW_TAG_friend"; break;
+	case DW_TAG_generic_subrange:
+		*s = "DW_TAG_generic_subrange"; break;
+	case DW_TAG_immutable_type:
+		*s = "DW_TAG_immutable_type"; break;
 	case DW_TAG_imported_declaration:
 		*s = "DW_TAG_imported_declaration"; break;
 	case DW_TAG_imported_module:
@@ -1279,6 +1485,8 @@ dwarf_get_TAG_name(unsigned tag, const char **s)
 		*s = "DW_TAG_set_type"; break;
 	case DW_TAG_shared_type:
 		*s = "DW_TAG_shared_type"; break;
+	case DW_TAG_skeleton_unit:
+		*s = "DW_TAG_skeleton_unit"; break;
 	case DW_TAG_string_type:
 		*s = "DW_TAG_string_type"; break;
 	case DW_TAG_structure_type:
@@ -1339,6 +1547,36 @@ dwarf_get_TAG_name(unsigned tag, const char **s)
 		*s = "DW_TAG_GNU_call_site"; break;
 	case DW_TAG_GNU_call_site_parameter:
 		*s = "DW_TAG_GNU_call_site_parameter"; break;
+	default:
+		return (DW_DLV_NO_ENTRY);
+	}
+
+	return (DW_DLV_OK);
+}
+
+int
+dwarf_get_UT_name(unsigned ut, const char **s)
+{
+
+	assert(s != NULL);
+
+	switch (ut) {
+	case DW_UT_compile:
+		*s = "DW_UT_compile"; break;
+	case DW_UT_type:
+		*s = "DW_UT_type"; break;
+	case DW_UT_partial:
+		*s = "DW_UT_partial"; break;
+	case DW_UT_skeleton:
+		*s = "DW_UT_skeleton"; break;
+	case DW_UT_split_compile:
+		*s = "DW_UT_split_compile"; break;
+	case DW_UT_split_type:
+		*s = "DW_UT_split_type"; break;
+	case DW_UT_lo_user:
+		*s = "DW_UT_lo_user"; break;
+	case DW_UT_hi_user:
+		*s = "DW_UT_hi_user"; break;
 	default:
 		return (DW_DLV_NO_ENTRY);
 	}

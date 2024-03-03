@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,8 +39,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_ehdr.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_ehdr.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
@@ -50,18 +50,22 @@ static int
 _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
     uint16_t strndx)
 {
-	Elf_Scn *scn;
 	size_t fsz;
-	int (*xlator)(unsigned char *_d, size_t _dsz, unsigned char *_s,
-	    size_t _c, int _swap);
+	Elf_Scn *scn;
 	uint32_t shtype;
+	_libelf_translator_function *xlator;
 
 	assert(STAILQ_EMPTY(&e->e_u.e_elf.e_scn));
 
 	fsz = _libelf_fsize(ELF_T_SHDR, ec, e->e_version, 1);
 	assert(fsz > 0);
 
-	if (e->e_rawsize < shoff + fsz) { /* raw file too small */
+	if (shoff + fsz < shoff) {	/* Numeric overflow. */
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+
+	if ((uint64_t) e->e_rawsize < shoff + fsz) {
 		LIBELF_SET_ERROR(HEADER, 0);
 		return (0);
 	}
@@ -74,10 +78,11 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		return (0);
 	}
 
-	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec);
-	(*xlator)((void *) &scn->s_shdr, sizeof(scn->s_shdr),
+	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec,
+	    _libelf_elfmachine(e));
+	(*xlator)((unsigned char *) &scn->s_shdr, sizeof(scn->s_shdr),
 	    (unsigned char *) e->e_rawfile + shoff, (size_t) 1,
-	    e->e_byteorder != _libelf_host_byteorder());
+	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
 		scn->s_shdr.s_shdr64.M)
@@ -114,7 +119,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 		eh->e_machine = EM_NONE;				\
 		eh->e_type    = ELF_K_NONE;				\
 		eh->e_version = LIBELF_PRIVATE(version);		\
-	} while (/*CONSTCOND*/0)
+	} while (/* CONSTCOND */ 0)
 
 void *
 _libelf_ehdr(Elf *e, int ec, int allocate)
@@ -157,14 +162,13 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 	fsz = _libelf_fsize(ELF_T_EHDR, ec, e->e_version, (size_t) 1);
 	assert(fsz > 0);
 
-	if (e->e_cmd != ELF_C_WRITE && e->e_rawsize < fsz) {
+	if (e->e_cmd != ELF_C_WRITE && e->e_rawsize < (off_t) fsz) {
 		LIBELF_SET_ERROR(HEADER, 0);
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_EHDR, ec, EV_CURRENT);
-
-	assert(msz > 0);
+	if ((msz = _libelf_msize(ELF_T_EHDR, ec, EV_CURRENT)) == 0)
+		return (NULL);
 
 	if ((ehdr = calloc((size_t) 1, msz)) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, 0);
@@ -185,14 +189,11 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 	if (e->e_cmd == ELF_C_WRITE)
 		return (ehdr);
 
-	xlator = _libelf_get_translator(ELF_T_EHDR, ELF_TOMEMORY, ec);
-	(*xlator)((void *)ehdr, msz, e->e_rawfile, (size_t) 1,
-	    e->e_byteorder != _libelf_host_byteorder());
+	xlator = _libelf_get_translator(ELF_T_EHDR, ELF_TOMEMORY, ec,
+	    _libelf_elfmachine(e));
+	(*xlator)((unsigned char*) ehdr, msz, e->e_rawfile, (size_t) 1,
+	    e->e_byteorder != LIBELF_PRIVATE(byteorder));
 
-	/*
-	 * If extended numbering is being used, read the correct
-	 * number of sections and program header entries.
-	 */
 	if (ec == ELFCLASS32) {
 		phnum = ((Elf32_Ehdr *) ehdr)->e_phnum;
 		shnum = ((Elf32_Ehdr *) ehdr)->e_shnum;
@@ -212,12 +213,19 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 		return (NULL);
 	}
 
-	if (shnum != 0 || shoff == 0LL) { /* not using extended numbering */
+	/*
+	 * If extended numbering is being used, read the correct
+	 * number of sections and program header entries.
+	 */
+	if ((shnum == 0 && shoff != 0) || phnum == PN_XNUM || strndx == SHN_XINDEX) {
+		if (_libelf_load_extended(e, ec, shoff, phnum, strndx) == 0)
+			return (NULL);
+	} else {
+		/* not using extended numbering */
 		e->e_u.e_elf.e_nphdr = phnum;
 		e->e_u.e_elf.e_nscn = shnum;
 		e->e_u.e_elf.e_strndx = strndx;
-	} else if (_libelf_load_extended(e, ec, shoff, phnum, strndx) == 0)
-		return (NULL);
+	}
 
 	return (ehdr);
 }

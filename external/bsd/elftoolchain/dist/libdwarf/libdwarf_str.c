@@ -1,7 +1,7 @@
-/*	$NetBSD: libdwarf_str.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_str.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
- * Copyright (c) 2009,2010 Kai Wang
+ * Copyright (c) 2009,2010,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_str.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: libdwarf_str.c 2070 2011-10-27 03:05:32Z jkoshy");
+__RCSID("$NetBSD: libdwarf_str.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_str.c 4016 2023-10-15 05:39:46Z kaiwang27");
 
 #define	_INIT_DWARF_STRTAB_SIZE 1024
 
@@ -55,7 +55,7 @@ _dwarf_strtab_add(Dwarf_Debug dbg, char *string, uint64_t *off,
 	if (off != NULL)
 		*off = dbg->dbg_strtab_size;
 
-	strncpy(&dbg->dbg_strtab[dbg->dbg_strtab_size], string, len - 1);
+	memcpy(&dbg->dbg_strtab[dbg->dbg_strtab_size], string, len - 1);
 	dbg->dbg_strtab_size += len;
 	dbg->dbg_strtab[dbg->dbg_strtab_size - 1] = '\0';
 
@@ -69,6 +69,15 @@ _dwarf_strtab_get_table(Dwarf_Debug dbg)
 	assert(dbg != NULL);
 
 	return (dbg->dbg_strtab);
+}
+
+char *
+_dwarf_strtab_get_line_table(Dwarf_Debug dbg)
+{
+
+	assert(dbg != NULL);
+
+	return (dbg->dbg_line_strtab);
 }
 
 int
@@ -97,6 +106,11 @@ _dwarf_strtab_init(Dwarf_Debug dbg, Dwarf_Error *error)
 			memcpy(dbg->dbg_strtab, ds->ds_data, ds->ds_size);
 		} else
 			dbg->dbg_strtab = (char *) ds->ds_data;
+
+		ds = _dwarf_find_section(dbg, ".debug_line_str");
+		if (ds != NULL) {
+			dbg->dbg_line_strtab = (char *) ds->ds_data;
+		}
 	} else {
 		/* DW_DLC_WRITE */
 
