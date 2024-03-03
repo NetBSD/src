@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.285.2.5 2024/03/01 14:28:52 martin Exp $
+# $NetBSD: mi,v 1.285.2.6 2024/03/03 07:11:43 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -921,7 +921,6 @@
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
-./usr/libdata/debug/usr/lib/named		comp-sys-usr		debug
 ./usr/libdata/debug/usr/libexec/atf-check.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-obsolete		obsolete
