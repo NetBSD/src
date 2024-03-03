@@ -5,7 +5,6 @@ Entrust_Root_Certification_Authority
 Comodo_AAA_Services_root
 QuoVadis_Root_CA_2
 QuoVadis_Root_CA_3
-Security_Communication_Root_CA
 XRamp_Global_CA_Root
 Go_Daddy_Class_2_CA
 Starfield_Class_2_CA
@@ -25,7 +24,6 @@ NetLock_Arany_Class_Gold
 SecureSign_RootCA11
 Microsec_e-Szigno_Root_CA_2009
 GlobalSign_Root_CA_-_R3
-Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068
 Izenpe.com
 Go_Daddy_Root_Certificate_Authority_-_G2
 Starfield_Root_Certificate_Authority_-_G2
@@ -111,7 +109,7 @@ Certum_Trusted_Root_CA
 TunTrust_Root_CA
 HARICA_TLS_RSA_Root_CA_2021
 HARICA_TLS_ECC_Root_CA_2021
-Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1
+Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068
 vTrus_ECC_Root_CA
 vTrus_Root_CA
 ISRG_Root_X2
@@ -138,3 +136,11 @@ SSL.com_TLS_RSA_Root_CA_2022
 SSL.com_TLS_ECC_Root_CA_2022
 Atos_TrustedRoot_Root_CA_ECC_TLS_2021
 Atos_TrustedRoot_Root_CA_RSA_TLS_2021
+TrustAsia_Global_Root_CA_G3
+TrustAsia_Global_Root_CA_G4
+CommScope_Public_Trust_ECC_Root-01
+CommScope_Public_Trust_ECC_Root-02
+CommScope_Public_Trust_RSA_Root-01
+CommScope_Public_Trust_RSA_Root-02
+Telekom_Security_TLS_ECC_Root_2020
+Telekom_Security_TLS_RSA_Root_2023
