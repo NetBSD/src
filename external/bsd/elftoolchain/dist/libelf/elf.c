@@ -1,4 +1,5 @@
-/*	$NetBSD: elf.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
  * All rights reserved.
@@ -25,17 +26,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: elf.c 2225 2011-11-26 18:55:54Z jkoshy ");
+ELFTC_VCSID("Id: elf.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 struct _libelf_globals _libelf = {
-	.libelf_arch		= LIBELF_ARCH,
 	.libelf_byteorder	= LIBELF_BYTEORDER,
-	.libelf_class		= LIBELF_CLASS,
 	.libelf_error		= 0,
 	.libelf_fillchar	= 0,
 	.libelf_version		= EV_NONE

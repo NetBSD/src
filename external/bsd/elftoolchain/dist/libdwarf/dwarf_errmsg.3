@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_errmsg.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_errmsg.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2009 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf_errmsg.3 2073 2011-10-27 03:30:47Z jkoshy 
+.\" Id: dwarf_errmsg.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd December 12, 2009
-.Os
 .Dt DWARF_ERRMSG 3
+.Os
 .Sh NAME
 .Nm dwarf_errmsg
 .Nd retrieve a human-readable string corresponding to a
@@ -46,10 +46,10 @@ returns a
 .Dv NUL Ns - Ns
 terminated string for the error denoted by
 argument
-.Ar err .
+.Fa err .
 .Pp
 Argument
-.Ar err
+.Fa err
 should be a valid handle to a
 .Vt Dwarf_Error
 instance.

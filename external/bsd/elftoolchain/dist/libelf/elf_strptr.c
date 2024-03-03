@@ -1,4 +1,5 @@
-/*	$NetBSD: elf_strptr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: elf_strptr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <assert.h>
@@ -32,8 +34,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_strptr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: elf_strptr.c 2990 2014-03-17 09:56:58Z jkoshy ");
+ELFTC_VCSID("Id: elf_strptr.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_strptr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 /*
  * Convert an ELF section#,offset pair to a string pointer.

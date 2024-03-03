@@ -1,7 +1,8 @@
-/*	$NetBSD: libdwarf_info.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: libdwarf_info.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2010,2011,2014 Kai Wang
+ * Copyright (c) 2010,2011,2014,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +29,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_info.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_info.c 3136 2014-12-24 16:04:38Z kaiwang27 ");
+ELFTC_VCSID("Id: libdwarf_info.c 4013 2023-10-14 22:40:50Z kaiwang27");
 
 int
 _dwarf_info_first_cu(Dwarf_Debug dbg, Dwarf_Error *error)
@@ -203,17 +203,49 @@ _dwarf_info_load(Dwarf_Debug dbg, Dwarf_Bool load_all, Dwarf_Bool is_info,
 			dbg->dbg_types_off = next_offset;
 
 		/* Initialise the compilation unit. */
-		cu->cu_length		 = length;
-		cu->cu_length_size	 = (dwarf_size == 4 ? 4 : 12);
-		cu->cu_version		 = dbg->read(ds->ds_data, &offset, 2);
-		cu->cu_abbrev_offset	 = dbg->read(ds->ds_data, &offset,
-		    dwarf_size);
+		cu->cu_length = length;
+		cu->cu_length_size = (dwarf_size == 4 ? 4 : 12);
+		cu->cu_version = dbg->read(ds->ds_data, &offset, 2);
+
+		/* Verify the DWARF version is supported. */
+		if (cu->cu_version < 2 || cu->cu_version > 5) {
+			DWARF_SET_ERROR(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
+			ret = DW_DLE_VERSION_STAMP_ERROR;
+			break;
+		}
+
+		if (cu->cu_version == 5) {
+			/*
+			 * DWARF5 has unit_type, abbrev_offset and pointer_size
+			 * fields are reordered.
+			 */
+			cu->cu_unit_type = dbg->read(ds->ds_data, &offset, 1);
+			cu->cu_pointer_size = dbg->read(ds->ds_data, &offset,
+			    1);
+			cu->cu_abbrev_offset = dbg->read(ds->ds_data, &offset,
+			    dwarf_size);
+		} else {
+			/* DWARF4 or lower. */
+			cu->cu_unit_type = is_info ? DW_UT_compile : DW_UT_type;
+			cu->cu_abbrev_offset = dbg->read(ds->ds_data, &offset,
+			    dwarf_size);
+			cu->cu_pointer_size = dbg->read(ds->ds_data, &offset,
+			    1);
+		}
+
 		cu->cu_abbrev_offset_cur = cu->cu_abbrev_offset;
-		cu->cu_pointer_size	 = dbg->read(ds->ds_data, &offset, 1);
-		cu->cu_next_offset	 = next_offset;
+		cu->cu_next_offset = next_offset;
+
+		/* DWARF5 Section 7.5.1.2 defines the dwo_id field. */
+		if (cu->cu_unit_type == DW_UT_skeleton ||
+		    cu->cu_unit_type == DW_UT_split_compile) {
+			/* TODO: the ID is implementation defined. */
+			cu->cu_dwo_id = dbg->read(ds->ds_data, &offset, 8);
+		}
 
 		/* .debug_types extra fields. */
-		if (!is_info) {
+		if (!is_info || cu->cu_unit_type == DW_UT_type ||
+		    cu->cu_unit_type == DW_UT_split_type) {
 			memcpy(cu->cu_type_sig.signature,
 			    (char *) ds->ds_data + offset, 8);
 			offset += 8;
@@ -226,12 +258,6 @@ _dwarf_info_load(Dwarf_Debug dbg, Dwarf_Bool load_all, Dwarf_Bool is_info,
 			STAILQ_INSERT_TAIL(&dbg->dbg_cu, cu, cu_next);
 		else
 			STAILQ_INSERT_TAIL(&dbg->dbg_tu, cu, cu_next);
-
-		if (cu->cu_version < 2 || cu->cu_version > 4) {
-			DWARF_SET_ERROR(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
-			ret = DW_DLE_VERSION_STAMP_ERROR;
-			break;
-		}
 
 		cu->cu_1st_offset = offset;
 

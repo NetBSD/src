@@ -1,4 +1,5 @@
-/*	$NetBSD: dwarf_pro_finish.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: dwarf_pro_finish.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_pro_finish.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: dwarf_pro_finish.c 2074 2011-10-27 03:34:33Z jkoshy ");
+ELFTC_VCSID("Id: dwarf_pro_finish.c 2074 2011-10-27 03:34:33Z jkoshy");
 
 Dwarf_Unsigned
 dwarf_producer_finish(Dwarf_P_Debug dbg, Dwarf_Error *error)

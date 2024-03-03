@@ -1,4 +1,5 @@
-/*	$NetBSD: elf_end.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: elf_end.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2009,2011 Joseph Koshy
  * All rights reserved.
@@ -25,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <assert.h>
 #include <libelf.h>
 #include <stdlib.h>
@@ -35,8 +38,9 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: elf_end.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: elf_end.c 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: elf_end.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_end.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 int
 elf_end(Elf *e)
@@ -83,14 +87,14 @@ elf_end(Elf *e)
 				free(e->e_rawfile);
 #if	ELFTC_HAVE_MMAP
 			else if (e->e_flags & LIBELF_F_RAWFILE_MMAP)
-				(void) munmap(e->e_rawfile, e->e_rawsize);
+				(void) munmap(e->e_rawfile, (size_t) e->e_rawsize);
 #endif
 		}
 
 		sv = e;
 		if ((e = e->e_parent) != NULL)
 			e->e_u.e_ar.e_nchildren--;
-		sv = _libelf_release_elf(sv);
+		_libelf_release_elf(sv);
 	}
 
 	return (0);

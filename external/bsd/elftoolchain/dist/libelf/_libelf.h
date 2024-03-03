@@ -1,4 +1,5 @@
-/*	$NetBSD: _libelf.h,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -24,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf.h 3174 2015-03-27 17:13:41Z emaste 
+ * Id: _libelf.h 3902 2020-11-24 21:17:41Z jkoshy
  */
 
 #ifndef	__LIBELF_H_
@@ -64,7 +65,7 @@ extern struct _libelf_globals _libelf;
 
 #define	LIBELF_SET_ERROR(E, O) do {					\
 		LIBELF_PRIVATE(error) = LIBELF_ERROR(ELF_E_##E, (O));	\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #define	LIBELF_ADJUST_AR_SIZE(S)	(((S) + 1U) & ~1U)
 
@@ -91,7 +92,7 @@ struct _Elf {
 	Elf_Kind	e_kind;		/* ELF_K_* */
 	Elf		*e_parent; 	/* non-NULL for archive members */
 	unsigned char	*e_rawfile;	/* uninterpreted bytes */
-	size_t		e_rawsize;	/* size of uninterpreted bytes */
+	off_t		e_rawsize;	/* size of uninterpreted bytes */
 	unsigned int	e_version;	/* file version */
 
 	/*
@@ -179,7 +180,7 @@ enum {
 			return (0);				\
 		}						\
 		(DST)->NAME = (SRC)->NAME & 0xFFFFFFFFU;	\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #define	LIBELF_COPY_S32(DST, SRC, NAME)	do {			\
 		if ((SRC)->NAME > INT32_MAX ||			\
@@ -188,12 +189,15 @@ enum {
 			return (0);				\
 		}						\
 		(DST)->NAME = (int32_t) (SRC)->NAME;		\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 
 /*
  * Function Prototypes.
  */
+
+typedef int _libelf_translator_function(unsigned char *_dst, size_t dsz,
+    unsigned char *_src, size_t _cnt, int _byteswap);
 
 #ifdef __cplusplus
 extern "C" {
@@ -208,12 +212,12 @@ Elf_Arsym *_libelf_ar_process_bsd_symtab(Elf *_ar, size_t *_dst);
 Elf_Arsym *_libelf_ar_process_svr4_symtab(Elf *_ar, size_t *_dst);
 long	 _libelf_checksum(Elf *_e, int _elfclass);
 void	*_libelf_ehdr(Elf *_e, int _elfclass, int _allocate);
+int	_libelf_elfmachine(Elf *_e);
 unsigned int _libelf_falign(Elf_Type _t, int _elfclass);
 size_t	_libelf_fsize(Elf_Type _t, int _elfclass, unsigned int _version,
     size_t count);
-int	(*_libelf_get_translator(Elf_Type _t, int _direction, int _elfclass))
-	    (unsigned char *_dst, size_t dsz, unsigned char *_src,
-	     size_t _cnt, int _byteswap);
+_libelf_translator_function *_libelf_get_translator(Elf_Type _t,
+    int _direction, int _elfclass, int _elfmachine);
 void	*_libelf_getphdr(Elf *_e, int _elfclass);
 void	*_libelf_getshdr(Elf_Scn *_scn, int _elfclass);
 void	_libelf_init_elf(Elf *_e, Elf_Kind _kind);
@@ -224,14 +228,14 @@ size_t	_libelf_msize(Elf_Type _t, int _elfclass, unsigned int _version);
 void	*_libelf_newphdr(Elf *_e, int _elfclass, size_t _count);
 Elf	*_libelf_open_object(int _fd, Elf_Cmd _c, int _reporterror);
 struct _Libelf_Data *_libelf_release_data(struct _Libelf_Data *_d);
-Elf	*_libelf_release_elf(Elf *_e);
+void	_libelf_release_elf(Elf *_e);
 Elf_Scn	*_libelf_release_scn(Elf_Scn *_s);
 int	_libelf_setphnum(Elf *_e, void *_eh, int _elfclass, size_t _phnum);
 int	_libelf_setshnum(Elf *_e, void *_eh, int _elfclass, size_t _shnum);
 int	_libelf_setshstrndx(Elf *_e, void *_eh, int _elfclass,
     size_t _shstrndx);
 Elf_Data *_libelf_xlate(Elf_Data *_d, const Elf_Data *_s,
-    unsigned int _encoding, int _elfclass, int _direction);
+    unsigned int _encoding, int _elfclass, int _elfmachine, int _direction);
 int	_libelf_xlate_shtype(uint32_t _sht);
 #ifdef __cplusplus
 }

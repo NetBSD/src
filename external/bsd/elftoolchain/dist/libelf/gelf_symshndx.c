@@ -1,6 +1,7 @@
-/*	$NetBSD: gelf_symshndx.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: gelf_symshndx.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
- * Copyright (c) 2006,2008 Joseph Koshy
+ * Copyright (c) 2006,2008,2020 Joseph Koshy
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,13 +26,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <assert.h>
 #include <gelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_symshndx.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: gelf_symshndx.c 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: gelf_symshndx.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: gelf_symshndx.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 GElf_Sym *
 gelf_getsymshndx(Elf_Data *d, Elf_Data *id, int ndx, GElf_Sym *dst,
@@ -50,9 +54,16 @@ gelf_getsymshndx(Elf_Data *d, Elf_Data *id, int ndx, GElf_Sym *dst,
 	if (gelf_getsym(d, ndx, dst) == 0)
 		return (NULL);
 
-	if (lid == NULL || (scn = lid->d_scn) == NULL ||
-	    (e = scn->s_elf) == NULL || (e != ld->d_scn->s_elf) ||
-	    shindex == NULL) {
+	if (shindex == NULL)
+		return (dst);
+
+	if (lid == NULL) {
+		*shindex = 0;
+		return (dst);
+	}
+
+	if ((scn = lid->d_scn) == NULL ||
+	    (e = scn->s_elf) == NULL || (e != ld->d_scn->s_elf)) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (NULL);
 	}
@@ -71,9 +82,9 @@ gelf_getsymshndx(Elf_Data *d, Elf_Data *id, int ndx, GElf_Sym *dst,
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_WORD, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_WORD, ec, e->e_version)) == 0)
+		return (NULL);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= id->d_size) {
@@ -123,9 +134,9 @@ gelf_update_symshndx(Elf_Data *d, Elf_Data *id, int ndx, GElf_Sym *gs,
 		return (0);
 	}
 
-	msz = _libelf_msize(ELF_T_WORD, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_WORD, ec, e->e_version)) == 0)
+		return (0);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= id->d_size) {

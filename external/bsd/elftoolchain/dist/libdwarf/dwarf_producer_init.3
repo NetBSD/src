@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_producer_init.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_producer_init.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,13 +24,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_producer_init.3 3182 2015-04-10 16:08:10Z emaste 
+.\" Id: dwarf_producer_init.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd August 20, 2011
-.Os
 .Dt DWARF_PRODUCER_INIT 3
+.Os
 .Sh NAME
-.Nm dwarf_producer_init
+.Nm dwarf_producer_init ,
 .Nm dwarf_producer_init_b
 .Nd allocate a DWARF producer descriptor
 .Sh LIBRARY
@@ -59,7 +59,7 @@ These functions allocate and return a
 descriptor representing a DWARF producer instance.
 .Pp
 The argument
-.Ar errhand
+.Fa errhand
 should contain the address of a function to be called in case of an
 error.
 If this argument is
@@ -68,20 +68,19 @@ the default error handling scheme is used, see
 .Xr dwarf 3 .
 .Pp
 The argument
-.Ar errarg
+.Fa errarg
 will be passed to the error handler function when it is invoked.
 .Pp
 The argument
-.Ar err
+.Fa err
 references a memory location that would hold a
 .Vt Dwarf_Error
 descriptor in case of an error.
 .Pp
 The argument
-.Ar flags
+.Fa flags
 specifies additional characteristics of the DWARF producer instance.
 The following flags are recognized:
-.Pp
 .Bl -tag -width "Dv DW_DLC_ISA_MIPS"
 .It Dv DW_DLC_ISA_IA64
 .Pq Deprecated
@@ -147,7 +146,7 @@ is set, the target's endianness is assumed to be the same as the host's
 endianness.
 .Pp
 Argument
-.Ar func
+.Fa func
 should point to an application-provided callback function of type
 .Vt Dwarf_Callback_Func_b .
 The type
@@ -196,7 +195,7 @@ value in the section header.
 On success, the callback function should return the section index
 value of the created section, and set the location pointed to by
 argument
-.Ar index
+.Fa index
 to the symbol table index of the symbol that associated with the newly
 created section.
 This symbol table index will be used in relocation entries
@@ -204,7 +203,7 @@ referring to the created section.
 .Pp
 In case of failure, the callback function should return -1 and set the
 location pointed to by argument
-.Ar error
+.Fa error
 to an application-defined error code.
 This application returned error code is currently ignored by the
 library.
@@ -230,50 +229,7 @@ descriptor.
 In case of an error, they return
 .Dv DW_DLV_BADADDR
 and set the argument
-.Ar err .
-.Sh ERRORS
-These functions can fail with:
-.Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
-.It Bq Er DW_DLE_ARGUMENT
-Argument
-.Ar func
-was NULL.
-.It Bq Er DW_DLE_ARGUMENT
-The flag
-.Dv DW_DLC_WRITE
-was not set in argument
-.Ar flags .
-.It Bq Er DW_DLE_ARGUMENT
-The flags
-.Dv DW_DLC_SIZE_32
-and
-.Dv DW_DLC_SIZE_64
-were both set in argument
-.Ar flags .
-.It Bq Er DW_DLE_ARGUMENT
-The flags
-.Dv DW_DLC_ISA_IA64
-and
-.Dv DW_DLC_ISA_MIPS
-were both set in argument
-.Ar flags .
-.It Bq Er DW_DLE_ARGUMENT
-The flags
-.Dv DW_DLC_TARGET_BIGENDIAN
-and
-.Dv DW_DLC_TARGET_LITTLEENDIAN
-were both set in argument
-.Ar flags .
-.It Bq Er DW_DLE_ARGUMENT
-The flags
-.Dv DW_DLC_STREAM_RELOCATIONS
-and
-.Dv DW_DLC_SYMBOLIC_RELOCATIONS
-were both set in argument
-.Ar flags .
-.It Bq Er DW_DLE_MEMORY
-An out of memory condition was encountered.
-.El
+.Fa err .
 .Sh EXAMPLES
 To initialize a
 .Vt Dwarf_P_Debug
@@ -291,6 +247,50 @@ if ((dbg = dwarf_producer_init(flags, cb_func, NULL, NULL, &de)) ==
     DW_DLV_BADADDR)
 	warnx("dwarf_producer_init failed: %s", dwarf_errmsg(-1));
 .Ed
+.Sh ERRORS
+These functions can fail with:
+.Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
+.It Bq Er DW_DLE_ARGUMENT
+Argument
+.Fa func
+was
+.Dv NULL .
+.It Bq Er DW_DLE_ARGUMENT
+The flag
+.Dv DW_DLC_WRITE
+was not set in argument
+.Fa flags .
+.It Bq Er DW_DLE_ARGUMENT
+The flags
+.Dv DW_DLC_SIZE_32
+and
+.Dv DW_DLC_SIZE_64
+were both set in argument
+.Fa flags .
+.It Bq Er DW_DLE_ARGUMENT
+The flags
+.Dv DW_DLC_ISA_IA64
+and
+.Dv DW_DLC_ISA_MIPS
+were both set in argument
+.Fa flags .
+.It Bq Er DW_DLE_ARGUMENT
+The flags
+.Dv DW_DLC_TARGET_BIGENDIAN
+and
+.Dv DW_DLC_TARGET_LITTLEENDIAN
+were both set in argument
+.Fa flags .
+.It Bq Er DW_DLE_ARGUMENT
+The flags
+.Dv DW_DLC_STREAM_RELOCATIONS
+and
+.Dv DW_DLC_SYMBOLIC_RELOCATIONS
+were both set in argument
+.Fa flags .
+.It Bq Er DW_DLE_MEMORY
+An out of memory condition was encountered.
+.El
 .Sh SEE ALSO
 .Xr dwarf 3 ,
 .Xr dwarf_errmsg 3 ,

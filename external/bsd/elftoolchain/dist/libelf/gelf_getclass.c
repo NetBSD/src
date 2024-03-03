@@ -1,4 +1,5 @@
-/*	$NetBSD: gelf_getclass.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: gelf_getclass.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,12 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <gelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_getclass.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: gelf_getclass.c 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: gelf_getclass.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: gelf_getclass.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 int
 gelf_getclass(Elf *e)

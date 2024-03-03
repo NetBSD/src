@@ -1,4 +1,5 @@
-/*	$NetBSD: libelf_xlate.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: libelf_xlate.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,13 +26,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <assert.h>
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: libelf_xlate.c 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: libelf_xlate.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 /*
  * Translate to/from the file representation of ELF objects.
@@ -47,11 +51,12 @@ ELFTC_VCSID("Id: libelf_xlate.c 3174 2015-03-27 17:13:41Z emaste ");
 
 Elf_Data *
 _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
-    int elfclass, int direction)
+    int elfclass, int elfmachine, int direction)
 {
 	int byteswap;
 	size_t cnt, dsz, fsz, msz;
 	uintptr_t sb, se, db, de;
+	_libelf_translator_function *xlator;
 
 	if (encoding == ELFDATANONE)
 		encoding = LIBELF_PRIVATE(byteorder);
@@ -84,9 +89,8 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	    (src->d_type, (size_t) 1, src->d_version)) == 0)
 		return (NULL);
 
-	msz = _libelf_msize(src->d_type, elfclass, src->d_version);
-
-	assert(msz > 0);
+	if ((msz = _libelf_msize(src->d_type, elfclass, src->d_version)) == 0)
+		return (NULL);
 
 	if (src->d_size % (direction == ELF_TOMEMORY ? fsz : msz)) {
 		LIBELF_SET_ERROR(DATA, 0);
@@ -140,8 +144,9 @@ _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
 	    (db == sb && !byteswap && fsz == msz))
 		return (dst);	/* nothing more to do */
 
-	if (!(_libelf_get_translator(src->d_type, direction, elfclass))
-	    (dst->d_buf, dsz, src->d_buf, cnt, byteswap)) {
+	xlator = _libelf_get_translator(src->d_type, direction, elfclass,
+	    elfmachine);
+	if (!xlator(dst->d_buf, dsz, src->d_buf, cnt, byteswap)) {
 		LIBELF_SET_ERROR(DATA, 0);
 		return (NULL);
 	}

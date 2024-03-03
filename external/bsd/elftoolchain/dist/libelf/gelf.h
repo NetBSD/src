@@ -1,4 +1,5 @@
-/*	$NetBSD: gelf.h,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: gelf.h,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -24,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: gelf.h 3174 2015-03-27 17:13:41Z emaste 
+ * Id: gelf.h 3174 2015-03-27 17:13:41Z emaste
  */
 
 #ifndef	_GELF_H_

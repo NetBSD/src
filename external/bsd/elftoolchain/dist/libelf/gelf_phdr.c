@@ -1,4 +1,5 @@
-/*	$NetBSD: gelf_phdr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: gelf_phdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <gelf.h>
 #include <libelf.h>
 #include <limits.h>
@@ -32,8 +35,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_phdr.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: gelf_phdr.c 3177 2015-03-30 18:19:41Z emaste ");
+ELFTC_VCSID("Id: gelf_phdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: gelf_phdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 Elf32_Phdr *
 elf32_getphdr(Elf *e)
@@ -55,10 +59,17 @@ gelf_getphdr(Elf *e, int index, GElf_Phdr *d)
 	Elf64_Ehdr *eh64;
 	Elf32_Phdr *ep32;
 	Elf64_Phdr *ep64;
+	size_t phnum;
 
 	if (d == NULL || e == NULL ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64) ||
-	    (e->e_kind != ELF_K_ELF) || index < 0) {
+	    (e->e_kind != ELF_K_ELF) || index < 0 ||
+	    elf_getphdrnum(e, &phnum) < 0) {
+		LIBELF_SET_ERROR(ARGUMENT, 0);
+		return (NULL);
+	}
+
+	if ((size_t)index >= phnum) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (NULL);
 	}
@@ -67,11 +78,6 @@ gelf_getphdr(Elf *e, int index, GElf_Phdr *d)
 		if ((eh32 = _libelf_ehdr(e, ELFCLASS32, 0)) == NULL ||
 		    ((ep32 = _libelf_getphdr(e, ELFCLASS32)) == NULL))
 			return (NULL);
-
-		if (index >= eh32->e_phnum) {
-			LIBELF_SET_ERROR(ARGUMENT, 0);
-			return (NULL);
-		}
 
 		ep32 += index;
 
@@ -88,11 +94,6 @@ gelf_getphdr(Elf *e, int index, GElf_Phdr *d)
 		if ((eh64 = _libelf_ehdr(e, ELFCLASS64, 0)) == NULL ||
 		    (ep64 = _libelf_getphdr(e, ELFCLASS64)) == NULL)
 			return (NULL);
-
-		if (index >= eh64->e_phnum) {
-			LIBELF_SET_ERROR(ARGUMENT, 0);
-			return (NULL);
-		}
 
 		ep64 += index;
 
@@ -127,13 +128,15 @@ gelf_newphdr(Elf *e, size_t count)
 int
 gelf_update_phdr(Elf *e, int ndx, GElf_Phdr *s)
 {
-	int ec, phnum;
+	int ec;
+	size_t phnum;
 	void *ehdr;
 	Elf32_Phdr *ph32;
 	Elf64_Phdr *ph64;
 
 	if (s == NULL || e == NULL || e->e_kind != ELF_K_ELF ||
-	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64)) {
+	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64) ||
+	    elf_getphdrnum(e, &phnum) < 0) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (0);
 	}
@@ -146,12 +149,7 @@ gelf_update_phdr(Elf *e, int ndx, GElf_Phdr *s)
 	if ((ehdr = _libelf_ehdr(e, ec, 0)) == NULL)
 		return (0);
 
-	if (ec == ELFCLASS32)
-		phnum = ((Elf32_Ehdr *) ehdr)->e_phnum;
-	else
-		phnum = ((Elf64_Ehdr *) ehdr)->e_phnum;
-
-	if (ndx < 0 || ndx > phnum) {
+	if (ndx < 0 || (size_t)ndx > phnum) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);
 		return (0);
 	}

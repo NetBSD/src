@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_errmsg.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: elf_errmsg.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_errmsg.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: elf_errmsg.3 3954 2022-03-12 12:07:16Z jkoshy
 .\"
 .Dd June 11, 2006
-.Os
 .Dt ELF_ERRMSG 3
+.Os
 .Sh NAME
 .Nm elf_errmsg ,
 .Nm elf_errno
@@ -58,13 +58,15 @@ The function
 .Fn elf_errmsg
 returns a null-terminated string with a human readable
 description of the error specified in argument
-.Ar error .
+.Fa error .
 A zero value for argument
-.Ar error
+.Fa error
 retrieves the most recent error encountered by the ELF
 library.
 An argument value of -1 behaves identically, except that
-it guarantees a non-NULL return from
+it guarantees a
+.No non- Ns Dv NULL
+return from
 .Fn elf_errmsg .
 .Sh RETURN VALUES
 Function
@@ -76,8 +78,10 @@ Function
 .Fn elf_errmsg
 returns a pointer to library local storage for non-zero values
 of argument
-.Ar error .
-With a zero argument, the function will return a NULL pointer if no
+.Fa error .
+With a zero argument, the function will return a
+.Dv NULL
+pointer if no
 error had been encountered by the library, or will return a pointer to
 library local storage containing an appropriate message otherwise.
 .Sh EXAMPLES

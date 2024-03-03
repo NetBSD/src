@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_elf.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_get_elf.3,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 .\"
 .\" Copyright (c) 2009 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf_get_elf.3 2122 2011-11-09 15:35:14Z jkoshy 
+.\" Id: dwarf_get_elf.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd November 9, 2011
-.Os
 .Dt DWARF_GET_ELF 3
+.Os
 .Sh NAME
 .Nm dwarf_get_elf
 .Nd retrieve the
@@ -55,7 +55,7 @@ descriptor associated with a
 instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should be a handle to a valid
 .Vt Dwarf_Debug
 instance returned by a prior call to
@@ -64,13 +64,13 @@ or
 .Xr dwarf_elf_init 3 .
 .Pp
 Argument
-.Ar elf
+.Fa elf
 points a location into which a handle to an
 .Vt Elf
 descriptor will be written.
 .Pp
 Argument
-.Ar err
+.Fa err
 is used to record error information in case of failure.
 .Sh RETURN VALUES
 On success, function
@@ -80,7 +80,7 @@ returns
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve the
 .Vt Elf
@@ -100,6 +100,6 @@ if (dwarf_get_elf(dbg, &elf, &de) != DW_DLV_OK)
 .Sh SEE ALSO
 .Xr dwarf 3 ,
 .Xr dwarf_errmsg 3 ,
-.Xr dwarf_init 3 ,
 .Xr dwarf_finish 3 ,
+.Xr dwarf_init 3 ,
 .Xr elf 3

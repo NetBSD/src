@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_checksum.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: gelf_checksum.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_checksum.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_checksum.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd August 29, 2006
-.Os
 .Dt GELF_CHECKSUM 3
+.Os
 .Sh NAME
 .Nm elf32_checksum ,
 .Nm elf64_checksum ,
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 These functions return a simple checksum of the ELF object described
 by their argument
-.Ar elf .
+.Fa elf .
 The checksum is computed in way that allows its value to remain
 unchanged in presence of modifications to the ELF object by utilities
 like
@@ -56,14 +56,14 @@ like
 Function
 .Fn elf32_checksum
 returns a checksum for an ELF descriptor
-.Ar elf
+.Fa elf
 of class
 .Dv ELFCLASS32 .
 .Pp
 Function
 .Fn elf64_checksum
 returns a checksum for an ELF descriptor
-.Ar elf
+.Fa elf
 of class
 .Dv ELFCLASS64 .
 .Pp
@@ -71,7 +71,7 @@ Function
 .Fn gelf_checksum
 provides a class-independent way retrieving the checksum
 for ELF object
-.Ar elf .
+.Fa elf .
 .Sh RETURN VALUES
 These functions return the checksum of the ELF object, or zero in case
 an error was encountered.
@@ -80,15 +80,16 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
-was NULL.
+.Fa elf
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF file.
 .It Bq Er ELF_E_ARGUMENT
 The ELF descriptor
-.Ar elf
+.Fa elf
 was not opened for reading or updating.
 .It Bq Er ELF_E_CLASS
 For functions
@@ -96,17 +97,17 @@ For functions
 and
 .Fn elf64_checksum ,
 ELF descriptor
-.Ar elf
+.Fa elf
 did not match the class of the called function.
 .It Bq Er ELF_E_HEADER
 The ELF object specified by argument
-.Ar elf
+.Fa elf
 had a malformed executable header.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected during processing.
 .It Bq Er ELF_E_SECTION
 The ELF object specified by argument
-.Ar elf
+.Fa elf
 contained a section with a malformed section header.
 .It Bq Er ELF_E_VERSION
 The ELF object was of an unsupported version.

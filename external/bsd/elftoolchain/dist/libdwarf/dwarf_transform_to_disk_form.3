@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_transform_to_disk_form.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_transform_to_disk_form.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,11 +24,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_transform_to_disk_form.3 2075 2011-10-27 03:47:28Z jkoshy 
+.\" Id: dwarf_transform_to_disk_form.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd August 25, 2011
-.Os
 .Dt DWARF_TRANSFORM_TO_DISK_FORM 3
+.Os
 .Sh NAME
 .Nm dwarf_transform_to_disk_form
 .Nd transform DWARF information into byte streams
@@ -52,16 +52,17 @@ is set on the producer, the function will also generate the associated
 relocation arrays.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 After a call to this function, the application can call the function
 .Xr dwarf_get_section_bytes 3
@@ -80,7 +81,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_NOCOUNT
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_transform_to_disk_form
@@ -88,8 +89,9 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during execution.
 .El

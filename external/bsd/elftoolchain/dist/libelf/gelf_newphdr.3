@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_newphdr.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: gelf_newphdr.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_newphdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_newphdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
-.Dd October 22, 2007
-.Os
+.Dd June 12, 2019
 .Dt GELF_NEWPHDR 3
+.Os
 .Sh NAME
 .Nm elf32_newphdr ,
 .Nm elf64_newphdr ,
@@ -58,16 +58,16 @@ Functions
 and
 .Fn elf64_newphdr
 allocate a table of
-.Ar count
+.Fa count
 .Vt Elf32_Phdr
 and
 .Vt Elf64_Phdr
 descriptors respectively,
 discarding any existing program header table
 already present in the ELF descriptor
-.Ar elf .
+.Fa elf .
 A value of zero for argument
-.Ar count
+.Fa count
 may be used to delete an existing program header table
 from an ELF descriptor.
 .Pp
@@ -78,9 +78,9 @@ will return a table of
 or
 .Vt Elf64_Phdr
 with
-.Ar count
+.Fa count
 elements depending on the ELF class of ELF descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 The functions set the
 .Dv ELF_F_DIRTY
@@ -94,31 +94,44 @@ by a prior call to
 or
 .Fn elf64_getphdr
 on the same descriptor
-.Ar elf
+.Fa elf
 will no longer be valid.
 .Sh RETURN VALUES
-The functions a valid pointer if successful, or NULL in case an error
-was encountered.
+The functions a valid pointer if successful, or
+.Dv NULL
+in case an error was encountered.
+.Sh COMPATIBILITY
+The
+.Fn gelf_newphdr
+function uses a type of
+.Ft "void *"
+for its returned value.
+This differs from some other implementations of the
+.Xr elf 3
+API, which use an
+.Ft "unsigned long"
+return type.
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
-was NULL.
+.Fa elf
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_CLASS
 ELF descriptor
-.Ar elf
+.Fa elf
 was of an unrecognized class.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected.
 .It Bq Er ELF_E_SEQUENCE
 An executable header was not allocated for ELF descriptor
-.Ar elf
+.Fa elf
 before using these APIs.
 .El
 .Sh SEE ALSO

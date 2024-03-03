@@ -1,4 +1,5 @@
-/*	$NetBSD: libdwarf_error.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: libdwarf_error.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Joseph Koshy
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_error.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_error.c 2070 2011-10-27 03:05:32Z jkoshy ");
+ELFTC_VCSID("Id: libdwarf_error.c 2070 2011-10-27 03:05:32Z jkoshy");
 
 void
 _dwarf_set_error(Dwarf_Debug dbg, Dwarf_Error *error, int errorcode,

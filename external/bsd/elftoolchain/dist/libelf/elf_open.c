@@ -1,4 +1,5 @@
-/*	$NetBSD: elf_open.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: elf_open.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011 Joseph Koshy
  * All rights reserved.
@@ -25,12 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_open.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id");
+ELFTC_VCSID("Id: elf_open.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_open.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 /*
  * Extension API: open a file for reading, ignoring parse errors.

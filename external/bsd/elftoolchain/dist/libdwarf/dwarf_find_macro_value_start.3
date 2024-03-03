@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_find_macro_value_start.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_find_macro_value_start.3,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,11 +24,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_find_macro_value_start.3 2073 2011-10-27 03:30:47Z jkoshy 
+.\" Id: dwarf_find_macro_value_start.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd March 26, 2011
-.Os
 .Dt DWARF_FIND_MACRO_VALUE_START 3
+.Os
 .Sh NAME
 .Nm dwarf_find_macro_value_start
 .Nd return the address of the first byte of a macro value
@@ -47,7 +47,7 @@ returns a pointer to the first byte of the macro value part of the
 macro string.
 .Pp
 Argument
-.Ar macro_string
+.Fa macro_string
 should be a NUL-terminated string conforming to the macro format
 defined in the DWARF standard; see
 .Xr dwarf 4 .
@@ -58,13 +58,16 @@ returns a pointer to the first byte of the macro value.
 If the macro value part was not found, function
 .Fn dwarf_find_macro_value_start
 returns a pointer to the NUL-byte terminating argument
-.Ar macro_string .
+.Fa macro_string .
 .Pp
 Function
 .Fn dwarf_find_macro_value_start
-returns NULL if argument
-.Ar macro_string
-was NULL.
+returns
+.Dv NULL
+if argument
+.Fa macro_string
+was
+.Dv NULL .
 .Sh SEE ALSO
 .Xr dwarf 3 ,
 .Xr dwarf_get_macro_details 3

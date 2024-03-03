@@ -1,4 +1,5 @@
-/*	$NetBSD: libdwarf_loc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: libdwarf_loc.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
  * Copyright (c) 2014 Kai Wang
@@ -28,8 +29,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_loc.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_loc.c 3070 2014-06-23 03:08:33Z kaiwang27 ");
+ELFTC_VCSID("Id: libdwarf_loc.c 3070 2014-06-23 03:08:33Z kaiwang27");
 
 /*
  * Given an array of bytes of length 'len' representing a

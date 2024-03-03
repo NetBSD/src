@@ -1,18 +1,18 @@
-# Id: Makefile 3022 2014-04-17 18:05:58Z jkoshy 
+# Id: Makefile 3948 2021-04-24 19:21:00Z jkoshy
 
 TOP=	..
+
+SUBDIR=		sys
 
 INCS=		elfdefinitions.h
 INCSDIR=	/usr/include
 
 .PHONY:	all clean clobber depend obj
 
-all depend obj:
-
-clean clobber:
-	rm -f ${CLEANFILES}
+all depend:
 
 cleandepend:
-	rm -f .depend
+	rm -f ${.OBJDIR}/.depend
 
 .include "${TOP}/mk/elftoolchain.inc.mk"
+.include "${TOP}/mk/elftoolchain.subdir.mk"

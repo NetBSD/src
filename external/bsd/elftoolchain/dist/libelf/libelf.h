@@ -1,4 +1,5 @@
-/*	$NetBSD: libelf.h,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: libelf.h,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
  * All rights reserved.
@@ -24,15 +25,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: libelf.h 3174 2015-03-27 17:13:41Z emaste 
+ * Id: libelf.h 3984 2022-05-06 11:22:42Z jkoshy
  */
 
 #ifndef	_LIBELF_H_
 #define	_LIBELF_H_
 
 #include <sys/types.h>
-#include <sys/elf32.h>
-#include <sys/elf64.h>
+
+#include <stdint.h>
+
+#include "elfdefinitions.h"
 
 /* Library private data structures */
 typedef struct _Elf Elf;
@@ -207,6 +210,7 @@ int		elf_getshdrnum(Elf *_elf, size_t *_dst);
 int		elf_getshnum(Elf *_elf, size_t *_dst);	/* Deprecated */
 int		elf_getshdrstrndx(Elf *_elf, size_t *_dst);
 int		elf_getshstrndx(Elf *_elf, size_t *_dst); /* Deprecated */
+unsigned int	elf_getversion(Elf *_elf);
 unsigned long	elf_hash(const char *_name);
 Elf_Kind	elf_kind(Elf *_elf);
 Elf		*elf_memory(char *_image, size_t _size);

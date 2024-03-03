@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+dnl 	$NetBSD: libelf_convert.m4,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
  * All rights reserved.
@@ -25,14 +25,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <assert.h>
 #include <libelf.h>
 #include <string.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: libelf_convert.m4 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: libelf_convert.m4 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -532,14 +535,14 @@ divert(0)
  * C macros to byte swap integral quantities.
  */
 
-#define	SWAP_BYTE(X)	do { (void) (X); } while (0)
-#define	SWAP_IDENT(X)	do { (void) (X); } while (0)
+#define	SWAP_BYTE(X)	do { (void) (X); } while (/*CONSTCOND*/0)
+#define	SWAP_IDENT(X)	do { (void) (X); } while (/*CONSTCOND*/0)
 #define	SWAP_HALF(X)	do {						\
 		uint16_t _x = (uint16_t) (X);				\
 		uint32_t _t = _x & 0xFFU;				\
 		_t <<= 8U; _x >>= 8U; _t |= _x & 0xFFU;			\
 		(X) = (uint16_t) _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	_SWAP_WORD(X, T) do {						\
 		uint32_t _x = (uint32_t) (X);				\
 		uint32_t _t = _x & 0xFF;				\
@@ -547,7 +550,7 @@ divert(0)
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = (T) _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR32(X)	_SWAP_WORD(X, Elf32_Addr)
 #define	SWAP_OFF32(X)	_SWAP_WORD(X, Elf32_Off)
 #define	SWAP_SWORD(X)	_SWAP_WORD(X, Elf32_Sword)
@@ -563,7 +566,7 @@ divert(0)
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		_t <<= 8; _x >>= 8; _t |= _x & 0xFF;			\
 		(X) = (T) _t;						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	SWAP_ADDR64(X)	_SWAP_WORD64(X, Elf64_Addr)
 #define	SWAP_LWORD(X)	_SWAP_WORD64(X, Elf64_Lword)
 #define	SWAP_OFF64(X)	_SWAP_WORD64(X, Elf64_Off)
@@ -582,7 +585,7 @@ divert(0)
 		unsigned char *const _p = (unsigned char *) (P);	\
 		_p[0]		= (unsigned char) (X);			\
 		(P)		= _p + 1;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_HALF(P,X)	do {						\
 		uint16_t _t	= (X);					\
 		unsigned char *const _p	= (unsigned char *) (P);	\
@@ -590,7 +593,7 @@ divert(0)
 		_p[0]		= _q[0];				\
 		_p[1]		= _q[1];				\
 		(P)		= _p + 2;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_WORD(P,X) do {						\
 		uint32_t _t	= (uint32_t) (X);			\
 		unsigned char *const _p	= (unsigned char *) (P);	\
@@ -600,7 +603,7 @@ divert(0)
 		_p[2]		= _q[2];				\
 		_p[3]		= _q[3];				\
 		(P)		= _p + 4;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_OFF32(P,X)	WRITE_WORD(P,X)
 #define	WRITE_SWORD(P,X)	WRITE_WORD(P,X)
@@ -617,7 +620,7 @@ divert(0)
 		_p[6]		= _q[6];				\
 		_p[7]		= _q[7];				\
 		(P)		= _p + 8;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	WRITE_ADDR64(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_LWORD(P,X)	WRITE_WORD64(P,X)
 #define	WRITE_OFF64(P,X)	WRITE_WORD64(P,X)
@@ -626,7 +629,7 @@ divert(0)
 #define	WRITE_IDENT(P,X)	do {					\
 		(void) memcpy((P), (X), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * C macros to read in various integral values.
@@ -642,7 +645,7 @@ divert(0)
 			(const unsigned char *) (P);			\
 		(X)		= _p[0];				\
 		(P)		= (P) + 1;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_HALF(P,X)	do {						\
 		uint16_t _t;						\
 		unsigned char *const _q = (unsigned char *) &_t;	\
@@ -652,7 +655,7 @@ divert(0)
 		_q[1]		= _p[1];				\
 		(P)		= (P) + 2;				\
 		(X)		= _t;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	_READ_WORD(P,X,T) do {						\
 		uint32_t _t;						\
 		unsigned char *const _q = (unsigned char *) &_t;	\
@@ -664,7 +667,7 @@ divert(0)
 		_q[3]		= _p[3];				\
 		(P)		= (P) + 4;				\
 		(X)		= (T) _t;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR32(P,X)	_READ_WORD(P, X, Elf32_Addr)
 #define	READ_OFF32(P,X)		_READ_WORD(P, X, Elf32_Off)
 #define	READ_SWORD(P,X)		_READ_WORD(P, X, Elf32_Sword)
@@ -684,7 +687,7 @@ divert(0)
 		_q[7]		= _p[7];				\
 		(P)		= (P) + 8;				\
 		(X)		= (T) _t;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define	READ_ADDR64(P,X)	_READ_WORD64(P, X, Elf64_Addr)
 #define	READ_LWORD(P,X)		_READ_WORD64(P, X, Elf64_Lword)
 #define	READ_OFF64(P,X)		_READ_WORD64(P, X, Elf64_Off)
@@ -693,7 +696,7 @@ divert(0)
 #define	READ_IDENT(P,X)		do {					\
 		(void) memcpy((X), (P), sizeof((X)));			\
 		(P)		= (P) + EI_NIDENT;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define	ROUNDUP2(V,N)	(V) = ((((V) + (N) - 1)) & ~((N) - 1))
 
@@ -822,7 +825,7 @@ _libelf_cvt_GNUHASH64_tom(unsigned char *dst, size_t dsz, unsigned char *src,
 	if (dsz < srcsz)	/* Destination lacks space. */
 		return (0);
 
-	nchains = srcsz / sizeof(uint32_t);
+	nchains = (uint32_t) (srcsz / sizeof(uint32_t));
 	chains = (uint32_t *) (uintptr_t) dst;
 
 	for (n = 0; n < nchains; n++) {
@@ -903,7 +906,7 @@ _libelf_cvt_GNUHASH64_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 	if (dsz < srcsz)
 		return (0);
 
-	nchains = srcsz / sizeof(uint32_t);
+	nchains = (uint32_t) (srcsz / sizeof(uint32_t));
 	for (n = 0; n < nchains; n++) {
 		t32 = *s32++;
 		if (byteswap)
@@ -972,6 +975,7 @@ _libelf_cvt_NOTE_tom(unsigned char *dst, size_t dsz, unsigned char *src,
 		if (count < sz || dsz < sz)	/* Buffers are too small. */
 			return (0);
 
+		/* Copy the remainder of the note as-is. */
 		(void) memcpy(dst, src, sz);
 
 		src += sz;
@@ -1021,10 +1025,12 @@ _libelf_cvt_NOTE_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 		WRITE_WORD(dst, type);
 
 		src += sizeof(Elf_Note);
+		count -= sizeof(Elf_Note);
 
 		if (count < sz)
 			sz = count;
 
+		/* Copy the remainder of the note as-is. */
 		(void) memcpy(dst, src, sz);
 
 		src += sz;
@@ -1071,17 +1077,19 @@ CONVERTER_NAMES(ELF_TYPE_LIST)
 	}
 };
 
-int (*_libelf_get_translator(Elf_Type t, int direction, int elfclass))
- (unsigned char *_dst, size_t dsz, unsigned char *_src, size_t _cnt,
-  int _byteswap)
+/*
+ * Return a translator function for the specified ELF section type, conversion
+ * direction, ELF class and ELF machine.
+ */
+_libelf_translator_function *
+_libelf_get_translator(Elf_Type t, int direction, int elfclass, int elfmachine)
 {
 	assert(elfclass == ELFCLASS32 || elfclass == ELFCLASS64);
 	assert(direction == ELF_TOFILE || direction == ELF_TOMEMORY);
+	assert(t >= ELF_T_FIRST && t <= ELF_T_LAST);
 
-	if (t >= ELF_T_NUM ||
-	    (elfclass != ELFCLASS32 && elfclass != ELFCLASS64) ||
-	    (direction != ELF_TOFILE && direction != ELF_TOMEMORY))
-		return (NULL);
+	/* TODO: Handle MIPS64 REL{,A} sections (ticket #559). */
+	(void) elfmachine;
 
 	return ((elfclass == ELFCLASS32) ?
 	    (direction == ELF_TOFILE ? cvt[t].tof32 : cvt[t].tom32) :

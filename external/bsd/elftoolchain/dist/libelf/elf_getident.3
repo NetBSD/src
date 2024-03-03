@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getident.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: elf_getident.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getident.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: elf_getident.3 3956 2022-03-12 12:39:30Z jkoshy
 .\"
 .Dd July 3, 2006
-.Os
 .Dt ELF_GETIDENT 3
+.Os
 .Sh NAME
 .Nm elf_getident
 .Nd return the initial bytes of a file
@@ -41,30 +41,35 @@
 Function
 .Fn elf_getident
 returns a pointer to the initial bytes of the file for descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 If argument
-.Ar sz
+.Fa sz
 is non-null, the size of the identification area returned is written
 to the location pointed to by
-.Ar sz .
+.Fa sz .
 This location is set to zero on errors.
 .Sh RETURN VALUES
 Function
 .Fn elf_getident
-will return a non-NULL pointer to the initial bytes of the file if
-successful, or NULL if an error condition is detected.
+will return a
+.No non- Ns Dv NULL
+pointer to the initial bytes of the file if successful, or
+.Dv NULL
+if an error condition is detected.
 .Sh ERRORS
 Function
 .Fn elf_getident
 can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
-A NULL value was passed in for argument
-.Ar elf .
+A
+.Dv NULL
+value was passed in for argument
+.Fa elf .
 .It Bq Er ELF_E_SEQUENCE
 ELF descriptor
-.Ar elf
+.Fa elf
 was opened for writing and function
 .Fn elf_getident
 was called before a call to

@@ -1,4 +1,5 @@
-/*	$NetBSD: gelf_rela.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: gelf_rela.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <assert.h>
 #include <gelf.h>
 #include <limits.h>
@@ -32,8 +35,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_rela.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: gelf_rela.c 3177 2015-03-30 18:19:41Z emaste ");
+ELFTC_VCSID("Id: gelf_rela.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: gelf_rela.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 GElf_Rela *
 gelf_getrela(Elf_Data *ed, int ndx, GElf_Rela *dst)
@@ -69,9 +73,9 @@ gelf_getrela(Elf_Data *ed, int ndx, GElf_Rela *dst)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_RELA, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_RELA, ec, e->e_version)) == 0)
+		return (NULL);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
@@ -132,9 +136,9 @@ gelf_update_rela(Elf_Data *ed, int ndx, GElf_Rela *dr)
 		return (0);
 	}
 
-	msz = _libelf_msize(ELF_T_RELA, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_RELA, ec, e->e_version)) == 0)
+		return (0);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
@@ -147,7 +151,7 @@ gelf_update_rela(Elf_Data *ed, int ndx, GElf_Rela *dr)
 
 		LIBELF_COPY_U32(rela32, dr, r_offset);
 
-		if (ELF64_R_SYM(dr->r_info) > ELF32_R_SYM(~0UL) ||
+		if (ELF64_R_SYM(dr->r_info) > ELF32_R_SYM(~0U) ||
 		    ELF64_R_TYPE(dr->r_info) > ELF32_R_TYPE(~0U)) {
 			LIBELF_SET_ERROR(RANGE, 0);
 			return (0);

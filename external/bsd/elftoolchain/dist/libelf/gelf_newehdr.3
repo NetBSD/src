@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_newehdr.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: gelf_newehdr.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_newehdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_newehdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
-.Dd October 22, 2007
-.Os
+.Dd June 12, 2019
 .Dt GELF_NEWEHDR 3
+.Os
 .Sh NAME
 .Nm elf32_newehdr ,
 .Nm elf64_newehdr ,
@@ -46,7 +46,7 @@
 .Fn gelf_newehdr "Elf *elf" "int elfclass"
 .Sh DESCRIPTION
 These functions retrieve the ELF header from the ELF descriptor
-.Ar elf ,
+.Fa elf ,
 allocating a new header if needed.
 File data structures are translated to their in-memory representations
 as described in
@@ -60,10 +60,11 @@ structure.
 Function
 .Fn elf64_newehdr
 returns a pointer to a 64 bit
-.Vt Elf64_Ehdr structure.
+.Vt Elf64_Ehdr
+structure.
 .Pp
 When argument
-.Ar elfclass
+.Fa elfclass
 has value
 .Dv ELFCLASS32 ,
 function
@@ -71,7 +72,7 @@ function
 returns the value returned by
 .Fn elf32_newehdr "elf" .
 When argument
-.Ar elfclass
+.Fa elfclass
 has value
 .Dv ELFCLASS64
 it returns the value returned by
@@ -93,7 +94,7 @@ The identification byte at offset
 .Dv EI_CLASS
 is set to the ELF class associated with the function being called
 or to argument
-.Ar elfclass
+.Fa elfclass
 for function
 .Fn gelf_newehdr .
 .It Va "e_ident[EI_DATA]"
@@ -125,41 +126,54 @@ as needed before calling
 If successful, these three functions set the
 .Dv ELF_F_DIRTY
 flag on ELF descriptor
-.Ar elf .
+.Fa elf .
 .Sh RETURN VALUES
 These functions return a pointer to a translated header descriptor
-if successful, or NULL on failure.
+if successful, or
+.Dv NULL
+on failure.
+.Sh COMPATIBILITY
+The
+.Fn gelf_newehdr
+function uses a type of
+.Ft "void *"
+for its returned value.
+This differs from some other implementations of the
+.Xr elf 3
+API, which use an
+.Ft "unsigned long"
+return type.
 .Sh ERRORS
 These functions can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar elf
+.Fa elf
 was null.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elfclass
+.Fa elfclass
 had an unsupported value.
 .It Bq Er ELF_E_ARGUMENT
 The class of the ELF descriptor
-.Ar elf
+.Fa elf
 did not match that of the requested operation.
 .It Bq Er ELF_E_ARGUMENT
 For function
 .Fn gelf_newehdr ,
 the class of argument
-.Ar elf
+.Fa elf
 was not
 .Dv ELFCLASSNONE
 and did not match the argument
-.Ar elfclass .
+.Fa elfclass .
 .It Bq Er ELF_E_CLASS
 The ELF class of descriptor
-.Ar elf
+.Fa elf
 did not match that of the API function being called.
 .It Bq Er ELF_E_HEADER
 A malformed ELF header was detected.
@@ -167,11 +181,11 @@ A malformed ELF header was detected.
 An out of memory condition was detected during execution.
 .It Bq Er ELF_E_SECTION
 The ELF descriptor in argument
-.Ar elf
+.Fa elf
 did not adhere to the conventions used for extended numbering.
 .It Bq Er ELF_E_VERSION
 The ELF descriptor
-.Ar elf
+.Fa elf
 had an unsupported ELF version number.
 .El
 .Sh SEE ALSO

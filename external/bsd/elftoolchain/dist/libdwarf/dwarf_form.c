@@ -1,7 +1,8 @@
-/*	$NetBSD: dwarf_form.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: dwarf_form.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2009,2010 Kai Wang
+ * Copyright (c) 2009,2010,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +29,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_form.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: dwarf_form.c 2073 2011-10-27 03:30:47Z jkoshy ");
+ELFTC_VCSID("Id: dwarf_form.c 4016 2023-10-15 05:39:46Z kaiwang27");
 
 int
 dwarf_hasform(Dwarf_Attribute at, Dwarf_Half form, Dwarf_Bool *return_hasform,
@@ -389,6 +389,7 @@ dwarf_formstring(Dwarf_Attribute at, char **return_string,
 		ret = DW_DLV_OK;
 		break;
 	case DW_FORM_strp:
+	case DW_FORM_line_strp:
 		*return_string = (char *) at->u[1].s;
 		ret = DW_DLV_OK;
 		break;

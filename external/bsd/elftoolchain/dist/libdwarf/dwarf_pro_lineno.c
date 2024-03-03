@@ -1,4 +1,5 @@
-/*	$NetBSD: dwarf_pro_lineno.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: dwarf_pro_lineno.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_pro_lineno.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: dwarf_pro_lineno.c 2973 2013-12-23 06:46:16Z kaiwang27 ");
+ELFTC_VCSID("Id: dwarf_pro_lineno.c 2973 2013-12-23 06:46:16Z kaiwang27");
 
 Dwarf_Unsigned
 dwarf_add_line_entry(Dwarf_P_Debug dbg, Dwarf_Unsigned file,

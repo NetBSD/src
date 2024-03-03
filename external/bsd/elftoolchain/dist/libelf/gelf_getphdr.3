@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getphdr.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: gelf_getphdr.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getphdr.3 189 2008-07-20 10:38:08Z jkoshy 
+.\" Id: gelf_getphdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd October 21, 2007
-.Os
 .Dt GELF_GETPHDR 3
+.Os
 .Sh NAME
 .Nm elf32_getphdr ,
 .Nm elf64_getphdr ,
@@ -66,12 +66,12 @@ function.
 Function
 .Fn gelf_getphdr
 will retrieve the program header table entry at index
-.Ar index
+.Fa index
 from ELF descriptor
-.Ar elf.
+.Fa elf .
 The translated program header table entry will be written to the
 address pointed to be argument
-.Ar dst .
+.Fa dst .
 .Pp
 Applications may inform the library of modifications to a program header table entry
 by using the
@@ -84,48 +84,51 @@ interface need to use the
 API to copy modifications to a program header entry back to the underlying
 ELF descriptor.
 .Sh RETURN VALUES
-The functions a valid pointer if successful, or NULL in case an error
-was encountered.
+The functions a valid pointer if successful, or
+.Dv NULL
+in case an error was encountered.
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
-was NULL.
+.Fa elf
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar dst
-was NULL.
+.Fa dst
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Index
-.Ar index
+.Fa index
 was out of range.
 .It Bq Er ELF_E_CLASS
 The class of ELF descriptor
-.Ar elf
+.Fa elf
 did not match the expected class of the function being called.
 .It Bq Er ELF_E_HEADER
 ELF descriptor
-.Ar elf
+.Fa elf
 did not possess an executable header.
 .It Bq Er ELF_E_HEADER
 ELF descriptor
-.Ar elf
+.Fa elf
 had a corrupt executable header.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected.
 .It Bq Er ELF_E_SECTION
 The ELF descriptor in argument
-.Ar elf
+.Fa elf
 did not adhere to the conventions used for extended numbering.
 .It Bq Er ELF_VERSION
 ELF descriptor
-.Ar elf
+.Fa elf
 was of an unsupported version.
 .El
 .Sh SEE ALSO

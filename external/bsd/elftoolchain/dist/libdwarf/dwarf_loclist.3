@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_loclist.3,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $
+.\"	$NetBSD: dwarf_loclist.3,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,11 +24,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_loclist.3 2122 2011-11-09 15:35:14Z jkoshy 
+.\" Id: dwarf_loclist.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd November 9, 2011
-.Os
 .Dt DWARF_LOCLIST 3
+.Os
 .Sh NAME
 .Nm dwarf_loclist ,
 .Nm dwarf_loclist_n
@@ -66,42 +66,44 @@ Function
 retrieves the list of location expressions associated with a DWARF
 attribute.
 Argument
-.Ar at
+.Fa at
 should reference a valid DWARF attribute.
 Argument
-.Ar llbuf
+.Fa llbuf
 should point to a location which will hold a returned array of
 pointers to
 .Vt Dwarf_Locdesc
 descriptors.
 Argument
-.Ar listlen
+.Fa listlen
 should point to a location which will be set to the number of
 elements contained in the returned array.
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 Function
 .Fn dwarf_loclist
 retrieves the first location expression associated with an attribute.
 Argument
-.Ar at
+.Fa at
 should reference a valid DWARF attribute.
 Argument
-.Ar llbuf
+.Fa llbuf
 should point to a location which will hold the returned pointer
 to a
 .Vt Dwarf_Locdesc
 descriptor.
 Argument
-.Ar listlen
+.Fa listlen
 should point to a location which will be always set to 1.
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 .Vt Dwarf_Locdesc
 descriptors are defined in the header file
@@ -150,7 +152,7 @@ expression.
 .El
 .Ss Memory Management
 The memory area used for the descriptor array returned in argument
-.Ar llbuf
+.Fa llbuf
 is allocated by the
 .Lb libdwarf .
 When the descriptor array is no longer needed, application code should
@@ -160,7 +162,7 @@ to free the memory area in the following manner:
 .Bl -enum
 .It
 First, the
-.Ar ld_s
+.Fa ld_s
 field of each
 .Vt Dwarf_Locdesc
 descriptor should be deallocated using the allocation type
@@ -182,24 +184,8 @@ On success, these functions returns
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
-.Sh ERRORS
-These functions can fail with:
-.Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
-.It Bq Er DW_DLE_ARGUMENT
-One of the arguments
-.Ar at ,
-.Ar llbuf
-or
-.Ar listlen
-was NULL.
-.It Bq Er DW_DLE_ARGUMENT
-The attribute provided by argument
-.Ar at
-does not contain a location expression or is not associated with a
-location expression list.
-.El
-.Sh EXAMPLE
+.Fa err .
+.Sh EXAMPLES
 To retrieve the location list associated with an attribute, use:
 .Bd -literal -offset indent
 Dwarf_Attribute at;
@@ -224,9 +210,26 @@ for (i = 0; i < lcnt; i++) {
 }
 dwarf_dealloc(dbg, llbuf, DW_DLA_LIST);
 .Ed
+.Sh ERRORS
+These functions can fail with:
+.Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
+.It Bq Er DW_DLE_ARGUMENT
+One of the arguments
+.Fa at ,
+.Fa llbuf
+or
+.Fa listlen
+was
+.Dv NULL .
+.It Bq Er DW_DLE_ARGUMENT
+The attribute provided by argument
+.Fa at
+does not contain a location expression or is not associated with a
+location expression list.
+.El
 .Sh SEE ALSO
 .Xr dwarf 3 ,
 .Xr dwarf_dealloc 3 ,
+.Xr dwarf_get_loclist_entry 3 ,
 .Xr dwarf_loclist_from_expr 3 ,
-.Xr dwarf_loclist_from_expr_a 3 ,
-.Xr dwarf_get_loclist_entry 3
+.Xr dwarf_loclist_from_expr_a 3

@@ -1,4 +1,5 @@
-/*	$NetBSD: libdwarf_ranges.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: libdwarf_ranges.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_ranges.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_ranges.c 2972 2013-12-23 06:46:04Z kaiwang27 ");
+ELFTC_VCSID("Id: libdwarf_ranges.c 2972 2013-12-23 06:46:04Z kaiwang27");
 
 static int
 _dwarf_ranges_parse(Dwarf_Debug dbg, Dwarf_CU cu, Dwarf_Section *ds,

@@ -1,4 +1,5 @@
-/*	$NetBSD: libdwarf_frame.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: libdwarf_frame.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009-2011,2014 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_frame.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27 ");
+ELFTC_VCSID("Id: libdwarf_frame.c 3804 2020-02-07 02:13:34Z emaste");
 
 static int
 _dwarf_frame_find_cie(Dwarf_FrameSec fs, Dwarf_Unsigned offset,
@@ -144,6 +144,8 @@ _dwarf_frame_parse_lsb_cie_augment(Dwarf_Debug dbg, Dwarf_Cie cie,
 	augdata_p = cie->cie_augdata;
 	while (*aug_p != '\0') {
 		switch (*aug_p) {
+		case 'S':
+			break;
 		case 'L':
 			/* Skip one augment in augment data. */
 			augdata_p++;
@@ -468,9 +470,9 @@ _dwarf_frame_section_init(Dwarf_Debug dbg, Dwarf_FrameSec *frame_sec,
 
 		if (length > ds->ds_size - offset ||
 		    (length == 0 && !eh_frame)) {
-			DWARF_SET_ERROR(dbg, error,
-			    DW_DLE_DEBUG_FRAME_LENGTH_BAD);
-			return (DW_DLE_DEBUG_FRAME_LENGTH_BAD);
+			ret = DW_DLE_DEBUG_FRAME_LENGTH_BAD;
+			DWARF_SET_ERROR(dbg, error, ret);
+			goto fail_cleanup;
 		}
 
 		/* Check terminator for .eh_frame */

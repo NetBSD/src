@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_cntl.3,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $
+.\"	$NetBSD: elf_cntl.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,11 +23,11 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_cntl.3 3181 2015-04-10 13:22:51Z emaste 
+.\" Id: elf_cntl.3 3953 2022-03-12 09:57:05Z jkoshy
 .\"
 .Dd August 9, 2006
-.Os
 .Dt ELF_CNTL 3
+.Os
 .Sh NAME
 .Nm elf_cntl
 .Nd control an elf file descriptor
@@ -42,34 +42,34 @@ Function
 .Fn elf_cntl
 controls the ELF library's subsequent use of the file descriptor
 used to create ELF descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 Argument
-.Ar cmd
+.Fa cmd
 informs the library of the action to be taken:
 .Bl -tag -width "ELF_C_FDDONE"
 .It Dv ELF_C_FDDONE
 This value instructs the ELF library not to perform any further
 I/O on the file descriptor associated with argument
-.Ar elf .
+.Fa elf .
 For ELF descriptors opened with mode
-.Ar ELF_C_WRITE
+.Dv ELF_C_WRITE
 or
-.Ar ELF_C_RDWR
+.Dv ELF_C_RDWR
 subsequent
 .Fn elf_update
 operations on the descriptor will fail.
 .It Dv ELF_C_FDREAD
 This value instructs the ELF library to read in all necessary
 data associated with ELF descriptor
-.Ar elf
+.Fa elf
 into memory so that the underlying file descriptor can be
 safely closed with command
 .Dv ELF_C_FDDONE .
 .El
 .Pp
 Argument
-.Ar elf
+.Fa elf
 must be an ELF descriptor associated with a file system object
 (e.g., an
 .Xr ar 1
@@ -88,15 +88,16 @@ returns 0 on success, or -1 if an error was detected.
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARCHIVE
 Argument
-.Ar elf
+.Fa elf
 is a descriptor for an archive member.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
-was NULL.
+.Fa elf
+was
+.Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar cmd
+.Fa cmd
 was not recognized.
 .It Bq Er ELF_E_MODE
 An

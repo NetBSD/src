@@ -1,4 +1,5 @@
-/*	$NetBSD: dwarf_frame.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: dwarf_frame.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009,2011 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_frame.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: dwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27 ");
+ELFTC_VCSID("Id: dwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27");
 
 int
 dwarf_get_fde_list(Dwarf_Debug dbg, Dwarf_Cie **cie_list,

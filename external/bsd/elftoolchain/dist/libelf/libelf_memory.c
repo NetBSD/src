@@ -1,4 +1,5 @@
-/*	$NetBSD: libelf_memory.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: libelf_memory.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011 Joseph Koshy
  * All rights reserved.
@@ -25,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <ar.h>
 #include <assert.h>
 #include <string.h>
@@ -32,8 +35,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_memory.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: libelf_memory.c 3013 2014-03-23 06:16:59Z jkoshy ");
+ELFTC_VCSID("Id: libelf_memory.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: libelf_memory.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 /*
  * Create an ELF descriptor for a memory image, optionally reporting
@@ -56,7 +60,7 @@ _libelf_memory(unsigned char *image, size_t sz, int reporterror)
 
 	e->e_cmd = ELF_C_READ;
 	e->e_rawfile = image;
-	e->e_rawsize = sz;
+	e->e_rawsize = (off_t) sz;
 
 #undef	LIBELF_IS_ELF
 #define	LIBELF_IS_ELF(P) ((P)[EI_MAG0] == ELFMAG0 && 		\
@@ -80,7 +84,7 @@ _libelf_memory(unsigned char *image, size_t sz, int reporterror)
 		if (error != ELF_E_NONE) {
 			if (reporterror) {
 				LIBELF_PRIVATE(error) = LIBELF_ERROR(error, 0);
-				(void) _libelf_release_elf(e);
+				_libelf_release_elf(e);
 				return (NULL);
 			}
 		} else {

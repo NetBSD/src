@@ -1,4 +1,5 @@
-/*	$NetBSD: _libelf_ar.h,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: _libelf_ar.h,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2010 Joseph Koshy
  * All rights reserved.
@@ -24,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf_ar.h 3013 2014-03-23 06:16:59Z jkoshy 
+ * Id: _libelf_ar.h 3013 2014-03-23 06:16:59Z jkoshy
  */
 
 #ifndef	__LIBELF_AR_H_

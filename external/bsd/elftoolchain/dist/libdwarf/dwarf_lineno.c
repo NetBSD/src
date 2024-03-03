@@ -1,4 +1,5 @@
-/*	$NetBSD: dwarf_lineno.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+/*	$NetBSD: dwarf_lineno.c,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $	*/
+
 /*-
  * Copyright (c) 2009,2011 Kai Wang
  * All rights reserved.
@@ -27,8 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_lineno.c,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $");
-ELFTC_VCSID("Id: dwarf_lineno.c 2983 2014-02-09 00:24:31Z kaiwang27 ");
+ELFTC_VCSID("Id: dwarf_lineno.c 2983 2014-02-09 00:24:31Z kaiwang27");
 
 int
 dwarf_srclines(Dwarf_Die die, Dwarf_Line **linebuf, Dwarf_Signed *linecount,

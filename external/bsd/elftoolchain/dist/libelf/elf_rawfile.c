@@ -1,4 +1,5 @@
-/*	$NetBSD: elf_rawfile.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $	*/
+/*	$NetBSD: elf_rawfile.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.
@@ -25,20 +26,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_rawfile.c,v 1.1.1.2 2016/02/20 02:42:01 christos Exp $");
-ELFTC_VCSID("Id: elf_rawfile.c 3174 2015-03-27 17:13:41Z emaste ");
+ELFTC_VCSID("Id: elf_rawfile.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_rawfile.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 char *
 elf_rawfile(Elf *e, size_t *sz)
 {
-	size_t size;
 	unsigned char *ptr;
 
-	size = e ? e->e_rawsize : 0;
 	ptr = NULL;
 
 	if (e == NULL)
@@ -47,7 +49,7 @@ elf_rawfile(Elf *e, size_t *sz)
 		LIBELF_SET_ERROR(SEQUENCE, 0);
 
 	if (sz)
-		*sz = size;
+		*sz = e ? (size_t) e->e_rawsize : 0;
 
 	return ((char *) ptr);
 }

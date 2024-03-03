@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_pro_nametbl.m4,v 1.1.1.2 2016/02/20 02:42:00 christos Exp $	*/
+dnl 	$NetBSD: dwarf_pro_nametbl.m4,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: dwarf_pro_nametbl.m4 2074 2011-10-27 03:34:33Z jkoshy 
+ * Id: dwarf_pro_nametbl.m4 2074 2011-10-27 03:34:33Z jkoshy
  */
 
 define(`MAKE_NAMETBL_PRO_API',`
