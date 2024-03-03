@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.228 2024/03/02 11:56:37 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.229 2024/03/03 00:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.228 2024/03/02 11:56:37 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.229 2024/03/03 00:50:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -416,7 +416,7 @@ static const char *const msgs[] = {
 	"hex escape '%.*s' has more than 2 digits",			// 358
 	"missing new-style '\\177' or old-style number base",		// 359
 	"missing new-style number base after '\\177'",			// 360
-	"number base '%.*s' is %ju, should be 8, 10 or 16",		// 361
+	"number base '%.*s' is %ju, must be 8, 10 or 16",		// 361
 	"old-style format contains '\\0'",				// 362
 	"non-printing character '%.*s' in description '%.*s'",		// 363
 	"missing bit position after '%.*s'",				// 364
@@ -430,8 +430,10 @@ static const char *const msgs[] = {
 	"field width '%.*s' (%ju) in '%.*s' out of range 0..%u",	// 372
 	"bit field end %ju in '%.*s' out of range 0..64",		// 373
 	"unknown directive '%.*s'",					// 374
-	"comparison value '%.*s' (%ju) exceeds field width %ju",	// 375
+	"comparison value '%.*s' (%ju) exceeds maximum field value %ju", // 375
 	"'%.*s' overlaps earlier '%.*s' on bit %u",			// 376
+	"redundant '\\0' at the end of new-style format",		// 377
+	"directive '%.*s' is unreachable by input value",		// 378
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];

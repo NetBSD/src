@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.607 2024/03/01 21:52:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.608 2024/03/03 00:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.607 2024/03/01 21:52:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.608 2024/03/03 00:50:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -315,6 +315,12 @@ ic_expr(const tnode_t *tn)
 	default:
 		return ic_any(tn->tn_type);
 	}
+}
+
+uint64_t
+possible_bits(const tnode_t *tn)
+{
+	return ~ic_expr(tn).bclr;
 }
 
 /* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
