@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar_util.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: libelf_ar_util.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2009,2010 Joseph Koshy
@@ -40,8 +40,8 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-__RCSID("$NetBSD: libelf_ar_util.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_ar_util.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: libelf_ar_util.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_ar_util.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 /*
  * Convert a string bounded by `start' and `start+sz' (exclusive) to a
@@ -277,7 +277,7 @@ _libelf_ar_open(Elf *e, int reporterror)
 		if (_libelf_ar_get_number((char *) (ARH).ar_size,	\
 		    sizeof((ARH).ar_size), 10, &(SZ)) == 0)		\
 			goto error;					\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 	READ_AR_HEADER(s, arh, sz, end);
 

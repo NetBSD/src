@@ -1,8 +1,8 @@
-/*	$NetBSD: _libdwarf.h,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: _libdwarf.h,v 1.4 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2009-2014 Kai Wang
+ * Copyright (c) 2009-2014,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libdwarf.h 3298 2016-01-09 15:43:31Z jkoshy 
+ * Id: _libdwarf.h 4019 2023-10-22 03:06:17Z kaiwang27
  */
 
 #ifndef	__LIBDWARF_H_
@@ -93,7 +93,7 @@ extern struct _libdwarf_globals _libdwarf;
 		ret = expr;						\
 		if (ret != DW_DLE_NONE)					\
 			goto gen_fail;					\
-	} while (/*CONSTCOND*/0)
+	} while (/* CONSTCOND */ 0)
 
 typedef struct _Dwarf_CU *Dwarf_CU;
 
@@ -101,6 +101,7 @@ struct _Dwarf_AttrDef {
 	Dwarf_Half	ad_attrib;		/* DW_AT_XXX */
 	Dwarf_Half	ad_form;		/* DW_FORM_XXX */
 	uint64_t	ad_offset;		/* Offset in abbrev section. */
+	int64_t		ad_const;		/* Implicit constant */
 	STAILQ_ENTRY(_Dwarf_AttrDef) ad_next;	/* Next attribute define. */
 };
 
@@ -188,6 +189,7 @@ struct _Dwarf_LineFile {
 	Dwarf_Unsigned	lf_dirndx;	/* Dir index. */
 	Dwarf_Unsigned	lf_mtime;	/* Modification time. */
 	Dwarf_Unsigned	lf_size;	/* File size. */
+	Dwarf_Form_Data16 lf_md5;	/* File md5 digest. */
 	STAILQ_ENTRY(_Dwarf_LineFile) lf_next; /* Next file in list. */
 };
 
@@ -333,8 +335,10 @@ struct _Dwarf_CU {
 	int		cu_abbrev_loaded; /* Abbrev table parsed. */
 	uint64_t	cu_abbrev_cnt;	/* Abbrev entry count. */
 	uint64_t	cu_lineno_offset; /* Offset into .debug_lineno. */
+	uint64_t	cu_dwo_id;	/* DWARF5 dwo id. */
 	uint8_t		cu_pointer_size;/* Number of bytes in pointer. */
 	uint8_t		cu_dwarf_size;	/* CU section dwarf size. */
+	uint8_t		cu_unit_type;	/* DWARF5 unit type. */
 	Dwarf_Sig8	cu_type_sig;	/* Type unit's signature. */
 	uint64_t	cu_type_offset; /* Type unit's type offset. */
 	Dwarf_Off	cu_next_offset; /* Offset to the next CU. */
@@ -433,6 +437,7 @@ struct _Dwarf_Debug {
 	char		*dbg_strtab;	/* Dwarf string table. */
 	Dwarf_Unsigned	dbg_strtab_cap; /* Dwarf string table capacity. */
 	Dwarf_Unsigned	dbg_strtab_size; /* Dwarf string table size. */
+	char		*dbg_line_strtab;/* Dwarf line info string table. */
 	STAILQ_HEAD(, _Dwarf_MacroSet) dbg_mslist; /* List of macro set. */
 	STAILQ_HEAD(, _Dwarf_Rangelist) dbg_rllist; /* List of rangelist. */
 	uint64_t	(*read)(uint8_t *, uint64_t *, int);
@@ -512,7 +517,8 @@ int		_dwarf_attr_init(Dwarf_Debug, Dwarf_Section *, uint64_t *, int,
 		    Dwarf_CU, Dwarf_Die, Dwarf_AttrDef, uint64_t, int,
 		    Dwarf_Error *);
 int		_dwarf_attrdef_add(Dwarf_Debug, Dwarf_Abbrev, uint64_t,
-		    uint64_t, uint64_t, Dwarf_AttrDef *, Dwarf_Error *);
+		    uint64_t, int64_t, uint64_t, Dwarf_AttrDef *,
+		    Dwarf_Error *);
 uint64_t	_dwarf_decode_lsb(uint8_t **, int);
 uint64_t	_dwarf_decode_msb(uint8_t **, int);
 int64_t		_dwarf_decode_sleb128(uint8_t **);
@@ -645,6 +651,7 @@ int		_dwarf_strtab_add(Dwarf_Debug, char *, uint64_t *,
 void		_dwarf_strtab_cleanup(Dwarf_Debug);
 int		_dwarf_strtab_gen(Dwarf_P_Debug, Dwarf_Error *);
 char		*_dwarf_strtab_get_table(Dwarf_Debug);
+char		*_dwarf_strtab_get_line_table(Dwarf_Debug);
 int		_dwarf_strtab_init(Dwarf_Debug, Dwarf_Error *);
 void		_dwarf_type_unit_cleanup(Dwarf_Debug);
 void		_dwarf_write_block(void *, uint64_t *, uint8_t *, uint64_t);

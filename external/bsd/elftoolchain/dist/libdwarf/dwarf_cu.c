@@ -1,8 +1,8 @@
-/*	$NetBSD: dwarf_cu.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_cu.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
- * Copyright (c) 2014 Kai Wang
+ * Copyright (c) 2014,2023 Kai Wang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,17 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_cu.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: dwarf_cu.c 3041 2014-05-18 15:11:03Z kaiwang27");
+__RCSID("$NetBSD: dwarf_cu.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
+ELFTC_VCSID("Id: dwarf_cu.c 4013 2023-10-14 22:40:50Z kaiwang27");
 
 int
-dwarf_next_cu_header_c(Dwarf_Debug dbg, Dwarf_Bool is_info,
+dwarf_next_cu_header_d(Dwarf_Debug dbg, Dwarf_Bool is_info,
     Dwarf_Unsigned *cu_length, Dwarf_Half *cu_version,
     Dwarf_Off *cu_abbrev_offset, Dwarf_Half *cu_pointer_size,
     Dwarf_Half *cu_offset_size, Dwarf_Half *cu_extension_size,
     Dwarf_Sig8 *type_signature, Dwarf_Unsigned *type_offset,
-    Dwarf_Unsigned *cu_next_offset, Dwarf_Error *error)
+    Dwarf_Unsigned *cu_next_offset, Dwarf_Half *cu_type,
+    Dwarf_Error *error)
 {
 	Dwarf_CU cu;
 	int ret;
@@ -110,7 +111,24 @@ dwarf_next_cu_header_c(Dwarf_Debug dbg, Dwarf_Bool is_info,
 			*type_offset = cu->cu_type_offset;
 	}
 
+	if (cu_type)
+		*cu_type = cu->cu_unit_type;
+
 	return (DW_DLV_OK);
+}
+
+int
+dwarf_next_cu_header_c(Dwarf_Debug dbg, Dwarf_Bool is_info,
+    Dwarf_Unsigned *cu_length, Dwarf_Half *cu_version,
+    Dwarf_Off *cu_abbrev_offset, Dwarf_Half *cu_pointer_size,
+    Dwarf_Half *cu_offset_size, Dwarf_Half *cu_extension_size,
+    Dwarf_Sig8 *type_signature, Dwarf_Unsigned *type_offset,
+    Dwarf_Unsigned *cu_next_offset, Dwarf_Error *error)
+{
+
+	return (dwarf_next_cu_header_d(dbg, 1, cu_length, cu_version,
+	    cu_abbrev_offset, cu_pointer_size, cu_offset_size,
+	    cu_extension_size, NULL, NULL, cu_next_offset, NULL, error));
 }
 
 

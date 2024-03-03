@@ -46,7 +46,7 @@ while getopts "$options" var; do
   '?') err "Unknown option: '-$OPTARG'.";;
   ':') err "Option '-$OPTARG' expects an argument.";;
   esac
-  shift $((OPTIND - 1))
+#  shift $((OPTIND - 1))
 done
 
 [ -n "${srcdir}" ] || err "Option -s must be specified."
@@ -95,7 +95,7 @@ c \
 }' -e \
 '/@ELFTC-USE-DOWNSTREAM-VCSID@/ {
 c \
-__RCSID("$NetBSD: netbsd-base-system-import.sh,v 1.1 2022/05/04 11:07:43 jkoshy Exp $");
+__RCSID("$NetBSD: netbsd-base-system-import.sh,v 1.2 2024/03/03 17:37:34 christos Exp $");
 }' -e \
 '/@ELFTC-INCLUDE-SYS-CDEFS@/ {
 c \
@@ -130,7 +130,7 @@ compare_and_move_or_diff() {
 
 # Manual pages need a CVS ID, and renaming of their SVN IDs.
 handle_manual_page() {
-  echo '.\"	$NetBSD: netbsd-base-system-import.sh,v 1.1 2022/05/04 11:07:43 jkoshy Exp $'         > ${srctmp}
+  echo '.\"	$NetBSD: netbsd-base-system-import.sh,v 1.2 2024/03/03 17:37:34 christos Exp $'         > ${srctmp}
   echo '.\"'                     >> ${srctmp}
   rename_svn_id < ${srcdir}/${1} >> ${srctmp}
 
@@ -140,7 +140,7 @@ handle_manual_page() {
 # M4 files need a NetBSD RCS Id prepended, and any embedded
 # VCS IDs transformed.
 handle_m4_file() {
-  echo 'dnl 	$NetBSD: netbsd-base-system-import.sh,v 1.1 2022/05/04 11:07:43 jkoshy Exp $'  > ${srctmp}
+  echo 'dnl 	$NetBSD: netbsd-base-system-import.sh,v 1.2 2024/03/03 17:37:34 christos Exp $'  > ${srctmp}
   transform_placeholders   <  ${srcdir}/${1} | \
     rename_svn_id         >> ${srctmp}
 

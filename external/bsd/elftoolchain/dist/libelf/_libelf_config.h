@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.5 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.6 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -25,107 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf_config.h 3396 2016-02-10 21:50:05Z emaste 
+ * Id: _libelf_config.h 3975 2022-04-30 20:10:58Z jkoshy
  */
-
-#if defined(__APPLE__) || defined(__DragonFly__)
-
-#if	defined(__amd64__)
-#define	LIBELF_ARCH		EM_X86_64
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS64
-#elif	defined(__i386__)
-#define	LIBELF_ARCH		EM_386
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS32
-#endif
-
-#endif	/* __DragonFly__ */
-
-#ifdef __FreeBSD__
-
-/*
- * Define LIBELF_{ARCH,BYTEORDER,CLASS} based on the machine architecture.
- * See also: <machine/elf.h>.
- */
-
-#if	defined(__amd64__)
-
-#define	LIBELF_ARCH		EM_X86_64
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS64
-
-#elif	defined(__aarch64__)
-
-#define	LIBELF_ARCH		EM_AARCH64
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS64
-
-#elif	defined(__arm__)
-
-#define	LIBELF_ARCH		EM_ARM
-#if	defined(__ARMEB__)	/* Big-endian ARM. */
-#define	LIBELF_BYTEORDER	ELFDATA2MSB
-#else
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#endif
-#define	LIBELF_CLASS		ELFCLASS32
-
-#elif	defined(__i386__)
-
-#define	LIBELF_ARCH		EM_386
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS32
-
-#elif	defined(__ia64__)
-
-#define	LIBELF_ARCH		EM_IA_64
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS64
-
-#elif	defined(__mips__)
-
-#define	LIBELF_ARCH		EM_MIPS
-#if	defined(__MIPSEB__)
-#define	LIBELF_BYTEORDER	ELFDATA2MSB
-#else
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#endif
-#define	LIBELF_CLASS		ELFCLASS32
-
-#elif	defined(__powerpc__)
-
-#define	LIBELF_ARCH		EM_PPC
-#define	LIBELF_BYTEORDER	ELFDATA2MSB
-#define	LIBELF_CLASS		ELFCLASS32
-
-#elif	defined(__riscv64)
-
-#define	LIBELF_ARCH		EM_RISCV
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS64
-
-#elif	defined(__sparc__)
-
-#define	LIBELF_ARCH		EM_SPARCV9
-#define	LIBELF_BYTEORDER	ELFDATA2MSB
-#define	LIBELF_CLASS		ELFCLASS64
-
-#else
-#error	Unknown FreeBSD architecture.
-#endif
-#endif  /* __FreeBSD__ */
-
-/*
- * Definitions for Minix3.
- */
-#ifdef __minix
-
-#define	LIBELF_ARCH		EM_386
-#define	LIBELF_BYTEORDER	ELFDATA2LSB
-#define	LIBELF_CLASS		ELFCLASS32
-
-#endif	/* __minix */
 
 #if defined(__NetBSD__) || defined(HAVE_NBTOOL_CONFIG_H)
 
@@ -149,45 +50,33 @@
 
 #endif	/* __NetBSD__ || HAVE_NBTOOL_CONFIG_H */
 
-#if defined(__OpenBSD__)
-
-#include <machine/exec.h>
-
-#define	LIBELF_ARCH		ELF_TARG_MACH
-#define	LIBELF_BYTEORDER	ELF_TARG_DATA
-#define	LIBELF_CLASS		ELF_TARG_CLASS
-
-#endif
-
 /*
- * GNU & Linux compatibility.
- *
- * `__linux__' is defined in an environment runs the Linux kernel and glibc.
- * `__GNU__' is defined in an environment runs a GNU kernel (Hurd) and glibc.
- * `__GLIBC__' is defined for an environment that runs glibc over a non-GNU
- *     kernel such as GNU/kFreeBSD.
+ * Downstream projects can replace the following placeholder with a custom
+ * definition of LIBELF_BYTEORDER, if the host's native byte order cannot
+ * be determined using the compilation environment.
  */
+/* @LIBELF-DEFINE-HOST-BYTEORDER@ */
 
 #ifndef HAVE_NBTOOL_CONFIG_H
-#if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
+#if	!defined(LIBELF_BYTEORDER)
 
-#if defined(__linux__)
+/*
+ * Use the __BYTE_ORDER__ and __ORDER_{LITTLE|BIG}_ENDIAN__ macros to
+ * determine the host's byte order.  These macros are predefined by the
+ * GNU and CLANG C compilers.
+ */
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
 
-#include "native-elf-format.h"
-
-#define	LIBELF_CLASS		ELFTC_CLASS
-#define	LIBELF_ARCH		ELFTC_ARCH
-#define	LIBELF_BYTEORDER	ELFTC_BYTEORDER
-
-#endif	/* defined(__linux__) */
-
-#if	LIBELF_CLASS == ELFCLASS32
-#define	Elf_Note		Elf32_Nhdr
-#elif   LIBELF_CLASS == ELFCLASS64
-#define	Elf_Note		Elf64_Nhdr
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define	LIBELF_BYTEORDER	ELFDATA2LSB
 #else
-#error  LIBELF_CLASS needs to be one of ELFCLASS32 or ELFCLASS64
+#define	LIBELF_BYTEORDER	ELFDATA2MSB
 #endif
 
-#endif /* defined(__linux__) || defined(__GNU__) || defined(__GLIBC__) */
+#else
+
+#error unknown host byte order
+
+#endif	/* defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) */
+#endif	/* !defined(LIBELF_BYTEORDER) */
 #endif /* HAVE_NBTOOL_CONFIG_H */

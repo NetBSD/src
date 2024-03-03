@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.5 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.6 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -38,8 +38,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_align.c,v 1.5 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_align.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: libelf_align.c,v 1.6 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_align.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 struct align {
 	unsigned int a32;
@@ -59,6 +59,10 @@ struct align {
 		.a32 = __alignof__(int32_t),			\
 		.a64 = __alignof__(int64_t)			\
 	    }
+#elif defined(__lint__)
+#define MALIGN(N)	{ .a32 = 0, .a64 = 0 }
+#define MALIGN64(N)	{ .a32 = 0, .a64 = 0 }
+#define MALIGN_WORD(N)	{ .a32 = 0, .a64 = 0 }
 #else
 #error	Need the __alignof__ builtin.
 #endif
@@ -116,7 +120,7 @@ static struct align falign[ELF_T_NUM] = {
 	[ELF_T_LWORD]	= FALIGN(8,8),
 	[ELF_T_MOVE]	= FALIGN(8,8),
 	[ELF_T_MOVEP] 	= UNSUPPORTED(),
-	[ELF_T_NOTE]	= FALIGN(1,1),
+	[ELF_T_NOTE]	= FALIGN(4,4),
 	[ELF_T_OFF]	= FALIGN(4,8),
 	[ELF_T_PHDR]	= FALIGN(4,8),
 	[ELF_T_REL]	= FALIGN(4,8),

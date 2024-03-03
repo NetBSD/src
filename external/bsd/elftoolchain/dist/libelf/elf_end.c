@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_end.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_end.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2009,2011 Joseph Koshy
@@ -42,8 +42,8 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: elf_end.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_end.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: elf_end.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: elf_end.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 int
 elf_end(Elf *e)
@@ -90,14 +90,14 @@ elf_end(Elf *e)
 				free(e->e_rawfile);
 #if	ELFTC_HAVE_MMAP
 			else if (e->e_flags & LIBELF_F_RAWFILE_MMAP)
-				(void) munmap(e->e_rawfile, e->e_rawsize);
+				(void) munmap(e->e_rawfile, (size_t) e->e_rawsize);
 #endif
 		}
 
 		sv = e;
 		if ((e = e->e_parent) != NULL)
 			e->e_u.e_ar.e_nchildren--;
-		sv = _libelf_release_elf(sv);
+		_libelf_release_elf(sv);
 	}
 
 	return (0);

@@ -1,5 +1,4 @@
-/*	$NetBSD: dwarf_weaks.m4,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
-
+dnl 	$NetBSD: dwarf_weaks.m4,v 1.5 2024/03/03 17:37:32 christos Exp $
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -28,7 +27,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_weaks.m4,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: dwarf_weaks.m4,v 1.5 2024/03/03 17:37:32 christos Exp $");
 ELFTC_VCSID("Id: dwarf_weaks.m4 2075 2011-10-27 03:47:28Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */

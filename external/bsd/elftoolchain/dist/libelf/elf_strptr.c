@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_strptr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_strptr.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -30,6 +30,7 @@
 # include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <assert.h>
@@ -37,8 +38,7 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_strptr.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_strptr.c 2990 2014-03-17 09:56:58Z jkoshy");
+__RCSID("$NetBSD: elf_strptr.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
 
 /*
  * Convert an ELF section#,offset pair to a string pointer.

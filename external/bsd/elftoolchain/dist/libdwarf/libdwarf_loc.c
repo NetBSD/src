@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_loc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_loc.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,7 +29,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_loc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: libdwarf_loc.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_loc.c 3070 2014-06-23 03:08:33Z kaiwang27");
 
 /*

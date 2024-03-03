@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_getbase.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: elf_getbase.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,12 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_getbase.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: elf_getbase.c 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: elf_getbase.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
 
 off_t
 elf_getbase(Elf *e)

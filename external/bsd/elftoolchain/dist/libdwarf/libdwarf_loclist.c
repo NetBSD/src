@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_loclist.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_loclist.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_loclist.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: libdwarf_loclist.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_loclist.c 3061 2014-06-02 00:42:41Z kaiwang27");
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_rw.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: libdwarf_rw.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_rw.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
-ELFTC_VCSID("Id: libdwarf_rw.c 3286 2015-12-31 16:45:46Z emaste");
+__RCSID("$NetBSD: libdwarf_rw.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
+ELFTC_VCSID("Id: libdwarf_rw.c 4007 2023-10-12 18:17:02Z kaiwang27");
 
 uint64_t
 _dwarf_read_lsb(uint8_t *data, uint64_t *offsetp, int bytes_to_read)
@@ -47,7 +47,10 @@ _dwarf_read_lsb(uint8_t *data, uint64_t *offsetp, int bytes_to_read)
 		ret |= ((uint64_t) src[6]) << 48 | ((uint64_t) src[7]) << 56;
 		/* FALLTHROUGH */
 	case 4:
-		ret |= ((uint64_t) src[2]) << 16 | ((uint64_t) src[3]) << 24;
+		ret |= ((uint64_t) src[3]) << 24;
+		/* FALLTHROUGH */
+	case 3:
+		ret |= ((uint64_t) src[2]) << 16;
 		/* FALLTHROUGH */
 	case 2:
 		ret |= ((uint64_t) src[1]) << 8;
@@ -79,7 +82,10 @@ _dwarf_decode_lsb(uint8_t **data, int bytes_to_read)
 		ret |= ((uint64_t) src[6]) << 48 | ((uint64_t) src[7]) << 56;
 		/* FALLTHROUGH */
 	case 4:
-		ret |= ((uint64_t) src[2]) << 16 | ((uint64_t) src[3]) << 24;
+		ret |= ((uint64_t) src[3]) << 24;
+		/* FALLTHROUGH */
+	case 3:
+		ret |= ((uint64_t) src[2]) << 16;
 		/* FALLTHROUGH */
 	case 2:
 		ret |= ((uint64_t) src[1]) << 8;
@@ -110,6 +116,10 @@ _dwarf_read_msb(uint8_t *data, uint64_t *offsetp, int bytes_to_read)
 		break;
 	case 2:
 		ret = src[1] | ((uint64_t) src[0]) << 8;
+		break;
+	case 3:
+		ret = src[2] | ((uint64_t) src[1]) << 8;
+		ret |= ((uint64_t) src[0]) << 16;
 		break;
 	case 4:
 		ret = src[3] | ((uint64_t) src[2]) << 8;
@@ -146,6 +156,10 @@ _dwarf_decode_msb(uint8_t **data, int bytes_to_read)
 	case 2:
 		ret = src[1] | ((uint64_t) src[0]) << 8;
 		break;
+	case 3:
+		ret = src[2] | ((uint64_t) src[1]) << 8;
+		ret |= ((uint64_t) src[0]) << 16;
+		break;
 	case 4:
 		ret = src[3] | ((uint64_t) src[2]) << 8;
 		ret |= ((uint64_t) src[1]) << 16 | ((uint64_t) src[0]) << 24;
@@ -158,7 +172,6 @@ _dwarf_decode_msb(uint8_t **data, int bytes_to_read)
 		break;
 	default:
 		return (0);
-		break;
 	}
 
 	*data += bytes_to_read;
@@ -293,7 +306,7 @@ _dwarf_read_sleb128(uint8_t *data, uint64_t *offsetp)
 	} while ((b & 0x80) != 0);
 
 	if (shift < 64 && (b & 0x40) != 0)
-		ret |= (-1 << shift);
+		ret |= (~0UL << shift);
 
 	return (ret);
 }
@@ -423,7 +436,7 @@ _dwarf_decode_sleb128(uint8_t **dp)
 	} while ((b & 0x80) != 0);
 
 	if (shift < 64 && (b & 0x40) != 0)
-		ret |= (-1 << shift);
+		ret |= (~0UL << shift);
 
 	*dp = src;
 

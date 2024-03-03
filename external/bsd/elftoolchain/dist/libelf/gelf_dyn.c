@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_dyn.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
+/*	$NetBSD: gelf_dyn.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,8 +39,7 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_dyn.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: gelf_dyn.c 3177 2015-03-30 18:19:41Z emaste");
+__RCSID("$NetBSD: gelf_dyn.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
 
 GElf_Dyn *
 gelf_getdyn(Elf_Data *ed, int ndx, GElf_Dyn *dst)
@@ -76,9 +75,9 @@ gelf_getdyn(Elf_Data *ed, int ndx, GElf_Dyn *dst)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_DYN, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_DYN, ec, e->e_version)) == 0)
+		return (NULL);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
@@ -136,9 +135,9 @@ gelf_update_dyn(Elf_Data *ed, int ndx, GElf_Dyn *ds)
 		return (0);
 	}
 
-	msz = _libelf_msize(ELF_T_DYN, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_DYN, ec, e->e_version)) == 0)
+		return (0);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {

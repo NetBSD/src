@@ -1,4 +1,4 @@
-/* $NetBSD: uthash.h,v 1.5 2023/12/17 18:59:19 jkoshy Exp $ */
+/*	$NetBSD: uthash.h,v 1.6 2024/03/03 17:37:29 christos Exp $	*/
 
 /*-
 Copyright (c) 2003-2021, Troy D. Hanson     http://troydhanson.github.com/uthash/

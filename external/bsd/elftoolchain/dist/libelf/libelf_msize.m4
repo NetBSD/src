@@ -1,5 +1,4 @@
-/*	$NetBSD: libelf_msize.m4,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
-
+dnl 	$NetBSD: libelf_msize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -38,8 +37,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_msize.m4,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
-ELFTC_VCSID("Id: libelf_msize.m4 3174 2015-03-27 17:13:41Z emaste");
+__RCSID("$NetBSD: libelf_msize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: libelf_msize.m4 3977 2022-05-01 06:45:34Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -96,6 +95,14 @@ static struct msize msize[ELF_T_NUM] = {
 MSIZES(ELF_TYPE_LIST)
 };
 
+/*
+ * Returns the memory size of the specified ELF type 't' of ELF
+ * class 'ec' and ELF version 'version'.
+ *
+ * If the specified combination of ELF type, class, and version is
+ * unsupported then a value of 0 will be returned and the appropriate
+ * library error code set.
+ */
 size_t
 _libelf_msize(Elf_Type t, int elfclass, unsigned int version)
 {
@@ -110,6 +117,11 @@ _libelf_msize(Elf_Type t, int elfclass, unsigned int version)
 	}
 
 	sz = (elfclass == ELFCLASS32) ? msize[t].msz32 : msize[t].msz64;
+
+	if (sz == 0) {
+		LIBELF_SET_ERROR(UNIMPL, 0);
+		return (0);
+	}
 
 	return (sz);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_pro_lineno.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
+/*	$NetBSD: dwarf_pro_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_pro_lineno.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+__RCSID("$NetBSD: dwarf_pro_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
 ELFTC_VCSID("Id: dwarf_pro_lineno.c 2973 2013-12-23 06:46:16Z kaiwang27");
 
 Dwarf_Unsigned

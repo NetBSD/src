@@ -1,4 +1,4 @@
-/* $NetBSD: utarray.h,v 1.4 2023/12/17 18:59:19 jkoshy Exp $ */
+/*	$NetBSD: utarray.h,v 1.5 2024/03/03 17:37:29 christos Exp $	*/
 
 /*-
 Copyright (c) 2008-2021, Troy D. Hanson   http://troydhanson.github.com/uthash/
