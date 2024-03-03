@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1209.2.12 2024/03/01 14:28:51 martin Exp $
+# $NetBSD: mi,v 1.1209.2.13 2024/03/03 07:11:42 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1337,6 +1337,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr		compatdir
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
+./usr/libdata/debug/usr/lib/named		base-sys-usr
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
