@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.41 2024/02/24 12:44:11 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.41 2024/02/24 12:44:11 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.41 2024/02/24 12:44:11 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.41 2024/02/24 12:44:11 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -215,7 +215,7 @@ new_style(state *s)
 			maybe_wrap_line(s, prev_bitfmt);
 			goto skip_description;
 		default:
-			s->bitfmt += 2;
+			return -1;
 		skip_description:
 			while (*s->bitfmt++ != '\0')
 				continue;
