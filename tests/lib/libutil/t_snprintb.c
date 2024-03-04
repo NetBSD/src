@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.29 2024/02/24 13:00:00 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.30 2024/03/04 21:35:28 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.29 2024/02/24 13:00:00 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.30 2024/03/04 21:35:28 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -807,18 +807,24 @@ ATF_TC_BODY(snprintb, tc)
 	    0xff,
 	    "0xff<f=0xff=000000000000000000000000000255%>");
 
-	// new style unknown directive
-	//
-	// Unknown directives are assumed to have a single byte argument
-	// followed by a description; they are skipped up to the next '\0'.
-	h_snprintb(
+	// new style unknown directive, at the beginning
+	h_snprintb_len(
+	    128,
 	    "\177\020"
-	    "c\010ignored\0"
-	    "c\000b\0"
-	    "lsb\0"
-	    "b\007msb\0",
+	    "unknown\0",
 	    0xff,
-	    "0xff<msb>");
+	    -1,
+	    "0xff#");
+
+	// new style unknown directive, after a known directive
+	h_snprintb_len(
+	    128,
+	    "\177\020"
+	    "b\007msb\0"
+	    "unknown\0",
+	    0xff,
+	    -1,
+	    "0xff<msb#");
 
 	// new style combinations, 'b' '='
 	//
