@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.6 2024/03/03 15:53:55 riastradh Exp $
+#	$NetBSD: certctl.sh,v 1.7 2024/03/04 20:37:31 riastradh Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -440,6 +440,7 @@ rehash()
 		return 1
 	elif [ ! -e "$certsdir" ]; then
 		# Directory doesn't exist at all.  Nothing to do!
+		:
 	elif [ ! -d "$certsdir" ]; then
 		error "certificates directory is not a directory"
 		return 1
