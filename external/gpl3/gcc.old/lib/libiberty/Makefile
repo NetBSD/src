@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2023/07/14 19:46:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2024/03/04 19:52:33 christos Exp $
 
 LIBISPRIVATE=	yes
 
 .include <bsd.init.mk>
 
+DEBUGFLAGS=	# XXX: regex.c has broken debugging printfs
 GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 LIB=		iberty
