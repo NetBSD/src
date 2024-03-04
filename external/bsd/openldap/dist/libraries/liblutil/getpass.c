@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.4 2024/03/04 17:10:33 christos Exp $	*/
 
 /* getpass.c -- get password from user */
 /* $OpenLDAP$ */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getpass.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.4 2024/03/04 17:10:33 christos Exp $");
 
 #include "portable.h"
 
@@ -85,11 +85,6 @@ lutil_getpass( const char *prompt )
 #endif
 
 	if( prompt == NULL ) prompt = _("Password: ");
-
-#ifdef DEBUG
-	if (debug & D_TRACE)
-		printf("->getpass(%s)\n", prompt);
-#endif
 
 #if defined(HAVE_TERMIOS_H) || defined(HAVE_SGTTY_H)
 	if ((fi = fopen(TTY, "r")) == NULL)
