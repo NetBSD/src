@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.255 2024/02/10 09:24:18 andvar Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.256 2024/03/05 14:33:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.255 2024/02/10 09:24:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.256 2024/03/05 14:33:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -328,7 +328,7 @@ uvm_page_init_bucket(struct pgfreelist *pgfl, struct pgflbucket *pgb, int num)
 void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
-	static struct uvm_cpu boot_cpu __cacheline_aligned;
+	static struct uvm_cpu uvm_boot_cpu __cacheline_aligned;
 	psize_t freepages, pagecount, bucketsize, n;
 	struct pgflbucket *pgb;
 	struct vm_page *pagearray;
@@ -344,7 +344,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * structures).
 	 */
 
-	curcpu()->ci_data.cpu_uvm = &boot_cpu;
+	curcpu()->ci_data.cpu_uvm = &uvm_boot_cpu;
 	uvmpdpol_init();
 	for (b = 0; b < __arraycount(uvm_freelist_locks); b++) {
 		mutex_init(&uvm_freelist_locks[b].lock, MUTEX_DEFAULT, IPL_VM);
