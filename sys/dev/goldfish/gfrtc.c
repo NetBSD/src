@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc.c,v 1.4 2024/01/04 12:02:11 simonb Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.4 2024/01/04 12:02:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $");
 
 #include <sys/param.h>
 
@@ -141,10 +141,8 @@ gfrtc_get_time(struct gfrtc_softc * const sc)
 
 
 void
-gfrtc_set_alarm(struct gfrtc_softc * const sc, const uint64_t nsec)
+gfrtc_set_alarm(struct gfrtc_softc * const sc, const uint64_t next)
 {
-	uint64_t next = gfrtc_get_time(sc) + nsec;
-
 	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_ALARM_HIGH, (uint32_t)(next >> 32));
 	GOLDFISH_RTC_WRITE(sc, GOLDFISH_RTC_ALARM_LOW, (uint32_t)next);
 }

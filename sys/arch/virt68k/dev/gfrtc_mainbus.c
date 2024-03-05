@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc_mainbus.c,v 1.2 2024/01/12 06:23:20 mlelstv Exp $	*/
+/*	$NetBSD: gfrtc_mainbus.c,v 1.3 2024/03/05 11:19:30 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc_mainbus.c,v 1.2 2024/01/12 06:23:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc_mainbus.c,v 1.3 2024/03/05 11:19:30 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +58,7 @@ struct gfrtc_mainbus_softc {
 	struct gfrtc_softc	sc_gfrtc;
 	struct clock_attach_args sc_clock_args;
 	uint64_t		sc_interval_ns;
+	uint64_t		sc_alarm_time;
 	void			(*sc_handler)(struct clockframe *);
 	struct evcnt *		sc_evcnt;
 	void *			sc_ih;
@@ -68,8 +69,9 @@ do {									\
 	/* Clear the interrupt condition. */				\
 	gfrtc_clear_interrupt(&sc->sc_gfrtc);				\
 									\
-	/* Get the next alarm set ASAP. */				\
-	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_interval_ns);		\
+	/* Get the next alarm set. */					\
+	sc->sc_alarm_time += sc->sc_interval_ns;			\
+	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_alarm_time);		\
 									\
 	/* Increment the counter and call the handler. */		\
 	sc->sc_evcnt->ev_count++;					\
@@ -103,7 +105,8 @@ gfrtc_mainbus_initclock(void *arg, unsigned int interval_us,
 	gfrtc_enable_interrupt(&sc->sc_gfrtc);
 
 	/* Start the first alarm! */
-	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_interval_ns);
+	sc->sc_alarm_time = gfrtc_get_time(&sc->sc_gfrtc) + sc->sc_interval_ns;
+	gfrtc_set_alarm(&sc->sc_gfrtc, sc->sc_alarm_time);
 }
 
 static int
