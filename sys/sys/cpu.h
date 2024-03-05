@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2024/03/05 14:39:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2024/03/05 20:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -100,7 +100,6 @@ void	cpu_topology_init(void);
 extern kmutex_t cpu_lock;
 extern u_int maxcpus;
 extern struct cpu_info **cpu_infos;
-extern struct cpu_info *boot_cpu;
 extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 
