@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.146 2023/04/07 08:55:30 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.147 2024/03/05 14:15:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.146 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.147 2024/03/05 14:15:29 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -270,8 +270,6 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
-
-	resettodr();
 }
 
 /*

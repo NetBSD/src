@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64_reboot.c,v 1.4 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: aarch64_reboot.c,v 1.5 2024/03/05 14:15:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.4 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch64_reboot.c,v 1.5 2024/03/05 14:15:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -207,8 +207,6 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
-
-	resettodr();
 }
 
 void

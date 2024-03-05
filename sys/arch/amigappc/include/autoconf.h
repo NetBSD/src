@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2009/07/21 09:49:15 phx Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2024/03/05 14:15:28 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -37,8 +37,6 @@
 #ifdef _KERNEL
 void initppc(u_int, u_int);
 
-void inittodr (time_t);
-void resettodr (void);
 void cpu_initclocks (void);
 void decr_intr (struct clockframe *);
 void setstatclockrate (int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 2024/03/05 14:15:35 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -45,7 +45,4 @@ struct confargs {
 
 #ifdef _KERNEL
 paddr_t kvtop(void *);
-
-void inittodr(time_t);
-void resettodr(void);
 #endif /* _KERNEL */

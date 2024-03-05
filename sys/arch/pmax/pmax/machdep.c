@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2024/01/15 19:44:07 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.256 2024/03/05 14:15:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/01/15 19:44:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2024/03/05 14:15:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -438,12 +438,6 @@ cpu_reboot(int howto, char *bootstr)
 		 * Synchronize the disks....
 		 */
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */

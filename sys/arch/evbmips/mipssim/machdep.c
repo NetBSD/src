@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2022/12/28 11:50:25 he Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2024/03/05 14:15:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2022/12/28 11:50:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/03/05 14:15:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -335,12 +335,6 @@ cpu_reboot(int howto, char *bootstr)
 		 * Synchronize the disks....
 		 */
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */

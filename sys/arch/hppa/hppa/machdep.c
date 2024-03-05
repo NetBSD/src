@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2024/01/22 07:15:25 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2024/03/05 14:15:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2024/01/22 07:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2024/03/05 14:15:32 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1395,12 +1395,6 @@ cpu_reboot(int howto, char *user_boot_string)
 	if (!(howto & RB_NOSYNC) && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* XXX probably save howto into stable storage */

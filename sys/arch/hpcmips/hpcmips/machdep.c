@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2024/03/05 14:15:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2024/03/05 14:15:32 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -527,12 +527,6 @@ cpu_reboot(int howto, char *bootstr)
 		 * Synchronize the disks....
 		 */
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */

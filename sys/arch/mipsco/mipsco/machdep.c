@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2023/03/06 21:39:06 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2024/03/05 14:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2023/03/06 21:39:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2024/03/05 14:15:33 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -376,12 +376,6 @@ cpu_reboot(volatile int howto, char *bootstr)
 		 */
 		waittime = 0;
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */

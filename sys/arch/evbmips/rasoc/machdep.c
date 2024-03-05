@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2020/07/22 01:24:39 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2020/07/22 01:24:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -244,12 +244,6 @@ cpu_reboot(int howto, char *bootstr)
 		 * Synchronize the disks....
 		 */
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */
