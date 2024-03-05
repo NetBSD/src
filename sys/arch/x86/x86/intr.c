@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.166 2023/11/29 11:40:37 mlelstv Exp $	*/
+/*	$NetBSD: intr.c,v 1.167 2024/03/05 20:58:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.166 2023/11/29 11:40:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.167 2024/03/05 20:58:05 andvar Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1056,7 +1056,7 @@ intr_mask_xcall(void *arg1, void *arg2)
 			 * For level-sensitive interrupts, the hardware
 			 * will let us know.  For everything else, we
 			 * need to explicitly handle interrupts that
-			 * happened when when the source was masked.
+			 * happened when the source was masked.
 			 */
 			const uint64_t bit = (1U << ih->ih_slot);
 			if (ci->ci_imasked & bit) {

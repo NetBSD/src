@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.45 2023/09/21 09:31:49 msaitoh Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.46 2024/03/05 20:58:05 andvar Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.45 2023/09/21 09:31:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.46 2024/03/05 20:58:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ adb_cuda_tickle(void)
 }
 
 /*
- * called when when an adb interrupt happens
+ * called when an adb interrupt happens
  *
  * Cuda version of adb_intr
  * TO DO: do we want to add some calls to intr_dispatch() here to
