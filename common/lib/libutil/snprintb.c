@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,17 +35,18 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
 #  include <inttypes.h>
 #  include <stdio.h>
+#  include <string.h>
 #  include <util.h>
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.42 2024/03/04 21:35:28 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -60,7 +61,7 @@ typedef struct {
 	uint64_t const val;
 	size_t const line_max;
 
-	const char *const num_fmt;
+	char num_fmt[5];
 	size_t total_len;
 	size_t line_pos;
 	size_t comma_pos;
@@ -255,48 +256,42 @@ snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	if (!old)
 		bitfmt++;
 
-	const char *num_fmt;
-	switch (*bitfmt++) {
-	case 8:
-		num_fmt = "%#jo";
-		break;
-	case 10:
-		num_fmt = "%ju";
-		break;
-	case 16:
-		num_fmt = "%#jx";
-		break;
-	default:
-		num_fmt = NULL;
-	}
-
 	state s = {
 		.buf = buf,
 		.bufsize = bufsize,
 		.bitfmt = bitfmt,
 		.val = val,
 		.line_max = line_max,
-		.num_fmt = num_fmt,
 	};
-	if (num_fmt == NULL)
-		goto internal;
+	int had_error = 0;
 
-	store_num(&s, num_fmt, val);
+	switch (*s.bitfmt++) {
+	case 8:
+		memcpy(s.num_fmt, "%#jo", 4);
+		break;
+	case 10:
+		memcpy(s.num_fmt, "%ju", 4);
+		break;
+	case 16:
+		memcpy(s.num_fmt, "%#jx", 4);
+		break;
+	default:
+		goto had_error;
+	}
 
-	if ((old ? old_style(&s) : new_style(&s)) < 0)
-		goto internal;
+	store_num(&s, s.num_fmt, val);
 
-	if (s.in_angle_brackets)
+	if ((old ? old_style(&s) : new_style(&s)) < 0) {
+had_error:
+#ifndef _KERNEL
+		errno = EINVAL;
+#endif
+		had_error = 1;
+		store(&s, '#');
+	} else if (s.in_angle_brackets)
 		store(&s, '>');
 	finish_buffer(&s);
-	return (int)(s.total_len - 1);
-internal:
-#ifndef _KERNEL
-	errno = EINVAL;
-#endif
-	store(&s, '#');
-	finish_buffer(&s);
-	return -1;
+	return had_error ? -1 : (int)(s.total_len - 1);
 }
 
 int
