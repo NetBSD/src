@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.198 2024/01/11 04:33:45 mrg Exp $	 */
+/* $NetBSD: machdep.c,v 1.199 2024/03/05 14:15:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2024/01/11 04:33:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2024/03/05 14:15:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -340,11 +340,6 @@ cpu_reboot(int howto, char *b)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr will be out of
-		 * synch; adjust it now.
-		 */
-		resettodr();
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {

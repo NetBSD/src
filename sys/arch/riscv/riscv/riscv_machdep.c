@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.36 2024/01/18 07:41:50 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.37 2024/03/05 14:15:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.36 2024/01/18 07:41:50 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.37 2024/03/05 14:15:34 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -403,8 +403,6 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
-
-	resettodr();
 }
 
 

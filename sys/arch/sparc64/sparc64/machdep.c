@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.307 2023/10/04 20:28:05 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.308 2024/03/05 14:15:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2023/10/04 20:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2024/03/05 14:15:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -558,17 +558,6 @@ cpu_reboot(int howto, char *user_boot_string)
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
 			vfs_sync_all(l);
-			/*
-			 * If we've been adjusting the clock, the todr
-			 * will be out of synch; adjust it now.
-			 *
-			 * resettodr will only do this only if inittodr()
-			 * has already been called.
-			 *
-			 * XXX used to do this after unmounting all
-			 * filesystems with vfs_shutdown().
-			 */
-			resettodr();
 		}
 
 		while (vfs_unmountall1(l, false, false) ||

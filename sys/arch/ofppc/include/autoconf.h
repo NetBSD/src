@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.18 2021/02/27 02:52:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.19 2024/03/05 14:15:33 thorpej Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -40,8 +40,6 @@ void initppc(u_int, u_int, char *);
 void strayintr(int);
 void dumpsys(void);
 
-void inittodr(time_t);
-void resettodr(void);
 void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);

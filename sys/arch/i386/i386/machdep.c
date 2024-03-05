@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.840 2023/07/16 19:55:43 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.841 2024/03/05 14:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.840 2023/07/16 19:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.841 2024/03/05 14:15:32 thorpej Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -754,15 +754,6 @@ cpu_reboot(int howto, char *bootstr)
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
 			vfs_sync_all(curlwp);
-			/*
-			 * If we've been adjusting the clock, the todr
-			 * will be out of synch; adjust it now.
-			 *
-			 * XXX used to do this after unmounting all
-			 * filesystems with vfs_shutdown().
-			 */
-			if (time_adjusted != 0)
-				resettodr();
 		}
 
 		while (vfs_unmountall1(curlwp, false, false) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2023/12/20 15:00:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2023/12/20 15:00:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:32 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -209,7 +209,6 @@ cpu_reboot(int howto, char *what)
 	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
 	}
 
 	/* Disable intr */

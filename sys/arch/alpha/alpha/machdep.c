@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.377 2023/12/20 20:35:37 andvar Exp $ */
+/* $NetBSD: machdep.c,v 1.378 2024/03/05 14:15:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.377 2023/12/20 20:35:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.378 2024/03/05 14:15:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1058,11 +1058,6 @@ cpu_reboot(int howto, char *bootstr)
 	if ((boothowto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */

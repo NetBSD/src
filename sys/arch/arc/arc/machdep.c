@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2023/12/20 06:36:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 2024/03/05 14:15:28 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2023/12/20 06:36:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2024/03/05 14:15:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -540,12 +540,6 @@ cpu_reboot(int howto, char *bootstr)
 		 */
 		waittime = 0;
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 	(void)splhigh();		/* extreme priority */
 

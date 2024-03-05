@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.254 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2024/01/19 18:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,11 +394,6 @@ bootsync(void)
 	if (waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 }
 

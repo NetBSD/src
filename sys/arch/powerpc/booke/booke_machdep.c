@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.34 2024/02/02 22:00:33 andvar Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.34 2024/02/02 22:00:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $");
 
 #include "ksyms.h"
 
@@ -266,7 +266,6 @@ cpu_reboot(int howto, char *what)
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
 	}
 
 	splhigh();

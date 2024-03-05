@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2024/02/10 17:41:00 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2024/03/05 14:15:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/02/10 17:41:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2024/03/05 14:15:31 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -373,7 +373,6 @@ cpu_reboot(int howto, char *what)
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
 	}
 	splhigh();
 	if (!cold && (howto & RB_DUMP)) {

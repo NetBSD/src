@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2023/12/20 14:12:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:31 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2023/12/20 14:12:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:31 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -1008,12 +1008,6 @@ cpu_reboot(int howto, char *bootstr)
 	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
 		waittime = 0;
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	splhigh();

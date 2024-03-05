@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2023/12/23 18:59:27 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2024/03/05 14:15:36 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2023/12/23 18:59:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2024/03/05 14:15:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -371,11 +371,6 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (!(howto & RB_NOSYNC)) {
 		bootsync();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Wait 3s */

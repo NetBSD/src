@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_reboot.c,v 1.4 2020/02/23 22:56:41 ad Exp $	*/
+/*	$NetBSD: kern_reboot.c,v 1.5 2024/03/05 14:15:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.4 2020/02/23 22:56:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.5 2024/03/05 14:15:36 thorpej Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.4 2020/02/23 22:56:41 ad Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/timevar.h>
 
 /*
  * Reboot / shutdown the system.
@@ -65,11 +66,28 @@ kern_reboot(int howto, char *bootstr)
 	}
 	shutting_down = 1;
 
+	/* Just cut to the chase if cold. */
+	if (cold) {
+		goto do_cpu_reboot;
+	}
+
+	if ((boothowto & RB_NOSYNC) == 0 && panicstr == NULL) {
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		if (time_adjusted != 0) {
+			time_adjusted = 0;
+			resettodr();
+		}
+	}
+
 	/*
 	 * XXX We should re-factor out all of the common stuff
 	 * that each and every cpu_reboot() does and put it here.
 	 */
 
+ do_cpu_reboot:
 	cpu_reboot(howto, bootstr);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2022/06/26 09:23:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.176 2024/03/05 14:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2022/06/26 09:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2024/03/05 14:15:33 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -228,7 +228,6 @@ cpu_reboot(int howto, char *what)
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
 	}
 
 #ifdef MULTIPROCESSOR

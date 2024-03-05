@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2024/02/05 22:08:04 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2024/03/05 14:15:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2024/02/05 22:08:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2024/03/05 14:15:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -224,13 +224,6 @@ cpu_reboot(int howto, char *bootstr)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-#if 0
-		resettodr();
-#endif
 	}
 
 	/* Disable interrupts. */

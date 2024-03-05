@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.15 2023/04/21 14:58:35 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.16 2024/03/05 14:15:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -220,7 +220,6 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (!cpu_reboot_called && !(boothowto & RB_NOSYNC)) {
 		vfs_shutdown();
-		resettodr();
 	}
 
 	cpu_reboot_called = 1;
