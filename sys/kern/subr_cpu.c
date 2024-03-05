@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.20 2024/01/04 11:18:19 mlelstv Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.21 2024/03/05 14:39:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.20 2024/01/04 11:18:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.21 2024/03/05 14:39:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -85,6 +85,9 @@ int64_t		cpu_counts[CPU_COUNT_MAX];
 
 /* An array of CPUs.  There are ncpu entries. */
 struct cpu_info **cpu_infos		__read_mostly;
+
+/* A pointer to the boot CPU, for quick reference when needed. */
+struct cpu_info *boot_cpu		__read_mostly;
 
 /* Note: set on mi_cpu_attach() and idle_loop(). */
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;

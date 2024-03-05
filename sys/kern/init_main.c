@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.547 2024/01/17 10:18:41 hannken Exp $	*/
+/*	$NetBSD: init_main.c,v 1.548 2024/03/05 14:39:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.547 2024/01/17 10:18:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.548 2024/03/05 14:39:29 thorpej Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -275,7 +275,8 @@ main(void)
 #ifdef DIAGNOSTIC
 	/*
 	 * Verify that CPU_INFO_FOREACH() knows about the boot CPU
-	 * and only the boot CPU at this point.
+	 * and only the boot CPU at this point.  The boot CPU should
+	 * also be marked PRIMARY.
 	 */
 	int cpucount = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -283,7 +284,11 @@ main(void)
 		cpucount++;
 	}
 	KASSERT(cpucount == 1);
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 #endif
+
+	/* Stash a pointer to the boot CPU for quick reference wheen needed. */
+	boot_cpu = curcpu();
 
 	l = &lwp0;
 #ifndef LWP0_CPU_INFO
