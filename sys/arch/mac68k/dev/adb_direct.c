@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.71 2024/02/28 13:05:39 thorpej Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.72 2024/03/05 20:58:05 andvar Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.71 2024/02/28 13:05:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.72 2024/03/05 20:58:05 andvar Exp $");
 
 #include "opt_adb.h"
 
@@ -394,7 +394,7 @@ adb_cuda_tickle(void)
 }
 
 /*
- * called when when an adb interrupt happens
+ * called when an adb interrupt happens
  *
  * Cuda version of adb_intr
  * TO DO: do we want to add some calls to intr_dispatch() here to
@@ -1208,7 +1208,7 @@ adb_guess_next_device(void)
 
 
 /*
- * Called when when an adb interrupt happens.
+ * Called when an adb interrupt happens.
  * This routine simply transfers control over to the appropriate
  * code for the machine we are running on.
  */
@@ -1241,7 +1241,7 @@ adb_intr(void *arg)
 
 
 /*
- * called when when an adb interrupt happens
+ * called when an adb interrupt happens
  *
  * IIsi version of adb_intr
  *
