@@ -1,4 +1,4 @@
-/* $NetBSD: mcclockvar.h,v 1.6 2024/03/06 06:30:48 thorpej Exp $ */
+/* $NetBSD: mcclockvar.h,v 1.7 2024/03/06 07:34:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,6 +32,9 @@
 
 struct mcclock_softc {
 	struct mc146818_softc	sc_mc146818;
+
+	/* Accessible only on the primary CPU. */
+	bool			sc_primary_only;
 };
 
 void	mcclock_attach(struct mcclock_softc *);

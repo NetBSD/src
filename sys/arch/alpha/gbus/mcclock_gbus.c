@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_gbus.c,v 1.4 2024/03/06 06:30:49 thorpej Exp $ */
+/* $NetBSD: mcclock_gbus.c,v 1.5 2024/03/06 07:34:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.4 2024/03/06 06:30:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.5 2024/03/06 07:34:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,6 +85,9 @@ mcclock_gbus_attach(device_t parent, device_t self, void *aux)
 			  0, &sc->sc_bsh) != 0) {
 		panic("mcclock_gbus_attach: couldn't map clock I/O space");
 	}
+
+	/* The RTC is accessible only by a CPU on the primary CPU module. */
+	msc->sc_primary_only = true;
 
 	sc->sc_mcread  = mcclock_gbus_read;
 	sc->sc_mcwrite = mcclock_gbus_write;
