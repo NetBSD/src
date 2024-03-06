@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.123 2022/07/10 08:17:02 nia Exp $
+.\"	$NetBSD: pci.4,v 1.124 2024/03/06 22:18:56 cnst Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -312,6 +312,11 @@ Realtek RTL8188CE/RTL8192CE 802.11b/g/n wireless network interfaces.
 WaveLAN/IEEE and PRISM-II 802.11 wireless interfaces.
 .It Xr wpi 4
 Intel PRO/Wireless 3945ABG Mini PCI Express network adapters.
+.El
+.Ss Cellular WAN interfaces
+.Bl -tag -width pcdisplay(4) -offset indent
+.It Xr wwanc 4
+Intel XMM 7360 LTE modem.
 .El
 .Ss Serial interfaces
 .Bl -tag -width pcdisplay(4) -offset indent
