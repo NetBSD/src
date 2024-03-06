@@ -1,4 +1,4 @@
-/* $NetBSD: gbusvar.h,v 1.1 2024/03/02 19:57:57 thorpej Exp $ */
+/* $NetBSD: gbusvar.h,v 1.2 2024/03/06 05:33:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,6 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ALPHA_GBUS_GBUSVAR_H_
+#define	_ALPHA_GBUS_GBUSVAR_H_
+
 /*
  * Autoconfiguration definitions for the Gbus found on TurboLaser CPU modules.
  */
@@ -37,6 +40,11 @@
 #include <sys/bus.h>
 
 struct gbus_attach_args {
-	const char *ga_name;		/* name of device */
-	bus_addr_t  ga_offset;		/* offset from Gbus base */
+	const char *	ga_name;	/* name of device */
+	bus_space_tag_t	ga_iot;		/* I/O space tag */
+	bus_addr_t	ga_offset;	/* offset from Gbus base */
 };
+
+bus_space_tag_t	gbus_io_init(paddr_t);
+
+#endif /* _ALPHA_GBUS_GBUSVAR_H_ */

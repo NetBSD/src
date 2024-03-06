@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.196 2024/03/02 20:15:33 thorpej Exp $
+# $NetBSD: files.alpha,v 1.197 2024/03/06 05:33:09 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -104,6 +104,7 @@ file	arch/alpha/tlsb/tlsbmem.c	tlsbmem
 device	gbus { offset = -1 }
 attach	gbus at tlsb
 file	arch/alpha/gbus/gbus.c		gbus
+file	arch/alpha/gbus/gbus_io.c	gbus
 
 #
 # MCBUS support
