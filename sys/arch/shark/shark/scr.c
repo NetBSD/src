@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.37 2024/02/09 22:08:33 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -67,7 +67,7 @@
 **    referenced to T2 counts.
 **
 **    The bottom half is done as a several linked state machines.  
-**    The top level machine is the maserSM (ie master State Machine).  This 
+**    The top level machine is the masterSM (ie master State Machine).  This 
 **    machine calls mid level protocol machines, ie ATRSM (Answer To Reset 
 **    State Machine), t0SendSM (T=0 Send State Machine), and t0RecvSM (T=0 Recv 
 **    State Machine).  These mid level protocol machines in turn call low level
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.37 2024/02/09 22:08:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.14 2024/02/09 18:39:52 andvar Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.15 2024/03/06 20:02:24 andvar Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.14 2024/02/09 18:39:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.15 2024/03/06 20:02:24 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -3288,7 +3288,7 @@ vmxnet3_select_txqueue(struct ifnet *ifp, struct mbuf *m __unused)
 	sc = ifp->if_softc;
 	cpuid = cpu_index(curcpu());
 	/*
-	 * Furure work
+	 * Future work
 	 * We should select txqueue to even up the load even if ncpu is
 	 * different from sc->vmx_ntxqueues. Currently, the load is not
 	 * even, that is, when ncpu is six and ntxqueues is four, the load
@@ -3606,7 +3606,7 @@ vmxnet3_if_link_status(struct vmxnet3_softc *sc)
  * check vmx(4) state by VMXNET3_CMD and update ifp->if_baudrate
  *   returns
  *       - true:  link up
- *       - flase: link down
+ *       - false: link down
  */
 static bool
 vmxnet3_cmd_link_status(struct ifnet *ifp)
