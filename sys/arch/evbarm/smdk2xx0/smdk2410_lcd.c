@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.14 2024/03/06 20:18:42 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.13 2023/12/20 13:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.14 2024/03/06 20:18:42 andvar Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -209,7 +209,7 @@ static const struct s3c24x0_lcd_panel_info samsung_LTS350Q1 =
     _(LCDCON3_HBPD, 7) | 
     _(LCDCON3_HFPD, 3),
 
-    /* LCDCON4: horizontaol pulse width */
+    /* LCDCON4: horizontal pulse width */
     _(LCDCON4_HPSW, 4),
 
     /* LCDCON5: signal polarities */
