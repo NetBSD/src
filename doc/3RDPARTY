@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1996 2024/03/03 21:05:47 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1997 2024/03/06 17:44:48 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -760,10 +760,10 @@ Notes:
 
 Package:	llvm
 Version:	10.0.0git (01f3a59fb3e2542fce74c768718f594d0debd0da)
-Current Vers.:	10.0.0
+Current Vers.:	18.1
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
-Date:		2020-06-13
+Date:		2024-03-06
 Responsible:	joerg
 License:	Apache2 with runtime exceptions
 Location:	external/apache2/llvm/dist
