@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.7 2008/05/14 13:29:29 tsutsui Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.8 2024/03/06 02:31:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -24,6 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_IC_MC146818VAR_H_
+#define	_DEV_IC_MC146818VAR_H_
+
 struct mc146818_softc {
 	device_t sc_dev;
 
@@ -45,4 +48,8 @@ struct mc146818_softc {
 	void (*sc_setcent)(struct mc146818_softc *, u_int);
 };
 
-void mc146818_attach(struct mc146818_softc *);
+void	mc146818_attach(struct mc146818_softc *);
+int	mc146818_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+int	mc146818_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+
+#endif /* _DEV_IC_MC146818VAR_H_ */
