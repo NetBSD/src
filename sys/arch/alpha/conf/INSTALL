@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.119 2024/03/02 20:15:33 thorpej Exp $
+# $NetBSD: INSTALL,v 1.120 2024/03/06 13:37:35 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -92,9 +92,9 @@ qemu*	at	mainbus?
 
 # TurboLaser bus support and devices
 tlsb*	at	mainbus?
-gbus*	at	tlsb? node ? offset ?
-tlsbmem* at	tlsb? node ? offset ?
-kft*	at	tlsb? node ? offset ?
+gbus*	at	tlsb? node ?
+tlsbmem* at	tlsb? node ?
+kft*	at	tlsb? node ?
 
 # Gbus Devices
 mcclock* at	gbus? offset ?

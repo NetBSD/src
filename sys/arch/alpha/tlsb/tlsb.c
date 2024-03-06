@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.41 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.42 2024/03/06 13:37:35 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.41 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.42 2024/03/06 13:37:35 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -70,7 +70,7 @@ CFATTACH_DECL_NEW(tlsb, 0,
 extern struct cfdriver tlsb_cd;
 
 static int	tlsbprint(void *, const char *);
-static const char *tlsb_node_type_str(uint32_t);
+static const char *tlsb_node_type_str(uint32_t, char *, size_t);
 
 /*
  * There can be only one TurboLaser, and we'll overload it
@@ -87,13 +87,15 @@ static int
 tlsbprint(void *aux, const char *pnp)
 {
 	struct tlsb_dev_attach_args *tap = aux;
+	char buf[64];
 
 	if (pnp)
 		aprint_normal("%s at %s node %d",
-		    tlsb_node_type_str(tap->ta_dtype), pnp, tap->ta_node);
+		    tlsb_node_type_str(tap->ta_dtype, buf, sizeof(buf)),
+		    pnp, tap->ta_node);
 	else
 		aprint_normal(" node %d: %s", tap->ta_node,
-		    tlsb_node_type_str(tap->ta_dtype));
+		    tlsb_node_type_str(tap->ta_dtype, buf, sizeof(buf)));
 
 	return (UNCONF);
 }
@@ -124,7 +126,9 @@ tlsbattach(device_t parent, device_t self, void *aux)
 	struct tlsb_dev_attach_args ta;
 	uint32_t tldev;
 	int node;
+	int ionodes = 0;
 	int locs[TLSBCF_NLOCS];
+	char buf[64];
 
 	printf("\n");
 
@@ -158,9 +162,11 @@ tlsbattach(device_t parent, device_t self, void *aux)
 		 * We do this so that we don't have to do something
 		 * silly at fault time like try a 'baddadr'...
 		 */
-		tlsb_found |= (1 << node);
-		if (TLDEV_ISIOPORT(tldev))
+		tlsb_found |= __BIT(node);
+		if (TLDEV_ISIOPORT(tldev)) {
+			ionodes |= __BIT(node);
 			continue;	/* not interested right now */
+		}
 		ta.ta_node = node;
 		ta.ta_dtype = TLDEV_DTYPE(tldev);
 		ta.ta_swrev = TLDEV_SWREV(tldev);
@@ -171,73 +177,71 @@ tlsbattach(device_t parent, device_t self, void *aux)
 		 */
 		if (TLDEV_ISCPU(tldev)) {
 			aprint_normal("%s node %d: %s\n", device_xname(self),
-			    node, tlsb_node_type_str(tldev));
+			    node,
+			    tlsb_node_type_str(tldev, buf, sizeof(buf)));
 		}
 		/*
 		 * Attach any children nodes, including a CPU's GBus
 		 */
 		locs[TLSBCF_NODE] = node;
-		locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
 		config_found(self, &ta, tlsbprint,
 		    CFARGS(.submatch = config_stdsubmatch,
 			   .locators = locs));
 	}
 	/*
-	 * *Now* search for I/O nodes (in descending order)
+	 * *Now* attach I/O nodes (in descending order).  We don't
+	 * need to bother using badaddr() here; we have a cheat sheet
+	 * from above.
 	 */
-	while (--node > 0) {
-		if (badaddr(TLSB_NODE_REG_ADDR(node, TLDEV), sizeof(uint32_t)))
+	while (--node >= 0) {
+		if ((ionodes & __BIT(node)) == 0) {
 			continue;
+		}
 		tldev = TLSB_GET_NODEREG(node, TLDEV);
 		if (tldev == 0) {
 			continue;
 		}
-		if (TLDEV_ISIOPORT(tldev)) {
 #if defined(MULTIPROCESSOR)
-			/*
-			 * XXX Eventually, we want to select a secondary
-			 * XXX processor on which to field interrupts for
-			 * XXX this node.  However, we just send them to
-			 * XXX the primary CPU for now.
-			 *
-			 * XXX Maybe multiple CPUs?  Does the hardware
-			 * XXX round-robin, or check the length of the
-			 * XXX per-CPU interrupt queue?
-			 */
-			printf("%s node %d: routing interrupts to %s\n",
-			  device_xname(self), node,
-			  device_xname(cpu_info[hwrpb->rpb_primary_cpu_id]->ci_softc->sc_dev));
-			TLSB_PUT_NODEREG(node, TLCPUMASK,
-			    (1UL << hwrpb->rpb_primary_cpu_id));
+		/*
+		 * XXX Eventually, we want to select a secondary
+		 * XXX processor on which to field interrupts for
+		 * XXX this node.  However, we just send them to
+		 * XXX the primary CPU for now.
+		 *
+		 * XXX Maybe multiple CPUs?  Does the hardware
+		 * XXX round-robin, or check the length of the
+		 * XXX per-CPU interrupt queue?
+		 */
+		printf("%s node %d: routing interrupts to %s\n",
+		  device_xname(self), node,
+		  device_xname(cpu_info[hwrpb->rpb_primary_cpu_id]->ci_softc->sc_dev));
+		TLSB_PUT_NODEREG(node, TLCPUMASK,
+		    (1UL << hwrpb->rpb_primary_cpu_id));
 #else
-			/*
-			 * Make sure interrupts are sent to the primary CPU.
-			 */
-			TLSB_PUT_NODEREG(node, TLCPUMASK,
-			    (1UL << hwrpb->rpb_primary_cpu_id));
+		/*
+		 * Make sure interrupts are sent to the primary CPU.
+		 */
+		TLSB_PUT_NODEREG(node, TLCPUMASK,
+		    (1UL << hwrpb->rpb_primary_cpu_id));
 #endif /* MULTIPROCESSOR */
 
-			ta.ta_node = node;
-			ta.ta_dtype = TLDEV_DTYPE(tldev);
-			ta.ta_swrev = TLDEV_SWREV(tldev);
-			ta.ta_hwrev = TLDEV_HWREV(tldev);
+		ta.ta_node = node;
+		ta.ta_dtype = TLDEV_DTYPE(tldev);
+		ta.ta_swrev = TLDEV_SWREV(tldev);
+		ta.ta_hwrev = TLDEV_HWREV(tldev);
 
-			locs[TLSBCF_NODE] = node;
-			locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
+		locs[TLSBCF_NODE] = node;
 
-			config_found(self, &ta, tlsbprint,
-			    CFARGS(.submatch = config_stdsubmatch,
-				   .locators = locs));
-		}
+		config_found(self, &ta, tlsbprint,
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 }
 
 static const char *
-tlsb_node_type_str(uint32_t dtype)
+tlsb_node_type_str(uint32_t dtype, char *buf, size_t buflen)
 {
-	static char	tlsb_line[64];
-
 	switch (dtype & TLDEV_DTYPE_MASK) {
 	case TLDEV_DTYPE_KFTHA:
 		return ("KFTHA I/O interface");
@@ -261,9 +265,8 @@ tlsb_node_type_str(uint32_t dtype)
 		return ("Dual CPU, 16MB cache");
 
 	default:
-		snprintf(tlsb_line, sizeof(tlsb_line), "unknown, dtype 0x%x",
-		    dtype);
-		return (tlsb_line);
+		snprintf(buf, buflen, "unknown, dtype 0x%04x", dtype);
+		return (buf);
 	}
 	/* NOTREACHED */
 }

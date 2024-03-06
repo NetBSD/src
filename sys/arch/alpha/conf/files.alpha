@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.197 2024/03/06 05:33:09 thorpej Exp $
+# $NetBSD: files.alpha,v 1.198 2024/03/06 13:37:35 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -85,7 +85,7 @@ file	dev/md_root.c			memory_disk_hooks
 # TurboLaser Bus Support
 #
 
-device	tlsb { node = -1, offset = -1 }
+device	tlsb { node = -1 }
 attach	tlsb at mainbus
 file	arch/alpha/tlsb/tlsb.c		tlsb & dec_kn8ae
 
