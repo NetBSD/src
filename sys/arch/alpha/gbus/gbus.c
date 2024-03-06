@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.2 2024/03/06 05:33:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.1 2024/03/02 19:57:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.2 2024/03/06 05:33:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,10 @@ CFATTACH_DECL_NEW(gbus, sizeof(struct gbus_softc),
 static int	gbusprint(void *, const char *);
 
 static const struct gbus_attach_args gbus_children[] = {
-	{ "zsc",	GBUS_DUART0_OFFSET },
-	{ "zsc",	GBUS_DUART1_OFFSET },
-	{ "mcclock",	GBUS_CLOCK_OFFSET },
-	{ NULL,		0 },
+	{ "zsc",	NULL,	GBUS_DUART0_OFFSET },
+	{ "zsc",	NULL,	GBUS_DUART1_OFFSET },
+	{ "mcclock",	NULL,	GBUS_CLOCK_OFFSET },
+	{ NULL,		NULL,	0 },
 };
 
 static int
@@ -113,6 +113,7 @@ gbusattach(device_t parent, device_t self, void *aux)
 	struct gbus_softc *sc = device_private(self);
 	struct tlsb_dev_attach_args *ta = aux;
 	const struct gbus_attach_args *ga;
+	bus_space_tag_t iot = gbus_io_init(TLSB_GBUS_BASE);
 	int locs[GBUSCF_NLOCS];
 
 	aprint_normal("\n");
@@ -123,6 +124,7 @@ gbusattach(device_t parent, device_t self, void *aux)
 	/* Attach the children. */
 	for (ga = gbus_children; ga->ga_name != NULL; ga++) {
 		struct gbus_attach_args gaa = *ga;
+		gaa.ga_iot = iot;
 		locs[GBUSCF_OFFSET] = gaa.ga_offset;
 		config_found(self, &gaa, gbusprint,
 		    CFARGS(.submatch = config_stdsubmatch,
