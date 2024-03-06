@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.107 2022/05/22 11:27:33 andvar Exp $ */
+/* $NetBSD: cpu.c,v 1.108 2024/03/06 07:22:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2022/05/22 11:27:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2024/03/06 07:22:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2022/05/22 11:27:33 andvar Exp $");
 #include <machine/alpha.h>
 
 struct cpu_info cpu_info_primary __cacheline_aligned = {
-	.ci_curlwp = &lwp0
+	.ci_curlwp = &lwp0,
+	.ci_flags  = CPUF_PRIMARY|CPUF_RUNNING,
 };
 struct cpu_info *cpu_info_list __read_mostly = &cpu_info_primary;
 
@@ -450,7 +451,8 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (primary) {
 		cpu_announce_extensions(ci);
 #if defined(MULTIPROCESSOR)
-		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
+		KASSERT(ci->ci_flags & CPUF_PRIMARY);
+		KASSERT(ci->ci_flags & CPUF_RUNNING);
 		atomic_or_ulong(&cpus_booted, (1UL << ma->ma_slot));
 		atomic_or_ulong(&cpus_running, (1UL << ma->ma_slot));
 #endif /* MULTIPROCESSOR */
