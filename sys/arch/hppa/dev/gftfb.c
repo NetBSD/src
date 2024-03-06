@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.8 2024/02/28 14:12:12 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.9 2024/03/06 08:19:44 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -294,7 +294,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_width,
+				sc->sc_scr.fbwidth,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
@@ -320,7 +320,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				sc->sc_scr.fbheight - sc->sc_height - 5,
-				sc->sc_width,
+				sc->sc_scr.fbwidth,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
