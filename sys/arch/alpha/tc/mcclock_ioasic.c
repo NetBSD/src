@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.18 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.19 2024/03/06 06:30:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.18 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.19 2024/03/06 06:30:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,7 +53,7 @@ struct mcclock_ioasic_clockdatum {
 };
 
 struct mcclock_ioasic_softc {
-	struct mc146818_softc	sc_mc146818;
+	struct mcclock_softc	sc_mcclock;
 
 	struct mcclock_ioasic_clockdatum *sc_dp;
 };
@@ -83,7 +83,7 @@ mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcclock_ioasic_softc *isc = device_private(self);
 	struct ioasicdev_attach_args *ioasicdev = aux;
-	struct mc146818_softc *sc = &isc->sc_mc146818;
+	struct mc146818_softc *sc = &isc->sc_mcclock.sc_mc146818;
 
 	/* XXX no bus_space(9) for TURBOchannel yet */
 	isc->sc_dp = (void *)ioasicdev->iada_addr;
@@ -93,7 +93,7 @@ mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mcwrite = mcclock_ioasic_write;
 
 	/* call alpha common mcclock attachment */
-	mcclock_attach(sc);
+	mcclock_attach(&isc->sc_mcclock);
 }
 
 static void

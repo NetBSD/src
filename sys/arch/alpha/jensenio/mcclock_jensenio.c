@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.12 2024/03/06 06:30:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.12 2024/03/06 06:30:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.11 2021/05/07 16:58:34 thorpe
 #include <alpha/alpha/mcclockvar.h>
 
 struct mcclock_jensenio_softc {
-	struct mc146818_softc	sc_mc146818;
+	struct mcclock_softc	sc_mcclock;
 
 	bus_space_handle_t	sc_std_rtc_ioh;
 };
@@ -109,7 +109,7 @@ mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcclock_jensenio_softc *jsc = device_private(self);
 	struct jensenio_attach_args *ja = aux;
-	struct mc146818_softc *sc = &jsc->sc_mc146818;
+	struct mc146818_softc *sc = &jsc->sc_mcclock.sc_mc146818;
 
 	sc->sc_dev = self;
 	sc->sc_bst = ja->ja_iot;
@@ -127,7 +127,7 @@ mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mcread  = mcclock_jensenio_read;
 	sc->sc_mcwrite = mcclock_jensenio_write;
 
-	mcclock_attach(sc);
+	mcclock_attach(&jsc->sc_mcclock);
 }
 
 static void
