@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.21 2021/05/07 16:58:33 thorpej Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.22 2024/03/06 06:30:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.21 2021/05/07 16:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.22 2024/03/06 06:30:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.21 2021/05/07 16:58:33 thorpej Exp
 static int	mcclock_isa_match(device_t, cfdata_t, void *);
 static void	mcclock_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mcclock_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 static void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
@@ -97,7 +97,8 @@ mcclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 static void
 mcclock_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = device_private(self);
+	struct mcclock_softc *msc = device_private(self);
+	struct mc146818_softc *sc = &msc->sc_mc146818;
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_dev = self;
@@ -109,7 +110,7 @@ mcclock_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mcread  = mcclock_isa_read;
 	sc->sc_mcwrite = mcclock_isa_write;
 
-	mcclock_attach(sc);
+	mcclock_attach(msc);
 }
 
 static void

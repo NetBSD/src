@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.21 2020/10/01 07:21:36 skrll Exp $ */
+/* $NetBSD: mcclock.c,v 1.22 2024/03/06 06:30:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21 2020/10/01 07:21:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.22 2024/03/06 06:30:48 thorpej Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -69,8 +69,9 @@ static void mcclock_set_pcc_freq(struct mc146818_softc *);
 static void mcclock_init(void *);
 
 void
-mcclock_attach(struct mc146818_softc *sc)
+mcclock_attach(struct mcclock_softc *msc)
 {
+	struct mc146818_softc *sc = &msc->sc_mc146818;
 
 	sc->sc_year0 = 1900 + UNIX_YEAR_OFFSET;
 	sc->sc_flag = 0;	/* BINARY, 24HR */

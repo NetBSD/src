@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_gbus.c,v 1.3 2024/03/06 05:44:44 thorpej Exp $ */
+/* $NetBSD: mcclock_gbus.c,v 1.4 2024/03/06 06:30:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.3 2024/03/06 05:44:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.4 2024/03/06 06:30:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_gbus.c,v 1.3 2024/03/06 05:44:44 thorpej Exp
 static int	mcclock_gbus_match(device_t, cfdata_t, void *);
 static void	mcclock_gbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mcclock_gbus, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_gbus, sizeof(struct mcclock_softc),
     mcclock_gbus_match, mcclock_gbus_attach, NULL, NULL);
 
 static void	mcclock_gbus_write(struct mc146818_softc *, u_int, u_int);
@@ -74,7 +74,8 @@ mcclock_gbus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 mcclock_gbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = device_private(self);
+	struct mcclock_softc *msc = device_private(self);
+	struct mc146818_softc *sc = &msc->sc_mc146818;
 	struct gbus_attach_args *ga = aux;
 
 	sc->sc_dev = self;
@@ -88,7 +89,7 @@ mcclock_gbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mcread  = mcclock_gbus_read;
 	sc->sc_mcwrite = mcclock_gbus_write;
 
-	mcclock_attach(sc);
+	mcclock_attach(msc);
 }
 
 static void
