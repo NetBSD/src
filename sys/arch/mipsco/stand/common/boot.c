@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2014/02/14 16:04:44 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2024/03/06 19:48:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ static char *devsplit(char *, char *);
 int main(int, char **);
 
 /*
- * This gets arguments from the first stage boot lader, calls PROM routines
+ * This gets arguments from the first stage boot loader, calls PROM routines
  * to open and load the program to boot, and then transfers execution to
  * that new program.
  */
