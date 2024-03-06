@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.20 2020/01/01 19:24:03 thorpej Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.21 2024/03/06 02:31:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.20 2020/01/01 19:24:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.21 2024/03/06 02:31:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.20 2020/01/01 19:24:03 thorpej Exp $"
 
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/mc146818var.h>
-
-int mc146818_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
-int mc146818_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
 void
 mc146818_attach(struct mc146818_softc *sc)
@@ -61,11 +58,14 @@ mc146818_attach(struct mc146818_softc *sc)
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
-	handle->todr_gettime_ymdhms = mc146818_gettime_ymdhms;
-	handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
-	handle->todr_setwen  = NULL;
+	KASSERT(handle->todr_gettime == NULL);
+	KASSERT(handle->todr_settime == NULL);
+	if (handle->todr_gettime_ymdhms == NULL) {
+		handle->todr_gettime_ymdhms = mc146818_gettime_ymdhms;
+	}
+	if (handle->todr_settime_ymdhms == NULL) {
+		handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
+	}
 
 	todr_attach(handle);
 }
@@ -103,7 +103,7 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	dt->dt_wday = FROMREG((*sc->sc_mcread)(sc, MC_DOW));
 	dt->dt_day  = FROMREG((*sc->sc_mcread)(sc, MC_DOM));
 	dt->dt_mon  = FROMREG((*sc->sc_mcread)(sc, MC_MONTH));
-	year       = FROMREG((*sc->sc_mcread)(sc, MC_YEAR));
+	year        = FROMREG((*sc->sc_mcread)(sc, MC_YEAR));
 	if (sc->sc_getcent) {
 		cent = (*sc->sc_getcent)(sc);
 		year += cent * 100;
