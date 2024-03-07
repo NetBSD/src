@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.141 2024/02/17 14:54:47 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.142 2024/03/07 20:42:04 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.141 2024/02/17 14:54:47 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.142 2024/03/07 20:42:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -569,10 +569,10 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		       && (ttisutcnt == typecnt || ttisutcnt == 0)))
 		  return EINVAL;
 
-		sp->leapcnt = leapcnt;
-		sp->timecnt = timecnt;
-		sp->typecnt = typecnt;
-		sp->charcnt = charcnt;
+		sp->leapcnt = (int)leapcnt;
+		sp->timecnt = (int)timecnt;
+		sp->typecnt = (int)typecnt;
+		sp->charcnt = (int)charcnt;
 
 		/* Read transitions, discarding those out of time_t range.
 		   But pretend the last transition before TIME_T_MIN
@@ -605,7 +605,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			if (sp->types[i])
 				sp->types[timecnt++] = typ;
 		}
-		sp->timecnt = timecnt;
+		sp->timecnt = (int)timecnt;
 		for (i = 0; i < sp->typecnt; ++i) {
 			register struct ttinfo *	ttisp;
 			unsigned char isdst, desigidx;
@@ -660,7 +660,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		    leapcnt++;
 		  }
 		}
-		sp->leapcnt = leapcnt;
+		sp->leapcnt = (int)leapcnt;
 
 		for (i = 0; i < sp->typecnt; ++i) {
 			register struct ttinfo *	ttisp;
@@ -725,7 +725,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			      size_t tsabbrlen = strlen(tsabbr);
 			      if (j + tsabbrlen < TZ_MAX_CHARS) {
 				strcpy(sp->chars + j, tsabbr);
-				charcnt = (int_fast32_t)(j + tsabbrlen + 1);
+				charcnt = (int)(j + tsabbrlen + 1);
 				ts->ttis[i].tt_desigidx = j;
 				gotabbr++;
 			      }
@@ -1878,11 +1878,11 @@ timesub(const time_t *timep, int_fast32_t offset,
 		* YEARSPERREPEAT));
 	/* idays = (tdays + dayoff) mod DAYSPERREPEAT, sans overflow.  */
 	idays = (int)(tdays % DAYSPERREPEAT);
-	idays += dayoff % DAYSPERREPEAT + 2 * DAYSPERREPEAT;
+	idays += (dayoff % DAYSPERREPEAT + 2 * DAYSPERREPEAT);
 	idays %= DAYSPERREPEAT;
 	/* Increase Y and decrease IDAYS until IDAYS is in range for Y.  */
 	while (year_lengths[isleap(y)] <= idays) {
-		int tdelta = idays / DAYSPERLYEAR;
+		int_fast32_t tdelta = idays / DAYSPERLYEAR;
 		int_fast32_t ydelta = tdelta + !tdelta;
 		time_t newy = y + ydelta;
 		register int	leapdays;
@@ -1910,7 +1910,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	  return NULL;
 	}
 #endif
-	tmp->tm_yday = idays;
+	tmp->tm_yday = (int)idays;
 	/*
 	** The "extra" mods below avoid overflow problems.
 	*/
@@ -1925,8 +1925,8 @@ timesub(const time_t *timep, int_fast32_t offset,
 		tmp->tm_wday += DAYSPERWEEK;
 	tmp->tm_hour = (int) (rem / SECSPERHOUR);
 	rem %= SECSPERHOUR;
-	tmp->tm_min = rem / SECSPERMIN;
-	tmp->tm_sec = rem % SECSPERMIN;
+	tmp->tm_min = (int)(rem / SECSPERMIN);
+	tmp->tm_sec = (int)(rem % SECSPERMIN);
 
 	/* Use "... ??:??:60" at the end of the localtime minute containing
 	   the second just before the positive leap second.  */
@@ -1935,7 +1935,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	ip = mon_lengths[isleap(y)];
 	for (tmp->tm_mon = 0; idays >= ip[tmp->tm_mon]; ++(tmp->tm_mon))
 		idays -= ip[tmp->tm_mon];
-	tmp->tm_mday = idays + 1;
+	tmp->tm_mday = (int)(idays + 1);
 	tmp->tm_isdst = 0;
 #ifdef TM_GMTOFF
 	tmp->TM_GMTOFF = offset;
