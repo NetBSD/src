@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.39 2020/01/13 16:01:37 uwe Exp $
+.\"	$NetBSD: dlfcn.3,v 1.40 2024/03/07 22:14:20 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,10 +27,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 13, 2020
+.Dd March 7, 2024
 .Dt DLFCN 3
 .Os
 .Sh NAME
+.Nm _dlauxinfo ,
 .Nm dlopen ,
 .Nm dlclose ,
 .Nm dlsym ,
@@ -45,6 +46,10 @@ They are included in every
 dynamically linked program automatically.)
 .Sh SYNOPSIS
 .In dlfcn.h
+.Ft "void *"
+.Fn _dlauxinfo "void"
+.Ft "void *"
+.Fn dlopen "const char *path" "int mode"
 .Ft "void *"
 .Fn dlopen "const char *path" "int mode"
 .Ft "int"
@@ -64,6 +69,12 @@ These functions provide an interface to the run-time linker
 .Xr ld.so 1 .
 They allow new shared objects to be loaded into the process' address space
 under program control.
+.Pp
+The
+.Fn _dlauxinfo
+function returns a pointer to the
+.Xr elf 5
+array of AuxInfo structures for the current executable.
 .Pp
 The
 .Fn dlopen
