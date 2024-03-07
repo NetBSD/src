@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2022/01/22 08:58:48 skrll Exp $
+#	$NetBSD: Makefile,v 1.92 2024/03/07 22:14:20 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __FPTRCAST.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -243,7 +243,8 @@ MLINKS+=param.3 MAX.3 \
 MLINKS+=dirent.3 dir.3 \
 	dirent.3 IFTODT.3 \
 	dirent.3 DTTOIF.3
-MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
+MLINKS+=dlfcn.3 _dlauxinfo.3 dlfcn.3 dlopen.3 dlfcn.3 \
+	dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3 dlfcn.3 dlvsym.3
 MLINKS+=timeradd.3 timersub.3 \
 	timeradd.3 timerclear.3 \
