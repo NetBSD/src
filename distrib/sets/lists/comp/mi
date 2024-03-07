@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2456 2024/03/04 10:19:13 macallan Exp $
+#	$NetBSD: mi,v 1.2457 2024/03/07 22:15:52 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6164,6 +6164,7 @@
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__unused.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__used.0			comp-c-catman		.cat
+./usr/share/man/cat3/_dlauxinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/_setjmp.0			comp-c-catman		.cat
@@ -9143,7 +9144,6 @@
 ./usr/share/man/cat3/logbf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logbl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logf.0			comp-c-catman		.cat
-./usr/share/man/cat3/logl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/login.0			comp-c-catman		.cat
 ./usr/share/man/cat3/login_cap.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_close.0		comp-c-catman		.cat
@@ -9156,6 +9156,7 @@
 ./usr/share/man/cat3/login_getpwclass.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_tty.0		comp-c-catman		.cat
 ./usr/share/man/cat3/loginx.0			comp-c-catman		.cat
+./usr/share/man/cat3/logl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logoutx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logwtmp.0			comp-c-catman		.cat
@@ -14713,6 +14714,7 @@
 ./usr/share/man/html3/__svc_getcallercreds.html comp-c-htmlman		html
 ./usr/share/man/html3/__unused.html		comp-c-htmlman		html
 ./usr/share/man/html3/__used.html		comp-c-htmlman		html
+./usr/share/man/html3/_dlauxinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/_longjmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/_lwp_makecontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/_setjmp.html		comp-c-htmlman		html
@@ -23099,6 +23101,7 @@
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/__unused.3			comp-c-man		.man
 ./usr/share/man/man3/__used.3			comp-c-man		.man
+./usr/share/man/man3/_dlauxinfo.3		comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
 ./usr/share/man/man3/_setjmp.3			comp-c-man		.man
