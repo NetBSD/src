@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.12 2024/02/28 04:14:47 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.13 2024/03/08 23:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.12 2024/02/28 04:14:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.13 2024/03/08 23:34:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -627,11 +627,17 @@ heartbeat(void)
 
 	KASSERT(curcpu_stable());
 
+	/*
+	 * If heartbeat checks are disabled globally, or if they are
+	 * suspended locally, or if we're already panicking so it's not
+	 * helpful to trigger more panics for more reasons, do nothing.
+	 */
 	period_ticks = atomic_load_relaxed(&heartbeat_max_period_ticks);
 	period_secs = atomic_load_relaxed(&heartbeat_max_period_secs);
 	if (__predict_false(period_ticks == 0) ||
 	    __predict_false(period_secs == 0) ||
-	    __predict_false(curcpu()->ci_heartbeat_suspend))
+	    __predict_false(curcpu()->ci_heartbeat_suspend) ||
+	    __predict_false(panicstr != NULL))
 		return;
 
 	/*
