@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.39 2024/02/06 23:57:41 mrg Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.40 2024/03/08 07:05:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ typedef uint32_t ehci_isoc_bufr_ptr_t;
 #define EHCI_ITD_ALIGN 32
 #define EHCI_ITD_NUFRAMES USB_UFRAMES_PER_FRAME
 #define EHCI_ITD_NBUFFERS 7
-typedef struct {
+typedef struct ehci_itd_t {
 	volatile ehci_link_t		itd_next;
 	volatile ehci_isoc_trans_t	itd_ctl[EHCI_ITD_NUFRAMES];
 #define EHCI_ITD_STATUS_MASK	__BITS(31,28)
@@ -252,7 +252,7 @@ typedef struct {
 
 /* Split Transaction Isochronous Transfer Descriptor */
 #define EHCI_SITD_ALIGN 32
-typedef struct {
+typedef struct ehci_sitd_t {
 	volatile ehci_link_t	sitd_next;
 	volatile uint32_t	sitd_endp;
 #define EHCI_SITD_DIR_MASK	__BIT(31)
@@ -301,7 +301,7 @@ typedef struct {
 #define EHCI_QTD_NBUFFERS	5
 #define EHCI_QTD_MAXTRANSFER	(EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE)
 #define EHCI_QTD_ALIGN 32
-typedef struct {
+typedef struct ehci_qtd_t {
 	volatile ehci_link_t	qtd_next;
 	volatile ehci_link_t	qtd_altnext;
 	volatile uint32_t	qtd_status;
@@ -343,7 +343,7 @@ typedef struct {
 
 /* Queue Head */
 #define EHCI_QH_ALIGN 32
-typedef struct {
+typedef struct ehci_qh_t {
 	volatile ehci_link_t	qh_link;
 	volatile uint32_t	qh_endp;
 #define EHCI_QH_ADDR_MASK	__BITS(6,0)	/* endpoint addr */
@@ -405,7 +405,7 @@ typedef struct {
 
 /* Periodic Frame Span Traversal Node */
 #define EHCI_FSTN_ALIGN 32
-typedef struct {
+typedef struct ehci_fstn_t {
 	volatile ehci_link_t	fstn_link;
 	volatile ehci_link_t	fstn_back;
 } __aligned(EHCI_FSTN_ALIGN) ehci_fstn_t;
