@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrioctl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: if_agrioctl.h,v 1.3 2024/03/08 19:45:59 rillig Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -64,7 +64,7 @@ struct agrportinfo {
 #define	AGRPORTINFO_BITS \
 	"\177\020" \
 	"b\0COLLECTING\0" \
-	"b\0DISTRIBUTING\0"
+	"b\1DISTRIBUTING\0"
 
 struct agrportlist {
 	int apl_nports;
