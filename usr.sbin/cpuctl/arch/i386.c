@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.143 2024/02/10 18:43:53 andvar Exp $	*/
+/*	$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.143 2024/02/10 18:43:53 andvar Exp $");
+__RCSID("$NetBSD: i386.c,v 1.144 2024/03/08 20:29:17 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1728,6 +1728,13 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 		bp += strlen(bp) + 1;
 	}
 }
+#ifdef lint
+#define print_bits(cpuname, hdr, fmt, val) \
+	do {	\
+		print_bits(cpuname, hdr, fmt, val); \
+		snprintb(NULL, 0, fmt, val); \
+	} while (0)
+#endif
 
 static void
 dump_descs(uint32_t leafstart, uint32_t leafend, const char *cpuname,
