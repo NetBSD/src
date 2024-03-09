@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.207 2024/02/27 05:27:39 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.208 2024/03/09 18:26:59 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21255,4 +21255,12 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h 				(manually edited)
 
 	Welcome to 10.0_RC5
+
+external/bsd/tcpdump/dist/print-ppp.c		patch
+
+	tcpdump(8): apply upstream fix for CVE-2020-8037:
+	the ppp decapsulator in tcpdump 4.9.3 can be convinced
+	to allocate a large amount of memory.
+	fixes PR 57586
+	[martin, ticket #623]
 
