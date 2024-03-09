@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.8 2024/03/09 10:47:16 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.9 2024/03/09 13:54:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.8 2024/03/09 10:47:16 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.9 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -59,10 +59,10 @@ static bool
 match_string_literal(const tnode_t *tn, const buffer **str)
 {
 	while (tn->tn_op == CVT)
-		tn = tn->tn_left;
+		tn = tn->u.ops.left;
 	return tn->tn_op == ADDR
-	    && tn->tn_left->tn_op == STRING
-	    && (*str = tn->tn_left->tn_string, (*str)->data != NULL);
+	    && tn->u.ops.left->tn_op == STRING
+	    && (*str = tn->u.ops.left->u.str_literals, (*str)->data != NULL);
 }
 
 static bool
@@ -74,8 +74,8 @@ match_snprintb_call(const function_call *call,
 	const buffer *str;
 
 	if (call->func->tn_op == ADDR
-	    && call->func->tn_left->tn_op == NAME
-	    && (func = call->func->tn_left->tn_sym->s_name, true)
+	    && call->func->u.ops.left->tn_op == NAME
+	    && (func = call->func->u.ops.left->u.sym->s_name, true)
 	    && ((strcmp(func, "snprintb") == 0 && call->args_len == 4)
 		|| (strcmp(func, "snprintb_m") == 0 && call->args_len == 5))
 	    && match_string_literal(call->args[2], &str)
@@ -329,7 +329,7 @@ check_snprintb(const tnode_t *expr)
 {
 	const buffer *fmt;
 	const tnode_t *value;
-	if (!match_snprintb_call(expr->tn_call, &fmt, &value))
+	if (!match_snprintb_call(expr->u.call, &fmt, &value))
 		return;
 
 	checker ck = {

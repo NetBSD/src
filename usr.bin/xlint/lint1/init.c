@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.262 2024/03/09 13:20:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.263 2024/03/09 13:54:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.262 2024/03/09 13:20:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.263 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -272,7 +272,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 	ln->tn_op = NAME;
 	ln->tn_type = lutp;
 	ln->tn_lvalue = true;
-	ln->tn_sym = lsym;
+	ln->u.sym = lsym;
 
 	rn = cconv(rn);
 
@@ -885,10 +885,10 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 	if (!can_init_character_array(tp, tn))
 		return false;
 
-	size_t len = tn->tn_string->len;
-	if (tn->tn_string->data != NULL) {
+	size_t len = tn->u.str_literals->len;
+	if (tn->u.str_literals->data != NULL) {
 		quoted_iterator it = { .end = 0 };
-		for (len = 0; quoted_next(tn->tn_string, &it); len++)
+		for (len = 0; quoted_next(tn->u.str_literals, &it); len++)
 			continue;
 	}
 
