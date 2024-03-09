@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.90 2024/03/03 16:09:01 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.91 2024/03/09 13:20:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.90 2024/03/03 16:09:01 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.91 2024/03/09 13:20:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -113,20 +113,22 @@ outtype(const type_t *tp)
 		outchar(tt[ts]);
 
 		if (ts == ARRAY) {
-			outint(tp->t_dim);
+			outint(tp->u.dimension);
 		} else if (ts == ENUM) {
-			outtt(tp->t_enum->en_tag, tp->t_enum->en_first_typedef);
+			outtt(tp->u.enumer->en_tag,
+			    tp->u.enumer->en_first_typedef);
 		} else if (is_struct_or_union(ts)) {
-			outtt(tp->t_sou->sou_tag, tp->t_sou->sou_first_typedef);
+			outtt(tp->u.sou->sou_tag,
+			    tp->u.sou->sou_first_typedef);
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
-			for (const sym_t *param = tp->t_params;
+			for (const sym_t *param = tp->u.params;
 			    param != NULL; param = param->s_next)
 				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
-			for (const sym_t *param = tp->t_params;
+			for (const sym_t *param = tp->u.params;
 			    param != NULL; param = param->s_next)
 				outtype(param->s_type);
 			if (tp->t_vararg)

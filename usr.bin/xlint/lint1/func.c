@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.182 2024/03/09 10:54:12 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.183 2024/03/09 13:20:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.182 2024/03/09 10:54:12 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.183 2024/03/09 13:20:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -253,7 +253,7 @@ begin_function(sym_t *fsym)
 	 * is already removed from the list of parameters.)
 	 */
 	int n = 1;
-	for (const sym_t *param = fsym->s_type->t_params;
+	for (const sym_t *param = fsym->s_type->u.params;
 	    param != NULL; param = param->s_next) {
 		if (param->s_scl == ABSTRACT) {
 			lint_assert(param->s_name == unnamed);
@@ -421,7 +421,7 @@ check_case_label_enum(const tnode_t *tn, const control_statement *cs)
 	if (!(tn->tn_type->t_is_enum || cs->c_switch_type->t_is_enum))
 		return;
 	if (tn->tn_type->t_is_enum && cs->c_switch_type->t_is_enum &&
-	    tn->tn_type->t_enum == cs->c_switch_type->t_enum)
+	    tn->tn_type->u.enumer == cs->c_switch_type->u.enumer)
 		return;
 
 #if 0 /* not yet ready, see msg_130.c */
@@ -639,7 +639,7 @@ stmt_switch_expr(tnode_t *tn)
 	if (tn != NULL) {
 		tp->t_tspec = tn->tn_type->t_tspec;
 		if ((tp->t_is_enum = tn->tn_type->t_is_enum) != false)
-			tp->t_enum = tn->tn_type->t_enum;
+			tp->u.enumer = tn->tn_type->u.enumer;
 	} else {
 		tp->t_tspec = INT;
 	}
@@ -673,8 +673,8 @@ stmt_switch_expr_stmt(void)
 		 * number of enumerators.
 		 */
 		nenum = nclab = 0;
-		lint_assert(cstmt->c_switch_type->t_enum != NULL);
-		for (esym = cstmt->c_switch_type->t_enum->en_first_enumerator;
+		lint_assert(cstmt->c_switch_type->u.enumer != NULL);
+		for (esym = cstmt->c_switch_type->u.enumer->en_first_enumerator;
 		    esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}

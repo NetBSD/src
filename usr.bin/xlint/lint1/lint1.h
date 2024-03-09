@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.219 2024/03/09 11:05:05 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.220 2024/03/09 13:20:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -129,7 +129,7 @@ struct lint1_type {
 	bool	t_incomplete_array:1;
 	bool	t_const:1;
 	bool	t_volatile:1;
-	bool	t_proto:1;	/* function prototype (t_params valid) */
+	bool	t_proto:1;	/* function prototype (u.params valid) */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_typedef:1;	/* type defined with typedef */
 	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
@@ -137,28 +137,22 @@ struct lint1_type {
 	/*
 	 * Either the type is currently an enum (having t_tspec ENUM), or it
 	 * is an integer type (typically INT) that has been implicitly
-	 * converted from an enum type.  In both cases, t_enum is valid.
+	 * converted from an enum type.  In both cases, u.enumer is valid.
 	 */
 	bool	t_is_enum:1;
 	bool	t_packed:1;
 	union {
-		int		_t_dim;		/* dimension (if ARRAY) */
-		struct_or_union	*_t_sou;
-		enumeration	*_t_enum;
-		sym_t		*_t_params;	/* parameters (if t_proto) */
-	} t_u;
+		int		dimension;	/* if ARRAY */
+		struct_or_union	*sou;
+		enumeration	*enumer;
+		sym_t		*params;	/* if t_proto */
+	} u;
 	unsigned int	t_bit_field_width:8;
 	unsigned int	t_bit_field_offset:24;
 	struct lint1_type *t_subt;	/*- element type (if ARRAY),
 					 * return value (if FUNC),
 					 * target type (if PTR) */
 };
-
-#define	t_dim	t_u._t_dim
-#define	t_sou	t_u._t_sou
-#define	t_enum	t_u._t_enum
-#define	t_params t_u._t_params
-
 
 typedef enum {
 	SK_VCFT,		/* variable, constant, function, type */
@@ -365,8 +359,8 @@ typedef struct decl_level {
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
 	bool	d_used:1;
-	type_t	*d_tag_type;	/* during a member declaration, the tag type to
-				 * which the member belongs */
+	type_t	*d_tag_type;	/* during a member or enumerator declaration,
+				 * the tag type to which the member belongs */
 	sym_t	*d_func_params;	/* during a function declaration, the
 				 * parameters, stored in the enclosing level */
 	pos_t	d_func_def_pos;	/* position of the function definition */
