@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.183 2024/03/09 13:20:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.184 2024/03/09 13:54:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.183 2024/03/09 13:20:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.184 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -401,12 +401,12 @@ static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
 	if (switch_expr->tn_op != BITAND ||
-	    switch_expr->tn_right->tn_op != CON)
+	    switch_expr->u.ops.right->tn_op != CON)
 		return;
 
 	lint_assert(case_expr->tn_op == CON);
-	uint64_t case_value = (uint64_t)case_expr->tn_val.u.integer;
-	uint64_t mask = (uint64_t)switch_expr->tn_right->tn_val.u.integer;
+	uint64_t case_value = (uint64_t)case_expr->u.value.u.integer;
+	uint64_t mask = (uint64_t)switch_expr->u.ops.right->u.value.u.integer;
 
 	if ((case_value & ~mask) != 0)
 		/* statement not reached */
@@ -908,7 +908,7 @@ static bool
 is_parenthesized(const tnode_t *tn)
 {
 	while (!tn->tn_parenthesized && tn->tn_op == COMMA)
-		tn = tn->tn_right;
+		tn = tn->u.ops.right;
 	return tn->tn_parenthesized && !tn->tn_sys;
 }
 
@@ -925,16 +925,16 @@ check_return_value(bool sys, tnode_t *tn)
 	ln->tn_op = NAME;
 	ln->tn_type = expr_unqualified_type(funcsym->s_type->t_subt);
 	ln->tn_lvalue = true;
-	ln->tn_sym = funcsym;	/* better than nothing */
+	ln->u.sym = funcsym;	/* better than nothing */
 
 	tnode_t *retn = build_binary(ln, RETURN, sys, tn);
 
 	if (retn != NULL) {
-		const tnode_t *rn = retn->tn_right;
+		const tnode_t *rn = retn->u.ops.right;
 		while (rn->tn_op == CVT || rn->tn_op == PLUS)
-			rn = rn->tn_left;
-		if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
-		    rn->tn_left->tn_sym->s_scl == AUTO)
+			rn = rn->u.ops.left;
+		if (rn->tn_op == ADDR && rn->u.ops.left->tn_op == NAME &&
+		    rn->u.ops.left->u.sym->s_scl == AUTO)
 			/* '%s' returns pointer to automatic object */
 			warning(302, funcsym->s_name);
 	}

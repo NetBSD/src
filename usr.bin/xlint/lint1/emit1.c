@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.91 2024/03/09 13:20:55 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.92 2024/03/09 13:54:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.91 2024/03/09 13:20:55 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.92 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -335,7 +335,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	 * flags; 'u' and 'i' must be last to make sure a letter is between the
 	 * numeric argument of a flag and the name of the function
 	 */
-	const function_call *call = tn->tn_call;
+	const function_call *call = tn->u.call;
 
 	/* information about arguments */
 	for (size_t n = 1; call->args != NULL && n <= call->args_len; n++) {
@@ -347,7 +347,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				 * XXX it would probably be better to
 				 * explicitly test the sign
 				 */
-				int64_t si = arg->tn_val.u.integer;
+				int64_t si = arg->u.value.u.integer;
 				if (si == 0)
 					/* zero constant */
 					outchar('z');
@@ -360,12 +360,12 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				outint((int)n);
 			}
 		} else if (arg->tn_op == ADDR &&
-		    arg->tn_left->tn_op == STRING &&
-		    arg->tn_left->tn_string->data != NULL) {
+		    arg->u.ops.left->tn_op == STRING &&
+		    arg->u.ops.left->u.str_literals->data != NULL) {
 			buffer buf;
 			buf_init(&buf);
 			quoted_iterator it = { .end = 0 };
-			while (quoted_next(arg->tn_left->tn_string, &it))
+			while (quoted_next(arg->u.ops.left->u.str_literals, &it))
 				buf_add_char(&buf, (char)it.value);
 
 			/* string literal, write all format specifiers */
@@ -377,7 +377,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	}
 	outchar((char)(retval_discarded ? 'd' : retval_used ? 'u' : 'i'));
 
-	outname(call->func->tn_left->tn_sym->s_name);
+	outname(call->func->u.ops.left->u.sym->s_name);
 
 	/* types of arguments */
 	outchar('f');

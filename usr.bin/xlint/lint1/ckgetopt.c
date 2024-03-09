@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.25 2024/03/03 16:09:01 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.26 2024/03/09 13:54:47 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.25 2024/03/03 16:09:01 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.26 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -86,23 +86,23 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 	if (tn != NULL
 	    && tn->tn_op == NE
 
-	    && tn->tn_right->tn_op == CON
-	    && tn->tn_right->tn_u._tn_val.v_tspec == INT
-	    && tn->tn_right->tn_u._tn_val.u.integer == -1
+	    && tn->u.ops.right->tn_op == CON
+	    && tn->u.ops.right->u.value.v_tspec == INT
+	    && tn->u.ops.right->u.value.u.integer == -1
 
-	    && tn->tn_left->tn_op == ASSIGN
-	    && tn->tn_left->tn_right->tn_op == CALL
-	    && (call = tn->tn_left->tn_right->tn_call)->func->tn_op == ADDR
-	    && call->func->tn_left->tn_op == NAME
-	    && strcmp(call->func->tn_left->tn_sym->s_name, "getopt") == 0
+	    && tn->u.ops.left->tn_op == ASSIGN
+	    && tn->u.ops.left->u.ops.right->tn_op == CALL
+	    && (call = tn->u.ops.left->u.ops.right->u.call)->func->tn_op == ADDR
+	    && call->func->u.ops.left->tn_op == NAME
+	    && strcmp(call->func->u.ops.left->u.sym->s_name, "getopt") == 0
 	    && call->args_len == 3
 	    && call->args != NULL
 
 	    && (last_arg = call->args[2]) != NULL
 	    && last_arg->tn_op == CVT
-	    && last_arg->tn_left->tn_op == ADDR
-	    && last_arg->tn_left->tn_left->tn_op == STRING
-	    && (str = last_arg->tn_left->tn_left->tn_string)->data != NULL) {
+	    && last_arg->u.ops.left->tn_op == ADDR
+	    && last_arg->u.ops.left->u.ops.left->tn_op == STRING
+	    && (str = last_arg->u.ops.left->u.ops.left->u.str_literals)->data != NULL) {
 		buffer buf;
 		buf_init(&buf);
 		quoted_iterator it = { .end = 0 };

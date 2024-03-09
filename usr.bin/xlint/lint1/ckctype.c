@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.10 2024/02/05 23:11:22 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.11 2024/03/09 13:54:47 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.10 2024/02/05 23:11:22 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.11 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -99,7 +99,7 @@ check_ctype_arg(const char *func, const tnode_t *arg)
 {
 	const tnode_t *on, *cn;
 
-	for (on = arg; on->tn_op == CVT; on = on->tn_left)
+	for (on = arg; on->tn_op == CVT; on = on->u.ops.left)
 		if (on->tn_type->t_tspec == UCHAR)
 			return;
 	if (on->tn_type->t_tspec == UCHAR)
@@ -125,8 +125,8 @@ check_ctype_function_call(const function_call *call)
 
 	if (call->args_len == 1 && call->args != NULL &&
 	    call->func->tn_op == NAME &&
-	    is_ctype_function(call->func->tn_sym->s_name))
-		check_ctype_arg(call->func->tn_sym->s_name, call->args[0]);
+	    is_ctype_function(call->func->u.sym->s_name))
+		check_ctype_arg(call->func->u.sym->s_name, call->args[0]);
 }
 
 void
@@ -134,10 +134,10 @@ check_ctype_macro_invocation(const tnode_t *ln, const tnode_t *rn)
 {
 
 	if (ln->tn_op == PLUS &&
-	    ln->tn_left != NULL &&
-	    ln->tn_left->tn_op == LOAD &&
-	    ln->tn_left->tn_left != NULL &&
-	    ln->tn_left->tn_left->tn_op == NAME &&
-	    is_ctype_table(ln->tn_left->tn_left->tn_sym->s_name))
+	    ln->u.ops.left != NULL &&
+	    ln->u.ops.left->tn_op == LOAD &&
+	    ln->u.ops.left->u.ops.left != NULL &&
+	    ln->u.ops.left->u.ops.left->tn_op == NAME &&
+	    is_ctype_table(ln->u.ops.left->u.ops.left->u.sym->s_name))
 		check_ctype_arg("function from <ctype.h>", rn);
 }

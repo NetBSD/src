@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.220 2024/03/09 13:20:55 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.221 2024/03/09 13:54:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -277,12 +277,12 @@ struct tnode {
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
-			tnode_t *_tn_left;	/* (left) operand */
-			tnode_t *_tn_right;	/* right operand */
-		} tn_s;
-		sym_t	*_tn_sym;	/* symbol if op == NAME */
-		val_t	_tn_val;	/* value if op == CON */
-		buffer	*_tn_string;	/* string if op == STRING; for
+			tnode_t *left;	/* (left) operand */
+			tnode_t *right;	/* right operand */
+		} ops;
+		sym_t	*sym;		/* if NAME */
+		val_t	value;		/* if CON */
+		buffer	*str_literals;	/* if STRING; for
 					 * character strings, 'data' points to
 					 * the concatenated string literals in
 					 * source form, and 'len' is the
@@ -290,16 +290,9 @@ struct tnode {
 					 * wide strings, 'data' is NULL and
 					 * 'len' is the number of resulting
 					 * characters */
-		function_call *_tn_call;
-	} tn_u;
+		function_call *call;	/* if CALL or ICALL */
+	} u;
 };
-
-#define	tn_left		tn_u.tn_s._tn_left
-#define tn_right	tn_u.tn_s._tn_right
-#define tn_sym		tn_u._tn_sym
-#define	tn_val		tn_u._tn_val
-#define	tn_string	tn_u._tn_string
-#define tn_call		tn_u._tn_call
 
 struct generic_association {
 	type_t *ga_arg;		/* NULL means default or error */
@@ -605,20 +598,20 @@ static inline bool
 constant_is_nonzero(const tnode_t *tn)
 {
 	lint_assert(tn->tn_op == CON);
-	lint_assert(tn->tn_type->t_tspec == tn->tn_val.v_tspec);
-	return is_nonzero_val(&tn->tn_val);
+	lint_assert(tn->tn_type->t_tspec == tn->u.value.v_tspec);
+	return is_nonzero_val(&tn->u.value);
 }
 
 static inline bool
 is_zero(const tnode_t *tn)
 {
-	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(&tn->tn_val);
+	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(&tn->u.value);
 }
 
 static inline bool
 is_nonzero(const tnode_t *tn)
 {
-	return tn != NULL && tn->tn_op == CON && is_nonzero_val(&tn->tn_val);
+	return tn != NULL && tn->tn_op == CON && is_nonzero_val(&tn->u.value);
 }
 
 static inline const char *

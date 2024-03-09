@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.29 2024/02/03 12:57:12 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.30 2024/03/09 13:54:47 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.29 2024/02/03 12:57:12 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.30 2024/03/09 13:54:47 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -73,7 +73,7 @@ is_symmetric_bool_or_other(op_t op)
 static bool
 is_int_constant_zero(const tnode_t *tn, tspec_t t)
 {
-	return t == INT && tn->tn_op == CON && tn->tn_val.u.integer == 0;
+	return t == INT && tn->tn_op == CON && tn->u.value.u.integer == 0;
 }
 
 static bool
@@ -201,7 +201,7 @@ bool
 is_typeok_bool_compares_with_zero(const tnode_t *tn)
 {
 	while (tn->tn_op == COMMA)
-		tn = tn->tn_right;
+		tn = tn->u.ops.right;
 	tn = before_conversion(tn);
 
 	return tn->tn_type->t_tspec == BOOL
