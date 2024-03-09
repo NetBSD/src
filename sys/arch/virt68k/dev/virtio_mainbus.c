@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $	*/
+/*	$NetBSD: virtio_mainbus.c,v 1.2 2024/03/09 11:16:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 2021, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.2 2024/03/09 11:16:31 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,8 @@ virtio_mainbus_alloc_interrupts(struct virtio_mmio_softc *msc)
 static void
 virtio_mainbus_free_interrupts(struct virtio_mmio_softc *msc)
 {
-	intr_disestablish(msc->sc_ih);
-	msc->sc_ih = NULL;
+	if (msc->sc_ih) {
+		intr_disestablish(msc->sc_ih);
+		msc->sc_ih = NULL;
+	}
 }
