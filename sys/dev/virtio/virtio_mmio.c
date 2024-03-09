@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.13 2024/01/06 06:59:33 thorpej Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.14 2024/03/09 11:55:59 isaki Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.13 2024/01/06 06:59:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.14 2024/03/09 11:55:59 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,7 @@ virtio_mmio_v2_setup_queue(struct virtio_softc *vsc, uint16_t idx,
     uint64_t addr)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	struct virtqueue *vq = &vsc->sc_vqs[idx];
-	KASSERT(vq->vq_index == idx);
+	struct virtqueue *vq;
 
 	virtio_mmio_reg_write(sc, VIRTIO_MMIO_QUEUE_SEL, idx);
 	if (addr == 0) {
@@ -218,6 +217,9 @@ virtio_mmio_v2_setup_queue(struct virtio_softc *vsc, uint16_t idx,
 		virtio_mmio_v2_set_addr(sc, VIRTIO_MMIO_V2_QUEUE_AVAIL_LOW, 0);
 		virtio_mmio_v2_set_addr(sc, VIRTIO_MMIO_V2_QUEUE_USED_LOW, 0);
 	} else {
+		vq = &vsc->sc_vqs[idx];
+		KASSERT(vq->vq_index == idx);
+
 		virtio_mmio_reg_write(sc, VIRTIO_MMIO_QUEUE_NUM,
 		    virtio_mmio_reg_read(sc, VIRTIO_MMIO_QUEUE_NUM_MAX));
 		virtio_mmio_v2_set_addr(sc, VIRTIO_MMIO_V2_QUEUE_DESC_LOW,
