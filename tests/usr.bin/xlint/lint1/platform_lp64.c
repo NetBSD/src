@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.7 2023/07/08 12:45:43 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.8 2024/03/09 16:47:09 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -43,4 +43,23 @@ convert_128(void)
 	s32 = s128;
 	/* expect+1: warning: conversion from '__uint128_t' to 'unsigned int' may lose accuracy [132] */
 	u32 = u128;
+}
+
+char ch;
+
+void
+array_index(void)
+{
+	static char buf[20];
+
+	/* expect+1: warning: array subscript cannot be > 19: 2147483647 [168] */
+	ch += buf[2147483647];
+	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	ch += buf[2147483648];
+	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	ch += buf[0x80000000];
+	/* expect+1: warning: array subscript cannot be > 19: 4294967295 [168] */
+	ch += buf[0xffffffff];
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	ch += buf[0xffffffffffffffff];
 }
