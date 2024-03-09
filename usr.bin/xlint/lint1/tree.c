@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.612 2024/03/09 13:54:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.613 2024/03/09 14:54:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.612 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.613 2024/03/09 14:54:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4327,52 +4327,37 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 		expr_free_all();
 }
 
-/*
- * Checks the range of array indices, if possible.
- * amper is set if only the address of the element is used. This
- * means that the index is allowed to refer to the first element
- * after the array.
- */
+/* If the expression has the form '*(arr + idx)', check the array index. */
 static void
-check_array_index(tnode_t *tn, bool amper)
+check_array_index(const tnode_t *indir, bool taking_address)
 {
-	lint_assert(has_operands(tn));
-	const tnode_t *ln = tn->u.ops.left;
-	const tnode_t *rn = tn->u.ops.right;
+	const tnode_t *plus, *arr, *idx;
 
-	/* We can only check constant indices. */
-	if (rn->tn_op != CON)
-		return;
+	if (indir->tn_op == INDIR
+	    && (plus = indir->u.ops.left, plus->tn_op == PLUS)
+	    && plus->u.ops.left->tn_op == ADDR
+	    && (arr = plus->u.ops.left->u.ops.left, true)
+	    && (arr->tn_op == STRING || arr->tn_op == NAME)
+	    && arr->tn_type->t_tspec == ARRAY
+	    && (idx = plus->u.ops.right, idx->tn_op == CON)
+	    && (!is_incomplete(arr->tn_type) || idx->u.value.u.integer < 0))
+		goto proceed;
+	return;
 
-	/* Return if the left node does not stem from an array. */
-	if (ln->tn_op != ADDR)
-		return;
-	if (ln->u.ops.left->tn_op != STRING && ln->u.ops.left->tn_op != NAME)
-		return;
-	if (ln->u.ops.left->tn_type->t_tspec != ARRAY)
-		return;
-
-	/*
-	 * For incomplete array types, we can print a warning only if the index
-	 * is negative.
-	 */
-	if (is_incomplete(ln->u.ops.left->tn_type)
-	    && rn->u.value.u.integer >= 0)
-		return;
-
-	int elsz = length_in_bits(ln->tn_type->t_subt, NULL);
+proceed:;
+	int elsz = length_in_bits(arr->tn_type->t_subt, NULL);
 	if (elsz == 0)
 		return;
 	elsz /= CHAR_SIZE;
 
 	/* Change the unit of the index from bytes to element size. */
-	int64_t con = is_uinteger(rn->tn_type->t_tspec)
-	    ? (int64_t)((uint64_t)rn->u.value.u.integer / elsz)
-	    : rn->u.value.u.integer / elsz;
+	int64_t con = is_uinteger(idx->tn_type->t_tspec)
+	    ? (int64_t)((uint64_t)idx->u.value.u.integer / elsz)
+	    : idx->u.value.u.integer / elsz;
 
-	int dim = ln->u.ops.left->tn_type->u.dimension + (amper ? 1 : 0);
+	int dim = arr->tn_type->u.dimension + (taking_address ? 1 : 0);
 
-	if (!is_uinteger(rn->tn_type->t_tspec) && con < 0)
+	if (!is_uinteger(idx->tn_type->t_tspec) && con < 0)
 		/* array subscript cannot be negative: %ld */
 		warning(167, (long)con);
 	else if (dim > 0 && (uint64_t)con >= (uint64_t)dim)
@@ -4389,15 +4374,7 @@ check_expr_addr(const tnode_t *ln, bool szof, bool fcall)
 			mark_as_set(ln->u.sym);
 		mark_as_used(ln->u.sym, fcall, szof);
 	}
-	if (ln->tn_op == INDIR && ln->u.ops.left->tn_op == PLUS)
-		check_array_index(ln->u.ops.left, true);
-}
-
-static void
-check_expr_load(const tnode_t *ln)
-{
-	if (ln->tn_op == INDIR && ln->u.ops.left->tn_op == PLUS)
-		check_array_index(ln->u.ops.left, false);
+	check_array_index(ln, true);
 }
 
 /*
@@ -4439,9 +4416,7 @@ check_expr_assign(const tnode_t *ln, bool szof)
 		if (ln->u.sym->s_scl == EXTERN)
 			outusg(ln->u.sym);
 	}
-	if (ln->tn_op == INDIR && ln->u.ops.left->tn_op == PLUS)
-		/* check the range of array indices */
-		check_array_index(ln->u.ops.left, false);
+	check_array_index(ln, false);
 }
 
 static void
@@ -4463,7 +4438,7 @@ check_expr_op(op_t op, const tnode_t *ln, bool szof, bool fcall, bool eqwarn)
 		check_expr_addr(ln, szof, fcall);
 		break;
 	case LOAD:
-		check_expr_load(ln);
+		check_array_index(ln, false);
 		/* FALLTHROUGH */
 	case INCBEF:
 	case DECBEF:
