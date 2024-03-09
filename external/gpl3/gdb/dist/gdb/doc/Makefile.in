@@ -417,6 +417,8 @@ refcard.pdf : refcard.tex $(REFEDITS)
 
 # File to record current GDB version number.
 GDBvn.texi : version.subst
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_GDBvn.texi:
 	echo "@set GDBVN `sed q version.subst`" > ./GDBvn.new
 	if [ -n "$(PKGVERSION)" ]; then \
 	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> ./GDBvn.new; \
