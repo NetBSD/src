@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_long.c,v 1.5 2024/03/09 16:47:09 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_long.c,v 1.6 2024/03/09 17:34:01 rillig Exp $	*/
 # 3 "platform_ilp32_long.c"
 
 /*
@@ -37,24 +37,75 @@ convert_between_int_and_long(void)
 	ul32 = u32;
 }
 
-char ch;
+unsigned char u8;
+unsigned long long u64;
+unsigned char u8_buf[20];
+unsigned long long u64_buf[20];
 
 void
 array_index(void)
 {
-	static char buf[20];
 
+	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
+	u8 += u8_buf[0x00ffffff];
 	/* expect+1: warning: array subscript cannot be > 19: 2147483647 [168] */
-	ch += buf[2147483647];
+	u8 += u8_buf[0x7fffffff];
 	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -2147483648 [167] */
-	ch += buf[2147483648];
+	u8 += u8_buf[2147483648];
 	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -2147483648 [167] */
-	ch += buf[0x80000000];
+	u8 += u8_buf[0x80000000];
 	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
-	ch += buf[0xffffffff];
+	u8 += u8_buf[0xffffffff];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -2147483648 [167] */
+	u8 += u8_buf[0x80000000];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
-	ch += buf[0xffffffffffffffff];
+	u8 += u8_buf[0xffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u8 += u8_buf[0x00ffffffffffffff];
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u8 += u8_buf[0xffffffffffffffff];
+
+	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
+	u64 += u64_buf[0x00ffffff];
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x7fffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	u64 += u64_buf[2147483648];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	u64 += u64_buf[0x80000000];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0xffffffff];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	u64 += u64_buf[0x80000000];
+	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0xffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x00ffffffffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x0fffffffffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x1fffffffffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x3fffffffffffffff];
+	/* expect+2: warning: conversion of 'long long' to 'long' is out of range [119] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x7fffffffffffffff];
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0xffffffffffffffff];
 }
