@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.216 2024/03/09 10:41:11 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.217 2024/03/09 10:47:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -554,20 +554,6 @@ typedef struct {
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
 	} while (false)
-
-static inline tnode_t *
-tn_ck_left(const tnode_t *tn)
-{
-	lint_assert(has_operands(tn));
-	return tn->tn_left;
-}
-
-static inline tnode_t *
-tn_ck_right(const tnode_t *tn)
-{
-	lint_assert(has_operands(tn));
-	return tn->tn_right;
-}
 
 #ifdef DEBUG
 #  include "err-msgs.h"

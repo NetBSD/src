@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.7 2024/03/03 16:09:01 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.8 2024/03/09 10:47:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.7 2024/03/03 16:09:01 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.8 2024/03/09 10:47:16 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -59,7 +59,7 @@ static bool
 match_string_literal(const tnode_t *tn, const buffer **str)
 {
 	while (tn->tn_op == CVT)
-		tn = tn_ck_left(tn);
+		tn = tn->tn_left;
 	return tn->tn_op == ADDR
 	    && tn->tn_left->tn_op == STRING
 	    && (*str = tn->tn_left->tn_string, (*str)->data != NULL);

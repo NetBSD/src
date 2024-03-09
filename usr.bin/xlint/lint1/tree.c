@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.609 2024/03/03 16:09:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.610 2024/03/09 10:47:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.609 2024/03/03 16:09:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.610 2024/03/09 10:47:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1236,7 +1236,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 static bool
 is_cast_redundant(const tnode_t *tn)
 {
-	const type_t *ntp = tn->tn_type, *otp = tn_ck_left(tn)->tn_type;
+	const type_t *ntp = tn->tn_type, *otp = tn->tn_left->tn_type;
 	tspec_t nt = ntp->t_tspec, ot = otp->t_tspec;
 
 	if (nt == BOOL || ot == BOOL)
