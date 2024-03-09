@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.489 2024/02/08 20:45:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.490 2024/03/09 10:41:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.489 2024/02/08 20:45:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.490 2024/03/09 10:41:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -128,7 +128,7 @@ is_either(const char *s, const char *a, const char *b)
 	tspec_t	y_tspec;
 	type_qualifiers y_type_qualifiers;
 	function_specifier y_function_specifier;
-	struct parameter_list y_parameter_list;
+	parameter_list y_parameter_list;
 	function_call *y_arguments;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
@@ -137,7 +137,7 @@ is_either(const char *s, const char *a, const char *b)
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
 	struct generic_association *y_generic;
-	struct array_size y_array_size;
+	array_size y_array_size;
 	bool	y_in_system_header;
 	designation y_designation;
 };
@@ -1421,7 +1421,7 @@ param_list:
 		block_level++;
 		begin_declaration_level(DLK_PROTO_PARAMS);
 	} identifier_list T_RPAREN {
-		$$ = (struct parameter_list){ .first = $3 };
+		$$ = (parameter_list){ .first = $3 };
 	}
 |	abstract_decl_param_list
 ;
@@ -1541,7 +1541,7 @@ direct_abstract_declarator:
 
 abstract_decl_param_list:	/* specific to lint */
 	abstract_decl_lparen T_RPAREN type_attribute_opt {
-		$$ = (struct parameter_list){ .first = NULL };
+		$$ = (parameter_list){ .first = NULL };
 	}
 |	abstract_decl_lparen vararg_parameter_type_list T_RPAREN
 	    type_attribute_opt {
@@ -1549,7 +1549,7 @@ abstract_decl_param_list:	/* specific to lint */
 		$$.prototype = true;
 	}
 |	abstract_decl_lparen error T_RPAREN type_attribute_opt {
-		$$ = (struct parameter_list){ .first = NULL };
+		$$ = (parameter_list){ .first = NULL };
 	}
 ;
 
@@ -1574,14 +1574,14 @@ vararg_parameter_type_list:	/* specific to lint */
 		else if (allow_c90)
 			/* C90 to C17 require formal parameter before '...' */
 			warning(84);
-		$$ = (struct parameter_list){ .vararg = true };
+		$$ = (parameter_list){ .vararg = true };
 	}
 ;
 
 /* XXX: C99 6.7.5 defines the same name, but it looks different. */
 parameter_type_list:
 	parameter_declaration {
-		$$ = (struct parameter_list){ .first = $1 };
+		$$ = (parameter_list){ .first = $1 };
 	}
 |	parameter_type_list T_COMMA parameter_declaration {
 		$$ = $1;

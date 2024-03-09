@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.215 2024/03/03 16:09:01 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.216 2024/03/09 10:41:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -108,6 +108,8 @@ typedef struct {
 	} u;
 } val_t;
 
+typedef struct sym sym_t;
+
 /*
  * Structures of type struct_or_union uniquely identify structures. This can't
  * be done in structures of type type_t, because these are copied if they must
@@ -121,9 +123,9 @@ typedef struct {
 	unsigned int sou_size_in_bits;
 	unsigned int sou_align_in_bits;
 	bool	sou_incomplete:1;
-	struct sym *sou_first_member;
-	struct sym *sou_tag;
-	struct sym *sou_first_typedef;
+	sym_t	*sou_first_member;
+	sym_t	*sou_tag;
+	sym_t	*sou_first_typedef;
 } struct_or_union;
 
 /*
@@ -131,9 +133,9 @@ typedef struct {
  */
 typedef struct {
 	bool	en_incomplete:1;
-	struct sym *en_first_enumerator;
-	struct sym *en_tag;
-	struct sym *en_first_typedef;
+	sym_t	*en_first_enumerator;
+	sym_t	*en_tag;
+	sym_t	*en_first_typedef;
 } enumeration;
 
 /*
@@ -165,7 +167,7 @@ struct lint1_type {
 		int		_t_dim;		/* dimension (if ARRAY) */
 		struct_or_union	*_t_sou;
 		enumeration	*_t_enum;
-		struct sym	*_t_params;	/* parameters (if t_proto) */
+		sym_t		*_t_params;	/* parameters (if t_proto) */
 	} t_u;
 	unsigned int	t_bit_field_width:8;
 	unsigned int	t_bit_field_offset:24;
@@ -218,7 +220,7 @@ typedef enum {
 /*
  * symbol table entry
  */
-typedef struct sym {
+struct sym {
 	const char *s_name;
 	const char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_def_pos;	/* position of last (prototype) definition,
@@ -268,20 +270,19 @@ typedef struct sym {
 		struct sym *s_old_style_params;	/* parameters in an old-style
 						 * function definition */
 	} u;
-	struct sym *s_symtab_next;	/* next symbol with same hash value */
-	struct sym **s_symtab_ref;	/* pointer to s_symtab_next of the
-					 * previous symbol */
-	struct sym *s_next;	/* next struct/union member, enumerator,
+	sym_t	*s_symtab_next;	/* next symbol in the same symtab bucket */
+	sym_t	**s_symtab_ref;	/* pointer to s_symtab_next of the previous
+				 * symbol */
+	sym_t	*s_next;	/* next struct/union member, enumerator,
 				 * parameter */
-	struct sym *s_level_next;	/* next symbol declared on the same
-					 * level */
-} sym_t;
+	sym_t	*s_level_next;	/* next symbol declared on the same level */
+};
 
 /*
  * Used to keep some information about symbols before they are entered
  * into the symbol table.
  */
-typedef struct sbuf {
+typedef struct {
 	const char *sb_name;		/* name of symbol */
 	size_t	sb_len;			/* length (without '\0') */
 	sym_t	*sb_sym;		/* symbol table entry */
@@ -295,10 +296,10 @@ typedef struct {
 	size_t args_cap;
 } function_call;
 
-/*
- * tree node
- */
-typedef struct tnode {
+typedef struct tnode tnode_t;
+
+/* An expression, forming an abstract syntax tree. */
+struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
 	bool	tn_lvalue:1;	/* node is lvalue */
@@ -311,8 +312,8 @@ typedef struct tnode {
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
-			struct tnode *_tn_left;	/* (left) operand */
-			struct tnode *_tn_right;	/* right operand */
+			tnode_t *_tn_left;	/* (left) operand */
+			tnode_t *_tn_right;	/* right operand */
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
 		val_t	_tn_val;	/* value if op == CON */
@@ -326,7 +327,7 @@ typedef struct tnode {
 					 * characters */
 		function_call *_tn_call;
 	} tn_u;
-} tnode_t;
+};
 
 #define	tn_left		tn_u.tn_s._tn_left
 #define tn_right	tn_u.tn_s._tn_right
@@ -341,10 +342,10 @@ struct generic_association {
 	struct generic_association *ga_prev;
 };
 
-struct array_size {
+typedef struct {
 	bool has_dim;
 	int dim;
-};
+} array_size;
 
 typedef enum decl_level_kind {
 	DLK_EXTERN,		/* global types, variables or functions */
@@ -407,11 +408,11 @@ typedef struct decl_level {
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 
-struct parameter_list {
+typedef struct {
 	sym_t	*first;
 	bool	vararg:1;
 	bool	prototype:1;
-};
+} parameter_list;
 
 /*
  * A sequence of asterisks and qualifiers, from right to left.  For example,
