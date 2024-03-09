@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ppp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.9.14.1 2024/03/09 18:25:30 bouyer Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -1372,19 +1372,29 @@ trunc:
 	return 0;
 }
 
+/*
+ * Un-escape RFC 1662 PPP in HDLC-like framing, with octet escapes.
+ * The length argument is the on-the-wire length, not the captured
+ * length; we can only un-escape the captured part.
+ */
 static void
 ppp_hdlc(netdissect_options *ndo,
          const u_char *p, int length)
 {
+	u_int caplen = ndo->ndo_snapend - p;
 	u_char *b, *t, c;
 	const u_char *s;
-	int i, proto;
+	u_int i;
+	int proto;
 	const void *se;
+
+	if (caplen == 0)
+		return;
 
         if (length <= 0)
                 return;
 
-	b = (u_char *)malloc(length);
+	b = (u_char *)malloc(caplen);
 	if (b == NULL)
 		return;
 
@@ -1393,10 +1403,10 @@ ppp_hdlc(netdissect_options *ndo,
 	 * Do this so that we dont overwrite the original packet
 	 * contents.
 	 */
-	for (s = p, t = b, i = length; i > 0 && ND_TTEST(*s); i--) {
+	for (s = p, t = b, i = caplen; i != 0; i--) {
 		c = *s++;
 		if (c == 0x7d) {
-			if (i <= 1 || !ND_TTEST(*s))
+			if (i <= 1)
 				break;
 			i--;
 			c = *s++ ^ 0x20;
