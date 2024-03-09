@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.33 2024/02/12 02:28:28 isaki Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.34 2024/03/09 11:04:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.33 2024/02/12 02:28:28 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.34 2024/03/09 11:04:22 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.33 2024/02/12 02:28:28 isaki Exp $")
  * Each block request uses at least two segments - one for the header
  * and one for the status.
 */
-#define	VIRTIO_BLK_MIN_SEGMENTS	2
+#define	VIRTIO_BLK_CTRL_SEGMENTS	2
 
 #define VIRTIO_BLK_FLAG_BITS			\
 	VIRTIO_COMMON_FLAG_BITS			\
@@ -222,7 +222,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 		r = bus_dmamap_create(virtio_dmat(sc->sc_virtio),
 				      ld->sc_maxxfer,
 				      (ld->sc_maxxfer / NBPG) +
-				      VIRTIO_BLK_MIN_SEGMENTS,
+				      VIRTIO_BLK_CTRL_SEGMENTS,
 				      ld->sc_maxxfer,
 				      0,
 				      BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW,
@@ -319,18 +319,15 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	if (features & VIRTIO_BLK_F_SEG_MAX) {
 		maxnsegs = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SEG_MAX);
-		if (maxnsegs < VIRTIO_BLK_MIN_SEGMENTS) {
+		if (maxnsegs == 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "Too small SEG_MAX %d minimum is %d\n",
-			    maxnsegs, VIRTIO_BLK_MIN_SEGMENTS);
-			maxnsegs = maxxfersize / NBPG;
-			// goto err;
+			    "Invalid SEG_MAX %d\n", maxnsegs);
+			goto err;
 		}
 	} else
 		maxnsegs = maxxfersize / NBPG;
 
-	/* 2 for the minimum size */
-	maxnsegs += VIRTIO_BLK_MIN_SEGMENTS;
+	maxnsegs += VIRTIO_BLK_CTRL_SEGMENTS;
 
 	virtio_init_vq_vqdone(vsc, &sc->sc_vq, 0,
 	    ld_virtio_vq_done);
@@ -414,7 +411,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	}
 
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
-	    VIRTIO_BLK_MIN_SEGMENTS);
+	    VIRTIO_BLK_CTRL_SEGMENTS);
 	if (r != 0) {
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 		return r;
@@ -543,7 +540,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 		return r;
 
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
-	    VIRTIO_BLK_MIN_SEGMENTS);
+	    VIRTIO_BLK_CTRL_SEGMENTS);
 	if (r != 0) {
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 		return r;
@@ -679,7 +676,7 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	vr = &sc->sc_reqs[slot];
 	KASSERT(vr->vr_bp == NULL);
 
-	r = virtio_enqueue_reserve(vsc, vq, slot, VIRTIO_BLK_MIN_SEGMENTS);
+	r = virtio_enqueue_reserve(vsc, vq, slot, VIRTIO_BLK_CTRL_SEGMENTS);
 	if (r != 0) {
 		return r;
 	}
