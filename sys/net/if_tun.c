@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.174 2023/12/29 23:01:02 chs Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.175 2024/03/09 13:55:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.174 2023/12/29 23:01:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.175 2024/03/09 13:55:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -604,9 +604,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 				goto out;
 			}
 			memcpy(mtod(m0, char *), dst, dst->sa_len);
-		}
-
-		if (tp->tun_flags & TUN_IFHEAD) {
+		} else if (tp->tun_flags & TUN_IFHEAD) {
 			/* Prepend the address family */
 			M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 			if (m0 == NULL) {
