@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.60 2024/03/07 22:03:16 christos Exp $
+# $NetBSD: postinstall.in,v 1.61 2024/03/09 06:51:40 rillig Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ mkdtemp()
 	while true; do
 		dir="${base}.${serial}"
 		mkdir -m 0700 "${dir}" && break
-		_serial=$((${serial} + 1))
+		serial=$((${serial} + 1))
 	done
 	echo "${dir}"
 }
