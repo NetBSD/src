@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.40 2024/03/07 22:14:20 christos Exp $
+.\"	$NetBSD: dlfcn.3,v 1.41 2024/03/09 15:21:38 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,9 @@ The
 .Fn _dlauxinfo
 function returns a pointer to the
 .Xr elf 5
-array of AuxInfo structures for the current executable.
+array of
+.Vt AuxInfo
+structures for the current executable.
 .Pp
 The
 .Fn dlopen
@@ -88,14 +90,16 @@ only the path provided will be searched.
 When just a shared object name is specified, the same search rules apply that
 are used for
 .Dq intrinsic
-shared object searches.
+shared object searches
 .Po
 see
 .Xr ld.elf_so 1
-.Pc
+.Pc .
 .Pp
 Shared libraries take the following form:
-.Do lib Ns Ao name Ac Ns .so Ns Oo .xx Ns Oo .yy Oc Oc Dc .
+.Sm off
+.Ic lib\^ Ao Ar name Ac Ic .so Oo Ic \&. Ar xx\^ Oo Ic \&. Ar yy\^ Oc Oc .
+.Sm on
 .Pp
 The shared object is mapped into the address space, relocated, and
 its external references are resolved in the same way as is done
@@ -134,8 +138,9 @@ other objects.
 This is the default value if visibility is unspecified.
 .El
 .Pp
-To specify both resolution time and visibility, bitwise inclusive OR one of
-each of the above values together.
+To specify both resolution time and visibility, bitwise inclusive
+.Tn OR
+one of each of the above values together.
 If an object was opened with
 .Dv RTLD_LOCAL
 and later opened with
@@ -143,7 +148,9 @@ and later opened with
 then it is promoted to
 .Dv RTLD_GLOBAL .
 .Pp
-Additionally, one of the following flags may be ORed into the
+Additionally, one of the following flags may be
+.Tn OR Ap ed
+into the
 .Fa mode
 argument:
 .Bl -tag -width ".Dv RTLD_NODELETE" -offset indent
@@ -272,8 +279,7 @@ is between the base address of the shared object and the value of the
 symbol
 .Va _end
 in the same shared object.
-If no object for which this condition holds
-true can be found,
+If no object for which this condition holds true can be found,
 .Fn dladdr
 will return 0.
 Otherwise, a non-zero value is returned and the
@@ -295,11 +301,11 @@ typedef struct {
 .Ed
 .Pp
 The structure members are further described as follows:
-.Bl -tag -width "Va"
-.It Va dli_fname
+.Bl -tag -width Fa
+.It Fa dli_fname
 The pathname of the shared object containing the address
 .Fa addr .
-.It Va dli_fbase
+.It Fa dli_fbase
 The base address at which this shared object is loaded in the process
 address space.
 This may be zero if the symbol was found in the internally generated
@@ -310,18 +316,19 @@ see
 .Xr link 5
 .Pc
 which is not associated with a file.
-.It Va dli_sname
+.It Fa dli_sname
 points at the nul-terminated name of the selected symbol
-.It Va dli_saddr
+.It Fa dli_saddr
 is the actual address
 .Pq as it appears in the process address space
 of the symbol.
 .El
 .Pp
-Note: both strings pointed at by
-.Va dli_fname
+.Em Note :
+both strings pointed at by
+.Fa dli_fname
 and
-.Va dli_sname
+.Fa dli_sname
 reside in memory private to the run-time linker module and should not
 be modified by the caller.
 .Pp
@@ -353,11 +360,14 @@ a second time, immediately following a prior invocation, will result in
 .Dv NULL
 being returned.
 .Sh ERRORS
-The error
-.Dq Cannot dlopen non-loadable /usr/lib/libpthread.so.1
-is generated when a program
-.Fn dlopen Ns No s
-a module that needs libpthread but isn't linked against it itself.
+.Bl -diag
+.It Cannot dlopen non-loadable /usr/lib/libpthread.so.1
+A program tries to
+.Fn dlopen
+a module that needs
+.Lb libpthread
+but the program isn't linked against it itself.
+.El
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr rtld 1 ,
@@ -366,4 +376,4 @@ a module that needs libpthread but isn't linked against it itself.
 .Sh HISTORY
 Some of the
 .Nm dl*
-functions first appeared in SunOS 4.
+functions first appeared in SunOS\~4.
