@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.394 2024/03/02 09:32:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.395 2024/03/09 10:41:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.394 2024/03/02 09:32:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.395 2024/03/09 10:41:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1334,7 +1334,7 @@ old_style_function(sym_t *decl, sym_t *params)
 }
 
 sym_t *
-add_function(sym_t *decl, struct parameter_list params)
+add_function(sym_t *decl, parameter_list params)
 {
 
 	debug_enter();
