@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.610 2024/03/09 10:47:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.611 2024/03/09 13:20:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.610 2024/03/09 10:47:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.611 2024/03/09 13:20:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -420,7 +420,7 @@ fallback_symbol(sym_t *sym)
 		/* C11 6.4.2.2 */
 		sym->s_type = block_derive_type(gettyp(CHAR), ARRAY);
 		sym->s_type->t_const = true;
-		sym->s_type->t_dim = (int)strlen(funcsym->s_name) + 1;
+		sym->s_type->u.dimension = (int)strlen(funcsym->s_name) + 1;
 		return;
 	}
 
@@ -537,7 +537,7 @@ build_string(buffer *lit)
 	type_t *tp = expr_zero_alloc(sizeof(*tp), "type");
 	tp->t_tspec = ARRAY;
 	tp->t_subt = gettyp(lit->data != NULL ? CHAR : WCHAR_TSPEC);
-	tp->t_dim = (int)(value_len + 1);
+	tp->u.dimension = (int)(value_len + 1);
 
 	tnode_t *n = expr_alloc_tnode();
 	n->tn_op = STRING;
@@ -982,7 +982,7 @@ subt_size_in_bytes(type_t *tp)
 
 	int elem = 1;
 	while (tp->t_tspec == ARRAY) {
-		elem *= tp->t_dim;
+		elem *= tp->u.dimension;
 		tp = tp->t_subt;
 	}
 
@@ -998,7 +998,7 @@ subt_size_in_bytes(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz_in_bits = (int)tp->t_sou->sou_size_in_bits) == 0)
+		if ((elsz_in_bits = (int)tp->u.sou->sou_size_in_bits) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -1055,7 +1055,7 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 		return;
 
 	const type_t *rtp = rn->tn_left->tn_type;
-	const sym_t *ec = rtp->t_enum->en_first_enumerator;
+	const sym_t *ec = rtp->u.enumer->en_first_enumerator;
 	const sym_t *max_ec = ec;
 	lint_assert(ec != NULL);
 	for (ec = ec->s_next; ec != NULL; ec = ec->s_next)
@@ -1065,7 +1065,7 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	int64_t max_enum_value = max_ec->u.s_enum_constant;
 	lint_assert(INT_MIN <= max_enum_value && max_enum_value <= INT_MAX);
 
-	int max_array_index = ltp->t_dim - 1;
+	int max_array_index = ltp->u.dimension - 1;
 	if (max_enum_value == max_array_index)
 		return;
 
@@ -1197,7 +1197,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		tp = gettyp(VOID);
 	else if (is_struct_or_union(lt)) {
 		lint_assert(is_struct_or_union(rt));
-		lint_assert(ln->tn_type->t_sou == rn->tn_type->t_sou);
+		lint_assert(ln->tn_type->u.sou == rn->tn_type->u.sou);
 		if (is_incomplete(ln->tn_type)) {
 			/* unknown operand size, op '%s' */
 			error(138, op_name(COLON));
@@ -1316,7 +1316,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	if ((op == ASSIGN || op == RETURN || op == INIT) &&
 	    (lt == STRUCT || rt == STRUCT)) {
 		lint_assert(lt == rt);
-		lint_assert(ln->tn_type->t_sou == rn->tn_type->t_sou);
+		lint_assert(ln->tn_type->u.sou == rn->tn_type->u.sou);
 		if (is_incomplete(ln->tn_type)) {
 			if (op == RETURN)
 				/* cannot return incomplete type */
@@ -1857,7 +1857,7 @@ find_member(const struct_or_union *sou, const char *name)
 		if (is_struct_or_union(mem->s_type->t_tspec)
 		    && mem->s_name == unnamed) {
 			sym_t *nested_mem =
-			    find_member(mem->s_type->t_sou, name);
+			    find_member(mem->s_type->u.sou, name);
 			if (nested_mem != NULL)
 				return nested_mem;
 		}
@@ -1905,7 +1905,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	if (op == ARROW && tn->tn_type->t_tspec == PTR
 	    && is_struct_or_union(tn->tn_type->t_subt->t_tspec))
 		tp = tn->tn_type->t_subt;
-	struct_or_union *sou = tp != NULL ? tp->t_sou : NULL;
+	struct_or_union *sou = tp != NULL ? tp->u.sou : NULL;
 
 	if (sou != NULL) {
 		sym_t *nested_mem = find_member(sou, msym->s_name);
@@ -2416,9 +2416,9 @@ typeok_colon(const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	if (lt == BOOL && rt == BOOL)
 		return true;
 
-	if (lt == STRUCT && rt == STRUCT && ltp->t_sou == rtp->t_sou)
+	if (lt == STRUCT && rt == STRUCT && ltp->u.sou == rtp->u.sou)
 		return true;
-	if (lt == UNION && rt == UNION && ltp->t_sou == rtp->t_sou)
+	if (lt == UNION && rt == UNION && ltp->u.sou == rtp->u.sou)
 		return true;
 
 	if (lt == PTR && is_null_pointer(rn))
@@ -2457,7 +2457,7 @@ has_constant_member(const type_t *tp)
 {
 	lint_assert(is_struct_or_union(tp->t_tspec));
 
-	for (sym_t *m = tp->t_sou->sou_first_member;
+	for (sym_t *m = tp->u.sou->sou_first_member;
 	    m != NULL; m = m->s_next) {
 		const type_t *mtp = m->s_type;
 		if (mtp->t_const)
@@ -2794,7 +2794,7 @@ check_assign_types_compatible(op_t op, int arg,
 		return true;
 
 	if (is_struct_or_union(lt) && is_struct_or_union(rt))
-		return ltp->t_sou == rtp->t_sou;
+		return ltp->u.sou == rtp->u.sou;
 
 	if (lt == PTR && is_null_pointer(rn)) {
 		if (is_integer(rn->tn_type->t_tspec))
@@ -3002,7 +3002,7 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
 	const mod_t *mp = &modtab[op];
 
-	if (ln->tn_type->t_enum != rn->tn_type->t_enum) {
+	if (ln->tn_type->u.enumer != rn->tn_type->u.enumer) {
 		switch (op) {
 		case INIT:
 			/* enum type mismatch between '%s' and '%s' in ... */
@@ -3395,8 +3395,8 @@ static bool
 struct_starts_with(const type_t *struct_tp, const type_t *member_tp)
 {
 
-	return struct_tp->t_sou->sou_first_member != NULL &&
-	    types_compatible(struct_tp->t_sou->sou_first_member->s_type,
+	return struct_tp->u.sou->sou_first_member != NULL &&
+	    types_compatible(struct_tp->u.sou->sou_first_member->s_type,
 		member_tp, true, false, NULL);
 }
 
@@ -3411,7 +3411,7 @@ is_byte_array(const type_t *tp)
 static bool
 union_contains(const type_t *utp, const type_t *mtp)
 {
-	for (const sym_t *mem = utp->t_sou->sou_first_member;
+	for (const sym_t *mem = utp->u.sou->sou_first_member;
 	    mem != NULL; mem = mem->s_next) {
 		if (types_compatible(mem->s_type, mtp, true, false, NULL))
 			return true;
@@ -3444,8 +3444,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 
 	/* Allow cast between pointers to sockaddr variants. */
 	if (nst == STRUCT && ost == STRUCT) {
-		const sym_t *nmem = nstp->t_sou->sou_first_member;
-		const sym_t *omem = ostp->t_sou->sou_first_member;
+		const sym_t *nmem = nstp->u.sou->sou_first_member;
+		const sym_t *omem = ostp->u.sou->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
 		    types_compatible(nmem->s_type, omem->s_type,
 			true, false, NULL))
@@ -3466,7 +3466,7 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	}
 
 	if (is_struct_or_union(nst) && is_struct_or_union(ost))
-		return nstp->t_sou != ostp->t_sou;
+		return nstp->u.sou != ostp->u.sou;
 
 	enum rank_kind rk1 = type_properties(nst)->tt_rank_kind;
 	enum rank_kind rk2 = type_properties(ost)->tt_rank_kind;
@@ -3886,7 +3886,7 @@ build_offsetof(const type_t *tp, designation dn)
 			if (!is_struct_or_union(tp->t_tspec))
 				goto proceed;	/* silent error */
 			const char *name = dr->dr_member->s_name;
-			sym_t *mem = find_member(tp->t_sou, name);
+			sym_t *mem = find_member(tp->u.sou, name);
 			if (mem == NULL) {
 				/* type '%s' does not have member '%s' */
 				error(101, name, type_name(tp));
@@ -3914,7 +3914,7 @@ type_size_in_bits(const type_t *tp)
 	lint_assert(tp != NULL);
 	while (tp->t_tspec == ARRAY) {
 		flex = true;	/* allow c99 flex arrays [] [0] */
-		elem *= tp->t_dim;
+		elem *= tp->u.dimension;
 		tp = tp->t_subt;
 	}
 	if (elem == 0 && !flex) {
@@ -3942,7 +3942,7 @@ type_size_in_bits(const type_t *tp)
 			error(143);
 			elsz = 1;
 		} else
-			elsz = tp->t_sou->sou_size_in_bits;
+			elsz = tp->u.sou->sou_size_in_bits;
 		break;
 	case ENUM:
 		if (is_incomplete(tp)) {
@@ -4000,7 +4000,7 @@ cast_to_union(tnode_t *otn, bool sys, type_t *ntp)
 		return NULL;
 	}
 
-	for (const sym_t *m = ntp->t_sou->sou_first_member;
+	for (const sym_t *m = ntp->u.sou->sou_first_member;
 	    m != NULL; m = m->s_next) {
 		if (types_compatible(m->s_type, otn->tn_type,
 		    false, false, NULL)) {
@@ -4137,12 +4137,12 @@ check_function_arguments(const function_call *call)
 
 	/* get # of parameters in the prototype */
 	int npar = 0;
-	for (const sym_t *p = ftp->t_params; p != NULL; p = p->s_next)
+	for (const sym_t *p = ftp->u.params; p != NULL; p = p->s_next)
 		npar++;
 
 	int narg = (int)call->args_len;
 
-	const sym_t *param = ftp->t_params;
+	const sym_t *param = ftp->u.params;
 	if (ftp->t_proto && npar != narg && !(ftp->t_vararg && npar < narg)) {
 		/* argument mismatch: %d %s passed, %d expected */
 		error(150, narg, narg != 1 ? "arguments" : "argument", npar);
@@ -4368,7 +4368,7 @@ check_array_index(tnode_t *tn, bool amper)
 	    ? (int64_t)((uint64_t)rn->tn_val.u.integer / elsz)
 	    : rn->tn_val.u.integer / elsz;
 
-	int dim = ln->tn_left->tn_type->t_dim + (amper ? 1 : 0);
+	int dim = ln->tn_left->tn_type->u.dimension + (amper ? 1 : 0);
 
 	if (!is_uinteger(rn->tn_type->t_tspec) && con < 0)
 		/* array subscript cannot be negative: %ld */

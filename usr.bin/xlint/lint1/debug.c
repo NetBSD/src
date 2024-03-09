@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.71 2024/02/05 23:11:22 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.72 2024/03/09 13:20:55 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.71 2024/02/05 23:11:22 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.72 2024/03/09 13:20:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -156,10 +156,10 @@ debug_type_details(const type_t *tp)
 	if (is_struct_or_union(tp->t_tspec)) {
 		debug_indent_inc();
 		debug_step("size %u bits, align %u bits, %s",
-		    tp->t_sou->sou_size_in_bits, tp->t_sou->sou_align_in_bits,
-		    tp->t_sou->sou_incomplete ? "incomplete" : "complete");
+		    tp->u.sou->sou_size_in_bits, tp->u.sou->sou_align_in_bits,
+		    tp->u.sou->sou_incomplete ? "incomplete" : "complete");
 
-		for (const sym_t *mem = tp->t_sou->sou_first_member;
+		for (const sym_t *mem = tp->u.sou->sou_first_member;
 		    mem != NULL; mem = mem->s_next) {
 			debug_sym("", mem, "\n");
 			debug_type_details(mem->s_type);
@@ -168,7 +168,7 @@ debug_type_details(const type_t *tp)
 	}
 	if (tp->t_is_enum) {
 		debug_indent_inc();
-		for (const sym_t *en = tp->t_enum->en_first_enumerator;
+		for (const sym_t *en = tp->u.enumer->en_first_enumerator;
 		    en != NULL; en = en->s_next) {
 			debug_sym("", en, "\n");
 		}

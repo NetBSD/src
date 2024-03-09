@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.61 2024/02/02 16:25:58 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.62 2024/03/09 13:20:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.61 2024/02/02 16:25:58 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.62 2024/03/09 13:20:55 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -165,7 +165,7 @@ type_name_of_function(buffer *buf, const type_t *tp)
 	buf_add(buf, "(");
 	if (tp->t_proto) {
 #if IS_LINT1
-		const sym_t *param = tp->t_params;
+		const sym_t *param = tp->u.params;
 		if (param == NULL)
 			buf_add(buf, "void");
 		for (; param != NULL; param = param->s_next) {
@@ -197,12 +197,12 @@ type_name_of_struct_or_union(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, " ");
 #if IS_LINT1
-	if (tp->t_sou->sou_tag->s_name == unnamed &&
-	    tp->t_sou->sou_first_typedef != NULL) {
+	if (tp->u.sou->sou_tag->s_name == unnamed &&
+	    tp->u.sou->sou_first_typedef != NULL) {
 		buf_add(buf, "typedef ");
-		buf_add(buf, tp->t_sou->sou_first_typedef->s_name);
+		buf_add(buf, tp->u.sou->sou_first_typedef->s_name);
 	} else {
-		buf_add(buf, tp->t_sou->sou_tag->s_name);
+		buf_add(buf, tp->u.sou->sou_tag->s_name);
 	}
 #else
 	buf_add(buf, tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
@@ -214,12 +214,12 @@ type_name_of_enum(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, " ");
 #if IS_LINT1
-	if (tp->t_enum->en_tag->s_name == unnamed &&
-	    tp->t_enum->en_first_typedef != NULL) {
+	if (tp->u.enumer->en_tag->s_name == unnamed &&
+	    tp->u.enumer->en_first_typedef != NULL) {
 		buf_add(buf, "typedef ");
-		buf_add(buf, tp->t_enum->en_first_typedef->s_name);
+		buf_add(buf, tp->u.enumer->en_first_typedef->s_name);
 	} else {
-		buf_add(buf, tp->t_enum->en_tag->s_name);
+		buf_add(buf, tp->u.enumer->en_tag->s_name);
 	}
 #else
 	buf_add(buf, tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
@@ -234,7 +234,7 @@ type_name_of_array(buffer *buf, const type_t *tp)
 	if (tp->t_incomplete_array)
 		buf_add(buf, "unknown_size");
 	else
-		buf_add_int(buf, tp->t_dim);
+		buf_add_int(buf, tp->u.dimension);
 #else
 	buf_add_int(buf, tp->t_dim);
 #endif
@@ -263,7 +263,7 @@ type_name(const type_t *tp)
 		buf_add(&buf, "volatile ");
 
 #if IS_LINT1
-	if (is_struct_or_union(t) && tp->t_sou->sou_incomplete)
+	if (is_struct_or_union(t) && tp->u.sou->sou_incomplete)
 		buf_add(&buf, "incomplete ");
 #endif
 	buf_add(&buf, tspec_name(t));
