@@ -174,7 +174,7 @@ ext2dt2dt(uint8_t type)
 {
 	switch (type) {
 	case EXT2_FT_REG_FILE:
-		return DT_FIFO;
+		return DT_REG;
 	case EXT2_FT_DIR:
 		return DT_DIR;
 	case EXT2_FT_CHRDEV:
