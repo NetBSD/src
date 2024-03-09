@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2023/11/10 21:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.111 2024/03/09 06:50:15 mrg Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -17,7 +17,7 @@ all:
 
 COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
 TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
-XZ_OPT=		-9
+XZ_OPT?=		-9
 GZIP_FLAGS=	${GZIP_N_FLAG}
 UMASK=		umask 022
 
