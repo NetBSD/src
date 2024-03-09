@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.181 2024/02/08 20:45:20 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.182 2024/03/09 10:54:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.181 2024/02/08 20:45:20 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.182 2024/03/09 10:54:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -162,12 +162,7 @@ end_control_statement(control_statement_kind kind)
 	control_statement *cs = cstmt;
 	cstmt = cs->c_surrounding;
 
-	case_label_t *cl, *next;
-	for (cl = cs->c_case_labels; cl != NULL; cl = next) {
-		next = cl->cl_next;
-		free(cl);
-	}
-
+	free(cs->c_case_labels.vals);
 	free(cs->c_switch_type);
 	free(cs);
 }
@@ -436,6 +431,34 @@ check_case_label_enum(const tnode_t *tn, const control_statement *cs)
 #endif
 }
 
+static bool
+check_duplicate_case_label(control_statement *cs, const val_t *nv)
+{
+	case_labels *labels = &cs->c_case_labels;
+	size_t i = 0, n = labels->len;
+
+	while (i < n && labels->vals[i].u.integer != nv->u.integer)
+		i++;
+
+	if (i < n) {
+		if (is_uinteger(nv->v_tspec))
+			/* duplicate case '%lu' in switch */
+			error(200, (unsigned long)nv->u.integer);
+		else
+			/* duplicate case '%ld' in switch */
+			error(199, (long)nv->u.integer);
+		return false;
+	}
+
+	if (labels->len >= labels->cap) {
+		labels->cap = 16 + 2 * labels->cap;
+		labels->vals = xrealloc(labels->vals,
+		    sizeof(*labels->vals) * labels->cap);
+	}
+	labels->vals[labels->len++] = *nv;
+	return true;
+}
+
 static void
 check_case_label(tnode_t *tn)
 {
@@ -487,27 +510,8 @@ check_case_label(tnode_t *tn)
 	convert_constant(CASE, 0, cs->c_switch_type, &nv, v);
 	free(v);
 
-	/* look if we had this value already */
-	case_label_t *cl;
-	for (cl = cs->c_case_labels; cl != NULL; cl = cl->cl_next) {
-		if (cl->cl_val.u.integer == nv.u.integer)
-			break;
-	}
-	if (cl != NULL && is_uinteger(nv.v_tspec))
-		/* duplicate case '%lu' in switch */
-		error(200, (unsigned long)nv.u.integer);
-	else if (cl != NULL)
-		/* duplicate case '%ld' in switch */
-		error(199, (long)nv.u.integer);
-	else {
+	if (check_duplicate_case_label(cs, &nv))
 		check_getopt_case_label(nv.u.integer);
-
-		/* Prepend the value to the list of case values. */
-		cl = xcalloc(1, sizeof(*cl));
-		cl->cl_val = nv;
-		cl->cl_next = cs->c_case_labels;
-		cs->c_case_labels = cl;
-	}
 }
 
 void
@@ -660,7 +664,6 @@ stmt_switch_expr_stmt(void)
 {
 	int nenum = 0, nclab = 0;
 	sym_t *esym;
-	case_label_t *cl;
 
 	lint_assert(cstmt->c_switch_type != NULL);
 
@@ -675,8 +678,7 @@ stmt_switch_expr_stmt(void)
 		    esym != NULL; esym = esym->s_next) {
 			nenum++;
 		}
-		for (cl = cstmt->c_case_labels; cl != NULL; cl = cl->cl_next)
-			nclab++;
+		nclab = (int)cstmt->c_case_labels.len;
 		if (hflag && eflag && nclab < nenum && !cstmt->c_default)
 			/* enumeration value(s) not handled in switch */
 			warning(206);
