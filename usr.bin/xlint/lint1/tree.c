@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.613 2024/03/09 14:54:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.614 2024/03/09 23:55:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.613 2024/03/09 14:54:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.614 2024/03/09 23:55:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -809,6 +809,8 @@ fold_constant_integer(tnode_t *tn)
 		ur = sr = tn->u.ops.right->u.value.u.integer;
 
 	uint64_t mask = value_bits(size_in_bits(t));
+	int64_t max_value = (int64_t)(mask >> 1);
+	int64_t min_value = -max_value - 1;
 	bool ovfl = false;
 
 	int64_t si;
@@ -841,11 +843,9 @@ fold_constant_integer(tnode_t *tn)
 		if (sr == 0) {
 			/* division by 0 */
 			error(139);
-			si = utyp ? -1 : INT64_MAX;
-		} else if (!utyp
-		    && (sl & mask) == (mask ^ (mask >> 1)) && sr == -1) {
-			/* operator '%s' produces integer overflow */
-			warning(141, op_name(DIV));
+			si = utyp ? -1 : max_value;
+		} else if (!utyp && sl == min_value && sr == -1) {
+			ovfl = true;
 			si = sl;
 		} else
 			si = utyp ? (int64_t)(ul / ur) : sl / sr;

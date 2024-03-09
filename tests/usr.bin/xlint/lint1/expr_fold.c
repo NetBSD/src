@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.11 2024/01/06 15:05:24 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.12 2024/03/09 23:55:11 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -114,9 +114,7 @@ fold_mult(void)
 void
 fold_div(void)
 {
-	/* expect+3: error: division by 0 [139] */
-	/* XXX: The following message is redundant. */
-	/* expect+1: warning: operator '/' produces integer overflow [141] */
+	/* expect+1: error: division by 0 [139] */
 	take_int(0 / 0);
 
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
