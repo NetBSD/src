@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.217 2024/03/09 10:47:16 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.218 2024/03/09 10:54:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -425,14 +425,12 @@ typedef struct qual_ptr {
 	struct qual_ptr *p_next;
 } qual_ptr;
 
-/*
- * The values of the 'case' labels, linked via cl_next in reverse order of
- * appearance in the code, that is from bottom to top.
- */
-typedef struct case_label {
-	val_t	cl_val;
-	struct case_label *cl_next;
-} case_label_t;
+/* The values of the 'case' labels. */
+typedef struct {
+	val_t	*vals;
+	size_t	len;
+	size_t	cap;
+} case_labels;
 
 typedef enum {
 	CS_DO_WHILE,
@@ -466,7 +464,7 @@ typedef struct control_statement {
 
 	type_t	*c_switch_type;	/* type of switch expression */
 	tnode_t	*c_switch_expr;
-	case_label_t *c_case_labels;	/* list of case values */
+	case_labels c_case_labels;	/* list of case values */
 
 	memory_pool c_for_expr3_mem;	/* saved memory for end of loop
 					 * expression in for() */
