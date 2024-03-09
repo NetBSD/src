@@ -207,7 +207,7 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 
 		if (clock_gettime(CLOCK_MONOTONIC, &tp1) == -1)
 			goto error;
-		for (; delta.tv_sec < 1 && time < ARGON2_MAX_TIME; ++time) {
+		for (; time < ARGON2_MAX_TIME; ++time) {
 			if (argon2_hash(time, memory, threads,
 			    tmp_pwd, sizeof(tmp_pwd), 
 			    tmp_salt, sizeof(tmp_salt), 
@@ -221,6 +221,8 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 			if (timespeccmp(&tp1, &tp2, >))
 				break; /* broken system... */
 			timespecsub(&tp2, &tp1, &delta);
+			if (delta.tv_sec >= 1)
+				break;
 		}
 	} else {
 		time = *etime;
