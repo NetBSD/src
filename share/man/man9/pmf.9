@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.22 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: pmf.9,v 1.23 2024/03/09 05:22:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 2, 2012
+.Dd March 9, 2024
 .Dt PMF 9
 .Os
 .Sh NAME
@@ -161,9 +161,10 @@ is
 then it is assumed that device state does not need to be captured and
 resumed on a power transition.
 Bus and class-level power management will still be performed.
-Returns
-.Dv false
-if there was an error.
+.Pp
+.Fn pmf_device_register
+always returns true.
+Callers should ignore the return value.
 .It Fn pmf_device_register1 "dev" "suspend" "resume" "shutdown"
 Like
 .Fn pmf_device_register ,
@@ -184,6 +185,10 @@ should return
 on success and
 .Dv false
 on failure.
+.Pp
+.Fn pmf_device_register1
+always returns true.
+Callers should ignore the return value.
 .It Fn pmf_device_deregister "dev"
 Deregister a device with the power management framework.
 .It Fn pmf_device_suspend "dev" "qual"
@@ -296,3 +301,10 @@ framework appeared in
 .Sh AUTHORS
 .An Jared D. McNeill Aq Mt jmcneill@NetBSD.org
 .An Joerg Sonnenberger Aq Mt joerg@NetBSD.org
+.Sh BUGS
+.Fn pmf_device_register
+and
+.Fn pmf_device_register1
+never fail and should return void, but until all callers are updated to
+ignore the return value, they must continue to return bool:
+.Lk "https://gnats.NetBSD.org/57575" "PR kern/57575"
