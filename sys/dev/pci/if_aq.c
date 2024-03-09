@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.46 2024/02/07 04:20:28 msaitoh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.47 2024/03/09 22:03:32 mrg Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.46 2024/02/07 04:20:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.47 2024/03/09 22:03:32 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1330,8 +1330,7 @@ struct aq_softc {
 	int sc_rx_irq[AQ_RSSQUEUE_MAX];
 	int sc_linkstat_irq;
 	bool sc_use_txrx_independent_intr;
-	bool sc_poll_linkstat;
-	bool sc_detect_linkstat;
+	bool sc_no_link_intr;
 
 #if NSYSMON_ENVSYS > 0
 	struct sysmon_envsys *sc_sme;
@@ -1443,11 +1442,9 @@ static int aq_match(device_t, cfdata_t, void *);
 static void aq_attach(device_t, device_t, void *);
 static int aq_detach(device_t, int);
 
-static int aq_setup_msix(struct aq_softc *, struct pci_attach_args *, int,
-    bool, bool);
+static int aq_setup_msix(struct aq_softc *, struct pci_attach_args *);
 static int aq_setup_legacy(struct aq_softc *, struct pci_attach_args *,
     pci_intr_type_t);
-static int aq_establish_msix_intr(struct aq_softc *, bool, bool);
 
 static int aq_ifmedia_change(struct ifnet * const);
 static void aq_ifmedia_status(struct ifnet * const, struct ifmediareq *);
@@ -1784,39 +1781,26 @@ aq_attach(device_t parent, device_t self, void *aux)
 	if (msixcount >= (sc->sc_nqueues * 2 + 1)) {
 		/* TX intrs + RX intrs + LINKSTAT intrs */
 		sc->sc_use_txrx_independent_intr = true;
-		sc->sc_poll_linkstat = false;
 		sc->sc_msix = true;
 	} else if (msixcount >= (sc->sc_nqueues * 2)) {
 		/* TX intrs + RX intrs */
 		sc->sc_use_txrx_independent_intr = true;
-		sc->sc_poll_linkstat = true;
 		sc->sc_msix = true;
 	} else
 #endif
 	if (msixcount >= (sc->sc_nqueues + 1)) {
 		/* TX/RX intrs LINKSTAT intrs */
 		sc->sc_use_txrx_independent_intr = false;
-		sc->sc_poll_linkstat = false;
 		sc->sc_msix = true;
 	} else if (msixcount >= sc->sc_nqueues) {
 		/* TX/RX intrs */
 		sc->sc_use_txrx_independent_intr = false;
-		sc->sc_poll_linkstat = true;
+		sc->sc_no_link_intr = true;
 		sc->sc_msix = true;
 	} else {
 		/* giving up using MSI-X */
 		sc->sc_msix = false;
 	}
-
-	/* on AQ1a0, AQ2, or FIBRE, linkstat interrupt doesn't work? */
-	if (aqp->aq_media_type == AQ_MEDIA_TYPE_FIBRE ||
-	    (HWTYPE_AQ1_P(sc) && FW_VERSION_MAJOR(sc) == 1) ||
-	    HWTYPE_AQ2_P(sc))
-		sc->sc_poll_linkstat = true;
-
-#ifdef AQ_FORCE_POLL_LINKSTAT
-	sc->sc_poll_linkstat = true;
-#endif
 
 	aprint_debug_dev(sc->sc_dev,
 	    "ncpu=%d, pci_msix_count=%d."
@@ -1824,27 +1808,30 @@ aq_attach(device_t parent, device_t self, void *aux)
 	    ncpu, msixcount,
 	    (sc->sc_use_txrx_independent_intr ?
 	    (sc->sc_nqueues * 2) : sc->sc_nqueues) +
-	    (sc->sc_poll_linkstat ? 0 : 1),
+	    (sc->sc_no_link_intr ? 0 : 1),
 	    sc->sc_nqueues,
 	    sc->sc_use_txrx_independent_intr ? "*2" : "",
-	    sc->sc_poll_linkstat ? "" : ", and link status");
+	    (sc->sc_no_link_intr) ? "" : ", and link status");
 
 	if (sc->sc_msix)
-		error = aq_setup_msix(sc, pa, sc->sc_nqueues,
-		    sc->sc_use_txrx_independent_intr, !sc->sc_poll_linkstat);
+		error = aq_setup_msix(sc, pa);
 	else
 		error = ENODEV;
 
 	if (error != 0) {
 		/* if MSI-X failed, fallback to MSI with single queue */
 		sc->sc_use_txrx_independent_intr = false;
-		sc->sc_poll_linkstat = false;
 		sc->sc_msix = false;
 		sc->sc_nqueues = 1;
+		sc->sc_no_link_intr = false;
+		aprint_debug_dev(sc->sc_dev, "MSI-X failed: %d, trying MSI",
+		    error);
 		error = aq_setup_legacy(sc, pa, PCI_INTR_TYPE_MSI);
 	}
 	if (error != 0) {
 		/* if MSI failed, fallback to INTx */
+		aprint_debug_dev(sc->sc_dev, "MSI failed: %d, trying legacy",
+		    error);
 		error = aq_setup_legacy(sc, pa, PCI_INTR_TYPE_INTX);
 	}
 	if (error != 0)
@@ -1858,7 +1845,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	error = workqueue_create(&sc->sc_reset_wq, wqname,
 	    aq_handle_reset_work, sc, PRI_SOFTNET, IPL_SOFTCLOCK,
 	    WQ_MPSAFE);
-	if (error) {
+	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create reset workqueue\n");
 		goto attach_failure;
@@ -1979,6 +1966,8 @@ aq_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_register(sc->sc_sme)) {
 			sysmon_envsys_destroy(sc->sc_sme);
 			sc->sc_sme = NULL;
+			aprint_debug_dev(sc->sc_dev, "failed to create envsys");
+			error = EINVAL;
 			goto attach_failure;
 		}
 
@@ -2025,6 +2014,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	return;
 
  attach_failure:
+	aprint_debug_dev(sc->sc_dev, "attach failed: %d", error);
 	aq_detach(self, 0);
 }
 
@@ -2152,8 +2142,7 @@ aq_establish_intr(struct aq_softc *sc, int intno, kcpuset_t *affinity,
 }
 
 static int
-aq_establish_msix_intr(struct aq_softc *sc, bool txrx_independent,
-    bool linkintr)
+aq_establish_msix_intr(struct aq_softc *sc)
 {
 	kcpuset_t *affinity;
 	int error, intno, i;
@@ -2163,7 +2152,7 @@ aq_establish_msix_intr(struct aq_softc *sc, bool txrx_independent,
 
 	intno = 0;
 
-	if (txrx_independent) {
+	if (sc->sc_use_txrx_independent_intr) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
 			snprintf(intr_xname, sizeof(intr_xname), "%s RX%d",
 			    device_xname(sc->sc_dev), i);
@@ -2195,7 +2184,7 @@ aq_establish_msix_intr(struct aq_softc *sc, bool txrx_independent,
 		}
 	}
 
-	if (linkintr) {
+	if (!sc->sc_no_link_intr) {
 		snprintf(intr_xname, sizeof(intr_xname), "%s LINK",
 		    device_xname(sc->sc_dev));
 		sc->sc_linkstat_irq = intno;
@@ -2221,9 +2210,11 @@ aq_establish_msix_intr(struct aq_softc *sc, bool txrx_independent,
 }
 
 static int
-aq_setup_msix(struct aq_softc *sc, struct pci_attach_args *pa, int nqueue,
-    bool txrx_independent, bool linkintr)
+aq_setup_msix(struct aq_softc *sc, struct pci_attach_args *pa)
 {
+	int nqueue = sc->sc_nqueues;
+	bool txrx_independent = sc->sc_use_txrx_independent_intr;
+	bool linkintr = !sc->sc_no_link_intr;
 	int error, nintr;
 
 	if (txrx_independent)
@@ -2241,7 +2232,7 @@ aq_setup_msix(struct aq_softc *sc, struct pci_attach_args *pa, int nqueue,
 		goto fail;
 	}
 
-	error = aq_establish_msix_intr(sc, txrx_independent, linkintr);
+	error = aq_establish_msix_intr(sc);
 	if (error == 0) {
 		sc->sc_nintrs = nintr;
 	} else {
@@ -5043,10 +5034,7 @@ aq_tick(void *arg)
 		return;
 	}
 
-	if (sc->sc_poll_linkstat || sc->sc_detect_linkstat) {
-		sc->sc_detect_linkstat = false;
-		aq_update_link_status(sc);
-	}
+	aq_update_link_status(sc);
 
 #ifdef AQ_EVENT_COUNTERS
 	if (sc->sc_poll_statistics)
@@ -5094,7 +5082,6 @@ aq_legacy_intr(void *arg)
 
 	if (status & __BIT(sc->sc_linkstat_irq)) {
 		AQ_LOCK(sc);
-		sc->sc_detect_linkstat = true;
 		if (!sc->sc_stopping)
 			callout_schedule(&sc->sc_tick_ch, 0);
 		AQ_UNLOCK(sc);
@@ -5150,7 +5137,6 @@ aq_link_intr(void *arg)
 	status = AQ_READ_REG(sc, AQ_INTR_STATUS_REG);
 	if (status & __BIT(sc->sc_linkstat_irq)) {
 		AQ_LOCK(sc);
-		sc->sc_detect_linkstat = true;
 		if (!sc->sc_stopping)
 			callout_schedule(&sc->sc_tick_ch, 0);
 		AQ_UNLOCK(sc);
