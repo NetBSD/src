@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.218 2024/03/09 10:54:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.219 2024/03/09 11:05:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -71,19 +71,6 @@ typedef struct {
 	int	p_uniq;			/* uniquifier */
 } pos_t;
 
-// TODO: Use bit-fields instead of plain bool, but keep an eye on arm and
-// powerpc, on which NetBSD's GCC 10.5.0 (but not the upstream GCC) generates
-// code that leads to extra 327 warnings, even in msg_327.c, which does not
-// contain any type qualifier at all.
-//
-// A possible starting point for continuing the investigation is that
-// type_qualifiers is a very small struct that contains only bool bit-fields,
-// and this struct is a member of the parser's union.
-//
-// Instead of using plain bool instead of bit-fields, an alternative workaround
-// is to compile cgram.c with -Os or -O1 instead of -O2.  The generated code
-// between -Os and -O2 differs too much though to give a hint at the root
-// cause.
 typedef struct {
 	bool tq_const;
 	bool tq_restrict;
@@ -128,9 +115,7 @@ typedef struct {
 	sym_t	*sou_first_typedef;
 } struct_or_union;
 
-/*
- * same as above for enums
- */
+/* The same as in struct_or_union, only for enums. */
 typedef struct {
 	bool	en_incomplete:1;
 	sym_t	*en_first_enumerator;
@@ -138,28 +123,21 @@ typedef struct {
 	sym_t	*en_first_typedef;
 } enumeration;
 
-/*
- * The type of an expression or object. Complex types are formed via t_subt
- * (for arrays, pointers and functions), as well as t_sou.
- */
+/* The type of an expression, object or function. */
 struct lint1_type {
 	tspec_t	t_tspec;	/* type specifier */
 	bool	t_incomplete_array:1;
-	bool	t_const:1;	/* const modifier */
-	bool	t_volatile:1;	/* volatile modifier */
+	bool	t_const:1;
+	bool	t_volatile:1;
 	bool	t_proto:1;	/* function prototype (t_params valid) */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_typedef:1;	/* type defined with typedef */
 	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
 	bool	t_bitfield:1;
 	/*
-	 * Either the type is currently an enum (having t_tspec ENUM), or it is
-	 * an integer type (typically INT) that has been implicitly converted
-	 * from an enum type.  In both cases, t_enum is valid.
-	 *
-	 * The information about a former enum type is retained to allow type
-	 * checks in expressions such as ((var1 & 0x0001) == var2), to detect
-	 * when var1 and var2 are from incompatible enum types.
+	 * Either the type is currently an enum (having t_tspec ENUM), or it
+	 * is an integer type (typically INT) that has been implicitly
+	 * converted from an enum type.  In both cases, t_enum is valid.
 	 */
 	bool	t_is_enum:1;
 	bool	t_packed:1;
@@ -179,7 +157,7 @@ struct lint1_type {
 #define	t_dim	t_u._t_dim
 #define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
-#define	t_params	t_u._t_params
+#define	t_params t_u._t_params
 
 
 typedef enum {
@@ -189,16 +167,14 @@ typedef enum {
 	SK_LABEL
 } symbol_kind;
 
-/*
- * storage classes and related things
- */
+/* storage classes and related things */
 typedef enum {
 	NO_SCL,
 	EXTERN,			/* external symbols (independent of decl_t) */
 	STATIC,			/* static symbols (local and global) */
 	AUTO,			/* automatic symbols (except register) */
 	REG,			/* register */
-	TYPEDEF,		/* typedef */
+	TYPEDEF,
 	THREAD_LOCAL,
 	STRUCT_TAG,
 	UNION_TAG,
@@ -217,9 +193,7 @@ typedef enum {
 	FS_NORETURN,		/* since C11 */
 } function_specifier;
 
-/*
- * symbol table entry
- */
+/* A type, variable, keyword; basically anything that has a name. */
 struct sym {
 	const char *s_name;
 	const char *s_rename;	/* renamed symbol's given name */
@@ -232,26 +206,26 @@ struct sym {
 	symbol_kind s_kind;
 	const struct keyword *s_keyword;
 	bool	s_bitfield:1;
-	bool	s_set:1;	/* variable set, label defined */
-	bool	s_used:1;	/* variable/label used */
-	bool	s_param:1;	/* symbol is function parameter */
-	bool	s_register:1;	/* symbol is register variable */
+	bool	s_set:1;
+	bool	s_used:1;
+	bool	s_param:1;
+	bool	s_register:1;
 	bool	s_defparam:1;	/* undefined symbol in old-style function
 				 * definition */
 	bool	s_return_type_implicit_int:1;
 	bool	s_osdef:1;	/* symbol stems from old-style function def. */
-	bool	s_inline:1;	/* true if this is an inline function */
-	struct sym *s_ext_sym;	/* for locally declared external symbols, the
+	bool	s_inline:1;
+	sym_t	*s_ext_sym;	/* for locally declared external symbols, the
 				 * pointer to the external symbol with the same
 				 * name */
 	def_t	s_def;		/* declared, tentative defined, defined */
-	scl_t	s_scl;		/* storage class, more or less */
+	scl_t	s_scl;
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
 				 * table */
 	type_t	*s_type;
 	union {
 		bool s_bool_constant;
-		int s_enum_constant;	/* XXX: should be TARG_INT */
+		int s_enum_constant;
 		struct {
 			struct_or_union *sm_containing_type;
 			unsigned int sm_offset_in_bits;
@@ -267,7 +241,7 @@ struct sym {
 				function_specifier function_specifier;
 			} u;
 		} s_keyword;
-		struct sym *s_old_style_params;	/* parameters in an old-style
+		sym_t	*s_old_style_params;	/* parameters in an old-style
 						 * function definition */
 	} u;
 	sym_t	*s_symtab_next;	/* next symbol in the same symtab bucket */
@@ -300,15 +274,12 @@ typedef struct tnode tnode_t;
 
 /* An expression, forming an abstract syntax tree. */
 struct tnode {
-	op_t	tn_op;		/* operator */
-	type_t	*tn_type;	/* type */
-	bool	tn_lvalue:1;	/* node is lvalue */
+	op_t	tn_op;
+	type_t	*tn_type;
+	bool	tn_lvalue:1;
 	bool	tn_cast:1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized:1;
-	bool	tn_sys:1;	/* the operator comes from a system header;
-				 * used in strict bool mode to allow mixing
-				 * bool and scalar, as these places are not
-				 * considered fixable */
+	bool	tn_sys:1;	/* comes from a system header */
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
@@ -349,9 +320,9 @@ typedef struct {
 
 typedef enum decl_level_kind {
 	DLK_EXTERN,		/* global types, variables or functions */
-	DLK_STRUCT,		/* members */
-	DLK_UNION,		/* members */
-	DLK_ENUM,		/* constants */
+	DLK_STRUCT,		/* struct members */
+	DLK_UNION,		/* union members */
+	DLK_ENUM,		/* enum constants */
 	DLK_OLD_STYLE_PARAMS,	/* parameters in an old-style function
 				 * definition */
 	DLK_PROTO_PARAMS,	/* parameters in a prototype function
