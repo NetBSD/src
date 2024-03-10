@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.137 2024/03/03 07:13:06 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.138 2024/03/10 19:22:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -13400,3 +13400,41 @@ doc/3RDPARTY					(manually edited)
 	Import libuv 1.44.2.
 	Adjust nsd, unbound and bind to the netbsd-9 branch.
 	[christos, ticket #1805]
+
+lib/libc/net/getnameinfo.c			1.60
+
+	getnameinfo(3): PR 57609: fix socket address length checks.
+	[riastradh, ticket #1806]
+
+lib/libc/net/getnameinfo.3			1.43
+
+	getnameinfo(3): PR 57832_ document NI_NUMERICSCOPE.
+	[riastradh, ticket #1808]
+
+sys/netinet6/icmp6.c				1.256 (patch)
+sys/netinet6/raw_ip6.c				1.184 (patch)
+
+	PR 57955: deliver timestamps also to raw sockets.
+	[riastradh, ticket #1809]
+
+sys/dev/usb/if_urtwn.c				1.109 (patch)
+
+	urtwn(4): PR 57965: avoid deadlock on command ring overflow.
+	[riastradh, ticket #1810]
+
+usr.bin/getconf/getconf.1			1.14
+usr.bin/getconf/getconf.c			1.37
+
+	getconf(1): PR 57875: accept variable names with or without
+	leading underscore. This matches FreeBSD and makes it more
+	portable to GNU getconf(1), which currently _requires_ a leading
+	underscore while ours currently _refuses_ a leading underscore.
+	[riastradh, ticket #1811]
+
+sys/netinet6/in6.c				1.292
+
+	netinet6: PR 53922: avoid NPD on certain inet6 addr configs.
+	This can be provoked by anyone on the local network by issuing
+	a router advertisement processed by dhcpcd.
+	[riastradh, ticket #1812]
+
