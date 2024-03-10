@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.13 2024/03/10 10:31:29 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.14 2024/03/10 14:32:30 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -59,8 +59,7 @@ fold_uminus(void)
 	/* The '-' is an operator, it is not part of the integer constant. */
 	take_int(-2147483648);
 
-	/* expect+2: warning: operator '+' produces integer overflow [141] */
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	take_int(-(2147483647 + 1));
 	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	take_int(-(-2147483647 - 1));

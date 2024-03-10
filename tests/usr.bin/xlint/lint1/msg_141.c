@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.13 2024/03/10 10:31:29 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.14 2024/03/10 14:32:30 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -347,11 +347,11 @@ plus_u64(void)
 	u64 = 0xffffffffffffffffULL + 0x0000000000000000ULL;
 	u64 = 0x0000000000000000ULL + 0xffffffffffffffffULL;
 	u64 = 0xfffffffffffffffeULL + 0x0000000000000001ULL;
-	/* TODO: expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	u64 = 0xffffffffffffffffULL + 0x0000000000000001ULL;
-	/* TODO: expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	u64 = 0x0000000000000001ULL + 0xffffffffffffffffULL;
-	/* TODO: expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
 	u64 = 0xffffffffffffffffULL + 0xffffffffffffffffULL;
 }
 
@@ -374,12 +374,12 @@ void
 minus_u32(void)
 {
 	u32 = 0x00000000U - 0x00000000U;
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	u32 = 0x00000000U - 0x00000001U;
 	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	u32 = 0x00000000U - 0x80000000U;
 	u32 = 0x80000000U - 0x00000001U;
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	u32 = 0x00000000U - 0xffffffffU;
 	u32 = 0xffffffffU - 0x00000000U;
 	u32 = 0xffffffffU - 0xffffffffU;

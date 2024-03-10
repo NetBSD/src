@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.618 2024/03/10 12:50:45 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.619 2024/03/10 14:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.618 2024/03/10 12:50:45 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.619 2024/03/10 14:32:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -819,18 +819,12 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 			return 0;
 		} else
 			return l % r;
-	case PLUS:;
-		uint64_t plus_result = l + r;
-		uint64_t hi = max_value ^ (max_value >> 1);
-		if (l & hi && r & hi && !(plus_result & hi))
-			*overflow = true;
-		return plus_result;
-	case MINUS:;
-		uint64_t minus_result = l - r;
-		hi = max_value ^ (max_value >> 1);
-		if (!(l & hi) && r & hi && minus_result & hi)
-			*overflow = true;
-		return minus_result;
+	case PLUS:
+		*overflow = l > max_value - r;
+		return l + r;
+	case MINUS:
+		*overflow = l < r;
+		return l - r;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
 		return l << (r & 63);
@@ -910,23 +904,26 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 			return 0;
 		}
 		return l % r;
-	case PLUS:;
-		uint64_t plus_result = (uint64_t)l + (uint64_t)r;
-		hi = (uint64_t)max_value + 1;
-
-		if (l & hi && r & hi && !(plus_result & hi))
+	case PLUS:
+		if (r > 0 && l > max_value - r) {
 			*overflow = true;
-		if (!(l & hi) && !(r & hi) && plus_result & hi)
+			return max_value;
+		}
+		if (r < 0 && l < min_value - r) {
 			*overflow = true;
-		return (int64_t)plus_result;
-	case MINUS:;
-		uint64_t minus_result = (uint64_t)l - (uint64_t)r;
-		hi = (uint64_t)max_value + 1;
-		if (l & hi && !(r & hi) && !(minus_result & hi))
+			return min_value;
+		}
+		return l + r;
+	case MINUS:
+		if (r > 0 && l < min_value + r) {
 			*overflow = true;
-		if (!(l & hi) && r & hi && minus_result & hi)
+			return min_value;
+		}
+		if (r < 0 && l > max_value + r) {
 			*overflow = true;
-		return (int64_t)minus_result;
+			return max_value;
+		}
+		return l - r;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
 		/* TODO: warn about overflow in signed '<<'. */
