@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.614 2024/03/09 23:55:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.615 2024/03/10 09:24:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.614 2024/03/09 23:55:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.615 2024/03/10 09:24:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -815,6 +815,9 @@ fold_constant_integer(tnode_t *tn)
 
 	int64_t si;
 	switch (tn->tn_op) {
+	case COMPL:
+		si = ~sl;
+		break;
 	case UPLUS:
 		si = sl;
 		break;
@@ -822,9 +825,6 @@ fold_constant_integer(tnode_t *tn)
 		si = sl == INT64_MIN ? sl : -sl;
 		if (sl != 0 && msb(si, t) == msb(sl, t))
 			ovfl = true;
-		break;
-	case COMPL:
-		si = ~sl;
 		break;
 	case MULT:
 		if (utyp) {
@@ -892,11 +892,11 @@ fold_constant_integer(tnode_t *tn)
 	case LE:
 		si = (utyp ? ul <= ur : sl <= sr) ? 1 : 0;
 		break;
-	case GE:
-		si = (utyp ? ul >= ur : sl >= sr) ? 1 : 0;
-		break;
 	case GT:
 		si = (utyp ? ul > ur : sl > sr) ? 1 : 0;
+		break;
+	case GE:
+		si = (utyp ? ul >= ur : sl >= sr) ? 1 : 0;
 		break;
 	case EQ:
 		si = (utyp ? ul == ur : sl == sr) ? 1 : 0;
