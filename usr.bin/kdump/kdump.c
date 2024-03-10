@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.143 2024/03/10 17:08:31 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.144 2024/03/10 18:54:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.143 2024/03/10 17:08:31 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.144 2024/03/10 18:54:41 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -892,11 +892,6 @@ ktrsyscall(struct ktr_syscall *ktr)
 			argcount--;
 			c = ',';
 
-			/*
-			 * Linux name is "futex".
-			 * Native name is "__futex".
-			 * Both have the same op argument.
-			 */
 		} else if ((strcmp(sys_name, "setsockopt") == 0 ||
 		    strcmp(sys_name, "getsockopt") == 0 ||
 		    strcmp(sys_name, "getsockopt2") == 0) && argcount >= 3) {
@@ -940,9 +935,15 @@ ktrsyscall(struct ktr_syscall *ktr)
 			ap++;
 			argcount--;
 			c = ',';
+
 		} else if ((strcmp(sys_name, "futex") == 0 ||
 			    strcmp(sys_name, "__futex") == 0) &&
 			   argcount > 2) {
+			/*
+			 * Linux name is "futex".
+			 * Native name is "__futex".
+			 * Both have the same op argument.
+			 */
 			(void)putchar('(');
 			output_long((long)*ap, 1);
 			(void)putchar(',');
