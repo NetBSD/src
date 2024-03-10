@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.617 2024/03/10 10:31:29 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.618 2024/03/10 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.617 2024/03/10 10:31:29 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.618 2024/03/10 12:50:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -787,6 +787,179 @@ build_address(bool sys, tnode_t *tn, bool force)
 	    tn, NULL);
 }
 
+static uint64_t
+fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
+		      uint64_t max_value, bool *overflow)
+{
+	switch (op) {
+	case COMPL:
+		return ~l;
+	case UPLUS:
+		return l;
+	case UMINUS:
+		return -l;
+	case MULT:;
+		uint64_t mult_result = l * r;
+		if (mult_result != (mult_result & max_value))
+			*overflow = true;
+		else if (l != 0 && mult_result / l != r)
+			*overflow = true;
+		return mult_result;
+	case DIV:
+		if (r == 0) {
+			/* division by 0 */
+			error(139);
+			return max_value;
+		} else
+			return l / r;
+	case MOD:
+		if (r == 0) {
+			/* modulus by 0 */
+			error(140);
+			return 0;
+		} else
+			return l % r;
+	case PLUS:;
+		uint64_t plus_result = l + r;
+		uint64_t hi = max_value ^ (max_value >> 1);
+		if (l & hi && r & hi && !(plus_result & hi))
+			*overflow = true;
+		return plus_result;
+	case MINUS:;
+		uint64_t minus_result = l - r;
+		hi = max_value ^ (max_value >> 1);
+		if (!(l & hi) && r & hi && minus_result & hi)
+			*overflow = true;
+		return minus_result;
+	case SHL:
+		/* TODO: warn about out-of-bounds 'sr'. */
+		return l << (r & 63);
+	case SHR:
+		/* TODO: warn about out-of-bounds 'sr'. */
+		return l >> (r & 63);
+	case LT:
+		return l < r ? 1 : 0;
+	case LE:
+		return l <= r ? 1 : 0;
+	case GT:
+		return l > r ? 1 : 0;
+	case GE:
+		return l >= r ? 1 : 0;
+	case EQ:
+		return l == r ? 1 : 0;
+	case NE:
+		return l != r ? 1 : 0;
+	case BITAND:
+		return l & r;
+	case BITXOR:
+		return l ^ r;
+	case BITOR:
+		return l | r;
+	default:
+		lint_assert(/*CONSTCOND*/false);
+	}
+	/* NOTREACHED */
+}
+
+static int64_t
+fold_signed_integer(op_t op, int64_t l, int64_t r,
+		    int64_t min_value, int64_t max_value, bool *overflow)
+{
+	switch (op) {
+	case COMPL:
+		return ~l;
+	case UPLUS:
+		return l;
+	case UMINUS:
+		*overflow = l == min_value;
+		return *overflow ? l : -l;
+	case MULT:;
+		uint64_t al = l >= 0 ? (uint64_t)l : -(uint64_t)l;
+		uint64_t ar = r >= 0 ? (uint64_t)r : -(uint64_t)r;
+		bool neg = (l >= 0) != (r >= 0);
+		uint64_t max_prod = (uint64_t)max_value + (neg ? 1 : 0);
+		if (al > 0 && ar > max_prod / al) {
+			*overflow = true;
+			return (int64_t)(al * ar);
+		}
+		uint64_t mult_result = l * r;
+		uint64_t hi = (uint64_t)max_value + 1;
+		// FIXME: Overflow can also happen in other bits.
+		if ((mult_result & hi) != ((l & hi) ^ (r & hi)))
+			*overflow = true;
+		return (int64_t)mult_result;
+	case DIV:
+		if (r == 0) {
+			/* division by 0 */
+			error(139);
+			return max_value;
+		}
+		if (l == min_value && r == -1) {
+			*overflow = true;
+			return l;
+		}
+		return l / r;
+	case MOD:
+		if (r == 0) {
+			/* modulus by 0 */
+			error(140);
+			return 0;
+		}
+		if (l == min_value && r == -1) {
+			*overflow = true;
+			return 0;
+		}
+		return l % r;
+	case PLUS:;
+		uint64_t plus_result = (uint64_t)l + (uint64_t)r;
+		hi = (uint64_t)max_value + 1;
+
+		if (l & hi && r & hi && !(plus_result & hi))
+			*overflow = true;
+		if (!(l & hi) && !(r & hi) && plus_result & hi)
+			*overflow = true;
+		return (int64_t)plus_result;
+	case MINUS:;
+		uint64_t minus_result = (uint64_t)l - (uint64_t)r;
+		hi = (uint64_t)max_value + 1;
+		if (l & hi && !(r & hi) && !(minus_result & hi))
+			*overflow = true;
+		if (!(l & hi) && r & hi && minus_result & hi)
+			*overflow = true;
+		return (int64_t)minus_result;
+	case SHL:
+		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about overflow in signed '<<'. */
+		return l << (r & 63);
+	case SHR:;
+		uint64_t shr_result = (uint64_t)l >> (r & 63);
+		if (shr_result & min_value)
+			shr_result |= min_value;
+		return (int64_t)shr_result;
+	case LT:
+		return l < r ? 1 : 0;
+	case LE:
+		return l <= r ? 1 : 0;
+	case GT:
+		return l > r ? 1 : 0;
+	case GE:
+		return l >= r ? 1 : 0;
+	case EQ:
+		return l == r ? 1 : 0;
+	case NE:
+		return l != r ? 1 : 0;
+	case BITAND:
+		return l & r;
+	case BITXOR:
+		return l ^ r;
+	case BITOR:
+		return l | r;
+	default:
+		lint_assert(/*CONSTCOND*/false);
+	}
+	/* NOTREACHED */
+}
+
 /*
  * XXX
  * Note: There appear to be a number of bugs in detecting overflow in
@@ -810,124 +983,10 @@ fold_constant_integer(tnode_t *tn)
 	int64_t min_value = -max_value - 1;
 	bool ovfl = false;
 
-	int64_t si;
-	switch (tn->tn_op) {
-	case COMPL:
-		si = ~sl;
-		break;
-	case UPLUS:
-		si = sl;
-		break;
-	case UMINUS:
-		if (utyp)
-			si = (int64_t)-ul;
-		else {
-			ovfl = sl == min_value;
-			si = ovfl ? sl : -sl;
-		}
-		break;
-	case MULT:
-		if (utyp) {
-			si = (int64_t)(ul * ur);
-			if (si != (si & (int64_t)mask))
-				ovfl = true;
-			else if (ul != 0 && si / ul != ur)
-				ovfl = true;
-		} else {
-			uint64_t al = sl >= 0 ? ul : -ul;
-			uint64_t ar = sr >= 0 ? ur : -ur;
-			bool neg = (sl >= 0) != (sr >= 0);
-			uint64_t max_prod = (uint64_t)max_value
-			    + (neg ? 1 : 0);
-			if (al > 0 && ar > max_prod / al) {
-				si = (int64_t)(al * ar);
-				ovfl = true;
-			} else
-				si = sl * sr;
-			if (msb(si, t) != (msb(sl, t) ^ msb(sr, t)))
-				ovfl = true;
-		}
-		break;
-	case DIV:
-		if (sr == 0) {
-			/* division by 0 */
-			error(139);
-			si = utyp ? -1 : max_value;
-		} else if (!utyp && sl == min_value && sr == -1) {
-			ovfl = true;
-			si = sl;
-		} else
-			si = utyp ? (int64_t)(ul / ur) : sl / sr;
-		break;
-	case MOD:
-		if (sr == 0) {
-			/* modulus by 0 */
-			error(140);
-			si = 0;
-		} else if (!utyp && sl == min_value && sr == -1) {
-			ovfl = true;
-			si = 0;
-		} else
-			si = utyp ? (int64_t)(ul % ur) : sl % sr;
-		break;
-	case PLUS:
-		si = (int64_t)(ul + ur);
-		if (msb(sl, t) && msb(sr, t) && !msb(si, t))
-			ovfl = true;
-		if (!utyp && !msb(sl, t) && !msb(sr, t) && msb(si, t))
-			ovfl = true;
-		break;
-	case MINUS:
-		si = (int64_t)(ul - ur);
-		if (!utyp && msb(sl, t) && !msb(sr, t) && !msb(si, t))
-			ovfl = true;
-		if (!msb(sl, t) && msb(sr, t) && msb(si, t))
-			ovfl = true;
-		break;
-	case SHL:
-		/* TODO: warn about out-of-bounds 'sr'. */
-		/* TODO: warn about overflow in signed '<<'. */
-		si = utyp ? (int64_t)(ul << (sr & 63)) : sl << (sr & 63);
-		break;
-	case SHR:
-		/*
-		 * The sign must be explicitly extended because shifts of
-		 * signed values are implementation dependent.
-		 */
-		/* TODO: warn about out-of-bounds 'sr'. */
-		si = (int64_t)(ul >> (sr & 63));
-		si = convert_integer(si, t, size_in_bits(t) - (int)sr);
-		break;
-	case LT:
-		si = (utyp ? ul < ur : sl < sr) ? 1 : 0;
-		break;
-	case LE:
-		si = (utyp ? ul <= ur : sl <= sr) ? 1 : 0;
-		break;
-	case GT:
-		si = (utyp ? ul > ur : sl > sr) ? 1 : 0;
-		break;
-	case GE:
-		si = (utyp ? ul >= ur : sl >= sr) ? 1 : 0;
-		break;
-	case EQ:
-		si = (utyp ? ul == ur : sl == sr) ? 1 : 0;
-		break;
-	case NE:
-		si = (utyp ? ul != ur : sl != sr) ? 1 : 0;
-		break;
-	case BITAND:
-		si = utyp ? (int64_t)(ul & ur) : sl & sr;
-		break;
-	case BITXOR:
-		si = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
-		break;
-	case BITOR:
-		si = utyp ? (int64_t)(ul | ur) : sl | sr;
-		break;
-	default:
-		lint_assert(/*CONSTCOND*/false);
-	}
+	int64_t si = utyp
+	    ? (int64_t)fold_unsigned_integer(tn->tn_op, ul, ur, mask, &ovfl)
+	    : fold_signed_integer(tn->tn_op, sl, sr, min_value, max_value,
+		&ovfl);
 
 	/* XXX: The overflow check does not work for 64-bit integers. */
 	if (ovfl ||
