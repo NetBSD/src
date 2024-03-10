@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.11 2024/03/10 16:06:13 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.12 2024/03/10 19:45:14 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -91,13 +91,13 @@ array_index(void)
 	u64 += u64_buf[0x00ffffffffffffff];
 	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
 	u64 += u64_buf[0x0fffffffffffffff];
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '2305843009213693951 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
 	u64 += u64_buf[0x1fffffffffffffff];
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '4611686018427387903 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
 	u64 += u64_buf[0x3fffffffffffffff];
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '9223372036854775807 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
 	u64 += u64_buf[0x7fffffffffffffff];
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
