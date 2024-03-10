@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_long.c,v 1.7 2024/03/10 16:06:13 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_long.c,v 1.8 2024/03/10 19:45:14 rillig Exp $	*/
 # 3 "platform_ilp32_long.c"
 
 /*
@@ -73,22 +73,22 @@ array_index(void)
 
 	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
 	u64 += u64_buf[0x00ffffff];
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '2147483647 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be > 19: 268435455 [168] */
 	u64 += u64_buf[0x7fffffff];
 	/* expect+3: warning: conversion of 'long long' to 'long' is out of range [119] */
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '-2147483648 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[2147483648];
 	/* expect+3: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '-2147483648 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[0x80000000];
 	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
 	u64 += u64_buf[0xffffffff];
 	/* expect+3: warning: conversion of 'unsigned int' to 'long' is out of range [119] */
-	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+2: warning: '-2147483648 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[0x80000000];
 	/* expect+2: warning: conversion of 'unsigned int' to 'long' is out of range [119] */

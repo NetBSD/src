@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.14 2024/03/10 14:32:30 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.15 2024/03/10 19:45:14 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -59,9 +59,9 @@ fold_uminus(void)
 	/* The '-' is an operator, it is not part of the integer constant. */
 	take_int(-2147483648);
 
-	/* expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: '2147483647 + 1' overflows 'int' [141] */
 	take_int(-(2147483647 + 1));
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: '-(-2147483648)' overflows 'int' [141] */
 	take_int(-(-2147483647 - 1));
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
 	take_int(-(4294967295));
@@ -99,14 +99,14 @@ void
 fold_mult(void)
 {
 	take_int(32767 * 65536);
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: '32768 * 65536' overflows 'int' [141] */
 	take_int(32768 * 65536);
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: '65536 * 65536' overflows 'int' [141] */
 	take_int(65536 * 65536);
 
 	take_uint(32767 * 65536U);
 	take_uint(32768 * 65536U);
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: '65536 * 65536' overflows 'unsigned int' [141] */
 	take_uint(65536 * 65536U);
 }
 
@@ -138,13 +138,13 @@ fold_mod(void)
 void
 fold_plus(void)
 {
-	/* expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: '2147483647 + 1' overflows 'int' [141] */
 	take_int(2147483647 + 1);
 
 	/* Assume two's complement, so no overflow. */
 	take_int(-2147483647 + -1);
 
-	/* expect+1: warning: operator '+' produces integer overflow [141] */
+	/* expect+1: warning: '-2147483647 + -2' overflows 'int' [141] */
 	take_int(-2147483647 + -2);
 
 	/*
@@ -161,25 +161,25 @@ fold_plus(void)
 void
 fold_minus(void)
 {
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: '2147483647 - -1' overflows 'int' [141] */
 	take_int(2147483647 - -1);
 	/* Assume two's complement. */
 	take_int(-2147483647 - 1);
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: '-2147483647 - 2' overflows 'int' [141] */
 	take_int(-2147483647 - 2);
 
 	take_int(0 - 2147483648);
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	/* expect+1: warning: '0 - 2147483648' overflows 'unsigned int' [141] */
 	take_uint(0 - 2147483648U);
 }
 
 void
 fold_shl(void)
 {
-	/* expect+1: warning: operator '<<' produces integer overflow [141] */
+	/* expect+1: warning: '16777216 << 24' overflows 'int' [141] */
 	take_int(1 << 24 << 24);
 
-	/* expect+1: warning: operator '<<' produces integer overflow [141] */
+	/* expect+1: warning: '16777216 << 24' overflows 'unsigned int' [141] */
 	take_uint(1U << 24 << 24);
 
 	/* expect+1: warning: shift amount 104 is greater than bit-size 32 of 'unsigned int' [122] */

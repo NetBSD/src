@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.231 2024/03/03 13:09:22 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.232 2024/03/10 19:45:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.231 2024/03/03 13:09:22 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.232 2024/03/10 19:45:14 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -196,7 +196,7 @@ static const char *const msgs[] = {
 	"unknown operand size, op '%s'",				// 138
 	"division by 0",						// 139
 	"modulus by 0",							// 140
-	"operator '%s' produces integer overflow",			// 141
+	"'%s' overflows '%s'",						// 141
 	"operator '%s' produces floating point overflow",		// 142
 	"cannot take size/alignment of incomplete type",		// 143
 	"cannot take size/alignment of function type '%s'",		// 144

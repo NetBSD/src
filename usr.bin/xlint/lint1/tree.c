@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.622 2024/03/10 16:06:13 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.623 2024/03/10 19:45:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.622 2024/03/10 16:06:13 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.623 2024/03/10 19:45:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -967,6 +967,19 @@ fold_constant_integer(tnode_t *tn)
 		if (u_res > mask)
 			overflow = true;
 		res = (int64_t)u_res;
+		if (overflow && hflag) {
+			char buf[128];
+			if (is_binary(tn)) {
+				snprintf(buf, sizeof(buf), "%ju %s %ju",
+				    (uintmax_t)l, op_name(tn->tn_op),
+				    (uintmax_t)r);
+			} else {
+				snprintf(buf, sizeof(buf), "%s%ju",
+				    op_name(tn->tn_op), (uintmax_t)l);
+			}
+			/* '%s' overflows '%s' */
+			warning(141, buf, type_name(tn->tn_type));
+		}
 	} else {
 		int64_t max_value = (int64_t)(mask >> 1);
 		int64_t min_value = -max_value - 1;
@@ -974,11 +987,23 @@ fold_constant_integer(tnode_t *tn)
 		    l, r, min_value, max_value, &overflow);
 		if (res < min_value || res > max_value)
 			overflow = true;
+		if (overflow && hflag) {
+			char buf[128];
+			if (is_binary(tn)) {
+				snprintf(buf, sizeof(buf), "%jd %s %jd",
+				    (intmax_t)l, op_name(tn->tn_op),
+				    (intmax_t)r);
+			} else if (tn->tn_op == UMINUS && l < 0) {
+				snprintf(buf, sizeof(buf), "-(%jd)",
+				    (intmax_t)l);
+			} else {
+				snprintf(buf, sizeof(buf), "%s%jd",
+				    op_name(tn->tn_op), (intmax_t)l);
+			}
+			/* '%s' overflows '%s' */
+			warning(141, buf, type_name(tn->tn_type));
+		}
 	}
-
-	if (overflow && hflag)
-		/* operator '%s' produces integer overflow */
-		warning(141, op_name(tn->tn_op));
 
 	val_t *v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
