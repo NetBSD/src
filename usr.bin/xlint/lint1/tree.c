@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.621 2024/03/10 15:49:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.622 2024/03/10 16:06:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.621 2024/03/10 15:49:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.622 2024/03/10 16:06:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -871,7 +871,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		uint64_t max_prod = (uint64_t)max_value + (neg ? 1 : 0);
 		if (al > 0 && ar > max_prod / al) {
 			*overflow = true;
-			return (int64_t)(al * ar);
+			return neg ? min_value : max_value;
 		}
 		return l * r;
 	case DIV:
