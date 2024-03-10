@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.71.2.6 2021/10/23 11:21:54 martin Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.71.2.7 2024/03/10 18:59:19 martin Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.71.2.6 2021/10/23 11:21:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.71.2.7 2024/03/10 18:59:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -833,6 +833,24 @@ urtwn_tx_beacon(struct urtwn_softc *sc, struct mbuf *m,
 }
 
 static void
+urtwn_cmdq_invariants(struct urtwn_softc *sc)
+{
+	struct urtwn_host_cmd_ring *const ring __diagused = &sc->cmdq;
+
+	KASSERT(mutex_owned(&sc->sc_task_mtx));
+	KASSERTMSG((ring->cur >= 0 && ring->cur < URTWN_HOST_CMD_RING_COUNT),
+	    "%s: cur=%d next=%d queued=%d",
+	    device_xname(sc->sc_dev), ring->cur, ring->next, ring->queued);
+	KASSERTMSG((ring->next >= 0 && ring->next < URTWN_HOST_CMD_RING_COUNT),
+	    "%s: cur=%d next=%d queued=%d",
+	    device_xname(sc->sc_dev), ring->cur, ring->next, ring->queued);
+	KASSERTMSG((ring->queued >= 0 &&
+		ring->queued <= URTWN_HOST_CMD_RING_COUNT),
+	    "%s: %d commands queued",
+	    device_xname(sc->sc_dev), ring->queued);
+}
+
+static void
 urtwn_task(void *arg)
 {
 	struct urtwn_softc *sc = arg;
@@ -865,7 +883,11 @@ urtwn_task(void *arg)
 	/* Process host commands. */
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
+	urtwn_cmdq_invariants(sc);
 	while (ring->next != ring->cur) {
+		KASSERTMSG(ring->queued > 0, "%s: cur=%d next=%d queued=%d",
+		    device_xname(sc->sc_dev),
+		    ring->cur, ring->next, ring->queued);
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&sc->sc_task_mtx);
 		splx(s);
@@ -873,6 +895,10 @@ urtwn_task(void *arg)
 		cmd->cb(sc, cmd->data);
 		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
+		urtwn_cmdq_invariants(sc);
+		KASSERTMSG(ring->queued > 0, "%s: cur=%d next=%d queued=%d",
+		    device_xname(sc->sc_dev),
+		    ring->cur, ring->next, ring->queued);
 		ring->queued--;
 		ring->next = (ring->next + 1) % URTWN_HOST_CMD_RING_COUNT;
 	}
@@ -887,6 +913,7 @@ urtwn_do_async(struct urtwn_softc *sc, void (*cb)(struct urtwn_softc *, void *),
 {
 	struct urtwn_host_cmd_ring *ring = &sc->cmdq;
 	struct urtwn_host_cmd *cmd;
+	bool schedtask = false;
 	int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s: cb=%p, arg=%p, len=%d\n",
@@ -894,19 +921,27 @@ urtwn_do_async(struct urtwn_softc *sc, void (*cb)(struct urtwn_softc *, void *),
 
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
+	urtwn_cmdq_invariants(sc);
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
 	ring->cur = (ring->cur + 1) % URTWN_HOST_CMD_RING_COUNT;
 
-	/* If there is no pending command already, schedule a task. */
-	if (!sc->sc_dying && ++ring->queued == 1) {
-		mutex_spin_exit(&sc->sc_task_mtx);
-		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
-	} else
-		mutex_spin_exit(&sc->sc_task_mtx);
+	/*
+	 * Schedule a task to process the command if need be.
+	 */
+	if (!sc->sc_dying) {
+		if (ring->queued == URTWN_HOST_CMD_RING_COUNT)
+			device_printf(sc->sc_dev, "command queue overflow\n");
+		else if (ring->queued++ == 0)
+			schedtask = true;
+	}
+	mutex_spin_exit(&sc->sc_task_mtx);
 	splx(s);
+
+	if (schedtask)
+		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 }
 
 static void
