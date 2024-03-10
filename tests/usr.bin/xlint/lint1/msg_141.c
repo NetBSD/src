@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.14 2024/03/10 14:32:30 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.15 2024/03/10 15:49:12 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -412,7 +412,7 @@ minus_u64(void)
 void
 shl_s32(void)
 {
-	/* TODO: expect+1: warning: operator '<<' produces integer overflow [141] */
+	/* expect+1: warning: operator '<<' produces integer overflow [141] */
 	s32 = 0x0100 << 23;
 	/* expect+1: warning: operator '<<' produces integer overflow [141] */
 	s32 = 0x0100 << 24;
@@ -457,6 +457,15 @@ shr_s32(void)
 	s32 = +9 >> 1;
 	s32 = +10 >> 1;
 	s32 = 0x7fffffff >> 1;
+
+	/* expect+1: error: negative array dimension (-16) [20] */
+	typedef int minus_32_shr_1[-32 >> 1];
+	/* expect+1: error: negative array dimension (-16) [20] */
+	typedef int minus_31_shr_1[-31 >> 1];
+	/* expect+1: error: negative array dimension (-15) [20] */
+	typedef int minus_30_shr_1[-30 >> 1];
+	/* expect+1: error: negative array dimension (-1) [20] */
+	typedef int minus_1_shr_1[-1 >> 31];
 }
 
 void
@@ -472,6 +481,15 @@ void
 shr_s64(void)
 {
 	// TODO
+
+	/* expect+1: error: negative array dimension (-16) [20] */
+	typedef int shr_minus_1_shr_0[-16LL >> 0];
+	/* expect+1: error: negative array dimension (-8) [20] */
+	typedef int shr_minus_1_shr_1[-16LL >> 1];
+	/* expect+1: error: negative array dimension (-1) [20] */
+	typedef int shr_minus_1_shr_16[-16LL >> 16];
+	/* expect+1: error: negative array dimension (-1) [20] */
+	typedef int shr_minus_1_shr_40[-16LL >> 40];
 }
 
 void

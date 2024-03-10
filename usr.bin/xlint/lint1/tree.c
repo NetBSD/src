@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.620 2024/03/10 14:42:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.621 2024/03/10 15:49:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.620 2024/03/10 14:42:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.621 2024/03/10 15:49:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -793,11 +793,11 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 {
 	switch (op) {
 	case COMPL:
-		return ~l;
+		return ~l & max_value;
 	case UPLUS:
 		return +l;
 	case UMINUS:
-		return -l;
+		return -l & max_value;
 	case MULT:
 		*overflow = r > 0 && l > max_value / r;
 		return l * r;
@@ -920,12 +920,11 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		/* TODO: warn about out-of-bounds 'sr'. */
 		/* TODO: warn about overflow. */
 		return l << (r & 63);
-	case SHR:;
+	case SHR:
 		/* TODO: warn about out-of-bounds 'sr'. */
-		uint64_t shr_result = (uint64_t)l >> (r & 63);
-		if (shr_result & min_value)
-			shr_result |= min_value;
-		return (int64_t)shr_result;
+		if (l < 0)
+			return (int64_t)~(~(uint64_t)l >> (r & 63));
+		return (int64_t)((uint64_t)l >> (r & 63));
 	case LT:
 		return l < r ? 1 : 0;
 	case LE:
@@ -950,45 +949,40 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 	}
 }
 
-/*
- * XXX
- * Note: There appear to be a number of bugs in detecting overflow in
- * this function. An audit and a set of proper regression tests are needed.
- *     --Perry Metzger, Nov. 16, 2001
- */
 static tnode_t *
 fold_constant_integer(tnode_t *tn)
 {
 
 	lint_assert(has_operands(tn));
 	tspec_t t = tn->u.ops.left->tn_type->t_tspec;
-	bool utyp = !is_integer(t) || is_uinteger(t);
-	int64_t sl = tn->u.ops.left->u.value.u.integer, sr = 0;
-	uint64_t ul = sl, ur = 0;
-	if (is_binary(tn))
-		ur = sr = tn->u.ops.right->u.value.u.integer;
-
+	int64_t l = tn->u.ops.left->u.value.u.integer;
+	int64_t r = is_binary(tn) ? tn->u.ops.right->u.value.u.integer : 0;
 	uint64_t mask = value_bits(size_in_bits(t));
-	int64_t max_value = (int64_t)(mask >> 1);
-	int64_t min_value = -max_value - 1;
-	bool ovfl = false;
 
-	int64_t si = utyp
-	    ? (int64_t)fold_unsigned_integer(tn->tn_op, ul, ur, mask, &ovfl)
-	    : fold_signed_integer(tn->tn_op, sl, sr, min_value, max_value,
-		&ovfl);
-
-	/* XXX: The overflow check does not work for 64-bit integers. */
-	if (ovfl ||
-	    ((si | mask) != ~(uint64_t)0 && (si & ~mask) != 0)) {
-		if (hflag)
-			/* operator '%s' produces integer overflow */
-			warning(141, op_name(tn->tn_op));
+	int64_t res;
+	bool overflow = false;
+	if (!is_integer(t) || is_uinteger(t)) {
+		uint64_t u_res = fold_unsigned_integer(tn->tn_op,
+		    (uint64_t)l, (uint64_t)r, mask, &overflow);
+		if (u_res > mask)
+			overflow = true;
+		res = (int64_t)u_res;
+	} else {
+		int64_t max_value = (int64_t)(mask >> 1);
+		int64_t min_value = -max_value - 1;
+		res = fold_signed_integer(tn->tn_op,
+		    l, r, min_value, max_value, &overflow);
+		if (res < min_value || res > max_value)
+			overflow = true;
 	}
+
+	if (overflow && hflag)
+		/* operator '%s' produces integer overflow */
+		warning(141, op_name(tn->tn_op));
 
 	val_t *v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
-	v->u.integer = convert_integer(si, t, 0);
+	v->u.integer = convert_integer(res, t, 0);
 
 	tnode_t *cn = build_constant(tn->tn_type, v);
 	if (tn->u.ops.left->tn_system_dependent)
