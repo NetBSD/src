@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.9 2024/03/09 13:54:47 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.10 2024/03/10 16:27:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.9 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.10 2024/03/10 16:27:16 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -67,24 +67,17 @@ match_string_literal(const tnode_t *tn, const buffer **str)
 
 static bool
 match_snprintb_call(const function_call *call,
-    const buffer **out_fmt, const tnode_t **out_val)
+    const buffer **fmt, const tnode_t **val)
 {
 	const char *func;
-	const tnode_t *val;
-	const buffer *str;
 
-	if (call->func->tn_op == ADDR
+	return call->func->tn_op == ADDR
 	    && call->func->u.ops.left->tn_op == NAME
 	    && (func = call->func->u.ops.left->u.sym->s_name, true)
 	    && ((strcmp(func, "snprintb") == 0 && call->args_len == 4)
 		|| (strcmp(func, "snprintb_m") == 0 && call->args_len == 5))
-	    && match_string_literal(call->args[2], &str)
-	    && (val = call->args[3], true)) {
-		*out_fmt = str;
-		*out_val = val;
-		return true;
-	}
-	return false;
+	    && match_string_literal(call->args[2], fmt)
+	    && (*val = call->args[3], true);
 }
 
 static int
