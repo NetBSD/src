@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.12 2024/03/09 23:55:11 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.13 2024/03/10 10:31:29 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -292,7 +292,6 @@ struct ctassert5_struct {
 void
 unary_minus_overflow(unsigned long long val)
 {
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	if (val > -(unsigned long long)(-0x7fffffffffffffffL - 1))
 		return;
 }
