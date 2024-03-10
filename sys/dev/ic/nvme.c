@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.68 2024/03/10 04:49:22 mrg Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.68 2024/03/10 04:49:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,8 @@ nvme_resume(struct nvme_softc *sc)
 		}
 	}
 
-	nvme_write4(sc, NVME_INTMC, 1);
+	if (!sc->sc_use_mq)
+		nvme_write4(sc, NVME_INTMC, 1);
 
 	return 0;
 
@@ -2023,6 +2024,8 @@ nvme_intr(void *xsc)
 {
 	struct nvme_softc *sc = xsc;
 
+	KASSERT(!sc->sc_use_mq);
+
 	/*
 	 * INTx is level triggered, controller deasserts the interrupt only
 	 * when we advance command queue head via write to the doorbell.
@@ -2042,6 +2045,8 @@ nvme_softintr_intx(void *xq)
 {
 	struct nvme_queue *q = xq;
 	struct nvme_softc *sc = q->q_sc;
+
+	KASSERT(!sc->sc_use_mq);
 
 	nvme_q_complete(sc, sc->sc_admin_q);
 	if (sc->sc_q != NULL)
