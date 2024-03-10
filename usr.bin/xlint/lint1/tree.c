@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.619 2024/03/10 14:32:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.620 2024/03/10 14:42:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.619 2024/03/10 14:32:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.620 2024/03/10 14:42:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -795,30 +795,26 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 	case COMPL:
 		return ~l;
 	case UPLUS:
-		return l;
+		return +l;
 	case UMINUS:
 		return -l;
-	case MULT:;
-		uint64_t mult_result = l * r;
-		if (mult_result != (mult_result & max_value))
-			*overflow = true;
-		else if (l != 0 && mult_result / l != r)
-			*overflow = true;
-		return mult_result;
+	case MULT:
+		*overflow = r > 0 && l > max_value / r;
+		return l * r;
 	case DIV:
 		if (r == 0) {
 			/* division by 0 */
 			error(139);
 			return max_value;
-		} else
-			return l / r;
+		}
+		return l / r;
 	case MOD:
 		if (r == 0) {
 			/* modulus by 0 */
 			error(140);
 			return 0;
-		} else
-			return l % r;
+		}
+		return l % r;
 	case PLUS:
 		*overflow = l > max_value - r;
 		return l + r;
@@ -827,6 +823,7 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 		return l - r;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about overflow. */
 		return l << (r & 63);
 	case SHR:
 		/* TODO: warn about out-of-bounds 'sr'. */
@@ -851,8 +848,8 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 		return l | r;
 	default:
 		lint_assert(/*CONSTCOND*/false);
+		/* NOTREACHED */
 	}
-	/* NOTREACHED */
 }
 
 static int64_t
@@ -863,7 +860,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 	case COMPL:
 		return ~l;
 	case UPLUS:
-		return l;
+		return +l;
 	case UMINUS:
 		*overflow = l == min_value;
 		return *overflow ? l : -l;
@@ -876,12 +873,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 			*overflow = true;
 			return (int64_t)(al * ar);
 		}
-		uint64_t mult_result = l * r;
-		uint64_t hi = (uint64_t)max_value + 1;
-		// FIXME: Overflow can also happen in other bits.
-		if ((mult_result & hi) != ((l & hi) ^ (r & hi)))
-			*overflow = true;
-		return (int64_t)mult_result;
+		return l * r;
 	case DIV:
 		if (r == 0) {
 			/* division by 0 */
@@ -926,9 +918,10 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l - r;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
-		/* TODO: warn about overflow in signed '<<'. */
+		/* TODO: warn about overflow. */
 		return l << (r & 63);
 	case SHR:;
+		/* TODO: warn about out-of-bounds 'sr'. */
 		uint64_t shr_result = (uint64_t)l >> (r & 63);
 		if (shr_result & min_value)
 			shr_result |= min_value;
@@ -953,8 +946,8 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l | r;
 	default:
 		lint_assert(/*CONSTCOND*/false);
+		/* NOTREACHED */
 	}
-	/* NOTREACHED */
 }
 
 /*
