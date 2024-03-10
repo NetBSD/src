@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.328 2024/03/01 16:41:42 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.329 2024/03/10 02:53:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -504,6 +504,7 @@ typedef struct GNode {
 	const char *fname;
 	/* Line number where the GNode got defined, 1-based */
 	unsigned lineno;
+	int exit_status;
 } GNode;
 
 /*
