@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.42 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.42.16.1 2024/03/10 18:42:42 martin Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 18, 2013
+.Dd February 15, 2024
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -106,6 +106,10 @@ If the host name cannot be found in DNS and this flag is set,
 a non-zero error code is returned.
 If the host name is not found and the flag is not set, the
 address is returned in numeric form.
+.It NI_NUMERICSCOPE
+For IPv6 addresses the numeric form of the IPv6 scope identifier is
+returned.
+This flag is ignored for non-IPv6 addresses.
 .It NI_NUMERICSERV
 The service name is returned as a digit string representing the port number.
 .It NI_DGRAM
