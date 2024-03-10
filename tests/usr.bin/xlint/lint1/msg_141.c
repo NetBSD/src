@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.11 2024/03/10 09:58:30 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.12 2024/03/10 10:15:52 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -162,26 +162,26 @@ mult_u32(void)
 void
 mult_s64(void)
 {
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = -0x100000000LL * 0x100000000LL;	// -0x010000000000000000
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = -3LL * 0x2aaaaaaaaaaaaaabLL;	// -0x8000000000000001
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = 0x2aaaaaaaaaaaaaabLL * -3LL;	// -0x8000000000000001
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = -0x100000000LL * 0x100000000LL;	// -0x010000000000000000
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = -3LL * 0x2aaaaaaaaaaaaaabLL;	// -0x8000000000000001
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = 0x2aaaaaaaaaaaaaabLL * -3LL;	// -0x8000000000000001
 	s64 = -8LL * +0x1000000000000000LL;	// -0x8000000000000000
 	s64 = +0x1000000000000000LL * -8LL;	// -0x8000000000000000
 	s64 = +2LL * +0x3fffffffffffffffLL;	// +0x7ffffffffffffffe
 	s64 = +0x3fffffffffffffffLL * +2LL;	// +0x7ffffffffffffffe
 	s64 = +0x7fffffffffffffffLL * +1LL;	// +0x7fffffffffffffff
 	s64 = +1LL * +0x7fffffffffffffffLL;	// +0x7fffffffffffffff
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = +2LL * +0x4000000000000000LL;	// +0x8000000000000000
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = +0x4000000000000000LL * +2LL;	// +0x8000000000000000
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = +0xffffffffLL * +0x100000001LL;	// +0xffffffffffffffff
-	/* TODO: expect+1: warning: operator '*' produces integer overflow [141] */
-	//s64 = +0x100000000LL * +0x100000000LL;	// +0x010000000000000000
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = +2LL * +0x4000000000000000LL;	// +0x8000000000000000
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = +0x4000000000000000LL * +2LL;	// +0x8000000000000000
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = +0xffffffffLL * +0x100000001LL;	// +0xffffffffffffffff
+	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	s64 = +0x100000000LL * +0x100000000LL;	// +0x010000000000000000
 }
 
 void
@@ -249,6 +249,7 @@ mod_s32(void)
 {
 	s32 = -1 % (-0x7fffffff - 1);
 	s32 = -1 % 0x7fffffff;
+	/* expect+1: warning: operator '%' produces integer overflow [141] */
 	s32 = (-0x7fffffff - 1) % -1;
 	s32 = 0x7fffffff % -1;
 }
@@ -269,9 +270,8 @@ mod_s64(void)
 {
 	s64 = -1LL % (-0x7fffffffffffffffLL - 1LL);
 	s64 = -1LL % 0x7fffffffffffffffLL;
-	// FIXME: endless loop on x86_64 in idivq instruction,
-	//  probably due to SIGFPE handling.
-	//s64 = (-0x7fffffffffffffffLL - 1LL) % -1LL;
+	/* expect+1: warning: operator '%' produces integer overflow [141] */
+	s64 = (-0x7fffffffffffffffLL - 1LL) % -1LL;
 	s64 = 0x7fffffffffffffffLL % -1LL;
 }
 
@@ -334,12 +334,12 @@ plus_u32(void)
 void
 plus_s64(void)
 {
-	/* TODO: expect+1: warning: operator '+' produces integer overflow [141] */
-	// FIXME: s64 = -0x7fffffffffffffffLL + -2LL;
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
+	s64 = -0x7fffffffffffffffLL + -2LL;
 	s64 = -0x7fffffffffffffffLL + -1LL;
 	s64 = 0x7ffffffffffffffeLL + 1LL;
-	/* TODO: expect+1: warning: operator '+' produces integer overflow [141] */
-	// FIXME: s64 = 0x7fffffffffffffffLL + 1LL;
+	/* expect+1: warning: operator '+' produces integer overflow [141] */
+	s64 = 0x7fffffffffffffffLL + 1LL;
 }
 
 void
@@ -390,19 +390,19 @@ minus_u32(void)
 void
 minus_s64(void)
 {
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
-	// FIXME: s64 = -0x7fffffffffffffffLL - 0x7fffffffffffffffLL;
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
-	// FIXME: s64 = -0x7fffffffffffffffLL - 2LL;
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	s64 = -0x7fffffffffffffffLL - 0x7fffffffffffffffLL;
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	s64 = -0x7fffffffffffffffLL - 2LL;
 	s64 = -0x7fffffffffffffffLL - 1LL;
 	s64 = -0x7fffffffffffffffLL - 0LL;
 	s64 = -0x7fffffffffffffffLL - -1LL;
 	s64 = 0x7fffffffffffffffLL - 1LL;
 	s64 = 0x7fffffffffffffffLL - 0LL;
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
-	// FIXME: s64 = 0x7fffffffffffffffLL - -1LL;
-	/* TODO: expect+1: warning: operator '-' produces integer overflow [141] */
-	// FIXME: s64 = 0x7fffffffffffffffLL - -0x7fffffffffffffffLL;
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	s64 = 0x7fffffffffffffffLL - -1LL;
+	/* expect+1: warning: operator '-' produces integer overflow [141] */
+	s64 = 0x7fffffffffffffffLL - -0x7fffffffffffffffLL;
 }
 
 void
