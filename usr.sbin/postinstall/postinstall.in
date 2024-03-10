@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.61 2024/03/09 06:51:40 rillig Exp $
+# $NetBSD: postinstall.in,v 1.62 2024/03/10 18:23:18 rillig Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -235,7 +235,7 @@ check_dir()
 #
 check_ids()
 {
-	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id ..."
+	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file srcfile start id ..."
 	local op="$1"
 	local type="$2"
 	local file="$3"
