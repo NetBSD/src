@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.59 2015/09/22 16:15:08 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.59.26.1 2024/03/10 13:44:34 martin Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.59 2015/09/22 16:15:08 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.59.26.1 2024/03/10 13:44:34 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -127,6 +127,13 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 	char *serv, socklen_t servlen,
 	int flags)
 {
+
+	/*      
+	 * getnameinfo() accepts an salen of sizeof(struct sockaddr_storage)
+	 * at maximum as shown in RFC 4038 Sec.6.2.3.
+	 */     
+	if (salen > sizeof(struct sockaddr_storage))
+		return EAI_FAMILY;
 
 	switch (sa->sa_family) {
 	case AF_APPLETALK:
@@ -220,6 +227,9 @@ getnameinfo_local(const struct sockaddr *sa, socklen_t salen,
 	const struct sockaddr_un *sun =
 	    (const struct sockaddr_un *)(const void *)sa;
 
+        if (salen <= sizeof(*sun) - sizeof(sun->sun_path))
+		return EAI_FAMILY;
+
 	if (serv != NULL && servlen > 0)
 		serv[0] = '\0';
 
@@ -266,8 +276,8 @@ getnameinfo_inet(const struct sockaddr *sa, socklen_t salen,
 	return EAI_FAMILY;
 
  found:
-	if (salen != afd->a_socklen)
-		return EAI_FAIL;
+	if (salen < afd->a_socklen)
+		return EAI_FAMILY;
 
 	/* network byte order */
 	port = ((const struct sockinet *)(const void *)sa)->si_port;
@@ -543,6 +553,9 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 	    (const struct sockaddr_dl *)(const void *)sa;
 	const struct ieee1394_hwaddr *iha;
 	int n;
+
+        if (salen <= sizeof(*sdl) - sizeof(sdl->sdl_data))
+		return EAI_FAMILY;
 
 	if (serv != NULL && servlen > 0)
 		*serv = '\0';
