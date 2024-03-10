@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.616 2024/03/10 10:15:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.617 2024/03/10 10:31:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.616 2024/03/10 10:15:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.617 2024/03/10 10:31:29 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -797,9 +797,6 @@ static tnode_t *
 fold_constant_integer(tnode_t *tn)
 {
 
-	val_t *v = xcalloc(1, sizeof(*v));
-	v->v_tspec = tn->tn_type->t_tspec;
-
 	lint_assert(has_operands(tn));
 	tspec_t t = tn->u.ops.left->tn_type->t_tspec;
 	bool utyp = !is_integer(t) || is_uinteger(t);
@@ -822,9 +819,12 @@ fold_constant_integer(tnode_t *tn)
 		si = sl;
 		break;
 	case UMINUS:
-		si = sl == INT64_MIN ? sl : -sl;
-		if (sl != 0 && msb(si, t) == msb(sl, t))
-			ovfl = true;
+		if (utyp)
+			si = (int64_t)-ul;
+		else {
+			ovfl = sl == min_value;
+			si = ovfl ? sl : -sl;
+		}
 		break;
 	case MULT:
 		if (utyp) {
@@ -937,6 +937,8 @@ fold_constant_integer(tnode_t *tn)
 			warning(141, op_name(tn->tn_op));
 	}
 
+	val_t *v = xcalloc(1, sizeof(*v));
+	v->v_tspec = tn->tn_type->t_tspec;
 	v->u.integer = convert_integer(si, t, 0);
 
 	tnode_t *cn = build_constant(tn->tn_type, v);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.12 2024/03/10 10:15:52 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.13 2024/03/10 10:31:29 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: operator '%s' produces integer overflow [141]
@@ -101,7 +101,6 @@ uminus_u32(void)
 {
 	u32 = -0x00000000U;
 	u32 = -0x7fffffffU;
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	u32 = -0x80000000U;
 	u32 = -0xffffffffU;
 }
@@ -121,7 +120,6 @@ uminus_u64(void)
 {
 	u64 = -0x0000000000000000ULL;
 	u64 = -0x7fffffffffffffffULL;
-	/* expect+1: warning: operator '-' produces integer overflow [141] */
 	u64 = -0x8000000000000000ULL;
 	u64 = -0xffffffffffffffffULL;
 }
