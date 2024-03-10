@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.615 2024/03/10 09:24:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.616 2024/03/10 10:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.615 2024/03/10 09:24:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.616 2024/03/10 10:15:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -834,7 +834,16 @@ fold_constant_integer(tnode_t *tn)
 			else if (ul != 0 && si / ul != ur)
 				ovfl = true;
 		} else {
-			si = sl * sr;
+			uint64_t al = sl >= 0 ? ul : -ul;
+			uint64_t ar = sr >= 0 ? ur : -ur;
+			bool neg = (sl >= 0) != (sr >= 0);
+			uint64_t max_prod = (uint64_t)max_value
+			    + (neg ? 1 : 0);
+			if (al > 0 && ar > max_prod / al) {
+				si = (int64_t)(al * ar);
+				ovfl = true;
+			} else
+				si = sl * sr;
 			if (msb(si, t) != (msb(sl, t) ^ msb(sr, t)))
 				ovfl = true;
 		}
@@ -855,18 +864,21 @@ fold_constant_integer(tnode_t *tn)
 			/* modulus by 0 */
 			error(140);
 			si = 0;
+		} else if (!utyp && sl == min_value && sr == -1) {
+			ovfl = true;
+			si = 0;
 		} else
 			si = utyp ? (int64_t)(ul % ur) : sl % sr;
 		break;
 	case PLUS:
-		si = utyp ? (int64_t)(ul + ur) : sl + sr;
+		si = (int64_t)(ul + ur);
 		if (msb(sl, t) && msb(sr, t) && !msb(si, t))
 			ovfl = true;
 		if (!utyp && !msb(sl, t) && !msb(sr, t) && msb(si, t))
 			ovfl = true;
 		break;
 	case MINUS:
-		si = utyp ? (int64_t)(ul - ur) : sl - sr;
+		si = (int64_t)(ul - ur);
 		if (!utyp && msb(sl, t) && !msb(sr, t) && !msb(si, t))
 			ovfl = true;
 		if (!msb(sl, t) && msb(sr, t) && msb(si, t))
