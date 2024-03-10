@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.466 2024/03/01 16:41:42 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.467 2024/03/10 02:53:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.466 2024/03/01 16:41:42 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.467 2024/03/10 02:53:37 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2044,6 +2044,8 @@ JobReapChild(pid_t pid, int status, bool isJobs)
 
 	job->status = JOB_ST_FINISHED;
 	job->exit_status = status;
+	if (WIFEXITED(status))
+		job->node->exit_status = WEXITSTATUS(status);
 
 	JobFinish(job, status);
 }
