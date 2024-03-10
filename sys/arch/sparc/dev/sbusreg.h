@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.6 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.7 2024/03/10 17:02:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ struct sbusreg {
 #define SBUS_AFSR_ERR	0x80000000	/* Summary bit: one of LE,TO,BERR */
 #define SBUS_AFSR_BITS	"\177\020"					\
 			"f\0\4PAH\0b\10WM\0f\11\3SSIZ\0f\14\5SA\0"	\
-			"b\11FAV\0b\12RD\0b\13ME\0f\14\4MID\0b\30S\0"	\
+			"b\21FAV\0b\22RD\0b\23ME\0f\24\4MID\0b\30S\0"	\
 			"f\31\3SIZ\0b\34BERR\0b\35TO\0b\36LE\0b\37ERR\0"
 
 /* Arbiter Enable register */
