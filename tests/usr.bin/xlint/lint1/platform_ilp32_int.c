@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_int.c,v 1.4 2024/03/09 17:34:01 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_int.c,v 1.5 2024/03/10 16:06:13 rillig Exp $	*/
 # 3 "platform_ilp32_int.c"
 
 /*
@@ -65,19 +65,22 @@ array_index(void)
 	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
 	u64 += u64_buf[0x00ffffff];
 	/* expect+2: warning: operator '*' produces integer overflow [141] */
-	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	/* expect+1: warning: array subscript cannot be > 19: 268435455 [168] */
 	u64 += u64_buf[0x7fffffff];
-	/* expect+2: warning: conversion of 'long long' to 'int' is out of range [119] */
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+3: warning: conversion of 'long long' to 'int' is out of range [119] */
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[2147483648];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+3: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[0x80000000];
 	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
 	u64 += u64_buf[0xffffffff];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: operator '*' produces integer overflow [141] */
+	/* expect+3: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -268435456 [167] */
 	u64 += u64_buf[0x80000000];
 	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
