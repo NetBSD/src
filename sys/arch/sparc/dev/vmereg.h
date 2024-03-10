@@ -1,4 +1,4 @@
-/*	$NetBSD: vmereg.h,v 1.7 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: vmereg.h,v 1.8 2024/03/10 16:58:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct vmebusreg {
 #define VMEBUS_AFSR_ME	0x00800000	/* Multiple error */
 #define VMEBUS_AFSR_RSVD 0x007fffff	/* reserved */
 #define VMEBUS_AFSR_BITS "\177\020"	\
-			 "b\27ME\0b\30S\0b\31ERR\0b\32WB\0\33TO\0f\34\3SZ\0"
+	"b\27ME\0b\30S\0b\31ERR\0b\32WB\0b\33BERR\0b\34TO\0f\35\3SZ\0"
 
 struct vmebusvec {
 	volatile uint8_t	vmebusvec[16];
