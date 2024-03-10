@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.9 2024/03/09 17:34:01 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.10 2024/03/10 10:39:19 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -91,12 +91,15 @@ array_index(void)
 	u64 += u64_buf[0x00ffffffffffffff];
 	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
 	u64 += u64_buf[0x0fffffffffffffff];
-	// FIXME: integer overflow
-	//u64 += u64_buf[0x1fffffffffffffff];
-	// FIXME: integer overflow
-	//u64 += u64_buf[0x3fffffffffffffff];
-	// FIXME: integer overflow
-	//u64 += u64_buf[0x7fffffffffffffff];
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x1fffffffffffffff];
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x3fffffffffffffff];
+	/* expect+2: warning: operator '*' produces integer overflow [141] */
+	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	u64 += u64_buf[0x7fffffffffffffff];
 	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
 	u64 += u64_buf[0xffffffffffffffff];
 }
