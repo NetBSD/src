@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.208 2024/03/09 18:26:59 bouyer Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.209 2024/03/10 19:21:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21263,4 +21263,53 @@ external/bsd/tcpdump/dist/print-ppp.c		patch
 	to allocate a large amount of memory.
 	fixes PR 57586
 	[martin, ticket #623]
+
+lib/libc/net/getnameinfo.c			1.60
+
+	getnameinfo(3): PR 57609: fix socket address length checks.
+	[riastradh, ticket #612]
+
+sys/dev/usb/usbdi.c				1.248,1.249
+
+	usbdi(9): PR 57783: avoid locking against self when racing with
+	the host controller softint to enter ddb.
+	[riastradh, ticket #613]
+
+lib/libc/net/getnameinfo.3			1.43
+
+	getnameinfo(3): PR 57832_ document NI_NUMERICSCOPE.
+	[riastradh, ticket #614]
+
+sys/netinet6/icmp6.c				1.256
+sys/netinet6/raw_ip6.c				1.184
+
+	PR 57955: deliver timestamps also to raw sockets.
+	[riastradh, ticket #615]
+
+sys/dev/usb/if_urtwn.c				1.109
+
+	urtwn(4): PR 57965: avoid deadlock on command ring overflow.
+	[riastradh, ticket #616]
+
+usr.bin/getconf/getconf.1			1.14
+usr.bin/getconf/getconf.c			1.37
+
+	getconf(1): PR 57875: accept variable names with or without
+	leading underscore. This matches FreeBSD and makes it more
+	portable to GNU getconf(1), which currently _requires_ a leading
+	underscore while ours currently _refuses_ a leading underscore.
+	[riastradh, ticket #617]
+
+sys/netinet/if_arp.c				1.312
+
+	netinet: PR 57959: attribute arp debug message that
+	is printed to the console.
+	[riastradh, ticket #618]
+
+sys/netinet6/in6.c				1.292
+
+	netinet6: PR 53922: avoid NPD on certain inet6 addr configs.
+	This can be provoked by anyone on the local network by issuing
+	a router advertisement processed by dhcpcd.
+	[riastradh, ticket #619]
 
