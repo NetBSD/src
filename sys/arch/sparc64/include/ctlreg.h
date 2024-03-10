@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.70 2024/02/02 22:33:42 andvar Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.71 2024/03/10 17:34:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -306,9 +306,10 @@
 		SFSR_ILL_ASI|SFSR_FT_IO_ATOMIC|SFSR_FT_ILL_NF|SFSR_FT_PRIV)
 
 #define	SFSR_BITS "\177\20" \
-	"f\20\30ASI\0" "b\16VAT\0" "b\15VAD\0" "b\14NFO\0" "b\13ASI\0" "b\12A\0" \
-	"b\11NF\0" "b\10PRIV\0" "b\7E\0" "b\6NUCLEUS\0" "b\5SECONDCTX\0" "b\4PRIV\0" \
-	"b\3W\0" "b\2OW\0" "b\1FV\0"
+	"f\20\30ASI\0"			"b\15VAT\0"	"b\14VAD\0" \
+	"b\13NFO\0"	"b\12ASI\0"	"b\11A\0"	"b\10NF\0" \
+	"b\07PRIV\0"	"b\06E\0"	"b\05NUCLEUS\0"	"b\04SECONDCTX\0" \
+	"b\03PRIV\0"	"b\02W\0"	"b\01OW\0"	"b\00FV\0"
 
 /* ASFR bits */
 #define	ASFR_ME			0x100000000LL
