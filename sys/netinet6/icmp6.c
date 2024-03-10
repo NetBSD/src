@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.254.2.1 2023/12/10 13:06:16 martin Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.254.2.2 2024/03/10 18:51:54 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.254.2.1 2023/12/10 13:06:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.254.2.2 2024/03/10 18:51:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1987,7 +1987,8 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		}
 #endif
 		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-			if (last->inp_flags & IN6P_CONTROLOPTS)
+			if (last->inp_flags & IN6P_CONTROLOPTS ||
+			    SOOPT_TIMESTAMP(last->inp_socket->so_options))
 				ip6_savecontrol(last, &opts, ip6, n);
 			/* strip intermediate headers */
 			m_adj(n, off);
@@ -2014,7 +2015,8 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	} else
 #endif
 	if (last) {
-		if (last->inp_flags & IN6P_CONTROLOPTS)
+		if (last->inp_flags & IN6P_CONTROLOPTS ||
+		    SOOPT_TIMESTAMP(last->inp_socket->so_options))
 			ip6_savecontrol(last, &opts, ip6, m);
 		/* strip intermediate headers */
 		m_adj(m, off);
