@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.175.4.1 2023/03/23 12:06:49 martin Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.175.4.2 2024/03/10 18:54:41 martin Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.175.4.1 2023/03/23 12:06:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.175.4.2 2024/03/10 18:54:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -140,7 +140,8 @@ rip6_sbappendaddr(struct in6pcb *last, struct ip6_hdr *ip6,
 {
 	struct mbuf *opts = NULL;
 
-	if (last->in6p_flags & IN6P_CONTROLOPTS)
+	if (last->in6p_flags & IN6P_CONTROLOPTS ||
+	    SOOPT_TIMESTAMP(last->in6p_socket->so_options))
 		ip6_savecontrol(last, &opts, ip6, n);
 
 	m_adj(n, hlen);
