@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.288.2.2 2023/12/10 13:06:16 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.288.2.3 2024/03/10 19:11:07 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.288.2.2 2023/12/10 13:06:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.288.2.3 2024/03/10 19:11:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -726,7 +726,14 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		int s = splsoftnet();
 		error = in6_update_ifa1(ifp, ifra, &ia, &psref, 0);
 		splx(s);
-		if (error)
+		/*
+		 * in6_update_ifa1 doesn't create the address if its
+		 * valid lifetime (vltime) is zero, since we would just
+		 * delete the address immediately in that case anyway.
+		 * So it may succeed but return null ia.  In that case,
+		 * nothing left to do.
+		 */
+		if (error || ia == NULL)
 			break;
 		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 		break;
