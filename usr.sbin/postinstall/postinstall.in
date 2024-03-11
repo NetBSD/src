@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.5.2.5 2020/07/07 20:02:27 martin Exp $
+# $NetBSD: postinstall.in,v 1.5.2.6 2024/03/11 17:37:42 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1299,15 +1299,47 @@ do_mtree()
 #
 #	named
 #
+handle_named_conf()
+{
+	local op="$1"
+	local option="dnssec-enable"
+	local failed=0
+	local conf
+
+	shift
+
+	for conf; do
+		local c=$(readlink -f "${conf}")
+		if ! ${GREP} -qs "${option}" "${c}"
+		then
+			continue
+		fi
+
+		if [ "${op}" = "fix" ]; then
+			${SED} -e "/${option}/d" "${c}" > "${c}.new"
+			failed=$(( ${failed} + $? ))
+			mv "${c}.new" "${c}"
+			failed=$(( ${failed} + $? ))
+			msg "Removed obsolete '${option}' in ${c}"
+		else
+			msg "'${option}' option in ${c} should be removed"
+			failed=$(( ${failed} + 1 ))
+		fi
+	done
+
+	return ${failed}
+}
+
 additem named "named configuration update"
 do_named()
 {
+	local oldconf="${DEST_DIR}/etc/namedb/named.conf"
+	local conf="${DEST_DIR}/etc/named.conf"
 	[ -n "$1" ] || err 3 "USAGE: do_named  fix|check"
-	op="$1"
+	local op="$1"
 
-	move_file "${op}" \
-		"${DEST_DIR}/etc/namedb/named.conf" \
-		"${DEST_DIR}/etc/named.conf"
+	move_file "${op}" "${oldconf}" "${conf}"
+	handle_named_conf "${op}" "${oldconf}" "${conf}"
 
 	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
 		644 \

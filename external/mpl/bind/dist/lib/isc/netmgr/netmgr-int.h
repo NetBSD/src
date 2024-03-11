@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.10.2.2 2024/02/29 12:35:14 martin Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.10.2.3 2024/03/11 17:37:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -276,7 +276,7 @@ struct isc_nmhandle {
 	LINK(isc_nmhandle_t) active_link;
 #endif
 	void *opaque;
-	char extra[];
+	max_align_t extra[];
 };
 
 typedef enum isc__netievent_type {
