@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.222 2024/03/10 19:22:56 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.223 2024/03/11 20:06:31 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4322,4 +4322,21 @@ sys/netinet6/in6.c				1.292
 	This can be provoked by anyone on the local network by issuing
 	a router advertisement processed by dhcpcd.
 	[riastradh, ticket #1944]
+
+sys/kern/sysv_shm.c				1.142 (patch)
+
+	sysv_shm: PR 57979: avoid arithmetic overflow when computing
+	kern.ipc.shmmax.
+	[riastradh, ticket #1945]
+
+sys/net/if_tun.c				1.175
+
+	tun(4): PR 58013: allow IPv6 packets with TUNSLMODE configured,
+	rather than hard-coding tun(4) as IPv4-only.
+	[riastradh, ticket #1946]
+
+lib/libc/gen/getcap.c				1.58
+
+	libc: fix memory leak in getent().
+	[ozaki-r, ticket #1947]
 
