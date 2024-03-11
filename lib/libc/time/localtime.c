@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.142 2024/03/07 20:42:04 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.143 2024/03/11 23:03:35 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.142 2024/03/07 20:42:04 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.143 2024/03/11 23:03:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1871,7 +1871,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	   for localtime values before 1970 when time_t is unsigned.  */
 	dayrem = (int)(tdays % DAYSPERREPEAT);
 	dayrem += dayoff % DAYSPERREPEAT;
-	y = (EPOCH_YEAR - YEARSPERREPEAT
+	y = (time_t)(EPOCH_YEAR - YEARSPERREPEAT
 	     + ((1 + dayoff / DAYSPERREPEAT + dayrem / DAYSPERREPEAT
 		 - ((dayrem % DAYSPERREPEAT) < 0)
 		 + tdays / DAYSPERREPEAT)
@@ -1884,7 +1884,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	while (year_lengths[isleap(y)] <= idays) {
 		int_fast32_t tdelta = idays / DAYSPERLYEAR;
 		int_fast32_t ydelta = tdelta + !tdelta;
-		time_t newy = y + ydelta;
+		time_t newy = (time_t)(y + ydelta);
 		register int	leapdays;
 		leapdays = (int)(leaps_thru_end_of(newy - 1) -
 			leaps_thru_end_of(y - 1));
