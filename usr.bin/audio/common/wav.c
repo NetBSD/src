@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.19 2024/03/08 06:57:59 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.20 2024/03/11 19:17:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.19 2024/03/08 06:57:59 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.20 2024/03/11 19:17:52 mrg Exp $");
 #endif
 
 
@@ -175,8 +175,10 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		 *
 		 * warn about this, but don't consider it an error.
 		 */
-		if (ext.len != 22 && verbose)
-			fprintf(stderr, "warning: WAVE ext.len %u not 22\n", ext.len);
+		if (getle16(ext.len) != 22 && verbose) {
+			fprintf(stderr, "warning: WAVE ext.len %u not 22\n",
+			    getle16(ext.len));
+		}
 	} else if (len < sizeof(fmt)) {
 		if (verbose)
 			fprintf(stderr, "WAVE fmt unsupported size %u\n", len);
