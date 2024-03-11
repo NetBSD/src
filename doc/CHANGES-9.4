@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.138 2024/03/10 19:22:08 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.139 2024/03/11 20:04:38 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -13437,4 +13437,30 @@ sys/netinet6/in6.c				1.292
 	This can be provoked by anyone on the local network by issuing
 	a router advertisement processed by dhcpcd.
 	[riastradh, ticket #1812]
+
+etc/named.conf					1.11
+external/mpl/bind/dist/lib/isc/netmgr/netmgr-int.h 1.11
+usr.sbin/postinstall/postinstall.in		1.59
+
+	named(8): fix bus errors on alignement critical architectures.
+	Update the default named.conf for the new version.
+	postinstall(8): add support to upgrade the named(8) configuration.
+	[christos, ticket #1813]
+
+sys/kern/sysv_shm.c				1.142
+
+	sysv_shm: PR 57979: avoid arithmetic overflow when computing
+	kern.ipc.shmmax.
+	[riastradh, ticket #1814]
+
+sys/net/if_tun.c				1.175
+
+	tun(4): PR 58013: allow IPv6 packets with TUNSLMODE configured,
+	rather than hard-coding tun(4) as IPv4-only.
+	[riastradh, ticket #1815]
+
+lib/libc/gen/getcap.c				1.58
+
+	libc: fix memory leak in getent().
+	[ozaki-r, ticket #1816]
 
