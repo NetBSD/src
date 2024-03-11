@@ -426,7 +426,7 @@ $1 == "CKA_LABEL" {
 			    NR, label
 		}
 		if (!(lolab in label_lineno)) {
-			err(snprintf("Missing label: %s", label))
+			err(sprintf("Missing label: %s", label))
 			skip()
 			next
 		}
