@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.20 2024/03/11 19:17:52 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.21 2024/03/11 23:12:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.20 2024/03/11 19:17:52 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.21 2024/03/11 23:12:29 mrg Exp $");
 #endif
 
 
@@ -122,12 +122,14 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	remain -= (l);				\
 } while (0)
 
-	if (strncmp(where, strRIFF, sizeof strRIFF) != 0)
+	if (memcmp(where, strRIFF, sizeof strRIFF) != 0)
 		return (AUDIO_ENOENT);
-	ADJUST(8);
-	if (strncmp(where, strWAVE, sizeof strWAVE) != 0)
-		return (AUDIO_ENOENT);
+	ADJUST(sizeof strRIFF);
+	/* XXX we ignore the RIFF length here */
 	ADJUST(4);
+	if (memcmp(where, strWAVE, sizeof strWAVE) != 0)
+		return (AUDIO_ENOENT);
+	ADJUST(sizeof strWAVE);
 
 	found = false;
 	while (remain >= sizeof part) {
@@ -245,18 +247,18 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	while (remain >= sizeof part) {
 		memcpy(&part, where, sizeof part);
 		ADJUST(sizeof part);
+		len = getle32(part.len);
 		if (strncmp(part.name, strdata, sizeof strdata) == 0) {
 			found = true;
 			break;
 		}
 		/* Adjust len here only for non-data parts. */
-		len = getle32(part.len);
 		ADJUST(len);
 	}
 	if (!found)
 		return (AUDIO_ENOENT);
 
-	if (getle32(part.len)) {
+	if (len) {
 		if (channels)
 			*channels = (u_int)getle16(fmt.channels);
 		if (sample)
@@ -266,7 +268,7 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		if (prec)
 			*prec = newprec;
 		if (datasize)
-			*datasize = (off_t)getle32(part.len);
+			*datasize = (off_t)len;
 		return (where - (char *)hdr);
 	}
 	return (AUDIO_EWAVNODATA);
