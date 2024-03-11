@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.57 2017/06/18 03:56:39 manu Exp $	*/
+/*	$NetBSD: getcap.c,v 1.57.16.1 2024/03/11 20:00:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.57 2017/06/18 03:56:39 manu Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.57.16.1 2024/03/11 20:00:53 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -502,8 +502,10 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			break;
 	}
 
-	if (!foundit)
+	if (!foundit) {
+		free(record);
 		return -1;
+	}
 
 	/*
 	 * Got the capability record, but now we have to expand all tc=name
