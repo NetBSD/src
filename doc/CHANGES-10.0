@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.209 2024/03/10 19:21:05 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.210 2024/03/11 20:11:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21312,4 +21312,103 @@ sys/netinet6/in6.c				1.292
 	This can be provoked by anyone on the local network by issuing
 	a router advertisement processed by dhcpcd.
 	[riastradh, ticket #619]
+
+external/mpl/mozilla-certdata/dist/certdata.txt up to 1.1.1.2
+distrib/sets/lists/base/mi			1.1334
+doc/3RDPARTY					1.1982,1.1994
+external/mpl/mozilla-certdata/share/Makefile	1.4
+external/mpl/mozilla-certdata/share/certdata.awk 1.3
+external/mpl/mozilla-certdata/share/certs/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem delete
+external/mpl/mozilla-certdata/share/certs/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem 1.2
+external/mpl/mozilla-certdata/share/certs/Chambers_of_Commerce_Root_-_2008.pem delete
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_ECC_Root-01.pem 1.1
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_ECC_Root-02.pem 1.1
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_RSA_Root-01.pem 1.1
+external/mpl/mozilla-certdata/share/certs/CommScope_Public_Trust_RSA_Root-02.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-Trust_SBR_Root_CA_1_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/D-Trust_SBR_Root_CA_2_2022.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Global_Chambersign_Root_-_2008.pem delete
+external/mpl/mozilla-certdata/share/certs/Security_Communication_Root_CA.pem delete
+external/mpl/mozilla-certdata/share/certs/Symantec_Class_1_Public_Primary_Certification_Authority_-_G6.pem delete
+external/mpl/mozilla-certdata/share/certs/Symantec_Class_2_Public_Primary_Certification_Authority_-_G6.pem delete
+external/mpl/mozilla-certdata/share/certs/Telekom_Security_SMIME_ECC_Root_2021.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telekom_Security_SMIME_RSA_Root_2023.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telekom_Security_TLS_ECC_Root_2020.pem 1.1
+external/mpl/mozilla-certdata/share/certs/Telekom_Security_TLS_RSA_Root_2023.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_Global_Root_CA_G3.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustAsia_Global_Root_CA_G4.pem 1.1
+external/mpl/mozilla-certdata/share/certs/TrustCor_ECA-1.pem delete
+external/mpl/mozilla-certdata/share/certs/TrustCor_RootCert_CA-1.pem delete
+external/mpl/mozilla-certdata/share/certs/TrustCor_RootCert_CA-2.pem delete
+external/mpl/mozilla-certdata/share/certs/Verisign_Class_1_Public_Primary_Certification_Authority_-_G3.pem delete
+external/mpl/mozilla-certdata/share/certs/Verisign_Class_2_Public_Primary_Certification_Authority_-_G3.pem delete
+external/mpl/mozilla-certdata/share/email.trust	1.2
+external/mpl/mozilla-certdata/share/server.trust 1.2
+
+	mozilla-certdata: PR 57984: update to 2024-02-12.
+	[riastradh, ticket #620]
+
+usr.sbin/certctl/certctl.sh			1.6
+
+	certctl(8): PR 57993: speed up a little by avoiding basename(1).
+	[riastradh, ticket #621]
+
+etc/named.conf					1.11
+external/mpl/bind/dist/lib/isc/netmgr/netmgr-int.h 1.11
+usr.sbin/postinstall/postinstall.in		1.59-1.61
+
+	named(8): fix bus errors on alignement critical architectures.
+	Update the default named.conf for the new version.
+	postinstall(8): add support to upgrade the named(8) configuration.
+	[christos, ticket #622]
+
+usr.sbin/wgconfig/wgconfig.8			1.11
+
+	wgconfig(8): PR 57663: fix typo in option name in the man page.
+	[riastradh, ticket #624]
+
+usr.sbin/certctl/certctl.sh			1.7
+
+	certctl(8): PR 57997: avoid non-POSIX `if' syntax by always
+	using a non-empty compound list.
+	[riastradh, ticket #625]
+
+sys/kern/sysv_shm.c				1.142
+
+	sysv_shm: PR 57979: avoid arithmetic overflow when computing
+	kern.ipc.shmmax.
+	[riastradh, ticket #626]
+
+sys/net/if_tun.c				1.175
+
+	tun(4): PR 58013: allow IPv6 packets with TUNSLMODE configured,
+	rather than hard-coding tun(4) as IPv4-only.
+	[riastradh, ticket #627]
+
+sys/net/if_wg.c					1.78
+
+	wg(4): PR 58021: fix psref crash in rump.
+	[riastradh, ticket #628]
+
+share/man/man4/wg.4				1.7
+
+	wg(4): PR 58015: spruce up example.
+	[riastradh, ticket #629]
+
+lib/libc/gen/getcap.c				1.58
+
+	libc: fix memory leak in getent().
+	[ozaki-r, ticket #630]
+
+sys/dev/pci/ehci_pci.c				1.76
+
+	ehci(4): cosmetic change to ehci_pci: consistently use cached
+	chipset tag value.
+	[riastradh, ticket #631]
+
+sys/dev/pci/xhci_pci.c				1.33
+
+	xhci(4): cosmetic change to xhci_pci: consistently use cached
+	chipset tag value.
+	[riastradh, ticket #632]
 
