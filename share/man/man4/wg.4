@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.6 2020/08/31 20:20:22 riastradh Exp $
+.\"	$NetBSD: wg.4,v 1.6.6.1 2024/03/11 19:39:23 martin Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ endpoint IP address outside the tunnel.
 .Sh EXAMPLES
 Typical network topology:
 .Bd -literal -offset abcd
-wm0 = 1.2.3.4                               bge0 = 4.3.2.1
+wm0 = 192.0.2.123                     bge0 = 198.51.100.45
 
 Stationary server:                         Roaming client:
 +---------+                                    +---------+
@@ -95,15 +95,22 @@ Stationary server:                         Roaming client:
 .Pp
 Generate key pairs on A and B:
 .Bd -literal -offset abcd
-A# wg-keygen > /etc/wg/wg0
+A# (umask 0077; wg-keygen > /etc/wg/wg0)
 A# wg-keygen --pub < /etc/wg/wg0 > /etc/wg/wg0.pub
 A# cat /etc/wg/wg0.pub
 N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y=
 
-B# wg-keygen > /etc/wg/wg0
+B# (umask 0077; wg-keygen > /etc/wg/wg0)
 B# wg-keygen --pub < /etc/wg/wg0 > /etc/wg/wg0.pub
 B# cat /etc/wg/wg0.pub
 X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU=
+.Ed
+.Pp
+Generate a pre-shared key on A and copy it to B to defend against
+potential future quantum cryptanalysis (not necessary for
+functionality):
+.Bd -literal -offset abcd
+A# (umask 0077; wg-keygen > /etc/wg/wg0.A-B)
 .Ed
 .Pp
 Configure A to listen on port 1234 and allow connections from B to
@@ -114,6 +121,7 @@ A# wgconfig wg0 set private-key /etc/wg/wg0
 A# wgconfig wg0 set listen-port 1234
 A# wgconfig wg0 add peer B \e
     X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
+    --preshared-key=/etc/wg/wg0.A-B \e
     --allowed-ips=10.0.1.1/32
 A# ifconfig wg0 up
 A# ifconfig wg0
@@ -122,15 +130,16 @@ wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
         inet6 fe80::22f7:d6ff:fe3a:1e60%wg0/64 flags 0 scopeid 0x3
 .Ed
 .Pp
-Configure B to connect to A at 1.2.3.4 on port 1234 and the packets can
-begin to flow:
+Configure B to connect to A at 192.0.2.123 on port 1234 and the packets
+can begin to flow:
 .Bd -literal -offset abcd
 B# ifconfig wg0 create 10.0.1.1/24
 B# wgconfig wg0 set private-key /etc/wg/wg0
 B# wgconfig wg0 add peer A \e
     N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
+    --preshared-key=/etc/wg/wg0.A-B \e
     --allowed-ips=10.0.1.0/32 \e
-    --endpoint=1.2.3.4:1234
+    --endpoint=192.0.2.123:1234
 B# ifconfig wg0 up
 B# ifconfig wg0
 wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
