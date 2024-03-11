@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.7 2013/10/28 01:06:36 mrg Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.8 2024/03/11 23:05:35 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.7 2013/10/28 01:06:36 mrg Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.8 2024/03/11 23:05:35 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -19,14 +19,15 @@ __RCSID("$NetBSD: fpsetround.c,v 1.7 2013/10/28 01:06:36 mrg Exp $");
 __weak_alias(fpsetround,_fpsetround)
 #endif
 
+#ifdef SOFTFLOATSPARC64_FOR_GCC
+extern fp_rnd _softfloat_float_rounding_mode;
+#endif
+
 fp_rnd
 fpsetround(fp_rnd rnd_dir)
 {
 	fp_rnd old;
 	fp_rnd new;
-#ifdef SOFTFLOATSPARC64_FOR_GCC
-	extern fp_rnd _softfloat_float_rounding_mode;
-#endif
 
 	__asm("st %%fsr,%0" : "=m" (*&old));
 
@@ -35,7 +36,7 @@ fpsetround(fp_rnd rnd_dir)
 #endif
 
 	new = old;
-	new &= ~(0x03 << 30); 
+	new &= ~(0x03U << 30); 
 	new |= ((rnd_dir & 0x03) << 30);
 
 	__asm("ld %0,%%fsr" : : "m" (*&new));
