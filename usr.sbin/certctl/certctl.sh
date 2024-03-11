@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: certctl.sh,v 1.4.2.3 2023/09/06 15:04:33 martin Exp $
+#	$NetBSD: certctl.sh,v 1.4.2.4 2024/03/11 17:12:53 martin Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 set -o pipefail
 set -Ceu
 
-progname=$(basename -- "$0")
+progname=${0##*/}
 
 ### Options and arguments
 
@@ -276,8 +276,7 @@ list_default_trusted()
 
 			# Print the vis-encoded absolute path to the
 			# certificate and base name on a single line.
-			vbase=$(basename -- "$vcert.")
-			vbase=${vbase%.}
+			vbase=${vcert##*/}
 			printf '%s %s\n' "$vcert" "$vbase"
 		done
 	done
@@ -339,8 +338,7 @@ list_distrusted()
 		# Print the vis-encoded absolute path to the
 		# certificate and base name on a single line.
 		vcert=$(printf '%s' "$cert" | vis -M)
-		vbase=$(basename -- "$vcert.")
-		vbase=${vbase%.}
+		vbase=${vcert##*/}
 		printf '%s %s\n' "$vcert" "$vbase"
 	done
 
@@ -562,8 +560,7 @@ cmd_trust()
 	fi
 
 	# Verify we currently distrust a certificate by this base name.
-	certbase=$(basename -- "$cert.")
-	certbase=${certbase%.}
+	certbase=${cert##*/}
 	if [ ! -h "$distrustdir/$certbase" ]; then
 		error "not currently distrusted: $vcert"
 		return 1
@@ -574,7 +571,7 @@ cmd_trust()
 	target=$(readlink -n -- "$distrustdir/$certbase" && printf .)
 	target=${target%.}
 	if [ "$cert" != "$target" ]; then
-		vcertbase=$(basename -- "$vcert")
+		vcertbase=${vcert##*/}
 		error "distrusted $vcertbase does not point to $vcert"
 		return 1
 	fi
@@ -617,8 +614,7 @@ cmd_untrust()
 	# Check whether this certificate is already distrusted.
 	# - If the same base name points to the same path, stop here.
 	# - Otherwise, fail noisily.
-	certbase=$(basename "$cert.")
-	certbase=${certbase%.}
+	certbase=${cert##*/}
 	if [ -h "$distrustdir/$certbase" ]; then
 		target=$(readlink -n -- "$distrustdir/$certbase" && printf .)
 		target=${target%.}
