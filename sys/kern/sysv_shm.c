@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.131.10.2 2020/01/21 18:12:54 martin Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.131.10.3 2024/03/11 18:04:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131.10.2 2020/01/21 18:12:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131.10.3 2024/03/11 18:04:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -1004,10 +1004,10 @@ shminit(struct sysctllog **clog)
 	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
 
 	if (shminfo.shmmax == 0)
-		shminfo.shmmax = max(physmem / 4, 1024) * PAGE_SIZE;
+		shminfo.shmall = max(physmem / 4, 1024);
 	else
-		shminfo.shmmax *= PAGE_SIZE;
-	shminfo.shmall = shminfo.shmmax / PAGE_SIZE;
+		shminfo.shmall = shminfo.shmmax / PAGE_SIZE;
+	shminfo.shmmax = (uint64_t)shminfo.shmall * PAGE_SIZE;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		cv_init(&shm_cv[i], "shmwait");
@@ -1129,7 +1129,7 @@ sysctl_ipc_shmmax(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	shminfo.shmmax = round_page(newsize);
-	shminfo.shmall = shminfo.shmmax >> PAGE_SHIFT;
+	shminfo.shmall = shminfo.shmmax / PAGE_SIZE;
 
 	return 0;
 }
