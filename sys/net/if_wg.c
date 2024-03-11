@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.71.2.2 2023/07/07 19:02:22 martin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.71.2.3 2024/03/11 19:34:00 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.2 2023/07/07 19:02:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.3 2024/03/11 19:34:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -2870,6 +2870,8 @@ wg_handle_packet(struct wg_softc *wg, struct mbuf *m,
 {
 	struct wg_msg *wgm;
 
+	KASSERT(curlwp->l_pflag & LP_BOUND);
+
 	m = wg_validate_msg_header(wg, m);
 	if (__predict_false(m == NULL))
 		return;
@@ -5039,6 +5041,7 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 {
 	struct mbuf *m;
 	const struct sockaddr *src;
+	int bound;
 
 	WG_TRACE("");
 
@@ -5053,7 +5056,9 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 	WG_DLOG("iov_len=%lu\n", iov[1].iov_len);
 	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
 
+	bound = curlwp_bind();
 	wg_handle_packet(wg, m, src);
+	curlwp_bindx(bound);
 }
 #endif /* WG_RUMPKERNEL */
 
