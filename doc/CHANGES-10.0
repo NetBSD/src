@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.210 2024/03/11 20:11:22 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.211 2024/03/12 10:14:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21411,4 +21411,33 @@ sys/dev/pci/xhci_pci.c				1.33
 	xhci(4): cosmetic change to xhci_pci: consistently use cached
 	chipset tag value.
 	[riastradh, ticket #632]
+
+sys/dev/ic/nvme.c				1.69
+
+	nvme(4): PR 58025: fix nvmectl(8) after suspend/resume cycle.
+	[riastradh, ticket #633]
+
+usr.bin/audio/common/auconv.h                   up to 1.6
+usr.bin/audio/common/audio.c                    up to 1.27
+usr.bin/audio/common/decode.c                   up to 1.2
+usr.bin/audio/common/libaudio.h                 up to 1.22
+usr.bin/audio/common/sun.c                      up to 1.11
+usr.bin/audio/common/wav.c                      up to 1.22
+usr.bin/audio/play/audioplay.1                  up to 1.34
+usr.bin/audio/play/play.c                       up to 1.64
+usr.bin/audio/record/audiorecord.1              up to 1.45
+usr.bin/audio/record/record.c                   up to 1.58
+
+	audioplay(1), audioctl(1), audiorecord(1):
+	- support for recording 24 bit .wav files
+	- read-overflow fixes for .wav files, and other fixes for the
+	  wav parser                              
+	- audioplay gains -n flag (no play, like make -n)
+	[mrg, ticket #634]
+
+usr.bin/kdump/kdump.c				1.141-1.144
+
+	kdump(1): PR 57918: fix decoding of sign extended ioctl codes.
+	Decode some {g,s}etsockopt*.
+	[kre, ticket #635]
 
