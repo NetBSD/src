@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.223 2024/03/11 20:06:31 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.224 2024/03/12 12:50:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4340,3 +4340,28 @@ lib/libc/gen/getcap.c				1.58
 	libc: fix memory leak in getent().
 	[ozaki-r, ticket #1947]
 
+sys/dev/usb/usbdi.c				1.248
+
+	usbdi(9): PR 57783: avoid locking against self when racing with
+	the host controller softint to enter ddb.
+	[riastradh, ticket #1940]
+
+usr.bin/audio/common/auconv.h                   up to 1.6
+usr.bin/audio/common/audio.c                    up to 1.27
+usr.bin/audio/common/decode.c                   up to 1.2
+usr.bin/audio/common/libaudio.h                 up to 1.22
+usr.bin/audio/common/sun.c                      up to 1.11
+usr.bin/audio/common/wav.c                      up to 1.22
+usr.bin/audio/play/audioplay.1                  up to 1.34
+usr.bin/audio/play/play.c                       up to 1.64
+usr.bin/audio/record/audiorecord.1              up to 1.45
+usr.bin/audio/record/record.c                   up to 1.58
+
+	audioplay(1), audiorecord(1):
+	- support for playing 32-bit and 64-bit IEEE FP .wav files
+	- support for recording 24 bit .wav files      
+	- read-overflow fixes for .wav files, and other fixes for the
+	  wav parser
+	- audioplay gains -n flag (no play, like make -n)
+	- audiorecord manual gained useful examples
+	[mrg, ticket #1948]
