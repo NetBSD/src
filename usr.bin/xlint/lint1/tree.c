@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.623 2024/03/10 19:45:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.624 2024/03/12 07:56:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.623 2024/03/10 19:45:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.624 2024/03/12 07:56:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3256,7 +3256,8 @@ tnode_t *
 promote(op_t op, bool farg, tnode_t *tn)
 {
 
-	tspec_t ot = tn->tn_type->t_tspec;
+	const type_t *otp = tn->tn_type;
+	tspec_t ot = otp->t_tspec;
 	if (!is_arithmetic(ot))
 		return tn;
 
@@ -3264,12 +3265,18 @@ promote(op_t op, bool farg, tnode_t *tn)
 	if (nt == ot)
 		return tn;
 
-	type_t *ntp = expr_dup_type(tn->tn_type);
+	type_t *ntp = expr_dup_type(gettyp(nt));
 	ntp->t_tspec = nt;
-	/*
-	 * Keep t_is_enum even though t_tspec gets converted from ENUM to INT,
-	 * so we are later able to check compatibility of enum types.
-	 */
+	ntp->t_is_enum = otp->t_is_enum;
+	if (ntp->t_is_enum)
+		ntp->u.enumer = otp->u.enumer;
+	ntp->t_bitfield = otp->t_bitfield;
+	if (ntp->t_bitfield) {
+		ntp->t_bit_field_width = otp->t_bit_field_width;
+		ntp->t_bit_field_offset = otp->t_bit_field_offset;
+	}
+	if (ntp->t_bitfield && is_uinteger(ot) && !is_uinteger(nt))
+		ntp->t_bit_field_width++;
 	return convert(op, 0, ntp, tn);
 }
 
