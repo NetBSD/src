@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.35 2024/03/12 07:56:08 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.36 2024/03/12 20:35:29 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -404,16 +404,26 @@ test_ic_conditional(char c1, char c2)
 }
 
 void
-fp_classify(void)
+compare_bit_field_to_integer_constant(void)
 {
-	static struct ieee_ext {
-		unsigned long long ext_exp:15;
-	} x;
+	static _Bool b;
+	static struct {
+		short s16:15;
+		unsigned short u16:15;
+		int s32:15;
+		unsigned u32:15;
+		long long s64:15;
+		unsigned long long u64:15;
+	} s;
 
 	// Since decl.c 1.180 from 2021-05-02 and before tree.c 1.624 from
 	// 2024-03-12, lint warned about a possible loss of accuracy [132]
-	// when promoting a small unsigned bit-field to 'int'.
-	if (x.ext_exp == 0) {
-	} else if (x.ext_exp == 0x7fff) {
-	}
+	// when promoting an 'unsigned long long' bit-field to 'int'.
+	b = s.s16 == 0;
+	b = s.u16 == 0;
+	b = s.s32 == 0;
+	b = s.u32 == 0;
+	b = s.s64 == 0;
+	b = s.u64 == 0;
+	b = !b;
 }
