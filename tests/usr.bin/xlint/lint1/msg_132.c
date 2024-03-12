@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.33 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.34 2024/03/12 07:29:39 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -401,4 +401,20 @@ test_ic_conditional(char c1, char c2)
 	 */
 	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
 	u8 = cond ? s8 : u8;
+}
+
+void
+fp_classify(void)
+{
+	static struct ieee_ext {
+		unsigned long long ext_exp:15;
+	} x;
+
+	/* FIXME: There is no loss of accuracy here. */
+	/* expect+1: warning: conversion from 'unsigned long long:15' to 'int:15' may lose accuracy [132] */
+	if (x.ext_exp == 0) {
+	/* FIXME: There is no loss of accuracy here. */
+	/* expect+1: warning: conversion from 'unsigned long long:15' to 'int:15' may lose accuracy [132] */
+	} else if (x.ext_exp == 0x7fff) {
+	}
 }
