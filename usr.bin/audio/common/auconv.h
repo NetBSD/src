@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.5 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: auconv.h,v 1.5.72.1 2024/03/12 10:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,24 @@ change_sign16_be(u_char *p, int cc)
 	while ((cc -= 2) >= 0) {
 		p[0] ^= 0x80;
 		p += 2;
+	}
+}
+
+static inline void
+change_sign24_le(u_char *p, int cc)
+{
+	while ((cc -= 3) >= 0) {
+		p[2] ^= 0x80;
+		p += 3;
+	}
+}
+
+static inline void
+change_sign24_be(u_char *p, int cc)
+{
+	while ((cc -= 3) >= 0) {
+		p[0] ^= 0x80;
+		p += 3;
 	}
 }
 
@@ -160,6 +178,44 @@ static inline void
 change_sign16_swap_bytes_be(u_char *p, int cc)
 {
 	swap_bytes_change_sign16_le(p, cc);
+}
+
+static inline void
+swap_bytes_change_sign24_le(u_char *p, int cc)
+{
+	u_char t;
+
+	while ((cc -= 3) >= 0) {
+		t = p[2];
+		p[2] = p[0] ^ 0x80;
+		p[0] = t;
+		p += 3;
+	}
+}
+
+static inline void
+swap_bytes_change_sign24_be(u_char *p, int cc)
+{
+	u_char t;
+
+	while ((cc -= 3) >= 0) {
+		t = p[0];
+		p[0] = p[2] ^ 0x80;
+		p[2] = t;
+		p += 3;
+	}
+}
+
+static inline void
+change_sign24_swap_bytes_le(u_char *p, int cc)
+{
+	swap_bytes_change_sign24_be(p, cc);
+}
+
+static inline void
+change_sign24_swap_bytes_be(u_char *p, int cc)
+{
+	swap_bytes_change_sign24_le(p, cc);
 }
 
 static inline void

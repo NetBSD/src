@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.26 2019/11/09 12:46:44 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.26.8.1 2024/03/12 10:04:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2013, 2015, 2019 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.26 2019/11/09 12:46:44 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.26.8.1 2024/03/12 10:04:22 martin Exp $");
 #endif
 
 
@@ -205,7 +205,7 @@ write_header(struct track_info *ti)
 
 	veclen = 0;
 	tlen = 0;
-		
+
 	if (hdrlen != 0) {
 		iv[veclen].iov_base = hdr;
 		iv[veclen].iov_len = hdrlen;

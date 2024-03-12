@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.61 2022/05/15 02:16:06 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.61.2.1 2024/03/12 10:04:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019, 2021 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.61 2022/05/15 02:16:06 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.61.2.1 2024/03/12 10:04:23 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ static int	volume;
 static int	balance;
 static int	port;
 static int	fflag;
+static int	nflag;
 static int	qflag;
 int	verbose;
 static int	sample_rate;
@@ -75,7 +76,7 @@ static int	channels;
 
 static char	const *play_errstring = NULL;
 static size_t	bufsize;
-static int	audiofd;
+static int	audiofd = -1;
 static int	exitstatus = EXIT_SUCCESS;
 
 int
@@ -87,7 +88,7 @@ main(int argc, char *argv[])
 	const char *defdevice = _PATH_SOUND;
 	const char *device = NULL;
 
-	while ((ch = getopt(argc, argv, "b:B:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:C:c:d:e:fhinp:P:qs:Vv:")) != -1) {
 		switch (ch) {
 		case 'b':
 			decode_int(optarg, &balance);
@@ -117,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			iflag++;
+			break;
+		case 'n':
+			nflag++;
 			break;
 		case 'q':
 			qflag++;
@@ -173,22 +177,22 @@ main(int argc, char *argv[])
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
 		device = defdevice;
 
-	audiofd = open(device, O_WRONLY);
-	if (audiofd < 0 && device == defdevice) {
-		device = _PATH_SOUND0;
+	if (!nflag) {
 		audiofd = open(device, O_WRONLY);
-	}
+		if (audiofd < 0 && device == defdevice) {
+			device = _PATH_SOUND0;
+			audiofd = open(device, O_WRONLY);
+		}
+		if (audiofd < 0)
+			err(1, "failed to open %s", device);
 
-	if (audiofd < 0)
-		err(1, "failed to open %s", device);
-
-	if (ioctl(audiofd, AUDIO_GETINFO, &info) < 0)
-		err(1, "failed to get audio info");
-	if (bufsize == 0) {
-		bufsize = info.play.buffer_size;
-		if (bufsize < 32 * 1024)
-			bufsize = 32 * 1024;
+		if (ioctl(audiofd, AUDIO_GETINFO, &info) < 0)
+			err(1, "failed to get audio info");
+		if (bufsize == 0)
+			bufsize = info.play.buffer_size;
 	}
+	if (bufsize == 0)
+		bufsize = 32 * 1024;
 
 	signal(SIGINT, cleanup);
 	signal(SIGTERM, cleanup);
@@ -208,9 +212,12 @@ static void
 cleanup(int signo)
 {
 
-	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
-	(void)ioctl(audiofd, AUDIO_SETINFO, &info);
-	close(audiofd);
+	if (audiofd != -1) {
+		(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
+		(void)ioctl(audiofd, AUDIO_SETINFO, &info);
+		close(audiofd);
+		audiofd = -1;
+	}
 	if (signo != 0) {
 		(void)raise_default_signal(signo);
 	}
@@ -283,6 +290,9 @@ audio_write(int fd, void *buf, size_t len, convert conv)
 	static void *convert_buffer;
 	static size_t convert_buffer_size;
 
+	if (nflag)
+		return len;
+
 	if (conv == NULL)
 		return write(fd, buf, len);
 
@@ -317,8 +327,7 @@ play(char *file)
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
-		if (!qflag)
-			warn("could not open %s", file);
+		warn("could not open %s", file);
 		exitstatus = EXIT_FAILURE;
 		return;
 	}
@@ -359,6 +368,8 @@ play(char *file)
 		else
 			errx(1, "unknown audio file: %s", file);
 	}
+	if (verbose)
+		printf("header length: %zd\n", hdrlen);
 
 	filesize -= hdrlen;
 	addr = (char *)addr + hdrlen;
@@ -383,7 +394,7 @@ play(char *file)
 	if ((off_t)nw != datasize)
 		errx(1, "final write failed");
 
-	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
+	if (!nflag && ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
 	if (munmap(oaddr, sizet_filesize) < 0)
 		err(1, "munmap failed");
@@ -446,7 +457,7 @@ play_fd(const char *file, int fd)
 			break;
 	}
 	/* something to think about: no message given for dataout < datasize */
-	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
+	if (!nflag && ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
 	return;
 read_error:
@@ -571,7 +582,7 @@ set_audio_mode:
 	}
 #endif /* __vax__ */
 
-	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
+	if (!nflag && ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
 
 	return (hdr_len);
@@ -581,7 +592,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());
+	fprintf(stderr, "Usage: %s [-hinqV] [options] files\n", getprogname());
 	fprintf(stderr, "Options:\n\t"
 	    "-B buffer size\n\t"
 	    "-b balance (0-63)\n\t"

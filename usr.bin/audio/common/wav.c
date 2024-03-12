@@ -1,7 +1,7 @@
-/*	$NetBSD: wav.c,v 1.15 2019/11/09 12:46:44 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.15.8.1 2024/03/12 10:04:23 martin Exp $	*/
 
 /*
- * Copyright (c) 2002, 2009, 2013, 2015, 2019 Matthew R. Green
+ * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.15 2019/11/09 12:46:44 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.15.8.1 2024/03/12 10:04:23 martin Exp $");
 #endif
 
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: wav.c,v 1.15 2019/11/09 12:46:44 mrg Exp $");
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "libaudio.h"
 #include "auconv.h"
@@ -89,6 +90,49 @@ wav_enc_from_val(int encoding)
 /*
  * WAV format helpers
  */
+
+static bool
+find_riff_chunk(const char search[4], size_t *remainp, char **wherep, uint32_t *partlen)
+{
+	wav_audioheaderpart part;
+
+	*partlen = 0;
+
+#define ADJUST(l) do {				\
+	if (l >= *(remainp))			\
+		return false;			\
+	*(wherep) += (l);			\
+	*(remainp) -= (l);			\
+} while (0)
+
+	while (*remainp >= sizeof part) {
+		const char *emsg = "";
+		uint32_t len;
+
+		memcpy(&part, *wherep, sizeof part);
+		ADJUST(sizeof part);
+		len = getle32(part.len);
+		if (len % 2) {
+			emsg = " (odd length, adjusted)";
+			len += 1;
+		}
+		if (strncmp(part.name, search, sizeof *search) == 0) {
+			*partlen = len;
+			if (verbose > 1)
+				fprintf(stderr, "Found part %.04s length %d%s\n",
+				    part.name, len, emsg);
+			return true;
+		}
+		ADJUST(len);
+		if (verbose > 1)
+			fprintf(stderr, "Skipping part %.04s length %d%s\n",
+			    part.name, len, emsg);
+	}
+#undef ADJUST
+
+	return false;
+}
+
 /*
  * find a .wav header, etc. returns header length on success
  */
@@ -96,61 +140,87 @@ ssize_t
 audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
     u_int *sample, u_int *channels, off_t *datasize)
 {
-	char	*where = hdr, *owhere;
-	wav_audioheaderpart part;
+	char	*where = hdr;
 	wav_audioheaderfmt fmt;
 	wav_audiohdrextensible ext;
-	char	*end = (((char *)hdr) + sz);
+	size_t remain = sz;
 	u_int	newenc, newprec;
+	uint32_t len = 0;
 	u_int16_t fmttag;
 	static const char
 	    strfmt[4] = "fmt ",
 	    strRIFF[4] = "RIFF",
 	    strWAVE[4] = "WAVE",
 	    strdata[4] = "data";
-		
+	bool found;
+
 	if (sz < 32)
 		return (AUDIO_ENOENT);
 
-	if (strncmp(where, strRIFF, sizeof strRIFF))
-		return (AUDIO_ENOENT);
-	where += 8;
-	if (strncmp(where, strWAVE, sizeof strWAVE))
-		return (AUDIO_ENOENT);
-	where += 4;
+#define ADJUST(l) do {				\
+	if (l >= remain)			\
+		return (AUDIO_ESHORTHDR);	\
+	where += (l);				\
+	remain -= (l);				\
+} while (0)
 
-	do {
-		memcpy(&part, where, sizeof part);
-		owhere = where;
-		where += getle32(part.len) + 8;
-	} while (where < end && strncmp(part.name, strfmt, sizeof strfmt));
+	if (memcmp(where, strRIFF, sizeof strRIFF) != 0)
+		return (AUDIO_ENOENT);
+	ADJUST(sizeof strRIFF);
+	/* XXX we ignore the RIFF length here */
+	ADJUST(4);
+	if (memcmp(where, strWAVE, sizeof strWAVE) != 0)
+		return (AUDIO_ENOENT);
+	ADJUST(sizeof strWAVE);
+
+	found = find_riff_chunk(strfmt, &remain, &where, &len);
 
 	/* too short ? */
-	if (where + sizeof fmt > end)
+	if (!found || remain <= sizeof fmt)
 		return (AUDIO_ESHORTHDR);
 
-	memcpy(&fmt, (owhere + 8), sizeof fmt);
-
+	memcpy(&fmt, where, sizeof fmt);
 	fmttag = getle16(fmt.tag);
 	if (verbose)
-		printf("WAVE format tag: %x\n", fmttag);
+		printf("WAVE format tag/len: %04x/%u\n", fmttag, len);
 
 	if (fmttag == WAVE_FORMAT_EXTENSIBLE) {
-		if ((uintptr_t)(where - owhere) < sizeof(fmt) + sizeof(ext))
+		if (len < sizeof(fmt) + sizeof(ext)) {
+			if (verbose)
+				fprintf(stderr, "short WAVE ext fmt\n");
 			return (AUDIO_ESHORTHDR);
-		memcpy(&ext, owhere + sizeof fmt, sizeof ext);
-		if (getle16(ext.len) < sizeof(ext) - sizeof(ext.len))
+		}
+		if (remain <= sizeof ext + sizeof fmt) {
+			if (verbose)
+				fprintf(stderr, "WAVE ext truncated\n");
 			return (AUDIO_ESHORTHDR);
+		}
+		memcpy(&ext, where + sizeof fmt, sizeof ext);
 		fmttag = getle16(ext.sub_tag);
+		uint16_t sublen = getle16(ext.len);
 		if (verbose)
-			printf("WAVE extensible sub tag: %x\n", fmttag);
+			printf("WAVE extensible tag/len: %04x/%u\n", fmttag, sublen);
+
+		/*
+		 * XXXMRG: it may be that part.len (aka sizeof fmt + sizeof ext)
+		 * should equal sizeof fmt + sizeof ext.len + sublen?  this block
+		 * is only entered for part.len == 40, where ext.len is expected
+		 * to be 22 (sizeof ext.len = 2, sizeof fmt = 16).
+		 *
+		 * warn about this, but don't consider it an error.
+		 */
+		if (getle16(ext.len) != 22 && verbose) {
+			fprintf(stderr, "warning: WAVE ext.len %u not 22\n",
+			    getle16(ext.len));
+		}
+	} else if (len < sizeof(fmt)) {
+		if (verbose)
+			fprintf(stderr, "WAVE fmt unsupported size %u\n", len);
+		return (AUDIO_EWAVUNSUPP);
 	}
+	ADJUST(len);
 
 	switch (fmttag) {
-	case WAVE_FORMAT_UNKNOWN:
-	case IBM_FORMAT_MULAW:
-	case IBM_FORMAT_ALAW:
-	case IBM_FORMAT_ADPCM:
 	default:
 		return (AUDIO_EWAVUNSUPP);
 
@@ -205,13 +275,11 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		break;
 	}
 
-	do {
-		memcpy(&part, where, sizeof part);
-		owhere = where;
-		where += (getle32(part.len) + 8);
-	} while (where < end && strncmp(part.name, strdata, sizeof strdata));
+	found = find_riff_chunk(strdata, &remain, &where, &len);
+	if (!found)
+		return (AUDIO_EWAVNODATA);
 
-	if ((where - getle32(part.len)) <= end) {
+	if (len) {
 		if (channels)
 			*channels = (u_int)getle16(fmt.channels);
 		if (sample)
@@ -221,10 +289,12 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		if (prec)
 			*prec = newprec;
 		if (datasize)
-			*datasize = (off_t)getle32(part.len);
-		return (owhere - (char *)hdr + 8);
+			*datasize = (off_t)len;
+		return (where - (char *)hdr);
 	}
 	return (AUDIO_EWAVNODATA);
+
+#undef ADJUST
 }
 
 
@@ -240,7 +310,7 @@ wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 	 *
 	 *      bytes   purpose
 	 *      0-3     "RIFF"
-	 *      4-7     file length (minus 8)
+	 *      4-7     RIFF chunk length (file length minus 8)
 	 *      8-15    "WAVEfmt "
 	 *      16-19   format size
 	 *      20-21   format tag
@@ -286,6 +356,8 @@ wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 	case 8:
 		break;
 	case 16:
+		break;
+	case 24:
 		break;
 	case 32:
 		break;
@@ -372,7 +444,7 @@ wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 	abps = (double)align*ti->sample_rate / (double)1 + 0.5;
 
 	nsample = (datalen / ti->precision) / ti->sample_rate;
-	
+
 	/*
 	 * now we've calculated the info, write it out!
 	 */
