@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.21 2024/03/11 23:12:29 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.22 2024/03/12 00:34:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.21 2024/03/11 23:12:29 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.22 2024/03/12 00:34:38 mrg Exp $");
 #endif
 
 
@@ -90,6 +90,49 @@ wav_enc_from_val(int encoding)
 /*
  * WAV format helpers
  */
+
+static bool
+find_riff_chunk(const char search[4], size_t *remainp, char **wherep, uint32_t *partlen)
+{
+	wav_audioheaderpart part;
+
+	*partlen = 0;
+
+#define ADJUST(l) do {				\
+	if (l >= *(remainp))			\
+		return false;			\
+	*(wherep) += (l);			\
+	*(remainp) -= (l);			\
+} while (0)
+
+	while (*remainp >= sizeof part) {
+		const char *emsg = "";
+		uint32_t len;
+
+		memcpy(&part, *wherep, sizeof part);
+		ADJUST(sizeof part);
+		len = getle32(part.len);
+		if (len % 2) {
+			emsg = " (odd length, adjusted)";
+			len += 1;
+		}
+		if (strncmp(part.name, search, sizeof *search) == 0) {
+			*partlen = len;
+			if (verbose > 1)
+				fprintf(stderr, "Found part %.04s length %d%s\n",
+				    part.name, len, emsg);
+			return true;
+		}
+		ADJUST(len);
+		if (verbose > 1)
+			fprintf(stderr, "Skipping part %.04s length %d%s\n",
+			    part.name, len, emsg);
+	}
+#undef ADJUST
+
+	return false;
+}
+
 /*
  * find a .wav header, etc. returns header length on success
  */
@@ -98,7 +141,6 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
     u_int *sample, u_int *channels, off_t *datasize)
 {
 	char	*where = hdr;
-	wav_audioheaderpart part;
 	wav_audioheaderfmt fmt;
 	wav_audiohdrextensible ext;
 	size_t remain = sz;
@@ -131,17 +173,7 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		return (AUDIO_ENOENT);
 	ADJUST(sizeof strWAVE);
 
-	found = false;
-	while (remain >= sizeof part) {
-		memcpy(&part, where, sizeof part);
-		ADJUST(sizeof part);
-		len = getle32(part.len);
-		if (strncmp(part.name, strfmt, sizeof strfmt) == 0) {
-			found = true;
-			break;
-		}
-		ADJUST(len);
-	}
+	found = find_riff_chunk(strfmt, &remain, &where, &len);
 
 	/* too short ? */
 	if (!found || remain <= sizeof fmt)
@@ -243,20 +275,9 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		break;
 	}
 
-	found = false;
-	while (remain >= sizeof part) {
-		memcpy(&part, where, sizeof part);
-		ADJUST(sizeof part);
-		len = getle32(part.len);
-		if (strncmp(part.name, strdata, sizeof strdata) == 0) {
-			found = true;
-			break;
-		}
-		/* Adjust len here only for non-data parts. */
-		ADJUST(len);
-	}
+	found = find_riff_chunk(strdata, &remain, &where, &len);
 	if (!found)
-		return (AUDIO_ENOENT);
+		return (AUDIO_EWAVNODATA);
 
 	if (len) {
 		if (channels)
