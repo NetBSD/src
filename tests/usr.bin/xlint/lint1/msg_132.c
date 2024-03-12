@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.34 2024/03/12 07:29:39 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.35 2024/03/12 07:56:08 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -410,11 +410,10 @@ fp_classify(void)
 		unsigned long long ext_exp:15;
 	} x;
 
-	/* FIXME: There is no loss of accuracy here. */
-	/* expect+1: warning: conversion from 'unsigned long long:15' to 'int:15' may lose accuracy [132] */
+	// Since decl.c 1.180 from 2021-05-02 and before tree.c 1.624 from
+	// 2024-03-12, lint warned about a possible loss of accuracy [132]
+	// when promoting a small unsigned bit-field to 'int'.
 	if (x.ext_exp == 0) {
-	/* FIXME: There is no loss of accuracy here. */
-	/* expect+1: warning: conversion from 'unsigned long long:15' to 'int:15' may lose accuracy [132] */
 	} else if (x.ext_exp == 0x7fff) {
 	}
 }

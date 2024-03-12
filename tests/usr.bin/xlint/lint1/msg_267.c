@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_267.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_267.c,v 1.8 2024/03/12 07:56:08 rillig Exp $	*/
 # 3 "msg_267.c"
 
 // Test for message: shift amount %u equals bit-size of '%s' [267]
@@ -57,20 +57,28 @@ shift_bit_field(void)
 	    (s.bit_field >> 18) &
 	    (s.bit_field >> 19) &
 	    (s.bit_field >> 31) &
-	    /* XXX: Why 'int:18', not 'unsigned int:18'? */
-	    /* expect+1: warning: shift amount 32 equals bit-size of 'int:18' [267] */
+	    // When promoting 'unsigned int:18', the target type is 'int', as
+	    // it can represent all possible values; this is a bit misleading
+	    // as its sign bit is always 0.
+	    /* expect+1: warning: shift amount 32 equals bit-size of 'int:19' [267] */
 	    (s.bit_field >> 32) &
-	    /* XXX: Why 'int', not 'unsigned int:18'? */
+	    // When promoting 'unsigned int:18', the target type is 'int', as
+	    // it can represent all possible values; this is a bit misleading
+	    // as its sign bit is always 0.
 	    /* expect+1: warning: shift amount 33 is greater than bit-size 32 of 'int' [122] */
 	    (s.bit_field >> 33) &
 	    (s.bit_field << 17) &
 	    (s.bit_field << 18) &
 	    (s.bit_field << 19) &
 	    (s.bit_field << 31) &
-	    /* XXX: Why 'int:18', not 'unsigned int:18'? */
-	    /* expect+1: warning: shift amount 32 equals bit-size of 'int:18' [267] */
+	    // When promoting 'unsigned int:18', the target type is 'int', as
+	    // it can represent all possible values; this is a bit misleading
+	    // as its sign bit is always 0.
+	    /* expect+1: warning: shift amount 32 equals bit-size of 'int:19' [267] */
 	    (s.bit_field << 32) &
-	    /* XXX: Why 'int', not 'unsigned int:18'? */
+	    // When promoting 'unsigned int:18', the target type is 'int', as
+	    // it can represent all possible values; this is a bit misleading
+	    // as its sign bit is always 0.
 	    /* expect+1: warning: shift amount 33 is greater than bit-size 32 of 'int' [122] */
 	    (s.bit_field << 33) &
 	    15;
