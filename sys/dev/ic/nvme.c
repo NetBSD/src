@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.67.4.1 2024/03/12 09:58:26 martin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.67 2022/09/13 10:14:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.67.4.1 2024/03/12 09:58:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,6 @@ nvme_detach(struct nvme_softc *sc, int flags)
 		return error;
 
 	/* from now on we are committed to detach, following will never fail */
-	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 	for (i = 0; i < sc->sc_nq; i++)
 		nvme_q_free(sc, sc->sc_q[i]);
 	kmem_free(sc->sc_q, sizeof(*sc->sc_q) * sc->sc_nq);
@@ -603,6 +602,11 @@ nvme_resume(struct nvme_softc *sc)
 	}
 
 	nvme_q_reset(sc, sc->sc_admin_q);
+	if (sc->sc_intr_establish(sc, NVME_ADMIN_Q, sc->sc_admin_q)) {
+		error = EIO;
+		device_printf(sc->sc_dev, "unable to establish admin q\n");
+		goto disable;
+	}
 
 	error = nvme_enable(sc, ffs(sc->sc_mps) - 1);
 	if (error) {
@@ -649,6 +653,8 @@ nvme_shutdown(struct nvme_softc *sc)
 	}
 	if (disabled)
 		goto disable;
+
+	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 
 	cc = nvme_read4(sc, NVME_CC);
 	CLR(cc, NVME_CC_SHN_MASK);
