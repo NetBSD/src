@@ -1,6 +1,6 @@
-.\"	$NetBSD: audioplay.1,v 1.30.6.1 2023/02/14 16:05:53 martin Exp $
+.\"	$NetBSD: audioplay.1,v 1.30.6.2 2024/03/12 10:04:23 martin Exp $
 .\"
-.\" Copyright (c) 1998, 1999, 2002, 2010, 2019 Matthew R. Green
+.\" Copyright (c) 1998, 1999, 2002, 2010, 2019, 2024 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 10, 2020
+.Dd March 3, 2024
 .Dt AUDIOPLAY 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd play audio files
 .Sh SYNOPSIS
 .Nm
-.Op Fl hiqV
+.Op Fl hinqV
 .Op Fl B Ar buffersize
 .Op Fl b Ar balance
 .Op Fl d Ar device
@@ -118,6 +118,8 @@ sample rate.
 Print a help message.
 .It Fl i
 If the audio device cannot be opened, exit now rather than wait for it.
+.It Fl n
+Do not write audio data, only parse files for sanity.
 .It Fl P
 When combined with the
 .Fl f
@@ -175,7 +177,7 @@ files.
 In addition to the audio driver encodings list in the EXAMPLES section,
 .Nm
 supports playing IEEE floating point data in RIFF WAVE audio files
-(with one caveat that the floating point size must be native.)
+(with one caveat that the floating point size must be native).
 In this case
 .Nm
 converts the floating point data into signed linear samples before
@@ -208,4 +210,4 @@ Support for RIFF WAVE IEEE floating point data was introduced in
 The
 .Nm
 program was written by
-.An Matthew R. Green Aq Mt mrg@eterna.com.au .
+.An Matthew R. Green Aq Mt mrg@eterna23.net .

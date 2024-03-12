@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.1 2015/06/21 06:06:01 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.1.26.1 2024/03/12 10:04:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: decode.c,v 1.1 2015/06/21 06:06:01 mrg Exp $");
+__RCSID("$NetBSD: decode.c,v 1.1.26.1 2024/03/12 10:04:22 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ decode_time(const char *arg, struct timeval *tvp)
 
 	tvp->tv_sec = tvp->tv_usec = 0;
 	s = copy;
-	
+
 	/* handle [hh:]mm:ss.dd */
 	if ((colon = strchr(s, ':')) != NULL) {
 		*colon++ = '\0';
