@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.25 2023/06/10 07:30:57 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.26 2024/03/12 21:27:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.25 2023/06/10 07:30:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.26 2024/03/12 21:27:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -94,9 +94,11 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			/* Process I/O and error interrupts. */
 			evbmips_iointr(ipl, pending, &cf);
 		}
+#ifdef DIAGNOSTIC
 		KASSERT(biglock_count == ci->ci_biglock_count);
 		KASSERT(blcnt == curlwp->l_blcnt);
 		KASSERT(mtx_count == ci->ci_mtx_count);
+#endif
 
 		/*
 		 * If even our spl is higher now (due to interrupting while
