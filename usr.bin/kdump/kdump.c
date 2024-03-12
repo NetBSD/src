@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.140 2021/06/20 00:25:29 chs Exp $	*/
+/*	$NetBSD: kdump.c,v 1.140.2.1 2024/03/12 10:13:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.140 2021/06/20 00:25:29 chs Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.140.2.1 2024/03/12 10:13:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,15 @@ __RCSID("$NetBSD: kdump.c,v 1.140 2021/06/20 00:25:29 chs Exp $");
 #include <vis.h>
 #include <util.h>
 
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
 #include "ktrace.h"
 #include "setemul.h"
 
 #include <sys/syscall.h>
+
+#define	CASERETURN(a)	case a:	return # a
 
 #define TIMESTAMP_NONE		0x0
 #define TIMESTAMP_ABSOLUTE	0x1
@@ -552,23 +557,152 @@ output_long(u_long it, int as_x)
 static const char *
 fcntlname(u_long cmd)
 {
-#define	FCNTLCASE(a)	case a:	return # a
 	switch (cmd) {
-	FCNTLCASE(F_DUPFD);
-	FCNTLCASE(F_GETFD);
-	FCNTLCASE(F_SETFD);
-	FCNTLCASE(F_GETFL);
-	FCNTLCASE(F_SETFL);
-	FCNTLCASE(F_GETOWN);
-	FCNTLCASE(F_SETOWN);
-	FCNTLCASE(F_GETLK);
-	FCNTLCASE(F_SETLK);
-	FCNTLCASE(F_SETLKW);
-	FCNTLCASE(F_CLOSEM);
-	FCNTLCASE(F_MAXFD);
-	FCNTLCASE(F_DUPFD_CLOEXEC);
-	FCNTLCASE(F_GETNOSIGPIPE);
-	FCNTLCASE(F_SETNOSIGPIPE);
+	CASERETURN(F_DUPFD);
+	CASERETURN(F_GETFD);
+	CASERETURN(F_SETFD);
+	CASERETURN(F_GETFL);
+	CASERETURN(F_SETFL);
+	CASERETURN(F_GETOWN);
+	CASERETURN(F_SETOWN);
+	CASERETURN(F_GETLK);
+	CASERETURN(F_SETLK);
+	CASERETURN(F_SETLKW);
+	CASERETURN(F_CLOSEM);
+	CASERETURN(F_MAXFD);
+	CASERETURN(F_DUPFD_CLOEXEC);
+	CASERETURN(F_GETNOSIGPIPE);
+	CASERETURN(F_SETNOSIGPIPE);
+	default:
+		return NULL;
+	}
+}
+
+static const char *
+sockproto(register_t proto)
+{
+	switch (proto) {
+	CASERETURN(IPPROTO_IP);
+	CASERETURN(IPPROTO_ICMP);
+	CASERETURN(IPPROTO_IGMP);
+	CASERETURN(IPPROTO_GGP);
+//	CASERETURN(IPPROTO_IPV4);
+	CASERETURN(IPPROTO_IPIP);
+	CASERETURN(IPPROTO_TCP);
+	CASERETURN(IPPROTO_EGP);
+	CASERETURN(IPPROTO_PUP);
+	CASERETURN(IPPROTO_UDP);
+	CASERETURN(IPPROTO_IDP);
+	CASERETURN(IPPROTO_TP);
+	CASERETURN(IPPROTO_DCCP);
+	CASERETURN(IPPROTO_IPV6);
+	CASERETURN(IPPROTO_ROUTING);
+	CASERETURN(IPPROTO_FRAGMENT);
+	CASERETURN(IPPROTO_RSVP);
+	CASERETURN(IPPROTO_GRE);
+	CASERETURN(IPPROTO_ESP);
+	CASERETURN(IPPROTO_AH);
+	CASERETURN(IPPROTO_MOBILE);
+//	CASERETURN(IPPROTO_IPV6_ICMP);
+	CASERETURN(IPPROTO_ICMPV6);
+	CASERETURN(IPPROTO_NONE);
+	CASERETURN(IPPROTO_DSTOPTS);
+	CASERETURN(IPPROTO_EON);
+	CASERETURN(IPPROTO_ETHERIP);
+	CASERETURN(IPPROTO_ENCAP);
+	CASERETURN(IPPROTO_PIM);
+	CASERETURN(IPPROTO_IPCOMP);
+	CASERETURN(IPPROTO_VRRP);
+//	CASERETURN(IPPROTO_CARP);
+	CASERETURN(IPPROTO_L2TP);
+	CASERETURN(IPPROTO_SCTP);
+	CASERETURN(IPPROTO_PFSYNC);
+	CASERETURN(IPPROTO_RAW);
+	CASERETURN(IPPROTO_MAX);
+	CASERETURN(IPPROTO_DONE);
+	CASERETURN(SOL_SOCKET);
+	default:
+		return NULL;
+	}
+}
+
+static const char *
+sockoptname(register_t optname)
+{
+	switch (optname) {
+	CASERETURN(SO_ACCEPTCONN);
+	CASERETURN(SO_ACCEPTFILTER);
+	CASERETURN(SO_BROADCAST);
+	CASERETURN(SO_DEBUG);
+	CASERETURN(SO_DONTROUTE);
+	CASERETURN(SO_ERROR);
+	CASERETURN(SO_KEEPALIVE);
+	CASERETURN(SO_LINGER);
+	CASERETURN(SO_NOHEADER);
+	CASERETURN(SO_NOSIGPIPE);
+	CASERETURN(SO_OOBINLINE);
+	CASERETURN(SO_OVERFLOWED);
+	CASERETURN(SO_RCVBUF);
+	CASERETURN(SO_RCVLOWAT);
+	CASERETURN(SO_RCVTIMEO);
+	CASERETURN(SO_RERROR);
+	CASERETURN(SO_REUSEADDR);
+	CASERETURN(SO_REUSEPORT);
+	CASERETURN(SO_SNDBUF);
+	CASERETURN(SO_SNDLOWAT);
+	CASERETURN(SO_SNDTIMEO);
+	CASERETURN(SO_TIMESTAMP);
+	CASERETURN(SO_TYPE);
+	CASERETURN(SO_USELOOPBACK);
+	default:
+		return NULL;
+	}
+}
+
+static const char *
+tcpoptname(register_t optname)
+{
+	switch (optname) {
+	CASERETURN(TCP_NODELAY);
+	CASERETURN(TCP_MAXSEG);
+	CASERETURN(TCP_MD5SIG);
+	CASERETURN(TCP_KEEPIDLE);
+	CASERETURN(TCP_KEEPINTVL);
+	CASERETURN(TCP_KEEPCNT);
+	CASERETURN(TCP_KEEPINIT);
+	CASERETURN(TCP_INFO);
+	default:
+		return NULL;
+	}
+}
+
+static const char *
+ipoptname(register_t optname)
+{
+	switch (optname) {
+	CASERETURN(IP_OPTIONS);
+	CASERETURN(IP_HDRINCL);
+	CASERETURN(IP_TOS);
+	CASERETURN(IP_TTL);
+	CASERETURN(IP_RECVOPTS);
+	CASERETURN(IP_RECVRETOPTS);
+	CASERETURN(IP_RECVDSTADDR);
+	CASERETURN(IP_RETOPTS);
+	CASERETURN(IP_MULTICAST_IF);
+	CASERETURN(IP_MULTICAST_TTL);
+	CASERETURN(IP_MULTICAST_LOOP);
+	CASERETURN(IP_ADD_MEMBERSHIP);
+	CASERETURN(IP_DROP_MEMBERSHIP);
+	CASERETURN(IP_PORTALGO);
+	CASERETURN(IP_PORTRANGE);
+	CASERETURN(IP_RECVIF);
+	CASERETURN(IP_ERRORMTU);
+	CASERETURN(IP_IPSEC_POLICY);
+	CASERETURN(IP_RECVTTL);
+	CASERETURN(IP_MINTTL);
+	CASERETURN(IP_PKTINFO);
+	CASERETURN(IP_RECVPKTINFO);
+	CASERETURN(IP_BINDANY);
 	default:
 		return NULL;
 	}
@@ -579,6 +713,11 @@ ioctldecode(u_long cmd)
 {
 	char dirbuf[4], *dir = dirbuf;
 	int c;
+
+	if (~0xffffffffULL & cmd) {
+		output_long(cmd, 1);
+		return;
+	}
 
 	if (cmd & IOC_IN)
 		*dir++ = 'W';
@@ -633,25 +772,24 @@ putprot(int pr)
 static const char *
 futex_op_name(u_long op)
 {
-#define	FUTEXCASE(a)	case a:	return # a
 	switch (op & FUTEX_CMD_MASK) {
-	FUTEXCASE(FUTEX_WAIT);
-	FUTEXCASE(FUTEX_WAKE);
-	FUTEXCASE(FUTEX_FD);
-	FUTEXCASE(FUTEX_REQUEUE);
-	FUTEXCASE(FUTEX_CMP_REQUEUE);
-	FUTEXCASE(FUTEX_WAKE_OP);
-	FUTEXCASE(FUTEX_LOCK_PI);
-	FUTEXCASE(FUTEX_UNLOCK_PI);
-	FUTEXCASE(FUTEX_TRYLOCK_PI);
-	FUTEXCASE(FUTEX_WAIT_BITSET);
-	FUTEXCASE(FUTEX_WAKE_BITSET);
-	FUTEXCASE(FUTEX_WAIT_REQUEUE_PI);
-	FUTEXCASE(FUTEX_CMP_REQUEUE_PI);
+	CASERETURN(FUTEX_WAIT);
+	CASERETURN(FUTEX_WAKE);
+	CASERETURN(FUTEX_FD);
+	CASERETURN(FUTEX_REQUEUE);
+	CASERETURN(FUTEX_CMP_REQUEUE);
+	CASERETURN(FUTEX_WAKE_OP);
+	CASERETURN(FUTEX_LOCK_PI);
+	CASERETURN(FUTEX_UNLOCK_PI);
+	CASERETURN(FUTEX_TRYLOCK_PI);
+	CASERETURN(FUTEX_WAIT_BITSET);
+	CASERETURN(FUTEX_WAKE_BITSET);
+	CASERETURN(FUTEX_WAIT_REQUEUE_PI);
+	CASERETURN(FUTEX_CMP_REQUEUE_PI);
 	default:
 		return NULL;
 	}
-#undef FUTEXCASE
+#undef CASERETURN
 }
 
 static void
@@ -754,14 +892,58 @@ ktrsyscall(struct ktr_syscall *ktr)
 			argcount--;
 			c = ',';
 
+		} else if ((strcmp(sys_name, "setsockopt") == 0 ||
+		    strcmp(sys_name, "getsockopt") == 0 ||
+		    strcmp(sys_name, "getsockopt2") == 0) && argcount >= 3) {
+			(void)putchar('(');
+			output_long((long)*ap, !(decimal || small(*ap)));
+			ap++;
+			argcount--;
+			register_t level = *ap;
+			fprintf(stderr, "level=%jx\n", (intmax_t)level);
+			if ((cp = sockproto(level)) != NULL) {
+				(void)printf(",%s", cp);
+			} else {
+				output_long((long)*ap,
+				    !(decimal || small(*ap)));
+			}
+			ap++;
+			argcount--;
+			const char *(*f)(register_t);
+			switch (level) {
+			case SOL_SOCKET:
+				f = sockoptname;
+				break;
+			case IPPROTO_IP:
+				f = ipoptname;
+				break;
+			case IPPROTO_TCP:
+				f = tcpoptname;
+				break;
+			default:
+				f = NULL;
+				break;
+			}
+
+			if (f && (cp = (*f)(*ap)) != NULL)
+				(void)printf(",%s", cp);
+			else {
+				(void)putchar(',');
+				output_long((long)*ap,
+				    !(decimal || small(*ap)));
+			}
+			ap++;
+			argcount--;
+			c = ',';
+
+		} else if ((strcmp(sys_name, "futex") == 0 ||
+			    strcmp(sys_name, "__futex") == 0) &&
+			   argcount > 2) {
 			/*
 			 * Linux name is "futex".
 			 * Native name is "__futex".
 			 * Both have the same op argument.
 			 */
-		} else if ((strcmp(sys_name, "futex") == 0 ||
-			    strcmp(sys_name, "__futex") == 0) &&
-			   argcount > 2) {
 			(void)putchar('(');
 			output_long((long)*ap, 1);
 			(void)putchar(',');
