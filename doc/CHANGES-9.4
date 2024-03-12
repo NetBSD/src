@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.139 2024/03/11 20:04:38 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.140 2024/03/12 10:15:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -13463,4 +13463,9 @@ lib/libc/gen/getcap.c				1.58
 
 	libc: fix memory leak in getent().
 	[ozaki-r, ticket #1816]
+
+sys/dev/ic/nvme.c				1.69
+
+	nvme(4): PR 58025: fix nvmectl(8) after suspend/resume cycle.
+	[riastradh, ticket #1817]
 
