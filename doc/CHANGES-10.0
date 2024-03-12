@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.211 2024/03/12 10:14:28 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.212 2024/03/12 10:19:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21440,4 +21440,9 @@ usr.bin/kdump/kdump.c				1.141-1.144
 	kdump(1): PR 57918: fix decoding of sign extended ioctl codes.
 	Decode some {g,s}etsockopt*.
 	[kre, ticket #635]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h 				(manually edited)
+
+	Welcome to 10.0_RC6
 
