@@ -1,7 +1,7 @@
-/*	$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: sun.c,v 1.9.18.1 2024/03/12 12:41:38 martin Exp $	*/
 
 /*
- * Copyright (c) 2002 Matthew R. Green
+ * Copyright (c) 2002, 2013, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sun.c,v 1.9 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: sun.c,v 1.9.18.1 2024/03/12 12:41:38 martin Exp $");
 #endif
 
 
@@ -149,7 +149,7 @@ sun_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 		break;
 #endif
 	}
-	
+
 	/* if we can't express this as a Sun header, don't write any */
 	if (audio_encoding_to_sun(ti->encoding, ti->precision, &sunenc) != 0) {
 		if (!ti->qflag && !warned) {
