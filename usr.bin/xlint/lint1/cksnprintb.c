@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.10 2024/03/10 16:27:16 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.11 2024/03/13 06:48:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.10 2024/03/10 16:27:16 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.11 2024/03/13 06:48:49 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -51,34 +51,9 @@ typedef struct {
 	quoted_iterator it;
 	uint64_t field_width;
 	uint64_t covered;
-	unsigned covered_start[64];
-	unsigned covered_end[64];
+	const char *covered_start[64];
+	int covered_len[64];
 } checker;
-
-static bool
-match_string_literal(const tnode_t *tn, const buffer **str)
-{
-	while (tn->tn_op == CVT)
-		tn = tn->u.ops.left;
-	return tn->tn_op == ADDR
-	    && tn->u.ops.left->tn_op == STRING
-	    && (*str = tn->u.ops.left->u.str_literals, (*str)->data != NULL);
-}
-
-static bool
-match_snprintb_call(const function_call *call,
-    const buffer **fmt, const tnode_t **val)
-{
-	const char *func;
-
-	return call->func->tn_op == ADDR
-	    && call->func->u.ops.left->tn_op == NAME
-	    && (func = call->func->u.ops.left->u.sym->s_name, true)
-	    && ((strcmp(func, "snprintb") == 0 && call->args_len == 4)
-		|| (strcmp(func, "snprintb_m") == 0 && call->args_len == 5))
-	    && match_string_literal(call->args[2], fmt)
-	    && (*val = call->args[3], true);
-}
 
 static int
 len(quoted_iterator it)
@@ -126,52 +101,36 @@ check_hex_escape(const buffer *buf, quoted_iterator it)
 }
 
 static void
-check_overlap(checker *ck, uint64_t dir_lsb, uint64_t width,
-	      size_t start, size_t end)
+check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
+	  const char *start, int len)
 {
 	unsigned lsb = (unsigned)(ck->new_style ? dir_lsb : dir_lsb - 1);
 	if (lsb >= 64 || width == 0 || width > 64)
 		return;
 
 	uint64_t field_mask = value_bits((unsigned)width) << lsb;
-	uint64_t overlap = ck->covered & field_mask;
-	if (overlap == 0)
-		goto update_covered;
-
 	for (unsigned i = lsb; i < 64; i++) {
-		if (!(overlap & bit(i)))
-			continue;
-		/* '%.*s' overlaps earlier '%.*s' on bit %u */
-		warning(376,
-		    (int)(end - start), ck->fmt->data + start,
-		    (int)(ck->covered_end[i] - ck->covered_start[i]),
-		    ck->fmt->data + ck->covered_start[i],
-		    ck->new_style ? i : i + 1);
-		break;
+		if (ck->covered & field_mask & bit(i)) {
+			/* '%.*s' overlaps earlier '%.*s' on bit %u */
+			warning(376,
+			    len, start, ck->covered_len[i],
+			    ck->covered_start[i],
+			    ck->new_style ? i : i + 1);
+			break;
+		}
 	}
 
-update_covered:
 	ck->covered |= field_mask;
 	for (unsigned i = lsb; i < 64; i++) {
 		if (field_mask & bit(i)) {
-			ck->covered_start[i] = (unsigned)start;
-			ck->covered_end[i] = (unsigned)end;
+			ck->covered_start[i] = start;
+			ck->covered_len[i] = len;
 		}
 	}
-}
 
-static void
-check_reachable(checker *ck, uint64_t dir_lsb, uint64_t width,
-		size_t start, size_t end)
-{
-	unsigned lsb = (unsigned)(ck->new_style ? dir_lsb : dir_lsb - 1);
-	if (lsb >= 64 || width == 0 || width > 64)
-		return;
-
-	uint64_t field_mask = value_bits((unsigned)width) << lsb;
 	if (!(possible_bits(ck->value) & field_mask))
 		/* directive '%.*s' is unreachable by input value */
-		warning(378, (int)(end - start), ck->fmt->data + start);
+		warning(378, len, start);
 }
 
 static bool
@@ -266,45 +225,37 @@ check_directive(checker *ck)
 		check_hex_escape(fmt, bit);
 	if (has_width)
 		check_hex_escape(fmt, width);
-	if (has_bit && bit.octal_digits == 0 && bit.hex_digits == 0) {
+	if (has_bit && bit.octal_digits == 0 && bit.hex_digits == 0)
 		/* bit position '%.*s' in '%.*s' should be escaped as ... */
 		warning(369, len(bit), start(bit, fmt),
 		    range(dir, *it), start(dir, fmt));
-	}
-	if (has_width && width.octal_digits == 0 && width.hex_digits == 0) {
+	if (has_width && width.octal_digits == 0 && width.hex_digits == 0)
 		/* field width '%.*s' in '%.*s' should be escaped as ... */
 		warning(370, len(width), start(width, fmt),
 		    range(dir, *it), start(dir, fmt));
-	}
-	if (has_bit && (new_style ? bit.value > 63 : bit.value - 1 > 31)) {
+	if (has_bit && (new_style ? bit.value > 63 : bit.value - 1 > 31))
 		/* bit position '%.*s' (%ju) in '%.*s' out of range %u..%u */
 		warning(371,
 		    len(bit), start(bit, fmt), val(bit),
 		    range(dir, *it), start(dir, fmt),
 		    new_style ? 0 : 1, new_style ? 63 : 32);
-	}
-	if (has_width && width.value > 64) {
+	if (has_width && width.value > 64)
 		/* field width '%.*s' (%ju) in '%.*s' out of range 0..64 */
 		warning(372,
 		    len(width), start(width, fmt), val(width),
 		    range(dir, *it), start(dir, fmt));
-	}
-	if (has_width && bit.value + width.value > 64) {
+	if (has_width && bit.value + width.value > 64)
 		/* bit field end %ju in '%.*s' out of range 0..64 */
 		warning(373, val(bit) + val(width),
 		    range(dir, *it), start(dir, fmt));
-	}
 	if (has_cmp && ck->field_width > 0 && ck->field_width < 64
-	    && cmp.value & ~value_bits((unsigned)ck->field_width)) {
+	    && cmp.value & ~value_bits((unsigned)ck->field_width))
 		/* comparison value '%.*s' (%ju) exceeds maximum field ... */
 		warning(375, len(cmp), start(cmp, fmt), val(cmp),
 		    (uintmax_t)value_bits((unsigned)ck->field_width));
-	}
-	if (has_bit) {
-		uint64_t w = has_width ? width.value : 1;
-		check_overlap(ck, bit.value, w, dir.start, it->end);
-		check_reachable(ck, bit.value, w, dir.start, it->end);
-	}
+	if (has_bit)
+		check_bit(ck, bit.value, has_width ? width.value : 1,
+		    ck->fmt->data + dir.start, (int)(it->end - dir.start));
 	if (needs_descr && !seen_descr)
 		/* empty description in '%.*s' */
 		warning(367, range(dir, *it), start(dir, fmt));
@@ -320,9 +271,22 @@ check_directive(checker *ck)
 void
 check_snprintb(const tnode_t *expr)
 {
+	const function_call *call = expr->u.call;
+	const char *name;
 	const buffer *fmt;
 	const tnode_t *value;
-	if (!match_snprintb_call(expr->u.call, &fmt, &value))
+
+	if (!(call->func->tn_op == ADDR
+	    && call->func->u.ops.left->tn_op == NAME
+	    && (name = call->func->u.ops.left->u.sym->s_name, true)
+	    && ((strcmp(name, "snprintb") == 0 && call->args_len == 4)
+		|| (strcmp(name, "snprintb_m") == 0 && call->args_len == 5))
+	    && call->args[2]->tn_op == CVT
+	    && call->args[2]->u.ops.left->tn_op == ADDR
+	    && call->args[2]->u.ops.left->u.ops.left->tn_op == STRING
+	    && (fmt = call->args[2]->u.ops.left->u.ops.left->u.str_literals,
+		fmt->data != NULL)
+	    && (value = call->args[3], true)))
 		return;
 
 	checker ck = {
