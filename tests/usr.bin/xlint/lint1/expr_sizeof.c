@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.14 2023/08/05 10:13:39 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.15 2024/03/13 06:56:24 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -199,3 +199,17 @@ struct s24 {
 };
 /* expect+1: error: negative array dimension (-24) [20] */
 typedef int sizeof_s24[-(int)sizeof(struct s24)];
+
+void
+sizeof_array_parameter(short arr[12345])
+{
+	// The size of an array parameter is the size of the decayed pointer.
+	// Subtracting 'sizeof(void *)' makes the test platform-independent.
+	typedef int sizeof_arr[-(int)(sizeof arr - sizeof(void *))];
+
+	// The 2 comes from 'sizeof(short)', as the type 'array[size] of elem'
+	// decays into the type 'pointer to elem', not 'pointer to array[size]
+	// of elem'.
+	/* expect+1: error: negative array dimension (-2) [20] */
+	typedef int sizeof_arr_elem[-(int)(sizeof *arr)];
+}
