@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.27 2024/03/13 06:59:01 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.28 2024/03/13 12:44:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.27 2024/03/13 06:59:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.28 2024/03/13 12:44:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,9 +53,9 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	struct cpu_info * const ci = curcpu();
 	uint32_t pending;
 	int ipl;
-	const int mtx_count __diagused = ci->ci_mtx_count;
-	const u_int biglock_count __diagused = ci->ci_biglock_count;
-	const u_int blcnt __diagused = curlwp->l_blcnt;
+	const int mtx_count = ci->ci_mtx_count;
+	const u_int biglock_count = ci->ci_biglock_count;
+	const u_int blcnt = curlwp->l_blcnt;
 
 	KASSERT(ci->ci_cpl == IPL_HIGH);
 	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
