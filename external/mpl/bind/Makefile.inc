@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2024/02/25 18:50:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2024/03/13 12:56:31 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -79,6 +79,7 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${MKKERBEROS} != "no"
+CPPFLAGS+=-DWITH_KERBEROS
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
 DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
