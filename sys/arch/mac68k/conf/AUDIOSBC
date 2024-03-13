@@ -1,0 +1,17 @@
+# $NetBSD: AUDIOSBC,v 1.1 2024/03/13 07:55:28 nat Exp $
+#
+# WSFB with audio enabled.
+
+include 	"arch/mac68k/conf/WSFBSBC"
+
+no asc0 at obio?
+
+# DEFQUALTY	0x0	22257 Monaural playback.
+# LOWQUALITY	0x1	Half playback rate.
+# HIGHQUALITY	0x2	Best Quality supported by ASC.
+
+ascaudio*	at obio? flags 0x0		# ASC/EASC audio
+audio*		at audiobus?
+spkr*		at audio?			# PC speaker (synthesized)
+wsbell*		at spkr? 			# Console beep
+

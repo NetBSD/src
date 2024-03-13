@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.27 2020/04/04 16:06:14 jdolecek Exp $
+#	$NetBSD: majors.mac68k,v 1.28 2024/03/13 07:55:28 nat Exp $
 #
 # Device majors for mac68k
 #
@@ -52,6 +52,7 @@ device-major	ksyms		char 52			ksyms
 device-major	wsfont		char 53			wsfont
 device-major	cpi		char 54			cpi
 device-major	sysmon		char 55			sysmon
+device-major	audio		char 56			audio
 
 #device-major	obsolete	char 98			obsolete (nsmb)
 

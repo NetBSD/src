@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.132 2024/01/09 04:16:25 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.133 2024/03/13 07:55:28 nat Exp $
 
 # mac68k-specific configuration info
 
@@ -43,9 +43,15 @@ device	ams: wsmousedev
 attach	ams at adb
 file	arch/mac68k/dev/ams.c		ams needs-flag
 
+# ASC (beeper)
 device	asc
 attach	asc at obio
 file	arch/mac68k/obio/asc.c		asc needs-flag
+
+#ASC audio
+device	ascaudio: audiobus, auconv, mulaw, aurateconv, auvolconv
+attach	ascaudio at obio
+file	arch/mac68k/obio/ascaudio.c	ascaudio needs-flag
 
 device	nubus { }
 attach	nubus at mainbus
