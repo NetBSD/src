@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.10 2024/03/14 15:23:52 jakllsch Exp $
+# $NetBSD: usb_hid_usages,v 1.11 2024/03/14 15:27:22 jakllsch Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -13,7 +13,6 @@
 	0x00	Undefined
 	0x01	Pointer
 	0x02	Mouse
-	0x03	Reserved
 	0x04	Joystick
 	0x05	Game Pad
 	0x06	Keyboard
@@ -530,7 +529,6 @@
 	0x4B	Generic Indicator
 	0x4C	System Suspend
 	0x4D	External Power Connected
-	0x4C-FFFF	Reserved
 
 9	Button
 	0x00	No Button Pressed
