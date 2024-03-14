@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.85 2024/03/03 10:09:42 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.86 2024/03/14 16:43:00 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.85 2024/03/03 10:09:42 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.86 2024/03/14 16:43:00 jakllsch Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -98,7 +98,6 @@ static void dwc_gmac_tx_intr(struct dwc_gmac_softc *);
 static void dwc_gmac_rx_intr(struct dwc_gmac_softc *);
 static void dwc_gmac_setmulti(struct dwc_gmac_softc *);
 static int dwc_gmac_ifflags_cb(struct ethercom *);
-static uint32_t	bitrev32(uint32_t);
 static void dwc_gmac_desc_set_owned_by_dev(struct dwc_gmac_dev_dmadesc *);
 static int  dwc_gmac_desc_is_owned_by_dev(struct dwc_gmac_dev_dmadesc *);
 static void dwc_gmac_desc_std_set_len(struct dwc_gmac_dev_dmadesc *, int);
@@ -1346,20 +1345,6 @@ skip:
 	mutex_exit(&sc->sc_rxq.r_mtx);
 }
 
-/*
- * Reverse order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
- */
-static uint32_t
-bitrev32(uint32_t x)
-{
-	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
-	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
-	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
-	x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
-
-	return (x >> 16) | (x << 16);
-}
-
 static void
 dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 {
@@ -1398,9 +1383,7 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 			goto special_filter;
 		}
 
-		h = bitrev32(
-			~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)
-		    ) >> 26;
+		h = ~ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		hashes[h >> 5] |= (1 << (h & 0x1f));
 
 		mcnt++;
