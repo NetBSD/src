@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1309 2024/03/03 00:50:41 rillig Exp $
+# $NetBSD: mi,v 1.1310 2024/03/14 21:00:33 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6473,6 +6473,10 @@
 ./usr/tests/usr.bin/sort/d_any_char_iflag_out.txt	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/sort/d_any_char_in.txt		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/stat				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/stat/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/stat/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/stat/t_stat				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar/Atffile					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar/Kyuafile				tests-usr.bin-tests	compattestfile,atf,kyua
