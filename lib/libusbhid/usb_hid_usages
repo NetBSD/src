@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.9 2024/02/10 09:21:52 andvar Exp $
+# $NetBSD: usb_hid_usages,v 1.10 2024/03/14 15:23:52 jakllsch Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -40,7 +40,7 @@
 	0x42	Vz
 	0x43	Vbrx
 	0x44	Vbry
-	0x45	Vbrx
+	0x45	Vbrz
 	0x46	Vno
 	0x47	Feature Notification
 	0x48	Resolution Multiplier
@@ -627,7 +627,7 @@
 	0x35	Illumination
 	0x36	Function Buttons
 	0x40	Menu
-	0x41	Menu  Pick
+	0x41	Menu Pick
 	0x42	Menu Up
 	0x43	Menu Down
 	0x44	Menu Left
@@ -688,7 +688,7 @@
 	0xB7	Stop
 	0xB8	Eject
 	0xB9	Random Play
-	0xBA	Select DisC
+	0xBA	Select Disc
 	0xBB	Enter Disc
 	0xBC	Repeat
 	0xBD	Tracking
