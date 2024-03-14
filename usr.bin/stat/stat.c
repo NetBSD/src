@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.51 2024/03/14 00:07:20 rillig Exp $ */
+/*	$NetBSD: stat.c,v 1.52 2024/03/14 19:38:56 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.51 2024/03/14 00:07:20 rillig Exp $");
+__RCSID("$NetBSD: stat.c,v 1.52 2024/03/14 19:38:56 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -1077,7 +1077,7 @@ format1(const struct stat *st,
 	 * First prefixlen chars are not encoded.
 	 */
 	if ((flags & FLAG_POUND) != 0 && ofmt == FMTF_STRING) {
-		flags = 0;
+		flags &= ~FLAG_POUND;
 		strncpy(visbuf, sdata, prefixlen);
 		/* Avoid GCC warnings. */
 		visbuf[prefixlen] = 0;
