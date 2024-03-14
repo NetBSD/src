@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.202 2024/01/25 00:30:57 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.203 2024/03/14 21:00:32 rillig Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -476,6 +476,7 @@
 ./usr/tests/usr.bin/sed
 ./usr/tests/usr.bin/shmif_dumpbus
 ./usr/tests/usr.bin/sort
+./usr/tests/usr.bin/stat
 ./usr/tests/usr.bin/tar
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
