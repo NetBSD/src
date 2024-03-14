@@ -1,4 +1,4 @@
-# $NetBSD: t_stat.sh,v 1.1 2024/03/14 21:00:33 rillig Exp $
+# $NetBSD: t_stat.sh,v 1.2 2024/03/14 21:17:54 rillig Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,9 +44,14 @@ string_format_body() {
 	atf_check -o 'inline:left-aligned <Ümläute           >\n' \
 	    stat -f 'left-aligned <%-20SN>' 'Ümläute'
 
-	# FIXME: invokes undefined behavior in snprintf "%+s"
-	atf_check -o 'inline:string-plus <Ümläute>\n' \
+	atf_check -s exit:1 -o ignore -e 'inline:stat: % SN: bad format\n' \
+	    stat -f 'string-space <% SN>' 'Ümläute'
+
+	atf_check -s exit:1 -o ignore -e 'inline:stat: %+SN: bad format\n' \
 	    stat -f 'string-plus <%+SN>' 'Ümläute'
+
+	atf_check -s exit:1 -o ignore -e 'inline:stat: %0SN: bad format\n' \
+	    stat -f 'string-zero <%0SN>' 'Ümläute'
 
 	atf_check -o 'inline:vis <\303\234ml\303\244ute>\n' \
 	    stat -f 'vis <%#SN>' 'Ümläute'
