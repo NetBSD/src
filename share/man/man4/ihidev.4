@@ -1,4 +1,4 @@
-.\" $NetBSD: ihidev.4,v 1.3 2019/10/05 06:28:50 ryoon Exp $
+.\" $NetBSD: ihidev.4,v 1.4 2024/03/14 15:19:03 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001,2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver handles all Human Interface Devices.
+driver handles all Human Interface Devices attached via I2C bus.
 Each HID device can have several components, e.g., a keyboard and
 a mouse.
 These components use different report identifiers (a byte)
