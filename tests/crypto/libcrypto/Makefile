@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2023/05/08 17:46:06 christos Exp $
+# $NetBSD: Makefile,v 1.16 2024/03/15 15:32:07 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,10 @@ SUBDIR += lhash sha x509v3
 .endif
 
 TESTSDIR=	${TESTSBASE}/crypto/libcrypto
+
+TESTS_C+=		t_sha512trunc
+DPADD.t_sha512trunc+=	${LIBCRYPTO}
+LDADD.t_sha512trunc+=	-lcrypto
 
 .if ${HAVE_OPENSSL} == 10
 TESTS_SH=	t_certs
