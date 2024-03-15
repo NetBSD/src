@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.28 2024/03/15 20:09:31 andvar Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.29 2024/03/15 22:15:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -65,7 +65,7 @@ uvm_swap_stats(char *c, int l, void (*f)(void *, const struct swapent *),
     size_t count, register_t *retval)
 {
 
-	retval = 0;
+	*retval = 0;
 	return ENOSYS;
 }
 
