@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.130 2020/10/18 18:22:29 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.130 2020/10/18 18:22:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -330,7 +330,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	struct vm_page *pg;
 	krwlock_t *slock;
 	int pageout_done;	/* number of PG_PAGEOUT pages processed */
-	int swslot;
+	int swslot __unused;	/* used for VMSWAP */
 	int i;
 	bool swap;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
@@ -405,7 +405,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		 */
 
 		if (error) {
-			int slot;
+			int slot __unused;	/* used for VMSWAP */
 			if (!write) {
 				pg->flags |= PG_RELEASED;
 				continue;

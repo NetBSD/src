@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.27 2024/03/15 07:09:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -58,7 +58,7 @@ int	uvm_swap_stats(char *, int,
 
 #else /* defined(VMSWAP) */
 #define	uvm_swapisfull()	true
-#define uvm_swap_stats(c, l, f, count, retval) (__used f, *retval = 0, ENOSYS)
+#define uvm_swap_stats(c, l, f, count, retval) (void)(f), (*retval = 0, ENOSYS)
 #endif /* defined(VMSWAP) */
 
 void	uvm_swap_shutdown(struct lwp *);

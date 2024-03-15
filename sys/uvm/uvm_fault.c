@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.236 2023/09/19 22:14:25 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.237 2024/03/15 07:09:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.236 2023/09/19 22:14:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.237 2024/03/15 07:09:37 andvar Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -273,7 +273,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 {
 	struct vm_page *pg;
 	krw_t lock_type;
-	int error;
+	int error __unused; /* used for VMSWAP */
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_lock_held(anon->an_lock));
