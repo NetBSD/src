@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3044 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3045 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -283,6 +283,13 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	nsd: Import 4.8.0. [christos 20240217]
 	unbound(8): Import 1.19.1. [christos 20240217]
 	bind: Import 9.18.24 [christos 20240221]
+	re(4): Add support for Killer E2600 Ethernet. [jakllsch 20240228]
 	sqlite3(1): Import 3.45.1. [christos 20240301]
+	alpha: Add initial support for the DEC KN7AA ("Ruby") systems,
+		DEC 7000 and DEC 10000. [thorpej 20240302]
 	elftoolchain: Import svn r4037. [christos 20240303]
+	certctl(8): Improve the performance of `certctl list`.
+		[riastradh 20240303]
+	audioplay(1): Add -n flag that doesn't write audio data for the
+		test suite. [mrg 20240304]
 	mac68k: Add ascaudio(4) ASC audio driver. [nat 20240313]
