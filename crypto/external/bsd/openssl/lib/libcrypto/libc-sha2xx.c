@@ -47,6 +47,20 @@ sha512_224_init(SHA512_CTX *context)
 }
 
 extern int
+sha512_224_final(unsigned char *md, SHA512_CTX *context);
+int
+sha512_224_final(unsigned char *md, SHA512_CTX *context)
+{
+	unsigned char tmp[64];
+
+	SHA512_Final(tmp, context);
+	memcpy(md, tmp, 28);
+	explicit_memset(tmp, 0, sizeof(tmp));
+	return 1;
+
+}
+
+extern int
 sha512_256_init(SHA512_CTX *context);
 int
 sha512_256_init(SHA512_CTX *context)
@@ -59,5 +73,18 @@ sha512_256_init(SHA512_CTX *context)
 	memset(context->buffer, 0, (size_t)(SHA512_BLOCK_LENGTH));
 	context->bitcount[0] = context->bitcount[1] =  0;
 
+	return 1;
+}
+
+extern int
+sha512_256_final(unsigned char *md, SHA512_CTX *context);
+int
+sha512_256_final(unsigned char *md, SHA512_CTX *context)
+{
+	unsigned char tmp[64];
+
+	SHA512_Final(tmp, context);
+	memcpy(md, tmp, 32);
+	explicit_memset(tmp, 0, sizeof(tmp));
 	return 1;
 }
