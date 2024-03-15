@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sha512trunc.c,v 1.1 2024/03/15 15:32:07 riastradh Exp $	*/
+/*	$NetBSD: t_sha512trunc.c,v 1.2 2024/03/15 18:10:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sha512trunc.c,v 1.1 2024/03/15 15:32:07 riastradh Exp $");
+__RCSID("$NetBSD: t_sha512trunc.c,v 1.2 2024/03/15 18:10:37 riastradh Exp $");
 
 #include <stddef.h>
 
@@ -123,8 +123,6 @@ ATF_TC_BODY(sha512_224, tc)
 		},
 	};
 
-	atf_tc_expect_fail("PR lib/58039:"
-	    " Buffer overflow when writing a SHA512_224 or SHA512_256 digest");
 	check(C, __arraycount(C), 28, EVP_sha512_224());
 }
 
@@ -159,8 +157,6 @@ ATF_TC_BODY(sha512_256, tc)
 		},
 	};
 
-	atf_tc_expect_fail("PR lib/58039:"
-	    " Buffer overflow when writing a SHA512_224 or SHA512_256 digest");
 	check(C, __arraycount(C), 32, EVP_sha512_256());
 }
 

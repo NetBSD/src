@@ -86,10 +86,12 @@ IMPLEMENT_digest_functions(sha512, SHA512_CTX,
 /* ossl_sha512_224_functions */
 IMPLEMENT_digest_functions(sha512_224, SHA512_CTX,
                            SHA512_CBLOCK, SHA224_DIGEST_LENGTH, SHA2_FLAGS,
-                           sha512_224_init, SHA512_Update, SHA512_Final)
+                           sha512_224_init, SHA512_Update,
+                           /* XXX NetBSD libc sha2 */sha512_224_final)
 
 /* ossl_sha512_256_functions */
 IMPLEMENT_digest_functions(sha512_256, SHA512_CTX,
                            SHA512_CBLOCK, SHA256_DIGEST_LENGTH, SHA2_FLAGS,
-                           sha512_256_init, SHA512_Update, SHA512_Final)
+                           sha512_256_init, SHA512_Update,
+                           /* XXX NetBSD libc sha2 */sha512_256_final)
 
