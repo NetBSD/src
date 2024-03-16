@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118reg.h,v 1.3 2010/09/27 12:29:03 kiyohara Exp $	*/
+/*	$NetBSD: lan9118reg.h,v 1.4 2024/03/16 18:17:39 andvar Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -206,7 +206,7 @@
 #define LAN9118_MAC_CR_HO		(1 << 15) /* Hash Only Filtering mode */
 #define LAN9118_MAC_CR_HPFILT		(1 << 13) /* Hash/Perfect Flt Mode */
 #define LAN9118_MAC_CR_LCOLL		(1 << 12) /* Late Collision Control */
-#define LAN9118_MAC_CR_BCAST		(1 << 11) /* Disable Broardcast Frms */
+#define LAN9118_MAC_CR_BCAST		(1 << 11) /* Disable Broadcast Frms */
 #define LAN9118_MAC_CR_DISRTY		(1 << 10) /* Disable Retry */
 #define LAN9118_MAC_CR_PADSTR		(1 << 8)  /* Automatic Pad String */
 #define LAN9118_MAC_CR_BOLMT		(1 << 7)  /* BackOff Limit */
