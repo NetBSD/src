@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.144 2024/03/10 18:54:41 rillig Exp $	*/
+/*	$NetBSD: kdump.c,v 1.145 2024/03/16 23:40:25 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.144 2024/03/10 18:54:41 rillig Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.145 2024/03/16 23:40:25 ryoon Exp $");
 #endif
 #endif /* not lint */
 
@@ -900,7 +900,6 @@ ktrsyscall(struct ktr_syscall *ktr)
 			ap++;
 			argcount--;
 			register_t level = *ap;
-			fprintf(stderr, "level=%jx\n", (intmax_t)level);
 			if ((cp = sockproto(level)) != NULL) {
 				(void)printf(",%s", cp);
 			} else {
