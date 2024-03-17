@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.18 2010/01/12 14:45:31 christos Exp $	*/
+/*	$NetBSD: strings.c,v 1.19 2024/03/17 21:48:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.18 2010/01/12 14:45:31 christos Exp $");
+__RCSID("$NetBSD: strings.c,v 1.19 2024/03/17 21:48:02 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ salloc(size_t size)
 }
 
 /*
- * Allocate zeroed space for 'number' elments of size 'size'.
+ * Allocate zeroed space for 'number' elements of size 'size'.
  */
 PUBLIC void *
 csalloc(size_t number, size_t size)
