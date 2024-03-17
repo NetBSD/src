@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.87 2024/01/20 14:52:47 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.88 2024/03/17 21:48:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.87 2024/01/20 14:52:47 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.88 2024/03/17 21:48:02 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -653,7 +653,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 		mbdst += clen;
 		/* Advance buffer character pointer. */
 		dst++;
-		/* Incrment output character count. */
+		/* Increment output character count. */
 		olen += clen;
 	}
 

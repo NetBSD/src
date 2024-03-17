@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.92 2019/05/08 13:40:16 isaki Exp $ */
+/* $NetBSD: thunk.c,v 1.93 2024/03/17 21:48:01 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.92 2019/05/08 13:40:16 isaki Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.93 2024/03/17 21:48:01 andvar Exp $");
 #endif
 
 #define _KMEMUSER
@@ -1436,7 +1436,7 @@ thunk_rfb_poll(thunk_rfb_t *rfb, thunk_rfb_event_t *event)
 			framebuffer_update_request[2],
 			framebuffer_update_request[3],
 			framebuffer_update_request[4],
-			framebuffer_update_request[0]?"Incrmental":"Complete");
+			framebuffer_update_request[0]?"Incremental":"Complete");
 #endif
 			
 		if (framebuffer_update_request[0] == 0) {
