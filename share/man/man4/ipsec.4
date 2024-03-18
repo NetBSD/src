@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.45 2018/06/15 23:13:19 wiz Exp $
+.\"	$NetBSD: ipsec.4,v 1.46 2024/03/18 22:47:19 gutteridge Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,7 +38,7 @@
 .Cd "options IPSEC"
 .Cd "options IPSEC_DEBUG"
 .Sh DESCRIPTION
-This manual pages describes the IPsec protocol.
+This manual page describes the IPsec protocol.
 For the network device driver please see
 .Xr ipsecif 4 .
 .Pp
@@ -374,15 +374,14 @@ so for the receiving kernel there's no sign of authenticity
 The issue will be solved when we revamp our policy engine to keep all the
 packet decapsulation history.
 .Pp
-Under certain condition,
-truncated result may be raised from the kernel
+Under certain conditions, truncated results may be raised from the kernel
 against
 .Dv SADB_DUMP
 and
 .Dv SADB_SPDDUMP
-operation on
+operations on
 .Dv PF_KEY
-socket.
+sockets.
 This occurs if there are too many database entries in the kernel
 and socket buffer for the
 .Dv PF_KEY
