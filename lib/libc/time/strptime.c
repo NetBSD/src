@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.65 2024/03/16 00:16:21 riastradh Exp $	*/
+/*	$NetBSD: strptime.c,v 1.66 2024/03/18 16:15:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.65 2024/03/16 00:16:21 riastradh Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.66 2024/03/18 16:15:24 riastradh Exp $");
 #endif
 
 #include "namespace.h"
@@ -348,8 +348,7 @@ literal:
 
 		case 's': {	/* seconds since the epoch */
 			const time_t TIME_MAX = __type_max(time_t);
-			time_t sse;
-			unsigned d;
+			time_t sse, d;
 
 			if (*bp < '0' || *bp > '9') {
 				bp = NULL;
