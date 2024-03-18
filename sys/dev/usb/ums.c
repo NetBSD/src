@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.105 2024/01/13 15:26:36 hgutch Exp $	*/
+/*	$NetBSD: ums.c,v 1.106 2024/03/18 15:15:27 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.105 2024/01/13 15:26:36 hgutch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.106 2024/03/18 15:15:27 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -170,7 +170,7 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	    !hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)) &&
 	    !hid_is_collection(desc, size, uha->reportid,
-			       HID_USAGE2(HUP_DIGITIZERS, 0x0002)))
+			       HID_USAGE2(HUP_DIGITIZERS, HUD_PEN)))
 		return UMATCH_NONE;
 
 	return UMATCH_IFACECLASS;
