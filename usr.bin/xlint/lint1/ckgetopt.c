@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.26 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.27 2024/03/19 23:19:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.26 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.27 2024/03/19 23:19:03 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -96,8 +96,6 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 	    && call->func->u.ops.left->tn_op == NAME
 	    && strcmp(call->func->u.ops.left->u.sym->s_name, "getopt") == 0
 	    && call->args_len == 3
-	    && call->args != NULL
-
 	    && (last_arg = call->args[2]) != NULL
 	    && last_arg->tn_op == CVT
 	    && last_arg->u.ops.left->tn_op == ADDR

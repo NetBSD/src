@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.92 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.93 2024/03/19 23:19:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.92 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.93 2024/03/19 23:19:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -337,9 +337,8 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	 */
 	const function_call *call = tn->u.call;
 
-	/* information about arguments */
-	for (size_t n = 1; call->args != NULL && n <= call->args_len; n++) {
-		const tnode_t *arg = call->args[n - 1];
+	for (size_t i = 0, n = call->args_len; i < n; i++) {
+		const tnode_t *arg = call->args[i];
 		if (arg->tn_op == CON) {
 			tspec_t t = arg->tn_type->t_tspec;
 			if (is_integer(t)) {
@@ -357,7 +356,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				else
 					/* negative if cast to signed */
 					outchar('n');
-				outint((int)n);
+				outint((int)i + 1);
 			}
 		} else if (arg->tn_op == ADDR &&
 		    arg->u.ops.left->tn_op == STRING &&
@@ -370,7 +369,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 
 			/* string literal, write all format specifiers */
 			outchar('s');
-			outint((int)n);
+			outint((int)i + 1);
 			outfstrg(buf.data);
 			free(buf.data);
 		}
@@ -382,7 +381,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	/* types of arguments */
 	outchar('f');
 	outint((int)call->args_len);
-	for (size_t i = 0; call->args != NULL && i < call->args_len; i++)
+	for (size_t i = 0, n = call->args_len; i < n; i++)
 		outtype(call->args[i]->tn_type);
 	/* expected type of return value */
 	outtype(tn->tn_type);

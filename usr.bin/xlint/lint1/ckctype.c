@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.11 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.12 2024/03/19 23:19:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckctype.c,v 1.11 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.12 2024/03/19 23:19:03 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -123,7 +123,7 @@ void
 check_ctype_function_call(const function_call *call)
 {
 
-	if (call->args_len == 1 && call->args != NULL &&
+	if (call->args_len == 1 &&
 	    call->func->tn_op == NAME &&
 	    is_ctype_function(call->func->u.sym->s_name))
 		check_ctype_arg(call->func->u.sym->s_name, call->args[0]);
