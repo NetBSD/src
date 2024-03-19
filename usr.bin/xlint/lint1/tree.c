@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.624 2024/03/12 07:56:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.625 2024/03/19 23:19:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.624 2024/03/12 07:56:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.625 2024/03/19 23:19:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1710,9 +1710,8 @@ use(const tnode_t *tn)
 	case CALL:
 	case ICALL:;
 		const function_call *call = tn->u.call;
-		if (call->args != NULL)
-			for (size_t i = 0, n = call->args_len; i < n; i++)
-				use(call->args[i]);
+		for (size_t i = 0, n = call->args_len; i < n; i++)
+			use(call->args[i]);
 		break;
 	default:
 		lint_assert(has_operands(tn));
@@ -2694,26 +2693,10 @@ is_const_char_pointer(const tnode_t *tn)
 }
 
 static bool
-is_first_arg_const_char_pointer(const tnode_t *tn)
-{
-	return tn->u.call->args != NULL
-	    && tn->u.call->args_len >= 1
-	    && is_const_char_pointer(tn->u.call->args[0]);
-}
-
-static bool
 is_const_pointer(const tnode_t *tn)
 {
 	const type_t *tp = before_conversion(tn)->tn_type;
 	return tp->t_tspec == PTR && tp->t_subt->t_const;
-}
-
-static bool
-is_second_arg_const_pointer(const tnode_t *tn)
-{
-	return tn->u.call->args_len >= 2
-	    && tn->u.call->args != NULL
-	    && is_const_pointer(tn->u.call->args[1]);
 }
 
 static void
@@ -2724,7 +2707,8 @@ check_unconst_function(const type_t *lstp, const tnode_t *rn)
 	if (lstp->t_tspec == CHAR && !lstp->t_const &&
 	    is_direct_function_call(rn, &function_name) &&
 	    is_unconst_function(function_name) &&
-	    is_first_arg_const_char_pointer(rn)) {
+	    rn->u.call->args_len >= 1 &&
+	    is_const_char_pointer(rn->u.call->args[0])) {
 		/* call to '%s' effectively discards 'const' from argument */
 		warning(346, function_name);
 	}
@@ -2732,7 +2716,8 @@ check_unconst_function(const type_t *lstp, const tnode_t *rn)
 	if (!lstp->t_const &&
 	    is_direct_function_call(rn, &function_name) &&
 	    strcmp(function_name, "bsearch") == 0 &&
-	    is_second_arg_const_pointer(rn)) {
+	    rn->u.call->args_len >= 2 &&
+	    is_const_pointer(rn->u.call->args[1])) {
 		/* call to '%s' effectively discards 'const' from argument */
 		warning(346, function_name);
 	}
@@ -4220,7 +4205,7 @@ check_prototype_argument(
  * Check types of all function arguments and insert conversions,
  * if necessary.
  */
-static bool
+static void
 check_function_arguments(const function_call *call)
 {
 	type_t *ftp = call->func->tn_type->t_subt;
@@ -4239,42 +4224,40 @@ check_function_arguments(const function_call *call)
 		param = NULL;
 	}
 
-	for (int n = 1; n <= narg; n++) {
-		tnode_t *arg = call->args[n - 1];
+	for (int i = 0; i < narg; i++) {
+		tnode_t *arg = call->args[i];
 
 		/* some things which are always not allowed */
 		tspec_t at = arg->tn_type->t_tspec;
 		if (at == VOID) {
 			/* void expressions may not be arguments, arg #%d */
-			error(151, n);
-			return false;
+			error(151, i + 1);
+			return;
 		}
 		if (is_struct_or_union(at) &&
 		    is_incomplete(arg->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
-			error(152, n);
-			return false;
+			error(152, i + 1);
+			return;
 		}
 		if (is_integer(at) &&
 		    arg->tn_type->t_is_enum &&
 		    is_incomplete(arg->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
-			warning(152, n);
+			warning(152, i + 1);
 		}
 
 		arg = cconv(arg);
-		call->args[n - 1] = arg;
+		call->args[i] = arg;
 
 		arg = param != NULL
-		    ? check_prototype_argument(n, param->s_type, arg)
+		    ? check_prototype_argument(i + 1, param->s_type, arg)
 		    : promote(NOOP, true, arg);
-		call->args[n - 1] = arg;
+		call->args[i] = arg;
 
 		if (param != NULL)
 			param = param->s_next;
 	}
-
-	return true;
 }
 
 tnode_t *
@@ -4284,7 +4267,7 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 	if (func == NULL)
 		return NULL;
 
-	op_t fcop = func->tn_op == NAME && func->tn_type->t_tspec == FUNC
+	op_t op = func->tn_op == NAME && func->tn_type->t_tspec == FUNC
 	    ? CALL : ICALL;
 
 	call->func = func;
@@ -4300,11 +4283,10 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 		return NULL;
 	}
 
-	if (!check_function_arguments(call))
-		call->args = NULL;
+	check_function_arguments(call);
 
 	tnode_t *ntn = expr_alloc_tnode();
-	ntn->tn_op = fcop;
+	ntn->tn_op = op;
 	ntn->tn_type = func->tn_type->t_subt->t_subt;
 	ntn->tn_sys = sys;
 	ntn->u.call = call;
@@ -4592,11 +4574,9 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 		bool discard = op == CVT && tn->tn_type->t_tspec == VOID;
 		check_expr_misc(call->func, false, false, false, op == CALL,
 		    discard, szof);
-		if (call->args != NULL) {
-			for (size_t i = 0, n = call->args_len; i < n; i++)
-				check_expr_misc(call->args[i],
-				    false, false, false, false, false, szof);
-		}
+		for (size_t i = 0, n = call->args_len; i < n; i++)
+			check_expr_misc(call->args[i],
+			    false, false, false, false, false, szof);
 		return;
 	}
 

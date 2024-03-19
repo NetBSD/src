@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.73 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.74 2024/03/19 23:19:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.73 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.74 2024/03/19 23:19:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -247,11 +247,8 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_indent_inc();
 		const function_call *call = tn->u.call;
 		debug_node(call->func);
-		if (call->args != NULL) {
-			for (size_t i = 0; i < call->args_len; i++)
-				debug_node(call->args[i]);
-		} else
-			debug_step("error in arguments");
+		for (size_t i = 0, n = call->args_len; i < n; i++)
+			debug_node(call->args[i]);
 		debug_indent_dec();
 		break;
 	default:
