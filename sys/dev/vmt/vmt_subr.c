@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.7 2024/03/20 23:33:22 msaitoh Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.8 2024/03/20 23:34:24 msaitoh Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -774,7 +774,11 @@ vmt_tclo_tick(void *xarg)
 	struct vmt_softc *sc = xarg;
 	u_int32_t rlen;
 	u_int16_t ack;
+	int delay;
 
+	/* By default, poll every second for new messages */
+	delay = 1;
+	
 	/* reopen tclo channel if it's currently closed */
 	if (sc->sc_tclo_rpc.channel == 0 &&
 	    sc->sc_tclo_rpc.cookie1 == 0 &&
@@ -782,8 +786,8 @@ vmt_tclo_tick(void *xarg)
 		if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
 			device_printf(sc->sc_dev,
 			    "unable to reopen TCLO channel\n");
-			callout_schedule(&sc->sc_tclo_tick, hz * 15);
-			return;
+			delay = 15;
+			goto out;
 		}
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
@@ -829,6 +833,9 @@ vmt_tclo_tick(void *xarg)
 	}
 	sc->sc_tclo_ping = 0;
 
+	/* The VM host can queue multiple messages; continue without delay */
+	delay = 0;
+
 #ifdef VMT_DEBUG
 	printf("vmware: received message '%s'\n", sc->sc_rpc_buf);
 #endif
@@ -842,10 +849,13 @@ vmt_tclo_tick(void *xarg)
 		}
 	}
 
+	if (sc->sc_rpc_error == 1) {
+		/* On error, give time to recover and wait a second */
+		delay = 1;
+	}
+
 out:
-	/* On error, give time to recover and wait a second */
-	callout_schedule(&sc->sc_tclo_tick,
-	    (sc->sc_tclo_ping || sc->sc_rpc_error) ? hz : 1);
+	callout_schedule(&sc->sc_tclo_tick, hz * delay);
 }
 
 static void
