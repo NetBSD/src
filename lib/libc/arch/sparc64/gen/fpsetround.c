@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.8 2024/03/11 23:05:35 christos Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.9 2024/03/20 06:15:39 rillig Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetround.c,v 1.8 2024/03/11 23:05:35 christos Exp $");
+__RCSID("$NetBSD: fpsetround.c,v 1.9 2024/03/20 06:15:39 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -36,8 +36,8 @@ fpsetround(fp_rnd rnd_dir)
 #endif
 
 	new = old;
-	new &= ~(0x03U << 30); 
-	new |= ((rnd_dir & 0x03) << 30);
+	new &= ~(0x03U << 30);
+	new |= ((rnd_dir & 0x03U) << 30);
 
 	__asm("ld %0,%%fsr" : : "m" (*&new));
 
