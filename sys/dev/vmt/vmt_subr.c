@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.5 2024/03/20 23:32:17 msaitoh Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.6 2024/03/20 23:33:02 msaitoh Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -79,9 +79,58 @@ static void vmt_update_guest_uptime(struct vmt_softc *);
 static void vmt_sync_guest_clock(struct vmt_softc *);
 
 static void vmt_tick(void *);
-static void vmt_tclo_tick(void *);
 static void vmt_clock_sync_tick(void *);
 static void vmt_pswitch_event(void *);
+
+static void vmt_tclo_tick(void *);
+static int vmt_tclo_process(struct vmt_softc *, const char *);
+static void vmt_tclo_reset(struct vmt_softc *);
+static void vmt_tclo_ping(struct vmt_softc *);
+static void vmt_tclo_halt(struct vmt_softc *);
+static void vmt_tclo_reboot(struct vmt_softc *);
+static void vmt_tclo_poweron(struct vmt_softc *);
+static void vmt_tclo_suspend(struct vmt_softc *);
+static void vmt_tclo_resume(struct vmt_softc *);
+static void vmt_tclo_capreg(struct vmt_softc *);
+static void vmt_tclo_broadcastip(struct vmt_softc *);
+
+struct vmt_tclo_rpc {
+	const char	*name;
+	void		(*cb)(struct vmt_softc *);
+} vmt_tclo_rpc[] = {
+	/* Keep sorted by name (case-sensitive) */
+	{ "Capabilities_Register",	vmt_tclo_capreg },
+	{ "OS_Halt",			vmt_tclo_halt },
+	{ "OS_PowerOn",			vmt_tclo_poweron },
+	{ "OS_Reboot",			vmt_tclo_reboot },
+	{ "OS_Resume",			vmt_tclo_resume },
+	{ "OS_Suspend",			vmt_tclo_suspend },
+	{ "Set_Option broadcastIP 1",	vmt_tclo_broadcastip },
+	{ "ping",			vmt_tclo_ping },
+	{ "reset",			vmt_tclo_reset },
+	{ NULL },
+#if 0
+	/* Various unsupported commands */
+	{ "Set_Option autohide 0" },
+	{ "Set_Option copypaste 1" },
+	{ "Set_Option enableDnD 1" },
+	{ "Set_Option enableMessageBusTunnel 0" },
+	{ "Set_Option linkRootHgfsShare 0" },
+	{ "Set_Option mapRootHgfsShare 0" },
+	{ "Set_Option synctime 1" },
+	{ "Set_Option synctime.period 0" },
+	{ "Set_Option time.synchronize.tools.enable 1" },
+	{ "Set_Option time.synchronize.tools.percentCorrection 0" },
+	{ "Set_Option time.synchronize.tools.slewCorrection 1" },
+	{ "Set_Option time.synchronize.tools.startup 1" },
+	{ "Set_Option toolScripts.afterPowerOn 1" },
+	{ "Set_Option toolScripts.afterResume 1" },
+	{ "Set_Option toolScripts.beforePowerOff 1" },
+	{ "Set_Option toolScripts.beforeSuspend 1" },
+	{ "Time_Synchronize 0" },
+	{ "Vix_1_Relayed_Command \"38cdcae40e075d66\"" },
+#endif
+};
 
 extern char hostname[MAXHOSTNAMELEN];
 
@@ -524,6 +573,202 @@ vmt_pswitch_event(void *xarg)
 }
 
 static void
+vmt_tclo_reset(struct vmt_softc *sc)
+{
+
+	if (sc->sc_rpc_error != 0) {
+		device_printf(sc->sc_dev, "resetting rpc\n");
+		vm_rpc_close(&sc->sc_tclo_rpc);
+
+		/* reopen and send the reset reply next time around */
+		return;
+	}
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
+		device_printf(sc->sc_dev, "failed to send reset reply\n");
+		sc->sc_rpc_error = 1;
+	}
+
+}
+
+static void
+vmt_tclo_ping(struct vmt_softc *sc)
+{
+
+	vmt_update_guest_info(sc);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending ping response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_halt(struct vmt_softc *sc)
+{
+
+	vmt_do_shutdown(sc);
+}
+
+static void
+vmt_tclo_reboot(struct vmt_softc *sc)
+{
+
+	vmt_do_reboot(sc);
+}
+
+static void
+vmt_tclo_poweron(struct vmt_softc *sc)
+{
+
+	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending poweron response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_suspend(struct vmt_softc *sc)
+{
+
+	log(LOG_KERN | LOG_NOTICE,
+	    "VMware guest entering suspended state\n");
+
+	vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev, "error sending suspend response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_resume(struct vmt_softc *sc)
+{
+
+	vmt_do_resume(sc); /* XXX msaitoh extract */
+}
+
+static void
+vmt_tclo_capreg(struct vmt_softc *sc)
+{
+
+	/* don't know if this is important at all */
+	if (vm_rpc_send_rpci_tx(sc,
+		"vmx.capability.unified_loop toolbox") != 0) {
+		device_printf(sc->sc_dev, "unable to set unified loop\n");
+		sc->sc_rpc_error = 1;
+	}
+	if (vm_rpci_response_successful(sc) == 0) {
+		device_printf(sc->sc_dev,
+		    "host rejected unified loop setting\n");
+	}
+
+	/* the trailing space is apparently important here */
+	if (vm_rpc_send_rpci_tx(sc,
+		"tools.capability.statechange ") != 0) {
+		device_printf(sc->sc_dev,
+		    "unable to send statechange capability\n");
+		sc->sc_rpc_error = 1;
+	}
+	if (vm_rpci_response_successful(sc) == 0) {
+		device_printf(sc->sc_dev,
+		    "host rejected statechange capability\n");
+	}
+
+	if (vm_rpc_send_rpci_tx(sc,
+		"tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
+		device_printf(sc->sc_dev, "unable to set tools version\n");
+		sc->sc_rpc_error = 1;
+	}
+
+	vmt_update_guest_uptime(sc);
+
+	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
+		device_printf(sc->sc_dev,
+		    "error sending capabilities_register response\n");
+		sc->sc_rpc_error = 1;
+	}
+}
+
+static void
+vmt_tclo_broadcastip(struct vmt_softc *sc)
+{
+	struct ifaddr *iface_addr = NULL;
+	struct ifnet *iface;
+	struct sockaddr_in *guest_ip;
+	int s;
+	struct psref psref;
+
+	/* find first available ipv4 address */
+	guest_ip = NULL;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(iface) {
+
+		/* skip loopback */
+		if (strncmp(iface->if_xname, "lo", 2) == 0 &&
+		    iface->if_xname[2] >= '0' &&
+		    iface->if_xname[2] <= '9') {
+			continue;
+		}
+
+		IFADDR_READER_FOREACH(iface_addr, iface) {
+			if (iface_addr->ifa_addr->sa_family != AF_INET) {
+				continue;
+			}
+
+			guest_ip = satosin(iface_addr->ifa_addr);
+			ifa_acquire(iface_addr, &psref);
+			goto got;
+		}
+	}
+got:
+	pserialize_read_exit(s);
+
+	if (guest_ip != NULL) {
+		if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
+			inet_ntoa(guest_ip->sin_addr)) != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to send guest IP address\n");
+			sc->sc_rpc_error = 1;
+		}
+		ifa_release(iface_addr, &psref);
+
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			VM_RPC_REPLY_OK) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending broadcastIP response\n");
+			sc->sc_rpc_error = 1;
+		}
+	} else {
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending broadcastIP"
+			    " error response\n");
+			sc->sc_rpc_error = 1;
+		}
+	}
+}
+
+int
+vmt_tclo_process(struct vmt_softc *sc, const char *name)
+{
+	int i;
+
+	/* Search for rpc command and call handler */
+	for (i = 0; vmt_tclo_rpc[i].name != NULL; i++) {
+		if (strcmp(vmt_tclo_rpc[i].name, sc->sc_rpc_buf) == 0) {
+			vmt_tclo_rpc[i].cb(sc);
+			return (0);
+		}
+	}
+
+	device_printf(sc->sc_dev, "unknown command: \"%s\"\n", name);
+
+	return (-1);
+}
+
+static void
 vmt_tclo_tick(void *xarg)
 {
 	struct vmt_softc *sc = xarg;
@@ -588,150 +833,7 @@ vmt_tclo_tick(void *xarg)
 	printf("vmware: received message '%s'\n", sc->sc_rpc_buf);
 #endif
 
-	if (strcmp(sc->sc_rpc_buf, "reset") == 0) {
-
-		if (sc->sc_rpc_error != 0) {
-			device_printf(sc->sc_dev, "resetting rpc\n");
-			vm_rpc_close(&sc->sc_tclo_rpc);
-			/* reopen and send the reset reply next time around */
-			goto out;
-		}
-
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
-			device_printf(sc->sc_dev,
-			    "failed to send reset reply\n");
-			sc->sc_rpc_error = 1;
-		}
-
-	} else if (strcmp(sc->sc_rpc_buf, "ping") == 0) {
-
-		vmt_update_guest_info(sc);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev,
-			    "error sending ping response\n");
-			sc->sc_rpc_error = 1;
-		}
-
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Halt") == 0) {
-		vmt_do_shutdown(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Reboot") == 0) {
-		vmt_do_reboot(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "OS_PowerOn") == 0) {
-		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev,
-			    "error sending poweron response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
-		log(LOG_KERN | LOG_NOTICE,
-		    "VMware guest entering suspended state\n");
-
-		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev,
-			    "error sending suspend response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
-		vmt_do_resume(sc);
-	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
-
-		/* don't know if this is important at all */
-		if (vm_rpc_send_rpci_tx(sc,
-		    "vmx.capability.unified_loop toolbox") != 0) {
-			device_printf(sc->sc_dev,
-			    "unable to set unified loop\n");
-			sc->sc_rpc_error = 1;
-		}
-		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev,
-			    "host rejected unified loop setting\n");
-		}
-
-		/* the trailing space is apparently important here */
-		if (vm_rpc_send_rpci_tx(sc,
-		    "tools.capability.statechange ") != 0) {
-			device_printf(sc->sc_dev,
-			    "unable to send statechange capability\n");
-			sc->sc_rpc_error = 1;
-		}
-		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev,
-			    "host rejected statechange capability\n");
-		}
-
-		if (vm_rpc_send_rpci_tx(sc,
-		    "tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
-			device_printf(sc->sc_dev,
-			    "unable to set tools version\n");
-			sc->sc_rpc_error = 1;
-		}
-
-		vmt_update_guest_uptime(sc);
-
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev,
-			    "error sending capabilities_register response\n");
-			sc->sc_rpc_error = 1;
-		}
-	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
-		struct ifaddr *iface_addr = NULL;
-		struct ifnet *iface;
-		struct sockaddr_in *guest_ip;
-		int s;
-		struct psref psref;
-
-		/* find first available ipv4 address */
-		guest_ip = NULL;
-		s = pserialize_read_enter();
-		IFNET_READER_FOREACH(iface) {
-
-			/* skip loopback */
-			if (strncmp(iface->if_xname, "lo", 2) == 0 &&
-			    iface->if_xname[2] >= '0' &&
-			    iface->if_xname[2] <= '9') {
-				continue;
-			}
-
-			IFADDR_READER_FOREACH(iface_addr, iface) {
-				if (iface_addr->ifa_addr->sa_family != AF_INET) {
-					continue;
-				}
-
-				guest_ip = satosin(iface_addr->ifa_addr);
-				ifa_acquire(iface_addr, &psref);
-				goto got;
-			}
-		}
-	got:
-		pserialize_read_exit(s);
-
-		if (guest_ip != NULL) {
-			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
-			    inet_ntoa(guest_ip->sin_addr)) != 0) {
-				device_printf(sc->sc_dev,
-				    "unable to send guest IP address\n");
-				sc->sc_rpc_error = 1;
-			}
-			ifa_release(iface_addr, &psref);
-
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
-			    VM_RPC_REPLY_OK) != 0) {
-				device_printf(sc->sc_dev,
-				    "error sending broadcastIP response\n");
-				sc->sc_rpc_error = 1;
-			}
-		} else {
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
-			    VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
-				device_printf(sc->sc_dev,
-				    "error sending broadcastIP"
-				    " error response\n");
-				sc->sc_rpc_error = 1;
-			}
-		}
-	} else {
+	if (vmt_tclo_process(sc, sc->sc_rpc_buf) != 0) {
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
 		    VM_RPC_REPLY_ERROR) != 0) {
 			device_printf(sc->sc_dev,
