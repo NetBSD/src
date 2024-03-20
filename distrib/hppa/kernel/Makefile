@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/02/24 07:23:38 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2024/03/20 00:33:42 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,8 +13,12 @@ MDSET_RELEASEDIR=	binary/kernel
 
 LIF=	netinstall.lif
 
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKBOOT_TIMESTAMP=	-t "${MKREPRO_TIMESTAMP}"
+.endif
+
 MDSET_POST = \
-	${MKBOOT} ${DESTDIR}/usr/mdec/boot ${.TARGET} ${LIF}
+	${MKBOOT} ${MKBOOT_TIMESTAMP} ${DESTDIR}/usr/mdec/boot ${.TARGET} ${LIF}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
