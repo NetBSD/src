@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.3 2021/03/27 21:23:14 ryo Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.4 2024/03/20 23:31:54 msaitoh Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -175,14 +175,17 @@ vmt_common_attach(struct vmt_softc *sc)
 	sc->sc_rpc_buf = kmem_alloc(VMT_RPC_BUFLEN, KM_SLEEP);
 
 	if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-		aprint_error_dev(self, "failed to open backdoor RPC channel (TCLO protocol)\n");
+		aprint_error_dev(self, "failed to open backdoor RPC channel "
+		    "(TCLO protocol)\n");
 		goto free;
 	}
 	sc->sc_tclo_rpc_open = true;
 
 	/* don't know if this is important at all yet */
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 1") != 0) {
-		aprint_error_dev(self, "failed to set HGFS server capability\n");
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 1") != 0) {
+		aprint_error_dev(self,
+		    "failed to set HGFS server capability\n");
 		goto free;
 	}
 
@@ -313,7 +316,7 @@ vmt_sysctl_setup_clock_sync(device_t self, const struct sysctlnode *root_node)
 	rv = sysctl_createv(&sc->sc_log, 0, &node, &period_node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "period",
 	    SYSCTL_DESCR("Period, in seconds, at which to update the "
-	        "guest's clock"),
+		"guest's clock"),
 	    vmt_sysctl_update_clock_sync_period, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 	return rv;
@@ -380,20 +383,23 @@ vmt_update_guest_info(struct vmt_softc *sc)
 	}
 
 	/*
-	 * we're supposed to pass the full network address information back here,
-	 * but that involves xdr (sunrpc) data encoding, which seems a bit unreasonable.
+	 * we're supposed to pass the full network address information back
+	 * here, but that involves xdr (sunrpc) data encoding, which seems
+	 * a bit unreasonable.
 	 */
 
 	if (sc->sc_set_guest_os == 0) {
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s %s %s",
-		    VM_GUEST_INFO_OS_NAME_FULL, ostype, osrelease, machine_arch) != 0) {
-			device_printf(sc->sc_dev, "unable to set full guest OS\n");
+		    VM_GUEST_INFO_OS_NAME_FULL,
+		    ostype, osrelease, machine_arch) != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to set full guest OS\n");
 			sc->sc_rpc_error = 1;
 		}
 
 		/*
-		 * host doesn't like it if we send an OS name it doesn't recognise,
-		 * so use "other" for i386 and "other-64" for amd64
+		 * Host doesn't like it if we send an OS name it doesn't
+		 * recognise, so use "other" for i386 and "other-64" for amd64.
 		 */
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s",
 		    VM_GUEST_INFO_OS_NAME, VM_OS_NAME) != 0) {
@@ -442,7 +448,8 @@ vmt_tclo_state_change_success(struct vmt_softc *sc, int success, char state)
 {
 	if (vm_rpc_send_rpci_tx(sc, "tools.os.statechange.status %d %d",
 	    success, state) != 0) {
-		device_printf(sc->sc_dev, "unable to send state change result\n");
+		device_printf(sc->sc_dev,
+		    "unable to send state change result\n");
 		sc->sc_rpc_error = 1;
 	}
 }
@@ -493,8 +500,10 @@ vmt_shutdown(device_t self, int flags)
 {
 	struct vmt_softc *sc = device_private(self);
 
-	if (vm_rpc_send_rpci_tx(sc, "tools.capability.hgfs_server toolbox 0") != 0) {
-		device_printf(sc->sc_dev, "failed to disable hgfs server capability\n");
+	if (vm_rpc_send_rpci_tx(sc,
+	    "tools.capability.hgfs_server toolbox 0") != 0) {
+		device_printf(sc->sc_dev,
+		    "failed to disable hgfs server capability\n");
 	}
 
 	if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
@@ -526,13 +535,16 @@ vmt_tclo_tick(void *xarg)
 	    sc->sc_tclo_rpc.cookie1 == 0 &&
 	    sc->sc_tclo_rpc.cookie2 == 0) {
 		if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
-			device_printf(sc->sc_dev, "unable to reopen TCLO channel\n");
+			device_printf(sc->sc_dev,
+			    "unable to reopen TCLO channel\n");
 			callout_schedule(&sc->sc_tclo_tick, hz * 15);
 			return;
 		}
 
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
-			device_printf(sc->sc_dev, "failed to send reset reply\n");
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_RESET_REPLY) != 0) {
+			device_printf(sc->sc_dev,
+			    "failed to send reset reply\n");
 			sc->sc_rpc_error = 1;
 			goto out;
 		} else {
@@ -542,14 +554,16 @@ vmt_tclo_tick(void *xarg)
 
 	if (sc->sc_tclo_ping) {
 		if (vm_rpc_send(&sc->sc_tclo_rpc, NULL, 0) != 0) {
-			device_printf(sc->sc_dev, "failed to send TCLO outgoing ping\n");
+			device_printf(sc->sc_dev,
+			    "failed to send TCLO outgoing ping\n");
 			sc->sc_rpc_error = 1;
 			goto out;
 		}
 	}
 
 	if (vm_rpc_get_length(&sc->sc_tclo_rpc, &rlen, &ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get length of incoming TCLO data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get length of incoming TCLO data\n");
 		sc->sc_rpc_error = 1;
 		goto out;
 	}
@@ -563,7 +577,8 @@ vmt_tclo_tick(void *xarg)
 		rlen = VMT_RPC_BUFLEN - 1;
 	}
 	if (vm_rpc_get_data(&sc->sc_tclo_rpc, sc->sc_rpc_buf, rlen, ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get incoming TCLO data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get incoming TCLO data\n");
 		sc->sc_rpc_error = 1;
 		goto out;
 	}
@@ -583,7 +598,8 @@ vmt_tclo_tick(void *xarg)
 		}
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_RESET_REPLY) != 0) {
-			device_printf(sc->sc_dev, "failed to send reset reply\n");
+			device_printf(sc->sc_dev,
+			    "failed to send reset reply\n");
 			sc->sc_rpc_error = 1;
 		}
 
@@ -591,7 +607,8 @@ vmt_tclo_tick(void *xarg)
 
 		vmt_update_guest_info(sc);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending ping response\n");
+			device_printf(sc->sc_dev,
+			    "error sending ping response\n");
 			sc->sc_rpc_error = 1;
 		}
 
@@ -602,15 +619,18 @@ vmt_tclo_tick(void *xarg)
 	} else if (strcmp(sc->sc_rpc_buf, "OS_PowerOn") == 0) {
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_POWERON);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending poweron response\n");
+			device_printf(sc->sc_dev,
+			    "error sending poweron response\n");
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Suspend") == 0) {
-		log(LOG_KERN | LOG_NOTICE, "VMware guest entering suspended state\n");
+		log(LOG_KERN | LOG_NOTICE,
+		    "VMware guest entering suspended state\n");
 
 		vmt_tclo_state_change_success(sc, 1, VM_STATE_CHANGE_SUSPEND);
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending suspend response\n");
+			device_printf(sc->sc_dev,
+			    "error sending suspend response\n");
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "OS_Resume") == 0) {
@@ -618,32 +638,41 @@ vmt_tclo_tick(void *xarg)
 	} else if (strcmp(sc->sc_rpc_buf, "Capabilities_Register") == 0) {
 
 		/* don't know if this is important at all */
-		if (vm_rpc_send_rpci_tx(sc, "vmx.capability.unified_loop toolbox") != 0) {
-			device_printf(sc->sc_dev, "unable to set unified loop\n");
+		if (vm_rpc_send_rpci_tx(sc,
+		    "vmx.capability.unified_loop toolbox") != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to set unified loop\n");
 			sc->sc_rpc_error = 1;
 		}
 		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev, "host rejected unified loop setting\n");
+			device_printf(sc->sc_dev,
+			    "host rejected unified loop setting\n");
 		}
 
 		/* the trailing space is apparently important here */
-		if (vm_rpc_send_rpci_tx(sc, "tools.capability.statechange ") != 0) {
-			device_printf(sc->sc_dev, "unable to send statechange capability\n");
+		if (vm_rpc_send_rpci_tx(sc,
+		    "tools.capability.statechange ") != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to send statechange capability\n");
 			sc->sc_rpc_error = 1;
 		}
 		if (vm_rpci_response_successful(sc) == 0) {
-			device_printf(sc->sc_dev, "host rejected statechange capability\n");
+			device_printf(sc->sc_dev,
+			    "host rejected statechange capability\n");
 		}
 
-		if (vm_rpc_send_rpci_tx(sc, "tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
-			device_printf(sc->sc_dev, "unable to set tools version\n");
+		if (vm_rpc_send_rpci_tx(sc,
+		    "tools.set.version %u", VM_VERSION_UNMANAGED) != 0) {
+			device_printf(sc->sc_dev,
+			    "unable to set tools version\n");
 			sc->sc_rpc_error = 1;
 		}
 
 		vmt_update_guest_uptime(sc);
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-			device_printf(sc->sc_dev, "error sending capabilities_register response\n");
+			device_printf(sc->sc_dev,
+			    "error sending capabilities_register response\n");
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
@@ -660,7 +689,8 @@ vmt_tclo_tick(void *xarg)
 
 			/* skip loopback */
 			if (strncmp(iface->if_xname, "lo", 2) == 0 &&
-			    iface->if_xname[2] >= '0' && iface->if_xname[2] <= '9') {
+			    iface->if_xname[2] >= '0' &&
+			    iface->if_xname[2] <= '9') {
 				continue;
 			}
 
@@ -680,25 +710,32 @@ vmt_tclo_tick(void *xarg)
 		if (guest_ip != NULL) {
 			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
 			    inet_ntoa(guest_ip->sin_addr)) != 0) {
-				device_printf(sc->sc_dev, "unable to send guest IP address\n");
+				device_printf(sc->sc_dev,
+				    "unable to send guest IP address\n");
 				sc->sc_rpc_error = 1;
 			}
 			ifa_release(iface_addr, &psref);
 
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
-				device_printf(sc->sc_dev, "error sending broadcastIP response\n");
+			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			    VM_RPC_REPLY_OK) != 0) {
+				device_printf(sc->sc_dev,
+				    "error sending broadcastIP response\n");
 				sc->sc_rpc_error = 1;
 			}
 		} else {
-			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
+			if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+			    VM_RPC_REPLY_ERROR_IP_ADDR) != 0) {
 				device_printf(sc->sc_dev,
-				    "error sending broadcastIP error response\n");
+				    "error sending broadcastIP"
+				    " error response\n");
 				sc->sc_rpc_error = 1;
 			}
 		}
 	} else {
-		if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_ERROR) != 0) {
-			device_printf(sc->sc_dev, "error sending unknown command reply\n");
+		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
+		    VM_RPC_REPLY_ERROR) != 0) {
+			device_printf(sc->sc_dev,
+			    "error sending unknown command reply\n");
 			sc->sc_rpc_error = 1;
 		}
 	}
@@ -928,7 +965,8 @@ vm_rpci_response_successful(struct vmt_softc *sc)
 }
 
 static int
-vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t length)
+vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf,
+    uint32_t length)
 {
 	struct vm_rpc rpci;
 	u_int32_t rlen;
@@ -947,7 +985,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 	}
 
 	if (vm_rpc_get_length(&rpci, &rlen, &ack) != 0) {
-		device_printf(sc->sc_dev, "failed to get length of rpci response data\n");
+		device_printf(sc->sc_dev,
+		    "failed to get length of rpci response data\n");
 		result = EIO;
 		goto out;
 	}
@@ -958,7 +997,8 @@ vm_rpc_send_rpci_tx_buf(struct vmt_softc *sc, const uint8_t *buf, uint32_t lengt
 		}
 
 		if (vm_rpc_get_data(&rpci, sc->sc_rpc_buf, rlen, ack) != 0) {
-			device_printf(sc->sc_dev, "failed to get rpci response data\n");
+			device_printf(sc->sc_dev,
+			    "failed to get rpci response data\n");
 			result = EIO;
 			goto out;
 		}
@@ -983,7 +1023,8 @@ vm_rpc_send_rpci_tx(struct vmt_softc *sc, const char *fmt, ...)
 	va_end(args);
 
 	if (len >= VMT_RPC_BUFLEN) {
-		device_printf(sc->sc_dev, "rpci command didn't fit in buffer\n");
+		device_printf(sc->sc_dev,
+		    "rpci command didn't fit in buffer\n");
 		return EIO;
 	}
 
