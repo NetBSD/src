@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.61 2018/09/22 12:24:03 rin Exp $
+#	$NetBSD: Makefile.powerpc,v 1.62 2024/03/20 00:35:21 christos Exp $
 #
 # Makefile for NetBSD
 #
@@ -114,6 +114,9 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 MKUBOOTIMAGEARGS=       -A powerpc -T kernel -C gz
 MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MKUBOOTIMAGEARGS+=	-t "${MKREPRO_TIMESTAMP}"
+.endif
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_GZIP_N} -9c $@.bin '>' $@.bin.gz; \
