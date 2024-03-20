@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.394 2023/06/03 21:24:57 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.395 2024/03/20 13:50:37 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -647,6 +647,42 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .endif
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so}.tmp
 	${MV} ${_LIB.so}.tmp ${_LIB.so}
+
+# If there's a file listing expected symbols, fail if the diff from it
+# to the actual symbols is nonempty, and show the diff in that case.
+.if exists(${.CURDIR}/${LIB}.${MACHINE_ARCH}.expsym)
+LIB_EXPSYM?=	${LIB}.${MACHINE_ARCH}.expsym
+.elif exists(${.CURDIR}/${LIB}.expsym)
+LIB_EXPSYM?=	${LIB}.expsym
+.endif
+
+.if !empty(LIB_EXPSYM)
+realall: ${_LIB.so.full}.diffsym
+${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
+	${_MKTARGET_CREATE}
+	if diff -u ${.ALLSRC} >${.TARGET}.tmp; then \
+		${MV} ${.TARGET}.tmp ${.TARGET}; \
+	else \
+		ret=$$?; \
+		cat ${.TARGET}.tmp; \
+		echo ${_LIB.so.full}: error: \
+			actual symbols differ from expected symbols >&2; \
+		exit $$ret; \
+	fi
+${_LIB.so.full}.actsym: ${_LIB.so.full}
+	${_MKTARGET_CREATE}
+	${NM} --dynamic --extern-only --defined-only --with-symbol-versions \
+		${_LIB.so.full} \
+	| cut -d' ' -f3 | LANG=C sort -u >${.TARGET}.tmp
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	${_LIB.so.full}.actsym
+CLEANFILES+=	${_LIB.so.full}.actsym.tmp
+CLEANFILES+=	${_LIB.so.full}.diffsym
+CLEANFILES+=	${_LIB.so.full}.diffsym.tmp
+update-symbols: .PHONY
+update-symbols: ${_LIB.so.full}.actsym
+	cp ${_LIB.so.full}.actsym ${.CURDIR}/${LIB}.expsym
+.endif
 
 .if !empty(LOBJS)							# {
 LLIBS?=		-lc
