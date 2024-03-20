@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.8 2023/12/26 16:20:01 pgoyette Exp $
+# $NetBSD: module.md.i386,v 1.9 2024/03/20 17:11:42 riastradh Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -35,6 +35,8 @@
 ./usr/libdata/debug/@MODULEDIR@/amdtemp/amdtemp.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/amdzentemp			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/amdzentemp/amdzentemp.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/apei				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/apei/apei.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/aps				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/aps/aps.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/asus				modules-base-kernel	kmod,debug
