@@ -1,0 +1,132 @@
+.\"	$NetBSD: apei.4,v 1.1 2024/03/20 17:11:42 riastradh Exp $
+.\"
+.\" Copyright (c) 2024 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 18, 2024
+.Dt APEI 4
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm apei
+.Nd ACPI Platform Error Interfaces
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.Cd "apei* at apeibus?"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+.Nm
+reports hardware errors discovered through
+.Tn APEI ,
+the
+.Tn ACPI
+Platform Error Interfaces.
+.Pp
+.Nm
+also supports injecting errors.
+.\" .Nm
+.\" also supports reading/writing/clearing error records in a persistent
+.\" firmware store (XXX not yet: nothing uses the ERST).
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DIAGNOSTICS
+When the hardware detects an error and reports it to
+.Nm ,
+it will print information about the error to the console.
+.Pp
+Example of a correctable memory error, automatically corrected by the
+system, with no further intervention needed:
+.Bd -literal
+apei0: error source 1 reported hardware error: severity=corrected nentries=1 status=0x12<CE,GEDE_COUNT=0x1>
+apei0: error source 1 entry 0: SectionType={0xa5bc1114,0x6f64,0x4ede,0xb8b8,{0x3e,0x83,0xed,0x7c,0x83,0xb1}} (memory error)
+apei0: error source 1 entry 0: ErrorSeverity=2 (corrected)
+apei0: error source 1 entry 0: Revision=0x201
+apei0: error source 1 entry 0: Flags=0x1<PRIMARY>
+apei0: error source 1 entry 0: FruText=CorrectedErr
+apei0: error source 1 entry 0: MemoryErrorType=8 (PARITY_ERROR)
+.Pp
+Example of a fatal uncorrectable memory error:
+.Bd -literal
+apei0: error source 0 reported hardware error: severity=fatal nentries=1 status=0x11<UE,GEDE_COUNT=0x1>
+apei0: error source 0 entry 0: SectionType={0xa5bc1114,0x6f64,0x4ede,0xb8b8,{0x3e,0x83,0xed,0x7c,0x83,0xb1}} (memory error)
+apei0: error source 0 entry 0: ErrorSeverity=1 (fatal)
+apei0: error source 0 entry 0: Revision=0x201
+apei0: error source 0 entry 0: Flags=0x1<PRIMARY>
+apei0: error source 0 entry 0: FruText=UncorrectedErr
+apei0: error source 0 entry 0: ErrorStatus=0x400<ErrorType=0x4=ERR_MEM>
+apei0: error source 0 entry 0: Node=0x0
+apei0: error source 0 entry 0: Module=0x0
+apei0: error source 0 entry 0: Device=0x0
+panic: fatal hardware error
+.Ed
+.Pp
+Details of the hardware error sources can be dumped with
+.Xr acpidump 8 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr acpidump 8
+.Rs
+.%B ACPI Specification 6.5
+.%O Chapter 18: ACPI Platform Error Interfaces (APEI)
+.%U https://uefi.org/specs/ACPI/6.5/18_Platform_Error_Interfaces.html
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Taylor R Campbell Aq Mt riastradh@NetBSD.org .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh BUGS
+No sysctl interface to read BERT after boot.
+.Pp
+No simple sysctl interface to inject errors with EINJ, or any way to
+inject errors at physical addresses in pages allocated for testing.
+Perhaps there should be a separate kernel module for that.
+.Pp
+Nothing reads, writes, or clears ERST.
+.Nx
+could use it to store dmesg or other diagnostic information on panic.
+.Pp
+Many hardware error source types in the HEST are missing, such as
+.Tn PCIe
+errors.
+.Pp
+.Nm
+is not wired to any machine-dependent machine check exception
+notifications.
+.Pp
+No formal log format or sysctl/device interface that programs can
+reliably act on.
+.Pp
+.Nx
+makes no attempt to recover from uncorrectable but recoverable errors,
+such as discarding a clean cached page where an uncorrectable memory
+error has occurred.
