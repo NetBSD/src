@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.3 2024/02/08 19:24:43 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.4 2024/03/20 00:34:32 christos Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -421,8 +421,6 @@ bcddate(char *file, char *toc)
 		stat(file, &statb);
 		tm = localtime(&statb.st_ctime);
 	}
-	stat(file, &statb);
-	tm = localtime(&statb.st_ctime);
 	tm->tm_year %= 100;
 	*toc = (tm->tm_year / 10) << 4;
 	*toc++ |= tm->tm_year % 10;
