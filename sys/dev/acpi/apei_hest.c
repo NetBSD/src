@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.2 2024/03/20 18:47:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.2 2024/03/20 18:47:59 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -917,7 +917,9 @@ apei_hest_attach(struct apei_softc *sc)
 			    " %"PRIu32"\n", i);
 			break;
 		}
-		KASSERT((const char *)next - (const char *)header <= resid);
+		KASSERT(header < next);
+		KASSERT((size_t)((const char *)next - (const char *)header) <=
+		    resid);
 		resid -= (const char *)next - (const char *)header;
 	}
 	if (resid) {
