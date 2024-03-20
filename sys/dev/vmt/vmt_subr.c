@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.4 2024/03/20 23:31:54 msaitoh Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.5 2024/03/20 23:32:17 msaitoh Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -72,6 +72,7 @@ static int vm_rpci_response_successful(struct vmt_softc *);
 static void vmt_tclo_state_change_success(struct vmt_softc *, int, char);
 static void vmt_do_reboot(struct vmt_softc *);
 static void vmt_do_shutdown(struct vmt_softc *);
+static bool vmt_shutdown(device_t, int);
 
 static void vmt_update_guest_info(struct vmt_softc *);
 static void vmt_update_guest_uptime(struct vmt_softc *);
@@ -80,7 +81,6 @@ static void vmt_sync_guest_clock(struct vmt_softc *);
 static void vmt_tick(void *);
 static void vmt_tclo_tick(void *);
 static void vmt_clock_sync_tick(void *);
-static bool vmt_shutdown(device_t, int);
 static void vmt_pswitch_event(void *);
 
 extern char hostname[MAXHOSTNAMELEN];
