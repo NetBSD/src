@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.6 2024/03/20 23:33:02 msaitoh Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.7 2024/03/20 23:33:22 msaitoh Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -843,7 +843,9 @@ vmt_tclo_tick(void *xarg)
 	}
 
 out:
-	callout_schedule(&sc->sc_tclo_tick, sc->sc_tclo_ping ? hz : 1);
+	/* On error, give time to recover and wait a second */
+	callout_schedule(&sc->sc_tclo_tick,
+	    (sc->sc_tclo_ping || sc->sc_rpc_error) ? hz : 1);
 }
 
 static void
