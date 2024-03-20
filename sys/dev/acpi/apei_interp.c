@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_interp.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei_interp.c,v 1.2 2024/03/20 19:21:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,11 +49,13 @@
  *	+-----------------------------------------------+
  *	| Action=SET_ERROR_TYPE				|
  *	| Instruction=SKIP_NEXT_INSTRUCTION_IF_TRUE	|
+ *	| Register=0x7fabcd10 [memory]			|
  *	| Value=0xdeadbeef				|
  *	+-----------------------------------------------+
  *	| Action=SET_ERROR_TYPE				|
  *	| Instruction=WRITE_REGISTER_VALUE		|
  *	| Register=0x7fabcd14 [memory]			|
+ *	| Value=1					|
  *	+-----------------------------------------------+
  *	| Action=SET_ERROR_TYPE				|
  *	| Instruction=READ_REGISTER			|
@@ -90,9 +92,9 @@
  *
  * This APEI interpreter first compiles the table into a contiguous
  * sequence of instructions for each action, to make execution easier,
- * since there's no requirement that the actions be in order, and the
- * GOTO instruction relies on contiguous indexing of the instructions
- * for an action.
+ * since there's no requirement that the instructions for an action be
+ * contiguous in the table, and the GOTO instruction relies on
+ * contiguous indexing of the instructions for an action.
  *
  * This interpreter also does a little validation so the firmware
  * doesn't, e.g., GOTO somewhere in oblivion.  The validation is mainly
@@ -105,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.2 2024/03/20 19:21:04 riastradh Exp $");
 
 #include <sys/types.h>
 
