@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.54 2024/03/21 22:14:29 uwe Exp $
+.\"	$NetBSD: sysconf.3,v 1.55 2024/03/21 22:17:27 uwe Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ Return 1 if the File Synchronization option is available on this system,
 otherwise \-1.
 .It Li _SC_HOST_NAME_MAX
 The maximum size of a hostname, including the terminating
-.Dv NUL .
+.Tn NUL .
 .It Li _SC_IOV_MAX
 The maximum number of
 .Va iovec
@@ -104,7 +104,7 @@ Return 1 if job control is available on this system, otherwise \-1.
 .It Li _SC_LOGIN_NAME_MAX
 Returns the size of the storage required for a login name, in bytes,
 including the terminating
-.Dv NUL .
+.Tn NUL .
 .It Li _SC_MAPPED_FILES
 Return 1 if the Memory Mapped Files option is available on this system,
 otherwise \-1.
@@ -131,7 +131,7 @@ The maximum number of open files per process.
 The size of a system page in bytes.
 .It Li _SC_PASS_MAX
 The maximum length of the password, not counting the terminating
-.Dv NUL .
+.Tn NUL .
 .It Li _SC_READER_WRITER_LOCKS
 The version of
 .St -p1003.1
