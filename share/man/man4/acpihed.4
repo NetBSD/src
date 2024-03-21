@@ -1,4 +1,4 @@
-.\"	$NetBSD: acpihed.4,v 1.1 2024/03/21 02:36:01 riastradh Exp $
+.\"	$NetBSD: acpihed.4,v 1.2 2024/03/21 11:17:13 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 18, 2024
-.Dt APEI 4
+.Dt ACPIHED 4
 .Os
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
@@ -38,8 +38,11 @@
 .Sh DESCRIPTION
 Certain hardware error sources that can be queried by
 .Xr apei 4
-notify an ACPI node with PNP ID
-.Sq Li PNP0C33
+notify an
+.Tn ACPI
+node with
+.Tn PNP ID
+.Ql PNP0C33
 when an error occurs.
 The
 .Nm
