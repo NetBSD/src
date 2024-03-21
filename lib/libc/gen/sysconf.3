@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.53 2024/03/21 14:48:01 wiz Exp $
+.\"	$NetBSD: sysconf.3,v 1.54 2024/03/21 22:14:29 uwe Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ otherwise \-1.
 .It Li _SC_CLOCK_SELECTION
 Return the
 .Tn POSIX
-version the implementation of the Clock Selection Option
+version the implementation of the Clock Selection option
 on this system conforms to,
 or \-1 if unavailable.
 .It Li _SC_CHILD_MAX
@@ -83,7 +83,7 @@ The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
 The number of clock ticks per second.
 .It Li _SC_FSYNC
-Return 1 if the File Synchronization Option is available on this system,
+Return 1 if the File Synchronization option is available on this system,
 otherwise \-1.
 .It Li _SC_HOST_NAME_MAX
 The maximum size of a hostname, including the terminating
@@ -106,21 +106,21 @@ Returns the size of the storage required for a login name, in bytes,
 including the terminating
 .Dv NUL .
 .It Li _SC_MAPPED_FILES
-Return 1 if the Memory Mapped Files Option is available on this system,
+Return 1 if the Memory Mapped Files option is available on this system,
 otherwise \-1.
 .It Li _SC_MEMLOCK
-Return 1 if the Process Memory Locking Option is available on this system,
+Return 1 if the Process Memory Locking option is available on this system,
 otherwise \-1.
 .It Li _SC_MEMLOCK_RANGE
-Return 1 if the Range Memory Locking Option is available on this system,
+Return 1 if the Range Memory Locking option is available on this system,
 otherwise \-1.
 .It Li _SC_MEMORY_PROTECTION
-Return 1 if the Memory Protection Option is available on this system,
+Return 1 if the Memory Protection option is available on this system,
 otherwise \-1.
 .It Li _SC_MONOTONIC_CLOCK
 Return the
 .Tn POSIX
-version the implementation of the Monotonic Clock Option
+version the implementation of the Monotonic Clock option
 on this system conforms to,
 or \-1 if unavailable.
 .It Li _SC_NGROUPS_MAX
@@ -170,7 +170,7 @@ at any one time.
 .It Li _SC_SYMLOOP_MAX
 The maximum number of symbolic links that may be expanded in a path name.
 .It Li _SC_SYNCHRONIZED_IO
-Return 1 if the Synchronized I/O Option is available on this system,
+Return 1 if the Synchronized I/O option is available on this system,
 otherwise \-1.
 .It Li _SC_THREADS
 The version of
@@ -252,26 +252,26 @@ permitted when using interval notation.
 The version of POSIX 1003.2 with which the system attempts to comply.
 .It Li _SC_2_C_BIND
 Return 1 if the system's C-language development facilities support the
-C-Language Bindings Option, otherwise \-1.
+C-Language Bindings option, otherwise \-1.
 .It Li _SC_2_C_DEV
-Return 1 if the system supports the C-Language Development Utilities Option,
+Return 1 if the system supports the C-Language Development Utilities option,
 otherwise \-1.
 .It Li _SC_2_CHAR_TERM
 Return 1 if the system supports at least one terminal type capable of
 all operations described in POSIX 1003.2, otherwise \-1.
 .It Li _SC_2_FORT_DEV
-Return 1 if the system supports the FORTRAN Development Utilities Option,
+Return 1 if the system supports the FORTRAN Development Utilities option,
 otherwise \-1.
 .It Li _SC_2_FORT_RUN
-Return 1 if the system supports the FORTRAN Runtime Utilities Option,
+Return 1 if the system supports the FORTRAN Runtime Utilities option,
 otherwise \-1.
 .It Li _SC_2_LOCALEDEF
 Return 1 if the system supports the creation of locales, otherwise \-1.
 .It Li _SC_2_SW_DEV
-Return 1 if the system supports the Software Development Utilities Option,
+Return 1 if the system supports the Software Development Utilities option,
 otherwise \-1.
 .It Li _SC_2_UPE
-Return 1 if the system supports the User Portability Utilities Option,
+Return 1 if the system supports the User Portability Utilities option,
 otherwise \-1.
 .It Li _SC_GETGR_R_SIZE_MAX
 The minimum size of the
