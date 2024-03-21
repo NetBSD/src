@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.110 2024/02/09 22:08:36 andvar Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.111 2024/03/21 12:33:21 isaki Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.110 2024/02/09 22:08:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.111 2024/03/21 12:33:21 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1280,12 +1280,14 @@ vioif_alloc_mems(struct vioif_softc *sc)
 
 		struct virtio_net_hdr *hdrs;
 		int dir;
+		int nsegs;
 
 		dir = VIOIF_NETQ_DIR(qid);
 		netq = &sc->sc_netqs[qid];
 		vq_num = netq->netq_vq->vq_num;
 		maps = netq->netq_maps;
 		hdrs = netq->netq_maps_kva;
+		nsegs = uimin(dmaparams[dir].dma_nsegs, vq_num - 1/*hdr*/);
 
 		for (i = 0; i < vq_num; i++) {
 			maps[i].vnm_hdr = &hdrs[i];
@@ -1297,7 +1299,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 				goto err_reqs;
 
 			r = vioif_dmamap_create(sc, &maps[i].vnm_mbuf_map,
-			    dmaparams[dir].dma_size, dmaparams[dir].dma_nsegs,
+			    dmaparams[dir].dma_size, nsegs,
 			    dmaparams[dir].msg_payload);
 			if (r != 0)
 				goto err_reqs;
