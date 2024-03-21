@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.2 2024/03/21 02:34:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.2 2024/03/21 02:34:59 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -507,7 +507,7 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 {
 	uint64_t teatab_pa;
 	ACPI_EINJ_TRIGGER *teatab = NULL;
-	size_t mapsize = 0, tabsize;
+	size_t mapsize = 0, tabsize, bodysize;
 	ACPI_EINJ_ENTRY *entry;
 	struct apei_einj_machine einj_machine, *const M = &einj_machine;
 	uint32_t i, nentries;
@@ -561,16 +561,20 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 	 * table is short.
 	 */
 	tabsize = teatab->TableSize;
-	if (nentries < howmany(tabsize, sizeof(ACPI_EINJ_ENTRY))) {
+	bodysize = tabsize - teatab->HeaderSize;
+	if (nentries < howmany(bodysize, sizeof(ACPI_EINJ_ENTRY))) {
 		device_printf(sc->sc_dev, "TRIGGER_ERROR action table:"
 		    " %zu bytes of trailing garbage\n",
 		    tabsize - nentries*sizeof(ACPI_EINJ_ENTRY));
-		tabsize = nentries*sizeof(ACPI_EINJ_ENTRY);
-	} else if (nentries > howmany(tabsize, sizeof(ACPI_EINJ_ENTRY))) {
+		bodysize = nentries*sizeof(ACPI_EINJ_ENTRY);
+		tabsize = teatab->HeaderSize + bodysize;
+	} else if (nentries > howmany(bodysize, sizeof(ACPI_EINJ_ENTRY))) {
 		device_printf(sc->sc_dev, "TRIGGER_ERROR action table:"
 		    " truncated to %zu entries\n",
 		    nentries*sizeof(ACPI_EINJ_ENTRY));
-		nentries = howmany(tabsize, sizeof(ACPI_EINJ_ENTRY));
+		nentries = howmany(bodysize, sizeof(ACPI_EINJ_ENTRY));
+		bodysize = nentries*sizeof(ACPI_EINJ_ENTRY);
+		tabsize = teatab->HeaderSize + bodysize;
 	}
 
 	/*
@@ -596,7 +600,7 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 	 *
 	 * Entries are fixed-size, so we can just index them.
 	 */
-	entry = (ACPI_EINJ_ENTRY *)(teatab + 1);
+	entry = (ACPI_EINJ_ENTRY *)((char *)teatab + teatab->HeaderSize);
 	for (i = 0; i < nentries; i++) {
 		ACPI_WHEA_HEADER *const header = &entry[i].WheaHeader;
 
