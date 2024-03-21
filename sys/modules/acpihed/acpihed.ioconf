@@ -1,0 +1,11 @@
+#	$NetBSD: acpihed.ioconf,v 1.1 2024/03/21 02:36:02 riastradh Exp $
+#
+
+ioconf acpihed
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+acpihed* at acpi?
