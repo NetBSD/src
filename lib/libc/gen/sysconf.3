@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.55 2024/03/21 22:17:27 uwe Exp $
+.\"	$NetBSD: sysconf.3,v 1.56 2024/03/21 22:21:40 uwe Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,37 +58,37 @@ Symbolic constants for each name value are found in the include file
 .In unistd.h .
 .Pp
 The available values are as follows:
-.Bl -tag -width "123456"
-.It Li _SC_ARG_MAX
+.Bl -tag -width Dv
+.It Dv _SC_ARG_MAX
 The maximum bytes of argument to
 .Xr execve 2 .
-.It Li _SC_ATEXIT_MAX
+.It Dv _SC_ATEXIT_MAX
 The maximum number of functions that may be registered with
 .Xr atexit 3 .
-.It Li _SC_BARRIERS
+.It Dv _SC_BARRIERS
 The version of
 .St -p1003.1
 and its
 Barriers
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_CLOCK_SELECTION
+.It Dv _SC_CLOCK_SELECTION
 Return the
 .Tn POSIX
 version the implementation of the Clock Selection option
 on this system conforms to,
 or \-1 if unavailable.
-.It Li _SC_CHILD_MAX
+.It Dv _SC_CHILD_MAX
 The maximum number of simultaneous processes per user id.
-.It Li _SC_CLK_TCK
+.It Dv _SC_CLK_TCK
 The number of clock ticks per second.
-.It Li _SC_FSYNC
+.It Dv _SC_FSYNC
 Return 1 if the File Synchronization option is available on this system,
 otherwise \-1.
-.It Li _SC_HOST_NAME_MAX
+.It Dv _SC_HOST_NAME_MAX
 The maximum size of a hostname, including the terminating
 .Tn NUL .
-.It Li _SC_IOV_MAX
+.It Dv _SC_IOV_MAX
 The maximum number of
 .Va iovec
 structures that a process has available for use with
@@ -99,114 +99,114 @@ structures that a process has available for use with
 .Xr sendmsg 2
 or
 .Xr writev 2 .
-.It Li _SC_JOB_CONTROL
+.It Dv _SC_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise \-1.
-.It Li _SC_LOGIN_NAME_MAX
+.It Dv _SC_LOGIN_NAME_MAX
 Returns the size of the storage required for a login name, in bytes,
 including the terminating
 .Tn NUL .
-.It Li _SC_MAPPED_FILES
+.It Dv _SC_MAPPED_FILES
 Return 1 if the Memory Mapped Files option is available on this system,
 otherwise \-1.
-.It Li _SC_MEMLOCK
+.It Dv _SC_MEMLOCK
 Return 1 if the Process Memory Locking option is available on this system,
 otherwise \-1.
-.It Li _SC_MEMLOCK_RANGE
+.It Dv _SC_MEMLOCK_RANGE
 Return 1 if the Range Memory Locking option is available on this system,
 otherwise \-1.
-.It Li _SC_MEMORY_PROTECTION
+.It Dv _SC_MEMORY_PROTECTION
 Return 1 if the Memory Protection option is available on this system,
 otherwise \-1.
-.It Li _SC_MONOTONIC_CLOCK
+.It Dv _SC_MONOTONIC_CLOCK
 Return the
 .Tn POSIX
 version the implementation of the Monotonic Clock option
 on this system conforms to,
 or \-1 if unavailable.
-.It Li _SC_NGROUPS_MAX
+.It Dv _SC_NGROUPS_MAX
 The maximum number of supplemental groups.
-.It Li _SC_OPEN_MAX
+.It Dv _SC_OPEN_MAX
 The maximum number of open files per process.
-.It Li _SC_PAGESIZE
+.It Dv _SC_PAGESIZE
 The size of a system page in bytes.
-.It Li _SC_PASS_MAX
+.It Dv _SC_PASS_MAX
 The maximum length of the password, not counting the terminating
 .Tn NUL .
-.It Li _SC_READER_WRITER_LOCKS
+.It Dv _SC_READER_WRITER_LOCKS
 The version of
 .St -p1003.1
 and its
 Read-Write Locks
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_REGEXP
+.It Dv _SC_REGEXP
 Return 1 if
 .Tn POSIX
 regular expressions are available on this system, otherwise \-1.
-.It Li _SC_SEMAPHORES
+.It Dv _SC_SEMAPHORES
 The version of
 .St -p1003.1
 and its
 Semaphores
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_SEM_NSEMS_MAX
+.It Dv _SC_SEM_NSEMS_MAX
 The maximum number of semaphores that one process can have open at a time,
 otherwise \-1.
-.It Li _SC_SHELL
+.It Dv _SC_SHELL
 Return 1 if
 .Tn POSIX
 shell is available on this system, otherwise \-1.
-.It Li _SC_SPIN_LOCKS
+.It Dv _SC_SPIN_LOCKS
 The version of
 .St -p1003.1
 and its
 Spin Locks
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_STREAM_MAX
+.It Dv _SC_STREAM_MAX
 The minimum maximum number of streams that a process may have open
 at any one time.
-.It Li _SC_SYMLOOP_MAX
+.It Dv _SC_SYMLOOP_MAX
 The maximum number of symbolic links that may be expanded in a path name.
-.It Li _SC_SYNCHRONIZED_IO
+.It Dv _SC_SYNCHRONIZED_IO
 Return 1 if the Synchronized I/O option is available on this system,
 otherwise \-1.
-.It Li _SC_THREADS
+.It Dv _SC_THREADS
 The version of
 .St -p1003.1
 and its
 Threads
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_THREAD_PRIO_PROTECT
+.It Dv _SC_THREAD_PRIO_PROTECT
 System supports the priority ceiling protocol for POSIX threads.
-.It Li _SC_TIMERS
+.It Dv _SC_TIMERS
 The version of
 .St -p1003.1
 and its
 Timers
 option to which the system attempts to conform,
 otherwise \-1.
-.It Li _SC_CPUTIME
+.It Dv _SC_CPUTIME
 The clockID CLOCK_PROCESS_CPUTIME_ID is supported,
 otherwise \-1.
-.It Li _SC_THREAD_CPUTIME
+.It Dv _SC_THREAD_CPUTIME
 The clockID CLOCK_THREAD_CPUTIME_ID is supported,
 otherwise \-1.
-.It Li _SC_DELAYTIMER_MAX
+.It Dv _SC_DELAYTIMER_MAX
 The maximum number of overrun for a specific timer,
 otherwise \-1.
-.It Li _SC_TZNAME_MAX
+.It Dv _SC_TZNAME_MAX
 The minimum maximum number of types supported for the name of a
 timezone.
-.It Li _SC_SAVED_IDS
+.It Dv _SC_SAVED_IDS
 Returns 1 if saved set-group and saved set-user ID is available,
 otherwise \-1.
-.It Li _SC_VERSION
+.It Dv _SC_VERSION
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
-.It Li _SC_XOPEN_SHM
+.It Dv _SC_XOPEN_SHM
 Return 1 if the
 .St -xpg4.2
 Shared Memory
@@ -216,92 +216,92 @@ otherwise \-1.
 Availability of the
 Shared Memory
 option depends on the
-.Li SYSVSHM
+.Dv SYSVSHM
 kernel option.
-.It Li _SC_BC_BASE_MAX
+.It Dv _SC_BC_BASE_MAX
 The maximum ibase/obase values in the
 .Xr bc 1
 utility.
-.It Li _SC_BC_DIM_MAX
+.It Dv _SC_BC_DIM_MAX
 The maximum array size in the
 .Xr bc 1
 utility.
-.It Li _SC_BC_SCALE_MAX
+.It Dv _SC_BC_SCALE_MAX
 The maximum scale value in the
 .Xr bc 1
 utility.
-.It Li _SC_BC_STRING_MAX
+.It Dv _SC_BC_STRING_MAX
 The maximum string length in the
 .Xr bc 1
 utility.
-.It Li _SC_COLL_WEIGHTS_MAX
+.It Dv _SC_COLL_WEIGHTS_MAX
 The maximum number of weights that can be assigned to any entry of
 the LC_COLLATE order keyword in the locale definition file.
-.It Li _SC_EXPR_NEST_MAX
+.It Dv _SC_EXPR_NEST_MAX
 The maximum number of expressions that can be nested within
 parenthesis by the
 .Xr expr 1
 utility.
-.It Li _SC_LINE_MAX
+.It Dv _SC_LINE_MAX
 The maximum length in bytes of a text-processing utility's input
 line.
-.It Li _SC_RE_DUP_MAX
+.It Dv _SC_RE_DUP_MAX
 The maximum number of repeated occurrences of a regular expression
 permitted when using interval notation.
-.It Li _SC_2_VERSION
+.It Dv _SC_2_VERSION
 The version of POSIX 1003.2 with which the system attempts to comply.
-.It Li _SC_2_C_BIND
+.It Dv _SC_2_C_BIND
 Return 1 if the system's C-language development facilities support the
 C-Language Bindings option, otherwise \-1.
-.It Li _SC_2_C_DEV
+.It Dv _SC_2_C_DEV
 Return 1 if the system supports the C-Language Development Utilities option,
 otherwise \-1.
-.It Li _SC_2_CHAR_TERM
+.It Dv _SC_2_CHAR_TERM
 Return 1 if the system supports at least one terminal type capable of
 all operations described in POSIX 1003.2, otherwise \-1.
-.It Li _SC_2_FORT_DEV
+.It Dv _SC_2_FORT_DEV
 Return 1 if the system supports the FORTRAN Development Utilities option,
 otherwise \-1.
-.It Li _SC_2_FORT_RUN
+.It Dv _SC_2_FORT_RUN
 Return 1 if the system supports the FORTRAN Runtime Utilities option,
 otherwise \-1.
-.It Li _SC_2_LOCALEDEF
+.It Dv _SC_2_LOCALEDEF
 Return 1 if the system supports the creation of locales, otherwise \-1.
-.It Li _SC_2_SW_DEV
+.It Dv _SC_2_SW_DEV
 Return 1 if the system supports the Software Development Utilities option,
 otherwise \-1.
-.It Li _SC_2_UPE
+.It Dv _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities option,
 otherwise \-1.
-.It Li _SC_GETGR_R_SIZE_MAX
+.It Dv _SC_GETGR_R_SIZE_MAX
 The minimum size of the
 .Fa buffer
 passed to
 .Xr getgrgid_r 3
 and
 .Xr getgrnam_r 3 .
-.It Li _SC_GETPW_R_SIZE_MAX
+.It Dv _SC_GETPW_R_SIZE_MAX
 The minimum size of the
 .Fa buffer
 passed to
 .Xr getpwnam_r 3
 and
 .Xr getpwuid_r 3 .
-.It Li _SC_NPROCESSORS_CONF
+.It Dv _SC_NPROCESSORS_CONF
 The number of processors configured.
-.It Li _SC_NPROCESSORS_ONLN
+.It Dv _SC_NPROCESSORS_ONLN
 The number of processors online (capable of running processes).
-.It Li _SC_PHYS_PAGES
+.It Dv _SC_PHYS_PAGES
 The total number of pages of physical memory.
 See
-.Li _SC_PAGESIZE
+.Dv _SC_PAGESIZE
 for the system page size.
-.It Li _SC_AVPHYS_PAGES
+.It Dv _SC_AVPHYS_PAGES
 The number of available pages of physical memory.
 See
-.Li _SC_PAGESIZE
+.Dv _SC_PAGESIZE
 for the system page size.
-.It Li _SC_TIMER_MAX
+.It Dv _SC_TIMER_MAX
 The number of timers available for
 .Xr timer_create 2 .
 This is also known as
@@ -342,9 +342,9 @@ The
 function conforms to
 .St -p1003.1-90 .
 The constants
-.Li _SC_NPROCESSORS_CONF
+.Dv _SC_NPROCESSORS_CONF
 and
-.Li _SC_NPROCESSORS_ONLN
+.Dv _SC_NPROCESSORS_ONLN
 are not part of the standard, but are provided by many systems.
 .Sh HISTORY
 The
