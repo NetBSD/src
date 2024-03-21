@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.2 2024/03/21 02:34:59 riastradh Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,10 +38,13 @@
  * some nontrivial userland support; maybe relying on the user to tread
  * carefully with error injection is fine -- after all, many types of
  * error injection will cause a system halt/panic.
+ *
+ * XXX Properly expose SET_ERROR_TYPE_WITH_ADDRESS, which has a more
+ * complicated relationship with its RegisterRegion field.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.2 2024/03/21 02:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $");
 
 #include <sys/types.h>
 

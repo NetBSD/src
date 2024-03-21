@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.2 2024/03/20 18:47:59 riastradh Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -43,10 +43,16 @@
  *
  * XXX sort out interrupt notification types, e.g. do we ever need to
  * do acpi_intr_establish?
+ *
+ * XXX sysctl knob to force polling each particular error source that
+ * supports it
+ *
+ * XXX consider a lighter-weight polling schedule for machines with
+ * thousands of polled GHESes
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.2 2024/03/20 18:47:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $");
 
 #include <sys/types.h>
 
