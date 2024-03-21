@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.15 2024/03/20 17:11:42 riastradh Exp $
+# $NetBSD: module.md.amd64,v 1.16 2024/03/21 02:36:01 riastradh Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -11,6 +11,8 @@
 ./usr/libdata/debug/@MODULEDIR@/acpidalb/acpidalb.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpifan				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpifan/acpifan.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/acpihed				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/acpihed/acpihed.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpilid				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpilid/acpilid.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpipmtr				modules-base-kernel	kmod,debug
