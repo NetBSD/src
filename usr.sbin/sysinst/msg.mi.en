@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.47 2023/10/31 14:03:33 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.48 2024/03/21 02:24:35 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1217,7 +1217,7 @@ message saveprompt {Save changes before finishing?}
 message cantsave {Changes cannot be saved.}
 message noroot {No root partition defined.  Cannot continue\n}
 
-message addusername {8 character username to add}
+message addusername {Username to add (maximum 8 characters)}
 message addusertowheel {Do you wish to add this user to group wheel?}
 
 message Delete_partition
