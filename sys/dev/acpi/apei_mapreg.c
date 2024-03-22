@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_mapreg.c,v 1.2 2024/03/22 18:19:14 riastradh Exp $	*/
+/*	$NetBSD: apei_mapreg.c,v 1.3 2024/03/22 20:47:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.2 2024/03/22 18:19:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.3 2024/03/22 20:47:31 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -136,7 +136,7 @@ apei_mapreg_read(const ACPI_GENERIC_ADDRESS *reg,
     const struct apei_mapreg *map)
 {
 	unsigned chunkbits = NBBY*(1 << (reg->AccessWidth - 1));
-	unsigned i, n = reg->BitWidth % chunkbits;
+	unsigned i, n = reg->BitWidth / chunkbits;
 	uint64_t v = 0;
 
 	for (i = 0; i < n; i++) {
@@ -175,7 +175,7 @@ apei_mapreg_write(const ACPI_GENERIC_ADDRESS *reg, struct apei_mapreg *map,
     uint64_t v)
 {
 	unsigned chunkbits = NBBY*(1 << (reg->AccessWidth - 1));
-	unsigned i, n = reg->BitWidth % chunkbits;
+	unsigned i, n = reg->BitWidth / chunkbits;
 
 	membar_release();	/* XXX probably not right for MMIO */
 	for (i = 0; i < n; i++) {
