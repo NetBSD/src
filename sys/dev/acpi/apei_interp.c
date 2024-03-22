@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_interp.c,v 1.2 2024/03/20 19:21:04 riastradh Exp $	*/
+/*	$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.2 2024/03/20 19:21:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -170,7 +170,16 @@ apei_interp_create(const char *name,
 void
 apei_interp_destroy(struct apei_interp *I)
 {
-	unsigned nact = I->nact;
+	unsigned action, nact = I->nact;
+
+	for (action = 0; action < nact; action++) {
+		struct apei_actinst *const A = &I->actinst[action];
+
+		if (A->ninst == 0 || A->ninst == UINT32_MAX || A->inst == NULL)
+			continue;
+		kmem_free(A->inst, A->ninst * sizeof(A->inst[0]));
+		A->inst = NULL;
+	}
 
 	kmem_free(I, offsetof(struct apei_interp, actinst[nact]));
 }
