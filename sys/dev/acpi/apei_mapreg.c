@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_mapreg.c,v 1.1 2024/03/20 17:11:44 riastradh Exp $	*/
+/*	$NetBSD: apei_mapreg.c,v 1.2 2024/03/22 18:19:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.1 2024/03/20 17:11:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.2 2024/03/22 18:19:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -144,16 +144,16 @@ apei_mapreg_read(const ACPI_GENERIC_ADDRESS *reg,
 
 		switch (reg->AccessWidth) {
 		case 1:
-			chunk = *(volatile const uint8_t *)map;
+			chunk = *((volatile const uint8_t *)map + i);
 			break;
 		case 2:
-			chunk = *(volatile const uint16_t *)map;
+			chunk = *((volatile const uint16_t *)map + i);
 			break;
 		case 3:
-			chunk = *(volatile const uint32_t *)map;
+			chunk = *((volatile const uint32_t *)map + i);
 			break;
 		case 4:
-			chunk = *(volatile const uint64_t *)map;
+			chunk = *((volatile const uint64_t *)map + i);
 			break;
 		default:
 			__unreachable();
@@ -183,16 +183,16 @@ apei_mapreg_write(const ACPI_GENERIC_ADDRESS *reg, struct apei_mapreg *map,
 
 		switch (reg->AccessWidth) {
 		case 1:
-			*(volatile uint8_t *)map = chunk;
+			*((volatile uint8_t *)map + i) = chunk;
 			break;
 		case 2:
-			*(volatile uint16_t *)map = chunk;
+			*((volatile uint16_t *)map + i) = chunk;
 			break;
 		case 3:
-			*(volatile uint32_t *)map = chunk;
+			*((volatile uint32_t *)map + i) = chunk;
 			break;
 		case 4:
-			*(volatile uint64_t *)map = chunk;
+			*((volatile uint64_t *)map + i) = chunk;
 			break;
 		default:
 			__unreachable();
