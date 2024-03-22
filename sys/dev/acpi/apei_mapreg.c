@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_mapreg.c,v 1.3 2024/03/22 20:47:31 riastradh Exp $	*/
+/*	$NetBSD: apei_mapreg.c,v 1.4 2024/03/22 20:47:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.3 2024/03/22 20:47:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_mapreg.c,v 1.4 2024/03/22 20:47:52 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -73,7 +73,10 @@ apei_mapreg_map(const ACPI_GENERIC_ADDRESS *reg)
 	case 1:			/* 8-bit */
 	case 2:			/* 16-bit */
 	case 3:			/* 32-bit */
+		break;
 	case 4:			/* 64-bit */
+		if (reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_IO)
+			return NULL;
 		break;
 	default:
 		return NULL;
@@ -100,11 +103,14 @@ apei_mapreg_map(const ACPI_GENERIC_ADDRESS *reg)
 
 	/*
 	 * Dispatch on the space id.
-	 *
-	 * Currently this only handles memory space because I/O space
-	 * is too painful to contemplate reimplementing here.
 	 */
 	switch (reg->SpaceId) {
+	case ACPI_ADR_SPACE_SYSTEM_IO:
+		/*
+		 * Just need to return something non-null -- no state
+		 * to record for a mapping.
+		 */
+		return (struct apei_mapreg *)__UNCONST(reg);
 	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 		return AcpiOsMapMemory(reg->Address,
 		    1 << (reg->AccessWidth - 1));
@@ -123,7 +129,16 @@ apei_mapreg_unmap(const ACPI_GENERIC_ADDRESS *reg,
     struct apei_mapreg *map)
 {
 
-	AcpiOsUnmapMemory(map, 1 << (reg->AccessWidth - 1));
+	switch (reg->SpaceId) {
+	case ACPI_ADR_SPACE_SYSTEM_IO:
+		KASSERT(map == __UNCONST(reg));
+		break;
+	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		AcpiOsUnmapMemory(map, 1 << (reg->AccessWidth - 1));
+		break;
+	default:
+		panic("invalid register mapping");
+	}
 }
 
 /*
@@ -142,18 +157,50 @@ apei_mapreg_read(const ACPI_GENERIC_ADDRESS *reg,
 	for (i = 0; i < n; i++) {
 		uint64_t chunk;
 
-		switch (reg->AccessWidth) {
-		case 1:
-			chunk = *((volatile const uint8_t *)map + i);
+		switch (reg->SpaceId) {
+		case ACPI_ADR_SPACE_SYSTEM_IO: {
+			ACPI_IO_ADDRESS addr;
+			uint32_t chunk32 = 0;
+			ACPI_STATUS rv;
+
+			switch (reg->AccessWidth) {
+			case 1:
+				addr = reg->Address + i;
+				break;
+			case 2:
+				addr = reg->Address + 2*i;
+				break;
+			case 3:
+				addr = reg->Address + 4*i;
+				break;
+			case 4:	/* no 64-bit I/O ports */
+			default:
+				__unreachable();
+			}
+			rv = AcpiOsReadPort(addr, &chunk32,
+			    NBBY*(1 << (reg->AccessWidth - 1)));
+			KASSERTMSG(!ACPI_FAILURE(rv), "%s",
+			    AcpiFormatException(rv));
+			chunk = chunk32;
 			break;
-		case 2:
-			chunk = *((volatile const uint16_t *)map + i);
-			break;
-		case 3:
-			chunk = *((volatile const uint32_t *)map + i);
-			break;
-		case 4:
-			chunk = *((volatile const uint64_t *)map + i);
+		}
+		case ACPI_ADR_SPACE_SYSTEM_MEMORY:
+			switch (reg->AccessWidth) {
+			case 1:
+				chunk = *((volatile const uint8_t *)map + i);
+				break;
+			case 2:
+				chunk = *((volatile const uint16_t *)map + i);
+				break;
+			case 3:
+				chunk = *((volatile const uint32_t *)map + i);
+				break;
+			case 4:
+				chunk = *((volatile const uint64_t *)map + i);
+				break;
+			default:
+				__unreachable();
+			}
 			break;
 		default:
 			__unreachable();
@@ -181,18 +228,48 @@ apei_mapreg_write(const ACPI_GENERIC_ADDRESS *reg, struct apei_mapreg *map,
 	for (i = 0; i < n; i++) {
 		uint64_t chunk = v >> (i*chunkbits);
 
-		switch (reg->AccessWidth) {
-		case 1:
-			*((volatile uint8_t *)map + i) = chunk;
+		switch (reg->SpaceId) {
+		case ACPI_ADR_SPACE_SYSTEM_IO: {
+			ACPI_IO_ADDRESS addr;
+			ACPI_STATUS rv;
+
+			switch (reg->AccessWidth) {
+			case 1:
+				addr = reg->Address + i;
+				break;
+			case 2:
+				addr = reg->Address + 2*i;
+				break;
+			case 3:
+				addr = reg->Address + 4*i;
+				break;
+			case 4:	/* no 64-bit I/O ports */
+			default:
+				__unreachable();
+			}
+			rv = AcpiOsWritePort(addr, chunk,
+			    NBBY*(1 << (reg->AccessWidth - 1)));
+			KASSERTMSG(!ACPI_FAILURE(rv), "%s",
+			    AcpiFormatException(rv));
 			break;
-		case 2:
-			*((volatile uint16_t *)map + i) = chunk;
-			break;
-		case 3:
-			*((volatile uint32_t *)map + i) = chunk;
-			break;
-		case 4:
-			*((volatile uint64_t *)map + i) = chunk;
+		}
+		case ACPI_ADR_SPACE_SYSTEM_MEMORY:
+			switch (reg->AccessWidth) {
+			case 1:
+				*((volatile uint8_t *)map + i) = chunk;
+				break;
+			case 2:
+				*((volatile uint16_t *)map + i) = chunk;
+				break;
+			case 3:
+				*((volatile uint32_t *)map + i) = chunk;
+				break;
+			case 4:
+				*((volatile uint64_t *)map + i) = chunk;
+				break;
+			default:
+				__unreachable();
+			}
 			break;
 		default:
 			__unreachable();
