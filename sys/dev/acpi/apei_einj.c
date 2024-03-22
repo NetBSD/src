@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/apei_einjvar.h>
 #include <dev/acpi/apei_interp.h>
+#include <dev/acpi/apei_mapreg.h>
 #include <dev/acpi/apei_reg.h>
 #include <dev/acpi/apeivar.h>
 
@@ -63,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.3 2024/03/21 02:35:09 riastradh Exp 
 #define	_COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("apei")
 
-static void apei_einj_instfunc(ACPI_WHEA_HEADER *, void *, uint32_t *,
-    uint32_t);
+static void apei_einj_instfunc(ACPI_WHEA_HEADER *, struct apei_mapreg *,
+    void *, uint32_t *, uint32_t);
 static uint64_t apei_einj_act(struct apei_softc *, enum AcpiEinjActions,
     uint64_t);
 static uint64_t apei_einj_trigger(struct apei_softc *, uint64_t);
@@ -108,6 +109,21 @@ static const char *const apei_einj_instruction[] = {
 	[ACPI_EINJ_WRITE_REGISTER] = "write_register",
 	[ACPI_EINJ_WRITE_REGISTER_VALUE] = "write_register_value",
 	[ACPI_EINJ_NOOP] = "noop",
+};
+
+/*
+ * apei_einj_instreg
+ *
+ *	Table of which isntructions use a register operand.
+ *
+ *	Must match apei_einj_instfunc.
+ */
+static const bool apei_einj_instreg[] = {
+	[ACPI_EINJ_READ_REGISTER] = true,
+	[ACPI_EINJ_READ_REGISTER_VALUE] = true,
+	[ACPI_EINJ_WRITE_REGISTER] = true,
+	[ACPI_EINJ_WRITE_REGISTER_VALUE] = true,
+	[ACPI_EINJ_NOOP] = false,
 };
 
 /*
@@ -184,7 +200,7 @@ apei_einj_attach(struct apei_softc *sc)
 	jsc->jsc_interp = apei_interp_create("EINJ",
 	    apei_einj_action, __arraycount(apei_einj_action),
 	    apei_einj_instruction, __arraycount(apei_einj_instruction),
-	    /*instvalid*/NULL, apei_einj_instfunc);
+	    apei_einj_instreg, /*instvalid*/NULL, apei_einj_instfunc);
 
 	/*
 	 * Compile the interpreter from the EINJ action instruction
@@ -379,8 +395,8 @@ struct apei_einj_machine {
  *	too.
  */
 static void
-apei_einj_instfunc(ACPI_WHEA_HEADER *header, void *cookie, uint32_t *ipp,
-    uint32_t maxip)
+apei_einj_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
+    void *cookie, uint32_t *ipp, uint32_t maxip)
 {
 	struct apei_einj_machine *M = cookie;
 	ACPI_STATUS rv = AE_OK;
@@ -418,24 +434,26 @@ apei_einj_instfunc(ACPI_WHEA_HEADER *header, void *cookie, uint32_t *ipp,
 	 */
 	switch (header->Instruction) {
 	case ACPI_EINJ_READ_REGISTER:
-		rv = apei_read_register(reg, Mask, &M->y);
+		rv = apei_read_register(reg, map, Mask, &M->y);
 		if (ACPI_FAILURE(rv))
 			break;
 		break;
 	case ACPI_EINJ_READ_REGISTER_VALUE: {
 		uint64_t v;
 
-		rv = apei_read_register(reg, Mask, &v);
+		rv = apei_read_register(reg, map, Mask, &v);
 		if (ACPI_FAILURE(rv))
 			break;
 		M->y = (v == Value ? 1 : 0);
 		break;
 	}
 	case ACPI_EINJ_WRITE_REGISTER:
-		rv = apei_write_register(reg, Mask, preserve_register, M->x);
+		rv = apei_write_register(reg, map, Mask, preserve_register,
+		    M->x);
 		break;
 	case ACPI_EINJ_WRITE_REGISTER_VALUE:
-		rv = apei_write_register(reg, Mask, preserve_register, Value);
+		rv = apei_write_register(reg, map, Mask, preserve_register,
+		    Value);
 		break;
 	case ACPI_EINJ_NOOP:
 		break;
@@ -621,14 +639,43 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 		}
 
 		/*
+		 * Verify the instruction.
+		 */
+		if (header->Instruction >= __arraycount(apei_einj_instreg)) {
+			device_printf(sc->sc_dev, "TRIGGER_ERROR action table:"
+			    " unknown instruction: %"PRIu32"\n",
+			    header->Instruction);
+			continue;
+		}
+
+		/*
+		 * Map the register if needed.
+		 */
+		struct apei_mapreg *map = NULL;
+		if (apei_einj_instreg[header->Instruction]) {
+			map = apei_mapreg_map(&header->RegisterRegion);
+			if (map == NULL) {
+				device_printf(sc->sc_dev, "TRIGGER_ERROR"
+				    " action table: failed to map register\n");
+				continue;
+			}
+		}
+
+		/*
 		 * Execute the instruction.  Since there's only one
 		 * action, we don't bother with the apei_interp
 		 * machinery to collate instruction tables for each
 		 * action.  EINJ instructions don't change ip.
 		 */
 		uint32_t ip = i + 1;
-		apei_einj_instfunc(header, M, &ip, nentries);
+		apei_einj_instfunc(header, map, M, &ip, nentries);
 		KASSERT(ip == i + 1);
+
+		/*
+		 * Unmap the register if mapped.
+		 */
+		if (map != NULL)
+			apei_mapreg_unmap(&header->RegisterRegion, map);
 	}
 
 out:	if (teatab) {
