@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Exp $	*/
+/*	$NetBSD: apei_interp.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -101,13 +101,10 @@
  * a convenience for catching mistakes in firmware, not a security
  * measure, since the OS is absolutely vulnerable to malicious firmware
  * anyway.
- *
- * XXX Map instruction registers in advance so ERST is safe in nasty
- * contexts, e.g. to save dmesg?
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -116,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Ex
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/apei_interp.h>
+#include <dev/acpi/apei_mapreg.h>
 
 /*
  * struct apei_actinst
@@ -125,7 +123,11 @@ __KERNEL_RCSID(0, "$NetBSD: apei_interp.c,v 1.3 2024/03/22 18:19:03 riastradh Ex
 struct apei_actinst {
 	uint32_t		ninst;
 	uint32_t		ip;
-	struct acpi_whea_header	**inst;
+	struct {
+		struct acpi_whea_header	*header;
+		struct apei_mapreg	*map;
+	}			*inst;
+	bool			disable;
 };
 
 /*
@@ -139,10 +141,12 @@ struct apei_interp {
 	unsigned		nact;
 	const char		*const *instname;
 	unsigned		ninst;
+	const bool		*instreg;
 	bool			(*instvalid)(ACPI_WHEA_HEADER *, uint32_t,
 				    uint32_t);
-	void			(*instfunc)(ACPI_WHEA_HEADER *, void *,
-				    uint32_t *, uint32_t);
+	void			(*instfunc)(ACPI_WHEA_HEADER *,
+				    struct apei_mapreg *, void *, uint32_t *,
+				    uint32_t);
 	struct apei_actinst	actinst[];
 };
 
@@ -150,8 +154,10 @@ struct apei_interp *
 apei_interp_create(const char *name,
     const char *const *actname, unsigned nact,
     const char *const *instname, unsigned ninst,
+    const bool *instreg,
     bool (*instvalid)(ACPI_WHEA_HEADER *, uint32_t, uint32_t),
-    void (*instfunc)(ACPI_WHEA_HEADER *, void *, uint32_t *, uint32_t))
+    void (*instfunc)(ACPI_WHEA_HEADER *, struct apei_mapreg *, void *,
+	uint32_t *, uint32_t))
 {
 	struct apei_interp *I;
 
@@ -161,6 +167,7 @@ apei_interp_create(const char *name,
 	I->nact = nact;
 	I->instname = instname;
 	I->ninst = ninst;
+	I->instreg = instreg;
 	I->instvalid = instvalid;
 	I->instfunc = instfunc;
 
@@ -174,9 +181,19 @@ apei_interp_destroy(struct apei_interp *I)
 
 	for (action = 0; action < nact; action++) {
 		struct apei_actinst *const A = &I->actinst[action];
+		unsigned j;
 
-		if (A->ninst == 0 || A->ninst == UINT32_MAX || A->inst == NULL)
+		if (A->ninst == 0 || A->inst == NULL)
 			continue;
+
+		for (j = 0; j < A->ninst; j++) {
+			ACPI_WHEA_HEADER *const E = A->inst[j].header;
+			struct apei_mapreg *const map = A->inst[j].map;
+
+			if (map != NULL)
+				apei_mapreg_unmap(&E->RegisterRegion, map);
+		}
+
 		kmem_free(A->inst, A->ninst * sizeof(A->inst[0]));
 		A->inst = NULL;
 	}
@@ -212,18 +229,17 @@ apei_interp_pass1_load(struct apei_interp *I, uint32_t i,
 	/*
 	 * If we can't interpret this instruction for this action, or
 	 * if we couldn't interpret a previous instruction for this
-	 * action, ignore _all_ instructions for this action -- by
-	 * marking the action as having UINT32_MAX instructions -- and
-	 * move on.
+	 * action, disable this action and move on.
 	 */
 	if (E->Instruction >= I->ninst ||
 	    I->instname[E->Instruction] == NULL) {
 		aprint_error("%s[%"PRIu32"]: unknown instruction: 0x%02"PRIx8
 		    "\n", I->name, i, E->Instruction);
-		A->ninst = UINT32_MAX;
+		A->ninst = 0;
+		A->disable = true;
 		return;
 	}
-	if (A->ninst == UINT32_MAX)
+	if (A->disable)
 		return;
 
 	/*
@@ -233,14 +249,16 @@ apei_interp_pass1_load(struct apei_interp *I, uint32_t i,
 	A->ninst++;
 
 	/*
-	 * If it overflows a reasonable size, bail on this instruction.
+	 * If it overflows a reasonable size, disable the action
+	 * altogether.
 	 */
 	if (A->ninst >= 256) {
 		aprint_error("%s[%"PRIu32"]:"
 		    " too many instructions for action %"PRIu32" (%s)\n",
 		    I->name, i,
 		    E->Action, I->actname[E->Action]);
-		A->ninst = UINT32_MAX;
+		A->ninst = 0;
+		A->disable = true;
 		return;
 	}
 }
@@ -278,15 +296,17 @@ apei_interp_pass2_verify(struct apei_interp *I, uint32_t i,
 	 * If the instruction is invalid, disable the whole action.
 	 */
 	struct apei_actinst *const A = &I->actinst[E->Action];
-	if (!(*I->instvalid)(E, A->ninst, i))
-		A->ninst = UINT32_MAX;
+	if (!(*I->instvalid)(E, A->ninst, i)) {
+		A->ninst = 0;
+		A->disable = true;
+	}
 }
 
 /*
  * apei_interp_pass3_alloc(I)
  *
  *	Allocate an array of instructions for each action that we
- *	didn't decide to bail on, marked with UINT32_MAX.
+ *	didn't disable.
  */
 void
 apei_interp_pass3_alloc(struct apei_interp *I)
@@ -295,7 +315,7 @@ apei_interp_pass3_alloc(struct apei_interp *I)
 
 	for (action = 0; action < I->nact; action++) {
 		struct apei_actinst *const A = &I->actinst[action];
-		if (A->ninst == 0 || A->ninst == UINT32_MAX)
+		if (A->ninst == 0 || A->disable)
 			continue;
 		A->inst = kmem_zalloc(A->ninst * sizeof(A->inst[0]), KM_SLEEP);
 	}
@@ -320,11 +340,14 @@ apei_interp_pass4_assemble(struct apei_interp *I, uint32_t i,
 		return;
 
 	struct apei_actinst *const A = &I->actinst[E->Action];
-	if (A->ninst == UINT32_MAX)
+	if (A->disable)
 		return;
 
 	KASSERT(A->ip < A->ninst);
-	A->inst[A->ip++] = E;
+	const uint32_t ip = A->ip++;
+	A->inst[ip].header = E;
+	A->inst[ip].map = I->instreg[E->Instruction] ?
+	    apei_mapreg_map(&E->RegisterRegion) : NULL;
 }
 
 /*
@@ -346,7 +369,7 @@ apei_interp_pass5_verify(struct apei_interp *I)
 		/*
 		 * If the action is disabled, it's all set.
 		 */
-		if (A->ninst == UINT32_MAX)
+		if (A->disable)
 			continue;
 		KASSERTMSG(A->ip == A->ninst,
 		    "action %s ip=%"PRIu32" ninstruction=%"PRIu32,
@@ -356,9 +379,20 @@ apei_interp_pass5_verify(struct apei_interp *I)
 		 * XXX Dump the complete instruction table.
 		 */
 		for (j = 0; j < A->ninst; j++) {
-			ACPI_WHEA_HEADER *const E = A->inst[j];
+			ACPI_WHEA_HEADER *const E = A->inst[j].header;
 
 			KASSERT(E->Action == action);
+
+			/*
+			 * If we need the register and weren't able to
+			 * map it, disable the action.
+			 */
+			if (I->instreg[E->Instruction] &&
+			    A->inst[j].map == NULL) {
+				A->disable = true;
+				continue;
+			}
+
 			aprint_debug("%s: %s[%"PRIu32"]: %s\n",
 			    I->name, I->actname[action], j,
 			    I->instname[E->Instruction]);
@@ -384,10 +418,14 @@ apei_interpret(struct apei_interp *I, unsigned action, void *cookie)
 	if (action > I->nact || I->actname[action] == NULL)
 		return;
 	struct apei_actinst *const A = &I->actinst[action];
+	if (A->disable)
+		return;
 
 	while (ip < A->ninst && juice --> 0) {
-		ACPI_WHEA_HEADER *const E = A->inst[ip++];
+		ACPI_WHEA_HEADER *const E = A->inst[ip].header;
+		struct apei_mapreg *const map = A->inst[ip].map;
 
-		(*I->instfunc)(E, cookie, &ip, A->ninst);
+		ip++;
+		(*I->instfunc)(E, map, cookie, &ip, A->ninst);
 	}
 }

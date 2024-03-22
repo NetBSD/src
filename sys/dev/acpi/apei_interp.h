@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_interp.h,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei_interp.h,v 1.2 2024/03/22 20:48:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -33,12 +33,15 @@
 
 struct acpi_whea_header;
 struct apei_interp;
+struct apei_mapreg;
 
 struct apei_interp *apei_interp_create(const char *,
     const char *const *, unsigned,
     const char *const *, unsigned,
+    const bool *,
     bool (*)(struct acpi_whea_header *, uint32_t, uint32_t),
-    void (*)(struct acpi_whea_header *, void *, uint32_t *, uint32_t));
+    void (*)(struct acpi_whea_header *, struct apei_mapreg *, void *,
+	uint32_t *, uint32_t));
 void apei_interp_destroy(struct apei_interp *);
 
 void apei_interp_pass1_load(struct apei_interp *, uint32_t,
