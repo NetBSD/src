@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.5 2024/03/22 20:48:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.4 2024/03/22 20:48:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.5 2024/03/22 20:48:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -399,7 +399,6 @@ apei_einj_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
     void *cookie, uint32_t *ipp, uint32_t maxip)
 {
 	struct apei_einj_machine *M = cookie;
-	ACPI_STATUS rv = AE_OK;
 
 	/*
 	 * Abbreviate some of the intermediate quantities to make the
@@ -434,42 +433,25 @@ apei_einj_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
 	 */
 	switch (header->Instruction) {
 	case ACPI_EINJ_READ_REGISTER:
-		rv = apei_read_register(reg, map, Mask, &M->y);
-		if (ACPI_FAILURE(rv))
-			break;
+		M->y = apei_read_register(reg, map, Mask);
 		break;
 	case ACPI_EINJ_READ_REGISTER_VALUE: {
 		uint64_t v;
 
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
+		v = apei_read_register(reg, map, Mask);
 		M->y = (v == Value ? 1 : 0);
 		break;
 	}
 	case ACPI_EINJ_WRITE_REGISTER:
-		rv = apei_write_register(reg, map, Mask, preserve_register,
-		    M->x);
+		apei_write_register(reg, map, Mask, preserve_register, M->x);
 		break;
 	case ACPI_EINJ_WRITE_REGISTER_VALUE:
-		rv = apei_write_register(reg, map, Mask, preserve_register,
-		    Value);
+		apei_write_register(reg, map, Mask, preserve_register, Value);
 		break;
 	case ACPI_EINJ_NOOP:
 		break;
-	default:
-		rv = AE_ERROR;
+	default:		/* XXX unreachable */
 		break;
-	}
-
-	/*
-	 * If any register I/O failed, print the failure message.  This
-	 * could be more specific about exactly what failed, but that
-	 * takes a little more effort to write.
-	 */
-	if (ACPI_FAILURE(rv)) {
-		aprint_debug_dev(M->sc->sc_dev, "%s: failed: %s\n", __func__,
-		    AcpiFormatException(rv));
 	}
 }
 

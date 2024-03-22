@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_erst.c,v 1.2 2024/03/22 20:48:05 riastradh Exp $	*/
+/*	$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.2 2024/03/22 20:48:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -376,7 +376,6 @@ apei_erst_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
     void *cookie, uint32_t *ipp, uint32_t maxip)
 {
 	struct apei_erst_machine *const M = cookie;
-	ACPI_STATUS rv = AE_OK;
 
 	/*
 	 * Abbreviate some of the intermediate quantities to make the
@@ -411,35 +410,31 @@ apei_erst_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
 	 */
 	switch (header->Instruction) {
 	case ACPI_ERST_READ_REGISTER:
-		rv = apei_read_register(reg, map, Mask, &M->y);
+		M->y = apei_read_register(reg, map, Mask);
 		break;
 	case ACPI_ERST_READ_REGISTER_VALUE: {
 		uint64_t v;
 
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
+		v = apei_read_register(reg, map, Mask);
 		M->y = (v == Value ? 1 : 0);
 		break;
 	}
 	case ACPI_ERST_WRITE_REGISTER:
-		rv = apei_write_register(reg, map, Mask, preserve_register,
-		    M->x);
+		apei_write_register(reg, map, Mask, preserve_register, M->x);
 		break;
 	case ACPI_ERST_WRITE_REGISTER_VALUE:
-		rv = apei_write_register(reg, map, Mask, preserve_register,
-		    Value);
+		apei_write_register(reg, map, Mask, preserve_register, Value);
 		break;
 	case ACPI_ERST_NOOP:
 		break;
 	case ACPI_ERST_LOAD_VAR1:
-		rv = apei_read_register(reg, map, Mask, &M->var1);
+		M->var1 = apei_read_register(reg, map, Mask);
 		break;
 	case ACPI_ERST_LOAD_VAR2:
-		rv = apei_read_register(reg, map, Mask, &M->var2);
+		M->var2 = apei_read_register(reg, map, Mask);
 		break;
 	case ACPI_ERST_STORE_VAR1:
-		rv = apei_write_register(reg, map, Mask, preserve_register,
+		apei_write_register(reg, map, Mask, preserve_register,
 		    M->var1);
 		break;
 	case ACPI_ERST_ADD:
@@ -464,25 +459,17 @@ apei_erst_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
 	case ACPI_ERST_ADD_VALUE: {
 		uint64_t v;
 
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
-
+		v = apei_read_register(reg, map, Mask);
 		v += Value;
-
-		rv = apei_write_register(reg, map, Mask, preserve_register, v);
+		apei_write_register(reg, map, Mask, preserve_register, v);
 		break;
 	}
 	case ACPI_ERST_SUBTRACT_VALUE: {
 		uint64_t v;
 
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
-
+		v = apei_read_register(reg, map, Mask);
 		v -= Value;
-
-		rv = apei_write_register(reg, map, Mask, preserve_register, v);
+		apei_write_register(reg, map, Mask, preserve_register, v);
 		break;
 	}
 	case ACPI_ERST_STALL:
@@ -490,64 +477,37 @@ apei_erst_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
 		break;
 	case ACPI_ERST_STALL_WHILE_TRUE:
 		for (;;) {
-			uint64_t v;
-
-			rv = apei_read_register(reg, map, Mask, &v);
-			if (ACPI_FAILURE(rv))
-				break;
-			if (v != Value)
+			if (apei_read_register(reg, map, Mask) != Value)
 				break;
 			DELAY(M->var1);
 		}
 		break;
-	case ACPI_ERST_SKIP_NEXT_IF_TRUE: {
-		uint64_t v;
-
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
-
+	case ACPI_ERST_SKIP_NEXT_IF_TRUE:
 		/*
 		 * If reading the register yields Value, skip the next
 		 * instruction -- unless that would run past the end of
 		 * the instruction buffer.
 		 */
-		if (v == Value) {
+		if (apei_read_register(reg, map, Mask) == Value) {
 			if (*ipp < maxip)
 				(*ipp)++;
 		}
 		break;
-	}
 	case ACPI_ERST_GOTO:
 		if (Value >= maxip) /* paranoia */
 			*ipp = maxip;
 		else
 			*ipp = Value;
 		break;
-	case ACPI_ERST_SET_SRC_ADDRESS_BASE: {
-		uint64_t v;
-
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
-		M->src_base = v;
+	case ACPI_ERST_SET_SRC_ADDRESS_BASE:
+		M->src_base = apei_read_register(reg, map, Mask);
 		break;
-	}
-	case ACPI_ERST_SET_DST_ADDRESS_BASE: {
-		uint64_t v;
-
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
-		M->src_base = v;
+	case ACPI_ERST_SET_DST_ADDRESS_BASE:
+		M->src_base = apei_read_register(reg, map, Mask);
 		break;
-	}
 	case ACPI_ERST_MOVE_DATA: {
-		uint64_t v;
+		const uint64_t v = apei_read_register(reg, map, Mask);
 
-		rv = apei_read_register(reg, map, Mask, &v);
-		if (ACPI_FAILURE(rv))
-			break;
 		/*
 		 * XXX This might not work in nasty contexts unless we
 		 * pre-allocate a virtual page for the mapping.
@@ -555,18 +515,8 @@ apei_erst_instfunc(ACPI_WHEA_HEADER *header, struct apei_mapreg *map,
 		apei_pmemmove(M->dst_base + v, M->src_base + v, M->var2);
 		break;
 	}
-	default:
+	default:		/* XXX unreachable */
 		break;
-	}
-
-	/*
-	 * If any register I/O failed, print the failure message.  This
-	 * could be more specific about exactly what failed, but that
-	 * takes a little more effort to write.
-	 */
-	if (ACPI_FAILURE(rv)) {
-		aprint_debug_dev(M->sc->sc_dev, "%s: failed: %s\n", __func__,
-		    AcpiFormatException(rv));
 	}
 }
 

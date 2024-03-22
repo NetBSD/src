@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_reg.c,v 1.2 2024/03/22 20:48:05 riastradh Exp $	*/
+/*	$NetBSD: apei_reg.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_reg.c,v 1.2 2024/03/22 20:48:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_reg.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -43,16 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: apei_reg.c,v 1.2 2024/03/22 20:48:05 riastradh Exp $
  * apei_read_register(Register, map, Mask, &X)
  *
  *	Read from Register mapped at map, shifted out of position and
- *	then masked with Mask, and store the result in X.
+ *	then masked with Mask, and return the result.
  *
  *	https://uefi.org/specs/ACPI/6.5/18_Platform_Error_Interfaces.html#read-register
  *
  *	(I'm guessing this applies to both ERST and EINJ, even though
  *	that section is under the ERST part.)
  */
-ACPI_STATUS
+uint64_t
 apei_read_register(ACPI_GENERIC_ADDRESS *Register, struct apei_mapreg *map,
-    uint64_t Mask, uint64_t *p)
+    uint64_t Mask)
 {
 	const uint8_t BitOffset = Register->BitOffset;
 	uint64_t X;
@@ -61,8 +61,7 @@ apei_read_register(ACPI_GENERIC_ADDRESS *Register, struct apei_mapreg *map,
 	X >>= BitOffset;
 	X &= Mask;
 
-	*p = X;
-	return AE_OK;
+	return X;
 }
 
 /*
@@ -79,7 +78,7 @@ apei_read_register(ACPI_GENERIC_ADDRESS *Register, struct apei_mapreg *map,
  *	https://uefi.org/sites/default/files/resources/ACPI_5_1release.pdf#page=714
  *	which has been lost in more recent versions of the spec.
  */
-ACPI_STATUS
+void
 apei_write_register(ACPI_GENERIC_ADDRESS *Register, struct apei_mapreg *map,
     uint64_t Mask, bool preserve_register, uint64_t X)
 {
@@ -95,5 +94,4 @@ apei_write_register(ACPI_GENERIC_ADDRESS *Register, struct apei_mapreg *map,
 		X |= Y;
 	}
 	apei_mapreg_write(Register, map, X);
-	return AE_OK;
 }
