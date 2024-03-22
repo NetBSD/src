@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.29 2024/03/22 19:36:56 andvar Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.29 2024/03/22 19:36:56 andvar Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -364,7 +364,7 @@ _rmt_open(const char *path, int oflag, int mode)
  *	bad problems if we get here
  */
 
-		err(1, "Cannnot exec %s", rshpath);
+		err(1, "Cannot exec %s", rshpath);
 		/*FALLTHROUGH*/
 	default:
 		break;
