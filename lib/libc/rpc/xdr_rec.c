@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.40 2024/01/23 17:24:38 christos Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.41 2024/03/22 19:45:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.40 2024/01/23 17:24:38 christos Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.41 2024/03/22 19:45:22 andvar Exp $");
 #endif
 #endif
 
@@ -242,7 +242,7 @@ xdrrec_create(
 
 
 /*
- * The reoutines defined below are the xdr ops which will go into the
+ * The routines defined below are the xdr ops which will go into the
  * xdr handle filled in by xdrrec_create.
  */
 
@@ -503,9 +503,9 @@ xdrrec_eof(XDR *xdrs)
 
 /*
  * The client must tell the package when an end-of-record has occurred.
- * The second paraemters tells whether the record should be flushed to the
+ * The second parameters tells whether the record should be flushed to the
  * (output) tcp stream.  (This let's the package support batched or
- * pipelined procedure calls.)  TRUE => immmediate flush to tcp connection.
+ * pipelined procedure calls.)  TRUE => immediate flush to tcp connection.
  */
 bool_t
 xdrrec_endofrecord(XDR *xdrs, int sendnow)
