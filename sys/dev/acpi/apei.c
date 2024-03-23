@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.2 2024/03/23 03:41:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.1 2024/03/20 17:11:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.2 2024/03/23 03:41:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -673,7 +673,8 @@ apei_gesb_report(struct apei_softc *sc, const ACPI_HEST_GENERIC_STATUS *gesb,
 	if (size < sizeof(*gesb)) {
 		device_printf(sc->sc_dev, "%s: truncated GESB, %zu < %zu\n",
 		    ctx, size, sizeof(*gesb));
-		return 0;
+		status = 0;
+		goto out;
 	}
 	size -= sizeof(*gesb);
 
