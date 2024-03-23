@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97 2021/01/25 20:05:29 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.98 2024/03/23 18:48:31 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -74,7 +74,7 @@ struct vm_page;
  * User space begins at 0x00000000 and runs through 0x1fffffff,
  * then has a `hole', then resumes at 0xe0000000 and runs until it
  * hits the kernel space at 0xf8000000.  This can be mapped
- * contiguously by ignorning the top two bits and pretending the
+ * contiguously by ignoring the top two bits and pretending the
  * space goes from 0 to 37ffffff.  Typically the lower range is
  * used for text+data and the upper for stack, but the code here
  * makes no such distinction.
