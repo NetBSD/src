@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2024/03/05 13:16:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2024/03/23 08:31:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2024/03/05 13:16:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2024/03/23 08:31:15 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -367,7 +367,7 @@ kmutex_t pmap_pvlist_mutex	__cacheline_aligned;
 
 #ifdef DEBUG
 
-bool pmap_stealdebug = true;
+bool pmap_stealdebug = false;
 
 #define DPRINTF(...)							     \
     do { if (pmap_stealdebug) { printf(__VA_ARGS__); } } while (false)
