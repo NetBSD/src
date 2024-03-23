@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.445 2023/07/22 18:50:31 lukem Exp $
+#	$NetBSD: bsd.README,v 1.446 2024/03/23 21:56:47 riastradh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -992,6 +992,20 @@ PROGDPLIBS	A list of the tuples:
 		This variable may be used for individual libraries/programs,
 		as well as in parent directories to cache common libraries
 		as a build-time optimization.
+
+LIB_EXPSYM	File listing all symbols expected to be defined by the
+		library.  Each line has a single symbol.  If the symbol
+		is versioned, it is followed by `@@', if it is the
+		default version, or `@', if not, and the symbol
+		version.  The lines must be sorted in LANG=C.
+
+		bsd.lib.mk checks to make sure exactly the set of
+		symbols in this file is defined when the library is
+		built; if not, the build will fail and print a diff
+		from the expected symbols to the actual symbols.
+		During development, you can update the expected symbols
+		from the actual ones with `make update-symbols'.
+
 
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.

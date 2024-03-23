@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.395 2024/03/20 13:50:37 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.396 2024/03/23 21:56:47 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -672,7 +672,7 @@ ${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
 ${_LIB.so.full}.actsym: ${_LIB.so.full}
 	${_MKTARGET_CREATE}
 	${NM} --dynamic --extern-only --defined-only --with-symbol-versions \
-		${_LIB.so.full} \
+		${.ALLSRC} \
 	| cut -d' ' -f3 | LANG=C sort -u >${.TARGET}.tmp
 	${MV} ${.TARGET}.tmp ${.TARGET}
 CLEANFILES+=	${_LIB.so.full}.actsym
@@ -681,7 +681,7 @@ CLEANFILES+=	${_LIB.so.full}.diffsym
 CLEANFILES+=	${_LIB.so.full}.diffsym.tmp
 update-symbols: .PHONY
 update-symbols: ${_LIB.so.full}.actsym
-	cp ${_LIB.so.full}.actsym ${.CURDIR}/${LIB}.expsym
+	cp ${.ALLSRC} ${.CURDIR}/${LIB_EXPSYM}
 .endif
 
 .if !empty(LOBJS)							# {
