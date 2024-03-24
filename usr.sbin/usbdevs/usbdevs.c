@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.41 2022/09/13 08:34:37 riastradh Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.42 2024/03/24 03:23:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.41 2022/09/13 08:34:37 riastradh Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.42 2024/03/24 03:23:19 mrg Exp $");
 #endif
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <sys/drvctlio.h>
 
@@ -328,8 +328,12 @@ dumpone(char *name, int f, int addr)
 		usbdump(f);
 }
 
+/*
+ * Find the highest usb device unit.  Searches recursively
+ * thought the device list, tracking highest unit seen.
+ */
 static int
-getusbcount_device(int fd, const char *dev, int depth)
+get_highest_usb_device_unit(int fd, const char *dev, int depth)
 {
 	struct devlistargs laa = {
 		.l_childname = NULL,
@@ -337,19 +341,23 @@ getusbcount_device(int fd, const char *dev, int depth)
 	};
 	size_t i;
 	size_t children;
-	int nbusses = 0;
+	int highbus = 0;
 
 	if (depth && (dev == NULL || *dev == '\0'))
 		return 0;
 
 	/*
-	 * Look for children that match "usb[0-9]*".  Could maybe
+	 * Look for children that match "usb[0-9]*".  The high 
+	 * bus from this value, regardles
 	 * simply return 1 here, but there's always a chance that
 	 * someone has eg, a USB to PCI bridge, with a USB
 	 * controller behind PCI.
 	 */
-	if (strncmp(dev, "usb", 3) == 0 && isdigit((int)dev[3]))
-		nbusses++;
+	if (strncmp(dev, "usb", 3) == 0 && isdigit((int)dev[3])) {
+		int new_high = atoi(dev+3);
+
+		highbus = MAX(new_high, highbus);
+	}
 
 	strlcpy(laa.l_devname, dev, sizeof(laa.l_devname));
 
@@ -366,11 +374,14 @@ getusbcount_device(int fd, const char *dev, int depth)
 		err(EXIT_FAILURE, "DRVLISTDEV: number of children grew");
 
 	for (i = 0; i < laa.l_children; i++) {
-		nbusses += getusbcount_device(fd, laa.l_childname[i],
+		int new_high;
+
+		new_high = get_highest_usb_device_unit(fd, laa.l_childname[i],
 		    depth + 1);
+		highbus = MAX(new_high, highbus);
 	}
 
-	return nbusses;
+	return highbus;
 }
 
 int
@@ -411,17 +422,17 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (dev == NULL) {
-		int nbusses;
+		int highbus;
 		int fd = open(DRVCTLDEV, O_RDONLY, 0);
 
 		/* If no drvctl configured, default to 16. */
 		if (fd != -1)
-			nbusses = getusbcount_device(fd, "", 0);
+			highbus = get_highest_usb_device_unit(fd, "", 0);
 		else
-			nbusses = 16;
+			highbus = 16;
 		close(fd);
 
-		for (ncont = 0, i = 0; i < nbusses; i++) {
+		for (ncont = 0, i = 0; i <= highbus; i++) {
 			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
