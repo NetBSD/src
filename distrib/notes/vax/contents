@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.16 2020/08/07 00:43:51 snj Exp $
+.\"	$NetBSD: contents,v 1.16.6.1 2024/03/24 20:24:24 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,7 +174,31 @@ kernel, named
 .Pa /netbsd .
 You
 .Em must
-install this distribution set.
+install either this distribution set, kern-GENERIC.MP or kern-GENERIC_USB.
+.
+.It Sy kern-GENERIC_USB
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC_USB
+kernel, named
+.Pa /netbsd .
+This kernel supports vsbus USB host controllers and some USB devices.
+You
+.Em must
+install either this distribution set, kern-GENERIC.MP or kern-GENERIC.
+.
+.It Sy kern-GENERIC.MP
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC.MP
+kernel, named
+.Pa /netbsd .
+This kernel supports multiple CPUs (if available).
+You
+.Em must
+install either this distribution set, kern-GENERIC or kern-GENERIC_USB.
 .
 .\" ------------------------------------------------------------------
 .
@@ -195,7 +219,7 @@ the typesettable document set, and other files from
 This set includes kernel modules to add functionality to a running system.
 .
 .It Sy rescue
-This set includes the statically linked emergency recover binaries installed
+This set includes the statically linked emergency recovery binaries installed
 in
 .Pa /rescue .
 .

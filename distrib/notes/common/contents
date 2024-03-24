@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.185 2021/04/02 07:09:11 rin Exp $
+.\"	$NetBSD: contents,v 1.185.6.1 2024/03/24 20:24:26 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -841,7 +841,7 @@ the typesettable document set, and other files from
 .Pa /usr/share .
 .
 .It Sy rescue
-This set includes the statically linked emergency recover binaries installed
+This set includes the statically linked emergency recovery binaries installed
 in
 .Pa /rescue .
 .
