@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.30 2022/12/15 14:54:27 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.30.2.1 2024/03/24 20:27:04 bouyer Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -569,12 +569,14 @@ gpt_get_part_attr_str(const struct disk_partitions *arg, part_id id,
 static bool
 gpt_insert_part_into_list(struct gpt_disk_partitions *parts,
     struct gpt_part_entry **list,
-    struct gpt_part_entry *entry, const char **err_msg)
+    struct gpt_part_entry *entry, const char **err_msg, part_id *new_id)
 {
 	struct gpt_part_entry *p, *last;
+	part_id pno;
 
 	/* find the first entry past the new one (if any) */
-	for (last = NULL, p = *list; p != NULL; last = p, p = p->gp_next) {
+	for (pno = 0, last = NULL, p = *list; p != NULL;
+	    last = p, p = p->gp_next, pno++) {
 		if (p->gp_start > entry->gp_start)
 			break;
 	}
@@ -609,7 +611,8 @@ gpt_insert_part_into_list(struct gpt_disk_partitions *parts,
 	}
 	if (*list == NULL)
 		*list = entry;
-
+	if (new_id != NULL)
+		*new_id = pno;
 	return true;
 }
 
@@ -651,7 +654,7 @@ gpt_set_part_info(struct disk_partitions *arg, part_id id,
 			*n = *p;
 			p->gp_flags &= ~GPEF_ON_DISK;
 			if (!gpt_insert_part_into_list(parts, &parts->obsolete,
-			    n, err_msg))
+			    n, err_msg, NULL))
 				return false;
 		} else if (info->size != p->gp_size) {
 			p->gp_flags |= GPEF_RESIZED;
@@ -1076,6 +1079,7 @@ gpt_add_part(struct disk_partitions *arg,
 	struct disk_part_free_space space;
 	struct disk_part_info data = *info;
 	struct gpt_part_entry *p, *n;
+	part_id pno;
 	bool ok;
 
 	if (err_msg != NULL)
@@ -1107,7 +1111,8 @@ gpt_add_part(struct disk_partitions *arg,
 		return NO_PART;
 	}
 	p->gp_flags |= GPEF_MODIFIED;
-	ok = gpt_insert_part_into_list(parts, &parts->partitions, p, err_msg);
+	ok = gpt_insert_part_into_list(parts, &parts->partitions, p,
+	    err_msg, &pno);
 	if (ok) {
 		if (info->flags & PTI_INSTALL_TARGET) {
 			/* update target mark - we can only have one */
@@ -1119,7 +1124,7 @@ gpt_add_part(struct disk_partitions *arg,
 
 		parts->dp.num_part++;
 		parts->dp.free_space -= p->gp_size;
-		return parts->dp.num_part-1;
+		return pno;
 	} else {
 		free(p);
 		return NO_PART;
@@ -1157,7 +1162,7 @@ gpt_delete_partition(struct disk_partitions *arg, part_id id,
 	res = true;
 	if (p->gp_flags & GPEF_ON_DISK) {
 		if (!gpt_insert_part_into_list(parts, &parts->obsolete,
-		    p, err_msg))
+		    p, err_msg, NULL))
 			res = false;
 	} else {
 		free(p);
