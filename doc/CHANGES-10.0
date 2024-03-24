@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.212 2024/03/12 10:19:02 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.213 2024/03/24 20:27:33 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21445,4 +21445,71 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h 				(manually edited)
 
 	Welcome to 10.0_RC6
+
+distrib/notes/acorn32/contents			1.8
+distrib/notes/alpha/contents			1.26
+distrib/notes/amd64/contents			1.14
+distrib/notes/amiga/contents			1.26
+distrib/notes/arc/contents			1.8
+distrib/notes/atari/contents			1.26
+distrib/notes/bebox/contents			1.8
+distrib/notes/cats/contents			1.8
+distrib/notes/common/contents			1.187
+distrib/notes/common/main			1.573, 1.574
+distrib/notes/common/sysinst			1.113
+distrib/notes/emips/contents			1.8
+distrib/notes/evbarm/contents			1.16
+distrib/notes/evbppc/contents			1.10
+distrib/notes/ews4800mips/contents		1.8
+distrib/notes/hp300/contents			1.23
+distrib/notes/hpcarm/contents			1.9
+distrib/notes/hpcmips/contents			1.16
+distrib/notes/hpcsh/contents			1.9
+distrib/notes/hppa/contents			1.8
+distrib/notes/i386/contents			1.36
+distrib/notes/landisk/contents			1.9
+distrib/notes/mac68k/contents			1.26
+distrib/notes/macppc/contents			1.20
+distrib/notes/mmeye/contents			1.9
+distrib/notes/mvme68k/contents			1.19
+distrib/notes/news68k/contents			1.12
+distrib/notes/newsmips/contents			1.8
+distrib/notes/next68k/contents			1.13
+distrib/notes/ofppc/contents			1.9
+distrib/notes/pmax/contents			1.23
+distrib/notes/prep/contents			1.8
+distrib/notes/rs6000/contents			1.8
+distrib/notes/sandpoint/contents		1.8
+distrib/notes/sgimips/contents			1.8
+distrib/notes/shark/contents			1.8
+distrib/notes/sparc/contents			1.30
+distrib/notes/sparc64/contents			1.13
+distrib/notes/sun2/contents			1.8
+distrib/notes/sun3/contents			1.22
+distrib/notes/vax/contents			1.17
+distrib/notes/vax/xfer				1.16
+distrib/notes/x68k/contents			1.23
+
+	Various style fixes (and some of VAX related errors and copy&pastos),
+	from Mouse on tech-install.
+
+
+	Use single-arg "Lk" macro for a link so we can get reasonable results
+	both in .more and .html output (still a bit odd, but better than
+	before IMHO).
+	[martin, ticket #643]
+
+usr.sbin/sysinst/configmenu.c			1.19
+
+	PR 58062: fix a bug I introduced with the https support: update
+	the pkgsrc/binary pkgs download URL not only when https transport
+	is selected.
+	[martin, ticket #644]
+
+usr.sbin/sysinst/gpt.c				1.32
+
+	PR 58061: fix bug in the GPT backend: when inserting a partition
+	(i.e. not adding it at the end) a bogus ID was returned for the new
+	partition.
+	[martin, ticket #645]
 
