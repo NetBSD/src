@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.572 2023/12/15 22:09:16 gutteridge Exp $
+.\"	$NetBSD: main,v 1.573 2024/03/24 12:53:20 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -481,10 +481,9 @@ The
 \*V release contains complete binary releases for most of these
 system architectures, with preliminary support for the others included in
 source form.
-Please see the
+For more information please see the
 .Nx
-.Lk https://www.NetBSD.org/ website
-for information on them.
+.Lk https://www.NetBSD.org/ website .
 .Pp
 .Nx
 is a completely integrated system.
@@ -527,9 +526,9 @@ this snapshot (yet).
 .Pp
 .\} \" !\n[RELEASE_BRANCH] \{
 One important new feature in this release is the support for extended
-attributes and access controll lists on FFS file systems.
+attributes and access control lists on FFS file systems.
 .Pp
-For new installations the installer will default to disable this features,
+For new installations the installer will by default disable these features,
 so the file system is compatible with older
 .Nx
 releases (before 10), and allow other operating systems to mount this
@@ -557,7 +556,7 @@ went into the
 .Nx
 \*V release.
 .ie \n[RELEASE_BRANCH] \{\
-The complete list of changes can be found in the following files:
+The complete list of changes can be found in
 .br
 .Lk "\*[RELEASE_URL]/CHANGES" CHANGES
 .de showdotchanges
@@ -573,7 +572,8 @@ The complete list of changes can be found in the following files:
 .  Lk "\*[RELEASE_URL]/CHANGES-\n[major].\n[nextminor]" "CHANGES-\\n[major].\n[nextminor]"
 .\}
 .br
-files in the top level directory of the NetBSD \n[major].\n[minor] release tree.
+which are also present in the top level directory of the
+NetBSD \n[major].\n[minor] release tree.
 .Pp
 .
 .\} \" \n[RELEASE_BRANCH]
