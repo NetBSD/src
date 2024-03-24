@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.112 2021/05/28 13:55:24 martin Exp $
+.\"	$NetBSD: sysinst,v 1.112.4.1 2024/03/24 20:24:26 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -692,7 +692,7 @@ It will take a while to load the kernel
 from the floppy,
 .\}
 .el ,
-probably around a minute or so, then, the kernel boot messages
+probably around a minute or so; then the kernel boot messages
 will be displayed.
 This may take a little while also, as
 .Nx
