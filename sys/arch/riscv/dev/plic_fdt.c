@@ -1,4 +1,4 @@
-/* $NetBSD: plic_fdt.c,v 1.5 2024/02/09 18:39:53 andvar Exp $ */
+/* $NetBSD: plic_fdt.c,v 1.6 2024/03/24 08:34:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.5 2024/02/09 18:39:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic_fdt.c,v 1.6 2024/03/24 08:34:20 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -240,7 +240,7 @@ plic_fdt_attach(device_t parent, device_t self, void *aux)
 		context++;
 	}
 
-	aprint_verbose_dev(self, "");
+	aprint_verbose_dev(self, "attaching");
 	error = plic_attach_common(sc, addr, size);
 	if (error != 0) {
 		return;
