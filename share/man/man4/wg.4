@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.9 2024/03/23 21:34:07 riastradh Exp $
+.\"	$NetBSD: wg.4,v 1.10 2024/03/24 00:45:06 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@ endpoint IP address outside the tunnel.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh EXAMPLES
 Typical network topology:
-.Bd -literal -offset abcd
+.Bd -literal -offset 4n
 Stationary server:                         Roaming client:
 +---------+                                    +---------+
 |    A    |                                    |    B    |
@@ -96,7 +96,7 @@ Stationary server:                         Roaming client:
 .Ed
 .Pp
 Generate key pairs on A and B:
-.Bd -literal -offset abcd
+.Bd -literal -offset 4n
 A# (umask 0077; wg-keygen > /etc/wg/wg0)
 A# wg-keygen --pub < /etc/wg/wg0 > /etc/wg/wg0.pub
 A# cat /etc/wg/wg0.pub
@@ -111,13 +111,13 @@ X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU=
 Generate a pre-shared key on A and copy it to B to defend against
 potential future quantum cryptanalysis (not necessary for
 functionality):
-.Bd -literal -offset abcd
+.Bd -literal -offset 4n
 A# (umask 0077; wg-keygen > /etc/wg/wg0.A-B)
 .Ed
 .Pp
 Configure A to listen on port 1234 and allow connections from B to
 appear in the 10.2.0.0/24 and fd00:2::/64 subnets:
-.Bd -literal -offset abcd
+.Bd -literal -offset 4n
 A# ifconfig wg0 create
 A# ifconfig wg0 inet 10.2.0.1/24
 A# ifconfig wg0 inet6 fd00:2::1/64
@@ -138,7 +138,7 @@ wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
 .Pp
 Configure B to connect to A at 192.0.2.123 on port 1234 and the packets
 can begin to flow:
-.Bd -literal -offset abcd
+.Bd -literal -offset 4n
 B# ifconfig wg0 create
 B# ifconfig wg0 inet 10.2.0.42/24
 B# ifconfig wg0 inet6 fd00:2::42/64
