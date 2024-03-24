@@ -1,4 +1,4 @@
-/* $NetBSD: plic.c,v 1.4 2023/12/25 13:01:59 skrll Exp $ */
+/* $NetBSD: plic.c,v 1.5 2024/03/24 08:34:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.4 2023/12/25 13:01:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plic.c,v 1.5 2024/03/24 08:34:20 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -204,7 +204,7 @@ plic_attach_common(struct plic_softc *sc, bus_addr_t addr, bus_size_t size)
 	}
 
 	aprint_naive("\n");
-	aprint_normal("RISC-V PLIC (%u IRQs)\n", sc->sc_ndev);
+	aprint_normal(": RISC-V PLIC (%u IRQs)\n", sc->sc_ndev);
 
 	plic_sc = sc;
 
