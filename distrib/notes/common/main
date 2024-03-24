@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.573 2024/03/24 12:53:20 martin Exp $
+.\"	$NetBSD: main,v 1.574 2024/03/24 13:18:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -481,9 +481,8 @@ The
 \*V release contains complete binary releases for most of these
 system architectures, with preliminary support for the others included in
 source form.
-For more information please see the
-.Nx
-.Lk https://www.NetBSD.org/ website .
+For more information please visit
+.Lk https://www.NetBSD.org/
 .Pp
 .Nx
 is a completely integrated system.
