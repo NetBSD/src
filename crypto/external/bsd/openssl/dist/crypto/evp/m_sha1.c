@@ -179,9 +179,19 @@ static int init512_224(EVP_MD_CTX *ctx)
     return sha512_224_init(EVP_MD_CTX_md_data(ctx));
 }
 
+static int final512_224(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return sha512_224_final(md, EVP_MD_CTX_md_data(ctx));
+}
+
 static int init512_256(EVP_MD_CTX *ctx)
 {
     return sha512_256_init(EVP_MD_CTX_md_data(ctx));
+}
+
+static int final512_256(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return sha512_256_final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static int init384(EVP_MD_CTX *ctx)
@@ -222,7 +232,7 @@ static const EVP_MD sha512_224_md = {
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init512_224,
     update512,
-    final512,
+    final512_224,
     NULL,
     NULL,
     SHA512_CBLOCK,
@@ -241,7 +251,7 @@ static const EVP_MD sha512_256_md = {
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init512_256,
     update512,
-    final512,
+    final512_256,
     NULL,
     NULL,
     SHA512_CBLOCK,
