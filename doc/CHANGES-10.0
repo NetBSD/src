@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.213 2024/03/24 20:27:33 bouyer Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.214 2024/03/25 15:28:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21512,4 +21512,61 @@ usr.sbin/sysinst/gpt.c				1.32
 	(i.e. not adding it at the end) a bogus ID was returned for the new
 	partition.
 	[martin, ticket #645]
+
+crypto/external/bsd/openssl/dist/crypto/evp/legacy_sha.c 1.2
+crypto/external/bsd/openssl/dist/include/crypto/sha.h 1.2
+crypto/external/bsd/openssl/dist/providers/implementations/digests/sha2_prov.c 1.2
+crypto/external/bsd/openssl/lib/libcrypto/libc-sha2xx.c 1.4
+distrib/sets/lists/debug/mi			1.430
+distrib/sets/lists/tests/mi			1.1311
+tests/crypto/libcrypto/Makefile			1.16
+tests/crypto/libcrypto/t_sha512trunc.c		1.1,1.2
+
+	openssl: PR 58039: avoid buffer overrun in SHA512/256 and
+	SHA512/224 output.
+	[riastradh, ticket #637]
+
+lib/libc/time/strptime.c			1.64,1.65
+tests/lib/libc/time/t_strptime.c		1.16
+
+	strptime(3): PR 58041: avoid arithmetic overflow.
+	[riastradh, ticket #638]
+
+sys/dev/acpi/acpi.c				1.299
+sys/dev/acpi/acpivar.h				1.90
+sys/dev/acpi/files.acpi				1.129,1.130
+
+	acpi(4): PR 58046: add hook for future APEI driver.
+	[riastradh, ticket #639]
+
+usr.bin/audio/common/wav.c			1.24
+
+	audioplay(1): avoid errors when a file has zero-length data.
+	[mrg, ticket #640]
+
+usr.bin/kdump/kdump.c				1.145
+
+	kdump(1): remove debug message.
+	[kre, ticket #641]
+
+distrib/amd64/ramdisks/common/Makefile.ramdisk	1.17
+distrib/i386/ramdisks/common/Makefile.ramdisk	1.16
+etc/etc.amd64/Makefile.inc			1.17
+etc/etc.i386/Makefile.inc			1.70
+
+	x86: PR 57534: release the zfs and cgd ramdisks too.
+	[riastradh, ticket #642]
+
+distrib/notes/common/main			1.575
+external/gpl2/groff/dist/tmac/doc.tmac		1.3
+
+	doc.tmac: PR 58074: .Lk - handle punctuation without anchor-text
+	correctly.
+	distrib/notes: add back the sentence final dot after .Lk.
+	[uwe, ticket #646]
+
+sys/dev/qbus/if_qe.c				1.82
+
+	vax/qe(4): PR 58068: fix crash on various ifconfig operations.
+	[riastradh, ticket #647]
 
