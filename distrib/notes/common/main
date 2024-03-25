@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.574 2024/03/24 13:18:02 martin Exp $
+.\"	$NetBSD: main,v 1.575 2024/03/25 13:35:28 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -482,7 +482,7 @@ The
 system architectures, with preliminary support for the others included in
 source form.
 For more information please visit
-.Lk https://www.NetBSD.org/
+.Lk https://www.NetBSD.org/ .
 .Pp
 .Nx
 is a completely integrated system.
