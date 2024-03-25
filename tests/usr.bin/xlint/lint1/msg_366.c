@@ -1,15 +1,15 @@
-/*	$NetBSD: msg_366.c,v 1.3 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_366.c,v 1.4 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_366.c"
 
 // Test for message: missing '\0' at the end of '%.*s' [366]
 
 /*
- * In the new-style format, each directive ends with a '\0'.  If that's not
+ * In the new-style format, each conversion ends with a '\0'.  If that's not
  * the case, snprintb will read beyond the end of the format argument, looking
  * for the terminating '\0'.  In the most common case where the format comes
- * from a string literal, the '\0' from the directive needs to be spelled out,
- * while the '\0' that terminates the sequence of directives is provided by
- * the C compiler.
+ * from a string literal, the '\0' from the conversion needs to be spelled
+ * out, while the '\0' that terminates the sequence of conversions is provided
+ * by the C compiler.
  */
 
 /* lint1-extra-flags: -X 351 */

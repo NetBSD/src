@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_364.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_364.c,v 1.3 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_364.c"
 
 // Test for message: missing bit position after '%.*s' [364]
 
 /*
- * The directives 'b', 'f' and 'F' require a bit position as their first
+ * The conversions 'b', 'f' and 'F' require a bit position as their first
  * argument.
  */
 

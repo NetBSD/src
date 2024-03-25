@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_377.c,v 1.3 2024/03/03 13:09:23 rillig Exp $	*/
+/*	$NetBSD: msg_377.c,v 1.4 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_377.c"
 
 // Test for message: redundant '\0' at the end of the format [377]
 
 /*
- * Each directive in the new-style format ends with a '\0' that needs to be
+ * Each conversion in the new-style format ends with a '\0' that needs to be
  * spelled out.
  *
  * In both old-style and new-style formats, the '\0' that ends the whole

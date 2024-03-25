@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_374.c,v 1.4 2024/03/03 13:09:23 rillig Exp $	*/
+/*	$NetBSD: msg_374.c,v 1.5 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_374.c"
 
-// Test for message: unknown directive '%.*s', must be one of 'bfF=:*' [374]
+// Test for message: unknown conversion '%.*s', must be one of 'bfF=:*' [374]
 
 /*
- * In the new-style format, an unknown directive is assumed to have a single
+ * In the new-style format, an unknown conversion is assumed to have a single
  * argument, followed by a null-terminated description.
  */
 
@@ -20,13 +20,13 @@ example(uint64_t u64)
 {
 	char buf[64];
 
-	/* expect+4: warning: unknown directive 'x', must be one of 'bfF=:*' [374] */
+	/* expect+4: warning: unknown conversion 'x', must be one of 'bfF=:*' [374] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "x12345\0",
 	    u64);
 
-	/* expect+4: warning: unknown directive '\000', must be one of 'bfF=:*' [374] */
+	/* expect+4: warning: unknown conversion '\000', must be one of 'bfF=:*' [374] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "\00012345\0",
@@ -41,12 +41,9 @@ example(uint64_t u64)
 
 	// Real-life example: the '\b' is a typo.
 	//
-	// TODO: Warn about the description that is split between string
-	//  literals for no apparent reason.
-	//
-	/* expect+4: warning: unknown directive '\b', must be one of 'bfF=:*' [374] */
+	/* expect+4: warning: unknown conversion '\b', must be one of 'bfF=:*' [374] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
-	    "b\15ENCNT\0b\16" "TC\0\b\20DSBL_" "CSR_DRN\0",
+	    "b\15ENCNT\0b\16" "TC\0\b\20DSBL_CSR_DRN\0",
 	    u64);
 }
