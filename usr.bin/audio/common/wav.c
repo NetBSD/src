@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.15.8.1 2024/03/12 10:04:23 martin Exp $	*/
+/*	$NetBSD: wav.c,v 1.15.8.2 2024/03/25 15:09:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019, 2024 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.15.8.1 2024/03/12 10:04:23 martin Exp $");
+__RCSID("$NetBSD: wav.c,v 1.15.8.2 2024/03/25 15:09:38 martin Exp $");
 #endif
 
 
@@ -99,7 +99,7 @@ find_riff_chunk(const char search[4], size_t *remainp, char **wherep, uint32_t *
 	*partlen = 0;
 
 #define ADJUST(l) do {				\
-	if (l >= *(remainp))			\
+	if (l > *(remainp))			\
 		return false;			\
 	*(wherep) += (l);			\
 	*(remainp) -= (l);			\
@@ -158,7 +158,7 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		return (AUDIO_ENOENT);
 
 #define ADJUST(l) do {				\
-	if (l >= remain)			\
+	if ((l) > remain)			\
 		return (AUDIO_ESHORTHDR);	\
 	where += (l);				\
 	remain -= (l);				\
@@ -279,20 +279,17 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	if (!found)
 		return (AUDIO_EWAVNODATA);
 
-	if (len) {
-		if (channels)
-			*channels = (u_int)getle16(fmt.channels);
-		if (sample)
-			*sample = getle32(fmt.sample_rate);
-		if (enc)
-			*enc = newenc;
-		if (prec)
-			*prec = newprec;
-		if (datasize)
-			*datasize = (off_t)len;
-		return (where - (char *)hdr);
-	}
-	return (AUDIO_EWAVNODATA);
+	if (channels)
+		*channels = (u_int)getle16(fmt.channels);
+	if (sample)
+		*sample = getle32(fmt.sample_rate);
+	if (enc)
+		*enc = newenc;
+	if (prec)
+		*prec = newprec;
+	if (datasize)
+		*datasize = (off_t)len;
+	return (where - (char *)hdr);
 
 #undef ADJUST
 }
