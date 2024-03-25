@@ -49,9 +49,9 @@ static int nm##_init(EVP_MD_CTX *ctx)                                          \
 #define sha512_256_Init    sha512_256_init
 
 #define sha512_224_Update  SHA512_Update
-#define sha512_224_Final   SHA512_Final
+#define sha512_224_Final   sha512_224_final /* XXX NetBSD libc sha2 */
 #define sha512_256_Update  SHA512_Update
-#define sha512_256_Final   SHA512_Final
+#define sha512_256_Final   sha512_256_final /* XXX NetBSD libc sha2 */
 
 IMPLEMENT_LEGACY_EVP_MD_METH(sha1, SHA1)
 IMPLEMENT_LEGACY_EVP_MD_METH(sha224, SHA224)
