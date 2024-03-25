@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.298 2022/05/31 20:28:57 mrg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.298.4.1 2024/03/25 15:05:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.298 2022/05/31 20:28:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.298.4.1 2024/03/25 15:05:17 martin Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -636,6 +636,9 @@ acpi_childdet(device_t self, device_t child)
 	if (sc->sc_wdrt == child)
 		sc->sc_wdrt = NULL;
 
+	if (sc->sc_apei == child)
+		sc->sc_apei = NULL;
+
 	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device == child)
@@ -921,6 +924,11 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL) {
 		sc->sc_wdrt = config_found(sc->sc_dev, NULL, NULL,
 					   CFARGS(.iattr = "acpiwdrtbus"));
+	}
+
+	if (ifattr_match(ifattr, "apeibus") && sc->sc_apei == NULL) {
+		sc->sc_apei = config_found(sc->sc_dev, NULL, NULL,
+					   CFARGS(.iattr = "apeibus"));
 	}
 
 	return 0;
