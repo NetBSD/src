@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.68 2015/03/07 07:28:37 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.68.8.1 2024/03/25 15:21:04 martin Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -29,6 +29,7 @@ INSTALLATION_DIRS+=	installation/misc
 INSTALLATION_DIRS+=	installation/cdrom
 INSTALLATION_DIRS+=	installation/floppy
 INSTALLATION_DIRS+=	installation/miniroot
+INSTALLATION_DIRS+=	installation/ramdisk
 
 # i386 specific distrib stuff
 snap_md_post:
@@ -39,3 +40,4 @@ snap_md_post:
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.*'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk '*.*'

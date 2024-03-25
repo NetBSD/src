@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2015/01/11 04:03:47 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.15.8.1 2024/03/25 15:21:04 martin Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -15,9 +15,11 @@ BUILD_KERNELS=		INSTALL INSTALL_XEN3_DOMU
 INSTALLATION_DIRS+= 	installation/cdrom
 INSTALLATION_DIRS+= 	installation/misc
 INSTALLATION_DIRS+= 	installation/miniroot
+INSTALLATION_DIRS+= 	installation/ramdisk
 
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.*'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk '*.*'
