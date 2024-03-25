@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.89 2021/12/26 14:34:39 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.89.4.1 2024/03/25 15:05:17 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -177,6 +177,13 @@ struct acpi_softc {
 	struct sysmon_pswitch	 sc_smpsw_sleep;
 
 	SIMPLEQ_HEAD(, acpi_devnode)	sc_head;
+
+	/*
+	 * Move this section to the other pseudo-bus child pointers
+	 * after pullup -- putting it here avoids potential ABI
+	 * compatibility issues with kernel modules.
+	 */
+	device_t		 sc_apei;	/* apei(4) pseudo-bus */
 };
 
 /*
