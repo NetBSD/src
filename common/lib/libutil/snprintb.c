@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.43 2024/03/05 07:37:08 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -231,12 +231,20 @@ finish_buffer(state *s)
 {
 	if (s->line_max > 0) {
 		store_eol(s);
-		if (s->bufsize >= 2 && s->total_len > s->bufsize - 2)
+		store(s, '\0');
+		if (s->bufsize >= 3 && s->total_len > s->bufsize)
+			s->buf[s->bufsize - 3] = '#';
+		if (s->bufsize >= 2 && s->total_len > s->bufsize)
 			s->buf[s->bufsize - 2] = '\0';
+		if (s->bufsize >= 1 && s->total_len > s->bufsize)
+			s->buf[s->bufsize - 1] = '\0';
+	} else {
+		store(s, '\0');
+		if (s->bufsize >= 2 && s->total_len > s->bufsize)
+			s->buf[s->bufsize - 2] = '#';
+		if (s->bufsize >= 1 && s->total_len > s->bufsize)
+			s->buf[s->bufsize - 1] = '\0';
 	}
-	store(s, '\0');
-	if (s->bufsize >= 1 && s->total_len > s->bufsize - 1)
-		s->buf[s->bufsize - 1] = '\0';
 }
 
 int

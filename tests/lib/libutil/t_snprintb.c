@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.30 2024/03/04 21:35:28 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.31 2024/03/25 20:39:27 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.30 2024/03/04 21:35:28 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.31 2024/03/25 20:39:27 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -341,7 +341,7 @@ ATF_TC_BODY(snprintb, tc)
 	// old style, buffer too small for nonzero value
 	h_snprintb_len(
 	    3, "\020", 0x07,
-	    3, "0x");
+	    3, "0#");
 
 	// old style, buffer large enough for nonzero value
 	h_snprintb_len(
@@ -351,17 +351,17 @@ ATF_TC_BODY(snprintb, tc)
 	// old style, buffer too small for '<'
 	h_snprintb_len(
 	    4, "\020\001lsb", 0x07,
-	    8, "0x7");
+	    8, "0x#");
 
 	// old style, buffer too small for description
 	h_snprintb_len(
 	    7, "\020\001lsb", 0x07,
-	    8, "0x7<ls");
+	    8, "0x7<l#");
 
 	// old style, buffer too small for '>'
 	h_snprintb_len(
 	    8, "\020\001lsb", 0x07,
-	    8, "0x7<lsb");
+	    8, "0x7<ls#");
 
 	// old style, buffer large enough for '>'
 	h_snprintb_len(
@@ -371,17 +371,17 @@ ATF_TC_BODY(snprintb, tc)
 	// old style, buffer too small for second description
 	h_snprintb_len(
 	    9, "\020\001one\002two", 0x07,
-	    12, "0x7<one,");
+	    12, "0x7<one#");
 
 	// old style, buffer too small for second description
 	h_snprintb_len(
 	    10, "\020\001one\002two", 0x07,
-	    12, "0x7<one,t");
+	    12, "0x7<one,#");
 
 	// old style, buffer too small for '>' after second description
 	h_snprintb_len(
 	    12, "\020\001one\002two", 0x07,
-	    12, "0x7<one,two");
+	    12, "0x7<one,tw#");
 
 	// old style, buffer large enough for '>' after second description
 	h_snprintb_len(
@@ -1090,28 +1090,28 @@ ATF_TC_BODY(snprintb, tc)
 	    1, "0");
 	h_snprintb_len(
 	    3, "\177\020", 0x07,
-	    3, "0x");
+	    3, "0#");
 	h_snprintb_len(
 	    4, "\177\020", 0x07,
 	    3, "0x7");
 	h_snprintb_len(
 	    7, "\177\020b\000lsb\0", 0x07,
-	    8, "0x7<ls");
+	    8, "0x7<l#");
 	h_snprintb_len(
 	    8, "\177\020b\000lsb\0", 0x07,
-	    8, "0x7<lsb");
+	    8, "0x7<ls#");
 	h_snprintb_len(
 	    9, "\177\020b\000lsb\0", 0x07,
 	    8, "0x7<lsb>");
 	h_snprintb_len(
 	    9, "\177\020b\000one\0b\001two\0", 0x07,
-	    12, "0x7<one,");
+	    12, "0x7<one#");
 	h_snprintb_len(
 	    10, "\177\020b\000one\0b\001two\0", 0x07,
-	    12, "0x7<one,t");
+	    12, "0x7<one,#");
 	h_snprintb_len(
 	    12, "\177\020b\000one\0b\001two\0", 0x07,
-	    12, "0x7<one,two");
+	    12, "0x7<one,tw#");
 	h_snprintb_len(
 	    13, "\177\020b\000one\0b\001two\0", 0x07,
 	    12, "0x7<one,two>");
@@ -1511,7 +1511,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    11,
 	    20,
 	    "0xff<lsb>\0"
-	    "0xf\0");		// XXX: incomplete number may be misleading
+	    "0x#\0");
 
 	// new-style format, buffer too small for '<' in line 2
 	h_snprintb_m_len(
@@ -1523,17 +1523,19 @@ ATF_TC_BODY(snprintb_m, tc)
 	    11,
 	    20,
 	    "0xff<lsb>\0"
-	    "0xff\0");
+	    "0xf#\0");
 
-	// new-style format, buffer too small for fallback
-	h_snprintb_m(
+	// new-style format, buffer too small for textual fallback
+	h_snprintb_m_len(
+	    24,
 	    "\177\020"
 	    "f\000\004bits\0"
 		"*=fallback\0"
 	    "b\0024\0",
 	    0xff,
 	    64,
-	    "0xff<bits=0xf=fallback,4>\0");
+	    26,
+	    "0xff<bits=0xf=fallbac#\0");
 
 	// new-style format, buffer too small for numeric fallback
 	h_snprintb_m_len(
@@ -1544,7 +1546,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    64,
 	    57,
-	    "0xff<fallback(0000\0");
+	    "0xff<fallback(000#\0");
 
 	// new-style format, buffer too small for numeric fallback past buffer
 	h_snprintb_m_len(
@@ -1557,7 +1559,7 @@ ATF_TC_BODY(snprintb_m, tc)
 	    0xff,
 	    64,
 	    48,
-	    "0xff<fallback\0");
+	    "0xff<fallbac#\0");
 
 	// new style, bits and fields, line break between fields
 	h_snprintb_m(
