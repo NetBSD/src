@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_362.c,v 1.2 2024/03/03 13:09:23 rillig Exp $	*/
+/*	$NetBSD: msg_362.c,v 1.3 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_362.c"
 
-// Test for message: directive '%.*s' should not be escaped [362]
+// Test for message: conversion '%.*s' should not be escaped [362]
 
 /*
- * Since the characters used for the directive type are chosen to be easily
+ * Since the characters used for the conversion type were chosen to be easily
  * readable, it doesn't make sense to obfuscate them.
  */
 
@@ -20,10 +20,10 @@ example(unsigned u32)
 {
 	char buf[64];
 
-	/* expect+9: warning: directive '\142' should not be escaped [362] */
+	/* expect+9: warning: conversion '\142' should not be escaped [362] */
 	/* expect+8: warning: bit position 'o' in '\142old-style-lsb\0' should be escaped as octal or hex [369] */
 	/* expect+7: warning: bit position 'o' (111) in '\142old-style-lsb\0' out of range 0..63 [371] */
-	/* expect+6: warning: unknown directive '\001', must be one of 'bfF=:*' [374] */
+	/* expect+6: warning: unknown conversion '\001', must be one of 'bfF=:*' [374] */
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "\142old-style-lsb\0"

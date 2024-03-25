@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_365.c,v 1.2 2024/03/03 10:27:18 rillig Exp $	*/
+/*	$NetBSD: msg_365.c,v 1.3 2024/03/25 22:37:43 rillig Exp $	*/
 # 3 "msg_365.c"
 
 // Test for message: missing field width after '%.*s' [365]
 
 /*
- * The directives 'f' and 'F' require a field width as their second argument.
+ * The conversions 'f' and 'F' require a field width as their second argument.
  */
 
 /* lint1-extra-flags: -X 351 */

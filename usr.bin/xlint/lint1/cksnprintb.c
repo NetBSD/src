@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.11 2024/03/13 06:48:49 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.12 2024/03/25 22:37:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.11 2024/03/13 06:48:49 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.12 2024/03/25 22:37:43 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -113,8 +113,8 @@ check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
 		if (ck->covered & field_mask & bit(i)) {
 			/* '%.*s' overlaps earlier '%.*s' on bit %u */
 			warning(376,
-			    len, start, ck->covered_len[i],
-			    ck->covered_start[i],
+			    len, start,
+			    ck->covered_len[i], ck->covered_start[i],
 			    ck->new_style ? i : i + 1);
 			break;
 		}
@@ -129,7 +129,7 @@ check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
 	}
 
 	if (!(possible_bits(ck->value) & field_mask))
-		/* directive '%.*s' is unreachable by input value */
+		/* conversion '%.*s' is unreachable by input value */
 		warning(378, len, start);
 }
 
@@ -158,7 +158,7 @@ parse_description(checker *ck)
 }
 
 static bool
-check_directive(checker *ck)
+check_conversion(checker *ck)
 {
 	bool new_style = ck->new_style;
 	const buffer *fmt = ck->fmt;
@@ -190,7 +190,7 @@ check_directive(checker *ck)
 	bool has_cmp = new_style
 	    && (dir.value == '=' || dir.value == ':');
 	if (has_cmp && !quoted_next(fmt, it)) {
-		/* missing comparison value after directive '%.*s' */
+		/* missing comparison value after conversion '%.*s' */
 		warning(368, range(dir, *it), start(dir, fmt));
 		return false;
 	}
@@ -208,12 +208,12 @@ check_directive(checker *ck)
 	}
 
 	if (!has_bit && !has_cmp && !has_default) {
-		/* unknown directive '%.*s', must be one of 'bfF=:*' */
+		/* unknown conversion '%.*s', must be one of 'bfF=:*' */
 		warning(374, len(dir), start(dir, fmt));
 		return false;
 	}
 	if (new_style && dir.escaped)
-		/* directive '%.*s' should not be escaped */
+		/* conversion '%.*s' should not be escaped */
 		warning(362, len(dir), start(dir, fmt));
 
 	bool needs_descr = !(new_style && dir.value == 'F');
@@ -312,6 +312,6 @@ check_snprintb(const tnode_t *expr)
 		return;
 	}
 
-	while (check_directive(&ck))
+	while (check_conversion(&ck))
 		continue;
 }
