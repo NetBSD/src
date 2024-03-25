@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.36 2024/03/12 20:35:29 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.37 2024/03/25 22:46:23 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -426,4 +426,21 @@ compare_bit_field_to_integer_constant(void)
 	b = s.s64 == 0;
 	b = s.u64 == 0;
 	b = !b;
+}
+
+_Bool
+binary_operators_on_bit_fields(void)
+{
+	struct {
+		unsigned long long u15:15;
+		unsigned long long u48:48;
+		unsigned long long u64;
+	} s = { 0, 0, 0 };
+
+	u64 = s.u15 | s.u48;
+	/* expect+1: warning: conversion from 'unsigned long long:16' to 'int:17' may lose accuracy [132] */
+	u64 = s.u15 | s.u48 | s.u64;
+	/* expect+2: warning: conversion from 'unsigned long long:16' to 'int:17' may lose accuracy [132] */
+	/* expect+1: warning: conversion from 'unsigned long long:17' to 'int:18' may lose accuracy [132] */
+	return (s.u15 | s.u48 | s.u64) != 0;
 }
