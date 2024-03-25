@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.225 2024/03/25 15:55:32 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.226 2024/03/25 15:59:02 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4383,4 +4383,10 @@ sys/dev/qbus/if_qe.c				1.82
 
 	vax/qe(4): PR 58068: fix crash on various ifconfig operations.
 	[riastradh, ticket #1951]
+
+external/gpl2/groff/dist/tmac/doc.tmac		1.3
+
+	doc.tmac: PR 58074: .Lk - handle punctuation without anchor-text
+	correctly.
+	[uwe, ticket #1952]
 
