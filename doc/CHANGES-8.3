@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.224 2024/03/12 12:50:10 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.225 2024/03/25 15:55:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4365,3 +4365,22 @@ usr.bin/audio/record/record.c                   up to 1.58
 	- audioplay gains -n flag (no play, like make -n)
 	- audiorecord manual gained useful examples
 	[mrg, ticket #1948]
+
+usr.bin/audio/common/wav.c			1.24
+
+	audioplay(1): avoid errors when a file has zero-length data.
+	[mrg, ticket #1950]
+
+distrib/amd64/ramdisks/common/Makefile.ramdisk	1.17
+distrib/i386/ramdisks/common/Makefile.ramdisk	1.16
+etc/etc.amd64/Makefile.inc			1.17
+etc/etc.i386/Makefile.inc			1.70
+
+	x86: PR 57534: release the zfs and cgd ramdisks too.
+	[riastradh, ticket #1949]
+
+sys/dev/qbus/if_qe.c				1.82
+
+	vax/qe(4): PR 58068: fix crash on various ifconfig operations.
+	[riastradh, ticket #1951]
+
