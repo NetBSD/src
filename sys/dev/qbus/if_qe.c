@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.81 2019/05/28 07:41:49 msaitoh Exp $ */
+/*      $NetBSD: if_qe.c,v 1.81.28.1 2024/03/25 15:26:04 martin Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.81 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.81.28.1 2024/03/25 15:26:04 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -97,7 +97,7 @@ struct	qe_softc {
 
 static	int	qematch(device_t, cfdata_t, void *);
 static	void	qeattach(device_t, device_t, void *);
-static	void	qeinit(struct qe_softc *);
+static	int	qeinit(struct ifnet *);
 static	void	qestart(struct ifnet *);
 static	void	qeintr(void *);
 static	int	qeioctl(struct ifnet *, u_long, void *);
@@ -341,6 +341,7 @@ qeattach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = qestart;
+	ifp->if_init = qeinit;
 	ifp->if_ioctl = qeioctl;
 	ifp->if_watchdog = qetimeout;
 	IFQ_SET_READY(&ifp->if_snd);
@@ -381,10 +382,10 @@ qeattach(device_t parent, device_t self, void *aux)
 /*
  * Initialization of interface.
  */
-void
-qeinit(struct qe_softc *sc)
+int
+qeinit(struct ifnet *ifp)
 {
-	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
+	struct qe_softc *sc = ifp->if_softc;
 	struct qe_cdata *qc = sc->sc_qedata;
 	int i;
 
@@ -411,7 +412,6 @@ qeinit(struct qe_softc *sc)
 		qc->qc_xmit[i].qe_status1 = qc->qc_xmit[i].qe_flag = QE_NOTYET;
 	}
 
-
 	/*
 	 * Init receive descriptors.
 	 */
@@ -436,6 +436,7 @@ qeinit(struct qe_softc *sc)
 	 */
 	qe_setup(sc);
 
+	return 0;
 }
 
 /*
@@ -651,7 +652,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			qeinit(sc);
+			qeinit(ifp);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -677,7 +678,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface it marked up and it is stopped, then
 			 * start it.
 			 */
-			qeinit(sc);
+			qeinit(ifp);
 			break;
 		case IFF_UP | IFF_RUNNING:
 			/*
@@ -868,5 +869,5 @@ qetimeout(struct ifnet *ifp)
 	 * Do a reset of interface, to get it going again.
 	 * Will it work by just restart the transmit logic?
 	 */
-	qeinit(sc);
+	qeinit(ifp);
 }
