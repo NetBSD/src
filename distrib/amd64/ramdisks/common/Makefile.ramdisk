@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.16 2022/04/10 11:56:28 martin Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.16.2.1 2024/03/25 15:18:22 martin Exp $
 
 NOSANITIZER=	# defined
 
@@ -49,6 +49,8 @@ ${CRUNCHBIN}:	libhack.o
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
 
-release:
+release:	${IMAGE}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${IMAGE} \
+		${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk/
 
 .include <bsd.prog.mk>
