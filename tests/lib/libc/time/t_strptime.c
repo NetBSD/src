@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.15 2018/06/03 08:48:37 maya Exp $ */
+/* $NetBSD: t_strptime.c,v 1.15.12.1 2024/03/25 14:43:30 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.15 2018/06/03 08:48:37 maya Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.15.12.1 2024/03/25 14:43:30 martin Exp $");
 
-#include <time.h>
-#include <stdlib.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include <atf-c.h>
 
@@ -441,6 +443,151 @@ ATF_TC_BODY(Zone, tc)
 	ztest("%Z");
 }
 
+ATF_TC(posixtime_overflow);
+
+ATF_TC_HEAD(posixtime_overflow, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks strptime(3) safely rejects POSIX time overfow");
+}
+
+ATF_TC_BODY(posixtime_overflow, tc)
+{
+	static const uint64_t P[] = { /* cases that should pass round-trip */
+		[0] = 0,
+		[1] = 1,
+		[2] = 2,
+		[3] = 0x7ffffffe,
+		[4] = 0x7fffffff,
+		[5] = 0x80000000,
+		[6] = 0x80000001,
+		[7] = 0xfffffffe,
+		[8] = 0xffffffff,
+		[9] = 0x100000000,
+		[10] = 0x100000001,
+		[11] = 67767976233532799, /* 2147483647-12-31T23:59:59 */
+		/*
+		 * Beyond this point, the year (.tm_year + 1900)
+		 * overflows the signed 32-bit range, so we won't be
+		 * able to test round-trips:
+		 */
+		[12] = 67767976233532800,
+		[13] = 67767976233532801,
+		[14] = 67768036191676799,
+		/*
+		 * Beyond this point, .tm_year itself overflows the
+		 * signed 32-bit range, so strptime won't work at all;
+		 * the output can't be represented in struct tm.
+		 */
+#if 0
+		[15] = 67768036191676800,
+		[16] = 67768036191676801,
+		[17] = 0x7ffffffffffffffe,
+		[18] = 0x7fffffffffffffff,
+#endif
+	};
+	static const uint64_t F[] = { /* cases strptime should reject */
+		[0] = 67768036191676800,
+		[1] = 67768036191676801,
+		[2] = 0x7ffffffffffffffe,
+		[3] = 0x7fffffffffffffff,
+		[4] = 0x8000000000000000,
+		[5] = 0x8000000000000001,
+		[6] = 0xfffffffffffffffe,
+		[7] = 0xffffffffffffffff,
+	};
+	size_t i;
+
+	/*
+	 * Verify time_t fits in uint64_t, with space to spare since
+	 * it's signed.
+	 */
+	__CTASSERT(__type_max(time_t) < __type_max(uint64_t));
+
+	/*
+	 * Make sure we work in UTC so this test doesn't depend on
+	 * which time zone your machine is configured for.
+	 */
+	setenv("TZ", "UTC", 1);
+
+	/*
+	 * Check the should-pass cases.
+	 */
+	for (i = 0; i < __arraycount(P); i++) {
+		char buf[sizeof("18446744073709551616")];
+		int n;
+		struct tm tm;
+		time_t t;
+		int error;
+
+		/*
+		 * Format the integer in decimal.
+		 */
+		n = snprintf(buf, sizeof(buf), "%"PRIu64, P[i]);
+		ATF_CHECK_MSG(n >= 0 && (unsigned)n < sizeof(buf),
+		    "P[%zu]: 64-bit requires %d digits", i, n);
+
+		/*
+		 * Parse the time into components.
+		 */
+		fprintf(stderr, "# P[%zu]: %"PRId64"\n", i, P[i]);
+		if (strptime(buf, "%s", &tm) == NULL) {
+			atf_tc_fail_nonfatal("P[%zu]: strptime failed", i);
+			continue;
+		}
+		fprintf(stderr, "tm_sec=%d\n", tm.tm_sec);
+		fprintf(stderr, "tm_min=%d\n", tm.tm_min);
+		fprintf(stderr, "tm_hour=%d\n", tm.tm_hour);
+		fprintf(stderr, "tm_mday=%d\n", tm.tm_mday);
+		fprintf(stderr, "tm_mon=%d\n", tm.tm_mon);
+		fprintf(stderr, "tm_year=%d\n", tm.tm_year);
+		fprintf(stderr, "tm_wday=%d\n", tm.tm_wday);
+		fprintf(stderr, "tm_yday=%d\n", tm.tm_yday);
+		fprintf(stderr, "tm_isdst=%d\n", tm.tm_isdst);
+		fprintf(stderr, "tm_gmtoff=%ld\n", tm.tm_gmtoff);
+		fprintf(stderr, "tm_zone=%s\n", tm.tm_zone);
+
+		/*
+		 * Convert back to POSIX seconds since epoch -- unless
+		 * the year number overflows signed 32-bit, in which
+		 * case stop here because we can't test further.
+		 */
+		if (tm.tm_year > 0x7fffffff - 1900)
+			continue;
+		t = mktime(&tm);
+		error = errno;
+		ATF_CHECK_MSG(t != -1, "P[%zu]: mktime failed: %d, %s",
+		    i, error, strerror(error));
+
+		/*
+		 * Verify the round-trip.
+		 */
+		ATF_CHECK_EQ_MSG(P[i], (uint64_t)t,
+		    "P[%zu]: %"PRId64" -> %"PRId64, i, P[i], (int64_t)t);
+	}
+
+	/*
+	 * Check the should-fail cases.
+	 */
+	for (i = 0; i < __arraycount(F); i++) {
+		char buf[sizeof("18446744073709551616")];
+		int n;
+
+		/*
+		 * Format the integer in decimal.
+		 */
+		n = snprintf(buf, sizeof(buf), "%"PRIu64, F[i]);
+		ATF_CHECK_MSG(n >= 0 && (unsigned)n < sizeof(buf),
+		    "F[%zu]: 64-bit requires %d digits", i, n);
+
+		/*
+		 * Verify strptime rejects this.
+		 */
+		h_fail(buf, "%s");
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -452,6 +599,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, year);
 	ATF_TP_ADD_TC(tp, zone);
 	ATF_TP_ADD_TC(tp, Zone);
+	ATF_TP_ADD_TC(tp, posixtime_overflow);
 
 	return atf_no_error();
 }

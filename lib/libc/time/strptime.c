@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.63 2020/09/21 15:31:54 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.63.6.1 2024/03/25 14:43:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.63 2020/09/21 15:31:54 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.63.6.1 2024/03/25 14:43:30 martin Exp $");
 #endif
 
 #include "namespace.h"
@@ -346,38 +346,40 @@ literal:
 			LEGAL_ALT(ALT_O);
 			continue;
 
-#ifndef TIME_MAX
-#define TIME_MAX	INT64_MAX
-#endif
-		case 's':	/* seconds since the epoch */
-			{
-				time_t sse = 0;
-				uint64_t rulim = TIME_MAX;
+		case 's': {	/* seconds since the epoch */
+			const time_t TIME_MAX = __type_max(time_t);
+			time_t sse;
+			unsigned d;
 
-				if (*bp < '0' || *bp > '9') {
-					bp = NULL;
-					continue;
-				}
-
-				do {
-					sse *= 10;
-					sse += *bp++ - '0';
-					rulim /= 10;
-				} while ((sse * 10 <= TIME_MAX) &&
-					 rulim && *bp >= '0' && *bp <= '9');
-
-				if (sse < 0 || (uint64_t)sse > TIME_MAX) {
-					bp = NULL;
-					continue;
-				}
-
-				if (localtime_r(&sse, tm) == NULL)
-					bp = NULL;
-				else
-					state |= S_YDAY | S_WDAY |
-					    S_MON | S_MDAY | S_YEAR;
+			if (*bp < '0' || *bp > '9') {
+				bp = NULL;
+				continue;
 			}
+
+			sse = *bp++ - '0';
+			while (*bp >= '0' && *bp <= '9') {
+				d = *bp++ - '0';
+				if (sse > TIME_MAX/10) {
+					bp = NULL;
+					break;
+				}
+				sse *= 10;
+				if (sse > TIME_MAX - d) {
+					bp = NULL;
+					break;
+				}
+				sse += d;
+			}
+			if (bp == NULL)
+				continue;
+
+			if (localtime_r(&sse, tm) == NULL)
+				bp = NULL;
+			else
+				state |= S_YDAY | S_WDAY |
+				    S_MON | S_MDAY | S_YEAR;
 			continue;
+		}
 
 		case 'U':	/* The week of year, beginning on sunday. */
 		case 'W':	/* The week of year, beginning on monday. */
