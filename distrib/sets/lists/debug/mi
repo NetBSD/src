@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394.2.5 2024/02/25 15:47:59 martin Exp $
+# $NetBSD: mi,v 1.394.2.6 2024/03/25 14:14:55 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1654,6 +1654,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
+./usr/libdata/debug/usr/tests/crypto/libcrypto/t_sha512trunc.debug	tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aescbc.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr1.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr2.debug		tests-crypto-debug	debug,atf,compattestfile

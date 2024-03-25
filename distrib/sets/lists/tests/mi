@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238.2.5 2023/11/28 13:17:11 martin Exp $
+# $NetBSD: mi,v 1.1238.2.6 2024/03/25 14:14:55 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1465,6 +1465,7 @@
 ./usr/tests/crypto/libcrypto/t_hashes			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_libcrypto		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_pubkey			tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/t_sha512trunc		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto				tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/Atffile			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/Kyuafile			tests-crypto-tests	compattestfile,atf,kyua
