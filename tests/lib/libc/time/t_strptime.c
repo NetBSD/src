@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.16 2024/03/16 00:06:37 riastradh Exp $ */
+/* $NetBSD: t_strptime.c,v 1.17 2024/03/26 21:52:23 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.16 2024/03/16 00:06:37 riastradh Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.17 2024/03/26 21:52:23 rillig Exp $");
 
 #include <errno.h>
 #include <inttypes.h>
@@ -449,7 +449,7 @@ ATF_TC_HEAD(posixtime_overflow, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
-	    "Checks strptime(3) safely rejects POSIX time overfow");
+	    "Checks strptime(3) safely rejects POSIX time overflow");
 }
 
 ATF_TC_BODY(posixtime_overflow, tc)
