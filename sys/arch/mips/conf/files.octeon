@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.12 2020/07/16 21:34:52 jmcneill Exp $
+#	$NetBSD: files.octeon,v 1.13 2024/03/26 10:51:16 riastradh Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -60,7 +60,7 @@ options 	COM_REGMAP
 
 device	octrnm
 attach	octrnm at iobus
-file	arch/mips/cavium/dev/octeon_rnm.c	octrnm & rnd
+file	arch/mips/cavium/dev/octeon_rnm.c	octrnm
 
 device	octtwsi: i2cbus
 attach	octtwsi at iobus
