@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.214 2024/03/25 15:28:00 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.215 2024/03/26 18:10:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21569,4 +21569,9 @@ sys/dev/qbus/if_qe.c				1.82
 
 	vax/qe(4): PR 58068: fix crash on various ifconfig operations.
 	[riastradh, ticket #647]
+
+sys/dev/audio/audio.c				1.137
+
+	audio(4): fix byte swapped samples on big-endian machines.
+	[mlelstv, ticket #650]
 
