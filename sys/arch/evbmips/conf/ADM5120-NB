@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.32 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: ADM5120-NB,v 1.33 2024/03/26 10:16:47 andvar Exp $
 #
 # Kernel config for the ADM5120 based boards and routers,
 # including the RouterBOARD 100 series.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -77,30 +77,6 @@ options 	BUFQ_PRIOCSCAN
 # Networking options
 options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
-options 	NETGRAPH	# Netgraph
-options 	NETGRAPH_ASYNC
-options 	NETGRAPH_BPF
-options 	NETGRAPH_CISCO
-options 	NETGRAPH_ECHO
-options 	NETGRAPH_EIFACE
-options 	NETGRAPH_ETF
-options 	NETGRAPH_ETHER
-options 	NETGRAPH_FRAME_RELAY
-options 	NETGRAPH_HOLE
-options 	NETGRAPH_HUB
-options 	NETGRAPH_IFACE
-options 	NETGRAPH_KSOCKET
-options 	NETGRAPH_L2TP
-options 	NETGRAPH_LMI
-options 	NETGRAPH_ONE2MANY
-options 	NETGRAPH_PPP
-options 	NETGRAPH_PPPOE
-options 	NETGRAPH_PPTPGRE
-options 	NETGRAPH_RFC1490
-options 	NETGRAPH_TEE
-options 	NETGRAPH_UI
-options 	NETGRAPH_VJC
-options 	NETGRAPH_VLAN
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -125,7 +101,7 @@ options 	NETGRAPH_VLAN
 options 	NFS_BOOT_DHCP
 
 # Pretty much only one device to use for the root file system.
-config		netbsd-admsw0	root on admsw0 type nfs
+config		netbsd		root on ? type ?
 
 mainbus0 	at root
 
@@ -151,9 +127,8 @@ pseudo-device	pty				# pseudo-terminals
 pseudo-device	ksyms
 
 obio*		at mainbus?
-extio*		at mainbus?
 gpio*		at mainbus?
-
+extio*		at mainbus?
 uart*		at obio? addr ?
 admsw*		at obio? addr ?
 #admflash*	at obio? addr ?
