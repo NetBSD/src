@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2022/05/02 18:28:38 jkoshy Exp $
+# $NetBSD: Makefile,v 1.3 2024/03/26 16:52:03 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -16,7 +16,7 @@ HOST_INCINSTFILES=
 HOST_INCINSTFILES+= ${HOST_INCSDIR}/${_f}
 ${HOST_INCSDIR}/${_f}: ${_f}
 	${_MKTARGET_INSTALL}
-	${HOST_INSTALL_FILE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 .endfor
 
 .PHONY:	all clean depend obj
