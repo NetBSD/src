@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.175 2023/11/06 12:16:52 hannken Exp $	*/
+/*	$NetBSD: ugen.c,v 1.176 2024/03/26 03:24:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.175 2023/11/06 12:16:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.176 2024/03/26 03:24:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -367,8 +367,12 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 static int
 ugenif_match(device_t parent, cfdata_t match, void *aux)
 {
-	/* Assume that they knew what they configured! (see ugenif(4)) */
-	return UMATCH_HIGHEST;
+	/*
+	 * Like ugen(4), ugenif(4) also has an override flag.  It has the
+	 * opposite effect, however, causing us to match with GENERIC
+	 * priority rather than HIGHEST.
+	 */
+	return (match->cf_flags & 1) ? UMATCH_GENERIC : UMATCH_HIGHEST;
 }
 
 static void
