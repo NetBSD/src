@@ -1,4 +1,4 @@
-/*	$NetBSD: apei.c,v 1.2 2024/03/23 03:41:35 riastradh Exp $	*/
+/*	$NetBSD: apei.c,v 1.3 2024/03/26 22:01:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.2 2024/03/23 03:41:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei.c,v 1.3 2024/03/26 22:01:03 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -305,7 +305,7 @@ apei_cper_guid_dec(const uint8_t buf[static 16], struct uuid *uuid)
  * apei_format_guid(uuid, s)
  *
  *	Format a UUID as a string.  This uses C initializer notation,
- *	not UUID notation, in order to match what the text in the UEFI
+ *	not UUID notation, in order to match the text in the UEFI
  *	specification.
  */
 static void
