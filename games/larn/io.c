@@ -1,66 +1,66 @@
-/*	$NetBSD: io.c,v 1.30 2024/03/23 21:10:45 andvar Exp $	*/
+/*	$NetBSD: io.c,v 1.31 2024/03/26 20:50:29 andvar Exp $	*/
 
 /*
- * io.c			 Larn is copyrighted 1986 by Noah Morgan.
+ * io.c			Larn is copyrighted 1986 by Noah Morgan.
  *
  * Below are the functions in this file:
  *
  * setupvt100()		Subroutine to set up terminal in correct mode for game
  * clearvt100()		Subroutine to clean up terminal when the game is over
  * ttgetch()		Routine to read in one character from the terminal
- * scbr()			Function to set cbreak -echo for the terminal
- * sncbr()			Function to set -cbreak echo for the terminal
+ * scbr()		Function to set cbreak -echo for the terminal
+ * sncbr()		Function to set -cbreak echo for the terminal
  * newgame()		Subroutine to save the initial time and seed rnd()
  *
  * FILE OUTPUT ROUTINES
  *
- * lprintf(format,args . . .)	printf to the output buffer 
- * lprint(integer)				send binary integer to output buffer
- * lwrite(buf,len)				write a buffer to the output buffer
- * lprcat(str)					append a string to the output buffer
+ * lprintf(format,args . . .)	printf to the output buffer
+ * lprint(integer)		send binary integer to output buffer
+ * lwrite(buf,len)		write a buffer to the output buffer
+ * lprcat(str)			append a string to the output buffer
  *
  * FILE OUTPUT MACROS (in header.h)
  *
- * lprc(character)				put the character into the output buffer
+ * lprc(character)		put the character into the output buffer
  *
  * FILE INPUT ROUTINES
  *
- * long lgetc()					read one character from input buffer
- * long larn_lrint()			read one integer from input buffer
- * lrfill(address,number)		put input bytes into a buffer char
- * *lgetw()						get a whitespace ended word from
- * input char *lgetl()			get a \n or EOF ended line from input
+ * long lgetc()			read one character from input buffer
+ * long larn_lrint()		read one integer from input buffer
+ * lrfill(address,number)	put input bytes into a buffer char
+ * *lgetw()			get a whitespace ended word from
+ * input char *lgetl()		get a \n or EOF ended line from input
  *
  * FILE OPEN / CLOSE ROUTINES
  *
- * lcreat(filename)				create a new file for write
- * lopen(filename)				open a file for read
- * lappend(filename)			open for append to an existing file
- * lrclose()					close the input file
- * lwclose()					close output file 
- * lflush()						flush the output buffer
+ * lcreat(filename)		create a new file for write
+ * lopen(filename)		open a file for read
+ * lappend(filename)		open for append to an existing file
+ * lrclose()			close the input file
+ * lwclose()			close output file
+ * lflush()			flush the output buffer
  *
  * Other Routines
  *
- * cursor(x,y)					position cursor at [x,y]
- * cursors()					position cursor at [1,24] (saves memory)
- * cl_line(x,y)					clear line at [1,y] and leave cursor at [x,y]
- * cl_up(x,y)					clear screen from [x,1] to current line
- * cl_dn(x,y)					clear screen from [1,y] to end of display
- * standout(str)				print the string in standout mode
- * set_score_output()			called when output should be literally printed
- * ttputch(ch)					print one character in decoded output buffer
- * flush_buf()					flush buffer with decoded output
- * init_term()					terminal initialization -- setup termcap info
- * char *tmcapcnv(sd,ss)		routine to convert VT100 \33's to termcap format
- * beep()						routine to emit a beep if enabled
- * (see no-beep in .larnopts)
+ * cursor(x,y)			position cursor at [x,y]
+ * cursors()			position cursor at [1,24] (saves memory)
+ * cl_line(x,y)			clear line at [1,y] and leave cursor at [x,y]
+ * cl_up(x,y)			clear screen from [x,1] to current line
+ * cl_dn(x,y)			clear screen from [1,y] to end of display
+ * standout(str)		print the string in standout mode
+ * set_score_output()		called when output should be literally printed
+ * ttputch(ch)			print one character in decoded output buffer
+ * flush_buf()			flush buffer with decoded output
+ * init_term()			terminal initialization -- setup termcap info
+ * char *tmcapcnv(sd,ss)	routine to convert VT100 \33's to termcap format
+ * beep()			routine to emit a beep if enabled
+ * 				(see no-beep in .larnopts)
  *
  * Note: ** entries are available only in termcap mode.
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.30 2024/03/23 21:10:45 andvar Exp $");
+__RCSID("$NetBSD: io.c,v 1.31 2024/03/26 20:50:29 andvar Exp $");
 #endif /* not lint */
 
 #include "header.h"
