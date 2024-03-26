@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.32 2013/03/28 22:54:25 njoly Exp $
+.\"	$NetBSD: exports.5,v 1.33 2024/03/26 23:32:43 riastradh Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,22 +34,30 @@
 .Os
 .Sh NAME
 .Nm exports
-.Nd define remote mount points for
+.Nd exported filesystem mount points for
 .Tn NFS
 mount requests
-.Sh SYNOPSIS
-.Nm exports
 .Sh DESCRIPTION
 The
 .Nm exports
-file specifies remote mount points for the
+file on an
 .Tn NFS
-mount protocol per the
+server, used by
+.Xr mountd 8 ,
+lists filesystems to be exported to
 .Tn NFS
-server specification; see
-.%T "Network File System Protocol Specification RFC 1094, Appendix A"
-and
-.%T "NFS: Network File System Version 3 Specification, Appendix I" .
+clients.
+.Pp
+Exporting a directory exposes the
+.Em entire
+content of the filesystem that the directory lives in to
+.Tn NFS
+clients, even it it isn't the root directory of a filesystem on the
+server.
+The list of exports is only what the server advertises to clients in
+the mount protocol, not a restriction on what files or directories
+within exported filesystems clients have access to with
+.Tn NFS .
 .Pp
 Each line in the file
 (other than comment lines that begin with a
@@ -166,13 +174,32 @@ This option is currently not implemented.
 .Pp
 The
 .Fl ro
-option specifies that the filesystem should be exported read-only
-(default read/write).
+option should be specified for filesystems that are read-only (default
+is to assume read/write).
 The option
 .Fl o
 is a synonym for
 .Fl ro
 in an effort to be backward compatible with older export file formats.
+.Pp
+.Bf -symbolic
+Warning:
+Exporting a read/write filesystem with
+.Fl ro
+.Em does not
+prevent clients from writing to it.
+.Ef
+To prevent clients from writing to a filesystem, it must be mounted
+read-only
+.Em on the server
+in the first place.
+To export a read/write filesystem so clients can only read from it, not
+write to it, you can mount a read-only nullfs from the filesystem with
+.Xr mount_null 8
+using the
+.Fl o Cm ro
+option, and then export the read-only nullfs instead.
+See also caveats about nullfs namespace below.
 .Pp
 The
 .Fl noresvport
@@ -369,6 +396,23 @@ The default remote mount-point file.
 .Xr mountd 8 ,
 .Xr nfsd 8 ,
 .Xr showmount 8
+.Rs
+.%T NFS: Network File System Protocol Specification
+.%R RFC 1094
+.%I IETF Network Working Group
+.%O Appendix A
+.%U https://datatracker.ietf.org/doc/html/rfc1094#appendix-A.1
+.Re
+.Rs
+.%A B. Callaghan
+.%A B. Pawlowski
+.%A P. Staubach
+.%T NFS Version 3 Protocol Specification
+.%R RFC 1813
+.%I IETF Network Working Group
+.%O Appendix I
+.%U https://datatracker.ietf.org/doc/html/rfc1813#section-5.0
+.Re
 .Sh CAVEATS
 Don't re-export NFS-mounted filesystems unless you are sure of the
 implications.
@@ -377,6 +421,21 @@ systems being exported, e.g. when timestamps are updated.
 Re-exporting should work to some extent and can even be useful in
 some cases, but don't expect it works as well as with local file
 systems.
+.Pp
+.Pp
+Filesystems that provide a namespace for a subtree of another
+filesystem such as nullfs 
+.No ( Xr mount_null 8 )
+and umapfs
+.No ( Xr mount_umap 8 )
+.Em do not
+restrict
+.Tn NFS
+clients to that namespace, so they cannot be used to securely limit
+.Tn NFS
+clients to a subtree of a filesystem.
+If you want to export one subtree and prevent access to other subtrees,
+the exported subtree must be on its own filesystem on the server.
 .Sh BUGS
 The export options are tied to the local mount points in the kernel and
 must be non-contradictory for any exported subdirectory of the local
