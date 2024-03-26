@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.181 2023/04/25 17:51:32 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.182 2024/03/26 18:02:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.181 2023/04/25 17:51:32 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.182 2024/03/26 18:02:04 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -402,7 +402,7 @@ rl_initialize(void)
 	 * Allow the use of the Delete/Insert keys.
 	 */
 	el_set(e, EL_BIND, "\\e[3~", "ed-delete-next-char", NULL);
-	el_set(e, EL_BIND, "\\e[2~", "ed-quoted-insert", NULL);
+	el_set(e, EL_BIND, "\\e[2~", "em-toggle-overwrite", NULL);
 
 	/*
 	 * Ctrl-left-arrow and Ctrl-right-arrow for word moving.
