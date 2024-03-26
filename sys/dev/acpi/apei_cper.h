@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_cper.h,v 1.1 2024/03/20 17:11:43 riastradh Exp $	*/
+/*	$NetBSD: apei_cper.h,v 1.2 2024/03/26 22:16:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
  * https://uefi.org/specs/UEFI/2.10/Apx_N_Common_Platform_Error_Record.html#record-header
  */
 struct cper_header {
-	char		SignatureStart[4];	/* `CPER" */
+	char		SignatureStart[4];	/* `CPER' */
 	uint16_t	Revision;
-	uint32_t	SignatureEnd;		/* 0xfffffff */
+	uint32_t	SignatureEnd;		/* 0xffffffff */
 	uint16_t	SectionCount;
 	uint32_t	ErrorSeverity;
 	uint32_t	ValidationBits;
@@ -179,7 +179,7 @@ enum {				/* struct cper_memory_error::validation_bits */
 	"b\006"	"BANK\0"						      \
 	"b\007"	"DEVICE\0"						      \
 	"b\010"	"ROW\0"							      \
-	"b\011"	"COLUJMN\0"						      \
+	"b\011"	"COLUMN\0"						      \
 	"b\012"	"BIT_POSITION\0"					      \
 	"b\013"	"REQUESTOR_ID\0"					      \
 	"b\014"	"RESPONDER_ID\0"					      \
