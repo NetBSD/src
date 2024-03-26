@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2022/04/13 17:52:56 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.2 2024/03/26 16:52:03 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -25,7 +25,7 @@ ${HOST_INCSDIR}:
 HOST_INCINSTFILES+= ${HOST_INCSDIR}/${_f}
 ${HOST_INCSDIR}/${_f}: ${_f}
 	${_MKTARGET_INSTALL}
-	${HOST_INSTALL_FILE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 .endfor
 
 includes: .PHONY ${HOST_INCSDIR} .WAIT ${HOST_INCINSTFILES}
