@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.33 2024/03/26 10:16:47 andvar Exp $
+#	$NetBSD: ADM5120-NB,v 1.34 2024/03/26 10:23:42 andvar Exp $
 #
 # Kernel config for the ADM5120 based boards and routers,
 # including the RouterBOARD 100 series.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.34 $"
 
 maxusers	32
 
@@ -101,7 +101,7 @@ options 	INET		# Internet protocols
 options 	NFS_BOOT_DHCP
 
 # Pretty much only one device to use for the root file system.
-config		netbsd		root on ? type ?
+config		netbsd-admsw0	root on admsw0 type nfs
 
 mainbus0 	at root
 
