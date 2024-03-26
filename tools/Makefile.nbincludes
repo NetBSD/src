@@ -1,18 +1,19 @@
-#	$NetBSD: Makefile.nbincludes,v 1.6 2023/06/04 10:00:20 lukem Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.7 2024/03/26 16:48:34 christos Exp $
 
 .include <bsd.hostinit.mk>
 
-_ARCHDIR=	${.CURDIR}/../../sys/arch
-_INCDIR=	${.CURDIR}/../../include
-_SYSDIR=	${.CURDIR}/../../sys/sys
-_UFSDIR=	${.CURDIR}/../../sys/ufs
+_ARCHDIR:=	${.PARSEDIR}/../sys/arch
+_INCDIR:=	${.PARSEDIR}/../include
+_SYSDIR:=	${.PARSEDIR}/../sys/sys
+_UFSDIR:=	${.PARSEDIR}/../sys/ufs
+_ELFTOOLCHAINDIR:=	${.PARSEDIR}/elftoolchain
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
 .if make(depend) || make(all) || make(dependall) || make(install)
 # There's no need to run these commands for "make cleandir" or "make obj",
 # and TOOL_SED will not yet have been built.
 _UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
-_ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.CURDIR}/../headerlist
+_ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.PARSEDIR}/headerlist
 .endif
 
 _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h
@@ -45,3 +46,4 @@ beforedepend:
 	    ${TOOL_PAX} -rw ${_UFS_INCS} ${TOOLDIR}/include/nbinclude/ufs
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine
+	cd ${_ELFTOOLCHAINDIR}/common && ${MAKE} includes
