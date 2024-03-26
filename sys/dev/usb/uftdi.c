@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.76 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.77 2024/03/26 03:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.76 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.77 2024/03/26 03:38:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.76 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>
@@ -184,10 +185,72 @@ static int	uftdi_detach(device_t, int);
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, NULL, NULL, uftdi_childdet);
 
+struct uftdi_match_quirk_entry {
+	uint16_t	vendor_id;
+	uint16_t	product_id;
+	int		iface_no;
+	const char *	vendor_str;
+	const char *	product_str;
+	int		match_ret;
+};
+
+static const struct uftdi_match_quirk_entry uftdi_match_quirks[] = {
+	/*
+	 * The Tigard board (https://github.com/tigard-tools/tigard)
+	 * has two interfaces, one of which is meant to act as a
+	 * regular USB serial port (interface 0), the other of which
+	 * is meant for other protocols (SWD, JTAG, etc.).  We must
+	 * reject interface 1 so that ugenif matches, thus allowing
+	 * full user-space control of that port.
+	 */
+	{
+	  .vendor_id	= USB_VENDOR_FTDI,
+	  .product_id	= USB_PRODUCT_FTDI_SERIAL_2232C,
+	  .iface_no	= 1,
+	  .vendor_str	= "SecuringHardware.com",
+	  .product_str	= "Tigard V1.1",
+	  .match_ret	= UMATCH_NONE,
+	}
+};
+
+static int
+uftdi_quirk_match(struct usbif_attach_arg *uiaa, int rv)
+{
+	struct usbd_device *dev = uiaa->uiaa_device;
+	const struct uftdi_match_quirk_entry *q;
+	int i;
+
+	for (i = 0; i < __arraycount(uftdi_match_quirks); i++) {
+		q = &uftdi_match_quirks[i];
+		if (uiaa->uiaa_vendor != q->vendor_id ||
+		    uiaa->uiaa_product != q->product_id ||
+		    uiaa->uiaa_ifaceno != q->iface_no) {
+			continue;
+		}
+		if (q->vendor_str != NULL &&
+		    (dev->ud_vendor == NULL ||
+		     strcmp(dev->ud_vendor, q->vendor_str) != 0)) {
+			continue;
+		}
+		if (q->product_str != NULL &&
+		    (dev->ud_product == NULL ||
+		     strcmp(dev->ud_product, q->product_str) != 0)) {
+			continue;
+		}
+		/*
+		 * Got a match!
+		 */
+		rv = q->match_ret;
+		break;
+	}
+	return rv;
+}
+
 static int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
+	int rv;
 
 	DPRINTFN(20,("uftdi: vendor=%#x, product=%#x\n",
 		     uiaa->uiaa_vendor, uiaa->uiaa_product));
@@ -195,8 +258,12 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 	if (uiaa->uiaa_configno != UFTDI_CONFIG_NO)
 		return UMATCH_NONE;
 
-	return uftdi_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
+	rv = uftdi_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE;
+	if (rv != UMATCH_NONE) {
+		rv = uftdi_quirk_match(uiaa, rv);
+	}
+	return rv;
 }
 
 static void
