@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.5 2024/03/22 20:48:14 riastradh Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.6 2024/03/26 22:01:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.5 2024/03/22 20:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.6 2024/03/26 22:01:03 rillig Exp $");
 
 #include <sys/types.h>
 
@@ -114,7 +114,7 @@ static const char *const apei_einj_instruction[] = {
 /*
  * apei_einj_instreg
  *
- *	Table of which isntructions use a register operand.
+ *	Table of which instructions use a register operand.
  *
  *	Must match apei_einj_instfunc.
  */
