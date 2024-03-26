@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2024/03/03 17:37:58 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2024/03/26 16:48:34 christos Exp $
 
 HOSTLIB=dwarf
 
@@ -97,4 +97,5 @@ CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 HOST_CPPFLAGS:=	${CPPFLAGS} ${HOST_CPPFLAGS}
 CPPFLAGS:=	# empty
 
+.include "../../Makefile.nbincludes"
 .include <bsd.hostlib.mk>
