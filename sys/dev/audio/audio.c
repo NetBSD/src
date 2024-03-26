@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.136 2022/08/25 11:16:33 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.136.4.1 2024/03/26 18:09:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.136 2022/08/25 11:16:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.136.4.1 2024/03/26 18:09:21 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5628,7 +5628,7 @@ audio_pmixer_process(struct audio_softc *sc)
 	}
 
 	m = mixer->mixsample;
-	if (mixer->swap_endian) {
+	if (!mixer->codec && mixer->swap_endian) {
 		for (i = 0; i < sample_count; i++) {
 			*h++ = bswap16(*m++);
 		}
@@ -6031,7 +6031,7 @@ audio_rmixer_process(struct audio_softc *sc)
 		mixersrc = &mixer->hwbuf;
 	}
 
-	if (mixer->swap_endian) {
+	if (!mixer->codec && mixer->swap_endian) {
 		/* inplace conversion */
 		p = auring_headptr_aint(mixersrc);
 		for (i = 0; i < count * mixer->track_fmt.channels; i++, p++) {
