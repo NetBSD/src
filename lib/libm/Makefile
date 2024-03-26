@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.226 2024/01/26 22:01:40 nros Exp $
+#  $NetBSD: Makefile,v 1.227 2024/03/26 20:12:47 rillig Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -55,6 +55,9 @@ LIBC_MACHINE_CPU?=	${MACHINE_CPU}
 
 LINTFLAGS+=	-g		# compiler_rt uses typeof() and __extension__
 LINTFLAGS+=	-X 117		# GCC sign-extends '>>' on signed int
+LINTFLAGS.s_logl.c+=	-X 161	# constant in conditional context
+LINTFLAGS.s_logl.c+=	-X 193	# unreachable statement (due to 161)
+LINTFLAGS.s_logl.c+=	-X 177	# non-constant initializer
 
 .if (${LIBC_MACHINE_CPU} == "aarch64")
 .PATH: ${.CURDIR}/arch/aarch64
