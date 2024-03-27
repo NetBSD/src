@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.9 2024/03/06 08:19:44 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.10 2024/03/27 06:52:03 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -780,7 +780,7 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		*(u_int *)data = WSDISPLAY_TYPE_STI;
 		return 0;
 
 	/* PCI config read/write passthrough. */
@@ -834,11 +834,15 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_GET_FBINFO:
-	{
+		{
 			struct wsdisplayio_fbinfo *fbi = data;
+			int ret;
 
-		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-	}
+			ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+			fbi->fbi_height = sc->sc_scr.fbheight;
+			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+			return ret;
+		}
 
 	case WSDISPLAYIO_GCURPOS:
 		{
