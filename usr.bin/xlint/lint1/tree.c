@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.627 2024/03/27 19:28:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.628 2024/03/27 20:09:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.627 2024/03/27 19:28:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.628 2024/03/27 20:09:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -829,11 +829,11 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 		*overflow = l < r;
 		return l - r;
 	case SHL:
-		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about out-of-bounds 'r'. */
 		/* TODO: warn about overflow. */
 		return l << (r & 63);
 	case SHR:
-		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about out-of-bounds 'r'. */
 		return l >> (r & 63);
 	case LT:
 		return l < r ? 1 : 0;
@@ -924,11 +924,11 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		}
 		return l - r;
 	case SHL:
-		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about out-of-bounds 'r'. */
 		/* TODO: warn about overflow. */
 		return l << (r & 63);
 	case SHR:
-		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about out-of-bounds 'r'. */
 		if (l < 0)
 			return (int64_t)~(~(uint64_t)l >> (r & 63));
 		return (int64_t)((uint64_t)l >> (r & 63));
@@ -4241,8 +4241,7 @@ check_function_arguments(const function_call *call)
 			error(151, i + 1);
 			return;
 		}
-		if (is_struct_or_union(at) &&
-		    is_incomplete(arg->tn_type)) {
+		if (is_struct_or_union(at) && is_incomplete(arg->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, i + 1);
 			return;

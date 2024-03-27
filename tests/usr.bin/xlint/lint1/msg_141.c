@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_141.c,v 1.16 2024/03/10 19:45:14 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.17 2024/03/27 20:09:43 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: '%s' overflows '%s' [141]
@@ -12,6 +12,7 @@ signed int s32;
 unsigned int u32;
 signed long long s64;
 unsigned long long u64;
+_Bool cond;
 
 void
 compl_s32(void)
@@ -406,7 +407,16 @@ minus_s64(void)
 void
 minus_u64(void)
 {
-	// TODO
+	u64 = 0x0000000000000000ULL - 0x0000000000000000ULL;
+	/* expect+1: warning: '0 - 1' overflows 'unsigned long long' [141] */
+	u64 = 0x0000000000000000ULL - 0x0000000000000001ULL;
+	/* expect+1: warning: '0 - 9223372036854775808' overflows 'unsigned long long' [141] */
+	u64 = 0x0000000000000000ULL - 0x8000000000000000ULL;
+	u64 = 0x8000000000000000ULL - 0x0000000000000001ULL;
+	/* expect+1: warning: '0 - 18446744073709551615' overflows 'unsigned long long' [141] */
+	u64 = 0x0000000000000000ULL - 0xffffffffffffffffULL;
+	u64 = 0xffffffffffffffffULL - 0x0000000000000000ULL;
+	u64 = 0xffffffffffffffffULL - 0xffffffffffffffffULL;
 }
 
 void
@@ -439,13 +449,19 @@ shl_u32(void)
 void
 shl_s64(void)
 {
-	// TODO
+	s64 = 1LL << 62;
+	s64 = 1LL << 63;
+	/* expect+1: warning: shift amount 64 equals bit-size of 'long long' [267] */
+	s64 = 1LL << 64;
 }
 
 void
 shl_u64(void)
 {
-	// TODO
+	s64 = 1ULL << 62;
+	s64 = 1ULL << 63;
+	/* expect+1: warning: shift amount 64 equals bit-size of 'unsigned long long' [267] */
+	s64 = 1ULL << 64;
 }
 
 void
@@ -483,13 +499,13 @@ shr_s64(void)
 	// TODO
 
 	/* expect+1: error: negative array dimension (-16) [20] */
-	typedef int shr_minus_1_shr_0[-16LL >> 0];
+	typedef int minus_16_shr_0[-16LL >> 0];
 	/* expect+1: error: negative array dimension (-8) [20] */
-	typedef int shr_minus_1_shr_1[-16LL >> 1];
+	typedef int minus_16_shr_1[-16LL >> 1];
 	/* expect+1: error: negative array dimension (-1) [20] */
-	typedef int shr_minus_1_shr_16[-16LL >> 16];
+	typedef int minus_16_shr_16[-16LL >> 16];
 	/* expect+1: error: negative array dimension (-1) [20] */
-	typedef int shr_minus_1_shr_40[-16LL >> 40];
+	typedef int minus_16_shr_40[-16LL >> 40];
 }
 
 void
@@ -501,25 +517,45 @@ shr_u64(void)
 void
 compare_s32(void)
 {
-	// TODO
+	cond = 0x7fffffff <  (-0x7fffffff - 1);
+	cond = 0x7fffffff <= (-0x7fffffff - 1);
+	cond = 0x7fffffff >  (-0x7fffffff - 1);
+	cond = 0x7fffffff >= (-0x7fffffff - 1);
+	cond = 0x7fffffff == (-0x7fffffff - 1);
+	cond = 0x7fffffff != (-0x7fffffff - 1);
 }
 
 void
 compare_u32(void)
 {
-	// TODO
+	cond = 0xffffffffU <  0x00000000U;
+	cond = 0xffffffffU <= 0x00000000U;
+	cond = 0xffffffffU >  0x00000000U;
+	cond = 0xffffffffU >= 0x00000000U;
+	cond = 0xffffffffU == 0x00000000U;
+	cond = 0xffffffffU != 0x00000000U;
 }
 
 void
 compare_s64(void)
 {
-	// TODO
+	cond = 0x7fffffffffffffffLL <  (-0x7fffffffffffffffLL - 1);
+	cond = 0x7fffffffffffffffLL <= (-0x7fffffffffffffffLL - 1);
+	cond = 0x7fffffffffffffffLL >  (-0x7fffffffffffffffLL - 1);
+	cond = 0x7fffffffffffffffLL >= (-0x7fffffffffffffffLL - 1);
+	cond = 0x7fffffffffffffffLL == (-0x7fffffffffffffffLL - 1);
+	cond = 0x7fffffffffffffffLL != (-0x7fffffffffffffffLL - 1);
 }
 
 void
 compare_u64(void)
 {
-	// TODO
+	cond = 0xffffffffffffffffULL <  0x0000000000000000ULL;
+	cond = 0xffffffffffffffffULL <= 0x0000000000000000ULL;
+	cond = 0xffffffffffffffffULL >  0x0000000000000000ULL;
+	cond = 0xffffffffffffffffULL >= 0x0000000000000000ULL;
+	cond = 0xffffffffffffffffULL == 0x0000000000000000ULL;
+	cond = 0xffffffffffffffffULL != 0x0000000000000000ULL;
 }
 
 void
@@ -538,13 +574,13 @@ bitand_u32(void)
 void
 bitand_s64(void)
 {
-	// TODO
+	u64 = ~0x7fffeeeeddddccccLL & 0x1111222233334444LL;
 }
 
 void
 bitand_u64(void)
 {
-	// TODO
+	u64 = 0xffffeeeeddddccccULL & 0x1111222233334444ULL;
 }
 
 void
@@ -563,13 +599,13 @@ bitxor_u32(void)
 void
 bitxor_s64(void)
 {
-	// TODO
+	s64 = ~0x123456789abcdef0LL ^ 0x0123456789abcdefLL;
 }
 
 void
 bitxor_u64(void)
 {
-	// TODO
+	u64 = 0xfedcba9876543210ULL ^ 0x0123456789abcdefULL;
 }
 
 void
@@ -589,11 +625,11 @@ bitor_u32(void)
 void
 bitor_s64(void)
 {
-	// TODO
+	s64 = 0x1111222233334444LL | ~0x0000111122223333LL;
 }
 
 void
 bitor_u64(void)
 {
-	// TODO
+	u64 = 0x1111222233334444ULL | 0xffffeeeeddddccccULL;
 }
