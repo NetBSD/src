@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.216 2024/02/23 05:34:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.217 2024/03/27 05:43:38 rillig Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -9,13 +9,11 @@
 
 # TOOLDIR must be valid, unless MKTOOLS=no
 .if ${MKTOOLS:Uyes} != "no"
-.if "${TOOLDIR}" == ""
-.error "TOOLDIR is undefined or empty"
-.elif "${TOOLDIR:tW:M/*}" == ""
-.error "TOOLDIR is not an absolute path: ${TOOLDIR}"
-#.elif !exists(TOOLDIR) # XXX .exists fails for directories
-#.error "TOOLDIR does not exist: ${TOOLDIR}"
-.endif
+.  if "${TOOLDIR}" == ""
+.    error TOOLDIR is undefined or empty
+.  elif ${TOOLDIR:tW:M/*} == ""
+.    error TOOLDIR '${TOOLDIR}' is not an absolute path
+.  endif
 .endif # MKTOOLS != no
 
 # TOOLS_BUILDRUMP == yes builds only the subset of the tools required
