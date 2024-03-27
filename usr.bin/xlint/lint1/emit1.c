@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.93 2024/03/19 23:19:03 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.94 2024/03/27 20:09:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.93 2024/03/19 23:19:03 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.94 2024/03/27 20:09:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -187,7 +187,7 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	 */
 	if (sc != EXTERN && !(sc == STATIC && sym->s_type->t_tspec == FUNC))
 		return;
-	if (isdigit((unsigned char)sym->s_name[0]))	/* 00000000_tmp */
+	if (isdigit((unsigned char)sym->s_name[0]))	/* see mktempsym */
 		return;
 
 	outint(csrc_pos.p_line);
