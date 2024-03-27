@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.35 2024/03/27 01:43:26 riastradh Exp $
+.\"	$NetBSD: exports.5,v 1.36 2024/03/27 13:11:14 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)exports.5	8.3 (Berkeley) 3/29/95
 .\"
-.Dd October 8, 2006
+.Dd March 27, 2024
 .Dt EXPORTS 5
 .Os
 .Sh NAME
@@ -55,16 +55,16 @@ Each entry in
 is a line with a list of directories followed by a list of hosts,
 netgroups, and options, separated by spaces or tabs:
 .Pp
-.Dl Pf / Va dir "..." Oo Va host | Va netgroup | Fl Va option Oc "..."
+.D1 Li / Ns Ar dir Li ... Oo Ar host | Ar netgroup | Fl Ar option Oc Li ...
 .Pp
 All directories in a single line must live in the same filesystem,
 which is exported to the hosts and netgroups listed, according to the
 options specified.
 Exported directories must not have pathname components that are
 symbolic links,
-.Ql "." ,
+.Ql \&. ,
 or
-.Ql ".." .
+.Ql \&.. .
 .Pp
 .Bf -symbolic
 Warning:
@@ -110,8 +110,9 @@ must come before any hosts, netgroups, or options on a line.
 Options begin with
 .Ql - .
 All other items on an export line are interpreted either as netgroups
-(see
-.Xr netgroup 5 )
+.Po see
+.Xr netgroup 5
+.Pc
 or as hosts, which can be either names, as in example.com, or numbers,
 as in 192.0.2.123 or 2001:db8:1234:abcd::42.
 Sets of hosts in a contiguous network range can be specified with the
@@ -129,7 +130,7 @@ options are exported to
 hosts on the network, with no access control.
 .Pp
 Supported export options:
-.Bl -tag -width ".Fl noresvport"
+.Bl -tag -width Fl
 .It Fl alldirs
 Allow mount requests from clients at any point within the filesystem,
 including regular files.
@@ -144,39 +145,40 @@ A client
 can still access the whole filesystem via individual RPCs if it
 wanted to, even if just one subdirectory has been mounted.
 .Sm off
-.It Fl maproot No = Ar user
+.It Fl maproot Li = Ar user
 .Sm on
 The credential of the specified user is used for remote access by root.
 The credential includes all the groups to which the user is a member
-on the local machine (see
-.Xr id 1 ) .
+on the local machine
+.Po see
+.Xr id 1
+.Pc .
 The user may be specified by name or number.
 .Sm off
-.It Fl maproot No = Ar user : group1 : group2 : ...
+.It Fl maproot Li = Ar user\^ Li \&: Ar group1\^ Li \&: group2\^ Li \&: Ar ...
 .Sm on
 The colon separated list is used to specify the precise credential
 to be used for remote access by root.
 The elements of the list may be either names or numbers.
 Note that
-.Sm off
-.Ql Ar user ":"
-.Sm on
+.Sq Ar user\^ Ns Li \&:
+(with the trailing colon)
 should be used to distinguish a credential containing no groups from a
 complete credential for that user.
 .Sm off
-.It Fl mapall No = Ar user
-.It Fl mapall No = Ar user : group1 : group2 : ...
+.It Fl mapall Li = Ar user
+.It Fl mapall Li = Ar user\^ Li \&: Ar group1\^ Li \&: Ar group2\^ Li \&: Ar ...
 .Sm on
 Mapping for all client uids (including root)
 using the same semantics as
 .Fl maproot .
 .It Fl r Ar user
-.It Fl r Ar user Ns : Ns Ar group1 Ns : Ns Ar group2 Ns : Ar ...
+.It Fl r Ar user\^ Ns Li \&: Ns Ar group1\^ Ns Li \&: Ns Ar group2\^ Ns Li \&: Ns Ar ...
 Synonym for
 .Fl maproot ,
 for compatibility with older export file formats.
 .Pp
-Note:
+.Em Note :
 Not a synonym for the read-only option
 .Fl ro .
 .El
@@ -196,7 +198,7 @@ If a
 option is given,
 all users (including root) will be mapped to that credential in
 place of their own.
-.Bl -tag -width ".Fl noresvport"
+.Bl -tag -width Fl
 .It Fl kerb
 Specifies that the Kerberos authentication server should be
 used to authenticate and map client credentials.
@@ -204,8 +206,11 @@ used to authenticate and map client credentials.
 .It Fl ro
 Export filesystem read-only.
 Clients will be forbidden to change or write to anything in the
-filesystem (except for named pipes, sockets, and device nodes, where
-write semantics is client-side anyway).
+filesystem
+.Po
+except for named pipes, sockets, and device nodes, where
+write semantics is client-side anyway
+.Pc .
 .It Fl o
 Synonym for
 .Fl ro
@@ -226,9 +231,7 @@ Using this option decreases the security of your system.
 (WebNFS)
 Enables WebNFS export, equivalent to combining
 .Fl public ,
-.Sm off
-.Fl mapall No = Ar nobody ,
-.Sm on
+.Fl mapall=nobody ,
 and
 .Fl ro .
 .It Fl public
@@ -241,7 +244,7 @@ This implies:
 read/write access to all files in the filesystem
 .It
 not requiring reserved ports
-.Pf ( Fl noresvport , Fl noresvmnt )
+.Pq Fl noresvport , Fl noresvmnt
 .It
 not remapping uids
 .El
@@ -255,16 +258,8 @@ not be used.
 For a WebNFS export,
 use the
 .Fl webnfs
-flag, which implies
-.Fl public ,
-.Sm off
-.Fl mapall No = Ar nobody ,
-.Sm on
-and
-.Fl ro .
-.Sm off
-.It Fl index No = Ar file
-.Sm on
+flag.
+.It Fl index Ns Li = Ns Ar file
 (WebNFS)
 File whose handle will be returned if
 a directory is looked up using the public filehandle.
@@ -293,9 +288,9 @@ WebNFS enables any client to get filehandles to the exported filesystem.
 Using IP spoofing, a client could then pretend to be a host to which
 the same filesystem was exported read/write, and use the handle to
 gain access to that filesystem.
-.Bl -tag -width ".Fl noresvport"
+.Bl -tag -width Fl
 .Sm off
-.It Fl network No = Ar netname Op No / Ar prefixlength
+.It Fl network Li = Ar netname Op Li / Ar prefixlength
 .Sm on
 Export the filesystem to all hosts in the specified network.
 .Pp
@@ -305,20 +300,29 @@ large number of clients within an administrative subnet.
 .Pp
 The netmask may be specified either by
 .Ar prefixlength ,
-or (for IPv4 networks only) by using a separate
+or
+.Pq for IPv4 networks only
+by using a separate
 .Fl mask
 option.
 If the mask is not specified, it will default to the mask for that network
-class (A, B or C; see
-.Xr inet 4 ) .
+class
+.Po
+A, B or C; see
+.Xr inet 4
+.Pc .
 .Pp
 Scoped IPv6 address must carry scope identifier as documented in
 .Xr inet6 4 .
 For example,
-.Dq fe80::%ne2/10
-is used to specify fe80::/10 on ne2 interface.
+.Ql fe80::%ne2/10
+is used to specify
+.Ql fe80::/10
+on
+.Ql ne2
+interface.
 .Sm off
-.It Fl mask No = Ar netmask .
+.It Fl mask No = Ar netmask
 .Sm on
 (IPv4-only)
 Netmask for
@@ -327,16 +331,17 @@ options with no
 .Ar prefixlength .
 .El
 .Sh FILES
-.Bl -tag -width /etc/exports -compact
+.Bl -tag -width Pa -compact
 .It Pa /etc/exports
 The default remote mount-point file.
 .El
 .Pp
 If you have modified the
 .Pa /etc/exports
-file, send the mountd a SIGHUP to make it re-read the
-.Pa /etc/exports
-file:
+file, send the mountd a
+.Dv SIGHUP
+to make it re-read it:
+.Pp
 .Dl "kill -HUP $(cat /var/run/mountd.pid)" .
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -360,57 +365,66 @@ following:
 .Bl -tag -width ".Pa /usr"
 .It Pa /usr
 is exported to hosts
-.Em friends
-where friends is specified in the netgroup file
-with users mapped to their remote credentials and
+.Ql friends
+where
+.Ql friends
+is specified in the
+.Xr netgroup 5
+file with users mapped to their remote credentials and
 root mapped to uid 0 and group 10.
 It is exported read-write and the hosts in
-.Dq friends
+.Ql friends
 can mount either
 .Pa /usr
 or
 .Pa /usr/local .
 .Pp
 It is also exported to
-.Em 131.104.48.16
+.Ql 131.104.48.16
 and
-.Em grumpy.cis.uoguelph.ca
+.Ql grumpy.cis.uoguelph.ca
 with users mapped to their remote credentials and
 root mapped to the user and groups associated with
-.Dq daemon .
+.Ql daemon .
 .Pp
 It is also exported to the rest of the world as read-only with
 all users mapped to the user and groups associated with
-.Dq nobody .
+.Ql nobody .
 .It Pa /u
 is exported to all hosts on the subnetwork
-.Em 131.104.48
+.Ql 131.104.48
 with root mapped to the uid for
-.Dq bin
+.Ql bin
 and with no group access.
 .It Pa /u2
 is exported to the hosts in
-.Dq friends
+.Ql friends
 with root mapped to uid and groups associated with
-.Dq root ;
+.Ql root ;
 it is exported to all hosts on network
-.Dq cis-net
+.Ql cis-net
 allowing mounts at any
-directory within /u2 and mapping all uids to credentials for the principal
+directory within
+.Pa /u2
+and mapping all uids to credentials for the principal
 that is authenticated by a Kerberos ticket.
-.Sy (Kerberos not implemented.)
+.Pq Sy Kerberos not implemented .
 .It Pa /a
-is exported to the network 192.168.0.0, with a netmask of 255.255.255.0.
+is exported to the network
+.Ql 192.168.0.0 ,
+with a netmask of
+.Ql 255.255.255.0 .
 However, the netmask in the entry for
 .Pa /a
 is not specified through a
 .Fl mask
 option, but through the
-.Pf / Ar prefixlen
+.Li / Ns Ar prefixlen
 notation.
 .It Pa /a
-is also exported to the IPv6 network 3ffe:1ce1:1:fe80:: address, using
-the upper 64 bits as the prefix.
+is also exported to the IPv6 network
+.Ql 3ffe:1ce1:1:fe80::
+address, using the upper 64 bits as the prefix.
 Note that, unlike with IPv4 network addresses, the specified network
 address must be complete, and not just contain the upper bits.
 With IPv6 addresses, the
@@ -448,12 +462,11 @@ Re-exporting should work to some extent and can even be useful in
 some cases, but don't expect it works as well as with local file
 systems.
 .Pp
-.Pp
 Filesystems that provide a namespace for a subtree of another
 filesystem such as nullfs
-.No ( Xr mount_null 8 )
+.Pq Xr mount_null 8
 and umapfs
-.No ( Xr mount_umap 8 )
+.Pq Xr mount_umap 8
 .Em do not
 restrict
 .Tn NFS
