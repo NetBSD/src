@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.nbincludes,v 1.7 2024/03/26 16:48:34 christos Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.8 2024/03/27 21:54:43 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -6,7 +6,6 @@ _ARCHDIR:=	${.PARSEDIR}/../sys/arch
 _INCDIR:=	${.PARSEDIR}/../include
 _SYSDIR:=	${.PARSEDIR}/../sys/sys
 _UFSDIR:=	${.PARSEDIR}/../sys/ufs
-_ELFTOOLCHAINDIR:=	${.PARSEDIR}/elftoolchain
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
 .if make(depend) || make(all) || make(dependall) || make(install)
@@ -46,4 +45,3 @@ beforedepend:
 	    ${TOOL_PAX} -rw ${_UFS_INCS} ${TOOLDIR}/include/nbinclude/ufs
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine
-	cd ${_ELFTOOLCHAINDIR}/common && ${MAKE} includes
