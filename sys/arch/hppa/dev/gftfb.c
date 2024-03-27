@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.10 2024/03/27 06:52:03 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.11 2024/03/27 09:08:38 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -839,7 +839,6 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			int ret;
 
 			ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-			fbi->fbi_height = sc->sc_scr.fbheight;
 			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
 			return ret;
 		}
