@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32.c,v 1.4 2023/02/27 23:07:53 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32.c,v 1.5 2024/03/27 19:28:20 rillig Exp $	*/
 # 3 "platform_ilp32.c"
 
 /*
@@ -10,7 +10,37 @@
  *	platform_ilp32_long.c
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 /* lint1-only-if: ilp32 */
 
-typedef int do_not_warn_about_empty_translation_unit;
+void
+switch_s64(long long x)
+{
+	switch (x) {
+	case 0x222200000001:
+	case 0x333300000001:
+	/* expect+1: error: duplicate case '37529424232449' in switch [199] */
+	case 0x222200000001:
+	case -0x7fffffffffffffff:
+	/* expect+1: error: duplicate case '-9223372036854775807' in switch [199] */
+	case -0x7fffffffffffffff:
+		break;
+	}
+}
+
+void
+switch_u64(unsigned long long x)
+{
+	switch (x) {
+	case 0x222200000001:
+	case 0x333300000001:
+	/* expect+1: error: duplicate case '37529424232449' in switch [200] */
+	case 0x222200000001:
+	/* expect+1: warning: conversion of negative constant to unsigned type [222] */
+	case -0x7fffffffffffffff:
+	/* expect+2: warning: conversion of negative constant to unsigned type [222] */
+	/* expect+1: error: duplicate case '9223372036854775809' in switch [200] */
+	case -0x7fffffffffffffff:
+		break;
+	}
+}

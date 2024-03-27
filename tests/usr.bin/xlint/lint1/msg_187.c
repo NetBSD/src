@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_187.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_187.c,v 1.6 2024/03/27 19:28:20 rillig Exp $	*/
 # 3 "msg_187.c"
 
-// Test for message: string literal too long (%lu) for target array (%lu) [187]
+// Test for message: string literal too long (%ju) for target array (%ju) [187]
 
 /* lint1-extra-flags: -X 351 */
 

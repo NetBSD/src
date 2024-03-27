@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.263 2024/03/09 13:54:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.264 2024/03/27 19:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.263 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.264 2024/03/27 19:28:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -835,8 +835,8 @@ initialization_add_designator_subscript(initialization *in, size_t subscript)
 	}
 
 	if (!tp->t_incomplete_array && subscript >= (size_t)tp->u.dimension) {
-		/* array subscript cannot be > %d: %ld */
-		error(168, tp->u.dimension - 1, (long)subscript);
+		/* array subscript cannot be > %d: %jd */
+		error(168, tp->u.dimension - 1, (intmax_t)subscript);
 		subscript = 0;	/* suppress further errors */
 	}
 
@@ -893,9 +893,8 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 	}
 
 	if (!tp->t_incomplete_array && (size_t)tp->u.dimension < len)
-		/* string literal too long (%lu) for target array (%lu) */
-		warning(187, (unsigned long)len,
-		    (unsigned long)tp->u.dimension);
+		/* string literal too long (%ju) for target array (%ju) */
+		warning(187, (uintmax_t)len, (uintmax_t)tp->u.dimension);
 
 	brace_level *bl = in->in_brace_level;
 	if (bl != NULL && bl->bl_designation.dn_len == 0)

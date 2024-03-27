@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.233 2024/03/25 22:37:43 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.234 2024/03/27 19:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.233 2024/03/25 22:37:43 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.234 2024/03/27 19:28:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -222,8 +222,8 @@ static const char *const msgs[] = {
 	"assignment of negative constant to unsigned type",		// 164
 	"constant truncated by assignment",				// 165
 	"precision lost in bit-field assignment",			// 166
-	"array subscript cannot be negative: %ld",			// 167
-	"array subscript cannot be > %d: %ld",				// 168
+	"array subscript cannot be negative: %jd",			// 167
+	"array subscript cannot be > %d: %jd",				// 168
 	"precedence confusion possible: parenthesize!",			// 169
 	"first operand of '?' must have scalar type",			// 170
 	"cannot assign to '%s' from '%s'",				// 171
@@ -242,7 +242,7 @@ static const char *const msgs[] = {
 	"illegal combination of '%s' and '%s'",				// 184
 	"cannot initialize '%s' from '%s'",				// 185
 	"bit-field initialization is illegal in traditional C",		// 186
-	"string literal too long (%lu) for target array (%lu)",		// 187
+	"string literal too long (%ju) for target array (%ju)",		// 187
 	"no automatic aggregate initialization in traditional C",	// 188
 	"",			/* no longer used */			// 189
 	"empty array declaration for '%s'",				// 190
@@ -254,8 +254,8 @@ static const char *const msgs[] = {
 	"case label affected by conversion",				// 196
 	"non-constant case expression",					// 197
 	"non-integral case expression",					// 198
-	"duplicate case '%ld' in switch",				// 199
-	"duplicate case '%lu' in switch",				// 200
+	"duplicate case '%jd' in switch",				// 199
+	"duplicate case '%ju' in switch",				// 200
 	"default outside switch",					// 201
 	"duplicate default in switch",					// 202
 	"case label must be of type 'int' in traditional C",		// 203
