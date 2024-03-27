@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_199.c,v 1.4 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: msg_199.c,v 1.5 2024/03/27 19:28:20 rillig Exp $	*/
 # 3 "msg_199.c"
 
-// Test for message: duplicate case '%ld' in switch [199]
+// Test for message: duplicate case '%jd' in switch [199]
 
 /* lint1-extra-flags: -X 351 */
 

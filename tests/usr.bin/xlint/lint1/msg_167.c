@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_167.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_167.c,v 1.6 2024/03/27 19:28:20 rillig Exp $	*/
 # 3 "msg_167.c"
 
-// Test for message: array subscript cannot be negative: %ld [167]
+// Test for message: array subscript cannot be negative: %jd [167]
 
 /* lint1-extra-flags: -X 351 */
 

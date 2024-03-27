@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.184 2024/03/09 13:54:47 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.185 2024/03/27 19:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.184 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.185 2024/03/27 19:28:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -442,11 +442,11 @@ check_duplicate_case_label(control_statement *cs, const val_t *nv)
 
 	if (i < n) {
 		if (is_uinteger(nv->v_tspec))
-			/* duplicate case '%lu' in switch */
-			error(200, (unsigned long)nv->u.integer);
+			/* duplicate case '%ju' in switch */
+			error(200, (uintmax_t)nv->u.integer);
 		else
-			/* duplicate case '%ld' in switch */
-			error(199, (long)nv->u.integer);
+			/* duplicate case '%jd' in switch */
+			error(199, (intmax_t)nv->u.integer);
 		return false;
 	}
 
