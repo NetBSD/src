@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.33 2024/03/26 23:32:43 riastradh Exp $
+.\"	$NetBSD: exports.5,v 1.34 2024/03/27 00:46:17 riastradh Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,32 +174,13 @@ This option is currently not implemented.
 .Pp
 The
 .Fl ro
-option should be specified for filesystems that are read-only (default
-is to assume read/write).
+option specifies that the filesystem should be exported read-only
+(default read/write).
 The option
 .Fl o
 is a synonym for
 .Fl ro
 in an effort to be backward compatible with older export file formats.
-.Pp
-.Bf -symbolic
-Warning:
-Exporting a read/write filesystem with
-.Fl ro
-.Em does not
-prevent clients from writing to it.
-.Ef
-To prevent clients from writing to a filesystem, it must be mounted
-read-only
-.Em on the server
-in the first place.
-To export a read/write filesystem so clients can only read from it, not
-write to it, you can mount a read-only nullfs from the filesystem with
-.Xr mount_null 8
-using the
-.Fl o Cm ro
-option, and then export the read-only nullfs instead.
-See also caveats about nullfs namespace below.
 .Pp
 The
 .Fl noresvport
@@ -424,7 +405,7 @@ systems.
 .Pp
 .Pp
 Filesystems that provide a namespace for a subtree of another
-filesystem such as nullfs 
+filesystem such as nullfs
 .No ( Xr mount_null 8 )
 and umapfs
 .No ( Xr mount_umap 8 )
