@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2024/03/26 16:52:03 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2024/03/27 21:55:08 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,6 +10,7 @@ INCS=		elfdefinitions.h
 HOST_INCSDIR=	${TOOLDIR}/include/sys
 
 elfdefinitions.h:	elfdefinitions.m4 elfconstants.m4
+	${_MKTARGET_CREATE}
 	${TOOL_M4} -I${SRCDIR} -D SRCDIR=${SRCDIR} ${M4FLAGS} \
 		elfdefinitions.m4 > ${.TARGET}
 
