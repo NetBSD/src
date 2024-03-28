@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.11 2024/03/27 09:08:38 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.12 2024/03/28 12:50:31 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -88,6 +88,7 @@ struct	gftfb_softc {
 #define HW_FB	0
 #define HW_FILL	1
 #define HW_BLIT	2
+	uint32_t sc_rect_colour, sc_rect_height;
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
@@ -250,7 +251,9 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
-	
+	sc->sc_rect_colour = 0xf0000000;
+	sc->sc_rect_height = 0;
+
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name, 
 	    sc->sc_width, sc->sc_height);
 	gftfb_setup(sc);
@@ -687,6 +690,9 @@ gftfb_setup(struct gftfb_softc *sc)
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
 
+	sc->sc_rect_colour = 0xf0000000;
+	sc->sc_rect_height = 0;
+
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
 	ngle_bt458_write(memt, memh, 0x08, 0x04);
@@ -1051,7 +1057,7 @@ gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
 }
 
 static void
-gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
+gftfb_real_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 		      uint32_t bg)
 {
 	struct sti_rom *rom = sc->sc_base.sc_rom;
@@ -1081,6 +1087,30 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 
 }
 
+static void
+gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
+		      uint32_t bg)
+{
+	/*
+	 * For some reason my 4MB VisEG always draws rectangles at least 32
+	 * pixels wide - no idea why, the bitblt command doesn't have this
+	 * problem.
+	 * So, as a workaround, we draw a 50xFontHeight rectangle to the right
+	 * of the visible fb, keep track of the colour so we don't need to
+	 * redraw every time, and bitblt the portion we need
+	 */
+	if (wi < 50) {
+		if ((bg != sc->sc_rect_colour) ||
+		    (he > sc->sc_rect_height)) {
+			gftfb_real_rectfill(sc, sc->sc_width + 10, 0, 50, 
+			    he, bg);
+			sc->sc_rect_colour = bg;
+			sc->sc_rect_height = he;
+		}
+		gftfb_bitblt(sc, sc->sc_width + 10, 0, x, y, wi, he, RopSrc);
+	} else
+		gftfb_real_rectfill(sc, x, y, wi, he, bg);
+}
 
 static void
 gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
@@ -1161,9 +1191,8 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
-#if 0
 	uint32_t bg;
-#endif
+
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
@@ -1179,20 +1208,14 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
-#if 0
+
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
 
-	/* XXX
-	 * rectfill currently draws rectangles less than 32 pixels wide as
-	 * 32 pixels wide, no idea why. So until I figure that one out we 
-	 * draw blanks by software
-	 * bitblt doesn't seem to have this problem
-	 */
 	if (c == 0x20) {
 		gftfb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
-#endif
+
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
 		return;
