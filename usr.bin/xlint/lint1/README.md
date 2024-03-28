@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.16 2024/03/09 13:54:47 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.17 2024/03/28 21:04:48 rillig Exp $)
 
 # Introduction
 
@@ -7,9 +7,9 @@ Lint1 analyzes a single translation unit of C code.
 * It reads the output of the C preprocessor, retaining the comments.
 * The lexer in `scan.l` and `lex.c` splits the input into tokens.
 * The parser in `cgram.y` creates types and expressions from the tokens.
-* It checks declarations in `decl.c`.
-* It checks initializations in `init.c`.
-* It checks types and expressions in `tree.c`.
+* The checks for declarations are in `decl.c`.
+* The checks for initializations are in `init.c`.
+* The checks for types and expressions are in `tree.c`.
 
 To see how a specific lint message is triggered, read the corresponding unit
 test in `tests/usr.bin/xlint/lint1/msg_???.c`.
@@ -48,10 +48,11 @@ or just informational depends on several things:
 
 * The language level, with its possible values:
     * traditional C (`-t`)
-    * migration from traditional C and C90 (default)
+    * migration from traditional C to C90 (default)
     * C90 (`-s`)
     * C99 (`-S`)
     * C11 (`-Ac11`)
+    * C23 (`-Ac23`)
 * In GCC mode (`-g`), lint allows several GNU extensions,
   reducing the amount of printed messages.
 * In strict bool mode (`-T`), lint issues errors when `bool` is mixed with
