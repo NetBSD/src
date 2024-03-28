@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.215 2024/03/26 18:10:21 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.216 2024/03/28 08:33:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -21574,4 +21574,9 @@ sys/dev/audio/audio.c				1.137
 
 	audio(4): fix byte swapped samples on big-endian machines.
 	[mlelstv, ticket #650]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h 				(manually edited)
+
+	Welcome to 10.0
 
