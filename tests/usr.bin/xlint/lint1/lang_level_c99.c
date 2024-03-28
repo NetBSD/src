@@ -1,16 +1,21 @@
-/*	$NetBSD: lang_level_c99.c,v 1.2 2023/08/06 19:44:50 rillig Exp $	*/
+/*	$NetBSD: lang_level_c99.c,v 1.3 2024/03/28 21:04:48 rillig Exp $	*/
 # 3 "lang_level_c99.c"
 
 /*
- * Tests that are specific to the C99 language level, in particular, features
- * that were added in C99.
+ * Tests that are specific to the C99 language level, in particular:
  *
- * In the below comments, [-] means unsupported and [x] means supported.
+ *	* syntax elements that were added in C99
+ *	* lint diagnostics that differ between the C90 and C99 language levels
+ *	* lint diagnostics that differ between the C99 and C11 language levels
  */
 
 /* lint1-flags: -S -w -X 351 */
 
-/* C99 Foreword */
+/*
+ * Features that were added in the C99 standard, as listed in the C99 foreword.
+ *
+ * In the below comments, [-] means unsupported and [x] means supported.
+ */
 
 // [-] restricted character set support via digraphs and <iso646.h>
 //

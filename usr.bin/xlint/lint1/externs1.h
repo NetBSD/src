@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.219 2024/03/09 10:41:11 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.220 2024/03/28 21:04:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,21 +36,21 @@
 /*
  * main1.c
  */
+extern bool Fflag;
+extern bool Pflag;
+extern bool Tflag;
 extern int aflag;
 extern bool bflag;
 extern bool cflag;
 extern bool eflag;
-extern bool Fflag;
 extern bool hflag;
 extern bool pflag;
 extern bool rflag;
 extern bool uflag;
 extern bool vflag;
-extern bool yflag;
 extern bool wflag;
+extern bool yflag;
 extern bool zflag;
-extern bool Tflag;
-extern bool Pflag;
 
 extern bool allow_trad;
 extern bool allow_c90;
@@ -74,7 +74,7 @@ int yyerror(const char *);
 int yyparse(void);
 
 /*
- * scan.l
+ * lex.c
  */
 extern bool in_gcc_attribute;
 extern pos_t curr_pos;
