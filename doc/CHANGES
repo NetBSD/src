@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3045 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3046 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -292,4 +292,24 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[riastradh 20240303]
 	audioplay(1): Add -n flag that doesn't write audio data for the
 		test suite. [mrg 20240304]
+	alpha: Add a bus space implementation for the Gbus, the general
+		8-bit bus present on Laser / TurboLaser CPU modules.
+		[thorepj 2024036]
+	lint(1): Detect more types of integer overflow. [rillig 20240310]
+	lint(1): Add extra details to the message about integer overflow.
+		[rillig 20240310]
 	mac68k: Add ascaudio(4) ASC audio driver. [nat 20240313]
+	x86: Inlcude the cgdroot.fs and zfsroot.fs ramdisks in the release
+		files. [riastradh 20240320]
+	apei(4): New driver for ACPI Platform Error Interfaces.
+		[riastradh 20240320]
+	vmt(4):  Process all queued messages without delay immediately.
+		From OpenBSD. [msaitoh 20240320]
+	acpihed(4): New driver for PNP0C33 to notify apei(4).
+		[riastradh 20240321]
+	echi(4): If device attach fails, install NULL pmf(4) handlers.
+		Allows suspend/resume on ThinkPad A475. [mrg 20240324]
+	utftdi(4): Add a "match quirk" mechanism that allows the driver to
+		selectively reject individual interfaces, allowing them to
+		be matched by ugen(4) and accessed through libusb.
+		[thorpej 20240326]
