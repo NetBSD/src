@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3047 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3048 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -294,12 +294,12 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		test suite. [mrg 20240304]
 	alpha: Add a bus space implementation for the Gbus, the general
 		8-bit bus present on Laser / TurboLaser CPU modules.
-		[thorepj 2024036]
+		[thorpej 20240306]
 	lint(1): Detect more types of integer overflow. [rillig 20240310]
 	lint(1): Add extra details to the message about integer overflow.
 		[rillig 20240310]
 	mac68k: Add ascaudio(4) ASC audio driver. [nat 20240313]
-	x86: Inlcude the cgdroot.fs and zfsroot.fs ramdisks in the release
+	x86: Include the cgdroot.fs and zfsroot.fs ramdisks in the release
 		files. [riastradh 20240320]
 	apei(4): New driver for ACPI Platform Error Interfaces.
 		[riastradh 20240320]
