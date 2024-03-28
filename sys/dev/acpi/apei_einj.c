@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_einj.c,v 1.6 2024/03/26 22:01:03 rillig Exp $	*/
+/*	$NetBSD: apei_einj.c,v 1.7 2024/03/28 13:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.6 2024/03/26 22:01:03 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_einj.c,v 1.7 2024/03/28 13:40:08 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -516,6 +516,16 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 	uint32_t i, nentries;
 
 	/*
+	 * Initialize the machine to execute the TRIGGER_ERROR action's
+	 * instructions.  Do this early to keep the error branches
+	 * simpler.
+	 */
+	memset(M, 0, sizeof(*M));
+	M->sc = sc;
+	M->x = x;		/* input */
+	M->y = 0;		/* output */
+
+	/*
 	 * Get the TRIGGER_ERROR action table's physical address.
 	 */
 	teatab_pa = apei_einj_act(sc, ACPI_EINJ_GET_TRIGGER_TABLE, 0);
@@ -586,15 +596,6 @@ apei_einj_trigger(struct apei_softc *sc, uint64_t x)
 	AcpiOsUnmapMemory(teatab, mapsize);
 	mapsize = tabsize;
 	teatab = AcpiOsMapMemory(teatab_pa, mapsize);
-
-	/*
-	 * Initialize the machine to execute the TRIGGER_ERROR action's
-	 * instructions.
-	 */
-	memset(M, 0, sizeof(*M));
-	M->sc = sc;
-	M->x = x;		/* input */
-	M->y = 0;		/* output */
 
 	/*
 	 * Now iterate over the EINJ-type entries and execute the
