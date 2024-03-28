@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsirand.8,v 1.10 2016/09/11 21:22:18 sevan Exp $
+.\"	$NetBSD: fsirand.8,v 1.11 2024/03/28 15:39:42 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,17 @@
 .Nm
 writes random inode generation numbers for all the inodes on device
 .Ar special .
-These random numbers make the NFS filehandles less predictable, increasing
-security of exported filesystems.
+These random numbers make the NFS filehandles less predictable, which
+was once thought to increase security of exported file systems.
+.Pp
+.Nm
+is no longer relevant because
+.Xr newfs 8
+has randomized inode generation numbers on all new file systems since
+.Nx 2.0 ,
+and in any case, exporting a file system to NFS clients allows them to
+traverse the entire file system, so making filehandles less predictable
+does not prevent clients from finding them anyway.
 .Pp
 .Nm
 should be run on a clean and unmounted filesystem.
