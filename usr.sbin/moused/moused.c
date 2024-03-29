@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.30 2023/06/24 05:15:42 msaitoh Exp $ */
+/* $NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.30 2023/06/24 05:15:42 msaitoh Exp $");
+__RCSID("$NetBSD: moused.c,v 1.31 2024/03/29 06:13:40 rillig Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -682,15 +682,6 @@ main(int argc, char *argv[])
 		}
 		if ((rodent.zmap[2] != 0) && (rodent.zmap[3] == 0))
 		    rodent.zmap[3] = rodent.zmap[2] + 1;
-	    }
-	    break;
-
-	case 'C':
-	    rodent.clickthreshold = atoi(optarg);
-	    if ((rodent.clickthreshold < 0) || 
-	        (rodent.clickthreshold > MAX_CLICKTHRESHOLD)) {
-	        warnx("invalid argument `%s'", optarg);
-	        usage();
 	    }
 	    break;
 
