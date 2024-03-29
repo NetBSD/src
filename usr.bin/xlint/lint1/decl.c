@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.396 2024/03/09 13:20:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.397 2024/03/29 08:35:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.396 2024/03/09 13:20:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.397 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1072,7 +1072,7 @@ declare_member(sym_t *dsym)
 		    rdsym->u.s_member.sm_containing_type) {
 			/* duplicate member name '%s' */
 			error(33, dsym->s_name);
-			rmsym(rdsym);
+			symtab_remove_forever(rdsym);
 		}
 	}
 
@@ -1169,14 +1169,6 @@ block_derive_pointer(type_t *stp, bool is_const, bool is_volatile)
 	return tp;
 }
 
-/*
- * The following 3 functions extend the type of a declarator with
- * pointer, function and array types.
- *
- * The current type is the type built by dcs_end_type (dcs->d_type) and
- * pointer, function and array types already added for this
- * declarator. The new type extension is inserted between both.
- */
 sym_t *
 add_pointer(sym_t *decl, qual_ptr *p)
 {
@@ -1205,23 +1197,19 @@ add_pointer(sym_t *decl, qual_ptr *p)
 }
 
 static type_t *
-block_derive_array(type_t *stp, bool dim, int len)
+block_derive_array(type_t *stp, bool has_dim, int dim)
 {
 
 	type_t *tp = block_derive_type(stp, ARRAY);
-	tp->u.dimension = len;
+	tp->u.dimension = dim;
 
 #if 0
 	/*
-	 * As of 2022-04-03, the implementation of the type parser (see
-	 * add_function, add_array, add_pointer) is strange.  When it sees the
-	 * type 'void *b[4]', it first creates 'void b[4]' and only later
-	 * inserts the '*' in the middle of the type.  Late modifications like
-	 * these should not be done at all, instead the parser should be fixed
-	 * to process the type names in the proper syntactical order.
-	 *
-	 * Since the intermediate type would be an array of void, but the final
-	 * type is valid, this check cannot be enabled yet.
+	 * When the type of the declaration 'void *b[4]' is constructed (see
+	 * add_function, add_array, add_pointer), the intermediate type
+	 * 'void[4]' is invalid and only later gets the '*' inserted in the
+	 * middle of the type.  Due to the invalid intermediate type, this
+	 * check cannot be enabled yet.
 	 */
 	if (stp->t_tspec == VOID) {
 		/* array of incomplete type */
@@ -1229,25 +1217,21 @@ block_derive_array(type_t *stp, bool dim, int len)
 		tp->t_subt = gettyp(CHAR);
 	}
 #endif
-	if (len < 0)
+	if (dim < 0)
 		/* negative array dimension (%d) */
-		error(20, len);
-	else if (len == 0 && dim)
+		error(20, dim);
+	else if (dim == 0 && has_dim)
 		/* zero sized array requires C99 or later */
 		c99ism(322);
-	else if (len == 0 && !dim)
+	else if (dim == 0 && !has_dim)
 		tp->t_incomplete_array = true;
 
 	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
 
-/*
- * If a dimension was specified, dim is true, otherwise false
- * n is the specified dimension
- */
 sym_t *
-add_array(sym_t *decl, bool dim, int n)
+add_array(sym_t *decl, bool has_dim, int dim)
 {
 
 	debug_dcs();
@@ -1259,7 +1243,7 @@ add_array(sym_t *decl, bool dim, int n)
 		lint_assert(*tpp != NULL);
 	}
 
-	*tpp = block_derive_array(dcs->d_type, dim, n);
+	*tpp = block_derive_array(dcs->d_type, has_dim, dim);
 
 	debug_step("%s: '%s'", __func__, type_name(decl->s_type));
 	return decl;
@@ -1980,7 +1964,7 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 			complete_type(dsym, rdsym);
 		}
 
-		rmsym(rdsym);
+		symtab_remove_forever(rdsym);
 	}
 
 	if (dsym->s_scl == TYPEDEF) {
@@ -2299,7 +2283,7 @@ declare_parameter(sym_t *sym, bool has_initializer)
 	    dcs->d_redeclared_symbol->s_block_level == block_level) {
 		/* redeclaration of formal parameter '%s' */
 		error(237, sym->s_name);
-		rmsym(dcs->d_redeclared_symbol);
+		symtab_remove_forever(dcs->d_redeclared_symbol);
 		sym->s_param = true;
 	}
 
@@ -2564,7 +2548,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 				if (hflag)
 					/* declaration of '%s' hides ... */
 					warning(91, dsym->s_name);
-				rmsym(rdsym);
+				symtab_remove_forever(rdsym);
 			}
 		}
 
@@ -2575,7 +2559,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 	if (rdsym->s_block_level == block_level) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		rmsym(rdsym);
+		symtab_remove_forever(rdsym);
 	}
 }
 
@@ -2741,7 +2725,7 @@ abstract_name_level(bool enclosing)
 	 * will be updated later, adding pointers, arrays and functions as
 	 * necessary.
 	 */
-	sym->s_type = (enclosing ? dcs->d_enclosing : dcs)->d_type;
+	sym->s_type = enclosing ? dcs->d_enclosing->d_type : dcs->d_type;
 	dcs->d_redeclared_symbol = NULL;
 
 	debug_printf("%s: ", __func__);

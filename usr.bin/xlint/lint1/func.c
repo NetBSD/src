@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.185 2024/03/27 19:28:20 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.186 2024/03/29 08:35:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.185 2024/03/27 19:28:20 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.186 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -308,8 +308,7 @@ begin_function(sym_t *fsym)
 				fsym->s_inline = true;
 		}
 
-		/* remove the old symbol from the symbol table */
-		rmsym(rdsym);
+		symtab_remove_forever(rdsym);
 	}
 
 	if (fsym->s_osdef && !fsym->s_type->t_proto) {

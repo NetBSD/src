@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2024/01/23 19:44:28 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2024/03/29 08:35:31 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -23,9 +23,7 @@ CLEANFILES+=	*.gcno *.gcda *.gcov
 CFLAGS+=	${ACTIVE_CC:Mgcc:%=-ftrapv}
 .endif
 
-.if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
-.endif
 
 LINTFLAGS+=	-aa	# warn about all lossy conversions
 LINTFLAGS+=	-e	# strict enum mode
