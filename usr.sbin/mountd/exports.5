@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.36 2024/03/27 13:11:14 uwe Exp $
+.\"	$NetBSD: exports.5,v 1.37 2024/03/29 00:23:05 snj Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ or
 Warning:
 Exporting a directory exposes the
 .Em entire
-content of the filesystem that the directory lives in to
+contents of the filesystem that the directory lives in to
 .Tn NFS
 clients.
 .Ef
@@ -312,7 +312,7 @@ A, B or C; see
 .Xr inet 4
 .Pc .
 .Pp
-Scoped IPv6 address must carry scope identifier as documented in
+Scoped IPv6 address must carry a scope identifier as documented in
 .Xr inet6 4 .
 For example,
 .Ql fe80::%ne2/10
@@ -338,11 +338,11 @@ The default remote mount-point file.
 .Pp
 If you have modified the
 .Pa /etc/exports
-file, send the mountd a
+file, send the mountd process a
 .Dv SIGHUP
 to make it re-read it:
 .Pp
-.Dl "kill -HUP $(cat /var/run/mountd.pid)" .
+.Dl "kill -HUP $(cat /var/run/mountd.pid)"
 .Sh EXAMPLES
 .Bd -literal -offset indent
 /usr /usr/local -maproot=0:10 friends
