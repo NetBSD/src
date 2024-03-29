@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.265 2024/03/29 07:35:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.266 2024/03/29 08:35:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.265 2024/03/29 07:35:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.266 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -105,12 +105,7 @@ typedef struct brace_level {
 	struct brace_level *bl_enclosing;
 } brace_level;
 
-/*
- * An ongoing initialization.
- *
- * In most cases there is only ever a single initialization at a time.  See
- * pointer_to_compound_literal in msg_171.c for a real-life counterexample.
- */
+/* An ongoing initialization. */
 typedef struct initialization {
 	/* The symbol that is to be initialized. */
 	sym_t		*in_sym;
@@ -173,13 +168,6 @@ can_init_character_array(const type_t *ltp, const tnode_t *rn)
 	    : lst == WCHAR_TSPEC;
 }
 
-/*
- * C11 6.7.9p9 seems to say that all unnamed members are skipped. C11 6.7.2.1p8
- * suggests an exception to that rule, and together with C11 6.7.2.1p13, it
- * says that the members from an anonymous struct/union member are "considered
- * to be members of the containing structure or union", thereby preventing that
- * the containing structure or union has only unnamed members.
- */
 static const sym_t *
 skip_unnamed(const sym_t *m)
 {
@@ -198,10 +186,6 @@ first_named_member(const type_t *tp)
 	return skip_unnamed(tp->u.sou->sou_first_member);
 }
 
-/*
- * C99 6.7.8p22 says that the type of an array of unknown size becomes known
- * at the end of its initializer list.
- */
 static void
 update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 {
@@ -214,8 +198,6 @@ update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 	outsym(sym, sym->s_scl, sym->s_def);
 }
 
-
-/* In traditional C, bit-fields can be initialized only by integer constants. */
 static void
 check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 {
@@ -275,27 +257,19 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 
 	rn = cconv(rn);
 
-	tspec_t lt = ln->tn_type->t_tspec;
-	tspec_t rt = rn->tn_type->t_tspec;
-
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(rn->tn_type));
 	if (!typeok(INIT, 0, ln, rn))
 		return;
 
-	/*
-	 * Preserve the tree memory. This is necessary because otherwise expr()
-	 * would free it.
-	 */
 	memory_pool saved_mem = expr_save_memory();
 	expr(rn, true, false, true, false);
 	expr_restore_memory(saved_mem);
 
+	tspec_t lt = ln->tn_type->t_tspec;
+	tspec_t rt = rn->tn_type->t_tspec;
 	check_bit_field_init(ln, lt, rt);
 
-	/*
-	 * XXX: Is it correct to do this conversion _after_ the typeok above?
-	 */
 	if (lt != rt || (ltp->t_bitfield && rn->tn_op == CON))
 		rn = convert(INIT, 0, unconst_cast(ltp), rn);
 
@@ -515,7 +489,6 @@ brace_level_advance(brace_level *bl, size_t *max_subscript)
 		(void)designation_descend(dn, bl->bl_type);
 
 	designator *dr = designation_last(dn);
-	/* TODO: try to switch on dr->dr_kind instead */
 	switch (tp->t_tspec) {
 	case STRUCT:
 		lint_assert(dr->dr_member != NULL);
@@ -594,12 +567,7 @@ brace_level_pop_final(brace_level *bl, size_t *max_subscript)
 	}
 }
 
-/*
- * Make the designation point to the sub-object to be initialized next.
- * Initially or after a previous expression, the designation is not advanced
- * yet since the place to stop depends on the next expression, especially for
- * string literals.
- */
+/* Make the designation point to the sub-object to be initialized next. */
 static bool
 brace_level_goto(brace_level *bl, const tnode_t *rn, size_t *max_subscript)
 {
@@ -646,7 +614,6 @@ initialization_free(initialization *in)
 {
 	brace_level *bl, *next;
 
-	/* TODO: lint_assert(in->in_brace_level == NULL) */
 	for (bl = in->in_brace_level; bl != NULL; bl = next) {
 		next = bl->bl_enclosing;
 		brace_level_free(bl);

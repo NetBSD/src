@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.220 2024/03/28 21:04:48 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.221 2024/03/29 08:35:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -85,12 +85,12 @@ extern FILE *yyin;
 
 void init_lex(void);
 int64_t convert_integer(int64_t, tspec_t, unsigned int);
-void clear_warn_flags(void);
+void reset_suppressions(void);
 sym_t *getsym(sbuf_t *);
 void clean_up_after_error(void);
 sym_t *pushdown(const sym_t *);
 sym_t *mktempsym(type_t *);
-void rmsym(sym_t *);
+void symtab_remove_forever(sym_t *);
 void symtab_remove_level(sym_t *);
 void inssym(int, sym_t *);
 void freeyyv(void *, int);

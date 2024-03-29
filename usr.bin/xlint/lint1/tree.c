@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.628 2024/03/27 20:09:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.629 2024/03/29 08:35:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.628 2024/03/27 20:09:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.629 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1014,7 +1014,7 @@ fold_constant_integer(tnode_t *tn)
 
 	val_t *v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
-	v->u.integer = convert_integer(res, t, 0);
+	v->u.integer = convert_integer(res, t, size_in_bits(t));
 
 	tnode_t *cn = build_constant(tn->tn_type, v);
 	if (tn->u.ops.left->tn_system_dependent)
@@ -1963,7 +1963,7 @@ remove_unknown_member(tnode_t *tn, sym_t *msym)
 {
 	/* type '%s' does not have member '%s' */
 	error(101, type_name(tn->tn_type), msym->s_name);
-	rmsym(msym);
+	symtab_remove_forever(msym);
 	msym->s_kind = SK_MEMBER;
 	msym->s_scl = STRUCT_MEMBER;
 

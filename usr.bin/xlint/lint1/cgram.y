@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.492 2024/03/27 21:14:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.493 2024/03/29 08:35:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.492 2024/03/27 21:14:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.493 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -77,7 +77,7 @@ static void
 clear_warning_flags_loc(const char *file, size_t line)
 {
 	debug_step("%s:%zu: clearing flags", file, line);
-	clear_warn_flags();
+	reset_suppressions();
 	saved_lwarn = LWARN_NOTHING_SAVED;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.222 2024/03/03 16:09:01 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.223 2024/03/29 08:35:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.222 2024/03/03 16:09:01 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.223 2024/03/29 08:35:32 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -478,18 +478,6 @@ lex_name(const char *yytext, size_t yyleng)
 	return T_NAME;
 }
 
-// Determines whether the constant is signed in traditional C but unsigned in
-// C90 and later.
-static bool
-is_unsigned_since_c90(unsigned ls, uint64_t ui, int base)
-{
-	if (ui <= TARG_INT_MAX)
-		return false;
-	if (ls == 0 && ui <= TARG_UINT_MAX && base != 10)
-		return true;
-	return ls <= 1 && ui > TARG_LONG_MAX;
-}
-
 static tspec_t
 integer_constant_type_signed(unsigned ls, uint64_t ui, int base, bool warned)
 {
@@ -595,12 +583,14 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		query_message(8, (int)len, cp);
 
 	bool unsigned_since_c90 = allow_trad && allow_c90 && u_suffix == 0
-	    && is_unsigned_since_c90(l_suffix, ui, base);
+	    && ui > TARG_INT_MAX
+	    && ((l_suffix == 0 && base != 10 && ui <= TARG_UINT_MAX)
+		|| (l_suffix <= 1 && ui > TARG_LONG_MAX));
 
 	tspec_t t = u_suffix > 0
 	    ? integer_constant_type_unsigned(l_suffix, ui, warned)
 	    : integer_constant_type_signed(l_suffix, ui, base, warned);
-	ui = (uint64_t)convert_integer((int64_t)ui, t, 0);
+	ui = (uint64_t)convert_integer((int64_t)ui, t, size_in_bits(t));
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = t;
@@ -610,22 +600,14 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	return T_CON;
 }
 
-/*
- * Extend or truncate si to match t.  If t is signed, sign-extend.
- *
- * len is the number of significant bits. If len is 0, len is set
- * to the width of type t.
- */
+/* Extend or truncate si to match t.  If t is signed, sign-extend. */
 int64_t
-convert_integer(int64_t si, tspec_t t, unsigned int len)
+convert_integer(int64_t si, tspec_t t, unsigned int bits)
 {
 
-	if (len == 0)
-		len = size_in_bits(t);
-
-	uint64_t vbits = value_bits(len);
+	uint64_t vbits = value_bits(bits);
 	uint64_t ui = (uint64_t)si;
-	return t == PTR || is_uinteger(t) || ((ui & bit(len - 1)) == 0)
+	return t == PTR || is_uinteger(t) || ((ui & bit(bits - 1)) == 0)
 	    ? (int64_t)(ui & vbits)
 	    : (int64_t)(ui | ~vbits);
 }
@@ -984,9 +966,7 @@ lex_character_constant(void)
 	return T_CON;
 }
 
-/*
- * Called if lex found a leading L\'
- */
+/* Called if lex found a leading "L'". */
 int
 lex_wide_character_constant(void)
 {
@@ -1169,9 +1149,6 @@ lex_comment(void)
 		{ "VARARGS",		true,	LC_VARARGS	},
 	};
 	char keywd[32];
-	char arg[32];
-	size_t l, i;
-	int a;
 
 	bool seen_end_of_comment = false;
 
@@ -1179,7 +1156,7 @@ lex_comment(void)
 		continue;
 
 	/* Read the potential keyword to keywd */
-	l = 0;
+	size_t l = 0;
 	while (c != EOF && l < sizeof(keywd) - 1 &&
 	    (isalpha(c) || isspace(c))) {
 		if (islower(c) && l > 0 && isupper((unsigned char)keywd[0]))
@@ -1192,6 +1169,7 @@ lex_comment(void)
 	keywd[l] = '\0';
 
 	/* look for the keyword */
+	size_t i;
 	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++)
 		if (strcmp(keywtab[i].name, keywd) == 0)
 			goto found_keyword;
@@ -1202,6 +1180,7 @@ found_keyword:
 		c = read_byte();
 
 	/* read the argument, if the keyword accepts one and there is one */
+	char arg[32];
 	l = 0;
 	if (keywtab[i].arg) {
 		while (isdigit(c) && l < sizeof(arg) - 1) {
@@ -1210,7 +1189,7 @@ found_keyword:
 		}
 	}
 	arg[l] = '\0';
-	a = l != 0 ? atoi(arg) : -1;
+	int a = l != 0 ? atoi(arg) : -1;
 
 	while (isspace(c))
 		c = read_byte();
@@ -1238,25 +1217,17 @@ skip_rest:
 void
 lex_slash_slash_comment(void)
 {
-	int c;
 
 	if (!allow_c99 && !allow_gcc)
 		/* %s does not support '//' comments */
 		gnuism(312, allow_c90 ? "C90" : "traditional C");
 
-	while ((c = read_byte()) != EOF && c != '\n')
+	for (int c; c = read_byte(), c != EOF && c != '\n';)
 		continue;
 }
 
-/*
- * Clear flags for lint comments LINTED, LONGLONG and CONSTCOND.
- * clear_warn_flags is called after function definitions and global and
- * local declarations and definitions. It is also called between
- * the controlling expression and the body of control statements
- * (if, switch, for, while).
- */
 void
-clear_warn_flags(void)
+reset_suppressions(void)
 {
 
 	lwarn = LWARN_ALL;
@@ -1367,7 +1338,6 @@ getsym(sbuf_t *sb)
 
 	/* create a new symbol table entry */
 
-	/* labels must always be allocated at level 1 (outermost block) */
 	decl_level *dl;
 	if (sym_kind == SK_LABEL) {
 		sym = level_zero_alloc(1, sizeof(*sym), "sym");
@@ -1440,12 +1410,11 @@ mktempsym(type_t *tp)
 	return sym;
 }
 
-/* Remove a symbol forever from the symbol table. */
 void
-rmsym(sym_t *sym)
+symtab_remove_forever(sym_t *sym)
 {
 
-	debug_step("rmsym '%s' %s '%s'",
+	debug_step("%s '%s' %s '%s'", __func__,
 	    sym->s_name, symbol_kind_name(sym->s_kind),
 	    type_name(sym->s_type));
 	symtab_remove(sym);
@@ -1488,11 +1457,6 @@ inssym(int level, sym_t *sym)
 	sym->s_block_level = level;
 	symtab_add(sym);
 
-	/*
-	 * Placing the inner symbols to the beginning of the list ensures that
-	 * these symbols are preferred over symbols from the outer blocks that
-	 * happen to have the same name.
-	 */
 	const sym_t *next = sym->s_symtab_next;
 	if (next != NULL)
 		lint_assert(sym->s_block_level >= next->s_block_level);
@@ -1513,12 +1477,12 @@ clean_up_after_error(void)
 sym_t *
 pushdown(const sym_t *sym)
 {
-	sym_t *nsym;
 
 	debug_step("pushdown '%s' %s '%s'",
 	    sym->s_name, symbol_kind_name(sym->s_kind),
 	    type_name(sym->s_type));
-	nsym = block_zero_alloc(sizeof(*nsym), "sym");
+
+	sym_t *nsym = block_zero_alloc(sizeof(*nsym), "sym");
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
 	nsym->s_def_pos = unique_curr_pos();
