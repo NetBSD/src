@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.264 2024/03/27 19:28:20 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.265 2024/03/29 07:35:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.264 2024/03/27 19:28:20 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.265 2024/03/29 07:35:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -223,10 +223,9 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 	if (!allow_c90 &&
 	    is_integer(lt) &&
 	    ln->tn_type->t_bitfield &&
-	    !is_integer(rt)) {
-		/* bit-field initialization is illegal in traditional C */
+	    !is_integer(rt))
+		/* bit-field initializer must be an integer in ... */
 		warning(186);
-	}
 }
 
 static void
