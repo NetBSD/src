@@ -1,0 +1,134 @@
+#!/bin/sh -
+#
+# $NetBSD: 99-ucom-symlinks,v 1.1 2024/03/30 06:29:01 thorpej Exp $
+#
+# Attempt to create stable names (using symbolic links) to USB serial
+# devices, regardless of device enumeration order, suitable for use in
+# configuration files.  The format of the stable names is:
+#
+#	/dev/{cdt}ty-$driver-$serialnumber-$portnumber
+# - or -
+#	/dev/{cdt}ty-$driver-$serialnumber
+#
+# depending on whether or not the device is a multi-port adapter.
+#
+# e.g.
+#
+#	/dev/tty-uftdi-FT64S4YP-1 -> /dev/ttyU0
+#
+#	/dev/tty-uslsa-01E7ABCC -> /dev/ttyU4
+#
+# If $driver or $serialnumber cannot be determined, then no symbolic link
+# will be created.
+#
+# Written by Jason R. Thorpe, December 2022.  Public domain.
+#
+
+export LC_ALL=C
+
+event="$1"
+shift
+devices=$@
+
+symlink_name()
+{
+	local parent
+	local portnum
+	local serialnum
+	local driver
+
+	parent=$(drvctl -p $1 device-parent)
+	if [ x"$parent" != x ]; then
+		driver=$(drvctl -p $parent device-driver)
+		serialnum=$(drvctl -p $parent serialnumber)
+	fi
+
+	# If the device is a single-port device, it may have the default
+	# port number locator of '-1'.  In that case, elide the port
+	# number.
+	portnum=$(drvctl -p $1 port)
+	if [ x"$portnum" = x"-1" -o x"$portnum" = x ]; then
+		portnum=""
+	else
+		portnum="-${portnum}"
+	fi
+
+	if [ x"$driver" != x -a x"$serialnum" != x ]; then
+		echo "${driver}-${serialnum}${portnum}"
+	else
+		echo ""
+	fi
+}
+
+remove_ucom_symlink()
+{
+	local name
+	local unit
+
+	name=$(readlink "/dev/${1}")
+
+	if [ x"$name" != x ]; then
+		rm -f "/dev/tty-${name}"
+		rm -f "/dev/dty-${name}"
+		rm -f "/dev/cty-${name}"
+		rm -f "/dev/${1}"
+	fi
+}
+
+add_ucom_symlink()
+{
+	local name
+	local tty_path
+	local dty_path
+	local cty_path
+
+	name=$(symlink_name $1)
+	unit=$(drvctl -p $1 device-unit)
+
+	if [ x"$name" != x -a x"$unit" != x ]; then
+		#
+		# We need to make two sets of symlinks:
+		#
+		# /dev/tty-uslsa-01E7ABCC -> /dev/ttyU4
+		#
+		# /dev/ucom4 -> uslsa-01E7ABCC
+		#
+		# This is needed because when we get the detach event
+		# for e.g. ucom4, the parent device (e.g. uslsa0) may
+		# already be gone, meaning we cannot query it.  So
+		# what we're doing is stashing the information in the
+		# second symlink so we can readlink(1) it later to
+		# recover the stable name.
+		#
+
+		tty_path="/dev/ttyU${unit}"
+		dty_path="/dev/dtyU${unit}"
+		cty_path="/dev/ctyU${unit}"
+
+		ln -sf "${name}" "/dev/${1}"
+		if [ -c ${tty_path} ]; then
+			ln -sf ${tty_path} "/dev/tty-${name}"
+		fi
+		if [ -c ${dty_path} ]; then
+			ln -sf ${dty_path} "/dev/dty-${name}"
+		fi
+		if [ -c ${cty_path} ]; then
+			ln -sf ${cty_path} "/dev/cty-${name}"
+		fi
+	fi
+}
+
+for device in $devices; do
+	case $device in
+	ucom*)
+		case $event in
+		device-attach)
+			remove_ucom_symlink $device
+			add_ucom_symlink $device
+			;;
+		device-detach)
+			remove_ucom_symlink $device
+			;;
+		esac
+	esac
+done
