@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.44 2022/02/23 21:54:40 andvar Exp $ */
+/*  $NetBSD: perfuse.c,v 1.45 2024/03/30 22:05:07 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -563,7 +563,7 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	 * It would be nice to avoid useless inactive, and only
 	 * get them on file open for writing (PUFFS does 
 	 * CLOSE/WRITE/INACTIVE, therefore actual close must be
-	 * done at INACTIVE time). Unfortunatley, puffs_setback
+	 * done at INACTIVE time). Unfortunately, puffs_setback
 	 * crashes when called on OPEN, therefore leave it for 
 	 * another day.
 	 */
