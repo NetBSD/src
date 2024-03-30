@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.397 2024/03/29 08:35:32 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.398 2024/03/30 19:51:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.397 2024/03/29 08:35:32 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.398 2024/03/30 19:51:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -589,6 +589,8 @@ dcs_begin_type(void)
 {
 
 	debug_enter();
+
+	// keep d_kind
 	dcs->d_abstract_type = NO_TSPEC;
 	dcs->d_complex_mod = NO_TSPEC;
 	dcs->d_sign_mod = NO_TSPEC;
@@ -596,17 +598,24 @@ dcs_begin_type(void)
 	dcs->d_scl = NO_SCL;
 	dcs->d_type = NULL;
 	dcs->d_redeclared_symbol = NULL;
+	// keep d_sou_size_in_bits
+	// keep d_sou_align_in_bits
 	dcs->d_qual = (type_qualifiers) { .tq_const = false };
 	dcs->d_inline = false;
 	dcs->d_multiple_storage_classes = false;
 	dcs->d_invalid_type_combination = false;
 	dcs->d_nonempty_decl = false;
 	dcs->d_no_type_specifier = false;
+	// keep d_asm
 	dcs->d_packed = false;
 	dcs->d_used = false;
+	// keep d_tag_type
 	dcs->d_func_params = NULL;
 	dcs->d_func_def_pos = (pos_t){ NULL, 0, 0 };
+	// keep d_first_dlsym
+	// keep d_last_dlsym
 	dcs->d_func_proto_syms = NULL;
+	// keep d_enclosing
 }
 
 static void
