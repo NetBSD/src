@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.631 2024/03/30 17:12:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.632 2024/03/30 17:23:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.631 2024/03/30 17:12:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.632 2024/03/30 17:23:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3642,7 +3642,11 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 			convert_integer_from_pointer(op, nt, tp, tn);
 
 	} else if (is_floating(nt)) {
-		/* No further checks. */
+		if (is_integer(ot)) {
+			/* implicit conversion from integer '%s' to ... */
+			query_message(19,
+			    type_name(tn->tn_type), type_name(tp));
+		}
 
 	} else if (nt == PTR) {
 		if (is_null_pointer(tn)) {
