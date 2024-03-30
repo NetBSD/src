@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_int.c,v 1.7 2024/03/30 16:47:45 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_int.c,v 1.8 2024/03/30 17:12:26 rillig Exp $	*/
 # 3 "platform_ilp32_int.c"
 
 /*
@@ -44,17 +44,13 @@ array_index(void)
 	/* expect+2: warning: conversion of 'long long' to 'int' is out of range [119] */
 	/* expect+1: warning: array subscript -2147483648 cannot be negative [167] */
 	u8 += u8_buf[2147483648];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -2147483648 cannot be negative [167] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u8 += u8_buf[0x80000000];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u8 += u8_buf[0xffffffff];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -2147483648 cannot be negative [167] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u8 += u8_buf[0x80000000];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u8 += u8_buf[0xffffffff];
 	/* expect+2: warning: conversion of 'long long' to 'int' is out of range [119] */
 	/* expect+1: warning: array subscript -1 cannot be negative [167] */
@@ -71,19 +67,15 @@ array_index(void)
 	/* expect+2: warning: '-2147483648 * 8' overflows 'int' [141] */
 	/* expect+1: warning: array subscript -268435456 cannot be negative [167] */
 	u64 += u64_buf[2147483648];
-	/* expect+3: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+2: warning: '-2147483648 * 8' overflows 'int' [141] */
-	/* expect+1: warning: array subscript -268435456 cannot be negative [167] */
+	/* expect+1: warning: '2147483648 * 8' overflows 'unsigned int' [141] */
 	u64 += u64_buf[0x80000000];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+2: warning: '4294967295 * 8' overflows 'unsigned int' [141] */
+	/* expect+1: warning: array subscript 536870911 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffff];
-	/* expect+3: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+2: warning: '-2147483648 * 8' overflows 'int' [141] */
-	/* expect+1: warning: array subscript -268435456 cannot be negative [167] */
+	/* expect+1: warning: '2147483648 * 8' overflows 'unsigned int' [141] */
 	u64 += u64_buf[0x80000000];
-	/* expect+2: warning: conversion of 'unsigned int' to 'int' is out of range [119] */
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+2: warning: '4294967295 * 8' overflows 'unsigned int' [141] */
+	/* expect+1: warning: array subscript 536870911 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffff];
 	/* expect+2: warning: conversion of 'long long' to 'int' is out of range [119] */
 	/* expect+1: warning: array subscript -1 cannot be negative [167] */

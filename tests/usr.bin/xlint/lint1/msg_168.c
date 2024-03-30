@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_168.c,v 1.12 2024/03/30 16:47:45 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.13 2024/03/30 17:12:26 rillig Exp $	*/
 # 3 "msg_168.c"
 
-// Test for message: array subscript %jd cannot be > %d [168]
+// Test for message: array subscript %ju cannot be > %d [168]
 
 /* lint1-extra-flags: -X 351 */
 

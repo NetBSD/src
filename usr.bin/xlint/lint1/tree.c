@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.630 2024/03/30 16:47:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.631 2024/03/30 17:12:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.630 2024/03/30 16:47:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.631 2024/03/30 17:12:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1183,14 +1183,17 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	/* pointer +- integer */
-	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
-		lint_assert(is_integer(rn->tn_type->t_tspec));
+	tspec_t lt = ln->tn_type->t_tspec;
+	tspec_t rt = rn->tn_type->t_tspec;
+	if (lt == PTR && rt != PTR) {
+		lint_assert(is_integer(rt));
 
 		check_ctype_macro_invocation(ln, rn);
 		check_enum_array_index(ln, rn);
 
 		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
-		if (rn->tn_type->t_tspec != elsz->tn_type->t_tspec)
+		tspec_t szt = elsz->tn_type->t_tspec;
+		if (rt != szt && rt != unsigned_type(szt))
 			rn = convert(NOOP, 0, elsz->tn_type, rn);
 
 		tnode_t *prod = build_op(MULT, sys, rn->tn_type, rn, elsz);
@@ -1201,8 +1204,8 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	/* pointer - pointer */
-	if (rn->tn_type->t_tspec == PTR) {
-		lint_assert(ln->tn_type->t_tspec == PTR);
+	if (rt == PTR) {
+		lint_assert(lt == PTR);
 		lint_assert(op == MINUS);
 
 		type_t *ptrdiff = gettyp(PTRDIFF_TSPEC);
@@ -4438,7 +4441,7 @@ proceed:;
 		/* array subscript %jd cannot be negative */
 		warning(167, (intmax_t)con);
 	else if (dim > 0 && (uint64_t)con >= (uint64_t)dim)
-		/* array subscript %jd cannot be > %d */
+		/* array subscript %ju cannot be > %d */
 		warning(168, (uintmax_t)con, dim - 1);
 }
 

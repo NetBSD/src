@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.13 2024/03/30 16:47:45 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.14 2024/03/30 17:12:26 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -70,7 +70,7 @@ array_index(void)
 	u8 += u8_buf[0xffffffff];
 	/* expect+1: warning: array subscript 72057594037927935 cannot be > 19 [168] */
 	u8 += u8_buf[0x00ffffffffffffff];
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+1: warning: array subscript 18446744073709551615 cannot be > 19 [168] */
 	u8 += u8_buf[0xffffffffffffffff];
 
 	/* expect+1: warning: array subscript 16777215 cannot be > 19 [168] */
@@ -100,6 +100,7 @@ array_index(void)
 	/* expect+2: warning: '9223372036854775807 * 8' overflows 'long' [141] */
 	/* expect+1: warning: array subscript 1152921504606846975 cannot be > 19 [168] */
 	u64 += u64_buf[0x7fffffffffffffff];
-	/* expect+1: warning: array subscript -1 cannot be negative [167] */
+	/* expect+2: warning: '18446744073709551615 * 8' overflows 'unsigned long' [141] */
+	/* expect+1: warning: array subscript 2305843009213693951 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffffffffffff];
 }
