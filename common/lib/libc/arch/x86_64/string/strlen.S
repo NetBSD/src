@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.7 2021/12/08 20:11:54 andvar Exp $	*/
+/*	$NetBSD: strlen.S,v 1.8 2024/03/30 22:03:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.7 2021/12/08 20:11:54 andvar Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.8 2024/03/30 22:03:39 andvar Exp $")
 #endif
 
 /*
@@ -108,7 +108,7 @@
  * to load constants.
  *
  *
- * [1] Henry S. Warren Jr., "Hacker's Delight", Addison-Westley 2003
+ * [1] Henry S. Warren Jr., "Hacker's Delight", Addison-Wesley 2003
  *
  * [2] International Business Machines, "The PowerPC Compiler Writer's
  *     Guide", Warthman Associates, 1996

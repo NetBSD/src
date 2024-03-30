@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.4 2021/12/08 20:11:54 andvar Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.5 2024/03/30 22:03:39 andvar Exp $")
 #endif
 
 ENTRY(strlen)
@@ -89,7 +89,7 @@ ENTRY(strlen)
 	 * to load constants.
 	 *
 	 *
-	 * [1] Henry S. Warren Jr., "Hacker's Delight", Addison-Westley 2003
+	 * [1] Henry S. Warren Jr., "Hacker's Delight", Addison-Wesley 2003
 	 *
 	 * [2] International Business Machines, "The PowerPC Compiler Writer's
 	 *     Guide", Warthman Associates, 1996
