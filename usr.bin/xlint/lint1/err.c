@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.236 2024/03/29 07:35:45 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.237 2024/03/30 16:47:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.236 2024/03/29 07:35:45 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.237 2024/03/30 16:47:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -222,8 +222,8 @@ static const char *const msgs[] = {
 	"assignment of negative constant to unsigned type",		// 164
 	"constant truncated by assignment",				// 165
 	"precision lost in bit-field assignment",			// 166
-	"array subscript cannot be negative: %jd",			// 167
-	"array subscript cannot be > %d: %jd",				// 168
+	"array subscript %jd cannot be negative",			// 167
+	"array subscript %jd cannot be > %d",				// 168
 	"precedence confusion possible: parenthesize!",			// 169
 	"first operand of '?' must have scalar type",			// 170
 	"cannot assign to '%s' from '%s'",				// 171

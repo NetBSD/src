@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.266 2024/03/29 08:35:32 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.267 2024/03/30 16:47:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.266 2024/03/29 08:35:32 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.267 2024/03/30 16:47:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -801,8 +801,8 @@ initialization_add_designator_subscript(initialization *in, size_t subscript)
 	}
 
 	if (!tp->t_incomplete_array && subscript >= (size_t)tp->u.dimension) {
-		/* array subscript cannot be > %d: %jd */
-		error(168, tp->u.dimension - 1, (intmax_t)subscript);
+		/* array subscript %jd cannot be > %d */
+		error(168, (intmax_t)subscript, tp->u.dimension - 1);
 		subscript = 0;	/* suppress further errors */
 	}
 
