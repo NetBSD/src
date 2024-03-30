@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.12 2024/03/10 19:45:14 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.13 2024/03/30 16:47:45 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -54,52 +54,52 @@ void
 array_index(void)
 {
 
-	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
+	/* expect+1: warning: array subscript 16777215 cannot be > 19 [168] */
 	u8 += u8_buf[0x00ffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483647 [168] */
+	/* expect+1: warning: array subscript 2147483647 cannot be > 19 [168] */
 	u8 += u8_buf[0x7fffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u8 += u8_buf[2147483648];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u8 += u8_buf[0x80000000];
-	/* expect+1: warning: array subscript cannot be > 19: 4294967295 [168] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u8 += u8_buf[0xffffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u8 += u8_buf[0x80000000];
-	/* expect+1: warning: array subscript cannot be > 19: 4294967295 [168] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u8 += u8_buf[0xffffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 72057594037927935 [168] */
+	/* expect+1: warning: array subscript 72057594037927935 cannot be > 19 [168] */
 	u8 += u8_buf[0x00ffffffffffffff];
-	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	/* expect+1: warning: array subscript -1 cannot be negative [167] */
 	u8 += u8_buf[0xffffffffffffffff];
 
-	/* expect+1: warning: array subscript cannot be > 19: 16777215 [168] */
+	/* expect+1: warning: array subscript 16777215 cannot be > 19 [168] */
 	u64 += u64_buf[0x00ffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483647 [168] */
+	/* expect+1: warning: array subscript 2147483647 cannot be > 19 [168] */
 	u64 += u64_buf[0x7fffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u64 += u64_buf[2147483648];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u64 += u64_buf[0x80000000];
-	/* expect+1: warning: array subscript cannot be > 19: 4294967295 [168] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 2147483648 [168] */
+	/* expect+1: warning: array subscript 2147483648 cannot be > 19 [168] */
 	u64 += u64_buf[0x80000000];
-	/* expect+1: warning: array subscript cannot be > 19: 4294967295 [168] */
+	/* expect+1: warning: array subscript 4294967295 cannot be > 19 [168] */
 	u64 += u64_buf[0xffffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 72057594037927935 [168] */
+	/* expect+1: warning: array subscript 72057594037927935 cannot be > 19 [168] */
 	u64 += u64_buf[0x00ffffffffffffff];
-	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
+	/* expect+1: warning: array subscript 1152921504606846975 cannot be > 19 [168] */
 	u64 += u64_buf[0x0fffffffffffffff];
 	/* expect+2: warning: '2305843009213693951 * 8' overflows 'long' [141] */
-	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
+	/* expect+1: warning: array subscript 1152921504606846975 cannot be > 19 [168] */
 	u64 += u64_buf[0x1fffffffffffffff];
 	/* expect+2: warning: '4611686018427387903 * 8' overflows 'long' [141] */
-	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
+	/* expect+1: warning: array subscript 1152921504606846975 cannot be > 19 [168] */
 	u64 += u64_buf[0x3fffffffffffffff];
 	/* expect+2: warning: '9223372036854775807 * 8' overflows 'long' [141] */
-	/* expect+1: warning: array subscript cannot be > 19: 1152921504606846975 [168] */
+	/* expect+1: warning: array subscript 1152921504606846975 cannot be > 19 [168] */
 	u64 += u64_buf[0x7fffffffffffffff];
-	/* expect+1: warning: array subscript cannot be negative: -1 [167] */
+	/* expect+1: warning: array subscript -1 cannot be negative [167] */
 	u64 += u64_buf[0xffffffffffffffff];
 }

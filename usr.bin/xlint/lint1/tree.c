@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.629 2024/03/29 08:35:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.630 2024/03/30 16:47:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.629 2024/03/29 08:35:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.630 2024/03/30 16:47:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4435,11 +4435,11 @@ proceed:;
 	int dim = arr->tn_type->u.dimension + (taking_address ? 1 : 0);
 
 	if (!is_uinteger(idx->tn_type->t_tspec) && con < 0)
-		/* array subscript cannot be negative: %jd */
+		/* array subscript %jd cannot be negative */
 		warning(167, (intmax_t)con);
 	else if (dim > 0 && (uint64_t)con >= (uint64_t)dim)
-		/* array subscript cannot be > %d: %jd */
-		warning(168, dim - 1, (intmax_t)con);
+		/* array subscript %jd cannot be > %d */
+		warning(168, (uintmax_t)con, dim - 1);
 }
 
 static void
