@@ -1,0 +1,144 @@
+#!/bin/sh -x
+#
+# $NetBSD: 99-ugen-perms-minipro,v 1.1 2024/03/30 16:47:55 thorpej Exp $
+#
+# Look for a "Minipro" (https://gitlab.com/DavidGriffith/minipro) compatible
+# EEPROM programmer and change change the permissions to 0660.
+#
+# Written by Jason R. Thorpe, March 2024.  Public domain.
+#
+
+export LC_ALL=C
+
+event="$1"
+shift
+devices=$@
+
+orig_perms=0600
+new_perms=0660
+
+orig_group=wheel
+new_group=wheel
+
+device_name=minipro
+
+is_target_device()
+{
+	local vendor_string
+	local product_string
+	local vendor_id
+	local product_id
+
+	#
+	# TL866A/TL866CS programmers have:
+	#
+	#	VID = 0x04d8 (1240)	# Microchip
+	#	PID = 0xe11c (57628)	# probably some PIC microcontroller
+	#
+	# XXX It's probably better to match on vendor-string / product-string
+	# in this case because of the use of the generic Microchip VID.
+	#
+	# The XGecu-branded TL866II+ devices have:
+	#
+	#	vendor-string="Xingong Electronicg Co.."
+	#	product-string="Xingong XGecu USB Prog.. Device"
+	#
+	# ...but they also have seemingly unique VID/PID (not the
+	# generic Microchip VID the older TL866A/CS programmers have):
+	#
+	#	VID = 0xa466 (42086)
+	#	PID = 0x0a53 (2643)
+	#
+	# XXX Add the XGecu T48 programmer info here.
+	#
+
+	vendor_string="$(drvctl -p $1 vendor-string)"
+	product_string="$(drvctl -p $1 product-string)"
+	vendor_id="$(drvctl -p $1 vendor-id)"
+	product_id="$(drvctl -p $1 product-id)"
+
+	#
+	# TL866A / TL866CS
+	#
+	if [ x"$vendor_id" = x"1240" -a \
+	     x"$product_id" = x"57628" ]; then
+		echo "yes"
+		return;
+	fi
+
+	#
+	# TL866II+
+	#
+	if [ x"$vendor_id" = x"42086" -a \
+	     x"$product_id" = x"2643" ]; then
+		echo "yes"
+		return
+	fi
+
+	echo "no"
+}
+
+set_permissions()
+{
+	if [ x$(is_target_device $1) = xyes ]; then
+		chgrp $new_group /dev/"${2}".*
+		chmod $new_perms /dev/"${2}".*
+		#
+		# We need to create a symlink here to remember
+		# the ugen device node that was used, since we
+		# can't recover it from the device name that
+		# comes from the kernel later because we get the
+		# event *after* the device is gone, and thus
+		# cannot query any properties.
+		#
+		rm -f /dev/${1}-${device_name}
+		ln -sf ${2} /dev/${1}-${device_name}
+	fi
+}
+
+restore_permissions()
+{
+	if [ -h "/dev/${1}-${device_name}" ]; then
+		devnode=$(readlink "/dev/${1}-${device_name}")
+		if [ x"$devnode" != x ]; then
+			chmod $orig_perms /dev/"${devnode}".*
+			chgrp $orig_group /dev/"${devnode}".*
+		fi
+		rm -f "/dev/${1}-${device_name}"
+	fi
+}
+
+get_ugen_devnode()
+{
+	# Because "ugen" and "ugenif" share the same /dev/ugenN.*
+	# namespace, we have to query an additional property to
+	# determine which one it is.
+	local ugen_unit
+
+	ugen_unit=$(drvctl -p $1 ugen-unit)
+	case "$ugen_unit" in
+	[0-9]*)
+		echo "ugen$ugen_unit"
+		;;
+	esac
+}
+
+for device in $devices; do
+	case $device in
+	ugensa*)
+		# Ignore ugensa(4).
+		;;
+	ugen*)
+		case $event in
+		device-attach)
+			devnode=$(get_ugen_devnode $1)
+			if [ x"$devnode" != x ]; then
+				set_permissions $device $devnode
+			fi
+			;;
+		device-detach)
+			restore_permissions $device
+			;;
+		esac
+	esac
+done
