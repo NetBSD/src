@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1336 2024/03/30 06:29:01 thorpej Exp $
+# $NetBSD: mi,v 1.1337 2024/03/30 06:42:10 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2488,6 +2488,7 @@
 ./usr/share/examples/devpubd			base-sys-examples
 ./usr/share/examples/devpubd/hooks		base-sys-examples
 ./usr/share/examples/devpubd/hooks/99-ucom-symlinks	base-sys-examples
+./usr/share/examples/devpubd/hooks/99-ugen-perms-tigard	base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples

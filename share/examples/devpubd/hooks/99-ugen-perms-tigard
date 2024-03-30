@@ -1,0 +1,105 @@
+#!/bin/sh -
+#
+# $NetBSD: 99-ugen-perms-tigard,v 1.1 2024/03/30 06:42:10 thorpej Exp $
+#
+# Look for a Tigard (https://github.com/tigard-tools/tigard) debug
+# board and change the permissions to 0660.
+#
+# Written by Jason R. Thorpe, March 2024.  Public domain.
+#
+
+export LC_ALL=C
+
+event="$1"
+shift
+devices=$@
+
+orig_perms=0600
+new_perms=0660
+
+orig_group=wheel
+new_group=wheel
+
+device_name=tigard
+
+is_target_device()
+{
+	local vendor_string
+	local product_string
+
+	vendor_string="$(drvctl -p $1 vendor-string)"
+	product_string="$(drvctl -p $1 product-string)"
+
+	if [ x"$vendor_string" = x"SecuringHardware.com" -a \
+	     x"$product_string" = x"Tigard V1.1" ]; then
+		echo "yes"
+		return
+	fi
+
+	echo "no"
+}
+
+set_permissions()
+{
+	if [ x$(is_target_device $1) = xyes ]; then
+		chgrp $new_group /dev/"${2}".*
+		chmod $new_perms /dev/"${2}".*
+		#
+		# We need to create a symlink here to remember
+		# the ugen device node that was used, since we
+		# can't recover it from the device name that
+		# comes from the kernel later because we get the
+		# event *after* the device is gone, and thus
+		# cannot query any properties.
+		#
+		rm -f /dev/${1}-${device_name}
+		ln -sf ${2} /dev/${1}-${device_name}
+	fi
+}
+
+restore_permissions()
+{
+	if [ -h "/dev/${1}-${device_name}" ]; then
+		devnode=$(readlink "/dev/${1}-${device_name}")
+		if [ x"$devnode" != x ]; then
+			chmod $orig_perms /dev/"${devnode}".*
+			chgrp $orig_group /dev/"${devnode}".*
+		fi
+		rm -f "/dev/${1}-${device_name}"
+	fi
+}
+
+get_ugen_devnode()
+{
+	# Because "ugen" and "ugenif" share the same /dev/ugenN.*
+	# namespace, we have to query an additional property to
+	# determine which one it is.
+	local ugen_unit
+
+	ugen_unit=$(drvctl -p $1 ugen-unit)
+	case "$ugen_unit" in
+	[0-9]*)
+		echo "ugen$ugen_unit"
+		;;
+	esac
+}
+
+for device in $devices; do
+	case $device in
+	ugensa*)
+		# Ignore ugensa(4).
+		;;
+	ugen*)
+		case $event in
+		device-attach)
+			devnode=$(get_ugen_devnode $1)
+			if [ x"$devnode" != x ]; then
+				set_permissions $device $devnode
+			fi
+			;;
+		device-detach)
+			restore_permissions $device
+			;;
+		esac
+	esac
+done
