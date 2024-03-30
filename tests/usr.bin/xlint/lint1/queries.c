@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.26 2024/03/30 17:23:13 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.27 2024/03/30 19:12:37 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -70,6 +70,9 @@ c64_t c64;
 char *str;
 const char *cstr;
 volatile char *vstr;
+
+void *void_ptr;
+const void *const_void_ptr;
 
 int
 Q1(double dbl)
@@ -356,9 +359,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 360 "queries.c" 3 4
+# 363 "queries.c" 3 4
 		((void *)0)
-# 362 "queries.c"
+# 365 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -448,6 +451,9 @@ Q15(void)
 	ptr_from_uint = &ptr_from_uint;
 	ptr_from_long = &ptr_from_long;
 
+	void_ptr = (void *)0;
+	const_void_ptr = (const void *)0;
+
 	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
 	return 0;
 }
@@ -498,6 +504,9 @@ convert_from_integer_to_floating(void)
 	f32 = 0.0F;
 	f32 = 0.0;
 	f64 = 0.0;
+
+	f64 = (double)0;
+	f64 = (double)u32;
 }
 
 /*
