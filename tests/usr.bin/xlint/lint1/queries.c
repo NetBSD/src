@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.24 2024/02/02 19:07:58 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.25 2024/03/30 17:12:26 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -34,6 +34,7 @@ typedef double _Complex c64_t;
 typedef char *str_t;
 typedef const char *cstr_t;
 typedef volatile char *vstr_t;
+typedef typeof(sizeof 0) size_t;
 
 _Bool cond;
 
@@ -101,7 +102,7 @@ Q3(int i, unsigned u)
 }
 
 unsigned long long
-Q4(signed char *ptr, int i, unsigned long long ull)
+Q4(signed char *ptr, int i, unsigned long long ull, size_t sz)
 {
 
 	/*
@@ -125,6 +126,8 @@ Q4(signed char *ptr, int i, unsigned long long ull)
 	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
 	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
 	u32 = u32 & u8;
+
+	s8 = ptr[sz];
 
 	/*
 	 * The conversion from 'signed char' to 'int' is done by the integer
@@ -351,9 +354,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 355 "queries.c" 3 4
+# 358 "queries.c" 3 4
 		((void *)0)
-# 357 "queries.c"
+# 360 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
