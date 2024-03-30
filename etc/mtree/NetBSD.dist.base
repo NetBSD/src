@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.255 2024/01/27 21:06:09 riastradh Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.256 2024/03/30 06:11:58 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -479,6 +479,8 @@
 ./usr/share/examples/atf
 ./usr/share/examples/blocklist
 ./usr/share/examples/certctl
+./usr/share/examples/devpubd
+./usr/share/examples/devpubd/hooks
 ./usr/share/examples/dhcp
 ./usr/share/examples/dhcpcd
 ./usr/share/examples/dhcpcd/hooks
