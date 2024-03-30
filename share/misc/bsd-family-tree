@@ -853,6 +853,7 @@ OpenBSD 7.1		2022-04-21 [OBD]
 FreeBSD 13.1		2022-05-17 [FBD]
 DragonFly 6.2.2		2022-06-09 [DFB]
 NetBSD 9.3		2022-08-04 [NBD]
+NetBSD 10.0		2024-03-28 [NBD]
 
 Bibliography
 ------------------------
@@ -918,4 +919,4 @@ Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
 $FreeBSD: head/share/misc/bsd-family-tree 361673 2020-05-31 21:38:33Z imp $
-$NetBSD: bsd-family-tree,v 1.83 2022/08/07 22:43:28 ast Exp $
+$NetBSD: bsd-family-tree,v 1.84 2024/03/30 19:34:46 martin Exp $
