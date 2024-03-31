@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.17 2024/03/28 21:04:48 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.18 2024/03/31 20:28:45 rillig Exp $)
 
 # Introduction
 
@@ -115,8 +115,7 @@ Some examples for operators:
 | NAME     | references the identifier in `u.sym`           |
 | UPLUS    | the unary operator `+u.ops.left`               |
 | PLUS     | the binary operator `u.ops.left + u.ops.right` |
-| CALL     | a direct function call                         |
-| ICALL    | an indirect function call                      |
+| CALL     | a function call                                |
 | CVT      | an implicit conversion or an explicit cast     |
 
 As an example, the expression `strcmp(names[i], "name")` has this internal

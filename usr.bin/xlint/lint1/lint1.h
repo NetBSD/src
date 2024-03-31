@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.221 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.222 2024/03/31 20:28:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -290,7 +290,7 @@ struct tnode {
 					 * wide strings, 'data' is NULL and
 					 * 'len' is the number of resulting
 					 * characters */
-		function_call *call;	/* if CALL or ICALL */
+		function_call *call;	/* if CALL */
 	} u;
 };
 

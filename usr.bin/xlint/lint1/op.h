@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.27 2024/02/05 23:11:22 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.28 2024/03/31 20:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -117,7 +117,6 @@ typedef enum {
 	CALL,
 	COMMA,
 	CVT,
-	ICALL,
 	LOAD,
 	RETURN,
 	REAL,

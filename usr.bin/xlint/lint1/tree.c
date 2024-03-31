@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.633 2024/03/30 19:12:37 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.634 2024/03/31 20:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.633 2024/03/30 19:12:37 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.634 2024/03/31 20:28:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1717,8 +1717,7 @@ use(const tnode_t *tn)
 	case CON:
 	case STRING:
 		break;
-	case CALL:
-	case ICALL:;
+	case CALL:;
 		const function_call *call = tn->u.call;
 		for (size_t i = 0, n = call->args_len; i < n; i++)
 			use(call->args[i]);
@@ -4280,9 +4279,6 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 	if (func == NULL)
 		return NULL;
 
-	op_t op = func->tn_op == NAME && func->tn_type->t_tspec == FUNC
-	    ? CALL : ICALL;
-
 	call->func = func;
 	check_ctype_function_call(call);
 
@@ -4299,7 +4295,7 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 	check_function_arguments(call);
 
 	tnode_t *ntn = expr_alloc_tnode();
-	ntn->tn_op = op;
+	ntn->tn_op = CALL;
 	ntn->tn_type = func->tn_type->t_subt->t_subt;
 	ntn->tn_sys = sys;
 	ntn->u.call = call;
@@ -4579,13 +4575,16 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	op_t op = tn->tn_op;
 	if (op == NAME || op == CON || op == STRING)
 		return;
-	if (op == CALL || op == ICALL) {
+	bool is_direct = op == CALL
+	    && tn->u.call->func->tn_op == ADDR
+	    && tn->u.call->func->u.ops.left->tn_op == NAME;
+	if (op == CALL) {
 		const function_call *call = tn->u.call;
-		if (op == CALL)
+		if (is_direct)
 			check_expr_call(tn, call->func,
 			    szof, vctx, cond, retval_discarded);
 		bool discard = op == CVT && tn->tn_type->t_tspec == VOID;
-		check_expr_misc(call->func, false, false, false, op == CALL,
+		check_expr_misc(call->func, false, false, false, is_direct,
 		    discard, szof);
 		for (size_t i = 0, n = call->args_len; i < n; i++)
 			check_expr_misc(call->args[i],
@@ -4615,7 +4614,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
 		cvctx = ccond = false;
 	bool discard = op == CVT && tn->tn_type->t_tspec == VOID;
-	check_expr_misc(ln, cvctx, ccond, eq, op == CALL, discard, szof);
+	check_expr_misc(ln, cvctx, ccond, eq, is_direct, discard, szof);
 
 	switch (op) {
 	case LOGAND:
