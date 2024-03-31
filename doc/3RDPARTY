@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2000 2024/03/15 15:49:01 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2001 2024/03/31 00:06:23 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1648,6 +1648,8 @@ Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	sys/external/bsd/elftoolchain/dist
+Vendor tag:	FreeBSD
+Release tag:	elftoolchain-rNNNNN
 Notes:
 		See README we use the svn id as the tag.
 
