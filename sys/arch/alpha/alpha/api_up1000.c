@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.32 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: api_up1000.c,v 1.33 2024/03/31 19:06:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.32 2023/12/04 00:32:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.33 2024/03/31 19:06:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ api_up1000_device_register(device_t dev, void *aux)
 	struct bootdev_data *b = bootdev_data;
 	device_t parent = device_parent(dev);
 
-	if (found)
+	if (b == NULL || found)
 		return;
 
 	if (!initted) {

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.58 2021/07/09 01:29:20 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.59 2024/03/31 19:06:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2021/07/09 01:29:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2024/03/31 19:06:30 thorpej Exp $");
 
 #include "pci.h"
 
@@ -324,13 +324,6 @@ device_register(device_t dev, void *aux)
 	if (parent != NULL && device_is_a(parent, "pci"))
 		device_pci_register(dev, aux);
 #endif
-
-	if (bootdev_data == NULL) {
-		/*
-		 * There is no hope.
-		 */
-		return;
-	}
 	if (platform.device_register)
 		(*platform.device_register)(dev, aux);
 }
