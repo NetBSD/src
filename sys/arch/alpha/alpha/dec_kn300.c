@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.43 2021/06/19 16:36:35 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.43 2021/06/19 16:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.44 2024/03/31 19:06:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ dec_kn300_device_register(device_t dev, void *aux)
 	struct bootdev_data *b = bootdev_data;
 	device_t parent = device_parent(dev);
 
-	if (found)
+	if (b == NULL || found)
 		return;
 
 	if (!initted) {
