@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.44 2020/10/03 17:33:23 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.45 2024/03/31 19:11:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -184,6 +184,23 @@ struct rpb {
  * XXX These are not very complete!
  */
 #define	SV_ST_MIATA_1_5		0x00004c00	/* Miata 1.5 */
+
+/*
+ * System types for the Tsunami family.
+ * XXX These are not very complete!
+ */
+#define	SV_ST_DP264		0x00000400	/* AlphaPC DP264 */
+#define	SV_ST_WARHOL		0x00000800
+#define	SV_ST_WINDJAMMER	0x00000c00
+#define	SV_ST_MONET		0x00001000
+#define	SV_ST_CLIPPER		0x00001400	/* AlphaServer ES40 */
+#define	SV_ST_GOLDRUSH		0x00001800	/* AlphaServer DS20 */
+#define	SV_ST_WEBBRICK		0x00001c00	/* AlphaServer DS10 */
+#define	SV_ST_CATAMARAN		0x00002000
+#define	SV_ST_BRISBANE		0x00002400
+#define	SV_ST_MALBOURNE		0x00002800
+#define	SV_ST_FLYINGCLIPPER	0x00002c00
+#define	SV_ST_SHARK		0x00003000	/* AlphaServer DS20L */
 
 	uint64_t	rpb_variation;		/*  58 */
 
