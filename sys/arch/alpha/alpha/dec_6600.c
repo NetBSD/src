@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.37 2024/03/31 19:06:30 thorpej Exp $ */
+/* $NetBSD: dec_6600.c,v 1.38 2024/03/31 19:11:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.37 2024/03/31 19:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.38 2024/03/31 19:11:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,15 +101,36 @@ static const char *kgdb_devlist[] = {
 };
 #endif /* KGDB */
 
+static const struct alpha_variation_table dec_6600_variations[] = {
+	{ SV_ST_DP264, "AlphaPC DP264" },
+	{ SV_ST_CLIPPER, "AlphaServer ES40 (\"Clipper\")" },
+	{ SV_ST_GOLDRUSH, "AlphaServer DS20 (\"GoldRush\")" },
+	{ SV_ST_WEBBRICK, "AlphaServer DS10 (\"WebBrick\")" },
+	{ SV_ST_SHARK, "AlphaServer DS20L (\"Shark\")" },
+	{ 0, NULL },
+};
+
+static const struct alpha_variation_table dec_titan_variations[] = {
+	{ 0, NULL },
+};
+
 void
 dec_6600_init(void)
 {
+	uint64_t variation;
 
-	platform.family = "6600";
+	platform.family = (hwrpb->rpb_type == ST_DEC_TITAN) ? "Titan"
+							    : "6600";
 
 	if ((platform.model = alpha_dsr_sysname()) == NULL) {
-		/* XXX Don't know the system variations, yet. */
-		platform.model = alpha_unknown_sysname();
+		const struct alpha_variation_table *vartab =
+		    (hwrpb->rpb_type == ST_DEC_TITAN) ? dec_titan_variations
+						      : dec_6600_variations;
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if ((platform.model = alpha_variation_name(variation,
+							   vartab)) == NULL) {
+			platform.model = alpha_unknown_sysname();
+		}
 	}
 
 	platform.iobus = "tsc";
@@ -202,6 +223,37 @@ dec_6600_device_register(device_t dev, void *aux)
 	static device_t primarydev, pcidev, ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
 	device_t parent = device_parent(dev);
+
+	/*
+	 * First section: Deal with system-specific quirks.
+	 */
+
+	if ((hwrpb->rpb_variation & SV_ST_MASK) == SV_ST_WEBBRICK) {
+		/*
+		 * DMA on the on-board ALI IDE controller is not
+		 * working correctly; disable it for now to let
+		 * the systems at least hobble along.
+		 *
+		 * N.B. There's only one Pchip on a DS10, do there
+		 * is not need to determine which hose we have here.
+		 *
+		 * XXX This is meant to be temporary until we can find
+		 * XXX and fix the issue with bus-master DMA.
+		 */
+		if (device_is_a(parent, "pci") && device_is_a(dev, "aceride")) {
+			struct pci_attach_args *pa = aux;
+
+			if (pa->pa_bus == 0 && pa->pa_device == 13 &&
+			    pa->pa_function == 0) {
+				prop_dictionary_set_bool(device_properties(dev),
+				    "pciide-disable-dma", true);
+			}
+		}
+	}
+
+	/*
+	 * Second section: Boot device detection.
+	 */
 
 	if (b == NULL || found)
 		return;
