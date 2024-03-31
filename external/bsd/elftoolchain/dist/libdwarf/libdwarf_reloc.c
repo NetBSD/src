@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_reloc.c,v 1.6 2024/03/27 21:53:06 christos Exp $	*/
+/*	$NetBSD: libdwarf_reloc.c,v 1.7 2024/03/31 03:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_reloc.c,v 1.6 2024/03/27 21:53:06 christos Exp $");
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.7 2024/03/31 03:20:38 christos Exp $");
 ELFTC_VCSID("Id: libdwarf_reloc.c 3741 2019-06-07 06:32:01Z jkoshy");
 
 Dwarf_Unsigned
@@ -36,7 +36,7 @@ _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
 {
 
 	assert(dbg != NULL);
-#ifdef BUILTIN_ELF_HEADERS
+
 	switch (dbg->dbgp_isa) {
 	case DW_ISA_AARCH64:
 		return (is64 ? R_AARCH64_ABS64 : R_AARCH64_ABS32);
@@ -59,7 +59,6 @@ _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
 	default:
 		break;
 	}
-#endif
 	return (0);		/* NOT REACHED */
 }
 
@@ -67,7 +66,6 @@ int
 _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 {
 
-#ifdef BUILTIN_ELF_HEADERS
 	switch (dbg->dbg_machine) {
 	case EM_NONE:
 		break;
@@ -129,7 +127,6 @@ _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 	default:
 		break;
 	}
-#endif
 
 	/* unknown relocation. */
 	return (0);
