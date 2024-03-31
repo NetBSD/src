@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.189 2022/03/28 12:48:35 riastradh Exp $	*/
+/*	$NetBSD: ccd.c,v 1.190 2024/03/31 14:56:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.189 2022/03/28 12:48:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.190 2024/03/31 14:56:41 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ struct ccdbuf {
 /* component buffer pool */
 static pool_cache_t ccd_cache;
 
-#define	CCD_GETBUF()		pool_cache_get(ccd_cache, PR_WAITOK)
+#define	CCD_GETBUF(wait)	pool_cache_get(ccd_cache, wait)
 #define	CCD_PUTBUF(cbp)		pool_cache_put(ccd_cache, cbp)
 
 #define CCDLABELDEV(dev)	\
@@ -168,11 +168,11 @@ static void	ccdinterleave(struct ccd_softc *);
 static int	ccdinit(struct ccd_softc *, char **, struct vnode **,
 		    struct lwp *);
 static struct ccdbuf *ccdbuffer(struct ccd_softc *, struct buf *,
-		    daddr_t, void *, long);
+		    daddr_t, void *, long, int);
 static void	ccdgetdefaultlabel(struct ccd_softc *, struct disklabel *);
 static void	ccdgetdisklabel(dev_t);
 static void	ccdmakedisklabel(struct ccd_softc *);
-static void	ccdstart(struct ccd_softc *);
+static int	ccdstart(struct ccd_softc *, struct buf *, int);
 static void	ccdthread(void *);
 
 static dev_type_open(ccdopen);
@@ -702,19 +702,12 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	return (0);
 }
 
-static bool
-ccdbackoff(struct ccd_softc *cs)
-{
-
-	/* XXX Arbitrary, should be a uvm call. */
-	return uvm_availmem(true) < (uvmexp.freemin >> 1) &&
-	    disk_isbusy(&cs->sc_dkdev);
-}
-
 static void
 ccdthread(void *cookie)
 {
+	int error;
 	struct ccd_softc *cs;
+	struct buf *bp;
 
 	cs = cookie;
 
@@ -725,21 +718,18 @@ ccdthread(void *cookie)
 
 	mutex_enter(cs->sc_iolock);
 	while (__predict_true(!cs->sc_zap)) {
-		if (bufq_peek(cs->sc_bufq) == NULL) {
+		bp = bufq_get(cs->sc_bufq);
+		if (bp == NULL) {
 			/* Nothing to do. */
 			cv_wait(&cs->sc_push, cs->sc_iolock);
-			continue;
-		}
-		if (ccdbackoff(cs)) {
-			/* Wait for memory to become available. */
-			(void)cv_timedwait(&cs->sc_push, cs->sc_iolock, 1);
 			continue;
 		}
 #ifdef DEBUG
  		if (ccddebug & CCDB_FOLLOW)
  			printf("ccdthread: dispatching I/O\n");
 #endif
-		ccdstart(cs);
+		error = ccdstart(cs, bp, PR_WAITOK);
+		KASSERT(error == 0);
 		mutex_enter(cs->sc_iolock);
 	}
 	cs->sc_thread = NULL;
@@ -777,21 +767,16 @@ ccdstrategy(struct buf *bp)
 		return;
 	}
 
-	/* Defer to thread if system is low on memory. */
-	bufq_put(cs->sc_bufq, bp);
-	if (__predict_false(ccdbackoff(cs))) {
+	if (ccdstart(cs, bp, PR_NOWAIT) != 0) {
+		/* Defer to thread if system is low on memory. */
+		bufq_put(cs->sc_bufq, bp);
+		cv_broadcast(&cs->sc_push);
 		mutex_exit(cs->sc_iolock);
-#ifdef DEBUG
- 		if (ccddebug & CCDB_FOLLOW)
- 			printf("ccdstrategy: holding off on I/O\n");
-#endif
-		return;
 	}
-	ccdstart(cs);
 }
 
-static void
-ccdstart(struct ccd_softc *cs)
+static int
+ccdstart(struct ccd_softc *cs, struct buf *bp, int wait)
 {
 	daddr_t blkno;
 	int wlabel;
@@ -801,11 +786,9 @@ ccdstart(struct ccd_softc *cs)
 	char *addr;
 	daddr_t bn;
 	vnode_t *vp;
-	buf_t *bp;
+	SIMPLEQ_HEAD(, ccdbuf) cbufq;
 
 	KASSERT(mutex_owned(cs->sc_iolock));
-
-	bp = bufq_get(cs->sc_bufq);
 	KASSERT(bp != NULL);
 
 	disk_busy(&cs->sc_dkdev);
@@ -836,15 +819,32 @@ ccdstart(struct ccd_softc *cs)
 	mutex_exit(cs->sc_iolock);
 	bp->b_rawblkno = blkno;
 
-	/* Allocate the component buffers and start I/O! */
+	/* Allocate the component buffers. */
+	SIMPLEQ_INIT(&cbufq);
 	bp->b_resid = bp->b_bcount;
 	bn = bp->b_rawblkno;
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
-		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
+		cbp = ccdbuffer(cs, bp, bn, addr, bcount, wait);
+		KASSERT(cbp != NULL || wait == PR_NOWAIT);
+		if (cbp == NULL) {
+			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+				CCD_PUTBUF(cbp);
+			}
+			mutex_enter(cs->sc_iolock);
+			disk_unbusy(&cs->sc_dkdev, 0, 0);
+			return ENOMEM;
+		}
+		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
 		rcount = cbp->cb_buf.b_bcount;
 		bn += btodb(rcount);
 		addr += rcount;
+	}
+
+	/* All buffers set up, now fire off the requests. */
+	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 		vp = cbp->cb_buf.b_vp;
 		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
 			mutex_enter(vp->v_interlock);
@@ -853,7 +853,7 @@ ccdstart(struct ccd_softc *cs)
 		}
 		(void)VOP_STRATEGY(vp, &cbp->cb_buf);
 	}
-	return;
+	return 0;
 
  done:
 	disk_unbusy(&cs->sc_dkdev, 0, 0);
@@ -862,6 +862,7 @@ ccdstart(struct ccd_softc *cs)
 	mutex_exit(cs->sc_iolock);
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+	return 0;
 }
 
 /*
@@ -869,7 +870,7 @@ ccdstart(struct ccd_softc *cs)
  */
 static struct ccdbuf *
 ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
-    long bcount)
+    long bcount, int wait)
 {
 	struct ccdcinfo *ci;
 	struct ccdbuf *cbp;
@@ -929,8 +930,9 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	/*
 	 * Fill in the component buf structure.
 	 */
-	cbp = CCD_GETBUF();
-	KASSERT(cbp != NULL);
+	cbp = CCD_GETBUF(wait);
+	if (cbp == NULL)
+		return NULL;
 	buf_init(&cbp->cb_buf);
 	cbp->cb_buf.b_flags = bp->b_flags;
 	cbp->cb_buf.b_oflags = bp->b_oflags;
