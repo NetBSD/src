@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2023/09/07 12:48:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2024/04/01 16:24:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.24 2023/09/07 12:48:49 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.25 2024/04/01 16:24:01 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -672,7 +672,7 @@ fetch_user_data(const void *uaddr, void *valp, size_t size)
 	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
 		return EFAULT;
 
-	if ((error = cpu_set_onfault(&fb, 1)) != 0)
+	if ((error = cpu_set_onfault(&fb, EFAULT)) != 0)
 		return error;
 
 	csr_sstatus_set(SR_SUM);
@@ -737,7 +737,7 @@ store_user_data(void *uaddr, const void *valp, size_t size)
 	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
 		return EFAULT;
 
-	if ((error = cpu_set_onfault(&fb, 1)) != 0)
+	if ((error = cpu_set_onfault(&fb, EFAULT)) != 0)
 		return error;
 
 	csr_sstatus_set(SR_SUM);
