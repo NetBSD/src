@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.122 2024/02/03 22:40:29 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.123 2024/04/01 02:20:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2024 Matthew R. Green
@@ -26,11 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997-2024 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.122 2024/02/03 22:40:29 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.123 2024/04/01 02:20:52 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -337,7 +341,7 @@ main(int argc, char **argv)
 		dflag = cflag = 1;
 
 #ifdef SMALL
-#define OPT_LIST "123456789cdhlV"
+#define OPT_LIST "123456789cdhlVn"
 #else
 #define OPT_LIST "123456789cdfhklNnqrS:tVv"
 #endif
@@ -402,6 +406,9 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			vflag = 1;
+			break;
+#else
+		case 'n':
 			break;
 #endif
 		default:
@@ -1113,6 +1120,7 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 	if (fchmod(fd, sb.st_mode) < 0)
 		maybe_warn("couldn't fchmod: %s", file);
 
+#ifdef TIMESPEC_TO_TIMEVAL
 	TIMESPEC_TO_TIMEVAL(&times[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtimespec);
 	if (futimes(fd, times) < 0)
@@ -1121,6 +1129,7 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 	/* finally, only try flags if they exist already */
         if (sb.st_flags != 0 && fchflags(fd, sb.st_flags) < 0)
 		maybe_warn("couldn't fchflags: %s", file);
+#endif
 }
 #endif
 
