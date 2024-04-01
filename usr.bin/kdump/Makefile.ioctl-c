@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.39 2022/11/12 02:20:16 mrg Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.40 2024/04/01 18:33:24 riastradh Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -63,6 +63,7 @@ CPPFLAGS+=	-D__SAVAGE_DRM_H__	# Dup ioctls
 #CPPFLAGS+=	-D__RADEON_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__MACH64_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__MGA_DRM_H__		# Dup ioctls
+CPPFLAGS+=	-D_SYS_ELFDEFINITIONS_H_	# collides with sys/exec_elf.h
 
 ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
 	${_MKTARGET_CREATE}

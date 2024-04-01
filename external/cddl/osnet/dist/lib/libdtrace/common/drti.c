@@ -24,6 +24,25 @@
  * Use is subject to license terms.
  */
 
+/*
+ * XXX Hack: Force the use of sys/exec_elf.h, not elfdefinitions.h.
+ * Why?
+ *
+ * - sys/dtrace.h is needed because (XXX why?).
+ *   => sys/dtrace.h pulls in sys/ctf_api.h
+ *   => which pulls in sys/elf.h
+ *   => which pulls in elfdefinitions.h (XXX should it?)
+ *
+ * - link.h is needed for Link_map.
+ *   => link.h pulls in link_elf.h
+ *   => which pulls in sys/exec_elf.h
+ *
+ * But elfdefinitions.h and sys/exec_elf.h collide over most basic ELF
+ * definitions.  Since we don't need elfdefinitions.h otherwise, prefer
+ * sys/exec_elf.h.
+ */
+#define	_SYS_ELFDEFINITIONS_H_
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <dlfcn.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.1 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: elf.h,v 1.2 2024/04/01 18:33:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
 #define _ELF_H_
 
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/exec_elf.h>
+# include "nbtool_config.h"
 #else
-#include <sys/exec_elf.h>
+# include <sys/types.h>
 #endif
+
+#include "elfdefinitions.h"
 
 #endif

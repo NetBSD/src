@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.c,v 1.2 2022/12/01 00:43:27 ryo Exp $	*/
+/*	$NetBSD: ksyms.c,v 1.3 2024/04/01 18:33:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ksyms.c,v 1.2 2022/12/01 00:43:27 ryo Exp $");
+__RCSID("$NetBSD: ksyms.c,v 1.3 2024/04/01 18:33:24 riastradh Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -118,7 +118,7 @@ ksymload(size_t *nsymp)
 		if (st == NULL) {
 			goto elffail;
 		}
-		if (ELF_ST_TYPE(st->st_info) != STT_FUNC) {
+		if (GELF_ST_TYPE(st->st_info) != STT_FUNC) {
 			continue;
 		}
 		sym = emalloc(sizeof(*sym));

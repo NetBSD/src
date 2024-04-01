@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2022/04/18 19:40:06 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.12 2024/04/01 18:33:23 riastradh Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -17,7 +17,8 @@ HOST_CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OPENSOLARIS_DISTDIR}/tools/ctf/cvt \
 		-I${OPENSOLARIS_DISTDIR}/uts/common \
 		-I${LIBELF_DIR} \
-		-I${LIBDWARF_DIR}
+		-I${LIBDWARF_DIR} \
+		-I${TOOLDIR}/include
 
 HOST_CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1
 
@@ -37,5 +38,4 @@ HOST_CFLAGS+=	-pthread
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/common
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/cvt
 
-.include "${.CURDIR}/../Makefile.nbincludes"
 .include "${.CURDIR}/../Makefile.host"

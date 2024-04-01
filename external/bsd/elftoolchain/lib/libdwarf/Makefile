@@ -82,7 +82,6 @@ GENSRCS=	dwarf_pubnames.c dwarf_pubtypes.c dwarf_weaks.c \
 		dwarf_pro_funcs.c dwarf_pro_types.c		\
 		dwarf_pro_vars.c
 CLEANFILES=	${GENSRCS}
-CPPFLAGS+=	-DBUILTIN_ELF_HEADERS
 CPPFLAGS+=	-I. -I${SRCDIR} -I${TOP}/common -I${TOP}/libelf
 
 LIBDPLIBS+=	elf ${.CURDIR}/../libelf
