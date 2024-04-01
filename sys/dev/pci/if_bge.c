@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.390 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.391 2024/04/01 22:56:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.390 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.391 2024/04/01 22:56:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5746,7 +5746,7 @@ bge_init_locked(struct ifnet *ifp)
 
 	/* 5718 step 12, 57XX step 37 */
 	/*
-	 * XXX Doucments of 5718 series and 577xx say the recommended value
+	 * XXX Documents of 5718 series and 577xx say the recommended value
 	 * is 1, but tg3 set 1 only on 57765 series.
 	 */
 	if (BGE_IS_57765_PLUS(sc))
