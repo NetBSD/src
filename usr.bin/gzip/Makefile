@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.18 2013/11/13 11:12:24 pettai Exp $
+#	$NetBSD: Makefile,v 1.19 2024/04/01 02:21:39 christos Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
 PROG=		gzip
+SRCS+=		gzip.c
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
+.if !defined(HOSTPROG)
 DPADD=		${LIBZ} ${LIBBZ2} ${LIBLZMA}
 LDADD=		-lz -lbz2 -llzma
 
@@ -25,5 +27,6 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 		${BINDIR}/zgrep ${BINDIR}/zegrep \
 		${BINDIR}/zgrep ${BINDIR}/zfgrep \
 		${BINDIR}/zmore ${BINDIR}/zless
+.endif
 
 .include <bsd.prog.mk>
