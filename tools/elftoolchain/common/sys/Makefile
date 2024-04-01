@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2024/03/31 03:20:38 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2024/04/01 02:18:30 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,10 +10,10 @@ INCS=		elfdefinitions.h
 HOST_INCSDIR=	${TOOLDIR}/include/sys
 
 # Too early for ${TOOL_M4}
-#elfdefinitions.h:	elfdefinitions.m4 elfconstants.m4
-#	${_MKTARGET_CREATE}
-#	${TOOL_M4} -I${SRCDIR} -D SRCDIR=${SRCDIR} ${M4FLAGS} \
-#		elfdefinitions.m4 > ${.TARGET}
+elfdefinitions.h:	elfdefinitions.m4 elfconstants.m4
+	${_MKTARGET_CREATE}
+	${TOOL_M4} -I${SRCDIR} -D SRCDIR=${SRCDIR} ${M4FLAGS} \
+		elfdefinitions.m4 > ${.TARGET}
 
 .PHONY:	all clean clobber depend
 
@@ -35,7 +35,7 @@ includes: .PHONY ${HOST_INCSDIR} .WAIT ${HOST_INCINSTFILES}
 all dependall depend:	${INCS}
 
 clean clobber:
-#	rm -f ${INCS}
+	rm -f ${INCS}
 
 cleandepend:
 	rm -f ${.OBJDIR}/.depend
