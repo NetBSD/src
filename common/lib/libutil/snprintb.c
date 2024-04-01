@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.44 2024/03/25 20:39:26 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -251,15 +251,6 @@ int
 snprintb_m(char *buf, size_t bufsize, const char *bitfmt, uint64_t val,
 	   size_t line_max)
 {
-#ifdef _KERNEL
-	/*
-	 * For safety; no other *s*printf() do this, but in the kernel
-	 * we don't usually check the return value.
-	 */
-	if (bufsize > 0)
-		(void)memset(buf, 0, bufsize);
-#endif /* _KERNEL */
-
 	int old = *bitfmt != '\177';
 	if (!old)
 		bitfmt++;
