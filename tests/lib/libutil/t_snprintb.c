@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.31 2024/03/25 20:39:27 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.32 2024/04/01 09:15:51 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.31 2024/03/25 20:39:27 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.32 2024/04/01 09:15:51 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -42,19 +42,16 @@ __RCSID("$NetBSD: t_snprintb.c,v 1.31 2024/03/25 20:39:27 rillig Exp $");
 #include <atf-c.h>
 
 static const char *
-vis_arr(const char *arr, size_t arrsize)
+vis_arr(char *buf, size_t bufsize, const char *arr, size_t arrsize)
 {
-	static char buf[3][1024];
-	static size_t i;
-
-	i = (i + 1) % (sizeof(buf) / sizeof(buf[0]));
-	int rv = strnvisx(buf[i] + 1, sizeof(buf[i]) - 2, arr, arrsize,
+	ATF_REQUIRE(bufsize >= 2);
+	int rv = strnvisx(buf + 1, bufsize - 2, arr, arrsize,
 	    VIS_WHITE | VIS_OCTAL);
 	ATF_REQUIRE_MSG(rv >= 0, "buffer too small for size %zu", arrsize);
-	buf[i][0] = '"';
-	buf[i][1 + rv] = '"';
-	buf[i][1 + rv + 1] = '\0';
-	return buf[i];
+	buf[0] = '"';
+	buf[1 + rv] = '"';
+	buf[1 + rv + 1] = '\0';
+	return buf;
 }
 
 static void
@@ -63,7 +60,7 @@ check_snprintb_m(const char *file, size_t line,
     size_t line_max,
     int want_rv, const char *want_buf, size_t want_bufsize)
 {
-	char buf[1024];
+	char buf[1024], vis_bitfmt[1024], vis_want_buf[1024], vis_buf[1024];
 
 	ATF_REQUIRE(bufsize <= sizeof(buf));
 	ATF_REQUIRE(want_bufsize <= sizeof(buf));
@@ -103,11 +100,12 @@ check_snprintb_m(const char *file, size_t line,
 	    "\twant: %d bytes %s\n"
 	    "\thave: %d bytes %s\n",
 	    file, line,
-	    vis_arr(bitfmt, bitfmtlen),
+	    vis_arr(vis_bitfmt, sizeof(vis_bitfmt), bitfmt, bitfmtlen),
 	    (uintmax_t)val,
 	    line_max,
-	    want_rv, vis_arr(want_buf, want_bufsize),
-	    rv, vis_arr(buf, have_bufsize));
+	    want_rv, vis_arr(vis_want_buf, sizeof(vis_want_buf),
+		want_buf, want_bufsize),
+	    rv, vis_arr(vis_buf, sizeof(vis_buf), buf, have_bufsize));
 }
 
 #define	h_snprintb_m_len(bufsize, bitfmt, val, line_max,		\
@@ -1500,6 +1498,15 @@ ATF_TC_BODY(snprintb_m, tc)
 	    34,
 	    "0x800f0701<LSB,NIBBLE2=0>\0"
 	    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\0");
+
+	// new style, missing number base
+	h_snprintb_m_len(
+	    1024,
+	    "\177",
+	    0xff,
+	    128,
+	    -1,
+	    "#\0");
 
 	// new style, buffer too small for complete number in line 2
 	h_snprintb_m_len(
