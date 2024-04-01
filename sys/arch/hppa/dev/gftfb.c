@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.12 2024/03/28 12:50:31 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.13 2024/04/01 09:48:58 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -212,8 +212,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
 	unsigned long defattr = 0;
-	int ret, is_console = 0, i, j;
-	uint8_t cmap[768];
+	int ret, is_console = 0;
 
 	sc->sc_dev = self;
 
@@ -329,15 +328,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 				defattr);
 	}
 
-	j = 0;
-	rasops_get_cmap(ri, cmap, sizeof(cmap));
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap_red[i] = cmap[j];
-		sc->sc_cmap_green[i] = cmap[j + 1];
-		sc->sc_cmap_blue[i] = cmap[j + 2];
-		gftfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
-		j += 3;
-	}
+	gftfb_restore_palette(sc);
 
 	/* no suspend/resume support yet */
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
@@ -1008,11 +999,17 @@ gftfb_getcmap(struct gftfb_softc *sc, struct wsdisplay_cmap *cm)
 static void
 gftfb_restore_palette(struct gftfb_softc *sc)
 {
-	int i;
+	uint8_t cmap[768];
+	int i, j;
 
+	j = 0;
+	rasops_get_cmap(&sc->sc_console_screen.scr_ri, cmap, sizeof(cmap));
 	for (i = 0; i < 256; i++) {
-		gftfb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		gftfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 }
 
