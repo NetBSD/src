@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1363 2024/01/20 08:09:13 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1364 2024/04/01 22:23:14 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1612,7 +1612,11 @@ USE_XZ_SETS?= no
 TOOL_GZIP=		${TOOL_PIGZ}
 GZIP_N_FLAG?=		-nT
 .else
+.if ${USETOOLS} == "yes"
+TOOL_GZIP=		${TOOLDIR}/bin/${_TOOL_PREFIX}gzip
+.else
 TOOL_GZIP=		gzip
+.endif
 GZIP_N_FLAG?=		-n
 .endif
 TOOL_GZIP_N=		${TOOL_GZIP} ${GZIP_N_FLAG}
