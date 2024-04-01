@@ -125,7 +125,7 @@ dt_module_syminit32(dt_module_t *dmp)
 				    dmp->dm_sec_offsets[sym->st_shndx];
 #endif
 #ifdef __NetBSD__
-			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
+			sym->st_value += (uintptr_t) dmp->dm_reloc_offset;
 #endif
 		}
 
@@ -177,7 +177,7 @@ dt_module_syminit64(dt_module_t *dmp)
 				    dmp->dm_sec_offsets[sym->st_shndx];
 #endif
 #ifdef __NetBSD__
-			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
+			sym->st_value += (uintptr_t) dmp->dm_reloc_offset;
 #endif
 		}
 

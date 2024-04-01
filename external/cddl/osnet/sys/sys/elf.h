@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.6 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: elf.h,v 1.7 2024/04/01 18:33:23 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -30,12 +30,25 @@
 #define	_SYS__ELF_SOLARIS_H_
 
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/exec_elf.h>
+# include "nbtool_config.h"
 #else
-#include <sys/exec_elf.h>
+# include <sys/types.h>
 #endif
 
-#define	SHT_SUNW_dof		0x6ffffff4
+/*
+ * XXX In the kernel (e.g., zfs module build, or anything else using
+ * sys/dtrace.h -> sys/ctf_api.h -> sys/elf.h), sys/elfdefinitions.h
+ * isn't available -- it's a header file for the userland libelf.  We
+ * could maybe make it available, but sys/exec_elf.h -- which would
+ * collide with sys/elfdefinitions.h -- provides all the definitions
+ * users need, so we'll just use that for now.
+ */
+#ifdef _KERNEL
+# include <sys/exec_elf.h>
+#else
+# include <sys/elfdefinitions.h>
+#endif
+
 #define	EM_AMD64		EM_X86_64
 
 #define __ELF_WORD_SIZE ELFSIZE

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.6 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf.h,v 1.7 2024/04/01 18:33:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -33,25 +33,11 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 # include "nbtool_config.h"
-#endif
-
-
-#ifdef BUILTIN_ELF_HEADERS
-# include <sys/types.h>
-# include <stdint.h>
-# include "elfdefinitions.h"
-#elif HAVE_NBTOOL_CONFIG_H
-# include <nbinclude/sys/exec_elf.h>
-#elif defined(__NetBSD__)
-# include <sys/types.h>
-# include <sys/exec_elf.h>
-#elif defined(__FreeBSD__)
-# include <sys/types.h>
-# include <sys/elf32.h>
-# include <sys/elf64.h>
 #else
-  #error "No valid elf headers"
+# include <sys/types.h>
 #endif
+
+#include "elfdefinitions.h"
 
 /* Library private data structures */
 typedef struct _Elf Elf;

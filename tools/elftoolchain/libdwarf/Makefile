@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2024/03/30 22:39:53 riastradh Exp $
+#	$NetBSD: Makefile,v 1.7 2024/04/01 18:33:23 riastradh Exp $
 
 HOSTLIB=dwarf
 
@@ -73,12 +73,11 @@ COMPATLIB_NO_LIB= yes # only the include files, not the library
 
 LIBDWARF_OBJDIR!= cd ${.CURDIR} && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-DBUILTIN_ELF_HEADERS
 CPPFLAGS+=	-I${.CURDIR}/../../compat
 CPPFLAGS+=	-I${.CURDIR}/../../common
 CPPFLAGS+=	-I${LIBDWARF_OBJDIR}/../common
 CPPFLAGS+=	-I${LIBDWARF_DIR} -I${LIBELF_DIR} -I${COMMON_DIR}
-CPPFLAGS+=	-I${TOOLDIR}/include -I${TOOLDIR}/include/nbinclude
+CPPFLAGS+=	-I${TOOLDIR}/include
 
 BUILD_OSTYPE!=  uname -s
 

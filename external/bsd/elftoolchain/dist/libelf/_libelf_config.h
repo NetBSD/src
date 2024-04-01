@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.6 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.7 2024/04/01 18:33:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -28,28 +28,6 @@
  * Id: _libelf_config.h 3975 2022-04-30 20:10:58Z jkoshy
  */
 
-#if defined(__NetBSD__) || defined(HAVE_NBTOOL_CONFIG_H)
-
-#include <machine/elf_machdep.h>
-
-#if	!defined(ARCH_ELFSIZE)
-#error	ARCH_ELFSIZE is not defined.
-#endif
-
-#if	ARCH_ELFSIZE == 32
-#define	LIBELF_ARCH		ELF32_MACHDEP_ID
-#define	LIBELF_BYTEORDER	ELF32_MACHDEP_ENDIANNESS
-#define	LIBELF_CLASS		ELFCLASS32
-#define	Elf_Note		Elf32_Nhdr
-#else
-#define	LIBELF_ARCH		ELF64_MACHDEP_ID
-#define	LIBELF_BYTEORDER	ELF64_MACHDEP_ENDIANNESS
-#define	LIBELF_CLASS		ELFCLASS64
-#define	Elf_Note		Elf64_Nhdr
-#endif
-
-#endif	/* __NetBSD__ || HAVE_NBTOOL_CONFIG_H */
-
 /*
  * Downstream projects can replace the following placeholder with a custom
  * definition of LIBELF_BYTEORDER, if the host's native byte order cannot
@@ -57,7 +35,6 @@
  */
 /* @LIBELF-DEFINE-HOST-BYTEORDER@ */
 
-#ifndef HAVE_NBTOOL_CONFIG_H
 #if	!defined(LIBELF_BYTEORDER)
 
 /*
@@ -79,4 +56,3 @@
 
 #endif	/* defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) */
 #endif	/* !defined(LIBELF_BYTEORDER) */
-#endif /* HAVE_NBTOOL_CONFIG_H */
