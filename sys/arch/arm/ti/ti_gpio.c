@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.15 2024/04/01 15:52:08 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.15 2024/04/01 15:52:08 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -262,10 +262,8 @@ static struct fdtbus_gpio_controller_func ti_gpio_funcs = {
 };
 
 static void
-ti_gpio_intr_disestablish(device_t dev, void *ih)
+ti_gpio_intr_disable(struct ti_gpio_softc * const sc, struct ti_gpio_intr * const intr)
 {
-	struct ti_gpio_softc * const sc = device_private(dev);
-	struct ti_gpio_intr *intr = ih;
 	const u_int pin = intr->intr_pin;
 	const uint32_t pin_mask = __BIT(pin);
 	uint32_t val;
@@ -280,6 +278,7 @@ ti_gpio_intr_disestablish(device_t dev, void *ih)
 
 	intr->intr_func = NULL;
 	intr->intr_arg = NULL;
+	intr->intr_mpsafe = false;
 }
 
 static void *
@@ -359,6 +358,15 @@ ti_gpio_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	return &sc->sc_intr[pin];
 }
 
+static void
+ti_gpio_intr_disestablish(device_t dev, void *ih)
+{
+	struct ti_gpio_softc * const sc = device_private(dev);
+	struct ti_gpio_intr * const intr = ih;
+	
+	ti_gpio_intr_disable(sc, intr);
+}
+
 static bool
 ti_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
@@ -423,6 +431,106 @@ ti_gpio_pin_ctl(void *priv, int pin, int flags)
 	mutex_exit(&sc->sc_lock);
 }
 
+static void *
+ti_gpio_gp_intr_establish(void *vsc, int pin, int ipl, int irqmode,
+    int (*func)(void *), void *arg)
+{
+	struct ti_gpio_softc * const sc = vsc;
+	uint32_t val;
+
+	if (ipl != IPL_VM || pin < 0 || pin >= __arraycount(sc->sc_pins))
+		return NULL;
+
+	if (sc->sc_intr[pin].intr_func != NULL)
+		return NULL;
+
+	/*
+	 * Enabling both high and low level triggers will cause the GPIO
+	 * controller to always assert the interrupt.
+	 */
+	if ((irqmode & (GPIO_INTR_LOW_LEVEL|GPIO_INTR_HIGH_LEVEL)) ==
+	    (GPIO_INTR_LOW_LEVEL|GPIO_INTR_HIGH_LEVEL))
+		return NULL;
+
+	/* Set pin as input */
+	mutex_enter(&sc->sc_lock);
+	if (ti_gpio_ctl(sc, pin, GPIO_PIN_INPUT) != 0) {
+		mutex_exit(&sc->sc_lock);
+		return NULL;
+	}
+
+	sc->sc_intr[pin].intr_pin = pin;
+	sc->sc_intr[pin].intr_func = func;
+	sc->sc_intr[pin].intr_arg = arg;
+	sc->sc_intr[pin].intr_mpsafe = (irqmode & GPIO_INTR_MPSAFE) != 0;
+
+	const uint32_t pin_mask = __BIT(pin);
+
+	/* Configure triggers */
+	val = RD4(sc, GPIO_LEVELDETECT0);
+	if ((irqmode & GPIO_INTR_LOW_LEVEL) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_LEVELDETECT0, val);
+
+	val = RD4(sc, GPIO_LEVELDETECT1);
+	if ((irqmode & GPIO_INTR_HIGH_LEVEL) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_LEVELDETECT1, val);
+
+	val = RD4(sc, GPIO_RISINGDETECT);
+	if ((irqmode & GPIO_INTR_POS_EDGE) != 0 ||
+	    (irqmode & GPIO_INTR_DOUBLE_EDGE) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_RISINGDETECT, val);
+
+	val = RD4(sc, GPIO_FALLINGDETECT);
+	if ((irqmode & GPIO_INTR_NEG_EDGE) != 0 ||
+	    (irqmode & GPIO_INTR_DOUBLE_EDGE) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_FALLINGDETECT, val);
+
+	/* Enable interrupts */
+	if (sc->sc_type == TI_GPIO_OMAP3) {
+		val = RD4(sc, GPIO_IRQENABLE1);
+		WR4(sc, GPIO_IRQENABLE1, val | pin_mask);
+	} else {
+		WR4(sc, GPIO_IRQENABLE1_SET, pin_mask);
+	}
+
+	mutex_exit(&sc->sc_lock);
+	
+	return &sc->sc_intr[pin];
+}
+
+static void
+ti_gpio_gp_intr_disestablish(void *vsc, void *ih)
+{
+	struct ti_gpio_softc * const sc = vsc;
+	struct ti_gpio_intr * const intr = ih;
+
+	ti_gpio_intr_disable(sc, intr);
+}
+
+static bool
+ti_gpio_gp_intrstr(void *vsc, int pin, int irqmode, char *buf, size_t buflen)
+{
+	struct ti_gpio_softc * const sc = vsc;
+
+	if (pin < 0 || pin >= TI_GPIO_NPINS)
+		return false;
+
+	snprintf(buf, buflen, "%s pin %d", sc->sc_modname, pin);
+	return true;
+}
+
 static void
 ti_gpio_attach_ports(struct ti_gpio_softc *sc)
 {
@@ -434,10 +542,17 @@ ti_gpio_attach_ports(struct ti_gpio_softc *sc)
 	gp->gp_pin_read = ti_gpio_pin_read;
 	gp->gp_pin_write = ti_gpio_pin_write;
 	gp->gp_pin_ctl = ti_gpio_pin_ctl;
+	gp->gp_intr_establish = ti_gpio_gp_intr_establish;
+	gp->gp_intr_disestablish = ti_gpio_gp_intr_disestablish;
+	gp->gp_intr_str = ti_gpio_gp_intrstr;
 
 	for (pin = 0; pin < __arraycount(sc->sc_pins); pin++) {
 		sc->sc_pins[pin].pin_num = pin;
 		sc->sc_pins[pin].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
+		sc->sc_pins[pin].pin_intrcaps =
+		    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
+		    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_HIGH_LEVEL |
+		    GPIO_INTR_LOW_LEVEL | GPIO_INTR_MPSAFE;
 		sc->sc_pins[pin].pin_state = ti_gpio_pin_read(sc, pin);
 	}
 
