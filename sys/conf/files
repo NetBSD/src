@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1311 2024/02/09 22:08:34 andvar Exp $
+#	$NetBSD: files,v 1.1312 2024/04/02 22:30:03 charlotte Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -105,6 +105,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_MBR
 				DKWEDGE_METHOD_APPLE
 				DKWEDGE_METHOD_RDB
+				DKWEDGE_METHOD_TOS
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA256
 				VERIFIED_EXEC_FP_SHA384
