@@ -1,4 +1,4 @@
-/*	$NetBSD: s_rintl.c,v 1.5 2013/08/21 13:04:44 martin Exp $	*/
+/*	$NetBSD: s_rintl.c,v 1.6 2024/04/02 18:39:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
 #else
-__RCSID("$NetBSD: s_rintl.c,v 1.5 2013/08/21 13:04:44 martin Exp $");
+__RCSID("$NetBSD: s_rintl.c,v 1.6 2024/04/02 18:39:51 christos Exp $");
 #endif
 
 #include <float.h>
@@ -40,17 +40,19 @@ __RCSID("$NetBSD: s_rintl.c,v 1.5 2013/08/21 13:04:44 martin Exp $");
 #include "math_private.h"
 
 #ifdef __HAVE_LONG_DOUBLE
+
+# if EXT_FRACBITS == 64 || EXT_FRACBITS == 113 && LDBL_MAX_EXP == 0x4000
+
+#  define BIAS (LDBL_MAX_EXP - 1)
 static const float
 shift[2] = {
-#if EXT_FRACBITS == 64
+#  if EXT_FRACBITS == 64
 	0x1.0p63, -0x1.0p63
-#elif EXT_FRACBITS == 113
+#  elif EXT_FRACBITS == 113
 	0x1.0p112, -0x1.0p112
-#elif EXT_FRACBITS == 112
-	0x1.0p111, -0x1.0p111
-#else
-#error "Unsupported long double format"
-#endif
+#  else
+#   error "Unsupported long double format"
+#  endif
 };
 static const float zero[2] = { 0.0, -0.0 };
 
@@ -63,11 +65,11 @@ rintl(long double x)
 
 	u.extu_ld = x;
 	u.extu_ext.ext_frach &= ~0x80000000;
-	expsign = u.extu_ext.ext_sign;
+	expsign = GET_EXPSIGN(&u);
 	ex = expsign & 0x7fff;
 
-	if (ex >= EXT_EXP_BIAS + EXT_FRACBITS - 1) {
-		if (ex == EXT_EXP_BIAS + EXT_FRACBITS)
+	if (ex >= BIAS + EXT_FRACBITS - 1) {
+		if (ex == BIAS + EXT_FRACBITS)
 			return (x + x);	/* Inf, NaN, or unsupported format */
 		return (x);		/* finite and already an integer */
 	}
@@ -87,9 +89,18 @@ rintl(long double x)
 	 * If the result is +-0, then it must have the same sign as x, but
 	 * the above calculation doesn't always give this.  Fix up the sign.
 	 */
-	if (ex < EXT_EXP_BIAS && x == 0.0L)
+	if (ex < BIAS && x == 0.0L)
 		return (zero[sign]);
 
 	return (x);
 }
-#endif
+# else
+
+long double
+rintl(long double x)
+{
+	return rint(x);
+}
+
+# endif
+#endif /* __HAVE_LONG_DOUBLE */
