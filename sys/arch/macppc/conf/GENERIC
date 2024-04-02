@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.379 2024/01/29 18:27:13 christos Exp $
+# $NetBSD: GENERIC,v 1.380 2024/04/02 22:56:50 charlotte Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.379 $"
+#ident 		"GENERIC-$Revision: 1.380 $"
 
 maxusers	32
 
@@ -78,6 +78,7 @@ options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
 #options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
 #options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 #options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+#options 	DKWEDGE_METHOD_TOS	# Support Atari "TOS" partitions as wedges
 
 # File systems
 include "conf/filesystems.config"

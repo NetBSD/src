@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2023/02/09 14:09:49 abs Exp $
+# $NetBSD: GENERIC,v 1.240 2024/04/02 22:56:51 charlotte Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.239 $"
+#ident		"GENERIC-$Revision: 1.240 $"
 
 maxusers	64
 
@@ -145,6 +145,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 #options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
 #options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+#options 	DKWEDGE_METHOD_TOS	# Support Atari "TOS" partitions as wedges
 
 ## File systems.
 include "conf/filesystems.config"
