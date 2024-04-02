@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.11 2024/02/11 09:07:49 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.12 2024/04/02 22:56:51 charlotte Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -66,6 +66,7 @@ options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 #options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+#options 	DKWEDGE_METHOD_TOS	# Support Atari "TOS" partitions as wedges
 
 include 	"conf/filesystems.config"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.96 2024/01/29 18:27:15 christos Exp $
+#	$NetBSD: GENERIC,v 1.97 2024/04/02 22:56:51 charlotte Exp $
 #
 # GENERIC machine description file
 #
@@ -96,6 +96,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 #options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+#options	DKWEDGE_METHOD_TOS	# Support Atari "TOS" partitions as wedges
 
 # Shared memory options
 
