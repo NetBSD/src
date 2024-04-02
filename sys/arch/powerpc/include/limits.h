@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.20 2019/01/21 20:28:18 dholland Exp $	*/
+/*	$NetBSD: limits.h,v 1.21 2024/04/02 14:21:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -94,18 +94,9 @@
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 #endif
 
-#ifdef _LP64
-/* Quads and longs are the same on LP64. */
-#define	UQUAD_MAX	(ULONG_MAX)
-#define	QUAD_MAX	(LONG_MAX)
-#define	QUAD_MIN	(LONG_MIN)
-#else
-/* GCC requires that quad constants be written as expressions. */
-#define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
-					/* max value for a quad_t */
-#define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
-#define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
-#endif
+#define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
+#define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
+#define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 
 #endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
