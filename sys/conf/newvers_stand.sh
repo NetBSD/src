@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers_stand.sh,v 1.9 2017/04/08 19:53:54 christos Exp $
+# $NetBSD: newvers_stand.sh,v 1.10 2024/04/02 14:15:19 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,8 @@
 # Called as:
 #	sh ${S}/conf/newvers_stand.sh [-dkn] [-D <date>] [-m <machine>] VERSION_TEMPLATE [EXTRA_MSG]
 
+DATE=${TOOL_DATE:-date}
+
 cwd=$(dirname "$0")
 
 add_name=true
@@ -45,8 +47,8 @@ dateargs=
 
 # parse command args
 while getopts "m:D:dknm:" OPT; do
-	case $OPT in
-	D)	dateargs="-r $OPTARG";;
+	case ${OPT} in
+	D)	dateargs="-r ${OPTARG}";;
 	d)	add_date=false;;
 	k)	add_kernrev=false;;
 	m)	machine=${OPTARG};;
@@ -56,25 +58,25 @@ while getopts "m:D:dknm:" OPT; do
 	esac
 done
 
-shift $(expr $OPTIND - 1)
+shift $(expr ${OPTIND} - 1)
 
 r=$(awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' "$1")
 shift
-t=$(LC_ALL=C TZ=UTC date $dateargs)
+t=$(LC_ALL=C TZ=UTC ${DATE} ${dateargs})
 
-if $add_date; then
+if ${add_date}; then
 	echo "const char bootprog_rev[] = \"${r} (${t})\";" > vers.c
 else
 	echo "const char bootprog_rev[] = \"${r}\";" > vers.c
 fi
 
-if $add_name; then
+if ${add_name}; then
 	extra=${1:+" $1"}
 
 	echo "const char bootprog_name[] = \"NetBSD/${machine}${extra}\";" >> vers.c
 fi
 
-if $add_kernrev; then
+if ${add_kernrev}; then
 	osr=$(sh "${cwd}/osrelease.sh")
 	echo "const char bootprog_kernrev[] = \"${osr}\";" >> vers.c
 fi
