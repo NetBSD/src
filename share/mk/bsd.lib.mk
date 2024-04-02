@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.397 2024/03/26 18:38:52 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.398 2024/04/02 16:17:29 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -16,9 +16,13 @@ LIBISCXX?=	no
 .if ${LIBISMODULE} != "no"
 _LIB_PREFIX?=	# empty
 MKDEBUGLIB:=	no
-MKPICINSTALL:=	no
 MKPROFILE:=	no
+.if ${LIBISMODULE} != "pic"
+MKPICINSTALL:=	no
+MKLINKLIB:=	no
 MKSTATICLIB:=	no
+.endif
+_LINKINSTALL?=	no
 _LINTINSTALL?=	no
 .else
 _LIB_PREFIX?=	lib
@@ -26,17 +30,19 @@ _LIB_PREFIX?=	lib
 
 .if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
+MKPROFILE:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
 MKSTATICLIB:=	no
 . elif ${LIBISPRIVATE} != "pic"
 MKPIC:=		no
 . endif
-MKPROFILE:=	no
+_LINKINSTALL?=	no
 _LINTINSTALL?=	no
 .endif
 
 _LINTINSTALL?=	${MKLINT}
+_LINKINSTALL?=	${MKLINKLIB}
 
 ##### Basic targets
 .PHONY:		checkver libinstall
@@ -731,7 +737,7 @@ LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS}
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
 libinstall::
 
-.if ${MKLINKLIB} != "no" && ${MKSTATICLIB} != "no"
+.if ${MKLINKLIB} != "no" && ${MKSTATICLIB} != "no" && ${_LINKINSTALL} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB.a}
 
@@ -838,7 +844,7 @@ ${_DEST.OBJ}/${_LIB.so.full}: ${_LIB.so.full}
 	    ${_DEST.LIB}/${_LIB.so.major}
 .endif
 .endif
-.if ${MKLINKLIB} != "no"
+.if ${MKLINKLIB} != "no" && ${_LINKINSTALL} != "no"
 	${INSTALL_SYMLINK}  ${_LIB.so.full} ${_DEST.OBJ}/${_LIB.so}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r ${_DEST.OBJ}/${_LIB.so.full} \
