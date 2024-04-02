@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.124 2024/04/01 22:20:58 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.125 2024/04/02 12:42:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2024 Matthew R. Green
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997-2024 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.124 2024/04/01 22:20:58 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.125 2024/04/02 12:42:35 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1762,6 +1762,7 @@ check_siginfo(void)
 out:
 	print_info = 0;
 }
+#endif
 
 static off_t
 cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
@@ -1799,7 +1800,6 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 		*gsizep = in_tot;
 	return (in_tot);
 }
-#endif
 
 static void
 handle_stdin(void)
