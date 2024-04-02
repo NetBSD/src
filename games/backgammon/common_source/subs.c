@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.20 2013/09/13 20:46:50 joerg Exp $	*/
+/*	$NetBSD: subs.c,v 1.21 2024/04/02 14:24:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.20 2013/09/13 20:46:50 joerg Exp $");
+__RCSID("$NetBSD: subs.c,v 1.21 2024/04/02 14:24:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ void
 writel(const char *l)
 {
 #ifdef DEBUG
+	static FILE  *trace;
 	const char   *s;
 
 	if (trace == NULL)
