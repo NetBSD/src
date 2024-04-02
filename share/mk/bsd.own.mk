@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1364 2024/04/01 22:23:14 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1365 2024/04/02 22:37:34 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1391,9 +1391,10 @@ _MKVARS.no= \
 ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
 .endfor
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc"
+.if ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE_ARCH} == "i386"    || \
+    ${MACHINE_ARCH} == "sparc"   || \
+    ${MACHINE_ARCH} == "x86_64"
 MKSLJIT=	yes
 .endif
 
