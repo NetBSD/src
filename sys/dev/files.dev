@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.9 2022/06/04 03:31:10 pgoyette Exp $
+#	$NetBSD: files.dev,v 1.10 2024/04/02 22:30:03 charlotte Exp $
 
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
@@ -13,6 +13,7 @@ file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
 file	dev/dkwedge/dkwedge_rdb.c	dkwedge_method_rdb
+file	dev/dkwedge/dkwedge_tos.c	dkwedge_method_tos
 file	dev/firmload.c			firmload
 file	dev/fss.c			fss
 file	dev/keylock.c			keylock
