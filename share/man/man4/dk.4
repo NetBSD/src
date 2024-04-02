@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.13 2021/01/06 18:05:58 wiz Exp $
+.\"	$NetBSD: dk.4,v 1.14 2024/04/02 23:46:19 charlotte Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" Jonathan A. Kollasch used vnd(4) as the template for this man page.
 .\"
-.Dd January 6, 2021
+.Dd April 2, 2024
 .Dt DK 4
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@ driver
 .Cd "options DKWEDGE_METHOD_MBR"
 .Cd "options DKWEDGE_METHOD_RDB"
 .Cd "options DKWEDGE_METHOD_APPLE"
+.Cd "options DKWEDGE_METHOD_TOS"
 .Sh DESCRIPTION
 The
 .Nm
@@ -114,6 +115,19 @@ extended partitions start with
 Amiga Rigid Disk Block (RDB) partitioning detection method.
 .It Dv DKWEDGE_METHOD_APPLE
 Apple partition map detection method.
+.It Dv DKWEDGE_METHOD_TOS
+Atari's TOS partition map detection method.
+.Pp
+For each partition, a wedge is created with a name of the format
+.Dq ATARI_{TYPE}_{NUMBER}
+where TYPE may either be
+.Dq GEM
+or
+.Dq BGM .
+The first partition typically corresponds to the C: drive when read on an
+actual Atari, the second to D: and so on. Extended partitions (those of type
+.Dq XGM )
+are not currently supported.
 .El
 .Sh FILES
 .Bl -tag -width /dev/XXrXdkX -compact
