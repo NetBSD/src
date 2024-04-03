@@ -1,4 +1,4 @@
-/* $NetBSD: t_cbrt.c,v 1.5 2018/11/15 05:14:20 riastradh Exp $ */
+/* $NetBSD: t_cbrt.c,v 1.6 2024/04/03 01:52:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cbrt.c,v 1.5 2018/11/15 05:14:20 riastradh Exp $");
+__RCSID("$NetBSD: t_cbrt.c,v 1.6 2024/04/03 01:52:28 christos Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -285,12 +285,9 @@ ATF_TC_BODY(cbrtl_powl, tc)
 	const long double eps = 2*LDBL_EPSILON;
 	size_t i;
 
-#if LDBL_MANT_DIG > DBL_MANT_DIG
-	atf_tc_expect_fail("powl not yet implemented with full precision");
-#endif
 	for (i = 0; i < __arraycount(x); i++) {
 		long double x_cbrt = cbrtl(x[i]);
-		long double x_pow13 = powl(x[i], 1.0 / 3.0);
+		long double x_pow13 = powl(x[i], 1.0L / 3.0L);
 		bool ok;
 
 		if (x[i] == 0) {
