@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.31 2024/01/23 15:45:07 christos Exp $
+ * $NetBSD: math_private.h,v 1.32 2024/04/03 04:40:23 kre Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -348,6 +348,9 @@ do {								\
 
 /* Support switching the mode to FP_PE if necessary. */
 #if defined(__i386__) && !defined(NO_FPSETPREC)
+
+#include <ieeefp.h>
+
 #define	ENTERI() ENTERIT(long double)
 #define	ENTERIT(returntype)			\
 	returntype __retval;			\
