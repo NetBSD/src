@@ -26,10 +26,6 @@ __weak_alias(sinhl, _sinhl)
 
 #ifdef __HAVE_LONG_DOUBLE
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 #include "math.h"
 #include "math_private.h"
 #if LDBL_MANT_DIG == 64

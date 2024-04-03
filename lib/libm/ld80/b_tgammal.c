@@ -53,10 +53,6 @@
 #error "Unsupported long double format"
 #endif
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 #include "math.h"
 #include "math_private.h"
 

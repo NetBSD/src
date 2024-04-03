@@ -28,9 +28,6 @@
  * See ../src/s_tanpi.c for implementation details.
  */
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
 #include <stdint.h>
 
 #include "math.h"

@@ -33,10 +33,6 @@ __weak_alias(acoshl, _acoshl)
  * Bruce D. Evans.
  */
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 /* EXP_LARGE is the threshold above which we use acosh(x) ~= log(2x). */
 #if LDBL_MANT_DIG == 64
 #define	EXP_LARGE	34
