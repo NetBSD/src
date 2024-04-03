@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.99 2022/04/25 02:29:14 gutteridge Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.100 2024/04/03 01:13:41 gutteridge Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.99 2022/04/25 02:29:14 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.100 2024/04/03 01:13:41 gutteridge Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -846,6 +846,8 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		/* Type 6030 cards return IWN_HW_REV_TYPE_6005 */
 		if (pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_1 ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_2 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_130_1  ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_130_2  ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_1 ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_2 ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6235   ||
