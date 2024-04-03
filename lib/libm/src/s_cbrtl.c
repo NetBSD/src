@@ -13,12 +13,9 @@
  * written by Steven G. Kargl with input from Bruce D. Evans
  * and David A. Schultz.
  */
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_cbrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
-#if 0
-__FBSDID("$FreeBSD: head/lib/msun/src/s_cbrtl.c 238924 2012-07-30 21:58:28Z kargl $");
-#endif
+__RCSID("$NetBSD: s_cbrtl.c,v 1.2 2024/04/03 01:51:01 christos Exp $");
+
 
 #include "namespace.h"
 #include <machine/ieee.h>
@@ -30,44 +27,48 @@ __FBSDID("$FreeBSD: head/lib/msun/src/s_cbrtl.c 238924 2012-07-30 21:58:28Z karg
 #ifdef __HAVE_LONG_DOUBLE
 __weak_alias(cbrtl, _cbrtl)
 
+#define	BIAS	(LDBL_MAX_EXP - 1)
+
 static const unsigned
     B1 = 709958130;	/* B1 = (127-127.0/3-0.03306235651)*2**23 */
 
 long double
 cbrtl(long double x)
 {
-	union ieee_ext_u ux, vx;
+	union ieee_ext_u u, v;
 	long double r, s, t, w;
 	double dr, dt, dx;
 	float ft, fx;
 	uint32_t hx;
+	uint16_t expsign;
 	int k;
 
-	ux.extu_ld = x;
-
+	u.extu_ld = x;
+	expsign = GET_EXPSIGN(&u);
+	k = expsign & 0x7fff;
 
 	/*
 	 * If x = +-Inf, then cbrt(x) = +-Inf.
 	 * If x = NaN, then cbrt(x) = NaN.
 	 */
-	if (ux.extu_exp == EXT_EXP_INFNAN)
+	if (k == BIAS + LDBL_MAX_EXP)
 		return (x + x);
-	if ((ux.extu_frach | ux.extu_fracl | ux.extu_exp) == 0)
-		return (x);
 
-	vx.extu_ld = 1;
-	vx.extu_ext.ext_sign = ux.extu_ext.ext_sign;
-	ux.extu_ext.ext_sign = 0;
-	if (ux.extu_exp == 0) {
+	ENTERI();
+	if (k == 0) {
+		/* If x = +-0, then cbrt(x) = +-0. */
+		if ((u.extu_frach | u.extu_fracl) == 0)
+			RETURNI(x);
 		/* Adjust subnormal numbers. */
-		ux.extu_ld *= 0x1.0p514;
-		k = ux.extu_exp - EXT_EXP_BIAS - 514;
-	} else {
-		k = ux.extu_exp - EXT_EXP_BIAS;
-	}
+		u.extu_ld *= 0x1.0p514;
+		k = u.extu_exp;
+		k -= BIAS + 514;
+ 	} else
+		k -= BIAS;
+	SET_EXPSIGN(&u, BIAS);
+	v.extu_ld = 1; 
 
-	ux.extu_exp = EXT_EXP_BIAS;
-	x = ux.extu_ld;
+	x = u.extu_ld;
 	switch (k % 3) {
 	case 1:
 	case -2:
@@ -80,7 +81,7 @@ cbrtl(long double x)
 		k -= 2;
 		break;
 	}
-	vx.extu_exp = EXT_EXP_BIAS + k / 3;
+	SET_EXPSIGN(&v, (expsign & 0x8000) | (BIAS + k / 3));
 
 	/*
 	 * The following is the guts of s_cbrtf, with the handling of
@@ -136,10 +137,9 @@ cbrtl(long double x)
 	r=x/s;				/* error <= 0.5 ulps; |r| < |t| */
 	w=t+t;				/* t+t is exact */
 	r=(r-t)/(w+r);			/* r-t is exact; w+r ~= 3*t */
-	t=t+t*r;			/* error <= 0.5 + 0.5/3 + epsilon */
+	t=t+t*r;			/* error <= (0.5 + 0.5/3) * ulp */
 
-	t *= vx.extu_ld;
-	return t;
+	t *= v.extu_ld;
+	RETURNI(t);
 }
-
 #endif /* __HAVE_LONG_DOUBLE */
