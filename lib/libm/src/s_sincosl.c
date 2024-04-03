@@ -31,14 +31,11 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/s_sincosl.c 319047 2017-05-28 06:13:38Z mmel $");
 #endif
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sincosl.c,v 1.3 2024/02/24 15:16:53 christos Exp $");
+__RCSID("$NetBSD: s_sincosl.c,v 1.4 2024/04/03 18:53:42 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include <float.h>
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
 
 #include "math.h"
 #include "math_private.h"

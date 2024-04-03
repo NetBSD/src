@@ -78,10 +78,6 @@
 #include <fenv.h>
 #endif
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 #ifdef __FreeBSD__
 #include "fpmath.h"
 #endif

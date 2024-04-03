@@ -1,4 +1,4 @@
-/*	$NetBSD: s_cosl.c,v 1.1 2024/01/21 18:53:18 christos Exp $	*/
+/*	$NetBSD: s_cosl.c,v 1.2 2024/04/03 18:53:42 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_cosl.c,v 1.1 2024/01/21 18:53:18 christos Exp $");
+__RCSID("$NetBSD: s_cosl.c,v 1.2 2024/04/03 18:53:42 christos Exp $");
 
 /*
  * Limited testing on pseudorandom numbers drawn within [-2e8:4e8] shows
@@ -38,9 +38,6 @@ __RCSID("$NetBSD: s_cosl.c,v 1.1 2024/01/21 18:53:18 christos Exp $");
 
 #include "namespace.h"
 #include <float.h>
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(cosl, _cosl)

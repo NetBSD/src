@@ -32,10 +32,6 @@ __weak_alias(asinhl, _asinhl)
  * Bruce D. Evans.
  */
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 /* EXP_LARGE is the threshold above which we use asinh(x) ~= log(2x). */
 /* EXP_TINY is the threshold below which we use asinh(x) ~= x. */
 #if LDBL_MANT_DIG == 64

@@ -29,10 +29,6 @@ __weak_alias(tanhl, _tanhl)
  * Converted to long double by Bruce D. Evans.
  */
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 #if LDBL_MANT_DIG == 64
 #include "../ld80/k_expl.h"
 #elif LDBL_MANT_DIG == 113

@@ -30,10 +30,6 @@
 #include <float.h>
 #include <stdint.h>
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 #ifdef __FreeBSD__
 #include "fpmath.h"
 #endif

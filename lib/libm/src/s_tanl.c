@@ -1,4 +1,4 @@
-/*	$NetBSD: s_tanl.c,v 1.2 2024/02/23 13:42:01 christos Exp $	*/
+/*	$NetBSD: s_tanl.c,v 1.3 2024/04/03 18:53:42 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_tanl.c,v 1.2 2024/02/23 13:42:01 christos Exp $");
+__RCSID("$NetBSD: s_tanl.c,v 1.3 2024/04/03 18:53:42 christos Exp $");
 
 /*
  * Limited testing on pseudorandom numbers drawn within [0:4e8] shows
@@ -38,9 +38,6 @@ __RCSID("$NetBSD: s_tanl.c,v 1.2 2024/02/23 13:42:01 christos Exp $");
  */
 #include "namespace.h"
 #include <float.h>
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
 
 #include "math.h"
 #include "math_private.h"

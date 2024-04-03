@@ -32,10 +32,6 @@ __weak_alias(atanhl, _atanhl)
  * Bruce D. Evans.
  */
 
-#ifdef __i386__
-#include <ieeefp.h>
-#endif
-
 /* EXP_TINY is the threshold below which we use atanh(x) ~= x. */
 #if LDBL_MANT_DIG == 64
 #define	EXP_TINY	-34
