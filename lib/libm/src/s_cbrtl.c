@@ -14,10 +14,11 @@
  * and David A. Schultz.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_cbrtl.c,v 1.2 2024/04/03 01:51:01 christos Exp $");
+__RCSID("$NetBSD: s_cbrtl.c,v 1.3 2024/04/03 14:54:50 christos Exp $");
 
 
 #include "namespace.h"
+#include <ieeefp.h>
 #include <machine/ieee.h>
 #include <float.h>
 
