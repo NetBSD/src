@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.14 2024/04/02 23:46:19 charlotte Exp $
+.\"	$NetBSD: dk.4,v 1.15 2024/04/03 00:40:46 uwe Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,11 +39,11 @@
 driver
 .Sh SYNOPSIS
 .Cd "options DKWEDGE_AUTODISCOVER"
+.Cd "options DKWEDGE_METHOD_APPLE"
 .Cd "options DKWEDGE_METHOD_BSDLABEL"
 .Cd "options DKWEDGE_METHOD_GPT"
 .Cd "options DKWEDGE_METHOD_MBR"
 .Cd "options DKWEDGE_METHOD_RDB"
-.Cd "options DKWEDGE_METHOD_APPLE"
 .Cd "options DKWEDGE_METHOD_TOS"
 .Sh DESCRIPTION
 The
@@ -59,79 +59,107 @@ Wedges need to have unique names.
 If a duplicate name is detected during
 auto-discovery, that partition is ignored.
 .Sh KERNEL OPTIONS
-.Bl -tag -width DKWEDGE_METHOD_BSDLABEL
+.Bl -tag -width Dv
+.\"
 .It Dv DKWEDGE_AUTODISCOVER
 Automatically detect and configure wedges using any available methods.
+For each partition found, a wedge with a corresponding name is created.
 .Pp
 Currently only
 .Dv DKWEDGE_METHOD_GPT
 and
 .Dv DKWEDGE_METHOD_APPLE
 are enabled by default.
-.Pp
-For each partition found, a wedge with a corresponding name is created.
+.\"
+.It Dv DKWEDGE_METHOD_APPLE
+Apple partition map detection method.
+.\"
 .It Dv DKWEDGE_METHOD_BSDLABEL
-BSD disklabel detection method.
+.Tn BSD
+disklabel detection method.
 For each configured partition in the
 .Xr disklabel 5
 that is not of type
 .Dv FS_UNUSED ,
 a wedge is created and named after the
-.Va d_packname
+.Fa d_packname
 field followed by
-.Sq \&/
+.Ql \&/
 and the partition letter
-.So a Sc Ns \&.. Ns So p Sc .
+.Sm off
+.So Li a Sc \&.. So Li p Sc .
+.Sm on
 .Pp
 When the
-.Va d_packname
+.Fa d_packname
 is empty or has the value
-.Dq fictitious ,
+.Ql fictitious ,
 the regular partition names
 are used as wedge names, i.e. the device name, unit number and
 partition letter, for example
-.Dq wd0a .
+.Ql wd0a .
+.\"
 .It Dv DKWEDGE_METHOD_GPT
 Extensible Firmware Interface Globally Unique Identifier Partition Table
-(GPT) detection method.
+.Tn ( GPT )
+detection method.
 .Pp
 For every GPT partition a wedge is created and named after the
 partition label.
-GPT partitions are UTF-16-encoded, this is converted into UTF-8.
+GPT partitions are UTF-16\(enencoded, this is converted into UTF-8.
 If a partition has no label, its UUID is used instead.
+.\"
 .It Dv DKWEDGE_METHOD_MBR
-IBM PC-compatible Master Boot Record (MBR) partitioning detection method,
-with support for Extended MBRs.
+IBM PC-compatible Master Boot Record
+.Tn ( MBR )
+partitioning detection method, with support for Extended MBRs.
 .Pp
 For every partition in the MBR a wedge is created and named like a
 regular partition name, i.e. the device name, unit number and a
 partition letter, for example
-.Dq wd0e .
+.Ql wd0e .
 Primary partitions start with
-.Sq e ,
+.Ql e ,
 extended partitions start with
-.Sq i .
+.Ql i .
+.\"
 .It Dv DKWEDGE_METHOD_RDB
-Amiga Rigid Disk Block (RDB) partitioning detection method.
-.It Dv DKWEDGE_METHOD_APPLE
-Apple partition map detection method.
+Amiga Rigid Disk Block
+.Tn ( RDB )
+partitioning detection method.
+.\"
 .It Dv DKWEDGE_METHOD_TOS
-Atari's TOS partition map detection method.
+Atari's
+.Tn TOS
+partition map detection method.
 .Pp
 For each partition, a wedge is created with a name of the format
-.Dq ATARI_{TYPE}_{NUMBER}
-where TYPE may either be
-.Dq GEM
+.Sm off
+.Li ATARI_ Bro Ar type Brc Li _ Bro Ar number Brc
+.Sm on
+where
+.Ar type
+may either be
+.Ql GEM
 or
-.Dq BGM .
-The first partition typically corresponds to the C: drive when read on an
-actual Atari, the second to D: and so on. Extended partitions (those of type
-.Dq XGM )
+.Ql BGM .
+The first partition typically corresponds to the
+.Ql C:
+drive when read on an actual Atari, the second to
+.Ql D:
+and so on.
+Extended partitions
+.Pq those of type Ql XGM
 are not currently supported.
 .El
 .Sh FILES
-.Bl -tag -width /dev/XXrXdkX -compact
-.It Pa /dev/{,r}dk*
+.Bl -tag -width Pa -compact
+.It Pa /dev/dk*
+Block mode
+.Nm
+device special files.
+.It Pa /dev/rdk*
+Raw mode
 .Nm
 device special files.
 .El
