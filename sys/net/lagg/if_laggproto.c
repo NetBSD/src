@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.9 2024/04/04 07:29:35 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.10 2024/04/04 07:31:10 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.9 2024/04/04 07:29:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.10 2024/04/04 07:31:10 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -673,6 +673,8 @@ lagg_lb_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 		pm_next->pm_ports[n] = pm_act->pm_ports[i];
 		n++;
 	}
+
+	pm_next->pm_nports = n;
 
 	lagg_portmap_switch(&lb->lb_pmaps);
 	pserialize_perform(psc->psc_psz);
