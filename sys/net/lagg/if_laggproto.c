@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.10 2024/04/04 07:31:10 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.11 2024/04/04 07:35:01 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.10 2024/04/04 07:31:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.11 2024/04/04 07:35:01 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -695,14 +695,18 @@ lagg_lb_transmit(struct lagg_proto_softc *psc, struct mbuf *m)
 	int s;
 
 	lb = psc->psc_ctx;
-	hash  = lagg_hashmbuf(psc->psc_softc, m);
+	hash = lagg_hashmbuf(psc->psc_softc, m);
 
 	s = pserialize_read_enter();
 
 	pm = lagg_portmap_active(&lb->lb_pmaps);
-	hash %= pm->pm_nports;
-	lp0 = pm->pm_ports[hash];
-	lp = lagg_link_active(psc, lp0->lp_proto_ctx, &psref);
+	if (__predict_true(pm->pm_nports != 0)) {
+		hash %= pm->pm_nports;
+		lp0 = pm->pm_ports[hash];
+		lp = lagg_link_active(psc, lp0->lp_proto_ctx, &psref);
+	} else {
+		lp = NULL;
+	}
 
 	pserialize_read_exit(s);
 
