@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sigstack.c,v 1.8 2024/04/04 00:46:30 riastradh Exp $	*/
+/*	$NetBSD: t_sigstack.c,v 1.9 2024/04/04 00:46:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigstack.c,v 1.8 2024/04/04 00:46:30 riastradh Exp $");
+__RCSID("$NetBSD: t_sigstack.c,v 1.9 2024/04/04 00:46:42 riastradh Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -81,10 +81,18 @@ on_sigusr1(int signo, siginfo_t *si, void *ctx)
 	 * On some architectures, this is broken.  Those that appear to
 	 * get this right are:
 	 *
-	 *	aarch64, alpha, m68k, or1k, powerpc, powerpc64, riscv,
-	 *	vax, x86_64
+	 *	aarch64
+	 *	alpha
+	 *	i386
+	 *	m68k
+	 *	or1k
+	 *	powerpc
+	 *	powerpc64
+	 *	riscv
+	 *	vax
+	 *	x86_64
 	 */
-#if defined __arm__ || defined __hppa__ || defined __i386__ || \
+#if defined __arm__ || defined __hppa__ || \
     defined __ia64__ || defined __mips__ || defined __sh3__ || \
     defined __sparc__ || defined __sparc64__
 	if (nentries > 0)
