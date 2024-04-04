@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.64 2024/04/04 08:36:03 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.65 2024/04/04 08:38:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.64 2024/04/04 08:36:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.65 2024/04/04 08:38:22 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1080,14 +1080,14 @@ lagg_output(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 	if (error) {
 		/* mbuf is already freed */
 		if_statinc(ifp, if_oerrors);
+	} else {
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+		if_statinc_ref(nsr, if_opackets);
+		if_statadd_ref(nsr, if_obytes, len);
+		if (mflags & M_MCAST)
+			if_statinc_ref(nsr, if_omcasts);
+		IF_STAT_PUTREF(ifp);
 	}
-
-	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statinc_ref(nsr, if_opackets);
-	if_statadd_ref(nsr, if_obytes, len);
-	if (mflags & M_MCAST)
-		if_statinc_ref(nsr, if_omcasts);
-	IF_STAT_PUTREF(ifp);
 }
 
 static struct mbuf *
