@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.5 2024/04/04 07:55:32 yamaguchi Exp $	*/
+/*	$NetBSD: lagg.c,v 1.6 2024/04/04 08:01:55 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.5 2024/04/04 07:55:32 yamaguchi Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.6 2024/04/04 08:01:55 yamaguchi Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -279,7 +279,7 @@ getlagg(prop_dictionary_t env)
 
 		if (errno != ENOBUFS)
 			break;
-		nports = req->lrq_nports + 3; /* 3: additional space */
+		nports = req->lrq_nports;
 	}
 
 	if (req != NULL) {
