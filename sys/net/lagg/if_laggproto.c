@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.8 2023/11/28 05:28:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.9 2024/04/04 07:29:35 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.8 2023/11/28 05:28:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.9 2024/04/04 07:29:35 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -365,6 +365,8 @@ lagg_common_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 
 		pport->lpp_active = false;
 	}
+
+	lagg_workq_add(psc->psc_workq, &psc->psc_work_linkspeed);
 }
 static void
 lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
