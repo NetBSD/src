@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.241 2024/01/12 08:44:42 martin Exp $
+# $NetBSD: HACKS,v 1.242 2024/04/04 23:53:05 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1114,4 +1114,13 @@ descr
 	./machine/cpu.h:57:9: error: array subscript 0 is outside array bounds of 'struct cpu_info * const[0]' [-Werror=array-bounds]
 	   56 |         __asm("movq %%gs:%1, %0" :
 	and can't easily be worked around.
+kcah
+
+hack	ctfconvert/gcc: disable gcc dwarf-4 generation
+cdate	Thu Apr  4 19:51:05 EDT 2024
+who	christos
+file	src/external/mit/xorg/lib/gallium.old/Makefile : 1.9
+descr
+	Some files create dwarf info that our ctfmerge can't handle.
+	We downgrade dwarf generation to version 3 which works.
 kcah
