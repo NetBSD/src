@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.29 2023/11/22 03:52:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.30 2024/04/04 07:40:38 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.29 2023/11/22 03:52:58 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.30 2024/04/04 07:40:38 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -75,6 +75,7 @@ enum {
 
 enum lacp_selected {
 	LACP_UNSELECTED,
+	LACP_READY,
 	LACP_STANDBY,
 	LACP_SELECTED,
 };
@@ -2457,7 +2458,7 @@ lacp_select(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	LACP_DPRINTF((lsc, lacpp, "aggregator lagid=%s\n", buf));
 
 	lacpp->lp_aggregator = la;
-	lacpp->lp_selected = LACP_STANDBY;
+	lacpp->lp_selected = LACP_READY;
 
 	LIST_FOREACH(lacpp0, &la->la_ports, lp_entry_la) {
 		if (lacp_port_priority_max(lacpp0, lacpp) == lacpp) {
