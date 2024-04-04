@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.18 2024/04/04 17:27:32 riastradh Exp $
+#	$NetBSD: t_sp.sh,v 1.19 2024/04/04 21:19:25 riastradh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -119,7 +119,9 @@ sigsafe()
 	export RUMP_SERVER=unix://commsock
 	export RUMP_STDOUT="$(pwd)/stdout"
 	export RUMP_STDERR="$(pwd)/stderr"
-	atf_check -s exit:0 rump_server ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server -v ${RUMP_SERVER}
+	cat stdout
+	cat stderr >&2
 	atf_check -s exit:0 sh -c "$RUN_CLIENT" -- \
 	    "$(atf_get_srcdir)"/h_client/h_sigcli
 }
