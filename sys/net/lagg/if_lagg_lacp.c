@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.35 2024/04/04 08:54:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.36 2024/04/04 09:09:24 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.35 2024/04/04 08:54:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.36 2024/04/04 09:09:24 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -674,6 +674,10 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	KASSERT(LAGG_LOCKED(sc));
 	KASSERT(IFNET_LOCKED(lp->lp_ifp));
 
+	lacpp = kmem_zalloc(sizeof(*lacpp), KM_NOSLEEP);
+	if (lacpp == NULL)
+		return ENOMEM;
+
 	lacp_mcastaddr(&ifr, lp->lp_ifp->if_xname);
 	error = lp->lp_ioctl(lp->lp_ifp, SIOCADDMULTI, (void *)&ifr);
 
@@ -687,12 +691,9 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	default:
 		LAGG_LOG(sc, LOG_ERR, "SIOCADDMULTI failed on %s\n",
 		    lp->lp_ifp->if_xname);
+		kmem_free(lacpp, sizeof(*lacpp));
 		return error;
 	}
-
-	lacpp = kmem_zalloc(sizeof(*lacpp), KM_NOSLEEP);
-	if (lacpp == NULL)
-		return ENOMEM;
 
 	lacpp->lp_added_multi = added_multi;
 	lagg_work_set(&lacpp->lp_work_smtx, lacp_sm_tx_work, lsc);
