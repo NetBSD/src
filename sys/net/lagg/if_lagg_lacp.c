@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.36 2024/04/04 09:09:24 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.37 2024/04/04 09:19:42 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.36 2024/04/04 09:09:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.37 2024/04/04 09:19:42 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2717,6 +2717,12 @@ lacp_dump_markertlv(const struct markerdu_info *mi_info,
 		    ntohl(mi_res->mi_rq_xid));
 	}
 }
+
+/*
+ * lacp_linkstate:
+ *   callback on link state changed.
+ *   enable, disable or reset LACP processing on the physical port.
+ */
 
 static void
 lacp_linkstate(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
