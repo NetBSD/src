@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_daemonize.c,v 1.8 2023/08/03 20:45:49 andvar Exp $	*/
+/*	$NetBSD: rumpuser_daemonize.c,v 1.9 2024/04/04 17:27:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.8 2023/08/03 20:45:49 andvar Exp $");
+__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.9 2024/04/04 17:27:23 riastradh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -52,6 +52,27 @@ static int isdaemonizing;
 static int daemonpipe[2];
 
 #include <rump/rumpuser.h>
+
+static int
+openstdoutstderr(void)
+{
+	char path[PATH_MAX];
+	int fd;
+
+	if (getenv_r("RUMP_STDOUT", path, sizeof(path)) == 0) {
+		if ((fd = open(path, O_WRONLY|O_CREAT)) == -1)
+			return -1;
+		dup2(fd, STDOUT_FILENO);
+		(void)close(fd);
+	}
+	if (getenv_r("RUMP_STDERR", path, sizeof(path)) == 0) {
+		if ((fd = open(path, O_WRONLY|O_CREAT)) == -1)
+			return -1;
+		dup2(fd, STDERR_FILENO);
+		(void)close(fd);
+	}
+	return 0;
+}
 
 int
 rumpuser_daemonize_begin(void)
@@ -79,6 +100,13 @@ rumpuser_daemonize_begin(void)
 	 */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, daemonpipe) == -1) {
 		rv = errno;
+		goto out;
+	}
+
+	if (openstdoutstderr() == -1) {
+		rv = errno;
+		(void)close(daemonpipe[0]);
+		(void)close(daemonpipe[1]);
 		goto out;
 	}
 
@@ -125,8 +153,10 @@ rumpuser_daemonize_done(int error)
 			goto out;
 		}
 		dup2(fd, STDIN_FILENO);
-		dup2(fd, STDOUT_FILENO);
-		dup2(fd, STDERR_FILENO);
+		if (getenv("RUMP_STDOUT") == NULL)
+			dup2(fd, STDOUT_FILENO);
+		if (getenv("RUMP_STDERR") == NULL)
+			dup2(fd, STDERR_FILENO);
 		if (fd > STDERR_FILENO)
 			close(fd);
 	}
