@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.17 2020/09/01 18:40:09 gson Exp $
+#	$NetBSD: t_sp.sh,v 1.18 2024/04/04 17:27:32 riastradh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,18 @@ test_case signal signal
 # test_case reconnect reconnect
 test_case_skip reconnect kern/55304 "leftover rump_server"
 
+RUN_CLIENT='
+	if "$@"; then
+		exit 0
+	else
+		status=$?
+	fi
+	RUMP_SERVER=unix://commsock rump.halt
+	cat stdout
+	cat stderr >&2
+	exit $status
+'
+
 basic()
 {
 	export RUMP_SERVER=unix://commsock
@@ -105,9 +117,11 @@ sigsafe()
 {
 
 	export RUMP_SERVER=unix://commsock
+	export RUMP_STDOUT="$(pwd)/stdout"
+	export RUMP_STDERR="$(pwd)/stderr"
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_sigcli
-
+	atf_check -s exit:0 sh -c "$RUN_CLIENT" -- \
+	    "$(atf_get_srcdir)"/h_client/h_sigcli
 }
 
 signal()
