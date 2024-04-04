@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2023/12/31 22:52:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2024/04/04 23:54:17 christos Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -22,7 +22,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-Dxstrdup=strdup -Dxexit=exit
 CPPFLAGS+=	-Dxcalloc=calloc -Dxmalloc=malloc -Dxrealloc=realloc
 
-LIBISMODULE=	1
+LIBISMODULE=	yes
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
 NOLINT=		# defined
