@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.11 2024/04/04 07:35:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.12 2024/04/04 07:49:06 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.11 2024/04/04 07:35:01 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.12 2024/04/04 07:49:06 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,9 +65,8 @@ struct lagg_proto_softc {
  * Locking notes:
  * - Items of struct lagg_proto_softc is protected by
  *   psc_lock (an adaptive mutex)
- * - psc_ports is protected by pserialize (psc_psz)
- *   - Updates of psc_ports is serialized by sc_lock in
- *     struct lagg_softc
+ * - psc_ports is protected by pselialize (psc_psz) and
+ *   it updates exclusively by LAGG_PROTO_LOCK.
  * - Other locking notes are described in if_laggproto.h
  */
 
@@ -751,21 +750,18 @@ lagg_lb_linkspeed_work(struct lagg_work *_lw __unused, void *xpsc)
 	struct lagg_proto_softc *psc = xpsc;
 	struct lagg_proto_port *pport;
 	uint64_t linkspeed, l;
-	int s;
 
 	linkspeed = 0;
 
-	s = pserialize_read_enter();
+	LAGG_PROTO_LOCK(psc); /* acquired to refer lpp_linkspeed */
 	PSLIST_READER_FOREACH(pport, &psc->psc_ports,
 	    struct lagg_proto_port, lpp_entry) {
 		if (pport->lpp_active) {
-			LAGG_PROTO_LOCK(psc);
 			l = pport->lpp_linkspeed;
-			LAGG_PROTO_UNLOCK(psc);
 			linkspeed = MAX(linkspeed, l);
 		}
 	}
-	pserialize_read_exit(s);
+	LAGG_PROTO_UNLOCK(psc);
 
 	LAGG_LOCK(psc->psc_softc);
 	lagg_set_linkspeed(psc->psc_softc, linkspeed);
