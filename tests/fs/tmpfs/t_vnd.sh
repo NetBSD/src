@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.12 2022/11/30 17:50:00 martin Exp $
+# $NetBSD: t_vnd.sh,v 1.13 2024/04/04 16:57:45 christos Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,8 @@
 #
 
 vnddev=vnd3
-vnd=/dev/${vnddev}
+rvnd=/dev/r${vnddev}a
+vnd=/dev/${vnddev}a
 
 atf_test_case basic cleanup
 basic_head() {
@@ -43,7 +44,7 @@ basic_body() {
 	    dd if=/dev/zero of=disk.img bs=1m count=10
 	atf_check -s eq:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
 
-	atf_check -s eq:0 -o ignore -e ignore newfs -I ${vnd}
+	atf_check -s eq:0 -o ignore -e ignore newfs -I ${rvnd}
 
 	atf_check -s eq:0 -o empty -e empty mkdir mnt
 	atf_check -s eq:0 -o empty -e empty mount ${vnd} mnt
