@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.62 2024/04/04 08:29:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.63 2024/04/04 08:31:58 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.62 2024/04/04 08:29:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.63 2024/04/04 08:31:58 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1068,8 +1068,12 @@ lagg_output(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 	mflags = m->m_flags;
 
 	error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT);
-	if (error != 0)
+	if (error != 0) {
+		if (m != NULL) {
+			m_freem(m);
+		}
 		return;
+	}
 	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	error = lagg_port_xmit(lp, m);
@@ -1175,8 +1179,13 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	if_statadd(ifp_port, if_ibytes, m->m_pkthdr.len);
 
 	if (pfil_run_hooks(ifp_port->if_pfil, &m,
-	    ifp_port, PFIL_IN) != 0)
+	    ifp_port, PFIL_IN) != 0) {
+		if (m != NULL) {
+			m_freem(m);
+			m = NULL;
+		}
 		goto out;
+	}
 
 	m = lagg_proto_input(lp->lp_softc, lp, m);
 	if (m != NULL) {
