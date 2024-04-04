@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.34 2024/04/04 08:53:14 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.35 2024/04/04 08:54:52 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.34 2024/04/04 08:53:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.35 2024/04/04 08:54:52 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1496,6 +1496,8 @@ lacp_run_timers(struct lacp_softc *lsc, struct lacp_port *lacpp)
 {
 	size_t i;
 
+	KASSERT(LACP_LOCKED(lsc));
+
 	for (i = 0; i < LACP_NTIMER; i++) {
 		KASSERT(lacpp->lp_timer[i] >= 0);
 
@@ -1814,6 +1816,8 @@ static void
 lacp_port_disable(struct lacp_softc *lsc, struct lacp_port *lacpp)
 {
 
+	KASSERT(LACP_LOCKED(lsc));
+
 	if (ISSET(lacpp->lp_actor.lpi_state, LACP_STATE_AGGREGATION))
 		LACP_DPRINTF((lsc, lacpp, "enable -> disable\n"));
 
@@ -1829,6 +1833,8 @@ lacp_port_enable(struct lacp_softc *lsc __LACPDEBUGUSED,
     struct lacp_port *lacpp)
 {
 
+	KASSERT(LACP_LOCKED(lsc));
+
 	if (!ISSET(lacpp->lp_actor.lpi_state, LACP_STATE_AGGREGATION))
 		LACP_DPRINTF((lsc, lacpp, "disable -> enable\n"));
 
@@ -1839,6 +1845,8 @@ lacp_port_enable(struct lacp_softc *lsc __LACPDEBUGUSED,
 static void
 lacp_sm_rx_timer(struct lacp_softc *lsc, struct lacp_port *lacpp)
 {
+
+	KASSERT(LACP_LOCKED(lsc));
 
 	if (!ISSET(lacpp->lp_actor.lpi_state, LACP_STATE_EXPIRED)) {
 		/* CURRENT -> EXPIRED */
@@ -1855,6 +1863,7 @@ static void
 lacp_sm_ptx_timer(struct lacp_softc *lsc __unused, struct lacp_port *lacpp)
 {
 
+	KASSERT(LACP_LOCKED(lsc));
 	lacp_sm_assert_ntt(lacpp);
 }
 
@@ -1902,6 +1911,7 @@ lacp_sm_mux_timer(struct lacp_softc *lsc __LACPDEBUGUSED,
 {
 	char buf[LACP_SYSTEMIDSTR_LEN] __LACPDEBUGUSED;
 
+	KASSERT(LACP_LOCKED(lsc));
 	KASSERT(lacpp->lp_pending > 0);
 
 	LACP_AGGREGATOR_STR(lacpp->lp_aggregator, buf, sizeof(buf));
