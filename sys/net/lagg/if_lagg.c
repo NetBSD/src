@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.58 2024/04/04 07:55:32 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.59 2024/04/04 08:20:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.58 2024/04/04 07:55:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.59 2024/04/04 08:20:20 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1649,11 +1649,9 @@ lagg_pr_attach(struct lagg_softc *sc, lagg_proto pr)
 {
 	struct lagg_variant *newvar, *oldvar;
 	struct lagg_proto_softc *psc;
-	bool cleanup_oldvar;
 	int error;
 
 	error = 0;
-	cleanup_oldvar = false;
 	newvar = kmem_alloc(sizeof(*newvar), KM_SLEEP);
 
 	LAGG_LOCK(sc);
@@ -1661,32 +1659,28 @@ lagg_pr_attach(struct lagg_softc *sc, lagg_proto pr)
 
 	if (oldvar != NULL && oldvar->lv_proto == pr) {
 		error = 0;
-		goto done;
+		goto failed;
 	}
 
 	error = lagg_proto_attach(sc, pr, &psc);
 	if (error != 0)
-		goto done;
+		goto failed;
 
 	newvar->lv_proto = pr;
 	newvar->lv_psc = psc;
-
 	lagg_variant_update(sc, newvar);
-	newvar = NULL;
+	lagg_set_linkspeed(sc, 0);
+	LAGG_UNLOCK(sc);
 
 	if (oldvar != NULL) {
 		lagg_proto_detach(oldvar);
-		cleanup_oldvar = true;
+		kmem_free(oldvar, sizeof(*oldvar));
 	}
 
-	lagg_set_linkspeed(sc, 0);
-done:
-	LAGG_UNLOCK(sc);
+	return 0;
 
-	if (newvar != NULL)
-		kmem_free(newvar, sizeof(*newvar));
-	if (cleanup_oldvar)
-		kmem_free(oldvar, sizeof(*oldvar));
+failed:
+	kmem_free(newvar, sizeof(*newvar));
 
 	return error;
 }
@@ -1697,15 +1691,14 @@ lagg_pr_detach(struct lagg_softc *sc)
 	struct lagg_variant *var;
 
 	LAGG_LOCK(sc);
-
 	var = sc->sc_var;
 	atomic_store_release(&sc->sc_var, NULL);
 	pserialize_perform(sc->sc_psz);
+	LAGG_UNLOCK(sc);
 
 	if (var != NULL)
 		lagg_proto_detach(var);
 
-	LAGG_UNLOCK(sc);
 
 	if (var != NULL)
 		kmem_free(var, sizeof(*var));
