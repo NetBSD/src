@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.30 2024/04/04 07:40:38 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.31 2024/04/04 07:45:57 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.30 2024/04/04 07:40:38 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.31 2024/04/04 07:45:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2317,6 +2317,10 @@ lacp_sm_mux(struct lacp_softc *lsc, struct lacp_port *lacpp)
 			break;
 		case LACP_MUX_ATTACHED:
 			if (selected != LACP_SELECTED) {
+				if (selected == LACP_STANDBY)
+					LAGG_LOG(lsc->lsc_softc, LOG_INFO,
+					    "detaching %s\n",
+					    LACP_PORT_XNAME(lacpp));
 				next_state = LACP_MUX_DETACHED;
 			} else if (lacp_isactive(lsc, lacpp) && p_sync) {
 				next_state = LACP_MUX_COLLECTING;
