@@ -1,4 +1,4 @@
-# $NetBSD: t_times.sh,v 1.6 2021/06/17 00:03:05 riastradh Exp $
+# $NetBSD: t_times.sh,v 1.7 2024/04/04 16:58:35 christos Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,7 +48,7 @@ empty_body() {
 	    atf_fail "Incorrect mtime: ${ost_birthtime} != ${ost_mtime}"
 
 	sleep 1
-	atf_check -s eq:0 -o ignore -e empty cat a
+	atf_check -s eq:0 -o empty -e empty cat a
 	eval $(stat -s a) || atf_fail "stat failed"
 	[ ${st_atime} -gt ${ost_atime} ] || \
 	    atf_fail "Incorrect atime: ${st_atime} <= ${ost_atime}"
@@ -83,7 +83,7 @@ non_empty_body() {
 	eval $(stat -s b | sed -e 's|st_|ost_|g') || atf_fail "stat failed"
 
 	sleep 1
-	atf_check -s eq:0 -o ignore -e empty cat b
+	atf_check -s eq:0 -o inline:"foo\n" -e empty cat b
 	eval $(stat -s b) || atf_fail "stat failed"
 	[ ${st_atime} -gt ${ost_atime} ] || \
 	    atf_fail "Incorrect atime: ${st_atime} <= ${ost_atime}"
