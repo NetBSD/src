@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.h,v 1.3 2021/11/08 06:29:16 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.h,v 1.4 2024/04/04 07:55:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -184,7 +184,7 @@ struct lagg_req {
 	lagg_proto		 lrq_proto;
 	size_t			 lrq_nports;
 	struct laggreqproto	 lrq_reqproto;
-	struct laggreqport	 lrq_reqports[1];
+	struct laggreqport	 lrq_reqports[];
 };
 
 #define	SIOCGLAGG		SIOCGIFGENERIC

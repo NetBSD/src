@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.4 2023/12/06 05:57:39 yamaguchi Exp $	*/
+/*	$NetBSD: lagg.c,v 1.5 2024/04/04 07:55:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.4 2023/12/06 05:57:39 yamaguchi Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.5 2024/04/04 07:55:32 yamaguchi Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -393,7 +393,11 @@ setlaggproto(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 setlaggport(prop_dictionary_t env, prop_dictionary_t oenv __unused)
 {
-	struct lagg_req req;
+	struct {
+		struct lagg_req req;
+		struct laggreqport port[1];
+	} _req;
+	struct lagg_req *req;
 	struct laggreqport *rp;
 	const char *ifname;
 	enum lagg_ioctl ioc;
@@ -406,9 +410,10 @@ setlaggport(prop_dictionary_t env, prop_dictionary_t oenv __unused)
 		return -1;
 	}
 
-	memset(&req, 0, sizeof(req));
-	req.lrq_nports = 1;
-	rp = &req.lrq_reqports[0];
+	memset(&_req, 0, sizeof(_req));
+	req = (struct lagg_req *)&_req;
+	rp = &req->lrq_reqports[0];
+
 	strlcpy(rp->rp_portname, ifname, sizeof(rp->rp_portname));
 	ioc = LAGGIOC_NOCMD;
 
@@ -426,8 +431,8 @@ setlaggport(prop_dictionary_t env, prop_dictionary_t oenv __unused)
 	}
 
 	if (ioc != LAGGIOC_NOCMD) {
-		req.lrq_ioctl = ioc;
-		if (indirect_ioctl(env, SIOCSLAGG, &req) == -1) {
+		req->lrq_ioctl = ioc;
+		if (indirect_ioctl(env, SIOCSLAGG, req) == -1) {
 			if (lagg_debug) {
 				warn("cmd=%d", ioc);
 			}
