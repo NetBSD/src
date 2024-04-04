@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.33 2024/04/04 08:36:03 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.34 2024/04/04 08:53:14 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.33 2024/04/04 08:36:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.34 2024/04/04 08:53:14 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -380,7 +380,7 @@ lacp_mcastaddr(struct ifreq *ifr, const char *if_xname)
 	ifr->ifr_addr.sa_len = sizeof(ifr->ifr_addr);
 	ifr->ifr_addr.sa_family = AF_UNSPEC;
 
-	KASSERT(sizeof(ifr->ifr_addr) >= sizeof(addr));
+	CTASSERT(sizeof(ifr->ifr_addr) >= sizeof(addr));
 	memcpy(&ifr->ifr_addr.sa_data, addr, sizeof(addr));
 }
 
