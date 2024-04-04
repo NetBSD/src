@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.60 2024/04/04 08:22:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.61 2024/04/04 08:26:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.60 2024/04/04 08:22:17 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.61 2024/04/04 08:26:32 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -693,7 +693,10 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 
 		nports = laggreq.lrq_nports;
-		if (nports > 0) {
+		if (nports > LAGG_MAX_PORTS) {
+			error = ENOMEM;
+			break;
+		} else if (nports > 0) {
 			allocsiz = sizeof(struct lagg_req)
 			    + sizeof(struct laggreqport) * nports;
 			buf = kmem_alloc(allocsiz, KM_SLEEP);
