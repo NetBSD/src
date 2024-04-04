@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.61 2024/04/04 08:26:32 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.62 2024/04/04 08:29:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.61 2024/04/04 08:26:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.62 2024/04/04 08:29:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1139,11 +1139,6 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 
 	ifp = &lp->lp_softc->sc_if;
 
-	/*
-	 * Drop promiscuously received packets
-	 * if we are not in promiscuous mode.
-	 */
-
 	if (__predict_false(m->m_len < (int)sizeof(*eh))) {
 		if ((m = m_pullup(m, sizeof(*eh))) == NULL) {
 			if_statinc(ifp, if_ierrors);
@@ -1166,6 +1161,10 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 
 		if_statinc(ifp_port, if_imcasts);
 	} else {
+		/*
+		 * Drop promiscuously received packets
+		 * if we are not in promiscuous mode.
+		 */
 		if ((ifp->if_flags & IFF_PROMISC) == 0 &&
 		    (ifp_port->if_flags & IFF_PROMISC) != 0 &&
 		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
