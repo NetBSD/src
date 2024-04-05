@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.62 2017/04/08 18:24:09 christos Exp $
+#	$NetBSD: newvers.sh,v 1.63 2024/04/05 22:27:25 christos Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -153,6 +153,7 @@ if [ ! -e version ]; then
 	echo 0 > version
 fi
 
+DATE=${TOOL_DATE:-date}
 Rflag=false
 nflag=false
 timestamp=
@@ -206,7 +207,7 @@ if ${Rflag}; then
 else
 	if [ -z "${timestamp}" ]; then
 		v=$(cat version)
-		t=$(LC_ALL=C date)
+		t=$(LC_ALL=C ${DATE})
 		u=${USER-root}
 		h=$(hostname)
 		d=$(pwd)
@@ -214,7 +215,7 @@ else
 		echo $(expr ${v} + 1) > version
 	else
 		v=0
-		t=$(LC_ALL=C TZ=UTC date -r "${timestamp}")
+		t=$(LC_ALL=C TZ=UTC ${DATE} -r "${timestamp}")
 		u=mkrepro
 		h=mkrepro.NetBSD.org
 		d="/usr/src/sys/arch/${machine}/compile/${id}"
