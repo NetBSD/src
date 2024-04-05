@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.338 2024/02/21 22:53:47 christos Exp $
+# $NetBSD: shl.mi,v 1.339 2024/04/05 01:15:59 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -314,13 +314,36 @@
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-#./usr/libdata/debug/usr/lib/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/named/filter-aaaa.so.0.debug	base-sys-debug	debug
 ./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
+./usr/libdata/debug/usr/lib/security/pam_afslog.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_chroot.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_deny.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_echo.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_exec.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_ftpusers.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_group.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_guest.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_krb5.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_ksu.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_lastlog.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_login_access.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_nologin.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_permit.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_radius.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_rhosts.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_rootok.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_securetty.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_self.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_skey.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_ssh.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_u2f.so.4.debug	base-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/security/pam_unix.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/libexec/ld.elf_so.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.1.debug	comp-sys-debug	debug,gcc
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,compattestfile,atf

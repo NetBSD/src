@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2023/06/03 09:09:10 lukem Exp $
+# $NetBSD: Makefile,v 1.32 2024/04/05 01:16:00 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -48,9 +48,10 @@ NOPROFILE=	# Don't build a profiling library
 MKPICLIB=yes
 .endif
 
+SHLIB_MINOR=	1
+
 DIST=   ${NETBSDSRCDIR}/external/bsd/openpam/dist
 LIB=	pam
-NOPROFILE=
 
 WARNS=		6
 LINTFLAGS+=	-w
@@ -202,7 +203,7 @@ PAM_DIR=${.CURDIR}
 .endif
 .for MOD in ${STATIC_MODULES}
 MODOBJDIR!=	cd ${PAM_DIR}/${MODULE_DIR}/${MOD} && ${PRINTOBJDIR}
-STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
+STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/${MOD}.a
 .endfor
 
 # XXX Using ${.ALLSRC} in the ld command causes openpam_static.c to be

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.399 2024/04/02 16:18:23 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.400 2024/04/05 01:16:00 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -16,9 +16,10 @@ LIBISCXX?=	no
 .if ${LIBISMODULE} != "no"
 _LIB_PREFIX?=	# empty
 MKDEBUGLIB:=	no
-MKPICINSTALL:=	no
 MKPROFILE:=	no
-MKSTATICLIB:=	no
+MKPICINSTALL:=	no
+MAKESTATICLIB?=	no
+MAKELINKLIB?=	yes
 _LINTINSTALL?=	no
 .else
 _LIB_PREFIX?=	lib
@@ -26,17 +27,21 @@ _LIB_PREFIX?=	lib
 
 .if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
+MKPROFILE:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
-MKSTATICLIB:=	no
+MAKESTATICLIB?=	no
 . elif ${LIBISPRIVATE} != "pic"
 MKPIC:=		no
 . endif
-MKPROFILE:=	no
+MAKELINKLIB?=	no
 _LINTINSTALL?=	no
 .endif
 
 _LINTINSTALL?=	${MKLINT}
+LINKINSTALL?=	${MAKELINKLIB}
+MAKELINKLIB?=	${MKLINKLIB}
+MAKESTATICLIB?=	${MKSTATICLIB}
 
 ##### Basic targets
 .PHONY:		checkver libinstall
@@ -422,7 +427,7 @@ _DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
 
 .if defined(LIB)							# {
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MKLINKLIB} != "no") && ${MKSTATICLIB} != "no"
+	|| ${MAKELINKLIB} != "no") && ${MAKESTATICLIB} != "no"
 _LIBS=${_LIB.a}
 .else
 _LIBS=
@@ -478,7 +483,7 @@ _LIBS+=${_LIB.ln}
 
 ALLOBJS=
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MKLINKLIB} != "no") && ${MKSTATICLIB} != "no"
+	|| ${MAKELINKLIB} != "no") && ${MAKESTATICLIB} != "no"
 ALLOBJS+=${STOBJS}
 .endif
 ALLOBJS+=${POBJS} ${SOBJS}
@@ -731,7 +736,7 @@ LIBCLEANFILES5+= ${_LIB.ln} ${LOBJS}
 # Make sure it gets defined, in case MKPIC==no && MKLINKLIB==no
 libinstall::
 
-.if ${MKLINKLIB} != "no" && ${MKSTATICLIB} != "no"
+.if ${MAKELINKLIB} != "no" && ${MAKESTATICLIB} != "no" && ${LINKINSTALL} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB.a}
 
@@ -838,7 +843,7 @@ ${_DEST.OBJ}/${_LIB.so.full}: ${_LIB.so.full}
 	    ${_DEST.LIB}/${_LIB.so.major}
 .endif
 .endif
-.if ${MKLINKLIB} != "no"
+.if ${MAKELINKLIB} != "no" && ${LINKINSTALL} != "no"
 	${INSTALL_SYMLINK}  ${_LIB.so.full} ${_DEST.OBJ}/${_LIB.so}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r ${_DEST.OBJ}/${_LIB.so.full} \

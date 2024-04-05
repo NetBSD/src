@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1338 2024/03/30 16:47:55 thorpej Exp $
+# $NetBSD: mi,v 1.1339 2024/04/05 01:15:59 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1267,6 +1267,7 @@
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
 ./usr/libdata/debug/usr/lib/named		base-sys-usr
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
+./usr/libdata/debug/usr/lib/security		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
@@ -1321,7 +1322,7 @@
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin		!makemandb
-./usr/libexec/named				base-bind-bin
+./usr/libexec/named				base-obsolete		obsolete
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
