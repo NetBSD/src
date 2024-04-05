@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.62 2024/03/10 18:23:18 rillig Exp $
+# $NetBSD: postinstall.in,v 1.63 2024/04/05 16:44:54 christos Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1706,6 +1706,12 @@ do_named()
 	compare_dir "${op}" "${SRC_DIR}/etc/namedb" "${DEST_DIR}/etc/namedb" \
 		644 \
 		root.cache
+
+	local od="${DEST_DIR}/usr/libexec/named"
+	if [ -d "$od" ]; then
+		rm -fr "$od"
+		msg "Removed obsolete '${od}'"
+	fi
 }
 
 
