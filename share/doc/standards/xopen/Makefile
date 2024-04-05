@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/01 17:04:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2024/04/05 23:06:32 christos Exp $
 
 DOCS=	xcu5
 .for i in ${DOCS}
@@ -7,7 +7,7 @@ TARGS+=	${i}.ps ${i}.txt ${i}.html ${i}.more
 
 POST_PLAIN= -P-b -P-u -P-o -Tascii
 
-ARGS_PS=	${GFLAGS} -dformat=PostScript
+ARGS_PS=	${GFLAGS} -dformat=PostScript ${ROFF_PAGESIZE}
 ARGS_TXT=	${GFLAGS} -dformat=ASCII ${POST_PLAIN}
 ARGS_HTML=	${GFLAGS} -dformat=HTML  ${POST_PLAIN} -ww
 ARGS_MORE=	${GFLAGS} -dformat=more -P-h -Tascii
