@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.68 2024/04/05 06:05:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.69 2024/04/05 06:37:29 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.68 2024/04/05 06:05:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.69 2024/04/05 06:37:29 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1705,8 +1705,8 @@ lagg_pr_detach(struct lagg_softc *sc)
 	LAGG_LOCK(sc);
 	var = sc->sc_var;
 	atomic_store_release(&sc->sc_var, NULL);
-	pserialize_perform(sc->sc_psz);
 	LAGG_UNLOCK(sc);
+	pserialize_perform(sc->sc_psz);
 
 	if (var != NULL)
 		lagg_proto_detach(var);
