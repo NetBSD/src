@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.41 2024/04/05 06:19:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.42 2024/04/05 06:21:02 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.41 2024/04/05 06:19:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.42 2024/04/05 06:21:02 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2560,19 +2560,23 @@ lacp_suppress_distributing(struct lacp_softc *lsc)
 {
 	struct lacp_aggregator *la;
 	struct lacp_port *lacpp;
+	bool marker_scheduled;
 
 	KASSERT(LACP_LOCKED(lsc));
 
 	la = lsc->lsc_aggregator;
+	marker_scheduled = false;
 
 	LIST_FOREACH(lacpp, &la->la_ports, lp_entry_la) {
 		if (ISSET(lacpp->lp_actor.lpi_state,
 		    LACP_STATE_DISTRIBUTING)) {
 			lagg_workq_add(lsc->lsc_workq,
 			    &lacpp->lp_work_marker);
+			marker_scheduled = true;
 		}
 	}
 
+	lsc->lsc_suppress_distributing = marker_scheduled;
 	LACP_PTIMER_ARM(lsc, LACP_PTIMER_DISTRIBUTING,
 	    LACP_TRANSIT_DELAY);
 }
@@ -2659,7 +2663,6 @@ lacp_marker_work(struct lagg_work *lw, void *xlsc)
 		return;
 	}
 	SET(lacpp->lp_flags, LACP_PORT_MARK);
-	lsc->lsc_suppress_distributing = true;
 	lp = lacpp->lp_laggport;
 	bound = curlwp_bind();
 	lagg_port_getref(lp, &psref);
