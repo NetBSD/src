@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.40 2024/04/05 06:16:32 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.41 2024/04/05 06:19:28 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.40 2024/04/05 06:16:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.41 2024/04/05 06:19:28 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -544,6 +544,7 @@ lacp_detach(struct lagg_proto_softc *xlsc)
 	LAGG_UNLOCK(lsc->lsc_softc);
 
 	lagg_workq_wait(lsc->lsc_workq, &lsc->lsc_work_rcvdu);
+	lagg_workq_wait(lsc->lsc_workq, &lsc->lsc_work_tick);
 	evcnt_detach(&lsc->lsc_mgethdr_failed);
 	evcnt_detach(&lsc->lsc_mpullup_failed);
 	evcnt_detach(&lsc->lsc_badlacpdu);
