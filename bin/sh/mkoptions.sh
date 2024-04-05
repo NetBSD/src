@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.5 2017/11/15 09:21:19 kre Exp $
+# $NetBSD: mkoptions.sh,v 1.6 2024/04/05 22:22:17 christos Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -13,12 +13,13 @@
 
 set -f
 IFS=' 	'	# blank, tab (no newline)
+export LC_ALL=C	# for sort consistency
 
 IF="$1"
 OF="${3+$3/}$2"
 
-E_FILE=$(${MKTEMP:-mktemp} -t MKO.E.$$)
-O_FILE=$(${MKTEMP:-mktemp} -t MKO.O.$$)
+E_FILE=$(${MKTEMP:-mktemp} -t MKOXXXXXXXX.E.$$)
+O_FILE=$(${MKTEMP:-mktemp} -t MKOXXXXXXXX.O.$$)
 trap 'rm -f "${E_FILE}" "${O_FILE}"' EXIT
 
 exec 5> "${E_FILE}"
@@ -40,8 +41,8 @@ ${SED:-sed} <"${IF}"			\
 	-e '/^#/d'			\
 	-e '/^[ 	]*\//d'		\
 	-e '/^[ 	]*\*/d'		\
-	-e '/^[ 	]*;/d'			|
-sort -b -k2,2f -k2,2 < "${IF}"			|
+	-e '/^[ 	]*;/d'		|
+sort -b -k2,2f -k2,2			|
 while read line
 do
 	# Look for comments in various styles, and ignore them
