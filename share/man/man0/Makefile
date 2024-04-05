@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.18 2023/05/22 12:55:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2024/04/05 23:05:53 christos Exp $
 
 #
 # Note: Needs ps2pdf to convert .ps to .pdf
@@ -77,10 +77,10 @@ man${_S}pages.ps: man${_S}pages.files
 		if ${TOOL_GREP} -q ^\\.TS "${.CURDIR}/back" ; \
 		then					\
 			${_MKSHMSG_FORMAT} >&2 $${f} ;	\
-			cat $${f} | ${TOOL_TBL} | ${TOOL_GROFF} -Z -msafer -man -Tps ; \
+			cat $${f} | ${TOOL_TBL} | ${TOOL_GROFF} -Z -msafer -man -Tps ${ROFF_PAGESIZE}; \
 		else					\
 			${_MKSHMSG_FORMAT} >&2 $${f} "(tbl)";	\
-			cat $${f} | ${TOOL_GROFF} -Z -msafer -man -Tps ; \
+			cat $${f} | ${TOOL_GROFF} -Z -msafer -man -Tps ${ROFF_PAGESIZE}; \
 		fi ;					\
 	done > ${.TARGET}.troff.tmp			\
 	&& cat ${.TARGET}.troff.tmp			\
