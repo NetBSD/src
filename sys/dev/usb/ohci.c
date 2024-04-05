@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.325 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: ohci.c,v 1.326 2024/04/05 18:57:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.325 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.326 2024/04/05 18:57:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2906,11 +2906,10 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	    sizeof(sed->ed.ed_tailp),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
+	xfer->ux_status = USBD_IN_PROGRESS;
 	usbd_xfer_schedule_timeout(xfer);
 
 	DPRINTF("done", 0, 0, 0, 0);
-
-	xfer->ux_status = USBD_IN_PROGRESS;
 
 	return USBD_IN_PROGRESS;
 }
@@ -3113,8 +3112,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
-	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 	return USBD_IN_PROGRESS;
 }

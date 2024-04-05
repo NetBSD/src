@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.324 2024/02/10 09:21:53 andvar Exp $ */
+/*	$NetBSD: ehci.c,v 1.325 2024/04/05 18:57:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.324 2024/02/10 09:21:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.325 2024/04/05 18:57:10 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3799,9 +3799,9 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
-	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -3985,9 +3985,9 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
-	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -4184,9 +4184,9 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
-	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 #if 0
 #ifdef EHCI_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.180 2023/07/20 11:59:04 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.181 2024/04/05 18:57:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.180 2023/07/20 11:59:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.181 2024/04/05 18:57:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4495,8 +4495,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
 out:	if (xfer->ux_status == USBD_NOT_STARTED) {
-		usbd_xfer_schedule_timeout(xfer);
 		xfer->ux_status = USBD_IN_PROGRESS;
+		usbd_xfer_schedule_timeout(xfer);
 	} else {
 		/*
 		 * We must be coming from xhci_pipe_restart -- timeout
@@ -4649,8 +4649,8 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
-	xfer->ux_status = USBD_IN_PROGRESS;
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
+	xfer->ux_status = USBD_IN_PROGRESS;
 	usbd_xfer_schedule_timeout(xfer);
 
 	return USBD_IN_PROGRESS;

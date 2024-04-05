@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.317 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.318 2024/04/05 18:57:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.317 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.318 2024/04/05 18:57:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2312,8 +2312,8 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	uhci_add_bulk(sc, sqh);
 	uhci_add_intr_list(sc, ux);
-	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 	return USBD_IN_PROGRESS;
 }
@@ -2603,8 +2603,8 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 	return USBD_IN_PROGRESS;
 }
