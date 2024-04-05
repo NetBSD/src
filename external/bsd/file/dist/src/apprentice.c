@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.28 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.29 2024/04/05 16:56:58 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.342 2023/07/17 14:38:35 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.28 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.29 2024/04/05 16:56:58 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1141,8 +1141,12 @@ apprentice_sort(const void *a, const void *b)
 	const struct magic_entry *mb = CAST(const struct magic_entry *, b);
 	size_t sa = file_magic_strength(ma->mp, ma->cont_count);
 	size_t sb = file_magic_strength(mb->mp, mb->cont_count);
-	if (sa == sb)
-		return 0;
+	if (sa == sb) {
+		int x = memcmp(ma->mp, mb->mp, sizeof(*ma->mp));
+		if (x == 0)
+			abort();
+		return x > 0 ? -1 : 1;
+	}
 	else if (sa > sb)
 		return -1;
 	else
