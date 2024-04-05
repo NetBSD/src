@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.59 2023/11/16 18:06:05 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.60 2024/04/05 23:05:04 christos Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -71,7 +71,7 @@ PRESET+=	-dcur_date="${curdate}"
 
 POST_PLAIN= -P-b -P-u -P-o
 
-ARGS_PS=	${PRESET} -dformat=PostScript
+ARGS_PS=	${PRESET} -dformat=PostScript ${ROFF_PAGESIZE}
 ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii -mtty-char
 ARGS_HTML=	${PRESET} -dformat=HTML ${POST_PLAIN} -Tlatin1 -ww
 ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
