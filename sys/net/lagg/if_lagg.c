@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.69 2024/04/05 06:37:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.70 2024/04/05 06:48:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.69 2024/04/05 06:37:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.70 2024/04/05 06:48:22 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2267,6 +2267,9 @@ lagg_port_setup(struct lagg_softc *sc,
 	switch (ifp_port->if_type) {
 	case IFT_ETHER:
 	case IFT_L2TP:
+		if (VLAN_ATTACHED((struct ethercom *)ifp_port))
+			return EBUSY;
+
 		if_type = IFT_IEEE8023ADLAG;
 		break;
 	default:
