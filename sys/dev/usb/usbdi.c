@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.252 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.253 2024/04/05 18:57:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.252 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.253 2024/04/05 18:57:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1867,6 +1867,8 @@ usbd_xfer_schedule_timeout(struct usbd_xfer *xfer)
 	    xfer->ux_timeout_set, xfer->ux_timeout_reset);
 
 	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+	KASSERTMSG(xfer->ux_status == USBD_IN_PROGRESS, "xfer=%p status=%d",
+	    xfer, xfer->ux_status);
 
 	if (xfer->ux_timeout_set) {
 		/*

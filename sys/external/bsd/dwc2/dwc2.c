@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.80 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.81 2024/04/05 18:57:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.80 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.81 2024/04/05 18:57:10 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -1092,8 +1092,8 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, qh, qtd);
 	if (retval)
 		goto fail2;
-	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
+	usbd_xfer_schedule_timeout(xfer);
 
 	if (alloc_bandwidth) {
 		dwc2_allocate_bus_bandwidth(hsotg,
