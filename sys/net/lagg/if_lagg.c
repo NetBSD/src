@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.67 2024/04/04 09:19:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.68 2024/04/05 06:05:37 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.67 2024/04/04 09:19:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.68 2024/04/05 06:05:37 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3010,7 +3010,7 @@ lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 	}
 
 	/* Activate the next Link-Level address */
-	if (ifa_next != ifp->if_dl) {
+	if (__predict_true(ifa_next != ifp->if_dl)) {
 		/* save the current address */
 		ifa_cur = ifp->if_dl;
 		if (ifa_cur != NULL)
