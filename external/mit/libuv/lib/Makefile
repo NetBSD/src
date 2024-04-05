@@ -1,14 +1,11 @@
-# $NetBSD: Makefile,v 1.7 2024/04/05 08:51:27 kre Exp $
+# $NetBSD: Makefile,v 1.8 2024/04/05 11:04:37 christos Exp $
 
-LIBISPRIVATE=pic
+LIBISPRIVATE=yes
 
 .include <bsd.own.mk>
 
 MKLINT=	no
 LIB=	uv
-
-MAKESTATICLIB=yes
-MAKELINKLIB=yes
 
 .if ${LIBISPRIVATE:Uno} == "no"
 INCS=	uv.h uv/unix.h uv/bsd.h uv/errno.h uv/version.h uv/threadpool.h
