@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.103 2023/04/09 12:26:36 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.103 2023/04/09 12:26:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1449,7 +1449,12 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	UVMHIST_LOG(ubchist, "vp %#jx kva %#jx len 0x%jx flags 0x%jx",
 	    (uintptr_t)vp, (uintptr_t)kva, len, flags);
 
-	KASSERT(vp->v_size <= vp->v_writesize);
+	KASSERT(vp->v_size != VSIZENOTSET);
+	KASSERT(vp->v_writesize != VSIZENOTSET);
+	KASSERTMSG(vp->v_size <= vp->v_writesize, "vp=%p"
+	    " v_size=0x%llx v_writesize=0x%llx", vp,
+	    (unsigned long long)vp->v_size,
+	    (unsigned long long)vp->v_writesize);
 	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;

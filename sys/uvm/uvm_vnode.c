@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.120 2023/04/09 12:37:12 riastradh Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.121 2024/04/05 13:05:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.120 2023/04/09 12:37:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.121 2024/04/05 13:05:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -451,9 +451,17 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 
 	KASSERT(newsize != VSIZENOTSET);
 	KASSERT(newsize >= 0);
-	KASSERT(vp->v_size <= vp->v_writesize);
-	KASSERT(vp->v_size == vp->v_writesize ||
-	    newsize == vp->v_writesize || newsize <= vp->v_size);
+	KASSERTMSG(vp->v_size <= vp->v_writesize, "vp=%p"
+	    " v_size=0x%llx v_writesize=0x%llx", vp,
+	    (unsigned long long)vp->v_size,
+	    (unsigned long long)vp->v_writesize);
+	KASSERTMSG((vp->v_size == vp->v_writesize ||
+		newsize == vp->v_writesize || newsize <= vp->v_size),
+	    "vp=%p v_size=0x%llx v_writesize=0x%llx newsize=0x%llx",
+	    vp,
+	    (unsigned long long)vp->v_size,
+	    (unsigned long long)vp->v_writesize,
+	    (unsigned long long)newsize);
 
 	oldsize = vp->v_writesize;
 
@@ -481,8 +489,16 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 	KASSERT(newsize >= 0);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
-	KASSERT(vp->v_size <= vp->v_writesize);
-	KASSERT(vp->v_size <= newsize);
+	KASSERTMSG(vp->v_size <= vp->v_writesize, "vp=%p"
+	    " v_size=0x%llx v_writesize=0x%llx newsize=0x%llx", vp,
+	    (unsigned long long)vp->v_size,
+	    (unsigned long long)vp->v_writesize,
+	    (unsigned long long)newsize);
+	KASSERTMSG(vp->v_size <= newsize, "vp=%p"
+	    " v_size=0x%llx v_writesize=0x%llx newsize=0x%llx", vp,
+	    (unsigned long long)vp->v_size,
+	    (unsigned long long)vp->v_writesize,
+	    (unsigned long long)newsize);
 	mutex_enter(vp->v_interlock);
 	vp->v_writesize = newsize;
 	mutex_exit(vp->v_interlock);
