@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.37 2024/04/04 09:19:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.38 2024/04/05 06:07:36 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.37 2024/04/04 09:19:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.38 2024/04/05 06:07:36 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1290,7 +1290,7 @@ lacp_rcvdu_work(struct lagg_work *lw __unused, void *xlsc)
 	struct lagg_port *lp;
 	struct mbuf *m;
 	uint8_t subtype;
-	int bound, s;
+	int bound, s0, s1;
 
 	bound = curlwp_bind();
 
@@ -1299,23 +1299,26 @@ lacp_rcvdu_work(struct lagg_work *lw __unused, void *xlsc)
 		if (m == NULL)
 			break;
 
-		ifp = m_get_rcvif(m, &s);
+		ifp = m_get_rcvif(m, &s0);
 		if (ifp == NULL) {
 			m_freem(m);
 			lsc->lsc_norcvif.ev_count++;
 			continue;
 		}
 
+		s1 = pserialize_read_enter();
 		lp = atomic_load_consume(&ifp->if_lagg);
 		if (lp == NULL) {
-			m_put_rcvif(ifp, &s);
+			pserialize_read_exit(s1);
+			m_put_rcvif(ifp, &s0);
 			m_freem(m);
 			lsc->lsc_norcvif.ev_count++;
 			continue;
 		}
 
 		lagg_port_getref(lp, &psref_lp);
-		m_put_rcvif(ifp, &s);
+		pserialize_read_exit(s1);
+		m_put_rcvif(ifp, &s0);
 
 		m_copydata(m, sizeof(struct ether_header),
 		    sizeof(subtype), &subtype);
