@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.42 2024/04/05 06:21:02 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.43 2024/04/05 06:31:37 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.42 2024/04/05 06:21:02 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.43 2024/04/05 06:31:37 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1360,10 +1360,6 @@ lacp_port_need_to_tell(struct lacp_port *lacpp)
 	if (!ISSET(lacpp->lp_flags, LACP_PORT_NTT))
 		return false;
 
-	if (ppsratecheck(&lacpp->lp_last_lacpdu, &lacpp->lp_lacpdu_sent,
-	    (LACP_SENDDU_PPS / LACP_FAST_PERIODIC_TIME)) == 0)
-		return false;
-
 	return true;
 }
 
@@ -1988,8 +1984,14 @@ lacp_sm_rx_update_ntt(struct lacp_softc *lsc, struct lacp_port *lacpp,
 	if (lacp_compare_peerinfo(&actor, my_pi) != 0 ||
 	    !LACP_STATE_EQ(lacpp->lp_actor.lpi_state, my_pi->lpi_state,
 	    LACP_STATE_ACTIVITY | LACP_STATE_SYNC | LACP_STATE_AGGREGATION)) {
-		LACP_DPRINTF((lsc, lacpp, "assert ntt\n"));
-		lacp_sm_assert_ntt(lacpp);
+		if (ppsratecheck(&lacpp->lp_last_lacpdu, &lacpp->lp_lacpdu_sent,
+		    (LACP_SENDDU_PPS / LACP_FAST_PERIODIC_TIME)) == 0) {
+			LACP_DPRINTF((lsc, lacpp,
+			    "skip ntt due to rate limit"));
+		} else {
+			LACP_DPRINTF((lsc, lacpp, "assert ntt\n"));
+			lacp_sm_assert_ntt(lacpp);
+		}
 	}
 }
 
