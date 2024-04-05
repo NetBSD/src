@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.14 2024/04/05 06:37:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.15 2024/04/05 06:51:41 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.14 2024/04/05 06:37:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.15 2024/04/05 06:51:41 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -206,6 +206,7 @@ lagg_proto_free(struct lagg_proto_softc *psc)
 	pserialize_destroy(psc->psc_psz);
 	mutex_destroy(&psc->psc_lock);
 	lagg_workq_destroy(psc->psc_workq);
+	PSLIST_DESTROY(&psc->psc_ports);
 
 	if (psc->psc_ctxsiz > 0)
 		kmem_free(psc->psc_ctx, psc->psc_ctxsiz);
@@ -321,6 +322,10 @@ lagg_proto_remove_port(struct lagg_proto_softc *psc,
 	PSLIST_WRITER_REMOVE(pport, lpp_entry);
 	LAGG_PROTO_UNLOCK(psc);
 	pserialize_perform(psc->psc_psz);
+
+	/* re-initialize for reuse */
+	PSLIST_ENTRY_DESTROY(pport, lpp_entry);
+	PSLIST_ENTRY_INIT(pport, lpp_entry);
 }
 
 void
