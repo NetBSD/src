@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.10 2023/10/18 06:41:00 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.11 2024/04/05 07:04:17 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -214,7 +214,7 @@ lagg_ifconfig_body()
 
 lagg_ifconfig_cleanup()
 {
-	$DEBG && dump
+	$DEBUG && dump
 	cleanup
 }
 
@@ -392,7 +392,7 @@ lagg_mtu_body()
 	atf_check -s exit:0 -o match:"mtu *$mtu_big" rump.ifconfig shmif1
 	atf_check -s exit:0 -o match:"mtu *$mtu_small" rump.ifconfig shmif2
 
-	# copy MTU from 1st port
+	# copy MTU to 1st added port
 	$atf_ifconfig lagg0 laggport shmif0
 	atf_check -s exit:0 -o match:"mtu *$mtu_lagg" rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:"mtu *$mtu_lagg" rump.ifconfig shmif0
