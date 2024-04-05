@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.38 2024/04/05 06:07:36 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.39 2024/04/05 06:11:16 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.38 2024/04/05 06:07:36 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.39 2024/04/05 06:11:16 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1444,10 +1444,13 @@ lacp_sm_tx_work(struct lagg_work *lw, void *xlsc)
 	lsc = xlsc;
 	lacpp = container_of(lw, struct lacp_port, lp_work_smtx);
 
-	if (lsc->lsc_stop_lacpdu)
-		return;
-
 	LACP_LOCK(lsc);
+
+	if (lsc->lsc_stop_lacpdu) {
+		LACP_UNLOCK(lsc);
+		return;
+	}
+
 	m = lacp_lacpdu_mbuf(lsc, lacpp);
 	if (m == NULL) {
 		LACP_UNLOCK(lsc);
