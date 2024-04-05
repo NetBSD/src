@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.8 2019/08/24 13:20:52 rmind Exp $
+#	$NetBSD: mod.mk,v 1.9 2024/04/05 01:16:00 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,7 @@ USE_SHLIBDIR=	yes
 LIBISMODULE=	yes
 LIBROOTDIR=	/lib
 
-#.if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
-#.endif
 
 .if defined(MLIBDIR)
 LIBDIR=		${LIBROOTDIR}/${MLIBDIR}/npf

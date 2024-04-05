@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.446 2024/03/23 21:56:47 riastradh Exp $
+#	$NetBSD: bsd.README,v 1.447 2024/04/05 01:16:00 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -328,6 +328,10 @@ MANINSTALL	Manual installation type.  Space separated list:
 			catinstall, htmlinstall, maninstall
 		Default value derived from MKCATPAGES and MKHTML.
 
+MAKELINKLIB	Defaults to ${MKLINKLIB} but can be overriden by Makefiles
+
+MAKESTATICLIB	Defaults to ${MKSTATICLIB} but can be overriden by Makefiles
+
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
 		If not set, programs link according to their makefile.
@@ -341,6 +345,9 @@ LIBGRP		Library group.  [${BINGRP}]
 LIBOWN		Library owner.  [${BINOWN}]
 
 LIBMODE		Library mode.  [${NONBINMODE}]
+
+LINKINSTALL	Install libraries used by users to link against (.a/.so)
+		defaults to ${MAKELINKLIB}
 
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
 		installation.  [/usr/share/doc]

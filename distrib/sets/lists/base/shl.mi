@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.976 2024/02/21 22:53:47 christos Exp $
+# $NetBSD: shl.mi,v 1.977 2024/04/05 01:15:59 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1002,4 +1002,4 @@
 ./usr/lib/security/pam_u2f.so.4			base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
 ./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot
-./usr/libexec/named/filter-aaaa.so		base-bind-bin
+./usr/libexec/named/filter-aaaa.so		base-obsolete		obsoleteind-bin
