@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.12 2024/04/04 07:49:06 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.13 2024/04/05 06:23:48 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.12 2024/04/04 07:49:06 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.13 2024/04/05 06:23:48 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,7 +132,6 @@ lagg_portmap_next(struct lagg_portmaps *maps)
 	size_t i;
 
 	i = atomic_load_consume(&maps->maps_activepmap);
-	i &= 0x1;
 	i ^= 0x1;
 
 	return &maps->maps_pmap[i];
