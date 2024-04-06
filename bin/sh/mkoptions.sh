@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.6 2024/04/05 22:22:17 christos Exp $
+# $NetBSD: mkoptions.sh,v 1.7 2024/04/06 14:20:27 kre Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -18,9 +18,20 @@ export LC_ALL=C	# for sort consistency
 IF="$1"
 OF="${3+$3/}$2"
 
-E_FILE=$(${MKTEMP:-mktemp} -t MKOXXXXXXXX.E.$$)
-O_FILE=$(${MKTEMP:-mktemp} -t MKOXXXXXXXX.O.$$)
-trap 'rm -f "${E_FILE}" "${O_FILE}"' EXIT
+case $- in
+*x*)
+	E_FILE=$(${MKTEMP:-mktemp} "${TMPDIR:-/tmp}/MKO.E.$$.XXXXXX") || exit 1
+	O_FILE=$(${MKTEMP:-mktemp} "${TMPDIR:-/tmp}/MKO.O.$$.XXXXXX") || {
+		rm -f "${E_FILE}"
+		exit 1
+	}
+	;;
+*)
+	E_FILE=$(${MKTEMP:-mktemp}) || exit 1
+	O_FILE=$(${MKTEMP:-mktemp}) || { rm -f "${E_FILE}"; exit 1; }
+	trap 'rm -f "${E_FILE}" "${O_FILE}"' EXIT
+	;;
+esac
 
 exec 5> "${E_FILE}"
 exec 6> "${O_FILE}"
@@ -41,8 +52,8 @@ ${SED:-sed} <"${IF}"			\
 	-e '/^#/d'			\
 	-e '/^[ 	]*\//d'		\
 	-e '/^[ 	]*\*/d'		\
-	-e '/^[ 	]*;/d'		|
-sort -b -k2,2f -k2,2			|
+	-e '/^[ 	]*;/d'			|
+sort -b -k2,2f -k2,2				|
 while read line
 do
 	# Look for comments in various styles, and ignore them
