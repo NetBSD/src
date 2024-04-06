@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.7 2023/07/01 13:37:36 nia Exp $
+$NetBSD: hdaudiodevs,v 1.8 2024/04/06 13:35:36 andvar Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,6 +42,7 @@ vendor	SIGMATEL2	0x111d	Sigmatel
 vendor	ANALOG		0x11d4	Analog Devices
 vendor	CONEXANT	0x14f1	Conexant
 vendor	VMWARE		0x15ad	VMware
+vendor	ZHAOXIN		0x1d17	Zhaoxin
 vendor	CMEDIA		0x434d	C-Media
 vendor	INTEL		0x8086	Intel
 vendor	SIGMATEL	0x8384	Sigmatel
@@ -261,3 +262,7 @@ product	SIGMATEL2	92HD81B1C5_1	0x76d5	92HD81B1C5
 
 /* VMware */
 product	VMWARE		VIRTUAL_HDA	0x1975	Virtual HDA
+
+/* Zhaoxin */
+product	ZHAOXIN		KX6000_HDMI_1	0x9f8a	ZX-E HDMI/DP
+product	ZHAOXIN		KX6000_HDMI_2	0x9f8b	ZX-E HDMI/DP
