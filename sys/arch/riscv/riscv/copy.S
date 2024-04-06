@@ -118,6 +118,7 @@ ENTRY(_ucas_32)
 END(_ucas_32)
 
 
+#ifdef _LP64
 /*
  * int _ucas_64(volatile uint64_t *ptr, uint64_t old,
  *	uint64_t new, uint64_t *ret)
@@ -156,3 +157,4 @@ ENTRY(_ucas_64)
 	li	a0, EFAULT
 	ret
 END(_ucas_64)
+#endif
