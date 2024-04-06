@@ -1,4 +1,4 @@
-/* $NetBSD: dkwedge_tos.c,v 1.1 2024/04/02 22:30:03 charlotte Exp $ */
+/* $NetBSD: dkwedge_tos.c,v 1.2 2024/04/06 09:51:34 hannken Exp $ */
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ dkwedge_discover_tos(struct disk *pdk, struct vnode *vp)
 		safe_type[TOS_PART_TYPE_LEN] = '\0';
 
 		/* Finally, make the wedge. */
-		snprintf(dkw.dkw_wname, sizeof(dkw.dkw_wname), "ATARI_%s_%02lu",
+		snprintf(dkw.dkw_wname, sizeof(dkw.dkw_wname), "ATARI_%s_%02zu",
 		    safe_type, i);
 		dkw.dkw_offset = be32toh(trs->parts[i].offset);
 		dkw.dkw_size = be32toh(trs->parts[i].size);
