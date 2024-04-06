@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2023/06/12 19:04:14 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.16 2024/04/06 10:08:54 skrll Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SOFTINTS	offsetof(struct cpu_info, ci_softints)
 
+define	FB_LEN		sizeof(struct faultbuf)
 define	FB_A0		offsetof(struct faultbuf, fb_reg[FB_A0])
 define	FB_RA		offsetof(struct faultbuf, fb_reg[FB_RA])
 define	FB_S0		offsetof(struct faultbuf, fb_reg[FB_S0])
@@ -164,6 +165,8 @@ define	FB_S10		offsetof(struct faultbuf, fb_reg[FB_S10])
 define	FB_S11		offsetof(struct faultbuf, fb_reg[FB_S11])
 define	FB_SP		offsetof(struct faultbuf, fb_reg[FB_SP])
 define	FB_SR		offsetof(struct faultbuf, fb_sr)
+
+define	EFAULT		EFAULT
 
 define	PAGE_SIZE	PAGE_SIZE
 define	PAGE_MASK	PAGE_MASK
@@ -192,6 +195,7 @@ define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
 define	RW_READ_INCR	RW_READ_INCR
 define	RW_READER	RW_READER
 
+define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 define	VM_KERNEL_BASE		VM_KERNEL_BASE
