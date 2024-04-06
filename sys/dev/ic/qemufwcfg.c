@@ -1,4 +1,4 @@
-/* $NetBSD: qemufwcfg.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $ */
+/* $NetBSD: qemufwcfg.c,v 1.3 2024/04/06 13:42:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qemufwcfg.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qemufwcfg.c,v 1.3 2024/04/06 13:42:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: qemufwcfg.c,v 1.2 2018/09/03 16:29:31 riastradh Exp 
 #define	FWCFG_DATA_REG		0x01
 #define	FWCFG_DMA_ADDR		0x04
 #elif defined(__arm__) || defined(__aarch64__)
+#define	FWCFG_SEL_REG		0x08
+#define	FWCFG_SEL_SWAP		htobe16
+#define	FWCFG_DATA_REG		0x00
+#define	FWCFG_DMA_ADDR		0x10
+#elif defined(__riscv)
 #define	FWCFG_SEL_REG		0x08
 #define	FWCFG_SEL_SWAP		htobe16
 #define	FWCFG_DATA_REG		0x00
