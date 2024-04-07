@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.152 2024/04/02 16:17:29 christos Exp $
+#	$NetBSD: bsd.x11.mk,v 1.153 2024/04/07 14:36:23 tsutsui Exp $
 
 .include <bsd.init.mk>
 
@@ -83,8 +83,7 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 
 .if !(${MACHINE} == "acorn32"	|| \
     ${MACHINE} == "sun3"	|| \
-    ${MACHINE} == "x68k"	|| \
-    ${MACHINE} == "vax")
+    ${MACHINE} == "x68k")
 #	EXT_DEFINES
 X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 
