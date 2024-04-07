@@ -1,4 +1,4 @@
-/*	$NetBSD: texindex.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
+/*	$NetBSD: texindex.c,v 1.3 2024/04/07 12:30:38 christos Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
    Id: texindex.c,v 1.11 2004/04/11 17:56:47 karl Exp 
@@ -55,6 +55,7 @@ struct lineinfo
     long number;        /* The numeric value (for numeric comparison). */
   } key;
   long keylen;          /* Length of KEY field. */
+  size_t idx;		/* tie breaker */
 };
 
 /* This structure describes a field to use as a sort key. */
@@ -369,7 +370,9 @@ compare_full (const void *p1, const void *p2)
         }
     }
 
-  return 0;                     /* Lines match exactly. */
+  if (*line1 == *line2)
+    abort ();
+  return *line1 < *line2 ? -1 : 1;
 }
 
 /* Compare LINE1 and LINE2, described by structures
@@ -428,7 +431,9 @@ compare_prepared (const void *p1, const void *p2)
         }
     }
 
-  return 0;                     /* Lines match exactly. */
+  if (line1->idx == line2->idx)
+    abort ();
+  return line1->idx < line2->idx ? -1 : 1;
 }
 
 /* Like compare_full but more general.
@@ -799,11 +804,13 @@ sort_in_core (char *infile, int total, char *outfile)
 
   if (lineinfo)
     {
+      size_t idx = 0;
       struct lineinfo *lp;
       char **p;
 
       for (lp = lineinfo, p = linearray; p != nextline; lp++, p++)
         {
+	  lp->idx = idx++;
           lp->text = *p;
           lp->key.text = find_field (keyfields, *p, &lp->keylen);
           if (keyfields->numeric)
