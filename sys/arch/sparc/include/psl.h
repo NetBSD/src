@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.52 2023/07/11 13:10:08 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.53 2024/04/07 17:08:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,8 +113,11 @@
 #define PSTATE_IE	0x002	/* interrupt enable */
 #define PSTATE_AG	0x001	/* enable alternate globals */
 
-#define PSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
-
+#define PSTATE_BITS "\177\020"						\
+	"b\013IG\0"	"b\012MG\0"	"b\011CLE\0"	"b\010TLE\0"	\
+			"F\006\002\0"	":\000MM_TSO\0"	":\001MM_PSO\0"	\
+	":\002MM_RMO\0"	"*?\0"		"b\005RED\0"	"b\004PEF\0"	\
+	"b\003AM\0"	"b\002PRIV\0"	"b\001IE\0"	"b\000AG\0"
 
 /*
  * 32-bit code requires TSO or at best PSO since that's what's supported on

@@ -1,4 +1,4 @@
-/*	$NetBSD: memeccreg.h,v 1.2 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: memeccreg.h,v 1.3 2024/04/07 17:08:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #define ECC_AFR_S	0x08000000	/* Access was in supervisor mode */
 #define ECC_AFR_MID	0xf0000000	/* Module code */
 #define ECC_AFR_BITS	"\177\020"				\
-			"f\0\4VAH\0f\4\4TYPE\0f\10\3SIZE\0"	\
+			"f\0\4PAH\0f\4\4TYPE\0f\10\3SIZE\0"	\
 			"b\13C\0b\14LOCK\0b\15MBL\0"		\
 			"f\16\10VA\0b\33S\0f\34\4MID\0"
 
