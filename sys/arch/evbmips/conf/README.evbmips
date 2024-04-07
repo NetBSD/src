@@ -1,0 +1,64 @@
+$NetBSD: README.evbmips,v 1.1 2024/04/07 19:39:24 andvar Exp $
+
+The documentation is not final, more updates are coming.
+
+config		date		targets			boards
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ADM5210		2007/03/20	evbmips-el		Infineon ADM5120 (MIPS32 4Kc) based boards and routers, 
+							including RouterBOARD 100 series.
+ADM5210-NB	2007/03/20	evbmips-el		ADM5120 netboot kernel.
+ADM5210-USB	2007/03/20	evbmips-el		ADM5120 netboot kernel with USB support.
+AP30		2006/06/06	evbmips-el,eb		Atheros AP30 development board (AR5312).
+CI20		2014/11/22	evbmips-eb		MIPS Creator CI20 (Ingenic JZ4780).
+CPMBR1400	2011/07/28	evbmips-el		CradlePoint MBR1400 Router (Ralink RT3883 MIPS74K).
+DB120		2011/07/07	evbmips-eb		Qualcomm Atheros AR9344 (MIPS74K) DB120 evaluation board.
+DBAU1500	2006/02/08	evbmips-el,eb		AMD Alchemy DBAu1500 evaluation board.
+DBAU1550	2006/02/08	evbmips-el,eb		AMD Alchemy DBAu1550 evaluation board.
+GDIUM		2009/08/06	evbmips-el		EMTEC Gdium netbook 32-bit kernel.
+GDIUM64		2011/08/24	evbmips(n)64-el		EMTEC Gdium netbook 64-bit kernel.
+LINKITSMART7688	2016/10/05	evbmips-el		Seeed Studio LinkIt Smart 7688 compact controller board (MediaTek MT7688).
+LOONGSON	2011/08/27	evbmips64-el		Loongson 2F/2E based devices (Lemote Fuloong, Yeelong).
+MALTA		2002/03/07	evbmips-el,eb		MIPS Malta evaluation board 4Kc (MIPS32) or 5Kc (MIPS64).
+MALTA32		2009/12/14	evbmips64-el,eb		MALTA N32 ABI kernel configuration.
+MALTA32.MP	2009/12/14	evbmips64-el,eb		MALTA N32 ABI MP kernel configuration.
+MALTA64		2009/12/14	evbmips(n)64-el,eb	MALTA 64-bit kernel configuration.
+MALTA64.MP	2009/12/14	evbmips(n)64-el,eb	MALTA MP 64-bit kernel configuration.
+MERAKI		2006/09/26	evbmips-eb		Meraki Mini (Atheros AR2315).
+MIPSSIM		2021/01/27	evbmips-el,eb		QEMU MIPS "mipssim" simulator.
+MIPSSIM64	2021/01/27	evbmips(n)64-el,eb	MIPSSIM 64-bit kernel.
+MTX-1		2006/02/23	evbmips-el		4G Systems MTX-1 (MeshCube / AccessCube, Alchemy Au1500).
+OCTEON		2015/04/29	evbmips(n)64-eb		Cavium Octeon and Octeon Plus SoC based devices like Ubiquiti Networks EdgeRouter Lite.
+OMSAL400	2006/02/23	evbmips-el		Plat'Home OpenMicroServer (OMS-AL400, Alchemy Au1550).
+P4032		2001/06/01	evbmips-el		Algorithmics MIPS P-4032  evaluation board (QED RM4xxx).
+P5064		2001/05/28	evbmips-el		Algorithmics MIPS P-5064 evaluation board (QED RM52xx).
+P5064-64	2009/12/14	evbmips(n)64-el		P5064 64-bit kernel configuration.
+P6032		2001/06/22	evbmips-el		Algorithmics MIPS P-6032 evaluation board.
+RB153		2007/03/20	evbmips-el		MikroTik RouterBOARD 153 (Infineon ADM5120).
+RB433UAH	2011/07/07	evbmips-eb		MikroTik RouterBOARD 433(UAH) AR71xx (MIPS24K core).
+SBMIPS		2002/03/06	evbmips-el,eb		Broadcom/SiByte SB1250 evaluation board.
+SBMIPS.MP	2011/02/20	evbmips-el,eb		SBMIPS MP kernel configuration.
+SBMIPS64	2009/12/14	evbmips(n)64-el,eb	SBMIPS 64-bit kernel configuration.
+SBMIPS64.MP	2011/02/20	evbmips(n)64-el,eb	SBMIPS 64-bit MP kernel configuration.
+WGT624V3	2007/02/18	evbmips-eb		Netgear WGT624 v3 wireless router (example config).
+XLSATX		2009/12/14				RMI (NetLogic) XLS/XLR models (base for other XLSATX* kernel configs).
+XLSATX32	2011/02/20	evbmips64-el,eb		XLSATX N32 kernel configuration.
+XLSATX64	2009/12/14	evbmips(n)64-el,eb	XLSATX 64-bit kernel configuration.
+XLSATX64.MP	2011/02/20	evbmips(n)64-el,eb	XLSATX 64-bit MP kernel configuration.
+ZYXELKX		2014/04/30	evbmips-el		Zyxel Keenetic Extra router (MediaTek MT7620A).
+
+Configuration file notes:
+* "INSALL_*"	installation kernel configuration files.
+		(typically enables hooks for initializing the root memory-disk).
+* "*.MP"	configuration files with the multiprocessor support enabled.
+* "*32"		N32 ABI kernel configuration files
+		(can be built using evbmips64-* targets).
+Building target notes:
+* "*-el"	represent targets for building little-endian kernels.
+* "*-eb"	represent targets for building big-endian kernels.
+* "evbmips64-*"	represent targets for building 64-bit (or N32 ABI) kernels and
+		mixed n32 (mostly)/n64 userland. 
+* "evbmipsn64*"	represent targets for building fully N64 ABI kernels and
+		userland.
+Other notes:
+64-bit kernels can be built using N32 or N64 ABIs; they will run with a 64-bit
+kernel address space regardless of the ABI.
