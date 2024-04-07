@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.37 2024/04/07 12:05:23 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.38 2024/04/07 14:28:26 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 22, 2024
+.Dd April 7, 2024
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -180,10 +180,10 @@ followed by type-specific parameters, each encoded as a single byte,
 followed by a
 .Tn NUL Ns -terminated description.
 The bit positions are 0-based,
-they range from
-.Sq \e000
-for the least significant bit to
-.Sq \e077
+ranging from
+.Ql \e000
+(0) for the least significant bit to
+.Ql \e077
 (63) for the most significant bit.
 .
 .Bl -tag -width Cm
@@ -252,15 +252,15 @@ If none of the previous
 .Sq Cm \&=
 or
 .Sq Cm \&:
-conversions matched, prints the field value, using the
-.Xr printf 3
-format
-.Ar fmt .
+conversions matched, prints the format string
+.Ar fmt
+via
+.Xr printf 3 .
 The format string
 .Ar fmt
 may contain a single
 .Vt uintmax_t
-conversion specification that prints the value that did not match.
+conversion specification to print the field value that did not match.
 .El
 .Pp
 The new format is terminated by an additional
@@ -285,15 +285,15 @@ total number of bytes.
 .Sh EXAMPLES
 Two examples of the old formatting style:
 .Bd -literal -offset indent
-snprintb(buf, bufsize, "\e10\e2BITTWO\e1BITONE", 3)
+snprintb(buf, bufsize, "\e010\e002BITTWO\e001BITONE", 3)
 \(rA "03<BITTWO,BITONE>"
 
 snprintb(buf, bufsize,
-    "\e20"
-    "\ex10NOTBOOT" "\ex0f""FPP" "\ex0eSDVMA"
-    "\ex0cVIDEO" "\ex0bLORES" "\ex0a""FPA" "\ex09""DIAG"
-    "\ex07""CACHE" "\ex06IOCACHE" "\ex05LOOPBACK"
-    "\ex04""DBGCACHE",
+    "\e020"
+    "\ex10""NOTBOOT"   "\ex0f""FPP"       "\ex0e""SDVMA"
+    "\ex0c""VIDEO"     "\ex0b""LORES"     "\ex0a""FPA"
+    "\ex09""DIAG"      "\ex07""CACHE"     "\ex06""IOCACHE"
+    "\ex05""LOOPBACK"  "\ex04""DBGCACHE",
     0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
@@ -302,9 +302,9 @@ An example of the new formatting style:
 .Bd -literal -offset indent
 snprintb(buf, bufsize,
     "\e177\e020"
-    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
-    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
-    "b\ex1fMSB\e0",
+    "b\e000LSB\e0" "b\e001BITONE\e0" "f\e004\e004NIBBLE2\e0"
+    "f\e020\e004BURST\e0" "=\e004FOUR\e0" "=\e017FIFTEEN\e0"
+    "b\e037MSB\e0",
     0x800f0701)
 \(rA "0x800f0701<LSB,NIBBLE2=0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
@@ -313,9 +313,9 @@ The same example using snprintb_m:
 .Bd -literal -offset indent
 snprintb_m(buf, bufsize,
     "\e177\e020"
-    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
-    "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
-    "b\ex1fMSB\e0",
+    "b\e000LSB\e0" "b\e001BITONE\e0" "f\e004\e004NIBBLE2\e0"
+    "f\e020\e004BURST\e0" "=\e004FOUR\e0" "=\e017FIFTEEN\e0"
+    "b\e037MSB\e0",
     0x800f0701, 34)
 \(rA "0x800f0701<LSB,NIBBLE2=0>\e0"
    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
