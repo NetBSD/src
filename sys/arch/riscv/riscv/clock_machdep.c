@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.7 2024/01/18 07:41:50 skrll Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.8 2024/04/07 22:59:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.7 2024/01/18 07:41:50 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.8 2024/04/07 22:59:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -124,6 +124,10 @@ riscv_timer_intr(void *arg)
 	ci->ci_ev_timer.ev_count++;
 
 	ci->ci_lastintr_scheduled += timer_ticks_per_hz;
+	while (__predict_false(ci->ci_lastintr_scheduled < now)) {
+		ci->ci_lastintr_scheduled += timer_ticks_per_hz;
+		/* XXX count missed timer interrupts */
+	}
 	sbi_set_timer(ci->ci_lastintr_scheduled);
 
 	hardclock(cf);
