@@ -1,4 +1,4 @@
-$NetBSD: README.evbmips,v 1.1 2024/04/07 19:39:24 andvar Exp $
+$NetBSD: README.evbmips,v 1.2 2024/04/07 19:51:49 andvar Exp $
 
 The documentation is not final, more updates are coming.
 
@@ -29,7 +29,7 @@ MIPSSIM64	2021/01/27	evbmips(n)64-el,eb	MIPSSIM 64-bit kernel.
 MTX-1		2006/02/23	evbmips-el		4G Systems MTX-1 (MeshCube / AccessCube, Alchemy Au1500).
 OCTEON		2015/04/29	evbmips(n)64-eb		Cavium Octeon and Octeon Plus SoC based devices like Ubiquiti Networks EdgeRouter Lite.
 OMSAL400	2006/02/23	evbmips-el		Plat'Home OpenMicroServer (OMS-AL400, Alchemy Au1550).
-P4032		2001/06/01	evbmips-el		Algorithmics MIPS P-4032  evaluation board (QED RM4xxx).
+P4032		2001/06/01	evbmips-el		Algorithmics MIPS P-4032 evaluation board (QED RM4xxx).
 P5064		2001/05/28	evbmips-el		Algorithmics MIPS P-5064 evaluation board (QED RM52xx).
 P5064-64	2009/12/14	evbmips(n)64-el		P5064 64-bit kernel configuration.
 P6032		2001/06/22	evbmips-el		Algorithmics MIPS P-6032 evaluation board.
