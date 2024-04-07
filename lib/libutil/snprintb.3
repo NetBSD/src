@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.36 2024/02/29 21:08:54 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.37 2024/04/07 12:05:23 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,6 @@ The
 .Fn snprintb
 function formats a bitmask into a mnemonic form suitable for printing.
 .Pp
-This conversion is useful for decoding bit fields in device registers.
 It formats the integer
 .Fa val
 into the buffer
@@ -103,13 +102,18 @@ character
 The decoding directive in
 .Fa fmt
 describes how the bitfield is to be interpreted and displayed.
-It follows two possible syntaxes, referred to as
+It follows two possible formats, referred to as
 .Dq old
 and
 .Dq new .
-The main advantage of the
+The
+.Dq old
+format is limited to describing single bits in a 32-bit value,
+the bit positions are 1-based.
+The
 .Dq new
-formatting is that it is capable of handling multi-bit fields.
+format supports multi-bit fields and 64-bit values,
+the bit positions are 0-based.
 .Pp
 If the first character of
 .Fa fmt
@@ -119,153 +123,149 @@ the remainder of the
 .Fa fmt
 argument follows the
 .Dq new
-syntax.
-The second character
-.Pq the first for the old format
-is a binary character representation of the
-output numeral base in which the bitfield will be printed before it is decoded.
-Recognized radix values
+format.
+.Pp
+The next character
+.Po the first for the
+.Dq old
+format
+.Pc
+specifies the numeral base in which to print the numbers in the output.
+The possible values
 .Pq in C escape-character format
 are
-.Ql \e10
-.Pq octal ,
-.Ql \e12
-.Pq decimal ,
-and
-.Ql \e20
-.Pq hexadecimal .
+.Ql \e010
+for octal,
+.Ql \e012
+for decimal, and
+.Ql \e020
+for hexadecimal.
 .Pp
 The remaining characters in the
 .Fa fmt
-argument are interpreted as a list of formatting directives.
-.
-.Ss Old Syntax
-.Pp
-The
+argument represent the formatting conversions,
+according to the
 .Dq old
-format syntax is a series of bit-position\(endescription pairs.
+or
+.Dq new
+format.
+.
+.Ss Old Format
 .Pp
-Each directive begins with a binary character value that represents
-the position of the bit being described.
+In the
+.Dq old
+format, each conversion specifies a bit position
+and a description that is printed if the corresponding bit is set.
 .Pp
-.Sy NB :
-the bit positions in the old syntax are
-.Em 1-based\^ !
-A bit position value of 1
-.Pq Ql \e1
-describes the least significant bit.
-Whereas a position value of 32
-.Po octal
-.Ql \e040 ,
-hexadecimal
-.Ql \ex20 ,
-the ASCII space character
-.Pc
-describes the most significant bit.
-The old syntax is limited to 32-bit values.
+The bit position is a 1-based single-byte binary value,
+ranging from
+.Ql \e001
+(1) for the least significant bit up to
+.Ql \e040
+(32) for the most significant bit.
 .Pp
-The remaining characters are the description to print should the bit
-being described be set.
-.Pp
-Descriptions are delimited by the next bit position value character
-encountered
-.Pq distinguishable by its value being \*[Le] 32 ,
+The description is delimited by the next character whose value is 32 or less
+.Po see
+.Xr ascii 7
+.Pc ,
 or by the end of the format string itself.
 .
-.Ss New Syntax
+.Ss New Format
 .Pp
-For the
+In the
 .Dq new
-format syntax,
-a formatting directive begins with a field type
-followed by a binary field position and possibly a field length,
-followed by a description.
+format,
+each conversion begins with a conversion type,
+followed by type-specific parameters, each encoded as a single byte,
+followed by a
+.Tn NUL Ns -terminated description.
 The bit positions are 0-based,
-the least significant bit is bit-position zero.
-Each description is terminated by a
-.Tn NUL
-byte.
+they range from
+.Sq \e000
+for the least significant bit to
+.Sq \e077
+(63) for the most significant bit.
 .
 .Bl -tag -width Cm
 .
-.It Cm b\e Ns Ar B
-Describes a single bit at bit-position
-.Ar B .
-The remaining characters are the description to print should the bit
-being described be set.
-This field directive is similar in function to the old format.
-When converting old formats to the new syntax don't forget that the
-new syntax uses zero-based bit positions.
+.It Cm b Ar bit Ar descr
+Prints the description from
+.Ar descr
+if the bit at the position
+.Ar bit
+is set.
 .
-.It Cm f\e Ns Ar B Ns Cm \e Ns Ar L
-Describes a multi-bit field beginning at bit-position
-.Ar B
-and having a bit-length of
-.Ar L .
-The remaining characters are printed as a description of the field
-followed by
-.Ql \&=
-and the value of the field.
-The value of the field is printed in the base specified as the second
-character of the
-.Ar fmt
-argument.
+.It Cm f Ar lsb Ar width Ar descr
+Prints the description from
+.Ar descr ,
+a delimiting
+.Sq \&=
+and the numerical value of the multi-bit field
+whose least significant bit is at
+.Ar lsb
+and that spans
+.Ar width
+bits.
+To print individual values of the field, see the
+.Sq Cm \&=
+and
+.Sq Cm \&*
+conversions below.
 .
-.It Cm F\e Ns Ar B Ns Cm \e Ns Ar L
+.It Cm F Ar lsb Ar width Op Ar descr
 Describes a multi-bit field like
 .Sq Cm f ,
 but just extracts the value for use with the
-.Sq Cm \&=
+.Sq Cm \&:
 and
-.Sq Cm \&:
-formatting directives described below.
+.Sq Cm \&*
+conversions below.
+The description from
+.Ar descr
+is ignored,
+it is only present for uniformity with the other conversions.
 .
-.It Cm \&=\e Ns Ar V
-The field previously extracted by the last
+.It Cm \&= Ar cmp Ar descr
+Compares the field value from the previous
 .Sq Cm f
-or
-.Sq Cm F
-directive is compared to the byte value
-.Ar V
-.Pq for values 0 through 255 .
-If they are equal,
+conversion to the single-byte value
+.Ar cmp ,
+which ranges from 0 to 255.
+If they are equal, prints
 .Ql \&=
-followed by the description string following
-.Ar V
-is printed.
-This and the
-.Sq Cm \&:
-directive may be repeated to annotate multiple possible values.
+followed by the description from
+.Ar descr .
+This conversion may be repeated.
 .
-.It Cm \&:\e Ns Ar V
-Operates like the
+.It Cm \&: Ar cmp Ar descr
+Compares the field value from the previous
+.Sq Cm F
+conversion to the single-byte value
+.Ar cmp ,
+which ranges from 0 to 255.
+If they are equal, prints the description from
+.Ar descr .
+This conversion may be repeated.
+.
+.It Cm * Ar fmt
+If none of the previous
 .Sq Cm \&=
-directive, but omits the leading
-.Ql \&= .
-.
-.It Cm * Ns Ar FMT
-This provides a
-.Dq default
-case that prints the extracted field value using the
+or
+.Sq Cm \&:
+conversions matched, prints the field value, using the
 .Xr printf 3
 format
-.Ar FMT
-when other
-.Sq Cm \&:
-or
-.Sq Cm \&=
-directives have not matched.
-.Ar FMT
-may contain a
+.Ar fmt .
+The format string
+.Ar fmt
+may contain a single
 .Vt uintmax_t
-format specification that prints the value that
-did not match, since the field can be more than 32 bits wide.
+conversion specification that prints the value that did not match.
 .El
 .Pp
 The new format is terminated by an additional
 .Tn NUL
-character at the end, following that delimiting the last
-bit-position\(endescription pair.
+character at the end, following that delimiting the last conversion.
 This
 .Tn NUL
 is supplied by the compiler to terminate the string literal and
@@ -302,8 +302,7 @@ An example of the new formatting style:
 .Bd -literal -offset indent
 snprintb(buf, bufsize,
     "\e177\e020"
-    "b\e0LSB\e0" "b\e1BITONE\e0"
-    "f\e4\e4NIBBLE2\e0"
+    "b\e0LSB\e0" "b\e1BITONE\e0" "f\e4\e4NIBBLE2\e0"
     "f\ex10\e4BURST\e0" "=\e4FOUR\e0" "=\exf""FIFTEEN\e0"
     "b\ex1fMSB\e0",
     0x800f0701)
@@ -400,6 +399,9 @@ does not describe a supported numeral base,
 or a bit number in the
 .Ar fmt
 argument is out of bounds,
+or the sequence of conversions in the
+.Ar fmt
+argument is invalid,
 or
 .Fn snprintf
 failed.

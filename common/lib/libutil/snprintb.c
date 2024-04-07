@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.47 2024/04/07 12:05:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.47 2024/04/07 12:05:23 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.47 2024/04/07 12:05:23 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -150,7 +150,8 @@ old_style(state *s)
 static int
 new_style(state *s)
 {
-	uint64_t field = s->val;
+	uint8_t field_kind = 0;	// 0 or 'f' or 'F'
+	uint64_t field = 0;	// valid if field_kind != '\0'
 	int matched = 1;
 	const char *prev_bitfmt = s->bitfmt;
 	while (*s->bitfmt != '\0') {
@@ -158,6 +159,7 @@ new_style(state *s)
 		uint8_t kind = cur_bitfmt[0];
 		switch (kind) {
 		case 'b':
+			field_kind = 0;
 			prev_bitfmt = cur_bitfmt;
 			uint8_t b_bit = cur_bitfmt[1];
 			if (b_bit >= 64)
@@ -174,6 +176,7 @@ new_style(state *s)
 			break;
 		case 'f':
 		case 'F':
+			field_kind = kind;
 			prev_bitfmt = cur_bitfmt;
 			matched = 0;
 			uint8_t f_lsb = cur_bitfmt[1];
@@ -200,6 +203,10 @@ new_style(state *s)
 		case '=':
 		case ':':
 			s->bitfmt += 2;
+			if (kind == '=' && field_kind != 'f')
+				return -1;
+			if (kind == ':' && field_kind != 'F')
+				return -1;
 			uint8_t cmp = cur_bitfmt[1];
 			if (cur_bitfmt[2] == '\0')
 				return -1;
@@ -213,6 +220,8 @@ new_style(state *s)
 			maybe_wrap_line(s, prev_bitfmt);
 			break;
 		case '*':
+			if (field_kind == 0)
+				return -1;
 			if (cur_bitfmt[1] == '\0')
 				return -1;
 			s->bitfmt++;
