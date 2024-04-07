@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.32 2024/04/01 09:15:51 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.33 2024/04/07 10:10:54 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.32 2024/04/01 09:15:51 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.33 2024/04/07 10:10:54 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -415,16 +415,20 @@ ATF_TC_BODY(snprintb, tc)
 	    0xff,
 	    "0xff<lsb,lsb,lsb>");
 
-	// new style single bits, empty description
-	h_snprintb(
+	// new style single bits, 'b' with empty description
+	//
+	// The description of a 'b' conversion must not be empty, as the
+	// output would contain several commas in a row.
+	h_snprintb_len(
+	    1024,
 	    "\177\020"
 	    "b\000lsb\0"
 	    "b\001\0"
 	    "b\002\0"
-	    "b\007msb\0"
-	    ,
+	    "b\007msb\0",
 	    0xff,
-	    "0xff<lsb,,,msb>");
+	    -1,
+	    "0xff<lsb#");
 
 	// new style single bits, bit number too large
 	h_snprintb_error(
@@ -583,16 +587,18 @@ ATF_TC_BODY(snprintb, tc)
 	    "f\101\000uint0\0",
 	    "0#");
 
-	// new style bit-field, empty field description
+	// new style bit-field, 'f' with empty description
 	//
-	// An empty field description results in an isolated '=', which is a
-	// mistake.
-	h_snprintb(
+	// The description of an 'f' conversion must not be empty, as the
+	// output would contain an isolated '='.
+	h_snprintb_len(
+	    1024,
 	    "\177\020"
 	    "f\000\004\0"
 		"=\001one\0",
 	    0x1,
-	    "0x1<=0x1=one>");
+	    -1,
+	    "0x1#");
 
 	// new style bit-field, non-printable description
 	//
@@ -612,41 +618,48 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, '=' with empty description
 	//
-	// The description of a '=' directive should not be empty, as the
-	// outputs contains several '=' in a row.
-	h_snprintb(
+	// The description of a '=' conversion must not be empty, as the
+	// output would contain several '=' in a row.
+	h_snprintb_len(
+	    1024,
 	    "\177\020"
 	    "f\000\004f\0"
 		"=\001one\0"
 		"=\001\0"
 		"=\001\0",
 	    0x1,
-	    "0x1<f=0x1=one==>");
+	    -1,
+	    "0x1<f=0x1=one#");
 
 	// new style bit-field, 'F' followed by ':' with empty description
 	//
-	// An empty description of a ':' directive that doesn't match results
-	// in empty angle brackets, which is a mistake.
-	h_snprintb(
+	// The description of a ':' conversion must not be empty, as the
+	// output would contain empty angle brackets.
+	h_snprintb_len(
+	    1024,
 	    "\177\020"
 	    "F\000\004\0"
 		":\001\0"
 		"*default\0",
 	    0x1,
-	    "0x1<>");
+	    -1,
+	    "0x1<#");
 
 	// new style bit-field, 'F', ':' with empty description, '*'
 	//
-	// An empty description of a ':' directive that matches results in
-	// normal-looking output, but if it didn't match, the output would
-	// contain empty angle brackets, which is a mistake.
-	h_snprintb(
+	// The description of a ':' conversion must not be empty, as the
+	// output would contain empty angle brackets. Not in this particular
+	// test case, as the value is different, but the structural error is
+	// detected nevertheless.
+	h_snprintb_len(
+	    1024,
 	    "\177\020"
 	    "F\000\004\0"
 		":\001\0"
 		"*default\0",
 	    0x2,
-	    "0x2<default>");
+	    -1,
+	    "0x2<#");
 
 	// new style bit-field, 'f' with non-exhaustive '='
 	h_snprintb(

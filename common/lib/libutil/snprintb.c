@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.45 2024/04/01 08:53:42 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.46 2024/04/07 10:10:54 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -162,6 +162,8 @@ new_style(state *s)
 			uint8_t b_bit = cur_bitfmt[1];
 			if (b_bit >= 64)
 				return -1;
+			if (cur_bitfmt[2] == '\0')
+				return -1;
 			s->bitfmt += 2;
 			if (((s->val >> b_bit) & 1) == 0)
 				goto skip_description;
@@ -180,6 +182,8 @@ new_style(state *s)
 			uint8_t f_width = cur_bitfmt[2];
 			if (f_width > 64)
 				return -1;
+			if (kind == 'f' && cur_bitfmt[3] == '\0')
+				return -1;
 			field = s->val >> f_lsb;
 			if (f_width < 64)
 				field &= ((uint64_t) 1 << f_width) - 1;
@@ -197,6 +201,8 @@ new_style(state *s)
 		case ':':
 			s->bitfmt += 2;
 			uint8_t cmp = cur_bitfmt[1];
+			if (cur_bitfmt[2] == '\0')
+				return -1;
 			if (field != cmp)
 				goto skip_description;
 			matched = 1;
@@ -207,6 +213,8 @@ new_style(state *s)
 			maybe_wrap_line(s, prev_bitfmt);
 			break;
 		case '*':
+			if (cur_bitfmt[1] == '\0')
+				return -1;
 			s->bitfmt++;
 			if (matched)
 				goto skip_description;
