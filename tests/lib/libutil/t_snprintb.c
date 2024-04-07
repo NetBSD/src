@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.34 2024/04/07 12:05:23 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.35 2024/04/07 15:20:17 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.34 2024/04/07 12:05:23 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.35 2024/04/07 15:20:17 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -309,16 +309,16 @@ ATF_TC_BODY(snprintb, tc)
 
 	// old style, empty description
 	//
-	// Empty descriptions result in multiple commas in a row, which is a
-	// mistake.
-	h_snprintb(
+	// The description of a bit in the old format must not be empty,
+	// to prevent multiple commas in a row.
+	h_snprintb_val_error(
 	    "\020"
 	    "\001lsb"
 	    "\004"
 	    "\005"
 	    "\010msb",
 	    0xff,
-	    "0xff<lsb,,,msb>");
+	    "0xff<lsb#");
 
 	// old style, buffer size 0, null buffer
 	//
@@ -679,8 +679,8 @@ ATF_TC_BODY(snprintb, tc)
 	// new style bit-field, 'F' with non-exhaustive ':'
 	//
 	// A bit-field that does not match any values generates multiple commas
-	// in a row, which looks confusing. The ':' directives should either be
-	// exhaustive, or there should be a '*' catch-all directive.
+	// in a row, which looks confusing. The ':' conversions should either be
+	// exhaustive, or there should be a '*' catch-all conversion.
 	h_snprintb(
 	    "\177\020"
 	    "b\000bit0\0"
@@ -741,7 +741,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, difference between '=' and ':'
 	//
-	// The ':' directive can almost emulate the '=' directive, without the
+	// The ':' conversion can almost emulate the '=' conversion, without the
 	// numeric output and with a different separator. It's best to use
 	// either 'f' with '=', or 'F' with ':', but not mix them.
 	h_snprintb(
@@ -757,9 +757,9 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field default, fixed string
 	//
-	// The 'f' directive pairs up with the '=' directive,
-	// the 'F' directive pairs up with the ':' directive,
-	// but there's only one 'default' directive for both variants,
+	// The 'f' conversion pairs up with the '=' conversion,
+	// the 'F' conversion pairs up with the ':' conversion,
+	// but there's only one 'default' conversion for both variants,
 	// so its description should include the '=' when used with 'f' but
 	// not with 'F'.
 	h_snprintb(
@@ -787,7 +787,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field default, can never match
 	//
-	// The '=' directive are exhaustive, making the '*' redundant.
+	// The '=' conversion are exhaustive, making the '*' redundant.
 	h_snprintb(
 	    "\177\020"
 	    "f\010\002f\0"
@@ -811,14 +811,14 @@ ATF_TC_BODY(snprintb, tc)
 	    0xff,
 	    "0xff<f=0xff=000000000000000000000000000255%>");
 
-	// new style unknown directive, at the beginning
+	// new style unknown conversion, at the beginning
 	h_snprintb_val_error(
 	    "\177\020"
 	    "unknown\0",
 	    0xff,
 	    "0xff#");
 
-	// new style unknown directive, after a known directive
+	// new style unknown conversion, after a known conversion
 	h_snprintb_val_error(
 	    "\177\020"
 	    "b\007msb\0"
@@ -946,42 +946,51 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style combinations, 'f' '*' '='
 	//
-	// After a catch-all '*' directive, any following '=' directive
-	// generates misleading output, which is a mistake.
-	h_snprintb(
+	// After a catch-all '*' conversions, there must not be further '='
+	// conversions.
+	h_snprintb_val_error(
 	    "\177\020"
 	    "f\000\010f\0"
 		"*=default\0"
 		"=\245match\0",
 	    0xa5,
-	    "0xa5<f=0xa5=default=match>");
+	    "0xa5<f=0xa5=default#");
 
 	// new style combinations, 'F' '*' ':'
 	//
-	// After a catch-all '*' directive, any following ':' directive
-	// generates misleading output, which is a mistake.
-	h_snprintb(
+	// After a catch-all '*' conversion, there must not be further ':'
+	// conversions.
+	h_snprintb_val_error(
 	    "\177\020"
 	    "F\000\010F\0"
 		"*default\0"
 		":\245-match\0",
 	    0xa5,
-	    "0xa5<default-match>");
+	    "0xa5<default#");
 
-	// new style combinations, '*' '*'
+	// new style combinations, 'f' '*' '*'
 	//
-	// After a catch-all '*' directive, any further '*' directive is
-	// ignored and thus redundant, which is a mistake.
-	h_snprintb(
+	// After a catch-all '*' conversion, there must not be further '=' or
+	// '*' conversions.
+	h_snprintb_val_error(
 	    "\177\020"
 	    "f\000\010f\0"
 		"*=default-f\0"
-		"*ignored\0"
+		"*ignored\0",
+	    0xa5,
+	    "0xa5<f=0xa5=default-f#");
+
+	// new style combinations, 'F' '*' '*'
+	//
+	// After a catch-all '*' conversion, there must not be further ':' or
+	// '*' conversions.
+	h_snprintb_val_error(
+	    "\177\020"
 	    "F\000\010\0"
 		"*default-F\0"
 		"*ignored\0",
 	    0xa5,
-	    "0xa5<f=0xa5=default-f,default-F>");
+	    "0xa5<default-F#");
 
 	// example from the manual page, old style octal
 	h_snprintb(
