@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2023/09/03 08:48:20 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2024/04/07 22:52:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2023/09/03 08:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2024/04/07 22:52:53 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -184,6 +184,7 @@ cpu_attach(device_t dv, cpuid_t hartid)
 		ci = curcpu();
 		KASSERTMSG(ci == &cpu_info_store[0], "ci %p", ci);
 		ci->ci_cpuid = hartid;
+		ci->ci_cpu_freq = riscv_timer_frequency_get();
 	} else {
 #ifdef MULTIPROCESSOR
 		if ((boothowto & RB_MD1) != 0) {
