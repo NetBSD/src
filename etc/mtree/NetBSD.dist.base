@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.257 2024/04/05 01:15:59 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.258 2024/04/08 12:32:15 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1451,6 +1451,7 @@
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
+./var/run/named			mode=0775 uname=named gname=named
 ./var/rwho			uname=_rwhod gname=_rwhod
 ./var/shm			mode=01777
 ./var/spool
