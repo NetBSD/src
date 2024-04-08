@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.35 2024/04/07 15:20:17 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.36 2024/04/08 21:28:35 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.35 2024/04/07 15:20:17 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.36 2024/04/08 21:28:35 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -994,7 +994,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// example from the manual page, old style octal
 	h_snprintb(
-	    "\10\2BITTWO\1BITONE",
+	    "\010\002BITTWO\001BITONE",
 	    0x03,
 	    "03<BITTWO,BITONE>");
 
@@ -1006,21 +1006,31 @@ ATF_TC_BODY(snprintb, tc)
 	// the bit number and the description need to be written as separate
 	// string literals.
 	h_snprintb(
-	    "\20"
-	    "\x10NOTBOOT" "\x0f""FPP" "\x0eSDVMA"
-	    "\x0cVIDEO" "\x0bLORES" "\x0a""FPA" "\x09""DIAG"
-	    "\x07""CACHE" "\x06IOCACHE" "\x05LOOPBACK"
-	    "\x04""DBGCACHE",
+	    "\x10"
+	    "\x10" "NOTBOOT"
+	    "\x0f" "FPP"
+	    "\x0e" "SDVMA"
+	    "\x0c" "VIDEO"
+	    "\x0b" "LORES"
+	    "\x0a" "FPA"
+	    "\x09" "DIAG"
+	    "\x07" "CACHE"
+	    "\x06" "IOCACHE"
+	    "\x05" "LOOPBACK"
+	    "\x04" "DBGCACHE",
 	    0xe860,
 	    "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>");
 
 	// example from the manual page, new style bits and fields
 	h_snprintb(
 	    "\177\020"
-	    "b\0LSB\0" "b\1BITONE\0"
-	    "f\4\4NIBBLE2\0"
-	    "f\x10\4BURST\0" "=\4FOUR\0" "=\xf""FIFTEEN\0"
-	    "b\x1fMSB\0",
+	    "b\000" "LSB\0"
+	    "b\001" "BITONE\0"
+	    "f\004\004" "NIBBLE2\0"
+	    "f\020\004" "BURST\0"
+		"=\x04" "FOUR\0"
+		"=\x0f" "FIFTEEN\0"
+	    "b\037" "MSB\0",
 	    0x800f0701,
 	    "0x800f0701<LSB,NIBBLE2=0,BURST=0xf=FIFTEEN,MSB>");
 
@@ -1492,13 +1502,13 @@ ATF_TC_BODY(snprintb_m, tc)
 	// example from the manual page, new style bits and fields
 	h_snprintb_m(
 	    "\177\020"
-	    "b\0LSB\0"
-	    "b\1BITONE\0"
-	    "f\4\4NIBBLE2\0"
-	    "f\x10\4BURST\0"
-		"=\4FOUR\0"
-		"=\xf""FIFTEEN\0"
-	    "b\x1fMSB\0",
+	    "b\000" "LSB\0"
+	    "b\001" "BITONE\0"
+	    "f\004\004" "NIBBLE2\0"
+	    "f\020\004" "BURST\0"
+		"=\x04" "FOUR\0"
+		"=\x0f" "FIFTEEN\0"
+	    "b\037" "MSB\0",
 	    0x800f0701,
 	    34,
 	    "0x800f0701<LSB,NIBBLE2=0>\0"
