@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.127 2024/04/08 09:25:25 kre Exp $
+.\"	$NetBSD: ifconfig.8,v 1.128 2024/04/08 12:32:57 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -630,6 +630,13 @@ Remove the interface named by
 from the
 .Xr lagg 4
 interface.
+.It Cm laggportpri Ar interface Ar n
+If the interface is a
+.Xr lagg 4
+pseudo-interface, set the priority of
+.Ar interface
+to
+.Ar n
 .It Cm laggproto Ar proto
 Set the aggregation protocol of
 .Xr lagg 4 .
@@ -641,13 +648,6 @@ The available options are
 .Li loadbalance ,
 and
 .Li none .
-.It Cm laggportpri Ar interface Ar n
-If the interface is a
-.Xr lagg 4
-pseudo-interface, set the priority of
-.Ar interface
-to
-.Ar n
 .It Cm eee
 Enable IEEE 802.3az Energy Efficiency Ethernet function.
 .It Cm -eee
