@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.6 2024/04/04 08:01:55 yamaguchi Exp $	*/
+/*	$NetBSD: lagg.c,v 1.7 2024/04/08 00:50:49 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.6 2024/04/04 08:01:55 yamaguchi Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.7 2024/04/08 00:50:49 yamaguchi Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -413,6 +413,7 @@ setlaggport(prop_dictionary_t env, prop_dictionary_t oenv __unused)
 	memset(&_req, 0, sizeof(_req));
 	req = (struct lagg_req *)&_req;
 	rp = &req->lrq_reqports[0];
+	req->lrq_nports = 1;
 
 	strlcpy(rp->rp_portname, ifname, sizeof(rp->rp_portname));
 	ioc = LAGGIOC_NOCMD;
