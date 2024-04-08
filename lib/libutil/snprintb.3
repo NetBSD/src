@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.38 2024/04/07 14:28:26 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.39 2024/04/08 21:28:35 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 7, 2024
+.Dd April 8, 2024
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -118,7 +118,10 @@ the bit positions are 0-based.
 If the first character of
 .Fa fmt
 is
-.Ql \e177 ,
+.Pq in C escape-character format
+.Ql \e177
+or
+.Ql \ex7f ,
 the remainder of the
 .Fa fmt
 argument follows the
@@ -131,14 +134,18 @@ The next character
 format
 .Pc
 specifies the numeral base in which to print the numbers in the output.
-The possible values
-.Pq in C escape-character format
-are
+The possible values are
 .Ql \e010
+or
+.Ql \ex08
 for octal,
 .Ql \e012
+or
+.Ql \ex0a
 for decimal, and
 .Ql \e020
+or
+.Ql \ex10
 for hexadecimal.
 .Pp
 The remaining characters in the
@@ -160,8 +167,12 @@ and a description that is printed if the corresponding bit is set.
 The bit position is a 1-based single-byte binary value,
 ranging from
 .Ql \e001
+or
+.Ql \ex01
 (1) for the least significant bit up to
 .Ql \e040
+or
+.Ql \ex20
 (32) for the most significant bit.
 .Pp
 The description is delimited by the next character whose value is 32 or less
@@ -182,8 +193,12 @@ followed by a
 The bit positions are 0-based,
 ranging from
 .Ql \e000
+or
+.Ql \ex00
 (0) for the least significant bit to
 .Ql \e077
+or
+.Ql \ex3f
 (63) for the most significant bit.
 .
 .Bl -tag -width Cm
@@ -212,6 +227,26 @@ and
 .Sq Cm \&*
 conversions below.
 .
+.It Cm \&= Ar cmp Ar descr
+Compares the field value from the previous
+.Sq Cm f
+conversion to the single-byte value
+.Ar cmp ,
+ranging from
+.Ql \e000
+or
+.Ql \ex00
+(0) to
+.Ql \e377
+or
+.Ql \exff
+(255).
+If they are equal, prints
+.Ql \&=
+followed by the description from
+.Ar descr .
+This conversion may be repeated.
+.
 .It Cm F Ar lsb Ar width Op Ar descr
 Describes a multi-bit field like
 .Sq Cm f ,
@@ -225,24 +260,20 @@ The description from
 is ignored,
 it is only present for uniformity with the other conversions.
 .
-.It Cm \&= Ar cmp Ar descr
-Compares the field value from the previous
-.Sq Cm f
-conversion to the single-byte value
-.Ar cmp ,
-which ranges from 0 to 255.
-If they are equal, prints
-.Ql \&=
-followed by the description from
-.Ar descr .
-This conversion may be repeated.
-.
 .It Cm \&: Ar cmp Ar descr
 Compares the field value from the previous
 .Sq Cm F
 conversion to the single-byte value
 .Ar cmp ,
-which ranges from 0 to 255.
+ranging from
+.Ql \e000
+or
+.Ql \ex00
+(0) to
+.Ql \e377
+or
+.Ql \exff
+(255).
 If they are equal, prints the description from
 .Ar descr .
 This conversion may be repeated.
@@ -255,7 +286,7 @@ or
 conversions matched, prints the format string
 .Ar fmt
 via
-.Xr printf 3 .
+.Xr snprintf 3 .
 The format string
 .Ar fmt
 may contain a single
@@ -289,11 +320,18 @@ snprintb(buf, bufsize, "\e010\e002BITTWO\e001BITONE", 3)
 \(rA "03<BITTWO,BITONE>"
 
 snprintb(buf, bufsize,
-    "\e020"
-    "\ex10""NOTBOOT"   "\ex0f""FPP"       "\ex0e""SDVMA"
-    "\ex0c""VIDEO"     "\ex0b""LORES"     "\ex0a""FPA"
-    "\ex09""DIAG"      "\ex07""CACHE"     "\ex06""IOCACHE"
-    "\ex05""LOOPBACK"  "\ex04""DBGCACHE",
+    "\ex10"
+    "\ex10" "NOTBOOT"
+    "\ex0f" "FPP"
+    "\ex0e" "SDVMA"
+    "\ex0c" "VIDEO"
+    "\ex0b" "LORES"
+    "\ex0a" "FPA"
+    "\ex09" "DIAG"
+    "\ex07" "CACHE"
+    "\ex06" "IOCACHE"
+    "\ex05" "LOOPBACK"
+    "\ex04" "DBGCACHE",
     0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
@@ -302,9 +340,13 @@ An example of the new formatting style:
 .Bd -literal -offset indent
 snprintb(buf, bufsize,
     "\e177\e020"
-    "b\e000LSB\e0" "b\e001BITONE\e0" "f\e004\e004NIBBLE2\e0"
-    "f\e020\e004BURST\e0" "=\e004FOUR\e0" "=\e017FIFTEEN\e0"
-    "b\e037MSB\e0",
+    "b\e000" "LSB\e0"
+    "b\e001" "BITONE\e0"
+    "f\e004\e004" "NIBBLE2\e0"
+    "f\e020\e004" "BURST\e0"
+        "=\ex04" "FOUR\e0"
+        "=\ex0f" "FIFTEEN\e0"
+    "b\e037" "MSB\e0",
     0x800f0701)
 \(rA "0x800f0701<LSB,NIBBLE2=0,BURST=0xf=FIFTEEN,MSB>"
 .Ed
@@ -313,9 +355,13 @@ The same example using snprintb_m:
 .Bd -literal -offset indent
 snprintb_m(buf, bufsize,
     "\e177\e020"
-    "b\e000LSB\e0" "b\e001BITONE\e0" "f\e004\e004NIBBLE2\e0"
-    "f\e020\e004BURST\e0" "=\e004FOUR\e0" "=\e017FIFTEEN\e0"
-    "b\e037MSB\e0",
+    "b\e000" "LSB\e0"
+    "b\e001" "BITONE\e0"
+    "f\e004\e004" "NIBBLE2\e0"
+    "f\e020\e004" "BURST\e0"
+        "=\ex04" "FOUR\e0"
+        "=\ex0f" "FIFTEEN\e0"
+    "b\e037" "MSB\e0",
     0x800f0701, 34)
 \(rA "0x800f0701<LSB,NIBBLE2=0>\e0"
    "0x800f0701<BURST=0xf=FIFTEEN,MSB>\e0"
@@ -324,12 +370,12 @@ snprintb_m(buf, bufsize,
 .Pp
 A more complex example from
 .In sys/mman.h
-that uses both the bit position
+that uses both the single-bit
 .Sq Cm b
-formatting as well as the
+formatting as well as the multi-bit field
 .Sq Cm F
-multibit field formatting with a default case
-.Pq Sq Cm \&* :
+formatting with a default
+.Sq Cm \&* :
 .Bd -literal -offset indent
 #define MAP_FMT "\e177\e020"                      \e
         "b\e0"  "SHARED\e0"                       \e
@@ -407,7 +453,6 @@ or
 failed.
 .El
 .Sh SEE ALSO
-.Xr printf 3 ,
 .Xr snprintf 3
 .Sh HISTORY
 The
@@ -429,3 +474,10 @@ The
 .Dq new
 format was the invention of
 .An Chris Torek .
+.Sh CAVEATS
+When using hexadecimal character escapes for bit positions or field widths,
+if a following description starts with one of the letters A to F,
+that letter is considered part of the character escape.
+In such a situation, the character escape and the description must be
+put into separate string literals, as in
+.Li \[dq]\ex0f\[dq] \[dq]FIFTEEN\[dq] .
