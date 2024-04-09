@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.74 2023/11/20 18:03:55 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.75 2024/04/09 15:17:24 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,6 +122,9 @@ distinfo dist_list[] = {
 	{"modules",		SET_MODULES,		false, MSG_set_modules, NULL},
 #endif
 	{"base",		SET_BASE,		false, MSG_set_base, NULL},
+#ifdef HAVE_BASE32
+	{"base32",		SET_BASE32,		false, MSG_set_base32, NULL},
+#endif
 #ifdef HAVE_DTB
 	{"dtb",			SET_DTB,		false, MSG_set_dtb, NULL},
 #endif
@@ -130,6 +133,7 @@ distinfo dist_list[] = {
 	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
 	{"gpufw",		SET_GPUFW,		false, MSG_set_gpufw, NULL},
 	{"man",			SET_MAN_PAGES,		false, MSG_set_man_pages, NULL},
+	{"manhtml",		SET_MAN_PAGES_HTML,	false, MSG_set_man_pages_html, NULL},
 	{"misc",		SET_MISC,		false, MSG_set_misc, NULL},
 	{"rescue",		SET_RESCUE,		false, MSG_set_rescue, NULL},
 	{"tests",		SET_TESTS,		false, MSG_set_tests, NULL},
@@ -163,6 +167,9 @@ distinfo dist_list[] = {
 	{"gnusrc",		SET_GNUSRC,		true, MSG_set_gnusrc, NULL},
 	{"xsrc",		SET_XSRC,		true, MSG_set_xsrc, NULL},
 	{"debug",		SET_DEBUG,		false, MSG_set_debug, NULL},
+#ifdef HAVE_DEBUG32
+	{"debug32",		SET_DEBUG32,		false, MSG_set_debug32, NULL},
+#endif
 	{"xdebug",		SET_X11_DEBUG,		false, MSG_set_xdebug, NULL},
 	{NULL,			SET_GROUP_END,		false, NULL, NULL},
 

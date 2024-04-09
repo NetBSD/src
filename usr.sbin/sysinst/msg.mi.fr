@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.45 2023/10/31 14:03:33 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.46 2024/04/09 15:17:24 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -876,6 +876,9 @@ message cur_distsets_header
 message set_base
 {Base}
 
+message set_base32
+{Base pour la compatibilit? 32 bits}
+
 message set_system
 {Système (/etc)}
 
@@ -893,6 +896,9 @@ message set_gpufw
 
 message set_man_pages
 {Pages de manuel}
+
+message set_man_pages_html
+{Pages de manuel (HTML)}
 
 message set_misc
 {Divers}
@@ -947,6 +953,9 @@ message set_xsrc
 
 message set_debug
 {Symboles de débogage}
+
+message set_debug32
+{Symboles de débogage (32-bit)}
 
 message set_xdebug
 {Symboles de débogage X11}

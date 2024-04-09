@@ -1,0 +1,5 @@
+# $NetBSD: mi,v 1.1 2024/04/09 15:17:23 nia Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./etc/mtree/set.base32				base-compat-shlib
