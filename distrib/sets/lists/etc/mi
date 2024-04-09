@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.274 2024/04/09 15:17:24 nia Exp $
+# $NetBSD: mi,v 1.275 2024/04/09 21:02:17 kre Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -356,7 +356,6 @@
 ./etc/shells					etc-sys-etc
 ./etc/shrc					etc-util-etc
 ./etc/skel/.cshrc				etc-sys-etc
-./etc/skel/.editrc				etc-sys-etc
 ./etc/skel/.login				etc-sys-etc
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
