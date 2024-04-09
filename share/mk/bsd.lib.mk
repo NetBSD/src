@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.400 2024/04/05 01:16:00 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.401 2024/04/09 22:37:23 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -425,9 +425,11 @@ _DEST.LINT:=${DESTDIR}${LINTLIBDIR}
 _DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}
 _DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
 
+_BUILDSTATICLIB= ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
+    || ${MAKELINKLIB} != "no" || ${MAKESTATICLIB} != "no"
+
 .if defined(LIB)							# {
-.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MAKELINKLIB} != "no") && ${MAKESTATICLIB} != "no"
+.if ${_BUILDSTATICLIB}
 _LIBS=${_LIB.a}
 .else
 _LIBS=
@@ -482,8 +484,7 @@ _LIBS+=${_LIB.ln}
 .endif
 
 ALLOBJS=
-.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
-	|| ${MAKELINKLIB} != "no") && ${MAKESTATICLIB} != "no"
+.if ${_BUILDSTATICLIB}
 ALLOBJS+=${STOBJS}
 .endif
 ALLOBJS+=${POBJS} ${SOBJS}
