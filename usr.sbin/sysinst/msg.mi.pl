@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.46 2023/10/31 14:03:33 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.47 2024/04/09 15:17:24 nia Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -813,6 +813,9 @@ message cur_distsets_header
 message set_base
 {Base}
 
+message set_base32
+{Baza dla kompatybilno?ci 32-bitowej}
+
 message set_system
 {System (/etc)}
 
@@ -830,6 +833,9 @@ message set_gpufw
 
 message set_man_pages
 {Strony Podrecznika}
+
+message set_man_pages_html
+{Strony Podrecznika (HTML)}
 
 message set_misc
 {Inne}
@@ -884,6 +890,9 @@ message set_xsrc
 
 message set_debug
 {Symbole debugowania}
+
+message set_debug32
+{Symbole debugowania (32-bit)}
 
 message set_xdebug
 {Symbole debugowania X11}

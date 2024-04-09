@@ -1,0 +1,2 @@
+# $NetBSD: mi,v 1.1 2024/04/09 15:17:23 nia Exp $
+./etc/mtree/set.debug32                           comp-sys-root

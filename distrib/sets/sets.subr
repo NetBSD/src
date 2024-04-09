@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.204 2022/09/10 12:31:42 rillig Exp $
+#	$NetBSD: sets.subr,v 1.205 2024/04/09 15:17:22 nia Exp $
 #
 
 #
@@ -154,11 +154,27 @@ else
 	debugset="debug"
 	xdebugset="xdebug"
 fi
+if [ -z "${debugset}" -o "${MKCOMPAT}" = "no" ]; then
+	debug32set=""
+else
+	debug32set="debug32"
+fi
 if [ "${MKDTB}" = "no" ]; then
 	dtbset=""
 else
 	dtbset="dtb"
 fi
+if [ "${MKHTML}" = "no" ]; then
+	manhtmlset=""
+else
+	manhtmlset="manhtml"
+fi
+if [ "${MKCOMPAT}" = "no" ]; then
+	base32set=""
+else
+	base32set="base32"
+fi
+
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
 	shlib=elf
@@ -170,7 +186,7 @@ stlib=$shlib
 if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
-nlists="base comp $debugset $dtbset etc games gpufw man misc $modset rescue $testset text"
+nlists="base $base32set comp $debugset $debug32set $dtbset etc games gpufw man $manhtmlset misc $modset rescue $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 
 OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
@@ -190,7 +206,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.204 2022/09/10 12:31:42 rillig Exp $
+# 	# $NetBSD: sets.subr,v 1.205 2024/04/09 15:17:22 nia Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

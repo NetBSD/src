@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2023/11/28 14:10:18 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2024/04/09 15:17:24 nia Exp $
 #
 # Makefile for sysinst
 
@@ -75,6 +75,10 @@ SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
 
 .if ${MKBSDTAR:Uno} == "no"
 CPPFLAGS+=	-DUSING_PAXASTAR
+.endif
+
+.if ${MKCOMPAT:Uno} != "no"
+CPPFLAGS+=	-DHAVE_BASE32
 .endif
 
 .if ${MKDTB:Uno} != "no"
