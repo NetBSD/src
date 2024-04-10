@@ -1,6 +1,6 @@
-/*	$NetBSD: glbl.c,v 1.10 2019/01/04 19:13:58 maya Exp $	*/
+/*	$NetBSD: glbl.c,v 1.11 2024/04/10 17:52:41 rillig Exp $	*/
 
-/* glob.c: This file contains the global command routines for the ed line
+/* glbl.c: This file contains the global command routines for the ed line
    editor */
 /*-
  * Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-__RCSID("$NetBSD: glbl.c,v 1.10 2019/01/04 19:13:58 maya Exp $");
+__RCSID("$NetBSD: glbl.c,v 1.11 2024/04/10 17:52:41 rillig Exp $");
 #endif
 #endif /* not lint */
 
