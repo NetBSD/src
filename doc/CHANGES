@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3048 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3049 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -313,3 +313,26 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		selectively reject individual interfaces, allowing them to
 		be matched by ugen(4) and accessed through libusb.
 		[thorpej 20240326]
+	moused(8): Remove undocumented and unused option 'C'.
+		[rilling 20240329]
+	ugen(4): Add a "ugen-unit" device property which devpubd(8) scripts
+		can query to determine which /dev/ugenN.xx nodes a given ugen
+		or ugenif device is using.  [thorpej 20240329]
+	libc: Limit writes to stdio FILE handles via fvwrite to INT_MAX
+		rather than BUFSIZE. Improves performance dramatically.
+		From enh via Apple libc.  [christos 20240329]
+	evbarm: Add interrupt support to the Texas Instruments gpio(4) driver
+		used on the Beaglebone Black.  [jakllsch 20240401]
+	dk(4): Add support for discovering Atari TOS partitions as wedges.
+		[charlotte 20240402]
+	rumpuser(3): New RUMP_STDOUT, RUMP_STDERR environment variables.
+		[riastradh 20240404]
+	config(1): Improve determinism for reproducible builds.
+		[riastradh 20240405]
+	qemufwcfg(4): Add RISC-V support.  [skrll 20240406]
+	vax: Switch vax to X.Org server version 120.  [tsutsui 20240407]
+	evbmips: Following evbarm, document kernel configurations in
+		sys/arch/evbmips/conf/README.evbmips. [andvar 20240407]
+	sysinst(8): Split compatibility libraries into separate sets,
+		base32 and debug32. Split HTML man pages into new manhtml
+		set.  [nia 20240410]
