@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.127 2022/11/01 06:47:41 simonb Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.128 2024/04/10 20:00:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -127,7 +127,7 @@ struct	partition {		/* the partition table */
  * padding at the end, but that would have been confusing (although that
  * is what actually happens), because the partitions structure is supposed
  * to be variable size and putting a padding uint32_t would be weird.
- * Unfornately mips32 and i386 align uint64_t standalone at an 8 byte
+ * Unfortunately mips32 and i386 align uint64_t standalone at an 8 byte
  * boundary, but in structures at a 4 byte boundary so matt's
  * change did not affect them.
  *
