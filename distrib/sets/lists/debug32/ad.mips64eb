@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.1 2024/04/09 15:17:23 nia Exp $
+# $NetBSD: ad.mips64eb,v 1.2 2024/04/10 16:14:26 nia Exp $
 ./usr/lib/64/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/64/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -484,6 +484,7 @@
 ./usr/libdata/debug/usr/lib/64/libzfs.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/64/libzfs_core.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/64/libzpool.so.0.0.debug	comp-sys-debug	debug,compat,zfs
+./usr/libdata/debug/usr/lib/64/security	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/64/security/pam_afslog.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/64/security/pam_chroot.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/64/security/pam_deny.so.4.debug	comp-sys-debug	debug,compat,pam
@@ -658,6 +659,7 @@
 ./usr/libdata/debug/usr/lib/o32/libzfs.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/o32/libzfs_core.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/o32/libzpool.so.0.0.debug	comp-sys-debug	debug,compat,zfs
+./usr/libdata/debug/usr/lib/o32/security	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/o32/security/pam_afslog.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/o32/security/pam_chroot.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/o32/security/pam_deny.so.4.debug	comp-sys-debug	debug,compat,pam
