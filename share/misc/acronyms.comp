@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.388 2024/01/29 16:31:53 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.389 2024/04/10 20:50:18 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1124,6 +1124,7 @@ NIC	network information center
 NIC	network interface card
 NIDS	network intrusion detection system
 NIP	network interface protocol
+NIPR	non-classified IP router (network)
 NIPS	network intrusion prevention system
 NIS	network information service
 NIST	National Institute of Standards and Technology
@@ -1427,6 +1428,7 @@ RIB	routing information base
 RIFF	Resource Interchange File Format
 RIP	Raster Image Processor
 RIP	Routing Information Protocol
+RIPR	releasable IP router (network)
 RIR	regional Internet registry
 RISC	reduced instruction set {computer,computing}
 RKM	ROM Kernel Manual
@@ -1566,6 +1568,7 @@ SIM	subscriber identity module
 SIMD	single instruction, multiple data
 SIMM	single inline memory module
 SIP	Session Initiation Protocol
+SIPR	secret IP router (network)
 SIR	signal-to-interference ratio
 SIR	slow infrared
 SIRT	security incident response team
