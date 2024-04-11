@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.2 2024/04/10 16:14:26 nia Exp $
+# $NetBSD: md.sparc64,v 1.3 2024/04/11 08:19:30 nia Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -29,7 +29,7 @@
 ./usr/lib/sparc/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/sparc/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/sparc/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/sparc/libbfd_g.a	comp-sys-debug		debug,compat
+./usr/lib/sparc/libbfd_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/sparc/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -62,9 +62,9 @@
 ./usr/lib/sparc/libfido2_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libfl_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libform_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/sparc/libgcc_eh_g.a 			comp-sys-debug	debug,compat,gcc
+./usr/lib/sparc/libgcc_eh_g.a 			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libgcc_g.a			comp-c-debuglib	debuglib,compat,gcc
-./usr/lib/sparc/libgcc_s_g.a			comp-sys-debug	debug,compat,gcc
+./usr/lib/sparc/libgcc_s_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/sparc/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
@@ -196,7 +196,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/sparc/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/sparc/libbfd.so.18.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/sparc/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/sparc/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/sparc/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat

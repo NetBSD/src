@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.2 2024/04/10 16:14:26 nia Exp $
+# $NetBSD: md.amd64,v 1.3 2024/04/11 08:19:30 nia Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -29,7 +29,7 @@
 ./usr/lib/i386/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/i386/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/i386/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/i386/libbfd_g.a	comp-sys-debug		debug,compat
+./usr/lib/i386/libbfd_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/i386/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -197,7 +197,7 @@
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/i386/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/i386/libbfd.so.18.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/i386/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
