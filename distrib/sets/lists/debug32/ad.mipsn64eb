@@ -1,4 +1,4 @@
-# $NetBSD: ad.mipsn64eb,v 1.2 2024/04/10 16:14:26 nia Exp $
+# $NetBSD: ad.mipsn64eb,v 1.3 2024/04/11 08:19:30 nia Exp $
 ./usr/lib/n32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -29,7 +29,7 @@
 ./usr/lib/n32/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/n32/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/n32/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/n32/libbfd_g.a	comp-sys-debug		debug,compat
+./usr/lib/n32/libbfd_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/n32/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -62,9 +62,9 @@
 ./usr/lib/n32/libfido2_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libfl_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libform_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/n32/libgcc_eh_g.a 			comp-sys-debug	debug,compat,gcc
+./usr/lib/n32/libgcc_eh_g.a 			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libgcc_g.a			comp-c-debuglib	debuglib,compat,gcc
-./usr/lib/n32/libgcc_s_g.a			comp-sys-debug	debug,compat,gcc
+./usr/lib/n32/libgcc_s_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/n32/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
@@ -192,7 +192,7 @@
 ./usr/lib/o32/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/o32/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/o32/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/o32/libbfd_g.a	comp-sys-debug		debug,compat
+./usr/lib/o32/libbfd_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/o32/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -225,9 +225,9 @@
 ./usr/lib/o32/libfido2_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libfl_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libform_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/o32/libgcc_eh_g.a 			comp-sys-debug	debug,compat,gcc
+./usr/lib/o32/libgcc_eh_g.a 			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libgcc_g.a			comp-c-debuglib	debuglib,compat,gcc
-./usr/lib/o32/libgcc_s_g.a			comp-sys-debug	debug,compat,gcc
+./usr/lib/o32/libgcc_s_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/o32/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
@@ -363,7 +363,7 @@
 ./usr/libdata/debug/usr/lib/n32/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/n32/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/n32/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/n32/libbfd.so.18.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/n32/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/n32/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/n32/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/n32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
@@ -538,7 +538,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/o32/libbfd.so.18.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libbfd.so.18.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libblocklist.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
