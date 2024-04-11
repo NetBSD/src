@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.26 2023/10/26 03:44:12 msaitoh Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.27 2024/04/11 10:42:42 andvar Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.26 2023/10/26 03:44:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.27 2024/04/11 10:42:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8072,7 +8072,7 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	if (proto_oper != 0) {
 		ifmr->ifm_status |= IFM_ACTIVE;
-		ifmr->ifm_active = IFM_ETHER | IFM_AUTO | media_oper;
+		ifmr->ifm_active = IFM_ETHER | IFM_FDX | IFM_AUTO | media_oper;
 		/* txpause, rxpause, duplex? */
 	}
 }
