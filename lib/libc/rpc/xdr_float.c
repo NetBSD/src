@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.41 2016/02/15 11:07:48 martin Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.42 2024/04/11 18:41:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.41 2016/02/15 11:07:48 martin Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.42 2024/04/11 18:41:03 christos Exp $");
 #endif
 #endif
 
@@ -254,6 +254,7 @@ xdr_double(XDR *xdrs, double *dp)
 				goto shipit;
 			}
 		}
+		/*LINTED: possible overflow*/
 		id.exp = vd.exp - VAX_DBL_BIAS + IEEE_DBL_BIAS;
 		id.mantissa1 = (vd.mantissa1 << 13) |
 			    ((unsigned int)vd.mantissa2 >> 3);
@@ -296,6 +297,7 @@ xdr_double(XDR *xdrs, double *dp)
 				goto doneit;
 			}
 		}
+		/*LINTED: can overflow */
 		vd.exp = id.exp - IEEE_DBL_BIAS + VAX_DBL_BIAS;
 		vd.mantissa1 = ((unsigned int)id.mantissa1 >> 13);
 		vd.mantissa2 = ((id.mantissa1 & MASK(13)) << 3) |
