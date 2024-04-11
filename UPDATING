@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.346 2024/04/11 02:15:39 riastradh Exp $
+$NetBSD: UPDATING,v 1.347 2024/04/11 06:20:29 nia Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -23,6 +23,10 @@ Recent changes:
 	Update builds may require manually deleting
 	$DESTDIR/var/run/named (and, potentially,
 	$DESTDIR/var/run/lwresd) in order to avoid checkflist failure.
+
+20240409:
+	32-bit compatibility libraries were moved into the base32
+	and debug32 sets.  HTML man pages were moved into the manhtml set.
 
 20230828:
 	If:
