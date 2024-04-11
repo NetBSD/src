@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.19 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.20 2024/04/11 13:51:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.19 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.20 2024/04/11 13:51:36 riastradh Exp $");
 
 /*
  * Futexes
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.19 2023/02/24 11:02:27 riastradh Exp
  *				futex(FUTEX_WAIT, &lock, v | 2, NULL, NULL, 0);
  *				continue;
  *			}
- *		} while (atomic_cas_uint(&lock, v, v & ~1) != v);
+ *		} while (atomic_cas_uint(&lock, v, v | 1) != v);
  *		membar_acquire();
  *
  *		...
