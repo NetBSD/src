@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.47 2024/02/08 20:51:24 andvar Exp $ */
+/*	$NetBSD: mbr.c,v 1.48 2024/04/11 06:42:18 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2829,7 +2829,7 @@ struct part_attr_set_data {
 };
 
 static bool
-part_attr_fornat_str(const struct disk_partitions *arg, part_id id,
+part_attr_format_str(const struct disk_partitions *arg, part_id id,
     const mbr_info_t *mb, int i, bool primary,
     const struct mbr_partition *mp, void *cookie)
 {
@@ -2942,7 +2942,7 @@ mbr_custom_attribute_format(const struct disk_partitions *arg,
 	data.parts = parts;
 	data.info = info;
 
-	return mbr_part_apply(arg, id, part_attr_fornat_str, &data);
+	return mbr_part_apply(arg, id, part_attr_format_str, &data);
 }
 
 static bool
