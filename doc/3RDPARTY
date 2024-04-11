@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2002 2024/04/09 17:06:12 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2003 2024/04/11 02:08:17 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -56,16 +56,18 @@ You want the unix2 (dual-licensed) tar file.
 Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
-Version:	6.2
-Current Vers:	6.2
+Version:	6.2 (20140117)
+Current Vers:	6.2 (20140117)
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
-Home Page:	http://www.am-utils.org/
+Home Page:	https://www.am-utils.org/
 Date:		2020-06-13
 Mailing List:	am-utils
 Responsible:	christos
 License:	BSD (4-clause)
 Location:	external/bsd/am-utils/dist
+Vendor tag:	ezk
+Release tag:	am-utils-x-y-YYYYMMDD
 Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
