@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.13 2024/04/12 05:17:48 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.14 2024/04/12 05:44:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.13 2024/04/12 05:17:48 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.14 2024/04/12 05:44:38 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: cksnprintb.c,v 1.13 2024/04/12 05:17:48 rillig Exp $");
 typedef struct {
 	bool new_style;
 	const buffer *fmt;
-	const tnode_t *value;
+	uint64_t possible_value_bits;
 
 	quoted_iterator it;
 	uint64_t field_width;
@@ -128,7 +128,7 @@ check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
 		}
 	}
 
-	if (!(possible_bits(ck->value) & field_mask))
+	if (!(ck->possible_value_bits & field_mask))
 		/* conversion '%.*s' is unreachable by input value */
 		warning(378, len, start);
 }
@@ -265,9 +265,8 @@ check_conversion(checker *ck)
 }
 
 void
-check_snprintb(const tnode_t *expr)
+check_snprintb(const function_call *call)
 {
-	const function_call *call = expr->u.call;
 	const char *name;
 	const buffer *fmt;
 	const tnode_t *value;
@@ -287,7 +286,7 @@ check_snprintb(const tnode_t *expr)
 
 	checker ck = {
 		.fmt = fmt,
-		.value = value,
+		.possible_value_bits = possible_bits(value),
 		.field_width = 64,
 	};
 
