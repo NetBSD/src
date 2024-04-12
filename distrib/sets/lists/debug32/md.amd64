@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.4 2024/04/11 15:29:16 wiz Exp $
+# $NetBSD: md.amd64,v 1.5 2024/04/12 11:40:09 wiz Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -36,7 +36,7 @@
 ./usr/lib/i386/libbozohttpd_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libbsdmalloc_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libbz2_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/i386/libc++_g.a		comp-c-debuglib	debuglib,compat
+./usr/lib/i386/libc++_g.a		comp-c-debuglib	debuglib,compat,libcxx
 ./usr/lib/i386/libc_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libcbor_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libcom_err_g.a			comp-c-debuglib	debuglib,compat
@@ -205,7 +205,7 @@
 ./usr/libdata/debug/usr/lib/i386/libbozohttpd.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/i386/libc++.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
 ./usr/libdata/debug/usr/lib/i386/libc.so.12.221.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libcbor.so.0.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
