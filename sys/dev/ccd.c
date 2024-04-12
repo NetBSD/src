@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.190 2024/03/31 14:56:41 hannken Exp $	*/
+/*	$NetBSD: ccd.c,v 1.191 2024/04/12 05:04:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.190 2024/03/31 14:56:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.191 2024/04/12 05:04:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1774,13 +1774,14 @@ ccd_info_sysctl(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	struct ccddiskinfo ccd;
 	struct ccd_softc *sc;
-	int unit;
+	int unit, error;
 
 	if (newp == NULL || newlen != sizeof(int))
 		return EINVAL;
 
-	unit = *(const int *)newp;
-	newp = NULL;
+	error = sysctl_copyin(l, newp, &unit, sizeof unit);
+	if (error)
+		return error;
 	newlen = 0;
 	ccd.ccd_ndisks = ~0;
 	mutex_enter(&ccd_lock);
@@ -1818,8 +1819,9 @@ ccd_components_sysctl(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	size = 0;
-	unit = *(const int *)newp;
-	newp = NULL;
+	error = sysctl_copyin(l, newp, &unit, sizeof unit);
+	if (error)
+		return error;
 	newlen = 0;
 	mutex_enter(&ccd_lock);
 	LIST_FOREACH(sc, &ccds, sc_link)
