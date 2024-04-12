@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.5 2024/04/12 11:40:09 wiz Exp $
+# $NetBSD: md.amd64,v 1.6 2024/04/12 14:22:51 hannken Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -63,9 +63,9 @@
 ./usr/lib/i386/libfido2_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libfl_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libform_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/i386/libgcc_eh_g.a 			comp-sys-debug	debug,compat,gcc
+./usr/lib/i386/libgcc_eh_g.a 			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libgcc_g.a			comp-c-debuglib	debuglib,compat,gcc
-./usr/lib/i386/libgcc_s_g.a			comp-sys-debug	debug,compat,gcc
+./usr/lib/i386/libgcc_s_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
