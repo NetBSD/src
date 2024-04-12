@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.259 2024/01/16 14:30:22 kre Exp $
+.\"	$NetBSD: sh.1,v 1.260 2024/04/12 19:09:50 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd December 9, 2022
+.Dd April 12, 2024
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpquVvXx
@@ -650,10 +650,14 @@ or
 must be enabled for this to work.
 .El
 .Ss Lexical Structure
-The shell reads input in terms of lines from a file and breaks it up into
-words at whitespace (blanks and tabs), and at certain sequences of
-characters that are special to the shell called
+The shell reads input in terms of lines from a file
+(or its standard input, or an argument string),
+removes comments,
+and then breaks it up into words at whitespace (blanks and tabs), and at
+certain sequences of characters that are special to the shell called
 .Dq operators .
+Unquoted whitespace is removed as part of this, after serving to
+separate words or operators.
 There are two types of operators: control operators and redirection
 operators (their meaning is discussed later).
 The following is a list of operators:
@@ -663,9 +667,76 @@ The following is a list of operators:
 .It "Redirection operators:"
 .Dl <  >  >|  <<  >>  <&  >&  <<-  <>
 .El
+.Pp
+The shell will detect an operator, which must be entirely unquoted,
+at any point in the input line (other than in comments, which have
+already been removed),
+and sometimes other than immediately after an unquoted dollar
+.Pq Sq \&$
+character, see
+.Sx Word Expansions
+below for defined sequences starting with
+.Pq Sq \&$
+which always form (part of) a word, even if some of the
+following characters would otherwise appear to be operators.
+.Pp
+For future proofing, it is advisable to precede and
+follow all operators with either line endings or whitespace.
+When recognizing an operator the longest sequence of characters
+present which form a valid operator are detected as that operator
+rather than shorter alternative sequences, so, for example,
+the sequence
+.Dl >&
+is always recognized as the two character redirection operator
+.Dq Li \&>&
+rather than the
+.Dq Li \&>
+redirection operator followed by control operator
+.Dq Li \&& .
+So while currently the sequence
+.Dl ;)
+is recognized as the two control operators
+.Dq Li \&;
+followed by
+.Dq Li \&) ,
+a future extension could create a new operator
+.Dq Li \&;)
+in which case that would be detected instead.
+Writing the sequence as
+.Dl ;\ )
+(note the space between the semicolon and parenthesis)
+guarantees that it will be recognized as two operators.
+Note that this does happen, the
+.Dq Li ;&
+control operator shown above is relatively new (by shell standards)
+and would once have been parsed as two operators.
+.Pp
+Also note that any of the redirection operators listed above may be
+immediately preceded by a digit sequence, with no intervening
+whitespace.
+Those digits form part of the redirection operator.
+See
+.Sx Redirections
+below for more details.
+.Ss Comments
+A shell comment begins with a
+.Sq Li \&#
+character at the beginning of a word, that is, at the beginning of
+the line, or after unquoted whitespace or an operator.
+All characters, without interpretation, from (and including) the
+.Sq Li \&# ,
+until the end of the current line (or EOF), but excluding the line ending
+.Sq Li \en ,
+are removed from the input.
+Note that it is not possible to continue a line containing a comment.
+Also note that a
+.Sq Li \&#
+character at any other place within a word is simply a character,
+and is sometimes required to implement specific shell operations.
 .Ss Quoting
 Quoting is used to remove the special meaning of certain characters or
 words to the shell, such as operators, whitespace, or keywords.
+Beginning or ending a quoted sequence does not end a shell word.
 There are four types of quoting:
 matched single quotes,
 matched double quotes,
@@ -673,15 +744,20 @@ backslash,
 and
 dollar preceding matched single quotes (enhanced C style strings.)
 .Ss Backslash
-An unquoted backslash preserves the literal meaning of the following
-character, with the exception of
+An unquoted backslash quotes, and so preserves the literal meaning of,
+the following character, with the exception of
 .Aq newline .
+That is, the quoted character just means itself, and is not considered
+as an operator, or whitespace, or the beginning of a comment, or any
+other special meaning it may otherwise have had.
+It may be joined with adjacent characters (along with the quoting
+backslash, which is removed much later) to form part of a word.
 An unquoted backslash preceding a
 .Aq newline
 is treated as a line continuation, the two characters are simply removed.
 .Ss Single Quotes
-Enclosing characters in single quotes preserves the literal meaning of all
-the characters (except single quotes, making it impossible to put
+Enclosing characters in a pair of single quotes preserves the literal meaning of all
+the characters between them (except single quotes, making it impossible to put
 single quotes in a single-quoted string).
 .Ss Double Quotes
 Enclosing characters within double quotes preserves the literal
@@ -689,13 +765,19 @@ meaning of all characters except dollar sign
 .Pq Li \&$ ,
 backquote
 .Pq Li \&` ,
-and backslash
-.Pq Li \e .
+backslash
+.Pq Li \e ,
+and itself
+.Pq Li \*q .
 The backslash inside double quotes is historically weird, and serves to
 quote only the following characters (and these not in all contexts):
 .Dl $  `  \*q  \e  <newline> ,
 where a backslash newline is a line continuation as above.
 Otherwise it remains literal.
+The dollar sign and backquote characters, inside a double quoted
+string, if not escaped by a backslash, retain the meaning they would
+have if unquoted, however the results of any expansion(s) they eventually
+generate are treated as quoted in this case.
 .\"
 .\"
 .Ss Dollar Single Quotes ( Li \&$'...' )
