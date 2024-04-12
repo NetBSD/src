@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.138 2023/03/05 23:28:54 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.139 2024/04/12 16:54:37 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.138 2023/03/05 23:28:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.139 2024/04/12 16:54:37 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_ntp.h"
 #include "opt_usb.h"
 #endif
 
