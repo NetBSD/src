@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.221 2024/03/29 08:35:32 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.222 2024/04/12 05:44:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -422,4 +422,4 @@ void check_getopt_end_switch(void);
 void check_getopt_end_while(void);
 
 /* cksnprintb.c */
-void check_snprintb(const tnode_t *);
+void check_snprintb(const function_call *);
