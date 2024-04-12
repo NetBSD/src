@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.239 2024/03/30 17:23:13 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.240 2024/04/12 05:17:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.239 2024/03/30 17:23:13 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.240 2024/04/12 05:17:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -418,7 +418,7 @@ static const char *const msgs[] = {
 	"missing new-style number base after '\\177'",			// 360
 	"number base '%.*s' is %ju, must be 8, 10 or 16",		// 361
 	"conversion '%.*s' should not be escaped",			// 362
-	"non-printing character '%.*s' in description '%.*s'",		// 363
+	"escaped character '%.*s' in description of conversion '%.*s'", // 363
 	"missing bit position after '%.*s'",				// 364
 	"missing field width after '%.*s'",				// 365
 	"missing '\\0' at the end of '%.*s'",				// 366

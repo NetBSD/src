@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_371.c,v 1.1 2024/03/01 19:39:29 rillig Exp $	*/
+/*	$NetBSD: msg_371.c,v 1.2 2024/04/12 05:17:48 rillig Exp $	*/
 # 3 "msg_371.c"
 
 // Test for message: bit position '%.*s' (%ju) in '%.*s' out of range %u..%u [371]
@@ -21,9 +21,10 @@ example(unsigned u32, uint64_t u64)
 {
 	char buf[64];
 
-	/* expect+11: warning: bit position '\000' (0) in '\000zero' out of range 1..32 [371] */
-	/* expect+10: warning: non-printing character '\177' in description 'bit32""\041bit33""\177' [363] */
-	/* expect+9: warning: non-printing character '\377' in description 'bit32""\041bit33""\177bit127""\377' [363] */
+	/* expect+12: warning: bit position '\000' (0) in '\000zero' out of range 1..32 [371] */
+	/* expect+11: warning: escaped character '\041' in description of conversion '\040bit32""\041' [363] */
+	/* expect+10: warning: escaped character '\177' in description of conversion '\040bit32""\041bit33""\177' [363] */
+	/* expect+9: warning: escaped character '\377' in description of conversion '\040bit32""\041bit33""\177bit127""\377' [363] */
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\000zero"
