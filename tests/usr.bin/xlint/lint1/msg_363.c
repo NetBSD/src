@@ -1,12 +1,13 @@
-/*	$NetBSD: msg_363.c,v 1.4 2024/03/03 16:09:01 rillig Exp $	*/
+/*	$NetBSD: msg_363.c,v 1.5 2024/04/12 05:17:48 rillig Exp $	*/
 # 3 "msg_363.c"
 
-// Test for message: non-printing character '%.*s' in description '%.*s' [363]
+// Test for message: escaped character '%.*s' in description of conversion '%.*s' [363]
 
 /*
  * The purpose of snprintb is to produce a printable, visible representation
- * of a binary number, therefore the description should consist of visible
- * characters only.
+ * of a binary number, therefore the description should consist of simple
+ * characters only, and these should not need to be escaped.  If they are,
+ * it's often due to a typo, such as a missing terminating '\0'.
  */
 
 /* lint1-extra-flags: -X 351 */
@@ -22,17 +23,17 @@ old_style_description(unsigned u32)
 	char buf[64];
 
 	/* expect+6: warning: bit position '\t' in '\tprint' should be escaped as octal or hex [369] */
-	/* expect+5: warning: non-printing character '\377' in description 'able\377' [363] */
+	/* expect+5: warning: escaped character '\377' in description of conversion '\nable\377' [363] */
 	/* expect+4: warning: bit position '\n' in '\nable\377' should be escaped as octal or hex [369] */
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\001non\tprint\nable\377",
 	    u32);
 
-	/* expect+10: warning: non-printing character '\177' in description '\177' [363] */
-	/* expect+9: warning: non-printing character '\177' in description 'aa""""\177' [363] */
-	/* expect+8: warning: non-printing character '\177' in description 'bb""\177' [363] */
-	/* expect+7: warning: non-printing character '\177' in description 'cc\177' [363] */
+	/* expect+10: warning: escaped character '\177' in description of conversion '\002""\177' [363] */
+	/* expect+9: warning: escaped character '\177' in description of conversion '\003aa""""\177' [363] */
+	/* expect+8: warning: escaped character '\177' in description of conversion '\004""bb""\177' [363] */
+	/* expect+7: warning: escaped character '\177' in description of conversion '\005""""cc\177' [363] */
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\002""\177"

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_376.c,v 1.2 2024/03/03 00:50:41 rillig Exp $	*/
+/*	$NetBSD: msg_376.c,v 1.3 2024/04/12 05:17:48 rillig Exp $	*/
 # 3 "msg_376.c"
 
 // Test for message: '%.*s' overlaps earlier '%.*s' on bit %u [376]
@@ -20,8 +20,6 @@ example(unsigned u32, uint64_t u64)
 	char buf[64];
 
 	// In the old-style format, bit positions are 1-based.
-	/* expect+10: warning: '\x01lsb' overlaps earlier '\001lsb' on bit 1 [376] */
-	/* expect+9: warning: '\x20msb""\041oob""\x21oob' overlaps earlier '\040msb' on bit 32 [376] */
 	snprintb(buf, sizeof(buf),
 	    "\020"
 	    "\001lsb"
@@ -30,6 +28,10 @@ example(unsigned u32, uint64_t u64)
 	    "\x20msb"
 	    "\041oob"
 	    "\x21oob",
+	    /* expect+4: warning: '\x01lsb' overlaps earlier '\001lsb' on bit 1 [376] */
+	    /* expect+3: warning: escaped character '\041' in description of conversion '\x20msb""\041' [363] */
+	    /* expect+2: warning: escaped character '\x21' in description of conversion '\x20msb""\041oob""\x21' [363] */
+	    /* expect+1: warning: '\x20msb""\041oob""\x21oob' overlaps earlier '\040msb' on bit 32 [376] */
 	    u32);
 
 	// In the new-style format, bit positions are 0-based.
