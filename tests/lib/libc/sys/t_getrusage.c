@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.9 2024/04/12 07:16:50 gson Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.9 2024/04/12 07:16:50 gson Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -126,6 +126,7 @@ ATF_TC(getrusage_maxrss);
 ATF_TC_HEAD(getrusage_maxrss, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test maxrss growing with getrusage(2)");
+	atf_tc_set_md_var(tc, "require.memory", "64M");
 }
 
 ATF_TC_BODY(getrusage_maxrss, tc)
