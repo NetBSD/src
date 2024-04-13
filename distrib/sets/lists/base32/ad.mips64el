@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.1 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: ad.mips64el,v 1.2 2024/04/13 08:50:19 nakayama Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/64/npf					base-compat-shlib	compat,npf
 ./lib/64/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -1035,7 +1035,9 @@
 ./usr/libdata/debug/lib/o32/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/64		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/64/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/64/security		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/o32		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/o32/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/o32/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-64			base-sys-shlib		compat,pic
 ./usr/libexec/ld.elf_so-o32			base-sys-shlib		compat,pic

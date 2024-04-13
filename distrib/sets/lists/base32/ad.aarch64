@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.1 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: ad.aarch64,v 1.2 2024/04/13 08:50:18 nakayama Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -1029,7 +1029,9 @@
 ./usr/libdata/debug/lib/eabihf/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabi		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabi/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/eabi/security	base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabihf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabihf/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/eabihf/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-eabi			base-sys-shlib		compat,pic
 ./usr/libexec/ld.elf_so-eabihf			base-sys-shlib		compat,pic

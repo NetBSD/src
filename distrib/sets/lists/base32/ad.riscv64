@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.1 2024/04/09 15:17:23 nia Exp $
+# $NetBSD: ad.riscv64,v 1.2 2024/04/13 08:50:19 nakayama Exp $
 ./lib/rv32					base-compat-shlib	compat
 ./lib/rv32/npf					base-compat-shlib	compat,npf
 ./lib/rv32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -515,4 +515,5 @@
 ./usr/libdata/debug/lib/rv32/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/rv32		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/rv32/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/rv32/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-rv32			base-sys-shlib		compat,pic

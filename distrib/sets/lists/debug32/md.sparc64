@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.3 2024/04/11 08:19:30 nia Exp $
+# $NetBSD: md.sparc64,v 1.4 2024/04/13 08:50:19 nakayama Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -317,7 +317,6 @@
 ./usr/libdata/debug/usr/lib/sparc/libzfs.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/sparc/libzfs_core.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/sparc/libzpool.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/sparc/security	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/sparc/security/pam_afslog.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/sparc/security/pam_chroot.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/sparc/security/pam_deny.so.4.debug	comp-sys-debug	debug,compat,pam

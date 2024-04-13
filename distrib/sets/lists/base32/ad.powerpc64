@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.1 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: ad.powerpc64,v 1.2 2024/04/13 08:50:19 nakayama Exp $
 ./lib/powerpc					base-compat-shlib	compat
 ./lib/powerpc/npf					base-compat-shlib	compat,npf
 ./lib/powerpc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -515,4 +515,5 @@
 ./usr/libdata/debug/lib/powerpc/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/powerpc		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/powerpc/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/powerpc/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-powerpc			base-sys-shlib		compat,pic
