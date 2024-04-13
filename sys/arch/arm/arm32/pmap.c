@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.441 2023/12/13 06:42:40 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.442 2024/04/13 10:36:01 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the company nor the name of the author may be used to
- *   endorse or promote products derived from this software without specific
+ *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.441 2023/12/13 06:42:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.442 2024/04/13 10:36:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
