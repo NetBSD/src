@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fmtcheck.c,v 1.5 2017/12/13 06:47:04 rin Exp $	*/
+/*	$NetBSD: t_fmtcheck.c,v 1.6 2024/04/13 14:02:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,10 @@ struct test_fmt {
 	{ "%ld %30s %#llx %-10.*e", "This number %lu%% and string %s has %qd numbers and %.*g floats", 1 },
 	{ "%o", "%lx", 2 },
 	{ "%p", "%lu", 2 },
+	// When fmtcheck supports '$', it could be used in dcngettext.
+	{ "%1$s", "%s", 2 },
+	{ "%1$s %2$s", "%s %s", 2 },
+	{ "%2$d %1$s", "%s %d", 2 },
 };
 
 ATF_TC(fmtcheck_basic);
