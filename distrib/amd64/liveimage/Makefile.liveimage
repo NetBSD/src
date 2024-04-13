@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.liveimage,v 1.2 2018/12/15 18:03:17 gson Exp $
+#	$NetBSD: Makefile.liveimage,v 1.3 2024/04/13 18:38:17 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,11 @@ PRIMARY_BOOT=		bootxx_ffsv1
 SECONDARY_BOOT=		boot
 SECONDARY_BOOT_ARG=	# unnecessary
 
+EFIBOOT=		${WORKDIR}/usr/mdec/bootx64.efi
+EFIBOOT+=		${WORKDIR}/usr/mdec/bootia32.efi
+
 USE_MBR=		yes
+USE_GPT=		yes
+USE_GPTMBR=		yes
 
 .include "${.CURDIR}/../../../common/bootimage/Makefile.liveimage"
