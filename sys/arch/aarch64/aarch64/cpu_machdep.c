@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.14 2023/02/25 00:40:22 riastradh Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.15 2024/04/14 12:51:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.14 2023/02/25 00:40:22 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.15 2024/04/14 12:51:16 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -158,9 +158,13 @@ dosoftints(void)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
+	/*
+	 * We intentionally don't verify that _REG_SP is aligned to
+	 * 16-bytes boundaries because it can be legally misaligned as long
+	 * as it's not used for accessing memory.
+	 */
 	if ((mcp->__gregs[_REG_SPSR] & ~SPSR_NZCV)
-	    || (mcp->__gregs[_REG_PC] & 3)
-	    || (mcp->__gregs[_REG_SP] & 15))
+	    || (mcp->__gregs[_REG_PC] & 3))
 		return EINVAL;
 
 	return 0;
