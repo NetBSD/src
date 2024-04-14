@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2024/04/13 17:22:33 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2024/04/14 08:29:54 kre Exp $
 
 LIBISMODULE=	yes
 MAKELINKLIB=	no
-.include <bsd.init.mk>
-
-.if !defined(MLIBDIR)
 LIB=	filter-aaaa
 
+.include <bsd.init.mk>
 
 SHLIB_MAJOR=0
 SRCS=	filter-aaaa.c
@@ -15,6 +13,5 @@ LIBDIR=	/usr/lib/named
 DIST=${IDIST}/bin/plugins
 
 .PATH: ${DIST}
-.endif
 
 .include <bsd.lib.mk>
