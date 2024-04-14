@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.24 2018/11/27 14:09:54 maxv Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25 2024/04/14 07:56:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2018/11/27 14:09:54 maxv Exp $"); 
+
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2024/04/14 07:56:45 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -48,12 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2018/11/27 14:09:54 maxv Exp $"
 #include <mips/regnum.h>
 #include <mips/locore.h>
 
-void *	
+void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
- 
+
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
