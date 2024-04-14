@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.52 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.53 2024/04/14 07:56:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.52 2021/02/01 19:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.53 2024/04/14 07:56:13 skrll Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -97,10 +97,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	fp = getframe(l, sig, &onstack);
-	
+
 	/* make room on the stack */
 	fp--;
-	
+
 	/* make the stack aligned */
 	fp = (struct sigframe_siginfo *)STACK_ALIGN(fp, STACK_ALIGNBYTES);
 
@@ -134,7 +134,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * trampoline version numbers are coordinated with machine-
 	 * dependent code in libc.
 	 */
-	
+
 	tf->tf_r0 = sig;
 	tf->tf_r1 = (int)&fp->sf_si;
 	tf->tf_r2 = (int)&fp->sf_uc;
