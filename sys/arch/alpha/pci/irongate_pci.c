@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.12 2021/06/25 03:45:59 thorpej Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.12.10.1 2024/04/16 19:10:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.12 2021/06/25 03:45:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.12.10.1 2024/04/16 19:10:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ irongate_conf_read0(void *ipv, pcitag_t tag, int offset)
 	REGVAL(PCI_CONF_ADDR) = (CONFADDR_ENABLE | tag | (offset & 0xff));
 	alpha_mb();
 	data = REGVAL(PCI_CONF_DATA);
+	alpha_mb();
 	REGVAL(PCI_CONF_ADDR) = 0;
 	alpha_mb();
 	PCI_CONF_UNLOCK(s);
