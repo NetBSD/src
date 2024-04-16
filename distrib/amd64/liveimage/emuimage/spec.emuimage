@@ -1,3 +1,3 @@
-# $NetBSD: spec.emuimage,v 1.2 2021/07/24 16:13:44 jmcneill Exp $
+# $NetBSD: spec.emuimage,v 1.3 2024/04/16 16:13:44 maya Exp $
 ./etc/rc.d/ec2_init			type=file mode=0555 uname=root gname=wheel
-./etc/rc.d/resize_disklabel		type=file mode=0555 uname=root gname=wheel
+./etc/rc.d/resize_gpt			type=file mode=0555 uname=root gname=wheel
