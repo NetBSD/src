@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.1 2024/04/16 18:17:45 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.2 2024/04/16 19:11:45 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -9,5 +9,28 @@ doc/README.files                                patched by hand
 external/gpl2/groff/tmac/mdoc.local             patched by hand
 sys/sys/param.h                                 patched by hand
 
-	Welcome to 10.0_BETA!
+	Welcome to 10.0_STABLE!
+
+lib/libc/time/strptime.c			1.66
+
+	strptime(3): PR 58041: pacify -Wsign-compare.
+	[riastradh, ticket #648]
+
+share/man/man4/ugen.4				1.39
+sys/dev/usb/uftdi.c				1.77
+sys/dev/usb/ugen.c				1.176
+sys/dev/usb/usbdevices.config			1.43
+
+	uftdi(4): fix openocd with the Tigard debug board.
+	[thorpej, ticket #649]
+
+sys/dev/usb/ugen.c				1.177
+
+	ugen(4): add a "ugen-unit" device property for devpubd(8) scripts.
+	[thorpej, ticket #651]
+
+sys/arch/alpha/pci/irongate_pci.c		1.13
+
+	alpha: add a missing barrier in irongate_conf_read0().
+	[thorpej, ticket #652]
 
