@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.2 2024/04/16 23:43:08 christos Exp $	*/
 
 /* index.c -- indexing for Texinfo.
    Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp 
@@ -511,8 +511,30 @@ index_element_compare (const void *element1, const void *element2)
 {
   INDEX_ELT **elt1 = (INDEX_ELT **) element1;
   INDEX_ELT **elt2 = (INDEX_ELT **) element2;
+  int ret = 0;
 
-  return index_compare_fn ((*elt1)->entry, (*elt2)->entry);
+  /* Find a stable sort order.  */
+  if (ret == 0)
+    ret = index_compare_fn ((*elt1)->entry, (*elt2)->entry);
+  if (ret == 0)
+    ret = strcmp ((*elt1)->defining_file, (*elt2)->defining_file);
+  if (ret == 0)
+    ret = strcmp ((*elt1)->node, (*elt2)->node);
+  if (ret == 0)
+    if ((*elt1)->defining_line < (*elt2)->defining_line)
+      ret = -1;
+    else if ((*elt1)->defining_line > (*elt2)->defining_line)
+      ret = 1;
+  if (ret == 0)
+    if ((*elt1)->entry_number < (*elt2)->entry_number)
+      ret = -1;
+    else if ((*elt1)->entry_number > (*elt2)->entry_number)
+      ret = 1;
+  if (ret == 0) {
+    abort ();
+  }
+
+  return ret;
 }
 
 /* Force all index entries to be unique. */
