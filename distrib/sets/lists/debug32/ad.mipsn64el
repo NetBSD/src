@@ -1,4 +1,4 @@
-# $NetBSD: ad.mipsn64el,v 1.4 2024/04/13 08:50:19 nakayama Exp $
+# $NetBSD: ad.mipsn64el,v 1.5 2024/04/16 14:15:53 martin Exp $
 ./usr/lib/n32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -331,7 +331,7 @@
 ./usr/libdata/debug/lib/o32/npf/ext_log.so.0.0.debug	comp-sys-debug	debug,compat,npf
 ./usr/libdata/debug/lib/o32/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,compat,npf
 ./usr/libdata/debug/lib/o32/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,compat,npf
-./usr/libdata/debug/libexec/ld.elf_so-64.debug	comp-sys-debug		debug,compat
+./usr/libdata/debug/libexec/ld.elf_so-n32.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/libexec/ld.elf_so-o32.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/lib/n32/i18n/libBIG5.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/n32/i18n/libDECHanyu.so.5.0.debug	comp-sys-debug	debug,compat
@@ -681,7 +681,7 @@
 ./usr/libdata/debug/usr/lib/o32/security/pam_ssh.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/o32/security/pam_u2f.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/o32/security/pam_unix.so.4.debug	comp-sys-debug	debug,compat,pam
-./usr/libdata/debug/usr/libexec/ld.elf_so-64.debug	comp-sys-debug		debug,compat
+./usr/libdata/debug/usr/libexec/ld.elf_so-n32.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so-o32.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/libexec/ld.elf_so.64	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ld.elf_so.o32	comp-obsolete		obsolete
