@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.171.2.1 2024/04/16 18:45:39 martin Exp $	*/
+/*	$NetBSD: ugen.c,v 1.171.2.2 2024/04/16 18:59:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.171.2.1 2024/04/16 18:45:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.171.2.2 2024/04/16 18:59:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -229,11 +229,17 @@ ugenif_get_unit(struct ugen_softc *sc)
 	KASSERT(sc0 == sc);
 	KASSERT(rb_tree_find_node(&ugenif.tree, &i) == sc);
 	mutex_exit(&ugenif.lock);
+
+	prop_dictionary_set_uint(device_properties(sc->sc_dev),
+	    "ugen-unit", sc->sc_unit);
 }
 
 static void
 ugenif_put_unit(struct ugen_softc *sc)
 {
+
+	prop_dictionary_remove(device_properties(sc->sc_dev),
+	    "ugen-unit");
 
 	mutex_enter(&ugenif.lock);
 	KASSERT(rb_tree_find_node(&ugenif.tree, &sc->sc_unit) == sc);
