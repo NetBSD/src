@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.h,v 1.5 2022/02/27 21:22:01 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.h,v 1.6 2024/04/16 14:34:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2017 Intel Corporation
@@ -29,6 +29,7 @@
 
 #include <linux/workqueue.h>
 #include <linux/pci.h>
+#include <linux/acpi.h>
 
 struct drm_i915_private;
 struct intel_encoder;
