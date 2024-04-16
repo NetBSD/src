@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.2 2024/04/13 08:50:19 nakayama Exp $
+# $NetBSD: ad.riscv64,v 1.3 2024/04/16 19:15:36 christos Exp $
 ./lib/rv32					base-compat-shlib	compat
 ./lib/rv32/npf					base-compat-shlib	compat,npf
 ./lib/rv32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -478,6 +478,8 @@
 ./usr/lib/rv32/lua/5.4/netpgp.so		base-compat-shlib	compat
 ./usr/lib/rv32/lua/5.4/sqlite.so		base-compat-shlib	compat
 ./usr/lib/rv32/lua/5.4/syslog.so		base-compat-shlib	compat
+./usr/lib/rv32/named				base-compat-shlib	compat
+./usr/lib/rv32/named/filter-aaaa.so.0		base-compat-shlib	compat
 ./usr/lib/rv32/openssl				base-crypto-usr		compat
 ./usr/lib/rv32/openssl/engines			base-crypto-usr		compat
 ./usr/lib/rv32/openssl/engines/dasync.so	base-crypto-usr		compat,pic,openssl=30
@@ -515,5 +517,7 @@
 ./usr/libdata/debug/lib/rv32/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/rv32		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/rv32/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/rv32/named		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/rv32/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-rv32			base-sys-shlib		compat,pic
+./usr/lib/rv32/named/filter-aaaa.so.0.debug	base-compat-shlib	compat
