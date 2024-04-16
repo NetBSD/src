@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsd-namespace-acpi.h,v 1.1 2022/02/27 14:22:42 riastradh Exp $	*/
+/*	$NetBSD: nbsd-namespace-acpi.h,v 1.2 2024/04/16 14:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	value		Value
 
 #define	acpi_get_handle		AcpiGetHandle
+#define	acpi_get_name		AcpiGetName
 #define	acpi_get_table		AcpiGetTable
 #define	acpi_evaluate_object	AcpiEvaluateObject
 #define	acpi_format_exception	AcpiFormatException
