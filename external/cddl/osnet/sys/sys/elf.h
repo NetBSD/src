@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.h,v 1.7 2024/04/01 18:33:23 riastradh Exp $	*/
+/*	$NetBSD: elf.h,v 1.8 2024/04/16 14:29:33 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -50,7 +50,5 @@
 #endif
 
 #define	EM_AMD64		EM_X86_64
-
-#define __ELF_WORD_SIZE ELFSIZE
 
 #endif /* !_SYS__ELF_SOLARIS_H_ */
