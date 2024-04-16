@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.38 2020/08/28 16:07:49 fcambus Exp $
+.\" $NetBSD: ugen.4,v 1.38.6.1 2024/04/16 18:45:39 martin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 14, 2019
+.Dd March 25, 2024
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Cd "ugen* at uhub? flags N"
 .Cd "ugen* at uhub? vendor V product P flags 1"
 .Cd "ugenif* at uhub? vendor V product P configuration C interface I"
+.Cd "ugenif* at uhub? vendor V product P configuration C interface I flags 1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -62,7 +63,9 @@ locators this can be used to force the
 driver to be used for a certain
 device.
 .Pp
-The second form of attachment can be used to
+The
+.Sq ugenif
+form of attachment can be used to
 .Dq steal
 only one interface from some device for use by the
 .Nm
@@ -74,6 +77,12 @@ as otherwise the
 driver would capture all of your
 .Nm usb
 devices.
+If
+.Dq flags 1
+is specified, the
+.Sq ugenif
+form will match at the lowest priority, thus allowing it to match only
+otherwise unclaimed interfaces.
 .Em NOTE :
 You have to be extremely careful,
 when using this form,
