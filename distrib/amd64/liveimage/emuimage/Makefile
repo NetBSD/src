@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/07/24 16:13:44 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.10 2024/04/16 16:13:44 maya Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live	# gives ${IMGBASE}.img
 
@@ -13,6 +13,6 @@ SPEC_EXTRA=	${.CURDIR}/spec.emuimage
 RC_CONF_EXTRA=	${.CURDIR}/rc.conf.emuimage
 IMGFILE_EXTRA=								\
 	${FILESDIR}/ec2_init		etc/rc.d/ec2_init		\
-	${FILESDIR}/resize_disklabel	etc/rc.d/resize_disklabel
+	${FILESDIR}/resize_gpt		etc/rc.d/resize_gpt
 
 .include "${.CURDIR}/../Makefile.liveimage"
