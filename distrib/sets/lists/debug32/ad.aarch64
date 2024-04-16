@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.4 2024/04/13 08:50:19 nakayama Exp $
+# $NetBSD: ad.aarch64,v 1.5 2024/04/16 19:15:36 christos Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -484,6 +484,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libzfs.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabi/libzfs_core.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabi/libzpool.so.0.0.debug	comp-sys-debug	debug,compat,zfs
+./usr/libdata/debug/usr/lib/eabi/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/security/pam_afslog.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/eabi/security/pam_chroot.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/eabi/security/pam_deny.so.4.debug	comp-sys-debug	debug,compat,pam
@@ -658,6 +659,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libzfs.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabihf/libzfs_core.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabihf/libzpool.so.0.0.debug	comp-sys-debug	debug,compat,zfs
+./usr/libdata/debug/usr/lib/eabihf/named/filter-aaaa.so.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/security/pam_afslog.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/eabihf/security/pam_chroot.so.4.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/eabihf/security/pam_deny.so.4.debug	comp-sys-debug	debug,compat,pam

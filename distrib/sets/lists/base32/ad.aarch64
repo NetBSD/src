@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2 2024/04/13 08:50:18 nakayama Exp $
+# $NetBSD: ad.aarch64,v 1.3 2024/04/16 19:15:36 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -490,6 +490,8 @@
 ./usr/lib/eabi/lua/5.4/netpgp.so		base-compat-shlib	compat
 ./usr/lib/eabi/lua/5.4/sqlite.so		base-compat-shlib	compat
 ./usr/lib/eabi/lua/5.4/syslog.so		base-compat-shlib	compat
+./usr/lib/eabi/named				base-compat-shlib	compat
+./usr/lib/eabi/named/filter-aaaa.so.0		base-compat-shlib	compat
 ./usr/lib/eabi/openssl				base-crypto-usr		compat
 ./usr/lib/eabi/openssl/engines			base-crypto-usr		compat
 ./usr/lib/eabi/openssl/engines/dasync.so	base-crypto-usr		compat,pic,openssl=30
@@ -990,6 +992,8 @@
 ./usr/lib/eabihf/lua/5.4/netpgp.so		base-compat-shlib	compat
 ./usr/lib/eabihf/lua/5.4/sqlite.so		base-compat-shlib	compat
 ./usr/lib/eabihf/lua/5.4/syslog.so		base-compat-shlib	compat
+./usr/lib/eabihf/named				base-compat-shlib	compat
+./usr/lib/eabihf/named/filter-aaaa.so.0		base-compat-shlib	compat
 ./usr/lib/eabihf/openssl				base-crypto-usr		compat
 ./usr/lib/eabihf/openssl/engines			base-crypto-usr		compat
 ./usr/lib/eabihf/openssl/engines/dasync.so	base-crypto-usr		compat,pic,openssl=30
@@ -1029,9 +1033,11 @@
 ./usr/libdata/debug/lib/eabihf/npf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabi		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabi/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/eabi/named		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabi/security	base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabihf		base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabihf/i18n		base-compat-shlib	compat
+./usr/libdata/debug/usr/lib/eabihf/named	base-compat-shlib	compat
 ./usr/libdata/debug/usr/lib/eabihf/security	base-compat-shlib	compat
 ./usr/libexec/ld.elf_so-eabi			base-sys-shlib		compat,pic
 ./usr/libexec/ld.elf_so-eabihf			base-sys-shlib		compat,pic

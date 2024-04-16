@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2024/04/14 08:29:54 kre Exp $
+#	$NetBSD: Makefile,v 1.8 2024/04/16 19:15:37 christos Exp $
 
 LIBISMODULE=	yes
 MAKELINKLIB=	no
@@ -8,7 +8,11 @@ LIB=	filter-aaaa
 
 SHLIB_MAJOR=0
 SRCS=	filter-aaaa.c
+.if defined(MLIBDIR)
+LIBDIR=	/usr/lib/${MLIBDIR}/named
+.else
 LIBDIR=	/usr/lib/named
+.endif
 
 DIST=${IDIST}/bin/plugins
 
