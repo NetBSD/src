@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.131 2024/04/17 18:52:39 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.131 2024/04/17 18:52:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.132 2024/04/17 18:52:54 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -857,13 +857,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return EHOSTDOWN;
 
-	/* In the TAP_NBIO case, we have to make sure we won't be sleeping */
-	if ((sc->sc_flags & TAP_NBIO) != 0) {
-		if (!mutex_tryenter(&sc->sc_lock))
-			return EWOULDBLOCK;
-	} else
-		mutex_enter(&sc->sc_lock);
-
+	mutex_enter(&sc->sc_lock);
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		if (sc->sc_flags & TAP_NBIO)
