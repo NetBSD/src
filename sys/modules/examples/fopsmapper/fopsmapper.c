@@ -1,4 +1,4 @@
-/*	$NetBSD: fopsmapper.c,v 1.2 2020/04/01 11:45:53 kamil Exp $	*/
+/*	$NetBSD: fopsmapper.c,v 1.3 2024/04/17 18:10:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,29 +27,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fopsmapper.c,v 1.2 2020/04/01 11:45:53 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fopsmapper.c,v 1.3 2024/04/17 18:10:27 riastradh Exp $");
 
-#include <sys/module.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+
 #include <uvm/uvm_extern.h>
 
 /*
  * To use this module you need to:
  *
  * mknod /dev/fopsmapper c 351 0
- *
  */
 
-dev_type_open(fopsmapper_open);
+dev_open_t fopsmapper_open;
 
 const struct cdevsw fopsmapper_cdevsw = {
 	.d_open = fopsmapper_open,
@@ -66,9 +67,9 @@ const struct cdevsw fopsmapper_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-static int fopsmapper_mmap(file_t *, off_t *, size_t,
-	       	int, int *, int *,struct uvm_object **, int *);
-static int fopsmapper_close(file_t *);
+static int fopsmapper_mmap(struct file *, off_t *, size_t, int, int *, int *,
+    struct uvm_object **, int *);
+static int fopsmapper_close(struct file *);
 
 const struct fileops mapper_fileops = {
 	.fo_read = fbadop_read,
@@ -83,16 +84,16 @@ const struct fileops mapper_fileops = {
 	.fo_mmap = fopsmapper_mmap,
 };
 
-typedef struct fopsmapper_softc {
+struct fopsmapper_softc {
 	char *buf;
 	struct uvm_object *uobj;
 	size_t bufsize;
-} fops_t;
+};
 
 int
 fopsmapper_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	fops_t *fo;
+	struct fopsmapper_softc *fo;
 	struct file *fp;
 	int fd, error;
 
@@ -105,11 +106,11 @@ fopsmapper_open(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-fopsmapper_mmap(file_t * fp, off_t * offp, size_t size, int prot,
-		int *flagsp, int *advicep, struct uvm_object **uobjp,
-		int *maxprotp)
+fopsmapper_mmap(struct file *fp, off_t *offp, size_t size, int prot,
+    int *flagsp, int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
-	fops_t *fo;
+	struct fopsmapper_softc *fo;
+	vaddr_t va;
 	int error;
 
 	if (prot & PROT_EXEC)
@@ -125,32 +126,35 @@ fopsmapper_mmap(file_t * fp, off_t * offp, size_t size, int prot,
 	fo->uobj = uao_create(size, 0);
 
 	fo->buf = NULL;
-	/* Map the uvm object into kernel */
-	error =	uvm_map(kernel_map, (vaddr_t *) &fo->buf, fo->bufsize,
-	                fo->uobj, 0, 0,
-	                UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-	                            UVM_INH_SHARE,UVM_ADV_RANDOM, 0));
 
+	/*
+	 * Map the uvm object into kernel.  Consumes our reference to
+	 * uobj on success.
+	 */
+	error =	uvm_map(kernel_map, &va, fo->bufsize, fo->uobj, 0, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (error) {
 		uao_detach(fo->uobj);
-		return error;
+		goto out;
 	}
+	fo->buf = (char *)va;
 	snprintf(fo->buf, 13, "Hey There!");
 
 	/* Get the reference of uobj */
 	uao_reference(fo->uobj);
-
 	*uobjp = fo->uobj;
 	*maxprotp = prot;
 	*advicep = UVM_ADV_RANDOM;
+	error = 0;
 
-	return 0;
+out:	return error;
 }
 
 int
-fopsmapper_close(file_t * fp)
+fopsmapper_close(struct file *fp)
 {
-	fops_t *fo;
+	struct fopsmapper_softc *fo;
 
 	fo = fp->f_data;
 	KASSERT(fo != NULL);
@@ -173,7 +177,7 @@ fopsmapper_modcmd(modcmd_t cmd, void *arg __unused)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		if (devsw_attach("fopsmapper", NULL, &bmajor,
-		    &fopsmapper_cdevsw, &cmajor))
+			&fopsmapper_cdevsw, &cmajor))
 			return ENXIO;
 		return 0;
 	case MODULE_CMD_FINI:
