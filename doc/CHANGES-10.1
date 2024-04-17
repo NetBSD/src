@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.2 2024/04/16 19:11:45 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.3 2024/04/17 18:03:46 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -33,4 +33,15 @@ sys/arch/alpha/pci/irongate_pci.c		1.13
 
 	alpha: add a missing barrier in irongate_conf_read0().
 	[thorpej, ticket #652]
+
+sys/dev/pci/if_iwn.c				1.100
+
+	iwn(4): PR 58105: use the correct firmware file on
+	Intel Centrino N 130.
+	[riastradh, ticket #653]
+
+share/mk/bsd.lib.mk				1.398,1.399,1.152 (via patch)
+
+	bsd.x11.mk: PR 58104: use TOOL_AWK, not the build host's awk.
+	[riastradh, ticket #654]
 
