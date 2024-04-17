@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.129 2024/04/17 18:32:13 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.130 2024/04/17 18:52:25 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.129 2024/04/17 18:32:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.130 2024/04/17 18:52:25 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -210,7 +210,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 
 /* Helper functions shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
-int	tap_clone_destroyer(device_t);
+static void			tap_clone_destroyer(device_t);
 
 static struct sysctllog *tap_sysctl_clog;
 
@@ -625,33 +625,25 @@ tap_clone_creator(int unit)
 	return device_private(config_attach_pseudo(cf));
 }
 
-/*
- * The clean design of if_clone and autoconf(9) makes that part
- * really straightforward.  The second argument of config_detach
- * means neither QUIET nor FORCED.
- */
 static int
 tap_clone_destroy(struct ifnet *ifp)
 {
 	struct tap_softc *sc = ifp->if_softc;
-	int error = tap_clone_destroyer(sc->sc_dev);
 
-	if (error == 0)
-		atomic_dec_uint(&tap_count);
-	return error;
+	tap_clone_destroyer(sc->sc_dev);
+	atomic_dec_uint(&tap_count);
+	return 0;
 }
 
-int
+static void
 tap_clone_destroyer(device_t dev)
 {
 	cfdata_t cf = device_cfdata(dev);
 	int error;
 
-	if ((error = config_detach(dev, 0)) != 0)
-		aprint_error_dev(dev, "unable to detach instance\n");
+	error = config_detach(dev, 0);
+	KASSERTMSG(error == 0, "error=%d", error);
 	kmem_free(cf, sizeof(*cf));
-
-	return error;
 }
 
 /*
@@ -774,7 +766,6 @@ tap_fops_close(file_t *fp)
 {
 	struct tap_softc *sc;
 	int unit = fp->f_devunit;
-	int error;
 
 	sc = device_lookup_private(&tap_cd, unit);
 	if (sc == NULL)
@@ -783,16 +774,16 @@ tap_fops_close(file_t *fp)
 	KERNEL_LOCK(1, NULL);
 	tap_dev_close(sc);
 
-	/* Destroy the device now that it is no longer useful,
-	 * unless it's already being destroyed. */
-	if ((sc->sc_flags & TAP_GOING) != 0) {
-		KERNEL_UNLOCK_ONE(NULL);
-		return 0;
-	}
+	/*
+	 * Destroy the device now that it is no longer useful, unless
+	 * it's already being destroyed.
+	 */
+	if ((sc->sc_flags & TAP_GOING) != 0)
+		goto out;
+	tap_clone_destroyer(sc->sc_dev);
 
-	error = tap_clone_destroyer(sc->sc_dev);
-	KERNEL_UNLOCK_ONE(NULL);
-	return error;
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
 static void
