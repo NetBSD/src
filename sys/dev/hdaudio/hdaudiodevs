@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.8 2024/04/06 13:35:36 andvar Exp $
+$NetBSD: hdaudiodevs,v 1.9 2024/04/17 11:42:47 andvar Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -144,6 +144,8 @@ product	VIATECH		VT2002P_1	0x4438	VT2002P
 product	VIATECH		VT1812		0x0448	VT1812
 product	VIATECH		VT1818S		0x0440	VT1818S
 product	VIATECH		VT1705		0x4760	VT1705
+product	VIATECH		VX900_HDMI_1	0x9f80	VX900 HDMI/DP
+product	VIATECH		VX900_HDMI_2	0x9f81	VX900 HDMI/DP
 
 /* Analog Devices */
 product	ANALOG		AD1884A		0x184a	AD1884A
