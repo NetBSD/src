@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.128 2023/01/06 01:54:22 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.129 2024/04/17 18:32:13 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.128 2023/01/06 01:54:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.129 2024/04/17 18:32:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -117,7 +117,7 @@ CFATTACH_DECL_NEW(tap, sizeof(struct tap_softc),
 extern struct cfdriver tap_cd;
 
 /* Real device access routines */
-static int	tap_dev_close(struct tap_softc *);
+static void	tap_dev_close(struct tap_softc *);
 static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
 static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
@@ -759,7 +759,8 @@ tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	return tap_dev_close(sc);
+	tap_dev_close(sc);
+	return 0;
 }
 
 /*
@@ -779,13 +780,8 @@ tap_fops_close(file_t *fp)
 	if (sc == NULL)
 		return ENXIO;
 
-	/* tap_dev_close currently always succeeds, but it might not
-	 * always be the case. */
 	KERNEL_LOCK(1, NULL);
-	if ((error = tap_dev_close(sc)) != 0) {
-		KERNEL_UNLOCK_ONE(NULL);
-		return error;
-	}
+	tap_dev_close(sc);
 
 	/* Destroy the device now that it is no longer useful,
 	 * unless it's already being destroyed. */
@@ -799,7 +795,7 @@ tap_fops_close(file_t *fp)
 	return error;
 }
 
-static int
+static void
 tap_dev_close(struct tap_softc *sc)
 {
 	struct ifnet *ifp;
@@ -832,8 +828,6 @@ tap_dev_close(struct tap_softc *sc)
 	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
 	if_link_state_change(ifp, LINK_STATE_DOWN);
-
-	return 0;
 }
 
 static int
