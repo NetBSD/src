@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.161 2022/03/28 12:39:18 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.162 2024/04/17 18:01:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,8 +43,9 @@
  * Definitions of device driver entry switches
  */
 
-#include <sys/queue.h>
 #include <sys/device_if.h>
+#include <sys/queue.h>
+#include <sys/types.h>
 
 struct buf;
 struct knote;
@@ -109,7 +110,7 @@ struct cdevsw {
 extern kmutex_t device_lock;
 
 int devsw_attach(const char *, const struct bdevsw *, devmajor_t *,
-		 const struct cdevsw *, devmajor_t *);
+    const struct cdevsw *, devmajor_t *);
 void devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
