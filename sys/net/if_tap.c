@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.130 2024/04/17 18:52:25 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.131 2024/04/17 18:52:39 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.130 2024/04/17 18:52:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.131 2024/04/17 18:52:39 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -641,7 +641,7 @@ tap_clone_destroyer(device_t dev)
 	cfdata_t cf = device_cfdata(dev);
 	int error;
 
-	error = config_detach(dev, 0);
+	error = config_detach(dev, DETACH_FORCE);
 	KASSERTMSG(error == 0, "error=%d", error);
 	kmem_free(cf, sizeof(*cf));
 }
