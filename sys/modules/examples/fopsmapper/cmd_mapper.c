@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_mapper.c,v 1.2 2020/04/01 13:07:32 kamil Exp $	*/
+/*	$NetBSD: cmd_mapper.c,v 1.3 2024/04/17 18:10:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmd_mapper.c,v 1.2 2020/04/01 13:07:32 kamil Exp $");
+__RCSID("$NetBSD: cmd_mapper.c,v 1.3 2024/04/17 18:10:27 riastradh Exp $");
 
 #include <sys/mman.h>
 
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: cmd_mapper.c,v 1.2 2020/04/01 13:07:32 kamil Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#define _PATH_DEV_MAPPER "/dev/fopsmapper"
+#define	_PATH_DEV_MAPPER	"/dev/fopsmapper"
 
 int main(int argc, char **argv)
 {
@@ -47,12 +47,11 @@ int main(int argc, char **argv)
 	if ((devfd = open(_PATH_DEV_MAPPER, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "Cannot open %s", _PATH_DEV_MAPPER);
 
-	map = (char *)(mmap(0, sysconf(_SC_PAGESIZE), PROT_READ, MAP_SHARED,
-				devfd, 0));
+	map = mmap(0, sysconf(_SC_PAGESIZE), PROT_READ, MAP_SHARED, devfd, 0);
 	if (map == MAP_FAILED)
 		err(EXIT_FAILURE, "Mapping failed");
 
-	printf("Message from device: %s\n",map);
+	printf("Message from device: %s\n", map);
 
 	if (munmap(map, sysconf(_SC_PAGESIZE)) == -1)
 		err(EXIT_FAILURE, "Unmap failed");
