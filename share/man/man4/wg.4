@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.6.6.1 2024/03/11 19:39:23 martin Exp $
+.\"	$NetBSD: wg.4,v 1.6.6.2 2024/04/18 15:44:37 martin Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,21 +75,23 @@ endpoint IP address outside the tunnel.
 .Sh EXAMPLES
 Typical network topology:
 .Bd -literal -offset abcd
-wm0 = 192.0.2.123                     bge0 = 198.51.100.45
-
 Stationary server:                         Roaming client:
 +---------+                                    +---------+
 |    A    |                                    |    B    |
 |---------|                                    |---------|
-|        [wm0]-------------internet--------[bge0]        |
+|         | 192.0.2.123          198.51.100.45 |         |
+|        [wm0]----------internet-----------[bge0]        |
 |    [wg0] port 1234 - - - (tunnel) - - - - - - [wg0]    |
-|   10.0.1.0                  |               10.0.1.1   |
+|   10.2.0.1                  |               10.2.0.42  |
+|   fd00:2::1                 |              fd00:2::42  |
 |         |                   |                |         |
 +--[wm1]--+          +-----------------+       +---------+
-     |               | VPN 10.0.1.0/24 |
+     | 10.1.0.1      | VPN 10.2.0.0/24 |
+     |               |     fd00:2::/64 |
      |               +-----------------+
 +-----------------+
-| LAN 10.0.0.0/24 |
+| LAN 10.1.0.0/24 |
+|     fd00:1::/64 |
 +-----------------+
 .Ed
 .Pp
@@ -114,40 +116,52 @@ A# (umask 0077; wg-keygen > /etc/wg/wg0.A-B)
 .Ed
 .Pp
 Configure A to listen on port 1234 and allow connections from B to
-appear in the 10.0.1.0/24 subnet:
+appear in the 10.2.0.0/24 and fd00:2::/64 subnets:
 .Bd -literal -offset abcd
-A# ifconfig wg0 create 10.0.1.0/24
+A# ifconfig wg0 create
+A# ifconfig wg0 inet 10.2.0.1/24
+A# ifconfig wg0 inet6 fd00:2::1/64
 A# wgconfig wg0 set private-key /etc/wg/wg0
 A# wgconfig wg0 set listen-port 1234
 A# wgconfig wg0 add peer B \e
     X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
     --preshared-key=/etc/wg/wg0.A-B \e
-    --allowed-ips=10.0.1.1/32
+    --allowed-ips=10.2.0.42/32,fd00:2::42/128
 A# ifconfig wg0 up
 A# ifconfig wg0
 wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
-        inet 10.0.1.0/24 flags 0
+        status: active
         inet6 fe80::22f7:d6ff:fe3a:1e60%wg0/64 flags 0 scopeid 0x3
+        inet6 fd00:2::1/64 flags 0
+        inet 10.2.0.1/24 flags 0
 .Ed
 .Pp
 Configure B to connect to A at 192.0.2.123 on port 1234 and the packets
 can begin to flow:
 .Bd -literal -offset abcd
-B# ifconfig wg0 create 10.0.1.1/24
+B# ifconfig wg0 create
+B# ifconfig wg0 inet 10.2.0.42/24
+B# ifconfig wg0 inet6 fd00:2::42/64
 B# wgconfig wg0 set private-key /etc/wg/wg0
 B# wgconfig wg0 add peer A \e
     N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
     --preshared-key=/etc/wg/wg0.A-B \e
-    --allowed-ips=10.0.1.0/32 \e
+    --allowed-ips=10.2.0.1/32,fd00:2::1/128 \e
     --endpoint=192.0.2.123:1234
 B# ifconfig wg0 up
 B# ifconfig wg0
 wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
-        inet 10.0.1.1/24 flags 0
+        status: active
         inet6 fe80::56eb:59ff:fe3d:d413%wg0/64 flags 0 scopeid 0x3
-B# ping -n 10.0.1.0
-PING 10.0.1.0 (10.0.1.0): 56 data bytes
-64 bytes from 10.0.1.0: icmp_seq=0 ttl=255 time=2.721110 ms
+        inet6 fd00:2::42/64 flags 0
+        inet 10.2.0.42/24 flags 0
+B# ping -n 10.2.0.1
+PING 10.2.0.1 (10.2.0.1): 56 data bytes
+64 bytes from 10.2.0.1: icmp_seq=0 ttl=255 time=2.721110 ms
+\&...
+B# ping6 -n fd00:2::1
+PING6(56=40+8+8 bytes) fd00:2::42 --> fd00:2::1
+16 bytes from fd00:2::1, icmp_seq=0 hlim=64 time=2.634 ms
 \&...
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
