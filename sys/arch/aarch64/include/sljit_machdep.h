@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.2 2018/12/02 20:54:44 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.2.6.1 2024/04/18 15:24:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -42,7 +42,12 @@
 
 #define SLJIT_CONFIG_ARM_64 1
 
-#ifdef _KERNEL
+#ifdef _HARDKERNEL
+/*
+ * XXX Currently sys/rump/include/machine/cpu.h doesn't have
+ * ci_cpufuncs for cpu_icache_sync_range, so we do this only for
+ * non-rump kernels for now.
+ */
 #define SLJIT_CACHE_FLUSH(from, to) \
 	cpu_icache_sync_range((vaddr_t)(from), (vsize_t)((to) - (from)))
 #else
