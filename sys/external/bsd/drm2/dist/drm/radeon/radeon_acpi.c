@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_acpi.c,v 1.5 2024/04/16 14:34:02 riastradh Exp $	*/
+/*	$NetBSD: radeon_acpi.c,v 1.6 2024/04/18 23:33:15 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.5 2024/04/16 14:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.6 2024/04/18 23:33:15 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -50,10 +50,12 @@ ACPI_MODULE_NAME("radeon_acpi")
 #include <linux/nbsd-namespace-acpi.h>
 #endif
 
+#ifndef __NetBSD__		/* XXX radeon acpi */
 #if defined(CONFIG_VGA_SWITCHEROO)
 bool radeon_atpx_dgpu_req_power_for_displays(void);
 #else
 static inline bool radeon_atpx_dgpu_req_power_for_displays(void) { return false; }
+#endif
 #endif
 
 #define ACPI_AC_CLASS           "ac_adapter"
