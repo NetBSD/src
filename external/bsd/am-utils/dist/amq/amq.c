@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.3 2015/01/18 15:37:57 christos Exp $	*/
+/*	$NetBSD: amq.c,v 1.3.18.1 2024/04/18 15:59:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -81,7 +81,7 @@ enum show_opt {
 static void
 time_print(time_type tt)
 {
-  time_t t = (time_t)*tt;
+  time_t t = (time_t)tt;
   struct tm *tp = localtime(&t);
   printf("%02d/%02d/%04d %02d:%02d:%02d",
 	 tp->tm_mon + 1, tp->tm_mday,
