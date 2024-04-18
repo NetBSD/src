@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.437.4.3 2023/12/14 17:43:10 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.437.4.4 2024/04/18 18:14:22 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.437.4.3 2023/12/14 17:43:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.437.4.4 2024/04/18 18:14:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2330,15 +2330,10 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 #ifdef PMAP_CACHE_VIPT
 	const bool want_syncicache = PV_IS_EXEC_P(md->pvh_attrs);
 	bool need_syncicache = false;
-#ifdef ARM_MMU_EXTENDED
-	const u_int execbits = (maskbits & PVF_EXEC) ? L2_XS_XN : 0;
-#else
-	const u_int execbits = 0;
+#ifndef ARM_MMU_EXTENDED
 	bool need_vac_me_harder = false;
 #endif
-#else
-	const u_int execbits = 0;
-#endif
+#endif /* PMAP_CACHE_VIPT */
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "md %#jx pa %#jx maskbits %#jx",
@@ -2421,9 +2416,14 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 
 		pt_entry_t * const ptep = &l2b->l2b_kva[l2pte_index(va)];
 		const pt_entry_t opte = *ptep;
-		pt_entry_t npte = opte | execbits;
+		pt_entry_t npte = opte;
 
-#ifdef ARM_MMU_EXTENDED
+#if defined(ARM_MMU_EXTENDED)
+		if ((maskbits & PVF_EXEC) != 0 && l2pte_valid_p(opte)) {
+			KASSERT((opte & L2_TYPE_S) != 0);
+			npte |= L2_XS_XN;
+		}
+
 		KASSERT((opte & L2_XS_nG) == (pm == pmap_kernel() ? 0 : L2_XS_nG));
 #endif
 
