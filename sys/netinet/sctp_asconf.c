@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.12 2019/06/25 15:33:56 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.12.28.1 2024/04/18 16:22:28 martin Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.12 2019/06/25 15:33:56 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.12.28.1 2024/04/18 16:22:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1540,6 +1540,7 @@ sctp_is_desired_interface_type(struct ifaddr *ifa)
 	case IFT_XETHER:
 	case IFT_SLIP:
 	case IFT_GIF:
+	case IFT_IPSEC:
 		result = 1;
 		break;
 	default:
