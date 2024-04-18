@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.8 2014/08/10 16:44:34 tls Exp $ */
+/* $NetBSD: viac7temp.c,v 1.8.32.1 2024/04/18 16:40:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.8 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.8.32.1 2024/04/18 16:40:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/xcall.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -161,4 +162,33 @@ viac7temp_refresh_xcall(void *arg0, void *arg1)
 	edata->value_cur *= 1000000;
 	edata->value_cur += 273150000;
 	edata->state = ENVSYS_SVALID;
+}
+
+MODULE(MODULE_CLASS_DRIVER, viac7temp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+viac7temp_modcmd(modcmd_t cmd, void *arg __unused)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_viac7temp,
+		    cfattach_ioconf_viac7temp, cfdata_ioconf_viac7temp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_viac7temp,
+		    cfattach_ioconf_viac7temp, cfdata_ioconf_viac7temp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
