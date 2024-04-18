@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.20 2018/05/04 14:50:40 christos Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.20.12.1 2024/04/18 17:57:31 martin Exp $
 
 .include <bsd.hostinit.mk>
 .include <bsd.sys.mk>
@@ -47,7 +47,7 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core lib${HOSTLIB}.a ${OBJS}
 
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
-CPPFLAGS:=	${HOST_CPPFLAGS}
+CPPFLAGS:=	${HOST_CPPFLAGS:N-Wp,-iremap,*}
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
