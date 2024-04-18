@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.14 2022/10/26 23:21:06 riastradh Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.14.2.1 2024/04/18 18:22:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.14 2022/10/26 23:21:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.14.2.1 2024/04/18 18:22:10 martin Exp $");
 
 #include <sys/param.h>
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.14 2022/10/26 23:21:06 riastradh Exp
 #include <sys/hook.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
+#include <sys/once.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
 
@@ -74,25 +75,48 @@ struct khook_list {
 
 int	powerhook_debug = 0;
 
+static ONCE_DECL(hook_control);
+static krwlock_t exithook_lock;
+static krwlock_t forkhook_lock;
+
+static int
+hook_init(void)
+{
+
+	rw_init(&exithook_lock);
+	rw_init(&forkhook_lock);
+
+	return 0;
+}
+
 static void *
-hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
+hook_establish(hook_list_t *list, krwlock_t *lock,
+    void (*fn)(void *), void *arg)
 {
 	struct hook_desc *hd;
 
-	hd = malloc(sizeof(*hd), M_DEVBUF, M_NOWAIT);
-	if (hd == NULL)
-		return (NULL);
+	RUN_ONCE(&hook_control, hook_init);
 
-	hd->hk_fn = fn;
-	hd->hk_arg = arg;
-	LIST_INSERT_HEAD(list, hd, hk_list);
+	hd = malloc(sizeof(*hd), M_DEVBUF, M_NOWAIT);
+	if (hd != NULL) {
+		if (lock)
+			rw_enter(lock, RW_WRITER);
+		hd->hk_fn = fn;
+		hd->hk_arg = arg;
+		LIST_INSERT_HEAD(list, hd, hk_list);
+		if (lock)
+			rw_exit(lock);
+	}
 
 	return (hd);
 }
 
 static void
-hook_disestablish(hook_list_t *list, void *vhook)
+hook_disestablish(hook_list_t *list, krwlock_t *lock, void *vhook)
 {
+
+	if (lock)
+		rw_enter(lock, RW_WRITER);
 #ifdef DIAGNOSTIC
 	struct hook_desc *hd;
 
@@ -106,6 +130,8 @@ hook_disestablish(hook_list_t *list, void *vhook)
 #endif
 	LIST_REMOVE((struct hook_desc *)vhook, hk_list);
 	free(vhook, M_DEVBUF);
+	if (lock)
+		rw_exit(lock);
 }
 
 static void
@@ -120,14 +146,20 @@ hook_destroy(hook_list_t *list)
 }
 
 static void
-hook_proc_run(hook_list_t *list, struct proc *p)
+hook_proc_run(hook_list_t *list, krwlock_t *lock, struct proc *p)
 {
 	struct hook_desc *hd;
 
+	RUN_ONCE(&hook_control, hook_init);
+
+	if (lock)
+		rw_enter(lock, RW_READER);
 	LIST_FOREACH(hd, list, hk_list) {
 		__FPTRCAST(void (*)(struct proc *, void *), *hd->hk_fn)(p,
 		    hd->hk_arg);
 	}
+	if (lock)
+		rw_exit(lock);
 }
 
 /*
@@ -146,13 +178,13 @@ static hook_list_t shutdownhook_list = LIST_HEAD_INITIALIZER(shutdownhook_list);
 void *
 shutdownhook_establish(void (*fn)(void *), void *arg)
 {
-	return hook_establish(&shutdownhook_list, fn, arg);
+	return hook_establish(&shutdownhook_list, NULL, fn, arg);
 }
 
 void
 shutdownhook_disestablish(void *vhook)
 {
-	hook_disestablish(&shutdownhook_list, vhook);
+	hook_disestablish(&shutdownhook_list, NULL, vhook);
 }
 
 /*
@@ -193,14 +225,14 @@ static hook_list_t mountroothook_list=LIST_HEAD_INITIALIZER(mountroothook_list);
 void *
 mountroothook_establish(void (*fn)(device_t), device_t dev)
 {
-	return hook_establish(&mountroothook_list, __FPTRCAST(void (*), fn),
-	    dev);
+	return hook_establish(&mountroothook_list, NULL,
+	    __FPTRCAST(void (*), fn), dev);
 }
 
 void
 mountroothook_disestablish(void *vhook)
 {
-	hook_disestablish(&mountroothook_list, vhook);
+	hook_disestablish(&mountroothook_list, NULL, vhook);
 }
 
 void
@@ -227,14 +259,14 @@ static hook_list_t exechook_list = LIST_HEAD_INITIALIZER(exechook_list);
 void *
 exechook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
-	return hook_establish(&exechook_list, __FPTRCAST(void (*)(void *), fn),
-	    arg);
+	return hook_establish(&exechook_list, &exec_lock,
+		__FPTRCAST(void (*)(void *), fn), arg);
 }
 
 void
 exechook_disestablish(void *vhook)
 {
-	hook_disestablish(&exechook_list, vhook);
+	hook_disestablish(&exechook_list, &exec_lock, vhook);
 }
 
 /*
@@ -243,7 +275,9 @@ exechook_disestablish(void *vhook)
 void
 doexechooks(struct proc *p)
 {
-	hook_proc_run(&exechook_list, p);
+	KASSERT(rw_lock_held(&exec_lock));
+
+	hook_proc_run(&exechook_list, NULL, p);
 }
 
 static hook_list_t exithook_list = LIST_HEAD_INITIALIZER(exithook_list);
@@ -251,22 +285,16 @@ static hook_list_t exithook_list = LIST_HEAD_INITIALIZER(exithook_list);
 void *
 exithook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
-	void *rv;
 
-	rw_enter(&exec_lock, RW_WRITER);
-	rv = hook_establish(&exithook_list, __FPTRCAST(void (*)(void *), fn),
-	    arg);
-	rw_exit(&exec_lock);
-	return rv;
+	return hook_establish(&exithook_list, &exithook_lock,
+	    __FPTRCAST(void (*)(void *), fn), arg);
 }
 
 void
 exithook_disestablish(void *vhook)
 {
 
-	rw_enter(&exec_lock, RW_WRITER);
-	hook_disestablish(&exithook_list, vhook);
-	rw_exit(&exec_lock);
+	hook_disestablish(&exithook_list, &exithook_lock, vhook);
 }
 
 /*
@@ -275,7 +303,7 @@ exithook_disestablish(void *vhook)
 void
 doexithooks(struct proc *p)
 {
-	hook_proc_run(&exithook_list, p);
+	hook_proc_run(&exithook_list, &exithook_lock, p);
 }
 
 static hook_list_t forkhook_list = LIST_HEAD_INITIALIZER(forkhook_list);
@@ -283,14 +311,14 @@ static hook_list_t forkhook_list = LIST_HEAD_INITIALIZER(forkhook_list);
 void *
 forkhook_establish(void (*fn)(struct proc *, struct proc *))
 {
-	return hook_establish(&forkhook_list, __FPTRCAST(void (*)(void *), fn),
-	    NULL);
+	return hook_establish(&forkhook_list, &forkhook_lock,
+	    __FPTRCAST(void (*)(void *), fn), NULL);
 }
 
 void
 forkhook_disestablish(void *vhook)
 {
-	hook_disestablish(&forkhook_list, vhook);
+	hook_disestablish(&forkhook_list, &forkhook_lock, vhook);
 }
 
 /*
@@ -301,10 +329,14 @@ doforkhooks(struct proc *p2, struct proc *p1)
 {
 	struct hook_desc *hd;
 
+	RUN_ONCE(&hook_control, hook_init);
+
+	rw_enter(&forkhook_lock, RW_READER);
 	LIST_FOREACH(hd, &forkhook_list, hk_list) {
 		__FPTRCAST(void (*)(struct proc *, struct proc *), *hd->hk_fn)
 		    (p2, p1);
 	}
+	rw_exit(&forkhook_lock);
 }
 
 static hook_list_t critpollhook_list = LIST_HEAD_INITIALIZER(critpollhook_list);
@@ -312,13 +344,13 @@ static hook_list_t critpollhook_list = LIST_HEAD_INITIALIZER(critpollhook_list);
 void *
 critpollhook_establish(void (*fn)(void *), void *arg)
 {
-	return hook_establish(&critpollhook_list, fn, arg);
+	return hook_establish(&critpollhook_list, NULL, fn, arg);
 }
 
 void
 critpollhook_disestablish(void *vhook)
 {
-	hook_disestablish(&critpollhook_list, vhook);
+	hook_disestablish(&critpollhook_list, NULL, vhook);
 }
 
 /*

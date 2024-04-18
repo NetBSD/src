@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.229 2022/06/17 14:30:37 shm Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.229.4.1 2024/04/18 18:22:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.229 2022/06/17 14:30:37 shm Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.229.4.1 2024/04/18 18:22:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -437,6 +437,7 @@ procfs_reclaim(void *v)
 	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
 	mutex_exit(vp->v_interlock);
+	procfs_hashrem(pfs);
 	kmem_free(pfs, sizeof(*pfs));
 	return 0;
 }

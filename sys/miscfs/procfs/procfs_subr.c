@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.116 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.116.20.1 2024/04/18 18:22:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.116 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.116.20.1 2024/04/18 18:22:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,57 +356,6 @@ vfs_findname(const vfs_namemap_t *nm, const char *bf, int buflen)
 			return (nm);
 
 	return (0);
-}
-
-static bool
-procfs_revoke_selector(void *arg, struct vnode *vp)
-{
-	struct proc *p = arg;
-	struct pfsnode *pfs;
-
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	pfs = VTOPFS(vp);
-
-	return (pfs != NULL && pfs->pfs_pid == p->p_pid);
-}
-
-void
-procfs_revoke_vnodes(struct proc *p, void *arg)
-{
-	int error;
-	bool suspended;
-	struct vnode *vp;
-	struct vnode_iterator *marker;
-	struct mount *mp = (struct mount *)arg;
-
-	if (!(p->p_flag & PK_SUGID))
-		return;
-
-	suspended = false;
-	vfs_vnode_iterator_init(mp, &marker);
-
-	while ((vp = vfs_vnode_iterator_next(marker,
-	    procfs_revoke_selector, p)) != NULL) {
-		if (vrecycle(vp))
-			continue;
-		/* Vnode is busy, we have to suspend the mount for vgone(). */
-		while (! suspended) {
-			error = vfs_suspend(mp, 0);
-			if (error == 0) {
-				suspended = true;
-			} else if (error != EINTR && error != ERESTART) {
-				KASSERT(error == EOPNOTSUPP);
-				break;
-			}
-		}
-		vgone(vp);
-	}
-
-	if (suspended)
-		vfs_resume(mp);
-
-	vfs_vnode_iterator_destroy(marker);
 }
 
 bool
