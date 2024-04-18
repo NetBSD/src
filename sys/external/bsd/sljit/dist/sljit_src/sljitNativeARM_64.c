@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativeARM_64.c,v 1.4 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeARM_64.c,v 1.4.30.1 2024/04/18 15:21:55 martin Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -1079,7 +1079,8 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_enter(struct sljit_compiler *compi
 	local_size = (local_size + 15) & ~0xf;
 	compiler->local_size = local_size;
 
-	if (local_size <= (63 * sizeof(sljit_sw))) {
+	SLJIT_ASSERT(local_size >= 0);
+	if ((size_t)local_size <= (63 * sizeof(sljit_sw))) {
 		FAIL_IF(push_inst(compiler, STP_PRE | 29 | RT2(TMP_LR)
 			| RN(TMP_SP) | ((-(local_size >> 3) & 0x7f) << 15)));
 		FAIL_IF(push_inst(compiler, ADDI | RD(SLJIT_SP) | RN(TMP_SP) | (0 << 10)));
@@ -1129,7 +1130,8 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_enter(struct sljit_compiler *compi
 
 	SLJIT_ASSERT(prev == -1);
 
-	if (compiler->local_size > (63 * sizeof(sljit_sw))) {
+	SLJIT_ASSERT(compiler->local_size >= 0);
+	if ((size_t)compiler->local_size > (63 * sizeof(sljit_sw))) {
 		/* The local_size is already adjusted by the saved registers. */
 		if (local_size > 0xfff) {
 			FAIL_IF(push_inst(compiler, SUBI | RD(TMP_SP) | RN(TMP_SP) | ((local_size >> 12) << 10) | (1 << 22)));
@@ -1179,7 +1181,8 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_return(struct sljit_compiler *comp
 	local_size = compiler->local_size;
 
 	saved_regs_size = GET_SAVED_REGISTERS_SIZE(compiler->scratches, compiler->saveds, 0);
-	if (local_size <= (63 * sizeof(sljit_sw)))
+	SLJIT_ASSERT(local_size >= 0);
+	if ((size_t)local_size <= (63 * sizeof(sljit_sw)))
 		offs = (local_size - saved_regs_size) << (15 - 3);
 	else {
 		FAIL_IF(push_inst(compiler, LDP_PST | 29 | RT2(TMP_LR)
@@ -1232,7 +1235,8 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_return(struct sljit_compiler *comp
 
 	SLJIT_ASSERT(prev == -1);
 
-	if (compiler->local_size <= (63 * sizeof(sljit_sw))) {
+	SLJIT_ASSERT(compiler->local_size >= 0);
+	if ((size_t)compiler->local_size <= (63 * sizeof(sljit_sw))) {
 		FAIL_IF(push_inst(compiler, LDP_PST | 29 | RT2(TMP_LR)
 			| RN(TMP_SP) | (((local_size >> 3) & 0x7f) << 15)));
 	} else if (saved_regs_size > 0) {

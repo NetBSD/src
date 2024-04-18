@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1289.2.2 2023/10/20 16:04:59 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1289.2.3 2024/04/18 15:21:55 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1285,6 +1285,21 @@ MKLLVMRT.i386=		yes
 MKLLVMRT.aarch64=	yes
 .endif
 
+# Just-in-time compiler for bpf, npf acceleration
+MKSLJIT.aarch64=	yes
+MKSLJIT.i386=		yes
+MKSLJIT.sparc=		yes
+#MKSLJIT.sparc64=	yes	# not suppored in sljit (yet?)
+MKSLJIT.x86_64=		yes
+#MKSLJIT.powerpc=	yes	# XXX
+#MKSLJIT.powerpc64=	yes	# XXX
+#MKSLJIT.mipsel=	yes	# XXX
+#MKSLJIT.mipseb=	yes	# XXX
+#MKSLJIT.mips64el=	yes	# XXX
+#MKSLJIT.mips64eb=	yes	# XXX
+#MKSLJIT.riscv32=	yes	# not until we update sljit
+#MKSLJIT.riscv64=	yes	# not until we update sljit
+
 # compat with old names
 MKDEBUGKERNEL?=${MKKDEBUG:Uno}
 MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
@@ -1317,12 +1332,6 @@ _MKVARS.no= \
 .for var in ${_MKVARS.no}
 ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
 .endfor
-
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc"
-MKSLJIT=	yes
-.endif
 
 #
 # Which platforms build the xorg-server drivers (as opposed

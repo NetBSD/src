@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274.2.2 2023/12/30 19:13:50 martin Exp $
+#	$NetBSD: Makefile,v 1.274.2.3 2024/04/18 15:21:55 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -258,14 +258,8 @@ SUBDIR+=	ubsec
 .endif
 
 .if ${MKSLJIT} != "no"
-# No modules for 32-bit arm, mips and powerpc yet.
-.if ${MACHINE_ARCH} == "aarch64" || \
-    ${MACHINE_ARCH} == "i386"    || \
-    ${MACHINE_ARCH} == "sparc"   || \
-    ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
-.endif
 .endif
 
 #
