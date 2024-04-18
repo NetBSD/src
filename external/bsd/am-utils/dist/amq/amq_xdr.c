@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_xdr.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: amq_xdr.c,v 1.1.1.3.18.1 2024/04/18 15:59:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -49,7 +49,7 @@
 bool_t
 xdr_time_type(XDR *xdrs, time_type *objp)
 {
-  if (!xdr_long(xdrs, (long *) objp)) {
+  if (!xdr_longlong_t(xdrs, (longlong_t *) objp)) {
     return (FALSE);
   }
   return (TRUE);
