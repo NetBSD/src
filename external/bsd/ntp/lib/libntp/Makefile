@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2024/04/12 19:06:45 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.31 2024/04/18 19:23:53 jakllsch Exp $
 
 LIBISPRIVATE=yes
 
@@ -88,7 +88,7 @@ CPPFLAGS+= -I${IDIST}/sntp/libopts
 # For MKREPRO, avoid using __DATE__ and __TIME__.
 # Instead, use the date and time from ${MKREPRO_TIMESTAMP}
 .if ${MKREPRO:Uno} == "yes"
-MKREPRO_DATE != ${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%F"
+MKREPRO_DATE != ${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%b %d %Y"
 MKREPRO_TIME != ${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%T"
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_DATE=\"${MKREPRO_DATE:Q}\"
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
