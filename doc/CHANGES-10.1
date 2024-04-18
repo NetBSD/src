@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.3 2024/04/17 18:03:46 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.4 2024/04/18 18:26:43 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -44,4 +44,93 @@ share/mk/bsd.lib.mk				1.398,1.399,1.152 (via patch)
 
 	bsd.x11.mk: PR 58104: use TOOL_AWK, not the build host's awk.
 	[riastradh, ticket #654]
+
+share/mk/bsd.own.mk				1.1365,1.1366
+sys/arch/aarch64/include/sljit_machdep.h	1.4
+sys/external/bsd/sljit/dist/sljit_src/sljitNativeARM_64.c 1.5
+sys/modules/Makefile				1.285
+
+	aarch64: PR 58103: enable SLJIT acceleration.
+	[riastradh, ticket #655]
+
+sys/stand/efiboot/efiboot.c			1.23
+
+	efiboot: PR 58075: avoid invalid memory access with netboot.
+	[riastradh, ticket #656]
+
+distrib/evbarm/instkernel/sshramdisk/Makefile	1.26
+
+	evbarm/sshramdisk: PR 58035: put firmware files in the right
+        place.
+	[riastradh, ticket #657]
+
+share/man/man4/wg.4				1.8,1.9
+
+	wg(4): PR 58015: man page improvements.
+	[riastradh, ticket #658]
+
+sys/netinet/sctp_asconf.c			1.14
+sys/netinet6/in6_ifattach.c			1.122
+sys/netinet6/nd6.c				1.282
+
+	ipsecif(4): fix invalid IPv6 route after deletion of a tunnel.
+	[knakahara, ticket #659]
+
+sbin/ifconfig/ifconfig.8			1.126-1.129
+
+	ifconfig(8): PR 58125: document lagg(4) parameters.
+	[andvar, ticket #660]
+
+sys/dev/pci/if_mcx.c				1.27
+
+	mcx(4): PR 58124: enforce full-duplex mark in mcx_media_status(),
+	when link is up.
+	[andvar, ticket #661]
+
+sys/arch/x86/x86/viac7temp.c			1.10
+
+	viac7temp(4): PR 58148: fix the kernel module.
+	[andvar, ticket #662]
+
+share/mk/bsd.hostlib.mk				1.21
+
+	Fix reproducible toolchain build on host toolchains   
+        that do not support -iremap.
+	[jakllsch, ticket #664]
+
+sys/ddb/db_proc.c				1.16
+
+	ddb(4): fix alignment of 'ps/[lw]' output.
+	[skrll, ticket #665]
+
+sys/arch/arm/arm32/pmap.c			1.443
+
+	arm: PR 58135: don't unconditionally set XN in pmap_clearbit.
+	[skrll, ticket #666]
+
+sys/arch/aarch64/aarch64/cpu_machdep.c		1.15
+sys/arch/aarch64/aarch64/sig_machdep.c		1.9
+
+	aarch64: PR 58149: cannot return from a signal handler if SP was
+	misaligned when the signal arrived.
+	[skrll, ticket #667]
+
+sys/kern/init_main.c				1.547
+sys/kern/kern_hook.c				1.15
+sys/kern/vfs_mount.c				1.104
+sys/miscfs/procfs/procfs.h			1.83,1.84
+sys/miscfs/procfs/procfs_subr.c			1.117
+sys/miscfs/procfs/procfs_vfsops.c		1.112-1.114
+sys/miscfs/procfs/procfs_vnops.c		1.230
+
+	procfs: PR 39913, PR 57775: make kernel hooks exechook, exithook
+	and forkhook MP-safe and make it safe to remove procfs nodes on
+	exehook or proc exit.
+	[hannken, ticket #668]
+
+sys/dev/ccd.c					1.190
+
+	ccd(4): PR 58043: allocate buffers with PR_NOWAIT and defer to
+	kthread if out of memory. 
+	[hannken, ticket #669]
 
