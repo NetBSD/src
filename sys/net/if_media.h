@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.71 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.72 2024/04/18 10:32:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -981,7 +981,7 @@ void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
 void	ifmedia_init_with_lock(struct ifmedia *, int, ifm_change_cb_t,
 	    ifm_stat_cb_t, kmutex_t *);
 
-/* Release resourecs associated with an ifmedia. */
+/* Release resources associated with an ifmedia. */
 void	ifmedia_fini(struct ifmedia *);
 
 

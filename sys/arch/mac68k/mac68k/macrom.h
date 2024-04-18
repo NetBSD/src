@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.19 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: macrom.h,v 1.20 2024/04/18 10:32:03 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -153,7 +153,7 @@ void	dumptrace(void);
 	/* Stuff for configuring ROM Glue */
 typedef struct rsrc_s {
 	u_int16_t unknown[4];	/* ???? */
-	u_int32_t next;		/* pointer to next resoure in list */
+	u_int32_t next;		/* pointer to next resource in list */
 	u_int32_t body;		/* pointer to resource body? */
 	u_int32_t name;		/* resource name */
 	u_int16_t index;	/* ???? */
