@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.13 2024/04/01 09:48:58 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.14 2024/04/18 04:52:43 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -237,7 +237,8 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	}
 	rom = (struct sti_rom *)kmem_zalloc(sizeof(*rom), KM_SLEEP);
 	rom->rom_softc = &sc->sc_base;
-	ret = sti_rom_setup(rom, paa->pa_iot, paa->pa_memt, sc->sc_romh, sc->sc_base.bases, STI_CODEBASE_MAIN);
+	ret = sti_rom_setup(rom, paa->pa_iot, paa->pa_memt, sc->sc_romh,
+	    sc->sc_base.bases, STI_CODEBASE_MAIN);
 	if (ret != 0) {
 		kmem_free(rom, sizeof(*rom));
 		return;
@@ -889,16 +890,22 @@ gftfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct gftfb_softc *sc = vd->cookie;
 	struct sti_rom *rom = sc->sc_base.sc_rom;
-	paddr_t pa;
+	paddr_t pa = -1;
 
-	if (offset < 0 || offset >= sc->sc_scr.fblen)
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return -1;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_DUMBFB)
-		return -1;
+	if (offset >= 0 || offset < sc->sc_scr.fblen) {
+		/* framebuffer */
+		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
+		    prot, BUS_SPACE_MAP_LINEAR);
+	} else if (offset >= 0x80000000 && offset < 0x8040000) {
+		/* blitter registers etc. */
+		pa = bus_space_mmap(rom->memt, rom->regh[2],
+		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
+	}
 
-	pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset, prot,
-	    BUS_SPACE_MAP_LINEAR);
 	return pa;
 }
 
