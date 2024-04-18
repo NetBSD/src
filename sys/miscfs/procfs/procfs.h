@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.82 2022/01/19 10:23:00 martin Exp $	*/
+/*	$NetBSD: procfs.h,v 1.82.4.1 2024/04/18 18:22:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -129,7 +129,9 @@ struct pfskey {
 	int		pk_fd;		/* associated fd if not -1 */
 };
 struct pfsnode {
+	LIST_ENTRY(pfsnode) pfs_hash;	/* per pid hash list */
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
+	struct mount	*pfs_mount;	/* mount associated with this pfsnode */
 	struct pfskey	pfs_key;
 #define pfs_type pfs_key.pk_type
 #define pfs_pid pfs_key.pk_pid
@@ -190,7 +192,6 @@ procfs_fileno(pid_t _pid, pfstype _type, int _fd)
 #define PROCFS_TYPE(type)	((type) % PFSlast)
 
 struct procfsmount {
-	void *pmnt_exechook;
 	int pmnt_flags;
 };
 
@@ -269,7 +270,7 @@ int procfs_doauxv(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_dolimit(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
-void procfs_revoke_vnodes(struct proc *, void *);
+void procfs_hashrem(struct pfsnode *);
 int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 
 /* functions to check whether or not files should be displayed */
