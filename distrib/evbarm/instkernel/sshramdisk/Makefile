@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.4.1 2018/11/01 07:52:59 martin Exp $
+#	$NetBSD: Makefile,v 1.15.4.2 2024/04/18 15:42:45 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,7 +29,9 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
-IMAGEPREBUILD=	${TOOL_PAX} ${PAX_TIMESTAMP} -rw -pp ${DESTDIR}/libdata/firmware ${WORKDIR}
+IMAGEPREBUILD= \
+	(cd ${DESTDIR} && ${TOOL_PAX} ${PAX_TIMESTAMP} -w libdata/firmware) \
+	| (cd ${WORKDIR} && ${TOOL_PAX} -r -pp)
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
