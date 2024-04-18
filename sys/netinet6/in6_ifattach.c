@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.120 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.120.12.1 2024/04/18 16:22:28 martin Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.120 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.120.12.1 2024/04/18 16:22:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 		break;
 
 	case IFT_GIF:
+	case IFT_IPSEC:
 #ifdef IFT_STF
 	case IFT_STF:
 #endif

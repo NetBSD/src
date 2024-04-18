@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.279.4.1 2023/12/10 13:06:16 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.279.4.2 2024/04/18 16:22:28 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.1 2023/12/10 13:06:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.2 2024/04/18 16:22:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1655,6 +1655,7 @@ nd6_need_cache(struct ifnet *ifp)
 	case IFT_IEEE1394:
 	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */
+	case IFT_IPSEC:
 	case IFT_PPP:
 	case IFT_TUNNEL:
 		return 1;
