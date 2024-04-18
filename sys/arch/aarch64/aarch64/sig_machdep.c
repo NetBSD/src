@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.8 2021/11/01 05:07:15 thorpej Exp $ */
+/* $NetBSD: sig_machdep.c,v 1.8.4.1 2024/04/18 18:17:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.8 2021/11/01 05:07:15 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.8.4.1 2024/04/18 18:17:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,8 +58,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	vaddr_t sp;
 
-	sp = onstack_p ? ((vaddr_t)ss->ss_sp + ss->ss_size) & -16 : tf->tf_sp;
+	/*
+	 * The user stack isn't guaranteed to be aligned to 16 bytes. Align
+	 * it before pushing anything onto it.
+	 */
+	sp = onstack_p ? ((vaddr_t)ss->ss_sp + ss->ss_size) : tf->tf_sp;
+	sp &= -16;
 
+	__CTASSERT(sizeof(ucontext_t) % 16 == 0);
 	sp -= sizeof(ucontext_t);
 	const vaddr_t ucp = sp;
 
