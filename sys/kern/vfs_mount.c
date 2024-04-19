@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.104 2024/01/17 10:17:29 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.105 2024/04/19 00:45:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.104 2024/01/17 10:17:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.105 2024/04/19 00:45:41 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -936,7 +936,8 @@ err_mounted:
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
-	vnode_t *coveredvp, *vp;
+	struct vnode *coveredvp, *vp;
+	struct vnode_impl *vip;
 	int error, async, used_syncer, used_extattr;
 	const bool was_suspended = fstrans_is_owner(mp);
 
@@ -1003,7 +1004,9 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		vfs_resume(mp);
 
 	mountlist_remove(mp);
-	if ((vp = VIMPL_TO_VNODE(TAILQ_FIRST(&mp->mnt_vnodelist))) != NULL) {
+
+	if ((vip = TAILQ_FIRST(&mp->mnt_vnodelist)) != NULL) {
+		vp = VIMPL_TO_VNODE(vip);
 		vprint("dangling", vp);
 		panic("unmount: dangling vnode");
 	}
