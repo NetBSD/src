@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.1 2024/04/19 09:18:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.1 2024/04/19 09:18:28 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -405,21 +405,21 @@ pmap_addr_range_check(pmap_t pmap, vaddr_t sva, vaddr_t eva, const char *func)
  */
 
 bool
-pmap_page_clear_attributes(struct vm_page_md *mdpg, u_int clear_attributes)
+pmap_page_clear_attributes(struct vm_page_md *mdpg, u_long clear_attributes)
 {
-	volatile unsigned long * const attrp = &mdpg->mdpg_attrs;
+	volatile u_long * const attrp = &mdpg->mdpg_attrs;
 
 #ifdef MULTIPROCESSOR
 	for (;;) {
-		u_int old_attr = *attrp;
+		u_long old_attr = *attrp;
 		if ((old_attr & clear_attributes) == 0)
 			return false;
-		u_int new_attr = old_attr & ~clear_attributes;
+		u_long new_attr = old_attr & ~clear_attributes;
 		if (old_attr == atomic_cas_ulong(attrp, old_attr, new_attr))
 			return true;
 	}
 #else
-	unsigned long old_attr = *attrp;
+	u_long old_attr = *attrp;
 	if ((old_attr & clear_attributes) == 0)
 		return false;
 	*attrp &= ~clear_attributes;
@@ -428,7 +428,7 @@ pmap_page_clear_attributes(struct vm_page_md *mdpg, u_int clear_attributes)
 }
 
 void
-pmap_page_set_attributes(struct vm_page_md *mdpg, u_int set_attributes)
+pmap_page_set_attributes(struct vm_page_md *mdpg, u_long set_attributes)
 {
 #ifdef MULTIPROCESSOR
 	atomic_or_ulong(&mdpg->mdpg_attrs, set_attributes);
