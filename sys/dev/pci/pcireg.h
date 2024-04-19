@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.169 2024/02/02 22:19:13 andvar Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.170 2024/04/19 21:24:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1963,8 +1963,8 @@ struct pci_rom {
 #define  PCI_EA_PROP_MEM_NONPREF	0x00	/* Memory Space, Non-Prefetchable */
 #define  PCI_EA_PROP_MEM_PREF		0x01	/* Memory Space, Prefetchable */
 #define  PCI_EA_PROP_IO			0x02	/* I/O Space */
-#define  PCI_EA_PROP_VF_MEM_NONPREF	0x03	/* Resorce for VF use. Mem. Non-Pref */
-#define  PCI_EA_PROP_VF_MEM_PREF	0x04	/* Resorce for VF use. Mem. Prefetch */
+#define  PCI_EA_PROP_VF_MEM_NONPREF	0x03	/* Resource for VF use. Mem. Non-Pref */
+#define  PCI_EA_PROP_VF_MEM_PREF	0x04	/* Resource for VF use. Mem. Prefetch */
 #define  PCI_EA_PROP_BB_MEM_NONPREF	0x05	/* Behind Bridge: MEM. Non-Pref */
 #define  PCI_EA_PROP_BB_MEM_PREF	0x06	/* Behind Bridge: MEM. Prefetch */
 #define  PCI_EA_PROP_BB_IO		0x07	/* Behind Bridge: I/O Space */
