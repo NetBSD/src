@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.243 2023/08/10 20:02:56 andvar Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.244 2024/04/19 21:24:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.243 2023/08/10 20:02:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.244 2024/04/19 21:24:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2559,10 +2559,10 @@ pci_conf_print_ea_cap_prop(unsigned int prop)
 		printf("I/O Space\n");
 		break;
 	case PCI_EA_PROP_VF_MEM_NONPREF:
-		printf("Resorce for VF use, Memory Space, Non-Prefetchable\n");
+		printf("Resource for VF use, Memory Space, Non-Prefetchable\n");
 		break;
 	case PCI_EA_PROP_VF_MEM_PREF:
-		printf("Resorce for VF use, Memory Space, Prefetch\n");
+		printf("Resource for VF use, Memory Space, Prefetch\n");
 		break;
 	case PCI_EA_PROP_BB_MEM_NONPREF:
 		printf("Behind the Bridge, Memory Space, Non-Pref\n");
