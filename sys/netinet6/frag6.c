@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.77 2023/08/29 17:01:35 christos Exp $	*/
+/*	$NetBSD: frag6.c,v 1.78 2024/04/19 05:04:06 ozaki-r Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.77 2023/08/29 17:01:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.78 2024/04/19 05:04:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -206,9 +206,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * sizeof(struct ip6_frag) == 8
 	 * sizeof(struct ip6_hdr) = 40
 	 */
-	if ((ip6f->ip6f_offlg & IP6F_MORE_FRAG) &&
-	    (((ntohs(ip6->ip6_plen) - offset) == 0) ||
-	     ((ntohs(ip6->ip6_plen) - offset) & 0x7) != 0)) {
+	frgpartlen = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - offset
+	    - sizeof(struct ip6_frag);
+	if ((frgpartlen == 0) ||
+	    ((ip6f->ip6f_offlg & IP6F_MORE_FRAG) && (frgpartlen & 0x7) != 0)) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 		    offsetof(struct ip6_hdr, ip6_plen));
 		in6_ifstat_inc(dstifp, ifs6_reass_fail);
@@ -316,7 +317,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * in size. If it would exceed, discard the fragment and return an
 	 * ICMP error.
 	 */
-	frgpartlen = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - offset;
 	if (q6->ip6q_unfrglen >= 0) {
 		/* The 1st fragment has already arrived. */
 		if (q6->ip6q_unfrglen + fragoff + frgpartlen > IPV6_MAXPACKET) {
