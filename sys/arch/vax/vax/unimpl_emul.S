@@ -1,4 +1,4 @@
-/*	$NetBSD: unimpl_emul.S,v 1.4 2017/05/22 16:53:05 ragge Exp $	*/
+/*	$NetBSD: unimpl_emul.S,v 1.4.40.1 2024/04/19 09:15:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Brandon Creighton.  All rights reserved.
@@ -683,7 +683,7 @@ emodd:	bsbw	touser
 	 * there aren't any bits left for the fraction.  Therefore we're
 	 * done here;  TMPFRAC1 is equal to TMPFRACTGT and TMPFRAC2 is 0.
 	 */
-	movq $0f0.0, TMPFRAC2
+	movq $0d0.0, TMPFRAC2
 	jmp 9f		/* we're done, move on */
 1:	
 	/*
@@ -727,7 +727,7 @@ emodd:	bsbw	touser
 	 * We are less than 1.0; TMPFRAC1 should be 0, and TMPFRAC2 should
 	 * be equal to TMPFRACTGT.
 	 */
-	movd $0f0.0, TMPFRAC1
+	movd $0d0.0, TMPFRAC1
 	movd TMPFRACTGT, TMPFRAC2
 9:			
 	/*
@@ -763,7 +763,7 @@ zeroexit:
 	bsbw getaddr_byte
 	movl $0x0, (%r0)
 	bsbw getaddr_byte
-	movd $0f0, (%r0)
+	movd $0d0, (%r0)
 	brw goback
 
 
