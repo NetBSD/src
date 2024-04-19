@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.234 2023/08/03 05:45:36 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.235 2024/04/19 00:55:35 riastradh Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.234 2023/08/03 05:45:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.235 2024/04/19 00:55:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -754,7 +754,7 @@ ip6_output(
 	 * XXX Is this really necessary?
 	 */
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
-		u_int32_t dummy1; /* XXX unused */
+		u_int32_t dummy1 = 0; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 		int hoff = sizeof(struct ip6_hdr);
 
