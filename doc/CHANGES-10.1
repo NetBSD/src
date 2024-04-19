@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.4 2024/04/18 18:26:43 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.5 2024/04/19 09:19:31 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -133,4 +133,21 @@ sys/dev/ccd.c					1.190
 	ccd(4): PR 58043: allocate buffers with PR_NOWAIT and defer to
 	kthread if out of memory. 
 	[hannken, ticket #669]
+
+external/bsd/ntp/lib/libntp/Makefile		1.28-1.31
+
+	ntpd(8): fix timestamp in the binary for reproducable builds.
+	[jakllsch, ticket #663]
+
+sys/arch/vax/vax/unimpl_emul.S			1.5
+
+	vax: fix assembler code to use constants of the correct size
+	to fix reproducable builds (no functional change)
+	[kalvisd, ticket #670]
+
+sys/uvm/pmap/pmap.c				1.78
+sys/uvm/pmap/pmap.h				1.27
+
+	PR 58006: fix kernel hang in pmap_page_clear_attributes().
+	[skrll, ticket #671]
 
