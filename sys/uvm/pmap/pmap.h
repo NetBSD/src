@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2022/11/03 18:55:07 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26.2.1 2024/04/19 09:18:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -296,8 +296,8 @@ extern pmap_segtab_t pmap_kern_segtab;
 
 bool	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
-bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
-void	pmap_page_set_attributes(struct vm_page_md *, u_int);
+bool	pmap_page_clear_attributes(struct vm_page_md *, u_long);
+void	pmap_page_set_attributes(struct vm_page_md *, u_long);
 void	pmap_pvlist_lock_init(size_t);
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 void	pmap_page_cache(struct vm_page_md *, bool);
