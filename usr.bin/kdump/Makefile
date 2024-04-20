@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2023/06/03 08:52:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2024/04/20 13:24:49 rillig Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
@@ -11,7 +11,7 @@ MAN=	kdump.1 ioctlprint.1
 SRCS=	kdump.c subr.c setemul.c siginfo.c
 .PATH:	${NETBSDSRCDIR}/usr.bin/ktrace
 CLEANFILES+=siginfo.c
-LINT_SUPPORTED=	no	# kdump-ioctl.c defines uio_t twice.
+NOLINT=	# kdump-ioctl.c defines uio_t twice.
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=-static
