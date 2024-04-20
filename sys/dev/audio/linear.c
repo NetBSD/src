@@ -1,4 +1,4 @@
-/*	$NetBSD: linear.c,v 1.4 2021/07/21 06:35:44 skrll Exp $	*/
+/*	$NetBSD: linear.c,v 1.5 2024/04/20 05:38:40 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.4 2021/07/21 06:35:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.5 2024/04/20 05:38:40 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -222,7 +222,7 @@ audio_internal_to_linear16(audio_filter_arg_t *arg)
 /*
  * audio_linear24_to_internal:
  *	This filter performs conversion from [US]LINEAR24/24{LE,BE} to
- *	internal format.  Since it's rerely used, it's size optimized.
+ *	internal format.  Since it's rarely used, it's size optimized.
  */
 void
 audio_linear24_to_internal(audio_filter_arg_t *arg)
