@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.467 2024/03/10 02:53:37 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.468 2024/04/20 10:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.467 2024/03/10 02:53:37 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.468 2024/04/20 10:18:55 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -901,7 +901,9 @@ JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 
 	run = GNode_ShouldExecute(job->node);
 
+	EvalStack_Push(job->node->name, NULL, NULL);
 	xcmd = Var_Subst(ucmd, job->node, VARE_WANTRES);
+	EvalStack_Pop();
 	/* TODO: handle errors */
 	xcmdStart = xcmd;
 
@@ -1028,7 +1030,9 @@ JobSaveCommands(Job *job)
 		 * variables such as .TARGET, .IMPSRC.  It is not intended to
 		 * expand the other variables as well; see deptgt-end.mk.
 		 */
+		EvalStack_Push(job->node->name, NULL, NULL);
 		expanded_cmd = Var_Subst(cmd, job->node, VARE_WANTRES);
+		EvalStack_Pop();
 		/* TODO: handle errors */
 		Lst_Append(&Targ_GetEndNode()->commands, expanded_cmd);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1101 2024/03/01 17:53:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1102 2024/04/20 10:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -137,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1101 2024/03/01 17:53:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1102 2024/04/20 10:18:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -258,6 +258,18 @@ typedef struct SepBuf {
 	char sep;
 } SepBuf;
 
+typedef struct {
+	const char *target;
+	const char *varname;
+	const char *expr;
+} EvalStackElement;
+
+typedef struct {
+	EvalStackElement *elems;
+	size_t len;
+	size_t cap;
+	Buffer details;
+} EvalStack;
 
 /* Whether we have replaced the original environ (which we cannot free). */
 char **savedEnv = NULL;
@@ -326,6 +338,58 @@ static const char VarEvalMode_Name[][32] = {
 	"eval-keep-dollar-and-undefined",
 };
 
+static EvalStack evalStack;
+
+
+void
+EvalStack_Push(const char *target, const char *expr, const char *varname)
+{
+	if (evalStack.len >= evalStack.cap) {
+		evalStack.cap = 16 + 2 * evalStack.cap;
+		evalStack.elems = bmake_realloc(evalStack.elems,
+		    evalStack.cap * sizeof(*evalStack.elems));
+	}
+	evalStack.elems[evalStack.len].target = target;
+	evalStack.elems[evalStack.len].expr = expr;
+	evalStack.elems[evalStack.len].varname = varname;
+	evalStack.len++;
+}
+
+void
+EvalStack_Pop(void)
+{
+	assert(evalStack.len > 0);
+	evalStack.len--;
+}
+
+const char *
+EvalStack_Details(void)
+{
+	size_t i;
+	Buffer *buf = &evalStack.details;
+
+
+	buf->len = 0;
+	for (i = 0; i < evalStack.len; i++) {
+		EvalStackElement *elem = evalStack.elems + i;
+		if (elem->target != NULL) {
+			Buf_AddStr(buf, "in target \"");
+			Buf_AddStr(buf, elem->target);
+			Buf_AddStr(buf, "\": ");
+		}
+		if (elem->expr != NULL) {
+			Buf_AddStr(buf, "while evaluating \"");
+			Buf_AddStr(buf, elem->expr);
+			Buf_AddStr(buf, "\": ");
+		}
+		if (elem->varname != NULL) {
+			Buf_AddStr(buf, "while evaluating variable \"");
+			Buf_AddStr(buf, elem->varname);
+			Buf_AddStr(buf, "\": ");
+		}
+	}
+	return buf->len > 0 ? buf->data : "";
+}
 
 static Var *
 VarNew(FStr name, const char *value,
@@ -2324,9 +2388,9 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	args.var = tvar.str;
 	if (strchr(args.var, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
-		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
+		    "In the :@ modifier, the variable name \"%s\" "
 		    "must not contain a dollar",
-		    expr->name, args.var);
+		    args.var);
 		return AMR_CLEANUP;
 	}
 
@@ -4503,6 +4567,11 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	 */
 	expr.value = FStr_InitRefer(v->val.data);
 
+	if (expr.name[0] != '\0')
+		EvalStack_Push(NULL, NULL, expr.name);
+	else
+		EvalStack_Push(NULL, start, NULL);
+
 	/*
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
@@ -4559,6 +4628,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		VarFreeShortLived(v);
 	}
 
+	EvalStack_Pop();
 	return expr.value;
 }
 
