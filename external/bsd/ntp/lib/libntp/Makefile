@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2024/04/19 16:04:28 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.35 2024/04/20 08:03:08 rillig Exp $
 
 LIBISPRIVATE=yes
 
@@ -86,18 +86,11 @@ ymd2yd.c
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
 # For MKREPRO, avoid using __DATE__ and __TIME__.
-# Instead, use the date and time from ${MKREPRO_TIMESTAMP}
 .if ${MKREPRO:Uno} == "yes"
-.if ${MKREPRO_TIMESTAMP:Uundefined} == "undefined"
-.error MKREPRO_TIMESTAMP is undefined with MKREPRO active
-.endif
-MKREPRO_DATE != env LC_ALL=C ${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%b %e %Y"
-MKREPRO_TIME != env LC_ALL=C ${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%T"
-.if ${MKREPRO_DATE} == "" || ${MKREPRO_TIME} == ""
-.error empty MKREPRO_DATE or MKREPRO_TIME
-.endif
-CPPFLAGS.ntp_calendar.c += -DMKREPRO_DATE=\"${MKREPRO_DATE:Q}\"
-CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
+MKREPRO_CPPFLAGS.ntp_calendar.c:= \
+	-DMKREPRO_DATE=\"${%b %e %Y:L:gmtime=${MKREPRO_TIMESTAMP}:Q}\" \
+	-DMKREPRO_TIME=\"${%T:L:gmtime=${MKREPRO_TIMESTAMP}:Q}\"
+CPPFLAGS.ntp_calendar.c += ${MKREPRO_CPPFLAGS.ntp_calendar.c}
 .endif
 
 COPTS.timetoa.c+=	${CC_WNO_FORMAT_TRUNCATION}
