@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2021/11/01 21:37:33 nia Exp $
+#	$NetBSD: Makefile,v 1.18 2024/04/20 13:24:49 rillig Exp $
 #
 
 NOFULLRELRO=	yes
@@ -8,7 +8,7 @@ NOFULLRELRO=	yes
 PROG=		rump_server
 SRCS=		rump_allserver.c
 NOMAN=		installed by ../rump_allserver
-LINT_SUPPORTED=	no	# LDADD contains -Wl,...
+NOLINT=		# LDADD contains -Wl,...
 
 LDADD+= \
     -Wl,--whole-archive \

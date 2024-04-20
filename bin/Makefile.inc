@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2021/10/09 21:06:31 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2024/04/20 13:24:48 rillig Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
@@ -10,6 +10,6 @@ BINDIR?=	/bin
 LDSTATIC?=	-static
 .endif
 
-.if ${MKLINT} != "no" && ${LINT_SUPPORTED:Uyes} == "yes"
+.if ${MKLINT} != "no" && !defined(NOLINT)
 realall: lint
 .endif
