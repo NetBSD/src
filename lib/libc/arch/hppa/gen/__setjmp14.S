@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.9 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.10 2024/04/20 14:09:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,12 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
+
 #include <machine/asm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.9 2020/05/05 06:20:55 skrll Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.10 2024/04/20 14:09:40 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,21 +56,21 @@ ENTRY(__setjmp14,0)
 	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
 
 	/* A sigcontext is at the beginning of our jmp_buf. */
-	stw	%r0, 4(%arg0)		; unused word (old style signal mask)
-	stw	%sp, 8(%arg0)		; sc.sc_sp = %sp
-	stw	%r0, 16(%arg0)		; sc.sc_ap = NULL
+	stw	%r0, _SC_MASK13(%arg0)		; unused word (old style signal mask)
+	stw	%sp, _SC_REGS_SP(%arg0)		; sc.sc_sp = %sp
+	stw	%r0, _SC_REGS_AP(%arg0)		; sc.sc_ap = NULL
 	mfsp	%sr0, %r1
-	stw	%r1, 20(%arg0)		; sc.sc_pcsqh = %sr0
-	stw	%rp, 24(%arg0)		; sc.sc_pcoqh = %rp
-	stw	%r1, 28(%arg0)		; sc.sc_pcsqh = %sr0
+	stw	%r1, _SC_REGS_PCSQH(%arg0)	; sc.sc_pcsqh = %sr0
+	stw	%rp, _SC_REGS_PCOQH(%arg0)	; sc.sc_pcoqh = %rp
+	stw	%r1, _SC_REGS_PCSQT(%arg0)	; sc.sc_pcsqt = %sr0
 	ldo	4(%rp), %r1
-	stw	%r1, 32(%arg0)		; sc.sc_pcoqt = %rp + 4
+	stw	%r1, _SC_REGS_PCOQT(%arg0)	; sc.sc_pcoqt = %rp + 4
 	ldil	L%PSW_MBS, %r1
 	ldo	R%PSW_MBS(%r1), %r1
-	stw	%r1, 36(%arg0)		; set sc.sc_ps
+	stw	%r1, _SC_REGS_PS(%arg0)		; set sc.sc_ps
 
 	/* We store all callee-saved registers after the sigcontext. */
-	ldo	56(%arg0), %r1
+	ldo	SIZEOF_SIGCONTEXT(%arg0), %r1
 	stwm	%r3, 4(%r1)
 	stwm	%r4, 4(%r1)
 	stwm	%r5, 4(%r1)
@@ -111,7 +113,7 @@ ENTRY(__setjmp14,0)
 	stw	%r1, 0(%arg0)		; sc.sc_onstack
 
 	/* Get the signal mask. */
-	ldo	40(%arg0), %arg2	; oset = &sc.sc_mask
+	ldo	_SC_MASK(%arg0), %arg2	; oset = &sc.sc_mask
 	copy	%r0, %arg1		; set = NULL
 	bl	__sigprocmask14, %rp
 	 copy	%r0, %arg0		; action = 0 <ignored>
