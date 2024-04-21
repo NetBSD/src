@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.30 2022/07/06 01:12:45 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.31 2024/04/21 03:02:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.30 2022/07/06 01:12:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.31 2024/04/21 03:02:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -496,7 +496,7 @@ drm_stat(struct file *fp, struct stat *st)
 	struct drm_file *const file = fp->f_data;
 	struct drm_minor *const dminor = file->minor;
 	const dev_t devno = makedev(cdevsw_lookup_major(&drm_cdevsw),
-	    64*dminor->type + dminor->index);
+	    dminor->index);
 
 	(void)memset(st, 0, sizeof(*st));
 
