@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2023/07/16 22:20:54 rjs Exp $
+# $NetBSD: Makefile,v 1.40 2024/04/21 00:23:23 maya Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -121,9 +121,11 @@ DRI_SOURCES.i965+= \
 	blorp.c \
 	blorp_blit.c \
 	blorp_clear.c \
+	brw_batch.c \
 	brw_binding_tables.c \
 	brw_blit.c \
 	brw_blorp.c \
+	brw_mipmap_tree.c \
 	brw_buffer_objects.c \
 	brw_buffers.c \
 	brw_bufmgr.c \
@@ -158,6 +160,7 @@ DRI_SOURCES.i965+= \
 	brw_eu_util.c \
 	brw_eu_validate.c \
 	brw_extensions.c \
+	brw_fbo.c \
 	brw_fs.cpp \
 	brw_fs_bank_conflicts.cpp \
 	brw_fs_cmod_propagation.cpp \
@@ -171,20 +174,22 @@ DRI_SOURCES.i965+= \
 	brw_fs_lower_regioning.cpp \
 	brw_fs_nir.cpp \
 	brw_fs_reg_allocate.cpp \
+	brw_ff_gs.c \
+	brw_formatquery.c \
 	brw_fs_register_coalesce.cpp \
 	brw_fs_saturate_propagation.cpp \
 	brw_fs_scoreboard.cpp \
 	brw_fs_sel_peephole.cpp \
 	brw_fs_validate.cpp \
 	brw_fs_visitor.cpp \
-	brw_ff_gs.c \
-	brw_formatquery.c \
 	brw_generate_mipmap.c \
 	brw_gs.c \
 	brw_gs_surface_state.c \
 	brw_interpolation_map.c \
 	brw_ir_performance.cpp \
+	brw_link.cpp \
 	brw_meta_util.c \
+	brw_mipmap_tree.c \
 	brw_misc_state.c \
 	brw_nir.c \
 	brw_nir_analyze_boolean_resolves.c \
@@ -204,6 +209,7 @@ DRI_SOURCES.i965+= \
 	brw_nir_rt.c \
 	brw_nir_tcs_workarounds.c \
 	brw_nir_trig_workarounds.c \
+	brw_nir_uniforms.cpp \
 	brw_object_purgeable.c \
 	brw_packed_float.c \
 	brw_performance_query.c \
@@ -277,6 +283,7 @@ DRI_SOURCES.i965+= \
 	gfx8_multisample_state.c \
 	hsw_queryobj.c \
 	hsw_sol.c \
+	intel_perf_metrics.c \
 	isl.c \
 	isl_aux_info.c \
 	isl_drm.c \
@@ -311,8 +318,9 @@ I965_INTEL_DEV_FILES = \
 	intel_device_info.c
 
 I965_INTEL_PERF_FILES = \
-	intel_pps_driver.cc \
-	intel_pps_perf.cc
+	intel_perf.c \
+	intel_perf_query.c \
+	intel_perf_mdapi.c
 
 INTEL_GENS_BLORP=	40 45 50 60 70 75 80 90 110
 
@@ -345,6 +353,11 @@ DRI_SOURCES.i965+=	i965_${_f}
 .for _f in ${I965_INTEL_DEV_FILES}
 BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/intel/dev/${_f} i965_${_f}
 DRI_SOURCES.i965+=	i965_${_f}
+.endfor
+.for _f in ${I965_INTEL_PERF_FILES}
+BUILDSYMLINKS+=			${X11SRCDIR.Mesa}/src/intel/perf/${_f} i965_${_f}
+DRI_SOURCES.i965+=		i965_${_f}
+CPPFLAGS.i965_${_f}+=	-I${X11SRCDIR.Mesa}/src/intel/perf
 .endfor
 
 .for _f in ${DRI_SOURCES.i965}
