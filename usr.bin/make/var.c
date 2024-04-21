@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1102 2024/04/20 10:18:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1103 2024/04/21 08:56:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -137,7 +137,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1102 2024/04/20 10:18:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1103 2024/04/21 08:56:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2515,6 +2515,26 @@ TryParseTime(const char **pp, time_t *out_time)
 	return true;
 }
 
+static bool
+Substring_ParseTime(Substring s, time_t *out_time)
+{
+	const char *p;
+	unsigned long n;
+
+	n = 0;
+	for (p = s.start; p != s.end && ch_isdigit(*p); p++) {
+		unsigned long next = 10 * n + ((unsigned)*p - '0');
+		if (next < n)
+			return false;
+		n = next;
+	}
+	if (p == s.start || p != s.end)
+		return false;
+
+	*out_time = (time_t)n;	/* ignore possible truncation for now */
+	return true;
+}
+
 /* :gmtime and :localtime */
 static ApplyModifierResult
 ApplyModifier_Time(const char **pp, ModChain *ch)
@@ -2537,8 +2557,7 @@ ApplyModifier_Time(const char **pp, ModChain *ch)
 			return AMR_CLEANUP;
 		if (ModChain_ShouldEval(ch)) {
 			Substring arg = LazyBuf_Get(&buf);
-			const char *arg_p = arg.start;
-			if (!TryParseTime(&arg_p, &t) || arg_p != arg.end) {
+			if (!Substring_ParseTime(arg, &t)) {
 				Parse_Error(PARSE_FATAL,
 				    "Invalid time value \"%.*s\"",
 				    (int)Substring_Length(arg), arg.start);
