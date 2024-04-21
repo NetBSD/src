@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1254 2024/04/02 22:56:50 charlotte Exp $
+# $NetBSD: GENERIC,v 1.1255 2024/04/21 14:11:12 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1254 $"
+#ident		"GENERIC-$Revision: 1.1255 $"
 
 maxusers	64		# estimated number of users
 
@@ -317,6 +317,7 @@ acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
 acpifan*	at acpi?		# ACPI Fan
+acpihed*	at acpi?		# ACPI Hardware Error Device
 acpilid*	at acpi?		# ACPI Lid Switch
 #acpipmtr*	at acpi?		# ACPI Power Meter (experimental)
 #acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
@@ -325,6 +326,7 @@ acpivga*	at acpi?		# ACPI Display Adapter
 acpiout*	at acpivga?		# ACPI Display Output Device
 acpiwdrt*	at acpi?		# ACPI Watchdog Resource Table
 acpiwmi*	at acpi?		# ACPI WMI Mapper
+apei*		at apeibus?		# ACPI Platform Error Interfaces
 
 # Mainboard devices
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
