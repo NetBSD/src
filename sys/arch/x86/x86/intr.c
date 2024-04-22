@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.167 2024/03/05 20:58:05 andvar Exp $	*/
+/*	$NetBSD: intr.c,v 1.168 2024/04/22 22:29:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,11 +133,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.167 2024/03/05 20:58:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.168 2024/04/22 22:29:28 andvar Exp $");
 
+#include "opt_acpi.h"
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
-#include "opt_acpi.h"
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1366,18 +1367,13 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if (NLAPIC > 0) || defined(MULTIPROCESSOR) || \
-    (NHYPERV > 0)
-	struct intrsource *isp;
-#endif
 #if NLAPIC > 0
+	struct intrsource *isp;
 	static int first = 1;
 #if defined(MULTIPROCESSOR)
 	int i;
 #endif
-#endif
 
-#if NLAPIC > 0
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
@@ -1404,7 +1400,7 @@ cpu_intr_init(struct cpu_info *ci)
 	for (i = 0; i < X86_NIPI; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
 		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
-#endif
+#endif /* MULTIPROCESSOR */
 
 #if NHYPERV > 0
 	if (hyperv_hypercall_enabled()) {
@@ -1418,8 +1414,8 @@ cpu_intr_init(struct cpu_info *ci)
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
 		    device_xname(ci->ci_dev), "Hyper-V hypercall");
 	}
-#endif
-#endif
+#endif /* NHYPERV > 0 */
+#endif /* NLAPIC > 0 */
 
 #if defined(__HAVE_PREEMPTION)
 	x86_init_preempt(ci);
