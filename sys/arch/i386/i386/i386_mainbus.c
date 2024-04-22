@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.6 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.6 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.7 2024/04/22 22:47:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,12 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.6 2021/08/07 16:18:55 thorpej Exp
 #include <arch/x86/pci/pci_bus_fixup.h>
 #if defined(PCI_ADDR_FIXUP)
 #include <arch/x86/pci/pci_addr_fixup.h>
-#endif
-#endif
-#ifdef __HAVE_PCI_MSI_MSIX
-#include <arch/x86/pci/msipic.h>
-#endif /* __HAVE_PCI_MSI_MSIX */
-#endif
+#endif /* PCI_ADDR_FIXUP */
+#endif /* PCI_BUS_FIXUP */
+#endif /* NPCI > 0 */
 
 void	i386_mainbus_childdetached(device_t, device_t);
 int	i386_mainbus_match(device_t, cfdata_t, void *);
@@ -178,7 +175,7 @@ i386_mainbus_childdetached(device_t self, device_t child)
 	if (sc->sc_pci == child)
 		sc->sc_pci = NULL;
 
-#if NPCI > 0
+#if NPCI > 0 && (defined(MPBIOS) || NACPICA > 0)
 	mp_pci_childdetached(self, child);
 #endif
 }
