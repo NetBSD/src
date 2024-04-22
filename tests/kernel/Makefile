@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.77 2023/10/17 13:51:52 rjs Exp $
+# $NetBSD: Makefile,v 1.78 2024/04/22 07:24:22 pho Exp $
 
 NOMAN=		# defined
 
@@ -18,6 +18,7 @@ TESTS_C+=	t_pty
 TESTS_C+=	t_memfd_create
 TESTS_C+=	t_mqueue
 TESTS_C+=	t_proccwd
+TESTS_C+=	t_signal_and_sp
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 TESTS_C+=	t_kauth_pr_47598
@@ -78,6 +79,11 @@ LDADD.t_rnd+=  -lrumpdev_rnd -lrumpdev ${LIBRUMPBASE}
 LDADD.t_timeleft+=	-lpthread
 
 CPPFLAGS+=	-D_KERNTYPES
+
+ARCH_INCS_DIR:=	${.PARSEDIR}/arch/${MACHINE_ARCH}
+.if exists(${ARCH_INCS_DIR}/stack_pointer.h)
+CPPFLAGS+=	-I${ARCH_INCS_DIR} -DHAVE_STACK_POINTER_H
+.endif
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
