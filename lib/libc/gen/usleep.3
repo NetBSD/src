@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.19 2010/04/29 17:29:56 jruoho Exp $
+.\"	$NetBSD: usleep.3,v 1.20 2024/04/22 21:02:18 jdolecek Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)usleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 29, 2010
+.Dd April 22, 2024
 .Dt USLEEP 3
 .Os
 .Sh NAME
@@ -42,6 +42,11 @@
 .Ft int
 .Fn usleep "useconds_t microseconds"
 .Sh DESCRIPTION
+.Bf -symbolic
+This interface is obsoleted by
+.Xr nanosleep 3 .
+.Ef
+.Pp
 The
 .Fn usleep
 function
@@ -53,13 +58,6 @@ action is to invoke a signal catching function or to terminate the
 process.
 The suspension time may be longer than requested due to the
 scheduling of other activity by the system.
-.Pp
-The
-.Fa microseconds
-argument must be less than 1,000,000.
-If the value of
-.Fa microseconds
-is 0, then the call has no effect.
 .Sh RETURN VALUES
 On successful completion,
 .Fn usleep
@@ -72,10 +70,9 @@ The
 .Fn usleep
 function may fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The
-.Fa microseconds
-interval specified 1,000,000 or more microseconds.
+.It Bq Er EINTR
+.Nm
+was interrupted by the delivery of a signal.
 .El
 .Sh SEE ALSO
 .Xr nanosleep 2 ,
