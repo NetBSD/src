@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.209 2023/07/16 19:55:43 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.210 2024/04/22 23:07:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.209 2023/07/16 19:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210 2024/04/22 23:07:47 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1134,6 +1134,7 @@ cpu_copy_trampoline(paddr_t pdir_pa)
 int
 mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
+#if NLAPIC > 0
 	int error;
 
 	/*
@@ -1149,7 +1150,6 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_JUMP);
 
-#if NLAPIC > 0
 	/*
 	 * "and the warm reset vector (DWORD based at 40:67) to point
 	 * to the AP startup code ..."
@@ -1159,7 +1159,6 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	dwordptr[1] = target >> 4;
 
 	memcpy((uint8_t *)cmos_data_mapping + 0x467, dwordptr, 4);
-#endif
 
 	if ((cpu_feature[0] & CPUID_APIC) == 0) {
 		aprint_error("mp_cpu_start: CPU does not have APIC\n");
@@ -1200,6 +1199,9 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	}
 
 	return 0;
+#else
+	return ENODEV;
+#endif /* NLAPIC > 0 */
 }
 
 void
