@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.46 2024/04/09 15:17:24 nia Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.47 2024/04/22 14:41:26 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -885,6 +885,9 @@ message set_base
 message set_base32
 {Basispaket f?r 32-Bit-Kompatibilit?t}
 
+message set_base64
+{Basispaket f?r 64-Bit-Kompatibilit?t}
+
 message set_system
 {Systemkonfiguration (/etc)}
 
@@ -962,6 +965,9 @@ message set_debug
 
 message set_debug32
 {Debug-Information (32-Bit)}
+
+message set_debug64
+{Debug-Information (64-Bit)}
 
 message set_xdebug
 {X11 Debug-Information}

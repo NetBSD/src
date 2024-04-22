@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.34 2024/04/09 15:17:21 nia Exp $
+#	$NetBSD: Makefile.bootimage,v 1.35 2024/04/22 14:41:24 nia Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -245,6 +245,10 @@ SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '
 SETS_DEFAULT=	modules base etc comp games gpufw man misc rescue tests text
 .if ${MKCOMPAT} != "no"
 SETS_DEFAULT+=	base32
+.endif
+.if ${MKCOMPAT} != "no" && \
+    (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
+SETS_DEFAULT+=	base64
 .endif
 .if ${MKHTML} != "no"
 SETS_DEFAULT+=	manhtml

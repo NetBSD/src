@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.47 2024/04/09 15:17:24 nia Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.48 2024/04/22 14:41:26 nia Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -816,6 +816,9 @@ message set_base
 message set_base32
 {Baza dla kompatybilno?ci 32-bitowej}
 
+message set_base64
+{Baza dla kompatybilno?ci 32-bitowej}
+
 message set_system
 {System (/etc)}
 
@@ -893,6 +896,9 @@ message set_debug
 
 message set_debug32
 {Symbole debugowania (32-bit)}
+
+message set_debug64
+{Symbole debugowania (64-bit)}
 
 message set_xdebug
 {Symbole debugowania X11}

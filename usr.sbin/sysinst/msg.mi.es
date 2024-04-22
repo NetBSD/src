@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.41 2024/04/09 15:17:24 nia Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.42 2024/04/22 14:41:26 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -844,6 +844,9 @@ message set_base
 message set_base32
 {Base de compatibilidad de 32 bits}
 
+message set_base64
+{Base de compatibilidad de 64 bits}
+
 message set_system
 {Sistema (/etc)}
 
@@ -921,6 +924,9 @@ message set_debug
 
 message set_debug32
 {Debug symbols (32-bit)}
+
+message set_debug64
+{Debug symbols (64-bit)}
 
 message set_xdebug
 {X11 debug symbols}
