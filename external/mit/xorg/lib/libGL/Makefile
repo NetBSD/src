@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2023/07/16 22:20:54 rjs Exp $
+#	$NetBSD: Makefile,v 1.35 2024/04/22 03:38:49 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -217,6 +217,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2 \
 		xcb-glx		${.CURDIR}/../libxcb/glx \
 		xcb-shm		${.CURDIR}/../libxcb/shm \
+		xcb-sync	${.CURDIR}/../libxcb/sync \
 		expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
 		m		${NETBSDSRCDIR}/lib/libm \
 		pthread		${NETBSDSRCDIR}/lib/libpthread
