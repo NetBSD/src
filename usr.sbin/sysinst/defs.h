@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.91 2024/04/09 15:17:24 nia Exp $	*/
+/*	$NetBSD: defs.h,v 1.92 2024/04/22 14:41:26 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,6 +141,7 @@ enum {
     /* System sets */
     SET_BASE,		/* base */
     SET_BASE32,		/* base 32-bit compat libs */
+    SET_BASE64,		/* base 64-bit compat libs */
     SET_ETC,		/* /etc */
     SET_COMPILER,	/* compiler tools */
     SET_DTB,		/* devicetree hardware descriptions */
@@ -179,6 +180,7 @@ enum {
     /* Debug sets */
     SET_DEBUG,
     SET_DEBUG32,
+    SET_DEBUG64,
     SET_X11_DEBUG,
 
     SET_LAST,
@@ -204,7 +206,7 @@ enum {
 #endif
 #define SET_CORE WITH_MODULES SET_BASE, WITH_DTB SET_GPUFW, SET_ETC
 /* All system sets */
-#define SET_SYSTEM SET_CORE, SET_BASE32, SET_COMPILER, SET_GAMES, \
+#define SET_SYSTEM SET_CORE, SET_BASE32, SET_BASE64, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MAN_PAGES_HTML, \
                     SET_MISC, SET_RESCUE, \
 		    SET_TESTS, SET_TEXT_TOOLS

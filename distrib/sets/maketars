@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.101 2024/04/09 15:17:22 nia Exp $
+# $NetBSD: maketars,v 1.102 2024/04/22 14:41:25 nia Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
 #	[-M metalog] [-N etcdir] [-F setlistsdir] [-d destdir]
 #	[-t tardir] [-U] [setname ...]
 #
-# The default sets are "base base32 comp debug debug32 dtb etc games gpufw
-# man manhtml misc rescue tests text"
+# The default sets are "base base32 base64 comp debug debug32 debug64 dtb
+# etc games gpufw man manhtml misc rescue tests text"
 # The X sets are "xbase xcomp xdebug xetc xfont xserver"
 #
 # If '-i installdir' is given, copy the given sets to installdir

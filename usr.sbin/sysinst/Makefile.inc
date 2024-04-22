@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2024/04/09 15:17:24 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2024/04/22 14:41:26 nia Exp $
 #
 # Makefile for sysinst
 
@@ -79,6 +79,20 @@ CPPFLAGS+=	-DUSING_PAXASTAR
 
 .if ${MKCOMPAT:Uno} != "no"
 CPPFLAGS+=	-DHAVE_BASE32
+.endif
+
+.if ${MKCOMPAT:Uno} != "no" && \
+    (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
+CPPFLAGS+=	-DHAVE_BASE64
+.endif
+
+.if ${MKCOMPAT:Uno} != "no" && ${MKDEBUG:Uno} != "no"
+CPPFLAGS+=	-DHAVE_DEBUG32
+.endif
+
+.if ${MKCOMPAT:Uno} != "no" && ${MKDEBUG:Uno} != "no" && \
+    (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
+CPPFLAGS+=	-DHAVE_DEBUG64
 .endif
 
 .if ${MKDTB:Uno} != "no"
