@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2019/09/23 13:42:33 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2024/04/23 20:37:08 nia Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
@@ -10,6 +10,8 @@
 CDBASE=		i386cd			# gives ${CDBASE}.iso
 CDRELEASE=	true                    # include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
+CDRELEASE_NOHTML=	true
+CDRELEASE_NOTESTS=	true
 CDBUILDEXTRA+=	boot.cfg		# Add boot.cfg file
 CLEANFILES+=	boot.cfg
 

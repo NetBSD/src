@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.45 2024/04/23 12:25:57 nia Exp $
+#	$NetBSD: Makefile.bootcd,v 1.46 2024/04/23 20:37:07 nia Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -58,6 +58,7 @@ CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
 .if defined(CDRELEASE_NOCOMPAT)
 .  for sufx in tgz tar.xz
 CDRELEASE_EXCLUDE+=	-s ',./binary/sets/base32.${sufx},,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/base64.${sufx},,gp'
 .  endfor
 .endif
 .if defined(CDRELEASE_NODEBUG)
@@ -66,6 +67,16 @@ CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug.${sufx},,gp'
 CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug32.${sufx},,gp'
 CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug64.${sufx},,gp'
 CDRELEASE_EXCLUDE+=	-s ',./binary/sets/xdebug.${sufx},,gp'
+.  endfor
+.endif
+.if defined(CDRELEASE_NOHTML)
+.  for sufx in tgz tar.xz
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/manhtml.${sufx},,gp'
+.  endfor
+.endif
+.if defined(CDRELEASE_NOTESTS)
+.  for sufx in tgz tar.xz
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/tests.${sufx},,gp'
 .  endfor
 .endif
 .if !defined(CDRELEASE_LIVEIMAGE)
