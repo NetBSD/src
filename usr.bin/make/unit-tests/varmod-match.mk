@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.21 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.22 2024/04/23 22:51:28 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -33,22 +33,22 @@
 # The pattern character '?' matches exactly 1 character, the pattern character
 # '*' matches 0 or more characters.  The whole pattern matches all words that
 # start with 's' and have 3 or more characters.
-.if ${One Two Three Four five six seven:L:Ms??*} != "six seven"
+.if ${One Two Three Four five six seven so s:L:Ms??*} != "six seven"
 .  error
 .endif
 
-# Ensure that a pattern without placeholders only matches itself.
+# A pattern without placeholders only matches itself.
 .if ${a aa aaa b ba baa bab:L:Ma} != "a"
 .  error
 .endif
 
-# Ensure that a pattern that ends with '*' is properly anchored at the
+# A pattern that ends with '*' is anchored at the
 # beginning.
 .if ${a aa aaa b ba baa bab:L:Ma*} != "a aa aaa"
 .  error
 .endif
 
-# Ensure that a pattern that starts with '*' is properly anchored at the end.
+# A pattern that starts with '*' is anchored at the end.
 .if ${a aa aaa b ba baa bab:L:M*a} != "a aa aaa ba baa"
 .  error
 .endif
@@ -257,8 +257,9 @@ ${:U*}=		asterisk
 .  error
 .endif
 
-# Without the modifier ':tW', the string is split into words.  All whitespace
-# around and between the words is normalized to a single space.
+# Without the modifier ':tW', the string is split into words.  Whitespace
+# around the words is discarded, and whitespace between the words is
+# normalized to a single space.
 .if ${   plain    string   :L:M*} != "plain string"
 .  error
 .endif
@@ -372,9 +373,16 @@ WORDS=		[x- x x- y yyyyy
 
 # Before var.c 1.1031 from 2022-08-24, the following expressions caused an
 # out-of-bounds read beyond the indirect ':M' modifiers.
-.if ${:U:${:UM\\}}		# The ':M' pattern need not be unescaped, the
-.  error			# resulting pattern is '\', it never matches
-.endif				# anything.
-.if ${:U:${:UM\\\:\\}}		# The ':M' pattern must be unescaped, the
-.  error			# resulting pattern is ':\', it never matches
-.endif				# anything.
+#
+# The argument to the inner ':U' is unescaped to 'M\'.
+# This 'M\' becomes an # indirect modifier ':M' with the pattern '\'.
+# The pattern '\' never matches.
+.if ${:U:${:UM\\}}
+.  error
+.endif
+# The argument to the inner ':U' is unescaped to 'M\:\'.
+# This 'M\:\' becomes an indirect modifier ':M' with the pattern ':\'.
+# The pattern ':\' never matches.
+.if ${:U:${:UM\\\:\\}}
+.  error
+.endif

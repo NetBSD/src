@@ -1,6 +1,6 @@
 : undefined 
-make: in target "unclosed-variable": Unclosed variable "UNCLOSED"
-: unclosed-variable 
+make: in target "unclosed-expression": Unclosed variable "UNCLOSED"
+: unclosed-expression 
 make: Unclosed expression, expecting '}' for "UNCLOSED"
 : unclosed-modifier 
 make: in target "unknown-modifier": while evaluating variable "UNKNOWN": Unknown modifier "Z"

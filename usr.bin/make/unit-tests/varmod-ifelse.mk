@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.27 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.28 2024/04/23 22:51:28 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -294,7 +294,7 @@ INDIRECT_COND2=	$${DELAYED} == "two"
 
 
 # In the modifier parts for the 'then' and 'else' branches, subexpressions are
-# parsed in by inspecting the actual modifiers.  In 2008, 2015, 2020, 2022 and
+# parsed by inspecting the actual modifiers.  In 2008, 2015, 2020, 2022 and
 # 2023, the exact parsing algorithm switched a few times, counting balanced
 # braces instead of proper subexpressions, which meant that unbalanced braces
 # were parsed differently, depending on whether the branch was active or not.
