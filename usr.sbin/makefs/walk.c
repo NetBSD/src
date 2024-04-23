@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.35 2024/04/23 22:12:48 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.36 2024/04/23 22:18:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.35 2024/04/23 22:12:48 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.36 2024/04/23 22:18:56 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -73,16 +73,17 @@ static	fsinode	*link_check(fsinode *);
  *	as compared by `strcmp()`.
  */
 static int
-fsnode_cmp (const void *_left, const void *_right)
+fsnode_cmp(const void *vleft, const void *vright)
 {
-	const fsnode * const left  = *(const fsnode * const *)_left;
-	const fsnode * const right = *(const fsnode * const *)_right;
+	const fsnode * const *left  = vleft;
+	const fsnode * const *right = vright;
+	const char *lname = (*left)->name, *rname = (*right)->name;
 
-	if (strcmp (left->name, ".") == 0)
+	if (strcmp(lname, ".") == 0)
 		return -1;
-	if (strcmp (right->name, ".") == 0)
+	if (strcmp(rname, ".") == 0)
 		return 1;
-	return strcmp (left->name, right->name);
+	return strcmp(lname, rname);
 }
 
 /*
@@ -249,14 +250,14 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 				cur->inode = curino;
 				cur->inode->nlink++;
 				if (debug & DEBUG_WALK_DIR_LINKCHECK)
-					printf("link_check: found [%llu, %llu]\n",
-					    (unsigned long long)curino->st.st_dev,
-					    (unsigned long long)curino->st.st_ino);
+					printf("link_check: found [%ju, %ju]\n",
+					    (uintmax_t)curino->st.st_dev,
+					    (uintmax_t)curino->st.st_ino);
 			}
 		}
 		if (S_ISLNK(cur->type)) {
 			char	slink[PATH_MAX+1];
-			int	llen;
+			ssize_t	llen;
 
 			llen = readlink(path, slink, sizeof(slink) - 1);
 			if (llen == -1)
@@ -594,9 +595,9 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 	}
 		/* XXX: ignoring F_NLINK for now */
 	if (specnode->flags & F_SIZE) {
-		ASEPRINT("size", "%lld",
-		    (long long)dirnode->inode->st.st_size,
-		    (long long)specnode->st_size);
+		ASEPRINT("size", "%jd",
+		    (intmax_t)dirnode->inode->st.st_size,
+		    (intmax_t)specnode->st_size);
 		dirnode->inode->st.st_size = specnode->st_size;
 	}
 	if (specnode->flags & F_SLINK) {
@@ -629,13 +630,13 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 		ASEPRINT("flags", "%#lX",
 		    (unsigned long)dirnode->inode->st.st_flags,
 		    (unsigned long)specnode->st_flags);
-		dirnode->inode->st.st_flags = specnode->st_flags;
+		dirnode->inode->st.st_flags = (unsigned int)specnode->st_flags;
 	}
 #endif
 	if (specnode->flags & F_DEV) {
-		ASEPRINT("rdev", "%#llx",
-		    (unsigned long long)dirnode->inode->st.st_rdev,
-		    (unsigned long long)specnode->st_rdev);
+		ASEPRINT("rdev", "%#jx",
+		    (uintmax_t)dirnode->inode->st.st_rdev,
+		    (uintmax_t)specnode->st_rdev);
 		dirnode->inode->st.st_rdev = specnode->st_rdev;
 	}
 #undef ASEPRINT
@@ -712,16 +713,16 @@ link_check(fsinode *entry)
 	static struct entry {
 		fsinode *data;
 	} *htable;
-	static int htshift;  /* log(allocated size) */
-	static int htmask;   /* allocated size - 1 */
-	static int htused;   /* 2*number of insertions */
-	int h, h2;
+	static size_t htshift;  /* log(allocated size) */
+	static size_t htmask;   /* allocated size - 1 */
+	static size_t htused;   /* 2*number of insertions */
+	size_t h, h2;
 	uint64_t tmp;
 	/* this constant is (1<<64)/((1+sqrt(5))/2)
 	 * aka (word size)/(golden ratio)
 	 */
 	const uint64_t HTCONST = 11400714819323198485ULL;
-	const int HTBITS = 64;
+	const size_t HTBITS = 64;
 
 	/* Never store zero in hashtable */
 	assert(entry);
@@ -742,8 +743,7 @@ link_check(fsinode *entry)
 		htable = ecalloc(htmask+1, sizeof(*htable));
 		/* populate newly allocated hashtable */
 		if (ohtable) {
-			int i;
-			for (i = 0; i <= htmask>>1; i++)
+			for (size_t i = 0; i <= htmask>>1; i++)
 				if (ohtable[i].data)
 					link_check(ohtable[i].data);
 			free(ohtable);
