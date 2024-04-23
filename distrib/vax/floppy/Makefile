@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/02/11 03:07:06 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2024/04/23 22:00:37 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,7 +29,10 @@ boot.vax: ${DESTDIR}/usr/mdec/boot
 
 ${IMAGE}: ${IMAGEDEPENDS}
 	cat ${XXBOOT} > ${IMAGE}.tmp
-	${TOOL_PAX} ${PAX_TIMESTAMP} -O -w -x ustar boot.vax netbsd.gz | dd of=${IMAGE}.tmp seek=16
+	(echo "./boot.vax type=file uname=root gname=wheel mode=0755"; \
+	 echo "./netbsd.gz type=file uname=root gname=wheel mode=0644") | \
+		${TOOL_PAX} ${PAX_TIMESTAMP} -O -w -x ustar -M | \
+		dd of=${IMAGE}.tmp seek=16
 	dd if=${IMAGE}.tmp of=${IMAGE} bs=${IMAGESIZE} conv=sync
 
 release: check_RELEASEDIR .WAIT ${IMAGE}
