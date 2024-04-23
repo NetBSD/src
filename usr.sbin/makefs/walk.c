@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.33 2023/12/28 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: walk.c,v 1.34 2024/04/23 22:12:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.33 2023/12/28 12:13:55 tsutsui Exp $");
+__RCSID("$NetBSD: walk.c,v 1.34 2024/04/23 22:12:16 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -66,6 +66,24 @@ static	fsnode	*create_fsnode(const char *, const char *, const char *,
 			       struct stat *);
 static	fsinode	*link_check(fsinode *);
 
+/*
+ * fsnode_cmp --
+ *	This function is used by `qsort` so sort one directory's
+ *	entries.  `.` is always first, sollowed by anything else
+ *	as compared by `strcmp()`.
+ */
+static int
+fsnode_cmp (const void *_left, const void *_right)
+{
+	const fsnode * const left  = *(const fsnode * const *)_left;
+	const fsnode * const right = *(const fsnode * const *)_right;
+
+	if (strcmp (left->name, ".") == 0)
+		return -1;
+	if (strcmp (right->name, ".") == 0)
+		return 1;
+	return strcmp (left->name, right->name);
+}
 
 /*
  * walk_dir --
@@ -86,6 +104,9 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 	struct stat	stbuf;
 	char		*name, *rp;
 	int		dot, len;
+
+	fsnode **list, **listptr;
+	int num = 0;
 
 	assert(root != NULL);
 	assert(dir != NULL);
@@ -241,7 +262,36 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 			cur->first = first;
 	if (closedir(dirp) == -1)
 		err(EXIT_FAILURE, "Can't closedir `%s/%s'", root, dir);
-	return (first);
+
+	/*
+	 * Sort entries.
+	 */
+	/* Create a plain list: Count, alloc, add.  */
+	for (fsnode *tmp = first; tmp; tmp = tmp->next) {
+		num++;
+		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
+			printf ("pre sort: %s %s %s\n", root, dir, tmp->name);
+	}
+	list = listptr = ecalloc (num, sizeof (*list));
+	for (fsnode *tmp = first; tmp; tmp = tmp->next)
+		*listptr++ = tmp;
+	/* Sort plain list.  */
+	qsort (list, num, sizeof (*list), &fsnode_cmp);
+	/* Rewire.  */
+	for (int i = 0; i < num - 1; ++i)
+		list[i]->next = list[i+1];
+	list[num - 1]->next = NULL;
+	first = list[0];
+	/* Check `first` to be ".".  */
+	assert (strcmp (first->name, ".") == 0);
+	/* Free.  */
+	free (list);
+	/* Dump sorted state.  */
+	if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
+		for (fsnode *tmp = first; tmp; tmp = tmp->next)
+			printf ("post sort: %s %s %s\n", root, dir, tmp->name);
+
+	return first;
 }
 
 static fsnode *
