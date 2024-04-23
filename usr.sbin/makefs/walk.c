@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.34 2024/04/23 22:12:16 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.35 2024/04/23 22:12:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.34 2024/04/23 22:12:16 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.35 2024/04/23 22:12:48 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -154,6 +154,15 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 		} else {
 			if (lstat(path, &stbuf) == -1)
 				err(EXIT_FAILURE, "Can't lstat `%s'", path);
+			/* As symlink permission bits vary between filesystems
+			   (ie. 0755 on FFS/NetBSD, 0777 for ext[234]/Linux),
+			   force them to 0755.  */
+			if (S_ISLNK(stbuf.st_mode)) {
+				stbuf.st_mode &= ~(S_IRWXU | S_IRWXG | S_IRWXO);
+				stbuf.st_mode |= S_IRWXU
+				                 | S_IRGRP | S_IXGRP
+				                 | S_IROTH | S_IXOTH;
+			}
 		}
 #ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
