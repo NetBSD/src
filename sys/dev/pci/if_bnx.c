@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.113 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.114 2024/04/23 15:34:07 hans Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.113 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.114 2024/04/23 15:34:07 hans Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5667,7 +5667,7 @@ bnx_stats_update(struct bnx_softc *sc)
 	struct statistics_block	*stats;
 
 	DBPRINT(sc, BNX_EXCESSIVE, "Entering %s()\n", __func__);
-	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0, BNX_STATUS_BLK_SZ,
+	bus_dmamap_sync(sc->bnx_dmatag, sc->stats_map, 0, BNX_STATS_BLK_SZ,
 	    BUS_DMASYNC_POSTREAD);
 
 	stats = (struct statistics_block *)sc->stats_block;
@@ -6257,7 +6257,7 @@ void
 bnx_dump_stats_block(struct bnx_softc *sc)
 {
 	struct statistics_block	*sblk;
-	bus_dmamap_sync(sc->bnx_dmatag, sc->status_map, 0, BNX_STATUS_BLK_SZ,
+	bus_dmamap_sync(sc->bnx_dmatag, sc->stats_map, 0, BNX_STATS_BLK_SZ,
 	    BUS_DMASYNC_POSTREAD);
 
 	sblk = sc->stats_block;
