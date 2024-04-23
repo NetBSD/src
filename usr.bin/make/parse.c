@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.720 2024/04/20 10:18:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.721 2024/04/23 22:51:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.720 2024/04/20 10:18:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.721 2024/04/23 22:51:28 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1622,10 +1622,10 @@ ParseDependencySources(char *p, GNodeType targetAttr,
  * Transformation rules such as '.c.o' are also handled here, see
  * Suff_AddTransform.
  *
- * Upon return, the value of the line is unspecified.
+ * Upon return, the value of expandedLine is unspecified.
  */
 static void
-ParseDependency(char *line, const char *unexpanded_line)
+ParseDependency(char *expandedLine, const char *unexpandedLine)
 {
 	char *p;
 	SearchPathList *paths;	/* search paths to alter when parsing a list
@@ -1636,14 +1636,14 @@ ParseDependency(char *line, const char *unexpanded_line)
 				 * vice versa */
 	GNodeType op;
 
-	DEBUG1(PARSE, "ParseDependency(%s)\n", line);
-	p = line;
+	DEBUG1(PARSE, "ParseDependency(%s)\n", expandedLine);
+	p = expandedLine;
 	paths = NULL;
 	targetAttr = OP_NONE;
 	special = SP_NOT;
 
-	if (!ParseDependencyTargets(&p, line, &special, &targetAttr, &paths,
-	    unexpanded_line))
+	if (!ParseDependencyTargets(&p, expandedLine, &special, &targetAttr,
+	    &paths, unexpandedLine))
 		goto out;
 
 	if (!Lst_IsEmpty(targets))
@@ -1651,7 +1651,7 @@ ParseDependency(char *line, const char *unexpanded_line)
 
 	op = ParseDependencyOp(&p);
 	if (op == OP_NONE) {
-		InvalidLineType(line, unexpanded_line);
+		InvalidLineType(expandedLine, unexpandedLine);
 		goto out;
 	}
 	ApplyDependencyOperator(op);

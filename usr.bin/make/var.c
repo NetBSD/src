@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1104 2024/04/21 21:59:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1105 2024/04/23 22:51:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -81,8 +81,7 @@
  *	Var_End		Clean up the module.
  *
  *	Var_Set
- *	Var_SetExpand
- *			Set the value of the variable, creating it if
+ *	Var_SetExpand	Set the value of the variable, creating it if
  *			necessary.
  *
  *	Var_Append
@@ -102,8 +101,7 @@
  *
  *	Var_Parse	Parse an expression such as ${VAR:Mpattern}.
  *
- *	Var_Delete
- *			Delete a variable.
+ *	Var_Delete	Delete a variable.
  *
  *	Var_ReexportVars
  *			Export some or even all variables to the environment
@@ -118,9 +116,6 @@
  *	Var_Stats	Print out hashing statistics if in -dh mode.
  *
  *	Var_Dump	Print out all variables defined in the given scope.
- *
- * XXX: There's a lot of almost duplicate code in these functions that only
- *  differs in subtle details that are not mentioned in the manual page.
  */
 
 #include <sys/stat.h>
@@ -137,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1104 2024/04/21 21:59:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1105 2024/04/23 22:51:28 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -147,7 +142,7 @@ MAKE_RCSID("$NetBSD: var.c,v 1.1104 2024/04/21 21:59:48 rillig Exp $");
  * There are 3 kinds of variables: scope variables, environment variables,
  * undefined variables.
  *
- * Scope variables are stored in a GNode.scope.  The only way to undefine
+ * Scope variables are stored in GNode.vars.  The only way to undefine
  * a scope variable is using the .undef directive.  In particular, it must
  * not be possible to undefine a variable during the evaluation of an
  * expression, or Var.name might point nowhere.  (There is another,
@@ -182,7 +177,7 @@ typedef struct Var {
 
 	/*
 	 * The variable comes from the environment.
-	 * Appending to its value moves the variable to the global scope.
+	 * Appending to its value depends on the scope, see var-op-append.mk.
 	 */
 	bool fromEnvironment:1;
 
@@ -485,11 +480,8 @@ VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 	}
 
 	if (var == NULL) {
-		FStr envName;
-		const char *envValue;
-
-		envName = Substring_Str(name);
-		envValue = getenv(envName.str);
+		FStr envName = Substring_Str(name);
+		const char *envValue = getenv(envName.str);
 		if (envValue != NULL)
 			return VarNew(envName, envValue, true, true, false);
 		FStr_Done(&envName);
@@ -1004,9 +996,10 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 	if (v == NULL) {
 		if (scope == SCOPE_CMDLINE && !(flags & VAR_SET_NO_EXPORT)) {
 			/*
-			 * This var would normally prevent the same name being
-			 * added to SCOPE_GLOBAL, so delete it from there if
-			 * needed. Otherwise -V name may show the wrong value.
+			 * This variable would normally prevent the same name
+			 * being added to SCOPE_GLOBAL, so delete it from
+			 * there if needed. Otherwise -V name may show the
+			 * wrong value.
 			 *
 			 * See ExistsInCmdline.
 			 */
@@ -4716,10 +4709,9 @@ VarSubstPlain(const char **pp, Buffer *res)
  * given string.
  *
  * Input:
- *	str		The string in which the expressions are
- *			expanded.
- *	scope		The scope in which to start searching for
- *			variables.  The other scopes are searched as well.
+ *	str		The string in which the expressions are expanded.
+ *	scope		The scope in which to start searching for variables.
+ *			The other scopes are searched as well.
  *	emode		The mode for parsing or evaluating subexpressions.
  */
 char *
