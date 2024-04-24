@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.38 2024/04/24 14:23:37 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.39 2024/04/24 21:59:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.38 2024/04/24 14:23:37 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.39 2024/04/24 21:59:39 rillig Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -93,7 +93,6 @@ fsnode_sort(fsnode *first, const char *root, const char *dir)
 	size_t num = 0;
 
 	for (fsnode *tmp = first; tmp; tmp = tmp->next, num++) {
-		num++;
 		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
 			printf("%s: pre sort: %s %s %s\n",
 			    __func__, root, dir, tmp->name);
@@ -103,7 +102,7 @@ fsnode_sort(fsnode *first, const char *root, const char *dir)
 	for (fsnode *tmp = first; tmp; tmp = tmp->next)
 		*listptr++ = tmp;
 
-	qsort (list, num, sizeof(*list), fsnode_cmp);
+	qsort(list, num, sizeof(*list), fsnode_cmp);
 
 	for (size_t i = 0; i < num - 1; ++i)
 		list[i]->next = list[i + 1];
@@ -562,7 +561,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 			if (curfsnode->type != S_IFDIR)
 				errx(EXIT_FAILURE,
 				    "`%s' is not a directory", path);
-			assert (curfsnode->child != NULL);
+			assert(curfsnode->child != NULL);
 			apply_specdir(path, curnode, curfsnode->child, speconly);
 		}
 	}
@@ -676,14 +675,14 @@ dump_fsnodes(fsnode *root)
 			assert(cur->symlink != NULL);
 			printf(" -> %s", cur->symlink);
 		} else {
-			assert (cur->symlink == NULL);
+			assert(cur->symlink == NULL);
 		}
 		if (cur->inode->nlink > 1)
 			printf(", nlinks=%d", cur->inode->nlink);
 		putchar('\n');
 
 		if (cur->child) {
-			assert (cur->type == S_IFDIR);
+			assert(cur->type == S_IFDIR);
 			dump_fsnodes(cur->child);
 		}
 	}
