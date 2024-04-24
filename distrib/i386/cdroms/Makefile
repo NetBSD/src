@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2007/03/06 21:52:45 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5 2024/04/24 11:29:34 nia Exp $
 
 SUBDIR=
 SUBDIR+=	bootcd
 SUBDIR+=	bootcd-com
+SUBDIR+=	installdvd
 SUBDIR+=	installcd
 
 TARGETS+=       release iso_image
