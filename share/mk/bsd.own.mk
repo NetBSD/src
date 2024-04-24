@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1368 2024/04/23 03:25:39 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1369 2024/04/24 05:20:35 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1607,7 +1607,6 @@ ${var}?= no
 # format if USE_PIGZGZIP is enabled.
 .if ${USE_PIGZGZIP} == "no" && \
     (${MACHINE} == "amd64" || \
-     ${MACHINE} == "sparc64" || \
      ${MACHINE_ARCH:Maarch64*})
 USE_XZ_SETS?= yes
 .else
