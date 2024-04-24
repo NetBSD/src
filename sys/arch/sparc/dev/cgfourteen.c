@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.96 2023/12/20 05:33:18 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.97 2024/04/24 11:49:58 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1072,22 +1072,28 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
 			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL);
 			sc->sc_depth = 8;
-			/* everything is CLUT1 */
-			for (i = 0; i < CG14_CLUT_SIZE; i++)
-			     sc->sc_xlut->xlut_lut[i] = 0;
+			break;
+		case 16:
+			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL_PIXMODE_16 | CG14_MCTL_POWERCTL);
+			sc->sc_depth = 16;
 			break;
 		case 32:
 			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
 			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
 			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL);
 			sc->sc_depth = 32;
-			for (i = 0; i < CG14_CLUT_SIZE; i++)
-			     sc->sc_xlut->xlut_lut[i] = 0;
 			break;
 		default:
 			printf("%s: can't change to depth %d\n",
 			    device_xname(sc->sc_dev), depth);
+			return;
 	}
+	/* everything is CLUT1 */
+	for (i = 0; i < CG14_CLUT_SIZE; i++)
+	     sc->sc_xlut->xlut_lut[i] = 0;
+
 }
 
 static void
@@ -1432,7 +1438,7 @@ cg14_bitblt_gc(void *cookie, int xs, int ys, int xd, int yd,
 
 	saddr = sc->sc_fb_paddr + xs + stride * ys;
 	daddr = sc->sc_fb_paddr + xd + stride * yd;
-
+		
 	if (saddr & 3) {
 		swi += saddr & 3;
 		dreg += saddr & 3;
