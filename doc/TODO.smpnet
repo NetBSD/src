@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.47 2022/08/14 10:13:06 nia Exp $
+$NetBSD: TODO.smpnet,v 1.48 2024/04/24 06:44:18 nia Exp $
 
 MP-safe components
 ==================
@@ -10,6 +10,7 @@ kernel option.  Some components scale up and some don't.
    - aq(4)
    - bcmgenet(4)
    - bge(4)
+   - ena(4)
    - iavf(4)
    - ixg(4)
    - ixl(4)
