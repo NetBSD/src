@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.34 2022/09/15 11:35:06 martin Exp $ */
+/* $NetBSD: extern.h,v 1.35 2024/04/24 15:46:20 nia Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -314,6 +314,7 @@ void psecs(long);
 void Free(void *);
 void * Malloc(size_t);
 void *Realloc(void *, size_t);
+void *Reallocarray(void *, size_t, size_t);
 void *Calloc(size_t, size_t);
 
 /*
