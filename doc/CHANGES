@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3049 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3050 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -336,3 +336,15 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	sysinst(8): Split compatibility libraries into separate sets,
 		base32 and debug32. Split HTML man pages into new manhtml
 		set.  [nia 20240410]
+	amd64: Support EFI as well as BIOS boot in the "live" USB image.
+		This is not the regular installation image, which already
+		supports EFI.  [maya 20240413]
+	uftdi(4): Add support for a range of "Brainboxes" USB serial
+		adapters, from Cameron Williams.  [maya 20240417]
+	x86: Enable ACPI Platform Error Interface support in the GENERIC
+		kernels.  [riastradh 20240421]
+	mips64el, mips64eb: Create "base64" and "debug64" sets that contain
+		the N64 libraries.  [nia 20240422]
+	x86, sparc64: Create "DVD" ISOs that contain all the sets excluded
+		from the normal ISOs for size reasons - also useful on
+		virtual machines.  [nia 20240424]
