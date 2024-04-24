@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.19 2022/05/27 17:04:16 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.20 2024/04/24 10:35:13 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -217,7 +217,7 @@ Color
   BorderTileBackground  "steelblue"
   BorderTileForeground  "steelblue"
 
-  DefaultBackground     "grey70"
+  DefaultBackground     "lavender"
   DefaultForeground     "black"
 
   TitleBackground       "lavender"
@@ -225,13 +225,13 @@ Color
 
   MenuBackground        "lavender"
   MenuForeground        "black"
-  MenuTitleBackground   "darkorange2"
+  MenuTitleBackground   "darkorange3"
   MenuTitleForeground   "black"
   MenuShadowColor 	"gray15"
 
-  IconBackground        "black"
-  IconForeground        "white"
-  IconBorderColor       "gray45"
+  IconBackground        "lavender"
+  IconForeground        "black"
+  IconBorderColor       "steelblue"
 
   IconManagerBackground "lavender"
   IconManagerForeground "black"
