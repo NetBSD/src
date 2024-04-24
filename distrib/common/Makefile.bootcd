@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.46 2024/04/23 20:37:07 nia Exp $
+#	$NetBSD: Makefile.bootcd,v 1.47 2024/04/24 11:29:34 nia Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -123,6 +123,8 @@ ECHO?=		echo
 
 .if ${CDRELEASE} == false
 CDIMAGE=	${CDBASE}.iso
+.elif ${CDBASE:M*dvd}
+CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/dvd$//}-dvd.iso
 .else
 CDIMAGE=	NetBSD-${DISTRIBVER}-${CDBASE:S/cd$//}.iso
 .endif
