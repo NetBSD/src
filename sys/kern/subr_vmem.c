@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.115 2023/12/03 19:34:08 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.115 2023/12/03 19:34:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.116 2024/04/24 02:08:03 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -971,6 +971,14 @@ vmem_init(vmem_t *vm, const char *name,
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT(quantum > 0);
+	KASSERT(powerof2(quantum));
+
+	/*
+	 * If private tags are going to be used, they must
+	 * be added to the arena before the first span is
+	 * added.
+	 */
+	KASSERT((flags & VM_PRIVTAGS) == 0 || size == 0);
 
 #if defined(_KERNEL)
 	/* XXX: SMP, we get called early... */
