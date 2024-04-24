@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.30 2023/12/04 01:49:29 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.31 2024/04/24 02:27:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.30 2023/12/04 01:49:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.31 2024/04/24 02:27:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ _vme_space_get(struct vmebus_softc *sc, vme_size_t len, vme_am_t ams, u_long ali
 			  0,			/* nocross */
 			  VMEM_ADDR_MIN,	/* minaddr */
 			  VMEM_ADDR_MAX,	/* maxaddr */
-			  VM_NOSLEEP,
+			  VM_BESTFIT | VM_NOSLEEP,
 			  &help);
 	if (!res)
 		*addr = help;
