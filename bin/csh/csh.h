@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.29 2020/04/03 18:11:29 joerg Exp $ */
+/* $NetBSD: csh.h,v 1.30 2024/04/24 15:47:11 nia Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -86,6 +86,7 @@ typedef void *ioctl_t;		/* Third arg of ioctl */
 
 #define xmalloc(i) Malloc(i)
 #define xrealloc(p, i) Realloc(p, i)
+#define xreallocarray(p, n, sz) Reallocarray(p, n, sz)
 #define xcalloc(n, s) Calloc(n, s)
 
 #include <stdio.h>
