@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2024/04/23 12:25:57 nia Exp $
+#	$NetBSD: Makefile,v 1.33 2024/04/24 05:16:16 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@ CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true
 CDRELEASE_NOCOMPAT=	true
+CDRELEASE_NOHTML=	true
+CDRELEASE_NOTESTS=	true
 CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd
 CD_SETS=	base etc
 .if ${MKKMOD} != "no"
