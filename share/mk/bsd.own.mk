@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1370 2024/04/24 07:54:53 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1371 2024/04/24 19:14:39 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1320,10 +1320,18 @@ MKDTB.earmv7hfeb=		yes
 MKDTB.riscv32=			yes
 MKDTB.riscv64=			yes
 
-# alpha build fails due to missing X include files,
-# vax build triggers a gcc bug and dies with an internal compiler error.
-# XXX switch both to old Mesa for now.
-.if ${MACHINE} == "alpha" || ${MACHINE} == "vax"
+# During transition from xorg-server 1.10 to 1.20
+.if \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "sgimips"
+HAVE_XORG_SERVER_VER?=110
+.else
+HAVE_XORG_SERVER_VER?=120
+.endif
+
+# Newer Mesa does not build with old X server
+.if ${HAVE_XORG_SERVER_VER} != "120"
 HAVE_MESA_VER=19
 .endif
 
@@ -1675,16 +1683,6 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 	xcb- xorg
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
-
-# During transition from xorg-server 1.10 to 1.20
-.if \
-    ${MACHINE} == "alpha"	|| \
-    ${MACHINE} == "netwinder"	|| \
-    ${MACHINE} == "sgimips"
-HAVE_XORG_SERVER_VER?=110
-.else
-HAVE_XORG_SERVER_VER?=120
-.endif
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
