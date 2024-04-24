@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.36 2024/04/23 22:18:56 christos Exp $	*/
+/*	$NetBSD: walk.c,v 1.37 2024/04/24 14:02:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.36 2024/04/23 22:18:56 christos Exp $");
+__RCSID("$NetBSD: walk.c,v 1.37 2024/04/24 14:02:39 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -86,6 +86,37 @@ fsnode_cmp(const void *vleft, const void *vright)
 	return strcmp(lname, rname);
 }
 
+static fsnode *
+fsnode_sort(fsnode *first, const char *root, const char *dir)
+{
+	fsnode **list, **listptr;
+	size_t num = 0;
+
+	for (fsnode *tmp = first; tmp; tmp = tmp->next, num++) {
+		num++;
+		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
+			printf ("pre sort: %s %s %s\n", root, dir, tmp->name);
+	}
+
+	list = listptr = ecalloc(num, sizeof(*list));
+	for (fsnode *tmp = first; tmp; tmp = tmp->next)
+		*listptr++ = tmp;
+
+	qsort (list, num, sizeof(*list), fsnode_cmp);
+
+	for (size_t i = 0; i < num - 1; ++i)
+		list[i]->next = list[i + 1];
+	list[num - 1]->next = NULL;
+	first = list[0];
+	assert(strcmp(first->name, ".") == 0);
+	free(list);
+	if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
+		for (fsnode *tmp = first; tmp; tmp = tmp->next)
+			printf("post sort: %s %s %s\n", root, dir, tmp->name);
+
+	return first;
+}
+
 /*
  * walk_dir --
  *	build a tree of fsnodes from `root' and `dir', with a parent
@@ -106,14 +137,11 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 	char		*name, *rp;
 	int		dot, len;
 
-	fsnode **list, **listptr;
-	int num = 0;
-
 	assert(root != NULL);
 	assert(dir != NULL);
 
 	len = snprintf(path, sizeof(path), "%s/%s", root, dir);
-	if (len >= (int)sizeof(path))
+	if ((size_t)len >= sizeof(path))
 		errx(EXIT_FAILURE, "Pathname too long.");
 	if (debug & DEBUG_WALK_DIR)
 		printf("walk_dir: %s %p\n", path, parent);
@@ -155,14 +183,16 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 		} else {
 			if (lstat(path, &stbuf) == -1)
 				err(EXIT_FAILURE, "Can't lstat `%s'", path);
-			/* As symlink permission bits vary between filesystems
-			   (ie. 0755 on FFS/NetBSD, 0777 for ext[234]/Linux),
-			   force them to 0755.  */
+			/*
+			 * Symlink permission bits vary between filesystems/OSs
+			 * (ie. 0755 on FFS/NetBSD, 0777 for ext[234]/Linux),
+			 * force them to 0755.
+			 */
 			if (S_ISLNK(stbuf.st_mode)) {
 				stbuf.st_mode &= ~(S_IRWXU | S_IRWXG | S_IRWXO);
 				stbuf.st_mode |= S_IRWXU
-				                 | S_IRGRP | S_IXGRP
-				                 | S_IROTH | S_IXOTH;
+				    | S_IRGRP | S_IXGRP
+				    | S_IROTH | S_IXOTH;
 			}
 		}
 #ifdef S_ISSOCK
@@ -273,35 +303,7 @@ walk_dir(const char *root, const char *dir, fsnode *parent, fsnode *join,
 	if (closedir(dirp) == -1)
 		err(EXIT_FAILURE, "Can't closedir `%s/%s'", root, dir);
 
-	/*
-	 * Sort entries.
-	 */
-	/* Create a plain list: Count, alloc, add.  */
-	for (fsnode *tmp = first; tmp; tmp = tmp->next) {
-		num++;
-		if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
-			printf ("pre sort: %s %s %s\n", root, dir, tmp->name);
-	}
-	list = listptr = ecalloc (num, sizeof (*list));
-	for (fsnode *tmp = first; tmp; tmp = tmp->next)
-		*listptr++ = tmp;
-	/* Sort plain list.  */
-	qsort (list, num, sizeof (*list), &fsnode_cmp);
-	/* Rewire.  */
-	for (int i = 0; i < num - 1; ++i)
-		list[i]->next = list[i+1];
-	list[num - 1]->next = NULL;
-	first = list[0];
-	/* Check `first` to be ".".  */
-	assert (strcmp (first->name, ".") == 0);
-	/* Free.  */
-	free (list);
-	/* Dump sorted state.  */
-	if (debug & DEBUG_DUMP_FSNODES_VERBOSE)
-		for (fsnode *tmp = first; tmp; tmp = tmp->next)
-			printf ("post sort: %s %s %s\n", root, dir, tmp->name);
-
-	return first;
+	return fsnode_sort(first, root, dir);
 }
 
 static fsnode *
