@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.44 2020/08/09 00:22:53 dholland Exp $ */
+/* $NetBSD: func.c,v 1.45 2024/04/24 15:49:03 nia Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.44 2020/08/09 00:22:53 dholland Exp $");
+__RCSID("$NetBSD: func.c,v 1.45 2024/04/24 15:49:03 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -978,7 +978,7 @@ dounsetenv(Char **v, struct command *t)
 	    maxi = i;
     }
 
-    name = xmalloc((size_t)(maxi + 1) * sizeof(Char));
+    name = xreallocarray(NULL, (size_t)(maxi + 1), sizeof(Char));
 
     while (++v && *v)
 	for (maxi = 1; maxi;)

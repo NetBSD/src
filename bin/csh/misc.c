@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.22 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: misc.c,v 1.23 2024/04/24 15:49:03 nia Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.22 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2024/04/24 15:49:03 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ strsave(const char *s)
 	s = "";
     for (n = s; *n++;)
 	continue;
-    r = p = xmalloc((size_t)(n - s) * sizeof(*p));
+    r = p = xreallocarray(NULL, (size_t)(n - s), sizeof(*p));
     while ((*p++ = *s++) != '\0')
 	continue;
     return (r);
@@ -189,7 +189,7 @@ strspl(char *cp, char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(*ep)));
+    ep = xreallocarray(NULL, (size_t)(((p - cp) + (q - dp) - 1), sizeof(*ep)));
     for (p = ep, q = cp; *p++ = *q++;)
 	continue;
     for (p--, q = dp; *p++ = *q++;)
