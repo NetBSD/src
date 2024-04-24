@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1369 2024/04/24 05:20:35 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1370 2024/04/24 07:54:53 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1319,6 +1319,13 @@ MKDTB.earmv7eb=			yes
 MKDTB.earmv7hfeb=		yes
 MKDTB.riscv32=			yes
 MKDTB.riscv64=			yes
+
+# alpha build fails due to missing X include files,
+# vax build triggers a gcc bug and dies with an internal compiler error.
+# XXX switch both to old Mesa for now.
+.if ${MACHINE} == "alpha" || ${MACHINE} == "vax"
+HAVE_MESA_VER=19
+.endif
 
 HAVE_MESA_VER?=	21
 .if ${HAVE_MESA_VER} == 19
