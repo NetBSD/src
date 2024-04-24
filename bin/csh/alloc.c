@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.c,v 1.15 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: alloc.c,v 1.16 2024/04/24 15:46:20 nia Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.15 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.16 2024/04/24 15:46:20 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,19 @@ Realloc(void *p, size_t n)
     if ((ptr = realloc(p, n)) == NULL) {
 	child++;
 	stderror(ERR_NOMEM);
+    }
+    return (ptr);
+}
+
+void *
+Reallocarray(void *p, size_t n, size_t sz)
+{
+    void *ptr = p;
+
+    if (reallocarr(&ptr, n, sz) != 0) {
+	child++;
+	stderror(ERR_NOMEM);
+	return (p);
     }
     return (ptr);
 }
