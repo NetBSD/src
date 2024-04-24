@@ -1,4 +1,4 @@
-/*	$NetBSD: gfpic.c,v 1.1 2024/01/02 07:27:51 thorpej Exp $	*/
+/*	$NetBSD: gfpic.c,v 1.2 2024/04/24 14:41:13 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfpic.c,v 1.1 2024/01/02 07:27:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfpic.c,v 1.2 2024/04/24 14:41:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ gfpic_enable(struct gfpic_softc *sc, int pirq)
 	KASSERT(pirq >= 0);
 	KASSERT(pirq <= 31);
 
-	device_printf(sc->sc_dev, "enabling IRQ %d (0x%08x)\n",
-	    pirq, (1U << pirq));
 	REG_WRITE(sc, GFPIC_ENABLE, (1U << pirq));
 }
 
