@@ -776,6 +776,8 @@ acpibat_init_envsys(device_t dv)
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
 
+	(void)acpi_deregister_notify(sc->sc_node);
+
 	sysmon_envsys_destroy(sc->sc_sme);
 	kmem_free(sc->sc_sensor, ACPIBAT_COUNT * sizeof(*sc->sc_sensor));
 
