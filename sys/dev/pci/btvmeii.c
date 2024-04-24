@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.27 2023/12/05 15:58:32 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.28 2024/04/24 02:31:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.27 2023/12/05 15:58:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.28 2024/04/24 02:31:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ b3_2706_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_
 			0,			/* boundary */
 			VMEM_ADDR_MIN,		/* minaddr */
 			VMEM_ADDR_MAX,		/* maxaddr */
-			VM_NOSLEEP,
+			VM_BESTFIT | VM_NOSLEEP,
 			&pcibase)) {
 		sc->windowused[wnd] = 0;
 		return (ENOMEM);
