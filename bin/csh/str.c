@@ -1,4 +1,4 @@
-/* $NetBSD: str.c,v 1.16 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: str.c,v 1.17 2024/04/24 15:49:03 nia Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.16 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.17 2024/04/24 15:49:03 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ blk2short(char **src)
      */
     for (n = 0; src[n] != NULL; n++)
 	continue;
-    sdst = dst = xmalloc((size_t)((n + 1) * sizeof(*dst)));
+    sdst = dst = xreallocarray(NULL, n + 1, sizeof(*dst));
 
     for (; *src != NULL; src++)
 	*dst++ = SAVE(*src);
@@ -85,7 +85,7 @@ short2blk(Char *const *src)
      */
     for (n = 0; src[n] != NULL; n++)
 	continue;
-    sdst = dst = xmalloc((size_t)((n + 1) * sizeof(*dst)));
+    sdst = dst = xreallocarray(NULL, n + 1, sizeof(*dst));
 
     for (; *src != NULL; src++)
 	*dst++ = strsave(short2str(*src));
@@ -105,7 +105,7 @@ str2short(const char *src)
 
     if (sdst == (NULL)) {
 	dstsize = MALLOC_INCR;
-	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
+	sdst = xreallocarray(NULL, (size_t)dstsize, sizeof(*sdst));
     }
 
     dst = sdst;
@@ -114,7 +114,7 @@ str2short(const char *src)
 	*dst++ = (Char) ((unsigned char) *src++);
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
+	    sdst = xreallocarray(sdst, (size_t)dstsize, sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -135,7 +135,7 @@ short2str(const Char *src)
 
     if (sdst == NULL) {
 	dstsize = MALLOC_INCR;
-	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
+	sdst = xreallocarray(NULL, dstsize, sizeof(*sdst));
     }
     dst = sdst;
     edst = &dst[dstsize];
@@ -143,7 +143,7 @@ short2str(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
+	    sdst = xreallocarray(sdst, dstsize, sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -312,7 +312,7 @@ s_strsave(const Char *s)
 	s = STRNULL;
     for (p = s; *p++;)
 	continue;
-    p = n = xmalloc((size_t)(p - s) * sizeof(*n));
+    p = n = xreallocarray(NULL, (size_t)(p - s), sizeof(*n));
     while ((*n++ = *s++) != '\0')
 	continue;
     return __UNCONST(p);
@@ -332,7 +332,7 @@ s_strspl(const Char *cp, const Char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = xmalloc((size_t)((p - cp) + (q - dp) - 1) * sizeof(*ep));
+    ep = xreallocarray(NULL, (size_t)((p - cp) + (q - dp) - 1), sizeof(*ep));
     for (d = ep, q = cp; (*d++ = *q++) != '\0';)
 	continue;
     for (d--, q = dp; (*d++ = *q++) != '\0';)
@@ -378,7 +378,7 @@ short2qstr(const Char *src)
 
     if (sdst == NULL) {
 	dstsize = MALLOC_INCR;
-	sdst = xmalloc((size_t)dstsize * sizeof(*sdst));
+	sdst = xreallocarray(NULL, dstsize, sizeof(*sdst));
     }
     dst = sdst;
     edst = &dst[dstsize];
@@ -388,7 +388,7 @@ short2qstr(const Char *src)
 	    *dst++ = '\\';
 	    if (dst == edst) {
 		dstsize += MALLOC_INCR;
-		sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
+		sdst = xreallocarray(sdst, (size_t)dstsize, sizeof(*sdst));
 		edst = &sdst[dstsize];
 		dst = &edst[-MALLOC_INCR];
 	    }
@@ -396,7 +396,7 @@ short2qstr(const Char *src)
 	*dst++ = (char) *src++;
 	if (dst == edst) {
 	    dstsize += MALLOC_INCR;
-	    sdst = xrealloc(sdst, (size_t)dstsize * sizeof(*sdst));
+	    sdst = xreallocarray(sdst, (size_t)dstsize, sizeof(*sdst));
 	    edst = &sdst[dstsize];
 	    dst = &edst[-MALLOC_INCR];
 	}
@@ -424,8 +424,8 @@ vis_str(const Char *cp)
     n = ((size_t)(dp - cp) << 2) + 1; /* 4 times + NULL */
     if (dstsize < n) {
 	sdst = (dstsize ? 
-	    xrealloc(sdst, (size_t)n * sizeof(*sdst)) :
-	    xmalloc((size_t)n * sizeof(*sdst)));
+	    xreallocarray(sdst, (size_t)n, sizeof(*sdst)) :
+	    xreallocarray(NULL, (size_t)n, sizeof(*sdst)));
 	dstsize = n;
     }
     /* 

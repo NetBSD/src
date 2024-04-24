@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.33 2020/09/29 02:58:51 msaitoh Exp $ */
+/* $NetBSD: file.c,v 1.34 2024/04/24 15:49:03 nia Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.33 2020/09/29 02:58:51 msaitoh Exp $");
+__RCSID("$NetBSD: file.c,v 1.34 2024/04/24 15:49:03 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -519,13 +519,10 @@ again:				/* search for matches */
 	if (command == LIST) {
 	    if ((size_t)numitems >= maxitems) {
 		maxitems += 1024;
-		if (items == NULL)
-			items = xmalloc(sizeof(*items) * maxitems);
-		else
-			items = xrealloc(items, sizeof(*items) * maxitems);
+		items = xreallocarray(items, sizeof(*items), maxitems);
  	    }
-	    items[numitems] = xmalloc((size_t) (Strlen(entry) + 1) *
-	        sizeof(Char));
+	    items[numitems] = xreallocarray(NULL,
+		(size_t) (Strlen(entry) + 1), sizeof(Char));
 	    copyn(items[numitems], entry, MAXNAMLEN);
 	    numitems++;
 	}
