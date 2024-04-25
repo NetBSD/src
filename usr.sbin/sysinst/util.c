@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.76 2024/04/22 14:41:26 nia Exp $	*/
+/*	$NetBSD: util.c,v 1.77 2024/04/25 11:25:08 hannken Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -246,7 +246,7 @@ init_set_status(int flags)
 	i = strlen(msg_all); if (i > len) {len = i; longest = msg_all; }
 	i = strlen(msg_some); if (i > len) {len = i; longest = msg_some; }
 	i = strlen(msg_none); if (i > len) {len = i; longest = msg_none; }
-	select_menu_width = snprintf(NULL, 0, "%-30s %s", "", longest);
+	select_menu_width = snprintf(NULL, 0, "%-40s %s", "", longest);
 
 	/* Give the md code a chance to choose the right kernel, etc. */
 	md_init_set_status(flags);
@@ -870,7 +870,7 @@ set_label(menudesc *menu, int opt, void *arg)
 		}
 	}
 
-	wprintw(menu->mw, "%-30s %s", msg_string(desc), selected);
+	wprintw(menu->mw, "%-40s %s", msg_string(desc), selected);
 }
 
 static int set_sublist(menudesc *menu, void *arg);

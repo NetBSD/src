@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.48 2024/04/22 14:41:26 nia Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.49 2024/04/25 11:25:08 hannken Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -806,8 +806,8 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{Pakiet dystrybucyjny             Uzyc?
---------------------------------- -----
+{Pakiet dystrybucyjny                       Uzyc?
+------------------------------------------- -----
 }
 
 message set_base
