@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3050 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3051 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -137,7 +137,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[gutteridge 20230630]
 	tetris(6): Support the informal standard of allowing setting NO_COLOR
 		in the environment to disable the use of color. [nia 20230701]
-	lint(1): Initial support for C23. [rilling 20230702]
+	lint(1): Initial support for C23. [rillig 20230702]
 	heartbeat(9): New mechanism to check progress of kernel.  This uses
 		hard interrupts to check progress of low-priority soft
 		interrupts, and one CPU to check progress of another CPU.
@@ -230,7 +230,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	kernel: Replace various usage of extent(9) with vmem(9).
 		[thorpej 20231201]
 	indent(1): Use line number of the token start in diagnostics
-		[rilling 20231203]
+		[rillig 20231203]
 	vmem(9): Add the notion of "private boundary tags", allowing vmem
 		to be used VERY early in boot. [thorpej 20231203]
 	kernel: Modularize compat90. [pgoyette 20231209]
@@ -314,7 +314,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		be matched by ugen(4) and accessed through libusb.
 		[thorpej 20240326]
 	moused(8): Remove undocumented and unused option 'C'.
-		[rilling 20240329]
+		[rillig 20240329]
 	ugen(4): Add a "ugen-unit" device property which devpubd(8) scripts
 		can query to determine which /dev/ugenN.xx nodes a given ugen
 		or ugenif device is using.  [thorpej 20240329]
