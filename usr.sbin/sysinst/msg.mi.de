@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.47 2024/04/22 14:41:26 nia Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.48 2024/04/25 11:25:08 hannken Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -875,8 +875,8 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{   Distributionspaket       Ausgewählt
-   ------------------------ ----------
+{   Distributionspaket                 Ausgewählt
+   ---------------------------------- ----------
 }
 
 message set_base
