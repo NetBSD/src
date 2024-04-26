@@ -1,4 +1,4 @@
-# $NetBSD: t_cat.sh,v 1.3 2016/06/16 01:04:58 sevan Exp $
+# $NetBSD: t_cat.sh,v 1.4 2024/04/26 00:57:15 rillig Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,37 +30,37 @@
 
 atf_test_case align
 align_head() {
-	atf_set "descr" "Test that cat(1) aligns the output " \
+	atf_set "descr" "Test that cat(1) aligns the output" \
 			"right with options '-be' (PR bin/4841)"
 }
 
 align_body() {
 
-	atf_check -s ignore -o file:$(atf_get_srcdir)/d_align.out \
-		-x "cat -be $(atf_get_srcdir)/d_align.in"
+	atf_check -o file:$(atf_get_srcdir)/d_align.out \
+	    cat -be $(atf_get_srcdir)/d_align.in
 }
 
 atf_test_case nonexistent
 nonexistent_head() {
-	atf_set "descr" "Test that cat(1) doesn't return zero exit " \
+	atf_set "descr" "Test that cat(1) doesn't return zero exit" \
 			"status for a nonexistent file (PR bin/3538)"
 }
 
 nonexistent_body() {
 
-	atf_check -s not-exit:0 -o empty -e not-empty \
-		-x "cat /some/name/that/does/not/exist"
+	atf_check -s not-exit:0 -e not-empty \
+	    cat /some/name/that/does/not/exist
 }
 
 atf_test_case se_output
 se_output_head() {
-	atf_set "descr" "Test that cat(1) prints a $ sign " \
+	atf_set "descr" "Test that cat(1) prints a $ sign" \
 			"on blank lines with options '-se' (PR bin/51250)"
 }
 
 se_output_body() {
-	atf_check -s ignore -o file:$(atf_get_srcdir)/d_se_output.out \
-		-x "cat -se $(atf_get_srcdir)/d_se_output.in"
+	atf_check -o file:$(atf_get_srcdir)/d_se_output.out \
+	    cat -se $(atf_get_srcdir)/d_se_output.in
 }
 
 atf_init_test_cases()
