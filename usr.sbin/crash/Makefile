@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2023/11/22 02:01:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.51 2024/04/26 22:07:32 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -119,7 +119,7 @@ NVFLAGS+=-R
 # vers.c
 SRCS+=	vers.c
 vers.c:	${S}/conf/newvers.sh ${_NETBSD_VERSION_DEPENDS}
-	${HOST_SH} ${S}/conf/newvers.sh ${NVFLAGS} -n -m ${MACHINE} -i CRASH
+	TOOL_DATE=${TOOL_DATE} ${HOST_SH} ${S}/conf/newvers.sh ${NVFLAGS} -n -m ${MACHINE} -i CRASH
 CLEANFILES+=	vers.c version
 
 .else				# } {
