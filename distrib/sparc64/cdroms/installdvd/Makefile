@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2024/04/24 15:39:58 nia Exp $
+#	$NetBSD: Makefile,v 1.2 2024/04/26 17:36:32 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	ne
 CD_SETS=	base etc
 .if ${MKKMOD} != "no"
 CD_SETS+=	modules
+.endif
+.if ${MKMAN} != "no"
+CD_SETS+=	man
 .endif
 
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}

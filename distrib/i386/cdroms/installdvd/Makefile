@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2024/04/24 11:29:34 nia Exp $
+#	$NetBSD: Makefile,v 1.2 2024/04/26 17:36:32 nia Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
@@ -11,6 +11,14 @@ CDBASE=		i386dvd			# gives ${CDBASE}.iso
 CDRELEASE=	true                    # include $RELEASEDIR/$RELEASEMACHINEDIR
 CDBUILDEXTRA+=	boot.cfg		# Add boot.cfg file
 CLEANFILES+=	boot.cfg
+
+.if ${MKKMOD} != "no"
+CD_SETS+=	modules
+.endif
+
+.if ${MKMAN} != "no"
+CD_SETS+=	man
+.endif
 
 prepare_md_post:
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" < ${.CURDIR}/boot.cfg.in > boot.cfg
