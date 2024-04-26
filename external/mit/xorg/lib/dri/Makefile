@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.40 2024/04/21 00:23:23 maya Exp $
+# $NetBSD: Makefile,v 1.41 2024/04/26 17:22:26 rillig Exp $
 
 # Link the mesa_dri_drivers mega driver.
+
+NOLINT=		# Lots of "Unsupported platform" due to undefined __GNUC__
 
 .include <bsd.own.mk>
 
