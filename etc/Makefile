@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.469 2023/11/10 20:44:58 christos Exp $
+#	$NetBSD: Makefile,v 1.470 2024/04/26 18:06:02 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -393,10 +393,10 @@ install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
 .if ${MKX11} != "no"
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
-	    AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
+	    AWK=${TOOL_AWK:Q} SED=${TOOL_SED:Q} MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
 .else
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
-	    AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
+	    AWK=${TOOL_AWK:Q} SED=${TOOL_SED:Q} MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -t ${OBSOLETE.dir})
 .endif
 .for file in ${OBSOLETE.files}
 	${_MKMSG_INSTALL} ${DESTDIR}/var/db/obsolete/${file}
