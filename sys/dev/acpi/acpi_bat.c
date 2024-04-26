@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.121 2022/01/07 01:10:57 riastradh Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.122 2024/04/26 18:19:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.121 2022/01/07 01:10:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.122 2024/04/26 18:19:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -762,17 +762,16 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
 	sc->sc_sme->sme_get_limits = acpibat_get_limits;
 
+	if (sysmon_envsys_register(sc->sc_sme))
+		goto fail;
+
 	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
 	acpibat_update_info(dv);
 	acpibat_update_status(dv);
 
-	if (sysmon_envsys_register(sc->sc_sme))
-		goto fail;
-
 	(void)pmf_device_register(dv, NULL, acpibat_resume);
 
 	return;
-
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
 
