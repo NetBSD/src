@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/06/03 21:26:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2024/04/26 18:21:25 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,8 @@ WARNS?=	6
 COPTS.zfs.c+=	-Wno-unknown-pragmas
 COPTS.zfs.c+=	-Wno-sign-conversion
 COPTS.zfs.c+=	-Wno-strict-prototypes
-LDADD+=	-lnvpair -lzfs
+LDADD+=	-lnvpair
+DPADD+= ${LIBNVPAIR}
 
 OSNET=${NETBSDSRCDIR}/external/cddl/osnet
 CPPFLAGS+=	-DHAVE_ZFS
