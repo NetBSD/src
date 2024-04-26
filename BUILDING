@@ -729,7 +729,7 @@ BUILDING
                MACHINE and MACHINE_ARCH settings.
 
      -N noiselevel
-               Set the "noisyness" level of the build, by setting MAKEVERBOSE
+               Set the "noisiness" level of the build, by setting MAKEVERBOSE
                to noiselevel.
 
      -n        Show the commands that would be executed by build.sh, but do
