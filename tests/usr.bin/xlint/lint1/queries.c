@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.27 2024/03/30 19:12:37 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.28 2024/04/27 10:08:54 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -16,7 +16,7 @@
  */
 
 /* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 */
-/* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19 */
+/* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19,20 */
 /* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
@@ -73,6 +73,8 @@ volatile char *vstr;
 
 void *void_ptr;
 const void *const_void_ptr;
+char *char_ptr;
+int *int_ptr;
 
 int
 Q1(double dbl)
@@ -359,9 +361,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 363 "queries.c" 3 4
+# 365 "queries.c" 3 4
 		((void *)0)
-# 365 "queries.c"
+# 367 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -509,10 +511,25 @@ convert_from_integer_to_floating(void)
 	f64 = (double)u32;
 }
 
-/*
- * Since queries do not affect the exit status, force a warning to make this
- * test conform to the general expectation that a test that produces output
- * exits non-successfully.
- */
-/* expect+1: warning: static variable 'unused' unused [226] */
-static int unused;
+// C allows implicit narrowing conversions from a void pointer to an arbitrary
+// object pointer. C++ doesn't allow this conversion since it is narrowing.
+void
+Q20_void_pointer_conversion(void)
+{
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'void' and 'const void' [128] */
+	void_ptr = const_void_ptr;
+	const_void_ptr = void_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
+	int_ptr = void_ptr;
+	/* expect+1: redundant cast from 'pointer to void' to 'pointer to int' before assignment [Q7] */
+	int_ptr = (int *)void_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to char' [Q20] */
+	char_ptr = void_ptr;
+	void_ptr = char_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
+	int_ptr = void_ptr;
+	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to char', op '=' [124] */
+	int_ptr = char_ptr;
+	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to int', op '=' [124] */
+	char_ptr = int_ptr;
+}

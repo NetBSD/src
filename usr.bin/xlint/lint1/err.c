@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.240 2024/04/12 05:17:48 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.241 2024/04/27 10:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.240 2024/04/12 05:17:48 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.241 2024/04/27 10:08:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -741,6 +741,7 @@ static const char *queries[] = {
 	"invisible character U+%04X in %s",				// Q17
 	"const automatic variable '%s'",				// Q18
 	"implicit conversion from integer '%s' to floating point '%s'",	// Q19
+	"implicit narrowing conversion from void pointer to '%s'",	// Q20
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */

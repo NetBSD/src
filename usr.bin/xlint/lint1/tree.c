@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.635 2024/04/12 05:44:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.636 2024/04/27 10:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.635 2024/04/12 05:44:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.636 2024/04/27 10:08:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1431,6 +1431,12 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		rn = convert(op, 0, ln->tn_type, rn);
 		rt = lt;
 	}
+
+	if (is_query_enabled[20]
+	    && lt == PTR && ln->tn_type->t_subt->t_tspec != VOID
+	    && rt == PTR && rn->tn_type->t_subt->t_tspec == VOID)
+		/* implicit narrowing conversion from void ... */
+		query_message(20, type_name(ln->tn_type));
 
 	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
 	    types_compatible(ln->tn_type, rn->tn_type, false, false, NULL) &&
