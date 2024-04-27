@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.56 2024/04/27 14:45:11 christos Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.57 2024/04/27 14:50:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.56 2024/04/27 14:45:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.57 2024/04/27 14:50:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/sdt.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -49,10 +50,27 @@ ACPI_MODULE_NAME		("thinkpad_acpi")
 #define	THINKPAD_NFANSENSORS	1
 #define	THINKPAD_NSENSORS	(THINKPAD_NTEMPSENSORS + THINKPAD_NFANSENSORS)
 
+typedef struct tp_sysctl_param {
+	device_t		sp_dev;
+	int			sp_bat;
+} tp_sysctl_param_t;
+
+typedef union tp_batctl {
+	int			have_any;
+	struct {
+	    int			charge_start:1;
+	    int			charge_stop:1;
+	    int			charge_inhibit:1;
+	    int			force_discharge:1;
+	    int			individual_control:1;
+	}			have;
+} tp_batctl_t;
+
 typedef struct thinkpad_softc {
 	device_t		sc_dev;
 	device_t		sc_ecdev;
 	struct acpi_devnode	*sc_node;
+	struct sysctllog	*sc_log;
 	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
 	ACPI_INTEGER		sc_ver;
@@ -90,6 +108,14 @@ typedef struct thinkpad_softc {
 	envsys_data_t		sc_sensor[THINKPAD_NSENSORS];
 
 	int			sc_display_state;
+
+#define THINKPAD_BAT_ANY	0
+#define THINKPAD_BAT_PRIMARY	1
+#define THINKPAD_BAT_SECONDARY	2
+#define THINKPAD_BAT_LAST	3
+
+	tp_batctl_t		sc_batctl;
+	tp_sysctl_param_t	sc_scparam[THINKPAD_BAT_LAST];
 } thinkpad_softc_t;
 
 /* Hotkey events */
@@ -130,6 +156,17 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_DISPLAY_ALL \
 	(THINKPAD_DISPLAY_LCD | THINKPAD_DISPLAY_CRT | THINKPAD_DISPLAY_DVI)
 
+#define THINKPAD_GET_CHARGE_START	"BCTG"
+#define THINKPAD_SET_CHARGE_START	"BCCS"
+#define THINKPAD_GET_CHARGE_STOP	"BCSG"
+#define THINKPAD_SET_CHARGE_STOP	"BCSS"
+#define THINKPAD_GET_FORCE_DISCHARGE	"BDSG"
+#define THINKPAD_SET_FORCE_DISCHARGE	"BDSS"
+#define THINKPAD_GET_CHARGE_INHIBIT	"BICG"
+#define THINKPAD_SET_CHARGE_INHIBIT	"BICS"
+
+#define THINKPAD_CALL_ERROR		0x80000000
+
 #define THINKPAD_BLUETOOTH_HWPRESENT	0x01
 #define THINKPAD_BLUETOOTH_RADIOSSW	0x02
 #define THINKPAD_BLUETOOTH_RESUMECTRL	0x04
@@ -167,6 +204,9 @@ static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
 static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *);
 static void	thinkpad_cmos(thinkpad_softc_t *, uint8_t);
+
+static void	thinkpad_battery_probe_support(device_t);
+static void	thinkpad_battery_sysctl_setup(device_t);
 
 CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
     thinkpad_match, thinkpad_attach, thinkpad_detach, NULL, NULL, NULL,
@@ -220,6 +260,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	int i;
 
 	sc->sc_dev = self;
+	sc->sc_log = NULL;
 	sc->sc_powhdl = NULL;
 	sc->sc_cmoshdl = NULL;
 	sc->sc_node = aa->aa_node;
@@ -371,6 +412,17 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	/* Register temperature and fan sensors with envsys */
 	thinkpad_sensors_init(sc);
 
+	/* Probe supported battery charge/control operations */
+	thinkpad_battery_probe_support(self);
+
+	if (sc->sc_batctl.have_any) {
+		for (i = 0; i < THINKPAD_BAT_LAST; i++) {
+			sc->sc_scparam[i].sp_dev = self;
+			sc->sc_scparam[i].sp_bat = i;
+		}
+		thinkpad_battery_sysctl_setup(self);
+	}
+
 fail:
 	if (!pmf_device_register(self, NULL, thinkpad_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -395,6 +447,9 @@ thinkpad_detach(device_t self, int flags)
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	if (sc->sc_log != NULL)
+		sysctl_teardown(&sc->sc_log);
 
 	pmf_device_deregister(self);
 
@@ -946,6 +1001,290 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "couldn't evaluate CMOS: %s\n",
 		    AcpiFormatException(rv));
+}
+
+static uint32_t
+thinkpad_call_method(device_t self, const char *path, uint32_t arg)
+{
+	thinkpad_softc_t *sc = device_private(self);
+	ACPI_HANDLE handle = sc->sc_node->ad_handle;
+	ACPI_OBJECT args[1];
+	ACPI_OBJECT_LIST arg_list;
+	ACPI_OBJECT rval;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	args[0].Type = ACPI_TYPE_INTEGER;
+	args[0].Integer.Value = arg;
+	arg_list.Pointer = &args[0];
+	arg_list.Count = __arraycount(args);
+
+	memset(&rval, 0, sizeof rval);
+	buf.Pointer = &rval;
+	buf.Length = sizeof rval;
+
+	rv = AcpiEvaluateObjectTyped(handle, path, &arg_list, &buf,
+	    ACPI_TYPE_INTEGER);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "call %s.%s(%x) failed: %s\n",
+		    acpi_name(handle), path, (unsigned)arg,
+		    AcpiFormatException(rv));
+		return THINKPAD_CALL_ERROR;
+	}
+
+	return rval.Integer.Value;
+}
+
+static void
+thinkpad_battery_probe_support(device_t self)
+{
+	thinkpad_softc_t *sc = device_private(self);
+	ACPI_HANDLE hdl = sc->sc_node->ad_handle, tmp;
+	ACPI_STATUS rv;
+	uint32_t val;
+
+	sc->sc_batctl.have_any = 0;
+
+	rv = AcpiGetHandle(hdl, THINKPAD_GET_CHARGE_START, &tmp);
+	if (ACPI_SUCCESS(rv)) {
+		val = thinkpad_call_method(self, THINKPAD_GET_CHARGE_START,
+		    THINKPAD_BAT_PRIMARY);
+		if (!(val & THINKPAD_CALL_ERROR) && (val & 0x100)) {
+			sc->sc_batctl.have.charge_start = 1;
+			if (val & 0x200)
+				sc->sc_batctl.have.individual_control = 1;
+		}
+	}
+
+	rv = AcpiGetHandle(hdl, THINKPAD_GET_CHARGE_STOP, &tmp);
+	if (ACPI_SUCCESS(rv)) {
+		val = thinkpad_call_method(self, THINKPAD_GET_CHARGE_STOP,
+		    THINKPAD_BAT_PRIMARY);
+		if (!(val & THINKPAD_CALL_ERROR) && (val & 0x100))
+			sc->sc_batctl.have.charge_stop = 1;
+	}
+
+	rv = AcpiGetHandle(hdl, THINKPAD_GET_FORCE_DISCHARGE, &tmp);
+	if (ACPI_SUCCESS(rv)) {
+		val = thinkpad_call_method(self, THINKPAD_GET_FORCE_DISCHARGE,
+		    THINKPAD_BAT_PRIMARY);
+		if (!(val & THINKPAD_CALL_ERROR) && (val & 0x100))
+			sc->sc_batctl.have.force_discharge = 1;
+	}
+
+	rv = AcpiGetHandle(hdl, THINKPAD_GET_CHARGE_INHIBIT, &tmp);
+	if (ACPI_SUCCESS(rv)) {
+		val = thinkpad_call_method(self, THINKPAD_GET_CHARGE_INHIBIT,
+		    THINKPAD_BAT_PRIMARY);
+		if (!(val & THINKPAD_CALL_ERROR) && (val & 0x20))
+			sc->sc_batctl.have.charge_inhibit = 1;
+	}
+
+	if (sc->sc_batctl.have_any)
+		aprint_verbose_dev(self, "battery control capabilities: %x\n",
+		    sc->sc_batctl.have_any);
+}
+
+static int
+thinkpad_battery_sysctl_charge_start(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	tp_sysctl_param_t *sp = node.sysctl_data;
+	int charge_start;
+	int err;
+
+	charge_start = thinkpad_call_method(sp->sp_dev,
+	    THINKPAD_GET_CHARGE_START, sp->sp_bat) & 0xff;
+
+	node.sysctl_data = &charge_start;
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err || newp == NULL)
+		return err;
+
+	if (charge_start < 0 || charge_start > 99)
+		return EINVAL;
+
+	if (thinkpad_call_method(sp->sp_dev, THINKPAD_SET_CHARGE_START,
+	    charge_start | sp->sp_bat<<8) & THINKPAD_CALL_ERROR)
+		return EIO;
+
+	return 0;
+}
+
+static int
+thinkpad_battery_sysctl_charge_stop(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	tp_sysctl_param_t *sp = node.sysctl_data;
+	int charge_stop;
+	int err;
+
+	charge_stop = thinkpad_call_method(sp->sp_dev,
+	    THINKPAD_GET_CHARGE_STOP, sp->sp_bat) & 0xff;
+
+	if (charge_stop == 0)
+		charge_stop = 100;
+
+	node.sysctl_data = &charge_stop;
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err || newp == NULL)
+		return err;
+
+	if (charge_stop < 1 || charge_stop > 100)
+		return EINVAL;
+
+	if (charge_stop == 100)
+		charge_stop = 0;
+
+	if (thinkpad_call_method(sp->sp_dev, THINKPAD_SET_CHARGE_STOP,
+	    charge_stop | sp->sp_bat<<8) & THINKPAD_CALL_ERROR)
+		return EIO;
+
+	return 0;
+}
+
+static int
+thinkpad_battery_sysctl_charge_inhibit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	tp_sysctl_param_t *sp = node.sysctl_data;
+	bool charge_inhibit;
+	int err;
+
+	charge_inhibit = thinkpad_call_method(sp->sp_dev,
+	    THINKPAD_GET_CHARGE_INHIBIT, sp->sp_bat) & 0x01;
+
+	node.sysctl_data = &charge_inhibit;
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err || newp == NULL)
+		return err;
+
+	if (thinkpad_call_method(sp->sp_dev, THINKPAD_SET_CHARGE_INHIBIT,
+	    charge_inhibit | sp->sp_bat<<4 | 0xffff<<8) & THINKPAD_CALL_ERROR)
+		return EIO;
+
+	return 0;
+}
+
+static int
+thinkpad_battery_sysctl_force_discharge(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	tp_sysctl_param_t *sp = node.sysctl_data;
+	bool force_discharge;
+	int err;
+
+	force_discharge = thinkpad_call_method(sp->sp_dev,
+	    THINKPAD_GET_FORCE_DISCHARGE, sp->sp_bat) & 0x01;
+
+	node.sysctl_data = &force_discharge;
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err || newp == NULL)
+		return err;
+
+	if (thinkpad_call_method(sp->sp_dev, THINKPAD_SET_FORCE_DISCHARGE,
+	    force_discharge | sp->sp_bat<<8) & THINKPAD_CALL_ERROR)
+		return EIO;
+
+	return 0;
+}
+
+static void
+thinkpad_battery_sysctl_setup_controls(device_t self,
+    const struct sysctlnode *rnode, int battery)
+{
+	thinkpad_softc_t *sc = device_private(self);
+
+	if (sc->sc_batctl.have.charge_start)
+		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "charge_start",
+		    SYSCTL_DESCR("charge start threshold (0-99)"),
+		    thinkpad_battery_sysctl_charge_start, 0,
+		    (void *)&(sc->sc_scparam[battery]), 0,
+		    CTL_CREATE, CTL_EOL);
+
+	if (sc->sc_batctl.have.charge_stop)
+		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "charge_stop",
+		    SYSCTL_DESCR("charge stop threshold (1-100)"),
+		    thinkpad_battery_sysctl_charge_stop, 0,
+		    (void *)&(sc->sc_scparam[battery]), 0,
+		    CTL_CREATE, CTL_EOL);
+
+	if (sc->sc_batctl.have.charge_inhibit)
+		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "charge_inhibit",
+		    SYSCTL_DESCR("charge inhibit"),
+		    thinkpad_battery_sysctl_charge_inhibit, 0,
+		    (void *)&(sc->sc_scparam[battery]), 0,
+		    CTL_CREATE, CTL_EOL);
+
+	if (sc->sc_batctl.have.force_discharge)
+		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "force_discharge",
+		    SYSCTL_DESCR("force discharge"),
+		    thinkpad_battery_sysctl_force_discharge, 0,
+		    (void *)&(sc->sc_scparam[battery]), 0,
+		    CTL_CREATE, CTL_EOL);
+}
+
+static void
+thinkpad_battery_sysctl_setup(device_t self)
+{
+	thinkpad_softc_t *sc = device_private(self);
+	const struct sysctlnode *rnode, *cnode;
+	int err;
+
+	err = sysctl_createv(&sc->sc_log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	err = sysctl_createv(&sc->sc_log, 0, &rnode, &rnode,
+	    0, CTLTYPE_NODE, device_xname(self),
+	    SYSCTL_DESCR("ThinkPad ACPI controls"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	if (sc->sc_batctl.have.individual_control) {
+		err = sysctl_createv(&sc->sc_log, 0, &rnode, &cnode,
+		    0, CTLTYPE_NODE, "bat0",
+		    SYSCTL_DESCR("battery charge controls (primary battery)"),
+		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+		if (err)
+			goto fail;
+
+		thinkpad_battery_sysctl_setup_controls(self, cnode,
+		    THINKPAD_BAT_PRIMARY);
+
+		err = sysctl_createv(&sc->sc_log, 0, &rnode, &cnode,
+		    0, CTLTYPE_NODE, "bat1",
+		    SYSCTL_DESCR("battery charge controls (secondary battery)"),
+		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+		if (err)
+			goto fail;
+
+		thinkpad_battery_sysctl_setup_controls(self, cnode,
+		    THINKPAD_BAT_SECONDARY);
+	} else {
+		err = sysctl_createv(&sc->sc_log, 0, &rnode, &cnode,
+		    0, CTLTYPE_NODE, "bat",
+		    SYSCTL_DESCR("battery charge controls"),
+		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+		if (err)
+			goto fail;
+
+		thinkpad_battery_sysctl_setup_controls(self, cnode,
+		    THINKPAD_BAT_ANY);
+	}
+
+	return;
+
+fail:
+	aprint_error_dev(self, "unable to add sysctl nodes (%d)\n", err);
 }
 
 static bool
