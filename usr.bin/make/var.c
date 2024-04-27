@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1106 2024/04/27 20:41:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1107 2024/04/27 21:26:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1106 2024/04/27 20:41:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1107 2024/04/27 21:26:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4542,7 +4542,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	 * while its value is still being used:
 	 *
 	 *	VAR=	value
-	 *	_:=	${VAR:${:U@VAR@loop@}:S,^,prefix,}
+	 *	_:=	${VAR:${:U:@VAR@@}:S,^,prefix,}
 	 *
 	 * The same effect might be achievable using the '::=' or the ':_'
 	 * modifiers.
