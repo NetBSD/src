@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.18 2020/07/26 08:08:41 simonb Exp $ */
+/*	$NetBSD: float.h,v 1.19 2024/04/27 06:01:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #if __STDC_VERSION__ >= 199901L
 #define	LDBL_EPSILON	0x1p-112L
 #define	LDBL_MIN	0x1p-16382L
-#define	LDBL_MAX	0x1.ffffffffffffffffffffffffffffp+16383L,
+#define	LDBL_MAX	0x1.ffffffffffffffffffffffffffffp+16383L
 #else
 #define	LDBL_EPSILON	1.9259299443872358530559779425849273E-34L
 #define	LDBL_MIN	3.3621031431120935062626778173217526E-4932L
