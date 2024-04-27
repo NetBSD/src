@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1105 2024/04/23 22:51:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1106 2024/04/27 20:41:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1105 2024/04/23 22:51:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1106 2024/04/27 20:41:32 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3117,28 +3117,20 @@ ok:
 static char *
 str_toupper(const char *str)
 {
-	char *res;
-	size_t i, len;
-
-	len = strlen(str);
-	res = bmake_malloc(len + 1);
-	for (i = 0; i < len + 1; i++)
+	size_t i, n = strlen(str) + 1;
+	char *res = bmake_malloc(n);
+	for (i = 0; i < n; i++)
 		res[i] = ch_toupper(str[i]);
-
 	return res;
 }
 
 static char *
 str_tolower(const char *str)
 {
-	char *res;
-	size_t i, len;
-
-	len = strlen(str);
-	res = bmake_malloc(len + 1);
-	for (i = 0; i < len + 1; i++)
+	size_t i, n = strlen(str) + 1;
+	char *res = bmake_malloc(n);
+	for (i = 0; i < n; i++)
 		res[i] = ch_tolower(str[i]);
-
 	return res;
 }
 
@@ -4429,7 +4421,7 @@ Expr_Init(const char *name, FStr value,
  * by .for loops and are boring, so evaluate them without debug logging.
  */
 static bool
-Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
+Var_Parse_U(const char **pp, VarEvalMode emode, FStr *out_value)
 {
 	const char *p;
 
@@ -4488,8 +4480,7 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
 FStr
 Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 {
-	const char *p = *pp;
-	const char *const start = p;
+	const char *start, *p;
 	bool haveModifier;	/* true for ${VAR:...}, false for ${VAR} */
 	char startc;		/* the actual '{' or '(' or '\0' */
 	char endc;		/* the expected '}' or ')' or '\0' */
@@ -4506,9 +4497,11 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 	    scope, DEF_REGULAR);
 	FStr val;
 
-	if (Var_Parse_FastLane(pp, emode, &val))
+	if (Var_Parse_U(pp, emode, &val))
 		return val;
 
+	p = *pp;
+	start = p;
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start, VarEvalMode_Name[emode]);
 
 	val = FStr_InitRefer(NULL);
