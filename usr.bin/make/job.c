@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.469 2024/04/26 17:11:22 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.470 2024/04/27 20:41:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.469 2024/04/26 17:11:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.470 2024/04/27 20:41:32 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1757,7 +1757,7 @@ JobStart(GNode *gn, bool special)
  * itself.
  */
 static char *
-PrintFilteredOutput(char *p, char *endp)	/* XXX: should all be const */
+PrintFilteredOutput(char *p, const char *endp)	/* XXX: p should be const */
 {
 	char *ep;		/* XXX: should be const */
 

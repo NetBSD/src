@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.331 2024/04/23 22:51:28 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.332 2024/04/27 20:41:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,6 +134,12 @@
 #define MAKE_ATTR_USE		__attribute__((__warn_unused_result__))
 #else
 #define MAKE_ATTR_USE		/* delete */
+#endif
+
+#if MAKE_GNUC_PREREQ(8, 0)
+#define MAKE_ATTR_NOINLINE		__attribute__((__noinline__))
+#else
+#define MAKE_ATTR_NOINLINE		/* delete */
 #endif
 
 #if __STDC_VERSION__ >= 199901L || defined(lint)
