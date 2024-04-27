@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.55 2022/08/12 16:21:41 riastradh Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.56 2024/04/27 14:45:11 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.55 2022/08/12 16:21:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.56 2024/04/27 14:45:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,8 +138,8 @@ typedef struct thinkpad_softc {
 #define THINKPAD_WWAN_RADIOSSW		0x02
 #define THINKPAD_WWAN_RESUMECTRL	0x04
 
-#define THINKPAD_UWB_HWPRESENT	0x01
-#define THINKPAD_UWB_RADIOSSW	0x02
+#define THINKPAD_UWB_HWPRESENT		0x01
+#define THINKPAD_UWB_RADIOSSW		0x02
 
 #define THINKPAD_RFK_BLUETOOTH		0
 #define THINKPAD_RFK_WWAN		1
@@ -165,7 +165,7 @@ static void	thinkpad_bluetooth_toggle(thinkpad_softc_t *);
 static bool	thinkpad_resume(device_t, const pmf_qual_t *);
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
-static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
+static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *);
 static void	thinkpad_cmos(thinkpad_softc_t *, uint8_t);
 
 CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
@@ -230,7 +230,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_ecdev = NULL;
 	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
-	     curdev != NULL; curdev = deviter_next(&di))
+	    curdev != NULL; curdev = deviter_next(&di))
 		if (device_is_a(curdev, "acpiecdt") ||
 		    device_is_a(curdev, "acpiec")) {
 			sc->sc_ecdev = curdev;
@@ -330,29 +330,30 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 #endif
 	for (i = TP_PSW_DISPLAY_CYCLE; i < TP_PSW_LAST; i++)
 		sc->sc_smpsw[i].smpsw_type = PSWITCH_TYPE_HOTKEY;
-	psw[TP_PSW_DISPLAY_CYCLE].smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
-	psw[TP_PSW_LOCK_SCREEN].smpsw_name = PSWITCH_HK_LOCK_SCREEN;
-	psw[TP_PSW_BATTERY_INFO].smpsw_name = PSWITCH_HK_BATTERY_INFO;
-	psw[TP_PSW_EJECT_BUTTON].smpsw_name = PSWITCH_HK_EJECT_BUTTON;
-	psw[TP_PSW_ZOOM_BUTTON].smpsw_name = PSWITCH_HK_ZOOM_BUTTON;
-	psw[TP_PSW_VENDOR_BUTTON].smpsw_name = PSWITCH_HK_VENDOR_BUTTON;
+
+	psw[TP_PSW_DISPLAY_CYCLE].smpsw_name	= PSWITCH_HK_DISPLAY_CYCLE;
+	psw[TP_PSW_LOCK_SCREEN].smpsw_name	= PSWITCH_HK_LOCK_SCREEN;
+	psw[TP_PSW_BATTERY_INFO].smpsw_name	= PSWITCH_HK_BATTERY_INFO;
+	psw[TP_PSW_EJECT_BUTTON].smpsw_name	= PSWITCH_HK_EJECT_BUTTON;
+	psw[TP_PSW_ZOOM_BUTTON].smpsw_name	= PSWITCH_HK_ZOOM_BUTTON;
+	psw[TP_PSW_VENDOR_BUTTON].smpsw_name	= PSWITCH_HK_VENDOR_BUTTON;
 #ifndef THINKPAD_NORMAL_HOTKEYS
-	psw[TP_PSW_FNF1_BUTTON].smpsw_name     = PSWITCH_HK_FNF1_BUTTON;
-	psw[TP_PSW_WIRELESS_BUTTON].smpsw_name = PSWITCH_HK_WIRELESS_BUTTON;
-	psw[TP_PSW_WWAN_BUTTON].smpsw_name     = PSWITCH_HK_WWAN_BUTTON;
-	psw[TP_PSW_POINTER_BUTTON].smpsw_name  = PSWITCH_HK_POINTER_BUTTON;
-	psw[TP_PSW_FNF10_BUTTON].smpsw_name    = PSWITCH_HK_FNF10_BUTTON;
-	psw[TP_PSW_FNF11_BUTTON].smpsw_name    = PSWITCH_HK_FNF11_BUTTON;
-	psw[TP_PSW_BRIGHTNESS_UP].smpsw_name   = PSWITCH_HK_BRIGHTNESS_UP;
-	psw[TP_PSW_BRIGHTNESS_DOWN].smpsw_name = PSWITCH_HK_BRIGHTNESS_DOWN;
-	psw[TP_PSW_THINKLIGHT].smpsw_name      = PSWITCH_HK_THINKLIGHT;
-	psw[TP_PSW_VOLUME_UP].smpsw_name       = PSWITCH_HK_VOLUME_UP;
-	psw[TP_PSW_VOLUME_DOWN].smpsw_name     = PSWITCH_HK_VOLUME_DOWN;
-	psw[TP_PSW_VOLUME_MUTE].smpsw_name     = PSWITCH_HK_VOLUME_MUTE;
-	psw[TP_PSW_STAR_BUTTON].smpsw_name     = PSWITCH_HK_STAR_BUTTON;
-	psw[TP_PSW_SCISSORS_BUTTON].smpsw_name = PSWITCH_HK_SCISSORS_BUTTON;
-	psw[TP_PSW_BLUETOOTH_BUTTON].smpsw_name = PSWITCH_HK_BLUETOOTH_BUTTON;
-	psw[TP_PSW_KEYBOARD_BUTTON].smpsw_name = PSWITCH_HK_KEYBOARD_BUTTON;
+	psw[TP_PSW_FNF1_BUTTON].smpsw_name	= PSWITCH_HK_FNF1_BUTTON;
+	psw[TP_PSW_WIRELESS_BUTTON].smpsw_name	= PSWITCH_HK_WIRELESS_BUTTON;
+	psw[TP_PSW_WWAN_BUTTON].smpsw_name	= PSWITCH_HK_WWAN_BUTTON;
+	psw[TP_PSW_POINTER_BUTTON].smpsw_name	= PSWITCH_HK_POINTER_BUTTON;
+	psw[TP_PSW_FNF10_BUTTON].smpsw_name	= PSWITCH_HK_FNF10_BUTTON;
+	psw[TP_PSW_FNF11_BUTTON].smpsw_name	= PSWITCH_HK_FNF11_BUTTON;
+	psw[TP_PSW_BRIGHTNESS_UP].smpsw_name	= PSWITCH_HK_BRIGHTNESS_UP;
+	psw[TP_PSW_BRIGHTNESS_DOWN].smpsw_name	= PSWITCH_HK_BRIGHTNESS_DOWN;
+	psw[TP_PSW_THINKLIGHT].smpsw_name	= PSWITCH_HK_THINKLIGHT;
+	psw[TP_PSW_VOLUME_UP].smpsw_name	= PSWITCH_HK_VOLUME_UP;
+	psw[TP_PSW_VOLUME_DOWN].smpsw_name	= PSWITCH_HK_VOLUME_DOWN;
+	psw[TP_PSW_VOLUME_MUTE].smpsw_name	= PSWITCH_HK_VOLUME_MUTE;
+	psw[TP_PSW_STAR_BUTTON].smpsw_name	= PSWITCH_HK_STAR_BUTTON;
+	psw[TP_PSW_SCISSORS_BUTTON].smpsw_name	= PSWITCH_HK_SCISSORS_BUTTON;
+	psw[TP_PSW_BLUETOOTH_BUTTON].smpsw_name	= PSWITCH_HK_BLUETOOTH_BUTTON;
+	psw[TP_PSW_KEYBOARD_BUTTON].smpsw_name	= PSWITCH_HK_KEYBOARD_BUTTON;
 #endif /* THINKPAD_NORMAL_HOTKEYS */
 
 	for (i = 0; i < TP_PSW_LAST; i++) {
