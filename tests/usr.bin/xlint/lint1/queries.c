@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.28 2024/04/27 10:08:54 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.29 2024/04/27 12:46:37 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -532,4 +532,6 @@ Q20_void_pointer_conversion(void)
 	int_ptr = char_ptr;
 	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to int', op '=' [124] */
 	char_ptr = int_ptr;
+
+	int_ptr = (void *)0;
 }
