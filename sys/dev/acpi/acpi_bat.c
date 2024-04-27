@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.122 2024/04/26 18:19:18 christos Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.123 2024/04/27 00:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.122 2024/04/26 18:19:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.123 2024/04/27 00:40:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -228,14 +228,6 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Battery\n");
 
 	sc->sc_node = aa->aa_node;
-
-	sc->sc_present = 0;
-	sc->sc_dvoltage = 0;
-	sc->sc_dcapacity = 0;
-	sc->sc_lcapacity = 0;
-	sc->sc_wcapacity = 0;
-
-	sc->sc_sme = NULL;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
@@ -759,7 +751,7 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme->sme_cookie = dv;
 	sc->sc_sme->sme_refresh = acpibat_refresh;
 	sc->sc_sme->sme_class = SME_CLASS_BATTERY;
-	sc->sc_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
+	sc->sc_sme->sme_flags = SME_POLL_ONLY;
 	sc->sc_sme->sme_get_limits = acpibat_get_limits;
 
 	if (sysmon_envsys_register(sc->sc_sme))
