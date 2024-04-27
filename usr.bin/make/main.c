@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.612 2024/03/10 02:53:37 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.613 2024/04/27 17:33:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.612 2024/03/10 02:53:37 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.613 2024/04/27 17:33:46 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1199,7 +1199,7 @@ ReadBuiltinRules(void)
 		Fatal("%s: cannot open %s.",
 		    progname, (const char *)sysMkFiles.first->datum);
 
-	Lst_DoneCall(&sysMkFiles, free);
+	Lst_DoneFree(&sysMkFiles);
 }
 
 static void
@@ -1564,9 +1564,9 @@ static void
 main_CleanUp(void)
 {
 #ifdef CLEANUP
-	Lst_DoneCall(&opts.variables, free);
-	Lst_DoneCall(&opts.makefiles, free);
-	Lst_DoneCall(&opts.create, free);
+	Lst_DoneFree(&opts.variables);
+	Lst_DoneFree(&opts.makefiles);
+	Lst_DoneFree(&opts.create);
 #endif
 
 	if (DEBUG(GRAPH2))

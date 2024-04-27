@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.215 2024/02/07 06:43:02 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.216 2024/04/27 17:33:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.215 2024/02/07 06:43:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.216 2024/04/27 17:33:46 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -151,9 +151,8 @@ static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
 
 #ifdef CLEANUP
 static void
-ArchFree(void *ap)
+ArchFree(Arch *a)
 {
-	Arch *a = ap;
 	HashIter hi;
 
 	/* Free memory from hash entries */
@@ -1070,7 +1069,11 @@ void
 Arch_End(void)
 {
 #ifdef CLEANUP
-	Lst_DoneCall(&archives, ArchFree);
+	ArchListNode *ln;
+
+	for (ln = archives.first; ln != NULL; ln = ln->next)
+		ArchFree(ln->datum);
+	Lst_Done(&archives);
 #endif
 }
 
