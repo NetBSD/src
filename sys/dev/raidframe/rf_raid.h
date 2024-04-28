@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.51 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.51.6.1 2024/04/28 12:09:08 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -116,7 +116,8 @@ struct RF_Raid_s {
 
 	RF_RaidLayout_t Layout;	/* all information related to layout */
 	RF_RaidDisk_t *Disks;	/* all information related to physical disks */
-	RF_DiskQueue_t *Queues;/* all information related to disk queues */
+	RF_DiskQueue_t *Queues; /* all information related to disk queues */
+	u_int   maxQueue;	/* initialized queues in Queues array */
 	const RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
 					 component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
@@ -213,10 +214,10 @@ struct RF_Raid_s {
 	int     recon_in_progress;
 	int     parity_rewrite_in_progress;
 	int     copyback_in_progress;
-	int     adding_hot_spare;
+	int     changing_components;
 
 	rf_declare_cond2(parity_rewrite_cv);
-	rf_declare_cond2(adding_hot_spare_cv);
+	rf_declare_cond2(changing_components_cv);
 
 	/*
          * Engine thread control
@@ -258,6 +259,8 @@ struct RF_Raid_s {
 	rf_declare_cond2(outstandingCond);
 	int     waitShutdown;
 	int     nAccOutstanding;
+
+	int     *abortRecon;	/* Abort background operations requested */
 
 	RF_DiskId_t **diskids;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.127.10.1 2023/09/09 14:54:38 martin Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.127.10.2 2024/04/28 12:09:08 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.127.10.1 2023/09/09 14:54:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.127.10.2 2024/04/28 12:09:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -295,9 +295,10 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	rc = rf_ContinueReconstructFailedDisk(reconDesc);
 
 	if (!rc) {
-		/* fix up the component label */
-		/* Don't actually need the read here.. */
-		c_label = raidget_component_label(raidPtr, scol);
+		/* fix up the component label.  Note that at this point col and scol have swapped places. */
+		/* We need to read from the *spared* disk, but use that label for the real component */
+
+		c_label = raidget_component_label(raidPtr, col);
 
 		raid_init_component_label(raidPtr, c_label);
 		c_label->row = 0;
@@ -305,7 +306,7 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		c_label->clean = RF_RAID_DIRTY;
 		c_label->status = rf_ds_optimal;
 		rf_component_label_set_partitionsize(c_label,
-		    raidPtr->Disks[scol].partitionSize);
+		    raidPtr->Disks[col].partitionSize);
 
 		/* We've just done a rebuild based on all the other
 		   disks, so at this point the parity is known to be
@@ -320,13 +321,11 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		   so we just update the spare disk as being a used spare
 		*/
 
-		spareDiskPtr->status = rf_ds_used_spare;
 		raidPtr->parity_good = RF_RAID_CLEAN;
 		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* XXXX MORE NEEDED HERE */
-
-		raidflush_component_label(raidPtr, scol);
+		raidflush_component_label(raidPtr, col);
 	} else {
 		/* Reconstruct failed. */
 
@@ -522,7 +521,6 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* fix up the component label */
-		/* Don't actually need the read here.. */
 		c_label = raidget_component_label(raidPtr, col);
 
 		rf_lock_mutex2(raidPtr->mutex);
@@ -643,9 +641,15 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	done = 0;
 	while (!done) {
 		
-		if (raidPtr->waitShutdown) {
-			/* someone is unconfiguring this array... bail on the reconstruct.. */
+		if (raidPtr->waitShutdown ||
+		    raidPtr->abortRecon[col]) {
+			/*
+			 * someone is unconfiguring this array
+			 * or failed a component
+			 *... bail on the reconstruct..
+			 */
 			recon_error = 1;
+			raidPtr->abortRecon[col] = 0;
 			break;
 		}
 
@@ -898,6 +902,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		rf_DrainReconEventQueue(reconDesc);
 
 		rf_FreeReconControl(raidPtr);
+
 #if RF_ACC_TRACE > 0
 		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
 #endif
@@ -918,6 +923,21 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	ds = (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE);
 	raidPtr->Disks[col].status = (ds) ? rf_ds_dist_spared : rf_ds_spared;
 	raidPtr->status = (ds) ? rf_rs_reconfigured : rf_rs_optimal;
+
+	if (col != scol) {
+		/* swap the names, raid_cinfo.  queues stay where they are. */
+		rf_swap_components(raidPtr, col, scol);
+		
+		/* mark the new spare as good */
+		raidPtr->Disks[col].status = rf_ds_optimal;
+
+		for (i = scol; i < raidPtr->numCol+raidPtr->numSpare-1; i++) {
+			/* now we work our way up the array, swapping as we go. */
+			/* swap with the one at the next position, which must be there */
+			rf_swap_components(raidPtr, i, i+1);
+		}
+		raidPtr->numSpare--;
+	}	
 	rf_unlock_mutex2(raidPtr->mutex);
 	RF_GETTIME(etime);
 	RF_TIMEVAL_DIFF(&(raidPtr->reconControl->starttime), &etime, &elpsd);

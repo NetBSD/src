@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.410.4.3 2023/10/18 11:44:22 martin Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.410.4.4 2024/04/28 12:09:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.410.4.3 2023/10/18 11:44:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.410.4.4 2024/04/28 12:09:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -888,6 +888,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 
 	for (c = 0; c < raidPtr->numSpare; c++) {
 		sparecol = raidPtr->numCol + c;
+
 		if (raidPtr->Disks[sparecol].status ==  rf_ds_used_spare) {
 			/* How about this one? */
 			scol = -1;
@@ -1226,9 +1227,7 @@ rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 
 	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->status == rf_rs_reconstructing) {
-		/* you can't fail a disk while we're reconstructing! */
-		/* XXX wrong for RAID6 */
-		goto out;
+		raidPtr->abortRecon[rr->col] = 1;
 	}
 	if ((raidPtr->Disks[rr->col].status == rf_ds_optimal) &&
 	    (raidPtr->numFailures > 0)) {
@@ -1237,8 +1236,18 @@ rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 		goto out;
 	}
 	if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
-		/* Can't fail a spared disk! */
-		goto out;
+		int spareCol = raidPtr->Disks[rr->col].spareCol;
+
+		if (spareCol < raidPtr->numCol ||
+		    spareCol >= raidPtr->numCol + raidPtr->numSpare)
+			goto out;
+
+		/* 
+		 * Fail the spare disk so that we can 
+		 * reconstruct on another one.
+		 */
+		raidPtr->Disks[spareCol].status = rf_ds_failed;
+			
 	}
 	rf_unlock_mutex2(raidPtr->mutex);
 
@@ -1674,12 +1683,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		rf_copy_single_component(&component, data);
 		return rf_add_hot_spare(raidPtr, &component);
 
-	case RAIDFRAME_REMOVE_HOT_SPARE:
-		return retcode;
-
+	/* Remove a non hot-spare component, never implemented in userland */
 	case RAIDFRAME_DELETE_COMPONENT:
 		rf_copy_single_component(&component, data);
 		return rf_delete_component(raidPtr, &component);
+
+	case RAIDFRAME_REMOVE_COMPONENT:
+		rf_copy_single_component(&component, data);
+		return rf_remove_component(raidPtr, &component);
 
 	case RAIDFRAME_INCORPORATE_HOT_SPARE:
 		rf_copy_single_component(&component, data);
@@ -2672,8 +2683,9 @@ rf_markalldirty(RF_Raid_t *raidPtr)
 		}
 	}
 
-	for( c = 0; c < raidPtr->numSpare ; c++) {
+	for (c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
+
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			/*
 
@@ -2745,8 +2757,9 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 		/* else we don't touch it.. */
 	}
 
-	for( c = 0; c < raidPtr->numSpare ; c++) {
+	for (c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
+
 		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			/*
@@ -3575,6 +3588,7 @@ rf_set_autoconfig(RF_Raid_t *raidPtr, int new_value)
 	}
 	for(column = 0; column < raidPtr->numSpare ; column++) {
 		sparecol = raidPtr->numCol + column;
+
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			clabel = raidget_component_label(raidPtr, sparecol);
 			clabel->autoconfigure = new_value;
@@ -3599,8 +3613,9 @@ rf_set_rootpartition(RF_Raid_t *raidPtr, int new_value)
 			raidflush_component_label(raidPtr, column);
 		}
 	}
-	for(column = 0; column < raidPtr->numSpare ; column++) {
+	for (column = 0; column < raidPtr->numSpare ; column++) {
 		sparecol = raidPtr->numCol + column;
+
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			clabel = raidget_component_label(raidPtr, sparecol);
 			clabel->root_partition = new_value;
@@ -3949,6 +3964,7 @@ rf_sync_component_caches(RF_Raid_t *raidPtr, int force)
 
 	for (c = 0; c < raidPtr->numSpare ; c++) {
 		int sparecol = raidPtr->numCol + c;
+
 		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			int e = rf_sync_component_cache(raidPtr, sparecol,
@@ -4033,12 +4049,12 @@ rf_get_info(RF_Raid_t *raidPtr, RF_DeviceConfig_t *config)
 		config->devs[d] = raidPtr->Disks[j];
 		d++;
 	}
-	for (j = config->cols, i = 0; i < config->nspares; i++, j++) {
-		config->spares[i] = raidPtr->Disks[j];
-		if (config->spares[i].status == rf_ds_rebuilding_spare) {
-			/* XXX: raidctl(8) expects to see this as a used spare */
-			config->spares[i].status = rf_ds_used_spare;
-		}
+	for (i = 0; i < config->nspares; i++) {
+		config->spares[i] = raidPtr->Disks[raidPtr->numCol + i];
+                if (config->spares[i].status == rf_ds_rebuilding_spare) {
+                        /* raidctl(8) expects to see this as a used spare */
+                        config->spares[i].status = rf_ds_used_spare;
+                }
 	}
 	return 0;
 }

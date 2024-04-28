@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.29 2021/07/27 03:01:48 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.29.10.1 2024/04/28 12:09:08 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -149,5 +149,6 @@ int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 			  RF_SectorCount_t, dev_t, int,
 			  RF_ShutdownList_t **,
 			  RF_AllocListElem_t *);
+int rf_UpdateDiskQueue(RF_DiskQueue_t *, RF_RaidDisk_t *);
 
 #endif				/* !_RF__RF_DISKQUEUE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.11 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.11.6.1 2024/04/28 12:09:08 martin Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -110,7 +110,8 @@
 
 #define RAIDFRAME_INIT_LABELS _IOW ('r', 21, RF_ComponentLabel_t)
 #define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_SingleComponent_t)
-#define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
+#define RAIDFRAME_REMOVE_COMPONENT  _IOW ('r', 23, RF_SingleComponent_t)
+#define RAIDFRAME_REMOVE_HOT_SPARE  RAIDFRAME_REMOVE_COMPONENT
 #define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
 #define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
