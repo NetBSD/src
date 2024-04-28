@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.76.6.1 2024/04/16 18:45:39 martin Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.76.6.2 2024/04/28 13:07:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.76.6.1 2024/04/16 18:45:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.76.6.2 2024/04/28 13:07:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -210,7 +210,19 @@ static const struct uftdi_match_quirk_entry uftdi_match_quirks[] = {
 	  .vendor_str	= "SecuringHardware.com",
 	  .product_str	= "Tigard V1.1",
 	  .match_ret	= UMATCH_NONE,
-	}
+	},
+	/*
+	 * The SiPEED Tang Nano 9K (and other SiPEED Tang FPGA development
+	 * boards) have an FT2232 on-board, wired up only for JTAG.
+	 */
+	{
+	  .vendor_id	= USB_VENDOR_FTDI,
+	  .product_id	= USB_PRODUCT_FTDI_SERIAL_2232C,
+	  .iface_no	= -1,
+	  .vendor_str	= "SIPEED",
+	  .product_str	= "JTAG Debugger",
+	  .match_ret	= UMATCH_NONE,
+	},
 };
 
 static int
@@ -224,7 +236,7 @@ uftdi_quirk_match(struct usbif_attach_arg *uiaa, int rv)
 		q = &uftdi_match_quirks[i];
 		if (uiaa->uiaa_vendor != q->vendor_id ||
 		    uiaa->uiaa_product != q->product_id ||
-		    uiaa->uiaa_ifaceno != q->iface_no) {
+		    (q->iface_no != -1 && uiaa->uiaa_ifaceno != q->iface_no)) {
 			continue;
 		}
 		if (q->vendor_str != NULL &&
