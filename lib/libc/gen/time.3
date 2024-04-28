@@ -1,4 +1,4 @@
-.\"	$NetBSD: time.3,v 1.16 2011/11/05 18:17:29 christos Exp $
+.\"	$NetBSD: time.3,v 1.17 2024/04/28 22:57:16 rillig Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)time.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 5, 2011
+.Dd April 29, 2024
 .Dt TIME 3
 .Os
 .Sh NAME
@@ -52,21 +52,17 @@ function
 returns the value of time in seconds since 0 hours, 0 minutes,
 0 seconds, January 1, 1970, Coordinated Universal Time.
 .Pp
-A copy of the time value may be saved to the area indicated by the
-pointer
-.Fa tloc .
 If
 .Fa tloc
-is a
-.Dv NULL
-pointer, no value is stored.
+is not a null pointer, a copy of the time value is saved in
+.Fa *tloc .
 .Pp
 Upon successful completion,
 .Fn time
 returns the value of time.
 Otherwise a value of
 .Po
-.Po Fa time_t Pc \-1
+.Po Fa time_t Pc Ns \-1
 .Pc
 is returned and the global variable
 .Va errno
