@@ -60,7 +60,7 @@ public:
 };
 
 inline unsigned int
-libc_name::hash (register const char *str, register unsigned int len)
+libc_name::hash (const char *str, unsigned int len)
 {
   static const unsigned short asso_values[] =
     {
@@ -91,7 +91,7 @@ libc_name::hash (register const char *str, register unsigned int len)
       1488, 1488, 1488, 1488, 1488, 1488, 1488, 1488, 1488, 1488,
       1488, 1488, 1488, 1488, 1488, 1488, 1488
     };
-  register int hval = len;
+  int hval = len;
 
   switch (hval)
     {
@@ -118,7 +118,7 @@ libc_name::hash (register const char *str, register unsigned int len)
 }
 
 const struct libc_name_struct *
-libc_name::libc_name_p (register const char *str, register unsigned int len)
+libc_name::libc_name_p (const char *str, unsigned int len)
 {
   enum
     {
@@ -1116,15 +1116,15 @@ libc_name::libc_name_p (register const char *str, register unsigned int len)
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      register int key = hash (str, len);
+      int key = hash (str, len);
 
       if (key <= MAX_HASH_VALUE && key >= 0)
         {
-          register int index = lookup[key];
+          int index = lookup[key];
 
           if (index >= 0)
             {
-              register const char *s = wordlist[index].name;
+              const char *s = wordlist[index].name;
 
               if (*str == *s && !strcmp (str + 1, s + 1))
                 return &wordlist[index];
