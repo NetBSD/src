@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.36 2022/05/18 00:37:11 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.36.2.1 2024/04/28 13:33:52 martin Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -123,6 +123,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	bozo_printf(httpd,
 		"<!DOCTYPE html>\r\n"
 		"<html><head><meta charset=\"utf-8\"/>\r\n"
+		"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n"
 		"<style type=\"text/css\">\r\n"
 		"table {\r\n"
 		"\tborder-top: 1px solid black;\r\n"
