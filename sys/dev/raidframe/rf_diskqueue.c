@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.63 2021/12/14 00:46:43 mrg Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.63.4.1 2024/04/28 12:09:08 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.63 2021/12/14 00:46:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.63.4.1 2024/04/28 12:09:08 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -187,6 +187,13 @@ rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 	return (0);
 }
 
+int
+rf_UpdateDiskQueue(RF_DiskQueue_t *diskqueue, RF_RaidDisk_t *disk)
+{
+	diskqueue->dev = disk->dev;
+	return(0);
+}
+
 static void
 rf_ShutdownDiskQueueSystem(void *arg)
 {
@@ -255,7 +262,7 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	}
 
 	spareQueues = &raidPtr->Queues[raidPtr->numCol];
-	for (r = 0; r < raidPtr->numSpare; r++) {
+	for (r = 0; r < raidPtr->maxQueue; r++) {
 		rc = rf_ConfigureDiskQueue(raidPtr, &spareQueues[r],
 					   raidPtr->numCol + r, p,
 					   raidPtr->sectorsPerDisk,
