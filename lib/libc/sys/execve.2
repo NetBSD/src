@@ -1,4 +1,4 @@
-.\"	$NetBSD: execve.2,v 1.46 2024/04/28 22:21:21 rillig Exp $
+.\"	$NetBSD: execve.2,v 1.47 2024/04/28 23:10:26 uwe Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,35 +75,32 @@ and
 .Xr a.out 5 .
 .Pp
 An interpreter file begins with a line of the form:
-.Pp
-.Bd -ragged -offset indent -compact
-.Sy \&#!
-.Em interpreter
-.Bq Em arg
+.Bd -ragged -offset indent
+.Ic \&#! Ns Ar interpreter Op Ar arg
 .Ed
 .Pp
 When an interpreter file is
-.Sy execve Ap d ,
+.Nm Ap d ,
 the system actually
-.Sy execve Ap s
+.Nm Ap s
 the specified
-.Em interpreter .
+.Ar interpreter .
 If the optional
-.Em arg
+.Ar arg
 is specified, it becomes the first argument to the
-.Em interpreter ,
+.Ar interpreter ,
 and the name of the originally
-.Sy execve Ap d
+.Nm Ap d
 file becomes the second argument;
 otherwise, the name of the originally
-.Sy execve Ap d
+.Nm Ap d
 file becomes the first argument.
 The original arguments are shifted over to become the subsequent arguments.
 The zeroth argument, normally the name of the
-.Fn execve Ns d
+.Nm Ap d
 file, is left unchanged.
 The interpreter named by
-.Em interpreter
+.Ar interpreter
 must not itself be an interpreter file.
 (See
 .Xr script 7
@@ -127,8 +124,8 @@ character pointers to null-terminated strings.
 A pointer to this array is normally stored in the global variable
 .Va environ .
 These strings pass information to the
-new process that is not directly an argument to the command (see
-.Xr environ 7 ) .
+new process that is not directly an argument to the command
+.Pq see Xr environ 7 .
 .Pp
 File descriptors open in the calling process image remain open in
 the new process image, except for those for which the close-on-exec
@@ -140,12 +137,18 @@ Descriptors that remain open are unaffected by
 .Fn execve .
 .Pp
 In the case of a new setuid or setgid executable being executed, if
-file descriptors 0, 1, or 2 (representing stdin, stdout, and stderr)
+file descriptors 0, 1, or 2
+.Po
+representing
+.Em stdin , stdout ,
+and
+.Em stderr
+.Pc
 are currently unallocated, these descriptors will be opened to point to
 some system file like
 .Pa /dev/null .
 The intent is to ensure these descriptors are not unallocated, since
-many libraries make assumptions about the use of these 3 file descriptors.
+many libraries make assumptions about the use of these three file descriptors.
 .Pp
 Signals set to be ignored in the calling process are set to be ignored in
 the new process.
@@ -157,8 +160,7 @@ The signal stack is reset to be undefined (see
 for more information).
 .Pp
 If the set-user-ID mode bit of the new process image file is set
-(see
-.Xr chmod 2 ) ,
+.Pq see Xr chmod 2 ,
 the effective user ID of the new process image is set to the owner ID
 of the new process image file.
 If the set-group-ID mode bit of the new process image file is set,
@@ -171,8 +173,8 @@ process image.
 After any set-user-ID and set-group-ID processing,
 the effective user ID is recorded as the saved set-user-ID,
 and the effective group ID is recorded as the saved set-group-ID.
-These values may be used in changing the effective IDs later (see
-.Xr setuid 2 ) .
+These values may be used in changing the effective IDs later
+.Pq see Xr setuid 2 .
 The set-ID bits are not honored if the respective file system has the
 .Cm nosuid
 option enabled or if the new process file is an interpreter file.
@@ -182,20 +184,19 @@ tracing is disabled if effective IDs are changed.
 The new process also inherits the following attributes from
 the calling process:
 .Pp
-.Bl -column parent_process_ID -offset indent -compact
-.It process ID Ta see Xr getpid 2
+.Bl -column "parent process ID" -offset indent -compact
+.It process ID        Ta see Xr getpid 2
 .It parent process ID Ta see Xr getppid 2
-.It process group ID Ta see Xr getpgrp 2
-.It access groups Ta see Xr getgroups 2
+.It process group ID  Ta see Xr getpgrp 2
+.It access groups     Ta see Xr getgroups 2
 .It working directory Ta see Xr chdir 2
-.It root directory Ta see Xr chroot 2
-.It control terminal Ta see Xr termios 4
-.It resource usages Ta see Xr getrusage 2
-.It interval timers Ta see Xr getitimer 2
-.It resource limits Ta see Xr getrlimit 2
-.It file mode mask Ta see Xr umask 2
-.It signal mask Ta see Xr sigaction 2 ,
-.Xr sigprocmask 2
+.It root directory    Ta see Xr chroot 2
+.It control terminal  Ta see Xr termios 4
+.It resource usages   Ta see Xr getrusage 2
+.It interval timers   Ta see Xr getitimer 2
+.It resource limits   Ta see Xr getrlimit 2
+.It file mode mask    Ta see Xr umask 2
+.It signal mask       Ta see Xr sigaction 2 , Xr sigprocmask 2
 .El
 .Pp
 When a program is executed as a result of an
@@ -209,10 +210,9 @@ char **argv, **envp;
 .Pp
 where
 .Fa argc
+.Pq the Dq arg count
 is the number of elements in
-.Fa argv
-(the
-.Dq arg count )
+.Fa argv ,
 and
 .Fa argv
 points to the array of character pointers
@@ -264,7 +264,7 @@ The default compile time limit is 262144 bytes and is specified
 in the variable
 .Dv NCARGS
 in
-.Aq Pa sys/param.h
+.In sys/param.h
 and get be read from the
 .Xr sysctl 3
 MIB variable
@@ -275,9 +275,11 @@ the new process file is not an ordinary file,
 its file mode denies execute permission, or
 it is on a file system mounted with execution
 disabled
-.Dv ( MNT_NOEXEC
+.Po
+.Dv MNT_NOEXEC
 in
-.Ao Pa sys/mount.h Ac ) .
+.In sys/mount.h
+.Pc .
 .It Bq Er EAGAIN
 A
 .Xr setuid 7
@@ -305,7 +307,7 @@ characters.
 .It Bq Er ENOENT
 The new process file does not exist, or
 the new process file is a script starting with
-.Li #!
+.Ql #!
 and the script interpreter does not exist.
 .It Bq Er ENOEXEC
 The new process file has the appropriate access
