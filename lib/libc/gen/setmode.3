@@ -1,4 +1,4 @@
-.\"	$NetBSD: setmode.3,v 1.23 2022/03/12 17:31:39 christos Exp $
+.\"	$NetBSD: setmode.3,v 1.24 2024/04/28 22:43:30 rillig Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,16 +51,15 @@ function accepts a string representation of a file mode change,
 compiles it to binary form, and returns an abstract representation
 that may be passed to
 .Fn getmode .
-The string may be an numeric (octal) or symbolic string of the form
+The string may be a numeric (octal) or symbolic string of the form
 accepted by
 .Xr chmod 1 ,
 and may represent either an exact mode to set or a change to make to
-the existing mode.
+an existing mode.
 .Pp
 The
 .Fn getmode
-function
-adjusts the file permission bits given by
+function adjusts the file permission bits given by
 .Fa mode
 according to the compiled change representation
 .Fa set ,
@@ -116,7 +115,7 @@ or
 .Xr strtol 3 .
 In addition,
 .Fn setmode
-will fail and set
+may fail and set
 .Va errno
 to:
 .Bl -tag -width Er
