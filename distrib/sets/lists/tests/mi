@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1313 2024/04/28 01:21:26 riastradh Exp $
+# $NetBSD: mi,v 1.1314 2024/04/28 14:39:22 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -35,6 +35,7 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon		tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/usb			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs			tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/fs/cd9660			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/ffs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/fifofs			tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/hfs			tests-fs-debug		compattestfile,atf
@@ -1564,7 +1565,9 @@
 ./usr/tests/fs/cd9660					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/cd9660/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/cd9660/Kyuafile				tests-fs-tests		atf,rump,kyua
-./usr/tests/fs/cd9660/pr_48787.image.bz2		tests-fs-tests		atf,rump
+./usr/tests/fs/cd9660/h_hexdump_r			tests-fs-tests		atf,rump
+./usr/tests/fs/cd9660/pr_48787.image.bz2		tests-obsolete		obsolete
+./usr/tests/fs/cd9660/pr_48787.image.hex		tests-fs-tests		atf,rump
 ./usr/tests/fs/cd9660/t_high_ino_big_file		tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/ffs/Atffile				tests-fs-tests		atf,rump
