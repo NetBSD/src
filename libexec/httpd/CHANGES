@@ -1,4 +1,7 @@
-$NetBSD: CHANGES,v 1.55 2024/01/26 23:19:44 mrg Exp $
+$NetBSD: CHANGES,v 1.56 2024/04/28 17:12:30 maya Exp $
+
+changes in bozohttpd 20240428:
+	o  make directory listings mobile friendly. from D. Bohdan.
 
 changes in bozohttpd 20240126:
 	o  add some more default mime types.
