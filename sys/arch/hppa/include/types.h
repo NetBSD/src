@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.32 2023/07/23 10:09:36 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.33 2024/04/28 10:57:34 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -80,8 +80,8 @@ typedef struct {
 typedef int			__register_t;
 
 
-#define	__SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
-#define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
+#define	__SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0 } }
+#define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1 } }
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
