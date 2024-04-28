@@ -1,4 +1,4 @@
-# $NetBSD: t_varquote.sh,v 1.5 2016/03/27 14:50:01 christos Exp $
+# $NetBSD: t_varquote.sh,v 1.6 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,7 +113,7 @@ nested_quotes_multiword_head() {
 	    "string works (PR bin/43597)"
 }
 nested_quotes_multiword_body() {
-	atf_check -s eq:0 -o match:"first-word second-word" -e empty \
+	atf_check -s exit:0 -o match:"first-word second-word" -e empty \
 	    ${TEST_SH} -c 'echo "${foo:="first-word"} second-word"'
 }
 
@@ -123,8 +123,8 @@ default_assignment_with_arith_head() {
 	    "string works (PR bin/50827)"
 }
 default_assignment_with_arith_body() {
-	atf_check -s eq:0 -o empty -e empty ${TEST_SH} -c ': "${x=$((1))}"'
-	atf_check -s eq:0 -o match:1 -e empty ${TEST_SH} -c 'echo "${x=$((1))}"'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c ': "${x=$((1))}"'
+	atf_check -s exit:0 -o match:1 -e empty ${TEST_SH} -c 'echo "${x=$((1))}"'
 }
 
 atf_init_test_cases() {

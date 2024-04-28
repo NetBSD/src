@@ -1,4 +1,4 @@
-# $NetBSD: t_tar.sh,v 1.2 2018/11/30 00:53:41 christos Exp $
+# $NetBSD: t_tar.sh,v 1.3 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,14 +35,14 @@ append_body() {
 	touch foo bar
 
 	# store both foo and bar into file1.tar
-	atf_check -s eq:0 -o empty -e empty tar -cf file1.tar foo bar
+	atf_check -s exit:0 -o empty -e empty tar -cf file1.tar foo bar
 
 	# store foo into file2.tar, then append bar to file2.tar
-	atf_check -s eq:0 -o empty -e empty tar -cf file2.tar foo
-	atf_check -s eq:0 -o empty -e empty tar -rf file2.tar bar
+	atf_check -s exit:0 -o empty -e empty tar -cf file2.tar foo
+	atf_check -s exit:0 -o empty -e empty tar -rf file2.tar bar
 
 	# ensure that file1.tar and file2.tar are equal
-	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
+	atf_check -s exit:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
 atf_test_case rd_base256_size
@@ -84,10 +84,10 @@ rd_base256_size_body() {
 	head -c 1450 /dev/zero >> test.tar
 
 	# test extracting the test archive
-	atf_check -s eq:0 -o empty -e empty tar -xf test.tar
+	atf_check -s exit:0 -o empty -e empty tar -xf test.tar
 
 	# ensure that output.bin is equal to reference.bin
-	atf_check -s eq:0 -o empty -e empty cmp output.bin reference.bin
+	atf_check -s exit:0 -o empty -e empty cmp output.bin reference.bin
 }
 
 atf_init_test_cases()

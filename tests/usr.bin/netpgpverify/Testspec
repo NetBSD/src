@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: Testspec,v 1.2 2016/06/01 14:52:56 agc Exp $
+# $NetBSD: Testspec,v 1.3 2024/04/28 07:27:42 rillig Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -58,30 +58,30 @@ expected33
 expected34
 expected35
 '
-TESTSET_1_CASE_1="-s eq:0 -o file:1.expected -e empty b2e < 1.in"
-TESTSET_1_CASE_2="-s eq:0 -o file:2.expected -e empty b2e < 2.in"
+TESTSET_1_CASE_1="-s exit:0 -o file:1.expected -e empty b2e < 1.in"
+TESTSET_1_CASE_2="-s exit:0 -o file:2.expected -e empty b2e < 2.in"
 
-TESTSET_1_CASE_1="-s eq:0 -o file:expected16 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify b.gpg"
-DISABLE_TESTSET_1_CASE_2="-s eq:0 -o file:expected17 -e empty netpgpverify -c verify a.gpg"
-TESTSET_1_CASE_3="-s eq:0 -o file:expected18 -e empty env TZ=US/Pacific netpgpverify -c verify a.gpg"
-TESTSET_1_CASE_4="-s eq:0 -o file:expected19 -e empty env TZ=US/Pacific netpgpverify -c verify NetBSD-6.0_RC2_hashes.asc"
-TESTSET_1_CASE_5="-s eq:0 -o file:expected20 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat jj.asc"
-TESTSET_1_CASE_6="-s eq:0 -o file:expected21 -e empty env TZ=US/Pacific netpgpverify < a.gpg"
-TESTSET_1_CASE_7="-s eq:0 -o file:expected22 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < jj.asc"
-TESTSET_1_CASE_8="-s eq:0 -o file:expected23 -e empty env TZ=US/Pacific netpgpverify < NetBSD-6.0_RC2_hashes.asc"
-TESTSET_1_CASE_9="-s eq:0 -o file:expected24 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < b.gpg"
-DISABLE_TESTSET_1_CASE_10="-s eq:0 -o file:expected25 -e empty netpgpverify NetBSD-6.0_RC1_hashes.gpg"
-DISABLE_TESTSET_1_CASE_11="-s eq:0 -o file:expected26 -e empty netpgpverify < NetBSD-6.0_RC1_hashes.gpg"
-TESTSET_1_CASE_12="-s eq:0 -o file:expected27 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < NetBSD-6.0_hashes.asc"
-TESTSET_1_CASE_13="-s eq:0 -o file:expected28 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg NetBSD-6.0_hashes.asc"
-DISABLE_TESTSET_1_CASE_14="-s eq:0 -o file:expected29 -e empty netpgpverify NetBSD-6.0_RC1_hashes_ascii.gpg"
-DISABLE_TESTSET_1_CASE_15="-s eq:0 -o file:expected30 -e empty netpgpverify < NetBSD-6.0_RC1_hashes_ascii.gpg"
-TESTSET_1_CASE_16="-s eq:0 -o file:expected31 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg b.gpg b.gpg"
-TESTSET_1_CASE_17="-s eq:0 -o file:expected32 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg b.gpg b.gpg b.gpg"
-TESTSET_1_CASE_18="-s eq:0 -o file:expected33 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg jj.asc b.gpg"
-TESTSET_1_CASE_19="-s eq:0 -o file:expected34 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg det.sig"
-TESTSET_1_CASE_20="-s eq:0 -o file:expected35 -e empty env TZ=US/Pacific netpgpverify -c cat -k pubring.gpg det.sig"
-DISABLE_TESTSET_1_CASE_21="-s eq:0 -o file:expected46 -e empty netpgpverify -k problem-pubring.gpg NetBSD-6.0_hashes.asc"
+TESTSET_1_CASE_1="-s exit:0 -o file:expected16 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify b.gpg"
+DISABLE_TESTSET_1_CASE_2="-s exit:0 -o file:expected17 -e empty netpgpverify -c verify a.gpg"
+TESTSET_1_CASE_3="-s exit:0 -o file:expected18 -e empty env TZ=US/Pacific netpgpverify -c verify a.gpg"
+TESTSET_1_CASE_4="-s exit:0 -o file:expected19 -e empty env TZ=US/Pacific netpgpverify -c verify NetBSD-6.0_RC2_hashes.asc"
+TESTSET_1_CASE_5="-s exit:0 -o file:expected20 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat jj.asc"
+TESTSET_1_CASE_6="-s exit:0 -o file:expected21 -e empty env TZ=US/Pacific netpgpverify < a.gpg"
+TESTSET_1_CASE_7="-s exit:0 -o file:expected22 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < jj.asc"
+TESTSET_1_CASE_8="-s exit:0 -o file:expected23 -e empty env TZ=US/Pacific netpgpverify < NetBSD-6.0_RC2_hashes.asc"
+TESTSET_1_CASE_9="-s exit:0 -o file:expected24 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < b.gpg"
+DISABLE_TESTSET_1_CASE_10="-s exit:0 -o file:expected25 -e empty netpgpverify NetBSD-6.0_RC1_hashes.gpg"
+DISABLE_TESTSET_1_CASE_11="-s exit:0 -o file:expected26 -e empty netpgpverify < NetBSD-6.0_RC1_hashes.gpg"
+TESTSET_1_CASE_12="-s exit:0 -o file:expected27 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < NetBSD-6.0_hashes.asc"
+TESTSET_1_CASE_13="-s exit:0 -o file:expected28 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg NetBSD-6.0_hashes.asc"
+DISABLE_TESTSET_1_CASE_14="-s exit:0 -o file:expected29 -e empty netpgpverify NetBSD-6.0_RC1_hashes_ascii.gpg"
+DISABLE_TESTSET_1_CASE_15="-s exit:0 -o file:expected30 -e empty netpgpverify < NetBSD-6.0_RC1_hashes_ascii.gpg"
+TESTSET_1_CASE_16="-s exit:0 -o file:expected31 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg b.gpg b.gpg"
+TESTSET_1_CASE_17="-s exit:0 -o file:expected32 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg b.gpg b.gpg b.gpg"
+TESTSET_1_CASE_18="-s exit:0 -o file:expected33 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg jj.asc b.gpg"
+TESTSET_1_CASE_19="-s exit:0 -o file:expected34 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg det.sig"
+TESTSET_1_CASE_20="-s exit:0 -o file:expected35 -e empty env TZ=US/Pacific netpgpverify -c cat -k pubring.gpg det.sig"
+DISABLE_TESTSET_1_CASE_21="-s exit:0 -o file:expected46 -e empty netpgpverify -k problem-pubring.gpg NetBSD-6.0_hashes.asc"
 
 TESTSET_2_NAME=dsa_signatures
 TESTSET_2_FILES='
@@ -102,13 +102,13 @@ expected44
 expected45
 expected46
 '
-TESTSET_2_CASE_1="-s eq:0 -o file:expected36 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.gpg"
-TESTSET_2_CASE_2="-s eq:0 -o file:expected37 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.gpg"
-TESTSET_2_CASE_3="-s eq:0 -o file:expected38 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.asc"
-TESTSET_2_CASE_4="-s eq:0 -o file:expected39 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.asc"
-TESTSET_2_CASE_5="-s eq:0 -o file:expected40 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.gpg"
-TESTSET_2_CASE_6="-s eq:0 -o file:expected41 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.gpg"
-TESTSET_2_CASE_7="-s eq:0 -o file:expected42 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.asc"
-TESTSET_2_CASE_8="-s eq:0 -o file:expected43 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.asc"
-TESTSET_2_CASE_9="-s eq:0 -o file:expected44 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.gpg"
-TESTSET_2_CASE_10="-s eq:0 -o file:expected45 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.asc"
+TESTSET_2_CASE_1="-s exit:0 -o file:expected36 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.gpg"
+TESTSET_2_CASE_2="-s exit:0 -o file:expected37 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.gpg"
+TESTSET_2_CASE_3="-s exit:0 -o file:expected38 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.asc"
+TESTSET_2_CASE_4="-s exit:0 -o file:expected39 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.asc"
+TESTSET_2_CASE_5="-s exit:0 -o file:expected40 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.gpg"
+TESTSET_2_CASE_6="-s exit:0 -o file:expected41 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.gpg"
+TESTSET_2_CASE_7="-s exit:0 -o file:expected42 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.asc"
+TESTSET_2_CASE_8="-s exit:0 -o file:expected43 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.asc"
+TESTSET_2_CASE_9="-s exit:0 -o file:expected44 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.gpg"
+TESTSET_2_CASE_10="-s exit:0 -o file:expected45 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.asc"

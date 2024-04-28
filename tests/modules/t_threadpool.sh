@@ -1,4 +1,4 @@
-# $NetBSD: t_threadpool.sh,v 1.1 2019/01/25 18:34:45 christos Exp $
+# $NetBSD: t_threadpool.sh,v 1.2 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,16 +37,16 @@ job_delay=2
 
 read_sysctl() {
 	echo "${1} = ${2}" >expout
-	atf_check -s eq:0 -o file:expout -e empty sysctl ${1}
+	atf_check -s exit:0 -o file:expout -e empty sysctl ${1}
 }
 
 write_sysctl() {
-	atf_check -s eq:0 -o ignore -e empty sysctl -w "${1}=${2}"
+	atf_check -s exit:0 -o ignore -e empty sysctl -w "${1}=${2}"
 }
 
 write_sysctl_fail() {
 	echo "${3}" >experr
-	atf_check -s eq:1 -o ignore -e file:experr sysctl -w "${1}=${2}"
+	atf_check -s exit:1 -o ignore -e file:experr sysctl -w "${1}=${2}"
 }
 
 atf_test_case unbound cleanup

@@ -1,4 +1,4 @@
-# $NetBSD: t_whoami.sh,v 1.1 2012/03/17 16:33:14 jruoho Exp $
+# $NetBSD: t_whoami.sh,v 1.2 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,12 +43,12 @@ correct_body() {
 
 	echo "Checking with EUID=100"
 	echo "test" >expout
-	atf_check -s eq:0 -o file:expout -e empty ./run_whoami.sh
+	atf_check -s exit:0 -o file:expout -e empty ./run_whoami.sh
 
 	echo "Checking with EUID=0"
 	export LIBFAKE_EUID_ROOT=1
 	echo "root" >expout
-	atf_check -s eq:0 -o file:expout -e empty ./run_whoami.sh
+	atf_check -s exit:0 -o file:expout -e empty ./run_whoami.sh
 }
 
 atf_test_case syntax
@@ -60,12 +60,12 @@ syntax_body() {
 
 	# Give a user to the command.
 	echo 'usage: whoami' >experr
-	atf_check -s eq:1 -o empty -e file:experr ./run_whoami.sh root
+	atf_check -s exit:1 -o empty -e file:experr ./run_whoami.sh root
 
 	# Give an invalid flag but which is allowed by id (with which
 	# whoami shares code) when using the -un options.
 	echo 'usage: whoami' >experr
-	atf_check -s eq:1 -o empty -e file:experr ./run_whoami.sh -r
+	atf_check -s exit:1 -o empty -e file:experr ./run_whoami.sh -r
 }
 
 atf_init_test_cases()

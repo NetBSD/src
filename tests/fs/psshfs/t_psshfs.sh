@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.9 2017/05/24 15:29:51 christos Exp $
+# $NetBSD: t_psshfs.sh,v 1.10 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,13 +72,13 @@ start_ssh() {
 	sed -e "s,@SRCDIR@,$(atf_get_srcdir),g" -e "s,@WORKDIR@,$(pwd),g" \
 	    $(atf_get_srcdir)/sshd_config.in >sshd_config || \
 	    atf_fail "Failed to create sshd_config"
-	atf_check -s eq:0 -o empty -e empty cp /usr/libexec/sftp-server .
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty cp /usr/libexec/sftp-server .
+	atf_check -s exit:0 -o empty -e empty \
 	    cp $(atf_get_srcdir)/ssh_host_key .
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    cp $(atf_get_srcdir)/ssh_host_key.pub .
-	atf_check -s eq:0 -o empty -e empty chmod 400 ssh_host_key
-	atf_check -s eq:0 -o empty -e empty chmod 444 ssh_host_key.pub
+	atf_check -s exit:0 -o empty -e empty chmod 400 ssh_host_key
+	atf_check -s exit:0 -o empty -e empty chmod 444 ssh_host_key.pub
 
 	/usr/sbin/sshd -e -f ./sshd_config >sshd.log 2>&1 &
 	while [ ! -f sshd.pid ]; do
@@ -87,14 +87,14 @@ start_ssh() {
 	echo "SSH server started (pid $(cat sshd.pid))"
 
 	echo "Setting up SSH client configuration"
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ssh-keygen -f ssh_user_key -t rsa -b 1024 -N "" -q
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    cp ssh_user_key.pub authorized_keys
 	echo "[localhost]:10000,[127.0.0.1]:10000,[::1]:10000" \
 	    "$(cat $(atf_get_srcdir)/ssh_host_key.pub)" >known_hosts || \
 	    atf_fail "Failed to create known_hosts"
-	atf_check -s eq:0 -o empty -e empty chmod 600 authorized_keys
+	atf_check -s exit:0 -o empty -e empty chmod 600 authorized_keys
 	sed -e "s,@SRCDIR@,$(atf_get_srcdir),g" -e "s,@WORKDIR@,$(pwd),g" \
 	    $(atf_get_srcdir)/ssh_config.in >ssh_config || \
 	    atf_fail "Failed to create ssh_config"
@@ -119,7 +119,7 @@ stop_ssh() {
 # Both directories are supposed to live on the current directory.
 #
 mount_psshfs() {
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    mount -t psshfs -o -F=$(pwd)/ssh_config localhost:$(pwd)/${1} ${2}
 }
 
@@ -159,13 +159,13 @@ EOF
 
 	mkdir mnt
 	mount_psshfs root mnt
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ./ne_inodes.sh root/dir root/dir/file1
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ./ne_inodes.sh root/dir root/dir/file2
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ./ne_inodes.sh root/dir/file1 root/dir/file2
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ./ne_inodes.sh root/file3 root/file4
 }
 inode_nos_cleanup() {
@@ -186,11 +186,11 @@ pwd_body() {
 	mkdir root/dir
 
 	mkdir mnt
-	atf_check -s eq:0 -o save:stdout -e empty \
+	atf_check -s exit:0 -o save:stdout -e empty \
 	    -x 'echo $(cd mnt && /bin/pwd)/dir'
 	mv stdout expout
 	mount_psshfs root mnt
-	atf_check -s eq:0 -o file:expout -e empty \
+	atf_check -s exit:0 -o file:expout -e empty \
 	    -x 'cd mnt/dir && ls .. >/dev/null && /bin/pwd'
 }
 pwd_cleanup() {

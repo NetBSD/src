@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.11 2021/10/21 13:21:55 andvar Exp $
+# $NetBSD: t_config.sh,v 1.12 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,7 +68,7 @@ run_and_check_pass()
 
 	run_and_check_prep "${name}"
 
-	atf_check -o ignore -s eq:0 \
+	atf_check -o ignore -s exit:0 \
 	    config -s "${supportdir}" -b "compile/${name}" "${config}"
 }
 
@@ -80,7 +80,7 @@ run_and_check_warn()
 
 	local stderr
 	eval stderr=\$${name}_stderr
-	atf_check -o ignore -e "${stderr}" -s eq:0 \
+	atf_check -o ignore -e "${stderr}" -s exit:0 \
 	    config -s "${supportdir}" -b "compile/${name}" "${config}"
 }
 

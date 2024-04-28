@@ -1,4 +1,4 @@
-# $NetBSD: t_sizes.sh,v 1.6 2018/01/17 00:23:17 maya Exp $
+# $NetBSD: t_sizes.sh,v 1.7 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ small_body() {
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -gt 1 ] || atf_fail "Incorrect bused count"
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty rm a
 
 	test_unmount
 }
@@ -58,7 +58,7 @@ big_body() {
 	eval $($(atf_get_srcdir)/h_tools statvfs . | sed -e 's|^f_|cf_|')
 	cf_bused=$((${cf_blocks} - ${cf_bfree}))
 
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=a bs=1m count=5
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
@@ -66,7 +66,7 @@ big_body() {
 	[ ${f_bused} -gt $((5 * 1024 * 1024 / ${pagesize})) ] || \
 	    atf_fail "bused too big"
 	of_bused=${f_bused}
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -lt ${of_bused} ] || \
@@ -84,13 +84,13 @@ overflow_head() {
 overflow_body() {
 	test_mount -o -s10M
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	of_bused=$((${f_blocks} - ${f_bfree}))
-	atf_check -s eq:1 -o ignore -e ignore \
+	atf_check -s exit:1 -o ignore -e ignore \
 	    dd if=/dev/zero of=a bs=1m count=15
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty rm a
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -ge ${of_bused} -a ${f_bused} -le $((${of_bused} + 1)) ] \
@@ -108,10 +108,10 @@ overwrite_head() {
 overwrite_body() {
 	test_mount -o -s10M
 
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=a bs=1024 count=10
 	sync
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=a bs=1024 conv=notrunc seek=1 count=1
 	sync
 	eval $(stat -s a)

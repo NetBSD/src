@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdir.sh,v 1.8 2011/03/05 07:41:11 pooka Exp $
+# $NetBSD: t_mkdir.sh,v 1.9 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,9 +39,9 @@ single_head() {
 single_body() {
 	test_mount
 
-	atf_check -s eq:1 -o empty -e empty test -d a
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty test -d a
+	atf_check -s exit:1 -o empty -e empty test -d a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty test -d a
 	test -d a
 	eval $(stat -s ${Mount_Point})
 	[ ${st_nlink} = 3 ] || atf_fail "Link count is not 3"
@@ -59,9 +59,9 @@ many_body() {
 	test_mount
 
 	for d in $(jot 100); do
-		atf_check -s eq:1 -o empty -e empty test -d ${d}
-		atf_check -s eq:0 -o empty -e empty mkdir ${d}
-		atf_check -s eq:0 -o empty -e empty test -d ${d}
+		atf_check -s exit:1 -o empty -e empty test -d ${d}
+		atf_check -s exit:0 -o empty -e empty mkdir ${d}
+		atf_check -s exit:0 -o empty -e empty test -d ${d}
 	done
 	eval $(stat -s ${Mount_Point})
 	[ ${st_nlink} = 102 ] || atf_fail "Link count is not 102"
@@ -77,9 +77,9 @@ nested_head() {
 nested_body() {
 	test_mount
 
-	atf_check -s eq:1 -o empty -e empty test -d a/b/c/d/e
-	atf_check -s eq:0 -o empty -e empty mkdir -p a/b/c/d/e
-	atf_check -s eq:0 -o empty -e empty test -d a/b/c/d/e
+	atf_check -s exit:1 -o empty -e empty test -d a/b/c/d/e
+	atf_check -s exit:0 -o empty -e empty mkdir -p a/b/c/d/e
+	atf_check -s exit:0 -o empty -e empty test -d a/b/c/d/e
 
 	test_unmount
 }
@@ -98,24 +98,24 @@ attrs_body() {
 
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir b c
+	atf_check -s exit:0 -o empty -e empty mkdir b c
 
-	atf_check -s eq:0 -o empty -e empty chown ${user}:0 b
+	atf_check -s exit:0 -o empty -e empty chown ${user}:0 b
 	eval $(stat -s b)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 0 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty chown ${user}:100 c
+	atf_check -s exit:0 -o empty -e empty chown ${user}:100 c
 	eval $(stat -s c)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'mkdir b/a'
+	atf_check -s exit:0 -o empty -e empty su -m ${user} -c 'mkdir b/a'
 	eval $(stat -s b/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 0 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'mkdir c/a'
+	atf_check -s exit:0 -o empty -e empty su -m ${user} -c 'mkdir c/a'
 	eval $(stat -s c/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
@@ -132,7 +132,7 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty mkdir dir
 	echo 'mkdir dir/a' | kqueue_monitor 2 dir
 
 	# Creating a directory raises NOTE_LINK on the parent directory
@@ -141,8 +141,8 @@ kqueue_body() {
 	# Creating a directory raises NOTE_WRITE on the parent directory
 	kqueue_check dir NOTE_WRITE
 
-	atf_check -s eq:0 -o empty -e empty rmdir dir/a
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rmdir dir/a
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
 	test_unmount
 }

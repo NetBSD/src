@@ -1,4 +1,4 @@
-# $NetBSD: t_sdiff.sh,v 1.1 2012/03/17 16:33:15 jruoho Exp $
+# $NetBSD: t_sdiff.sh,v 1.2 2024/04/28 07:27:43 rillig Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,13 +32,13 @@ flags_head()
 }
 flags_body()
 {
-	atf_check -o file:$(atf_get_srcdir)/d_flags_l.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_flags_l.out -s exit:1 \
 	    sdiff -l "$(atf_get_srcdir)/d_input1" "$(atf_get_srcdir)/d_input2"
 
-	atf_check -o file:$(atf_get_srcdir)/d_flags_s.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_flags_s.out -s exit:1 \
 	    sdiff -s "$(atf_get_srcdir)/d_input1" "$(atf_get_srcdir)/d_input2"
 
-	atf_check -o file:$(atf_get_srcdir)/d_flags_w.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_flags_w.out -s exit:1 \
 	    sdiff -w 125 "$(atf_get_srcdir)/d_input1" "$(atf_get_srcdir)/d_input2"
 }
 
@@ -52,14 +52,14 @@ iflags_body()
 	tail1="-w 125 -I .*filename.* $(atf_get_srcdir)/d_input1 $(atf_get_srcdir)/d_input2"
 	tail2="-w 125 -I .*filename.* $(atf_get_srcdir)/d_input2 $(atf_get_srcdir)/d_input1"
 
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_a1.out -s eq:1 sdiff ${tail1}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_a2.out -s eq:1 sdiff ${tail2}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_b1.out -s eq:1 sdiff -s ${tail1}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_b2.out -s eq:1 sdiff -s ${tail2}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_c1.out -s eq:1 sdiff -l ${tail1}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_c2.out -s eq:1 sdiff -l ${tail2}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_d1.out -s eq:1 sdiff -s ${tail1}
-	atf_check -o file:$(atf_get_srcdir)/d_iflags_d2.out -s eq:1 sdiff -s ${tail2}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_a1.out -s exit:1 sdiff ${tail1}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_a2.out -s exit:1 sdiff ${tail2}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_b1.out -s exit:1 sdiff -s ${tail1}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_b2.out -s exit:1 sdiff -s ${tail2}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_c1.out -s exit:1 sdiff -l ${tail1}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_c2.out -s exit:1 sdiff -l ${tail2}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_d1.out -s exit:1 sdiff -s ${tail1}
+	atf_check -o file:$(atf_get_srcdir)/d_iflags_d2.out -s exit:1 sdiff -s ${tail2}
 }
 
 atf_test_case tabs
@@ -69,7 +69,7 @@ tabs_head()
 }
 tabs_body()
 {
-	atf_check -o file:$(atf_get_srcdir)/d_tabs.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_tabs.out -s exit:1 \
 	    sdiff "$(atf_get_srcdir)/d_tabs1.in" "$(atf_get_srcdir)/d_tabs2.in"
 }
 
@@ -80,13 +80,13 @@ tabends_head()
 }
 tabends_body()
 {
-	atf_check -o file:$(atf_get_srcdir)/d_tabends_a.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_tabends_a.out -s exit:1 \
 	    sdiff -w30 "$(atf_get_srcdir)/d_tabends.in" /dev/null
 
-	atf_check -o file:$(atf_get_srcdir)/d_tabends_b.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_tabends_b.out -s exit:1 \
 	    sdiff -w30 /dev/null "$(atf_get_srcdir)/d_tabends.in"
 
-	atf_check -o file:$(atf_get_srcdir)/d_tabends_c.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_tabends_c.out -s exit:1 \
 	    sdiff -w19 "$(atf_get_srcdir)/d_tabends.in" /dev/null
 }
 
@@ -142,10 +142,10 @@ oneline_head()
 }
 oneline_body()
 {
-	atf_check -o file:$(atf_get_srcdir)/d_oneline_a.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_oneline_a.out -s exit:1 \
 	    sdiff /dev/null "$(atf_get_srcdir)/d_oneline.in"
 
-	atf_check -o file:$(atf_get_srcdir)/d_oneline_b.out -s eq:1 \
+	atf_check -o file:$(atf_get_srcdir)/d_oneline_b.out -s exit:1 \
 	    sdiff "$(atf_get_srcdir)/d_oneline.in" /dev/null
 }
 
@@ -157,10 +157,10 @@ dot_head()
 dot_body()
 {
 	echo ".                                                               <" > expout
-	atf_check -o file:expout -s eq:1 sdiff "$(atf_get_srcdir)/d_dot.in" /dev/null
+	atf_check -o file:expout -s exit:1 sdiff "$(atf_get_srcdir)/d_dot.in" /dev/null
 
 	echo "                                                                > ." > expout
-	atf_check -o file:expout -s eq:1 sdiff /dev/null "$(atf_get_srcdir)/d_dot.in"
+	atf_check -o file:expout -s exit:1 sdiff /dev/null "$(atf_get_srcdir)/d_dot.in"
 }
 
 atf_test_case stdin
@@ -171,11 +171,11 @@ stdin_head()
 stdin_body()
 {
 	echo "                                                                > stdin" > expout
-	atf_check -o file:expout -s eq:1 -x \
+	atf_check -o file:expout -s exit:1 -x \
 	    "echo stdin | sdiff /dev/null /dev/stdin"
 
 	echo "stdin                                                           <" > expout
-	atf_check -o file:expout -s eq:1 -x \
+	atf_check -o file:expout -s exit:1 -x \
 	    "echo stdin | sdiff /dev/stdin /dev/null"
 }
 

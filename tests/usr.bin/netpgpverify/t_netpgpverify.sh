@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: t_netpgpverify.sh,v 1.4 2016/08/28 15:59:15 christos Exp $
+# $NetBSD: t_netpgpverify.sh,v 1.5 2024/04/28 07:27:42 rillig Exp $
 
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -7193,26 +7193,26 @@ IGl0IHN0YXRpY2FsbHkgbGlua2VkIGFzIHdlbGw/Cm11bHRpcGxlIGZpbGVzIGlu
 IG5ldHBncHZlcmlmeQo=
 ====
 EOF
-	atf_check -s eq:0 -o file:expected16 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify b.gpg
-	atf_check -s eq:0 -o file:expected18 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify a.gpg
-#	atf_check -s eq:0 -o file:expected19 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify NetBSD-6.0_RC2_hashes.asc
-	atf_check -s eq:0 -o file:expected20 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat jj.asc
-	atf_check -s eq:0 -o file:expected21 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < a.gpg
-	atf_check -s eq:0 -o file:expected22 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < jj.asc
-#	atf_check -s eq:0 -o file:expected23 -e empty env TZ=US/Pacific netpgpverify < NetBSD-6.0_RC2_hashes.asc
-	atf_check -s eq:0 -o file:expected24 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < b.gpg
-	#atf_check -s eq:0 -o file:expected25 -e empty netpgpverify NetBSD-6.0_RC1_hashes.gpg
-	#atf_check -s eq:0 -o file:expected26 -e empty netpgpverify < NetBSD-6.0_RC1_hashes.gpg
-	atf_check -s eq:0 -o file:expected27 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < NetBSD-6.0_hashes.asc
-	atf_check -s eq:0 -o file:expected28 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg NetBSD-6.0_hashes.asc
-	#atf_check -s eq:0 -o file:expected29 -e empty netpgpverify NetBSD-6.0_RC1_hashes_ascii.gpg
-	#atf_check -s eq:0 -o file:expected30 -e empty netpgpverify < NetBSD-6.0_RC1_hashes_ascii.gpg
-	atf_check -s eq:0 -o file:expected31 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg b.gpg b.gpg
-	atf_check -s eq:0 -o file:expected32 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg b.gpg b.gpg b.gpg
-	atf_check -s eq:0 -o file:expected33 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg jj.asc b.gpg
-	atf_check -s eq:0 -o file:expected34 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg det.sig
-	atf_check -s eq:0 -o file:expected35 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat det.sig
-	#atf_check -s eq:0 -o file:expected46 -e empty netpgpverify -k problem-pubring.gpg NetBSD-6.0_hashes.asc
+	atf_check -s exit:0 -o file:expected16 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify b.gpg
+	atf_check -s exit:0 -o file:expected18 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify a.gpg
+#	atf_check -s exit:0 -o file:expected19 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c verify NetBSD-6.0_RC2_hashes.asc
+	atf_check -s exit:0 -o file:expected20 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat jj.asc
+	atf_check -s exit:0 -o file:expected21 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < a.gpg
+	atf_check -s exit:0 -o file:expected22 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < jj.asc
+#	atf_check -s exit:0 -o file:expected23 -e empty env TZ=US/Pacific netpgpverify < NetBSD-6.0_RC2_hashes.asc
+	atf_check -s exit:0 -o file:expected24 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < b.gpg
+	#atf_check -s exit:0 -o file:expected25 -e empty netpgpverify NetBSD-6.0_RC1_hashes.gpg
+	#atf_check -s exit:0 -o file:expected26 -e empty netpgpverify < NetBSD-6.0_RC1_hashes.gpg
+	atf_check -s exit:0 -o file:expected27 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg < NetBSD-6.0_hashes.asc
+	atf_check -s exit:0 -o file:expected28 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg NetBSD-6.0_hashes.asc
+	#atf_check -s exit:0 -o file:expected29 -e empty netpgpverify NetBSD-6.0_RC1_hashes_ascii.gpg
+	#atf_check -s exit:0 -o file:expected30 -e empty netpgpverify < NetBSD-6.0_RC1_hashes_ascii.gpg
+	atf_check -s exit:0 -o file:expected31 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg b.gpg b.gpg
+	atf_check -s exit:0 -o file:expected32 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg b.gpg b.gpg b.gpg
+	atf_check -s exit:0 -o file:expected33 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat b.gpg jj.asc b.gpg
+	atf_check -s exit:0 -o file:expected34 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg det.sig
+	atf_check -s exit:0 -o file:expected35 -e empty env TZ=US/Pacific netpgpverify -k pubring.gpg -c cat det.sig
+	#atf_check -s exit:0 -o file:expected46 -e empty netpgpverify -k problem-pubring.gpg NetBSD-6.0_hashes.asc
 }
 
 # Test set 2 (dsa_signatures) for netpgpverify
@@ -7407,16 +7407,16 @@ LTIzIFtFeHBpcnkgMjAxOS0wNi0yMV0KZmluZ2VycHJpbnQ6ICAxOTE1IDA4MDEg
 ZmJkOCBmNDVkIDg5ZjIgMDIwNSA5ZmYyIGMyNGYgZGYyYyBlNjIwIAoK
 ====
 EOF
-	atf_check -s eq:0 -o file:expected36 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.gpg
-	atf_check -s eq:0 -o file:expected37 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.gpg
-	atf_check -s eq:0 -o file:expected38 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.asc
-	atf_check -s eq:0 -o file:expected39 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.asc
-	atf_check -s eq:0 -o file:expected40 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.gpg
-	atf_check -s eq:0 -o file:expected41 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.gpg
-	atf_check -s eq:0 -o file:expected42 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.asc
-	atf_check -s eq:0 -o file:expected43 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.asc
-	atf_check -s eq:0 -o file:expected44 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.gpg
-	atf_check -s eq:0 -o file:expected45 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.asc
+	atf_check -s exit:0 -o file:expected36 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.gpg
+	atf_check -s exit:0 -o file:expected37 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.gpg
+	atf_check -s exit:0 -o file:expected38 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.asc
+	atf_check -s exit:0 -o file:expected39 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.asc
+	atf_check -s exit:0 -o file:expected40 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.gpg
+	atf_check -s exit:0 -o file:expected41 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.gpg
+	atf_check -s exit:0 -o file:expected42 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.asc
+	atf_check -s exit:0 -o file:expected43 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.asc
+	atf_check -s exit:0 -o file:expected44 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.gpg
+	atf_check -s exit:0 -o file:expected45 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.asc
 }
 
 # all test sets

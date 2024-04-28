@@ -1,4 +1,4 @@
-# $NetBSD: t_groups.sh,v 1.1 2012/03/17 16:33:14 jruoho Exp $
+# $NetBSD: t_groups.sh,v 1.2 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,13 +42,13 @@ correct_body() {
 	create_run_groups
 
 	echo "users wheel" >expout
-	atf_check -s eq:0 -o file:expout -e empty ./run_groups.sh
-	atf_check -s eq:0 -o file:expout -e empty ./run_groups.sh 100
-	atf_check -s eq:0 -o file:expout -e empty ./run_groups.sh test
+	atf_check -s exit:0 -o file:expout -e empty ./run_groups.sh
+	atf_check -s exit:0 -o file:expout -e empty ./run_groups.sh 100
+	atf_check -s exit:0 -o file:expout -e empty ./run_groups.sh test
 
 	echo "wheel" >expout
-	atf_check -s eq:0 -o file:expout -e empty ./run_groups.sh 0
-	atf_check -s eq:0 -o file:expout -e empty ./run_groups.sh root
+	atf_check -s exit:0 -o file:expout -e empty ./run_groups.sh 0
+	atf_check -s exit:0 -o file:expout -e empty ./run_groups.sh root
 }
 
 atf_test_case syntax
@@ -60,8 +60,8 @@ syntax_body() {
 
 	# Give an invalid flag but which is allowed by id (with which
 	# groups shares code) when using the -Gn options.
-	atf_check -s eq:1 -o empty -e save:stderr ./run_groups.sh -r
-	atf_check -s eq:0 -o ignore -e empty grep '^usage:' stderr
+	atf_check -s exit:1 -o empty -e save:stderr ./run_groups.sh -r
+	atf_check -s exit:0 -o ignore -e empty grep '^usage:' stderr
 }
 
 atf_init_test_cases()

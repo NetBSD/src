@@ -1,4 +1,4 @@
-# $NetBSD: t_libcrypto.sh,v 1.9 2023/05/08 17:46:06 christos Exp $
+# $NetBSD: t_libcrypto.sh,v 1.10 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,7 +78,7 @@ threads_body()
 		    -cert "$s/d_server.pem" \
 		    -ccert "$s/d_client.pem" \
 		2>&1 | tee out
-		atf_check -s eq:1 -o empty -e empty grep :error: out
+		atf_check -s exit:1 -o empty -e empty grep :error: out
 	fi
 }
 

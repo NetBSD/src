@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.4 2024/01/30 16:57:32 martin Exp $
+#	$NetBSD: t_sets.sh,v 1.5 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ check_mtree()
 	local set=$1
 
 	cd /
-	atf_check -o empty -s eq:0 \
+	atf_check -o empty -s exit:0 \
 		mtree -e </etc/mtree/set."$set"
 }
 

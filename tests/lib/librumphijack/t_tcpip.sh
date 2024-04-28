@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.23 2023/08/05 13:13:37 riastradh Exp $
+#       $NetBSD: t_tcpip.sh,v 1.24 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,8 +88,8 @@ start_sshd() {
 	    cp $(atf_get_srcdir)/ssh_host_key .
 	atf_check -s ignore -o empty -e ignore \
 	    cp $(atf_get_srcdir)/ssh_host_key.pub .
-	atf_check -s eq:0 -o empty -e empty chmod 400 ssh_host_key
-	atf_check -s eq:0 -o empty -e empty chmod 444 ssh_host_key.pub
+	atf_check -s exit:0 -o empty -e empty chmod 400 ssh_host_key
+	atf_check -s exit:0 -o empty -e empty chmod 444 ssh_host_key.pub
 
 # Start in debugging mode so we don't have parent<->child privsep stuff
         env LD_PRELOAD=/usr/lib/librumphijack.so \
@@ -101,14 +101,14 @@ start_sshd() {
 	sleep 1
 
 	echo "Setting up SSH client configuration"
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    ssh-keygen -f ssh_user_key -t rsa -b 1024 -N "" -q
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    cp ssh_user_key.pub authorized_keys
 	echo "127.0.0.1,localhost,::1 " \
 	    "$(cat $(atf_get_srcdir)/ssh_host_key.pub)" >known_hosts || \
 	    atf_fail "Failed to create known_hosts"
-	atf_check -s eq:0 -o empty -e empty chmod 600 authorized_keys
+	atf_check -s exit:0 -o empty -e empty chmod 600 authorized_keys
 	sed -e "s,@SRCDIR@,$(atf_get_srcdir),g" -e "s,@WORKDIR@,$(pwd),g" \
 	    $(atf_get_srcdir)/ssh_config.in >ssh_config || \
 	    atf_fail "Failed to create ssh_config"

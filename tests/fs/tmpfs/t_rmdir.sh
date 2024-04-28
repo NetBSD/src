@@ -1,4 +1,4 @@
-# $NetBSD: t_rmdir.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_rmdir.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ mntpt_head() {
 mntpt_body() {
 	test_mount
 
-	atf_check -s eq:1 -o empty -e ignore rmdir ${Mount_Point}
+	atf_check -s exit:1 -o empty -e ignore rmdir ${Mount_Point}
 
 	test_unmount
 }
@@ -52,7 +52,7 @@ non_existent_head() {
 non_existent_body() {
 	test_mount
 
-	atf_check -s eq:1 -o empty -e ignore rmdir non-existent
+	atf_check -s exit:1 -o empty -e ignore rmdir non-existent
 
 	test_unmount
 }
@@ -65,11 +65,11 @@ single_head() {
 single_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
 	eval $(stat -s ${Mount_Point})
 	[ ${st_nlink} = 3 ] || \
 	    atf_fail "Incorrect number of links after creation"
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty rmdir a
 	eval $(stat -s ${Mount_Point})
 	[ ${st_nlink} = 2 ] || \
 	    atf_fail "Incorrect number of links after removal"
@@ -85,10 +85,10 @@ nested_head() {
 nested_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir -p a/b/c
-	atf_check -s eq:0 -o empty -e empty rmdir a/b/c
-	atf_check -s eq:0 -o empty -e empty rmdir a/b
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty mkdir -p a/b/c
+	atf_check -s exit:0 -o empty -e empty rmdir a/b/c
+	atf_check -s exit:0 -o empty -e empty rmdir a/b
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -101,10 +101,10 @@ dots_head() {
 dots_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:1 -o empty -e ignore rmdir a/.
-	atf_check -s eq:1 -o empty -e ignore rmdir a/..
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:1 -o empty -e ignore rmdir a/.
+	atf_check -s exit:1 -o empty -e ignore rmdir a/..
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -117,13 +117,13 @@ non_empty_head() {
 non_empty_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mkdir a/b
-	atf_check -s eq:0 -o empty -e empty mkdir a/c
-	atf_check -s eq:1 -o empty -e ignore rmdir a
-	atf_check -s eq:0 -o empty -e empty rmdir a/b
-	atf_check -s eq:0 -o empty -e empty rmdir a/c
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a/b
+	atf_check -s exit:0 -o empty -e empty mkdir a/c
+	atf_check -s exit:1 -o empty -e ignore rmdir a
+	atf_check -s exit:0 -o empty -e empty rmdir a/b
+	atf_check -s exit:0 -o empty -e empty rmdir a/c
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -136,13 +136,13 @@ links_head() {
 links_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mkdir a/b
-	atf_check -s eq:0 -o empty -e empty mkdir c
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a/b
+	atf_check -s exit:0 -o empty -e empty mkdir c
 
-	atf_check -s eq:0 -o empty -e empty rmdir c
-	atf_check -s eq:0 -o empty -e empty rmdir a/b
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty rmdir c
+	atf_check -s exit:0 -o empty -e empty rmdir a/b
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	eval $(stat -s ${Mount_Point})
 	[ ${st_nlink} = 2 ] || atf_fail "Incorrect number of links"
@@ -158,12 +158,12 @@ curdir_head() {
 curdir_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
 	# Catch a bug that would panic the system when accessing the
 	# current directory after being deleted: vop_open cannot assume
 	# that open files are still linked to a directory.
-	atf_check -s eq:1 -o empty -e ignore -x '( cd a && rmdir ../a && ls )'
-	atf_check -s eq:1 -o empty -e empty test -e a
+	atf_check -s exit:1 -o empty -e ignore -x '( cd a && rmdir ../a && ls )'
+	atf_check -s exit:1 -o empty -e empty test -e a
 
 	test_unmount
 }
@@ -177,13 +177,13 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
-	atf_check -s eq:0 -o empty -e empty mkdir dir/a
+	atf_check -s exit:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty mkdir dir/a
 	echo 'rmdir dir/a' | kqueue_monitor 3 dir dir/a
 	kqueue_check dir/a NOTE_DELETE
 	kqueue_check dir NOTE_LINK
 	kqueue_check dir NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
 	test_unmount
 }
