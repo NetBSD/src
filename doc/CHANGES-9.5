@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.1 2024/04/28 10:11:21 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.2 2024/04/28 13:32:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -11,4 +11,16 @@ doc/CHANGES-9.5 				added
 	Welcome to 9.4_STABLE.
 	[martin]
 
+sys/netinet6/frag6.c				1.78
+
+	inet6: fix calculation of fragment length.
+	[ozaki-r, ticket #1836]
+
+sys/dev/usb/uftdi.c				1.78
+sys/dev/usb/usbdevs				1.815
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	uftdi(4): PR 58127: add some USB serial adapters.
+	[maya, ticket #1837]
 
