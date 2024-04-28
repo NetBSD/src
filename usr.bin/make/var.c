@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1107 2024/04/27 21:26:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1108 2024/04/28 15:10:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1107 2024/04/27 21:26:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1108 2024/04/28 15:10:19 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4731,7 +4731,7 @@ Var_Subst(const char *str, GNode *scope, VarEvalMode emode)
 			VarSubstPlain(&p, &res);
 	}
 
-	return Buf_DoneDataCompact(&res);
+	return Buf_DoneData(&res);
 }
 
 void
