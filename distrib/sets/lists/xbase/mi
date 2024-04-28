@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.172 2022/10/17 07:40:22 mrg Exp $
+# $NetBSD: mi,v 1.172.2.1 2024/04/28 10:02:51 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1394,6 +1394,7 @@
 ./usr/X11R7/man/cat1/xsetmode.0				xbase-xsetmode-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xsetpointer.0			xbase-xsetpointer-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xsetroot.0				xbase-xsetroot-catman	.cat,xorg
+./usr/X11R7/man/cat1/xsetwallpaper.0			xbase-xsetwallpaper-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xsm.0				xbase-xsm-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xstdcmap.0				xbase-xstdcmap-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xterm.0				xbase-xterm-catman	.cat,xorg
@@ -1546,6 +1547,7 @@
 ./usr/X11R7/man/html1/xsetmode.html			xbase-xsetmode-htmlman	html,xorg
 ./usr/X11R7/man/html1/xsetpointer.html			xbase-xsetpointer-htmlman	html,xorg
 ./usr/X11R7/man/html1/xsetroot.html			xbase-xsetroot-htmlman	html,xorg
+./usr/X11R7/man/html1/xsetwallpaper.html		xbase-xsetwallpaper-htmlman	html,xorg
 ./usr/X11R7/man/html1/xsm.html				xbase-xsm-htmlman	html,xorg
 ./usr/X11R7/man/html1/xstdcmap.html			xbase-xstdcmap-htmlman	html,xorg
 ./usr/X11R7/man/html1/xterm.html			xbase-xterm-htmlman	html,xorg
@@ -1699,6 +1701,7 @@
 ./usr/X11R7/man/man1/xsetmode.1				xbase-xsetmode-man	.man,xorg
 ./usr/X11R7/man/man1/xsetpointer.1			xbase-xsetpointer-man	.man,xorg
 ./usr/X11R7/man/man1/xsetroot.1				xbase-xsetroot-man	.man,xorg
+./usr/X11R7/man/man1/xsetwallpaper.1			xbase-xsetwallpaper-man	.man,xorg
 ./usr/X11R7/man/man1/xsm.1				xbase-xsm-man	.man,xorg
 ./usr/X11R7/man/man1/xstdcmap.1				xbase-xstdcmap-man	.man,xorg
 ./usr/X11R7/man/man1/xterm.1				xbase-xterm-man	.man,xorg
