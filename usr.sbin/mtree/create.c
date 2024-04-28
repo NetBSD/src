@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.76 2018/11/18 23:03:36 sevan Exp $	*/
+/*	$NetBSD: create.c,v 1.76.10.1 2024/04/28 13:19:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.76 2018/11/18 23:03:36 sevan Exp $");
+__RCSID("$NetBSD: create.c,v 1.76.10.1 2024/04/28 13:19:21 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ static uid_t uid;
 static mode_t mode;
 static u_long flags;
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(HAVE_NBTOOL_CONFIG_H)
 #define	FTS_CONST const
 #else
 #define	FTS_CONST
