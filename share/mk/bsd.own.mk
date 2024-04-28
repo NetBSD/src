@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1372 2024/04/24 20:38:24 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1373 2024/04/28 08:01:04 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1301,7 +1301,6 @@ MKRADEONFIRMWARE.x86_64=	yes
 MKRADEONFIRMWARE.i386=		yes
 MKRADEONFIRMWARE.aarch64=	yes
 MKAMDGPUFIRMWARE.x86_64=	yes
-MKAMDGPUFIRMWARE.i386=		yes
 
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
