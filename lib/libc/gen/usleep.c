@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.20 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: usleep.c,v 1.20.42.1 2024/04/28 13:23:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: usleep.c,v 1.20 2012/06/25 22:32:44 abs Exp $");
+__RCSID("$NetBSD: usleep.c,v 1.20.42.1 2024/04/28 13:23:20 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,13 +51,8 @@ usleep(useconds_t useconds)
 	if (useconds == 0)
 		return (0);
 
-	if (useconds >= 1000000) {
-		errno = EINVAL;
-		return (-1);
-	}
-
-	ts.tv_sec  = 0;
-	ts.tv_nsec = useconds * 1000;
+	ts.tv_sec  = (useconds / 1000000);
+	ts.tv_nsec = (useconds % 1000000) * 1000;
 
 	nanosleep(&ts, NULL);
 
