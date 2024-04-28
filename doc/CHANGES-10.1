@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.6 2024/04/20 13:27:04 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.7 2024/04/28 13:43:59 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -150,4 +150,75 @@ sys/uvm/pmap/pmap.h				1.27
 
 	PR 58006: fix kernel hang in pmap_page_clear_attributes().
 	[skrll, ticket #671]
+
+distrib/sets/lists/xbase/mi			1.175
+external/mit/xorg/bin/xsetwallpaper/Makefile	1.6
+
+	PR 58172: install xsetwallpaper(1) manual page.
+	[jakllsch, ticket #672]
+
+sys/netinet6/frag6.c				1.78
+
+	inet6: fix calculation of fragment length.
+	[ozaki-r, ticket #673]
+
+sbin/raidctl/raidctl.8				1.80
+sbin/raidctl/raidctl.c				1.79
+sys/dev/raidframe/raidframeio.h			1.12
+sys/dev/raidframe/rf_diskqueue.c		1.64
+sys/dev/raidframe/rf_diskqueue.h		1.30
+sys/dev/raidframe/rf_disks.c			1.94
+sys/dev/raidframe/rf_disks.h			1.15
+sys/dev/raidframe/rf_driver.c			1.141
+sys/dev/raidframe/rf_netbsdkintf.c		1.414
+sys/dev/raidframe/rf_raid.h			1.52
+sys/dev/raidframe/rf_reconstruct.c		1.129
+
+	raid(4): implement hot removal of spares and components.
+	[oster, ticket #674]
+
+sbin/raidctl/raidctl.8				1.81
+sbin/raidctl/raidctl.c				1.80
+
+	raidctl(8): implement single command-line configuration of simple
+	RAID sets.
+	[oster, ticket #675]
+
+sys/dev/usb/uftdi.c				1.79
+
+	uftdi(4): add a match quirk to prevent matching any interface
+	on SiPEED FPGA development boards (e.g. Tang Nano 9K).
+	The FT2232s on these boards are wired up only for JTAG.
+	[thorpej, ticket #676]
+
+external/gpl3/gcc.old/dist/gcc/cp/cfns.h	1.12
+(applied to external/gpl3/gcc/dist/gcc/cp/cfns.h)
+usr.sbin/mtree/create.c				1.78
+
+	Fix tool build on FreeBSD 14 (and possibly other systems).
+	[hgutch, ticket #677]
+
+lib/libc/gen/usleep.3				1.20,1.21
+lib/libc/gen/usleep.c				1.21
+
+	usleep(3): PR 58184: allow calls with useconds >= 1000000.
+	[jdolecek, ticket #678]
+
+sys/dev/usb/uftdi.c				1.78
+sys/dev/usb/usbdevs				1.815
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	uftdi(4): PR 58127: add some USB serial adapters.
+	[maya, ticket #679]
+
+libexec/httpd/dir-index-bozo.c			1.37
+
+	httpd(8): PR 57962: create mobile-friendly directory listings.
+	[maya, ticket #680]
+
+etc/Makefile					1.470
+
+	PR/58200: change "makeobsolete" to use the tool version of sed.
+	[christos, ticket #681]
 
