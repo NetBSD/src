@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.326 2024/04/05 18:57:10 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.327 2024/04/28 07:52:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.326 2024/04/05 18:57:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.327 2024/04/28 07:52:52 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -826,8 +826,8 @@ ohci_init(ohci_softc_t *sc)
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
-	err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_HCCA_SIZE,	OHCI_HCCA_ALIGN,
-	    USBMALLOC_COHERENT, &sc->sc_hccadma);
+	err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_HCCA_SIZE,
+	    OHCI_HCCA_ALIGN, USBMALLOC_COHERENT, &sc->sc_hccadma);
 	if (err) {
 		sc->sc_hcca = NULL;
 		return err;
