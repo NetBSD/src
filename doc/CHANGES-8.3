@@ -1,4 +1,4 @@
-$NetBSD: CHANGES-8.3,v 1.1.2.228 2024/04/18 16:45:55 martin Exp $
+$NetBSD: CHANGES-8.3,v 1.1.2.229 2024/04/28 10:17:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -4429,4 +4429,9 @@ sys/arch/x86/x86/viac7temp.c			1.10
 
 	viac7temp(4): PR 58148: fix the kernel module.
 	[andvar, ticket #1959]
+
+sys/netinet6/frag6.c				1.78
+
+	inet6: fix calculation of fragment length.
+	[ozaki-r, ticket #1960]
 
