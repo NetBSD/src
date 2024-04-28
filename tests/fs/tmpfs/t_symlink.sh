@@ -1,4 +1,4 @@
-# $NetBSD: t_symlink.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_symlink.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,12 +37,12 @@ file_head() {
 file_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty ln -s a b
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty ln -s a b
 	[ $(md5 b | cut -d ' ' -f 4) = d41d8cd98f00b204e9800998ecf8427e ] || \
 	    atf_fail "Symlink points to an incorrect file"
 
-	atf_check -s eq:0 -o empty -e empty -x 'echo foo >a'
+	atf_check -s exit:0 -o empty -e empty -x 'echo foo >a'
 	[ $(md5 b | cut -d ' ' -f 4) = d3b07384d113edec49eaa6238ad5ff00 ] || \
 	    atf_fail "Symlink points to an incorrect file"
 
@@ -58,10 +58,10 @@ exec_head() {
 exec_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch b
-	atf_check -s eq:0 -o empty -e empty ln -s /bin/cp cp
-	atf_check -s eq:0 -o empty -e empty ./cp b c
-	atf_check -s eq:0 -o empty -e empty test -f c
+	atf_check -s exit:0 -o empty -e empty touch b
+	atf_check -s exit:0 -o empty -e empty ln -s /bin/cp cp
+	atf_check -s exit:0 -o empty -e empty ./cp b c
+	atf_check -s exit:0 -o empty -e empty test -f c
 
 	test_unmount
 }
@@ -74,13 +74,13 @@ dir_head() {
 dir_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir d
-	atf_check -s eq:1 -o empty -e empty test -f d/foo
-	atf_check -s eq:1 -o empty -e empty test -f e/foo
-	atf_check -s eq:0 -o empty -e empty ln -s d e
-	atf_check -s eq:0 -o empty -e empty touch d/foo
-	atf_check -s eq:0 -o empty -e empty test -f d/foo
-	atf_check -s eq:0 -o empty -e empty test -f e/foo
+	atf_check -s exit:0 -o empty -e empty mkdir d
+	atf_check -s exit:1 -o empty -e empty test -f d/foo
+	atf_check -s exit:1 -o empty -e empty test -f e/foo
+	atf_check -s exit:0 -o empty -e empty ln -s d e
+	atf_check -s exit:0 -o empty -e empty touch d/foo
+	atf_check -s exit:0 -o empty -e empty test -f d/foo
+	atf_check -s exit:0 -o empty -e empty test -f e/foo
 
 	test_unmount
 }
@@ -94,11 +94,11 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty mkdir dir
 	echo 'ln -s non-existent dir/a' | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rm dir/a
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rm dir/a
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
 	test_unmount
 }

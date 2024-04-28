@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.4 2020/03/15 10:15:16 martin Exp $
+# $NetBSD: t_create.sh,v 1.5 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,11 +36,11 @@ validfat32_body() {
 		atf_skip "not enough free space in working directory"
 	fi
 
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    newfs_msdos -b 512 -C 33m -F 32 msdos.img
 #	fsck_msdos/newfs_msdos have been fixed
 #	atf_expect_fail "PR bin/46743"
-	atf_check -s eq:0 -o not-match:FIXED -e empty fsck_msdos -p msdos.img
+	atf_check -s exit:0 -o not-match:FIXED -e empty fsck_msdos -p msdos.img
 	atf_expect_pass
 }
 

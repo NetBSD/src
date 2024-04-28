@@ -1,4 +1,4 @@
-# $NetBSD: t_vnode_leak.sh,v 1.7 2018/01/17 00:23:17 maya Exp $
+# $NetBSD: t_vnode_leak.sh,v 1.8 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ main_head() {
 main_body() {
 	echo "Lowering kern.maxvnodes to 2000"
 	sysctl -n kern.maxvnodes >oldvnodes
-	atf_check -s eq:0 -o ignore -e empty sysctl -w kern.maxvnodes=2000
+	atf_check -s exit:0 -o ignore -e empty sysctl -w kern.maxvnodes=2000
 
 	test_mount -o -s$(((4000 + 2) * 4096))
 	echo "Creating 4000 directories"

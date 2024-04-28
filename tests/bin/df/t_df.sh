@@ -1,4 +1,4 @@
-# $NetBSD: t_df.sh,v 1.2 2020/08/23 15:51:30 ryo Exp $
+# $NetBSD: t_df.sh,v 1.3 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -79,7 +79,7 @@ filer:/        1202716672   1202716672   -180407500 117% /filer
 /dev/strpct   21474836476  10737418240  10737418236  50% /strpct
 /dev/wd0e        10485688      2859932      7625756  27% /mount/windows/C
 EOF
-	atf_check -s eq:0 -o file:expout -e empty \
+	atf_check -s exit:0 -o file:expout -e empty \
 	    -x "BLOCKSIZE=1k $(atf_get_srcdir)/h_df -n"
 }
 
@@ -137,7 +137,7 @@ filer:/        1.1T   1.1T  -172G 117% /filer
 /dev/strpct     20T    10T    10T  50% /strpct
 /dev/wd0e       10G   2.7G   7.3G  27% /mount/windows/C
 EOF
-	atf_check -s eq:0 -o file:expout -e empty \
+	atf_check -s exit:0 -o file:expout -e empty \
 	    -x "BLOCKSIZE=1k $(atf_get_srcdir)/h_df -hn"
 }
 

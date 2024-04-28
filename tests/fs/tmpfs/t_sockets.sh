@@ -1,4 +1,4 @@
-# $NetBSD: t_sockets.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_sockets.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,10 +34,10 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty $(atf_get_srcdir)/h_tools sockets a
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty $(atf_get_srcdir)/h_tools sockets a
+	atf_check -s exit:0 -o empty -e empty rm a
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty mkdir dir
 	echo "$(atf_get_srcdir)/h_tools sockets dir/a" | kqueue_monitor 1 dir
 	kqueue_check dir NOTE_WRITE
 

@@ -1,4 +1,4 @@
-# $NetBSD: t_ulimit.sh,v 1.3 2016/03/27 14:50:01 christos Exp $
+# $NetBSD: t_ulimit.sh,v 1.4 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,10 +45,10 @@ get_ulimits() {
 }
 
 limits_body() {
-	atf_check -s eq:0 -o ignore -e empty ${TEST_SH} -c "ulimit -a"
+	atf_check -s exit:0 -o ignore -e empty ${TEST_SH} -c "ulimit -a"
 	for l in $(get_ulimits)
 	do
-	    atf_check -s eq:0 -o ignore -e empty ${TEST_SH} -c "ulimit $l"
+	    atf_check -s exit:0 -o ignore -e empty ${TEST_SH} -c "ulimit $l"
 	done
 }
 

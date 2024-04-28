@@ -1,4 +1,4 @@
-# $NetBSD: t_exec.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_exec.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,11 +35,11 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty cp /bin/cp .
+	atf_check -s exit:0 -o empty -e empty cp /bin/cp .
 	echo "Verifying copied file"
 	[ $(md5 cp | cut -d ' ' -f 4) = $(md5 /bin/cp | cut -d ' ' -f 4) ] || \
 	    atf_file "New binary file does not match original"
-	atf_check -s eq:0 -o empty -e empty ./cp cp foo
+	atf_check -s exit:0 -o empty -e empty ./cp cp foo
 
 	test_unmount
 }

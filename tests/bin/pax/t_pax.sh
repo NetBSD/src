@@ -1,4 +1,4 @@
-# $NetBSD: t_pax.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_pax.sh,v 1.2 2024/04/28 07:27:40 rillig Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,17 +35,17 @@ append_body() {
 	touch foo bar
 
 	# store both foo and bar into file1.tar
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    pax -w -b 512 -x ustar -f file1.tar foo bar
 
 	# store foo into file2.tar, then append bar to file2.tar
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    pax -w -b 512 -x ustar -f file2.tar foo
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty \
 	    pax -w -b 512 -x ustar -f file2.tar -a bar
 
 	# ensure that file1.tar and file2.tar are equal
-	atf_check -s eq:0 -o empty -e empty cmp file1.tar file2.tar
+	atf_check -s exit:0 -o empty -e empty cmp file1.tar file2.tar
 }
 
 atf_init_test_cases()

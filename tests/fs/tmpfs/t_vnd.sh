@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.13 2024/04/04 16:57:45 christos Exp $
+# $NetBSD: t_vnd.sh,v 1.14 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,14 +40,14 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=disk.img bs=1m count=10
-	atf_check -s eq:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
+	atf_check -s exit:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
 
-	atf_check -s eq:0 -o ignore -e ignore newfs -I ${rvnd}
+	atf_check -s exit:0 -o ignore -e ignore newfs -I ${rvnd}
 
-	atf_check -s eq:0 -o empty -e empty mkdir mnt
-	atf_check -s eq:0 -o empty -e empty mount ${vnd} mnt
+	atf_check -s exit:0 -o empty -e empty mkdir mnt
+	atf_check -s exit:0 -o empty -e empty mount ${vnd} mnt
 
 	echo "Creating test files"
 	for f in $(jot -w %u 100 | uniq); do
@@ -61,8 +61,8 @@ basic_body() {
 		    atf_fail "Invalid checksum for file ${f}"
 	done
 
-	atf_check -s eq:0 -o empty -e empty umount mnt
-	atf_check -s eq:0 -o empty -e empty vndconfig -u ${vnddev}
+	atf_check -s exit:0 -o empty -e empty umount mnt
+	atf_check -s exit:0 -o empty -e empty vndconfig -u ${vnddev}
 
 	test_unmount
 	touch done

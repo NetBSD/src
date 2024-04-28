@@ -1,4 +1,4 @@
-# $NetBSD: t_factor.sh,v 1.11 2020/10/11 18:43:50 christos Exp $
+# $NetBSD: t_factor.sh,v 1.12 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@ expect() {
 	if [ -n "$3" ] && [ $ncrypt -eq 0 ] ; then 
 		atf_skip "crypto needed for huge non-prime factors - PR bin/23663"
 	fi
-	atf_check -s eq:0 -o file:expout -e empty /usr/games/factor ${1}
+	atf_check -s exit:0 -o file:expout -e empty /usr/games/factor ${1}
 }
 
 atf_test_case overflow1

@@ -1,4 +1,4 @@
-# $NetBSD: t_abi_uvm.sh,v 1.3 2012/04/20 05:41:25 jruoho Exp $
+# $NetBSD: t_abi_uvm.sh,v 1.4 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,7 +58,7 @@ PAGE_SIZE_body() {
 	echo "Module PAGE_SIZE: ${module_pagesize}"
 	atf_check_equal "${kernel_pagesize}" "${module_pagesize}"
 
-	atf_check -s eq:0 -o empty -e empty modunload k_uvm
+	atf_check -s exit:0 -o empty -e empty modunload k_uvm
 }
 PAGE_SIZE_cleanup() {
 	modunload k_uvm >/dev/null 2>&1 || true

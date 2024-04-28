@@ -1,4 +1,4 @@
-# $NetBSD: t_read_write.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_read_write.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,7 +64,7 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o ignore -e ignore \
+	atf_check -s exit:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=c bs=1k count=10
 	echo 'dd if=/dev/zero of=c seek=2 bs=1k count=1 conv=notrunc' \
 	    '>/dev/null 2>&1' | kqueue_monitor 1 c

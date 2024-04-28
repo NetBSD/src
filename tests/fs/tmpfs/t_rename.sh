@@ -1,4 +1,4 @@
-# $NetBSD: t_rename.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_rename.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,10 +38,10 @@ dots_head() {
 dots_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:1 -o empty -e ignore mv a/. c
-	atf_check -s eq:1 -o empty -e ignore mv a/.. c
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:1 -o empty -e ignore mv a/. c
+	atf_check -s exit:1 -o empty -e ignore mv a/.. c
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -54,12 +54,12 @@ crossdev_head() {
 crossdev_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:1 -o empty -e save:stderr \
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:1 -o empty -e save:stderr \
 	    $(atf_get_srcdir)/h_tools rename a /var/tmp/a
-	atf_check -s eq:0 -o ignore -e empty grep "Cross-device link" stderr
-	atf_check -s eq:0 -o empty -e empty test -d a
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o ignore -e empty grep "Cross-device link" stderr
+	atf_check -s exit:0 -o empty -e empty test -d a
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -72,11 +72,11 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mv a c
-	atf_check -s eq:1 -o empty -e empty test -d a
-	atf_check -s eq:0 -o empty -e empty test -d c
-	atf_check -s eq:0 -o empty -e empty rmdir c
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mv a c
+	atf_check -s exit:1 -o empty -e empty test -d a
+	atf_check -s exit:0 -o empty -e empty test -d c
+	atf_check -s exit:0 -o empty -e empty rmdir c
 
 	test_unmount
 }
@@ -91,37 +91,37 @@ dotdot_body() {
 	test_mount
 
 	echo "Checking if the '..' entry is updated after moves"
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:0 -o empty -e empty mv b a
-	atf_check -s eq:0 -o empty -e empty test -d a/b/../b
-	atf_check -s eq:0 -o empty -e empty test -d a/b/../../a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:0 -o empty -e empty mv b a
+	atf_check -s exit:0 -o empty -e empty test -d a/b/../b
+	atf_check -s exit:0 -o empty -e empty test -d a/b/../../a
 	eval $(stat -s a/b)
 	[ ${st_nlink} = 2 ] || atf_fail "Incorrect number of links"
 	eval $(stat -s a)
 	[ ${st_nlink} = 3 ] || atf_fail "Incorrect number of links"
-	atf_check -s eq:0 -o empty -e empty rmdir a/b
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty rmdir a/b
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	echo "Checking if the '..' entry is correct after renames"
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:0 -o empty -e empty mv b a
-	atf_check -s eq:0 -o empty -e empty mv a c
-	atf_check -s eq:0 -o empty -e empty test -d c/b/../b
-	atf_check -s eq:0 -o empty -e empty test -d c/b/../../c
-	atf_check -s eq:0 -o empty -e empty rmdir c/b
-	atf_check -s eq:0 -o empty -e empty rmdir c
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:0 -o empty -e empty mv b a
+	atf_check -s exit:0 -o empty -e empty mv a c
+	atf_check -s exit:0 -o empty -e empty test -d c/b/../b
+	atf_check -s exit:0 -o empty -e empty test -d c/b/../../c
+	atf_check -s exit:0 -o empty -e empty rmdir c/b
+	atf_check -s exit:0 -o empty -e empty rmdir c
 
 	echo "Checking if the '..' entry is correct after multiple moves"
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:0 -o empty -e empty mv b a
-	atf_check -s eq:0 -o empty -e empty mv a c
-	atf_check -s eq:0 -o empty -e empty mv c/b d
-	atf_check -s eq:0 -o empty -e empty test -d d/../c
-	atf_check -s eq:0 -o empty -e empty rmdir d
-	atf_check -s eq:0 -o empty -e empty rmdir c
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:0 -o empty -e empty mv b a
+	atf_check -s exit:0 -o empty -e empty mv a c
+	atf_check -s exit:0 -o empty -e empty mv c/b d
+	atf_check -s exit:0 -o empty -e empty test -d d/../c
+	atf_check -s exit:0 -o empty -e empty rmdir d
+	atf_check -s exit:0 -o empty -e empty rmdir c
 
 	test_unmount
 }
@@ -135,14 +135,14 @@ dir_to_emptydir_head() {
 dir_to_emptydir_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty touch a/c
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty touch a/c
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:0 -o empty -e empty \
 	    $(atf_get_srcdir)/h_tools rename a b
-	atf_check -s eq:1 -o empty -e empty test -e a
-	atf_check -s eq:0 -o empty -e empty test -d b
-	atf_check -s eq:0 -o empty -e empty test -f b/c
+	atf_check -s exit:1 -o empty -e empty test -e a
+	atf_check -s exit:0 -o empty -e empty test -d b
+	atf_check -s exit:0 -o empty -e empty test -f b/c
 	rm b/c
 	rmdir b
 
@@ -158,17 +158,17 @@ dir_to_fulldir_head() {
 dir_to_fulldir_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty touch a/c
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:0 -o empty -e empty touch b/d
-	atf_check -s eq:1 -o empty -e save:stderr \
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty touch a/c
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:0 -o empty -e empty touch b/d
+	atf_check -s exit:1 -o empty -e save:stderr \
 	    $(atf_get_srcdir)/h_tools rename a b
-	atf_check -s eq:0 -o ignore -e empty grep "Directory not empty" stderr
-	atf_check -s eq:0 -o empty -e empty test -d a
-	atf_check -s eq:0 -o empty -e empty test -f a/c
-	atf_check -s eq:0 -o empty -e empty test -d b
-	atf_check -s eq:0 -o empty -e empty test -f b/d
+	atf_check -s exit:0 -o ignore -e empty grep "Directory not empty" stderr
+	atf_check -s exit:0 -o empty -e empty test -d a
+	atf_check -s exit:0 -o empty -e empty test -f a/c
+	atf_check -s exit:0 -o empty -e empty test -d b
+	atf_check -s exit:0 -o empty -e empty test -f b/d
 	rm a/c
 	rm b/d
 	rmdir a
@@ -186,13 +186,13 @@ dir_to_file_head() {
 dir_to_file_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:0 -o empty -e empty touch b
-	atf_check -s eq:1 -o empty -e save:stderr \
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:0 -o empty -e empty touch b
+	atf_check -s exit:1 -o empty -e save:stderr \
 	    $(atf_get_srcdir)/h_tools rename a b
-	atf_check -s eq:0 -o ignore -e empty grep "Not a directory" stderr
-	atf_check -s eq:0 -o empty -e empty test -d a
-	atf_check -s eq:0 -o empty -e empty test -f b
+	atf_check -s exit:0 -o ignore -e empty grep "Not a directory" stderr
+	atf_check -s exit:0 -o empty -e empty test -d a
+	atf_check -s exit:0 -o empty -e empty test -f b
 	rmdir a
 	rm b
 
@@ -208,13 +208,13 @@ file_to_dir_head() {
 file_to_dir_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty mkdir b
-	atf_check -s eq:1 -o empty -e save:stderr \
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty mkdir b
+	atf_check -s exit:1 -o empty -e save:stderr \
 	    $(atf_get_srcdir)/h_tools rename a b
-	atf_check -s eq:0 -o ignore -e empty grep "Is a directory" stderr
-	atf_check -s eq:0 -o empty -e empty test -f a
-	atf_check -s eq:0 -o empty -e empty test -d b
+	atf_check -s exit:0 -o ignore -e empty grep "Is a directory" stderr
+	atf_check -s exit:0 -o empty -e empty test -f a
+	atf_check -s exit:0 -o empty -e empty test -d b
 	rm a
 	rmdir b
 
@@ -230,34 +230,34 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
-	atf_check -s eq:0 -o empty -e empty touch dir/a
+	atf_check -s exit:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty touch dir/a
 	echo 'mv dir/a dir/b' | kqueue_monitor 2 dir dir/a
 	kqueue_check dir/a NOTE_RENAME
 	kqueue_check dir NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rm dir/b
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rm dir/b
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
-	atf_check -s eq:0 -o empty -e empty touch dir/a
-	atf_check -s eq:0 -o empty -e empty touch dir/b
+	atf_check -s exit:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty touch dir/a
+	atf_check -s exit:0 -o empty -e empty touch dir/b
 	echo 'mv dir/a dir/b' | kqueue_monitor 3 dir dir/a dir/b
 	kqueue_check dir/a NOTE_RENAME
 	kqueue_check dir NOTE_WRITE
 	kqueue_check dir/b NOTE_DELETE
-	atf_check -s eq:0 -o empty -e empty rm dir/b
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rm dir/b
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir1
-	atf_check -s eq:0 -o empty -e empty mkdir dir2
-	atf_check -s eq:0 -o empty -e empty touch dir1/a
+	atf_check -s exit:0 -o empty -e empty mkdir dir1
+	atf_check -s exit:0 -o empty -e empty mkdir dir2
+	atf_check -s exit:0 -o empty -e empty touch dir1/a
 	echo 'mv dir1/a dir2/a' | kqueue_monitor 3 dir1 dir1/a dir2
 	kqueue_check dir1/a NOTE_RENAME
 	kqueue_check dir1 NOTE_WRITE
 	kqueue_check dir2 NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rm dir2/a
-	atf_check -s eq:0 -o empty -e empty rmdir dir1
-	atf_check -s eq:0 -o empty -e empty rmdir dir2
+	atf_check -s exit:0 -o empty -e empty rm dir2/a
+	atf_check -s exit:0 -o empty -e empty rmdir dir1
+	atf_check -s exit:0 -o empty -e empty rmdir dir2
 
 	test_unmount
 }

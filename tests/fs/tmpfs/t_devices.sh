@@ -1,4 +1,4 @@
-# $NetBSD: t_devices.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_devices.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,12 +35,12 @@ basic_body() {
 
 	umask 022
 
-	atf_check -s eq:0 -o ignore -e ignore /dev/MAKEDEV std
-	atf_check -s eq:0 -o empty -e empty test -e zero
-	atf_check -s eq:0 -o empty -e empty test -e null
+	atf_check -s exit:0 -o ignore -e ignore /dev/MAKEDEV std
+	atf_check -s exit:0 -o empty -e empty test -e zero
+	atf_check -s exit:0 -o empty -e empty test -e null
 
 	echo "Reading from the 'zero' character device"
-	atf_check -s eq:0 -o ignore -e ignore dd if=zero of=a bs=10k count=1
+	atf_check -s exit:0 -o ignore -e ignore dd if=zero of=a bs=10k count=1
 	[ $(md5 a | cut -d ' ' -f 4) = 1276481102f218c981e0324180bafd9f ] || \
 	    atf_fail "Data read is invalid"
 

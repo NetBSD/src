@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: h_funcs.subr,v 1.5 2013/03/17 01:16:45 jmmv Exp $
+# $NetBSD: h_funcs.subr,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ test_mount() {
 	require_fs tmpfs
 
 	Mount_Point=$(pwd)/mntpt
-	atf_check -s eq:0 -o empty -e empty mkdir "${Mount_Point}"
+	atf_check -s exit:0 -o empty -e empty mkdir "${Mount_Point}"
 	echo "mount -t tmpfs ${*} tmpfs ${Mount_Point}"
 	mount -t tmpfs "${@}" tmpfs "${Mount_Point}" 2>mounterr
 	if [ "${?}" -ne 0 ]; then
@@ -60,8 +60,8 @@ test_mount() {
 #
 test_unmount() {
 	cd - >/dev/null
-	atf_check -s eq:0 -o empty -e empty umount ${Mount_Point}
-	atf_check -s eq:0 -o empty -e empty rmdir ${Mount_Point}
+	atf_check -s exit:0 -o empty -e empty umount ${Mount_Point}
+	atf_check -s exit:0 -o empty -e empty rmdir ${Mount_Point}
 	Mount_Point=
 }
 

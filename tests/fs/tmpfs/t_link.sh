@@ -1,4 +1,4 @@
-# $NetBSD: t_link.sh,v 1.6 2021/10/30 09:53:47 hannken Exp $
+# $NetBSD: t_link.sh,v 1.7 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,14 +38,14 @@ basic_head() {
 basic_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty touch z
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty touch z
 	eval $(stat -s a | sed -e 's|st_|sta_|g')
 	eval $(stat -s z | sed -e 's|st_|stz_|g')
 	test ${sta_ino} != ${stz_ino} || \
 	    atf_fail "Node numbers are not different"
 	test ${sta_nlink} -eq 1 || atf_fail "Number of links is incorrect"
-	atf_check -s eq:0 -o empty -e empty ln a b
+	atf_check -s exit:0 -o empty -e empty ln a b
 
 	echo "Checking if link count is correct after links are created"
 	eval $(stat -s a | sed -e 's|st_|sta_|g')
@@ -55,10 +55,10 @@ basic_body() {
 	test ${stb_nlink} -eq 2 || atf_fail "Link count is incorrect"
 
 	echo "Checking if link count is correct after links are deleted"
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty rm a
 	eval $(stat -s b | sed -e 's|st_|stb_|g')
 	test ${stb_nlink} -eq 1 || atf_fail "Link count is incorrect"
-	atf_check -s eq:0 -o empty -e empty rm b
+	atf_check -s exit:0 -o empty -e empty rm b
 
 	test_unmount
 }
@@ -72,9 +72,9 @@ subdirs_head() {
 subdirs_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty mkdir c
-	atf_check -s eq:0 -o empty -e empty ln a c/b
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty mkdir c
+	atf_check -s exit:0 -o empty -e empty ln a c/b
 
 	echo "Checking if link count is correct after links are created"
 	eval $(stat -s a | sed -e 's|st_|sta_|g')
@@ -84,11 +84,11 @@ subdirs_body() {
 	test ${stb_nlink} -eq 2 || atf_fail "Link count is incorrect"
 
 	echo "Checking if link count is correct after links are deleted"
-	atf_check -s eq:0 -o empty -e empty rm a
+	atf_check -s exit:0 -o empty -e empty rm a
 	eval $(stat -s c/b | sed -e 's|st_|stb_|g')
 	test ${stb_nlink} -eq 1 || atf_fail "Link count is incorrect"
-	atf_check -s eq:0 -o empty -e empty rm c/b
-	atf_check -s eq:0 -o empty -e empty rmdir c
+	atf_check -s exit:0 -o empty -e empty rm c/b
+	atf_check -s exit:0 -o empty -e empty rmdir c
 
 	test_unmount
 }
@@ -102,8 +102,8 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
-	atf_check -s eq:0 -o empty -e empty touch dir/a
+	atf_check -s exit:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty touch dir/a
 	echo 'ln dir/a dir/b' | kqueue_monitor 2 dir dir/a
 	kqueue_check dir/a NOTE_LINK
 	kqueue_check dir NOTE_WRITE
@@ -111,8 +111,8 @@ kqueue_body() {
 	echo 'rm dir/a' | kqueue_monitor 2 dir dir/b
 	kqueue_check dir/b NOTE_DELETE
 	kqueue_check dir NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rm dir/b
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rm dir/b
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
 	test_unmount
 }

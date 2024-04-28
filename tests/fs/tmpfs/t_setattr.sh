@@ -1,4 +1,4 @@
-# $NetBSD: t_setattr.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_setattr.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,9 +38,9 @@ chown_head() {
 chown_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir own
+	atf_check -s exit:0 -o empty -e empty mkdir own
 	eval $(stat -s own | sed -e 's|st_|ost_|g')
-	atf_check -s eq:0 -o empty -e empty chown 1234 own
+	atf_check -s exit:0 -o empty -e empty chown 1234 own
 	eval $(stat -s own)
 	[ ${st_uid} -eq 1234 ] || atf_fail "uid was not set"
 	[ ${st_gid} -eq ${ost_gid} ] || atf_fail "gid was modified"
@@ -57,7 +57,7 @@ chown_kqueue_head() {
 chown_kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir ownq
+	atf_check -s exit:0 -o empty -e empty mkdir ownq
 	echo 'chown 1234 ownq' | kqueue_monitor 1 ownq
 	kqueue_check ownq NOTE_ATTRIB
 
@@ -72,9 +72,9 @@ chgrp_head() {
 chgrp_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir grp
+	atf_check -s exit:0 -o empty -e empty mkdir grp
 	eval $(stat -s grp | sed -e 's|st_|ost_|g')
-	atf_check -s eq:0 -o empty -e empty chgrp 5678 grp
+	atf_check -s exit:0 -o empty -e empty chgrp 5678 grp
 	eval $(stat -s grp)
 	[ ${st_uid} -eq ${ost_uid} ] || atf_fail "uid was modified"
 	[ ${st_gid} -eq 5678 ] || atf_fail "gid was not set"
@@ -91,7 +91,7 @@ chgrp_kqueue_head() {
 chgrp_kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir grpq
+	atf_check -s exit:0 -o empty -e empty mkdir grpq
 	echo 'chgrp 1234 grpq' | kqueue_monitor 1 grpq
 	kqueue_check grpq NOTE_ATTRIB
 
@@ -107,8 +107,8 @@ chowngrp_head() {
 chowngrp_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir owngrp
-	atf_check -s eq:0 -o empty -e empty chown 1234:5678 owngrp
+	atf_check -s exit:0 -o empty -e empty mkdir owngrp
+	atf_check -s exit:0 -o empty -e empty chown 1234:5678 owngrp
 	eval $(stat -s owngrp)
 	[ ${st_uid} -eq 1234 ] || atf_fail "uid was not modified"
 	[ ${st_gid} -eq 5678 ] || atf_fail "gid was not modified"
@@ -125,7 +125,7 @@ chowngrp_kqueue_head() {
 chowngrp_kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir owngrpp
+	atf_check -s exit:0 -o empty -e empty mkdir owngrpp
 	echo 'chown 1234:5678 owngrpp' | kqueue_monitor 1 owngrpp
 	kqueue_check owngrpp NOTE_ATTRIB
 
@@ -140,8 +140,8 @@ chmod_head() {
 chmod_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir mode
-	atf_check -s eq:0 -o empty -e empty chmod 0000 mode
+	atf_check -s exit:0 -o empty -e empty mkdir mode
+	atf_check -s exit:0 -o empty -e empty chmod 0000 mode
 	eval $(stat -s mode)
 	[ ${st_mode} -eq 40000 ] || af_fail "mode was not set"
 
@@ -157,7 +157,7 @@ chmod_kqueue_head() {
 chmod_kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir modeq
+	atf_check -s exit:0 -o empty -e empty mkdir modeq
 	echo 'chmod 0000 modeq' | kqueue_monitor 1 modeq
 	kqueue_check modeq NOTE_ATTRIB
 
@@ -172,8 +172,8 @@ chtimes_head() {
 chtimes_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir times
-	atf_check -s eq:0 -o empty -e empty \
+	atf_check -s exit:0 -o empty -e empty mkdir times
+	atf_check -s exit:0 -o empty -e empty \
 	    -x 'TZ=GMT touch -t 200501010101 times'
 	eval $(stat -s times)
 	[ ${st_atime} = ${st_mtime} ] || \
@@ -192,7 +192,7 @@ chtimes_kqueue_head() {
 chtimes_kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir timesq
+	atf_check -s exit:0 -o empty -e empty mkdir timesq
 	echo 'touch timesq' | kqueue_monitor 1 timesq
 	kqueue_check timesq NOTE_ATTRIB
 

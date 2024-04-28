@@ -1,4 +1,4 @@
-# $NetBSD: t_rc_d_cli.sh,v 1.5 2022/02/26 16:21:59 gson Exp $
+# $NetBSD: t_rc_d_cli.sh,v 1.6 2024/04/28 07:27:42 rillig Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ no_command_body() {
 	export h_simple=YES
 	rc_helper=$(atf_get_srcdir)/h_simple
 
-	atf_check -s eq:1 -o empty -e ignore ${rc_helper}
+	atf_check -s exit:1 -o empty -e ignore ${rc_helper}
 }
 
 atf_test_case default_start_no_args
@@ -49,7 +49,7 @@ default_start_no_args_body() {
 	rc_helper=$(atf_get_srcdir)/h_simple
 
 	atf_expect_fail "PR bin/56506"
-	atf_check -s eq:0 -o ignore -e empty ${rc_helper} start
+	atf_check -s exit:0 -o ignore -e empty ${rc_helper} start
 	${rc_helper} forcestop
 	atf_fail "random failure did not happen this time"
 }
@@ -63,7 +63,7 @@ default_start_with_args_body() {
 	export h_simple=YES
 	rc_helper=$(atf_get_srcdir)/h_simple
 
-	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} start foo
+	atf_check -s exit:1 -o ignore -e ignore ${rc_helper} start foo
 	if ${rc_helper} status >/dev/null; then
 		${rc_helper} forcestop
 		atf_fail 'extra argument to start did not error out'
@@ -81,7 +81,7 @@ default_stop_no_args_body() {
 
 	atf_expect_fail "PR bin/56506"
 	${rc_helper} start
-	atf_check -s eq:0 -o ignore -e empty ${rc_helper} stop
+	atf_check -s exit:0 -o ignore -e empty ${rc_helper} stop
 	atf_fail "random failure did not happen this time"
 }
 
@@ -95,7 +95,7 @@ default_stop_with_args_body() {
 	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
-	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} stop foo
+	atf_check -s exit:1 -o ignore -e ignore ${rc_helper} stop foo
 	if ${rc_helper} status >/dev/null; then
 		${rc_helper} forcestop
 	else
@@ -114,7 +114,7 @@ default_restart_no_args_body() {
 
 	atf_expect_fail "PR bin/56506"
 	${rc_helper} start
-	atf_check -s eq:0 -o ignore -e empty ${rc_helper} restart
+	atf_check -s exit:0 -o ignore -e empty ${rc_helper} restart
 	${rc_helper} forcestop
 	atf_fail "random failure did not happen this time"
 }
@@ -129,7 +129,7 @@ default_restart_with_args_body() {
 	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
-	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} restart foo
+	atf_check -s exit:1 -o ignore -e ignore ${rc_helper} restart foo
 	${rc_helper} forcestop
 }
 
@@ -144,7 +144,7 @@ pre${command}:.
 ${command}:.
 post${command}:.
 EOF
-	atf_check -s eq:0 -o file:expout -e empty ${rc_helper} ${command}
+	atf_check -s exit:0 -o file:expout -e empty ${rc_helper} ${command}
 }
 
 do_overriden_with_args() {
@@ -158,7 +158,7 @@ pre${command}:.
 ${command}: >arg1< > arg 2 < >arg3< >*<.
 post${command}:.
 EOF
-	atf_check -s eq:0 -o file:expout -e empty ${rc_helper} ${command} \
+	atf_check -s exit:0 -o file:expout -e empty ${rc_helper} ${command} \
 	    'arg1' ' arg 2 ' 'arg3' '*'
 }
 

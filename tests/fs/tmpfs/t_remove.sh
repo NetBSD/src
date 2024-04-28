@@ -1,4 +1,4 @@
-# $NetBSD: t_remove.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_remove.sh,v 1.6 2024/04/28 07:27:41 rillig Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,11 +37,11 @@ single_head() {
 single_body() {
 	test_mount
 
-	atf_check -s eq:1 -o empty -e empty test -f a
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty test -f a
-	atf_check -s eq:0 -o empty -e empty rm a
-	atf_check -s eq:1 -o empty -e empty test -f a
+	atf_check -s exit:1 -o empty -e empty test -f a
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty test -f a
+	atf_check -s exit:0 -o empty -e empty rm a
+	atf_check -s exit:1 -o empty -e empty test -f a
 
 	test_unmount
 }
@@ -55,12 +55,12 @@ uchg_head() {
 uchg_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty touch a
-	atf_check -s eq:0 -o empty -e empty chflags uchg a
-	atf_check -s eq:1 -o empty -e ignore rm -f a
-	atf_check -s eq:0 -o empty -e empty chflags nouchg a
-	atf_check -s eq:0 -o empty -e empty rm a
-	atf_check -s eq:1 -o empty -e empty test -f a
+	atf_check -s exit:0 -o empty -e empty touch a
+	atf_check -s exit:0 -o empty -e empty chflags uchg a
+	atf_check -s exit:1 -o empty -e ignore rm -f a
+	atf_check -s exit:0 -o empty -e empty chflags nouchg a
+	atf_check -s exit:0 -o empty -e empty rm a
+	atf_check -s exit:1 -o empty -e empty test -f a
 
 	test_unmount
 }
@@ -73,9 +73,9 @@ dot_head() {
 dot_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir a
-	atf_check -s eq:1 -o empty -e ignore unlink a/.
-	atf_check -s eq:0 -o empty -e empty rmdir a
+	atf_check -s exit:0 -o empty -e empty mkdir a
+	atf_check -s exit:1 -o empty -e ignore unlink a/.
+	atf_check -s exit:0 -o empty -e empty rmdir a
 
 	test_unmount
 }
@@ -89,12 +89,12 @@ kqueue_head() {
 kqueue_body() {
 	test_mount
 
-	atf_check -s eq:0 -o empty -e empty mkdir dir
-	atf_check -s eq:0 -o empty -e empty touch dir/a
+	atf_check -s exit:0 -o empty -e empty mkdir dir
+	atf_check -s exit:0 -o empty -e empty touch dir/a
 	echo 'rm dir/a' | kqueue_monitor 2 dir dir/a
 	kqueue_check dir/a NOTE_DELETE
 	kqueue_check dir NOTE_WRITE
-	atf_check -s eq:0 -o empty -e empty rmdir dir
+	atf_check -s exit:0 -o empty -e empty rmdir dir
 
 	test_unmount
 }
