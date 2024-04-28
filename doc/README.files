@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.5.26.2 2022/08/08 16:58:05 martin Exp $
+#	$NetBSD: README.files,v 1.5.26.3 2024/04/28 10:11:21 martin Exp $
 
 What's in this directory:
 
@@ -10,6 +10,7 @@ CHANGES-9.1	Changes between the the 9.0 release and the 9.1 release.
 CHANGES-9.2	Changes between the the 9.1 release and the 9.2 release.
 CHANGES-9.3	Changes between the the 9.2 release and the 9.3 release.
 CHANGES-9.4	Changes between the the 9.3 release and the 9.4 release.
+CHANGES-9.5	Changes between the the 9.4 release and the 9.5 release.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
