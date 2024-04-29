@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 2024/04/18 19:17:14 jakllsch Exp $
+# $NetBSD: mi,v 1.176 2024/04/29 22:09:11 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1344,7 +1344,7 @@
 ./usr/X11R7/man/cat1/xconsole.0				xbase-xconsole-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xcutsel.0				xbase-xcutsel-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xditview.0				xbase-xditview-catman	.cat,xorg
-./usr/X11R7/man/cat1/xdm.0				xbase-xdm-catman	.cat,xorg
+./usr/X11R7/man/cat1/xdm.0				xbase-obsolete	obsolete
 ./usr/X11R7/man/cat1/xdpyinfo.0				xbase-xdpyinfo-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xdriinfo.0				xbase-xdriinfo-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xedit.0				xbase-xedit-catman	.cat,xorg
@@ -1428,6 +1428,8 @@
 ./usr/X11R7/man/cat7/XProjectTeam.0			xbase-x11-catman	.cat,xorg
 ./usr/X11R7/man/cat7/Xsecurity.0			xbase-x11-catman	.cat,xorg
 ./usr/X11R7/man/cat7/xkeyboard-config.0			xbase-xkeyboard-config-catman	.cat,xorg
+./usr/X11R7/man/cat8					base-x11-root	xorg
+./usr/X11R7/man/cat8/xdm.0				xbase-xdm-catman	.cat,xorg
 ./usr/X11R7/man/html1					base-x11-root	xorg
 ./usr/X11R7/man/html1/appres.html			xbase-appres-htmlman	html,xorg
 ./usr/X11R7/man/html1/atobm.html			xbase-bitmap-htmlman	html,xorg
@@ -1497,7 +1499,7 @@
 ./usr/X11R7/man/html1/xconsole.html			xbase-xconsole-htmlman	html,xorg
 ./usr/X11R7/man/html1/xcutsel.html			xbase-xcutsel-htmlman	html,xorg
 ./usr/X11R7/man/html1/xditview.html			xbase-xditview-htmlman	html,xorg
-./usr/X11R7/man/html1/xdm.html				xbase-xdm-htmlman	html,xorg
+./usr/X11R7/man/html1/xdm.html				xbase-obsolete	obsolete
 ./usr/X11R7/man/html1/xdpyinfo.html			xbase-xdpyinfo-htmlman	html,xorg
 ./usr/X11R7/man/html1/xdriinfo.html			xbase-xdriinfo-htmlman	html,xorg
 ./usr/X11R7/man/html1/xedit.html			xbase-xedit-htmlman	html,xorg
@@ -1581,6 +1583,8 @@
 ./usr/X11R7/man/html7/XProjectTeam.html			xbase-x11-htmlman	html,xorg
 ./usr/X11R7/man/html7/Xsecurity.html			xbase-x11-htmlman	html,xorg
 ./usr/X11R7/man/html7/xkeyboard-config.html		xbase-xkeyboard-config-htmlman	html,xorg
+./usr/X11R7/man/html8					base-x11-root	xorg
+./usr/X11R7/man/html8/xdm.html				xbase-xdm-htmlman	html,xorg
 ./usr/X11R7/man/man1					base-x11-root	xorg
 ./usr/X11R7/man/man1/appres.1				xbase-appres-man	.man,xorg
 ./usr/X11R7/man/man1/atobm.1				xbase-bitmap-man	.man,xorg
@@ -1651,7 +1655,7 @@
 ./usr/X11R7/man/man1/xconsole.1				xbase-xconsole-man	.man,xorg
 ./usr/X11R7/man/man1/xcutsel.1				xbase-xcutsel-man	.man,xorg
 ./usr/X11R7/man/man1/xditview.1				xbase-xditview-man	.man,xorg
-./usr/X11R7/man/man1/xdm.1				xbase-xdm-man	.man,xorg
+./usr/X11R7/man/man1/xdm.1				xbase-obsolete	obsolete
 ./usr/X11R7/man/man1/xdpyinfo.1				xbase-xdpyinfo-man	.man,xorg
 ./usr/X11R7/man/man1/xdriinfo.1				xbase-xdriinfo-man	.man,xorg
 ./usr/X11R7/man/man1/xedit.1				xbase-xedit-man	.man,xorg
@@ -1735,6 +1739,8 @@
 ./usr/X11R7/man/man7/XProjectTeam.7			xbase-x11-man	.man,xorg
 ./usr/X11R7/man/man7/Xsecurity.7			xbase-x11-man	.man,xorg
 ./usr/X11R7/man/man7/xkeyboard-config.7			xbase-xkeyboard-config-man	.man,xorg
+./usr/X11R7/man/man8					base-x11-root	xorg
+./usr/X11R7/man/man8/xdm.8				xbase-xdm-man	.man,xorg
 ./usr/X11R7/man/whatis.db				xbase-x11-man	man,xorg,!makemandb
 ./usr/X11R7/share					base-x11-root	xorg
 ./usr/X11R7/share/aclocal				base-x11-root	xorg
