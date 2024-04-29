@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.29 2023/08/01 19:36:45 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.30 2024/04/29 21:25:34 andvar Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.29 2023/08/01 19:36:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.30 2024/04/29 21:25:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,10 @@ static void	ihidev_intr_fini(struct ihidev_softc *);
 static bool	ihidev_suspend(device_t, const pmf_qual_t *);
 static bool	ihidev_resume(device_t, const pmf_qual_t *);
 static int	ihidev_hid_command(struct ihidev_softc *, int, void *, bool);
+#if NACPICA > 0
 static int	ihidev_intr(void *);
 static void	ihidev_work(struct work *, void *);
+#endif
 static int	ihidev_reset(struct ihidev_softc *, bool);
 static int	ihidev_hid_desc_parse(struct ihidev_softc *);
 
@@ -730,14 +732,13 @@ ihidev_intr_fini(struct ihidev_softc *sc)
 #endif
 }
 
+#if NACPICA > 0
 static void
 ihidev_intr_mask(struct ihidev_softc * const sc)
 {
 
 	if (sc->sc_intr_type == IST_LEVEL) {
-#if NACPICA > 0
 		acpi_intr_mask(sc->sc_ih);
-#endif
 	}
 }
 
@@ -746,9 +747,7 @@ ihidev_intr_unmask(struct ihidev_softc * const sc)
 {
 
 	if (sc->sc_intr_type == IST_LEVEL) {
-#if NACPICA > 0
 		acpi_intr_unmask(sc->sc_ih);
-#endif
 	}
 }
 
@@ -832,6 +831,7 @@ ihidev_work(struct work *wk, void *arg)
 	 */
 	ihidev_intr_unmask(sc);
 }
+#endif
 
 static int
 ihidev_maxrepid(void *buf, int len)
@@ -1009,6 +1009,7 @@ ihidev_set_report(struct device *dev, int type, int id, void *data,
 static bool
 ihidev_acpi_get_info(struct ihidev_softc *sc)
 {
+#if NACPICA > 0
 	ACPI_HANDLE hdl = (void *)(uintptr_t)sc->sc_phandle;
 	ACPI_STATUS status;
 	ACPI_INTEGER val;
@@ -1033,4 +1034,7 @@ ihidev_acpi_get_info(struct ihidev_softc *sc)
 	sc->sc_hid_desc_addr = (u_int)val;
 
 	return true;
+#else
+	return false;
+#endif
 }
