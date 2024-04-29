@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.153 2024/04/07 14:36:23 tsutsui Exp $
+#	$NetBSD: bsd.x11.mk,v 1.154 2024/04/29 22:09:10 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -400,7 +400,7 @@ realinstall: appdefsinstall
 CLEANDIRFILES+= ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
-.SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
+.SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7 .8
 
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
 XORGVERSION=	'"X Version 11"'
@@ -463,7 +463,7 @@ _X11MANTRANSFORMCMD+=	-e s,${__def__},${__value__:C/%/ /gW},g
 .endif
 _X11MANTRANSFORMCMD+=	${X11EXTRAMANDEFS}
 
-.man.1 .man.3 .man.4 .man.5 .man.7 .man.pre.1 .man.pre.4 .man.pre.5:
+.man.1 .man.3 .man.4 .man.5 .man.7 .man.8 .man.pre.1 .man.pre.4 .man.pre.5:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${_X11MANTRANSFORMCMD} | ${X11TOOL_UNXCOMM} > ${.TARGET}.tmp

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2022/08/19 15:55:36 nia Exp $
+#	$NetBSD: Makefile,v 1.20 2024/04/29 22:09:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 		error.c file.c genauth.c mitauth.c netaddr.c policy.c \
 		protodpy.c reset.c resource.c server.c session.c socket.c \
 		util.c xdmauth.c xdmcp.c prngc.c
+MAN=		xdm.8
 
 .if ${MKPIC} == "no"
 SRCS+=		Login.c greet.c verify.c

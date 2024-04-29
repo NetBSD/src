@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.30 2022/07/14 06:53:40 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.31 2024/04/29 22:09:11 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -163,6 +163,7 @@
 ./usr/X11R7/man/cat4/x86
 ./usr/X11R7/man/cat5
 ./usr/X11R7/man/cat7
+./usr/X11R7/man/cat8
 ./usr/X11R7/man/html1
 ./usr/X11R7/man/html3
 ./usr/X11R7/man/html4
@@ -170,6 +171,7 @@
 ./usr/X11R7/man/html4/x86
 ./usr/X11R7/man/html5
 ./usr/X11R7/man/html7
+./usr/X11R7/man/html8
 ./usr/X11R7/man/man1
 ./usr/X11R7/man/man3
 ./usr/X11R7/man/man4
@@ -177,6 +179,7 @@
 ./usr/X11R7/man/man4/x86
 ./usr/X11R7/man/man5
 ./usr/X11R7/man/man7
+./usr/X11R7/man/man8
 ./usr/X11R7/share
 ./usr/X11R7/share/aclocal
 ./usr/X11R7/share/examples
