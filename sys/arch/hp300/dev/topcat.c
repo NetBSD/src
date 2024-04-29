@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.6 2022/11/30 11:36:50 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.7 2024/04/29 15:34:57 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -342,6 +342,19 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 		if (fb->planes > 8)
 			fb->planes = 8;
 		fb->planemask = (1 << fb->planes) - 1;
+	}
+
+	/*
+	 * Some displays, such as the HP332 and HP340 internal video
+	 * and HP98542/98543 appear to return a display width of 1024
+	 * instead of 512.
+	 * 
+	 * It looks these boards have VRAM with sparse address layout,
+	 * i.e. 1 bit or 4 bits per pixel but 2 bytes per pixel, so
+	 * we have to handle 512 pixels per line with 1024 bytes per line.
+	 */
+	if (fb->planes <= 4 && fb->dwidth == 1024 && fb->dheight == 400) {
+		fb->dwidth = 512;
 	}
 
 	fb->bmv = topcat_windowmove;
