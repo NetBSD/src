@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: diofb.c,v 1.8 2024/04/29 15:34:57 tsutsui Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -145,15 +145,6 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 		fb->dwidth = fb->fbwidth;
 	if (fb->dheight > fb->fbheight)
 		fb->dheight = fb->fbheight;
-
-	/*
-	 * Some displays, such as the HP332 and HP340 internal video
-	 * appear to return a display width of 1024 instead of 512.
-	 */
-	if (fbr->num_planes == 1 || fbr->num_planes == 4) {
-		if (fb->dwidth == 1024 && fb->dheight == 400)
-			fb->dwidth = 512;
-	}
 
 	fb->planes = fbr->num_planes;
 	if (fb->planes > 8)
