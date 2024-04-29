@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.7 2023/08/03 08:16:31 mrg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.8 2024/04/29 07:33:32 skrll Exp $
 
 NOPIE=yes
 NOSSP=yes
@@ -38,12 +38,12 @@ CFLAGS+=	-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 
 .include "${S}/conf/newvers_stand.mk"
 
-CPPFLAGS+=		-D_STANDALONE -Dhppa ${DEBUGFLAGS}
-CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}
-CPPFLAGS+=		-DNO_NET
+CPPFLAGS+=	-D_STANDALONE -Dhppa ${DEBUGFLAGS}
+CPPFLAGS+=	-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}
+CPPFLAGS+=	-DNO_NET
 
-COMMONSOURCE=		cons.c dev_hppa.c dk.c itecons.c \
-			machdep.c milli_tiny.S pdc.c time.c
+COMMONSOURCE=	cons.c dev_hppa.c dk.c itecons.c \
+		machdep.c milli_tiny.S pdc.c time.c
 DRIVERSOURCE=
 
 ### find out what to use for libkern

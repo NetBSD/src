@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2024/04/29 07:31:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2024/04/29 07:34:27 skrll Exp $
 
-NODEBUG=yes
-PROG=	xxboot
-NOMAN=	# defined
-SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
+NODEBUG=	yes
+PROG=		xxboot
+NOMAN=		# defined
+SRCS=		start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
 
 .PATH:	${.CURDIR}/../common
 
