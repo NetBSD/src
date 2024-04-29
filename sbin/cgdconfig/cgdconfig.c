@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.62 2024/04/29 00:28:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.61 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.62 2024/04/29 00:28:18 riastradh Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -1507,7 +1507,8 @@ iv_method(int mode)
 
 
 static void
-show(const char *dev) {
+show(const char *dev)
+{
 	char path[64];
 	struct cgd_user cgu;
 	int fd;
@@ -1532,11 +1533,13 @@ show(const char *dev) {
 	}
 
 	dev = devname(cgu.cgu_dev, S_IFBLK);
-	if (dev != NULL)
+	if (dev != NULL) {
 		printf("%s ", dev);
-	else
-		printf("dev %llu,%llu ", (unsigned long long)major(cgu.cgu_dev),
+	} else {
+		printf("dev %llu,%llu ",
+		    (unsigned long long)major(cgu.cgu_dev),
 		    (unsigned long long)minor(cgu.cgu_dev));
+	}
 
 	if (verbose)
 		printf("%s ", cgu.cgu_alg);
