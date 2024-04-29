@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.7 2024/04/29 15:34:57 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.8 2024/04/29 17:39:59 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ topcat_restore(struct diofb *fb)
 	tc->prr  = RR_COPY;
 
 	/* Enable display */
-	tc->nblank = 0xff;
+	tc->nblank = fb->planemask;
 }
 
 int
@@ -455,7 +455,7 @@ topcat_setcolor(struct diofb *fb, u_int index)
 
 	if (tc->regs.fbid != GID_TOPCAT) {
 		tccm_waitbusy(tc);
-		tc->plane_mask = 0xff;
+		tc->plane_mask = fb->planemask;
 		tc->cindex = ~index;
 		tc->rdata  = fb->cmap.r[index];
 		tc->gdata  = fb->cmap.g[index];
@@ -468,7 +468,7 @@ topcat_setcolor(struct diofb *fb, u_int index)
 		tc->cindex = 0;
 	} else {
 		tccm_waitbusy(tc);
-		tc->plane_mask = 0xff;
+		tc->plane_mask = fb->planemask;
 		tc->rdata  = fb->cmap.r[index];
 		tc->gdata  = fb->cmap.g[index];
 		tc->bdata  = fb->cmap.b[index];
@@ -526,12 +526,13 @@ topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 
 	tc_waitbusy(tc, fb->planemask);
 
-	tc->wen = planemask;
-	tc->wmrr = rop;
 	if (planemask != 0xff) {
 		tc->wen = planemask ^ 0xff;
 		tc->wmrr = rop ^ 0x0f;
 		tc->wen = fb->planemask;
+	} else {
+		tc->wen = planemask;
+		tc->wmrr = rop;
 	}
 	tc->source_y = sy;
 	tc->source_x = sx;
