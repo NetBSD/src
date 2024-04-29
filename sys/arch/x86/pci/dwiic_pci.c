@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.9 2022/10/19 22:28:35 riastradh Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.10 2024/04/29 21:29:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.9 2022/10/19 22:28:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10 2024/04/29 21:29:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.9 2022/10/19 22:28:35 riastradh Exp 
 #else
 #define DPRINTF(x)
 #endif
+
+#if NACPICA > 0
+#define	I2C_USE_ACPI
+#endif /* NACPICA > 0 */
 
 struct pci_dwiic_softc {
 	struct dwiic_softc	sc_dwiic;
@@ -267,12 +271,18 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 	lpss_write(sc, LPSS_REMAP_HI,
 	    pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_BAR0 + 0x4));
 
+#ifdef I2C_USE_ACPI
 	sc->sc_acpinode = acpi_pcidev_find(0 /*XXX segment*/,
 	    pa->pa_bus, pa->pa_device, pa->pa_function);
+#else
+	sc->sc_acpinode = NULL;
+#endif
 
 	if (sc->sc_acpinode) {
+#ifdef I2C_USE_ACPI
 		sc->sc_dwiic.sc_iba.iba_child_devices =
 		    acpi_enter_i2c_devs(NULL, sc->sc_acpinode);
+#endif
 	} else {
 		aprint_verbose_dev(self, "no matching ACPI node\n");
 	}
