@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.8 2024/04/29 17:39:59 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.9 2024/04/29 17:47:27 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -453,6 +453,8 @@ topcat_setcolor(struct diofb *fb, u_int index)
 	if (fb->planemask == 1)
 		return;
 
+	tc_waitbusy(tc, fb->planemask);
+
 	if (tc->regs.fbid != GID_TOPCAT) {
 		tccm_waitbusy(tc);
 		tc->plane_mask = fb->planemask;
@@ -541,8 +543,6 @@ topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 	tc->wheight = cy;
 	tc->wwidth = cx;
 	tc->wmove = fb->planemask;
-
-	tc_waitbusy(tc, fb->planemask);
 
 	return 0;
 }
