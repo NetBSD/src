@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2023/01/13 18:43:43 martin Exp $
+#	$NetBSD: Makefile,v 1.5 2024/04/29 07:31:18 skrll Exp $
 
 NODEBUG=yes
 PROG=	xxboot
@@ -16,6 +16,9 @@ CPPFLAGS+=	-D__daddr_t=int32_t -D__ino_t=uint32_t
 #CPPFLAGS+=	-traditional	# would be best
 CPPFLAGS+=	-Dconst=
 COPTS+=		-Os -fno-delete-null-pointer-checks -funsigned-char -mdisable-fpregs -mpa-risc-1-0
+
+# Make sure we override any optimization options specified by the user
+DBG=		# empty
 
 .include <bsd.own.mk>
 
