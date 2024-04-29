@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.1,v 1.7 2018/09/14 13:19:15 rin Exp $
+.\"	$NetBSD: vi.1,v 1.8 2024/04/29 00:50:42 maya Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -12,14 +12,14 @@
 .\"
 .\"     Id: vi.1,v 8.53 2001/01/28 13:20:06 skimo Exp  (Berkeley) Date: 2001/01/28 13:20:06 
 .\"
-.TH VI 1 "September 14, 2018"
+.TH VI 1 "April 28, 2024"
 .UC
 .SH NAME
 ex, vi, view \- text editors
 .SH SYNOPSIS
 .B ex
 [\c
-.B -eFGRrSsv\c
+.B -eGRrSsv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -30,7 +30,7 @@ ex, vi, view \- text editors
 .br
 .B vi
 [\c
-.B -eFlRrSv\c
+.B -elRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -41,7 +41,7 @@ ex, vi, view \- text editors
 .br
 .B view
 [\c
-.B -eFGRrSv\c
+.B -eGRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -114,11 +114,6 @@ supports both the old and new syntax.
 .B \-e
 Start editing in ex mode, as if the command name were
 .IR \&ex .
-.TP
-.B \-F
-Don't copy the entire file when first starting to edit.
-(The default is to make a copy in case someone else modifies
-the file during your edit session.)
 .TP
 .B \-G
 Start editing in gtags mode, as if the gtagsmode option was set.
