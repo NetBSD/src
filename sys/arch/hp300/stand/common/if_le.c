@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 2023/04/21 22:43:11 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16 2024/04/29 14:42:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -492,8 +492,9 @@ le_poll(struct iodesc *desc, void *pkt, int len)
 		printf("le_poll: length %d\n", length);
 #endif
 	if (length >= BUFSIZE) {
+		printf("le%d_poll: invalid length %d, status 0x%x\n",
+		    unit, length, stat);
 		length = 0;
-		panic("csr0 when bad things happen: %x", stat);
 		goto cleanup;
 	}
 	if (!length)
