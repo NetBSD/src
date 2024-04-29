@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.8 2024/04/29 15:34:57 tsutsui Exp $	*/
+/*	$NetBSD: diofb.c,v 1.9 2024/04/29 17:25:11 tsutsui Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -351,9 +351,7 @@ diofb_allocattr(void *cookie, int fg, int bg, int flg, long *attr)
 		bg = swap;
 	}
 
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-
-	*attr = (bg << 16) | (fg << 24) | flg;
+	*attr = (bg << 16) | (fg << 24) | (flg & WSATTR_UNDERLINE);
 
 	return 0;
 }
