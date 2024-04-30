@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.187 2024/04/02 22:30:03 charlotte Exp $
+# $NetBSD: ALL,v 1.188 2024/04/30 19:35:29 andvar Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.187 $"
+#ident		"ALL-$Revision: 1.188 $"
 
 maxusers	64		# estimated number of users
 
@@ -38,7 +38,7 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 odcm0		at cpu0		# On-demand clock modulation
 padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
-viac7temp*	at cpu?		# VIA C7 temperature sensor
+viac7temp*	at cpu?		# VIA C7, Nano and Zhaoxin temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 # Beep when it is safe to power down the system (requires sysbeep)
