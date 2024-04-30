@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1255 2024/04/21 14:11:12 riastradh Exp $
+# $NetBSD: GENERIC,v 1.1256 2024/04/30 19:35:28 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1255 $"
+#ident		"GENERIC-$Revision: 1.1256 $"
 
 maxusers	64		# estimated number of users
 
@@ -41,7 +41,7 @@ hyperv0		at cpu0		# Microsoft Hyper-V
 #odcm0		at cpu0		# On-demand clock modulation
 #padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
-viac7temp*	at cpu?		# VIA C7 temperature sensor
+viac7temp*	at cpu?		# VIA C7, Nano and Zhaoxin temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 #Xen PV support for HVM guests
