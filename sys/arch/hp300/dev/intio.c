@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.32 2024/01/28 17:31:40 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.33 2024/04/30 05:06:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.32 2024/01/28 17:31:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33 2024/04/30 05:06:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ CFATTACH_DECL_NEW(intio, sizeof(struct intio_softc),
 #endif
 
 #define	INTIO_3xx_BUILTINS						\
-	(__BIT(HP_320) | __BIT(HP_330) | __BIT(HP_340) ||		\
-	 __BIT(HP_345) | __BIT(HP_345) | __BIT(HP_350) ||		\
-	 __BIT(HP_360) | __BIT(HP_370) | __BIT(HP_375) ||		\
+	(__BIT(HP_320) | __BIT(HP_330) | __BIT(HP_340) |		\
+	 __BIT(HP_345) | __BIT(HP_345) | __BIT(HP_350) |		\
+	 __BIT(HP_360) | __BIT(HP_370) | __BIT(HP_375) |		\
 	 __BIT(HP_380) | __BIT(HP_385))
 
 #define	INTIO_362_BUILTINS	__BIT(HP_362)
