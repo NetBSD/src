@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.47 2024/01/16 07:06:59 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.48 2024/04/30 09:55:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.47 2024/01/16 07:06:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.48 2024/04/30 09:55:45 tsutsui Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -276,7 +276,7 @@ dmaupdateipl(int ipl)
 		intr_disestablish(sc->sc_ih);
 	}
 
-	if ((sc->sc_ipl == ipl) == 0) {
+	if ((sc->sc_ipl = ipl) == 0) {
 		/* Don't hook up a new handler. */
 		return;
 	}
