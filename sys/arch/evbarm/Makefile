@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2022/10/29 13:14:38 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.14 2024/04/30 02:05:00 dyoung Exp $
 
 # Makefile for evbarm tags file and boot blocks
 
@@ -37,6 +37,7 @@ SEVBARM+=	${SYSDIR}/arch/evbarm/smdk2xx0/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/tisdp24xx/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/tsarm/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/viper/*.[ch]
+SEVBARM+=	${SYSDIR}/arch/arm/xilinx/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/arm/xscale/*.[ch]
 
 AEVBARM=	${SYSDIR}/arch/evbarm/adi_brh/*.S
