@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.8 2024/04/16 19:15:36 christos Exp $
+# $NetBSD: md.amd64,v 1.9 2024/04/30 18:34:19 martin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -211,7 +211,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libcrypto.so.15.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/i386/libctf.so.3.0.debug
+./usr/libdata/debug/usr/lib/i386/libctf.so.3.0.debug	comp-sys-debug	debug,compat,ctf
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.9.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libdes.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-sys-debug	debug,compat,lvm

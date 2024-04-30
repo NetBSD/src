@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.6 2024/04/30 01:18:40 macallan Exp $
+# $NetBSD: md.amd64,v 1.7 2024/04/30 18:34:19 martin Exp $
 ./lib/i386					base-compat-shlib	compat
 ./lib/i386/npf					base-compat-shlib	compat,npf
 ./lib/i386/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -142,9 +142,9 @@
 ./usr/lib/i386/libcrypto.so			base-compat-shlib	compat
 ./usr/lib/i386/libcrypto.so.15			base-compat-shlib	compat
 ./usr/lib/i386/libcrypto.so.15.0		base-compat-shlib	compat
-./usr/lib/i386/libctf.so			base-compat-shlib	compat
-./usr/lib/i386/libctf.so.3			base-compat-shlib	compat
-./usr/lib/i386/libctf.so.3.0			base-compat-shlib	compat
+./usr/lib/i386/libctf.so			base-compat-shlib	compat,ctf
+./usr/lib/i386/libctf.so.3			base-compat-shlib	compat,ctf
+./usr/lib/i386/libctf.so.3.0			base-compat-shlib	compat,ctf
 ./usr/lib/i386/libcurses.so			base-compat-shlib	compat
 ./usr/lib/i386/libcurses.so.9			base-compat-shlib	compat
 ./usr/lib/i386/libcurses.so.9.1			base-compat-shlib	compat
