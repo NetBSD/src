@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.343 2024/04/20 10:18:55 rillig Exp $
+# $NetBSD: Makefile,v 1.344 2024/04/30 16:41:32 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -589,8 +589,9 @@ unexport-env.rawout: export.mk
 
 # In tests that use the debugging option -dd, ignore debugging output that is
 # only logged in -DCLEANUP mode.
-STD_SED_CMDS.dd=		-e '/^OpenDirs_Done:/d'
-STD_SED_CMDS.dd+=		-e '/^CachedDir /d'
+STD_SED_CMDS.dd=	-e '/^OpenDirs_Done:/d'
+STD_SED_CMDS.dd+=	-e '/^CachedDir /d'
+STD_SED_CMDS.dd+=	-e 's,  ${DEFSYSPATH:U/usr/share/mk} ,  <defsyspath> ,'
 
 # Omit details such as process IDs from the output of the -dg1 option.
 STD_SED_CMDS.dg1=	-e 's,${.CURDIR}$$,<curdir>,'
