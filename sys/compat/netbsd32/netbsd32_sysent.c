@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.159 2024/04/30 17:10:22 mlelstv Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.160 2024/05/01 07:22:43 mlelstv Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.159 2024/04/30 17:10:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.160 2024/05/01 07:22:43 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1280,7 +1280,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 294 = netbsd32___sigsuspend14 */
 	{
 		ns(struct compat_16_netbsd32___sigreturn14_args),
-		.sy_call = (sy_call_t *)compat_16_netbsd32___sigreturn14
+		.sy_call = (sy_call_t *)sys_nomodule
 	},		/* 295 = compat_16_netbsd32___sigreturn14 */
 	{
 		ns(struct netbsd32___getcwd_args),
