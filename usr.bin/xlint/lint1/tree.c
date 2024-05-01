@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.637 2024/04/27 12:46:37 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.638 2024/05/01 05:49:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.637 2024/04/27 12:46:37 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.638 2024/05/01 05:49:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -763,12 +763,14 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (t != rt)
 		*rnp = apply_usual_arithmetic_conversions(op, *rnp, t);
 
-	unsigned lw = (*lnp)->tn_type->t_bit_field_width;
-	unsigned rw = (*rnp)->tn_type->t_bit_field_width;
-	if (lw < rw)
-		*lnp = convert(NOOP, 0, (*rnp)->tn_type, *lnp);
-	if (rw < lw)
-		*rnp = convert(NOOP, 0, (*lnp)->tn_type, *rnp);
+	if (is_integer(t)) {
+		unsigned lw = width_in_bits((*lnp)->tn_type);
+		unsigned rw = width_in_bits((*rnp)->tn_type);
+		if (lw < rw)
+			*lnp = convert(NOOP, 0, (*rnp)->tn_type, *lnp);
+		if (rw < lw)
+			*rnp = convert(NOOP, 0, (*lnp)->tn_type, *rnp);
+	}
 }
 
 static tnode_t *
