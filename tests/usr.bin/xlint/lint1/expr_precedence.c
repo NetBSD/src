@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.11 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.12 2024/05/01 07:40:11 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -20,8 +20,9 @@ int init_error = 3, 4;
 int init_syntactically_ok = var = 1 ? 2 : 3;
 
 /*
- * The arguments of __attribute__ must be constant-expression, as assignments
- * don't make sense at that point.
+ * The arguments of __attribute__ must be constant-expression, but for
+ * simplicity of implementation, they are parsed just like function arguments,
+ * even though this allows assignment-expression.
  */
 void __attribute__((format(printf,
     /*
@@ -32,7 +33,6 @@ void __attribute__((format(printf,
      *
      * See lex.c, function 'search', keyword 'in_gcc_attribute'.
      */
-    /* expect+1: error: syntax error '=' [249] */
     var = 1,
     /* Syntactically ok, must be a constant expression though. */
     var > 0 ? 2 : 1)))

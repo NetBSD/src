@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.75 2024/03/31 20:28:45 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.76 2024/05/01 07:40:11 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.75 2024/03/31 20:28:45 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.76 2024/05/01 07:40:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -461,7 +461,9 @@ debug_decl_level(const decl_level *dl)
 	if (dl->d_sou_size_in_bits != 0)
 		debug_printf(" size=%u", dl->d_sou_size_in_bits);
 	if (dl->d_sou_align_in_bits != 0)
-		debug_printf(" align=%u", dl->d_sou_align_in_bits);
+		debug_printf(" sou_align=%u", dl->d_sou_align_in_bits);
+	if (dl->d_mem_align_in_bits != 0)
+		debug_printf(" mem_align=%u", dl->d_mem_align_in_bits);
 
 	debug_word(dl->d_qual.tq_const, "const");
 	debug_word(dl->d_qual.tq_restrict, "restrict");
