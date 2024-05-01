@@ -1,4 +1,4 @@
-/*	$NetBSD: wm8750_zaudio.c,v 1.3 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: wm8750_zaudio.c,v 1.4 2024/05/01 19:11:45 andvar Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.3 2019/05/08 13:40:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wm8750_zaudio.c,v 1.4 2024/05/01 19:11:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ static const uint16_t record_regs[][2] = {
 	{ ADCTL1_REG, ADCTL1_TSDEN | ADCTL1_SET_VSEL(3)
 	              | ADCTL1_SET_DATSEL(1) },
 
-	/* Diffrential input select: LINPUT1-RINPUT1, stereo */
+	/* Differential input select: LINPUT1-RINPUT1, stereo */
 	{ ADCINPMODE_REG, 0x000 },
 
 	/* L-R differential, micboost 20dB */
