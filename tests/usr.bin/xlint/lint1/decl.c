@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.28 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.29 2024/05/01 12:36:56 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -240,4 +240,25 @@ get_x(struct point3d { struct point3d_number { int v; } x, y, z; } arg)
 	static struct point3d local;
 	static struct point3d_number z;
 	return arg.x.v + local.x.v + z.v;
+}
+
+// Expressions of the form '(size_t)&null_ptr->member' are used by several
+// C implementations to implement the offsetof macro.  Dereferencing a null
+// pointer invokes undefined behavior, though, even in this form.
+void
+offsetof_on_array_member(void)
+{
+	struct s1 {
+		int padding, plain, arr[2];
+	};
+
+	struct s2 {
+		unsigned int off_plain:(unsigned long)&((struct s1 *)0)->plain;
+		// FIXME: offsetof must work for array members as well.
+		/* expect+1: error: integral constant expression expected [55] */
+		unsigned int off_arr:(unsigned long)&((struct s1 *)0)->arr;
+		// FIXME: offsetof must work for array members as well.
+		/* expect+1: error: integral constant expression expected [55] */
+		unsigned int off_arr_element:(unsigned long)&((struct s1 *)0)->arr[0];
+	};
 }
