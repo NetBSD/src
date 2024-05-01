@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.10 2024/05/01 08:58:34 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.11 2024/05/01 19:28:33 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -149,6 +149,8 @@ static int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
 		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
 static int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static void	topcat_putchar8(void *, int, int, u_int, long);
+static void	topcat_putchar1_4(void *, int, int, u_int, long);
 
 static struct wsdisplay_accessops topcat_accessops = {
 	topcat_ioctl,
@@ -312,8 +314,10 @@ int
 topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fbr;
+	struct rasops_info *ri = &fb->ri;
 	int rc;
 	u_int i;
+	bool sparse = false;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return rc;
@@ -355,11 +359,23 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	 */
 	if (fb->planes <= 4 && fb->dwidth == 1024 && fb->dheight == 400) {
 		fb->dwidth = 512;
+		sparse = true;
 	}
 
 	fb->bmv = topcat_windowmove;
 	topcat_restore(fb);
 	diofb_fbsetup(fb);
+	if (!sparse) {
+		/* save original rasops putchar op */
+		fb->wsputchar = ri->ri_ops.putchar;
+		ri->ri_ops.putchar = topcat_putchar8;
+	} else {
+		ri->ri_ops.putchar = topcat_putchar1_4;
+		/* copycols and erasecols ops require byte size of fontwidth */
+		fb->wsd.fontwidth *= 2;
+		/* copyrows and eraserows ops require byte size per line */
+		ri->ri_emuwidth *= 2;
+	}
 	for (i = 0; i <= fb->planemask; i++)
 		topcat_setcolor(fb, i);
 
@@ -549,6 +565,104 @@ topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 	return 0;
 }
 
+static void
+topcat_putchar8(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct diofb *diofb = ri->ri_hw;
+	volatile struct tcboxfb *tc = (struct tcboxfb *)diofb->regkva;
+
+	/* Wait windowmove ops complete before drawing a glyph */
+	tc_waitbusy(tc, diofb->planemask);
+
+	/* Call the original rasops putchar */
+	(*diofb->wsputchar)(cookie, row, col, uc, attr);
+}
+
+/*
+ * Put a single character on 1 bpp or 4 bpp variants with sparse VRAM addresses
+ */
+static void
+topcat_putchar1_4(void *cookie, int row, int col, u_int uc, long attr)
+{
+	int width, height, cnt, fs;
+	uint32_t fb;
+	uint8_t *fr, clr[2];
+	uint8_t *dp, *rp;
+	struct rasops_info *ri;
+	struct diofb *diofb;
+	volatile struct tcboxfb *tc;
+
+	ri = (struct rasops_info *)cookie;
+
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+		return;
+
+	rp = ri->ri_bits + (row * ri->ri_yscale) +
+	    (col * ri->ri_xscale * 2);
+
+	height = ri->ri_font->fontheight;
+	width = ri->ri_font->fontwidth;
+	clr[0] = (uint8_t)ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr[1] = (uint8_t)ri->ri_devcmap[(attr >> 24) & 0xf];
+
+	/* Wait windowmove ops complete before drawing a glyph */
+	diofb = ri->ri_hw;
+	tc = (struct tcboxfb *)diofb->regkva;
+	tc_waitbusy(tc, diofb->planemask);
+
+	/*
+	 * At least HP98543 requires to write 4 bpp data onto
+	 * both odd and even addresses.
+	 */
+	if (uc == ' ') {
+		uint16_t c = clr[0];
+
+		c = c << 8 | c;
+		while (height--) {
+			dp = rp;
+			rp += ri->ri_stride;
+
+			for (cnt = width; cnt; cnt--) {
+				*(uint16_t *)dp = c;
+				dp += 2;
+			}
+		}
+	} else {
+		uc -= ri->ri_font->firstchar;
+		fr = (uint8_t *)ri->ri_font->data + uc * ri->ri_fontscale;
+		fs = ri->ri_font->stride;
+
+		while (height--) {
+			dp = rp;
+			fb = be32dec(fr);
+			fr += fs;
+			rp += ri->ri_stride;
+
+			for (cnt = width; cnt; cnt--) {
+				uint16_t c = clr[(fb >> 31) & 1];
+
+				c = c << 8 | c;
+				*(uint16_t *)dp = c;
+				dp += 2;
+				fb <<= 1;
+			}
+		}
+	}
+
+	/* Do underline */
+	if ((attr & WSATTR_UNDERLINE) != 0) {
+		uint16_t c = clr[1];
+
+		c = c << 8 | c;
+		rp -= ri->ri_stride * ri->ri_ul.off;
+
+		while (width--) {
+			*(uint16_t *)rp = c;
+			rp += 2;
+		}
+	}
+}
 
 /*
  *   Topcat/catseye console attachment
