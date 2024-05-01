@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.399 2024/05/01 07:40:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.400 2024/05/01 10:30:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.399 2024/05/01 07:40:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.400 2024/05/01 10:30:56 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -463,6 +463,9 @@ void
 dcs_add_alignas(tnode_t *tn)
 {
 	dcs->d_mem_align_in_bits = to_int_constant(tn, true) * CHAR_SIZE;
+	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
+		dcs->d_type->u.sou->sou_align_in_bits =
+		    dcs->d_mem_align_in_bits;
 }
 
 void
@@ -606,6 +609,7 @@ dcs_begin_type(void)
 	dcs->d_redeclared_symbol = NULL;
 	// keep d_sou_size_in_bits
 	// keep d_sou_align_in_bits
+	dcs->d_mem_align_in_bits = 0;
 	dcs->d_qual = (type_qualifiers) { .tq_const = false };
 	dcs->d_inline = false;
 	dcs->d_multiple_storage_classes = false;
@@ -707,6 +711,8 @@ dcs_merge_declaration_specifiers(void)
 	debug_dcs();
 }
 
+static void dcs_align(unsigned int, unsigned int);
+
 /* Create a type in 'dcs->d_type' from the information gathered in 'dcs'. */
 void
 dcs_end_type(void)
@@ -740,6 +746,14 @@ dcs_end_type(void)
 		dcs->d_type = block_dup_type(dcs->d_type);
 		dcs->d_type->t_const |= dcs->d_qual.tq_const;
 		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
+	}
+	unsigned align = dcs->d_mem_align_in_bits;
+	if (align > 0 && dcs->d_type->t_tspec == STRUCT) {
+		dcs_align(align, 0);
+		dcs->d_type->u.sou->sou_align_in_bits = align;
+		dcs->d_type->u.sou->sou_size_in_bits =
+		    (dcs->d_type->u.sou->sou_size_in_bits + align - 1)
+		    & -align;
 	}
 
 	debug_dcs();
@@ -814,7 +828,6 @@ alignment_in_bits(const type_t *tp)
 			a = worst_align_in_bits;
 	}
 	lint_assert(a >= CHAR_SIZE);
-	lint_assert(a <= worst_align_in_bits);
 	return a;
 }
 
