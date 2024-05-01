@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.6 2021/10/31 11:36:26 gson Exp $
+# $NetBSD: t_intr.sh,v 1.7 2024/05/01 11:40:25 gson Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,10 @@ TMOUT=20
 
 h_test() {
 	local avail=$( df -m . | awk '{if (int($4) > 0) print $4}' )
-	local need=$(( 2 * $MAX * 8 / 1000000 ))
+	# The test data are stored in triplicate: numbers.in, numbers.out,
+	# and a temporary "stdout" file created by ATF.  Each line consists
+	# of up to 7 digits and a newline for a total of 8 bytes.
+	local need=$(( 3 * $MAX * 8 / 1000000 ))
 	if [ $avail -lt $need ]; then
 		atf_skip "not enough free space in working directory"
 	fi
