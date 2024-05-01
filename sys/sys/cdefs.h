@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.160 2023/04/30 08:45:48 riastradh Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.161 2024/05/01 07:43:41 rillig Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -451,7 +451,7 @@
 #if defined(__lint__)
 #define __thread	/* delete */
 #define	__packed	__packed
-#define	__aligned(x)	/* delete */
+#define	__aligned(x)	_Alignas((x))
 #define	__section(x)	/* delete */
 #elif __GNUC_PREREQ__(2, 7) || defined(__PCC__) || defined(__lint__)
 #define	__packed	__attribute__((__packed__))
