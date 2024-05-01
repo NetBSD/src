@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.9 2024/04/29 17:47:27 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.10 2024/05/01 08:58:34 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -474,7 +474,9 @@ topcat_setcolor(struct diofb *fb, u_int index)
 		tc->rdata  = fb->cmap.r[index];
 		tc->gdata  = fb->cmap.g[index];
 		tc->bdata  = fb->cmap.b[index];
+		DELAY(1);	/* necessary for at least old HP98543 */
 		tc->cindex = ~index;
+		DELAY(1);	/* necessary for at least old HP98543 */
 		tc->strobe = 0xff;
 		/* XXX delay required on 68020/30 to avoid bus error */
 		DELAY(100);
