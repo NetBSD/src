@@ -1,4 +1,4 @@
-# $NetBSD: newvers.mk,v 1.3 2024/04/05 22:27:25 christos Exp $
+# $NetBSD: newvers.mk,v 1.4 2024/05/01 14:52:01 christos Exp $
 
 MKREPRO?=no
 
@@ -17,7 +17,8 @@ newvers: vers.o
 vers.o: ${SYSTEM_OBJ:O} Makefile $S/conf/newvers.sh \
 		$S/conf/osrelease.sh ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
-	TOOL_DATE=${TOOL_DATE} ${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
+	TOOL_AWK=${TOOL_AWK} TOOL_DATE=${TOOL_DATE} \
+	    ${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 	${COMPILE_CTFCONVERT}
