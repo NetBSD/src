@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_aligned.c,v 1.7 2024/05/01 07:40:11 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_aligned.c,v 1.8 2024/05/01 10:30:56 rillig Exp $	*/
 # 3 "gcc_attribute_aligned.c"
 
 /*
@@ -71,4 +71,14 @@ aligned_struct_member(void)
 	 */
 	/* expect+1: error: negative array dimension (-32) [20] */
 	typedef int ctassert[-(int)sizeof(struct aligned)];
+}
+
+void
+alignment_larger_than_size(void)
+{
+	struct s {
+		unsigned u32 __attribute__((__aligned__(32)));
+	} _Alignas(4096);
+	/* expect+1: error: negative array dimension (-4096) [20] */
+	typedef int size[-(int)sizeof(struct s)];
 }
