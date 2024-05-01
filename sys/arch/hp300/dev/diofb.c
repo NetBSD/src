@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.9 2024/04/29 17:25:11 tsutsui Exp $	*/
+/*	$NetBSD: diofb.c,v 1.10 2024/05/01 19:28:33 tsutsui Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -361,10 +361,11 @@ diofb_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
+	int fontwidth = fb->wsd.fontwidth;
 
-	n *= ri->ri_font->fontwidth;
-	src *= ri->ri_font->fontwidth;
-	dst *= ri->ri_font->fontwidth;
+	n *= fontwidth;
+	src *= fontwidth;
+	dst *= fontwidth;
 	row *= ri->ri_font->fontheight;
 
 	(*fb->bmv)(fb, ri->ri_xorigin + src, ri->ri_yorigin + row,
@@ -394,11 +395,12 @@ diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 	struct diofb *fb = ri->ri_hw;
 	int fg, bg;
 	int snum, scol, srow;
+	int fontwidth = fb->wsd.fontwidth;
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
-	snum = num * ri->ri_font->fontwidth;
-	scol = col * ri->ri_font->fontwidth + ri->ri_xorigin;
+	snum = num * fontwidth;
+	scol = col * fontwidth + ri->ri_xorigin;
 	srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
 
 	/*
@@ -423,7 +425,7 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 	bg ^= 0xff;
 
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		rc = (*fb->bmv)(fb, 0, 0, 0, 0, ri->ri_width, ri->ri_height,
+		rc = (*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, ri->ri_height,
 		    RR_CLEAR, bg);
 	} else {
 		srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
@@ -440,10 +442,11 @@ diofb_do_cursor(struct rasops_info *ri)
 {
 	struct diofb *fb = ri->ri_hw;
 	int x, y;
+	int fontwidth = fb->wsd.fontwidth;
 
-	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	x = ri->ri_ccol * fontwidth + ri->ri_xorigin;
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
-	(*fb->bmv)(fb, x, y, x, y, ri->ri_font->fontwidth,
+	(*fb->bmv)(fb, x, y, x, y, fontwidth,
 	    ri->ri_font->fontheight, RR_INVERT, 0xff);
 }
 

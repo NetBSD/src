@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbvar.h,v 1.4 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: diofbvar.h,v 1.5 2024/05/01 19:28:33 tsutsui Exp $	*/
 /*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -105,6 +105,9 @@ struct diofb {
 	/* blockmove routine */
 	int	(*bmv)(struct diofb *, uint16_t, uint16_t, uint16_t,
 		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
+
+	/* putchar routine to handle rasops; MD busywait might be required */
+	void	(*wsputchar)(void *, int, int, u_int, long);
 };
 
 /* Replacement Rules (rops) */
