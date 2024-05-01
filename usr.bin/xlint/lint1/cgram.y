@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.493 2024/03/29 08:35:32 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.494 2024/05/01 07:40:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.493 2024/03/29 08:35:32 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.494 2024/05/01 07:40:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -423,7 +423,6 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for gcc_attribute_specifier. */
 /* No type for gcc_attribute_list. */
 /* No type for gcc_attribute. */
-/* No type for gcc_attribute_parameters. */
 %type	<y_in_system_header> sys
 
 %%
@@ -937,8 +936,12 @@ type_attribute_opt:
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
-|	T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
-|	T_ALIGNAS T_LPAREN constant_expression T_RPAREN	/* C11 6.7.5 */
+|	T_ALIGNAS T_LPAREN type_specifier T_RPAREN {		/* C11 6.7.5 */
+		dcs_add_alignas(build_sizeof($3));
+	}
+|	T_ALIGNAS T_LPAREN constant_expression T_RPAREN {	/* C11 6.7.5 */
+		dcs_add_alignas($3);
+	}
 |	T_PACKED {
 		dcs_add_packed();
 	}
@@ -2197,16 +2200,16 @@ gcc_attribute:
 			suppress_fallthrough = true;
 	}
 |	T_NAME T_LPAREN T_RPAREN
-|	T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
+|	T_NAME T_LPAREN argument_expression_list T_RPAREN {
+		const char *name = $1->sb_name;
+		if (is_either(name, "aligned", "__aligned__")
+		    && $3->args_len == 1)
+			dcs_add_alignas($3->args[0]);
+	}
 |	type_qualifier {
 		if (!$1.tq_const)
 			yyerror("Bad attribute");
 	}
-;
-
-gcc_attribute_parameters:
-	constant_expression
-|	gcc_attribute_parameters T_COMMA constant_expression
 ;
 
 sys:

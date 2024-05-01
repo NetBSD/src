@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_aligned.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_aligned.c,v 1.7 2024/05/01 07:40:11 rillig Exp $	*/
 # 3 "gcc_attribute_aligned.c"
 
 /*
@@ -47,8 +47,8 @@ struct save87 {
 	struct fpacc87 s87_ac[8];
 };
 
-/* FIXME: @4 2 + @4 2 + @4 2 + @4 8 + @4 8 + @2 (8 * 10) == 108 */
-/* expect+1: error: negative array dimension (-104) [20] */
+/* @4 2 + @4 2 + @4 2 + @4 8 + @4 8 + @2 (8 * 10) == 108 */
+/* expect+1: error: negative array dimension (-108) [20] */
 typedef int sizeof_save87[-(int)sizeof(struct save87)];
 
 
@@ -69,7 +69,6 @@ aligned_struct_member(void)
 	 *
 	 * https://gcc.gnu.org/onlinedocs/gcc/Common-Type-Attributes.html
 	 */
-	/* TODO: should be -32 instead of -8. */
-	/* expect+1: error: negative array dimension (-8) [20] */
+	/* expect+1: error: negative array dimension (-32) [20] */
 	typedef int ctassert[-(int)sizeof(struct aligned)];
 }

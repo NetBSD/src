@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.398 2024/03/30 19:51:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.399 2024/05/01 07:40:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.398 2024/03/30 19:51:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.399 2024/05/01 07:40:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -457,6 +457,12 @@ pack_struct_or_union(type_t *tp)
 	}
 	tp->u.sou->sou_size_in_bits = bits;
 	debug_dcs();
+}
+
+void
+dcs_add_alignas(tnode_t *tn)
+{
+	dcs->d_mem_align_in_bits = to_int_constant(tn, true) * CHAR_SIZE;
 }
 
 void
@@ -1038,7 +1044,9 @@ dcs_add_member(sym_t *mem)
 		    - mem->u.s_member.sm_offset_in_bits;
 		dcs->d_sou_size_in_bits += tp->t_bit_field_width;
 	} else {
-		dcs_align(alignment_in_bits(tp), 0);
+		unsigned int align_in_bits = dcs->d_mem_align_in_bits > 0
+		    ? dcs->d_mem_align_in_bits : alignment_in_bits(tp);
+		dcs_align(align_in_bits, 0);
 		mem->u.s_member.sm_offset_in_bits = dcs->d_sou_size_in_bits;
 		dcs->d_sou_size_in_bits += type_size_in_bits(tp);
 	}
