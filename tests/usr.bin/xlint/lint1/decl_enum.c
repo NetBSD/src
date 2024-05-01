@@ -1,9 +1,21 @@
-/*	$NetBSD: decl_enum.c,v 1.4 2023/06/30 21:39:54 rillig Exp $	*/
+/*	$NetBSD: decl_enum.c,v 1.5 2024/05/01 12:36:56 rillig Exp $	*/
 # 3 "decl_enum.c"
 
 /*
  * Tests for enum declarations.
  */
+
+
+// Initializing an enum from a 64-bit value cuts off the upper bits.
+// TIME_MIN thus gets truncated from 0x8000_0000_0000_0000 to 0.
+// TIME_MAX thus gets truncated from 0x7fff_ffff_ffff_ffff to -1.
+enum {
+	/* expect+1: warning: integral constant too large [56] */
+	TIME_MIN = (long long)(1ULL << 63),
+	/* expect+1: warning: integral constant too large [56] */
+	TIME_MAX = (long long)~(1ULL << 63),
+};
+
 
 /* cover 'enumerator_list: error' */
 enum {
