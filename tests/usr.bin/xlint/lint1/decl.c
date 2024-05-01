@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.29 2024/05/01 12:36:56 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.30 2024/05/01 17:42:57 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -243,22 +243,29 @@ get_x(struct point3d { struct point3d_number { int v; } x, y, z; } arg)
 }
 
 // Expressions of the form '(size_t)&null_ptr->member' are used by several
-// C implementations to implement the offsetof macro.  Dereferencing a null
-// pointer invokes undefined behavior, though, even in this form.
+// C implementations to implement the offsetof macro.
 void
 offsetof_on_array_member(void)
 {
-	struct s1 {
+	typedef struct {
 		int padding, plain, arr[2];
+	} s1;
+
+	// Bit-fields must have a constant number of bits.
+	struct s2 {
+		unsigned int off_plain:(unsigned long)&((s1 *)0)->plain;
+		unsigned int off_arr:(unsigned long)&((s1 *)0)->arr;
+		unsigned int off_arr_0:(unsigned long)&((s1 *)0)->arr[0];
+		unsigned int off_arr_3:(unsigned long)&((s1 *)0)->arr[3];
 	};
 
-	struct s2 {
-		unsigned int off_plain:(unsigned long)&((struct s1 *)0)->plain;
-		// FIXME: offsetof must work for array members as well.
-		/* expect+1: error: integral constant expression expected [55] */
-		unsigned int off_arr:(unsigned long)&((struct s1 *)0)->arr;
-		// FIXME: offsetof must work for array members as well.
-		/* expect+1: error: integral constant expression expected [55] */
-		unsigned int off_arr_element:(unsigned long)&((struct s1 *)0)->arr[0];
-	};
+	// Arrays may be variable-width, but the diagnostic reveals the size.
+	/* expect+1: error: negative array dimension (-4) [20] */
+	typedef int off_plain[-(int)(unsigned long)&((s1 *)0)->plain];
+	/* expect+1: error: negative array dimension (-8) [20] */
+	typedef int off_arr[-(int)(unsigned long)&((s1 *)0)->arr];
+	/* expect+1: error: negative array dimension (-8) [20] */
+	typedef int off_arr_0[-(int)(unsigned long)&((s1 *)0)->arr[0]];
+	/* expect+1: error: negative array dimension (-20) [20] */
+	typedef int off_arr_3[-(int)(unsigned long)&((s1 *)0)->arr[3]];
 }
