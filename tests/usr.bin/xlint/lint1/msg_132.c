@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.39 2024/05/01 05:38:11 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.40 2024/05/01 05:49:33 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -265,13 +265,13 @@ test_ic_shr(u64_t x)
 unsigned char
 test_bit_fields(unsigned long long m)
 {
-	/* expect+1: warning: conversion from 'unsigned long long:32' to 'unsigned int:3' may lose accuracy [132] */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int:3' may lose accuracy [132] */
 	bits.u3 = bits.u32 & m;
 
 	bits.u5 = bits.u3 & m;
 	bits.u32 = bits.u5 & m;
 
-	/* expect+1: warning: conversion from 'unsigned long long:32' to 'unsigned char' may lose accuracy [132] */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	return bits.u32 & m;
 }
 
@@ -450,6 +450,7 @@ binary_operators_on_bit_fields(void)
 	cond = (s.u15 | s.u48 | s.u64) != 0;
 	cond = (s.u64 | s.u48 | s.u15) != 0;
 
-	/* expect+1: warning: conversion of 'int' to 'int:4' is out of range [119] */
+	// Before tree.c from 1.638 from 2024-05-01, lint wrongly warned:
+	// warning: conversion of 'int' to 'int:4' is out of range [119]
 	s32 = 8 - bits.u3;
 }
