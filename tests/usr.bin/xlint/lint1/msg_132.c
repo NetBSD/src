@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.38 2024/03/25 23:39:14 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.39 2024/05/01 05:38:11 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -449,4 +449,7 @@ binary_operators_on_bit_fields(void)
 	u64 = s.u64 | s.u48 | s.u15;
 	cond = (s.u15 | s.u48 | s.u64) != 0;
 	cond = (s.u64 | s.u48 | s.u15) != 0;
+
+	/* expect+1: warning: conversion of 'int' to 'int:4' is out of range [119] */
+	s32 = 8 - bits.u3;
 }
