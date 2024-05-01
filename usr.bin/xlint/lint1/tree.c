@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.638 2024/05/01 05:49:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.639 2024/05/01 17:42:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.638 2024/05/01 05:49:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.639 2024/05/01 17:42:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4112,6 +4112,28 @@ cast_to_union(tnode_t *otn, bool sys, type_t *ntp)
 	return NULL;
 }
 
+// In GCC mode, allow 'nullptr + offset' as a constant expression.
+static tnode_t *
+null_pointer_offset(tnode_t *tn)
+{
+	uint64_t off = 0;
+	const tnode_t *n = tn;
+	while ((n->tn_op == PLUS || n->tn_op == MINUS)
+	    && is_integer(n->u.ops.right->tn_type->t_tspec)) {
+		off += (uint64_t)n->u.ops.right->u.value.u.integer;
+		n = n->u.ops.left;
+	}
+	if (n->tn_type->t_tspec == PTR
+	    && n->tn_op == ADDR
+	    && n->u.ops.left->tn_op == INDIR
+	    && n->u.ops.left->u.ops.left->tn_op == CON
+	    && n->u.ops.left->u.ops.left->tn_type->t_tspec == PTR) {
+		off += (uint64_t)n->u.ops.left->u.ops.left->u.value.u.integer;
+		return build_integer_constant(SIZEOF_TSPEC, (int64_t)off);
+	}
+	return tn;
+}
+
 tnode_t *
 cast(tnode_t *tn, bool sys, type_t *tp)
 {
@@ -4144,7 +4166,7 @@ cast(tnode_t *tn, bool sys, type_t *tp)
 		error(148);
 		return NULL;
 	} else if (is_integer(nt) && is_scalar(ot)) {
-		/* ok */
+		tn = null_pointer_offset(tn);
 	} else if (is_floating(nt) && is_arithmetic(ot)) {
 		/* ok */
 	} else if (nt == PTR && is_integer(ot)) {
