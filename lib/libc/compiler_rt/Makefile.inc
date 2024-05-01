@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.47 2024/03/10 18:00:13 rillig Exp $
+# $NetBSD: Makefile.inc,v 1.48 2024/05/01 18:38:15 christos Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -380,6 +380,7 @@ LINTFLAGS.floatuntidf.c += -X 122,141,267,351
 LINTFLAGS.floatuntisf.c += -X 351
 LINTFLAGS.floatuntixf.c += -X 122,351
 LINTFLAGS.floatuntixf.c += -X 141 # alpha
+LINTFLAGS.gcc_personality_v0.c += -X 132,231
 LINTFLAGS.int_util.c += -X 231
 LINTFLAGS.lshrti3.c += -X 351
 LINTFLAGS.moddi3.c += -X 117 # vax
