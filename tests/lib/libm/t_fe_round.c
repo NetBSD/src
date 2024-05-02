@@ -187,7 +187,7 @@ ATF_TC_BODY(fe_nearbyintl, tc)
 		    " (integer part %Lf)",
 		    i, rmname(valuesl[i].round_mode), valuesl[i].input, fpart,
 		    ipart);
-		ATF_CHECK_MSG((long int)received == valuesl[i].expected,
+		ATF_CHECK_MSG((intmax_t)received == valuesl[i].expected,
 		    "[%u] %s nearbyintl(%Lf): got %Lf, expected %jd",
 		    i, rmname(valuesl[i].round_mode),
 		    valuesl[i].input, received, valuesl[i].expected);
