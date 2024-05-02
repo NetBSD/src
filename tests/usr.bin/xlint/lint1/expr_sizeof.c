@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.15 2024/03/13 06:56:24 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.16 2024/05/02 20:03:33 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -212,4 +212,54 @@ sizeof_array_parameter(short arr[12345])
 	// of elem'.
 	/* expect+1: error: negative array dimension (-2) [20] */
 	typedef int sizeof_arr_elem[-(int)(sizeof *arr)];
+}
+
+
+void
+sequence_of_structs(void)
+{
+	typedef unsigned char uint8_t;
+	typedef short unsigned int uint16_t;
+	typedef unsigned int uint32_t;
+	typedef long unsigned int uint64_t;
+	typedef unsigned long size_t;
+
+	union fp_addr {
+		uint64_t fa_64;
+		struct {
+			uint32_t fa_off;
+			uint16_t fa_seg;
+			uint16_t fa_opcode;
+		} fa_32;
+	} __packed _Alignas(4);
+
+	struct fpacc87 {
+		uint64_t f87_mantissa;
+		uint16_t f87_exp_sign;
+	} __packed _Alignas(2);
+
+	// FIXME: This otherwise unused struct declaration influences the
+	// offsets checked below. Without this struct, sizeof(struct save87)
+	// is calculated correctly as 108 below.
+	struct fpaccfx {
+		struct fpacc87 r _Alignas(16);
+	};
+
+	struct save87 {
+		uint16_t s87_cw _Alignas(4);
+		uint16_t s87_sw _Alignas(4);
+		uint16_t s87_tw _Alignas(4);
+		union fp_addr s87_ip;
+		union fp_addr s87_dp;
+		struct fpacc87 s87_ac[8];
+	};
+
+	/* expect+1: error: negative array dimension (-20) [20] */
+	typedef int o1[-(int)((size_t)(unsigned long)(&(((struct save87 *)0)->s87_dp)))];
+	// FIXME: must be 28.
+	/* expect+1: error: negative array dimension (-32) [20] */
+	typedef int o2[-(int)((size_t)(unsigned long)(&(((struct save87 *)0)->s87_ac)))];
+	// FIXME: must be 108.
+	/* expect+1: error: negative array dimension (-112) [20] */
+	typedef int reveal[-(int)sizeof(struct save87)];
 }
