@@ -9,6 +9,7 @@
 #include <fenv.h>
 #ifdef __HAVE_FENV
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -145,23 +146,27 @@ ATF_TC_BODY(fe_nearbyint, tc)
 
 #ifdef __HAVE_LONG_DOUBLE
 
+#define IM intmax_t
+
 /*
  * Use one bit more than fits in IEEE 754 binary64.
  */
 static const struct {
 	int round_mode;
 	long double input;
-	long int expected;
+	IM expected;
 } valuesl[] = {
-	{ FE_TOWARDZERO,	0x2.00000000000008p+52L, 0x20000000000000 },
-	{ FE_DOWNWARD,		0x2.00000000000008p+52L, 0x20000000000000 },
-	{ FE_UPWARD,		0x2.00000000000008p+52L, 0x20000000000001 },
-	{ FE_TONEAREST,		0x2.00000000000008p+52L, 0x20000000000000 },
-	{ FE_TOWARDZERO,	0x2.00000000000018p+52L, 0x20000000000001 },
-	{ FE_DOWNWARD,		0x2.00000000000018p+52L, 0x20000000000001 },
-	{ FE_UPWARD,		0x2.00000000000018p+52L, 0x20000000000002 },
-	{ FE_TONEAREST,		0x2.00000000000018p+52L, 0x20000000000002 },
+	{ FE_TOWARDZERO,	0x2.00000000000008p+52L, (IM)0x20000000000000 },
+	{ FE_DOWNWARD,		0x2.00000000000008p+52L, (IM)0x20000000000000 },
+	{ FE_UPWARD,		0x2.00000000000008p+52L, (IM)0x20000000000001 },
+	{ FE_TONEAREST,		0x2.00000000000008p+52L, (IM)0x20000000000000 },
+	{ FE_TOWARDZERO,	0x2.00000000000018p+52L, (IM)0x20000000000001 },
+	{ FE_DOWNWARD,		0x2.00000000000018p+52L, (IM)0x20000000000001 },
+	{ FE_UPWARD,		0x2.00000000000018p+52L, (IM)0x20000000000002 },
+	{ FE_TONEAREST,		0x2.00000000000018p+52L, (IM)0x20000000000002 },
 };
+
+#undef IM
 
 ATF_TC(fe_nearbyintl);
 ATF_TC_HEAD(fe_nearbyintl, tc)
@@ -183,7 +188,7 @@ ATF_TC_BODY(fe_nearbyintl, tc)
 		    "%s nearbyintl(%Lf) has fractional part %Lf",
 		    rmname(values[i].round_mode), valuesl[i].input, fpart);
 		ATF_CHECK_MSG((long int)received == valuesl[i].expected,
-		    "%s [%u] nearbyint(%Lf): got %Lf, expected %ld",
+		    "%s [%u] nearbyint(%Lf): got %Lf, expected %jd",
 		    rmname(values[i].round_mode), i,
 		    valuesl[i].input, received, valuesl[i].expected);
 
