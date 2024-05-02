@@ -18,6 +18,23 @@
 
 #define EPSILON 0.001
 
+static const char *
+rmname(int rm)
+{
+	switch (rm) {
+	case FE_TOWARDZERO:
+		return "FE_TOWARDZERO";
+	case FE_DOWNWARD:
+		return "FE_DOWNWARD";
+	case FE_UPWARD:
+		return "FE_UPWARD";
+	case FE_TONEAREST:
+		return "FE_TONEAREST";
+	default:
+		return "unknown";
+	}
+}
+
 static const struct {
 	int round_mode;
 	double input;
@@ -96,29 +113,33 @@ ATF_TC_BODY(fe_round, tc)
 ATF_TC(fe_nearbyint);
 ATF_TC_HEAD(fe_nearbyint, tc)
 {
-	atf_tc_set_md_var(tc, "descr","Checking IEEE 754 rounding modes using nearbyint");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checking IEEE 754 rounding modes using nearbyint");
 }
 
 ATF_TC_BODY(fe_nearbyint, tc)
 {
-	double received;
+	double received, ipart, fpart;
 
 	for (unsigned int i = 0; i < __arraycount(values); i++) {
 		fesetround(values[i].round_mode);
 
 		received = nearbyint(values[i].input);
-		ATF_CHECK_MSG(
-		    (fabs(received - values[i].expected) < EPSILON),
-		    "nearbyint rounding wrong, difference too large\n"
-		    "input: %f (index %d): got %f, expected %ld\n",
-		    values[i].input, i, received, values[i].expected);
+		fpart = modf(received, &ipart);
+		ATF_CHECK_MSG(fpart == 0,
+		    "%s nearbyint(%f) has fractional part %f",
+		    rmname(values[i].round_mode), values[i].input, fpart);
+		ATF_CHECK_MSG((long int)received == values[i].expected,
+		    "%s [%u] nearbyint(%f) got %f, expected %ld\n",
+		    rmname(values[i].round_mode),
+		    i, values[i].input, received, values[i].expected);
 
 		/* Do we get the same rounding mode out? */
-		ATF_CHECK_MSG(
-		    (fegetround() == values[i].round_mode),
-		    "Didn't get the same rounding mode out!\n"
-		    "(index %d) fed in %d rounding mode, got %d out\n",
-		    i, values[i].round_mode, fegetround());
+		ATF_CHECK_MSG(fegetround() == values[i].round_mode,
+		    "[%u] set %d (%s), got %d (%s)",
+		    i,
+		    values[i].round_mode, rmname(values[i].round_mode),
+		    fegetround(), rmname(fegetround()));
 	}
 }
 
