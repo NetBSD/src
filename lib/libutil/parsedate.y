@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.39 2024/05/01 19:59:07 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.40 2024/05/02 14:19:56 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -546,7 +546,7 @@ static const TABLE OtherTable[] = {
     { "now",		tMINUTE_UNIT,	0 },
     { "last",		tUNUMBER,	-1 },
     { "this",		tMINUTE_UNIT,	0 },
-    { "next",		tUNUMBER,	1 },
+    { "next",		tUNUMBER,	2 },	/* it is more useful this way */
     { "first",		tUNUMBER,	1 },
     { "one",		tUNUMBER,	1 },
 /*  { "second",		tUNUMBER,	2 }, */
