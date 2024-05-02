@@ -128,12 +128,14 @@ ATF_TC_BODY(fe_nearbyint, tc)
 		received = nearbyint(values[i].input);
 		fpart = modf(received, &ipart);
 		ATF_CHECK_MSG(fpart == 0,
-		    "%s nearbyint(%f) has fractional part %f",
-		    rmname(values[i].round_mode), values[i].input, fpart);
+		    "[%u] %s nearbyint(%f) has fractional part %f"
+		    " (integer part %f)",
+		    i, rmname(values[i].round_mode), values[i].input, fpart,
+		    ipart);
 		ATF_CHECK_MSG((long int)received == values[i].expected,
-		    "%s [%u] nearbyint(%f) got %f, expected %ld\n",
-		    rmname(values[i].round_mode),
-		    i, values[i].input, received, values[i].expected);
+		    "[%u] %s nearbyint(%f): got %f, expected %ld",
+		    i, rmname(values[i].round_mode),
+		    values[i].input, received, values[i].expected);
 
 		/* Do we get the same rounding mode out? */
 		ATF_CHECK_MSG(fegetround() == values[i].round_mode,
@@ -181,11 +183,13 @@ ATF_TC_BODY(fe_nearbyintl, tc)
 		received = nearbyintl(valuesl[i].input);
 		fpart = modfl(received, &ipart);
 		ATF_CHECK_MSG(fpart == 0,
-		    "%s nearbyintl(%Lf) has fractional part %Lf",
-		    rmname(values[i].round_mode), valuesl[i].input, fpart);
+		    "[%u] %s nearbyintl(%Lf) has fractional part %Lf"
+		    " (integer part %Lf)",
+		    i, rmname(valuesl[i].round_mode), valuesl[i].input, fpart,
+		    ipart);
 		ATF_CHECK_MSG((long int)received == valuesl[i].expected,
-		    "%s [%u] nearbyint(%Lf): got %Lf, expected %jd",
-		    rmname(values[i].round_mode), i,
+		    "[%u] %s nearbyintl(%Lf): got %Lf, expected %jd",
+		    i, rmname(valuesl[i].round_mode),
 		    valuesl[i].input, received, valuesl[i].expected);
 
 		/* Do we get the same rounding mode out? */
