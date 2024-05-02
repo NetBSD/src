@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2023/08/11 02:43:59 rillig Exp $
+#	$NetBSD: Makefile,v 1.3 2024/05/02 15:45:36 christos Exp $
 
 PROG=		base64
 WARNS?=		6		# instead of 5 from usr.bin
-LINTFLAGS+=	-T		# strict bool mode
+#LINTFLAGS+=	-T		# strict bool mode
 
 .include <bsd.prog.mk>
