@@ -143,6 +143,61 @@ ATF_TC_BODY(fe_nearbyint, tc)
 	}
 }
 
+#ifdef __HAVE_LONG_DOUBLE
+
+/*
+ * Use one bit more than fits in IEEE 754 binary64.
+ */
+static const struct {
+	int round_mode;
+	long double input;
+	long int expected;
+} valuesl[] = {
+	{ FE_TOWARDZERO,	0x2.00000000000008p+52L, 0x20000000000000 },
+	{ FE_DOWNWARD,		0x2.00000000000008p+52L, 0x20000000000000 },
+	{ FE_UPWARD,		0x2.00000000000008p+52L, 0x20000000000001 },
+	{ FE_TONEAREST,		0x2.00000000000008p+52L, 0x20000000000000 },
+	{ FE_TOWARDZERO,	0x2.00000000000018p+52L, 0x20000000000001 },
+	{ FE_DOWNWARD,		0x2.00000000000018p+52L, 0x20000000000001 },
+	{ FE_UPWARD,		0x2.00000000000018p+52L, 0x20000000000002 },
+	{ FE_TONEAREST,		0x2.00000000000018p+52L, 0x20000000000002 },
+};
+
+ATF_TC(fe_nearbyintl);
+ATF_TC_HEAD(fe_nearbyintl, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checking IEEE 754 rounding modes using nearbyintl");
+}
+
+ATF_TC_BODY(fe_nearbyintl, tc)
+{
+	long double received, ipart, fpart;
+
+	for (unsigned int i = 0; i < __arraycount(valuesl); i++) {
+		fesetround(valuesl[i].round_mode);
+
+		received = nearbyintl(valuesl[i].input);
+		fpart = modfl(received, &ipart);
+		ATF_CHECK_MSG(fpart == 0,
+		    "%s nearbyintl(%Lf) has fractional part %Lf",
+		    rmname(values[i].round_mode), valuesl[i].input, fpart);
+		ATF_CHECK_MSG((long int)received == valuesl[i].expected,
+		    "%s [%u] nearbyint(%Lf): got %Lf, expected %ld",
+		    rmname(values[i].round_mode), i,
+		    valuesl[i].input, received, valuesl[i].expected);
+
+		/* Do we get the same rounding mode out? */
+		ATF_CHECK_MSG(fegetround() == valuesl[i].round_mode,
+		    "[%u] set %d (%s), got %d (%s)",
+		    i,
+		    valuesl[i].round_mode, rmname(valuesl[i].round_mode),
+		    fegetround(), rmname(fegetround()));
+	}
+}
+
+#endif
+
 static const struct {
 	double input;
 	double toward;
@@ -209,6 +264,9 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, fe_round);
 	ATF_TP_ADD_TC(tp, fe_nearbyint);
+#ifdef __HAVE_LONG_DOUBLE
+	ATF_TP_ADD_TC(tp, fe_nearbyintl);
+#endif
 	ATF_TP_ADD_TC(tp, fe_nextafter);
 	ATF_TP_ADD_TC(tp, fe_nexttoward);
 
