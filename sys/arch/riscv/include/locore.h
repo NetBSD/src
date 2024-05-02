@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.12 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.13 2024/05/02 18:18:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@ fpu_valid_p(lwp_t *l)
 
 void	__syncicache(const void *, size_t);
 
-int	cpu_set_onfault(struct faultbuf *, register_t) __returns_twice;
-void	cpu_jump_onfault(struct trapframe *, const struct faultbuf *);
+int	cpu_set_onfault(struct faultbuf *) __returns_twice;
+void	cpu_jump_onfault(struct trapframe *, const struct faultbuf *, int);
 
 static inline void
 cpu_unset_onfault(void)

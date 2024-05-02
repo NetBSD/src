@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.5 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.6 2024/05/02 18:18:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ END(cpu_exception_handler)
 
 /*
  * int
- * cpu_set_onfault(struct faultbuf *fb, register_t retval)
+ * cpu_set_onfault(struct faultbuf *fb)
  */
 ENTRY_NP(cpu_set_onfault)
 	REG_S	ra, FB_RA(a0)
@@ -476,7 +476,6 @@ ENTRY_NP(cpu_set_onfault)
 	REG_S	s10, FB_S10(a0)
 	REG_S	s11, FB_S11(a0)
 	REG_S	sp, FB_SP(a0)
-	REG_S	a1, FB_A0(a0)
 	PTR_S	a0, L_MD_ONFAULT(tp)
 	li	a0, 0
 	ret
