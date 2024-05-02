@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2024/04/01 16:24:01 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2024/05/02 18:18:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.25 2024/04/01 16:24:01 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.26 2024/05/02 18:18:17 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -90,10 +90,11 @@ static const char * const causenames[] = {
 	[CAUSE_STORE_PAGE_FAULT] = "store page fault",
 };
 
+
 void
-cpu_jump_onfault(struct trapframe *tf, const struct faultbuf *fb)
+cpu_jump_onfault(struct trapframe *tf, const struct faultbuf *fb, int error)
 {
-	tf->tf_a0 = fb->fb_reg[FB_A0];
+	tf->tf_a0 = error;
 	tf->tf_ra = fb->fb_reg[FB_RA];
 	tf->tf_s0 = fb->fb_reg[FB_S0];
 	tf->tf_s1 = fb->fb_reg[FB_S1];
@@ -131,7 +132,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		return EFAULT;
 
 	csr_sstatus_set(SR_SUM);
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
+	if ((error = cpu_set_onfault(&fb)) == 0) {
 		memcpy(kaddr, uaddr, len);
 		cpu_unset_onfault();
 	}
@@ -159,7 +160,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		return EFAULT;
 
 	csr_sstatus_set(SR_SUM);
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
+	if ((error = cpu_set_onfault(&fb)) == 0) {
 		memcpy(uaddr, kaddr, len);
 		cpu_unset_onfault();
 	}
@@ -174,7 +175,7 @@ kcopy(const void *kfaddr, void *kdaddr, size_t len)
 	struct faultbuf fb;
 	int error;
 
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
+	if ((error = cpu_set_onfault(&fb)) == 0) {
 		memcpy(kdaddr, kfaddr, len);
 		cpu_unset_onfault();
 	}
@@ -204,7 +205,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 		return EFAULT;
 
 	csr_sstatus_set(SR_SUM);
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
+	if ((error = cpu_set_onfault(&fb)) == 0) {
 		retlen = strlcpy(kaddr, uaddr, len);
 		cpu_unset_onfault();
 		if (retlen >= len) {
@@ -240,7 +241,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 		return EFAULT;
 
 	csr_sstatus_set(SR_SUM);
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
+	if ((error = cpu_set_onfault(&fb)) == 0) {
 		retlen = strlcpy(uaddr, kaddr, len);
 		cpu_unset_onfault();
 		if (retlen >= len) {
@@ -517,7 +518,7 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 		return false;
 	}
 
-	cpu_jump_onfault(tf, fb);
+	cpu_jump_onfault(tf, fb, error);
 	return true;
 }
 
@@ -672,7 +673,7 @@ fetch_user_data(const void *uaddr, void *valp, size_t size)
 	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
 		return EFAULT;
 
-	if ((error = cpu_set_onfault(&fb, EFAULT)) != 0)
+	if ((error = cpu_set_onfault(&fb)) != 0)
 		return error;
 
 	csr_sstatus_set(SR_SUM);
@@ -737,7 +738,7 @@ store_user_data(void *uaddr, const void *valp, size_t size)
 	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
 		return EFAULT;
 
-	if ((error = cpu_set_onfault(&fb, EFAULT)) != 0)
+	if ((error = cpu_set_onfault(&fb)) != 0)
 		return error;
 
 	csr_sstatus_set(SR_SUM);
