@@ -712,6 +712,7 @@ static void
 wq_init(workqueue_t *wq, int nfiles)
 {
 	int throttle, nslots, i;
+	const char *e;
 
 	if (getenv("CTFMERGE_MAX_SLOTS"))
 		nslots = atoi(getenv("CTFMERGE_MAX_SLOTS"));
@@ -728,17 +729,21 @@ wq_init(workqueue_t *wq, int nfiles)
 
 	wq->wq_wip = xcalloc(sizeof (wip_t) * nslots);
 	wq->wq_nwipslots = nslots;
+	e = getenv("CTFMERGE_NUM_THREADS");
+	if (e) {
+		wq->wq_nthreads = atoi(e);
+	} else {
 #ifdef _SC_NPROCESSORS_ONLN
-	wq->wq_nthreads = MIN(sysconf(_SC_NPROCESSORS_ONLN) * 3 / 2, nslots);
+		wq->wq_nthreads = MIN(sysconf(_SC_NPROCESSORS_ONLN) * 3 / 2,
+		    nslots);
 #else
-	wq->wq_nthreads = 2;
+		wq->wq_nthreads = 2;
 #endif
+	}
 	wq->wq_thread = xmalloc(sizeof (pthread_t) * wq->wq_nthreads);
 
-	if (getenv("CTFMERGE_INPUT_THROTTLE"))
-		throttle = atoi(getenv("CTFMERGE_INPUT_THROTTLE"));
-	else
-		throttle = MERGE_INPUT_THROTTLE_LEN;
+	e = getenv("CTFMERGE_INPUT_THROTTLE");
+	throttle = e ? atoi(e) : MERGE_INPUT_THROTTLE_LEN;
 	wq->wq_ithrottle = throttle * wq->wq_nthreads;
 
 	debug(1, "Using %d slots, %d threads\n", wq->wq_nwipslots,
