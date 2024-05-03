@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.494 2024/05/01 07:40:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.495 2024/05/03 04:04:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.494 2024/05/01 07:40:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.495 2024/05/03 04:04:17 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1026,7 +1026,7 @@ struct_or_union:
 		set_sym_kind(SK_TAG);
 		begin_declaration_level($1 == STRUCT ? DLK_STRUCT : DLK_UNION);
 		dcs->d_sou_size_in_bits = 0;
-		dcs->d_sou_align_in_bits = CHAR_SIZE;
+		dcs->d_sou_align = 1;
 		$$ = $1;
 	}
 |	struct_or_union type_attribute

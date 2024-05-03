@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.223 2024/05/01 07:40:11 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.224 2024/05/03 04:04:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -224,7 +224,7 @@ void dcs_set_asm(void);
 void dcs_begin_type(void);
 void dcs_end_type(void);
 int length_in_bits(const type_t *, const char *);
-unsigned int alignment_in_bits(const type_t *);
+unsigned int alignment(const type_t *);
 sym_t *concat_symbols(sym_t *, sym_t *);
 void check_type(sym_t *);
 sym_t *declare_unnamed_member(void);

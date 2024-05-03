@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.639 2024/05/01 17:42:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.640 2024/05/03 04:04:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.639 2024/05/01 17:42:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.640 2024/05/03 04:04:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3598,14 +3598,13 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 		return;
 	}
 
-	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp) &&
+	if (hflag && alignment(nstp) > alignment(ostp) &&
 	    ost != CHAR && ost != UCHAR &&
 	    !is_incomplete(ostp) &&
 	    !(nst == UNION && union_contains(nstp, ostp))) {
 		/* converting '%s' to '%s' increases alignment ... */
 		warning(135, type_name(otp), type_name(ntp),
-		    alignment_in_bits(ostp) / CHAR_SIZE,
-		    alignment_in_bits(nstp) / CHAR_SIZE);
+		    alignment(ostp), alignment(nstp));
 	}
 
 	if (cflag && should_warn_about_pointer_cast(nstp, nst, ostp, ost)) {
@@ -4083,8 +4082,7 @@ build_alignof(const type_t *tp)
 		error(145);
 		return NULL;
 	}
-	return build_integer_constant(SIZEOF_TSPEC,
-	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
+	return build_integer_constant(SIZEOF_TSPEC, (int64_t)alignment(tp));
 }
 
 static tnode_t *

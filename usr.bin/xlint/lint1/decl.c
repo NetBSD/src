@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.400 2024/05/01 10:30:56 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.401 2024/05/03 04:04:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.400 2024/05/01 10:30:56 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.401 2024/05/03 04:04:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -421,12 +421,13 @@ bit_fields_width(const sym_t **mem, bool *named)
 		if ((*mem)->s_name != unnamed)
 			*named = true;
 		width += (*mem)->s_type->t_bit_field_width;
-		unsigned int mem_align = alignment_in_bits((*mem)->s_type);
+		unsigned mem_align = alignment((*mem)->s_type);
 		if (mem_align > align)
 			align = mem_align;
 		*mem = (*mem)->s_next;
 	}
-	return (width + align - 1) & -align;
+	unsigned align_in_bits = align * CHAR_BIT;
+	return (width + align_in_bits - 1) & -align_in_bits;
 }
 
 static void
@@ -462,10 +463,9 @@ pack_struct_or_union(type_t *tp)
 void
 dcs_add_alignas(tnode_t *tn)
 {
-	dcs->d_mem_align_in_bits = to_int_constant(tn, true) * CHAR_SIZE;
+	dcs->d_mem_align = to_int_constant(tn, true);
 	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
-		dcs->d_type->u.sou->sou_align_in_bits =
-		    dcs->d_mem_align_in_bits;
+		dcs->d_type->u.sou->sou_align = dcs->d_mem_align;
 }
 
 void
@@ -608,8 +608,8 @@ dcs_begin_type(void)
 	dcs->d_type = NULL;
 	dcs->d_redeclared_symbol = NULL;
 	// keep d_sou_size_in_bits
-	// keep d_sou_align_in_bits
-	dcs->d_mem_align_in_bits = 0;
+	// keep d_sou_align
+	dcs->d_mem_align = 0;
 	dcs->d_qual = (type_qualifiers) { .tq_const = false };
 	dcs->d_inline = false;
 	dcs->d_multiple_storage_classes = false;
@@ -747,13 +747,14 @@ dcs_end_type(void)
 		dcs->d_type->t_const |= dcs->d_qual.tq_const;
 		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
 	}
-	unsigned align = dcs->d_mem_align_in_bits;
+	unsigned align = dcs->d_mem_align;
 	if (align > 0 && dcs->d_type->t_tspec == STRUCT) {
 		dcs_align(align, 0);
-		dcs->d_type->u.sou->sou_align_in_bits = align;
+		dcs->d_type->u.sou->sou_align = align;
+		unsigned align_in_bits = align * CHAR_SIZE;
 		dcs->d_type->u.sou->sou_size_in_bits =
-		    (dcs->d_type->u.sou->sou_size_in_bits + align - 1)
-		    & -align;
+		    (dcs->d_type->u.sou->sou_size_in_bits + align_in_bits - 1)
+		    & -align_in_bits;
 	}
 
 	debug_dcs();
@@ -807,27 +808,27 @@ length_in_bits(const type_t *tp, const char *name)
 }
 
 unsigned int
-alignment_in_bits(const type_t *tp)
+alignment(const type_t *tp)
 {
 
 	/* Super conservative so that it works for most systems. */
-	unsigned int worst_align_in_bits = 2 * LONG_SIZE;
+	unsigned worst_align = 2 * LONG_SIZE / CHAR_SIZE;
 
 	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
 
 	tspec_t t = tp->t_tspec;
-	unsigned int a;
+	unsigned a;
 	if (is_struct_or_union(t))
-		a = tp->u.sou->sou_align_in_bits;
+		a = tp->u.sou->sou_align;
 	else {
 		lint_assert(t != FUNC);
-		if ((a = size_in_bits(t)) == 0)
-			a = CHAR_SIZE;
-		else if (a > worst_align_in_bits)
-			a = worst_align_in_bits;
+		if ((a = size_in_bits(t) / CHAR_SIZE) == 0)
+			a = 1;
+		else if (a > worst_align)
+			a = worst_align;
 	}
-	lint_assert(a >= CHAR_SIZE);
+	lint_assert(a >= 1);
 	return a;
 }
 
@@ -1021,16 +1022,17 @@ check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **inout_tp)
 	}
 }
 
-/* Aligns the next structure element as required. */
+/* Aligns the next structure member as required. */
 static void
 dcs_align(unsigned int member_alignment, unsigned int bit_field_width)
 {
 
-	if (member_alignment > dcs->d_sou_align_in_bits)
-		dcs->d_sou_align_in_bits = member_alignment;
+	if (member_alignment > dcs->d_sou_align)
+		dcs->d_sou_align = member_alignment;
 
-	unsigned int offset = (dcs->d_sou_size_in_bits + member_alignment - 1)
-	    & ~(member_alignment - 1);
+	unsigned align_in_bits = member_alignment * CHAR_SIZE;
+	unsigned offset = (dcs->d_sou_size_in_bits + align_in_bits - 1)
+	    & -align_in_bits;
 	if (bit_field_width == 0
 	    || dcs->d_sou_size_in_bits + bit_field_width > offset)
 		dcs->d_sou_size_in_bits = offset;
@@ -1049,7 +1051,7 @@ dcs_add_member(sym_t *mem)
 	}
 
 	if (mem->s_bitfield) {
-		dcs_align(alignment_in_bits(tp), tp->t_bit_field_width);
+		dcs_align(alignment(tp), tp->t_bit_field_width);
 		// XXX: Why round down?
 		mem->u.s_member.sm_offset_in_bits = dcs->d_sou_size_in_bits
 		    - dcs->d_sou_size_in_bits % size_in_bits(tp->t_tspec);
@@ -1057,9 +1059,9 @@ dcs_add_member(sym_t *mem)
 		    - mem->u.s_member.sm_offset_in_bits;
 		dcs->d_sou_size_in_bits += tp->t_bit_field_width;
 	} else {
-		unsigned int align_in_bits = dcs->d_mem_align_in_bits > 0
-		    ? dcs->d_mem_align_in_bits : alignment_in_bits(tp);
-		dcs_align(align_in_bits, 0);
+		unsigned int align = dcs->d_mem_align > 0
+		    ? dcs->d_mem_align : alignment(tp);
+		dcs_align(align, 0);
 		mem->u.s_member.sm_offset_in_bits = dcs->d_sou_size_in_bits;
 		dcs->d_sou_size_in_bits += type_size_in_bits(tp);
 	}
@@ -1654,7 +1656,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		if (kind != ENUM) {
 			tp->u.sou = block_zero_alloc(sizeof(*tp->u.sou),
 			    "struct_or_union");
-			tp->u.sou->sou_align_in_bits = CHAR_SIZE;
+			tp->u.sou->sou_align = 1;
 			tp->u.sou->sou_tag = tag;
 			tp->u.sou->sou_incomplete = true;
 		} else {
@@ -1692,10 +1694,10 @@ complete_struct_or_union(sym_t *first_member)
 	if (tp == NULL)		/* in case of syntax errors */
 		return gettyp(INT);
 
-	dcs_align(dcs->d_sou_align_in_bits, 0);
+	dcs_align(dcs->d_sou_align, 0);
 
 	struct_or_union *sou = tp->u.sou;
-	sou->sou_align_in_bits = dcs->d_sou_align_in_bits;
+	sou->sou_align = dcs->d_sou_align;
 	sou->sou_incomplete = false;
 	sou->sou_first_member = first_member;
 	if (tp->t_packed)
