@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.4 2023/09/03 08:48:20 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5 2024/05/03 07:24:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2023/09/03 08:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2024/05/03 07:24:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -212,7 +212,7 @@ cpu_ipi_wait(const char *s, const kcpuset_t *watchset, const kcpuset_t *wanted)
 	kcpuset_t *kcp = ci->ci_watchcpus;
 
 	/* some finite amount of time */
-	for (u_long limit = curcpu()->ci_cpu_freq /* / 10 */; !done && limit--; ) {
+	for (u_long limit = ci->ci_cpu_freq /* / 10 */; !done && limit--; ) {
 		kcpuset_copy(kcp, watchset);
 		kcpuset_intersect(kcp, wanted);
 		done = kcpuset_match(kcp, wanted);
