@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.15 2024/02/24 15:34:47 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.16 2024/05/03 15:39:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ The Regents of the University of California.  All rights reserved.");
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.15 2024/02/24 15:34:47 christos Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.16 2024/05/03 15:39:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,10 @@ void	 bcddate(char *, char *);
 char	*lifname(char *);
 int	 putfile(char *, int);
 void	 usage(void);
+
+#ifndef __CTASSERT
+#define	__CTASSERT(X)
+#endif
 
 #define CLEAR(a, b, c)	\
 __CTASSERT(sizeof(b) - 1 == c); \
