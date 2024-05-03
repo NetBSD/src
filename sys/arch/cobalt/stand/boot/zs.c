@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 2024/05/03 21:38:15 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 Izumi Tsutsui. All rights reserved.
@@ -87,7 +87,7 @@ zs_reset(void *dev)
 	zs_write_reg(dev,  9, ZSWR9_HARD_RESET);
 	delay(1000);
 
-	/* disable all inerttupts */
+	/* disable all interrupts */
 	zs_write_reg(dev,  1, 0);
 
 	/* set TX/RX misc parameters and modes */
