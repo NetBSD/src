@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.5 2023/09/14 03:25:31 rin Exp $ */
+/* $NetBSD: ptrace.h,v 1.6 2024/05/03 07:11:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_pc
-#define PTRACE_REG_FP(r)	(r)->r_reg[7]
+#define PTRACE_REG_FP(r)	(r)->r_reg[_X_S0]
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
-#define PTRACE_REG_SP(r)	(r)->r_reg[1]
-#define PTRACE_REG_INTRV(r)	(r)->r_reg[9]
+#define PTRACE_REG_SP(r)	(r)->r_reg[_X_SP]
+#define PTRACE_REG_INTRV(r)	(r)->r_reg[_X_A0]
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile("c.unimp" ::: "memory")
 
