@@ -1,4 +1,4 @@
-/*	$NetBSD: iris_zs.c,v 1.1 2019/01/12 16:44:47 tsutsui Exp $	*/
+/*	$NetBSD: iris_zs.c,v 1.2 2024/05/03 21:38:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018 Naruaki Etomi
@@ -113,7 +113,7 @@ zs_reset(void *dev)
 	zs_write_reg(dev,  9, ZSWR9_HARD_RESET);
 	DELAY(1000);
 
-	/* disable all inerttupts */
+	/* disable all interrupts */
 	zs_write_reg(dev,  1, 0);
 
 	/* set TX/RX misc parameters and modes */
