@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.17 2024/05/03 15:32:37 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.18 2024/05/03 19:16:13 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -7,8 +7,6 @@
  */
 
 /* lint1-extra-flags: -X 351 */
-// TODO: Remove the lp64 restriction when sequence_of_structs has been fixed.
-/* lint1-only-if: lp64 */
 
 /*
  * A sizeof expression can either take a type name or an expression.
@@ -221,9 +219,9 @@ void
 sequence_of_structs(void)
 {
 	typedef unsigned char uint8_t;
-	typedef short unsigned int uint16_t;
+	typedef unsigned short uint16_t;
 	typedef unsigned int uint32_t;
-	typedef long unsigned int uint64_t;
+	typedef unsigned long long uint64_t;
 
 	union fp_addr {
 		uint64_t fa_64;
