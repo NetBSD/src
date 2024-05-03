@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.29 2020/09/21 18:41:59 chs Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.30 2024/05/03 07:09:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.29 2020/09/21 18:41:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.30 2024/05/03 07:09:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,17 +67,17 @@ uvm_io(struct vm_map *map, struct uio *uio, int flags)
 	 */
 
 	if (uio->uio_resid == 0)
-		return(0);
+		return 0;
 	togo = uio->uio_resid;
 
 	baseva = (vaddr_t) uio->uio_offset;
 	endva = baseva + (togo - 1);
 
 	if (endva < baseva)   /* wrap around? */
-		return(EIO);
+		return EIO;
 
 	if (baseva >= VM_MAXUSER_ADDRESS)
-		return(0);
+		return 0;
 	if (endva >= VM_MAXUSER_ADDRESS)
 		/* EOF truncate */
 		togo = togo - (endva - VM_MAXUSER_ADDRESS + 1);
@@ -141,5 +141,5 @@ uvm_io(struct vm_map *map, struct uio *uio, int flags)
 		if (error)
 			break;
 	}
-	return (error);
+	return error;
 }
