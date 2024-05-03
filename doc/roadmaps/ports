@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.9 2021/10/31 08:11:13 nia Exp $
+$NetBSD: ports,v 1.10 2024/05/03 07:00:14 skrll Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -14,7 +14,7 @@ priorities for the project:
 The following elements, projects, and goals are not strategic
 priorities but are still important undertakings worth doing:
 
- 1. riscv and/or or1k ports
+ 1. or1k port
  2. cheri port
 
 The following elements, projects, and goals are perhaps less pressing;
@@ -34,15 +34,9 @@ having a newer version would be nice.
 
 - As of July 2018, maya is working on this.
 
- 1. riscv and/or or1k ports
+ 1. or1k port
 
-We have some riscv code and a bit of or1k code, but neither is done.
-
- - As of July 2018, zmcgrew is working on riscv in a separate repository
-   https://github.com/zmcgrew/src/tree/riscv
-   Nobody is working on or1k.
- - Contact matt@ for further information.
-
+We have a bit of or1k code, but it's not complete.
 
  2. cheri port
 
