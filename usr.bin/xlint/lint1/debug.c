@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.76 2024/05/01 07:40:11 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.77 2024/05/03 04:04:17 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.76 2024/05/01 07:40:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.77 2024/05/03 04:04:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -155,8 +155,12 @@ debug_type_details(const type_t *tp)
 
 	if (is_struct_or_union(tp->t_tspec)) {
 		debug_indent_inc();
-		debug_step("size %u bits, align %u bits, %s",
-		    tp->u.sou->sou_size_in_bits, tp->u.sou->sou_align_in_bits,
+		unsigned int size_in_bits = tp->u.sou->sou_size_in_bits;
+		debug_printf("size %u", size_in_bits / CHAR_SIZE);
+		if (size_in_bits % CHAR_SIZE > 0)
+			debug_printf("+%u", size_in_bits % CHAR_SIZE);
+		debug_step(", align %u, %s",
+		    tp->u.sou->sou_align,
 		    tp->u.sou->sou_incomplete ? "incomplete" : "complete");
 
 		for (const sym_t *mem = tp->u.sou->sou_first_member;
@@ -458,12 +462,14 @@ debug_decl_level(const decl_level *dl)
 	}
 	if (dl->d_redeclared_symbol != NULL)
 		debug_sym(" redeclared=(", dl->d_redeclared_symbol, ")");
-	if (dl->d_sou_size_in_bits != 0)
-		debug_printf(" size=%u", dl->d_sou_size_in_bits);
-	if (dl->d_sou_align_in_bits != 0)
-		debug_printf(" sou_align=%u", dl->d_sou_align_in_bits);
-	if (dl->d_mem_align_in_bits != 0)
-		debug_printf(" mem_align=%u", dl->d_mem_align_in_bits);
+	if (dl->d_sou_size_in_bits > 0)
+		debug_printf(" size=%u", dl->d_sou_size_in_bits / CHAR_SIZE);
+	if (dl->d_sou_size_in_bits % CHAR_SIZE > 0)
+		debug_printf("+%u", dl->d_sou_size_in_bits % CHAR_SIZE);
+	if (dl->d_sou_align > 0)
+		debug_printf(" sou_align=%u", dl->d_sou_align);
+	if (dl->d_mem_align > 0)
+		debug_printf(" mem_align=%u", dl->d_mem_align);
 
 	debug_word(dl->d_qual.tq_const, "const");
 	debug_word(dl->d_qual.tq_restrict, "restrict");
