@@ -682,7 +682,7 @@ terminate_cleanup(void)
 	if (outfile == NULL)
 		return;
 
-#if !defined (__FreeBSD__) && !defined(__NetBSD__)
+#if !defined (__FreeBSD__) && !(defined(__NetBSD__) || HAVE_NBTOOL_CONFIG_H)
 	if (dounlink) {
 		fprintf(stderr, "Removing %s\n", outfile);
 		unlink(outfile);
