@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.119 2024/02/02 22:00:33 andvar Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.120 2024/05/04 12:41:03 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.119 2024/02/02 22:00:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.120 2024/05/04 12:41:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -377,7 +377,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	if (total_len > un->un_rx_bufsz) {
-		aprint_error_dev(un->un_dev,
+		device_printf(un->un_dev,
 		    "rxeof: too large transfer (%u > %u)\n",
 		    total_len, un->un_rx_bufsz);
 		goto done;
@@ -471,7 +471,7 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (usbd_ratecheck(&unp->unp_intr_notice)) {
-			aprint_error_dev(un->un_dev, "usb error on intr: %s\n",
+			device_printf(un->un_dev, "usb error on intr: %s\n",
 			    usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
