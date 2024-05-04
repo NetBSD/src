@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3052 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3053 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -358,6 +358,15 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[christos 20240427]
 	i386: Rewrite viac7temp(4) temperature sensor to use MSR, which works
 		on far more CPUs.  [andvar 20240430]
+	hp300: Fix a wrong palette color setting problems on HP98543 4 bpp
+		topcat(4) framebuffer on HP360. [tsutsui 20240501]
 	lint(1): Support _Alignas and attribute aligned.  [rillig 20240501].
+	hp300: Fix "garbage pixels" problems on scrolling ops etc. on
+		HP98543 and HP98547 topcat(4) color framebuffers.
+		[tsutsui 20240501]
+	hp300: Treat HP98542 and HP98543 1024x400 framebuffers as
+		"pseudo doubled" 512x400 bitmap pixels as HP-UX did, because
+		even modern LCDs cannot handle such 1024x400 resolutions
+		properly. [tsutsui 20240501]
 	evbarm: Add device tree for Red Pitaya SDRlab 122-16.
 		[dyoung 20240504]
