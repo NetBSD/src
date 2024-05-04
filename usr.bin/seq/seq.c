@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.13 2024/02/24 10:10:04 mlelstv Exp $");
+__RCSID("$NetBSD: seq.c,v 1.14 2024/05/04 13:29:41 mlelstv Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -105,6 +105,7 @@ main(int argc, char *argv[])
 	double first = 1.0;
 	double last = 0.0;
 	double incr = 0.0;
+	double prev;
 	struct lconv *locale;
 	char *fmt = NULL;
 	const char *sep = "\n";
@@ -208,15 +209,23 @@ main(int argc, char *argv[])
 
 	if (incr > 0) {
 		printf(fmt, first);
+		prev = first;
 		for (first += incr; first <= last; first += incr) {
+			if (first <= prev)
+				errx(1, "increment too small\n");
 			fputs(sep, stdout);
 			printf(fmt, first);
+			prev = first;
 		}
 	} else {
 		printf(fmt, first);
+		prev = first;
 		for (first += incr; first >= last; first += incr) {
+			if (first >= prev)
+				errx(1, "increment too small\n");
 			fputs(sep, stdout);
 			printf(fmt, first);
+			prev = first;
 		}
 	}
 	if (term != NULL)
