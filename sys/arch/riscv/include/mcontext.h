@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.7 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: mcontext.h,v 1.8 2024/05/04 12:42:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ union __fpreg {
 #define _BSD_FPREG_T_	union __fpreg
 #endif
 
-typedef	__uint64_t	__greg_t;
+typedef	long		__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 typedef	__uint32_t	__greg32_t;
 typedef	__greg32_t	__gregset32_t[_NGREG];
