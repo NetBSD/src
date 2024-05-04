@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3051 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3052 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -348,3 +348,16 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	x86, sparc64: Create "DVD" ISOs that contain all the sets excluded
 		from the normal ISOs for size reasons - also useful on
 		virtual machines.  [nia 20240424]
+	i386: Remove kernel modules, redundant kernels, and amdgpu firmware
+		from the CD-ROM image to help it fit on a CD-ROM
+		once more.  [nia 20240426]
+	httpd(8): Make directory listings mobile-friendly, from D. Bohdan.
+		[maya 20240426]
+	thinkpad(4): Expose a sysctl interface to control some aspects of
+		charging behavior on supported systems, from Malte Dehling.
+		[christos 20240427]
+	i386: Rewrite viac7temp(4) temperature sensor to use MSR, which works
+		on far more CPUs.  [andvar 20240430]
+	lint(1): Support _Alignas and attribute aligned.  [rillig 20240501].
+	evbarm: Add device tree for Red Pitaya SDRlab 122-16.
+		[dyoung 20240504]
