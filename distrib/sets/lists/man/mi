@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1773 2024/04/30 19:35:28 andvar Exp $
+# $NetBSD: mi,v 1.1774 2024/05/04 19:10:04 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3833,8 +3833,10 @@
 ./usr/share/man/man1/midiplay.1			man-audio-man		.man
 ./usr/share/man/man1/midirecord.1		man-audio-man		.man
 ./usr/share/man/man1/mixerctl.1			man-audio-man		.man
+./usr/share/man/man1/mkcsmapper.1		man-util-man		.man
 ./usr/share/man/man1/mkdep.1			man-c-man		.man
 ./usr/share/man/man1/mkdir.1			man-util-man		.man
+./usr/share/man/man1/mkesdb.1			man-util-man		.man
 ./usr/share/man/man1/mkfifo.1			man-sysutil-man		.man
 ./usr/share/man/man1/mkfilters.1		man-ipf-man		ipfilter,.man
 ./usr/share/man/man1/mklocale.1			man-util-man		.man
