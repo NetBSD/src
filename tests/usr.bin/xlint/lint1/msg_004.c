@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_004.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_004.c,v 1.8 2024/05/04 06:52:17 rillig Exp $	*/
 # 3 "msg_004.c"
 
 // Test for message: illegal type combination [4]
+//
+// See also:
+//	msg_005.c
 
 /* lint1-extra-flags: -X 351 */
 

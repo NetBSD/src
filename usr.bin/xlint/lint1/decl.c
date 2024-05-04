@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.401 2024/05/03 04:04:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.402 2024/05/04 06:52:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.401 2024/05/03 04:04:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.402 2024/05/04 06:52:16 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,12 +63,20 @@ int enumval;
  */
 decl_level *dcs;
 
+#ifdef DEBUG
+static inline void
+debug_func_dcs(const char *func)
+{
+	debug_printf("%s: ", func);
+	debug_dcs();
+}
+#else
+#define debug_func_dcs(func) debug_noop()
+#endif
 
 void
 init_decl(void)
 {
-
-	/* declaration stack */
 	dcs = xcalloc(1, sizeof(*dcs));
 	dcs->d_kind = DLK_EXTERN;
 	dcs->d_last_dlsym = &dcs->d_first_dlsym;
@@ -109,10 +117,10 @@ gettyp(tspec_t t)
 type_t *
 block_dup_type(const type_t *tp)
 {
-
-	debug_step("%s '%s'", __func__, type_name(tp));
 	type_t *ntp = block_zero_alloc(sizeof(*ntp), "type");
+	// Keep referring to the same subtype, struct, union, enum, params.
 	*ntp = *tp;
+	debug_step("%s '%s'", __func__, type_name(ntp));
 	return ntp;
 }
 
@@ -120,10 +128,10 @@ block_dup_type(const type_t *tp)
 type_t *
 expr_dup_type(const type_t *tp)
 {
-
-	debug_step("%s '%s'", __func__, type_name(tp));
 	type_t *ntp = expr_zero_alloc(sizeof(*ntp), "type");
+	// Keep referring to the same subtype, struct, union, enum, params.
 	*ntp = *tp;
+	debug_step("%s: '%s'", __func__, type_name(ntp));
 	return ntp;
 }
 
@@ -136,8 +144,8 @@ expr_dup_type(const type_t *tp)
 type_t *
 expr_unqualified_type(const type_t *tp)
 {
-
 	type_t *ntp = expr_zero_alloc(sizeof(*ntp), "type");
+	// Keep referring to the same subtype, struct, union, enum, params.
 	*ntp = *tp;
 	ntp->t_const = false;
 	ntp->t_volatile = false;
@@ -146,11 +154,11 @@ expr_unqualified_type(const type_t *tp)
 	 * In case of a struct or union type, the members should lose their
 	 * qualifiers as well, but that would require a deep copy of the struct
 	 * or union type.  This in turn would defeat the type comparison in
-	 * types_compatible, which simply tests whether tp1->u.sou ==
-	 * tp2->u.sou.
+	 * types_compatible, which simply tests whether 'tp1->u.sou ==
+	 * tp2->u.sou'.
 	 */
 
-	debug_step("%s '%s'", __func__, type_name(ntp));
+	debug_step("%s: '%s'", __func__, type_name(ntp));
 	return ntp;
 }
 
@@ -177,19 +185,15 @@ is_incomplete(const type_t *tp)
 void
 dcs_add_function_specifier(function_specifier fs)
 {
-	debug_step("%s: %s", __func__, function_specifier_name(fs));
 	if (fs == FS_INLINE) {
 		if (dcs->d_inline)
 			/* duplicate '%s' */
 			warning(10, "inline");
 		dcs->d_inline = true;
 	}
+	debug_func_dcs(__func__);
 }
 
-/*
- * Remember the storage class of the current declaration and detect multiple
- * storage classes.
- */
 void
 dcs_add_storage_class(scl_t sc)
 {
@@ -209,8 +213,7 @@ dcs_add_storage_class(scl_t sc)
 		dcs->d_scl = STATIC;	/* ignore thread_local */
 	else
 		dcs->d_multiple_storage_classes = true;
-	debug_printf("%s: ", __func__);
-	debug_dcs();
+	debug_func_dcs(__func__);
 }
 
 /* Merge the signedness into the abstract type. */
@@ -237,9 +240,6 @@ merge_signedness(tspec_t t, tspec_t s)
 static type_t *
 typedef_error(type_t *td, tspec_t t)
 {
-
-	debug_step("%s: '%s' %s", __func__, type_name(td), tspec_name(t));
-
 	tspec_t t2 = td->t_tspec;
 
 	if ((t == SIGNED || t == UNSIGN) &&
@@ -290,6 +290,7 @@ typedef_error(type_t *td, tspec_t t)
 
 invalid:
 	dcs->d_invalid_type_combination = true;
+	debug_func_dcs(__func__);
 	return td;
 }
 
@@ -306,8 +307,6 @@ void
 dcs_add_type(type_t *tp)
 {
 
-	debug_step("%s: %s", __func__, type_name(tp));
-	debug_dcs();
 	if (tp->t_typedef) {
 		/*-
 		 * something like "typedef int a; int a b;"
@@ -319,11 +318,12 @@ dcs_add_type(type_t *tp)
 		lint_assert(dcs->d_rank_mod == NO_TSPEC);
 
 		dcs->d_type = tp;
+		debug_func_dcs(__func__);
 		return;
 	}
 
 	tspec_t t = tp->t_tspec;
-	if (is_struct_or_union(t) || t == ENUM) {
+	if (t == STRUCT || t == UNION || t == ENUM) {
 		/* something like "int struct a ..." */
 		if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
 		    dcs->d_rank_mod != NO_TSPEC || dcs->d_sign_mod != NO_TSPEC) {
@@ -333,13 +333,14 @@ dcs_add_type(type_t *tp)
 			dcs->d_rank_mod = NO_TSPEC;
 		}
 		dcs->d_type = tp;
-		debug_dcs();
+		debug_func_dcs(__func__);
 		return;
 	}
 
 	if (dcs->d_type != NULL && !dcs->d_type->t_typedef) {
 		/* something like "struct a int" */
 		dcs->d_invalid_type_combination = true;
+		debug_func_dcs(__func__);
 		return;
 	}
 
@@ -398,7 +399,7 @@ dcs_add_type(type_t *tp)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
 	}
-	debug_dcs();
+	debug_func_dcs(__func__);
 }
 
 static void
@@ -410,6 +411,8 @@ set_first_typedef(type_t *tp, sym_t *sym)
 		tp->u.sou->sou_first_typedef = sym;
 	if (t == ENUM && tp->u.enumer->en_first_typedef == NULL)
 		tp->u.enumer->en_first_typedef = sym;
+	debug_printf("%s: ", __func__);
+	debug_type(tp);
 }
 
 static unsigned int
@@ -457,7 +460,6 @@ pack_struct_or_union(type_t *tp)
 			bits = mem_bits;
 	}
 	tp->u.sou->sou_size_in_bits = bits;
-	debug_dcs();
 }
 
 void
@@ -465,7 +467,9 @@ dcs_add_alignas(tnode_t *tn)
 {
 	dcs->d_mem_align = to_int_constant(tn, true);
 	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
+		// FIXME: The type must not be modified.
 		dcs->d_type->u.sou->sou_align = dcs->d_mem_align;
+	debug_func_dcs(__func__);
 }
 
 void
@@ -475,12 +479,14 @@ dcs_add_packed(void)
 		dcs->d_packed = true;
 	else
 		pack_struct_or_union(dcs->d_type);
+	debug_func_dcs(__func__);
 }
 
 void
 dcs_set_used(void)
 {
 	dcs->d_used = true;
+	debug_func_dcs(__func__);
 }
 
 /*
@@ -492,6 +498,7 @@ void
 dcs_add_qualifiers(type_qualifiers qs)
 {
 	add_type_qualifiers(&dcs->d_qual, qs);
+	debug_func_dcs(__func__);
 }
 
 void
@@ -591,6 +598,8 @@ dcs_set_asm(void)
 
 	for (decl_level *dl = dcs; dl != NULL; dl = dl->d_enclosing)
 		dl->d_asm = true;
+	debug_step("%s", __func__);
+	debug_dcs_all();
 }
 
 void
@@ -626,6 +635,8 @@ dcs_begin_type(void)
 	// keep d_last_dlsym
 	dcs->d_func_proto_syms = NULL;
 	// keep d_enclosing
+
+	debug_func_dcs(__func__);
 }
 
 static void
@@ -707,8 +718,7 @@ dcs_merge_declaration_specifiers(void)
 	if (l != NO_TSPEC)
 		t = l;
 	dcs->d_type = gettyp(merge_signedness(t, s));
-	debug_printf("%s: ", __func__);
-	debug_dcs();
+	debug_func_dcs(__func__);
 }
 
 static void dcs_align(unsigned int, unsigned int);
@@ -1036,6 +1046,7 @@ dcs_align(unsigned int member_alignment, unsigned int bit_field_width)
 	if (bit_field_width == 0
 	    || dcs->d_sou_size_in_bits + bit_field_width > offset)
 		dcs->d_sou_size_in_bits = offset;
+	debug_func_dcs(__func__);
 }
 
 /* Add a member to the struct or union type that is being built in 'dcs'. */
@@ -1069,7 +1080,7 @@ dcs_add_member(sym_t *mem)
 	if (union_size > dcs->d_sou_size_in_bits)
 		dcs->d_sou_size_in_bits = union_size;
 
-	debug_dcs();
+	debug_func_dcs(__func__);
 }
 
 sym_t *
@@ -1224,7 +1235,7 @@ add_pointer(sym_t *decl, qual_ptr *p)
 		free(p);
 		p = next;
 	}
-	debug_step("add_pointer: '%s'", type_name(decl->s_type));
+	debug_step("%s: '%s'", __func__, type_name(decl->s_type));
 	return decl;
 }
 
@@ -1514,6 +1525,7 @@ declarator_name(sym_t *sym)
 	dcs->d_func_proto_syms = NULL;
 
 	debug_sym("declarator_name: ", sym, "\n");
+	debug_func_dcs(__func__);
 	return sym;
 }
 
@@ -1592,6 +1604,7 @@ new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			dcs->d_enclosing->d_nonempty_decl = true;
 	}
 	debug_sym("new_tag: ", tag, "\n");
+	debug_dcs_all();
 	return tag;
 }
 
@@ -1669,6 +1682,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	}
 	debug_printf("%s: '%s'", __func__, type_name(tp));
 	debug_sym(" ", tag, "\n");
+	debug_dcs_all();
 	return tp;
 }
 
@@ -1712,6 +1726,7 @@ complete_struct_or_union(sym_t *first_member)
 		/* '%s' has no named members */
 		warning(65, type_name(tp));
 	debug_step("%s: '%s'", __func__, type_name(tp));
+	debug_dcs_all();
 	return tp;
 }
 
@@ -1723,6 +1738,7 @@ complete_enum(sym_t *first_enumerator)
 	tp->u.enumer->en_incomplete = false;
 	tp->u.enumer->en_first_enumerator = first_enumerator;
 	debug_step("%s: '%s'", __func__, type_name(tp));
+	debug_func_dcs(__func__);
 	return tp;
 }
 
@@ -2762,6 +2778,7 @@ abstract_name_level(bool enclosing)
 
 	debug_printf("%s: ", __func__);
 	debug_sym("", sym, "\n");
+	debug_func_dcs(__func__);
 	return sym;
 }
 
