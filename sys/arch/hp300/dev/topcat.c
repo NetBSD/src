@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.11 2024/05/01 19:28:33 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.12 2024/05/04 16:06:57 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -351,11 +351,24 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	/*
 	 * Some displays, such as the HP332 and HP340 internal video
 	 * and HP98542/98543 appear to return a display width of 1024
-	 * instead of 512.
+	 * instead of 512. It looks these boards have actually have
+	 * enough 64KB (1bpp) or 256KB (4bpp) VRAM and RAMDAC capabilities
+	 * to display 1024x400 pixels.
 	 * 
-	 * It looks these boards have VRAM with sparse address layout,
-	 * i.e. 1 bit or 4 bits per pixel but 2 bytes per pixel, so
-	 * we have to handle 512 pixels per line with 1024 bytes per line.
+	 * However HP's officlal "Service Information Manual" for
+	 * "HP 900 Series 300 Computers Models 330/350" says:
+	 *  "The medium-resolution board uses eight memory chips per plane.
+	 *   This is enough to display 512 doubled pixels by 400 scan lines."
+	 *
+	 * This "512 doubled pixels" implies that the native HP-UX treated
+	 * these 1024x400 framebuffers as pseudo 512x400 ones because
+	 * ancient 1980s CRTs (such as 35741) didn't display such higher
+	 * resolution. Furthermore, even modern LCDs can only handle
+	 * upto 720 pixels in the "400 line" as VGA compatible mode.
+	 *
+	 * As mentioned above, we treat these 1024x400 1 bit or 4 bit
+	 * framebuffers as "2 bytes per pixel" ones, so we have to handle
+	 * 512 pixels per line with 1024 bytes per line.
 	 */
 	if (fb->planes <= 4 && fb->dwidth == 1024 && fb->dheight == 400) {
 		fb->dwidth = 512;
@@ -580,7 +593,8 @@ topcat_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 }
 
 /*
- * Put a single character on 1 bpp or 4 bpp variants with sparse VRAM addresses
+ * Put a single character on 1 bpp (98542) or 4 bpp (98543) variants
+ * with 1024x400 VRAM to treat them as a pseudo 512x400 bitmap.
  */
 static void
 topcat_putchar1_4(void *cookie, int row, int col, u_int uc, long attr)
@@ -612,8 +626,8 @@ topcat_putchar1_4(void *cookie, int row, int col, u_int uc, long attr)
 	tc_waitbusy(tc, diofb->planemask);
 
 	/*
-	 * At least HP98543 requires to write 4 bpp data onto
-	 * both odd and even addresses.
+	 * We have to put pixel data to both odd and even addresses
+	 * to handle "doubled pixels" as noted above.
 	 */
 	if (uc == ' ') {
 		uint16_t c = clr[0];
