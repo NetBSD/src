@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.25 2019/05/22 08:47:02 hannken Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.26 2024/05/04 13:33:18 mlelstv Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.25 2019/05/22 08:47:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.26 2024/05/04 13:33:18 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -370,6 +370,8 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 			memset(bf, 0, sizeof(bf));
 			if (first) {
 				strncpy(bf, stats->io_name, sizeof(bf));
+				/* account for trailing NUL byte */
+				needed += 1;
 				first = 0;
 			} else {
 				bf[0] = ' ';
