@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.161 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: uhub.c,v 1.162 2024/05/04 12:49:15 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.161 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.162 2024/05/04 12:49:15 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -864,7 +864,7 @@ uhub_explore(struct usbd_device *dev)
 			 * some other serious problem.  Since we cannot leave
 			 * at 0 we have to disable the port instead.
 			 */
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "device problem, disabling port %d\n", port);
 			usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
 		} else {
