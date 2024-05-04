@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/02/24 07:23:43 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2024/05/04 07:04:24 skrll Exp $
 
 #	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
 
@@ -17,9 +17,9 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 #CPPFLAGS+=	-DLIFDEBUG -DDEBUGBUG -DDEBUG
 CPPFLAGS+=	-DBOOTARG_APIVER=3
 CPPFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-WARNS=	2
+WARNS=		2
 
-CPPFLAGS+=		-D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
+CPPFLAGS+=	-D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
 SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
 
 .include "../Makefile.buildboot"
