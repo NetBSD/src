@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1774 2024/05/04 19:10:04 reed Exp $
+# $NetBSD: mi,v 1.1775 2024/05/04 19:16:22 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -337,8 +337,10 @@
 ./usr/share/man/cat1/midiplay.0			man-audio-catman	.cat
 ./usr/share/man/cat1/midirecord.0		man-audio-catman	.cat
 ./usr/share/man/cat1/mixerctl.0			man-audio-catman	.cat
+./usr/share/man/cat1/mkcsmapper.0		man-util-catman		.cat
 ./usr/share/man/cat1/mkdep.0			man-c-catman		.cat
 ./usr/share/man/cat1/mkdir.0			man-util-catman		.cat
+./usr/share/man/cat1/mkesdb.0			man-util-catman		.cat
 ./usr/share/man/cat1/mkfifo.0			man-sysutil-catman	.cat
 ./usr/share/man/cat1/mkfilters.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat1/mklocale.0			man-util-catman		.cat
