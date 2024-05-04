@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.278 2023/04/11 08:50:07 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.279 2024/05/04 12:45:13 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.278 2023/04/11 08:50:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.279 2024/05/04 12:45:13 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1082,6 +1082,24 @@ usbd_properties(device_t dv, struct usbd_device *dev)
 	proto = dd->bDeviceProtocol;
 	vendor = UGETW(dd->idVendor);
 	product = UGETW(dd->idProduct);
+
+	prop_dictionary_set_uint8(dict, "address", dev->ud_addr);
+
+	if (dev->ud_myhub) {
+		struct usbd_device *hdev = dev->ud_myhub;
+		struct usbd_hub *hub = hdev->ud_hub;
+		int p;
+
+		KASSERT(hub != NULL);
+
+		prop_dictionary_set_uint8(dict, "hub-address", hdev->ud_addr);
+		for (p=1; p <= hub->uh_hubdesc.bNbrPorts; ++p) {
+			if (hub->uh_ports[p-1].up_dev == dev) {
+				prop_dictionary_set_uint8(dict, "hub-port", p);
+				break;
+			}
+		}
+	}
 
 	prop_dictionary_set_uint8(dict, "class", class);
 	prop_dictionary_set_uint8(dict, "subclass", subclass);
