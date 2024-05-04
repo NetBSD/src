@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/10/28 22:22:44 christos Exp $
-
-NOMAN=# defined (must come before bsd.own.mk)
+#	$NetBSD: Makefile,v 1.8 2024/05/04 19:10:04 reed Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
