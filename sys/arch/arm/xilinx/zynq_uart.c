@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.5 2022/10/27 07:57:46 skrll Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.6 2024/05/04 02:04:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.5 2022/10/27 07:57:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.6 2024/05/04 02:04:54 dyoung Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -1974,7 +1974,9 @@ zynquart_init(struct zynquart_regs *regsp, int rate, tcflag_t cflag)
 struct consdev zynquartcons = {
 	.cn_getc = zynquartcngetc,
 	.cn_putc = zynquartcnputc,
-	.cn_pollc = nullcnpollc
+	.cn_pollc = nullcnpollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL,
 };
 
 
