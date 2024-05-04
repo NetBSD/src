@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.8 2023/06/10 04:45:25 simonb Exp $	*/
+/*	$NetBSD: unlz.c,v 1.9 2024/05/04 13:17:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ lz_flush(struct lz_decoder *lz)
 
 	size_t size = (size_t)offs;
 	lz_crc_update(&lz->crc, lz->obuf + lz->spos, size);
-	if (fwrite(lz->obuf + lz->spos, 1, size, lz->fout) != size)
+	if (!tflag && fwrite(lz->obuf + lz->spos, 1, size, lz->fout) != size)
 		return -1;
 
 	lz->wrapped = lz->pos >= lz->dict_size;
