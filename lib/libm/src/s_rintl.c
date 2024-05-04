@@ -1,4 +1,4 @@
-/*	$NetBSD: s_rintl.c,v 1.6 2024/04/02 18:39:51 christos Exp $	*/
+/*	$NetBSD: s_rintl.c,v 1.7 2024/05/04 19:21:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
 #else
-__RCSID("$NetBSD: s_rintl.c,v 1.6 2024/04/02 18:39:51 christos Exp $");
+__RCSID("$NetBSD: s_rintl.c,v 1.7 2024/05/04 19:21:51 riastradh Exp $");
 #endif
 
 #include <float.h>
@@ -39,20 +39,17 @@ __RCSID("$NetBSD: s_rintl.c,v 1.6 2024/04/02 18:39:51 christos Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __HAVE_LONG_DOUBLE
+#define	BIAS	(LDBL_MAX_EXP - 1)
 
-# if EXT_FRACBITS == 64 || EXT_FRACBITS == 113 && LDBL_MAX_EXP == 0x4000
-
-#  define BIAS (LDBL_MAX_EXP - 1)
 static const float
 shift[2] = {
-#  if EXT_FRACBITS == 64
+#if LDBL_MANT_DIG == 64
 	0x1.0p63, -0x1.0p63
-#  elif EXT_FRACBITS == 113
+#elif LDBL_MANT_DIG == 113
 	0x1.0p112, -0x1.0p112
-#  else
-#   error "Unsupported long double format"
-#  endif
+#else
+#error "Unsupported long double format"
+#endif
 };
 static const float zero[2] = { 0.0, -0.0 };
 
@@ -64,12 +61,11 @@ rintl(long double x)
 	int ex, sign;
 
 	u.extu_ld = x;
-	u.extu_ext.ext_frach &= ~0x80000000;
 	expsign = GET_EXPSIGN(&u);
 	ex = expsign & 0x7fff;
 
-	if (ex >= BIAS + EXT_FRACBITS - 1) {
-		if (ex == BIAS + EXT_FRACBITS)
+	if (ex >= BIAS + LDBL_MANT_DIG - 1) {
+		if (ex == BIAS + LDBL_MAX_EXP)
 			return (x + x);	/* Inf, NaN, or unsupported format */
 		return (x);		/* finite and already an integer */
 	}
@@ -94,13 +90,3 @@ rintl(long double x)
 
 	return (x);
 }
-# else
-
-long double
-rintl(long double x)
-{
-	return rint(x);
-}
-
-# endif
-#endif /* __HAVE_LONG_DOUBLE */
