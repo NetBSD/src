@@ -1,3 +1,4 @@
+.\" $NetBSD: ctfmerge.1,v 1.4 2024/05/04 13:11:41 christos Exp $
 .\"
 .\" Copyright (c) 2010 The FreeBSD Foundation 
 .\" All rights reserved. 
@@ -28,7 +29,7 @@
 .\"
 .\" $FreeBSD: head/cddl/usr.bin/ctfmerge/ctfmerge.1 239969 2012-09-01 06:23:13Z joel $
 .\"
-.Dd July 7, 2010
+.Dd May 4, 2024
 .Dt CTFMERGE 1
 .Os
 .Sh NAME
@@ -105,6 +106,28 @@ Copy CTF data from
 .Ar srcfile
 into
 .Ar destfile .
+.El
+.Sh ENVIRONMENT VARIABLES
+The following environment variables are used in
+.Nm :
+.Bl -tag -width x
+.It CTFMERGE_TERMINATE_NO_UNLINK
+Don't remove temporary files on exit, so that they can be examined
+for debugging.
+.It CTFMERGE_MAX_SLOTS
+Number of round-robin slots in the input queue that it is processed by
+worker threads.
+Each slot represents a file batch (default 5).
+.It CTFMERGE_PHASE1_BATCH_SIZE
+Number of files in a slot that are needed before processing starts (default 8).
+.It CTFMERGE_NUM_THREADS
+Set the number of worker threads.
+If the number of processors can be determined it defaults to
+min(processors * 3 / 2, nslots), if not it defaults to 2.
+.It CTFMERGE_INPUT_THROTTLE
+Max queue size to queue (defaults to 10).
+.It CTFMERGE_DEBUG_LEVEL
+Increase debugging verbosity (maximum is 3).
 .El
 .Sh EXIT STATUS
 .Ex -std
