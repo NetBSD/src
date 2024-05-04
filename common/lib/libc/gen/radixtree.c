@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.34 2024/05/04 17:58:24 chs Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.34 2024/05/04 17:58:24 chs Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.33 2023/09/23 19:17:38 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.34 2024/05/04 17:58:24 chs Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -410,9 +410,10 @@ radix_tree_alloc_node(void)
 
 #if defined(_KERNEL)
 	/*
-	 * note that kmem_alloc can block.
+	 * We must not block waiting for memory because this function
+	 * can be called in contexts where waiting for memory is illegal.
 	 */
-	n = kmem_intr_alloc(sizeof(struct radix_tree_node), KM_SLEEP);
+	n = kmem_intr_alloc(sizeof(struct radix_tree_node), KM_NOSLEEP);
 #elif defined(_STANDALONE)
 	n = alloc(sizeof(*n));
 #else /* defined(_STANDALONE) */
