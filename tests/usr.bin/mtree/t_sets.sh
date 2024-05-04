@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.5 2024/04/28 07:27:42 rillig Exp $
+#	$NetBSD: t_sets.sh,v 1.6 2024/05/04 20:24:37 riastradh Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ set_case()
 
 	eval "set_${set}_head() { atf_set descr \"/etc/mtree/set.${set}\"; }"
 	eval "set_${set}_body() { check_mtree ${set}; }"
+	eval "set_${set}_defined="
 }
 
 set_case base
@@ -62,8 +63,22 @@ set_case xdebug
 set_case xfont
 set_case xserver
 
+sets_unknown=
+
+sets_unknown_head()
+{
+	atf_set descr "Verify this tests lists all sets"
+}
+sets_unknown_body()
+{
+	test -z "$sets_unknown" || atf_tc_fail "Unknown sets: ${sets_unknown}"
+}
+
 atf_init_test_cases()
 {
+	local mtree set defined
+
+	atf_add_test_case sets_unknown
 
 	# base is always installed -- hard-code this in case we make a
 	# mistake with the automatic set detection.
@@ -92,6 +107,15 @@ atf_init_test_cases()
 			;;
 		*)	;;
 		esac
-		atf_add_test_case set_"${set}"
+
+		# If we have a test for this set, add it.  Otherwise,
+		# add it to the unknown list to make the test suite
+		# fail.
+		eval 'defined=${set_'"$set"'_defined+yes}'
+		if [ -n "$defined" ]; then
+			atf_add_test_case set_"${set}"
+		else
+			sets_unknown="${sets_unknown}${sets_unknown:+ }${set}"
+		fi
 	done
 }
