@@ -1,4 +1,4 @@
-.\" $NetBSD: ctfmerge.1,v 1.4 2024/05/04 13:11:41 christos Exp $
+.\" $NetBSD: ctfmerge.1,v 1.5 2024/05/04 18:20:44 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The FreeBSD Foundation 
 .\" All rights reserved. 
@@ -41,7 +41,7 @@
 .Fl l Ar label
 .Fl L Ar labelenv
 .Fl o Ar outfile
-file ...
+.Ar
 .Nm
 .Op Fl fgstv
 .Fl l Ar label
@@ -50,14 +50,14 @@ file ...
 .Fl d Ar uniqfile
 .Op Fl g
 .Op Fl D Ar uniqlabel
-file ...
+.Ar
 .Nm
 .Op Fl fgstv
 .Fl l Ar label
 .Fl L Ar labelenv
 .Fl o Ar outfile
 .Fl w Ar withfile
-file ...
+.Ar
 .Nm
 .Op Fl g
 .Fl c Ar srcfile
@@ -69,13 +69,17 @@ utility merges several CTF data sections from several files into one
 output file, unifying common data.
 .Pp
 The following options are available:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl f
 Match global symbols to global CTF data.
 .It Fl g
 Don't delete the original debugging sections.
 .It Fl s
-Use the .dynsym ELF section instead of the .symtab ELF section.
+Use the
+.Ql .dynsym
+ELF section instead of the
+.Ql .symtab
+ELF section.
 .It Fl t
 Make sure that all object files have a CTF section.
 .It Fl v
@@ -110,24 +114,32 @@ into
 .Sh ENVIRONMENT VARIABLES
 The following environment variables are used in
 .Nm :
-.Bl -tag -width x
-.It CTFMERGE_TERMINATE_NO_UNLINK
+.Bl -tag -width Ev
+.It Ev CTFMERGE_TERMINATE_NO_UNLINK
 Don't remove temporary files on exit, so that they can be examined
 for debugging.
-.It CTFMERGE_MAX_SLOTS
+.It Ev CTFMERGE_MAX_SLOTS
 Number of round-robin slots in the input queue that it is processed by
 worker threads.
-Each slot represents a file batch (default 5).
-.It CTFMERGE_PHASE1_BATCH_SIZE
-Number of files in a slot that are needed before processing starts (default 8).
-.It CTFMERGE_NUM_THREADS
+Each slot represents a file batch
+.Pq default 5 .
+.It Ev CTFMERGE_PHASE1_BATCH_SIZE
+Number of files in a slot that are needed before processing starts
+.Pq default 8 .
+.It Ev CTFMERGE_NUM_THREADS
 Set the number of worker threads.
 If the number of processors can be determined it defaults to
-min(processors * 3 / 2, nslots), if not it defaults to 2.
-.It CTFMERGE_INPUT_THROTTLE
-Max queue size to queue (defaults to 10).
-.It CTFMERGE_DEBUG_LEVEL
-Increase debugging verbosity (maximum is 3).
+.Fo min
+.Fa "processors\|*\|3\|/\|2"
+.Fa "nslots"
+.Fc
+if not it defaults to 2.
+.It Ev CTFMERGE_INPUT_THROTTLE
+Max queue size to queue
+.Pq defaults to 10 .
+.It Ev CTFMERGE_DEBUG_LEVEL
+Increase debugging verbosity
+.Pq maximum is 3 .
 .El
 .Sh EXIT STATUS
 .Ex -std
