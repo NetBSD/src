@@ -1,4 +1,4 @@
-/*	$NetBSD: t_next.c,v 1.1 2024/05/05 02:53:02 riastradh Exp $	*/
+/*	$NetBSD: t_next.c,v 1.2 2024/05/05 14:29:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,11 +27,23 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_next.c,v 1.1 2024/05/05 02:53:02 riastradh Exp $");
+__RCSID("$NetBSD: t_next.c,v 1.2 2024/05/05 14:29:38 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
 #include <math.h>
+
+#ifdef __vax__		/* XXX PR 57881: vax libm is missing various symbols */
+
+ATF_TC(vaxafter)
+ATF_TC_HEAD(vaxafter, tc)
+{
+
+	atf_expect_fail("PR 57881: vax libm is missing various symbols")
+	atf_tc_fail("missing nextafter{,f,l} and nexttoward{,f,l} on vax");
+}
+
+#else  /* !__vax__ */
 
 #define	CHECK(x, y)							      \
 	ATF_CHECK_EQ_MSG((x), (y), #x"=%La=%Lg, "#y"=%La=%Lg",		      \
@@ -146,14 +158,20 @@ ATF_TC_BODY(nexttowardl, tc)
 	CHECK(nexttowardl(-1 + LDBL_EPSILON/2, -2), -1);
 }
 
+#endif	/* __vax__ */
+
 ATF_TP_ADD_TCS(tp)
 {
 
+#ifdef __vax__
+	ATF_TP_ADD_TC(tp, vaxafter);
+#else
 	ATF_TP_ADD_TC(tp, nextafter);
 	ATF_TP_ADD_TC(tp, nextafterf);
 	ATF_TP_ADD_TC(tp, nextafterl);
 	ATF_TP_ADD_TC(tp, nexttoward);
 	ATF_TP_ADD_TC(tp, nexttowardf);
 	ATF_TP_ADD_TC(tp, nexttowardl);
+#endif
 	return atf_no_error();
 }
