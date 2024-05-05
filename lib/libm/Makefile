@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.228 2024/05/05 02:50:11 riastradh Exp $
+#  $NetBSD: Makefile,v 1.229 2024/05/05 11:07:49 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -82,7 +82,6 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
 .endif
-COMMON_SRCS+= s_rintl.c
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
 .endfor
