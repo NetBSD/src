@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314 2024/04/28 14:39:22 rillig Exp $
+# $NetBSD: mi,v 1.1315 2024/05/05 02:53:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3946,6 +3946,7 @@
 ./usr/tests/lib/libm/t_libm				tests-obsolete		obsolete
 ./usr/tests/lib/libm/t_log				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_modf				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_next				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_pow				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_precision			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_round				tests-lib-tests		compattestfile,atf
