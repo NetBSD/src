@@ -436,6 +436,21 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 		vp->v_type = VREG;
 		break;
 
+	case PFSsysvipc:/* /proc/sysvipc = dr-xr-xr-x */
+		if (pfs->pfs_fd == -1) {
+			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
+			    S_IROTH|S_IXOTH;
+			vp->v_type = VDIR;
+			break;
+		}
+		/*FALLTHROUGH*/
+	case PFSsysvipc_msg:	/* /proc/sysvipc/msg = -r--r--r-- */
+	case PFSsysvipc_sem:	/* /proc/sysvipc/sem = -r--r--r-- */
+	case PFSsysvipc_shm:	/* /proc/sysvipc/shm = -r--r--r-- */
+		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
+		vp->v_type = VREG;
+		break;
+
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
 		procfs_machdep_allocvp(vp);

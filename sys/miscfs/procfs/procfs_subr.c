@@ -283,6 +283,18 @@ procfs_rw(void *v)
 		error = procfs_doauxv(curl, p, pfs, uio);
 		break;
 
+	case PFSsysvipc_msg:
+		error = procfs_dosysvipc_msg(curl, p, pfs, uio);
+		break;
+
+	case PFSsysvipc_sem:
+		error = procfs_dosysvipc_sem(curl, p, pfs, uio);
+		break;
+
+	case PFSsysvipc_shm:
+		error = procfs_dosysvipc_shm(curl, p, pfs, uio);
+		break;
+
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
 		error = procfs_machdep_rw(curl, l, pfs, uio);

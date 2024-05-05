@@ -38,6 +38,10 @@
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.87 2020/09/05 16:30:12 riastradh Exp $");
 
+#if defined(_KERNEL_OPT)
+#include "opt_sysv.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
@@ -58,6 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.87 2020/09/05 16:30:12 riastradh 
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/filedesc.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <miscfs/procfs/procfs.h>
 
@@ -744,5 +757,143 @@ procfs_doversion(struct lwp *curl, struct proc *p,
 out:
 	free(bf, M_TEMP);
 	sysctl_unlock();
+	return error;
+}
+
+int
+procfs_dosysvipc_msg(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char *bf;
+	int offset = 0;
+	int error = EFBIG;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	offset += snprintf(bf, LBFSZ,
+	    "%10s %10s %4s  %10s %10s %5s %5s %5s %5s %5s %5s %10s %10s %10s\n",
+	    "key", "msqid", "perms", "cbytes", "qnum", "lspid", "lrpid",
+	    "uid", "gid", "cuid", "cgid", "stime", "rtime", "ctime");
+	if (offset >= LBFSZ)
+		goto out;
+
+#ifdef SYSVMSG
+	for (int id = 0; id < msginfo.msgmni; id++)
+		if (msqs[id].msq_u.msg_qbytes > 0) {
+			offset += snprintf(&bf[offset], LBFSZ - offset,
+			    "%10d %10d  %4o  %10zu %10lu %5u %5u %5u %5u %5u %5u %10lld %10lld %10lld\n",
+			    (int) msqs[id].msq_u.msg_perm._key,
+			    IXSEQ_TO_IPCID(id, msqs[id].msq_u.msg_perm),
+			    msqs[id].msq_u.msg_perm.mode,
+			    msqs[id].msq_u._msg_cbytes,
+			    msqs[id].msq_u.msg_qnum,
+			    msqs[id].msq_u.msg_lspid,
+			    msqs[id].msq_u.msg_lrpid,
+			    msqs[id].msq_u.msg_perm.uid,
+			    msqs[id].msq_u.msg_perm.gid,
+			    msqs[id].msq_u.msg_perm.cuid,
+			    msqs[id].msq_u.msg_perm.cgid,
+			    (long long)msqs[id].msq_u.msg_stime,
+			    (long long)msqs[id].msq_u.msg_rtime,
+			    (long long)msqs[id].msq_u.msg_ctime);
+			if (offset >= LBFSZ)
+				goto out;
+		}
+#endif
+
+	error = uiomove_frombuf(bf, offset, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+int
+procfs_dosysvipc_sem(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char *bf;
+	int offset = 0;
+	int error = EFBIG;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	offset += snprintf(bf, LBFSZ,
+	    "%10s %10s %4s %10s %5s %5s %5s %5s %10s %10s\n",
+	    "key", "semid", "perms", "nsems", "uid", "gid", "cuid", "cgid",
+	    "otime", "ctime");
+	if (offset >= LBFSZ)
+		goto out;
+
+#ifdef SYSVSEM
+	for (int id = 0; id < seminfo.semmni; id++)
+		if ((sema[id].sem_perm.mode & SEM_ALLOC) != 0) {
+			offset += snprintf(&bf[offset], LBFSZ - offset,
+			    "%10d %10d  %4o %10u %5u %5u %5u %5u %10lld %10lld\n",
+			    (int) sema[id].sem_perm._key,
+			    IXSEQ_TO_IPCID(id, sema[id].sem_perm),
+			    sema[id].sem_perm.mode,
+			    sema[id].sem_nsems,
+			    sema[id].sem_perm.uid,
+			    sema[id].sem_perm.gid,
+			    sema[id].sem_perm.cuid,
+			    sema[id].sem_perm.cgid,
+			    (long long)sema[id].sem_otime,
+			    (long long)sema[id].sem_ctime);
+			if (offset >= LBFSZ)
+				goto out;
+		}
+#endif
+
+	error = uiomove_frombuf(bf, offset, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+int
+procfs_dosysvipc_shm(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char *bf;
+	int offset = 0;
+	int error = EFBIG;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	offset += snprintf(bf, LBFSZ,
+	    "%10s %10s %s %21s %5s %5s %5s %5s %5s %5s %5s %10s %10s %10s %21s %21s\n",
+	    "key", "shmid", "perms", "size", "cpid", "lpid", "nattch", "uid",
+	    "gid", "cuid", "cgid", "atime", "dtime", "ctime", "rss", "swap");
+	if (offset >= LBFSZ)
+		goto out;
+
+#ifdef SYSVSHM
+	for (unsigned int id = 0; id < shminfo.shmmni; id++)
+		if ((shmsegs[id].shm_perm.mode & SHMSEG_ALLOCATED) != 0) {
+			offset += snprintf(&bf[offset], LBFSZ - offset,
+			    "%10d %10d  %4o %21zu %5u %5u  %5u %5u %5u %5u %5u %10lld %10lld %10lld %21d %21d\n",
+			    (int) shmsegs[id].shm_perm._key,
+			    IXSEQ_TO_IPCID(id, shmsegs[id].shm_perm),
+			    shmsegs[id].shm_perm.mode,
+			    shmsegs[id].shm_segsz,
+			    shmsegs[id].shm_cpid,
+			    shmsegs[id].shm_lpid,
+			    shmsegs[id].shm_nattch,
+			    shmsegs[id].shm_perm.uid,
+			    shmsegs[id].shm_perm.gid,
+			    shmsegs[id].shm_perm.cuid,
+			    shmsegs[id].shm_perm.cgid,
+			    (long long)shmsegs[id].shm_atime,
+			    (long long)shmsegs[id].shm_dtime,
+			    (long long)shmsegs[id].shm_ctime,
+			    0, 0);	/* XXX rss & swp are not supported */
+			if (offset >= LBFSZ)
+				goto out;
+		}
+#endif
+
+	error = uiomove_frombuf(bf, offset, uio);
+out:
+	free(bf, M_TEMP);
 	return error;
 }
