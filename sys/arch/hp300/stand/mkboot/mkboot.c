@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.16 2024/05/03 15:39:50 christos Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.17 2024/05/05 07:36:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ The Regents of the University of California.  All rights reserved.");
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.16 2024/05/03 15:39:50 christos Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.17 2024/05/05 07:36:37 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: mkboot.c,v 1.16 2024/05/03 15:39:50 christos Exp $");
 #define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
 #define lifstob(s)	((s) * SECTSIZE)
 
-int	loadpoint = -1;
+uint32_t loadpoint = ULONG_MAX;
 struct  load ld;
 struct	lifvol lifv;
 struct	lifdir lifd[LIF_NUMDIR];
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "l:t:")) != -1)
 		switch (ch) {
 		case 'l':
-			loadpoint = strtol(optarg, NULL, 0);
+			loadpoint = strtoul(optarg, NULL, 0);
 			break;
 		case 't':
 			repro_epoch = (time_t)atoll(optarg);
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
-	if (loadpoint == -1 || argc == 0)
+	if (loadpoint == ULONG_MAX || argc == 0)
 		usage();
 	n1 = argv[0];
 	argv++;
