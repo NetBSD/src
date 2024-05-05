@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.2 2024/04/16 23:43:08 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.3 2024/05/05 15:26:20 riastradh Exp $	*/
 
 /* index.c -- indexing for Texinfo.
    Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp 
@@ -520,16 +520,18 @@ index_element_compare (const void *element1, const void *element2)
     ret = strcmp ((*elt1)->defining_file, (*elt2)->defining_file);
   if (ret == 0)
     ret = strcmp ((*elt1)->node, (*elt2)->node);
-  if (ret == 0)
+  if (ret == 0) {
     if ((*elt1)->defining_line < (*elt2)->defining_line)
       ret = -1;
     else if ((*elt1)->defining_line > (*elt2)->defining_line)
       ret = 1;
-  if (ret == 0)
+  }
+  if (ret == 0) {
     if ((*elt1)->entry_number < (*elt2)->entry_number)
       ret = -1;
     else if ((*elt1)->entry_number > (*elt2)->entry_number)
       ret = 1;
+  }
   if (ret == 0) {
     abort ();
   }
