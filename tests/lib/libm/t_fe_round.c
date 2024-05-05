@@ -195,6 +195,19 @@ ATF_TC_BODY(fe_nearbyint_rint, tc)
 			 */
 			fesetround(values[i].round_mode);
 
+#ifdef __ia64__
+/*
+ * Without this barrier, we get:
+ *
+ * /tmp//ccJayu9g.s:2793: Warning: Use of 'mov.m' violates RAW dependency 'AR[FPSR].sf0.flags' (impliedf)
+ * /tmp//ccJayu9g.s:2793: Warning: Only the first path encountering the conflict is reported
+ * /tmp//ccJayu9g.s:2757: Warning: This is the location of the conflicting usage
+ *
+ * (If you fix this, remove the entry from doc/HACKS.)
+ */
+			__insn_barrier();
+#endif
+
 			/*
 			 * Clear sticky floating-point exception bits
 			 * so we can verify whether the FE_INEXACT
