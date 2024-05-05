@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.229 2024/05/05 11:07:49 riastradh Exp $
+#  $NetBSD: Makefile,v 1.230 2024/05/05 14:53:22 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -206,9 +206,9 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
-COMMON_SRCS+= s_rintl.c
 .if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 COMMON_SRCS+= s_nexttoward.c
+COMMON_SRCS+= s_rintl.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
