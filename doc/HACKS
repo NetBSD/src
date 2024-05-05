@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.242 2024/04/04 23:53:05 christos Exp $
+# $NetBSD: HACKS,v 1.243 2024/05/05 23:08:53 riastradh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1123,4 +1123,15 @@ file	src/external/mit/xorg/lib/gallium.old/Makefile : 1.9
 descr
 	Some files create dwarf info that our ctfmerge can't handle.
 	We downgrade dwarf generation to version 3 which works.
+kcah
+
+hack	ia64: work around feclearexcept/fetestexcept compiler bug
+cdate	Sun May  5 23:06:10 UTC 2024
+who	riastradh
+file	tests/lib/libm/t_fe_round.c
+descr
+	Without judiciously placed __insn_barrier, we get:
+	/tmp//ccJayu9g.s:2793: Warning: Use of 'mov.m' violates RAW dependency 'AR[FPSR].sf0.flags' (impliedf)
+	/tmp//ccJayu9g.s:2793: Warning: Only the first path encountering the conflict is reported
+	/tmp//ccJayu9g.s:2757: Warning: This is the location of the conflicting usage
 kcah
