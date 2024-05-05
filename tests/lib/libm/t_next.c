@@ -1,4 +1,4 @@
-/*	$NetBSD: t_next.c,v 1.2 2024/05/05 14:29:38 riastradh Exp $	*/
+/*	$NetBSD: t_next.c,v 1.3 2024/05/05 14:34:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_next.c,v 1.2 2024/05/05 14:29:38 riastradh Exp $");
+__RCSID("$NetBSD: t_next.c,v 1.3 2024/05/05 14:34:58 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -35,11 +35,16 @@ __RCSID("$NetBSD: t_next.c,v 1.2 2024/05/05 14:29:38 riastradh Exp $");
 
 #ifdef __vax__		/* XXX PR 57881: vax libm is missing various symbols */
 
-ATF_TC(vaxafter)
+ATF_TC(vaxafter);
 ATF_TC_HEAD(vaxafter, tc)
 {
 
-	atf_expect_fail("PR 57881: vax libm is missing various symbols")
+	atf_tc_set_md_var(tc, "descr", "vax nextafter/nexttoward reminder");
+}
+ATF_TC_BODY(vaxafter, tc)
+{
+
+	atf_tc_expect_fail("PR 57881: vax libm is missing various symbols");
 	atf_tc_fail("missing nextafter{,f,l} and nexttoward{,f,l} on vax");
 }
 
