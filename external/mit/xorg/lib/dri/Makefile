@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2024/04/26 17:22:26 rillig Exp $
+# $NetBSD: Makefile,v 1.42 2024/05/05 15:25:31 riastradh Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -485,7 +485,8 @@ CPPFLAGS.streaming-load-memcpy.c+=	-msse4.1
 CPPFLAGS.isl_tiled_memcpy_sse41.c+=	-msse4.1
 .endif
 
-CFLAGS+= ${${ACTIVE_CC} == "clang":? -Wno-error=atomic-alignment :}
+CWARNFLAGS.clang+=	-Wno-error=atomic-alignment
+CWARNFLAGS.clang+=	-Wno-error=typedef-redefinition
 
 .include "../driver.mk"
 
