@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.349 2024/04/23 03:25:39 maya Exp $
+$NetBSD: UPDATING,v 1.350 2024/05/05 02:50:11 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20240504:
+	Update builds on x86 require making the `cleandir' target in
+	lib/libm, or deleting the objdir for lib/libm.
 
 20240423:
 	Update builds with x11 may fail after switching to Mesa 21.
