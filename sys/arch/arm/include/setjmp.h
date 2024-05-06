@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.5 2013/01/11 13:56:32 matt Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.6 2024/05/06 07:29:30 skrll Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
@@ -10,11 +10,12 @@
  * NOTE: The internal structure of a jmp_buf is *PRIVATE*
  *       This information is provided as there is software
  *       that fiddles with this with obtain the stack pointer
- *	 (yes really ! and its commercial !).
+ *	 (yes really ! and it's commercial !).
  *
  * Description of the setjmp buffer
  *
- * word  0	magic number	(dependent on creator)
+ * Word		Field		Comment
+ * 	0	magic number	(dependent on creator)
  *	13	fpscr		vfp status control register
  *	14	r4		register 4
  *	15	r5		register 5
@@ -47,13 +48,13 @@
  * A side note I should mention - Please do not tamper
  * with the floating point fields. While they are
  * always saved and restored at the moment this cannot
- * be garenteed especially if the compiler happens
+ * be guaranteed especially if the compiler happens
  * to be generating soft-float code so no fp
  * registers will be used.
  *
- * Whilst this can be seen an encouraging people to
+ * Whilst this can be seen as encouraging people to
  * use the setjmp buffer in this way I think that it
- * is for the best then if changes occur compiles will
+ * is for the best then, if changes occur, compiles will
  * break rather than just having new builds falling over
  * mysteriously.
  */
