@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modf.c,v 1.3 2024/05/06 02:21:39 riastradh Exp $	*/
+/*	$NetBSD: t_modf.c,v 1.4 2024/05/06 18:35:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_modf.c,v 1.3 2024/05/06 02:21:39 riastradh Exp $");
+__RCSID("$NetBSD: t_modf.c,v 1.4 2024/05/06 18:35:59 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -129,8 +129,7 @@ ATF_TC_BODY(modff, tc)
 		    casesf[n].i, casesf[n].i, casesf[n].f, casesf[n].f);
 	}
 
-#ifdef INFINITY
-	{
+	if (isinf(INFINITY)) {
 		float x, i, f;
 
 		x = INFINITY;
@@ -151,7 +150,6 @@ ATF_TC_BODY(modff, tc)
 		    "modff -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 	}
-#endif	/* INFINITY */
 
 #ifdef NAN
 	{
@@ -244,8 +242,7 @@ ATF_TC_BODY(modf, tc)
 		    cases[n].i, cases[n].i, cases[n].f, cases[n].f);
 	}
 
-#ifdef INFINITY
-	{
+	if (isinf(INFINITY)) {
 		double x, i, f;
 
 		x = INFINITY;
@@ -266,7 +263,6 @@ ATF_TC_BODY(modf, tc)
 		    "modf -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 	}
-#endif	/* INFINITY */
 
 #ifdef NAN
 	{
@@ -394,8 +390,7 @@ ATF_TC_BODY(modfl, tc)
 	}
 #endif	/* __HAVE_LONG_DOUBLE */
 
-#ifdef INFINITY
-	{
+	if (isinf(INFINITY)) {
 		long double x, i, f;
 
 		x = INFINITY;
@@ -416,7 +411,6 @@ ATF_TC_BODY(modfl, tc)
 		    "modfl -inf returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
 	}
-#endif
 
 #ifdef NAN
 	{
@@ -431,7 +425,7 @@ ATF_TC_BODY(modfl, tc)
 		    "modfl NaN returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
 	}
-#endif
+#endif	/* NAN */
 }
 
 ATF_TP_ADD_TCS(tp)
