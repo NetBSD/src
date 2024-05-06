@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.300 2024/01/14 00:39:10 gutteridge Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.301 2024/05/06 08:43:36 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -264,7 +264,8 @@ SYSTEM_LD_TAIL+= && ${TOOL_SED} \
 
 SYSTEM_LD_TAIL_DEBUG?=&& \
 	runit mv -f $@ $@.gdb && \
-	runit ${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
+	runit ${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    $@.gdb $@-${KERNEL_CONFIG}.debug && \
 	runit ${OBJCOPY} ${OBJCOPY_STRIPFLAGS} -p -R .gnu_debuglink \
 	    --add-gnu-debuglink=$@-${KERNEL_CONFIG}.debug $@.gdb $@ && \
 	runit chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
