@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos1.c,v 1.1 2022/08/27 09:56:21 christos Exp $	*/
+/*	$NetBSD: n_sincos1.c,v 1.2 2024/05/06 15:52:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_sincos1.c,v 1.1 2022/08/27 09:56:21 christos Exp $");
+__RCSID("$NetBSD: n_sincos1.c,v 1.2 2024/05/06 15:52:52 riastradh Exp $");
 
 #include <math.h>
 
-#ifdef __weak_alias
-__weak_alias(_sincosl, sincos)
+#ifndef __HAVE_LONG_DOUBLE
+__weak_alias(sincosl, _sincosl)
+__strong_alias(_sincosl, sincos)
 #endif
 
 void
