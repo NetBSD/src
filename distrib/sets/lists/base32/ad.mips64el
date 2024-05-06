@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.4 2024/04/22 14:41:25 nia Exp $
+# $NetBSD: ad.mips64el,v 1.5 2024/05/06 08:38:51 mrg Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/o32					base-compat-shlib	compat
 ./lib/o32/npf					base-compat-shlib	compat,npf
@@ -323,9 +323,9 @@
 ./usr/lib/o32/libp2k.so			base-compat-shlib	compat
 ./usr/lib/o32/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/o32/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/o32/libpam.so			base-compat-shlib	compat
-./usr/lib/o32/libpam.so.4			base-compat-shlib	compat
-./usr/lib/o32/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/o32/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/o32/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/o32/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/o32/libpanel.so			base-compat-shlib	compat
 ./usr/lib/o32/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/o32/libpanel.so.3.0			base-compat-shlib	compat

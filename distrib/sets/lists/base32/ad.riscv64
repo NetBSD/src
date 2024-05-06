@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.4 2024/04/17 13:23:32 christos Exp $
+# $NetBSD: ad.riscv64,v 1.5 2024/05/06 08:38:51 mrg Exp $
 ./lib/rv32					base-compat-shlib	compat
 ./lib/rv32/npf					base-compat-shlib	compat,npf
 ./lib/rv32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -317,9 +317,9 @@
 ./usr/lib/rv32/libp2k.so			base-compat-shlib	compat
 ./usr/lib/rv32/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/rv32/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/rv32/libpam.so			base-compat-shlib	compat
-./usr/lib/rv32/libpam.so.4			base-compat-shlib	compat
-./usr/lib/rv32/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/rv32/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/rv32/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/rv32/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/rv32/libpanel.so			base-compat-shlib	compat
 ./usr/lib/rv32/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/rv32/libpanel.so.3.0			base-compat-shlib	compat

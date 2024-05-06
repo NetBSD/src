@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.3 2024/04/16 19:15:36 christos Exp $
+# $NetBSD: ad.powerpc64,v 1.4 2024/05/06 08:38:51 mrg Exp $
 ./lib/powerpc					base-compat-shlib	compat
 ./lib/powerpc/npf					base-compat-shlib	compat,npf
 ./lib/powerpc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -317,9 +317,9 @@
 ./usr/lib/powerpc/libp2k.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/powerpc/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/powerpc/libpam.so			base-compat-shlib	compat
-./usr/lib/powerpc/libpam.so.4			base-compat-shlib	compat
-./usr/lib/powerpc/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/powerpc/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/powerpc/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/powerpc/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/powerpc/libpanel.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/powerpc/libpanel.so.3.0			base-compat-shlib	compat
