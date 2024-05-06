@@ -1,4 +1,4 @@
-/* $NetBSD: t_sincos.c,v 1.1 2022/08/27 08:31:58 christos Exp $ */
+/* $NetBSD: t_sincos.c,v 1.2 2024/05/06 15:53:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011, 2022 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@ static const struct {
 	{  360,  6.283185307179586,  1.0000000000000000, 999 },
 };
 
-#ifdef __HAVE_LONG_DOUBLE
 /*
  * sincosl(3)
  */
@@ -207,7 +206,6 @@ ATF_TC_BODY(sincosl_zero_pos, tc)
 	sincosl(x, &s, &c);
 	ATF_CHECK(s == 0.0 && c == 1.0);
 }
-#endif
 
 /*
  * sincos(3)
@@ -451,14 +449,13 @@ ATF_TC_BODY(sincosf_zero_pos, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-#ifdef __HAVE_LONG_DOUBLE
+
 	ATF_TP_ADD_TC(tp, sincosl_angles);
 	ATF_TP_ADD_TC(tp, sincosl_nan);
 	ATF_TP_ADD_TC(tp, sincosl_inf_neg);
 	ATF_TP_ADD_TC(tp, sincosl_inf_pos);
 	ATF_TP_ADD_TC(tp, sincosl_zero_neg);
 	ATF_TP_ADD_TC(tp, sincosl_zero_pos);
-#endif
 
 	ATF_TP_ADD_TC(tp, sincos_angles);
 	ATF_TP_ADD_TC(tp, sincos_nan);
