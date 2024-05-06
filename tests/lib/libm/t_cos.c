@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.10 2024/05/06 15:44:08 riastradh Exp $ */
+/* $NetBSD: t_cos.c,v 1.11 2024/05/06 15:45:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -277,9 +277,10 @@ ATF_TC_BODY(cosf_angles, tc)
 		 *
 		 * The volatile should not be necessary, by C99 Sec.
 		 * 5.2.4.2.2. para. 8 on p. 24 which specifies that
-		 * assignment and cast remove all extra range and precision,
-		 * but seems to be needed to work around a compiler bug.
-		 */ 
+		 * assignment and cast remove all extra range and
+		 * precision, but is needed when we compile with
+		 * -std=gnu99 which doesn't implement this semantics.
+		 */
 		volatile float result = cosf(theta);
 
 		if (cos_theta == 999)
