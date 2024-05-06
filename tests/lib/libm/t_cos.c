@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.9 2019/05/27 00:10:36 maya Exp $ */
+/* $NetBSD: t_cos.c,v 1.10 2024/05/06 15:44:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@ static const struct {
 	{  360,  6.283185307179586,  1.0000000000000000, 999 },
 };
 
-#ifdef __HAVE_LONG_DOUBLE
 /*
  * cosl(3)
  */
@@ -133,7 +132,6 @@ ATF_TC_BODY(cosl_inf_pos, tc)
 	ATF_CHECK(isnan(cosl(x)) != 0);
 }
 
-
 ATF_TC(cosl_zero_neg);
 ATF_TC_HEAD(cosl_zero_neg, tc)
 {
@@ -159,7 +157,6 @@ ATF_TC_BODY(cosl_zero_pos, tc)
 
 	ATF_CHECK(cosl(x) == 1.0);
 }
-#endif
 
 /*
  * cos(3)
@@ -228,7 +225,6 @@ ATF_TC_BODY(cos_inf_pos, tc)
 
 	ATF_CHECK(isnan(cos(x)) != 0);
 }
-
 
 ATF_TC(cos_zero_neg);
 ATF_TC_HEAD(cos_zero_neg, tc)
@@ -372,14 +368,13 @@ ATF_TC_BODY(cosf_zero_pos, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-#ifdef __HAVE_LONG_DOUBLE
+
 	ATF_TP_ADD_TC(tp, cosl_angles);
 	ATF_TP_ADD_TC(tp, cosl_nan);
 	ATF_TP_ADD_TC(tp, cosl_inf_neg);
 	ATF_TP_ADD_TC(tp, cosl_inf_pos);
 	ATF_TP_ADD_TC(tp, cosl_zero_neg);
 	ATF_TP_ADD_TC(tp, cosl_zero_pos);
-#endif
 
 	ATF_TP_ADD_TC(tp, cos_angles);
 	ATF_TP_ADD_TC(tp, cos_nan);
