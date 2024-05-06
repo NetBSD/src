@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modf.c,v 1.2 2024/05/06 00:54:02 riastradh Exp $	*/
+/*	$NetBSD: t_modf.c,v 1.3 2024/05/06 02:21:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_modf.c,v 1.2 2024/05/06 00:54:02 riastradh Exp $");
+__RCSID("$NetBSD: t_modf.c,v 1.3 2024/05/06 02:21:39 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -138,7 +138,7 @@ ATF_TC_BODY(modff, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modff +inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i > 0,
 		    "modff +inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 
@@ -147,7 +147,7 @@ ATF_TC_BODY(modff, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modff -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i < 0,
 		    "modff -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 	}
@@ -253,7 +253,7 @@ ATF_TC_BODY(modf, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modf +inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i > 0,
 		    "modf +inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 
@@ -262,7 +262,7 @@ ATF_TC_BODY(modf, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modf -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i < 0,
 		    "modf -inf returned integer %g=%a, frac %g=%a",
 		    i, i, f, f);
 	}
@@ -403,7 +403,7 @@ ATF_TC_BODY(modfl, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modfl +inf returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i > 0,
 		    "modfl +inf returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
 
@@ -412,7 +412,7 @@ ATF_TC_BODY(modfl, tc)
 		ATF_CHECK_MSG(f == 0,
 		    "modfl -inf returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
-		ATF_CHECK_MSG(isinf(i),
+		ATF_CHECK_MSG(isinf(i) && i < 0,
 		    "modfl -inf returned integer %Lg=%La, frac %Lg=%La",
 		    i, i, f, f);
 	}
