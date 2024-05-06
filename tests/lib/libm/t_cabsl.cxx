@@ -43,21 +43,15 @@ ATF_TEST_CASE_BODY(cabsl)
 {
 	int sum = 0;
 
-#ifdef __HAVE_LONG_DOUBLE
 	std::complex<long double> cld(3.0,4.0);
 	sum += std::abs(cld);
-#endif
 	std::complex<double> cd(3.0,4.0);
 	sum += std::abs(cd);
 
 	std::complex<float> cf(3.0,4.0);
 	sum += std::abs(cf);
 
-#ifdef __HAVE_LONG_DOUBLE
 	ATF_REQUIRE_EQ(sum, 3*5);
-#else
-	ATF_REQUIRE_EQ(sum, 2*5);
-#endif
 }
 
 ATF_INIT_TEST_CASES(tcs)
