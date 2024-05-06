@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.3 2024/04/16 19:15:36 christos Exp $
+# $NetBSD: ad.aarch64,v 1.4 2024/05/06 08:38:51 mrg Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -329,9 +329,9 @@
 ./usr/lib/eabi/libp2k.so			base-compat-shlib	compat
 ./usr/lib/eabi/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/eabi/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/eabi/libpam.so			base-compat-shlib	compat
-./usr/lib/eabi/libpam.so.4			base-compat-shlib	compat
-./usr/lib/eabi/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/eabi/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/eabi/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/eabi/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/eabi/libpanel.so			base-compat-shlib	compat
 ./usr/lib/eabi/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/eabi/libpanel.so.3.0			base-compat-shlib	compat
@@ -831,9 +831,9 @@
 ./usr/lib/eabihf/libp2k.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libp2k.so.2			base-compat-shlib	compat
 ./usr/lib/eabihf/libp2k.so.2.0			base-compat-shlib	compat
-./usr/lib/eabihf/libpam.so			base-compat-shlib	compat
-./usr/lib/eabihf/libpam.so.4			base-compat-shlib	compat
-./usr/lib/eabihf/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/eabihf/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/eabihf/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/eabihf/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/eabihf/libpanel.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/eabihf/libpanel.so.3.0			base-compat-shlib	compat

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.4 2024/05/06 06:06:40 macallan Exp $
+# $NetBSD: md.sparc64,v 1.5 2024/05/06 08:38:51 mrg Exp $
 ./lib/sparc					base-compat-shlib	compat
 ./lib/sparc/npf					base-compat-shlib	compat,npf
 ./lib/sparc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -322,9 +322,9 @@
 ./usr/lib/sparc/libp2k.so			base-compat-shlib	compat,rump
 ./usr/lib/sparc/libp2k.so.2			base-compat-shlib	compat,rump
 ./usr/lib/sparc/libp2k.so.2.0			base-compat-shlib	compat,rump
-./usr/lib/sparc/libpam.so			base-compat-shlib	compat
-./usr/lib/sparc/libpam.so.4			base-compat-shlib	compat
-./usr/lib/sparc/libpam.so.4.1			base-compat-shlib	compat
+./usr/lib/sparc/libpam.so			base-compat-shlib	compat,pam
+./usr/lib/sparc/libpam.so.4			base-compat-shlib	compat,pam
+./usr/lib/sparc/libpam.so.4.1			base-compat-shlib	compat,pam
 ./usr/lib/sparc/libpanel.so			base-compat-shlib	compat
 ./usr/lib/sparc/libpanel.so.3			base-compat-shlib	compat
 ./usr/lib/sparc/libpanel.so.3.0			base-compat-shlib	compat
