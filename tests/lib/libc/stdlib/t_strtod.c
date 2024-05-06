@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.35 2024/01/14 12:44:09 andvar Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.36 2024/05/06 18:39:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.35 2024/01/14 12:44:09 andvar Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.36 2024/05/06 18:39:36 riastradh Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -44,12 +44,10 @@ __RCSID("$NetBSD: t_strtod.c,v 1.35 2024/01/14 12:44:09 andvar Exp $");
 
 #include <fenv.h>
 
-#if !defined(__vax__)
 static const char * const inf_strings[] =
     { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
       "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
-const char *nan_string = "NaN(x)y";
-#endif
+const char * const nan_string = "NaN(x)y";
 
 ATF_TC(strtod_basic);
 ATF_TC_HEAD(strtod_basic, tc)
@@ -68,8 +66,10 @@ ATF_TC_BODY(strtod_basic, tc)
 		errno = 0;
 		double d = strtod(buf, NULL);
 
-		ATF_REQUIRE(d > 0.0);
-		ATF_REQUIRE(errno == 0);
+		ATF_CHECK_MSG(d > 0, "i=%zu buf=\"%s\" d=%g errno=%d",
+		    i, buf, d, errno);
+		ATF_CHECK_EQ_MSG(errno, 0, "i=%zu buf=\"%s\" d=%g errno=%d",
+		    i, buf, d, errno);
 	}
 }
 
@@ -78,12 +78,6 @@ ATF_TC_HEAD(strtod_hex, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "A strtod(3) with hexadecimals");
 }
-
-#ifdef __vax__
-#define SMALL_NUM       1.0e-38
-#else
-#define SMALL_NUM       1.0e-40
-#endif
 
 ATF_TC_BODY(strtod_hex, tc)
 {
@@ -94,16 +88,18 @@ ATF_TC_BODY(strtod_hex, tc)
 	str = "-0x0";
 	d = strtod(str, &end);	/* -0.0 */
 
-	ATF_REQUIRE(end == str + 4);
-	ATF_REQUIRE(signbit(d) != 0);
-	ATF_REQUIRE(fabs(d) < SMALL_NUM);
+	ATF_CHECK_EQ_MSG(end, str + 4, "str=%p end=%p", str, end);
+	ATF_CHECK_MSG(signbit(d) != 0, "d=%g=%a signbit=%d", d, d, signbit(d));
+	ATF_CHECK_EQ_MSG(fabs(d), 0, "d=%g=%a, fabs(d)=%g=%a",
+	    d, d, fabs(d), fabs(d));
 
 	str = "-0x";
 	d = strtod(str, &end);	/* -0.0 */
 
-	ATF_REQUIRE(end == str + 2);
-	ATF_REQUIRE(signbit(d) != 0);
-	ATF_REQUIRE(fabs(d) < SMALL_NUM);
+	ATF_CHECK_EQ_MSG(end, str + 2, "str=%p end=%p", str, end);
+	ATF_CHECK_MSG(signbit(d) != 0, "d=%g=%a signbit=%d", d, d, signbit(d));
+	ATF_CHECK_EQ_MSG(fabs(d), 0, "d=%g=%a fabs(d)=%g=%a",
+	    d, d, fabs(d), fabs(d));
 }
 
 ATF_TC(strtod_inf);
@@ -114,14 +110,15 @@ ATF_TC_HEAD(strtod_inf, tc)
 
 ATF_TC_BODY(strtod_inf, tc)
 {
-#ifndef __vax__
+
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
+
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		volatile double d = strtod(inf_strings[i], NULL);
-		ATF_REQUIRE(isinf(d) != 0);
+		ATF_CHECK_MSG(isinf(d), "inf_strings[%zu]=\"%s\" d=%g=%a",
+		    i, inf_strings[i], d, d);
 	}
-#else
-	atf_tc_skip("vax not supported");
-#endif
 }
 
 ATF_TC(strtof_inf);
@@ -132,14 +129,17 @@ ATF_TC_HEAD(strtof_inf, tc)
 
 ATF_TC_BODY(strtof_inf, tc)
 {
-#ifndef __vax__
+
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
+
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		volatile float f = strtof(inf_strings[i], NULL);
-		ATF_REQUIRE(isinf(f) != 0);
+		ATF_CHECK_MSG(isinf(f), "inf_strings[%zu]=\"%s\" f=%g=%a",
+		    i, inf_strings[i], f, f);
+		ATF_CHECK_MSG(isinff(f), "inf_strings[%zu]=\"%s\" f=%g=%a",
+		    i, inf_strings[i], f, f);
 	}
-#else
-	atf_tc_skip("vax not supported");
-#endif
 }
 
 ATF_TC(strtold_inf);
@@ -150,19 +150,15 @@ ATF_TC_HEAD(strtold_inf, tc)
 
 ATF_TC_BODY(strtold_inf, tc)
 {
-#ifndef __vax__
-#   ifdef __HAVE_LONG_DOUBLE
+
+	if (!isinf(INFINITY))
+		atf_tc_skip("no infinities on this architecture");
 
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		volatile long double ld = strtold(inf_strings[i], NULL);
-		ATF_REQUIRE(isinf(ld) != 0);
+		ATF_CHECK_MSG(isinf(ld), "inf_strings[%zu]=\"%s\" ld=%Lg=%La",
+		    i, inf_strings[i], ld, ld);
 	}
-#   else
-	atf_tc_skip("Requires long double support");
-#   endif
-#else
-	atf_tc_skip("vax not supported");
-#endif
 }
 
 ATF_TC(strtod_nan);
@@ -173,15 +169,16 @@ ATF_TC_HEAD(strtod_nan, tc)
 
 ATF_TC_BODY(strtod_nan, tc)
 {
-#ifndef __vax__
 	char *end;
 
-	volatile double d = strtod(nan_string, &end);
-	ATF_REQUIRE(isnan(d) != 0);
-	ATF_REQUIRE(strcmp(end, "y") == 0);
-#else
-	atf_tc_skip("vax not supported");
+#ifndef NAN
+	atf_tc_skip("no NaNs on this architecture");
 #endif
+
+	volatile double d = strtod(nan_string, &end);
+	ATF_CHECK_MSG(isnan(d), "nan_string=\"%s\" d=%g=%a", nan_string, d, d);
+	ATF_CHECK_MSG(strcmp(end, "y") == 0, "nan_string=\"%s\"@%p end=%p",
+	    nan_string, nan_string, end);
 }
 
 ATF_TC(strtof_nan);
@@ -192,15 +189,18 @@ ATF_TC_HEAD(strtof_nan, tc)
 
 ATF_TC_BODY(strtof_nan, tc)
 {
-#ifndef __vax__
 	char *end;
 
-	volatile float f = strtof(nan_string, &end);
-	ATF_REQUIRE(isnanf(f) != 0);
-	ATF_REQUIRE(strcmp(end, "y") == 0);
-#else
-	atf_tc_skip("vax not supported");
+#ifndef NAN
+	atf_tc_skip("no NaNs on this architecture");
 #endif
+
+	volatile float f = strtof(nan_string, &end);
+	ATF_CHECK_MSG(isnan(f), "nan_string=\"%s\" f=%g=%a", nan_string, f, f);
+	ATF_CHECK_MSG(isnanf(f), "nan_string=\"%s\" f=%g=%a", nan_string,
+	    f, f);
+	ATF_CHECK_MSG(strcmp(end, "y") == 0, "nan_string=\"%s\"@%p end=%p",
+	    nan_string, nan_string, end);
 }
 
 ATF_TC(strtold_nan);
@@ -211,21 +211,19 @@ ATF_TC_HEAD(strtold_nan, tc)
 
 ATF_TC_BODY(strtold_nan, tc)
 {
-#ifndef __vax__
-#   ifdef __HAVE_LONG_DOUBLE
-
 	char *end;
 
-	volatile long double ld = strtold(nan_string, &end);
-	ATF_REQUIRE(isnan(ld) != 0);
-	ATF_REQUIRE(__isnanl(ld) != 0);
-	ATF_REQUIRE(strcmp(end, "y") == 0);
-#   else
-	atf_tc_skip("Requires long double support");
-#   endif
-#else
-	atf_tc_skip("vax not supported");
+#ifndef NAN
+	atf_tc_skip("no NaNs on this architecture");
 #endif
+
+	volatile long double ld = strtold(nan_string, &end);
+	ATF_CHECK_MSG(isnan(ld), "nan_string=\"%s\" ld=%Lg=%La",
+	    nan_string, ld, ld);
+	ATF_CHECK_MSG(isnanf(ld), "nan_string=\"%s\" ld=%Lg=%La",
+	    nan_string, ld, ld);
+	ATF_CHECK_MSG(strcmp(end, "y") == 0, "nan_string=\"%s\"@%p end=%p",
+	    nan_string, nan_string, end);
 }
 
 ATF_TC(strtod_round);
@@ -246,19 +244,10 @@ ATF_TC_BODY(strtod_round, tc)
 	    "1.00000011920928977282585492503130808472633361816406";
 
 	(void)fesetround(FE_UPWARD);
-
 	volatile double d1 = strtod(val, NULL);
-
 	(void)fesetround(FE_DOWNWARD);
-
 	volatile double d2 = strtod(val, NULL);
-
-	if (fabs(d1 - d2) > 0.0)
-		return;
-	else {
-		atf_tc_expect_fail("PR misc/44767");
-		atf_tc_fail("strtod(3) did not honor fesetround(3)");
-	}
+	ATF_CHECK_MSG(d1 > d2, "d1=%g=%a d2=%g=%a", d1, d1, d2, d2);
 #else
 	atf_tc_skip("Requires <fenv.h> support");
 #endif
@@ -310,7 +299,7 @@ ATF_TC_BODY(strtod_gherman_bug, tc)
 	errno = 0;
 	volatile double d = strtod(str, NULL);
 
-	ATF_CHECK(d == 0x1.d34fd8378ea83p+0);
+	ATF_CHECK_EQ_MSG(d, 0x1.d34fd8378ea83p+0, "d=%g=%a", d, d);
 }
 
 ATF_TP_ADD_TCS(tp)
