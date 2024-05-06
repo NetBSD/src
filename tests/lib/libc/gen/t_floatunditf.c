@@ -1,4 +1,4 @@
-/* $NetBSD: t_floatunditf.c,v 1.6 2014/11/04 00:20:19 justin Exp $ */
+/*	$NetBSD: t_floatunditf.c,v 1.7 2024/05/06 17:53:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -26,15 +26,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_floatunditf.c,v 1.7 2024/05/06 17:53:43 riastradh Exp $");
+
 #include <atf-c.h>
+#include <float.h>
 #include <inttypes.h>
 #include <math.h>
 
-#ifdef __HAVE_LONG_DOUBLE
+#if LDBL_MANT_DIG < 53
+#error Unsupported long double format
+#endif
+
 static const struct {
 	uint64_t u64;
 	long double ld;
 } testcases[] = {
+#if LDBL_MANT_DIG >= 64
 	{ 0xffffffffffffffffULL, 0xf.fffffffffffffffp+60L },
 	{ 0xfffffffffffffffeULL, 0xf.ffffffffffffffep+60L },
 	{ 0xfffffffffffffffdULL, 0xf.ffffffffffffffdp+60L },
@@ -46,9 +54,12 @@ static const struct {
 	{ 0x7ffffffffffffffULL, 0xf.fffffffffffffep+55L },
 	{ 0x3ffffffffffffffULL, 0xf.fffffffffffffcp+54L },
 	{ 0x1ffffffffffffffULL, 0xf.fffffffffffff8p+53L },
+#endif
+#if LDBL_MANT_DIG >= 56
 	{ 0xffffffffffffffULL, 0xf.fffffffffffffp+52L },
 	{ 0x7fffffffffffffULL, 0xf.ffffffffffffep+51L },
 	{ 0x3fffffffffffffULL, 0xf.ffffffffffffcp+50L },
+#endif
 	{ 0x1fffffffffffffULL, 0xf.ffffffffffff8p+49L },
 	{ 0xfffffffffffffULL, 0xf.ffffffffffffp+48L },
 	{ 0x7ffffffffffffULL, 0xf.fffffffffffep+47L },
@@ -103,7 +114,6 @@ static const struct {
 	{ 0x3ULL, 0xcp-2L },
 	{ 0x1ULL, 0x8p-3L },
 };
-#endif
 
 ATF_TC(floatunditf);
 ATF_TC_HEAD(floatunditf, tc)
@@ -114,9 +124,6 @@ ATF_TC_HEAD(floatunditf, tc)
 
 ATF_TC_BODY(floatunditf, tc)
 {
-#ifndef __HAVE_LONG_DOUBLE
-	atf_tc_skip("Requires long double support");
-#else
 	size_t i;
 
 	for (i = 0; i < __arraycount(testcases); ++i)
@@ -125,7 +132,6 @@ ATF_TC_BODY(floatunditf, tc)
 		    "#%zu: expected %.20Lf, got %.20Lf\n", i,
 		    testcases[i].ld,
 		    (long double)testcases[i].u64);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)
