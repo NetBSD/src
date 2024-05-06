@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.6 2024/05/04 20:24:37 riastradh Exp $
+#	$NetBSD: t_sets.sh,v 1.7 2024/05/06 14:38:28 riastradh Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ sets_unknown_head()
 }
 sets_unknown_body()
 {
-	test -z "$sets_unknown" || atf_tc_fail "Unknown sets: ${sets_unknown}"
+	test -z "$sets_unknown" || atf_fail "Unknown sets: ${sets_unknown}"
 }
 
 atf_init_test_cases()
