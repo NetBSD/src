@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2024/05/03 07:06:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2024/05/06 07:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2024/05/03 07:06:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2024/05/06 07:18:19 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1830,7 +1830,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 {
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(dpm=#%jx spm=%#jx dva=%#jx sva=%#jx",
-	    dst_pmap, src_pmap, dst_addr, src_addr);
+	    (uintptr_t)dst_pmap, (uintptr_t)src_pmap, dst_addr, src_addr);
 	UVMHIST_LOG(pmaphist, "... len=%#jx)", len, 0, 0, 0);
 	PMAP_COUNT(copy);
 }
