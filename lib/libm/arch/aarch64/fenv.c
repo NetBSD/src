@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.6 2019/08/25 18:59:52 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.7 2024/05/06 15:59:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.6 2019/08/25 18:59:52 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.7 2024/05/06 15:59:53 skrll Exp $");
 
 #include "namespace.h"
 
@@ -98,7 +98,7 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 /*
  * The feraiseexcept() function shall attempt to raise the supported
  * floating-point exceptions represented by the argument excepts. The order
- * in which these floating-point exceptions are raised is unspecified. 
+ * in which these floating-point exceptions are raised is unspecified.
  */
 int
 feraiseexcept(int excepts)
@@ -219,7 +219,7 @@ fesetenv(const fenv_t *envp)
  * The feupdateenv() function shall attempt to save the currently raised
  * floating-point exceptions in its automatic storage, attempt to install the
  * floating-point environment represented by the object pointed to by envp,
- * and then attempt to raise the saved floating-point exceptions. 
+ * and then attempt to raise the saved floating-point exceptions.
  */
 int
 feupdateenv(const fenv_t *envp)
