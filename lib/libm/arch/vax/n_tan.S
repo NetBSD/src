@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.S,v 1.7 2014/03/06 10:59:52 martin Exp $	*/
+/*	$NetBSD: n_tan.S,v 1.8 2024/05/06 15:33:04 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,12 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-ENTRY(tan, 0x0fc0)		# save %r6-%r11
+
+WEAK_ALIAS(tanl, _tanl)
+STRONG_ALIAS(_tanl, _tan)
+
+WEAK_ALIAS(tan, _tan)
+ENTRY(_tan, 0x0fc0)		# save %r6-%r11
 	movq	4(%ap),%r0
 	bicw3	$0x807f,%r0,%r2
 	beql	1f		# if x is zero or reserved operand then return x
@@ -87,11 +92,12 @@ ENTRY(tan, 0x0fc0)		# save %r6-%r11
 	divd3	%r0,%r10,%r0
 	bispsw	(%sp)+
 1:	ret
+END(_tan)
 
-
-ENTRY(tanf, 0)
+WEAK_ALIAS(tanf, _tanf)
+ENTRY(_tanf, 0)
 	cvtfd	4(%ap),-(%sp)
-	calls	$2,_C_LABEL(tan)
+	calls	$2,_C_LABEL(_tan)
 	cvtdf	%r0,%r0
 	ret
-
+END(_tanf)
