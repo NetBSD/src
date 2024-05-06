@@ -1,4 +1,4 @@
-/* $NetBSD: t_precision.c,v 1.3 2016/08/27 10:07:05 christos Exp $ */
+/* $NetBSD: t_precision.c,v 1.4 2024/05/06 15:46:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_precision.c,v 1.3 2016/08/27 10:07:05 christos Exp $");
+__RCSID("$NetBSD: t_precision.c,v 1.4 2024/05/06 15:46:31 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -45,9 +45,7 @@ ATF_TC_HEAD(t_precision, tc)
 }
 
 volatile double x = 1;
-#if __HAVE_LONG_DOUBLE
 volatile long double y = 1;
-#endif
 
 ATF_TC_BODY(t_precision, tc)
 {
@@ -60,7 +58,6 @@ ATF_TC_BODY(t_precision, tc)
 	x += DBL_EPSILON;
 	ATF_CHECK(x == 2.0);
 
-#if __HAVE_LONG_DOUBLE
 	y += LDBL_EPSILON;
 	ATF_CHECK(y != 1.0L);
 	y -= 1;
@@ -68,7 +65,6 @@ ATF_TC_BODY(t_precision, tc)
 	y = 2;
 	y += LDBL_EPSILON;
 	ATF_CHECK(y == 2.0L);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)
