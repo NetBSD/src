@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.84 2023/06/03 21:26:28 lukem Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.85 2024/05/06 08:43:37 mrg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -191,7 +191,8 @@ ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 .if defined(PROGDEBUG)
 ${PROGDEBUG}: ${PROG}
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --only-keep-debug ${PROG} ${PROGDEBUG} \
+	( ${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    ${PROG} ${PROGDEBUG} \
 	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${PROGDEBUG} ${PROG} \
 	) || (rm -f ${PROGDEBUG}; false)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.402 2024/04/11 19:12:11 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.403 2024/05/06 08:43:37 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -621,15 +621,15 @@ _MAINLIBDEPS=	${SOLIB} ${DPADD} ${DPLIBC} \
 .if defined(_LIB.so.debug)
 ${_LIB.so.debug}: ${_LIB.so.link}
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --only-keep-debug \
-		${_LIB.so.link} ${_LIB.so.debug} \
+	( ${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    ${_LIB.so.link} ${_LIB.so.debug} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	${_MKTARGET_CREATE}
 	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${_LIB.so.debug} \
-		${_LIB.so.link} ${_LIB.so.full}.tmp && \
-		${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
+	    --add-gnu-debuglink=${_LIB.so.debug} \
+	    ${_LIB.so.link} ${_LIB.so.full}.tmp && \
+	    ${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.link}: ${_MAINLIBDEPS}
 .else # aka no MKDEBUG

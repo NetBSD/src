@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.348 2024/02/19 20:39:38 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.349 2024/05/06 08:43:37 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -506,8 +506,9 @@ ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 .if defined(_PROGDEBUG.${_P})
 ${_PROGDEBUG.${_P}}: ${_P}
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}} \
-	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	( ${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    ${_P} ${_PROGDEBUG.${_P}} && \
+	  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
 	) || (rm -f ${_PROGDEBUG.${_P}}; false)
 .endif
