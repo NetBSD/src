@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.9 2014/10/10 22:06:33 martin Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.10 2024/05/06 15:33:04 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,17 +46,19 @@
  */
 #include <machine/asm.h>
 
-ENTRY(sinf, 0)
+WEAK_ALIAS(sinf, _sinf)
+ENTRY(_sinf, 0)
 	cvtfd	4(%ap),-(%sp)
-	calls	$2,_C_LABEL(sin)
+	calls	$2,_C_LABEL(_sin)
 	cvtdf	%r0,%r0
 	ret
+END(_sinf)
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(_sinl, sin)
-#endif
+WEAK_ALIAS(sinl, _sinl)
+STRONG_ALIAS(_sinl, _sin)
 
-ENTRY(sin, 0xfc0)
+WEAK_ALIAS(sin, _sin)
+ENTRY(_sin, 0xfc0)
 	movq	4(%ap),%r0
 	bicw3	$0x807f,%r0,%r2
 	beql	1f		# if x is zero or reserved operand then return x
@@ -77,6 +79,7 @@ ENTRY(sin, 0xfc0)
 	jsb	_C_LABEL(__libm_sincos)+2
 	bispsw	(%sp)+
 1:	ret
+END(_sin)
 
 /*
  * double cos(arg)
@@ -85,17 +88,19 @@ ENTRY(sin, 0xfc0)
  * S. McDonald, April 4,  1985
  */
 
-ENTRY(cosf, 0)
+WEAK_ALIAS(cosf, _cosf)
+ENTRY(_cosf, 0)
 	cvtfd	4(%ap),-(%sp)
-	calls	$2,_C_LABEL(cos)
+	calls	$2,_C_LABEL(_cos)
 	cvtdf	%r0,%r0
 	ret
+END(_cosf)
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(_cosl, cos)
-#endif
+WEAK_ALIAS(cosl, _cosl)
+STRONG_ALIAS(_cosl, _cos)
 
-ENTRY(cos, 0x0fc0)
+WEAK_ALIAS(cos, _cos)
+ENTRY(_cos, 0x0fc0)
 	movq	4(%ap),%r0
 	bicw3	$0x7f,%r0,%r2
 	cmpw	$0x8000,%r2
@@ -117,3 +122,4 @@ ENTRY(cos, 0x0fc0)
 	jsb	_C_LABEL(__libm_sincos)+2
 	bispsw	(%sp)+
 1:	ret
+END(_cos)
