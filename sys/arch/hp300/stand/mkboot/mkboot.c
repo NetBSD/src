@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.18 2024/05/06 18:08:49 tsutsui Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.19 2024/05/07 19:55:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ The Regents of the University of California.  All rights reserved.");
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.18 2024/05/06 18:08:49 tsutsui Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.19 2024/05/07 19:55:14 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ int	 main(int, char **);
 
 static void	 bcddate(char *, char *);
 static char	*lifname(char *);
-static int	 putfile(char *, int);
+static size_t	 putfile(char *, int);
 static void	 usage(void);
 
 #ifndef __CTASSERT
@@ -120,9 +120,9 @@ memcpy((a), (b), (c))
 int
 main(int argc, char **argv)
 {
-	char *n1, *n2, *n3;
-	int n, to, ch;
-	int count;
+	char *name1, *name2, *name3;
+	int to, ch;
+	uint32_t count, nsec;
 
 	while ((ch = getopt(argc, argv, "l:t:")) != -1)
 		switch (ch) {
@@ -140,23 +140,23 @@ main(int argc, char **argv)
 	argv += optind;
 	if (loadpoint == ULONG_MAX || argc == 0)
 		usage();
-	n1 = argv[0];
+	name1 = argv[0];
 	argv++;
 	argc--;
 	if (argc == 0)
 		usage();
 	if (argc > 1) {
-		n2 = argv[0];
+		name2 = argv[0];
 		argv++;
 		argc--;
 		if (argc > 1) {
-			n3 = argv[0];
+			name3 = argv[0];
 			argv++;
 			argc--;
 		} else
-			n3 = NULL;
+			name3 = NULL;
 	} else
-		n2 = n3 = NULL;
+		name2 = name3 = NULL;
 
 	if ((to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1)
 		err(1, "Can't open `%s'", argv[0]);
@@ -180,28 +180,28 @@ main(int argc, char **argv)
 
 	/* output bootfile one */
 	lseek(to, LIF_FILESTART, SEEK_SET);
-	count = putfile(n1, to);
-	n = btolifs(count);
-	strcpy(lifd[0].dir_name, lifname(n1));
+	count = putfile(name1, to);
+	nsec = btolifs(count);
+	strcpy(lifd[0].dir_name, lifname(name1));
 	lifd[0].dir_type = htobe16(DIR_TYPE);
 	lifd[0].dir_addr = htobe32(btolifs(LIF_FILESTART));
-	lifd[0].dir_length = htobe32(n);
-	bcddate(n1, lifd[0].dir_toc);
+	lifd[0].dir_length = htobe32(nsec);
+	bcddate(name1, lifd[0].dir_toc);
 	lifd[0].dir_flag = htobe16(DIR_FLAG);
 	lifd[0].dir_exec = htobe32(loadpoint);
 	lifv.vol_length = htobe32(be32toh(lifd[0].dir_addr) +
 	    be32toh(lifd[0].dir_length));
 
 	/* if there is an optional second boot program, output it */
-	if (n2 != NULL) {
-		lseek(to, LIF_FILESTART + lifstob(n), SEEK_SET);
-		count = putfile(n2, to);
-		n = btolifs(count);
-		strcpy(lifd[1].dir_name, lifname(n2));
+	if (name2 != NULL) {
+		lseek(to, LIF_FILESTART + lifstob(nsec), SEEK_SET);
+		count = putfile(name2, to);
+		nsec = btolifs(count);
+		strcpy(lifd[1].dir_name, lifname(name2));
 		lifd[1].dir_type = htobe16(DIR_TYPE);
 		lifd[1].dir_addr = htobe32(lifv.vol_length);
-		lifd[1].dir_length = htobe32(n);
-		bcddate(n2, lifd[1].dir_toc);
+		lifd[1].dir_length = htobe32(nsec);
+		bcddate(name2, lifd[1].dir_toc);
 		lifd[1].dir_flag = htobe16(DIR_FLAG);
 		lifd[1].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[1].dir_addr) +
@@ -209,16 +209,16 @@ main(int argc, char **argv)
 	}
 
 	/* ditto for three */
-	if (n3 != NULL) {
-		lseek(to, LIF_FILESTART + lifstob(lifd[0].dir_length + n),
+	if (name3 != NULL) {
+		lseek(to, LIF_FILESTART + lifstob(lifd[0].dir_length + nsec),
 		    SEEK_SET);
-		count = putfile(n3, to);
-		n = btolifs(count);
-		strcpy(lifd[2].dir_name, lifname(n3));
+		count = putfile(name3, to);
+		nsec = btolifs(count);
+		strcpy(lifd[2].dir_name, lifname(name3));
 		lifd[2].dir_type = htobe16(DIR_TYPE);
 		lifd[2].dir_addr = htobe32(lifv.vol_length);
-		lifd[2].dir_length = htobe32(n);
-		bcddate(n3, lifd[2].dir_toc);
+		lifd[2].dir_length = htobe32(nsec);
+		bcddate(name3, lifd[2].dir_toc);
 		lifd[2].dir_flag = htobe16(DIR_FLAG);
 		lifd[2].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[2].dir_addr) +
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-static int
+static size_t
 putfile(char *from, int to)
 {
 	int fd;

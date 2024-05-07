@@ -1,4 +1,4 @@
-/*	$NetBSD: volhdr.h,v 1.5 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: volhdr.h,v 1.6 2024/05/07 19:55:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,37 +41,37 @@
  */
 
 struct	lifvol {
-	int16_t	vol_id;
-	char	vol_label[6];
-	int32_t	vol_addr;
-	int16_t	vol_oct;
-	int16_t	vol_dummy;
-	int32_t	vol_dirsize;
-	int16_t	vol_version;
-	int16_t	vol_zero;
-	int32_t	vol_huh1;
-	int32_t	vol_huh2;
-	int32_t	vol_length;
+	uint16_t	vol_id;
+	char		vol_label[6];
+	uint32_t	vol_addr;
+	uint16_t	vol_oct;
+	uint16_t	vol_dummy;
+	uint32_t	vol_dirsize;
+	uint16_t	vol_version;
+	uint16_t	vol_zero;
+	uint32_t	vol_huh1;
+	uint32_t	vol_huh2;
+	uint32_t	vol_length;
 };
 
 struct	lifdir {
-	char	dir_name[10];
-	uint16_t dir_type;
-	int32_t	dir_addr;
-	int32_t	dir_length;
-	char	dir_toc[6];
-	int16_t dir_flag;
+	char		dir_name[10];
+	uint16_t	dir_type;
+	uint32_t	dir_addr;
+	uint32_t	dir_length;
+	char		dir_toc[6];
+	uint16_t	dir_flag;
 	int32_t	dir_exec;
 };
 
 /* load header for boot rom */
 struct load {
-	int32_t address;
-	int32_t count;
+	uint32_t	address;
+	uint32_t	count;
 };
 
-#define VOL_ID		-32768
+#define VOL_ID		0x8000	/* always $8000 */
 #define VOL_OCT		4096
-#define	DIR_TYPE	-5822
-#define DIR_FLAG	0x8001	/* dont ask me! */
-#define	SECTSIZE	256
+#define DIR_TYPE	0xe942	/* "SYS9k Series 9000" */
+#define DIR_FLAG	0x8001	/* don't ask me! */
+#define SECTSIZE	256
