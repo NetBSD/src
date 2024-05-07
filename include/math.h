@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.69 2024/01/22 14:01:50 kre Exp $	*/
+/*	$NetBSD: math.h,v 1.70 2024/05/07 15:17:35 riastradh Exp $	*/
 
 /*
  * ====================================================
@@ -501,6 +501,7 @@ long double fminl(long double, long double);
 #endif /* !_ANSI_SOURCE && ... */
 
 #if defined(_NETBSD_SOURCE)
+
 #ifndef __cplusplus
 int	matherr(struct exception *);
 #endif
@@ -515,6 +516,22 @@ double	significand(double);
  */
 double	drem(double, double);
 
+void		sincos(double, double *, double *);
+void		sincosf(float, float *, float *);
+void		sincosl(long double, long double *, long double *);
+
+double		cospi(double);
+float		cospif(float);
+long double	cospil(long double);
+
+double		sinpi(double);
+float		sinpif(float);
+long double	sinpil(long double);
+
+double		tanpi(double);
+float		tanpif(float);
+long double	tanpil(long double);
+
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE) || defined(_REENTRANT)
@@ -524,8 +541,8 @@ double	drem(double, double);
  */
 double	gamma_r(double, int *);
 double	lgamma_r(double, int *);
+long double	lgammal_r(long double, int *);
 #endif /* _NETBSD_SOURCE || _REENTRANT */
-
 
 #if defined(_NETBSD_SOURCE)
 
@@ -553,10 +570,6 @@ float	significandf(float);
  * float versions of BSD math library entry points
  */
 float	dremf(float, float);
-
-void		sincos(double, double *, double *);
-void		sincosf(float, float *, float *);
-void		sincosl(long double, long double *, long double *);
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE) || defined(_REENTRANT)
@@ -590,19 +603,6 @@ int	__isinfl(long double);
 int	__isnanl(long double);
 int	__signbitl(long double);
 #endif
-
-/* XXX: Probable temporary hacks for new math functions - 20240122 */
-double	cospi(double);
-float	cospif(float);
-double	sinpi(double);
-float	sinpif(float);
-double	tanpi(double);
-float	tanpif(float);
-
-long double	cospil(long double);
-long double	lgammal_r(long double, int *);
-long double	sinpil(long double);
-long double	tanpil(long double);
 
 __END_DECLS
 
