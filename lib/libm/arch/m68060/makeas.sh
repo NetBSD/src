@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.10 2024/05/07 21:14:12 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.11 2024/05/07 22:17:08 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-RCSID='$NetBSD: makeas.sh,v 1.10 2024/05/07 21:14:12 riastradh Exp $'
+RCSID='$NetBSD: makeas.sh,v 1.11 2024/05/07 22:17:08 riastradh Exp $'
 
 RCSID=${RCSID#\$}
 RCSID=${RCSID% \$}
@@ -34,8 +34,8 @@ REALCODE=fplsp_wrap.S
 FILELIST=Makefile.list
 
 dummy () {
-while [ X$1 != X ]; do
-/bin/cat > $1.S << EOM
+	while [ X$1 != X ]; do
+		/bin/cat > $1.S << EOM
 /* \$NetBSD\$ */
 
 /*
@@ -47,9 +47,9 @@ while [ X$1 != X ]; do
  *
  */
 EOM
-echo -n " " $1.S >> $FILELIST
-shift
-done
+		echo -n " " $1.S >> $FILELIST
+		shift
+	done
 }
 
 linebreak () {
@@ -58,13 +58,13 @@ linebreak () {
 }
 
 mk () {
-NAME=$1
-OFFS=$2
-THESRC=$3.S
-shift; shift; shift
+	NAME=$1
+	OFFS=$2
+	THESRC=$3.S
+	shift; shift; shift
 
-echo -n " " ${THESRC} >> $FILELIST
-/bin/cat > ${THESRC} << EOJ
+	echo -n " " ${THESRC} >> $FILELIST
+	/bin/cat > ${THESRC} << EOJ
 /* \$NetBSD\$ */
 
 /*
@@ -89,17 +89,17 @@ ENTRY($NAME)
 	rts
 #endif
 EOJ
-dummy $*
+	dummy $*
 }
 
 mks () {
-NAME=$1
-OFFS=$2
-THESRC=$3.S
-shift; shift; shift
+	NAME=$1
+	OFFS=$2
+	THESRC=$3.S
+	shift; shift; shift
 
-echo -n " " ${THESRC} >> $FILELIST
-/bin/cat > ${THESRC} << EOJ
+	echo -n " " ${THESRC} >> $FILELIST
+	/bin/cat > ${THESRC} << EOJ
 /* \$NetBSD\$ */
 
 /*
@@ -122,7 +122,7 @@ ENTRY($NAME)
 	rts
 #endif
 EOJ
-dummy $*
+	dummy $*
 }
 
 /bin/cat > ${REALCODE} << EOJ
