@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.list,v 1.7 2024/05/07 21:18:47 riastradh Exp $
+# $NetBSD: Makefile.list,v 1.8 2024/05/07 22:51:19 riastradh Exp $
 
 #
 # list of M68060 architecture dependent files for libm.
 #
 # Created by:
 #
-#	NetBSD: makeas.sh,v 1.10 2024/05/07 21:14:12 riastradh Exp
+#	NetBSD: makeas.sh,v 1.16 2024/05/07 22:30:16 riastradh Exp
 #
 # Do not edit manually!
 #
