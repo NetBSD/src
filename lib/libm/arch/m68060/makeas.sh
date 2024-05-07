@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.9 2024/05/07 21:05:47 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.10 2024/05/07 21:14:12 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -25,7 +25,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-RCSID='$NetBSD: makeas.sh,v 1.9 2024/05/07 21:05:47 riastradh Exp $'
+RCSID='$NetBSD: makeas.sh,v 1.10 2024/05/07 21:14:12 riastradh Exp $'
+
+RCSID=${RCSID#\$}
+RCSID=${RCSID% \$}
 
 REALCODE=fplsp_wrap.S
 FILELIST=Makefile.list
