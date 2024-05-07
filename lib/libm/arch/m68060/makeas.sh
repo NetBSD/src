@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.15 2024/05/07 22:29:53 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.16 2024/05/07 22:30:16 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 set -eu
 
-RCSID='$NetBSD: makeas.sh,v 1.15 2024/05/07 22:29:53 riastradh Exp $'
+RCSID='$NetBSD: makeas.sh,v 1.16 2024/05/07 22:30:16 riastradh Exp $'
 
 RCSID=${RCSID#\$}
 RCSID=${RCSID% \$}
@@ -102,6 +102,7 @@ ENTRY($NAME)
 	movel %sp@+,%d1
 	rts
 #endif
+END($NAME)
 EOJ
 	dummy "$@"
 }
@@ -146,6 +147,7 @@ ENTRY($NAME)
 	movel %sp@+,%d0
 	rts
 #endif
+END($NAME)
 EOJ
 	dummy "$@"
 }
