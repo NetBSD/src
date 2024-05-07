@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.11 2024/05/07 22:17:08 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.12 2024/05/07 22:17:24 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-RCSID='$NetBSD: makeas.sh,v 1.11 2024/05/07 22:17:08 riastradh Exp $'
+RCSID='$NetBSD: makeas.sh,v 1.12 2024/05/07 22:17:24 riastradh Exp $'
 
 RCSID=${RCSID#\$}
 RCSID=${RCSID% \$}
@@ -58,6 +58,8 @@ linebreak () {
 }
 
 mk () {
+	local NAME OFFS THESRC
+
 	NAME=$1
 	OFFS=$2
 	THESRC=$3.S
@@ -93,6 +95,8 @@ EOJ
 }
 
 mks () {
+	local NAME OFFS THESRC
+
 	NAME=$1
 	OFFS=$2
 	THESRC=$3.S
