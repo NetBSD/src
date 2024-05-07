@@ -1,4 +1,4 @@
-/*      $NetBSD: n_infnan.S,v 1.6 2003/08/07 16:44:45 agc Exp $ */
+/*      $NetBSD: n_infnan.S,v 1.7 2024/05/07 15:15:10 riastradh Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,3 +54,4 @@ ENTRY(infnan, 0)
 1:	movl	$EDOM,_C_LABEL(errno)
 2:	emodd	$0,$0,$0x8000,%r0,%r0	# generates the reserved operand fault
 	ret
+END(infnan)

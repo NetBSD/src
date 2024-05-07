@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.7 2013/11/24 15:12:10 martin Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.8 2024/05/07 15:15:09 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@ ENTRY(cbrtf, 0)
 	calls	$2,_C_LABEL(cbrt)
 	cvtdf	%r0,%r0
 	ret
+END(cbrtf)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(cbrtl, cbrt)
@@ -54,6 +55,7 @@ ALTENTRY(cbrt)
 ENTRY(d_cbrt, 0x00c0)		# save %r6 & %r7
 	movq	4(%ap),%r0	# %r0 = argument x
 	jbr 	dcbrt2
+END(d_cbrt)
 
 ENTRY(dcbrt_, 0x00c0)		# save %r6 & %r7
 	movq	*4(%ap),%r0	# %r0 = argument x
@@ -90,6 +92,7 @@ dcbrt2:	bicw3	$0x807f,%r0,%r2	# biased exponent of x
 	bisw2	%ap,%r0		# restore the sign bit
 return:
 	ret			# error less than 0.667 ulps
+END(dcbrt_)
 
 	_ALIGN_TEXT
 B :	.long		 721142941		# (86-0.03306235651)*(2^23)

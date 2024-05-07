@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.11 2014/10/11 06:59:29 martin Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.12 2024/05/07 15:15:10 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,7 @@ WEAK_ALIAS(sqrtl, sqrt)
 ENTRY(d_sqrt, 0x003c)		# save %r5,%r4,%r3,%r2
 	movq	*4(%ap),%r0
 	jbr  	dsqrt2
+END(d_sqrt)
 
 ENTRY(sqrt, 0x003c)		# save %r5,%r4,%r3,%r2
 	movq    4(%ap),%r0
@@ -61,6 +62,7 @@ dsqrt2:	bicw3	$0x807f,%r0,%r2	# check exponent of input
 	jeql	noexp		# biased exponent is zero -> 0.0 or reserved
 	bsbb	__libm_dsqrt_r5_lcl
 noexp:	ret
+END(sqrt)
 
 /* **************************** internal procedure */
 
@@ -128,3 +130,4 @@ ENTRY(sqrtf, 0)
 	calls	$2,_C_LABEL(sqrt)
 	cvtdf	%r0,%r0
 	ret
+END(sqrtf)
