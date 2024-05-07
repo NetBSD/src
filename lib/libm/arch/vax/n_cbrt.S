@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.8 2024/05/07 15:15:09 riastradh Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.9 2024/05/07 15:15:31 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ END(cbrtf)
 WEAK_ALIAS(cbrtl, cbrt)
 #endif
 
-ALTENTRY(cbrt)
+STRONG_ALIAS(cbrt, d_cbrt)
 ENTRY(d_cbrt, 0x00c0)		# save %r6 & %r7
 	movq	4(%ap),%r0	# %r0 = argument x
 	jbr 	dcbrt2

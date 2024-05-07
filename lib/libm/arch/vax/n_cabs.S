@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.8 2024/05/07 15:15:09 riastradh Exp $	*/
+/*	$NetBSD: n_cabs.S,v 1.9 2024/05/07 15:15:31 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@ WEAK_ALIAS(hypotl, _hypot)
 WEAK_ALIAS(_hypotl, _hypot)
 #endif
 
-ALTENTRY(cabs)
+STRONG_ALIAS(_cabs, _hypot)
 ENTRY(_hypot, 0x8040) 		# save %r6, enable floating overflow
 	movq	4(%ap),%r0	# %r0:1 = x
 	movq	12(%ap),%r2	# %r2:3 = y
