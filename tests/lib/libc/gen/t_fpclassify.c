@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.3 2011/10/01 21:47:08 christos Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.4 2024/05/07 21:00:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -136,13 +136,6 @@ ATF_TC_BODY(fpclassify_double, tc)
 	ATF_REQUIRE_EQ(f, 0);
 }
 
-/*
- * XXX NetBSD doesn't have long-double flavors of frexp, ldexp, and modf,
- * XXX so this test is disabled.
- */
-
-#ifdef TEST_LONG_DOUBLE
-
 ATF_TC(fpclassify_long_double);
 ATF_TC_HEAD(fpclassify_long_double, tc)
 {
@@ -186,7 +179,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	ATF_REQUIRE_EQ(e, 0);
 	ATF_REQUIRE_EQ(f, 0);
 }
-#endif /* TEST_LONG_DOUBLE */
+
 #endif /* _FLOAT_IEEE754 */
 
 ATF_TP_ADD_TCS(tp)
@@ -197,9 +190,7 @@ ATF_TP_ADD_TCS(tp)
 #else
 	ATF_TP_ADD_TC(tp, fpclassify_float);
 	ATF_TP_ADD_TC(tp, fpclassify_double);
-#ifdef TEST_LONG_DOUBLE
 	ATF_TP_ADD_TC(tp, fpclassify_long_double);
-#endif /* TEST_LONG_DOUBLE */
 #endif /* _FLOAT_IEEE754 */
 
 	return atf_no_error();
