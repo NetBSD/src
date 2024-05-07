@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.4 2003/10/26 07:25:34 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2024/05/07 21:11:24 riastradh Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.host.mk>		# for HOST_SH
 
 M060SP=		${NETBSDSRCDIR}/sys/arch/m68k/060sp
 ASM2GAS=	${M060SP}/asm2gas
