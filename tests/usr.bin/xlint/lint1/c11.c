@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.6 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.7 2024/05/07 19:32:35 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -7,6 +7,29 @@
  */
 
 /* lint1-flags: -Ac11 -w -X 192,231,236,351 */
+
+
+int
+bool_is_predefined_in_c23(void)
+{
+	/* expect+1: error: syntax error 't' [249] */
+	bool t = true;
+	bool f = false;
+	/* expect+4: error: 't' undefined [99] */
+	/* expect+3: error: 'true' undefined [99] */
+	/* expect+2: error: 'f' undefined [99] */
+	/* expect+1: error: 'false' undefined [99] */
+	return (t == true ? 20 : 0) + (f == false ? 3 : 0);
+}
+
+int
+c99_bool_is_still_valid_in_c23(void)
+{
+	_Bool t = 1;
+	_Bool f = 0;
+	return (t == 1 ? 20 : 0) + (f == 0 ? 3 : 0);
+}
+
 
 _Noreturn void exit(int);
 void _Noreturn exit(int);
@@ -73,11 +96,9 @@ void fcompat(void)
 	int (*p)[4][n+1];
 	int c[n][n][6][m];
 	int (*r)[n][n][n+1];
-	/* expect+2: warning: illegal combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
-	/* expect+1: warning: 'p' set but not used in function 'fcompat' [191] */
+	/* expect+1: warning: illegal combination of 'pointer to array[4] of array[1] of int' and 'pointer to array[6] of array[1] of int', op '=' [124] */
 	p = a;
-	/* expect+2: warning: illegal combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
-	/* expect+1: warning: 'r' set but not used in function 'fcompat' [191] */
+	/* expect+1: warning: illegal combination of 'pointer to array[1] of array[1] of array[1] of int' and 'pointer to array[1] of array[6] of array[1] of int', op '=' [124] */
 	r = c;
 }
 
@@ -101,8 +122,7 @@ void fvla(int m, int C[m][m])
 	int (*s)[m];
 	/* expect+1: warning: nested 'extern' declaration of 'r' [352] */
 	extern int (*r)[m];
-	/* expect+2: warning: illegal combination of 'pointer to array[1] of int' and 'pointer to int', op 'init' [124] */
-	/* expect+1: warning: 'q' set but not used in function 'fvla' [191] */
+	/* expect+1: warning: illegal combination of 'pointer to array[1] of int' and 'pointer to int', op 'init' [124] */
 	static int (*q)[m] = &B;
 }
 
