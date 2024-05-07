@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.12 2024/05/07 22:17:24 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.13 2024/05/07 22:18:19 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-RCSID='$NetBSD: makeas.sh,v 1.12 2024/05/07 22:17:24 riastradh Exp $'
+RCSID='$NetBSD: makeas.sh,v 1.13 2024/05/07 22:18:19 riastradh Exp $'
 
 RCSID=${RCSID#\$}
 RCSID=${RCSID% \$}
@@ -34,8 +34,10 @@ REALCODE=fplsp_wrap.S
 FILELIST=Makefile.list
 
 dummy () {
-	while [ X$1 != X ]; do
-		/bin/cat > $1.S << EOM
+	local F
+
+	for F; do
+		/bin/cat > $F.S << EOM
 /* \$NetBSD\$ */
 
 /*
@@ -47,8 +49,7 @@ dummy () {
  *
  */
 EOM
-		echo -n " " $1.S >> $FILELIST
-		shift
+		echo -n " " $F.S >> $FILELIST
 	done
 }
 
@@ -91,7 +92,7 @@ ENTRY($NAME)
 	rts
 #endif
 EOJ
-	dummy $*
+	dummy "$@"
 }
 
 mks () {
@@ -126,7 +127,7 @@ ENTRY($NAME)
 	rts
 #endif
 EOJ
-	dummy $*
+	dummy "$@"
 }
 
 /bin/cat > ${REALCODE} << EOJ
