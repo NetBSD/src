@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.13 2024/05/07 22:18:19 riastradh Exp $
+# $NetBSD: makeas.sh,v 1.14 2024/05/07 22:19:42 riastradh Exp $
 
 # Copyright (c) 1999, 2000 Ignatios Souvatzis
 # All rights reserved.
@@ -25,7 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-RCSID='$NetBSD: makeas.sh,v 1.13 2024/05/07 22:18:19 riastradh Exp $'
+set -eu
+
+RCSID='$NetBSD: makeas.sh,v 1.14 2024/05/07 22:19:42 riastradh Exp $'
 
 RCSID=${RCSID#\$}
 RCSID=${RCSID% \$}
