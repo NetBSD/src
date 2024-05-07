@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.8 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.9 2024/05/07 19:32:35 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -9,6 +9,29 @@
 //	msg_353.c		for empty initializer braces
 
 /* lint1-flags: -Ac23 -w -X 351 */
+
+
+int
+bool_is_predefined_in_c23(void)
+{
+	/* expect+1: error: syntax error 't' [249] */
+	bool t = true;
+	bool f = false;
+	/* expect+4: error: 't' undefined [99] */
+	/* expect+3: error: 'true' undefined [99] */
+	/* expect+2: error: 'f' undefined [99] */
+	/* expect+1: error: 'false' undefined [99] */
+	return (t == true ? 20 : 0) + (f == false ? 3 : 0);
+}
+
+int
+c99_bool_is_still_valid_in_c23(void)
+{
+	_Bool t = 1;
+	_Bool f = 0;
+	return (t == 1 ? 20 : 0) + (f == 0 ? 3 : 0);
+}
+
 
 int
 empty_initializer_braces(void)
