@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.9 2024/05/07 19:32:35 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.10 2024/05/07 21:13:27 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -14,13 +14,8 @@
 int
 bool_is_predefined_in_c23(void)
 {
-	/* expect+1: error: syntax error 't' [249] */
 	bool t = true;
 	bool f = false;
-	/* expect+4: error: 't' undefined [99] */
-	/* expect+3: error: 'true' undefined [99] */
-	/* expect+2: error: 'f' undefined [99] */
-	/* expect+1: error: 'false' undefined [99] */
 	return (t == true ? 20 : 0) + (f == false ? 3 : 0);
 }
 
