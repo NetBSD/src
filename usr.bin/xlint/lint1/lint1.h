@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.224 2024/05/03 04:04:18 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.225 2024/05/07 21:13:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -187,6 +187,12 @@ typedef enum {
 	FS_NORETURN,		/* since C11 */
 } function_specifier;
 
+typedef enum {
+	NC_FALSE,		/* since C23 */
+	NC_TRUE,		/* since C23 */
+	// TODO: null_ptr
+} named_constant;
+
 /* A type, variable, keyword; basically anything that has a name. */
 struct sym {
 	const char *s_name;
@@ -233,6 +239,8 @@ struct sym {
 				type_qualifiers sk_type_qualifier;
 				/* if T_FUNCTION_SPECIFIER */
 				function_specifier function_specifier;
+				/* if T_CON */
+				named_constant constant;
 			} u;
 		} s_keyword;
 		sym_t	*s_old_style_params;	/* parameters in an old-style

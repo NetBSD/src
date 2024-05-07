@@ -1,4 +1,4 @@
-/*	$NetBSD: strict-bool-stdbool.h,v 1.1 2021/01/16 16:03:46 rillig Exp $	*/
+/*	$NetBSD: strict-bool-stdbool.h,v 1.2 2024/05/07 21:13:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -32,9 +32,11 @@
 #ifndef _LINT_STDBOOL_H
 #define _LINT_STDBOOL_H
 
+#if __STDC_VERSION__ >= 199901 && __STDC_VERSION__ < 202311
 #define bool	_Bool
 #define false	__lint_false
 #define true	__lint_true
+#endif
 
 #define __bool_true_false_are_defined 1
 
