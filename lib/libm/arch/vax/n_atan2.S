@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.9 2014/10/10 20:58:09 martin Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.10 2024/05/07 15:15:09 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,6 +81,7 @@ ENTRY(_atan2f, 0)
 	calls	$2,_C_LABEL(_atan2)
 	cvtdf	%r0,%r0
 	ret
+END(_atan2f)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(atan2, _atan2)
@@ -211,6 +212,7 @@ pio2:
 resop:
 	movq	$0x8000,%r0		# propagate the reserved operand
 	ret
+END(_atan2)
 
 	_ALIGN_TEXT
 ptable:

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.7 2014/10/10 20:58:09 martin Exp $	*/
+/*	$NetBSD: n_cabs.S,v 1.8 2024/05/07 15:15:09 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,7 @@ ENTRY(_hypotf, 0)
 	calls	$2,_C_LABEL(_hypot)
 	cvtdf	%r0,%r0
 	ret
+END(_hypotf)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(hypot, _hypot)
@@ -64,6 +65,7 @@ ENTRY(_hypot, 0x8040) 		# save %r6, enable floating overflow
 	movq	4(%ap),%r0	# %r0:1 = x
 	movq	12(%ap),%r2	# %r2:3 = y
 	jbr	cabs2
+END(_hypot)
 
 /*	entry for Fortran use, call by:   d = abs(z) */
 ENTRY(z_abs, 0x8040)		# save %r6, enable floating overflow
@@ -89,6 +91,7 @@ cont:
 	addd2	%r0,%r0		# overflow; %r0 is half of true abs value
 return:
 	ret
+END(z_abs)
 
 ENTRY(__libm_cdabs_r6,0)	# ENTRY POINT for cdsqrt
 				# calculates a scaled (factor in %r6)
@@ -138,3 +141,4 @@ ordered:
 				# %r0:1 = dsqrt(x^2+y^2)/2^%r6
 retsb:
 	rsb			# error < 0.86 ulp
+END(__libm_cdabs_r6)

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.10 2014/11/14 14:53:17 joerg Exp $	*/
+/*	$NetBSD: n_support.S,v 1.11 2024/05/07 15:15:10 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,6 +61,7 @@ ENTRY(copysign, 0)
 	bicw2	$0x8000,%r0		# replace x by |x|
 	bisw2	%r2,%r0			# copy the sign bit of y to x
 Lz:	ret
+END(copysign)
 
 ENTRY(copysignf, 0)
 	movl	4(%ap),%r0		# load x into %r0
@@ -70,6 +71,7 @@ ENTRY(copysignf, 0)
 	bicw2	$0x8000,%r0		# replace x by |x|
 	bisw2	%r2,%r0			# copy the sign bit of y to x
 1:	ret
+END(copysignf)
 
 /*
  * float logbf(float x);
@@ -79,6 +81,7 @@ ENTRY(logbf, 0)
 	calls   $2,_C_LABEL(logb)
 	cvtdf   %r0,%r0
 	ret
+END(logbf)
 
 /*
  * double logb(double x);
@@ -94,6 +97,7 @@ Ln:	movq	4(%ap),%r0		# %r0:1 = x (zero or reserved op)
 	bneq	1f			# simply return if reserved op
 	movq 	$0x0000fe00ffffcfff,%r0  # -2147483647.0
 1:	ret
+END(logb)
 
 /*
  * long finite(double x);
@@ -110,6 +114,7 @@ ENTRY(finite, 0)
 	ret
 1:	clrl	%r0
 	ret
+END(finite)
 
 /* int isnan(double x);
  */
@@ -124,6 +129,7 @@ ENTRY(isnan, 0)
 ENTRY(isnanf, 0)
 	clrl	%r0
 	ret
+END(isnanf)
 
 /*
  * double scalb(x,N)
@@ -155,6 +161,7 @@ ovfl:	pushl	$ERANGE
 	ret
 unfl:	movq	$0,%r0
 ret1:	ret
+END(scalb)
 
 /*
  * DREM(X,Y)
@@ -245,3 +252,4 @@ Rop:					#Reserved operand
 Ret:
 	movq	$0x8000,%r0		#propagate reserved op
 	ret
+END(drem)

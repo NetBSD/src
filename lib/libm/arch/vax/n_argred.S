@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.9 2007/04/19 00:37:20 matt Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.10 2024/05/07 15:15:09 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,7 @@ small_arg:
  *  	   %r3  contains a F-format extension to the reduced argument;
  *          %r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
  */
+END(__libm_argred)
 
 	.hidden	__libm_sincos
 ENTRY(__libm_sincos, 0)
@@ -120,6 +121,7 @@ done:
 	mnegd	%r0,%r0
 even:
 	rsb
+END(__libm_sincos)
 
 #ifdef __ELF__
 	.section .rodata
