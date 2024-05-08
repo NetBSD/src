@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_finitef.c,v 1.8 2013/11/12 17:37:43 joerg Exp $");
+__RCSID("$NetBSD: s_finitef.c,v 1.9 2024/05/08 01:40:27 riastradh Exp $");
 #endif
 
 /*
@@ -23,8 +23,11 @@ __RCSID("$NetBSD: s_finitef.c,v 1.8 2013/11/12 17:37:43 joerg Exp $");
  * no branching!
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+__weak_alias(finitef, _finitef)
 
 int
 finitef(float x)

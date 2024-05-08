@@ -15,11 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tanf.c,v 1.7 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_tanf.c,v 1.8 2024/05/08 01:40:27 riastradh Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+__weak_alias(tanf, _tanf)
 
 float
 tanf(float x)

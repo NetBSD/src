@@ -93,6 +93,8 @@ _cchshf
 _cchshl
 _ceill
 _copysignl
+_cos
+_cosf
 _cosh
 _coshf
 _coshl
@@ -126,6 +128,8 @@ _fesetexceptflag
 _fesetround
 _fetestexcept
 _feupdateenv
+_finite
+_finitef
 _floorl
 _fma
 _fmaf
@@ -157,9 +161,11 @@ _scalblnl
 _scalbn
 _scalbnf
 _scalbnl
+_sin
 _sincos
 _sincosf
 _sincosl
+_sinf
 _sinh
 _sinhf
 _sinhl
@@ -168,6 +174,8 @@ _sinpi
 _sinpif
 _sinpil
 _sqrtl
+_tan
+_tanf
 _tanhl
 _tanl
 _tanpi

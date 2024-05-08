@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.c,v 1.9 2022/08/27 09:56:21 christos Exp $	*/
+/*	$NetBSD: n_sincos.c,v 1.10 2024/05/08 01:40:27 riastradh Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +35,17 @@ static char sccsid[] = "@(#)sincos.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #define _LIBM_DECLARE
+#include "namespace.h"
 #include "mathimpl.h"
 #include "trig.h"
 
-#ifdef __weak_alias
-__weak_alias(_sinl, sin);
-__weak_alias(_cosl, cos);
-#endif
+__weak_alias(sinl, _sinl)
+__strong_alias(_sinl, _sin)
 
+__weak_alias(cosl, _cosl)
+__strong_alias(_cosl, _cos)
+
+__weak_alias(sin, _sin)
 double
 sin(double x)
 {
@@ -72,12 +75,14 @@ sin(double x)
 	return x+x*sin__S(x*x);
 }
 
+__weak_alias(sinf, _sinf)
 float
 sinf(float x)
 {
 	return sin(x);
 }
 
+__weak_alias(cos, _cos)
 double
 cos(double x)
 {
@@ -108,6 +113,7 @@ cos(double x)
 	return copysign(a,s);
 }
 
+__weak_alias(cosf, _cosf)
 float
 cosf(float x)
 {

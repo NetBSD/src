@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cos.c,v 1.11 2007/08/20 16:01:39 drochner Exp $");
+__RCSID("$NetBSD: s_cos.c,v 1.12 2024/05/08 01:40:27 riastradh Exp $");
 #endif
 
 /* cos(x)
@@ -50,11 +50,7 @@ __RCSID("$NetBSD: s_cos.c,v 1.11 2007/08/20 16:01:39 drochner Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#if 0 /* notyet */
-#ifdef __weak_alias
 __weak_alias(cos, _cos)
-#endif
-#endif
 
 double
 cos(double x)

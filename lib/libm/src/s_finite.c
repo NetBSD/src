@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_finite.c,v 1.12 2013/11/12 17:37:43 joerg Exp $");
+__RCSID("$NetBSD: s_finite.c,v 1.13 2024/05/08 01:40:27 riastradh Exp $");
 #endif
 
 /*
@@ -20,8 +20,11 @@ __RCSID("$NetBSD: s_finite.c,v 1.12 2013/11/12 17:37:43 joerg Exp $");
  * no branching!
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+__weak_alias(finite, _finite)
 
 int
 finite(double x)
