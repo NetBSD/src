@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2024/02/18 20:58:00 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2024/05/08 16:53:34 christos Exp $
 
+NOLINT=yes
 LIBISPRIVATE=yes
 LIB=dns
 
