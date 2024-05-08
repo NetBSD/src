@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2024/05/05 15:25:31 riastradh Exp $
+# $NetBSD: Makefile,v 1.43 2024/05/08 16:53:34 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -528,7 +528,8 @@ CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
 			-Wno-error=enum-conversion \
 			-Wno-error=implicit-int-float-conversion \
 			-Wno-error=tautological-constant-compare \
-			-Wno-c99-designator -Wno-xor-used-as-pow
+			-Wno-c99-designator -Wno-xor-used-as-pow \
+			-Wno-typedef-redefinition
 
 COPTS+= -Wno-error=stack-protector
 
