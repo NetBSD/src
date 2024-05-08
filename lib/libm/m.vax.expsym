@@ -229,6 +229,8 @@ pow
 powf
 powl
 rint
+rintf
+rintl
 round
 roundf
 roundl
