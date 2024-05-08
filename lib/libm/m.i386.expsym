@@ -147,6 +147,8 @@ _fesetround
 _fetestexcept
 _feupdateenv
 _fini
+_finite
+_finitef
 _floorl
 _fmodl
 _hypot
