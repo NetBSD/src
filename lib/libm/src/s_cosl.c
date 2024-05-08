@@ -1,4 +1,4 @@
-/*	$NetBSD: s_cosl.c,v 1.2 2024/04/03 18:53:42 christos Exp $	*/
+/*	$NetBSD: s_cosl.c,v 1.3 2024/05/08 01:42:23 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_cosl.c,v 1.2 2024/04/03 18:53:42 christos Exp $");
+__RCSID("$NetBSD: s_cosl.c,v 1.3 2024/05/08 01:42:23 riastradh Exp $");
 
 /*
  * Limited testing on pseudorandom numbers drawn within [-2e8:4e8] shows
@@ -62,7 +62,7 @@ pio4u = LD80C(0xc90fdaa22168c235, -00001,  7.85398163397448309628e-01L);
 #elif LDBL_MANT_DIG == 113
 #include "../ld128/e_rem_pio2l.h"
 #include "../ld128/k_cosl.c"
-long double pio4 =  7.85398163397448309615660845819875721e-1L;
+static long double pio4 =  7.85398163397448309615660845819875721e-1L;
 #else
 #error "Unsupported long double format"
 #endif
