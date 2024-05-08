@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.10 2023/04/04 19:39:38 he Exp $ */
+/* $NetBSD: t_printf.c,v 1.11 2024/05/08 18:19:57 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,14 +28,16 @@
 
 #include <sys/types.h>
 #include <sys/resource.h>
+
 #include <atf-c.h>
+#include <errno.h>
+#include <float.h>
 #include <math.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
-#include <errno.h>
 
 ATF_TC(snprintf_c99);
 ATF_TC_HEAD(snprintf_c99, tc)
@@ -191,7 +193,46 @@ ATF_TC_BODY(snprintf_double_a, tc)
 	char buf[1000];
 
 	snprintf(buf, sizeof buf, "%.3a", (double)10.6);
-	ATF_REQUIRE_STREQ("0x1.533p+3", buf);
+	ATF_CHECK_MSG((strcmp(buf, "0x1.533p+3") == 0 ||
+		strcmp(buf, "0x2.a66p+2") == 0 ||
+		strcmp(buf, "0x5.4ccp+1") == 0 ||
+		strcmp(buf, "0xa.998p+0") == 0),
+	    "buf=%s", buf);
+
+	snprintf(buf, sizeof buf, "%a", (double)0.125);
+	ATF_CHECK_MSG((strcmp(buf, "0x1p-3") == 0 ||
+		strcmp(buf, "0x2p-4") == 0 ||
+		strcmp(buf, "0x4p-5") == 0 ||
+		strcmp(buf, "0x8p-6") == 0),
+	    "buf=%s", buf);
+}
+
+ATF_TC(snprintf_long_double_a);
+ATF_TC_HEAD(snprintf_long_double_a, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test printf La format");
+}
+
+ATF_TC_BODY(snprintf_long_double_a, tc)
+{
+	char buf[1000];
+
+	atf_tc_expect_fail("PR lib/56937:"
+	    " printf(3) long double %%a formatting is broken");
+
+	snprintf(buf, sizeof buf, "%.3La", 10.6L);
+	ATF_CHECK_MSG((strcmp(buf, "0x1.533p+3") == 0 ||
+		strcmp(buf, "0x2.a66p+2") == 0 ||
+		strcmp(buf, "0x5.4ccp+1") == 0 ||
+		strcmp(buf, "0xa.998p+0") == 0),
+	    "buf=%s", buf);
+
+	snprintf(buf, sizeof buf, "%La", 0.125L);
+	ATF_CHECK_MSG((strcmp(buf, "0x1p-3") == 0 ||
+		strcmp(buf, "0x2p-4") == 0 ||
+		strcmp(buf, "0x4p-5") == 0 ||
+		strcmp(buf, "0x8p-6") == 0),
+	    "buf=%s", buf);
 }
 
 /* is "long double" and "double" different? */
@@ -235,6 +276,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, snprintf_float);
 	ATF_TP_ADD_TC(tp, sprintf_zeropad);
 	ATF_TP_ADD_TC(tp, snprintf_double_a);
+	ATF_TP_ADD_TC(tp, snprintf_long_double_a);
 #ifndef WIDE_DOUBLE
 	ATF_TP_ADD_TC(tp, pr57250_fix);
 #endif
