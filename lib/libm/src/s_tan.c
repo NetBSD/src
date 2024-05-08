@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tan.c,v 1.10 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_tan.c,v 1.11 2024/05/08 01:40:27 riastradh Exp $");
 #endif
 
 /* tan(x)
@@ -45,8 +45,11 @@ __RCSID("$NetBSD: s_tan.c,v 1.10 2002/05/26 22:01:58 wiz Exp $");
  *	TRIG(x) returns trig(x) nearly rounded
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+__weak_alias(tan, _tan)
 
 double
 tan(double x)

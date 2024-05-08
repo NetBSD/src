@@ -113,6 +113,7 @@ _cchshl
 _ceill
 _copysignl
 _cos
+_cosf
 _cosh
 _coshf
 _coshl
@@ -148,6 +149,7 @@ _fetestexcept
 _feupdateenv
 _fini
 _finite
+_finitef
 _floorl
 _fmodl
 _hypot
@@ -181,6 +183,7 @@ _sin
 _sincos
 _sincosf
 _sincosl
+_sinf
 _sinh
 _sinhf
 _sinhl
@@ -190,6 +193,7 @@ _sinpif
 _sinpil
 _sqrtl
 _tan
+_tanf
 _tanhl
 _tanl
 _tanpi

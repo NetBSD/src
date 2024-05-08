@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.19 2024/02/24 19:32:09 mrg Exp $ */
+/* $NetBSD: namespace.h,v 1.20 2024/05/08 01:40:27 riastradh Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -15,14 +15,15 @@
 #define logf _logf
 #define logl _logl
 
-#if 0 /* not yet - need to review use in machdep code first */
 #define sin _sin
 #define sinf _sinf
 #define cos _cos
 #define cosf _cosf
+#define tan _tan
+#define tanf _tanf
+
 #define finite _finite
 #define finitef _finitef
-#endif /* notyet */
 
 #define sincos _sincos
 #define sincosf _sincosf
