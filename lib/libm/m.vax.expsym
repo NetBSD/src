@@ -42,6 +42,8 @@ _exp
 _expf
 _expl
 _fini
+_finite
+_finitef
 _hypot
 _hypotf
 _hypotl
