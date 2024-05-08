@@ -1,4 +1,4 @@
-/*	$NetBSD: s_finite.S,v 1.7 2003/08/07 16:44:41 agc Exp $	*/
+/*	$NetBSD: s_finite.S,v 1.8 2024/05/08 01:05:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,11 +38,12 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_finite.S,v 1.7 2003/08/07 16:44:41 agc Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.8 2024/05/08 01:05:25 riastradh Exp $")
 
 | finite(x)
 | returns the value TRUE if -INF < x < +INF and returns FALSE otherwise.
-ENTRY(finite)
+WEAK_ALIAS(finite, _finite)
+ENTRY(_finite)
 	movw	%sp@(4),%d0
 	movw	#0x7FF0,%d1
 	andw	%d1,%d0
@@ -51,3 +52,4 @@ ENTRY(finite)
 	extbl	%d0
 	negl	%d0
 	rts
+END(_finite)
