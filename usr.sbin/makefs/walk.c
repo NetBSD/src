@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.39 2024/04/24 21:59:39 rillig Exp $	*/
+/*	$NetBSD: walk.c,v 1.40 2024/05/08 15:57:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.39 2024/04/24 21:59:39 rillig Exp $");
+__RCSID("$NetBSD: walk.c,v 1.40 2024/05/08 15:57:56 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ static	void	 apply_specentry(const char *, NODE *, fsnode *);
 static	fsnode	*create_fsnode(const char *, const char *, const char *,
 			       struct stat *);
 static	fsinode	*link_check(fsinode *);
+static size_t missing = 0;
 
 /*
  * fsnode_cmp --
@@ -429,6 +430,9 @@ apply_specfile(const char *specfile, const char *dir, fsnode *parent, int specon
 	apply_specdir(dir, root, parent, speconly);
 
 	free_nodes(root);
+	if (missing)
+		errx(EXIT_FAILURE, "Add %zu missing entries in `%s'", 
+		    missing, specfile);
 }
 
 static void
@@ -469,6 +473,11 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 					break;
 			}
 			if (curnode == NULL) {
+				if (speconly > 1) {
+					warnx("missing specfile entry for %s/%s",
+					    dir, curfsnode->name);
+					missing++;
+				}
 				if (debug & DEBUG_APPLY_SPECONLY) {
 					printf("%s: trimming %s/%s %p\n",
 					    __func__, dir, curfsnode->name,

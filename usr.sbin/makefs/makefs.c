@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.57 2024/02/18 16:59:16 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.58 2024/05/08 15:57:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.57 2024/02/18 16:59:16 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.58 2024/05/08 15:57:56 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'x':
-			fsoptions.onlyspec = 1;
+			fsoptions.onlyspec++;
 			break;
 
 		case 'Z':
