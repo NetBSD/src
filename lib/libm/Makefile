@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.231 2024/05/05 22:52:19 riastradh Exp $
+#  $NetBSD: Makefile,v 1.232 2024/05/08 23:28:07 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -81,6 +81,7 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .PATH.c: ${.CURDIR}/arch/arm
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
+LIB_EXPSYM=	${LIB}.armhf.expsym
 .endif
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
@@ -205,6 +206,7 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 .PATH:	${.CURDIR}/arch/mips
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
+LIB_EXPSYM=	${LIB}.mipshf.expsym
 .endif
 .if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 COMMON_SRCS+= s_nexttoward.c
