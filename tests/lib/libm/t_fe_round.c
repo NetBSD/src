@@ -391,6 +391,12 @@ ATF_TC_BODY(fe_nearbyintl_rintl, tc)
 				    fnname[fn], valuesl[i].input);
 			}
 
+#if __HAVE_LONG_DOUBLE + 0 == 128
+			atf_tc_expect_fail("PR lib/58237:"
+			    " modfl returns wrong answers"
+			    " on ld128 architectures");
+#endif
+
 			/*
 			 * Verify the fractional part of the result is
 			 * zero -- the result of rounding to an integer
