@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.404 2024/05/07 20:56:25 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.405 2024/05/08 20:38:55 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -660,10 +660,10 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 
 # If there's a file listing expected symbols, fail if the diff from it
 # to the actual symbols is nonempty, and show the diff in that case.
-.if exists(${.CURDIR}/${LIB}.${MACHINE_ARCH}.expsym)
-LIB_EXPSYM?=	${LIB}.${MACHINE_ARCH}.expsym
-.elif exists(${.CURDIR}/${LIB}.${MACHINE_CPU}.expsym)
-LIB_EXPSYM?=	${LIB}.${MACHINE_CPU}.expsym
+.if exists(${.CURDIR}/${LIB}.${LIBC_MACHINE_ARCH:U${MACHINE_ARCH}}.expsym)
+LIB_EXPSYM?=	${LIB}.${LIBC_MACHINE_ARCH:U${MACHINE_ARCH}}.expsym
+.elif exists(${.CURDIR}/${LIB}.${LIBC_MACHINE_CPU:U${MACHINE_CPU}}.expsym)
+LIB_EXPSYM?=	${LIB}.${LIBC_MACHINE_CPU:U${MACHINE_CPU}}.expsym
 .elif exists(${.CURDIR}/${LIB}.expsym)
 LIB_EXPSYM?=	${LIB}.expsym
 .endif
