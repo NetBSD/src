@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.11 2024/05/07 15:15:10 riastradh Exp $	*/
+/*	$NetBSD: n_support.S,v 1.12 2024/05/08 01:04:24 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -103,10 +103,11 @@ END(logb)
  * long finite(double x);
  */
 #ifndef __GFLOAT__
-	.globl finitef
-finitef = finite
+WEAK_ALIAS(finitef, _finitef)
+STRONG_ALIAS(_finitef, _finite)
 #endif
-ENTRY(finite, 0)
+WEAK_ALIAS(finite, _finite)
+ENTRY(_finite, 0)
 	bicw3	$0x7f,4(%ap),%r0	# mask off the mantissa
 	cmpw	%r0,$0x8000		# to see if x is the reserved op
 	beql	1f			# if so, return FALSE (0)
@@ -114,7 +115,7 @@ ENTRY(finite, 0)
 	ret
 1:	clrl	%r0
 	ret
-END(finite)
+END(_finite)
 
 /* int isnan(double x);
  */
