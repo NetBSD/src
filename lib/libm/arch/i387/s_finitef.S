@@ -5,9 +5,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_finitef.S,v 1.6 2003/07/26 19:25:01 salo Exp $")
+RCSID("$NetBSD: s_finitef.S,v 1.7 2024/05/08 01:04:03 riastradh Exp $")
 
-ENTRY(finitef)
+WEAK_ALIAS(finitef, _finitef)
+
+ENTRY(_finitef)
 #ifdef __i386__
 	movl	4(%esp),%eax
 	andl	$0x7f800000, %eax
@@ -23,3 +25,4 @@ ENTRY(finitef)
 	setne	%al
 #endif
 	ret
+END(_finitef)
