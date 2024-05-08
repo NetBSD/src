@@ -112,6 +112,7 @@ _cchshf
 _cchshl
 _ceill
 _copysignl
+_cos
 _cosh
 _coshf
 _coshl
@@ -175,6 +176,7 @@ _scalblnl
 _scalbn
 _scalbnf
 _scalbnl
+_sin
 _sincos
 _sincosf
 _sincosl
@@ -186,6 +188,7 @@ _sinpi
 _sinpif
 _sinpil
 _sqrtl
+_tan
 _tanhl
 _tanl
 _tanpi

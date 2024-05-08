@@ -1,4 +1,4 @@
-/*	$NetBSD: s_cos.S,v 1.6 2003/08/07 16:44:43 agc Exp $	*/
+/*	$NetBSD: s_cos.S,v 1.7 2024/05/08 01:04:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,11 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sincos.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_cos.S,v 1.6 2003/08/07 16:44:43 agc Exp $")
+RCSID("$NetBSD: s_cos.S,v 1.7 2024/05/08 01:04:40 riastradh Exp $")
 
-ENTRY(cos)
+WEAK_ALIAS(cos, _cos)
+
+ENTRY(_cos)
 	fcosd	%sp@(4),%fp0
 #ifndef __SVR4_ABI__
 	fmoved	%fp0,%sp@-
@@ -48,3 +50,4 @@ ENTRY(cos)
 	movel	%sp@+,%d1
 #endif
 	rts
+END(_cos)
