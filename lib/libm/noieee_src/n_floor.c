@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.8 2014/03/16 09:51:39 martin Exp $ */
+/*      $NetBSD: n_floor.c,v 1.9 2024/05/08 02:08:11 riastradh Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,11 +45,10 @@ ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
 #define	L	vccast(L)
 #endif
 
-#ifdef __weak_alias
-__weak_alias(ceill, ceil);
-__weak_alias(floorl, floor);
-__weak_alias(truncl, trunc);
-#endif
+__weak_alias(ceill, ceil)
+__weak_alias(floorl, floor)
+__weak_alias(truncl, trunc)
+__weak_alias(rintl, rint)
 
 /*
  * floor(x) := the largest integer no larger than x;
@@ -110,7 +109,6 @@ ceilf(float x)
 	return ceil((double)x);
 }
 
-#ifndef ns32000			/* rint() is in ./NATIONAL/support.s */
 /*
  * algorithm for rint(x) in pseudo-pascal form ...
  *
@@ -149,7 +147,12 @@ rint(double x)
 	t = x + s;				/* x+s rounded to integer */
 	return (t - s);
 }
-#endif	/* not national */
+
+float
+rintf(float x)
+{
+	return rint((double)x);
+}
 
 long
 lrint(double x)
