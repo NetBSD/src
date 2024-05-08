@@ -5,6 +5,7 @@ __divdc3
 __divsc3
 __divxc3
 __exp__D
+__fe_dfl_env
 __ieee754_acos
 __ieee754_acosf
 __ieee754_acosh
@@ -130,6 +131,9 @@ _feupdateenv
 _finite
 _finitef
 _floorl
+_fma
+_fmaf
+_fmal
 _fmodl
 _hypot
 _hypotf

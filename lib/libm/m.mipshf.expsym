@@ -5,6 +5,7 @@ __divdc3
 __divsc3
 __divxc3
 __exp__D
+__fe_dfl_env
 __ieee754_acos
 __ieee754_acosf
 __ieee754_acosh
@@ -127,6 +128,7 @@ _fesetexceptflag
 _fesetround
 _fetestexcept
 _feupdateenv
+_fini
 _finite
 _finitef
 _floorl
@@ -134,6 +136,7 @@ _fmodl
 _hypot
 _hypotf
 _hypotl
+_init
 _lgammal
 _lgammal_r
 _log
