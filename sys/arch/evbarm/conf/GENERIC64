@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.214 2023/10/11 07:49:29 rin Exp $
+#	$NetBSD: GENERIC64,v 1.215 2024/05/09 12:09:59 pho Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -131,7 +131,7 @@ cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
 cpu*		at acpi?
 
-vmt*		at fdt?			# VMware Tools
+vmt0		at cpu0			# VMware Tools
 
 # Performance monitors
 armpmu* 	at fdt?

@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.44 2024/02/18 09:03:44 andvar Exp $
+#	$NetBSD: files.aarch64,v 1.45 2024/05/09 12:09:58 pho Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -73,8 +73,13 @@ file	arch/aarch64/aarch64/disasm.c			ddb
 # mainbus files
 device	mainbus { [addr = -1], [size = 0], [intr = -1] }
 
-device cpu { }
+device	cpufeaturebus {}
+device	cpu { }: cpufeaturebus
 file	arch/aarch64/aarch64/cpu.c			cpu
+
+# VMware Tools driver
+attach	vmt at cpufeaturebus
+file	arch/aarch64/aarch64/vmt.c			vmt
 
 # bus_space(9)
 define	bus_space_generic
