@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.10 2024/05/09 12:23:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,8 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $");
+__RCSID("$NetBSD: t_ilogb.c,v 1.10 2024/05/09 12:23:21 riastradh Exp $");
 
 #include <atf-c.h>
 #include <fenv.h>
@@ -38,10 +39,14 @@ __RCSID("$NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $");
 
 #ifndef __HAVE_FENV
 
-# define ATF_CHECK_RAISED_INVALID
-# define ATF_CHECK_RAISED_NOTHING
+# define ATF_CLEAR_EXCEPTS		__nothing
+# define ATF_CHECK_RAISED_INVALID	__nothing
+# define ATF_CHECK_RAISED_NOTHING	__nothing
 
-#else
+#else  /* __HAVE_FENV */
+
+# define ATF_CLEAR_EXCEPTS		(void)feclearexcept(FE_ALL_EXCEPT);
+
 # define ATF_CHECK_RAISED_INVALID do { \
 	int r = fetestexcept(FE_ALL_EXCEPT); \
 	ATF_CHECK_MSG((r & FE_INVALID) != 0, \
@@ -55,71 +60,64 @@ __RCSID("$NetBSD: t_ilogb.c,v 1.9 2018/06/14 21:57:25 maya Exp $");
 	ATF_CHECK_MSG(r == 0, "r=%#x != 0\n", r); \
 	(void)feclearexcept(FE_ALL_EXCEPT); \
 } while (/*CONSTCOND*/0)
-#endif
+
+#endif	/* __HAVE_FENV */
 
 ATF_TC(ilogb);
 ATF_TC_HEAD(ilogb, tc)
 {
-	atf_tc_set_md_var(tc, "descr","Check ilogb family");
+	atf_tc_set_md_var(tc, "descr", "Check ilogb family");
 }
 
 ATF_TC_BODY(ilogb, tc)
 {
 
+	ATF_CLEAR_EXCEPTS;
+
 	ATF_CHECK(ilogbf(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
 	ATF_CHECK(ilogb(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
-#ifdef __HAVE_LONG_DOUBLE
 	ATF_CHECK(ilogbl(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
-#endif
 
-	ATF_CHECK(ilogbf(-0) == FP_ILOGB0);
+	ATF_CHECK(ilogbf(-0.) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
-	ATF_CHECK(ilogb(-0) == FP_ILOGB0);
+	ATF_CHECK(ilogb(-0.) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
-#ifdef __HAVE_LONG_DOUBLE
-	ATF_CHECK(ilogbl(-0) == FP_ILOGB0);
+	ATF_CHECK(ilogbl(-0.) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
-#endif
 
-	ATF_CHECK(ilogbf(INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-	ATF_CHECK(ilogb(INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-#ifdef __HAVE_LONG_DOUBLE
-	ATF_CHECK(ilogbl(INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-#endif
+	if (isinf(INFINITY)) {
+		ATF_CHECK(ilogbf(INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
+		ATF_CHECK(ilogb(INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
+		ATF_CHECK(ilogbl(INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
 
-	ATF_CHECK(ilogbf(-INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-	ATF_CHECK(ilogb(-INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-#ifdef __HAVE_LONG_DOUBLE
-	ATF_CHECK(ilogbl(-INFINITY) == INT_MAX);
-	ATF_CHECK_RAISED_INVALID;
-#endif
+		ATF_CHECK(ilogbf(-INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
+		ATF_CHECK(ilogb(-INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
+		ATF_CHECK(ilogbl(-INFINITY) == INT_MAX);
+		ATF_CHECK_RAISED_INVALID;
+	}
 
 	ATF_CHECK(ilogbf(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
 	ATF_CHECK(ilogb(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
-#ifdef __HAVE_LONG_DOUBLE
 	ATF_CHECK(ilogbl(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
-#endif
 
-#ifndef __vax__
+#ifdef NAN
 	ATF_CHECK(ilogbf(NAN) == FP_ILOGBNAN);
 	ATF_CHECK_RAISED_INVALID;
 	ATF_CHECK(ilogb(NAN) == FP_ILOGBNAN);
 	ATF_CHECK_RAISED_INVALID;
-#ifdef __HAVE_LONG_DOUBLE
 	ATF_CHECK(ilogbl(NAN) == FP_ILOGBNAN);
 	ATF_CHECK_RAISED_INVALID;
-#endif
 #endif
 }
 
