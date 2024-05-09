@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.48 2024/03/30 16:47:45 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.49 2024/05/09 20:53:13 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -23,7 +23,7 @@ typedef struct any {
 int scalar_without_braces = 3;
 int scalar_with_optional_braces = { 3 };
 int scalar_with_too_many_braces = {{ 3 }};
-/* expect+1: error: too many initializers [174] */
+/* expect+1: error: too many initializers for 'int' [174] */
 int scalar_with_too_many_initializers = { 3, 5 };
 
 
