@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.14 2024/05/08 20:23:15 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.15 2024/05/09 12:24:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -216,9 +216,6 @@ ATF_TC_HEAD(snprintf_long_double_a, tc)
 ATF_TC_BODY(snprintf_long_double_a, tc)
 {
 	char buf[1000];
-
-	atf_tc_expect_fail("PR lib/56937:"
-	    " printf(3) long double %%a formatting is broken");
 
 	snprintf(buf, sizeof buf, "%.3La", 10.6L);
 	ATF_CHECK_MSG((strcmp(buf, "0x1.533p+3") == 0 ||
