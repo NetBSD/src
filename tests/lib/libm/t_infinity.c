@@ -1,4 +1,4 @@
-/* $NetBSD: t_infinity.c,v 1.6 2012/09/26 07:24:38 jruoho Exp $ */
+/* $NetBSD: t_infinity.c,v 1.7 2024/05/09 14:00:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_infinity.c,v 1.6 2012/09/26 07:24:38 jruoho Exp $");
+__RCSID("$NetBSD: t_infinity.c,v 1.7 2024/05/09 14:00:58 riastradh Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -89,11 +89,6 @@ ATF_TC_HEAD(infinity_long_double, tc)
 
 ATF_TC_BODY(infinity_long_double, tc)
 {
-
-#ifndef LDBL_MAX
-	atf_tc_skip("no long double support on this architecture");
-	return;
-#else
 	long double v;
 
 	v = LDBL_MAX;
@@ -105,7 +100,6 @@ ATF_TC_BODY(infinity_long_double, tc)
 	v *= v;
 	ATF_REQUIRE(isinf(v));
 	ATF_REQUIRE(fpclassify(v) == FP_INFINITE);
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)
