@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.498 2024/05/09 20:22:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.499 2024/05/09 20:56:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.498 2024/05/09 20:22:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.499 2024/05/09 20:56:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -306,6 +306,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_op>		point_or_arrow
 %type	<y_arguments>	argument_expression_list
+%type	<y_scl>		storage_class_specifiers
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
 %type	<y_tnode>	expression_opt
@@ -332,6 +333,7 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for type_init_declarator_list. */
 /* No type for notype_init_declarator. */
 /* No type for type_init_declarator. */
+%type	<y_scl>		storage_class_specifier
 %type	<y_type>	type_specifier
 %type	<y_type>	notype_type_specifier
 %type	<y_type>	struct_or_union_specifier
@@ -606,6 +608,19 @@ postfix_expression:
 		$$ = build_name(current_initsym(), false);
 		end_initialization();
 	}
+	/* Rule 'compound_literal' with storage classes from C23 6.5.3.6. */
+|	T_LPAREN storage_class_specifiers type_name T_RPAREN {
+		sym_t *tmp = mktempsym($3);
+		tmp->s_scl = $2;
+		begin_initialization(tmp);
+		cgram_declare(tmp, true, NULL);
+	} braced_initializer {
+		if (!allow_c99)
+			 /* compound literals are a C99/GCC extension */
+			 gnuism(319);
+		$$ = build_name(current_initsym(), false);
+		end_initialization();
+	}
 |	T_LPAREN compound_statement_lbrace {
 		begin_statement_expr();
 	} gcc_statement_expr_list {
@@ -682,7 +697,14 @@ argument_expression_list:
 /* C23 6.5.3.6 */
 /* The rule 'compound_literal' is inlined into 'postfix_expression'. */
 
-/* TODO: Implement 'storage_class_specifiers' from C23 6.5.3.6. */
+/* C23 6.5.3.6 */
+storage_class_specifiers:
+	storage_class_specifier
+|	storage_class_specifiers storage_class_specifier {
+		// TODO C23: maybe merge multiple storage class specifiers
+		$$ = $1;
+	}
+;
 
 /* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3, C23 6.5.4 */
 unary_expression:
@@ -1048,7 +1070,10 @@ type_init_declarator:
 
 /* TODO: Implement 'attribute_declaration' from C23 6.7.1. */
 
-/* TODO: Implement 'storage_class_specifier' from C23 6.7.2. */
+/* K&R ???, C90 ???, C99 ???, C11 ???, C23 6.7.2 */
+storage_class_specifier:
+	T_SCLASS
+;
 
 /* C99 6.7.2, C23 6.7.3.1 */
 type_specifier:

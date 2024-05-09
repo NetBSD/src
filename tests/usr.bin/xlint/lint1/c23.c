@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.11 2024/05/09 11:08:07 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.12 2024/05/09 20:56:41 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -41,6 +41,29 @@ null_pointer_constant(const char *p, double dbl)
 	return p == nullptr;
 }
 
+
+void *
+storage_class_in_compound_literal(void)
+{
+	typedef struct node node;
+	struct node {
+		node *left;
+		int value;
+		node *right;
+	};
+
+	node *tree;
+	tree = &(static node){
+	    &(static node){
+		nullptr,
+		3,
+		nullptr,
+	    },
+	    5,
+	    nullptr,
+	};
+	return tree->left;
+}
 
 int
 empty_initializer_braces(void)
