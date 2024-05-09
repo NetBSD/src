@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.118 2024/01/20 00:22:11 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.119 2024/05/09 01:33:13 dyoung Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.118 2024/01/20 00:22:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.119 2024/05/09 01:33:13 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -896,6 +896,9 @@ sdhc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int r;
+
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_NON_REMOVABLE))
+		return 1;
 
 	if (hp->sc->sc_vendor_card_detect)
 		return (*hp->sc->sc_vendor_card_detect)(hp->sc);

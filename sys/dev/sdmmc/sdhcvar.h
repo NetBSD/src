@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.34 2024/01/20 00:22:11 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.35 2024/05/09 01:33:13 dyoung Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -52,6 +52,10 @@ struct sdhc_softc {
 #define	SDHC_FLAG_NO_HS_BIT	0x00002000 /* Don't set SDHC_HIGH_SPEED bit */
 #define	SDHC_FLAG_EXTERNAL_DMA	0x00004000
 #define	SDHC_FLAG_EXTDMA_DMAEN	0x00008000 /* ext. dma need SDHC_DMA_ENABLE */
+#define	SDHC_FLAG_NON_REMOVABLE \
+				0x00010000 /* slot has no card detect, behave
+					    * as if a card is always present
+					    */
 #define	SDHC_FLAG_NO_CLKBASE	0x00020000 /* ignore clkbase register */
 #define	SDHC_FLAG_SINGLE_POWER_WRITE 0x00040000
 #define	SDHC_FLAG_NO_TIMEOUT	0x00080000 /* ignore timeout interrupts */
