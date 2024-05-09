@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.20 2022/02/06 15:52:20 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.21 2024/05/09 01:33:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.20 2022/02/06 15:52:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.21 2024/05/09 01:33:12 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,6 +166,7 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	ACPI_INTEGER clock_freq;
 	ACPI_INTEGER caps, caps_mask;
 	ACPI_INTEGER funcs;
+	bool non_removable;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -233,6 +234,11 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 
 	/* Enable DMA transfer */
 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+
+	rv = acpi_dsd_bool(aa->aa_node->ad_handle, "non-removable",
+	    &non_removable);
+	if (ACPI_SUCCESS(rv) && non_removable)
+		sc->sc.sc_flags |= SDHC_FLAG_NON_REMOVABLE;
 
 	/* Read clock frequency from device properties */
 	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency",
