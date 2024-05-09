@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/19 19:49:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2024/05/09 06:34:50 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -9,10 +9,10 @@ PROG=	xdpyinfo
 CPPFLAGS+=-I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
 
 LDADD+=	-lXtst -lXi -lXrender -lXinerama -lXcomposite \
-	-lXxf86vm -lXxf86dga -lXxf86misc -lXext -lX11 \
+	-lXxf86vm -lXxf86dga -lXext -lX11 \
 	-lxcb -lX11-xcb
 DPADD+= ${LIBXTST} ${LIBXI} ${LIBXRENDER} ${LIBXINERAMA} ${LIBXCOMPOSITE} \
-	${LIBXXF86VM} ${LIBXXF86DGA} ${LIBXXF86MISC} ${LIBXEXT} ${LIBX11} \
+	${LIBXXF86VM} ${LIBXXF86DGA} ${LIBXEXT} ${LIBX11} \
 	${LIBXCB} ${LIBX11XCB}
 
 .PATH:	${X11SRCDIR.${PROG}}
