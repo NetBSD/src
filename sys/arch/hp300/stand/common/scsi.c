@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.12 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.13 2024/05/09 15:11:11 tsutsui Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -399,6 +399,19 @@ scsi_read_capacity(int ctlr, int slave, uint8_t *buf, unsigned int len)
 	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
 	    DATA_IN_PHASE);
 }
+
+#ifdef SUPPORT_CD
+int
+scsi_inquiry(int ctlr, int slave, uint8_t *buf, unsigned int len)
+{
+	struct scsi_softc *hs = &scsi_softc[ctlr];
+	static struct scsi_cdb6 cdb = { CMD_INQUIRY };
+
+	cdb.len = len;
+	return scsiicmd(hs, slave, (uint8_t *)&cdb, sizeof(cdb), buf, len,
+	    DATA_IN_PHASE);
+}
+#endif
 
 int
 scsi_tt_read(int ctlr, int slave, uint8_t *buf, u_int len, daddr_t blk,

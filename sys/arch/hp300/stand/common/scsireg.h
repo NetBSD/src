@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.5 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.6 2024/05/09 15:11:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -274,6 +274,9 @@ struct scsi_xsense {
 /* inquiry data */
 struct scsi_inquiry {
 	u_char	type;
+#define SID_TYPE	0x1f
+#define T_DIRECT	0x00
+#define T_CDROM		0x05
 	u_char	qual;
 	u_char	version;
 	u_char	rsvd;

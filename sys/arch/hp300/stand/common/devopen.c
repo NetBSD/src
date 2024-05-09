@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.14 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.15 2024/05/09 15:11:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ devlookup(const char *d, int len)
 			case 4:	/* sd */
 				memcpy(file_system, file_system_ufs,
 				    sizeof(file_system_ufs));
-				nfsys = NFSYS_UFS;
+				nfsys = NFSYS_FS;
 				break;
 
 			case 6:	/* le */
@@ -263,7 +263,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	case 4:		/* sd */
 		memcpy(file_system, file_system_ufs,
 		    sizeof(file_system_ufs));
-		nfsys = NFSYS_UFS;
+		nfsys = NFSYS_FS;
 		break;
 
 	case 6:		/* le */
