@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.497 2024/05/09 20:15:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.498 2024/05/09 20:22:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.497 2024/05/09 20:15:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.498 2024/05/09 20:22:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -328,8 +328,8 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for type_attribute. */
 /* No type for begin_type. */
 /* No type for end_type. */
-/* No type for notype_init_declarators. */
-/* No type for type_init_declarators. */
+/* No type for notype_init_declarator_list. */
+/* No type for type_init_declarator_list. */
 /* No type for notype_init_declarator. */
 /* No type for type_init_declarator. */
 %type	<y_type>	type_specifier
@@ -340,8 +340,8 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		member_declaration_list_with_rbrace
 %type	<y_sym>		member_declaration_list
 %type	<y_sym>		member_declaration
-%type	<y_sym>		notype_member_declarators
-%type	<y_sym>		type_member_declarators
+%type	<y_sym>		notype_member_declarator_list
+%type	<y_sym>		type_member_declarator_list
 %type	<y_sym>		notype_member_declarator
 %type	<y_sym>		type_member_declarator
 %type	<y_type>	enum_specifier
@@ -852,7 +852,7 @@ declaration:
 			/* empty declaration */
 			warning(2);
 	}
-|	begin_type_declmods end_type notype_init_declarators T_SEMI {
+|	begin_type_declmods end_type notype_init_declarator_list T_SEMI {
 		if (dcs->d_scl == TYPEDEF)
 			/* syntax error '%s' */
 			error(249, "missing base type for typedef");
@@ -869,7 +869,7 @@ declaration:
 			warning(2);
 	}
 |	begin_type_declaration_specifiers end_type
-	    type_init_declarators T_SEMI
+	    type_init_declarator_list T_SEMI
 |	static_assert_declaration
 ;
 
@@ -1004,14 +1004,14 @@ end_type:
 /* C23 6.7.1 */
 /* The rule 'init_declarator_list' is split into the 'notype' and 'type' variants. */
 
-notype_init_declarators:
+notype_init_declarator_list:
 	notype_init_declarator
-|	notype_init_declarators T_COMMA type_init_declarator
+|	notype_init_declarator_list T_COMMA type_init_declarator
 ;
 
-type_init_declarators:
+type_init_declarator_list:
 	type_init_declarator
-|	type_init_declarators T_COMMA type_init_declarator
+|	type_init_declarator_list T_COMMA type_init_declarator
 ;
 
 /* C23 6.7.1 */
@@ -1149,13 +1149,13 @@ member_declaration:
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
 		set_sym_kind(SK_MEMBER);
-	} notype_member_declarators T_SEMI {
+	} notype_member_declarator_list T_SEMI {
 		set_sym_kind(SK_VCFT);
 		$$ = $4;
 	}
 |	begin_type_specifier_qualifier_list end_type {
 		set_sym_kind(SK_MEMBER);
-	} type_member_declarators T_SEMI {
+	} type_member_declarator_list T_SEMI {
 		set_sym_kind(SK_VCFT);
 		$$ = $4;
 	}
@@ -1194,24 +1194,24 @@ member_declaration:
 /* C23 6.7.3.2 */
 /* The rule 'member_declarator_list' is split into the 'type' and 'notype' variants. */
 
-/* Was named struct_declarators until C11. */
-notype_member_declarators:
+/* Was named struct_declarator_list until C11. */
+notype_member_declarator_list:
 	notype_member_declarator {
 		$$ = declare_member($1);
 	}
-|	notype_member_declarators {
+|	notype_member_declarator_list {
 		set_sym_kind(SK_MEMBER);
 	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	}
 ;
 
-/* Was named struct_declarators until C11. */
-type_member_declarators:
+/* Was named struct_declarator_list until C11. */
+type_member_declarator_list:
 	type_member_declarator {
 		$$ = declare_member($1);
 	}
-|	type_member_declarators {
+|	type_member_declarator_list {
 		set_sym_kind(SK_MEMBER);
 	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
@@ -2098,7 +2098,7 @@ for_start:			/* see C99 6.8.5 */
 for_exprs:			/* see C99 6.8.5 */
 	for_start
 	    begin_type_declaration_specifiers end_type
-	    notype_init_declarators T_SEMI
+	    notype_init_declarator_list T_SEMI
 	    expression_opt T_SEMI
 	    expression_opt T_RPAREN {
 		/* variable declaration in for loop */
@@ -2200,7 +2200,7 @@ external_declaration:
  * See 'declaration' for all other declarations.
  */
 top_level_declaration:		/* C99 6.9 calls this 'declaration' */
-	begin_type end_type notype_init_declarators T_SEMI {
+	begin_type end_type notype_init_declarator_list T_SEMI {
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99)
 			/* old-style declaration; add 'int' */
@@ -2288,7 +2288,7 @@ arg_declaration:
 		/* empty declaration */
 		warning(2);
 	}
-|	begin_type_declmods end_type notype_init_declarators T_SEMI
+|	begin_type_declmods end_type notype_init_declarator_list T_SEMI
 |	begin_type_declaration_specifiers end_type T_SEMI {
 		if (!dcs->d_nonempty_decl)
 			/* empty declaration */
@@ -2298,7 +2298,7 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 	}
 |	begin_type_declaration_specifiers end_type
-	    type_init_declarators T_SEMI {
+	    type_init_declarator_list T_SEMI {
 		if (dcs->d_nonempty_decl)
 			/* '%s' declared in parameter declaration list */
 			warning(3, type_name(dcs->d_type));
