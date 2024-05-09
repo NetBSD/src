@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.232 2024/05/08 23:28:07 riastradh Exp $
+#  $NetBSD: Makefile,v 1.233 2024/05/09 00:04:23 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -206,13 +206,26 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 .PATH:	${.CURDIR}/arch/mips
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
-LIB_EXPSYM=	${LIB}.mipshf.expsym
 .endif
 .if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 COMMON_SRCS+= s_nexttoward.c
 COMMON_SRCS+= s_rintl.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
+.  if ${MKSOFTFLOAT} == "no"
+.    if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
+LIB_EXPSYM=	m.mips64hf.expsym
+.    else
+LIB_EXPSYM=	m.mipshf.expsym
+.    endif
+.  else
+.    if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
+LIB_EXPSYM=	m.mips64.expsym
+.    else
+LIB_EXPSYM=	m.mips.expsym
+.    endif
+.  endif
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
