@@ -94,6 +94,11 @@ struct linux_sysinfo {
 #define	LINUX_RLIMIT_MEMLOCK	8
 #define	LINUX_RLIMIT_AS		9
 #define	LINUX_RLIMIT_LOCKS	10
+#define LINUX_RLIMIT_SIGPENDING	11
+#define LINUX_RLIMIT_MSGQUEUE	12
+#define LINUX_RLIMIT_NICE	13
+#define LINUX_RLIMIT_RTPRIO	14
+#define LINUX_RLIMIT_RTTIME	15
 #ifdef __mips__  /* XXX only mips32. On mips64, it's ~0ul */
 #define	LINUX_RLIM_INFINITY	0x7fffffffUL
 #define	LINUX32_RLIM_INFINITY	0x7fffffffU

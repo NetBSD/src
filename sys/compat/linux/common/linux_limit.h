@@ -94,6 +94,11 @@ linux_to_bsd_limit(int lim)
 	case LINUX_RLIMIT_AS:
 		return RLIMIT_AS;
 	case LINUX_RLIMIT_LOCKS:
+	case LINUX_RLIMIT_SIGPENDING:
+	case LINUX_RLIMIT_MSGQUEUE:
+	case LINUX_RLIMIT_NICE:
+	case LINUX_RLIMIT_RTPRIO:
+	case LINUX_RLIMIT_RTTIME:
 		return -EOPNOTSUPP;
 	default:
 		return -EINVAL;
