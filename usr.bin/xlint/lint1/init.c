@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.268 2024/03/30 17:12:26 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.269 2024/05/09 20:53:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.268 2024/03/30 17:12:26 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.269 2024/05/09 20:53:13 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -530,8 +530,8 @@ warn_too_many_initializers(designator_kind kind, const type_t *tp)
 		/* too many array initializers, expected %d */
 		error(173, tp->u.dimension);
 	} else
-		/* too many initializers */
-		error(174);
+		/* too many initializers for '%s' */
+		error(174, type_name(tp));
 }
 
 static bool
