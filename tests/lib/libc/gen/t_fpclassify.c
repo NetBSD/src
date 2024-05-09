@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.5 2024/05/09 14:13:08 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.6 2024/05/09 14:44:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,21 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef _FLOAT_IEEE754
-
-ATF_TC(no_test);
-ATF_TC_HEAD(no_test, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Dummy test");
-}
-
-ATF_TC_BODY(no_test,tc)
-{
-	atf_tc_skip("Test not available on this architecture");
-}
-
-#else /* defined(_FLOAT_IEEE754) */
-
 ATF_TC(fpclassify_float);
 ATF_TC_HEAD(fpclassify_float, tc)
 {
@@ -75,6 +60,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	    d0, f, e, 0.5, FLT_MIN_EXP);
 	d1 = d0;
 
+#ifdef __FLT_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < FLT_MANT_DIG; i++) {
 		d1 /= 2;
@@ -108,6 +94,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 		    " expected normalized %a, exponent %d",
 		    i, d1, f, e, 0.5, FLT_MIN_EXP - i);
 	}
+#endif
 
 	d1 /= 2;
 	ATF_CHECK_EQ_MSG(fpclassify(d1), FP_ZERO,
@@ -151,6 +138,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	    d0, f, e, 0.5, DBL_MIN_EXP);
 	d1 = d0;
 
+#ifdef __DBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < DBL_MANT_DIG; i++) {
 		d1 /= 2;
@@ -184,6 +172,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 		    " expected normalized %a, exponent %d",
 		    i, d1, f, e, 0.5, DBL_MIN_EXP - i);
 	}
+#endif
 
 	d1 /= 2;
 	ATF_CHECK_EQ_MSG(fpclassify(d1), FP_ZERO,
@@ -227,6 +216,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	    d0, f, e, 0.5L, LDBL_MIN_EXP);
 	d1 = d0;
 
+#ifdef __LDBL_HAS_DENORM__
 	/* shift a "1" bit through the mantissa (skip the implicit bit) */
 	for (i = 1; i < LDBL_MANT_DIG; i++) {
 		d1 /= 2;
@@ -260,6 +250,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 		    " expected normalized %La, exponent %d",
 		    i, d1, f, e, 0.5L, LDBL_MIN_EXP - i);
 	}
+#endif
 
 	d1 /= 2;
 	ATF_CHECK_EQ_MSG(fpclassify(d1), FP_ZERO,
@@ -276,18 +267,12 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	    d1, f, e, 0.L, 0);
 }
 
-#endif /* _FLOAT_IEEE754 */
-
 ATF_TP_ADD_TCS(tp)
 {
 
-#ifndef _FLOAT_IEEE754
-	ATF_TP_ADD_TC(tp, no_test);
-#else
 	ATF_TP_ADD_TC(tp, fpclassify_float);
 	ATF_TP_ADD_TC(tp, fpclassify_double);
 	ATF_TP_ADD_TC(tp, fpclassify_long_double);
-#endif /* _FLOAT_IEEE754 */
 
 	return atf_no_error();
 }
