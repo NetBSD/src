@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.50 2024/05/08 16:08:08 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.51 2024/05/09 03:41:05 kre Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -322,7 +322,7 @@ image:
 .if defined(SPEC_EXTRA)
 	cat ${SPEC_EXTRA} >> ${WORKSPEC}
 .endif
-	if [ ! -s ${WORKSPEC} ]; then ${MAKESPEC} cdrom > ${WORKSPEC}; fi
+	${MAKESPEC} cdrom >> ${WORKSPEC}
 	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 -F ${WORKSPEC} -xx \
 	    ${MAKEFS_TIMESTAMP} ${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} \
 	    ${CDIMAGE} cdrom
