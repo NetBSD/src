@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.74 2024/02/07 04:20:26 msaitoh Exp $ */
+/* $NetBSD: cpu.c,v 1.75 2024/05/09 12:09:58 pho Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.74 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.75 2024/05/09 12:09:58 pho Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -180,6 +180,11 @@ cpu_attach(device_t dv, cpuid_t id)
 	cpu_setup_rng(dv, ci);
 	cpu_setup_aes(dv, ci);
 	cpu_setup_chacha(dv, ci);
+
+	struct cpufeature_attach_args cfaa;
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+	config_found(dv, &cfaa, NULL, CFARGS(.iattr = "cpufeaturebus"));
 }
 
 struct cpuidtab {

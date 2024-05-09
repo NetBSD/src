@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile,v 1.4 2020/10/27 08:57:11 ryo Exp $
+#	$NetBSD: Makefile,v 1.5 2024/05/09 12:09:59 pho Exp $
 
 .include "../Makefile.inc"
 
+.if ${MACHINE_CPU} == "aarch64"
+.PATH:	${S}/arch/aarch64/aarch64
+.elif ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
 .PATH:	${S}/arch/x86/x86
+.endif
 .PATH:	${S}/dev/vmt
 
-KMOD=	vmt	
+KMOD=	vmt
 IOCONF=	vmt.ioconf
 SRCS=	vmt.c \
 	vmt_subr.c

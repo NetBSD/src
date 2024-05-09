@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.49 2023/02/25 00:40:22 riastradh Exp $ */
+/* $NetBSD: cpu.h,v 1.50 2024/05/09 12:09:59 pho Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -247,6 +247,9 @@ cpu_dosoftints(void)
 #endif
 }
 
+struct cpufeature_attach_args {
+	struct cpu_info *ci;
+};
 
 #endif /* _KERNEL */
 

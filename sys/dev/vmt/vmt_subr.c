@@ -1,4 +1,4 @@
-/* $NetBSD: vmt_subr.c,v 1.9 2024/04/02 20:04:16 christos Exp $ */
+/* $NetBSD: vmt_subr.c,v 1.10 2024/05/09 12:09:59 pho Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -20,7 +20,8 @@
 
 /*
  * Protocol reverse engineered by Ken Kato:
- * https://sites.google.com/site/chitchatvmback/backdoor
+ * https://sites.google.com/site/chitchatvmback/backdoor (dead link)
+ * https://web.archive.org/web/20230325103442/https://sites.google.com/site/chitchatvmback/backdoor (archive)
  */
 
 #include <sys/param.h>
