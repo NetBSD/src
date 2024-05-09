@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.18 2020/02/15 08:16:11 skrll Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.19 2024/05/09 12:41:08 pho Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.18 2020/02/15 08:16:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.19 2024/05/09 12:41:08 pho Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -122,5 +122,6 @@ cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 	cpu_attach(self, mb->mb_core);
 }
 
-CFATTACH_DECL_NEW(cpu_mainbus, 0,
-    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu_mainbus, 0,
+    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL,
+    cpu_rescan, cpu_childdetached);

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.42 2022/03/03 06:26:05 riastradh Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.43 2024/05/09 12:41:08 pho Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.42 2022/03/03 06:26:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.43 2024/05/09 12:41:08 pho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -57,8 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.42 2022/03/03 06:26:05 riastradh Exp $
 static int	cpu_fdt_match(device_t, cfdata_t, void *);
 static void	cpu_fdt_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cpu_fdt, 0,
-	cpu_fdt_match, cpu_fdt_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu_fdt, 0,
+    cpu_fdt_match, cpu_fdt_attach, NULL, NULL,
+    cpu_rescan, cpu_childdetached);
 
 static int
 cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)

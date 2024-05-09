@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmt.4,v 1.4 2024/05/09 12:09:58 pho Exp $
+.\"	$NetBSD: vmt.4,v 1.5 2024/05/09 12:41:08 pho Exp $
 .\"	$OpenBSD: vmt.4,v 1.4 2010/10/26 05:07:31 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -78,3 +78,41 @@ The
 .Nm
 driver was written by
 .An David Gwynne Aq Mt dlg@openbsd.org .
+.Sh BUGS
+.Nm
+is known to cause a conflict with
+.Xr vmtoolsd 8
+from
+.Li open-vm-tools .
+.Nm
+works by establishing an RPC channel called TCLO between VMware guest and
+host to receive controlling messages from the host. The problem is that
+.Nm
+is essentially a subset of
+.Xr vmtoolsd 8 ,
+and they both use the same RPC channel, but TCLO is never meant to be
+simultaneously used by two distinct services in the same VM guest. So when
+.Xr vmtoolsd 8
+is running while also
+.Nm
+is active, they continually fight for the channel, both get rejected by the
+confused VM host, and neither one can establish a stable communication
+line.
+.Pp
+So before launching
+.Xr vmtoolsd 8
+the
+.Nm
+driver should be detached by running:
+.Bd -literal -offset indent
+# drvctl -d vmt0
+.Ed
+.Pp
+And after terminating
+.Xr vmtoolsd 8
+the
+.Nm
+driver should be re-attached by running:
+.Bd -literal -offset indent
+# drvctl -r -a cpufeaturebus cpu0
+.Ed
