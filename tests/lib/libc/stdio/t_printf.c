@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.15 2024/05/09 12:24:24 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.16 2024/05/09 22:38:29 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ ATF_TC_BODY(snprintf_double_a, tc)
 	snprintf(buf, sizeof buf, "%.3a", (double)10.6);
 	ATF_CHECK_MSG((strcmp(buf, "0x1.533p+3") == 0 ||
 		strcmp(buf, "0x2.a66p+2") == 0 ||
-		strcmp(buf, "0x5.4ccp+1") == 0 ||
+		strcmp(buf, "0x5.4cdp+1") == 0 ||
 		strcmp(buf, "0xa.99ap+0") == 0),
 	    "buf=%s", buf);
 
@@ -220,7 +220,7 @@ ATF_TC_BODY(snprintf_long_double_a, tc)
 	snprintf(buf, sizeof buf, "%.3La", 10.6L);
 	ATF_CHECK_MSG((strcmp(buf, "0x1.533p+3") == 0 ||
 		strcmp(buf, "0x2.a66p+2") == 0 ||
-		strcmp(buf, "0x5.4ccp+1") == 0 ||
+		strcmp(buf, "0x5.4cdp+1") == 0 ||
 		strcmp(buf, "0xa.99ap+0") == 0),
 	    "buf=%s", buf);
 
