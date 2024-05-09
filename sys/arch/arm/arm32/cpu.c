@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.153 2022/03/03 06:26:05 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.154 2024/05/09 12:41:08 pho Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.153 2022/03/03 06:26:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.154 2024/05/09 12:41:08 pho Exp $");
 
 #include <sys/param.h>
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.153 2022/03/03 06:26:05 riastradh Exp $");
 
 #include <arm/locore.h>
 #include <arm/undefined.h>
+#include <arm/cpuvar.h>
 #include <arm/cpu_topology.h>
 
 extern const char *cpu_arch;
@@ -231,6 +232,18 @@ cpu_attach(device_t dv, cpuid_t id)
 #endif
 
 	vfp_attach(ci);
+}
+
+int
+cpu_rescan(device_t dv, const char *ifattr, const int *locators)
+{
+	return 0;
+}
+
+void
+cpu_childdetached(device_t dv, device_t child)
+{
+	/* Nada */
 }
 
 enum cpu_class {

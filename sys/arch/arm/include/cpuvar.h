@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1 2020/02/15 08:16:11 skrll Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.2 2024/05/09 12:41:08 pho Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/device_if.h>
 
 void	cpu_attach(device_t, cpuid_t);
+int	cpu_rescan(device_t, const char *, const int *);
+void	cpu_childdetached(device_t, device_t);
 
 #endif
 
