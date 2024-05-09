@@ -431,7 +431,8 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
 	case PFSstatm:		/* /proc/N/statm = -r--r--r-- */
 	case PFSversion:	/* /proc/version = -r--r--r-- */
-	case PFSlimit:		/* /proc/limit = -r--r--r-- */
+	case PFSlimit:		/* /proc/N/limit = -r--r--r-- */
+	case PFSlimits:		/* /proc/N/limits = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;

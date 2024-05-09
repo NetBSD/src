@@ -171,6 +171,7 @@ static const struct proc_target {
 	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
 	{ DT_REG, N("limit"),	PFSlimit,	NULL },
+	{ DT_REG, N("limits"),	PFSlimits,	procfs_validfile_linux },
 	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
 	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("mem"),	PFSmem,		NULL },
@@ -704,6 +705,7 @@ procfs_getattr(void *v)
 	case PFSmap:
 	case PFSmaps:
 	case PFSlimit:
+	case PFSlimits:
 	case PFSauxv:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
@@ -844,6 +846,7 @@ procfs_getattr(void *v)
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSlimit:
+	case PFSlimits:
 	case PFSmap:
 	case PFSmaps:
 		/*

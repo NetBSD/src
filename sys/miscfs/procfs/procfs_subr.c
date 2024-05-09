@@ -215,6 +215,10 @@ procfs_rw(void *v)
 		error = procfs_dolimit(curl, p, pfs, uio);
 		break;
 
+	case PFSlimits:
+		error = procfs_dolimits(curl, p, pfs, uio);
+		break;
+
 	case PFSmap:
 		error = procfs_domap(curl, p, pfs, uio, 0);
 		break;

@@ -97,6 +97,7 @@ typedef enum {
 	PFSfpregs,	/* the process's FP register set */
 	PFSloadavg,	/* load average (if -o linux) */
 	PFSlimit,	/* resource limits */
+	PFSlimits,	/* resource limits, Linux style (if -o linux) */
 	PFSmap,		/* memory map */
 	PFSmaps,	/* memory map, Linux style (if -o linux) */
 	PFSmem,		/* the process's memory image */
@@ -268,6 +269,8 @@ int procfs_doversion(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_doauxv(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_dolimit(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_dolimits(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_hashrem(struct pfsnode *);
