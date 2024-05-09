@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.495 2024/05/03 04:04:17 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.496 2024/05/09 11:08:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.495 2024/05/03 04:04:17 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.496 2024/05/09 11:08:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -140,6 +140,7 @@ is_either(const char *s, const char *a, const char *b)
 	array_size y_array_size;
 	bool	y_in_system_header;
 	designation y_designation;
+	named_constant y_named_constant;
 };
 
 /* for Bison:
@@ -199,6 +200,7 @@ is_either(const char *s, const char *a, const char *b)
 			fprintf(yyo, "<scalar>");
 	}
 } <y_designation>
+%printer { fprintf(yyo, "%s", named_constant_name($$)); } <y_named_constant>
 */
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -287,6 +289,7 @@ is_either(const char *s, const char *a, const char *b)
 %token	<y_name>	T_NAME
 %token	<y_name>	T_TYPENAME
 %token	<y_val>		T_CON
+%token	<y_named_constant> T_NAMED_CONSTANT
 %token	<y_string>	T_STRING
 
 /* No type for program. */
@@ -483,6 +486,25 @@ primary_expression:
 	}
 |	T_CON {
 		$$ = build_constant(gettyp($1->v_tspec), $1);
+	}
+|	T_NAMED_CONSTANT {
+		if ($1 == NC_NULLPTR) {
+			tnode_t *zero = expr_alloc_tnode();
+			zero->tn_op = CON;
+			zero->tn_type = gettyp(INT);
+			zero->u.value.v_tspec = INT;
+
+			type_t *void_ptr = block_derive_type(gettyp(VOID), PTR);
+			$$ = convert(CVT, 0, void_ptr, zero);
+			$$->tn_sys = zero->tn_sys;
+		} else {
+			tnode_t *nc = expr_alloc_tnode();
+			nc->tn_op = CON;
+			nc->tn_type = gettyp(BOOL);
+			nc->u.value.v_tspec = BOOL;
+			nc->u.value.u.integer = $1 == NC_TRUE ? 1 : 0;
+			$$ = nc;
+		}
 	}
 |	string {
 		$$ = build_string($1);
