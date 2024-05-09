@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.241 2024/01/26 12:58:51 tsutsui Exp $
+#	 $NetBSD: mi,v 1.242 2024/05/09 06:38:27 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1214,8 +1214,8 @@
 ./usr/X11R7/lib/libXv_p.a				xcomp-libXv-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXxf86dga.a				xcomp-libXxf86dga-lib	xorg,compatx11file
 ./usr/X11R7/lib/libXxf86dga_p.a				xcomp-libXxf86dga-lib	profile,xorg,compatx11file
-./usr/X11R7/lib/libXxf86misc.a				xcomp-libXxf86misc-lib	xorg,compatx11file
-./usr/X11R7/lib/libXxf86misc_p.a			xcomp-libXxf86misc-lib	profile,xorg,compatx11file
+./usr/X11R7/lib/libXxf86misc.a				xcomp-obsolete	obsolete
+./usr/X11R7/lib/libXxf86misc_p.a			xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libXxf86vm.a				xcomp-libXxf86vm-lib	xorg,compatx11file
 ./usr/X11R7/lib/libXxf86vm_p.a				xcomp-libXxf86vm-lib	profile,xorg,compatx11file
 ./usr/X11R7/lib/libdrm.a				xcomp-libdrm-lib	xorg,compatx11file
@@ -1462,7 +1462,7 @@
 ./usr/X11R7/lib/pkgconfig/xvmc.pc			xcomp-libXvMC-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xwaylandproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86dga.pc			xcomp-libXxf86dga-lib	xorg
-./usr/X11R7/lib/pkgconfig/xxf86misc.pc			xcomp-libXxf86misc-lib	xorg
+./usr/X11R7/lib/pkgconfig/xxf86misc.pc			comp-obsolete	obsolete
 ./usr/X11R7/lib/pkgconfig/xxf86vm.pc			xcomp-libXxf86vm-lib	xorg
 ./usr/X11R7/man/cat1/mergelib.0				xcomp-mergelib-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xft-config.0			xcomp-obsolete	obsolete
@@ -1929,15 +1929,15 @@
 ./usr/X11R7/man/cat3/XExtendedMaxRequestSize.0		xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XExtentsOfFontSet.0		xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86DGA.0				xcomp-libXxf86dga-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86Misc.0				xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscGetKbdSettings.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscGetMouseSettings.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscGetSaver.0			xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscQueryExtension.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscQueryVersion.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscSetKbdSettings.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscSetMouseSettings.0		xcomp-libXxf86misc-catman	.cat,xorg
-./usr/X11R7/man/cat3/XF86MiscSetSaver.0			xcomp-libXxf86misc-catman	.cat,xorg
+./usr/X11R7/man/cat3/XF86Misc.0				xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscGetKbdSettings.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscGetMouseSettings.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscGetSaver.0			xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscQueryExtension.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscQueryVersion.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscSetKbdSettings.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscSetMouseSettings.0		xcomp-obsolete	obsolete
+./usr/X11R7/man/cat3/XF86MiscSetSaver.0			xcomp-obsolete	obsolete
 ./usr/X11R7/man/cat3/XF86VM.0				xcomp-libXxf86vm-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeAddModeLine.0		xcomp-libXxf86vm-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	xcomp-libXxf86vm-catman	.cat,xorg
@@ -3403,15 +3403,15 @@
 ./usr/X11R7/man/html3/XExtendedMaxRequestSize.html	xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XExtentsOfFontSet.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86DGA.html			xcomp-libXxf86dga-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86Misc.html			xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetKbdSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetMouseSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetSaver.html		xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscQueryExtension.html	xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscQueryVersion.html		xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetKbdSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetSaver.html		xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86Misc.html			xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscGetKbdSettings.html	xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscGetMouseSettings.html	xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscGetSaver.html		xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscQueryExtension.html	xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscQueryVersion.html		xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscSetKbdSettings.html	xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	xcomp-obsolete	obsolete
+./usr/X11R7/man/html3/XF86MiscSetSaver.html		xcomp-obsolete	obsolete
 ./usr/X11R7/man/html3/XF86VM.html			xcomp-libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeAddModeLine.html	xcomp-libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeDeleteModeLine.html	xcomp-libXxf86vm-htmlman	html,xorg
@@ -4876,15 +4876,15 @@
 ./usr/X11R7/man/man3/XExtendedMaxRequestSize.3		xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XExtentsOfFontSet.3		xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XF86DGA.3				xcomp-libXxf86dga-man	.man,xorg
-./usr/X11R7/man/man3/XF86Misc.3				xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscGetKbdSettings.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscGetMouseSettings.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscGetSaver.3			xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscQueryExtension.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscQueryVersion.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscSetKbdSettings.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscSetMouseSettings.3		xcomp-libXxf86misc-man	.man,xorg
-./usr/X11R7/man/man3/XF86MiscSetSaver.3			xcomp-libXxf86misc-man	.man,xorg
+./usr/X11R7/man/man3/XF86Misc.3				xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscGetKbdSettings.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscGetMouseSettings.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscGetSaver.3			xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscQueryExtension.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscQueryVersion.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscSetKbdSettings.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscSetMouseSettings.3		xcomp-obsolete	obsolete
+./usr/X11R7/man/man3/XF86MiscSetSaver.3			xcomp-obsolete	obsolete
 ./usr/X11R7/man/man3/XF86VM.3				xcomp-libXxf86vm-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeAddModeLine.3		xcomp-libXxf86vm-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	xcomp-libXxf86vm-man	.man,xorg

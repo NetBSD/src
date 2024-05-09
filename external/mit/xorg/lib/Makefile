@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2023/07/15 21:24:46 rjs Exp $
+#	$NetBSD: Makefile,v 1.59 2024/05/09 06:38:27 nia Exp $
 
 # build libraries for xorg
 
@@ -39,7 +39,7 @@ SUBDIR+=libvdpau \
 SUBDIR+=libXi libXxf86vm \
 	libGL${OLD_SUFFIX} libXScrnSaver libXfont libXfont2 \
 	libXinerama libXmu libXmuu libXpm libXrender \
-	libXres libXtst libXvMC libXvMCW libXv libXxf86dga libXxf86misc \
+	libXres libXtst libXvMC libXvMCW libXv libXxf86dga \
 	libxkbui \
 	.WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
