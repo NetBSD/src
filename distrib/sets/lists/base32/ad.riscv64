@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.5 2024/05/06 08:38:51 mrg Exp $
+# $NetBSD: ad.riscv64,v 1.6 2024/05/09 15:54:58 mrg Exp $
 ./lib/rv32					base-compat-shlib	compat
 ./lib/rv32/npf					base-compat-shlib	compat,npf
 ./lib/rv32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -88,8 +88,10 @@
 ./usr/lib/rv32/libarchive.so.5			base-compat-shlib	compat
 ./usr/lib/rv32/libarchive.so.5.0		base-compat-shlib	compat
 ./usr/lib/rv32/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/rv32/libasan.so.5			base-compat-shlib	compat,gcc,cxx
-./usr/lib/rv32/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/rv32/libasan.so.5			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/rv32/libasan.so.5.0			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/rv32/libasan.so.6			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/rv32/libasan.so.6.0			base-compat-shlib	compat,gcc=12,cxx
 ./usr/lib/rv32/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/rv32/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/rv32/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -198,8 +200,10 @@
 ./usr/lib/rv32/libgnumalloc.so.1		base-compat-shlib	compat
 ./usr/lib/rv32/libgnumalloc.so.1.0		base-compat-shlib	compat
 ./usr/lib/rv32/libgomp.so			base-compat-shlib	compat,gcc
-./usr/lib/rv32/libgomp.so.2			base-compat-shlib	compat,gcc
-./usr/lib/rv32/libgomp.so.2.1			base-compat-shlib	compat,gcc
+./usr/lib/rv32/libgomp.so.2			base-compat-shlib	compat,gcc=10
+./usr/lib/rv32/libgomp.so.2.1			base-compat-shlib	compat,gcc=10
+./usr/lib/rv32/libgomp.so.2			base-compat-shlib	compat,gcc=12
+./usr/lib/rv32/libgomp.so.2.2			base-compat-shlib	compat,gcc=12
 ./usr/lib/rv32/libgssapi.so			base-compat-shlib	compat,kerberos
 ./usr/lib/rv32/libgssapi.so.12			base-compat-shlib	compat,kerberos
 ./usr/lib/rv32/libgssapi.so.12.0		base-compat-shlib	compat,kerberos
@@ -270,8 +274,10 @@
 ./usr/lib/rv32/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/rv32/libldap_r.so.6.0		base-compat-shlib	compat,ldap
 ./usr/lib/rv32/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/rv32/liblsan.so.2			base-compat-shlib	compat,cxx,gcc
-./usr/lib/rv32/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc
+./usr/lib/rv32/liblsan.so.2			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/rv32/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/rv32/liblsan.so.3			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/rv32/liblsan.so.3.0			base-compat-shlib	compat,cxx,gcc=12
 ./usr/lib/rv32/liblua.so			base-compat-shlib	compat
 ./usr/lib/rv32/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/rv32/liblua.so.6.1			base-compat-shlib	compat
@@ -418,7 +424,8 @@
 ./usr/lib/rv32/libssl.so.15.0			base-compat-shlib	compat
 ./usr/lib/rv32/libstdc++.so			base-compat-shlib	compat,gcc,cxx,libstdcxx
 ./usr/lib/rv32/libstdc++.so.9			base-compat-shlib	compat,gcc,cxx,libstdcxx
-./usr/lib/rv32/libstdc++.so.9.0		base-compat-shlib	compat,gcc,cxx,libstdcxx
+./usr/lib/rv32/libstdc++.so.9.0			base-compat-shlib	compat,gcc=10,cxx,libstdcxx
+./usr/lib/rv32/libstdc++.so.9.1			base-compat-shlib	compat,gcc=12,cxx,libstdcxx
 ./usr/lib/rv32/libtermcap.so			base-compat-shlib	compat
 ./usr/lib/rv32/libtermcap.so.0			base-compat-shlib	compat
 ./usr/lib/rv32/libtermcap.so.0.6		base-compat-shlib	compat
@@ -432,8 +439,10 @@
 ./usr/lib/rv32/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/rv32/libtre.so.0.8			base-compat-shlib	compat
 ./usr/lib/rv32/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/rv32/libubsan.so.4			base-compat-shlib	compat,gcc,cxx
-./usr/lib/rv32/libubsan.so.4.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/rv32/libubsan.so.4			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/rv32/libubsan.so.4.0			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/rv32/libubsan.so.5			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/rv32/libubsan.so.5.0			base-compat-shlib	compat,gcc=12,cxx
 ./usr/lib/rv32/libukfs.so			base-compat-shlib	compat
 ./usr/lib/rv32/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/rv32/libukfs.so.1.0			base-compat-shlib	compat
