@@ -188,6 +188,8 @@ fminf
 fmod
 fmodf
 fmodl
+frexpf
+frexpl
 gamma
 hypot
 hypotf
