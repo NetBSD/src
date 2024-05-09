@@ -1,4 +1,4 @@
-/*	$NetBSD: n_ilogb.c,v 1.1 2016/08/24 09:08:50 christos Exp $	*/
+/*	$NetBSD: n_ilogb.c,v 1.2 2024/05/09 12:18:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,10 +30,14 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: n_ilogb.c,v 1.1 2016/08/24 09:08:50 christos Exp $");
+__RCSID("$NetBSD: n_ilogb.c,v 1.2 2024/05/09 12:18:48 riastradh Exp $");
 #endif
 
 #include "math.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(ilogbl,ilogb)
+#endif
 
 int
 ilogb(double x)
