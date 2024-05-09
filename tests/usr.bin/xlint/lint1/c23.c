@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.10 2024/05/07 21:13:27 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.11 2024/05/09 11:08:07 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -25,6 +25,20 @@ c99_bool_is_still_valid_in_c23(void)
 	_Bool t = 1;
 	_Bool f = 0;
 	return (t == 1 ? 20 : 0) + (f == 0 ? 3 : 0);
+}
+
+
+bool
+null_pointer_constant(const char *p, double dbl)
+{
+	/* expect+1: error: operands of '!=' have incompatible types 'double' and 'pointer to void' [107] */
+	if (dbl != nullptr)
+		p++;
+	if (dbl > 0.0)
+		p++;
+	if (*p == '\0')
+		p = nullptr;
+	return p == nullptr;
 }
 
 

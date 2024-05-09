@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.224 2024/05/07 21:13:26 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.225 2024/05/09 11:08:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.224 2024/05/07 21:13:26 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.225 2024/05/09 11:08:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -97,8 +97,9 @@ bool in_system_header;
 	kwdef(name, T_TYPE, .u.kw_tspec = (tspec), since, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
 	kwdef(name, T_QUAL, .u.kw_tqual = {.tqual = true}, since, gcc, deco)
-#define kwdef_const(name, constant,		since, gcc, deco) \
-	kwdef(name, T_CON, .u.kw_const = (constant), since, gcc, deco)
+#define kwdef_const(name, named_constant,	since, gcc, deco) \
+	kwdef(name, T_NAMED_CONSTANT, \
+	    .u.kw_named_constant = (named_constant), since, gcc, deco)
 #define kwdef_keyword(name, token) \
 	kwdef(name, token, {false},		78, 0, 1)
 
@@ -114,7 +115,7 @@ static const struct keyword {
 		type_qualifiers kw_tqual;	/* if kw_token is T_QUAL */
 		function_specifier kw_fs;	/* if kw_token is
 						 * T_FUNCTION_SPECIFIER */
-		named_constant kw_const;	/* if kw_token is T_CON */
+		named_constant kw_named_constant;
 	} u;
 	bool	kw_added_in_c90:1;
 	bool	kw_added_in_c99_or_c11:1;
@@ -165,6 +166,7 @@ static const struct keyword {
 #endif
 	kwdef_type(	"long",		LONG,			78),
 	kwdef("_Noreturn", T_FUNCTION_SPECIFIER, .u.kw_fs = FS_NORETURN, 11,0,1),
+	kwdef_const(	"nullptr",	NC_NULLPTR,		23,0,1),
 	// XXX: __packed is GCC-specific.
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
@@ -374,8 +376,8 @@ register_keyword(const struct keyword *kw, bool leading, bool trailing)
 		sym->u.s_keyword.u.sk_type_qualifier = kw->u.kw_tqual;
 	if (tok == T_FUNCTION_SPECIFIER)
 		sym->u.s_keyword.u.function_specifier = kw->u.kw_fs;
-	if (tok == T_CON)
-		sym->u.s_keyword.u.constant = kw->u.kw_const;
+	if (tok == T_NAMED_CONSTANT)
+		sym->u.s_keyword.u.named_constant = kw->u.kw_named_constant;
 
 	symtab_add(sym);
 }
@@ -455,12 +457,8 @@ lex_keyword(sym_t *sym)
 	if (tok == T_FUNCTION_SPECIFIER)
 		yylval.y_function_specifier =
 		    sym->u.s_keyword.u.function_specifier;
-	if (tok == T_CON) {
-		val_t *v = xcalloc(1, sizeof(*v));
-		v->v_tspec = BOOL;
-		v->u.integer = sym->u.s_keyword.u.constant == NC_TRUE ? 1 : 0;
-		yylval.y_val = v;
-	}
+	if (tok == T_NAMED_CONSTANT)
+		yylval.y_named_constant = sym->u.s_keyword.u.named_constant;
 	return tok;
 }
 

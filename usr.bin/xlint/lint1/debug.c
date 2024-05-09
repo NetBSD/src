@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.77 2024/05/03 04:04:17 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.78 2024/05/09 11:08:07 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.77 2024/05/03 04:04:17 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.78 2024/05/09 11:08:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -359,6 +359,18 @@ function_specifier_name(function_specifier spec)
 	};
 
 	return name[spec];
+}
+
+const char *
+named_constant_name(named_constant nc)
+{
+	static const char *const name[] = {
+	    "false",
+	    "true",
+	    "nullptr",
+	};
+
+	return name[nc];
 }
 
 static void
