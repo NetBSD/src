@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3053 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3054 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -370,3 +370,17 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		properly. [tsutsui 20240501]
 	evbarm: Add device tree for Red Pitaya SDRlab 122-16.
 		[dyoung 20240504]
+	libm: Add an assembly implementation of rintl(3) for x86.
+		[riastradh 20240505]
+	libm: Expose more long double functions on vax.
+		[riastradh 20240506]
+	libm: Expand tests for modf/modff/modfl, nextafter/nexttoward,
+		nearbyint/nearbyintl/rint.  [riastradh 20240506]
+	mk: Use --compress-debug-sections when creating debug files
+		to reduce the size of the installed debug set.
+		[mrg 20240506]
+	makefs(8): Add an option to warn and error out for mtree missing
+		entries.  [christos 20240508]
+	hp300: Preliminary CD boot support.  [tsutsui 20240509]
+	lint(1): Support new keywords in C23 mode, including nullptr.
+		[rillig 20240509]
