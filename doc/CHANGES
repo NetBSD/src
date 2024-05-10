@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3054 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3055 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -384,3 +384,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	hp300: Preliminary CD boot support.  [tsutsui 20240509]
 	lint(1): Support new keywords in C23 mode, including nullptr.
 		[rillig 20240509]
+	install(1): Support -v (verbose). [wiz 20240510]
