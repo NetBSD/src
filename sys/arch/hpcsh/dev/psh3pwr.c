@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.6 2012/10/29 12:51:38 chs Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.7 2024/05/10 20:08:04 andvar Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.6 2012/10/29 12:51:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.7 2024/05/10 20:08:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.6 2012/10/29 12:51:38 chs Exp $");
 #endif
 
 
-/* A/D covnerter channels to get power stats from */
+/* A/D converter channels to get power stats from */
 #define ADC_CHANNEL_BATTERY	3
 
 /* On/Off bit for Green LED. pin 7 in SH7709 GPIO port H. */
