@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.105 2024/05/10 12:18:16 riastradh Exp $
+# $NetBSD: shl.mi,v 1.106 2024/05/10 12:21:49 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -152,8 +152,6 @@
 ./usr/X11R7/lib/libXxf86dga.so.2		xbase-libXxf86dga-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXxf86dga.so.2.0		xbase-libXxf86dga-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXxf86misc.so			xbase-obsolete		obsolete
-./usr/X11R7/lib/libXxf86misc.so.2		xbase-obsolete		obsolete
-./usr/X11R7/lib/libXxf86misc.so.2.0		xbase-obsolete		obsolete
 ./usr/X11R7/lib/libXxf86vm.so			xbase-libXxf86vm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXxf86vm.so.2			xbase-libXxf86vm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXxf86vm.so.2.0		xbase-libXxf86vm-lib		xorg,compatx11file
