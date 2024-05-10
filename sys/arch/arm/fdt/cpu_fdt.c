@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.43 2024/05/09 12:41:08 pho Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.44 2024/05/10 14:42:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.43 2024/05/09 12:41:08 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.44 2024/05/10 14:42:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,7 +98,7 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 	cpu_attach(self, cpuid);
 
 	/* Attach CPU frequency scaling provider */
-	config_found(self, faa, NULL, CFARGS_NONE);
+	config_found(self, faa, NULL, CFARGS(.iattr = "cpu"));
 }
 
 #if defined(MULTIPROCESSOR) && (NPSCI_FDT > 0 || defined(__aarch64__))
