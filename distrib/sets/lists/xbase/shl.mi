@@ -1,6 +1,15 @@
-# $NetBSD: shl.mi,v 1.104 2024/05/09 06:38:27 nia Exp $
+# $NetBSD: shl.mi,v 1.105 2024/05/10 12:18:16 riastradh Exp $
 #
-# Note: don't delete entries from here - mark them as "obsolete" instead.
+# Note:	Don't delete entries from here - mark them as "obsolete" instead,
+#	unless otherwise stated below.
+#
+# Note:	Do not mark "old" major and major.minor shared libraries as
+#	"obsolete"; just remove the entry, as third-party applications
+#	may be linked against the old major shared library, and
+#	that is a symlink to the old major.minor shared library.
+#	e.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	Exceptions to this rule may include shared libraries that
+#	are dlopen()ed at run-time, such as extra locales, etc.
 #
 ./usr/X11R7/lib/X11/locale/lib/common/ximcp.so		obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2	obsolete	obsolete
