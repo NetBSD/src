@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.3 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4 2024/05/10 08:20:37 skrll Exp $	*/
 
 /*
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -11,13 +11,14 @@
 typedef int fenv_t;		/* FPSCR */
 typedef int fexcept_t;
 
-#define	FE_INEXACT	0x00	/* Result inexact */
-#define	FE_UNDERFLOW	0x02	/* Result underflowed */
-#define	FE_OVERFLOW	0x04	/* Result overflowed */
-#define	FE_DIVBYZERO	0x08	/* divide-by-zero */
-#define	FE_INVALID	0x10	/* Result invalid */
+#define	FE_INEXACT	__BIT(0)	/* Result inexact */
+#define	FE_UNDERFLOW	__BIT(1)	/* Result underflowed */
+#define	FE_OVERFLOW	__BIT(2)	/* Result overflowed */
+#define	FE_DIVBYZERO	__BIT(3)	/* divide-by-zero */
+#define	FE_INVALID	__BIT(4)	/* Result invalid */
 
-#define	FE_ALL_EXCEPT	0x1f
+#define	FE_ALL_EXCEPT	\
+    (FE_INEXACT | FE_UNDERFLOW | FE_OVERFLOW | FE_DIVBYZERO | FE_INVALID)
 
 #define	FE_TONEAREST	0	/* round to nearest representable number */
 #define	FE_TOWARDZERO	1	/* round to zero (truncate) */
