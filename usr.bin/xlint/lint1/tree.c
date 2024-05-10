@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.640 2024/05/03 04:04:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.641 2024/05/10 21:43:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.640 2024/05/03 04:04:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.641 2024/05/10 21:43:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3680,8 +3680,8 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 }
 
 static void
-convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
-			  tspec_t nt, val_t *v, val_t *nv)
+convert_constant_from_floating(op_t op, int arg, const type_t *ntp,
+			       tspec_t nt, val_t *nv, val_t *ov)
 {
 	long double max = 0.0, min = 0.0;
 
@@ -3715,36 +3715,34 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	case DOUBLE:
 	case DCOMPLEX:
 		max = DBL_MAX;		min = -DBL_MAX;		break;
-	case PTR:
-		/* Already got an error because of float --> ptr */
 	case LDOUBLE:
 	case LCOMPLEX:
-		/* LINTED 248 */
+		/* LINTED 248; see floating_error_value. */
 		max = LDBL_MAX;		min = -max;		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
 	}
-	if (v->u.floating > max || v->u.floating < min) {
+	if (ov->u.floating > max || ov->u.floating < min) {
 		lint_assert(nt != LDOUBLE);
-		if (op == FARG) {
+		const char *ot_name = type_name(gettyp(ov->v_tspec));
+		const char *nt_name = type_name(ntp);
+		if (op == FARG)
 			/* conversion of '%s' to '%s' is out of range, ... */
-			warning(295,
-			    type_name(gettyp(ot)), type_name(tp), arg);
-		} else {
+			warning(295, ot_name, nt_name, arg);
+		else
 			/* conversion of '%s' to '%s' is out of range */
-			warning(119, type_name(gettyp(ot)), type_name(tp));
-		}
-		v->u.floating = v->u.floating > 0 ? max : min;
+			warning(119, ot_name, nt_name);
+		ov->u.floating = ov->u.floating > 0 ? max : min;
 	}
 
 	if (nt == FLOAT || nt == FCOMPLEX)
-		nv->u.floating = (float)v->u.floating;
+		nv->u.floating = (float)ov->u.floating;
 	else if (nt == DOUBLE || nt == DCOMPLEX)
-		nv->u.floating = (double)v->u.floating;
+		nv->u.floating = (double)ov->u.floating;
 	else if (nt == LDOUBLE || nt == LCOMPLEX)
-		nv->u.floating = v->u.floating;
+		nv->u.floating = ov->u.floating;
 	else
-		nv->u.integer = (int64_t)v->u.floating;
+		nv->u.integer = (int64_t)ov->u.floating;
 }
 
 static bool
@@ -3925,7 +3923,7 @@ convert_constant(op_t op, int arg, const type_t *ntp, val_t *nv, val_t *ov)
 	}
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE)
-		convert_constant_floating(op, arg, ot, ntp, nt, ov, nv);
+		convert_constant_from_floating(op, arg, ntp, nt, nv, ov);
 	else if (!convert_constant_to_floating(nt, nv, ot, ov)) {
 		range_check = true;	/* Check for lost precision. */
 		nv->u.integer = ov->u.integer;
