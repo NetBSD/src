@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.47 2012/04/08 22:00:40 wiz Exp $
+.\"	$NetBSD: install.1,v 1.48 2024/05/10 09:14:52 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 1, 2009
+.Dd May 9, 2024
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm
-.Op Fl bcprsU
+.Op Fl bcprsUv
 .Op Fl a Ar command
 .Op Fl B Ar suffix
 .Op Fl D Ar destdir
@@ -297,6 +297,11 @@ try to change the owner, the group, or the file flags of the destination.
 The information that would have been updated can be stored in a log
 file with
 .Fl M Ar metalog .
+.It Fl v
+Cause
+.Nm
+to be verbose,
+showing files as they are installed or backed up.
 .El
 .Pp
 By default,
