@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.4 2024/05/11 07:40:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.3 2023/05/07 12:41:47 skrll Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.4 2024/05/11 07:40:18 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,9 +47,9 @@ __weak_alias(fpsetmask,_fpsetmask)
 fp_except
 fpsetmask(fp_except mask)
 {
-#if 0
-	return __SHIFTOUT(fcsr_fmask_write(__SHIFTIN(mask, FCSR_MASK)), FCSR_FMASK);
-#else
+#if FCSR_FMASK == 0
 	return 0;
+#else
+	return __SHIFTOUT(fcsr_fmask_write(__SHIFTIN(mask, FCSR_MASK)), FCSR_FMASK);
 #endif
 }
