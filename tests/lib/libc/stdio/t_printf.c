@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.17 2024/05/11 14:33:23 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.18 2024/05/11 14:39:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -231,6 +231,11 @@ ATF_TC_BODY(snprintf_long_double_a, tc)
 		strcmp(buf, "0x8p-6") == 0),
 	    "buf=%s", buf);
 
+	/*
+	 * Test case adapted from:
+	 *
+	 * https://mail-index.netbsd.org/tech-userlevel/2020/04/11/msg012329.html
+	 */
 #if LDBL_MAX_EXP >= 16384 && LDBL_MANT_DIG >= 64
 	snprintf(buf, sizeof buf, "%La", -0xc.ecececececececep+3788L);
 	ATF_CHECK_MSG((strcmp(buf, "-0x1.9d9d9d9d9d9d9d9cp+3791") == 0 ||
@@ -242,7 +247,7 @@ ATF_TC_BODY(snprintf_long_double_a, tc)
 
 #if LDBL_MAX_EXP >= 16384 && LDBL_MANT_DIG >= 113
 	snprintf(buf, sizeof buf, "%La",
-	    0x1.cecececececececececececececep+3791L);
+	    -0x1.cecececececececececececececep+3791L);
 	ATF_CHECK_MSG((strcmp(buf,
 		    "-0x1.cecececececececececececececep+3791") == 0 ||
 		strcmp(buf, "-0x3.3333333333333338p+3790") == 0 ||
