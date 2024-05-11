@@ -1,4 +1,4 @@
-#	$NetBSD: LEGACY,v 1.1 2015/03/07 07:28:37 mrg Exp $
+#	$NetBSD: LEGACY,v 1.1.54.1 2024/05/11 14:31:56 martin Exp $
 
 # LEGACY kernel -- includes vga@isa and pcdisplay@isa for pre-PCI
 # systems, due to significant pain making them fail to attach when
@@ -12,3 +12,12 @@ wsdisplay*	at pcdisplay? console ?
 
 # XXX we could turn off all sorts of other modern features in this
 # configuration, but that is left for future work.
+
+no i915drmkms*		at pci?
+no intelfb*		at intelfbbus?          
+
+no radeon*		at pci?
+no radeondrmkmsfb*	at radeonfbbus?        
+
+no nouveau*		at pci?
+no nouveaufb*		at nouveaufbbus?
