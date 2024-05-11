@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.19 2024/05/07 19:55:14 tsutsui Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.20 2024/05/11 22:29:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,13 +46,17 @@ The Regents of the University of California.  All rights reserved.");
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.19 2024/05/07 19:55:14 tsutsui Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.20 2024/05/11 22:29:36 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#ifndef HAVE_NBTOOL_CONFIG_H
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
 #include <sys/endian.h>
 #endif
 
@@ -65,25 +69,23 @@ __RCSID("$NetBSD: mkboot.c,v 1.19 2024/05/07 19:55:14 tsutsui Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "volhdr.h"
-
 #define LIF_NUMDIR	8
 
 #define LIF_VOLSTART	0
-#define LIF_VOLSIZE	sizeof(struct lifvol)
+#define LIF_VOLSIZE	sizeof(struct hp300_lifvol)
 #define LIF_DIRSTART	512
-#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
+#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct hp300_lifdir))
 #define LIF_FILESTART	8192
 
-#define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
-#define lifstob(s)	((s) * SECTSIZE)
+#define btolifs(b)	(((b) + (HP300_SECTSIZE - 1)) / HP300_SECTSIZE)
+#define lifstob(s)	((s) * HP300_SECTSIZE)
 
 #define bintobcd(bin)	((((bin) / 10) << 4) | ((bin) % 10))
 
 static uint32_t loadpoint = ULONG_MAX;
-static struct  load ld;
-static struct	lifvol lifv;
-static struct	lifdir lifd[LIF_NUMDIR];
+static struct hp300_load ld;
+static struct hp300_lifvol lifv;
+static struct hp300_lifdir lifd[LIF_NUMDIR];
 static time_t repro_epoch = 0;
 
 int	 main(int, char **);
@@ -171,10 +173,10 @@ main(int argc, char **argv)
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 
 	/* record volume info */
-	lifv.vol_id = htobe16(VOL_ID);
+	lifv.vol_id = htobe16(HP300_VOL_ID);
 	CLEAR(lifv.vol_label, "BOOT43", sizeof(lifv.vol_label));
 	lifv.vol_addr = htobe32(btolifs(LIF_DIRSTART));
-	lifv.vol_oct = htobe16(VOL_OCT);
+	lifv.vol_oct = htobe16(HP300_VOL_OCT);
 	lifv.vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
 	lifv.vol_version = htobe16(1);
 
@@ -183,11 +185,11 @@ main(int argc, char **argv)
 	count = putfile(name1, to);
 	nsec = btolifs(count);
 	strcpy(lifd[0].dir_name, lifname(name1));
-	lifd[0].dir_type = htobe16(DIR_TYPE);
+	lifd[0].dir_type = htobe16(HP300_DIR_TYPE);
 	lifd[0].dir_addr = htobe32(btolifs(LIF_FILESTART));
 	lifd[0].dir_length = htobe32(nsec);
 	bcddate(name1, lifd[0].dir_toc);
-	lifd[0].dir_flag = htobe16(DIR_FLAG);
+	lifd[0].dir_flag = htobe16(HP300_DIR_FLAG);
 	lifd[0].dir_exec = htobe32(loadpoint);
 	lifv.vol_length = htobe32(be32toh(lifd[0].dir_addr) +
 	    be32toh(lifd[0].dir_length));
@@ -198,11 +200,11 @@ main(int argc, char **argv)
 		count = putfile(name2, to);
 		nsec = btolifs(count);
 		strcpy(lifd[1].dir_name, lifname(name2));
-		lifd[1].dir_type = htobe16(DIR_TYPE);
+		lifd[1].dir_type = htobe16(HP300_DIR_TYPE);
 		lifd[1].dir_addr = htobe32(lifv.vol_length);
 		lifd[1].dir_length = htobe32(nsec);
 		bcddate(name2, lifd[1].dir_toc);
-		lifd[1].dir_flag = htobe16(DIR_FLAG);
+		lifd[1].dir_flag = htobe16(HP300_DIR_FLAG);
 		lifd[1].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[1].dir_addr) +
 		    be32toh(lifd[1].dir_length));
@@ -215,11 +217,11 @@ main(int argc, char **argv)
 		count = putfile(name3, to);
 		nsec = btolifs(count);
 		strcpy(lifd[2].dir_name, lifname(name3));
-		lifd[2].dir_type = htobe16(DIR_TYPE);
+		lifd[2].dir_type = htobe16(HP300_DIR_TYPE);
 		lifd[2].dir_addr = htobe32(lifv.vol_length);
 		lifd[2].dir_length = htobe32(nsec);
 		bcddate(name3, lifd[2].dir_toc);
-		lifd[2].dir_flag = htobe16(DIR_FLAG);
+		lifd[2].dir_flag = htobe16(HP300_DIR_FLAG);
 		lifd[2].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[2].dir_addr) +
 		    be32toh(lifd[2].dir_length));
