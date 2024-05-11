@@ -1,4 +1,4 @@
-/* $NetBSD: t_asin.c,v 1.4 2018/11/07 03:59:36 riastradh Exp $ */
+/* $NetBSD: t_asin.c,v 1.5 2024/05/11 21:27:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -240,8 +240,9 @@ ATF_TC_BODY(asinf_inrange, tc)
 		float y = values[i].y;
 
 		if (fabs(x) == 0.5)
-			atf_tc_expect_fail("asinf is busted,"
-			    " gives ~2ulp error");
+			atf_tc_expect_fail("PR lib/58246:"
+			    " asinf gives ~2ulp error"
+			    " when it should give <1ulp");
 		if (!(fabsf((asinf(x) - y)/y) <= eps)) {
 			atf_tc_fail_nonfatal("asinf(%.8g) = %.8g != %.8g,"
 			    " error=~%.1fulp",
