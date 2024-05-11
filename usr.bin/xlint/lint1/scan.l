@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.140 2023/09/14 22:20:08 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.141 2024/05/11 16:12:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.140 2023/09/14 22:20:08 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.141 2024/05/11 16:12:28 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -111,6 +111,7 @@ FSUF	([fFlL]?[i]?)
 "("				return T_LPAREN;
 ")"				return T_RPAREN;
 "..."				return T_ELLIPSIS;
+"::"				return T_DCOLON;
 "'"				return lex_character_constant();
 "L'"				return lex_wide_character_constant();
 ^#.*$				lex_directive(yytext);

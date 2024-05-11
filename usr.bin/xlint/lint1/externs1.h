@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.225 2024/05/09 11:08:07 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.226 2024/05/11 16:12:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -152,6 +152,7 @@ void debug_pop_indented(bool);
 void debug_enter_func(const char *);
 void debug_step(const char *fmt, ...) __printflike(1, 2);
 void debug_leave_func(const char *);
+void debug_attribute_list(const attribute_list *);
 #define	debug_enter()		debug_enter_func(__func__)
 #define	debug_leave()		debug_leave_func(__func__)
 #else
@@ -171,6 +172,7 @@ void debug_leave_func(const char *);
 #define	debug_enter()		debug_noop()
 #define	debug_step(...)		debug_noop()
 #define	debug_leave()		debug_noop()
+#define	debug_attribute_list(list) debug_noop()
 #endif
 
 /*
