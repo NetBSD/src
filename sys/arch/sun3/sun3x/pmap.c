@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -3462,7 +3462,7 @@ pmap_bootstrap_alloc(int size)
 	return rtn;
 }
 
-/* pmap_bootstap_aalign			INTERNAL
+/* pmap_bootstrap_aalign			INTERNAL
  **
  * Used to insure that the next call to pmap_bootstrap_alloc() will
  * return a chunk of memory aligned to the specified size.
