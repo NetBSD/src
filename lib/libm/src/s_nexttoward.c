@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nexttoward.c,v 1.2 2013/08/21 13:03:56 martin Exp $	*/
+/*	$NetBSD: s_nexttoward.c,v 1.3 2024/05/11 02:07:53 riastradh Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nexttoward.c,v 1.2 2013/08/21 13:03:56 martin Exp $");
+__RCSID("$NetBSD: s_nexttoward.c,v 1.3 2024/05/11 02:07:53 riastradh Exp $");
 
 /*
  * We assume that a long double has a 15-bit exponent.  On systems
@@ -71,7 +71,7 @@ nexttoward(double x, long double y)
 			return x;		/* raise underflow flag */
 	}
 
-	if ((hx > 0.0) ^ (x < y)) {		/* x -= ulp */
+	if ((hx >= 0) ^ (x < y)) {		/* x -= ulp */
 		if (lx == 0) hx -= 1;
 		lx -= 1;
 	} else {				/* x += ulp */
