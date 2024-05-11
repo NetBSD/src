@@ -16,6 +16,9 @@
 
 
 #include <float.h>
+#include <math.h>
+
+#include <machine/ieee.h>
 
 __weak_alias(hypotl, _hypotl)
 
@@ -45,7 +48,7 @@ __weak_alias(hypotl, _hypotl)
 #define	MANT_DIG	LDBL_MANT_DIG
 #define	MAX_EXP		LDBL_MAX_EXP
 
-#if LDBL_MANL_SIZE > 32
+#if EXT_FRACLBITS > 32
 typedef	uint64_t man_t;
 #else
 typedef	uint32_t man_t;
