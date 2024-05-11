@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.78 2024/05/09 11:08:07 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.78 2024/05/09 11:08:07 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.79 2024/05/11 16:12:28 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -526,4 +526,73 @@ debug_dcs_all(void)
 		debug_decl_level(dl);
 	}
 }
+
+static void
+debug_token(const token *tok)
+{
+	switch (tok->kind) {
+	case TK_IDENTIFIER:
+		debug_printf("%s", tok->u.identifier);
+		break;
+	case TK_CONSTANT:;
+		val_t c = tok->u.constant;
+		tspec_t t = c.v_tspec;
+		if (is_floating(t))
+			debug_printf("%Lg", c.u.floating);
+		else if (is_uinteger(t))
+			debug_printf("%llu", (unsigned long long)c.u.integer);
+		else if (is_integer(t))
+			debug_printf("%lld", (long long)c.u.integer);
+		else {
+			lint_assert(t == BOOL);
+			debug_printf("%s",
+			    c.u.integer != 0 ? "true" : "false");
+		}
+		break;
+	case TK_STRING_LITERALS:
+		debug_printf("%s", tok->u.string_literals.data);
+		break;
+	case TK_PUNCTUATOR:
+		debug_printf("%s", tok->u.punctuator);
+		break;
+	}
+}
+
+static void
+debug_balanced_token_sequence(const balanced_token_sequence *seq)
+{
+	const char *sep = "";
+	for (size_t i = 0, n = seq->len; i < n; i++) {
+		const balanced_token *tok = seq->tokens + i;
+		if (tok->kind != '\0') {
+			debug_printf("%s%c", sep, tok->kind);
+			debug_balanced_token_sequence(&tok->u.tokens);
+			debug_printf("%c", tok->kind == '(' ? ')'
+			    : tok->kind == '[' ? ']' : '}');
+		} else {
+			debug_printf("%s", sep);
+			debug_token(&tok->u.token);
+		}
+		sep = " ";
+	}
+}
+
+void
+debug_attribute_list(const attribute_list *list)
+{
+	for (size_t i = 0, n = list->len; i < n; i++) {
+		const attribute *attr = list->attrs + i;
+		debug_printf("attribute [[");
+		if (attr->prefix != NULL)
+			debug_printf("%s::", attr->prefix);
+		debug_printf("%s", attr->name);
+		if (attr->arg != NULL) {
+			debug_printf("(");
+			debug_balanced_token_sequence(attr->arg);
+			debug_printf(")");
+		}
+		debug_step("]]");
+	}
+}
+
 #endif

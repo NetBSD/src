@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.12 2024/05/09 20:56:41 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.13 2024/05/11 16:12:28 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -109,3 +109,57 @@ thread_local extern int extern_thread_local_2;
 static thread_local int static_thread_local_1;
 /* expect+1: warning: static variable 'static_thread_local_2' unused [226] */
 thread_local static int static_thread_local_2;
+
+
+int
+attributes(int i)
+{
+	// An attribute specifier list may be empty.
+	[[]]i++;
+
+	// There may be leading or trailing commas.
+	[[,]]i++;
+
+	// There may be arbitrary commas around or between the attributes.
+	[[,,,,,]]i++;
+
+	// An attribute may be a plain identifier without arguments.
+	[[identifier]]i++;
+
+	// The identifier may be prefixed with one additional identifier.
+	[[prefix::identifier]]i++;
+
+	// An attribute may have empty arguments.
+	[[identifier()]]i++;
+
+	// The arguments of an attribute may be arbitrary tokens.
+	[[identifier([])]]i++;
+
+	// The commas in this "argument list" are ordinary punctuator tokens,
+	// they do not separate any arguments.
+	// The structure of the attribute argument is:
+	//	1. empty balanced token sequence between '[' and ']'
+	//	2. token ','
+	//	3. empty balanced token sequence between '{' and '}'
+	//	4. token ','
+	//	5. empty balanced token sequence between '(' and ')'
+	[[identifier([], {}, ())]]i++;
+
+	// Inside an argument, parentheses may be nested.
+	[[identifier(((((())))))]]i++;
+	// Inside an argument, brackets may be nested.
+	[[identifier([[[[[]]]]])]]i++;
+	// Inside an argument, braces may be nested.
+	[[identifier({{{{{}}}}})]]i++;
+
+	// An attribute argument may contain arbitrary punctuation.
+	[[identifier(++++ ? ? ? : : :: )]]i++;
+
+	// An attribute argument may contain constants and string literals.
+	[[identifier(0, 0.0, "hello" " " "world")]]i++;
+
+	// There may be multiple attribute specifier sequences in a row.
+	[[]][[]][[]]i++;
+
+	return i;
+}

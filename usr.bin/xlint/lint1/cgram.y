@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.499 2024/05/09 20:56:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.500 2024/05/11 16:12:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.499 2024/05/09 20:56:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.500 2024/05/11 16:12:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -69,6 +69,7 @@ static int saved_lwarn = LWARN_NOTHING_SAVED;
 
 static void cgram_declare(sym_t *, bool, sbuf_t *);
 static void read_until_rparen(void);
+static balanced_token_sequence read_balanced_token_sequence(void);
 static sym_t *symbolrename(sym_t *, sbuf_t *);
 
 
@@ -110,6 +111,42 @@ is_either(const char *s, const char *a, const char *b)
 	return strcmp(s, a) == 0 || strcmp(s, b) == 0;
 }
 
+static void
+attribute_list_add(attribute_list *list, attribute attr)
+{
+	if (list->len >= list->cap) {
+		attribute *old_attrs = list->attrs;
+		list->cap = 16 + 2 * list->cap;
+		list->attrs = block_zero_alloc(
+		    list->cap * sizeof(*list->attrs), "attribute_list.attrs");
+		memcpy(list->attrs, old_attrs,
+		    list->len * sizeof(*list->attrs));
+	}
+	list->attrs[list->len++] = attr;
+}
+
+static void
+attribute_list_add_all(attribute_list *dst, attribute_list src)
+{
+	for (size_t i = 0, n = src.len; i < n; i++)
+		attribute_list_add(dst, src.attrs[i]);
+}
+
+static attribute
+new_attribute(const sbuf_t *prefix, const sbuf_t *name,
+	      const balanced_token_sequence *arg)
+{
+	attribute attr = { .name = xstrdup(name->sb_name) };
+	if (prefix != NULL)
+		attr.prefix = xstrdup(prefix->sb_name);
+	if (arg != NULL) {
+		attr.arg = block_zero_alloc(sizeof(*attr.arg),
+		    "balanced_token_sequence");
+		*attr.arg = *arg;
+	}
+	return attr;
+}
+
 #if YYDEBUG && YYBYACC
 #define YYSTYPE_TOSTRING cgram_to_string
 #endif
@@ -141,6 +178,9 @@ is_either(const char *s, const char *a, const char *b)
 	bool	y_in_system_header;
 	designation y_designation;
 	named_constant y_named_constant;
+	attribute y_attribute;
+	attribute_list y_attribute_list;
+	balanced_token_sequence y_tokens;
 };
 
 /* for Bison:
@@ -231,6 +271,7 @@ is_either(const char *s, const char *a, const char *b)
 %token			T_COMMA
 %token			T_SEMI
 %token			T_ELLIPSIS
+%token			T_DCOLON
 %token			T_REAL
 %token			T_IMAG
 %token			T_GENERIC
@@ -388,6 +429,11 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_range>	range
 /* No type for init_lbrace. */
 /* No type for init_rbrace. */
+%type	<y_attribute_list>	attribute_specifier_sequence
+%type	<y_attribute_list>	attribute_specifier
+%type	<y_attribute_list>	attribute_list
+%type	<y_attribute>		attribute
+%type	<y_tokens>		attribute_argument_clause
 %type	<y_name>	asm_or_symbolrename_opt
 /* No type for statement. */
 /* No type for no_attr_statement. */
@@ -1854,27 +1900,71 @@ init_rbrace:			/* helper */
 	}
 ;
 
-/* TODO: Implement 'attribute_specifier_sequence' from C23 6.7.13.2. */
+/* C23 6.7.13.2 */
+attribute_specifier_sequence:
+	attribute_specifier {
+		$$ = (attribute_list) { NULL, 0, 0 };
+		attribute_list_add_all(&$$, $1);
+	}
+|	attribute_specifier_sequence attribute_specifier {
+		$$ = $1;
+		attribute_list_add_all(&$$, $2);
+	}
+;
 
-/* TODO: Implement 'attribute_specifier' from C23 6.7.13.2. */
+/* C23 6.7.13.2 */
+attribute_specifier:
+	T_LBRACK T_LBRACK attribute_list T_RBRACK T_RBRACK {
+		$$ = $3;
+	}
+;
 
-/* TODO: Implement 'attribute_list' from C23 6.7.13.2. */
+/* C23 6.7.13.2 */
+attribute_list:
+	/* empty */ {
+		$$ = (attribute_list) { NULL, 0, 0 };
+	}
+|	attribute {
+		$$ = (attribute_list) { NULL, 0, 0 };
+		attribute_list_add(&$$, $1);
+	}
+|	attribute_list T_COMMA
+|	attribute_list T_COMMA attribute {
+		$$ = $1;
+		attribute_list_add(&$$, $3);
+	}
+;
 
-/* TODO: Implement 'attribute' from C23 6.7.13.2. */
+/* C23 6.7.13.2 */
+attribute:
+	identifier {
+		$$ = new_attribute(NULL, $1, NULL);
+	}
+|	identifier T_DCOLON identifier {
+		$$ = new_attribute($1, $3, NULL);
+	}
+|	identifier attribute_argument_clause {
+		$$ = new_attribute(NULL, $1, &$2);
+	}
+|	identifier T_DCOLON identifier attribute_argument_clause {
+		$$ = new_attribute($1, $3, &$4);
+	}
+;
 
-/* TODO: Implement 'attribute_token' from C23 6.7.13.2. */
+/* The rule 'attribute_token' is inlined into 'attribute'. */
+/* The rule 'standard_attribute' is inlined into 'attribute_token'. */
+/* The rule 'attribute_prefixed_token' is inlined into 'attribute_token'. */
+/* The rule 'attribute_prefix' is inlined into 'attribute_token'. */
 
-/* TODO: Implement 'standard_attribute' from C23 6.7.13.2. */
+/* C23 6.7.13.2 */
+attribute_argument_clause:
+	T_LPAREN {
+		$$ = read_balanced_token_sequence();
+	}
+;
 
-/* TODO: Implement 'attribute_prefixed_token' from C23 6.7.13.2. */
-
-/* TODO: Implement 'attribute_prefix' from C23 6.7.13.2. */
-
-/* TODO: Implement 'attribute_argument_clause' from C23 6.7.13.2. */
-
-/* TODO: Implement 'balanced_token_sequence' from C23 6.7.13.2. */
-
-/* TODO: Implement 'balanced_token' from C23 6.7.13.2. */
+/* The rule 'balanced_token_sequence' is inlined into 'attribute_argument_clause'. */
+/* The rule 'balanced_token' is inlined into 'balanced_token_sequence'. */
 
 asm_or_symbolrename_opt:	/* GCC extensions */
 	/* empty */ {
@@ -2011,6 +2101,11 @@ expression_statement:
 	}
 |	T_SEMI {
 		check_statement_reachable();
+		suppress_fallthrough = false;
+	}
+|	attribute_specifier_sequence expression T_SEMI {
+		debug_attribute_list(&$1);
+		expr($2, false, false, false, false);
 		suppress_fallthrough = false;
 	}
 ;
@@ -2404,10 +2499,10 @@ yyerror(const char *msg)
 
 #if YYDEBUG && YYBYACC
 static const char *
-cgram_to_string(int token, YYSTYPE val)
+cgram_to_string(int tok, YYSTYPE val)
 {
 
-	switch (token) {
+	switch (tok) {
 	case T_INCDEC:
 		return val.y_inc ? "++" : "--";
 	case T_MULTIPLICATIVE:
@@ -2465,6 +2560,82 @@ read_until_rparen(void)
 	}
 
 	yyclearin;
+}
+
+static void
+fill_token(token *tok)
+{
+	switch (yychar) {
+	case T_NAME:
+	case T_TYPENAME:
+		tok->kind = TK_IDENTIFIER;
+		tok->u.identifier = xstrdup(yylval.y_name->sb_name);
+		break;
+	case T_CON:
+		tok->kind = TK_CONSTANT;
+		tok->u.constant = *yylval.y_val;
+		break;
+	case T_NAMED_CONSTANT:
+		tok->kind = TK_IDENTIFIER;
+		tok->u.identifier = xstrdup(yytext);
+		break;
+	case T_STRING:;
+		tok->kind = TK_STRING_LITERALS;
+		tok->u.string_literals.len = yylval.y_string->len;
+		tok->u.string_literals.cap = yylval.y_string->cap;
+		tok->u.string_literals.data = xstrdup(yylval.y_string->data);
+		break;
+	default:
+		tok->kind = TK_PUNCTUATOR;
+		tok->u.punctuator = xstrdup(yytext);
+	}
+}
+
+static void
+seq_reserve(balanced_token_sequence *seq)
+{
+	if (seq->len >= seq->cap) {
+		seq->cap = 16 + 2 * seq->cap;
+		const balanced_token *old_tokens = seq->tokens;
+		balanced_token *new_tokens = block_zero_alloc(
+		    seq->cap * sizeof(*seq->tokens), "balanced_tokens");
+		memcpy(new_tokens, old_tokens, seq->len * sizeof(*seq->tokens));
+		seq->tokens = new_tokens;
+	}
+}
+
+static balanced_token_sequence
+read_balanced(int opening)
+{
+	debug_enter();
+	int closing = opening == T_LPAREN ? T_RPAREN
+	    : opening == T_LBRACK ? T_RBRACK : T_RBRACE;
+	balanced_token_sequence seq = { NULL, 0, 0 };
+	debug_step("opening %d, closing %d", opening, closing);
+
+	while (yychar = yylex(), yychar > 0 && yychar != closing) {
+		debug_step("reading token %d", yychar);
+		seq_reserve(&seq);
+		if (yychar == T_LPAREN
+		    || yychar == T_LBRACK
+		    || yychar == T_LBRACE) {
+			seq.tokens[seq.len].kind = yychar == T_LPAREN ? '('
+			    : yychar == T_LBRACK ? '[' : '{';
+			seq.tokens[seq.len++].u.tokens = read_balanced(yychar);
+		} else
+			fill_token(&seq.tokens[seq.len++].u.token);
+	}
+	debug_leave();
+	return seq;
+}
+
+static balanced_token_sequence
+read_balanced_token_sequence(void)
+{
+	lint_assert(yychar < 0);
+	balanced_token_sequence seq = read_balanced(T_LPAREN);
+	yyclearin;
+	return seq;
 }
 
 static sym_t *

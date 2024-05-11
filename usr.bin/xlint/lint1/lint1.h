@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.226 2024/05/09 11:08:07 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.227 2024/05/11 16:12:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -512,6 +512,52 @@ typedef struct {
 	bool missing_hex_digits;
 	bool unescaped_newline;	/* stops iterating */
 } quoted_iterator;
+
+typedef enum {
+	TK_IDENTIFIER,
+	TK_CONSTANT,
+	TK_STRING_LITERALS,
+	TK_PUNCTUATOR,
+} token_kind;
+
+typedef struct token {
+	token_kind kind;
+	union {
+		const char *identifier;
+		val_t constant;
+		buffer string_literals;
+		const char *punctuator;
+	} u;
+} token;
+
+typedef struct balanced_token_sequence balanced_token_sequence;
+typedef struct balanced_token balanced_token;
+
+struct balanced_token_sequence {
+	balanced_token *tokens;
+	size_t len;
+	size_t cap;
+};
+
+struct balanced_token {
+	char kind;	// '\0', '(', '[', '{'
+	union {
+		token token;
+		balanced_token_sequence tokens;
+	} u;
+};
+
+typedef struct {
+	const char *prefix;
+	const char *name;
+	balanced_token_sequence *arg;
+} attribute;
+
+typedef struct {
+	attribute *attrs;
+	size_t len;
+	size_t cap;
+} attribute_list;
 
 #include "externs1.h"
 
