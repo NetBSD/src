@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.3.18.1 2024/04/18 15:21:55 martin Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.3.18.2 2024/05/11 14:08:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -29,6 +29,12 @@
 #ifndef _AARCH64_SLJITARCH_H
 #define _AARCH64_SLJITARCH_H
 
+#ifndef __aarch64__		/* compat32 */
+
+#include <arm/sljit_machdep.h>
+
+#else  /* __aarch64__ */
+
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
@@ -56,4 +62,6 @@
 	(void)__builtin___clear_cache((char *)(from), (char *)(to))
 #endif
 
-#endif
+#endif	/* __aarch64__ (vs compat32) */
+
+#endif	/* _AARCH64_SLJITARCH_H */
