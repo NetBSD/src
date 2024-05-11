@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.3 2024/05/11 19:08:29 riastradh Exp $ */
+/* $NetBSD: t_hypot.c,v 1.4 2024/05/11 20:09:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -181,20 +181,16 @@ ATF_TC_BODY(hypotf_trivial, tc)
 	unsigned i;
 
 	for (i = 0; i < __arraycount(trivial_casesf); i++) {
-		volatile float y, x = trivial_casesf[i];
+		volatile float x = trivial_casesf[i];
 
-		ATF_CHECK_EQ_MSG((y = hypotf(x, 0)), x,
-		    "[%u] x=%g=%a hypotf(x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotf(-x, 0)), x,
-		    "[%u] x=%g=%a hypotf(-x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotf(0, x)), x,
-		    "[%u] x=%g=%a hypotf(0, x)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotf(0, -x)), x,
-		    "[%u] x=%g=%a hypotf(0, -x)=x=%g=%a",
-		    i, x, x, y, y);
+		CHECK_EQ(i, hypotf, x, +0., x);
+		CHECK_EQ(i, hypotf, x, -0., x);
+		CHECK_EQ(i, hypotf, +0., x, x);
+		CHECK_EQ(i, hypotf, -0., x, x);
+		CHECK_EQ(i, hypotf, -x, +0., x);
+		CHECK_EQ(i, hypotf, -x, -0., x);
+		CHECK_EQ(i, hypotf, +0., -x, x);
+		CHECK_EQ(i, hypotf, -0., -x, x);
 	}
 }
 
@@ -208,37 +204,29 @@ ATF_TC_BODY(hypot_trivial, tc)
 	unsigned i;
 
 	for (i = 0; i < __arraycount(trivial_casesf); i++) {
-		volatile double y, x = trivial_casesf[i];
+		volatile double x = trivial_casesf[i];
 
-		ATF_CHECK_EQ_MSG((y = hypot(x, 0)), x,
-		    "[%u] x=%g=%a hypot(x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(-x, 0)), x,
-		    "[%u] x=%g=%a hypot(-x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(0, x)), x,
-		    "[%u] x=%g=%a hypot(0, x)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(0, -x)), x,
-		    "[%u] x=%g=%a hypot(0, -x)=x=%g=%a",
-		    i, x, x, y, y);
+		CHECK_EQ(i, hypot, x, +0., x);
+		CHECK_EQ(i, hypot, x, -0., x);
+		CHECK_EQ(i, hypot, +0., x, x);
+		CHECK_EQ(i, hypot, -0., x, x);
+		CHECK_EQ(i, hypot, -x, +0., x);
+		CHECK_EQ(i, hypot, -x, -0., x);
+		CHECK_EQ(i, hypot, +0., -x, x);
+		CHECK_EQ(i, hypot, -0., -x, x);
 	}
 
 	for (i = 0; i < __arraycount(trivial_cases); i++) {
-		volatile double y, x = trivial_cases[i];
+		volatile double x = trivial_cases[i];
 
-		ATF_CHECK_EQ_MSG((y = hypot(x, 0)), x,
-		    "[%u] x=%g=%a hypot(x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(-x, 0)), x,
-		    "[%u] x=%g=%a hypot(-x, 0)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(0, x)), x,
-		    "[%u] x=%g=%a hypot(0, x)=x=%g=%a",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypot(0, -x)), x,
-		    "[%u] x=%g=%a hypot(0, -x)=x=%g=%a",
-		    i, x, x, y, y);
+		CHECK_EQ(i, hypot, x, +0., x);
+		CHECK_EQ(i, hypot, x, -0., x);
+		CHECK_EQ(i, hypot, +0., x, x);
+		CHECK_EQ(i, hypot, -0., x, x);
+		CHECK_EQ(i, hypot, -x, +0., x);
+		CHECK_EQ(i, hypot, -x, -0., x);
+		CHECK_EQ(i, hypot, +0., -x, x);
+		CHECK_EQ(i, hypot, -0., -x, x);
 	}
 }
 
@@ -252,37 +240,29 @@ ATF_TC_BODY(hypotl_trivial, tc)
 	unsigned i;
 
 	for (i = 0; i < __arraycount(trivial_casesf); i++) {
-		volatile long double y, x = trivial_casesf[i];
+		volatile long double x = trivial_casesf[i];
 
-		ATF_CHECK_EQ_MSG((y = hypotl(x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(-x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(-x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, x)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, -x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, -x)=x=%Lg=%La",
-		    i, x, x, y, y);
+		CHECKL_EQ(i, hypotl, x, +0.L, x);
+		CHECKL_EQ(i, hypotl, x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, x, x);
+		CHECKL_EQ(i, hypotl, -0.L, x, x);
+		CHECKL_EQ(i, hypotl, -x, +0.L, x);
+		CHECKL_EQ(i, hypotl, -x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, -x, x);
+		CHECKL_EQ(i, hypotl, -0.L, -x, x);
 	}
 
 	for (i = 0; i < __arraycount(trivial_cases); i++) {
-		volatile long double y, x = trivial_cases[i];
+		volatile long double x = trivial_cases[i];
 
-		ATF_CHECK_EQ_MSG((y = hypotl(x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(-x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(-x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, x)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, -x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, -x)=x=%Lg=%La",
-		    i, x, x, y, y);
+		CHECKL_EQ(i, hypotl, x, +0.L, x);
+		CHECKL_EQ(i, hypotl, x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, x, x);
+		CHECKL_EQ(i, hypotl, -0.L, x, x);
+		CHECKL_EQ(i, hypotl, -x, +0.L, x);
+		CHECKL_EQ(i, hypotl, -x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, -x, x);
+		CHECKL_EQ(i, hypotl, -0.L, -x, x);
 	}
 
 #if __HAVE_LONG_DOUBLE + 0 == 128
@@ -290,20 +270,16 @@ ATF_TC_BODY(hypotl_trivial, tc)
 #endif
 
 	for (i = 0; i < __arraycount(trivial_casesl); i++) {
-		volatile long double y, x = trivial_casesl[i];
+		volatile long double x = trivial_casesl[i];
 
-		ATF_CHECK_EQ_MSG((y = hypotl(x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(-x, 0)), x,
-		    "[%u] x=%Lg=%La hypotl(-x, 0)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, x)=x=%Lg=%La",
-		    i, x, x, y, y);
-		ATF_CHECK_EQ_MSG((y = hypotl(0, -x)), x,
-		    "[%u] x=%Lg=%La hypotl(0, -x)=x=%Lg=%La",
-		    i, x, x, y, y);
+		CHECKL_EQ(i, hypotl, x, +0.L, x);
+		CHECKL_EQ(i, hypotl, x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, x, x);
+		CHECKL_EQ(i, hypotl, -0.L, x, x);
+		CHECKL_EQ(i, hypotl, -x, +0.L, x);
+		CHECKL_EQ(i, hypotl, -x, -0.L, x);
+		CHECKL_EQ(i, hypotl, +0.L, -x, x);
+		CHECKL_EQ(i, hypotl, -0.L, -x, x);
 	}
 }
 
