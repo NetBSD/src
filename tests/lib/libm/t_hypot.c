@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.4 2024/05/11 20:09:13 riastradh Exp $ */
+/* $NetBSD: t_hypot.c,v 1.5 2024/05/11 20:09:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -265,10 +265,6 @@ ATF_TC_BODY(hypotl_trivial, tc)
 		CHECKL_EQ(i, hypotl, -0.L, -x, x);
 	}
 
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58245: hypotl is broken on ld128 ports");
-#endif
-
 	for (i = 0; i < __arraycount(trivial_casesl); i++) {
 		volatile long double x = trivial_casesl[i];
 
@@ -456,10 +452,6 @@ ATF_TC_BODY(hypotl_exact, tc)
 			CHECKL_EQ(i, hypotl, -b, -a, c);
 		}
 	}
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58245: hypotl is broken on ld128 ports");
-#endif
 
 #if LDBL_MANT_DIG >= 64
 	for (i = 0; i < __arraycount(exact_casesl); i++) {
