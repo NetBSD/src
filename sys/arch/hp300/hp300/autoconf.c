@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.113 2024/05/11 09:55:11 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.114 2024/05/11 19:16:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113 2024/05/11 09:55:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2024/05/11 19:16:19 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -455,7 +455,8 @@ device_register(device_t dev, void *aux)
 		goto linkup;
 	}
 
-	if (device_is_a(dev, "sd")) {
+	if (device_is_a(dev, "sd") ||
+	    device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		dd->dd_slave = sa->sa_periph->periph_target;
@@ -503,8 +504,8 @@ findbootdev(void)
 	punit = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 
-	scsiboot = (type == 4);			/* sd major */
-	hpibboot = (type == 0 || type == 2);	/* ct/rd major */
+	scsiboot = (type == 4);			/* sd or cd */
+	hpibboot = (type == 0 || type == 2);	/* ct/rd */
 	netboot  = (type == 6);			/* le - special */
 
 	/*
@@ -564,7 +565,9 @@ findbootdev(void)
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && !device_is_a(booted_device, "sd"))) {
+		if (type ==  4 &&
+		    !device_is_a(booted_device, "sd") &&
+		    !device_is_a(booted_device, "cd")) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    device_xname(booted_device), type);
@@ -630,15 +633,15 @@ setbootdev(void)
 	int type, ctlr;
 
 	/*
-	 * Note our magic numbers for type:
+	 * Note our magic numbers for type shared with the BOOTROM:
 	 *
 	 *	0 == ct
 	 *	2 == rd
-	 *	4 == sd
+	 *	4 == sd or cd
 	 *	6 == le
 	 *
-	 * All are bdevsw major numbers, except for le, which
-	 * is just special.
+	 * All are bdevsw major numbers, except for le and cd.
+	 * le is just special. cd is treated as sd by the BOOTROM.
 	 *
 	 * We can't mount root on a tape, so we ignore those.
 	 */
@@ -664,6 +667,8 @@ setbootdev(void)
 		type = 2;
 	else if (device_is_a(root_device, "sd"))
 		type = 4;
+	else if (device_is_a(root_device, "cd"))
+		type = 4;	/* not a major, but for MAKEBOOTDEV() */
 	else if (device_is_a(root_device, "md"))
 		goto out;
 	else {
@@ -696,7 +701,7 @@ setbootdev(void)
 			}
 		}
 		break;
-	case 4: /* sd */
+	case 4: /* sd or cd */
 		/*
 		 * "sd" -> "scsibus" -> "spc"
 		 */
