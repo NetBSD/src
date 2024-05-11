@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.76 2023/07/30 12:39:18 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.77 2024/05/11 06:34:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.76 2023/07/30 12:39:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.77 2024/05/11 06:34:45 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -1128,7 +1128,7 @@ pps_init(struct pps_state *pps)
 }
 
 /*
- * capture a timetamp in the pps structure
+ * capture a timestamp in the pps structure
  */
 void
 pps_capture(struct pps_state *pps)
