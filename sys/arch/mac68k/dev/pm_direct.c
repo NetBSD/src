@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.30 2021/08/21 11:55:24 andvar Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.30.4.1 2024/05/11 14:46:26 martin Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.30 2021/08/21 11:55:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.30.4.1 2024/05/11 14:46:26 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -562,6 +562,7 @@ pm_intr_pm1(void *arg)
 			printf("pm: PM is not ready. error code=%08x\n", rval);
 #endif
 		splx(s);
+		return;
 	}
 
 	if ((pmdata.data[2] & 0x10) == 0x10) {
@@ -821,6 +822,7 @@ pm_intr_pm2(void *arg)
 			printf("pm: PM is not ready. error code: %08x\n", rval);
 #endif
 		splx(s);
+		return;
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
