@@ -1,4 +1,4 @@
-# $NetBSD: module.ad.aarch64,v 1.6 2023/04/11 10:30:41 riastradh Exp $
+# $NetBSD: module.ad.aarch64,v 1.7 2024/05/11 07:34:33 mlelstv Exp $
 ./usr/libdata/debug/@MODULEDIR@/amdgpu				modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/amdgpu/amdgpu.kmod.debug	modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit,debug
@@ -73,3 +73,5 @@
 ./usr/libdata/debug/@MODULEDIR@/exec_elf64/exec_elf64.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sljit				modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/sljit/sljit.kmod.debug			modules-base-kernel	kmod,sljit,debug
+./usr/libdata/debug/@MODULEDIR@/vmt				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/vmt/vmt.kmod.debug			modules-base-kernel	kmod,debug
