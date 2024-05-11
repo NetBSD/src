@@ -1,4 +1,4 @@
-/*	$NetBSD: landisk.c,v 1.8 2019/05/07 04:35:31 thorpej Exp $	*/
+/*	$NetBSD: landisk.c,v 1.9 2024/05/11 06:50:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: landisk.c,v 1.8 2019/05/07 04:35:31 thorpej Exp $");
+__RCSID("$NetBSD: landisk.c,v 1.9 2024/05/11 06:50:23 andvar Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -146,7 +146,7 @@ landisk_setboot(ib_params *params)
 
 	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
 	if (magic != htole32(LANDISK_BOOT_MAGIC_1)) {
-		warnx("Invalid magic in stage1 boostrap %x != %x",
+		warnx("Invalid magic in stage1 bootstrap %x != %x",
 			magic, htole32(LANDISK_BOOT_MAGIC_1));
 		goto done;
 	}
