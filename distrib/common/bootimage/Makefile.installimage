@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.10 2021/09/25 21:26:03 maya Exp $
+#	$NetBSD: Makefile.installimage,v 1.10.2.1 2024/05/11 14:31:57 martin Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -46,7 +46,8 @@ DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.in
 
 # XXX: no permission info for makefs(8)
 IMGDIR_EXTRA=	${RELEASEDIR}/${RELEASEMACHINEDIR}	${RELEASEMACHINEDIR}
-IMGDIR_EXCLUDE= 	-s ',./installation/cdrom.*,,gp'
+IMGDIR_EXCLUDE+= 	-s ',./installation/floppy/.*,,gp'
+IMGDIR_EXCLUDE+= 	-s ',./installation/cdrom.*,,gp'
 IMGDIR_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
 IMGDIR_EXCLUDE+=	-s ',./installation/installimage.*,,gp'
 .if defined(MD_IMGDIR_EXCLUDE)
