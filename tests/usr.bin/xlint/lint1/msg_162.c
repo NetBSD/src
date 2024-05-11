@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_162.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_162.c,v 1.9 2024/05/11 15:53:38 rillig Exp $	*/
 # 3 "msg_162.c"
 
 // Test for message: operator '%s' compares '%s' with '%s' [162]
@@ -8,6 +8,7 @@
 void
 left_unsigned(unsigned int ui)
 {
+	/* expect+1: warning: comparing integer 'unsigned int' to floating point constant -5 [379] */
 	if (ui < -5.0) {
 	}
 
