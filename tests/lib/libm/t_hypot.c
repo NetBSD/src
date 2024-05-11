@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.5 2024/05/11 20:09:47 riastradh Exp $ */
+/* $NetBSD: t_hypot.c,v 1.6 2024/05/11 20:51:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,18 @@
 #define	CHECKL_EQ(i, hypot, a, b, c)					      \
 	ATF_CHECK_MSG(hypot(a, b) == (c),				      \
 	    "[%u] %s(%La, %La)=%La, expected %La",			      \
-	    (i), #hypot, (a), (b), hypot(a, b), (c))
+	    (i), #hypot, (long double)(a), (long double)(b), hypot(a, b),     \
+	    (long double)(c))
+
+#define	CHECK_NAN(i, hypot, a, b)					      \
+	ATF_CHECK_MSG(isnan(hypot(a, b)),				      \
+	    "[%u] %s(%a, %a)=%a, expected NaN",				      \
+	    (i), #hypot, (a), (b), hypot(a, b))
+
+#define	CHECKL_NAN(i, hypot, a, b)					      \
+	ATF_CHECK_MSG(isnan(hypot(a, b)),				      \
+	    "[%u] %s(%La, %La)=%La, expected NaN",			      \
+	    (i), #hypot, (long double)(a), (long double)(b), hypot(a, b))
 
 static const float trivial_casesf[] = {
 	0,
@@ -191,6 +202,31 @@ ATF_TC_BODY(hypotf_trivial, tc)
 		CHECK_EQ(i, hypotf, -x, -0., x);
 		CHECK_EQ(i, hypotf, +0., -x, x);
 		CHECK_EQ(i, hypotf, -0., -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECK_EQ(i, hypotf, x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypotf, x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypotf, +INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypotf, -INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypotf, -x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypotf, -x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypotf, +INFINITY, -x, INFINITY);
+			CHECK_EQ(i, hypotf, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECK_EQ(i, hypotf, x, NAN, INFINITY);
+			CHECK_EQ(i, hypotf, NAN, x, INFINITY);
+			CHECK_EQ(i, hypotf, -x, NAN, INFINITY);
+			CHECK_EQ(i, hypotf, NAN, -x, INFINITY);
+		} else {
+			CHECK_NAN(i, hypotf, x, NAN);
+			CHECK_NAN(i, hypotf, NAN, x);
+			CHECK_NAN(i, hypotf, -x, NAN);
+			CHECK_NAN(i, hypotf, NAN, -x);
+		}
+#endif
 	}
 }
 
@@ -214,6 +250,31 @@ ATF_TC_BODY(hypot_trivial, tc)
 		CHECK_EQ(i, hypot, -x, -0., x);
 		CHECK_EQ(i, hypot, +0., -x, x);
 		CHECK_EQ(i, hypot, -0., -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECK_EQ(i, hypot, x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, +INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypot, -INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypot, -x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, -x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, +INFINITY, -x, INFINITY);
+			CHECK_EQ(i, hypot, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECK_EQ(i, hypot, x, NAN, INFINITY);
+			CHECK_EQ(i, hypot, NAN, x, INFINITY);
+			CHECK_EQ(i, hypot, -x, NAN, INFINITY);
+			CHECK_EQ(i, hypot, NAN, -x, INFINITY);
+		} else {
+			CHECK_NAN(i, hypot, x, NAN);
+			CHECK_NAN(i, hypot, NAN, x);
+			CHECK_NAN(i, hypot, -x, NAN);
+			CHECK_NAN(i, hypot, NAN, -x);
+		}
+#endif
 	}
 
 	for (i = 0; i < __arraycount(trivial_cases); i++) {
@@ -227,6 +288,31 @@ ATF_TC_BODY(hypot_trivial, tc)
 		CHECK_EQ(i, hypot, -x, -0., x);
 		CHECK_EQ(i, hypot, +0., -x, x);
 		CHECK_EQ(i, hypot, -0., -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECK_EQ(i, hypot, x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, +INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypot, -INFINITY, x, INFINITY);
+			CHECK_EQ(i, hypot, -x, +INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, -x, -INFINITY, INFINITY);
+			CHECK_EQ(i, hypot, +INFINITY, -x, INFINITY);
+			CHECK_EQ(i, hypot, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECK_EQ(i, hypot, x, NAN, INFINITY);
+			CHECK_EQ(i, hypot, NAN, x, INFINITY);
+			CHECK_EQ(i, hypot, -x, NAN, INFINITY);
+			CHECK_EQ(i, hypot, NAN, -x, INFINITY);
+		} else {
+			CHECK_NAN(i, hypot, x, NAN);
+			CHECK_NAN(i, hypot, NAN, x);
+			CHECK_NAN(i, hypot, -x, NAN);
+			CHECK_NAN(i, hypot, NAN, -x);
+		}
+#endif
 	}
 }
 
@@ -250,6 +336,31 @@ ATF_TC_BODY(hypotl_trivial, tc)
 		CHECKL_EQ(i, hypotl, -x, -0.L, x);
 		CHECKL_EQ(i, hypotl, +0.L, -x, x);
 		CHECKL_EQ(i, hypotl, -0.L, -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECKL_EQ(i, hypotl, x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, -x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECKL_EQ(i, hypotl, x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, -x, INFINITY);
+		} else {
+			CHECKL_NAN(i, hypotl, x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, x);
+			CHECKL_NAN(i, hypotl, -x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, -x);
+		}
+#endif
 	}
 
 	for (i = 0; i < __arraycount(trivial_cases); i++) {
@@ -263,6 +374,31 @@ ATF_TC_BODY(hypotl_trivial, tc)
 		CHECKL_EQ(i, hypotl, -x, -0.L, x);
 		CHECKL_EQ(i, hypotl, +0.L, -x, x);
 		CHECKL_EQ(i, hypotl, -0.L, -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECKL_EQ(i, hypotl, x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, -x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECKL_EQ(i, hypotl, x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, -x, INFINITY);
+		} else {
+			CHECKL_NAN(i, hypotl, x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, x);
+			CHECKL_NAN(i, hypotl, -x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, -x);
+		}
+#endif
 	}
 
 	for (i = 0; i < __arraycount(trivial_casesl); i++) {
@@ -276,6 +412,31 @@ ATF_TC_BODY(hypotl_trivial, tc)
 		CHECKL_EQ(i, hypotl, -x, -0.L, x);
 		CHECKL_EQ(i, hypotl, +0.L, -x, x);
 		CHECKL_EQ(i, hypotl, -0.L, -x, x);
+
+		if (isinf(INFINITY)) {
+			CHECKL_EQ(i, hypotl, x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, +INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, -INFINITY, INFINITY);
+			CHECKL_EQ(i, hypotl, +INFINITY, -x, INFINITY);
+			CHECKL_EQ(i, hypotl, -INFINITY, -x, INFINITY);
+		}
+
+#ifdef NAN
+		if (isinf(x)) {
+			CHECKL_EQ(i, hypotl, x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, x, INFINITY);
+			CHECKL_EQ(i, hypotl, -x, NAN, INFINITY);
+			CHECKL_EQ(i, hypotl, NAN, -x, INFINITY);
+		} else {
+			CHECKL_NAN(i, hypotl, x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, x);
+			CHECKL_NAN(i, hypotl, -x, NAN);
+			CHECKL_NAN(i, hypotl, NAN, -x);
+		}
+#endif
 	}
 }
 
@@ -474,6 +635,22 @@ ATF_TC_BODY(hypotl_exact, tc)
 			CHECKL_EQ(i, hypotl, -b, -a, c);
 		}
 	}
+#endif
+}
+
+ATF_TC(hypot_nan);
+ATF_TC_HEAD(hypot_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "hypot/hypotf/hypotl(NAN, NAN)");
+}
+ATF_TC_BODY(hypot_nan, tc)
+{
+#ifdef NAN
+	CHECK_NAN(0, hypot, NAN, NAN);
+	CHECK_NAN(1, hypotf, NAN, NAN);
+	CHECKL_NAN(2, hypotl, NAN, NAN);
+#else
+	atf_tc_skip("no NaNs on this architecture");
 #endif
 }
 
