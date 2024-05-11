@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.641 2024/05/10 21:43:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.642 2024/05/11 15:53:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.641 2024/05/10 21:43:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.642 2024/05/11 15:53:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -757,6 +757,13 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	tspec_t t = allow_c90
 	    ? usual_arithmetic_conversion_c90(lt, rt)
 	    : usual_arithmetic_conversion_trad(lt, rt);
+
+	if (modtab[op].m_comparison
+	    && is_integer(lt) && (*lnp)->tn_op != CON
+	    && is_floating(t) && (*rnp)->tn_op == CON)
+		/* comparing integer '%s' to floating point constant %Lg */
+		warning(379, type_name((*lnp)->tn_type),
+		    (*rnp)->u.value.u.floating);
 
 	if (t != lt)
 		*lnp = apply_usual_arithmetic_conversions(op, *lnp, t);
