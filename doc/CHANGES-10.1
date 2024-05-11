@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.9 2024/05/11 14:09:50 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.10 2024/05/11 14:51:14 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -221,4 +221,44 @@ etc/Makefile					1.470
 
 	PR/58200: change "makeobsolete" to use the tool version of sed.
 	[christos, ticket #681]
+
+distrib/common/Makefile.bootcd			1.48
+distrib/common/bootimage/Makefile.installimage	1.11
+distrib/i386/cdroms/installcd/Makefile		1.12
+share/mk/bsd.own.mk				1.1373
+sys/arch/i386/conf/LEGACY			1.3
+
+	i386: reduce size of ISO image:
+	 - remove redundant kernels and floppy images
+	 - do not build AMD GPU firmware
+	 - remove DRM support from the LEGACY kernel (targetting ISA machines)
+	[nia, ticket #682]
+
+external/mit/xf86-input-ws/dist/src/ws.c	1.17,1.18
+
+	xf86-input-ws: print log message about touchpad scrolling only once.
+	[nia, ticket #683]
+
+sys/arch/hp300/stand/inst/Makefile		1.11
+sys/arch/hp300/stand/uboot/Makefile		1.11
+
+	hp300: PR 58211: fix hardlinks in /usr/mdec.
+	[tsutsui, ticket #684]
+
+sys/arch/hp300/stand/common/if_le.c		1.15,1.16
+
+	hp300: do not panic on fatal errors on receiving packets with invalid
+	length.
+	[tsutsui, ticket #685]
+
+sys/arch/mac68k/dev/pm_direct.c			1.31
+
+	mac68k: avoid random crashes on some Powerbook models
+	when using mouse or keyboard.
+	[nat, ticket #686]
+
+sys/dev/pci/if_vmx.c				1.13
+
+	vmx(4):	set IFM_FDX flag if the link is up.
+	[msaitoh, ticket #687]
 
