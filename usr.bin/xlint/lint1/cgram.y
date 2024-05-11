@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.500 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.501 2024/05/11 16:58:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.500 2024/05/11 16:12:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.501 2024/05/11 16:58:59 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -375,7 +375,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 /* No type for notype_init_declarator. */
 /* No type for type_init_declarator. */
 %type	<y_scl>		storage_class_specifier
-%type	<y_type>	type_specifier
+%type	<y_type>	type_type_specifier
 %type	<y_type>	notype_type_specifier
 %type	<y_type>	struct_or_union_specifier
 %type	<y_tspec>	struct_or_union
@@ -947,7 +947,7 @@ begin_type_declaration_specifiers:	/* see C99 6.7, C23 6.7.1 */
 	begin_type_typespec {
 		dcs_add_type($1);
 	}
-|	begin_type_declmods type_specifier {
+|	begin_type_declmods type_type_specifier {
 		dcs_add_type($2);
 	}
 |	type_attribute begin_type_declaration_specifiers
@@ -979,7 +979,7 @@ begin_type_specifier_qualifier_list_postfix:
 	begin_type_typespec {
 		dcs_add_type($1);
 	}
-|	begin_type_qualifier_list type_specifier {
+|	begin_type_qualifier_list type_type_specifier {
 		dcs_add_type($2);
 	}
 |	begin_type_specifier_qualifier_list_postfix type_qualifier {
@@ -1039,7 +1039,7 @@ type_attribute_opt:
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
-|	T_ALIGNAS T_LPAREN type_specifier T_RPAREN {		/* C11 6.7.5 */
+|	T_ALIGNAS T_LPAREN type_type_specifier T_RPAREN {		/* C11 6.7.5 */
 		dcs_add_alignas(build_sizeof($3));
 	}
 |	T_ALIGNAS T_LPAREN constant_expression T_RPAREN {	/* C11 6.7.5 */
@@ -1122,7 +1122,9 @@ storage_class_specifier:
 ;
 
 /* C99 6.7.2, C23 6.7.3.1 */
-type_specifier:
+/* The rule 'type_specifier' is split into the 'notype' and 'type' variants. */
+
+type_type_specifier:
 	notype_type_specifier
 |	T_TYPENAME {
 		$$ = getsym($1)->s_type;
@@ -1213,8 +1215,8 @@ member_declaration_list:
 	}
 ;
 
-/* Was named struct_declaration until C11. */
 /* K&R ???, C90 ???, C99 6.7.2.1, C11 6.7.2.1, C23 6.7.3.2 */
+/* Was named struct_declaration until C11. */
 member_declaration:
 	begin_type_qualifier_list end_type {
 		/* ^^ There is no check for the missing type-specifier. */
@@ -1264,8 +1266,8 @@ member_declaration:
 
 /* C23 6.7.3.2 */
 /* The rule 'member_declarator_list' is split into the 'type' and 'notype' variants. */
-
 /* Was named struct_declarator_list until C11. */
+
 notype_member_declarator_list:
 	notype_member_declarator {
 		$$ = declare_member($1);
@@ -1277,7 +1279,6 @@ notype_member_declarator_list:
 	}
 ;
 
-/* Was named struct_declarator_list until C11. */
 type_member_declarator_list:
 	type_member_declarator {
 		$$ = declare_member($1);
@@ -1291,8 +1292,8 @@ type_member_declarator_list:
 
 /* C23 6.7.3.2 */
 /* The rule 'member_declarator' is split into the 'type' and 'notype' variants. */
-
 /* Was named struct_declarator until C11. */
+
 notype_member_declarator:
 	notype_declarator
 	/* C99 6.7.2.1 */
@@ -1307,7 +1308,6 @@ notype_member_declarator:
 	}
 ;
 
-/* Was named struct_declarator until C11. */
 type_member_declarator:
 	type_declarator
 |	type_declarator T_COLON constant_expression type_attribute_list_opt {
