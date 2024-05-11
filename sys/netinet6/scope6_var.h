@@ -51,7 +51,7 @@
  *                  ^                      ^                ^          |
  *                  |                      |                |          |
  *            no conversion              parse            parse      embed
- *                  |                   embedded        embbeded      ID
+ *                  |                   embedded        embedded      ID
  *                  |                      ID              ID    (if necessary)
  *                  |                      |                |          |
  *                  v                      |                |          v
