@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.16 2024/05/09 22:38:29 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.17 2024/05/11 14:33:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ ATF_TC_BODY(snprintf_long_double_a, tc)
 	snprintf(buf, sizeof buf, "%La",
 	    0x1.cecececececececececececececep+3791L);
 	ATF_CHECK_MSG((strcmp(buf,
-		    "-0x1.cecececececececececececececep+3791L") == 0 ||
+		    "-0x1.cecececececececececececececep+3791") == 0 ||
 		strcmp(buf, "-0x3.3333333333333338p+3790") == 0 ||
 		strcmp(buf, "-0x6.767676767676767p+3789") == 0 ||
 		strcmp(buf, "-0xc.ecececececececep+3788") == 0),
