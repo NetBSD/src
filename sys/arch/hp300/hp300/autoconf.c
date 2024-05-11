@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.112 2024/01/16 07:07:00 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.113 2024/05/11 09:55:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.112 2024/01/16 07:07:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113 2024/05/11 09:55:11 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -678,12 +678,29 @@ setbootdev(void)
 	 */
 	switch (type) {
 	case 2: /* rd */
-	case 4: /* sd */
 		/*
 		 * "rd" -> "hpibbus" -> "fhpib"
-		 * "sd" -> "scsibus" -> "spc"
+		 * "rd" -> "hpibbus" -> "nhpib"
 		 */
 		for (cdd = LIST_FIRST(&dev_data_list_hpib), ctlr = 0;
+		    cdd != NULL; cdd = LIST_NEXT(cdd, dd_clist), ctlr++) {
+			if (cdd->dd_dev ==
+			    device_parent(device_parent(root_device))) {
+				/*
+				 * Found it!
+				 */
+				bootdev = MAKEBOOTDEV(type,
+				    ctlr, dd->dd_slave, dd->dd_punit,
+				    DISKPART(rootdev));
+				break;
+			}
+		}
+		break;
+	case 4: /* sd */
+		/*
+		 * "sd" -> "scsibus" -> "spc"
+		 */
+		for (cdd = LIST_FIRST(&dev_data_list_scsi), ctlr = 0;
 		    cdd != NULL; cdd = LIST_NEXT(cdd, dd_clist), ctlr++) {
 			if (cdd->dd_dev ==
 			    device_parent(device_parent(root_device))) {
