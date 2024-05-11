@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.17 2021/12/05 05:01:50 msaitoh Exp $ */
+/* $NetBSD: hp300.c,v 1.18 2024/05/11 22:10:27 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.17 2021/12/05 05:01:50 msaitoh Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.18 2024/05/11 22:10:27 tsutsui Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -167,11 +167,12 @@ hp300_setboot(ib_params *params)
 	/* Relocate files, sanity check LIF directory on the way */
 	lifdir = (void *)(bootstrap + HP300_SECTSIZE * 2);
 	for (i = 0; i < 8; lifdir++, i++) {
-		int32_t addr = be32toh(lifdir->dir_addr);
-		int32_t limit = (params->s1stat.st_size - 1) / HP300_SECTSIZE + 1;
-		int32_t end = addr + be32toh(lifdir->dir_length);
+		uint32_t addr = be32toh(lifdir->dir_addr);
+		uint32_t limit = (params->s1stat.st_size - 1) / HP300_SECTSIZE
+		    + 1;
+		uint32_t end = addr + be32toh(lifdir->dir_length);
 		if (end > limit) {
-			warnx("LIF entry %d larger (%d %d) than LIF file",
+			warnx("LIF entry %d larger (%u %u) than LIF file",
 				i, end, limit);
 			goto done;
 		}
