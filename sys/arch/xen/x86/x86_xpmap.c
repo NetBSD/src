@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.92 2022/08/20 23:48:51 riastradh Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.93 2024/05/11 06:50:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.92 2022/08/20 23:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.93 2024/05/11 06:50:23 andvar Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -503,7 +503,7 @@ xen_locore(void)
 	x86_cpuid(0x80000001, descs);
 	xpmap_pg_nx = (descs[3] & CPUID_NOX) ? PTE_NX : 0;
 
-	/* Space after Xen boostrap tables should be free */
+	/* Space after Xen bootstrap tables should be free */
 	xen_tables = xen_start_info.pt_base;
 	our_tables = xen_tables + (xen_start_info.nr_pt_frames * PAGE_SIZE);
 
