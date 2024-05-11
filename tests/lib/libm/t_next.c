@@ -1,4 +1,4 @@
-/*	$NetBSD: t_next.c,v 1.5 2024/05/11 01:44:12 riastradh Exp $	*/
+/*	$NetBSD: t_next.c,v 1.6 2024/05/11 02:07:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_next.c,v 1.5 2024/05/11 01:44:12 riastradh Exp $");
+__RCSID("$NetBSD: t_next.c,v 1.6 2024/05/11 02:07:54 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -391,9 +391,6 @@ ATF_TC_BODY(next_near_0, tc)
 #endif
 	};
 
-#ifdef __HAVE_LONG_DOUBLE
-	atf_tc_expect_fail("PR 58236: nexttoward(3) is broken on subnormals");
-#endif
 	check(x, __arraycount(x));
 }
 
