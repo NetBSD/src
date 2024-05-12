@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.642 2024/05/11 15:53:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.643 2024/05/12 09:07:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.642 2024/05/11 15:53:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.643 2024/05/12 09:07:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4214,10 +4214,10 @@ add_function_argument(function_call *call, tnode_t *arg)
 	if (call->args_len >= call->args_cap) {
 		call->args_cap += 8;
 		tnode_t **new_args = expr_zero_alloc(
-		    call->args_cap * sizeof(*call->args),
-		    "function_call.args");
-		memcpy(new_args, call->args,
-		    call->args_len * sizeof(*call->args));
+		    call->args_cap * sizeof(*call->args), "tnode*[]");
+		if (call->args_len > 0)
+			memcpy(new_args, call->args,
+			    call->args_len * sizeof(*call->args));
 		call->args = new_args;
 	}
 	call->args[call->args_len++] = arg;
