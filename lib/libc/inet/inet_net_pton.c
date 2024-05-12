@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.6 2024/02/05 21:46:05 andvar Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.7 2024/05/12 23:58:18 msaitoh Exp $");
 #endif
 #endif
 
@@ -150,7 +150,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 			goto enoent;
 	}
 
-	/* Firey death and destruction unless we prefetched EOS. */
+	/* Fiery death and destruction unless we prefetched EOS. */
 	if (ch != '\0')
 		goto enoent;
 
