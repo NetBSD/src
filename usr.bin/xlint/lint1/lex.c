@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.226 2024/05/12 08:48:36 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.227 2024/05/12 09:07:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.226 2024/05/12 08:48:36 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.227 2024/05/12 09:07:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1545,9 +1545,10 @@ seq_reserve(balanced_token_sequence *seq)
 		seq->cap = 16 + 2 * seq->cap;
 		const balanced_token *old_tokens = seq->tokens;
 		balanced_token *new_tokens = block_zero_alloc(
-		    seq->cap * sizeof(*seq->tokens), "balanced_tokens");
-		memcpy(new_tokens, old_tokens,
-		    seq->len * sizeof(*seq->tokens));
+		    seq->cap * sizeof(*seq->tokens), "balanced_token[]");
+		if (seq->len > 0)
+			memcpy(new_tokens, old_tokens,
+			    seq->len * sizeof(*seq->tokens));
 		seq->tokens = new_tokens;
 	}
 }

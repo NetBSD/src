@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.502 2024/05/12 08:48:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.503 2024/05/12 09:07:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.502 2024/05/12 08:48:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.503 2024/05/12 09:07:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -118,9 +118,10 @@ attribute_list_add(attribute_list *list, attribute attr)
 		attribute *old_attrs = list->attrs;
 		list->cap = 16 + 2 * list->cap;
 		list->attrs = block_zero_alloc(
-		    list->cap * sizeof(*list->attrs), "attribute_list.attrs");
-		memcpy(list->attrs, old_attrs,
-		    list->len * sizeof(*list->attrs));
+		    list->cap * sizeof(*list->attrs), "attribute[]");
+		if (list->len > 0)
+			memcpy(list->attrs, old_attrs,
+			    list->len * sizeof(*list->attrs));
 	}
 	list->attrs[list->len++] = attr;
 }
