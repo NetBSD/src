@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.117 2024/01/17 10:20:12 hannken Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.118 2024/05/12 17:22:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.117 2024/01/17 10:20:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.118 2024/05/12 17:22:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,10 @@ procfs_rw(void *v)
 
 	case PFSlimit:
 		error = procfs_dolimit(curl, p, pfs, uio);
+		break;
+
+	case PFSlimits:
+		error = procfs_dolimits(curl, p, pfs, uio);
 		break;
 
 	case PFSmap:

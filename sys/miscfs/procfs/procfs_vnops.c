@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.230 2024/01/17 10:19:21 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.231 2024/05/12 17:22:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.230 2024/01/17 10:19:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.231 2024/05/12 17:22:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -171,6 +171,7 @@ static const struct proc_target {
 	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
 	{ DT_REG, N("limit"),	PFSlimit,	NULL },
+	{ DT_REG, N("limits"),	PFSlimits,	procfs_validfile_linux },
 	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
 	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("mem"),	PFSmem,		NULL },
@@ -704,6 +705,7 @@ procfs_getattr(void *v)
 	case PFSmap:
 	case PFSmaps:
 	case PFSlimit:
+	case PFSlimits:
 	case PFSauxv:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
@@ -844,6 +846,7 @@ procfs_getattr(void *v)
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSlimit:
+	case PFSlimits:
 	case PFSmap:
 	case PFSmaps:
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.114 2024/01/17 10:21:01 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.115 2024/05/12 17:22:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.114 2024/01/17 10:21:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.115 2024/05/12 17:22:29 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -431,7 +431,8 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
 	case PFSstatm:		/* /proc/N/statm = -r--r--r-- */
 	case PFSversion:	/* /proc/version = -r--r--r-- */
-	case PFSlimit:		/* /proc/limit = -r--r--r-- */
+	case PFSlimit:		/* /proc/N/limit = -r--r--r-- */
+	case PFSlimits:		/* /proc/N/limits = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
