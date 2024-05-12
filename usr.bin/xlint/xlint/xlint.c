@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.123 2024/03/02 09:32:19 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.124 2024/05/12 18:00:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.123 2024/03/02 09:32:19 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.124 2024/05/12 18:00:59 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -617,7 +617,6 @@ main(int argc, char *argv[])
 		case 'F':
 			Fflag = true;
 			/* FALLTHROUGH */
-		case 'u':
 		case 'h':
 			list_add_flag(&lint1.flags, c);
 			list_add_flag(&lint2.flags, c);
@@ -684,6 +683,7 @@ main(int argc, char *argv[])
 			break;
 #endif
 
+		case 'u':
 		case 'x':
 		case 'H':
 			list_add_flag(&lint2.flags, c);

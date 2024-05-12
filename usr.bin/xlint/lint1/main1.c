@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.82 2024/02/03 19:37:02 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.83 2024/05/12 18:00:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.82 2024/02/03 19:37:02 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.83 2024/05/12 18:00:58 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,6 @@ bool Pflag;
 bool pflag;
 bool rflag;
 bool Tflag;
-bool uflag;
 bool vflag;
 bool wflag;
 bool yflag;
@@ -138,7 +137,7 @@ main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "abceghpq:rstuvwyzA:FPR:STX:")) != -1) {
+	while ((c = getopt(argc, argv, "abceghpq:rstvwyzA:FPR:STX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = true;	break;
@@ -173,7 +172,6 @@ main(int argc, char *argv[])
 			allow_c11 = false;
 			allow_c23 = false;
 			break;
-		case 'u':	uflag = true;	break;
 		case 'w':	wflag = true;	break;
 		case 'v':	vflag = true;	break;
 		case 'y':	yflag = true;	break;
@@ -262,7 +260,7 @@ static void __dead
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-abceghmprstuvwyzFPST] [-Alevel] [-ddirectory] "
+	    "usage: %s [-abceghmprstvwyzFPST] [-Alevel] [-d directory] "
 	    "[-R old=new]\n"
 	    "       %*s [-X id,...] [-q id,...] src dest\n",
 	    getprogname(), (int)strlen(getprogname()), "");
