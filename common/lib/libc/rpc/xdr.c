@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.3 2019/06/16 16:01:44 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.4 2024/05/12 23:52:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.3 2019/06/16 16:01:44 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.4 2024/05/12 23:52:57 msaitoh Exp $");
 #endif
 #endif
 
@@ -674,7 +674,7 @@ xdr_netobj(XDR *xdrs, struct netobj *np)
 }
 
 /*
- * XDR a descriminated union
+ * XDR a discriminated union
  * Support routine for discriminated unions.
  * You create an array of xdrdiscrim structures, terminated with
  * an entry with a null procedure pointer.  The routine gets
