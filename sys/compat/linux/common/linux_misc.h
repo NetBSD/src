@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.31 2024/05/12 19:50:42 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.32 2024/05/12 19:54:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ __packed
 
 #ifdef _KERNEL
 __BEGIN_DECLS
+struct linux_timeval;
 int bsd_to_linux_wstat(int);
 int linux_select1(struct lwp *, register_t *, int, fd_set *, fd_set *,
 		       fd_set *, struct linux_timeval *);
