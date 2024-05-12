@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.59 2023/10/09 11:28:05 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.60 2024/05/12 17:17:56 christos Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.59 2023/10/09 11:28:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.60 2024/05/12 17:17:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -72,7 +72,8 @@ int	uredebug = 0;
 
 static const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8152 },
-	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8153 }
+	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8153 },
+	{ USB_VENDOR_TPLINK,  USB_PRODUCT_TPLINK_UE300 },
 };
 
 #define URE_BUFSZ	(16 * 1024)
