@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.49 2024/05/12 11:46:14 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.50 2024/05/12 12:28:35 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -476,7 +476,6 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 	// or nowhere.
 	/* expect+1: warning: loop not entered at top [207] */
 	do {
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	} while (0);
 }
 

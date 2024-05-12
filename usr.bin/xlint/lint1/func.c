@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.186 2024/03/29 08:35:32 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.187 2024/05/12 12:28:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.186 2024/03/29 08:35:32 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.187 2024/05/12 12:28:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -548,7 +548,7 @@ default_label(void)
 }
 
 static tnode_t *
-check_controlling_expression(tnode_t *tn)
+check_controlling_expression(tnode_t *tn, bool is_do_while)
 {
 	tn = cconv(tn);
 	if (tn != NULL)
@@ -563,7 +563,8 @@ check_controlling_expression(tnode_t *tn)
 		return NULL;
 	}
 
-	if (tn != NULL && Tflag && !is_typeok_bool_compares_with_zero(tn)) {
+	if (tn != NULL && Tflag
+	    && !is_typeok_bool_compares_with_zero(tn, is_do_while)) {
 		/* controlling expression must be bool, not '%s' */
 		error(333, tn->tn_type->t_is_enum ? type_name(tn->tn_type)
 		    : tspec_name(tn->tn_type->t_tspec));
@@ -576,7 +577,7 @@ void
 stmt_if_expr(tnode_t *tn)
 {
 	if (tn != NULL)
-		tn = check_controlling_expression(tn);
+		tn = check_controlling_expression(tn, false);
 	if (tn != NULL)
 		expr(tn, false, true, false, false);
 	begin_control_statement(CS_IF);
@@ -721,7 +722,7 @@ stmt_while_expr(tnode_t *tn)
 	}
 
 	if (tn != NULL)
-		tn = check_controlling_expression(tn);
+		tn = check_controlling_expression(tn, false);
 
 	begin_control_statement(CS_WHILE);
 	cstmt->c_loop = true;
@@ -762,7 +763,7 @@ stmt_do_while_expr(tnode_t *tn)
 		set_reached(true);
 
 	if (tn != NULL)
-		tn = check_controlling_expression(tn);
+		tn = check_controlling_expression(tn, true);
 
 	if (tn != NULL && tn->tn_op == CON) {
 		cstmt->c_maybe_endless = constant_is_nonzero(tn);
@@ -811,7 +812,7 @@ stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		expr(tn1, false, false, true, false);
 
 	if (tn2 != NULL)
-		tn2 = check_controlling_expression(tn2);
+		tn2 = check_controlling_expression(tn2, false);
 	if (tn2 != NULL)
 		expr(tn2, false, true, true, false);
 
