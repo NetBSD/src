@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.57 2022/08/12 10:49:47 riastradh Exp $
+.\" $NetBSD: cgdconfig.8,v 1.58 2024/05/12 18:02:16 christos Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2021
+.Dd May 12, 2024
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -270,6 +270,8 @@ scan for a valid Master Boot Record.
 scan for a valid GUID partition table.
 .It ffs
 scan for a valid FFS file system.
+.It zfs
+scan for a valid ZFS vdev label (if compiled with MKZFS).
 .It re-enter
 prompt for passphrase twice, and ensure entered passphrases are
 identical.

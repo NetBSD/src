@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.14 2022/08/12 10:49:35 riastradh Exp $ */
+/* $NetBSD: params.h,v 1.15 2024/05/12 18:02:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ struct params {
 #define VERIFY_REENTER		0x4
 #define VERIFY_MBR      	0x5
 #define VERIFY_GPT      	0x6
+#define VERIFY_ZFS      	0x7
 
 /* shared key derivation methods */
 
