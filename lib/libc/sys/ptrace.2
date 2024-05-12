@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.85 2020/05/14 13:40:49 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.86 2024/05/12 23:55:57 msaitoh Exp $
 .\"
 .\" This file is in the public domain.
 .Dd May 14, 2020
@@ -907,7 +907,7 @@ Other components (fields) will be ignored.
 The
 .Fa xs_xstate_bv
 field specifies whether component state should be set to provided
-values (when 1) or reset to unitialized (when 0).
+values (when 1) or reset to uninitialized (when 0).
 The request will fail if
 .Fa xs_xstate_bv
 is not a subset of
