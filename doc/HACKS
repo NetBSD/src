@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.243 2024/05/05 23:08:53 riastradh Exp $
+# $NetBSD: HACKS,v 1.244 2024/05/12 23:55:57 msaitoh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -597,7 +597,7 @@ port	vax
 	file	src/games/gomoku/Makefile : 1.12
 	descr
 		pickmove.c crashes with -O2, warns about ovi.o_intersect being
-		unitialized with -O1, works with -O0
+		uninitialized with -O1, works with -O0
 	kcah
 
 	hack	gdtoa/misc.c miscompile

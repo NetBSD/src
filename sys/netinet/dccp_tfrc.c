@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.11 2023/08/14 03:03:48 mrg Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.12 2024/05/12 23:55:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.11 2023/08/14 03:03:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.12 2024/05/12 23:55:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -669,7 +669,7 @@ tfrc_send_packet(void *ccb, long datasize)
 
 #ifdef TFRCDEBUG
 				if (cb->t_last_win_count.tv_sec == -1)
-					panic("TFRC - t_last_win_count unitialized (tfrc_send_packet)\n");
+					panic("TFRC - t_last_win_count uninitialized (tfrc_send_packet)\n");
 #endif
 				t_temp = t_now;
 				timersub(&t_temp, &(cb->t_last_win_count), &t_temp);
