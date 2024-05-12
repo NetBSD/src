@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.7 2010/06/12 21:25:56 macallan Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.8 2024/05/12 07:22:13 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,6 +91,39 @@ struct cg14ctl {
 #define CG14_RSR_REVMASK	0xf0 		/*  mask to get revision */
 #define CG14_RSR_IMPLMASK	0x0f		/*  mask to get impl. code */
 	volatile uint8_t	ctl_ccr;	/* clock control register */
+#define CCR_SCL		0x01
+#define CCR_SDA		0x02
+#define CCR_SDA_DIR	0x04
+#define CCR_ASXSEL	0x08	/* the ICS1562 has 4 data/address lines and a */
+#define CCR_DATA	0xf0	/* toggle input - I suspect this is it */
+	volatile uint32_t	ctl_tmr;	/* test mode readback */
+	volatile uint8_t	ctl_mod;	/* monitor data register */
+	/* reads 0x4 on mine, other bits in the lower half can be written with
+	   no obvious effect ( I suspect monitor ID ), upper half is hard zero 
+	 */
+	volatile uint8_t	ctl_acr;	/* aux control register */	
+#define ACR_BYTE_PIXEL	0x01	/* if unset pixels are 32bit */
+				/* other bits are hard zero */	
+        uint8_t 	m_pad0[6];      /* Reserved                     */
+        uint16_t	m_hct;          /* Horizontal Counter           */
+        uint16_t	m_vct;          /* Vertical Counter             */
+        uint16_t	m_hbs;          /* Horizontal Blank Start       */
+        uint16_t	m_hbc;          /* Horizontal Blank Clear       */
+        uint16_t	m_hss;          /* Horizontal Sync Set          */
+        uint16_t	m_hsc;          /* Horizontal Sync Set          */
+        uint16_t	m_csc;          /* Composite sync clear         */
+        uint16_t	m_vbs;          /* Vertical blank start         */
+        uint16_t	m_vbc;          /* Vertical Blank Clear */
+        uint16_t	m_vss;          /* Verical Sync Set             */
+        uint16_t	m_vsc;          /* Verical Sync Clear           */
+        uint16_t	m_xcs;          /* XXX Gone in VSIMM 2 */
+        uint16_t	m_xcc;          /* XXX Gone in VSIMM 2 */
+        uint16_t	m_fsa;          /* Fault status address         */
+        uint16_t	m_adr;          /* Address register (autoincrements) */
+        uint8_t		m_pad2[0xce];   /* Reserved                     */
+
+        /* PCG registers */
+        uint8_t		m_pcg[0x100];   /* Pixel Clock generator regs   */
 	/* XXX etc. */
 };
 
@@ -133,6 +166,35 @@ struct cg14xlut {
 	volatile uint8_t	xlut_lutinc[CG14_CLUT_SIZE];	/* autoincrLUT*/
 	volatile uint8_t	xlut_lutincd[CG14_CLUT_SIZE];
 };
+
+/* 
+ * The XLUT and ctl_ppr bits are the same - in 8bit ppr is used, in 16bit and
+ * 24bit XLUT
+ * here we select two colours, either RGB or a component passed through a
+ * CLUT, and blend them together. The alpha value is taken from the right 
+ * source's CLUT's upper byte, with 0x80 being 1.0 and 0x00 being 0.0
+*/
+
+#define CG14_LEFT_PASSTHROUGH	0x00
+#define CG14_LEFT_CLUT1		0x40
+#define CG14_LEFT_CLUT2		0x80
+#define CG14_LEFT_CLUT3		0xc0
+
+#define CG14_RIGHT_PASSTHROUGH	0x00
+#define CG14_RIGHT_CLUT1	0x10
+#define CG14_RIGHT_CLUT2	0x20
+#define CG14_RIGHT_CLUT3	0x30
+
+/* 0 is passthrough again */
+#define CG14_LEFT_B       0x04
+#define CG14_LEFT_G       0x08
+#define CG14_LEFT_R       0x0c
+
+/* except here 0 selects the X channel */
+#define CG14_RIGHT_X      0x00
+#define CG14_RIGHT_B      0x01
+#define CG14_RIGHT_G      0x02
+#define CG14_RIGHT_R      0x03
 
 /* Color Look-Up Table (CLUT) */
 struct cg14clut {
