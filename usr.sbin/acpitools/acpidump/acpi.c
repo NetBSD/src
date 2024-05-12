@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.55 2022/05/24 20:50:21 andvar Exp $ */
+/* $NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.55 2022/05/24 20:50:21 andvar Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -4719,7 +4719,7 @@ aml_disassemble(ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 		goto out;
 	}
 	if (status != 0) {
-		fprintf(stderr, "iast exit status = %d\n", status);
+		fprintf(stderr, "iasl exit status = %d\n", status);
 	}
 
 	/* Dump iasl's output to stdout */
