@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.80 2022/06/26 22:31:38 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.81 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,11 +52,11 @@ struct timeval {
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
 	(ts)->tv_sec = (tv)->tv_sec;					\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define	TIMESPEC_TO_TIMEVAL(tv, ts) do {				\
 	(tv)->tv_sec = (ts)->tv_sec;					\
 	(tv)->tv_usec = (suseconds_t)(ts)->tv_nsec / 1000;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Note: timezone is obsolete. All timezone handling is now in
@@ -82,7 +82,7 @@ struct timezone {
 			(vvp)->tv_sec++;				\
 			(vvp)->tv_usec -= 1000000;			\
 		}							\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #define	timersub(tvp, uvp, vvp)						\
 	do {								\
 		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
@@ -91,7 +91,7 @@ struct timezone {
 			(vvp)->tv_sec--;				\
 			(vvp)->tv_usec += 1000000;			\
 		}							\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 
 /*
  * hide bintime for _STANDALONE because this header is used for hpcboot.exe,
@@ -254,7 +254,7 @@ ns2bintime(uint64_t ns)
 			(vsp)->tv_sec++;				\
 			(vsp)->tv_nsec -= 1000000000L;			\
 		}							\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #define	timespecsub(tsp, usp, vsp)					\
 	do {								\
 		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
@@ -263,7 +263,7 @@ ns2bintime(uint64_t ns)
 			(vsp)->tv_sec--;				\
 			(vsp)->tv_nsec += 1000000000L;			\
 		}							\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #define timespec2ns(x) (((uint64_t)(x)->tv_sec) * 1000000000L + (x)->tv_nsec)
 
 #ifdef _KERNEL

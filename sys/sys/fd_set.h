@@ -1,4 +1,4 @@
-/*	$NetBSD: fd_set.h,v 1.7 2018/06/24 12:05:40 kamil Exp $	*/
+/*	$NetBSD: fd_set.h,v 1.8 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ typedef	struct fd_set {
 	unsigned int __i;						\
 	for (__i = 0; __i < __NFD_SIZE; __i++)				\
 		__fds->fds_bits[__i] = 0;				\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif /* GCC 2.95 */
 
 /*
@@ -100,7 +100,7 @@ typedef	struct fd_set {
 	unsigned int __i;						\
 	for (__i = 0; __i < __NFD_SIZE; __i++)				\
 		__t->fds_bits[__i] = __f->fds_bits[__i];		\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif /* GCC 2.95 */
 
 #endif /* _NETBSD_SOURCE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.26 2021/04/17 01:53:58 mrg Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.27 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -151,7 +151,7 @@ extern	struct kern_history_head kern_histories;
 do { \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 	sysctl_kernhist_new(&(NAME)); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define KERNHIST_INIT(NAME,N) \
 do { \
@@ -163,7 +163,7 @@ do { \
 		kmem_zalloc(sizeof(struct kern_history_ent) * (N), KM_SLEEP); \
 	(NAME).s = 0; \
 	KERNHIST_LINK_STATIC(NAME); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define KERNHIST_INITIALIZER(NAME,BUF) \
 { \
@@ -189,7 +189,7 @@ do { \
 			if (KERNHIST_DELAY != 0) \
 				DELAY(KERNHIST_DELAY); \
 		} \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 #else
 #define KERNHIST_PRINTNOW(E) /* nothing */
 #endif
@@ -215,13 +215,13 @@ do { \
 	_e_->v[2] = (uintmax_t)(C); \
 	_e_->v[3] = (uintmax_t)(D); \
 	KERNHIST_PRINTNOW(_e_); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define KERNHIST_CALLED(NAME) \
 do { \
 	_kernhist_call = atomic_inc_32_nv(&_kernhist_cnt); \
 	KERNHIST_LOG(NAME, "called!", 0, 0, 0, 0); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 /*
  * This extends kernhist to avoid wasting a separate "called!" entry on every
@@ -231,7 +231,7 @@ do { \
 do { \
 	_kernhist_call = atomic_inc_32_nv(&_kernhist_cnt); \
 	KERNHIST_LOG(NAME, "called: "FMT, (A), (B), (C), (D)); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define KERNHIST_FUNC(FNAME) \
 	static uint32_t _kernhist_cnt = 0; \

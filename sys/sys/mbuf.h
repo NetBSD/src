@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.239 2024/01/22 21:15:02 jdolecek Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.240 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ do {									\
 	KASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
 	(m)->m_ext.ext_refcnt = 1;					\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 /*
  * Macros for mbuf external storage.
@@ -489,7 +489,7 @@ do {									\
 		(m)->m_ext.ext_arg = NULL;				\
 		mowner_ref((m), M_EXT);					\
 	}								\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
@@ -500,7 +500,7 @@ do {									\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
 	mowner_ref((m), M_EXT);						\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define M_BUFADDR(m)							\
 	(((m)->m_flags & M_EXT) ? (m)->m_ext.ext_buf :			\
@@ -573,7 +573,7 @@ do {									\
 		(m) = m_prepend((m), (plen), (how));			\
 	if ((m) && (m)->m_flags & M_PKTHDR)				\
 		(m)->m_pkthdr.len += (plen);				\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 /* change mbuf to new type */
 #define MCHTYPE(m, t)							\
@@ -582,7 +582,7 @@ do {									\
 	mbstat_type_add((m)->m_type, -1);				\
 	mbstat_type_add(t, 1);						\
 	(m)->m_type = t;						\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #ifdef DIAGNOSTIC
 #define M_VERIFY_PACKET(m)	m_verify_packet(m)
@@ -623,7 +623,7 @@ do {									\
 			(m) = NULL;					\
 		}							\
 	}								\
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #endif /* defined(_KERNEL) */
 
@@ -644,19 +644,19 @@ struct name {							\
 #define MBUFQ_INIT(q)		do {				\
 	(q)->mq_first = NULL;					\
 	(q)->mq_last = &(q)->mq_first;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MBUFQ_ENQUEUE(q, m)	do {				\
 	(m)->m_nextpkt = NULL;					\
 	*(q)->mq_last = (m);					\
 	(q)->mq_last = &(m)->m_nextpkt;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MBUFQ_PREPEND(q, m)	do {				\
 	if (((m)->m_nextpkt = (q)->mq_first) == NULL)		\
 		(q)->mq_last = &(m)->m_nextpkt;			\
 	(q)->mq_first = (m);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MBUFQ_DEQUEUE(q, m)	do {				\
 	if (((m) = (q)->mq_first) != NULL) {			\
@@ -665,7 +665,7 @@ struct name {							\
 		else						\
 			(m)->m_nextpkt = NULL;			\
 	}							\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MBUFQ_DRAIN(q)		do {				\
 	struct mbuf *__m0;					\
@@ -674,7 +674,7 @@ struct name {							\
 		m_freem(__m0);					\
 	}							\
 	(q)->mq_last = &(q)->mq_first;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MBUFQ_FIRST(q)		((q)->mq_first)
 #define MBUFQ_NEXT(m)		((m)->m_nextpkt)

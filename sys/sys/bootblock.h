@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.59 2024/05/11 22:10:27 tsutsui Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.60 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -800,7 +800,7 @@ struct alpha_boot_block {
 		    _i++)						\
 			_cksum += le64toh(_bb->bb_data[_i]);		\
 		*(cksum) = htole64(_cksum);				\
-	} while (/*CONSTCOND*/ 0)
+	} while (0)
 
 /* ------------------------------------------
  * apple --

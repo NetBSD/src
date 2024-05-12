@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.162 2024/05/11 13:26:54 riastradh Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.163 2024/05/12 10:34:56 rillig Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -340,7 +340,7 @@
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__) || defined(__lint__)
 #define	__unreachable()	__builtin_unreachable()
 #else
-#define	__unreachable()	do {} while (/*CONSTCOND*/0)
+#define	__unreachable()	do {} while (0)
 #endif
 
 #if defined(_KERNEL) || defined(_RUMPKERNEL)

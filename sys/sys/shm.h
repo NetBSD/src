@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.55 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: shm.h,v 1.56 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ extern void (*uvm_shmfork)(struct vmspace *, struct vmspace *);
 	(dst).shm_dtime = (src).shm_dtime; \
 	(dst).shm_ctime = (src).shm_ctime; \
 	(dst).shm_nattch = (src).shm_nattch; \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #else /* !_KERNEL */
 

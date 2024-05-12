@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.58 2023/07/08 20:02:10 riastradh Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.59 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -95,7 +95,7 @@ struct plimit {
 		    _p->p_stats->p_prof.pr_addr,			\
 		    _p->p_stats->p_prof.pr_ticks);			\
 		_p->p_stats->p_prof.pr_ticks = 0;			\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 
 extern char defcorename[];
 
