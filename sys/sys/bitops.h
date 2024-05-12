@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.15 2021/09/12 15:22:05 rillig Exp $	*/
+/*	$NetBSD: bitops.h,v 1.16 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -323,7 +323,7 @@ fast_remainder32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
 	size_t __i;							\
 	for (__i = 0; __i < __arraycount((__v)->_b); __i++)		\
 		(__v)->_b[__i] = 0;					\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif /* GCC 2.95 */
 
 #endif /* _SYS_BITOPS_H_ */

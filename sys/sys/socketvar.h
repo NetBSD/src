@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.168 2024/02/03 19:05:14 jdolecek Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.169 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ do {									\
 		(sb)->sb_mbtail = NULL;					\
 		(sb)->sb_lastrecord = NULL;				\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 extern u_long		sb_max;
 extern int		somaxkva;

@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.7 2008/04/29 19:16:08 ad Exp $ */
+/* $NetBSD: boot_flag.h,v 1.8 2024/05/12 10:34:56 rillig Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,6 @@
 		break;						\
 	} /* switch */						\
 								\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 
 #endif /* _SYS_BOOT_FLAG_H_ */

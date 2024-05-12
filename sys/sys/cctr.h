@@ -1,4 +1,4 @@
-/*	$NetBSD: cctr.h,v 1.4 2020/10/10 03:05:04 thorpej Exp $	*/
+/*	$NetBSD: cctr.h,v 1.5 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ do {									\
 		(ci)->ci_cc.cc_ticks = 0;				\
 		cc_calibrate_cpu((ci));					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif /* _KERNEL */
 
 #endif /* _SYS_CCTR_H_ */

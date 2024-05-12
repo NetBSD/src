@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.34 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: sem.h,v 1.35 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 	(dst).sem_nsems = (src).sem_nsems; \
 	(dst).sem_otime = (src).sem_otime; \
 	(dst).sem_ctime = (src).sem_ctime; \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #endif /* _KERNEL */
 

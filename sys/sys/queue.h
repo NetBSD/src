@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.76 2021/01/16 23:51:51 chs Exp $	*/
+/*	$NetBSD: queue.h,v 1.77 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -136,26 +136,26 @@ struct {								\
  */
 #define	SLIST_INIT(head) do {						\
 	(head)->slh_first = SLIST_END(head);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SLIST_INSERT_AFTER(slistelm, elm, field) do {			\
 	(elm)->field.sle_next = (slistelm)->field.sle_next;		\
 	(slistelm)->field.sle_next = (elm);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SLIST_INSERT_HEAD(head, elm, field) do {			\
 	(elm)->field.sle_next = (head)->slh_first;			\
 	(head)->slh_first = (elm);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SLIST_REMOVE_AFTER(slistelm, field) do {			\
 	(slistelm)->field.sle_next =					\
 	    SLIST_NEXT(SLIST_NEXT((slistelm), field), field);		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SLIST_REMOVE_HEAD(head, field) do {				\
 	(head)->slh_first = (head)->slh_first->field.sle_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SLIST_REMOVE(head, elm, type, field) do {			\
 	if ((head)->slh_first == (elm)) {				\
@@ -168,7 +168,7 @@ struct {								\
 		curelm->field.sle_next =				\
 		    curelm->field.sle_next->field.sle_next;		\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 
 /*
@@ -214,7 +214,7 @@ struct {								\
 		(head2)->lh_first->field.le_prev = &(head2)->lh_first;	\
 		LIST_INIT((head1));					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * List functions.
@@ -245,7 +245,7 @@ struct {								\
 
 #define	LIST_INIT(head) do {						\
 	(head)->lh_first = LIST_END(head);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	LIST_INSERT_AFTER(listelm, elm, field) do {			\
 	QUEUEDEBUG_LIST_OP((listelm), field)				\
@@ -255,7 +255,7 @@ struct {								\
 		    &(elm)->field.le_next;				\
 	(listelm)->field.le_next = (elm);				\
 	(elm)->field.le_prev = &(listelm)->field.le_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	LIST_INSERT_BEFORE(listelm, elm, field) do {			\
 	QUEUEDEBUG_LIST_OP((listelm), field)				\
@@ -263,7 +263,7 @@ struct {								\
 	(elm)->field.le_next = (listelm);				\
 	*(listelm)->field.le_prev = (elm);				\
 	(listelm)->field.le_prev = &(elm)->field.le_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	LIST_INSERT_HEAD(head, elm, field) do {				\
 	QUEUEDEBUG_LIST_INSERT_HEAD((head), (elm), field)		\
@@ -271,7 +271,7 @@ struct {								\
 		(head)->lh_first->field.le_prev = &(elm)->field.le_next;\
 	(head)->lh_first = (elm);					\
 	(elm)->field.le_prev = &(head)->lh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	LIST_REMOVE(elm, field) do {					\
 	QUEUEDEBUG_LIST_OP((elm), field)				\
@@ -280,7 +280,7 @@ struct {								\
 		    (elm)->field.le_prev;				\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
 	QUEUEDEBUG_LIST_POSTREMOVE((elm), field)			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define LIST_REPLACE(elm, elm2, field) do {				\
 	if (((elm2)->field.le_next = (elm)->field.le_next) != NULL)	\
@@ -289,7 +289,7 @@ struct {								\
 	(elm2)->field.le_prev = (elm)->field.le_prev;			\
 	*(elm2)->field.le_prev = (elm2);				\
 	QUEUEDEBUG_LIST_POSTREMOVE((elm), field)			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Simple queue definitions.
@@ -333,36 +333,36 @@ struct {								\
 #define	SIMPLEQ_INIT(head) do {						\
 	(head)->sqh_first = NULL;					\
 	(head)->sqh_last = &(head)->sqh_first;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_INSERT_HEAD(head, elm, field) do {			\
 	if (((elm)->field.sqe_next = (head)->sqh_first) == NULL)	\
 		(head)->sqh_last = &(elm)->field.sqe_next;		\
 	(head)->sqh_first = (elm);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_INSERT_TAIL(head, elm, field) do {			\
 	(elm)->field.sqe_next = NULL;					\
 	*(head)->sqh_last = (elm);					\
 	(head)->sqh_last = &(elm)->field.sqe_next;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	if (((elm)->field.sqe_next = (listelm)->field.sqe_next) == NULL)\
 		(head)->sqh_last = &(elm)->field.sqe_next;		\
 	(listelm)->field.sqe_next = (elm);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_REMOVE_HEAD(head, field) do {				\
 	if (((head)->sqh_first = (head)->sqh_first->field.sqe_next) == NULL) \
 		(head)->sqh_last = &(head)->sqh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define SIMPLEQ_REMOVE_AFTER(head, elm, field) do {			\
 	if (((elm)->field.sqe_next = (elm)->field.sqe_next->field.sqe_next) \
 	    == NULL)							\
 		(head)->sqh_last = &(elm)->field.sqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_REMOVE(head, elm, type, field) do {			\
 	if ((head)->sqh_first == (elm)) {				\
@@ -375,7 +375,7 @@ struct {								\
 			curelm->field.sqe_next->field.sqe_next) == NULL) \
 			    (head)->sqh_last = &(curelm)->field.sqe_next; \
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_CONCAT(head1, head2) do {				\
 	if (!SIMPLEQ_EMPTY((head2))) {					\
@@ -383,7 +383,7 @@ struct {								\
 		(head1)->sqh_last = (head2)->sqh_last;		\
 		SIMPLEQ_INIT((head2));					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	SIMPLEQ_LAST(head, type, field)					\
 	(SIMPLEQ_EMPTY((head)) ?						\
@@ -485,7 +485,7 @@ struct {								\
 #define	TAILQ_INIT(head) do {						\
 	(head)->tqh_first = TAILQ_END(head);				\
 	(head)->tqh_last = &(head)->tqh_first;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_INSERT_HEAD(head, elm, field) do {			\
 	QUEUEDEBUG_TAILQ_INSERT_HEAD((head), (elm), field)		\
@@ -496,7 +496,7 @@ struct {								\
 		(head)->tqh_last = &(elm)->field.tqe_next;		\
 	(head)->tqh_first = (elm);					\
 	(elm)->field.tqe_prev = &(head)->tqh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_INSERT_TAIL(head, elm, field) do {			\
 	QUEUEDEBUG_TAILQ_INSERT_TAIL((head), (elm), field)		\
@@ -504,7 +504,7 @@ struct {								\
 	(elm)->field.tqe_prev = (head)->tqh_last;			\
 	*(head)->tqh_last = (elm);					\
 	(head)->tqh_last = &(elm)->field.tqe_next;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	QUEUEDEBUG_TAILQ_OP((listelm), field)				\
@@ -516,7 +516,7 @@ struct {								\
 		(head)->tqh_last = &(elm)->field.tqe_next;		\
 	(listelm)->field.tqe_next = (elm);				\
 	(elm)->field.tqe_prev = &(listelm)->field.tqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_INSERT_BEFORE(listelm, elm, field) do {			\
 	QUEUEDEBUG_TAILQ_OP((listelm), field)				\
@@ -524,7 +524,7 @@ struct {								\
 	(elm)->field.tqe_next = (listelm);				\
 	*(listelm)->field.tqe_prev = (elm);				\
 	(listelm)->field.tqe_prev = &(elm)->field.tqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_REMOVE(head, elm, field) do {				\
 	QUEUEDEBUG_TAILQ_PREREMOVE((head), (elm), field)		\
@@ -536,7 +536,7 @@ struct {								\
 		(head)->tqh_last = (elm)->field.tqe_prev;		\
 	*(elm)->field.tqe_prev = (elm)->field.tqe_next;			\
 	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define TAILQ_REPLACE(head, elm, elm2, field) do {			\
         if (((elm2)->field.tqe_next = (elm)->field.tqe_next) != 	\
@@ -548,7 +548,7 @@ struct {								\
         (elm2)->field.tqe_prev = (elm)->field.tqe_prev;			\
         *(elm2)->field.tqe_prev = (elm2);				\
 	QUEUEDEBUG_TAILQ_POSTREMOVE((elm), field);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	TAILQ_CONCAT(head1, head2, field) do {				\
 	if (!TAILQ_EMPTY(head2)) {					\
@@ -557,7 +557,7 @@ struct {								\
 		(head1)->tqh_last = (head2)->tqh_last;			\
 		TAILQ_INIT((head2));					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Singly-linked Tail queue declarations.
@@ -590,30 +590,30 @@ struct {								\
 #define	STAILQ_INIT(head) do {						\
 	(head)->stqh_first = NULL;					\
 	(head)->stqh_last = &(head)->stqh_first;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_INSERT_HEAD(head, elm, field) do {			\
 	if (((elm)->field.stqe_next = (head)->stqh_first) == NULL)	\
 		(head)->stqh_last = &(elm)->field.stqe_next;		\
 	(head)->stqh_first = (elm);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_INSERT_TAIL(head, elm, field) do {			\
 	(elm)->field.stqe_next = NULL;					\
 	*(head)->stqh_last = (elm);					\
 	(head)->stqh_last = &(elm)->field.stqe_next;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	if (((elm)->field.stqe_next = (listelm)->field.stqe_next) == NULL)\
 		(head)->stqh_last = &(elm)->field.stqe_next;		\
 	(listelm)->field.stqe_next = (elm);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_REMOVE_HEAD(head, field) do {				\
 	if (((head)->stqh_first = (head)->stqh_first->field.stqe_next) == NULL) \
 		(head)->stqh_last = &(head)->stqh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_REMOVE(head, elm, type, field) do {			\
 	if ((head)->stqh_first == (elm)) {				\
@@ -626,7 +626,7 @@ struct {								\
 			curelm->field.stqe_next->field.stqe_next) == NULL) \
 			    (head)->stqh_last = &(curelm)->field.stqe_next; \
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_FOREACH(var, head, field)				\
 	for ((var) = ((head)->stqh_first);				\
@@ -644,7 +644,7 @@ struct {								\
 		(head1)->stqh_last = (head2)->stqh_last;		\
 		STAILQ_INIT((head2));					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STAILQ_LAST(head, type, field)					\
 	(STAILQ_EMPTY((head)) ?						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.34 2019/09/30 21:13:33 kamil Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.35 2024/05/12 10:34:56 rillig Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -112,26 +112,26 @@ typedef struct ksiginfo {
 #define	KSI_INIT(ksi)							\
 do {									\
 	memset((ksi), 0, sizeof(*(ksi)));				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	KSI_INIT_EMPTY(ksi)						\
 do {									\
 	KSI_INIT((ksi));						\
 	(ksi)->ksi_flags = KSI_EMPTY;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	KSI_INIT_TRAP(ksi)						\
 do {									\
 	KSI_INIT((ksi));						\
 	(ksi)->ksi_flags = KSI_TRAP;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Copy the part of ksiginfo_t without the queue pointers */
 #define	KSI_COPY(fksi, tksi)						\
 do {									\
 	(tksi)->ksi_info = (fksi)->ksi_info;				\
 	(tksi)->ksi_flags = (fksi)->ksi_flags;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 
 /* Predicate macros to test how a ksiginfo_t was generated. */

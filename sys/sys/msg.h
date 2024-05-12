@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.29 2023/02/12 16:28:32 andvar Exp $	*/
+/*	$NetBSD: msg.h,v 1.30 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ extern kmutex_t	msgmutex;
 	(dst).msg_stime = (src).msg_stime; \
 	(dst).msg_rtime = (src).msg_rtime; \
 	(dst).msg_ctime = (src).msg_ctime; \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #endif /* _KERNEL */
 

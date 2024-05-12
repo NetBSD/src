@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.55 2023/09/06 12:29:14 riastradh Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.56 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ do {								\
 	KASSERT(kpreempt_disabled());				\
 	KASSERT((unsigned)idx < CPU_COUNT_MAX);			\
 	curcpu()->ci_counts[(idx)] += (d);			\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 /*
  * Fetch a potentially stale count - cheap, use as often as you like.

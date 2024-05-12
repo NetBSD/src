@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.17 2020/04/16 22:13:51 christos Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.18 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ struct ieee_double {
 	(a)[1] = (uint32_t)((u).extu_ext.ext_fracl >> 32);	\
 	(a)[2] = (uint32_t)((u).extu_ext.ext_frach >>  0);	\
 	(a)[3] = (uint32_t)((u).extu_ext.ext_frach >> 32);	\
-} while(/*CONSTCOND*/0)
+} while (0)
 
 struct ieee_ext {
 #if _BYTE_ORDER == _BIG_ENDIAN

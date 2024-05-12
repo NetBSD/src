@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.37 2018/06/23 07:23:06 gson Exp $	*/
+/*	$NetBSD: ipc.h,v 1.38 2024/05/12 10:34:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,7 @@ __END_DECLS
 	(dst).cgid = (src).cgid; \
 	(dst).mode = (src).mode; \
 	(dst)._seq = (src)._seq; \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 /*
  * Set-up the sysctl routine for COMPAT_50
