@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.97 2024/04/24 11:49:58 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.98 2024/05/12 11:48:05 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -385,6 +385,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 
 	/* Attach to /dev/fb */
 	fb_attach(&sc->sc_fb, isconsole);
+
 }
 
 /*
@@ -493,6 +494,7 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			return EINVAL;
 
 		cg14_set_depth(sc, depth);
+		cg14_init_cmap(sc);
 		}
 		break;
 	default:
@@ -608,7 +610,8 @@ cgfourteenpoll(dev_t dev, int events, struct lwp *l)
 static void
 cg14_init(struct cgfourteen_softc *sc)
 {
-	cg14_set_depth(sc, 32);
+	cg14_set_depth(sc, 32);	
+	cg14_init_cmap(sc);
 }
 
 static void
@@ -616,6 +619,7 @@ static void
 cg14_reset(struct cgfourteen_softc *sc)
 {
 	cg14_set_depth(sc, 8);
+	cg14_init_cmap(sc);
 }
 
 /* Enable/disable video display; power down monitor if DPMS-capable */
@@ -736,7 +740,9 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		WSSCREEN_RESIZE,
 		NULL
 	};
+
 	cg14_set_depth(sc, 8);
+
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -753,38 +759,37 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	sc->sc_gc.gc_rectfill = cg14_rectfill_a;
 	sc->sc_gc.gc_rop = 0xc;
 
-		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
-		    &defattr);
+	vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
+	    &defattr);
 
-		/* clear the screen with the default background colour */
-		if (sc->sc_sx != NULL) {
-			cg14_rectfill(sc, 0, 0, ri->ri_width, ri->ri_height,
-				ri->ri_devcmap[(defattr >> 16) & 0xf]);
-		} else {
-			memset(sc->sc_fb.fb_pixels,
-			       ri->ri_devcmap[(defattr >> 16) & 0xf],
-			       ri->ri_stride * ri->ri_height);
-		}
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	/* clear the screen with the default background colour */
+	if (sc->sc_sx != NULL) {
+		cg14_rectfill(sc, 0, 0, ri->ri_width, ri->ri_height,
+			ri->ri_devcmap[(defattr >> 16) & 0xf]);
+	} else {
+		memset(sc->sc_fb.fb_pixels,
+		       ri->ri_devcmap[(defattr >> 16) & 0xf],
+		       ri->ri_stride * ri->ri_height);
+	}
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		glyphcache_init_align(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
-			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) - 
-			 sc->sc_fb.fb_type.fb_height - 5,
-			sc->sc_fb.fb_type.fb_width,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			defattr, 4);
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+	glyphcache_init_align(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
+		(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) - 
+		 sc->sc_fb.fb_type.fb_height - 5,
+		sc->sc_fb.fb_type.fb_width,
+		ri->ri_font->fontwidth,
+		ri->ri_font->fontheight,
+		defattr, 4);
+
 	if (is_cons) {
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	}
-
-	cg14_init_cmap(sc);
 
 	aa.console = is_cons;
 	aa.scrdata = &sc->sc_screenlist;
@@ -792,6 +797,12 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	aa.accesscookie = &sc->sc_vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
+
+	/*
+	 * do this here since any output through firmware calls will mess
+	 * with XLUT settings
+	 */
+	cg14_init_cmap(sc);
 }
 
 static void
@@ -799,18 +810,74 @@ cg14_init_cmap(struct cgfourteen_softc *sc)
 {
 	struct rasops_info *ri = &sc->sc_console_screen.scr_ri;
 	int i, j = 0;
+	uint32_t r, g, b, c;
 	uint8_t cmap[768];
 
-	rasops_get_cmap(ri, cmap, sizeof(cmap));
+	if (sc->sc_depth == 16) {
+		/* construct an R5G6B5 palette in CLUT1/2 */
+		for (i = 0; i < 0x100; i++) {
+			/* upper byte first */
+			r = (i & 0xf8);	/* red component */
+			r |= r >> 5;		/* fill lower bits so 0xf8 */
+			c = 0x40000000 | r;	/* becomes 0xff */
+			g = i & 0x7;		/* upper 3 bits of green */
+			g |= g << 3;
+			c |= ((g << 10) & 0xf000);	/* make it 4 */
+			sc->sc_clut1->clut_lut[i] = c;
+			/* lower byte */
+			g = i & 0xe0;		/* lower half of green */
+			g |= g >> 3;
+			c = 0x40000000 | ((g << 4) & 0x0f00);
+			b = i & 0x1f;		/* and blue */
+			b = (b << 3) | (b >> 2);
+			c |= (b << 16); 
+			sc->sc_clut2->clut_lut[i] = c;
+		}	
 
-	for (i = 0; i < 256; i++) {
+		/*
+		 * because we alpha blend our components everything is half
+		 * intensity, fix that with the gamma LUT
+		 */
 
-		sc->sc_cmap.cm_map[i][3] = cmap[j];
-		sc->sc_cmap.cm_map[i][2] = cmap[j + 1];
-		sc->sc_cmap.cm_map[i][1] = cmap[j + 2];
-		j += 3;
+		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simlicity */
+		for (i = 0; i < 128; i++) {
+			sc->sc_dac->dac_addr = i;
+			sc->sc_dac->dac_gammalut = i << 1;
+			sc->sc_dac->dac_gammalut = i << 1;
+			sc->sc_dac->dac_gammalut = i << 1;
+		}
+
+		/* finally fill the XLUT */
+		for (i = 0; i < 256; i++)
+		     sc->sc_xlut->xlut_lut[i] = 
+		         CG14_LEFT_CLUT2 | CG14_LEFT_B |
+		         CG14_RIGHT_CLUT1 | CG14_RIGHT_X;
+	} else {
+		/* in 8 or 24bit put a linear ramp in the gamma LUT */
+		sc->sc_dac->dac_mode &= ~6;	/* 8bit mode, for simlicity */
+		for (i = 0; i < 256; i++) {
+			sc->sc_dac->dac_addr = i;
+			sc->sc_dac->dac_gammalut = i;
+			sc->sc_dac->dac_gammalut = i;
+			sc->sc_dac->dac_gammalut = i;
+		}
+
+		/* and zero the XLUT */
+		for (i = 0; i < 256; i++)
+		     sc->sc_xlut->xlut_lut[i] = 0;
+
+		if (sc->sc_depth == 8) {
+			rasops_get_cmap(ri, cmap, sizeof(cmap));
+
+			for (i = 0; i < 256; i++) {
+				sc->sc_cmap.cm_map[i][3] = cmap[j];
+				sc->sc_cmap.cm_map[i][2] = cmap[j + 1];
+				sc->sc_cmap.cm_map[i][1] = cmap[j + 2];
+				j += 3;
+			}
+			cg14_load_hwcmap(sc, 0, 256);
+		}
 	}
-	cg14_load_hwcmap(sc, 0, 256);
 }
 
 static int
@@ -932,6 +999,7 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					} else {
 
 						cg14_set_depth(sc, 32);
+						cg14_init_cmap(sc);
 					}
 				}
 			}
@@ -1002,10 +1070,10 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 	struct cgfourteen_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
-	ri->ri_depth = 8;
+	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_fb.fb_type.fb_width;
 	ri->ri_height = sc->sc_fb.fb_type.fb_height;
-	ri->ri_stride = ri->ri_width;
+	ri->ri_stride = ri->ri_width * (sc->sc_depth >> 3);
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
 	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
@@ -1038,7 +1106,7 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 #if NSX > 0
-	if (sc->sc_sx != NULL) {
+	if ((sc->sc_sx != NULL) && (sc->sc_depth == 8)) {
 		ri->ri_ops.copyrows = cg14_copyrows;
 		ri->ri_ops.copycols = cg14_copycols;
 		ri->ri_ops.eraserows = cg14_eraserows;
@@ -1055,7 +1123,6 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 static void
 cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 {
-	int i;
 
 	/* init mask */
 	if (sc->sc_sx != NULL) {
@@ -1090,9 +1157,6 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			    device_xname(sc->sc_dev), depth);
 			return;
 	}
-	/* everything is CLUT1 */
-	for (i = 0; i < CG14_CLUT_SIZE; i++)
-	     sc->sc_xlut->xlut_lut[i] = 0;
 
 }
 
