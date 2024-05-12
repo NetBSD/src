@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.38 2024/03/02 09:32:19 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.39 2024/05/12 18:49:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.38 2024/03/02 09:32:19 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.39 2024/05/12 18:49:36 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -60,7 +60,7 @@ outtype(type_t *tp)
 		tspec_t ts = tp->t_tspec;
 		if (ts == INT && tp->t_is_enum)
 			ts = ENUM;
-		if (!isupper((unsigned char)tt[ts]))
+		if (!ch_isupper(tt[ts]))
 			errx(1, "internal error: outtype(%d)", ts);
 		if (tp->t_const)
 			outchar('c');
