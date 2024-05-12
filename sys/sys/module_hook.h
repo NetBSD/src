@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.6 2019/12/12 22:55:20 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.7 2024/05/12 10:38:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -70,14 +70,14 @@ extern struct hook ## _t {					\
 do {								\
 	(hook).f = func;					\
 	module_hook_set(&(hook).hooked, &(hook).lc);		\
-} while /* CONSTCOND */ (0)
+} while (0)
 
 #define MODULE_HOOK_UNSET(hook)					\
 do {								\
 	KASSERT((hook).f);					\
 	module_hook_unset(&(hook).hooked, &(hook).lc);		\
 	(hook).f = NULL;	/* paranoia */			\
-} while /* CONSTCOND */ (0)
+} while (0)
 
 #define MODULE_HOOK_CALL(hook, args, default, retval)		\
 do {								\
@@ -87,7 +87,7 @@ do {								\
 	} else {						\
 		(retval) = (default);				\
 	}							\
-} while /* CONSTCOND */ (0)
+} while (0)
 
 #define MODULE_HOOK_CALL_VOID(hook, args, default)		\
 do {								\
@@ -97,6 +97,6 @@ do {								\
 	} else {						\
 		default;					\
 	}							\
-} while /* CONSTCOND */ (0)
+} while (0)
 
 #endif	/* _SYS_MODULE_HOOK_H */
