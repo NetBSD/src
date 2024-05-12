@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.85 2024/05/12 17:22:29 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.86 2024/05/12 17:26:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -112,7 +112,11 @@ typedef enum {
 	PFSstat,	/* process status (if -o linux) */
 	PFSstatm,	/* process memory info (if -o linux) */
 	PFSstatus,	/* process status */
-	PFStask,	/* task subdirector (if -o linux) */
+	PFSsysvipc,	/* sysvipc subdirectory (if -o linux) */
+	PFSsysvipc_msg,	/* sysvipc msg info (if -o linux) */
+	PFSsysvipc_sem,	/* sysvipc sem info (if -o linux) */
+	PFSsysvipc_shm,	/* sysvipc shm info (if -o linux) */
+	PFStask,	/* task subdirectory (if -o linux) */
 	PFSuptime,	/* elapsed time since (if -o linux) */
 	PFSversion,	/* kernel version (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
@@ -271,6 +275,12 @@ int procfs_doauxv(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_dolimit(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_dolimits(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_dosysvipc_msg(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_dosysvipc_sem(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_dosysvipc_shm(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_hashrem(struct pfsnode *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.115 2024/05/12 17:22:29 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.116 2024/05/12 17:26:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.115 2024/05/12 17:22:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.116 2024/05/12 17:26:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -433,6 +433,21 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSversion:	/* /proc/version = -r--r--r-- */
 	case PFSlimit:		/* /proc/N/limit = -r--r--r-- */
 	case PFSlimits:		/* /proc/N/limits = -r--r--r-- */
+		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
+		vp->v_type = VREG;
+		break;
+
+	case PFSsysvipc:/* /proc/sysvipc = dr-xr-xr-x */
+		if (pfs->pfs_fd == -1) {
+			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
+			    S_IROTH|S_IXOTH;
+			vp->v_type = VDIR;
+			break;
+		}
+		/*FALLTHROUGH*/
+	case PFSsysvipc_msg:	/* /proc/sysvipc/msg = -r--r--r-- */
+	case PFSsysvipc_sem:	/* /proc/sysvipc/sem = -r--r--r-- */
+	case PFSsysvipc_shm:	/* /proc/sysvipc/shm = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
