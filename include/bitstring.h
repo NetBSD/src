@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.14 2016/03/17 02:25:32 christos Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.15 2024/05/12 10:41:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,7 +98,7 @@ typedef	unsigned char bitstr_t;
 		bit_clear(_name, _start); \
 		_start++; \
 	} \
-} while(/*CONSTCOND*/0)
+} while (0)
 
 				/* set bits start ... stop in bitstring */
 #define	bit_nset(name, start, stop) do { \
@@ -108,7 +108,7 @@ typedef	unsigned char bitstr_t;
 		bit_set(_name, _start); \
 		_start++; \
 	} \
-} while(/*CONSTCOND*/0)
+} while (0)
 
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) do { \
@@ -121,7 +121,7 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-} while(/*CONSTCOND*/0)
+} while (0)
 
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) do { \
@@ -134,6 +134,6 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-} while(/*CONSTCOND*/0)
+} while (0)
 
 #endif /* !_BITSTRING_H_ */
