@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1504 2024/04/06 09:10:11 andvar Exp $
+$NetBSD: pcidevs,v 1.1505 2024/05/12 23:29:14 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7856,8 +7856,10 @@ product PHILIPS SAA7135HL	0x7135	SAA7135HL PCI A/V Broadcast Decoder
 product PHILIPS SAA7146AH	0x7146	SAA7146AH PCI Multimedia Bridge
 
 /* Phison products */
-product PHISON PS5000		0x5000 PS5000
-product PHISON PS5016		0x5016 PS5016
+product PHISON PS5000		0x5000	PS5000
+product PHISON PS5016		0x5016	PS5016
+product PHISON PS5021		0x5021	PS5021
+product PHISON PS5026		0x5026	PS5026
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810			0x0001	53c810
