@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.31 2024/05/12 12:28:34 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.32 2024/05/12 12:32:39 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.31 2024/05/12 12:28:34 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.32 2024/05/12 12:32:39 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -49,26 +49,6 @@ __RCSID("$NetBSD: ckbool.c,v 1.31 2024/05/12 12:28:34 rillig Exp $");
  * See d_c99_bool_strict.c for the detailed rules and for examples.
  */
 
-
-/*
- * See if in strict bool mode, the operator takes either two bool operands
- * or two arbitrary other operands.
- */
-static bool
-is_assignment_bool_or_other(op_t op)
-{
-	return op == ASSIGN ||
-	    op == ANDASS || op == XORASS || op == ORASS ||
-	    op == RETURN || op == INIT || op == FARG;
-}
-
-static bool
-is_symmetric_bool_or_other(op_t op)
-{
-	return op == EQ || op == NE ||
-	    op == BITAND || op == BITXOR || op == BITOR ||
-	    op == COLON;
-}
 
 static bool
 is_int_constant_zero(const tnode_t *tn, tspec_t t)
@@ -91,10 +71,16 @@ is_typeok_strict_bool_binary(op_t op,
 	    (is_int_constant_zero(ln, lt) || is_int_constant_zero(rn, rt)))
 		return true;
 
-	if (is_assignment_bool_or_other(op))
+	if (op == ASSIGN || op == ANDASS || op == XORASS || op == ORASS ||
+	    op == RETURN || op == INIT || op == FARG)
 		return lt != BOOL && (ln->tn_sys || rn->tn_sys);
 
-	return !is_symmetric_bool_or_other(op);
+	if (op == EQ || op == NE ||
+	    op == BITAND || op == BITXOR || op == BITOR ||
+	    op == COLON)
+		return false;
+
+	return true;
 }
 
 /*
