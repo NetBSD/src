@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.210 2024/03/08 20:29:17 rillig Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.211 2024/05/12 23:41:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1021,7 +1021,7 @@
 #define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
 #define CPUID_AMD_ENCMEM_SEV_SNP __BIT(4)  /* Secure Nested Paging */
 #define CPUID_AMD_ENCMEM_VMPL	__BIT(5)   /* Virtual Machine Privilege Lvl */
-#define CPUID_AMD_ENCMEM_RPMQUERY __BIT(6) /* RMPQUERY instruction */
+#define CPUID_AMD_ENCMEM_RMPQUERY __BIT(6) /* RMPQUERY instruction */
 #define CPUID_AMD_ENCMEM_VMPLSSS __BIT(7)  /* VMPL Secure Shadow Stack */
 #define CPUID_AMD_ENCMEM_SECTSC	__BIT(8)   /* Secure TSC */
 #define CPUID_AMD_ENCMEM_TSCAUX_V __BIT(9)  /* TSC AUX Virtualization */
