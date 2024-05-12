@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.30 2024/03/09 13:54:47 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.31 2024/05/12 12:28:34 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.30 2024/03/09 13:54:47 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.31 2024/05/12 12:28:34 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -149,7 +149,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 	if (mp->m_compares_with_zero) {
 		bool binary = mp->m_binary;
-		bool lbool = is_typeok_bool_compares_with_zero(ln);
+		bool lbool = is_typeok_bool_compares_with_zero(ln, false);
 		bool ok = true;
 
 		if (!binary && !lbool) {
@@ -163,7 +163,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			ok = false;
 		}
 		if (binary && op != QUEST &&
-		    !is_typeok_bool_compares_with_zero(rn)) {
+		    !is_typeok_bool_compares_with_zero(rn, false)) {
 			/* right operand of '%s' must be bool, not '%s' */
 			error(332, op_name(op), tspec_name(rt));
 			ok = false;
@@ -198,7 +198,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 }
 
 bool
-is_typeok_bool_compares_with_zero(const tnode_t *tn)
+is_typeok_bool_compares_with_zero(const tnode_t *tn, bool is_do_while)
 {
 	while (tn->tn_op == COMMA)
 		tn = tn->u.ops.right;
@@ -206,6 +206,7 @@ is_typeok_bool_compares_with_zero(const tnode_t *tn)
 
 	return tn->tn_type->t_tspec == BOOL
 	    || tn->tn_op == BITAND
+	    || (is_do_while && is_int_constant_zero(tn, tn->tn_type->t_tspec))
 	    || (tn->tn_sys && is_scalar(tn->tn_type->t_tspec));
 }
 

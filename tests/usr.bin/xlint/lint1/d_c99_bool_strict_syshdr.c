@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.23 2024/05/12 11:46:14 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.24 2024/05/12 12:28:35 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -17,33 +17,33 @@ extern const unsigned short *ctype_table;
 
 extern void println(const char *);
 
+
+
+
 /*
- * On NetBSD 8, <sys/select.h> defines FD_ISSET by enclosing the statements
- * in the well-known 'do { ... } while (CONSTCOND 0)' loop.  The 0 in the
- * controlling expression has type INT but should be allowed nevertheless
- * since that header does not have a way to distinguish between bool and int.
- * It just follows the C99 standard, unlike the lint-provided stdbool.h,
- * which redefines 'false' to '__lint_false'.
+ * No matter whether the code is from a system header or not, the idiom
+ * 'do { ... } while (0)' is well known, and using the integer constant 0
+ * instead of the boolean constant 'false' neither creates any type confusion
+ * nor does its value take place in any conversions, as its scope is limited
+ * to the controlling expression of the loop.
  */
 void
-strict_bool_system_header_statement_macro(void)
+statement_macro(void)
 {
 
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);
-	/* expect-1: error: controlling expression must be bool, not 'int' [333] */
 
-# 38 "d_c99_bool_strict_syshdr.c" 3 4
-	do {
-		println("nothing");
-	} while (/*CONSTCOND*/0);	/* ok */
-
-# 43 "d_c99_bool_strict_syshdr.c"
+# 39 "d_c99_bool_strict_syshdr.c" 3 4
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);
-	/* expect-1: error: controlling expression must be bool, not 'int' [333] */
+
+# 44 "d_c99_bool_strict_syshdr.c"
+	do {
+		println("nothing");
+	} while (/*CONSTCOND*/0);
 }
 
 
