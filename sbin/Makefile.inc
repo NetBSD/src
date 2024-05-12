@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.24 2024/04/20 13:24:48 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2024/05/12 17:55:36 rillig Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 WARNS?=		5
 BINDIR?=	/sbin
+
+LINTFLAGS+=	-u	# don't warn about "used but not defined"
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=	-static
