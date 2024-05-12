@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.118 2024/05/12 17:22:29 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.119 2024/05/12 17:26:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.118 2024/05/12 17:22:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.119 2024/05/12 17:26:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,18 @@ procfs_rw(void *v)
 
 	case PFSauxv:
 		error = procfs_doauxv(curl, p, pfs, uio);
+		break;
+
+	case PFSsysvipc_msg:
+		error = procfs_dosysvipc_msg(curl, p, pfs, uio);
+		break;
+
+	case PFSsysvipc_sem:
+		error = procfs_dosysvipc_sem(curl, p, pfs, uio);
+		break;
+
+	case PFSsysvipc_shm:
+		error = procfs_dosysvipc_shm(curl, p, pfs, uio);
 		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.231 2024/05/12 17:22:29 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.232 2024/05/12 17:26:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.231 2024/05/12 17:22:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.232 2024/05/12 17:26:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -203,10 +203,27 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("stat"),	    PFScpustat,        procfs_validfile_linux },
 	{ DT_REG, N("loadavg"),	    PFSloadavg,        procfs_validfile_linux },
 	{ DT_REG, N("version"),     PFSversion,        procfs_validfile_linux },
+	{ DT_DIR, N("sysvipc"),     PFSsysvipc,        procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
     sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
+
+/*
+ * List of files in the sysvipc directory
+ */
+static const struct proc_target proc_sysvipc_targets[] = {
+#define N(s) sizeof(s)-1, s
+        /*        name              type            validp */
+	{ DT_DIR, N("."),	PFSsysvipc,	NULL },
+	{ DT_DIR, N(".."),	PFSroot,	NULL },
+	{ DT_REG, N("msg"),	PFSsysvipc_msg, procfs_validfile_linux },
+	{ DT_REG, N("sem"),	PFSsysvipc_sem, procfs_validfile_linux },
+	{ DT_REG, N("shm"),	PFSsysvipc_shm, procfs_validfile_linux },
+#undef N
+};
+static const int nproc_sysvipc_targets =
+    sizeof(proc_sysvipc_targets) / sizeof(proc_sysvipc_targets[0]);
 
 int	procfs_lookup(void *);
 int	procfs_open(void *);
@@ -725,7 +742,15 @@ procfs_getattr(void *v)
 	case PFSself:
 	case PFScurproc:
 	case PFSroot:
+	case PFSsysvipc_msg:
+	case PFSsysvipc_sem:
+	case PFSsysvipc_shm:
 		vap->va_nlink = 1;
+		vap->va_uid = vap->va_gid = 0;
+		break;
+
+	case PFSsysvipc:
+		vap->va_nlink = 5;
 		vap->va_uid = vap->va_gid = 0;
 		break;
 
@@ -843,6 +868,10 @@ procfs_getattr(void *v)
 	case PFSloadavg:
 	case PFSstatm:
 	case PFSversion:
+	case PFSsysvipc:
+	case PFSsysvipc_msg:
+	case PFSsysvipc_sem:
+	case PFSsysvipc_shm:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSlimit:
@@ -1159,6 +1188,34 @@ procfs_lookup(void *v)
 		procfs_proc_unlock(p);
 		return error;
 	}
+	case PFSsysvipc:
+		if (cnp->cn_flags & ISDOTDOT) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0, PFSroot,
+			    -1);
+			return (error);
+		}
+
+		for (i = 0; i < nproc_sysvipc_targets; i++) {
+			pt = &proc_sysvipc_targets[i];
+			/*
+			 * check for node match.  proc is always NULL here,
+			 * so call pt_valid with constant NULL lwp.
+			 */
+			if (cnp->cn_namelen == pt->pt_namlen &&
+			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
+			    (pt->pt_valid == NULL ||
+			     (*pt->pt_valid)(NULL, dvp->v_mount)))
+				break;
+		}
+
+		if (i != nproc_sysvipc_targets) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0,
+			    pt->pt_pfstype, -1);
+			return (error);
+		}
+
+		return (ENOENT);
+
 	default:
 		return (ENOTDIR);
 	}
@@ -1441,6 +1498,40 @@ procfs_readdir(void *v)
 				*cookies++ = i + 1;
 			nc++;
 		}
+		goto out;
+	}
+
+	/*
+	 * sysvipc subdirectory
+	 */
+	case PFSsysvipc: {
+		if ((error = procfs_proc_lock(vp->v_mount, pfs->pfs_pid, &p,
+					      ESRCH)) != 0)
+			return error;
+		if (ap->a_ncookies) {
+			ncookies = uimin(ncookies, (nproc_sysvipc_targets - i));
+			cookies = malloc(ncookies * sizeof (off_t),
+			    M_TEMP, M_WAITOK);
+			*ap->a_cookies = cookies;
+		}
+
+		for (pt = &proc_sysvipc_targets[i];
+		     uio->uio_resid >= UIO_MX && i < nproc_sysvipc_targets; pt++, i++) {
+			if (pt->pt_valid &&
+			    (*pt->pt_valid)(NULL, vp->v_mount) == 0)
+				continue;
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
+			    pt->pt_pfstype, -1);
+			d.d_namlen = pt->pt_namlen;
+			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
+			d.d_type = pt->pt_type;
+
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
+				break;
+			if (cookies)
+				*cookies++ = i + 1;
+		}
+
 		goto out;
 	}
 
