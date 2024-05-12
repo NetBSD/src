@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.8 2021/12/02 04:29:48 ryo Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.9 2024/05/12 17:23:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,11 @@ linux_to_bsd_limit(int lim)
 	case LINUX_RLIMIT_AS:
 		return RLIMIT_AS;
 	case LINUX_RLIMIT_LOCKS:
+	case LINUX_RLIMIT_SIGPENDING:
+	case LINUX_RLIMIT_MSGQUEUE:
+	case LINUX_RLIMIT_NICE:
+	case LINUX_RLIMIT_RTPRIO:
+	case LINUX_RLIMIT_RTTIME:
 		return -EOPNOTSUPP;
 	default:
 		return -EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.29 2023/08/18 19:41:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.30 2024/05/12 17:23:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,11 @@ struct linux_sysinfo {
 #define	LINUX_RLIMIT_MEMLOCK	8
 #define	LINUX_RLIMIT_AS		9
 #define	LINUX_RLIMIT_LOCKS	10
+#define LINUX_RLIMIT_SIGPENDING	11
+#define LINUX_RLIMIT_MSGQUEUE	12
+#define LINUX_RLIMIT_NICE	13
+#define LINUX_RLIMIT_RTPRIO	14
+#define LINUX_RLIMIT_RTTIME	15
 #ifdef __mips__  /* XXX only mips32. On mips64, it's ~0ul */
 #define	LINUX_RLIM_INFINITY	0x7fffffffUL
 #define	LINUX32_RLIM_INFINITY	0x7fffffffU
