@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.141 2024/05/11 16:12:28 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.142 2024/05/12 08:48:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.141 2024/05/11 16:12:28 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.142 2024/05/12 08:48:36 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -49,6 +49,7 @@ EXP	([eE][+-]?[0-9]+)
 PEXP	(p[+-]?[0-9A-Fa-f]+)
 FSUF	([fFlL]?[i]?)
 
+%pointer
 %option nounput
 
 %%

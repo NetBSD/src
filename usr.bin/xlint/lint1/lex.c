@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.225 2024/05/09 11:08:07 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.226 2024/05/12 08:48:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.225 2024/05/09 11:08:07 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.226 2024/05/12 08:48:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -468,15 +468,15 @@ lex_keyword(sym_t *sym)
  * member, tag, ...).
  */
 extern int
-lex_name(const char *yytext, size_t yyleng)
+lex_name(const char *text, size_t len)
 {
 
-	sym_t *sym = symtab_search(yytext);
+	sym_t *sym = symtab_search(text);
 	if (sym != NULL && sym->s_keyword != NULL)
 		return lex_keyword(sym);
 
 	sbuf_t *sb = xmalloc(sizeof(*sb));
-	sb->sb_len = yyleng;
+	sb->sb_len = len;
 	sb->sb_sym = sym;
 	yylval.y_name = sb;
 
@@ -486,8 +486,8 @@ lex_name(const char *yytext, size_t yyleng)
 		return sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	}
 
-	char *name = block_zero_alloc(yyleng + 1, "string");
-	(void)memcpy(name, yytext, yyleng + 1);
+	char *name = block_zero_alloc(len + 1, "string");
+	(void)memcpy(name, text, len + 1);
 	sb->sb_name = name;
 	return T_NAME;
 }
@@ -547,10 +547,9 @@ integer_constant_type_unsigned(unsigned l, uint64_t ui, bool warned)
 }
 
 int
-lex_integer_constant(const char *yytext, size_t yyleng, int base)
+lex_integer_constant(const char *text, size_t len, int base)
 {
-	const char *cp = yytext;
-	size_t len = yyleng;
+	const char *cp = text;
 
 	/* skip 0[xX] or 0[bB] */
 	if (base == 16 || base == 2) {
@@ -627,10 +626,9 @@ convert_integer(int64_t si, tspec_t t, unsigned int bits)
 }
 
 int
-lex_floating_constant(const char *yytext, size_t yyleng)
+lex_floating_constant(const char *text, size_t len)
 {
-	const char *cp = yytext;
-	size_t len = yyleng;
+	const char *cp = text;
 
 	bool imaginary = cp[len - 1] == 'i';
 	if (imaginary)
@@ -1072,9 +1070,9 @@ set_csrc_pos(void)
  *	# lineno "filename" [GCC-flag...]
  */
 void
-lex_directive(const char *yytext)
+lex_directive(const char *text)
 {
-	const char *p = yytext + 1;	/* skip '#' */
+	const char *p = text + 1;	/* skip '#' */
 
 	while (*p == ' ' || *p == '\t')
 		p++;
@@ -1509,6 +1507,78 @@ pushdown(const sym_t *sym)
 	dcs->d_last_dlsym = &nsym->s_level_next;
 
 	return nsym;
+}
+
+static void
+fill_token(int tk, const char *text, token *tok)
+{
+	switch (tk) {
+	case T_NAME:
+	case T_TYPENAME:
+		tok->kind = TK_IDENTIFIER;
+		tok->u.identifier = xstrdup(yylval.y_name->sb_name);
+		break;
+	case T_CON:
+		tok->kind = TK_CONSTANT;
+		tok->u.constant = *yylval.y_val;
+		break;
+	case T_NAMED_CONSTANT:
+		tok->kind = TK_IDENTIFIER;
+		tok->u.identifier = xstrdup(text);
+		break;
+	case T_STRING:;
+		tok->kind = TK_STRING_LITERALS;
+		tok->u.string_literals.len = yylval.y_string->len;
+		tok->u.string_literals.cap = yylval.y_string->cap;
+		tok->u.string_literals.data = xstrdup(yylval.y_string->data);
+		break;
+	default:
+		tok->kind = TK_PUNCTUATOR;
+		tok->u.punctuator = xstrdup(text);
+	}
+}
+
+static void
+seq_reserve(balanced_token_sequence *seq)
+{
+	if (seq->len >= seq->cap) {
+		seq->cap = 16 + 2 * seq->cap;
+		const balanced_token *old_tokens = seq->tokens;
+		balanced_token *new_tokens = block_zero_alloc(
+		    seq->cap * sizeof(*seq->tokens), "balanced_tokens");
+		memcpy(new_tokens, old_tokens,
+		    seq->len * sizeof(*seq->tokens));
+		seq->tokens = new_tokens;
+	}
+}
+
+static balanced_token_sequence
+read_balanced(int opening)
+{
+	int closing = opening == T_LPAREN ? T_RPAREN
+	    : opening == T_LBRACK ? T_RBRACK : T_RBRACE;
+	balanced_token_sequence seq = { NULL, 0, 0 };
+
+	int tok;
+	while (tok = yylex(), tok > 0 && tok != closing) {
+		seq_reserve(&seq);
+		if (tok == T_LPAREN || tok == T_LBRACK || tok == T_LBRACE) {
+			seq.tokens[seq.len].kind = tok == T_LPAREN ? '('
+			    : tok == T_LBRACK ? '[' : '{';
+			seq.tokens[seq.len].u.tokens = read_balanced(tok);
+		} else {
+			fill_token(tok, yytext, &seq.tokens[seq.len].u.token);
+			freeyyv(&yylval, tok);
+		}
+		seq.len++;
+	}
+	return seq;
+}
+
+balanced_token_sequence
+lex_balanced(void)
+{
+	return read_balanced(T_LPAREN);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.226 2024/05/11 16:12:28 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.227 2024/05/12 08:48:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -72,6 +72,7 @@ extern int yydebug;
 
 int yyerror(const char *);
 int yyparse(void);
+extern char *yytext;
 
 /*
  * lex.c
@@ -402,6 +403,7 @@ void lex_slash_slash_comment(void);
 void lex_unknown_character(int);
 int lex_input(void);
 bool quoted_next(const buffer *, quoted_iterator *);
+balanced_token_sequence lex_balanced(void);
 
 /*
  * ckbool.c
