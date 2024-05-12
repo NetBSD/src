@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.21 2021/12/10 20:36:03 andvar Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.22 2024/05/12 13:43:27 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -195,6 +195,8 @@
 				SX_LONG | (dreg << 7) | (o))
 #define SX_LDB(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
 				SX_UBYTE_0 | (dreg << 7) | (o))
+#define SX_LDW(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_USHORT_0 | (dreg << 7) | (o))
 #define SX_LDP(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
 				SX_PACKED | (dreg << 7) | (o))
 #define SX_LDUQ0(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
@@ -223,6 +225,8 @@
 				SX_UBYTE_0 | (sreg << 7) | (o))
 #define SX_STBC(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
 				SX_UBYTE_0 | (sreg << 7) | (o))
+#define SX_STW(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_USHORT_0 | (sreg << 7) | (o))
 #define SX_STP(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_PACKED | (sreg << 7) | (o))
 #define SX_STPS(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT | \
