@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.501 2024/05/11 16:58:59 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.502 2024/05/12 08:48:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.501 2024/05/11 16:58:59 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.502 2024/05/12 08:48:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2562,78 +2562,11 @@ read_until_rparen(void)
 	yyclearin;
 }
 
-static void
-fill_token(token *tok)
-{
-	switch (yychar) {
-	case T_NAME:
-	case T_TYPENAME:
-		tok->kind = TK_IDENTIFIER;
-		tok->u.identifier = xstrdup(yylval.y_name->sb_name);
-		break;
-	case T_CON:
-		tok->kind = TK_CONSTANT;
-		tok->u.constant = *yylval.y_val;
-		break;
-	case T_NAMED_CONSTANT:
-		tok->kind = TK_IDENTIFIER;
-		tok->u.identifier = xstrdup(yytext);
-		break;
-	case T_STRING:;
-		tok->kind = TK_STRING_LITERALS;
-		tok->u.string_literals.len = yylval.y_string->len;
-		tok->u.string_literals.cap = yylval.y_string->cap;
-		tok->u.string_literals.data = xstrdup(yylval.y_string->data);
-		break;
-	default:
-		tok->kind = TK_PUNCTUATOR;
-		tok->u.punctuator = xstrdup(yytext);
-	}
-}
-
-static void
-seq_reserve(balanced_token_sequence *seq)
-{
-	if (seq->len >= seq->cap) {
-		seq->cap = 16 + 2 * seq->cap;
-		const balanced_token *old_tokens = seq->tokens;
-		balanced_token *new_tokens = block_zero_alloc(
-		    seq->cap * sizeof(*seq->tokens), "balanced_tokens");
-		memcpy(new_tokens, old_tokens, seq->len * sizeof(*seq->tokens));
-		seq->tokens = new_tokens;
-	}
-}
-
-static balanced_token_sequence
-read_balanced(int opening)
-{
-	debug_enter();
-	int closing = opening == T_LPAREN ? T_RPAREN
-	    : opening == T_LBRACK ? T_RBRACK : T_RBRACE;
-	balanced_token_sequence seq = { NULL, 0, 0 };
-	debug_step("opening %d, closing %d", opening, closing);
-
-	while (yychar = yylex(), yychar > 0 && yychar != closing) {
-		debug_step("reading token %d", yychar);
-		seq_reserve(&seq);
-		if (yychar == T_LPAREN
-		    || yychar == T_LBRACK
-		    || yychar == T_LBRACE) {
-			seq.tokens[seq.len].kind = yychar == T_LPAREN ? '('
-			    : yychar == T_LBRACK ? '[' : '{';
-			seq.tokens[seq.len++].u.tokens = read_balanced(yychar);
-		} else
-			fill_token(&seq.tokens[seq.len++].u.token);
-	}
-	debug_leave();
-	return seq;
-}
-
 static balanced_token_sequence
 read_balanced_token_sequence(void)
 {
 	lint_assert(yychar < 0);
-	balanced_token_sequence seq = read_balanced(T_LPAREN);
+	balanced_token_sequence seq = lex_balanced();
 	yyclearin;
 	return seq;
 }
