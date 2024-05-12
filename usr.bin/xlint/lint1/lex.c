@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.227 2024/05/12 09:07:41 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.227 2024/05/12 09:07:41 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.228 2024/05/12 18:49:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -896,7 +896,7 @@ check_quoted(const buffer *buf, bool complete, char delim)
 			warning(264);
 		else {
 			unsigned char ch = buf->data[it.end - 1];
-			if (isprint(ch))
+			if (ch_isprint(ch))
 				/* dubious escape \%c */
 				warning(79, ch);
 			else
@@ -1029,11 +1029,11 @@ parse_line_directive_flags(const char *p,
 	*is_system = false;
 
 	while (*p != '\0') {
-		while (isspace((unsigned char)*p))
+		while (ch_isspace(*p))
 			p++;
 
 		const char *word = p;
-		while (*p != '\0' && !isspace((unsigned char)*p))
+		while (*p != '\0' && !ch_isspace(*p))
 			p++;
 		size_t len = (size_t)(p - word);
 
@@ -1077,9 +1077,9 @@ lex_directive(const char *text)
 	while (*p == ' ' || *p == '\t')
 		p++;
 
-	if (!isdigit((unsigned char)*p)) {
+	if (!ch_isdigit(*p)) {
 		if (strncmp(p, "pragma", 6) == 0
-		    && isspace((unsigned char)p[6]))
+		    && ch_isspace(p[6]))
 			return;
 		goto error;
 	}
@@ -1164,19 +1164,19 @@ lex_comment(void)
 
 	bool seen_end_of_comment = false;
 
-	while (c = read_byte(), isspace(c))
+	while (c = read_byte(), isspace(c) != 0)
 		continue;
 
 	/* Read the potential keyword to keywd */
 	size_t l = 0;
 	while (c != EOF && l < sizeof(keywd) - 1 &&
-	    (isalpha(c) || isspace(c))) {
-		if (islower(c) && l > 0 && isupper((unsigned char)keywd[0]))
+	    (isalpha(c) != 0 || isspace(c) != 0)) {
+		if (islower(c) != 0 && l > 0 && ch_isupper(keywd[0]))
 			break;
 		keywd[l++] = (char)c;
 		c = read_byte();
 	}
-	while (l > 0 && isspace((unsigned char)keywd[l - 1]))
+	while (l > 0 && ch_isspace(keywd[l - 1]))
 		l--;
 	keywd[l] = '\0';
 
@@ -1188,14 +1188,14 @@ lex_comment(void)
 	goto skip_rest;
 
 found_keyword:
-	while (isspace(c))
+	while (isspace(c) != 0)
 		c = read_byte();
 
 	/* read the argument, if the keyword accepts one and there is one */
 	char arg[32];
 	l = 0;
 	if (keywtab[i].arg) {
-		while (isdigit(c) && l < sizeof(arg) - 1) {
+		while (isdigit(c) != 0 && l < sizeof(arg) - 1) {
 			arg[l++] = (char)c;
 			c = read_byte();
 		}
@@ -1203,7 +1203,7 @@ found_keyword:
 	arg[l] = '\0';
 	int a = l != 0 ? atoi(arg) : -1;
 
-	while (isspace(c))
+	while (isspace(c) != 0)
 		c = read_byte();
 
 	seen_end_of_comment = c == '*' && (c = read_byte()) == '/';

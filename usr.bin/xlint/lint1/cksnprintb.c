@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.14 2024/04/12 05:44:38 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.14 2024/04/12 05:44:38 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -86,9 +86,9 @@ check_hex_escape(const buffer *buf, quoted_iterator it)
 		bool upper = false;
 		bool lower = false;
 		for (size_t i = it.start + 2; i < it.end; i++) {
-			if (isupper((unsigned char)buf->data[i]))
+			if (ch_isupper(buf->data[i]))
 				upper = true;
-			if (islower((unsigned char)buf->data[i]))
+			if (ch_islower(buf->data[i]))
 				lower = true;
 		}
 		if (upper && lower)

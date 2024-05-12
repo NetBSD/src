@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.243 2024/05/11 15:53:38 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.244 2024/05/12 18:49:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.243 2024/05/11 15:53:38 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.244 2024/05/12 18:49:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -450,7 +450,7 @@ suppress_messages(const char *p)
 {
 	char *end;
 
-	for (; isdigit((unsigned char)*p); p = end + 1) {
+	for (; ch_isdigit(*p); p = end + 1) {
 		unsigned long id = strtoul(p, &end, 10);
 		if ((*end != '\0' && *end != ',') ||
 		    id >= sizeof(msgs) / sizeof(msgs[0]) ||
@@ -771,7 +771,7 @@ enable_queries(const char *p)
 {
 	char *end;
 
-	for (; isdigit((unsigned char)*p); p = end + 1) {
+	for (; ch_isdigit(*p); p = end + 1) {
 		unsigned long id = strtoul(p, &end, 10);
 		if ((*end != '\0' && *end != ',') ||
 		    id >= sizeof(queries) / sizeof(queries[0]) ||
