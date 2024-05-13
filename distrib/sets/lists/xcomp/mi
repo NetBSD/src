@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.242 2024/05/09 06:38:27 nia Exp $
+#	 $NetBSD: mi,v 1.243 2024/05/13 14:56:44 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5962,7 +5962,7 @@
 ./usr/libdata/lint/llib-lXvMC.ln			xcomp-libXvMC-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lXvMCW.ln			xcomp-libXvMCW-lintlib	lint,xorg
 ./usr/libdata/lint/llib-lXxf86dga.ln			xcomp-libXxf86dga-lintlib	lint,xorg
-./usr/libdata/lint/llib-lXxf86misc.ln			xcomp-libXxf86misc-lintlib	lint,xorg
+./usr/libdata/lint/llib-lXxf86misc.ln			xcomp-obsolete	obsolete
 ./usr/libdata/lint/llib-lXxf86vm.ln			xcomp-libXxf86vm-lintlib	lint,xorg
 ./usr/libdata/lint/llib-ldrm.ln				xcomp-libdrm-lintlib	lint,xorg
 ./usr/libdata/lint/llib-ldrm_radeon.ln			xcomp-libdrm_radeon-lintlib	lint,xorg
