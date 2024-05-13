@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.57 2022/12/24 15:37:50 andvar Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.58 2024/05/13 00:24:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.57 2022/12/24 15:37:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.58 2024/05/13 00:24:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -309,7 +309,7 @@ bootpset(struct mbuf *m, void *context, int waited)
 {
 	struct bootp *bootp;
 
-	/* we know it's contigous (in 1 mbuf cluster) */
+	/* we know it's contiguous (in 1 mbuf cluster) */
 	bootp = mtod(m, struct bootp*);
 
 	bootp->bp_secs = htons(waited);
