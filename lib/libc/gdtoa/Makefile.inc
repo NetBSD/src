@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2023/10/07 12:15:53 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2024/05/13 21:17:24 rillig Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -44,3 +44,5 @@ SRCS+=	dmisc.c \
 .if ${MACHINE_ARCH} != "vax"
 SRCS+=	strtord.c
 .endif
+
+LINTFLAGS.hdtoa.c+=	-X 132	# conversion may lose accuracy
