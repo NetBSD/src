@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2023/02/04 16:34:36 wiz Exp $
+# $NetBSD: mi,v 1.47 2024/05/13 14:56:44 christos Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -48,7 +48,7 @@
 ./usr/X11R7/lib/libXvMC_g.a				xdebug-libXvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXv_g.a				xdebug-libXv-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXxf86dga_g.a				xdebug-libXxf86dga-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libXxf86misc_g.a			xdebug-libXxf86misc-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libXxf86misc_g.a			xdebug-obsolete	obsolete
 ./usr/X11R7/lib/libXxf86vm_g.a				xdebug-libXxf86vm-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_g.a				xdebug-libdrm-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_radeon_g.a			xdebug-libdrm_radeon-debuglib	xorg,debuglib,compatx11file
