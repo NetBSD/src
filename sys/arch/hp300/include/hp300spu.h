@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.16 2024/01/18 14:39:06 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.17 2024/05/13 00:08:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ extern	int mmuid;		/* MMU id */
 
 /*
  * This section associates hp300 model configurations with certain
- * combindations of CPU, MMU, and cache.
+ * combinations of CPU, MMU, and cache.
  */
 
 /*
