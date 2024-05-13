@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.349 2024/01/24 05:18:59 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.350 2024/05/13 03:15:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.349 2024/01/24 05:18:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.350 2024/05/13 03:15:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -358,8 +358,8 @@ SYSCTL_INT(_hw_ix, OID_AUTO, enable_msix, CTLFLAG_RDTUN, &ixgbe_enable_msix, 0,
 /*
  * Number of Queues, can be set to 0,
  * it then autoconfigures based on the
- * number of cpus with a max of 8. This
- * can be overridden manually here.
+ * number of cpus and number of MSI-X vectors.
+ * This can be overridden manually here.
  */
 static int ixgbe_num_queues = 0;
 SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
