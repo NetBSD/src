@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.42 2024/02/20 23:36:02 andvar Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.43 2024/05/13 00:08:06 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
@@ -789,7 +789,7 @@ initarm(void *arg)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef	VERBOSE_INIT_ARM
 	printf("vectors ");
