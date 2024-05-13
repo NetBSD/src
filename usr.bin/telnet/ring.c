@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.16 2023/08/07 23:31:11 mrg Exp $	*/
+/*	$NetBSD: ring.c,v 1.17 2024/05/13 00:32:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.16 2023/08/07 23:31:11 mrg Exp $");
+__RCSID("$NetBSD: ring.c,v 1.17 2024/05/13 00:32:39 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ ring_full_consecutive(Ring *ring)
 }
 
 /*
- * Move data into the "supply" portion of of the ring buffer.
+ * Move data into the "supply" portion of the ring buffer.
  */
 void
 ring_supply_data(Ring *ring, unsigned char *buffer, int count)
