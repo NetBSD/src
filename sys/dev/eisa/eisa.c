@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.49 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.50 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.49 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.50 2024/05/13 00:01:53 msaitoh Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -207,7 +207,7 @@ eisa_compatible_lookup(const struct eisa_attach_args * const ea,
 
 #ifdef EISAVERBOSE
 /*
- * Descriptions of of known vendors and devices ("products").
+ * Descriptions of known vendors and devices ("products").
  */
 struct eisa_knowndev {
 	int	flags;

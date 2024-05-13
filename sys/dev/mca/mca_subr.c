@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.10 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.11 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.10 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.11 2024/05/13 00:01:53 msaitoh Exp $");
 
 #include "opt_mcaverbose.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.10 2009/03/14 15:36:18 dsl Exp $");
 
 #ifdef MCAVERBOSE
 /*
- * Descriptions of of known MCA devices
+ * Descriptions of known MCA devices
  */
 struct mca_knowndev {
 	int		 id;		/* MCA ID */

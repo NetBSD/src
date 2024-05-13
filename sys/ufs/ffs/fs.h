@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.71 2023/01/07 19:41:30 chs Exp $	*/
+/*	$NetBSD: fs.h,v 1.72 2024/05/13 00:01:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -150,7 +150,7 @@
 /*
  * The volume name for this filesystem is maintained in fs_volname.
  * MAXVOLLEN defines the length of the buffer allocated.
- * This space used to be part of of fs_fsmnt.
+ * This space used to be part of fs_fsmnt.
  */
 #define	MAXVOLLEN	32
 
