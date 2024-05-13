@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.172 2023/01/07 19:41:30 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.173 2024/05/13 00:24:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.172 2023/01/07 19:41:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.173 2024/05/13 00:24:19 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -763,7 +763,7 @@ ffs_dirpref(struct inode *pip)
  * If a section is already partially allocated, the policy is to
  * contiguously allocate fs_maxcontig blocks.  The end of one of these
  * contiguous blocks and the beginning of the next is laid out
- * contigously if possible.
+ * contiguously if possible.
  *
  * => um_lock held on entry and exit
  */

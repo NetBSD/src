@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.48 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.49 2024/05/13 00:24:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.48 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.49 2024/05/13 00:24:19 msaitoh Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -753,7 +753,7 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
  * at least "logfile" MB in size (plus room for any indirect blocks).
  * We start at the middle of the filesystem and check each cylinder
  * group working outwards.  If "logfile" MB is not available as a
- * single contigous chunk, then return the address and size of the
+ * single contiguous chunk, then return the address and size of the
  * largest chunk found.
  *
  * XXX 

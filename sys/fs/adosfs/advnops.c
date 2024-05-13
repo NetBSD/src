@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.59 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: advnops.c,v 1.60 2024/05/13 00:24:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.59 2022/04/04 19:33:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.60 2024/05/13 00:24:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ adosfs_read(void *v)
 		/*
 		 * read ahead could possibly be worth something
 		 * but not much as ados makes little attempt to
-		 * make things contigous
+		 * make things contiguous
 		 */
 		error = bread(sp->a_vp, lbn, amp->bsize, 0, &bp);
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.36 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.37 2024/05/13 00:24:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.36 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.37 2024/05/13 00:24:19 msaitoh Exp $");
 
 /*
  * kernel include files.
@@ -765,7 +765,7 @@ chainlength(struct msdosfsmount *pmp, u_long start, u_long count)
 }
 
 /*
- * Allocate contigous free clusters.
+ * Allocate contiguous free clusters.
  *
  * pmp	      - mount point.
  * start      - start of cluster chain.
