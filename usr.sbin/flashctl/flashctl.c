@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.10 2024/05/12 19:03:55 rillig Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.11 2024/05/13 20:38:05 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flashctl.c,v 1.10 2024/05/12 19:03:55 rillig Exp $");
+__RCSID("$NetBSD: flashctl.c,v 1.11 2024/05/13 20:38:05 rillig Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/flashio.h>
@@ -233,11 +233,11 @@ to_intmax(intmax_t *num, const char *str)
 
 	errno = 0;
 	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
-		if (isxdigit((unsigned char)str[2]) == 0)
+		if (!isxdigit((unsigned char)str[2]))
 			return EINVAL;
 		*num = strtoimax(str, &endptr, 16);
 	} else {
-		if (isdigit((unsigned char)str[0]) == 0)
+		if (!isdigit((unsigned char)str[0]))
 			return EINVAL;
 		*num = strtoimax(str, &endptr, 10);
 	}

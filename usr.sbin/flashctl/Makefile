@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.3 2023/01/08 15:49:51 rillig Exp $
+# $NetBSD: Makefile,v 1.4 2024/05/13 20:38:05 rillig Exp $
 
 SRCS=		flashctl.c
 
 PROG=		flashctl
 MAN=		flashctl.8
-LINTFLAGS+=	-T		# strict bool mode
+LINTFLAGS+=	${MKLLVM:U-T:D}	# strict bool mode
 
 WARNS=		4
 
 .include <bsd.prog.mk>
+
