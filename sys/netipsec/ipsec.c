@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.178 2023/01/27 09:33:43 ozaki-r Exp $ */
+/* $NetBSD: ipsec.c,v 1.179 2024/05/13 00:12:33 msaitoh Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.178 2023/01/27 09:33:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.179 2024/05/13 00:12:33 msaitoh Exp $");
 
 /*
  * IPsec controller part.
@@ -489,7 +489,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb *inp,
 			switch (currsp->policy) {
 			case IPSEC_POLICY_BYPASS:
 				IPSECLOG(LOG_ERR, "Illegal policy for "
-				    "non-priviliged defined %d\n",
+				    "non-privileged defined %d\n",
 				    currsp->policy);
 				*error = EINVAL;
 				return NULL;

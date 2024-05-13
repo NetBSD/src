@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.197 2024/01/15 08:13:45 andvar Exp $ */
+/*	$NetBSD: trap.c,v 1.198 2024/05/13 00:12:33 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2024/01/15 08:13:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2024/05/13 00:12:33 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -520,7 +520,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 #endif
 		/*
 		 * The kernel needs to use FPU registers for block
-		 * load/store.  If we trap in priviliged code, save
+		 * load/store.  If we trap in privileged code, save
 		 * the FPU state if there is any and enable the FPU.
 		 *
 		 * We rely on the kernel code properly enabling the FPU
@@ -1386,7 +1386,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		}
 
 		/*
-		 * If this was a priviliged error but not a probe, we
+		 * If this was a privileged error but not a probe, we
 		 * cannot recover, so panic.
 		 */
 		if (afsr & ASFR_PRIV) {
