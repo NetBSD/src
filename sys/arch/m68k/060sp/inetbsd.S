@@ -1,6 +1,6 @@
 /*
 #
-# $NetBSD: inetbsd.S,v 1.4 2000/11/30 21:00:51 scw Exp $
+# $NetBSD: inetbsd.S,v 1.5 2024/05/13 00:10:06 msaitoh Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -83,7 +83,7 @@ ASENTRY_NOPROFILE(_060_isp_done)
 # This is an alternate exit point for the Unimplemented Integer
 # Instruction exception handler. If the instruction was a "chk2"
 # and the operand was out of bounds, then _isp_unimp() creates
-# a CHK exception stack frame from the Unimplemented Integer Instrcution
+# a CHK exception stack frame from the Unimplemented Integer Instruction
 # stack frame and branches to this routine.
 #
 */
