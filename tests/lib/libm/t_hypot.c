@@ -1,4 +1,4 @@
-/* $NetBSD: t_hypot.c,v 1.7 2024/05/12 20:58:44 riastradh Exp $ */
+/* $NetBSD: t_hypot.c,v 1.8 2024/05/13 20:28:15 rillig Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -689,6 +689,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, hypot_exact);
+	ATF_TP_ADD_TC(tp, hypot_nan);
 	ATF_TP_ADD_TC(tp, hypot_trivial);
 	ATF_TP_ADD_TC(tp, hypotf_exact);
 	ATF_TP_ADD_TC(tp, hypotf_trivial);
