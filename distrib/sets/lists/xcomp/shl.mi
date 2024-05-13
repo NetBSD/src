@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.57 2022/07/14 07:41:49 mrg Exp $
+#	$NetBSD: shl.mi,v 1.58 2024/05/13 14:59:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -50,7 +50,7 @@
 ./usr/X11R7/lib/libXvMC_pic.a				xcomp-libXvMC-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXv_pic.a				xcomp-libXv-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXxf86dga_pic.a			xcomp-libXxf86dga-lib	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libXxf86misc_pic.a			xcomp-libXxf86misc-lib	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libXxf86misc_pic.a			xcomp-obsolete	obsolete
 ./usr/X11R7/lib/libXxf86vm_pic.a			xcomp-libXxf86vm-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libdrm_pic.a				xcomp-libdrm-lib	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libdrm_radeon_pic.a			xcomp-libdrm_radeon-lib	xorg,picinstall,compatx11file
