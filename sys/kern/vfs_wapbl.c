@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.112 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.113 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.112 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.113 2024/05/13 00:01:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1560,7 +1560,7 @@ wapbl_truncate(struct wapbl *wl, size_t minfree)
 	tail = wl->wl_tail;
 	delta = wl->wl_reclaimable_bytes;
 
-	/* If all of of the entries are flushed, then be sure to keep
+	/* If all of the entries are flushed, then be sure to keep
 	 * the reserved bytes reserved.  Watch out for discarded transactions,
 	 * which could leave more bytes reserved than are reclaimable.
 	 */

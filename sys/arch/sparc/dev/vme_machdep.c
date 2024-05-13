@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.77 2023/12/01 05:22:01 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.78 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.77 2023/12/01 05:22:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.78 2024/05/13 00:01:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ vmem_t *vme_dvmamap;
  * The VME hardware on the sun4m IOMMU maps the first 8MB of 32-bit
  * VME space to the last 8MB of DVMA space and the first 1MB of
  * 24-bit VME space to the first 1MB of the last 8MB of DVMA space
- * (thus 24-bit VME space overlaps the first 1MB of of 32-bit space).
+ * (thus 24-bit VME space overlaps the first 1MB of 32-bit space).
  * The following constants define subregions in the IOMMU DVMA map
  * for VME DVMA allocations.  The DMA addresses returned by
  * bus_dmamap_load*() must be relocated by -VME_IOMMU_DVMA_BASE.

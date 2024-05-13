@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.62 2023/09/16 18:40:26 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.63 2024/05/13 00:01:53 msaitoh Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.62 2023/09/16 18:40:26 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.63 2024/05/13 00:01:53 msaitoh Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -153,7 +153,7 @@ sumsize(size_t a, size_t b)
   size_overflow();
 }
 
-/* Return the size of of the string STR, including its trailing NUL.
+/* Return the size of the string STR, including its trailing NUL.
    Report an error and exit if this would exceed INDEX_MAX which means
    pointer subtraction wouldn't work.  */
 static ptrdiff_t

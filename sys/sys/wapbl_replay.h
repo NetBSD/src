@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl_replay.h,v 1.1 2008/11/24 16:05:21 joerg Exp $	*/
+/*	$NetBSD: wapbl_replay.h,v 1.2 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct wapbl_wc_header {
 	uint32_t	wc_fs_dev_bshift;
 	int64_t		wc_head;
 	int64_t		wc_tail;
-	int64_t		wc_circ_off;	/* offset of of circ buffer region */
+	int64_t		wc_circ_off;	/* offset of circ buffer region */
 	int64_t		wc_circ_size;	/* size of circular buffer region */
 	uint8_t		wc_spare[0];	/* actually longer */
 };

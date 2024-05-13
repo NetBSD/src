@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.60 2024/05/13 00:01:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.60 2024/05/13 00:01:53 msaitoh Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -287,7 +287,7 @@ tc_intr_disestablish(device_t dev, void *cookie)
 
 #ifdef TCVERBOSE
 /*
- * Descriptions of of known devices.
+ * Descriptions of known devices.
  */
 struct tc_knowndev {
 	const char *id, *driver, *description;
