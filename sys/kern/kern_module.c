@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.161 2023/01/31 13:21:37 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.162 2024/05/13 00:32:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.161 2023/01/31 13:21:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.162 2024/05/13 00:32:09 msaitoh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -641,7 +641,7 @@ module_init_class(modclass_t modclass)
  *
  *	Return true if the two supplied kernel versions are said to
  *	have the same binary interface for kernel code.  The entire
- *	version is signficant for the development tree (-current),
+ *	version is significant for the development tree (-current),
  *	major and minor versions are significant for official
  *	releases of the system.
  */
