@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.21 2014/03/28 15:00:53 christos Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.22 2024/05/13 00:11:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "../../../../../sys/sys/bootblock.h"
-/* Ficticious geometry for cross tool usage against a file image */
+/* Fictitious geometry for cross tool usage against a file image */
 #define SGIVOL_NBTOOL_NSECS	32
 #define SGIVOL_NBTOOL_NTRACKS	64
 #else

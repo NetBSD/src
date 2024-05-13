@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.245 2023/03/21 15:47:46 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.246 2024/05/13 00:11:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.245 2023/03/21 15:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.246 2024/05/13 00:11:22 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -81,7 +81,7 @@ extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
 /*
- * keep a count of the nfs mounts to generate ficticious drive names
+ * keep a count of the nfs mounts to generate fictitious drive names
  * for the per drive stats.
  */
 unsigned int nfs_mount_count = 0;
