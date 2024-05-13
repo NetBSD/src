@@ -1,4 +1,4 @@
-.\"	$NetBSD: creds_msdos.8,v 1.5 2024/02/04 05:43:06 mrg Exp $
+.\"	$NetBSD: creds_msdos.8,v 1.6 2024/05/13 23:10:47 gutteridge Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm creds_msdos
-.Nd automatically add login credentials from MSDOS partition
+.Nd automatically add login credentials from MS-DOS partition
 .Sh SYNOPSIS
 .Nm
 .Ar start
@@ -37,18 +37,18 @@
 The
 .Nm
 rc.d script allows automatic addition of login credentials during boot
-using a special file found on the MSDOS partition of a bootable image.
+using a special file found on the MS-DOS partition of a bootable image.
 This script is not distributed with the normal system and is only
 included with pre-installed bootable images.
 The goal is to allow remote access of the system without having to
 edit the primary root file system (which may not be accessible from
 the host the image is being written from), but place this information
-in the MSDOS partition that most platforms can easily access.
+in the MS-DOS partition that most platforms can easily access.
 .Pp
 Typically, an installable image (such as
 .Pa arm64.img )
 is written to an SD card or similar media, and has both a native FFS
-partition as well as an MSDOS partition for booting.
+partition as well as an MS-DOS partition for booting.
 If this script is enabled and has been pointed at the boot partition
 it will inspect the file
 .Pa creds.txt
@@ -65,7 +65,7 @@ group.
 .It Ic sshkeyfile Ar user Ar keyfile
 Look for the
 .Ar keyfile
-in the MSDOS boot partition and merge ssh keys from this file into user's
+in the MS-DOS boot partition and merge ssh keys from this file into user's
 .Pa ~/.ssh/authorized_keys
 file.
 .\"
