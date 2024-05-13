@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.17 2010/06/21 19:49:31 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.18 2024/05/13 00:25:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.17 2010/06/21 19:49:31 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.18 2024/05/13 00:25:23 msaitoh Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -111,7 +111,7 @@ __unused
 static void
 show_mime_info(FILE *fp, struct mime_info *mip, struct mime_info *end_mip)
 {
-	for (/* EMTPY */; mip != end_mip; mip = mip->mi_flink)
+	for (/* EMPTY */; mip != end_mip; mip = mip->mi_flink)
 		show_one_mime_info(fp, mip);
 
 	(void)fprintf(fp, "++ =========\n");

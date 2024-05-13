@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmacreg.h,v 1.3 2008/12/23 02:15:10 matt Exp $ */
+/* $NetBSD: gemini_gmacreg.h,v 1.4 2024/05/13 00:25:23 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,10 +125,10 @@
 #define	INT1_TOE_IQ2_FULL	__BIT(30)	/* TOE Intr Queue2 Full */
 #define	INT1_TOE_IQ1_FULL	__BIT(29)	/* TOE Intr Queue1 Full */
 #define	INT1_TOE_IQ0_FULL	__BIT(28)	/* TOE Intr Queue0 Full */
-#define	INT1_TOE_IQ3_NONEMPTY	__BIT(27)	/* TOE Intr Queue3 !Emtpy */
-#define	INT1_TOE_IQ2_NONEMPTY	__BIT(26)	/* TOE Intr Queue2 !Emtpy */
-#define	INT1_TOE_IQ1_NONEMPTY	__BIT(25)	/* TOE Intr Queue1 !Emtpy */
-#define	INT1_TOE_IQ0_NONEMPTY	__BIT(24)	/* TOE Intr Queue0 !Emtpy */
+#define	INT1_TOE_IQ3_NONEMPTY	__BIT(27)	/* TOE Intr Queue3 !Empty */
+#define	INT1_TOE_IQ2_NONEMPTY	__BIT(26)	/* TOE Intr Queue2 !Empty */
+#define	INT1_TOE_IQ1_NONEMPTY	__BIT(25)	/* TOE Intr Queue1 !Empty */
+#define	INT1_TOE_IQ0_NONEMPTY	__BIT(24)	/* TOE Intr Queue0 !Empty */
 #define	INT1_HWTQ13_EOF		__BIT(23)	/* GMAC1 HW TX Queue3 EOF */
 #define	INT1_HWTQ12_EOF		__BIT(22)	/* GMAC1 HW TX Queue2 EOF */
 #define	INT1_HWTQ11_EOF		__BIT(21)	/* GMAC1 HW TX Queue1 EOF */
