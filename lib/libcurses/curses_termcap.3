@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_termcap.3,v 1.6 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: curses_termcap.3,v 1.7 2024/05/14 10:38:16 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 4, 2011
+.Dd May 14, 2024
 .Dt CURSES_TERMCAP 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .In curses.h
 .Ft char *
-.Fn fullname "char *termbuf" "char *name"
+.Fn fullname "const char *termbuf" "char *name"
 .Sh DESCRIPTION
 The
 .Fn fullname
