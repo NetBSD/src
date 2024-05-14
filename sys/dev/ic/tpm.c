@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.28 2023/07/04 01:02:26 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.29 2024/05/14 13:41:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.28 2023/07/04 01:02:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.29 2024/05/14 13:41:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ tpm12_suspend(struct tpm_softc *sc)
 	 */
 	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
 	if (error) {
-		device_printf(sc->sc_dev, "start write failed: %d", error);
+		device_printf(sc->sc_dev, "start write failed: %d\n", error);
 		goto out;
 	}
 
@@ -158,8 +158,8 @@ tpm12_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
 	if (error) {
-		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
-		    error);
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed:"
+		    " %d\n", error);
 		goto out;
 	}
 
@@ -167,7 +167,7 @@ tpm12_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
 	if (error) {
-		device_printf(sc->sc_dev, "end write failed: %d", error);
+		device_printf(sc->sc_dev, "end write failed: %d\n", error);
 		goto out;
 	}
 
@@ -177,7 +177,7 @@ tpm12_suspend(struct tpm_softc *sc)
 	 */
 	error = (*sc->sc_intf->start)(sc, UIO_READ);
 	if (error) {
-		device_printf(sc->sc_dev, "start read failed: %d", error);
+		device_printf(sc->sc_dev, "start read failed: %d\n", error);
 		goto out;
 	}
 
@@ -186,11 +186,11 @@ tpm12_suspend(struct tpm_softc *sc)
 	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
 	    0);
 	if (error) {
-		device_printf(sc->sc_dev, "read failed: %d", error);
+		device_printf(sc->sc_dev, "read failed: %d\n", error);
 		goto out;
 	}
 	if (nread != sizeof(response)) {
-		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		device_printf(sc->sc_dev, "short header read: %zu\n", nread);
 		goto out;
 	}
 
@@ -198,7 +198,7 @@ tpm12_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
 	if (error) {
-		device_printf(sc->sc_dev, "end read failed: %d", error);
+		device_printf(sc->sc_dev, "end read failed: %d\n", error);
 		goto out;
 	}
 
@@ -209,7 +209,8 @@ tpm12_suspend(struct tpm_softc *sc)
 	    be32toh(response.length) != sizeof(response) ||
 	    be32toh(response.code) != 0) {
 		device_printf(sc->sc_dev,
-		    "TPM_ORD_SaveState failed: tag=0x%x length=0x%x code=0x%x",
+		    "TPM_ORD_SaveState failed:"
+		    " tag=0x%x length=0x%x code=0x%x\n",
 		    be16toh(response.tag),
 		    be32toh(response.length),
 		    be32toh(response.code));
@@ -248,7 +249,7 @@ tpm20_suspend(struct tpm_softc *sc)
 	 */
 	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
 	if (error) {
-		device_printf(sc->sc_dev, "start write failed: %d", error);
+		device_printf(sc->sc_dev, "start write failed: %d\n", error);
 		goto out;
 	}
 
@@ -256,8 +257,8 @@ tpm20_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
 	if (error) {
-		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
-		    error);
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed:"
+		    " %d\n", error);
 		goto out;
 	}
 
@@ -265,7 +266,7 @@ tpm20_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
 	if (error) {
-		device_printf(sc->sc_dev, "end write failed: %d", error);
+		device_printf(sc->sc_dev, "end write failed: %d\n", error);
 		goto out;
 	}
 
@@ -275,7 +276,7 @@ tpm20_suspend(struct tpm_softc *sc)
 	 */
 	error = (*sc->sc_intf->start)(sc, UIO_READ);
 	if (error) {
-		device_printf(sc->sc_dev, "start read failed: %d", error);
+		device_printf(sc->sc_dev, "start read failed: %d\n", error);
 		goto out;
 	}
 
@@ -284,11 +285,11 @@ tpm20_suspend(struct tpm_softc *sc)
 	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
 	    0);
 	if (error) {
-		device_printf(sc->sc_dev, "read failed: %d", error);
+		device_printf(sc->sc_dev, "read failed: %d\n", error);
 		goto out;
 	}
 	if (nread != sizeof(response)) {
-		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		device_printf(sc->sc_dev, "short header read: %zu\n", nread);
 		goto out;
 	}
 
@@ -296,7 +297,7 @@ tpm20_suspend(struct tpm_softc *sc)
 
 	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
 	if (error) {
-		device_printf(sc->sc_dev, "end read failed: %d", error);
+		device_printf(sc->sc_dev, "end read failed: %d\n", error);
 		goto out;
 	}
 
@@ -307,7 +308,7 @@ tpm20_suspend(struct tpm_softc *sc)
 	    be32toh(response.length) != sizeof(response) ||
 	    be32toh(response.code) != TPM2_RC_SUCCESS) {
 		device_printf(sc->sc_dev,
-		    "TPM_CC_Shutdown failed: tag=0x%x length=0x%x code=0x%x",
+		    "TPM_CC_Shutdown failed: tag=0x%x length=0x%x code=0x%x\n",
 		    be16toh(response.tag),
 		    be32toh(response.length),
 		    be32toh(response.code));
@@ -684,7 +685,7 @@ tpm20_rng(struct tpm_softc *sc, unsigned *entropybitsp)
 
 	/* Verify the response header looks sensible.  */
 	if (nread != sizeof(response.hdr)) {
-		device_printf(sc->sc_dev, "read %zu bytes, expected %zu",
+		device_printf(sc->sc_dev, "read %zu bytes, expected %zu\n",
 		    nread, sizeof(response.hdr));
 		goto out;
 	}
