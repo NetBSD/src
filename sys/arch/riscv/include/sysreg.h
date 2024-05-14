@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.31 2024/02/05 21:46:05 andvar Exp $ */
+/* $NetBSD: sysreg.h,v 1.32 2024/05/14 15:16:51 riastradh Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ fcsr_read(void)
 	return __fcsr;
 }
 
-
 static inline uint32_t
 fcsr_write(uint32_t __new)
 {
@@ -75,16 +74,15 @@ fcsr_fflags_read(void)
 {
 	uint32_t __old;
 	asm volatile("frflags %0" : "=r"(__old) :: "memory");
-	return __SHIFTOUT(__old, FCSR_FFLAGS);
+	return __old;
 }
 
 static inline uint32_t
 fcsr_fflags_write(uint32_t __new)
 {
 	uint32_t __old;
-	__new = __SHIFTIN(__new, FCSR_FFLAGS);
 	asm volatile("fsflags %0, %1" : "=r"(__old) : "r"(__new) : "memory");
-	return __SHIFTOUT(__old, FCSR_FFLAGS);
+	return __old;
 }
 
 static inline uint32_t
@@ -92,18 +90,16 @@ fcsr_frm_read(void)
 {
 	uint32_t __old;
 	asm volatile("frrm\t%0" : "=r"(__old) :: "memory");
-	return __SHIFTOUT(__old, FCSR_FRM);
+	return __old;
 }
 
 static inline uint32_t
 fcsr_frm_write(uint32_t __new)
 {
 	uint32_t __old;
-	__new = __SHIFTIN(__new, FCSR_FRM);
 	asm volatile("fsrm\t%0, %1" : "=r"(__old) : "r"(__new) : "memory");
-	return __SHIFTOUT(__old, FCSR_FRM);
+	return __old;
 }
-
 
 #define	RISCVREG_READ_INLINE(regname)					\
 static inline uintptr_t							\
