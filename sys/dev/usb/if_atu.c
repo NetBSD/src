@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.75 2022/03/03 06:06:52 riastradh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.76 2024/05/14 19:00:44 andvar Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.75 2022/03/03 06:06:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.76 2024/05/14 19:00:44 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -967,7 +967,7 @@ atu_internal_firmware(device_t arg)
 	}
 
 	/* after a lot of trying and measuring I found out the device needs
-	 * about 56 miliseconds after sending the remap command before
+	 * about 56 milliseconds after sending the remap command before
 	 * it's ready to communicate again. So we'll wait just a little bit
 	 * longer than that to be sure...
 	 */

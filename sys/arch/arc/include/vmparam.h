@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2019/03/28 08:28:16 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2024/05/14 19:00:43 andvar Exp $	*/
 /*	$OpenBSD: vmparam.h,v 1.3 1997/04/19 17:19:59 pefo Exp $	*/
 /*	NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp 	*/
 
@@ -12,7 +12,7 @@
 #define VM_MAX_WIRED_MAP_ADDRESS	((vaddr_t)0xFFFFC000)
 
 /*
- * Maximum number of contigous physical memory segment.
+ * Maximum number of contiguous physical memory segment.
  */
 #undef	VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX		16

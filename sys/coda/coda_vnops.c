@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.118 2022/03/27 16:24:58 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.119 2024/05/14 19:00:44 andvar Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.118 2022/03/27 16:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.119 2024/05/14 19:00:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -797,7 +797,7 @@ coda_fsync(void *v)
 	return(ENODEV);
     }
 
-    /* Check for fsync of control object or unitialized cnode. */
+    /* Check for fsync of control object or uninitialized cnode. */
     if (IS_CTL_VP(vp) || vp->v_type == VNON) {
 	MARK_INT_SAT(CODA_FSYNC_STATS);
 	return(0);
