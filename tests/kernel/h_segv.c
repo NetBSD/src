@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.14 2019/04/25 19:37:09 kamil Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.15 2024/05/14 15:54:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.14 2019/04/25 19:37:09 kamil Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.15 2024/05/14 15:54:16 riastradh Exp $");
 
 #define	__TEST_FENV
 
@@ -121,9 +121,14 @@ check_fpe(void)
 		printf("FPU does not implement traps on FP exceptions\n");
 		exit(EXIT_FAILURE);
 	}
+#elif defined __riscv__
+	printf("RISC-V does not support floating-point exception traps\n");
+	exit(EXIT_FAILURE);
 #endif
 	exit(EXIT_SUCCESS);
 }
+
+volatile int ignore_result;
 
 static void
 trigger_fpe(void)
@@ -135,7 +140,13 @@ trigger_fpe(void)
 	feenableexcept(FE_ALL_EXCEPT);
 #endif
 
-	usleep((int)(a/b));
+	/*
+	 * Try to trigger SIGFPE either by dividing by zero (which is
+	 * defined to raise FE_DIVBYZERO, but may just return infinity
+	 * without trapping the exception) or by converting infinity to
+	 * integer.
+	 */
+	ignore_result = (int)(a/b);
 }
 
 static void
