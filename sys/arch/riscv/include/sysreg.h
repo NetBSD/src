@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.32 2024/05/14 15:16:51 riastradh Exp $ */
+/* $NetBSD: sysreg.h,v 1.33 2024/05/14 15:17:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ static inline uint32_t
 fcsr_read(void)
 {
 	uint32_t __fcsr;
-	asm volatile("frcsr %0" : "=r"(__fcsr) :: "memory");
+	asm("frcsr %0" : "=r"(__fcsr) :: "memory");
 	return __fcsr;
 }
 
@@ -73,7 +73,7 @@ static inline uint32_t
 fcsr_fflags_read(void)
 {
 	uint32_t __old;
-	asm volatile("frflags %0" : "=r"(__old) :: "memory");
+	asm("frflags %0" : "=r"(__old) :: "memory");
 	return __old;
 }
 
@@ -89,7 +89,7 @@ static inline uint32_t
 fcsr_frm_read(void)
 {
 	uint32_t __old;
-	asm volatile("frrm\t%0" : "=r"(__old) :: "memory");
+	asm("frrm\t%0" : "=r"(__old) :: "memory");
 	return __old;
 }
 
