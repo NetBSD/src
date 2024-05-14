@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.234 2024/05/09 14:42:09 riastradh Exp $
+#  $NetBSD: Makefile,v 1.235 2024/05/14 14:34:35 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -194,7 +194,7 @@ ARCH_SRCS += s_fmax.S s_fmaxf.S
 ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
 
-.elif (${LIBC_MACHINE_ARCH} == "powerpc")
+.elif (${LIBC_MACHINE_CPU} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
