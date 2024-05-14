@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.35 2024/05/14 16:04:17 riastradh Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.36 2024/05/14 16:06:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -673,6 +673,8 @@ are_fpu_exceptions_supported(void)
 		return false;
 	return true;
 }
+#elif defined __riscv__
+#define are_fpu_exceptions_supported() 0
 #else
 #define are_fpu_exceptions_supported() 1
 #endif
