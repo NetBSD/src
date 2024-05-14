@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.21 2020/08/23 11:04:58 gson Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.22 2024/05/14 14:55:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -61,16 +61,25 @@ ATF_TC_BODY(no_test, tc)
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
-	 * skip these tests if running on them and compiled for
+	 * Skip these tests if running on them and compiled for
 	 * hard float.
 	 */
-#define	FPU_PREREQ()							\
-	if (0 == fpsetmask(fpsetmask(FP_X_INV)))			\
-		atf_tc_skip("FPU does not implement traps on FP exceptions");
+#define	FPU_PREREQ() do							      \
+{									      \
+	if (0 == fpsetmask(fpsetmask(FP_X_INV)))			      \
+		atf_tc_skip("FPU does not implement traps on FP exceptions"); \
+} while (0)
+#endif
+
+#ifdef __riscv__
+#ifdef __riscv__
+#define	FPU_PREREQ()							      \
+	atf_tc_skip("RISC-V does not support floating-point exception traps")
+#endif
 #endif
 
 #ifndef FPU_PREREQ
-#define	FPU_PREREQ()	/* nothing */
+#define	FPU_PREREQ()	__nothing
 #endif
 
 void		sigfpe(int, siginfo_t *, void *);
