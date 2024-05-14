@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.34 2022/05/24 20:08:38 andvar Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.35 2024/05/14 16:04:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -677,6 +677,8 @@ are_fpu_exceptions_supported(void)
 #define are_fpu_exceptions_supported() 1
 #endif
 
+volatile double ignore_result;
+
 static void __used
 trigger_fpe(void)
 {
@@ -701,7 +703,7 @@ trigger_fpe(void)
 #endif
 
 	/* Division by zero causes CPU trap, translated to SIGFPE */
-	usleep((int)(a / b));
+	ignore_result = (int)(a / b);
 }
 
 static void __used
