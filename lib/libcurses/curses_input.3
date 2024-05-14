@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.30 2022/05/21 12:34:44 uwe Exp $
+.\"	$NetBSD: curses_input.3,v 1.31 2024/05/14 10:22:48 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -76,7 +76,7 @@
 .Ft int
 .Fn has_key "int key_symbol"
 .Ft int
-.Fn define_key "char *sequence" "int key_symbol"
+.Fn define_key "const char *sequence" "int key_symbol"
 .Ft int
 .Fn getnstr "char *str" "int limit"
 .Ft int

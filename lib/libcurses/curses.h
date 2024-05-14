@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.130 2021/02/13 10:37:00 rillig Exp $	*/
+/*	$NetBSD: curses.h,v 1.131 2024/05/14 10:22:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -652,7 +652,7 @@ int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
 int	 curs_set(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
-int      define_key(char *, int);
+int      define_key(const char *, int);
 int	 delay_output(int);
 void     delscreen(SCREEN *);
 int	 delwin(WINDOW *);

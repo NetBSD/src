@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.78 2021/10/19 06:37:29 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.79 2024/05/14 10:22:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.78 2021/10/19 06:37:29 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.79 2024/05/14 10:22:48 uwe Exp $");
 #endif
 #endif					/* not lint */
 
@@ -211,7 +211,7 @@ static wchar_t	inbuf[INBUF_SZ];
 static int	start, end, working; /* pointers for manipulating inbuf data */
 
 /* prototypes for private functions */
-static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
+static void add_key_sequence(SCREEN *screen, const char *sequence, int key_type);
 static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type,
         int symbol);
 static void delete_key_sequence(keymap_t *current, int key_type);
@@ -370,7 +370,7 @@ delete_key_sequence(keymap_t *current, int key_type)
  * for the given key symbol.
  */
 static void
-add_key_sequence(SCREEN *screen, char *sequence, int key_type)
+add_key_sequence(SCREEN *screen, const char *sequence, int key_type)
 {
 	key_entry_t *tmp_key;
 	keymap_t *current;
@@ -762,7 +762,7 @@ do_keyok(keymap_t *current, int key_type, bool set, bool flag, int *retval)
  *
  */
 int
-define_key(char *sequence, int symbol)
+define_key(const char *sequence, int symbol)
 {
 
 	if (symbol <= 0 || _cursesi_screen == NULL)
