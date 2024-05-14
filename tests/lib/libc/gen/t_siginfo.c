@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.50 2024/05/14 16:10:14 riastradh Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.51 2024/05/14 16:10:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -386,7 +386,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 		 * Do not use constant 1 here. GCC >= 12 optimizes
 		 * (1 / i) to (abs(i) == 1 ? i : 0), even for -O0.
 		 */
-		long unity = strtol("1", NULL, 10),
+		volatile long unity = strtol("1", NULL, 10),
 		     zero  = strtol("0", NULL, 10);
 		printf("%ld\n", unity / zero);
 	}
