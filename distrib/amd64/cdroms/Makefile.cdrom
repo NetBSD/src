@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.28 2024/04/26 17:36:32 nia Exp $
+# $NetBSD: Makefile.cdrom,v 1.29 2024/05/14 14:58:41 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -21,6 +21,8 @@ CD_SETS+=	base etc gpufw
 .if ${MKKMOD} != "no"
 CD_SETS+=	modules
 .endif
+
+SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
 ${EFIBOOTIMG}: ${DESTDIR}/usr/mdec/bootx64.efi ${DESTDIR}/usr/mdec/bootia32.efi
 	${RM} -f ${EFIBOOTIMG}
