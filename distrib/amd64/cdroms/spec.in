@@ -1,0 +1,6 @@
+./boot 		type=file uname=root gname=wheel mode=644
+./install.sh 	type=file uname=root gname=wheel mode=755
+./mnt2 		type=dir  uname=root gname=wheel mode=755
+./netbsd 	type=file uname=root gname=wheel mode=644
+./targetroot 	type=dir  uname=root gname=wheel mode=755
+./etc/gettytab 	type=link uname=root gname=wheel mode=755
