@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.4 2010/02/28 15:52:17 snj Exp $
+$NetBSD: TODO,v 1.5 2024/05/14 19:00:44 andvar Exp $
 
 - convert the code to do caching in buffer cache indexed by
   file-vnode/file-offset so that NTFS would take advantage of UBC;
@@ -10,7 +10,7 @@ $NetBSD: TODO,v 1.4 2010/02/28 15:52:17 snj Exp $
 - working VOP_BALLOC() (new in UBC)
 	(from Chuq)
 
-- readdir: evalutate impact of using variable length reclen - should
+- readdir: evaluate impact of using variable length reclen - should
   enable us to store much more entries into buf in typical case with
   short filenames, though more work would need to be done in offset != 0
   case

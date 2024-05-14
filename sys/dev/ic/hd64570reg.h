@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.11 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.12 2024/05/14 19:00:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -340,7 +340,7 @@ struct hdlc_llc_header {
 #define SCA_RXS_CLK_ADPLL_OUT   0x60	/* BRG out for ADPLL clock */
 #define SCA_RXS_CLK_ADPLL_IN    0x70	/* line input for ADPLL clock */
 
-#define SCA_TXS_DIV_MASK	0x0F	/* BRG divisor is 2^(valud) */
+#define SCA_TXS_DIV_MASK	0x0F	/* BRG divisor is 2^(value) */
 #define SCA_TXS_DIV_1		0x00	/* 1 */
 #define SCA_TXS_DIV_2		0x01	/* 2 */
 #define SCA_TXS_DIV_4		0x02	/* 4 */

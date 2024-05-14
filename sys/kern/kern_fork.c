@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.230 2023/02/25 08:22:00 skrll Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.231 2024/05/14 19:00:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.230 2023/02/25 08:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.231 2024/05/14 19:00:44 andvar Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -109,7 +109,7 @@ u_int	nprocs __cacheline_aligned = 1;		/* process 0 */
 
 /*
  * Number of ticks to sleep if fork() would fail due to process hitting
- * limits. Exported in miliseconds to userland via sysctl.
+ * limits. Exported in milliseconds to userland via sysctl.
  */
 int	forkfsleep = 0;
 

@@ -1,4 +1,4 @@
-$NetBSD: HPMMU.notes,v 1.6 2023/09/08 18:51:19 andvar Exp $
+$NetBSD: HPMMU.notes,v 1.7 2024/05/14 19:00:43 andvar Exp $
 
 Overview:
 --------
@@ -28,7 +28,7 @@ Overview:
 	is used with 16 Kbytes of cache on 320 systems and 32 Kbytes on
 	350 systems.  Each cache entry can contain instructions or data,
 	from either user or supervisor space.  Separate valid bits are
-	kept for user and supervisor entries, allowing for descriminatory
+	kept for user and supervisor entries, allowing for discriminatory
 	flushing of the cache.
 
 	MMU translation and cache-miss detection are done in parallel.

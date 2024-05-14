@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2023/01/15 05:08:33 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2024/05/14 19:00:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,7 +97,7 @@
 
 /*
  * Constants which control the way the VM system deals with memory segments.
- * Only one physical contigous memory segment.
+ * Only one physical contiguous memory segment.
  */
 #define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

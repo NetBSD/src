@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.28 2021/07/31 20:29:37 andvar Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.29 2024/05/14 19:00:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.28 2021/07/31 20:29:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.29 2024/05/14 19:00:44 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -815,7 +815,7 @@ tcp_cubic_update_ctime(struct tcpcb *tp)
 }
 
 /*
- * miliseconds from last congestion
+ * milliseconds from last congestion
  */
 static uint32_t
 tcp_cubic_diff_ctime(struct tcpcb *tp)

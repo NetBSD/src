@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_utils.c,v 1.14 2013/12/14 18:04:56 christos Exp $	*/
+/*	$NetBSD: rec_utils.c,v 1.15 2024/05/14 19:00:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_utils.c,v 1.14 2013/12/14 18:04:56 christos Exp $");
+__RCSID("$NetBSD: rec_utils.c,v 1.15 2024/05/14 19:00:43 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -86,7 +86,7 @@ dataonly:
 		return (RET_SUCCESS);
 
 	/*
-	 * We must copy big keys/data to make them contigous.  Otherwise,
+	 * We must copy big keys/data to make them contiguous.  Otherwise,
 	 * leave the page pinned and don't copy unless the user specified
 	 * concurrent access.
 	 */
