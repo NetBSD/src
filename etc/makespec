@@ -55,17 +55,40 @@ gettype() {
 	esac
 }
 
-if [ -z "$1" ]; then
-	echo "Usage: $0 <dir>" 1>&2
+usage() {
+	echo "Usage: $0 -d <base> <dir>..." 1>&2
 	exit 1
+}
+
+
+while getopts "d:" i; do
+	case $i in
+	d)
+		DIR="$OPTARG";;
+	*)
+		usage;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+if [ -z "$DIR" ] || [ -z "$1" ]; then
+	usage
 fi
 
-cd "$1"
-for i in $TYPES; do
+cd "$DIR"
+
+for d; do
+	case $d in
+	.);;
+	*)	d="./$d";;
+	esac
+	for i in $TYPES; do
 	
-	t=$(gettype $i)
-	m=$(getmode $i)
-	find . -type $i -exec \
-	    printf "%s type=$t uname=root gname=wheel mode=$m\n" {} \;
+		t=$(gettype $i)
+		m=$(getmode $i)
+		find $d -type $i -exec \
+		printf "%s type=$t uname=root gname=wheel mode=$m\n" {} \;
+	done
 
 done | sort
