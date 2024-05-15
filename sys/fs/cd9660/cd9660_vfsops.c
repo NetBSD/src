@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.103 2024/02/03 22:39:27 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.104 2024/05/15 11:01:27 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.103 2024/02/03 22:39:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.104 2024/05/15 11:01:27 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -845,7 +845,7 @@ cd9660_loadvnode(struct mount *mp, struct vnode *vp,
 		struct buf *bp2;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
 		    && (off = isonum_711(isodir->ext_attr_length)))
-			cd9660_blkatoff(vp, (off_t)-(off << imp->im_bshift),
+			cd9660_blkatoff(vp, -((off_t) off << imp->im_bshift),
 			    NULL, &bp2);
 		else
 			bp2 = NULL;
