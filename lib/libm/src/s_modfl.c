@@ -36,7 +36,7 @@
  * $FreeBSD: head/lib/msun/src/s_modfl.c 165855 2007-01-07 07:54:21Z das $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_modfl.c,v 1.1 2014/06/16 12:54:43 joerg Exp $");
+__RCSID("$NetBSD: s_modfl.c,v 1.2 2024/05/15 00:02:56 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: s_modfl.c,v 1.1 2014/06/16 12:54:43 joerg Exp $");
 __weak_alias(modfl, _modfl)
 #endif
 
-#if LDBL_MANL_SIZE > 32
+#if EXT_FRACLBITS > 32
 #define	MASK	((uint64_t)-1)
 #else
 #define	MASK	((uint32_t)-1)
@@ -59,7 +59,7 @@ __weak_alias(modfl, _modfl)
 /* Return the last n bits of a word, representing the fractional part. */
 #define	GETFRAC(bits, n)	((bits) & ~(MASK << (n)))
 /* The number of fraction bits in manh, not counting the integer bit */
-#define	HIBITS	(LDBL_MANT_DIG - EXT_FRACHBITS)
+#define	HIBITS	(LDBL_MANT_DIG - EXT_FRACLBITS)
 
 static const long double zero[] = { 0.0L, -0.0L };
 
