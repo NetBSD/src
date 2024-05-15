@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modf.c,v 1.5 2024/05/08 22:57:37 riastradh Exp $	*/
+/*	$NetBSD: t_modf.c,v 1.6 2024/05/15 00:02:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_modf.c,v 1.5 2024/05/08 22:57:37 riastradh Exp $");
+__RCSID("$NetBSD: t_modf.c,v 1.6 2024/05/15 00:02:57 riastradh Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -288,11 +288,6 @@ ATF_TC_HEAD(modfl, tc)
 ATF_TC_BODY(modfl, tc)
 {
 	unsigned n;
-
-#if __HAVE_LONG_DOUBLE + 0 == 128
-	atf_tc_expect_fail("PR lib/58237:"
-	    " modfl returns wrong answers on ld128 architectures");
-#endif
 
 	for (n = 0; n < __arraycount(casesf); n++) {
 		long double x, i, f;
