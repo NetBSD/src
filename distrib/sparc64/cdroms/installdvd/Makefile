@@ -1,38 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2024/04/26 17:36:32 nia Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.3 2024/05/15 16:29:54 christos Exp $
 
 CDBASE=		sparc64dvd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
-CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd
-CD_SETS=	base etc
-.if ${MKKMOD} != "no"
-CD_SETS+=	modules
-.endif
-.if ${MKMAN} != "no"
-CD_SETS+=	man
-.endif
-
-SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
-
-CDRELEASE_NOISOS=	true
-CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc64/bootfs && ${PRINTOBJDIR}
-CDBOOTIMAGE=    ${CDBOOTIMAGEDIR}/boot.fs
-SUN_BOOT_ARGS:=  - - - - ${CDBOOTIMAGE}
-
-image_md_pre:
-	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc
-	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
-	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.ttys cdrom/etc/ttys
-	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.rc cdrom/etc/rc
-	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/../installcd/install.sh cdrom/install.sh
-	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
-	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
-
-image_md_post:
-	SUNLABEL=${TOOL_SUNLABEL:Q} \
-		${HOST_SH} ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
-		${CDIMAGE} ${SUN_BOOT_ARGS}
-
-.include "${.CURDIR}/../../../common/Makefile.bootcd"
-
+.include "${.CURDIR}/../Makefile.cdrom"
