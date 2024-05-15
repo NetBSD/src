@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2019/12/20 19:46:51 martin Exp $
+#	$NetBSD: Makefile,v 1.20 2024/05/15 16:31:35 christos Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDDEV_POPULATE=	true			# populate /dev on the CD
@@ -10,6 +10,8 @@ CD_SETS=	base etc	# no modules for VAX
 # for PRINTOBJDIR
 .include <bsd.own.mk>
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+
+SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
 # prepare mutliuser install environment
 image_md_pre:
