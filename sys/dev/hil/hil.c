@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.7 2022/06/25 02:36:27 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.7.4.1 2024/05/16 12:22:06 martin Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -153,6 +153,7 @@ hil_attach(struct hil_softc *sc, int *hil_is_console)
 	sc->sc_cmdbp = sc->sc_cmdbuf;
 	sc->sc_pollbp = sc->sc_pollbuf;
 	sc->sc_console = hil_is_console;
+	sc->sc_status = HIL_STATUS_BUSY;
 }
 
 /*
@@ -271,9 +272,6 @@ hil_intr(void *v)
 {
 	struct hil_softc *sc = v;
 	uint8_t c, stat;
-
-	if (cold)
-		return 0;
 
 	stat = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 
