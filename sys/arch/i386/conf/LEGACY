@@ -1,4 +1,4 @@
-#	$NetBSD: LEGACY,v 1.1.54.1 2024/05/11 14:31:56 martin Exp $
+#	$NetBSD: LEGACY,v 1.1.54.2 2024/05/16 12:29:11 martin Exp $
 
 # LEGACY kernel -- includes vga@isa and pcdisplay@isa for pre-PCI
 # systems, due to significant pain making them fail to attach when
@@ -21,3 +21,5 @@ no radeondrmkmsfb*	at radeonfbbus?
 
 no nouveau*		at pci?
 no nouveaufb*		at nouveaufbbus?
+
+no options		DRM_LEGACY
