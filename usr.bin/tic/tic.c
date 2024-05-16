@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.40 2020/03/30 00:09:06 roy Exp $ */
+/* $NetBSD: tic.c,v 1.40.6.1 2024/05/16 12:19:48 martin Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.40 2020/03/30 00:09:06 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.40.6.1 2024/05/16 12:19:48 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -468,7 +468,7 @@ merge_use(int flags)
 			if (!promoted && rtic->rtype != TERMINFO_RTYPE) {
 				if (promote(rtic, utic) == -1)
 					err(EXIT_FAILURE, "promote");
-				promoted = true;
+				promoted = rtic->rtype == TERMINFO_RTYPE;
 			}
 
 			merge(rtic, utic, flags);
