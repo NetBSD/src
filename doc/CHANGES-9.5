@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.3 2024/05/11 14:48:38 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.4 2024/05/16 12:24:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -35,4 +35,10 @@ sys/arch/mac68k/dev/pm_direct.c			1.31
 	mac68k: avoid random crashes on some Powerbook models
 	when using mouse or keyboard.
 	[nat, ticket #1839]
+
+sys/dev/hil/hil.c				1.8
+
+	hp300: fix "stray level 1 interrupt" panic by pressing keys
+	during autoconf(9).
+	[tsutsui, ticket #1840]
 
