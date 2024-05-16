@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.18 2024/05/16 11:54:19 nia Exp $
+.\" $NetBSD: eap.4,v 1.19 2024/05/16 14:41:03 uwe Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,11 +34,12 @@
 .Nm eap
 .Nd AudioPCI audio device driver
 .Sh SYNOPSIS
-.Cd "eap*   at pci? dev ? function ?"
-.Cd "audio* at audiobus?"
-.Cd "joy*   at eap?"
-.Cd "midi*  at eap?"
+.Cd "eap*    at pci? dev ? function ?"
 .Cd "options EAP_USE_BOTH_DACS"
+.Pp
+.Cd "audio*  at audiobus?"
+.Cd "joy*    at eap?"
+.Cd "midi*   at eap?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,9 +48,8 @@ SoundBlaster PCI series of audio cards.
 All models based on the ES1370, ES1371, and ES1373 chips are supported.
 .Pp
 By specifying:
-.Bd -unfilled -offset indent
-options EAP_USE_BOTH_DACS
-.Ed
+.Pp
+.D1 Cd options EAP_USE_BOTH_DACS
 .Pp
 a second audio device is attached.
 You can use it simply by directing audio output to it.
