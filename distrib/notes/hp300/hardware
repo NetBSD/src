@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.26.2.1 2024/01/14 16:00:09 martin Exp $
+.\"	$NetBSD: hardware,v 1.26.2.2 2024/05/16 12:27:50 martin Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -155,6 +155,10 @@ Network interfaces
 .It
 Graphics Devices
 .(bullet -compact
+98542 monochrome Topcat (512x400, 1 bit, DIO-II)
+.It
+98543 color Topcat (512x400, 4 bits, DIO-II)
+.It
 98544 monochrome Topcat (1024x768, 1 bit, DIO-II)
 .It
 98545A color Topcat (1024x768, 4 bits, DIO-II)
