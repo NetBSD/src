@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: diofb.c,v 1.7.6.1 2024/05/16 12:27:50 martin Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -145,15 +145,6 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 		fb->dwidth = fb->fbwidth;
 	if (fb->dheight > fb->fbheight)
 		fb->dheight = fb->fbheight;
-
-	/*
-	 * Some displays, such as the HP332 and HP340 internal video
-	 * appear to return a display width of 1024 instead of 512.
-	 */
-	if (fbr->num_planes == 1 || fbr->num_planes == 4) {
-		if (fb->dwidth == 1024 && fb->dheight == 400)
-			fb->dwidth = 512;
-	}
 
 	fb->planes = fbr->num_planes;
 	if (fb->planes > 8)
@@ -360,9 +351,7 @@ diofb_allocattr(void *cookie, int fg, int bg, int flg, long *attr)
 		bg = swap;
 	}
 
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-
-	*attr = (bg << 16) | (fg << 24) | flg;
+	*attr = (bg << 16) | (fg << 24) | (flg & WSATTR_UNDERLINE);
 
 	return 0;
 }
@@ -372,10 +361,11 @@ diofb_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct diofb *fb = ri->ri_hw;
+	int fontwidth = fb->wsd.fontwidth;
 
-	n *= ri->ri_font->fontwidth;
-	src *= ri->ri_font->fontwidth;
-	dst *= ri->ri_font->fontwidth;
+	n *= fontwidth;
+	src *= fontwidth;
+	dst *= fontwidth;
 	row *= ri->ri_font->fontheight;
 
 	(*fb->bmv)(fb, ri->ri_xorigin + src, ri->ri_yorigin + row,
@@ -405,11 +395,12 @@ diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 	struct diofb *fb = ri->ri_hw;
 	int fg, bg;
 	int snum, scol, srow;
+	int fontwidth = fb->wsd.fontwidth;
 
 	rasops_unpack_attr(attr, &fg, &bg, NULL);
 
-	snum = num * ri->ri_font->fontwidth;
-	scol = col * ri->ri_font->fontwidth + ri->ri_xorigin;
+	snum = num * fontwidth;
+	scol = col * fontwidth + ri->ri_xorigin;
 	srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
 
 	/*
@@ -434,7 +425,7 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 	bg ^= 0xff;
 
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		rc = (*fb->bmv)(fb, 0, 0, 0, 0, ri->ri_width, ri->ri_height,
+		rc = (*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, ri->ri_height,
 		    RR_CLEAR, bg);
 	} else {
 		srow = row * ri->ri_font->fontheight + ri->ri_yorigin;
@@ -451,10 +442,11 @@ diofb_do_cursor(struct rasops_info *ri)
 {
 	struct diofb *fb = ri->ri_hw;
 	int x, y;
+	int fontwidth = fb->wsd.fontwidth;
 
-	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	x = ri->ri_ccol * fontwidth + ri->ri_xorigin;
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
-	(*fb->bmv)(fb, x, y, x, y, ri->ri_font->fontwidth,
+	(*fb->bmv)(fb, x, y, x, y, fontwidth,
 	    ri->ri_font->fontheight, RR_INVERT, 0xff);
 }
 

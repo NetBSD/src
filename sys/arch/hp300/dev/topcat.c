@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.6 2022/11/30 11:36:50 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.6.2.1 2024/05/16 12:27:50 martin Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -149,6 +149,8 @@ static int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
 		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
 static int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static void	topcat_putchar8(void *, int, int, u_int, long);
+static void	topcat_putchar1_4(void *, int, int, u_int, long);
 
 static struct wsdisplay_accessops topcat_accessops = {
 	topcat_ioctl,
@@ -312,8 +314,10 @@ int
 topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fbr;
+	struct rasops_info *ri = &fb->ri;
 	int rc;
 	u_int i;
+	bool sparse = false;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return rc;
@@ -344,9 +348,47 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 		fb->planemask = (1 << fb->planes) - 1;
 	}
 
+	/*
+	 * Some displays, such as the HP332 and HP340 internal video
+	 * and HP98542/98543 appear to return a display width of 1024
+	 * instead of 512. It looks these boards have actually have
+	 * enough 64KB (1bpp) or 256KB (4bpp) VRAM and RAMDAC capabilities
+	 * to display 1024x400 pixels.
+	 * 
+	 * However HP's officlal "Service Information Manual" for
+	 * "HP 900 Series 300 Computers Models 330/350" says:
+	 *  "The medium-resolution board uses eight memory chips per plane.
+	 *   This is enough to display 512 doubled pixels by 400 scan lines."
+	 *
+	 * This "512 doubled pixels" implies that the native HP-UX treated
+	 * these 1024x400 framebuffers as pseudo 512x400 ones because
+	 * ancient 1980s CRTs (such as 35741) didn't display such higher
+	 * resolution. Furthermore, even modern LCDs can only handle
+	 * upto 720 pixels in the "400 line" as VGA compatible mode.
+	 *
+	 * As mentioned above, we treat these 1024x400 1 bit or 4 bit
+	 * framebuffers as "2 bytes per pixel" ones, so we have to handle
+	 * 512 pixels per line with 1024 bytes per line.
+	 */
+	if (fb->planes <= 4 && fb->dwidth == 1024 && fb->dheight == 400) {
+		fb->dwidth = 512;
+		sparse = true;
+	}
+
 	fb->bmv = topcat_windowmove;
 	topcat_restore(fb);
 	diofb_fbsetup(fb);
+	if (!sparse) {
+		/* save original rasops putchar op */
+		fb->wsputchar = ri->ri_ops.putchar;
+		ri->ri_ops.putchar = topcat_putchar8;
+	} else {
+		ri->ri_ops.putchar = topcat_putchar1_4;
+		/* copycols and erasecols ops require byte size of fontwidth */
+		fb->wsd.fontwidth *= 2;
+		/* copyrows and eraserows ops require byte size per line */
+		ri->ri_emuwidth *= 2;
+	}
 	for (i = 0; i <= fb->planemask; i++)
 		topcat_setcolor(fb, i);
 
@@ -382,7 +424,7 @@ topcat_restore(struct diofb *fb)
 	tc->prr  = RR_COPY;
 
 	/* Enable display */
-	tc->nblank = 0xff;
+	tc->nblank = fb->planemask;
 }
 
 int
@@ -440,9 +482,11 @@ topcat_setcolor(struct diofb *fb, u_int index)
 	if (fb->planemask == 1)
 		return;
 
+	tc_waitbusy(tc, fb->planemask);
+
 	if (tc->regs.fbid != GID_TOPCAT) {
 		tccm_waitbusy(tc);
-		tc->plane_mask = 0xff;
+		tc->plane_mask = fb->planemask;
 		tc->cindex = ~index;
 		tc->rdata  = fb->cmap.r[index];
 		tc->gdata  = fb->cmap.g[index];
@@ -455,11 +499,13 @@ topcat_setcolor(struct diofb *fb, u_int index)
 		tc->cindex = 0;
 	} else {
 		tccm_waitbusy(tc);
-		tc->plane_mask = 0xff;
+		tc->plane_mask = fb->planemask;
 		tc->rdata  = fb->cmap.r[index];
 		tc->gdata  = fb->cmap.g[index];
 		tc->bdata  = fb->cmap.b[index];
+		DELAY(1);	/* necessary for at least old HP98543 */
 		tc->cindex = ~index;
+		DELAY(1);	/* necessary for at least old HP98543 */
 		tc->strobe = 0xff;
 		/* XXX delay required on 68020/30 to avoid bus error */
 		DELAY(100);
@@ -513,12 +559,13 @@ topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 
 	tc_waitbusy(tc, fb->planemask);
 
-	tc->wen = planemask;
-	tc->wmrr = rop;
 	if (planemask != 0xff) {
 		tc->wen = planemask ^ 0xff;
 		tc->wmrr = rop ^ 0x0f;
 		tc->wen = fb->planemask;
+	} else {
+		tc->wen = planemask;
+		tc->wmrr = rop;
 	}
 	tc->source_y = sy;
 	tc->source_x = sx;
@@ -528,11 +575,108 @@ topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
 	tc->wwidth = cx;
 	tc->wmove = fb->planemask;
 
-	tc_waitbusy(tc, fb->planemask);
-
 	return 0;
 }
 
+static void
+topcat_putchar8(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct diofb *diofb = ri->ri_hw;
+	volatile struct tcboxfb *tc = (struct tcboxfb *)diofb->regkva;
+
+	/* Wait windowmove ops complete before drawing a glyph */
+	tc_waitbusy(tc, diofb->planemask);
+
+	/* Call the original rasops putchar */
+	(*diofb->wsputchar)(cookie, row, col, uc, attr);
+}
+
+/*
+ * Put a single character on 1 bpp (98542) or 4 bpp (98543) variants
+ * with 1024x400 VRAM to treat them as a pseudo 512x400 bitmap.
+ */
+static void
+topcat_putchar1_4(void *cookie, int row, int col, u_int uc, long attr)
+{
+	int width, height, cnt, fs;
+	uint32_t fb;
+	uint8_t *fr, clr[2];
+	uint8_t *dp, *rp;
+	struct rasops_info *ri;
+	struct diofb *diofb;
+	volatile struct tcboxfb *tc;
+
+	ri = (struct rasops_info *)cookie;
+
+	if (!CHAR_IN_FONT(uc, ri->ri_font))
+		return;
+
+	rp = ri->ri_bits + (row * ri->ri_yscale) +
+	    (col * ri->ri_xscale * 2);
+
+	height = ri->ri_font->fontheight;
+	width = ri->ri_font->fontwidth;
+	clr[0] = (uint8_t)ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr[1] = (uint8_t)ri->ri_devcmap[(attr >> 24) & 0xf];
+
+	/* Wait windowmove ops complete before drawing a glyph */
+	diofb = ri->ri_hw;
+	tc = (struct tcboxfb *)diofb->regkva;
+	tc_waitbusy(tc, diofb->planemask);
+
+	/*
+	 * We have to put pixel data to both odd and even addresses
+	 * to handle "doubled pixels" as noted above.
+	 */
+	if (uc == ' ') {
+		uint16_t c = clr[0];
+
+		c = c << 8 | c;
+		while (height--) {
+			dp = rp;
+			rp += ri->ri_stride;
+
+			for (cnt = width; cnt; cnt--) {
+				*(uint16_t *)dp = c;
+				dp += 2;
+			}
+		}
+	} else {
+		uc -= ri->ri_font->firstchar;
+		fr = (uint8_t *)ri->ri_font->data + uc * ri->ri_fontscale;
+		fs = ri->ri_font->stride;
+
+		while (height--) {
+			dp = rp;
+			fb = be32dec(fr);
+			fr += fs;
+			rp += ri->ri_stride;
+
+			for (cnt = width; cnt; cnt--) {
+				uint16_t c = clr[(fb >> 31) & 1];
+
+				c = c << 8 | c;
+				*(uint16_t *)dp = c;
+				dp += 2;
+				fb <<= 1;
+			}
+		}
+	}
+
+	/* Do underline */
+	if ((attr & WSATTR_UNDERLINE) != 0) {
+		uint16_t c = clr[1];
+
+		c = c << 8 | c;
+		rp -= ri->ri_stride * ri->ri_ul.off;
+
+		while (width--) {
+			*(uint16_t *)rp = c;
+			rp += 2;
+		}
+	}
+}
 
 /*
  *   Topcat/catseye console attachment

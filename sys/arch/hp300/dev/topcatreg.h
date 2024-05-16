@@ -1,5 +1,5 @@
 /*	$OpenBSD: topcatreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: topcatreg.h,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: topcatreg.h,v 1.2.90.1 2024/05/16 12:27:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,13 +42,13 @@
 #define tccm_waitbusy(regaddr) \
 do { \
 	while (((volatile struct tcboxfb *)(regaddr))->cmap_busy & 0x04) \
-		DELAY(10); \
+		DELAY(100); \
 } while (/* CONSTCOND */0)
 
 #define tc_waitbusy(regaddr,planes) \
 do { \
 	while (((volatile struct tcboxfb *)(regaddr))->busy & planes) \
-		DELAY(10); \
+		DELAY(100); \
 } while (/* CONSTCOND */0)
 
 struct tcboxfb {
