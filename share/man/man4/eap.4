@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.19 2024/05/16 14:41:03 uwe Exp $
+.\" $NetBSD: eap.4,v 1.20 2024/05/16 17:00:31 nia Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,10 @@ By specifying:
 .D1 Cd options EAP_USE_BOTH_DACS
 .Pp
 a second audio device is attached.
-You can use it simply by directing audio output to it.
+This can be used for audio output simultaneously with the primary DAC.
+You can use it simply by directing audio output to the additional
+.Pa /dev/audioX
+device associated with it.
 .Sh SEE ALSO
 .Xr ac97 4 ,
 .Xr audio 4 ,
@@ -79,3 +82,13 @@ The
 .Dv EAP_USE_BOTH_DACS
 option is rather redundant after the introduction of the in-kernel audio
 mixer, and may be removed in a future release.
+It is possible that it could be used to accelerate mixing streams by
+taking advantage of the hardware's features, but currently the
+additional (small) overhead of the kernel mixer is impossible to bypass,
+since
+.Nx
+no longer allows userspace software to write directly to audio hardware.
+The
+.Nm
+hardware only features one clock, so generally the second audio device
+must be configured in the same way as the first.
