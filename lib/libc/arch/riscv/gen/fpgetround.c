@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.4 2024/05/16 00:56:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.3 2023/05/07 12:41:47 skrll Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.4 2024/05/16 00:56:11 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,5 +47,5 @@ __weak_alias(fpgetround,_fpgetround)
 fp_rnd
 fpgetround(void)
 {
-	return __SHIFTOUT(fcsr_read(), FCSR_FRM);
+	return fcsr_frm_read();
 }
