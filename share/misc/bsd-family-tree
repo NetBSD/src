@@ -411,62 +411,87 @@ FreeBSD 5.2           |      |                 |                       |
  |     |      |       |      |    |      |        |            DragonFly 5.8
  |     |      |       |      |    |      |        |                    |
  |     |      |       |      |    |      |        |            DragonFly 5.6.3
- |     |      |       |      |    |   NetBSD      |                    |
- |     |      |       |      |    |    8.2        |            DragonFly 5.8.1
- |     |      |       |      |    |           OpenBSD 6.7              |
- |     |   FreeBSD    |      |    |               |                    |
- |     |     11.4     |      |    |               |                    |
- |     |              |      |    |               |            DragonFly 5.8.2
- |     |              |      |    |               |            DragonFly 5.8.3
- |     |              |      |  NetBSD 9.1    OpenBSD 6.8              |
- |  FreeBSD           |      |    |               |                    |
- |   12.2           macOS    |    |               |                    |
- |     |             11      |    |               |                    |
- |     `------.       |      |    |               |                    |
- |            |       |      |    |               |                    |
- *--FreeBSD   |       |      |    |               |                    |
- |   13.0     |       |      |  NetBSD 9.2    OpenBSD 6.9      DragonFly 6.0
- |     |      |       |      |    |               |                    |
- |     |      |       |      |    |               |                    |
- |     |   FreeBSD  macOS    |    |           OpenBSD 7.0      DragonFly 6.2.1
- |     |     12.3    12      |    |               |                    |
- |     |              |      |    |               |                    |
- |     |              |      |    |           OpenBSD 7.1              |
- |  FreeBSD           |      |    |               |                    |
- |   13.1             |      |    |               |                    |
- |                    |      |    |               |            DragonFly 6.2.2
- |                    |      |  NetBSD 9.3        |                    |
+ |     |      |       |      |    |    NetBSD     |                    |
+ |     |      |       |      |    |     8.2       |                    |
+ |     |      |       |      |    |      |        |            DragonFly 5.8.1
+ |     |      |       |      |    |      |    OpenBSD 6.7              |
+ |     |   FreeBSD    |      |    |      |        |                    |
+ |     |     11.4     |      |    |      |        |                    |
+ |     |              |      |    |      |        |            DragonFly 5.8.2
+ |     |              |      |    |      |        |            DragonFly 5.8.3
+ |     |              |      |  NetBSD   |    OpenBSD 6.8              |
+ |     |              |      |   9.1     |        |                    |
+ |  FreeBSD         macOS    |    |      |        |                    |
+ |   12.2            11      |    |      |        |                    |
+ |     |              |      |    |      |        |                    |
+ |     `------.       |      |    |      |        |                    |
+ *--FreeBSD   |       |      |    |      |        |                    |
+ |   13.0     |       |      |  NetBSD   |    OpenBSD 6.9      DragonFly 6.0.0
+ |     |      |       |      |   9.2     |        |                    |
+ |     |      |       |      |    |      |        |            DragonFly 6.0.1
+ |     |   FreeBSD  macOS    |    |      |    OpenBSD 7.0              |
+ |     |     12.3    12      |    |      |        |                    |
+ |     |      |       |      |    |      |        |            DragonFly 6.2.1
+ |     |      |       |      |    |      |    OpenBSD 7.1              |
+ |  FreeBSD   |       |      |    |      |        |                    |
+ |   13.1     |       |      |    |      |        |                    |
+ |     |      |       |      |    |      |        |            DragonFly 6.2.2
+ |     |      |       |      |  NetBSD   |        |                    |
+ |     |      |       |      |   9.3     |        |                    |
+ |     |      |     macOS    |    |      |    OpenBSD 7.2              |
+ |     |      |      13      |    |      |        |                    |
+ |     |   FreeBSD    |      |    |      |        |                    |
+ |     |     12.4     |      |    |      |        |                    |
+ |     |              |      |    |      |        |            DragonFly 6.4.0
+ |     |              |      |    |      |    OpenBSD 7.3              |
+ |  FreeBSD           |      |    |      |        |                    |
+ |   13.2             |      |    |      |        |                    |
+ |     |              |      |    |      |        |                    |
+ |     `------.       |      |    .      |        |                    |
+ |            |     macOS    |     \     |        |                    |
+ |            |      14      |      \    .    OpenBSD 7.4              |
+ *--FreeBSD   |       |      |       \    \       |                    |
+ |   14.0     |       |      |        \    \      |                    |
+ |         FreeBSD    |      |         |    |     |                    |
+ |           13.3     |      *--NetBSD |    |     |                    |
+ |                    |      |   10.0  |    |   OpenBSD                |
+ |                    |      |         |    |    7.5                   |
+ |                    |      |       NetBSD |     |                    |
+ |                    |      |        9.4   |     |                    |
+ |                    |      |            NetBSD  |                    |
+ |                    |      |             8.3    |                    |
  |                    |      |                    |                    |
-FreeBSD 14 -current   |  NetBSD -current   OpenBSD -current    DragonFly -current
+FreeBSD 15            |    NetBSD 11            OpenBSD             DragonFly
+ -current             |     -current             -current            -current
  |                    |      |                    |                    |
  v                    v      v                    v                    v
 
 Time
 ----------------
 
-Time tolerance +/- 6 months, depending on which book/article you read; if it
-was the announcement in Usenet or if it was available as tape.
+Time tolerance +/- 6 months, depending on which book/article you read; if it was
+the announcement in Usenet or if it was available as tape.
 
-[44B] McKusick, Marshall Kirk, Keith Bostic, Michael J Karels,
-	and John Quarterman. The Design and Implementation of
-	the 4.4BSD Operating System.
+[44B] McKusick, Marshall Kirk, Keith Bostic, Michael J Karels, and John
+	Quarterman. The Design and Implementation of the 4.4BSD Operating System.
 [APL] Apple website [https://www.apple.com/macosx/]
 [BSDI] Berkeley Software Design, Inc.
 [DFB] DragonFlyBSD Project, The.
 [DOC] README, COPYRIGHT on tape.
 [FBD] FreeBSD Project, The.
-[KB]  Keith Bostic. BSD2.10 available from Usenix. comp.unix.sources,
-	Volume 11, Info 4, April, 1987.
+[KB]  Keith Bostic. BSD2.10 available from Usenix. comp.unix.sources, Volume 11,
+	Info 4, April, 1987.
 [KKK] Mike Karels, Kirk McKusick, and Keith Bostic. tahoe announcement.
 	comp.bugs.4bsd.ucb-fixes, June 15, 1988.
-[KSJ] Michael J. Karels, Carl F. Smith, and William F. Jolitz.
-	Changes in the Kernel in 2.9BSD. Second Berkeley Software
-	Distribution UNIX Version 2.9, July, 1983.
+[KSJ] Michael J. Karels, Carl F. Smith, and William F. Jolitz.  Changes in the
+	Kernel in 2.9BSD. Second Berkeley Software Distribution UNIX Version 2.9,
+	July, 1983.
 [NBD] NetBSD Project, The.
 [OBD] OpenBSD Project, The.
-[QCU] Salus, Peter H. A quarter century of UNIX.
+[QCU] Salus, Peter H. A quarter century of UNIX. ISBN 0201547775, EAN
+	9780201547771
 [SMS] Steven M. Schultz. 2.11BSD, UNIX for the PDP-11.
-[TUHS] The Unix Historical Society.  http://minnie.tuhs.org/Unix_History/.
+[TUHS] The Unix Historical Society.  https://minnie.tuhs.org/Unix_History/.
 [USE] Usenet announcement.
 [WRS] Wind River Systems, Inc.
 [dmr] Dennis Ritchie, via E-Mail
@@ -500,6 +525,7 @@ Ninth   Edition         1986-09-xx [QCU]
 Tenth   Edition         1989-10-xx [QCU]
 
 1BSD                    late 1977
+			1978-01-16 [DOC]
 			1978-03-09 [QCU]
 				PDP-11, Pascal, ex(1)
 				30 free copies of 1BSD sent out
@@ -508,7 +534,8 @@ Tenth   Edition         1989-10-xx [QCU]
 				75 2BSD tapes shipped
 2.79BSD			1980-04-xx [TUHS]
 2.8BSD			1981-07-xx [KSJ]
-
+				First 2BSD with bootable V7 kernel plus
+				community fixes.
 2.8.1BSD		1982-01-xx [QCU]
 				set of performance improvements
 2.9BSD			1983-07-xx [KSJ]
@@ -837,14 +864,15 @@ OpenBSD 6.7		2020-05-19 [OBD]
 FreeBSD 11.4		2020-06-16 [FBD]
 DragonFly 5.8.2		2020-09-23 [DFB]
 DragonFly 5.8.3		2020-09-24 [DFB]
-NetBSD 9.1		2020-10-18 [NBD]
 OpenBSD 6.8		2020-10-18 [OBD]
+NetBSD 9.1		2020-10-18 [NBD]
 FreeBSD 12.2		2020-10-27 [FBD]
 macOS 11		2020-11-12 [APL]
 FreeBSD 13.0		2021-04-13 [FBD]
 OpenBSD 6.9		2021-05-01 [OBD]
 DragonFly 6.0		2021-05-08 [DFB]
 NetBSD 9.2		2021-05-12 [NBD]
+DragonFly 6.0.1		2021-10-12 [DFB]
 OpenBSD 7.0		2021-10-14 [OBD]
 macOS 12		2021-10-25 [APL]
 FreeBSD 12.3		2021-12-01 [FBD]
@@ -853,7 +881,20 @@ OpenBSD 7.1		2022-04-21 [OBD]
 FreeBSD 13.1		2022-05-17 [FBD]
 DragonFly 6.2.2		2022-06-09 [DFB]
 NetBSD 9.3		2022-08-04 [NBD]
+OpenBSD 7.2		2022-10-20 [OBD]
+macOS 13		2022-10-24 [APL]
+FreeBSD 12.4		2022-12-05 [FBD]
+DragonFly 6.4		2022-12-30 [DFB]
+OpenBSD 7.3		2023-04-10 [OBD]
+FreeBSD 13.2		2023-04-11 [FBD]
+macOS 14		2023-09-26 [APL]
+OpenBSD 7.4		2023-10-16 [OBD]
+FreeBSD 14.0		2023-11-20 [FBD]
+FreeBSD 13.3		2024-03-05 [FBD]
 NetBSD 10.0		2024-03-28 [NBD]
+OpenBSD 7.5		2024-04-05 [OBD]
+NetBSD 9.4		2024-04-20 [NBD]
+NetBSD 8.3		2024-05-07 [NBD]
 
 Bibliography
 ------------------------
@@ -884,25 +925,25 @@ Presented to the Tasmanian Unix Special Interest Group of the
 Australian Computer Society, Hobart, August 1993.
 
 Peter H. Salus. Unix at 25. Byte Magazine, October 1994.
-URL: http://www.byte.com/art/9410/sec8/art3.htm
+URL: https://web.archive.org/web/20081230094857/http://www.byte.com/art/9410/sec8/art3.htm
 
 Andreas Klemm, Lars Köller. If you're going to San Francisco ...
 Die freien BSD-Varianten von Unix. c't April 1997, page 368ff.
 
-BSD Release Announcements collection.
+FreeBSD Release Information
 URL: https://www.FreeBSD.org/releases/
 
-BSD Hypertext Man Pages
-URL: https://www.FreeBSD.org/cgi/man.cgi
+Manual pages for FreeBSD and ports
+URL: https://man.FreeBSD.org/cgi/man.cgi
 
 UNIX history graphing project
-URL: http://minnie.tuhs.org/Unix_History/index.html
+URL: https://minnie.tuhs.org/Unix_History/index.html
 
 UNIX history
-URL: http://www.levenez.com/unix/
+URL: https://www.levenez.com/unix/
 
 James Howard: The BSD Family Tree
-URL: http://ezine.daemonnews.org/200104/bsd_family.html
+URL: https://web.archive.org/web/20090427195917/http://ezine.daemonnews.org/200104/bsd_family.html
 ("what are the differences between FreeBSD, NetBSD, and OpenBSD?")
 
 
@@ -915,8 +956,7 @@ original BSD announcements from Usenet or tapes.
 Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 
 --
-Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
-URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
+Copyright (c) 1997-2023 Wolfram Schneider <wosch@FreeBSD.org>
+URL: https://cgit.freebsd.org/src/tree/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 361673 2020-05-31 21:38:33Z imp $
-$NetBSD: bsd-family-tree,v 1.84 2024/03/30 19:34:46 martin Exp $
+$NetBSD: bsd-family-tree,v 1.85 2024/05/16 12:04:21 ast Exp $
