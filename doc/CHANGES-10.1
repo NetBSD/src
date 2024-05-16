@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.10 2024/05/11 14:51:14 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.11 2024/05/16 12:32:00 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -261,4 +261,31 @@ sys/dev/pci/if_vmx.c				1.13
 
 	vmx(4):	set IFM_FDX flag if the link is up.
 	[msaitoh, ticket #687]
+
+usr.bin/tic/tic.c				1.41
+
+	tic(1): PR 58034: only mark the terminfo entry promoted if
+	it actually was.
+	[wiz, ticket #688]
+
+sys/dev/hil/hil.c				1.8
+
+	hp300: fix "stray level 1 interrupt" panic by pressing keys
+	during autoconf(9).
+	[tsutsui, ticket #689]
+
+distrib/notes/hp300/hardware			1.28
+share/man/man4/man4.hp300/topcat.4		1.8
+sys/arch/hp300/dev/diofb.c			1.8-1.10
+sys/arch/hp300/dev/diofbvar.h			1.5
+sys/arch/hp300/dev/topcat.c			1.7-1.12
+sys/arch/hp300/dev/topcatreg.h			1.5
+
+	hp300: topcat(4) framebuffer fixes.
+	[tsutsui, ticket #690]
+
+sys/arch/i386/conf/LEGACY			1.4
+
+	Exclude DRM_LEGACY from the ISA kernel.
+	[nia, ticket #691]
 
