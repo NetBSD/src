@@ -1,7 +1,7 @@
-# $NetBSD: pckbd.sv.svascii,v 1.1 2001/05/02 15:08:35 drochner Exp $
+# $NetBSD: pckbd.sv.svascii,v 1.2 2024/05/16 14:11:42 gson Exp $
 #
 # This is an overlay to the swedish keymap which maps
-# the natinal characters to their ASCII counterparts.
+# the national characters to their ASCII counterparts.
 # From Michael Eriksson per PR kern/8456.
 
 keycode 5 = 4 dollar currency
