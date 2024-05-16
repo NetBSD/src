@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.53 2023/05/19 14:47:16 hauke Exp $
+# $NetBSD: Makefile,v 1.54 2024/05/16 14:21:45 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -294,7 +294,7 @@ MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
 .if !empty(ports:Mmacppc)
 BOOTHFS=	boothfs
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
-	--macbin -map ${.CURDIR}/hfsmap.lst \
+	--macbin -data-change-warn -map ${.CURDIR}/hfsmap.lst \
 	-boot-hfs-file ${.OBJDIR}/${BOOTHFS}
 UUDECODE_FILES=	${BOOTHFS}
 .include <bsd.files.mk>
