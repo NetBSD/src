@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.35 2024/04/22 14:41:24 nia Exp $
+#	$NetBSD: Makefile.bootimage,v 1.36 2024/05/16 15:46:42 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -170,6 +170,8 @@ CHMOD?=		chmod
 DD?=		dd
 MKDIR?=		mkdir -p
 RM?=		rm
+
+MAKESPEC=	${HOST_SH} ${NETBSDSRCDIR}/etc/makespec
 
 #
 # common definitions for image
@@ -351,6 +353,7 @@ ${WORKFSTAB}:
 # create root file system for the image
 #
 ${TARGETFS}: prepare_md_post ${WORKFSTAB}
+	@${RM} -f ${WORKSPEC}
 	@if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
 		echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 		false; 							\
@@ -413,11 +416,11 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 	@if [ -f ${_SRC} ]; then 					\
 		echo ${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
 		${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
+		echo "./${_TARGET} type=file uname=root gname=wheel mode=0555" >> ${WORKSPEC}; \
 	fi
 .endfor
 .endif
 	@echo Preparing spec files for makefs...
-	${RM} -f ${WORKSPEC}
 	cat ${WORKDIR}/etc/mtree/* |					\
 	    ${TOOL_SED} -e 's/ size=[0-9]*//' > ${WORKSPEC}
 	${HOST_SH} ${WORKDIR}/dev/MAKEDEV -s all ipty |			\
@@ -430,12 +433,19 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 .if defined(SPEC_EXTRA)
 	cat ${SPEC_EXTRA} >> ${WORKSPEC}
 .endif
+	if [ -f ${WORKDIR}/netbsd.gdb ]; then \
+	    echo "./netbsd.gdb type=file uname=root gname=wheel mode=0444" \
+	    >> ${WORKSPEC}; \
+	fi
+	if [ -d ${WORKDIR}/${MACHINE} ]; then \
+	    ${MAKESPEC} -d ${WORKDIR} ${MACHINE} >> ${WORKSPEC}; \
+	fi
 	@echo Creating rootfs...
 	# XXX /var/spool/ftp/hidden is unreadable
 	${CHMOD} +r ${WORKDIR}/var/spool/ftp/hidden
 	${TOOL_MAKEFS} -M ${FSSIZE} -m ${FSSIZE}			\
 	    -B ${TARGET_ENDIANNESS}					\
-	    -F ${WORKSPEC} -N ${WORKDIR}/etc				\
+	    -xx -F ${WORKSPEC} -N ${WORKDIR}/etc			\
 	    ${MAKEFS_TIMESTAMP}						\
 	    ${IMGMAKEFSOPTIONS}						\
 	    ${WORKFS} ${WORKDIR}
