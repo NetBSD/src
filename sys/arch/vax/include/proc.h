@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2011/07/03 02:18:20 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.16 2024/05/17 22:21:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -50,9 +50,6 @@ struct mdproc {
 	void    (*md_syscall)(struct trapframe *);
 
 };
-
-/* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */
 
 /* kernel stack params */
 #define	KSTACK_LOWEST_ADDR(l)	\
