@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.80 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.81 2024/05/17 23:32:50 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -355,7 +355,7 @@ int	_cursesi_waddbytes(WINDOW *, const char *, int, attr_t, int);
 void     _cursesi_reset_wacs(SCREEN *);
 #endif /* HAVE_WCHAR */
 void     _cursesi_resetterm(SCREEN *);
-int      _cursesi_setterm(char *, SCREEN *);
+int      _cursesi_setterm(const char *, SCREEN *);
 int	 __delay(void);
 unsigned int	 __hash_more(const void *, size_t, unsigned int);
 unsigned int	 __hash_line(const __LDATA *, int);

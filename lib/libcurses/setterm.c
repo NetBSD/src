@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.71 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: setterm.c,v 1.72 2024/05/17 23:32:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.71 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.72 2024/05/17 23:32:50 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,14 +52,14 @@ static int does_ctrl_o(const char *exit_cap, const char *acs_cap);
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
 
 int
-setterm(char *type)
+setterm(const char *type)
 {
 
 	return _cursesi_setterm(type, _cursesi_screen);
 }
 
 int
-_cursesi_setterm(char *type, SCREEN *screen)
+_cursesi_setterm(const char *type, SCREEN *screen)
 {
 	int unknown, r;
 	char *p;
