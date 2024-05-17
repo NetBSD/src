@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2021/06/18 20:30:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2024/05/17 20:27:09 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -33,6 +33,7 @@ CRUNCHBIN=	rd_bin
 LISTS=		${.CURDIR}/list
 MTREECONF=	${.CURDIR}/mtree.conf
 IMAGEENDIAN=	be
+IMAGESPECEXTRA=	dev/pipe
 MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		fstab passwd protocols ${DISTRIBDIR}/common/services \
