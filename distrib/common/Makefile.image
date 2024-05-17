@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.43 2024/05/17 19:54:28 christos Exp $
+#	$NetBSD: Makefile.image,v 1.44 2024/05/17 21:31:10 christos Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -107,8 +107,7 @@ ${IMAGE}: ${WORKBUILT}
 	${IMAGEPREBUILD}
 .endif
 	if [ "X${IMAGERUNTIME}" != "X" ]; then				\
-		release_destdir=${WORKDIR};				\
-		cd $$release_destdir;					\
+		release_destdir=${CUROBJDIR}/${WORKDIR};		\
 		cd ${DESTDIR};						\
 		for imge in ${IMAGERUNTIME};				\
 		do							\
@@ -117,7 +116,7 @@ ${IMAGE}: ${WORKBUILT}
 		done;							\
 		cd "${CUROBJDIR}";					\
 	fi
-	for i in ${IMAGERUNTIME} ${IMAGESPECEXTRA}; do 			\
+	for i in ${IMAGESPECEXTRA}; do 					\
 		if [ -n "$$i" ] && [ -e ${WORKDIR}/$$i ]; then 		\
 		    ${MAKESPEC} -d ${WORKDIR} $$i >> ${WORKSPEC}; 	\
 		fi; 							\
