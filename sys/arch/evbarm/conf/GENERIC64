@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.215 2024/05/09 12:09:59 pho Exp $
+#	$NetBSD: GENERIC64,v 1.216 2024/05/17 10:25:43 nia Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -448,6 +448,8 @@ vcaudio0 	at vchiq?
 # Audio support
 hdaudio*	at fdt?			# Intel HDA
 hdaudio*	at pci? dev ? function ?
+auich*		at pci? dev ? function ?	# Intel AC'97 Audio (QEMU)
+eap*		at pci? dev ? function ?	# Ensoniq AudioPCI (QEMU)
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
 ausoc*		at fdt?			# Simple SoC audio card
