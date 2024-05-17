@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.90 2022/03/28 12:37:46 riastradh Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.91 2024/05/17 23:57:46 thorpej Exp $	*/
 
 /*
  *
@@ -45,12 +45,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.90 2022/03/28 12:37:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.91 2024/05/17 23:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>

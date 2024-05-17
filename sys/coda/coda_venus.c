@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.30 2013/10/17 20:56:02 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.31 2024/05/17 23:57:46 thorpej Exp $	*/
 
 /*
  *
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.30 2013/10/17 20:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.31 2024/05/17 23:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>

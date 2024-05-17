@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.32 2020/04/13 19:23:17 ad Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.33 2024/05/17 23:57:46 thorpej Exp $	*/
 
 /*
  *
@@ -55,11 +55,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.32 2020/04/13 19:23:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.33 2024/05/17 23:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/mount.h>
