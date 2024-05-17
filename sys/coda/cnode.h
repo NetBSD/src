@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.20 2014/12/13 15:59:30 hannken Exp $	*/
+/*	$NetBSD: cnode.h,v 1.21 2024/05/17 23:56:24 thorpej Exp $	*/
 
 /*
  *
@@ -49,7 +49,7 @@
 
 #include <sys/vnode.h>
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
+#include <sys/malloc.h>
 
 MALLOC_DECLARE(M_CODA);
 #endif
