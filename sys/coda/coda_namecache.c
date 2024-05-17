@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.29 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.30 2024/05/17 23:57:46 thorpej Exp $	*/
 
 /*
  *
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.29 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.30 2024/05/17 23:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 #include <sys/kauth.h>
 

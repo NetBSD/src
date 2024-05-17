@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.64 2024/02/13 21:39:02 andvar Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.65 2024/05/17 23:57:46 thorpej Exp $	*/
 
 /*
  *
@@ -54,14 +54,13 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.64 2024/02/13 21:39:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.65 2024/05/17 23:57:46 thorpej Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.10 2021/01/30 01:23:08 thorpej Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.11 2024/05/18 00:02:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,13 +31,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.10 2021/01/30 01:23:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.11 2024/05/18 00:02:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>

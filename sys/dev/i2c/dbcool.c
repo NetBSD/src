@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.64 2022/03/30 00:06:50 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.65 2024/05/18 00:02:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,13 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.64 2022/03/30 00:06:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.65 2024/05/18 00:02:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/module.h>
 
