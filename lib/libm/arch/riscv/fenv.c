@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.4 2023/05/07 12:41:47 skrll Exp $ */
+/* $NetBSD: fenv.c,v 1.5 2024/05/17 02:11:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.4 2023/05/07 12:41:47 skrll Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.5 2024/05/17 02:11:07 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -114,19 +114,15 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
  * The standard explicitly allows us to execute an instruction that has the
  * exception as a side effect, but we choose to manipulate the status register
  * directly.
- *
- * The validation of input is being deferred to fesetexceptflag().
  */
 int
 feraiseexcept(int excepts)
 {
-	fexcept_t ex = 0;
 
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
 	excepts &= FE_ALL_EXCEPT;
-	fesetexceptflag(&ex, excepts);
-	/* XXX exception magic XXX */
+	fcsr_fflags_write(fcsr_fflags_read() | excepts);
 
 	/* Success */
 	return 0;
