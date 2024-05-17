@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.131 2024/05/14 10:22:48 uwe Exp $	*/
+/*	$NetBSD: curses.h,v 1.132 2024/05/17 23:32:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -719,7 +719,7 @@ int	 mvwprintw(WINDOW *, int, int, const char *, ...) __printflike(4, 5);
 int	 mvwscanw(WINDOW *, int, int, const char *, ...) __scanflike(4, 5);
 int	 napms(int);
 WINDOW	*newpad(int, int);
-SCREEN  *newterm(char *, FILE *, FILE *);
+SCREEN  *newterm(const char *, FILE *, FILE *);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 attr_t	 no_color_attributes(void);
@@ -751,7 +751,7 @@ int	 savetty(void);
 int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
-int	 setterm(char *);
+int	 setterm(const char *);
 int	 set_escdelay(int);
 int	 set_tabsize(int);
 SCREEN  *set_term(SCREEN *);

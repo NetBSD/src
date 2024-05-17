@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.28 2021/02/07 23:00:57 rillig Exp $
+.\"	$NetBSD: curses_screen.3,v 1.29 2024/05/17 23:32:50 uwe Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd March 12, 2020
+.Dd May 16, 2024
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@
 .Ft void
 .Fn use_env "bool value"
 .Ft SCREEN *
-.Fn newterm "char *type" "FILE *outfd" "FILE *infd"
+.Fn newterm "const char *type" "FILE *outfd" "FILE *infd"
 .Ft SCREEN *
 .Fn set_term "SCREEN *screen"
 .Ft void
@@ -79,7 +79,7 @@
 .Ft int
 .Fn resizeterm "int lines" "int cols"
 .Ft int
-.Fn setterm "char *name"
+.Fn setterm "const char *name"
 .Ft int
 .Fn set_tabsize "int value"
 .Pp
@@ -99,7 +99,9 @@ argument points to a
 .Xr terminfo 5
 entry, or it may be
 .Dv NULL
-in which case the TERM environment variable is used.
+in which case the
+.Ev TERM
+environment variable is used.
 The
 .Fa outfd
 and

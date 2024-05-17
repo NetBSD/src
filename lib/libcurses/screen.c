@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.37 2022/04/08 10:17:52 andvar Exp $	*/
+/*	$NetBSD: screen.c,v 1.38 2024/05/17 23:32:50 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.37 2022/04/08 10:17:52 andvar Exp $");
+__RCSID("$NetBSD: screen.c,v 1.38 2024/05/17 23:32:50 uwe Exp $");
 #endif
 #endif					/* not lint */
 
@@ -124,10 +124,10 @@ set_term(SCREEN *new)
  *
  */
 SCREEN *
-newterm(char *type, FILE *outfd, FILE *infd)
+newterm(const char *type, FILE *outfd, FILE *infd)
 {
 	SCREEN *new_screen;
-	char *sp;
+	const char *sp;
 
 	sp = type;
 	if (type == NULL && (sp = getenv("TERM")) == NULL)
@@ -176,7 +176,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	if (_cursesi_gettmode(new_screen) == ERR)
 		goto error_exit;
 
-	if (_cursesi_setterm((char *)sp, new_screen) == ERR)
+	if (_cursesi_setterm(sp, new_screen) == ERR)
 		goto error_exit;
 
 	/* Need either homing or cursor motion for refreshes */
