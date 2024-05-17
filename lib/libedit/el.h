@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.46 2021/08/15 10:08:41 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.47 2024/05/17 02:59:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #define	NARROW_HISTORY	0x040
 #define	NO_RESET	0x080
 #define	FIXIO		0x100
+#define	FROM_ELLINE	0x200
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 
