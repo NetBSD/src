@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.36 2024/05/16 15:46:42 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.37 2024/05/18 02:03:17 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -433,12 +433,13 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 .if defined(SPEC_EXTRA)
 	cat ${SPEC_EXTRA} >> ${WORKSPEC}
 .endif
-	if [ -f ${WORKDIR}/netbsd.gdb ]; then \
-	    echo "./netbsd.gdb type=file uname=root gname=wheel mode=0444" \
-	    >> ${WORKSPEC}; \
-	fi
-	if [ -d ${WORKDIR}/${MACHINE} ]; then \
-	    ${MAKESPEC} -d ${WORKDIR} ${MACHINE} >> ${WORKSPEC}; \
+	for i in ${WORKDIR}/netbsd.*; do \
+	    if [ -e $$i ]; then \
+		echo "./$$(basename $$i) type=file uname=root gname=wheel mode=0444" >> ${WORKSPEC}; \
+	    fi; \
+	done
+	if [ -d ${WORKDIR}/${RELEASEMACHINEDIR} ]; then \
+	    ${MAKESPEC} -d ${WORKDIR} ${RELEASEMACHINEDIR} >> ${WORKSPEC}; \
 	fi
 	@echo Creating rootfs...
 	# XXX /var/spool/ftp/hidden is unreadable
