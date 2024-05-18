@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.87 2023/02/13 08:39:40 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.88 2024/05/18 00:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.87 2023/02/13 08:39:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.88 2024/05/18 00:04:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.87 2023/02/13 08:39:40 hannken Ex
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
