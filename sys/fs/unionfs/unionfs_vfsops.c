@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
