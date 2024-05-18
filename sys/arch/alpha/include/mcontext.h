@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2021/05/24 21:00:12 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2024/05/18 00:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,9 +93,9 @@ typedef struct {
 } mcontext_t;
 
 /* Machine-dependent uc_flags */
-#define _UC_TLSBASE	0x20	/* valid process-unique value in _REG_UNIQUE */
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
+#define _UC_TLSBASE	_UC_MD_BIT5	/* valid value in _REG_UNIQUE */
+#define _UC_SETSTACK	_UC_MD_BIT16
+#define _UC_CLRSTACK	_UC_MD_BIT17
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_S6])

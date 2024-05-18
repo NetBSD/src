@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2022/06/26 14:37:13 skrll Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13 2024/05/18 00:37:40 thorpej Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -111,8 +111,8 @@ __END_DECLS
 
 #endif /* !__ASSEMBLER__ */
 
-#define	_UC_SETSTACK	0x00010000
-#define	_UC_CLRSTACK	0x00020000
-#define	_UC_TLSBASE	0x00040000
+#define	_UC_SETSTACK	_UC_MD_BIT16
+#define	_UC_CLRSTACK	_UC_MD_BIT17
+#define	_UC_TLSBASE	_UC_MD_BIT18
 
 #endif /* _HPPA_MCONTEXT_H_ */

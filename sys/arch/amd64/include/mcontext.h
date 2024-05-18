@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.20 2019/12/27 00:32:16 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.21 2024/05/18 00:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,13 +74,13 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-#define	_UC_TLSBASE	0x00080000
+#define	_UC_TLSBASE	_UC_MD_BIT19
 
 /*
  * mcontext extensions to handle signal delivery.
  */
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
+#define _UC_SETSTACK	_UC_MD_BIT16
+#define _UC_CLRSTACK	_UC_MD_BIT17
 
 #define	__UCONTEXT_SIZE	784
 
@@ -155,7 +155,7 @@ typedef struct {
 	uint32_t	_mc_tlsbase;
 } mcontext32_t;
 
-#define _UC_FXSAVE       0x20    /* FP state is in FXSAVE format in XMM space */
+#define _UC_FXSAVE       _UC_MD_BIT5    /* FP state is in FXSAVE format in XMM space */
 
 #define	_UC_MACHINE32_PAD	4
 #define	__UCONTEXT32_SIZE	776

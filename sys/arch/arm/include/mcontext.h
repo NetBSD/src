@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.23 2021/10/06 05:33:15 skrll Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.24 2024/05/18 00:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -257,14 +257,14 @@ __END_DECLS
 #endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 /* Machine-dependent uc_flags */
-#define _UC_TLSBASE	0x00080000	/* see <sys/ucontext.h> */
+#define _UC_TLSBASE	_UC_MD_BIT19	/* see <sys/ucontext.h> */
 
 /* Machine-dependent uc_flags for arm */
-#define	_UC_ARM_VFP	0x00010000	/* FPU field is VFP */
+#define	_UC_ARM_VFP	_UC_MD_BIT16	/* FPU field is VFP */
 
 /* used by signal delivery to indicate status of signal stack */
-#define _UC_SETSTACK	0x00020000
-#define _UC_CLRSTACK	0x00040000
+#define _UC_SETSTACK	_UC_MD_BIT17
+#define _UC_CLRSTACK	_UC_MD_BIT18
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_FP])

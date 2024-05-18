@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2018/02/19 08:31:13 mrg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2024/05/18 00:37:41 thorpej Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define	_SPARC64_MCONTEXT_H_
@@ -72,9 +72,9 @@ typedef struct {
 	__xrs32_t	__xrs;		/* may indicate extra reg state */
 } mcontext32_t;
 
-#define	_UC_SETSTACK	0x00010000
-#define	_UC_CLRSTACK	0x00020000
-#define	_UC_TLSBASE	0x00080000
+#define	_UC_SETSTACK	_UC_MD_BIT16
+#define	_UC_CLRSTACK	_UC_MD_BIT17
+#define	_UC_TLSBASE	_UC_MD_BIT19
 
 #define	_UC_MACHINE32_PAD	43	/* compat_netbsd32 variant */
 #define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])

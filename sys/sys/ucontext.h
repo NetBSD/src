@@ -1,7 +1,7 @@
-/*	$NetBSD: ucontext.h,v 1.19 2018/02/27 23:09:02 uwe Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.20 2024/05/18 00:37:41 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2003, 2024 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,49 +57,41 @@ struct __ucontext {
 #define _UC_STACK	0x02		/* valid uc_stack */
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
-#define	_UC_MD		0x400f0020	/* MD bits.  see below */
+#define	_UC_MD_BIT5	0x00000020	/* MD bits.  see below */
+#define	_UC_MD_BIT16	0x00010000
+#define	_UC_MD_BIT17	0x00020000
+#define	_UC_MD_BIT18	0x00040000
+#define	_UC_MD_BIT19	0x00080000
+#define	_UC_MD_BIT20	0x00100000
+#define	_UC_MD_BIT21	0x00200000
+#define	_UC_MD_BIT30	0x40000000
 
 /*
- * if your port needs more MD bits, please try to choose bits from _UC_MD
- * first, rather than picking random unused bits.
+ * if your port needs more MD bits, please choose bits from _UC_MD_BIT*
+ * rather than picking random unused bits.
  *
- * _UC_MD details
+ * For historical reasons, some common flags have machine-dependent
+ * definitions.  All platforms must define and handle those flags,
+ * which are:
  *
  * 	_UC_TLSBASE	Context contains valid pthread private pointer 
- *			All ports must define this MD flag
- * 			0x00040000	hppa, mips
- * 			0x00000020	alpha
- *			0x00080000	all other ports
  *
  *	_UC_SETSTACK	Context uses signal stack
- *			0x00020000	arm
- *			[undefined]	alpha, powerpc and vax
- *			0x00010000	other ports
  *
  *	_UC_CLRSTACK	Context does not use signal stack
- *			0x00040000	arm
- *			[undefined]	alpha, powerpc and vax
- *			0x00020000	other ports
- *
- *	_UC_POWERPC_VEC Context contains valid AltiVec context
- *			0x00010000	powerpc only
- *
- *	_UC_POWERPC_SPE	Context contains valid SPE context
- *			0x00020000	powerpc only
- *
- *	_UC_M68K_UC_USER Used by m68k machdep code, but undocumented
- *			0x40000000	m68k only
- *
- *	_UC_ARM_VFP	Unused
- *			0x00010000	arm only
- *
- *	_UC_VM		Context contains valid virtual 8086 context
- *			0x00040000	i386, amd64 only
- *
- *	_UC_FXSAVE	Context contains FPU context in that 
- *			is in FXSAVE format in XMM space 
- *			0x00000020	i386, amd64 only
  */
+
+#ifndef _UC_TLSBASE
+#error	_UC_TLSBASE not defined.
+#endif
+
+#ifndef _UC_SETSTACK
+#error	_UC_SETSTACK not defined.
+#endif
+
+#ifndef _UC_CLRSTACK
+#error	_UC_CLRSTACK not defined.
+#endif
 
 #ifdef _KERNEL
 struct lwp;
