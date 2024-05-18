@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.32 2019/09/27 14:36:18 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.33 2024/05/18 00:05:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.32 2019/09/27 14:36:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.33 2024/05/18 00:05:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.32 2019/09/27 14:36:18 christos
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <miscfs/procfs/procfs.h>
 
