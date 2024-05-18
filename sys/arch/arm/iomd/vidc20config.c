@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.36 2022/05/24 06:28:00 andvar Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.37 2024/05/18 19:04:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.36 2022/05/24 06:28:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.37 2024/05/18 19:04:45 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +206,7 @@ vidcvideo_write(u_int reg, int value)
 
 	/*
 	 * Undefine SAFER if you wish to speed things up (a little)
-	 * although this means the function will assume things abou
+	 * although this means the function will assume things about
 	 * the structure of vidc_state. i.e. the first 256 words are
 	 * the palette array
 	 */
