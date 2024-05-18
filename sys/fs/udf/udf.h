@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.55 2023/06/27 09:58:50 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.56 2024/05/18 00:04:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -40,6 +40,7 @@
 #include <sys/bufq.h>
 #include <sys/disk.h>
 #include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <miscfs/genfs/genfs_node.h>
 
 /* debug section */
