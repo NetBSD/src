@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.20 2024/05/18 00:37:41 thorpej Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.21 2024/05/18 01:16:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003, 2024 The NetBSD Foundation, Inc.
@@ -33,24 +33,6 @@
 #define _SYS_UCONTEXT_H_
 
 #include <sys/sigtypes.h>
-#include <machine/mcontext.h>
-
-typedef struct __ucontext	ucontext_t;
-
-struct __ucontext {
-	unsigned int	uc_flags;	/* properties */
-	ucontext_t * 	uc_link;	/* context to resume */
-	sigset_t	uc_sigmask;	/* signals blocked in this context */
-	stack_t		uc_stack;	/* the stack used by this context */
-	mcontext_t	uc_mcontext;	/* machine state */
-#if defined(_UC_MACHINE_PAD)
-	long		__uc_pad[_UC_MACHINE_PAD];
-#endif
-};
-
-#ifndef _UC_UCONTEXT_ALIGN
-#define _UC_UCONTEXT_ALIGN (~0)
-#endif
 
 /* uc_flags */
 #define _UC_SIGMASK	0x01		/* valid uc_sigmask */
@@ -80,6 +62,25 @@ struct __ucontext {
  *
  *	_UC_CLRSTACK	Context does not use signal stack
  */
+
+#include <machine/mcontext.h>
+
+typedef struct __ucontext	ucontext_t;
+
+struct __ucontext {
+	unsigned int	uc_flags;	/* properties */
+	ucontext_t * 	uc_link;	/* context to resume */
+	sigset_t	uc_sigmask;	/* signals blocked in this context */
+	stack_t		uc_stack;	/* the stack used by this context */
+	mcontext_t	uc_mcontext;	/* machine state */
+#if defined(_UC_MACHINE_PAD)
+	long		__uc_pad[_UC_MACHINE_PAD];
+#endif
+};
+
+#ifndef _UC_UCONTEXT_ALIGN
+#define _UC_UCONTEXT_ALIGN (~0)
+#endif
 
 #ifndef _UC_TLSBASE
 #error	_UC_TLSBASE not defined.
