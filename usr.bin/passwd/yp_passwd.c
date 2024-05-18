@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.37 2012/03/25 05:55:07 dholland Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.38 2024/05/18 19:28:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.37 2012/03/25 05:55:07 dholland Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.38 2024/05/18 19:28:36 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ pwyp_process(const char *username, int argc, char **argv)
 		switch (ch) {
 		case 'y':
 			/*
-			 * Abosrb the -y that may have gotten us here.
+			 * Absorb the -y that may have gotten us here.
 			 */
 			break;
 
