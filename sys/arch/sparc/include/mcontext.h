@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.18 2019/12/27 00:32:17 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19 2024/05/18 00:37:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #ifndef _SPARC_MCONTEXT_H_
 #define	_SPARC_MCONTEXT_H_
 
-#define	_UC_SETSTACK	0x00010000
-#define	_UC_CLRSTACK	0x00020000
-#define	_UC_TLSBASE	0x00080000
+#define	_UC_SETSTACK	_UC_MD_BIT16
+#define	_UC_CLRSTACK	_UC_MD_BIT17
+#define	_UC_TLSBASE	_UC_MD_BIT19
 
 /*
  * Layout of mcontext_t according the System V Application Binary Interface,

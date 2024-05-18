@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2020/10/04 10:34:18 rin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13 2024/05/18 00:37:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 /*
  * mcontext extensions to handle signal delivery.
  */
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
+#define	_UC_SETSTACK	_UC_MD_BIT16
+#define	_UC_CLRSTACK	_UC_MD_BIT17
 
 /*
  * General register state
@@ -98,8 +98,8 @@ typedef struct {
 /* Note: no additional padding is to be performed in ucontext_t. */
 
 /* Machine-specific uc_flags value */
-#define _UC_M68K_UC_USER 0x40000000
-#define	_UC_TLSBASE	0x00080000
+#define	_UC_M68K_UC_USER _UC_MD_BIT30
+#define	_UC_TLSBASE	_UC_MD_BIT19
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_A7])
 #define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_A6])

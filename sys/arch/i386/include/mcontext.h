@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.15 2019/12/27 00:32:17 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.16 2024/05/18 00:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
 /*
  * mcontext extensions to handle signal delivery.
  */
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
-#define _UC_VM		0x00040000
-#define	_UC_TLSBASE	0x00080000
+#define	_UC_SETSTACK	_UC_MD_BIT16
+#define	_UC_CLRSTACK	_UC_MD_BIT17
+#define	_UC_VM		_UC_MD_BIT18
+#define	_UC_TLSBASE	_UC_MD_BIT19
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,
@@ -96,7 +96,7 @@ typedef struct {
 	__greg_t	_mc_tlsbase;
 } mcontext_t;
 
-#define _UC_FXSAVE	0x20	/* FP state is in FXSAVE format in XMM space */
+#define _UC_FXSAVE	_UC_MD_BIT5	/* FP state is in FXSAVE format in XMM space */
 
 #define _UC_MACHINE_PAD	4	/* Padding appended to ucontext_t */
 
