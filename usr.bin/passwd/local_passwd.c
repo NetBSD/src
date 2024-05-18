@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.36 2012/03/25 05:55:07 dholland Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.37 2024/05/18 19:03:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.36 2012/03/25 05:55:07 dholland Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.37 2024/05/18 19:03:31 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 		switch (ch) {
 		case 'l':
 			/*
-			 * Aborb the -l that may have gotten us here.
+			 * Absorb the -l that may have gotten us here.
 			 */
 			break;
 
