@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.14 2016/03/09 20:18:17 christos Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.15 2024/05/19 15:41:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.14 2016/03/09 20:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.15 2024/05/19 15:41:53 tsutsui Exp $");
 #else
 /* used by macppc_installboot */
 #if HAVE_NBTOOL_CONFIG_H
@@ -66,11 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.14 2016/03/09 20:18:17 christos Ex
 #endif
 
 #include <fs/cd9660/iso.h>
-#ifdef _KERNEL
 #include <fs/cd9660/cd9660_extern.h>
-#else
-static int isochar(const u_char *, const u_char *, int, uint16_t *);
-#endif
 
 #include <fs/unicode.h>
 
