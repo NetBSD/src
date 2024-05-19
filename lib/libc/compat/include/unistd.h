@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.3 2024/01/20 14:52:46 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.4 2024/05/19 22:25:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,8 +64,12 @@
 #define	_COMPAT_UNISTD_H_
 
 __BEGIN_DECLS
-pid_t	 vfork(void) __returns_twice;
-pid_t	 __vfork14(void) __returns_twice;
+
+pid_t	vfork(void) __returns_twice;
+pid_t	__vfork14(void) __returns_twice;
+int	dup3(int, int, int);
+int	__dup3110(int, int, int);
+
 __END_DECLS
 
 #endif /* !_COMPAT_UNISTD_H_ */

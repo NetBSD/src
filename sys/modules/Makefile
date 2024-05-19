@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.286 2024/05/09 12:09:59 pho Exp $
+#	$NetBSD: Makefile,v 1.287 2024/05/19 22:25:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ SUBDIR+=	compat_43   compat_sysctl_09_43
 SUBDIR+=	compat_09   compat_10   compat_12   compat_13   compat_14
 SUBDIR+=	compat_16   compat_20   compat_30   compat_40   compat_50
 SUBDIR+=	compat_60   compat_70   compat_80   compat_90   compat_100
+SUBDIR+=	compat_110
 
 SUBDIR+=	compat_sysv_10 compat_sysv_14 compat_sysv_50
 
@@ -318,6 +319,7 @@ SUBDIR+=	compat_netbsd32_20	compat_netbsd32_30
 SUBDIR+=	compat_netbsd32_40	compat_netbsd32_50
 SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
 SUBDIR+=	compat_netbsd32_90	compat_netbsd32_100
+SUBDIR+=	compat_netbsd32_110
 SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_coredump
 SUBDIR+=	compat_netbsd32_mqueue

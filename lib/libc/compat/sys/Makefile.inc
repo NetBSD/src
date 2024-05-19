@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.11 2021/11/01 05:53:45 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2024/05/19 22:25:47 christos Exp $
 
 .PATH: ${COMPATDIR}/sys
 SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
-    compat_ntp_gettime.c compat_sched.c \
+    compat_ntp_gettime.c compat_sched.c compat_dup3.c \
     compat_semctl.c compat_sigaltstack.c compat_stat.c compat___stat13.c \
     compat_statfs.c compat_statvfs.c compat_socket.c compat_getfh.c \
     compat_fhopen.c compat___fhstat30.c compat_fhstatvfs.c compat_fhstatvfs1.c \

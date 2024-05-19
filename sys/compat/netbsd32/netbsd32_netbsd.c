@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.235 2023/07/30 05:30:45 rin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.236 2024/05/19 22:25:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.235 2023/07/30 05:30:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.236 2024/05/19 22:25:48 christos Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -2462,7 +2462,7 @@ netbsd32__sched_protect(struct lwp *l,
 }
 
 int
-netbsd32_dup3(struct lwp *l, const struct netbsd32_dup3_args *uap,
+netbsd32___dup3110(struct lwp *l, const struct netbsd32___dup3110_args *uap,
 	      register_t *retval)
 {
 	/* {
@@ -2470,13 +2470,13 @@ netbsd32_dup3(struct lwp *l, const struct netbsd32_dup3_args *uap,
 		syscallarg(int) to;
 		syscallarg(int) flags;
 	} */
-	struct sys_dup3_args ua;
+	struct sys___dup3110_args ua;
 
 	NETBSD32TO64_UAP(from);
 	NETBSD32TO64_UAP(to);
 	NETBSD32TO64_UAP(flags);
 
-	return sys_dup3(l, &ua, retval);
+	return sys___dup3110(l, &ua, retval);
 }
 
 int

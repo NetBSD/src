@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.49 2024/05/19 15:56:55 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.50 2024/05/19 22:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.49 2024/05/19 15:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.50 2024/05/19 22:25:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
 }
 
 int
-sys_dup3(struct lwp *l, const struct sys_dup3_args *uap, register_t *retval)
+sys___dup3110(struct lwp *l, const struct sys___dup3110_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)	from;
