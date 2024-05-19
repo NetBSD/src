@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.253 2023/08/03 12:24:46 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.254 2024/05/19 22:25:48 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -102,7 +102,7 @@ ASM=\
 	chdir.S chflags.S chmod.S chown.S chroot.S \
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
-	dup.S dup2.S dup3.S \
+	dup.S dup2.S __dup3110.S \
 	eventfd.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \

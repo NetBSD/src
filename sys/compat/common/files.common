@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.11 2023/12/09 15:21:01 pgoyette Exp $
+#	$NetBSD: files.common,v 1.12 2024/05/19 22:25:48 christos Exp $
 
 #
 # Generic utility files, used by various compat options.
@@ -114,7 +114,10 @@ file	compat/common/net_inet6_nd_90.c		compat_90
 # Compatibility code for NetBSD 10.0
 file	compat/common/compat_100_mod.c		compat_100
 file	compat/common/kern_event_100.c		compat_100
-#file	compat/common/usb_subr_100.c		compat_100
+
+# Compatibility code for NetBSD 11.0
+file	compat/common/compat_110_mod.c		compat_110
+file	compat/common/sys_descrip_110.c		compat_110
 
 #
 # Sources for sysv ipc compatibility across the versions.

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.144 2023/07/30 06:52:20 rin Exp $
+	$NetBSD: syscalls.master,v 1.145 2024/05/19 22:25:48 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1069,7 +1069,8 @@
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
 452	OBSOL		5.99 quotactl
 453	STD		{ int|netbsd32||pipe2(netbsd32_intp fildes, int flags); }
-454	STD		{ int|netbsd32||dup3(int from, int to, int flags); }
+454	COMPAT_110 MODULAR compat_netbsd32_110 \
+			{ int|netbsd32||dup3(int from, int to, int flags); }
 455	STD		{ int|netbsd32||kqueue1(int flags); }
 456	STD  		{ int|netbsd32||paccept(int s, \
 			    netbsd32_sockaddrp_t name, \
@@ -1229,3 +1230,5 @@
 			    netbsd32_epoll_eventp_t events, int maxevents, \
 			    netbsd32_timespecp_t timeout, \
 			    netbsd32_sigsetp_t sigmask); }
+505	STD		{ int|netbsd32|110|dup3(int from, int to, \
+			    int flags); }
