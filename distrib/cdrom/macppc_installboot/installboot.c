@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 2014/03/27 16:34:37 apb Exp $	*/
+/*	$NetBSD: installboot.c,v 1.6 2024/05/19 15:51:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -87,7 +87,7 @@ main(int argc, char **argv)
 	if (pread(params->fsfd, &pme, sizeof pme, BSIZE * 2) != sizeof(pme))
 		err(1, "read pme from file system `%s'", params->filesystem);
 
-	if (strcmp(pme.pmPartName, "NetBSD_BootBlock"))
+	if (strcmp((char *)pme.pmPartName, "NetBSD_BootBlock"))
 		err(1, "invalid partition map in file system `%s'",
 		    params->filesystem);
 
