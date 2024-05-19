@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.23 2024/05/19 13:28:28 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.24 2024/05/19 13:50:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.23 2024/05/19 13:28:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.24 2024/05/19 13:50:04 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.23 2024/05/19 13:28:28 riastradh Exp
 
 #include <ttm/ttm_bo_driver.h>
 
+static int	ttm_bo_uvm_fault_idle(struct ttm_buffer_object *,
+		    struct uvm_faultinfo *);
 static int	ttm_bo_uvm_lookup(struct ttm_bo_device *, unsigned long,
 		    unsigned long, struct ttm_buffer_object **);
 
