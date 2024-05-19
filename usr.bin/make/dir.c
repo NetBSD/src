@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.287 2024/05/19 17:55:54 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.288 2024/05/19 20:09:40 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.287 2024/05/19 17:55:54 sjg Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.288 2024/05/19 20:09:40 sjg Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1144,15 +1144,16 @@ found:
  * Input:
  *	name		the file to find
  *	path		the directories to search, or NULL
+ *	isinclude	if true, do not search .CURDIR at all
  *
  * Results:
  *	The freshly allocated path to the file, or NULL.
  */
-char *
-Dir_FindFile(const char *name, SearchPath *path)
+static char *
+FindFile(const char *name, SearchPath *path, bool isinclude)
 {
 	char *file;		/* the current filename to check */
-	bool seenDotLast = false; /* true if we should search dot last */
+	bool seenDotLast = isinclude; /* true if we should search dot last */
 	struct cached_stat cst;
 	const char *trailing_dot = ".";
 	const char *base = str_basename(name);
@@ -1165,9 +1166,7 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return NULL;
 	}
 
-	if (path == sysIncPath || path == defSysIncPath)
-		seenDotLast = true;
-	else if (path->dirs.first != NULL) {
+	if (!seenDotLast && path->dirs.first != NULL) {
 		CachedDir *dir = path->dirs.first->datum;
 		if (dir == dotLast) {
 			seenDotLast = true;
@@ -1207,7 +1206,8 @@ Dir_FindFile(const char *name, SearchPath *path)
 				return file;
 		}
 
-		if (seenDotLast && (file = DirFindDot(name, base)) != NULL)
+		if (!isinclude && seenDotLast
+		    && (file = DirFindDot(name, base)) != NULL)
 			return file;
 	}
 
@@ -1246,6 +1246,38 @@ Dir_FindFile(const char *name, SearchPath *path)
 
 	DEBUG0(DIR, "   failed. Returning NULL\n");
 	return NULL;
+}
+
+/*
+ * Find the file with the given name along the given search path.
+ *
+ * Input:
+ *	name		the file to find
+ *	path		the directories to search, or NULL
+ *
+ * Results:
+ *	The freshly allocated path to the file, or NULL.
+ */
+char *
+Dir_FindFile(const char *name, SearchPath *path)
+{
+	return FindFile(name, path, false);
+}
+
+/*
+ * Find the include file with the given name along the given search path.
+ *
+ * Input:
+ *	name		the file to find
+ *	path		the directories to search, or NULL
+ *
+ * Results:
+ *	The freshly allocated path to the file, or NULL.
+ */
+char *
+Dir_FindInclude(const char *name, SearchPath *path)
+{
+	return FindFile(name, path, true);
 }
 
 
