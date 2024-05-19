@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2024/05/07 19:24:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2024/05/19 15:39:58 tsutsui Exp $
 
 PROGELF=	uboot
 PROGSOURCE=	uboot.c tgets.c
@@ -6,6 +6,7 @@ NEWVERSWHAT=	"Primary Boot"
 
 CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
 CPPFLAGS+=	-DSUPPORT_UFS2
+CPPFLAGS+=	-DSUPPORT_CD
 
 LINKS=	${BINDIR}/${PROG} ${BINDIR}/rdboot
 LINKS+=	${BINDIR}/${PROG} ${BINDIR}/bootrd
