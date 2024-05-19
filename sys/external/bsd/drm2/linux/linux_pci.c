@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.27 2023/09/30 10:46:46 mrg Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.28 2024/05/19 17:36:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.27 2023/09/30 10:46:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.28 2024/05/19 17:36:08 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -626,6 +626,42 @@ pci_kludgey_match_isa_bridge(const struct pci_attach_args *pa)
 	return 1;
 }
 
+static int
+pci_kludgey_match_other_display(const struct pci_attach_args *pa)
+{
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+		return 0;
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_MISC)
+		return 0;
+
+	return 1;
+}
+
+static int
+pci_kludgey_match_vga_display(const struct pci_attach_args *pa)
+{
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+		return 0;
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+		return 0;
+
+	return 1;
+}
+
+static int
+pci_kludgey_match_3d_display(const struct pci_attach_args *pa)
+{
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+		return 0;
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_3D)
+		return 0;
+
+	return 1;
+}
+
 void
 pci_dev_put(struct pci_dev *pdev)
 {
@@ -638,20 +674,37 @@ pci_dev_put(struct pci_dev *pdev)
 	kmem_free(pdev, sizeof(*pdev));
 }
 
-struct pci_dev *		/* XXX i915 kludge */
-pci_get_class(uint32_t class_subclass_shifted __unused, struct pci_dev *from)
+struct pci_dev *		/* XXX i915/amdgpu kludge */
+pci_get_class(uint32_t class_subclass_shifted, struct pci_dev *from)
 {
 	struct pci_attach_args pa;
-
-	KASSERT(class_subclass_shifted == (PCI_CLASS_BRIDGE_ISA << 8));
 
 	if (from != NULL) {
 		pci_dev_put(from);
 		return NULL;
 	}
 
-	if (!pci_find_device(&pa, &pci_kludgey_match_isa_bridge))
-		return NULL;
+	switch (class_subclass_shifted) {
+	case PCI_CLASS_BRIDGE_ISA << 8:
+		if (!pci_find_device(&pa, &pci_kludgey_match_isa_bridge))
+			return NULL;
+		break;
+	case PCI_CLASS_DISPLAY_OTHER << 8:
+		if (!pci_find_device(&pa, &pci_kludgey_match_other_display))
+			return NULL;
+		break;
+	case PCI_CLASS_DISPLAY_VGA << 8:
+		if (!pci_find_device(&pa, &pci_kludgey_match_vga_display))
+			return NULL;
+		break;
+	case PCI_CLASS_DISPLAY_3D << 8:
+		if (!pci_find_device(&pa, &pci_kludgey_match_3d_display))
+			return NULL;
+		break;
+	default:
+		panic("unknown pci_get_class: %"PRIx32,
+		    class_subclass_shifted);
+	}
 
 	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
 	linux_pci_dev_init(pdev, NULL, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
