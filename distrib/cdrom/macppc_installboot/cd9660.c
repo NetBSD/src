@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.5 2024/05/19 15:51:30 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.6 2024/05/19 15:52:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.5 2024/05/19 15:51:30 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.6 2024/05/19 15:52:34 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -213,8 +213,6 @@ cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 			found = 1;
 			/* ISO filesystem always has contiguous file blocks */
 			blocks[0].block = (int64_t)isonum_733(idr->extent);
-			/* XXX bootxx assumes blocksize is 512 */
-			blocks[0].block *= blocksize / 512;
 			blocks[0].blocksize =
 			    roundup(isonum_733(idr->size), blocksize);
 			*maxblk = 1;
