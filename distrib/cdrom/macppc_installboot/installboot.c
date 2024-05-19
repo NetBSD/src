@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 2024/05/19 15:51:30 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7 2024/05/19 15:52:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -47,6 +47,12 @@ static	void usage(void);
 
 static	ib_params	installboot_params;
 
+static	struct ib_fs cd9660_fstype = {
+	.name = "cd9660",
+	.match = cd9660_match,
+	.findstage2 = cd9660_findstage2
+};
+
 int
 main(int argc, char **argv)
 {
@@ -59,6 +65,7 @@ main(int argc, char **argv)
 	uint32_t nblk, maxblk, blk_i;
 	int rv;
 	ib_block *blocks;
+	uint64_t block;
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -70,11 +77,16 @@ main(int argc, char **argv)
 		usage();
 
 	params->filesystem = argv[1];
+	params->fstype = &cd9660_fstype;
 
 	if ((params->fsfd = open(params->filesystem, O_RDWR, 0600)) == -1)
 		err(1, "Opening file system `%s' read", params->filesystem);
 	if (fstat(params->fsfd, &params->fsstat) == -1)
 		err(1, "Examining file system `%s'", params->filesystem);
+	if (!params->fstype->match(params))
+		errx(1, "File system `%s' is not of type %s",
+		    params->filesystem, params->fstype->name);
+
 #ifdef DEBUG
 	printf("file system: %s, %ld bytes\n",
 	    params->filesystem, (long)params->fsstat.st_size);
@@ -167,14 +179,16 @@ main(int argc, char **argv)
 	}
 
 	nblk = maxblk;
-	if (!cd9660_findstage2(params, &nblk, blocks)) {
+	if (!params->fstype->findstage2(params, &nblk, blocks)) {
 		exit(1);
 	}
 
 	bbinfop->bbi_block_count = htobe32(nblk);
 	bbinfop->bbi_block_size = htobe32(blocks[0].blocksize);
 	for (blk_i = 0; blk_i < nblk; blk_i++) {
-		bbinfop->bbi_block_table[blk_i] = htobe32(blocks[blk_i].block);
+		/* XXX bootxx assumes blocksize is 512 */
+		block = blocks[blk_i].block * (params->fstype->blocksize / 512);
+		bbinfop->bbi_block_table[blk_i] = htobe32(block);
 		if (blocks[blk_i].blocksize < blocks[0].blocksize &&
 		    blk_i + 1 != nblk) {
 			warnx("Secondary bootstrap `%s' blocks do not have "
