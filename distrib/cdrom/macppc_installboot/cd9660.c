@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.4 2014/09/27 15:21:40 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.5 2024/05/19 15:51:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.4 2014/09/27 15:21:40 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.5 2024/05/19 15:51:30 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: cd9660.c,v 1.4 2014/09/27 15:21:40 tsutsui Exp $");
 #include <dirent.h>
 
 #include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
 
 #include "installboot.h"
 
@@ -87,7 +88,7 @@ cd9660_match(ib_params *params)
 		return 0;
 	}
 
-	blocksize = isonum_723((char *)ipd.logical_block_size);
+	blocksize = isonum_723((u_char *)ipd.logical_block_size);
 	if (blocksize != ISO_DEFAULT_BLOCK_SIZE) {
 		warnx("Invalid blocksize %d in `%s'",
 		    blocksize, params->filesystem);
@@ -104,10 +105,11 @@ int
 cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 {
 	uint8_t buf[ISO_DEFAULT_BLOCK_SIZE];
-	char name[MAXNAMLEN];
-	char *ofwboot;
+	char name[ISO_MAXNAMLEN];
+	char *stage2;
 	off_t loc;
-	int rv, blocksize, found, i;
+	int rv, blocksize, found;
+	u_int i;
 	struct iso_primary_descriptor ipd;
 	struct iso_directory_record *idr;
 
@@ -122,20 +124,20 @@ cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 #endif
 
 	/* The secondary bootstrap must be clearly in /. */
-	strlcpy(name, params->stage2, MAXNAMLEN);
-	ofwboot = name;
-	if (ofwboot[0] == '/')
-		ofwboot++;
-	if (strchr(ofwboot, '/') != NULL) {
+	strlcpy(name, params->stage2, ISO_MAXNAMLEN);
+	stage2 = name;
+	if (stage2[0] == '/')
+		stage2++;
+	if (strchr(stage2, '/') != NULL) {
 		warnx("The secondary bootstrap `%s' must be in / "
 		    "on filesystem `%s'", params->stage2, params->filesystem);
 		return 0;
 	}
-	if (strchr(ofwboot, '.') == NULL) {
+	if (strchr(stage2, '.') == NULL) {
 		/*
 		 * XXX should fix isofncmp()?
 		 */
-		strlcat(ofwboot, ".", MAXNAMLEN);
+		strlcat(name, ".", ISO_MAXNAMLEN);
 	}
 
 	rv = pread(params->fsfd, &ipd, sizeof(ipd),
@@ -148,7 +150,7 @@ cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 		   params->filesystem);
 		return 0;
 	}
-	blocksize = isonum_723((char *)ipd.logical_block_size);
+	blocksize = isonum_723((u_char *)ipd.logical_block_size);
 
 	idr = (void *)ipd.root_directory_record;
 	loc = (off_t)isonum_733(idr->extent) * blocksize;
@@ -205,8 +207,9 @@ cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 			printf("\n");
 		}
 #endif
-		if (isofncmp(ofwboot, strlen(ofwboot),
-		    idr->name, isonum_711(idr->name_len), 0) == 0) {
+		if (isofncmp((u_char *)stage2, strlen(stage2),
+		    (u_char *)idr->name,
+		    isonum_711((u_char *)idr->name_len), 0) == 0) {
 			found = 1;
 			/* ISO filesystem always has contiguous file blocks */
 			blocks[0].block = (int64_t)isonum_733(idr->extent);
