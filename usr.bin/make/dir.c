@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.286 2023/12/29 18:53:24 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.287 2024/05/19 17:55:54 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.286 2023/12/29 18:53:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.287 2024/05/19 17:55:54 sjg Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -566,10 +566,12 @@ void
 Dir_SetSYSPATH(void)
 {
 	CachedDirListNode *ln;
-
+	SearchPath *path = Lst_IsEmpty(&sysIncPath->dirs)
+		? defSysIncPath : sysIncPath;
+	
 	Var_ReadOnly(".SYSPATH", false);
 	Global_Delete(".SYSPATH");
-	for (ln = sysIncPath->dirs.first; ln != NULL; ln = ln->next) {
+	for (ln = path->dirs.first; ln != NULL; ln = ln->next) {
 		CachedDir *dir = ln->datum;
 		Global_Append(".SYSPATH", dir->name);
 	}
@@ -1163,7 +1165,9 @@ Dir_FindFile(const char *name, SearchPath *path)
 		return NULL;
 	}
 
-	if (path->dirs.first != NULL) {
+	if (path == sysIncPath || path == defSysIncPath)
+		seenDotLast = true;
+	else if (path->dirs.first != NULL) {
 		CachedDir *dir = path->dirs.first->datum;
 		if (dir == dotLast) {
 			seenDotLast = true;
