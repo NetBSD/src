@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.44 2024/05/19 15:44:21 tsutsui Exp $	*/
+/*	$NetBSD: installboot.h,v 1.45 2024/05/19 15:48:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -170,6 +170,10 @@ int		shared_bbinfo_clearboot(ib_params *, struct bbinfo_params *,
 		    int (*)(ib_params *, struct bbinfo_params *, uint8_t *));
 int		shared_bbinfo_setboot(ib_params *, struct bbinfo_params *,
 		    int (*)(ib_params *, struct bbinfo_params *, uint8_t *));
+
+	/* cd9660.c */
+int		cd9660_match(ib_params *);
+int		cd9660_findstage2(ib_params *, uint32_t *, ib_block *);
 
 	/* ext2fs.c */
 int		ext2fs_match(ib_params *);
