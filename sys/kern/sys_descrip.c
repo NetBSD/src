@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.48 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.49 2024/05/19 15:56:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.48 2023/07/10 02:31:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.49 2024/05/19 15:56:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,8 @@ sys_dup3(struct lwp *l, const struct sys_dup3_args *uap, register_t *retval)
 		syscallarg(int)	to;
 		syscallarg(int)	flags;
 	} */
+	if (SCARG(uap, from) == SCARG(uap, to))
+		return EINVAL;
 	return dodup(l, SCARG(uap, from), SCARG(uap, to), SCARG(uap, flags),
 	    retval);
 }
