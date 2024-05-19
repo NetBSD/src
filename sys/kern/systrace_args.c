@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.51 2023/07/28 18:20:28 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.52 2024/05/19 22:27:15 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3452,7 +3452,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_dup3 */
 	case 454: {
-		const struct sys_dup3_args *p = params;
+		const struct compat_110_sys_dup3_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -3933,6 +3933,15 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = (intptr_t) SCARG(p, timeout); /* const struct timespec * */
 		uarg[4] = (intptr_t) SCARG(p, sigmask); /* const sigset_t * */
 		*n_args = 5;
+		break;
+	}
+	/* sys___dup3110 */
+	case 505: {
+		const struct sys___dup3110_args *p = params;
+		iarg[0] = SCARG(p, from); /* int */
+		iarg[1] = SCARG(p, to); /* int */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
 		break;
 	}
 	default:
@@ -10629,6 +10638,22 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys___dup3110 */
+	case 505:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -12853,6 +12878,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_epoll_pwait2 */
 	case 504:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___dup3110 */
+	case 505:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
