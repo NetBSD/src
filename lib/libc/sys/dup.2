@@ -1,4 +1,4 @@
-.\"	$NetBSD: dup.2,v 1.33 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: dup.2,v 1.34 2024/05/19 16:04:46 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 24, 2013
+.Dd May 19, 2024
 .Dt DUP 2
 .Os
 .Sh NAME
@@ -117,7 +117,14 @@ and can to some extent be adjusted with
 .Pp
 The
 .Fn dup3
-call includes an additional
+call fails and returns 
+.Er EINVAL
+if the numeric value in the
+.Ar oldfd 
+argument is equal to the one in the
+.Ar newfd
+argument.
+It also includes an additional
 .Fa flags
 argument supporting a subset of the
 .Xr open 2
@@ -207,11 +214,15 @@ and
 .Fa newfd
 is not in the range of valid file descriptors.
 .It Bq Er EINVAL
-.Fa flags
-contained an invalid value.
-Only
+In the
 .Fn dup3
-can generate this error.
+call either the
+.Fa flags
+argument contained an invalid value or the
+.Ar oldfd
+argument is equal to the
+.Ar newfd
+argument.
 .It Bq Er EMFILE
 Too many descriptors are active.
 Only
