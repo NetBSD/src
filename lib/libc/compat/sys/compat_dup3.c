@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_dup3.c,v 1.1 2024/05/19 22:25:48 christos Exp $ */
+/*	$NetBSD: compat_dup3.c,v 1.2 2024/05/20 01:33:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_dup3.c,v 1.1 2024/05/19 22:25:48 christos Exp $");
+__RCSID("$NetBSD: compat_dup3.c,v 1.2 2024/05/20 01:33:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,7 +45,7 @@ int
 dup3(int oldfd, int newfd, int flags)
 {
 	if (oldfd != newfd) {
-		return __dup3110(oldfd, newfd, flags);
+		return __dup3100(oldfd, newfd, flags);
 	}
 	if (flags & (O_NONBLOCK|O_NOSIGPIPE)) {
 		int e = fcntl(newfd, F_GETFL, 0);
