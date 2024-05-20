@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.288 2024/05/20 13:34:12 riastradh Exp $
+#	$NetBSD: Makefile,v 1.289 2024/05/20 17:32:51 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -322,7 +322,6 @@ SUBDIR+=	compat_netbsd32_20	compat_netbsd32_30
 SUBDIR+=	compat_netbsd32_40	compat_netbsd32_50
 SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
 SUBDIR+=	compat_netbsd32_90	compat_netbsd32_100
-SUBDIR+=	compat_netbsd32_110
 SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_coredump
 SUBDIR+=	compat_netbsd32_mqueue
@@ -512,6 +511,14 @@ SUBDIR+=	viomb
 SUBDIR+=	virtio
 SUBDIR+=	virtio_pci
 SUBDIR+=	vioscsi
+.endif
+
+# We need these four locally	XXX-PRG
+.if ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	ld
+SUBDIR+=	ld_nvme
+SUBDIR+=	nvme
+SUBDIR+=	ksem
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
