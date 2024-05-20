@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.312 2024/05/19 22:25:48 christos Exp $
+	$NetBSD: syscalls.master,v 1.313 2024/05/20 01:30:34 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -954,7 +954,7 @@
 ; 452 only ever appeared in 5.99.x and can be reused after netbsd-7
 452	OBSOL		5.99 quotactl
 453	STD	RUMP	{ int|sys||pipe2(int *fildes, int flags); }
-454	COMPAT_110 MODULAR compat_110 RUMP \
+454	COMPAT_100 MODULAR compat_100 RUMP \
 			{ int|sys||dup3(int from, int to, int flags); }
 455	STD	RUMP	{ int|sys||kqueue1(int flags); }
 456	STD	RUMP	{ int|sys||paccept(int s, struct sockaddr *name, \
@@ -1064,4 +1064,4 @@
 			    struct epoll_event *events, int maxevents, \
 			    const struct timespec *timeout, \
 			    const sigset_t *sigmask); }
-505	STD	RUMP	{ int|sys|110|dup3(int from, int to, int flags); }
+505	STD	RUMP	{ int|sys|100|dup3(int from, int to, int flags); }

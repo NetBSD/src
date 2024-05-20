@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_decrip_110.c,v 1.1 2024/05/19 22:25:48 christos Exp $	*/
+/*	$NetBSD: sys_descrip_100.c,v 1.1 2024/05/20 01:30:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_decrip_110.c,v 1.1 2024/05/19 22:25:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip_100.c,v 1.1 2024/05/20 01:30:34 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
