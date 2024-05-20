@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.9 2017/01/13 20:31:53 christos Exp $ */
+/* $NetBSD: t_dup.c,v 1.10 2024/05/20 00:27:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.9 2017/01/13 20:31:53 christos Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.10 2024/05/20 00:27:53 christos Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -208,10 +208,10 @@ ATF_TC_BODY(dup3_err, tc)
 	ATF_REQUIRE(fd >= 0);
 
 	errno = 0;
-	ATF_REQUIRE(dup3(fd, fd, O_CLOEXEC) != -1);
+	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, fd, O_CLOEXEC) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, -1, O_CLOEXEC) == -1);
+	ATF_REQUIRE_ERRNO(EINVAL, dup3(-1, -1, O_CLOEXEC) == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, dup3(fd, -1, O_CLOEXEC) == -1);
