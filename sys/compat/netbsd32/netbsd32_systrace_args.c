@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.53 2024/05/19 22:27:15 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.54 2024/05/20 01:40:45 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3269,7 +3269,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_dup3 */
 	case 454: {
-		const struct compat_110_netbsd32_dup3_args *p = params;
+		const struct compat_100_netbsd32_dup3_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -3752,9 +3752,9 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 5;
 		break;
 	}
-	/* netbsd32___dup3110 */
+	/* netbsd32___dup3100 */
 	case 505: {
-		const struct netbsd32___dup3110_args *p = params;
+		const struct netbsd32___dup3100_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -10169,7 +10169,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* netbsd32___dup3110 */
+	/* netbsd32___dup3100 */
 	case 505:
 		switch(ndx) {
 		case 0:
@@ -12302,7 +12302,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* netbsd32___dup3110 */
+	/* netbsd32___dup3100 */
 	case 505:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
