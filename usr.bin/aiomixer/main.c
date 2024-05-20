@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2023/06/29 19:06:54 nia Exp $ */
+/* $NetBSD: main.c,v 1.6 2024/05/20 22:21:45 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -149,7 +149,12 @@ slide_control(struct aiomixer *aio,
 
 	switch (info->type) {
 	case AUDIO_MIXER_VALUE:
-		delta = right ? info->un.v.delta : -info->un.v.delta;
+		if (info->un.v.delta != 0) {
+			delta = right ? info->un.v.delta : -info->un.v.delta;
+		} else {
+			/* delta is 0 in qemu with sb(4) */
+			delta = right ? 16 : -16;
+		}
 		/*
 		 * work around strange problem where the level can be
 		 * increased but not decreased, seen with uaudio(4)
