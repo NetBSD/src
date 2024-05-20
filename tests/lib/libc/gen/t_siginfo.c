@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.51 2024/05/14 16:10:54 riastradh Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.52 2024/05/20 11:21:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -306,7 +306,7 @@ ATF_TC_HEAD(sigfpe_flt, tc)
 ATF_TC_BODY(sigfpe_flt, tc)
 {
 	struct sigaction sa;
-	double d = strtod("0", NULL);
+	volatile double d = strtod("0", NULL);
 
 	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under QEMU");
