@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.40 2022/01/17 20:38:49 andvar Exp $	*/
+/*	$NetBSD: fgen.l,v 1.41 2024/05/20 20:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.40 2022/01/17 20:38:49 andvar Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.41 2024/05/20 20:46:05 wiz Exp $");
 #endif
 
 %}
@@ -987,8 +987,8 @@ apply_macros(YY_BUFFER_STATE yinput, const char *str)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "%s: [-d level] [-o outfile] <infile>\n",
-	getprogname());
+	(void)fprintf(stderr, "usage: %s [-d level] [-o outfile] infile\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
