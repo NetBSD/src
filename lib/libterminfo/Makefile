@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2020/04/05 12:31:02 roy Exp $
+#	$NetBSD: Makefile,v 1.24 2024/05/20 09:48:42 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,7 @@ MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 
 CPPFLAGS+=	-I${.OBJDIR}
 
-.include <Makefile.hash>
+.include "Makefile.hash"
 
 # Generate our man pages
 terminfo.5: genman terminfo.5.in term.h termcap_map.c
