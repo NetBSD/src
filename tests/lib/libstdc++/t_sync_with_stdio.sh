@@ -1,4 +1,4 @@
-#	$NetBSD: t_sync_with_stdio.sh,v 1.1 2024/04/28 01:21:27 riastradh Exp $
+#	$NetBSD: t_sync_with_stdio.sh,v 1.2 2024/05/20 11:20:53 riastradh Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,6 @@ cin_nosync_head()
 cin_nosync_body()
 {
 	echo hello >in
-	atf_expect_fail "PR lib/58206: sync_with_stdio breaks reads from cin"
 	atf_check -o inline:'6\n' "$(atf_get_srcdir)"/h_cin_nosync <in
 }
 
