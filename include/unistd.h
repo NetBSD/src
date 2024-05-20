@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.165 2024/05/19 22:25:47 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.166 2024/05/20 01:30:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
 #ifndef __LIBC12_SOURCE__
-int	 dup3(int, int, int) __RENAME(__dup3110);
+int	 dup3(int, int, int) __RENAME(__dup3100);
 #endif
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);

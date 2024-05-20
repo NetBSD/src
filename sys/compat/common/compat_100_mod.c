@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_100_mod.c,v 1.2 2023/07/28 18:19:00 christos Exp $ */
+/*	$NetBSD: compat_100_mod.c,v 1.3 2024/05/20 01:30:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_100_mod.c,v 1.2 2023/07/28 18:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_100_mod.c,v 1.3 2024/05/20 01:30:34 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -49,15 +49,23 @@ __KERNEL_RCSID(0, "$NetBSD: compat_100_mod.c,v 1.2 2023/07/28 18:19:00 christos 
 int
 compat_100_init(void)
 {
+	int error;
 
-	return kern_event_100_init();
+	error = kern_event_100_init();
+	if (error)
+		return error;
+	return sys_descrip_100_init();
 }
 
 int
 compat_100_fini(void)
 {
+	int error;
 
-	return kern_event_100_fini();
+	error = kern_event_100_fini();
+	if (error)
+		return error;
+	return sys_descrip_100_fini();
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_100, NULL);

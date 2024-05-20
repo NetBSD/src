@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_100.c,v 1.3 2023/07/29 12:48:15 rin Exp $ */
+/*	$NetBSD: netbsd32_compat_100.c,v 1.4 2024/05/20 01:30:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.3 2023/07/29 12:48:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_100.c,v 1.4 2024/05/20 01:30:33 christos Exp $");
 
 #include <sys/types.h>
+#include <sys/filedesc.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
 #include <sys/module.h>
@@ -129,9 +130,29 @@ compat_100_netbsd32___kevent50(struct lwp *l,
 	    SCARG(uap, timeout), &netbsd32_kevent_ops);
 }
 
+int
+compat_100_netbsd32_dup3(struct lwp *l,
+    const struct compat_100_netbsd32_dup3_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+		syscallarg(const netbsd32_kevent100p_t) changelist;
+		syscallarg(netbsd32_size_t) nchanges;
+		syscallarg(netbsd32_kevent100p_t) eventlist;
+		syscallarg(netbsd32_size_t) nevents;
+		syscallarg(netbsd32_timespecp_t) timeout;
+	} */
+	return dodup(l, SCARG(uap, from), SCARG(uap, to), SCARG(uap, flags),
+	    retval);
+}
+
 static struct syscall_package compat_netbsd32_100_syscalls[] = {
 	{ NETBSD32_SYS_compat_100_netbsd32___kevent50, 0,
 	    (sy_call_t *)compat_100_netbsd32___kevent50 },
+	{ NETBSD32_SYS_compat_100_netbsd32_dup3, 0,
+	    (sy_call_t *)compat_100_netbsd32_dup3 },
 	{ 0, 0, NULL },
 };
 
