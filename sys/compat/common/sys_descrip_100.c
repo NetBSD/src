@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip_100.c,v 1.1 2024/05/20 01:30:34 christos Exp $	*/
+/*	$NetBSD: sys_descrip_100.c,v 1.2 2024/05/20 09:37:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip_100.c,v 1.1 2024/05/20 01:30:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip_100.c,v 1.2 2024/05/20 09:37:34 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,28 +40,28 @@ __KERNEL_RCSID(0, "$NetBSD: sys_descrip_100.c,v 1.1 2024/05/20 01:30:34 christos
 
 #include <compat/common/compat_mod.h>
 
-static const struct syscall_package sys_descrip_110_syscalls[] = {
-	{ SYS_compat_110_dup3, 0,
-	    (sy_call_t *)compat_110_sys_dup3 },
+static const struct syscall_package sys_descrip_100_syscalls[] = {
+	{ SYS_compat_100_dup3, 0,
+	    (sy_call_t *)compat_100_sys_dup3 },
 	{ 0, 0, NULL },
 };
 
 int
-sys_descrip_110_init(void)
+sys_descrip_100_init(void)
 {
 
-	return syscall_establish(NULL, sys_descrip_110_syscalls);
+	return syscall_establish(NULL, sys_descrip_100_syscalls);
 }
 
 int
-sys_descrip_110_fini(void)
+sys_descrip_100_fini(void)
 {
 
-	return syscall_disestablish(NULL, sys_descrip_110_syscalls);
+	return syscall_disestablish(NULL, sys_descrip_100_syscalls);
 }
 
 int
-compat_110_sys_dup3(struct lwp *l, const struct compat_110_sys_dup3_args *uap,
+compat_100_sys_dup3(struct lwp *l, const struct compat_100_sys_dup3_args *uap,
     register_t *retval)
 {
 	/* {
