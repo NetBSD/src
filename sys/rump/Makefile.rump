@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.137 2024/05/19 22:25:49 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.138 2024/05/20 04:16:48 christos Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -54,7 +54,7 @@ RUMP_NBCOMPAT=	50 60 70 80 90 100 110
 RUMP_NBCOMPAT=
 .endif
 RUMP_NBCOMPAT:=	${RUMP_NBCOMPAT:S/,/ /g}
-CPPFLAGS+=	${RUMP_NBCOMPAT:C/[1-9]0/-DCOMPAT_&/g}
+CPPFLAGS+=	${RUMP_NBCOMPAT:C/^[1-9][0-9]*/-DCOMPAT_&/g}
 
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
