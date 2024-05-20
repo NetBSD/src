@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.182 2024/05/20 11:35:36 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.183 2024/05/20 11:35:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.182 2024/05/20 11:35:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.183 2024/05/20 11:35:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4556,7 +4556,6 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 	struct xhci_ring * const tr = xs->xs_xr[dci];
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	struct xhci_pipe * const xpipe = (struct xhci_pipe *)xfer->ux_pipe;
-	uint32_t len = xfer->ux_length;
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
 	uint32_t status;
@@ -4604,7 +4603,7 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 
 	offs = 0;
 	for (i = 0; i < xfer->ux_nframes; i++) {
-		len = xfer->ux_frlengths[i];
+		const uint32_t len = xfer->ux_frlengths[i];
 
 		tdpc = howmany(len, mps);
 		tbc = howmany(tdpc, maxb) - 1;
