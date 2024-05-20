@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.287 2024/05/19 22:25:49 christos Exp $
+#	$NetBSD: Makefile,v 1.288 2024/05/20 13:34:12 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,10 @@ SUBDIR+=	compat_43   compat_sysctl_09_43
 SUBDIR+=	compat_09   compat_10   compat_12   compat_13   compat_14
 SUBDIR+=	compat_16   compat_20   compat_30   compat_40   compat_50
 SUBDIR+=	compat_60   compat_70   compat_80   compat_90   compat_100
-SUBDIR+=	compat_110
+
+# Not until 11.0 is released and we need binary compatibility with it
+# in >11.0.
+#SUBDIR+= compat_110
 
 SUBDIR+=	compat_sysv_10 compat_sysv_14 compat_sysv_50
 
