@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.13 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.14 2024/05/21 22:47:11 nia Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -292,20 +292,20 @@
 #define VOL_0DB 200
 
 /* Futzable parms */
-#define EAP_MASTER_VOL		0
-#define EAP_VOICE_VOL		1
-#define EAP_FM_VOL		2
-#define EAP_VIDEO_VOL		2	/* ES1371 */
-#define EAP_CD_VOL		3
-#define EAP_LINE_VOL		4
-#define EAP_AUX_VOL		5
-#define EAP_MIC_VOL		6
-#define	EAP_RECORD_SOURCE	7
-#define EAP_INPUT_SOURCE	8
-#define	EAP_MIC_PREAMP		9
-#define EAP_OUTPUT_CLASS	10
-#define EAP_RECORD_CLASS	11
-#define EAP_INPUT_CLASS		12
+#define EAP_OUTPUT_CLASS	0
+#define EAP_RECORD_CLASS	1
+#define EAP_INPUT_CLASS		2
+#define EAP_MASTER_VOL		3
+#define EAP_VOICE_VOL		4
+#define EAP_FM_VOL		5
+#define EAP_VIDEO_VOL		5	/* ES1371 */
+#define EAP_CD_VOL		6
+#define EAP_LINE_VOL		7
+#define EAP_AUX_VOL		8
+#define EAP_MIC_VOL		9
+#define	EAP_RECORD_SOURCE	10
+#define EAP_INPUT_SOURCE	11
+#define	EAP_MIC_PREAMP		12
 
 #define MIDI_BUSY_WAIT		100
 #define MIDI_BUSY_DELAY		100	/* Delay when UART is busy */
