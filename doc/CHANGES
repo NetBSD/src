@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3056 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3057 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -59,6 +59,8 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	amiga: Fix bootblocks for Kickstart 3.2. [abs 20230325]
 	libc: Add __atomic_is_lock_free to help stdatomic.h usage with
 		GCC. [riastradh 20230330]
+	uaudio(4): Initial support for USB Audio Class 2.0 devices.
+		[mlelstv 20230402]
 	vacation(1): Check 'Auto-Submitted:' header in addition to
 		'Precedence:', and set 'Precedence:' in addition to
 		'Auto-Submitted:'.  [hauke 20230411]
@@ -401,3 +403,11 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		(from Ricardo Branco).  [christos 20240512]
 	cgdconfig(8): Add zfs verification method (from Malte Dehling)
 		[christos 20240512]
+	curses(3): Constify argument of define_key(3) for compatibility
+		with ncurses.  [uwe 20240514]
+	eap(4): Support monoraual sound at the hardware level and
+		a range of hardware frequencies, as in NetBSD 7
+		and earlier.  [nia 20240517]
+	curses(3): Constify arguments of newterm(3), setterm(3)
+		functions.  [uwe 20240517]
+	tic(1): Honour the user's umask (from RVP).  [christos 20240520]
