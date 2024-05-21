@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.17 2024/05/21 04:01:26 gutteridge Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.18 2024/05/21 22:10:21 gutteridge Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -148,20 +148,19 @@ generate a header, or create the image.
 Before the image is written, the header is displayed to standard out;
 for example:
 .Bd -literal -offset 0
+ image type:  uimg
  magic:       0x27051956
- time:        Tue Jun  7 15:58:41 2011
- size:        2482203
- load addr:   0x00020000
- entry point: 0x00020000
- data crc:    0x700fdf53
+ time:        Tue May 21 18:05:09 2024
+ size:        137
+ load addr:   0x00000000
+ entry point: 0x00000000
+ data crc:    0xface05f2
  os:          2 (netbsd)
- arch:        7 (powerpc)
- type:        2 (kernel)
- comp:        1 (gz)
- name:        NetBSD/evbppc 5.99.52 (INSTALL_PMPPC)
- header crc:  0x94ea96cf
-.Ed
-.\" TODO: check the name line above
+ arch:        2 (arm)
+ type:        6 (script)
+ comp:        0 (none)
+ name:        NetBSD/armv7 boot
+ header crc:  0x2164b567
 .\" .Sh FILES
 .Sh SEE ALSO
 .Qq Das U-Boot - the Universal Boot Loader
