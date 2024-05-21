@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.31 2024/02/09 16:10:18 christos Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.32 2024/05/21 03:54:31 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.31 2024/02/09 16:10:18 christos Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.32 2024/05/21 03:54:31 gutteridge Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -155,6 +155,7 @@ static const struct uboot_arch {
 	{ IH_ARCH_MIPS64,	"mips64" },
 	{ IH_ARCH_PPC,		"powerpc" },
 	{ IH_ARCH_OPENRISC,	"or1k" },
+	{ IH_ARCH_RISCV,	"riscv" },
 	{ IH_ARCH_SH,		"sh" },
 };
 
@@ -263,7 +264,7 @@ __dead static void
 usage(void)
 {
 	fprintf(stderr,
-"Usage: %s [-hu] -A <arm|arm64|i386|mips|mips64|or1k|powerpc|sh> -a address\n"
+"Usage: %s [-hu] -A <arm|arm64|i386|mips|mips64|or1k|powerpc|riscv|sh> -a address\n"
 "\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address] [-t timestamp]\n"
 "\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n"
 "\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n"
