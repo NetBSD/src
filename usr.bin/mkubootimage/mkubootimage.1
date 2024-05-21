@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.16 2024/05/21 03:54:31 gutteridge Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.17 2024/05/21 04:01:26 gutteridge Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,6 +46,7 @@
 .Fl n Ar image
 .Op Fl O Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
 .Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns script Ns | Ns standalone )
+.Op Fl t Ar epoch
 .Ar source destination
 .\"
 .Sh DESCRIPTION
@@ -119,14 +120,14 @@ This is required.
 Defines the operating system type.
 The default OS name is
 .Qq netbsd .
-.It Fl t Ar epoch
-Use given epoch timestamp as image creation time.
-(This is only used for legacy U-Boot images.)
 .It Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns script Ns | Ns standalone )
 Defines the image type.
 This is required for
 .Qq uimg
 format images.
+.It Fl t Ar epoch
+Use given epoch timestamp as image creation time.
+(This is only used for legacy U-Boot images.)
 .It Fl u
 Update the header in an existing file instead of creating a new one.
 .El
