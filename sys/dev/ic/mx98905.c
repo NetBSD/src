@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.17 2023/08/01 20:52:43 andvar Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.18 2024/05/21 07:29:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.17 2023/08/01 20:52:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.18 2024/05/21 07:29:40 andvar Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -282,7 +282,7 @@ mx98905_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 }
 
 /*
- * Given a source and destination address, copy 'amout' of a packet from
+ * Given a source and destination address, copy 'amount' of a packet from
  * the ring buffer into a linear destination buffer.  Takes into account
  * ring-wrap.
  */
