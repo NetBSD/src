@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.77 2021/08/20 20:25:28 andvar Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.78 2024/05/21 07:29:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.77 2021/08/20 20:25:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.78 2024/05/21 07:29:40 andvar Exp $");
 
 #include "rtl80x9.h"
 
@@ -716,7 +716,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 }
 
 /*
- * Given a source and destination address, copy 'amout' of a packet from
+ * Given a source and destination address, copy 'amount' of a packet from
  * the ring buffer into a linear destination buffer.  Takes into account
  * ring-wrap.
  */
