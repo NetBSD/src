@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.32 2024/05/21 03:54:31 gutteridge Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.33 2024/05/21 04:01:26 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.32 2024/05/21 03:54:31 gutteridge Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.33 2024/05/21 04:01:26 gutteridge Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -264,10 +264,10 @@ __dead static void
 usage(void)
 {
 	fprintf(stderr,
-"Usage: %s [-hu] -A <arm|arm64|i386|mips|mips64|or1k|powerpc|riscv|sh> -a address\n"
-"\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address] [-t timestamp]\n"
-"\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n"
-"\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n"
+"Usage: %s [-hu] -A <arm|arm64|i386|mips|mips64|or1k|powerpc|riscv|sh>\n"
+"\t-a address [-C <bz2|gz|lzma|lzo|none>] [-E address] [-e address] \n"
+"\t[-f <arm64|uimg>] [-m magic] -n image [-O <freebsd|linux|netbsd|openbsd>]\n"
+"\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone> [-t timestamp]\n"
 "\tsource destination\n", getprogname());
 
 	exit(EXIT_FAILURE);
