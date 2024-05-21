@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3057 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3058 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -383,7 +383,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[mrg 20240506]
 	makefs(8): Add an option to warn and error out for mtree missing
 		entries.  [christos 20240508]
-	hp300: Preliminary CD boot support.  [tsutsui 20240509]
 	lint(1): Support new keywords in C23 mode, including nullptr.
 		[rillig 20240509]
 	install(1): Support -v (verbose). [wiz 20240510]
@@ -410,4 +409,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		and earlier.  [nia 20240517]
 	curses(3): Constify arguments of newterm(3), setterm(3)
 		functions.  [uwe 20240517]
+	hp300: Installation CD ISO image is now bootable. [tsutsui 20240519]
 	tic(1): Honour the user's umask (from RVP).  [christos 20240520]
