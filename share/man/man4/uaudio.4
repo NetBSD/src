@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.30 2024/05/21 10:45:39 nia Exp $
+.\" $NetBSD: uaudio.4,v 1.31 2024/05/22 00:25:56 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,46 +46,63 @@ audio class devices.
 A
 .Tn USB
 audio device consists of a number of components:
-input terminals (e.g. USB digital input), output terminals (e.g.
-speakers), and a number of units in between (e.g. volume control).
+input terminals
+.Pq e.g. USB digital input ,
+output terminals
+.Pq e.g. speakers ,
+and a number of units in between
+.Pq e.g. volume control .
 The following types of units are handled by the
 .Nm
-driver and are accessible via the mixer (see
-.Xr audio 4 )
+driver and are accessible via the mixer
+.Pq see Xr audio 4
 interface:
-.Bl -tag -width Dv -offset 3n -compact
-.It mixer
+.Bl -tag -width Em
+.It Em mixer
 A mixer has a number of inputs and one output.
 Each input has a control that determines its volume in the output.
 The name of the control is
-.Ar mixN-S ,
+.Sm off
+.Li mix Ar N Li \|- Ar S ,
+.Sm on
 where
 .Ar N
 is a number that identifies which mixer it is and
 .Ar S
 which input.
-.It selector
+.
+.It Em selector
 A selector unit selects one of multiple audio sources such as mic-in
 and line-in.
 The name of the control is
-.Ar selN-S1S2S3... ,
+.Sm off
+.Li sel Ar N Li \|- Ar S1S2S3... ,
+.Sm on
 where
 .Ar N
 is a number that identifies which selector unit it is and the sequence of
 .Ar Sn
 indicates candidate units for the audio source.
-.It feature
+.
+.It Em feature
 A feature unit changes the sound in some way, like bass, treble,
 mute, or volume.
 The name of the control is determined in a heuristic way.
 If the unit changes the sound to a speaker output terminal,
-the names of the controls may be outputs.speaker.bass, outputs.speaker.treble,
-outputs.speaker.mute, outputs.speaker, or likewise.
-.It processing
+the names of the controls may be
+.Li outputs.speaker.bass ,
+.Li outputs.speaker.treble ,
+.Li outputs.speaker.mute ,
+.Li outputs.speaker ,
+or likewise.
+.
+.It Em processing
 A processing unit does one of a number of audio processing functions
-(e.g., channel up-down mixing, Dolby ProLogic, or chorus effects).
-The name of the on-off control is
-.Ar proN.M-enable ,
+.Pq e.g., channel up-down mixing, Dolby ProLogic, or chorus effects .
+The name of the on\[en]off control is
+.Sm off
+.Li pro Ar N Li \&. Ar M Li \|-enable ,
+.Sm on
 where
 .Ar N
 is a number that identifies which processing unit it is and
@@ -93,10 +110,13 @@ is a number that identifies which processing unit it is and
 which kind.
 Depending on the type of processing unit there may be other controls
 as well.
-.It extension
+.
+.It Em extension
 An extension unit performs some unspecified audio processing
-The name of the on-off control is
-.Ar extN-enable ,
+The name of the on\[en]off control is
+.Sm off
+.Li ext Ar N Li \|-enable ,
+.Sm on
 where
 .Ar N
 is a number that identifies which processing unit it is.
