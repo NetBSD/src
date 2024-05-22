@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.24 2024/05/22 15:47:18 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.25 2024/05/22 15:59:12 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.24 2024/05/22 15:47:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.25 2024/05/22 15:59:12 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -1477,8 +1477,6 @@ drm_gem_unlock_reservations(struct drm_gem_object **objs, int count,
 }
 EXPORT_SYMBOL(drm_gem_unlock_reservations);
 
-#ifndef __NetBSD__		/* XXX xarray */
-
 /**
  * drm_gem_fence_array_add - Adds the fence to an array of fences to be
  * waited on, deduplicating fences from the same context.
@@ -1571,5 +1569,3 @@ int drm_gem_fence_array_add_implicit(struct xarray *fence_array,
 	return ret;
 }
 EXPORT_SYMBOL(drm_gem_fence_array_add_implicit);
-
-#endif
