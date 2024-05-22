@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.23 2021/12/19 11:58:49 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.24 2024/05/22 15:47:18 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.23 2021/12/19 11:58:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.24 2024/05/22 15:47:18 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -605,7 +605,7 @@ drm_gem_get_pages(struct drm_gem_object *obj)
 	unsigned i, npages;
 	int ret;
 
-	KASSERT((obj->size & (PAGE_SIZE - 1)) != 0);
+	KASSERT((obj->size & (PAGE_SIZE - 1)) == 0);
 
 	npages = obj->size >> PAGE_SHIFT;
 	pages = kvmalloc_array(npages, sizeof(*pages), GFP_KERNEL);
