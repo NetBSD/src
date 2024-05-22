@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2024/05/19 15:48:57 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.60 2024/05/22 15:42:42 tsutsui Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ ARCH_XLAT+= sun2-sun68k.c sun3-sun68k.c
 
 .if !defined(SMALLPROG) && !defined(ARCH_FILES)
 ARCH_FILES=  alpha.c amiga.c
-ARCH_FILES+= emips.c evbarm.c evbmips.c ews4800mips.c
+ARCH_FILES+= evbarm.c evbmips.c ews4800mips.c
 ARCH_FILES+= hp300.c hppa.c
 ARCH_FILES+= i386.c
 ARCH_FILES+= landisk.c
