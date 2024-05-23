@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideoreg.h,v 1.6 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumvideoreg.h,v 1.7 2024/05/23 08:30:51 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 /*
  *	LCD Timing Register
  */
-/* Horizontanl Total */
+/* Horizontal Total */
 #define	PLUM_VIDEO_PLHT_REG		0x080
 /* Horizontal Display Start */
 #define	PLUM_VIDEO_PLHDS_REG		0x084
@@ -115,7 +115,7 @@
 #define	PLUM_VIDEO_PLVDS_REG		0x098
 /* V-Sync Start/End */
 #define	PLUM_VIDEO_PLVSEVSS_REG		0x09c
-/* V-Blankng Start/End */
+/* V-Blanking Start/End */
 #define	PLUM_VIDEO_PLVBEVBS_REG		0x0a0
 /* Current Line # */
 #define	PLUM_VIDEO_PLCLN_REG		0x0a8
