@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2024/05/22 17:20:45 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.27 2024/05/23 06:10:03 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=	ffs
 CPPFLAGS+=	-DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
-CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACl -DUFS_DIRHASH
+CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL -DUFS_DIRHASH
 
 CWARNFLAGS.clang=	-Wno-conversion
 COPTS.ffs_appleufs.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
