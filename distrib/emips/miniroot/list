@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2013/11/30 08:27:18 nakayama Exp $
+#	$NetBSD: list,v 1.4 2024/05/23 15:00:43 tsutsui Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -17,9 +17,6 @@ PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
 PROG	usr/bin/vi
-
-# extras in usr/sbin
-PROG	usr/sbin/installboot
 
 # crunchgen source directory specials: progs built in nonstandard places
 SPECIAL	vi	srcdir external/bsd/nvi/usr.bin/nvi
