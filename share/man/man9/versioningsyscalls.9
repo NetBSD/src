@@ -1,4 +1,4 @@
-.\"	$NetBSD: versioningsyscalls.9,v 1.6 2024/05/20 17:12:41 christos Exp $
+.\"	$NetBSD: versioningsyscalls.9,v 1.7 2024/05/23 06:35:45 pgoyette Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,7 +224,7 @@ variable.
 .Ss Regenerating the system calls
 If versioning structs, then modify
 .Pa sys/kern/makesyscalls.sh
-by adding and entry for
+by adding an entry for
 .Ft struct my_structCNUM
 type to
 .Va uncompattypes .
