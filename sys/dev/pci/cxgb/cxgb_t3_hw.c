@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.7 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.8 2024/05/23 08:52:06 andvar Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -3425,7 +3425,7 @@ static void config_pcie(adapter_t *adap)
  *
  *  Initialize and configure T3 HW modules.  This performs the
  *  initialization steps that need to be done once after a card is reset.
- *  MAC and PHY initialization is handled separarely whenever a port is
+ *  MAC and PHY initialization is handled separately whenever a port is
  *  enabled.
  *
  *  @fw_params are passed to FW and their value is platform dependent.

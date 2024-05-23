@@ -1,4 +1,4 @@
-/*	$NetBSD: kn230.h,v 1.3 2002/09/29 23:23:58 wiz Exp $	*/
+/*	$NetBSD: kn230.h,v 1.4 2024/05/23 08:52:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Jonathan Stone.
@@ -167,7 +167,7 @@
 
 #define KN230_SYS_NVRAM_ADDR	0x1f000304       /* holds addr of NVRAM bank */
 /*
- * NVRAM has separete control and status registers for each of
+ * NVRAM has separate control and status registers for each of
  * the two motherboard SIMM banks (even and odd),
  * located at offsets from the value at value at SYS_NVRAM_ADDR.
  */

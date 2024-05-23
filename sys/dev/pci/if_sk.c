@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.111 2022/05/23 13:53:37 rin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.112 2024/05/23 08:52:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.111 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.112 2024/05/23 08:52:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ sk_win_write_1(struct sk_softc *sc, uint32_t reg, uint8_t x)
 
 /*
  * The VPD EEPROM contains Vital Product Data, as suggested in
- * the PCI 2.1 specification. The VPD data is separared into areas
+ * the PCI 2.1 specification. The VPD data is separated into areas
  * denoted by resource IDs. The SysKonnect VPD contains an ID string
  * resource (the name of the adapter), a read-only area resource
  * containing various key/data fields and a read/write area which
