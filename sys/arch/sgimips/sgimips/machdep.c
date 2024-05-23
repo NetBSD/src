@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2024/05/23 06:11:14 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 2024/05/23 06:14:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2024/05/23 06:11:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2024/05/23 06:14:12 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -539,7 +539,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 
 	case MACH_SGI_IP12:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
-        	mach_boardrev = (i & 0x7000) >> 12; 
+        	mach_boardrev = (i & 0x7000) >> 12;
 
 		if ((i & 0x8000) == 0) {
 			if (mach_boardrev < 7)
@@ -786,7 +786,7 @@ haltsys:
 #if NMCCLOCK_MACE > 0
 		if (mach_type == MACH_SGI_IP32) {
 			mcclock_poweroff();
-		} else 
+		} else
 #endif
 			arcbios_PowerDown();
 		printf("WARNING: powerdown failed\n");
@@ -805,7 +805,7 @@ haltsys:
 	if (mach_type == MACH_SGI_IP32) {
 		crime_reboot();
 	} else
-#endif	
+#endif
 		arcbios_Reboot();
 
 	for (;;);
