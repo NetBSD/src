@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.11 2010/02/28 15:52:16 snj Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.12 2024/05/23 08:30:51 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -195,7 +195,7 @@
 #	define MQ200_GC2CRCC_RESULT_SHIFT	8
 #	define MQ200_GC2CRCC_RESULT_MASK	0x3fffff00
 
-/* GC Hotizontal Display Control (GC02R and GC22R)	*/
+/* GC Horizontal Display Control (GC02R and GC22R)	*/
 #define MQ200_GCHDCR(n)		(MQ200_GC(n)+0x08)
 #	define MQ200_GC1HDC_TOTAL_MASK		0x00000fff
 #	define MQ200_GC1HDC_TOTAL_SHIFT		0
@@ -213,7 +213,7 @@
 #	define MQ200_GCVDC_END_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Hotizontal Sync Control (GC04R and GC24R)	*/
+/* GC Horizontal Sync Control (GC04R and GC24R)	*/
 #define MQ200_GCHSCR(n)		(MQ200_GC(n)+0x10)
 #	define MQ200_GCHSC_START_MASK		0x00000fff
 #	define MQ200_GCHSC_START_SHIFT		0
