@@ -36,6 +36,8 @@
 #include "logerr.h"
 #include "privsep.h"
 
+/* We expect to have open 2 SEQPACKET, 2 STREAM and 2 file STREAM fds */
+
 static int
 ps_ctl_startcb(struct ps_process *psp)
 {
@@ -217,14 +219,16 @@ ps_ctl_start(struct dhcpcd_ctx *ctx)
 		.psi_cmd = PS_CTL,
 	};
 	struct ps_process *psp;
-	int data_fd[2], listen_fd[2];
+	int work_fd[2], listen_fd[2];
 	pid_t pid;
 
-	if (xsocketpair(AF_UNIX, SOCK_STREAM | SOCK_CXNB, 0, data_fd) == -1 ||
+	if_closesockets(ctx);
+
+	if (xsocketpair(AF_UNIX, SOCK_STREAM | SOCK_CXNB, 0, work_fd) == -1 ||
 	    xsocketpair(AF_UNIX, SOCK_STREAM | SOCK_CXNB, 0, listen_fd) == -1)
 		return -1;
 #ifdef PRIVSEP_RIGHTS
-	if (ps_rights_limit_fdpair(data_fd) == -1 ||
+	if (ps_rights_limit_fdpair(work_fd) == -1 ||
 	    ps_rights_limit_fdpair(listen_fd) == -1)
 		return -1;
 #endif
@@ -237,24 +241,25 @@ ps_ctl_start(struct dhcpcd_ctx *ctx)
 	if (pid == -1)
 		return -1;
 	else if (pid != 0) {
-		psp->psp_work_fd = data_fd[1];
-		close(data_fd[0]);
+		psp->psp_work_fd = work_fd[0];
+		close(work_fd[1]);
+		close(listen_fd[1]);
 		ctx->ps_control = control_new(ctx,
-		    listen_fd[1], FD_SENDLEN | FD_LISTEN);
+		    listen_fd[0], FD_SENDLEN | FD_LISTEN);
 		if (ctx->ps_control == NULL)
 			return -1;
-		close(listen_fd[0]);
 		return pid;
 	}
 
-	psp->psp_work_fd = data_fd[0];
-	close(data_fd[1]);
+	close(work_fd[0]);
+	close(listen_fd[0]);
+
+	psp->psp_work_fd = work_fd[1];
 	if (eloop_event_add(ctx->eloop, psp->psp_work_fd, ELE_READ,
 	    ps_ctl_recv, ctx) == -1)
 		return -1;
 
-	ctx->ps_control = control_new(ctx, listen_fd[0], 0);
-	close(listen_fd[1]);
+	ctx->ps_control = control_new(ctx, listen_fd[1], 0);
 	if (ctx->ps_control == NULL)
 		return -1;
 	if (eloop_event_add(ctx->eloop, ctx->ps_control->fd, ELE_READ,

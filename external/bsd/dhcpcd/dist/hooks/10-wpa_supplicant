@@ -106,8 +106,8 @@ if [ "$ifwireless" = "1" ] && \
     command -v wpa_cli >/dev/null 2>&1
 then
 	case "$reason" in
-	PREINIT)	wpa_supplicant_start;;
-	RECONFIGURE)	wpa_supplicant_reconfigure;;
-	DEPARTED)	wpa_supplicant_stop;;
+	PREINIT)		wpa_supplicant_start;;
+	RECONFIGURE)		wpa_supplicant_reconfigure;;
+	DEPARTED|STOPPED)	wpa_supplicant_stop;;
 	esac
 fi

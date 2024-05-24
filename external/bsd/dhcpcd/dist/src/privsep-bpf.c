@@ -53,6 +53,8 @@
 #include "logerr.h"
 #include "privsep.h"
 
+/* We expect to have open 3 SEQPACKET and one RAW fd */
+
 static void
 ps_bpf_recvbpf(void *arg, unsigned short events)
 {
@@ -160,6 +162,9 @@ ps_bpf_start_bpf(struct ps_process *psp)
 	ps_freeprocesses(ctx, psp);
 
 	psp->psp_bpf = bpf_open(&psp->psp_ifp, psp->psp_filter, ia);
+#ifdef DEBUG_FD
+	logdebugx("pid %d bpf_fd=%d", getpid(), psp->psp_bpf->bpf_fd);
+#endif
 	if (psp->psp_bpf == NULL)
 		logerr("%s: bpf_open",__func__);
 #ifdef PRIVSEP_RIGHTS

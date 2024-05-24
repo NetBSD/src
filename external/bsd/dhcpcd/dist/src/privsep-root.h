@@ -36,6 +36,7 @@
 #endif
 
 pid_t ps_root_start(struct dhcpcd_ctx *ctx);
+void ps_root_close(struct dhcpcd_ctx *ctx);
 int ps_root_stop(struct dhcpcd_ctx *ctx);
 void ps_root_signalcb(int, void *);
 

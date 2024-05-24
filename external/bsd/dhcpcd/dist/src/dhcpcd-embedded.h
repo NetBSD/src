@@ -30,7 +30,7 @@
 #define INITDEFINENDS	       6
 #define INITDEFINE6S	      14
 #else
-#define INITDEFINES	     128
+#define INITDEFINES	     157
 #define INITDEFINENDS	       7
 #define INITDEFINE6S	      74
 #endif
