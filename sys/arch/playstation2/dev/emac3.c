@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.15 2022/02/11 23:49:19 riastradh Exp $	*/
+/*	$NetBSD: emac3.c,v 1.16 2024/05/24 20:09:09 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.15 2022/02/11 23:49:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.16 2024/05/24 20:09:09 andvar Exp $");
 
 #include "debug_playstation2.h"
 
@@ -292,7 +292,7 @@ emac3_config(const u_int8_t *eaddr)
 	    RMR_SP |	/* strip padding */
 	    RMR_SFCS |	/* strip FCS */
 	    RMR_IAE |	/* individual address enable */
-	    RMR_BAE);	/* boradcast address enable */
+	    RMR_BAE);	/* broadcast address enable */
 
 	/* TX mode */
 	_emac3_reg_write_4(EMAC3_TMR1, 
