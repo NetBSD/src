@@ -3494,7 +3494,7 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 			 * To keep the same behaviour we won't do anything with
 			 * this. In the future we should make a lists of
 			 * ADVERTS and pick the "best" one. */
-			logdebugx("%s: discarding ADVERTISMENT from %s",
+			logdebugx("%s: discarding ADVERTISEMENT from %s",
 			    ifp->name, sfrom);
 			return;
 		}
