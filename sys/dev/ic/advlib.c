@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.30 2022/09/25 18:43:32 thorpej Exp $        */
+/*      $NetBSD: advlib.c,v 1.31 2024/05/24 20:06:55 andvar Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.30 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.31 2024/05/24 20:06:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ static int AscRiscHaltedAbortTIX(ASC_SOFTC *, u_int8_t);
 /* Error Handling routines */
 static int AscSetLibErrorCode(ASC_SOFTC *, u_int16_t);
 
-/* Handle bugged borads routines */
+/* Handle bugged boards routines */
 static int AscTagQueuingSafe(ASC_SCSI_INQUIRY *);
 static void AscAsyncFix(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
 
@@ -228,7 +228,7 @@ static void DvcDelayNanoSecond(u_int32_t);
  * This function perform the following steps:
  * - initialize ASC_SOFTC structure with defaults values.
  * - inquire board registers to know what kind of board it is.
- * - keep track of bugged borads.
+ * - keep track of bugged boards.
  */
 void
 AscInitASC_SOFTC(ASC_SOFTC *sc)
@@ -3002,7 +3002,7 @@ AscSetLibErrorCode(ASC_SOFTC *sc, u_int16_t err_code)
 
 
 /******************************************************************************/
-/*                            Handle bugged borads routines                   */
+/*                            Handle bugged boards routines                   */
 /******************************************************************************/
 
 

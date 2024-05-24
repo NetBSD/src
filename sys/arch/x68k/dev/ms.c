@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.41 2024/01/07 07:58:33 isaki Exp $ */
+/*	$NetBSD: ms.c,v 1.42 2024/05/24 20:06:55 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.41 2024/01/07 07:58:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.42 2024/05/24 20:06:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -650,7 +650,7 @@ ms_trigger(struct zs_chanstate *cs, int onoff)
 	cs->cs_creg[5] = cs->cs_preg[5];
 	zs_write_reg(cs, 5, cs->cs_preg[5]);
 
-	/* for keyborad connected one */
+	/* for keyboard connected one */
 	mfp_send_usart(onoff | 0x40);
 }
 

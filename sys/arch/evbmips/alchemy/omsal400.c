@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.11 2020/08/17 07:50:41 simonb Exp $ */
+/* $NetBSD: omsal400.c,v 1.12 2024/05/24 20:06:55 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.11 2020/08/17 07:50:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.12 2024/05/24 20:06:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,7 +111,7 @@ omsal400_init(void)
 	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1550)
 		panic("omsal400: CPU not Au1550");
 
-#if 0 /* XXX: TODO borad identification */
+#if 0 /* XXX: TODO board identification */
 	/* check the whoami register for a match */
 	whoami = GET16(DBAU1550_WHOAMI);
 
