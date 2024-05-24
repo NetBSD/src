@@ -173,12 +173,24 @@ arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 	 * the other IPv4LL client will receieve two ARP
 	 * messages.
 	 * If another conflict happens within DEFEND_INTERVAL
-	 * then we must drop our address and negotiate a new one. */
+	 * then we must drop our address and negotiate a new one.
+	 * If DHCPCD_ARP_PERSISTDEFENCE is set, that enables
+	 * RFC5227 section 2.4.c behaviour. Upon conflict
+	 * detection, the host records the time that the
+	 * conflicting ARP packet was received, and then
+	 * broadcasts one single ARP Announcement. The host then
+	 * continues to use the address normally. All further
+	 * conflict notifications within the DEFEND_INTERVAL are
+	 * ignored. */
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespecisset(&astate->defend) &&
 	    eloop_timespec_diff(&now, &astate->defend, NULL) < DEFEND_INTERVAL)
+	{
 		logwarnx("%s: %d second defence failed for %s",
 		    ifp->name, DEFEND_INTERVAL, inet_ntoa(astate->addr));
+		if (ifp->options->options & DHCPCD_ARP_PERSISTDEFENCE)
+			return;
+	}
 	else if (arp_request(astate, &astate->addr) == -1)
 		logerr(__func__);
 	else {

@@ -1877,13 +1877,13 @@ dhcp_discover(void *arg)
 	dhcp_new_xid(ifp);
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 	if (!(state->added & STATE_EXPIRED)) {
-		if (ifo->fallback)
+		if (ifo->fallback && ifo->fallback_time)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
-			    ifo->reboot, dhcp_fallback, ifp);
+			    ifo->fallback_time, dhcp_fallback, ifp);
 #ifdef IPV4LL
 		else if (ifo->options & DHCPCD_IPV4LL)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
-			    ifo->reboot, ipv4ll_start, ifp);
+			    ifo->ipv4ll_time, ipv4ll_start, ifp);
 #endif
 	}
 	if (ifo->options & DHCPCD_REQUEST)
@@ -1914,11 +1914,13 @@ dhcp_request(void *arg)
 {
 	struct interface *ifp = arg;
 	struct dhcp_state *state = D_STATE(ifp);
+	struct if_options *ifo = ifp->options;
 
 	state->state = DHS_REQUEST;
 	// Handle the server being silent to our request.
-	eloop_timeout_add_sec(ifp->ctx->eloop, ifp->options->reboot,
-	    dhcp_requestfailed, ifp);
+	if (ifo->request_time != 0)
+		eloop_timeout_add_sec(ifp->ctx->eloop, ifo->request_time,
+		    dhcp_requestfailed, ifp);
 	send_request(ifp);
 }
 
@@ -1944,7 +1946,11 @@ dhcp_expire(void *arg)
 static void
 dhcp_decline(struct interface *ifp)
 {
+	struct dhcp_state *state = D_STATE(ifp);
 
+	// Set the expired state so we send over BPF as this could be
+	// an address defence failure.
+	state->added |= STATE_EXPIRED;
 	send_message(ifp, DHCP_DECLINE, NULL);
 }
 #endif
@@ -2098,8 +2104,12 @@ static void
 dhcp_arp_defend_failed(struct arp_state *astate)
 {
 	struct interface *ifp = astate->iface;
+	struct dhcp_state *state = D_STATE(ifp);
 
+	if (!(ifp->options->options & (DHCPCD_INFORM | DHCPCD_STATIC)))
+		dhcp_decline(ifp);
 	dhcp_drop(ifp, "EXPIRED");
+	dhcp_unlink(ifp->ctx, state->leasefile);
 	dhcp_start1(ifp);
 }
 #endif
@@ -2740,7 +2750,7 @@ dhcp_reboot(struct interface *ifp)
 	/* Need to add this before dhcp_expire and friends. */
 	if (!ifo->fallback && ifo->options & DHCPCD_IPV4LL)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
-		    ifo->reboot, ipv4ll_start, ifp);
+		    ifo->ipv4ll_time, ipv4ll_start, ifp);
 #endif
 
 	if (ifo->options & DHCPCD_LASTLEASE && state->lease.frominfo)
@@ -3199,8 +3209,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 
 	if (has_option_mask(ifo->requestmask, DHO_IPV6_PREFERRED_ONLY)) {
 		if (get_option_uint32(ifp->ctx, &v6only_time, bootp, bootp_len,
-		    DHO_IPV6_PREFERRED_ONLY) == 0 &&
-		    (state->state == DHS_DISCOVER || state->state == DHS_REBOOT))
+		    DHO_IPV6_PREFERRED_ONLY) == 0 && (state->state == DHS_DISCOVER ||
+		    state->state == DHS_REBOOT || state->state == DHS_NONE))
 		{
 			char v6msg[128];
 
@@ -3524,12 +3534,6 @@ dhcp_handlebootp(struct interface *ifp, struct bootp *bootp, size_t len,
 {
 	size_t v;
 
-	if (len < offsetof(struct bootp, vend)) {
-		logerrx("%s: truncated packet (%zu) from %s",
-		    ifp->name, len, inet_ntoa(*from));
-		return;
-	}
-
 	/* Unlikely, but appeases sanitizers. */
 	if (len > FRAMELEN_MAX) {
 		logerrx("%s: packet exceeded frame length (%zu) from %s",
@@ -3662,6 +3666,13 @@ dhcp_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg)
 		logerr(__func__);
 		return;
 	}
+
+	if (iov->iov_len < offsetof(struct bootp, vend)) {
+		logerrx("%s: truncated packet (%zu) from %s",
+		    ifp->name, iov->iov_len, inet_ntoa(from->sin_addr));
+		return;
+	}
+
 	state = D_CSTATE(ifp);
 	if (state == NULL) {
 		/* Try re-directing it to another interface. */
