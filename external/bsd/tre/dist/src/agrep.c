@@ -320,10 +320,6 @@ tre_agrep_get_next_record(int fd, const char *filename)
     }
 }
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-
 #include <dirent.h>
 
 static int tre_agrep_handle_file(const char */*filename*/);
