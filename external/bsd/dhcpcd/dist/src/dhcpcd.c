@@ -401,28 +401,41 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 }
 
 static void
-dhcpcd_drop(struct interface *ifp, int stop)
+dhcpcd_drop_af(struct interface *ifp, int stop, int af)
 {
 
+	if (af == AF_UNSPEC || af == AF_INET6) {
 #ifdef DHCP6
-	dhcp6_drop(ifp, stop ? NULL : "EXPIRE6");
+		dhcp6_drop(ifp, stop ? NULL : "EXPIRE6");
 #endif
 #ifdef INET6
-	ipv6nd_drop(ifp);
-	ipv6_drop(ifp);
+		ipv6nd_drop(ifp);
+		ipv6_drop(ifp);
 #endif
+	}
+
+	if (af == AF_UNSPEC || af == AF_INET) {
 #ifdef IPV4LL
-	ipv4ll_drop(ifp);
+		ipv4ll_drop(ifp);
 #endif
 #ifdef INET
-	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
+		dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
 #endif
 #ifdef ARP
-	arp_drop(ifp);
+		arp_drop(ifp);
+	}
 #endif
+
 #if !defined(DHCP6) && !defined(DHCP)
 	UNUSED(stop);
 #endif
+}
+
+static void
+dhcpcd_drop(struct interface *ifp, int stop)
+{
+
+	dhcpcd_drop_af(ifp, stop, AF_UNSPEC);
 }
 
 static void
@@ -1512,7 +1525,8 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
     int argc, char **argv)
 {
 	struct interface *ifp;
-	unsigned long long opts;
+	struct if_options *ifo;
+	unsigned long long opts, orig_opts;
 	int opt, oi, oifind, do_reboot, do_renew, af = AF_UNSPEC;
 	size_t len, l, nifaces;
 	char *tmp, *p;
@@ -1641,20 +1655,40 @@ dumperr:
 	}
 
 	if (opts & (DHCPCD_EXITING | DHCPCD_RELEASE)) {
-		if (oifind == argc) {
+		if (oifind == argc && af == AF_UNSPEC) {
 			stop_all_interfaces(ctx, opts);
 			eloop_exit(ctx->eloop, EXIT_SUCCESS);
 			return 0;
 		}
-		for (oi = oifind; oi < argc; oi++) {
-			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
-				continue;
+
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if (!ifp->active)
 				continue;
-			ifp->options->options |= opts;
+			for (oi = oifind; oi < argc; oi++) {
+				if (strcmp(ifp->name, argv[oi]) == 0)
+					break;
+			}
+			if (oi == argc)
+				continue;
+
+			ifo = ifp->options;
+			orig_opts = ifo->options;
+			ifo->options |= opts;
 			if (opts & DHCPCD_RELEASE)
-				ifp->options->options &= ~DHCPCD_PERSISTENT;
-			stop_interface(ifp, NULL);
+				ifo->options &= ~DHCPCD_PERSISTENT;
+			switch (af) {
+			case AF_INET:
+				ifo->options &= ~DHCPCD_IPV4;
+				break;
+			case AF_INET6:
+				ifo->options &= ~DHCPCD_IPV6;
+				break;
+			}
+			if (af != AF_UNSPEC)
+				dhcpcd_drop_af(ifp, 1, af);
+			else
+				stop_interface(ifp, NULL);
+			ifo->options = orig_opts;
 		}
 		return 0;
 	}
@@ -1947,6 +1981,7 @@ main(int argc, char **argv, char **envp)
 	}
 
 	memset(&ctx, 0, sizeof(ctx));
+	closefrom(STDERR_FILENO + 1);
 
 	ifo = NULL;
 	ctx.cffile = CONFIG;
@@ -1976,7 +2011,7 @@ main(int argc, char **argv, char **envp)
 	ctx.dhcp6_wfd = -1;
 #endif
 #ifdef PRIVSEP
-	ctx.ps_log_fd = -1;
+	ctx.ps_log_fd = ctx.ps_log_root_fd = -1;
 	TAILQ_INIT(&ctx.ps_processes);
 #endif
 
@@ -2173,11 +2208,11 @@ printpidfile:
 			ctx.options |= DHCPCD_MANAGER;
 
 			/*
-			 * If we are given any interfaces, we
+			 * If we are given any interfaces or a family, we
 			 * cannot send a signal as that would impact
 			 * other interfaces.
 			 */
-			if (optind != argc)
+			if (optind != argc || family != AF_UNSPEC)
 				sig = 0;
 		}
 		if (ctx.options & DHCPCD_PRINT_PIDFILE) {
@@ -2427,9 +2462,14 @@ printpidfile:
 		goto run_loop;
 	}
 
+#ifdef DEBUG_FD
+	loginfox("forkfd %d", ctx.fork_fd);
+#endif
+
 	/* We have now forked, setsid, forked once more.
 	 * From this point on, we are the controlling daemon. */
 	logdebugx("spawned manager process on PID %d", getpid());
+
 start_manager:
 	ctx.options |= DHCPCD_STARTED;
 	if ((pid = pidfile_lock(ctx.pidfile)) != 0) {
@@ -2647,10 +2687,6 @@ exit1:
 	free(ctx.script_env);
 	rt_dispose(&ctx);
 	free(ctx.duid);
-	if (ctx.link_fd != -1) {
-		eloop_event_delete(ctx.eloop, ctx.link_fd);
-		close(ctx.link_fd);
-	}
 	if_closesockets(&ctx);
 	free_globals(&ctx);
 #ifdef INET6
