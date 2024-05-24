@@ -423,8 +423,8 @@ dhcpcd_drop_af(struct interface *ifp, int stop, int af)
 #endif
 #ifdef ARP
 		arp_drop(ifp);
-	}
 #endif
+	}
 
 #if !defined(DHCP6) && !defined(DHCP)
 	UNUSED(stop);
