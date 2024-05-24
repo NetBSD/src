@@ -2318,7 +2318,9 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 {
 	struct rt *rt;
 	struct ra *rap;
+	const struct routeinfo *rinfo;
 	const struct ipv6_addr *addr;
+	struct in6_addr netmask;
 
 	if (ctx->ra_routers == NULL)
 		return 0;
@@ -2326,6 +2328,27 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 	TAILQ_FOREACH(rap, ctx->ra_routers, next) {
 		if (rap->expired)
 			continue;
+
+		/* add rfc4191 route information routes */
+		TAILQ_FOREACH (rinfo, &rap->rinfos, next) {
+			if(rinfo->lifetime == 0)
+				continue;
+			if ((rt = inet6_makeroute(rap->iface, rap)) == NULL)
+				continue;
+
+			in6_addr_fromprefix(&netmask, rinfo->prefix_len);
+
+			sa_in6_init(&rt->rt_dest, &rinfo->prefix);
+			sa_in6_init(&rt->rt_netmask, &netmask);
+			sa_in6_init(&rt->rt_gateway, &rap->from);
+#ifdef HAVE_ROUTE_PREF
+			rt->rt_pref = ipv6nd_rtpref(rinfo->flags);
+#endif
+
+			rt_proto_add(routes, rt);
+		}
+
+		/* add subnet routes */
 		TAILQ_FOREACH(addr, &rap->addrs, next) {
 			if (addr->prefix_vltime == 0)
 				continue;
@@ -2333,11 +2356,13 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 			if (rt) {
 				rt->rt_dflags |= RTDF_RA;
 #ifdef HAVE_ROUTE_PREF
-				rt->rt_pref = ipv6nd_rtpref(rap);
+				rt->rt_pref = ipv6nd_rtpref(rap->flags);
 #endif
 				rt_proto_add(routes, rt);
 			}
 		}
+
+		/* add default route */
 		if (rap->lifetime == 0)
 			continue;
 		if (ipv6_anyglobal(rap->iface) == NULL)
@@ -2347,7 +2372,7 @@ inet6_raroutes(rb_tree_t *routes, struct dhcpcd_ctx *ctx)
 			continue;
 		rt->rt_dflags |= RTDF_RA;
 #ifdef HAVE_ROUTE_PREF
-		rt->rt_pref = ipv6nd_rtpref(rap);
+		rt->rt_pref = ipv6nd_rtpref(rap->flags);
 #endif
 		rt_proto_add(routes, rt);
 	}

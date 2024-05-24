@@ -197,6 +197,18 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 	    &n, sizeof(n)) == -1)
 		logerr("%s: SO_USELOOPBACK", __func__);
 
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEPROOT) {
+		/* We only want to write to this socket, so set
+		 * a small as possible buffer size. */
+		socklen_t smallbuf = 1;
+
+		if (setsockopt(ctx->link_fd, SOL_SOCKET, SO_RCVBUF,
+		    &smallbuf, (socklen_t)sizeof(smallbuf)) == -1)
+			logerr("%s: setsockopt(SO_RCVBUF)", __func__);
+	}
+#endif
+
 #if defined(RO_MSGFILTER)
 	if (setsockopt(ctx->link_fd, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter)) == -1)
@@ -220,9 +232,8 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 		ps_rights_limit_fd_sockopt(ctx->link_fd);
 #endif
 
-
 #if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
-	priv->pf_link_fd = socket(PF_LINK, SOCK_DGRAM, 0);
+	priv->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM, 0);
 	if (priv->pf_link_fd == -1)
 		logerr("%s: socket(PF_LINK)", __func__);
 #endif
@@ -235,13 +246,20 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 	struct priv *priv;
 
 	priv = (struct priv *)ctx->priv;
+	if (priv == NULL)
+		return;
+
 #ifdef INET6
-	if (priv->pf_inet6_fd != -1)
+	if (priv->pf_inet6_fd != -1) {
 		close(priv->pf_inet6_fd);
+		priv->pf_inet6_fd = -1;
+	}
 #endif
 #if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
-	if (priv->pf_link_fd != -1)
+	if (priv->pf_link_fd != -1) {
 		close(priv->pf_link_fd);
+		priv->pf_link_fd = -1;
+	}
 #endif
 	free(priv);
 	ctx->priv = NULL;

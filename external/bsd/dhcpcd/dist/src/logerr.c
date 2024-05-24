@@ -376,6 +376,8 @@ logsetfd(int fd)
 	struct logctx *ctx = &_logctx;
 
 	ctx->log_fd = fd;
+	if (fd != -1)
+		closelog();
 #ifndef SMALL
 	if (fd != -1 && ctx->log_file != NULL) {
 		fclose(ctx->log_file);

@@ -118,7 +118,7 @@ set_hostname()
 	*)					hshort=true;;
 	esac
 
-	need_hostname || return
+	need_hostname || return 0
 
 	if [ -n "$new_fqdn" ]; then
 		if ${hfqdn} || ! ${hshort}; then
