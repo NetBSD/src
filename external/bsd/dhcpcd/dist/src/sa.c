@@ -300,11 +300,39 @@ sa_toprefix(const struct sockaddr *sa)
 	return prefix;
 }
 
+static void
+ipbytes_fromprefix(uint8_t *ap, int prefix, int max_prefix)
+{
+	int bytes, bits, i;
+
+	bytes = prefix / NBBY;
+	bits = prefix % NBBY;
+
+	for (i = 0; i < bytes; i++)
+		*ap++ = 0xff;
+	if (bits) {
+		uint8_t a;
+
+		a = 0xff;
+		a  = (uint8_t)(a << (8 - bits));
+		*ap++ = a;
+	}
+	bytes = (max_prefix - prefix) / NBBY;
+	for (i = 0; i < bytes; i++)
+		*ap++ = 0x00;
+}
+
+void
+in6_addr_fromprefix(struct in6_addr *addr, int prefix)
+{
+	ipbytes_fromprefix((uint8_t *)addr, prefix, 128);
+}
+
 int
 sa_fromprefix(struct sockaddr *sa, int prefix)
 {
 	uint8_t *ap;
-	int max_prefix, bytes, bits, i;
+	int max_prefix;
 
 	switch (sa->sa_family) {
 #ifdef INET
@@ -328,22 +356,8 @@ sa_fromprefix(struct sockaddr *sa, int prefix)
 		return -1;
 	}
 
-	bytes = prefix / NBBY;
-	bits = prefix % NBBY;
-
 	ap = (uint8_t *)sa + sa_addroffset(sa);
-	for (i = 0; i < bytes; i++)
-		*ap++ = 0xff;
-	if (bits) {
-		uint8_t a;
-
-		a = 0xff;
-		a  = (uint8_t)(a << (8 - bits));
-		*ap++ = a;
-	}
-	bytes = (max_prefix - prefix) / NBBY;
-	for (i = 0; i < bytes; i++)
-		*ap++ = 0x00;
+	ipbytes_fromprefix(ap, prefix, max_prefix);
 
 #ifndef NDEBUG
 	/* Ensure the calculation is correct */

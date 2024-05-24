@@ -132,17 +132,18 @@ void
 if_closesockets(struct dhcpcd_ctx *ctx)
 {
 
-	if (ctx->pf_inet_fd != -1)
-		close(ctx->pf_inet_fd);
-#ifdef PF_LINK
-	if (ctx->pf_link_fd != -1)
-		close(ctx->pf_link_fd);
-#endif
-
-	if (ctx->priv) {
-		if_closesockets_os(ctx);
-		free(ctx->priv);
+	if (ctx->link_fd != -1) {
+		eloop_event_delete(ctx->eloop, ctx->link_fd);
+		close(ctx->link_fd);
+		ctx->link_fd = -1;
 	}
+
+	if (ctx->pf_inet_fd != -1) {
+		close(ctx->pf_inet_fd);
+		ctx->pf_inet_fd = -1;
+	}
+
+	if_closesockets_os(ctx);
 }
 
 int
@@ -982,6 +983,10 @@ xsocket(int domain, int type, int protocol)
 
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
+#ifdef DEBUG_FD
+	logerrx("pid %d fd=%d domain=%d type=%d protocol=%d",
+	    getpid(), s, domain, type, protocol);
+#endif
 
 #ifndef HAVE_SOCK_CLOEXEC
 	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(s, F_GETFD)) == -1 ||
@@ -1022,6 +1027,10 @@ xsocketpair(int domain, int type, int protocol, int fd[2])
 
 	if ((s = socketpair(domain, type, protocol, fd)) == -1)
 		return -1;
+
+#ifdef DEBUG_FD
+	logerrx("pid %d fd[0]=%d fd[1]=%d", getpid(), fd[0], fd[1]);
+#endif
 
 #ifndef HAVE_SOCK_CLOEXEC
 	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(fd[0], F_GETFD)) == -1 ||

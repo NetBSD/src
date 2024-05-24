@@ -47,6 +47,8 @@
 #include "logerr.h"
 #include "privsep.h"
 
+/* We expect to have open 2 SEQPACKET, 1 udp, 1 udp6 and 1 raw6 fds */
+
 #ifdef INET
 static void
 ps_inet_recvbootp(void *arg, unsigned short events)

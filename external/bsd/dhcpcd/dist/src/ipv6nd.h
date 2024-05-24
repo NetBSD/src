@@ -37,6 +37,20 @@
 #include "dhcpcd.h"
 #include "ipv6.h"
 
+/* rfc4191 */
+struct routeinfo {
+	TAILQ_ENTRY(routeinfo) next;
+	struct in6_addr prefix;
+	uint8_t prefix_len;
+	uint32_t lifetime;
+	uint8_t flags;
+	struct timespec acquired;
+	char sprefix[INET6_ADDRSTRLEN];
+};
+
+TAILQ_HEAD(routeinfohead, routeinfo);
+
+
 struct ra {
 	TAILQ_ENTRY(ra) next;
 	struct interface *iface;
@@ -45,13 +59,14 @@ struct ra {
 	uint8_t *data;
 	size_t data_len;
 	struct timespec acquired;
-	unsigned char flags;
+	uint8_t flags;
 	uint32_t lifetime;
 	uint32_t reachable;
 	uint32_t retrans;
 	uint32_t mtu;
 	uint8_t hoplimit;
 	struct ipv6_addrhead addrs;
+	struct routeinfohead rinfos;
 	bool hasdns;
 	bool expired;
 	bool willexpire;
@@ -105,7 +120,7 @@ int ipv6nd_open(bool);
 int ipv6nd_openif(struct interface *);
 #endif
 void ipv6nd_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
-int ipv6nd_rtpref(struct ra *);
+int ipv6nd_rtpref(uint8_t);
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
