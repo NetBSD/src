@@ -1,4 +1,4 @@
-/*	$NetBSD: kn230.h,v 1.4 2024/05/23 08:52:06 andvar Exp $	*/
+/*	$NetBSD: kn230.h,v 1.5 2024/05/24 19:00:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Jonathan Stone.
@@ -35,17 +35,17 @@
 
 /*
  * Physical addresses of baseboard devices and registers on the
- * the DECstation 5100 motherboard (also known as the kn230).
+ * DECstation 5100 motherboard (also known as the kn230).
  *
  * The only options on the kn230 are two slots for daughterboards.
  * Each slot can contain an extra four-port dc708x DZ11 clone chip.
- * Most baseborad chips are the same hardware and at the same
- * address as  the DECstation 3100 (kn01), except:
+ * Most baseboard chips are the same hardware and at the same
+ * address as the DECstation 3100 (kn01), except:
  *
  *	The kn230 has more devices than the 3100, so instead
  *	of hardwiring each device to a CPU interrupt line,
- *	the kn230 provides an interrupt-request  register (ICSR).
- * 	Devices are mapped onto  CPU interrupt lines as below:
+ *	the kn230 provides an interrupt-request register (ICSR).
+ * 	Devices are mapped onto CPU interrupt lines as below:
  *	    hardint 5:	fpu
  *	    hardint 4:	reset switch
  *	    hardint 3:	memory error (write to nonexistent memory)
@@ -75,7 +75,7 @@
 
 /*
  * Interrupt-request bitmasks in the low-order 16 bits of the CSR.
- * If a bit is set, the corresponding device has an  interrupt condition.
+ * If a bit is set, the corresponding device has an interrupt condition.
  * There is no equivalent per-device interrupt masking register.
  * (note: these were LED control bits in the kn01).
  */
@@ -88,7 +88,7 @@
 #define KN230_CSR_INTR_DZ0     	0x00000100	/* baseboard DZ */
 
 /*
- * kn230 LED control  register.
+ * kn230 LED control register.
  * Writing a 1 bit to any bit turns off the corresponding LED.
  * low bits are or'ed to control registers which have side effects.
  *
@@ -156,7 +156,7 @@
 
 /*
  * NVRAM state definitions.
- * Used under Ultrix for  PrestoServe.
+ * Used under Ultrix for PrestoServe.
  */
 #define KN230_SYS_NVRAM_DIAG	0x1f000300	/* NVRAM diagnostic register */
 #define KN230_NVRAM_PRESENT	0x00000001
@@ -169,7 +169,7 @@
 /*
  * NVRAM has separate control and status registers for each of
  * the two motherboard SIMM banks (even and odd),
- * located at offsets from the value at value at SYS_NVRAM_ADDR.
+ * located at offsets from the value at SYS_NVRAM_ADDR.
  */
 # define KN230_SYS_NVRAM_EVENBNK_STATUS_OFFSET	(0x200000)
 # define KN230_SYS_NVRAM_ODDBNK_STATUS_OFFSET	(0x200000 +4)
@@ -180,8 +180,8 @@
 #define KN230_NVRAM_BATFAIL	0x00000001       /* battery failure */
 #define KN230_NVRAM_BATKILL	0x00000002       /* battery kill */
 /*
- * To enable the battery,  write 0x00  to each nvram control reg.
+ * To enable the battery, write 0x00 to each nvram control reg.
  * To disable the battery, write the sequence
- *    0x01, 0x01,  0x00, 0x00,  0x01
+ *    0x01, 0x01, 0x00, 0x00, 0x01
  * to both per-bank control registers (do banks in parallel, not in sequence).
  */
