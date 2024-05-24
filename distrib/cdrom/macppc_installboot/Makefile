@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2024/05/19 15:51:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2024/05/24 10:13:44 tsutsui Exp $
 
 .include <bsd.hostinit.mk>
 HOSTPROG=	macppc_installboot
 SRCS=		installboot.c cd9660.c cd9660_util.c
 
-.PATH.c: ${NETBSDSRCDIR}/sys/fs/cd9660
+.PATH.c: ${NETBSDSRCDIR}/usr.sbin/installboot ${NETBSDSRCDIR}/sys/fs/cd9660
 
 HOST_CPPFLAGS+=	-I. -I${.CURDIR}
 #HOST_CPPFLAGS+=	-DDEBUG
