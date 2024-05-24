@@ -408,15 +408,23 @@ ps_startprocess(struct ps_process *psp,
 		return pid;
 	}
 
+	/* If we are not the root process, close un-needed stuff. */
+	if (ctx->ps_root != psp) {
+		ps_root_close(ctx);
 #ifdef PLUGIN_DEV
-	/* If we are not the root process, stop listening to devices. */
-	if (ctx->ps_root != psp)
 		dev_stop(ctx);
 #endif
+	}
 
 	ctx->options |= DHCPCD_FORKED;
 	if (ctx->ps_log_fd != -1)
 		logsetfd(ctx->ps_log_fd);
+
+#ifdef DEBUG_FD
+	logerrx("pid %d log_fd=%d data_fd=%d psp_fd=%d",
+	    getpid(), ctx->ps_log_fd, ctx->ps_data_fd, psp->psp_fd);
+#endif
+
 	eloop_clear(ctx->eloop, -1);
 	eloop_forked(ctx->eloop);
 	eloop_signal_set_cb(ctx->eloop,
@@ -458,18 +466,6 @@ ps_startprocess(struct ps_process *psp,
 		}
 #endif
 	}
-
-	if (ctx->ps_inet != psp)
-		ctx->ps_inet = NULL;
-	if (ctx->ps_ctl != psp)
-		ctx->ps_ctl = NULL;
-
-#if 0
-	char buf[1024];
-	errno = 0;
-	ssize_t xx = recv(psp->psp_fd, buf, sizeof(buf), MSG_PEEK);
-	logerr("pid %d test fd %d recv peek %zd", getpid(), psp->psp_fd, xx);
-#endif
 
 	if (eloop_event_add(ctx->eloop, psp->psp_fd, ELE_READ,
 	    recv_msg, psp) == -1)
@@ -1215,6 +1211,7 @@ ps_newprocess(struct dhcpcd_ctx *ctx, struct ps_id *psid)
 		return NULL;
 	psp->psp_ctx = ctx;
 	memcpy(&psp->psp_id, psid, sizeof(psp->psp_id));
+	psp->psp_fd = -1;
 	psp->psp_work_fd = -1;
 #ifdef HAVE_CAPSICUM
 	psp->psp_pfd = -1;
