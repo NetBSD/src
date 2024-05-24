@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2017/01/24 18:04:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2024/05/24 13:26:35 tsutsui Exp $
 
 DBG=		-Os
 
@@ -12,5 +12,3 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
 		${DESTDIR}/.profile ${DESTDIR}/boot.emips \
 		${DESTDIR}/etc/disktab \
 		${KERNOBJDIR}/GENERIC/netbsd
-
-IMAGEPOSTBUILD=	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
