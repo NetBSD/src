@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032reg.h,v 1.3 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p4032reg.h,v 1.4 2024/05/24 20:13:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Memory map and register definitions for the Algorithmics P-4032.
  */
 
-#define	P4032_MEMORY		0x00000000UL	/* onbord DRAM memory */
+#define	P4032_MEMORY		0x00000000UL	/* onboard DRAM memory */
 			/* 	256 MB		*/
 #define	P4032_ISAMEM		0x10000000UL	/* ISA window of PCI memory */
 			/*	8MB		*/
