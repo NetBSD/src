@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.6 2024/03/01 17:47:05 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.7 2024/05/24 23:02:46 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -19,6 +19,11 @@ TESTS+=			default
 #CFLAGS.default=	-O1
 #SKIP.default=		yes
 #SKIP_TESTS.default=	varmod-subst
+
+TESTS+=			sanitize
+ENV.sanitize=		MKSANITIZER=yes LIMIT_RESOURCES=:
+CPPFLAGS.sanitize=	-DCLEANUP
+CFLAGS.sanitize=	-O2 -ggdb
 
 # Try a different compiler, with slightly different warnings and error
 # messages.  Clang has a few stricter checks than GCC, concerning enums

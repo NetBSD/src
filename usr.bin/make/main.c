@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.616 2024/05/19 17:55:54 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.617 2024/05/24 23:02:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.616 2024/05/19 17:55:54 sjg Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.617 2024/05/24 23:02:46 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1583,9 +1583,9 @@ main_CleanUp(void)
 	meta_finish();
 #endif
 	Suff_End();
+	Var_End();
 	Targ_End();
 	Arch_End();
-	Var_End();
 	Parse_End();
 	Dir_End();
 	Job_End();
@@ -2119,6 +2119,7 @@ Main_ExportMAKEFLAGS(bool first)
 	/* TODO: handle errors */
 	if (flags[0] != '\0')
 		setenv("MAKEFLAGS", flags, 1);
+	free(flags);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1109 2024/05/07 18:26:22 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1110 2024/05/24 23:02:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1109 2024/05/07 18:26:22 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1110 2024/05/24 23:02:46 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4753,11 +4753,32 @@ Var_Init(void)
 	SCOPE_CMDLINE = GNode_New("Command");
 }
 
+#ifdef CLEANUP
+static void
+Var_DeleteAll(GNode *scope)
+{
+	for (;;) {
+		HashIter hi;
+		HashIter_Init(&hi, &scope->vars);
+		if (!HashIter_Next(&hi))
+			return;
+		((Var *)hi.entry->value)->readOnly = false;
+		Var_Delete(scope, hi.entry->key);
+	}
+}
+
+#endif
+
 /* Clean up the variables module. */
 void
 Var_End(void)
 {
 	Var_Stats();
+#ifdef CLEANUP
+	Var_DeleteAll(SCOPE_CMDLINE);
+	Var_DeleteAll(SCOPE_GLOBAL);
+	Var_DeleteAll(SCOPE_INTERNAL);
+#endif
 }
 
 void
