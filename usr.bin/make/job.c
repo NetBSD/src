@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.473 2024/05/25 21:07:48 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.474 2024/05/25 21:34:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.473 2024/05/25 21:07:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.474 2024/05/25 21:34:38 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1456,11 +1456,11 @@ JobExec(Job *job, char **argv)
 		 * was marked close-on-exec, we must clear that bit in the
 		 * new input.
 		 */
-		if (dup2(fileno(job->cmdFILE), 0) == -1)
+		if (dup2(fileno(job->cmdFILE), STDIN_FILENO) == -1)
 			execDie("dup2", "job->cmdFILE");
-		if (fcntl(0, F_SETFD, 0) == -1)
+		if (fcntl(STDIN_FILENO, F_SETFD, 0) == -1)
 			execDie("fcntl clear close-on-exec", "stdin");
-		if (lseek(0, 0, SEEK_SET) == -1)
+		if (lseek(STDIN_FILENO, 0, SEEK_SET) == -1)
 			execDie("lseek to 0", "stdin");
 
 		if (job->node->type & (OP_MAKE | OP_SUBMAKE)) {
@@ -1477,18 +1477,18 @@ JobExec(Job *job, char **argv)
 		 * Set up the child's output to be routed through the pipe
 		 * we've created for it.
 		 */
-		if (dup2(job->outPipe, 1) == -1)
+		if (dup2(job->outPipe, STDOUT_FILENO) == -1)
 			execDie("dup2", "job->outPipe");
 
 		/*
 		 * The output channels are marked close on exec. This bit
-		 * was duplicated by the dup2(on some systems), so we have
+		 * was duplicated by dup2 (on some systems), so we have
 		 * to clear it before routing the shell's error output to
 		 * the same place as its standard output.
 		 */
-		if (fcntl(1, F_SETFD, 0) == -1)
+		if (fcntl(STDOUT_FILENO, F_SETFD, 0) == -1)
 			execDie("clear close-on-exec", "stdout");
-		if (dup2(1, 2) == -1)
+		if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1)
 			execDie("dup2", "1, 2");
 
 		/*
