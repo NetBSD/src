@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.9 2024/04/30 18:34:19 martin Exp $
+# $NetBSD: md.amd64,v 1.10 2024/05/25 14:11:20 martin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -274,7 +274,7 @@
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-sys-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/i386/libpam.so.4.1.debug	comp-sys-debug	debug,compat,pam
 ./usr/libdata/debug/usr/lib/i386/libpanel.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.9.0.debug	comp-sys-debug	debug,compat
@@ -312,7 +312,7 @@
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/i386/libubsan.so.4.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/i386/libumem.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/i386/libunbound.so.9.0.debug	comp-sys-debug	debug,compat,unbound
 ./usr/libdata/debug/usr/lib/i386/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
