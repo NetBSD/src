@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.726 2024/05/25 21:07:48 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.727 2024/05/25 22:08:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.726 2024/05/25 21:07:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.727 2024/05/25 22:08:35 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -636,7 +636,7 @@ LinkSource(GNode *pgn, GNode *cgn, bool isSpecial)
 		Lst_Append(&cgn->parents, pgn);
 
 	if (DEBUG(PARSE)) {
-		debug_printf("# LinkSource: added child %s - %s\n",
+		debug_printf("Target \"%s\" depends on \"%s\"\n",
 		    pgn->name, cgn->name);
 		Targ_PrintNode(pgn, 0);
 		Targ_PrintNode(cgn, 0);
