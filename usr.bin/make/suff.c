@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.378 2024/02/07 06:43:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.379 2024/05/25 08:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.378 2024/02/07 06:43:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.379 2024/05/25 08:03:19 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -1223,6 +1223,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 
 		DEBUG1(SUFF, "%s...", name);
 		gn = Targ_GetNode(name);
+		free(name);
 
 		/* Insert gn before the original child. */
 		Lst_InsertBefore(&pgn->children, cln, gn);

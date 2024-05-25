@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.292 2024/05/25 00:00:25 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.293 2024/05/25 08:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.292 2024/05/25 00:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.293 2024/05/25 08:03:19 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -876,6 +876,7 @@ SearchPath_ExpandMiddle(SearchPath *path, const char *pattern,
 	(void)SearchPath_Add(partPath, dirpath);
 	DirExpandPath(wildcardComponent + 1, partPath, expansions);
 	SearchPath_Free(partPath);
+	free(dirpath);
 }
 
 /*
