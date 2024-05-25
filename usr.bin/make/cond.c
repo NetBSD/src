@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.363 2024/04/23 22:51:28 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.364 2024/05/25 00:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.363 2024/04/23 22:51:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.364 2024/05/25 00:00:25 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -736,8 +736,10 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	arg = ParseWord(&p, doEval);
 	assert(arg[0] != '\0');
 
-	if (*p == '=' || *p == '!' || *p == '<' || *p == '>')
+	if (*p == '=' || *p == '!' || *p == '<' || *p == '>') {
+		free(arg);
 		return CondParser_Comparison(par, doEval);
+	}
 	par->p = p;
 
 	/*

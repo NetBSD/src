@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.7 2024/05/24 23:02:46 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.8 2024/05/25 00:00:25 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -60,6 +60,7 @@ ENV.no-meta=		USE_META="no"
 SKIP_TESTS.no-meta=	depsrc-meta meta-cmd-cmp
 
 TESTS+=			cleanup
+ENV.cleanup=		MKLINT=yes
 CPPFLAGS.cleanup=	-DCLEANUP
 
 TESTS+=			debug-refcnt

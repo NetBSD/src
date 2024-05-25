@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.333 2024/05/07 18:26:22 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.334 2024/05/25 00:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1004,6 +1004,9 @@ typedef enum VarExportMode {
 } VarExportMode;
 
 void Var_Delete(GNode *, const char *);
+#ifdef CLEANUP
+void Var_DeleteAll(GNode *scope);
+#endif
 void Var_Undef(const char *);
 void Var_Set(GNode *, const char *, const char *);
 void Var_SetExpand(GNode *, const char *, const char *);
