@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1111 2024/05/25 00:00:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1112 2024/05/25 08:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1111 2024/05/25 00:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1112 2024/05/25 08:03:19 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2396,11 +2396,11 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 		    "In the :@ modifier, the variable name \"%s\" "
 		    "must not contain a dollar",
 		    args.var);
-		return AMR_CLEANUP;
+		goto cleanup_tvar;
 	}
 
 	if (!ParseModifierPart(pp, '@', VARE_PARSE_BALANCED, ch, &strBuf))
-		return AMR_CLEANUP;
+		goto cleanup_tvar;
 	str = LazyBuf_DoneGet(&strBuf);
 	args.body = str.str;
 
@@ -2419,6 +2419,10 @@ done:
 	FStr_Done(&tvar);
 	FStr_Done(&str);
 	return AMR_OK;
+
+cleanup_tvar:
+	FStr_Done(&tvar);
+	return AMR_CLEANUP;
 }
 
 static void

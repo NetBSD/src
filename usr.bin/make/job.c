@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.471 2024/05/07 18:26:22 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.472 2024/05/25 08:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.471 2024/05/07 18:26:22 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.472 2024/05/25 08:03:19 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2482,6 +2482,7 @@ Job_ParseShell(char *line)
 			}
 		}
 	} else {
+		free(UNCONST(shellPath));
 		shellPath = path;
 		shellName = newShell.name != NULL ? newShell.name
 		    : str_basename(path);
