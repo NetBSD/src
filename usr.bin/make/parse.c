@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.723 2024/05/19 20:09:40 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.724 2024/05/25 00:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.723 2024/05/19 20:09:40 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.724 2024/05/25 00:00:25 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1263,13 +1263,12 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	}
 
 	if (SkipGuarded(fullname))
-		return;
+		goto done;
 
 	if ((fd = open(fullname, O_RDONLY)) == -1) {
 		if (!silent)
 			Parse_Error(PARSE_FATAL, "Cannot open %s", fullname);
-		free(fullname);
-		return;
+		goto done;
 	}
 
 	buf = LoadFile(fullname, fd);
@@ -1278,6 +1277,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	Parse_PushInput(fullname, 1, 0, buf, NULL);
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
+done:
 	free(fullname);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.291 2024/05/24 22:52:24 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.292 2024/05/25 00:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,7 +132,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.291 2024/05/24 22:52:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.292 2024/05/25 00:00:25 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -501,6 +501,18 @@ Dir_InitDot(void)
 	Dir_SetPATH();		/* initialize */
 }
 
+#ifdef CLEANUP
+static void
+FreeCachedTable(HashTable *tbl)
+{
+	HashIter hi;
+	HashIter_Init(&hi, tbl);
+	while (HashIter_Next(&hi) != NULL)
+		free(hi.entry->value);
+	HashTable_Done(tbl);
+}
+#endif
+
 /* Clean up the directories module. */
 void
 Dir_End(void)
@@ -511,8 +523,8 @@ Dir_End(void)
 	CachedDir_Assign(&dotLast, NULL);
 	SearchPath_Clear(&dirSearchPath);
 	OpenDirs_Done(&openDirs);
-	HashTable_Done(&mtimes);
-	HashTable_Done(&lmtimes);
+	FreeCachedTable(&mtimes);
+	FreeCachedTable(&lmtimes);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1110 2024/05/24 23:02:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1111 2024/05/25 00:00:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1110 2024/05/24 23:02:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1111 2024/05/25 00:00:25 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -581,6 +581,21 @@ Var_Delete(GNode *scope, const char *varname)
 	Buf_Done(&v->val);
 	free(v);
 }
+
+#ifdef CLEANUP
+void
+Var_DeleteAll(GNode *scope)
+{
+	for (;;) {
+		HashIter hi;
+		HashIter_Init(&hi, &scope->vars);
+		if (HashIter_Next(&hi) == NULL)
+			return;
+		((Var *)hi.entry->value)->readOnly = false;
+		Var_Delete(scope, hi.entry->key);
+	}
+}
+#endif
 
 /*
  * Undefine one or more variables from the global scope.
@@ -2466,6 +2481,7 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 	Expr_Define(expr);
 	if (shouldEval)
 		Expr_SetValue(expr, Substring_Str(LazyBuf_Get(&buf)));
+	LazyBuf_Done(&buf);
 
 	return AMR_OK;
 }
@@ -4753,32 +4769,11 @@ Var_Init(void)
 	SCOPE_CMDLINE = GNode_New("Command");
 }
 
-#ifdef CLEANUP
-static void
-Var_DeleteAll(GNode *scope)
-{
-	for (;;) {
-		HashIter hi;
-		HashIter_Init(&hi, &scope->vars);
-		if (!HashIter_Next(&hi))
-			return;
-		((Var *)hi.entry->value)->readOnly = false;
-		Var_Delete(scope, hi.entry->key);
-	}
-}
-
-#endif
-
 /* Clean up the variables module. */
 void
 Var_End(void)
 {
 	Var_Stats();
-#ifdef CLEANUP
-	Var_DeleteAll(SCOPE_CMDLINE);
-	Var_DeleteAll(SCOPE_GLOBAL);
-	Var_DeleteAll(SCOPE_INTERNAL);
-#endif
 }
 
 void
