@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.15 2024/05/19 15:41:53 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.16 2024/05/25 06:27:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.15 2024/05/19 15:41:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.16 2024/05/25 06:27:57 tsutsui Exp $");
 #else
 /* used by macppc_installboot */
 #if HAVE_NBTOOL_CONFIG_H
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.15 2024/05/19 15:41:53 tsutsui Exp
 #include <assert.h>
 #include <dirent.h>
 #define KASSERT(x)	assert(x)	/* XXX for <fs/unicode.h> */
+
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>		/* for le16dec(9) etc. in iso.h */
+#endif
 #endif
 
 #include <fs/cd9660/iso.h>
