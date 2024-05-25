@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.472 2024/05/25 08:03:19 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.473 2024/05/25 21:07:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.472 2024/05/25 08:03:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.473 2024/05/25 21:07:48 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1035,6 +1035,7 @@ JobSaveCommands(Job *job)
 		EvalStack_Pop();
 		/* TODO: handle errors */
 		Lst_Append(&Targ_GetEndNode()->commands, expanded_cmd);
+		Parse_RegisterCommand(expanded_cmd);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.725 2024/05/25 08:03:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.726 2024/05/25 21:07:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.725 2024/05/25 08:03:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.726 2024/05/25 21:07:48 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -218,9 +218,9 @@ static GNodeList *targets;
 #ifdef CLEANUP
 /*
  * All shell commands for all targets, in no particular order and possibly
- * with duplicates.  Kept in a separate list since the commands from .USE or
- * .USEBEFORE nodes are shared with other GNodes, thereby giving up the
- * easily understandable ownership over the allocated strings.
+ * with duplicate values.  Kept in a separate list since the commands from
+ * .USE or .USEBEFORE nodes are shared with other GNodes, thereby giving up
+ * the easily understandable ownership over the allocated strings.
  */
 static StringList targCmds = LST_INIT;
 #endif
@@ -2674,6 +2674,13 @@ FinishDependencyGroup(void)
 	targets = NULL;
 }
 
+#ifdef CLEANUP
+void Parse_RegisterCommand(char *cmd)
+{
+	Lst_Append(&targCmds, cmd);
+}
+#endif
+
 /* Add the command to each target from the current dependency spec. */
 static void
 ParseLine_ShellCommand(const char *p)
@@ -2696,9 +2703,7 @@ ParseLine_ShellCommand(const char *p)
 			GNode *gn = ln->datum;
 			GNode_AddCommand(gn, cmd);
 		}
-#ifdef CLEANUP
-		Lst_Append(&targCmds, cmd);
-#endif
+		Parse_RegisterCommand(cmd);
 	}
 }
 

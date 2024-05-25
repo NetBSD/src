@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.182 2024/05/25 00:00:25 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.183 2024/05/25 21:07:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.182 2024/05/25 00:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.183 2024/05/25 21:07:48 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -219,9 +219,7 @@ GNode_New(const char *name)
 static void
 GNode_Free(GNode *gn)
 {
-#ifdef CLEANUP
 	Var_DeleteAll(gn);
-#endif
 
 	free(gn->name);
 	free(gn->uname);
