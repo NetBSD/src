@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.334 2024/05/25 00:00:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.335 2024/05/25 21:07:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -915,6 +915,15 @@ void Targ_PrintType(GNodeType);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
 const char *GNodeMade_Name(GNodeMade) MAKE_ATTR_USE;
+#ifdef CLEANUP
+void Parse_RegisterCommand(char *);
+#else
+/* ARGSUSED */
+MAKE_INLINE
+void Parse_RegisterCommand(char *cmd MAKE_ATTR_UNUSED)
+{
+}
+#endif
 
 /* var.c */
 void Var_Init(void);

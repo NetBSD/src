@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.256 2024/05/25 15:37:17 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.257 2024/05/25 21:07:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.256 2024/05/25 15:37:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.257 2024/05/25 21:07:48 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -278,11 +278,13 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 			 * usual '$$'.
 			 */
 			Lst_Append(&endNode->commands, cmdStart);
-			return true;
+			goto register_command;
 		}
 	}
 	if (strcmp(cmdStart, "...") == 0) {
 		gn->type |= OP_SAVE_CMDS;
+	register_command:
+		Parse_RegisterCommand(cmdStart);
 		return true;
 	}
 
@@ -302,7 +304,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	while (ch_isspace(*cmd))
 		cmd++;
 	if (cmd[0] == '\0')
-		return true;
+		goto register_command;
 
 	useShell = UseShell(cmd);
 
@@ -312,7 +314,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	}
 
 	if (!doIt && !GNode_ShouldExecute(gn))
-		return true;
+		goto register_command;
 
 	DEBUG1(JOB, "Execute: '%s'\n", cmd);
 
