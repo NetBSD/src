@@ -47,6 +47,7 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_mqueue.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -468,12 +469,23 @@
 274	UNIMPL		mbind
 275	UNIMPL		get_mempolicy
 276	UNIMPL		set_mempolicy
-277	UNIMPL		mq_open
-278	UNIMPL		mq_unlink
-279	UNIMPL		mq_timedsend
-280	UNIMPL		mq_timedreceive
-281	UNIMPL		mq_notify
-282	UNIMPL		mq_getsetattr
+277	STD		{ linux_mqd_t|linux_sys||mq_open(const char *name, \
+			    int oflag, linux_umode_t mode, \
+			    struct linux_mq_attr *attr); }
+278	STD		{ int|linux_sys||mq_unlink(const char *name); }
+279	STD		{ int|linux_sys||mq_timedsend(linux_mqd_t mqdes, \
+			    const char *msg_ptr, size_t msg_len, \
+			    unsigned int msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+280	STD		{ ssize_t|linux_sys||mq_timedreceive(linux_mqd_t mqdes, \
+			    char *msg_ptr, size_t msg_len, \
+			    unsigned int *msg_prio, \
+			    const struct linux_timespec *abs_timeout); }
+281	STD		{ int|linux_sys||mq_notify(linux_mqd_t mqdes, \
+			    const struct linux_sigevent *sevp); }
+282	STD		{ int|linux_sys||mq_getsetattr(linux_mqd_t mqdes, \
+			    const struct linux_mq_attr *newattr, \
+			    struct linux_mq_attr *oldattr); }
 283	UNIMPL		sys_kexec_load
 284	STD		{ int|linux_sys||waitid(int idtype, id_t id, \
 			    linux_siginfo_t *infop, int options, \
