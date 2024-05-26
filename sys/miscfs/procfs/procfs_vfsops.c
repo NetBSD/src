@@ -437,6 +437,9 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 		vp->v_type = VREG;
 		break;
 
+	case PFSsys:	/* /proc/sys = dr-xr-xr-x */
+	case PFSsysfs:	/* /proc/sys/fs = dr-xr-xr-x */
+	case PFSmqueue:	/* /proc/sys/fs/mqueue = dr-xr-xr-x */
 	case PFSsysvipc:/* /proc/sysvipc = dr-xr-xr-x */
 		if (pfs->pfs_fd == -1) {
 			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
@@ -445,6 +448,11 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 			break;
 		}
 		/*FALLTHROUGH*/
+	case PFSmq_msg_def:	/* /proc/sys/fs/mqueue/msg_default = -r--r--r-- */
+	case PFSmq_msg_max:	/* /proc/sys/fs/mqueue/msg_max = -r--r--r-- */
+	case PFSmq_siz_def:	/* /proc/sys/fs/mqueue/msgsize_default = -r--r--r-- */
+	case PFSmq_siz_max:	/* /proc/sys/fs/mqueue/msgsize_max = -r--r--r-- */
+	case PFSmq_qmax:	/* /proc/sys/fs/mqueue/queues_max = -r--r--r-- */
 	case PFSsysvipc_msg:	/* /proc/sysvipc/msg = -r--r--r-- */
 	case PFSsysvipc_sem:	/* /proc/sysvipc/sem = -r--r--r-- */
 	case PFSsysvipc_shm:	/* /proc/sysvipc/shm = -r--r--r-- */

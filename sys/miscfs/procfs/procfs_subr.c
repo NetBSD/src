@@ -299,6 +299,26 @@ procfs_rw(void *v)
 		error = procfs_dosysvipc_shm(curl, p, pfs, uio);
 		break;
 
+	case PFSmq_msg_def:
+		error = procfs_domq_msg_def(curl, p, pfs, uio);
+		break;
+
+	case PFSmq_msg_max:
+		error = procfs_domq_msg_max(curl, p, pfs, uio);
+		break;
+
+	case PFSmq_siz_def:
+		error = procfs_domq_siz_def(curl, p, pfs, uio);
+		break;
+
+	case PFSmq_siz_max:
+		error = procfs_domq_siz_max(curl, p, pfs, uio);
+		break;
+
+	case PFSmq_qmax:
+		error = procfs_domq_qmax(curl, p, pfs, uio);
+		break;
+
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
 		error = procfs_machdep_rw(curl, l, pfs, uio);
