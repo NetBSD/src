@@ -13,7 +13,7 @@ SRCS+=	linux_fdio.c linux_file.c linux_hdio.c linux_ioctl.c
 SRCS+=	linux_ipc.c linux_misc.c linux_mtio.c linux_sched.c
 SRCS+=	linux_sg.c linux_signal.c linux_signo.c linux_socket.c
 SRCS+=	linux_sysctl.c linux_termios.c linux_time.c linux_mod.c
-SRCS+=	linux_inotify.c
+SRCS+=	linux_inotify.c linux_mqueue.c
 
 .if ${MACHINE_CPU} == "aarch64"
 CPPFLAGS+=	-DEXEC_ELF64
