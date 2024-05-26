@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.10 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call argument lists.
@@ -772,6 +772,50 @@ struct linux_sys_sysinfo_args {
 	syscallarg(struct linux_sysinfo *) arg;
 };
 check_syscall_args(linux_sys_sysinfo)
+
+struct linux_sys_mq_open_args {
+	syscallarg(const char *) name;
+	syscallarg(int) oflag;
+	syscallarg(linux_umode_t) mode;
+	syscallarg(struct linux_mq_attr *) attr;
+};
+check_syscall_args(linux_sys_mq_open)
+
+struct linux_sys_mq_unlink_args {
+	syscallarg(const char *) name;
+};
+check_syscall_args(linux_sys_mq_unlink)
+
+struct linux_sys_mq_timedsend_args {
+	syscallarg(linux_mqd_t) mqdes;
+	syscallarg(const char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned int) msg_prio;
+	syscallarg(const struct linux_timespec *) abs_timeout;
+};
+check_syscall_args(linux_sys_mq_timedsend)
+
+struct linux_sys_mq_timedreceive_args {
+	syscallarg(linux_mqd_t) mqdes;
+	syscallarg(char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned int *) msg_prio;
+	syscallarg(const struct linux_timespec *) abs_timeout;
+};
+check_syscall_args(linux_sys_mq_timedreceive)
+
+struct linux_sys_mq_notify_args {
+	syscallarg(linux_mqd_t) mqdes;
+	syscallarg(const struct linux_sigevent *) sevp;
+};
+check_syscall_args(linux_sys_mq_notify)
+
+struct linux_sys_mq_getsetattr_args {
+	syscallarg(linux_mqd_t) mqdes;
+	syscallarg(const struct linux_mq_attr *) newattr;
+	syscallarg(struct linux_mq_attr *) oldattr;
+};
+check_syscall_args(linux_sys_mq_getsetattr)
 #ifdef SYSVMSG
 
 struct sys_msgget_args;
@@ -1359,6 +1403,18 @@ int	sys_getegid(struct lwp *, const void *, register_t *);
 int	linux_sys_gettid(struct lwp *, const void *, register_t *);
 
 int	linux_sys_sysinfo(struct lwp *, const struct linux_sys_sysinfo_args *, register_t *);
+
+int	linux_sys_mq_open(struct lwp *, const struct linux_sys_mq_open_args *, register_t *);
+
+int	linux_sys_mq_unlink(struct lwp *, const struct linux_sys_mq_unlink_args *, register_t *);
+
+int	linux_sys_mq_timedsend(struct lwp *, const struct linux_sys_mq_timedsend_args *, register_t *);
+
+int	linux_sys_mq_timedreceive(struct lwp *, const struct linux_sys_mq_timedreceive_args *, register_t *);
+
+int	linux_sys_mq_notify(struct lwp *, const struct linux_sys_mq_notify_args *, register_t *);
+
+int	linux_sys_mq_getsetattr(struct lwp *, const struct linux_sys_mq_getsetattr_args *, register_t *);
 
 #ifdef SYSVMSG
 int	sys_msgget(struct lwp *, const struct sys_msgget_args *, register_t *);

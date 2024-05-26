@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.10 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.10 2023/08/19 17:50:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.10 2023/08/19 17:50:24 christos E
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #define	s(type)	sizeof(type)
@@ -812,23 +813,35 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_sysinfo
 	},		/* 179 = sysinfo */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 180 = filler */
+		ns(struct linux_sys_mq_open_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_open
+	},		/* 180 = mq_open */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 181 = filler */
+		ns(struct linux_sys_mq_unlink_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_unlink
+	},		/* 181 = mq_unlink */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 182 = filler */
+		ns(struct linux_sys_mq_timedsend_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_timedsend
+	},		/* 182 = mq_timedsend */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 183 = filler */
+		ns(struct linux_sys_mq_timedreceive_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_timedreceive
+	},		/* 183 = mq_timedreceive */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 184 = filler */
+		ns(struct linux_sys_mq_notify_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_notify
+	},		/* 184 = mq_notify */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 185 = filler */
+		ns(struct linux_sys_mq_getsetattr_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_getsetattr
+	},		/* 185 = mq_getsetattr */
 #ifdef SYSVMSG
 	{
 		ns(struct sys_msgget_args),

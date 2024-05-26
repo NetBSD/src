@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.81 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.81 2023/08/19 17:50:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.81 2023/08/19 17:50:24 christos
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/linux_syscallargs.h>
 #else /* _KERNEL_OPT */
@@ -307,12 +308,12 @@ const char *const linux_syscallnames[] = {
 	/* 237 */	"#237 (unimplemented mbind)",
 	/* 238 */	"#238 (unimplemented set_mempolicy)",
 	/* 239 */	"#239 (unimplemented get_mempolicy)",
-	/* 240 */	"#240 (unimplemented mq_open)",
-	/* 241 */	"#241 (unimplemented mq_unlink)",
-	/* 242 */	"#242 (unimplemented mq_timedsend)",
-	/* 243 */	"#243 (unimplemented mq_timedreceive)",
-	/* 244 */	"#244 (unimplemented mq_notify)",
-	/* 245 */	"#245 (unimplemented mq_getsetattr)",
+	/* 240 */	"mq_open",
+	/* 241 */	"mq_unlink",
+	/* 242 */	"mq_timedsend",
+	/* 243 */	"mq_timedreceive",
+	/* 244 */	"mq_notify",
+	/* 245 */	"mq_getsetattr",
 	/* 246 */	"#246 (unimplemented kexec_load)",
 	/* 247 */	"waitid",
 	/* 248 */	"#248 (unimplemented add_key)",
@@ -851,12 +852,12 @@ const char *const altlinux_syscallnames[] = {
 	/* 237 */	NULL, /* unimplemented mbind */
 	/* 238 */	NULL, /* unimplemented set_mempolicy */
 	/* 239 */	NULL, /* unimplemented get_mempolicy */
-	/* 240 */	NULL, /* unimplemented mq_open */
-	/* 241 */	NULL, /* unimplemented mq_unlink */
-	/* 242 */	NULL, /* unimplemented mq_timedsend */
-	/* 243 */	NULL, /* unimplemented mq_timedreceive */
-	/* 244 */	NULL, /* unimplemented mq_notify */
-	/* 245 */	NULL, /* unimplemented mq_getsetattr */
+	/* 240 */	NULL, /* mq_open */
+	/* 241 */	NULL, /* mq_unlink */
+	/* 242 */	NULL, /* mq_timedsend */
+	/* 243 */	NULL, /* mq_timedreceive */
+	/* 244 */	NULL, /* mq_notify */
+	/* 245 */	NULL, /* mq_getsetattr */
 	/* 246 */	NULL, /* unimplemented kexec_load */
 	/* 247 */	NULL, /* waitid */
 	/* 248 */	NULL, /* unimplemented add_key */

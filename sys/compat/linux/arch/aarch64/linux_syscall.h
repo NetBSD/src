@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.10 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call numbers.
@@ -452,6 +452,24 @@
 
 /* syscall: "sysinfo" ret: "int" args: "struct linux_sysinfo *" */
 #define	LINUX_SYS_sysinfo	179
+
+/* syscall: "mq_open" ret: "linux_mqd_t" args: "const char *" "int" "linux_umode_t" "struct linux_mq_attr *" */
+#define	LINUX_SYS_mq_open	180
+
+/* syscall: "mq_unlink" ret: "int" args: "const char *" */
+#define	LINUX_SYS_mq_unlink	181
+
+/* syscall: "mq_timedsend" ret: "int" args: "linux_mqd_t" "const char *" "size_t" "unsigned int" "const struct linux_timespec *" */
+#define	LINUX_SYS_mq_timedsend	182
+
+/* syscall: "mq_timedreceive" ret: "ssize_t" args: "linux_mqd_t" "char *" "size_t" "unsigned int *" "const struct linux_timespec *" */
+#define	LINUX_SYS_mq_timedreceive	183
+
+/* syscall: "mq_notify" ret: "int" args: "linux_mqd_t" "const struct linux_sigevent *" */
+#define	LINUX_SYS_mq_notify	184
+
+/* syscall: "mq_getsetattr" ret: "int" args: "linux_mqd_t" "const struct linux_mq_attr *" "struct linux_mq_attr *" */
+#define	LINUX_SYS_mq_getsetattr	185
 
 #ifdef SYSVMSG
 /* syscall: "msgget" ret: "int" args: "key_t" "int" */

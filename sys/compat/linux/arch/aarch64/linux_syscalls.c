@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.10 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.10 2023/08/19 17:50:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.10 2023/08/19 17:50:24 christos
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/linux_syscallargs.h>
 #else /* _KERNEL_OPT */
 #include <sys/null.h>
@@ -220,12 +221,12 @@ const char *const linux_syscallnames[] = {
 	/* 177 */	"getegid",
 	/* 178 */	"gettid",
 	/* 179 */	"sysinfo",
-	/* 180 */	"#180 (unimplemented mq_open)",
-	/* 181 */	"#181 (unimplemented mq_unlink)",
-	/* 182 */	"#182 (unimplemented mq_timedsend)",
-	/* 183 */	"#183 (unimplemented mq_timedreceive)",
-	/* 184 */	"#184 (unimplemented mq_notify)",
-	/* 185 */	"#185 (unimplemented mq_getsetattr)",
+	/* 180 */	"mq_open",
+	/* 181 */	"mq_unlink",
+	/* 182 */	"mq_timedsend",
+	/* 183 */	"mq_timedreceive",
+	/* 184 */	"mq_notify",
+	/* 185 */	"mq_getsetattr",
 #ifdef SYSVMSG
 	/* 186 */	"msgget",
 	/* 187 */	"msgctl",
@@ -758,12 +759,12 @@ const char *const altlinux_syscallnames[] = {
 	/* 177 */	NULL, /* getegid */
 	/* 178 */	NULL, /* gettid */
 	/* 179 */	NULL, /* sysinfo */
-	/* 180 */	NULL, /* unimplemented mq_open */
-	/* 181 */	NULL, /* unimplemented mq_unlink */
-	/* 182 */	NULL, /* unimplemented mq_timedsend */
-	/* 183 */	NULL, /* unimplemented mq_timedreceive */
-	/* 184 */	NULL, /* unimplemented mq_notify */
-	/* 185 */	NULL, /* unimplemented mq_getsetattr */
+	/* 180 */	NULL, /* mq_open */
+	/* 181 */	NULL, /* mq_unlink */
+	/* 182 */	NULL, /* mq_timedsend */
+	/* 183 */	NULL, /* mq_timedreceive */
+	/* 184 */	NULL, /* mq_notify */
+	/* 185 */	NULL, /* mq_getsetattr */
 #ifdef SYSVMSG
 	/* 186 */	NULL, /* msgget */
 	/* 187 */	NULL, /* msgctl */

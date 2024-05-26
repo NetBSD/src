@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.81 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call numbers.
@@ -620,6 +620,24 @@
 
 /* syscall: "utimes" ret: "int" args: "const char *" "const struct timeval50 *" */
 #define	LINUX_SYS_utimes	235
+
+/* syscall: "mq_open" ret: "linux_mqd_t" args: "const char *" "int" "linux_umode_t" "struct linux_mq_attr *" */
+#define	LINUX_SYS_mq_open	240
+
+/* syscall: "mq_unlink" ret: "int" args: "const char *" */
+#define	LINUX_SYS_mq_unlink	241
+
+/* syscall: "mq_timedsend" ret: "int" args: "linux_mqd_t" "const char *" "size_t" "unsigned int" "const struct linux_timespec *" */
+#define	LINUX_SYS_mq_timedsend	242
+
+/* syscall: "mq_timedreceive" ret: "ssize_t" args: "linux_mqd_t" "char *" "size_t" "unsigned int *" "const struct linux_timespec *" */
+#define	LINUX_SYS_mq_timedreceive	243
+
+/* syscall: "mq_notify" ret: "int" args: "linux_mqd_t" "const struct linux_sigevent *" */
+#define	LINUX_SYS_mq_notify	244
+
+/* syscall: "mq_getsetattr" ret: "int" args: "linux_mqd_t" "const struct linux_mq_attr *" "struct linux_mq_attr *" */
+#define	LINUX_SYS_mq_getsetattr	245
 
 /* syscall: "waitid" ret: "int" args: "int" "id_t" "linux_siginfo_t *" "int" "struct rusage50 *" */
 #define	LINUX_SYS_waitid	247

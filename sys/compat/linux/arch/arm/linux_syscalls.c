@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.92 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.92 2023/08/19 17:50:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -24,6 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.92 2023/08/19 17:50:24 christos
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/linux_syscallargs.h>
 #else /* _KERNEL_OPT */
 #include <sys/null.h>
@@ -309,12 +310,12 @@ const char *const linux_syscallnames[] = {
 	/* 271 */	"#271 (unimplemented pciconfig_iobase)",
 	/* 272 */	"#272 (unimplemented pciconfig_read)",
 	/* 273 */	"#273 (unimplemented pciconfig_write)",
-	/* 274 */	"#274 (unimplemented mq_open)",
-	/* 275 */	"#275 (unimplemented mq_unlink)",
-	/* 276 */	"#276 (unimplemented mq_timedsend)",
-	/* 277 */	"#277 (unimplemented mq_timedreceive)",
-	/* 278 */	"#278 (unimplemented mq_notify)",
-	/* 279 */	"#279 (unimplemented mq_getsetattr)",
+	/* 274 */	"mq_open",
+	/* 275 */	"mq_unlink",
+	/* 276 */	"mq_timedsend",
+	/* 277 */	"mq_timedreceive",
+	/* 278 */	"mq_notify",
+	/* 279 */	"mq_getsetattr",
 	/* 280 */	"waitid",
 	/* 281 */	"#281 (unimplemented socket)",
 	/* 282 */	"#282 (unimplemented bind)",
@@ -831,12 +832,12 @@ const char *const altlinux_syscallnames[] = {
 	/* 271 */	NULL, /* unimplemented pciconfig_iobase */
 	/* 272 */	NULL, /* unimplemented pciconfig_read */
 	/* 273 */	NULL, /* unimplemented pciconfig_write */
-	/* 274 */	NULL, /* unimplemented mq_open */
-	/* 275 */	NULL, /* unimplemented mq_unlink */
-	/* 276 */	NULL, /* unimplemented mq_timedsend */
-	/* 277 */	NULL, /* unimplemented mq_timedreceive */
-	/* 278 */	NULL, /* unimplemented mq_notify */
-	/* 279 */	NULL, /* unimplemented mq_getsetattr */
+	/* 274 */	NULL, /* mq_open */
+	/* 275 */	NULL, /* mq_unlink */
+	/* 276 */	NULL, /* mq_timedsend */
+	/* 277 */	NULL, /* mq_timedreceive */
+	/* 278 */	NULL, /* mq_notify */
+	/* 279 */	NULL, /* mq_getsetattr */
 	/* 280 */	NULL, /* waitid */
 	/* 281 */	NULL, /* unimplemented socket */
 	/* 282 */	NULL, /* unimplemented bind */

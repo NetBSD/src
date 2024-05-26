@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.96 2023/08/19 17:50:25 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.96 2023/08/19 17:50:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -21,6 +21,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.96 2023/08/19 17:50:25 christos E
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_mqueue.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #define	s(type)	sizeof(type)
@@ -1143,23 +1144,35 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 261 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 262 = filler */
+		ns(struct linux_sys_mq_open_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_open
+	},		/* 262 = mq_open */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 263 = filler */
+		ns(struct linux_sys_mq_unlink_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_unlink
+	},		/* 263 = mq_unlink */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 264 = filler */
+		ns(struct linux_sys_mq_timedsend_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_timedsend
+	},		/* 264 = mq_timedsend */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 265 = filler */
+		ns(struct linux_sys_mq_timedreceive_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_timedreceive
+	},		/* 265 = mq_timedreceive */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 266 = filler */
+		ns(struct linux_sys_mq_notify_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_notify
+	},		/* 266 = mq_notify */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 267 = filler */
+		ns(struct linux_sys_mq_getsetattr_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_mq_getsetattr
+	},		/* 267 = mq_getsetattr */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 268 = filler */
