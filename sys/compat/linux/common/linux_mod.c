@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.15 2023/08/19 17:57:54 christos Exp 
 # define	MD3	""
 #endif
 
-#define REQ1    "compat_ossaudio,sysv_ipc,compat_util"
+#define REQ1    "compat_ossaudio,sysv_ipc,mqueue,compat_util"
 #define REQ2    ",compat_50,compat_43"
 
 MODULE(MODULE_CLASS_EXEC, compat_linux, REQ1 REQ2 MD1 MD2 MD3);
