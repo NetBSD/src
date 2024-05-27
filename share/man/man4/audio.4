@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.105 2024/02/27 02:14:23 gutteridge Exp $
+.\"	$NetBSD: audio.4,v 1.106 2024/05/27 02:39:15 nia Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2020
+.Dd May 27, 2024
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -604,11 +604,19 @@ channel.
 If the channel count does not match the current channel count, the
 attempt to change the setting may fail (depending on the hardware
 device driver implementation).
+Audio levels may be adjusted in increments of the
+.Dv delta
+value returned by
+.Dv AUDIO_MIXER_DEVINFO .
+This field is optional for hardware drivers to specify - devices with a
+delta of 0 may allow arbitrary adjustment of levels.
+.Pp
 For an enumeration value, the
 .Va ord
 field should be set to one of the possible values as returned by a prior
 .Dv AUDIO_MIXER_DEVINFO
 command.
+.Pp
 The type
 .Dv AUDIO_MIXER_CLASS
 is only used for classifying particular mixer device
