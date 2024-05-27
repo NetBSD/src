@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.4 2023/08/01 20:09:12 andvar Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.5 2024/05/27 22:03:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_swapcontext.c,v 1.4 2023/08/01 20:09:12 andvar Exp $");
+__RCSID("$NetBSD: t_swapcontext.c,v 1.5 2024/05/27 22:03:21 thorpej Exp $");
 
 #include <ucontext.h>
 #include <stdio.h>
@@ -81,13 +81,9 @@ mainfunc(void)
 	nctx.uc_stack.ss_sp = stack;
 	nctx.uc_stack.ss_size = sizeof(stack);
 
-#ifndef _UC_TLSBASE
-	ATF_REQUIRE_MSG(0, "_UC_TLSBASE is not defined");
-#else /* _UC_TLSBASE */
 	ATF_REQUIRE(nctx.uc_flags & _UC_TLSBASE);
 	if (!alter_tlsbase)
 		nctx.uc_flags &= ~_UC_TLSBASE;
-#endif /* _UC_TLSBASE */
 
 	makecontext(&nctx, swapfunc, 0);
 
@@ -108,6 +104,9 @@ ATF_TC_HEAD(swapcontext1, tc)
 }
 ATF_TC_BODY(swapcontext1, tc)
 {
+#ifdef __vax__
+	atf_tc_expect_fail("PR port-vax/58290");
+#endif
 	alter_tlsbase = 0;
 	mainfunc();
 }
@@ -120,6 +119,9 @@ ATF_TC_HEAD(swapcontext2, tc)
 }
 ATF_TC_BODY(swapcontext2, tc)
 {
+#ifdef __vax__
+	atf_tc_expect_fail("PR port-vax/58290");
+#endif
 	alter_tlsbase = 1;
 	mainfunc();
 }
