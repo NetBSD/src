@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.145 2023/10/01 09:34:28 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.146 2024/05/27 02:47:53 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.145 2023/10/01 09:34:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.146 2024/05/27 02:47:53 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -9151,6 +9151,13 @@ audio_volume_down(device_t dv)
 		mi.un.v.delta = 0;
 		if (audio_query_devinfo(sc, &mi) == 0) {
 			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+			/*
+			 * delta is optional. 16 gives us about 16 increments
+			 * to reach max or minimum gain which seems reasonable
+			 * for keyboard key presses.
+			 */
+			if (mi.un.v.delta == 0)
+				mi.un.v.delta = 16;
 			newgain = gain - mi.un.v.delta;
 			if (newgain < AUDIO_MIN_GAIN)
 				newgain = AUDIO_MIN_GAIN;
@@ -9175,6 +9182,8 @@ audio_volume_up(device_t dv)
 		mi.un.v.delta = 0;
 		if (audio_query_devinfo(sc, &mi) == 0) {
 			au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+			if (mi.un.v.delta == 0) 
+				mi.un.v.delta = 16;
 			newgain = gain + mi.un.v.delta;
 			if (newgain > AUDIO_MAX_GAIN)
 				newgain = AUDIO_MAX_GAIN;
