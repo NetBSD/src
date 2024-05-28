@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.617 2024/05/24 23:02:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.618 2024/05/28 19:09:04 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.617 2024/05/24 23:02:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.618 2024/05/28 19:09:04 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -739,6 +739,10 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 	if ((writable && access(path, W_OK) != 0) || chdir(path) != 0) {
 		(void)fprintf(stderr, "%s: warning: %s: %s.\n",
 		    progname, path, strerror(errno));
+		/* Allow debugging how we got here - not always obvious */
+		if (GetBooleanExpr("${MAKE_DEBUG_OBJDIR_CHECK_WRITABLE}",
+			false))
+			PrintOnError(NULL, "");
 		return false;
 	}
 

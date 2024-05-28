@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.375 2024/03/10 02:53:37 sjg Exp $
+.\"	$NetBSD: make.1,v 1.376 2024/05/28 19:09:04 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd March 9, 2024
+.Dd May 28, 2024
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1143,9 +1143,19 @@ This mode can be used to detect undeclared dependencies between files.
 Used to create files in a separate directory, see
 .Va .OBJDIR .
 .It Va MAKE_OBJDIR_CHECK_WRITABLE
-Used to force a separate directory for the created files,
-even if that directory is not writable, see
-.Va .OBJDIR .
+When true,
+.Nm
+will check that
+.Va .OBJDIR
+is writable, and issue a warning if not.
+.It Va MAKE_DEBUG_OBJDIR_CHECK_WRITABLE
+When true and
+.Nm
+is warning about an unwritable
+.Va .OBJDIR ,
+report the variables listed in
+.Va MAKE_PRINT_VAR_ON_ERROR
+to help debug.
 .It Va MAKEOBJDIRPREFIX
 Used to create files in a separate directory, see
 .Va .OBJDIR .
