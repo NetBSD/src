@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.63 2023/09/23 21:26:16 andvar Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.64 2024/05/28 11:06:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.63 2023/09/23 21:26:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.64 2024/05/28 11:06:07 macallan Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -113,7 +113,7 @@ struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
 struct pmap ofw_pmap;
 struct bat ofw_battable[BAT_VA2IDX(0xffffffff)+1];
 
-char bootpath[256];
+char bootpath[256] = "";
 char model_name[64];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
@@ -165,7 +165,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			while (*args)
 				BOOT_FLAG(*args++, boothowto);
 		}
-	} else {
+	}
+
+	/* if bootpath is still empty, get it from /chosen */
+	if (bootpath[0] == 0) {
 		int chs = OF_finddevice("/chosen");
 		int len;
 
