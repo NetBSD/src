@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.4 2024/05/28 06:57:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigtramp2.S,v 1.3 2023/05/07 12:41:47 skrll Exp $")
+	RCSID("$NetBSD: __sigtramp2.S,v 1.4 2024/05/28 06:57:17 skrll Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 
 /*
- * The MIPS signal trampoline is invoked only to return from
+ * The RISC-V signal trampoline is invoked only to return from
  * the signal; the kernel calls the signal handler directly.
  *
  * On entry, stack looks like:

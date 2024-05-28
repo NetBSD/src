@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 2014/09/19 17:36:26 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2 2024/05/28 06:57:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/exec.h>
 
 /*
- * On MIPS, pointers are signed.
+ * On RISC-V, pointers are signed.
  */
 #define	NETBSD32_POINTER_TYPE			int32_t
 typedef struct { NETBSD32_POINTER_TYPE i32; }	netbsd32_pointer_t;
