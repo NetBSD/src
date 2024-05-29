@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.58 2021/06/04 01:58:02 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.59 2024/05/29 02:06:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -162,7 +162,14 @@
 
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
 
-#define	__RCSID(_s)			__IDSTRING(rcsid,_s)
+#ifdef _NETBSD_REVISIONID
+#define	__RCSID(_s)							      \
+	__IDSTRING(rcsid,_s);						      \
+	__IDSTRING(revisionid,						      \
+	    "$" "NetBSD: " __FILE__ " " _NETBSD_REVISIONID " $")
+#else
+#define	__RCSID(_s)	__IDSTRING(rcsid,_s)
+#endif
 #define	__SCCSID(_s)
 #define __SCCSID2(_s)
 #define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright,_s)

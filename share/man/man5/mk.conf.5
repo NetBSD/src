@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.108 2023/07/23 16:52:37 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.109 2024/05/29 02:06:45 riastradh Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -1859,6 +1859,16 @@ builds from real releases.
 .DFLTu
 .Pq I.e., Dq no .
 .
+.It Sy NETBSD_REVISIONID
+Tree-wide revision identifier, such as a Mercurial or Git commit hash
+or similar.
+If set, will be included in program notes where
+.Xr __RCSID 3
+and
+.Xr __KERNEL_RCSID 3
+are used, and will be reported by
+.Xr ident 1 .
+.DFLTu
 .It Sy NOCLEANDIR
 If set, avoids the
 .Dq make cleandir

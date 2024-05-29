@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.20 2006/05/18 17:55:38 christos Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.21 2024/05/29 02:06:46 riastradh Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -77,7 +77,14 @@
 
 #undef __KERNEL_RCSID
 
+#ifdef _NETBSD_REVISIONID
+#define	__RCSID(_s)							      \
+	__IDSTRING(rcsid,_s);						      \
+	__IDSTRING(revisionid,						      \
+	    "$" "NetBSD: " __FILE__ " " _NETBSD_REVISIONID " $")
+#else
 #define	__RCSID(_s)	__IDSTRING(rcsid,_s)
+#endif
 #define	__SCCSID(_s)
 #define	__SCCSID2(_s)
 #if 0	/* XXX userland __COPYRIGHTs have \ns in them */
