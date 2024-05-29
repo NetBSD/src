@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkoldver,v 1.4 2024/05/28 16:20:34 christos Exp $
+#	$NetBSD: checkoldver,v 1.5 2024/05/29 13:35:12 christos Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,16 +47,14 @@ delete() {
 	then
 		obsol="$obsol.$4"
 	fi
-	echo $PWD/$obsol
+	printf "${PWD}/${obsol}\n"
 }
 
 comparelib() {
 	local name="${1%.so.*}"
-	local version=${1#*.so.}
-	OIFS="$IFS"
-	IFS="$IFS."
+	local version="${1#"${name}"*.so.}"
+	local IFS=.
 	set -- $version
-	IFS="$OIFS"
 
 	if [ -z "$libmajor" ]
 	then
