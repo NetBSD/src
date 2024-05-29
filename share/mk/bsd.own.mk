@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1373 2024/04/28 08:01:04 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1374 2024/05/29 02:06:45 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -233,6 +233,14 @@ PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .endif
 .else
 PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
+.endif
+
+#
+# Make sure we set _NETBSD_REVISIONID in CPPFLAGS if requested.
+#
+.ifdef NETBSD_REVISIONID
+_NETBSD_REVISIONID_STR=	"${NETBSD_REVISIONID}"
+CPPFLAGS+=	-D_NETBSD_REVISIONID=${_NETBSD_REVISIONID_STR:Q}
 .endif
 
 #
