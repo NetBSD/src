@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.6 2024/05/28 22:15:22 riastradh Exp $	*/
+/*	$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.6 2024/05/28 22:15:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -105,7 +105,11 @@ nd_timer(void *arg)
 
 			m->m_nextpkt = NULL;
 			ln->ln_hold = NULL;
+			ln->la_numheld = 0;
 		}
+
+		KASSERTMSG(ln->la_numheld == 0, "la_numheld=%d",
+		    ln->la_numheld);
 
 		missed = ND_LLINFO_INCOMPLETE;
 		ln->ln_state = ND_LLINFO_WAITDELETE;
