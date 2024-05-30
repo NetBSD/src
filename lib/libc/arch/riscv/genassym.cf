@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2023/05/19 06:31:01 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.4 2024/05/30 15:56:43 skrll Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,40 @@ include <sys/ucontext.h>
 
 include <machine/setjmp.h>
 
+define UC_GREGS_RA	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_RA])
 define UC_GREGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
+define UC_GREGS_GP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_GP])
+define UC_GREGS_TP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_TP])
+define UC_GREGS_T0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T0])
+define UC_GREGS_T1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T1])
+define UC_GREGS_T2	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T2])
+define UC_GREGS_S0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S0])
+define UC_GREGS_S1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S1])
+define UC_GREGS_A0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A0])
+define UC_GREGS_A1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A1])
+define UC_GREGS_A2	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A2])
+define UC_GREGS_A3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A3])
+define UC_GREGS_A4	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A4])
+define UC_GREGS_A5	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A5])
+define UC_GREGS_A6	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A6])
+define UC_GREGS_A7	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_A7])
+define UC_GREGS_S2	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S2])
+define UC_GREGS_S3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S3])
+define UC_GREGS_S4	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S4])
+define UC_GREGS_S5	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S5])
+define UC_GREGS_S6	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S6])
+define UC_GREGS_S7	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S7])
+define UC_GREGS_S8	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S8])
+define UC_GREGS_S9	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S9])
+define UC_GREGS_S10	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S10])
+define UC_GREGS_S11	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S11])
+define UC_GREGS_T3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T3])
+define UC_GREGS_T4	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T4])
+define UC_GREGS_T5	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T5])
+define UC_GREGS_T6	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_T6])
 define UC_GREGS_RV	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_RV])
 define UC_GREGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs[0])
 
 define SIG_BLOCK	SIG_BLOCK
 define SIG_SETMASK	SIG_SETMASK
