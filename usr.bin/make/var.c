@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1112 2024/05/25 08:03:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1113 2024/05/30 21:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1112 2024/05/25 08:03:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1113 2024/05/30 21:50:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -586,13 +586,12 @@ Var_Delete(GNode *scope, const char *varname)
 void
 Var_DeleteAll(GNode *scope)
 {
-	for (;;) {
-		HashIter hi;
-		HashIter_Init(&hi, &scope->vars);
-		if (HashIter_Next(&hi) == NULL)
-			return;
-		((Var *)hi.entry->value)->readOnly = false;
-		Var_Delete(scope, hi.entry->key);
+	HashIter hi;
+	HashIter_Init(&hi, &scope->vars);
+	while (HashIter_Next(&hi) != NULL) {
+		Var *v = hi.entry->value;
+		Buf_Done(&v->val);
+		free(v);
 	}
 }
 #endif
