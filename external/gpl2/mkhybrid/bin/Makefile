@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 2024/05/31 20:27:19 tsutsui Exp $
 #	$OpenBSD: Makefile,v 1.8 2022/07/11 03:11:49 daniel Exp $
 
 # NOTE: The mkhybrid distrib also makes an "mkisofs" which is the same binary
@@ -5,19 +6,27 @@
 # to make mkisofs as a link to this, rather than the (earlier) version in
 # the tree.
 
+DIST=	${NETBSDSRCDIR}/external/gpl2/mkhybrid/dist
+
 PROG=	mkhybrid
 MAN=	mkhybrid.8
 BINDIR=	/usr/sbin
-.PATH:	${.CURDIR}/../src ${.CURDIR}/../src/libhfs_iso ${.CURDIR}/../src/libfile
 
-SRCS=	data.c block.c low.c lfile.c btree.c node.c record.c lvolume.c \
-	hfs.c file.c apprentice.c softmagic.c mkisofs.c tree.c write.c \
-	hash.c rock.c multi.c joliet.c match.c name.c eltorito.c \
+.PATH:	${DIST}
+SRCS=	mkisofs.c tree.c write.c hash.c rock.c multi.c \
+	joliet.c match.c name.c eltorito.c \
 	apple.c volume.c desktop.c mac_label.c		
+SRCS+=	getopt.c getopt1.c
 
-CFLAGS+=-DSYSTEM_ID_DEFAULT=\"OpenBSD\" -DAPPLE_HYB -DVANILLA_AUTOCONF \
-	-I${.CURDIR}/../src -I${.CURDIR}/../src/include \
-	-I${.CURDIR}/../src/libhfs_iso \
-	-I${.CURDIR}/../src/libfile
+.PATH:	${DIST}/libhfs_iso
+SRCS+=	block.c btree.c data.c file.c hfs.c low.c lvolume.c node.c record.c
+
+.PATH:	${DIST}/libfile
+SRCS+=	apprentice.c lfile.c softmagic.c
+
+CPPFLAGS+=-DSYSTEM_ID_DEFAULT=\"NetBSD\" -DAPPLE_HYB -DVANILLA_AUTOCONF \
+	-I${DIST} -I${DIST}/include \
+	-I${DIST}/libhfs_iso \
+	-I${DIST}/libfile
 
 .include <bsd.prog.mk>
