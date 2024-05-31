@@ -293,6 +293,8 @@ extern int all_files;
 extern int generate_tables;
 extern int print_size;
 extern int split_output;
+extern int jhide_trans_tbl;
+extern int hide_rr_moved;
 extern int omit_period;
 extern int omit_version_number;
 extern int transparent_compression;

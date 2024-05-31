@@ -407,7 +407,8 @@ got_valid_name:
       set_733((char *) table->isorec.size, tablesize);
       table->size = tablesize;
       table->filedir = this_dir;
-      table->de_flags    |= INHIBIT_JOLIET_ENTRY;
+      if (jhide_trans_tbl)
+         table->de_flags    |= INHIBIT_JOLIET_ENTRY;
       table->name = strdup("<translation table>");
       table->table = (char *) e_malloc(ROUND_UP(tablesize));
       memset(table->table, 0, ROUND_UP(tablesize));
@@ -605,8 +606,13 @@ static void generate_reloc_directory()
 	reloc_dir->next = root->subdir;
 	root->subdir = reloc_dir;
 	reloc_dir->depth = 1;
-	reloc_dir->whole_name = strdup("./rr_moved");
-	reloc_dir->de_name =  strdup("rr_moved");
+	if (hide_rr_moved) {
+		reloc_dir->whole_name = strdup("./.rr_moved");
+		reloc_dir->de_name = strdup(".rr_moved");
+	} else {
+		reloc_dir->whole_name = strdup("./rr_moved");
+		reloc_dir->de_name =  strdup("rr_moved");
+	}
 	reloc_dir->extent = 0;
 	
 	
@@ -638,8 +644,8 @@ static void generate_reloc_directory()
 		fstatbuf.st_mode = 0555 | S_IFDIR;
 		fstatbuf.st_nlink = 2;
 		generate_rock_ridge_attributes("",
-					       "rr_moved", s_entry,
-					       &fstatbuf, &fstatbuf, 0);
+			hide_rr_moved ? ".rr_moved" : "rr_moved",
+			s_entry, &fstatbuf, &fstatbuf, 0);
 	};
 	
 	/* Now create the . and .. entries in rr_moved */
