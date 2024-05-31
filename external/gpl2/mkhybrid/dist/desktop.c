@@ -22,9 +22,11 @@
 
 #ifdef APPLE_HYB
 
+#include <config.h>
 #include <string.h>
 #include <err.h>
-#include "hfs.h"
+#include "mkisofs.h"
+#include "volume.h"
 
 #define	DB	"Desktop DB"
 #define DBFC	"DMGR"

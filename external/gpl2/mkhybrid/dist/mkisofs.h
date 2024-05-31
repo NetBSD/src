@@ -433,6 +433,9 @@ extern int    DECL(check_prev_session, (struct directory_entry **, int len,
 				     struct stat *,
 				     struct directory_entry **));
 
+/* desktop.c */
+extern int make_desktop(hfsvol *, int);
+
 #ifdef	USE_SCG
 /* scsi.c */
 #ifdef __STDC__

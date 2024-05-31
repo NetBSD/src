@@ -20,4 +20,5 @@
 #define VOLUME_H
 
 extern int make_mac_volume(struct directory *, int);
+extern int write_fork(hfsfile *, long);
 #endif
