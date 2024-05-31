@@ -222,11 +222,13 @@ struct ld_option
 #define OPTION_HIDE_RR_MOVED		176
 #if 0
 #define OPTION_GUI			177
+#endif
 #define OPTION_TRANS_TBL		178
 #define OPTION_P_LIST			179
 #define OPTION_I_LIST			180
 #define OPTION_J_LIST			181
 #define OPTION_X_LIST			182
+#if 0
 #define OPTION_NO_RR			183
 #define OPTION_JCHARSET			184
 #define OPTION_PAD			185
@@ -262,13 +264,18 @@ struct ld_option
 #define OPTION_USH			208
 #define OPTION_XIN			209
 
+#if 0
+#define OPTION_DAVE			210
+#define OPTION_SFM			211
+#endif
+
 #define OPTION_PROBE			220
 #define OPTION_MACNAME			221
 #define OPTION_NOMACFILES		222
 #define OPTION_BOOT_HFS_FILE		223
 #define OPTION_MAGIC_FILE		224
 
-#define OPTION_TRANS_TBL		225
+#define OPTION_HFS_LIST			225
 
 #define OPTION_GEN_PT			226
 
@@ -279,15 +286,6 @@ struct ld_option
 #define OPTION_BSIZE			230
 #define OPTION_HFS_VOLID		231
 
-#define OPTION_H_LIST			240
-#endif /* APPLE_HYB */
-
-#define OPTION_P_LIST			241
-#define OPTION_I_LIST			242
-#define OPTION_J_LIST			243
-#define OPTION_X_LIST			244
-
-#ifdef APPLE_HYB
 #define OPTION_HFS_BLESS		245
 #endif /* APPLE_HYB */
 
@@ -421,7 +419,7 @@ static const struct ld_option ld_options[] =
       '\0', NULL, "Do not create the HFS (empty) Desktop files", ONE_DASH },
   { {"hide-hfs", required_argument, NULL, OPTION_HFS_HIDE},
       '\0', "GLOBFILE", "Hide HFS file" , ONE_DASH },
-  { {"hide-hfs-list", required_argument, NULL, OPTION_H_LIST},
+  { {"hide-hfs-list", required_argument, NULL, OPTION_HFS_LIST},
       '\0', "GLOBFILE", "List of HFS files to hide" , ONE_DASH },
   { {"table-name", required_argument, NULL, OPTION_TRANS_TBL},
       '\0', "TABLE_NAME", "translation table file name", ONE_DASH },
@@ -1183,7 +1181,7 @@ int FDECL2(main, int, argc, char **, argv){
       case OPTION_HFS_HIDE:
         hfs_add_match(optarg);
 	break;
-      case OPTION_H_LIST:
+      case OPTION_HFS_LIST:
 	hfs_add_list(optarg);
 	break;
 #endif /* APPLE_HYB */
