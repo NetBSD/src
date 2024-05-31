@@ -22,14 +22,23 @@
 /* Define if you have the sbrk function.  */
 #define HAVE_SBRK 1
 
+/* Define if you have the strdup function.  */
+#define HAVE_STRDUP 1
+
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
+
+/* Define if you have the <flock.h> header file.  */
+/* #undef HAVE_FLOCK_H */
 
 /* Define if you have the <malloc.h> header file.  */
 /* #undef HAVE_MALLOC_H */
 
 /* Define if you have the <ndir.h> header file.  */
 /* #undef HAVE_NDIR_H */
+
+/* Define if you have the <stdlib.h> header file.  */
+#define HAVE_STDLIB_H 1
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
@@ -63,5 +72,3 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
-
-#define HAVE_FLOCK 1

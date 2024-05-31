@@ -12,7 +12,8 @@ if test -z "$ac_header_dirent"; then
 fi
 AC_CHECK_FUNCS(memmove sbrk strdup)
 AC_CHECK_HEADERS(sys/mkdev.h sys/sysmacros.h malloc.h termios.h sys/types.h)
-AC_CHECK_HEADERS(unistd.h string.h strings.h sys/stat.h sys/fcntl.h)
+AC_CHECK_HEADERS(unistd.h string.h strings.h stdlib.h sys/stat.h sys/fcntl.h)
+AC_CHECK_HEADERS(flock.h)
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 AC_OUTPUT(Makefile)
