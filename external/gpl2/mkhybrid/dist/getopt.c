@@ -70,7 +70,7 @@ the executable file might be covered by the GNU General Public License. */
 
 /* This needs to come after some library #include
    to get __GNU_LIBRARY__ defined.  */
-#if defined(__GNU_LIBRARY__) || defined(__OpenBSD__)
+#if defined(HAVE_STDLIB_H)
 /* Don't include stdlib.h for non-GNU C libraries because some of them
    contain conflicting prototypes for getopt.  */
 #include <stdlib.h>
@@ -169,7 +169,7 @@ static enum
   REQUIRE_ORDER, PERMUTE, RETURN_IN_ORDER
 } ordering;
 
-#if defined(__GNU_LIBRARY__) || defined(__OpenBSD__)
+#if defined(HAVE_STRING_H)
 /* We want to avoid inclusion of string.h with non-GNU libraries
    because there are many ways it can cause trouble.
    On some systems, it contains special magic macros that don't work
