@@ -104,6 +104,8 @@ char * boot_image = BOOT_IMAGE_DEFAULT;
 int volume_set_size = 1;
 int volume_sequence_number = 1;
 
+int jhide_trans_tbl;            /* Hide TRANS.TBL from Joliet tree */
+int hide_rr_moved;              /* Name RR_MOVED .rr_moved in Rock Ridge tree */
 int omit_period = 0;             /* Violates iso9660, but these are a pain */
 int transparent_compression = 0; /* So far only works with linux */
 int omit_version_number = 0;     /* May violate iso9660, but noone uses vers*/
@@ -204,6 +206,20 @@ struct ld_option
 #define OPTION_I_HIDE			163
 #define OPTION_J_HIDE			164
 #define OPTION_LOG_FILE			165
+#if 0
+#define OPTION_PVERSION			166
+#define OPTION_NOBAK			167
+#define OPTION_SPARCLABEL		168
+#define OPTION_HARD_DISK_BOOT		169
+#define OPTION_NO_EMUL_BOOT		170
+#define OPTION_NO_BOOT			171
+#define OPTION_BOOT_LOAD_ADDR		172
+#define OPTION_BOOT_LOAD_SIZE		173
+#define OPTION_BOOT_INFO_TABLE		174
+#endif
+#define OPTION_HIDE_TRANS_TBL		175
+#define OPTION_HIDE_RR_MOVED		176
+
 #ifdef APPLE_HYB
 #define OPTION_CAP			200
 #define OPTION_NETA			201
@@ -282,6 +298,10 @@ static const struct ld_option ld_options[] =
   /* NON-HFS change */
   { {"hide-joliet-list", required_argument, NULL, OPTION_J_LIST},
       '\0', "FILE", "List of Joliet files to hide" , ONE_DASH },
+  {{"hide-joliet-trans-tbl", no_argument, NULL, OPTION_HIDE_TRANS_TBL},
+      '\0', NULL, "Hide TRANS.TBL from Joliet tree", ONE_DASH},
+  {{"hide-rr-moved", no_argument, NULL, OPTION_HIDE_RR_MOVED},
+      '\0', NULL, "Rename RR_MOVED to .rr_moved in Rock Ridge tree", ONE_DASH},
 #endif /* APPLE_HYB */
   { {NULL, required_argument, NULL, 'i'},
       'i', "ADD_FILES", "No longer supported" , TWO_DASHES },
@@ -1013,6 +1033,12 @@ int FDECL2(main, int, argc, char **, argv){
 	break;
       case OPTION_J_HIDE:
 	j_add_match(optarg);
+	break;
+      case OPTION_HIDE_TRANS_TBL:
+	jhide_trans_tbl++;
+	break;
+      case OPTION_HIDE_RR_MOVED:
+	hide_rr_moved++;
 	break;
       case OPTION_HELP:
 	usage ();
