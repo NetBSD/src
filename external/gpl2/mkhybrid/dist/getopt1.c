@@ -55,7 +55,7 @@
 
 /* This needs to come after some library #include
    to get __GNU_LIBRARY__ defined.  */
-#ifdef __GNU_LIBRARY__
+#if defined(HAVE_STDLIB_H)
 #include <stdlib.h>
 #else
 char *getenv ();
