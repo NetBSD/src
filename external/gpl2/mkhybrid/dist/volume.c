@@ -26,7 +26,7 @@ int DECL(copy_to_mac_vol, (hfsvol *, struct directory *));
 /*
 **	AlcSiz: find allocation size for given volume size
 */
-int
+static int
 AlcSiz(int vlen)
 {
 	int	lpa, drAlBlkSiz;
@@ -45,7 +45,7 @@ AlcSiz(int vlen)
 /*
 **	XClpSiz: find the default size of the catalog/extent file
 */
-int
+static int
 XClpSiz(int vlen)
 {
 	int	olpa, lpa, drNmAlBlks, drAlBlkSiz;
@@ -79,7 +79,7 @@ XClpSiz(int vlen)
 /*
 **	get_vol_size: get the size of the volume including the extent/catalog
 */
-int
+static int
 get_vol_size(int vblen)
 {
 	int	drXTClpSiz, drAlBlkSiz;

@@ -72,7 +72,7 @@ struct file_hash * FDECL2(find_hash, dev_t, dev, ino_t, inode){
 #ifdef APPLE_HYB
 /* based on flush_file_hash() below - needed as we wnat to re-use the
    file hash table */
-void flush_hash(){
+void flush_hash(void){
 	struct file_hash  * fh, *fh1;
 	int i;
 

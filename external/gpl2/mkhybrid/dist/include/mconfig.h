@@ -191,7 +191,7 @@ extern "C" {
  * If there is no flock defined by the system, use emulation
  * through fcntl record locking.
  */
-#ifndef HAVE_FLOCK
+#if !defined(HAVE_FLOCK_H) && !defined(HAVE_SYS_FCNTL_H)
 #define LOCK_SH         1       /* shared lock */
 #define LOCK_EX         2       /* exclusive lock */
 #define LOCK_NB         4       /* don't block when locking */

@@ -412,7 +412,7 @@ extern int DECL(iso9660_date,(char *, time_t));
 extern void DECL(add_hash,(struct directory_entry *));
 extern struct file_hash * DECL(find_hash,(dev_t, ino_t));
 #ifdef APPLE_HYB
-extern void flush_hash();
+extern void flush_hash(void);
 #endif /* APPLE_HYB */
 extern void DECL(add_directory_hash,(dev_t, ino_t));
 extern struct file_hash * DECL(find_directory_hash,(dev_t, ino_t));
