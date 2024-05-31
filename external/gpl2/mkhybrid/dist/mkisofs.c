@@ -54,11 +54,6 @@
 #endif
 #include <fctldefs.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__) 
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-
 struct directory * root = NULL;
 
 #ifdef APPLE_HYB
@@ -1137,18 +1132,6 @@ int FDECL2(main, int, argc, char **, argv){
 
 parse_input_files:
 
-#if defined(__NetBSD__) || defined(__OpenBSD__) 
-    {
-    struct rlimit rlp;
-	if (getrlimit(RLIMIT_DATA,&rlp) == -1) 
-		perror("Warning: getrlimit");
-	else {
-		rlp.rlim_cur=33554432;
-		if (setrlimit(RLIMIT_DATA,&rlp) == -1)
-			perror("Warning: setrlimit");
-		}
-	}
-#endif
 #ifdef HAVE_SBRK
   mem_start = (unsigned long) sbrk(0);
 #endif
