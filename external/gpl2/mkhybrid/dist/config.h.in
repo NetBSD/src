@@ -21,6 +21,9 @@
 /* Define if you have the sbrk function.  */
 #undef HAVE_SBRK
 
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
 /* Define if you have the <dirent.h> header file.  */
 #undef HAVE_DIRENT_H
 
