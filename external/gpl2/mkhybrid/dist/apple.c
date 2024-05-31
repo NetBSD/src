@@ -92,7 +92,7 @@ static char tmp_type[CT_SIZE+1], tmp_creator[CT_SIZE+1];
 **
 **	':' is replaced by '%' and string is terminated with '\0'
 */
-void
+static void
 cstrncpy(char *t, const char *f, int c)
 {
 	while (c-- && *f)
@@ -142,7 +142,7 @@ hex2char(const char *s)
 	if(strlen(++s) < 2)
 	    return(0);
 
-	if (!isxdigit(*s) || !isxdigit(*(s+1)))
+	if (!isxdigit((int)(u_char)*s) || !isxdigit((int)(u_char)*(s+1)))
 	    return(0);
 
 	o = (dehex(*s) << 4) & 0xf0;
@@ -163,7 +163,7 @@ hex2char(const char *s)
 **	that ":" is replaced by "%"
 **	
 */
-void
+static void
 hstrncpy(unsigned char *t, const char *f, int c)
 {
 	unsigned char	o;
@@ -244,7 +244,7 @@ get_none_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 **	read_info_file:	open and read a finderinfo file for an HFS file
 **			or directory
 */
-int
+static int
 read_info_file(char *name, void *info, int len)
 /* char		*name;				finderinfo filename */
 /* void	 	*info;				info buffer */
@@ -868,7 +868,7 @@ get_sgl_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 **	Only tested with PC Exchange v2.1 - don't know if it will work
 **	with v2.2 and above.
 */
-struct hfs_info *
+static struct hfs_info *
 get_hfs_fe_info(struct hfs_info *hfs_info, char *name)
 {
 	FILE	*fp;
@@ -964,7 +964,7 @@ get_hfs_fe_info(struct hfs_info *hfs_info, char *name)
 **		directory - saves on reading this many times for each
 **		file.
 */
-struct hfs_info *
+static struct hfs_info *
 get_hfs_sgi_info(struct hfs_info *hfs_info, char *name)
 {
 	FILE	*fp;
@@ -1028,7 +1028,7 @@ del_hfs_info(struct hfs_info *hfs_info)
 **	match_key: find the correct hfs_ent using the Unix filename
 **		as the key
 */
-hfsdirent *
+static hfsdirent *
 match_key(struct hfs_info *hfs_info, const char *key)
 {
 	while (hfs_info) {
@@ -1240,7 +1240,7 @@ get_sgi_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 /*
 **	get_hfs_itype: get the type of HFS info for a file
 */
-int
+static int
 get_hfs_itype(const char *wname, const char *dname, char *htmp)
 {
 	int	wlen, i;
