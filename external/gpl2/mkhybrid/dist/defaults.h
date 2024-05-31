@@ -22,6 +22,8 @@
 #define  DEFCREATOR		"unix"  /* default Apple CREATOR */
 #endif /* APPLE_HYB */
 
+#ifndef SYSTEM_ID_DEFAULT
+
 #ifdef __QNX__
 #define  SYSTEM_ID_DEFAULT 	"QNX"
 #endif
@@ -73,3 +75,5 @@
 #ifndef SYSTEM_ID_DEFAULT
 #define  SYSTEM_ID_DEFAULT 	"Unknown"
 #endif
+
+#endif /* !SYSTEM_ID_DEFAULT */
