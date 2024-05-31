@@ -228,8 +228,7 @@ intptr_t hfs_ishidden()
 {
   return((intptr_t)hfs_mat[0]);
 }
-
-/* These will probably appear in mkisofs in the future */
+#endif /* APPLE_HYB */
 
 void add_list(file)
 char *file;
@@ -293,5 +292,3 @@ char *file;
 
   fclose(fp);
 }
-
-#endif /* APPLE_HYB */
