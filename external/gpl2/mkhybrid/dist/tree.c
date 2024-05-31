@@ -410,8 +410,8 @@ got_valid_name:
       if (jhide_trans_tbl)
          table->de_flags    |= INHIBIT_JOLIET_ENTRY;
       table->name = strdup("<translation table>");
-      table->table = (char *) e_malloc(ROUND_UP(tablesize));
-      memset(table->table, 0, ROUND_UP(tablesize));
+      table->table = (char *) e_malloc(ROUND_UP(tablesize)+1);
+      memset(table->table, 0, ROUND_UP(tablesize)+1);
 #ifdef APPLE_HYB
       iso9660_file_length  (trans_tbl, table, 0);
 #else
@@ -678,6 +678,13 @@ static void FDECL2(attach_dot_entries, struct directory *, dirnode,
 	      e_malloc(sizeof (struct directory_entry));
 	    memcpy(s_entry, dirnode->self, 
 		   sizeof(struct directory_entry));
+#ifdef APPLE_HYB
+	    if (dirnode->self->hfs_ent) {
+	      s_entry->hfs_ent = (hfsdirent *) e_malloc(sizeof (hfsdirent));
+	      memcpy(s_entry->hfs_ent, dirnode->self->hfs_ent,
+		     sizeof (hfsdirent));
+            }
+#endif
 	    s_entry->name = strdup("..");
 	    s_entry->whole_name = NULL;
 	    s_entry->isorec.name_len[0] = 1;
@@ -710,6 +717,13 @@ static void FDECL2(attach_dot_entries, struct directory *, dirnode,
 	      e_malloc(sizeof (struct directory_entry));
 	    memcpy(s_entry, dirnode->self, 
 		   sizeof(struct directory_entry));
+#ifdef APPLE_HYB
+	    if (dirnode->self->hfs_ent) {
+	      s_entry->hfs_ent = (hfsdirent *) e_malloc(sizeof (hfsdirent));
+	      memcpy(s_entry->hfs_ent, dirnode->self->hfs_ent,
+		     sizeof (hfsdirent));
+	    }
+#endif
 	    s_entry->name = strdup(".");
 	    s_entry->whole_name = NULL;
 	    s_entry->isorec.name_len[0] = 1;
