@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1114 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1115 2024/05/31 20:21:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1114 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1115 2024/05/31 20:21:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2145,13 +2145,23 @@ ParseModifierPartBalanced(const char **pp, LazyBuf *part)
 	}
 }
 
-/* See ParseModifierPart for the documentation. */
+/*
+ * Parse a part of a modifier such as the "from" and "to" in :S/from/to/ or
+ * the "var" or "replacement ${var}" in :@var@replacement ${var}@, up to and
+ * including the next unescaped delimiter.  The delimiter, as well as the
+ * backslash or the dollar, can be escaped with a backslash.
+ *
+ * Return true if parsing succeeded, together with the parsed (and possibly
+ * expanded) part.  In that case, pp points right after the delimiter.  The
+ * delimiter is not included in the part though.
+ */
 static bool
-ParseModifierPartSubst(
+ParseModifierPart(
+    /* The parsing position, updated upon return */
     const char **pp,
-    /* If true, parse up to but excluding the next ':' or ch->endc. */
-    bool whole,
-    char delim,
+    char end1,
+    char end2,
+    /* Mode for evaluating nested expressions. */
     VarEvalMode emode,
     ModChain *ch,
     LazyBuf *part,
@@ -2167,16 +2177,11 @@ ParseModifierPartSubst(
     struct ModifyWord_SubstArgs *subst
 )
 {
-	const char *p;
-	char end1, end2;
+	const char *p = *pp;
 
-	p = *pp;
 	LazyBuf_Init(part, p);
-
-	end1 = whole ? ':' : delim;
-	end2 = whole ? ch->endc : delim;
 	while (*p != '\0' && *p != end1 && *p != end2) {
-		if (IsEscapedModifierPart(p, delim, subst)) {
+		if (IsEscapedModifierPart(p, end2, subst)) {
 			LazyBuf_Add(part, p[1]);
 			p += 2;
 		} else if (*p != '$') {	/* Unescaped, simple text */
@@ -2185,7 +2190,7 @@ ParseModifierPartSubst(
 			else
 				LazyBuf_Add(part, *p);
 			p++;
-		} else if (p[1] == delim) {	/* Unescaped '$' at end */
+		} else if (p[1] == end2) {	/* Unescaped '$' at end */
 			if (out_pflags != NULL)
 				out_pflags->anchorEnd = true;
 			else
@@ -2204,7 +2209,7 @@ ParseModifierPartSubst(
 		LazyBuf_Done(part);
 		return false;
 	}
-	if (!whole)
+	if (end1 == end2)
 		(*pp)++;
 
 	{
@@ -2214,32 +2219,6 @@ ParseModifierPartSubst(
 	}
 
 	return true;
-}
-
-/*
- * Parse a part of a modifier such as the "from" and "to" in :S/from/to/ or
- * the "var" or "replacement ${var}" in :@var@replacement ${var}@, up to and
- * including the next unescaped delimiter.  The delimiter, as well as the
- * backslash or the dollar, can be escaped with a backslash.
- *
- * Return true if parsing succeeded, together with the parsed (and possibly
- * expanded) part.  In that case, pp points right after the delimiter.  The
- * delimiter is not included in the part though.
- */
-static bool
-ParseModifierPart(
-    /* The parsing position, updated upon return */
-    const char **pp,
-    /* Parsing stops at this delimiter */
-    char delim,
-    /* Mode for evaluating nested expressions. */
-    VarEvalMode emode,
-    ModChain *ch,
-    LazyBuf *part
-)
-{
-	return ParseModifierPartSubst(pp, false, delim, emode, ch, part,
-	    NULL, NULL);
 }
 
 MAKE_INLINE bool
@@ -2386,7 +2365,8 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	args.scope = expr->scope;
 
 	(*pp)++;		/* Skip the first '@' */
-	if (!ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &tvarBuf))
+	if (!ParseModifierPart(pp, '@', '@', VARE_PARSE_ONLY,
+	    ch, &tvarBuf, NULL, NULL))
 		return AMR_CLEANUP;
 	tvar = LazyBuf_DoneGet(&tvarBuf);
 	args.var = tvar.str;
@@ -2398,7 +2378,8 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 		goto cleanup_tvar;
 	}
 
-	if (!ParseModifierPart(pp, '@', VARE_PARSE_BALANCED, ch, &strBuf))
+	if (!ParseModifierPart(pp, '@', '@', VARE_PARSE_BALANCED,
+	    ch, &strBuf, NULL, NULL))
 		goto cleanup_tvar;
 	str = LazyBuf_DoneGet(&strBuf);
 	args.body = str.str;
@@ -2542,7 +2523,7 @@ ApplyModifier_Time(const char **pp, ModChain *ch)
 		const char *p = args + 1;
 		LazyBuf buf;
 		FStr arg;
-		if (!ParseModifierPartSubst(&p, true, '\0', ch->expr->emode,
+		if (!ParseModifierPart(&p, ':', ch->endc, ch->expr->emode,
 		    ch, &buf, NULL, NULL))
 			return AMR_CLEANUP;
 		arg = LazyBuf_DoneGet(&buf);
@@ -2624,7 +2605,8 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 	FStr cmd;
 
 	(*pp)++;
-	if (!ParseModifierPart(pp, '!', expr->emode, ch, &cmdBuf))
+	if (!ParseModifierPart(pp, '!', '!', expr->emode,
+	    ch, &cmdBuf, NULL, NULL))
 		return AMR_CLEANUP;
 	cmd = LazyBuf_DoneGet(&cmdBuf);
 
@@ -2941,13 +2923,13 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 		(*pp)++;
 	}
 
-	if (!ParseModifierPartSubst(pp,
-	    false, delim, ch->expr->emode, ch, &lhsBuf, &args.pflags, NULL))
+	if (!ParseModifierPart(pp, delim, delim, ch->expr->emode,
+	    ch, &lhsBuf, &args.pflags, NULL))
 		return AMR_CLEANUP;
 	args.lhs = LazyBuf_Get(&lhsBuf);
 
-	if (!ParseModifierPartSubst(pp,
-	    false, delim, ch->expr->emode, ch, &rhsBuf, NULL, &args)) {
+	if (!ParseModifierPart(pp, delim, delim, ch->expr->emode,
+	    ch, &rhsBuf, NULL, &args)) {
 		LazyBuf_Done(&lhsBuf);
 		return AMR_CLEANUP;
 	}
@@ -2982,11 +2964,13 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 
 	*pp += 2;
 
-	if (!ParseModifierPart(pp, delim, ch->expr->emode, ch, &reBuf))
+	if (!ParseModifierPart(pp, delim, delim, ch->expr->emode,
+	    ch, &reBuf, NULL, NULL))
 		return AMR_CLEANUP;
 	re = LazyBuf_DoneGet(&reBuf);
 
-	if (!ParseModifierPart(pp, delim, ch->expr->emode, ch, &replaceBuf)) {
+	if (!ParseModifierPart(pp, delim, delim, ch->expr->emode,
+	    ch, &replaceBuf, NULL, NULL)) {
 		FStr_Done(&re);
 		return AMR_CLEANUP;
 	}
@@ -3213,7 +3197,8 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	FStr arg;
 
 	(*pp)++;		/* skip the '[' */
-	if (!ParseModifierPart(pp, ']', expr->emode, ch, &argBuf))
+	if (!ParseModifierPart(pp, ']', ']', expr->emode,
+	    ch, &argBuf, NULL, NULL))
 		return AMR_CLEANUP;
 	arg = LazyBuf_DoneGet(&argBuf);
 	p = arg.str;
@@ -3450,10 +3435,12 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	}
 
 	(*pp)++;		/* skip past the '?' */
-	if (!ParseModifierPart(pp, ':', then_emode, ch, &thenBuf))
+	if (!ParseModifierPart(pp, ':', ':', then_emode,
+	    ch, &thenBuf, NULL, NULL))
 		return AMR_CLEANUP;
 
-	if (!ParseModifierPart(pp, ch->endc, else_emode, ch, &elseBuf)) {
+	if (!ParseModifierPart(pp, ch->endc, ch->endc, else_emode,
+	    ch, &elseBuf, NULL, NULL)) {
 		LazyBuf_Done(&thenBuf);
 		return AMR_CLEANUP;
 	}
@@ -3533,7 +3520,8 @@ found_op:
 
 	*pp = mod + (op[0] != '=' ? 3 : 2);
 
-	if (!ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf))
+	if (!ParseModifierPart(pp, ch->endc, ch->endc, expr->emode,
+	    ch, &buf, NULL, NULL))
 		return AMR_CLEANUP;
 	val = LazyBuf_DoneGet(&buf);
 
@@ -3692,13 +3680,12 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (!IsSysVModifier(mod, ch->startc, ch->endc))
 		return AMR_UNKNOWN;
 
-	if (!ParseModifierPart(pp, '=', expr->emode, ch, &lhsBuf))
+	if (!ParseModifierPart(pp, '=', '=', expr->emode,
+	    ch, &lhsBuf, NULL, NULL))
 		return AMR_CLEANUP;
 
-	/*
-	 * The SysV modifier lasts until the end of the expression.
-	 */
-	if (!ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhsBuf)) {
+	if (!ParseModifierPart(pp, ch->endc, ch->endc, expr->emode,
+	    ch, &rhsBuf, NULL, NULL)) {
 		LazyBuf_Done(&lhsBuf);
 		return AMR_CLEANUP;
 	}
