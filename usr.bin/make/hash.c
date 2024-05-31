@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.76 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.77 2024/05/31 07:11:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.76 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.77 2024/05/31 07:11:12 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -317,7 +317,7 @@ HashIter_Next(HashIter *hi)
 		he = buckets[hi->nextBucket++];
 	}
 	hi->entry = he;
-	return he != NULL;
+	return true;
 }
 
 void
