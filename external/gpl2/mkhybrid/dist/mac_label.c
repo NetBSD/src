@@ -23,6 +23,7 @@
 #include <mkisofs.h>
 #include "mac_label_proto.h"
 #include <mac_label.h>
+#include "data.h"
 
 int
 gen_mac_label(defer *mac_boot)

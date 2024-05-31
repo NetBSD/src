@@ -149,4 +149,5 @@ int hfs_rename(hfsvol *, char *, char *);
 #ifdef APPLE_HYB
 unsigned short hfs_get_drAllocPtr(hfsfile *);
 int hfs_set_drAllocPtr(hfsfile *, unsigned short, int size);
+void hfs_vsetbless(hfsvol *, unsigned long);
 #endif /* APPLE_HYB */
