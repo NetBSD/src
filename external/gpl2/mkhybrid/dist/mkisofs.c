@@ -104,6 +104,7 @@ char * boot_image = BOOT_IMAGE_DEFAULT;
 int volume_set_size = 1;
 int volume_sequence_number = 1;
 
+int use_graft_ptrs = 0;         /* Use graft points */
 int jhide_trans_tbl;            /* Hide TRANS.TBL from Joliet tree */
 int hide_rr_moved;              /* Name RR_MOVED .rr_moved in Rock Ridge tree */
 int omit_period = 0;             /* Violates iso9660, but these are a pain */
@@ -219,6 +220,34 @@ struct ld_option
 #endif
 #define OPTION_HIDE_TRANS_TBL		175
 #define OPTION_HIDE_RR_MOVED		176
+#if 0
+#define OPTION_GUI			177
+#define OPTION_TRANS_TBL		178
+#define OPTION_P_LIST			179
+#define OPTION_I_LIST			180
+#define OPTION_J_LIST			181
+#define OPTION_X_LIST			182
+#define OPTION_NO_RR			183
+#define OPTION_JCHARSET			184
+#define OPTION_PAD			185
+#define OPTION_H_HIDE			186
+#define OPTION_H_LIST			187
+#define OPTION_CHECK_OLDNAMES		188
+
+#ifdef SORTING
+#define OPTION_SORT			189
+#endif /* SORTING */
+#define OPTION_UCS_LEVEL		190
+#define OPTION_ISO_TRANSLATE		191
+#define OPTION_ISO_LEVEL		192
+#define OPTION_RELAXED_FILENAMES	193
+#define OPTION_ALLOW_LOWERCASE		194
+#define OPTION_ALLOW_MULTIDOT		195
+#define OPTION_USE_FILEVERSION		196
+#define OPTION_MAX_FILENAMES		197
+#define OPTION_ALT_BOOT			198
+#endif
+#define OPTION_USE_GRAFT		199
 
 #ifdef APPLE_HYB
 #define OPTION_CAP			200
@@ -251,13 +280,18 @@ struct ld_option
 #define OPTION_HFS_VOLID		231
 
 #define OPTION_H_LIST			240
+#endif /* APPLE_HYB */
+
 #define OPTION_P_LIST			241
 #define OPTION_I_LIST			242
 #define OPTION_J_LIST			243
 #define OPTION_X_LIST			244
 
+#ifdef APPLE_HYB
 #define OPTION_HFS_BLESS		245
 #endif /* APPLE_HYB */
+
+static int	save_pname = 0;
 
 static const struct ld_option ld_options[] =
 {
@@ -283,26 +317,22 @@ static const struct ld_option ld_options[] =
       'D', NULL, "Disable deep directory relocation", ONE_DASH },
   { {"follow-links", no_argument, NULL, 'f'},
       'f', NULL, "Follow symbolic links", ONE_DASH },
+  {{"graft-points", no_argument, NULL, OPTION_USE_GRAFT},
+      '\0', NULL, "Allow to use graft points for filenames", ONE_DASH},
   { {"help", no_argument, NULL, OPTION_HELP},
       '\0', NULL, "Print option help", ONE_DASH },
   { {"hide", required_argument, NULL, OPTION_I_HIDE},
       '\0', "GLOBFILE", "Hide ISO9660/RR file" , ONE_DASH },
-#ifdef APPLE_HYB
-  /* NON-HFS change */
   { {"hide-list", required_argument, NULL, OPTION_I_LIST},
       '\0', "FILE", "list of ISO9660/RR files to hide" , ONE_DASH },
-#endif /* APPLE_HYB */
   { {"hide-joliet", required_argument, NULL, OPTION_J_HIDE},
       '\0', "GLOBFILE", "Hide Joliet file" , ONE_DASH },
-#ifdef APPLE_HYB
-  /* NON-HFS change */
   { {"hide-joliet-list", required_argument, NULL, OPTION_J_LIST},
       '\0', "FILE", "List of Joliet files to hide" , ONE_DASH },
   {{"hide-joliet-trans-tbl", no_argument, NULL, OPTION_HIDE_TRANS_TBL},
       '\0', NULL, "Hide TRANS.TBL from Joliet tree", ONE_DASH},
   {{"hide-rr-moved", no_argument, NULL, OPTION_HIDE_RR_MOVED},
       '\0', NULL, "Rename RR_MOVED to .rr_moved in Rock Ridge tree", ONE_DASH},
-#endif /* APPLE_HYB */
   { {NULL, required_argument, NULL, 'i'},
       'i', "ADD_FILES", "No longer supported" , TWO_DASHES },
   { {"joliet", no_argument, NULL, 'J'},
@@ -315,10 +345,8 @@ static const struct ld_option ld_options[] =
       '\0', "LOG_FILE", "Re-direct messages to LOG_FILE", ONE_DASH },
   { {"exclude", required_argument, NULL, 'm'},
       'm', "GLOBFILE", "Exclude file name" , ONE_DASH },
-#ifdef APPLE_HYB
   { {"exclude-list", required_argument, NULL, OPTION_X_LIST},
       'm', "FILE", "List of file names to exclude" , ONE_DASH },
-#endif /* APPLE_HYB */
   { {"prev-session", required_argument, NULL, 'M'},
       'M', "FILE", "Set path to previous session to merge" , ONE_DASH },
   { {"omit-version-number", no_argument, NULL, 'N'},
@@ -329,10 +357,8 @@ static const struct ld_option ld_options[] =
       0, NULL, "Inhibit splitting symlink fields" , ONE_DASH },
   { {"output", required_argument, NULL, 'o'},
       'o', "FILE", "Set output file name" , ONE_DASH },
-#ifdef APPLE_HYB
   { {"path-list", required_argument, NULL, OPTION_P_LIST},
       '\0', "FILE", "list of pathnames to process" , ONE_DASH },
-#endif /* APPLE_HYB */
   { {"preparer", required_argument, NULL, 'p'},
       'p', "PREP", "Set Volume preparer" , ONE_DASH },
   { {"print-size", no_argument, NULL, OPTION_PRINT_SIZE},
@@ -436,6 +462,12 @@ char *s;{char *c;if(c=(char *)malloc(strlen(s)+1))strcpy(c,s);return c;}
 	void read_rcfile	__PR((char * appname));
 	void usage		__PR((void));
 static	void hide_reloc_dir	__PR((void));
+static  char * get_pnames	__PR((int argc, char **argv, int opt,
+					char *pname, int pnsize, FILE * fp));
+
+	int main		__PR((int argc, char **argv));
+	char * findequal	__PR((char *s));
+	char * escstrcpy	__PR((char *to, char *from));
 
 void FDECL1(read_rcfile, char *, appname)
 {
@@ -755,16 +787,30 @@ hide_reloc_dir()
 
 /* get pathnames from the command line, and then from given file */
 static char *
-FDECL5(get_pnames, int, argc, char **, argv, int, opt, char *, pname, FILE *, fp)
+get_pnames(int argc, char **argv, int opt, char *pname, int pnsize, FILE * fp)
 {
+	int len;
+
+	/* we may of already read the first line from the pathnames file */
+	if (save_pname) {
+		save_pname = 0;
+		return (pname);
+	}
+
 	if (opt < argc)
 	    return (argv[opt]);
 
 	if (fp == NULL)
 	    return ((char *)0);
 
-	if (fscanf(fp, "%s", pname) != EOF)
-	    return (pname);
+	if (fgets(pname, pnsize, fp)) {
+		/* Discard newline */
+		len = strlen(pname);
+		if (pname[len - 1] == '\n') {
+			pname[len - 1] = '\0';
+		}
+		return (pname);
+	}
 
 	return ((char *)0);
 }
@@ -777,7 +823,6 @@ int FDECL2(main, int, argc, char **, argv){
   unsigned long mem_start;
 #endif
   struct stat statbuf;
-  char * scan_tree;
   char * merge_image = NULL;
   struct iso_directory_record * mrootp = NULL;
   struct output_fragment * opnt;
@@ -786,12 +831,16 @@ int FDECL2(main, int, argc, char **, argv){
   struct option longopts[OPTION_COUNT + 1];
   int c;
   char *log_file = 0;
-#ifdef APPLE_HYB
-  char *afpfile = "";		/* mapping file for TYPE/CREATOR */
+  char *node = NULL;
   char *pathnames = 0;
   FILE *pfp = NULL;
-  char pname[1024], *arg;
-  int no_path_names = 0;
+  char pname[2*PATH_MAX + 1 + 1];	/* may be too short */
+  char *arg;				/* if '\\' present */
+  char nodename[PATH_MAX + 1];
+  int no_path_names = 1;
+  int have_cmd_line_pathspec = 0;
+#ifdef APPLE_HYB
+  char *afpfile = "";		/* mapping file for TYPE/CREATOR */
 #endif /* APPLE_HYB */
 
   if (argc < 2)
@@ -850,7 +899,12 @@ int FDECL2(main, int, argc, char **, argv){
 	 * A filename that we take as input.
 	 */
 	optind--;
+	have_cmd_line_pathspec = 1;
 	goto parse_input_files;
+
+      case OPTION_USE_GRAFT:
+	use_graft_ptrs = 1;
+	break;
       case 'C':
 	/*
 	 * This is a temporary hack until cdwrite gets the proper hooks in
@@ -1132,8 +1186,7 @@ int FDECL2(main, int, argc, char **, argv){
       case OPTION_H_LIST:
 	hfs_add_list(optarg);
 	break;
-/* NON-HFS change 
-   The next options will probably appear in mkisofs in the future */
+#endif /* APPLE_HYB */
       case OPTION_P_LIST:
 	pathnames = optarg;
 	break;
@@ -1146,7 +1199,6 @@ int FDECL2(main, int, argc, char **, argv){
       case OPTION_J_LIST:
 	j_add_list(optarg);
 	break;
-#endif /* APPLE_HYB */
       default:
 	usage();
 	exit(1);
@@ -1220,23 +1272,37 @@ parse_input_files:
       fprintf(stderr,"Warning: -C specified without -M: old session data will not be merged.\n");
     }
 
+  /*
+   * see if we have a list of pathnames to process
+   */
+  if (pathnames) {
+    /* "-" means take list from the standard input */
+    if (strcmp(pathnames, "-")) {
+      if ((pfp = fopen(pathnames, "r")) == NULL) {
+        fprintf(stderr,
+                "Unable to open pathname list %s.\n", pathnames);
+	exit(1);
+      }
+    } else
+      pfp = stdin;
+  }
+
   /*  The first step is to scan the directory tree, and take some notes */
 
-  scan_tree = argv[optind];
-
-
-  if(!scan_tree){
+  if ((arg = get_pnames(argc, argv, optind, pname,
+			sizeof(pname), pfp)) == NULL) {
 	  usage();
 	  exit(1);
   };
 
-#ifndef VMS
-  if(scan_tree[strlen(scan_tree)-1] != '/') {
-    scan_tree = (char *) e_malloc(strlen(argv[optind])+2);
-    strcpy(scan_tree, argv[optind]);
-    strcat(scan_tree, "/");
-  };
-#endif
+  /*
+   * if we don't have a pathspec, then save the pathspec found
+   * in the pathnames file (stored in pname) - we don't want
+   * to skip this pathspec when we read the pathnames file again
+   */
+  if (!have_cmd_line_pathspec) {
+    save_pname = 1;
+  }
 
   if(use_RockRidge){
 #if 1
@@ -1277,7 +1343,23 @@ parse_input_files:
       fprintf(stderr,"\n%s\n", version_string);
     }
   }
-
+  /* Find name of root directory. */
+  if (arg != NULL)
+    node = findequal(arg);
+  if (!use_graft_ptrs)
+    node = NULL;
+  if (node == NULL) {
+    if (use_graft_ptrs && arg != NULL)
+      node = escstrcpy(nodename, arg);
+    else
+      node = arg;
+  } else {
+    /*
+     * Remove '\\' escape chars which are located
+     * before '\\' and '=' chars
+     */
+    node = escstrcpy(nodename, ++node);
+  }
   /*
    * See if boot catalog file exists in root directory, if not
    * we will create it.
@@ -1324,40 +1406,20 @@ parse_input_files:
    */
   find_or_create_directory(NULL, "", &de, TRUE);
 
-#ifdef APPLE_HYB
-  /* NON-HFS change: see if we have a list of pathnames to process */
-  if (pathnames) {
-	/* "-" means take list from the standard input */
-	if (strcmp(pathnames, "-")) {
-	    if ((pfp = fopen(pathnames, "r")) == NULL) {
-		fprintf(stderr, "unable to open pathname list %s\n",pathnames);
-		exit (1);
-	    }
-	}
-	else
-	    pfp = stdin;
-  }
-#endif /* APPLE_HYB */
-
   /*
    * Scan the actual directory (and any we find below it)
    * for files to write out to the output image.  Note - we
    * take multiple source directories and keep merging them
    * onto the image.
    */
-#if APPLE_HYB
-  /* NON-HFS change */
-  while((arg = get_pnames(argc, argv, optind, pname, pfp)) != NULL)
-#else
-  while(optind < argc)
-#endif /* APPLE_HYB */
+  while((arg = get_pnames(argc, argv, optind, pname,
+					sizeof(pname), pfp)) != NULL)
     {
-      char * node;
       struct directory * graft_dir;
       struct stat        st;
       char             * short_name;
       int                status;
-      char   graft_point[1024];
+      char   graft_point[PATH_MAX + 1];
 
       /*
        * We would like a syntax like:
@@ -1382,42 +1444,86 @@ parse_input_files:
        * The default will be that the file is injected at the
        * root of the image tree.
        */
-#ifdef APPLE_HYB
-      /* NON-HFS change */
-      node = strchr(arg, '=');
-#else
-      node = strchr(argv[optind], '=');
-#endif /* APPLE_HYB */
+      node = findequal(arg);
+      if (!use_graft_ptrs)
+        node = NULL;
+      /*
+       * Remove '\\' escape chars which are located
+       * before '\\' and '=' chars ---> below in escstrcpy()
+       */
+
       short_name = NULL;
 
       if( node != NULL )
 	{
 	  char * pnt;
 	  char * xpnt;
+	  size_t len;
 
-	  *node = '\0';
-#ifdef APPLE_HYB
-	  /* NON-HFS change */
-	  strcpy(graft_point, arg);
-#else
-	  strcpy(graft_point, argv[optind]);
-#endif /* APPLE_HYB */
-	  *node = '=';
-	  node++;
+	  if (node) {
+	    *node = '\0';
+	    escstrcpy(graft_point, arg);
+	    *node = '=';
+	  }
+
+	  /*
+	   * Remove unwanted "./" & "/" sequences from start...
+	   */
+	  do {
+	    xpnt = graft_point;
+	    while (xpnt[0] == '.' && xpnt[1] == '/')
+	      xpnt += 2;
+	    while (*xpnt == PATH_SEPARATOR) {
+	      xpnt++;
+	    }
+	    strcpy(graft_point, xpnt);
+	  } while (xpnt > graft_point);
+
+	  if (node) {
+	    node = escstrcpy(nodename, ++node);
+	  } else {
+	    node = arg;
+	  }
 
 	  graft_dir = root;
 	  xpnt = graft_point;
-	  if( *xpnt == PATH_SEPARATOR )
-	    {
-	      xpnt++;
+	  /*
+	   * If "node" points to a directory, then graft_point
+	   * needs to point to a directory too.
+	   */
+	  if (follow_links)
+	    status = stat_filter(node, &st);
+	  else
+	    status = lstat_filter(node, &st);
+	  if (status == 0 && S_ISDIR(st.st_mode)) {
+	    len = strlen(graft_point);
+
+	    if ((len <= (sizeof (graft_point) -1)) &&
+		graft_point[len-1] != '/') {
+	      graft_point[len++] = '/';
+	      graft_point[len] = '\0';
 	    }
+	  }
 
 	  /*
 	   * Loop down deeper and deeper until we
 	   * find the correct insertion spot.
+	   * Canonicalize the filename while parsing it.
 	   */
 	  while(1==1)
 	    {
+	      do {
+		while (xpnt[0] == '.' && xpnt[1] == '/')
+		  xpnt += 2;
+		while (xpnt[0] == '/')
+		  xpnt += 1;
+		if (xpnt[0] == '.' && xpnt[1] == '.' && xpnt[2] == '/') {
+		  if (graft_dir && graft_dir != root) {
+		    graft_dir = graft_dir->parent;
+		    xpnt += 2;
+		  }
+	        }
+	      } while ((xpnt[0] == '/') || (xpnt[0] == '.' && xpnt[1] == '/'));
 	      pnt = strchr(xpnt, PATH_SEPARATOR);
 	      if( pnt == NULL )
 		{
@@ -1438,19 +1544,20 @@ parse_input_files:
       else
 	{
 	  graft_dir = root;
-#ifdef APPLE_HYB
-	  /* NON-HFS change */
-	  node = arg;
-#else
-	  node = argv[optind];
-#endif /* APPLE_HYB */
+	  if (use_graft_ptrs)
+	    node = escstrcpy(nodename, arg);
+	  else
+	    node = arg;
 	}
 
       /*
        * Now see whether the user wants to add a regular file,
        * or a directory at this point.
        */
-      status = stat_filter(node, &st);
+      if (follow_links)
+	status = stat_filter(node, &st);
+      else
+	status = lstat_filter(node, &st);
       if( status != 0 )
 	{
 	  /*
@@ -1495,14 +1602,9 @@ parse_input_files:
 	}
 
       optind++;
-#ifdef APPLE_HYB
-      /* NON-HFS change */
       no_path_names = 0;
-#endif /* APPLE_HYB */
     }
 
-#ifdef APPLE_HYB
-  /* NON-HFS change */
   if (pfp && pfp != stdin)
     fclose(pfp);
 
@@ -1512,7 +1614,6 @@ parse_input_files:
           usage();
           exit(1);
   };
-#endif /* APPLE_HYB */
 
   /*
    * Now merge in any previous sessions.  This is driven on the source
@@ -1709,6 +1810,44 @@ parse_input_files:
   return 0;
 #endif
 }
+
+/*
+ * Find unescaped equal sign in string.
+ */
+char *
+findequal(char *s)
+{
+	char	*p = s;
+
+	while ((p = strchr(p, '=')) != NULL) {
+		if (p > s && p[-1] != '\\')
+			return (p);
+		p++;
+	}
+	return (NULL);
+}
+
+/*
+ * Find unescaped equal sign in string.
+ */
+char *
+escstrcpy(char *to, char *from)
+{
+	char	*p = to;
+
+	while ((*p = *from++) != '\0') {
+		if (*p == '\\' || *p == '=') {
+			if (p[-1] == '\\') {
+				--p;
+				p[0] = p[1];
+			}
+
+		}
+		p++;
+	}
+	return (to);
+}
+
 
 void *
 FDECL1(e_malloc, size_t, size)

@@ -27,8 +27,8 @@ int hfs_add_match __PR((char *fn));
 void hfs_add_list __PR((char *fn));
 int hfs_matches __PR((char *fn));
 intptr_t hfs_ishidden __PR((void));
+#endif /* APPLE_HYB */
 
 void add_list __PR((char *fn));
 void i_add_list __PR((char *fn));
 void j_add_list __PR((char *fn));
-#endif /* APPLE_HYB */

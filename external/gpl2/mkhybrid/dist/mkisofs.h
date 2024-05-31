@@ -528,10 +528,19 @@ extern void * DECL(e_malloc,(size_t));
  * Make sure we have a definition for this.  If not, take a very conservative
  * guess.  From what I can tell SunOS is the only one with this trouble.
  */
+#include <limits.h>
 #ifndef NAME_MAX
 #ifdef FILENAME_MAX
 #define NAME_MAX	FILENAME_MAX
 #else
 #define NAME_MAX	128
+#endif
+#endif
+
+#ifndef PATH_MAX
+#ifdef FILENAME_MAX
+#define PATH_MAX        FILENAME_MAX
+#else
+#define PATH_MAX        1024
 #endif
 #endif
