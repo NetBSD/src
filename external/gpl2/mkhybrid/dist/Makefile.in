@@ -76,7 +76,7 @@ install: mkisofs mkisofs.8
 	$(INSTALL_PROGRAM) mkhybrid $(bindir)/mkhybrid
 	-$(INSTALL_DATA) $(srcdir)/mkhybrid.8 $(mandir)/mkhybrid.$(manext)
 
-tree.o: tree.c mkisofs.h iso9660.h exclude.h config.h Makefile
+tree.o: tree.c mkisofs.h iso9660.h config.h Makefile
 	$(CC) -c $(CFLAGS) $(srcdir)/tree.c
 
 write.o: write.c mkisofs.h iso9660.h config.h Makefile
@@ -100,7 +100,7 @@ multi.o: multi.c iso9660.h mkisofs.h config.h Makefile
 name.o: name.c iso9660.h mkisofs.h config.h Makefile
 	$(CC) -c $(CFLAGS) $(srcdir)/name.c
 
-mkisofs.o: mkisofs.c iso9660.h mkisofs.h exclude.h config.h Makefile $(LIBHFS) $(INCHFS) $(LIBFILE)
+mkisofs.o: mkisofs.c iso9660.h mkisofs.h config.h Makefile $(LIBHFS) $(INCHFS) $(LIBFILE)
 	$(CC) -c $(CFLAGS) $(srcdir)/mkisofs.c
 
 eltorito.o: eltorito.c iso9660.h mkisofs.h config.h Makefile
