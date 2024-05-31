@@ -28,11 +28,7 @@
 #include "match.h"
 #include "apple_proto.h"
 
-#ifdef linux
-#include <getopt.h>
-#else
-#include "getopt.h"
-#endif
+#include "getopt.h"	/* Always include local (nonstandard) getopt.h */
 
 #include "iso9660.h"
 #include <ctype.h>
