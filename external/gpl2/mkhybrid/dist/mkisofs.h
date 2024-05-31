@@ -316,7 +316,7 @@ extern char *defcreator;	/* default Apple CREATOR */
 extern char *trans_tbl;		/* translation table name */
 extern int gen_pt;		/* generate HFS partition table */
 extern char *autoname;		/* Autostart filename */
-extern int bsize;		/* Apple File Exchange block size */
+extern int afe_size;		/* Apple File Exchange block size */
 extern char *hfs_volume_id;	/* HFS volume ID */
 #define ASSOC_FLAG	4       /* ISO flag for "associated" file */
 #define MAP_LAST	1	/* process magic then map file */

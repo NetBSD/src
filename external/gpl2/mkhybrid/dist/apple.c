@@ -872,11 +872,6 @@ struct hfs_info *
 get_hfs_fe_info(struct hfs_info *hfs_info, char *name)
 {
 	FILE	*fp;
-#ifdef __svr4__
-	struct statvfs fsbuf;
-#else
-	struct statfs fsbuf;
-#endif /* __svr4__ */
 	int	fe_num, fe_pad;
 	fe_info info;
 	int	c = 0;
@@ -889,30 +884,15 @@ get_hfs_fe_info(struct hfs_info *hfs_info, char *name)
 	if ((fp = fopen(name, "rb")) == NULL)
 	    return(NULL);
 
-	/* The FAT cluster size may have been given on the command line
-	   - if not they try and find *guess* it */
-	if (!bsize) {
-	    /* FINDER.DAT layout depends on the FAT cluster size - assume
-	       this is mapped to the "fundamental file system block size"
-	       For SVR4 we use statvfs(), others use statfs() */
-#ifdef __svr4__
-	    if (statvfs(name, &fsbuf) < 0)
-		return(NULL);
-
-	    bsize = fsbuf.f_frsize;
-#else
-	    if (statfs(name, &fsbuf) < 0)
-		return(NULL);
-
-	    bsize = fsbuf.f_bsize;
-#endif /* __svr4__ */
-	}
-
-	if (bsize <= 0)
+	/*
+	 * no longer attempt to find out FAT cluster
+	 * - rely on command line parameter
+	 */
+	if (afe_size <= 0)
 	    return(NULL);
 
-	fe_num = bsize/FE_SIZE;
-	fe_pad = bsize%FE_SIZE;
+	fe_num = afe_size / FE_SIZE;
+	fe_pad = afe_size % FE_SIZE;
 
 	while(fread(&info, 1, FE_SIZE, fp) != 0) {
 

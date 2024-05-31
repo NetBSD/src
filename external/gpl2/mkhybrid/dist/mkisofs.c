@@ -138,7 +138,7 @@ int	probe = 0;		/* search files for HFS/Unix type */
 int	nomacfiles = 0;		/* don't look for Mac/Unix files */
 int	hfs_select = 0;		/* Mac/Unix types to select */
 int	create_dt = 1;		/* create the Desktp files */
-int	bsize = 0;		/* Apple File Exchange block size */
+int	afe_size = 0;		/* Apple File Exchange block size */
 int	hfs_last = MAG_LAST;	/* process magic file after map file */
 char	*deftype = DEFTYPE;	/* default Apple TYPE */
 char	*defcreator = DEFCREATOR; /* default Apple CREATOR */
@@ -1068,7 +1068,9 @@ int FDECL2(main, int, argc, char **, argv){
 	/* gen_pt = 1; */
 	break;
       case OPTION_BSIZE:
-	bsize = atoi(optarg);
+	afe_size = atoi(optarg);
+	hfs_select |= DO_FEU;
+	hfs_select |= DO_FEL;
 	break;
       case OPTION_HFS_VOLID:
 	hfs_volume_id = optarg;
@@ -1164,7 +1166,7 @@ parse_input_files:
   /* if -probe, -macname, any hfs selection and/or mapping file is given,
      but no HFS option, then select apple_hyb */
   if (!apple_hyb && !apple_ext) {
-    if (*afpfile || probe || mac_name || nomacfiles || hfs_select || hfs_boot_file || magic_file || hfs_ishidden() || gen_pt || autoname || bsize)
+    if (*afpfile || probe || mac_name || nomacfiles || hfs_select || hfs_boot_file || magic_file || hfs_ishidden() || gen_pt || autoname || afe_size)
 	apple_hyb = 1;
   }
 
@@ -1181,6 +1183,12 @@ parse_input_files:
   if (apple_hyb || apple_ext)
     apple_both = 1;
 
+  if (apple_both && verbose && !afe_size &&
+      (hfs_select & (DO_FEU | DO_FEL))) {
+    fprintf(stderr,
+    "Warning: assuming PC Exchange cluster size of 512 bytes\n");
+    afe_size = 512;
+  }
   if (apple_both) {
     /* set up the TYPE/CREATOR mappings */
     hfs_init(afpfile, 0, probe, nomacfiles, hfs_select);

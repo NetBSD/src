@@ -10,20 +10,6 @@
 #define __svr4__	/* maybe there's a "configure" solution ? */
 #endif /* __sgi */
 
-#ifdef __svr4__
-#include <sys/statvfs.h>
-#else
-#if defined(__FreeBSD__) || defined(__bsdi__) || defined(__OpenBSD__)
-#include <sys/mount.h>
-#else
-#if defined(_IBMR2)
-#include <sys/statfs.h>
-#else
-#include <sys/vfs.h>
-#endif /* _IBMR2 */
-#endif /* __FreeBSD__ || __bsdi__ */
-#endif /* __svr4__ */
-
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif /* O_BINARY */
