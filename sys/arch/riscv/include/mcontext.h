@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.8 2024/05/04 12:42:09 skrll Exp $ */
+/* $NetBSD: mcontext.h,v 1.9 2024/05/31 13:11:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -91,9 +91,34 @@ typedef _BSD_FPREG_T_	__fregset_t[_NFREG];
 #define	_REG_SP		_REG_X2
 #define	_REG_GP		_REG_X3
 #define	_REG_TP		_REG_X4
+#define	_REG_T0		_REG_X5
+#define	_REG_T1		_REG_X6
+#define	_REG_T2		_REG_X7
 #define	_REG_S0		_REG_X8
+#define	_REG_S1		_REG_X9
 #define	_REG_RV		_REG_X10
 #define	_REG_A0		_REG_X10
+#define	_REG_A1		_REG_X11
+#define	_REG_A2		_REG_X12
+#define	_REG_A3		_REG_X13
+#define	_REG_A4		_REG_X14
+#define	_REG_A5		_REG_X15
+#define	_REG_A6		_REG_X16
+#define	_REG_A7		_REG_X17
+#define	_REG_S2		_REG_X18
+#define	_REG_S3		_REG_X19
+#define	_REG_S4		_REG_X20
+#define	_REG_S5		_REG_X21
+#define	_REG_S6		_REG_X22
+#define	_REG_S7		_REG_X23
+#define	_REG_S8		_REG_X24
+#define	_REG_S9		_REG_X25
+#define	_REG_S10	_REG_X26
+#define	_REG_S11	_REG_X27
+#define	_REG_T3		_REG_X28
+#define	_REG_T4		_REG_X29
+#define	_REG_T5		_REG_X30
+#define	_REG_T6		_REG_X31
 
 #define	_REG_F0		0
 #define	_REG_FPCSR	32
