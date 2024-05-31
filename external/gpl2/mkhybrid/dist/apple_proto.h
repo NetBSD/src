@@ -26,7 +26,7 @@ extern void hfs_init(char *, unsigned short, int, int, unsigned int);
 extern void clean_hfs(void);
 extern int hfs_exclude(char *);
 extern int get_hfs_rname(char *, char *, char *);
-extern int get_hfs_dir(char *, char *, struct directory_entry *);
+extern int get_hfs_dir(const char *, const char *, struct directory_entry *);
 extern int get_hfs_info(char *, char *, struct directory_entry *);
 extern void print_hfs_info(struct directory_entry *);
 extern void delete_rsrc_ent(struct directory_entry *);

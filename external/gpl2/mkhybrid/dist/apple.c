@@ -34,17 +34,17 @@
 typedef struct directory_entry dir_ent;
 
 /* routines for getting HFS names and info */
-static int get_none_dir(char *, char *, dir_ent *, int);
+static int get_none_dir(char *, const char *, dir_ent *, int);
 static int get_none_info(char *, char *, dir_ent *, int);
-static int get_cap_dir(char *, char *, dir_ent *, int);
+static int get_cap_dir(char *, const char *, dir_ent *, int);
 static int get_cap_info(char *, char *, dir_ent *, int);
 static int get_es_info(char *, char *, dir_ent *, int);
 static int get_dbl_info(char *, char *, dir_ent *, int);
 static int get_mb_info(char *, char *, dir_ent *, int);
 static int get_sgl_info(char *, char *, dir_ent *, int);
-static int get_fe_dir(char *, char *, dir_ent *, int);
+static int get_fe_dir(char *, const char *, dir_ent *, int);
 static int get_fe_info(char *, char *, dir_ent *, int);
-static int get_sgi_dir(char *, char *, dir_ent *, int);
+static int get_sgi_dir(char *, const char *, dir_ent *, int);
 static int get_sgi_info(char *, char *, dir_ent *, int);
 
 void map_ext(char *, char **, char **, unsigned short *, char *);
@@ -63,11 +63,11 @@ static unsigned int	hselect;		/* type of HFS file selected */
 struct hfs_type {			/* Types of various HFS Unix files */
   int	type;					/* type of file */
   int	flags;					/* special flags */
-  char *info;           			/* finderinfo name */
-  char *rsrc;           			/* resource fork name */
+  const char *info;           			/* finderinfo name */
+  const char *rsrc;           			/* resource fork name */
   int  (*get_info)(char*, char*, dir_ent*,int);	/* finderinfo function */
-  int  (*get_dir)(char*, char*,dir_ent*,int);	/* directory name function */
-  char *desc;					/* description */
+  int  (*get_dir)(char*, const char*,dir_ent*,int); /* directory name function */
+  const char *desc;				/* description */
 };
 
 /* Above filled in */
@@ -93,7 +93,7 @@ static char tmp_type[CT_SIZE+1], tmp_creator[CT_SIZE+1];
 **	':' is replaced by '%' and string is terminated with '\0'
 */
 void
-cstrncpy(char *t, char *f, int c)
+cstrncpy(char *t, const char *f, int c)
 {
 	while (c-- && *f)
 	{
@@ -135,7 +135,7 @@ dehex(char c)
 }
 
 static unsigned char
-hex2char(char *s)
+hex2char(const char *s)
 {
 	unsigned char o;
 
@@ -164,7 +164,7 @@ hex2char(char *s)
 **	
 */
 void
-hstrncpy(unsigned char *t, char *f, int c)
+hstrncpy(unsigned char *t, const char *f, int c)
 {
 	unsigned char	o;
 	while (c-- && *f)
@@ -211,7 +211,7 @@ basename(char *a)
 **	get_none_dir: ordinary Unix directory
 */
 int
-get_none_dir(char *hname, char *dname, dir_ent *s_entry, int ret)
+get_none_dir(char *hname, const char *dname, dir_ent *s_entry, int ret)
 {
 	/* just copy the given name */
 	hstrncpy(s_entry->hfs_ent->name, dname, HFS_MAX_FLEN);
@@ -270,9 +270,9 @@ read_info_file(char *name, void *info, int len)
 **	get_cap_dir: get the CAP name for a directory
 */
 int
-get_cap_dir(char *hname, char *dname, dir_ent *s_entry, int ret)
+get_cap_dir(char *hname, const char *dname, dir_ent *s_entry, int ret)
 /* char		*hname				whole path */
-/* char		*dname				this dir name */
+/* const char	*dname				this dir name */
 /* dir_ent	*s_entry			directory entry */
 {
 	FileInfo	info;			/* finderinfo struct */
@@ -1029,7 +1029,7 @@ del_hfs_info(struct hfs_info *hfs_info)
 **		as the key
 */
 hfsdirent *
-match_key(struct hfs_info *hfs_info, char *key)
+match_key(struct hfs_info *hfs_info, const char *key)
 {
 	while (hfs_info) {
 	    if (!strcasecmp(key, hfs_info->keyname))
@@ -1046,9 +1046,9 @@ match_key(struct hfs_info *hfs_info, char *key)
 **	base on probing with od ...
 */
 int
-get_fe_dir(char *hname, char *dname, dir_ent *s_entry, int ret)
+get_fe_dir(char *hname, const char *dname, dir_ent *s_entry, int ret)
 /* char		*hname				whole path */
-/* char		*dname				this dir name */
+/* const char	*dname				this dir name */
 /* dir_ent	*s_entry			directory entry */
 {
 	struct hfs_info *hfs_info;
@@ -1152,9 +1152,9 @@ get_fe_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 **	base on probing with od ...
 */
 int
-get_sgi_dir(char *hname, char *dname, dir_ent *s_entry, int ret)
+get_sgi_dir(char *hname, const char *dname, dir_ent *s_entry, int ret)
 /* char		*hname				whole path */
-/* char		*dname				this dir name */
+/* const char	*dname				this dir name */
 /* dir_ent	*s_entry			directory entry */
 {
 	struct hfs_info *hfs_info;
@@ -1241,7 +1241,7 @@ get_sgi_info(char *hname, char *dname, dir_ent *s_entry, int ret)
 **	get_hfs_itype: get the type of HFS info for a file
 */
 int
-get_hfs_itype(char *wname, char *dname, char *htmp)
+get_hfs_itype(const char *wname, const char *dname, char *htmp)
 {
 	int	wlen, i;
 
@@ -1268,7 +1268,7 @@ get_hfs_itype(char *wname, char *dname, char *htmp)
 **	get_hfs_dir: set the HFS directory name
 */
 int
-get_hfs_dir(char *wname, char *dname, dir_ent *s_entry)
+get_hfs_dir(const char *wname, const const char *dname, dir_ent *s_entry)
 {
 	int	type;
 
