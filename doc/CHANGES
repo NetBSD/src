@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3060 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3061 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -412,4 +412,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	hp300: Installation CD ISO image is now bootable. [tsutsui 20240519]
 	tic(1): Honour the user's umask (from RVP).  [christos 20240520]
 	dhcpcd: Import version 10.0.8. [roy 20240524]
-
+	mkhybrid: Import mkhybrid from OpenBSD 7.3 as a tool to create
+		ISO9660/HFS hybrid ISO images for mac68k and macppc.
+		[tsutsui 20240531]
