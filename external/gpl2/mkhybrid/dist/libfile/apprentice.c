@@ -1,7 +1,6 @@
 /* @(#)apprentice.c	1.13 09/07/11 joerg */
-#include <schily/mconfig.h>
 #ifndef lint
-static	UConst char sccsid[] =
+static	const char sccsid[] =
 	"@(#)apprentice.c	1.13 09/07/11 joerg";
 #endif
 /*
@@ -44,15 +43,15 @@ static	UConst char sccsid[] =
  * SUCH DAMAGE.
  */
 
-#include <schily/stdio.h>
-#include <schily/stdlib.h>
-#include <schily/string.h>
-#include <schily/ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "proto.h"
 #include "file.h"
-#include <schily/schily.h>
 
 #ifndef	lint
-static UConst char moduleid[] = 
+static const char moduleid[] = 
 	"@(#)Id: apprentice.c,v 1.25 1997/01/15 17:23:24 christos Exp";
 #endif	/* lint */
 
@@ -73,23 +72,24 @@ struct  magic *__f_magic;	/* array of magic entries		*/
 			tolower((unsigned char) (l)) : (l))
 
 
-static int getvalue	__PR((struct magic *, char **));
-static int hextoint	__PR((int));
-static char *apgetstr	__PR((char *, char *, int, int *));
-static int parse	__PR((char *, int *, int));
-static void eatsize	__PR((char **));
+static int getvalue	(struct magic *, char **);
+static int hextoint	(int);
+static char *apgetstr	(char *, char *, int, int *);
+static int parse	(char *, int *, int);
+static void eatsize	(char **);
 
 static int maxmagic = 0;
 
-static int apprentice_1	__PR((char *, int));
+static int apprentice_1	(char *, int);
 
 /*
  * init_magic - read magic file and set up mapping
  * based on the original apprentice()
  */
 int
-init_magic(fn)
-char *fn;			/* list of magic files */
+init_magic(
+char *fn			/* list of magic files */
+)
 {
         maxmagic = MAXMAGIS;
 	__f_magic = (struct magic *) calloc(sizeof(struct magic), maxmagic);
@@ -100,9 +100,10 @@ char *fn;			/* list of magic files */
 }
 
 static int
-apprentice_1(fn, check)
-char *fn;			/* name of magic file */
-int check;			/* non-zero? checking-only run. */
+apprentice_1(
+char *fn,			/* name of magic file */
+int check			/* non-zero? checking-only run. */
+)
 {
 	static const char hdr[] =
 		"cont\toffset\ttype\topcode\tmask\tvalue\tdesc";
@@ -139,9 +140,7 @@ int check;			/* non-zero? checking-only run. */
  * XXX is uint32 really a good idea XXX JS
  */
 UInt32_t
-signextend(m, v)
-struct magic *m;
-UInt32_t v;
+signextend(struct magic *m, UInt32_t v)
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -178,9 +177,7 @@ UInt32_t v;
  * parse one line from magic file, put into magic[index++] if valid
  */
 static int
-parse(l, ndx, check)
-char *l;
-int *ndx, check;
+parse(char *l, int *ndx, int check)
 {
 	int i = 0, nd = *ndx;
 	struct magic *m;
@@ -402,9 +399,7 @@ GetDesc:
  * just after the number read.  Return 0 for success, non-zero for failure.
  */
 static int
-getvalue(m, p)
-struct magic *m;
-char **p;
+getvalue(struct magic *m, char **p)
 {
 	int slen;
 
@@ -426,10 +421,7 @@ char **p;
  * Return updated scan pointer as function result.
  */
 static char *
-apgetstr(s, p, plen, slen)
-register char	*s;
-register char	*p;
-int	plen, *slen;
+apgetstr(char *s, char *p, int plen, int *slen)
 {
 	char	*origs = s, *origp = p;
 	char	*pmax = p + plen - 1;
@@ -529,8 +521,7 @@ out:
 
 /* Single hex char to int; -1 if not a hex char. */
 static int
-hextoint(c)
-int c;
+hextoint(int c)
 {
 	if (!isascii((unsigned char) c))	return -1;
 	if (isdigit((unsigned char) c))		return c - '0';
@@ -544,10 +535,7 @@ int c;
  * Print a string containing C character escapes.
  */
 void
-showstr(fp, s, len)
-FILE *fp;
-const char *s;
-int len;
+showstr(FILE *fp, const char *s, int len)
 {
 	register char	c;
 
@@ -603,8 +591,7 @@ int len;
  * eatsize(): Eat the size spec from a number [eg. 10UL]
  */
 static void
-eatsize(p)
-char **p;
+eatsize(char **p)
 {
 	char *l = *p;
 

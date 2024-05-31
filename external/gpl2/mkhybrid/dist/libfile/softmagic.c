@@ -1,7 +1,6 @@
 /* @(#)softmagic.c	1.12 09/07/11 joerg */
-#include <schily/mconfig.h>
 #ifndef lint
-static	UConst char sccsid[] =
+static	const char sccsid[] =
 	"@(#)softmagic.c	1.12 09/07/11 joerg";
 #endif
 /*
@@ -44,15 +43,14 @@ static	UConst char sccsid[] =
  * SUCH DAMAGE.
  */
 
-#include <schily/stdio.h>
-#include <schily/string.h>
-#include <schily/stdlib.h>
-#include <schily/schily.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "file.h"
 
 #ifndef	lint
-static UConst char moduleid[] = 
+static const char moduleid[] = 
 	"@(#)Id: softmagic.c,v 1.34 1997/01/15 19:28:35 christos Exp";
 #endif	/* lint */
 
@@ -62,16 +60,15 @@ int	debug = 1; 	/* debugging 				*/
 #define	debug	0 	/* debugging 				*/
 #endif /* DEBUG */
 
-/* static int match	__PR((unsigned char *, int)); */
-static char *match	__PR((unsigned char *, int));
-static int mget		__PR((union VALUETYPE *,
-			     unsigned char *, struct magic *, int));
+static char *match	(unsigned char *, int);
+static int mget		(union VALUETYPE *,
+			     unsigned char *, struct magic *, int);
 /* QNX has a mcheck() prototyp in a public include file */
-static int magcheck	__PR((union VALUETYPE *, struct magic *));
+static int magcheck	(union VALUETYPE *, struct magic *);
 #ifdef	__used__
-static void mdebug	__PR((Int32_t, char *, int));
+static void mdebug	(Int32_t, char *, int);
 #endif
-static int mconvert	__PR((union VALUETYPE *, struct magic *));
+static int mconvert	(union VALUETYPE *, struct magic *);
 
 /*
  * softmagic - lookup one file in database 
@@ -80,9 +77,7 @@ static int mconvert	__PR((union VALUETYPE *, struct magic *));
  */
 /*ARGSUSED1*/		/* nbytes passed for regularity, maybe need later */
 char *
-softmagic(buf, nbytes)
-unsigned char *buf;
-int nbytes;
+softmagic(unsigned char *buf, int nbytes)
 {
 	return (match(buf, nbytes));
 }
@@ -115,9 +110,7 @@ int nbytes;
  *	so that higher-level continuations are processed.
  */
 static char *
-match(s, nbytes)
-unsigned char	*s;
-int nbytes;
+match(unsigned char *s, int nbytes)
 {
 	int magindex = 0;
 	union VALUETYPE p;
@@ -146,9 +139,7 @@ int nbytes;
  * Convert the byte order of the data we are looking at
  */
 static int
-mconvert(p, m)
-union VALUETYPE *p;
-struct magic *m;
+mconvert(union VALUETYPE *p, struct magic *m)
 {
 	switch (m->type) {
 	case BYTE:
@@ -189,10 +180,7 @@ struct magic *m;
 
 #ifdef	__used__
 static void
-mdebug(offset, str, len)
-Int32_t offset;
-char *str;
-int len;
+mdebug(Int32_t offset, char *str, int len)
 {
 	(void) fprintf(stderr, "mget @%d: ", offset);
 	showstr(stderr, (char *) str, len);
@@ -202,11 +190,7 @@ int len;
 #endif
 
 static int
-mget(p, s, m, nbytes)
-union VALUETYPE* p;
-unsigned char	*s;
-struct magic *m;
-int nbytes;
+mget(union VALUETYPE* p, unsigned char *s, struct magic *m, int nbytes)
 {
 	Int32_t offset = m->offset;
 
@@ -252,9 +236,7 @@ int nbytes;
 }
 
 static int
-magcheck(p, m)
-union VALUETYPE* p;
-struct magic *m;
+magcheck(union VALUETYPE* p, struct magic *m)
 {
 	register UInt32_t l = m->value.l;
 	register UInt32_t v;

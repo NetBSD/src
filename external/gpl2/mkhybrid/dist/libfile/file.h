@@ -35,10 +35,8 @@
 #ifndef __file_h__
 #define __file_h__
 
-#ifndef	_SCHILY_MCONFIG_H
-#include <schily/mconfig.h>
-#endif
-#include <schily/utypes.h>
+typedef int Int32_t;
+typedef unsigned int UInt32_t;
 
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
@@ -85,29 +83,26 @@ struct magic {
 	char desc[MAXDESC];	/* description */
 };
 
-#include <schily/stdio.h>
+#include <stdio.h>
 
-extern int   init_magic		__PR((char *));
-extern int   ascmagic		__PR((unsigned char *, int));
-/*extern void  error		__PR((const char *, ...));*/
-extern void  ckfputs		__PR((const char *, FILE *));
+extern int   init_magic		(char *);
+extern int   ascmagic		(unsigned char *, int);
+extern void  ckfputs		(const char *, FILE *);
 struct stat;
-extern int   fsmagic		__PR((const char *, struct stat *));
-extern int   is_compress	__PR((const unsigned char *, int *));
-extern int   is_tar		__PR((unsigned char *, int));
-extern void  magwarn		__PR((const char *, ...));
-extern void  mdump		__PR((struct magic *));
-extern char *get_magic_magic	__PR((const char *));
-extern void  showstr		__PR((FILE *, const char *, int));
-extern char *softmagic		__PR((unsigned char *, int));
-extern int   tryit		__PR((unsigned char *, int, int));
-extern int   zmagic		__PR((unsigned char *, int));
-extern void  ckfprintf		__PR((FILE *, const char *, ...));
-#ifndef __BEOS__
-extern UInt32_t signextend	__PR((struct magic *, UInt32_t));
-#endif /* __BEOS__ */
-extern int internatmagic	__PR((unsigned char *, int));
-extern void tryelf		__PR((int, char *, int));
+extern int   fsmagic		(const char *, struct stat *);
+extern int   is_compress	(const unsigned char *, int *);
+extern int   is_tar		(unsigned char *, int);
+extern void  magwarn		(const char *, ...);
+extern void  mdump		(struct magic *);
+extern char *get_magic_magic	(const char *);
+extern void  showstr		(FILE *, const char *, int);
+extern char *softmagic		(unsigned char *, int);
+extern int   tryit		(unsigned char *, int, int);
+extern int   zmagic		(unsigned char *, int);
+extern void  ckfprintf		(FILE *, const char *, ...);
+extern UInt32_t signextend	(struct magic *, UInt32_t);
+extern int internatmagic	(unsigned char *, int);
+extern void tryelf		(int, char *, int);
 
 
 extern char *progname;		/* the program name 			*/
@@ -120,14 +115,6 @@ extern int __f_nmagic;		/* number of valid magic[]s 		*/
 extern int debug;		/* enable debugging?			*/
 extern int zflag;		/* process compressed files?		*/
 extern int lflag;		/* follow symbolic links?		*/
-
-#if defined(sun) || defined(__sun__) || defined (__sun)
-# if defined(__svr4) || defined (__SVR4) || defined(__svr4__)
-#  define SOLARIS
-# else
-#  define SUNOS
-# endif
-#endif
 
 
 #ifndef	HAVE_STRERROR

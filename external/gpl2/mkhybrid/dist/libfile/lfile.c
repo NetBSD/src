@@ -1,7 +1,6 @@
 /* @(#)file.c	1.10 09/08/04 joerg */
-#include <schily/mconfig.h>
 #ifndef lint
-static	UConst char sccsid[] =
+static	const char sccsid[] =
 	"@(#)file.c	1.10 09/08/04 joerg";
 #endif
 /*
@@ -67,25 +66,21 @@ static	UConst char sccsid[] =
  * SUCH DAMAGE.
  */
 #ifndef	lint
-static UConst char moduleid[] = 
+static const char moduleid[] = 
 	"@(#)Id: file.c,v 1.38 1997/01/15 19:28:35 christos Exp";
 #endif	/* lint */
 
-#include <schily/stdio.h>
-#include <schily/stdlib.h>
-#include <schily/unistd.h>	/* for read() */
-#include <schily/stat.h>
-#include <schily/fcntl.h>	/* for open() */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>	/* for read() */
+#include <sys/stat.h>
+#include <fcntl.h>	/* for open() */
 
 #ifdef RESTORE_TIME
 #include <schily/utime.h>
 #ifdef HAVE_UTIMES
 #define	USE_UTIMES
 #endif
-#endif
-
-#if 0
-#include <schily/in.h>		/* for byte swapping */
 #endif
 
 #include "patchlevel.h"
@@ -107,86 +102,15 @@ char *magicfile;	/* where magic be found 		*/
 char *progname;		/* used throughout 			*/
 #endif
 
-char *	get_magic_match	__PR((const char *inname));
-void	clean_magic	__PR((void));
-
-#if 0
-static int	byteconv4	__P((int, int, int));
-static short	byteconv2	__P((int, int, int));
-#endif
-
-#if 0
-/*
- * byteconv4
- * Input:
- *	from		4 byte quantity to convert
- *	same		whether to perform byte swapping
- *	big_endian	whether we are a big endian host
- */
-static int
-byteconv4(from, same, big_endian)
-    int from;
-    int same;
-    int big_endian;
-{
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      int i;
-      char c[4];
-    } retval, tmpval;
-
-    tmpval.i = from;
-    retval.c[0] = tmpval.c[3];
-    retval.c[1] = tmpval.c[2];
-    retval.c[2] = tmpval.c[1];
-    retval.c[3] = tmpval.c[0];
-
-    return retval.i;
-  }
-  else
-    return ntohl(from);		/* msb -> lsb conversion on lsb */
-}
-
-/*
- * byteconv2
- * Same as byteconv4, but for shorts
- */
-static short
-byteconv2(from, same, big_endian)
-	int from;
-	int same;
-	int big_endian;
-{
-  if (same)
-    return from;
-  else if (big_endian)		/* lsb -> msb conversion on msb */
-  {
-    union {
-      short s;
-      char c[2];
-    } retval, tmpval;
-
-    tmpval.s = (short) from;
-    retval.c[0] = tmpval.c[1];
-    retval.c[1] = tmpval.c[0];
-
-    return retval.s;
-  }
-  else
-    return ntohs(from);		/* msb -> lsb conversion on lsb */
-}
-#endif
+char *	get_magic_match	(const char *inname);
+void	clean_magic	(void);
 
 /*
  * get_magic_match - get the CREATOR/TYPE string
  * based on the original process()
  */
 char *
-get_magic_match(inname)
-const char	*inname;
+get_magic_match(const char *inname)
 {
 	int	fd = 0;
 	unsigned char	buf[HOWMANY+1];	/* one extra for terminating '\0' */
@@ -247,7 +171,7 @@ const char	*inname;
  * clean_magic - deallocate memory used
  */
 void
-clean_magic()
+clean_magic(void)
 {
 	if (__f_magic)
 		free(__f_magic);
@@ -255,9 +179,7 @@ clean_magic()
 	
 
 #ifdef MAIN
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	char	*ret;
 	char	creator[5];
