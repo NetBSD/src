@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1113 2024/05/30 21:50:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1114 2024/05/31 05:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1113 2024/05/30 21:50:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1114 2024/05/31 05:50:11 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -588,7 +588,7 @@ Var_DeleteAll(GNode *scope)
 {
 	HashIter hi;
 	HashIter_Init(&hi, &scope->vars);
-	while (HashIter_Next(&hi) != NULL) {
+	while (HashIter_Next(&hi)) {
 		Var *v = hi.entry->value;
 		Buf_Done(&v->val);
 		free(v);
@@ -781,7 +781,7 @@ Var_ReexportVars(GNode *scope)
 
 		/* Ouch! Exporting all variables at once is crazy. */
 		HashIter_Init(&hi, &SCOPE_GLOBAL->vars);
-		while (HashIter_Next(&hi) != NULL) {
+		while (HashIter_Next(&hi)) {
 			Var *var = hi.entry->value;
 			ExportVar(var->name.str, scope, VEM_ENV);
 		}
@@ -4805,7 +4805,7 @@ Var_Dump(GNode *scope)
 	Vector_Init(&vec, sizeof(const char *));
 
 	HashIter_Init(&hi, &scope->vars);
-	while (HashIter_Next(&hi) != NULL)
+	while (HashIter_Next(&hi))
 		*(const char **)Vector_Push(&vec) = hi.entry->key;
 	varnames = vec.items;
 
