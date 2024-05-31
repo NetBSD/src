@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.217 2024/04/27 20:41:32 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.218 2024/05/31 05:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.217 2024/04/27 20:41:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.218 2024/05/31 05:50:11 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -156,7 +156,7 @@ ArchFree(Arch *a)
 	HashIter hi;
 
 	HashIter_Init(&hi, &a->members);
-	while (HashIter_Next(&hi) != NULL)
+	while (HashIter_Next(&hi))
 		free(hi.entry->value);
 
 	free(a->name);
