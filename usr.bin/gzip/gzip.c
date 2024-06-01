@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.125 2024/04/02 12:42:35 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.126 2024/06/01 09:45:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997-2024 Matthew R. Green
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997-2024 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.125 2024/04/02 12:42:35 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.126 2024/06/01 09:45:36 tsutsui Exp $");
 #endif /* not lint */
 
 /*
@@ -1126,7 +1126,7 @@ copymodes(int fd, const struct stat *sbp, const char *file)
 	if (fchmod(fd, sb.st_mode) < 0)
 		maybe_warn("couldn't fchmod: %s", file);
 
-#ifdef TIMESPEC_TO_TIMEVAL
+#ifdef !HAVE_NBTOOL_CONFIG_H
 	TIMESPEC_TO_TIMEVAL(&times[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtimespec);
 	if (futimes(fd, times) < 0)
