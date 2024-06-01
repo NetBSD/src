@@ -1,4 +1,4 @@
-/*	$NetBSD: compat__lwp_park.c,v 1.2 2009/01/11 02:46:26 christos Exp $ */
+/*	$NetBSD: compat__lwp_park.c,v 1.3 2024/06/01 13:33:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat__lwp_park.c,v 1.2 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat__lwp_park.c,v 1.3 2024/06/01 13:33:46 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #define __LIBC12_SOURCE__
 #include <sys/time.h>
 #include <compat/sys/time.h>
-#include <lwp.h>
 #include <compat/include/lwp.h>
 
 __warn_references(_lwp_park,
