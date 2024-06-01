@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1115 2024/05/31 20:21:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1116 2024/06/01 05:08:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1115 2024/05/31 20:21:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1116 2024/06/01 05:08:48 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -328,7 +328,6 @@ static const char VarEvalMode_Name[][32] = {
 	"parse-balanced",
 	"eval",
 	"eval-defined",
-	"eval-keep-dollar",
 	"eval-keep-undefined",
 	"eval-keep-dollar-and-undefined",
 };
@@ -1284,11 +1283,7 @@ GNode_ValueDirect(GNode *gn, const char *name)
 static VarEvalMode
 VarEvalMode_WithoutKeepDollar(VarEvalMode emode)
 {
-	if (emode == VARE_KEEP_DOLLAR_UNDEF)
-		return VARE_EVAL_KEEP_UNDEF;
-	if (emode == VARE_EVAL_KEEP_DOLLAR)
-		return VARE_WANTRES;
-	return emode;
+	return emode == VARE_KEEP_DOLLAR_UNDEF ? VARE_EVAL_KEEP_UNDEF : emode;
 }
 
 static VarEvalMode
@@ -1313,8 +1308,7 @@ VarEvalMode_ShouldKeepUndef(VarEvalMode emode)
 static bool
 VarEvalMode_ShouldKeepDollar(VarEvalMode emode)
 {
-	return emode == VARE_EVAL_KEEP_DOLLAR ||
-	       emode == VARE_KEEP_DOLLAR_UNDEF;
+	return emode == VARE_KEEP_DOLLAR_UNDEF;
 }
 
 
