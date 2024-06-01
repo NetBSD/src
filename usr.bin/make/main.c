@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.619 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.620 2024/06/01 07:37:19 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.619 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.620 2024/06/01 07:37:19 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1971,12 +1971,13 @@ static void
 purge_relative_cached_realpaths(void)
 {
 	HashIter hi;
+	bool more;
 
 	HashIter_Init(&hi, &cached_realpaths);
-	HashIter_Next(&hi);
-	while (hi.entry != NULL) {
+	more = HashIter_Next(&hi);
+	while (more) {
 		HashEntry *he = hi.entry;
-		HashIter_Next(&hi);
+		more = HashIter_Next(&hi);
 		if (he->key[0] != '/') {
 			DEBUG1(DIR, "cached_realpath: purging %s\n", he->key);
 			HashTable_DeleteEntry(&cached_realpaths, he);
