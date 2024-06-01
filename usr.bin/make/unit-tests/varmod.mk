@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.11 2024/04/20 10:18:56 rillig Exp $
+# $NetBSD: varmod.mk,v 1.12 2024/06/01 18:44:05 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -119,4 +119,18 @@ VAR=	STOP
 .  error
 .endif
 
-all: # nothing
+# Test the word selection modifier ':[n]' with a very large number that is
+# larger than ULONG_MAX for any supported platform.
+# expect+1: Malformed conditional (${word:L:[99333000222000111000]})
+.if ${word:L:[99333000222000111000]}
+.endif
+# expect+1: Malformed conditional (${word:L:[2147483648]})
+.if ${word:L:[2147483648]}
+.endif
+
+# Test the range generation modifier ':range=n' with a very large number that
+# is larger than SIZE_MAX for any supported platform.
+# expect+2: Malformed conditional (${word:L:range=99333000222000111000})
+# expect+1: while evaluating variable "word": Invalid number "99333000222000111000}" for ':range' modifier
+.if ${word:L:range=99333000222000111000}
+.endif
