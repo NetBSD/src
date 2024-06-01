@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.24 2023/11/19 21:47:52 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.25 2024/06/01 05:08:48 rillig Exp $
 #
 # Tests for the expression modifier ':@var@body@', which replaces each word of
 # the expression with the expanded body, which may contain references to the
@@ -82,10 +82,8 @@ mod-loop-dollar:
 8_DOLLARS=	$$$$$$$$
 # This string literal is written with 8 dollars, and this is saved as the
 # variable value.  But as soon as this value is evaluated, it goes through
-# Var_Subst, which replaces each '$$' with a single '$'.  This could be
-# prevented by VARE_EVAL_KEEP_DOLLAR, but that flag is usually removed
-# before expanding subexpressions.  See ApplyModifier_Loop and
-# ParseModifierPart for examples.
+# Var_Subst, which replaces each '$$' with a single '$'.
+# See ApplyModifier_Loop and ParseModifierPart for examples.
 #
 .MAKEFLAGS: -dcp
 USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$

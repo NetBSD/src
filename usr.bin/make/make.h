@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.335 2024/05/25 21:07:48 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.336 2024/06/01 05:08:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -955,18 +955,6 @@ typedef enum VarEvalMode {
 	 * subexpression evaluates to undefined.
 	 */
 	VARE_UNDEFERR,
-
-	/*
-	 * Parse and evaluate the expression.  Keep '$$' as '$$' instead of
-	 * reducing it to a single '$'.  Subexpressions that evaluate to
-	 * undefined expand to an empty string.
-	 *
-	 * Used in variable assignments using the ':=' operator.  It allows
-	 * multiple such assignments to be chained without accidentally
-	 * expanding '$$file' to '$file' in the first assignment and
-	 * interpreting it as '${f}' followed by 'ile' in the next assignment.
-	 */
-	VARE_EVAL_KEEP_DOLLAR,
 
 	/*
 	 * Parse and evaluate the expression.  Keep undefined variables as-is
