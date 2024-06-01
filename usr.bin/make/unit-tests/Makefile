@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.345 2024/05/24 23:02:46 rillig Exp $
+# $NetBSD: Makefile,v 1.346 2024/06/01 10:06:23 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -773,6 +773,11 @@ test:	${OUTFILES} .PHONY
 	  echo "Failed tests: $${failed}" ; false ; \
 	else \
 	  echo "All tests passed" ; \
+	  lua=${LUA:Ulua} ; \
+	  have_lua=$$("$$lua" -e 'print "yes"' 2>&1) ; \
+	  if [ "$$have_lua" = "yes" ]; then \
+	    "$$lua" ./check-expect.lua *.mk; \
+	  fi; \
 	fi
 
 accept:
