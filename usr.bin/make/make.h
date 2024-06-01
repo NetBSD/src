@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.336 2024/06/01 05:08:48 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.337 2024/06/01 06:26:36 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -992,6 +992,8 @@ typedef enum VarSetFlags {
 } VarSetFlags;
 
 typedef enum VarExportMode {
+	/* .export-all */
+	VEM_ALL,
 	/* .export-env */
 	VEM_ENV,
 	/* .export: Initial export or update an already exported variable. */

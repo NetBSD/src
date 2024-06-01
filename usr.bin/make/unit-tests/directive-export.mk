@@ -1,4 +1,4 @@
-# $NetBSD: directive-export.mk,v 1.10 2023/11/19 09:45:19 rillig Exp $
+# $NetBSD: directive-export.mk,v 1.11 2024/06/01 06:26:36 sjg Exp $
 #
 # Tests for the .export directive.
 #
@@ -28,7 +28,8 @@ VAR=		value $$ ${INDIRECT}
 .  error
 .endif
 
-# No syntactical argument means to export all variables.
+# No syntactical argument used to mean export all variables.
+# Since var.c 1.1117 2024/06/01 it causes a warning.
 .export
 
 # An empty argument means no additional variables to export.
