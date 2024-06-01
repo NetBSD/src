@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.621 2024/06/01 12:17:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.622 2024/06/01 12:27:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.621 2024/06/01 12:17:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.622 2024/06/01 12:27:31 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -368,7 +368,7 @@ MainParseArgChdir(const char *argvalue)
 	    stat(curdir, &sb) != -1 &&
 	    sa.st_ino == sb.st_ino &&
 	    sa.st_dev == sb.st_dev)
-		strncpy(curdir, argvalue, MAXPATHLEN);
+		snprintf(curdir, MAXPATHLEN, "%s", argvalue);
 	ignorePWD = true;
 }
 
@@ -1041,7 +1041,7 @@ HandlePWD(const struct stat *curdir_st)
 	if (stat(pwd, &pwd_st) == 0 &&
 	    curdir_st->st_ino == pwd_st.st_ino &&
 	    curdir_st->st_dev == pwd_st.st_dev)
-		(void)strncpy(curdir, pwd, MAXPATHLEN);
+		snprintf(curdir, MAXPATHLEN, "%s", pwd);
 
 ignore_pwd:
 	FStr_Done(&makeobjdir);
@@ -1999,9 +1999,7 @@ cached_realpath(const char *pathname, char *resolved)
 
 	rp = HashTable_FindValue(&cached_realpaths, pathname);
 	if (rp != NULL) {
-		/* a hit */
-		strncpy(resolved, rp, MAXPATHLEN);
-		resolved[MAXPATHLEN - 1] = '\0';
+		snprintf(resolved, MAXPATHLEN, "%s", rp);
 		return resolved;
 	}
 
