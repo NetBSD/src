@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.728 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.729 2024/06/01 06:26:36 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.728 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.729 2024/06/01 06:26:36 sjg Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2759,6 +2759,8 @@ ParseDirective(char *line)
 		Var_Undef(arg);
 	else if (Substring_Equals(dir, "export"))
 		Var_Export(VEM_PLAIN, arg);
+	else if (Substring_Equals(dir, "export-all"))
+		Var_Export(VEM_ALL, arg);
 	else if (Substring_Equals(dir, "export-env"))
 		Var_Export(VEM_ENV, arg);
 	else if (Substring_Equals(dir, "export-literal"))

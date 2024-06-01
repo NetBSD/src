@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1116 2024/06/01 05:08:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1117 2024/06/01 06:26:36 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1116 2024/06/01 05:08:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1117 2024/06/01 06:26:36 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -838,8 +838,11 @@ ExportVarsExpand(const char *uvarnames, bool isExport, VarExportMode mode)
 void
 Var_Export(VarExportMode mode, const char *varnames)
 {
-	if (mode == VEM_PLAIN && varnames[0] == '\0') {
+	if (mode == VEM_ALL) {
 		var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
+		return;
+	} else if (mode == VEM_PLAIN && varnames[0] == '\0') {
+		Parse_Error(PARSE_WARNING, ".export requires an argument.");
 		return;
 	}
 
