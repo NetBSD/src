@@ -1,4 +1,4 @@
-/*	$NetBSD: btlreg.h,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.9 2024/06/02 12:11:36 andvar Exp $	*/
 
 typedef uint8_t physaddr[4];
 typedef uint8_t physlen[4];
@@ -160,7 +160,7 @@ struct bt_buf {
  */
 #define BT_INITIATOR_CCB	0x00	/* SCSI Initiator CCB */
 #define BT_TARGET_CCB		0x01	/* SCSI Target CCB */
-#define BT_INIT_SCAT_GATH_CCB	0x02	/* SCSI Initiator with scattter gather */
+#define BT_INIT_SCAT_GATH_CCB	0x02	/* SCSI Initiator with scatter gather */
 #define BT_RESET_CCB		0x81	/* SCSI Bus reset */
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.g,v 1.6 2021/12/05 04:35:38 msaitoh Exp $
+.\"	$NetBSD: csh.g,v 1.7 2024/06/02 12:11:36 andvar Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -423,7 +423,7 @@ An error message produced by a program is often referred to as a
 Most error messages are not written to the 
 .I "standard output" ,
 since that is often directed away from the terminal (1.3, 1.5).
-Error messsages are instead written to the
+Error messages are instead written to the
 .I "diagnostic output"
 which may be directed away from the terminal, but usually is not.
 Thus 

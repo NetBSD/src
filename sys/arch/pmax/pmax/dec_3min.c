@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.74 2018/09/17 16:52:28 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.75 2024/06/02 12:11:35 andvar Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.74 2018/09/17 16:52:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.75 2024/06/02 12:11:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.74 2018/09/17 16:52:28 tsutsui Exp $"
 
 /* all these to get ioasic_base */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
-#include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
+#include <dev/tc/ioasicreg.h>		/* ioasic interrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/machdep.h>

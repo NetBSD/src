@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.5 2024/06/02 12:11:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -45,7 +45,7 @@
  *
  * Note that all wired mappings are must be 32 MB aligned.  This is
  * because we use 32 MB mappings in the TLB.  Changing this might get
- * us more effficent use of the address space, but it would greatly
+ * us more efficient use of the address space, but it would greatly
  * complicate the code, and would also probably consume additional TLB
  * entries.
  *

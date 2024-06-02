@@ -121,7 +121,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * OFFLOAD Queues, as the host is responsible for providing the correct TID in
  * every WR.
  *
- * Ingress Trafffic for OFFLOAD Queue[i] is sent to RESP Queue[i].
+ * Ingress Traffic for OFFLOAD Queue[i] is sent to RESP Queue[i].
  */
 #define FW_OFLD_NUM         8
 #define FW_OFLD_SGEEC_START     0
