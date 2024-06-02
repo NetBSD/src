@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.180 2024/05/25 00:00:25 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.181 2024/06/02 15:31:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.180 2024/05/25 00:00:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.181 2024/06/02 15:31:25 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -197,7 +197,7 @@ ForLoop_ParseItems(ForLoop *f, const char *p)
 
 	cpp_skip_whitespace(&p);
 
-	items = Var_Subst(p, SCOPE_GLOBAL, VARE_WANTRES);
+	items = Var_Subst(p, SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 
 	f->items = Substring_Words(items, false);

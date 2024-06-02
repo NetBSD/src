@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.623 2024/06/01 20:19:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.624 2024/06/02 15:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.623 2024/06/01 20:19:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.624 2024/06/02 15:31:26 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -766,7 +766,7 @@ SetVarObjdir(bool writable, const char *var, const char *suffix)
 		return false;
 	}
 
-	Var_Expand(&path, SCOPE_GLOBAL, VARE_WANTRES);
+	Var_Expand(&path, SCOPE_GLOBAL, VARE_EVAL);
 
 	(void)Main_SetObjdir(writable, "%s%s", path.str, suffix);
 
@@ -808,8 +808,7 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 static void
 MakeMode(void)
 {
-	char *mode = Var_Subst("${.MAKE.MODE:tl}",
-	    SCOPE_GLOBAL, VARE_WANTRES);
+	char *mode = Var_Subst("${.MAKE.MODE:tl}", SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 
 	if (mode[0] != '\0') {
@@ -832,14 +831,14 @@ static void
 PrintVar(const char *varname, bool expandVars)
 {
 	if (strchr(varname, '$') != NULL) {
-		char *evalue = Var_Subst(varname, SCOPE_GLOBAL, VARE_WANTRES);
+		char *evalue = Var_Subst(varname, SCOPE_GLOBAL, VARE_EVAL);
 		/* TODO: handle errors */
 		printf("%s\n", evalue);
 		free(evalue);
 
 	} else if (expandVars) {
 		char *expr = str_concat3("${", varname, "}");
-		char *evalue = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
+		char *evalue = Var_Subst(expr, SCOPE_GLOBAL, VARE_EVAL);
 		/* TODO: handle errors */
 		free(expr);
 		printf("%s\n", evalue);
@@ -865,7 +864,7 @@ GetBooleanExpr(const char *expr, bool fallback)
 	char *value;
 	bool res;
 
-	value = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
+	value = Var_Subst(expr, SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 	res = ParseBoolean(value, fallback);
 	free(value);
@@ -1216,7 +1215,7 @@ InitMaxJobs(void)
 	    !Var_Exists(SCOPE_GLOBAL, ".MAKE.JOBS"))
 		return;
 
-	value = Var_Subst("${.MAKE.JOBS}", SCOPE_GLOBAL, VARE_WANTRES);
+	value = Var_Subst("${.MAKE.JOBS}", SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 	n = (int)strtol(value, NULL, 0);
 	if (n < 1) {
@@ -1251,7 +1250,7 @@ InitVpath(void)
 	if (!Var_Exists(SCOPE_CMDLINE, "VPATH"))
 		return;
 
-	vpath = Var_Subst("${VPATH}", SCOPE_CMDLINE, VARE_WANTRES);
+	vpath = Var_Subst("${VPATH}", SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 	path = vpath;
 	do {
@@ -1288,7 +1287,7 @@ ReadFirstDefaultMakefile(void)
 	StringList makefiles = LST_INIT;
 	StringListNode *ln;
 	char *prefs = Var_Subst("${.MAKE.MAKEFILE_PREFERENCE}",
-	    SCOPE_CMDLINE, VARE_WANTRES);
+	    SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 
 	AppendWords(&makefiles, prefs);
@@ -1495,7 +1494,7 @@ main_PrepareMaking(void)
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!opts.noBuiltins || opts.printVars == PVM_NONE) {
 		makeDependfile = Var_Subst("${.MAKE.DEPENDFILE}",
-		    SCOPE_CMDLINE, VARE_WANTRES);
+		    SCOPE_CMDLINE, VARE_EVAL);
 		if (makeDependfile[0] != '\0') {
 			/* TODO: handle errors */
 			doing_depend = true;
@@ -2084,7 +2083,7 @@ PrintOnError(GNode *gn, const char *msg)
 	{
 		char *errorVarsValues = Var_Subst(
 		    "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
-		    SCOPE_GLOBAL, VARE_WANTRES);
+		    SCOPE_GLOBAL, VARE_EVAL);
 		/* TODO: handle errors */
 		printf("%s", errorVarsValues);
 		free(errorVarsValues);
@@ -2114,7 +2113,7 @@ Main_ExportMAKEFLAGS(bool first)
 
 	flags = Var_Subst(
 	    "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
-	    SCOPE_CMDLINE, VARE_WANTRES);
+	    SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 	if (flags[0] != '\0')
 		setenv("MAKEFLAGS", flags, 1);
@@ -2132,7 +2131,7 @@ getTmpdir(void)
 
 	/* Honor $TMPDIR if it is valid, strip a trailing '/'. */
 	tmpdir = Var_Subst("${TMPDIR:tA:U" _PATH_TMP ":S,/$,,W}/",
-	    SCOPE_GLOBAL, VARE_WANTRES);
+	    SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 
 	if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {

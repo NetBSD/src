@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.218 2024/05/31 05:50:11 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.219 2024/06/02 15:31:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.218 2024/05/31 05:50:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.219 2024/06/02 15:31:25 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -209,7 +209,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			bool isError;
 
 			/* XXX: is expanded twice: once here and once below */
-			result = Var_Parse(&nested_p, scope, VARE_UNDEFERR);
+			result = Var_Parse(&nested_p, scope,
+			    VARE_EVAL_DEFINED);
 			/* TODO: handle errors */
 			isError = result.str == var_Error;
 			FStr_Done(&result);
@@ -224,7 +225,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 	spec[cp++ - spec] = '\0';
 	if (expandLib)
-		Var_Expand(&lib, scope, VARE_UNDEFERR);
+		Var_Expand(&lib, scope, VARE_EVAL_DEFINED);
 
 	for (;;) {
 		/*
@@ -248,7 +249,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 				const char *nested_p = cp;
 
 				result = Var_Parse(&nested_p, scope,
-				    VARE_UNDEFERR);
+				    VARE_EVAL_DEFINED);
 				/* TODO: handle errors */
 				isError = result.str == var_Error;
 				FStr_Done(&result);
@@ -293,7 +294,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			char *p;
 			const char *unexpandedMem = mem.str;
 
-			Var_Expand(&mem, scope, VARE_UNDEFERR);
+			Var_Expand(&mem, scope, VARE_EVAL_DEFINED);
 
 			/*
 			 * Now form an archive spec and recurse to deal with
