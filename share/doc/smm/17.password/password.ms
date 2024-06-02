@@ -1,4 +1,4 @@
-.\"	$NetBSD: password.ms,v 1.1 2007/11/29 12:35:05 mjf Exp $
+.\"	$NetBSD: password.ms,v 1.2 2024/06/02 11:44:29 andvar Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -325,7 +325,7 @@ found.
 .PP
 Another profitable approach for the bad guy is to use the word
 list from a dictionary or to use a list of names.
-For example, a large commercial dictionary contains typicallly about
+For example, a large commercial dictionary contains typically about
 250,000 words; these words can be checked in about five minutes.
 Again, a noticeable fraction of any collection of passwords
 will be found.
