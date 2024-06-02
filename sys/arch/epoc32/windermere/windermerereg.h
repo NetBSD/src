@@ -1,4 +1,4 @@
-/*	$NetBSD: windermerereg.h,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: windermerereg.h,v 1.2 2024/06/02 13:28:46 andvar Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -69,8 +69,8 @@
 /* Interrupt */
 #define INTSR		0x00	/* Interrupt Status(after masking) */
 #define INTRSR		0x01	/* Interrupt Status(before masking) */
-#define INTENS		0x02	/* Interrupr Enable */
-#define INTENC		0x03	/* Interrupr Disable */
+#define INTENS		0x02	/* Interrupt Enable */
+#define INTENC		0x03	/* Interrupt Disable */
 
 /* UART */
 #define UART_SIZE	0x20

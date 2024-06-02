@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.22 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.23 2024/06/02 13:28:44 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.22 2018/10/14 00:10:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.23 2024/06/02 13:28:44 andvar Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -241,7 +241,7 @@ news5000_enable_timer(void)
 
 	news5000_tc_init();
 
-	/* enable timer interrpt */
+	/* enable timer interrupt */
 	*(volatile uint32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
 }
 

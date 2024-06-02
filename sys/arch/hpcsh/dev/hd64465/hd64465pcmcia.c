@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.36 2023/04/05 21:53:56 andvar Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.37 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.36 2023/04/05 21:53:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.37 2024/06/02 13:28:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ hd64465pcmcia_intr(void *arg)
 	cscr = HD64461_PCCCSCR(ch->ch_channel);
 	r = hd64465_reg_read_1(cscr);
 
-	/* clear interrtupt (don't change power switch select) */
+	/* clear interrupt (don't change power switch select) */
 	hd64465_reg_write_1(cscr, r & ~0x40);
 
 	if (r & (0x60 | 0x04/* for memory mapped mode*/)) {

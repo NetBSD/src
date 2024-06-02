@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.28 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: esp.c,v 1.29 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.28 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.29 2024/06/02 13:28:45 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -231,7 +231,7 @@ espattach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	/* and the interuppts */
+	/* and the interrupts */
 	isr_add_autovect(ncr53c9x_intr, sc, ca->ca_intpri);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(self), "intr");

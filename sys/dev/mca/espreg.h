@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.2 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: espreg.h,v 1.3 2024/06/02 13:28:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #define N86C01_MODE_ENABLE	0x02		/* Mode enable register */
 #define	 N86C01_DATA_WIDTH	0x80		/* data width - 1=16 0=8 */
-#define  N86C01_INTR_ENABLE	0x40		/* enable inrerrupts 1=enable*/
+#define  N86C01_INTR_ENABLE	0x40		/* enable interrupts 1=enable*/
 #define  N86C01_INTR_SELECT_MSK	0x30		/* IRQ select - see ADF */
 #define  N86C01_IOADDR_MSK	0x0e		/* Base Address - see ADF */
 #define  N86C01_CARD_ENABLE	0x01		/* Card enable - 1=enabled */

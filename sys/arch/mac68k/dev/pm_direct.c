@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.31 2024/04/26 00:59:08 nat Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.32 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.31 2024/04/26 00:59:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.32 2024/06/02 13:28:45 andvar Exp $");
 
 #include "opt_adb.h"
 
@@ -410,7 +410,7 @@ pm_pmgrop_pm1(PMData *pmdata)
 	u_char pm_data;
 	u_char *pm_buf;
 
-	/* disable all inetrrupts but PM */
+	/* disable all interrupts but PM */
 	via1_vIER = via_reg(VIA1, vIER);
 	PM_VIA_INTR_DISABLE();
 
@@ -681,7 +681,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 
 	s = splhigh();
 
-	/* disable all inetrrupts but PM */
+	/* disable all interrupts but PM */
 	via1_vIER = 0x10;
 	via1_vIER &= via_reg(VIA1, vIER);
 	via_reg(VIA1, vIER) = via1_vIER;

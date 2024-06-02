@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.55 2021/10/11 02:30:00 rin Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.55 2021/10/11 02:30:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -458,7 +458,7 @@ hd64461pcmcia_channel0_intr(void *arg)
 	int ret = 0;
 
 	r = hd64461_reg_read_1(HD64461_PCC0CSCR_REG8);
-	/* clear interrtupt (edge source only) */
+	/* clear interrupt (edge source only) */
 	hd64461_reg_write_1(HD64461_PCC0CSCR_REG8, 0);
 
 	if (r & HD64461_PCC0CSCR_P0IREQ) {
@@ -482,7 +482,7 @@ hd64461pcmcia_channel1_intr(void *arg)
 	int ret = 0;
 
 	r = hd64461_reg_read_1(HD64461_PCC1CSCR_REG8);
-	/* clear interrtupt */
+	/* clear interrupt */
 	hd64461_reg_write_1(HD64461_PCC1CSCR_REG8, 0);
 
 	if (r & HD64461_PCC1CSCR_P1RC) {

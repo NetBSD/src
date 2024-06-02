@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.8 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.9 2024/06/02 13:28:45 andvar Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -108,7 +108,7 @@
  * - (8+x)(9+y*2).F000.3EFF
  *
  * (8+x)(9+y*2).F000.3F00,              N/A             PCIy Interrupt ACK0
- * (8+x)(9+y*2).F000.3F40                               PCIy INteruppt ACK1
+ * (8+x)(9+y*2).F000.3F40                               PCIy Interrupt ACK1
  *
  * (8+x)(9+y*2).F000.3F80               N/A             Unused
  * - (8+x)(9+y*2).FFFF.FFFF

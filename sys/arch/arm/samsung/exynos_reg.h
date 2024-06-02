@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.15 2017/06/11 00:13:15 jmcneill Exp $	*/
+/*	$NetBSD: exynos_reg.h,v 1.16 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * ISP		In-System Programming, like a JTAG
  * ACP		Accelerator Coherency Port
  * SSS		Security Sub System
- * GIC		Generic Interurrupt Controller
+ * GIC		Generic Interrupt Controller
  * PMU		Power Management Unit
  * DMC		2D Graphics engine
  * LEFTBUS	Data bus / Peripheral bus

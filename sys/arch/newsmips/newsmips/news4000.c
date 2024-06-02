@@ -1,4 +1,4 @@
-/*	$NetBSD: news4000.c,v 1.1 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: news4000.c,v 1.2 2024/06/02 13:28:44 andvar Exp $	*/
 
 /*-
  * Copyright (C) 2000 NONAKA Kimihiro.  All rights reserved.
@@ -199,7 +199,7 @@ news4000_enable_timer(void)
 	news4000_tc_init();
 #endif
 
-	/* enable timer interrpt */
+	/* enable timer interrupt */
 	*(volatile uint32_t *)NEWS4000_TIMERCTL = 1;
 }
 
