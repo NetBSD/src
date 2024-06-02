@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_pscreg.h,v 1.1 2006/03/06 23:06:17 shige Exp $ */
+/* $NetBSD: ausmbus_pscreg.h,v 1.2 2024/06/02 19:51:22 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -75,14 +75,14 @@
  *   DN: Data Not-acknowledged
  *   AN: Address Not-acknowledged
  *   AL: Arbitration Lost
- *   RR: Mask Rx FIFO request intterrupt
- *   RO: Mask Rx FIFO overflow intterrupt
- *   RU: Mask Rx FIFO uderflow intterrupt
- *   TR: Mask Tx FIFO request intterrupt
- *   TO: Mask Tx FIFO overflow intterrupt
- *   TU: Mask Tx FIFO uderflow intterrupt
- *   SD: Mask Slave Done intterrupt
- *   MD: Mask Master Done intterrupt
+ *   RR: Mask Rx FIFO request interrupt
+ *   RO: Mask Rx FIFO overflow interrupt
+ *   RU: Mask Rx FIFO uderflow interrupt
+ *   TR: Mask Tx FIFO request interrupt
+ *   TO: Mask Tx FIFO overflow interrupt
+ *   TU: Mask Tx FIFO uderflow interrupt
+ *   SD: Mask Slave Done interrupt
+ *   MD: Mask Master Done interrupt
  */
 #define	SMBUS_MSK_DN		(1u << 30)	/* R/W */
 #define	SMBUS_MSK_AN		(1u << 29)	/* R/W */
@@ -141,14 +141,14 @@
  *   DN: Data Not-acknowledged
  *   AN: Address Not-acknowledged
  *   AL: Arbitration Lost
- *   RR: Mask Rx FIFO request intterrupt
- *   RO: Mask Rx FIFO overflow intterrupt
- *   RU: Mask Rx FIFO uderflow intterrupt
- *   TR: Mask Tx FIFO request intterrupt
- *   TO: Mask Tx FIFO overflow intterrupt
- *   TU: Mask Tx FIFO uderflow intterrupt
- *   SD: Mask Slave Done intterrupt
- *   MD: Mask Master Done intterrupt
+ *   RR: Mask Rx FIFO request interrupt
+ *   RO: Mask Rx FIFO overflow interrupt
+ *   RU: Mask Rx FIFO uderflow interrupt
+ *   TR: Mask Tx FIFO request interrupt
+ *   TO: Mask Tx FIFO overflow interrupt
+ *   TU: Mask Tx FIFO uderflow interrupt
+ *   SD: Mask Slave Done interrupt
+ *   MD: Mask Master Done interrupt
  */
 #define	SMBUS_EVNT_DN		(1u << 30)	/* R/W */
 #define	SMBUS_EVNT_AN		(1u << 29)	/* R/W */
