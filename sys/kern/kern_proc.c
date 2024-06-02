@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.274 2023/10/05 19:41:07 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.275 2024/06/02 12:11:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.274 2023/10/05 19:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.275 2024/06/02 12:11:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1074,7 +1074,7 @@ proc_alloc(void)
 }
 
 /*
- * proc_alloc_pid_slot: allocate PID and record the occcupant so that
+ * proc_alloc_pid_slot: allocate PID and record the occupant so that
  * proc_find_raw() can find it by the PID.
  */
 static pid_t __noinline

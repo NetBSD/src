@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.27 2023/04/20 08:28:05 skrll Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.28 2024/06/02 12:11:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.27 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.28 2024/06/02 12:11:36 andvar Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -543,7 +543,7 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(NANDF_D1, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
 	IOMUX_MP(NANDF_D0, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
 
-	/* Batttery pins */
+	/* Battery pins */
 	IOMUX_MP(NANDF_D13, ALT3, HYS | DSEHIGH),
 	IOMUX_MP(NANDF_D12, ALT3, HYS | DSEHIGH),
 #if 0

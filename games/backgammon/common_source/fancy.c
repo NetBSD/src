@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.17 2021/05/02 12:50:43 rillig Exp $	*/
+/*	$NetBSD: fancy.c,v 1.18 2024/06/02 12:11:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.17 2021/05/02 12:50:43 rillig Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.18 2024/06/02 12:11:36 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ fboard(void)
 	for (i = 0; i < 53; i++)
 		fancyc('_');
 
-	curmove(15, 0);		/* do botttom line */
+	curmove(15, 0);		/* do bottom line */
 	for (i = 0; i < 53; i++)
 		fancyc('_');
 
