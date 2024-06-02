@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.337 2024/06/01 06:26:36 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.338 2024/06/02 15:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -937,7 +937,7 @@ typedef enum VarEvalMode {
 	 * TODO: Document what Var_Parse and Var_Subst return in this mode.
 	 *  As of 2021-03-15, they return unspecified, inconsistent results.
 	 */
-	VARE_PARSE_ONLY,
+	VARE_PARSE,
 
 	/*
 	 * Parse text in which '${...}' and '$(...)' are not parsed as
@@ -948,13 +948,13 @@ typedef enum VarEvalMode {
 	VARE_PARSE_BALANCED,
 
 	/* Parse and evaluate the expression. */
-	VARE_WANTRES,
+	VARE_EVAL,
 
 	/*
 	 * Parse and evaluate the expression.  It is an error if a
 	 * subexpression evaluates to undefined.
 	 */
-	VARE_UNDEFERR,
+	VARE_EVAL_DEFINED,
 
 	/*
 	 * Parse and evaluate the expression.  Keep undefined variables as-is
@@ -967,13 +967,13 @@ typedef enum VarEvalMode {
 	 *	# way) is still undefined, the updated CFLAGS becomes
 	 *	# "-I.. $(.INCLUDES)".
 	 */
-	VARE_EVAL_KEEP_UNDEF,
+	VARE_EVAL_KEEP_UNDEFINED,
 
 	/*
 	 * Parse and evaluate the expression.  Keep '$$' as '$$' and preserve
 	 * undefined subexpressions.
 	 */
-	VARE_KEEP_DOLLAR_UNDEF
+	VARE_EVAL_KEEP_DOLLAR_AND_UNDEFINED
 } VarEvalMode;
 
 typedef enum VarSetFlags {

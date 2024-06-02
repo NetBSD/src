@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.729 2024/06/01 06:26:36 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.730 2024/06/02 15:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.729 2024/06/01 06:26:36 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.730 2024/06/02 15:31:26 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -603,7 +603,7 @@ HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 		return;
 	}
 
-	xmsg = Var_Subst(umsg, SCOPE_CMDLINE, VARE_WANTRES);
+	xmsg = Var_Subst(umsg, SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 
 	Parse_Error(level, "%s", xmsg);
@@ -909,8 +909,7 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
 			break;
 
 		if (*p == '$') {
-			FStr val = Var_Parse(&p, SCOPE_CMDLINE,
-			    VARE_PARSE_ONLY);
+			FStr val = Var_Parse(&p, SCOPE_CMDLINE, VARE_PARSE);
 			/* TODO: handle errors */
 			FStr_Done(&val);
 		} else
@@ -1795,7 +1794,7 @@ VarCheckSyntax(VarAssignOp op, const char *uvalue, GNode *scope)
 	if (opts.strict) {
 		if (op != VAR_SUBST && strchr(uvalue, '$') != NULL) {
 			char *parsedValue = Var_Subst(uvalue,
-			    scope, VARE_PARSE_ONLY);
+			    scope, VARE_PARSE);
 			/* TODO: handle errors */
 			free(parsedValue);
 		}
@@ -1821,7 +1820,8 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	if (!Var_ExistsExpand(scope, name))
 		Var_SetExpand(scope, name, "");
 
-	evalue = Var_Subst(uvalue, scope, VARE_KEEP_DOLLAR_UNDEF);
+	evalue = Var_Subst(uvalue, scope,
+	    VARE_EVAL_KEEP_DOLLAR_AND_UNDEFINED);
 	/* TODO: handle errors */
 
 	Var_SetExpand(scope, name, evalue);
@@ -1838,7 +1838,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 	char *output, *error;
 
 	cmd = FStr_InitRefer(uvalue);
-	Var_Expand(&cmd, SCOPE_CMDLINE, VARE_UNDEFERR);
+	Var_Expand(&cmd, SCOPE_CMDLINE, VARE_EVAL_DEFINED);
 
 	output = Cmd_Exec(cmd.str, &error);
 	Var_SetExpand(scope, name, output);
@@ -2020,7 +2020,7 @@ ParseInclude(char *directive)
 
 	*p = '\0';
 
-	Var_Expand(&file, SCOPE_CMDLINE, VARE_WANTRES);
+	Var_Expand(&file, SCOPE_CMDLINE, VARE_EVAL);
 	IncludeFile(file.str, endc == '>', directive[0] == 'd', silent);
 	FStr_Done(&file);
 }
@@ -2229,7 +2229,7 @@ ParseTraditionalInclude(char *line)
 
 	pp_skip_whitespace(&file);
 
-	all_files = Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES);
+	all_files = Var_Subst(file, SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 
 	for (file = all_files; !done; file = p + 1) {
@@ -2272,7 +2272,7 @@ ParseGmakeExport(char *line)
 	/*
 	 * Expand the value before putting it in the environment.
 	 */
-	value = Var_Subst(value, SCOPE_CMDLINE, VARE_WANTRES);
+	value = Var_Subst(value, SCOPE_CMDLINE, VARE_EVAL);
 	/* TODO: handle errors */
 
 	setenv(variable, value, 1);
@@ -2881,7 +2881,7 @@ ParseDependencyLine(char *line)
 	 * empty string var_Error, which cannot be detected in the result of
 	 * Var_Subst.
 	 */
-	emode = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
+	emode = opts.strict ? VARE_EVAL : VARE_EVAL_DEFINED;
 	expanded_line = Var_Subst(line, SCOPE_CMDLINE, emode);
 	/* TODO: handle errors */
 

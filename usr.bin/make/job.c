@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.474 2024/05/25 21:34:38 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.475 2024/06/02 15:31:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.474 2024/05/25 21:34:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.475 2024/06/02 15:31:25 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -902,7 +902,7 @@ JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 	run = GNode_ShouldExecute(job->node);
 
 	EvalStack_Push(job->node->name, NULL, NULL);
-	xcmd = Var_Subst(ucmd, job->node, VARE_WANTRES);
+	xcmd = Var_Subst(ucmd, job->node, VARE_EVAL);
 	EvalStack_Pop();
 	/* TODO: handle errors */
 	xcmdStart = xcmd;
@@ -1031,7 +1031,7 @@ JobSaveCommands(Job *job)
 		 * expand the other variables as well; see deptgt-end.mk.
 		 */
 		EvalStack_Push(job->node->name, NULL, NULL);
-		expanded_cmd = Var_Subst(cmd, job->node, VARE_WANTRES);
+		expanded_cmd = Var_Subst(cmd, job->node, VARE_EVAL);
 		EvalStack_Pop();
 		/* TODO: handle errors */
 		Lst_Append(&Targ_GetEndNode()->commands, expanded_cmd);
@@ -1070,7 +1070,7 @@ DebugFailedJob(const Job *job)
 		debug_printf("\t%s\n", cmd);
 
 		if (strchr(cmd, '$') != NULL) {
-			char *xcmd = Var_Subst(cmd, job->node, VARE_WANTRES);
+			char *xcmd = Var_Subst(cmd, job->node, VARE_EVAL);
 			debug_printf("\t=> %s\n", xcmd);
 			free(xcmd);
 		}
@@ -2195,7 +2195,7 @@ Job_SetPrefix(void)
 		Global_Set(".MAKE.JOB.PREFIX", "---");
 
 	targPrefix = Var_Subst("${.MAKE.JOB.PREFIX}",
-	    SCOPE_GLOBAL, VARE_WANTRES);
+	    SCOPE_GLOBAL, VARE_EVAL);
 	/* TODO: handle errors */
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.25 2024/06/01 05:08:48 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.26 2024/06/02 15:31:26 rillig Exp $
 #
 # Tests for the expression modifier ':@var@body@', which replaces each word of
 # the expression with the expanded body, which may contain references to the
@@ -93,11 +93,11 @@ USE_8_DOLLARS=	${:U1:@var@${8_DOLLARS}@} ${8_DOLLARS} $$$$$$$$
 #
 SUBST_CONTAINING_LOOP:= ${USE_8_DOLLARS}
 # The ':=' assignment operator evaluates the variable value using the mode
-# VARE_KEEP_DOLLAR_UNDEF, which means that some dollar signs are preserved,
-# but not all.  The dollar signs in the top-level expression and in the
-# indirect ${8_DOLLARS} are preserved.
+# VARE_EVAL_KEEP_DOLLAR_AND_UNDEFINED, which means that some dollar signs are
+# preserved, but not all.  The dollar signs in the top-level expression and in
+# the indirect ${8_DOLLARS} are preserved.
 #
-# The variable modifier :@var@ does not preserve the dollar signs though, no
+# The modifier :@var@ does not preserve the dollar signs though, no
 # matter in which context it is evaluated.  What happens in detail is:
 # First, the modifier part "${8_DOLLARS}" is parsed without expanding it.
 # Next, each word of the value is expanded on its own, and at this moment
