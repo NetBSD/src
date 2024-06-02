@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.16 2022/06/17 06:18:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.17 2024/06/02 19:27:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.16 2022/06/17 06:18:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.17 2024/06/02 19:27:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1780,7 +1780,7 @@ iavf_setup_interrupts(struct iavf_softc *sc)
 		IAVF_LOG(sc, LOG_ERR, "couldn't allocate interrupts\n");
 	} else if (counts[PCI_INTR_TYPE_MSIX] != (int)num) {
 		IAVF_LOG(sc, LOG_DEBUG,
-		    "request %u intruppts, but allocate %d interrupts\n",
+		    "request %u interrupts, but allocate %d interrupts\n",
 		    num, counts[PCI_INTR_TYPE_MSIX]);
 		num = counts[PCI_INTR_TYPE_MSIX];
 	}
