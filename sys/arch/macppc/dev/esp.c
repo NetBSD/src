@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.34 2023/12/20 15:29:04 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.35 2024/06/02 19:27:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.34 2023/12/20 15:29:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.35 2024/06/02 19:27:12 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -230,7 +230,7 @@ espattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_maxxfer = 64 * 1024;
 
-	/* and the interuppts */
+	/* and the interrupts */
 	intr_establish_xname(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc,
 	    device_xname(self));
 
