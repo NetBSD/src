@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1117 2024/06/01 06:26:36 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1118 2024/06/02 11:25:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1117 2024/06/01 06:26:36 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1118 2024/06/02 11:25:03 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2083,7 +2083,7 @@ static bool
 IsEscapedModifierPart(const char *p, char delim,
 		      struct ModifyWord_SubstArgs *subst)
 {
-	if (p[0] != '\\')
+	if (p[0] != '\\' || p[1] == '\0')
 		return false;
 	if (p[1] == delim || p[1] == '\\' || p[1] == '$')
 		return true;

@@ -9,6 +9,8 @@ make: Bad modifier ":[2147483648]" for variable "word"
 make: "varmod.mk" line 128: Malformed conditional (${word:L:[2147483648]})
 make: "varmod.mk" line 135: while evaluating variable "word": Invalid number "99333000222000111000}" for ':range' modifier
 make: "varmod.mk" line 135: Malformed conditional (${word:L:range=99333000222000111000})
+make: "varmod.mk" line 143: while evaluating "${:${:Ugmtime=\\}}": Invalid time value "\"
+make: "varmod.mk" line 143: Malformed conditional (${:${:Ugmtime=\\}})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

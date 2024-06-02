@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.12 2024/06/01 18:44:05 rillig Exp $
+# $NetBSD: varmod.mk,v 1.13 2024/06/02 11:25:03 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -133,4 +133,13 @@ VAR=	STOP
 # expect+2: Malformed conditional (${word:L:range=99333000222000111000})
 # expect+1: while evaluating variable "word": Invalid number "99333000222000111000}" for ':range' modifier
 .if ${word:L:range=99333000222000111000}
+.endif
+
+# In an indirect modifier, the delimiter is '\0', which at the same time marks
+# the end of the string.  The sequence '\\' '\0' is not an escaped delimiter,
+# as it would be wrong to skip past the end of the string.
+# expect+2: while evaluating "${:${:Ugmtime=\\}}": Invalid time value "\"
+# expect+1: Malformed conditional (${:${:Ugmtime=\\}})
+.if ${:${:Ugmtime=\\}}
+.  error
 .endif
