@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2024/02/10 18:43:52 andvar Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2024/06/02 19:20:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2024/02/10 18:43:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2024/06/02 19:20:09 andvar Exp $");
 
 #include "opt_mbr.h"
 
@@ -436,7 +436,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			/* disklabel is written in host's endian */
 			if (dlp->d_npartitions > MAXPARTITIONS ||
 			    dkcksum(dlp) != 0)
-				msg = "disk label corruptted";
+				msg = "disk label corrupted";
 			else {
 				*lp = *dlp;
 				msg = NULL;
@@ -449,7 +449,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			/* disklabel is written in reversed endian */
 			if (bswap16(dlp->d_npartitions) > MAXPARTITIONS ||
 			    dkcksum_re(dlp) != 0)
-				msg = "disk label corruptted";
+				msg = "disk label corrupted";
 			else {
 				swap_endian_disklabel(lp, dlp);
 				/* recalculate cksum in host's endian */
@@ -466,7 +466,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		    le32toh(dlp->d_magic2) == DISKMAGIC) {
 			if (le16toh(dlp->d_npartitions) > MAXPARTITIONS ||
 			    dkcksum_mmeye(dlp) != 0)
-				msg = "disk label corruptted";
+				msg = "disk label corrupted";
 			else {
 				/* disklabel is written in old mmeye's way */
 				swap_mmeye_disklabel(lp, dlp);
