@@ -1,4 +1,4 @@
-/*	$NetBSD: ypalias_init.c,v 1.2 2021/10/30 08:56:54 nia Exp $	*/
+/*	$NetBSD: ypalias_init.c,v 1.3 2024/06/02 11:44:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypalias_init.c,v 1.2 2021/10/30 08:56:54 nia Exp $");
+__RCSID("$NetBSD: ypalias_init.c,v 1.3 2024/06/02 11:44:29 andvar Exp $");
 #endif
 
 #include <err.h>
@@ -105,7 +105,7 @@ ypalias_init(void)
 	if (reallocarr(&ypa, i, sizeof(*ypa)) == 0)
 		return ypa;
 out:
-	warn("Cannot alllocate alias space, returning default list");
+	warn("Cannot allocate alias space, returning default list");
 	if (ypa) {
 		do
 			free(__UNCONST(ypa[--i].alias));
