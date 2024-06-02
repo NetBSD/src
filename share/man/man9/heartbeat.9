@@ -1,4 +1,4 @@
-.\"	$NetBSD: heartbeat.9,v 1.5 2023/07/07 15:56:31 uwe Exp $
+.\"	$NetBSD: heartbeat.9,v 1.6 2024/06/02 13:28:45 andvar Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ checks whether
 .Xr time_uptime 9
 has changed, to see if either the
 .Xr timecounter 9
-or soft intrrupts on the current CPU are stuck.
+or soft interrupts on the current CPU are stuck.
 If it hasn't advanced within
 .Li kern.heartbeat.max_period
 seconds worth of ticks, or if it has updated and the current CPU's view

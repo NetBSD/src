@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpcie.c,v 1.4 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: imxpcie.c,v 1.5 2024/06/02 13:28:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.4 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.5 2024/06/02 13:28:45 andvar Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -566,7 +566,7 @@ imxpcie_setup(struct imxpcie_softc * const sc)
 	PCIE_WRITE(sc, PCI_BAR0, 0x00000004);
 	PCIE_WRITE(sc, PCI_BAR1, 0x00000000);
 
-	/* Interurupt pins */
+	/* Interrupt pins */
 	v = PCIE_READ(sc, PCI_INTERRUPT_REG);
 	v &= ~(PCI_INTERRUPT_PIN_MASK << PCI_INTERRUPT_PIN_SHIFT);
 	v |= PCI_INTERRUPT_PIN_A << PCI_INTERRUPT_PIN_SHIFT;

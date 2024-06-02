@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.32 2024/02/02 22:00:33 andvar Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.33 2024/06/02 13:28:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.32 2024/02/02 22:00:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.33 2024/06/02 13:28:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1045,7 +1045,7 @@ cdtty_hwiflow(struct cd18xx_softc *sc, struct cdtty_port *p)
 
 /*
  * this is the number of interrupts allowed, total.  set it to 0
- * to allow unlimited interrpts
+ * to allow unlimited interrupts
  */
 #define INTR_MAX_ALLOWED	0
 

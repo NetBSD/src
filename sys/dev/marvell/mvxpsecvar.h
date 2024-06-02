@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsecvar.h,v 1.3 2022/05/22 11:39:27 riastradh Exp $	*/
+/*	$NetBSD: mvxpsecvar.h,v 1.4 2024/06/02 13:28:45 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -345,7 +345,7 @@ typedef SLIST_HEAD(mvxpsec_packet_list, mvxpsec_packet) mvxpsec_list_t;
  * Event counters
  */
 struct mvxpsec_evcnt {
-	/* interuprts */
+	/* interrupts */
 	struct evcnt intr_all;
 	struct evcnt intr_auth;
 	struct evcnt intr_des;

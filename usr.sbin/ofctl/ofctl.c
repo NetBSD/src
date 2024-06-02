@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.15 2020/06/06 22:33:23 thorpej Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.16 2024/06/02 13:28:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.15 2020/06/06 22:33:23 thorpej Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.16 2024/06/02 13:28:46 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -899,7 +899,7 @@ static const struct {
 #if 0
 	{ "assigned-addresses", assigned_addresses_format },
 	{ "ranges", ranges_format },
-	{ "interrupt-map", interrup_map_format },
+	{ "interrupt-map", interrupt_map_format },
 	{ "interrupt", interrupt_format },
 #endif
 	{ "model", string_format },
