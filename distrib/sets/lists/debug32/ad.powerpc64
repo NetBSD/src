@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.5 2024/04/16 19:15:36 christos Exp $
+# $NetBSD: ad.powerpc64,v 1.6 2024/06/03 18:47:23 riastradh Exp $
 ./usr/lib/powerpc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -191,7 +191,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libamu.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/powerpc/libasan.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/powerpc/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/powerpc/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/powerpc/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
@@ -226,7 +226,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libfido2.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libform.so.8.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libgcc_s.so.1.0.debug	comp-sys-debug	debug,compat,gcc
-./usr/libdata/debug/usr/lib/powerpc/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,gcc
+./usr/libdata/debug/usr/lib/powerpc/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/powerpc/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libgomp.so.2.1.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/powerpc/libgssapi.so.12.0.debug	comp-sys-debug	debug,compat,kerberos
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/liblber.so.5.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/powerpc/libldap.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/powerpc/libldap_r.so.6.0.debug	comp-sys-debug	debug,compat,ldap
-./usr/libdata/debug/usr/lib/powerpc/liblsan.so.2.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/powerpc/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcc
 ./usr/libdata/debug/usr/lib/powerpc/liblua.so.6.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/liblzf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
@@ -265,7 +265,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libnpf.so.0.1.debug	comp-sys-debug	debug,compat,npf
 ./usr/libdata/debug/usr/lib/powerpc/libns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libnvpair.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/powerpc/libobjc.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/powerpc/libobjc.so.4.0.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/powerpc/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libp2k.so.2.0.debug	comp-sys-debug	debug,compat
@@ -301,10 +301,10 @@
 ./usr/libdata/debug/usr/lib/powerpc/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libssh.so.46.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libssl.so.15.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libtre.so.0.8.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/powerpc/libubsan.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/powerpc/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/powerpc/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/powerpc/libumem.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/powerpc/libunbound.so.9.0.debug	comp-sys-debug	debug,compat,unbound

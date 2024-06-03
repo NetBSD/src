@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.5 2024/05/06 08:38:51 mrg Exp $
+# $NetBSD: md.sparc64,v 1.6 2024/06/03 18:47:23 riastradh Exp $
 ./lib/sparc					base-compat-shlib	compat
 ./lib/sparc/npf					base-compat-shlib	compat,npf
 ./lib/sparc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -124,6 +124,9 @@
 ./usr/lib/sparc/libbz2.so			base-compat-shlib	compat
 ./usr/lib/sparc/libbz2.so.1			base-compat-shlib	compat
 ./usr/lib/sparc/libbz2.so.1.1			base-compat-shlib	compat
+./usr/lib/sparc/libc++.so			base-compat-shlib	compat,libcxx
+./usr/lib/sparc/libc++.so.1			base-compat-shlib	compat,libcxx
+./usr/lib/sparc/libc++.so.1.0			base-compat-shlib	compat,libcxx
 ./usr/lib/sparc/libc.so				base-compat-shlib	compat
 ./usr/lib/sparc/libc.so.12			base-compat-shlib	compat
 ./usr/lib/sparc/libc.so.12.221			base-compat-shlib	compat

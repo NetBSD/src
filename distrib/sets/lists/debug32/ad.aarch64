@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.5 2024/04/16 19:15:36 christos Exp $
+# $NetBSD: ad.aarch64,v 1.6 2024/06/03 18:47:23 riastradh Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -192,7 +192,7 @@
 ./usr/lib/eabihf/libatf-c++_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabihf/libatf-c_g.a			comp-c-debuglib	debuglib,compat,atf
 ./usr/lib/eabihf/libavl_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/eabihf/libbfd_g.a	comp-sys-debug		debug,compat
+./usr/lib/eabihf/libbfd_g.a	comp-sys-debug		debug,compat,binutils
 ./usr/lib/eabihf/libbind9_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libblocklist_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libbluetooth_g.a			comp-c-debuglib	debuglib,compat
@@ -358,7 +358,8 @@
 ./usr/libdata/debug/usr/lib/eabi/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libamu.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libasan.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libarm.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabi/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/eabi/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
@@ -371,16 +372,19 @@
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbz2.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libc.so.12.221.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libc_vfp.so.0.0.debug	comp-sys-debug	debug,compat,softfloat
 ./usr/libdata/debug/usr/lib/eabi/libcbor.so.0.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcrypto.so.15.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libctf.so.3.0.debug	comp-sys-debug	debug,compat,ctf
 ./usr/libdata/debug/usr/lib/eabi/libcurses.so.9.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdes.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdevmapper.so.1.0.debug	comp-sys-debug	debug,compat,lvm
 ./usr/libdata/debug/usr/lib/eabi/libdm.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdns_sd.so.0.0.debug	comp-sys-debug	debug,compat,mdns
+./usr/libdata/debug/usr/lib/eabi/libdtrace.so.3.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/lib/eabi/libdwarf.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libedit.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libelf.so.2.0.debug	comp-sys-debug	debug,compat
@@ -393,7 +397,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libfido2.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libform.so.8.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libgcc_s.so.1.0.debug	comp-sys-debug	debug,compat,gcc
-./usr/libdata/debug/usr/lib/eabi/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,gcc
+./usr/libdata/debug/usr/lib/eabi/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/eabi/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libgomp.so.2.1.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/eabi/libgssapi.so.12.0.debug	comp-sys-debug	debug,compat,kerberos
@@ -419,7 +423,7 @@
 ./usr/libdata/debug/usr/lib/eabi/liblber.so.5.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/eabi/libldap.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/eabi/libldap_r.so.6.0.debug	comp-sys-debug	debug,compat,ldap
-./usr/libdata/debug/usr/lib/eabi/liblsan.so.2.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcc
 ./usr/libdata/debug/usr/lib/eabi/liblua.so.6.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblzf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
@@ -432,7 +436,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libnpf.so.0.1.debug	comp-sys-debug	debug,compat,npf
 ./usr/libdata/debug/usr/lib/eabi/libns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libnvpair.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/eabi/libobjc.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libobjc.so.4.0.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/eabi/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libp2k.so.2.0.debug	comp-sys-debug	debug,compat
@@ -468,10 +472,10 @@
 ./usr/libdata/debug/usr/lib/eabi/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssh.so.46.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssl.so.15.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libtre.so.0.8.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libubsan.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabi/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libumem.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabi/libunbound.so.9.0.debug	comp-sys-debug	debug,compat,unbound
@@ -533,7 +537,8 @@
 ./usr/libdata/debug/usr/lib/eabihf/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libamu.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libasan.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libarm.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabihf/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf
 ./usr/libdata/debug/usr/lib/eabihf/libatf-c.so.0.0.debug	comp-sys-debug	debug,compat,atf
@@ -546,16 +551,19 @@
 ./usr/libdata/debug/usr/lib/eabihf/libbsdmalloc.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libbz2.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libc.so.12.221.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libc_vfp.so.0.0.debug	comp-sys-debug	debug,compat,softfloat
 ./usr/libdata/debug/usr/lib/eabihf/libcbor.so.0.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
 ./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libcrypto.so.15.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libctf.so.3.0.debug	comp-sys-debug	debug,compat,ctf
 ./usr/libdata/debug/usr/lib/eabihf/libcurses.so.9.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libdes.so.15.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libdevmapper.so.1.0.debug	comp-sys-debug	debug,compat,lvm
 ./usr/libdata/debug/usr/lib/eabihf/libdm.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libdns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libdns_sd.so.0.0.debug	comp-sys-debug	debug,compat,mdns
+./usr/libdata/debug/usr/lib/eabihf/libdtrace.so.3.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/lib/eabihf/libdwarf.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libedit.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libelf.so.2.0.debug	comp-sys-debug	debug,compat
@@ -568,7 +576,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libfido2.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libform.so.8.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libgcc_s.so.1.0.debug	comp-sys-debug	debug,compat,gcc
-./usr/libdata/debug/usr/lib/eabihf/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,gcc
+./usr/libdata/debug/usr/lib/eabihf/libgnuctf.so.1.0.debug	comp-sys-debug	debug,compat,binutils=239
 ./usr/libdata/debug/usr/lib/eabihf/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libgomp.so.2.1.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/eabihf/libgssapi.so.12.0.debug	comp-sys-debug	debug,compat,kerberos
@@ -594,7 +602,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/liblber.so.5.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/eabihf/libldap.so.6.0.debug	comp-sys-debug	debug,compat,ldap
 ./usr/libdata/debug/usr/lib/eabihf/libldap_r.so.6.0.debug	comp-sys-debug	debug,compat,ldap
-./usr/libdata/debug/usr/lib/eabihf/liblsan.so.2.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/liblsan.so.2.0.debug	comp-sys-debug	debug,compat,cxx,gcc
 ./usr/libdata/debug/usr/lib/eabihf/liblua.so.6.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/liblzf.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/liblzma.so.2.0.debug	comp-sys-debug	debug,compat
@@ -607,7 +615,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libnpf.so.0.1.debug	comp-sys-debug	debug,compat,npf
 ./usr/libdata/debug/usr/lib/eabihf/libns.so.21.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libnvpair.so.0.0.debug	comp-sys-debug	debug,compat,zfs
-./usr/libdata/debug/usr/lib/eabihf/libobjc.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libobjc.so.4.0.debug	comp-sys-debug	debug,compat,gcc
 ./usr/libdata/debug/usr/lib/eabihf/libopcodes.so.11.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libossaudio.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libp2k.so.2.0.debug	comp-sys-debug	debug,compat
@@ -643,10 +651,10 @@
 ./usr/libdata/debug/usr/lib/eabihf/libsqlite3.so.1.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libssh.so.46.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libssl.so.15.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/eabihf/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libtre.so.0.8.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libubsan.so.4.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabihf/libukfs.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libumem.so.0.0.debug	comp-sys-debug	debug,compat,zfs
 ./usr/libdata/debug/usr/lib/eabihf/libunbound.so.9.0.debug	comp-sys-debug	debug,compat,unbound
