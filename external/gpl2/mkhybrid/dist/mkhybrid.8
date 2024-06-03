@@ -46,6 +46,9 @@ mkhybrid \- create an hybrid ISO9660/JOLIET/HFS filesystem with optional Rock Ri
 .B \-D
 ]
 [
+.B \-graft-points
+]
+[
 .B \-hide
 .I glob
 ]
@@ -60,6 +63,12 @@ mkhybrid \- create an hybrid ISO9660/JOLIET/HFS filesystem with optional Rock Ri
 [
 .B \-hide-joliet-list
 .I file
+]
+[
+.B \-hide-joliet-trans-tbl
+]
+[
+.B \-hide-rr-moved
 ]
 [
 .B \-J
@@ -344,7 +353,10 @@ mkhybrid
 will merge the files found in all of the specified path components to form the cdrom
 image.
 .PP
-It is possible to graft the paths at points other than the root
+If the option
+.I \-graft-points
+has been specified, 
+it is possible to graft the paths at points other than the root
 directory, and it is possible to graft files or directories onto the
 cdrom image with names different than what they have in the source filesystem.  This is
 easiest to illustrate with a couple of examples.   Let's start by assuming that a local
@@ -479,6 +491,14 @@ Follow symbolic links when generating the filesystem.  When this option is not
 in use, symbolic links will be entered using Rock Ridge if enabled, otherwise
 the file will be ignored.
 .TP
+.B \-graft-points
+Allow to use graft points for filenames. If this option is used, all filenames
+are checked for graft points. The filename is divided at the first unescaped
+equal sign. All occurrences of '\\\\' and '=' characters must be escaped with '\\\\'
+if 
+.I \-graft-points
+has been specified.
+.TP
 .BI \-hide " glob
 Hide
 .I glob
@@ -520,6 +540,34 @@ option.
 A file containing a list of
 .I globs
 to be hidden as above.
+.TP
+.B \-hide-joliet-trans-tbl
+Hide the
+.B TRANS.TBL
+files from the Joliet tree.
+These files usually don't make sense in the Joliet World as they list
+the real name and the ISO9660 name which may both be different from the
+Joliet name.
+.TP
+.B \-hide-rr-moved
+Rename the directory
+.B RR_MOVED
+to
+.B .rr_moved
+in the Rock Ridge tree.
+It seems to be impossible to completely hide the
+.B RR_MOVED
+directory from the Rock Ridge tree.
+This option only makes the visible tree better to understand for
+people who don't know what this directory is for.
+If you need to have no
+.B RR_MOVED
+directory at all, you should use the
+.B \-D
+option. Note that in case that the
+.B \-D
+option has been specified, the resulting filesystem is not ISO9660
+level-1 compliant and will not be readable on MS-DOS.
 .TP
 .B \-l
 Allow full 32 character filenames.  Normally the ISO9660 filename will be in an
