@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.22 2024/01/19 22:22:40 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.23 2024/06/04 21:42:40 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.22 2024/01/19 22:22:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.23 2024/06/04 21:42:40 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -334,6 +334,23 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 	KASSERT(i915_gem_object_type_has(obj,
 		I915_GEM_OBJECT_HAS_STRUCT_PAGE));
 
+	int pmapflags;
+	switch (mmo->mmap_type) {
+	case I915_MMAP_TYPE_WC:
+		pmapflags = PMAP_WRITE_COMBINE;
+		break;
+	case I915_MMAP_TYPE_WB:
+		pmapflags = 0;	/* default */
+		break;
+	case I915_MMAP_TYPE_UC:
+		pmapflags = PMAP_NOCACHE;
+		break;
+	case I915_MMAP_TYPE_GTT: /* handled by vm_fault_gtt */
+	default:
+		panic("invalid i915 gem mmap offset type: %d",
+		    mmo->mmap_type);
+	}
+
 	struct scatterlist *sg = obj->mm.pages->sgl;
 	unsigned startpage = (ufi->entry->offset + (vaddr - ufi->entry->start))
 	    >> PAGE_SHIFT;
@@ -349,7 +366,7 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 		/* XXX errno NetBSD->Linux */
 		err = -pmap_enter(ufi->orig_map->pmap,
 		    vaddr + i*PAGE_SIZE, paddr, ufi->entry->protection,
-		    PMAP_CANFAIL | ufi->entry->protection);
+		    PMAP_CANFAIL | ufi->entry->protection | pmapflags);
 		if (err)
 			break;
 	}
@@ -489,7 +506,7 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 		/* XXX errno NetBSD->Linux */
 		ret = -pmap_enter(ufi->orig_map->pmap,
 		    vaddr + i*PAGE_SIZE, paddr, ufi->entry->protection,
-		    PMAP_CANFAIL | ufi->entry->protection);
+		    PMAP_CANFAIL|PMAP_WRITE_COMBINE | ufi->entry->protection);
 		if (ret)
 			break;
 	}
