@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.68 2024/02/17 08:27:46 skrll Exp $
+.\" $NetBSD: bus_dma.9,v 1.69 2024/06/04 21:43:13 riastradh Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -717,9 +717,20 @@ function.
 This flag is a
 .Em hint
 to machine-dependent code.
-If possible, map the uncached memory.
+If possible, map the memory uncached.
 This flag may be useful in the case that the memory cache causes unexpected
 behavior of the device.
+.Pp
+Exclusive with
+.Dv BUS_DMA_PREFETCHABLE .
+.It Dv BUS_DMA_PREFETCHABLE
+This flag is a
+.Em hint
+to machine-dependent code.
+If possible, map the memory prefetchable/write-combining.
+.Pp
+Exclusive with
+.Dv BUS_DMA_NOCACHE .
 .El
 .El
 .Pp
