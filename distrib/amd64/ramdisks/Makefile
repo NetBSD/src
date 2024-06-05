@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2024/02/19 17:55:46 riastradh Exp $
+#	$NetBSD: Makefile,v 1.6 2024/06/05 16:37:44 riastradh Exp $
 
 SUBDIR=
 SUBDIR+=	ramdisk
 SUBDIR+=	ramdisk-cgdroot
-SUBDIR+=	ramdisk-zfsroot
+SUBDIR+=	${${MKZFS} != "no":?ramdisk-zfsroot:}
 
 TARGETS+=	release
 
