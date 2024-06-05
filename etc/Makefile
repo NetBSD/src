@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.471 2024/05/31 20:58:52 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.472 2024/06/05 17:20:18 tsutsui Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -54,7 +54,7 @@ MKISOFS?=	${TOOL_MKHYBRID}
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
 ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
-MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
+MKISOFS_FLAGS+= -J -l -r \
 		-V ${ISO_VOLID} \
 		-publisher "The NetBSD Project" \
 		-m "${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom"
