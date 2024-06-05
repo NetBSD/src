@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.6 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.7 2024/06/05 14:16:31 riastradh Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -371,8 +371,9 @@
 ./usr/libdata/debug/usr/lib/eabi/libbozohttpd.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbz2.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libc++.so.1.0.debug		comp-sys-debug	debug,libcxx
 ./usr/libdata/debug/usr/lib/eabi/libc.so.12.221.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libc_vfp.so.0.0.debug	comp-sys-debug	debug,compat,softfloat
+./usr/libdata/debug/usr/lib/eabi/libc_vfp.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcbor.so.0.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
@@ -447,6 +448,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libperfuse.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libppath.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libproc.so.1.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/lib/eabi/libprop.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libpthread.so.1.4.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libpuffs.so.2.0.debug	comp-sys-debug	debug,compat
@@ -550,8 +552,8 @@
 ./usr/libdata/debug/usr/lib/eabihf/libbozohttpd.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libbsdmalloc.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libbz2.so.1.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libc++.so.1.0.debug		comp-sys-debug	debug,libcxx
 ./usr/libdata/debug/usr/lib/eabihf/libc.so.12.221.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libc_vfp.so.0.0.debug	comp-sys-debug	debug,compat,softfloat
 ./usr/libdata/debug/usr/lib/eabihf/libcbor.so.0.5.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.8.0.debug	comp-sys-debug	debug,compat,kerberos
 ./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
@@ -626,6 +628,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libperfuse.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libppath.so.0.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libproc.so.1.0.debug	comp-sys-debug	debug,compat,dtrace
 ./usr/libdata/debug/usr/lib/eabihf/libprop.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libpthread.so.1.4.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libpuffs.so.2.0.debug	comp-sys-debug	debug,compat

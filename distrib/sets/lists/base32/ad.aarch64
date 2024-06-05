@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.5 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.6 2024/06/05 14:16:31 riastradh Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -143,9 +143,9 @@
 ./usr/lib/eabi/libc.so				base-compat-shlib	compat
 ./usr/lib/eabi/libc.so.12			base-compat-shlib	compat
 ./usr/lib/eabi/libc.so.12.221			base-compat-shlib	compat
-./usr/lib/eabi/libc_vfp.so			base-compat-shlib	compat,softfloat
-./usr/lib/eabi/libc_vfp.so.0			base-compat-shlib	compat,softfloat
-./usr/lib/eabi/libc_vfp.so.0.0			base-compat-shlib	compat,softfloat
+./usr/lib/eabi/libc_vfp.so			base-compat-shlib	compat
+./usr/lib/eabi/libc_vfp.so.0			base-compat-shlib	compat
+./usr/lib/eabi/libc_vfp.so.0.0			base-compat-shlib	compat
 ./usr/lib/eabi/libcbor.so			base-compat-shlib	compat
 ./usr/lib/eabi/libcbor.so.0			base-compat-shlib	compat
 ./usr/lib/eabi/libcbor.so.0.5			base-compat-shlib	compat
@@ -657,9 +657,6 @@
 ./usr/lib/eabihf/libc.so				base-compat-shlib	compat
 ./usr/lib/eabihf/libc.so.12			base-compat-shlib	compat
 ./usr/lib/eabihf/libc.so.12.221			base-compat-shlib	compat
-./usr/lib/eabihf/libc_vfp.so			base-compat-shlib	compat,softfloat
-./usr/lib/eabihf/libc_vfp.so.0			base-compat-shlib	compat,softfloat
-./usr/lib/eabihf/libc_vfp.so.0.0		base-compat-shlib	compat,softfloat
 ./usr/lib/eabihf/libcbor.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libcbor.so.0			base-compat-shlib	compat
 ./usr/lib/eabihf/libcbor.so.0.5			base-compat-shlib	compat
