@@ -1,11 +1,11 @@
-# $NetBSD: varmod.mk,v 1.13 2024/06/02 11:25:03 rillig Exp $
+# $NetBSD: varmod.mk,v 1.14 2024/06/05 22:06:53 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
 # See also:
 #	varparse-errors.mk
 
-# As of 2022-08-06, the possible behaviors during parsing are:
+# As of 2024-06-05, the possible behaviors during parsing are:
 #
 # * `strict`: the parsing style used by most modifiers:
 #   * either uses `ParseModifierPart` or parses the modifier literal
@@ -46,9 +46,9 @@
 # | `U`          | individual   | custom parser      | N/A      |
 # | `[`          | strict       |                    | no       |
 # | `_`          | individual   | strcspn            | yes      |
-# | `gmtime`     | strict       | only literal value | yes      |
+# | `gmtime`     | strict       |                    | yes      |
 # | `hash`       | strict       |                    | N/A      |
-# | `localtime`  | strict       | only literal value | yes      |
+# | `localtime`  | strict       |                    | yes      |
 # | `q`          | strict       |                    | yes      |
 # | `range`      | strict       |                    | N/A      |
 # | `sh`         | strict       |                    | N/A      |
