@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.22 2024/04/23 22:51:28 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.23 2024/06/05 22:06:53 rillig Exp $
 #
 # Tests for the ':M' modifier, which keeps only those words that match the
 # given pattern.
@@ -42,13 +42,12 @@
 .  error
 .endif
 
-# A pattern that ends with '*' is anchored at the
-# beginning.
+# A pattern that does not start with '*' is anchored at the beginning.
 .if ${a aa aaa b ba baa bab:L:Ma*} != "a aa aaa"
 .  error
 .endif
 
-# A pattern that starts with '*' is anchored at the end.
+# A pattern that does not end with '*' is anchored at the end.
 .if ${a aa aaa b ba baa bab:L:M*a} != "a aa aaa ba baa"
 .  error
 .endif
@@ -375,7 +374,7 @@ WORDS=		[x- x x- y yyyyy
 # out-of-bounds read beyond the indirect ':M' modifiers.
 #
 # The argument to the inner ':U' is unescaped to 'M\'.
-# This 'M\' becomes an # indirect modifier ':M' with the pattern '\'.
+# This 'M\' becomes an indirect modifier ':M' with the pattern '\'.
 # The pattern '\' never matches.
 .if ${:U:${:UM\\}}
 .  error

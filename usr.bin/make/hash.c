@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.77 2024/05/31 07:11:12 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.78 2024/06/05 22:06:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.77 2024/05/31 07:11:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.78 2024/06/05 22:06:53 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -297,8 +297,8 @@ HashTable_DeleteEntry(HashTable *t, HashEntry *he)
 }
 
 /*
- * Return the next entry in the hash table, or NULL if the end of the table
- * is reached.
+ * Place the next entry from the hash table in hi->entry, or return false if
+ * the end of the table is reached.
  */
 bool
 HashIter_Next(HashIter *hi)
