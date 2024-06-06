@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphyreg.h,v 1.3 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: icsphyreg.h,v 1.4 2024/06/06 21:28:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #define	MII_ICSPHY_QPR		0x11	/* Quick Poll Register */
 #define	QPR_SPEED		0x8000	/* 100Mbps */
-#define	QPR_FDX			0x4000	/* Full dupled */
+#define	QPR_FDX			0x4000	/* Full-duplex */
 #define	QPR_ANB2		0x2000	/* Autoneg monitor bit 2 */
 #define	QPR_ANB1		0x1000	/* Autoneg monitor bit 1 */
 #define	QPR_ANB0		0x0800	/* Autoneg monitor bit 0 */
