@@ -1,4 +1,4 @@
-# $NetBSD: varmod.mk,v 1.14 2024/06/05 22:06:53 rillig Exp $
+# $NetBSD: varmod.mk,v 1.15 2024/06/06 20:41:50 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
@@ -141,5 +141,97 @@ VAR=	STOP
 # expect+2: while evaluating "${:${:Ugmtime=\\}}": Invalid time value "\"
 # expect+1: Malformed conditional (${:${:Ugmtime=\\}})
 .if ${:${:Ugmtime=\\}}
+.  error
+.endif
+
+# Test a '$' at the end of a modifier part, for all modifiers in the order
+# listed in ApplyModifier.
+#
+# The only modifier parts where an unescaped '$' makes sense at the end are
+# the 'from' parts of the ':S' and ':C' modifiers.  In all other modifier
+# parts, an unescaped '$' is an undocumented and discouraged edge case, as it
+# means the same as an escaped '$'.
+.if ${:U:!printf '%s\n' $!} != "\$"
+.  error
+.endif
+# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+.if ${VAR::=value$} != "" || ${VAR} != "value"
+.  error
+.endif
+${:U }=		<space>
+# expect+2: while evaluating variable "VAR": Dollar followed by nothing
+# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+.if ${VAR::+=appended$} != "" || ${VAR} != "value<space>appended"
+.  error
+.endif
+.if ${1:?then$:else$} != "then\$"
+.  error
+.endif
+.if ${0:?then$:else$} != "else\$"
+.  error
+.endif
+# expect+1: while evaluating variable "word": Dollar followed by nothing
+.if ${word:L:@w@$w$@} != "word"
+.  error
+.endif
+# expect: make: Bad modifier ":[$]" for variable "word"
+# expect+1: Malformed conditional (${word:[$]})
+.if ${word:[$]}
+.  error
+.else
+.  error
+.endif
+VAR_DOLLAR=	VAR$$
+.if ${word:L:_=VAR$} != "word" || ${${VAR_DOLLAR}} != "word"
+.  error
+.endif
+.if ${word:L:C,d$,m,} != "worm"
+.  error
+.endif
+.if ${word:L:C,d,$,} != "wor\$"
+.  error
+.endif
+# expect+2: while evaluating variable "VAR": Invalid variable name '}', at "$} != "set""
+# expect+1: while evaluating variable "VAR": Dollar followed by nothing
+.if ${VAR:Dset$} != "set"
+.  error
+.endif
+# expect+1: while evaluating "${:Ufallback$} != "fallback"": Invalid variable name '}', at "$} != "fallback""
+.if ${:Ufallback$} != "fallback"
+.  error
+.endif
+# expect+2: Malformed conditional (${%y:L:gmtime=1000$})
+# expect+1: while evaluating variable "%y": Invalid time value "1000$"
+.if ${%y:L:gmtime=1000$}
+.  error
+.else
+.  error
+.endif
+# expect+2: Malformed conditional (${%y:L:localtime=1000$})
+# expect+1: while evaluating variable "%y": Invalid time value "1000$"
+.if ${%y:L:localtime=1000$}
+.  error
+.else
+.  error
+.endif
+# expect+1: while evaluating variable "word": Dollar followed by nothing
+.if ${word:L:Mw*$} != "word"
+.  error
+.endif
+# expect+1: while evaluating variable "word": Dollar followed by nothing
+.if ${word:L:NX*$} != "word"
+.  error
+.endif
+# expect+2: while evaluating variable ".": Invalid argument 'fallback$' for modifier ':mtime'
+# expect+1: Malformed conditional (${.:L:mtime=fallback$})
+.if ${.:L:mtime=fallback$}
+.  error
+.else
+.  error
+.endif
+.if ${word:L:S,d$,m,} != "worm"
+.  error
+.endif
+.if ${word:L:S,d,m$,} != "worm\$"
 .  error
 .endif
