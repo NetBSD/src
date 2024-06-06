@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.4 2011/04/29 21:55:43 matt Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.5 2024/06/06 21:18:41 andvar Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@ typedef struct rmixl_fmn_rxmsg {
 
 /*
  * compute FMN dest_id from MIPS cpuid
- * - each Core FMN sation has 8 buckets
+ * - each Core FMN station has 8 buckets
  * - each Core has 4 threads
  * - here we use 1 bucket per thread
  *   (the first four buckets)
