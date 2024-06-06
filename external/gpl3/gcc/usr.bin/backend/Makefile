@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2024/02/25 00:28:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.72 2024/06/06 05:41:28 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -52,6 +52,7 @@ CPPFLAGS.cppbuiltin.cc+=	-DBASEVER="\"${BASEVER}"\"
 CLEANFILES+=	gengenrtl genrtl.h \
 		gengtype gtyp-gen.h gtype-brig.h gtype-desc.cc gtype-desc.h \
 		gtype-c.h gtype-cp.h gtype-f.h gtype-objc.h \
+		gtype-d.h gtype-fortran.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
 		insn-preds.cc genpreds tm-preds.h tm_p.h cs-tm_p.h \
@@ -64,6 +65,8 @@ CLEANFILES+=	gengenrtl genrtl.h \
 
 # XXX
 #COPTS.varasm.cc=		-Wno-error
+
+.SUFFIXES: .lo .h .c .cc
 
 # XXX Override the normal rule to use HOST_COMPILE.cc
 .c.lo:
@@ -427,6 +430,31 @@ aarch64-builtin-iterators.h: ${DIST}/gcc/config/aarch64/geniterators.sh \
 	$(HOST_SH) ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	aarch-builtin-iterators.h
+
+.if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64" # {
+
+rs6000-gen-builtins.lo: ${HH} ${DIST}/gcc/config/rs6000/rs6000-gen-builtins.cc
+rbtree.lo: ${HH} ${DIST}/gcc/config/rs6000/rbtree.cc
+rs6000-gen-builtins: rs6000-gen-builtins.lo rbtree.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
+rs6000-builtins.cc: rs6000-gen-builtins \
+		    ${DIST}/gcc/config/rs6000/rs6000-builtins.def \
+		    ${DIST}/gcc/config/rs6000/rs6000-overload.def
+	${_MKTARGET_CREATE}
+	./rs6000-gen-builtins \
+		    ${DIST}/gcc/config/rs6000/rs6000-builtins.def \
+		    ${DIST}/gcc/config/rs6000/rs6000-overload.def \
+                rs6000-builtins.h rs6000-builtins.cc rs6000-vecdefines.h
+rs6000-builtins.h rs6000-vecdefines.h: rs6000-builtins.cc
+
+CLEANFILES+=	rs6000-builtins.h rs6000-builtins.cc rs6000-vecdefines.h
+CLEANFILES+=	rs6000-gen-builtins rbtree.lo rs6000-gen-builtins.lo
+
+gtype-desc.h: rs6000-builtins.h
+
+.endif # }
+
 
 #
 # Required hard-coded dependancies.
