@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.575 2024/03/25 13:35:28 uwe Exp $
+.\"	$NetBSD: main,v 1.576 2024/06/06 00:21:28 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -723,11 +723,7 @@ All the above source sets are located in the
 subdirectory of the distribution tree.
 .Pp
 The source sets are distributed as compressed tar files.
-Except for the
-.Sy pkgsrc
-set, which is traditionally unpacked into
-.Pa /usr/pkgsrc ,
-all sets may be unpacked into
+Individual sets may be unpacked into
 .Pa /usr/src
 with the command:
 .Dl # Ic "cd / ; tar -zxpf set_name.\*[setsuffix]"
