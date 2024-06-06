@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphyreg.h,v 1.1 2001/08/25 04:06:26 thorpej Exp $	*/
+/*	$NetBSD: amhphyreg.h,v 1.2 2024/06/06 21:17:37 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -50,7 +50,7 @@
 #define	SER_SCE			0x0200	/* speed change enable */
 #define	SER_GE			0x0100	/* global enable */
 #define	SER_LSC			0x0010	/* link status change */
-#define	SER_DMC			0x0008	/* duplex mode chane */
+#define	SER_DMC			0x0008	/* duplex mode change */
 #define	SER_ANC			0x0004	/* auto-negotiation change */
 #define	SER_SC			0x0002	/* speed change */
 #define	SER_G			0x0001	/* global event pending */
