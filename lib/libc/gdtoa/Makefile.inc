@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2024/05/13 21:17:24 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2024/06/07 20:50:13 riastradh Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -28,6 +28,7 @@ SRCS+=	strtod.c
 
 # private interfaces interfacing to libc
 SRCS+=	dtoa.c ldtoa.c hdtoa.c gdtoa.c
+LINTFLAGS.ldtoa.c+=	-X 132
 
 # local locking implementation
 SRCS+=	gdtoa_locks.c

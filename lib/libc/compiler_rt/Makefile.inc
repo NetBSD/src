@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.48 2024/05/01 18:38:15 christos Exp $
+# $NetBSD: Makefile.inc,v 1.49 2024/06/07 20:50:13 riastradh Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -136,6 +136,7 @@ GENERIC_SRCS+= \
 .if ${LIBC_MACHINE_CPU} == "aarch64"
 GENERIC_SRCS+= \
 	comparetf2.c
+LINTFLAGS.comparetf2.c += -X 132
 .endif
 
 GENERIC_SRCS+= \
@@ -266,6 +267,21 @@ GENERIC_SRCS+= \
 	floatunditf.c \
 	floatsitf.c \
 	floatditf.c
+LINTFLAGS.addtf3.c += -X 132
+LINTFLAGS.divtf3.c += -X 132
+LINTFLAGS.extenddftf2.c += -X 117,132
+LINTFLAGS.extendsftf2.c += -X 117,132
+LINTFLAGS.fixdfti.c += -X 132,309
+LINTFLAGS.fixtfdi.c += -X 132
+LINTFLAGS.fixtfsi.c += -X 132
+LINTFLAGS.floatditf.c += -X 132
+LINTFLAGS.floatsitf.c += -X 132
+LINTFLAGS.floatunsitf.c += -X 132
+LINTFLAGS.floatunditf.c += -X 132
+LINTFLAGS.multf3.c += -X 132
+LINTFLAGS.subtf3.c += -X 132
+LINTFLAGS.trunctfdf2.c += -X 117,132
+LINTFLAGS.trunctfsf2.c += -X 117,132
 .endif
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
