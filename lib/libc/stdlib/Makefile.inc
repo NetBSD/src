@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.98 2024/01/27 17:58:36 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.99 2024/06/07 20:50:13 riastradh Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -105,6 +105,10 @@ MLINKS+=strtoul.3 strtoull.3
 MLINKS+=strtoul.3 strtoumax.3
 MLINKS+=strtoul.3 strtouq.3
 MLINKS+=tsearch.3 tfind.3 tsearch.3 twalk.3 tsearch.3 tdelete.3
+
+# lint(1) spuriously complains about `*s == CHAR_MAX' even though *s
+# has type char.
+LINTFLAGS.strfmon.c += -X 230
 
 # jemalloc
 LINTFLAGS.arena.c += -X 86,117,161,191,193,207,217,226

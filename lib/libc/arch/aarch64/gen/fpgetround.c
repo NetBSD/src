@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpgetround.c,v 1.2 2016/12/24 15:23:06 maya Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.3 2024/06/07 20:50:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: fpgetround.c,v 1.2 2016/12/24 15:23:06 maya Exp $");
 
 #include <aarch64/armreg.h>
 
-__weak_alias(fpgetround,_fpgetround);
+__weak_alias(fpgetround,_fpgetround)
 
 fp_rnd_t
 fpgetround(void)
