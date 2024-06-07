@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.62 2020/05/22 14:54:30 christos Exp $ */
+/* $NetBSD: cp.c,v 1.63 2024/06/07 21:01:00 andvar Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.62 2020/05/22 14:54:30 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.63 2024/06/07 21:01:00 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -375,7 +375,7 @@ copy(char *argv[], enum op type, int fts_options)
 			 * is the case where the target exists.
 			 *
 			 * Also, check for "..".  This is for correct path
-			 * concatentation for paths ending in "..", e.g.
+			 * concatenation for paths ending in "..", e.g.
 			 *	cp -R .. /tmp
 			 * Paths ending in ".." are changed to ".".  This is
 			 * tricky, but seems the easiest way to fix the problem.
