@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.26 2024/06/07 13:53:02 riastradh Exp $ */
+/* $NetBSD: global_locale.c,v 1.27 2024/06/07 13:53:12 riastradh Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.26 2024/06/07 13:53:02 riastradh Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.27 2024/06/07 13:53:12 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,20 +58,20 @@ static const _MonetaryLocale _DefaultMonetaryLocale = {
 	"",
 	"",
 	"",
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX,
-	(char)CHAR_MAX
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX,
+	CHAR_MAX
 };
 
 static const _NumericLocale _DefaultNumericLocale = {

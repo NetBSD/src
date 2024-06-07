@@ -1,4 +1,4 @@
-/* $NetBSD: fix_grouping.c,v 1.6 2012/03/21 14:11:24 christos Exp $ */
+/* $NetBSD: fix_grouping.c,v 1.7 2024/06/07 13:53:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fix_grouping.c,v 1.6 2012/03/21 14:11:24 christos Exp $");
+__RCSID("$NetBSD: fix_grouping.c,v 1.7 2024/06/07 13:53:12 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: fix_grouping.c,v 1.6 2012/03/21 14:11:24 christos Exp $");
 #include "fix_grouping.h"
 
 #ifndef NBCHAR_MAX
-#define NBCHAR_MAX	(char)CHAR_MAX
+#define NBCHAR_MAX	CHAR_MAX
 #endif
 
 #ifndef __UNCONST
