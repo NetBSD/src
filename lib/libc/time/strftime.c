@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.55 2024/02/18 12:47:08 kre Exp $	*/
+/*	$NetBSD: strftime.c,v 1.56 2024/06/07 13:53:23 riastradh Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.55 2024/02/18 12:47:08 kre Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.56 2024/06/07 13:53:23 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __weak_alias(strftime_z, _strftime_z)
 
 #include "sys/localedef.h"
 #define _TIME_LOCALE(loc) \
-    ((_TimeLocale *)((loc)->part_impl[(size_t)LC_TIME]))
+    ((_TimeLocale *)((loc)->part_impl[LC_TIME]))
 #define c_fmt   d_t_fmt
 
 enum warn { IN_NONE, IN_SOME, IN_THIS, IN_ALL };

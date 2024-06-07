@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.7 2020/06/02 01:30:31 joerg Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.8 2024/06/07 13:53:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -57,10 +57,10 @@ typedef union _RuneState {
 #define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
 #define _RUNE_LOCALE(loc) \
-    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
+    ((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))
 
 #define _CITRUS_CTYPE(loc) \
-    (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)
+    (((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))->rl_citrus_ctype)
 
 /* */
 

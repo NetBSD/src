@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.66 2024/03/18 16:15:24 riastradh Exp $	*/
+/*	$NetBSD: strptime.c,v 1.67 2024/06/07 13:53:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.66 2024/03/18 16:15:24 riastradh Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.67 2024/06/07 13:53:23 riastradh Exp $");
 #endif
 
 #include "namespace.h"
@@ -55,7 +55,7 @@ static const u_char *find_string(const u_char *, int *, const char * const *,
 	const char * const *, int);
 
 #define _TIME_LOCALE(loc) \
-    ((_TimeLocale *)((loc)->part_impl[(size_t)LC_TIME]))
+    ((_TimeLocale *)((loc)->part_impl[LC_TIME]))
 
 /*
  * We do not implement alternate representations. However, we always
