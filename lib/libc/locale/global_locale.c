@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.27 2024/06/07 13:53:12 riastradh Exp $ */
+/* $NetBSD: global_locale.c,v 1.28 2024/06/07 13:53:23 riastradh Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.27 2024/06/07 13:53:12 riastradh Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.28 2024/06/07 13:53:23 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -143,26 +143,26 @@ struct _locale _lc_global_locale = {
     .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
-	[(size_t)LC_ALL     ] = _lc_C_locale_name,
-	[(size_t)LC_COLLATE ] = _lc_C_locale_name,
-	[(size_t)LC_CTYPE   ] = _lc_C_locale_name,
-	[(size_t)LC_MONETARY] = _lc_C_locale_name,
-	[(size_t)LC_NUMERIC ] = _lc_C_locale_name,
-	[(size_t)LC_TIME    ] = _lc_C_locale_name,
-	[(size_t)LC_MESSAGES] = _lc_C_locale_name,
+	[LC_ALL     ] = _lc_C_locale_name,
+	[LC_COLLATE ] = _lc_C_locale_name,
+	[LC_CTYPE   ] = _lc_C_locale_name,
+	[LC_MONETARY] = _lc_C_locale_name,
+	[LC_NUMERIC ] = _lc_C_locale_name,
+	[LC_TIME    ] = _lc_C_locale_name,
+	[LC_MESSAGES] = _lc_C_locale_name,
     },
     .part_impl = {
-	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
-	[(size_t)LC_COLLATE ] = (_locale_part_t)NULL,
-	[(size_t)LC_CTYPE   ] = (_locale_part_t)
+	[LC_ALL     ] = (_locale_part_t)NULL,
+	[LC_COLLATE ] = (_locale_part_t)NULL,
+	[LC_CTYPE   ] = (_locale_part_t)
 	    __UNCONST(&_DefaultRuneLocale),
-	[(size_t)LC_MONETARY] = (_locale_part_t)
+	[LC_MONETARY] = (_locale_part_t)
 	    __UNCONST(&_DefaultMonetaryLocale),
-	[(size_t)LC_NUMERIC ] = (_locale_part_t)
+	[LC_NUMERIC ] = (_locale_part_t)
 	    __UNCONST(&_DefaultNumericLocale),
-	[(size_t)LC_MESSAGES] = (_locale_part_t)
+	[LC_MESSAGES] = (_locale_part_t)
 	    __UNCONST(&_DefaultMessagesLocale),
-	[(size_t)LC_TIME] = (_locale_part_t)
+	[LC_TIME] = (_locale_part_t)
 	    __UNCONST(&_DefaultTimeLocale),
     },
 };
@@ -171,26 +171,26 @@ const struct _locale _lc_C_locale = {
     .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
-	[(size_t)LC_ALL     ] = _lc_C_locale_name,
-	[(size_t)LC_COLLATE ] = _lc_C_locale_name,
-	[(size_t)LC_CTYPE   ] = _lc_C_locale_name,
-	[(size_t)LC_MONETARY] = _lc_C_locale_name,
-	[(size_t)LC_NUMERIC ] = _lc_C_locale_name,
-	[(size_t)LC_TIME    ] = _lc_C_locale_name,
-	[(size_t)LC_MESSAGES] = _lc_C_locale_name,
+	[LC_ALL     ] = _lc_C_locale_name,
+	[LC_COLLATE ] = _lc_C_locale_name,
+	[LC_CTYPE   ] = _lc_C_locale_name,
+	[LC_MONETARY] = _lc_C_locale_name,
+	[LC_NUMERIC ] = _lc_C_locale_name,
+	[LC_TIME    ] = _lc_C_locale_name,
+	[LC_MESSAGES] = _lc_C_locale_name,
     },
     .part_impl = {
-	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
-	[(size_t)LC_COLLATE ] = (_locale_part_t)NULL,
-	[(size_t)LC_CTYPE   ] = (_locale_part_t)
+	[LC_ALL     ] = (_locale_part_t)NULL,
+	[LC_COLLATE ] = (_locale_part_t)NULL,
+	[LC_CTYPE   ] = (_locale_part_t)
 	    __UNCONST(&_DefaultRuneLocale),
-	[(size_t)LC_MONETARY] = (_locale_part_t)
+	[LC_MONETARY] = (_locale_part_t)
 	    __UNCONST(&_DefaultMonetaryLocale),
-	[(size_t)LC_NUMERIC ] = (_locale_part_t)
+	[LC_NUMERIC ] = (_locale_part_t)
 	    __UNCONST(&_DefaultNumericLocale),
-	[(size_t)LC_MESSAGES] = (_locale_part_t)
+	[LC_MESSAGES] = (_locale_part_t)
 	    __UNCONST(&_DefaultMessagesLocale),
-	[(size_t)LC_TIME] = (_locale_part_t)
+	[LC_TIME] = (_locale_part_t)
 	    __UNCONST(&_DefaultTimeLocale),
     },
 };
