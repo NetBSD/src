@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_fix_grouping.h,v 1.2 2009/01/11 02:46:24 christos Exp $ */
+/* $NetBSD: citrus_fix_grouping.h,v 1.3 2024/06/07 13:53:12 riastradh Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -43,7 +43,7 @@ _citrus_fixup_char_max_md(char *grouping)
 
 	for (p = grouping; *p != '\0'; ++p) {
 		if (*p == _CITRUS_LC_GROUPING_VALUE_NO_FUTHER)
-			*p = (char)CHAR_MAX;
+			*p = CHAR_MAX;
 	}
 }
 #define _CITRUS_FIXUP_CHAR_MAX_MD(grouping) \
