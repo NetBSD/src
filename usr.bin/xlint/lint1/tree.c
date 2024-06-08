@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.643 2024/05/12 09:07:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.644 2024/06/08 06:37:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.643 2024/05/12 09:07:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.644 2024/06/08 06:37:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3804,22 +3804,23 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 }
 
 static void
-convert_constant_check_range_signed(op_t op, int arg)
+convert_constant_check_range_signed(op_t op, int arg,
+				    const type_t *ntp, int64_t ov)
 {
 	if (op == ASSIGN)
-		/* assignment of negative constant to unsigned type */
-		warning(164);
+		/* assignment of negative constant %lld to unsigned ... */
+		warning(164, (long long)ov, type_name(ntp));
 	else if (op == INIT)
-		/* initialization of unsigned with negative constant */
-		warning(221);
+		/* initialization of unsigned type '%s' with negative ... */
+		warning(221, type_name(ntp), (long long)ov);
 	else if (op == FARG)
-		/* conversion of negative constant to unsigned type, ... */
-		warning(296, arg);
+		/* conversion of negative constant %lld to unsigned ... */
+		warning(296, (long long)ov, type_name(ntp), arg);
 	else if (modtab[op].m_comparison) {
 		/* handled by check_integer_comparison() */
 	} else
-		/* conversion of negative constant to unsigned type */
-		warning(222);
+		/* conversion of negative constant %lld to unsigned ... */
+		warning(222, (long long)ov, type_name(ntp));
 }
 
 /*
@@ -3902,7 +3903,8 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 	} else if (nt != PTR && is_uinteger(nt) &&
 	    ot != PTR && !is_uinteger(ot) &&
 	    v->u.integer < 0)
-		convert_constant_check_range_signed(op, arg);
+		convert_constant_check_range_signed(op, arg,
+		    tp, v->u.integer);
 	else if (nv->u.integer != v->u.integer && nbitsz <= obitsz &&
 	    (v->u.integer & xmask) != 0 &&
 	    (is_uinteger(ot) || (v->u.integer & xmsk1) != xmsk1))

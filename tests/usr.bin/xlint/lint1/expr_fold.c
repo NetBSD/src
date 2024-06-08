@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.15 2024/03/10 19:45:14 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.16 2024/06/08 06:37:06 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -67,11 +67,11 @@ fold_uminus(void)
 	take_int(-(4294967295));
 
 	take_uint(-(0));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -2147483647 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(-(2147483647));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -2147483648 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(-(2147483648));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -4294967295 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(-(4294967295));
 }
 
@@ -85,13 +85,13 @@ fold_compl(void)
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
 	take_int(~(4294967295));
 
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -1 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(~(0));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -2147483648 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(~(2147483647));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -2147483649 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(~(2147483648));
-	/* expect+1: warning: conversion of negative constant to unsigned type, arg #1 [296] */
+	/* expect+1: warning: conversion of negative constant -4294967296 to unsigned type 'unsigned int', arg #1 [296] */
 	take_uint(~(4294967295));
 }
 
