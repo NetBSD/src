@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.78 2023/12/20 05:08:34 thorpej Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.79 2024/06/08 21:02:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.78 2023/12/20 05:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.79 2024/06/08 21:02:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -801,7 +801,7 @@ emuxki_play_start(struct emuxki_softc *sc, int ch, uint32_t start, uint32_t end)
 	volume = 32767;
 
 	emuxki_write(sc, ch, EMU_CHAN_DSL,
-	    (0 << 24) |	/* send amound D = 0 */
+	    (0 << 24) |	/* send amount D = 0 */
 	    end);
 
 	emuxki_write(sc, ch, EMU_CHAN_PSST,
