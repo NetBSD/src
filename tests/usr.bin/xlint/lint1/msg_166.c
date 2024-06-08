@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_166.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_166.c,v 1.6 2024/06/08 06:37:06 rillig Exp $	*/
 # 3 "msg_166.c"
 
 // Test for message: precision lost in bit-field assignment [166]
@@ -51,9 +51,9 @@ void example(void) {
 	bits.minus_8_to_7 = 8;
 
 	/* Clang doesn't warn about the -1. */
-	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	/* expect+1: warning: assignment of negative constant -2 to unsigned type 'unsigned int:1' [164] */
 	bits.zero_to_1 = -2;
-	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	/* expect+1: warning: assignment of negative constant -1 to unsigned type 'unsigned int:1' [164] */
 	bits.zero_to_1 = -1;
 	bits.zero_to_1 = 0;
 	bits.zero_to_1 = 1;
@@ -61,9 +61,9 @@ void example(void) {
 	bits.zero_to_1 = 2;
 
 	/* Clang doesn't warn about the -8. */
-	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	/* expect+1: warning: assignment of negative constant -9 to unsigned type 'unsigned int:4' [164] */
 	bits.zero_to_15 = -9;
-	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	/* expect+1: warning: assignment of negative constant -8 to unsigned type 'unsigned int:4' [164] */
 	bits.zero_to_15 = -8;
 	bits.zero_to_15 = 0;
 	bits.zero_to_15 = 15;

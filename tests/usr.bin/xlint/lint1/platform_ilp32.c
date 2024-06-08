@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32.c,v 1.5 2024/03/27 19:28:20 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32.c,v 1.6 2024/06/08 06:37:06 rillig Exp $	*/
 # 3 "platform_ilp32.c"
 
 /*
@@ -36,9 +36,9 @@ switch_u64(unsigned long long x)
 	case 0x333300000001:
 	/* expect+1: error: duplicate case '37529424232449' in switch [200] */
 	case 0x222200000001:
-	/* expect+1: warning: conversion of negative constant to unsigned type [222] */
+	/* expect+1: warning: conversion of negative constant -9223372036854775807 to unsigned type 'unsigned long long' [222] */
 	case -0x7fffffffffffffff:
-	/* expect+2: warning: conversion of negative constant to unsigned type [222] */
+	/* expect+2: warning: conversion of negative constant -9223372036854775807 to unsigned type 'unsigned long long' [222] */
 	/* expect+1: error: duplicate case '9223372036854775809' in switch [200] */
 	case -0x7fffffffffffffff:
 		break;

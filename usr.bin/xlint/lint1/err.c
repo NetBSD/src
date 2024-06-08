@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.244 2024/05/12 18:49:36 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.245 2024/06/08 06:37:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.244 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.245 2024/06/08 06:37:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -219,7 +219,7 @@ static const char *const msgs[] = {
 	"constant in conditional context",				// 161
 	"operator '%s' compares '%s' with '%s'",			// 162
 	"a cast does not yield an lvalue",				// 163
-	"assignment of negative constant to unsigned type",		// 164
+	"assignment of negative constant %lld to unsigned type '%s'",	// 164
 	"constant truncated by assignment",				// 165
 	"precision lost in bit-field assignment",			// 166
 	"array subscript %jd cannot be negative",			// 167
@@ -276,8 +276,8 @@ static const char *const msgs[] = {
 	"C90 treats constant as unsigned, op '%s'",			// 218
 	"concatenated strings are illegal in traditional C",		// 219
 	"fallthrough on case statement",				// 220
-	"initialization of unsigned with negative constant",		// 221
-	"conversion of negative constant to unsigned type",		// 222
+	"initialization of unsigned type '%s' with negative constant %lld", // 221
+	"conversion of negative constant %lld to unsigned type '%s'",	// 222
 	"end-of-loop code not reached",					// 223
 	"cannot recover from previous errors",				// 224
 	"static function '%s' called but not defined",			// 225
@@ -351,7 +351,7 @@ static const char *const msgs[] = {
 	"parameter %d must be 'char *' for PRINTFLIKE/SCANFLIKE",	// 293
 	"multi-character character constant",				// 294
 	"conversion of '%s' to '%s' is out of range, arg #%d",		// 295
-	"conversion of negative constant to unsigned type, arg #%d",	// 296
+	"conversion of negative constant %lld to unsigned type '%s', arg #%d", // 296
 	"conversion to '%s' may sign-extend incorrectly, arg #%d",	// 297
 	"conversion from '%s' to '%s' may lose accuracy, arg #%d",	// 298
 	"prototype does not match old-style definition, arg #%d",	// 299
