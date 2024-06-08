@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.7 2024/06/05 14:16:31 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.8 2024/06/08 12:38:22 rin Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -68,7 +68,7 @@
 ./usr/lib/eabi/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabi/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/eabi/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/eabi/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/eabi/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabi/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/eabi/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/eabi/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -106,7 +106,7 @@
 ./usr/lib/eabi/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/eabi/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/eabi/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabi/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/eabi/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump
@@ -231,7 +231,7 @@
 ./usr/lib/eabihf/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabihf/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/eabihf/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/eabihf/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/eabihf/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabihf/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/eabihf/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/eabihf/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -269,7 +269,7 @@
 ./usr/lib/eabihf/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/eabihf/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/eabihf/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/eabihf/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/eabihf/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabihf/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump

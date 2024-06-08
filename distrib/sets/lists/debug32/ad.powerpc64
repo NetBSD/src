@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.6 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: ad.powerpc64,v 1.7 2024/06/08 12:38:22 rin Exp $
 ./usr/lib/powerpc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -68,7 +68,7 @@
 ./usr/lib/powerpc/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/powerpc/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/powerpc/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/powerpc/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/powerpc/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/powerpc/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/powerpc/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/powerpc/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -106,7 +106,7 @@
 ./usr/lib/powerpc/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/powerpc/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/powerpc/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/powerpc/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/powerpc/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/powerpc/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump

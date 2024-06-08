@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.7 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: md.sparc64,v 1.8 2024/06/08 12:38:22 rin Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -68,7 +68,7 @@
 ./usr/lib/sparc/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/sparc/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/sparc/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/sparc/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/sparc/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/sparc/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -106,7 +106,7 @@
 ./usr/lib/sparc/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/sparc/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/sparc/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/sparc/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/sparc/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump

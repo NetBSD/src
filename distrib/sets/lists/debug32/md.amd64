@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.11 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: md.amd64,v 1.12 2024/06/08 12:38:22 rin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -69,7 +69,7 @@
 ./usr/lib/i386/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/i386/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/i386/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/i386/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/i386/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -108,7 +108,7 @@
 ./usr/lib/i386/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/i386/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/i386/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/i386/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/i386/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mipsn64el,v 1.7 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: ad.mipsn64el,v 1.8 2024/06/08 12:38:22 rin Exp $
 ./usr/lib/n32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -68,7 +68,7 @@
 ./usr/lib/n32/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/n32/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/n32/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/n32/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/n32/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/n32/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -106,7 +106,7 @@
 ./usr/lib/n32/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/n32/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/n32/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/n32/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/n32/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/n32/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump
@@ -231,7 +231,7 @@
 ./usr/lib/o32/libgcov_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libgnuctf_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/o32/libgnumalloc_g.a			comp-c-debuglib	debuglib,compat
-./usr/lib/o32/libgomp_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/o32/libgomp_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libgssapi_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/o32/libhdb_g.a			comp-c-debuglib	debuglib,compat,kerberos
 ./usr/lib/o32/libheimbase_g.a			comp-c-debuglib	debuglib,compat,kerberos
@@ -269,7 +269,7 @@
 ./usr/lib/o32/libnpf_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libns_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libnvpair_g.a			comp-c-debuglib	debuglib,compat,zfs
-./usr/lib/o32/libobjc_g.a			comp-c-debuglib	debuglib,compat
+./usr/lib/o32/libobjc_g.a			comp-c-debuglib	debuglib,compat,gcc
 ./usr/lib/o32/libopcodes_g.a			comp-c-debuglib	debuglib,compat,binutils
 ./usr/lib/o32/libossaudio_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/libp2k_g.a			comp-c-debuglib	debuglib,compat,rump
