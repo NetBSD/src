@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.184 2023/11/28 02:54:33 riastradh Exp $	*/
+/*	$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.184 2023/11/28 02:54:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.185 2024/06/08 08:01:49 hannken Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -462,9 +462,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (!PTQ_EMPTY(&pthread__deadqueue)) {
 		pthread_mutex_lock(&pthread__deadqueue_lock);
 		PTQ_FOREACH(newthread, &pthread__deadqueue, pt_deadq) {
-			/* Still busily exiting, or finished? */
-			if (newthread->pt_lwpctl->lc_curcpu ==
-			    LWPCTL_CPU_EXITED)
+			/* Still running? */
+			if (_lwp_kill(newthread->pt_lid, 0) == -1 &&
+			    errno == ESRCH)
 				break;
 		}
 		if (newthread)
