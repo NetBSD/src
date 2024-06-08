@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.13 2024/05/24 10:13:44 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14 2024/06/08 13:03:40 tsutsui Exp $
 
-.include <bsd.hostinit.mk>
-HOSTPROG=	macppc_installboot
-SRCS=		installboot.c cd9660.c cd9660_util.c
+NOMAN=	# defined
+PROG=	macppc_installboot
+SRCS=	installboot.c cd9660.c cd9660_util.c
 
+.PATH.c: ${.CURDIR}
 .PATH.c: ${NETBSDSRCDIR}/usr.sbin/installboot ${NETBSDSRCDIR}/sys/fs/cd9660
 
-HOST_CPPFLAGS+=	-I. -I${.CURDIR}
-#HOST_CPPFLAGS+=	-DDEBUG
+CPPFLAGS+=	-I. -I${.CURDIR}
+#CPPFLAGS+=	-DDEBUG
 
+.if !defined(HOSTPROGNAME)
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	-rm -rf fs
@@ -23,11 +25,6 @@ cleandir distclean: cleaninc
 
 cleaninc:
 	-rm -rf fs
+.endif	# !defined(HOSTPROGNAME)
 
-.include <bsd.own.mk>
-
-.ifndef NOCOMPATLIB
-.-include	"${TOOLDIR}/share/compat/defs.mk"
-.endif
-
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>
