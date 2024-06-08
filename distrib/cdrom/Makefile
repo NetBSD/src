@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.56 2024/05/31 20:57:32 tsutsui Exp $
+# $NetBSD: Makefile,v 1.57 2024/06/08 13:03:40 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -67,10 +67,6 @@ SUBDIR=
 MKISOFS=	${TOOL_MKHYBRID}
 .endif
 
-.if !empty(ALL_PORTS:Mmacppc)
-SUBDIR+=	macppc_installboot
-.endif
-
 .if !empty(SUBDIR)
 .include <bsd.subdir.mk>
 .endif
@@ -85,9 +81,6 @@ RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
-.if !empty(ALL_PORTS:Mmacppc)
-MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
-.endif
 .if !empty(ALL_PORTS:Msgimips)
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
 .endif
@@ -472,10 +465,6 @@ size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 
 # Actually build the image with all the bootstrap goo....
 
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-${IMAGEDIR}/${image}.iso: all-macppc_installboot
-.endif
-
 ${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	@sort -o ${contents.${image}} ${contents.${image}}
 .if defined(LOG_MKISOFS)
@@ -489,8 +478,7 @@ ${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	    ${.TARGET} ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)
-	${MACPPC_IBOOTDIR}/macppc_installboot \
-	    $@ ${EXTFILEDIR}/macppc.bootxx /ofwboot
+	${TOOL_MACPPCINSTALLBOOT} $@ ${EXTFILEDIR}/macppc.bootxx /ofwboot
 .endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
 	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}
