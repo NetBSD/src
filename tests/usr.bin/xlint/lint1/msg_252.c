@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_252.c,v 1.7 2024/01/27 15:10:57 rillig Exp $	*/
+/*	$NetBSD: msg_252.c,v 1.8 2024/06/08 06:42:59 rillig Exp $	*/
 # 3 "msg_252.c"
 
 // Test for message: integer constant out of range [252]
@@ -33,7 +33,7 @@
  * Due to this unnecessary difference, disable this test on ILP32 platforms
  * for now (2021-08-28).
  */
-/* lint1-skip-if: ilp32 */
+/* lint1-only-if: lp64 */
 
 /* lint1-extra-flags: -X 351 */
 

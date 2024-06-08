@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2024/03/01 19:39:28 rillig Exp $
+#	$NetBSD: Makefile,v 1.105 2024/06/08 06:42:59 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -111,8 +111,7 @@ add-test: .PHONY
 		'' \
 		'/* lint1-extra-flags: -Z */' \
 		'/* lint1-flags: -Z */' \
-		'/* lint1-only-if: schar uchar ilp32 lp64 int long */' \
-		'/* lint1-skip-if: ldbl64 ldbl96 ldbl128 */' \
+		'/* lint1-only-if: schar uchar ilp32 lp64 int long ldbl64 ldbl96 ldbl128 */' \
 		'' \
 		'// TODO: Add some code that passes.' \
 		'// TODO: Add some code that fails.' \
