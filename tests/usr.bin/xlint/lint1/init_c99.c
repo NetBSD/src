@@ -1,14 +1,11 @@
-/*	$NetBSD: d_c99_init.c,v 1.49 2024/05/09 20:53:13 rillig Exp $	*/
-# 3 "d_c99_init.c"
+/*	$NetBSD: init_c99.c,v 1.1 2024/06/08 13:50:47 rillig Exp $	*/
+# 3 "init_c99.c"
 
-/*
- * Test C99 initializers.
- *
- * See C99 6.7.8 "Initialization".
-*/
+// Tests for initialization in C99 or later, mainly for designators.
+//
+// See C99 6.7.8 "Initialization".
 
-/* lint1-extra-flags: -X 351 */
-
+/* lint1-flags: -Sw -X 351 */
 
 void use(const void *);
 
@@ -152,9 +149,9 @@ struct point point_with_mixed_designators = {
  * to ensure that only '.' was actually used.
  */
 struct point origin = {
-    .x = 0,
-    /* expect+1: error: syntax error '->' [249] */
-    ->y = 0,
+	.x = 0,
+	/* expect+1: error: syntax error '->' [249] */
+	->y = 0,
 };
 
 /* Ensure that the parser can recover from the parse error. */
@@ -358,9 +355,9 @@ c99_6_7_8_p31_example7(void)
 }
 
 char c99_6_7_8_p32_example8_s1[] = "abc",
-     c99_6_7_8_p32_example8_t1[3] = "abc";
+	 c99_6_7_8_p32_example8_t1[3] = "abc";
 char c99_6_7_8_p32_example8_s2[] = { 'a', 'b', 'c', '\0' },
-     c99_6_7_8_p32_example8_t2[3] = { 'a', 'b', 'c' };
+	 c99_6_7_8_p32_example8_t2[3] = { 'a', 'b', 'c' };
 char *c99_6_7_8_p32_example8_p = "abc";
 
 enum { member_one, member_two };
@@ -510,7 +507,7 @@ const char string_initialized_with_braced_literal[] = {
 
 // An array of unknown size containing strings.
 char weekday_names[][4] = {
-    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
 /* nested struct/union initialization */
@@ -564,3 +561,178 @@ typedef int ctassert_11[-(int)(sizeof(arr_11) / sizeof(arr_11[0]))];
 int arr_3[] = { [1] = 1, [0] = 0, 1, 2 };
 /* expect+1: error: negative array dimension (-3) [20] */
 typedef int ctassert_3[-(int)(sizeof(arr_3) / sizeof(arr_3[0]))];
+
+
+// C99 struct initialization using designators.
+struct {
+	int i;
+	char *s;
+} struct_array[] = {
+	{
+		.i =  2,
+	},
+	{
+		.s =  "foo"
+	},
+	{
+		.i =  1,
+		.s = "bar"
+	},
+	{
+		.s =  "foo",
+		.i = -1
+	},
+};
+
+// Ensure that deeply nested structs can be designated in an initializer.
+int
+init_deeply_nested_struct(void)
+{
+	struct rgb {
+		unsigned red;
+		unsigned green;
+		unsigned blue;
+	};
+
+	struct hobbies {
+		unsigned dancing: 1;
+		unsigned running: 1;
+		unsigned swimming: 1;
+	};
+
+	struct person {
+		struct hobbies hobbies;
+		struct rgb favorite_color;
+	};
+
+	struct city {
+		struct person mayor;
+	};
+
+	struct state {
+		struct city capital;
+	};
+
+	struct state st = {
+		.capital.mayor.hobbies.dancing = 1,
+		.capital.mayor.favorite_color.green = 0xFF,
+		.capital.mayor.favorite_color.red = 0xFF,
+	};
+	return st.capital.mayor.favorite_color.red;
+}
+
+struct {
+	int i[10];
+	char *s;
+} struct_array_with_inner_array[] = {
+	{
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+		"foo"
+	},
+};
+
+struct {
+	int type;
+	union {
+		char b[20];
+		short s[10];
+		long l[5];
+	} data;
+} array_in_union_in_struct = {
+	.type = 3,
+	.data.l[0] = 4
+};
+
+// Somewhere between 2005.12.24.20.47.56 and 2006.12.19.19.06.44, lint could
+// not initialize named members, see PR bin/20264.
+union {
+	char *p;
+	int a[1];
+} array_in_union = {
+	.a = { 7 }
+};
+
+/*
+ * Initialization of a nested struct, in which some parts are initialized
+ * from non-constant expressions of the inner struct type.
+ *
+ * In C99, 6.7.8p13 describes exactly this case.
+ */
+void
+init_nested_struct(void)
+{
+
+	typedef enum O1 {
+		O1C = 101
+	} O1;
+	typedef enum O2 {
+		O2C = 102
+	} O2;
+	typedef enum O3 {
+		O3C = 103
+	} O3;
+	typedef enum I1 {
+		I1C = 201
+	} I1;
+	typedef enum I2 {
+		I2C = 202
+	} I2;
+
+	struct Inner1 {
+		I1 i1;
+	};
+
+	struct Outer3Inner1 {
+		O1 o1;
+		struct Inner1 inner;
+		O3 o3;
+	};
+
+	struct Inner1 inner1 = {
+		I1C
+	};
+	struct Outer3Inner1 o3i1 = {
+		O1C,
+		inner1,
+		O3C
+	};
+
+	O1 o1 = o3i1.o1;
+
+	struct Inner2 {
+		I1 i1;
+		I2 i2;
+	};
+
+	struct Outer3Inner2 {
+		O1 o1;
+		struct Inner2 inner;
+		O3 o3;
+	};
+
+	struct Inner2 inner2 = {
+		I1C,
+		I2C
+	};
+	struct Outer3Inner2 o3i2 = {
+		O1C,
+		inner2,
+		O3C
+	};
+	o1 = o3i2.o1;
+
+	/*
+	 * For static storage duration, each initializer expression must be a
+	 * constant expression.
+	 */
+	static struct Inner2 inner3_static = {
+		I1C,
+		I2C
+	};
+	static struct Outer3Inner2 o3i2_static = {
+		O1C,
+		/* expect+1: error: non-constant initializer [177] */
+		inner3_static,
+		O3C
+	};
+}
