@@ -1,4 +1,4 @@
-/*	$NetBSD: lang_level_c99.c,v 1.3 2024/03/28 21:04:48 rillig Exp $	*/
+/*	$NetBSD: lang_level_c99.c,v 1.4 2024/06/08 09:09:20 rillig Exp $	*/
 # 3 "lang_level_c99.c"
 
 /*
@@ -176,6 +176,18 @@ call_implicitly_declared_function(void)
 // [x] mixed declarations and code
 
 // [x] new block scopes for selection and iteration statements
+void
+for_scope(void)
+{
+	// A for loop may have a declaration in its first part.
+	for (int i = 0; i < 10; i++)
+		continue;
+
+	// Test that the scope of the previous i has ended.
+	for (int i = 0; i < 10; i++)
+		continue;
+}
+
 
 // [?] integer constant type rules
 //

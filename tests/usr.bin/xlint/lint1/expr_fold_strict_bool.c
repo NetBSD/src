@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold_strict_bool.c,v 1.2 2021/08/22 21:17:04 rillig Exp $	*/
+/*	$NetBSD: expr_fold_strict_bool.c,v 1.3 2024/06/08 09:09:20 rillig Exp $	*/
 # 3 "expr_fold_strict_bool.c"
 
 /*
@@ -9,7 +9,6 @@
  */
 
 /* lint1-extra-flags: -T */
-/* lint1-only-if: lp64 */
 
 typedef long long int64_t;
 typedef unsigned long long uint64_t;

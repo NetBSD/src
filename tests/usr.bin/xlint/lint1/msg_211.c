@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_211.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_211.c,v 1.7 2024/06/08 09:09:20 rillig Exp $	*/
 # 3 "msg_211.c"
 
 // Test for message: function has return type '%s' but returns '%s' [211]
@@ -21,4 +21,19 @@ return_int(double dbl, void *ptr, struct str str)
 		/* expect+1: error: function has return type 'int' but returns 'struct str' [211] */
 		return str;
 	return 3;
+}
+
+enum A {
+	A
+};
+
+enum B {
+	B
+};
+
+enum A
+return_enum(enum B arg)
+{
+	/* expect+1: warning: function has return type 'enum A' but returns 'enum B' [211] */
+	return arg;
 }
