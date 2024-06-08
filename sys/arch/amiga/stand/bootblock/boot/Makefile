@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2022/04/29 07:45:20 rin Exp $
+#	$NetBSD: Makefile,v 1.63 2024/06/08 06:39:57 mlelstv Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -53,6 +53,7 @@ OBJS+=	$(SOBJS) $(COBJS)
 DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -DSA_HARDCODED_SECSIZE
 DEFS += -D__INTERNAL_LIBSA_CREAD
 DEFS += -DSERCONSOLE
+DEFS += -DLIBSA_NO_RAW_ACCESS
 SOBJS += cread.o
 
 #XX#SOBJS += adler32.o crc32.o inflate.o trees.o \
@@ -109,7 +110,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 boot.amiga: x.out
 	${_MKTARGET_CREATE}
-	${RELOC2BB} -S x.out $@ || (${NM} -u x.out && false)
+	${RELOC2BB} -d -S x.out $@ || (${NM} -u x.out && false)
 
 x.out: xxstart.o libboot.a ${LIBZ}
 	${_MKTARGET_LINK}
