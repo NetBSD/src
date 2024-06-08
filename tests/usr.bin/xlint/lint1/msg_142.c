@@ -1,15 +1,9 @@
-/*	$NetBSD: msg_142.c,v 1.11 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: msg_142.c,v 1.12 2024/06/08 06:42:59 rillig Exp $	*/
 # 3 "msg_142.c"
 
 // Test for message: operator '%s' produces floating point overflow [142]
 
 /* lint1-extra-flags: -X 351 */
-
-/*
- * VAX has floating point formats with different limits than the other
- * platforms, which all implement IEEE 754.
- */
-/* xlint1-skip-if: vax */
 
 /*
  * For 96-bit and 128-bit floating point numbers, a different number of
