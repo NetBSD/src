@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.17 2016/04/29 16:26:48 joerg Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.18 2024/06/08 21:35:18 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -48,7 +48,11 @@ struct _locale_cache_t {
 	SLIST_ENTRY(_locale_cache_t) cache_link;
 	const char *monetary_name;
 	const char *numeric_name;
+	const char *message_name;
 	struct lconv ldata;
+	const char * errlist_prefix;
+	const char * const *errlist;
+	const char * const **errlistp;
 };
 
 struct _locale {
