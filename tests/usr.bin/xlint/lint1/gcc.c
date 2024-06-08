@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.1 2024/06/08 09:09:20 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.2 2024/06/08 11:55:40 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -12,8 +12,8 @@
 const char *
 gcc_function(void)
 {
-	// TODO: make __FUNCTION__ an array, then uncomment the code.
-	//typedef int size[-(int)sizeof __FUNCTION__];
+	/* expect+1: error: negative array dimension (-13) [20] */
+	typedef int size[-(int)sizeof __FUNCTION__];
 
 	return __FUNCTION__;
 }
