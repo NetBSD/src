@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.2 2024/06/08 11:55:40 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.3 2024/06/08 13:50:47 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -50,4 +50,45 @@ range_in_case_label(int i)
 	default:
 		return 2;
 	}
+}
+
+union {
+	int i;
+	char *s;
+} initialize_union_with_mixed_designators[] = {
+	{ i: 1 },		/* GCC-style */
+	{ s: "foo" },		/* GCC-style */
+	{ .i = 1 },		/* C99-style */
+	{ .s = "foo" }		/* C99-style */
+};
+
+union {
+	int i[10];
+	short s;
+} initialize_union_with_gcc_designators[] = {
+	{ s: 2 },
+	{ i: { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 } },
+};
+
+void
+declaration_of_variable_array(int i)
+{
+	int array[i];
+	while (i-- > 0)
+		array[i] = 0;
+}
+
+/*
+ * Before cgram.y 1.226 from 2021-05-03, lint could not parse typeof(...) if
+ * there was a statement before it.
+ */
+void *
+typeof_after_statement(void **ptr)
+{
+	return ({
+		if (*ptr != (void *)0)
+			ptr++;
+		__typeof__(*ptr) ret = *ptr;
+		ret;
+	});
 }

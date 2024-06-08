@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.23 2023/07/09 10:42:07 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.24 2024/06/08 13:50:47 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument %d is converted from '%s' to '%s' due to prototype [259]
@@ -33,6 +33,7 @@ void signed_long(long);
 void unsigned_long(unsigned long);
 void signed_long_long(long long);
 void unsigned_long_long(unsigned long long);
+void take_float(float);
 
 void
 change_in_type_width(char c, int i, long l)
@@ -227,6 +228,23 @@ unsigned_to_unsigned(unsigned int ui, unsigned long ul, unsigned long long ull)
 	/* expect+1: warning: argument 1 is converted from 'unsigned long' to 'unsigned long long' due to prototype [259] */
 	unsigned_long_long(ul);
 	unsigned_long_long(ull);
+}
+
+void
+constants(void)
+{
+	/* expect+2: warning: argument 1 is converted from 'long long' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295] */
+	unsigned_int(0x7fffffffffffffffLL);
+	/* expect+1: warning: argument 1 is converted from 'double' to 'unsigned int' due to prototype [259] */
+	unsigned_int(2.1);
+}
+
+void
+to_float(double dbl)
+{
+	/* expect+1: warning: argument 1 is converted from 'double' to 'float' due to prototype [259] */
+	take_float(dbl);
 }
 
 void
