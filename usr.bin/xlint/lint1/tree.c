@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.644 2024/06/08 06:37:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.645 2024/06/08 11:55:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.644 2024/06/08 06:37:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.645 2024/06/08 11:55:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -403,14 +403,11 @@ fallback_symbol(sym_t *sym)
 	if (Tflag && fallback_symbol_strict_bool(sym))
 		return;
 
-	if (block_level > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
+	if (funcsym != NULL && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
 		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
 		gnuism(316);
-		// XXX: Should probably be ARRAY instead of PTR.
-		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
-		sym->s_type->t_const = true;
-		return;
+		goto return_function_name;
 	}
 
 	if (funcsym != NULL && strcmp(sym->s_name, "__func__") == 0) {
@@ -418,6 +415,7 @@ fallback_symbol(sym_t *sym)
 			/* __func__ is a C99 feature */
 			warning(317);
 		/* C11 6.4.2.2 */
+	return_function_name:
 		sym->s_type = block_derive_type(gettyp(CHAR), ARRAY);
 		sym->s_type->t_const = true;
 		sym->s_type->u.dimension = (int)strlen(funcsym->s_name) + 1;
