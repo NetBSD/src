@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.30 2024/05/01 17:42:57 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.31 2024/06/08 09:09:20 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -268,4 +268,35 @@ offsetof_on_array_member(void)
 	typedef int off_arr_0[-(int)(unsigned long)&((s1 *)0)->arr[0]];
 	/* expect+1: error: negative array dimension (-20) [20] */
 	typedef int off_arr_3[-(int)(unsigned long)&((s1 *)0)->arr[3]];
+}
+
+/* PR bin/39639: writing "long double" gave "long int" */
+int
+long_double_vs_long_int(long double *a, long int *b)
+{
+	/* expect+1: warning: illegal combination of 'pointer to long double' and 'pointer to long', op '==' [124] */
+	return a == b;
+}
+
+struct zero_sized_array {
+	int member[0];
+};
+
+void
+type_name_as_member_name(void)
+{
+	typedef char h[10];
+
+	typedef struct {
+		int i;
+		char *c;
+	} fh;
+
+	struct foo {
+		fh h;
+		struct {
+			int x;
+			int y;
+		} fl;
+	};
 }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.141 2023/04/23 08:47:27 rillig Exp $
+# $NetBSD: Makefile,v 1.142 2024/06/08 09:09:20 rillig Exp $
 
 NOMAN=		# defined
 
@@ -19,6 +19,38 @@ archsubdir.sh:
 FILESDIR=	${TESTSDIR}
 FILES+=		${:!cd ${.CURDIR} && echo *.c *.exp-ln!}
 FILES+=		check-expect.lua
+
+add-test: .PHONY
+	@set -eu; \
+	test=${NAME:Q}; \
+	[ "$$test" ] || { \
+		echo "usage: ${MAKE} add-test NAME=<name>"; \
+		exit; \
+	}; \
+	\
+	if [ -f "$$test.c" ]; then \
+		echo "error: test $$test already exists in $$PWD."; \
+		exit 1; \
+	fi; \
+	\
+	echo "=> Adding test $$test"; \
+	printf '%s\n' \
+		'/*	$$''NetBSD$$	*/' \
+		"# 3 \"$$test.c\"" \
+		'' \
+		'/*' \
+		' * TODO: Explain the purpose of the test.' \
+		' */' \
+		'' \
+		'/* lint1-extra-flags: -Z */' \
+		'/* lint1-flags: -Z */' \
+		'/* lint1-only-if: schar uchar ilp32 lp64 int long ldbl64 ldbl96 ldbl128 */' \
+		'' \
+		'// TODO: Add some code that passes.' \
+		'// TODO: Add some code that fails.' \
+	> "$$test.c"; \
+	cvs add "$$test.c"; \
+	${MAKE} sync-mi
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

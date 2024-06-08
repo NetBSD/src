@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2024/06/08 06:42:59 rillig Exp $
+#	$NetBSD: Makefile,v 1.106 2024/06/08 09:09:19 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -87,36 +87,6 @@ DPSRCS+=	err-msgs.h
 CPPFLAGS+=	-I.
 
 add-test: .PHONY
-	@set -eu; \
-	test=${NAME:Q}; \
-	[ "$$test" ] || { \
-		echo "usage: ${MAKE} add-test NAME=<name>"; \
-		exit; \
-	}; \
-	\
-	cd '../../../tests/usr.bin/xlint/lint1'; \
-	if [ -f "$$test.c" ]; then \
-		echo "error: test $$test already exists in $$PWD."; \
-		exit 1; \
-	fi; \
-	\
-	echo "=> Adding test $$test"; \
-	printf '%s\n' \
-		'/*	$$''NetBSD$$	*/' \
-		"# 3 \"$$test.c\"" \
-		'' \
-		'/*' \
-		' * TODO: Explain the purpose of the test.' \
-		' */' \
-		'' \
-		'/* lint1-extra-flags: -Z */' \
-		'/* lint1-flags: -Z */' \
-		'/* lint1-only-if: schar uchar ilp32 lp64 int long ldbl64 ldbl96 ldbl128 */' \
-		'' \
-		'// TODO: Add some code that passes.' \
-		'// TODO: Add some code that fails.' \
-	> "$$test.c"; \
-	cvs add "$$test.c"; \
-	${MAKE} sync-mi
+	@cd '../../../tests/usr.bin/xlint/lint1' && ${MAKE} add-test
 
 .include <bsd.prog.mk>
