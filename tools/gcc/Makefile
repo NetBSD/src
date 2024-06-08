@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2024/02/22 02:47:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.112 2024/06/08 01:07:44 gutteridge Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -57,7 +57,7 @@ COMMON_CONFIGURE_ARGS+=	--enable-fix-cortex-a53-835769 \
 COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 .endif
 
-# We nabled isl support for GCC 12.  Move into normal segment when
+# We enabled isl support for GCC 12.  Move into normal segment when
 # removing GCC 10.
 .if ${HAVE_GCC} < 12
 ISL_CONFIGURE_ARGS+=	--without-isl
