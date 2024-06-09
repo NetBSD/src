@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.34 2020/04/23 23:22:41 jakllsch Exp $	*/
+/*	$NetBSD: asm.h,v 1.35 2024/06/09 22:35:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -224,9 +224,32 @@
 #define	PIC_SYM(x,y)	x
 #endif	/* __PIC__ */
 
-#define RCSID(x)	.pushsection ".ident","MS",%progbits,1;		\
-			.asciz x;					\
+/*
+ * Annoyingly, gas on arm seems to generate _two_ NUL-terminated
+ * strings for
+ *
+ *	.asciz "foo" "bar"
+ *
+ * instead of concatenating it into a single NUL-terminated string as
+ * on other architectures.
+ *
+ * To work around this, we concatenate into a single NUL-terminated by:
+ *
+ *	.ascii "foo"
+ *	.asciz "bar"
+ */
+#define _IDENTSTR(x)	.pushsection ".ident","MS",%progbits,1;		\
+			x;						\
 			.popsection
+
+#ifdef _NETBSD_REVISIONID
+#define	RCSID(_s)							\
+	_IDENTSTR(.asciz _s);						\
+	_IDENTSTR(.ascii "$"; .ascii "NetBSD: "; .ascii __FILE__;	\
+	    .ascii " "; .ascii _NETBSD_REVISIONID; .asciz " $")
+#else
+#define	RCSID(_s)	_IDENTSTR(.asciz _s)
+#endif
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
