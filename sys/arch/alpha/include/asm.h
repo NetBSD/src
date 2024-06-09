@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.45 2023/02/23 14:55:10 riastradh Exp $ */
+/* $NetBSD: asm.h,v 1.46 2024/06/09 22:35:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -649,7 +649,14 @@ label:	ASCIZ msg;						\
 
 #ifdef _KERNEL
 
+#ifdef _NETBSD_REVISIONID
+#define	__KERNEL_RCSID(_n, _s)						      \
+	__SECTIONSTRING(.ident, _s);					      \
+	__SECTIONSTRING(.ident,						      \
+	    "$" "NetBSD: " __FILE__ " " _NETBSD_REVISIONID " $")
+#else
 #define	__KERNEL_RCSID(_n, _s)		__SECTIONSTRING(.ident, _s)
+#endif
 #define	__KERNEL_COPYRIGHT(_n, _s)	__SECTIONSTRING(.copyright, _s)
 
 #ifdef NO_KERNEL_RCSIDS
@@ -706,7 +713,16 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 				stq r, CPU_INFO_CURLWP(v0)
 
 #endif /* MULTIPROCESSOR */
+
+#else /* !_KERNEL */
+
+#ifdef _NETBSD_REVISIONID
+#define	RCSID(_s)							      \
+	__SECTIONSTRING(.ident, _s);					      \
+	__SECTIONSTRING(.ident,						      \
+	    "$" "NetBSD: " __FILE__ " " _NETBSD_REVISIONID " $")
 #else
 #define	RCSID(_s)		__SECTIONSTRING(.ident, _s)
+#endif
 
 #endif /* _KERNEL */
