@@ -87,6 +87,5 @@ S emit.c
 319 d 0.319 e 14used_and_using F1 I I
 320 d 0.320 e 9only_used F0 I
 325 c 0.325 u 14used_and_using f1 I I
-# FIXME: only_used's result is actually used, the 'i' for 'ignored' is wrong.
-325 c 0.325 i 9only_used f0 I
+325 c 0.325 u 9only_used f0 I
 323 d 0.323 dr 10only_using F0 I

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.646 2024/06/09 10:27:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.647 2024/06/09 16:53:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.646 2024/06/09 10:27:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.647 2024/06/09 16:53:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4649,7 +4649,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 		    discard, szof);
 		for (size_t i = 0, n = call->args_len; i < n; i++)
 			check_expr_misc(call->args[i],
-			    false, false, false, false, false, szof);
+			    true, false, false, false, false, szof);
 		return;
 	}
 
