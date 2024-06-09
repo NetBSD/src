@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.23 2018/10/29 00:31:57 uwe Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.24 2024/06/09 13:02:24 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,13 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.23 2018/10/29 00:31:57 uwe Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.24 2024/06/09 13:02:24 rillig Exp $");
 #endif
-#endif				/* not lint */
 
 #ifdef DEBUG
 #include <stdarg.h>
@@ -106,13 +104,6 @@ __CTRACE(int area, const char *fmt,...)
 	(void)fflush(tracefp);
 }
 #else
-/* this kills the empty translation unit message from lint... */
-void
-__cursesi_make_lint_shut_up_if_debug_not_defined(void);
-
-void
-__cursesi_make_lint_shut_up_if_debug_not_defined(void)
-{
-	return;
-}
+/* Prevent an 'empty translation unit' message from lint. */
+typedef int dummy;
 #endif
