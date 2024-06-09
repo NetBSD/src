@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.17 2023/05/22 17:53:27 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.18 2024/06/09 16:49:40 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -315,3 +315,12 @@ struct compound_expression_in_initializer compound = {
  * initializer.
  */
 const char array_of_unknown_size[] = "unknown";
+
+int used_and_using(int);
+int only_used(void);
+
+int
+only_using(void)
+{
+	return used_and_using(only_used());
+}

@@ -83,3 +83,10 @@ S emit.c
 286 d 0.286 d 8use_vars F0 V
 305 d 0.305 d 8compound sT1 34compound_expression_in_initializer
 317 d 0.317 d 21array_of_unknown_size A8cC
+
+319 d 0.319 e 14used_and_using F1 I I
+320 d 0.320 e 9only_used F0 I
+325 c 0.325 u 14used_and_using f1 I I
+# FIXME: only_used's result is actually used, the 'i' for 'ignored' is wrong.
+325 c 0.325 i 9only_used f0 I
+323 d 0.323 dr 10only_using F0 I
