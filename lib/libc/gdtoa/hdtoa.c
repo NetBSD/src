@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.13 2024/05/09 12:24:24 riastradh Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.14 2024/06/09 15:06:07 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.13 2024/05/09 12:24:24 riastradh Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.14 2024/06/09 15:06:07 jakllsch Exp $");
 #endif
 
 #include <float.h>
@@ -59,8 +59,12 @@ __RCSID("$NetBSD: hdtoa.c,v 1.13 2024/05/09 12:24:24 riastradh Exp $");
 #define	INFSTR	"Infinity"
 #define	NANSTR	"NaN"
 
+#ifndef __vax__
 #define	DBL_ADJ		(DBL_MAX_EXP - 2 + ((DBL_MANT_DIG - 1) % 4))
 #define	LDBL_ADJ	(LDBL_MAX_EXP - 2 + ((LDBL_MANT_DIG - 1) % 4))
+#else /* __vax__ */
+#define	DBL_ADJ		(DBL_MAX_EXP + 4 + ((DBL_MANT_DIG) % 4))
+#endif
 
 /*
  * Round up the given digit string.  If the digit string is fff...f,
@@ -152,6 +156,11 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 
 	u.dblu_d = d;
 	*sign = u.dblu_dbl.dbl_sign;
+#ifdef __vax__
+	u.dfltu_dflt.dflt_fracl =
+	    ((u.dfltu_dflt.dflt_fracl >> 16) & 0xFFFF) |
+	    ((u.dfltu_dflt.dflt_fracl & 0xffff) << 16);
+#endif
 
 	switch (fpclassify(d)) {
 	case FP_NORMAL:
@@ -160,16 +169,11 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	case FP_ZERO:
 		*decpt = 1;
 		return (nrv_alloc("0", rve, 1));
+#ifndef __vax__
 	case FP_SUBNORMAL:
-#ifdef __vax__
-		/* (DBL_MAX_EXP=127 / 2) + 2 = 65? */
-		u.dblu_d *= 0x1p65;
-		*decpt = u.dblu_dbl.dbl_exp - (65 + DBL_ADJ);
-#else
 		/* (DBL_MAX_EXP=1024 / 2) + 2 = 514? */
 		u.dblu_d *= 0x1p514;
 		*decpt = u.dblu_dbl.dbl_exp - (514 + DBL_ADJ);
-#endif
 		break;
 	case FP_INFINITE:
 		*decpt = INT_MAX;
@@ -177,6 +181,7 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	case FP_NAN:
 		*decpt = INT_MAX;
 		return (nrv_alloc(NANSTR, rve, sizeof(NANSTR) - 1));
+#endif
 	default:
 		abort();
 	}
@@ -210,7 +215,8 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 		u.dblu_dbl.dbl_fracl >>= 4;
 	}
 #ifdef DBL_FRACMBITS
-	for (; s > s0; s--) {
+	for (; s > s0 + sigfigs - ((DBL_FRACLBITS + DBL_FRACMBITS) / 4) - 1
+            && s > s0; s--) {
 		*s = u.dblu_dbl.dbl_fracm & 0xf;
 		u.dblu_dbl.dbl_fracm >>= 4;
 	}
