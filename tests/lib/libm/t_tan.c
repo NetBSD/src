@@ -1,4 +1,4 @@
-/* $NetBSD: t_tan.c,v 1.7 2018/11/07 04:00:13 riastradh Exp $ */
+/* $NetBSD: t_tan.c,v 1.8 2024/06/09 16:53:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -113,9 +113,10 @@ ATF_TC_HEAD(tan_inf_neg, tc)
 
 ATF_TC_BODY(tan_inf_neg, tc)
 {
-	const double x = -1.0L / 0.0L;
+	const volatile double x = -1.0 / 0.0;
+	const double y = tan(x);
 
-	ATF_CHECK(isnan(tan(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(tan_inf_pos);
@@ -126,9 +127,10 @@ ATF_TC_HEAD(tan_inf_pos, tc)
 
 ATF_TC_BODY(tan_inf_pos, tc)
 {
-	const double x = 1.0L / 0.0L;
+	const volatile double x = 1.0 / 0.0;
+	const double y = tan(x);
 
-	ATF_CHECK(isnan(tan(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 
@@ -220,12 +222,10 @@ ATF_TC_HEAD(tanf_inf_neg, tc)
 
 ATF_TC_BODY(tanf_inf_neg, tc)
 {
-	const float x = -1.0L / 0.0L;
+	const volatile float x = -1.0f / 0.0f;
+	const float y = tanf(x);
 
-	if (isnan(tanf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("tanf(-Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(tanf_inf_pos);
@@ -236,12 +236,10 @@ ATF_TC_HEAD(tanf_inf_pos, tc)
 
 ATF_TC_BODY(tanf_inf_pos, tc)
 {
-	const float x = 1.0L / 0.0L;
+	const volatile float x = 1.0f / 0.0f;
+	const float y = tanf(x);
 
-	if (isnan(tanf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("tanf(+Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 

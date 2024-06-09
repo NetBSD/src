@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.11 2024/05/06 15:45:20 riastradh Exp $ */
+/* $NetBSD: t_cos.c,v 1.12 2024/06/09 16:53:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -114,9 +114,10 @@ ATF_TC_HEAD(cosl_inf_neg, tc)
 
 ATF_TC_BODY(cosl_inf_neg, tc)
 {
-	const long double x = -1.0L / 0.0L;
+	const volatile long double x = -1.0L / 0.0L;
+	const long double y = cosl(x);
 
-	ATF_CHECK(isnan(cosl(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%La", y);
 }
 
 ATF_TC(cosl_inf_pos);
@@ -127,9 +128,10 @@ ATF_TC_HEAD(cosl_inf_pos, tc)
 
 ATF_TC_BODY(cosl_inf_pos, tc)
 {
-	const long double x = 1.0L / 0.0L;
+	const volatile long double x = 1.0L / 0.0L;
+	const long double y = cosl(x);
 
-	ATF_CHECK(isnan(cosl(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%La", y);
 }
 
 ATF_TC(cosl_zero_neg);
@@ -208,9 +210,10 @@ ATF_TC_HEAD(cos_inf_neg, tc)
 
 ATF_TC_BODY(cos_inf_neg, tc)
 {
-	const double x = -1.0L / 0.0L;
+	const volatile double x = -1.0 / 0.0;
+	const double y = cos(x);
 
-	ATF_CHECK(isnan(cos(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(cos_inf_pos);
@@ -221,9 +224,10 @@ ATF_TC_HEAD(cos_inf_pos, tc)
 
 ATF_TC_BODY(cos_inf_pos, tc)
 {
-	const double x = 1.0L / 0.0L;
+	const volatile double x = 1.0 / 0.0;
+	const double y = cos(x);
 
-	ATF_CHECK(isnan(cos(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(cos_zero_neg);
@@ -316,12 +320,10 @@ ATF_TC_HEAD(cosf_inf_neg, tc)
 
 ATF_TC_BODY(cosf_inf_neg, tc)
 {
-	const float x = -1.0L / 0.0L;
+	const volatile float x = -1.0f / 0.0f;
+	const float y = cosf(x);
 
-	if (isnan(cosf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("cosf(-Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(cosf_inf_pos);
@@ -332,12 +334,10 @@ ATF_TC_HEAD(cosf_inf_pos, tc)
 
 ATF_TC_BODY(cosf_inf_pos, tc)
 {
-	const float x = 1.0L / 0.0L;
+	const volatile float x = 1.0f / 0.0f;
+	const float y = cosf(x);
 
-	if (isnan(cosf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("cosf(+Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 
