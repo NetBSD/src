@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.20 2023/10/22 00:09:20 mrg Exp $
+$NetBSD: README.gcc12,v 1.21 2024/06/09 19:35:25 mrg Exp $
 
 
 new stuff:
@@ -31,8 +31,8 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	y[17]	y		y	y	?
-aarch64eb	y	y	y	y	y[17]	y		y	y	?
+aarch64		y	y	y	y	y[17]	y		y	y	n
+aarch64eb	y	y	y	y	y[17]	y		y	y	n
 alpha		y	y	y	y	b	y		y	y	?
 earmv4		y	b	?	y	?	?		?	?	?
 earmv4eb	y	b	?	y	?	?		?	?	?
@@ -49,34 +49,29 @@ earmv7eb	y	b	?	y	?	?		?	?	?
 earmv7hf	y	y	y	y	b	y		y	y	?
 earmv7hfeb	y	y	y	y	b	y		y	y	?
 hppa		y	y	y	y	?	y		?	?	?
-i386		y	y	y	y	n[18]	y		y	n[19]	?
-ia64		y	b	y	y	y	y		y[3]	n	?
-m68000		y	y	y	y	n[11]	n		y[14]	?	?
+i386		y	y	y	y	y[18]	y		y	n[19]	n
+ia64		y	b	y	y	y	y		y[3]	n	n
+m68000		y	y	y	y	b	n		y[14]	?	?
 m68k		y	y	y	y	b	y		y[14]	y[14]	?
 mipseb		y	b	y	y	b	y		?	?	?
 mipsel		y	b	y	y	b	y		?	?	?
 mips64eb	y	b	y	y	b	y		?	?	?
 mips64el	y	b	y	y	b	y		?	?	?
-powerpc		y	y	y	y	?	n[4]		?	?	?
-powerpc64	y	?	?	y	?	?		?	?	?
+powerpc		y	y	y	y	y	b		?	?	?
+powerpc64	y	?	?	y	b	b		?	?	?
 sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
-sparc		y	y	y	y	n[21]	y		y	y	?
-sparc64		y	b	y	y	n[16]	y		y	?	?
+sparc		y	y	y	y	n[21]	y		y	y	n
+sparc64		y	b	y	y	n[16]	y		y	?	n
 vax		y	y	y	y	n[23]	n		n[24,25] ?	?
-x86_64		y	y	y	y	y[13]	y		y	y	?
-riscv32		y	y	y	y	b	y		n[2]	?	?
-riscv64		y	y	y	y	b	y		y	y	?
+x86_64		y	y	y	y	y[13]	y		y	y	n
+riscv32		y	y	y	y	b	y		n[2]	?	n
+riscv64		y	y	y	y	b	y		y	y	n
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
 [2]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
 [3]: GENERIC.SKI boots just as well as GCC 10.
-[4]: rs6000 has a new generator for rs6000-builtins.cc and rs6000-builtins.h rs6000-vecdefines.h
-[7]: fails to build kernels:
-     In file included from sys/arch/powerpc/oea/pmap64.c:4:
-     sys/arch/powerpc/oea/pmap.c:2186:2: error: #error PPC_OEA64 not supported
-[11]: sanitizers don't build yet.
 [13]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
       ThreadSanitizer: CHECK failed: tsan_rtl.cpp:149 "((reinterpret_cast<uptr>(this) % 64)) == ((0))" (0x10, 0x0) (tid=21499)
       ThreadSanitizer:DEADLYSIGNAL
@@ -87,17 +82,17 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       ThreadSanitizer: nested bug in the same thread, aborting.
 [14]: "dd count=1", "env LC_CTYPE=en_US.UTF-8 locale", and "tests/crypto/libcrypto/h_evp_test evpmd_blake.txt" abort.
       adding -fno-stack-protector to strsuftoll.c, citrus_module.c, and blake2_prov.c, respectively, works around the problem.
+      -- workarounds commited.
 [16]: sanitizers crash early:
       Program received signal SIGSEGV, Segmentation fault.
       (gdb) bt
       #0  0x000000004064265c in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2181
       #1  0xffffffffffffc704 in ?? ()
       Backtrace stopped: previous frame identical to this frame (corrupt stack?)
+      -- some wip patches make this less bad
 [17]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
       FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
-[18]: *san requires 64-bit atomic ops:
-      ld: /usr/lib/libasan.so: undefined reference to `__sync_val_compare_and_swap_8'
-      If lib*san is compiled with -march=i586, all tests in usr.bin/{cc,c++} successfully pass.
+[18]: lib*san is compiled with -march=i586 to ensure required atomic ops are present
 [19]: kernel freezes with garbage parmanently output to console, after lib/libc/sys/t_ptrace_wait:syscall_signal_on_sce fails:
           syscall_signal_on_sce: [[ 3013.0266693] sorry pid 1847 was killed: orphanes
           ss
@@ -116,6 +111,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 	U __sync_val_compare_and_swap_1
 	U __sync_val_compare_and_swap_4
       liblsan and libubsan are mssing the _4 and _8 versions, too.
+      -- they're not really supported (not my atf) in gcc 10 currently.
 [22]: single-user shell crashes. if userland is built with DBG=-O1, it boots into multi-user mode.
       however, at least db(3) is broken, by which files are corrupted when edited by vi(1).
 [23]: sanitizers fail to build:
@@ -133,7 +129,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
-values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), nx (yes, no x11)
+values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), nx (yes, no x11), nk (no kernels available)
 
 CPU		platform list
 ---		-------- ----
@@ -160,10 +156,10 @@ mips64eb:	 		y
 mips64el:	k		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	k		k	k	k		kn[4]		k		k		k		k		k
+powerpc:	k		k	k	k		y		k		k		k		k		k
 
 		evbppc		macppc		ofppc
-powerpc64:	k		k		n[7]
+powerpc64:	nk		nk		nk
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
 sh3eb:		 		y		 		 		k
