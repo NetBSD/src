@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/06/03 09:09:15 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2024/06/09 22:12:46 kre Exp $
 
 NOMAN=
 
@@ -73,7 +73,6 @@ test_compat_lzip.c \
 test_compat_lzma.c \
 test_compat_lzop.c \
 test_compat_mac.c \
-test_compat_pax_libarchive_2x.c \
 test_compat_perl_archive_tar.c \
 test_compat_plexus_archiver_tar.c \
 test_compat_solaris_pax_sparse.c \
@@ -204,7 +203,6 @@ test_read_format_zip_winzip_aes_large.c \
 test_read_format_zip_with_invalid_traditional_eocd.c \
 test_read_format_zip_zip64.c \
 test_read_large.c \
-test_read_pax_schily_xattr.c \
 test_read_pax_truncated.c \
 test_read_position.c \
 test_read_set_format.c \
