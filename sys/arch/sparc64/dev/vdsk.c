@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.11 2023/12/12 21:34:34 andvar Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.12 2024/06/09 19:13:54 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -788,7 +788,6 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 void
 vdsk_ldc_reset(struct ldc_conn *lc)
 {
-
 	struct vdsk_softc *sc = lc->lc_sc;
 
 	sc->sc_vio_state = 0;
@@ -797,7 +796,6 @@ vdsk_ldc_reset(struct ldc_conn *lc)
 void
 vdsk_ldc_start(struct ldc_conn *lc)
 {
-
 	struct vdsk_softc *sc = lc->lc_sc;
 
 	vdsk_send_ver_info(sc, VDSK_MAJOR, VDSK_MINOR);
@@ -806,7 +804,6 @@ vdsk_ldc_start(struct ldc_conn *lc)
 void
 vdsk_sendmsg(struct vdsk_softc *sc, void *msg, size_t len)
 {
-
 	struct ldc_conn *lc = &sc->sc_lc;
 	int err;
 
@@ -818,7 +815,6 @@ vdsk_sendmsg(struct vdsk_softc *sc, void *msg, size_t len)
 void
 vdsk_send_ver_info(struct vdsk_softc *sc, uint16_t major, uint16_t minor)
 {
-
 	struct vio_ver_info vi;
 
 	/* Allocate new session ID. */
@@ -1255,14 +1251,12 @@ vdsk_complete_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs, int desc)
 void
 vdsk_scsi_inq(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
-
 	vdsk_scsi_inquiry(sc, xs);
 }
 
 void
 vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
-
 	struct scsipi_inquiry_data inq;
 	char buf[5];
 
@@ -1272,20 +1266,21 @@ vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case VD_MEDIA_TYPE_CD:
 		case VD_MEDIA_TYPE_DVD:
 			inq.device = T_CDROM;
+			inq.dev_qual2 = SID_REMOVABLE;
+			bcopy("Virtual CDROM    ", inq.product, sizeof(inq.product));
 			break;
-
 		case VD_MEDIA_TYPE_FIXED:
-		default:
 			inq.device = T_DIRECT;
+			bcopy("Virtual Disk    ", inq.product, sizeof(inq.product));
 			break;
+		default:
+			panic("Unhandled media type %d\n", sc->sc_vd_mtype);
 	}
-
 	inq.version = 0x05; /* SPC-3 */
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	inq.flags3 |= SID_CmdQue;
 	bcopy("SUN     ", inq.vendor, sizeof(inq.vendor));
-	bcopy("Virtual Disk    ", inq.product, sizeof(inq.product));
 	snprintf(buf, sizeof(buf), "%u.%u ", sc->sc_major, sc->sc_minor);
 	bcopy(buf, inq.revision, sizeof(inq.revision));
 
@@ -1297,7 +1292,6 @@ vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 void
 vdsk_scsi_capacity(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
-
 	struct scsipi_read_capacity_10_data rcd;
 	uint64_t capacity;
 
@@ -1321,7 +1315,6 @@ vdsk_scsi_capacity(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 void
 vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
-
 	struct scsipi_read_capacity_16_data rcd;
 	uint64_t capacity;
 
@@ -1349,7 +1342,6 @@ vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 void
 vdsk_scsi_done(struct scsipi_xfer *xs, int error)
 {
-
 	xs->error = error;
 
 	scsipi_done(xs);
