@@ -24,7 +24,6 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 #define __LIBARCHIVE_BUILD 1
 #include "archive_getdate.h"
@@ -321,6 +320,11 @@ test_newer_ctime_than_file_mbs(void)
 	struct archive_entry *ae;
 	struct archive *m;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
+
 	if (!assert((m = archive_match_new()) != NULL))
 		return;
 	if (!assert((ae = archive_entry_new()) != NULL)) {
@@ -434,6 +438,11 @@ test_newer_ctime_than_file_wcs(void)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
 
 	if (!assert((m = archive_match_new()) != NULL))
 		return;
@@ -782,6 +791,11 @@ test_older_ctime_than_file_mbs(void)
 	struct archive_entry *ae;
 	struct archive *m;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
+
 	if (!assert((m = archive_match_new()) != NULL))
 		return;
 	if (!assert((ae = archive_entry_new()) != NULL)) {
@@ -896,6 +910,11 @@ test_older_ctime_than_file_wcs(void)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
 
 	if (!assert((m = archive_match_new()) != NULL))
 		return;
@@ -1073,6 +1092,11 @@ test_ctime_between_files_mbs(void)
 	struct archive_entry *ae;
 	struct archive *m;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
+
 	if (!assert((m = archive_match_new()) != NULL))
 		return;
 	if (!assert((ae = archive_entry_new()) != NULL)) {
@@ -1131,6 +1155,11 @@ test_ctime_between_files_wcs(void)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct archive *m;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        skipping("Can't set ctime on Windows");
+        return;
+#endif
 
 	if (!assert((m = archive_match_new()) != NULL))
 		return;

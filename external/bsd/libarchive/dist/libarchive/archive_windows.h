@@ -23,13 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD$
  */
-
-#ifndef __LIBARCHIVE_BUILD
-#error This header is only to be used internally to libarchive.
-#endif
 
 /*
  * TODO: A lot of stuff in here isn't actually used by libarchive and
@@ -47,6 +41,10 @@
 
 #ifndef LIBARCHIVE_ARCHIVE_WINDOWS_H_INCLUDED
 #define	LIBARCHIVE_ARCHIVE_WINDOWS_H_INCLUDED
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 /* Start of configuration for native Win32  */
 #ifndef MINGW_HAS_SECURE_API

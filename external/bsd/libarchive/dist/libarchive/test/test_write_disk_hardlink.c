@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_disk_hardlink.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 /* Execution bits, Group members bits and others bits do not work. */
@@ -49,6 +48,9 @@ DEFINE_TEST(test_write_disk_hardlink)
 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
 	struct archive *ad;
 	struct archive_entry *ae;
+#ifdef HAVE_LINKAT
+	int can_symlink;
+#endif
 	int r;
 
 	/* Force the umask to something predictable. */
@@ -147,7 +149,7 @@ DEFINE_TEST(test_write_disk_hardlink)
 	archive_entry_free(ae);
 
 	/*
-	 * Finally, try a new-cpio-like approach, where the initial
+	 * Third, try a new-cpio-like approach, where the initial
 	 * regular file is empty and the hardlink has the data.
 	 */
 
@@ -174,6 +176,41 @@ DEFINE_TEST(test_write_disk_hardlink)
 		assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
 	}
 	archive_entry_free(ae);
+
+#ifdef HAVE_LINKAT
+	/* Finally, try creating a hard link to a dangling symlink */
+	can_symlink = canSymlink();
+	if (can_symlink) {
+		/* Symbolic link: link5a -> foo */
+		assert((ae = archive_entry_new()) != NULL);
+		archive_entry_copy_pathname(ae, "link5a");
+		archive_entry_set_mode(ae, AE_IFLNK | 0642);
+		archive_entry_unset_size(ae);
+		archive_entry_copy_symlink(ae, "foo");
+		assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+		if (r >= ARCHIVE_WARN) {
+			assertEqualInt(ARCHIVE_WARN,
+			    archive_write_data(ad, data, sizeof(data)));
+			assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		}
+		archive_entry_free(ae);
+
+
+		/* Link.  Size of zero means this doesn't carry data. */
+		assert((ae = archive_entry_new()) != NULL);
+		archive_entry_copy_pathname(ae, "link5b");
+		archive_entry_set_mode(ae, S_IFREG | 0642);
+		archive_entry_set_size(ae, 0);
+		archive_entry_copy_hardlink(ae, "link5a");
+		assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+		if (r >= ARCHIVE_WARN) {
+			assertEqualInt(ARCHIVE_WARN,
+			    archive_write_data(ad, data, sizeof(data)));
+			assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		}
+		archive_entry_free(ae);
+	}
+#endif
 	assertEqualInt(0, archive_write_free(ad));
 
 	/* Test the entries on disk. */
@@ -211,5 +248,14 @@ DEFINE_TEST(test_write_disk_hardlink)
 	assertFileNLinks("link4a", 2);
 	assertFileSize("link4a", sizeof(data));
 	assertIsHardlink("link4a", "link4b");
+
+#ifdef HAVE_LINKAT
+	if (can_symlink) {
+		/* Test #5 */
+		assertIsSymlink("link5a", "foo", 0);
+		assertFileNLinks("link5a", 2);
+		assertIsHardlink("link5a", "link5b");
+	}
+#endif
 #endif
 }

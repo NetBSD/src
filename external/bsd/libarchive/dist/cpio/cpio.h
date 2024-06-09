@@ -21,8 +21,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: src/usr.bin/cpio/cpio.h,v 1.7 2008/12/06 07:30:40 kientzle Exp $
  */
 
 #ifndef CPIO_H_INCLUDED
@@ -62,8 +60,10 @@ struct cpio {
 	int		  option_list; /* -t */
 	char		  option_null; /* --null */
 	int		  option_numeric_uid_gid; /* -n */
+	int		  option_pwb; /* -6 */
 	int		  option_rename; /* -r */
 	char		 *destdir;
+	size_t		  destdir_len;
 	size_t		  pass_destpath_alloc;
 	char		 *pass_destpath;
 	int		  uid_override;

@@ -21,9 +21,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_crc32.h 201102 2009-12-28 03:11:36Z kientzle $
  */
+
+#ifndef ARCHIVE_CRC32_H
+#define ARCHIVE_CRC32_H
 
 #ifndef __LIBARCHIVE_BUILD
 #error This header is only to be used internally to libarchive.
@@ -76,3 +77,5 @@ crc32(unsigned long crc, const void *_p, size_t len)
 		crc = crc_tbl[(crc ^ *p++) & 0xff] ^ (crc >> 8);
 	return (crc ^ 0xffffffffUL);
 }
+
+#endif
