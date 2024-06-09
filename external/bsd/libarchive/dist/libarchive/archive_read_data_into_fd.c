@@ -24,7 +24,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_data_into_fd.c,v 1.16 2008/05/23 05:01:29 cperciva Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -95,8 +94,13 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	    "archive_read_data_into_fd");
 
 	can_lseek = (fstat(fd, &st) == 0) && S_ISREG(st.st_mode);
-	if (!can_lseek)
+	if (!can_lseek) {
 		nulls = calloc(1, nulls_size);
+		if (!nulls) {
+			r = ARCHIVE_FATAL;
+			goto cleanup;
+		}
+	}
 
 	while ((r = archive_read_data_block(a, &buff, &size, &target_offset)) ==
 	    ARCHIVE_OK) {

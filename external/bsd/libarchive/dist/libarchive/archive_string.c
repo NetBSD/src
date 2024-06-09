@@ -25,7 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_string.c 201095 2009-12-28 02:33:22Z kientzle $");
 
 /*
  * Basic resizable string support, to simplify manipulating arbitrary-sized
@@ -74,6 +73,9 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_string.c 201095 2009-12-28 02:33
 #if !defined(HAVE_WMEMMOVE) && !defined(wmemmove)
 #define wmemmove(a,b,i)  (wchar_t *)memmove((a), (b), (i) * sizeof(wchar_t))
 #endif
+
+#undef max
+#define max(a, b)       ((a)>(b)?(a):(b))
 
 struct archive_string_conv {
 	struct archive_string_conv	*next;
@@ -458,7 +460,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 
 	if (from_cp == CP_C_LOCALE) {
 		/*
-		 * "C" locale special process.
+		 * "C" locale special processing.
 		 */
 		wchar_t *ws;
 		const unsigned char *mp;
@@ -550,6 +552,8 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		} else
 			mbflag = MB_PRECOMPOSED;
 
+		mbflag |= MB_ERR_INVALID_CHARS;
+
 		buffsize = dest->length + length + 1;
 		do {
 			/* Allocate memory for WCS. */
@@ -591,7 +595,7 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 	 * No single byte will be more than one wide character,
 	 * so this length estimate will always be big enough.
 	 */
-	size_t wcs_length = len;
+	// size_t wcs_length = len;
 	size_t mbs_length = len;
 	const char *mbs = p;
 	wchar_t *wcs;
@@ -600,7 +604,11 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 
 	memset(&shift_state, 0, sizeof(shift_state));
 #endif
-	if (NULL == archive_wstring_ensure(dest, dest->length + wcs_length + 1))
+	/*
+	 * As we decided to have wcs_length == mbs_length == len
+	 * we can use len here instead of wcs_length
+	 */
+	if (NULL == archive_wstring_ensure(dest, dest->length + len + 1))
 		return (-1);
 	wcs = dest->s + dest->length;
 	/*
@@ -609,6 +617,12 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 	 * multi bytes.
 	 */
 	while (*mbs && mbs_length > 0) {
+		/*
+		 * The buffer we allocated is always big enough.
+		 * Keep this code path in a comment if we decide to choose
+		 * smaller wcs_length in the future
+		 */
+/*
 		if (wcs_length == 0) {
 			dest->length = wcs - dest->s;
 			dest->s[dest->length] = L'\0';
@@ -618,24 +632,20 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 				return (-1);
 			wcs = dest->s + dest->length;
 		}
+*/
 #if HAVE_MBRTOWC
-		r = mbrtowc(wcs, mbs, wcs_length, &shift_state);
+		r = mbrtowc(wcs, mbs, mbs_length, &shift_state);
 #else
-		r = mbtowc(wcs, mbs, wcs_length);
+		r = mbtowc(wcs, mbs, mbs_length);
 #endif
 		if (r == (size_t)-1 || r == (size_t)-2) {
 			ret_val = -1;
-			if (errno == EILSEQ) {
-				++mbs;
-				--mbs_length;
-				continue;
-			} else
-				break;
+			break;
 		}
 		if (r == 0 || r > mbs_length)
 			break;
 		wcs++;
-		wcs_length--;
+		// wcs_length--;
 		mbs += r;
 		mbs_length -= r;
 	}
@@ -680,7 +690,7 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 
 	if (to_cp == CP_C_LOCALE) {
 		/*
-		 * "C" locale special process.
+		 * "C" locale special processing.
 		 */
 		const wchar_t *wp = ws;
 		char *p;
@@ -735,7 +745,8 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 			else
 				dp = &defchar_used;
 			count = WideCharToMultiByte(to_cp, 0, ws, wslen,
-			    as->s + as->length, (int)as->buffer_length-1, NULL, dp);
+			    as->s + as->length,
+			    (int)as->buffer_length - (int)as->length - 1, NULL, dp);
 			if (count == 0 &&
 			    GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
 				/* Expand the MBS buffer and retry. */
@@ -798,7 +809,8 @@ archive_string_append_from_wcs(struct archive_string *as,
 			as->s[as->length] = '\0';
 			/* Re-allocate buffer for MBS. */
 			if (archive_string_ensure(as,
-			    as->length + len * 2 + 1) == NULL)
+			    as->length + max(len * 2,
+			    (size_t)MB_CUR_MAX) + 1) == NULL)
 				return (-1);
 			p = as->s + as->length;
 			end = as->s + as->buffer_length - MB_CUR_MAX -1;
@@ -889,7 +901,7 @@ add_converter(struct archive_string_conv *sc, int (*converter)
      struct archive_string_conv *))
 {
 	if (sc == NULL || sc->nconverter >= 2)
-		__archive_errx(1, "Programing error");
+		__archive_errx(1, "Programming error");
 	sc->converter[sc->nconverter++] = converter;
 }
 
@@ -1313,6 +1325,10 @@ free_sconv_object(struct archive_string_conv *sc)
 }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+# if defined(WINAPI_FAMILY_PARTITION) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#  define GetOEMCP() CP_OEMCP
+# endif
+
 static unsigned
 my_atoi(const char *p)
 {
@@ -1512,7 +1528,7 @@ get_current_codepage(void)
 	p = strrchr(locale, '.');
 	if (p == NULL)
 		return (GetACP());
-	if (strcmp(p+1, "utf8") == 0)
+	if ((strcmp(p+1, "utf8") == 0) || (strcmp(p+1, "UTF-8") == 0))
 		return CP_UTF8;
 	cp = my_atoi(p+1);
 	if ((int)cp <= 0)
@@ -3440,7 +3456,8 @@ strncat_from_utf8_libarchive2(struct archive_string *as,
 			as->length = p - as->s;
 			/* Re-allocate buffer for MBS. */
 			if (archive_string_ensure(as,
-			    as->length + len * 2 + 1) == NULL)
+			    as->length + max(len * 2,
+			    (size_t)MB_CUR_MAX) + 1) == NULL)
 				return (-1);
 			p = as->s + as->length;
 			end = as->s + as->buffer_length - MB_CUR_MAX -1;
@@ -3869,6 +3886,11 @@ archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes,
 	}
 
 	*p = NULL;
+	/* Try converting WCS to MBS first if MBS does not exist yet. */
+	if ((aes->aes_set & AES_SET_MBS) == 0) {
+		const char *pm; /* unused */
+		archive_mstring_get_mbs(a, aes, &pm); /* ignore errors, we'll handle it later */
+	}
 	if (aes->aes_set & AES_SET_MBS) {
 		sc = archive_string_conversion_to_charset(a, "UTF-8", 1);
 		if (sc == NULL)
@@ -3891,9 +3913,9 @@ int
 archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,
     const char **p)
 {
+	struct archive_string_conv *sc;
 	int r, ret = 0;
 
-	(void)a; /* UNUSED */
 	/* If we already have an MBS form, return that immediately. */
 	if (aes->aes_set & AES_SET_MBS) {
 		*p = aes->aes_mbs.s;
@@ -3914,10 +3936,23 @@ archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,
 			ret = -1;
 	}
 
-	/*
-	 * Only a UTF-8 form cannot avail because its conversion already
-	 * failed at archive_mstring_update_utf8().
-	 */
+	/* If there's a UTF-8 form, try converting with the native locale. */
+	if (aes->aes_set & AES_SET_UTF8) {
+		archive_string_empty(&(aes->aes_mbs));
+		sc = archive_string_conversion_from_charset(a, "UTF-8", 1);
+		if (sc == NULL)
+			return (-1);/* Couldn't allocate memory for sc. */
+		r = archive_strncpy_l(&(aes->aes_mbs),
+			aes->aes_utf8.s, aes->aes_utf8.length, sc);
+		if (a == NULL)
+			free_sconv_object(sc);
+		*p = aes->aes_mbs.s;
+		if (r == 0) {
+			aes->aes_set |= AES_SET_MBS;
+			ret = 0;/* success; overwrite previous error. */
+		} else
+			ret = -1;/* failure. */
+	}
 	return (ret);
 }
 
@@ -3935,6 +3970,11 @@ archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,
 	}
 
 	*wp = NULL;
+	/* Try converting UTF8 to MBS first if MBS does not exist yet. */
+	if ((aes->aes_set & AES_SET_MBS) == 0) {
+		const char *p; /* unused */
+		archive_mstring_get_mbs(a, aes, &p); /* ignore errors, we'll handle it later */
+	}
 	/* Try converting MBS to WCS using native locale. */
 	if (aes->aes_set & AES_SET_MBS) {
 		archive_wstring_empty(&(aes->aes_wcs));
@@ -3950,12 +3990,13 @@ archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,
 }
 
 int
-archive_mstring_get_mbs_l(struct archive_mstring *aes,
+archive_mstring_get_mbs_l(struct archive *a, struct archive_mstring *aes,
     const char **p, size_t *length, struct archive_string_conv *sc)
 {
-	int r, ret = 0;
-
+	int ret = 0;
 #if defined(_WIN32) && !defined(__CYGWIN__)
+	int r;
+
 	/*
 	 * Internationalization programming on Windows must use Wide
 	 * characters because Windows platform cannot make locale UTF-8.
@@ -3977,20 +4018,12 @@ archive_mstring_get_mbs_l(struct archive_mstring *aes,
 	}
 #endif
 
-	/* If there is not an MBS form but is a WCS form, try converting
+	/* If there is not an MBS form but there is a WCS or UTF8 form, try converting
 	 * with the native locale to be used for translating it to specified
 	 * character-set. */
-	if ((aes->aes_set & AES_SET_MBS) == 0 &&
-	    (aes->aes_set & AES_SET_WCS) != 0) {
-		archive_string_empty(&(aes->aes_mbs));
-		r = archive_string_append_from_wcs(&(aes->aes_mbs),
-		    aes->aes_wcs.s, aes->aes_wcs.length);
-		if (r == 0)
-			aes->aes_set |= AES_SET_MBS;
-		else if (errno == ENOMEM)
-			return (-1);
-		else
-			ret = -1;
+	if ((aes->aes_set & AES_SET_MBS) == 0) {
+		const char *pm; /* unused */
+		archive_mstring_get_mbs(a, aes, &pm); /* ignore errors, we'll handle it later */
 	}
 	/* If we already have an MBS form, use it to be translated to
 	 * specified character-set. */
@@ -4195,6 +4228,17 @@ archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes,
 	if (sc == NULL)
 		return (-1);/* Couldn't allocate memory for sc. */
 	r = archive_strcpy_l(&(aes->aes_mbs), utf8, sc);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	/* On failure, make an effort to convert UTF8 to WCS as the active code page
+	 * may not be able to represent all characters in the string */
+	if (r != 0) {
+		if (archive_wstring_append_from_mbs_in_codepage(&(aes->aes_wcs),
+			aes->aes_utf8.s, aes->aes_utf8.length, sc) == 0)
+			aes->aes_set = AES_SET_UTF8 | AES_SET_WCS;
+	}
+#endif
+
 	if (a == NULL)
 		free_sconv_object(sc);
 	if (r != 0)

@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
@@ -36,6 +35,10 @@ DEFINE_TEST(test_option_t)
 	time_t mtime;
 	char date[32];
 	char date2[32];
+	struct tm *tmptr;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm tmbuf;
+#endif
 
 	/* List reference archive, make sure the TOC is correct. */
 	extract_reference_file("test_option_t.cpio");
@@ -87,11 +90,18 @@ DEFINE_TEST(test_option_t)
 #ifdef HAVE_LOCALE_H
 	setlocale(LC_ALL, "");
 #endif
+#if defined(HAVE_LOCALTIME_S)
+        tmptr = localtime_s(&tmbuf, &mtime) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+        tmptr = localtime_r(&mtime, &tmbuf);
+#else
+        tmptr = localtime(&mtime);
+#endif
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	strftime(date2, sizeof(date2)-1, "%b %d  %Y", localtime(&mtime));
+	strftime(date2, sizeof(date2)-1, "%b %d  %Y", tmptr);
 	_snprintf(date, sizeof(date)-1, "%12.12s file", date2);
 #else
-	strftime(date2, sizeof(date2)-1, "%b %e  %Y", localtime(&mtime));
+	strftime(date2, sizeof(date2)-1, "%b %e  %Y", tmptr);
 	snprintf(date, sizeof(date)-1, "%12.12s file", date2);
 #endif
 	assertEqualMem(p + 42, date, strlen(date));

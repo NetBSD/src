@@ -25,7 +25,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -384,6 +383,8 @@ __archive_pathmatch(const char *p, const char *s, int flags)
 	/* Empty pattern only matches the empty string. */
 	if (p == NULL || *p == '\0')
 		return (s == NULL || *s == '\0');
+	else if (s == NULL)
+		return (0);
 
 	/* Leading '^' anchors the start of the pattern. */
 	if (*p == '^') {
@@ -424,6 +425,8 @@ __archive_pathmatch_w(const wchar_t *p, const wchar_t *s, int flags)
 	/* Empty pattern only matches the empty string. */
 	if (p == NULL || *p == L'\0')
 		return (s == NULL || *s == L'\0');
+	else if (s == NULL)
+		return (0);
 
 	/* Leading '^' anchors the start of the pattern. */
 	if (*p == L'^') {

@@ -12,8 +12,9 @@
    More information about the BLAKE2 hash function can be found at
    https://blake2.net.
 */
-#ifndef BLAKE2_IMPL_H
-#define BLAKE2_IMPL_H
+
+#ifndef ARCHIVE_BLAKE2_IMPL_H
+#define ARCHIVE_BLAKE2_IMPL_H
 
 #include <stdint.h>
 #include <string.h>
@@ -153,7 +154,7 @@ static BLAKE2_INLINE uint64_t rotr64( const uint64_t w, const unsigned c )
 /* prevents compiler optimizing out memset() */
 static BLAKE2_INLINE void secure_zero_memory(void *v, size_t n)
 {
-  static void *(*const volatile memset_v)(void *, int, size_t) = &memset;
+  static void *(__LA_LIBC_CC *const volatile memset_v)(void *, int, size_t) = &memset;
   memset_v(v, 0, n);
 }
 

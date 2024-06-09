@@ -12,16 +12,19 @@
    More information about the BLAKE2 hash function can be found at
    https://blake2.net.
 */
-#ifndef BLAKE2_H
-#define BLAKE2_H
+
+#ifndef ARCHIVE_BLAKE2_H
+#define ARCHIVE_BLAKE2_H
 
 #include <stddef.h>
 #include <stdint.h>
 
 #if defined(_MSC_VER)
 #define BLAKE2_PACKED(x) __pragma(pack(push, 1)) x __pragma(pack(pop))
-#else
+#elif defined(__GNUC__)
 #define BLAKE2_PACKED(x) x __attribute__((packed))
+#else
+#define BLAKE2_PACKED(x) _Pragma("pack 1") x _Pragma("pack 0")
 #endif
 
 #if defined(__cplusplus)

@@ -23,21 +23,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/lib/libarchive/archive_endian.h 201085 2009-12-28 02:17:15Z kientzle $
- *
  * Borrowed from FreeBSD's <sys/endian.h>
  */
-
-#ifndef __LIBARCHIVE_BUILD
-#error This header is only to be used internally to libarchive.
-#endif
-
-/* Note:  This is a purely internal header! */
-/* Do not use this outside of libarchive internal code! */
 
 #ifndef ARCHIVE_ENDIAN_H_INCLUDED
 #define ARCHIVE_ENDIAN_H_INCLUDED
 
+/* Note:  This is a purely internal header! */
+/* Do not use this outside of libarchive internal code! */
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 /*
  * Disabling inline keyword for compilers known to choke on it:

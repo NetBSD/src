@@ -21,8 +21,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: head/lib/libarchive/archive_platform.h 201090 2009-12-28 02:22:04Z kientzle $
  */
 
 /* !!ONLY FOR USE INTERNALLY TO LIBARCHIVE!! */
@@ -69,8 +67,16 @@
  * either Windows or Posix APIs. */
 #if (defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__)
 #include "archive_windows.h"
+/* The C library on Windows specifies a calling convention for callback
+ * functions and exports; when we interact with them (capture pointers,
+ * call and pass function pointers) we need to match their calling
+ * convention.
+ * This only matters when libarchive is built with /Gr, /Gz or /Gv
+ * (which change the default calling convention.) */
+#define __LA_LIBC_CC __cdecl
 #else
 #define la_stat(path,stref)		stat(path,stref)
+#define __LA_LIBC_CC
 #endif
 
 /*
@@ -78,19 +84,6 @@
  * uses those macros to select/define replacements and include key
  * headers as required.
  */
-
-/* Get a real definition for __FBSDID or __RCSID if we can */
-#if HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
-#endif
-
-/* If not, define them so as to avoid dangling semicolons. */
-#ifndef __FBSDID
-#define	__FBSDID(a)     struct _undefined_hack
-#endif
-#ifndef __RCSID
-#define	__RCSID(a)     struct _undefined_hack
-#endif
 
 /* Try to get standard C99-style integer type definitions. */
 #if HAVE_INTTYPES_H
@@ -155,6 +148,28 @@
 #define	INTMAX_MIN ((intmax_t)(~INTMAX_MAX))
 #endif
 
+/* Some platforms lack the standard PRIxN/PRIdN definitions. */
+#if !HAVE_INTTYPES_H || !defined(PRIx32) || !defined(PRId32)
+#ifndef PRIx32
+#if SIZEOF_INT == 4
+#define PRIx32 "x"
+#elif SIZEOF_LONG == 4
+#define PRIx32 "lx"
+#else
+#error No suitable 32-bit unsigned integer type found for this platform
+#endif
+#endif // PRIx32
+#ifndef PRId32
+#if SIZEOF_INT == 4
+#define PRId32 "d"
+#elif SIZEOF_LONG == 4
+#define PRId32 "ld"
+#else
+#error No suitable 32-bit signed integer type found for this platform
+#endif
+#endif // PRId32
+#endif // !HAVE_INTTYPES_H || !defined(PRIx32) || !defined(PRId32)
+
 /*
  * If we can't restore metadata using a file descriptor, then
  * for compatibility's sake, close files before trying to restore metadata.
@@ -165,8 +180,9 @@
 
 /*
  * glibc 2.24 deprecates readdir_r
+ * bionic c deprecates readdir_r too
  */
-#if defined(HAVE_READDIR_R) && (!defined(__GLIBC__) || !defined(__GLIBC_MINOR__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 24))
+#if defined(HAVE_READDIR_R) && (!defined(__GLIBC__) || !defined(__GLIBC_MINOR__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 24)) && (!defined(__ANDROID__))
 #define	USE_READDIR_R	1
 #else
 #undef	USE_READDIR_R

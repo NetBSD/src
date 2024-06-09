@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 DEFINE_TEST(test_option_lzma)
 {
@@ -44,6 +43,7 @@ DEFINE_TEST(test_option_lzma)
 		if (strstr(p, "Unsupported compression") != NULL) {
 			skipping("This version of bsdtar was compiled "
 			    "without lzma support");
+			free(p);
 			return;
 		}
 		failure("--lzma option is broken");

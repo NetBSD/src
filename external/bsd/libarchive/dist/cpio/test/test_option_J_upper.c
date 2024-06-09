@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 DEFINE_TEST(test_option_J_upper)
 {
@@ -43,6 +42,7 @@ DEFINE_TEST(test_option_J_upper)
 		if (strstr(p, "compression not available") != NULL) {
 			skipping("This version of bsdcpio was compiled "
 			    "without xz support");
+			free(p);
 			return;
 		}
 		failure("-J option is broken");
