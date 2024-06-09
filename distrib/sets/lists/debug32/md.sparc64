@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.8 2024/06/08 12:38:22 rin Exp $
+# $NetBSD: md.sparc64,v 1.9 2024/06/09 19:56:18 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/sparc/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -190,7 +190,7 @@
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_std.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/sparc/libamu.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/sparc/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/sparc/libarchive..so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/sparc/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc=10
 ./usr/libdata/debug/usr/lib/sparc/libasan.so.6.0.debug	comp-sys-debug	debug,compat,gcc=12
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.10.0.debug	comp-sys-debug	debug,compat

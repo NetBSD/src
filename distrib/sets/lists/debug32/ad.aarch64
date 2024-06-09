@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.8 2024/06/08 12:38:22 rin Exp $
+# $NetBSD: ad.aarch64,v 1.9 2024/06/09 19:56:18 christos Exp $
 ./usr/lib/eabi/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/eabi/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -357,7 +357,7 @@
 ./usr/libdata/debug/usr/lib/eabi/i18n/libmapper_std.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libamu.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libarchive..so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libarm.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabi/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
@@ -538,7 +538,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/i18n/libmapper_std.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libamu.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabihf/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libarchive..so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libarm.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/eabihf/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
