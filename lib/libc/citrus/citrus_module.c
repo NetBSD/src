@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_module.c,v 1.13 2018/01/04 20:57:28 kamil Exp $	*/
+/*	$NetBSD: citrus_module.c,v 1.14 2024/06/09 18:55:00 mrg Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_module.c,v 1.13 2018/01/04 20:57:28 kamil Exp $");
+__RCSID("$NetBSD: citrus_module.c,v 1.14 2024/06/09 18:55:00 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -275,6 +275,9 @@ _findshlib(char *name, int *majorp, int *minorp)
 	return path[0] ? path : NULL;
 }
 
+#ifdef __m68k__	/* See doc/HACKS. */
+__attribute((__optimize__("-fno-stack-protector")))
+#endif
 void *
 _citrus_find_getops(_citrus_module_t handle, const char *modname,
 		    const char *ifname)

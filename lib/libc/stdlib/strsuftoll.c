@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoll.c,v 1.9 2011/10/22 22:08:47 christos Exp $	*/
+/*	$NetBSD: strsuftoll.c,v 1.10 2024/06/09 18:55:00 mrg Exp $	*/
 /*-
  * Copyright (c) 2001-2002,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strsuftoll.c,v 1.9 2011/10/22 22:08:47 christos Exp $");
+__RCSID("$NetBSD: strsuftoll.c,v 1.10 2024/06/09 18:55:00 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -111,6 +111,9 @@ __weak_alias(strsuftollx, _strsuftollx)
  * appropriate error.
  * 
  */
+#ifdef __m68k__	/* See doc/HACKS. */
+__attribute((__optimize__("-fno-stack-protector")))
+#endif
 /* LONGLONG */
 long long
 strsuftoll(const char *desc, const char *val,
