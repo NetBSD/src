@@ -21,8 +21,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD$
  */
 
 #ifndef	TEST_COMMON_H
@@ -115,27 +113,23 @@
 #pragma warn -8068	/* Constant out of range in comparison. */
 #endif
 
+
 #if defined(__GNUC__) && (__GNUC__ > 2 || \
 			  (__GNUC__ == 2 && __GNUC_MINOR__ >= 7))
-#define	__LA_PRINTFLIKE(f,a)	__attribute__((__format__(__printf__, f, a)))
+# ifdef __MINGW_PRINTF_FORMAT
+#  define __LA_PRINTF_FORMAT __MINGW_PRINTF_FORMAT
+# else
+#  define __LA_PRINTF_FORMAT __printf__
+# endif
+# define __LA_PRINTFLIKE(f,a)	__attribute__((__format__(__LA_PRINTF_FORMAT, f, a)))
 #else
-#define	__LA_PRINTFLIKE(f,a)
+# define __LA_PRINTFLIKE(f,a)
 #endif
 
 /* Haiku OS and QNX */
 #if defined(__HAIKU__) || defined(__QNXNTO__)
 /* Haiku and QNX have typedefs in stdint.h (needed for int64_t) */
 #include <stdint.h>
-#endif
-
-/* Get a real definition for __FBSDID if we can */
-#if HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
-#endif
-
-/* If not, define it so as to avoid dangling semicolons. */
-#ifndef __FBSDID
-#define	__FBSDID(a)     struct _undefined_hack
 #endif
 
 #ifndef O_BINARY
@@ -163,12 +157,17 @@
 /* chdir() and error if it fails */
 #define assertChdir(path)  \
   assertion_chdir(__FILE__, __LINE__, path)
+/* change file/directory permissions and errors if it fails */
+#define assertChmod(pathname, mode)				\
+  assertion_chmod(__FILE__, __LINE__, pathname, mode)
 /* Assert two files have the same file flags */
 #define assertEqualFflags(patha, pathb)	\
   assertion_compare_fflags(__FILE__, __LINE__, patha, pathb, 0)
 /* Assert two integers are the same.  Reports value of each one if not. */
 #define assertEqualInt(v1,v2) \
   assertion_equal_int(__FILE__, __LINE__, (v1), #v1, (v2), #v2, NULL)
+#define assertEqualAddress(v1,v2) \
+  assertion_equal_address(__FILE__, __LINE__, (v1), #v1, (v2), #v2, NULL)
 /* Assert two strings are the same.  Reports value of each one if not. */
 #define assertEqualString(v1,v2)   \
   assertion_equal_string(__FILE__, __LINE__, (v1), #v1, (v2), #v2, NULL, 0)
@@ -276,11 +275,13 @@
 void failure(const char *fmt, ...) __LA_PRINTFLIKE(1, 2);
 int assertion_assert(const char *, int, int, const char *, void *);
 int assertion_chdir(const char *, int, const char *);
+int assertion_chmod(const char *, int, const char *, int);
 int assertion_compare_fflags(const char *, int, const char *, const char *,
     int);
 int assertion_empty_file(const char *, int, const char *);
 int assertion_equal_file(const char *, int, const char *, const char *);
 int assertion_equal_int(const char *, int, long long, const char *, long long, const char *, void *);
+int assertion_equal_address(const char *, int, const void *, const char *, const void *, const char *, void *);
 int assertion_equal_mem(const char *, int, const void *, const char *, const void *, const char *, size_t, const char *, void *);
 int assertion_memory_filled_with(const char *, int, const void *, const char *, size_t, const char *, char, const char *, void *);
 int assertion_equal_string(const char *, int, const char *v1, const char *, const char *v2, const char *, void *, int);
@@ -460,5 +461,7 @@ void assertVersion(const char *prog, const char *base);
 #ifdef USE_DMALLOC
 #include <dmalloc.h>
 #endif
+
+#include "test_utils.h"
 
 #endif	/* TEST_COMMON_H */

@@ -22,9 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD$
-.\"
-.Dd April 3, 2017
+.Dd January 19, 2020
 .Dt ARCHIVE_WRITE_DISK 3
 .Os
 .Sh NAME
@@ -113,7 +111,8 @@ or
 .Pq FreeBSD, Mac OS X
 for more information on file attributes.
 .It Cm ARCHIVE_EXTRACT_MAC_METADATA
-Mac OS X specific. Restore metadata using
+Mac OS X specific.
+Restore metadata using
 .Xr copyfile 3 .
 By default,
 .Xr copyfile 3
@@ -138,6 +137,11 @@ is not specified, then SUID and SGID bits will only be restored
 if the default user and group IDs of newly-created objects on disk
 happen to match those specified in the archive entry.
 By default, only basic permissions are restored, and umask is obeyed.
+.It Cm ARCHIVE_EXTRACT_SAFE_WRITES
+Extract files atomically, by first creating a unique temporary file and then
+renaming it to its required destination name.
+This avoids a race where an application might see a partial file (or no
+file) during extraction.
 .It Cm ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS
 Refuse to extract an absolute path.
 The default is to not refuse such paths.
@@ -157,14 +161,14 @@ caused by archives that (deliberately or otherwise) extract
 files outside of the current directory.
 The default is not to perform this check.
 If
-.It Cm ARCHIVE_EXTRACT_SPARSE
-Scan data for blocks of NUL bytes and try to recreate them with holes.
-This results in sparse files, independent of whether the archive format
-supports or uses them.
 .Cm ARCHIVE_EXTRACT_UNLINK
 is specified together with this option, the library will
 remove any intermediate symlinks it finds and return an
 error only if such symlink could not be removed.
+.It Cm ARCHIVE_EXTRACT_SPARSE
+Scan data for blocks of NUL bytes and try to recreate them with holes.
+This results in sparse files, independent of whether the archive format
+supports or uses them.
 .It Cm ARCHIVE_EXTRACT_TIME
 The timestamps (mtime, ctime, and atime) should be restored.
 By default, they are ignored.
@@ -264,9 +268,9 @@ and
 functions.
 .\"
 .Sh SEE ALSO
+.Xr tar 1 ,
 .Xr archive_read 3 ,
 .Xr archive_write 3 ,
-.Xr tar 1 ,
 .Xr libarchive 3
 .Sh HISTORY
 The
