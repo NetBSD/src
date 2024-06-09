@@ -1,4 +1,7 @@
-/* w_acosf.c -- float version of w_acos.c.
+/*	$NetBSD: w_acosf.c,v 1.8 2024/06/09 13:35:38 riastradh Exp $	*/
+
+/*
+ * w_acosf.c -- float version of w_acos.c.
  * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
  */
 
@@ -15,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_acosf.c,v 1.7 2024/06/09 13:33:36 riastradh Exp $");
+__RCSID("$NetBSD: w_acosf.c,v 1.8 2024/06/09 13:35:38 riastradh Exp $");
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.10 2024/06/09 13:33:36 riastradh Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.11 2024/06/09 13:35:38 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,8 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_asincos.c,v 1.10 2024/06/09 13:33:36 riastradh Exp $");
+__RCSID("$NetBSD: n_asincos.c,v 1.11 2024/06/09 13:35:38 riastradh Exp $");
 
 #ifndef lint
 #if 0

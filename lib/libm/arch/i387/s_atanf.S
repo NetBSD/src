@@ -1,3 +1,5 @@
+/*	$NetBSD: s_atanf.S,v 1.7 2024/06/09 13:35:38 riastradh Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -7,7 +9,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_atanf.S,v 1.6 2024/06/09 13:33:36 riastradh Exp $")
+RCSID("$NetBSD: s_atanf.S,v 1.7 2024/06/09 13:35:38 riastradh Exp $")
 
 WEAK_ALIAS(atanf, _atanf)
 
