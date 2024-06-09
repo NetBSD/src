@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.48 2024/04/24 06:44:18 nia Exp $
+$NetBSD: TODO.smpnet,v 1.49 2024/06/09 20:30:35 mrg Exp $
 
 MP-safe components
 ==================
@@ -58,6 +58,7 @@ kernel option.  Some components scale up and some don't.
    - vlan(4)
  - Packet filters
    - npf(7)
+   - ipf(4)
  - Others
    - bpf(4)
    - ipsec(4)
@@ -106,7 +107,6 @@ Unprotected ones
    - stf(4)
    - if_srt
  - Packet filters
-   - ipf(4)
    - pf(4)
  - Others
    - AppleTalk (sys/netatalk/)

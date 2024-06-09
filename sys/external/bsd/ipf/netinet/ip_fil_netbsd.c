@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.38 2023/06/24 05:16:15 msaitoh Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.39 2024/06/09 20:30:36 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.38 2023/06/24 05:16:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.39 2024/06/09 20:30:36 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -159,6 +159,9 @@ const struct cdevsw ipl_cdevsw = {
 	.d_discard = nodiscard,
 #ifdef D_OTHER
 	.d_flag = D_OTHER
+# if __NetBSD_Version__ >= 799003200
+                          | D_MPSAFE
+# endif
 #else
 	.d_flag = 0
 #endif
@@ -1346,9 +1349,13 @@ sendorfree:
 		m0 = m->m_act;
 		m->m_act = 0;
 		if (error == 0) {
+# if __NetBSD_Version__ >= 799003200
+			error = if_output_lock(ifp, ifp, m, dst, rt);
+# else
 			KERNEL_LOCK(1, NULL);
 			error = (*ifp->if_output)(ifp, m, dst, rt);
 			KERNEL_UNLOCK_ONE(NULL);
+# endif
 		} else {
 			FREE_MB_T(m);
 		}
