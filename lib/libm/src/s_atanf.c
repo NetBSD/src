@@ -1,4 +1,7 @@
-/* s_atanf.c -- float version of s_atan.c.
+/*	$NetBSD: s_atanf.c,v 1.9 2024/06/09 13:35:38 riastradh Exp $	*/
+
+/*
+ * s_atanf.c -- float version of s_atan.c.
  * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
  */
 
@@ -15,7 +18,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_atanf.c,v 1.8 2024/06/09 13:33:36 riastradh Exp $");
+__RCSID("$NetBSD: s_atanf.c,v 1.9 2024/06/09 13:35:38 riastradh Exp $");
 #endif
 
 #include "namespace.h"

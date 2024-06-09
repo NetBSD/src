@@ -1,3 +1,5 @@
+/*	$NetBSD: w_asin.c,v 1.12 2024/06/09 13:35:38 riastradh Exp $	*/
+
 /* @(#)w_asin.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -12,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_asin.c,v 1.11 2024/06/09 13:33:36 riastradh Exp $");
+__RCSID("$NetBSD: w_asin.c,v 1.12 2024/06/09 13:35:38 riastradh Exp $");
 #endif
 
 /*

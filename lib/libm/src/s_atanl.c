@@ -1,3 +1,5 @@
+/*	$NetBSD: s_atanl.c,v 1.7 2024/06/09 13:35:38 riastradh Exp $	*/
+
 /* FreeBSD: head/lib/msun/src/s_atan.c 176451 2008-02-22 02:30:36Z das */
 /*
  * ====================================================
@@ -9,7 +11,9 @@
  * is preserved.
  * ====================================================
  */
+
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: s_atanl.c,v 1.7 2024/06/09 13:35:38 riastradh Exp $");
 
 #include "namespace.h"
 
