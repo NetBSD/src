@@ -1,4 +1,4 @@
-/* $NetBSD: t_sin.c,v 1.7 2019/05/27 00:24:37 maya Exp $ */
+/* $NetBSD: t_sin.c,v 1.8 2024/06/09 16:53:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -117,9 +117,10 @@ ATF_TC_HEAD(sin_inf_neg, tc)
 
 ATF_TC_BODY(sin_inf_neg, tc)
 {
-	const double x = -1.0L / 0.0L;
+	const volatile double x = -1.0 / 0.0;
+	const double y = sin(x);
 
-	ATF_CHECK(isnan(sin(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(sin_inf_pos);
@@ -130,9 +131,10 @@ ATF_TC_HEAD(sin_inf_pos, tc)
 
 ATF_TC_BODY(sin_inf_pos, tc)
 {
-	const double x = 1.0L / 0.0L;
+	const volatile double x = 1.0 / 0.0;
+	const double y = sin(x);
 
-	ATF_CHECK(isnan(sin(x)) != 0);
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 
@@ -222,12 +224,10 @@ ATF_TC_HEAD(sinf_inf_neg, tc)
 
 ATF_TC_BODY(sinf_inf_neg, tc)
 {
-	const float x = -1.0L / 0.0L;
+	const volatile float x = -1.0f / 0.0f;
+	const float y = sinf(x);
 
-	if (isnan(sinf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("sinf(-Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 ATF_TC(sinf_inf_pos);
@@ -238,12 +238,10 @@ ATF_TC_HEAD(sinf_inf_pos, tc)
 
 ATF_TC_BODY(sinf_inf_pos, tc)
 {
-	const float x = 1.0L / 0.0L;
+	const volatile float x = -1.0f / 0.0f;
+	const float y = sinf(x);
 
-	if (isnan(sinf(x)) == 0) {
-		atf_tc_expect_fail("PR lib/45362");
-		atf_tc_fail("sinf(+Inf) != NaN");
-	}
+	ATF_CHECK_MSG(isnan(y), "y=%a", y);
 }
 
 
