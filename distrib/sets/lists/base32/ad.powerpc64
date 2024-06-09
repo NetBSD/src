@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc64,v 1.4 2024/05/06 08:38:51 mrg Exp $
+# $NetBSD: ad.powerpc64,v 1.5 2024/06/09 18:49:03 mrg Exp $
 ./lib/powerpc					base-compat-shlib	compat
 ./lib/powerpc/npf					base-compat-shlib	compat,npf
 ./lib/powerpc/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -88,8 +88,10 @@
 ./usr/lib/powerpc/libarchive.so.5			base-compat-shlib	compat
 ./usr/lib/powerpc/libarchive.so.5.0		base-compat-shlib	compat
 ./usr/lib/powerpc/libasan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libasan.so.5			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/powerpc/libasan.so.5			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/powerpc/libasan.so.5.0			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/powerpc/libasan.so.6			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/powerpc/libasan.so.6.0			base-compat-shlib	compat,gcc=12,cxx
 ./usr/lib/powerpc/libasn1.so			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libasn1.so.10			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libasn1.so.10.0			base-compat-shlib	compat,kerberos
@@ -199,7 +201,8 @@
 ./usr/lib/powerpc/libgnumalloc.so.1.0		base-compat-shlib	compat
 ./usr/lib/powerpc/libgomp.so			base-compat-shlib	compat,gcc
 ./usr/lib/powerpc/libgomp.so.2			base-compat-shlib	compat,gcc
-./usr/lib/powerpc/libgomp.so.2.1			base-compat-shlib	compat,gcc
+./usr/lib/powerpc/libgomp.so.2.1			base-compat-shlib	compat,gcc=10
+./usr/lib/powerpc/libgomp.so.2.2			base-compat-shlib	compat,gcc=12
 ./usr/lib/powerpc/libgssapi.so			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libgssapi.so.12			base-compat-shlib	compat,kerberos
 ./usr/lib/powerpc/libgssapi.so.12.0		base-compat-shlib	compat,kerberos
@@ -270,8 +273,10 @@
 ./usr/lib/powerpc/libldap_r.so.6			base-compat-shlib	compat,ldap
 ./usr/lib/powerpc/libldap_r.so.6.0		base-compat-shlib	compat,ldap
 ./usr/lib/powerpc/liblsan.so			base-compat-shlib	compat,cxx,gcc
-./usr/lib/powerpc/liblsan.so.2			base-compat-shlib	compat,cxx,gcc
-./usr/lib/powerpc/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc
+./usr/lib/powerpc/liblsan.so.2			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/powerpc/liblsan.so.2.0			base-compat-shlib	compat,cxx,gcc=10
+./usr/lib/powerpc/liblsan.so.3			base-compat-shlib	compat,cxx,gcc=12
+./usr/lib/powerpc/liblsan.so.3.0			base-compat-shlib	compat,cxx,gcc=12
 ./usr/lib/powerpc/liblua.so			base-compat-shlib	compat
 ./usr/lib/powerpc/liblua.so.6			base-compat-shlib	compat
 ./usr/lib/powerpc/liblua.so.6.1			base-compat-shlib	compat
@@ -418,7 +423,8 @@
 ./usr/lib/powerpc/libssl.so.15.0			base-compat-shlib	compat
 ./usr/lib/powerpc/libstdc++.so			base-compat-shlib	compat,gcc,cxx,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.9			base-compat-shlib	compat,gcc,cxx,libstdcxx
-./usr/lib/powerpc/libstdc++.so.9.0		base-compat-shlib	compat,gcc,cxx,libstdcxx
+./usr/lib/powerpc/libstdc++.so.9.0		base-compat-shlib	compat,gcc=10,cxx,libstdcxx
+./usr/lib/powerpc/libstdc++.so.9.1		base-compat-shlib	compat,gcc=12,cxx,libstdcxx
 ./usr/lib/powerpc/libtermcap.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libtermcap.so.0			base-compat-shlib	compat
 ./usr/lib/powerpc/libtermcap.so.0.6		base-compat-shlib	compat
@@ -432,8 +438,10 @@
 ./usr/lib/powerpc/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/powerpc/libtre.so.0.8			base-compat-shlib	compat
 ./usr/lib/powerpc/libubsan.so			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libubsan.so.4			base-compat-shlib	compat,gcc,cxx
-./usr/lib/powerpc/libubsan.so.4.0			base-compat-shlib	compat,gcc,cxx
+./usr/lib/powerpc/libubsan.so.4			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/powerpc/libubsan.so.4.0			base-compat-shlib	compat,gcc=10,cxx
+./usr/lib/powerpc/libubsan.so.5			base-compat-shlib	compat,gcc=12,cxx
+./usr/lib/powerpc/libubsan.so.5.0			base-compat-shlib	compat,gcc=12,cxx
 ./usr/lib/powerpc/libukfs.so			base-compat-shlib	compat
 ./usr/lib/powerpc/libukfs.so.1			base-compat-shlib	compat
 ./usr/lib/powerpc/libukfs.so.1.0			base-compat-shlib	compat
