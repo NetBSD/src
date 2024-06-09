@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2021/04/17 20:12:55 rillig Exp $	*/
+/*	$NetBSD: asm.h,v 1.23 2024/06/09 22:35:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,9 +112,16 @@
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+#define _IDENTSTR(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
+#ifdef _NETBSD_REVISIONID
+#define	RCSID(_s)							      \
+	_IDENTSTR(_s);							      \
+	_IDENTSTR("$" "NetBSD: " __FILE__ " " _NETBSD_REVISIONID " $")
+#else
+#define	RCSID(_s)			_IDENTSTR(_s)
+#endif
 
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
