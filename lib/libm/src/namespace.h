@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.21 2024/06/09 13:33:03 riastradh Exp $ */
+/* $NetBSD: namespace.h,v 1.22 2024/06/09 13:33:11 riastradh Exp $ */
 
 #define acoshl _acoshl
 #define acosl _acosl
@@ -24,7 +24,6 @@
 #define cosf _cosf
 #define cosh _cosh
 #define coshf _coshf
-#define coshl _coshl
 #define coshl _coshl
 #define cosl _cosl
 #define cospi _cospi
@@ -85,7 +84,6 @@
 #define sinf _sinf
 #define sinh _sinh
 #define sinhf _sinhf
-#define sinhl _sinhl
 #define sinhl _sinhl
 #define sinl _sinl
 #define sinpi _sinpi
