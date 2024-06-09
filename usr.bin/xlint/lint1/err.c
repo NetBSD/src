@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.245 2024/06/08 06:37:06 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.246 2024/06/09 10:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.245 2024/06/08 06:37:06 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.246 2024/06/09 10:27:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -435,6 +435,8 @@ static const char *const msgs[] = {
 	"redundant '\\0' at the end of the format",			// 377
 	"conversion '%.*s' is unreachable by input value",		// 378
 	"comparing integer '%s' to floating point constant %Lg",	// 379
+	"lossy conversion of %Lg to '%s', arg #%d",			// 380
+	"lossy conversion of %Lg to '%s'",				// 381
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];

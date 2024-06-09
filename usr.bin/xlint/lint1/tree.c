@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.645 2024/06/08 11:55:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.646 2024/06/09 10:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.645 2024/06/08 11:55:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.646 2024/06/09 10:27:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3289,7 +3289,26 @@ promote(op_t op, bool farg, tnode_t *tn)
 }
 
 static void
-convert_integer_from_floating(op_t op, const type_t *tp, const tnode_t *tn)
+check_lossy_floating_to_integer_conversion(
+    op_t op, int arg, const type_t *tp, const tnode_t *tn)
+{
+	long double x = tn->u.value.u.floating;
+	integer_constraints ic = ic_any(tp);
+	if (is_uinteger(tp->t_tspec)
+	    ? x >= ic.umin && x <= ic.umax && x == (uint64_t)x
+	    : x >= ic.smin && x <= ic.smax && x == (int64_t)x)
+		return;
+	if (op == FARG)
+		/* lossy conversion of %Lg to '%s', arg #%d */
+		warning(380, x, type_name(tp), arg);
+	else
+		/* lossy conversion of %Lg to '%s' */
+		warning(381, x, type_name(tp));
+}
+
+static void
+convert_integer_from_floating(
+    op_t op, int arg, const type_t *tp, const tnode_t *tn)
 {
 
 	if (op == CVT)
@@ -3298,6 +3317,8 @@ convert_integer_from_floating(op_t op, const type_t *tp, const tnode_t *tn)
 	else
 		/* implicit conversion from floating point '%s' to ... */
 		query_message(1, type_name(tn->tn_type), type_name(tp));
+	if (tn->tn_op == CON)
+		check_lossy_floating_to_integer_conversion(op, arg, tp, tn);
 }
 
 static bool
@@ -3649,7 +3670,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		} else if (is_integer(ot))
 			convert_integer_from_integer(op, arg, nt, ot, tp, tn);
 		else if (is_floating(ot))
-			convert_integer_from_floating(op, tp, tn);
+			convert_integer_from_floating(op, arg, tp, tn);
 		else if (ot == PTR)
 			convert_integer_from_pointer(op, nt, tp, tn);
 
@@ -3731,12 +3752,15 @@ convert_constant_from_floating(op_t op, int arg, const type_t *ntp,
 		lint_assert(nt != LDOUBLE);
 		const char *ot_name = type_name(gettyp(ov->v_tspec));
 		const char *nt_name = type_name(ntp);
+		if (is_integer(nt))
+			goto after_warning;
 		if (op == FARG)
 			/* conversion of '%s' to '%s' is out of range, ... */
 			warning(295, ot_name, nt_name, arg);
 		else
 			/* conversion of '%s' to '%s' is out of range */
 			warning(119, ot_name, nt_name);
+	after_warning:
 		ov->u.floating = ov->u.floating > 0 ? max : min;
 	}
 

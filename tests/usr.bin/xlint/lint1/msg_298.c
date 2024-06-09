@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_298.c,v 1.6 2024/06/08 13:50:47 rillig Exp $	*/
+/*	$NetBSD: msg_298.c,v 1.7 2024/06/09 10:27:39 rillig Exp $	*/
 # 3 "msg_298.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy, arg #%d [298]
@@ -22,9 +22,4 @@ convert_bit_and(long l)
 	take_schar(l & 0x7F);
 }
 
-void
-convert_floating_to_integer(void)
-{
-	// TODO: warn about lossy conversion.
-	take_uint(2.1);
-}
+// For lossy floating-to-integer conversions, see messages 380 and 381.
