@@ -6,27 +6,30 @@
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: e_asinl.c,v 1.4 2024/06/09 13:33:36 riastradh Exp $");
+
 /*
  * See comments in e_asin.c.
  * Converted to long double by David Schultz <das@FreeBSD.ORG>.
  */
 
 #include "namespace.h"
+
 #include <float.h>
 #include <machine/ieee.h>
 
 #include "math.h"
 #include "math_private.h"
 
-__weak_alias(asinl, _asinl)
-
 #ifdef __HAVE_LONG_DOUBLE
+
+__weak_alias(asinl, _asinl)
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/invtrig.h"
@@ -88,11 +91,5 @@ asinl(long double x)
 	    t  = pio4_hi-(p-q);
 	}    
 	if(expsign>0) return t; else return -t;    
-}
-#else
-long double
-asinl(long double x)
-{
-	return asin(x);
 }
 #endif

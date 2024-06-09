@@ -1,14 +1,18 @@
-/* $NetBSD: namespace.h,v 1.22 2024/06/09 13:33:11 riastradh Exp $ */
+/* $NetBSD: namespace.h,v 1.23 2024/06/09 13:33:36 riastradh Exp $ */
 
+#define acos _acos
+#define acosf _acosf
 #define acoshl _acoshl
 #define acosl _acosl
 #define asin _asin
 #define asinf _asinf
 #define asinhl _asinhl
 #define asinl _asinl
+#define atan _atan
 #define atan2 _atan2
 #define atan2f _atan2f
 #define atan2l _atan2l
+#define atanf _atanf
 #define atanhl _atanhl
 #define atanl _atanl
 #define casin _casin

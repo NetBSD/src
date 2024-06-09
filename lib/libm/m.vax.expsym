@@ -12,11 +12,15 @@ __log__L
 __muldc3
 __mulsc3
 __mulxc3
+_acos
+_acosf
 _asin
 _asinf
+_atan
 _atan2
 _atan2f
 _atan2l
+_atanf
 _cabs
 _casin
 _casinf

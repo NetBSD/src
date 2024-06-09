@@ -19,10 +19,6 @@
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __weak_alias
-__weak_alias(atanl, _atanl)
-#endif
-
 #ifdef __HAVE_LONG_DOUBLE
 
 /*
@@ -30,6 +26,7 @@ __weak_alias(atanl, _atanl)
  * Converted to long double by David Schultz <das@FreeBSD.ORG>.
  */
 
+__weak_alias(atanl, _atanl)
 
 #if LDBL_MANT_DIG == 64
 #include "../ld80/invtrig.h"
@@ -100,11 +97,5 @@ atanl(long double x)
 	    z = atanhi[id] - ((x*(s1+s2) - atanlo[id]) - x);
 	    return (expsign<0)? -z:z;
 	}
-}
-#else
-long double
-atanl(long double x)
-{
-	return atan(x);
 }
 #endif

@@ -12,16 +12,24 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_acos.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
+__RCSID("$NetBSD: w_acos.c,v 1.10 2024/06/09 13:33:36 riastradh Exp $");
 #endif
 
 /*
  * wrap_acos(x)
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
 
+#ifndef __HAVE_LONG_DOUBLE
+__weak_alias(acosl, _acosl)
+__strong_alias(_acosl, _acos)
+#endif
+
+__weak_alias(acos, _acos)
 
 double
 acos(double x)		/* wrapper acos */

@@ -15,11 +15,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_atanf.c,v 1.7 2002/05/26 22:01:54 wiz Exp $");
+__RCSID("$NetBSD: s_atanf.c,v 1.8 2024/06/09 13:33:36 riastradh Exp $");
 #endif
+
+#include "namespace.h"
 
 #include "math.h"
 #include "math_private.h"
+
+__weak_alias(atanf, _atanf)
 
 static const float atanhi[] = {
   4.6364760399e-01, /* atan(0.5)hi 0x3eed6338 */
