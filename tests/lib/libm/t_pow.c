@@ -1,4 +1,4 @@
-/* $NetBSD: t_pow.c,v 1.5 2017/01/20 21:15:56 maya Exp $ */
+/* $NetBSD: t_pow.c,v 1.6 2024/06/09 16:53:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pow.c,v 1.5 2017/01/20 21:15:56 maya Exp $");
+__RCSID("$NetBSD: t_pow.c,v 1.6 2024/06/09 16:53:25 riastradh Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -45,9 +45,10 @@ ATF_TC_HEAD(pow_nan_x, tc)
 
 ATF_TC_BODY(pow_nan_x, tc)
 {
-	const double x = 0.0L / 0.0L;
+	const volatile double x = 0.0 / 0.0;
+	const double z = pow(x, 2.0);
 
-	ATF_CHECK(isnan(pow(x, 2.0)) != 0);
+	ATF_CHECK_MSG(isnan(z), "z=%a", z);
 }
 
 ATF_TC(pow_nan_y);
@@ -58,9 +59,10 @@ ATF_TC_HEAD(pow_nan_y, tc)
 
 ATF_TC_BODY(pow_nan_y, tc)
 {
-	const double y = 0.0L / 0.0L;
+	const volatile double y = 0.0 / 0.0;
+	const double z = pow(2.0, y);
 
-	ATF_CHECK(isnan(pow(2.0, y)) != 0);
+	ATF_CHECK_MSG(isnan(z), "z=%a", z);
 }
 
 ATF_TC(pow_inf_neg_x);
@@ -71,7 +73,7 @@ ATF_TC_HEAD(pow_inf_neg_x, tc)
 
 ATF_TC_BODY(pow_inf_neg_x, tc)
 {
-	const double x = -1.0L / 0.0L;
+	const volatile double x = -1.0 / 0.0;
 	double z;
 
 	/*
@@ -79,28 +81,24 @@ ATF_TC_BODY(pow_inf_neg_x, tc)
 	 * If y is even, y > 0, and x is -Inf, +Inf is returned.
 	 */
 	z = pow(x, 3.0);
-
-	if (isinf(z) == 0 || signbit(z) == 0)
-		atf_tc_fail_nonfatal("pow(-Inf, 3.0) != -Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "pow(x, 3.0)", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "x=%a z=%s=%a", x, "pow(x, 3.0)", z);
 
 	z = pow(x, 4.0);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(-Inf, 4.0) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "pow(x, 4.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "pow(x, 4.0)", z);
 
 	/*
 	 * If y is odd, y < 0, and x is -Inf, -0.0 is returned.
 	 * If y is even, y < 0, and x is -Inf, +0.0 is returned.
 	 */
 	z = pow(x, -3.0);
-
-	if (fabs(z) > 0.0 || signbit(z) == 0)
-		atf_tc_fail_nonfatal("pow(-Inf, -3.0) != -0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "x=%a z=%s=%a", x, "pow(x, -3.0)", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "x=%a z=%s=%a", x, "pow(x, -3.0)", z);
 
 	z = pow(x, -4.0);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(-Inf -4.0) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "x=%a z=%s=%a", x, "pow(x, -4.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "pow(x, -4.0)", z);
 }
 
 ATF_TC(pow_inf_neg_y);
@@ -111,7 +109,7 @@ ATF_TC_HEAD(pow_inf_neg_y, tc)
 
 ATF_TC_BODY(pow_inf_neg_y, tc)
 {
-	const double y = -1.0L / 0.0L;
+	const volatile double y = -1.0 / 0.0;
 	double z;
 
 	/*
@@ -119,14 +117,12 @@ ATF_TC_BODY(pow_inf_neg_y, tc)
 	 * If |x| > 1 and y is -Inf, +0.0 is returned.
 	 */
 	z = pow(0.1, y);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(0.1, -Inf) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "y=%a z=%s=%a", y, "pow(0.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "pow(0.1, y)", z);
 
 	z = pow(1.1, y);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(1.1, -Inf) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "y=%a z=%s=%a", y, "pow(1.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "pow(1.1, y)", z);
 }
 
 ATF_TC(pow_inf_pos_x);
@@ -137,7 +133,7 @@ ATF_TC_HEAD(pow_inf_pos_x, tc)
 
 ATF_TC_BODY(pow_inf_pos_x, tc)
 {
-	const double x = 1.0L / 0.0L;
+	const volatile double x = 1.0 / 0.0;
 	double z;
 
 	/*
@@ -145,14 +141,12 @@ ATF_TC_BODY(pow_inf_pos_x, tc)
 	 * For y > 0, if x is +Inf, +Inf is returned.
 	 */
 	z = pow(x, -2.0);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(+Inf, -2.0) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "x=%a z=%s=%a", x, "pow(x, -2.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "pow(x, -2.0)", z);
 
 	z = pow(x, 2.0);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(+Inf, 2.0) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "pow(x, 2.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "pow(x, 2.0)", z);
 }
 
 ATF_TC(pow_inf_pos_y);
@@ -163,7 +157,7 @@ ATF_TC_HEAD(pow_inf_pos_y, tc)
 
 ATF_TC_BODY(pow_inf_pos_y, tc)
 {
-	const double y = 1.0L / 0.0L;
+	const volatile double y = 1.0 / 0.0;
 	double z;
 
 	/*
@@ -171,14 +165,12 @@ ATF_TC_BODY(pow_inf_pos_y, tc)
 	 * If |x| > 1 and y is +Inf, +Inf is returned.
 	 */
 	z = pow(0.1, y);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(0.1, +Inf) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0, "y=%a z=%s=%a", y, "pow(0.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "pow(0.1, y)", z);
 
 	z = pow(1.1, y);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(1.1, +Inf) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "y=%a z=%s=%a", y, "pow(1.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "pow(1.1, y)", z);
 }
 
 ATF_TC(pow_one_neg_x);
@@ -189,24 +181,18 @@ ATF_TC_HEAD(pow_one_neg_x, tc)
 
 ATF_TC_BODY(pow_one_neg_x, tc)
 {
-	const double infp = 1.0L / 0.0L;
-	const double infn = -1.0L / 0.0L;
+	const volatile double infp = 1.0 / 0.0;
+	const volatile double infn = -1.0 / 0.0;
+	double z;
 
 	/*
 	 * If x is -1.0, and y is +-Inf, 1.0 shall be returned.
 	 */
-	ATF_REQUIRE(isinf(infp) != 0);
-	ATF_REQUIRE(isinf(infn) != 0);
+	ATF_REQUIRE_MSG(isinf(infp), "infp=%a", infp);
+	ATF_REQUIRE_MSG(isinf(infn), "infn=%a", infn);
 
-	if (pow(-1.0, infp) != 1.0) {
-		atf_tc_expect_fail("PR lib/45372");
-		atf_tc_fail_nonfatal("pow(-1.0, +Inf) != 1.0");
-	}
-
-	if (pow(-1.0, infn) != 1.0) {
-		atf_tc_expect_fail("PR lib/45372");
-		atf_tc_fail_nonfatal("pow(-1.0, -Inf) != 1.0");
-	}
+	ATF_CHECK_EQ_MSG((z = pow(-1.0, infp)), 1.0, "z=%a", z);
+	ATF_CHECK_EQ_MSG((z = pow(-1.0, infn)), 1.0, "z=%a", z);
 }
 
 ATF_TC(pow_one_pos_x);
@@ -217,21 +203,22 @@ ATF_TC_HEAD(pow_one_pos_x, tc)
 
 ATF_TC_BODY(pow_one_pos_x, tc)
 {
-	const double y[] = { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
-	const double z = 0.0L / 0.0L;
+	const volatile double y[] =
+	    { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
+	const volatile double z = 0.0 / 0.0;
 	size_t i;
 
 	/*
 	 * For any value of y (including NaN),
 	 * if x is 1.0, 1.0 shall be returned.
 	 */
-	if (pow(1.0, z) != 1.0)
-		atf_tc_fail_nonfatal("pow(1.0, NaN) != 1.0");
+	ATF_CHECK_EQ_MSG(pow(1.0, z), 1.0, "z=%a pow(1.0, z)=%a",
+	    z, pow(1.0, z));
 
 	for (i = 0; i < __arraycount(y); i++) {
-
-		if (pow(1.0, y[i]) != 1.0)
-			atf_tc_fail_nonfatal("pow(1.0, %0.01f) != 1.0", y[i]);
+		ATF_CHECK_EQ_MSG(pow(1.0, y[i]), 1.0,
+		    "i=%zu y[i]=%a pow(1.0, y[i])=%a",
+		    i, y[i], pow(1.0, y[i]));
 	}
 }
 
@@ -250,55 +237,40 @@ ATF_TC_BODY(pow_zero_x, tc)
 	 * is an odd integer, x is returned.
 	 */
 	z = pow(+0.0, 3.0);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(+0.0, 3.0) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	z = pow(-0.0, 3.0);
-
-	if (fabs(z) > 0.0 || signbit(z) == 0)
-		atf_tc_fail_nonfatal("pow(-0.0, 3.0) != -0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "z=%a", z);
 
 	/*
 	 * If y > 0 and not an odd integer,
 	 * if x is +0.0 or -0.0, +0.0 is returned.
 	 */
 	z = pow(+0.0, 4.0);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(+0.0, 4.0) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	z = pow(-0.0, 4.0);
-
-	if (fabs(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("pow(-0.0, 4.0) != +0.0");
+	ATF_CHECK_MSG(fabs(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	/*
 	 * If y < 0 and x is +0.0 or -0.0, either +-HUGE_VAL,
 	 * +-HUGE_VALF, or +-HUGE_VALL shall be returned.
 	 */
 	z = pow(+0.0, -4.0);
-
-	if (z != HUGE_VAL) {
-		atf_tc_fail_nonfatal("pow(+0.0, -4.0) != HUGE_VAL");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VAL, "z=%a", z);
 
 	z = pow(-0.0, -4.0);
-
-	if (z != HUGE_VAL) {
-		atf_tc_fail_nonfatal("pow(-0.0, -4.0) != HUGE_VAL");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VAL, "z=%a", z);
 
 	z = pow(+0.0, -5.0);
-
-	if (z != HUGE_VAL) {
-		atf_tc_fail_nonfatal("pow(+0.0, -5.0) != HUGE_VAL");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VAL, "z=%a", z);
 
 	z = pow(-0.0, -5.0);
-
-	if (z != -HUGE_VAL)
-		atf_tc_fail_nonfatal("pow(-0.0, -5.0) != -HUGE_VAL");
+	ATF_CHECK_EQ_MSG(z, -HUGE_VAL, "z=%a", z);
 }
 
 ATF_TC(pow_zero_y);
@@ -309,27 +281,24 @@ ATF_TC_HEAD(pow_zero_y, tc)
 
 ATF_TC_BODY(pow_zero_y, tc)
 {
-	const double x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
-	const double z = 0.0L / 0.0L;
+	const volatile double x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
+	const volatile double z = 0.0 / 0.0;
 	size_t i;
 
 	/*
 	 * For any value of x (including NaN),
 	 * if y is +0.0 or -0.0, 1.0 is returned.
 	 */
-	if (pow(z, +0.0) != 1.0)
-		atf_tc_fail_nonfatal("pow(NaN, +0.0) != 1.0");
-
-	if (pow(z, -0.0) != 1.0)
-		atf_tc_fail_nonfatal("pow(NaN, -0.0) != 1.0");
+	ATF_CHECK_EQ_MSG(pow(z, +0.0), 1.0, "z=%a pow(z, +0.0)=%a",
+	    z, pow(z, +0.0));
+	ATF_CHECK_EQ_MSG(pow(z, -0.0), 1.0, "z=%a pow(z, -0.0)=%a",
+	    z, pow(z, -0.0));
 
 	for (i = 0; i < __arraycount(x); i++) {
-
-		if (pow(x[i], +0.0) != 1.0)
-			atf_tc_fail_nonfatal("pow(%0.01f, +0.0) != 1.0", x[i]);
-
-		if (pow(x[i], -0.0) != 1.0)
-			atf_tc_fail_nonfatal("pow(%0.01f, -0.0) != 1.0", x[i]);
+		ATF_CHECK_EQ_MSG(pow(x[i], +0.0), 1.0,
+		    "i=%zu pow(%a, +0.0)=%a", i, x[i], pow(x[i], +0.0));
+		ATF_CHECK_EQ_MSG(pow(x[i], -0.0), 1.0,
+		    "i=%zu pow(%a, -0.0)=%a", i, x[i], pow(x[i], -0.0));
 	}
 }
 
@@ -344,9 +313,10 @@ ATF_TC_HEAD(powf_nan_x, tc)
 
 ATF_TC_BODY(powf_nan_x, tc)
 {
-	const float x = 0.0L / 0.0L;
+	const volatile float x = 0.0f / 0.0f;
+	const float z = powf(x, 2.0f);
 
-	ATF_CHECK(isnanf(powf(x, 2.0)) != 0);
+	ATF_CHECK_MSG(isnanf(z), "z=%a", z);
 }
 
 ATF_TC(powf_nan_y);
@@ -357,9 +327,10 @@ ATF_TC_HEAD(powf_nan_y, tc)
 
 ATF_TC_BODY(powf_nan_y, tc)
 {
-	const float y = 0.0L / 0.0L;
+	const volatile float y = 0.0f / 0.0f;
+	const float z = powf(2.0f, y);
 
-	ATF_CHECK(isnanf(powf(2.0, y)) != 0);
+	ATF_CHECK_MSG(isnanf(z), "z=%a", z);
 }
 
 ATF_TC(powf_inf_neg_x);
@@ -370,7 +341,7 @@ ATF_TC_HEAD(powf_inf_neg_x, tc)
 
 ATF_TC_BODY(powf_inf_neg_x, tc)
 {
-	const float x = -1.0L / 0.0L;
+	const volatile float x = -1.0f / 0.0f;
 	float z;
 
 	/*
@@ -378,30 +349,24 @@ ATF_TC_BODY(powf_inf_neg_x, tc)
 	 * If y is even, y > 0, and x is -Inf, +Inf is returned.
 	 */
 	z = powf(x, 3.0);
-
-	if (isinf(z) == 0 || signbit(z) == 0)
-		atf_tc_fail_nonfatal("powf(-Inf, 3.0) != -Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "powf(x, 3.0)", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "x=%a z=%s=%a", x, "powf(x, 3.0)", z);
 
 	z = powf(x, 4.0);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(-Inf, 4.0) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "powf(x, 4.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "powf(x, 4.0)", z);
 
 	/*
 	 * If y is odd, y < 0, and x is -Inf, -0.0 is returned.
 	 * If y is even, y < 0, and x is -Inf, +0.0 is returned.
 	 */
 	z = powf(x, -3.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) == 0) {
-		atf_tc_expect_fail("PR lib/45372");
-		atf_tc_fail_nonfatal("powf(-Inf, -3.0) != -0.0");
-	}
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "x=%a z=%s=%a", x, "powf(x, -3.0)", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "x=%a z=%s=%a", x, "powf(x, -3.0)", z);
 
 	z = powf(x, -4.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(-Inf -4.0) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "x=%a z=%s=%a", x, "powf(x, -4.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "powf(x, -4.0)", z);
 }
 
 ATF_TC(powf_inf_neg_y);
@@ -412,7 +377,7 @@ ATF_TC_HEAD(powf_inf_neg_y, tc)
 
 ATF_TC_BODY(powf_inf_neg_y, tc)
 {
-	const float y = -1.0L / 0.0L;
+	const volatile float y = -1.0f / 0.0f;
 	float z;
 
 	/*
@@ -420,14 +385,12 @@ ATF_TC_BODY(powf_inf_neg_y, tc)
 	 * If |x| > 1 and y is -Inf, +0.0 is returned.
 	 */
 	z = powf(0.1, y);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(0.1, -Inf) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "y=%a z=%s=%a", y, "powf(0.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "powf(0.1, y)", z);
 
 	z = powf(1.1, y);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(1.1, -Inf) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "y=%a z=%s=%a", y, "powf(1.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "powf(1.1, y)", z);
 }
 
 ATF_TC(powf_inf_pos_x);
@@ -438,7 +401,7 @@ ATF_TC_HEAD(powf_inf_pos_x, tc)
 
 ATF_TC_BODY(powf_inf_pos_x, tc)
 {
-	const float x = 1.0L / 0.0L;
+	const volatile float x = 1.0f / 0.0f;
 	float z;
 
 	/*
@@ -446,14 +409,12 @@ ATF_TC_BODY(powf_inf_pos_x, tc)
 	 * For y > 0, if x is +Inf, +Inf is returned.
 	 */
 	z = powf(x, -2.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(+Inf, -2.0) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "x=%a z=%s=%a", x, "powf(x, -2.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "powf(x, -2.0)", z);
 
 	z = powf(x, 2.0);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(+Inf, 2.0) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "x=%a z=%s=%a", x, "powf(x, 2.0)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "x=%a z=%s=%a", x, "powf(x, 2.0)", z);
 }
 
 ATF_TC(powf_inf_pos_y);
@@ -472,14 +433,12 @@ ATF_TC_BODY(powf_inf_pos_y, tc)
 	 * If |x| > 1 and y is +Inf, +Inf is returned.
 	 */
 	z = powf(0.1, y);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(0.1, +Inf) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "y=%a z=%s=%a", y, "powf(0.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "powf(0.1, y)", z);
 
 	z = powf(1.1, y);
-
-	if (isinf(z) == 0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(1.1, +Inf) != +Inf");
+	ATF_CHECK_MSG(isinf(z), "y=%a z=%s=%a", y, "powf(1.1, y)", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "y=%a z=%s=%a", y, "powf(1.1, y)", z);
 }
 
 ATF_TC(powf_one_neg_x);
@@ -490,24 +449,18 @@ ATF_TC_HEAD(powf_one_neg_x, tc)
 
 ATF_TC_BODY(powf_one_neg_x, tc)
 {
-	const float infp = 1.0L / 0.0L;
-	const float infn = -1.0L / 0.0L;
+	const volatile float infp = 1.0f / 0.0f;
+	const volatile float infn = -1.0f / 0.0f;
+	double z;
 
 	/*
 	 * If x is -1.0, and y is +-Inf, 1.0 shall be returned.
 	 */
-	ATF_REQUIRE(isinf(infp) != 0);
-	ATF_REQUIRE(isinf(infn) != 0);
+	ATF_REQUIRE_MSG(isinf(infp), "infp=%a", infp);
+	ATF_REQUIRE_MSG(isinf(infn), "infn=%a", infn);
 
-	if (powf(-1.0, infp) != 1.0) {
-		atf_tc_expect_fail("PR lib/45372");
-		atf_tc_fail_nonfatal("powf(-1.0, +Inf) != 1.0");
-	}
-
-	if (powf(-1.0, infn) != 1.0) {
-		atf_tc_expect_fail("PR lib/45372");
-		atf_tc_fail_nonfatal("powf(-1.0, -Inf) != 1.0");
-	}
+	ATF_CHECK_EQ_MSG((z = powf(-1.0, infp)), 1.0, "z=%a", z);
+	ATF_CHECK_EQ_MSG((z = powf(-1.0, infn)), 1.0, "z=%a", z);
 }
 
 ATF_TC(powf_one_pos_x);
@@ -518,21 +471,22 @@ ATF_TC_HEAD(powf_one_pos_x, tc)
 
 ATF_TC_BODY(powf_one_pos_x, tc)
 {
-	const float y[] = { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
-	const float z = 0.0L / 0.0L;
+	const volatile float y[] =
+	    { 0.0, 0.1, 2.0, -3.0, 99.0, 99.99, 9999999.9 };
+	const volatile float z = 0.0f / 0.0f;
 	size_t i;
 
 	/*
 	 * For any value of y (including NaN),
 	 * if x is 1.0, 1.0 shall be returned.
 	 */
-	if (powf(1.0, z) != 1.0)
-		atf_tc_fail_nonfatal("powf(1.0, NaN) != 1.0");
+	ATF_CHECK_EQ_MSG(powf(1.0, z), 1.0, "z=%a powf(1.0, z)=%a",
+	    z, powf(1.0, z));
 
 	for (i = 0; i < __arraycount(y); i++) {
-
-		if (powf(1.0, y[i]) != 1.0)
-			atf_tc_fail_nonfatal("powf(1.0, %0.01f) != 1.0", y[i]);
+		ATF_CHECK_EQ_MSG(powf(1.0, y[i]), 1.0,
+		    "i=%zu y[i]=%a powf(1.0, y[i])=%a",
+		    i, y[i], powf(1.0, y[i]));
 	}
 }
 
@@ -551,58 +505,40 @@ ATF_TC_BODY(powf_zero_x, tc)
 	 * is an odd integer, x is returned.
 	 */
 	z = powf(+0.0, 3.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(+0.0, 3.0) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	z = powf(-0.0, 3.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) == 0)
-		atf_tc_fail_nonfatal("powf(-0.0, 3.0) != -0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) != 0, "z=%a", z);
 
 	/*
 	 * If y > 0 and not an odd integer,
 	 * if x is +0.0 or -0.0, +0.0 is returned.
 	 */
 	z = powf(+0.0, 4.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(+0.0, 4.0) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	z = powf(-0.0, 4.0);
-
-	if (fabsf(z) > 0.0 || signbit(z) != 0)
-		atf_tc_fail_nonfatal("powf(-0.0, 4.0) != +0.0");
+	ATF_CHECK_MSG(fabsf(z) == 0.0, "z=%a", z);
+	ATF_CHECK_MSG(signbit(z) == 0, "z=%a", z);
 
 	/*
 	 * If y < 0 and x is +0.0 or -0.0, either +-HUGE_VAL,
 	 * +-HUGE_VALF, or +-HUGE_VALL shall be returned.
 	 */
 	z = powf(+0.0, -4.0);
-
-	if (z != HUGE_VALF) {
-		atf_tc_expect_fail("PR port-amd64/45391");
-		atf_tc_fail_nonfatal("powf(+0.0, -4.0) != HUGE_VALF");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VALF, "z=%a", z);
 
 	z = powf(-0.0, -4.0);
-
-	if (z != HUGE_VALF) {
-		atf_tc_expect_fail("PR port-amd64/45391");
-		atf_tc_fail_nonfatal("powf(-0.0, -4.0) != HUGE_VALF");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VALF, "z=%a", z);
 
 	z = powf(+0.0, -5.0);
-
-	if (z != HUGE_VALF) {
-		atf_tc_expect_fail("PR port-amd64/45391");
-		atf_tc_fail_nonfatal("powf(+0.0, -5.0) != HUGE_VALF");
-	}
+	ATF_CHECK_EQ_MSG(z, HUGE_VALF, "z=%a", z);
 
 	z = powf(-0.0, -5.0);
-
-	if (z != -HUGE_VALF)
-		atf_tc_fail_nonfatal("powf(-0.0, -5.0) != -HUGE_VALF");
+	ATF_CHECK_EQ_MSG(z, -HUGE_VALF, "z=%a", z);
 }
 
 ATF_TC(powf_zero_y);
@@ -613,27 +549,24 @@ ATF_TC_HEAD(powf_zero_y, tc)
 
 ATF_TC_BODY(powf_zero_y, tc)
 {
-	const float x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
-	const float z = 0.0L / 0.0L;
+	const volatile float x[] =  { 0.1, -3.0, 77.0, 99.99, 101.0000001 };
+	const volatile float z = 0.0f / 0.0f;
 	size_t i;
 
 	/*
 	 * For any value of x (including NaN),
 	 * if y is +0.0 or -0.0, 1.0 is returned.
 	 */
-	if (powf(z, +0.0) != 1.0)
-		atf_tc_fail_nonfatal("powf(NaN, +0.0) != 1.0");
-
-	if (powf(z, -0.0) != 1.0)
-		atf_tc_fail_nonfatal("powf(NaN, -0.0) != 1.0");
+	ATF_CHECK_EQ_MSG(powf(z, +0.0), 1.0, "z=%a powf(z, +0.0)=%a",
+	    z, powf(z, +0.0));
+	ATF_CHECK_EQ_MSG(powf(z, -0.0), 1.0, "z=%a powf(z, -0.0)=%a",
+	    z, powf(z, -0.0));
 
 	for (i = 0; i < __arraycount(x); i++) {
-
-		if (powf(x[i], +0.0) != 1.0)
-			atf_tc_fail_nonfatal("powf(%0.01f, +0.0) != 1.0",x[i]);
-
-		if (powf(x[i], -0.0) != 1.0)
-			atf_tc_fail_nonfatal("powf(%0.01f, -0.0) != 1.0",x[i]);
+		ATF_CHECK_EQ_MSG(powf(x[i], +0.0), 1.0,
+		    "i=%zu powf(%a, +0.0)=%a", i, x[i], powf(x[i], +0.0));
+		ATF_CHECK_EQ_MSG(powf(x[i], -0.0), 1.0,
+		    "i=%zu powf(%a, -0.0)=%a", i, x[i], powf(x[i], -0.0));
 	}
 }
 
