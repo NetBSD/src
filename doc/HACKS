@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.244 2024/05/12 23:55:57 msaitoh Exp $
+# $NetBSD: HACKS,v 1.245 2024/06/09 18:55:40 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1134,4 +1134,19 @@ descr
 	/tmp//ccJayu9g.s:2793: Warning: Use of 'mov.m' violates RAW dependency 'AR[FPSR].sf0.flags' (impliedf)
 	/tmp//ccJayu9g.s:2793: Warning: Only the first path encountering the conflict is reported
 	/tmp//ccJayu9g.s:2757: Warning: This is the location of the conflicting usage
+kcah
+
+hack	m68k: work around stack protector m68k compiler bug
+cdate	Thu Jun  6 15:53:21 PDT 2024
+port	m68k
+who	mrg
+file	lib/libc/stdlib/strsuftoll.c : 1.10
+file	lib/libc/citrus/citrus_module.c : 1.14
+file	crypto/external/bsd/openssl/lib/libcrypto/blake2.inc : 1.3
+descr
+	With GCC 12, strsuftoll() triggers an stack protector issue
+	that does not appear to be valid.  _citrus_find_getops() does
+	the same.  They both have minimal stack usage themselves and
+	I suspect a GCC bug.
+	The blake2 version is less well studied.
 kcah
