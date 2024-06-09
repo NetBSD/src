@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/test/test_copy.c,v 1.3 2008/08/15 06:12:02 kientzle Exp $");
 
 #if defined(__CYGWIN__)
 # include <limits.h>
@@ -160,21 +159,21 @@ create_tree(void)
 		failure("Internal sanity check failed: i = %d", i);
 		assert(filenames[i] != NULL);
 
-		sprintf(buff, "f/%s", filenames[i]);
+		snprintf(buff, sizeof(buff), "f/%s", filenames[i]);
 		assertMakeFile(buff, 0777, buff);
 
 		/* Create a link named "l/abcdef..." to the above. */
-		sprintf(buff2, "l/%s", filenames[i]);
+		snprintf(buff2, sizeof(buff2), "l/%s", filenames[i]);
 		assertMakeHardlink(buff2, buff);
 
 		/* Create a link named "m/abcdef..." to the above. */
-		sprintf(buff2, "m/%s", filenames[i]);
+		snprintf(buff2, sizeof(buff2), "m/%s", filenames[i]);
 		assertMakeHardlink(buff2, buff);
 
 		if (canSymlink()) {
 			/* Create a symlink named "s/abcdef..." to the above. */
-			sprintf(buff, "s/%s", filenames[i]);
-			sprintf(buff2, "../f/%s", filenames[i]);
+			snprintf(buff, sizeof(buff), "s/%s", filenames[i]);
+			snprintf(buff2, sizeof(buff2), "../f/%s", filenames[i]);
 			failure("buff=\"%s\" buff2=\"%s\"", buff, buff2);
 			assertMakeSymlink(buff, buff2, 0);
 		}
@@ -202,13 +201,13 @@ verify_tree(size_t limit)
 	/* Generate the names we know should be there and verify them. */
 	for (i = 1; i < LOOP_MAX; i++) {
 		/* Verify a file named "f/abcdef..." */
-		sprintf(name1, "f/%s", filenames[i]);
+		snprintf(name1, sizeof(name1), "f/%s", filenames[i]);
 		if (i <= limit) {
 			assertFileExists(name1);
 			assertFileContents(name1, (int)strlen(name1), name1);
 		}
 
-		sprintf(name2, "l/%s", filenames[i]);
+		snprintf(name2, sizeof(name2), "l/%s", filenames[i]);
 		if (i + 2 <= limit) {
 			/* Verify hardlink "l/abcdef..." */
 			assertIsHardlink(name1, name2);
@@ -219,14 +218,14 @@ verify_tree(size_t limit)
 
 		if (canSymlink()) {
 			/* Verify symlink "s/abcdef..." */
-			sprintf(name1, "s/%s", filenames[i]);
-			sprintf(name2, "../f/%s", filenames[i]);
+			snprintf(name1, sizeof(name1), "s/%s", filenames[i]);
+			snprintf(name2, sizeof(name2), "../f/%s", filenames[i]);
 			if (strlen(name2) <= limit)
 				assertIsSymlink(name1, name2, 0);
 		}
 
 		/* Verify dir "d/abcdef...". */
-		sprintf(name1, "d/%s", filenames[i]);
+		snprintf(name1, sizeof(name1), "d/%s", filenames[i]);
 		if (i + 1 <= limit) { /* +1 for trailing slash */
 			if (assertIsDir(name1, -1)) {
 				/* TODO: opendir/readdir this

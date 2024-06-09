@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_extract.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #define BUFF_SIZE 1000000
 #define FILE_BUFF_SIZE 100000
@@ -59,8 +58,7 @@ DEFINE_TEST(test_read_extract)
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "file");
 	archive_entry_set_mode(ae, S_IFREG | 0755);
-	for (i = 0; i < FILE_BUFF_SIZE; i++)
-		file_buff[i] = (unsigned char)rand();
+	fill_with_pseudorandom_data(file_buff, FILE_BUFF_SIZE);
 	archive_entry_set_size(ae, FILE_BUFF_SIZE);
 	assertA(0 == archive_write_header(a, ae));
 	assertA(FILE_BUFF_SIZE == archive_write_data(a, file_buff, FILE_BUFF_SIZE));

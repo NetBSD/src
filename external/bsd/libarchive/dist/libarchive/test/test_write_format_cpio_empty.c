@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_cpio_empty.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 /*
  * Check that an "empty" cpio archive is correctly created.
@@ -52,7 +51,7 @@ DEFINE_TEST(test_write_format_cpio_empty)
 
 	/* Create a new archive in memory. */
 	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_cpio(a));
+	assertA(0 == archive_write_set_format_cpio_odc(a));
 	assertA(0 == archive_write_add_filter_none(a));
 	/* 1-byte block size ensures we see only the required bytes. */
 	/* We're not testing the padding here. */
