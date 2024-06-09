@@ -24,7 +24,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -61,6 +60,9 @@ archive_read_set_format(struct archive *_a, int code)
     case ARCHIVE_FORMAT_CPIO:
       strcpy(str, "cpio");
       break;
+    case ARCHIVE_FORMAT_EMPTY:
+      strcpy(str, "empty");
+      break;
     case ARCHIVE_FORMAT_ISO9660:
       strcpy(str, "iso9660");
       break;
@@ -76,8 +78,14 @@ archive_read_set_format(struct archive *_a, int code)
     case ARCHIVE_FORMAT_RAR_V5:
       strcpy(str, "rar5");
       break;
+    case ARCHIVE_FORMAT_RAW:
+      strcpy(str, "raw");
+      break;
     case ARCHIVE_FORMAT_TAR:
       strcpy(str, "tar");
+      break;
+    case ARCHIVE_FORMAT_WARC:
+      strcpy(str, "warc");
       break;
     case ARCHIVE_FORMAT_XAR:
       strcpy(str, "xar");

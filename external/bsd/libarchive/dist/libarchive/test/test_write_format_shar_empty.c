@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_shar_empty.c,v 1.3 2008/09/01 05:38:33 kientzle Exp $");
 
 /*
  * Check that an "empty" shar archive is correctly created as an empty file.
@@ -49,6 +48,6 @@ DEFINE_TEST(test_write_format_shar_empty)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
-	failure("Empty shar archive should be exactly 0 bytes, was %d.", used);
+	failure("Empty shar archive should be exactly 0 bytes, was %zu.", used);
 	assert(used == 0);
 }

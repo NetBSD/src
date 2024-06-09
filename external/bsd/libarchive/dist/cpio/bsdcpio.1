@@ -22,8 +22,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD$
-.\"
 .Dd September 16, 2014
 .Dt CPIO 1
 .Os
@@ -75,7 +73,6 @@ Pass-through.
 Read a list of filenames from standard input and copy the files to the
 specified directory.
 .El
-.Pp
 .Sh OPTIONS
 Unless specifically stated otherwise, options are applicable in
 all operating modes.
@@ -83,6 +80,13 @@ all operating modes.
 .It Fl 0 , Fl Fl null
 Read filenames separated by NUL characters instead of newlines.
 This is necessary if any of the filenames being read might contain newlines.
+.It Fl 6 , Fl Fl pwb
+When reading a binary format archive, assume it's the earlier one,
+from the PWB variant of 6th Edition UNIX.
+When writing a cpio archive, use the PWB format.
+.It Fl 7 , Fl Fl binary
+(o mode only)
+When writing a cpio archive, use the (newer, non-PWB) binary format.
 .It Fl A
 (o mode only)
 Append to the specified archive.
@@ -385,10 +389,10 @@ For best compatibility, scripts should limit themselves to the
 standard syntax.
 .Sh SEE ALSO
 .Xr bzip2 1 ,
-.Xr tar 1 ,
 .Xr gzip 1 ,
 .Xr mt 1 ,
 .Xr pax 1 ,
+.Xr tar 1 ,
 .Xr libarchive 3 ,
 .Xr cpio 5 ,
 .Xr libarchive-formats 5 ,

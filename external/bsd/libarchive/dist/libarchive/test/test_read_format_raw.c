@@ -26,7 +26,6 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_raw.c 191594 2009-04-27 20:09:05Z kientzle $");
 
 DEFINE_TEST(test_read_format_raw)
 {
@@ -36,7 +35,9 @@ DEFINE_TEST(test_read_format_raw)
 	const char *reffile1 = "test_read_format_raw.data";
 	const char *reffile2 = "test_read_format_raw.data.Z";
 	const char *reffile3 = "test_read_format_raw.bufr";
+#ifdef HAVE_ZLIB_H
 	const char *reffile4 = "test_read_format_raw.data.gz";
+#endif
 
 	/* First, try pulling data out of an uninterpretable file. */
 	extract_reference_file(reffile1);
@@ -70,7 +71,7 @@ DEFINE_TEST(test_read_format_raw)
 	extract_reference_file(reffile2);
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_by_code(a, ARCHIVE_FORMAT_RAW));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_open_filename(a, reffile2, 1));
@@ -98,8 +99,7 @@ DEFINE_TEST(test_read_format_raw)
 	extract_reference_file(reffile3);
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_set_format(a, ARCHIVE_FORMAT_RAW));
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_open_filename(a, reffile3, 1));
 
@@ -119,6 +119,7 @@ DEFINE_TEST(test_read_format_raw)
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
+#ifdef HAVE_ZLIB_H
 	/* Fourth, try with gzip which has metadata. */
 	extract_reference_file(reffile4);
 	assert((a = archive_read_new()) != NULL);
@@ -144,4 +145,5 @@ DEFINE_TEST(test_read_format_raw)
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+#endif
 }

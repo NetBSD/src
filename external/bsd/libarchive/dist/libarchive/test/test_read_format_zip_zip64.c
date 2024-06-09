@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 /*
  * Sample file was created with:
@@ -88,7 +87,7 @@ DEFINE_TEST(test_read_format_zip_zip64a)
 	size_t s;
 
 	extract_reference_file(refname);
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 
 	/* First read with seeking. */
 	assert((a = archive_read_new()) != NULL);
@@ -112,7 +111,7 @@ DEFINE_TEST(test_read_format_zip_zip64b)
 	size_t s;
 
 	extract_reference_file(refname);
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 
 	/* First read with seeking. */
 	assert((a = archive_read_new()) != NULL);

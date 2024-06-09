@@ -26,7 +26,6 @@
 
 
 #include "cpio_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/cpio/cpio.c,v 1.15 2008/12/06 07:30:40 kientzle Exp $");
 
 #include <sys/types.h>
 #include <archive.h>
@@ -108,22 +107,22 @@ static int	entry_to_archive(struct cpio *, struct archive_entry *);
 static int	file_to_archive(struct cpio *, const char *);
 static void	free_cache(struct name_cache *cache);
 static void	list_item_verbose(struct cpio *, struct archive_entry *);
-static void	long_help(void) __LA_DEAD;
+static __LA_NORETURN void	long_help(void);
 static const char *lookup_gname(struct cpio *, gid_t gid);
 static int	lookup_gname_helper(struct cpio *,
 		    const char **name, id_t gid);
 static const char *lookup_uname(struct cpio *, uid_t uid);
 static int	lookup_uname_helper(struct cpio *,
 		    const char **name, id_t uid);
-static void	mode_in(struct cpio *) __LA_DEAD;
-static void	mode_list(struct cpio *) __LA_DEAD;
+static __LA_NORETURN void	mode_in(struct cpio *);
+static __LA_NORETURN void	mode_list(struct cpio *);
 static void	mode_out(struct cpio *);
 static void	mode_pass(struct cpio *, const char *);
 static const char *remove_leading_slash(const char *);
 static int	restore_time(struct cpio *, struct archive_entry *,
 		    const char *, int fd);
-static void	usage(void) __LA_DEAD;
-static void	version(void) __LA_DEAD;
+static __LA_NORETURN void	usage(void);
+static __LA_NORETURN void	version(void);
 static const char * passphrase_callback(struct archive *, void *);
 static void	passphrase_free(char *);
 
@@ -192,6 +191,12 @@ main(int argc, char *argv[])
 		case '0': /* GNU convention: --null, -0 */
 			cpio->option_null = 1;
 			break;
+		case '6': /* in/out: assume/create 6th edition (PWB) format */
+			cpio->option_pwb = 1;
+			break;
+		case '7': /* out: create archive using 7th Edition binary format */
+			cpio->format = "bin";
+			break;
 		case 'A': /* NetBSD/OpenBSD */
 			cpio->option_append = 1;
 			break;
@@ -245,7 +250,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 			long_help();
-			break;
+			/* NOTREACHED */
 		case 'I': /* NetBSD/OpenBSD */
 			cpio->filename = cpio->argument;
 			break;
@@ -352,7 +357,7 @@ main(int argc, char *argv[])
 			break;
 		case OPTION_VERSION: /* GNU convention */
 			version();
-			break;
+			/* NOTREACHED */
 #if 0
 	        /*
 		 * cpio_getopt() handles -W specially, so it's not
@@ -400,11 +405,12 @@ main(int argc, char *argv[])
 
 	switch (cpio->mode) {
 	case 'o':
-		/* TODO: Implement old binary format in libarchive,
-		   use that here. */
-		if (cpio->format == NULL)
-			cpio->format = "odc"; /* Default format */
-
+		if (cpio->format == NULL) {
+			if (cpio->option_pwb)
+				cpio->format = "pwb";
+			else
+				cpio->format = "cpio";
+		}
 		mode_out(cpio);
 		break;
 	case 'i':
@@ -420,7 +426,7 @@ main(int argc, char *argv[])
 			mode_list(cpio);
 		else
 			mode_in(cpio);
-		break;
+		/* NOTREACHED */
 	case 'p':
 		if (*cpio->argv == NULL || **cpio->argv == '\0')
 			lafe_errc(1, 0,
@@ -435,6 +441,8 @@ main(int argc, char *argv[])
 	archive_match_free(cpio->matching);
 	free_cache(cpio->gname_cache);
 	free_cache(cpio->uname_cache);
+	archive_read_close(cpio->archive_read_disk);
+	archive_read_free(cpio->archive_read_disk);
 	free(cpio->destdir);
 	passphrase_free(cpio->ppbuff);
 	return (cpio->return_value);
@@ -462,7 +470,7 @@ static const char *long_help_msg =
 	"  -v Verbose filenames     -V  one dot per file\n"
 	"Create: %p -o [options]  < [list of files] > [archive]\n"
 	"  -J,-y,-z,--lzma  Compress archive with xz/bzip2/gzip/lzma\n"
-	"  --format {odc|newc|ustar}  Select archive format\n"
+	"  --format {pwb|bin|odc|newc|ustar}  Select archive format\n"
 	"List: %p -it < [archive]\n"
 	"Extract: %p -i [options] < [archive]\n";
 
@@ -737,7 +745,7 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 	 */
 	destpath = srcpath;
 	if (cpio->destdir) {
-		len = strlen(cpio->destdir) + strlen(srcpath) + 8;
+		len = cpio->destdir_len + strlen(srcpath) + 8;
 		if (len >= cpio->pass_destpath_alloc) {
 			while (len >= cpio->pass_destpath_alloc) {
 				cpio->pass_destpath_alloc += 512;
@@ -970,6 +978,8 @@ mode_in(struct cpio *cpio)
 		lafe_errc(1, 0, "Couldn't allocate archive object");
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
+	if (cpio->option_pwb)
+		archive_read_set_options(a, "pwb");
 	if (cpio->passphrase != NULL)
 		r = archive_read_add_passphrase(a, cpio->passphrase);
 	else
@@ -1080,6 +1090,8 @@ mode_list(struct cpio *cpio)
 		lafe_errc(1, 0, "Couldn't allocate archive object");
 	archive_read_support_filter_all(a);
 	archive_read_support_format_all(a);
+	if (cpio->option_pwb)
+		archive_read_set_options(a, "pwb");
 	if (cpio->passphrase != NULL)
 		r = archive_read_add_passphrase(a, cpio->passphrase);
 	else
@@ -1133,12 +1145,16 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 {
 	char			 size[32];
 	char			 date[32];
-	char			 uids[16], gids[16];
+	char			 uids[22], gids[22];
 	const char 		*uname, *gname;
 	FILE			*out = stdout;
 	const char		*fmt;
 	time_t			 mtime;
 	static time_t		 now;
+	struct tm		*ltime;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm		tmbuf;
+#endif
 
 	if (!now)
 		time(&now);
@@ -1186,7 +1202,17 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 	else
 		fmt = cpio->day_first ? "%e %b %H:%M" : "%b %e %H:%M";
 #endif
-	strftime(date, sizeof(date), fmt, localtime(&mtime));
+#if defined(HAVE_LOCALTIME_S)
+	ltime = localtime_s(&tmbuf, &mtime) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	ltime = localtime_r(&mtime, &tmbuf);
+#else
+	ltime = localtime(&mtime);
+#endif
+	if (ltime != NULL)
+		strftime(date, sizeof(date), fmt, ltime);
+	else
+		strcpy(date, "invalid mtime");
 
 	fprintf(out, "%s%3d %-8s %-8s %8s %12s %s",
 	    archive_entry_strmode(entry),
@@ -1208,15 +1234,14 @@ mode_pass(struct cpio *cpio, const char *destdir)
 	struct lafe_line_reader *lr;
 	const char *p;
 	int r;
-	size_t destdir_len;
 
 	/* Ensure target dir has a trailing '/' to simplify path surgery. */
-	destdir_len = strlen(destdir);
-	cpio->destdir = malloc(destdir_len + 8);
-	memcpy(cpio->destdir, destdir, destdir_len);
-	if (destdir_len == 0 || destdir[destdir_len - 1] != '/')
-		cpio->destdir[destdir_len++] = '/';
-	cpio->destdir[destdir_len++] = '\0';
+	cpio->destdir_len = strlen(destdir);
+	cpio->destdir = malloc(cpio->destdir_len + 8);
+	memcpy(cpio->destdir, destdir, cpio->destdir_len);
+	if (cpio->destdir_len == 0 || destdir[cpio->destdir_len - 1] != '/')
+		cpio->destdir[cpio->destdir_len++] = '/';
+	cpio->destdir[cpio->destdir_len] = '\0';
 
 	cpio->archive = archive_write_disk_new();
 	if (cpio->archive == NULL)

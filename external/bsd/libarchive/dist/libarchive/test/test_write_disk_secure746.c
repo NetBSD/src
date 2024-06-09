@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 #define UMASK 022
 
@@ -39,9 +38,6 @@ __FBSDID("$FreeBSD$");
  */
 DEFINE_TEST(test_write_disk_secure746a)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	skipping("archive_write_disk security checks not supported on Windows");
-#else
 	struct archive *a;
 	struct archive_entry *ae;
 
@@ -75,7 +71,6 @@ DEFINE_TEST(test_write_disk_secure746a)
 
 	assertEqualIntA(a, ARCHIVE_FATAL, archive_write_close(a));
 	archive_write_free(a);
-#endif
 }
 
 /*

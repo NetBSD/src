@@ -26,7 +26,6 @@
 
 
 #include "cpio_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/cpio/cmdline.c,v 1.5 2008/12/06 07:30:40 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -51,7 +50,7 @@ __FBSDID("$FreeBSD: src/usr.bin/cpio/cmdline.c,v 1.5 2008/12/06 07:30:40 kientzl
 /*
  * Short options for cpio.  Please keep this sorted.
  */
-static const char *short_options = "0AaBC:cdE:F:f:H:hI:iJjLlmnO:opR:rtuVvW:yZz";
+static const char *short_options = "067AaBC:cdE:F:f:H:hI:iJjLlmnO:opR:rtuVvW:yZz";
 
 /*
  * Long options for cpio.  Please keep this sorted.
@@ -62,6 +61,7 @@ static const struct option {
 	int equivalent;	/* Equivalent short option. */
 } cpio_longopts[] = {
 	{ "b64encode",			0, OPTION_B64ENCODE },
+	{ "binary",			0, '7' },
 	{ "create",			0, 'o' },
 	{ "dereference",		0, 'L' },
 	{ "dot",			0, 'V' },
@@ -86,6 +86,7 @@ static const struct option {
 	{ "pass-through",		0, 'p' },
 	{ "preserve-modification-time", 0, 'm' },
 	{ "preserve-owner",		0, OPTION_PRESERVE_OWNER },
+	{ "pwb",			0, '6' },
 	{ "quiet",			0, OPTION_QUIET },
 	{ "unconditional",		0, 'u' },
 	{ "uuencode",			0, OPTION_UUENCODE },
@@ -113,12 +114,18 @@ cpio_getopt(struct cpio *cpio)
 	static int state = state_start;
 	static char *opt_word;
 
-	const struct option *popt, *match = NULL, *match2 = NULL;
-	const char *p, *long_prefix = "--";
+	const struct option *popt, *match, *match2;
+	const char *p, *long_prefix;
 	size_t optlength;
-	int opt = '?';
-	int required = 0;
+	int opt;
+	int required;
 
+again:
+	match = NULL;
+	match2 = NULL;
+	long_prefix = "--";
+	opt = '?';
+	required = 0;
 	cpio->argument = NULL;
 
 	/* First time through, initialize everything. */
@@ -168,7 +175,7 @@ cpio_getopt(struct cpio *cpio)
 		if (opt == '\0') {
 			/* End of this group; recurse to get next option. */
 			state = state_next_word;
-			return cpio_getopt(cpio);
+			goto again;
 		}
 
 		/* Does this option take an argument? */

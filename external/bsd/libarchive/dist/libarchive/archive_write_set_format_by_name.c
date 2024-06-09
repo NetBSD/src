@@ -24,7 +24,6 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_by_name.c 201168 2009-12-29 06:15:32Z kientzle $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -49,6 +48,7 @@ struct { const char *name; int (*setter)(struct archive *); } names[] =
 	{ "arbsd",	archive_write_set_format_ar_bsd },
 	{ "argnu",	archive_write_set_format_ar_svr4 },
 	{ "arsvr4",	archive_write_set_format_ar_svr4 },
+	{ "bin",	archive_write_set_format_cpio_bin },
 	{ "bsdtar",	archive_write_set_format_pax_restricted },
 	{ "cd9660",	archive_write_set_format_iso9660 },
 	{ "cpio",	archive_write_set_format_cpio },
@@ -58,11 +58,12 @@ struct { const char *name; int (*setter)(struct archive *); } names[] =
 	{ "mtree",	archive_write_set_format_mtree },
 	{ "mtree-classic",	archive_write_set_format_mtree_classic },
 	{ "newc",	archive_write_set_format_cpio_newc },
-	{ "odc",	archive_write_set_format_cpio },
+	{ "odc",	archive_write_set_format_cpio_odc },
 	{ "oldtar",	archive_write_set_format_v7tar },
 	{ "pax",	archive_write_set_format_pax },
 	{ "paxr",	archive_write_set_format_pax_restricted },
 	{ "posix",	archive_write_set_format_pax },
+	{ "pwb",	archive_write_set_format_cpio_pwb },
 	{ "raw",	archive_write_set_format_raw },
 	{ "rpax",	archive_write_set_format_pax_restricted },
 	{ "shar",	archive_write_set_format_shar },

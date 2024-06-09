@@ -21,18 +21,16 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD$
  */
+
+#ifndef ARCHIVE_CMDLINE_PRIVATE_H
+#define ARCHIVE_CMDLINE_PRIVATE_H
 
 #ifndef __LIBARCHIVE_BUILD
 #ifndef __LIBARCHIVE_TEST
 #error This header is only to be used internally to libarchive.
 #endif
 #endif
-
-#ifndef ARCHIVE_CMDLINE_PRIVATE_H
-#define ARCHIVE_CMDLINE_PRIVATE_H
 
 struct archive_cmdline {
         char            *path;

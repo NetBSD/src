@@ -23,10 +23,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD");
 
 #include <locale.h>
-
 
 /*
  * Github Issue 748 reported problems with end-of-entry handling
@@ -56,7 +54,7 @@ DEFINE_TEST(test_read_format_zip_high_compression)
 	}
 
 	extract_reference_file(refname);
-	p = slurpfile(&archive_size, refname);
+	p = slurpfile(&archive_size, "%s", refname);
 
 	assert((a = archive_read_new()) != NULL);
         assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_zip(a));

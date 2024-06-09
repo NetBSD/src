@@ -23,8 +23,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD$
-.\"
 .Dd February 2, 2012
 .Dt ARCHIVE_ENTRY_TIME 3
 .Os
@@ -48,7 +46,7 @@
 .Nm archive_entry_mtime_nsec ,
 .Nm archive_entry_mtime_is_set ,
 .Nm archive_entry_set_mtime ,
-.Nm archive_entry_unset_mtime ,
+.Nm archive_entry_unset_mtime
 .Nd functions for manipulating times in archive entry descriptions
 .Sh LIBRARY
 Streaming Archive Library (libarchive, -larchive)
@@ -113,8 +111,8 @@ The current state can be queried using
 .Fn XXX_is_set .
 Unset time fields have a second and nanosecond field of 0.
 .Sh SEE ALSO
-.Xr archive_entry 3
-.Xr libarchive 3 ,
+.Xr archive_entry 3 ,
+.Xr libarchive 3
 .Sh HISTORY
 The
 .Nm libarchive

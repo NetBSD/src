@@ -25,8 +25,6 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD$");
-
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -223,15 +221,10 @@ static int
 archive_filter_lz4_open(struct archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
-	int ret;
 	size_t required_size;
 	static size_t const bkmap[] = { 64 * 1024, 256 * 1024, 1 * 1024 * 1024,
 			   4 * 1024 * 1024 };
 	size_t pre_block_size;
-
-	ret = __archive_write_open_filter(f->next_filter);
-	if (ret != 0)
-		return (ret);
 
 	if (data->block_maximum_size < 4)
 		data->block_size = bkmap[0];
@@ -343,7 +336,7 @@ static int
 archive_filter_lz4_close(struct archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
-	int ret, r1;
+	int ret;
 
 	/* Finish compression cycle. */
 	ret = (int)lz4_write_one_block(f, NULL, 0);
@@ -366,9 +359,7 @@ archive_filter_lz4_close(struct archive_write_filter *f)
 		ret = __archive_write_filter(f->next_filter,
 			    data->out_buffer, data->out - data->out_buffer);
 	}
-
-	r1 = __archive_write_close_filter(f->next_filter);
-	return (r1 < ret ? r1 : ret);
+	return ret;
 }
 
 static int
@@ -525,10 +516,10 @@ drive_compressor_independence(struct archive_write_filter *f, const char *p,
 	} else {
 		/* The buffer is not compressed. The compressed size was
 		 * bigger than its uncompressed size. */
-		archive_le32enc(data->out, length | 0x80000000);
+		archive_le32enc(data->out, (uint32_t)(length | 0x80000000));
 		data->out += 4;
 		memcpy(data->out, p, length);
-		outsize = length;
+		outsize = (uint32_t)length;
 	}
 	data->out += outsize;
 	if (data->block_checksum) {
@@ -610,10 +601,10 @@ drive_compressor_dependence(struct archive_write_filter *f, const char *p,
 	} else {
 		/* The buffer is not compressed. The compressed size was
 		 * bigger than its uncompressed size. */
-		archive_le32enc(data->out, length | 0x80000000);
+		archive_le32enc(data->out, (uint32_t)(length | 0x80000000));
 		data->out += 4;
 		memcpy(data->out, p, length);
-		outsize = length;
+		outsize = (uint32_t)length;
 	}
 	data->out += outsize;
 	if (data->block_checksum) {

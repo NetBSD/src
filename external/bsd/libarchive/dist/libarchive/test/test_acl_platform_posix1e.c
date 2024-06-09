@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_acl_freebsd.c 189427 2009-03-06 04:21:23Z kientzle $");
 
 #if ARCHIVE_ACL_POSIX1E
 #include <sys/acl.h>
@@ -364,8 +363,8 @@ DEFINE_TEST(test_acl_platform_posix1e_read)
 	struct archive *a;
 	struct archive_entry *ae;
 	int n, fd, flags, dflags;
-	char *func, *acl_text;
-	const char *acl1_text, *acl2_text, *acl3_text;
+	char *acl_text;
+	const char *func, *acl1_text, *acl2_text, *acl3_text;
 #if ARCHIVE_ACL_SUNOS
 	void *aclp;
 	int aclcnt;

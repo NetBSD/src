@@ -24,7 +24,6 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.23 2008/12/15 06:00:25 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -63,7 +62,7 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.23 2008/12/15 06:00:25 kientzle E
 #include "err.h"
 #include "passphrase.h"
 
-static size_t	bsdtar_expand_char(char *, size_t, char);
+static size_t	bsdtar_expand_char(char *, size_t, size_t, char);
 static const char *strip_components(const char *path, int elements);
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -173,12 +172,12 @@ safe_fprintf(FILE *f, const char *fmt, ...)
 				/* Not printable, format the bytes. */
 				while (n-- > 0)
 					i += (unsigned)bsdtar_expand_char(
-					    outbuff, i, *p++);
+					    outbuff, sizeof(outbuff), i, *p++);
 			}
 		} else {
 			/* After any conversion failure, don't bother
 			 * trying to convert the rest. */
-			i += (unsigned)bsdtar_expand_char(outbuff, i, *p++);
+			i += (unsigned)bsdtar_expand_char(outbuff, sizeof(outbuff), i, *p++);
 			try_wc = 0;
 		}
 
@@ -200,7 +199,7 @@ safe_fprintf(FILE *f, const char *fmt, ...)
  * Render an arbitrary sequence of bytes into printable ASCII characters.
  */
 static size_t
-bsdtar_expand_char(char *buff, size_t offset, char c)
+bsdtar_expand_char(char *buff, size_t buffsize, size_t offset, char c)
 {
 	size_t i = offset;
 
@@ -221,7 +220,7 @@ bsdtar_expand_char(char *buff, size_t offset, char c)
 		case '\v': buff[i++] = 'v'; break;
 		case '\\': buff[i++] = '\\'; break;
 		default:
-			sprintf(buff + i, "%03o", 0xFF & (int)c);
+			snprintf(buff + i, buffsize - i, "%03o", 0xFF & (int)c);
 			i += 3;
 		}
 	}
@@ -309,11 +308,12 @@ set_chdir(struct bsdtar *bsdtar, const char *newdir)
 		/* The -C /foo -C bar case; concatenate */
 		char *old_pending = bsdtar->pending_chdir;
 		size_t old_len = strlen(old_pending);
-		bsdtar->pending_chdir = malloc(old_len + strlen(newdir) + 2);
+        size_t new_len = old_len + strlen(newdir) + 2;
+		bsdtar->pending_chdir = malloc(new_len);
 		if (old_pending[old_len - 1] == '/')
 			old_pending[old_len - 1] = '\0';
 		if (bsdtar->pending_chdir != NULL)
-			sprintf(bsdtar->pending_chdir, "%s/%s",
+			snprintf(bsdtar->pending_chdir, new_len, "%s/%s",
 			    old_pending, newdir);
 		free(old_pending);
 	}
@@ -470,7 +470,7 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 	const char *original_name = name;
 	const char *hardlinkname = archive_entry_hardlink(entry);
 	const char *original_hardlinkname = hardlinkname;
-#if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H)
+#if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H) || defined(HAVE_PCRE2POSIX_H)
 	char *subst_name;
 	int r;
 
@@ -666,6 +666,10 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	const char		*fmt;
 	time_t			 tim;
 	static time_t		 now;
+	struct tm		*ltime;
+#if defined(HAVE_LOCALTIME_R) || defined(HAVE_LOCALTIME_S)
+	struct tm		tmbuf;
+#endif
 
 	/*
 	 * We avoid collecting the entire list in memory at once by
@@ -687,7 +691,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	/* Use uname if it's present, else uid. */
 	p = archive_entry_uname(entry);
 	if ((p == NULL) || (*p == '\0')) {
-		sprintf(tmp, "%lu ",
+		snprintf(tmp, sizeof(tmp), "%lu ",
 		    (unsigned long)archive_entry_uid(entry));
 		p = tmp;
 	}
@@ -702,7 +706,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		fprintf(out, "%s", p);
 		w = strlen(p);
 	} else {
-		sprintf(tmp, "%lu",
+		snprintf(tmp, sizeof(tmp), "%lu",
 		    (unsigned long)archive_entry_gid(entry));
 		w = strlen(tmp);
 		fprintf(out, "%s", tmp);
@@ -715,7 +719,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	 */
 	if (archive_entry_filetype(entry) == AE_IFCHR
 	    || archive_entry_filetype(entry) == AE_IFBLK) {
-		sprintf(tmp, "%lu,%lu",
+		snprintf(tmp, sizeof(tmp), "%lu,%lu",
 		    (unsigned long)archive_entry_rdevmajor(entry),
 		    (unsigned long)archive_entry_rdevminor(entry));
 	} else {
@@ -737,7 +741,14 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		fmt = bsdtar->day_first ? DAY_FMT " %b  %Y" : "%b " DAY_FMT "  %Y";
 	else
 		fmt = bsdtar->day_first ? DAY_FMT " %b %H:%M" : "%b " DAY_FMT " %H:%M";
-	strftime(tmp, sizeof(tmp), fmt, localtime(&tim));
+#if defined(HAVE_LOCALTIME_S)
+	ltime = localtime_s(&tmbuf, &tim) ? NULL : &tmbuf;
+#elif defined(HAVE_LOCALTIME_R)
+	ltime = localtime_r(&tim, &tmbuf);
+#else
+	ltime = localtime(&tim);
+#endif
+	strftime(tmp, sizeof(tmp), fmt, ltime);
 	fprintf(out, " %s ", tmp);
 	safe_fprintf(out, "%s", archive_entry_pathname(entry));
 

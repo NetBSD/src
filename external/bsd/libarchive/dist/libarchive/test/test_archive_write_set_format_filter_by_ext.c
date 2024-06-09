@@ -24,13 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include "test.h"
-__FBSDID("$FreeBSD$");
 
 static void
 test_format_filter_by_ext(const char *output_file, 
-    int format_id, int filter_id, int dot_stored, char * def_ext)
+    int format_id, int filter_id, int dot_stored, const char * def_ext)
 {
 	struct archive_entry *ae;
 	struct archive *a;
@@ -61,7 +59,7 @@ test_format_filter_by_ext(const char *output_file,
 	     strcmp(archive_error_string(a),
 		   "xz compression not supported on this platform") == 0)) {
                 const char *filter_name = archive_filter_name(a, 0);
-		skipping("%s filter not suported on this platform", filter_name);
+		skipping("%s filter not supported on this platform", filter_name);
 		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(buff);
 		return;

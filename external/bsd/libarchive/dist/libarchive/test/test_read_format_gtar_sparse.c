@@ -23,8 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_gtar_sparse.c 189308 2009-03-03 17:02:51Z kientzle $");
-
 
 struct contents {
 	int64_t	o;
@@ -214,8 +212,9 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 					 * Any byte before the expected
 					 * data must be NULL.
 					 */
-					failure("%s: pad at offset %d "
-					    "should be zero", name, actual.o);
+					failure("%s: pad at offset %jd "
+						"should be zero", name,
+						(intmax_t)actual.o);
 					assertEqualInt(c, 0);
 				} else if (actual.o == expect.o) {
 					/*
