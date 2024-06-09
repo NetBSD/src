@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3062 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3063 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -416,3 +416,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		ISO9660/HFS hybrid ISO images for mac68k and macppc.
 		[tsutsui 20240531]
 	pthread(3): Fix memory leak in pthread_create(). [hannken 20240608]
+	libarchive: Import libarchive-3.7.4. [christos 20240609]
