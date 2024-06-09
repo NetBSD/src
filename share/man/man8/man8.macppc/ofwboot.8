@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.17 2024/03/02 00:03:20 uwe Exp $
+.\"	$NetBSD: ofwboot.8,v 1.18 2024/06/09 05:42:59 tsutsui Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 1, 2024
+.Dd June 9, 2024
 .Dt OFWBOOT 8 macppc
 .Os
 .Sh NAME
@@ -82,14 +82,13 @@ actually designates the primary bootloader location and its name in the
 form:
 .Bd -literal -offset indent
 .Sm off
-.Ar device Ic \&: Op Ar partition-num
-.Ic \&, Op Ar bootloader-filename
+.Ar device Ic \&: Oo Ar partition-num Oc Op \&, \e Ar bootloader-filename
 .Sm on
 .Ed
 .Pp
 A typical example, from a PowerBook (FireWire), is
 .Pp
-.Dl /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,ofwboot.xcf
+.Dl /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,\eofwboot.xcf
 .Pp
 Note that colon
 .Pq Ql \&:
@@ -119,7 +118,7 @@ The
 .Ar boot-device
 above could then be simplified to:
 .Pp
-.Dl hd:9,ofwboot.xcf
+.Dl hd:9,\eofwboot.xcf
 .Pp
 .Ar bootloader-filename
 is usually
@@ -159,8 +158,7 @@ The syntax is similar to the
 argument:
 .Bd -literal -offset indent
 .Sm off
-.Op Ar boot-file-device Ic \&: Ar partition-num\^ Ic \&/
-.Op Ar kernel-name
+.Oo Ar boot-file-device Ic \&: Ar partition-num\^ Ic \&/ Oc Op Ar kernel-name
 .Sm on
 .Ed
 .Pp
@@ -242,8 +240,14 @@ are the same program, in different executable formats.
 is installed via
 .Xr installboot 8
 on systems with Open Firmware versions less than 3.
-It is not necessary to specify this file name, as it is stored in a special
-location on the disk, partition
+It is not necessary to specify this file name on the Open Firmware
+.Ic boot
+command, as it is stored in a special location in the
+.Nx
+partition that is marked
+.Dq bootable
+in the Apple partition map entry.
+The bootable partition can be specified as partition
 .Dq zero .
 For example, the following command might be used to boot from a SCSI device
 with ID 2:
@@ -303,9 +307,9 @@ with RAM disk and
 included.
 .
 .It Pa NetBSD-{RELEASE}-macppc.iso
-bootable CDROM image for all supported systems.
+bootable CD-ROM image for all supported systems.
 Usually located at
-.Pa ftp://ftp.NetBSD.org/pub/NetBSD/images/{RELEASE}/NetBSD-{RELEASE}-macppc.iso
+.Pa https://cdn.NetBSD.org/pub/NetBSD/images/{RELEASE}/
 .El
 .Sh EXAMPLES
 .Pp
@@ -323,7 +327,7 @@ Boot an Open Firmware 3 system, with
 .Ar netbsd
 installed on partition
 .Dq Pa a :
-.Dl 0 > boot hd:,ofwboot.xcf
+.Dl 0 > boot hd:,\eofwboot.xcf
 .
 .It
 Boot the kernel named
@@ -338,16 +342,39 @@ version of
 .Nm
 from the USB flash drive:
 .Dl 0 > boot usb0/disk:,\eofwboot.elf hd/netbsd.new -d
+or
+.Dl 0 > boot usb1/disk:,\eofwboot.elf hd/netbsd.new -d
+Note: You can check which usb device name should be used by
+.Dq Ic devalias
+and
+.Dq Ic dev usb0 ls
+commands etc.
 .
 .It
-Boot from bootable CDROM with Open Firmware 3 or higher:
-.Dl 0 > boot cd:,\eofwboot.xcf netbsd.macppc
+Boot from bootable CD-ROM of
+.Nx
+release with Open Firmware 3 or higher:
+.Dl 0 > boot cd:,\eofwboot.xcf
 .
 .It
-Boot from bootable CDROM (internal SCSI, id=3) of
-.Nx 1.5
+Boot from bootable CD-ROM (internal SCSI, id=3) of
+.Nx
 release with Open Firmware versions prior to 3:
-.Dl 0 > boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC
+.Dl 0 > boot scsi/sd@3:0
+.
+.It
+Boot from a USB flash drive containing a bootable CD-ROM ISO image of
+.Nx
+release with Open Firmware 3 or higher:
+.Dl 0 > boot usb0/disk@1:3,\eofwboot.xcf
+or
+.Dl 0 > boot usb1/disk@1:3,\eofwboot.xcf
+Note: The partition number
+.Dq Pa 3
+is an ISO9660/HFS hybrid partition specified by the Apple partition map
+in the macppc CD ISO image of
+.Nx
+release.
 .
 .It
 Boot from floppy disk:
@@ -383,6 +410,17 @@ Could be
 .Dq device not found
 or I/O errors on the device.
 The numbers are just for example.
+If the error is caused by I/O errors (especially on CD boot),
+retrying the same command after restarting Open Firmware by
+.Ic reset-all
+command might help.
+.Bd -unfilled
+CLAIM failed
+.Ed
+Open Firmware got errors on memory allocation ops etc.
+This could also happen by buggy Open Firmware implementation, or improper
+.Ev real-base
+variable settings.
 .Bd -unfilled
 Can't LOAD from this device
 .Ed
@@ -408,22 +446,23 @@ As it says.
 no active package3337696/
 .Ed
 and hangs: See the real-base part in the FAQ.
-.\" .Bd -unfilled
-.\" 0 > boot yy
-.\" >> NetBSD/macppc OpenFirmware Boot, Revision 1.3
-.\" >> (root@nazuha, Fri Jun  8 22:21:55 JST 2001)
-.\" no active packageopen yy: Device not configured
-.\" open ata/ata-disk@0/yy: Device not configured
-.\" Boot:
-.\" .Ed
+.Pp
+Note: It is recommended to restart Open Firmware by
+.Ic reset-all
+command if you get these Open Firmware errors,
+to avoid further unexpected random errors.
 .Sh SEE ALSO
 .Xr installboot 8
 .Pp
 .Pa INSTALL.html
 .Pp
-.Lk http://www.NetBSD.org/ports/macppc/faq.html "NetBSD/macppc Frequently Asked Questions"
+.Lk https://www.NetBSD.org/ports/macppc/faq.html "NetBSD/macppc Frequently Asked Questions"
 .Pp
-.Lk http://www.NetBSD.org/docs/network/netboot/ "Diskless NetBSD HOW-TO"
+.Lk https://www.NetBSD.org/ports/macppc/partitioning.html "NetBSD/macppc Partitioning HOW-TO"
+.Pp
+.Lk https://www.NetBSD.org/ports/macppc/models.html "NetBSD/macppc Model Support"
+.Pp
+.Lk https://www.NetBSD.org/docs/network/netboot/ "Diskless NetBSD HOW-TO"
 .Sh STANDARDS
 .St -ieee1275-94
 .Sh BUGS
