@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.8 2024/06/08 12:38:22 rin Exp $
+# $NetBSD: ad.mips64eb,v 1.9 2024/06/09 19:56:18 christos Exp $
 ./usr/lib/o32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/o32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -191,7 +191,7 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_std.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libamu.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libarchive.so.5.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libarchive..so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc,cxx
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.2.0.debug	comp-sys-debug	debug,compat,atf

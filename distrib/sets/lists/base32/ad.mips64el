@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.5 2024/05/06 08:38:51 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.6 2024/06/09 19:56:18 christos Exp $
 ./lib/64					base-compat-shlib	compat
 ./lib/o32					base-compat-shlib	compat
 ./lib/o32/npf					base-compat-shlib	compat,npf
@@ -89,7 +89,7 @@
 ./usr/lib/o32/libamu.so.5.0			base-compat-shlib	compat
 ./usr/lib/o32/libarchive.so			base-compat-shlib	compat
 ./usr/lib/o32/libarchive.so.5			base-compat-shlib	compat
-./usr/lib/o32/libarchive.so.5.0		base-compat-shlib	compat
+./usr/lib/o32/libarchive..so.5.1		base-compat-shlib	compat
 ./usr/lib/o32/libasan.so			base-compat-shlib	compat,gcc,cxx
 ./usr/lib/o32/libasan.so.5			base-compat-shlib	compat,gcc,cxx
 ./usr/lib/o32/libasan.so.5.0			base-compat-shlib	compat,gcc,cxx
