@@ -1,109 +1,47 @@
-/* $NetBSD: namespace.h,v 1.20 2024/05/08 01:40:27 riastradh Exp $ */
+/* $NetBSD: namespace.h,v 1.21 2024/06/09 13:33:03 riastradh Exp $ */
 
+#define acoshl _acoshl
+#define acosl _acosl
+#define asin _asin
+#define asinf _asinf
+#define asinhl _asinhl
+#define asinl _asinl
 #define atan2 _atan2
 #define atan2f _atan2f
 #define atan2l _atan2l
-#define hypot _hypot
-#define hypotf _hypotf
-#define hypotl _hypotl
-
-#define exp _exp
-#define expf _expf
-#define expl _expl
-#define expm1l _expm1l
-#define log _log
-#define logf _logf
-#define logl _logl
-
-#define sin _sin
-#define sinf _sinf
-#define cos _cos
-#define cosf _cosf
-#define tan _tan
-#define tanf _tanf
-
-#define finite _finite
-#define finitef _finitef
-
-#define sincos _sincos
-#define sincosf _sincosf
-#define sincosl _sincosl
-#define sinh _sinh
-#define sinhf _sinhf
-#define sinhl _sinhl
-#define cosh _cosh
-#define coshf _coshf
-#define coshl _coshl
-#define asin _asin
-#define asinf _asinf
-#define asinl _asinl
-
-#define remquo _remquo
-#define remquof _remquof
-#define remquol _remquol
-
+#define atanhl _atanhl
+#define atanl _atanl
 #define casin _casin
 #define casinf _casinf
 #define casinl _casinl
 #define catan _catan
 #define catanf _catanf
 #define catanl _catanl
-
-#define scalbn _scalbn
-#define scalbnf _scalbnf
-#define scalbnl _scalbnl
-#define scalbln _scalbln
-#define scalblnf _scalblnf
-#define scalblnl _scalblnl
-
-#define copysignl _copysignl
-#define sqrtl _sqrtl
 #define cbrtl _cbrtl
 #define ceill _ceill
-#define floorl _floorl
-#define roundl _roundl
-#define fmodl _fmodl
-#define modfl _modfl
-#define truncl _truncl
-
-#define exp2l _exp2l
-#define cosl _cosl
-#define sinl _sinl
-#define tanl _tanl
-#define powl _powl
+#define copysignl _copysignl
+#define cos _cos
+#define cosf _cosf
+#define cosh _cosh
+#define coshf _coshf
 #define coshl _coshl
-#define sinhl _sinhl
-#define acosl _acosl
-#define atanl _atanl
-#define asinhl _asinhl
-#define acoshl _acoshl
-#define tanhl _tanhl
-#define atanhl _atanhl
-#define log10l _log10l
-#define log1pl _log1pl
-#define log2l _log2l
-
+#define coshl _coshl
+#define cosl _cosl
 #define cospi _cospi
 #define cospif _cospif
 #define cospil _cospil
-
-#define sinpi _sinpi
-#define sinpif _sinpif
-#define sinpil _sinpil
-
-#define tanpi _tanpi
-#define tanpif _tanpif
-#define tanpil _tanpil
-
-#define erfl _erfl
 #define erfcl _erfcl
-
-#define lgammal _lgammal
-#define lgammal_r _lgammal_r
-#define tgammal _tgammal
-
+#define erfl _erfl
+#define exp _exp
+#define exp2l _exp2l
+#define expf _expf
+#define expl _expl
+#define expm1l _expm1l
 #define feclearexcept _feclearexcept
+#define fedisableexcept _fedisableexcept
+#define feenableexcept _feenableexcept
 #define fegetenv _fegetenv
+#define fegetexcept _fegetexcept
 #define fegetexceptflag _fegetexceptflag
 #define fegetround _fegetround
 #define feholdexcept _feholdexcept
@@ -113,7 +51,53 @@
 #define fesetround _fesetround
 #define fetestexcept _fetestexcept
 #define feupdateenv _feupdateenv
-
-#define fedisableexcept _fedisableexcept
-#define feenableexcept _feenableexcept
-#define fegetexcept _fegetexcept
+#define finite _finite
+#define finitef _finitef
+#define floorl _floorl
+#define fmodl _fmodl
+#define hypot _hypot
+#define hypotf _hypotf
+#define hypotl _hypotl
+#define lgammal _lgammal
+#define lgammal_r _lgammal_r
+#define log _log
+#define log10l _log10l
+#define log1pl _log1pl
+#define log2l _log2l
+#define logf _logf
+#define logl _logl
+#define modfl _modfl
+#define powl _powl
+#define remquo _remquo
+#define remquof _remquof
+#define remquol _remquol
+#define roundl _roundl
+#define scalbln _scalbln
+#define scalblnf _scalblnf
+#define scalblnl _scalblnl
+#define scalbn _scalbn
+#define scalbnf _scalbnf
+#define scalbnl _scalbnl
+#define sin _sin
+#define sincos _sincos
+#define sincosf _sincosf
+#define sincosl _sincosl
+#define sinf _sinf
+#define sinh _sinh
+#define sinhf _sinhf
+#define sinhl _sinhl
+#define sinhl _sinhl
+#define sinl _sinl
+#define sinpi _sinpi
+#define sinpif _sinpif
+#define sinpil _sinpil
+#define sqrtl _sqrtl
+#define tan _tan
+#define tanf _tanf
+#define tanhl _tanhl
+#define tanl _tanl
+#define tanpi _tanpi
+#define tanpif _tanpif
+#define tanpil _tanpil
+#define tgammal _tgammal
+#define truncl _truncl
