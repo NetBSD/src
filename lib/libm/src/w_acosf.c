@@ -15,16 +15,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_acosf.c,v 1.6 2002/05/26 22:01:59 wiz Exp $");
+__RCSID("$NetBSD: w_acosf.c,v 1.7 2024/06/09 13:33:36 riastradh Exp $");
 #endif
 
 /*
  * wrap_acosf(x)
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
 
+__weak_alias(acosf, _acosf)
 
 float
 acosf(float x)		/* wrapper acosf */

@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_asinf.c,v 1.7 2007/08/20 16:01:39 drochner Exp $");
+__RCSID("$NetBSD: w_asinf.c,v 1.8 2024/06/09 13:33:36 riastradh Exp $");
 #endif
 
 /*
@@ -23,12 +23,11 @@ __RCSID("$NetBSD: w_asinf.c,v 1.7 2007/08/20 16:01:39 drochner Exp $");
  */
 
 #include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __weak_alias
 __weak_alias(asinf, _asinf)
-#endif
 
 float
 asinf(float x)		/* wrapper asinf */

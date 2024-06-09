@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.9 2016/09/21 14:11:40 christos Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.10 2024/06/09 13:33:36 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_asincos.c,v 1.9 2016/09/21 14:11:40 christos Exp $");
+__RCSID("$NetBSD: n_asincos.c,v 1.10 2024/06/09 13:33:36 riastradh Exp $");
 
 #ifndef lint
 #if 0
@@ -91,12 +91,10 @@ static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
 #include "namespace.h"
 #include "mathimpl.h"
 
-#ifdef __weak_alias
-__weak_alias(asinf, _asinf)
-#endif
-#ifdef __weak_alias
+__weak_alias(acos, _acos)
+__weak_alias(acosf, _asinf)
 __weak_alias(asin, _asin)
-#endif
+__weak_alias(asinf, _asinf)
 
 double
 asin(double x)

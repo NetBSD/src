@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan.c,v 1.6 2013/11/24 14:41:53 martin Exp $	*/
+/*	$NetBSD: n_atan.c,v 1.7 2024/06/09 13:33:36 riastradh Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,13 @@ static char sccsid[] = "@(#)atan.c	8.1 (Berkeley) 6/4/93";
  *	maximum observed error in ulps (units in the last place) was
  *	0.85 ulps.
  */
+
+#include "namespace.h"
+
 #include "mathimpl.h"
+
+__weak_alias(atan, _atan)
+__weak_alias(atanf, _atanf)
 
 double
 atan(double x)

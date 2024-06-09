@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_atan.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
+__RCSID("$NetBSD: s_atan.c,v 1.12 2024/06/09 13:33:36 riastradh Exp $");
 #endif
 
 /* atan(x)
@@ -35,8 +35,17 @@ __RCSID("$NetBSD: s_atan.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
  * to produce the hexadecimal values shown.
  */
 
+#include "namespace.h"
+
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__weak_alias(atanl, _atanl)
+__strong_alias(_atanl, _atan)
+#endif
+
+__weak_alias(atan, _atan)
 
 static const double atanhi[] = {
   4.63647609000806093515e-01, /* atan(0.5)hi 0x3FDDAC67, 0x0561BB4F */
