@@ -39,6 +39,16 @@ DEFINE_TEST(test_write_disk_secure)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
+	char tmp[2048];
+	const char *tmpdir;
+	const char *lname =
+	    "libarchive_test-test_write_disk_secure-absolute_symlink";
+#if 0
+	const char *fname =
+	    "libarchive_test-test_write_disk_secure-absolute_symlink_path.tmp";
+#endif
+	const char *pname =
+	    "libarchive_test-test_write_disk_secure-absolute_path.tmp";
 #if defined(HAVE_LCHMOD) && defined(HAVE_SYMLINK) && \
     defined(S_IRUSR) && defined(S_IWUSR) && defined(S_IXUSR)
 	int working_lchmod;
