@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.237 2024/06/10 12:47:40 riastradh Exp $
+#  $NetBSD: Makefile,v 1.238 2024/06/10 12:49:29 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -113,7 +113,7 @@ EXPSYM_SRCS=	m.common.expsym m.ieee754.expsym m.alpha.expsym
 .PATH.c: ${.CURDIR}/arch/arm
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
-EXPSYM_SRC_MD=	${LIB}.armhf.expsym
+EXPSYM_SRC_MD=	m.armhf.expsym
 .endif
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
