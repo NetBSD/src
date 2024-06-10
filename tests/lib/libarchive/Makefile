@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2024/06/10 10:09:34 kre Exp $
+# $NetBSD: Makefile,v 1.11 2024/06/10 10:51:35 kre Exp $
 
 NOMAN=
 
@@ -577,7 +577,6 @@ test_read_large_splitted_rar_ab.uu  \
 test_read_large_splitted_rar_ac.uu  \
 test_read_large_splitted_rar_ad.uu  \
 test_read_large_splitted_rar_ae.uu  \
-test_read_pax_schily_xattr.tar.uu  \
 test_read_splitted_rar_aa.uu  \
 test_read_splitted_rar_ab.uu  \
 test_read_splitted_rar_ac.uu  \
