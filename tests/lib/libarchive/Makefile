@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2024/06/10 00:35:38 christos Exp $
+# $NetBSD: Makefile,v 1.9 2024/06/10 07:31:51 kre Exp $
 
 NOMAN=
 
@@ -609,4 +609,5 @@ list.h: ${SRCS.h_libarchive} Makefile
 
 COPTS.test_archive_string_conversion.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.test_main.c+=	${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.test_write_disk_secure.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
