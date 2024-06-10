@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.351 2024/06/10 01:53:35 gutteridge Exp $
+$NetBSD: UPDATING,v 1.352 2024/06/10 08:04:44 kre Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20240610:
+	Update builds are likely to require removing the objdir for
+	distrib/<arch>/cdroms - or at least references to libarchive
+	from within there after the recent libarchive update.
 
 20240504:
 	Update builds on x86 require making the `cleandir' target in
