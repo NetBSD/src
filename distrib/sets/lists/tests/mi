@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1319 2024/06/09 10:27:39 rillig Exp $
+# $NetBSD: mi,v 1.1320 2024/06/10 10:07:27 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2611,7 +2611,6 @@
 ./usr/tests/lib/libarchive/test_compat_lzop_3.tar.lzo.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_mac-1.tar.Z.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_mac-2.tar.Z.uu					tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libarchive/test_compat_pax_libarchive_2x.tar.Z.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_perl_archive_tar.tar.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_plexus_archiver_tar.tar.uu			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_compat_solaris_pax_sparse_1.pax.Z.uu			tests-lib-tests		compattestfile,atf
@@ -2862,7 +2861,6 @@
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_ac.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_ad.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_large_splitted_rar_ae.uu				tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libarchive/test_read_pax_schily_xattr.tar.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_splitted_rar_aa.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_splitted_rar_ab.uu					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_read_splitted_rar_ac.uu					tests-lib-tests		compattestfile,atf
