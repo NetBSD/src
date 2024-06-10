@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.350 2024/05/05 02:50:11 riastradh Exp $
+$NetBSD: UPDATING,v 1.351 2024/06/10 01:53:35 gutteridge Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -188,7 +188,7 @@ Recent changes:
 
 20210417:
 	GCC 10 was enabled for several platforms.  If builds fail in either
-	tools/gcc or external/gpl/gcc, first try cleaning those objects and
+	tools/gcc or external/gpl3/gcc, first try cleaning those objects and
 	removing the $DESTDIR/usr/include/g++ subdirectory.
 
 20201016:
