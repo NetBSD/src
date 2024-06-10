@@ -24,6 +24,9 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 
+options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
+
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -50,13 +53,7 @@ include 	"conf/compat_netbsd30.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	MFS		# memory file system
-file-system	TMPFS		# Efficient memory file-system
-file-system 	KERNFS		# /kern
-file-system 	PROCFS		# /proc
-file-system 	NFS		# Network File System client
-file-system	PTYFS		# /dev/pts/N support
+include "conf/filesystems.config"
 
 # File system options
 #options 	APPLE_UFS	# Apple UFS support in FFS
