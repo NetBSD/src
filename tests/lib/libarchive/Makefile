@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2024/06/10 07:31:51 kre Exp $
+# $NetBSD: Makefile,v 1.10 2024/06/10 10:09:34 kre Exp $
 
 NOMAN=
 
@@ -327,7 +327,6 @@ test_compat_lzop_2.tar.lzo.uu  \
 test_compat_lzop_3.tar.lzo.uu  \
 test_compat_mac-1.tar.Z.uu  \
 test_compat_mac-2.tar.Z.uu  \
-test_compat_pax_libarchive_2x.tar.Z.uu  \
 test_compat_perl_archive_tar.tar.uu  \
 test_compat_plexus_archiver_tar.tar.uu  \
 test_compat_solaris_pax_sparse_1.pax.Z.uu  \
