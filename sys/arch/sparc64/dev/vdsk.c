@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.12 2024/06/09 19:13:54 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.13 2024/06/10 19:54:24 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -219,6 +219,8 @@ void	vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_read_discinfo(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_read_trackinfo(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_done(struct scsipi_xfer *, int);
 
 int
@@ -1049,6 +1051,14 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			vdsk_scsi_report_luns(sc, xs);
 			return;
 			
+		case READ_DISCINFO:
+			vdsk_scsi_read_discinfo(sc, xs);
+			return;
+
+		case READ_TRACKINFO:
+			vdsk_scsi_read_trackinfo(sc, xs);
+			return;
+			
 		case SCSI_TEST_UNIT_READY:
 		case START_STOP:
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
@@ -1336,6 +1346,32 @@ vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 void
 vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 {
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_read_discinfo(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	DPRINTF(("%s()\n", __FUNCTION__));
+
+	struct scsipi_read_discinfo_data read_discinfo_data;
+	bzero(&read_discinfo_data, sizeof(read_discinfo_data));
+
+	bcopy(&read_discinfo_data, xs->data, MIN(sizeof(read_discinfo_data), xs->datalen));
+	
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_read_trackinfo(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
+	DPRINTF(("%s()\n", __FUNCTION__));
+
+	struct scsipi_read_trackinfo_data read_trackinfo_data;
+	bzero(&read_trackinfo_data, sizeof(read_trackinfo_data));
+
+	bcopy(&read_trackinfo_data, xs->data, MIN(sizeof(read_trackinfo_data), xs->datalen));
+	
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
