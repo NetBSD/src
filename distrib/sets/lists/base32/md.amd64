@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.9 2024/06/09 19:56:18 christos Exp $
+# $NetBSD: md.amd64,v 1.10 2024/06/10 07:48:54 kre Exp $
 ./lib/i386					base-compat-shlib	compat
 ./lib/i386/npf					base-compat-shlib	compat,npf
 ./lib/i386/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -86,7 +86,7 @@
 ./usr/lib/i386/libamu.so.5.0			base-compat-shlib	compat
 ./usr/lib/i386/libarchive.so			base-compat-shlib	compat
 ./usr/lib/i386/libarchive.so.5			base-compat-shlib	compat
-./usr/lib/i386/libarchive..so.5.1		base-compat-shlib	compat
+./usr/lib/i386/libarchive.so.5.1		base-compat-shlib	compat
 ./usr/lib/i386/libasan.so			base-compat-shlib	compat,gcc,cxx
 ./usr/lib/i386/libasan.so.5			base-compat-shlib	compat,gcc=10,cxx
 ./usr/lib/i386/libasan.so.5.0			base-compat-shlib	compat,gcc=10,cxx
