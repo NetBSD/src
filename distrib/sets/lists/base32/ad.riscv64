@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.7 2024/06/09 19:56:18 christos Exp $
+# $NetBSD: ad.riscv64,v 1.8 2024/06/10 07:57:10 kre Exp $
 ./lib/rv32					base-compat-shlib	compat
 ./lib/rv32/npf					base-compat-shlib	compat,npf
 ./lib/rv32/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -86,7 +86,7 @@
 ./usr/lib/rv32/libamu.so.5.0			base-compat-shlib	compat
 ./usr/lib/rv32/libarchive.so			base-compat-shlib	compat
 ./usr/lib/rv32/libarchive.so.5			base-compat-shlib	compat
-./usr/lib/rv32/libarchive..so.5.1		base-compat-shlib	compat
+./usr/lib/rv32/libarchive.so.5.1		base-compat-shlib	compat
 ./usr/lib/rv32/libasan.so			base-compat-shlib	compat,gcc,cxx
 ./usr/lib/rv32/libasan.so.5			base-compat-shlib	compat,gcc=10,cxx
 ./usr/lib/rv32/libasan.so.5.0			base-compat-shlib	compat,gcc=10,cxx

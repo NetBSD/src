@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.7 2024/06/09 19:56:18 christos Exp $
+# $NetBSD: ad.aarch64,v 1.8 2024/06/10 07:57:10 kre Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-compat-shlib	compat,npf
 ./lib/eabi/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -98,7 +98,7 @@
 ./usr/lib/eabi/libamu.so.5.0			base-compat-shlib	compat
 ./usr/lib/eabi/libarchive.so			base-compat-shlib	compat
 ./usr/lib/eabi/libarchive.so.5			base-compat-shlib	compat
-./usr/lib/eabi/libarchive..so.5.1		base-compat-shlib	compat
+./usr/lib/eabi/libarchive.so.5.1		base-compat-shlib	compat
 ./usr/lib/eabi/libarm.so			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic
@@ -612,7 +612,7 @@
 ./usr/lib/eabihf/libamu.so.5.0			base-compat-shlib	compat
 ./usr/lib/eabihf/libarchive.so			base-compat-shlib	compat
 ./usr/lib/eabihf/libarchive.so.5			base-compat-shlib	compat
-./usr/lib/eabihf/libarchive..so.5.1		base-compat-shlib	compat
+./usr/lib/eabihf/libarchive.so.5.1		base-compat-shlib	compat
 ./usr/lib/eabihf/libarm.so			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic
