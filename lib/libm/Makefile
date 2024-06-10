@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.236 2024/06/09 14:10:05 riastradh Exp $
+#  $NetBSD: Makefile,v 1.237 2024/06/10 12:47:40 riastradh Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -62,10 +62,12 @@ LINTFLAGS.s_logl.c+=	-X 177	# non-constant initializer
 EXPSYM_SRCS=	m.common.expsym
 EXPSYM_SRCS+=	m.ieee754.expsym
 EXPSYM_SRCS+=	m.fenv.expsym
+EXPSYM_SRCS+=	${EXPSYM_SRC_MD:U}
+
 .if exists(${.CURDIR}/m.${LIBC_MACHINE_ARCH}.expsym)
-EXPSYM_SRCS+=	m.${LIBC_MACHINE_ARCH}.expsym
+EXPSYM_SRC_MD=	m.${LIBC_MACHINE_ARCH}.expsym
 .elif exists(${.CURDIR}/m.${LIBC_MACHINE_CPU}.expsym)
-EXPSYM_SRCS+=	m.${LIBC_MACHINE_CPU}.expsym
+EXPSYM_SRC_MD=	m.${LIBC_MACHINE_CPU}.expsym
 .endif
 
 # We will build m.expsym with a rule below, by merging all the files
@@ -111,7 +113,7 @@ EXPSYM_SRCS=	m.common.expsym m.ieee754.expsym m.alpha.expsym
 .PATH.c: ${.CURDIR}/arch/arm
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
-LIB_EXPSYM=	${LIB}.armhf.expsym
+EXPSYM_SRC_MD=	${LIB}.armhf.expsym
 .endif
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
@@ -249,15 +251,15 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 .  if ${MKSOFTFLOAT} == "no"
 .    if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
-LIB_EXPSYM=	m.mips64hf.expsym
+EXPSYM_SRC_MD=	m.mips64hf.expsym
 .    else
-LIB_EXPSYM=	m.mipshf.expsym
+EXPSYM_SRC_MD=	m.mipshf.expsym
 .    endif
 .  else
 .    if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
-LIB_EXPSYM=	m.mips64.expsym
+EXPSYM_SRC_MD=	m.mips64.expsym
 .    else
-LIB_EXPSYM=	m.mips.expsym
+EXPSYM_SRC_MD=	m.mips.expsym
 .    endif
 .  endif
 
