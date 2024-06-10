@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.81 2024/06/10 08:04:44 kre Exp $
+.\" $NetBSD: gpt.8,v 1.82 2024/06/10 09:17:29 kre Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -629,15 +629,6 @@ and are not currently used by
 They may be used by
 .Nx
 in the future.
-In addition, the notation
-.Ar bit Ns NN ,
-where NN is an integer in the range 48..63 (inclusive)
-allows any of the file-system type specific attribute bits
-to be set.
-This is a hack, and is likely to be changed in a later
-revision, when the ability to set (and decode) attributes
-that are specific to a specific owning partition type is
-added.
 .\" ==== show ====
 .It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc Oo Fl b Ar startsec Oc
 The
