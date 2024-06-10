@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.88 2024/06/10 08:04:44 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.89 2024/06/10 09:17:29 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1221,30 +1221,8 @@ gpt_attr_get(gpt_t gpt, uint64_t *attributes)
 			if (strcmp(gpt_attr[i].name, ptr) == 0)
 				break;
 		if (i == __arraycount(gpt_attr)) {
-			long bit;
-			char *ep;
-
-			/*
-			 * XXX
-			 * Allow bitNN for 48 <= NN <= 63
-			 * so the partition type specific bits
-			 * can be accessed (set/cleared) 
-			 *
-			 * This should be fixed so the partition type
-			 * specific bits can be given names, which apply
-			 * only for the appropriate partition type.
-			 */
-			if (strncasecmp(ptr, "bit", 3) == 0 &&
-			    isdigit((int)(unsigned char)ptr[3]) &&
-			    (bit = strtol(ptr + 3, &ep, 10)) >= 48 &&
-			    bit <= 63 &&
-			    *ep == '\0') {
-				*attributes |= 1ULL << (unsigned)bit;
-			} else {
-				gpt_warnx(gpt,
-				    "Unrecognized attribute `%s'", ptr);
-				rv = -1;
-			}
+			gpt_warnx(gpt, "Unrecognized attribute `%s'", ptr);
+			rv = -1;
 		} else
 			*attributes |= gpt_attr[i].mask;
 	}
@@ -1296,7 +1274,7 @@ gpt_attr_list(char *buf, size_t len, uint64_t attributes)
 	 * (it does build however).
 	 */
 			if (gpt_attr[i].mask & (gpt_attr[i].mask - 1)) {
-				/* This only happens in bits 48..63 */
+				/* This only happens in bits 46..63 */
 
 				/*
 				 * xbuf is big enough for "=65535\0"
