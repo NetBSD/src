@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv64,v 1.9 2024/06/09 19:56:18 christos Exp $
+# $NetBSD: ad.riscv64,v 1.10 2024/06/10 07:47:06 kre Exp $
 ./usr/lib/rv32/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/rv32/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/rv32/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -190,7 +190,7 @@
 ./usr/libdata/debug/usr/lib/rv32/i18n/libmapper_std.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/rv32/i18n/libmapper_zone.so.5.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/rv32/libamu.so.5.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/rv32/libarchive..so.5.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/rv32/libarchive.so.5.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/rv32/libasan.so.5.0.debug	comp-sys-debug	debug,compat,gcc=10
 ./usr/libdata/debug/usr/lib/rv32/libasan.so.6.0.debug	comp-sys-debug	debug,compat,gcc=12
 ./usr/libdata/debug/usr/lib/rv32/libasn1.so.10.0.debug	comp-sys-debug	debug,compat
