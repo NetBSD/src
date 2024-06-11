@@ -1,4 +1,4 @@
-# $NetBSD: t_high_ino_big_file.sh,v 1.6 2024/04/28 14:39:22 rillig Exp $
+# $NetBSD: t_high_ino_big_file.sh,v 1.7 2024/06/11 17:12:36 rillig Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ atf_test_case pr_kern_48787 cleanup
 pr_kern_48787_head() {
 	atf_set "descr" "Verifies 32bit overflow issues from PR kern/48787 are fixed"
 	atf_set "require.user" "root"
-	atf_set "require.progs" "rump_cd9660 bunzip2 stat"
+	atf_set "require.progs" "rump_cd9660 stat"
 	atf_set "timeout" 6000
 }
 
@@ -81,10 +81,10 @@ pr_kern_48787_body() {
 		atf_skip "not enough free disk space, have ${avail} Kbytes, need ~ 4500000 Kbytes"
 	fi
 	$(atf_get_srcdir)/h_hexdump_r < $(atf_get_srcdir)/pr_48787.image.hex > pr_48787.image || atf_fail "h_hexdump_r failed"
-	mntpnt=$(pwd)/mnt
+	mntpnt=$PWD/mnt
 	mkdir ${mntpnt}
 
-	rump_cd9660 -o norrip ./pr_48787.image ${mntpnt}
+	rump_cd9660 -o norrip "$PWD"/pr_48787.image ${mntpnt}
 	if [ ! -r ${mntpnt}/small_file ]; then
 		atf_fail "${mntpnt}/small_file does not exist"
 	fi
@@ -93,7 +93,7 @@ pr_kern_48787_body() {
 	fi
 	umount ${mntpnt}
 
-	rump_cd9660 ./pr_48787.image ${mntpnt}
+	rump_cd9660 "$PWD/pr_48787.image" ${mntpnt}
 	if [ ! -r ${mntpnt}/small_file ]; then
 		atf_fail "${mntpnt}/small_file does not exist"
 	fi
