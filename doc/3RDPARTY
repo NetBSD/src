@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2010 2024/06/11 15:14:00 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2011 2024/06/11 17:21:58 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1130,12 +1130,14 @@ Home Page:	http://www.openssl.org/
 Date:		2024-06-11
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
-License:	OpenSSL and SSLeay license (both BSD-like)
+License:	Apache2
 Location:	crypto/external/bsd/openssl/dist
 Vendor tag:	OPENSSL
 Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
 Current tag:	openssl-3-0-14
 Notes:
+- Next update to be in crypto/openssl/apache2/openssl/dist, since
+  OpenSSL 3.0 was relicensed as Apache2
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
