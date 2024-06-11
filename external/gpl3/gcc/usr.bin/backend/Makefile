@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2024/06/06 05:41:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.73 2024/06/11 03:06:48 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -34,6 +34,12 @@ CPPFLAGS.lto-streamer-in.cc+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CXXFLAGS+=	-std=gnu++11
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
+
+# XXX This is generated here, not in ../include.
+.if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64"
+INCS+=	rs6000-vecdefines.h
+INCSDIR=${GCC_INCSDIR}
+.endif
 
 .include <bsd.lib.mk>
 
