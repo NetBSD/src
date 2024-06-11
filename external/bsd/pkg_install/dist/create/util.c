@@ -58,6 +58,8 @@
 static void
 update_ids(struct memory_file *file)
 {
+	const char *s;
+
 	if (file->owner != NULL) {
 		uid_t uid;
 
@@ -65,7 +67,10 @@ update_ids(struct memory_file *file)
 			errx(2, "user %s unknown", file->owner);
 		file->st.st_uid = uid;
 	} else {
-		file->owner = xstrdup(user_from_uid(file->st.st_uid, 1));
+		if ((s = user_from_uid(file->st.st_uid, 1)) == NULL)
+			errx(2, "unknown user name for uid %u",
+			    (unsigned) file->st.st_uid);
+		file->owner = xstrdup(s);
 	}
 
 	if (file->group != NULL) {
@@ -75,7 +80,10 @@ update_ids(struct memory_file *file)
 			errx(2, "group %s unknown", file->group);
 		file->st.st_gid = gid;
 	} else {
-		file->group = xstrdup(group_from_gid(file->st.st_gid, 1));
+		if ((s = group_from_gid(file->st.st_gid, 1)) == NULL)
+			errx(2, "unknown group name for gid %u",
+			    (unsigned) file->st.st_gid);
+		file->group = xstrdup(s);
 	}
 }
 

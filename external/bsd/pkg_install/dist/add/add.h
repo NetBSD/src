@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.3 2021/04/10 19:49:59 nia Exp $ */
+/* $NetBSD: add.h,v 1.4 2024/06/11 09:26:57 wiz Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -27,6 +27,8 @@
 
 extern char *Destdir;
 extern char *OverrideMachine;
+extern char *OverrideOpsys;
+extern char *OverrideOSVersion;
 extern char *Prefix;
 extern char *View;
 extern char *Viewbase;
@@ -41,6 +43,8 @@ extern int ReplaceSame;
 
 extern Boolean ForceDepends;
 extern Boolean ForceDepending;
+
+void	parse_cross(const char *, char **, char **, char **);
 
 int     make_hierarchy(char *);
 void    apply_perms(char *, char **, int);
