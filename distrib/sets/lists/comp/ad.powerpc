@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.104 2024/06/09 18:49:03 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.105 2024/06/11 03:07:06 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -158,6 +158,7 @@
 ./usr/include/gcc-12/spu2vmx.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/tmmintrin.h		comp-c-include		gcc=12
 ./usr/include/gcc-12/vec_types.h		comp-c-include		gcc=12
+./usr/include/gcc-12/rs6000-vecdefines.h	comp-c-include		gcc=12
 ./usr/include/gcc-12/x86gprintrin.h		comp-c-include		gcc=12
 ./usr/include/gcc-12/x86intrin.h		comp-c-include		gcc=12
 ./usr/include/gcc-12/xmmintrin.h		comp-c-include		gcc=12
