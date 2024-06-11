@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.11 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: license.c,v 1.12 2024/06/11 09:26:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -50,6 +50,7 @@ const char *default_acceptable_licenses =
     "apache-1.1 apache-2.0 "
     "arphic-public "
     "artistic artistic-2.0 "
+    "beer-ware "
     "boost-license "
     "cc-by-sa-v3.0 "
     "cc-by-sa-v4.0 "
@@ -58,9 +59,11 @@ const char *default_acceptable_licenses =
     "cddl-1.0 "
     "cecill-2.1 "
     "cecill-b-v1 "
+    "cecill-c-v1 "
     "cpl-1.0 "
     "epl-v1.0 "
     "eupl-v1.1 "
+    "eupl-v1.2 "
     "gfsl "
     "gnu-fdl-v1.1 gnu-fdl-v1.2 gnu-fdl-v1.3 "
     "gnu-gpl-v1 "
@@ -68,6 +71,8 @@ const char *default_acceptable_licenses =
     "gnu-gpl-v3 gnu-lgpl-v3 "
     "happy "
     "hpnd "
+    "icu "
+    "ijg "
     "info-zip "
     "ipafont "
     "ipl-1.0 "
@@ -78,10 +83,11 @@ const char *default_acceptable_licenses =
     "mit "
     "mpl-1.0 mpl-1.1 mpl-2.0 "
     "mplusfont "
+    "ms-pl "
     "odbl-v1 "
     "ofl-v1.0 ofl-v1.1 "
     "openssl "
-    "original-bsd modified-bsd 2-clause-bsd "
+    "original-bsd modified-bsd 2-clause-bsd 0-clause-bsd "
     "osl "
     "paratype "
     "php "
@@ -94,6 +100,7 @@ const char *default_acceptable_licenses =
     "sissl-1.1 "
     "sleepycat-public "
     "unicode "
+    "unicode-v3 "
     "unlicense "
     "vera-ttf-license "
     "w3c "

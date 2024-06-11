@@ -1,4 +1,4 @@
-# $NetBSD: pkgsrc.cnf,v 1.3 2021/04/10 19:49:59 nia Exp $
+# $NetBSD: pkgsrc.cnf,v 1.4 2024/06/11 09:26:58 wiz Exp $
 #
 # OpenSSL sample configuration file for use by pkgsrc.sh
 #
@@ -77,9 +77,8 @@ emailAddress		= optional
 
 ####################################################################
 [ req ]
-default_bits		= 2048
+default_bits		= 4096
 default_keyfile 	= privkey.pem
-default_md		= sha1
 distinguished_name	= req_distinguished_name
 x509_extensions	= v3_ca	# The extentions to add to the self signed cert
 

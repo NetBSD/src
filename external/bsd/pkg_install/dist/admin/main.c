@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2020/12/02 13:53:50 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2024/06/11 09:26:57 wiz Exp $	*/
 
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 #endif
 #endif
-__RCSID("$NetBSD: main.c,v 1.6 2020/12/02 13:53:50 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2024/06/11 09:26:57 wiz Exp $");
 
 /*-
  * Copyright (c) 1999-2019 The NetBSD Foundation, Inc.
@@ -95,6 +95,17 @@ struct pkgdb_count {
 };
 
 /*
+ * A simple list of pkgname/pkgbase entries in the pkgdb to verify there are
+ * no duplicate entries.
+ */
+struct pkgbase_entry {
+	char *pkgbase;
+	char *pkgname;
+	SLIST_ENTRY(pkgbase_entry) entries;
+};
+SLIST_HEAD(pkgbase_entry_head, pkgbase_entry);
+
+/*
  * A hashed list of +REQUIRED_BY entries.
  */
 struct reqd_by_entry {
@@ -121,7 +132,7 @@ static void set_unset_variable(char **, Boolean);
 static void digest_input(char **);
 
 /* print usage message and exit */
-void 
+void
 usage(void)
 {
 	(void) fprintf(stderr, "usage: %s [-bqSVv] [-C config] [-d lsdir] [-K pkg_dbdir] [-s sfx] command [args ...]\n"
@@ -245,7 +256,7 @@ add_pkg(const char *pkgdir, void *vp)
 	return 0;
 }
 
-static void 
+static void
 rebuild(void)
 {
 	char *cachename;
@@ -393,9 +404,52 @@ add_depends_of(const char *pkgname, void *cookie)
 			add_required_by(p->name, pkgname, h);
 	}
 
-	free_plist(&plist);	
+	free_plist(&plist);
 
 	return 0;
+}
+
+/*
+ * It is a fatal error if the pkgdb contains multiple entries with the same
+ * PKGBASE, usually caused by inserting directories manually into the pkgdb.
+ */
+static int
+check_duplicate_pkgbase(const char *pkgname, void *cookie)
+{
+	struct pkgbase_entry_head *head = cookie;
+	struct pkgbase_entry *pkg, *pkgiter;
+	char *p;
+
+	if ((p = strrchr(pkgname, '-')) == NULL) {
+		errx(EXIT_FAILURE, "entry '%s' in pkgdb is not a valid package name.",
+		    pkgname);
+	}
+
+	pkg = xmalloc(sizeof(*pkg));
+	pkg->pkgname = xstrdup(pkgname);
+	*p = '\0';
+	pkg->pkgbase = xstrdup(pkgname);
+
+	SLIST_FOREACH(pkgiter, head, entries) {
+		if (strcmp(pkg->pkgbase, pkgiter->pkgbase) == 0) {
+			errx(EXIT_FAILURE, "corrupt pkgdb, duplicate PKGBASE entries:\n"
+			    "\t%s\n\t%s", pkg->pkgname, pkgiter->pkgname);
+		}
+	}
+
+	SLIST_INSERT_HEAD(head, pkg, entries);
+
+	return 0;
+}
+
+static void
+check_pkgdb(void)
+{
+	struct pkgbase_entry_head pbhead;
+
+	SLIST_INIT(&pbhead);
+	if (iterate_pkg_db(check_duplicate_pkgbase, &pbhead) == -1)
+		errx(EXIT_FAILURE, "cannot iterate pkgdb");
 }
 
 static void
@@ -450,7 +504,7 @@ rebuild_tree(void)
 	}
 }
 
-int 
+int
 main(int argc, char *argv[])
 {
 	Boolean		 use_default_sfx = TRUE;
@@ -531,7 +585,7 @@ main(int argc, char *argv[])
 	if (strcasecmp(argv[0], "pmatch") == 0) {
 
 		char *pattern, *pkg;
-		
+
 		argv++;		/* "pmatch" */
 
 		if (argv[0] == NULL || argv[1] == NULL) {
@@ -546,21 +600,27 @@ main(int argc, char *argv[])
 		} else {
 			return 1;
 		}
-	  
+
 	} else if (strcasecmp(argv[0], "rebuild") == 0) {
 
+		check_pkgdb();
 		rebuild();
-		printf("Done.\n");
+		if (!quiet) {
+			printf("Done.\n");
+		}
 
-	  
 	} else if (strcasecmp(argv[0], "rebuild-tree") == 0) {
 
+		check_pkgdb();
 		rebuild_tree();
-		printf("Done.\n");
+		if (!quiet) {
+			printf("Done.\n");
+		}
 
 	} else if (strcasecmp(argv[0], "check") == 0) {
 		argv++;		/* "check" */
 
+		check_pkgdb();
 		check(argv);
 
 		if (!quiet) {
@@ -609,7 +669,7 @@ main(int argc, char *argv[])
 					printf("%s/%s\n", dir, p);
 				free(p);
 			}
-			
+
 			argv++;
 		}
 	} else if (strcasecmp(argv[0], "list") == 0 ||
@@ -691,7 +751,7 @@ main(int argc, char *argv[])
 			puts(output);
 			fetchFreeURL(url);
 			free(output);
-		}		
+		}
 
 		return rc;
 	} else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
@@ -784,23 +844,23 @@ set_unset_variable(char **argv, Boolean unset)
 
 	if (argv[0] == NULL || argv[1] == NULL)
 		usage();
-	
+
 	variable = NULL;
 
 	if (unset) {
 		arg.variable = argv[0];
 		arg.value = NULL;
-	} else {	
+	} else {
 		eq = NULL;
 		if ((eq=strchr(argv[0], '=')) == NULL)
 			usage();
-		
+
 		variable = xmalloc(eq-argv[0]+1);
 		strlcpy(variable, argv[0], eq-argv[0]+1);
-		
+
 		arg.variable = variable;
 		arg.value = eq+1;
-		
+
 		if (strcmp(variable, AUTOMATIC_VARNAME) == 0 &&
 		    strcasecmp(arg.value, "yes") != 0 &&
 		    strcasecmp(arg.value, "no") != 0) {

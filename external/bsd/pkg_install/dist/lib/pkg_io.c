@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.4 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.5 2024/06/11 09:26:57 wiz Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.5 2024/06/11 09:26:57 wiz Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -48,14 +48,14 @@ __RCSID("$NetBSD: pkg_io.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
 #endif
 #include <stdlib.h>
 
+#include "lib.h"
+
 #ifdef BOOTSTRAP
 #undef IS_URL
 #define IS_URL(x) 0
 #else
 #include <fetch.h>
 #endif
-
-#include "lib.h"
 
 struct pkg_path {
 	TAILQ_ENTRY(pkg_path) pl_link;

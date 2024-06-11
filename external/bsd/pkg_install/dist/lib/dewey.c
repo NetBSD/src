@@ -1,7 +1,7 @@
-/* $NetBSD: dewey.c,v 1.5 2021/04/10 19:49:59 nia Exp $ */
+/* $NetBSD: dewey.c,v 1.6 2024/06/11 09:26:57 wiz Exp $ */
 
 /*
- * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
+ * Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,41 +47,41 @@
 
 /* do not modify these values, or things will NOT work */
 enum {
-        Alpha = -3,
-        Beta = -2,
-        RC = -1,
-        Dot = 0,
-        Patch = 1
+	Alpha = -3,
+	Beta = -2,
+	RC = -1,
+	Dot = 0,
+	Patch = 1
 };
 
 /* this struct defines a version number */
 typedef struct arr_t {
-	unsigned	c;              /* # of version numbers */
-	unsigned	size;           /* size of array */
-	int	       *v;              /* array of decimal numbers */
-	int		netbsd;         /* any "nb" suffix */
+	unsigned	c;		/* # of version numbers */
+	unsigned	size;		/* size of array */
+	int	       *v;		/* array of decimal numbers */
+	int		netbsd;		/* any "nb" suffix */
 } arr_t;
 
 /* this struct describes a test */
 typedef struct test_t {
-	const char     *s;              /* string representation */
-	unsigned	len;            /* length of string */
-	int		t;              /* enumerated type of test */
+	const char     *s;		/* string representation */
+	unsigned	len;		/* length of string */
+	int		t;		/* enumerated type of test */
 } test_t;
 
 
 /* the tests that are recognised. */
- const test_t   tests[] = {
-        {	"<=",	2,	DEWEY_LE	},
-        {	"<",	1,	DEWEY_LT	},
-        {	">=",	2,	DEWEY_GE	},
-        {	">",	1,	DEWEY_GT	},
-        {	"==",	2,	DEWEY_EQ	},
-        {	"!=",	2,	DEWEY_NE	},
-        {	NULL,	0,	0	}
+const test_t	tests[] = {
+	{	"<=",	2,	DEWEY_LE	},
+	{	"<",	1,	DEWEY_LT	},
+	{	">=",	2,	DEWEY_GE	},
+	{	">",	1,	DEWEY_GT	},
+	{	"==",	2,	DEWEY_EQ	},
+	{	"!=",	2,	DEWEY_NE	},
+	{	NULL,	0,	0	}
 };
 
- const test_t	modifiers[] = {
+const test_t	modifiers[] = {
 	{	"alpha",	5,	Alpha	},
 	{	"beta",		4,	Beta	},
 	{	"pre",		3,	RC	},
@@ -122,10 +122,10 @@ dewey_mktest(int *op, const char *test)
 static int
 mkcomponent(arr_t *ap, const char *num)
 {
-	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
-	const test_t	       *modp;
-	int                 n;
-	const char             *cp;
+	static const char alphas[] = "abcdefghijklmnopqrstuvwxyz";
+	const test_t *modp;
+	int n;
+	const char *cp;
 
 	if (ap->c == ap->size) {
 		if (ap->size == 0) {
@@ -252,7 +252,7 @@ dewey_cmp(const char *lhs, int op, const char *rhs)
 		freeversion(&left);
 		return 0;
 	}
-        retval = vtest(&left, op, &right);
+	retval = vtest(&left, op, &right);
 	freeversion(&left);
 	freeversion(&right);
 	return retval;
@@ -281,11 +281,11 @@ dewey_match(const char *pattern, const char *pkg)
 	    strncmp(pkg, pattern, (size_t)(version-pkg)) != 0)
 		return 0;
 	version++;
-	
+
 	/* extract comparison operator */
-        if ((n = dewey_mktest(&op, sep)) < 0) {
+	if ((n = dewey_mktest(&op, sep)) < 0) {
 		return 0;
-        }
+	}
 	/* skip operator */
 	sep += n;
 
@@ -317,4 +317,3 @@ dewey_match(const char *pattern, const char *pkg)
 
 	return 0;
 }
-
