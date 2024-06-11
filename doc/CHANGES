@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3064 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3065 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -418,3 +418,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	pthread(3): Fix memory leak in pthread_create(). [hannken 20240608]
 	libarchive: Import libarchive-3.7.4. [christos 20240609]
 	pkg_install: Import pkg_install-20240307. [wiz 20240611]
+	OpenSSL: Imported 3.0.14. [christos 2020611]
