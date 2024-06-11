@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2017/04/20 13:18:47 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2024/06/11 10:18:11 wiz Exp $
 # Original from FreeBSD, no rcs id.
 
 PROG= pkg_add
-SRCS= main.c perform.c
+SRCS= main.c parse_cross.c perform.c
 
 .include <bsd.init.mk>
 
