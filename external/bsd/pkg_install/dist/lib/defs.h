@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.4 2021/04/10 19:26:04 nia Exp $ */
+/* $NetBSD: defs.h,v 1.1.1.5 2024/06/11 09:15:40 wiz Exp $ */
 
 /*-
  * Copyright (c) 1999,2000,2009 The NetBSD Foundation, Inc.

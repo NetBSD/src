@@ -1,4 +1,4 @@
-/*	$NetBSD: lpkg.c,v 1.1.1.3 2021/04/10 19:26:04 nia Exp $	*/
+/*	$NetBSD: lpkg.c,v 1.1.1.4 2024/06/11 09:15:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps

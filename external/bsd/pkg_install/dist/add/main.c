@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.12 2021/04/10 19:26:03 nia Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.13 2024/06/11 09:15:38 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.12 2021/04/10 19:26:03 nia Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.13 2024/06/11 09:15:38 wiz Exp $");
 
 /*
  *
@@ -40,6 +40,8 @@ static char Options[] = "AC:DIK:P:RVfhm:np:t:Uuv";
 
 char   *Destdir = NULL;
 char   *OverrideMachine = NULL;
+char   *OverrideOpsys = NULL;
+char   *OverrideOSVersion = NULL;
 char   *Prefix = NULL;
 Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
@@ -110,7 +112,8 @@ main(int argc, char **argv)
 			break;
 
 		case 'm':
-			OverrideMachine = optarg;
+			parse_cross(optarg, &OverrideMachine, &OverrideOpsys,
+			    &OverrideOSVersion);
 			break;
 
 		case 'n':

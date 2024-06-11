@@ -1,4 +1,4 @@
-/*	$NetBSD: automatic.c,v 1.1.1.3 2021/04/10 19:26:04 nia Exp $	*/
+/*	$NetBSD: automatic.c,v 1.1.1.4 2024/06/11 09:15:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: automatic.c,v 1.1.1.3 2021/04/10 19:26:04 nia Exp $");
+__RCSID("$NetBSD: automatic.c,v 1.1.1.4 2024/06/11 09:15:39 wiz Exp $");
 
 #if HAVE_ASSERT_H
 #include <assert.h>
