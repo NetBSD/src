@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.34 2024/03/09 11:04:22 isaki Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.34 2024/03/09 11:04:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35 2024/06/12 16:51:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,9 @@ struct ld_virtio_softc {
 	struct ld_softc		sc_ld;
 	device_t		sc_dev;
 
+	uint32_t		sc_seg_max; /* max number of segs in xfer */
+	uint32_t		sc_size_max; /* max size of single seg */
+
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	sc_vq;
 
@@ -220,11 +223,10 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 			goto err_reqs;
 		}
 		r = bus_dmamap_create(virtio_dmat(sc->sc_virtio),
-				      ld->sc_maxxfer,
-				      (ld->sc_maxxfer / NBPG) +
-				      VIRTIO_BLK_CTRL_SEGMENTS,
-				      ld->sc_maxxfer,
-				      0,
+				      /*size*/ld->sc_maxxfer,
+				      /*nseg*/sc->sc_seg_max,
+				      /*maxsegsz*/sc->sc_size_max,
+				      /*boundary*/0,
 				      BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW,
 				      &vr->vr_payload);
 		if (r != 0) {
@@ -264,7 +266,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct virtio_softc *vsc = device_private(parent);
 	uint64_t features;
-	int qsize, maxxfersize, maxnsegs;
+	int qsize;
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -296,46 +298,53 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	} else
 		ld->sc_secsize = VIRTIO_BLK_BSIZE;
 
-	/* At least genfs_io assumes maxxfer == MAXPHYS. */
-	if (features & VIRTIO_BLK_F_SIZE_MAX) {
-		maxxfersize = virtio_read_device_config_4(vsc,
-		    VIRTIO_BLK_CONFIG_SIZE_MAX);
-		if (maxxfersize < MAXPHYS) {
-			aprint_error_dev(sc->sc_dev,
-			    "Too small SIZE_MAX %dK minimum is %dK\n",
-			    maxxfersize / 1024, MAXPHYS / 1024);
-			// goto err;
-			maxxfersize = MAXPHYS;
-		} else if (maxxfersize > MAXPHYS) {
-			aprint_normal_dev(sc->sc_dev,
-			    "Clip SIZE_MAX from %dK to %dK\n",
-			    maxxfersize / 1024,
-			    MAXPHYS / 1024);
-			maxxfersize = MAXPHYS;
-		}
-	} else
-		maxxfersize = MAXPHYS;
-
 	if (features & VIRTIO_BLK_F_SEG_MAX) {
-		maxnsegs = virtio_read_device_config_4(vsc,
+		sc->sc_seg_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SEG_MAX);
-		if (maxnsegs == 0) {
+		if (sc->sc_seg_max == 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "Invalid SEG_MAX %d\n", maxnsegs);
+			    "Invalid SEG_MAX %d\n", sc->sc_seg_max);
 			goto err;
 		}
-	} else
-		maxnsegs = maxxfersize / NBPG;
+	} else {
+		sc->sc_seg_max = 1;
+		aprint_verbose_dev(sc->sc_dev,
+		    "Unknown SEG_MAX, assuming %"PRIu32"\n", sc->sc_seg_max);
+	}
 
-	maxnsegs += VIRTIO_BLK_CTRL_SEGMENTS;
+	/* At least genfs_io assumes size_max*seg_max >= MAXPHYS. */
+	if (features & VIRTIO_BLK_F_SIZE_MAX) {
+		sc->sc_size_max = virtio_read_device_config_4(vsc,
+		    VIRTIO_BLK_CONFIG_SIZE_MAX);
+		if (sc->sc_size_max < MAXPHYS/sc->sc_seg_max) {
+			aprint_error_dev(sc->sc_dev,
+			    "Too small SIZE_MAX %d minimum is %d\n",
+			    sc->sc_size_max, MAXPHYS/sc->sc_seg_max);
+			// goto err;
+			sc->sc_size_max = MAXPHYS/sc->sc_seg_max;
+		} else if (sc->sc_size_max > MAXPHYS) {
+			aprint_verbose_dev(sc->sc_dev,
+			    "Clip SIZE_MAX from %d to %d\n",
+			    sc->sc_size_max, MAXPHYS);
+			sc->sc_size_max = MAXPHYS;
+		}
+	} else {
+		sc->sc_size_max = MAXPHYS;
+		aprint_verbose_dev(sc->sc_dev,
+		    "Unknown SIZE_MAX, assuming %"PRIu32"\n",
+		    sc->sc_size_max);
+	}
+
+	aprint_normal_dev(sc->sc_dev, "max %"PRIu32" segs"
+	    " of max %"PRIu32" bytes\n",
+	    sc->sc_seg_max, sc->sc_size_max);
 
 	virtio_init_vq_vqdone(vsc, &sc->sc_vq, 0,
 	    ld_virtio_vq_done);
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq, maxxfersize, maxnsegs,
-	    "I/O request") != 0) {
+	if (virtio_alloc_vq(vsc, &sc->sc_vq, sc->sc_size_max,
+		sc->sc_seg_max + VIRTIO_BLK_CTRL_SEGMENTS, "I/O request") != 0)
 		goto err;
-	}
 	qsize = sc->sc_vq.vq_num;
 
 	if (virtio_child_attach_finish(vsc, &sc->sc_vq, 1,
@@ -345,7 +354,15 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dv = self;
 	ld->sc_secperunit = virtio_read_device_config_8(vsc,
 	    VIRTIO_BLK_CONFIG_CAPACITY) / (ld->sc_secsize / VIRTIO_BLK_BSIZE);
-	ld->sc_maxxfer = maxxfersize;
+
+	/*
+	 * Clamp ld->sc_maxxfer to MAXPHYS before ld_virtio_alloc_reqs
+	 * allocates DMA maps of at most ld->sc_maxxfer bytes.
+	 * ldattach will also clamp to MAXPHYS, but not until after
+	 * ld_virtio_alloc_reqs is done, so that doesn't help.
+	 */
+	ld->sc_maxxfer = MIN(MAXPHYS, sc->sc_size_max * sc->sc_seg_max);
+
 	if (features & VIRTIO_BLK_F_GEOMETRY) {
 		ld->sc_ncylinders = virtio_read_device_config_2(vsc,
 					VIRTIO_BLK_CONFIG_GEOMETRY_C);
@@ -410,6 +427,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 		return r;
 	}
 
+	KASSERT(vr->vr_payload->dm_nsegs <= sc->sc_seg_max);
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
 	    VIRTIO_BLK_CTRL_SEGMENTS);
 	if (r != 0) {
