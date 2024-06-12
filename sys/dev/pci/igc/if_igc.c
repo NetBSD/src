@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.13 2024/02/21 12:39:39 msaitoh Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.14 2024/06/12 06:21:37 rin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.13 2024/02/21 12:39:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.14 2024/06/12 06:21:37 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -2806,7 +2806,7 @@ igc_intr(void *arg)
 
 	/* Definitely not our interrupt. */
 	if (reg_icr == 0x0) {
-		DPRINTF(MISC, "not for me");
+		DPRINTF(MISC, "not for me\n");
 		return 0;
 	}
 
