@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2011 2024/06/11 17:21:58 riastradh Exp $
+#	$NetBSD: 3RDPARTY,v 1.2012 2024/06/12 02:26:13 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1749,6 +1749,9 @@ Mailing List:	mailto:devicetree@vger.kernel.org
 Responsible:	jmcneill
 License:	GPLv2 and dual GPLv2/X11 license
 Location:	sys/external/gpl2/dts
+Notes:
+sys/external/gpl2/dts/dts2netbsd should be used to create directories to import
+Not all DTS files are presently sourced from kernel.org.
 
 Package:	iscsi
 Version:	4.12.4
