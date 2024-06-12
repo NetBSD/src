@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.13 2024/06/10 19:54:24 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.14 2024/06/12 19:12:44 riastradh Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -139,7 +139,7 @@ struct vdsk_softc {
 
 	struct scsipi_adapter sc_adapter;
 	struct scsipi_channel sc_channel;
-  
+
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
@@ -248,7 +248,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
 
-	printf(": ivec 0x%llx, 0x%llx", 
+	printf(": ivec 0x%llx, 0x%llx",
 	       (long long unsigned int)ca->ca_tx_ino,
 	       (long long unsigned int)ca->ca_rx_ino);
 
@@ -331,7 +331,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
 		panic("pmap_extract failed %lx\n", va);
 #if OPENBSD_BUSDMA
-	err = hv_ldc_tx_qconf(lc->lc_id, 
+	err = hv_ldc_tx_qconf(lc->lc_id,
 	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
 #else
         err = hv_ldc_tx_qconf(lc->lc_id, pa, lc->lc_txq->lq_nentries);
@@ -423,10 +423,10 @@ vdsk_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	switch (req) {
 		case ADAPTER_REQ_RUN_XFER:
 			vdsk_scsi_cmd(sc, xs);
-			break;  
+			break;
 		case ADAPTER_REQ_GROW_RESOURCES:
-		case ADAPTER_REQ_SET_XFER_MODE: 
-			/* Ignored */  
+		case ADAPTER_REQ_SET_XFER_MODE:
+			/* Ignored */
 			break;
 		default:
 			panic("req unhandled: %x", req);
@@ -1050,7 +1050,7 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case SCSI_REPORT_LUNS:
 			vdsk_scsi_report_luns(sc, xs);
 			return;
-			
+
 		case READ_DISCINFO:
 			vdsk_scsi_read_discinfo(sc, xs);
 			return;
@@ -1058,7 +1058,7 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case READ_TRACKINFO:
 			vdsk_scsi_read_trackinfo(sc, xs);
 			return;
-			
+
 		case SCSI_TEST_UNIT_READY:
 		case START_STOP:
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
@@ -1073,7 +1073,7 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			return;
 
 		default:
-			panic("%s unhandled cmd 0x%02x\n", 
+			panic("%s unhandled cmd 0x%02x\n",
 			      __func__, xs->cmd->opcode);
 	}
 
@@ -1138,7 +1138,7 @@ vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			break;
 
 		default:
-			panic("%s  unhandled cmd opcode 0x%x", 
+			panic("%s  unhandled cmd opcode 0x%x",
 			      __func__, xs->cmd->opcode);
 	}
 
@@ -1246,8 +1246,8 @@ vdsk_complete_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs, int desc)
 	xs->resid = xs->datalen -
 		sc->sc_vd->vd_desc[desc].size;
 
-	/* 
-	 * scsi_done() called by vdsk_scsi_done() requires 
+	/*
+	 * scsi_done() called by vdsk_scsi_done() requires
 	 * the kernel to be locked
 	 */
 	KERNEL_LOCK(1, curlwp);
@@ -1358,7 +1358,7 @@ vdsk_scsi_read_discinfo(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 	bzero(&read_discinfo_data, sizeof(read_discinfo_data));
 
 	bcopy(&read_discinfo_data, xs->data, MIN(sizeof(read_discinfo_data), xs->datalen));
-	
+
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
@@ -1371,7 +1371,7 @@ vdsk_scsi_read_trackinfo(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 	bzero(&read_trackinfo_data, sizeof(read_trackinfo_data));
 
 	bcopy(&read_trackinfo_data, xs->data, MIN(sizeof(read_trackinfo_data), xs->datalen));
-	
+
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
