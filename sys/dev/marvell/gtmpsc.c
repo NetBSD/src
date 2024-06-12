@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.48 2022/11/02 20:38:22 andvar Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.49 2024/06/12 09:51:27 andvar Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.48 2022/11/02 20:38:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.49 2024/06/12 09:51:27 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -118,8 +118,8 @@ STATIC int  gtmpscparam(struct tty *, struct termios *);
 STATIC void gtmpsc_shutdownhook(void *);
 
 STATIC uint32_t cflag2mpcr(tcflag_t);
-STATIC __inline void gtmpsc_intr_rx(struct gtmpsc_softc *);
-STATIC __inline void gtmpsc_intr_tx(struct gtmpsc_softc *);
+static __inline void gtmpsc_intr_rx(struct gtmpsc_softc *);
+static __inline void gtmpsc_intr_tx(struct gtmpsc_softc *);
 STATIC void gtmpsc_write(struct gtmpsc_softc *);
 STATIC void gtmpsc_txflush(gtmpsc_softc_t *);
 STATIC void gtmpsc_rxdesc_init(struct gtmpsc_softc *);
@@ -879,7 +879,7 @@ cflag2mpcr(tcflag_t cflag)
 	return mpcr;
 }
 
-STATIC void
+static __inline void
 gtmpsc_intr_rx(struct gtmpsc_softc *sc)
 {
 	gtmpsc_pollrx_t *vrxp;
@@ -943,7 +943,7 @@ gtmpsc_intr_rx(struct gtmpsc_softc *sc)
 	}
 }
 
-STATIC __inline void
+static __inline void
 gtmpsc_intr_tx(struct gtmpsc_softc *sc)
 {
 	gtmpsc_polltx_t *vtxp;
