@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.20 2024/02/02 22:33:42 andvar Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.21 2024/06/12 20:03:56 andvar Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.20 2024/02/02 22:33:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.21 2024/06/12 20:03:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -2010,10 +2010,10 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 		    MVXORE_XEXNDPR(sc, chan)));
 		printf("  CurrentDescPtr  : 0x%08x\n",
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    MVXORE_XEXCDPR(chan)));
+		    MVXORE_XEXCDPR(sc, chan)));
 	}
 	printf("  ByteCnt         : 0x%08x\n",
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXBCR(chan)));
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXBCR(sc, chan)));
 
 	if (opmode == MVXORE_XEXCR_OM_ECC ||
 	    opmode == MVXORE_XEXCR_OM_MEMINIT) {
