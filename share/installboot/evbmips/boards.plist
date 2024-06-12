@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.1 2020/06/21 17:15:51 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.2 2024/06/12 02:27:42 gutteridge Exp $ -->
 <!--
   Copyright (c) 2020 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -30,7 +30,7 @@
 <plist>
 <dict>
 	<!--
-	  -- ingenic boards
+	  ingenic boards
 	  -->
 	<key>img,ci20</key>
 	<dict>

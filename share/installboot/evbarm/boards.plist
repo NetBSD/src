@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.9 2020/06/21 19:39:11 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.10 2024/06/12 02:27:41 gutteridge Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -30,7 +30,7 @@
 <plist>
 <dict>
 	<!--
-	  -- altera boards
+	  altera boards
 	  -->
 	<key>terasic,de0-atlas</key>
 	<dict>
@@ -41,7 +41,7 @@
 	</dict>
 
 	<!--
-	  -- amlogic boards
+	  amlogic boards
 	  -->
 	<key>hardkernel,odroid-c2</key>
 	<dict>
@@ -59,7 +59,7 @@
 	</dict>
 
 	<!--
-	  -- exynos boards
+	  exynos boards
 	  -->
 	<key>hardkernel,odroid-xu3</key>
 	<dict>
@@ -70,7 +70,7 @@
 	</dict>
 
 	<!--
-	  -- rockchip boards
+	  rockchip boards
 	  -->
 	<key>pine64,rock64</key>
 	<dict>
@@ -102,7 +102,7 @@
 	</dict>
 
 	<!--
-	 -- mediatek boards
+	 mediatek boards
 	 -->
 	<key>bananapi,bpi-r2</key>
 	<dict>
@@ -113,7 +113,7 @@
 	</dict>
 
 	<!--
-	  -- nvidia boards
+	  nvidia boards
 	  -->
 	<key>nvidia,jetson-tk1</key>
 	<dict>
@@ -145,7 +145,7 @@
 	</dict>
 
 	<!--
-	  -- omap boards
+	  omap boards
 	  -->
 	<key>ti,omap3-beagle</key>
 	<dict>
@@ -184,7 +184,7 @@
 	</dict>
 
 	<!--
-	  -- sunxi boards
+	  sunxi boards
 	  -->
 	<!-- Banana Pi-branded board "compatible" strings are a mess.
 	     We will just keep them all together here.  -->
@@ -487,7 +487,7 @@
 	</dict>
 
 	<!--
-	  -- xilinx boards
+	  xilinx boards
 	  -->
 	<key>digilent,zynq-zybo</key>
 	<dict>
