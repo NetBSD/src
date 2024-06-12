@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.10 2024/06/12 02:27:41 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.11 2024/06/12 02:31:48 gutteridge Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -72,6 +72,13 @@
 	<!--
 	  rockchip boards
 	  -->
+	<key>friendlyarm,nanopi-r2s</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyElec NanoPi R2S</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-r2s</string>
+	</dict>
 	<key>pine64,rock64</key>
 	<dict>
 		<key>description</key>
@@ -92,6 +99,13 @@
 		<string>Pine64 Pinebook Pro</string>
 		<key>u-boot-pkg</key>
 		<string>pinebook-pro</string>
+	</dict>
+	<key>pine64,pinecube</key>
+	<dict>
+		<key>description</key>
+		<string>PineCube IP Camera</string>
+		<key>u-boot-pkg</key>
+		<string>pinecube</string>
 	</dict>
 	<key>asus,rk3288-tinker</key>
 	<dict>
@@ -167,6 +181,13 @@
 		<string>TI AM335x BeagleBone Black</string>
 		<key>u-boot-pkg</key>
 		<string>beagleboneblack</string>
+	</dict>
+	<key>ti,am335x-bone-green</key>
+	<dict>
+		<key>description</key>
+		<string>TI AM335x BeagleBone Green</string>
+		<key>u-boot-pkg</key>
+		<string>beaglebonegreen</string>
 	</dict>
 	<key>ti,omap4-panda</key>
 	<dict>
