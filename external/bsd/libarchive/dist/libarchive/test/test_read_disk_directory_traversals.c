@@ -1607,8 +1607,9 @@ test_parent(void)
 	int file_count;
 	int match_count;
 	int r;
-#if defined(O_PATH) || defined(O_SEARCH) || \
+#if defined(O_PATH) || (defined(O_SEARCH) && !defined(__NetBSD__)) || \
  (defined(__FreeBSD__) && defined(O_EXEC))
+#define IGNORE_TRAVERSALS_TEST4
 	const char *ignore_traversals_test4;
 
 	ignore_traversals_test4 = getenv("IGNORE_TRAVERSALS_TEST4");
@@ -1787,8 +1788,7 @@ test_parent(void)
 	archive_entry_clear(ae);
 	r = archive_read_next_header2(a, ae);
 	if (r == ARCHIVE_FAILED) {
-#if defined(O_PATH) || defined(O_SEARCH) || \
- (defined(__FreeBSD__) && defined(O_EXEC))
+#ifdef IGNORE_TRAVERSALS_TEST4
 		if (ignore_traversals_test4 == NULL)
 			assertEqualIntA(a, ARCHIVE_OK, r);
 #endif
