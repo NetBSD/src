@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.103 2023/02/25 00:35:28 riastradh Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.104 2024/06/13 14:47:54 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.103 2023/02/25 00:35:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.104 2024/06/13 14:47:54 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1136,18 +1136,20 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	case XBDIP_NATIVE:
 		reqn = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_n,
 		    xbdi->xbdi_ring.ring_n.req_cons);
-		req->handle = reqn->handle;
-		req->sector_number = reqn->sector_number;
 		if (reqn->operation == BLKIF_OP_INDIRECT) {
 			rinn = (blkif_request_indirect_t *)reqn;
 			req->operation = rinn->indirect_op;
-			req->nr_segments = (uint8_t)rinn->nr_segments;
-			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
+			req->handle = rinn->handle;
+			if (rinn->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
 				goto bad_nr_segments;
+			req->nr_segments = (uint8_t)rinn->nr_segments;
+			req->sector_number = rinn->sector_number;
 			xbdi->xbdi_in_gntref = rinn->indirect_grefs[0];
 			/* first_sect and segment grefs fetched later */
 		} else {
+			req->handle = reqn->handle;
 			req->nr_segments = reqn->nr_segments;
+			req->sector_number = reqn->sector_number;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST)
 				goto bad_nr_segments;
 			for (i = 0; i < req->nr_segments; i++)
@@ -1158,18 +1160,20 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	case XBDIP_32:
 		req32 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_32,
 		    xbdi->xbdi_ring.ring_n.req_cons);
-		req->handle = req32->handle;
-		req->sector_number = req32->sector_number;
 		if (req32->operation == BLKIF_OP_INDIRECT) {
 			rin32 = (blkif_x86_32_request_indirect_t *)req32;
 			req->operation = rin32->indirect_op;
-			req->nr_segments = (uint8_t)rin32->nr_segments;
-			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
+			req->handle = rin32->handle;
+			if (rin32->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
 				goto bad_nr_segments;
+			req->nr_segments = (uint8_t)rin32->nr_segments;
+			req->sector_number = rin32->sector_number;
 			xbdi->xbdi_in_gntref = rin32->indirect_grefs[0];
 			/* first_sect and segment grefs fetched later */
 		} else {
+			req->handle = req32->handle;
 			req->nr_segments = req32->nr_segments;
+			req->sector_number = req32->sector_number;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST)
 				goto bad_nr_segments;
 			for (i = 0; i < req->nr_segments; i++)
@@ -1180,17 +1184,20 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj __unused)
 	case XBDIP_64:
 		req64 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_64,
 		    xbdi->xbdi_ring.ring_n.req_cons);
-		req->handle = req64->handle;
-		req->sector_number = req64->sector_number;
 		if (req64->operation == BLKIF_OP_INDIRECT) {
 			rin64 = (blkif_x86_64_request_indirect_t *)req64;
-			req->nr_segments = (uint8_t)rin64->nr_segments;
-			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
+			req->operation = rin64->indirect_op;
+			req->handle = rin64->handle;
+			if (rin64->nr_segments > VBD_MAX_INDIRECT_SEGMENTS)
 				goto bad_nr_segments;
+			req->nr_segments = (uint8_t)rin64->nr_segments;
+			req->sector_number = rin64->sector_number;
 			xbdi->xbdi_in_gntref = rin64->indirect_grefs[0];
 			/* first_sect and segment grefs fetched later */
 		} else {
+			req->handle = req64->handle;
 			req->nr_segments = req64->nr_segments;
+			req->sector_number = req64->sector_number;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST)
 				goto bad_nr_segments;
 			for (i = 0; i < req->nr_segments; i++)
@@ -1268,6 +1275,8 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 		gop.dest.offset = ma & PAGE_MASK;
 		gop.dest.domid = DOMID_SELF;
 		gop.dest.u.gmfn = ma >> PAGE_SHIFT;
+
+		KASSERT(gop.dest.offset + gop.len <= PAGE_SIZE);
 
 		if (HYPERVISOR_grant_table_op(GNTTABOP_copy, &gop, 1) != 0) {
 			printf("%s: GNTTABOP_copy failed\n", xbdi->xbdi_name);
