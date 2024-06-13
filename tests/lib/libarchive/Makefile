@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2024/06/10 10:51:35 kre Exp $
+# $NetBSD: Makefile,v 1.12 2024/06/13 21:03:33 martin Exp $
 
 NOMAN=
 
@@ -319,6 +319,8 @@ test_compat_lz4_B7.tar.lz4.uu  \
 test_compat_lz4_B7BD.tar.lz4.uu  \
 test_compat_lzip_1.tlz.uu  \
 test_compat_lzip_2.tlz.uu  \
+test_compat_lzip_3.lz.uu  \
+test_compat_lzip_4.tlz.uu  \
 test_compat_lzma_1.tlz.uu  \
 test_compat_lzma_2.tlz.uu  \
 test_compat_lzma_3.tlz.uu  \
@@ -334,6 +336,7 @@ test_compat_solaris_pax_sparse_2.pax.Z.uu  \
 test_compat_solaris_tar_acl.tar.uu  \
 test_compat_star_acl_nfs4.tar.uu  \
 test_compat_star_acl_posix1e.tar.uu  \
+test_compat_tar_directory_1.tar.uu  \
 test_compat_tar_hardlink_1.tar.uu  \
 test_compat_uudecode_large.tar.Z.uu  \
 test_compat_xz_1.txz.uu  \
@@ -391,8 +394,11 @@ test_read_format_7zip_bzip2.7z.uu  \
 test_read_format_7zip_copy.7z.uu  \
 test_read_format_7zip_copy_2.7z.uu  \
 test_read_format_7zip_deflate.7z.uu  \
+test_read_format_7zip_deflate_arm64.7z.uu  \
 test_read_format_7zip_delta_lzma1.7z.uu  \
 test_read_format_7zip_delta_lzma2.7z.uu  \
+test_read_format_7zip_delta4_lzma1.7z.uu  \
+test_read_format_7zip_delta4_lzma2.7z.uu  \
 test_read_format_7zip_empty_archive.7z.uu  \
 test_read_format_7zip_empty_file.7z.uu  \
 test_read_format_7zip_encryption.7z.uu  \
@@ -401,11 +407,13 @@ test_read_format_7zip_encryption_partially.7z.uu  \
 test_read_format_7zip_lzma1.7z.uu  \
 test_read_format_7zip_lzma1_2.7z.uu  \
 test_read_format_7zip_lzma1_lzma2.7z.uu  \
-test_read_format_7zip_lzma2.7z.uu  \
+test_read_format_7zip_lzma2.7z.uu \
+test_read_format_7zip_lzma2_arm.7z.uu \
 test_read_format_7zip_malformed.7z.uu  \
 test_read_format_7zip_malformed2.7z.uu  \
 test_read_format_7zip_ppmd.7z.uu  \
 test_read_format_7zip_symbolic_name.7z.uu  \
+test_read_format_7zip_win_attrib.7z.uu \
 test_read_format_ar.ar.uu  \
 test_read_format_cab_1.cab.uu  \
 test_read_format_cab_2.cab.uu  \
@@ -461,8 +469,15 @@ test_read_format_mtree_nomagic3.mtree.uu  \
 test_read_format_mtree_noprint.mtree.uu  \
 test_read_format_rar.rar.uu  \
 test_read_format_rar5_arm.rar.uu  \
+test_read_format_rar5_arm_filter_on_window_boundary.rar.uu \
+test_read_format_rar5_bad_window_sz_in_mltarc_file.rar.uu \
 test_read_format_rar5_blake2.rar.uu  \
+test_read_format_rar5_block_size_is_too_small.rar.uu \
 test_read_format_rar5_compressed.rar.uu  \
+test_read_format_rar5_decode_number_out_of_bounds_read.rar.uu \
+test_read_format_rar5_different_solid_window_size.rar.uu \
+test_read_format_rar5_different_window_size.rar.uu \
+test_read_format_rar5_different_winsize_on_merge.rar.uu \
 test_read_format_rar5_distance_overflow.rar.uu  \
 test_read_format_rar5_extra_field_version.rar.uu  \
 test_read_format_rar5_fileattr.rar.uu  \
@@ -487,12 +502,14 @@ test_read_format_rar5_multiple_files_solid.rar.uu  \
 test_read_format_rar5_nonempty_dir_stream.rar.uu  \
 test_read_format_rar5_owner.rar.uu  \
 test_read_format_rar5_readtables_overflow.rar.uu  \
+test_read_format_rar5_sfx.exe.uu \
 test_read_format_rar5_solid.rar.uu  \
 test_read_format_rar5_stored.rar.uu  \
 test_read_format_rar5_stored_manyfiles.rar.uu  \
 test_read_format_rar5_symlink.rar.uu  \
 test_read_format_rar5_truncated_huff.rar.uu  \
 test_read_format_rar5_win32.rar.uu  \
+test_read_format_rar5_window_buf_and_size_desync.rar.uu \
 test_read_format_rar_binary_data.rar.uu  \
 test_read_format_rar_compress_best.rar.uu  \
 test_read_format_rar_compress_normal.rar.uu  \
@@ -508,6 +525,7 @@ test_read_format_rar_multivolume.part0004.rar.uu  \
 test_read_format_rar_noeof.rar.uu  \
 test_read_format_rar_ppmd_lzss_conversion.rar.uu  \
 test_read_format_rar_ppmd_use_after_free.rar.uu  \
+test_read_format_rar_ppmd_use_after_free2.rar.uu \
 test_read_format_rar_sfx.exe.uu  \
 test_read_format_rar_subblock.rar.uu  \
 test_read_format_rar_unicode.rar.uu  \
@@ -527,6 +545,8 @@ test_read_format_ustar_filename_koi8r.tar.Z.uu  \
 test_read_format_warc.warc.uu  \
 test_read_format_zip.zip.uu  \
 test_read_format_zip_7075_utf8_paths.zip.uu  \
+test_read_format_zip_7z_deflate.zip.uu \
+test_read_format_zip_7z_lzma.zip.uu \
 test_read_format_zip_bz2_hang.zip.uu  \
 test_read_format_zip_bzip2.zipx.uu  \
 test_read_format_zip_bzip2_multi.zipx.uu  \
@@ -548,6 +568,7 @@ test_read_format_zip_length_at_end.zip.uu  \
 test_read_format_zip_lzma.zipx.uu  \
 test_read_format_zip_lzma_alone_leak.zipx.uu  \
 test_read_format_zip_lzma_multi.zipx.uu  \
+test_read_format_zip_lzma_stream_end.zipx.uu \
 test_read_format_zip_mac_metadata.zip.uu  \
 test_read_format_zip_malformed1.zip.uu  \
 test_read_format_zip_msdos.zip.uu  \
