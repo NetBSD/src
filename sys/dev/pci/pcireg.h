@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.170 2024/04/19 21:24:00 andvar Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.171 2024/06/14 03:15:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -135,7 +135,7 @@ typedef u_int8_t pci_interface_t;
 typedef u_int8_t pci_revision_t;
 
 #define	PCI_CLASS_SHIFT			24
-#define	PCI_CLASS_MASK			0xff
+#define	PCI_CLASS_MASK			0xffU
 #define	PCI_CLASS(cr) \
 	    (((cr) >> PCI_CLASS_SHIFT) & PCI_CLASS_MASK)
 
