@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_obj_wirepages.9,v 1.1 2024/06/14 13:19:35 riastradh Exp $
+.\"	$NetBSD: uvm_obj_wirepages.9,v 1.2 2024/06/14 14:36:32 uwe Exp $
 .\"
 .\" Copyright (c) 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,9 +53,9 @@ the pages in the range will not be paged out until unwired with
 If
 .Fa list
 is nonnull, it is initialized to a tailq of pages linked through the
-.Dv pageq.queue
+.Fa pageq.queue
 member of
-.Dt struct vm_page ,
+.Vt struct vm_page ,
 for the convenience of the caller.
 The caller is not transferred ownership of any part of
 .Fa list
