@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.189 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.189 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.190 2024/06/14 18:44:18 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1404,6 +1404,7 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 	u_int8_t *data;
 	int len = 16*1024;
 	int rc;
+	int retries;
 	struct scsi_repsuppopcode cmd;
 	
 	/* refrain from asking for supported opcodes */
@@ -1420,7 +1421,6 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 	 *   enumerate all codes
 	 *     if timeout exists insert maximum into opcode table
 	 */
-
 	data = malloc(len, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	memset(&cmd, 0, sizeof(cmd));
@@ -1429,9 +1429,22 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 	cmd.repoption = RSOC_RCTD|RSOC_ALL;
 	_lto4b(len, cmd.alloclen);
 	
-	rc = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-			    (void *)data, len, 0, 1000, NULL,
-			    XS_CTL_DATA_IN|XS_CTL_SILENT);
+	/* loop to skip any UNIT ATTENTIONS at this point */
+	retries = 3;
+	do {
+		rc = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+				    (void *)data, len, 0, 60000, NULL,
+				    XS_CTL_DATA_IN|XS_CTL_SILENT);
+#ifdef SCSIPI_DEBUG
+		if (rc != 0) {
+			SC_DEBUG(periph, SCSIPI_DB3,
+				("SCSI_MAINTENANCE_IN"
+			 	"[RSOC_REPORT_SUPPORTED_OPCODES] command"
+				" failed: rc=%d, retries=%d\n",
+				rc, retries));
+		}
+#endif
+        } while (rc == EIO && retries-- > 0);
 
 	if (rc == 0) {
 		int count;
