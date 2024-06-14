@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.469 2024/01/07 00:38:18 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.470 2024/06/14 13:19:35 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -66,7 +66,7 @@ MAN+=	secmodel_suser.9 \
 	ubc.9 ucas.9 ucom.9 ufetch.9 uiomove.9 \
 	usbd_status.9 usbdi.9 usbnet.9 \
 	userret.9 ustore.9 \
-	uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
+	uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 uvm_obj_wirepages.9 \
 	vattr.9 veriexec.9 vcons.9 versioningsyscalls.9 \
 	vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 vmem.9  \
@@ -1014,6 +1014,7 @@ MLINKS+=uvm_map.9 uvm_unmap.9 uvm_map.9 uvm_map_pageable.9 \
 	uvm_map.9 uvmspace_exec.9 uvm_map.9 uvmspace_fork.9 \
 	uvm_map.9 uvmspace_free.9 uvm_map.9 uvmspace_share.9 \
 	uvm_map.9 uvmspace_unshare.9
+MLINKS+=uvm_obj_wirepages.9 uvm_obj_unwirepages.9
 
 MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_space_map.9 \
