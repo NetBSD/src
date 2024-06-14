@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2457 2024/03/07 22:15:52 christos Exp $
+#	$NetBSD: mi,v 1.2458 2024/06/14 13:19:35 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -13020,6 +13020,8 @@
 ./usr/share/man/cat9/uvm_map_pageable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_map_protect.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_meter.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_obj_unwirepages.0	comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_obj_wirepages.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_page_physload.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_pagealloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_pagefree.0		comp-sys-catman		.cat
@@ -21392,6 +21394,8 @@
 ./usr/share/man/html9/uvm_map_pageable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_map_protect.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_meter.html		comp-sys-htmlman	html
+./usr/share/man/html9/uvm_obj_unwirepages.html	comp-sys-htmlman	html
+./usr/share/man/html9/uvm_obj_wirepages.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_page_physload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_pagealloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_pagefree.html		comp-sys-htmlman	html
@@ -29987,6 +29991,8 @@
 ./usr/share/man/man9/uvm_map_pageable.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_map_protect.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_meter.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_obj_unwirepages.9	comp-sys-man		.man
+./usr/share/man/man9/uvm_obj_wirepages.9	comp-sys-man		.man
 ./usr/share/man/man9/uvm_page_physload.9	comp-sys-man		.man
 ./usr/share/man/man9/uvm_pagealloc.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_pagefree.9		comp-sys-man		.man
