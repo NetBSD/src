@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.338 2024/06/02 15:31:26 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.339 2024/06/15 20:02:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1018,6 +1018,7 @@ FStr Var_Value(GNode *, const char *) MAKE_ATTR_USE;
 const char *GNode_ValueDirect(GNode *, const char *) MAKE_ATTR_USE;
 FStr Var_Parse(const char **, GNode *, VarEvalMode);
 char *Var_Subst(const char *, GNode *, VarEvalMode);
+char *Var_SubstInTarget(const char *, GNode *);
 void Var_Expand(FStr *, GNode *, VarEvalMode);
 void Var_Stats(void);
 void Var_Dump(GNode *);
@@ -1032,8 +1033,6 @@ void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
 void Global_Set_ReadOnly(const char *, const char *);
 
-void EvalStack_Push(const char *, const char *, const char *);
-void EvalStack_Pop(void);
 const char *EvalStack_Details(void);
 
 /* util.c */
