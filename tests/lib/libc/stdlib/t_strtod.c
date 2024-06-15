@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.36 2024/05/06 18:39:36 riastradh Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.37 2024/06/15 12:20:22 rillig Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,17 +32,17 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.36 2024/05/06 18:39:36 riastradh Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.37 2024/06/15 12:20:22 rillig Exp $");
 
 #include <errno.h>
+#include <fenv.h>
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <atf-c.h>
-
-#include <fenv.h>
 
 static const char * const inf_strings[] =
     { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
@@ -70,6 +70,38 @@ ATF_TC_BODY(strtod_basic, tc)
 		    i, buf, d, errno);
 		ATF_CHECK_EQ_MSG(errno, 0, "i=%zu buf=\"%s\" d=%g errno=%d",
 		    i, buf, d, errno);
+	}
+}
+
+ATF_TC(strtold_basic);
+ATF_TC_HEAD(strtold_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Some examples of strtold(3)");
+}
+
+ATF_TC_BODY(strtold_basic, tc)
+{
+	static const struct {
+		const char *str;
+		long double val;
+	} testcases[] = {
+		{ "0x0p0", 0.0L },
+		{ "0x1.234p0", 0x1234 / 4096.0L },
+		{ "0x1.234p0", 0x1234 / 4096.0L },
+#if FLT_RADIX == 2 && LDBL_MAX_EXP == 16384 && LDBL_MANT_DIG == 64
+		{ "2.16", 0x8.a3d70a3d70a3d71p-2L },
+#endif
+	};
+
+	for (size_t i = 0, n = __arraycount(testcases); i < n; i++) {
+		char *end;
+		errno = 0;
+		long double val = strtold(testcases[i].str, &end);
+
+		ATF_CHECK_MSG(
+		    errno == 0 && *end == '\0' && val == testcases[i].val,
+		    "'%s' want %La have %La errno %d end '%s'",
+		    testcases[i].str, testcases[i].val, val, errno, end);
 	}
 }
 
@@ -306,6 +338,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strtod_basic);
+	ATF_TP_ADD_TC(tp, strtold_basic);
 	ATF_TP_ADD_TC(tp, strtod_hex);
 	ATF_TP_ADD_TC(tp, strtod_inf);
 	ATF_TP_ADD_TC(tp, strtof_inf);
