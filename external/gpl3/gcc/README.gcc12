@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.21 2024/06/09 19:35:25 mrg Exp $
+$NetBSD: README.gcc12,v 1.22 2024/06/15 20:36:38 mrg Exp $
 
 
 new stuff:
@@ -31,26 +31,26 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	y[17]	y		y	y	n
-aarch64eb	y	y	y	y	y[17]	y		y	y	n
-alpha		y	y	y	y	b	y		y	y	?
-earmv4		y	b	?	y	?	?		?	?	?
-earmv4eb	y	b	?	y	?	?		?	?	?
-earmv5		y	y	y	y	b	y		y	y	?
-earmv5eb	y	y	y	y	b	y		y	y	?
-earmv5hf	y	b	?	y	?	?		?	?	?
-earmv5hfeb	y	b	?	y	?	?		?	?	?
-earmv6		y	b	?	y	?	?		?	?	?
-earmv6eb	y	b	?	y	?	?		?	?	?
-earmv6hf	y	y	y	y	b	y		y	y	?
-earmv6hfeb	y	y	y	y	b	y		y	y	?
-earmv7		y	b	y	y	?	?		?	?	?
-earmv7eb	y	b	?	y	?	?		?	?	?
-earmv7hf	y	y	y	y	b	y		y	y	?
-earmv7hfeb	y	y	y	y	b	y		y	y	?
+aarch64		y	y	y	y	y[17]	y		y	y	y
+aarch64eb	y	y	y	y	y[17]	y		y	y	y
+alpha		y	y	y	y	b	y		y	y	y
+earmv4		y	b	?	y	?	?		?	?	y
+earmv4eb	y	b	?	y	?	?		?	?	y
+earmv5		y	y	y	y	b	y		y	y	y
+earmv5eb	y	y	y	y	b	y		y	y	y
+earmv5hf	y	b	?	y	?	?		?	?	y
+earmv5hfeb	y	b	?	y	?	?		?	?	y
+earmv6		y	b	?	y	?	?		?	?	y
+earmv6eb	y	b	?	y	?	?		?	?	y
+earmv6hf	y	y	y	y	b	y		y	y	y
+earmv6hfeb	y	y	y	y	b	y		y	y	y
+earmv7		y	b	y	y	?	?		?	?	y
+earmv7eb	y	b	?	y	?	?		?	?	y
+earmv7hf	y	y	y	y	b	y		y	y	y
+earmv7hfeb	y	y	y	y	b	y		y	y	y
 hppa		y	y	y	y	?	y		?	?	?
-i386		y	y	y	y	y[18]	y		y	n[19]	n
-ia64		y	b	y	y	y	y		y[3]	n	n
+i386		y	y	y	y	y[18]	y		y	n[19]	y
+ia64		y	b	y	y	y	y		y[3]	n	y
 m68000		y	y	y	y	b	n		y[14]	?	?
 m68k		y	y	y	y	b	y		y[14]	y[14]	?
 mipseb		y	b	y	y	b	y		?	?	?
@@ -61,12 +61,12 @@ powerpc		y	y	y	y	y	b		?	?	?
 powerpc64	y	?	?	y	b	b		?	?	?
 sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
-sparc		y	y	y	y	n[21]	y		y	y	n
-sparc64		y	b	y	y	n[16]	y		y	?	n
+sparc		y	y	y	y	n[21]	y		y	y	y
+sparc64		y	b	y	y	n[16]	y		y	?	y
 vax		y	y	y	y	n[23]	n		n[24,25] ?	?
-x86_64		y	y	y	y	y[13]	y		y	y	n
-riscv32		y	y	y	y	b	y		n[2]	?	n
-riscv64		y	y	y	y	b	y		y	y	n
+x86_64		y	y	y	y	y[13]	y		y	y	y
+riscv32		y	y	y	y	b	y		n[2]	?	y
+riscv64		y	y	y	y	b	y		y	y	y
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
