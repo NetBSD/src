@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.120 2024/06/15 05:18:48 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.121 2024/06/15 06:07:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.120 2024/06/15 05:18:48 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.121 2024/06/15 06:07:14 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ STATIC int dowait(int, struct job *, struct job **);
 #define WSILENT 4
 STATIC int jobstatus(const struct job *, int);
 STATIC int waitproc(int, struct job *, int *);
-STATIC void cmdtxt(union node *);
+STATIC int cmdtxt(union node *, int);
 STATIC void cmdlist(union node *, int);
 STATIC void cmdputs(const char *);
 inline static void cmdputi(int);
@@ -1720,7 +1720,7 @@ commandtext(struct procstat *ps, union node *n)
 	else
 		len = sizeof(ps->cmd) / 10;
 	cmdnleft = len;
-	cmdtxt(n);
+	(void)cmdtxt(n, 1);
 	if (cmdnleft <= 0) {
 		char *p = ps->cmd + len - 4;
 		p[0] = '.';
@@ -1736,8 +1736,16 @@ commandtext(struct procstat *ps, union node *n)
 }
 
 
-STATIC void
-cmdtxt(union node *n)
+/*
+ * Generate a string describing tree node n & its descendants (recursive calls)
+ *
+ * Return true (non-zero) if the output is complete (ends with an operator)
+ * so no ';' need be added before the following command.  Return false (zero)
+ * if a ';' is needed to terminate the output if it is followed by something
+ * which is not an operator.
+ */
+STATIC int
+cmdtxt(union node *n, int top)
 {
 	union node *np;
 	struct nodelist *lp;
@@ -1745,111 +1753,120 @@ cmdtxt(union node *n)
 	int i;
 
 	if (n == NULL || cmdnleft <= 0)
-		return;
+		return 1;
 	switch (n->type) {
 	case NSEMI:
-		cmdtxt(n->nbinary.ch1);
-		cmdputs("; ");
-		cmdtxt(n->nbinary.ch2);
-		break;
+		if (!cmdtxt(n->nbinary.ch1, 0))
+			cmdputs(";");
+		cmdputs(" ");
+		return cmdtxt(n->nbinary.ch2, 0);
 	case NAND:
-		cmdtxt(n->nbinary.ch1);
+		(void)cmdtxt(n->nbinary.ch1, 0);
 		cmdputs(" && ");
-		cmdtxt(n->nbinary.ch2);
-		break;
+		return cmdtxt(n->nbinary.ch2, 0);
 	case NOR:
-		cmdtxt(n->nbinary.ch1);
+		(void) cmdtxt(n->nbinary.ch1, 0);
 		cmdputs(" || ");
-		cmdtxt(n->nbinary.ch2);
-		break;
+		return cmdtxt(n->nbinary.ch2, 0);
 	case NDNOT:
 		cmdputs("! ");
 		/* FALLTHROUGH */
 	case NNOT:
 		cmdputs("! ");
-		cmdtxt(n->nnot.com);
+		return cmdtxt(n->nnot.com, 0);
 		break;
 	case NPIPE:
 		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
-			cmdtxt(lp->n);
+			(void) cmdtxt(lp->n, 0);
 			if (lp->next)
 				cmdputs(" | ");
 		}
-		if (n->npipe.backgnd)
+		if (!top && n->npipe.backgnd) {
 			cmdputs(" &");
-		break;
+			return 1;
+		}
+		return 0;
 	case NSUBSHELL:
 		cmdputs("(");
-		cmdtxt(n->nredir.n);
+		(void) cmdtxt(n->nredir.n, 0);
 		cmdputs(")");
-		break;
+		return 0;
 	case NREDIR:
 	case NBACKGND:
-		cmdtxt(n->nredir.n);
-		break;
+		return cmdtxt(n->nredir.n, top);
 	case NIF:
 		cmdputs("if ");
-		cmdtxt(n->nif.test);
-		cmdputs("; then ");
-		cmdtxt(n->nif.ifpart);
+		if (!cmdtxt(n->nif.test, 0))
+			cmdputs(";");
+		cmdputs(" then ");
+		i = cmdtxt(n->nif.ifpart, 0);
 		if (n->nif.elsepart) {
-			cmdputs("; else ");
-			cmdtxt(n->nif.elsepart);
+			if (i == 0)
+				cmdputs(";");
+			cmdputs(" else ");
+			i = cmdtxt(n->nif.elsepart, 0);
 		}
-		cmdputs("; fi");
-		break;
+		if (i == 0)
+			cmdputs(";");
+		cmdputs(" fi");
+		return 0;
 	case NWHILE:
 		cmdputs("while ");
 		goto until;
 	case NUNTIL:
 		cmdputs("until ");
  until:
-		cmdtxt(n->nbinary.ch1);
-		cmdputs("; do ");
-		cmdtxt(n->nbinary.ch2);
-		cmdputs("; done");
-		break;
+		if (!cmdtxt(n->nbinary.ch1, 0))
+			cmdputs(";");
+		cmdputs(" do ");
+		if (!cmdtxt(n->nbinary.ch2, 0))
+			cmdputs(";");
+		cmdputs(" done");
+		return 0;
 	case NFOR:
 		cmdputs("for ");
 		cmdputs(n->nfor.var);
 		cmdputs(" in ");
 		cmdlist(n->nfor.args, 1);
 		cmdputs("; do ");
-		cmdtxt(n->nfor.body);
-		cmdputs("; done");
-		break;
+		if (!cmdtxt(n->nfor.body, 0))
+			cmdputs(";");
+		cmdputs(" done");
+		return 0;
 	case NCASE:
 		cmdputs("case ");
 		cmdputs(n->ncase.expr->narg.text);
 		cmdputs(" in ");
 		for (np = n->ncase.cases; np; np = np->nclist.next) {
-			cmdtxt(np->nclist.pattern);
+			(void) cmdtxt(np->nclist.pattern, 0);
 			cmdputs(") ");
-			cmdtxt(np->nclist.body);
+			(void) cmdtxt(np->nclist.body, 0);
 			switch (n->type) {	/* switch (not if) for later */
 			case NCLISTCONT:
-				cmdputs(";& ");
+				cmdputs(" ;& ");
 				break;
 			default:
-				cmdputs(";; ");
+				cmdputs(" ;; ");
 				break;
 			}
 		}
 		cmdputs("esac");
-		break;
+		return 0;
 	case NDEFUN:
 		cmdputs(n->narg.text);
 		cmdputs("() { ... }");
-		break;
+		return 0;
 	case NCMD:
 		cmdlist(n->ncmd.args, 1);
 		cmdlist(n->ncmd.redirect, 0);
-		if (n->ncmd.backgnd)
+		if (!top && n->ncmd.backgnd) {
 			cmdputs(" &");
-		break;
+			return 1;
+		}
+		return 0;
 	case NARG:
 		cmdputs(n->narg.text);
-		break;
+		return 0;
 	case NTO:
 		p = ">";  i = 1;  goto redir;
 	case NCLOBBER:
@@ -1874,17 +1891,18 @@ cmdtxt(union node *n)
 			else
 				cmdputi(n->ndup.dupfd);
 		} else {
-			cmdtxt(n->nfile.fname);
+			(void) cmdtxt(n->nfile.fname, 0);
 		}
-		break;
+		return 0;
 	case NHERE:
 	case NXHERE:
 		cmdputs("<<...");
-		break;
+		return 0;
 	default:
 		cmdputs("???");
-		break;
+		return 0;
 	}
+	return 0;
 }
 
 STATIC void
@@ -1893,7 +1911,7 @@ cmdlist(union node *np, int sep)
 	for (; np; np = np->narg.next) {
 		if (!sep)
 			cmdputs(" ");
-		cmdtxt(np);
+		(void) cmdtxt(np, 0);
 		if (sep && np->narg.next)
 			cmdputs(" ");
 	}
