@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1120 2024/06/15 20:02:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -132,7 +132,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1120 2024/06/15 20:02:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1121 2024/06/15 22:06:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -190,6 +190,12 @@ typedef struct Var {
 	 * See VAR_SET_READONLY.
 	 */
 	bool readOnly:1;
+
+	/*
+	 * The variable is read-only and immune to the .NOREADONLY special
+	 * target.  Any attempt to modify it results in an error.
+	 */
+	bool readOnlyLoud:1;
 
 	/*
 	 * The variable is currently being accessed by Var_Parse or Var_Subst.
@@ -393,6 +399,7 @@ VarNew(FStr name, const char *value,
 	var->shortLived = shortLived;
 	var->fromEnvironment = fromEnvironment;
 	var->readOnly = readOnly;
+	var->readOnlyLoud = false;
 	var->inUse = false;
 	var->exported = false;
 	var->reexport = false;
@@ -552,6 +559,12 @@ Var_Delete(GNode *scope, const char *varname)
 	}
 
 	v = he->value;
+	if (v->readOnlyLoud) {
+		Parse_Error(PARSE_FATAL,
+		    "Cannot delete \"%s\" as it is read-only",
+		    v->name.str);
+		return;
+	}
 	if (v->readOnly) {
 		DEBUG2(VAR, "%s: ignoring delete '%s' as it is read-only\n",
 		    scope->name, varname);
@@ -1025,6 +1038,12 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		}
 		v = VarAdd(name, val, scope, flags);
 	} else {
+		if (v->readOnlyLoud) {
+			Parse_Error(PARSE_FATAL,
+			    "Cannot overwrite \"%s\" as it is read-only",
+			    name);
+			return;
+		}
 		if (v->readOnly && !(flags & VAR_SET_READONLY)) {
 			DEBUG3(VAR,
 			    "%s: ignoring '%s = %s' as it is read-only\n",
@@ -1117,7 +1136,8 @@ Global_Delete(const char *name)
 void
 Global_Set_ReadOnly(const char *name, const char *value)
 {
-	Var_SetWithFlags(SCOPE_GLOBAL, name, value, VAR_SET_READONLY);
+	Var_SetWithFlags(SCOPE_GLOBAL, name, value, VAR_SET_NONE);
+	VarFind(name, SCOPE_GLOBAL, false)->readOnlyLoud = true;
 }
 
 /*
@@ -1135,6 +1155,10 @@ Var_Append(GNode *scope, const char *name, const char *val)
 
 	if (v == NULL) {
 		Var_SetWithFlags(scope, name, val, VAR_SET_NONE);
+	} else if (v->readOnlyLoud) {
+		Parse_Error(PARSE_FATAL,
+		    "Cannot append to \"%s\" as it is read-only", name);
+		return;
 	} else if (v->readOnly) {
 		DEBUG3(VAR, "%s: ignoring '%s += %s' as it is read-only\n",
 		    scope->name, name, val);
