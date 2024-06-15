@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.191 2023/12/25 04:52:38 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.191 2023/12/25 04:52:38 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.192 2024/06/15 05:18:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -574,9 +574,10 @@ evalsubshell(union node *n, int flags)
 		INTON;
 		redirect(n->nredir.redirect, REDIR_KEEP);
 		evaltree(n->nredir.n, flags | EV_EXIT);   /* never returns */
-	} else if (backgnd)
+	} else if (backgnd) {
+		jobstarted(jp);
 		exitstatus = 0;
-	else
+	} else
 		exitstatus = waitforjob(jp);
 	INTON;
 
@@ -744,8 +745,10 @@ evalpipe(union node *n)
 		exitstatus = waitforjob(jp);
 		CTRACE(DBG_EVAL, ("evalpipe:  job done exit status %d\n",
 		    exitstatus));
-	} else
+	} else {
+		jobstarted(jp);
 		exitstatus = 0;
+	}
 	INTON;
 }
 
@@ -1419,7 +1422,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		backcmd->fd = pip[0];
 		close(pip[1]);
 		backcmd->jp = jp;
-	}
+	} else
+		jobstarted(jp);
+
 	FORCEINTON;
 
  out:

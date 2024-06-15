@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.119 2024/01/30 19:05:07 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.120 2024/06/15 05:18:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.119 2024/01/30 19:05:07 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.120 2024/06/15 05:18:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1096,6 +1096,21 @@ anyjobs(void)
 	}
 
 	return 0;
+}
+
+/*
+ * Output the (new) POSIX required "[%d] %d" string whenever an
+ * async (ie: background) job is started in an interactive shell.
+ * Note that a subshell environment is not regarded as interactive.
+ */
+void
+jobstarted(struct job *jp)
+{
+	if (!iflag || !rootshell)
+		return;
+
+	outfmt(out2, "[%d] %ld\n", JNUM(jp),
+	    jp->pgrp != 0 ? (long)jp->pgrp : (long)jp->ps->pid);
 }
 
 /*
