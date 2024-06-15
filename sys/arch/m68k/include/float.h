@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.22 2023/12/31 04:20:40 dholland Exp $	*/
+/*	$NetBSD: float.h,v 1.23 2024/06/15 11:44:09 rillig Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
@@ -23,7 +23,7 @@
  * in particular and pp. 3-2 to 3-5 in general.
  *
  * If anyone needs to update this comment please make sure the copy in
- * m68k/float.h also gets updated.
+ * x86/include/float.h also gets updated.
  */
 
 #if defined(__LDBL_MANT_DIG__)
