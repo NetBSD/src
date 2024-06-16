@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2024/06/14 17:15:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2024/06/16 22:44:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.57 2024/06/14 17:15:45 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2024/06/16 22:44:01 kre Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: main.c,v 1.57 2024/06/14 17:15:45 rillig Exp $");
 #include "extern.h"
 #include "drvstats.h"
 
-static int     dellave;
+static double	dellave;
 
 kvm_t *kd;
 char	*memf = NULL;
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 	curmode->c_flags |= CF_INIT;
 	labels();
 
-	dellave = 0;
+	dellave = 0.0;
 
 	display(0);
 	if (!bflag) {
@@ -291,13 +291,13 @@ display(int signo)
 	if (curmode->c_flags & CF_LOADAV) {
 		j = 5.0*avenrun[0] + 0.5;
 		dellave -= avenrun[0];
-		if (dellave >= 0)
+		if (dellave >= 0.0)
 			c = '<';
 		else {
 			c = '>';
 			dellave = -dellave;
 		}
-		if (dellave < 1)
+		if (dellave < 0.1)
 			c = '|';
 		dellave = avenrun[0];
 		wmove(wload, 0, 0);
