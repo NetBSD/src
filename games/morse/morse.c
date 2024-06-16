@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.21 2024/06/16 18:00:59 rillig Exp $	*/
+/*	$NetBSD: morse.c,v 1.22 2024/06/16 18:09:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.21 2024/06/16 18:00:59 rillig Exp $");
+__RCSID("$NetBSD: morse.c,v 1.22 2024/06/16 18:09:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 		if (*argv)
 			do {
 				for (p = *argv; *p; ++p)
-					morse((int)*p);
+					morse((unsigned char)*p);
 				show("");
 			} while (*++argv);
 		else while ((ch = getchar()) != EOF)
