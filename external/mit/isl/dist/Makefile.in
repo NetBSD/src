@@ -1626,6 +1626,8 @@ all: $(BUILT_SOURCES) isl_config.h
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_Makefile.in:
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
