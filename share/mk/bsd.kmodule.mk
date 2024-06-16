@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.85 2024/05/06 08:43:37 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.86 2024/06/16 21:50:23 pgoyette Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -31,6 +31,7 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_MODULE -DSYSCTL_INCLUDE_DESCR
 CPPFLAGS+=	${${MKDTRACE:Uno} != "no" :? -DKDTRACE_HOOKS :}
+AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 CWARNFLAGS.clang+=	-Wno-error=constant-conversion
 
