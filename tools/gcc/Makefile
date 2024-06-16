@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2024/06/08 01:07:44 gutteridge Exp $
+#	$NetBSD: Makefile,v 1.113 2024/06/16 16:03:30 gutteridge Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -15,6 +15,12 @@ MKNATIVE=		${.CURDIR}/mknative-gcc.old
 # Defaults
 CC_FOR_BUILD=		${HOST_CXX:Q}
 MKNATIVE?=		${.CURDIR}/mknative-gcc
+
+# Force C++11 so builds succeed on hosts where this isn't the compiler
+# default, e.g., NetBSD 8.x with GCC 5.5.
+.if ${HAVE_GCC} > 10
+HOST_CXXFLAGS+=		-std=c++11
+.endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
