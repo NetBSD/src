@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1323 2024/06/15 13:26:31 wiz Exp $
+# $NetBSD: mi,v 1.1324 2024/06/16 18:40:58 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1721,6 +1721,7 @@
 ./usr/tests/games/Atffile				tests-games-tests	compattestfile,atf
 ./usr/tests/games/Kyuafile				tests-games-tests	kyua
 ./usr/tests/games/t_factor				tests-games-tests	compattestfile,atf
+./usr/tests/games/t_morse				tests-games-tests	compattestfile,atf
 ./usr/tests/include					tests-include-tests	compattestfile,atf
 ./usr/tests/include/Atffile				tests-include-tests	compattestfile,atf
 ./usr/tests/include/Kyuafile				tests-include-tests	compattestfile,atf,kyua
