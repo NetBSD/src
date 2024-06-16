@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.7 2024/06/16 13:03:48 christos Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.8 2024/06/16 16:11:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.7 2024/06/16 13:03:48 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.8 2024/06/16 16:11:17 christos Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -428,8 +428,7 @@ aesvia_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
 				break;
 			memcpy(cv, in + nbytes - 16, 16);
 			xor128(tmp, tmp, cv);
-			// XXX: is this right? (subtracting 16)
-			memcpy(out + nbytes - 16, tmp, 16);
+			memcpy(out + nbytes, tmp, 16);
 		}
 
 		xor128(tmp, tmp, iv0);
