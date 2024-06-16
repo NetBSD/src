@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.86 2024/03/14 16:43:00 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.87 2024/06/16 17:11:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.86 2024/03/14 16:43:00 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.87 2024/06/16 17:11:11 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -655,7 +655,6 @@ dwc_gmac_free_rx_ring(struct dwc_gmac_softc *sc, struct dwc_gmac_rx_ring *ring)
 	if (ring->r_desc == NULL)
 		return;
 
-
 	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		data = &ring->r_data[i];
 
@@ -700,7 +699,7 @@ dwc_gmac_alloc_tx_ring(struct dwc_gmac_softc *sc,
 		}
 		ring->t_desc[i].ddesc_next = htole32(
 		    ring->t_physaddr + sizeof(struct dwc_gmac_dev_dmadesc)
-		    *TX_NEXT(i));
+		    * TX_NEXT(i));
 	}
 
 	return 0;
@@ -1674,9 +1673,9 @@ static void
 dwc_dump_status(struct dwc_gmac_softc *sc)
 {
 	uint32_t status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-	     AWIN_GMAC_MAC_INTR);
+	    AWIN_GMAC_MAC_INTR);
 	uint32_t dma_status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-	     AWIN_GMAC_DMA_STATUS);
+	    AWIN_GMAC_DMA_STATUS);
 	char buf[200];
 
 	/* print interrupt state */
