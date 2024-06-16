@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.20 2023/06/01 04:08:36 mrg Exp $	*/
+/*	$NetBSD: morse.c,v 1.21 2024/06/16 18:00:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.20 2023/06/01 04:08:36 mrg Exp $");
+__RCSID("$NetBSD: morse.c,v 1.21 2024/06/16 18:00:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: morse.c,v 1.20 2023/06/01 04:08:36 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static const char
-	*const digit[] = {
+static const char digit[][6] = {
 	"-----",
 	".----",
 	"..---",
@@ -61,8 +60,9 @@ static const char
 	"--...",
 	"---..",
 	"----.",
-},
-	*const alph[] = {
+};
+
+static const char alph[][5] = {
 	".-",
 	"-...",
 	"-.-.",
@@ -93,7 +93,7 @@ static const char
 
 static const struct punc {
 	char c;
-	const char *morse;
+	const char morse[7];
 } other[] = {
 	{ '.', ".-.-.-" },
 	{ ',', "--..--" },
@@ -109,10 +109,9 @@ static const struct punc {
 	{ '+', ".-.-." },
 	{ '_', "..--.-" },
 	{ '@', ".--.-." },
-	{ '\0', NULL }
+	{ '\0', "" }
 };
 
-int	main(int, char *[]);
 static void morse(int);
 static void decode(const char *);
 static void show(const char *);
