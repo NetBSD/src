@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1378 2024/06/15 20:35:14 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1379 2024/06/16 19:21:46 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -78,8 +78,8 @@ TOOLCHAIN_MISSING?=	no
 .if ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_CPU} == "riscv" || \
     ${MACHINE_CPU} == "arm" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "i386" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "ia64" || \
