@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_conversion.c,v 1.5 2017/02/08 21:33:12 christos Exp $	*/
+/*	$NetBSD: cd9660_conversion.c,v 1.6 2024/06/17 13:31:17 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_conversion.c,v 1.5 2017/02/08 21:33:12 christos Exp $");
+__RCSID("$NetBSD: cd9660_conversion.c,v 1.6 2024/06/17 13:31:17 reinoud Exp $");
 #endif  /* !__lint */
 
 
@@ -174,7 +174,7 @@ void
 cd9660_time_8426(unsigned char *buf, time_t tim)
 {
 	struct tm t;
-	char temp[18];
+	char temp[70];	/* we know its only 18 but gcc can't figure this out */
 
 	if (stampst.st_ino)
 		(void)gmtime_r(&tim, &t);
