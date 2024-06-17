@@ -1,4 +1,4 @@
-.\" $NetBSD: eap.4,v 1.17 2008/04/30 13:10:53 martin Exp $
+.\" $NetBSD: eap.4,v 1.17.74.1 2024/06/17 18:02:28 martin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,18 +27,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 22, 2006
+.Dd May 16, 2024
 .Dt EAP 4
 .Os
 .Sh NAME
 .Nm eap
 .Nd AudioPCI audio device driver
 .Sh SYNOPSIS
-.Cd "eap*   at pci? dev ? function ?"
-.Cd "audio* at audiobus?"
-.Cd "joy*   at eap?"
-.Cd "midi*  at eap?"
+.Cd "eap*    at pci? dev ? function ?"
 .Cd "options EAP_USE_BOTH_DACS"
+.Pp
+.Cd "audio*  at audiobus?"
+.Cd "joy*    at eap?"
+.Cd "midi*   at eap?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,14 +48,14 @@ SoundBlaster PCI series of audio cards.
 All models based on the ES1370, ES1371, and ES1373 chips are supported.
 .Pp
 By specifying:
-.Bd -unfilled -offset indent
-options EAP_USE_BOTH_DACS
-.Ed
+.Pp
+.D1 Cd options EAP_USE_BOTH_DACS
 .Pp
 a second audio device is attached.
-You can use it simply by directing audio output to it.
-This way it is possible for two different programs to use the "same"
-audio device simultaneously.
+This can be used for audio output simultaneously with the primary DAC.
+You can use it simply by directing audio output to the additional
+.Pa /dev/audioX
+device associated with it.
 .Sh SEE ALSO
 .Xr ac97 4 ,
 .Xr audio 4 ,
@@ -76,3 +77,18 @@ This is unlikely to work on PCI busses other than the primary one.
 There is also a possibility for conflicts with real ISA devices
 because the PCI bus is probed before ISA.
 Use with caution.
+.Pp
+The
+.Dv EAP_USE_BOTH_DACS
+option is rather redundant after the introduction of the in-kernel audio
+mixer, and may be removed in a future release.
+It is possible that it could be used to accelerate mixing streams by
+taking advantage of the hardware's features, but currently the
+additional (small) overhead of the kernel mixer is impossible to bypass,
+since
+.Nx
+no longer allows userspace software to write directly to audio hardware.
+The
+.Nm
+hardware only features one clock, so generally the second audio device
+must be configured in the same way as the first.
