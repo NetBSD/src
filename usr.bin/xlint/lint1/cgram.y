@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.504 2024/06/17 04:14:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.505 2024/06/17 17:06:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.504 2024/06/17 04:14:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.505 2024/06/17 17:06:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2111,6 +2111,11 @@ expression_statement:
 		debug_attribute_list(&$1);
 		expr($2, false, false, false, false);
 		suppress_fallthrough = false;
+	}
+|	attribute_specifier_sequence T_SEMI {
+		debug_attribute_list(&$1);
+		check_statement_reachable();
+		suppress_fallthrough = attributes_contain(&$1, "fallthrough");
 	}
 ;
 
