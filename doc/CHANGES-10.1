@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.11 2024/05/16 12:32:00 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.12 2024/06/17 18:09:35 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -288,4 +288,45 @@ sys/arch/i386/conf/LEGACY			1.4
 
 	Exclude DRM_LEGACY from the ISA kernel.
 	[nia, ticket #691]
+
+sbin/disklabel/main.c				1.58
+
+	disklabel(8): avoid writing a label to the wrong sector
+	on some architectures from installer/ramdisk versions of
+	the disklabel command.
+	[tsutsui, ticket #692]
+
+sys/arch/hp300/hp300/autoconf.c			1.113
+
+	hp300: fix boot device selection for SCSI disks.
+	[tsutsui, ticket #693]
+
+sys/arch/vax/include/mcontext.h			1.11
+sys/arch/vax/vax/machdep.c			1.200
+sys/arch/vax/vax/sig_machdep.c			1.27
+
+	vax: implement _UC_SETSTACK / _UC_CLRSTACK.
+	[thorpej, ticket #694]
+
+sys/arch/evbarm/conf/GENERIC64			1.216
+
+	aarch64: add some simple PCI audio devices to GENERIC64
+	(for use in QEMU).
+	[nia, ticket #698]
+
+sys/dev/pci/eap.c				1.103
+
+	eap(4): restore the full set of supported hardware encodings
+	from netbsd-7.
+	[nia, ticket #697]
+
+share/man/man4/eap.4				1.18-1.20
+
+	eap(4): improve man page.
+	[nia, ticket #696]
+
+sys/arch/sgimips/sgimips/machdep.c		1.155
+
+	sgimips: PR 58269: call mips_vector_init earlier to fix boot.
+	[skrll, ticket #695]
 
