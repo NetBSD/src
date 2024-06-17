@@ -235,16 +235,16 @@ inline ThreadState *cur_thread_init() { return cur_thread(); }
 __attribute__((tls_model("initial-exec")))
 extern THREADLOCAL char cur_thread_placeholder[];
 inline ThreadState *cur_thread() {
-  return reinterpret_cast<ThreadState *>(cur_thread_placeholder)->current;
+  return reinterpret_cast<ThreadState *>((reinterpret_cast<uptr>(cur_thread_placeholder) + SANITIZER_CACHE_LINE_SIZE - 1) & ~static_cast<uptr>(SANITIZER_CACHE_LINE_SIZE - 1))->current;
 }
 inline ThreadState *cur_thread_init() {
-  ThreadState *thr = reinterpret_cast<ThreadState *>(cur_thread_placeholder);
+  ThreadState *thr = reinterpret_cast<ThreadState *>((reinterpret_cast<uptr>(cur_thread_placeholder) + SANITIZER_CACHE_LINE_SIZE - 1) & ~static_cast<uptr>(SANITIZER_CACHE_LINE_SIZE - 1));
   if (UNLIKELY(!thr->current))
     thr->current = thr;
   return thr->current;
 }
 inline void set_cur_thread(ThreadState *thr) {
-  reinterpret_cast<ThreadState *>(cur_thread_placeholder)->current = thr;
+  reinterpret_cast<ThreadState *>((reinterpret_cast<uptr>(cur_thread_placeholder) + SANITIZER_CACHE_LINE_SIZE - 1) & ~static_cast<uptr>(SANITIZER_CACHE_LINE_SIZE - 1))->current = thr;
 }
 inline void cur_thread_finalize() { }
 #  endif  // SANITIZER_MAC || SANITIZER_ANDROID
