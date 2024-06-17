@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.15 2024/06/15 18:36:06 mrg Exp $
+# $NetBSD: md.amd64,v 1.16 2024/06/17 18:53:41 riastradh Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libDECHanyu_g.a			comp-c-debuglib	debuglib,compat
 ./usr/lib/i386/i18n/libEUCTW_g.a			comp-c-debuglib	debuglib,compat
@@ -314,7 +314,9 @@
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.9.0.debug	comp-sys-debug	debug,compat,gcc=10,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.9.1.debug	comp-sys-debug	debug,compat,gcc=12,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.2.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.2.0.debug		comp-tpm-debug	compat,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/i386/libtspi.so.4.0.debug		comp-tpm-debug	compat,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libubsan.so.4.0.debug	comp-sys-debug	debug,compat,gcc=10,cxx
 ./usr/libdata/debug/usr/lib/i386/libubsan.so.5.0.debug	comp-sys-debug	debug,compat,gcc=12,cxx
 ./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump
