@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 2021/08/12 20:53:18 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152.4.1 2024/06/17 18:05:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2021/08/12 20:53:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152.4.1 2024/06/17 18:05:30 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -285,6 +285,13 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	}
 
 	cpu_setmodel("%s", arcbios_system_identifier);
+
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init(NULL, false);
 
 	uvm_md_init();
 
@@ -660,13 +667,6 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	 * present in the system.
 	 */
 	arcbios_tree_walk(sgimips_count_cpus, NULL);
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init(NULL, false);
 
 	/*
 	 * Initialize error message buffer (at end of core).
