@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.15 2024/06/17 17:06:48 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.16 2024/06/17 22:11:09 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -168,13 +168,9 @@ typedef int number;
 
 void
 attributes_in_parameter_declaration(
-    /* expect+1: warning: parameter 'int_param' unused in function 'attributes_in_parameter_declaration' [231] */
     [[maybe_unused]] int int_param,
-    /* expect+1: warning: parameter 'const_int_param' unused in function 'attributes_in_parameter_declaration' [231] */
     [[maybe_unused]] const int const_int_param,
-    /* expect+1: warning: parameter 'typedef_param' unused in function 'attributes_in_parameter_declaration' [231] */
     [[maybe_unused]] number typedef_param,
-    /* expect+1: warning: parameter 'const_typedef_param' unused in function 'attributes_in_parameter_declaration' [231] */
     [[maybe_unused]] const number const_typedef_param)
 {
 }

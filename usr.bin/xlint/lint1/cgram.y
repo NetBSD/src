@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.505 2024/06/17 17:06:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.506 2024/06/17 22:11:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.505 2024/06/17 17:06:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.506 2024/06/17 22:11:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1057,6 +1057,7 @@ begin_type:
 	}
 |	attribute_specifier_sequence {
 		dcs_begin_type();
+		dcs->d_used = attributes_contain(&$1, "maybe_unused");
 	}
 ;
 
