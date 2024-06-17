@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.102 2019/07/25 15:06:07 msaitoh Exp $	*/
+/*	$NetBSD: eap.c,v 1.102.28.1 2024/06/17 17:57:35 martin Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.102 2019/07/25 15:06:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.102.28.1 2024/06/17 17:57:35 martin Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -218,9 +218,39 @@ static const struct audio_format eap_formats[] = {
 		.precision	= 16,
 		.channels	= 2,
 		.channel_mask	= AUFMT_STEREO,
-		.frequency_type	= 2,
+		.frequency_type	= 0,
 		.frequency	= { 4000, 48000 },
 	},
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_SLINEAR_LE,
+		.validbits	= 16,
+		.precision	= 16,
+		.channels	= 1,
+		.channel_mask	= AUFMT_MONAURAL,
+		.frequency_type	= 0,
+		.frequency	= { 4000, 48000 },
+	},
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
+		.validbits	= 8,
+		.precision	= 8,
+		.channels	= 2,
+		.channel_mask	= AUFMT_STEREO,
+		.frequency_type	= 0,
+		.frequency	= { 4000, 48000 },
+	},
+	{
+		.mode		= AUMODE_PLAY | AUMODE_RECORD,
+		.encoding	= AUDIO_ENCODING_ULINEAR_LE,
+		.validbits	= 8,
+		.precision	= 8,
+		.channels	= 1,
+		.channel_mask	= AUFMT_MONAURAL,
+		.frequency_type	= 0,
+		.frequency	= { 4000, 48000 },
+	}
 };
 #define EAP_NFORMATS	__arraycount(eap_formats)
 
