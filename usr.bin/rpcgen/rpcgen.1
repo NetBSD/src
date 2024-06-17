@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpcgen.1,v 1.25 2024/06/16 22:21:57 rillig Exp $
+.\"	$NetBSD: rpcgen.1,v 1.26 2024/06/17 01:28:31 uwe Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
 .Dd December 14, 2013
@@ -12,7 +12,7 @@
 .Ar infile
 .Nm
 .Op Fl AaBbILMNTv
-.Op Fl D Ar name Op =value
+.Op Fl D Ar name Ns Op Li = Ns Ar value
 .Op Fl i Ar size
 .Op Fl K Ar secs
 .Op Fl Y Ar pathname
@@ -23,9 +23,9 @@
 .Fl l Li |
 .Fl m Li |
 .Fl t Li |
-.Fl S\&c Li |
-.Fl S\&s
-.\" .Fl S\&m
+.Fl \&Sc Li |
+.Fl \&Ss
+.\" .Fl \&Sm
 .Op Fl o Ar outfile
 .Op Ar infile
 .Nm
@@ -72,14 +72,14 @@ it will also generate the
 dispatch table in
 .Pa proto_tbl.i .
 With the
-.Fl S\&c
+.Fl \&Sc
 option,
 it will also generate sample code which would illustrate how to use the
 remote procedures on the client side.
 This code would be created in
 .Pa proto_client.c .
 With the
-.Fl S\&s
+.Fl \&Ss
 option,
 it will also generate a sample server code which would illustrate how to write
 the remote procedures.
@@ -87,10 +87,12 @@ This code would be created in
 .Pa proto_server.c .
 .Pp
 The server created can be started both by the port monitors
-(for example,
-.Em inetd
+.Po
+for example,
+.Xr inetd 8
 or
-.Em listen )
+.Xr listen 1M		\" sic! System V
+.Pc
 or by itself.
 When it is started by a port monitor,
 it creates servers only for the transport for which
@@ -114,7 +116,7 @@ file.
 the transports are chosen at run time and not at compile time.
 When the server is self-started,
 it backgrounds itself by default.
-A special define symbol
+A special preprocessor symbol
 .Dv RPC_SVC_FG
 can be used to run the server process in foreground.
 .Pp
@@ -123,7 +125,7 @@ for the creation of more sophisticated
 .Tn RPC
 servers.
 These features include support for user provided
-.Li #defines
+.Li #define Ns s
 and
 .Tn RPC
 dispatch tables.
@@ -131,12 +133,14 @@ The entries in the
 .Tn RPC
 dispatch table contain:
 .Pp
+.\" XXX: uwe: -dash has too much space after the dash and causes the
+.\" first item to exceed the page width in text mode.
 .Bl -inset -offset indent -compact
-.It +
+.It -
 pointers to the service routine corresponding to that procedure,
-.It +
+.It -
 a pointer to the input and output arguments,
-.It +
+.It -
 the size of these routines
 .El
 .Pp
@@ -164,7 +168,7 @@ executed with the
 .Fl n
 option,
 it creates a server for the transport specified by
-.Em netid .
+.Ar netid .
 If
 .Ar infile
 is not specified,
@@ -180,7 +184,7 @@ For each type of output file,
 defines a special preprocessor symbol for use by the
 .Nm
 programmer:
-.Bl -tag -width RPC_CLNT
+.Bl -tag -offset indent -width Dv
 .It Dv RPC_HDR
 defined when compiling into header files
 .It Dv RPC_XDR
@@ -198,7 +202,7 @@ dispatch tables
 .El
 .Pp
 Any line beginning with
-.Sq %
+.Ql %
 is passed directly into the output file,
 uninterpreted by
 .Nm .
@@ -208,7 +212,7 @@ For every data type referred to in
 .Nm
 assumes that there exists a
 routine with the string
-.Dq xdr_
+.Ql xdr_
 prepended to the name of the data type.
 If this routine does not exist in the
 .Tn RPC/XDR
@@ -218,7 +222,7 @@ allows customization of
 .Tn XDR
 routines.
 .Sh OPTIONS
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl A
 Generate an
 .Fn svc_caller
@@ -226,16 +230,24 @@ function.
 .It Fl a
 Generate all the files including sample code for client and server side.
 .It Fl B
-Generate BSD cplusplus macros (__BEGIN_DECLS, __END_DECLS).
+Generate BSD cplusplus macros
+.Pq Dv __BEGIN_DECLS , Dv __END_DECLS .
 .It Fl b
-Compile stubs in "backwards compatible" mode, disabling support for
+Compile stubs in
+.Dq backwards compatible
+mode, disabling support for
 transport-independent RPC.
+.Bd -filled -offset indent
+.Em Note :
 The
 .Fl b
-should always be specified when generating files for
+should
+.Em always
+be specified when generating files for
 .Nx ,
 since there is no transport-independent RPC support in
 .Nx .
+.Ed
 .It Fl c
 Compile into
 .Tn XDR
@@ -244,12 +256,12 @@ routines.
 Define a symbol
 .Dv name .
 Equivalent to the
-.Dv #define
+.Li #define
 directive in the source.
 If no
-.Dv value
+.Ar value
 is given,
-.Dv value
+.Ar value
 is defined as 1.
 This option may be specified more than once.
 .It Fl h
@@ -284,16 +296,16 @@ That interval can be changed using the
 .Fl K
 flag.
 To create a server that exits immediately upon servicing a request,
-.Dq Fl K No 0
+.Fl K Cm 0
 can be used.
 To create a server that never exits, the appropriate argument is
-.Dq Fl K No -1 .
+.Fl K Cm \-1 .
 .Pp
 When monitoring for a server,
 some port monitors, like the
 .At V.4
 utility
-.Ic listen ,
+.Xr listen 1M ,
 .Em always
 spawn a new process in response to a service request.
 If it is known that a server will be used with such a monitor, the
@@ -301,9 +313,12 @@ server should exit immediately on completion.
 For such servers,
 .Nm
 should be used with
-.Dq Fl K No -1 .
+.Fl K Cm \-1 .
 .It Fl L
-Server errors will be sent to syslog instead of stderr.
+Server errors will be sent to
+.Xr syslog 3
+instead of
+.Va stderr .
 .It Fl l
 Compile into client-side stubs.
 .Xr inetd 8 .
@@ -312,8 +327,10 @@ Generate thread-safe stubs.
 This alters the calling pattern of client and
 server stubs so that storage for results is allocated by the caller.
 Note
-that all components for a particular service (stubs, client and service
-wrappers, etc.) must be built either with or without the
+that all components for a particular service
+(stubs, client and service wrappers,
+.Em etc . )
+must be built either with or without the
 .Fl M
 flag.
 .It Fl m
@@ -352,8 +369,7 @@ Specify the name of the output file.
 If none is specified,
 standard output is used
 .Po
-.Fl c Fl h Fl l
-.Fl m Fl n Fl s
+.Fl c , Fl h , Fl l , Fl m , Fl n , Fl s
 modes only
 .Pc
 .It Fl s Ar nettype
@@ -361,37 +377,42 @@ Compile into server-side stubs for all the
 transports belonging to the class
 .Ar nettype .
 The supported classes are
-.Em netpath ,
-.Em visible ,
-.Em circuit_n ,
-.Em circuit_v ,
-.Em datagram_n ,
-.Em datagram_v ,
-.Em tcp ,
+.Cm netpath ,
+.Cm visible ,
+.Cm circuit_n ,
+.Cm circuit_v ,
+.Cm datagram_n ,
+.Cm datagram_v ,
+.Cm tcp ,
 and
-.Em udp
-[see
+.Cm udp
+See
 .Xr rpc 3
 for the meanings associated with these classes.
+.Bd -filled -offset indent
 .Em Note :
-.Bx
+.Nx
 currently supports only the
-.Em tcp
+.Cm tcp
 and
-.Em udp
-classes].
+.Cm udp
+classes
+.Ed
+.Pp
 This option may be specified more than once.
+.Bd -filled -offset indent
 .Em Note :
 the transports are chosen at run time and not at compile time.
-.It Fl S\&c
+.Ed
+.It Fl \&Sc
 Generate sample code to show the use of remote procedure and how to bind
 to the server before calling the client side stubs generated by
 .Nm .
-.It Fl S\&s
+.It Fl \&Ss
 Generate skeleton code for the remote procedures on the server side.
 You would need
 to fill in the actual code for the remote procedures.
-.\" .It Fl S\&m
+.\" .It Fl \&Sm
 .\" Generate a sample Makefile that can be used to compile the application.
 .It Fl T
 Generate the code to support
@@ -406,7 +427,7 @@ Display the version number.
 .It Fl Y Ar pathname
 Specify the directory where
 .Nm
-looks for the C pre-processor.
+looks for the C preprocessor.
 .El
 .Pp
 The options
@@ -447,14 +468,12 @@ procedures and types.
 The server code generated with
 .Fl n
 option refers to the transport indicated by
-.Em netid
+.Ar netid
 and hence is very site specific.
 .Sh EXAMPLES
 The command
 .Pp
-.Bd -literal -offset indent
-$ rpcgen -T prot.x
-.Ed
+.Dl $ rpcgen -T prot.x
 .Pp
 generates the five files:
 .Pa prot.h ,
@@ -467,29 +486,22 @@ and
 The following example sends the C data-definitions (header file)
 to standard output.
 .Pp
-.Bd -literal -offset indent
-$ rpcgen -h prot.x
-.Ed
+.Dl $ rpcgen -h prot.x
 .Pp
 To send the test version of the
-.Dv -DTEST ,
+.Ql -DTEST ,
 server side stubs for
 all the transport belonging to the class
-.Em datagram_n
+.Cm datagram_n
 to standard output, use:
 .Pp
-.Bd -literal -offset indent
-$ rpcgen -s datagram_n -DTEST prot.x
-.Ed
+.Dl $ rpcgen -s datagram_n -DTEST prot.x
 .Pp
 To create the server side stubs for the transport indicated by
-.Em netid
-.Em tcp ,
+.Ar netid
+.Cm tcp ,
 use:
-.Pp
-.Bd -literal -offset indent
-$ rpcgen -n tcp -o prot_svc.c prot.x
-.Ed
+.Dl $ rpcgen -n tcp -o prot_svc.c prot.x
 .Sh SEE ALSO
 .Xr cpp 1 ,
 .Xr inetd 8
