@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.10 2024/06/10 07:48:54 kre Exp $
+# $NetBSD: md.amd64,v 1.11 2024/06/17 18:53:41 riastradh Exp $
 ./lib/i386					base-compat-shlib	compat
 ./lib/i386/npf					base-compat-shlib	compat,npf
 ./lib/i386/npf/ext_log.so			base-compat-shlib	compat,npf
@@ -444,9 +444,15 @@
 ./usr/lib/i386/libtermlib.so			base-compat-shlib	compat
 ./usr/lib/i386/libtermlib.so.0			base-compat-shlib	compat
 ./usr/lib/i386/libtermlib.so.0.6		base-compat-shlib	compat
+./usr/lib/i386/libtpm_unseal.so			base-compat-shlib	compat,tpm
+./usr/lib/i386/libtpm_unseal.so.2		base-compat-shlib	compat,tpm
+./usr/lib/i386/libtpm_unseal.so.2.0		base-compat-shlib	compat,tpm
 ./usr/lib/i386/libtre.so			base-compat-shlib	compat
 ./usr/lib/i386/libtre.so.0			base-compat-shlib	compat
 ./usr/lib/i386/libtre.so.0.8			base-compat-shlib	compat
+./usr/lib/i386/libtspi.so			base-compat-shlib	compat,tpm
+./usr/lib/i386/libtspi.so.4			base-compat-shlib	compat,tpm
+./usr/lib/i386/libtspi.so.4.0			base-compat-shlib	compat,tpm
 ./usr/lib/i386/libubsan.so			base-compat-shlib	compat,gcc,cxx
 ./usr/lib/i386/libubsan.so.4			base-compat-shlib	compat,gcc=10,cxx
 ./usr/lib/i386/libubsan.so.4.0			base-compat-shlib	compat,gcc=10,cxx
