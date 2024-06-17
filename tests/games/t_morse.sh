@@ -1,4 +1,4 @@
-#	$NetBSD: t_morse.sh,v 1.1 2024/06/16 18:40:58 rillig Exp $
+#	$NetBSD: t_morse.sh,v 1.2 2024/06/17 03:23:19 rillig Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,6 +26,9 @@
 #
 
 atf_test_case digits
+digits_head() {
+	atf_set 'require.progs' '/usr/games/morse'
+}
 digits_body() {
 	trailing_space=' '
 	morse_s_digits="\
@@ -66,6 +69,9 @@ $trailing_space
 # Before 2024-06-16, non-ASCII characters invoked undefined behavior,
 # possibly crashing morse.
 atf_test_case nonascii
+nonascii_head() {
+	atf_set 'require.progs' '/usr/games/morse'
+}
 nonascii_body()
 {
 	expected="\
