@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2024/06/17 10:16:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2024/06/17 22:39:36 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -15,7 +15,10 @@ SRCS+=	uvm_13.c kern_sig_13.c
 COMPAT_MACHDEP_SRCS=	compat_13_machdep.c
 
 .if ${MACHINE_CPU} == "m68k"
+.include "../Makefile.assym"
+
 COMPAT_MACHDEP_SRCS+=	compat_13_sigreturn13.s
+COPTS.compat_13_sigreturn13.s+=	-I. -x assembler-with-cpp
 .endif
 
 .include "../Makefile.compat"
