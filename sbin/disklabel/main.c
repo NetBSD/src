@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2021/11/03 14:25:39 nia Exp $	*/
+/*	$NetBSD: main.c,v 1.57.2.1 2024/06/17 16:34:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2021/11/03 14:25:39 nia Exp $");
+__RCSID("$NetBSD: main.c,v 1.57.2.1 2024/06/17 16:34:07 martin Exp $");
 #endif
 #endif	/* not lint */
 
@@ -352,7 +352,7 @@ static const struct arch_endian {
 #define labelsector	LABELSECTOR
 #define labelusesmbr	LABELUSESMBR
 #define maxpartitions	MAXPARTITIONS
-#define LABEL_OFFSET	LABELOFFSET
+#define LABEL_OFFSET	(LABELSECTOR * DEV_BSIZE + LABELOFFSET)
 #endif /* !NATIVELABEL_ONLY */
 
 /*
