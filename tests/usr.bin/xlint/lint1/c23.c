@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.14 2024/06/17 04:14:02 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.15 2024/06/17 17:06:48 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -8,7 +8,7 @@
 //	c11.c
 //	msg_353.c		for empty initializer braces
 
-/* lint1-flags: -Ac23 -w -X 351 */
+/* lint1-flags: -Ac23 -hw -X 351 */
 
 
 int
@@ -177,4 +177,23 @@ attributes_in_parameter_declaration(
     /* expect+1: warning: parameter 'const_typedef_param' unused in function 'attributes_in_parameter_declaration' [231] */
     [[maybe_unused]] const number const_typedef_param)
 {
+}
+
+int
+attribute_in_switch_statement(int n)
+{
+	switch (n) {
+	case 1:
+		n++;
+	/* expect+1: warning: fallthrough on case statement [220] */
+	case 2:
+		n++;
+		[[fallthrough]];
+	case 3:
+		n++;
+		[[fallthrough]];
+	default:
+		n++;
+	}
+	return n;
 }

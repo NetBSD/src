@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.647 2024/06/09 16:53:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.648 2024/06/17 17:06:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.647 2024/06/09 16:53:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.648 2024/06/17 17:06:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -321,6 +321,17 @@ uint64_t
 possible_bits(const tnode_t *tn)
 {
 	return ~ic_expr(tn).bclr;
+}
+
+bool
+attributes_contain(const attribute_list *attrs, const char *str)
+{
+	for (size_t i = 0, n = attrs->len; i < n; i++) {
+		const attribute *attr = attrs->attrs + i;
+		if (attr->prefix == NULL && strcmp(attr->name, str) == 0)
+			return true;
+	}
+	return false;
 }
 
 /* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
