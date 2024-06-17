@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.503 2024/05/12 09:07:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.504 2024/06/17 04:14:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.503 2024/05/12 09:07:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.504 2024/06/17 04:14:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -154,7 +154,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 
 %}
 
-%expect 103
+%expect 110
 
 %union {
 	val_t	*y_val;
@@ -1053,6 +1053,9 @@ type_attribute:			/* See C11 6.7 declaration-specifiers */
 
 begin_type:
 	/* empty */ {
+		dcs_begin_type();
+	}
+|	attribute_specifier_sequence {
 		dcs_begin_type();
 	}
 ;

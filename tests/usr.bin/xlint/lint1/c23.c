@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.13 2024/05/11 16:12:28 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.14 2024/06/17 04:14:02 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -162,4 +162,19 @@ attributes(int i)
 	[[]][[]][[]]i++;
 
 	return i;
+}
+
+typedef int number;
+
+void
+attributes_in_parameter_declaration(
+    /* expect+1: warning: parameter 'int_param' unused in function 'attributes_in_parameter_declaration' [231] */
+    [[maybe_unused]] int int_param,
+    /* expect+1: warning: parameter 'const_int_param' unused in function 'attributes_in_parameter_declaration' [231] */
+    [[maybe_unused]] const int const_int_param,
+    /* expect+1: warning: parameter 'typedef_param' unused in function 'attributes_in_parameter_declaration' [231] */
+    [[maybe_unused]] number typedef_param,
+    /* expect+1: warning: parameter 'const_typedef_param' unused in function 'attributes_in_parameter_declaration' [231] */
+    [[maybe_unused]] const number const_typedef_param)
+{
 }
