@@ -41,12 +41,16 @@ void (*on_initialize)(void);
 int (*on_finalize)(int);
 #endif
 
+// XXX PR lib/58349 (https://gnats.NetBSD.org/58349): NetBSD ld.elf_so
+// doesn't support TLS alignment beyond void *, so we have to buffer
+// some extra space and do the alignment ourselves at all the reference
+// sites.
 #if !SANITIZER_GO && !SANITIZER_MAC
 __attribute__((tls_model("initial-exec")))
-THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(
+THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState) + SANITIZER_CACHE_LINE_SIZE - 1] ALIGNED(
     SANITIZER_CACHE_LINE_SIZE);
 #endif
-static char ctx_placeholder[sizeof(Context)] ALIGNED(SANITIZER_CACHE_LINE_SIZE);
+static char ctx_placeholder[sizeof(Context) + SANITIZER_CACHE_LINE_SIZE - 1] ALIGNED(SANITIZER_CACHE_LINE_SIZE);
 Context *ctx;
 
 // Can be overriden by a front-end.
@@ -366,7 +370,7 @@ void Initialize(ThreadState *thr) {
   // Install tool-specific callbacks in sanitizer_common.
   SetCheckUnwindCallback(CheckUnwind);
 
-  ctx = new(ctx_placeholder) Context;
+  ctx = new(reinterpret_cast<char *>((reinterpret_cast<uptr>(ctx_placeholder) + SANITIZER_CACHE_LINE_SIZE - 1) & ~static_cast<uptr>(SANITIZER_CACHE_LINE_SIZE - 1))) Context;
   const char *env_name = SANITIZER_GO ? "GORACE" : "TSAN_OPTIONS";
   const char *options = GetEnv(env_name);
   CacheBinaryName();

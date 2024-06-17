@@ -1082,7 +1082,7 @@ TSAN_INTERCEPTOR(void, pthread_exit, void *retval) {
   {
     SCOPED_INTERCEPTOR_RAW(pthread_exit, retval);
 #if !SANITIZER_MAC && !SANITIZER_ANDROID
-    CHECK_EQ(thr, &cur_thread_placeholder);
+    CHECK_EQ(thr, reinterpret_cast<char *>((reinterpret_cast<uptr>(cur_thread_placeholder) + SANITIZER_CACHE_LINE_SIZE - 1) & ~static_cast<uptr>(SANITIZER_CACHE_LINE_SIZE - 1)));
 #endif
   }
   REAL(pthread_exit)(retval);
