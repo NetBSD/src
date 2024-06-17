@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.196.20.2 2024/02/17 15:50:20 martin Exp $	 */
+/* $NetBSD: machdep.c,v 1.196.20.3 2024/06/17 16:48:57 martin Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.20.2 2024/02/17 15:50:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.20.3 2024/06/17 16:48:57 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -701,6 +701,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		lwp_setprivate(l, tlsbase);
 		tf->tf_sp += sizeof(tlsbase);
 	}
+
+	mutex_enter(l->l_proc->p_lock);
+	if (flags & _UC_SETSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(l->l_proc->p_lock);
+
 	return 0;
 }
 
