@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.75 2023/12/28 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: ffs.c,v 1.76 2024/06/17 23:53:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.75 2023/12/28 12:13:55 tsutsui Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.76 2024/06/17 23:53:42 riastradh Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -826,8 +826,8 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 			    root, fsopts);
 
 		if (debug & DEBUG_FS_POPULATE_NODE) {
-			printf("ffs_populate_dir: writing ino %d, %s",
-			    cur->inode->ino, inode_type(cur->type));
+			printf("ffs_populate_dir: writing ino %lld, %s",
+			    (long long)cur->inode->ino, inode_type(cur->type));
 			if (cur->inode->nlink > 1)
 				printf(", nlink %d", cur->inode->nlink);
 			putchar('\n');
