@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.4 2024/05/16 12:24:02 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.5 2024/06/17 18:10:13 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -41,4 +41,27 @@ sys/dev/hil/hil.c				1.8
 	hp300: fix "stray level 1 interrupt" panic by pressing keys
 	during autoconf(9).
 	[tsutsui, ticket #1840]
+
+sbin/disklabel/main.c				1.58
+
+	disklabel(8): avoid writing a label to the wrong sector
+	on some architectures from installer/ramdisk versions of
+	the disklabel command.
+	[tsutsui, ticket #1841]
+
+sys/arch/hp300/hp300/autoconf.c			1.113
+
+	hp300: fix boot device selection for SCSI disks.
+	[tsutsui, ticket #1842]
+
+sys/dev/pci/eap.c				1.103
+
+	eap(4): restore the full set of supported hardware encodings
+	from netbsd-7.
+	[nia, ticket #1843]
+
+share/man/man4/eap.4				1.18-1.20
+
+	eap(4): improve man page.
+	[nia, ticket #1844]
 
