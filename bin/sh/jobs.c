@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.121 2024/06/15 06:07:14 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.122 2024/06/18 07:21:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.121 2024/06/15 06:07:14 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.122 2024/06/18 07:21:31 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -705,6 +705,7 @@ waitcmd(int argc, char **argv)
 	int i;
 	int any = 0;
 	int found;
+	int oldwait = 0;
 	char *pid = NULL, *fpid;
 	char **arg;
 	char idstring[20];
@@ -721,6 +722,9 @@ waitcmd(int argc, char **argv)
 			break;
 		}
 	}
+
+	if (!any && *argptr == 0)
+		oldwait = 1;
 
 	if (pid != NULL) {
 		if (!validname(pid, '\0', NULL))
@@ -740,7 +744,7 @@ waitcmd(int argc, char **argv)
 	if (jobs_invalid) {
 		CTRACE(DBG_WAIT, ("builtin wait%s%s in child, invalid jobtab\n",
 		    any ? " -n" : "", *argptr ? " pid..." : ""));
-		return (any || *argptr) ? 127 : 0;
+		return oldwait ? 0 : 127;
 	}
 
 	/*
@@ -919,7 +923,7 @@ waitcmd(int argc, char **argv)
 		}
 
 		/* this is to handle "wait" (no args) */
-		if (found == 0 && job->state == JOBDONE) {
+		if (oldwait && job->state == JOBDONE) {
 			VTRACE(DBG_JOBS|DBG_WAIT, ("Cleanup: %d\n", i));
 			freejob(job);
 		}
