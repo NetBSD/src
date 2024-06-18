@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: bluetooth.c,v 1.2 2024/06/18 05:13:58 rillig Exp $	*/
 
 /*
  * bluetooth.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bluetooth.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+ * $Id: bluetooth.c,v 1.2 2024/06/18 05:13:58 rillig Exp $
  * $FreeBSD: src/lib/libbluetooth/bluetooth.c,v 1.2 2004/03/05 08:10:17 markm Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bluetooth.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $");
+__RCSID("$NetBSD: bluetooth.c,v 1.2 2024/06/18 05:13:58 rillig Exp $");
 
 #include <bluetooth.h>
 #include <stdio.h>
@@ -291,7 +291,7 @@ int
 bt_aton(char const *str, bdaddr_t *ba)
 {
 	int	 i, b;
-	char	*end = NULL;
+	const char *end;
 
 	memset(ba, 0, sizeof(*ba));
 
