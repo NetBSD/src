@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.245 2024/06/09 18:55:40 mrg Exp $
+# $NetBSD: HACKS,v 1.246 2024/06/18 18:55:32 riastradh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1149,4 +1149,18 @@ descr
 	the same.  They both have minimal stack usage themselves and
 	I suspect a GCC bug.
 	The blake2 version is less well studied.
+kcah
+
+hack	gcc: work around alignment limitations in ld.elf_so
+cdate	Mon Jun 17 23:35:52 UTC 2024
+who	riastradh
+file	external/gpl3/gcc/dist/libsanitizer/tsan/tsan_interceptors_posix.cpp : 1.4
+file	src/external/gpl3/gcc/dist/libsanitizer/tsan/tsan_rtl.cpp : 1.4
+file	external/gpl3/gcc/dist/libsanitizer/tsan/tsan_rtl.h : 1.5
+descr
+	ld.elf_so only supports 2*pointer-aligned objects (typically
+	8- or 16-byte) in thread-local storage, but tsan expects
+	cacheline-aligned objects (typically >=64-byte).  To work
+	around this, allocate n + 63 bytes and pick whichever pointer
+	in that interval is aligned (PR lib/58349).
 kcah
