@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25 2024/06/18 13:29:56 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25 2024/06/18 13:29:56 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -424,7 +424,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
 {
 	struct trapframe * const tf = lwp_trapframe(l);
 	__greg32_t *gr = mcp->__gregs;
-	__greg32_t ras_pc;
+	void *ras_pc;
 
 	gr[_REG_R0]  = tf->tf_reg[0];
 	gr[_REG_R1]  = tf->tf_reg[1];
@@ -444,9 +444,9 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
 	gr[_REG_R15] = tf->tf_pc;
 	gr[_REG_CPSR] = tf->tf_spsr;
 
-	if ((ras_pc = (__greg32_t)(uintptr_t)ras_lookup(l->l_proc,
-	    (void *)(uintptr_t)gr[_REG_R15])) != -1) {
-		gr[_REG_R15] = ras_pc;
+	ras_pc = ras_lookup(l->l_proc, (void *)(uintptr_t)gr[_REG_R15]);
+	if (ras_pc != (void *)-1) {
+		gr[_REG_R15] = (__greg32_t)(uintptr_t)ras_pc;
 	}
 	*flagsp |= _UC_CPU;
 
