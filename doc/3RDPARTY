@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2013 2024/06/18 17:29:15 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2014 2024/06/18 19:41:08 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1143,8 +1143,8 @@ Notes:
 - configure and build after importing in the import directory
 - check the generated files against the ones in the include directory
   and merge changes
-- copy the toplevel libFOO.ld files to our foo.map linker files (the legacy.ld
-  is in providers/)
+- copy the toplevel libFOO.ld files to our FOO.map linker files (the legacy.ld
+  is in providers/), and sync the FOO.expsym files if there were changes
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
