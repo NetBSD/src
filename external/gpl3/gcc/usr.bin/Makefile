@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2024/02/25 00:28:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2024/06/18 04:07:18 mrg Exp $
 
 NOOBJ=# defined
 
@@ -8,11 +8,12 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 
-.if ${MKGCCCMDS} != "no" || make(includes)
+# host-libiberty is used by include on rs6000.
+SUBDIR+=	host-libiberty .WAIT
 
 # We keep libcpp here since it depends upon frontend.
-SUBDIR+=	host-libiberty .WAIT \
-		host-libcpp .WAIT \
+.if ${MKGCCCMDS} != "no" || make(includes)
+SUBDIR+=	host-libcpp .WAIT \
 		../../../mit/isl/lib/libisl \
 		backend .WAIT \
 		frontend .WAIT \
@@ -23,6 +24,10 @@ SUBDIR+=	host-libiberty .WAIT \
 .endif
 
 SUBDIR+=	include
+
+# Make sure that we do host-liberty before include, rs6000 has a generator
+# for an installed a header and the generator needs host-libiberty.
+include-include: include-host-libiberty
 
 .include <bsd.subdir.mk>
 
