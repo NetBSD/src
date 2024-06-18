@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2024/01/25 11:47:53 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2024/06/18 13:35:26 rin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2024/01/25 11:47:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2024/06/18 13:35:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,11 +82,20 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args maa;
 
 	aprint_normal(": Nintendo Wii\n");
+
+	/*
+	 * GCC 12 blames pointer reference to 0-th page, [0, 0xfff].
+	 * XXX map to higher address as done for, e.g., arm by devmap?
+	 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 	aprint_debug_dev(self, "mem1 0x%x, mem2 0x%x\n",
 	    in32(GLOBAL_MEM1_SIZE), in32(GLOBAL_MEM2_SIZE));
 	aprint_debug_dev(self, "cpu %u, bus %u, vidmode %u\n",
 	    in32(GLOBAL_CPU_SPEED), in32(GLOBAL_BUS_SPEED),
 	    in32(GLOBAL_CUR_VID_MODE));
+#pragma GCC diagnostic pop
+
 	aprint_debug_dev(self, "ios version 0x%x\n", in32(GLOBAL_IOS_VERSION));
 
 	maa.maa_bst = &wii_mem_tag;
