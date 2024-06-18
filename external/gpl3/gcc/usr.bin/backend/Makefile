@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2024/06/11 03:06:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.74 2024/06/18 04:07:18 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -34,12 +34,6 @@ CPPFLAGS.lto-streamer-in.cc+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CXXFLAGS+=	-std=gnu++11
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
-
-# XXX This is generated here, not in ../include.
-.if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64"
-INCS+=	rs6000-vecdefines.h
-INCSDIR=${GCC_INCSDIR}
-.endif
 
 .include <bsd.lib.mk>
 
@@ -439,24 +433,7 @@ CLEANFILES+=	aarch-builtin-iterators.h
 
 .if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64" # {
 
-rs6000-gen-builtins.lo: ${HH} ${DIST}/gcc/config/rs6000/rs6000-gen-builtins.cc
-rbtree.lo: ${HH} ${DIST}/gcc/config/rs6000/rbtree.cc
-rs6000-gen-builtins: rs6000-gen-builtins.lo rbtree.lo
-	${_MKTARGET_LINK}
-	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
-rs6000-builtins.cc: rs6000-gen-builtins \
-		    ${DIST}/gcc/config/rs6000/rs6000-builtins.def \
-		    ${DIST}/gcc/config/rs6000/rs6000-overload.def
-	${_MKTARGET_CREATE}
-	./rs6000-gen-builtins \
-		    ${DIST}/gcc/config/rs6000/rs6000-builtins.def \
-		    ${DIST}/gcc/config/rs6000/rs6000-overload.def \
-                rs6000-builtins.h rs6000-builtins.cc rs6000-vecdefines.h
-rs6000-builtins.h rs6000-vecdefines.h: rs6000-builtins.cc
-
-CLEANFILES+=	rs6000-builtins.h rs6000-builtins.cc rs6000-vecdefines.h
-CLEANFILES+=	rs6000-gen-builtins rbtree.lo rs6000-gen-builtins.lo
-
+.include "../rs6000-inc.mk"
 gtype-desc.h: rs6000-builtins.h
 
 .endif # }

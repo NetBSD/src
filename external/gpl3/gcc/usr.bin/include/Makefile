@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2024/06/06 05:41:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2024/06/18 04:07:18 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -8,9 +8,9 @@ SUBDIR=	sanitizer
 .include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
 .endif
 
-# XXX rs6000-vecdefines.h is generated in usr.bin/backend.  we can
-# try to install this from there later perhaps?
-INCS= ${G_EXTRA_HEADERS:T:Nrs6000-vecdefines.h}
+INCS= ${G_EXTRA_HEADERS:T}
+
+.include "../rs6000-inc.mk"
 
 # Part of the standard headers, the rest of which we replace.
 INCS+=	stdatomic.h
