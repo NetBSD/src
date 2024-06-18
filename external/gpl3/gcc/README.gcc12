@@ -1,4 +1,4 @@
-$NetBSD: README.gcc12,v 1.23 2024/06/16 21:49:22 skrll Exp $
+$NetBSD: README.gcc12,v 1.24 2024/06/18 14:08:11 rin Exp $
 
 
 new stuff:
@@ -57,7 +57,7 @@ mipseb		y	b	y	y	b	y		?	?	?
 mipsel		y	b	y	y	b	y		?	?	?
 mips64eb	y	b	y	y	b	y		?	?	?
 mips64el	y	b	y	y	b	y		?	?	?
-powerpc		y	y	y	y	y	b		?	?	?
+powerpc		y	y	y	y	y	y		y	y	?
 powerpc64	y	?	?	y	b	b		?	?	?
 sh3eb		y	?	y	y	b	y		?	?	?
 sh3el		y	n[20]	y	y	b	y		n[22]	?	?
