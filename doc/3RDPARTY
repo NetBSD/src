@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2012 2024/06/12 02:26:13 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.2013 2024/06/18 17:29:15 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1139,10 +1139,18 @@ Notes:
 - Next update to be in crypto/openssl/apache2/openssl/dist, since
   OpenSSL 3.0 was relicensed as Apache2
 - Run openssl2netbsd to get rid of the RCSID identifiers
+- import
+- configure and build after importing in the import directory
+- check the generated files against the ones in the include directory
+  and merge changes
+- copy the toplevel libFOO.ld files to our foo.map linker files (the legacy.ld
+  is in providers/)
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
   to regen assembly files
+- run openssl speed -evp aes-256-cbc and compare the results with the 
+  autoconf build
 
 Package:	pcc
 Version:	1.1.0.DEVEL 20160208
