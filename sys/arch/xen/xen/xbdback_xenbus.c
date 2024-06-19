@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.105 2024/06/19 09:02:48 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.106 2024/06/19 09:43:22 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.105 2024/06/19 09:02:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.106 2024/06/19 09:43:22 martin Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -420,7 +420,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		    sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS,
 		    NULL, BUS_DMA_WAITOK);
 		if (error != 0) {
-			printf("%s: can't load dma map for indirect segments %d @%p (%d, %ld)\n",
+			printf("%s: can't load dma map for indirect segments %d @%p (%d, %zu)\n",
 			    xbdi->xbdi_name, i, xbd_io->xio_seg, error, sizeof(xbd_io->xio_seg));
 			bus_dmamap_destroy(xbdi->xbdi_xbusd->xbusd_dmat,
 			    xbd_io->xio_seg_dmamap);
