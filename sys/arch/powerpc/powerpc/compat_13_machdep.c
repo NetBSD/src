@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.22 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.23 2024/06/19 15:19:22 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.22 2022/03/13 17:50:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.23 2024/06/19 15:19:22 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -52,6 +52,22 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.22 2022/03/13 17:50:55 andva
 #include <compat/sys/signalvar.h>
 
 #include <powerpc/psl.h>
+
+#ifdef _LP64
+
+/*
+ * COMPAT_13 is useful only with COMPAT_NETBSD32.
+ */
+
+int
+compat_13_sys_sigreturn(struct lwp *l,
+    const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
+{
+
+	return ENOSYS;
+}
+
+#else
 
 int
 compat_13_sys_sigreturn(struct lwp *l,
@@ -104,3 +120,5 @@ compat_13_sys_sigreturn(struct lwp *l,
 
 	return (EJUSTRETURN);
 }
+
+#endif /* !_LP64 */
