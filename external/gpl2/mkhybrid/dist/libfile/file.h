@@ -116,15 +116,4 @@ extern int debug;		/* enable debugging?			*/
 extern int zflag;		/* process compressed files?		*/
 extern int lflag;		/* follow symbolic links?		*/
 
-
-#ifndef	HAVE_STRERROR
-extern int sys_nerr;
-extern char *sys_errlist[];
-#define strerror(e) \
-	(((e) >= 0 && (e) < sys_nerr) ? sys_errlist[(e)] : "Unknown error")
-#endif
-#ifndef	HAVE_STRTOUL
-#define strtoul(a, b, c)	strtol(a, b, c)
-#endif
-
 #endif /* __file_h__ */
