@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.14 2024/06/12 19:12:44 riastradh Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.15 2024/06/19 20:00:10 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -1277,7 +1277,7 @@ vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case VD_MEDIA_TYPE_DVD:
 			inq.device = T_CDROM;
 			inq.dev_qual2 = SID_REMOVABLE;
-			bcopy("Virtual CDROM    ", inq.product, sizeof(inq.product));
+			bcopy("Virtual CDROM   ", inq.product, sizeof(inq.product));
 			break;
 		case VD_MEDIA_TYPE_FIXED:
 			inq.device = T_DIRECT;
