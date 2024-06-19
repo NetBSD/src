@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.25 2024/06/17 21:57:59 pgoyette Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.26 2024/06/19 15:19:22 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.25 2024/06/17 21:57:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.26 2024/06/19 15:19:22 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -59,6 +59,29 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.25 2024/06/17 21:57:59 pgoye
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
 #endif
+
+#ifdef _LP64
+
+/*
+ * COMPAT_16 is useful only with COMPAT_NETBSD32.
+ */
+void
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+
+	printf("sendsig_sigcontext: illegal\n");
+	sigexit(curlwp, SIGILL);
+}
+
+int
+compat_16_sys___sigreturn14(struct lwp *l,
+    const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
+{
+
+	return ENOSYS;
+}
+
+#else
 
 /*
  * Send a signal to process.
@@ -253,3 +276,5 @@ compat_16_sys___sigreturn14(struct lwp *l,
 
 	return (EJUSTRETURN);
 }
+
+#endif /* !_LP64 */
