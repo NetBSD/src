@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2024/01/14 22:34:54 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.17 2024/06/19 15:21:59 rin Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -129,7 +129,9 @@ define	AM9513_CLK_CMD			AM9513_CLK_CMD
 define	SUN2_CLK_TIMER_CLEAR_OUTPUT	AM9513_CMD_CLEAR_OUTPUT(AM9513_TIMER2)
 
 # kernel-isms
+ifndef _MODULE
 define	KERNBASE			KERNBASE
+endif
 define	USPACE				USPACE
 define	PAGE_SIZE			PAGE_SIZE
 define	NBPG				NBPG
