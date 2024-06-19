@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.32 2022/07/05 22:50:43 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.33 2024/06/19 23:30:06 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -438,7 +438,7 @@ is used instead.
 .\"Within the replacement text
 .\".Ar s ,
 .\"the sequence
-.\".Ar \en ,
+.\".Sq Li \e Ns Ar n ,
 .\"where
 .\".Ar n
 .\"is a digit from 1 to 9, may be used to indicate just the text that
@@ -458,8 +458,8 @@ and the original target is
 .Em not
 changed.
 Note that the
-.Ql \en
-sequences within replacement string
+.Sq Li \e Ns Ar n
+sequences (backreferences) within replacement string
 .Ar s
 supported by GNU
 .Nm
