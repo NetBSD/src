@@ -1,4 +1,4 @@
-.\" $NetBSD: viac7temp.4,v 1.3 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: viac7temp.4,v 1.1.2.2 2024/06/20 11:00:06 martin Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,12 +24,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 24, 2011
+.Dd April 30, 2024
 .Dt VIAC7TEMP 4
 .Os
 .Sh NAME
 .Nm viac7temp
-.Nd VIA C7 temperature sensor
+.Nd VIA C7, VIA Nano and Zhaoxin CPU temperature sensor
 .Sh SYNOPSIS
 .Cd "viac7temp* at cpu?"
 .Sh DESCRIPTION
@@ -37,7 +37,11 @@ The
 .Nm
 driver supports temperature sensors found in
 .Tn VIA
-.Tn C7
+.Tn C7,
+.Tn VIA
+.Tn Nano
+and 
+.Tn Zhaoxin
 processors.
 The available information is available through the
 .Xr envsys 4

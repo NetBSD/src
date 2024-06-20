@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.599.4.5 2023/11/03 08:56:36 martin Exp $
+# $NetBSD: GENERIC,v 1.599.4.6 2024/06/20 11:00:07 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.599.4.5 $"
+#ident		"GENERIC-$Revision: 1.599.4.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -89,6 +89,7 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 hyperv0 	at cpu0		# Microsoft Hyper-V
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
+viac7temp*	at cpu?		# VIA C7, Nano and Zhaoxin temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 #Xen PV support for PVH and HVM guests

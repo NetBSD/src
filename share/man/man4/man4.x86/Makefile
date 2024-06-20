@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.23 2021/07/25 07:35:55 nia Exp $
+#	$NetBSD: Makefile,v 1.23.2.1 2024/06/20 11:00:06 martin Exp $
 
 MAN=	amdccp.4 amdpcib.4 apic.4 autoconf.4 balloon.4 console.4 coretemp.4 \
 	est.4 fdc.4 fwhrng.4 hpet.4 ichlpcib.4 imcsmb.4 lpt.4 mem.4 odcm.4 \
-	powernow.4 soekrisgpio.4 tco.4 amdsmn.4 amdzentemp.4
+	powernow.4 soekrisgpio.4 tco.4 amdsmn.4 amdzentemp.4 viac7temp.4
 
 MLINKS+=apic.4 ioapic.4 \
 	apic.4 lapic.4
