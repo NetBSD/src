@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: aed.c,v 1.34.8.1 2024/06/20 18:16:22 martin Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.34 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.34.8.1 2024/06/20 18:16:22 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -164,6 +164,7 @@ aed_input(adb_event_t *event)
 			aed_dokeyupdown(&new_event);
 		break;
 	case ADBADDR_MS:
+		event->u.m.buttons |= aed_sc->sc_buttons;
 		new_event.u.m.buttons |= aed_sc->sc_buttons;
 		aed_handoff(&new_event);
 		break;
