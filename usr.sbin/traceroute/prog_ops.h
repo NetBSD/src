@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.2 2019/08/18 04:12:07 kamil Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.2.8.1 2024/06/20 18:20:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #include <sys/socket.h>
 #include <poll.h>
 #include <ifaddrs.h>
+
+#ifndef CRUNCHOPS
 
 struct prog_ops {
 	int (*op_init)(void);
@@ -74,5 +76,22 @@ extern const struct prog_ops prog_ops;
 #define prog_getsockname prog_ops.op_getsockname
 #define prog_sysctl prog_ops.op_sysctl
 #define prog_getifaddrs prog_ops.op_getifaddrs
+
+#else
+
+#define prog_init ((int (*)(void))NULL)
+#define prog_socket socket
+#define prog_setsockopt setsockopt
+#define prog_shutdown shutdown
+#define prog_poll poll
+#define prog_recvfrom recvfrom
+#define prog_sendto sendto
+#define prog_close close
+#define prog_connect connect
+#define prog_getsockname getsockname
+#define prog_sysctl sysctl
+#define prog_getifaddrs getifaddrs
+
+#endif /* CRUNCHOPS */
 
 #endif /* _PROG_OPS_H_ */
