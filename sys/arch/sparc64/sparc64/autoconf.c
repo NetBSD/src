@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.240 2023/12/20 05:33:59 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.241 2024/06/20 18:02:45 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.240 2023/12/20 05:33:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.241 2024/06/20 18:02:45 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1183,14 +1183,15 @@ device_register(device_t dev, void *aux)
 		 * secondary logical domain
 		 *
 		 * The bootpath looks something like this:
-		 *   /virtual-devices@100/channel-devices@200/disk@1:a
+		 *   /virtual-devices@100/channel-devices@200/disk@1:a (disk)
+		 *   /virtual-devices@100/channel-devices@200/disk@4:f (cdrom)
 		 *
 		 * The device hierarchy constructed during autoconfiguration
 		 * is:
-		 *   /mainbus/vbus/cbus/vdsk/scsibus/sd
+		 *   /mainbus/vbus/cbus/vdsk/scsibus/sd or
+		 *   /mainbus/vbus/cbus/vdsk/scsibus/cd
 		 */
-		if (CPU_ISSUN4V && device_is_a(dev, "sd") &&
-		    device_is_a(busdev, "vdsk")) {
+		if (CPU_ISSUN4V && device_is_a(busdev, "vdsk")) {
 			dev_path_exact_match(dev, ofnode);
 		} else {
 			dev_bi_unit_drive_match(dev, ofnode,
