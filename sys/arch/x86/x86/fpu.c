@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.79.4.2 2023/07/25 11:41:42 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.79.4.3 2024/06/20 11:02:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.2 2023/07/25 11:41:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.79.4.3 2024/06/20 11:02:16 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -603,6 +603,15 @@ fputrap(struct trapframe *frame)
 void
 fpudna(struct trapframe *frame)
 {
+#ifdef XENPV
+	/*
+	 * Xen produes spurious fpudna traps, just do nothing.
+	 */
+	if (USERMODE(frame->tf_cs)) {
+		clts();
+		return;
+	} 
+#endif
 	panic("fpudna from %s, ip %p, trapframe %p",
 	    USERMODE(frame->tf_cs) ? "userland" : "kernel",
 	    (void *)X86_TF_RIP(frame), frame);
