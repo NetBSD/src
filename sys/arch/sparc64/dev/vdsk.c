@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.16 2024/06/19 20:04:20 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.17 2024/06/20 17:49:46 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -631,7 +631,9 @@ vdsk_rx_vio_attr_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 			}
 
 			sc->sc_vdisk_block_size = ai->vdisk_block_size;
+			DPRINTF(("vdisk_block_size %u\n", sc->sc_vdisk_block_size));
 			sc->sc_vdisk_size = ai->vdisk_size;
+			DPRINTF(("vdisk_size %lu\n", sc->sc_vdisk_size));
 			if (sc->sc_major > 1 || sc->sc_minor >= 1)
 				sc->sc_vd_mtype = ai->vd_mtype;
 			else
@@ -846,6 +848,8 @@ vdsk_send_attr_info(struct vdsk_softc *sc)
 	ai.xfer_mode = VIO_DRING_MODE;
 	ai.vdisk_block_size = DEV_BSIZE;
 	ai.max_xfer_sz = MAXPHYS / DEV_BSIZE;
+	DPRINTF(("vdisk_block_size %u\n", ai.vdisk_block_size));
+	DPRINTF(("max_xfer_sz %lu\n", ai.max_xfer_sz));
 	vdsk_sendmsg(sc, &ai, sizeof(ai));
 
 	sc->sc_vio_state |= VIO_SND_ATTR_INFO;
@@ -1023,42 +1027,98 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 	switch (xs->cmd->opcode) {
 
 		case SCSI_READ_6_COMMAND:
+			DPRINTF(("SCSI_READ_6_COMMAND\n"));
+			break;
+			
 		case READ_10:
+			DPRINTF(("SCSI_READ_10\n"));
+			break;
+			
 		case READ_12:
+			DPRINTF(("SCSI_READ_12\n"));
+			break;
+			
 		case READ_16:
+			DPRINTF(("SCSI_READ_16\n"));
+			break;
+			
 		case SCSI_WRITE_6_COMMAND:
+			DPRINTF(("SCSI_WRITE_6\n"));
+			break;
+			
 		case WRITE_10:
+			DPRINTF(("SCSI_WRITE_10\n"));
+			break;
+			
 		case WRITE_12:
+			DPRINTF(("SCSI_WRITE_12\n"));
+			break;
+			
 		case WRITE_16:
+			DPRINTF(("SCSI_WRITE_16\n"));
+			break;
+			
 		case SCSI_SYNCHRONIZE_CACHE_10:
+			DPRINTF(("SCSI_SYNCHRONIZE_CACHE_10WRITE_16\n"));
 			break;
 
 		case INQUIRY:
+			DPRINTF(("INQUIRY\n"));
 			vdsk_scsi_inq(sc, xs);
 			return;
 
 		case READ_CAPACITY_10:
+			DPRINTF(("READ_CAPACITY_10\n"));
 			vdsk_scsi_capacity(sc, xs);
 			return;
 
 		case READ_CAPACITY_16:
+			DPRINTF(("READ_CAPACITY_16\n"));
 			vdsk_scsi_capacity16(sc, xs);
 			return;
 
 		case SCSI_REPORT_LUNS:
+			DPRINTF(("REPORT_LUNS\n"));
 			vdsk_scsi_report_luns(sc, xs);
 			return;
 
 		case SCSI_TEST_UNIT_READY:
+			DPRINTF(("TEST_UNIT_READY\n"));
+			vdsk_scsi_done(xs, XS_NOERROR);
+			return;
+			
 		case START_STOP:
+			DPRINTF(("START_STOP\n"));
+			vdsk_scsi_done(xs, XS_NOERROR);
+			return;
+			
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
+			DPRINTF(("PREVENT_ALLOW_MEDIUM_REMOVAL\n"));
+			vdsk_scsi_done(xs, XS_NOERROR);
+			return;
+			
 		case SCSI_MODE_SENSE_6:
+			printf("SCSI_MODE_SENSE_6 (not implemented)\n");
+			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			return;
+
+		case SCSI_MODE_SELECT_6:
+			printf("MODE_SELECT_6 (not implemented)\n");
+			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			return;
+
 		case SCSI_MAINTENANCE_IN:
+			printf("MAINTENANCE_IN\n");
 			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 
 		case SCSI_MODE_SENSE_10:
+			printf("SCSI_MODE_SENSE_10 (not implemented)\n");
+			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
+			return;
+			
 		case READ_TOC:
+			printf("READ_TOC (not implemented)\n");
 			vdsk_scsi_done(xs, XS_DRIVER_STUFFUP);
 			return;
 
@@ -1113,6 +1173,7 @@ vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case READ_10:
 		case READ_12:
 		case READ_16:
+			DPRINTF(("VD_OP_BREAD\n"));
 			operation = VD_OP_BREAD;
 			break;
 
@@ -1120,10 +1181,12 @@ vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case WRITE_10:
 		case WRITE_12:
 		case WRITE_16:
+			DPRINTF(("VD_OP_BWRITE\n"));
 			operation = VD_OP_BWRITE;
 			break;
 
 		case SCSI_SYNCHRONIZE_CACHE_10:
+			DPRINTF(("VD_OP_FLUSH\n"));
 			operation = VD_OP_FLUSH;
 			break;
 
@@ -1157,7 +1220,7 @@ vdsk_submit_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 	len = xs->datalen;
 	va = (vaddr_t)xs->data;
 	while (len > 0) {
-	  DPRINTF(("len = %u\n", len));
+		DPRINTF(("len = %u\n", len));
 		KASSERT(ncookies < MAXPHYS / PAGE_SIZE);
 		pa = 0;
 		pmap_extract(pmap_kernel(), va, &pa);
