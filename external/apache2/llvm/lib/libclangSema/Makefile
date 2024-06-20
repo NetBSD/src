@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2024/06/20 04:13:35 mrg Exp $
 
 LIB=	clangSema
 
@@ -69,3 +69,5 @@ CLANG_TABLEGEN_OUTPUT= \
 .else
 .include <bsd.lib.mk>
 .endif
+
+CWARNFLAGS.gcc+=       -Wno-free-nonheap-object
