@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2022/01/22 11:49:16 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25.4.1 2024/06/20 18:11:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25.4.1 2024/06/20 18:11:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,13 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	devhandle_t selfh = device_handle(self);
 
 	cpus = OF_finddevice("/cpus");
-	if (cpus != 0) {
+	/*
+	 * XXX
+	 * the canonical error value is -1 but I dimly remember some OF
+	 * variants returning 0 here, so check for both just in case.
+	 * It's not like this is a performance critical path.
+	 */
+	if ((cpus != -1) && (cpus != 0)) {
 		node = OF_child(cpus);
 		while (node != 0) {
 			ca.ca_name = "cpu";
