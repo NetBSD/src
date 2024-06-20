@@ -1,7 +1,7 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.106 2024/06/19 09:43:22 martin Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.107 2024/06/20 15:17:27 bouyer Exp $      */
 
 /*
- * Copyright (c) 2006 Manuel Bouyer.
+ * Copyright (c) 2006,2024 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.106 2024/06/19 09:43:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.107 2024/06/20 15:17:27 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -169,7 +169,7 @@ struct xbdback_io {
 			grant_ref_t xio_gref[VBD_MAX_INDIRECT_SEGMENTS];
 			/* grants release */
 			grant_handle_t xio_gh[VBD_MAX_INDIRECT_SEGMENTS];
-			bool xio_need_bounce; /* request is not contigous */
+			bool xio_need_bounce; /* request is not contiguous */
 		} xio_rw;
 	} u;
 };
@@ -200,9 +200,9 @@ struct xbdback_instance {
 	SLIST_HEAD(, xbdback_va) xbdi_va_free;
 	/* segments structure allocated in page-aligned chunks */
 	struct blkif_request_segment *xbdi_segs;
-	/* bounce buffer in case a transfer is not contigous */
+	/* bounce buffer in case a transfer is not contiguous */
 	vaddr_t xbdi_bouncebuf;
-	int xbdi_bouncebuf_use; /* is bounce buffer in use ? */
+	int xbdi_bouncebuf_use; /* is bounce buffer in use? */
 	/* backing device parameters */
 	dev_t xbdi_dev;
 	const struct bdevsw *xbdi_bdevsw; /* pointer to the device's bdevsw */
@@ -238,14 +238,14 @@ struct xbdback_instance {
 do {								\
 	KASSERT(mutex_owned(&xbdip->xbdi_lock));		\
 	(xbdip)->xbdi_refcnt++;					\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define xbdi_put(xbdip)						\
 do {								\
 	KASSERT(mutex_owned(&xbdip->xbdi_lock));		\
 	if (--((xbdip)->xbdi_refcnt) == 0)  			\
                xbdback_finish_disconnect(xbdip);		\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 static SLIST_HEAD(, xbdback_instance) xbdback_instances;
 static kmutex_t xbdback_lock;
@@ -394,7 +394,8 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 	 * allocate page-aligned memory for segments, so that for each
 	 * xbdback_io its segments are in a single page.
 	 * sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS
-	 * is 128 so this helps us
+	 * is 128 so this helps us avoiding a page boundary withing a
+	 * block of VBD_MAX_INDIRECT_SEGMENTS segments.
 	 */
 	CTASSERT(sizeof(struct blkif_request_segment) * VBD_MAX_INDIRECT_SEGMENTS == 128);
 	xbdi->xbdi_segs = (void *)uvm_km_alloc(kernel_map, round_page(
@@ -1204,7 +1205,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 			req->operation = rinn->indirect_op;
 			req->nr_segments = (uint8_t)rinn->nr_segments;
 			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS) {
-				errstr = "too much indirect segments";
+				errstr = "too many indirect segments";
 				goto bad_segments;
 			}
 			in_gntref = rinn->indirect_grefs[0];
@@ -1212,7 +1213,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		} else {
 			req->nr_segments = reqn->nr_segments;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
-				errstr = "too much segments";
+				errstr = "too many segments";
 				goto bad_segments;
 			}
 			for (i = 0; i < req->nr_segments; i++)
@@ -1229,7 +1230,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 			req->operation = rin32->indirect_op;
 			req->nr_segments = (uint8_t)rin32->nr_segments;
 			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS) {
-				errstr = "too much indirect segments";
+				errstr = "too many indirect segments";
 				goto bad_segments;
 			}
 			in_gntref = rin32->indirect_grefs[0];
@@ -1237,7 +1238,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		} else {
 			req->nr_segments = req32->nr_segments;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
-				errstr = "too much segments";
+				errstr = "too many segments";
 				goto bad_segments;
 			}
 			for (i = 0; i < req->nr_segments; i++)
@@ -1253,7 +1254,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 			rin64 = (blkif_x86_64_request_indirect_t *)req64;
 			req->nr_segments = (uint8_t)rin64->nr_segments;
 			if (req->nr_segments > VBD_MAX_INDIRECT_SEGMENTS) {
-				errstr = "too much indirect segments";
+				errstr = "too many indirect segments";
 				goto bad_segments;
 			}
 			in_gntref = rin64->indirect_grefs[0];
@@ -1261,7 +1262,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		} else {
 			req->nr_segments = req64->nr_segments;
 			if (req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
-				errstr = "too much segments";
+				errstr = "too many segments";
 				goto bad_segments;
 			}
 			for (i = 0; i < req->nr_segments; i++)
@@ -1490,7 +1491,7 @@ xbdback_co_do_io(struct xbdback_instance *xbdi, void *obj)
 				segoffset += PAGE_SIZE * i;
 				memcpy(
 				    (void *)(xbdi->xbdi_bouncebuf + boffset),
-				    (void *) (xbd_io->xio_vaddr + segoffset),
+				    (void *)(xbd_io->xio_vaddr + segoffset),
 				    segbcount);
 				boffset += segbcount;
 			}
@@ -1568,7 +1569,7 @@ xbdback_iodone_locked(struct xbdback_instance *xbdi, struct xbdback_io *xbd_io,
 				KASSERT(boffset + segbcount < MAXPHYS);
 				segoffset += PAGE_SIZE * i;
 				memcpy(
-				    (void *) (xbd_io->xio_vaddr + segoffset),
+				    (void *)(xbd_io->xio_vaddr + segoffset),
 				    (void *)(xbdi->xbdi_bouncebuf + boffset),
 				    segbcount);
 				boffset += segbcount;
@@ -1698,9 +1699,9 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 	switch(error) {
 	case 0:
 #ifdef XENDEBUG_VBD
-		printf("handle ");
+		printf("handle");
 		for (i = 0; i < req->nr_segments; i++) {
-			printf("%u ", (u_int)xbd_io->xio_gh[i]);
+			printf(" %u ", (u_int)xbd_io->xio_gh[i]);
 		}
 		printf("\n");
 #endif
