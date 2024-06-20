@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314.2.6 2024/03/11 17:09:41 martin Exp $
+# $NetBSD: mi,v 1.1314.2.7 2024/06/20 18:07:03 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6266,6 +6266,7 @@
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
 ./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
+./usr/share/zoneinfo/leap-seconds.list		base-sys-share		share
 ./usr/share/zoneinfo/leapseconds		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
 ./usr/share/zoneinfo/zone.tab			base-sys-share		share

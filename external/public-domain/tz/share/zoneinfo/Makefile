@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/10/08 13:44:36 kre Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2024/06/20 18:07:03 martin Exp $
 
 .include <bsd.own.mk>
 .include "../../Makefile.inc"
@@ -52,7 +52,7 @@ YDATA=		$(PRIMARY_YDATA) etcetera backward
 NDATA=		factory
 TDATA=		$(YDATA) $(NDATA)
 ZONETABLES=	zone1970.tab zone.tab
-TABDATA=	iso3166.tab leapseconds $(ZONETABLES)
+TABDATA=	iso3166.tab leapseconds leap-seconds.list $(ZONETABLES)
 DATA=		$(YDATA) $(NDATA) $(TABDATA)
 
 TZBUILDDIR=	${.OBJDIR}/builddir
