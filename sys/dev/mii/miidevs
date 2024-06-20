@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.168 2020/06/23 14:35:36 msaitoh Exp $
+$NetBSD: miidevs,v 1.168.20.1 2024/06/20 18:24:44 martin Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
 oui RENESAS			0x749050	Renesas
+oui INTEL2			0x984fee	Intel
+oui MAXLINEAR			0xac9a96	MaxLinear
 
 /* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
@@ -116,6 +118,7 @@ oui xxVITESSE			0x008083	Vitesse Semiconductor
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 oui xxCICADA			0x00c08f	Cicada Semiconductor
 oui xxRDC			0x00d02d	RDC Semiconductor
+oui xxMAXLINEAR			0x0c32ab	MaxLinear
 oui xxNATSEMI			0x1000e8	National Semiconductor
 oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
@@ -276,7 +279,12 @@ model INTEL I350		0x003b I350 10/100/1000 media interface
 model xxMARVELL I210		0x0000 I210 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 model ATTANSIC I82578		0x0004 Intel 82578 10/100/1000 media interface
-
+/* Acquired by MaxLinear */
+model INTEL2 GPY211		0x0000 MaxLinear GPY21[125] 2.5G media interface
+model INTEL2 I226_1		0x0001 I226 2.5G media interface (1)
+model INTEL2 I226_2		0x0005 I226 2.5G media interface (2)
+model INTEL2 I225		0x000c I225 2.5G media interface
+model INTEL2 GPY115		0x0030 MaxLinear GPY115 Gigabit PHY
 
 /* JMicron PHYs */
 model JMICRON JMP211		0x0021 JMP211 10/100/1000 media interface
