@@ -179,6 +179,7 @@ static int next_delim_len; /* Length of delimiter after record. */
 static int delim_after = 1;/* If true, print the delimiter after the record. */
 static int at_eof;
 static int have_matches;   /* If true, matches have been found. */
+static int is_binary;      /* -1 unknown, 0 ascii, 1 binary */
 
 static int invert_match;   /* Show only non-matching records. */
 static int print_filename; /* Output filename. */
@@ -199,6 +200,12 @@ static regaparams_t match_params;
 /* The color string used with the --color option.  If set, the
    environment variable GREP_COLOR overrides this default value. */
 static const char *highlight = "01;31";
+
+static int
+isbinaryfile(void)
+{
+	return buf != NULL && memchr(buf, '\0', data_len) != NULL;
+}
 
 /* Sets `record' to the next complete record from file `fd', and `record_len'
    to the length of the record.	 Returns 1 when there are no more records,
@@ -262,6 +269,9 @@ tre_agrep_get_next_record(int fd, const char *filename)
 	    }
 	  data_len += r;
 	  next_record = buf;
+
+	  if (is_binary < 0)
+	    is_binary = isbinaryfile();
 	}
 
       /* Find the next record delimiter. */
@@ -310,46 +320,7 @@ tre_agrep_get_next_record(int fd, const char *filename)
     }
 }
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-
 #include <dirent.h>
-
-static int
-isbinaryfile(const char *filename)
-{
-	struct stat	 st;
-	size_t		 size;
-	size_t		 i;
-	char		*mapped;
-	FILE		*fp;
-	int		 isbin;
-
-	if ((fp = fopen(filename, "r")) == NULL) {
-		return 1;
-	}
-	fstat(fileno(fp), &st);
-	isbin = 0;
-	if ((st.st_mode & S_IFMT) != S_IFREG) {
-		isbin = 1;
-	} else {
-		size = (size_t)st.st_size;
-		mapped = mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fp), 0);
-		if (mapped == MAP_FAILED) {
-			fclose(fp);
-			return 1;
-		}
-		for (i = 0 ; !isbin && i < size ; i++) {
-			if (mapped[i] == 0x0) {
-				isbin = 1;
-			}
-		}
-		munmap(mapped, size);
-	}
-	fclose(fp);
-	return isbin;
-}
 
 static int tre_agrep_handle_file(const char */*filename*/);
 
@@ -397,6 +368,8 @@ tre_agrep_handle_file(const char *filename)
   int fd;
   int count = 0;
   int recnum = 0;
+
+  is_binary = -1;
 
   /* Allocate the initial buffer. */
   if (buf == NULL)
@@ -488,10 +461,12 @@ tre_agrep_handle_file(const char *filename)
 	      printf("%s\n", filename);
 	      break;
 	    }
-	  else if (!count_matches && isbinaryfile(filename))
+	  else if (!count_matches && is_binary > 0)
 	    {
 	      if (print_filename)
-		printf("Binary file %s matches\n", filename);
+		printf("%s:", filename);
+	      printf("Binary file matches\n");
+	      break;
 	    }
 	  else if (!count_matches)
 	    {
