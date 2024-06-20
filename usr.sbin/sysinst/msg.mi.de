@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.48 2024/04/25 11:25:08 hannken Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.49 2024/06/20 05:46:22 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -643,7 +643,7 @@ message net_defroute
 {IPv4-Gateway}
 
 message net_media
-{Art der Netzwerkverbindung}
+{Art der Netzwerkverbindung (fuer Automatik leer lassen)}
 
 message net_ssid
 {WLAN-SSID?}
