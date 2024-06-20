@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_rename.c,v 1.3 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_rename.c,v 1.3.4.1 2024/06/20 18:09:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_rename.c,v 1.3 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_rename.c,v 1.3.4.1 2024/06/20 18:09:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -127,7 +127,7 @@ msdosfs_rename(void *v)
 	KASSERT(tdvp->v_type == VDIR);
 
 	cred = fcnp->cn_cred;
-	KASSERT(tcnp->cn_cred == cred);
+	KASSERT(kauth_cred_uidmatch(cred, tcnp->cn_cred));
 
 	/*
 	 * Sanitize our world from the VFS insanity.  Unlock the target
