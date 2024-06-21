@@ -1,4 +1,4 @@
-/* $NetBSD: clk.c,v 1.7 2019/07/23 17:44:03 jmcneill Exp $ */
+/* $NetBSD: clk.c,v 1.7.28.1 2024/06/21 10:59:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.7 2019/07/23 17:44:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.7.28.1 2024/06/21 10:59:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -229,6 +229,8 @@ clk_get_rate(struct clk *clk)
 int
 clk_set_rate(struct clk *clk, u_int rate)
 {
+	KASSERT(clk != NULL);
+
 	if (clk->flags & CLK_SET_RATE_PARENT)
 		return clk_set_rate(clk_get_parent(clk), rate);
 
