@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.26 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: netif.c,v 1.26.30.1 2024/06/21 11:05:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -292,8 +292,10 @@ fnd:
 	(void)memset(s, 0, sizeof(*s));
 	netif_init();
 	nif = netif_select(machdep_hint);
-	if (!nif)
-		panic("netboot: no interfaces left untried");
+	if (!nif) {
+		errno = ENXIO;
+		return -1;
+	}
 	if (netif_probe(nif, machdep_hint)) {
 		printf("%s: couldn't probe %s%d\n", __func__,
 		    nif->nif_driver->netif_bname, nif->nif_unit);
