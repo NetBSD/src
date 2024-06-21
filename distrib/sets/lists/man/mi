@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1757.2.10 2024/06/20 17:46:55 martin Exp $
+# $NetBSD: mi,v 1.1757.2.11 2024/06/21 10:39:38 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5487,7 +5487,7 @@
 ./usr/share/man/html4/x86/tco.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/tprof_amdpmi.html	man-obsolete		obsolete
 ./usr/share/man/html4/x86/tprof_pmi.html	man-obsolete		obsolete
-./usr/share/man/man4/x86/viac7temp.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/viac7temp.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/vmt.html		man-obsolete		obsolete
 ./usr/share/man/html4/x86/vmx.html		man-obsolete		obsolete
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
