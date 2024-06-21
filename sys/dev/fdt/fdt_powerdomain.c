@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_powerdomain.c,v 1.1 2022/03/04 08:19:06 skrll Exp $ */
+/* $NetBSD: fdt_powerdomain.c,v 1.1.4.1 2024/06/21 11:03:41 martin Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_powerdomain.c,v 1.1 2022/03/04 08:19:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_powerdomain.c,v 1.1.4.1 2024/06/21 11:03:41 martin Exp $");
 
 #include <sys/param.h>
 
@@ -103,7 +103,7 @@ fdtbus_powerdomain_enable_internal(int phandle, int index, bool enable)
 	if (pds == NULL)
 		return EINVAL;
 
-	for (const uint32_t *pd = pds; pd < pds + len; index--) {
+	for (const uint32_t *pd = pds; pd < pds + len / sizeof(*pd); index--) {
 		uint32_t pd_node =
 		   fdtbus_get_phandle_from_native(be32toh(pd[0]));
 		struct fdtbus_powerdomain_controller *pdc =
