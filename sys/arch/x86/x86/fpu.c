@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.88 2024/05/17 00:37:14 manu Exp $	*/
+/*	$NetBSD: fpu.c,v 1.89 2024/06/21 17:24:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.88 2024/05/17 00:37:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.89 2024/06/21 17:24:08 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -624,7 +624,7 @@ fpudna(struct trapframe *frame)
 	if (USERMODE(frame->tf_cs)) {
 		clts();
 		return;
-	} 
+	}
 #endif
 	panic("fpudna from %s, ip %p, trapframe %p",
 	    USERMODE(frame->tf_cs) ? "userland" : "kernel",
