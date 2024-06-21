@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.3.2.4 2024/02/23 18:41:02 martin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.3.2.5 2024/06/21 10:54:50 martin Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.4 2024/02/23 18:41:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.3.2.5 2024/06/21 10:54:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_net_mpsafe.h"
 #include "opt_if_igc.h"
 #if 0 /* notyet */
 #include "vlan.h"
@@ -354,7 +353,6 @@ igc_attach(device_t parent, device_t self, void *aux)
 
 	const struct igc_product *igcp = igc_lookup(pa);
 	KASSERT(igcp != NULL);
-	pci_aprint_devinfo_fancy(pa, "Ethernet controller", igcp->igcp_name, 1);
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_MPSAFE);
@@ -363,17 +361,23 @@ igc_attach(device_t parent, device_t self, void *aux)
 
 	sc->osdep.os_sc = sc;
 	sc->osdep.os_pa = *pa;
-#ifdef __aarch64__
+#ifndef __aarch64__
 	/*
 	 * XXX PR port-arm/57643
 	 * 64-bit DMA does not work at least for LX2K with 32/64GB memory.
 	 * smmu(4) support may be required.
 	 */
-	sc->osdep.os_dmat = pa->pa_dmat;
-#else
-	sc->osdep.os_dmat = pci_dma64_available(pa) ?
-	    pa->pa_dmat64 : pa->pa_dmat;
+	if (pci_dma64_available(pa)) {
+		aprint_verbose(", 64-bit DMA");
+		sc->osdep.os_dmat = pa->pa_dmat64;
+	} else
 #endif
+	{
+		aprint_verbose(", 32-bit DMA");
+		sc->osdep.os_dmat = pa->pa_dmat;
+	}
+
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller", igcp->igcp_name, 1);
 
 	/* Determine hardware and mac info */
 	igc_identify_hardware(sc);
@@ -2119,7 +2123,9 @@ igc_rxeof(struct rx_ring *rxr, u_int limit)
 		const bool eop = staterr & IGC_RXD_STAT_EOP;
 		const uint16_t len = le16toh(rxdesc->wb.upper.length);
 
+#if NVLAN > 0
 		const uint16_t vtag = le16toh(rxdesc->wb.upper.vlan);
+#endif
 
 		const uint32_t ptype = le32toh(rxdesc->wb.lower.lo_dword.data) &
 		    IGC_PKTTYPE_MASK;
@@ -2800,7 +2806,7 @@ igc_intr(void *arg)
 
 	/* Definitely not our interrupt. */
 	if (reg_icr == 0x0) {
-		DPRINTF(MISC, "not for me");
+		DPRINTF(MISC, "not for me\n");
 		return 0;
 	}
 
