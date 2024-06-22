@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_380.c,v 1.1 2024/06/09 10:27:39 rillig Exp $	*/
+/*	$NetBSD: msg_380.c,v 1.2 2024/06/22 06:24:46 rillig Exp $	*/
 # 3 "msg_380.c"
 
 // Test for message: lossy conversion of %Lg to '%s', arg #%d [380]
@@ -50,11 +50,22 @@ conversions(void)
 	take_u64(0.0);
 	/* expect+1: warning: lossy conversion of 3.141 to 'unsigned long long', arg #1 [380] */
 	take_u64(3.141);
-	take_u64(18446744073709550591.0);
-	/* expect+1: warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380] */
-	take_u64(18446744073709550592.0);
-	/* expect+1: warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380] */
-	take_u64(18446744073709551615.0);
-	/* expect+1: warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380] */
-	take_u64(18446744073709551616.0);
+
+	// Warning on:		alpha
+	// No warning on:	aarch64 aarch64-compat32 arm i386 mips powerpc riscv64 sh3 sparc x86_64
+	// Unknown:		coldfire hppa ia64 m68000 m68k mips64 mipsn64 or1k powerpc64 riscv32 sparc64 vax
+	//
+	// warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380]
+	//take_u64(18446744073709550591.0);
+
+	// Warning on:		aarch64 alpha arm i386 mips riscv64 sparc x86_64
+	// No warning on:	aarch64-compat32 powerpc sh3
+	// Unknown:		coldfire hppa ia64 m68000 m68k mips64 mipsn64 or1k powerpc64 riscv32 sparc64 vax
+	//
+	// warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380]
+	//take_u64(18446744073709550592.0);
+	// warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380]
+	//take_u64(18446744073709551615.0);
+	// warning: lossy conversion of 1.84467e+19 to 'unsigned long long', arg #1 [380]
+	//take_u64(18446744073709551616.0);
 }
