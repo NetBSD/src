@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.300 2024/06/22 20:17:25 riastradh Exp $
+# $NetBSD: md.amd64,v 1.301 2024/06/22 23:45:09 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -724,8 +724,6 @@
 ./usr/include/gcc-10/rdseedintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/rtmintrin.h		comp-c-include		gcc=10
 ./usr/include/gcc-10/rtmintrin.h		comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/sanitizer			comp-c-include		gcc=10
-./usr/include/gcc-10/sanitizer			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/sgxintrin.h		comp-c-include		gcc=10
 ./usr/include/gcc-10/sgxintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/shaintrin.h		comp-c-include		gcc=10
