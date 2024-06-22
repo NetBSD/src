@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2024/06/22 17:59:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.111 2024/06/22 23:02:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ SUBDIR+= \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
 	xf86-video-amdgpu \
+	xf86-video-ark \
 	xf86-video-ast \
 	xf86-video-ati \
 	xf86-video-chips \
@@ -65,7 +66,6 @@ SUBDIR+= \
 
 # needs porting for xorg-server 1.18
 #	xf86-video-apm \
-#	xf86-video-ark \
 #	xf86-video-glint \
 #	xf86-video-intel-old \
 #	xf86-video-xgi
@@ -80,6 +80,7 @@ SUBDIR+= \
 .if ${MACHINE} == "alpha"
 SUBDIR+= \
 	xf86-video-ast \
+	xf86-video-ark \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
@@ -102,7 +103,6 @@ SUBDIR+= \
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-apm \
-	xf86-video-ark \
 	xf86-video-glint \
 	xf86-video-s3 \
 	xf86-video-tga \
@@ -128,6 +128,7 @@ SUBDIR+= \
 
 .if ${MACHINE} == "cats"
 SUBDIR+= \
+	xf86-video-ark \
 	xf86-video-ast \
 	xf86-video-ati \
 	xf86-video-chips \
@@ -153,7 +154,6 @@ SUBDIR+= \
 
 # needs porting for xorg-server 1.18
 #	xf86-video-apm \
-#	xf86-video-ark \
 #	xf86-video-glint
 
 .endif	# ${MACHINE} == "cats"
