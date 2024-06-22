@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.66 2024/06/22 23:20:38 mrg Exp $
+# $NetBSD: md.alpha,v 1.67 2024/06/22 23:24:46 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -100,8 +100,6 @@
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/vga_drv.so		xserver-obsolete	obsolete
