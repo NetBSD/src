@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.38.4.1 2023/07/29 10:58:02 martin Exp $ */
+/* $NetBSD: coretemp.c,v 1.38.4.2 2024/06/22 09:57:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.38.4.1 2023/07/29 10:58:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.38.4.2 2024/06/22 09:57:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,7 +110,7 @@ static int	coretemp_match(device_t, cfdata_t, void *);
 static void	coretemp_attach(device_t, device_t, void *);
 static int	coretemp_detach(device_t, int);
 static int	coretemp_quirks(struct cpu_info *);
-static void	coretemp_tjmax(device_t);
+static int	coretemp_tjmax(device_t);
 static void	coretemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	coretemp_refresh_xcall(void *, void *);
 
@@ -194,9 +194,10 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_register(sc->sc_sme) != 0)
 		goto fail;
 
-	coretemp_tjmax(self);
-	aprint_verbose(", Tjmax=%d", sc->sc_tjmax);
-	aprint_normal("\n");
+	if (coretemp_tjmax(self) == 0) {
+		aprint_verbose(", Tjmax=%d", sc->sc_tjmax);
+		aprint_normal("\n");
+	}
 	return;
 
 fail:
@@ -258,7 +259,7 @@ coretemp_quirks(struct cpu_info *ci)
 	return 1;
 }
 
-void
+static int
 coretemp_tjmax(device_t self)
 {
 	struct coretemp_softc *sc = device_private(self);
@@ -288,17 +289,19 @@ coretemp_tjmax(device_t self)
 		if ((model < 0x17) && ((msr & __BIT(28)) == 0))
 			goto notee;
 
-		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
-			return;
-
-		if ((msr & __BIT(30)) != 0) {
-			sc->sc_tjmax = 85;
-			return;
+		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT) {
+			aprint_normal("\n");
+			aprint_error_dev(sc->sc_dev,
+			    "Failed to read MSR_IA32_EXT_CONFIG MSR. "
+			    "Using default (%d)\n", sc->sc_tjmax);
+			return 1;
 		}
+
+		if ((msr & __BIT(30)) != 0)
+			sc->sc_tjmax = 85;
 	} else if (model == 0x17 && stepping == 0x06) {
 		/* The mobile Penryn family. */
 		sc->sc_tjmax = 105;
-		return;
 	} else if (model == 0x1c) {
 		if (stepping == 0x0a) {
 			/* 45nm Atom D400, N400 and D500 series */
@@ -307,21 +310,39 @@ coretemp_tjmax(device_t self)
 			sc->sc_tjmax = 90;
 	} else {
 notee:
-		/* Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET. */
+		/* 
+		 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET.
+		 * It is not fully known which CPU models have the MSR.
+		 */
 		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT) {
+			aprint_normal("\n");
 			aprint_error_dev(sc->sc_dev,
 			    "Failed to read TEMPERATURE_TARGET MSR. "
-			    "Use the default (%d)\n", sc->sc_tjmax);
-			return;
+			    "Using default (%d)\n", sc->sc_tjmax);
+			return 1;
 		}
 
 		tjmax = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
-		if ((tjmax < TJMAX_LIMIT_LOW) || (tjmax > TJMAX_LIMIT_HIGH))
+		if (tjmax < TJMAX_LIMIT_LOW) {
+			aprint_normal("\n");
 			aprint_error_dev(sc->sc_dev,
-			    "WARNING: Tjmax(%d) might exceeded the limit.\n",
+			    "WARNING: Tjmax(%d) retrieved was below expected range, "
+				"using default (%d).\n", tjmax, sc->sc_tjmax);
+			return 1;
+		}
+
+		if (tjmax > TJMAX_LIMIT_HIGH) {
+			aprint_normal("\n");
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: Tjmax(%d) might exceed the limit.\n",
 			    tjmax);
+			sc->sc_tjmax = tjmax;
+			return 1;
+		}
 		sc->sc_tjmax = tjmax;
 	}
+
+	return 0;
 }
 
 static void
