@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.81.4.1 2024/06/22 10:02:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.81 2022/09/28 16:43:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.81.4.1 2024/06/22 10:02:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,10 +112,10 @@ static int synaptics_edge_bottom = SYNAPTICS_EDGE_BOTTOM;
 static int synaptics_edge_motion_delta = 32;
 static u_int synaptics_finger_high = SYNAPTICS_FINGER_LIGHT + 5;
 static u_int synaptics_finger_low = SYNAPTICS_FINGER_LIGHT - 10;
-static int synaptics_horiz_pct = 0;
-static int synaptics_vert_pct = 0;
-static int synaptics_button_pct = 30;
-static int synaptics_button_boundary;
+static int synaptics_hscroll_pct = 0;
+static int synaptics_vscroll_pct = 0;
+static int synaptics_button_pct = 0;
+static int synaptics_button_boundary = SYNAPTICS_EDGE_BOTTOM;
 static int synaptics_button2;
 static int synaptics_button3;
 static int synaptics_two_fingers_emul = 0;
@@ -166,23 +166,26 @@ static int synaptics_movement_threshold_nodenum;
 static int synaptics_movement_enable_nodenum;
 static int synaptics_button_region_movement_nodenum;
 static int synaptics_aux_mid_button_scroll_nodenum;
-static int synaptics_horiz_pct_nodenum;
-static int synaptics_vert_pct_nodenum;
+static int synaptics_hscroll_pct_nodenum;
+static int synaptics_vscroll_pct_nodenum;
 static int synaptics_button_pct_nodenum;
 
 /*
  * copy of edges so we can recalculate edge limit if there is 
  * vertical scroll region
  */
-static int synaptics_actual_edge_right;
-static int synaptics_actual_edge_bottom;
+static int synaptics_true_edge_right;
+static int synaptics_true_edge_bottom;
 
-static int synaptics_old_vert_pct = 0;
-static int synaptics_old_horiz_pct = 0;
-static int synaptics_old_button_pct = 0;
-static int synaptics_old_button_boundary = SYNAPTICS_EDGE_BOTTOM;
-static int synaptics_old_horiz_edge = SYNAPTICS_EDGE_BOTTOM;
-static int synaptics_old_vert_edge = SYNAPTICS_EDGE_RIGHT;
+/*
+ * invalid old values, recalculate everything
+ */
+static int synaptics_old_vscroll_pct = -1;
+static int synaptics_old_hscroll_pct = -1;
+static int synaptics_old_button_pct = -1;
+static int synaptics_old_button_boundary = -1;
+static int synaptics_old_edge_right = -1;
+static int synaptics_old_edge_bottom = -1;
 
 /*
  * This holds the processed packet data, it is global because multiple
@@ -208,7 +211,7 @@ synaptics_poll_cmd(struct pms_softc *psc, ...)
 	int res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, i, 0,
     	    NULL, 0);
 	if (res)
-		aprint_error_dev(psc->sc_dev, "command error %#x\n", cmd[0]);
+		device_printf(psc->sc_dev, "command error %#x\n", cmd[0]);
 	return res;
 }
 
@@ -221,7 +224,7 @@ synaptics_poll_reset(struct pms_softc *psc)
 	u_char cmd[1] = { PMS_RESET };
 	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 2,
 	    resp, 1);
-	aprint_debug_dev(psc->sc_dev, "reset %d 0x%02x 0x%02x\n",
+	DPRINTF(10, &psc->u.synaptics, "reset %d 0x%02x 0x%02x\n",
 	    res, resp[0], resp[1]);
 	return res;
 }
@@ -251,79 +254,89 @@ synaptics_special_write(struct pms_softc *psc, u_char command, u_char arg)
 	return res;
 }
 
+static int
+synaptics_value(int pct, int low, int high)
+{
+	return low + pct * (high - low) / 100UL;
+}
+
+static int
+synaptics_percentage(int val, int low, int high)
+{
+	return ((val - low) * 100UL + high - low - 1) / (high - low);
+}
+
 static void
 pms_synaptics_set_boundaries(void)
 {
-	if (synaptics_vert_pct != synaptics_old_vert_pct ) {
-		synaptics_edge_right = synaptics_actual_edge_right -
-		    ((unsigned long) synaptics_vert_pct *
-		    (synaptics_actual_edge_right - synaptics_edge_left)) / 100;
-		synaptics_old_vert_pct = synaptics_vert_pct;
-		synaptics_old_vert_edge = synaptics_edge_right;
+	if (synaptics_vscroll_pct != synaptics_old_vscroll_pct ) {
+		synaptics_edge_right = synaptics_value(
+		    100 - synaptics_vscroll_pct,
+		    synaptics_edge_left,
+		    synaptics_true_edge_right);
+		synaptics_old_vscroll_pct = synaptics_vscroll_pct;
 	}
 
-	if (synaptics_edge_right != synaptics_old_vert_edge) {
-		if (synaptics_edge_right >= synaptics_actual_edge_right) {
-			synaptics_vert_pct = 0;
-			synaptics_edge_right = synaptics_actual_edge_right;
+	if (synaptics_edge_right != synaptics_old_edge_right) {
+		if (synaptics_edge_right >= synaptics_true_edge_right) {
+			synaptics_vscroll_pct = 0;
+			synaptics_edge_right = synaptics_true_edge_right;
 		} else {
-			synaptics_vert_pct = 100 -
-			    ((unsigned long) 100 * synaptics_edge_right) /
-			    (synaptics_actual_edge_right - synaptics_edge_left);
+			synaptics_vscroll_pct = 100 - synaptics_percentage(
+			    synaptics_edge_right,
+			    synaptics_edge_left,
+			    synaptics_true_edge_right);
 		}
-		synaptics_old_vert_pct = synaptics_vert_pct;
-		synaptics_old_vert_edge = synaptics_edge_right;
+		synaptics_old_vscroll_pct = synaptics_vscroll_pct;
+		synaptics_old_edge_right = synaptics_edge_right;
 	}
 
-	if (synaptics_horiz_pct != synaptics_old_horiz_pct ) {
-		synaptics_edge_bottom = synaptics_actual_edge_bottom +
-		    ((unsigned long) synaptics_horiz_pct *
-		    (synaptics_edge_top - synaptics_actual_edge_bottom)) / 100;
-		synaptics_old_horiz_pct = synaptics_horiz_pct;
-		synaptics_old_horiz_edge = synaptics_edge_bottom;
+	if (synaptics_hscroll_pct != synaptics_old_hscroll_pct ) {
+		synaptics_edge_bottom = synaptics_value(
+		    synaptics_hscroll_pct,
+		    synaptics_true_edge_bottom,
+		    synaptics_edge_top);
+		synaptics_old_hscroll_pct = synaptics_hscroll_pct;
 	}
 
-	if (synaptics_edge_bottom != synaptics_old_horiz_edge) {
-		if (synaptics_edge_bottom <= synaptics_actual_edge_bottom) {
-			synaptics_vert_pct = 0;
-			synaptics_edge_bottom = synaptics_actual_edge_bottom;
+	if (synaptics_edge_bottom != synaptics_old_edge_bottom) {
+		if (synaptics_edge_bottom <= synaptics_true_edge_bottom) {
+			synaptics_hscroll_pct = 0;
+			synaptics_edge_bottom = synaptics_true_edge_bottom;
 		} else {
-			synaptics_horiz_pct = 100 -
-			    ((unsigned long) 100 * synaptics_edge_bottom) /
-			    (synaptics_edge_top - synaptics_actual_edge_bottom);
+			synaptics_hscroll_pct = synaptics_percentage(
+			    synaptics_edge_bottom,
+			    synaptics_true_edge_bottom,
+			    synaptics_edge_top);
 		}
-		synaptics_old_horiz_edge = synaptics_edge_bottom;
+		synaptics_old_hscroll_pct = synaptics_hscroll_pct;
+		synaptics_old_edge_bottom = synaptics_edge_bottom;
 	}
 
 	if (synaptics_button_pct != synaptics_old_button_pct) {
+		synaptics_button_boundary = synaptics_value(
+		    synaptics_button_pct,
+		    synaptics_edge_bottom,
+		    synaptics_edge_top);
 		synaptics_old_button_pct = synaptics_button_pct;
 	}
 
 	if (synaptics_button_boundary != synaptics_old_button_boundary) {
 		if (synaptics_button_boundary <= synaptics_edge_bottom) {
 			synaptics_button_pct = 0;
+			synaptics_button_boundary = synaptics_edge_bottom;
 		} else if (synaptics_button_boundary >= synaptics_edge_top) {
 			synaptics_button_pct = 100;
+			synaptics_button_boundary = synaptics_edge_top;
 		} else {
-			synaptics_button_pct =
-			    (synaptics_button_boundary - synaptics_edge_bottom)
-			    * 100
-			    / (synaptics_edge_top - synaptics_edge_bottom);
+			synaptics_button_pct = synaptics_percentage(
+			    synaptics_button_boundary,
+			    synaptics_edge_bottom,
+			    synaptics_edge_top);
 		}
 		synaptics_old_button_pct = synaptics_button_pct;
+		synaptics_old_button_boundary = synaptics_button_boundary;
 	}
-
-	/*
-	 * calculate the button boundary
-	 */
-	if (synaptics_edge_top > synaptics_edge_bottom) {
-		synaptics_button_boundary = synaptics_edge_bottom + 
-		    ((unsigned long) synaptics_button_pct * 
-		    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
-	} else {
-		synaptics_button_boundary = synaptics_edge_bottom;
-	}
-	synaptics_old_button_boundary = synaptics_button_boundary;
 
 	synaptics_button2 = synaptics_edge_left +
 	    (synaptics_edge_right - synaptics_edge_left) / 3;
@@ -339,7 +352,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	u_char resp[3];
 	int res;
 
-	aprint_debug_dev(psc->sc_dev,
+	DPRINTF(10, sc,
 	    "synaptics_probe: Capabilities 0x%04x.\n", sc->caps);
 	if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH)
 		sc->flags |= SYN_FLAG_HAS_PASSTHROUGH;
@@ -354,7 +367,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 		sc->flags |= SYN_FLAG_HAS_MULTI_FINGER_REPORT;
 
 	/* Ask about extra buttons to detect up/down. */
-	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08)
+	if ((__SHIFTOUT(sc->caps, SYNAPTICS_CAP_EXTNUM) + 0x08)
 	    >= SYNAPTICS_EXTENDED_QUERY)
 	{
 		res = synaptics_special_read(psc, SYNAPTICS_EXTENDED_QUERY, resp);
@@ -364,12 +377,12 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 				sc->button_mask = sc->button_mask <<
 				    ((sc->num_buttons + 1) >> 1);
 
-			aprint_debug_dev(psc->sc_dev,
-			    "%s: Extended Buttons: %d.\n", __func__,
+			DPRINTF(10, sc,
+			    "Extended Buttons: %d.\n",
 			    sc->num_buttons);
 
-			aprint_debug_dev(psc->sc_dev, "%s: Extended "
-			    "Capabilities: 0x%02x 0x%02x 0x%02x.\n", __func__,
+			DPRINTF(10, sc, "Extended "
+			    "Capabilities: 0x%02x 0x%02x 0x%02x.\n",
 			    resp[0], resp[1], resp[2]);
 			if (sc->num_buttons >= 2) {
 				/* Yes. */
@@ -391,7 +404,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	}
 
 	/* Ask about click pad */
-	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08) >=
+	if ((__SHIFTOUT(sc->caps, SYNAPTICS_CAP_EXTNUM) + 0x08) >=
 	    SYNAPTICS_CONTINUED_CAPABILITIES)
 	{
 		res = synaptics_special_read(psc,
@@ -428,8 +441,8 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 		if (res == 0) {
 			uint val = SYN_CCAP_VALUE(resp);
 
-			aprint_debug_dev(psc->sc_dev, "%s: Continued "
-			    "Capabilities 0x%02x 0x%02x 0x%02x.\n", __func__,
+			DPRINTF(10, sc, "Continued "
+			    "Capabilities 0x%02x 0x%02x 0x%02x.\n",
 			    resp[0], resp[1], resp[2]);
 			switch (SYN_CCAP_CLICKPAD_TYPE(val)) {
 			case 0: /* not a clickpad */
@@ -514,7 +527,8 @@ pms_synaptics_probe_init(void *vsc)
 	sc->num_buttons = 0;
 	sc->button_mask = 0xff;
 
-	pms_synaptics_set_boundaries();
+	synaptics_true_edge_right = synaptics_edge_right;
+	synaptics_true_edge_bottom = synaptics_edge_bottom;
 
 	/* Check for minimum version and print a nice message. */
 	ver_major = resp[2] & 0x0f;
@@ -526,7 +540,6 @@ pms_synaptics_probe_init(void *vsc)
 		sc->caps = 0;
 		goto done;
 	}
-
 
 	/* Query the hardware capabilities. */
 	res = synaptics_special_read(psc, SYNAPTICS_READ_CAPABILITIES, resp);
@@ -574,7 +587,7 @@ pms_synaptics_probe_init(void *vsc)
 			synaptics_edge_top = (resp[2] << 5) + 
 			    ((resp[1] & 0xf0) >> 3);
 
-			synaptics_actual_edge_right = synaptics_edge_right;
+			synaptics_true_edge_right = synaptics_edge_right;
 
 			/*
 			 * If we have vertical scroll then steal 10%
@@ -602,14 +615,14 @@ pms_synaptics_probe_init(void *vsc)
 			synaptics_edge_bottom = (resp[2] << 5) + 
 			    ((resp[1] & 0xf0) >> 3);
 
-			synaptics_actual_edge_bottom = synaptics_edge_bottom;
+			synaptics_true_edge_bottom = synaptics_edge_bottom;
 
 			/*
 			 * If we have horizontal scroll then steal 10%
 			 * for that region.
 			 */
 			if (sc->flags & SYN_FLAG_HAS_HORIZONTAL_SCROLL)
-				synaptics_horiz_pct = 10;
+				synaptics_hscroll_pct = 10;
 
 			aprint_normal_dev(psc->sc_dev,
 			    "Probed min coordinates left: %d, bottom: %d\n",
@@ -617,9 +630,9 @@ pms_synaptics_probe_init(void *vsc)
 		}
 	}
 
+done:
 	pms_synaptics_set_boundaries();
 
-done:
 	pms_sysctl_synaptics(&clog);
 	pckbport_set_inputhandler(psc->sc_kbctag, psc->sc_kbcslot,
 	    pms_synaptics_input, psc, device_xname(psc->sc_dev));
@@ -666,7 +679,7 @@ pms_synaptics_enable(void *vsc)
 
 	res = synaptics_special_write(psc, SYNAPTICS_CMD_SET_MODE2, enable_modes);
 	if (res)
-		aprint_error("synaptics: set mode error\n");
+		device_printf(psc->sc_dev, "set mode error\n");
 
 	/* a couple of set scales to clear out pending commands */
 	for (i = 0; i < 2; i++)
@@ -1023,24 +1036,24 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	    CTLTYPE_INT, "vert_scroll_percent",
 	    SYSCTL_DESCR("Percent of trackpad width to reserve for vertical scroll region"),
 	    pms_sysctl_synaptics_verify, 0,
-	    &synaptics_vert_pct,
+	    &synaptics_vscroll_pct,
 	    0, CTL_HW, root_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
-	synaptics_vert_pct_nodenum = node->sysctl_num;
+	synaptics_vscroll_pct_nodenum = node->sysctl_num;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "horizontal_scroll_percent",
 	    SYSCTL_DESCR("Percent of trackpad height to reserve for scroll region"),
 	    pms_sysctl_synaptics_verify, 0,
-	    &synaptics_horiz_pct,
+	    &synaptics_hscroll_pct,
 	    0, CTL_HW, root_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
-	synaptics_horiz_pct_nodenum = node->sysctl_num;
+	synaptics_hscroll_pct_nodenum = node->sysctl_num;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -1154,11 +1167,11 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		if (t < 0 || t > 1)
 			return (EINVAL);
 	} else
-	if (node.sysctl_num == synaptics_vert_pct_nodenum) {
+	if (node.sysctl_num == synaptics_vscroll_pct_nodenum) {
 		if (t < 0 || t > 100)
 			return (EINVAL);
 	} else
-	if (node.sysctl_num == synaptics_horiz_pct_nodenum) {
+	if (node.sysctl_num == synaptics_hscroll_pct_nodenum) {
 		if (t < 0 || t > 100)
 			return (EINVAL);
 	} else
@@ -1214,7 +1227,7 @@ pms_synaptics_get_fingers(struct pms_softc *psc, u_char w, short z)
 			break;
 
 		default:
-			aprint_error_dev(psc->sc_dev,
+			device_printf(psc->sc_dev,
 			    "invalid extended w mode %d\n",
 			    ew_mode);
 			return 0; /* pretend there are no fingers */
@@ -1279,7 +1292,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 		{
 		case SYNAPTICS_EW_WHEEL:
 			/* scroll wheel report, ignore for now */
-			aprint_debug_dev(psc->sc_dev, "mouse wheel packet\n");
+			DPRINTF(10, sc, "mouse wheel packet\n");
 			return;
 
 		case SYNAPTICS_EW_SECONDARY_FINGER:
@@ -1343,7 +1356,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 			goto skip_position;
 
 		default:
-			aprint_error_dev(psc->sc_dev,
+			device_printf(psc->sc_dev,
 			    "invalid extended w mode %d\n",
 			    ew_mode);
 			return;
@@ -1462,7 +1475,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 		if ((psc->packet[0] ^ psc->packet[3]) & 0x02) {
 			/* extended buttons */
 
-			aprint_debug_dev(psc->sc_dev,
+			DPRINTF(10, sc,
 			    "synaptics_parse: %02x %02x %02x %02x %02x %02x\n",
 			    psc->packet[0], psc->packet[1], psc->packet[2],
 			    psc->packet[3], psc->packet[4], psc->packet[5]);
@@ -1716,11 +1729,8 @@ pms_synaptics_input(void *vsc, int data)
 	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
-			aprint_debug_dev(psc->sc_dev,
+			device_printf(psc->sc_dev,
 			    "pms_synaptics_input: unusual delay (%ld.%06ld s), "
-			    "scheduling reset\n",
-			    (long)diff.tv_sec, (long)diff.tv_usec);
-			printf("pms_synaptics_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n",
 			    (long)diff.tv_sec, (long)diff.tv_usec);
 			psc->inputstate = 0;
@@ -1739,7 +1749,7 @@ pms_synaptics_input(void *vsc, int data)
 	case -1:
 	case 0:
 		if ((data & 0xc8) != 0x80) {
-			aprint_debug_dev(psc->sc_dev,
+			device_printf(psc->sc_dev,
 			    "pms_synaptics_input: 0x%02x out of sync\n", data);
 			/* use negative counts to limit resync phase */
 			psc->inputstate--;
@@ -1751,7 +1761,7 @@ pms_synaptics_input(void *vsc, int data)
 	case -6:
 	case 3:
 		if ((data & 8) == 8) {
-			aprint_debug_dev(psc->sc_dev,
+			device_printf(psc->sc_dev,
 			    "pms_synaptics_input: dropped in relative mode, reset\n");
 			psc->inputstate = 0;
 			psc->sc_enabled = 0;
@@ -1762,6 +1772,10 @@ pms_synaptics_input(void *vsc, int data)
 
 	psc->packet[psc->inputstate++] = data & 0xff;
 	if (psc->inputstate == 6) {
+		struct synaptics_softc *sc = &psc->u.synaptics;
+		DPRINTF(10, sc, "synaptics: packet: 0x%02x%02x%02x%02x%02x%02x\n",
+			psc->packet[0], psc->packet[1], psc->packet[2],
+			psc->packet[3], psc->packet[4], psc->packet[5]);
 		/*
 		 * We have a complete packet.
 		 * Extract the pertinent details.
