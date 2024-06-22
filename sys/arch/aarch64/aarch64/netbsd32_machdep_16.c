@@ -29,11 +29,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.3 2021/11/14 15:12:01 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.3.4.1 2024/06/22 11:11:53 martin Exp $");
 
 #if defined (_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
+
+#include <compat/netbsd32/netbsd32.h>
 
 void
 netbsd32_machdep_md_16_init(void)
