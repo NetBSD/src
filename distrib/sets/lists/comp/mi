@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2459 2024/06/22 20:17:25 riastradh Exp $
+#	$NetBSD: mi,v 1.2460 2024/06/22 21:30:51 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1337,7 +1337,7 @@
 ./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
-./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,obsolete,gcc=10
+./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,obsolete,gcc=12
 ./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/debug.h			comp-cxx-include	gcc,cxx,libstdcxx
