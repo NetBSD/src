@@ -1,0 +1,18 @@
+#	$NetBSD: Makefile.compat,v 1.1.2.2 2024/06/22 11:11:53 martin Exp $
+
+COMPAT_ARCH=	${MACHINE_CPU:C/x86_64/amd64/}
+
+.if empty(KMOD:Mnetbsd32)
+COMPAT_SUBDIR=	${COMPAT_ARCH}
+.else
+COMPAT_SUBDIR=	${COMPAT_ARCH:C/arm/arm32/}
+.endif
+
+COMPAT_PATH=	${S}/arch/${COMPAT_ARCH}/${COMPAT_SUBDIR}
+
+.for _s in ${COMPAT_MACHDEP_SRCS}
+.if exists(${COMPAT_PATH}/${_s})
+.PATH:	${COMPAT_PATH}
+SRCS+=	${_s}
+.endif
+.endfor
