@@ -30,17 +30,24 @@
 
 /* Default style. */
 static struct style style_default = {
-	{ { { ' ' }, 0, 1, 1 }, 0, 0, 8, 8, 0  },
+	{ { { ' ' }, 0, 1, 1 }, 0, 0, 8, 8, 0, 0 },
 	0,
 
 	8,
 	STYLE_ALIGN_DEFAULT,
 	STYLE_LIST_OFF,
 
-	STYLE_RANGE_NONE, 0,
+	STYLE_RANGE_NONE, 0, "",
 
 	STYLE_DEFAULT_BASE
 };
+
+/* Set range string. */
+static void
+style_set_range_string(struct style *sy, const char *s)
+{
+	strlcpy(sy->range_string, s, sizeof sy->range_string);
+}
 
 /*
  * Parse an embedded style of the form "fg=colour,bg=colour,bright,...".  Note
@@ -77,6 +84,7 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 		if (strcasecmp(tmp, "default") == 0) {
 			sy->gc.fg = base->fg;
 			sy->gc.bg = base->bg;
+			sy->gc.us = base->us;
 			sy->gc.attr = base->attr;
 			sy->gc.flags = base->flags;
 		} else if (strcasecmp(tmp, "ignore") == 0)
@@ -103,32 +111,67 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 		} else if (strcasecmp(tmp, "norange") == 0) {
 			sy->range_type = style_default.range_type;
 			sy->range_argument = style_default.range_type;
+			strlcpy(sy->range_string, style_default.range_string,
+			    sizeof sy->range_string);
 		} else if (end > 6 && strncasecmp(tmp, "range=", 6) == 0) {
 			found = strchr(tmp + 6, '|');
 			if (found != NULL) {
 				*found++ = '\0';
 				if (*found == '\0')
 					goto error;
-				for (cp = found; *cp != '\0'; cp++) {
-					if (!isdigit((u_char)*cp))
-						goto error;
-				}
 			}
 			if (strcasecmp(tmp + 6, "left") == 0) {
 				if (found != NULL)
 					goto error;
 				sy->range_type = STYLE_RANGE_LEFT;
 				sy->range_argument = 0;
+				style_set_range_string(sy, "");
 			} else if (strcasecmp(tmp + 6, "right") == 0) {
 				if (found != NULL)
 					goto error;
 				sy->range_type = STYLE_RANGE_RIGHT;
 				sy->range_argument = 0;
+				style_set_range_string(sy, "");
+			} else if (strcasecmp(tmp + 6, "pane") == 0) {
+				if (found == NULL)
+					goto error;
+				if (*found != '%' || found[1] == '\0')
+					goto error;
+				for (cp = found + 1; *cp != '\0'; cp++) {
+					if (!isdigit((u_char)*cp))
+						goto error;
+				}
+				sy->range_type = STYLE_RANGE_PANE;
+				sy->range_argument = atoi(found + 1);
+				style_set_range_string(sy, "");
 			} else if (strcasecmp(tmp + 6, "window") == 0) {
 				if (found == NULL)
 					goto error;
+				for (cp = found; *cp != '\0'; cp++) {
+					if (!isdigit((u_char)*cp))
+						goto error;
+				}
 				sy->range_type = STYLE_RANGE_WINDOW;
 				sy->range_argument = atoi(found);
+				style_set_range_string(sy, "");
+			} else if (strcasecmp(tmp + 6, "session") == 0) {
+				if (found == NULL)
+					goto error;
+				if (*found != '$' || found[1] == '\0')
+					goto error;
+				for (cp = found + 1; *cp != '\0'; cp++) {
+					if (!isdigit((u_char)*cp))
+						goto error;
+				}
+				sy->range_type = STYLE_RANGE_SESSION;
+				sy->range_argument = atoi(found + 1);
+				style_set_range_string(sy, "");
+			} else if (strcasecmp(tmp + 6, "user") == 0) {
+				if (found == NULL)
+					goto error;
+				sy->range_type = STYLE_RANGE_USER;
+				sy->range_argument = 0;
+				style_set_range_string(sy, found);
 			}
 		} else if (strcasecmp(tmp, "noalign") == 0)
 			sy->align = style_default.align;
@@ -162,6 +205,13 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 					sy->gc.bg = base->bg;
 			} else
 				goto error;
+		} else if (end > 3 && strncasecmp(tmp, "us=", 3) == 0) {
+			if ((value = colour_fromstring(tmp + 3)) == -1)
+				goto error;
+			if (value != 8)
+				sy->gc.us = value;
+			else
+				sy->gc.us = base->us;
 		} else if (strcasecmp(tmp, "none") == 0)
 			sy->gc.attr = 0;
 		else if (end > 2 && strncasecmp(tmp, "no", 2) == 0) {
@@ -192,7 +242,7 @@ style_tostring(struct style *sy)
 	int			 off = 0;
 	const char		*comma = "", *tmp = "";
 	static char		 s[256];
-	char			 b[16];
+	char			 b[21];
 
 	*s = '\0';
 
@@ -214,8 +264,18 @@ style_tostring(struct style *sy)
 			tmp = "left";
 		else if (sy->range_type == STYLE_RANGE_RIGHT)
 			tmp = "right";
-		else if (sy->range_type == STYLE_RANGE_WINDOW) {
+		else if (sy->range_type == STYLE_RANGE_PANE) {
+			snprintf(b, sizeof b, "pane|%%%u", sy->range_argument);
+			tmp = b;
+		} else if (sy->range_type == STYLE_RANGE_WINDOW) {
 			snprintf(b, sizeof b, "window|%u", sy->range_argument);
+			tmp = b;
+		} else if (sy->range_type == STYLE_RANGE_SESSION) {
+			snprintf(b, sizeof b, "session|$%u",
+			    sy->range_argument);
+			tmp = b;
+		} else if (sy->range_type == STYLE_RANGE_USER) {
+			snprintf(b, sizeof b, "user|%s", sy->range_string);
 			tmp = b;
 		}
 		off += xsnprintf(s + off, sizeof s - off, "%srange=%s", comma,
@@ -258,6 +318,11 @@ style_tostring(struct style *sy)
 		    colour_tostring(gc->bg));
 		comma = ",";
 	}
+	if (gc->us != 8) {
+		off += xsnprintf(s + off, sizeof s - off, "%sus=%s", comma,
+		    colour_tostring(gc->us));
+		comma = ",";
+	}
 	if (gc->attr != 0) {
 		xsnprintf(s + off, sizeof s - off, "%s%s", comma,
 		    attributes_tostring(gc->attr));
@@ -287,6 +352,8 @@ style_add(struct grid_cell *gc, struct options *oo, const char *name,
 		gc->fg = sy->gc.fg;
 	if (sy->gc.bg != 8)
 		gc->bg = sy->gc.bg;
+	if (sy->gc.us != 8)
+		gc->us = sy->gc.us;
 	gc->attr |= sy->gc.attr;
 
 	if (ft0 != NULL)

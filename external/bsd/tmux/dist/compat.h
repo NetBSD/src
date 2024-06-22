@@ -334,6 +334,18 @@ char		*strndup(const char *, size_t);
 void		*memmem(const void *, size_t, const void *, size_t);
 #endif
 
+#ifndef HAVE_HTONLL
+/* htonll.c */
+#undef htonll
+uint64_t	 htonll(uint64_t);
+#endif
+
+#ifndef HAVE_NTOHLL
+/* ntohll.c */
+#undef ntohll
+uint64_t	 ntohll(uint64_t);
+#endif
+
 #ifndef HAVE_GETPEEREID
 /* getpeereid.c */
 int		getpeereid(int, uid_t *, gid_t *);
@@ -423,7 +435,9 @@ void		*recallocarray(void *, size_t, size_t, size_t);
 
 #ifdef HAVE_SYSTEMD
 /* systemd.c */
+int		 systemd_activated(void);
 int		 systemd_create_socket(int, char **);
+int		 systemd_move_pid_to_new_cgroup(pid_t, char **);
 #endif
 
 #ifdef HAVE_UTF8PROC
