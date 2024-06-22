@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.12 2024/06/17 18:09:35 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.13 2024/06/22 18:33:21 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -329,4 +329,244 @@ sys/arch/sgimips/sgimips/machdep.c		1.155
 
 	sgimips: PR 58269: call mips_vector_init earlier to fix boot.
 	[skrll, ticket #695]
+
+external/bsd/tre/dist/src/agrep.c		1.5,1.6
+
+	agrep(1): PR 53513: rewrite check for binary files.
+	[andvar, ticket #699]
+
+distrib/sets/lists/man/mi			1.1773 (adapted)
+share/man/man4/man4.i386/Makefile		1.81
+share/man/man4/man4.i386/viac7temp.4		delete
+share/man/man4/man4.x86/Makefile		1.24
+share/man/man4/man4.x86/viac7temp.4		1.1
+sys/arch/amd64/conf/ALL				1.188
+sys/arch/amd64/conf/GENERIC			1.612
+sys/arch/i386/conf/ALL				1.519
+sys/arch/i386/conf/GENERIC			1.1256
+sys/arch/x86/x86/viac7temp.c			1.11
+
+	viac7temp(4): rewrite temperature sensor to read value from MSR.
+	Add the driver to amd64 GENERIC.
+	[andvar, ticket #700]
+
+
+sys/arch/x86/x86/fpu.c				1.88
+
+	xen: workaround panic "fpudna from userland" on i386 Xen PV domU.
+	[manu, ticket #701]
+
+sys/dev/usb/if_urtwn.c				1.108
+sys/dev/usb/usbdevs				1.812
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urtwn(4): PR 57819: add Mercusys and Mercusys MW150USV2 support.
+	[nia, ticket #702]
+
+usr.bin/aiomixer/main.c				1.6
+
+	aiomixer(1): fix setting volume on sb(4) emulated in QEMU.
+	[nia, ticket #703]
+
+usr.bin/ftp/ftp.1				1.154
+
+	ftp.1: drop a sentence that's no longer accurate.
+	[gutteridge, ticket #704]
+
+distrib/sets/lists/base/mi			1.1345
+external/public-domain/tz/share/zoneinfo/Makefile 1.5
+
+	Install /usr/share/zoneinfo/leap-seconds.list.
+	[kre, ticket #705]
+
+sys/fs/msdosfs/msdosfs_rename.c			1.4
+
+	PR 58146: fix msdosfs rename crash in RUMP.
+	[rhialto, ticket #706]
+
+sys/arch/macppc/macppc/mainbus.c		1.26
+
+	macppc: PR 57394: check for proper error value from OF_finddevice().
+	[tsutsui, ticket #707]
+
+sys/arch/mac68k/dev/aed.c			1.39
+sys/arch/macppc/dev/aed.c			1.35
+
+	mac68k/macppc: PR 58303: fix passing of emulated 2nd and 3rd button
+	events to the corresponding adb mouse.
+	[nat, ticket #708]
+
+crypto/external/bsd/openssh/bin/Makefile.inc	1.5
+
+	openssh: use ${EXTERNAL_OPENSSL_SUBDIR} instead of hard-coded
+	`openssl`.
+	[rin, ticket #709]
+
+usr.sbin/envstat/prog_ops.h			1.3
+usr.sbin/powerd/prog_ops.h			1.2
+usr.sbin/traceroute/prog_ops.h			1.3
+
+	envstat(8), powerd(8), traceroute(8): add support to CRUNCHOPS
+	to enable building rump-fied programs as crunched binaries.
+	[rin, ticket #710]
+
+lib/libpthread/pthread.c			1.185
+
+	libpthread: PR 57831: fix resource leak in pthread_create().
+	[hannken, ticket #711]
+
+sys/dev/mii/miidevs				1.169-1.171
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	miidevs: Add MaxLinear GPY21[125] 2.5G PHY and
+	GPY115 Gigabit PHY.
+	[msaitoh, ticket #712]
+
+sys/dev/pci/igc/if_igc.c			1.7-1.9,1.14
+
+	igc(4):
+	 - Fix build of the MODULAR kernel, which explicitly excludes vlans.
+	 - Notify which of 64- or 32-bit DMA is used
+	 - Cleanup
+	[rin, ticket #713]
+
+sys/dev/clk/clk.c				1.8
+
+	clk(4): clk_set_rate: Add KASSERT to check `clk != NULL`
+	[rin, ticket #714]
+
+sys/dev/fdt/fdt_powerdomain.c			1.2
+
+	fdt_powerdomain: fix out of bounds data access in the "all"
+	(index -1) case.
+	[rin, ticket #715]
+
+sys/lib/libsa/netif.c				1.27
+
+	libsa: do not panic when the requested NIC is not available.
+	[rin, ticket #716]
+
+sys/arch/x86/x86/coretemp.c			1.40,1.41
+
+	coretemp(4): do not accept impossibly low TjMax values.
+	[gutteridge, ticket #717]
+
+sys/dev/pckbport/synaptics.c			1.83
+
+	pms(4): PR 57874: fix synaptics capability parsing to
+	unbreak old devices.
+	[gutteridge, ticket #718]
+
+etc/etc.aarch64/MAKEDEV.conf			1.10
+etc/etc.amd64/MAKEDEV.conf			1.36
+etc/etc.i386/MAKEDEV.conf			1.36
+
+	Fix some missing device nodes. PRs 58093, 58100, 58101 and 58102.
+	[skrll, ticket #719]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/modes/xf86Modes.c 1.2
+
+	PR 58321: make sure we fill in the name field in generated/
+	converted modes.
+	[tsutsui, ticket #720]
+
+external/gpl3/gcc.old/dist/gcc/doc/gcc.info	1.15
+external/gpl3/gcc.old/dist/gcc/doc/gcc.texi	1.13
+						(applied to external/gpl3/gcc)
+
+	PR 58336: fix broken gcc.info file.
+	[hgutch, ticket #721]
+	
+distrib/hp300/cdroms/installcd/Makefile		1.4
+sys/arch/hp300/dev/dcm.c			1.91
+sys/arch/hp300/dev/dcmreg.h			1.11
+sys/arch/hp300/dev/diofbreg.h			1.4
+sys/arch/hp300/dev/diofbvar.h			1.4
+sys/arch/hp300/dev/dma.c			1.45
+sys/arch/hp300/dev/dnkbd.c			1.14
+sys/arch/hp300/dev/dvbox.c			1.4
+sys/arch/hp300/dev/frodoreg.h			1.6
+sys/arch/hp300/dev/hpib.c			1.45
+sys/arch/hp300/dev/mcclock_frodo.c		1.2
+sys/arch/hp300/dev/rbox.c			1.4
+sys/arch/hp300/dev/rboxreg.h			1.3
+sys/arch/hp300/dev/rtc.c			1.22
+sys/arch/hp300/dev/sti_sgc.c			1.8
+sys/arch/hp300/dev/topcatreg.h			1.3
+sys/arch/hp300/hp300/autoconf.c			1.111,1.114
+sys/arch/hp300/hp300/machdep.c			1.238
+sys/arch/hp300/hp300/trap.c			1.156
+sys/arch/hp300/include/bus.h			1.23
+sys/arch/hp300/include/cpu.h			1.73
+sys/arch/hp300/stand/Makefile.buildboot		1.38,1.39
+sys/arch/hp300/stand/common/clock.c		1.14
+sys/arch/hp300/stand/common/conf.c		1.15
+sys/arch/hp300/stand/common/conf.h		1.4
+sys/arch/hp300/stand/common/devopen.c		1.14,1.15
+sys/arch/hp300/stand/common/hil.c		1.15
+sys/arch/hp300/stand/common/ite_dumb.c		1.2
+sys/arch/hp300/stand/common/ite_sti.c		1.2
+sys/arch/hp300/stand/common/machdep.c		1.16
+sys/arch/hp300/stand/common/netio.c		1.19
+sys/arch/hp300/stand/common/prf.c		1.6
+sys/arch/hp300/stand/common/rd.c		1.16
+sys/arch/hp300/stand/common/scsi.c		1.12,1.13
+sys/arch/hp300/stand/common/scsireg.h		1.5,1.6
+sys/arch/hp300/stand/common/scsivar.h		1.5
+sys/arch/hp300/stand/common/sd.c		1.12,1.13
+sys/arch/hp300/stand/inst/Makefile		1.12
+sys/arch/hp300/stand/inst/inst.c		1.25
+sys/arch/hp300/stand/mkboot/Makefile		1.12,1.13
+sys/arch/hp300/stand/mkboot/mkboot.c		1.12-1.20
+sys/arch/hp300/stand/mkboot/volhdr.h		1.6
+sys/arch/hp300/stand/mkboot/volhdr.h		delete
+sys/arch/hp300/stand/uboot/Makefile		1.12,1.13
+sys/fs/cd9660/cd9660_extern.h			1.29
+sys/fs/cd9660/cd9660_util.c			1.15,1.16
+sys/sys/bootblock.h				1.59
+tools/Makefile.nbincludes			1.11 (patch)
+usr.sbin/installboot/Makefile			1.59
+usr.sbin/installboot/arch/hp300.c		1.18,1.19
+usr.sbin/installboot/cd9660.c			1.1,1.2
+usr.sbin/installboot/fstypes.c			1.14
+usr.sbin/installboot/installboot.8		1.106-1.109
+usr.sbin/installboot/installboot.h		1.44,1.45
+
+	hp300: create bootable CD images.
+	Various minor fixes. PRs 57909, 54455.
+	[tsutsui, ticket #722]
+
+sys/dev/pci/pcireg.h				1.171
+
+	PCI_CLASS_MASK: use unsigned to avoid undefined behavior.
+	[rin, ticket #723]
+
+share/mk/bsd.kmodule.mk				1.86
+sys/arch/aarch64/aarch64/netbsd32_machdep_13.c	1.4
+sys/arch/aarch64/aarch64/netbsd32_machdep_16.c	1.4
+sys/arch/mips/mips/netbsd32_machdep_13.c	1.4
+sys/arch/mips/mips/netbsd32_machdep_16.c	1.8
+sys/arch/powerpc/powerpc/compat_13_machdep.c	1.23
+sys/arch/powerpc/powerpc/compat_16_machdep.c	1.25,1.26
+sys/arch/sun2/sun2/enable.h			1.5
+sys/arch/sun2/sun2/genassym.cf			1.17
+sys/modules/Makefile.compat			1.1
+sys/modules/compat_13/Makefile			1.3-1.5
+sys/modules/compat_16/Makefile			1.3,1.4
+sys/modules/compat_netbsd32_13/Makefile		1.5
+sys/modules/compat_netbsd32_16/Makefile		1.5
+
+	PR 58346: fix compat modules build.
+	[pgoyette, ticket #724]
+
+sys/arch/xen/xen/xbdback_xenbus.c		upto 1.107
+
+	Add back proper support for disk transfer request which are
+	not contiguous in memory (this support was lost with rev 1.83,
+	between netbsd-9 and netbsd-10 branches).
+	This fixes a possible virtual disk corruption with linux domUs.
+	[bouyer, ticket #726]
+
 
