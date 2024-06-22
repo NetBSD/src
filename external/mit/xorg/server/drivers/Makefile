@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2023/02/27 00:34:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.110 2024/06/22 17:59:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -90,14 +90,11 @@ SUBDIR+= \
 	xf86-video-nv \
 	xf86-video-r128 \
 	xf86-video-radeon \
-	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-savage \
 	xf86-video-siliconmotion \
 	xf86-video-sis \
 	xf86-video-tdfx \
-	xf86-video-tga \
-	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-wsfb
 #	xf86-video-imstt
@@ -106,7 +103,10 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
-	xf86-video-glint
+	xf86-video-glint \
+	xf86-video-s3 \
+	xf86-video-tga \
+	xf86-video-trident
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "alpha"
 
