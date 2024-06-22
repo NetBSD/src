@@ -41,6 +41,9 @@ static const char *options_table_clock_mode_style_list[] = {
 static const char *options_table_status_list[] = {
 	"off", "on", "2", "3", "4", "5", NULL
 };
+static const char *options_table_message_line_list[] = {
+	"0", "1", "2", "3", "4", NULL
+};
 static const char *options_table_status_keys_list[] = {
 	"emacs", "vi", NULL
 };
@@ -81,11 +84,17 @@ static const char *options_table_window_size_list[] = {
 static const char *options_table_remain_on_exit_list[] = {
 	"off", "on", "failed", NULL
 };
+static const char *options_table_destroy_unattached_list[] = {
+	"off", "on", "keep-last", "keep-group", NULL
+};
 static const char *options_table_detach_on_destroy_list[] = {
-	"off", "on", "no-detached", NULL
+	"off", "on", "no-detached", "previous", "next", NULL
 };
 static const char *options_table_extended_keys_list[] = {
 	"off", "on", "always", NULL
+};
+static const char *options_table_allow_passthrough_list[] = {
+	"off", "on", "all", NULL
 };
 
 /* Status line format. */
@@ -320,6 +329,42 @@ const struct options_table_entry options_table[] = {
 		  "Empty does not write a history file."
 	},
 
+	{ .name = "menu-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "default",
+	  .separator = ",",
+	  .text = "Default style of menu."
+	},
+
+	{ .name = "menu-selected-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "bg=yellow,fg=black",
+	  .separator = ",",
+	  .text = "Default style of selected menu item."
+	},
+
+	{ .name = "menu-border-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of menu borders."
+	},
+
+	{ .name = "menu-border-lines",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_popup_border_lines_list,
+	  .default_num = BOX_LINES_SINGLE,
+	  .text = "Type of characters used to draw menu border lines. Some of "
+	          "these are only supported on terminals with UTF-8 support."
+	},
+
 	{ .name = "message-limit",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SERVER,
@@ -362,7 +407,8 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "xterm*:clipboard:ccolour:cstyle:focus:title,"
-			 "screen*:title",
+			 "screen*:title,"
+	                 "rxvt*:ignorefkeys",
 	  .separator = ",",
 	  .text = "List of terminal features, used if they cannot be "
 		  "automatically detected."
@@ -440,11 +486,12 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "destroy-unattached",
-	  .type = OPTIONS_TABLE_FLAG,
+	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_SESSION,
+	  .choices = options_table_destroy_unattached_list,
 	  .default_num = 0,
 	  .text = "Whether to destroy sessions when they have no attached "
-		  "clients."
+		  "clients, or keep the last session whether in the group."
 	},
 
 	{ .name = "detach-on-destroy",
@@ -523,7 +570,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "lock-command",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "lock -np",
+	  .default_str = TMUX_LOCK_CMD,
 	  .text = "Shell command to run to lock a client."
 	},
 
@@ -537,13 +584,21 @@ const struct options_table_entry options_table[] = {
 		  "'mode-keys' is set to 'vi'."
 	},
 
+	{ .name = "message-line",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .choices = options_table_message_line_list,
+	  .default_num = 0,
+	  .text = "Position (line) of messages and the command prompt."
+	},
+
 	{ .name = "message-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_str = "bg=yellow,fg=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
-	  .text = "Style of the command prompt."
+	  .text = "Style of messages and the command prompt."
 	},
 
 	{ .name = "mouse",
@@ -802,11 +857,14 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "allow-passthrough",
-	  .type = OPTIONS_TABLE_FLAG,
+	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .choices = options_table_allow_passthrough_list,
 	  .default_num = 0,
 	  .text = "Whether applications are allowed to use the escape sequence "
-	          "to bypass tmux."
+		  "to bypass tmux. Can be 'off' (disallowed), 'on' (allowed "
+		  "if the pane is visible), or 'all' (allowed even if the pane "
+		  "is invisible)."
 	},
 
 	{ .name = "allow-rename",
@@ -916,8 +974,8 @@ const struct options_table_entry options_table[] = {
 	{ .name = "mode-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "bg=yellow,fg=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "bg=yellow,fg=black",
 	  .separator = ",",
 	  .text = "Style of indicators and highlighting in modes."
 	},

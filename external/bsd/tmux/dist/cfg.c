@@ -51,8 +51,7 @@ cfg_done(__unused struct cmdq_item *item, __unused void *data)
 		return (CMD_RETURN_NORMAL);
 	cfg_finished = 1;
 
-	if (!RB_EMPTY(&sessions))
-		cfg_show_causes(RB_MIN(sessions, &sessions));
+	cfg_show_causes(NULL);
 
 	if (cfg_item != NULL)
 		cmdq_continue(cfg_item);
@@ -67,6 +66,7 @@ start_cfg(void)
 {
 	struct client	 *c;
 	u_int		  i;
+	int		  flags = 0;
 
 	/*
 	 * Configuration files are loaded without a client, so commands are run
@@ -84,19 +84,17 @@ start_cfg(void)
 		cmdq_append(c, cfg_item);
 	}
 
-	for (i = 0; i < cfg_nfiles; i++) {
-		if (cfg_quiet)
-			load_cfg(cfg_files[i], c, NULL, CMD_PARSE_QUIET, NULL);
-		else
-			load_cfg(cfg_files[i], c, NULL, 0, NULL);
-	}
+	if (cfg_quiet)
+		flags = CMD_PARSE_QUIET;
+	for (i = 0; i < cfg_nfiles; i++)
+		load_cfg(cfg_files[i], c, NULL, NULL, flags, NULL);
 
 	cmdq_append(NULL, cmdq_get_callback(cfg_done, NULL));
 }
 
 int
-load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
-    struct cmdq_item **new_item)
+load_cfg(const char *path, struct client *c, struct cmdq_item *item,
+    struct cmd_find_state *current, int flags, struct cmdq_item **new_item)
 {
 	FILE			*f;
 	struct cmd_parse_input	 pi;
@@ -135,7 +133,7 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 	}
 
 	if (item != NULL)
-		state = cmdq_copy_state(cmdq_get_state(item));
+		state = cmdq_copy_state(cmdq_get_state(item), current);
 	else
 		state = cmdq_new_state(NULL, NULL, 0);
 	cmdq_add_format(state, "current_file", "%s", pi.file);
@@ -155,8 +153,8 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 
 int
 load_cfg_from_buffer(const void *buf, size_t len, const char *path,
-    struct client *c, struct cmdq_item *item, int flags,
-    struct cmdq_item **new_item)
+    struct client *c, struct cmdq_item *item, struct cmd_find_state *current,
+    int flags, struct cmdq_item **new_item)
 {
 	struct cmd_parse_input	 pi;
 	struct cmd_parse_result	*pr;
@@ -187,7 +185,7 @@ load_cfg_from_buffer(const void *buf, size_t len, const char *path,
 	}
 
 	if (item != NULL)
-		state = cmdq_copy_state(cmdq_get_state(item));
+		state = cmdq_copy_state(cmdq_get_state(item), current);
 	else
 		state = cmdq_new_state(NULL, NULL, 0);
 	cmdq_add_format(state, "current_file", "%s", pi.file);
@@ -238,11 +236,29 @@ cfg_print_causes(struct cmdq_item *item)
 void
 cfg_show_causes(struct session *s)
 {
+	struct client			*c = TAILQ_FIRST(&clients);
 	struct window_pane		*wp;
 	struct window_mode_entry	*wme;
 	u_int				 i;
 
-	if (s == NULL || cfg_ncauses == 0)
+	if (cfg_ncauses == 0)
+		return;
+
+	if (c != NULL && (c->flags & CLIENT_CONTROL)) {
+		for (i = 0; i < cfg_ncauses; i++) {
+			control_write(c, "%%config-error %s", cfg_causes[i]);
+			free(cfg_causes[i]);
+		}
+		goto out;
+	}
+
+	if (s == NULL) {
+		if (c != NULL && c->session != NULL)
+			s = c->session;
+		else
+			s = RB_MIN(sessions, &sessions);
+	}
+	if (s == NULL || s->attached == 0) /* wait for an attached session */
 		return;
 	wp = s->curw->window->active;
 
@@ -254,6 +270,7 @@ cfg_show_causes(struct session *s)
 		free(cfg_causes[i]);
 	}
 
+out:
 	free(cfg_causes);
 	cfg_causes = NULL;
 	cfg_ncauses = 0;
