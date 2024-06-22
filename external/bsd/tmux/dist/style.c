@@ -255,8 +255,6 @@ style_tostring(struct style *sy)
 			tmp = "left-marker";
 		else if (sy->list == STYLE_LIST_RIGHT_MARKER)
 			tmp = "right-marker";
-		else
-			abort();	// XXX: gcc
 		off += xsnprintf(s + off, sizeof s - off, "%slist=%s", comma,
 		    tmp);
 		comma = ",";
@@ -279,8 +277,7 @@ style_tostring(struct style *sy)
 		} else if (sy->range_type == STYLE_RANGE_USER) {
 			snprintf(b, sizeof b, "user|%s", sy->range_string);
 			tmp = b;
-		} else
-			abort();	// XXX: gcc
+		}
 		off += xsnprintf(s + off, sizeof s - off, "%srange=%s", comma,
 		    tmp);
 		comma = ",";
