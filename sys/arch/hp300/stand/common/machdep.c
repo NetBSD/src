@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.86.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,12 +122,12 @@ trap(struct trapframe *fp)
 		  fp->tf_format, fp->tf_format, fp->tf_sr, fp->tf_pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
 	       fp->tf_regs[0], fp->tf_regs[1],
-	       fp->tf_regs[2], fp->tf_regs[3], 
+	       fp->tf_regs[2], fp->tf_regs[3],
 	       fp->tf_regs[4], fp->tf_regs[5],
 	       fp->tf_regs[6], fp->tf_regs[7]);
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
 	       fp->tf_regs[8], fp->tf_regs[9],
-	       fp->tf_regs[10], fp->tf_regs[11], 
+	       fp->tf_regs[10], fp->tf_regs[11],
 	       fp->tf_regs[12], fp->tf_regs[13],
 	       fp->tf_regs[14], fp->tf_regs[15]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2021/03/07 10:01:08 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.22.18.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -756,5 +756,5 @@ __HP300_copy_region_N(4)
  * There is no bus_dma(9)'fied bus drivers on this port.
  */
 #define __HAVE_NO_BUS_DMA
- 
+
 #endif /* _HP300_BUS_H_ */

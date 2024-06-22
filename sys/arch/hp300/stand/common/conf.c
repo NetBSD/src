@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 2022/12/11 07:39:30 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.14.2.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,6 +41,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
 
 #include <hp300/stand/common/conf.h>
 #include <hp300/stand/common/rawfs.h>
@@ -138,13 +139,16 @@ int	npunit = __arraycount(punitsw);
  * Filesystem configuration
  */
 struct fs_ops file_system_rawfs[1] = { FS_OPS(rawfs) };
-struct fs_ops file_system_ufs[NFSYS_UFS] = {
+struct fs_ops file_system_ufs[NFSYS_FS] = {
 	FS_OPS(ffsv1),
 #ifdef SUPPORT_UFS2
 	FS_OPS(ffsv2),
 #endif
+#ifdef SUPPORT_CD
+	FS_OPS(cd9660),
+#endif
 };
 struct fs_ops file_system_nfs[1] = { FS_OPS(nfs) };
 
-struct fs_ops file_system[NFSYS_UFS];
+struct fs_ops file_system[NFSYS_FS];
 int	nfsys = 1;		/* default value; should be overrieded */

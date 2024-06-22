@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2022/12/11 07:39:30 tsutsui Exp $	*/
+/*	$NetBSD: conf.h,v 1.3.2.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -53,10 +53,16 @@ int sdopen(struct open_file *, ...);
 int sdclose(struct open_file *);
 #endif
 #ifdef SUPPORT_UFS2
-#define NFSYS_UFS	2
+#define NFSYS_UFS2	1
 #else
-#define NFSYS_UFS	1
+#define NFSYS_UFS2	0
 #endif
+#ifdef SUPPORT_CD
+#define NFSYS_CD9660	1
+#else
+#define NFSYS_CD9660	0
+#endif
+#define NFSYS_FS	(1 + NFSYS_UFS2 + NFSYS_CD9660)
 
 #ifdef SUPPORT_ETHERNET
 extern struct netif_driver le_driver;
@@ -72,5 +78,5 @@ extern	struct punitsw punitsw[];
 extern	int npunit;
 
 extern	struct fs_ops file_system_rawfs[1];
-extern	struct fs_ops file_system_ufs[NFSYS_UFS];
+extern	struct fs_ops file_system_ufs[NFSYS_FS];
 extern	struct fs_ops file_system_nfs[1];

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.10.26.1 2024/05/11 14:38:40 martin Exp $
+#	$NetBSD: Makefile,v 1.10.26.2 2024/06/22 10:57:11 martin Exp $
 
-PROGAOUT=	inst
+PROGELF=	inst
 PROGSOURCE=	inst.c
 NEWVERSWHAT=	"Miniroot Installer"
 

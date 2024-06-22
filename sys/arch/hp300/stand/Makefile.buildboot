@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.37 2021/07/09 17:44:28 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.37.10.1 2024/06/22 10:57:10 martin Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -7,7 +7,7 @@ S=		${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../common
 
-PROG=		${PROGAOUT}.lif
+PROG=		${PROGELF}.lif
 WARNS?=		1
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
@@ -15,7 +15,7 @@ NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
-CLEANFILES+=	${PROGAOUT}
+CLEANFILES+=	${PROGELF}
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
@@ -29,10 +29,14 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-${PROG}: ${PROGAOUT}
-	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
-	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
-	rm -f ${PROGAOUT}.bin
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+HP300MKBOOT_TIMESTAMP=-t "${MKREPRO_TIMESTAMP}"
+.endif
+
+${PROG}: ${PROGELF}
+	${OBJCOPY} --output-target=binary ${PROGELF} ${PROGELF}.bin
+	${TOOL_HP300MKBOOT} -l 0x${RELOC} ${HP300MKBOOT_TIMESTAMP} ${PROGELF}.bin ${PROG}
+	rm -f ${PROGELF}.bin
 
 .include "${S}/conf/newvers_stand.mk"
 
@@ -78,8 +82,8 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -N -Ttext ${RELOC} -e begin -o ${PROGAOUT} \
+${PROGELF}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -N -Ttext ${RELOC} -e begin -o ${PROGELF} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	@${SIZE} ${PROGAOUT}
-	@echo ${PROGAOUT} total size should not exceed 1044480 bytes
+	@${SIZE} ${PROGELF}
+	@echo ${PROGELF} total size should not exceed 1044480 bytes

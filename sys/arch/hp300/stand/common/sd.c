@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.11 2011/07/17 20:54:40 joerg Exp $	*/
+/*	$NetBSD: sd.c,v 1.11.84.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,9 @@ struct	sd_softc {
 	char	sc_alive;
 	short	sc_blkshift;
 	struct	sdminilabel sc_pinfo;
+#ifdef SUPPORT_CD
+	uint8_t	sc_type;
+#endif
 };
 
 #define	SDRETRY		2
@@ -82,6 +85,9 @@ sdinit(int ctlr, int unit)
 {
 	struct sd_softc *ss = &sd_softc[ctlr][unit];
 	u_char stat;
+#ifdef SUPPORT_CD
+	struct scsi_inquiry inqbuf;
+#endif
 	int capbuf[2];
 
 	stat = scsi_test_unit_rdy(ctlr, unit);
@@ -97,6 +103,20 @@ sdinit(int ctlr, int unit)
 			return 0;
 		}
 	}
+#ifdef SUPPORT_CD
+	/*
+	 * try to get the disk type.
+	 */
+	memset(&inqbuf, 0, sizeof(inqbuf));
+	stat = scsi_inquiry(ctlr, unit, (u_char *)&inqbuf, sizeof(inqbuf));
+	if (stat == 0) {
+		/* to fake a disklabel on CD-ROM */
+		ss->sc_type = inqbuf.type & SID_TYPE;
+	} else {
+		/* assume a disk by default */
+		ss->sc_type = T_DIRECT;
+	}
+#endif
 	/*
 	 * try to get the drive block size.
 	 */
@@ -138,14 +158,25 @@ sdgetinfo(struct sd_softc *ss)
 		printf("sdgetinfo: sdstrategy error %d\n", err);
 		return 0;
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
-		printf("sd(%d,%d,%d): WARNING: %s\n",
-		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
-		pi->npart = 3;
-		pi->offset[0] = pi->offset[1] = -1;
-		pi->offset[2] = 0;
+#ifdef SUPPORT_CD
+		if (ss->sc_type == T_CDROM) {
+			/* assume a whole disk region is ISO9660 */
+			pi->npart = 3;
+			pi->offset[0] = 0;
+			pi->offset[1] = -1;
+			pi->offset[2] = 0;
+		} else
+#endif
+		{
+			printf("sd(%d,%d,%d): WARNING: %s\n",
+			    ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
+			pi->npart = 3;
+			pi->offset[0] = pi->offset[1] = -1;
+			pi->offset[2] = 0;
+		}
 	} else {
 		pi->npart = lp->d_npartitions;
 		for (i = 0; i < pi->npart; i++)
@@ -173,7 +204,7 @@ sdopen(struct open_file *f, ...)
 	printf("sdopen: ctlr=%d unit=%d part=%d\n",
 	    ctlr, unit, part);
 #endif
-	
+
 	if (ctlr >= NSCSI || scsialive(ctlr) == 0)
 		return EADAPT;
 	if (unit >= NSD)
@@ -252,6 +283,6 @@ retry:
 		goto retry;
 	}
 	*rsize = size;
-	
+
 	return 0;
 }

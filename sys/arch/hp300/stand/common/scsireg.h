@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.4 2015/09/07 03:49:45 dholland Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.4.48.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -274,6 +274,9 @@ struct scsi_xsense {
 /* inquiry data */
 struct scsi_inquiry {
 	u_char	type;
+#define SID_TYPE	0x1f
+#define T_DIRECT	0x00
+#define T_CDROM		0x05
 	u_char	qual;
 	u_char	version;
 	u_char	rsvd;
@@ -319,7 +322,7 @@ struct scsi_modesel_hdr {
 	u_int	number_blocks	:24;
 	u_int	rsvd3		: 8;
 	u_int	block_length	:24;
-}; 
+};
 
 struct scsi_modesense_hdr {
 	u_char	len;
@@ -331,14 +334,14 @@ struct scsi_modesense_hdr {
 	u_int	number_blocks	:24;
 	u_int	rsvd2		: 8;
 	u_int	block_length	:24;
-}; 
+};
 
 /*
  * Mode Select / Mode sense "pages"
  */
 
 /*
- * Page One - Error Recovery Parameters 
+ * Page One - Error Recovery Parameters
  */
 struct scsi_err_recovery {
 	u_char	page_savable	: 1;	/* save parameters */
@@ -406,7 +409,7 @@ struct scsi_format {
 };
 
 /*
- * Page Four - Rigid Disk Drive Geometry Parameters 
+ * Page Four - Rigid Disk Drive Geometry Parameters
  */
 struct scsi_geometry {
 	u_char	page_savable	: 1;	/* save parameters */

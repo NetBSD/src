@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbvar.h,v 1.3.90.1 2024/05/16 12:27:50 martin Exp $	*/
+/*	$NetBSD: diofbvar.h,v 1.3.90.2 2024/06/22 10:57:10 martin Exp $	*/
 /*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct diofb {
 #define	RR_COPY			0x3
 #define	RR_XOR			0x6
 #define	RR_INVERT		0xa
-#define	RR_COPYINVERTED  	0xc
+#define	RR_COPYINVERTED		0xc
 
 void	diofb_cnattach(struct diofb *);
 void	diofb_end_attach(device_t, struct wsdisplay_accessops *, struct diofb *,

@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.105 2022/08/19 00:50:08 riastradh Exp $
+.\"	$NetBSD: installboot.8,v 1.105.2.1 2024/06/22 10:57:10 martin Exp $
 .\"
-.\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2021
+.
+.\" Prevent accidental hyphenation after the hyphen in "U-Boot"
+.\" Usage: \*(UB
+.ds UB U\(hyBoot
+.
+.Dd May 19, 2024
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -73,7 +78,7 @@ into
 .Ar filesystem ,
 or disable an existing bootstrap in
 .Ar filesystem .
-.Ss Traditional Nx boot
+.Ss Traditional NetBSD boot
 Generally,
 .Nx
 disk bootstrap software consists of two parts: a
@@ -86,7 +91,10 @@ and a
 bootstrap program that usually resides as an ordinary file in the file system.
 .Pp
 When booting, the primary bootstrap program is loaded and invoked by
-the machine's PROM or BIOS.
+the machine's
+.Tn PROM
+or
+.Tn BIOS .
 After receiving control of the system it loads and runs the secondary
 bootstrap program, which in turn loads and runs the kernel.
 The secondary bootstrap may allow control over various boot parameters
@@ -95,18 +103,23 @@ passed to the kernel.
 Perform the following steps to make a file system bootable:
 .Bl -enum
 .It
-Copy the secondary bootstrap (usually
-.Pa /usr/mdec/boot. Ns Sy MACHINE
+Copy the secondary bootstrap
+.Po
+usually
+.Pa /usr/mdec/boot. Ns Aq Ar MACHINE\^
 or
-.Pa /usr/mdec/boot )
+.Pa /usr/mdec/boot
+.Pc
 to the root directory of the target file system.
 .
 .It
 Use
 .Nm
 to install the primary bootstrap program
-(usually
-.Pa /usr/mdec/bootxx_ Ns Sy FSTYPE )
+.Po
+usually
+.Pa /usr/mdec/bootxx_ Ns Aq Ar FSTYPE\^
+.Pc
 into
 .Ar filesystem .
 .Pp
@@ -142,44 +155,63 @@ information to
 Information about known boards and their requirements is loaded from a
 database at run-time.
 Sometimes these platforms also require the use of 3rd-party boot loader
-software, such as
-.Sy U-Boot .
+software, such as \*(UB.
 To support these platforms,
 .Nm
 scans known locations for these 3rd-party boot loader packages for
 database overlays that contain additional board-specific boot loader
 installation information in a file called
-.Sq installboot.plist .
+.Pa installboot.plist .
 .Pp
 The following platforms have this requirement and utilize this database
 overlay feature:
 .Sy evbarm .
 .Ss UEFI boot
-On platforms that boot with UEFI, there is a single boot loader in the
-EFI system partition at
-.Pa EFI/boot/boot Ns Va ARCH Ns Pa .efi
+On platforms that boot with
+.Tn UEFI ,
+there is a single boot loader in the
+.Tn EFI
+system partition at
+.Pa EFI/boot/boot Ns Ao Ar ARCH\^ Ac Ns Pa .efi
 where
-.Va ARCH
-is the UEFI name for the architecture, such as
-.Li ia32 Pq Nx Ns /i386 ,
-.Li x64 Pq Nx Ns /amd64 ,
+.Ar ARCH
+is the
+.Tn UEFI
+name for the architecture, such as
+.Li ia32
+.Pq Nx Ns /i386 ,
+.Li x64
+.Pq Nx Ns /amd64 ,
 or
-.Li aa64 Pq Nx Ns /aarch64 .
+.Li aa64
+.Pq Nx Ns /aarch64 .
 .Pp
 .Nm
-is not needed for UEFI boot.
-However, it may be used on a platform that supports UEFI boot to make a
+is not needed for
+.Tn UEFI
+boot.
+However, it may be used on a platform that supports
+.Tn UEFI
+boot to make a
 hybrid image that can be booted
 .Em either
-with UEFI boot or with, e.g., BIOS or U-Boot.
-Hybrid images may also require a special GPT for BIOS boot; see
+with
+.Tn UEFI
+boot or with, e.g.,
+.Tn BIOS
+or \*(UB.
+Hybrid images may also require a special
+.Tn GPT
+for
+.Tn BIOS
+boot; see
 .Xr gpt 8 .
 .Ss Options
 The options and arguments recognized by
 .Nm
 are as follows:
 .
-.Bl -tag -width "optionsxxx"
+.Bl -tag -width Fl
 .
 .It Fl B Ar s2bno
 When hard-coding the blocks of
@@ -194,9 +226,11 @@ by examining
 .Ar filesystem .
 If this option is supplied,
 .Ar secondary
-should refer to an actual secondary bootstrap (rather than the
-file name of the one present in
-.Ar filesystem )
+should refer to an actual secondary bootstrap
+.Po
+rather than the file name of the one present in
+.Ar filesystem
+.Pc
 so that its size can be determined.
 .
 .It Fl b Ar s1bno
@@ -206,7 +240,11 @@ at block number
 .Ar s1bno
 instead of the default location for the machine and file system type.
 .Sy [ alpha ,
-.Sy i386/amd64 (bootxx_fat16 only) ,
+.Sy i386/amd64
+.Po
+.Pa bootxx_fat16
+only
+.Pc ,
 .Sy pmax ,
 .Sy vax ]
 .
@@ -215,7 +253,9 @@ Clear (remove) any existing bootstrap instead of installing one.
 .
 .It Fl e
 Edit the options of an existing bootstrap.
-This can be used to change the options in bootxx_xxxfs files,
+This can be used to change the options in
+.Pa bootxx_ Ns Aq Ar FSTYPE\^
+files,
 raw disk partitions, and the
 .Pa pxeboot_ia32.bin
 file.
@@ -238,30 +278,30 @@ as the target machine type.
 The default machine is determined from
 .Xr uname 3
 and then
-.Ev MACHINE .
-The following machines are currently supported by
-.Nm :
+.Ev MACHINE
+environment variable.
+The following machines are currently supported:
 .Bd -ragged -offset indent
-.Sy alpha ,
-.Sy amd64 ,
-.Sy amiga ,
-.Sy evbarm ,
-.Sy ews4800mips ,
-.Sy hp300 ,
-.Sy hppa ,
-.Sy i386 ,
-.Sy landisk ,
-.Sy macppc ,
-.Sy news68k ,
-.Sy newsmips ,
-.Sy next68k ,
-.Sy pmax ,
-.Sy sparc ,
-.Sy sparc64 ,
-.Sy sun2 ,
-.Sy sun3 ,
-.Sy vax ,
-.Sy x68k
+.Ic alpha ,
+.Ic amd64 ,
+.Ic amiga ,
+.Ic evbarm ,
+.Ic ews4800mips ,
+.Ic hp300 ,
+.Ic hppa ,
+.Ic i386 ,
+.Ic landisk ,
+.Ic macppc ,
+.Ic news68k ,
+.Ic newsmips ,
+.Ic next68k ,
+.Ic pmax ,
+.Ic sparc ,
+.Ic sparc64 ,
+.Ic sun2 ,
+.Ic sun3 ,
+.Ic vax ,
+.Ic x68k
 .Ed
 .
 .
@@ -274,17 +314,18 @@ Machine specific
 .Nm
 options, comma separated.
 .Pp
-Supported options are (with the machines for they are valid in brackets):
+Supported options are
+.Pq with the machines for they are valid in brackets :
 .
-.Bl -tag -offset indent -width alphasum
+.Bl -tag -width Ic
 .
-.It Sy alphasum
+.It Ic alphasum
 .Sy [ alpha ]
 Recalculate and restore the Alpha checksum.
 This is the default for
 .Nx Ns /alpha .
 .
-.It Sy append
+.It Ic append
 .Sy [ alpha ,
 .Sy pmax ,
 .Sy vax ]
@@ -294,7 +335,7 @@ to the end of
 .Ar filesystem ,
 which must be a regular file in this case.
 .
-.It Sy board=<board name>
+.It Ic board Ns Op Ns Li = Ns Ar type
 .Sy [ evbarm ]
 Specify the board type used to determine the correct boot loader image
 and installation procedure.
@@ -303,55 +344,71 @@ If omitted,
 will attempt to guess the board type based on system information if run
 natively.
 .
-.It Sy bootconf
+.It Ic bootconf
 .Sy [ amd64 ,
 .Sy i386 ]
 (Don't) read a
-.Dq boot.cfg
+.Pa boot.cfg
 file.
 .
-.It Sy command=<boot command>
+.It Ic command Ns Li = Ns Ar commandline
 .Sy [ amiga ]
 Modify the default boot command line.
 .
-.It Sy console=<console name>
+.It Ic console Ns Li = Ns Ar name
 .Sy [ amd64 ,
 .Sy i386 ]
-Set the console device, <console name> must be one of:
-pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd, com3kbd or auto.
+Set the console device.
+.Ar name
+must be one of:
+.Ic pc ,
+.Ic com0 ,
+.Ic com1 ,
+.Ic com2 ,
+.Ic com3 ,
+.Ic com0kbd ,
+.Ic com1kbd ,
+.Ic com2kbd ,
+.Ic com3kbd ,
+or
+.Ic auto .
 .
-.It Sy dtb=/path/to/dtb/file
+.It Ic dtb Ns Li = Ns Ar dtbfile
 .Sy [ evbarm ]
 Attempt to determine the board type from information in the device tree
 blob file at
-.Pa /path/to/dtb/file .
+.Ar dtbfile .
 If both
-.Sy board
+.Ic board
 and
-.Sy dtb
+.Ic dtb
 options are specified,
-.Sy board
+.Ic board
 takes precendence.
 .
-.It Sy ioaddr=<ioaddr>
+.It Ic ioaddr Ns Li = Ns Ar ioaddr
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the IO address to be used for the console serial port.
-Defaults to the IO address used by the system BIOS for the specified port.
+Defaults to the IO address used by the system
+.Tn BIOS
+for the specified port.
 .
-.It Sy keymap=<keymap>
+.It Ic keymap Ns Li = Ns Ar keymap
 .Sy [ amd64 ,
 .Sy i386 ]
 Set a boot time keyboard translation map.
-Each character in <keymap> will be replaced by the one following it.
+Each character in
+.Ar keymap
+will be replaced by the one following it.
 For example, an argument of
-.Dq zyz
+.Li zyz
 would swap the lowercase letters
-.Sq y
+.Aq y
 and
-.Sq z .
+.Aq z .
 .
-.It Sy media=<media type>
+.It Ic media Ns Li = Ns Ar type
 .Sy [ evbarm ]
 Some boards require a different boot loader binary and/or installation
 procedure depending on what type of media will be used to boot the system.
@@ -359,31 +416,35 @@ For such boards, this option is required, and omitting it will display a
 usage message that lists the valid media types for the board.
 For boards that do not require special media handling, this option is
 not allowed.
-Common values: sdmmc, emmc, usb.
+Common values:
+.Ic sdmmc ,
+.Ic emmc ,
+.Ic usb .
 .
-.It Sy modules
+.It Ic modules
 .Sy [ amd64 ,
 .Sy i386 ]
 (Don't) load kernel modules.
 .
-.It Sy password=<password>
+.It Ic password Ns Li = Ns Ar password
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the password which must be entered before the boot menu can be accessed.
 .
-.It Sy resetvideo
+.It Ic resetvideo
 .Sy [ amd64 ,
 .Sy i386 ]
 Reset the video before booting.
 .
-.It Sy speed=<baud rate>
+.It Ic speed Ns Li = Ns Ar baud
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the baud rate for the serial console.
 If a value of zero is specified, then the current baud rate (set by the
-BIOS) will be used.
+.Tn BIOS )
+will be used.
 .
-.It Sy sunsum
+.It Ic sunsum
 .Sy [ alpha ,
 .Sy pmax ,
 .Sy vax ]
@@ -395,7 +456,7 @@ The existing
 .Nx Ns /sparc
 disklabel should use no more than 4 partitions.
 .
-.It Sy timeout=<seconds>
+.It Ic timeout Ns Li = Ns Ar seconds
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the timeout before the automatic boot begins to the given number of seconds.
@@ -407,22 +468,25 @@ Use
 as the type of
 .Ar filesystem .
 The default operation is to attempt to auto-detect this setting.
-The following file system types are currently supported by
-.Nm :
+The following file system types are currently supported by:
 .
-.Bl -tag -offset indent -width raid
+.Bl -tag -width Ic
 .
-.It Sy ffs
+.It Ic ffs
 .Bx
 Fast File System.
 .
-.It Sy raid
+.It Ic raid
 Mirrored RAIDframe File System.
 .
-.It Sy raw
-.Sq Raw
+.It Ic cd9660
+ISO 9660 File System.
+.
+.It Ic raw
+.Dq Raw
 image.
-Note: if a platform needs to hard-code the block offset of the secondary
+.Em Note :
+if a platform needs to hard-code the block offset of the secondary
 bootstrap, it cannot be searched for on this file system type, and must
 be provided with
 .Fl B Ar s2bno .
@@ -431,19 +495,17 @@ be provided with
 .It Fl u Ar U-Boot-paths
 .Ar U-Boot-paths
 is a colon-separated list of search paths to scan for
-.Sy U-Boot
-packages with
-.Nm installboot
+\*(UB packages with
+.Nm
 installation overlays.
 If multiple overlays are found, overlays from paths closer to the front
 of the list take precedence.
-If not specified, environment variable 
+If not specified, environment variable
 .Ev INSTALLBOOT_UBOOT_PATHS
 is used if defined; otherwise, the default path is
 .Pa /usr/pkg/share/u-boot .
 This option is only used on platforms that support
-using
-.Sy U-Boot .
+using \*(UB.
 .
 .It Fl v
 Verbose operation.
@@ -476,7 +538,7 @@ Most systems require
 to be in the
 .Dq root
 directory of the file system, so the leading
-.Dq Pa /
+.Ql /
 is not necessary on
 .Ar secondary .
 .Pp
@@ -501,29 +563,21 @@ These are:
 .It sun3 Ta ffs, raw
 .El
 .El
-.Pp
-.Nm
-exits 0 on success, and >0 if an error occurs.
 .
 .Sh ENVIRONMENT
-.Nm
-uses the following environment variables:
-.
-.Bl -tag -width "MACHINE"
+.Bl -tag -width Ev
 .
 .It Ev INSTALLBOOT_UBOOT_PATHS
 A colon-separated list of search paths to scan for
-.Sy U-Boot
-packages with
-.Nm installboot
+\*(UB packages with
+.Nm
 installation overlays.
 If multiple overlays are found, overlays from paths closer to the front
 of the list take precedence.
 If not specified, the default path is
 .Pa /usr/pkg/share/u-boot .
 This environment variable is only used on platforms that support
-using
-.Sy U-Boot .
+using \*(UB.
 .
 .It Ev MACHINE
 Default value for
@@ -537,29 +591,32 @@ overriding the result from
 Most
 .Nx
 ports will contain variations of the following files:
-.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.Bl -tag -width Pa
 .
-.It Pa /usr/mdec/bootxx_ Ns Sy FSTYPE
+.It Pa /usr/mdec/bootxx_ Ns Aq Ar FSTYPE\^
 Primary bootstrap for file system type
-.Sy FSTYPE .
+.Ar FSTYPE .
 Installed into the bootstrap area of the file system by
 .Nm .
 .
 .It Pa /usr/mdec/bootxx_fat16
-Primary bootstrap for MS-DOS
+Primary bootstrap for
+.Tn MS-DOS
 .Sy FAT16
 file systems.
 This differs from
-.Nm bootxx_msdos
+.Pa bootxx_msdos
 in that it doesn't require the filesystem to have been initialised with
 any
-.Ql reserved sectors .
+.Dq reserved sectors .
 It also uses the information in the
-.Ql Boot Parameter Block
+.Dq Boot Parameter Block
 to get the media and filesystem properties.
 The
-.Ql hidden sectors
-field of the BPB must be the offset of the partition in the disk.
+.Dq hidden sectors
+field of the
+.Tn BPB
+must be the offset of the partition in the disk.
 This can be set using the
 .Fl b Ar s1bno
 option.
@@ -568,24 +625,27 @@ option.
 Primary bootstrap for
 .Sy FFSv1
 file systems
-(the
-.Ql traditional
+.Po
+the
+.Dq traditional
 file system prior to
-.Nx 6.0 ) .
+.Nx 6.0
+.Pc .
 Use
 .Xr dumpfs 8
-to confirm the file system format is
-.Sy FFSv1 .
+to confirm the file system format is FFSv1.
 .
 .It Pa /usr/mdec/bootxx_ffsv2
 Primary bootstrap for
 .Sy FFSv2
-file systems (the default file system for some platforms as of
-.Nx 6.0 ) .
+file systems
+.Po
+the default file system for some platforms as of
+.Nx 6.0
+.Pc .
 Use
 .Xr dumpfs 8
-to confirm the file system format is
-.Sy FFSv2 .
+to confirm the file system format is FFSv2.
 .
 .It Pa /usr/mdec/bootxx_lfsv1
 Primary bootstrap for
@@ -596,10 +656,11 @@ file systems.
 Primary bootstrap for
 .Sy LFSv2
 file systems
-(the default LFS version).
+.Pq the default Tn LFS version .
 .
 .It Pa /usr/mdec/bootxx_msdos
-Primary bootstrap for MS-DOS
+Primary bootstrap for
+.Tn MS-DOS
 .Sy FAT
 file systems.
 .
@@ -609,77 +670,78 @@ Primary bootstrap for
 boot images.
 This is used by various install media.
 .
-.It Pa /usr/mdec/boot. Ns Sy MACHINE
+.It Pa /usr/mdec/boot. Ns Aq Ar MACHINE\^
 Secondary bootstrap for machine type
-.Sy MACHINE .
+.Ar MACHINE .
 This should be installed into the file system before
 .Nm
 is run.
 .
 .It Pa /usr/mdec/boot
 Synonym for
-.Pa /usr/mdec/boot. Ns Sy MACHINE
+.Pa /usr/mdec/boot. Ns Aq Ar MACHINE\^
 .
-.It Pa /boot. Ns Sy MACHINE
+.It Pa /boot. Ns Aq Ar MACHINE\^
 Installed copy of secondary bootstrap for machine type
-.Sy MACHINE .
+.Ar MACHINE .
 .
 .It Pa /boot
 Installed copy of secondary bootstrap.
 Searched for by the primary bootstrap if
-.Pa /boot. Ns Sy MACHINE
+.Pa /boot. Ns Aq Ar MACHINE\^
 is not found.
 .
 .El
 .
-.Ss Nx Ns /evbarm files
+.Ss NetBSD/evbarm files
 The
 .Nx Ns /evbarm
-platform covers a wide variety of board types, many of which use
-.Sy U-Boot .
+platform covers a wide variety of board types, many of which use \*(UB.
 Running
 .Nm
 with no options will display a list of known boards.
 Using the verbose option will also display information about which
-.Sy U-Boot
-package needs to be installed to support that board, and if the required
-.Sy U-Boot
-package is installed, the path at which it is located.
-.Bl -tag -width /usr/pkg/share/u-boot
+\*(UB package needs to be installed to support that board,
+and if the required \*(UB package is installed,
+the path at which it is located.
+.Bl -tag -width Pa
 .It Pa /usr/pkg/share/u-boot
 The default location scanned for
-.Sy U-Boot
-packages with installation overlays.
+\*(UB packages with installation overlays.
 .It Pa /usr/share/installboot/evbarm/boards.plist
 Base board database, used to provide information about which
-.Sy U-Boot
-package is required for a given board.
+\*(UB package is required for a given board.
 .El
 .
-.Ss Nx Ns /evbmips files
+.Ss NetBSD/evbmips files
 .
 The
 .Nx Ns /evbmips
-bootstrap files currently only apply to the SBMIPS kernels for the
-SiByte/Broadcom BCM1250 and BCM1480 CPUs.
-.Bl -tag -width /usr/mdec/sbmips/bootxx_cd9660
+bootstrap files currently only apply to the
+.Tn SBMIPS
+kernels for the
+SiByte/Broadcom
+.Tn BCM1250
+and
+.Tn BCM1480
+CPUs.
+.Bl -tag -width Pa
 .
 .It Pa /usr/mdec/sbmips/boot
 .Nx Ns /evbmips
-secondary bootstrap for
-.Sy FFSv1 ,
-.Sy FFSv2 ,
-.Sy LFSv1 ,
-and
-.Sy LFSv2 .
+secondary bootstrap for FFSv1, FFSv2, LFSv1, and LFSv2.
 .It Pa /usr/mdec/sbmips/bootxx_cd9660
-SBMIPS primary bootstrap for ISO 9660 file system.
+.Tn SBMIPS
+primary bootstrap for ISO 9660 file system.
 .It Pa /usr/mdec/sbmips/bootxx_ffs
-SBMIPS primary bootstrap for FFSv1 and FFSv2 file system.
+.Tn SBMIPS
+primary bootstrap for FFSv1 and FFSv2 file system.
 .It Pa /usr/mdec/sbmips/bootxx_lfs
-SBMIPS primary bootstrap for LFSv1 and LFSv2 file system.
+.Tn SBMIPS
+primary bootstrap for LFSv1 and LFSv2 file system.
 .It Pa /usr/mdec/sbmips/netboot
-SBMIPS primary bootstrap for network root.
+.Tn SBMIPS
+primary bootstrap for network root.
 .Pp
 Note that
 .Nm
@@ -687,18 +749,13 @@ does not currently support evbmips directly.
 .
 .El
 .
-.Ss Nx Ns /hppa files
+.Ss NetBSD/hppa files
 .
-.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.Bl -tag -width Pa
 .
 .It Pa /usr/mdec/xxboot
 .Nx Ns /hppa
-primary bootstrap for
-.Sy FFSv1 ,
-.Sy FFSv2 ,
-.Sy LFSv1 ,
-and
-.Sy LFSv2 .
+primary bootstrap for FFSv1, FFSv2, LFSv1, and LFSv2.
 .It Pa /usr/mdec/cdboot
 .Nx Ns /hppa
 primary bootstrap for ISO 9660 file system.
@@ -708,9 +765,9 @@ Synonym for
 .
 .El
 .
-.Ss Nx Ns /macppc files
+.Ss NetBSD/macppc files
 .
-.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.Bl -tag -width Pa
 .
 .It Pa /usr/mdec/bootxx
 .Nx Ns /macppc
@@ -727,9 +784,9 @@ secondary bootstrap.
 .
 .El
 .
-.Ss Nx Ns /next68k files
+.Ss NetBSD/next68k files
 .
-.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.Bl -tag -width Pa
 .
 .It Pa /usr/mdec/boot
 .Nx Ns /next68k
@@ -737,9 +794,9 @@ bootstrap.
 .
 .El
 .
-.Ss Nx Ns /sparc64 files
+.Ss NetBSD/sparc64 files
 .
-.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.Bl -tag -width Pa
 .
 .It Pa /usr/mdec/bootblk
 .Nx Ns /sparc64
@@ -758,72 +815,106 @@ secondary bootstrap.
 .
 .Sh EXAMPLES
 .
-.Ss common
+.Ss Common
 Verbosely install the Berkeley Fast File System primary bootstrap on to disk
-.Sq sd0 :
-.Dl Ic installboot -v /dev/rsd0c /usr/mdec/bootxx_ffs
+.Ql sd0 :
+.Pp
+.Dl installboot -v /dev/rsd0c /usr/mdec/bootxx_ffs
+.Pp
 Note: the
 .Dq whole disk
-partition (c on some ports, d on others) is used here, since the a partition
-probably is already opened (mounted as
-.Pa / ) ,
+partition
+.Po
+.Ql c
+on some ports,
+.Ql d
+on others
+.Pc
+is used here, since the
+.Ql a
+partition
+probably is already opened
+.Po
+mounted as
+.Pa /
+.Pc ,
 so
 .Nm
 would not be able to access it.
 .Pp
 Remove the primary bootstrap from disk
-.Sq sd1 :
-.Dl Ic installboot -c /dev/rsd1c
-.
-.Ss Nx Ns /amiga
-Modify the command line to change the default from "netbsd -ASn2" to
-"netbsd -S":
-.Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffsv1
-.
-.Ss Nx Ns /evbarm
-Install the
-.Sy U-Boot
-boot loader for a Pinebook into an image that will be written to
-an SDMMC card:
-.Dl Ic installboot -m evbarm -o board=pine64,pinebook arm64.img
+.Ql sd1 :
 .Pp
-Install / update the
-.Sy U-Boot
-boot loader for the current running system on the eMMC device
-.Sq ld0
+.Dl installboot -c /dev/rsd1c
+.
+.Ss NetBSD/amiga
+Modify the command line to change the default from
+.Ql "netbsd -ASn2"
+to
+.Ql "netbsd -S" :
+.Bd -literal -offset indent
+installboot -m amiga -o command="netbsd -S" /dev/rsd0a \e
+    /usr/mdec/bootxx_ffsv1
+.Ed
+.
+.Ss NetBSD/evbarm
+Install the
+\*(UB boot loader for a Pinebook into an image that will be written to
+an
+.Tn SDMMC
+card:
+.Pp
+.Dl installboot -m evbarm -o board=pine64,pinebook arm64.img
+.Pp
+Install/update the
+\*(UB boot loader for the current running system on the
+.Tn eMMC
+device
+.Ql ld0
 and display verbose information about the procedure:
-.Dl Ic installboot -v /dev/rld0c
+.Pp
+.Dl installboot -v /dev/rld0c
 .Pp
 Install a specific
-.Sy U-Boot
-package for a BeagleBone Black into an image that will be written
-to an SDMMC card:
-.Dl Ic installboot -m evbarm -o board=ti,am335x-bone-black armv7.img \
-	/path/to/experimental/u-boot/package
+\*(UB package for a BeagleBone Black into an image that will be written
+to an
+.Tn SDMMC
+card:
+.Bd -literal -offset indent
+installboot -m evbarm -o board=ti,am335x-bone-black armv7.img \e
+    /path/to/experimental/u-boot/package
+.Ed
 .
-.Ss Nx Ns /ews4800mips
+.Ss NetBSD/ews4800mips
 Install the System V Boot File System primary bootstrap on to disk
-.Sq sd0 ,
+.Ql sd0 ,
 with the secondary bootstrap
-.Sq Pa /boot
+.Pa /boot
 already present in the SysVBFS partition on the disk:
-.Dl Ic installboot /dev/rsd0p /usr/mdec/bootxx_bfs
+.Pp
+.Dl installboot /dev/rsd0p /usr/mdec/bootxx_bfs
+.Pp
 .Bd -ragged -offset indent-two -compact
 .Em Note :
 On
 .Nx Ns /ews4800mips
-the p partition is the
+the
+.Ql p
+partition is the
 .Dq whole disk
-(i.e., raw) partition.
+.Pq i.e., raw
+partition.
 .Ed
-.Ss Nx Ns /i386 and Nx Ns /amd64
-Install new boot blocks on an existing
-.Sy FFSv2
-mounted root file system on
-.Sq wd0 ,
-setting the timeout to five seconds, after installing an MBR bootcode and
-copying a new secondary bootstrap:
-.Dl Ic fdisk -c /usr/mdec/mbr /dev/rwd0d
+.
+.Ss NetBSD/i386 and NetBSD/amd64
+Install new boot blocks on an existing FFSv2 mounted root file system on
+.Ql wd0 ,
+setting the timeout to five seconds, after installing an
+.Tn MBR
+bootcode and copying a new secondary bootstrap:
+.Pp
+.Dl fdisk -c /usr/mdec/mbr /dev/rwd0d
+.Pp
 .Bd -ragged -offset indent-two -compact
 .Em Note :
 See
@@ -832,34 +923,39 @@ and
 .Xr x86/mbr 8
 for more details.
 .Ed
-.Dl Ic cp /usr/mdec/boot /boot
-.Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv2
+.Pp
+.Dl cp /usr/mdec/boot /boot
+.Dl installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv2
+.Pp
 .Bd -ragged -offset indent-two -compact
 .Em Note :
 Pre
 .Nx 6.0
-systems used
-.Sy FFSv1
-file systems on these platforms; double check with
+systems used FFSv1 file systems on these platforms; double check with
 .Xr dumpfs 8
 to be sure to use the correct secondary bootstrap.
 .Ed
 .Pp
-Create a bootable CD-ROM with an ISO 9660
-file system for an i386 system with a serial console:
-.Dl Ic mkdir cdrom
-.Dl Ic cp sys/arch/i386/compile/mykernel/netbsd cdrom/netbsd
-.Dl Ic cp /usr/mdec/boot cdrom/boot
-.Dl Ic cp /usr/mdec/bootxx_cd9660 bootxx
-.Dl Ic installboot -o console=com0,speed=19200 -m i386 -e bootxx
-.Dl Ic makefs -t cd9660 -o 'bootimage=i386;bootxx,no-emul-boot' boot.iso \
-	cdrom
+Create a bootable
+.Tn CD-ROM
+with an ISO 9660 file system for an i386 system with a serial console:
+.Bd -literal -offset indent
+mkdir cdrom
+cp sys/arch/i386/compile/mykernel/netbsd cdrom/netbsd
+cp /usr/mdec/boot cdrom/boot
+cp /usr/mdec/bootxx_cd9660 bootxx
+installboot -o console=com0,speed=19200 -m i386 -e bootxx
+makefs -t cd9660 -o 'bootimage=i386;bootxx,no-emul-boot' boot.iso \e
+    cdrom
+.Ed
 .
 .Pp
 Create a bootable floppy disk with an FFSv1
 file system for a small custom kernel (note: bigger kernels needing
 multiple disks are handled with the ustarfs file system):
-.Dl Ic newfs -s 1440k /dev/rfd0a
+.Pp
+.Dl newfs -s 1440k /dev/rfd0a
+.Pp
 .Bd -ragged -offset indent-two -compact
 .Em Note :
 Ignore the warnings that
@@ -867,59 +963,83 @@ Ignore the warnings that
 displays; it can not write a disklabel,
 which is not a problem for a floppy disk.
 .Ed
-.Dl Ic mount /dev/fd0a /mnt
-.Dl Ic cp /usr/mdec/boot /mnt/boot
-.Dl Ic gzip -9 < sys/arch/i386/compile/mykernel/netbsd > /mnt/netbsd.gz
-.Dl Ic umount /mnt
-.Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ffsv1
+.
+.Bd -literal -offset indent
+mount /dev/fd0a /mnt
+cp /usr/mdec/boot /mnt/boot
+gzip -9 < sys/arch/i386/compile/mykernel/netbsd > /mnt/netbsd.gz
+umount /mnt
+installboot -v /dev/rfd0a /usr/mdec/bootxx_ffsv1
+.Ed
 .
 .Pp
-Create a bootable FAT file system on
-.Sq wd1a ,
-which should have the same offset and size as a FAT primary partition
-in the Master Boot Record (MBR):
-.Dl Ic newfs_msdos -r 16 /dev/rwd1a
+Create a bootable
+.Tn FAT
+file system on
+.Ql wd1a ,
+which should have the same offset and size as a
+.Tn FAT
+primary partition
+in the Master Boot Record
+.Tn ( MBR ) :
+.Pp
+.Dl newfs_msdos -r 16 /dev/rwd1a
+.Pp
 .Bd -ragged -offset indent-two -compact
 .Em Notes :
 The
-.Fl r Ar 16
+.Fl r Ic 16
 is to reserve space for the primary bootstrap.
 .Xr newfs_msdos 8
 will display an
-.Dq MBR type
+.Dq Tn MBR type
 such as
 .Ql 1 ,
 .Ql 4 ,
 or
 .Ql 6 ;
-the MBR partition type of the appropriate primary partition should be
+the
+.Tn MBR
+partition type of the appropriate primary partition should be
 changed to this value.
 .Ed
-.Dl Ic mount -t msdos /dev/wd1a /mnt
-.Dl Ic cp /usr/mdec/boot /mnt/boot
-.Dl Ic cp path/to/kernel /mnt/netbsd
-.Dl Ic umount /mnt
-.Dl Ic installboot -t raw /dev/rwd1a /usr/mdec/bootxx_msdos
+.
+.Bd -literal -offset indent
+mount -t msdos /dev/wd1a /mnt
+cp /usr/mdec/boot /mnt/boot
+cp path/to/kernel /mnt/netbsd
+umount /mnt
+installboot -t raw /dev/rwd1a /usr/mdec/bootxx_msdos
+.Ed
 .Pp
-Make the existing FAT16 filesystem on
-.Sq sd0e
+Make the existing
+.Tn FAT16
+filesystem on
+.Ql sd0e
 bootable.
-This can be used to make USB memory bootable provided it has 512 byte
+This can be used to make
+.Tn USB
+memory bootable provided it has 512 byte
 sectors and that the manufacturer correctly initialised the file system.
-.Dl Ic mount -t msdos /dev/sd0e /mnt
-.Dl Ic cp /usr/mdec/boot /mnt/boot
-.Dl Ic cp path/to/kernel /mnt/netbsd
-.Dl Ic umount /mnt
-.Dl Ic installboot /dev/rsd0e /usr/mdec/bootxx_fat16
+.Bd -literal -offset indent
+mount -t msdos /dev/sd0e /mnt
+cp /usr/mdec/boot /mnt/boot
+cp path/to/kernel /mnt/netbsd
+umount /mnt
+installboot /dev/rsd0e /usr/mdec/bootxx_fat16
+.Ed
+.Pp
 It may also be necessary to use
-.Nm fdisk
+.Xr fdisk 8
 to make the device itself bootable.
 .
 .Pp
 Switch the existing installed bootstrap to use a serial console without
 reinstalling or altering other options such as timeout.
-.Dl Ic installboot -e -o console=com0 /dev/rwd0a
-.Ss Nx Ns /macppc
+.Pp
+.Dl installboot -e -o console=com0 /dev/rwd0a
+.
+.Ss NetBSD/macppc
 Note the
 .Nm
 utility is only required for macppc machines with OpenFirmware version 2
@@ -928,8 +1048,9 @@ OpenFirmware 3 cannot load bootblocks specified in the Apple partition
 map.
 .Pp
 Install the Berkeley Fast File System primary bootstrap on to disk
-.Sq wd0 :
-.Dl Ic installboot /dev/rwd0c /usr/mdec/bootxx /ofwboot
+.Ql wd0 :
+.Pp
+.Dl installboot /dev/rwd0c /usr/mdec/bootxx /ofwboot
 .Pp
 The secondary
 .Nx Ns /macppc
@@ -941,22 +1062,26 @@ The primary bootstrap requires the raw
 for the secondary bootstrap, not
 .Pa ofwboot.xcf ,
 which is used for the OpenFirmware to load kernels.
-.Ss Nx Ns /next68k
-Install the bootstrap on to disk
-.Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/boot
 .
-.Ss Nx Ns /pmax
+.Ss NetBSD/next68k
+Install the bootstrap on to disk
+.Ql sd0 :
+.Pp
+.Dl installboot /dev/rsd0c /usr/mdec/boot
+.
+.Ss NetBSD/pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
-.Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
+.Ql sd0 :
+.Pp
+.Dl installboot /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
 .Nx Ns /pmax
 requires that this file system starts at block 0 of the disk.
 .Pp
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
-.Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Pp
+.Dl installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
 .Pp
 Make an ISO 9660 filesystem in the file
 .Pa /tmp/cd-image
@@ -966,37 +1091,57 @@ primary bootstrap
 .Pa bootxx_cd9660
 and the secondary bootstrap
 .Pa boot.pmax :
-.Dl Ic mkisofs -o /tmp/cd-image -a -l -v iso-source-dir
-.Dl ...
-.Dl 48 51 iso-source-dir/bootxx_cd9660
-.Dl ...
-.Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Bd -literal -offset indent
+mkisofs -o /tmp/cd-image -a -l -v iso-source-dir
+\&...
+48 51 iso-source-dir/bootxx_cd9660
+\&...
+installboot -b $((48 * 4)) /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Ed
 .
-.Ss Nx Ns /sparc
+.Ss NetBSD/sparc
 Install the Berkeley Fast File System primary bootstrap on to disk
-.Sq sd0 ,
+.Ql sd0 ,
 with the secondary bootstrap
-.Sq Pa /boot
+.Pa /boot
 already present:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.Pp
+.Dl installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .
-.Ss Nx Ns /sparc64
+.Ss NetBSD/sparc64
 Install the primary bootstrap on to disk
-.Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootblk
+.Ql sd0 :
+.Pp
+.Dl installboot /dev/rsd0c /usr/mdec/bootblk
 .Pp
 The secondary
 .Nx Ns /sparc64
 bootstrap is located in
 .Pa /usr/mdec/ofwboot .
 .
-.Ss Nx Ns /sun2 and Nx Ns /sun3
+.Ss NetBSD/sun2 and NetBSD/sun3
 Install the Berkeley Fast File System primary bootstrap on to disk
-.Sq sd0 ,
+.Ql sd0 ,
 with the secondary bootstrap
-.Sq Pa /boot
+.Pa /boot
 already present:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.Pp
+.Dl installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.
+.Ss NetBSD/vax
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Ql ra0 :
+.Pp
+.Dl installboot /dev/rra0c /usr/mdec/raboot
+.Pp
+The primary bootstrap works with FFSv1 and FFSv2 file systems.
+The secondary
+.Nx Ns /vax
+bootstrap is located in
+.Pa /usr/mdec/boot .
+.
+.Sh DIAGNOSTIC
+.Ex -std
 .
 .Sh SEE ALSO
 .Xr uname 3 ,
@@ -1055,49 +1200,55 @@ There are not currently primary bootstraps to support all file systems
 types which are capable of being the root file system.
 .Pp
 If a disk has been converted from
-.Sy FFS
+.Tn FFS
 to
-.Sy RAID
+.Tn RAID
 without the contents of the disk erased, then the original
-.Sy FFS
+.Tn FFS
 installation may be auto-detected instead of the
-.Sy RAID
+.Tn RAID
 installation.
 In this case, the
-.Fl t Ar raid
+.Fl t Ic raid
 option must be provided.
 .
-.Ss Nx Ns /alpha
+.Ss NetBSD/alpha
 The
 .Nx Ns /alpha
 primary bootstrap program can only load the secondary bootstrap program
-from file systems starting at the beginning (block 0) of disks.
+from file systems starting at the beginning
+.Pq block 0
+of disks.
 Similarly, the secondary bootstrap program can only load kernels from
 file systems starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
-though some file systems (e.g., ISO 9660) are able to accommodate larger
-ones.
+though some file systems
+.Pq e.g., ISO 9660
+are able to accommodate larger ones.
 .
-.Ss Nx Ns /hp300
+.Ss NetBSD/hp300
 The disk must have a boot partition large enough to hold the bootstrap code.
 Currently the primary bootstrap must be a LIF format file.
 .
-.Ss Nx Ns /i386 and Nx Ns /amd64
+.Ss NetBSD/i386 and NetBSD/amd64
 The bootstrap must be installed in the
 .Nx
-partition that starts at the beginning of the mbr partition.
+partition that starts at the beginning of the
+.Tn MBR
+partition.
 If that is a valid filesystem and contains the
 .Pa /boot
 program then it will be used as the root filesystem, otherwise the
-.Sq a
+.Ql a
 partition will be booted.
 .Pp
 The size of primary bootstrap programs is restricted to 8KB, even
-though some file systems (e.g., ISO 9660) are able to accommodate larger
-ones.
+though some file systems
+.Pq e.g., ISO 9660
+are able to accommodate larger ones.
 .
-.Ss Nx Ns /macppc
+.Ss NetBSD/macppc
 Due to restrictions in
 .Nm
 and the secondary bootstrap implementation, file systems where kernels exist
@@ -1110,24 +1261,24 @@ and always writes a faked map to make disks bootable.
 .Pp
 The
 .Nx Ns /macppc
-bootstrap program can't load kernels from
-.Sy FFSv2
-partitions.
-.Ss Nx Ns /next68k
+bootstrap program can't load kernels from FFSv2 partitions.
+.
+.Ss NetBSD/next68k
 The size of bootstrap programs is restricted to the free space before
 the file system at the beginning of the disk minus 8KB.
 .
-.Ss Nx Ns /pmax
+.Ss NetBSD/pmax
 The
 .Nx Ns /pmax
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
-though some file systems (e.g., ISO 9660) are able to accommodate larger
-ones.
+though some file systems
+.Pq e.g., ISO 9660
+are able to accommodate larger ones.
 .
-.Ss Nx Ns /sun2 and Nx Ns /sun3
+.Ss NetBSD/sun2 and NetBSD/sun3
 The
 .Nx Ns /sun2
 and
@@ -1135,12 +1286,13 @@ and
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .
-.Ss Nx Ns /vax
+.Ss NetBSD/vax
 The
 .Nx Ns /vax
 secondary bootstrap program can only load kernels from file systems
 starting at the beginning of disks.
 .Pp
 The size of primary bootstrap programs is restricted to 7.5KB, even
-though some file systems (e.g., ISO 9660) are able to accommodate larger
-ones.
+though some file systems
+.Pq e.g., ISO 9660
+are able to accommodate larger ones.

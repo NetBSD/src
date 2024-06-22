@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.nbincludes,v 1.5 2016/09/14 00:41:04 christos Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.5.24.1 2024/06/22 10:57:10 martin Exp $
 
 # NOxxx definitions are copied from Makefile.host, and are
 # required before .include <bsd.own.mk>.   The include of bsd.own.mk
@@ -15,12 +15,15 @@ _ARCHDIR=	${.CURDIR}/../../sys/arch
 _INCDIR=	${.CURDIR}/../../include
 _SYSDIR=	${.CURDIR}/../../sys/sys
 _UFSDIR=	${.CURDIR}/../../sys/ufs
+_FSDIR:=	${.CURDIR}/../../sys/fs
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
 .if make(depend) || make(all) || make(dependall) || make(install)
 # There's no need to run these commands for "make cleandir" or "make obj",
 # and TOOL_SED will not yet have been built.
 _UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
+_FS_INCS!=	cd ${_FSDIR} && find cd9660 -name '*.h'
+_FS_INCS+=	unicode.h
 _ARCH_INCS!=	${TOOL_SED} -e 's/^\#.*//' ${.CURDIR}/../headerlist
 .endif
 
@@ -43,6 +46,8 @@ beforedepend:
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/sys
 	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/ufs
+	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/fs
+	${HOST_INSTALL_DIR} ${TOOLDIR}/include/nbinclude/fs/cd9660
 	cd ${_ARCHDIR} && \
 	    ${TOOL_PAX} -s /include\\/// -rw ${_ARCH_INCS} \
 	    ${TOOLDIR}/include/nbinclude
@@ -52,5 +57,7 @@ beforedepend:
 	    ${TOOL_PAX} -rw ${_SYSINCS} ${TOOLDIR}/include/nbinclude/sys
 	cd ${_UFSDIR} && \
 	    ${TOOL_PAX} -rw ${_UFS_INCS} ${TOOLDIR}/include/nbinclude/ufs
+	cd ${_FSDIR} && \
+	    ${TOOL_PAX} -rw ${_FS_INCS} ${TOOLDIR}/include/nbinclude/fs
 	cd ${TOOLDIR}/include/nbinclude && rm -f machine && \
 	    ${HOST_INSTALL_SYMLINK} ${MACHINE} machine
