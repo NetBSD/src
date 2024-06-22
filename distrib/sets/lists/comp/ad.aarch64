@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.52 2024/06/03 18:47:23 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.53 2024/06/22 20:17:25 riastradh Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -158,11 +158,17 @@
 ./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
 ./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_acle.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_acle.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/arm_bf16.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_bf16.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/arm_fp16.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_fp16.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/arm_neon.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_neon.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/arm_sve.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_sve.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-12/arm_acle.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/arm_bf16.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/arm_fp16.h			comp-c-include		gcc=12
