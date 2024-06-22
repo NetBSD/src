@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.73 2024/06/22 23:02:45 mrg Exp $
+# $NetBSD: md.cats,v 1.74 2024/06/22 23:20:38 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -72,8 +72,8 @@
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so.1		xserver-xf86-video-tdfx-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-obsolete	xorg,obsolete
+./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg
+./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/vesa_drv.so		xserver-xf86-video-vesa-drivers	xorg
@@ -237,7 +237,7 @@
 ./usr/X11R7/man/cat4/savage.0				xserver-xf86-video-savage-catman	.cat,xorg
 ./usr/X11R7/man/cat4/siliconmotion.0			xserver-xf86-video-siliconmotion-catman	.cat,xorg
 ./usr/X11R7/man/cat4/tdfx.0				xserver-xf86-video-tdfx-catman	.cat,xorg
-./usr/X11R7/man/cat4/trident.0				xserver-obsolete	.cat,xorg,obsolete
+./usr/X11R7/man/cat4/trident.0				xserver-xf86-video-trident-catman	.cat,xorg
 ./usr/X11R7/man/cat4/tseng.0				xserver-xf86-video-tseng-catman	.cat,xorg
 ./usr/X11R7/man/cat4/vesa.0				xserver-xf86-video-vesa-catman	.cat,xorg
 ./usr/X11R7/man/cat4/vga.0				xserver-obsolete	obsolete
@@ -276,7 +276,7 @@
 ./usr/X11R7/man/html4/savage.html			xserver-xf86-video-savage-htmlman	html,xorg
 ./usr/X11R7/man/html4/siliconmotion.html		xserver-xf86-video-siliconmotion-htmlman	html,xorg
 ./usr/X11R7/man/html4/tdfx.html				xserver-xf86-video-tdfx-htmlman	html,xorg
-./usr/X11R7/man/html4/trident.html			xserver-obsolete	html,xorg,obsolete
+./usr/X11R7/man/html4/trident.html			xserver-xf86-video-trident-htmlman	html,xorg
 ./usr/X11R7/man/html4/tseng.html			xserver-xf86-video-tseng-htmlman	html,xorg
 ./usr/X11R7/man/html4/vesa.html				xserver-xf86-video-vesa-htmlman	html,xorg
 ./usr/X11R7/man/html4/vga.html				xserver-obsolete	obsolete
@@ -315,7 +315,7 @@
 ./usr/X11R7/man/man4/savage.4				xserver-xf86-video-savage-man	.man,xorg
 ./usr/X11R7/man/man4/siliconmotion.4			xserver-xf86-video-siliconmotion-man	.man,xorg
 ./usr/X11R7/man/man4/tdfx.4				xserver-xf86-video-tdfx-man	.man,xorg
-./usr/X11R7/man/man4/trident.4				xserver-obsolete	.man,xorg,obsolete
+./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				xserver-xf86-video-tseng-man	.man,xorg
 ./usr/X11R7/man/man4/vesa.4				xserver-xf86-video-vesa-man	.man,xorg
 ./usr/X11R7/man/man4/vga.4				xserver-obsolete	obsolete
