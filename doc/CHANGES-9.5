@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.5 2024/06/17 18:10:13 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.6 2024/06/22 18:23:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -64,4 +64,29 @@ share/man/man4/eap.4				1.18-1.20
 
 	eap(4): improve man page.
 	[nia, ticket #1844]
+
+external/bsd/tre/dist/src/agrep.c		1.5,1.6 (patch)
+
+	agrep(1): PR 53513: rewrite check for binary files.
+	[andvar, ticket #1845]
+
+sys/dev/usb/if_urtwn.c				1.108
+sys/dev/usb/usbdevs				1.812
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urtwn(4): PR 57819: add Mercusys and Mercusys MW150USV2 support.
+	[nia, ticket #1846]
+
+sys/arch/mac68k/dev/aed.c			1.39
+sys/arch/macppc/dev/aed.c			1.35
+
+	mac68k/macppc: PR 58303: fix passing of emulated 2nd and 3rd button
+	events to the corresponding adb mouse.
+	[nat, ticket #1847]
+
+sys/arch/x86/x86/coretemp.c			1.40,1.41
+
+	coretemp(4): do not accept impossibly low TjMax values.
+	[gutteridge, ticket #1848]
 
