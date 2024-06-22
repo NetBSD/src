@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.58 2017/04/29 00:05:35 nonaka Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.58.40.1 2024/06/22 10:57:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -949,41 +949,41 @@ struct apple_blockzeroblock {
 /* volume header for "LIF" format volumes */
 
 struct	hp300_lifvol {
-	int16_t	vol_id;
-	char	vol_label[6];
-	int32_t	vol_addr;
-	int16_t	vol_oct;
-	int16_t	vol_dummy;
-	int32_t	vol_dirsize;
-	int16_t	vol_version;
-	int16_t	vol_zero;
-	int32_t	vol_huh1;
-	int32_t	vol_huh2;
-	int32_t	vol_length;
+	uint16_t	vol_id;
+	char		vol_label[6];
+	uint32_t	vol_addr;
+	uint16_t	vol_oct;
+	uint16_t	vol_dummy;
+	uint32_t	vol_dirsize;
+	uint16_t	vol_version;
+	uint16_t	vol_zero;
+	uint32_t	vol_huh1;
+	uint32_t	vol_huh2;
+	uint32_t	vol_length;
 };
 
 /* LIF directory entry format */
 
 struct	hp300_lifdir {
-	char	dir_name[10];
-	int16_t	dir_type;
-	int32_t	dir_addr;
-	int32_t	dir_length;
-	char	dir_toc[6];
-	int16_t	dir_flag;
-	int32_t	dir_exec;
+	char		dir_name[10];
+	uint16_t	dir_type;
+	uint32_t	dir_addr;
+	uint32_t	dir_length;
+	char		dir_toc[6];
+	uint16_t	dir_flag;
+	uint32_t	dir_exec;
 };
 
 /* load header for boot rom */
 struct hp300_load {
-	int32_t address;
-	int32_t count;
+	uint32_t	address;
+	uint32_t	count;
 };
 
-#define	HP300_VOL_ID		-32768
+#define	HP300_VOL_ID		0x8000	/* always $8000 */
 #define	HP300_VOL_OCT		4096
-#define	HP300_DIR_TYPE		-5822
-#define	HP300_DIR_FLAG		0x8001	/* dont ask me! */
+#define	HP300_DIR_TYPE		0xe942	/* "SYS9k Series 9000" */
+#define	HP300_DIR_FLAG		0x8001	/* don't ask me! */
 #define	HP300_SECTSIZE		256
 
 

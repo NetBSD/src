@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.13 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.13.56.1 2024/06/22 10:57:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.13 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.13.56.1 2024/06/22 10:57:10 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -48,11 +48,33 @@ __RCSID("$NetBSD: fstypes.c,v 1.13 2010/01/14 16:27:49 tsutsui Exp $");
 
 struct ib_fs fstypes[] = {
 #ifndef NO_STAGE2
-	{ .name = "ffs",  .match = ffs_match,	.findstage2 = ffs_findstage2	},
-	{ .name = "raid", .match = raid_match,	.findstage2 = ffs_findstage2	},
-	{ .name = "raw",  .match = raw_match,	.findstage2 = raw_findstage2	},
+	{
+		.name = "ffs",
+		.match = ffs_match,
+		.findstage2 = ffs_findstage2
+	},
+	{
+		.name = "raid",
+		.match = raid_match,
+		.findstage2 = ffs_findstage2
+	},
+#ifdef SUPPORT_CD9660
+	{
+		.name = "cd9660",
+		.match = cd9660_match,
+		.findstage2 = cd9660_findstage2
+	},
 #endif
-	{ .name = NULL, }
+	/* raw_match() always matches, so raw should be at the end. */
+	{
+		.name = "raw",
+		.match = raw_match,
+		.findstage2 = raw_findstage2
+	},
+#endif
+	{
+		.name = NULL
+	}
 };
 
 #ifndef NO_STAGE2

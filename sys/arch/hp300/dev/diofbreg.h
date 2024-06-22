@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbreg.h,v 1.3 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: diofbreg.h,v 1.3.90.1 2024/06/22 10:57:10 martin Exp $	*/
 /*	$OpenBSD: diofbreg.h,v 1.3 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 struct	diofbreg {
 	uint8_t		:8;
 	uint8_t		id;		/* id and reset register	0x01 */
-	uint8_t 	sec_interrupt;	/* secondary interrupt register	0x02 */
+	uint8_t		sec_interrupt;	/* secondary interrupt register	0x02 */
 	uint8_t		interrupt;	/* interrupt register		0x03 */
 	uint8_t		:8;
 	uint8_t		fbwmsb;		/* frame buffer width MSB	0x05 */
