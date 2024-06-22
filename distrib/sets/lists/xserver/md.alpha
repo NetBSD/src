@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.63 2024/01/28 06:20:02 tsutsui Exp $
+# $NetBSD: md.alpha,v 1.64 2024/06/22 17:59:49 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -82,8 +82,10 @@
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		xserver-xf86-video-radeon-kms-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		xserver-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	xserver-obsolete	xorg,obsolete
-./usr/X11R7/lib/modules/drivers/s3_drv.so		xserver-xf86-video-s3-drivers	xorg
-./usr/X11R7/lib/modules/drivers/s3_drv.so.0		xserver-xf86-video-s3-drivers	xorg
+./usr/X11R7/lib/modules/drivers/s3_drv.so		xserver-xf86-video-s3-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/s3_drv.so.0		xserver-xf86-video-s3-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/s3_drv.so		xserver-xf86-video-s3-drivers	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/s3_drv.so.0		xserver-xf86-video-s3-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so		xserver-xf86-video-s3virge-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so.1	xserver-xf86-video-s3virge-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/savage_drv.so		xserver-xf86-video-savage-drivers	xorg
@@ -94,10 +96,14 @@
 ./usr/X11R7/lib/modules/drivers/sis_drv.so.0		xserver-xf86-video-sis-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so		xserver-xf86-video-tdfx-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so.1		xserver-xf86-video-tdfx-drivers	xorg
-./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-xf86-video-tga-drivers	xorg
-./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg
+./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		xserver-xf86-video-tseng-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/vga_drv.so		xserver-obsolete	obsolete
@@ -396,13 +402,15 @@
 ./usr/X11R7/man/man4/r128.4				xserver-xf86-video-r128-man	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				xserver-xf86-video-radeon-kms-man	.man,xorg
 ./usr/X11R7/man/man4/radeonhd.4				xserver-obsolete	.man,xorg,obsolete
-./usr/X11R7/man/man4/s3.4				xserver-xf86-video-s3-man	.man,xorg
+./usr/X11R7/man/man4/s3.4				xserver-xf86-video-s3-man	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/s3.4				xserver-xf86-video-s3-man	.man,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/man4/s3virge.4				xserver-xf86-video-s3virge-man	.man,xorg
 ./usr/X11R7/man/man4/savage.4				xserver-xf86-video-savage-man	.man,xorg
 ./usr/X11R7/man/man4/siliconmotion.4			xserver-xf86-video-siliconmotion-man	.man,xorg
 ./usr/X11R7/man/man4/sis.4				xserver-xf86-video-sis-man	.man,xorg
 ./usr/X11R7/man/man4/tdfx.4				xserver-xf86-video-tdfx-man	.man,xorg
-./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg
+./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/man4/tseng.4				xserver-xf86-video-tseng-man	.man,xorg
 ./usr/X11R7/man/man4/vga.4				xserver-obsolete	obsolete
 ./usr/X11R7/man/man4/void.4				xserver-obsolete	obsolete
