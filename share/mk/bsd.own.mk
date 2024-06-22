@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1382 2024/06/16 21:48:23 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1383 2024/06/22 23:26:37 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1345,7 +1345,7 @@ MKDTB.riscv64=			yes
 # During transition from xorg-server 1.10 to 1.20
 # XXX sgimips uses XAA which is removed in 1.20, and EXA is hard
 # XXX to do the same with.
-.if ${MACHINE} == "sgimips" || ${MACHINE} == "alpha"
+.if ${MACHINE} == "sgimips"
 HAVE_XORG_SERVER_VER?=110
 .else
 HAVE_XORG_SERVER_VER?=120
