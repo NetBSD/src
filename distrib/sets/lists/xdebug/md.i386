@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.63 2024/06/22 23:02:44 mrg Exp $
+# $NetBSD: md.i386,v 1.64 2024/06/22 23:20:38 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib
@@ -180,7 +180,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tfp410_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tfp410_drv.so.2.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tga_drv.so.1.debug	xdebug-obsolete	obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-obsolete	obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/trident_drv.so.1.debug	xdebug-xf86-video-trident-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/tseng_drv.so.1.debug	xdebug-xf86-video-tseng-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vboxvideo_drv.so.1.debug	xdebug-xf86-video-vboxvideo-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/vesa_drv.so.2.debug	xdebug-xf86-video-vesa-debug		xorg,debug

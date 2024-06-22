@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2024/06/22 23:02:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.112 2024/06/22 23:20:39 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -49,6 +49,7 @@ SUBDIR+= \
 	xf86-video-siliconmotion \
 	xf86-video-sis \
 	xf86-video-tdfx \
+	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-vboxvideo \
 	xf86-video-vmware \
@@ -62,7 +63,6 @@ SUBDIR+= \
 # needs porting for xorg-server 21.1.3
 #	xf86-video-s3
 #	xf86-video-tga
-#	xf86-video-trident
 
 # needs porting for xorg-server 1.18
 #	xf86-video-apm \
@@ -79,8 +79,8 @@ SUBDIR+= \
 
 .if ${MACHINE} == "alpha"
 SUBDIR+= \
-	xf86-video-ast \
 	xf86-video-ark \
+	xf86-video-ast \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
@@ -96,6 +96,7 @@ SUBDIR+= \
 	xf86-video-siliconmotion \
 	xf86-video-sis \
 	xf86-video-tdfx \
+	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-wsfb
 #	xf86-video-imstt
@@ -105,8 +106,7 @@ SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-glint \
 	xf86-video-s3 \
-	xf86-video-tga \
-	xf86-video-trident
+	xf86-video-tga
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "alpha"
 
@@ -143,6 +143,7 @@ SUBDIR+= \
 	xf86-video-savage \
 	xf86-video-siliconmotion \
 	xf86-video-tdfx \
+	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-vesa \
 	xf86-video-wsfb
@@ -150,7 +151,6 @@ SUBDIR+= \
 # needs porting for xorg-server 21.1.3
 #	xf86-video-s3
 #	xf86-video-tga
-#	xf86-video-trident
 
 # needs porting for xorg-server 1.18
 #	xf86-video-apm \

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.65 2024/06/22 23:02:45 mrg Exp $
+# $NetBSD: md.alpha,v 1.66 2024/06/22 23:20:38 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -98,8 +98,8 @@
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/tga_drv.so		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		xserver-xf86-video-tga-drivers	xorg,xorg_server_ver=120,obsolete
-./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg
+./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/trident_drv.so		xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/trident_drv.so.1	xserver-xf86-video-trident-drivers	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		xserver-xf86-video-tseng-drivers	xorg
@@ -407,8 +407,7 @@
 ./usr/X11R7/man/man4/siliconmotion.4			xserver-xf86-video-siliconmotion-man	.man,xorg
 ./usr/X11R7/man/man4/sis.4				xserver-xf86-video-sis-man	.man,xorg
 ./usr/X11R7/man/man4/tdfx.4				xserver-xf86-video-tdfx-man	.man,xorg
-./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=110
-./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg,xorg_server_ver=120,obsolete
+./usr/X11R7/man/man4/trident.4				xserver-xf86-video-trident-man	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				xserver-xf86-video-tseng-man	.man,xorg
 ./usr/X11R7/man/man4/vga.4				xserver-obsolete	obsolete
 ./usr/X11R7/man/man4/void.4				xserver-obsolete	obsolete
