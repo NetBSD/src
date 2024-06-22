@@ -42,6 +42,7 @@ static void	server_client_check_modes(struct client *);
 static void	server_client_set_title(struct client *);
 static void	server_client_set_path(struct client *);
 static void	server_client_reset_state(struct client *);
+static int 	server_client_is_bracket_pasting(struct client *, key_code);
 static int	server_client_assume_paste(struct session *);
 static void	server_client_update_latest(struct client *);
 
@@ -559,9 +560,9 @@ static key_code
 server_client_check_mouse(struct client *c, struct key_event *event)
 {
 	struct mouse_event	*m = &event->m;
-	struct session		*s = c->session;
-	struct winlink		*wl;
-	struct window_pane	*wp;
+	struct session		*s = c->session, *fs;
+	struct winlink		*fwl;
+	struct window_pane	*wp, *fwp;
 	u_int			 x, y, b, sx, sy, px, py;
 	int			 ignore = 0;
 	key_code		 key;
@@ -667,6 +668,7 @@ have_event:
 	/* Save the session. */
 	m->s = s->id;
 	m->w = -1;
+	m->wp = -1;
 	m->ignore = ignore;
 
 	/* Is this on the status line? */
@@ -683,18 +685,42 @@ have_event:
 			case STYLE_RANGE_NONE:
 				return (KEYC_UNKNOWN);
 			case STYLE_RANGE_LEFT:
+				log_debug("mouse range: left");
 				where = STATUS_LEFT;
 				break;
 			case STYLE_RANGE_RIGHT:
+				log_debug("mouse range: right");
 				where = STATUS_RIGHT;
 				break;
-			case STYLE_RANGE_WINDOW:
-				wl = winlink_find_by_index(&s->windows,
-				    sr->argument);
-				if (wl == NULL)
+			case STYLE_RANGE_PANE:
+				fwp = window_pane_find_by_id(sr->argument);
+				if (fwp == NULL)
 					return (KEYC_UNKNOWN);
-				m->w = wl->window->id;
+				m->wp = sr->argument;
 
+				log_debug("mouse range: pane %%%u", m->wp);
+				where = STATUS;
+				break;
+			case STYLE_RANGE_WINDOW:
+				fwl = winlink_find_by_index(&s->windows,
+				    sr->argument);
+				if (fwl == NULL)
+					return (KEYC_UNKNOWN);
+				m->w = fwl->window->id;
+
+				log_debug("mouse range: window @%u", m->w);
+				where = STATUS;
+				break;
+			case STYLE_RANGE_SESSION:
+				fs = session_find_by_id(sr->argument);
+				if (fs == NULL)
+					return (KEYC_UNKNOWN);
+				m->s = sr->argument;
+
+				log_debug("mouse range: session $%u", m->s);
+				where = STATUS;
+				break;
+			case STYLE_RANGE_USER:
 				where = STATUS;
 				break;
 			}
@@ -1754,6 +1780,25 @@ out:
 	return (key);
 }
 
+/* Is this a bracket paste key? */
+static int
+server_client_is_bracket_pasting(struct client *c, key_code key)
+{
+	if (key == KEYC_PASTE_START) {
+		c->flags |= CLIENT_BRACKETPASTING;
+		log_debug("%s: bracket paste on", c->name);
+		return (1);
+	}
+
+	if (key == KEYC_PASTE_END) {
+		c->flags &= ~CLIENT_BRACKETPASTING;
+		log_debug("%s: bracket paste off", c->name);
+		return (1);
+	}
+
+	return !!(c->flags & CLIENT_BRACKETPASTING);
+}
+
 /* Is this fast enough to probably be a paste? */
 static int
 server_client_assume_paste(struct session *s)
@@ -1818,7 +1863,7 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 	struct key_binding		*bd;
 	int				 xtimeout, flags;
 	struct cmd_find_state		 fs;
-	key_code			 key0;
+	key_code			 key0, prefix, prefix2;
 
 	/* Check the client is good to accept input. */
 	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
@@ -1862,8 +1907,14 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 	if (KEYC_IS_MOUSE(key) && !options_get_number(s->options, "mouse"))
 		goto forward_key;
 
+	/* Forward if bracket pasting. */
+	if (server_client_is_bracket_pasting(c, key))
+		goto forward_key;
+
 	/* Treat everything as a regular key when pasting is detected. */
-	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
+	if (!KEYC_IS_MOUSE(key) &&
+	    (~key & KEYC_SENT) &&
+	    server_client_assume_paste(s))
 		goto forward_key;
 
 	/*
@@ -1884,9 +1935,11 @@ table_changed:
 	 * The prefix always takes precedence and forces a switch to the prefix
 	 * table, unless we are already there.
 	 */
+	prefix = (key_code)options_get_number(s->options, "prefix");
+	prefix2 = (key_code)options_get_number(s->options, "prefix2");
 	key0 = (key & (KEYC_MASK_KEY|KEYC_MASK_MODIFIERS));
-	if ((key0 == (key_code)options_get_number(s->options, "prefix") ||
-	    key0 == (key_code)options_get_number(s->options, "prefix2")) &&
+	if ((key0 == (prefix & (KEYC_MASK_KEY|KEYC_MASK_MODIFIERS)) ||
+	    key0 == (prefix2 & (KEYC_MASK_KEY|KEYC_MASK_MODIFIERS))) &&
 	    strcmp(table->name, "prefix") != 0) {
 		server_client_set_key_table(c, "prefix");
 		server_status_client(c);
@@ -2218,7 +2271,8 @@ server_client_check_pane_buffer(struct window_pane *wp)
 		}
 		wpo = control_pane_offset(c, wp, &flag);
 		if (wpo == NULL) {
-			off = 0;
+			if (!flag)
+				off = 0;
 			continue;
 		}
 		if (!flag)
@@ -2714,6 +2768,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			break;
 		server_client_update_latest(c);
 		tty_resize(&c->tty);
+		tty_repeat_requests(&c->tty);
 		recalculate_sizes();
 		if (c->overlay_resize == NULL)
 			server_client_clear_overlay(c);
@@ -2788,8 +2843,11 @@ server_client_command_done(struct cmdq_item *item, __unused void *data)
 
 	if (~c->flags & CLIENT_ATTACHED)
 		c->flags |= CLIENT_EXIT;
-	else if (~c->flags & CLIENT_EXIT)
+	else if (~c->flags & CLIENT_EXIT) {
+		if (c->flags & CLIENT_CONTROL)
+			control_ready(c);
 		tty_send_requests(&c->tty);
+	}
 	return (CMD_RETURN_NORMAL);
 }
 
@@ -2940,14 +2998,14 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 	case MSG_IDENTIFY_STDIN:
 		if (datalen != 0)
 			fatalx("bad MSG_IDENTIFY_STDIN size");
-		c->fd = imsg->fd;
-		log_debug("client %p IDENTIFY_STDIN %d", c, imsg->fd);
+		c->fd = imsg_get_fd(imsg);
+		log_debug("client %p IDENTIFY_STDIN %d", c, c->fd);
 		break;
 	case MSG_IDENTIFY_STDOUT:
 		if (datalen != 0)
 			fatalx("bad MSG_IDENTIFY_STDOUT size");
-		c->out_fd = imsg->fd;
-		log_debug("client %p IDENTIFY_STDOUT %d", c, imsg->fd);
+		c->out_fd = imsg_get_fd(imsg);
+		log_debug("client %p IDENTIFY_STDOUT %d", c, c->out_fd);
 		break;
 	case MSG_IDENTIFY_ENVIRON:
 		if (datalen == 0 || data[datalen - 1] != '\0')
@@ -3209,4 +3267,70 @@ server_client_remove_pane(struct window_pane *wp)
 			free(cw);
 		}
 	}
+}
+
+/* Print to a client. */
+void
+server_client_print(struct client *c, int parse, struct evbuffer *evb)
+{
+	void				*data = EVBUFFER_DATA(evb);
+	size_t				 size = EVBUFFER_LENGTH(evb);
+	struct window_pane		*wp;
+	struct window_mode_entry	*wme;
+	char				*sanitized, *msg, *line;
+
+	if (!parse) {
+		utf8_stravisx(&msg, data, size,
+		    VIS_OCTAL|VIS_CSTYLE|VIS_NOSLASH);
+		log_debug("%s: %s", __func__, msg);
+	} else {
+		msg = (char *)EVBUFFER_DATA(evb);
+		if (msg[size - 1] != '\0')
+			evbuffer_add(evb, "", 1);
+	}
+
+	if (c == NULL)
+		goto out;
+
+	if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
+		if (~c->flags & CLIENT_UTF8) {
+			sanitized = utf8_sanitize(msg);
+			if (c->flags & CLIENT_CONTROL)
+				control_write(c, "%s", sanitized);
+			else
+				file_print(c, "%s\n", sanitized);
+			free(sanitized);
+		} else {
+			if (c->flags & CLIENT_CONTROL)
+				control_write(c, "%s", msg);
+			else
+				file_print(c, "%s\n", msg);
+		}
+		goto out;
+	}
+
+	wp = server_client_get_pane(c);
+	wme = TAILQ_FIRST(&wp->modes);
+	if (wme == NULL || wme->mode != &window_view_mode)
+		window_pane_set_mode(wp, NULL, &window_view_mode, NULL, NULL);
+	if (parse) {
+		do {
+			line = evbuffer_readln(evb, NULL, EVBUFFER_EOL_LF);
+			if (line != NULL) {
+				window_copy_add(wp, 1, "%s", line);
+				free(line);
+			}
+		} while (line != NULL);
+
+		size = EVBUFFER_LENGTH(evb);
+		if (size != 0) {
+			line = (char *)EVBUFFER_DATA(evb);
+			window_copy_add(wp, 1, "%.*s", (int)size, line);
+		}
+	} else
+		window_copy_add(wp, 0, "%s", msg);
+
+out:
+	if (!parse)
+		free(msg);
 }

@@ -82,13 +82,19 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 
 	s->cstyle = SCREEN_CURSOR_DEFAULT;
 	s->default_cstyle = SCREEN_CURSOR_DEFAULT;
+	s->mode = MODE_CURSOR;
 	s->default_mode = 0;
 	s->ccolour = -1;
 	s->default_ccolour = -1;
 	s->tabs = NULL;
 	s->sel = NULL;
 
+#ifdef ENABLE_SIXEL
+	TAILQ_INIT(&s->images);
+#endif
+
 	s->write_list = NULL;
+	s->hyperlinks = NULL;
 
 	screen_reinit(s);
 }
@@ -118,6 +124,22 @@ screen_reinit(struct screen *s)
 
 	screen_clear_selection(s);
 	screen_free_titles(s);
+
+#ifdef ENABLE_SIXEL
+	image_free_all(s);
+#endif
+
+	screen_reset_hyperlinks(s);
+}
+
+/* Reset hyperlinks of a screen. */
+void
+screen_reset_hyperlinks(struct screen *s)
+{
+	if (s->hyperlinks == NULL)
+		s->hyperlinks = hyperlinks_init();
+	else
+		hyperlinks_reset(s->hyperlinks);
 }
 
 /* Destroy a screen. */
@@ -136,7 +158,13 @@ screen_free(struct screen *s)
 		grid_destroy(s->saved_grid);
 	grid_destroy(s->grid);
 
+	if (s->hyperlinks != NULL)
+		hyperlinks_free(s->hyperlinks);
 	screen_free_titles(s);
+
+#ifdef ENABLE_SIXEL
+	image_free_all(s);
+#endif
 }
 
 /* Reset tabs to default, eight spaces apart. */
@@ -280,8 +308,12 @@ screen_resize_cursor(struct screen *s, u_int sx, u_int sy, int reflow,
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy, eat_empty, &cy);
 
-	if (reflow)
+	if (reflow) {
+#ifdef ENABLE_SIXEL
+		image_free_all(s);
+#endif
 		screen_reflow(s, sx, &cx, &cy, cursor);
+	}
 
 	if (cy >= s->grid->hsize) {
 		s->cx = cx;
@@ -611,7 +643,7 @@ screen_alternate_off(struct screen *s, struct grid_cell *gc, int cursor)
 	 * before copying back.
 	 */
 	if (s->saved_grid != NULL)
-		screen_resize(s, s->saved_grid->sx, s->saved_grid->sy, 1);
+		screen_resize(s, s->saved_grid->sx, s->saved_grid->sy, 0);
 
 	/*
 	 * Restore the cursor position and cell. This happens even if not
@@ -685,9 +717,9 @@ screen_mode_to_string(int mode)
 	if (mode & MODE_CURSOR_VERY_VISIBLE)
 		strlcat(tmp, "CURSOR_VERY_VISIBLE,", sizeof tmp);
 	if (mode & MODE_MOUSE_UTF8)
-		strlcat(tmp, "UTF8,", sizeof tmp);
+		strlcat(tmp, "MOUSE_UTF8,", sizeof tmp);
 	if (mode & MODE_MOUSE_SGR)
-		strlcat(tmp, "SGR,", sizeof tmp);
+		strlcat(tmp, "MOUSE_SGR,", sizeof tmp);
 	if (mode & MODE_BRACKETPASTE)
 		strlcat(tmp, "BRACKETPASTE,", sizeof tmp);
 	if (mode & MODE_FOCUSON)

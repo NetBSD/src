@@ -113,6 +113,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 		window_pane_resize(sc->wp0, w->sx, w->sy);
 
 		layout_init(w, sc->wp0);
+		w->active = NULL;
 		window_set_active_pane(w, sc->wp0, 0);
 	}
 
@@ -380,8 +381,20 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	}
 
 	/* In the parent process, everything is done now. */
-	if (new_wp->pid != 0)
+	if (new_wp->pid != 0) {
+#if defined(HAVE_SYSTEMD) && defined(ENABLE_CGROUPS)
+		/*
+		 * Move the child process into a new cgroup for systemd-oomd
+		 * isolation.
+		 */
+		if (systemd_move_pid_to_new_cgroup(new_wp->pid, cause) < 0) {
+			log_debug("%s: moving pane to new cgroup failed: %s",
+			    __func__, *cause);
+			free (*cause);
+		}
+#endif
 		goto complete;
+	}
 
 	/*
 	 * Child process. Change to the working directory or home if that
@@ -389,7 +402,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	 */
 	if (chdir(new_wp->cwd) == 0)
 		environ_set(child, "PWD", 0, "%s", new_wp->cwd);
-	else if ((tmp = find_home()) != NULL || chdir(tmp) == 0)
+	else if ((tmp = find_home()) != NULL && chdir(tmp) == 0)
 		environ_set(child, "PWD", 0, "%s", tmp);
 	else if (chdir("/") == 0)
 		environ_set(child, "PWD", 0, "/");
@@ -416,8 +429,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		_exit(1);
 
 	/* Clean up file descriptors and signals and update the environment. */
-	closefrom(STDERR_FILENO + 1);
 	proc_clear_signals(server_proc, 1);
+	closefrom(STDERR_FILENO + 1);
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
 	log_close();
 	environ_push(child);

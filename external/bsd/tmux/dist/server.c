@@ -53,6 +53,8 @@ struct cmd_find_state	 marked_pane;
 static u_int		 message_next;
 struct message_list	 message_log;
 
+time_t			 current_time;
+
 static int	server_loop(void);
 static void	server_send_exit(void);
 static void	server_accept(int, short, void *);
@@ -210,7 +212,6 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 	RB_INIT(&sessions);
 	key_bindings_init();
 	TAILQ_INIT(&message_log);
-
 	gettimeofday(&start_time, NULL);
 
 #ifdef HAVE_SYSTEMD
@@ -261,6 +262,8 @@ server_loop(void)
 {
 	struct client	*c;
 	u_int		 items;
+
+	current_time = time (NULL);
 
 	do {
 		items = cmdq_next(NULL);

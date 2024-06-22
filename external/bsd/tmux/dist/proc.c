@@ -93,8 +93,9 @@ proc_event_cb(__unused int fd, short events, void *arg)
 			log_debug("peer %p message %d", peer, imsg.hdr.type);
 
 			if (peer_check_version(peer, &imsg) != 0) {
-				if (imsg.fd != -1)
-					close(imsg.fd);
+				fd = imsg_get_fd(&imsg);
+				if (fd != -1)
+					close(fd);
 				imsg_free(&imsg);
 				break;
 			}
@@ -193,18 +194,13 @@ proc_start(const char *name)
 	log_debug("%s started (%ld): version %s, socket %s, protocol %d", name,
 	    (long)getpid(), getversion(), socket_path, PROTOCOL_VERSION);
 	log_debug("on %s %s %s", u.sysname, u.release, u.version);
-	log_debug("using libevent %s (%s)"
+	log_debug("using libevent %s %s", event_get_version(), event_get_method());
 #ifdef HAVE_UTF8PROC
-	    "; utf8proc %s"
+	log_debug("using utf8proc %s", utf8proc_version());
 #endif
 #ifdef NCURSES_VERSION
-	    "; ncurses " NCURSES_VERSION
+	log_debug("using ncurses %s %06u", NCURSES_VERSION, NCURSES_VERSION_PATCH);
 #endif
-	    , event_get_version(), event_get_method()
-#ifdef HAVE_UTF8PROC
-	    , utf8proc_version()
-#endif
-	);
 
 	tp = xcalloc(1, sizeof *tp);
 	tp->name = xstrdup(name);

@@ -103,6 +103,7 @@ format_job_cmp(struct format_job *fj1, struct format_job *fj2)
 #define FORMAT_SESSION_NAME 0x8000
 #define FORMAT_CHARACTER 0x10000
 #define FORMAT_COLOUR 0x20000
+#define FORMAT_CLIENTS 0x40000
 
 /* Limit on recursion. */
 #define FORMAT_LOOP_LIMIT 100
@@ -1125,7 +1126,6 @@ format_cb_mouse_word(struct format_tree *ft)
 	struct window_pane	*wp;
 	struct grid		*gd;
 	u_int			 x, y;
-	char			*s;
 
 	if (!ft->m.valid)
 		return (NULL);
@@ -1138,11 +1138,30 @@ format_cb_mouse_word(struct format_tree *ft)
 	if (!TAILQ_EMPTY(&wp->modes)) {
 		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode ||
 		    TAILQ_FIRST(&wp->modes)->mode == &window_view_mode)
-			return (s = window_copy_get_word(wp, x, y));
+			return (window_copy_get_word(wp, x, y));
 		return (NULL);
 	}
 	gd = wp->base.grid;
 	return (format_grid_word(gd, x, gd->hsize + y));
+}
+
+/* Callback for mouse_hyperlink. */
+static void *
+format_cb_mouse_hyperlink(struct format_tree *ft)
+{
+	struct window_pane	*wp;
+	struct grid		*gd;
+	u_int			 x, y;
+
+	if (!ft->m.valid)
+		return (NULL);
+	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
+	if (wp == NULL)
+		return (NULL);
+	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
+		return (NULL);
+	gd = wp->base.grid;
+	return (format_grid_hyperlink(gd, x, gd->hsize + y, wp->screen));
 }
 
 /* Callback for mouse_line. */
@@ -1169,6 +1188,72 @@ format_cb_mouse_line(struct format_tree *ft)
 	}
 	gd = wp->base.grid;
 	return (format_grid_line(gd, gd->hsize + y));
+}
+
+/* Callback for mouse_status_line. */
+static void *
+format_cb_mouse_status_line(struct format_tree *ft)
+{
+	char	*value;
+	u_int	 y;
+
+	if (!ft->m.valid)
+		return (NULL);
+	if (ft->c == NULL || (~ft->c->tty.flags & TTY_STARTED))
+		return (NULL);
+
+	if (ft->m.statusat == 0 && ft->m.y < ft->m.statuslines) {
+		y = ft->m.y;
+	} else if (ft->m.statusat > 0 && ft->m.y >= (u_int)ft->m.statusat) {
+		y = ft->m.y - ft->m.statusat;
+	} else
+		return (NULL);
+	xasprintf(&value, "%u", y);
+	return (value);
+
+}
+
+/* Callback for mouse_status_range. */
+static void *
+format_cb_mouse_status_range(struct format_tree *ft)
+{
+	struct style_range	*sr;
+	u_int			 x, y;
+
+	if (!ft->m.valid)
+		return (NULL);
+	if (ft->c == NULL || (~ft->c->tty.flags & TTY_STARTED))
+		return (NULL);
+
+	if (ft->m.statusat == 0 && ft->m.y < ft->m.statuslines) {
+		x = ft->m.x;
+		y = ft->m.y;
+	} else if (ft->m.statusat > 0 && ft->m.y >= (u_int)ft->m.statusat) {
+		x = ft->m.x;
+		y = ft->m.y - ft->m.statusat;
+	} else
+		return (NULL);
+
+	sr = status_get_range(ft->c, x, y);
+	if (sr == NULL)
+		return (NULL);
+	switch (sr->type) {
+	case STYLE_RANGE_NONE:
+		return (NULL);
+	case STYLE_RANGE_LEFT:
+		return (xstrdup("left"));
+	case STYLE_RANGE_RIGHT:
+		return (xstrdup("right"));
+	case STYLE_RANGE_PANE:
+		return (xstrdup("pane"));
+	case STYLE_RANGE_WINDOW:
+		return (xstrdup("window"));
+	case STYLE_RANGE_SESSION:
+		return (xstrdup("session"));
+	case STYLE_RANGE_USER:
+		return (xstrdup(sr->string));
+	}
+	return (NULL);
 }
 
 /* Callback for alternate_on. */
@@ -1865,12 +1950,24 @@ format_cb_pane_input_off(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for pane_unseen_changes. */
+static void *
+format_cb_pane_unseen_changes(struct format_tree *ft)
+{
+	if (ft->wp != NULL) {
+		if (ft->wp->flags & PANE_UNSEENCHANGES)
+			return (xstrdup("1"));
+		return (xstrdup("0"));
+	}
+	return (NULL);
+}
+
 /* Callback for pane_last. */
 static void *
 format_cb_pane_last(struct format_tree *ft)
 {
 	if (ft->wp != NULL) {
-		if (ft->wp == ft->wp->window->last)
+		if (ft->wp == TAILQ_FIRST(&ft->wp->window->last_panes))
 			return (xstrdup("1"));
 		return (xstrdup("0"));
 	}
@@ -2043,6 +2140,18 @@ format_cb_scroll_region_upper(struct format_tree *ft)
 	if (ft->wp != NULL)
 		return (format_printf("%u", ft->wp->base.rupper));
 	return (NULL);
+}
+
+/* Callback for server_sessions. */
+static void *
+format_cb_server_sessions(__unused struct format_tree *ft)
+{
+	struct session	*s;
+	u_int		 n = 0;
+
+	RB_FOREACH(s, sessions, &sessions)
+		n++;
+	return (format_printf("%u", n));
 }
 
 /* Callback for session_attached. */
@@ -2789,6 +2898,9 @@ static const struct format_table_entry format_table[] = {
 	{ "mouse_button_flag", FORMAT_TABLE_STRING,
 	  format_cb_mouse_button_flag
 	},
+	{ "mouse_hyperlink", FORMAT_TABLE_STRING,
+	  format_cb_mouse_hyperlink
+	},
 	{ "mouse_line", FORMAT_TABLE_STRING,
 	  format_cb_mouse_line
 	},
@@ -2800,6 +2912,12 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "mouse_standard_flag", FORMAT_TABLE_STRING,
 	  format_cb_mouse_standard_flag
+	},
+	{ "mouse_status_line", FORMAT_TABLE_STRING,
+	  format_cb_mouse_status_line
+	},
+	{ "mouse_status_range", FORMAT_TABLE_STRING,
+	  format_cb_mouse_status_range
 	},
 	{ "mouse_utf8_flag", FORMAT_TABLE_STRING,
 	  format_cb_mouse_utf8_flag
@@ -2930,6 +3048,9 @@ static const struct format_table_entry format_table[] = {
 	{ "pane_tty", FORMAT_TABLE_STRING,
 	  format_cb_pane_tty
 	},
+	{ "pane_unseen_changes", FORMAT_TABLE_STRING,
+	  format_cb_pane_unseen_changes
+	},
 	{ "pane_width", FORMAT_TABLE_STRING,
 	  format_cb_pane_width
 	},
@@ -2941,6 +3062,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "scroll_region_upper", FORMAT_TABLE_STRING,
 	  format_cb_scroll_region_upper
+	},
+	{ "server_sessions", FORMAT_TABLE_STRING,
+	  format_cb_server_sessions
 	},
 	{ "session_activity", FORMAT_TABLE_TIME,
 	  format_cb_session_activity
@@ -3387,12 +3511,12 @@ format_quote_style(const char *s)
 }
 
 /* Make a prettier time. */
-static char *
-format_pretty_time(time_t t)
+char *
+format_pretty_time(time_t t, int seconds)
 {
 	struct tm       now_tm, tm;
 	time_t		now, age;
-	char		s[6];
+	char		s[9];
 
 	time(&now);
 	if (now < t)
@@ -3404,7 +3528,10 @@ format_pretty_time(time_t t)
 
 	/* Last 24 hours. */
 	if (age < 24 * 3600) {
-		strftime(s, sizeof s, "%H:%M", &tm);
+		if (seconds)
+			strftime(s, sizeof s, "%H:%M:%S", &tm);
+		else
+			strftime(s, sizeof s, "%H:%M", &tm);
 		return (xstrdup(s));
 	}
 
@@ -3509,7 +3636,7 @@ found:
 		if (t == 0)
 			return (NULL);
 		if (modifiers & FORMAT_PRETTY)
-			found = format_pretty_time(t);
+			found = format_pretty_time(t, 0);
 		else {
 			if (time_format != NULL) {
 				localtime_r(&t, &tm);
@@ -3539,18 +3666,43 @@ found:
 	}
 	if (modifiers & FORMAT_QUOTE_SHELL) {
 		saved = found;
-		found = xstrdup(format_quote_shell(saved));
+		found = format_quote_shell(saved);
 		free(saved);
 	}
 	if (modifiers & FORMAT_QUOTE_STYLE) {
 		saved = found;
-		found = xstrdup(format_quote_style(saved));
+		found = format_quote_style(saved);
 		free(saved);
 	}
 	return (found);
 }
 
-/* Remove escaped characters from string. */
+/* Unescape escaped characters. */
+static char *
+format_unescape(const char *s)
+{
+	char	*out, *cp;
+	int	 brackets = 0;
+
+	cp = out = xmalloc(strlen(s) + 1);
+	for (; *s != '\0'; s++) {
+		if (*s == '#' && s[1] == '{')
+			brackets++;
+		if (brackets == 0 &&
+		    *s == '#' &&
+		    strchr(",#{}:", s[1]) != NULL) {
+			*cp++ = *++s;
+ 			continue;
+		}
+		if (*s == '}')
+			brackets--;
+		*cp++ = *s;
+	}
+	*cp = '\0';
+	return (out);
+}
+
+/* Remove escaped characters. */
 static char *
 format_strip(const char *s)
 {
@@ -3583,7 +3735,9 @@ format_skip(const char *s, const char *end)
 	for (; *s != '\0'; s++) {
 		if (*s == '#' && s[1] == '{')
 			brackets++;
-		if (*s == '#' && strchr(",#{}:", s[1]) != NULL) {
+		if (*s == '#' &&
+		    s[1] != '\0' &&
+		    strchr(",#{}:", s[1]) != NULL) {
 			s++;
 			continue;
 		}
@@ -3697,7 +3851,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 			cp++;
 
 		/* Check single character modifiers with no arguments. */
-		if (strchr("labcdnwETSWP<>", cp[0]) != NULL &&
+		if (strchr("labcdnwETSWPL<>", cp[0]) != NULL &&
 		    format_is_end(cp[1])) {
 			format_add_modifier(&list, count, cp, 1, NULL, 0);
 			cp++;
@@ -3732,7 +3886,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 		argc = 0;
 
 		/* Single argument with no wrapper character. */
-		if (!ispunct((unsigned char)cp[1]) || cp[1] == '-') {
+		if (!ispunct((u_char)cp[1]) || cp[1] == '-') {
 			end = format_skip(cp + 1, ":;");
 			if (end == NULL)
 				break;
@@ -4025,6 +4179,40 @@ format_loop_panes(struct format_expand_state *es, const char *fmt)
 	return (value);
 }
 
+/* Loop over clients. */
+static char *
+format_loop_clients(struct format_expand_state *es, const char *fmt)
+{
+	struct format_tree		*ft = es->ft;
+	struct client			*c;
+	struct cmdq_item		*item = ft->item;
+	struct format_tree		*nft;
+	struct format_expand_state	 next;
+	char				*expanded, *value;
+	size_t				 valuelen;
+
+	value = xcalloc(1, 1);
+	valuelen = 1;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		format_log(es, "client loop: %s", c->name);
+		nft = format_create(c, item, 0, ft->flags);
+		format_defaults(nft, c, ft->s, ft->wl, ft->wp);
+		format_copy_state(&next, es, 0);
+		next.ft = nft;
+		expanded = format_expand1(&next, fmt);
+		format_free(nft);
+
+		valuelen += strlen(expanded);
+		value = xrealloc(value, valuelen);
+
+		strlcat(value, expanded, valuelen);
+		free(expanded);
+	}
+
+	return (value);
+}
+
 static char *
 format_replace_expression(struct format_modifier *mexp,
     struct format_expand_state *es, const char *copy)
@@ -4299,6 +4487,9 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			case 'P':
 				modifiers |= FORMAT_PANES;
 				break;
+			case 'L':
+				modifiers |= FORMAT_CLIENTS;
+				break;
 			}
 		} else if (fm->size == 2) {
 			if (strcmp(fm->modifier, "||") == 0 ||
@@ -4313,7 +4504,8 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 
 	/* Is this a literal string? */
 	if (modifiers & FORMAT_LITERAL) {
-		value = xstrdup(copy);
+		format_log(es, "literal string is '%s'", copy);
+		value = format_unescape(copy);
 		goto done;
 	}
 
@@ -4352,6 +4544,10 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			goto fail;
 	} else if (modifiers & FORMAT_PANES) {
 		value = format_loop_panes(es, copy);
+		if (value == NULL)
+			goto fail;
+	} else if (modifiers & FORMAT_CLIENTS) {
+		value = format_loop_clients(es, copy);
 		if (value == NULL)
 			goto fail;
 	} else if (modifiers & FORMAT_WINDOW_NAME) {
@@ -4603,7 +4799,7 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 {
 	struct format_tree	*ft = es->ft;
 	char			*buf, *out, *name;
-	const char		*ptr, *s;
+	const char		*ptr, *s, *style_end = NULL;
 	size_t			 off, len, n, outlen;
 	int     		 ch, brackets;
 	char			 expanded[8192];
@@ -4698,18 +4894,20 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 				break;
 			fmt += n + 1;
 			continue;
+		case '[':
 		case '#':
 			/*
 			 * If ##[ (with two or more #s), then it is a style and
 			 * can be left for format_draw to handle.
 			 */
-			ptr = fmt;
-			n = 2;
+			ptr = fmt - (ch == '[');
+			n = 2 - (ch == '[');
 			while (*ptr == '#') {
 				ptr++;
 				n++;
 			}
 			if (*ptr == '[') {
+				style_end = format_skip(fmt - 2, "]");
 				format_log(es, "found #*%zu[", n);
 				while (len - off < n + 2) {
 					buf = xreallocarray(buf, 2, len);
@@ -4732,10 +4930,12 @@ format_expand1(struct format_expand_state *es, const char *fmt)
 			continue;
 		default:
 			s = NULL;
-			if (ch >= 'A' && ch <= 'Z')
-				s = format_upper[ch - 'A'];
-			else if (ch >= 'a' && ch <= 'z')
-				s = format_lower[ch - 'a'];
+			if (fmt > style_end) { /* skip inside #[] */
+				if (ch >= 'A' && ch <= 'Z')
+					s = format_upper[ch - 'A'];
+				else if (ch >= 'a' && ch <= 'z')
+					s = format_lower[ch - 'a'];
+			}
 			if (s == NULL) {
 				while (len - off < 3) {
 					buf = xreallocarray(buf, 2, len);
@@ -5056,4 +5256,21 @@ format_grid_line(struct grid *gd, u_int y)
 		free(ud);
 	}
 	return (s);
+}
+
+/* Return hyperlink at given coordinates. Caller frees. */
+char *
+format_grid_hyperlink(struct grid *gd, u_int x, u_int y, struct screen* s)
+{
+	const char		*uri;
+	struct grid_cell	 gc;
+
+	grid_get_cell(gd, x, y, &gc);
+	if (gc.flags & GRID_FLAG_PADDING)
+		return (NULL);
+	if (s->hyperlinks == NULL || gc.link == 0)
+		return (NULL);
+	if (!hyperlinks_get(s->hyperlinks, gc.link, &uri, NULL, NULL))
+		return (NULL);
+	return (xstrdup(uri));
 }
