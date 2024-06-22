@@ -1,5 +1,3 @@
-# Makefile.am
-
 # Obvious program stuff.
 bin_PROGRAMS = tmux
 CLEANFILES = tmux.1.mdoc tmux.1.man cmd-parse.c
@@ -14,6 +12,7 @@ dist_EXTRA_tmux_SOURCES = compat/*.[ch]
 AM_CPPFLAGS += @XOPEN_DEFINES@ \
 	-DTMUX_VERSION='"@VERSION@"' \
 	-DTMUX_CONF='"$(sysconfdir)/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+	-DTMUX_LOCK_CMD='"@DEFAULT_LOCK_CMD@"' \
 	-DTMUX_TERM='"@DEFAULT_TERM@"'
 
 # Additional object files.
@@ -150,6 +149,7 @@ dist_tmux_SOURCES = \
 	grid-reader.c \
 	grid-view.c \
 	grid.c \
+	hyperlinks.c \
 	input-keys.c \
 	input.c \
 	job.c \
@@ -189,6 +189,7 @@ dist_tmux_SOURCES = \
 	tty-keys.c \
 	tty-term.c \
 	tty.c \
+	utf8-combined.c \
 	utf8.c \
 	window-buffer.c \
 	window-client.c \
@@ -214,6 +215,11 @@ endif
 # Add compat file for utf8proc.
 if HAVE_UTF8PROC
 nodist_tmux_SOURCES += compat/utf8proc.c
+endif
+
+# Enable sixel support.
+if ENABLE_SIXEL
+dist_tmux_SOURCES += image.c image-sixel.c
 endif
 
 if NEED_FUZZING

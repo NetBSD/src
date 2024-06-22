@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([tmux], 3.3a)
+AC_INIT([tmux], 3.4)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -44,7 +44,7 @@ fi
 # Set up the compiler in two different ways and say yes we may want to install.
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_CC_C99
+m4_version_prereq(2.70, [AC_PROG_CC], [AC_PROG_CC_C99])
 AC_PROG_CPP
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -148,7 +148,7 @@ AC_CHECK_FUNCS([ \
 	prctl \
 	proc_pidinfo \
 	getpeerucred \
-	sysconf \
+	sysconf
 ])
 
 # Check for functions with a compatibility implementation.
@@ -165,7 +165,9 @@ AC_REPLACE_FUNCS([ \
 	getpeereid \
 	getline \
 	getprogname \
+	htonll \
 	memmem \
+	ntohll \
 	setenv \
 	setproctitle \
 	strcasestr \
@@ -267,6 +269,12 @@ if test "x$found_libevent" = xno; then
 	AC_MSG_ERROR("libevent not found")
 fi
 
+# Look for yacc.
+AC_CHECK_PROG(found_yacc, $YACC, yes, no)
+if test "x$found_yacc" = xno; then
+	AC_MSG_ERROR("yacc not found")
+fi
+
 # Look for ncurses or curses. Try pkg-config first then directly for the
 # library.
 PKG_CHECK_MODULES(
@@ -309,7 +317,7 @@ fi
 if test "x$found_ncurses" = xno; then
 	AC_SEARCH_LIBS(
 		setupterm,
-		[tinfo ncurses ncursesw],
+		[tinfo terminfo ncurses ncursesw],
 		found_ncurses=yes,
 		found_ncurses=no
 	)
@@ -344,6 +352,10 @@ else
 		AC_MSG_ERROR("curses not found")
 	fi
 fi
+AC_CHECK_FUNCS([ \
+	tiparm \
+	tiparm_s \
+])
 
 # Look for utempter.
 AC_ARG_ENABLE(
@@ -373,6 +385,15 @@ AC_ARG_ENABLE(
 	AS_HELP_STRING(--enable-utf8proc, use utf8proc if it is installed)
 )
 if test "x$enable_utf8proc" = xyes; then
+	PKG_CHECK_MODULES(
+		LIBUTF8PROC,
+		libutf8proc,
+		[
+			AM_CPPFLAGS="$LIBUTF8PROC_CFLAGS $AM_CPPFLAGS"
+			CPPFLAGS="$LIBUTF8PROC_CFLAGS $SAVED_CPPFLAGS"
+			LIBS="$LIBUTF8PROC_LIBS $LIBS"
+		]
+	)
 	AC_CHECK_HEADER(utf8proc.h, enable_utf8proc=yes, enable_utf8proc=no)
 	if test "x$enable_utf8proc" = xyes; then
 		AC_SEARCH_LIBS(
@@ -414,10 +435,35 @@ if test x"$enable_systemd" = xyes; then
 	fi
 fi
 AM_CONDITIONAL(HAVE_SYSTEMD, [test "x$found_systemd" = xyes])
+AC_ARG_ENABLE(
+	cgroups,
+	AS_HELP_STRING(--disable-cgroups, disable adding panes to new cgroups with systemd)
+)
+if test "x$enable_cgroups" = x; then
+	# Default to the same as $enable_systemd.
+	enable_cgroups=$enable_systemd
+fi
+if test "x$enable_cgroups" = xyes; then
+	if test "x$found_systemd" = xyes; then
+		AC_DEFINE(ENABLE_CGROUPS)
+	else
+		AC_MSG_ERROR("cgroups requires systemd to be enabled")
+	fi
+fi
+
+# Enable sixel support.
+AC_ARG_ENABLE(
+	sixel,
+	AS_HELP_STRING(--enable-sixel, enable sixel images)
+)
+if test "x$enable_sixel" = xyes; then
+	AC_DEFINE(ENABLE_SIXEL)
+fi
+AM_CONDITIONAL(ENABLE_SIXEL, [test "x$enable_sixel" = xyes])
 
 # Check for b64_ntop. If we have b64_ntop, we assume b64_pton as well.
 AC_MSG_CHECKING(for b64_ntop)
-	AC_LINK_IFELSE([AC_LANG_PROGRAM(
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[
 		#include <sys/types.h>
 		#include <netinet/in.h>
@@ -914,6 +960,19 @@ AM_CONDITIONAL(IS_SUNOS, test "x$PLATFORM" = xsunos)
 AM_CONDITIONAL(IS_HPUX, test "x$PLATFORM" = xhpux)
 AM_CONDITIONAL(IS_HAIKU, test "x$PLATFORM" = xhaiku)
 AM_CONDITIONAL(IS_UNKNOWN, test "x$PLATFORM" = xunknown)
+
+# Set the default lock command
+DEFAULT_LOCK_CMD="lock -np"
+AC_MSG_CHECKING(lock-command)
+if test "x$PLATFORM" = xlinux; then
+	AC_CHECK_PROG(found_vlock, vlock, yes, no)
+	if test "x$found_vlock" = xyes; then
+		DEFAULT_LOCK_CMD="vlock"
+	fi
+fi
+AC_MSG_RESULT($DEFAULT_LOCK_CMD)
+AC_SUBST(DEFAULT_LOCK_CMD)
+
 
 # Save our CFLAGS/CPPFLAGS/LDFLAGS for the Makefile and restore the old user
 # variables.

@@ -14,8 +14,6 @@
 
 @SET_MAKE@
 
-# Makefile.am
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -133,6 +131,9 @@ bin_PROGRAMS = tmux$(EXEEXT)
 
 # Add compat file for utf8proc.
 @HAVE_UTF8PROC_TRUE@am__append_14 = compat/utf8proc.c
+
+# Enable sixel support.
+@ENABLE_SIXEL_TRUE@am__append_15 = image.c image-sixel.c
 @NEED_FUZZING_TRUE@check_PROGRAMS = fuzz/input-fuzzer$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -155,6 +156,42 @@ fuzz_input_fuzzer_OBJECTS = fuzz/input-fuzzer.$(OBJEXT)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_DEPENDENCIES = $(LDADD)
 fuzz_input_fuzzer_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(fuzz_input_fuzzer_LDFLAGS) $(LDFLAGS) -o $@
+am__dist_tmux_SOURCES_DIST = alerts.c arguments.c attributes.c cfg.c \
+	client.c cmd-attach-session.c cmd-bind-key.c cmd-break-pane.c \
+	cmd-capture-pane.c cmd-choose-tree.c cmd-command-prompt.c \
+	cmd-confirm-before.c cmd-copy-mode.c cmd-detach-client.c \
+	cmd-display-menu.c cmd-display-message.c cmd-display-panes.c \
+	cmd-find-window.c cmd-find.c cmd-if-shell.c cmd-join-pane.c \
+	cmd-kill-pane.c cmd-kill-server.c cmd-kill-session.c \
+	cmd-kill-window.c cmd-list-buffers.c cmd-list-clients.c \
+	cmd-list-keys.c cmd-list-panes.c cmd-list-sessions.c \
+	cmd-list-windows.c cmd-load-buffer.c cmd-lock-server.c \
+	cmd-move-window.c cmd-new-session.c cmd-new-window.c \
+	cmd-parse.y cmd-paste-buffer.c cmd-pipe-pane.c cmd-queue.c \
+	cmd-refresh-client.c cmd-rename-session.c cmd-rename-window.c \
+	cmd-resize-pane.c cmd-resize-window.c cmd-respawn-pane.c \
+	cmd-respawn-window.c cmd-rotate-window.c cmd-run-shell.c \
+	cmd-save-buffer.c cmd-select-layout.c cmd-select-pane.c \
+	cmd-select-window.c cmd-send-keys.c cmd-server-access.c \
+	cmd-set-buffer.c cmd-set-environment.c cmd-set-option.c \
+	cmd-show-environment.c cmd-show-messages.c cmd-show-options.c \
+	cmd-show-prompt-history.c cmd-source-file.c cmd-split-window.c \
+	cmd-swap-pane.c cmd-swap-window.c cmd-switch-client.c \
+	cmd-unbind-key.c cmd-wait-for.c cmd.c colour.c compat.h \
+	control-notify.c control.c environ.c file.c format.c \
+	format-draw.c grid-reader.c grid-view.c grid.c hyperlinks.c \
+	input-keys.c input.c job.c key-bindings.c key-string.c \
+	layout-custom.c layout-set.c layout.c log.c menu.c mode-tree.c \
+	names.c notify.c options-table.c options.c paste.c popup.c \
+	proc.c regsub.c resize.c screen-redraw.c screen-write.c \
+	screen.c server-acl.c server-client.c server-fn.c server.c \
+	session.c spawn.c status.c style.c tmux.c tmux.h \
+	tmux-protocol.h tty-acs.c tty-features.c tty-keys.c tty-term.c \
+	tty.c utf8-combined.c utf8.c window-buffer.c window-client.c \
+	window-clock.c window-copy.c window-customize.c window-tree.c \
+	window.c xmalloc.c xmalloc.h image.c image-sixel.c
+@ENABLE_SIXEL_TRUE@am__objects_1 = image.$(OBJEXT) \
+@ENABLE_SIXEL_TRUE@	image-sixel.$(OBJEXT)
 dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	attributes.$(OBJEXT) cfg.$(OBJEXT) client.$(OBJEXT) \
 	cmd-attach-session.$(OBJEXT) cmd-bind-key.$(OBJEXT) \
@@ -192,29 +229,31 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	colour.$(OBJEXT) control-notify.$(OBJEXT) control.$(OBJEXT) \
 	environ.$(OBJEXT) file.$(OBJEXT) format.$(OBJEXT) \
 	format-draw.$(OBJEXT) grid-reader.$(OBJEXT) \
-	grid-view.$(OBJEXT) grid.$(OBJEXT) input-keys.$(OBJEXT) \
-	input.$(OBJEXT) job.$(OBJEXT) key-bindings.$(OBJEXT) \
-	key-string.$(OBJEXT) layout-custom.$(OBJEXT) \
-	layout-set.$(OBJEXT) layout.$(OBJEXT) log.$(OBJEXT) \
-	menu.$(OBJEXT) mode-tree.$(OBJEXT) names.$(OBJEXT) \
-	notify.$(OBJEXT) options-table.$(OBJEXT) options.$(OBJEXT) \
-	paste.$(OBJEXT) popup.$(OBJEXT) proc.$(OBJEXT) \
-	regsub.$(OBJEXT) resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
-	screen-write.$(OBJEXT) screen.$(OBJEXT) server-acl.$(OBJEXT) \
-	server-client.$(OBJEXT) server-fn.$(OBJEXT) server.$(OBJEXT) \
-	session.$(OBJEXT) spawn.$(OBJEXT) status.$(OBJEXT) \
-	style.$(OBJEXT) tmux.$(OBJEXT) tty-acs.$(OBJEXT) \
-	tty-features.$(OBJEXT) tty-keys.$(OBJEXT) tty-term.$(OBJEXT) \
-	tty.$(OBJEXT) utf8.$(OBJEXT) window-buffer.$(OBJEXT) \
+	grid-view.$(OBJEXT) grid.$(OBJEXT) hyperlinks.$(OBJEXT) \
+	input-keys.$(OBJEXT) input.$(OBJEXT) job.$(OBJEXT) \
+	key-bindings.$(OBJEXT) key-string.$(OBJEXT) \
+	layout-custom.$(OBJEXT) layout-set.$(OBJEXT) layout.$(OBJEXT) \
+	log.$(OBJEXT) menu.$(OBJEXT) mode-tree.$(OBJEXT) \
+	names.$(OBJEXT) notify.$(OBJEXT) options-table.$(OBJEXT) \
+	options.$(OBJEXT) paste.$(OBJEXT) popup.$(OBJEXT) \
+	proc.$(OBJEXT) regsub.$(OBJEXT) resize.$(OBJEXT) \
+	screen-redraw.$(OBJEXT) screen-write.$(OBJEXT) \
+	screen.$(OBJEXT) server-acl.$(OBJEXT) server-client.$(OBJEXT) \
+	server-fn.$(OBJEXT) server.$(OBJEXT) session.$(OBJEXT) \
+	spawn.$(OBJEXT) status.$(OBJEXT) style.$(OBJEXT) \
+	tmux.$(OBJEXT) tty-acs.$(OBJEXT) tty-features.$(OBJEXT) \
+	tty-keys.$(OBJEXT) tty-term.$(OBJEXT) tty.$(OBJEXT) \
+	utf8-combined.$(OBJEXT) utf8.$(OBJEXT) window-buffer.$(OBJEXT) \
 	window-client.$(OBJEXT) window-clock.$(OBJEXT) \
 	window-copy.$(OBJEXT) window-customize.$(OBJEXT) \
-	window-tree.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT)
-@NEED_FORKPTY_TRUE@am__objects_1 =  \
+	window-tree.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT) \
+	$(am__objects_1)
+@NEED_FORKPTY_TRUE@am__objects_2 =  \
 @NEED_FORKPTY_TRUE@	compat/forkpty-@PLATFORM@.$(OBJEXT)
-@HAVE_SYSTEMD_TRUE@am__objects_2 = compat/systemd.$(OBJEXT)
-@HAVE_UTF8PROC_TRUE@am__objects_3 = compat/utf8proc.$(OBJEXT)
-nodist_tmux_OBJECTS = osdep-@PLATFORM@.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3)
+@HAVE_SYSTEMD_TRUE@am__objects_3 = compat/systemd.$(OBJEXT)
+@HAVE_UTF8PROC_TRUE@am__objects_4 = compat/utf8proc.$(OBJEXT)
+nodist_tmux_OBJECTS = osdep-@PLATFORM@.$(OBJEXT) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4)
 tmux_OBJECTS = $(dist_tmux_OBJECTS) $(nodist_tmux_OBJECTS)
 tmux_LDADD = $(LDADD)
 tmux_DEPENDENCIES = $(LIBOBJS)
@@ -256,7 +295,7 @@ am__v_YACC_1 =
 YLWRAP = $(top_srcdir)/etc/ylwrap
 SOURCES = fuzz/input-fuzzer.c $(dist_tmux_SOURCES) \
 	$(nodist_tmux_SOURCES) $(dist_EXTRA_tmux_SOURCES)
-DIST_SOURCES = fuzz/input-fuzzer.c $(dist_tmux_SOURCES) \
+DIST_SOURCES = fuzz/input-fuzzer.c $(am__dist_tmux_SOURCES_DIST) \
 	$(dist_EXTRA_tmux_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -299,8 +338,9 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/getline.c $(top_srcdir)/compat/getopt.c \
 	$(top_srcdir)/compat/getpeereid.c \
 	$(top_srcdir)/compat/getprogname.c \
+	$(top_srcdir)/compat/htonll.c \
 	$(top_srcdir)/compat/imsg-buffer.c $(top_srcdir)/compat/imsg.c \
-	$(top_srcdir)/compat/memmem.c \
+	$(top_srcdir)/compat/memmem.c $(top_srcdir)/compat/ntohll.c \
 	$(top_srcdir)/compat/reallocarray.c \
 	$(top_srcdir)/compat/recallocarray.c \
 	$(top_srcdir)/compat/setenv.c \
@@ -342,6 +382,7 @@ AM_CFLAGS = @AM_CFLAGS@ $(am__append_1) $(am__append_2) \
 AM_CPPFLAGS = @AM_CPPFLAGS@ @XOPEN_DEFINES@ \
 	-DTMUX_VERSION='"@VERSION@"' \
 	-DTMUX_CONF='"$(sysconfdir)/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+	-DTMUX_LOCK_CMD='"@DEFAULT_LOCK_CMD@"' \
 	-DTMUX_TERM='"@DEFAULT_TERM@"' $(am__append_4) $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_9) \
 	$(am__append_10) $(am__append_11)
@@ -357,6 +398,7 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DEFAULT_LOCK_CMD = @DEFAULT_LOCK_CMD@
 DEFAULT_TERM = @DEFAULT_TERM@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -385,6 +427,8 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTINFO_CFLAGS = @LIBTINFO_CFLAGS@
 LIBTINFO_LIBS = @LIBTINFO_LIBS@
+LIBUTF8PROC_CFLAGS = @LIBUTF8PROC_CFLAGS@
+LIBUTF8PROC_LIBS = @LIBUTF8PROC_LIBS@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MANFORMAT = @MANFORMAT@
@@ -433,6 +477,8 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
+found_vlock = @found_vlock@
+found_yacc = @found_yacc@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -475,138 +521,40 @@ dist_EXTRA_tmux_SOURCES = compat/*.[ch]
 LDADD = $(LIBOBJS)
 
 # List of sources.
-dist_tmux_SOURCES = \
-	alerts.c \
-	arguments.c \
-	attributes.c \
-	cfg.c \
-	client.c \
-	cmd-attach-session.c \
-	cmd-bind-key.c \
-	cmd-break-pane.c \
-	cmd-capture-pane.c \
-	cmd-choose-tree.c \
-	cmd-command-prompt.c \
-	cmd-confirm-before.c \
-	cmd-copy-mode.c \
-	cmd-detach-client.c \
-	cmd-display-menu.c \
-	cmd-display-message.c \
-	cmd-display-panes.c \
-	cmd-find-window.c \
-	cmd-find.c \
-	cmd-if-shell.c \
-	cmd-join-pane.c \
-	cmd-kill-pane.c \
-	cmd-kill-server.c \
-	cmd-kill-session.c \
-	cmd-kill-window.c \
-	cmd-list-buffers.c \
-	cmd-list-clients.c \
-	cmd-list-keys.c \
-	cmd-list-panes.c \
-	cmd-list-sessions.c \
-	cmd-list-windows.c \
-	cmd-load-buffer.c \
-	cmd-lock-server.c \
-	cmd-move-window.c \
-	cmd-new-session.c \
-	cmd-new-window.c \
-	cmd-parse.y \
-	cmd-paste-buffer.c \
-	cmd-pipe-pane.c \
-	cmd-queue.c \
-	cmd-refresh-client.c \
-	cmd-rename-session.c \
-	cmd-rename-window.c \
-	cmd-resize-pane.c \
-	cmd-resize-window.c \
-	cmd-respawn-pane.c \
-	cmd-respawn-window.c \
-	cmd-rotate-window.c \
-	cmd-run-shell.c \
-	cmd-save-buffer.c \
-	cmd-select-layout.c \
-	cmd-select-pane.c \
-	cmd-select-window.c \
-	cmd-send-keys.c \
-	cmd-server-access.c \
-	cmd-set-buffer.c \
-	cmd-set-environment.c \
-	cmd-set-option.c \
-	cmd-show-environment.c \
-	cmd-show-messages.c \
-	cmd-show-options.c \
-	cmd-show-prompt-history.c \
-	cmd-source-file.c \
-	cmd-split-window.c \
-	cmd-swap-pane.c \
-	cmd-swap-window.c \
-	cmd-switch-client.c \
-	cmd-unbind-key.c \
-	cmd-wait-for.c \
-	cmd.c \
-	colour.c \
-	compat.h \
-	control-notify.c \
-	control.c \
-	environ.c \
-	file.c \
-	format.c \
-	format-draw.c \
-	grid-reader.c \
-	grid-view.c \
-	grid.c \
-	input-keys.c \
-	input.c \
-	job.c \
-	key-bindings.c \
-	key-string.c \
-	layout-custom.c \
-	layout-set.c \
-	layout.c \
-	log.c \
-	menu.c \
-	mode-tree.c \
-	names.c \
-	notify.c \
-	options-table.c \
-	options.c \
-	paste.c \
-	popup.c \
-	proc.c \
-	regsub.c \
-	resize.c \
-	screen-redraw.c \
-	screen-write.c \
-	screen.c \
-	server-acl.c \
-	server-client.c \
-	server-fn.c \
-	server.c \
-	session.c \
-	spawn.c \
-	status.c \
-	style.c \
-	tmux.c \
-	tmux.h \
-	tmux-protocol.h \
-	tty-acs.c \
-	tty-features.c \
-	tty-keys.c \
-	tty-term.c \
-	tty.c \
-	utf8.c \
-	window-buffer.c \
-	window-client.c \
-	window-clock.c \
-	window-copy.c \
-	window-customize.c \
-	window-tree.c \
-	window.c \
-	xmalloc.c \
-	xmalloc.h
-
+dist_tmux_SOURCES = alerts.c arguments.c attributes.c cfg.c client.c \
+	cmd-attach-session.c cmd-bind-key.c cmd-break-pane.c \
+	cmd-capture-pane.c cmd-choose-tree.c cmd-command-prompt.c \
+	cmd-confirm-before.c cmd-copy-mode.c cmd-detach-client.c \
+	cmd-display-menu.c cmd-display-message.c cmd-display-panes.c \
+	cmd-find-window.c cmd-find.c cmd-if-shell.c cmd-join-pane.c \
+	cmd-kill-pane.c cmd-kill-server.c cmd-kill-session.c \
+	cmd-kill-window.c cmd-list-buffers.c cmd-list-clients.c \
+	cmd-list-keys.c cmd-list-panes.c cmd-list-sessions.c \
+	cmd-list-windows.c cmd-load-buffer.c cmd-lock-server.c \
+	cmd-move-window.c cmd-new-session.c cmd-new-window.c \
+	cmd-parse.y cmd-paste-buffer.c cmd-pipe-pane.c cmd-queue.c \
+	cmd-refresh-client.c cmd-rename-session.c cmd-rename-window.c \
+	cmd-resize-pane.c cmd-resize-window.c cmd-respawn-pane.c \
+	cmd-respawn-window.c cmd-rotate-window.c cmd-run-shell.c \
+	cmd-save-buffer.c cmd-select-layout.c cmd-select-pane.c \
+	cmd-select-window.c cmd-send-keys.c cmd-server-access.c \
+	cmd-set-buffer.c cmd-set-environment.c cmd-set-option.c \
+	cmd-show-environment.c cmd-show-messages.c cmd-show-options.c \
+	cmd-show-prompt-history.c cmd-source-file.c cmd-split-window.c \
+	cmd-swap-pane.c cmd-swap-window.c cmd-switch-client.c \
+	cmd-unbind-key.c cmd-wait-for.c cmd.c colour.c compat.h \
+	control-notify.c control.c environ.c file.c format.c \
+	format-draw.c grid-reader.c grid-view.c grid.c hyperlinks.c \
+	input-keys.c input.c job.c key-bindings.c key-string.c \
+	layout-custom.c layout-set.c layout.c log.c menu.c mode-tree.c \
+	names.c notify.c options-table.c options.c paste.c popup.c \
+	proc.c regsub.c resize.c screen-redraw.c screen-write.c \
+	screen.c server-acl.c server-client.c server-fn.c server.c \
+	session.c spawn.c status.c style.c tmux.c tmux.h \
+	tmux-protocol.h tty-acs.c tty-features.c tty-keys.c tty-term.c \
+	tty.c utf8-combined.c utf8.c window-buffer.c window-client.c \
+	window-clock.c window-copy.c window-customize.c window-tree.c \
+	window.c xmalloc.c xmalloc.h $(am__append_15)
 nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_12) \
 	$(am__append_13) $(am__append_14)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_LDFLAGS = $(FUZZING_LIBS)
@@ -810,6 +758,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid-reader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid-view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hyperlinks.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image-sixel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input-keys.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/job.Po@am__quote@
@@ -848,6 +799,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty-keys.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty-term.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8-combined.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-client.Po@am__quote@
@@ -876,9 +828,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getopt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getpeereid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getprogname.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/htonll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/memmem.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/ntohll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/reallocarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/recallocarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/setenv.Po@am__quote@
