@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2458 2024/06/14 13:19:35 riastradh Exp $
+#	$NetBSD: mi,v 1.2459 2024/06/22 20:17:25 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1201,6 +1201,7 @@
 ./usr/include/g++/bits/random.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_access.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_cmp.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/bits/range_cmp.h		comp-cxx-include	gcc,cxx,libstdcxx,obsolete,gcc=12
 ./usr/include/g++/bits/ranges_algo.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ranges_algobase.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ranges_base.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=12
@@ -1336,6 +1337,7 @@
 ./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx,obsolete,gcc=10
 ./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/debug.h			comp-cxx-include	gcc,cxx,libstdcxx
@@ -2380,6 +2382,16 @@
 ./usr/include/gcc-10/sanitizer/tsan_interface.h		comp-gcc-include	gcc=10
 ./usr/include/gcc-10/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=10
 ./usr/include/gcc-10/stdatomic.h			comp-gcc-include	gcc=10
+./usr/include/gcc-10/omp.h				comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/openacc.h				comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/allocator_interface.h	comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/asan_interface.h		comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/common_interface_defs.h	comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/lsan_interface.h		comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/netbsd_syscall_hooks.h	comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/tsan_interface.h		comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/sanitizer/tsan_interface_atomic.h	comp-obsolete	obsolete,gcc=12
+./usr/include/gcc-10/stdatomic.h			comp-obsolete	obsolete,gcc=12
 ./usr/include/gcc-12/omp.h				comp-gcc-include	gcc=12
 ./usr/include/gcc-12/openacc.h				comp-gcc-include	gcc=12
 ./usr/include/gcc-12/sanitizer				comp-gcc-include	gcc=12

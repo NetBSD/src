@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.105 2024/06/11 03:07:06 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.106 2024/06/22 20:17:25 riastradh Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -120,25 +120,45 @@
 ./usr/include/gcc-9/x86intrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-9/xmmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/altivec.h			comp-c-include		gcc=10
+./usr/include/gcc-10/altivec.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/amo.h			comp-c-include		gcc=10
+./usr/include/gcc-10/amo.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/bmi2intrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/bmi2intrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/bmiintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/bmiintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/emmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/emmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/htmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/htmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/htmxlintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/htmxlintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/mm_malloc.h		comp-c-include		gcc=10
+./usr/include/gcc-10/mm_malloc.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/mmintrin.h			comp-c-include		gcc=10
+./usr/include/gcc-10/mmintrin.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/pmmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/pmmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/ppc-asm.h			comp-c-include		gcc=10
+./usr/include/gcc-10/ppc-asm.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/ppu_intrinsics.h		comp-c-include		gcc=10
+./usr/include/gcc-10/ppu_intrinsics.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/si2vmx.h			comp-c-include		gcc=10
+./usr/include/gcc-10/si2vmx.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/smmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/smmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/spu2vmx.h			comp-c-include		gcc=10
+./usr/include/gcc-10/spu2vmx.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/tmmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/tmmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/vec_types.h		comp-c-include		gcc=10
+./usr/include/gcc-10/vec_types.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/x86intrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/x86intrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/xmmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/xmmintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-12/altivec.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/amo.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/bmi2intrin.h		comp-c-include		gcc=12
