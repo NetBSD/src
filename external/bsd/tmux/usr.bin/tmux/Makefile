@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2024/06/22 23:49:17 wiz Exp $
+# $NetBSD: Makefile,v 1.35 2024/06/22 23:51:26 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -259,5 +259,7 @@ COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
 .NOPATH: tmux.1
 tmux.1: $(SRCDIR)/tmux.1
 	sed -e 's|@SYSCONFDIR@|/etc|g' $> > $@
+
+CLEANDIRFILES+=	tmux.1
 
 .include <bsd.prog.mk>
