@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.130 2019/03/28 10:44:29 kardel Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.131 2024/06/22 10:07:46 palle Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -504,6 +504,8 @@ struct scsipi_periph {
 #define PQUIRK_NOREPSUPPOPC     0x01000000      /* does not grok
 						   REPORT SUPPORTED OPCODES
 						   to fetch device timeouts */
+#define PQUIRK_NOREADDISCINFO   0x02000000      /* device doesn't do
+						   READ_DISCINFO properly */
 /*
  * Error values an adapter driver may return
  */
