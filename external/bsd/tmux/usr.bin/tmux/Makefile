@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2024/01/04 13:20:22 uwe Exp $
+# $NetBSD: Makefile,v 1.33 2024/06/22 20:08:16 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,9 @@ format.c \
 grid-reader.c \
 grid-view.c \
 grid.c \
+hyperlinks.c \
+image.c \
+image-sixel.c \
 input-keys.c \
 input.c \
 job.c \
@@ -132,6 +135,7 @@ tty-keys.c \
 tty-term.c \
 tty.c \
 utf8.c \
+utf8-combined.c \
 window-buffer.c \
 window-client.c \
 window-clock.c \
@@ -150,6 +154,8 @@ SRCS+=		imsg.c
 SRCS+=		fdforkpty.c
 SRCS+=		freezero.c
 SRCS+=		explicit_bzero.c
+SRCS+=		htonll.c
+SRCS+=		ntohll.c
 SRCS+=		recallocarray.c
 SRCS+=		getdtablecount.c
 #SRCS+=		strtonum.c
@@ -163,7 +169,7 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
-# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually; HAVE_BSD_GETOPT_H necessary due to local patches
+# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually; HAVE_BSD_GETOPT necessary due to local patches
 CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
@@ -175,6 +181,7 @@ CPPFLAGS+=	\
 -DHAVE_CURSES_H=1 \
 -DHAVE_DAEMON=1 \
 -DHAVE_DIRENT_H=1 \
+-DENABLE_SIXEL=1 \
 -DHAVE_EVENT2_EVENT_H=1 \
 -DHAVE_FCNTL_CLOSEM=1 \
 -DHAVE_FCNTL_H=1 \
@@ -212,6 +219,7 @@ CPPFLAGS+=	\
 -DHAVE_SYS_STAT_H=1 \
 -DHAVE_SYS_TREE_H=1 \
 -DHAVE_SYS_TYPES_H=1 \
+-DHAVE_TIPARM=1 \
 -DHAVE_TREE_H=1 \
 -DHAVE_UNISTD_H=1 \
 -DHAVE_UTIL_H=1 \
@@ -220,17 +228,17 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.3a\" \
+-DPACKAGE_STRING=\"tmux\ 3.4\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.3a\" \
+-DPACKAGE_VERSION=\"3.4\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+-DTMUX_LOCK_CMD='"lock -np"' \
 -DTMUX_TERM='"tmux-256color"' \
--DTMUX_VERSION='"3.3a"' \
--DVERSION=\"3.3a\" \
+-DTMUX_VERSION='"3.4"' \
+-DVERSION=\"3.4\" \
 -D_ALL_SOURCE=1 \
--D_FORTIFY_SOURCE=2 \
 -D_GNU_SOURCE=1 \
 -D_OPENBSD_SOURCE \
 -D_POSIX_PTHREAD_SEMANTICS=1 \
