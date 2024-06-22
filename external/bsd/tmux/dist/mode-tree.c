@@ -497,7 +497,7 @@ mode_tree_build(struct mode_tree_data *mtd)
 	mode_tree_clear_lines(mtd);
 	mode_tree_build_lines(mtd, &mtd->children, 0);
 
-	if (tag == UINT64_MAX)
+	if (mtd->line_list != NULL && tag == UINT64_MAX)
 		tag = mtd->line_list[mtd->current].item->tag;
 	mode_tree_set_current(mtd, tag);
 
@@ -962,8 +962,8 @@ mode_tree_display_menu(struct mode_tree_data *mtd, struct client *c, u_int x,
 		x -= (menu->width + 4) / 2;
 	else
 		x = 0;
-	if (menu_display(menu, 0, NULL, x, y, c, NULL, mode_tree_menu_callback,
-	    mtm) != 0)
+	if (menu_display(menu, 0, 0, NULL, x, y, c, BOX_LINES_DEFAULT, NULL,
+	    NULL, NULL, NULL, mode_tree_menu_callback, mtm) != 0)
 		menu_free(menu);
 }
 

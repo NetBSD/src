@@ -263,6 +263,17 @@ status_line_size(struct client *c)
 	return (s->statuslines);
 }
 
+/* Get the prompt line number for client's session. 1 means at the bottom. */
+static u_int
+status_prompt_line_at(struct client *c)
+{
+	struct session	*s = c->session;
+
+	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
+		return (1);
+	return (options_get_number(s->options, "message-line"));
+}
+
 /* Get window at window list position. */
 struct style_range *
 status_get_range(struct client *c, u_int x, u_int y)
@@ -461,17 +472,26 @@ void
 status_message_set(struct client *c, int delay, int ignore_styles,
     int ignore_keys, const char *fmt, ...)
 {
-	struct timeval	tv;
-	va_list		ap;
+	struct timeval	 tv;
+	va_list		 ap;
+	char		*s;
+
+	va_start(ap, fmt);
+	xvasprintf(&s, fmt, ap);
+	va_end(ap);
+
+	log_debug("%s: %s", __func__, s);
+
+	if (c == NULL) {
+		server_add_message("message: %s", s);
+		free(s);
+		return;
+	}
 
 	status_message_clear(c);
 	status_push_screen(c);
-
-	va_start(ap, fmt);
-	xvasprintf(&c->message_string, fmt, ap);
-	va_end(ap);
-
-	server_add_message("%s message: %s", c->name, c->message_string);
+	c->message_string = s;
+	server_add_message("%s message: %s", c->name, s);
 
 	/*
 	 * With delay -1, the display-time option is used; zero means wait for
@@ -533,7 +553,7 @@ status_message_redraw(struct client *c)
 	struct session		*s = c->session;
 	struct screen		 old_screen;
 	size_t			 len;
-	u_int			 lines, offset;
+	u_int			 lines, offset, messageline;
 	struct grid_cell	 gc;
 	struct format_tree	*ft;
 
@@ -546,6 +566,10 @@ status_message_redraw(struct client *c)
 		lines = 1;
 	screen_init(sl->active, c->tty.sx, lines, 0);
 
+	messageline = status_prompt_line_at(c);
+	if (messageline > lines - 1)
+		messageline = lines - 1;
+
 	len = screen_write_strlen("%s", c->message_string);
 	if (len > c->tty.sx)
 		len = c->tty.sx;
@@ -555,11 +579,11 @@ status_message_redraw(struct client *c)
 	format_free(ft);
 
 	screen_write_start(&ctx, sl->active);
-	screen_write_fast_copy(&ctx, &sl->screen, 0, 0, c->tty.sx, lines - 1);
-	screen_write_cursormove(&ctx, 0, lines - 1, 0);
+	screen_write_fast_copy(&ctx, &sl->screen, 0, 0, c->tty.sx, lines);
+	screen_write_cursormove(&ctx, 0, messageline, 0);
 	for (offset = 0; offset < c->tty.sx; offset++)
 		screen_write_putc(&ctx, &gc, ' ');
-	screen_write_cursormove(&ctx, 0, lines - 1, 0);
+	screen_write_cursormove(&ctx, 0, messageline, 0);
 	if (c->message_ignore_styles)
 		screen_write_nputs(&ctx, len, &gc, "%s", c->message_string);
 	else
@@ -695,7 +719,7 @@ status_prompt_redraw(struct client *c)
 	struct session		*s = c->session;
 	struct screen		 old_screen;
 	u_int			 i, lines, offset, left, start, width;
-	u_int			 pcursor, pwidth;
+	u_int			 pcursor, pwidth, promptline;
 	struct grid_cell	 gc, cursorgc;
 	struct format_tree	*ft;
 
@@ -707,6 +731,10 @@ status_prompt_redraw(struct client *c)
 	if (lines <= 1)
 		lines = 1;
 	screen_init(sl->active, c->tty.sx, lines, 0);
+
+	promptline = status_prompt_line_at(c);
+	if (promptline > lines - 1)
+		promptline = lines - 1;
 
 	ft = format_create_defaults(NULL, c, NULL, NULL, NULL);
 	if (c->prompt_mode == PROMPT_COMMAND)
@@ -723,13 +751,13 @@ status_prompt_redraw(struct client *c)
 		start = c->tty.sx;
 
 	screen_write_start(&ctx, sl->active);
-	screen_write_fast_copy(&ctx, &sl->screen, 0, 0, c->tty.sx, lines - 1);
-	screen_write_cursormove(&ctx, 0, lines - 1, 0);
+	screen_write_fast_copy(&ctx, &sl->screen, 0, 0, c->tty.sx, lines);
+	screen_write_cursormove(&ctx, 0, promptline, 0);
 	for (offset = 0; offset < c->tty.sx; offset++)
 		screen_write_putc(&ctx, &gc, ' ');
-	screen_write_cursormove(&ctx, 0, lines - 1, 0);
+	screen_write_cursormove(&ctx, 0, promptline, 0);
 	format_draw(&ctx, &gc, start, c->prompt_string, NULL, 0);
-	screen_write_cursormove(&ctx, start, lines - 1, 0);
+	screen_write_cursormove(&ctx, start, promptline, 0);
 
 	left = c->tty.sx - start;
 	if (left == 0)
@@ -1452,8 +1480,6 @@ process_key:
 	return (0);
 
 append_key:
-	if (key <= 0x1f || (key >= KEYC_BASE && key < KEYC_BASE_END))
-		return (0);
 	if (key <= 0x7f)
 		utf8_set(&tmp, key);
 	else if (KEYC_IS_UNICODE(key))
@@ -1747,8 +1773,9 @@ status_prompt_complete_list_menu(struct client *c, char **list, u_int size,
 	else
 		offset = 0;
 
-	if (menu_display(menu, MENU_NOMOUSE|MENU_TAB, NULL, offset,
-	    py, c, NULL, status_prompt_menu_callback, spm) != 0) {
+	if (menu_display(menu, MENU_NOMOUSE|MENU_TAB, 0, NULL, offset, py, c,
+	    BOX_LINES_DEFAULT, NULL, NULL, NULL, NULL,
+	    status_prompt_menu_callback, spm) != 0) {
 		menu_free(menu);
 		free(spm);
 		return (0);
@@ -1840,8 +1867,9 @@ status_prompt_complete_window_menu(struct client *c, struct session *s,
 	else
 		offset = 0;
 
-	if (menu_display(menu, MENU_NOMOUSE|MENU_TAB, NULL, offset,
-	    py, c, NULL, status_prompt_menu_callback, spm) != 0) {
+	if (menu_display(menu, MENU_NOMOUSE|MENU_TAB, 0, NULL, offset, py, c,
+	    BOX_LINES_DEFAULT, NULL, NULL, NULL, NULL,
+	    status_prompt_menu_callback, spm) != 0) {
 		menu_free(menu);
 		free(spm);
 		return (NULL);

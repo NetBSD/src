@@ -131,6 +131,8 @@ static void	window_copy_cursor_previous_word_pos(struct window_mode_entry *,
 		    const char *, u_int *, u_int *);
 static void	window_copy_cursor_previous_word(struct window_mode_entry *,
 		    const char *, int);
+static void	window_copy_cursor_prompt(struct window_mode_entry *, int,
+		    const char *);
 static void	window_copy_scroll_up(struct window_mode_entry *, u_int);
 static void	window_copy_scroll_down(struct window_mode_entry *, u_int);
 static void	window_copy_rectangle_set(struct window_mode_entry *, int);
@@ -293,6 +295,7 @@ struct window_copy_mode_data {
 	int		 timeout;	/* search has timed out */
 #define WINDOW_COPY_SEARCH_TIMEOUT 10000
 #define WINDOW_COPY_SEARCH_ALL_TIMEOUT 200
+#define WINDOW_COPY_SEARCH_MAX_LINE 2000
 
 	int			 jumptype;
 	struct utf8_data	*jumpchar;
@@ -1250,6 +1253,64 @@ window_copy_cmd_cursor_right(struct window_copy_cmd_state *cs)
 	return (WINDOW_COPY_CMD_NOTHING);
 }
 
+/* Scroll line containing the cursor to the given position. */
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_to(struct window_copy_cmd_state *cs, u_int to)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	struct window_copy_mode_data	*data = wme->data;
+	u_int				 oy, delta;
+	int				 scroll_up; /* >0 up, <0 down */
+
+	scroll_up = data->cy - to;
+	delta = abs(scroll_up);
+	oy = screen_hsize(data->backing) - data->oy;
+
+	/*
+	 * oy is the maximum scroll down amount, while data->oy is the maximum
+	 * scroll up amount.
+	 */
+	if (scroll_up > 0 && data->oy >= delta) {
+		window_copy_scroll_up(wme, delta);
+		data->cy -= delta;
+	} else if (scroll_up < 0 && oy >= delta) {
+		window_copy_scroll_down(wme, delta);
+		data->cy += delta;
+	}
+
+	window_copy_update_selection(wme, 0, 0);
+	return (WINDOW_COPY_CMD_REDRAW);
+}
+
+/* Scroll line containing the cursor to the bottom. */
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_bottom(struct window_copy_cmd_state *cs)
+{
+	struct window_copy_mode_data	*data = cs->wme->data;
+	u_int				 bottom;
+
+	bottom = screen_size_y(&data->screen) - 1;
+	return (window_copy_cmd_scroll_to(cs, bottom));
+}
+
+/* Scroll line containing the cursor to the middle. */
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_middle(struct window_copy_cmd_state *cs)
+{
+	struct window_copy_mode_data	*data = cs->wme->data;
+	u_int				 mid_value;
+
+	mid_value = (screen_size_y(&data->screen) - 1) / 2;
+	return (window_copy_cmd_scroll_to(cs, mid_value));
+}
+
+/* Scroll line containing the cursor to the top. */
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_top(struct window_copy_cmd_state *cs)
+{
+	return (window_copy_cmd_scroll_to(cs, 0));
+}
+
 static enum window_copy_cmd_action
 window_copy_cmd_cursor_up(struct window_copy_cmd_state *cs)
 {
@@ -2183,6 +2244,26 @@ window_copy_cmd_jump_to_mark(struct window_copy_cmd_state *cs)
 }
 
 static enum window_copy_cmd_action
+window_copy_cmd_next_prompt(struct window_copy_cmd_state *cs)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	const char			*arg1 = args_string(cs->args, 1);
+
+	window_copy_cursor_prompt(wme, 1, arg1);
+	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
+window_copy_cmd_previous_prompt(struct window_copy_cmd_state *cs)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	const char			*arg1 = args_string(cs->args, 1);
+
+	window_copy_cursor_prompt(wme, 0, arg1);
+	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
 window_copy_cmd_search_backward(struct window_copy_cmd_state *cs)
 {
 	struct window_mode_entry	*wme = cs->wme;
@@ -2636,6 +2717,18 @@ static const struct {
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_jump_to_mark
 	},
+	{ .command = "next-prompt",
+	  .minargs = 0,
+	  .maxargs = 1,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_next_prompt
+	},
+	{ .command = "previous-prompt",
+	  .minargs = 0,
+	  .maxargs = 1,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_previous_prompt
+	},
 	{ .command = "middle-line",
 	  .minargs = 0,
 	  .maxargs = 0,
@@ -2768,6 +2861,12 @@ static const struct {
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_refresh_from_pane
 	},
+	{ .command = "scroll-bottom",
+	  .minargs = 0,
+	  .maxargs = 0,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_bottom
+	},
 	{ .command = "scroll-down",
 	  .minargs = 0,
 	  .maxargs = 0,
@@ -2779,6 +2878,18 @@ static const struct {
 	  .maxargs = 0,
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_scroll_down_and_cancel
+	},
+	{ .command = "scroll-middle",
+	  .minargs = 0,
+	  .maxargs = 0,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_middle
+	},
+	{ .command = "scroll-top",
+	  .minargs = 0,
+	  .maxargs = 0,
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_top
 	},
 	{ .command = "scroll-up",
 	  .minargs = 0,
@@ -3095,7 +3206,9 @@ window_copy_search_lr_regex(struct grid *gd, u_int *ppx, u_int *psx, u_int py,
 	len = gd->sx - first;
 	endline = gd->hsize + gd->sy - 1;
 	pywrap = py;
-	while (buf != NULL && pywrap <= endline) {
+	while (buf != NULL &&
+	    pywrap <= endline &&
+	    len < WINDOW_COPY_SEARCH_MAX_LINE) {
 		gl = grid_get_line(gd, pywrap);
 		if (~gl->flags & GRID_LINE_WRAPPED)
 			break;
@@ -3152,7 +3265,9 @@ window_copy_search_rl_regex(struct grid *gd, u_int *ppx, u_int *psx, u_int py,
 	len = gd->sx - first;
 	endline = gd->hsize + gd->sy - 1;
 	pywrap = py;
-	while (buf != NULL && (pywrap <= endline)) {
+	while (buf != NULL &&
+	    pywrap <= endline &&
+	    len < WINDOW_COPY_SEARCH_MAX_LINE) {
 		gl = grid_get_line(gd, pywrap);
 		if (~gl->flags & GRID_LINE_WRAPPED)
 			break;
@@ -3491,10 +3606,11 @@ window_copy_search_jump(struct window_mode_entry *wme, struct grid *gd,
     struct grid *sgd, u_int fx, u_int fy, u_int endline, int cis, int wrap,
     int direction, int regex)
 {
-	u_int	 i, px, sx, ssize = 1;
-	int	 found = 0, cflags = REG_EXTENDED;
-	char	*sbuf = NULL;
-	regex_t	 reg;
+	u_int			 i, px, sx, ssize = 1;
+	int			 found = 0, cflags = REG_EXTENDED;
+	char			*sbuf = NULL;
+	regex_t			 reg;
+	struct grid_line	*gl;
 
 	if (regex) {
 		sbuf = xmalloc(ssize);
@@ -3511,6 +3627,9 @@ window_copy_search_jump(struct window_mode_entry *wme, struct grid *gd,
 
 	if (direction) {
 		for (i = fy; i <= endline; i++) {
+			gl = grid_get_line(gd, i);
+			if (i != endline && gl->flags & GRID_LINE_WRAPPED)
+				continue;
 			if (regex) {
 				found = window_copy_search_lr_regex(gd,
 				    &px, &sx, i, fx, gd->sx, &reg);
@@ -3524,6 +3643,9 @@ window_copy_search_jump(struct window_mode_entry *wme, struct grid *gd,
 		}
 	} else {
 		for (i = fy + 1; endline < i; i--) {
+			gl = grid_get_line(gd, i - 1);
+			if (i != endline && gl->flags & GRID_LINE_WRAPPED)
+				continue;
 			if (regex) {
 				found = window_copy_search_rl_regex(gd,
 				    &px, &sx, i - 1, 0, fx + 1, &reg);
@@ -3612,6 +3734,8 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 		data->searchall = 0;
 	} else
 		visible_only = (strcmp(wp->searchstr, str) == 0);
+	if (visible_only == 0 && data->searchmark != NULL)
+		window_copy_clear_marks(wme);
 	free(wp->searchstr);
 	wp->searchstr = xstrdup(str);
 	wp->searchregex = regex;
@@ -3651,8 +3775,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 			}
 		}
 		endline = gd->hsize + gd->sy - 1;
-	}
-	else {
+	} else {
 		window_copy_move_left(s, &fx, &fy, wrapflag);
 		endline = 0;
 	}
@@ -3671,6 +3794,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 		if (direction &&
 		    window_copy_search_mark_at(data, fx, fy, &at) == 0 &&
 		    at > 0 &&
+		    data->searchmark != NULL &&
 		    data->searchmark[at] == data->searchmark[at - 1]) {
 			window_copy_move_after_search_mark(data, &fx, &fy,
 			    wrapflag);
@@ -3693,8 +3817,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 				data->cy = fy - screen_hsize(data->backing) +
 				    data-> oy;
 			}
-		}
-		else {
+		} else {
 			/*
 			 * When searching backward, position the cursor at the
 			 * beginning of the mark.
@@ -3703,6 +3826,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 			        &start) == 0) {
 				while (window_copy_search_mark_at(data, fx, fy,
 				           &at) == 0 &&
+				       data->searchmark != NULL &&
 				       data->searchmark[at] ==
 				           data->searchmark[start]) {
 					data->cx = fx;
@@ -4092,8 +4216,9 @@ window_copy_write_line(struct window_mode_entry *wme,
 	struct window_copy_mode_data	*data = wme->data;
 	struct screen			*s = &data->screen;
 	struct options			*oo = wp->window->options;
+	struct grid_line		*gl;
 	struct grid_cell		 gc, mgc, cgc, mkgc;
-	char				 hdr[512];
+	char				 hdr[512], tmp[256], *t;
 	size_t				 size = 0;
 	u_int				 hsize = screen_hsize(data->backing);
 
@@ -4107,23 +4232,29 @@ window_copy_write_line(struct window_mode_entry *wme,
 	mkgc.flags |= GRID_FLAG_NOPALETTE;
 
 	if (py == 0 && s->rupper < s->rlower && !data->hide_position) {
+		gl = grid_get_line(data->backing->grid, hsize - data->oy);
+		if (gl->time == 0)
+			xsnprintf(tmp, sizeof tmp, "[%u/%u]", data->oy, hsize);
+		else {
+			t = format_pretty_time(gl->time, 1);
+			xsnprintf(tmp, sizeof tmp, "%s [%u/%u]", t, data->oy,
+			    hsize);
+			free(t);
+		}
+
 		if (data->searchmark == NULL) {
 			if (data->timeout) {
 				size = xsnprintf(hdr, sizeof hdr,
-				    "(timed out) [%u/%u]", data->oy, hsize);
-			} else {
-				size = xsnprintf(hdr, sizeof hdr,
-				    "[%u/%u]", data->oy, hsize);
-			}
+				    "(timed out) %s", tmp);
+			} else
+				size = xsnprintf(hdr, sizeof hdr, "%s", tmp);
 		} else {
-			if (data->searchcount == -1) {
+			if (data->searchcount == -1)
+				size = xsnprintf(hdr, sizeof hdr, "%s", tmp);
+			else {
 				size = xsnprintf(hdr, sizeof hdr,
-				    "[%u/%u]", data->oy, hsize);
-			} else {
-				size = xsnprintf(hdr, sizeof hdr,
-				    "(%d%s results) [%u/%u]", data->searchcount,
-				    data->searchmore ? "+" : "", data->oy,
-				    hsize);
+				    "(%d%s results) %s", data->searchcount,
+				    data->searchmore ? "+" : "", tmp);
 			}
 		}
 		if (size > screen_size_x(s))
@@ -4570,7 +4701,7 @@ window_copy_copy_buffer(struct window_mode_entry *wme, const char *prefix,
 
 	if (options_get_number(global_options, "set-clipboard") != 0) {
 		screen_write_start_pane(&ctx, wp, NULL);
-		screen_write_setselection(&ctx, buf, len);
+		screen_write_setselection(&ctx, "", buf, len);
 		screen_write_stop(&ctx);
 		notify_pane("pane-set-clipboard", wp);
 	}
@@ -4644,7 +4775,7 @@ window_copy_append_selection(struct window_mode_entry *wme)
 
 	if (options_get_number(global_options, "set-clipboard") != 0) {
 		screen_write_start_pane(&ctx, wp, NULL);
-		screen_write_setselection(&ctx, (u_char *)buf, len);
+		screen_write_setselection(&ctx, "", (u_char *)buf, len);
 		screen_write_stop(&ctx);
 		notify_pane("pane-set-clipboard", wp);
 	}
@@ -5268,6 +5399,54 @@ window_copy_cursor_previous_word(struct window_mode_entry *wme,
 	grid_reader_cursor_previous_word(&gr, separators, already, stop_at_eol);
 	grid_reader_get_cursor(&gr, &px, &py);
 	window_copy_acquire_cursor_up(wme, hsize, data->oy, oldy, px, py);
+}
+
+static void
+window_copy_cursor_prompt(struct window_mode_entry *wme, int direction,
+    const char *args)
+{
+	struct window_copy_mode_data	*data = wme->data;
+	struct screen			*s = data->backing;
+	struct grid			*gd = s->grid;
+	u_int				 end_line;
+	u_int				 line = gd->hsize - data->oy + data->cy;
+	int				 add, line_flag;
+
+	if (args != NULL && strcmp(args, "-o") == 0)
+		line_flag = GRID_LINE_START_OUTPUT;
+	else
+		line_flag = GRID_LINE_START_PROMPT;
+
+	if (direction == 0) { /* up */
+		add = -1;
+		end_line = 0;
+	} else { /* down */
+		add = 1;
+		end_line = gd->hsize + gd->sy - 1;
+	}
+
+	if (line == end_line)
+		return;
+	for (;;) {
+		if (line == end_line)
+			return;
+		line += add;
+
+		if (grid_get_line(gd, line)->flags & line_flag)
+			break;
+	}
+
+	data->cx = 0;
+	if (line > gd->hsize) {
+		data->cy = line - gd->hsize;
+		data->oy = 0;
+	} else {
+		data->cy = 0;
+		data->oy = gd->hsize - line;
+	}
+
+	window_copy_update_selection(wme, 1, 0);
+	window_copy_redraw_screen(wme);
 }
 
 static void

@@ -477,7 +477,7 @@ sixel_print_repeat(char **buf, size_t *len, size_t *used, u_int count, char ch)
 char *
 sixel_print(struct sixel_image *si, struct sixel_image *map, size_t *size)
 {
-	char			*buf, tmp[64], *contains, data, last = 0;
+	char			*buf, tmp[64], *contains, data = 0, last = 0;
 	size_t			 len, used = 0, tmplen;
 	u_int			*colours, ncolours, i, c, x, y, count;
 	struct sixel_line	*sl;

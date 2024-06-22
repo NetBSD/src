@@ -55,8 +55,11 @@ static int	tty_keys_clipboard(struct tty *, const char *, size_t,
 		    size_t *);
 static int	tty_keys_device_attributes(struct tty *, const char *, size_t,
 		    size_t *);
+static int	tty_keys_device_attributes2(struct tty *, const char *, size_t,
+		    size_t *);
 static int	tty_keys_extended_device_attributes(struct tty *, const char *,
 		    size_t, size_t *);
+static int	tty_keys_colours(struct tty *, const char *, size_t, size_t *);
 
 /* A key tree entry. */
 struct tty_key {
@@ -126,7 +129,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033\033[C", KEYC_RIGHT|KEYC_CURSOR|KEYC_META },
 	{ "\033\033[D", KEYC_LEFT|KEYC_CURSOR|KEYC_META },
 
-	/* Other (xterm) "cursor" keys. */
+	/* Other xterm keys. */
 	{ "\033OH", KEYC_HOME },
 	{ "\033OF", KEYC_END },
 
@@ -139,7 +142,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033\033[H", KEYC_HOME|KEYC_META|KEYC_IMPLIED_META },
 	{ "\033\033[F", KEYC_END|KEYC_META|KEYC_IMPLIED_META },
 
-	/* rxvt-style arrow + modifier keys. */
+	/* rxvt arrow keys. */
 	{ "\033Oa", KEYC_UP|KEYC_CTRL },
 	{ "\033Ob", KEYC_DOWN|KEYC_CTRL },
 	{ "\033Oc", KEYC_RIGHT|KEYC_CTRL },
@@ -150,7 +153,31 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[c", KEYC_RIGHT|KEYC_SHIFT },
 	{ "\033[d", KEYC_LEFT|KEYC_SHIFT },
 
-	/* rxvt-style function + modifier keys (C = ^, S = $, C-S = @). */
+	/* rxvt function keys. */
+	{ "\033[11~", KEYC_F1 },
+	{ "\033[12~", KEYC_F2 },
+	{ "\033[13~", KEYC_F3 },
+	{ "\033[14~", KEYC_F4 },
+	{ "\033[15~", KEYC_F5 },
+	{ "\033[17~", KEYC_F6 },
+	{ "\033[18~", KEYC_F7 },
+	{ "\033[19~", KEYC_F8 },
+	{ "\033[20~", KEYC_F9 },
+	{ "\033[21~", KEYC_F10 },
+
+	{ "\033[23~", KEYC_F1|KEYC_SHIFT },
+	{ "\033[24~", KEYC_F2|KEYC_SHIFT },
+	{ "\033[25~", KEYC_F3|KEYC_SHIFT },
+	{ "\033[26~", KEYC_F4|KEYC_SHIFT },
+	{ "\033[28~", KEYC_F5|KEYC_SHIFT },
+	{ "\033[29~", KEYC_F6|KEYC_SHIFT },
+	{ "\033[31~", KEYC_F7|KEYC_SHIFT },
+	{ "\033[32~", KEYC_F8|KEYC_SHIFT },
+	{ "\033[33~", KEYC_F9|KEYC_SHIFT },
+	{ "\033[34~", KEYC_F10|KEYC_SHIFT },
+	{ "\033[23$", KEYC_F11|KEYC_SHIFT },
+	{ "\033[24$", KEYC_F12|KEYC_SHIFT },
+
 	{ "\033[11^", KEYC_F1|KEYC_CTRL },
 	{ "\033[12^", KEYC_F2|KEYC_CTRL },
 	{ "\033[13^", KEYC_F3|KEYC_CTRL },
@@ -163,31 +190,6 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21^", KEYC_F10|KEYC_CTRL },
 	{ "\033[23^", KEYC_F11|KEYC_CTRL },
 	{ "\033[24^", KEYC_F12|KEYC_CTRL },
-	{ "\033[2^", KEYC_IC|KEYC_CTRL },
-	{ "\033[3^", KEYC_DC|KEYC_CTRL },
-	{ "\033[7^", KEYC_HOME|KEYC_CTRL },
-	{ "\033[8^", KEYC_END|KEYC_CTRL },
-	{ "\033[6^", KEYC_NPAGE|KEYC_CTRL },
-	{ "\033[5^", KEYC_PPAGE|KEYC_CTRL },
-
-	{ "\033[11$", KEYC_F1|KEYC_SHIFT },
-	{ "\033[12$", KEYC_F2|KEYC_SHIFT },
-	{ "\033[13$", KEYC_F3|KEYC_SHIFT },
-	{ "\033[14$", KEYC_F4|KEYC_SHIFT },
-	{ "\033[15$", KEYC_F5|KEYC_SHIFT },
-	{ "\033[17$", KEYC_F6|KEYC_SHIFT },
-	{ "\033[18$", KEYC_F7|KEYC_SHIFT },
-	{ "\033[19$", KEYC_F8|KEYC_SHIFT },
-	{ "\033[20$", KEYC_F9|KEYC_SHIFT },
-	{ "\033[21$", KEYC_F10|KEYC_SHIFT },
-	{ "\033[23$", KEYC_F11|KEYC_SHIFT },
-	{ "\033[24$", KEYC_F12|KEYC_SHIFT },
-	{ "\033[2$", KEYC_IC|KEYC_SHIFT },
-	{ "\033[3$", KEYC_DC|KEYC_SHIFT },
-	{ "\033[7$", KEYC_HOME|KEYC_SHIFT },
-	{ "\033[8$", KEYC_END|KEYC_SHIFT },
-	{ "\033[6$", KEYC_NPAGE|KEYC_SHIFT },
-	{ "\033[5$", KEYC_PPAGE|KEYC_SHIFT },
 
 	{ "\033[11@", KEYC_F1|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[12@", KEYC_F2|KEYC_CTRL|KEYC_SHIFT },
@@ -201,12 +203,6 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21@", KEYC_F10|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[23@", KEYC_F11|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[24@", KEYC_F12|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[2@", KEYC_IC|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[3@", KEYC_DC|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[7@", KEYC_HOME|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[8@", KEYC_END|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[6@", KEYC_NPAGE|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[5@", KEYC_PPAGE|KEYC_CTRL|KEYC_SHIFT },
 
 	/* Focus tracking. */
 	{ "\033[I", KEYC_FOCUS_IN },
@@ -215,6 +211,9 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	/* Paste keys. */
 	{ "\033[200~", KEYC_PASTE_START },
 	{ "\033[201~", KEYC_PASTE_END },
+
+	/* Extended keys. */
+	{ "\033[1;5Z", '\011'|KEYC_CTRL|KEYC_SHIFT },
 };
 
 /* Default xterm keys. */
@@ -688,8 +687,19 @@ tty_keys_next(struct tty *tty)
 		goto partial_key;
 	}
 
-	/* Is this a device attributes response? */
+	/* Is this a primary device attributes response? */
 	switch (tty_keys_device_attributes(tty, buf, len, &size)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		goto partial_key;
+	}
+
+	/* Is this a secondary device attributes response? */
+	switch (tty_keys_device_attributes2(tty, buf, len, &size)) {
 	case 0:		/* yes */
 		key = KEYC_UNKNOWN;
 		goto complete_key;
@@ -701,6 +711,17 @@ tty_keys_next(struct tty *tty)
 
 	/* Is this an extended device attributes response? */
 	switch (tty_keys_extended_device_attributes(tty, buf, len, &size)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		goto partial_key;
+	}
+
+	/* Is this a colours response? */
+	switch (tty_keys_colours(tty, buf, len, &size)) {
 	case 0:		/* yes */
 		key = KEYC_UNKNOWN;
 		goto complete_key;
@@ -798,6 +819,8 @@ partial_key:
 
 	/* Get the time period. */
 	delay = options_get_number(global_options, "escape-time");
+	if (delay == 0)
+		delay = 1;
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
@@ -939,34 +962,16 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 		nkey = number;
 
 	/* Update the modifiers. */
-	switch (modifiers) {
-	case 2:
-		nkey |= KEYC_SHIFT;
-		break;
-	case 3:
-		nkey |= (KEYC_META|KEYC_IMPLIED_META);
-		break;
-	case 4:
-		nkey |= (KEYC_SHIFT|KEYC_META|KEYC_IMPLIED_META);
-		break;
-	case 5:
-		nkey |= KEYC_CTRL;
-		break;
-	case 6:
-		nkey |= (KEYC_SHIFT|KEYC_CTRL);
-		break;
-	case 7:
-		nkey |= (KEYC_META|KEYC_CTRL);
-		break;
-	case 8:
-		nkey |= (KEYC_SHIFT|KEYC_META|KEYC_IMPLIED_META|KEYC_CTRL);
-		break;
-	case 9:
-		nkey |= (KEYC_META|KEYC_IMPLIED_META);
-		break;
-	default:
-		*key = KEYC_NONE;
-		break;
+	if (modifiers > 0) {
+		modifiers--;
+		if (modifiers & 1)
+			nkey |= KEYC_SHIFT;
+		if (modifiers & 2)
+			nkey |= (KEYC_META|KEYC_IMPLIED_META); /* Alt */
+		if (modifiers & 4)
+			nkey |= KEYC_CTRL;
+		if (modifiers & 8)
+			nkey |= (KEYC_META|KEYC_IMPLIED_META); /* Meta */
 	}
 
 	/*
@@ -1003,7 +1008,8 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 
 /*
  * Handle mouse key input. Returns 0 for success, -1 for failure, 1 for partial
- * (probably a mouse sequence but need more data).
+ * (probably a mouse sequence but need more data), -2 if an invalid mouse
+ * sequence.
  */
 static int
 tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
@@ -1064,7 +1070,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		if (b < MOUSE_PARAM_BTN_OFF ||
 		    x < MOUSE_PARAM_POS_OFF ||
 		    y < MOUSE_PARAM_POS_OFF)
-			return (-1);
+			return (-2);
 		b -= MOUSE_PARAM_BTN_OFF;
 		x -= MOUSE_PARAM_POS_OFF;
 		y -= MOUSE_PARAM_POS_OFF;
@@ -1106,7 +1112,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 
 		/* Check and return the mouse input. */
 		if (x < 1 || y < 1)
-			return (-1);
+			return (-2);
 		x--;
 		y--;
 		b = sgr_b;
@@ -1154,7 +1160,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
 	struct client		*c = tty->client;
 	struct window_pane	*wp;
-	size_t			 end, terminator, needed;
+	size_t			 end, terminator = 0, needed;
 	char			*copy, *out;
 	int			 outlen;
 	u_int			 i;
@@ -1256,7 +1262,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 }
 
 /*
- * Handle secondary device attributes input. Returns 0 for success, -1 for
+ * Handle primary device attributes input. Returns 0 for success, -1 for
  * failure, 1 for partial.
  */
 static int
@@ -1264,17 +1270,15 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
     size_t *size)
 {
 	struct client	*c = tty->client;
+	int		*features = &c->term_features;
 	u_int		 i, n = 0;
-	char		 tmp[64], *endptr, p[32] = { 0 }, *cp, *next;
+	char		 tmp[128], *endptr, p[32] = { 0 }, *cp, *next;
 
 	*size = 0;
 	if (tty->flags & TTY_HAVEDA)
 		return (-1);
 
-	/*
-	 * First three bytes are always \033[>. Some older Terminal.app
-	 * versions respond as for DA (\033[?) so accept and ignore that.
-	 */
+	/* First three bytes are always \033[?. */
 	if (buf[0] != '\033')
 		return (-1);
 	if (len == 1)
@@ -1283,27 +1287,23 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 		return (-1);
 	if (len == 2)
 		return (1);
-	if (buf[2] != '>' && buf[2] != '?')
+	if (buf[2] != '?')
 		return (-1);
 	if (len == 3)
 		return (1);
 
-	/* Copy the rest up to a 'c'. */
-	for (i = 0; i < (sizeof tmp) - 1; i++) {
+	/* Copy the rest up to a c. */
+	for (i = 0; i < (sizeof tmp); i++) {
 		if (3 + i == len)
 			return (1);
 		if (buf[3 + i] == 'c')
 			break;
 		tmp[i] = buf[3 + i];
 	}
-	if (i == (sizeof tmp) - 1)
+	if (i == (sizeof tmp))
 		return (-1);
 	tmp[i] = '\0';
 	*size = 4 + i;
-
-	/* Ignore DA response. */
-	if (buf[2] == '?')
-		return (0);
 
 	/* Convert all arguments to numbers. */
 	cp = tmp;
@@ -1311,28 +1311,120 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 		p[n] = strtoul(next, &endptr, 10);
 		if (*endptr != '\0')
 			p[n] = 0;
-		n++;
+		if (++n == nitems(p))
+			break;
 	}
 
-	/* Add terminal features. */
+	/*
+	 * Add terminal features. Hardware level 5 does not offer SIXEL but
+	 * some terminal emulators report it anyway and it does not harm
+	 * to check it here.
+	 *
+	 * DECSLRM and DECFRA should be supported by level 5 as well as level
+	 * 4, but VTE has rather ruined it by advertising level 5 despite not
+	 * supporting them.
+	 */
+	switch (p[0]) {
+	case 64: /* level 4 */
+		tty_add_features(features, "margins,rectfill", ",");
+		/* FALLTHROUGH */
+	case 62: /* level 2 */
+	case 63: /* level 3 */
+	case 65: /* level 5 */
+		for (i = 1; i < n; i++) {
+			log_debug("%s: DA feature: %d", c->name, p[i]);
+			if (p[i] == 4)
+				tty_add_features(features, "sixel", ",");
+		}
+		break;
+	}
+	log_debug("%s: received primary DA %.*s", c->name, (int)*size, buf);
+
+	tty_update_features(tty);
+	tty->flags |= TTY_HAVEDA;
+
+	return (0);
+}
+
+/*
+ * Handle secondary device attributes input. Returns 0 for success, -1 for
+ * failure, 1 for partial.
+ */
+static int
+tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
+    size_t *size)
+{
+	struct client	*c = tty->client;
+	int		*features = &c->term_features;
+	u_int		 i, n = 0;
+	char		 tmp[128], *endptr, p[32] = { 0 }, *cp, *next;
+
+	*size = 0;
+	if (tty->flags & TTY_HAVEDA2)
+		return (-1);
+
+	/* First three bytes are always \033[>. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != '[')
+		return (-1);
+	if (len == 2)
+		return (1);
+	if (buf[2] != '>')
+		return (-1);
+	if (len == 3)
+		return (1);
+
+	/* Copy the rest up to a c. */
+	for (i = 0; i < (sizeof tmp); i++) {
+		if (3 + i == len)
+			return (1);
+		if (buf[3 + i] == 'c')
+			break;
+		tmp[i] = buf[3 + i];
+	}
+	if (i == (sizeof tmp))
+		return (-1);
+	tmp[i] = '\0';
+	*size = 4 + i;
+
+	/* Convert all arguments to numbers. */
+	cp = tmp;
+	while ((next = strsep(&cp, ";")) != NULL) {
+		p[n] = strtoul(next, &endptr, 10);
+		if (*endptr != '\0')
+			p[n] = 0;
+		if (++n == nitems(p))
+			break;
+	}
+
+	/*
+	 * Add terminal features. We add DECSLRM and DECFRA for some
+	 * identification codes here, notably 64 will catch VT520, even though
+	 * we can't use level 5 from DA because of VTE.
+	 */
 	switch (p[0]) {
 	case 41: /* VT420 */
-		tty_add_features(&c->term_features, "margins,rectfill", ",");
+	case 61: /* VT510 */
+	case 64: /* VT520 */
+		tty_add_features(features, "margins,rectfill", ",");
 		break;
 	case 'M': /* mintty */
-		tty_default_features(&c->term_features, "mintty", 0);
+		tty_default_features(features, "mintty", 0);
 		break;
 	case 'T': /* tmux */
-		tty_default_features(&c->term_features, "tmux", 0);
+		tty_default_features(features, "tmux", 0);
 		break;
 	case 'U': /* rxvt-unicode */
-		tty_default_features(&c->term_features, "rxvt-unicode", 0);
+		tty_default_features(features, "rxvt-unicode", 0);
 		break;
 	}
 	log_debug("%s: received secondary DA %.*s", c->name, (int)*size, buf);
 
 	tty_update_features(tty);
-	tty->flags |= TTY_HAVEDA;
+	tty->flags |= TTY_HAVEDA2;
 
 	return (0);
 }
@@ -1346,6 +1438,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
     size_t len, size_t *size)
 {
 	struct client	*c = tty->client;
+	int		*features = &c->term_features;
 	u_int		 i;
 	char		 tmp[128];
 
@@ -1371,7 +1464,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 	if (len == 4)
 		return (1);
 
-	/* Copy the rest up to a '\033\\'. */
+	/* Copy the rest up to \033\. */
 	for (i = 0; i < (sizeof tmp) - 1; i++) {
 		if (4 + i == len)
 			return (1);
@@ -1386,13 +1479,13 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 
 	/* Add terminal features. */
 	if (strncmp(tmp, "iTerm2 ", 7) == 0)
-		tty_default_features(&c->term_features, "iTerm2", 0);
+		tty_default_features(features, "iTerm2", 0);
 	else if (strncmp(tmp, "tmux ", 5) == 0)
-		tty_default_features(&c->term_features, "tmux", 0);
+		tty_default_features(features, "tmux", 0);
 	else if (strncmp(tmp, "XTerm(", 6) == 0)
-		tty_default_features(&c->term_features, "XTerm", 0);
+		tty_default_features(features, "XTerm", 0);
 	else if (strncmp(tmp, "mintty ", 7) == 0)
-		tty_default_features(&c->term_features, "mintty", 0);
+		tty_default_features(features, "mintty", 0);
 	log_debug("%s: received extended DA %.*s", c->name, (int)*size, buf);
 
 	free(c->term_type);
@@ -1400,6 +1493,72 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 
 	tty_update_features(tty);
 	tty->flags |= TTY_HAVEXDA;
+
+	return (0);
+}
+
+/*
+ * Handle foreground or background input. Returns 0 for success, -1 for
+ * failure, 1 for partial.
+ */
+static int
+tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
+{
+	struct client	*c = tty->client;
+	u_int		 i;
+	char		 tmp[128];
+	int		 n;
+
+	*size = 0;
+
+	/* First four bytes are always \033]1 and 0 or 1 and ;. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != ']')
+		return (-1);
+	if (len == 2)
+		return (1);
+	if (buf[2] != '1')
+		return (-1);
+	if (len == 3)
+		return (1);
+	if (buf[3] != '0' && buf[3] != '1')
+		return (-1);
+	if (len == 4)
+		return (1);
+	if (buf[4] != ';')
+		return (-1);
+	if (len == 5)
+		return (1);
+
+	/* Copy the rest up to \033\ or \007. */
+	for (i = 0; i < (sizeof tmp) - 1; i++) {
+		if (5 + i == len)
+			return (1);
+		if (buf[5 + i - 1] == '\033' && buf[5 + i] == '\\')
+			break;
+		if (buf[5 + i] == '\007')
+			break;
+		tmp[i] = buf[5 + i];
+	}
+	if (i == (sizeof tmp) - 1)
+		return (-1);
+	if (tmp[i - 1] == '\033')
+		tmp[i - 1] = '\0';
+	else
+		tmp[i] = '\0';
+	*size = 6 + i;
+
+	n = colour_parseX11(tmp);
+	if (n != -1 && buf[3] == '0') {
+		log_debug("%s: foreground is %s", c->name, colour_tostring(n));
+		tty->fg = n;
+	} else if (n != -1) {
+		log_debug("%s: background is %s", c->name, colour_tostring(n));
+		tty->bg = n;
+	}
 
 	return (0);
 }

@@ -121,9 +121,9 @@ hyperlinks_remove(struct hyperlinks_uri *hlu)
 	RB_REMOVE(hyperlinks_by_inner_tree, &hl->by_inner, hlu);
 	RB_REMOVE(hyperlinks_by_uri_tree, &hl->by_uri, hlu);
 
-	free((void *)hlu->internal_id);
-	free((void *)hlu->external_id);
-	free((void *)hlu->uri);
+	free(__UNCONST(hlu->internal_id));
+	free(__UNCONST(hlu->external_id));
+	free(__UNCONST(hlu->uri));
 	free(hlu);
 }
 

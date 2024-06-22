@@ -845,7 +845,7 @@ args_make_commands_free(struct args_command_state *state)
 		cmd_list_free(state->cmdlist);
 	if (state->pi.c != NULL)
 		server_client_unref(state->pi.c);
-	free((void *)state->pi.file);
+	free(__UNCONST(state->pi.file));
 	free(state->cmd);
 	free(state);
 }

@@ -236,8 +236,10 @@ cmdq_link_state(struct cmdq_state *state)
 
 /* Make a copy of a state. */
 struct cmdq_state *
-cmdq_copy_state(struct cmdq_state *state)
+cmdq_copy_state(struct cmdq_state *state, struct cmd_find_state *current)
 {
+	if (current != NULL)
+		return (cmdq_new_state(current, &state->event, state->flags));
 	return (cmdq_new_state(&state->current, &state->event, state->flags));
 }
 
@@ -823,43 +825,28 @@ cmdq_guard(struct cmdq_item *item, const char *guard, int flags)
 
 /* Show message from command. */
 void
+cmdq_print_data(struct cmdq_item *item, int parse, struct evbuffer *evb)
+{
+	server_client_print(item->client, parse, evb);
+}
+
+/* Show message from command. */
+void
 cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 {
-	struct client			*c = item->client;
-	struct window_pane		*wp;
-	struct window_mode_entry	*wme;
-	va_list				 ap;
-	char				*tmp, *msg;
+	va_list		 ap;
+	struct evbuffer	*evb;
+
+	evb = evbuffer_new();
+	if (evb == NULL)
+		fatalx("out of memory");
 
 	va_start(ap, fmt);
-	xvasprintf(&msg, fmt, ap);
+	evbuffer_add_vprintf(evb, fmt, ap);
 	va_end(ap);
 
-	log_debug("%s: %s", __func__, msg);
-
-	if (c == NULL)
-		/* nothing */;
-	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
-		if (~c->flags & CLIENT_UTF8) {
-			tmp = msg;
-			msg = utf8_sanitize(tmp);
-			free(tmp);
-		}
-		if (c->flags & CLIENT_CONTROL)
-			control_write(c, "%s", msg);
-		else
-			file_print(c, "%s\n", msg);
-	} else {
-		wp = server_client_get_pane(c);
-		wme = TAILQ_FIRST(&wp->modes);
-		if (wme == NULL || wme->mode != &window_view_mode) {
-			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,
-			    NULL);
-		}
-		window_copy_add(wp, 0, "%s", msg);
-	}
-
-	free(msg);
+	cmdq_print_data(item, 0, evb);
+	evbuffer_free(evb);
 }
 
 /* Show error from command. */
