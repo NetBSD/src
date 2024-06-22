@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/03/04 17:22:49 christos Exp $
+# $NetBSD: Makefile,v 1.4 2024/06/22 13:36:54 riastradh Exp $
 
 NOLINT=
 NOMAN=
@@ -92,7 +92,7 @@ SHLIB_MINOR=    5
 
 .include <bsd.lib.mk>
 
-${OBJS}: cbor/configuration.h
+${ALLOBJS}: cbor/configuration.h
 
 cbor/configuration.h: ${VERS_FILE}
 	@mkdir -p cbor && ( \
