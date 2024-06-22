@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2024/06/22 23:20:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.113 2024/06/22 23:21:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,8 @@ SUBDIR+= \
 	xf86-video-vesa \
 	xf86-video-wsfb
 
+# XXX add -qxl, also for arm?
+
 # needs porting for xorg-server 1.6
 #	xf86-video-imstt
 #	xf86-video-rendition
@@ -99,8 +101,18 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-wsfb
+
+# needs porting for xorg-server 1.6
 #	xf86-video-imstt
-# needs porting for xorg-server 1.18, and 21.1
+
+# needs porting for xorg-server 1.18
+#	xf86-video-apm
+#	xf86-video-glint
+
+# needs porting for xorg-server 21.1.3
+#	xf86-video-s3
+#	xf86-video-tga
+
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-apm \
@@ -108,6 +120,7 @@ SUBDIR+= \
 	xf86-video-s3 \
 	xf86-video-tga
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+
 .endif	# ${MACHINE} == "alpha"
 
 .if ${MACHINE} == "amiga"
@@ -153,7 +166,7 @@ SUBDIR+= \
 #	xf86-video-tga
 
 # needs porting for xorg-server 1.18
-#	xf86-video-apm \
+#	xf86-video-apm
 #	xf86-video-glint
 
 .endif	# ${MACHINE} == "cats"
@@ -242,9 +255,11 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 
+# needs porting for xorg-server 1.6
+#	xf86-video-imstt
+
 # needs porting for xorg-server 21.1.3
 #	xf86-video-glint
-#	xf86-video-imstt
 
 .endif	# ${MACHINE} == "macppc"
 
