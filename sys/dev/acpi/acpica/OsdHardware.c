@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.14 2022/05/31 20:28:57 mrg Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.15 2024/06/23 15:21:52 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.14 2022/05/31 20:28:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.15 2024/06/23 15:21:52 andvar Exp $");
 
 #include "pci.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.14 2022/05/31 20:28:57 mrg Exp $")
 /*
  * ACPICA doesn't provide much in the way of letting us know which
  * hardware resources it wants to use.  We therefore have to resort
- * to calling machinde-dependent code to do the access for us.
+ * to calling machine-dependent code to do the access for us.
  */
 
 /*
