@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.472 2024/06/05 17:20:18 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.473 2024/06/23 00:37:12 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -411,7 +411,7 @@ distrib-dirs: .PHONY check_DESTDIR
 	cd ${NETBSDSRCDIR}/etc/mtree && ${MAKE} distrib-dirs
 
 COMPRESS_PROGRAM=${"${USE_XZ_SETS:Uno}"!="no":?${TOOL_XZ}:${TOOL_GZIP}}
-XZ_OPT=-9
+XZ_OPT?=-9
 TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 
 # release, snapshot --
