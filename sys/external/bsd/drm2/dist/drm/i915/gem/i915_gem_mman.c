@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.25 2024/06/23 13:01:44 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.26 2024/06/23 14:37:41 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.25 2024/06/23 13:01:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.26 2024/06/23 14:37:41 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -565,7 +565,6 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	struct i915_mmap_offset *mmo =
 	    container_of(uobj, struct i915_mmap_offset, uobj);
 	struct drm_i915_gem_object *obj = mmo->obj;
-	bool pinned = false;
 	int error;
 
 	KASSERT(rw_lock_held(obj->base.filp->vmobjlock));
@@ -585,12 +584,6 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 */
 	rw_exit(obj->base.filp->vmobjlock);
 
-	/* XXX errno Linux->NetBSD */
-	error = -i915_gem_object_pin_pages(obj);
-	if (error)
-		goto out;
-	pinned = true;
-
 	switch (mmo->mmap_type) {
 	case I915_MMAP_TYPE_WC:
 	case I915_MMAP_TYPE_WB:
@@ -608,8 +601,6 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		    mmo->mmap_type);
 	}
 
-out:	if (pinned)
-		i915_gem_object_unpin_pages(obj);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 
 	/*
