@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2024/06/22 23:51:26 wiz Exp $
+# $NetBSD: Makefile,v 1.36 2024/06/23 06:27:38 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -169,7 +169,18 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
-# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually; HAVE_BSD_GETOPT necessary due to local patches
+# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually
+#
+# HAVE_BSD_GETOPT:
+# Use the NetBSD libc getopt functions instead of the compat functions
+# provided by tmux (done using a local patch).
+#
+# HAVE_VIS:
+# tmux assumes the OpenBSD variant of strnvis which has arguments
+# swapped compared to FreeBSD & NetBSD, see
+# https://github.com/tmux/tmux/pull/4015
+# We have a local patch that adapts the call to the NetBSD version,
+# so we don't need to use the compat code provided by tmux.
 CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
