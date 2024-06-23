@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.26 2024/06/23 14:37:41 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.27 2024/06/23 19:37:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.26 2024/06/23 14:37:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.27 2024/06/23 19:37:11 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -252,14 +252,14 @@ compute_partial_view(const struct drm_i915_gem_object *obj,
  */
 int	pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, unsigned);
 #define	pmap_enter	pmap_enter_default
+#endif
 
+#ifdef __NetBSD__
 static int
 i915_error_to_vmf_fault(int err)
-{
-	return err;
-}
 #else
 static vm_fault_t i915_error_to_vmf_fault(int err)
+#endif
 {
 	switch (err) {
 	default:
@@ -269,11 +269,19 @@ static vm_fault_t i915_error_to_vmf_fault(int err)
 	case -EFAULT: /* purged object */
 	case -ENODEV: /* bad object, how did you get here! */
 	case -ENXIO: /* unable to access backing store (on device) */
+#ifdef __NetBSD__
+		return EINVAL;	/* SIGBUS */
+#else
 		return VM_FAULT_SIGBUS;
+#endif
 
 	case -ENOSPC: /* shmemfs allocation failure */
 	case -ENOMEM: /* our allocation failure */
+#ifdef __NetBSD__
+		return ENOMEM;
+#else
 		return VM_FAULT_OOM;
+#endif
 
 	case 0:
 	case -EAGAIN:
@@ -284,10 +292,13 @@ static vm_fault_t i915_error_to_vmf_fault(int err)
 		 * EBUSY is ok: this just means that another thread
 		 * already did the job.
 		 */
+#ifdef __NetBSD__
+		return 0;	/* retry access in userland */
+#else
 		return VM_FAULT_NOPAGE;
+#endif
 	}
 }
-#endif
 
 #ifdef __NetBSD__
 static int
@@ -313,7 +324,7 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 	/* Sanity check that we allow writing into this object */
 	if (unlikely(i915_gem_object_is_readonly(obj) && write))
 #ifdef __NetBSD__
-		return -EFAULT;
+		return EINVAL;	/* SIGBUS */
 #else
 		return VM_FAULT_SIGBUS;
 #endif
@@ -420,7 +431,7 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 	/* Sanity check that we allow writing into this object */
 	if (i915_gem_object_is_readonly(obj) && write)
 #ifdef __NetBSD__
-		return -EFAULT;
+		return EINVAL;	/* SIGBUS */
 #else
 		return VM_FAULT_SIGBUS;
 #endif
@@ -588,12 +599,11 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	case I915_MMAP_TYPE_WC:
 	case I915_MMAP_TYPE_WB:
 	case I915_MMAP_TYPE_UC:
-		/* XXX errno Linux->NetBSD */
-		error = -vm_fault_cpu(ufi, mmo, vaddr, pps, npages, centeridx,
+		error = vm_fault_cpu(ufi, mmo, vaddr, pps, npages, centeridx,
 		    flags);
 		break;
 	case I915_MMAP_TYPE_GTT:
-		error = -vm_fault_gtt(ufi, mmo, vaddr, pps, npages, centeridx,
+		error = vm_fault_gtt(ufi, mmo, vaddr, pps, npages, centeridx,
 		    flags);
 		break;
 	default:
@@ -602,16 +612,8 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	}
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
-
-	/*
-	 * Remap EINTR to success, so that we return to userland.
-	 * On the way out, we'll deliver the signal, and if the signal
-	 * is not fatal then the user code which faulted will most likely
-	 * fault again, and we'll come back here for another try.
-	 */
-	if (error == EINTR)
-		error = 0;
-
+	KASSERT(error != EINTR);
+	KASSERT(error != ERESTART);
 	return error;
 }
 
