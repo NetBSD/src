@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.18 2023/09/10 15:23:01 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.19 2024/06/23 20:47:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.18 2023/09/10 15:23:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.19 2024/06/23 20:47:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1106,6 +1106,7 @@ xen_rtc_set(struct todr_chip_handle *todr, struct timeval *tvp)
 		systime_ns = xen_global_systime_ns();
 
 		/* Set the hypervisor wall clock time.  */
+		memset(&op, 0, sizeof(op));
 		op.cmd = XENPF_settime;
 		op.u.settime.secs = tvp->tv_sec;
 		op.u.settime.nsecs = tvp->tv_usec * 1000;
