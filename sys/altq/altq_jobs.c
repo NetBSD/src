@@ -1831,14 +1831,14 @@ int
 jobsclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
+	int error = 0;
 	struct jobs_if *jif;
-
 	while ((jif = jif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(jif->jif_ifq))
 			altq_disable(jif->jif_ifq);
 
-		int error = altq_detach(pif->pif_ifq);
+		error = altq_detach(jif->jif_ifq);
 		switch (error) {
 		case 0:
 		case ENXIO:	/* already disabled */
@@ -1848,7 +1848,6 @@ jobsclose(dev_t dev, int flag, int fmt,
 		}
 		jobs_detach(jif);
 	}
-
 	return error;
 }
 
