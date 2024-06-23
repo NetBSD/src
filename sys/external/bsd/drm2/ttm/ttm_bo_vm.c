@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.25 2024/06/23 00:48:56 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.26 2024/06/23 00:49:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.25 2024/06/23 00:48:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.26 2024/06/23 00:49:06 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -272,7 +272,8 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 	for (i = 0; i < npages; i++) {
 		paddr_t paddr;
 
-		/* XXX PGO_ALLPAGES?  */
+		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
+			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
 		if (!bo->mem.bus.is_iomem) {
