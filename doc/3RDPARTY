@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2016 2024/06/22 20:10:32 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2017 2024/06/23 18:36:05 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -368,33 +368,38 @@ Please submit all changes upstream.
 Import using the import-src make target.
 
 Package:	drm
-Version:	Linux 3.15
-Current Vers:	?
+Version:	Linux 5.6-rc3, upstream tag v5.6-rc3
+Current Vers:	Linux 6.6 (LTS), upstream branch linux-6.6.y, tag v6.6.35
 Maintainer:	Intel, AMD, Linux kernel developers
-Archive Site:	git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-Home Page:	http://dri.freedesktop.org/
+Archive Site:	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+Home Page:	https://dri.freedesktop.org/
 Mailing List:	dri-devel@lists.freedesktop.org
 Responsible:	riastradh
 License:	BSD
 Location:	sys/external/bsd/drm2/dist
+Vendor tag:	LINUX
+Release tag:	linux-drm-vX-Y(-rcZ) (formerly linux-X-Y(-rcZ)-drm-bsd)
 Notes:
 Graphics drivers.   Talk to riastradh@ about updates.  When importing
 from Linux, we map
        drivers/gpu/drm	       ->      sys/external/bsd/drm2/dist/drm
        include/drm	       ->      sys/external/bsd/drm2/dist/include/drm
-       include/uapi/drm	       ->      sys/external/bsd/drm2/dist/uapi/drm
+       include/uapi/drm	       ->      sys/external/bsd/drm2/dist/include/uapi/drm
 GPL sources are excluded.  In the future, we may import them into
-external/gpl2/drm2 and build them as kernel modules.  Nouveau sources
-(drivers/gpu/drm/nouveau in Linux) must first be processed with the
-script sys/external/bsd/drm2/nouveau/nouveau2netbsd, about which see
-the source for details.
-Vendor tag:    LINUX
-Release tag:   linux-X-Y(-rcZ)-drm-bsd
-	(nouveau got reimported as linux-3-15-drm-bsd-reimport-nouveau)
-I neglected to add RCSIDs in the last import (except for nouveau, for
-which nouveau2netbsd adds them).  For the next import, remember to add
-them!
-
+external/gpl2/drm2 and build them as kernel modules.  Sources are
+processed with prepare-import.sh first, as well as:
+- amdgpu/amdgpu2netbsd
+- i915drm/i915drmkms2netbsd
+- radeon/radeon2netbsd
+- drm/drm2netbsd
+- nouveau/nouveau2netbsd
+- vmwgfx/vmwgfx2netbsd
+Past vendor release tags:
+- linux-3-6-rc8-drm2-bsd
+- linux-3-15-drm-bsd
+- linux-3-15-drm-bsd-reimport-nouveau
+- linux-drm-v4-4-143
+- linux-drm-v5-6-rc3
 
 Package:	ekermit
 Version:	1.7
