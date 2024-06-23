@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.26 2024/06/23 00:49:06 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.27 2024/06/23 00:49:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.26 2024/06/23 00:49:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.27 2024/06/23 00:49:20 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -183,8 +183,8 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 	voff_t uoffset;		/* offset in bytes into bo */
 	unsigned startpage;	/* offset in pages into bo */
 	unsigned i;
-	vm_prot_t vm_prot;	/* VM_PROT_* */
-	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
+	vm_prot_t vm_prot = vmf->entry->protection; /* VM_PROT_* */
+	pgprot_t prot = vm_prot; /* VM_PROT_* | PMAP_* cacheability flags */
 	int err, ret;
 
 	/*
@@ -233,20 +233,17 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 		goto out_io_unlock;
 	}
 
-	vm_prot = vmf->entry->protection;
+	prot = ttm_io_prot(bo->mem.placement, prot);
 	if (!bo->mem.bus.is_iomem) {
 		struct ttm_operation_ctx ctx = {
 			.interruptible = false,
 			.no_wait_gpu = false,
 			.flags = TTM_OPT_FLAG_FORCE_ALLOC
+
 		};
 
 		u.ttm = bo->ttm;
 		size = (size_t)bo->ttm->num_pages << PAGE_SHIFT;
-		if (ISSET(bo->mem.placement, TTM_PL_FLAG_CACHED))
-			pgprot = vm_prot;
-		else
-			pgprot = ttm_io_prot(bo->mem.placement, vm_prot);
 		if (ttm_tt_populate(bo->ttm, &ctx)) {
 			ret = ENOMEM;
 			goto out_io_unlock;
@@ -254,7 +251,6 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 	} else {
 		u.base = (bo->mem.bus.base + bo->mem.bus.offset);
 		size = bo->mem.bus.size;
-		pgprot = ttm_io_prot(bo->mem.placement, vm_prot);
 	}
 
 	KASSERT(vmf->entry->start <= vaddr);
@@ -287,9 +283,12 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 			    vm_prot, 0);
 
 			paddr = pmap_phys_address(cookie);
+#if 0				/* XXX Why no PMAP_* flags added here? */
+			mmapflags = pmap_mmap_flags(cookie);
+#endif
 		}
 		ret = pmap_enter(vmf->orig_map->pmap, vaddr + i*PAGE_SIZE,
-		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
+		    paddr, vm_prot, PMAP_CANFAIL | prot);
 		if (ret) {
 			KASSERT(ret != ERESTART);
 			break;
