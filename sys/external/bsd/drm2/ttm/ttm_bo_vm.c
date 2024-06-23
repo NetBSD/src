@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.27 2024/06/23 00:49:20 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.28 2024/06/23 00:49:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.27 2024/06/23 00:49:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.28 2024/06/23 00:49:31 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -290,6 +290,11 @@ ttm_bo_uvm_fault_reserved(struct uvm_faultinfo *vmf, vaddr_t vaddr,
 		ret = pmap_enter(vmf->orig_map->pmap, vaddr + i*PAGE_SIZE,
 		    paddr, vm_prot, PMAP_CANFAIL | prot);
 		if (ret) {
+			/*
+			 * XXX Continue with ret=0 if i != centeridx,
+			 * so we don't fail if only readahead pages
+			 * fail?
+			 */
 			KASSERT(ret != ERESTART);
 			break;
 		}
