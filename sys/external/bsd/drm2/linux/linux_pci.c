@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.29 2024/06/23 00:53:48 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.30 2024/06/24 21:23:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.29 2024/06/23 00:53:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.30 2024/06/24 21:23:53 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -621,7 +621,7 @@ pci_dev_put(struct pci_dev *pdev)
 }
 
 struct pci_get_class_state {
-	uint32_t		class_subclass_shifted;
+	uint32_t		class_subclass_interface;
 	const struct pci_dev	*from;
 };
 
@@ -639,17 +639,19 @@ pci_get_class_match(void *cookie, const struct pci_attach_args *pa)
 			C->from = NULL;
 		return 0;
 	}
-	if (C->class_subclass_shifted !=
-	    (PCI_CLASS(pa->pa_class) << 8 | PCI_SUBCLASS(pa->pa_class)))
+	if (C->class_subclass_interface !=
+	    (PCI_CLASS(pa->pa_class) << 16 |
+		PCI_SUBCLASS(pa->pa_class) << 8 |
+		PCI_INTERFACE(pa->pa_class)))
 		return 0;
 
 	return 1;
 }
 
 struct pci_dev *
-pci_get_class(uint32_t class_subclass_shifted, struct pci_dev *from)
+pci_get_class(uint32_t class_subclass_interface, struct pci_dev *from)
 {
-	struct pci_get_class_state context = {class_subclass_shifted, from},
+	struct pci_get_class_state context = {class_subclass_interface, from},
 	    *C = &context;
 	struct pci_attach_args pa;
 	struct pci_dev *pdev = NULL;
