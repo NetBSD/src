@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2024/06/22 13:36:54 riastradh Exp $
+# $NetBSD: Makefile,v 1.5 2024/06/24 18:01:03 riastradh Exp $
 
 NOLINT=
 NOMAN=
@@ -90,12 +90,9 @@ libcbor.pc: libcbor.pc.in
 SHLIB_MAJOR=    0
 SHLIB_MINOR=    5
 
-.include <bsd.lib.mk>
-
-${ALLOBJS}: cbor/configuration.h
-
 cbor/configuration.h: ${VERS_FILE}
-	@mkdir -p cbor && ( \
+	${_MKTARGET_CREATE}
+	mkdir -p cbor && ( \
 	echo	'#define CBOR_MAJOR_VERSION ${CBOR_VERSION_MAJOR}' && \
 	echo	'#define CBOR_MINOR_VERSION ${CBOR_VERSION_MINOR}' && \
 	echo	'#define CBOR_PATCH_VERSION ${CBOR_VERSION_PATCH}' && \
@@ -103,9 +100,10 @@ cbor/configuration.h: ${VERS_FILE}
 	echo	'#define CBOR_BUFFER_GROWTH 2' && \
 	echo	'#define CBOR_PRETTY_PRINTER 1' && \
 	echo	'#define CBOR_RESTRICT_SPECIFIER restrict' && \
-	echo	'#define CBOR_INLINE_SPECIFIER ') > ${.TARGET}
+	echo	'#define CBOR_INLINE_SPECIFIER ') > ${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+= cbor/configuration.h
+CLEANFILES+= cbor/configuration.h.tmp
 
-.BEGIN:
-
+.include <bsd.lib.mk>
