@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.67 2024/06/22 23:24:46 mrg Exp $
+# $NetBSD: md.alpha,v 1.68 2024/06/24 09:36:59 martin Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -339,7 +339,7 @@
 ./usr/X11R7/man/html4/r128.html				xserver-xf86-video-r128-htmlman	html,xorg
 ./usr/X11R7/man/html4/radeon.html			xserver-xf86-video-radeon-kms-htmlman	html,xorg
 ./usr/X11R7/man/html4/radeonhd.html			xserver-obsolete	html,xorg,obsolete
-./usr/X11R7/man/html4/s3.html				xserver-xf86-video-s3-htmlman	html,xorg
+./usr/X11R7/man/html4/s3.html				xserver-obsolete	html,xorg,obsolete
 ./usr/X11R7/man/html4/s3virge.html			xserver-xf86-video-s3virge-htmlman	html,xorg
 ./usr/X11R7/man/html4/savage.html			xserver-xf86-video-savage-htmlman	html,xorg
 ./usr/X11R7/man/html4/siliconmotion.html		xserver-xf86-video-siliconmotion-htmlman	html,xorg
