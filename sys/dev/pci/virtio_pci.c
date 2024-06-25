@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.47 2024/06/25 14:22:16 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.48 2024/06/25 14:22:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.47 2024/06/25 14:22:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.48 2024/06/25 14:22:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ static bool	virtio_pci_msix_enabled(struct virtio_pci_softc *);
 
 CFATTACH_DECL3_NEW(virtio_pci, sizeof(struct virtio_pci_softc),
     virtio_pci_match, virtio_pci_attach, virtio_pci_detach, NULL,
-    virtio_pci_rescan, NULL, DVF_DETACH_SHUTDOWN);
+    virtio_pci_rescan, NULL, 0);
 
 static const struct virtio_ops virtio_pci_ops_09 = {
 	.kick = virtio_pci_kick_09,
