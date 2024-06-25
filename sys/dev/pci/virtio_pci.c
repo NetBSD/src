@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.49 2024/06/25 14:22:48 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.50 2024/06/25 14:53:45 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,17 +28,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.49 2024/06/25 14:22:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.50 2024/06/25 14:53:45 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kmem.h>
-#include <sys/module.h>
-#include <sys/endian.h>
-#include <sys/interrupt.h>
-#include <sys/syslog.h>
+#include <sys/types.h>
 
 #include <sys/device.h>
+#include <sys/endian.h>
+#include <sys/interrupt.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
