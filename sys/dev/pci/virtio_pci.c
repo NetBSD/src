@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.53 2024/06/25 14:55:09 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.54 2024/06/25 14:55:23 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.53 2024/06/25 14:55:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.54 2024/06/25 14:55:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -618,7 +618,8 @@ virtio_pci_find_cap(struct virtio_pci_softc *psc, int cfg_type, void *buf,
 static void
 virtio_pci_kick_09(struct virtio_softc *sc, uint16_t idx)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 
 	bus_space_write_2(psc->sc_notify_iot, psc->sc_notify_ioh, 0, idx);
 }
@@ -648,7 +649,8 @@ virtio_pci_adjust_config_region(struct virtio_pci_softc *psc)
 static uint16_t
 virtio_pci_read_queue_size_09(struct virtio_softc *sc, uint16_t idx)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 
 	bus_space_write_2(psc->sc_iot, psc->sc_ioh,
 	    VIRTIO_CONFIG_QUEUE_SELECT, idx);
@@ -659,7 +661,8 @@ virtio_pci_read_queue_size_09(struct virtio_softc *sc, uint16_t idx)
 static void
 virtio_pci_setup_queue_09(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 
 	bus_space_write_2(psc->sc_iot, psc->sc_ioh,
 	    VIRTIO_CONFIG_QUEUE_SELECT, idx);
@@ -678,7 +681,8 @@ virtio_pci_setup_queue_09(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 static void
 virtio_pci_set_status_09(struct virtio_softc *sc, int status)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	int old = 0;
 
 	if (status != 0) {
@@ -693,7 +697,8 @@ static void
 virtio_pci_negotiate_features_09(struct virtio_softc *sc,
     uint64_t guest_features)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	uint32_t r;
 
 	r = bus_space_read_4(psc->sc_iot, psc->sc_ioh,
@@ -714,7 +719,8 @@ virtio_pci_negotiate_features_09(struct virtio_softc *sc,
 static void
 virtio_pci_kick_10(struct virtio_softc *sc, uint16_t idx)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	unsigned offset = sc->sc_vqs[idx].vq_notify_off *
 	    psc->sc_notify_off_multiplier;
 
@@ -724,8 +730,9 @@ virtio_pci_kick_10(struct virtio_softc *sc, uint16_t idx)
 static uint16_t
 virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	bus_space_tag_t	   iot = psc->sc_iot;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
+	bus_space_tag_t iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
 
 	bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_SELECT, idx);
@@ -760,7 +767,8 @@ virtio_pci_bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
 static void
 virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	struct virtqueue *vq = &sc->sc_vqs[idx];
 	bus_space_tag_t iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
@@ -800,8 +808,9 @@ virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 static void
 virtio_pci_set_status_10(struct virtio_softc *sc, int status)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	bus_space_tag_t	   iot = psc->sc_iot;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
+	bus_space_tag_t iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
 	int old = 0;
 
@@ -815,9 +824,10 @@ void
 virtio_pci_negotiate_features_10(struct virtio_softc *sc,
     uint64_t guest_features)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	device_t self          =  sc->sc_dev;
-	bus_space_tag_t	   iot = psc->sc_iot;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
+	device_t self = sc->sc_dev;
+	bus_space_tag_t iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
 	uint64_t host, negotiated, device_status;
 
@@ -873,8 +883,9 @@ virtio_pci_negotiate_features_10(struct virtio_softc *sc,
 static int
 virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	bus_space_tag_t	   iot = psc->sc_iot;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
+	bus_space_tag_t iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
 	int vector, ret, qid;
 
@@ -912,7 +923,8 @@ virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 static int
 virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	int offset, vector, ret, qid;
 
 	if (!virtio_pci_msix_enabled(psc))
@@ -960,7 +972,8 @@ static int
 virtio_pci_establish_msix_interrupts(struct virtio_softc *sc,
     const struct pci_attach_args *pa)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct virtqueue *vq;
@@ -1097,7 +1110,8 @@ static int
 virtio_pci_establish_intx_interrupt(struct virtio_softc *sc,
     const struct pci_attach_args *pa)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -1123,7 +1137,8 @@ virtio_pci_establish_intx_interrupt(struct virtio_softc *sc,
 static int
 virtio_pci_alloc_interrupts(struct virtio_softc *sc)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = psc->sc_pa.pa_pc;
 	pcitag_t tag = psc->sc_pa.pa_tag;
@@ -1215,7 +1230,8 @@ retry:
 static void
 virtio_pci_free_interrupts(struct virtio_softc *sc)
 {
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 
 	for (int i = 0; i < psc->sc_ihs_num; i++) {
 		if (psc->sc_ihs[i] == NULL)
@@ -1254,7 +1270,8 @@ static int
 virtio_pci_intr(void *arg)
 {
 	struct virtio_softc *sc = arg;
-	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
+	struct virtio_pci_softc * const psc = container_of(sc,
+	    struct virtio_pci_softc, sc_sc);
 	int isr, r = 0;
 
 	/* check and ack the interrupt */
