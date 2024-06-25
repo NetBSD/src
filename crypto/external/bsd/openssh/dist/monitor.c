@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.43 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.44 2024/06/25 16:58:24 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.237 2023/08/16 16:14:11 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.43 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.44 2024/06/25 16:58:24 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -318,7 +318,6 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 			auth_log(ssh, authenticated, partial,
 			    auth_method, auth_submethod);
 			if (!partial && !authenticated) {
-				pfilter_notify(1);
 				authctxt->failures++;
 			}
 			if (authenticated || partial) {
@@ -327,16 +326,21 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 			}
 		}
 		if (authctxt->failures > options.max_authtries) {
+			pfilter_notify(1);
 			/* Shouldn't happen */
 			fatal_f("privsep child made too many authentication "
 			    "attempts");
 		}
 	}
 
-	if (!authctxt->valid)
+	if (!authctxt->valid) {
+		pfilter_notify(1);
 		fatal_f("authenticated invalid user");
-	if (strcmp(auth_method, "unknown") == 0)
+	}
+	if (strcmp(auth_method, "unknown") == 0) {
+		pfilter_notify(1);
 		fatal_f("authentication method name unknown");
+	}
 
 	debug_f("user %s authenticated by privileged process", authctxt->user);
 	ssh->authctxt = NULL;
