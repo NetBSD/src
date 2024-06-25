@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.50 2024/06/25 14:53:45 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.51 2024/06/25 14:54:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.50 2024/06/25 14:53:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.51 2024/06/25 14:54:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,7 +77,6 @@ static int	virtio_pci_match(device_t, cfdata_t, void *);
 static void	virtio_pci_attach(device_t, device_t, void *);
 static int	virtio_pci_rescan(device_t, const char *, const int *);
 static int	virtio_pci_detach(device_t, int);
-
 
 #define NMAPREG		((PCI_MAPREG_END - PCI_MAPREG_START) / \
 				sizeof(pcireg_t))
@@ -171,7 +170,6 @@ static bool	virtio_pci_msix_enabled(struct virtio_pci_softc *);
 #	define STRUCT_ENDIAN_09	LITTLE_ENDIAN
 #	define STRUCT_ENDIAN_10	LITTLE_ENDIAN
 #endif
-
 
 CFATTACH_DECL3_NEW(virtio_pci, sizeof(struct virtio_pci_softc),
     virtio_pci_match, virtio_pci_attach, virtio_pci_detach, NULL,
@@ -351,7 +349,6 @@ virtio_pci_rescan(device_t self, const char *ifattr, const int *locs)
 	return 0;
 }
 
-
 static int
 virtio_pci_detach(device_t self, int flags)
 {
@@ -388,16 +385,12 @@ virtio_pci_detach(device_t self, int flags)
 	return 0;
 }
 
-
 static int
 virtio_pci_attach_09(device_t self, void *aux)
-	//struct virtio_pci_softc *psc, struct pci_attach_args *pa)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct virtio_softc * const sc = &psc->sc_sc;
-//	pci_chipset_tag_t pc = pa->pa_pc;
-//	pcitag_t tag = pa->pa_tag;
 
 	/* complete IO region */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
@@ -430,7 +423,6 @@ virtio_pci_attach_09(device_t self, void *aux)
 	sc->sc_struct_endian = STRUCT_ENDIAN_09;
 	return 0;
 }
-
 
 static int
 virtio_pci_attach_10(device_t self, void *aux)
@@ -611,7 +603,6 @@ virtio_pci_find_cap(struct virtio_pci_softc *psc, int cfg_type, void *buf, int b
 	return 0;
 }
 
-
 /* -------------------------------------
  * Version 0.9 support
  * -------------------------------------*/
@@ -720,7 +711,6 @@ virtio_pci_kick_10(struct virtio_softc *sc, uint16_t idx)
 
 	bus_space_write_2(psc->sc_notify_iot, psc->sc_notify_ioh, offset, idx);
 }
-
 
 static uint16_t
 virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
@@ -863,7 +853,6 @@ virtio_pci_negotiate_features_10(struct virtio_softc *sc, uint64_t guest_feature
 	sc->sc_active_features = negotiated;
 	return;
 }
-
 
 /* -------------------------------------
  * Generic PCI interrupt code
