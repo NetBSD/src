@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.46 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.471 2023/09/04 10:29:58 job Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.47 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.472 2024/01/11 01:45:36 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.46 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.47 2024/06/25 16:36:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -255,10 +255,12 @@ ask_filename(struct passwd *pw, const char *prompt)
 		name = _PATH_SSH_CLIENT_ID_ED25519;
 	else {
 		switch (sshkey_type_from_name(key_type_name)) {
+#ifdef WITH_DSA
 		case KEY_DSA_CERT:
 		case KEY_DSA:
 			name = _PATH_SSH_CLIENT_ID_DSA;
 			break;
+#endif
 		case KEY_ECDSA_CERT:
 		case KEY_ECDSA:
 			name = _PATH_SSH_CLIENT_ID_ECDSA;
@@ -367,10 +369,12 @@ do_convert_to_pkcs8(struct sshkey *k)
 		if (!PEM_write_RSA_PUBKEY(stdout, k->rsa))
 			fatal("PEM_write_RSA_PUBKEY failed");
 		break;
+#ifdef WITH_DSA
 	case KEY_DSA:
 		if (!PEM_write_DSA_PUBKEY(stdout, k->dsa))
 			fatal("PEM_write_DSA_PUBKEY failed");
 		break;
+#endif
 	case KEY_ECDSA:
 		if (!PEM_write_EC_PUBKEY(stdout, k->ecdsa))
 			fatal("PEM_write_EC_PUBKEY failed");
@@ -389,10 +393,12 @@ do_convert_to_pem(struct sshkey *k)
 		if (!PEM_write_RSAPublicKey(stdout, k->rsa))
 			fatal("PEM_write_RSAPublicKey failed");
 		break;
+#ifdef WITH_DSA
 	case KEY_DSA:
 		if (!PEM_write_DSA_PUBKEY(stdout, k->dsa))
 			fatal("PEM_write_DSA_PUBKEY failed");
 		break;
+#endif
 	case KEY_ECDSA:
 		if (!PEM_write_EC_PUBKEY(stdout, k->ecdsa))
 			fatal("PEM_write_EC_PUBKEY failed");
@@ -465,8 +471,10 @@ do_convert_private_ssh2(struct sshbuf *b)
 	u_int magic, i1, i2, i3, i4;
 	size_t slen;
 	u_long e;
+#ifdef WITH_DSA
 	BIGNUM *dsa_p = NULL, *dsa_q = NULL, *dsa_g = NULL;
 	BIGNUM *dsa_pub_key = NULL, *dsa_priv_key = NULL;
+#endif
 	BIGNUM *rsa_n = NULL, *rsa_e = NULL, *rsa_d = NULL;
 	BIGNUM *rsa_p = NULL, *rsa_q = NULL, *rsa_iqmp = NULL;
 
@@ -494,10 +502,12 @@ do_convert_private_ssh2(struct sshbuf *b)
 	}
 	free(cipher);
 
-	if (strstr(type, "dsa")) {
-		ktype = KEY_DSA;
-	} else if (strstr(type, "rsa")) {
+	if (strstr(type, "rsa")) {
 		ktype = KEY_RSA;
+#ifdef WITH_DSA
+	} else if (strstr(type, "dsa")) {
+		ktype = KEY_DSA;
+#endif
 	} else {
 		free(type);
 		return NULL;
@@ -507,6 +517,7 @@ do_convert_private_ssh2(struct sshbuf *b)
 	free(type);
 
 	switch (key->type) {
+#ifdef WITH_DSA
 	case KEY_DSA:
 		if ((dsa_p = BN_new()) == NULL ||
 		    (dsa_q = BN_new()) == NULL ||
@@ -526,6 +537,7 @@ do_convert_private_ssh2(struct sshbuf *b)
 			fatal_f("DSA_set0_key failed");
 		dsa_pub_key = dsa_priv_key = NULL; /* transferred */
 		break;
+#endif
 	case KEY_RSA:
 		if ((r = sshbuf_get_u8(b, &e1)) != 0 ||
 		    (e1 < 30 && (r = sshbuf_get_u8(b, &e2)) != 0) ||
@@ -689,12 +701,14 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 		(*k)->type = KEY_RSA;
 		(*k)->rsa = EVP_PKEY_get1_RSA(pubkey);
 		break;
+#ifdef WITH_DSA
 	case EVP_PKEY_DSA:
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_DSA;
 		(*k)->dsa = EVP_PKEY_get1_DSA(pubkey);
 		break;
+#endif
 	case EVP_PKEY_EC:
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
@@ -762,10 +776,12 @@ do_convert_from(struct passwd *pw)
 			fprintf(stdout, "\n");
 	} else {
 		switch (k->type) {
+#ifdef WITH_DSA
 		case KEY_DSA:
 			ok = PEM_write_DSAPrivateKey(stdout, k->dsa, NULL,
 			    NULL, 0, NULL, NULL);
 			break;
+#endif
 		case KEY_ECDSA:
 			ok = PEM_write_ECPrivateKey(stdout, k->ecdsa, NULL,
 			    NULL, 0, NULL, NULL);
@@ -3731,9 +3747,11 @@ main(int argc, char **argv)
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_RSA_KEY_FILE, rr_hostname,
 			    print_generic, opts, nopts);
+#ifdef WITH_DSA
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_DSA_KEY_FILE, rr_hostname,
 			    print_generic, opts, nopts);
+#endif
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_ECDSA_KEY_FILE, rr_hostname,
 			    print_generic, opts, nopts);

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh_api.c,v 1.15 2023/07/28 04:58:27 rin Exp $	*/
-/* $OpenBSD: ssh_api.c,v 1.27 2021/04/03 06:18:41 djm Exp $ */
+/*	$NetBSD: ssh_api.c,v 1.16 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: ssh_api.c,v 1.28 2024/01/09 21:39:14 djm Exp $ */
 
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.15 2023/07/28 04:58:27 rin Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.16 2024/06/25 16:36:54 christos Exp $");
 
 #include <sys/types.h>
 
@@ -83,6 +83,7 @@ int
 ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 {
 	const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
+	char *populated[PROPOSAL_MAX];
 	struct ssh *ssh;
 	const char **proposal;
 	static int called;
@@ -102,10 +103,19 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 
 	/* Initialize key exchange */
 	proposal = kex_params ? __UNCONST(kex_params->proposal) : myproposal;
-	if ((r = kex_ready(ssh, __UNCONST(proposal))) != 0) {
+	kex_proposal_populate_entries(ssh, populated,
+	    proposal[PROPOSAL_KEX_ALGS],
+	    proposal[PROPOSAL_ENC_ALGS_CTOS],
+	    proposal[PROPOSAL_MAC_ALGS_CTOS],
+	    proposal[PROPOSAL_COMP_ALGS_CTOS],
+	    proposal[PROPOSAL_SERVER_HOST_KEY_ALGS]);
+	r = kex_ready(ssh, populated);
+	kex_proposal_free_entries(populated);
+	if (r != 0) {
 		ssh_free(ssh);
 		return r;
 	}
+
 	ssh->kex->server = is_server;
 	if (is_server) {
 #ifdef WITH_OPENSSL

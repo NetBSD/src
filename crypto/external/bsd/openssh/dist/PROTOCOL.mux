@@ -188,8 +188,6 @@ For dynamically allocated listen port the server replies with
 
 7. Requesting closure of port forwards
 
-Note: currently unimplemented (server will always reply with MUX_S_FAILURE).
-
 A client may request the master to close a port forward:
 
 	uint32	MUX_C_CLOSE_FWD
@@ -295,5 +293,5 @@ XXX session inspection via master
 XXX signals via mux request
 XXX list active connections via mux
 
-$OpenBSD: PROTOCOL.mux,v 1.13 2022/01/01 01:55:30 jsg Exp $
-$NetBSD: PROTOCOL.mux,v 1.12 2022/02/23 19:07:20 christos Exp $
+$OpenBSD: PROTOCOL.mux,v 1.14 2024/01/08 05:11:18 djm Exp $
+$NetBSD: PROTOCOL.mux,v 1.13 2024/06/25 16:36:54 christos Exp $

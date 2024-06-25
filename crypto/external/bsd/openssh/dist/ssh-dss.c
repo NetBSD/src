@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-dss.c,v 1.18 2023/07/26 17:58:16 christos Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.49 2023/03/05 05:34:09 dtucker Exp $ */
+/*	$NetBSD: ssh-dss.c,v 1.19 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.50 2024/01/11 01:45:36 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.18 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.19 2024/06/25 16:36:54 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -38,6 +39,8 @@ __RCSID("$NetBSD: ssh-dss.c,v 1.18 2023/07/26 17:58:16 christos Exp $");
 #include "digest.h"
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
+
+#ifdef WITH_DSA
 
 #define INTBLOB_LEN	20
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
@@ -448,3 +451,5 @@ const struct sshkey_impl sshkey_dsa_cert_impl = {
 	/* .keybits = */	0,
 	/* .funcs = */		&sshkey_dss_funcs,
 };
+
+#endif /* WITH_DSA */

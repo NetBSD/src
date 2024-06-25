@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.39 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.236 2023/09/10 23:12:32 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.40 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.237 2024/02/01 02:37:33 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.39 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.40 2024/06/25 16:36:54 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -164,24 +164,24 @@ struct CMD {
 #define LOCAL	2
 
 static const struct CMD cmds[] = {
-	{ "bye",	I_QUIT,		NOARGS, 	NOARGS	},
-	{ "cd",		I_CHDIR,	REMOTE, 	NOARGS	},
-	{ "chdir",	I_CHDIR,	REMOTE, 	NOARGS	},
-	{ "chgrp",	I_CHGRP,	REMOTE, 	NOARGS	},
-	{ "chmod",	I_CHMOD,	REMOTE, 	NOARGS	},
-	{ "chown",	I_CHOWN,	REMOTE, 	NOARGS	},
-	{ "copy",	I_COPY,		REMOTE, 	LOCAL	},
-	{ "cp",		I_COPY,		REMOTE, 	LOCAL	},
-	{ "df",		I_DF,		REMOTE, 	NOARGS	},
-	{ "dir",	I_LS,		REMOTE, 	NOARGS	},
-	{ "exit",	I_QUIT,		NOARGS, 	NOARGS	},
-	{ "get",	I_GET,		REMOTE, 	LOCAL	},
-	{ "help",	I_HELP,		NOARGS, 	NOARGS	},
+	{ "bye",	I_QUIT,		NOARGS,		NOARGS	},
+	{ "cd",		I_CHDIR,	REMOTE,		NOARGS	},
+	{ "chdir",	I_CHDIR,	REMOTE,		NOARGS	},
+	{ "chgrp",	I_CHGRP,	REMOTE,		NOARGS	},
+	{ "chmod",	I_CHMOD,	REMOTE,		NOARGS	},
+	{ "chown",	I_CHOWN,	REMOTE,		NOARGS	},
+	{ "copy",	I_COPY,		REMOTE,		LOCAL	},
+	{ "cp",		I_COPY,		REMOTE,		LOCAL	},
+	{ "df",		I_DF,		REMOTE,		NOARGS	},
+	{ "dir",	I_LS,		REMOTE,		NOARGS	},
+	{ "exit",	I_QUIT,		NOARGS,		NOARGS	},
+	{ "get",	I_GET,		REMOTE,		LOCAL	},
+	{ "help",	I_HELP,		NOARGS,		NOARGS	},
 	{ "lcd",	I_LCHDIR,	LOCAL,		NOARGS	},
 	{ "lchdir",	I_LCHDIR,	LOCAL,		NOARGS	},
 	{ "lls",	I_LLS,		LOCAL,		NOARGS	},
 	{ "lmkdir",	I_LMKDIR,	LOCAL,		NOARGS	},
-	{ "ln",		I_LINK,		REMOTE, 	REMOTE	},
+	{ "ln",		I_LINK,		REMOTE,		REMOTE	},
 	{ "lpwd",	I_LPWD,		LOCAL,		NOARGS	},
 	{ "ls",		I_LS,		REMOTE,		NOARGS	},
 	{ "lumask",	I_LUMASK,	NOARGS,		NOARGS	},
@@ -190,17 +190,17 @@ static const struct CMD cmds[] = {
 	{ "mput",	I_PUT,		LOCAL,		REMOTE	},
 	{ "progress",	I_PROGRESS,	NOARGS,		NOARGS	},
 	{ "put",	I_PUT,		LOCAL,		REMOTE	},
-	{ "pwd",	I_PWD,		REMOTE, 	NOARGS	},
-	{ "quit",	I_QUIT,		NOARGS, 	NOARGS	},
-	{ "reget",	I_REGET,	REMOTE, 	LOCAL	},
-	{ "rename",	I_RENAME,	REMOTE, 	REMOTE	},
+	{ "pwd",	I_PWD,		REMOTE,		NOARGS	},
+	{ "quit",	I_QUIT,		NOARGS,		NOARGS	},
+	{ "reget",	I_REGET,	REMOTE,		LOCAL	},
+	{ "rename",	I_RENAME,	REMOTE,		REMOTE	},
 	{ "reput",	I_REPUT,	LOCAL,		REMOTE	},
 	{ "rm",		I_RM,		REMOTE,		NOARGS	},
 	{ "rmdir",	I_RMDIR,	REMOTE,		NOARGS	},
 	{ "symlink",	I_SYMLINK,	REMOTE,		REMOTE	},
-	{ "version",	I_VERSION,	NOARGS, 	NOARGS	},
-	{ "!",		I_SHELL,	NOARGS, 	NOARGS	},
-	{ "?",		I_HELP,		NOARGS, 	NOARGS	},
+	{ "version",	I_VERSION,	NOARGS,		NOARGS	},
+	{ "!",		I_SHELL,	NOARGS,		NOARGS	},
+	{ "?",		I_HELP,		NOARGS,		NOARGS	},
 	{ NULL,		-1,		-1,		-1	}
 };
 

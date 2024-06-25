@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.32 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.153 2023/06/21 05:06:04 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.33 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.155 2024/01/11 01:45:36 djm Exp $ */
 
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.32 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.33 2024/06/25 16:36:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -485,11 +485,11 @@ congreet(int s)
 
 	/*
 	 * Read the server banner as per RFC4253 section 4.2.  The "SSH-"
-	 * protocol identification string may be preceeded by an arbitrarily
+	 * protocol identification string may be preceded by an arbitrarily
 	 * large banner which we must read and ignore.  Loop while reading
 	 * newline-terminated lines until we have one starting with "SSH-".
 	 * The ID string cannot be longer than 255 characters although the
-	 * preceeding banner lines may (in which case they'll be discarded
+	 * preceding banner lines may (in which case they'll be discarded
 	 * in multiple iterations of the outer loop).
 	 */
 	for (;;) {
@@ -770,9 +770,11 @@ main(int argc, char **argv)
 				int type = sshkey_type_from_name(tname);
 
 				switch (type) {
+#ifdef WITH_DSA
 				case KEY_DSA:
 					get_keytypes |= KT_DSA;
 					break;
+#endif
 				case KEY_ECDSA:
 					get_keytypes |= KT_ECDSA;
 					break;

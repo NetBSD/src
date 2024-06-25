@@ -1,5 +1,5 @@
-/*	$NetBSD: sshsig.c,v 1.12 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.34 2023/12/08 09:18:39 markus Exp $ */
+/*	$NetBSD: sshsig.c,v 1.13 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.35 2024/03/08 22:16:32 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.12 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.13 2024/06/25 16:36:54 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -748,7 +748,7 @@ parse_principals_key_and_options(const char *path, u_long linenum, char *line,
 		*keyp = NULL;
 
 	cp = line;
-	cp = cp + strspn(cp, " \t"); /* skip leading whitespace */
+	cp = cp + strspn(cp, " \t\n\r"); /* skip leading whitespace */
 	if (*cp == '#' || *cp == '\0')
 		return SSH_ERR_KEY_NOT_FOUND; /* blank or all-comment line */
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.50 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.601 2023/12/18 14:45:49 djm Exp $ */
+/*	$NetBSD: sshd.c,v 1.51 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.602 2024/01/08 00:34:34 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.50 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.51 2024/06/25 16:36:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -2351,6 +2351,7 @@ do_ssh2_kex(struct ssh *ssh)
 	kex->sign = sshd_hostkey_sign;
 
 	ssh_dispatch_run_fatal(ssh, DISPATCH_BLOCK, &kex->done);
+	kex_proposal_free_entries(myproposal);
 
 #ifdef DEBUG_KEXDH
 	/* send 1st encrypted/maced/compressed message */
@@ -2360,7 +2361,6 @@ do_ssh2_kex(struct ssh *ssh)
 	    (r = ssh_packet_write_wait(ssh)) != 0)
 		fatal_fr(r, "send test");
 #endif
-	kex_proposal_free_entries(myproposal);
 	debug("KEX done");
 }
 

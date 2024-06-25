@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.39 2023/12/20 17:15:20 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.402 2023/11/24 00:31:30 dtucker Exp $ */
+/*	$NetBSD: clientloop.c,v 1.40 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.403 2024/02/21 05:57:34 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.39 2023/12/20 17:15:20 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.40 2024/06/25 16:36:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -513,7 +513,7 @@ send_chaff(struct ssh *ssh)
 {
 	int r;
 
-	if ((ssh->kex->flags & KEX_HAS_PING) == 0)
+	if (ssh->kex == NULL || (ssh->kex->flags & KEX_HAS_PING) == 0)
 		return 0;
 	/* XXX probabilistically send chaff? */
 	/*

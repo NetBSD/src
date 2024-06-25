@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.34 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.154 2023/10/12 02:18:18 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.35 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.156 2024/03/04 02:16:11 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -104,7 +104,7 @@ typedef struct {
 	char   *sk_provider; /* Security key provider */
 	int	verify_host_key_dns;	/* Verify host key using DNS */
 
-	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
+	int     num_identity_files;	/* Number of files for identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];
 	int    identity_file_userprovided[SSH_MAX_IDENTITY_FILES];
 	struct sshkey *identity_keys[SSH_MAX_IDENTITY_FILES];
@@ -175,12 +175,12 @@ typedef struct {
 	int	proxy_use_fdpass;
 
 	int	num_canonical_domains;
-	char	*canonical_domains[MAX_CANON_DOMAINS];
+	char	**canonical_domains;
 	int	canonicalize_hostname;
 	int	canonicalize_max_dots;
 	int	canonicalize_fallback_local;
 	int	num_permitted_cnames;
-	struct allowed_cname permitted_cnames[MAX_CANON_DOMAINS];
+	struct allowed_cname *permitted_cnames;
 
 	char	*revoked_host_keys;
 
