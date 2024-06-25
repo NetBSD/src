@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.8 2024/05/25 00:00:25 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.9 2024/06/25 05:18:38 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -200,8 +200,15 @@ CFLAGS.gcc-warn+=	-Wno-error=duplicated-branches
 
 .for shell in /usr/pkg/bin/bash /usr/pkg/bin/dash
 .  if exists(${shell})
-TESTS+=		${shell:T}
+TESTS+=			${shell:T}
 CPPFLAGS.${shell:T}=	-DDEFSHELL_CUSTOM="\"${shell}\""
+
+.    for name in ${shell:T}-sanitize
+TESTS+=			${name}
+ENV.${name}=		MKSANITIZER=yes LIMIT_RESOURCES=:
+CPPFLAGS.${name}=	-DDEFSHELL_CUSTOM="\"${shell}\"" -DCLEANUP
+CFLAGS.${name}=		-ggdb -O0
+.    endfor
 .  endif
 .endfor
 
