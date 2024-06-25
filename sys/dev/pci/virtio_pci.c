@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.48 2024/06/25 14:22:30 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.49 2024/06/25 14:22:48 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.48 2024/06/25 14:22:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.49 2024/06/25 14:22:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,8 @@ err:
 		if (psc->sc_bars_iosize[i] == 0)
 			continue;
 		bus_space_unmap(psc->sc_bars_iot[i], psc->sc_bars_ioh[i],
-				psc->sc_bars_iosize[i]);
+		    psc->sc_bars_iosize[i]);
+		psc->sc_bars_iosize[i] = 0;
 	}
 	return ret;
 }
