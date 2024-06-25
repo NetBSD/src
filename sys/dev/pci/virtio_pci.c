@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.52 2024/06/25 14:54:55 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.53 2024/06/25 14:55:09 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.52 2024/06/25 14:54:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.53 2024/06/25 14:55:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -142,9 +142,9 @@ static int	virtio_pci_msix_config_intr(void *);
 static int	virtio_pci_setup_interrupts_09(struct virtio_softc *, int);
 static int	virtio_pci_setup_interrupts_10(struct virtio_softc *, int);
 static int	virtio_pci_establish_msix_interrupts(struct virtio_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static int	virtio_pci_establish_intx_interrupt(struct virtio_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static bool	virtio_pci_msix_enabled(struct virtio_pci_softc *);
 
 #define VIRTIO_MSIX_CONFIG_VECTOR_INDEX	0
@@ -205,9 +205,8 @@ static const struct virtio_ops virtio_pci_ops_10 = {
 static int
 virtio_pci_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa;
+	const struct pci_attach_args * const pa = aux;
 
-	pa = (struct pci_attach_args *)aux;
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_QUMRANET:
 		/* Transitional devices MUST have a PCI Revision ID of 0. */
@@ -240,7 +239,7 @@ virtio_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
 	struct virtio_softc * const sc = &psc->sc_sc;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	const struct pci_attach_args * const pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	int revision;
@@ -394,7 +393,7 @@ static int
 virtio_pci_attach_09(device_t self, void *aux)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	const struct pci_attach_args * const pa = aux;
 	struct virtio_softc * const sc = &psc->sc_sc;
 
 	/* complete IO region */
@@ -433,10 +432,10 @@ static int
 virtio_pci_attach_10(device_t self, void *aux)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	const struct pci_attach_args * const pa = aux;
 	struct virtio_softc * const sc = &psc->sc_sc;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
+	const pci_chipset_tag_t pc = pa->pa_pc;
+	const pcitag_t tag = pa->pa_tag;
 
 	struct virtio_pci_cap common, isr, device;
 	struct virtio_pci_notify_cap notify;
@@ -959,7 +958,7 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 
 static int
 virtio_pci_establish_msix_interrupts(struct virtio_softc *sc,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
 	device_t self = sc->sc_dev;
@@ -1096,7 +1095,7 @@ error:
 
 static int
 virtio_pci_establish_intx_interrupt(struct virtio_softc *sc,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
 	device_t self = sc->sc_dev;
