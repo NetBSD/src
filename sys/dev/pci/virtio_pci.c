@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.45 2024/06/25 14:21:45 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.46 2024/06/25 14:22:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.45 2024/06/25 14:21:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.46 2024/06/25 14:22:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,7 @@ virtio_pci_detach(device_t self, int flags)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
 	struct virtio_softc * const sc = &psc->sc_sc;
+	unsigned i;
 	int r;
 
 	r = config_detach_children(self, flags);
@@ -368,10 +369,21 @@ virtio_pci_detach(device_t self, int flags)
 	KASSERT(sc->sc_vqs == NULL);
 	KASSERT(psc->sc_ihs_num == 0);
 
-	if (psc->sc_iosize)
-		bus_space_unmap(psc->sc_iot, psc->sc_ioh,
-			psc->sc_mapped_iosize);
-	psc->sc_iosize = 0;
+	if (sc->sc_version_1) {
+		for (i = 0; i < __arraycount(psc->sc_bars_iot); i++) {
+			if (psc->sc_bars_iosize[i] == 0)
+				continue;
+			bus_space_unmap(psc->sc_bars_iot[i],
+			    psc->sc_bars_ioh[i], psc->sc_bars_iosize[i]);
+			psc->sc_bars_iosize[i] = 0;
+		}
+	} else {
+		if (psc->sc_iosize) {
+			bus_space_unmap(psc->sc_iot, psc->sc_ioh,
+			    psc->sc_mapped_iosize);
+			psc->sc_iosize = 0;
+		}
+	}
 
 	return 0;
 }
