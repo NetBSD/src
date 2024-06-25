@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.46 2024/06/25 14:22:03 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.47 2024/06/25 14:22:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.46 2024/06/25 14:22:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.47 2024/06/25 14:22:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ struct virtio_pci_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
-	bus_size_t		sc_mapped_iosize;
 
 	/* BARs */
 	bus_space_tag_t		sc_bars_iot[NMAPREG];
@@ -380,7 +379,7 @@ virtio_pci_detach(device_t self, int flags)
 	} else {
 		if (psc->sc_iosize) {
 			bus_space_unmap(psc->sc_iot, psc->sc_ioh,
-			    psc->sc_mapped_iosize);
+			    psc->sc_iosize);
 			psc->sc_iosize = 0;
 		}
 	}
@@ -405,7 +404,6 @@ virtio_pci_attach_09(device_t self, void *aux)
 		aprint_error_dev(self, "can't map i/o space\n");
 		return EIO;
 	}
-	psc->sc_mapped_iosize = psc->sc_iosize;
 
 	/* queue space */
 	if (bus_space_subregion(psc->sc_iot, psc->sc_ioh,
@@ -543,7 +541,6 @@ virtio_pci_attach_10(device_t self, void *aux)
 	}
 	psc->sc_iosize = common.length;
 	psc->sc_iot = psc->sc_bars_iot[i];
-	psc->sc_mapped_iosize = psc->sc_bars_iosize[i];
 
 	psc->sc_sc.sc_version_1 = 1;
 
