@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.35 2024/02/13 13:17:51 macallan Exp $	*/
+/*	$NetBSD: sti.c,v 1.36 2024/06/25 11:52:11 macallan Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.35 2024/02/13 13:17:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.36 2024/06/25 11:52:11 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -683,12 +683,25 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 		}
 		break;
 
+	case STI_DD_HCRX:
+		scr->setupfb = ngle_elk_setupfb;
+		scr->putcmap = ngle_putcmap;
+
+		if (scr->scr_bpp > 8) {
+			scr->reg12_value = NGLE_BUFF1_CMAP3;
+			scr->reg10_value = 0xBBA0A000;
+		} else {
+			scr->reg12_value = NGLE_BUFF1_CMAP0;
+			scr->reg10_value = 0x13602000;
+		}
+		scr->cmap_finish_register = NGLE_REG_1;
+		break;
+
 	case STI_DD_GRX:
 	case STI_DD_CRX24:
 	case STI_DD_EVRX:
 	case STI_DD_3X2V:
 	case STI_DD_DUAL_CRX:
-	case STI_DD_HCRX:
 	case STI_DD_LEGO:
 	case STI_DD_SUMMIT:
 	case STI_DD_PINNACLE:
