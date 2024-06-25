@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.24 2023/12/20 17:15:20 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.121 2023/12/18 14:45:49 djm Exp $ */
+/*	$NetBSD: kex.h,v 1.25 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: kex.h,v 1.122 2024/02/02 00:13:34 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -103,10 +103,10 @@ enum kex_exchange {
 #define KEX_INIT_SENT			0x0001
 #define KEX_INITIAL			0x0002
 #define KEX_HAS_PUBKEY_HOSTBOUND	0x0004
-#define KEX_RSA_SHA2_256_SUPPORTED 	0x0008 /* only set in server for now */
-#define KEX_RSA_SHA2_512_SUPPORTED 	0x0010 /* only set in server for now */
-#define KEX_HAS_PING		 	0x0020
-#define KEX_HAS_EXT_INFO_IN_AUTH 	0x0040
+#define KEX_RSA_SHA2_256_SUPPORTED	0x0008 /* only set in server for now */
+#define KEX_RSA_SHA2_512_SUPPORTED	0x0010 /* only set in server for now */
+#define KEX_HAS_PING			0x0020
+#define KEX_HAS_EXT_INFO_IN_AUTH	0x0040
 
 struct sshenc {
 	char	*name;

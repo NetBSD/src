@@ -1,5 +1,6 @@
-/*	$NetBSD: xmss_hash.c,v 1.3 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: xmss_hash.c,v 1.3 2022/04/20 16:00:25 millert Exp $ */
+/*	$NetBSD: xmss_hash.c,v 1.4 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: xmss_hash.c,v 1.4 2023/12/20 00:06:25 jsg Exp $ */
+
 /*
 hash.c version 20160722
 Andreas Hülsing
@@ -7,7 +8,7 @@ Joost Rijneveld
 Public domain.
 */
 #include "includes.h"
-__RCSID("$NetBSD: xmss_hash.c,v 1.3 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: xmss_hash.c,v 1.4 2024/06/25 16:36:54 christos Exp $");
 
 #include "xmss_hash_address.h"
 #include "xmss_commons.h"
@@ -73,7 +74,7 @@ int prf(unsigned char *out, const unsigned char *in, const unsigned char *key, u
 }
 
 /*
- * Implemts H_msg
+ * Implements H_msg
  */
 int h_msg(unsigned char *out, const unsigned char *in, unsigned long long inlen, const unsigned char *key, const unsigned int keylen, const unsigned int n)
 {

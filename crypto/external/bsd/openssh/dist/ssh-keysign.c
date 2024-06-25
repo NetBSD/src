@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.24 2022/10/05 22:39:36 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.71 2022/08/01 11:09:26 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.25 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.73 2024/01/11 01:51:16 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.24 2022/10/05 22:39:36 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.25 2024/06/25 16:36:54 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -196,9 +196,14 @@ main(int argc, char **argv)
 	if (fd > 2)
 		close(fd);
 
+	for (i = 0; i < NUM_KEYTYPES; i++)
+		key_fd[i] = -1;
+
 	i = 0;
 	/* XXX This really needs to read sshd_config for the paths */
+#ifdef WITH_DSA
 	key_fd[i++] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
+#endif
 	key_fd[i++] = open(_PATH_HOST_ECDSA_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_ED25519_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_XMSS_KEY_FILE, O_RDONLY);

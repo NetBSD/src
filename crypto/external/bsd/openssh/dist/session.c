@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.38 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.336 2023/08/10 23:05:48 djm Exp $ */
+/*	$NetBSD: session.c,v 1.39 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.337 2024/02/01 02:37:33 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.38 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.39 2024/06/25 16:36:54 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1186,7 +1186,7 @@ safely_chroot(const char *path, uid_t uid)
 			memcpy(component, path, cp - path);
 			component[cp - path] = '\0';
 		}
-	
+
 		debug3_f("checking '%s'", component);
 
 		if (stat(component, &st) != 0)

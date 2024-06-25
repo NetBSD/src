@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.37 2023/12/20 17:15:21 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.365 2023/11/20 02:50:00 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.38 2024/06/25 16:36:54 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.366 2024/01/11 01:45:36 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.37 2023/12/20 17:15:21 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.38 2024/06/25 16:36:54 christos Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -1631,7 +1631,9 @@ show_other_keys(struct hostkeys *hostkeys, struct sshkey *key)
 {
 	int type[] = {
 		KEY_RSA,
+#ifdef WITH_DSA
 		KEY_DSA,
+#endif
 		KEY_ECDSA,
 		KEY_ED25519,
 		KEY_XMSS,
