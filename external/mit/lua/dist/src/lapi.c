@@ -1,4 +1,4 @@
-/*	$NetBSD: lapi.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: lapi.c,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lapi.c 
@@ -419,9 +419,9 @@ LUA_API const char *lua_tolstring (lua_State *L, int idx, size_t *len) {
     o = index2value(L, idx);  /* previous call may reallocate the stack */
   }
   if (len != NULL)
-    *len = vslen(o);
+    *len = tsslen(tsvalue(o));
   lua_unlock(L);
-  return svalue(o);
+  return getstr(tsvalue(o));
 }
 
 

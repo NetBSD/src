@@ -1,4 +1,4 @@
-/*	$NetBSD: liolib.c,v 1.1.1.13 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: liolib.c,v 1.1.1.14 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: liolib.c 
@@ -247,8 +247,8 @@ static int f_gc (lua_State *L) {
 */
 static int io_fclose (lua_State *L) {
   LStream *p = tolstream(L);
-  int res = fclose(p->f);
-  return luaL_fileresult(L, (res == 0), NULL);
+  errno = 0;
+  return luaL_fileresult(L, (fclose(p->f) == 0), NULL);
 }
 
 
@@ -274,6 +274,7 @@ static int io_open (lua_State *L) {
   LStream *p = newfile(L);
   const char *md = mode;  /* to traverse/check mode */
   luaL_argcheck(L, l_checkmode(md), 2, "invalid mode");
+  errno = 0;
   p->f = fopen(filename, mode);
   return (p->f == NULL) ? luaL_fileresult(L, 0, filename) : 1;
 }
@@ -294,6 +295,7 @@ static int io_popen (lua_State *L) {
   const char *mode = luaL_optstring(L, 2, "r");
   LStream *p = newprefile(L);
   luaL_argcheck(L, l_checkmodep(mode), 2, "invalid mode");
+  errno = 0;
   p->f = l_popen(L, filename, mode);
   p->closef = &io_pclose;
   return (p->f == NULL) ? luaL_fileresult(L, 0, filename) : 1;
@@ -302,6 +304,7 @@ static int io_popen (lua_State *L) {
 
 static int io_tmpfile (lua_State *L) {
   LStream *p = newfile(L);
+  errno = 0;
   p->f = tmpfile();
   return (p->f == NULL) ? luaL_fileresult(L, 0, NULL) : 1;
 }
@@ -569,6 +572,7 @@ static int g_read (lua_State *L, FILE *f, int first) {
   int nargs = lua_gettop(L) - 1;
   int n, success;
   clearerr(f);
+  errno = 0;
   if (nargs == 0) {  /* no arguments? */
     success = read_line(L, f, 1);
     n = first + 1;  /* to return 1 result */
@@ -662,6 +666,7 @@ static int io_readline (lua_State *L) {
 static int g_write (lua_State *L, FILE *f, int arg) {
   int nargs = lua_gettop(L) - arg;
   int status = 1;
+  errno = 0;
   for (; nargs--; arg++) {
     if (lua_type(L, arg) == LUA_TNUMBER) {
       /* optimization: could be done exactly as for strings */
@@ -680,7 +685,8 @@ static int g_write (lua_State *L, FILE *f, int arg) {
   }
   if (l_likely(status))
     return 1;  /* file handle already on stack top */
-  else return luaL_fileresult(L, status, NULL);
+  else
+    return luaL_fileresult(L, status, NULL);
 }
 
 
@@ -705,6 +711,7 @@ static int f_seek (lua_State *L) {
   l_seeknum offset = (l_seeknum)p3;
   luaL_argcheck(L, (lua_Integer)offset == p3, 3,
                   "not an integer in proper range");
+  errno = 0;
   op = l_fseek(f, offset, mode[op]);
   if (l_unlikely(op))
     return luaL_fileresult(L, 0, NULL);  /* error */
@@ -721,19 +728,25 @@ static int f_setvbuf (lua_State *L) {
   FILE *f = tofile(L);
   int op = luaL_checkoption(L, 2, NULL, modenames);
   lua_Integer sz = luaL_optinteger(L, 3, LUAL_BUFFERSIZE);
-  int res = setvbuf(f, NULL, mode[op], (size_t)sz);
+  int res;
+  errno = 0;
+  res = setvbuf(f, NULL, mode[op], (size_t)sz);
   return luaL_fileresult(L, res == 0, NULL);
 }
 
 
 
 static int io_flush (lua_State *L) {
-  return luaL_fileresult(L, fflush(getiofile(L, IO_OUTPUT)) == 0, NULL);
+  FILE *f = getiofile(L, IO_OUTPUT);
+  errno = 0;
+  return luaL_fileresult(L, fflush(f) == 0, NULL);
 }
 
 
 static int f_flush (lua_State *L) {
-  return luaL_fileresult(L, fflush(tofile(L)) == 0, NULL);
+  FILE *f = tofile(L);
+  errno = 0;
+  return luaL_fileresult(L, fflush(f) == 0, NULL);
 }
 
 
@@ -775,7 +788,7 @@ static const luaL_Reg meth[] = {
 ** metamethods for file handles
 */
 static const luaL_Reg metameth[] = {
-  {"__index", NULL},  /* place holder */
+  {"__index", NULL},  /* placeholder */
   {"__gc", f_gc},
   {"__close", f_gc},
   {"__tostring", f_tostring},

@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: lobject.c,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lobject.c 
@@ -544,7 +544,7 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
   addstr2buff(&buff, fmt, strlen(fmt));  /* rest of 'fmt' */
   clearbuff(&buff);  /* empty buffer into the stack */
   lua_assert(buff.pushed == 1);
-  return svalue(s2v(L->top.p - 1));
+  return getstr(tsvalue(s2v(L->top.p - 1)));
 }
 
 

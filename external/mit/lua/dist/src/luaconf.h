@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.1.1.14 2023/06/02 14:13:25 nikita Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: luaconf.h 
@@ -258,6 +258,15 @@
 #endif
 
 #endif
+
+
+/*
+** LUA_IGMARK is a mark to ignore all after it when building the
+** module name (e.g., used to build the luaopen_ function name).
+** Typically, the suffix after the mark is the module version,
+** as in "mod-v1.2.so".
+*/
+#define LUA_IGMARK		"-"
 
 /* }================================================================== */
 

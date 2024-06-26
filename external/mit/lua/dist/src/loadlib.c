@@ -1,4 +1,4 @@
-/*	$NetBSD: loadlib.c,v 1.1.1.14 2023/06/02 14:13:25 nikita Exp $	*/
+/*	$NetBSD: loadlib.c,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: loadlib.c 
@@ -24,15 +24,6 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
-
-
-/*
-** LUA_IGMARK is a mark to ignore all before it when building the
-** luaopen_ function name.
-*/
-#if !defined (LUA_IGMARK)
-#define LUA_IGMARK		"-"
-#endif
 
 
 /*

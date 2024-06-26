@@ -1,4 +1,4 @@
-/*	$NetBSD: lstate.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: lstate.c,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lstate.c 
@@ -121,7 +121,7 @@ CallInfo *luaE_extendCI (lua_State *L) {
 /*
 ** free all CallInfo structures not in use by a thread
 */
-void luaE_freeCI (lua_State *L) {
+static void freeCI (lua_State *L) {
   CallInfo *ci = L->ci;
   CallInfo *next = ci->next;
   ci->next = NULL;
@@ -206,7 +206,7 @@ static void freestack (lua_State *L) {
   if (L->stack.p == NULL)
     return;  /* stack not completely built yet */
   L->ci = &L->base_ci;  /* free the entire 'ci' list */
-  luaE_freeCI(L);
+  freeCI(L);
   lua_assert(L->nci == 0);
   luaM_freearray(L, L->stack.p, stacksize(L) + EXTRA_STACK);  /* free stack */
 }
@@ -435,7 +435,7 @@ void luaE_warning (lua_State *L, const char *msg, int tocont) {
 void luaE_warnerror (lua_State *L, const char *where) {
   TValue *errobj = s2v(L->top.p - 1);  /* error object */
   const char *msg = (ttisstring(errobj))
-                  ? svalue(errobj)
+                  ? getstr(tsvalue(errobj))
                   : "error object is not a string";
   /* produce warning "error in %s (%s)" (where, msg) */
   luaE_warning(L, "error in ", 1);

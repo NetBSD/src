@@ -1,4 +1,4 @@
-/*	$NetBSD: ltable.h,v 1.1.1.13 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: ltable.h,v 1.1.1.14 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: ltable.h 
@@ -43,8 +43,6 @@ LUAI_FUNC void luaH_setint (lua_State *L, Table *t, lua_Integer key,
 LUAI_FUNC const TValue *luaH_getshortstr (Table *t, TString *key);
 LUAI_FUNC const TValue *luaH_getstr (Table *t, TString *key);
 LUAI_FUNC const TValue *luaH_get (Table *t, const TValue *key);
-LUAI_FUNC void luaH_newkey (lua_State *L, Table *t, const TValue *key,
-                                                    TValue *value);
 LUAI_FUNC void luaH_set (lua_State *L, Table *t, const TValue *key,
                                                  TValue *value);
 LUAI_FUNC void luaH_finishset (lua_State *L, Table *t, const TValue *key,

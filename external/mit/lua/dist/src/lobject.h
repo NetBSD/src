@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.h,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: lobject.h,v 1.1.1.15 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lobject.h 
@@ -388,7 +388,7 @@ typedef struct GCObject {
 typedef struct TString {
   CommonHeader;
   lu_byte extra;  /* reserved words for short strings; "has hash" for longs */
-  lu_byte shrlen;  /* length for short strings */
+  lu_byte shrlen;  /* length for short strings, 0xFF for long strings */
   unsigned int hash;
   union {
     size_t lnglen;  /* length for long strings */
@@ -400,19 +400,17 @@ typedef struct TString {
 
 
 /*
-** Get the actual string (array of bytes) from a 'TString'.
+** Get the actual string (array of bytes) from a 'TString'. (Generic
+** version and specialized versions for long and short strings.)
 */
-#define getstr(ts)  ((ts)->contents)
+#define getstr(ts)	((ts)->contents)
+#define getlngstr(ts)	check_exp((ts)->shrlen == 0xFF, (ts)->contents)
+#define getshrstr(ts)	check_exp((ts)->shrlen != 0xFF, (ts)->contents)
 
-
-/* get the actual string (array of bytes) from a Lua value */
-#define svalue(o)       getstr(tsvalue(o))
 
 /* get string length from 'TString *s' */
-#define tsslen(s)	((s)->tt == LUA_VSHRSTR ? (s)->shrlen : (s)->u.lnglen)
-
-/* get string length from 'TValue *o' */
-#define vslen(o)	tsslen(tsvalue(o))
+#define tsslen(s)  \
+	((s)->shrlen != 0xFF ? (s)->shrlen : (s)->u.lnglen)
 
 /* }================================================================== */
 

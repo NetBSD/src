@@ -1,4 +1,4 @@
-/*	$NetBSD: lcode.h,v 1.1.1.10 2023/01/02 20:57:30 nikita Exp $	*/
+/*	$NetBSD: lcode.h,v 1.1.1.11 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lcode.h 
@@ -63,10 +63,8 @@ typedef enum UnOpr { OPR_MINUS, OPR_BNOT, OPR_NOT, OPR_LEN, OPR_NOUNOPR } UnOpr;
 
 LUAI_FUNC int luaK_code (FuncState *fs, Instruction i);
 LUAI_FUNC int luaK_codeABx (FuncState *fs, OpCode o, int A, unsigned int Bx);
-LUAI_FUNC int luaK_codeAsBx (FuncState *fs, OpCode o, int A, int Bx);
 LUAI_FUNC int luaK_codeABCk (FuncState *fs, OpCode o, int A,
                                             int B, int C, int k);
-LUAI_FUNC int luaK_isKint (expdesc *e);
 LUAI_FUNC int luaK_exp2const (FuncState *fs, const expdesc *e, TValue *v);
 LUAI_FUNC void luaK_fixline (FuncState *fs, int line);
 LUAI_FUNC void luaK_nil (FuncState *fs, int from, int n);
@@ -78,7 +76,6 @@ LUAI_FUNC int luaK_exp2anyreg (FuncState *fs, expdesc *e);
 LUAI_FUNC void luaK_exp2anyregup (FuncState *fs, expdesc *e);
 LUAI_FUNC void luaK_exp2nextreg (FuncState *fs, expdesc *e);
 LUAI_FUNC void luaK_exp2val (FuncState *fs, expdesc *e);
-LUAI_FUNC int luaK_exp2RK (FuncState *fs, expdesc *e);
 LUAI_FUNC void luaK_self (FuncState *fs, expdesc *e, expdesc *key);
 LUAI_FUNC void luaK_indexed (FuncState *fs, expdesc *t, expdesc *k);
 LUAI_FUNC void luaK_goiftrue (FuncState *fs, expdesc *e);

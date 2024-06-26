@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.h,v 1.1.1.13 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: ldebug.h,v 1.1.1.14 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: ldebug.h 
@@ -60,6 +60,7 @@ LUAI_FUNC const char *luaG_addinfo (lua_State *L, const char *msg,
                                                   TString *src, int line);
 LUAI_FUNC l_noret luaG_errormsg (lua_State *L);
 LUAI_FUNC int luaG_traceexec (lua_State *L, const Instruction *pc);
+LUAI_FUNC int luaG_tracecall (lua_State *L);
 
 
 #endif

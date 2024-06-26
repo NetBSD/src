@@ -1,4 +1,4 @@
-/*	$NetBSD: lundump.c,v 1.1.1.13 2023/06/02 14:13:26 nikita Exp $	*/
+/*	$NetBSD: lundump.c,v 1.1.1.14 2024/06/26 21:35:31 nikita Exp $	*/
 
 /*
 ** Id: lundump.c 
@@ -83,7 +83,7 @@ static size_t loadUnsigned (LoadState *S, size_t limit) {
 
 
 static size_t loadSize (LoadState *S) {
-  return loadUnsigned(S, ~(size_t)0);
+  return loadUnsigned(S, MAX_SIZET);
 }
 
 
@@ -124,7 +124,7 @@ static TString *loadStringN (LoadState *S, Proto *p) {
     ts = luaS_createlngstrobj(L, size);  /* create string */
     setsvalue2s(L, L->top.p, ts);  /* anchor it ('loadVector' can GC) */
     luaD_inctop(L);
-    loadVector(S, getstr(ts), size);  /* load directly in final place */
+    loadVector(S, getlngstr(ts), size);  /* load directly in final place */
     L->top.p--;  /* pop string */
   }
   luaC_objbarrier(L, p, ts);
