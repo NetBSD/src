@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.6 2024/06/22 18:23:25 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.7 2024/06/26 17:13:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -89,4 +89,9 @@ sys/arch/x86/x86/coretemp.c			1.40,1.41
 
 	coretemp(4): do not accept impossibly low TjMax values.
 	[gutteridge, ticket #1848]
+
+usr.sbin/btpand/btpand.c			1.9
+
+	btpand(8): fix off-by-one bug causing out of bounds memory access.
+	[plunky, ticket #1851]
 
