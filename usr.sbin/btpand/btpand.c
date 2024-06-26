@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.8 2022/05/18 13:56:32 andvar Exp $	*/
+/*	$NetBSD: btpand.c,v 1.8.2.1 2024/06/26 17:11:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.8 2022/05/18 13:56:32 andvar Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.8.2.1 2024/06/26 17:11:51 martin Exp $");
 
 #include <sys/wait.h>
 
@@ -155,10 +155,13 @@ main(int argc, char *argv[])
 
 		case 's': /* service */
 		case 'S': /* service (no SDP) */
-			for (ul = 0; strcasecmp(optarg, services[ul].type); ul++) {
-				if (ul == __arraycount(services))
-					errx(EXIT_FAILURE, "%s: unknown service", optarg);
+			for (ul = 0; ul < __arraycount(services); ul++) {
+				if (strcasecmp(optarg, services[ul].type) == 0)
+					break;
 			}
+
+			if (ul == __arraycount(services))
+				errx(EXIT_FAILURE, "%s: unknown service", optarg);
 
 			if (ch == 's') {
 				service_type = services[ul].type;
