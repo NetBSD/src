@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.h,v 1.2 2023/10/04 07:35:27 rin Exp $	*/
+/*	$NetBSD: if_igc.h,v 1.3 2024/06/27 07:31:41 rin Exp $	*/
 /*	$OpenBSD: if_igc.h,v 1.2 2022/01/09 05:42:50 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -39,13 +39,14 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/atomic.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
 
 #include <dev/pci/igc/igc_api.h>
 #include <dev/pci/igc/igc_i225.h>
 
-#ifdef __HAVE_ATOMIC64_OPS
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 #define	IGC_EVENT_COUNTERS
 #endif
 
