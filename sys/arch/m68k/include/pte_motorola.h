@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.8 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.8.86.1 2024/06/27 19:27:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,21 +59,21 @@ typedef u_int	pt_entry_t;	/* page table entry */
 #define	SG_RO		0x00000004
 #define	SG_RW		0x00000000
 #define	SG_U		0x00000008	/* modified bit (68040) */
-#define	SG_FRAME	((~0) << PG_SHIFT)
+#define	SG_FRAME	((~0U) << PG_SHIFT)
 #define	SG_ISHIFT	((PG_SHIFT << 1) - 2)	/* 24 or 22 */
-#define	SG_IMASK	((~0) << SG_ISHIFT)
+#define	SG_IMASK	((~0U) << SG_ISHIFT)
 #define	SG_PSHIFT	PG_SHIFT
-#define	SG_PMASK	(((~0) << SG_PSHIFT) & ~SG_IMASK)
+#define	SG_PMASK	(((~0U) << SG_PSHIFT) & ~SG_IMASK)
 
 /* 68040 additions */
 #define	SG4_MASK1	0xfe000000
 #define	SG4_SHIFT1	25
 #define	SG4_MASK2	0x01fc0000
 #define	SG4_SHIFT2	18
-#define	SG4_MASK3	(((~0) << PG_SHIFT) & ~(SG4_MASK1 | SG4_MASK2))
+#define	SG4_MASK3	(((~0U) << PG_SHIFT) & ~(SG4_MASK1 | SG4_MASK2))
 #define	SG4_SHIFT3	PG_SHIFT
 #define	SG4_ADDR1	0xfffffe00
-#define	SG4_ADDR2	((~0) << (20 - PG_SHIFT))
+#define	SG4_ADDR2	((~0U) << (20 - PG_SHIFT))
 #define	SG4_LEV1SIZE	128
 #define	SG4_LEV2SIZE	128
 #define	SG4_LEV3SIZE	(1 << (SG4_SHIFT2 - PG_SHIFT))	/* 64 or 32 */
@@ -86,7 +86,7 @@ typedef u_int	pt_entry_t;	/* page table entry */
 #define	PG_W		0x00000100
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
-#define	PG_FRAME	((~0) << PG_SHIFT)
+#define	PG_FRAME	((~0U) << PG_SHIFT)
 #define	PG_CI		0x00000040
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 

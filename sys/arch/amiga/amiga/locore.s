@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2022/05/30 09:56:02 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.161.4.1 2024/06/27 19:27:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -422,9 +422,6 @@ ENTRY_NOPROFILE(trace)
 #endif
 	moveq	#T_TRACE,%d0
 	jra	_ASM_LABEL(fault)
-
-/* Use common m68k sigreturn */
-#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.
