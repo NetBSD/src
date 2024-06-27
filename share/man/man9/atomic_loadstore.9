@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_loadstore.9,v 1.7 2022/04/09 23:32:53 riastradh Exp $
+.\"	$NetBSD: atomic_loadstore.9,v 1.7.2.1 2024/06/27 19:30:29 martin Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -544,9 +544,10 @@ must be zero.
 .Pp
 All
 .Nx
-ports support atomic loads and stores on units of data up to 32 bits.
-Some ports additionally support atomic loads and stores on larger
-quantities, like 64-bit quantities, if
+ports support cheap atomic loads and stores on units of data up to 32
+bits.
+Some ports additionally support cheap atomic loads and stores on
+64-bit quantities if
 .Dv __HAVE_ATOMIC64_LOADSTORE
 is defined.
 The macros are not allowed on larger quantities of data than the port
@@ -587,6 +588,24 @@ must be conditional on
 	...
 	mutex_exit(&foo->f_lock);
 .Ed
+.Pp
+Some ports support expensive 64-bit atomic read/modify/write
+operations, but not cheap 64-bit atomic loads and stores.
+For example, the armv7 instruction set includes 64-bit
+.Li ldrexd
+and
+.Li strexd
+loops (load-exclusive, store-conditional) which are atomic on 64-bit
+quantities.
+But the cheap 64-bit
+.Li ldrd / strd
+instructions are only atomic on 32-bit accesses at a time.
+These ports define
+.Dv __HAVE_ATOMIC64_OPS
+but not
+.Dv __HAVE_ATOMIC64_LOADSTORE ,
+since they do not have cheaper 64-bit atomic load/store operations than
+the full atomic read/modify/write operations.
 .Sh C11 COMPATIBILITY
 These macros are meant to follow
 .Tn C11
