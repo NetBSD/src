@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.841 2024/03/05 14:15:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.841 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.842 2024/06/27 23:58:46 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1280,15 +1280,6 @@ init386(paddr_t first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-	/*
-	 * Initialize RNG to get entropy ASAP either from CPU
-	 * RDRAND/RDSEED or from seed on disk.  Must happen after
-	 * cpu_init_msrs.  Prefer to happen after consinit so we have
-	 * the opportunity to print useful feedback.
-	 */
-	cpu_rng_init();
-	x86_rndseed();
-
 #ifdef DEBUG_MEMLOAD
 	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
 #endif
@@ -1298,6 +1289,22 @@ init386(paddr_t first_avail)
 	 * We must do this before loading pages into the VM system.
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
+
+	/*
+	 * Initialize RNG to get entropy ASAP either from CPU
+	 * RDRAND/RDSEED or from seed on disk.  Constraints:
+	 *
+	 * - Must happen after cpu_init_msrs so that curcpu() and
+	 *   curlwp work.
+	 *
+	 * - Must happen after consinit so we have the opportunity to
+	 *   print useful feedback.
+	 *
+	 * - On KASLR kernels, must happen after pmap_bootstrap because
+	 *   x86_rndseed requires access to the direct map.
+	 */
+	cpu_rng_init();
+	x86_rndseed();
 
 #ifndef XENPV
 	/* Initialize the memory clusters. */
