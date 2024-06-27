@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.368 2024/03/05 14:15:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.369 2024/06/27 23:58:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.368 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2024/06/27 23:58:46 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1755,15 +1755,6 @@ init_x86_64(paddr_t first_avail)
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/*
-	 * Initialize RNG to get entropy ASAP either from CPU
-	 * RDRAND/RDSEED or from seed on disk.  Must happen after
-	 * cpu_init_msrs.  Prefer to happen after consinit so we have
-	 * the opportunity to print useful feedback.
-	 */
-	cpu_rng_init();
-	x86_rndseed();
-
-	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_md_init();
@@ -1802,6 +1793,22 @@ init_x86_64(paddr_t first_avail)
 	 * We must do this before loading pages into the VM system.
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
+
+	/*
+	 * Initialize RNG to get entropy ASAP either from CPU
+	 * RDRAND/RDSEED or from seed on disk.  Constraints:
+	 *
+	 * - Must happen after cpu_init_msrs so that curcpu() and
+	 *   curlwp work.
+	 *
+	 * - Must happen after consinit so we have the opportunity to
+	 *   print useful feedback.
+	 *
+	 * - On KASLR kernels, must happen after pmap_bootstrap because
+	 *   x86_rndseed requires access to the direct map.
+	 */
+	cpu_rng_init();
+	x86_rndseed();
 
 #ifndef XENPV
 	/* Internalize the physical pages into the VM system. */
