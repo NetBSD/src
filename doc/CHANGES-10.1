@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.1,v 1.1.2.14 2024/06/26 17:12:36 martin Exp $
+# $NetBSD: CHANGES-10.1,v 1.1.2.15 2024/06/27 19:34:10 martin Exp $
 
 A complete list of changes from the NetBSD 10.0 release on 2024-03-28
 until the 10.1 release:
@@ -557,6 +557,24 @@ sys/modules/compat_13/Makefile			1.3-1.5
 sys/modules/compat_16/Makefile			1.3,1.4
 sys/modules/compat_netbsd32_13/Makefile		1.5
 sys/modules/compat_netbsd32_16/Makefile		1.5
+sys/arch/amiga/amiga/locore.s			1.169
+sys/arch/atari/atari/locore.s			1.125
+sys/arch/cesfic/cesfic/locore.s			1.45
+sys/arch/hp300/hp300/locore.s			1.183
+sys/arch/luna68k/luna68k/locore.s		1.81
+sys/arch/m68k/conf/files.m68k			1.53
+sys/arch/m68k/include/pte_motorola.h		1.10 (adapted, via patch)
+sys/arch/m68k/m68k/compat_13_sigreturn13.s	1.8
+sys/arch/m68k/m68k/compat_16_sigreturn14.s	1.6
+sys/arch/m68k/m68k/sigreturn.s			delete
+sys/arch/mac68k/mac68k/locore.s			1.182
+sys/arch/mvme68k/mvme68k/locore.s		1.129
+sys/arch/news68k/news68k/locore.s		1.84
+sys/arch/next68k/next68k/locore.s		1.84
+sys/arch/sun2/sun2/locore.s			1.37
+sys/arch/sun3/sun3/locore.s			1.109
+sys/arch/sun3/sun3x/locore.s			1.77
+sys/arch/x68k/x68k/locore.s			1.130
 
 	PR 58346: fix compat modules build.
 	[pgoyette, ticket #724]
@@ -573,4 +591,15 @@ usr.sbin/btpand/btpand.c			1.9
 
 	btpand(8): fix off-by-one bug causing out of bounds memory access.
 	[plunky, ticket #727]
+
+share/man/man9/atomic_loadstore.9		1.8
+
+	atomic_loadstore(9): PR 58340: clarify relation to __HAVE_ATOMIC64_OPS.
+	[rin, ticket #728]
+
+sys/dev/pci/igc/if_igc.h			1.3
+
+	igc(4): use __HAVE_ATOMIC64_LOADSTORE instead of __HAVE_ATOMIC64_OPS
+	to detect atomic_loadstore(9) is applicable to 64-bit integers.
+	[rin, ticket #729]
 
