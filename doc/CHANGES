@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3067 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3068 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -417,7 +417,26 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[tsutsui 20240531]
 	pthread(3): Fix memory leak in pthread_create(). [hannken 20240608]
 	libarchive: Import libarchive-3.7.4. [christos 20240609]
+	ipfilter(4): Mark as MPSAFE.  [mrg 20240609]
 	pkg_install: Import pkg_install-20240307. [wiz 20240611]
 	OpenSSL: Imported 3.0.14. [christos 2020611]
+	sh(1): When a background job is started at the top level (ie: not
+		in any kind of subshell) of an interactive shell, print
+		the job number assigned, and the process id of the lead
+		(or only) process in the job, as required by POSIX.1-2024.
+		[kre 20240615]
+	arm: Switch to GCC 12. [mrg 20240615]
+	alpha: Switch to GCC 12. [mrg 20240615]
+	riscv: Switch to GCC 12. [mrg 20240615]
+	sparc, sparc64: Switch to GCC 12. [mrg 20240615]
+	i386, amd64: Switch to GCC 12. [mrg 20240615]
+	hppa: Switch to GCC 12. [skrll 20240615]
+	lint(1): Accept C23 [[fallthrough]] statements. [rillig 20240617]
+	alpha: Switch to X.Org Server 1.20. [mrg 20240622]
 	tmux(1): Import version 3.4 with Sixel support enabled. [wiz 20240622]
+	pci(4): Allow pci_find_device callers to pass a cookie through to
+		the match function so they can keep state or pass in extra
+		parameters.  [riastradh 20240623]
+	puc(4): Add support for a range of Brainboxes PCI serial cards,
+		from Cameron Williams.  [jakllsch 20240623]
 	OpenSSH: Import 9.6. [christos 20240625]
