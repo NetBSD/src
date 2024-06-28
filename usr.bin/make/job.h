@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.78 2023/12/19 19:33:39 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.79 2024/06/28 15:20:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -179,7 +179,7 @@ typedef struct Job {
 #endif
 } Job;
 
-extern const char *shellPath;
+extern char *shellPath;
 extern const char *shellName;
 extern char *shellErrFlag;
 
