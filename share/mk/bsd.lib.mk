@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.406 2024/06/28 20:45:26 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.407 2024/06/28 21:58:24 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -615,36 +615,15 @@ LIBCC:=	${CC}
 # VERSION_MAP
 #
 #	Path to an ld version script to use when linking the library.
-#	If a relative path, interpreted relative to the object
-#	directory; use ${.CURDIR}/foo.map if foo.map is in the source
-#	directory.  Interpretation of relative path may be changed
-#	later to search .PATH like target prerequisites.
+#	Resolved from .PATH like a target prerequisite.
 #
-#	Implemented by adding -Wl,--version-script=${VERSION_MAP} to
-#	LDFLAGS.
+#	Implemented by adding -Wl,--version-script=${${VERSION_MAP}:P}
+#	to LDFLAGS, and by adding ${VERSION_MAP} to DPADD to make it a
+#	target prerequisite so :P works.
 #
 .if !empty(VERSION_MAP)
-# It is tempting to use the make :P modifier here so that you can just
-# write
-#
-#	VERSION_MAP=	foo.map
-#
-# instead of
-#
-#	VERSION_MAP=	${.CURDIR}/foo.map
-#
-# but it appears that :P works _only_ with literal names, not with
-# expansions, so while you could write
-#
-#	VERSION_MAP=	${foo.map:P}
-#
-# in the makefile, we can't set
-#
-#	LDFLAGS+=	-Wl,--version-script=${${VERSION_MAP}:P}
-#
-# here.
 DPADD+=			${VERSION_MAP}
-LDFLAGS+=		-Wl,--version-script=${VERSION_MAP}
+LDFLAGS+=		-Wl,--version-script=${${VERSION_MAP}:P}
 .endif
 
 _LDADD.${_LIB}=	${LDADD} ${LDADD.${_LIB}}
