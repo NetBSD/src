@@ -31,7 +31,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-RCSID("$NetBSD: _setjmp.S,v 1.10 2011/01/25 02:38:15 matt Exp $")
+RCSID("$NetBSD: _setjmp.S,v 1.11 2024/06/29 06:52:34 rin Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -68,7 +68,9 @@ END(_setjmp)
 
 ENTRY(_longjmp, 0)
 	movl	8(%ap),%r0		# return(v)
-	movl	4(%ap),%r1		# fetch buffer
+	jneq	1f
+	movl	$1,%r0
+1:	movl	4(%ap),%r1		# fetch buffer
 	tstl	12(%r1)			# is fp null
 	beql	botch
 	movq	44(%r1),%r6		# restore r6/r7
