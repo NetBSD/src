@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2018 2024/06/25 16:40:23 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2019 2024/06/29 18:27:25 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1092,6 +1092,8 @@ Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
 Location:	crypto/external/bsd/openssh/dist
+Vendor tag:	OPENSSH
+Release tag:	vXY-YYYYMMDD for version X.Y
 Notes:
 imported from OpenBSD ssh -- is not from the portable OpenSSH
 use openssh2netbsd before import.
