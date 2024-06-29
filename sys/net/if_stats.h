@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.h,v 1.3 2021/06/29 21:19:58 riastradh Exp $	*/
+/*	$NetBSD: if_stats.h,v 1.4 2024/06/29 02:18:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -55,42 +55,52 @@ typedef enum {
 
 #ifdef _KERNEL
 
+#include <sys/sdt.h>
+
+SDT_PROBE_DECLARE(sdt, net, interface, stat);
+
 #define	IF_STAT_GETREF(ifp)	_NET_STAT_GETREF((ifp)->if_stats)
 #define	IF_STAT_PUTREF(ifp)	_NET_STAT_PUTREF((ifp)->if_stats)
 
 static inline void
 if_statinc(ifnet_t *ifp, if_stat_t x)
 {
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x, +1);
 	_NET_STATINC((ifp)->if_stats, x);
 }
 
 static inline void
 if_statinc_ref(net_stat_ref_t nsr, if_stat_t x)
 {
+	/* XXX sdt probe needs ifp */
 	_NET_STATINC_REF(nsr, x);
 }
 
 static inline void
 if_statdec(ifnet_t *ifp, if_stat_t x)
 {
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x, -1);
 	_NET_STATDEC((ifp)->if_stats, x);
 }
 
 static inline void
 if_statdec_ref(net_stat_ref_t nsr, if_stat_t x)
 {
+	/* XXX sdt probe needs ifp */
 	_NET_STATDEC_REF(nsr, x);
 }
 
 static inline void
 if_statadd(ifnet_t *ifp, if_stat_t x, uint64_t v)
 {
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x, v);
 	_NET_STATADD((ifp)->if_stats, x, v);
 }
 
 static inline void
 if_statadd_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 {
+	/* XXX sdt probe needs ifp */
 	_NET_STATADD_REF(nsr, x, v);
 }
 
@@ -98,6 +108,8 @@ static inline void
 if_statadd2(ifnet_t *ifp, if_stat_t x1, uint64_t v1, if_stat_t x2, uint64_t v2)
 {
 	net_stat_ref_t _nsr_ = IF_STAT_GETREF(ifp);
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x1, v1);
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x2, v2);
 	_NET_STATADD_REF(_nsr_, x1, v1);
 	_NET_STATADD_REF(_nsr_, x2, v2);
 	IF_STAT_PUTREF(ifp);
@@ -106,12 +118,14 @@ if_statadd2(ifnet_t *ifp, if_stat_t x1, uint64_t v1, if_stat_t x2, uint64_t v2)
 static inline void
 if_statsub(ifnet_t *ifp, if_stat_t x, uint64_t v)
 {
+	SDT_PROBE3(sdt, net, interface, stat,  ifp, x, -v);
 	_NET_STATSUB((ifp)->if_stats, x, v);
 }
 
 static inline void
 if_statsub_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 {
+	/* XXX sdt probe needs ifp */
 	_NET_STATSUB_REF(nsr, x, v);
 }
 
