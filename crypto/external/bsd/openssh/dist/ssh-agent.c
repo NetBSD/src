@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.38 2024/06/25 16:36:54 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.39 2024/06/29 08:02:40 mrg Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.306 2024/03/09 05:12:13 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.38 2024/06/25 16:36:54 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.39 2024/06/29 08:02:40 mrg Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2151,8 +2151,7 @@ cleanup_exit(int i)
 	_exit(i);
 }
 
-/*ARGSUSED*/
-__dead static void
+static void
 cleanup_handler(int sig)
 {
 	signalled = sig;
