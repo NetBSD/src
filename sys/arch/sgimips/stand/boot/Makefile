@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/01/01 19:41:05 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2024/06/29 08:06:56 rin Exp $
 
 
 # Don't strip the ECOFF'ed version on install -- strip gets confused by that,
@@ -7,7 +7,7 @@
 STRIPFLAG=
 
 SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
-	getopt.c disk.c arcbios_calls.S
+	disk.c arcbios_calls.S
 
 PROG=	aoutboot
 ${PROG}: ip2xboot ip3xboot
