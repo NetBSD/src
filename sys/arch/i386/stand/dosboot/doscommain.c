@@ -1,4 +1,4 @@
-/*	$NetBSD: doscommain.c,v 1.6 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: doscommain.c,v 1.1 2024/06/29 13:45:14 rin Exp $	*/
 
 /*
  * Copyright (c) 1996

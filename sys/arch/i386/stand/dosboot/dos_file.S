@@ -1,4 +1,4 @@
-/*	$NetBSD: dos_file.S,v 1.6 2009/11/21 11:52:57 dsl Exp $	*/
+/*	$NetBSD: dos_file.S,v 1.1 2024/06/29 13:45:14 rin Exp $	*/
 	
 /* extracted from Tor Egge's patches for NetBSD boot */
 
