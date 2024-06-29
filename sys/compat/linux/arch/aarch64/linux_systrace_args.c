@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.10 2023/08/19 17:50:24 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.11 2024/06/29 13:46:31 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1177,6 +1177,15 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
+	/* linux_sys_getcpu */
+	case 168: {
+		const struct linux_sys_getcpu_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, cpu); /* unsigned int * */
+		uarg[1] = (intptr_t) SCARG(p, node); /* unsigned int * */
+		uarg[2] = (intptr_t) SCARG(p, tcache); /* struct linux_getcpu_cache * */
+		*n_args = 3;
+		break;
+	}
 	/* linux_sys_gettimeofday */
 	case 169: {
 		const struct linux_sys_gettimeofday_args *p = params;
@@ -1728,6 +1737,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = SCARG(p, last); /* unsigned int */
 		uarg[2] = SCARG(p, flags); /* unsigned int */
 		*n_args = 3;
+		break;
+	}
+	/* linux_sys_faccessat2 */
+	case 439: {
+		const struct linux_sys_faccessat2_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
+		iarg[2] = SCARG(p, amode); /* int */
+		iarg[3] = SCARG(p, flags); /* int */
+		*n_args = 4;
 		break;
 	}
 	/* linux_sys_nosys */
@@ -3740,6 +3759,22 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_getcpu */
+	case 168:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int *";
+			break;
+		case 1:
+			p = "unsigned int *";
+			break;
+		case 2:
+			p = "struct linux_getcpu_cache *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_gettimeofday */
 	case 169:
 		switch(ndx) {
@@ -4680,6 +4715,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_faccessat2 */
+	case 439:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const char *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_nosys */
 	case 440:
 		break;
@@ -5389,6 +5443,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_getcpu */
+	case 168:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_gettimeofday */
 	case 169:
 		if (ndx == 0 || ndx == 1)
@@ -5686,6 +5745,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_close_range */
 	case 436:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_faccessat2 */
+	case 439:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
