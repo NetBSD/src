@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.10 2017/12/10 02:32:03 christos Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.11 2024/06/29 08:03:28 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -406,9 +406,6 @@ extern void	ngets(char *, int);
 /* imports from stdlib, modified for sa */
 
 extern long	strtol(const char *, char **, int);
-extern char	*optarg;			/* getopt(3) external variables */
-extern int	optind, opterr, optopt, optreset;
-extern int	getopt(int, char * const [], const char *);
 
 extern long	strtol(const char *, char **, int);
 
