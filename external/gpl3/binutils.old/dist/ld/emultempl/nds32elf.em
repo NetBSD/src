@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2012-2020 Free Software Foundation, Inc.
+# Copyright (C) 2012-2022 Free Software Foundation, Inc.
 # Contributed by Andes Technology Corporation.
 #
 # This file is part of the GNU Binutils.
@@ -24,7 +24,7 @@ fragment <<EOF
 
 #include "elf-bfd.h"
 #include "elf/nds32.h"
-#include "bfd_stdint.h"
+#include <stdint.h>
 #include "elf32-nds32.h"
 
 static int relax_fp_as_gp = 1;		/* --mrelax-omit-fp  */

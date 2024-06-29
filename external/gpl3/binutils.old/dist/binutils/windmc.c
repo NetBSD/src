@@ -1,5 +1,5 @@
 /* windmc.c -- a program to compile Windows message files.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Written by Kai Tietz, Onevision.
 
    This file is part of GNU Binutils.
@@ -50,7 +50,7 @@ typedef struct mc_msg_item
   struct bin_messagetable_item *res;
 } mc_msg_item;
 
-int target_is_bigendian = 0;
+bool target_is_bigendian = 0;
 const char *def_target_arch;
 
 /* Globals and static variable definitions. */
@@ -338,7 +338,7 @@ mc_add_node_lang (mc_node *root, const mc_keyword *lang, rc_uint_type vid)
 static char *
 convert_unicode_to_ACP (const unichar *usz)
 {
-  char *s;
+  char *s = NULL;
   rc_uint_type l;
 
   if (! usz)
@@ -377,7 +377,7 @@ write_header_define (FILE *fp, const unichar *sym_name, rc_uint_type vid, const 
       if (nl != NULL)
 	{
 	  if (mcset_out_values_are_decimal)
-	    fprintf (fp, "//\n// MessageId: 0x%lu\n//\n", (unsigned long) vid);
+	    fprintf (fp, "//\n// MessageId: %lu\n//\n", (unsigned long) vid);
 	  else
 	    fprintf (fp, "//\n// MessageId: 0x%lx\n//\n", (unsigned long) vid);
 	}
@@ -392,7 +392,7 @@ write_header_define (FILE *fp, const unichar *sym_name, rc_uint_type vid, const 
       (tdef ? "(" : ""), (tdef ? tdef : ""), (tdef ? ")" : ""),
     (unsigned long) vid);
   else
-    fprintf (fp, "#define %s %s%s%s 0x%lu\n\n", sym,
+    fprintf (fp, "#define %s %s%s%s %lu\n\n", sym,
       (tdef ? "(" : ""), (tdef ? tdef : ""), (tdef ? ")" : ""),
     (unsigned long) vid);
 }
@@ -607,7 +607,7 @@ mc_generate_bin_item (mc_node_lang *n, rc_uint_type *res_len)
   else
     {
       rc_uint_type txt_len, l;
-      char *cvt_txt;
+      char *cvt_txt = NULL;
 
       codepage_from_unicode( &l, n->message, &cvt_txt, n->lang->lang_info.wincp);
       if (! cvt_txt)
@@ -821,7 +821,7 @@ write_dbg (FILE *fp)
   while (h != NULL)
     {
       if (h->symbol)
-	write_dbg_define (fp, h->symbol, mcset_msg_id_typedef);
+	write_dbg_define (fp, h->symbol, h->id_typecast);
       h = h->next;
     }
   fprintf (fp, "  { (");
@@ -872,7 +872,7 @@ write_header (FILE *fp)
 		fprintf (fp, "#define %s 0x%lx\n", convert_unicode_to_ACP (key->sval),
 			 (unsigned long) key->nval);
 	      else
-		fprintf (fp, "#define %s 0x%lu\n", convert_unicode_to_ACP (key->sval),
+		fprintf (fp, "#define %s %lu\n", convert_unicode_to_ACP (key->sval),
 			 (unsigned long) key->nval);
 	    }
 	}
@@ -892,7 +892,7 @@ write_header (FILE *fp)
 		fprintf (fp, "#define %s 0x%lx\n", convert_unicode_to_ACP (key->sval),
 			 (unsigned long) key->nval);
 	      else
-		fprintf (fp, "#define %s 0x%lu\n", convert_unicode_to_ACP (key->sval),
+		fprintf (fp, "#define %s %lu\n", convert_unicode_to_ACP (key->sval),
 			 (unsigned long) key->nval);
 	    }
 	}
@@ -908,7 +908,7 @@ write_header (FILE *fp)
 	    fprintf (fp, "%s", s);
 	}
       if (h->symbol)
-	write_header_define (fp, h->symbol, h->vid, mcset_msg_id_typedef, h->sub);
+	write_header_define (fp, h->symbol, h->vid, h->id_typecast, h->sub);
       h = h->next;
     }
 }
@@ -924,7 +924,7 @@ mc_unify_path (const char *path)
   hsz = xmalloc (strlen (path) + 2);
   strcpy (hsz, path);
   end = hsz + strlen (hsz);
-  if (hsz[-1] != '/' && hsz[-1] != '\\')
+  if (end[-1] != '/' && end[-1] != '\\')
     strcpy (end, "/");
   while ((end = strchr (hsz, '\\')) != NULL)
     *end = '/';
@@ -941,12 +941,10 @@ main (int argc, char **argv)
   char *target, *input_filename;
   int verbose;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -1107,7 +1105,7 @@ main (int argc, char **argv)
 
   /* Load the input file and do code page transformations to UTF16.  */
   {
-    unichar *u;
+    unichar *u = NULL;
     rc_uint_type ul;
     char *buff;
     bfd_size_type flen;
@@ -1161,12 +1159,9 @@ main (int argc, char **argv)
     }
   write_bin ();
 
-  if (mc_nodes_lang)
-    free (mc_nodes_lang);
-  if (mc_severity_codes)
-    free (mc_severity_codes);
-  if (mc_facility_codes)
-    free (mc_facility_codes);
+  free (mc_nodes_lang);
+  free (mc_severity_codes);
+  free (mc_facility_codes);
 
   xexit (0);
   return 0;

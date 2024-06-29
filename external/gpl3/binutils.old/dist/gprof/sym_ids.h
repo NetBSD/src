@@ -1,6 +1,6 @@
 /* sym_ids.h
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -38,6 +38,6 @@ extern Sym_Table syms[NUM_TABLES];
 
 extern void sym_id_add (const char *, Table_Id);
 extern void sym_id_parse (void);
-extern bfd_boolean sym_id_arc_is_present (Sym_Table *, Sym *, Sym *);
+extern bool sym_id_arc_is_present (Sym_Table *, Sym *, Sym *);
 
 #endif /* sym_ids_h */

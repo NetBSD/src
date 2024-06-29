@@ -1,5 +1,5 @@
 /* Plugin control for the GNU linker.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -22,11 +22,11 @@
 #define GLD_PLUGIN_H
 
 /* Report plugin symbols.  */
-extern bfd_boolean report_plugin_symbols;
+extern bool report_plugin_symbols;
 
 /* Set at all symbols read time, to avoid recursively offering the plugin
    its own newly-added input files and libs to claim.  */
-extern bfd_boolean no_more_claiming;
+extern bool no_more_claiming;
 
 /* This is the only forward declaration we need to avoid having
    to include the plugin-api.h header in order to use this file.  */

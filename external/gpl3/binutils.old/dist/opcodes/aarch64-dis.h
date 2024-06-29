@@ -1,5 +1,5 @@
 /* aarch64-dis.h -- Header file for aarch64-dis.c and aarch64-dis-2.c.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -20,7 +20,7 @@
 
 #ifndef OPCODES_AARCH64_DIS_H
 #define OPCODES_AARCH64_DIS_H
-#include "bfd_stdint.h"
+#include <stdint.h>
 #include "aarch64-opc.h"
 
 /* Lookup opcode WORD in the opcode table.
@@ -50,7 +50,7 @@ const aarch64_opcode* aarch64_find_next_alias_opcode (const aarch64_opcode *);
 
 /* Switch-table-based high-level operand extractor.  */
 
-bfd_boolean
+bool
 aarch64_extract_operand (const aarch64_operand *, aarch64_opnd_info *,
 			 const aarch64_insn, const aarch64_inst *,
 			 aarch64_operand_error *);
@@ -58,10 +58,11 @@ aarch64_extract_operand (const aarch64_operand *, aarch64_opnd_info *,
 /* Operand extractors.  */
 
 #define AARCH64_DECL_OPD_EXTRACTOR(x)	\
-  bfd_boolean aarch64_##x (const aarch64_operand *, aarch64_opnd_info *, \
-			   const aarch64_insn, const aarch64_inst *, \
-			   aarch64_operand_error *)
+  bool aarch64_##x (const aarch64_operand *, aarch64_opnd_info *,	\
+		    const aarch64_insn, const aarch64_inst *,		\
+		    aarch64_operand_error *)
 
+AARCH64_DECL_OPD_EXTRACTOR (ext_none);
 AARCH64_DECL_OPD_EXTRACTOR (ext_regno);
 AARCH64_DECL_OPD_EXTRACTOR (ext_regno_pair);
 AARCH64_DECL_OPD_EXTRACTOR (ext_regrt_sysins);
@@ -93,6 +94,7 @@ AARCH64_DECL_OPD_EXTRACTOR (ext_sysreg);
 AARCH64_DECL_OPD_EXTRACTOR (ext_pstatefield);
 AARCH64_DECL_OPD_EXTRACTOR (ext_sysins_op);
 AARCH64_DECL_OPD_EXTRACTOR (ext_barrier);
+AARCH64_DECL_OPD_EXTRACTOR (ext_barrier_dsb_nxs);
 AARCH64_DECL_OPD_EXTRACTOR (ext_hint);
 AARCH64_DECL_OPD_EXTRACTOR (ext_prfop);
 AARCH64_DECL_OPD_EXTRACTOR (ext_reg_extended);
@@ -120,8 +122,15 @@ AARCH64_DECL_OPD_EXTRACTOR (ext_sve_reglist);
 AARCH64_DECL_OPD_EXTRACTOR (ext_sve_scale);
 AARCH64_DECL_OPD_EXTRACTOR (ext_sve_shlimm);
 AARCH64_DECL_OPD_EXTRACTOR (ext_sve_shrimm);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_za_hv_tiles);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_za_list);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_za_array);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_addr_ri_u4xvl);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_sm_za);
+AARCH64_DECL_OPD_EXTRACTOR (ext_sme_pred_reg_with_index);
 AARCH64_DECL_OPD_EXTRACTOR (ext_imm_rotate1);
 AARCH64_DECL_OPD_EXTRACTOR (ext_imm_rotate2);
+AARCH64_DECL_OPD_EXTRACTOR (ext_x0_to_x30);
 
 #undef AARCH64_DECL_OPD_EXTRACTOR
 

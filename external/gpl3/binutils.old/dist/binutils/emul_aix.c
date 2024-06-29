@@ -1,5 +1,5 @@
 /* Binutils emulation layer.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.
@@ -28,13 +28,13 @@
 
 /* Default to <bigaf>.  */
 /* FIXME: write only variable.  */
-static bfd_boolean big_archive = TRUE;
+static bool big_archive = true;
 
 /* Whether to include 32 bit objects.  */
-static bfd_boolean X32 = TRUE;
+static bool X32 = true;
 
 /* Whether to include 64 bit objects.  */
-static bfd_boolean X64 = FALSE;
+static bool X64 = false;
 
 static void
 ar_emul_aix_usage (FILE *fp)
@@ -47,7 +47,7 @@ ar_emul_aix_usage (FILE *fp)
   fprintf (fp, _("  [-X32_64]    - accepts 32 and 64 bit objects\n"));
 }
 
-static bfd_boolean
+static bool
 check_aix (bfd *try_bfd)
 {
   extern const bfd_target rs6000_xcoff_vec;
@@ -57,78 +57,68 @@ check_aix (bfd *try_bfd)
   if (bfd_check_format (try_bfd, bfd_object))
     {
       if (!X32 && try_bfd->xvec == &rs6000_xcoff_vec)
-	return FALSE;
+	return false;
 
       if (!X64 && (try_bfd->xvec == &rs6000_xcoff64_vec
 		   || try_bfd->xvec == &rs6000_xcoff64_aix_vec))
-	return FALSE;
+	return false;
     }
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
-ar_emul_aix_append (bfd **after_bfd, char *file_name, const char *target,
-		    bfd_boolean verbose, bfd_boolean flatten)
+static bool
+ar_emul_aix_append (bfd **after_bfd, bfd *new_bfd,
+		    bool verbose, bool flatten)
 {
-  bfd *new_bfd;
-
-  new_bfd = bfd_openr (file_name, target);
-  AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
-
   return do_ar_emul_append (after_bfd, new_bfd, verbose, flatten, check_aix);
 }
 
-static bfd_boolean
-ar_emul_aix_replace (bfd **after_bfd, char *file_name, const char *target,
-		     bfd_boolean verbose)
+static bool
+ar_emul_aix_replace (bfd **after_bfd, bfd *new_bfd,
+		     bool verbose)
 {
-  bfd *new_bfd;
-
-  new_bfd = bfd_openr (file_name, target);
-  AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
-
   if (!check_aix (new_bfd))
-    return FALSE;
+    return false;
 
-  AR_EMUL_REPLACE_PRINT_VERBOSE (verbose, file_name);
+  AR_EMUL_REPLACE_PRINT_VERBOSE (verbose, bfd_get_filename (new_bfd));
 
   new_bfd->archive_next = *after_bfd;
   *after_bfd = new_bfd;
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 ar_emul_aix_parse_arg (char *arg)
 {
-  if (CONST_STRNEQ (arg, "-X32_64"))
+  if (startswith (arg, "-X32_64"))
     {
-      big_archive = TRUE;
-      X32 = TRUE;
-      X64 = TRUE;
+      big_archive = true;
+      X32 = true;
+      X64 = true;
     }
-  else if (CONST_STRNEQ (arg, "-X32"))
+  else if (startswith (arg, "-X32"))
     {
-      big_archive = TRUE;
-      X32 = TRUE;
-      X64 = FALSE;
+      big_archive = true;
+      X32 = true;
+      X64 = false;
     }
-  else if (CONST_STRNEQ (arg, "-X64"))
+  else if (startswith (arg, "-X64"))
     {
-      big_archive = TRUE;
-      X32 = FALSE;
-      X64 = TRUE;
+      big_archive = true;
+      X32 = false;
+      X64 = true;
     }
-  else if (CONST_STRNEQ (arg, "-g"))
+  else if (startswith (arg, "-g"))
     {
-      big_archive = FALSE;
-      X32 = TRUE;
-      X64 = FALSE;
+      big_archive = false;
+      X32 = true;
+      X64 = false;
     }
   else
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 struct bin_emulation_xfer_struct bin_aix_emulation =

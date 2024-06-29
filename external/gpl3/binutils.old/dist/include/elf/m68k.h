@@ -1,5 +1,5 @@
 /* MC68k ELF support for BFD.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -97,5 +97,17 @@ END_RELOC_NUMBERS (R_68K_max)
 #define EF_M68K_CF_EMAC_B	0x30  /* EMAC_B */
 #define EF_M68K_CF_FLOAT	0x40  /* Has float insns */
 #define EF_M68K_CF_MASK		0xFF
-     
+
+/* GNU object attribute tags.  */
+enum
+{
+  /* 0-3 are generic.  */
+
+  /* FP ABI, low 2 bits:
+     1 for double precision hard-float,
+     2 for soft-float,
+     0 for not tagged or not using any ABIs affected by the differences. */
+  Tag_GNU_M68K_ABI_FP = 4,
+};
+
 #endif

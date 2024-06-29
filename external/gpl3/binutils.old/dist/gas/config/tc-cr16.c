@@ -1,5 +1,5 @@
 /* tc-cr16.c -- Assembler code for the CR16 CPU core.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
@@ -26,6 +26,10 @@
 #include "opcode/cr16.h"
 #include "elf/cr16.h"
 
+#include <limits.h>
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
 
 /* Word is considered here as a 16-bit unsigned short int.  */
 #define WORD_SHIFT  16
@@ -41,7 +45,7 @@
 
 /* Assign a number NUM, shifted by SHIFT bytes, into a location
    pointed by index BYTE of array 'output_opcode'.  */
-#define CR16_PRINT(BYTE, NUM, SHIFT)   output_opcode[BYTE] |= (NUM << SHIFT)
+#define CR16_PRINT(BYTE, NUM, SHIFT)   output_opcode[BYTE] |= (NUM) << (SHIFT)
 
 /* Operand errors.  */
 typedef enum
@@ -53,15 +57,15 @@ typedef enum
 op_err;
 
 /* Opcode mnemonics hash table.  */
-static struct hash_control *cr16_inst_hash;
+static htab_t cr16_inst_hash;
 /* CR16 registers hash table.  */
-static struct hash_control *reg_hash;
+static htab_t reg_hash;
 /* CR16 register pair hash table.  */
-static struct hash_control *regp_hash;
+static htab_t regp_hash;
 /* CR16 processor registers hash table.  */
-static struct hash_control *preg_hash;
+static htab_t preg_hash;
 /* CR16 processor registers 32 bit hash table.  */
-static struct hash_control *pregp_hash;
+static htab_t pregp_hash;
 /* Current instruction we're assembling.  */
 const inst *instruction;
 
@@ -119,7 +123,7 @@ l_cons (int nbytes)
   expressionS exp;
 
 #ifdef md_flush_pending_output
-    md_flush_pending_output ();
+  md_flush_pending_output ();
 #endif
 
   if (is_it_end_of_statement ())
@@ -146,97 +150,98 @@ l_cons (int nbytes)
       expression (&exp);
 
       if (*input_line_pointer == ':')
-        {
-          /* Bitfields.  */
-          long value = 0;
+	{
+	  /* Bitfields.  */
+	  long value = 0;
 
-          for (;;)
-            {
-              unsigned long width;
+	  for (;;)
+	    {
+	      unsigned long width;
 
-              if (*input_line_pointer != ':')
-                {
-                  input_line_pointer = hold;
-                  break;
-                }
-              if (exp.X_op == O_absent)
-                {
-                  as_warn (_("using a bit field width of zero"));
-                  exp.X_add_number = 0;
-                  exp.X_op = O_constant;
-                }
+	      if (*input_line_pointer != ':')
+		{
+		  input_line_pointer = hold;
+		  break;
+		}
+	      if (exp.X_op == O_absent)
+		{
+		  as_warn (_("using a bit field width of zero"));
+		  exp.X_add_number = 0;
+		  exp.X_op = O_constant;
+		}
 
-              if (exp.X_op != O_constant)
-                {
-                  *input_line_pointer = '\0';
-                  as_bad (_("field width \"%s\" too complex for a bitfield"), hold);
-                  *input_line_pointer = ':';
-                  demand_empty_rest_of_line ();
-                  return;
-                }
+	      if (exp.X_op != O_constant)
+		{
+		  *input_line_pointer = '\0';
+		  as_bad (_("field width \"%s\" too complex for a bitfield"),
+			  hold);
+		  *input_line_pointer = ':';
+		  demand_empty_rest_of_line ();
+		  return;
+		}
 
-              if ((width = exp.X_add_number) >
-                  (unsigned int)(BITS_PER_CHAR * nbytes))
-                {
+	      if ((width = exp.X_add_number) >
+		  (unsigned int)(BITS_PER_CHAR * nbytes))
+		{
 		  as_warn (ngettext ("field width %lu too big to fit in %d"
 				     " byte: truncated to %d bits",
 				     "field width %lu too big to fit in %d"
 				     " bytes: truncated to %d bits",
 				     nbytes),
 			   width, nbytes, (BITS_PER_CHAR * nbytes));
-                  width = BITS_PER_CHAR * nbytes;
-                }                   /* Too big.  */
+		  width = BITS_PER_CHAR * nbytes;
+		}
 
+	      if (width > bits_available)
+		{
+		  /* FIXME-SOMEDAY: backing up and reparsing is wasteful.  */
+		  input_line_pointer = hold;
+		  exp.X_add_number = value;
+		  break;
+		}
 
-              if (width > bits_available)
-                {
-                  /* FIXME-SOMEDAY: backing up and reparsing is wasteful.  */
-                  input_line_pointer = hold;
-                  exp.X_add_number = value;
-                  break;
-                }
+	      /* Skip ':'.  */
+	      hold = ++input_line_pointer;
 
-              /* Skip ':'.  */
-              hold = ++input_line_pointer;
+	      expression (&exp);
+	      if (exp.X_op != O_constant)
+		{
+		  char cache = *input_line_pointer;
 
-              expression (&exp);
-              if (exp.X_op != O_constant)
-                {
-                  char cache = *input_line_pointer;
+		  *input_line_pointer = '\0';
+		  as_bad (_("field value \"%s\" too complex for a bitfield"),
+			  hold);
+		  *input_line_pointer = cache;
+		  demand_empty_rest_of_line ();
+		  return;
+		}
 
-                  *input_line_pointer = '\0';
-                  as_bad (_("field value \"%s\" too complex for a bitfield"), hold);
-                  *input_line_pointer = cache;
-                  demand_empty_rest_of_line ();
-                  return;
-                }
+	      value |= ((~(-(1 << width)) & exp.X_add_number)
+			<< ((BITS_PER_CHAR * nbytes) - bits_available));
 
-              value |= ((~(-(1 << width)) & exp.X_add_number)
-                        << ((BITS_PER_CHAR * nbytes) - bits_available));
+	      if ((bits_available -= width) == 0
+		  || is_it_end_of_statement ()
+		  || *input_line_pointer != ',')
+		break;
 
-              if ((bits_available -= width) == 0
-                  || is_it_end_of_statement ()
-                  || *input_line_pointer != ',')
-                break;
+	      hold = ++input_line_pointer;
+	      expression (&exp);
+	    }
 
-              hold = ++input_line_pointer;
-              expression (&exp);
-            }
-
-          exp.X_add_number = value;
-          exp.X_op = O_constant;
-          exp.X_unsigned = 1;
-        }
+	  exp.X_add_number = value;
+	  exp.X_op = O_constant;
+	  exp.X_unsigned = 1;
+	}
 
       if ((*(input_line_pointer) == '@') && (*(input_line_pointer +1) == 'c'))
-        code_label = 1;
+	code_label = 1;
       emit_expr (&exp, (unsigned int) nbytes);
       ++c;
       if ((*(input_line_pointer) == '@') && (*(input_line_pointer +1) == 'c'))
-        {
-          input_line_pointer +=3;
-          break;
-        }
+	{
+	  input_line_pointer +=3;
+	  break;
+	}
     }
   while ((*input_line_pointer++ == ','));
 
@@ -324,7 +329,7 @@ get_register (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) hash_find (reg_hash, reg_name);
+  rreg = (const reg_entry *) str_hash_find (reg_hash, reg_name);
 
   if (rreg != NULL)
     return rreg->value.reg_val;
@@ -345,10 +350,10 @@ get_register_pair (char *reg_name)
       tmp_rp[0] = '(';
       strcat (tmp_rp, reg_name);
       strcat (tmp_rp,")");
-      rreg = (const reg_entry *) hash_find (regp_hash, tmp_rp);
+      rreg = (const reg_entry *) str_hash_find (regp_hash, tmp_rp);
     }
   else
-    rreg = (const reg_entry *) hash_find (regp_hash, reg_name);
+    rreg = (const reg_entry *) str_hash_find (regp_hash, reg_name);
 
   if (rreg != NULL)
     return rreg->value.reg_val;
@@ -363,7 +368,7 @@ get_index_register (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) hash_find (reg_hash, reg_name);
+  rreg = (const reg_entry *) str_hash_find (reg_hash, reg_name);
 
   if ((rreg != NULL)
       && ((rreg->value.reg_val == 12) || (rreg->value.reg_val == 13)))
@@ -378,13 +383,13 @@ get_index_register_pair (char *reg_name)
 {
   const reg_entry *rreg;
 
-  rreg = (const reg_entry *) hash_find (regp_hash, reg_name);
+  rreg = (const reg_entry *) str_hash_find (regp_hash, reg_name);
 
   if (rreg != NULL)
     {
       if ((rreg->value.reg_val != 1) || (rreg->value.reg_val != 7)
-          || (rreg->value.reg_val != 9) || (rreg->value.reg_val > 10))
-        return rreg->value.reg_val;
+	  || (rreg->value.reg_val != 9) || (rreg->value.reg_val > 10))
+	return rreg->value.reg_val;
 
       as_bad (_("Unknown register pair - index relative mode: `%d'"), rreg->value.reg_val);
     }
@@ -399,7 +404,7 @@ get_pregister (char *preg_name)
 {
   const reg_entry *prreg;
 
-  prreg = (const reg_entry *) hash_find (preg_hash, preg_name);
+  prreg = (const reg_entry *) str_hash_find (preg_hash, preg_name);
 
   if (prreg != NULL)
     return prreg->value.preg_val;
@@ -414,7 +419,7 @@ get_pregisterp (char *preg_name)
 {
   const reg_entry *prreg;
 
-  prreg = (const reg_entry *) hash_find (pregp_hash, preg_name);
+  prreg = (const reg_entry *) str_hash_find (pregp_hash, preg_name);
 
   if (prreg != NULL)
     return prreg->value.preg_val;
@@ -470,16 +475,15 @@ reset_vars (char *op)
    to know about all such entries so that it can adjust them if
    necessary.  */
 
-#define SWITCH_TABLE(fix)                                  \
-  (   (fix)->fx_addsy != NULL                              \
-   && (fix)->fx_subsy != NULL                              \
-   && S_GET_SEGMENT ((fix)->fx_addsy) ==                   \
-      S_GET_SEGMENT ((fix)->fx_subsy)                      \
-   && S_GET_SEGMENT (fix->fx_addsy) != undefined_section   \
-   && (   (fix)->fx_r_type == BFD_RELOC_CR16_NUM8          \
-       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM16         \
-       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM32         \
-       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM32a))
+#define SWITCH_TABLE(fix)						\
+  ((fix)->fx_addsy != NULL						\
+   && (fix)->fx_subsy != NULL						\
+   && ((fix)->fx_r_type == BFD_RELOC_CR16_NUM8				\
+       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM16			\
+       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM32			\
+       || (fix)->fx_r_type == BFD_RELOC_CR16_NUM32a)			\
+   && S_GET_SEGMENT ((fix)->fx_addsy) != undefined_section		\
+   && S_GET_SEGMENT ((fix)->fx_addsy) == S_GET_SEGMENT ((fix)->fx_subsy))
 
 /* See whether we need to force a relocation into the output file.
    This is used to force out switch and PC relative relocations when
@@ -507,12 +511,12 @@ cr16_cons_fix_new (fragS *frag, int offset, int len, expressionS *exp,
     case 2: rtype = BFD_RELOC_CR16_NUM16; break;
     case 4:
       if (code_label)
-        {
-          rtype = BFD_RELOC_CR16_NUM32a;
-          code_label = 0;
-        }
+	{
+	  rtype = BFD_RELOC_CR16_NUM32a;
+	  code_label = 0;
+	}
       else
-        rtype = BFD_RELOC_CR16_NUM32;
+	rtype = BFD_RELOC_CR16_NUM32;
       break;
     }
 
@@ -528,10 +532,10 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 
   /* If symbols are local and resolved, then no relocation needed.  */
   if ( ((fixP->fx_addsy)
-        && (S_GET_SEGMENT (fixP->fx_addsy) == absolute_section))
+	&& (S_GET_SEGMENT (fixP->fx_addsy) == absolute_section))
        || ((fixP->fx_subsy)
 	   && (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)))
-     return NULL;
+    return NULL;
 
   reloc = XNEW (arelent);
   reloc->sym_ptr_ptr  = XNEW (asymbol *);
@@ -542,56 +546,52 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
   if (fixP->fx_subsy != NULL)
     {
       if (SWITCH_TABLE (fixP))
-        {
-          /* Keep the current difference in the addend.  */
-          reloc->addend = (S_GET_VALUE (fixP->fx_addsy)
-                           - S_GET_VALUE (fixP->fx_subsy) + fixP->fx_offset);
+	{
+	  /* Keep the current difference in the addend.  */
+	  reloc->addend = (S_GET_VALUE (fixP->fx_addsy)
+			   - S_GET_VALUE (fixP->fx_subsy) + fixP->fx_offset);
 
-          switch (fixP->fx_r_type)
-            {
-            case BFD_RELOC_CR16_NUM8:
-              fixP->fx_r_type = BFD_RELOC_CR16_SWITCH8;
-              break;
-            case BFD_RELOC_CR16_NUM16:
-              fixP->fx_r_type = BFD_RELOC_CR16_SWITCH16;
-              break;
-            case BFD_RELOC_CR16_NUM32:
-              fixP->fx_r_type = BFD_RELOC_CR16_SWITCH32;
-              break;
-            case BFD_RELOC_CR16_NUM32a:
-              fixP->fx_r_type = BFD_RELOC_CR16_NUM32a;
-              break;
-            default:
-              abort ();
-              break;
-            }
-        }
+	  switch (fixP->fx_r_type)
+	    {
+	    case BFD_RELOC_CR16_NUM8:
+	      fixP->fx_r_type = BFD_RELOC_CR16_SWITCH8;
+	      break;
+	    case BFD_RELOC_CR16_NUM16:
+	      fixP->fx_r_type = BFD_RELOC_CR16_SWITCH16;
+	      break;
+	    case BFD_RELOC_CR16_NUM32:
+	      fixP->fx_r_type = BFD_RELOC_CR16_SWITCH32;
+	      break;
+	    case BFD_RELOC_CR16_NUM32a:
+	      fixP->fx_r_type = BFD_RELOC_CR16_NUM32a;
+	      break;
+	    default:
+	      abort ();
+	      break;
+	    }
+	}
       else
-        {
-          /* We only resolve difference expressions in the same section.  */
-          as_bad_where (fixP->fx_file, fixP->fx_line,
-                        _("can't resolve `%s' {%s section} - `%s' {%s section}"),
-                        fixP->fx_addsy ? S_GET_NAME (fixP->fx_addsy) : "0",
-                        segment_name (fixP->fx_addsy
-                                      ? S_GET_SEGMENT (fixP->fx_addsy)
-                                      : absolute_section),
-                        S_GET_NAME (fixP->fx_subsy),
-                        segment_name (S_GET_SEGMENT (fixP->fx_addsy)));
-        }
+	{
+	  /* We only resolve difference expressions in the same section.  */
+	  as_bad_subtract (fixP);
+	  free (reloc->sym_ptr_ptr);
+	  free (reloc);
+	  return NULL;
+	}
     }
 #ifdef OBJ_ELF
-      if ((fixP->fx_r_type == BFD_RELOC_CR16_GOT_REGREL20)
-           && GOT_symbol
+  if ((fixP->fx_r_type == BFD_RELOC_CR16_GOT_REGREL20)
+      && GOT_symbol
+      && fixP->fx_addsy == GOT_symbol)
+    {
+      reloc->addend = fixP->fx_offset = reloc->address;
+    }
+  else if ((fixP->fx_r_type == BFD_RELOC_CR16_GOTC_REGREL20)
+	   && GOT_symbol
 	   && fixP->fx_addsy == GOT_symbol)
-	{
-	    reloc->addend = fixP->fx_offset = reloc->address;
-	}
-      else if ((fixP->fx_r_type == BFD_RELOC_CR16_GOTC_REGREL20)
-           && GOT_symbol
-	   && fixP->fx_addsy == GOT_symbol)
-	{
-	    reloc->addend = fixP->fx_offset = reloc->address;
-	}
+    {
+      reloc->addend = fixP->fx_offset = reloc->address;
+    }
 #endif
 
   gas_assert ((int) fixP->fx_r_type > 0);
@@ -600,9 +600,9 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
   if (reloc->howto == NULL)
     {
       as_bad_where (fixP->fx_file, fixP->fx_line,
-                    _("internal error: reloc %d (`%s') not supported by object file format"),
-                    fixP->fx_r_type,
-                    bfd_get_reloc_code_name (fixP->fx_r_type));
+		    _("internal error: reloc %d (`%s') not supported by object file format"),
+		    fixP->fx_r_type,
+		    bfd_get_reloc_code_name (fixP->fx_r_type));
       return NULL;
     }
   gas_assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
@@ -623,12 +623,12 @@ md_estimate_size_before_relax (fragS *fragp, asection *seg)
   for (subtype = 0; subtype < ARRAY_SIZE (rlx_state); subtype += 2)
     {
       if (fragp->fr_subtype == rlx_state[subtype]
-          && (!S_IS_DEFINED (fragp->fr_symbol)
-              || seg != S_GET_SEGMENT (fragp->fr_symbol)))
-        {
-          fragp->fr_subtype = rlx_state[subtype + 1];
-          break;
-        }
+	  && (!S_IS_DEFINED (fragp->fr_symbol)
+	      || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+	{
+	  fragp->fr_subtype = rlx_state[subtype + 1];
+	  break;
+	}
     }
 
   if (fragp->fr_subtype >= ARRAY_SIZE (md_relax_table))
@@ -642,7 +642,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, fragS *fragP)
 {
   /* 'opcode' points to the start of the instruction, whether
      we need to change the instruction's fixed encoding.  */
-  char *opcode = fragP->fr_literal + fragP->fr_fix;
+  char *opcode = &fragP->fr_literal[0] + fragP->fr_fix;
   bfd_reloc_code_real_type reloc;
 
   subseg_change (sec, 0);
@@ -654,23 +654,23 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, fragS *fragP)
       break;
     case 1:
       /* If the subtype is not changed due to :m operand qualifier,
-         then no need to update the opcode value.  */
+	 then no need to update the opcode value.  */
       if ((int)opcode[1] != 0x18)
-        {
-          opcode[0] = (opcode[0] & 0xf0);
-          opcode[1] = 0x18;
-        }
+	{
+	  opcode[0] = (opcode[0] & 0xf0);
+	  opcode[1] = 0x18;
+	}
       reloc = BFD_RELOC_CR16_DISP16;
       break;
     case 2:
       /* If the subtype is not changed due to :l operand qualifier,
-         then no need to update the opcode value.  */
+	 then no need to update the opcode value.  */
       if ((int)opcode[1] != 0)
-        {
-          opcode[2] = opcode[0];
-          opcode[0] = opcode[1];
-          opcode[1] = 0x0;
-        }
+	{
+	  opcode[2] = opcode[0];
+	  opcode[0] = opcode[1];
+	  opcode[1] = 0x0;
+	}
       reloc = BFD_RELOC_CR16_DISP24;
       break;
     default:
@@ -678,8 +678,8 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, fragS *fragP)
     }
 
   fix_new (fragP, fragP->fr_fix,
-           bfd_get_reloc_size (bfd_reloc_type_lookup (stdoutput, reloc)),
-           fragP->fr_symbol, fragP->fr_offset, 1, reloc);
+	   bfd_get_reloc_size (bfd_reloc_type_lookup (stdoutput, reloc)),
+	   fragP->fr_symbol, fragP->fr_offset, 1, reloc);
   fragP->fr_var = 0;
   fragP->fr_fix += md_relax_table[fragP->fr_subtype].rlx_length;
 }
@@ -689,16 +689,16 @@ md_undefined_symbol (char *name)
 {
   if (*name == '_' && *(name + 1) == 'G'
       && strcmp (name, "_GLOBAL_OFFSET_TABLE_") == 0)
-   {
-     if (!GOT_symbol)
-       {
-         if (symbol_find (name))
-             as_bad (_("GOT already in symbol table"));
-          GOT_symbol = symbol_new (name, undefined_section,
-                                   (valueT) 0, &zero_address_frag);
-       }
-     return GOT_symbol;
-   }
+    {
+      if (!GOT_symbol)
+	{
+	  if (symbol_find (name))
+	    as_bad (_("GOT already in symbol table"));
+	  GOT_symbol = symbol_new (name, undefined_section,
+				   &zero_address_frag, 0);
+	}
+      return GOT_symbol;
+    }
   return 0;
 }
 
@@ -794,25 +794,19 @@ md_pcrel_from (fixS *fixp)
 }
 
 static void
-initialise_reg_hash_table (struct hash_control ** hash_table,
-                           const reg_entry * register_table,
-                           const unsigned int num_entries)
+initialise_reg_hash_table (htab_t *hash_table,
+			   const reg_entry *register_table,
+			   const unsigned int num_entries)
 {
-  const reg_entry * rreg;
-  const char *hashret;
+  const reg_entry *rreg;
 
-  if ((* hash_table = hash_new ()) == NULL)
-    as_fatal (_("Virtual memory exhausted"));
+  *hash_table = str_htab_create ();
 
   for (rreg = register_table;
        rreg < (register_table + num_entries);
        rreg++)
-    {
-      hashret = hash_insert (* hash_table, rreg->name, (char *) rreg);
-      if (hashret)
-        as_fatal (_("Internal Error:  Can't hash %s: %s"),
-                  rreg->name, hashret);
-    }
+    if (str_hash_insert (*hash_table, rreg->name, rreg, 0) != NULL)
+      as_fatal (_("duplicate %s"), rreg->name);
 }
 
 /* This function is called once, at assembler startup time.  This should
@@ -824,31 +818,25 @@ md_begin (void)
   int i = 0;
 
   /* Set up a hash table for the instructions.  */
-  if ((cr16_inst_hash = hash_new ()) == NULL)
-    as_fatal (_("Virtual memory exhausted"));
+  cr16_inst_hash = str_htab_create ();
 
   while (cr16_instruction[i].mnemonic != NULL)
     {
-      const char *hashret;
       const char *mnemonic = cr16_instruction[i].mnemonic;
 
-      hashret = hash_insert (cr16_inst_hash, mnemonic,
-                             (char *)(cr16_instruction + i));
-
-      if (hashret != NULL && *hashret != '\0')
-        as_fatal (_("Can't hash `%s': %s\n"), cr16_instruction[i].mnemonic,
-                  *hashret == 0 ? _("(unknown reason)") : hashret);
+      if (str_hash_insert (cr16_inst_hash, mnemonic, cr16_instruction + i, 0))
+	as_fatal (_("duplicate %s"), mnemonic);
 
       /* Insert unique names into hash table.  The CR16 instruction set
-         has many identical opcode names that have different opcodes based
-         on the operands.  This hash table then provides a quick index to
-         the first opcode with a particular name in the opcode table.  */
+	 has many identical opcode names that have different opcodes based
+	 on the operands.  This hash table then provides a quick index to
+	 the first opcode with a particular name in the opcode table.  */
       do
-        {
-          ++i;
-        }
+	{
+	  ++i;
+	}
       while (cr16_instruction[i].mnemonic != NULL
-             && streq (cr16_instruction[i].mnemonic, mnemonic));
+	     && streq (cr16_instruction[i].mnemonic, mnemonic));
     }
 
   /* Initialize reg_hash hash table.  */
@@ -890,7 +878,7 @@ process_label_constant (char *str, ins * cr16_ins)
     case O_absent:
       /* Missing or bad expr becomes absolute 0.  */
       as_bad (_("missing or invalid displacement expression `%s' taken as 0"),
-              str);
+	      str);
       cr16_ins->exp.X_op = O_constant;
       cr16_ins->exp.X_add_number = 0;
       cr16_ins->exp.X_add_symbol = NULL;
@@ -911,183 +899,183 @@ process_label_constant (char *str, ins * cr16_ins)
       cr16_ins->rtype = BFD_RELOC_NONE;
       relocatable = 1;
 
-      if (strneq (input_line_pointer, "@c", 2))
-        symbol_with_at = 1;
+      if (startswith (input_line_pointer, "@c"))
+	symbol_with_at = 1;
 
-      if (strneq (input_line_pointer, "@l", 2)
-          || strneq (input_line_pointer, ":l", 2))
-        symbol_with_l = 1;
+      if (startswith (input_line_pointer, "@l")
+	  || startswith (input_line_pointer, ":l"))
+	symbol_with_l = 1;
 
-      if (strneq (input_line_pointer, "@m", 2)
-          || strneq (input_line_pointer, ":m", 2))
-        symbol_with_m = 1;
+      if (startswith (input_line_pointer, "@m")
+	  || startswith (input_line_pointer, ":m"))
+	symbol_with_m = 1;
 
-      if (strneq (input_line_pointer, "@s", 2)
-          || strneq (input_line_pointer, ":s", 2))
-        symbol_with_s = 1;
+      if (startswith (input_line_pointer, "@s")
+	  || startswith (input_line_pointer, ":s"))
+	symbol_with_s = 1;
 
-      if (strneq (input_line_pointer, "@cGOT", 5)
-          || strneq (input_line_pointer, "@cgot", 5))
+      if (startswith (input_line_pointer, "@cGOT")
+	  || startswith (input_line_pointer, "@cgot"))
 	{
 	  if (GOT_symbol == NULL)
-           GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
+	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
 
-          symbol_with_at_gotc = 1;
+	  symbol_with_at_gotc = 1;
 	}
-      else if (strneq (input_line_pointer, "@GOT", 4)
-          || strneq (input_line_pointer, "@got", 4))
+      else if (startswith (input_line_pointer, "@GOT")
+	       || startswith (input_line_pointer, "@got"))
 	{
-          if ((strneq (input_line_pointer, "+", 1))
-	       || (strneq (input_line_pointer, "-", 1)))
-           as_warn (_("GOT bad expression with %s."), input_line_pointer);
+	  if ((startswith (input_line_pointer, "+"))
+	      || (startswith (input_line_pointer, "-")))
+	    as_warn (_("GOT bad expression with %s."), input_line_pointer);
 
 	  if (GOT_symbol == NULL)
-           GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
+	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
 
-          symbol_with_at_got = 1;
+	  symbol_with_at_got = 1;
 	}
 
       switch (cur_arg->type)
-        {
-        case arg_cr:
-          if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
-            {
+	{
+	case arg_cr:
+	  if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
+	    {
 	      if (symbol_with_at_got)
-	          cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
 	      else if (symbol_with_at_gotc)
-	          cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
 	      else if (cur_arg->size == 20)
-                cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
-              else
-                cr16_ins->rtype = BFD_RELOC_CR16_REGREL20a;
-            }
-          break;
-
-        case arg_crp:
-          if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
-	   {
-	    if (symbol_with_at_got)
-	      cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
-	    else if (symbol_with_at_gotc)
-	      cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
-	   } else {
-            switch (instruction->size)
-              {
-              case 1:
-                switch (cur_arg->size)
-                  {
-                  case 0:
-                    cr16_ins->rtype = BFD_RELOC_CR16_REGREL0;
-                    break;
-                  case 4:
-                    if (IS_INSN_MNEMONIC ("loadb") || IS_INSN_MNEMONIC ("storb"))
-                      cr16_ins->rtype = BFD_RELOC_CR16_REGREL4;
-                    else
-                      cr16_ins->rtype = BFD_RELOC_CR16_REGREL4a;
-                    break;
-                  default: break;
-                  }
-                break;
-              case 2:
-                cr16_ins->rtype = BFD_RELOC_CR16_REGREL16;
-                break;
-              case 3:
-                if (cur_arg->size == 20)
-                  cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
-                else
-                  cr16_ins->rtype = BFD_RELOC_CR16_REGREL20a;
-                break;
-              default:
-                break;
-              }
-	    }
-          break;
-
-        case arg_idxr:
-          if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
-	    {
-	      if (symbol_with_at_got)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
-	      else if (symbol_with_at_gotc)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
 	      else
-                cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_REGREL20a;
 	    }
-          break;
+	  break;
 
-        case arg_idxrp:
-          if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
+	case arg_crp:
+	  if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
 	    {
-	    if (symbol_with_at_got)
-	      cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
-	    else if (symbol_with_at_gotc)
-	      cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
-	    else {
-            switch (instruction->size)
-              {
-              case 1: cr16_ins->rtype = BFD_RELOC_CR16_REGREL0; break;
-              case 2: cr16_ins->rtype = BFD_RELOC_CR16_REGREL14; break;
-              case 3: cr16_ins->rtype = BFD_RELOC_CR16_REGREL20; break;
-              default: break;
-              }
+	      if (symbol_with_at_got)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+	      else if (symbol_with_at_gotc)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+	    } else {
+	    switch (instruction->size)
+	      {
+	      case 1:
+		switch (cur_arg->size)
+		  {
+		  case 0:
+		    cr16_ins->rtype = BFD_RELOC_CR16_REGREL0;
+		    break;
+		  case 4:
+		    if (IS_INSN_MNEMONIC ("loadb") || IS_INSN_MNEMONIC ("storb"))
+		      cr16_ins->rtype = BFD_RELOC_CR16_REGREL4;
+		    else
+		      cr16_ins->rtype = BFD_RELOC_CR16_REGREL4a;
+		    break;
+		  default: break;
+		  }
+		break;
+	      case 2:
+		cr16_ins->rtype = BFD_RELOC_CR16_REGREL16;
+		break;
+	      case 3:
+		if (cur_arg->size == 20)
+		  cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
+		else
+		  cr16_ins->rtype = BFD_RELOC_CR16_REGREL20a;
+		break;
+	      default:
+		break;
+	      }
+	  }
+	  break;
+
+	case arg_idxr:
+	  if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
+	    {
+	      if (symbol_with_at_got)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+	      else if (symbol_with_at_gotc)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+	      else
+		cr16_ins->rtype = BFD_RELOC_CR16_REGREL20;
 	    }
-	   }
-          break;
+	  break;
 
-        case arg_c:
-          if (IS_INSN_MNEMONIC ("bal"))
-            cr16_ins->rtype = BFD_RELOC_CR16_DISP24;
-          else if (IS_INSN_TYPE (BRANCH_INS))
-            {
-              if (symbol_with_l)
-                cr16_ins->rtype = BFD_RELOC_CR16_DISP24;
-              else if (symbol_with_m)
-                cr16_ins->rtype = BFD_RELOC_CR16_DISP16;
-              else
-                cr16_ins->rtype = BFD_RELOC_CR16_DISP8;
-            }
-          else if (IS_INSN_TYPE (STOR_IMM_INS) || IS_INSN_TYPE (LD_STOR_INS)
-                   || IS_INSN_TYPE (CSTBIT_INS))
-            {
-	      if (symbol_with_s)
-                as_bad (_("operand %d: illegal use expression: `%s`"), cur_arg_num + 1, str);
+	case arg_idxrp:
+	  if (IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
+	    {
 	      if (symbol_with_at_got)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
 	      else if (symbol_with_at_gotc)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+	      else {
+		switch (instruction->size)
+		  {
+		  case 1: cr16_ins->rtype = BFD_RELOC_CR16_REGREL0; break;
+		  case 2: cr16_ins->rtype = BFD_RELOC_CR16_REGREL14; break;
+		  case 3: cr16_ins->rtype = BFD_RELOC_CR16_REGREL20; break;
+		  default: break;
+		  }
+	      }
+	    }
+	  break;
+
+	case arg_c:
+	  if (IS_INSN_MNEMONIC ("bal"))
+	    cr16_ins->rtype = BFD_RELOC_CR16_DISP24;
+	  else if (IS_INSN_TYPE (BRANCH_INS))
+	    {
+	      if (symbol_with_l)
+		cr16_ins->rtype = BFD_RELOC_CR16_DISP24;
 	      else if (symbol_with_m)
-                cr16_ins->rtype = BFD_RELOC_CR16_ABS20;
-              else /* Default to (symbol_with_l) */
-                cr16_ins->rtype = BFD_RELOC_CR16_ABS24;
-            }
-          else if (IS_INSN_TYPE (BRANCH_NEQ_INS))
-            cr16_ins->rtype = BFD_RELOC_CR16_DISP4;
-          break;
-
-        case arg_ic:
-          if (IS_INSN_TYPE (ARITH_INS))
-            {
+		cr16_ins->rtype = BFD_RELOC_CR16_DISP16;
+	      else
+		cr16_ins->rtype = BFD_RELOC_CR16_DISP8;
+	    }
+	  else if (IS_INSN_TYPE (STOR_IMM_INS) || IS_INSN_TYPE (LD_STOR_INS)
+		   || IS_INSN_TYPE (CSTBIT_INS))
+	    {
+	      if (symbol_with_s)
+		as_bad (_("operand %d: illegal use expression: `%s`"), cur_arg_num + 1, str);
 	      if (symbol_with_at_got)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
 	      else if (symbol_with_at_gotc)
-	        cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
+	      else if (symbol_with_m)
+		cr16_ins->rtype = BFD_RELOC_CR16_ABS20;
+	      else /* Default to (symbol_with_l) */
+		cr16_ins->rtype = BFD_RELOC_CR16_ABS24;
+	    }
+	  else if (IS_INSN_TYPE (BRANCH_NEQ_INS))
+	    cr16_ins->rtype = BFD_RELOC_CR16_DISP4;
+	  break;
+
+	case arg_ic:
+	  if (IS_INSN_TYPE (ARITH_INS))
+	    {
+	      if (symbol_with_at_got)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOT_REGREL20;
+	      else if (symbol_with_at_gotc)
+		cr16_ins->rtype = BFD_RELOC_CR16_GOTC_REGREL20;
 	      else if (symbol_with_s)
-                cr16_ins->rtype = BFD_RELOC_CR16_IMM4;
-              else if (symbol_with_m)
-                cr16_ins->rtype = BFD_RELOC_CR16_IMM20;
-              else if (symbol_with_at)
-                cr16_ins->rtype = BFD_RELOC_CR16_IMM32a;
-              else /* Default to (symbol_with_l) */
-                cr16_ins->rtype = BFD_RELOC_CR16_IMM32;
-            }
-          else if (IS_INSN_TYPE (ARITH_BYTE_INS))
-            {
-              cr16_ins->rtype = BFD_RELOC_CR16_IMM16;
-            }
-          break;
-        default:
-          break;
-        }
+		cr16_ins->rtype = BFD_RELOC_CR16_IMM4;
+	      else if (symbol_with_m)
+		cr16_ins->rtype = BFD_RELOC_CR16_IMM20;
+	      else if (symbol_with_at)
+		cr16_ins->rtype = BFD_RELOC_CR16_IMM32a;
+	      else /* Default to (symbol_with_l) */
+		cr16_ins->rtype = BFD_RELOC_CR16_IMM32;
+	    }
+	  else if (IS_INSN_TYPE (ARITH_BYTE_INS))
+	    {
+	      cr16_ins->rtype = BFD_RELOC_CR16_IMM16;
+	    }
+	  break;
+	default:
+	  break;
+	}
       break;
 
     default:
@@ -1121,18 +1109,18 @@ getreg_image (reg r)
 
   reg_name = rreg->name;
 
-/* Issue a error message when register is illegal.  */
-#define IMAGE_ERR \
-  as_bad (_("Illegal register (`%s') in Instruction: `%s'"), \
+  /* Issue a error message when register is illegal.  */
+#define IMAGE_ERR						\
+  as_bad (_("Illegal register (`%s') in Instruction: `%s'"),	\
 	  reg_name, ins_parse);
 
   switch (rreg->type)
     {
     case CR16_R_REGTYPE:
       if (! is_procreg)
-        return rreg->image;
+	return rreg->image;
       else
-        IMAGE_ERR;
+	IMAGE_ERR;
       break;
 
     case CR16_P_REGTYPE:
@@ -1177,7 +1165,7 @@ set_operand (char *operand, ins * cr16_ins)
       process_label_constant (operandS, cr16_ins);
 
       if (cur_arg->type != arg_ic)
-        cur_arg->type = arg_c;
+	cur_arg->type = arg_c;
       break;
 
     case arg_icr:   /* Case $0x18(r1).  */
@@ -1185,7 +1173,7 @@ set_operand (char *operand, ins * cr16_ins)
     case arg_cr:    /* Case 0x18(r1).   */
       /* Set displacement constant.  */
       while (*operandE != '(')
-        operandE++;
+	operandE++;
       *operandE = '\0';
       process_label_constant (operandS, cr16_ins);
       operandS = operandE;
@@ -1194,60 +1182,60 @@ set_operand (char *operand, ins * cr16_ins)
       operandS++;
       /* Set register base.  */
       while (*operandE != ')')
-        operandE++;
+	operandE++;
       *operandE = '\0';
       if ((cur_arg->r = get_register (operandS)) == nullregister)
-         as_bad (_("Illegal register `%s' in Instruction `%s'"),
-              operandS, ins_parse);
+	as_bad (_("Illegal register `%s' in Instruction `%s'"),
+		operandS, ins_parse);
 
       /* set the arg->rp, if reg is "r12" or "r13" or "14" or "15" */
       if ((cur_arg->type != arg_rbase)
-          && ((getreg_image (cur_arg->r) == 12)
-              || (getreg_image (cur_arg->r) == 13)
-              || (getreg_image (cur_arg->r) == 14)
-              || (getreg_image (cur_arg->r) == 15)))
-         {
-           cur_arg->type = arg_crp;
-           cur_arg->rp = cur_arg->r;
-         }
+	  && ((getreg_image (cur_arg->r) == 12)
+	      || (getreg_image (cur_arg->r) == 13)
+	      || (getreg_image (cur_arg->r) == 14)
+	      || (getreg_image (cur_arg->r) == 15)))
+	{
+	  cur_arg->type = arg_crp;
+	  cur_arg->rp = cur_arg->r;
+	}
       break;
 
     case arg_crp:    /* Case 0x18(r1,r0).   */
       /* Set displacement constant.  */
       while (*operandE != '(')
-        operandE++;
+	operandE++;
       *operandE = '\0';
       process_label_constant (operandS, cr16_ins);
       operandS = operandE;
       operandS++;
       /* Set register pair base.  */
       while (*operandE != ')')
-        operandE++;
+	operandE++;
       *operandE = '\0';
       if ((cur_arg->rp = get_register_pair (operandS)) == nullregister)
-         as_bad (_("Illegal register pair `%s' in Instruction `%s'"),
-              operandS, ins_parse);
+	as_bad (_("Illegal register pair `%s' in Instruction `%s'"),
+		operandS, ins_parse);
       break;
 
     case arg_idxr:
       /* Set register pair base.  */
       if ((strchr (operandS,'(') != NULL))
-        {
-         while ((*operandE != '(') && (! ISSPACE (*operandE)))
-           operandE++;
-         if ((cur_arg->rp = get_index_register_pair (operandE)) == nullregister)
-              as_bad (_("Illegal register pair `%s' in Instruction `%s'"),
-                            operandS, ins_parse);
-         *operandE++ = '\0';
-         cur_arg->type = arg_idxrp;
-        }
+	{
+	  while ((*operandE != '(') && (! ISSPACE (*operandE)))
+	    operandE++;
+	  if ((cur_arg->rp = get_index_register_pair (operandE)) == nullregister)
+	    as_bad (_("Illegal register pair `%s' in Instruction `%s'"),
+		    operandS, ins_parse);
+	  *operandE++ = '\0';
+	  cur_arg->type = arg_idxrp;
+	}
       else
-        cur_arg->rp = -1;
+	cur_arg->rp = -1;
 
-       operandE = operandS;
+      operandE = operandS;
       /* Set displacement constant.  */
       while (*operandE != ']')
-        operandE++;
+	operandE++;
       process_label_constant (++operandE, cr16_ins);
       *operandE++ = '\0';
       operandE = operandS;
@@ -1255,25 +1243,25 @@ set_operand (char *operand, ins * cr16_ins)
       /* Set index register .  */
       operandS = strchr (operandE,'[');
       if (operandS != NULL)
-        { /* Eliminate '[', detach from rest of operand.  */
-          *operandS++ = '\0';
+	{ /* Eliminate '[', detach from rest of operand.  */
+	  *operandS++ = '\0';
 
-          operandE = strchr (operandS, ']');
+	  operandE = strchr (operandS, ']');
 
-          if (operandE == NULL)
-            as_bad (_("unmatched '['"));
-          else
-            { /* Eliminate ']' and make sure it was the last thing
-                 in the string.  */
-              *operandE = '\0';
-              if (*(operandE + 1) != '\0')
-                as_bad (_("garbage after index spec ignored"));
-            }
-        }
+	  if (operandE == NULL)
+	    as_bad (_("unmatched '['"));
+	  else
+	    { /* Eliminate ']' and make sure it was the last thing
+		 in the string.  */
+	      *operandE = '\0';
+	      if (*(operandE + 1) != '\0')
+		as_bad (_("garbage after index spec ignored"));
+	    }
+	}
 
       if ((cur_arg->i_r = get_index_register (operandS)) == nullregister)
-        as_bad (_("Illegal register `%s' in Instruction `%s'"),
-                operandS, ins_parse);
+	as_bad (_("Illegal register `%s' in Instruction `%s'"),
+		operandS, ins_parse);
       *operandE = '\0';
       *operandS = '\0';
       break;
@@ -1350,9 +1338,9 @@ parse_operand (char *operand, ins * cr16_ins)
     {
     case '$':
       if (strchr (operand, '(') != NULL)
-        cur_arg->type = arg_icr;
+	cur_arg->type = arg_icr;
       else
-        cur_arg->type = arg_ic;
+	cur_arg->type = arg_ic;
       goto set_params;
       break;
 
@@ -1373,15 +1361,15 @@ parse_operand (char *operand, ins * cr16_ins)
   if (strchr (operand, '(') != NULL)
     {
       if (strchr (operand, ',') != NULL
-          && (strchr (operand, ',') > strchr (operand, '(')))
-        cur_arg->type = arg_crp;
+	  && (strchr (operand, ',') > strchr (operand, '(')))
+	cur_arg->type = arg_crp;
       else
-        cur_arg->type = arg_cr;
+	cur_arg->type = arg_cr;
     }
   else
     cur_arg->type = arg_c;
 
-/* Parse an operand according to its type.  */
+  /* Parse an operand according to its type.  */
  set_params:
   cur_arg->constant = 0;
   set_operand (operand, cr16_ins);
@@ -1407,40 +1395,40 @@ parse_operands (ins * cr16_ins, char *operands)
   while (*operandT != '\0')
     {
       if (*operandT == ',' && bracket_flag != 1 && sq_bracket_flag != 1)
-        {
-          *operandT++ = '\0';
-          operand[op_num++] = strdup (operandH);
-          operandH = operandT;
-          continue;
-        }
+	{
+	  *operandT++ = '\0';
+	  operand[op_num++] = strdup (operandH);
+	  operandH = operandT;
+	  continue;
+	}
 
       if (*operandT == ' ')
-        as_bad (_("Illegal operands (whitespace): `%s'"), ins_parse);
+	as_bad (_("Illegal operands (whitespace): `%s'"), ins_parse);
 
       if (*operandT == '(')
-        bracket_flag = 1;
+	bracket_flag = 1;
       else if (*operandT == '[')
-        sq_bracket_flag = 1;
+	sq_bracket_flag = 1;
 
       if (*operandT == ')')
-        {
-          if (bracket_flag)
-            bracket_flag = 0;
-          else
-            as_fatal (_("Missing matching brackets : `%s'"), ins_parse);
-        }
+	{
+	  if (bracket_flag)
+	    bracket_flag = 0;
+	  else
+	    as_fatal (_("Missing matching brackets : `%s'"), ins_parse);
+	}
       else if (*operandT == ']')
-        {
-          if (sq_bracket_flag)
-            sq_bracket_flag = 0;
-          else
-            as_fatal (_("Missing matching brackets : `%s'"), ins_parse);
-        }
+	{
+	  if (sq_bracket_flag)
+	    sq_bracket_flag = 0;
+	  else
+	    as_fatal (_("Missing matching brackets : `%s'"), ins_parse);
+	}
 
       if (bracket_flag == 1 && *operandT == ')')
-        bracket_flag = 0;
+	bracket_flag = 0;
       else if (sq_bracket_flag == 1 && *operandT == ']')
-        sq_bracket_flag = 0;
+	sq_bracket_flag = 0;
 
       operandT++;
     }
@@ -1525,15 +1513,12 @@ static char *
 get_b_cc (char * op)
 {
   unsigned int i;
-  char op1[5];
 
-  for (i = 1; i < strlen (op); i++)
-     op1[i-1] = op[i];
-
-  op1[i-1] = '\0';
+  if (op[1] == 0 || (op[2] != 0 && op[3] != 0))
+    return NULL;
 
   for (i = 0; i < cr16_num_cc ; i++)
-    if (streq (op1, cr16_b_cond_tab[i]))
+    if (streq (op + 1, cr16_b_cond_tab[i]))
       return (char *) cr16_b_cond_tab[i];
 
    return NULL;
@@ -1544,7 +1529,7 @@ static int
 is_bcc_insn (char * op)
 {
   if (!(streq (op, "bal") || streq (op, "beq0b") || streq (op, "bnq0b")
-        || streq (op, "beq0w") || streq (op, "bnq0w")))
+	|| streq (op, "beq0w") || streq (op, "bnq0w")))
     if ((op[0] == 'b') && (get_b_cc (op) != NULL))
       return 1;
   return 0;
@@ -1595,10 +1580,10 @@ getregp_image (reg r)
 
   reg_name = rreg->name;
 
-/* Issue a error message when register  pair is illegal.  */
-#define RPAIR_IMAGE_ERR \
-  as_bad (_("Illegal register pair (`%s') in Instruction: `%s'"), \
-            reg_name, ins_parse);                                 \
+  /* Issue a error message when register  pair is illegal.  */
+#define RPAIR_IMAGE_ERR							\
+  as_bad (_("Illegal register pair (`%s') in Instruction: `%s'"),	\
+	  reg_name, ins_parse);						\
   break;
 
   switch (rreg->type)
@@ -1634,26 +1619,26 @@ getidxregp_image (reg r)
 
   reg_name = rreg->name;
 
-/* Issue a error message when register  pair is illegal.  */
-#define IDX_RPAIR_IMAGE_ERR \
+  /* Issue a error message when register  pair is illegal.  */
+#define IDX_RPAIR_IMAGE_ERR						\
   as_bad (_("Illegal index register pair (`%s') in Instruction: `%s'"), \
-            reg_name, ins_parse);                                       \
+	  reg_name, ins_parse);						\
 
   if (rreg->type == CR16_RP_REGTYPE)
     {
       switch (rreg->image)
-        {
-        case 0:  return 0; break;
-        case 2:  return 1; break;
-        case 4:  return 2; break;
-        case 6:  return 3; break;
-        case 8:  return 4; break;
-        case 10: return 5; break;
-        case 3:  return 6; break;
-        case 5:  return 7; break;
-        default:
-          break;
-        }
+	{
+	case 0:  return 0; break;
+	case 2:  return 1; break;
+	case 4:  return 2; break;
+	case 6:  return 3; break;
+	case 8:  return 4; break;
+	case 10: return 5; break;
+	case 3:  return 6; break;
+	case 5:  return 7; break;
+	default:
+	  break;
+	}
     }
 
   IDX_RPAIR_IMAGE_ERR;
@@ -1681,10 +1666,10 @@ getprocreg_image (int r)
 
   reg_name = rreg->name;
 
-/* Issue a error message when register  pair is illegal.  */
-#define PROCREG_IMAGE_ERR \
-  as_bad (_("Illegal processor register (`%s') in Instruction: `%s'"), \
-            reg_name, ins_parse);                                      \
+  /* Issue a error message when register  pair is illegal.  */
+#define PROCREG_IMAGE_ERR						\
+  as_bad (_("Illegal processor register (`%s') in Instruction: `%s'"),	\
+	  reg_name, ins_parse);						\
   break;
 
   switch (rreg->type)
@@ -1713,19 +1698,19 @@ getprocregp_image (int r)
     {
       r = r - MAX_REG;
       switch (r)
-        {
-        case 4: pregptab_disp = 1;  break;
-        case 6: pregptab_disp = 2;  break;
-        case 8:
-        case 9:
-        case 10:
-          pregptab_disp = 3;  break;
-        case 12:
-          pregptab_disp = 4;  break;
-        case 14:
-          pregptab_disp = 5;  break;
-        default: break;
-        }
+	{
+	case 4: pregptab_disp = 1;  break;
+	case 6: pregptab_disp = 2;  break;
+	case 8:
+	case 9:
+	case 10:
+	  pregptab_disp = 3;  break;
+	case 12:
+	  pregptab_disp = 4;  break;
+	case 14:
+	  pregptab_disp = 5;  break;
+	default: break;
+	}
       rreg = &cr16_pregptab[r - pregptab_disp];
     }
   /* Register not found.  */
@@ -1737,10 +1722,10 @@ getprocregp_image (int r)
 
   reg_name = rreg->name;
 
-/* Issue a error message when register  pair is illegal.  */
-#define PROCREGP_IMAGE_ERR \
-  as_bad (_("Illegal 32 bit - processor register (`%s') in Instruction: `%s'"),\
-            reg_name, ins_parse);                                              \
+  /* Issue a error message when register  pair is illegal.  */
+#define PROCREGP_IMAGE_ERR						\
+  as_bad (_("Illegal 32 bit - processor register (`%s') in Instruction: `%s'"), \
+	  reg_name, ins_parse);						\
   break;
 
   switch (rreg->type)
@@ -1759,9 +1744,9 @@ getprocregp_image (int r)
 static long
 getconstant (long x, int nbits)
 {
-  /* The following expression avoids overflow if
-     'nbits' is the number of bits in 'bfd_vma'.  */
-  return (x & ((((1 << (nbits - 1)) - 1) << 1) | 1));
+  if ((unsigned) nbits >= sizeof (x) * CHAR_BIT)
+    return x;
+  return x & ((1UL << nbits) - 1);
 }
 
 /* Print a constant value to 'output_opcode':
@@ -1773,27 +1758,26 @@ static void
 print_constant (int nbits, int shift, argument *arg)
 {
   unsigned long mask = 0;
-
-  long constant = getconstant (arg->constant, nbits);
+  unsigned long constant = getconstant (arg->constant, nbits);
 
   switch (nbits)
     {
     case 32:
     case 28:
       /* mask the upper part of the constant, that is, the bits
-         going to the lowest byte of output_opcode[0].
-         The upper part of output_opcode[1] is always filled,
-         therefore it is always masked with 0xFFFF.  */
+	 going to the lowest byte of output_opcode[0].
+	 The upper part of output_opcode[1] is always filled,
+	 therefore it is always masked with 0xFFFF.  */
       mask = (1 << (nbits - 16)) - 1;
       /* Divide the constant between two consecutive words :
-         0        1         2         3
-         +---------+---------+---------+---------+
-         |         | X X X X | x X x X |         |
-         +---------+---------+---------+---------+
-         output_opcode[0]    output_opcode[1]     */
+	 0        1         2         3
+	 +---------+---------+---------+---------+
+	 |         | X X X X | x X x X |         |
+	 +---------+---------+---------+---------+
+	 output_opcode[0]    output_opcode[1]     */
 
       CR16_PRINT (0, (constant >> WORD_SHIFT) & mask, 0);
-      CR16_PRINT (1, (constant & 0xFFFF), WORD_SHIFT);
+      CR16_PRINT (1, constant & 0xFFFF, WORD_SHIFT);
       break;
 
     case 21:
@@ -1804,74 +1788,77 @@ print_constant (int nbits, int shift, argument *arg)
     case 22:
     case 20:
       /* mask the upper part of the constant, that is, the bits
-         going to the lowest byte of output_opcode[0].
-         The upper part of output_opcode[1] is always filled,
-         therefore it is always masked with 0xFFFF.  */
+	 going to the lowest byte of output_opcode[0].
+	 The upper part of output_opcode[1] is always filled,
+	 therefore it is always masked with 0xFFFF.  */
       mask = (1 << (nbits - 16)) - 1;
       /* Divide the constant between two consecutive words :
-         0        1         2          3
-         +---------+---------+---------+---------+
-         |         | X X X X | - X - X |         |
-         +---------+---------+---------+---------+
-         output_opcode[0]    output_opcode[1]     */
+	 0        1         2          3
+	 +---------+---------+---------+---------+
+	 |         | X X X X | - X - X |         |
+	 +---------+---------+---------+---------+
+	 output_opcode[0]    output_opcode[1]     */
 
-      if ((instruction->size > 2) && (shift == WORD_SHIFT))
-        {
-          if (arg->type == arg_idxrp)
-            {
-              CR16_PRINT (0, ((constant >> WORD_SHIFT) & mask) << 8, 0);
-              CR16_PRINT (1, (constant & 0xFFFF), WORD_SHIFT);
-            }
-          else
-            {
-              CR16_PRINT (0, (((((constant >> WORD_SHIFT) & mask) << 8) & 0x0f00) | ((((constant >> WORD_SHIFT) & mask) >> 4) & 0xf)),0);
-              CR16_PRINT (1, (constant & 0xFFFF), WORD_SHIFT);
-            }
-        }
+      if (instruction->size > 2 && shift == WORD_SHIFT)
+	{
+	  if (arg->type == arg_idxrp)
+	    {
+	      CR16_PRINT (0, ((constant >> WORD_SHIFT) & mask) << 8, 0);
+	      CR16_PRINT (1, constant & 0xFFFF, WORD_SHIFT);
+	    }
+	  else
+	    {
+	      CR16_PRINT (0,
+			  ((((constant >> WORD_SHIFT) & mask & 0xf) << 8)
+			   | (((constant >> WORD_SHIFT) & mask & 0xf0) >> 4)),
+			  0);
+	      CR16_PRINT (1, constant & 0xFFFF, WORD_SHIFT);
+	    }
+	}
       else
-        CR16_PRINT (0, constant, shift);
+	CR16_PRINT (0, constant, shift);
       break;
 
     case 14:
       if (arg->type == arg_idxrp)
-        {
-          if (instruction->size == 2)
-            {
-              CR16_PRINT (0, ((constant)      & 0xf), shift);        /* 0-3 bits.  */
-              CR16_PRINT (0, ((constant >> 4) & 0x3), (shift + 20)); /* 4-5 bits.  */
-              CR16_PRINT (0, ((constant >> 6) & 0x3), (shift + 14)); /* 6-7 bits.  */
-              CR16_PRINT (0, ((constant >> 8) & 0x3f), (shift + 8)); /* 8-13 bits.  */
-            }
-          else
-            CR16_PRINT (0, constant, shift);
-        }
+	{
+	  if (instruction->size == 2)
+	    {
+	      CR16_PRINT (0, (constant)      & 0xf, shift);      /* 0-3 bits.  */
+	      CR16_PRINT (0, (constant >> 4) & 0x3, shift + 20); /* 4-5 bits.  */
+	      CR16_PRINT (0, (constant >> 6) & 0x3, shift + 14); /* 6-7 bits.  */
+	      CR16_PRINT (0, (constant >> 8) & 0x3f, shift + 8); /* 8-13 bits.  */
+	    }
+	  else
+	    CR16_PRINT (0, constant, shift);
+	}
       break;
 
     case 16:
     case 12:
       /* When instruction size is 3 and 'shift' is 16, a 16-bit constant is
-         always filling the upper part of output_opcode[1]. If we mistakenly
-         write it to output_opcode[0], the constant prefix (that is, 'match')
-         will be overridden.
-         0        1         2         3
-         +---------+---------+---------+---------+
-         | 'match' |         | X X X X |         |
-         +---------+---------+---------+---------+
-         output_opcode[0]    output_opcode[1]     */
+	 always filling the upper part of output_opcode[1]. If we mistakenly
+	 write it to output_opcode[0], the constant prefix (that is, 'match')
+	 will be overridden.
+	 0        1         2         3
+	 +---------+---------+---------+---------+
+	 | 'match' |         | X X X X |         |
+	 +---------+---------+---------+---------+
+	 output_opcode[0]    output_opcode[1]     */
 
-      if ((instruction->size > 2) && (shift == WORD_SHIFT))
-        CR16_PRINT (1, constant, WORD_SHIFT);
+      if (instruction->size > 2 && shift == WORD_SHIFT)
+	CR16_PRINT (1, constant, WORD_SHIFT);
       else
-        CR16_PRINT (0, constant, shift);
+	CR16_PRINT (0, constant, shift);
       break;
 
     case 8:
-      CR16_PRINT (0, ((constant / 2) & 0xf), shift);
-      CR16_PRINT (0, ((constant / 2) >> 4), (shift + 8));
+      CR16_PRINT (0, (constant / 2) & 0xf, shift);
+      CR16_PRINT (0, (constant / 2) >> 4, shift + 8);
       break;
 
     default:
-      CR16_PRINT (0, constant,  shift);
+      CR16_PRINT (0, constant, shift);
       break;
     }
 }
@@ -1909,41 +1896,27 @@ print_operand (int nbits, int shift, argument *arg)
 
     case arg_idxrp:
       /*    16      12      8    6      0
-            +-----------------------------+
-            | r_index | disp  | rp_base   |
-            +-----------------------------+          */
+	    +-----------------------------+
+	    | r_index | disp  | rp_base   |
+	    +-----------------------------+          */
 
       if (instruction->size == 3)
-        {
-          CR16_PRINT (0, getidxregp_image (arg->rp), 0);
-          if (getreg_image (arg->i_r) == 12)
-            CR16_PRINT (0, 0, 3);
-          else
-            CR16_PRINT (0, 1, 3);
-        }
+	{
+	  CR16_PRINT (0, getidxregp_image (arg->rp), 0);
+	  CR16_PRINT (0, getreg_image (arg->i_r) & 1, 3);
+	}
       else
-        {
-          CR16_PRINT (0, getidxregp_image (arg->rp), 16);
-          if (getreg_image (arg->i_r) == 12)
-            CR16_PRINT (0, 0, 19);
-          else
-            CR16_PRINT (0, 1, 19);
-        }
+	{
+	  CR16_PRINT (0, getidxregp_image (arg->rp), 16);
+	  CR16_PRINT (0, getreg_image (arg->i_r) & 1, 19);
+	}
       print_constant (nbits, shift, arg);
       break;
 
     case arg_idxr:
-      if (getreg_image (arg->i_r) == 12)
-        if (IS_INSN_MNEMONIC ("cbitb") || IS_INSN_MNEMONIC ("sbitb")
-            || IS_INSN_MNEMONIC ("tbitb"))
-          CR16_PRINT (0, 0, 23);
-        else CR16_PRINT (0, 0, 24);
-      else
-        if (IS_INSN_MNEMONIC ("cbitb") || IS_INSN_MNEMONIC ("sbitb")
-            || IS_INSN_MNEMONIC ("tbitb"))
-          CR16_PRINT (0, 1, 23);
-        else CR16_PRINT (0, 1, 24);
-
+      CR16_PRINT (0, getreg_image (arg->i_r) & 1,
+		  (IS_INSN_TYPE (CSTBIT_INS)
+		   && instruction->mnemonic[4] == 'b') ? 23 : 24);
       print_constant (nbits, shift, arg);
       break;
 
@@ -1957,24 +1930,20 @@ print_operand (int nbits, int shift, argument *arg)
       break;
 
     case arg_cr:
-      print_constant (nbits, shift , arg);
+      print_constant (nbits, shift, arg);
       /* Add the register argument to the output_opcode.  */
-      CR16_PRINT (0, getreg_image (arg->r), (shift+16));
+      CR16_PRINT (0, getreg_image (arg->r), shift - 16);
       break;
 
     case arg_crp:
-      print_constant (nbits, shift , arg);
-      if (instruction->size > 1)
-        CR16_PRINT (0, getregp_image (arg->rp), (shift + 16));
-      else if (IS_INSN_TYPE (LD_STOR_INS) || (IS_INSN_TYPE (CSTBIT_INS)))
-        {
-          if (instruction->size == 2)
-            CR16_PRINT (0, getregp_image (arg->rp), (shift - 8));
-          else if (instruction->size == 1)
-            CR16_PRINT (0, getregp_image (arg->rp), 16);
-        }
+      print_constant (nbits, shift, arg);
+      if ((IS_INSN_TYPE (LD_STOR_INS) || IS_INSN_TYPE (CSTBIT_INS))
+	  && instruction->size == 1)
+	CR16_PRINT (0, getregp_image (arg->rp), 16);
+      else if (instruction->size > 1)
+	CR16_PRINT (0, getregp_image (arg->rp), (shift + 16) & 31);
       else
-        CR16_PRINT (0, getregp_image (arg->rp), shift);
+	CR16_PRINT (0, getregp_image (arg->rp), shift);
       break;
 
     default:
@@ -2002,93 +1971,88 @@ get_number_of_operands (void)
 static op_err
 check_range (long *num, int bits, int unsigned flags, int update)
 {
-  long min, max;
+  int32_t min, max;
   op_err retval = OP_LEGAL;
-  long value = *num;
-
-  if (bits == 0 && value > 0) return OP_OUT_OF_RANGE;
-
-  /* For hosts with longs bigger than 32-bits make sure that the top
-     bits of a 32-bit negative value read in by the parser are set,
-     so that the correct comparisons are made.  */
-  if (value & 0x80000000)
-    value |= (-1UL << 31);
-
+  int32_t value = *num;
 
   /* Verify operand value is even.  */
   if (flags & OP_EVEN)
     {
       if (value % 2)
-        return OP_NOT_EVEN;
+	return OP_NOT_EVEN;
     }
 
   if (flags & OP_DEC)
     {
       value -= 1;
       if (update)
-        *num = value;
+	*num = value;
     }
 
   if (flags & OP_SHIFT)
     {
       value >>= 1;
       if (update)
-        *num = value;
+	*num = value;
     }
   else if (flags & OP_SHIFT_DEC)
     {
       value = (value >> 1) - 1;
       if (update)
-        *num = value;
+	*num = value;
     }
 
   if (flags & OP_ABS20)
     {
       if (value > 0xEFFFF)
-        return OP_OUT_OF_RANGE;
+	return OP_OUT_OF_RANGE;
     }
 
   if (flags & OP_ESC)
     {
       if (value == 0xB || value == 0x9)
-        return OP_OUT_OF_RANGE;
+	return OP_OUT_OF_RANGE;
       else if (value == -1)
-        {
-          if (update)
-            *num = 9;
-          return retval;
-        }
+	{
+	  if (update)
+	    *num = 9;
+	  return retval;
+	}
     }
 
   if (flags & OP_ESC1)
     {
       if (value > 13)
-        return OP_OUT_OF_RANGE;
+	return OP_OUT_OF_RANGE;
     }
 
-   if (flags & OP_SIGNED)
-     {
-       max = (1 << (bits - 1)) - 1;
-       min = - (1 << (bits - 1));
-       if ((value > max) || (value < min))
-         retval = OP_OUT_OF_RANGE;
-     }
-   else if (flags & OP_UNSIGNED)
-     {
-       max = ((((1 << (bits - 1)) - 1) << 1) | 1);
-       min = 0;
-       if (((unsigned long) value > (unsigned long) max)
-            || ((unsigned long) value < (unsigned long) min))
-         retval = OP_OUT_OF_RANGE;
-     }
-   else if (flags & OP_NEG)
-     {
-       max = - 1;
-       min = - ((1 << (bits - 1)) - 1);
-       if ((value > max) || (value < min))
-         retval = OP_OUT_OF_RANGE;
-     }
-   return retval;
+  if (bits == 0)
+    {
+      if (value != 0)
+	retval = OP_OUT_OF_RANGE;
+      return retval;
+    }
+
+  if (flags & OP_SIGNED)
+    {
+      max = (1U << (bits - 1)) - 1;
+      min = - (1U << (bits - 1));
+      if (value > max || value < min)
+	retval = OP_OUT_OF_RANGE;
+    }
+  else if (flags & OP_UNSIGNED)
+    {
+      max = (1U << (bits - 1) << 1) - 1;
+      if ((uint32_t) value > (uint32_t) max)
+	retval = OP_OUT_OF_RANGE;
+    }
+  else if (flags & OP_NEG)
+    {
+      min = - ((1U << (bits - 1)) - 1);
+      if (value < min)
+	retval = OP_OUT_OF_RANGE;
+    }
+  return retval;
 }
 
 /* Bunch of error checking.
@@ -2104,8 +2068,9 @@ warn_if_needed (ins *insn)
     {
       /* Enough to verify that one of the arguments is a simple reg.  */
       if ((insn->arg[0].type == arg_r) || (insn->arg[1].type == arg_r))
-        if (insn->arg[0].r == insn->arg[1].r)
-          as_bad (_("Same src/dest register is used (`r%d'), result is undefined"), insn->arg[0].r);
+	if (insn->arg[0].r == insn->arg[1].r)
+	  as_bad (_("Same src/dest register is used (`r%d'), "
+		    "result is undefined"), insn->arg[0].r);
     }
 
   if (IS_INSN_MNEMONIC ("pop")
@@ -2115,43 +2080,43 @@ warn_if_needed (ins *insn)
       unsigned int count = insn->arg[0].constant, reg_val;
 
       /* Check if count operand caused to save/retrieve the RA twice
-         to generate warning message.  */
-     if (insn->nargs > 2)
-       {
-         reg_val = getreg_image (insn->arg[1].r);
+	 to generate warning message.  */
+      if (insn->nargs > 2)
+	{
+	  reg_val = getreg_image (insn->arg[1].r);
 
-         if (   ((reg_val == 9) &&  (count > 7))
-             || ((reg_val == 10) && (count > 6))
-             || ((reg_val == 11) && (count > 5))
-             || ((reg_val == 12) && (count > 4))
-             || ((reg_val == 13) && (count > 2))
-             || ((reg_val == 14) && (count > 0)))
-           as_warn (_("RA register is saved twice."));
+	  if (   ((reg_val == 9) &&  (count > 7))
+		 || ((reg_val == 10) && (count > 6))
+		 || ((reg_val == 11) && (count > 5))
+		 || ((reg_val == 12) && (count > 4))
+		 || ((reg_val == 13) && (count > 2))
+		 || ((reg_val == 14) && (count > 0)))
+	    as_warn (_("RA register is saved twice."));
 
-         /* Check if the third operand is "RA" or "ra" */
-         if (!(((insn->arg[2].r) == ra) || ((insn->arg[2].r) == RA)))
-           as_bad (_("`%s' Illegal use of registers."), ins_parse);
-       }
+	  /* Check if the third operand is "RA" or "ra" */
+	  if (!(((insn->arg[2].r) == ra) || ((insn->arg[2].r) == RA)))
+	    as_bad (_("`%s' Illegal use of registers."), ins_parse);
+	}
 
       if (insn->nargs > 1)
-       {
-         reg_val = getreg_image (insn->arg[1].r);
+	{
+	  reg_val = getreg_image (insn->arg[1].r);
 
-         /* If register is a register pair ie r12/r13/r14 in operand1, then
-            the count constant should be validated.  */
-         if (((reg_val == 11) && (count > 7))
-             || ((reg_val == 12) && (count > 6))
-             || ((reg_val == 13) && (count > 4))
-             || ((reg_val == 14) && (count > 2))
-             || ((reg_val == 15) && (count > 0)))
-           as_bad (_("`%s' Illegal count-register combination."), ins_parse);
-       }
-     else
-       {
-         /* Check if the operand is "RA" or "ra" */
-         if (!(((insn->arg[0].r) == ra) || ((insn->arg[0].r) == RA)))
-           as_bad (_("`%s' Illegal use of register."), ins_parse);
-       }
+	  /* If register is a register pair ie r12/r13/r14 in operand1, then
+	     the count constant should be validated.  */
+	  if (((reg_val == 11) && (count > 7))
+	      || ((reg_val == 12) && (count > 6))
+	      || ((reg_val == 13) && (count > 4))
+	      || ((reg_val == 14) && (count > 2))
+	      || ((reg_val == 15) && (count > 0)))
+	    as_bad (_("`%s' Illegal count-register combination."), ins_parse);
+	}
+      else
+	{
+	  /* Check if the operand is "RA" or "ra" */
+	  if (!(((insn->arg[0].r) == ra) || ((insn->arg[0].r) == RA)))
+	    as_bad (_("`%s' Illegal use of register."), ins_parse);
+	}
     }
 
   /* Some instruction assume the stack pointer as rptr operand.
@@ -2159,7 +2124,7 @@ warn_if_needed (ins *insn)
   if (instruction->flags & NO_SP)
     {
       if (getreg_image (insn->arg[1].r) == getreg_image (sp))
-        as_bad (_("`%s' has undefined result"), ins_parse);
+	as_bad (_("`%s' has undefined result"), ins_parse);
     }
 
   /* If the rptr register is specified as one of the registers to be loaded,
@@ -2167,8 +2132,8 @@ warn_if_needed (ins *insn)
   if (instruction->flags & NO_RPTR)
     {
       if ((1 << getreg_image (insn->arg[0].r)) & insn->arg[1].constant)
-        as_bad (_("Same src/dest register is used (`r%d'),result is undefined"),
-                  getreg_image (insn->arg[0].r));
+	as_bad (_("Same src/dest register is used (`r%d'),result is undefined"),
+		getreg_image (insn->arg[0].r));
     }
 }
 
@@ -2184,12 +2149,12 @@ adjust_if_needed (ins *insn ATTRIBUTE_UNUSED)
   if ((IS_INSN_TYPE (CSTBIT_INS)) || (IS_INSN_TYPE (LD_STOR_INS)))
     {
       if ((instruction->operands[0].op_type == abs24)
-           && ((insn->arg[0].constant) > 0xF00000))
-        {
-          insn->arg[0].constant &= 0xFFFFF;
-          instruction--;
-          ret_value = 1;
-        }
+	  && ((insn->arg[0].constant) > 0xF00000))
+	{
+	  insn->arg[0].constant &= 0xFFFFF;
+	  instruction--;
+	  ret_value = 1;
+	}
     }
 
   return ret_value;
@@ -2231,9 +2196,9 @@ assemble_insn (const char *mnemonic, ins *insn)
   /* Operand error (used for issuing various constant error messages).  */
   op_err op_error, const_err = OP_LEGAL;
 
-/* Retrieve data (based on FUNC) for each operand of a given instruction.  */
-#define GET_CURRENT_DATA(FUNC, ARRAY)                           \
-  for (i = 0; i < insn->nargs; i++)                             \
+  /* Retrieve data (based on FUNC) for each operand of a given instruction.  */
+#define GET_CURRENT_DATA(FUNC, ARRAY)			\
+  for (i = 0; i < insn->nargs; i++)			\
     ARRAY[i] = FUNC (instruction->operands[i].op_type)
 
 #define GET_CURRENT_TYPE    GET_CURRENT_DATA (get_optype, cur_type)
@@ -2256,17 +2221,17 @@ assemble_insn (const char *mnemonic, ins *insn)
   ins_type = CR16_INS_TYPE (instruction->flags);
 
   while (/* Check that match is still not found.  */
-         match != 1
-         /* Check we didn't get to end of table.  */
-         && instruction->mnemonic != NULL
-         /* Check that the actual mnemonic is still available.  */
-         && IS_INSN_MNEMONIC (mnemonic)
-         /* Check that the instruction type wasn't changed.  */
-         && IS_INSN_TYPE (ins_type))
+	 match != 1
+	 /* Check we didn't get to end of table.  */
+	 && instruction->mnemonic != NULL
+	 /* Check that the actual mnemonic is still available.  */
+	 && IS_INSN_MNEMONIC (mnemonic)
+	 /* Check that the instruction type wasn't changed.  */
+	 && IS_INSN_TYPE (ins_type))
     {
       /* Check whether number of arguments is legal.  */
       if (get_number_of_operands () != insn->nargs)
-        goto next_insn;
+	goto next_insn;
       found_same_number_of_operands = 1;
 
       /* Initialize arrays with data of each operand in current template.  */
@@ -2276,61 +2241,61 @@ assemble_insn (const char *mnemonic, ins *insn)
 
       /* Check for type compatibility.  */
       for (i = 0; i < insn->nargs; i++)
-        {
-          if (cur_type[i] != insn->arg[i].type)
-            {
-              if (invalid_optype == -1)
-                invalid_optype = i + 1;
-              goto next_insn;
-            }
-        }
+	{
+	  if (cur_type[i] != insn->arg[i].type)
+	    {
+	      if (invalid_optype == -1)
+		invalid_optype = i + 1;
+	      goto next_insn;
+	    }
+	}
       found_same_argument_types = 1;
 
       for (i = 0; i < insn->nargs; i++)
-        {
-          /* If 'bal' instruction size is '2' and reg operand is not 'ra'
-             then goto next instruction.  */
-          if (IS_INSN_MNEMONIC ("bal") && (i == 0)
-              && (instruction->size == 2) && (insn->arg[i].rp != 14))
-            goto next_insn;
+	{
+	  /* If 'bal' instruction size is '2' and reg operand is not 'ra'
+	     then goto next instruction.  */
+	  if (IS_INSN_MNEMONIC ("bal") && (i == 0)
+	      && (instruction->size == 2) && (insn->arg[i].rp != 14))
+	    goto next_insn;
 
-          /* If 'storb' instruction with 'sp' reg and 16-bit disp of
-           * reg-pair, leads to undefined trap, so this should use
-           * 20-bit disp of reg-pair.  */
-          if (IS_INSN_MNEMONIC ("storb") && (instruction->size == 2)
-              && (insn->arg[i].r == 15) && (insn->arg[i + 1].type == arg_crp))
-            goto next_insn;
+	  /* If 'storb' instruction with 'sp' reg and 16-bit disp of
+	   * reg-pair, leads to undefined trap, so this should use
+	   * 20-bit disp of reg-pair.  */
+	  if (IS_INSN_MNEMONIC ("storb") && (instruction->size == 2)
+	      && (insn->arg[i].r == 15) && (insn->arg[i + 1].type == arg_crp))
+	    goto next_insn;
 
-          /* Only check range - don't update the constant's value, since the
-             current instruction may not be the last we try to match.
-             The constant's value will be updated later, right before printing
-             it to the object file.  */
-          if ((insn->arg[i].X_op == O_constant)
-              && (op_error = check_range (&insn->arg[i].constant, cur_size[i],
-                                          cur_flags[i], 0)))
-            {
-              if (invalid_const == -1)
-                {
-                  invalid_const = i + 1;
-                  const_err = op_error;
-                }
-              goto next_insn;
-            }
-          /* For symbols, we make sure the relocation size (which was already
-             determined) is sufficient.  */
-          else if ((insn->arg[i].X_op == O_symbol)
-                   && ((bfd_reloc_type_lookup (stdoutput, insn->rtype))->bitsize
-                       > cur_size[i]))
-                  goto next_insn;
-        }
+	  /* Only check range - don't update the constant's value, since the
+	     current instruction may not be the last we try to match.
+	     The constant's value will be updated later, right before printing
+	     it to the object file.  */
+	  if ((insn->arg[i].X_op == O_constant)
+	      && (op_error = check_range (&insn->arg[i].constant, cur_size[i],
+					  cur_flags[i], 0)))
+	    {
+	      if (invalid_const == -1)
+		{
+		  invalid_const = i + 1;
+		  const_err = op_error;
+		}
+	      goto next_insn;
+	    }
+	  /* For symbols, we make sure the relocation size (which was already
+	     determined) is sufficient.  */
+	  else if ((insn->arg[i].X_op == O_symbol)
+		   && ((bfd_reloc_type_lookup (stdoutput, insn->rtype))->bitsize
+		       > cur_size[i]))
+	    goto next_insn;
+	}
       found_const_within_range = 1;
 
       /* If we got till here -> Full match is found.  */
       match = 1;
       break;
 
-/* Try again with next instruction.  */
-next_insn:
+      /* Try again with next instruction.  */
+    next_insn:
       instruction++;
     }
 
@@ -2338,70 +2303,70 @@ next_insn:
     {
       /* We haven't found a match - instruction can't be assembled.  */
       if (!found_same_number_of_operands)
-        as_bad (_("Incorrect number of operands"));
+	as_bad (_("Incorrect number of operands"));
       else if (!found_same_argument_types)
-        as_bad (_("Illegal type of operand (arg %d)"), invalid_optype);
+	as_bad (_("Illegal type of operand (arg %d)"), invalid_optype);
       else if (!found_const_within_range)
-        {
-          switch (const_err)
-            {
-            case OP_OUT_OF_RANGE:
-              as_bad (_("Operand out of range (arg %d)"), invalid_const);
-              break;
-            case OP_NOT_EVEN:
-              as_bad (_("Operand has odd displacement (arg %d)"), invalid_const);
-              break;
-            default:
-              as_bad (_("Illegal operand (arg %d)"), invalid_const);
-              break;
-            }
-        }
+	{
+	  switch (const_err)
+	    {
+	    case OP_OUT_OF_RANGE:
+	      as_bad (_("Operand out of range (arg %d)"), invalid_const);
+	      break;
+	    case OP_NOT_EVEN:
+	      as_bad (_("Operand has odd displacement (arg %d)"), invalid_const);
+	      break;
+	    default:
+	      as_bad (_("Illegal operand (arg %d)"), invalid_const);
+	      break;
+	    }
+	}
 
-       return 0;
+      return 0;
     }
   else
     /* Full match - print the encoding to output file.  */
     {
       /* Make further checking (such that couldn't be made earlier).
-         Warn the user if necessary.  */
+	 Warn the user if necessary.  */
       warn_if_needed (insn);
 
       /* Check whether we need to adjust the instruction pointer.  */
       if (adjust_if_needed (insn))
-        /* If instruction pointer was adjusted, we need to update
-           the size of the current template operands.  */
-        GET_CURRENT_SIZE;
+	/* If instruction pointer was adjusted, we need to update
+	   the size of the current template operands.  */
+	GET_CURRENT_SIZE;
 
       for (i = 0; i < insn->nargs; i++)
-        {
-          int j = instruction->flags & REVERSE_MATCH ?
-                  i == 0 ? 1 :
-                  i == 1 ? 0 : i :
-                  i;
+	{
+	  int j = instruction->flags & REVERSE_MATCH ?
+	    i == 0 ? 1 :
+	    i == 1 ? 0 : i :
+	    i;
 
-          /* This time, update constant value before printing it.  */
-            if ((insn->arg[j].X_op == O_constant)
-               && (check_range (&insn->arg[j].constant, cur_size[j],
-                                cur_flags[j], 1) != OP_LEGAL))
-              as_fatal (_("Illegal operand (arg %d)"), j+1);
-        }
+	  /* This time, update constant value before printing it.  */
+	  if ((insn->arg[j].X_op == O_constant)
+	      && (check_range (&insn->arg[j].constant, cur_size[j],
+			       cur_flags[j], 1) != OP_LEGAL))
+	    as_fatal (_("Illegal operand (arg %d)"), j+1);
+	}
 
       /* First, copy the instruction's opcode.  */
       output_opcode[0] = BIN (instruction->match, instruction->match_bits);
 
       for (i = 0; i < insn->nargs; i++)
-        {
-         /* For BAL (ra),disp17 instruction only. And also set the
-            DISP24a relocation type.  */
-         if (IS_INSN_MNEMONIC ("bal") && (instruction->size == 2) && i == 0)
-           {
-             insn->rtype = BFD_RELOC_CR16_DISP24a;
-             continue;
-           }
-          cur_arg_num = i;
-          print_operand (cur_size[i], instruction->operands[i].shift,
-                         &insn->arg[i]);
-        }
+	{
+	  /* For BAL (ra),disp17 instruction only. And also set the
+	     DISP24a relocation type.  */
+	  if (IS_INSN_MNEMONIC ("bal") && (instruction->size == 2) && i == 0)
+	    {
+	      insn->rtype = BFD_RELOC_CR16_DISP24a;
+	      continue;
+	    }
+	  cur_arg_num = i;
+	  print_operand (cur_size[i], instruction->operands[i].shift,
+			 &insn->arg[i]);
+	}
     }
 
   return 1;
@@ -2425,62 +2390,62 @@ print_insn (ins *insn)
       words[j++] = output_opcode[i] & 0xFFFF;
     }
 
-    /* Handle relocation.  */
-    if ((instruction->flags & RELAXABLE) && relocatable)
-      {
-        int relax_subtype;
-        /* Write the maximal instruction size supported.  */
-        insn_size = INSN_MAX_SIZE;
+  /* Handle relocation.  */
+  if ((instruction->flags & RELAXABLE) && relocatable)
+    {
+      int relax_subtype;
+      /* Write the maximal instruction size supported.  */
+      insn_size = INSN_MAX_SIZE;
 
-        if (IS_INSN_TYPE (BRANCH_INS))
-          {
-            switch (insn->rtype)
-              {
-              case BFD_RELOC_CR16_DISP24:
-                relax_subtype = 2;
-                break;
-              case BFD_RELOC_CR16_DISP16:
-                relax_subtype = 1;
-                break;
-              default:
-                relax_subtype = 0;
-                break;
-              }
-          }
-        else
-          abort ();
+      if (IS_INSN_TYPE (BRANCH_INS))
+	{
+	  switch (insn->rtype)
+	    {
+	    case BFD_RELOC_CR16_DISP24:
+	      relax_subtype = 2;
+	      break;
+	    case BFD_RELOC_CR16_DISP16:
+	      relax_subtype = 1;
+	      break;
+	    default:
+	      relax_subtype = 0;
+	      break;
+	    }
+	}
+      else
+	abort ();
 
-        this_frag = frag_var (rs_machine_dependent, insn_size *2,
-                              4, relax_subtype,
-                              insn->exp.X_add_symbol,
-                              0,
-                              0);
-      }
-    else
-      {
-        insn_size = instruction->size;
-        this_frag = frag_more (insn_size * 2);
+      this_frag = frag_var (rs_machine_dependent, insn_size *2,
+			    4, relax_subtype,
+			    insn->exp.X_add_symbol,
+			    0,
+			    0);
+    }
+  else
+    {
+      insn_size = instruction->size;
+      this_frag = frag_more (insn_size * 2);
 
-        if ((relocatable) && (insn->rtype != BFD_RELOC_NONE))
-          {
-             reloc_howto_type *reloc_howto;
-             int size;
+      if ((relocatable) && (insn->rtype != BFD_RELOC_NONE))
+	{
+	  reloc_howto_type *reloc_howto;
+	  int size;
 
-             reloc_howto = bfd_reloc_type_lookup (stdoutput, insn->rtype);
+	  reloc_howto = bfd_reloc_type_lookup (stdoutput, insn->rtype);
 
-             if (!reloc_howto)
-               abort ();
+	  if (!reloc_howto)
+	    abort ();
 
-             size = bfd_get_reloc_size (reloc_howto);
+	  size = bfd_get_reloc_size (reloc_howto);
 
-             if (size < 1 || size > 4)
-               abort ();
+	  if (size < 1 || size > 4)
+	    abort ();
 
-             fix_new_exp (frag_now, this_frag - frag_now->fr_literal,
-                          size, &insn->exp, reloc_howto->pc_relative,
-                          insn->rtype);
-          }
-      }
+	  fix_new_exp (frag_now, this_frag - frag_now->fr_literal,
+		       size, &insn->exp, reloc_howto->pc_relative,
+		       insn->rtype);
+	}
+    }
 
   /* Verify a 2-byte code alignment.  */
   addr_mod = frag_now_fix () & 1;
@@ -2505,7 +2470,7 @@ cr16_assemble (const char *op, char *param)
   ins cr16_ins;
 
   /* Find the instruction.  */
-  instruction = (const inst *) hash_find (cr16_inst_hash, op);
+  instruction = (const inst *) str_hash_find (cr16_inst_hash, op);
   if (instruction == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), op);
@@ -2559,9 +2524,12 @@ md_assemble (char *op)
      extra white spaces.  */
   if (streq ("cinv", op))
     {
-     /* Validate the cinv options.  */
+      /* Validate the cinv options.  */
+      unsigned int op_len, param_len;
       check_cinv_options (param);
-      strcat (op, param);
+      op_len = strlen (op);
+      param_len = strlen (param) + 1;
+      memmove (op + op_len, param, param_len);
     }
 
   /* MAPPING - SHIFT INSN, if imm4/imm16 positive values
@@ -2572,19 +2540,19 @@ md_assemble (char *op)
     {
       strcpy (param1, param);
       /* Find the instruction.  */
-      instruction = (const inst *) hash_find (cr16_inst_hash, op);
-       parse_operands (&cr16_ins, param1);
+      instruction = (const inst *) str_hash_find (cr16_inst_hash, op);
+      parse_operands (&cr16_ins, param1);
       if (((&cr16_ins)->arg[0].type == arg_ic)
-          && ((&cr16_ins)->arg[0].constant >= 0))
-        {
-           if (streq ("lshb", op))
-             cr16_assemble ("ashub", param);
-           else if (streq ("lshd", op))
-             cr16_assemble ("ashud", param);
-           else
-             cr16_assemble ("ashuw", param);
-	   return;
-        }
+	  && ((&cr16_ins)->arg[0].constant >= 0))
+	{
+	  if (streq ("lshb", op))
+	    cr16_assemble ("ashub", param);
+	  else if (streq ("lshd", op))
+	    cr16_assemble ("ashud", param);
+	  else
+	    cr16_assemble ("ashuw", param);
+	  return;
+	}
     }
 
   cr16_assemble (op, param);

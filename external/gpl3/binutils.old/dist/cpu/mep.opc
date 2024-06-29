@@ -626,7 +626,7 @@ typedef struct
   int len;
 } arg;
 
-macro macros[] =
+static macro const macros[] =
 {
   { "sizeof", "(`1.end + (- `1))"},
   { "startof", "(`1 | 0)" },
@@ -659,10 +659,10 @@ str_append (char *dest, const char *input, int len)
   return strncat (new_dest, input, len);
 }
 
-static macro *
+static const macro *
 lookup_macro (const char *name)
 {
-  macro *m;
+  const macro *m;
 
   for (m = macros; m->name; ++m)
     if (strncmp (m->name, name, strlen(m->name)) == 0)
@@ -672,7 +672,7 @@ lookup_macro (const char *name)
 }
 
 static char *
-expand_macro (arg *args, int narg, macro *mac)
+expand_macro (arg *args, int narg, const macro *mac)
 {
   char *result = 0, *rescanned_result = 0;
   char *e = mac->expansion;
@@ -722,7 +722,7 @@ expand_string (const char *in, int first_only)
   arg args[MAXARGS];
   int state = IN_TEXT;
   const char *mark = in;
-  macro *pmacro = NULL;
+  const macro *pmacro = NULL;
   char *expansion = 0;
   char *result = 0;
 
@@ -855,8 +855,7 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
 	*strp_in += (str - hold); 
     }
 
-  if (hold)
-    free (hold);
+  free (hold);
 
   return errmsg;
 }
@@ -870,11 +869,8 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
 
 #define CGEN_VALIDATE_INSN_SUPPORTED
 
-static void print_tpreg (CGEN_CPU_DESC, PTR, CGEN_KEYWORD *, long, unsigned int);
-static void print_spreg (CGEN_CPU_DESC, PTR, CGEN_KEYWORD *, long, unsigned int);
-
 static void
-print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info,
+print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, void *dis_info,
 	     CGEN_KEYWORD *table ATTRIBUTE_UNUSED, long val ATTRIBUTE_UNUSED,
 	     unsigned int flags ATTRIBUTE_UNUSED)
 {
@@ -884,7 +880,7 @@ print_tpreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info,
 }
 
 static void
-print_spreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, PTR dis_info, 
+print_spreg (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED, void *dis_info,
 	     CGEN_KEYWORD *table ATTRIBUTE_UNUSED, long val ATTRIBUTE_UNUSED,
 	     unsigned int flags ATTRIBUTE_UNUSED)
 {
@@ -1272,7 +1268,7 @@ print_slot_insn (CGEN_CPU_DESC cd,
   CGEN_INSN_INT insn_value;
   CGEN_EXTRACT_INFO ex_info;
 
-  insn_value = cgen_get_insn_value (cd, buf, 32);
+  insn_value = cgen_get_insn_value (cd, buf, 32, cd->insn_endian);
 
   /* Fill in ex_info fields like read_insn would.  Don't actually call
      read_insn, since the incoming buffer is already read (and possibly
@@ -1452,12 +1448,15 @@ mep_print_insn (CGEN_CPU_DESC cd, bfd_vma pc, disassemble_info *info)
   if (info->section && info->section->owner)
     {
       bfd *abfd = info->section->owner;
-      mep_config_index = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_INDEX_MASK;
-      /* This instantly redefines MEP_CONFIG, MEP_OMASK, .... MEP_VLIW64 */
+      if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
+	{
+	  mep_config_index = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_INDEX_MASK;
+	  /* This instantly redefines MEP_CONFIG, MEP_OMASK, .... MEP_VLIW64 */
 
-      cop_type = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_COP_MASK;
-      if (cop_type == EF_MEP_COP_IVC2)
-	ivc2 = 1;
+	  cop_type = abfd->tdata.elf_obj_data->elf_header->e_flags & EF_MEP_COP_MASK;
+	  if (cop_type == EF_MEP_COP_IVC2)
+	    ivc2 = 1;
+	}
     }
 
   /* Picking the right ISA bitmask for the current context is tricky.  */

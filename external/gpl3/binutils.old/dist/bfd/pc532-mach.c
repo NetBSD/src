@@ -1,5 +1,5 @@
 /* BFD back-end for Mach3/532 a.out-ish binaries.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -77,7 +77,7 @@
 reloc_howto_type *MY_bfd_reloc_type_lookup
   (bfd *abfd, bfd_reloc_code_real_type code);
 
-static bfd_boolean
+static bool
 MY(write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
@@ -100,7 +100,7 @@ MY(write_object_contents) (bfd *abfd)
 
   WRITE_HEADERS (abfd, execp);
 
-  return TRUE;
+  return true;
 }
 
 #define MY_write_object_contents MY(write_object_contents)

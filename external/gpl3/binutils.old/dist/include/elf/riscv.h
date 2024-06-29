@@ -1,5 +1,5 @@
 /* RISC-V ELF support for BFD.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS ELF support for BFD, by Ian Lance Taylor.
@@ -88,6 +88,7 @@ START_RELOC_NUMBERS (elf_riscv_reloc_type)
   RELOC_NUMBER (R_RISCV_SET16, 55)
   RELOC_NUMBER (R_RISCV_SET32, 56)
   RELOC_NUMBER (R_RISCV_32_PCREL, 57)
+  RELOC_NUMBER (R_RISCV_IRELATIVE, 58)
 END_RELOC_NUMBERS (R_RISCV_max)
 
 /* Processor specific flags for the ELF header e_flags field.  */
@@ -116,11 +117,21 @@ END_RELOC_NUMBERS (R_RISCV_max)
 /* The name of the global pointer symbol.  */
 #define RISCV_GP_SYMBOL "__global_pointer$"
 
+/* Processor specific dynamic array tags.  */
+#define DT_RISCV_VARIANT_CC (DT_LOPROC + 1)
+
+/* RISC-V specific values for st_other.  */
+#define STO_RISCV_VARIANT_CC 0x80
+
 /* Additional section types.  */
-#define SHT_RISCV_ATTRIBUTES   0x70000003  /* Section holds attributes.  */
+#define SHT_RISCV_ATTRIBUTES 0x70000003 /* Section holds attributes.  */
+
+/* Processor specific program header types.  */
+
+/* Location of RISC-V ELF attribute section. */
+#define PT_RISCV_ATTRIBUTES 0x70000003
 
 /* Object attributes.  */
-
 enum
 {
   /* 0-3 are generic.  */

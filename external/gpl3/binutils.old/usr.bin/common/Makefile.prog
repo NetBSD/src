@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
+#	$NetBSD: Makefile.prog,v 1.1.1.3 2024/06/29 16:24:46 christos Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -17,7 +17,7 @@ BUPROG=		${G_PROGRAMS:M${XPROG}*:S/-/_/}
 
 SRCS=		${G_${BUPROG}_OBJECTS:.o=.c} \
 		${G_${BUPROG}_DEPENDENCIES:M*.o:.o=.c}
-MAN=		${G_man_MANS:M${PROG}.1}
+MAN=		${G_man_MANS:T:M${PROG}.1}
 
 
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)

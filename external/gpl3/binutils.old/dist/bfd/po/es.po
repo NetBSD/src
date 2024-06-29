@@ -567,7 +567,7 @@ msgstr "%B: aviso: lectura de segmento de números de línea fallada"
 #: coffcode.h:4641 coffcode.h:4655
 #, c-format
 msgid "%B: warning: illegal symbol index 0x%lx in line number entry %d"
-msgstr "%B: aviso: índice simbólico 0x%ld ilegal en las entradas del número de línea %d"
+msgstr "%B: aviso: índice simbólico 0x%lx ilegal en las entradas del número de línea %d"
 
 #: coffcode.h:4669
 #, c-format

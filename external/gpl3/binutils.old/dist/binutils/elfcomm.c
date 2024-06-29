@@ -1,5 +1,5 @@
 /* elfcomm.c -- common code for ELF format file.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -21,14 +21,19 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+/* Do not include bfd.h in this file.  Functions in this file are used
+   by readelf.c and elfedit.c which define BFD64, and by objdump.c
+   which doesn't.  */
+
 #include "sysdep.h"
 #include "libiberty.h"
-#include "filenames.h"
 #include "bfd.h"
+#include "filenames.h"
 #include "aout/ar.h"
-#include "bucomm.h"
 #include "elfcomm.h"
 #include <assert.h>
+
+extern char *program_name;
 
 void
 error (const char *message, ...)
@@ -58,77 +63,42 @@ warn (const char *message, ...)
   va_end (args);
 }
 
-void (*byte_put) (unsigned char *, elf_vma, int);
+void (*byte_put) (unsigned char *, elf_vma, unsigned int);
 
 void
-byte_put_little_endian (unsigned char * field, elf_vma value, int size)
+byte_put_little_endian (unsigned char * field, elf_vma value, unsigned int size)
 {
-  switch (size)
+  if (size > sizeof (elf_vma))
     {
-    case 8:
-      field[7] = (((value >> 24) >> 24) >> 8) & 0xff;
-      field[6] = ((value >> 24) >> 24) & 0xff;
-      field[5] = ((value >> 24) >> 16) & 0xff;
-      field[4] = ((value >> 24) >> 8) & 0xff;
-      /* Fall through.  */
-    case 4:
-      field[3] = (value >> 24) & 0xff;
-      /* Fall through.  */
-    case 3:
-      field[2] = (value >> 16) & 0xff;
-      /* Fall through.  */
-    case 2:
-      field[1] = (value >> 8) & 0xff;
-      /* Fall through.  */
-    case 1:
-      field[0] = value & 0xff;
-      break;
-
-    default:
       error (_("Unhandled data length: %d\n"), size);
       abort ();
+    }
+  while (size--)
+    {
+      *field++ = value & 0xff;
+      value >>= 8;
     }
 }
 
 void
-byte_put_big_endian (unsigned char * field, elf_vma value, int size)
+byte_put_big_endian (unsigned char * field, elf_vma value, unsigned int size)
 {
-  switch (size)
+  if (size > sizeof (elf_vma))
     {
-    case 8:
-      field[7] = value & 0xff;
-      field[6] = (value >> 8) & 0xff;
-      field[5] = (value >> 16) & 0xff;
-      field[4] = (value >> 24) & 0xff;
-      value >>= 16;
-      value >>= 16;
-      /* Fall through.  */
-    case 4:
-      field[3] = value & 0xff;
-      value >>= 8;
-      /* Fall through.  */
-    case 3:
-      field[2] = value & 0xff;
-      value >>= 8;
-      /* Fall through.  */
-    case 2:
-      field[1] = value & 0xff;
-      value >>= 8;
-      /* Fall through.  */
-    case 1:
-      field[0] = value & 0xff;
-      break;
-
-    default:
       error (_("Unhandled data length: %d\n"), size);
       abort ();
     }
+  while (size--)
+    {
+      field[size] = value & 0xff;
+      value >>= 8;
+    }
 }
 
-elf_vma (*byte_get) (const unsigned char *, int);
+elf_vma (*byte_get) (const unsigned char *, unsigned int);
 
 elf_vma
-byte_get_little_endian (const unsigned char *field, int size)
+byte_get_little_endian (const unsigned char *field, unsigned int size)
 {
   switch (size)
     {
@@ -151,42 +121,26 @@ byte_get_little_endian (const unsigned char *field, int size)
 	|    (((unsigned long) (field[3])) << 24);
 
     case 5:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return  ((elf_vma) (field[0]))
 	  |    (((elf_vma) (field[1])) << 8)
 	  |    (((elf_vma) (field[2])) << 16)
 	  |    (((elf_vma) (field[3])) << 24)
 	  |    (((elf_vma) (field[4])) << 32);
-      else if (sizeof (elf_vma) == 4)
-	/* We want to extract data from an 8 byte wide field and
-	   place it into a 4 byte wide field.  Since this is a little
-	   endian source we can just use the 4 byte extraction code.  */
-	return  ((unsigned long) (field[0]))
-	  |    (((unsigned long) (field[1])) << 8)
-	  |    (((unsigned long) (field[2])) << 16)
-	  |    (((unsigned long) (field[3])) << 24);
       /* Fall through.  */
 
     case 6:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return  ((elf_vma) (field[0]))
 	  |    (((elf_vma) (field[1])) << 8)
 	  |    (((elf_vma) (field[2])) << 16)
 	  |    (((elf_vma) (field[3])) << 24)
 	  |    (((elf_vma) (field[4])) << 32)
 	  |    (((elf_vma) (field[5])) << 40);
-      else if (sizeof (elf_vma) == 4)
-	/* We want to extract data from an 8 byte wide field and
-	   place it into a 4 byte wide field.  Since this is a little
-	   endian source we can just use the 4 byte extraction code.  */
-	return  ((unsigned long) (field[0]))
-	  |    (((unsigned long) (field[1])) << 8)
-	  |    (((unsigned long) (field[2])) << 16)
-	  |    (((unsigned long) (field[3])) << 24);
       /* Fall through.  */
 
     case 7:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return  ((elf_vma) (field[0]))
 	  |    (((elf_vma) (field[1])) << 8)
 	  |    (((elf_vma) (field[2])) << 16)
@@ -194,18 +148,10 @@ byte_get_little_endian (const unsigned char *field, int size)
 	  |    (((elf_vma) (field[4])) << 32)
 	  |    (((elf_vma) (field[5])) << 40)
 	  |    (((elf_vma) (field[6])) << 48);
-      else if (sizeof (elf_vma) == 4)
-	/* We want to extract data from an 8 byte wide field and
-	   place it into a 4 byte wide field.  Since this is a little
-	   endian source we can just use the 4 byte extraction code.  */
-	return  ((unsigned long) (field[0]))
-	  |    (((unsigned long) (field[1])) << 8)
-	  |    (((unsigned long) (field[2])) << 16)
-	  |    (((unsigned long) (field[3])) << 24);
       /* Fall through.  */
 
     case 8:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return  ((elf_vma) (field[0]))
 	  |    (((elf_vma) (field[1])) << 8)
 	  |    (((elf_vma) (field[2])) << 16)
@@ -214,14 +160,6 @@ byte_get_little_endian (const unsigned char *field, int size)
 	  |    (((elf_vma) (field[5])) << 40)
 	  |    (((elf_vma) (field[6])) << 48)
 	  |    (((elf_vma) (field[7])) << 56);
-      else if (sizeof (elf_vma) == 4)
-	/* We want to extract data from an 8 byte wide field and
-	   place it into a 4 byte wide field.  Since this is a little
-	   endian source we can just use the 4 byte extraction code.  */
-	return  ((unsigned long) (field[0]))
-	  |    (((unsigned long) (field[1])) << 8)
-	  |    (((unsigned long) (field[2])) << 16)
-	  |    (((unsigned long) (field[3])) << 24);
       /* Fall through.  */
 
     default:
@@ -231,7 +169,7 @@ byte_get_little_endian (const unsigned char *field, int size)
 }
 
 elf_vma
-byte_get_big_endian (const unsigned char *field, int size)
+byte_get_big_endian (const unsigned char *field, unsigned int size)
 {
   switch (size)
     {
@@ -253,46 +191,26 @@ byte_get_big_endian (const unsigned char *field, int size)
 	|   (((unsigned long) (field[0])) << 24);
 
     case 5:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return ((elf_vma) (field[4]))
 	  |   (((elf_vma) (field[3])) << 8)
 	  |   (((elf_vma) (field[2])) << 16)
 	  |   (((elf_vma) (field[1])) << 24)
 	  |   (((elf_vma) (field[0])) << 32);
-      else if (sizeof (elf_vma) == 4)
-	{
-	  /* Although we are extracting data from an 8 byte wide field,
-	     we are returning only 4 bytes of data.  */
-	  field += 1;
-	  return ((unsigned long) (field[3]))
-	    |   (((unsigned long) (field[2])) << 8)
-	    |   (((unsigned long) (field[1])) << 16)
-	    |   (((unsigned long) (field[0])) << 24);
-	}
       /* Fall through.  */
 
     case 6:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return ((elf_vma) (field[5]))
 	  |   (((elf_vma) (field[4])) << 8)
 	  |   (((elf_vma) (field[3])) << 16)
 	  |   (((elf_vma) (field[2])) << 24)
 	  |   (((elf_vma) (field[1])) << 32)
 	  |   (((elf_vma) (field[0])) << 40);
-      else if (sizeof (elf_vma) == 4)
-	{
-	  /* Although we are extracting data from an 8 byte wide field,
-	     we are returning only 4 bytes of data.  */
-	  field += 2;
-	  return ((unsigned long) (field[3]))
-	    |   (((unsigned long) (field[2])) << 8)
-	    |   (((unsigned long) (field[1])) << 16)
-	    |   (((unsigned long) (field[0])) << 24);
-	}
       /* Fall through.  */
 
     case 7:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return ((elf_vma) (field[6]))
 	  |   (((elf_vma) (field[5])) << 8)
 	  |   (((elf_vma) (field[4])) << 16)
@@ -300,20 +218,10 @@ byte_get_big_endian (const unsigned char *field, int size)
 	  |   (((elf_vma) (field[2])) << 32)
 	  |   (((elf_vma) (field[1])) << 40)
 	  |   (((elf_vma) (field[0])) << 48);
-      else if (sizeof (elf_vma) == 4)
-	{
-	  /* Although we are extracting data from an 8 byte wide field,
-	     we are returning only 4 bytes of data.  */
-	  field += 3;
-	  return ((unsigned long) (field[3]))
-	    |   (((unsigned long) (field[2])) << 8)
-	    |   (((unsigned long) (field[1])) << 16)
-	    |   (((unsigned long) (field[0])) << 24);
-	}
       /* Fall through.  */
 
     case 8:
-      if (sizeof (elf_vma) == 8)
+      if (sizeof (elf_vma) >= 8)
 	return ((elf_vma) (field[7]))
 	  |   (((elf_vma) (field[6])) << 8)
 	  |   (((elf_vma) (field[5])) << 16)
@@ -322,16 +230,6 @@ byte_get_big_endian (const unsigned char *field, int size)
 	  |   (((elf_vma) (field[2])) << 40)
 	  |   (((elf_vma) (field[1])) << 48)
 	  |   (((elf_vma) (field[0])) << 56);
-      else if (sizeof (elf_vma) == 4)
-	{
-	  /* Although we are extracting data from an 8 byte wide field,
-	     we are returning only 4 bytes of data.  */
-	  field += 4;
-	  return ((unsigned long) (field[3]))
-	    |   (((unsigned long) (field[2])) << 8)
-	    |   (((unsigned long) (field[1])) << 16)
-	    |   (((unsigned long) (field[0])) << 24);
-	}
       /* Fall through.  */
 
     default:
@@ -341,7 +239,7 @@ byte_get_big_endian (const unsigned char *field, int size)
 }
 
 elf_vma
-byte_get_signed (const unsigned char *field, int size)
+byte_get_signed (const unsigned char *field, unsigned int size)
 {
   elf_vma x = byte_get (field, size);
 
@@ -367,25 +265,6 @@ byte_get_signed (const unsigned char *field, int size)
     default:
       abort ();
     }
-}
-
-/* Return the high-order 32-bits and the low-order 32-bits
-   of an 8-byte value separately.  */
-
-void
-byte_get_64 (const unsigned char *field, elf_vma *high, elf_vma *low)
-{
-  if (byte_get == byte_get_big_endian)
-    {
-      *high = byte_get_big_endian (field, 4);
-      *low = byte_get_big_endian (field + 4, 4);
-    }
-  else
-    {
-      *high = byte_get_little_endian (field + 4, 4);
-      *low = byte_get_little_endian (field, 4);
-    }
-  return;
 }
 
 /* Return the path name for a proxy entry in a thin archive, adjusted
@@ -456,13 +335,13 @@ adjust_relative_path (const char *file_name, const char *name,
     ARCH->sym_size and ARCH->sym_table.
    It is the caller's responsibility to free ARCH->index_array and
     ARCH->sym_table.
-   Returns TRUE upon success, FALSE otherwise.
+   Returns 1 upon success, 0 otherwise.
    If failure occurs an error message is printed.  */
 
-static bfd_boolean
-process_archive_index_and_symbols (struct archive_info *  arch,
-				   unsigned int           sizeof_ar_index,
-				   bfd_boolean            read_symbols)
+static int
+process_archive_index_and_symbols (struct archive_info *arch,
+				   unsigned int sizeof_ar_index,
+				   int read_symbols)
 {
   size_t got;
   unsigned long size;
@@ -477,7 +356,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
     {
       error (_("%s: invalid archive header size: %ld\n"),
 	     arch->file_name, size);
-      return FALSE;
+      return 0;
     }
 
   size = size + (size & 1);
@@ -490,7 +369,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  error (_("%s: failed to skip archive symbol table\n"),
 		 arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
     }
   else
@@ -508,7 +387,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
       if (size < sizeof_ar_index)
 	{
 	  error (_("%s: the archive index is empty\n"), arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
 
       /* Read the number of entries in the archive index.  */
@@ -516,7 +395,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
       if (got != sizeof_ar_index)
 	{
 	  error (_("%s: failed to read archive index\n"), arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
 
       arch->index_num = byte_get_big_endian (integer_buffer, sizeof_ar_index);
@@ -528,7 +407,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  error (_("%s: the archive index is supposed to have 0x%lx entries of %d bytes, but the size is only 0x%lx\n"),
 		 arch->file_name, (long) arch->index_num, sizeof_ar_index, size);
-	  return FALSE;
+	  return 0;
 	}
 
       /* Read in the archive index.  */
@@ -537,7 +416,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
       if (index_buffer == NULL)
 	{
 	  error (_("Out of memory whilst trying to read archive symbol index\n"));
-	  return FALSE;
+	  return 0;
 	}
 
       got = fread (index_buffer, sizeof_ar_index, arch->index_num, arch->file);
@@ -545,7 +424,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  free (index_buffer);
 	  error (_("%s: failed to read archive index\n"), arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
 
       size -= arch->index_num * sizeof_ar_index;
@@ -557,7 +436,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  free (index_buffer);
 	  error (_("Out of memory whilst trying to convert the archive symbol index\n"));
-	  return FALSE;
+	  return 0;
 	}
 
       for (i = 0; i < arch->index_num; i++)
@@ -571,14 +450,14 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  error (_("%s: the archive has an index but no symbols\n"),
 		 arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
 
       arch->sym_table = (char *) malloc (size);
       if (arch->sym_table == NULL)
 	{
 	  error (_("Out of memory whilst trying to read archive index symbol table\n"));
-	  return FALSE;
+	  return 0;
 	}
 
       arch->sym_size = size;
@@ -587,7 +466,7 @@ process_archive_index_and_symbols (struct archive_info *  arch,
 	{
 	  error (_("%s: failed to read archive index symbol table\n"),
 		 arch->file_name);
-	  return FALSE;
+	  return 0;
 	}
     }
 
@@ -597,18 +476,18 @@ process_archive_index_and_symbols (struct archive_info *  arch,
     {
       error (_("%s: failed to read archive header following archive index\n"),
 	     arch->file_name);
-      return FALSE;
+      return 0;
     }
 
-  return TRUE;
+  return 1;
 }
 
 /* Read the symbol table and long-name table from an archive.  */
 
 int
 setup_archive (struct archive_info *arch, const char *file_name,
-	       FILE *file, bfd_boolean is_thin_archive,
-	       bfd_boolean read_symbols)
+	       FILE *file, off_t file_size,
+	       int is_thin_archive, int read_symbols)
 {
   size_t got;
 
@@ -622,7 +501,7 @@ setup_archive (struct archive_info *arch, const char *file_name,
   arch->longnames_size = 0;
   arch->nested_member_origin = 0;
   arch->is_thin_archive = is_thin_archive;
-  arch->uses_64bit_indices = FALSE;
+  arch->uses_64bit_indices = 0;
   arch->next_arhdr_offset = SARMAG;
 
   /* Read the first archive member header.  */
@@ -642,21 +521,21 @@ setup_archive (struct archive_info *arch, const char *file_name,
     }
 
   /* See if this is the archive symbol table.  */
-  if (const_strneq (arch->arhdr.ar_name, "/               "))
+  if (startswith (arch->arhdr.ar_name, "/               "))
     {
       if (! process_archive_index_and_symbols (arch, 4, read_symbols))
 	return 1;
     }
-  else if (const_strneq (arch->arhdr.ar_name, "/SYM64/         "))
+  else if (startswith (arch->arhdr.ar_name, "/SYM64/         "))
     {
-      arch->uses_64bit_indices = TRUE;
+      arch->uses_64bit_indices = 1;
       if (! process_archive_index_and_symbols (arch, 8, read_symbols))
 	return 1;
     }
   else if (read_symbols)
     printf (_("%s has no archive index\n"), file_name);
 
-  if (const_strneq (arch->arhdr.ar_name, "//              "))
+  if (startswith (arch->arhdr.ar_name, "//              "))
     {
       /* This is the archive string table holding long member names.  */
       char fmag_save = arch->arhdr.ar_fmag[0];
@@ -671,7 +550,8 @@ setup_archive (struct archive_info *arch, const char *file_name,
 	  return 1;
 	}
       /* PR 17531: file: 639d6a26.  */
-      if ((signed long) arch->longnames_size < 0)
+      if ((off_t) arch->longnames_size > file_size
+	  || (signed long) arch->longnames_size < 0)
 	{
 	  error (_("%s: long name table is too big, (size = 0x%lx)\n"),
 		 file_name, arch->longnames_size);
@@ -713,6 +593,7 @@ setup_nested_archive (struct archive_info *nested_arch,
 		      const char *member_file_name)
 {
   FILE * member_file;
+  struct stat statbuf;
 
   /* Have we already setup this archive?  */
   if (nested_arch->file_name != NULL
@@ -721,14 +602,19 @@ setup_nested_archive (struct archive_info *nested_arch,
 
   /* Close previous file and discard cached information.  */
   if (nested_arch->file != NULL)
-    fclose (nested_arch->file);
+    {
+      fclose (nested_arch->file);
+      nested_arch->file = NULL;
+    }
   release_archive (nested_arch);
 
   member_file = fopen (member_file_name, "rb");
   if (member_file == NULL)
     return 1;
+  if (fstat (fileno (member_file), &statbuf) < 0)
+    return 1;
   return setup_archive (nested_arch, member_file_name, member_file,
-			FALSE, FALSE);
+			statbuf.st_size, 0, 0);
 }
 
 /* Release the memory used for the archive information.  */
@@ -736,14 +622,14 @@ setup_nested_archive (struct archive_info *nested_arch,
 void
 release_archive (struct archive_info * arch)
 {
-  if (arch->file_name != NULL)
-    free (arch->file_name);
-  if (arch->index_array != NULL)
-    free (arch->index_array);
-  if (arch->sym_table != NULL)
-    free (arch->sym_table);
-  if (arch->longnames != NULL)
-    free (arch->longnames);
+  free (arch->file_name);
+  free (arch->index_array);
+  free (arch->sym_table);
+  free (arch->longnames);
+  arch->file_name = NULL;
+  arch->index_array = NULL;
+  arch->sym_table = NULL;
+  arch->longnames = NULL;
 }
 
 /* Get the name of an archive member from the current archive header.
@@ -797,7 +683,7 @@ get_archive_member_name (struct archive_info *arch,
       arch->longnames[j] = '\0';
 
       if (!arch->is_thin_archive || arch->nested_member_origin == 0)
-        return arch->longnames + k;
+	return xstrdup (arch->longnames + k);
 
       /* PR 17531: file: 2896dc8b.  */
       if (k >= j)
@@ -813,7 +699,7 @@ get_archive_member_name (struct archive_info *arch,
       if (member_file_name != NULL
           && setup_nested_archive (nested_arch, member_file_name) == 0)
 	{
-          member_name = get_archive_member_name_at (nested_arch,
+	  member_name = get_archive_member_name_at (nested_arch,
 						    arch->nested_member_origin,
 						    NULL);
 	  if (member_name != NULL)
@@ -825,7 +711,7 @@ get_archive_member_name (struct archive_info *arch,
       free (member_file_name);
 
       /* Last resort: just return the name of the nested archive.  */
-      return arch->longnames + k;
+      return xstrdup (arch->longnames + k);
     }
 
   /* We have a normal (short) name.  */
@@ -833,7 +719,7 @@ get_archive_member_name (struct archive_info *arch,
     if (arch->arhdr.ar_name[j] == '/')
       {
 	arch->arhdr.ar_name[j] = '\0';
-	return arch->arhdr.ar_name;
+	return xstrdup (arch->arhdr.ar_name);
       }
 
   /* The full ar_name field is used.  Don't rely on ar_date starting

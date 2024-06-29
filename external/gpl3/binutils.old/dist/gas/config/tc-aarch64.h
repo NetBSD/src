@@ -1,5 +1,5 @@
 /* tc-aarch64.h -- Header file for tc-aarch64.c.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -225,6 +225,8 @@ void mapping_state (enum mstate);
 
 struct aarch64_segment_info_type
 {
+  const char *last_file;
+  unsigned last_line;
   enum mstate mapstate;
   unsigned int marked_pr_dependency;
   aarch64_instr_sequence insn_sequence;
@@ -255,7 +257,6 @@ extern void aarch64_after_parse_args (void);
 
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
-extern long md_pcrel_from_section (struct fix *, segT);
 extern void aarch64_frag_align_code (int, int);
 extern const char * elf64_aarch64_target_format (void);
 extern int aarch64_force_relocation (struct fix *);

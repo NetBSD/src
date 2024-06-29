@@ -10,19 +10,7 @@ OTHER_TEXT_SECTIONS='*(.glue_7t) *(.glue_7) *(.vfp11_veneer) *(.v4_bx)'
 OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__bss_start__ = .${CREATE_SHLIB+)};"
 OTHER_BSS_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_bss_end__ = .${CREATE_SHLIB+)}; ${CREATE_SHLIB+PROVIDE (}__bss_end__ = .${CREATE_SHLIB+)};"
 OTHER_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__end__ = .${CREATE_SHLIB+)};"
-OTHER_SECTIONS='
-.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }
-/* This section contains data that is not initialised during load
-   *or* application reset.  */
- .noinit (NOLOAD) :
- {
-   . = ALIGN(2);
-   PROVIDE (__noinit_start = .);
-   *(.noinit)
-   . = ALIGN(2);
-   PROVIDE (__noinit_end = .);
- }
-'
+OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
 ATTRS_SECTIONS='.ARM.attributes 0 : { KEEP (*(.ARM.attributes)) KEEP (*(.gnu.attributes)) }'
 OTHER_READONLY_SECTIONS="
   .ARM.extab ${RELOCATING-0} : { *(.ARM.extab${RELOCATING+* .gnu.linkonce.armextab.*}) }
@@ -49,3 +37,7 @@ STACK_ADDR=0x80000
 
 # ARM does not support .s* sections.
 NO_SMALL_DATA=yes
+
+# ARM supports the .noinit and .persistent sections.
+HAVE_NOINIT=yes
+HAVE_PERSISTENT=yes

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2024/06/29 16:24:46 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
@@ -8,10 +8,10 @@ CPPFLAGS+=	-I${DIST}
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
 PROG=		as
-SRCS=		${G_OBJS:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
-		${G_OBJS:Mitbl-parse.o:.o=.y} \
-		${G_OBJS:Mitbl-lex-wrapper.o:S/-wrapper.o/.l/} \
-		${G_OBJS:Mm68k-parse.o:.o=.y}
+SRCS=		${G_OBJS:M*.o:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
+		${G_OBJS:M*.o:Mitbl-parse.o:.o=.y} \
+		${G_OBJS:M*.o:Mitbl-lex-wrapper.o:S/-wrapper.o/.l/} \
+		${G_OBJS:M*.o:Mm68k-parse.o:.o=.y}
 
 COPTS.obj-elf.c = -Wno-stack-protector
 COPTS.atof-generic.c = -Wno-stack-protector

@@ -1,5 +1,5 @@
 /* atof_ieee.c - turn a Flonum into an IEEE floating point number
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,6 +19,7 @@
    02110-1301, USA.  */
 
 #include "as.h"
+#include "safe-ctype.h"
 
 /* Flonums returned here.  */
 extern FLONUM_TYPE generic_floating_point_number;
@@ -27,10 +28,17 @@ extern FLONUM_TYPE generic_floating_point_number;
 /* Don't count the gap in the m68k extended precision format.  */
 #define MAX_PRECISION  5
 #define H_PRECISION    1
+#define B_PRECISION    1 /* Not strictly IEEE, but handled here anyway.  */
 #define F_PRECISION    2
 #define D_PRECISION    4
 #define X_PRECISION    5
+#ifndef X_PRECISION_PAD
+#define X_PRECISION_PAD 0
+#endif
 #define P_PRECISION    5
+#ifndef P_PRECISION_PAD
+#define P_PRECISION_PAD X_PRECISION_PAD
+#endif
 
 /* Length in LittleNums of guard bits.  */
 #define GUARD          2
@@ -237,6 +245,12 @@ atof_ieee (char *str,			/* Text to convert to binary.  */
       exponent_bits = 5;
       break;
 
+    case 'b':
+    case 'B':
+      precision = B_PRECISION;
+      exponent_bits = 8;
+      break;
+
     case 'f':
     case 'F':
     case 's':
@@ -311,24 +325,34 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
       return return_value;
     }
 
-  /* NaN:  Do the right thing.  */
-  if (generic_floating_point_number.sign == 0)
+  switch (generic_floating_point_number.sign)
     {
+    /* NaN:  Do the right thing.  */
+    case 0:
+    case 'Q': case 'q':
+    case 'S': case 's':
       if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
 	as_warn (_("NaNs are not supported by this target"));
 
       if (precision == H_PRECISION)
 	{
-	  words[0] = 0x7fff;
+	  if (TOUPPER (generic_floating_point_number.sign) != 'S')
+	    words[0] = 0x7fff;
+	  else
+	    words[0] = exponent_bits == 5 ? 0x7dff : 0x7fbf;
 	}
       else if (precision == F_PRECISION)
 	{
-	  words[0] = 0x7fff;
+	  words[0] = TOUPPER (generic_floating_point_number.sign) == 'S'
+	             ? 0x7fbf : 0x7fff;
 	  words[1] = 0xffff;
 	}
       else if (precision == X_PRECISION)
 	{
 #ifdef TC_M68K
+	  if (generic_floating_point_number.sign)
+	    as_warn (_("NaN flavors are not supported by this target"));
+
 	  words[0] = 0x7fff;
 	  words[1] = 0;
 	  words[2] = 0xffff;
@@ -337,11 +361,12 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
 	  words[5] = 0xffff;
 #else /* ! TC_M68K  */
 #ifdef TC_I386
-	  words[0] = 0xffff;
-	  words[1] = 0xc000;
-	  words[2] = 0;
-	  words[3] = 0;
-	  words[4] = 0;
+	  words[0] = 0x7fff;
+	  words[1] = TOUPPER (generic_floating_point_number.sign) == 'S'
+		     ? 0xbfff : 0xffff;
+	  words[2] = 0xffff;
+	  words[3] = 0xffff;
+	  words[4] = 0xffff;
 #else /* ! TC_I386  */
 	  abort ();
 #endif /* ! TC_I386  */
@@ -349,22 +374,27 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
 	}
       else
 	{
-	  words[0] = 0x7fff;
+	  words[0] = TOUPPER (generic_floating_point_number.sign) == 'S'
+	             ? 0x7ff7 : 0x7fff;
 	  words[1] = 0xffff;
 	  words[2] = 0xffff;
 	  words[3] = 0xffff;
 	}
+
+      if (ISLOWER (generic_floating_point_number.sign))
+	words[0] |= 0x8000;
+
       return return_value;
-    }
-  else if (generic_floating_point_number.sign == 'P')
-    {
+
+    case 'P':
+    case 'N':
       if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
 	as_warn (_("Infinities are not supported by this target"));
 
       /* +INF:  Do the right thing.  */
-      if (precision == H_PRECISION)
+      if (precision == H_PRECISION /* also B_PRECISION */)
 	{
-	  words[0] = 0x7c00;
+	  words[0] = exponent_bits == 5 ? 0x7c00 : 0x7f80;
 	}
       else if (precision == F_PRECISION)
 	{
@@ -399,51 +429,10 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
 	  words[2] = 0;
 	  words[3] = 0;
 	}
-      return return_value;
-    }
-  else if (generic_floating_point_number.sign == 'N')
-    {
-      if (TC_LARGEST_EXPONENT_IS_NORMAL (precision))
-	as_warn (_("Infinities are not supported by this target"));
 
-      /* Negative INF.  */
-      if (precision == H_PRECISION)
-	{
-	  words[0] = 0xfc00;
-	}
-      else if (precision == F_PRECISION)
-	{
-	  words[0] = 0xff80;
-	  words[1] = 0x0;
-	}
-      else if (precision == X_PRECISION)
-	{
-#ifdef TC_M68K
-	  words[0] = 0xffff;
-	  words[1] = 0;
-	  words[2] = 0;
-	  words[3] = 0;
-	  words[4] = 0;
-	  words[5] = 0;
-#else /* ! TC_M68K  */
-#ifdef TC_I386
-	  words[0] = 0xffff;
-	  words[1] = 0x8000;
-	  words[2] = 0;
-	  words[3] = 0;
-	  words[4] = 0;
-#else /* ! TC_I386  */
-	  abort ();
-#endif /* ! TC_I386  */
-#endif /* ! TC_M68K  */
-	}
-      else
-	{
-	  words[0] = 0xfff0;
-	  words[1] = 0x0;
-	  words[2] = 0x0;
-	  words[3] = 0x0;
-	}
+      if (generic_floating_point_number.sign == 'N')
+	words[0] |= 0x8000;
+
       return return_value;
     }
 
@@ -755,12 +744,12 @@ const char *
 ieee_md_atof (int type,
 	      char *litP,
 	      int *sizeP,
-	      bfd_boolean big_wordian)
+	      bool big_wordian)
 {
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  int prec = 0;
+  int prec = 0, pad = 0;
 
   if (strchr (FLT_CHARS, type) != NULL)
     {
@@ -769,6 +758,11 @@ ieee_md_atof (int type,
 	case 'H':
 	case 'h':
 	  prec = H_PRECISION;
+	  break;
+
+	case 'B':
+	case 'b':
+	  prec = B_PRECISION;
 	  break;
 
 	case 'f':
@@ -788,6 +782,7 @@ ieee_md_atof (int type,
 	case 't':
 	case 'T':
 	  prec = X_PRECISION;
+	  pad = X_PRECISION_PAD;
 	  type = 'x';		/* This is what atof_ieee() understands.  */
 	  break;
 
@@ -803,6 +798,7 @@ ieee_md_atof (int type,
 #else
 	  prec = P_PRECISION;
 #endif
+	  pad = P_PRECISION_PAD;
 	  break;
 
 	default:
@@ -835,7 +831,7 @@ ieee_md_atof (int type,
   if (t)
     input_line_pointer = t;
 
-  *sizeP = prec * sizeof (LITTLENUM_TYPE);
+  *sizeP = (prec + pad) * sizeof (LITTLENUM_TYPE);
 
   if (big_wordian)
     {
@@ -853,6 +849,9 @@ ieee_md_atof (int type,
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
+
+  memset (litP, 0, pad * sizeof (LITTLENUM_TYPE));
+  litP += pad * sizeof (LITTLENUM_TYPE);
 
   return NULL;
 }

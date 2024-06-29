@@ -1,5 +1,5 @@
 /* BFD library support routines for the Z80 architecture.
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -31,13 +31,71 @@ const bfd_arch_info_type bfd_z80_arch;
 static const bfd_arch_info_type *
 compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 {
-  if (a->arch != b->arch)
+  if (a->arch != b->arch || a->arch != bfd_arch_z80)
     return NULL;
 
   if (a->mach == b->mach)
     return a;
+  switch (a->mach)
+    {
+    case bfd_mach_z80:
+    case bfd_mach_z80full:
+    case bfd_mach_z80strict:
+      switch (b->mach)
+	{
+	case bfd_mach_z80:
+	case bfd_mach_z80full:
+	case bfd_mach_z80strict:
+	  return & bfd_z80_arch;
+	case bfd_mach_z180:
+	case bfd_mach_ez80_z80:
+	case bfd_mach_ez80_adl:
+	case bfd_mach_z80n:
+	case bfd_mach_r800:
+	  return b;
+	}
+      break;
+    case bfd_mach_z80n:
+    case bfd_mach_r800:
+      switch (b->mach)
+	{
+	case bfd_mach_z80:
+	case bfd_mach_z80full:
+	case bfd_mach_z80strict:
+	  return a;
+	}
+      break;
+    case bfd_mach_z180:
+      switch (b->mach)
+	{
+	case bfd_mach_z80:
+	case bfd_mach_z80full:
+	case bfd_mach_z80strict:
+	  return a;
+	case bfd_mach_ez80_z80:
+	case bfd_mach_ez80_adl:
+	  return b;
+	}
+      break;
+    case bfd_mach_ez80_z80:
+    case bfd_mach_ez80_adl:
+      switch (b->mach)
+	{
+	case bfd_mach_z80:
+	case bfd_mach_z80full:
+	case bfd_mach_z80strict:
+	case bfd_mach_z180:
+	case bfd_mach_ez80_z80:
+	  return a;
+	case bfd_mach_ez80_adl:
+	  return b;
+	}
+      break;
+    case bfd_mach_gbz80:
+       return NULL;
+    }
 
-  return (a->arch == bfd_arch_z80) ? & bfd_z80_arch : NULL;
+  return NULL;
 }
 
 #define N(name,print,bits,default,next)  \
@@ -48,15 +106,16 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_z80full,	 "z80-full",   16, FALSE, M(1)),
-  N (bfd_mach_z80strict, "z80-strict", 16, FALSE, M(2)),
-  N (bfd_mach_z80,	 "z80",	       16, FALSE, M(3)),
-  N (bfd_mach_r800,	 "r800",       16, FALSE, M(4)),
-  N (bfd_mach_gbz80,	 "gbz80",      16, FALSE, M(5)),
-  N (bfd_mach_z180,	 "z180",       16, FALSE, M(6)),
-  N (bfd_mach_ez80_z80,	 "ez80-z80",   16, FALSE, M(7)),
-  N (bfd_mach_ez80_adl,	 "ez80-adl",   24, FALSE, NULL)
+  N (bfd_mach_z80,	 "z80",        16, true,  M(1)),
+  N (bfd_mach_z80strict, "z80-strict", 16, false, M(2)),
+  N (bfd_mach_z80full,	 "z80-full",   16, false, M(3)),
+  N (bfd_mach_r800,	 "r800",       16, false, M(4)),
+  N (bfd_mach_gbz80,	 "gbz80",      16, false, M(5)),
+  N (bfd_mach_z180,	 "z180",       16, false, M(6)),
+  N (bfd_mach_z80n,	 "z80n",       16, false, M(7)),
+  N (bfd_mach_ez80_z80,	 "ez80-z80",   16, false, M(8)),
+  N (bfd_mach_ez80_adl,	 "ez80-adl",   24, false, NULL)
 };
 
 const bfd_arch_info_type bfd_z80_arch =
-  N (bfd_mach_z80full,   "z80-full",   16, TRUE,  M(1));
+  N (bfd_mach_z80,   "z80",   16, true,  M(1));

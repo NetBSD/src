@@ -1,5 +1,5 @@
 /* Print Motorola 68k instructions.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -409,7 +409,7 @@ fetch_arg (unsigned char *buffer,
    A similar case exists for the movem instructions where the register
    mask is interpreted differently for different EAs.  */
 
-static bfd_boolean
+static bool
 m68k_valid_ea (char code, int val)
 {
   int mode, mask;

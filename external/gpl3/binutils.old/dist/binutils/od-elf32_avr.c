@@ -1,5 +1,5 @@
 /* od-avrelf.c -- dump information about an AVR elf object file.
-   Copyright (C) 2011-2020 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
    Written by Senthil Kumar Selvaraj, Atmel.
 
    This file is part of GNU Binutils.
@@ -77,23 +77,29 @@ elf32_avr_filter (bfd *abfd)
   return bfd_get_flavour (abfd) == bfd_target_elf_flavour;
 }
 
-static char*
+static char *
 elf32_avr_get_note_section_contents (bfd *abfd, bfd_size_type *size)
 {
   asection *section;
+  bfd_byte *contents;
 
-  if ((section = bfd_get_section_by_name (abfd, ".note.gnu.avr.deviceinfo")) == NULL)
+  section = bfd_get_section_by_name (abfd, ".note.gnu.avr.deviceinfo");
+  if (section == NULL)
     return NULL;
 
-  *size = bfd_section_size (section);
-  char *contents = (char *) xmalloc (*size);
-  bfd_get_section_contents (abfd, section, contents, 0, *size);
+  if (!bfd_malloc_and_get_section (abfd, section, &contents))
+    {
+      free (contents);
+      contents = NULL;
+    }
 
-  return contents;
+  *size = bfd_section_size (section);
+  return (char *) contents;
 }
 
-static char* elf32_avr_get_note_desc (bfd *abfd, char *contents,
-        bfd_size_type size)
+static char *
+elf32_avr_get_note_desc (bfd *abfd, char *contents, bfd_size_type size,
+			 bfd_size_type *descsz)
 {
   Elf_External_Note *xnp = (Elf_External_Note *) contents;
   Elf_Internal_Note in;
@@ -107,50 +113,62 @@ static char* elf32_avr_get_note_desc (bfd *abfd, char *contents,
   if (in.namesz > contents - in.namedata + size)
     return NULL;
 
+  if (in.namesz != 4 || strcmp (in.namedata, "AVR") != 0)
+    return NULL;
+
   in.descsz = bfd_get_32 (abfd, xnp->descsz);
   in.descdata = in.namedata + align_power (in.namesz, 2);
-  if (in.descsz != 0
-        && (in.descdata >= contents + size
-            || in.descsz > contents - in.descdata + size))
+  if (in.descsz < 6 * sizeof (uint32_t)
+      || in.descdata >= contents + size
+      || in.descsz > contents - in.descdata + size)
     return NULL;
 
-  if (strcmp (in.namedata, "AVR") != 0)
-    return NULL;
+  /* If the note has a string table, ensure it is 0 terminated.  */
+  if (in.descsz > 8 * sizeof (uint32_t))
+    in.descdata[in.descsz - 1] = 0;
 
+  *descsz = in.descsz;
   return in.descdata;
 }
 
 static void
 elf32_avr_get_device_info (bfd *abfd, char *description,
-        deviceinfo *device)
+			   bfd_size_type desc_size, deviceinfo *device)
 {
   if (description == NULL)
     return;
 
   const bfd_size_type memory_sizes = 6;
 
-  memcpy (device, description, memory_sizes * sizeof(uint32_t));
-  device->name = NULL;
+  memcpy (device, description, memory_sizes * sizeof (uint32_t));
+  desc_size -= memory_sizes * sizeof (uint32_t);
+  if (desc_size < 8)
+    return;
 
-  uint32_t *stroffset_table = ((uint32_t *) description) + memory_sizes;
+  uint32_t *stroffset_table = (uint32_t *) description + memory_sizes;
   bfd_size_type stroffset_table_size = bfd_get_32 (abfd, stroffset_table);
-  char *str_table = ((char *) stroffset_table) + stroffset_table_size;
 
   /* If the only content is the size itself, there's nothing in the table */
-  if (stroffset_table_size == 4)
+  if (stroffset_table_size < 8)
     return;
+  if (desc_size <= stroffset_table_size)
+    return;
+  desc_size -= stroffset_table_size;
 
   /* First entry is the device name index. */
   uint32_t device_name_index = bfd_get_32 (abfd, stroffset_table + 1);
+  if (device_name_index >= desc_size)
+    return;
 
+  char *str_table = (char *) stroffset_table + stroffset_table_size;
   device->name = str_table + device_name_index;
 }
 
 static void
 elf32_avr_get_memory_usage (bfd *abfd,
-        bfd_size_type *text_usage,
-        bfd_size_type *data_usage,
-        bfd_size_type *eeprom_usage)
+			    bfd_size_type *text_usage,
+			    bfd_size_type *data_usage,
+			    bfd_size_type *eeprom_usage)
 {
 
   bfd_size_type avr_datasize = 0;
@@ -159,6 +177,7 @@ elf32_avr_get_memory_usage (bfd *abfd,
   bfd_size_type bootloadersize = 0;
   bfd_size_type noinitsize = 0;
   bfd_size_type eepromsize = 0;
+  bfd_size_type res;
   asection *section;
 
   if ((section = bfd_get_section_by_name (abfd, ".data")) != NULL)
@@ -174,8 +193,50 @@ elf32_avr_get_memory_usage (bfd *abfd,
   if ((section = bfd_get_section_by_name (abfd, ".eeprom")) != NULL)
     eepromsize = bfd_section_size (section);
 
-  *text_usage = avr_textsize + avr_datasize + bootloadersize;
-  *data_usage = avr_datasize + avr_bsssize + noinitsize;
+  /* PR 27285: Check for overflow.  */
+  res = avr_textsize + avr_datasize;
+  if (res < avr_textsize || res < avr_datasize)
+    {
+      fprintf (stderr, _("Warning: textsize (%#lx) + datasize (%#lx) overflows size type\n"),
+	       (long) avr_textsize, (long) avr_datasize);
+      res = (bfd_size_type) -1;
+    }
+  else
+    {
+      bfd_size_type res2;
+      res2 = res + bootloadersize;
+      if (res2 < bootloadersize || res2 < res)
+	{
+	  fprintf (stderr, _("Warning: textsize (%#lx) + datasize (%#lx) + bootloadersize (%#lx) overflows size type\n"),
+		   (long) avr_textsize, (long) avr_datasize, (long) bootloadersize);
+	  res2 = (bfd_size_type) -1;
+	}
+      res = res2;
+    }
+  *text_usage = res;
+
+  res = avr_datasize + avr_bsssize;
+  if (res < avr_datasize || res < avr_bsssize)
+    {
+      fprintf (stderr, _("Warning: datatsize (%#lx) + bssssize (%#lx) overflows size type\n"),
+	       (long) avr_datasize, (long) avr_bsssize);
+      res = (bfd_size_type) -1;
+    }
+  else
+    {
+      bfd_size_type res2;
+
+      res2 = res + noinitsize;
+      if (res2 < res || res2 < noinitsize)
+	{
+	  fprintf (stderr, _("Warning: datasize (%#lx) + bsssize (%#lx) + noinitsize (%#lx) overflows size type\n"),
+		   (long) avr_datasize, (long) avr_bsssize, (long) noinitsize);
+	  res2 = (bfd_size_type) -1;
+	}
+      res = res2;
+    }
+  *data_usage = res;
+
   *eeprom_usage = eepromsize;
 }
 
@@ -183,7 +244,7 @@ static void
 elf32_avr_dump_mem_usage (bfd *abfd)
 {
   char *description = NULL;
-  bfd_size_type note_section_size = 0;
+  bfd_size_type sec_size, desc_size;
 
   deviceinfo device = { 0, 0, 0, 0, 0, 0, NULL };
   device.name = "Unknown";
@@ -192,31 +253,31 @@ elf32_avr_dump_mem_usage (bfd *abfd)
   bfd_size_type text_usage = 0;
   bfd_size_type eeprom_usage = 0;
 
-  char *contents = elf32_avr_get_note_section_contents (abfd,
-    &note_section_size);
+  char *contents = elf32_avr_get_note_section_contents (abfd, &sec_size);
 
   if (contents != NULL)
     {
-      description = elf32_avr_get_note_desc (abfd, contents, note_section_size);
-      elf32_avr_get_device_info (abfd, description, &device);
+      description = elf32_avr_get_note_desc (abfd, contents, sec_size,
+					     &desc_size);
+      elf32_avr_get_device_info (abfd, description, desc_size, &device);
     }
 
   elf32_avr_get_memory_usage (abfd, &text_usage, &data_usage,
-     &eeprom_usage);
+			      &eeprom_usage);
 
   printf ("AVR Memory Usage\n"
           "----------------\n"
           "Device: %s\n\n", device.name);
 
   /* Text size */
-  printf ("Program:%8ld bytes", text_usage);
+  printf ("Program:%8lu bytes", text_usage);
   if (device.flash_size > 0)
     printf (" (%2.1f%% Full)", ((float) text_usage / device.flash_size) * 100);
 
   printf ("\n(.text + .data + .bootloader)\n\n");
 
   /* Data size */
-  printf ("Data:   %8ld bytes", data_usage);
+  printf ("Data:   %8lu bytes", data_usage);
   if (device.ram_size > 0)
     printf (" (%2.1f%% Full)", ((float) data_usage / device.ram_size) * 100);
 
@@ -225,7 +286,7 @@ elf32_avr_dump_mem_usage (bfd *abfd)
   /* EEPROM size */
   if (eeprom_usage > 0)
     {
-      printf ("EEPROM: %8ld bytes", eeprom_usage);
+      printf ("EEPROM: %8lu bytes", eeprom_usage);
       if (device.eeprom_size > 0)
         printf (" (%2.1f%% Full)", ((float) eeprom_usage / device.eeprom_size) * 100);
 

@@ -30,7 +30,7 @@ The BFD contains the result of an executable core dump.
 @subsubsection @code{bfd_check_format}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_check_format (bfd *abfd, bfd_format format);
+bool bfd_check_format (bfd *abfd, bfd_format format);
 @end example
 @strong{Description}@*
 Verify if the file attached to the BFD @var{abfd} is compatible
@@ -73,7 +73,7 @@ more than one backend recognised the file format.
 @subsubsection @code{bfd_check_format_matches}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_check_format_matches
+bool bfd_check_format_matches
    (bfd *abfd, bfd_format format, char ***matching);
 @end example
 @strong{Description}@*
@@ -91,7 +91,7 @@ should free it.
 @subsubsection @code{bfd_set_format}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_set_format (bfd *abfd, bfd_format format);
+bool bfd_set_format (bfd *abfd, bfd_format format);
 @end example
 @strong{Description}@*
 This function sets the file format of the BFD @var{abfd} to the

@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -160,16 +160,16 @@ snip (bfd *abfd)
 
 /* Close a BFD and remove it from the cache.  */
 
-static bfd_boolean
+static bool
 bfd_cache_delete (bfd *abfd)
 {
-  bfd_boolean ret;
+  bool ret;
 
   if (fclose ((FILE *) abfd->iostream) == 0)
-    ret = TRUE;
+    ret = true;
   else
     {
-      ret = FALSE;
+      ret = false;
       bfd_set_error (bfd_error_system_call);
     }
 
@@ -184,7 +184,7 @@ bfd_cache_delete (bfd *abfd)
 /* We need to open a new file, and the cache is full.  Find the least
    recently used cacheable BFD and close it.  */
 
-static bfd_boolean
+static bool
 close_one (void)
 {
   register bfd *to_kill;
@@ -208,7 +208,7 @@ close_one (void)
   if (to_kill == NULL)
     {
       /* There are no open cacheable BFD's.  */
-      return TRUE;
+      return true;
     }
 
   to_kill->where = _bfd_real_ftell ((FILE *) to_kill->iostream);
@@ -485,25 +485,25 @@ INTERNAL_FUNCTION
 	bfd_cache_init
 
 SYNOPSIS
-	bfd_boolean bfd_cache_init (bfd *abfd);
+	bool bfd_cache_init (bfd *abfd);
 
 DESCRIPTION
 	Add a newly opened BFD to the cache.
 */
 
-bfd_boolean
+bool
 bfd_cache_init (bfd *abfd)
 {
   BFD_ASSERT (abfd->iostream != NULL);
   if (open_files >= bfd_cache_max_open ())
     {
       if (! close_one ())
-	return FALSE;
+	return false;
     }
   abfd->iovec = &cache_iovec;
   insert (abfd);
   ++open_files;
-  return TRUE;
+  return true;
 }
 
 /*
@@ -511,7 +511,7 @@ INTERNAL_FUNCTION
 	bfd_cache_close
 
 SYNOPSIS
-	bfd_boolean bfd_cache_close (bfd *abfd);
+	bool bfd_cache_close (bfd *abfd);
 
 DESCRIPTION
 	Remove the BFD @var{abfd} from the cache. If the attached file is open,
@@ -522,15 +522,15 @@ RETURNS
 	returned if all is well.
 */
 
-bfd_boolean
+bool
 bfd_cache_close (bfd *abfd)
 {
   if (abfd->iovec != &cache_iovec)
-    return TRUE;
+    return true;
 
   if (abfd->iostream == NULL)
     /* Previously closed.  */
-    return TRUE;
+    return true;
 
   return bfd_cache_delete (abfd);
 }
@@ -540,7 +540,7 @@ FUNCTION
 	bfd_cache_close_all
 
 SYNOPSIS
-	bfd_boolean bfd_cache_close_all (void);
+	bool bfd_cache_close_all (void);
 
 DESCRIPTION
 	Remove all BFDs from the cache. If the attached file is open,
@@ -551,10 +551,10 @@ RETURNS
 	returned if all is well.
 */
 
-bfd_boolean
+bool
 bfd_cache_close_all (void)
 {
-  bfd_boolean ret = TRUE;
+  bool ret = true;
 
   while (bfd_last_cache != NULL)
     ret &= bfd_cache_close (bfd_last_cache);
@@ -580,7 +580,7 @@ DESCRIPTION
 FILE *
 bfd_open_file (bfd *abfd)
 {
-  abfd->cacheable = TRUE;	/* Allow it to be closed later.  */
+  abfd->cacheable = true;	/* Allow it to be closed later.  */
 
   if (open_files >= bfd_cache_max_open ())
     {
@@ -592,15 +592,17 @@ bfd_open_file (bfd *abfd)
     {
     case read_direction:
     case no_direction:
-      abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_RB);
+      abfd->iostream = _bfd_real_fopen (bfd_get_filename (abfd), FOPEN_RB);
       break;
     case both_direction:
     case write_direction:
       if (abfd->opened_once)
 	{
-	  abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_RUB);
+	  abfd->iostream = _bfd_real_fopen (bfd_get_filename (abfd),
+					    FOPEN_RUB);
 	  if (abfd->iostream == NULL)
-	    abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_WUB);
+	    abfd->iostream = _bfd_real_fopen (bfd_get_filename (abfd),
+					      FOPEN_WUB);
 	}
       else
 	{
@@ -627,11 +629,12 @@ bfd_open_file (bfd *abfd)
 	     the --info option.  */
 	  struct stat s;
 
-	  if (stat (abfd->filename, &s) == 0 && s.st_size != 0)
-	    unlink_if_ordinary (abfd->filename);
+	  if (stat (bfd_get_filename (abfd), &s) == 0 && s.st_size != 0)
+	    unlink_if_ordinary (bfd_get_filename (abfd));
 #endif
-	  abfd->iostream = _bfd_real_fopen (abfd->filename, FOPEN_WUB);
-	  abfd->opened_once = TRUE;
+	  abfd->iostream = _bfd_real_fopen (bfd_get_filename (abfd),
+					    FOPEN_WUB);
+	  abfd->opened_once = true;
 	}
       break;
     }

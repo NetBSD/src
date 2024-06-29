@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -84,12 +84,6 @@ CODE_FRAGMENT
 .
 .  {* A unique identifier of the BFD  *}
 .  unsigned int id;
-.
-.  {* The format which belongs to the BFD. (object, core, etc.)  *}
-.  ENUM_BITFIELD (bfd_format) format : 3;
-.
-.  {* The direction with which the BFD was opened.  *}
-.  ENUM_BITFIELD (bfd_direction) direction : 2;
 .
 .  {* Format_specific flags.  *}
 .  flagword flags;
@@ -194,6 +188,12 @@ CODE_FRAGMENT
 .   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT \
 .   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
 .
+.  {* The format which belongs to the BFD. (object, core, etc.)  *}
+.  ENUM_BITFIELD (bfd_format) format : 3;
+.
+.  {* The direction with which the BFD was opened.  *}
+.  ENUM_BITFIELD (bfd_direction) direction : 2;
+.
 .  {* Is the file descriptor being cached?  That is, can it be closed as
 .     needed, and re-opened when accessed later?  *}
 .  unsigned int cacheable : 1;
@@ -245,13 +245,16 @@ CODE_FRAGMENT
 .  {* Set if this is a slim LTO object not loaded with a compiler plugin.  *}
 .  unsigned int lto_slim_object : 1;
 .
+.  {* Do not attempt to modify this file.  Set when detecting errors
+.     that BFD is not prepared to handle for objcopy/strip.  *}
+.  unsigned int read_only : 1;
+.
 .  {* Set to dummy BFD created when claimed by a compiler plug-in
 .     library.  *}
 .  bfd *plugin_dummy_bfd;
 .
-.  {* Currently my_archive is tested before adding origin to
-.     anything. I believe that this can become always an add of
-.     origin, with origin set to 0 for non archive files.  *}
+.  {* The offset of this bfd in the file, typically 0 if it is not
+.     contained in an archive.  *}
 .  ufile_ptr origin;
 .
 .  {* The origin in the archive of the proxy entry.  This will
@@ -273,9 +276,18 @@ CODE_FRAGMENT
 .  {* The number of sections.  *}
 .  unsigned int section_count;
 .
+.  {* The archive plugin file descriptor.  *}
+.  int archive_plugin_fd;
+.
+.  {* The number of opens on the archive plugin file descriptor.  *}
+.  unsigned int archive_plugin_fd_open_count;
+.
 .  {* A field used by _bfd_generic_link_add_archive_symbols.  This will
 .     be used only for archive elements.  *}
 .  int archive_pass;
+.
+.  {* The total size of memory from bfd_alloc.  *}
+.  bfd_size_type alloc_size;
 .
 .  {* Stuff only useful for object files:
 .     The start address.  *}
@@ -283,7 +295,7 @@ CODE_FRAGMENT
 .
 .  {* Symbol table for output BFD (with symcount entries).
 .     Also used by the linker to cache input BFD symbols.  *}
-.  struct bfd_symbol  **outsymbols;
+.  struct bfd_symbol **outsymbols;
 .
 .  {* Used for input and output.  *}
 .  unsigned int symcount;
@@ -293,6 +305,11 @@ CODE_FRAGMENT
 .
 .  {* Pointer to structure which contains architecture information.  *}
 .  const struct bfd_arch_info *arch_info;
+.
+.  {* Cached length of file for bfd_get_size.  0 until bfd_get_size is
+.     called, 1 if stat returns an error or the file size is too large to
+.     return in ufile_ptr.  Both 0 and 1 should be treated as "unknown".  *}
+.  ufile_ptr size;
 .
 .  {* Stuff only useful for archives.  *}
 .  void *arelt_data;
@@ -364,7 +381,7 @@ CODE_FRAGMENT
 .  return abfd->filename;
 .}
 .
-.static inline bfd_boolean
+.static inline bool
 .bfd_get_cacheable (const bfd *abfd)
 .{
 .  return abfd->cacheable;
@@ -412,13 +429,13 @@ CODE_FRAGMENT
 .  return abfd->section_count;
 .}
 .
-.static inline bfd_boolean
+.static inline bool
 .bfd_has_map (const bfd *abfd)
 .{
 .  return abfd->has_armap;
 .}
 .
-.static inline bfd_boolean
+.static inline bool
 .bfd_is_thin_archive (const bfd *abfd)
 .{
 .  return abfd->is_thin_archive;
@@ -431,15 +448,15 @@ CODE_FRAGMENT
 .}
 .
 .{* See note beside bfd_set_section_userdata.  *}
-.static inline bfd_boolean
-.bfd_set_cacheable (bfd * abfd, bfd_boolean val)
+.static inline bool
+.bfd_set_cacheable (bfd * abfd, bool val)
 .{
 .  abfd->cacheable = val;
-.  return TRUE;
+.  return true;
 .}
 .
 .static inline void
-.bfd_set_thin_archive (bfd *abfd, bfd_boolean val)
+.bfd_set_thin_archive (bfd *abfd, bool val)
 .{
 .  abfd->is_thin_archive = val;
 .}
@@ -574,7 +591,7 @@ CODE_FRAGMENT
 .    abfd->sections = s;
 .}
 .
-.static inline bfd_boolean
+.static inline bool
 .bfd_section_removed_from_list (const bfd *abfd, const asection *s)
 .{
 .  return s->next ? s->next->prev != s : abfd->section_last != s;
@@ -783,8 +800,8 @@ bfd_errmsg (bfd_error_type error_tag)
       char *buf;
       const char *msg = bfd_errmsg (input_error);
 
-      if (asprintf (&buf, _(bfd_errmsgs [error_tag]), input_bfd->filename, msg)
-	  != -1)
+      if (asprintf (&buf, _(bfd_errmsgs [error_tag]),
+		    bfd_get_filename (input_bfd), msg) != -1)
 	return buf;
 
       /* Ick, what to do on out of memory?  */
@@ -1034,12 +1051,7 @@ _bfd_doprnt (FILE *stream, const char *format, union _bfd_doprnt_args *args)
 			*sptr++ = ptr[-1];
 			*sptr = '\0';
 #endif
-#if defined (__GNUC__) || defined (HAVE_LONG_LONG)
 			PRINT_TYPE (long long, ll);
-#else
-			/* Fake it and hope for the best.  */
-			PRINT_TYPE (long, l);
-#endif
 			break;
 		      }
 		  }
@@ -1054,14 +1066,7 @@ _bfd_doprnt (FILE *stream, const char *format, union _bfd_doprnt_args *args)
 		if (wide_width == 0)
 		  PRINT_TYPE (double, d);
 		else
-		  {
-#if defined (__GNUC__) || defined (HAVE_LONG_DOUBLE)
-		    PRINT_TYPE (long double, ld);
-#else
-		    /* Fake it and hope for the best.  */
-		    PRINT_TYPE (double, d);
-#endif
-		  }
+		  PRINT_TYPE (long double, ld);
 	      }
 	      break;
 	    case 's':
@@ -1110,10 +1115,10 @@ _bfd_doprnt (FILE *stream, const char *format, union _bfd_doprnt_args *args)
 		  else if (abfd->my_archive
 			   && !bfd_is_thin_archive (abfd->my_archive))
 		    result = fprintf (stream, "%s(%s)",
-				      abfd->my_archive->filename,
-				      abfd->filename);
+				      bfd_get_filename (abfd->my_archive),
+				      bfd_get_filename (abfd));
 		  else
-		    result = fprintf (stream, "%s", abfd->filename);
+		    result = fprintf (stream, "%s", bfd_get_filename (abfd));
 		}
 	      else
 		PRINT_TYPE (void *, p);
@@ -1263,11 +1268,7 @@ _bfd_doprnt_scan (const char *format, union _bfd_doprnt_args *args)
 			break;
 		      case 2:
 		      default:
-#if defined (__GNUC__) || defined (HAVE_LONG_LONG)
 			arg_type = LongLong;
-#else
-			arg_type = Long;
-#endif
 			break;
 		      }
 		  }
@@ -1282,13 +1283,7 @@ _bfd_doprnt_scan (const char *format, union _bfd_doprnt_args *args)
 		if (wide_width == 0)
 		  arg_type = Double;
 		else
-		  {
-#if defined (__GNUC__) || defined (HAVE_LONG_DOUBLE)
-		    arg_type = LongDouble;
-#else
-		    arg_type = Double;
-#endif
-		  }
+		  arg_type = LongDouble;
 	      }
 	      break;
 	    case 's':
@@ -1607,7 +1602,7 @@ FUNCTION
 	bfd_set_file_flags
 
 SYNOPSIS
-	bfd_boolean bfd_set_file_flags (bfd *abfd, flagword flags);
+	bool bfd_set_file_flags (bfd *abfd, flagword flags);
 
 DESCRIPTION
 	Set the flag word in the BFD @var{abfd} to the value @var{flags}.
@@ -1622,29 +1617,29 @@ DESCRIPTION
 
 */
 
-bfd_boolean
+bool
 bfd_set_file_flags (bfd *abfd, flagword flags)
 {
   if (abfd->format != bfd_object)
     {
       bfd_set_error (bfd_error_wrong_format);
-      return FALSE;
+      return false;
     }
 
   if (bfd_read_p (abfd))
     {
       bfd_set_error (bfd_error_invalid_operation);
-      return FALSE;
+      return false;
     }
 
   abfd->flags = flags;
   if ((flags & bfd_applicable_file_flags (abfd)) != flags)
     {
       bfd_set_error (bfd_error_invalid_operation);
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 void
@@ -1738,18 +1733,19 @@ bfd_get_sign_extend_vma (bfd *abfd)
      no place to store this information in the COFF back end.
      Should enough other COFF targets add support for DWARF2,
      a place will have to be found.  Until then, this hack will do.  */
-  if (CONST_STRNEQ (name, "coff-go32")
+  if (startswith (name, "coff-go32")
       || strcmp (name, "pe-i386") == 0
       || strcmp (name, "pei-i386") == 0
       || strcmp (name, "pe-x86-64") == 0
       || strcmp (name, "pei-x86-64") == 0
+      || strcmp (name, "pei-aarch64-little") == 0
       || strcmp (name, "pe-arm-wince-little") == 0
       || strcmp (name, "pei-arm-wince-little") == 0
       || strcmp (name, "aixcoff-rs6000") == 0
       || strcmp (name, "aix5coff64-rs6000") == 0)
     return 1;
 
-  if (CONST_STRNEQ (name, "mach-o"))
+  if (startswith (name, "mach-o"))
     return 0;
 
   bfd_set_error (bfd_error_wrong_format);
@@ -1761,7 +1757,7 @@ FUNCTION
 	bfd_set_start_address
 
 SYNOPSIS
-	bfd_boolean bfd_set_start_address (bfd *abfd, bfd_vma vma);
+	bool bfd_set_start_address (bfd *abfd, bfd_vma vma);
 
 DESCRIPTION
 	Make @var{vma} the entry point of output BFD @var{abfd}.
@@ -1770,11 +1766,11 @@ RETURNS
 	Returns <<TRUE>> on success, <<FALSE>> otherwise.
 */
 
-bfd_boolean
+bool
 bfd_set_start_address (bfd *abfd, bfd_vma vma)
 {
   abfd->start_address = vma;
-  return TRUE;
+  return true;
 }
 
 /*
@@ -1867,6 +1863,24 @@ _bfd_set_gp_value (bfd *abfd, bfd_vma v)
 
 /*
 FUNCTION
+	bfd_set_gp_value
+
+SYNOPSIS
+	void bfd_set_gp_value (bfd *abfd, bfd_vma v);
+
+DESCRIPTION
+	Allow external access to the fucntion to set the GP value.
+	This is specifically added for gdb-compile support.
+*/
+
+void
+bfd_set_gp_value (bfd *abfd, bfd_vma v)
+{
+  _bfd_set_gp_value (abfd, v);
+}
+
+/*
+FUNCTION
 	bfd_scan_vma
 
 SYNOPSIS
@@ -1898,10 +1912,8 @@ bfd_scan_vma (const char *string, const char **end, int base)
   if (sizeof (bfd_vma) <= sizeof (unsigned long))
     return strtoul (string, (char **) end, base);
 
-#if defined (HAVE_STRTOULL) && defined (HAVE_LONG_LONG)
   if (sizeof (bfd_vma) <= sizeof (unsigned long long))
     return strtoull (string, (char **) end, base);
-#endif
 
   if (base == 0)
     {
@@ -1962,7 +1974,7 @@ FUNCTION
 	bfd_copy_private_header_data
 
 SYNOPSIS
-	bfd_boolean bfd_copy_private_header_data (bfd *ibfd, bfd *obfd);
+	bool bfd_copy_private_header_data (bfd *ibfd, bfd *obfd);
 
 DESCRIPTION
 	Copy private BFD header information from the BFD @var{ibfd} to the
@@ -1985,7 +1997,7 @@ FUNCTION
 	bfd_copy_private_bfd_data
 
 SYNOPSIS
-	bfd_boolean bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd);
+	bool bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd);
 
 DESCRIPTION
 	Copy private BFD information from the BFD @var{ibfd} to the
@@ -2006,7 +2018,7 @@ FUNCTION
 	bfd_set_private_flags
 
 SYNOPSIS
-	bfd_boolean bfd_set_private_flags (bfd *abfd, flagword flags);
+	bool bfd_set_private_flags (bfd *abfd, flagword flags);
 
 DESCRIPTION
 	Set private BFD flag information in the BFD @var{abfd}.
@@ -2058,7 +2070,8 @@ DESCRIPTION
 .	BFD_SEND (abfd, _bfd_debug_info_accumulate, (abfd, section))
 .
 .#define bfd_stat_arch_elt(abfd, stat) \
-.	BFD_SEND (abfd, _bfd_stat_arch_elt,(abfd, stat))
+.	BFD_SEND (abfd->my_archive ? abfd->my_archive : abfd, \
+.		  _bfd_stat_arch_elt, (abfd, stat))
 .
 .#define bfd_update_armap_timestamp(abfd) \
 .	BFD_SEND (abfd, _bfd_update_armap_timestamp, (abfd))
@@ -2123,7 +2136,7 @@ DESCRIPTION
 .
 .extern bfd_byte *bfd_get_relocated_section_contents
 .  (bfd *, struct bfd_link_info *, struct bfd_link_order *, bfd_byte *,
-.   bfd_boolean, asymbol **);
+.   bool, asymbol **);
 .
 
 */
@@ -2133,12 +2146,12 @@ bfd_get_relocated_section_contents (bfd *abfd,
 				    struct bfd_link_info *link_info,
 				    struct bfd_link_order *link_order,
 				    bfd_byte *data,
-				    bfd_boolean relocatable,
+				    bool relocatable,
 				    asymbol **symbols)
 {
   bfd *abfd2;
   bfd_byte *(*fn) (bfd *, struct bfd_link_info *, struct bfd_link_order *,
-		   bfd_byte *, bfd_boolean, asymbol **);
+		   bfd_byte *, bool, asymbol **);
 
   if (link_order->type == bfd_indirect_link_order)
     {
@@ -2156,33 +2169,34 @@ bfd_get_relocated_section_contents (bfd *abfd,
 
 /* Record information about an ELF program header.  */
 
-bfd_boolean
+bool
 bfd_record_phdr (bfd *abfd,
 		 unsigned long type,
-		 bfd_boolean flags_valid,
+		 bool flags_valid,
 		 flagword flags,
-		 bfd_boolean at_valid,
-		 bfd_vma at,
-		 bfd_boolean includes_filehdr,
-		 bfd_boolean includes_phdrs,
+		 bool at_valid,
+		 bfd_vma at,  /* Bytes.  */
+		 bool includes_filehdr,
+		 bool includes_phdrs,
 		 unsigned int count,
 		 asection **secs)
 {
   struct elf_segment_map *m, **pm;
-  bfd_size_type amt;
+  size_t amt;
+  unsigned int opb = bfd_octets_per_byte (abfd, NULL);
 
   if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
   amt = sizeof (struct elf_segment_map);
   amt += ((bfd_size_type) count - 1) * sizeof (asection *);
   m = (struct elf_segment_map *) bfd_zalloc (abfd, amt);
   if (m == NULL)
-    return FALSE;
+    return false;
 
   m->p_type = type;
   m->p_flags = flags;
-  m->p_paddr = at;
+  m->p_paddr = at * opb;
   m->p_flags_valid = flags_valid;
   m->p_paddr_valid = at_valid;
   m->includes_filehdr = includes_filehdr;
@@ -2195,13 +2209,13 @@ bfd_record_phdr (bfd *abfd,
     ;
   *pm = m;
 
-  return TRUE;
+  return true;
 }
 
 #ifdef BFD64
 /* Return true iff this target is 32-bit.  */
 
-static bfd_boolean
+static bool
 is32bit (bfd *abfd)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
@@ -2249,7 +2263,7 @@ FUNCTION
 	bfd_alt_mach_code
 
 SYNOPSIS
-	bfd_boolean bfd_alt_mach_code (bfd *abfd, int alternative);
+	bool bfd_alt_mach_code (bfd *abfd, int alternative);
 
 DESCRIPTION
 
@@ -2260,7 +2274,7 @@ DESCRIPTION
 	machine codes.
 */
 
-bfd_boolean
+bool
 bfd_alt_mach_code (bfd *abfd, int alternative)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
@@ -2276,25 +2290,25 @@ bfd_alt_mach_code (bfd *abfd, int alternative)
 	case 1:
 	  code = get_elf_backend_data (abfd)->elf_machine_alt1;
 	  if (code == 0)
-	    return FALSE;
+	    return false;
 	  break;
 
 	case 2:
 	  code = get_elf_backend_data (abfd)->elf_machine_alt2;
 	  if (code == 0)
-	    return FALSE;
+	    return false;
 	  break;
 
 	default:
-	  return FALSE;
+	  return false;
 	}
 
       elf_elfheader (abfd)->e_machine = code;
 
-      return TRUE;
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2325,55 +2339,12 @@ bfd_emul_get_maxpagesize (const char *emul)
   return 0;
 }
 
-static void
-bfd_elf_set_pagesize (const bfd_target *target, bfd_vma size,
-		      int offset, const bfd_target *orig_target)
-{
-  if (target->flavour == bfd_target_elf_flavour)
-    {
-      const struct elf_backend_data *bed;
-
-      bed = xvec_get_elf_backend_data (target);
-      *((bfd_vma *) ((char *) bed + offset)) = size;
-    }
-
-  if (target->alternative_target
-      && target->alternative_target != orig_target)
-    bfd_elf_set_pagesize (target->alternative_target, size, offset,
-			  orig_target);
-}
-
-/*
-FUNCTION
-	bfd_emul_set_maxpagesize
-
-SYNOPSIS
-	void bfd_emul_set_maxpagesize (const char *, bfd_vma);
-
-DESCRIPTION
-	For ELF, set the maximum page size for the emulation.  It is
-	a no-op for other formats.
-
-*/
-
-void
-bfd_emul_set_maxpagesize (const char *emul, bfd_vma size)
-{
-  const bfd_target *target;
-
-  target = bfd_find_target (emul, NULL);
-  if (target)
-    bfd_elf_set_pagesize (target, size,
-			  offsetof (struct elf_backend_data,
-				    maxpagesize), target);
-}
-
 /*
 FUNCTION
 	bfd_emul_get_commonpagesize
 
 SYNOPSIS
-	bfd_vma bfd_emul_get_commonpagesize (const char *, bfd_boolean);
+	bfd_vma bfd_emul_get_commonpagesize (const char *);
 
 DESCRIPTION
 	Returns the common page size, in bytes, as determined by
@@ -2384,7 +2355,7 @@ RETURNS
 */
 
 bfd_vma
-bfd_emul_get_commonpagesize (const char *emul, bfd_boolean relro)
+bfd_emul_get_commonpagesize (const char *emul)
 {
   const bfd_target *target;
 
@@ -2395,37 +2366,9 @@ bfd_emul_get_commonpagesize (const char *emul, bfd_boolean relro)
       const struct elf_backend_data *bed;
 
       bed = xvec_get_elf_backend_data (target);
-      if (relro)
-	return bed->relropagesize;
-      else
-	return bed->commonpagesize;
+      return bed->commonpagesize;
     }
   return 0;
-}
-
-/*
-FUNCTION
-	bfd_emul_set_commonpagesize
-
-SYNOPSIS
-	void bfd_emul_set_commonpagesize (const char *, bfd_vma);
-
-DESCRIPTION
-	For ELF, set the common page size for the emulation.  It is
-	a no-op for other formats.
-
-*/
-
-void
-bfd_emul_set_commonpagesize (const char *emul, bfd_vma size)
-{
-  const bfd_target *target;
-
-  target = bfd_find_target (emul, NULL);
-  if (target)
-    bfd_elf_set_pagesize (target, size,
-			  offsetof (struct elf_backend_data,
-				    commonpagesize), target);
 }
 
 /*
@@ -2449,7 +2392,7 @@ bfd_demangle (bfd *abfd, const char *name, int options)
   char *res, *alloc;
   const char *pre, *suf;
   size_t pre_len;
-  bfd_boolean skip_lead;
+  bool skip_lead;
 
   skip_lead = (abfd != NULL
 	       && *name != '\0'
@@ -2481,8 +2424,7 @@ bfd_demangle (bfd *abfd, const char *name, int options)
 
   res = cplus_demangle (name, options);
 
-  if (alloc != NULL)
-    free (alloc);
+  free (alloc);
 
   if (res == NULL)
     {
@@ -2549,6 +2491,7 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
       if ((abfd->flags & BFD_COMPRESS_GABI) != 0)
 	{
 	  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+	  struct bfd_elf_section_data * esd = elf_section_data (sec);
 
 	  /* Set the SHF_COMPRESSED bit.  */
 	  elf_section_flags (sec) |= SHF_COMPRESSED;
@@ -2558,10 +2501,11 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 	      Elf32_External_Chdr *echdr = (Elf32_External_Chdr *) contents;
 	      bfd_put_32 (abfd, ELFCOMPRESS_ZLIB, &echdr->ch_type);
 	      bfd_put_32 (abfd, sec->size, &echdr->ch_size);
-	      bfd_put_32 (abfd, 1 << sec->alignment_power,
+	      bfd_put_32 (abfd, 1u << sec->alignment_power,
 			  &echdr->ch_addralign);
 	      /* bfd_log2 (alignof (Elf32_Chdr)) */
 	      bfd_set_section_alignment (sec, 2);
+	      esd->this_hdr.sh_addralign = 4;
 	    }
 	  else
 	    {
@@ -2569,10 +2513,11 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 	      bfd_put_32 (abfd, ELFCOMPRESS_ZLIB, &echdr->ch_type);
 	      bfd_put_32 (abfd, 0, &echdr->ch_reserved);
 	      bfd_put_64 (abfd, sec->size, &echdr->ch_size);
-	      bfd_put_64 (abfd, 1 << sec->alignment_power,
+	      bfd_put_64 (abfd, UINT64_C (1) << sec->alignment_power,
 			  &echdr->ch_addralign);
 	      /* bfd_log2 (alignof (Elf64_Chdr)) */
 	      bfd_set_section_alignment (sec, 3);
+	      esd->this_hdr.sh_addralign = 8;
 	    }
 	  break;
 	}
@@ -2598,7 +2543,7 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
    bfd_check_compression_header
 
    SYNOPSIS
-	bfd_boolean bfd_check_compression_header
+	bool bfd_check_compression_header
 	  (bfd *abfd, bfd_byte *contents, asection *sec,
 	  bfd_size_type *uncompressed_size,
 	  unsigned int *uncompressed_alignment_power);
@@ -2613,7 +2558,7 @@ RETURNS
 	Return TRUE if the compression header is valid.
 */
 
-bfd_boolean
+bool
 bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
 			      asection *sec,
 			      bfd_size_type *uncompressed_size,
@@ -2643,11 +2588,11 @@ bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
 	{
 	  *uncompressed_size = chdr.ch_size;
 	  *uncompressed_alignment_power = bfd_log2 (chdr.ch_addralign);
-	  return TRUE;
+	  return true;
 	}
     }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2716,7 +2661,7 @@ bfd_convert_section_size (bfd *ibfd, sec_ptr isec, bfd *obfd,
     return size;
 
   /* Convert GNU property size.  */
-  if (CONST_STRNEQ (isec->name, NOTE_GNU_PROPERTY_SECTION_NAME))
+  if (startswith (isec->name, NOTE_GNU_PROPERTY_SECTION_NAME))
     return _bfd_elf_convert_gnu_property_size (ibfd, obfd);
 
   /* Do nothing if input file will be decompressed.  */
@@ -2742,7 +2687,7 @@ FUNCTION
 	bfd_convert_section_contents
 
 SYNOPSIS
-	bfd_boolean bfd_convert_section_contents
+	bool bfd_convert_section_contents
 	  (bfd *ibfd, asection *isec, bfd *obfd,
 	   bfd_byte **ptr, bfd_size_type *ptr_size);
 
@@ -2754,44 +2699,44 @@ DESCRIPTION
 	function, and the new size written to @var{ptr_size}.
 */
 
-bfd_boolean
+bool
 bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
 			      bfd_byte **ptr, bfd_size_type *ptr_size)
 {
   bfd_byte *contents;
   bfd_size_type ihdr_size, ohdr_size, size;
   Elf_Internal_Chdr chdr;
-  bfd_boolean use_memmove;
+  bool use_memmove;
 
   /* Do nothing if either input or output aren't ELF.  */
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
   /* Do nothing if ELF classes of input and output are the same.  */
   if (get_elf_backend_data (ibfd)->s->elfclass
       == get_elf_backend_data (obfd)->s->elfclass)
-    return TRUE;
+    return true;
 
   /* Convert GNU properties.  */
-  if (CONST_STRNEQ (isec->name, NOTE_GNU_PROPERTY_SECTION_NAME))
+  if (startswith (isec->name, NOTE_GNU_PROPERTY_SECTION_NAME))
     return _bfd_elf_convert_gnu_properties (ibfd, isec, obfd, ptr,
 					    ptr_size);
 
   /* Do nothing if input file will be decompressed.  */
   if ((ibfd->flags & BFD_DECOMPRESS))
-    return TRUE;
+    return true;
 
   /* Do nothing if the input section isn't a SHF_COMPRESSED section.  */
   ihdr_size = bfd_get_compression_header_size (ibfd, isec);
   if (ihdr_size == 0)
-    return TRUE;
+    return true;
 
   /* PR 25221.  Check for corrupt input sections.  */
   if (ihdr_size > bfd_get_section_limit (ibfd, isec))
     /* FIXME: Issue a warning about a corrupt
        compression header size field ?  */
-    return FALSE;
+    return false;
 
   contents = *ptr;
 
@@ -2807,13 +2752,13 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
 
       ohdr_size = sizeof (Elf64_External_Chdr);
 
-      use_memmove = FALSE;
+      use_memmove = false;
     }
   else if (ihdr_size != sizeof (Elf64_External_Chdr))
     {
       /* FIXME: Issue a warning about a corrupt
 	 compression header size field ?  */
-      return FALSE;
+      return false;
     }
   else
     {
@@ -2823,7 +2768,7 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
       chdr.ch_addralign = bfd_get_64 (ibfd, &echdr->ch_addralign);
 
       ohdr_size = sizeof (Elf32_External_Chdr);
-      use_memmove = TRUE;
+      use_memmove = true;
     }
 
   size = bfd_section_size (isec) - ihdr_size + ohdr_size;
@@ -2831,7 +2776,7 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
     {
       contents = (bfd_byte *) bfd_malloc (size);
       if (contents == NULL)
-	return FALSE;
+	return false;
     }
 
   /* Write out the output compression header.  */
@@ -2862,5 +2807,16 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
     }
 
   *ptr_size = size;
-  return TRUE;
+  return true;
+}
+
+/* Get the linker information.  */
+
+struct bfd_link_info *
+_bfd_get_link_info (bfd *abfd)
+{
+  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+    return NULL;
+
+  return elf_link_info (abfd);
 }

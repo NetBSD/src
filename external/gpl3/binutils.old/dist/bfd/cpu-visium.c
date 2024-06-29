@@ -1,6 +1,6 @@
 /* BFD support for the Visium processor.
 
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -33,7 +33,7 @@ const bfd_arch_info_type bfd_visium_arch =
   "visium",			/* Architecture name.  */
   "visium",			/* Machine name.  */
   2,				/* Section align power.  */
-  TRUE,				/* The default ?  */
+  true,				/* The default ?  */
   bfd_default_compatible,	/* Architecture comparison fn.  */
   bfd_default_scan,		/* String to architecture convert fn.  */
   bfd_arch_default_fill,	/* Default fill.  */

@@ -7,7 +7,7 @@ $!
 $! Written by Klaus K"ampf (kkaempf@rmi.de)
 $! Rewritten by Tristan Gingold (gingold@adacore.com)
 $!
-$!   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+$!   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 $!
 $! This file is free software; you can redistribute it and/or modify
 $! it under the terms of the GNU General Public License as published by
@@ -60,47 +60,11 @@ $DECK
       ERASE(match_pos);
       COPY_TEXT('64');
    ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64BIT_LONG@', FORWARD, EXACT, rang);
+   match_pos := SEARCH_QUIETLY('@BFD_INT64_FMT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('0');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_LONG_LONG@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('1');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64BIT_LONG_LONG@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('1');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT_DEFINED@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('1');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('__int64');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('unsigned __int64');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOSTPTR_T@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('unsigned __int64');
+      COPY_TEXT('"l"');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@bfd_file_ptr@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
@@ -108,11 +72,11 @@ $DECK
       ERASE(match_pos);
       COPY_TEXT('bfd_signed_vma');
    ENDIF;
-   match_pos := SEARCH_QUIETLY('unsigned @bfd_file_ptr@ ufile_ptr', FORWARD, EXACT, rang);
+   match_pos := SEARCH_QUIETLY('@bfd_ufile_ptr@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('bfd_vma ufile_ptr');
+      COPY_TEXT('bfd_vma');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@supports_plugins@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
@@ -150,31 +114,35 @@ $DECK
       ERASE(match_pos);
       COPY_TEXT('32');
    ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64BIT_LONG@', FORWARD, EXACT, rang);
+   match_pos := SEARCH_QUIETLY('@bfd_default_target_size@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('32');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@BFD_INT64_FMT@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('"ll"');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@bfd_file_ptr@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('bfd_signed_vma');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@bfd_ufile_ptr@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('bfd_vma');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@supports_plugins@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
       COPY_TEXT('0');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT_DEFINED@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('__DECC');
-      SPLIT_LINE;
-      COPY_TEXT('#include <ints.h>');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('int64');
-   ENDIF;
-   match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT('uint64');
    ENDIF;
    WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
    QUIT
@@ -232,18 +200,11 @@ $DECK
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('"<http://www.sourceware.org/bugzilla/>"');
+      COPY_TEXT('"<https://www.sourceware.org/bugzilla/>"');
    ENDIF;
    WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
    QUIT
 $  EOD
-$!
-$!
-$! create bfd_stdint.h
-$!
-$ write sys$output "Generate `bfd_stdint.h'"
-$ create []bfd_stdint.h
-#include <inttypes.h>
 $!
 $!
 $! create targmatch.h

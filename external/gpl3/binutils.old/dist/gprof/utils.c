@@ -43,9 +43,7 @@ int
 print_name_only (Sym *self)
 {
   const char *name = self->name;
-  const char *filename;
   char *demangled = 0;
-  char buf[PATH_MAX];
   int size = 0;
 
   if (name)
@@ -60,7 +58,9 @@ print_name_only (Sym *self)
       size = strlen (name);
       if ((line_granularity || inline_file_names) && self->file)
 	{
-	  filename = self->file->name;
+	  const char *filename = self->file->name;
+	  char *buf;
+
 	  if (!print_path)
 	    {
 	      filename = strrchr (filename, '/');
@@ -73,6 +73,7 @@ print_name_only (Sym *self)
 		  filename = self->file->name;
 		}
 	    }
+	  buf = xmalloc (strlen (filename) + 8 + 20 + 16);
 	  if (line_granularity)
 	    {
 	      sprintf (buf, " (%s:%d @ %lx)", filename, self->line_num,
@@ -84,11 +85,9 @@ print_name_only (Sym *self)
 	    }
 	  printf ("%s", buf);
 	  size += strlen (buf);
+	  free (buf);
 	}
-      if (demangled)
-	{
-	  free (demangled);
-	}
+      free (demangled);
       DBG (DFNDEBUG, printf ("{%d} ", self->cg.top_order));
       DBG (PROPDEBUG, printf ("%4.0f%% ", 100.0 * self->cg.prop.fract));
     }

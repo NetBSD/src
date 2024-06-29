@@ -1,4 +1,4 @@
-@set VERSION 2.34
-@set VERSION_PACKAGE (GNU Binutils) 
-@set UPDATED February 2020
-@set BUGURL @uref{http://www.sourceware.org/bugzilla/}
+@set VERSION 2.39
+@set VERSION_PACKAGE (NetBSD Binutils nb1)
+@set UPDATED December 2022
+@set BUGURL @uref{http://www.NetBSD.org/support/send-pr.html}

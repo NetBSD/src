@@ -1,7 +1,628 @@
-2020-01-17  Nick Clifton  <nickc@redhat.com>
+2022-07-08  Nick Clifton  <nickc@redhat.com>
+
+	* 2.39 branch created.
+
+2022-07-01  Nick Clifton  <nickc@redhat.com>
+
+	PR demangler/105039
+	* rust-demangle.c (demangle_const): Add recursion limit.
+
+2022-06-26  Simon Marchi  <simon.marchi@efficios.com>
+
+	* configure.ac: Add AC_CONFIG_MACRO_DIRS call.
+	* configure: Re-generate.
+
+2022-05-23  Nathan Sidwell  <nathan@acm.org>
+
+	* cp-demangle.c (d_make_comp): Adjust.
+	(d_name, d_prefix): Adjust subst handling. Add module handling.
+	(d_maybe_module_name): New.
+	(d_unqualified_name): Add incoming module parm. Handle it.  Adjust all callers.
+	(d_special_name): Add 'GI' support.
+	(d_count_template_scopes): Adjust.
+	(d_print_comp_inner): Print module.
+	* testsuite/demangle-expected: New test cases
+
+2022-05-18  Nathan Sidwell  <nathan@acm.org>
+
+	* cp-demangle.c (d_name): Add SUBSTABLE parameter,
+	push substitution if requested. Adjust unscoped name handling.
+	(d_prefix): Reorder main loop. Adjust all calls.
+	(d_unqualified_name): Add SCOPE parameter, create qualified
+	name here. Adjust all calls.
+	(cplus_demangle_type): Do not handle 'S' here, leave all
+	to d_class_enum_type.
+	(d_class_enum_type): Add SUBSTABLE parameter.
+
+2022-05-17  Nathan Sidwell  <nathan@acm.org>
+
+	* cp-demangle.c (d_make_comp): Adjust.
+	(d_unqualified_name): Add 'DC' support.
+	(d_count_template_scopes): Adjust.
+	(d_print_comp_inner): Add structured binding.
+	* testsuite/demangle-expected: Add testcases.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+
+	* regex.c: Restore comments.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+	    Alan Modra  <amodra@gmail.com>
+
+	* hashtab.c (htab_empty): Use void * type instead of void **.
+	(htab_expand): Likewise.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+
+	* random.c: Remove 'define PTR'.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+
+	* alloca.c (C_alloca): Use void * instead PTR.
+	* calloc.c (malloc): Likewise.
+	(bzero): Likewise.
+	(calloc): Likewise.
+	* hashtab.c (find_empty_slot_for_expand): Likewise.
+	(eq_pointer): Likewise.
+	(htab_create_alloc_ex): Likewise.
+	(htab_create_typed_alloc): Likewise.
+	(htab_set_functions_ex): Likewise.
+	(htab_delete): Likewise.
+	(htab_empty): Likewise.
+	(htab_expand): Likewise.
+	(htab_find_with_hash): Likewise.
+	(htab_find): Likewise.
+	(htab_find_slot_with_hash): Likewise.
+	(htab_find_slot): Likewise.
+	(htab_remove_elt): Likewise.
+	(htab_remove_elt_with_hash): Likewise.
+	(htab_clear_slot): Likewise.
+	(htab_traverse_noresize): Likewise.
+	(htab_traverse): Likewise.
+	(htab_hash_string): Likewise.
+	(iterative_hash): Likewise.
+	(hash_pointer): Likewise.
+	* memchr.c (memchr): Likewise.
+	* memcmp.c (memcmp): Likewise.
+	* memcpy.c (memcpy): Likewise.
+	* memmove.c (memmove): Likewise.
+	* mempcpy.c (memcpy): Likewise.
+	(mempcpy): Likewise.
+	* memset.c (memset): Likewise.
+	* objalloc.c (malloc): Likewise.
+	(free): Likewise.
+	(objalloc_create): Likewise.
+	(_objalloc_alloc): Likewise.
+	(objalloc_free_block): Likewise.
+	* random.c (PTR): Likewise.
+	(void): Likewise.
+	(initstate): Likewise.
+	(setstate): Likewise.
+	* regex.c: Likewise.
+	* spaces.c (malloc): Likewise.
+	(free): Likewise.
+	* stpcpy.c (memcpy): Likewise.
+	* strdup.c (malloc): Likewise.
+	(memcpy): Likewise.
+	* strerror.c (malloc): Likewise.
+	(memset): Likewise.
+	* strndup.c (malloc): Likewise.
+	(memcpy): Likewise.
+	* strsignal.c (malloc): Likewise.
+	(memset): Likewise.
+	* vasprintf.c (malloc): Likewise.
+	* vprintf-support.c: Likewise.
+	* xatexit.c (malloc): Likewise.
+	* xmalloc.c (xmalloc): Likewise.
+	(xcalloc): Likewise.
+	(xrealloc): Likewise.
+	* xmemdup.c (xmemdup): Likewise.
+
+2022-03-19  Tiezhu Yang  <yangtiezhu@loongson.cn>
+
+	* floatformat.c (floatformat_ieee_quad_big): Renamed from
+	floatformat_ia64_quad_big.
+	(floatformat_ieee_quad_little): Similarly.
+
+2022-02-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR lto/104617
+	* simple-object-elf.c (simple_object_elf_match): Fix up URL
+	in comment.
+	(simple_object_elf_copy_lto_debug_sections): Remap sh_info and
+	sh_link even if they are in the SHN_LORESERVE .. SHN_HIRESERVE
+	range (inclusive).
+
+2022-02-17  Mark Wielaard  <mark@klomp.org>
+
+	* rust-demangle.c (rust_demangle_callback): Ignore everything
+	after '.' char in sym for v0. For legacy symbols search
+	backwards to find the last 'E' before any '.'.
+	* testsuite/rust-demangle-expected: Add new .suffix testcases.
+
+2022-01-31  Nick Clifton  <nickc@redhat.com>
+
+	PR demangler/98886
+	PR demangler/99935
+	* rust-demangle.c (struct rust_demangler): Add a recursion
+	counter.
+	(demangle_path): Increment/decrement the recursion counter upon
+	entry and exit.  Fail if the counter exceeds a fixed limit.
+	(demangle_type): Likewise.
+	(rust_demangle_callback): Initialise the recursion counter,
+	disabling if requested by the option flags.
+
+2022-01-15  Martin Sebor  <msebor@redhat.com>
+
+	* regex.c: Suppress -Wuse-after-free.
+
+2021-12-30  Lancelot SIX  <lsix@lancelotsix.com>
+
+	* cp-demangle.c (d_clone_suffix): Support digits in clone tag
+	names.
+	* testsuite/demangle-expected: Check demangling of clone symbols
+	with digits in name.
+
+2021-12-16  H.J. Lu  <hjl.tools@gmail.com>
+
+	Revert:
+	2021-12-16  H.J. Lu  <hjl.tools@gmail.com>
+
+	* Makefile.in (AR): Add @AR_PLUGIN_OPTION@
+	(RANLIB): Add @RANLIB_PLUGIN_OPTION@.
+	(configure_deps): Depend on ../config/gcc-plugin.m4.
+	* configure.ac: AC_SUBST AR_PLUGIN_OPTION and
+	RANLIB_PLUGIN_OPTION.
+	* aclocal.m4: Regenerated.
+	* configure: Likewise.
+
+2021-12-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	* Makefile.in (AR): Add @AR_PLUGIN_OPTION@
+	(RANLIB): Add @RANLIB_PLUGIN_OPTION@.
+	(configure_deps): Depend on ../config/gcc-plugin.m4.
+	* configure.ac: AC_SUBST AR_PLUGIN_OPTION and
+	RANLIB_PLUGIN_OPTION.
+	* aclocal.m4: Regenerated.
+	* configure: Likewise.
+
+2021-11-29  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/103021
+	* Makefile.in: Use ETAGS variable in TAGS target.
+	* configure: Regenerate.
+	* configure.ac: Allow ETAGS variable to be overridden.
+
+2021-11-29  Andrew Pinski  <apinski@marvell.com>
+
+	* make-temp-file.c (try_dir): Check to see if the dir
+	is actually a directory.
+
+2021-10-22  Eric Gallager  <egallager@gcc.gnu.org>
+
+	PR other/102663
+	* Makefile.in: Allow dvi-formatted documentation
+	to be installed.
+
+2021-10-17  Luís Ferreira  <contact@lsferreira.net>
+
+	PR d/102618
+	* d-demangle.c (dlang_parse_qualified): Handle anonymous
+	symbols correctly.
+	* testsuite/d-demangle-expected: New tests to cover anonymous
+	symbols.
+
+2021-10-14  Luís Ferreira  <contact@lsferreira.net>
+
+	* testsuite/d-demangle-expected: Add test case for function literals.
+
+2021-10-14  Luís Ferreira  <contact@lsferreira.net>
+
+	* testsuite/d-demangle-expected: Add test cases for simple special
+	mangles.
+
+2021-10-12  Luís Ferreira  <contact@lsferreira.net>
+
+	* d-demangle.c (dlang_parse_qualified): Remove redudant parenthesis
+	around lhs and rhs of assignments.
+
+2021-10-01  Luís Ferreira  <contact@lsferreira.net>
+
+	* testsuite/d-demangle-expected: Add missing format for new test
+
+2021-09-23  Luís Ferreira  <contact@lsferreira.net>
+
+	* d-demangle.c (dlang_Type): Validate MANGLED is nonnull.
+	* testsuite/d-demangle-expected: New test.
+
+2021-09-23  Luís Ferreira  <contact@lsferreira.net>
+
+	* d-demangle.c (dlang_symbol_backref): Ensure strlen of
+	string is less than length computed by dlang_number.
+
+2021-09-01  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* configure: Regenerate.
+	* configure.ac: Do not search for sbrk on Darwin.
+	* xmalloc.c: Do not declare sbrk unless it has been found
+	by configure.
+
+2021-08-29  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_identifier): Skip over fake parent manglings.
+	* testsuite/d-demangle-expected: Add tests.
+
+2021-08-29  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_parse_arrayliteral): Add 'info' parameter.
+	(dlang_parse_assocarray): Likewise.
+	(dlang_parse_structlit): Likewise.
+	(dlang_value): Likewise.  Handle function literal symbols.
+	(dlang_template_args): Pass 'info' to dlang_value.
+	* testsuite/d-demangle-expected: Add new test.
+
+2021-08-29  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_attributes): Handle typeof(*null).
+	(dlang_type): Likewise.  Demangle 'n' as typeof(null).
+	* testsuite/d-demangle-expected: Update tests.
+
+2021-08-23  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* simple-object-mach-o.c (simple_object_mach_o_write_segment):
+	Cast the first argument to set_32 as needed.
+
+2021-08-18  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* simple-object-mach-o.c (simple_object_mach_o_write_segment):
+	Arrange to swap the LTO index tables where needed.
+
+2021-06-30  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* make-temp-file.c (usrtmp): Remove.
+	(choose_tmpdir): Remove use of usrtmp.
+
+2021-06-28  Indu Bhagat  <indu.bhagat@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Copy over .BTF section.
+
+2021-06-28  Indu Bhagat  <indu.bhagat@oracle.com>
+	    David Faust  <david.faust@oracle.com>
+	    Jose E. Marchesi  <jose.marchesi@oracle.com>
+	    Weimin Pan  <weimin.pan@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Copy over .ctf
+	sections.
+
+2021-06-05  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR target/100734
+	* configure.ac: Use libiberty snprintf and vsnprintf on
+	hppa*-*-hpux*.
+	* configure: Regenerate.
+
+2021-05-06  Tom Tromey  <tom@tromey.com>
+
+	* hashtab.c (htab_eq_string): New function.
+
+2021-05-04  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* configure.ac: Make test for variables more robust.
+	* configure: Regenerate.
+
+2021-05-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/99703
+	* configure: Regenerated.
+
+2021-04-21  Andreas Schwab  <schwab@linux-m68k.org>
+
+	PR demangler/100177
+	* rust-demangle.c (demangle_const_char): Properly print the
+	character value.
+
+2021-03-31  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/88115
+	* cp-demangle.c (d_dump, d_make_comp, d_expression_1)
+	(d_count_templates_scopes): Handle DEMANGLE_COMPONENT_VENDOR_EXPR.
+	(d_print_comp_inner): Likewise.
+	<case DEMANGLE_COMPONENT_EXTENDED_OPERATOR>: Revert r11-4926
+	change.
+	<case DEMANGLE_COMPONENT_UNARY>: Likewise.
+	* testsuite/demangle-expected: Adjust __alignof__ tests.
+
+2021-03-16  Nick Clifton  <nickc@redhat.com>
+
+	* sha1.c (sha1_process_bytes): Use memmove in place of memcpy.
+
+2021-02-20  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (ACLOCAL, ACLOCAL_AMFLAGS, $(srcdir)/aclocal.m4): Define.
+	(configure_deps): Rename to ...
+	(aclocal_deps): ... this.  Replace aclocal.m4 with acinclude.m4.
+	($(srcdir)/configure): Replace $(configure_deps) with
+	$(srcdir)/aclocal.m4.
+	* aclocal.m4: Move libiberty macros to acinclude.m4, then regenerate.
+	* acinclude.m4: New file.
+	* configure: Regenerate.
+
+2021-02-19  Ayush Mittal  <ayush.m@samsung.com>
+
+	* argv.c (expandargv): free allocated buffer if read fails.
+
+2021-02-01  Martin Sebor  <msebor@redhat.com>
+
+	* dyn-string.c (dyn_string_insert_cstr): Use memcpy instead of strncpy
+	to avoid -Wstringop-truncation.
+
+2021-01-04  Martin Liska  <mliska@suse.cz>
+
+	* strverscmp.c: Convert to utf8 from iso8859.
+
+2020-12-22  Jason Merrill  <jason@redhat.com>
+
+	PR c++/67343
+	* cp-demangle.h (struct d_info): Add unresolved_name_state.
+	* cp-demangle.c (d_prefix): Add subst parm.
+	(d_nested_name): Pass it.
+	(d_unresolved_name): Split out from...
+	(d_expression_1): ...here.
+	(d_demangle_callback): Maybe retry with old sr mangling.
+	* testsuite/demangle-expected: Add test.
+
+2020-12-21  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression_1): Recognize qualified-id
+	on RHS of dt/pt.
+	* testsuite/demangle-expected: Add test.
+
+2020-12-21  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_unqualified_name): Clear is_expression.
+	* testsuite/demangle-expected: Add tests.
+
+2020-11-25  Matthew Malcomson  <matthew.malcomson@arm.com>
+
+	* configure: Regenerate.
+	* configure.ac: Avoid using sanitizer.
+
+2020-11-13  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* rust-demangle.c (struct rust_demangler): Add
+	skipping_printing and bound_lifetime_depth fields.
+	(eat): Add (v0-only).
+	(parse_integer_62): Add (v0-only).
+	(parse_opt_integer_62): Add (v0-only).
+	(parse_disambiguator): Add (v0-only).
+	(struct rust_mangled_ident): Add punycode{,_len} fields.
+	(parse_ident): Support v0 identifiers.
+	(print_str): Respect skipping_printing.
+	(print_uint64): Add (v0-only).
+	(print_uint64_hex): Add (v0-only).
+	(print_ident): Respect skipping_printing,
+	Support v0 identifiers.
+	(print_lifetime_from_index): Add (v0-only).
+	(demangle_binder): Add (v0-only).
+	(demangle_path): Add (v0-only).
+	(demangle_generic_arg): Add (v0-only).
+	(demangle_type): Add (v0-only).
+	(demangle_path_maybe_open_generics): Add (v0-only).
+	(demangle_dyn_trait): Add (v0-only).
+	(demangle_const): Add (v0-only).
+	(demangle_const_uint): Add (v0-only).
+	(basic_type): Add (v0-only).
+	(rust_demangle_callback): Support v0 symbols.
+	* testsuite/rust-demangle-expected: Add v0 testcases.
+
+2020-11-13  Seija Kijin  <doremylover456@gmail.com>
+
+	* strstr.c (strstr): Make implementation ANSI/POSIX compliant.
+
+2020-11-11  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/88115
+	* cp-demangle.c (d_print_comp_inner)
+	<case DEMANGLE_COMPONENT_EXTENDED_OPERATOR>: Don't print the
+	"operator " prefix for __alignof__.
+	<case DEMANGLE_COMPONENT_UNARY>: Always print parens around the
+	operand of __alignof__.
+	* testsuite/demangle-expected: Test demangling for __alignof__.
+
+2020-11-09  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* pex-win32.c (pex_win32_exec_child): Initialize orig_err.
+
+2020-10-06  Martin Liska  <mliska@suse.cz>
+
+	PR lto/97290
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Use sh_link of a .symtab_shndx section.
+
+2020-09-24  Mark Wielaard  <mark@klomp.org>
+
+	* dwarfnames.c (get_DW_UT_name): Define using DW_UT_FIRST, DW_UT
+	and DW_UT_END.
+
+2020-09-08  Felix Willgerodt  <felix.willgerodt@intel.com>
+
+	* floatformat.c (floatformat_bfloat16_big): New.
+	(floatformat_bfloat16_little): New.
+
+2020-09-08  Alan Modra  <amodra@gmail.com>
+
+	* d-demangle.c: Include limits.h.
+	(ULONG_MAX, UINT_MAX): Provide fall-back definition.
+	(dlang_number): Simplify and correct overflow test.  Only
+	write *ret on returning non-NULL.  Make "ret" an unsigned long*.
+	Only succeed for result of [0,UINT_MAX].
+	(dlang_decode_backref): Simplify and correct overflow test.
+	Only write *ret on returning non-NULL.  Only succeed for
+	result [1,MAX_LONG].
+	(dlang_backref): Remove now unnecessary range check.
+	(dlang_symbol_name_p): Likewise.
+	(string_need): Take a size_t n arg, and use size_t tem.
+	(string_append): Use size_t n.
+	(string_appendn, string_prependn): Take a size_t n arg.
+	(TEMPLATE_LENGTH_UNKNOWN): Define as -1UL.
+	(dlang_lname, dlang_parse_template): Take an unsigned long len
+	arg.
+	(dlang_symbol_backref, dlang_identifier, dlang_parse_integer),
+	(dlang_parse_integer, dlang_parse_string),
+	(dlang_parse_arrayliteral, dlang_parse_assocarray),
+	(dlang_parse_structlit, dlang_parse_tuple),
+	(dlang_template_symbol_param, dlang_template_args): Use
+	unsigned long variables.
+	* testsuite/d-demangle-expected: Add new tests.
+
+2020-08-26  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_function_args): Handle 'in' and 'in ref'
+	parameter storage classes.
+	(dlang_type): Remove identifier type.
+	* testsuite/d-demangle-expected: Update tests.
+
+2020-08-03  Richard Biener  <rguenther@suse.de>
+
+	PR lto/96385
+	* simple-object-elf.c
+	(simple_object_elf_copy_lto_debug_sections): Localize global
+	UNDEFs and reuse the prevailing name.
+
+2020-07-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/96202
+	* configure: Regenerated.
+
+2020-07-14  Ian Lance Taylor  <iant@golang.org>
+
+	PR demangler/96143
+	* cp-demangle.c (d_lambda): Don't add substitution candidate.
+	* testsuite/demangle-expected: Update a few existing test cases
+	accordingly, and add a new test case.
+
+2020-07-10  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (cplus_demangle_operators): Add di, dx, dX.
+	(d_expression_1): Handle di and dX.
+	(is_designated_init, d_maybe_print_designated_init): New.
+	(d_print_comp_inner): Use d_maybe_print_designated_init.
+	* testsuite/demangle-expected: Add designator tests.
+
+2020-06-26  Nick Clifton  <nickc@redhat.com>
+
+	* bsearch.c (bsearch): Remove use of register keyword.
+	* bsearch_r.c (bsearch_r): Likewise.
+
+2020-06-23  Nick Alcock  <nick.alcock@oracle.com>
+
+	* bsearch_r.c: New file.
+	* Makefile.in (CFILES): Add bsearch_r.c.
+	(REQUIRED_OFILES): Add bsearch_r.o.
+	* functions.texi: Regenerate.
+
+2020-05-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/95413
+	* configure: Regenerated.
+
+2020-05-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_attributes): Add @live attribute.
+	* testsuite/d-demangle-expected: Add new tests.
+
+2020-05-14  Rainer Schuetze  <r.sagitario@gmx.de>
+	    Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (enum dlang_symbol_kinds): Remove enum.
+	(struct dlang_info): New struct
+	(dlang_decode_backref): New function.
+	(dlang_backref): New function.
+	(dlang_symbol_backref): New function.
+	(dlang_type_backref): New function.
+	(dlang_symbol_name_p): New function.
+	(dlang_function_type_noreturn): New function.
+	(dlang_function_type): Add 'info' parameter.  Decode function type
+	with dlang_function_type_noreturn.
+	(dlang_function_args): Add 'info' parameter.
+	(dlang_type): Add 'info' parameter.  Handle back referenced types.
+	(dlang_identifier): Replace 'kind' parameter with 'info'.  Handle back
+	referenced symbols.  Split off decoding of plain identifiers to...
+	(dlang_lname): ...here.
+	(dlang_parse_mangle): Replace 'kind' parameter with 'info'.  Decode
+	function type and return with dlang_type.
+	(dlang_parse_qualified): Replace 'kind' parameter with 'info', add
+	'suffix_modifier' parameter.  Decode function type with
+	dlang_function_type_noreturn.
+	(dlang_parse_tuple): Add 'info' parameter.
+	(dlang_template_symbol_param): New function.
+	(dlang_template_args): Add 'info' parameter.  Decode symbol parameter
+	with dlang_template_symbol_param.  Handle back referenced values, and
+	externally mangled parameters.
+	(dlang_parse_template): Add 'info' parameter.
+	(dlang_demangle_init_info): New function.
+	(dlang_demangle): Initialize and pass 'info' parameter.
+	* testsuite/d-demangle-expected: Add new tests.
+
+2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94998
+	* configure: Regenerated.
+
+2020-04-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* configure: Regenerated.
+
+2020-04-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR demangler/94797
+	* cp-demangle.c (cplus_demangle_operators): Add ss <=> operator.
+	* testsuite/demangle-expected: Add operator<=> test.
+
+2020-04-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* Makefile.in (COMPILE.c): Add @CET_HOST_FLAGS@.
+	(configure_deps): Add $(srcdir)/../config/cet.m4 and
+	$(srcdir)/../config/enable.m4.
+	* aclocal.m4: Include ../config/cet.m4 and ../config/enable.m4.
+	* configure.ac: Add GCC_CET_HOST_FLAGS(CET_HOST_FLAGS) and
+	AC_SUBST(CET_HOST_FLAGS).
+	* configure: Regenerated.
+
+2020-03-05  Egeyar Bagcioglu  <egeyar.bagcioglu@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Name
+	".GCC.command.line" among debug sections to be copied over
+	from lto objects.
+
+2020-03-02  Nick Clifton  <nickc@redhat.com>
 
 	* testsuite/demangle-expected: Update expected demangling of
 	enable_if pattern.
+
+2020-03-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR lto/93966
+	* simple-object.c (handle_lto_debug_sections): Also copy
+	.note.gnu.property section.
+
+2020-02-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR libstdc++/79193
+	PR libstdc++/88999
+
+	* configure: Regenerated.
+
+2020-02-05  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* hashtab.c (htab_remove_elt): Make a parameter const.
+	(htab_remove_elt_with_hash): Likewise.
+
+2020-01-23  Alexandre Oliva <oliva@adacore.com>
+
+	* argv.c (writeargv): Output empty args as "".
 
 2020-01-01  Jakub Jelinek  <jakub@redhat.com>
 
