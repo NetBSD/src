@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_syncache.c,v 1.6 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_syncache.c,v 1.7 2024/06/29 12:59:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.6 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_syncache.c,v 1.7 2024/06/29 12:59:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -938,9 +938,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_timestamp = tb.ts_recent;
 		m_freem(m);
 		if (syn_cache_respond(sc) == 0) {
-			uint64_t *tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_SNDACKS]++;
-			tcps[TCP_STAT_SNDTOTAL]++;
+			net_stat_ref_t tcps = TCP_STAT_GETREF();
+			_NET_STATINC_REF(tcps, TCP_STAT_SNDACKS);
+			_NET_STATINC_REF(tcps, TCP_STAT_SNDTOTAL);
 			TCP_STAT_PUTREF();
 		}
 		return 1;
@@ -1046,9 +1046,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	sc->sc_tp = tp;
 	m_freem(m);
 	if (syn_cache_respond(sc) == 0) {
-		uint64_t *tcps = TCP_STAT_GETREF();
-		tcps[TCP_STAT_SNDACKS]++;
-		tcps[TCP_STAT_SNDTOTAL]++;
+		net_stat_ref_t tcps = TCP_STAT_GETREF();
+		_NET_STATINC_REF(tcps, TCP_STAT_SNDACKS);
+		_NET_STATINC_REF(tcps, TCP_STAT_SNDTOTAL);
 		TCP_STAT_PUTREF();
 		syn_cache_insert(sc, tp);
 	} else {

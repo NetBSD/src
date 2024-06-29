@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.85 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.85 2021/02/19 14:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -368,7 +368,7 @@ static void
 ipflow_addstats(struct ipflow *ipf)
 {
 	struct rtentry *rt;
-	uint64_t *ips;
+	net_stat_ref_t ips;
 
 	rt = rtcache_validate(&ipf->ipf_ro);
 	if (rt != NULL) {
@@ -377,10 +377,11 @@ ipflow_addstats(struct ipflow *ipf)
 	}
 
 	ips = IP_STAT_GETREF();
-	ips[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
-	ips[IP_STAT_TOTAL] += ipf->ipf_uses;
-	ips[IP_STAT_FORWARD] += ipf->ipf_uses;
-	ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+	_NET_STATADD_REF(ips, IP_STAT_CANTFORWARD,
+	    ipf->ipf_errors + ipf->ipf_dropped);
+	_NET_STATADD_REF(ips, IP_STAT_TOTAL, ipf->ipf_uses);
+	_NET_STATADD_REF(ips, IP_STAT_FORWARD, ipf->ipf_uses);
+	_NET_STATADD_REF(ips, IP_STAT_FASTFORWARD, ipf->ipf_uses);
 	IP_STAT_PUTREF();
 }
 
@@ -476,7 +477,7 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
-	uint64_t *ips;
+	net_stat_ref_t ips;
 
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&ipflow_work_enqueued, 0);
@@ -493,9 +494,10 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 			rt->rt_use += ipf->ipf_uses;
 			rtcache_unref(rt, &ipf->ipf_ro);
 			ips = IP_STAT_GETREF();
-			ips[IP_STAT_TOTAL] += ipf->ipf_uses;
-			ips[IP_STAT_FORWARD] += ipf->ipf_uses;
-			ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+			_NET_STATADD_REF(ips, IP_STAT_TOTAL, ipf->ipf_uses);
+			_NET_STATADD_REF(ips, IP_STAT_FORWARD, ipf->ipf_uses);
+			_NET_STATADD_REF(ips, IP_STAT_FASTFORWARD,
+			    ipf->ipf_uses);
 			IP_STAT_PUTREF();
 			ipf->ipf_uses = 0;
 		}

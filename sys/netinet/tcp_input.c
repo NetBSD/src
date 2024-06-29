@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.438 2022/11/04 09:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.439 2024/06/29 12:59:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -462,7 +462,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 #ifdef TCP_REASS_COUNTERS
 	u_int count = 0;
 #endif
-	uint64_t *tcps;
+	net_stat_ref_t tcps;
 
 	so = tp->t_inpcb->inp_socket;
 
@@ -585,8 +585,8 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int tlen)
 		if (SEQ_LEQ(q->ipqe_seq, pkt_seq) &&
 		    SEQ_GEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVDUPPACK]++;
-			tcps[TCP_STAT_RCVDUPBYTE] += pkt_len;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVDUPBYTE, pkt_len);
 			TCP_STAT_PUTREF();
 			tcp_new_dsack(tp, pkt_seq, pkt_len);
 			m_freem(m);
@@ -728,11 +728,12 @@ insert_it:
 	 */
 	tp->t_rcvoopack++;
 	tcps = TCP_STAT_GETREF();
-	tcps[TCP_STAT_RCVOOPACK]++;
-	tcps[TCP_STAT_RCVOOBYTE] += rcvoobyte;
+	_NET_STATINC_REF(tcps, TCP_STAT_RCVOOPACK);
+	_NET_STATADD_REF(tcps, TCP_STAT_RCVOOBYTE, rcvoobyte);
 	if (rcvpartdupbyte) {
-	    tcps[TCP_STAT_RCVPARTDUPPACK]++;
-	    tcps[TCP_STAT_RCVPARTDUPBYTE] += rcvpartdupbyte;
+		_NET_STATINC_REF(tcps, TCP_STAT_RCVPARTDUPPACK);
+		_NET_STATADD_REF(tcps, TCP_STAT_RCVPARTDUPBYTE,
+		    rcvpartdupbyte);
 	}
 	TCP_STAT_PUTREF();
 
@@ -981,7 +982,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 	int tiflags;
 	int todrop;
 	uint32_t t_flags = 0;
-	uint64_t *tcps;
+	net_stat_ref_t tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
@@ -1011,8 +1012,8 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			t_flags |= TF_ACKNOW;
 			todrop = tlen;
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVDUPPACK] += 1;
-			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVDUPBYTE, todrop);
 			TCP_STAT_PUTREF();
 		} else if ((tiflags & TH_RST) &&
 		    th->th_seq != vp->rcv_nxt) {
@@ -1023,8 +1024,9 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			goto dropafterack_ratelim;
 		} else {
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVPARTDUPPACK] += 1;
-			tcps[TCP_STAT_RCVPARTDUPBYTE] += todrop;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVPARTDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVPARTDUPBYTE,
+			    todrop);
 			TCP_STAT_PUTREF();
 		}
 
@@ -1198,7 +1200,7 @@ tcp_input(struct mbuf *m, int off, int proto)
 	struct mbuf *tcp_saveti = NULL;
 	uint32_t ts_rtt;
 	uint8_t iptos;
-	uint64_t *tcps;
+	net_stat_ref_t tcps;
 	vestigial_inpcb_t vestige;
 
 	vestige.valid = 0;
@@ -1841,9 +1843,10 @@ after_listen:
 					  tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcps = TCP_STAT_GETREF();
-				tcps[TCP_STAT_PREDACK]++;
-				tcps[TCP_STAT_RCVACKPACK]++;
-				tcps[TCP_STAT_RCVACKBYTE] += acked;
+				_NET_STATINC_REF(tcps, TCP_STAT_PREDACK);
+				_NET_STATINC_REF(tcps, TCP_STAT_RCVACKPACK);
+				_NET_STATADD_REF(tcps, TCP_STAT_RCVACKBYTE,
+				    acked);
 				TCP_STAT_PUTREF();
 				nd_hint(tp);
 
@@ -1924,9 +1927,9 @@ after_listen:
 			tp->snd_wl1 = th->th_seq;
 
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_PREDDAT]++;
-			tcps[TCP_STAT_RCVPACK]++;
-			tcps[TCP_STAT_RCVBYTE] += tlen;
+			_NET_STATINC_REF(tcps, TCP_STAT_PREDDAT);
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVBYTE, tlen);
 			TCP_STAT_PUTREF();
 			nd_hint(tp);
 		/*
@@ -2139,8 +2142,9 @@ after_listen:
 			tlen = tp->rcv_wnd;
 			tiflags &= ~TH_FIN;
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVPACKAFTERWIN]++;
-			tcps[TCP_STAT_RCVBYTEAFTERWIN] += todrop;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVPACKAFTERWIN);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVBYTEAFTERWIN,
+			    todrop);
 			TCP_STAT_PUTREF();
 		}
 		tp->snd_wl1 = th->th_seq - 1;
@@ -2188,9 +2192,9 @@ after_listen:
 			tp->ts_recent = 0;
 		} else {
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVDUPPACK]++;
-			tcps[TCP_STAT_RCVDUPBYTE] += tlen;
-			tcps[TCP_STAT_PAWSDROP]++;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVDUPBYTE, tlen);
+			_NET_STATINC_REF(tcps, TCP_STAT_PAWSDROP);
 			TCP_STAT_PUTREF();
 			tcp_new_dsack(tp, th->th_seq, tlen);
 			goto dropafterack;
@@ -2230,8 +2234,8 @@ after_listen:
 			todrop = tlen;
 			dupseg = true;
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVDUPPACK]++;
-			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVDUPBYTE, todrop);
 			TCP_STAT_PUTREF();
 		} else if ((tiflags & TH_RST) && th->th_seq != tp->rcv_nxt) {
 			/*
@@ -2241,8 +2245,9 @@ after_listen:
 			goto dropafterack_ratelim;
 		} else {
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVPARTDUPPACK]++;
-			tcps[TCP_STAT_RCVPARTDUPBYTE] += todrop;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVPARTDUPPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVPARTDUPBYTE,
+			    todrop);
 			TCP_STAT_PUTREF();
 		}
 		tcp_new_dsack(tp, th->th_seq, todrop);
@@ -2521,8 +2526,8 @@ after_listen:
 		}
 		acked = th->th_ack - tp->snd_una;
 		tcps = TCP_STAT_GETREF();
-		tcps[TCP_STAT_RCVACKPACK]++;
-		tcps[TCP_STAT_RCVACKBYTE] += acked;
+		_NET_STATINC_REF(tcps, TCP_STAT_RCVACKPACK);
+		_NET_STATADD_REF(tcps, TCP_STAT_RCVACKBYTE, acked);
 		TCP_STAT_PUTREF();
 
 		/*
@@ -2759,8 +2764,8 @@ dodata:
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcps = TCP_STAT_GETREF();
-			tcps[TCP_STAT_RCVPACK]++;
-			tcps[TCP_STAT_RCVBYTE] += tlen;
+			_NET_STATINC_REF(tcps, TCP_STAT_RCVPACK);
+			_NET_STATADD_REF(tcps, TCP_STAT_RCVBYTE, tlen);
 			TCP_STAT_PUTREF();
 			nd_hint(tp);
 			if (so->so_state & SS_CANTRCVMORE) {
