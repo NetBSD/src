@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2022 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c
@@ -122,6 +122,14 @@ across a greater range of addresses.  @xref{Xtensa Jump Relaxation,
 potentially be out of range.  In the absence of such jumps this option
 does not affect code size or performance.  The default is
 @samp{--trampolines}.
+
+@item --abi-windowed | --abi-call0
+@kindex --abi-windowed
+@kindex --abi-call0
+Choose ABI tag written to the @code{.xtensa.info} section.  ABI tag
+indicates ABI of the assembly code.  A warning is issued by the linker
+on an attempt to link object files with inconsistent ABI tags.
+Default ABI is chosen by the Xtensa core configuration.
 @end table
 
 @c man end

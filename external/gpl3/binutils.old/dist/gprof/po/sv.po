@@ -1,24 +1,24 @@
 # Swedish messages for gprof.
-# Copyright © 2001, 2002, 2004, 2006, 2007, 2009, 2015, 2017 Free Software Foundation, Inc.
+# Copyright © 2001, 2002, 2004, 2006, 2007, 2009, 2015, 2017, 2020 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 # Christian Rose <menthos@menthos.com>, 2001, 2002, 2004.
 # Daniel Nylander <po@danielnylander.se>, 2006, 2007, 2009.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015, 2017.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015, 2017, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.28.90\n"
+"Project-Id-Version: gprof 2.33.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-07-03 16:56+0200\n"
-"PO-Revision-Date: 2017-07-05 11:16+0200\n"
+"POT-Creation-Date: 2020-01-18 14:04+0000\n"
+"PO-Revision-Date: 2020-06-24 01:09+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
-"Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language-Team: Swedish <tp-sv-list@lists.sourceforge.net>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Poedit 2.3.1\n"
 
 #: alpha.c:102 mips.c:54
 msgid "<indirect child>"
@@ -127,7 +127,7 @@ msgid ""
 "\t\t     Call graph (explanation follows)\n"
 "\n"
 msgstr ""
-"\t\t     Angropsgraf (förklaring följer)\n"
+"\t\t     Anropsgraf (förklaring följer)\n"
 "\n"
 
 #: cg_print.c:76
@@ -237,22 +237,22 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr "<cykel %d>"
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: kan inte tolka mappningsfilen %s.\n"
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:523
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: kunde inte öppna %s.\n"
 
-#: corefile.c:192
+#: corefile.c:193
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: inte i ett körbart format\n"
 
-#: corefile.c:203
+#: corefile.c:204
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: kan inte hitta .text-sektion i %s\n"
@@ -267,22 +267,22 @@ msgstr "%s: slut på utrymme för %lu byte textutrymme\n"
 msgid "%s: can't do -c\n"
 msgstr "%s: kan inte göra -c\n"
 
-#: corefile.c:335
+#: corefile.c:331
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c stöds inte på arkitekturen %s\n"
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:532 corefile.c:637
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: filen ”%s” har inga symboler\n"
 
-#: corefile.c:541
+#: corefile.c:537
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: filen ”%s” har för många symboler\n"
 
-#: corefile.c:909
+#: corefile.c:904
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: någon räknade fel: ltab.len=%d istället för %ld\n"
@@ -382,7 +382,7 @@ msgstr "\t%d grundblocksräkningsposter\n"
 #: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
@@ -396,7 +396,7 @@ msgid ""
 "\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Användning: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I kataloger]\n"
+"Användning: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I kataloger]\n"
 "\t[-d[num]] [-k från/till] [-m min_antal] [-t tabell_längd]\n"
 "\t[--[no-]annotated-source[=namn]] [--[no-]exec-counts[=namn]]\n"
 "\t[--[no-]flat-profile[=namn]] [--[no-]graph[=namn]]\n"
@@ -422,48 +422,48 @@ msgstr ""
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: felsökning stöds inte; -d ignorerades\n"
 
-#: gprof.c:336
+#: gprof.c:340
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: okänt filformat %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:424
+#: gprof.c:428
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:425
+#: gprof.c:429
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "Baserat på BSD gprof, copyright 1983 Regents of the University of California.\n"
 
-#: gprof.c:426
+#: gprof.c:430
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Detta program är fri programvara. Detta program har ingen som helst garanti.\n"
 
-#: gprof.c:467
+#: gprof.c:471
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: okänd avmanglingsstil ”%s”\n"
 
-#: gprof.c:490
+#: gprof.c:494
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: Endast en av --function-ordering och --file-ordering kan anges.\n"
 
-#: gprof.c:542
+#: gprof.c:546
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: tyvärr, filformatet ”prof” stöds inte än\n"
 
-#: gprof.c:596
+#: gprof.c:600
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: gmon.out-filen saknar histogram\n"
 
-#: gprof.c:603
+#: gprof.c:607
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: gmon.out-filen saknar anropsgrafdata\n"

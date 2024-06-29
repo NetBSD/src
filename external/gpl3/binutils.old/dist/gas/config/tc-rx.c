@@ -1,5 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -41,17 +41,16 @@ const char line_separator_chars[] = "!";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
-/* ELF flags to set in the output file header.  */
-static int elf_flags = E_FLAG_RX_ABI;
-
 #ifndef TE_LINUX
-bfd_boolean rx_use_conventional_section_names = FALSE;
+bool rx_use_conventional_section_names = false;
+static int elf_flags = E_FLAG_RX_ABI;
 #else
-bfd_boolean rx_use_conventional_section_names = TRUE;
+bool rx_use_conventional_section_names = true;
+static int elf_flags;
 #endif
-static bfd_boolean rx_use_small_data_limit = FALSE;
 
-static bfd_boolean rx_pid_mode = FALSE;
+static bool rx_use_small_data_limit = false;
+static bool rx_pid_mode = false;
 static int rx_num_int_regs = 0;
 int rx_pid_register;
 int rx_gp_register;
@@ -148,15 +147,15 @@ md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg ATTRIBUTE_UNUSED)
       return 1;
 
     case OPTION_CONVENTIONAL_SECTION_NAMES:
-      rx_use_conventional_section_names = TRUE;
+      rx_use_conventional_section_names = true;
       return 1;
 
     case OPTION_RENESAS_SECTION_NAMES:
-      rx_use_conventional_section_names = FALSE;
+      rx_use_conventional_section_names = false;
       return 1;
 
     case OPTION_SMALL_DATA_LIMIT:
-      rx_use_small_data_limit = TRUE;
+      rx_use_small_data_limit = true;
       return 1;
 
     case OPTION_RELAX:
@@ -164,7 +163,7 @@ md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg ATTRIBUTE_UNUSED)
       return 1;
 
     case OPTION_PID:
-      rx_pid_mode = TRUE;
+      rx_pid_mode = true;
       elf_flags |= E_FLAG_RX_PID;
       return 1;
 
@@ -290,7 +289,7 @@ rx_include (int ignore)
 
   /* Get the filename.  Spaces are allowed, NUL characters are not.  */
   filename = input_line_pointer;
-  last_char = find_end_of_line (filename, FALSE);
+  last_char = find_end_of_line (filename, false);
   input_line_pointer = last_char;
 
   while (last_char >= filename && (* last_char == ' ' || * last_char == '\n'))
@@ -491,7 +490,7 @@ parse_rx_section (char * name)
       else
 	type = SHT_NOBITS;
 
-      obj_elf_change_section (name, type, 0, attr, 0, NULL, FALSE, FALSE);
+      obj_elf_change_section (name, type, attr, 0, NULL, false, false);
     }
   else /* Try not to redefine a section, especially B_1.  */
     {
@@ -506,7 +505,7 @@ parse_rx_section (char * name)
 	| ((flags & SEC_STRINGS) ? SHF_STRINGS : 0)
 	| ((flags & SEC_THREAD_LOCAL) ? SHF_TLS : 0);
 
-      obj_elf_change_section (name, type, 0, attr, 0, NULL, FALSE, FALSE);
+      obj_elf_change_section (name, type, attr, 0, NULL, false, false);
     }
 
   bfd_set_section_alignment (now_seg, align);
@@ -567,7 +566,7 @@ rx_rept (int ignore ATTRIBUTE_UNUSED)
 {
   size_t count = get_absolute_expression ();
 
-  do_repeat_with_expander (count, "MREPEAT", "ENDR", "..MACREP");
+  do_repeat (count, "MREPEAT", "ENDR", "..MACREP");
 }
 
 /* Like cons() accept that strings are allowed.  */
@@ -1097,7 +1096,7 @@ rx_equ (char * name, char * expression)
    rather than at the start of a line.  (eg .EQU or .DEFINE).  If one
    is found, process it and return TRUE otherwise return FALSE.  */
 
-static bfd_boolean
+static bool
 scan_for_infix_rx_pseudo_ops (char * str)
 {
   char * p;
@@ -1105,16 +1104,16 @@ scan_for_infix_rx_pseudo_ops (char * str)
   char * dot = strchr (str, '.');
 
   if (dot == NULL || dot == str)
-    return FALSE;
+    return false;
 
   /* A real pseudo-op must be preceded by whitespace.  */
   if (dot[-1] != ' ' && dot[-1] != '\t')
-    return FALSE;
+    return false;
 
   pseudo_op = dot + 1;
 
   if (!ISALNUM (* pseudo_op))
-    return FALSE;
+    return false;
 
   for (p = pseudo_op + 1; ISALNUM (* p); p++)
     ;
@@ -1128,9 +1127,9 @@ scan_for_infix_rx_pseudo_ops (char * str)
   else if (strncasecmp ("BTEQU", pseudo_op, p - pseudo_op) == 0)
     as_warn (_("The .BTEQU pseudo-op is not implemented."));
   else
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 void
@@ -2465,7 +2464,7 @@ arelent **
 tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 {
   static arelent * reloc[5];
-  bfd_boolean is_opcode = FALSE;
+  bool is_opcode = false;
 
   if (fixp->fx_r_type == BFD_RELOC_NONE)
     {
@@ -2490,7 +2489,7 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
       && fixp->fx_subsy)
     {
       fixp->fx_r_type = BFD_RELOC_RX_DIFF;
-      is_opcode = TRUE;
+      is_opcode = true;
     }
   else if (sec)
     is_opcode = sec->flags & SEC_CODE;

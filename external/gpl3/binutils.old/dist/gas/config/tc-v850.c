@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,8 +28,8 @@
 #define SEXT16(x)	((((x) & 0xffff) ^ (~0x7fff)) + 0x8000)
 
 /* Set to TRUE if we want to be pedantic about signed overflows.  */
-static bfd_boolean warn_signed_overflows   = FALSE;
-static bfd_boolean warn_unsigned_overflows = FALSE;
+static bool warn_signed_overflows   = false;
+static bool warn_unsigned_overflows = false;
 
 /* Non-zero if floating point insns are not being used.  */
 static signed int soft_float = -1;
@@ -481,8 +481,8 @@ v850_comm (int area)
 	input_line_pointer++;
 
       /* @@ Some say data, some say bss.  */
-      if (strncmp (input_line_pointer, "bss\"", 4)
-	  && strncmp (input_line_pointer, "data\"", 5))
+      if (!startswith (input_line_pointer, "bss\"")
+	  && !startswith (input_line_pointer, "data\""))
 	{
 	  while (*--input_line_pointer != '"')
 	    ;
@@ -599,7 +599,7 @@ const pseudo_typeS md_pseudo_table[] =
 };
 
 /* Opcode hash table.  */
-static struct hash_control *v850_hash;
+static htab_t v850_hash;
 
 /* This table is sorted.  Suitable for searching by a binary search.  */
 static const struct reg_name pre_defined_registers[] =
@@ -942,7 +942,7 @@ static int
 reg_name_search (const struct reg_name *regs,
 		 int regcount,
 		 const char *name,
-		 bfd_boolean accept_numbers)
+		 bool accept_numbers)
 {
   int middle, low, high;
   int cmp;
@@ -995,7 +995,7 @@ reg_name_search (const struct reg_name *regs,
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 register_name (expressionS *expressionP)
 {
   int reg_number;
@@ -1008,7 +1008,7 @@ register_name (expressionS *expressionP)
   c = get_symbol_name (&name);
 
   reg_number = reg_name_search (pre_defined_registers, REG_NAME_CNT,
-				name, FALSE);
+				name, false);
 
   /* Put back the delimiting char.  */
   (void) restore_line_pointer (c);
@@ -1022,7 +1022,7 @@ register_name (expressionS *expressionP)
       expressionP->X_op		= O_register;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1030,7 +1030,7 @@ register_name (expressionS *expressionP)
 
   expressionP->X_op = O_illegal;
 
-  return FALSE;
+  return false;
 }
 
 /* Summary of system_register_name().
@@ -1045,9 +1045,9 @@ register_name (expressionS *expressionP)
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 system_register_name (expressionS *expressionP,
-		      bfd_boolean accept_numbers)
+		      bool accept_numbers)
 {
   int reg_number;
   char *name;
@@ -1084,7 +1084,7 @@ system_register_name (expressionS *expressionP,
       expressionP->X_op		= O_register;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1092,7 +1092,7 @@ system_register_name (expressionS *expressionP,
 
   expressionP->X_op = O_illegal;
 
-  return FALSE;
+  return false;
 }
 
 /* Summary of cc_name().
@@ -1105,9 +1105,9 @@ system_register_name (expressionS *expressionP,
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 cc_name (expressionS *expressionP,
-	 bfd_boolean accept_numbers)
+	 bool accept_numbers)
 {
   int reg_number;
   char *name;
@@ -1143,7 +1143,7 @@ cc_name (expressionS *expressionP,
       expressionP->X_op		= O_constant;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1152,12 +1152,12 @@ cc_name (expressionS *expressionP,
   expressionP->X_op = O_illegal;
   expressionP->X_add_number = 0;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 float_cc_name (expressionS *expressionP,
-	       bfd_boolean accept_numbers)
+	       bool accept_numbers)
 {
   int reg_number;
   char *name;
@@ -1193,7 +1193,7 @@ float_cc_name (expressionS *expressionP,
       expressionP->X_op		= O_constant;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1202,12 +1202,12 @@ float_cc_name (expressionS *expressionP,
   expressionP->X_op = O_illegal;
   expressionP->X_add_number = 0;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 cacheop_name (expressionS * expressionP,
-	      bfd_boolean accept_numbers)
+	      bool accept_numbers)
 {
   int reg_number;
   char *name;
@@ -1241,7 +1241,7 @@ cacheop_name (expressionS * expressionP,
       expressionP->X_op		= O_constant;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1250,12 +1250,12 @@ cacheop_name (expressionS * expressionP,
   expressionP->X_op = O_illegal;
   expressionP->X_add_number = 0;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 prefop_name (expressionS * expressionP,
-	     bfd_boolean accept_numbers)
+	     bool accept_numbers)
 {
   int reg_number;
   char *name;
@@ -1289,7 +1289,7 @@ prefop_name (expressionS * expressionP,
       expressionP->X_op		= O_constant;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1298,10 +1298,10 @@ prefop_name (expressionS * expressionP,
   expressionP->X_op = O_illegal;
   expressionP->X_add_number = 0;
 
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 vector_register_name (expressionS *expressionP)
 {
   int reg_number;
@@ -1314,7 +1314,7 @@ vector_register_name (expressionS *expressionP)
   c = get_symbol_name (&name);
 
   reg_number = reg_name_search (vector_registers, VREG_NAME_CNT,
-				name, FALSE);
+				name, false);
 
   /* Put back the delimiting char.  */
   (void) restore_line_pointer (c);
@@ -1328,7 +1328,7 @@ vector_register_name (expressionS *expressionP)
       expressionP->X_op		= O_register;
       expressionP->X_add_number = reg_number;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
@@ -1336,7 +1336,7 @@ vector_register_name (expressionS *expressionP)
 
   expressionP->X_op = O_illegal;
 
-  return FALSE;
+  return false;
 }
 
 static void
@@ -1444,7 +1444,7 @@ parse_register_list (unsigned long *insn,
 	    {
 	      if (regs[i] == exp.X_add_number)
 		{
-		  *insn |= (1 << i);
+		  *insn |= 1u << i;
 		  break;
 		}
 	    }
@@ -1452,7 +1452,7 @@ parse_register_list (unsigned long *insn,
 	  if (i == 32)
 	    return _("illegal register included in list");
 	}
-      else if (system_register_name (&exp, TRUE))
+      else if (system_register_name (&exp, true))
 	{
 	  if (regs == type1_regs)
 	    {
@@ -1532,7 +1532,7 @@ struct option md_longopts[] =
 
 size_t md_longopts_size = sizeof (md_longopts);
 
-static bfd_boolean v850_data_8 = FALSE;
+static bool v850_data_8 = false;
 
 void
 md_show_usage (FILE *stream)
@@ -1580,10 +1580,10 @@ md_parse_option (int c, const char *arg)
     }
 
   if (strcmp (arg, "warn-signed-overflow") == 0)
-    warn_signed_overflows = TRUE;
+    warn_signed_overflows = true;
 
   else if (strcmp (arg, "warn-unsigned-overflow") == 0)
-    warn_unsigned_overflows = TRUE;
+    warn_unsigned_overflows = true;
 
   else if (strcmp (arg, "v850") == 0)
     {
@@ -1646,12 +1646,12 @@ md_parse_option (int c, const char *arg)
     }
   else if (strcmp (arg, "8byte-align") == 0)
     {
-      v850_data_8 = TRUE;
+      v850_data_8 = true;
       v850_e_flags |= EF_RH850_DATA_ALIGN8;
     }
   else if (strcmp (arg, "4byte-align") == 0)
     {
-      v850_data_8 = FALSE;
+      v850_data_8 = false;
       v850_e_flags &= ~ EF_RH850_DATA_ALIGN8;
     }
   else if (strcmp (arg, "soft-float") == 0)
@@ -1673,7 +1673,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litp, int *sizep)
 {
-  return ieee_md_atof (type, litp, sizep, FALSE);
+  return ieee_md_atof (type, litp, sizep, false);
 }
 
 /* Very gross.  */
@@ -1705,7 +1705,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   else if (fragP->fr_subtype == SUBYPTE_LOOP_16_22 + 1)
     {
       unsigned char * buffer =
-	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+	(unsigned char *) (fragP->fr_fix + &fragP->fr_literal[0]);
       int loop_reg = (buffer[0] & 0x1f);
 
       /* Add -1.reg.  */
@@ -1713,7 +1713,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       /* Now create the conditional branch + fixup to the final target.  */
       /* 0x000107ea = bne LBL(disp17).  */
       md_number_to_chars ((char *) buffer + 2, 0x000107ea, 4);
-      fix_new (fragP, fragP->fr_fix+2, 4, fragP->fr_symbol,
+      fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
 	       fragP->fr_offset, 1,
 	       BFD_RELOC_V850_17_PCREL);
       fragP->fr_fix += 6;
@@ -1743,7 +1743,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 	   || fragP->fr_subtype == SUBYPTE_SA_9_17_22_32 + 1)
     {
       unsigned char *buffer =
-	(unsigned char *) (fragP->fr_fix + fragP->fr_literal);
+	(unsigned char *) (fragP->fr_fix + &fragP->fr_literal[0]);
 
       buffer[0] &= 0x0f;	/* Use condition.  */
       buffer[0] |= 0xe0;
@@ -1888,7 +1888,7 @@ md_begin (void)
   const char *prev_name = "";
   const struct v850_opcode *op;
 
-  if (strncmp (TARGET_CPU, "v850e3v5", 8) == 0)
+  if (startswith (TARGET_CPU, "v850e3v5"))
     {
       if (machine == -1)
 	machine = bfd_mach_v850e3v5;
@@ -1896,7 +1896,7 @@ md_begin (void)
       if (!processor_mask)
 	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
     }
-  else if (strncmp (TARGET_CPU, "v850e2v4", 8) == 0)
+  else if (startswith (TARGET_CPU, "v850e2v4"))
     {
       if (machine == -1)
 	machine = bfd_mach_v850e3v5;
@@ -1904,7 +1904,7 @@ md_begin (void)
       if (!processor_mask)
 	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E3V5);
     }
-  else if (strncmp (TARGET_CPU, "v850e2v3", 8) == 0)
+  else if (startswith (TARGET_CPU, "v850e2v3"))
     {
       if (machine == -1)
         machine = bfd_mach_v850e2v3;
@@ -1912,7 +1912,7 @@ md_begin (void)
       if (!processor_mask)
         SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2V3);
     }
-  else if (strncmp (TARGET_CPU, "v850e2", 6) == 0)
+  else if (startswith (TARGET_CPU, "v850e2"))
     {
       if (machine == -1)
 	machine = bfd_mach_v850e2;
@@ -1920,7 +1920,7 @@ md_begin (void)
       if (!processor_mask)
 	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E2);
     }
-  else if (strncmp (TARGET_CPU, "v850e1", 6) == 0)
+  else if (startswith (TARGET_CPU, "v850e1"))
     {
       if (machine == -1)
         machine = bfd_mach_v850e1;
@@ -1928,7 +1928,7 @@ md_begin (void)
       if (!processor_mask)
         SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E1);
     }
-  else if (strncmp (TARGET_CPU, "v850e", 5) == 0)
+  else if (startswith (TARGET_CPU, "v850e"))
     {
       if (machine == -1)
 	machine = bfd_mach_v850e;
@@ -1936,7 +1936,7 @@ md_begin (void)
       if (!processor_mask)
 	SET_PROCESSOR_MASK (processor_mask, PROCESSOR_V850E);
     }
-  else if (strncmp (TARGET_CPU, "v850", 4) == 0)
+  else if (startswith (TARGET_CPU, "v850"))
     {
       if (machine == -1)
 	machine = 0;
@@ -1952,7 +1952,7 @@ md_begin (void)
   if (soft_float == -1)
     soft_float = machine < bfd_mach_v850e2v3;
 
-  v850_hash = hash_new ();
+  v850_hash = str_htab_create ();
 
   /* Insert unique names into hash table.  The V850 instruction set
      has many identical opcode names that have different opcodes based
@@ -1964,7 +1964,7 @@ md_begin (void)
       if (strcmp (prev_name, op->name))
 	{
 	  prev_name = (char *) op->name;
-	  hash_insert (v850_hash, op->name, (char *) op);
+	  str_hash_insert (v850_hash, op->name, op, 0);
 	}
       op++;
     }
@@ -2020,22 +2020,19 @@ handle_lo16 (const struct v850_operand *operand, const char **errmsg)
 {
   if (operand == NULL)
     return BFD_RELOC_LO16;
-
-  if (operand->default_reloc == BFD_RELOC_LO16)
-    return BFD_RELOC_LO16;
-
-  if (operand->default_reloc == BFD_RELOC_V850_16_SPLIT_OFFSET)
-    return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
-
-  if (operand->default_reloc == BFD_RELOC_V850_16_S1)
-    return BFD_RELOC_V850_LO16_S1;
-
-  if (operand->default_reloc == BFD_RELOC_16)
-    return BFD_RELOC_LO16;
-
-  *errmsg = _("lo() relocation used on an instruction which does "
-	      "not support it");
-  return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+  
+  switch (operand->default_reloc)
+    {
+    case BFD_RELOC_LO16: return BFD_RELOC_LO16;
+    case BFD_RELOC_V850_LO16_SPLIT_OFFSET: return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
+    case BFD_RELOC_V850_16_SPLIT_OFFSET: return BFD_RELOC_V850_LO16_SPLIT_OFFSET;
+    case BFD_RELOC_V850_16_S1: return BFD_RELOC_V850_LO16_S1;
+    case BFD_RELOC_16: return BFD_RELOC_LO16;
+    default:
+      *errmsg = _("lo() relocation used on an instruction which does "
+		  "not support it");
+      return BFD_RELOC_64;  /* Used to indicate an error condition.  */
+    }
 }
 
 static bfd_reloc_code_real_type
@@ -2141,13 +2138,13 @@ handle_tdaoff (const struct v850_operand *operand, const char **errmsg)
 static bfd_reloc_code_real_type
 v850_reloc_prefix (const struct v850_operand *operand, const char **errmsg)
 {
-  bfd_boolean paren_skipped = FALSE;
+  bool paren_skipped = false;
 
   /* Skip leading opening parenthesis.  */
   if (*input_line_pointer == '(')
     {
       ++input_line_pointer;
-      paren_skipped = TRUE;
+      paren_skipped = true;
     }
 
 #define CHECK_(name, reloc) 						\
@@ -2157,15 +2154,15 @@ v850_reloc_prefix (const struct v850_operand *operand, const char **errmsg)
       return reloc;							\
     }
 
-  CHECK_ ("hi0",    handle_hi016(operand, errmsg)  );
-  CHECK_ ("hi",	    handle_hi16(operand, errmsg)   );
-  CHECK_ ("lo",	    handle_lo16 (operand, errmsg)  );
+  CHECK_ ("hi0",    handle_hi016 (operand, errmsg));
+  CHECK_ ("hi",	    handle_hi16 (operand, errmsg));
+  CHECK_ ("lo",	    handle_lo16 (operand, errmsg));
   CHECK_ ("sdaoff", handle_sdaoff (operand, errmsg));
   CHECK_ ("zdaoff", handle_zdaoff (operand, errmsg));
   CHECK_ ("tdaoff", handle_tdaoff (operand, errmsg));
   CHECK_ ("hilo",   BFD_RELOC_32);
   CHECK_ ("lo23",   BFD_RELOC_V850_23);
-  CHECK_ ("ctoff",  handle_ctoff (operand, errmsg) );
+  CHECK_ ("ctoff",  handle_ctoff (operand, errmsg));
 
   /* Restore skipped parenthesis.  */
   if (paren_skipped)
@@ -2303,7 +2300,7 @@ md_assemble (char *str)
   char *f = NULL;
   int i;
   int match;
-  bfd_boolean extra_data_after_insn = FALSE;
+  bool extra_data_after_insn = false;
   unsigned extra_data_len = 0;
   unsigned long extra_data = 0;
   char *saved_input_line_pointer;
@@ -2321,7 +2318,7 @@ md_assemble (char *str)
     *s++ = '\0';
 
   /* Find the first opcode with the proper name.  */
-  opcode = (struct v850_opcode *) hash_find (v850_hash, str);
+  opcode = (struct v850_opcode *) str_hash_find (v850_hash, str);
   if (opcode == NULL)
     {
       /* xgettext:c-format  */
@@ -2348,9 +2345,9 @@ md_assemble (char *str)
 
       if (no_stld23)
 	{
-	  if ((strncmp (opcode->name, "st.", 3) == 0
+	  if ((startswith (opcode->name, "st.")
 	       && v850_operands[opcode->operands[1]].bits == 23)
-	      || (strncmp (opcode->name, "ld.", 3) == 0
+	      || (startswith (opcode->name, "ld.")
 		  && v850_operands[opcode->operands[0]].bits == 23))
 	    {
 	      errmsg = _("st/ld offset 23 instruction was disabled .");
@@ -2371,7 +2368,7 @@ md_assemble (char *str)
       next_opindex = 0;
       insn = opcode->opcode;
       extra_data_len = 0;
-      extra_data_after_insn = FALSE;
+      extra_data_after_insn = false;
 
       input_line_pointer = str = start_of_operands;
 
@@ -2497,7 +2494,7 @@ md_assemble (char *str)
 
 		  if (operand->flags & V850E_IMMEDIATE32)
 		    {
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 4;
 		      extra_data	    = 0;
 		    }
@@ -2508,7 +2505,7 @@ md_assemble (char *str)
 			  errmsg = _("immediate operand is too large");
 			  goto error;
 			}
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 2;
 		      extra_data	    = 0;
 		    }
@@ -2529,7 +2526,7 @@ md_assemble (char *str)
 			  goto error;
 			}
 
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 2;
 		      extra_data	    = 0;
 		    }
@@ -2568,7 +2565,7 @@ md_assemble (char *str)
 
 		  if (operand->flags & V850E_IMMEDIATE32)
 		    {
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 4;
 		      extra_data	    = 0;
 		    }
@@ -2579,7 +2576,7 @@ md_assemble (char *str)
 			  errmsg = _("immediate operand is too large");
 			  goto error;
 			}
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 2;
 		      extra_data	    = 0;
 		    }
@@ -2600,7 +2597,7 @@ md_assemble (char *str)
 			  goto error;
 			}
 
-		      extra_data_after_insn = TRUE;
+		      extra_data_after_insn = true;
 		      extra_data_len	    = 2;
 		      extra_data	    = 0;
 		    }
@@ -2664,7 +2661,7 @@ md_assemble (char *str)
 		  break;
 		}
 
-	      extra_data_after_insn = TRUE;
+	      extra_data_after_insn = true;
 	      extra_data_len        = 2;
 	      extra_data            = ex.X_add_number;
 	    }
@@ -2697,7 +2694,7 @@ md_assemble (char *str)
 	      fixups[fc].reloc   = operand->default_reloc;
 	      ++fc;
 
-	      extra_data_after_insn = TRUE;
+	      extra_data_after_insn = true;
 	      extra_data_len        = 2;
 	      extra_data            = 0;
 	    }
@@ -2738,7 +2735,7 @@ md_assemble (char *str)
 		  break;
 		}
 
-	      extra_data_after_insn = TRUE;
+	      extra_data_after_insn = true;
 	      extra_data_len        = 4;
 	      extra_data            = ex.X_add_number;
 	    }
@@ -2776,7 +2773,7 @@ md_assemble (char *str)
 		}
 	      else if ((operand->flags & V850_OPERAND_SRG) != 0)
 		{
-		  if (!system_register_name (&ex, TRUE))
+		  if (!system_register_name (&ex, true))
 		    {
 		      errmsg = _("invalid system register name");
 		    }
@@ -2807,7 +2804,7 @@ md_assemble (char *str)
 		}
 	      else if ((operand->flags & V850_OPERAND_CC) != 0)
 		{
-		  if (!cc_name (&ex, TRUE))
+		  if (!cc_name (&ex, true))
 		    {
 		      errmsg = _("invalid condition code name");
 		    }
@@ -2820,19 +2817,19 @@ md_assemble (char *str)
 		}
 	      else if ((operand->flags & V850_OPERAND_FLOAT_CC) != 0)
 		{
-		  if (!float_cc_name (&ex, TRUE))
+		  if (!float_cc_name (&ex, true))
 		    {
 		      errmsg = _("invalid condition code name");
 		    }
 		}
 	      else if ((operand->flags & V850_OPERAND_CACHEOP) != 0)
 		{
-		  if (!cacheop_name (&ex, TRUE))
+		  if (!cacheop_name (&ex, true))
 		    errmsg = _("invalid cache operation name");
 		}
 	      else if ((operand->flags & V850_OPERAND_PREFOP) != 0)
 		{
-		  if (!prefop_name (&ex, TRUE))
+		  if (!prefop_name (&ex, true))
 		    errmsg = _("invalid pref operation name");
 		}
 	      else if ((operand->flags & V850_OPERAND_VREG) != 0)
@@ -2889,17 +2886,17 @@ md_assemble (char *str)
 				       &symbol_rootP, &symbol_lastP);
 		    }
 		}
-	      else if (system_register_name (&ex, FALSE)
+	      else if (system_register_name (&ex, false)
 		       && (operand->flags & V850_OPERAND_SRG) == 0)
 		{
 		  errmsg = _("syntax error: system register not expected");
 		}
-	      else if (cc_name (&ex, FALSE)
+	      else if (cc_name (&ex, false)
 		       && (operand->flags & V850_OPERAND_CC) == 0)
 		{
 		  errmsg = _("syntax error: condition code not expected");
 		}
-	      else if (float_cc_name (&ex, FALSE)
+	      else if (float_cc_name (&ex, false)
 		       && (operand->flags & V850_OPERAND_FLOAT_CC) == 0)
 		{
 		  errmsg = _("syntax error: condition code not expected");
@@ -2949,8 +2946,8 @@ md_assemble (char *str)
                      value does not fit into the bits available then create a
                      fake error so that the next ld/st instruction will be
                      selected.  */
-                  if ( (  (strncmp (opcode->name, "st.", 3) == 0)
-		       || (strncmp (opcode->name, "ld.", 3) == 0))
+                  if ( (  (startswith (opcode->name, "st."))
+		       || (startswith (opcode->name, "ld.")))
                       && ex.X_op == O_constant
                       && (ex.X_add_number < (-(1 << (operand->bits - 1)))
 			  || ex.X_add_number > ((1 << (operand->bits - 1)) - 1)))
@@ -3236,7 +3233,7 @@ md_assemble (char *str)
 	  f = frag_more (extra_data_len);
 	  md_number_to_chars (f, extra_data, extra_data_len);
 
-	  extra_data_after_insn = FALSE;
+	  extra_data_after_insn = false;
 	}
     }
 
@@ -3447,8 +3444,7 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 	    value -= S_GET_VALUE (fixP->fx_subsy);
 	  else
 	    /* We don't actually support subtracting a symbol.  */
-	    as_bad_where (fixP->fx_file, fixP->fx_line,
-			  _("expression too complex"));
+	    as_bad_subtract (fixP);
 	}
       fixP->fx_addnumber = value;
     }
@@ -3691,7 +3687,7 @@ cons_fix_new_v850 (fragS *frag,
     fix_new (frag, where, size, NULL, 0, 0, r);
 }
 
-bfd_boolean
+bool
 v850_fix_adjustable (fixS *fixP)
 {
   if (fixP->fx_addsy == NULL)

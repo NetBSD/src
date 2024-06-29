@@ -1,5 +1,5 @@
 /* tc-s12z.c -- Assembler code for the Freescale S12Z
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,9 +23,7 @@
 #include "subsegs.h"
 #include "dwarf2dbg.h"
 #include "opcode/s12z.h"
-#include <stdint.h>
 #include <limits.h>
-#include <stdbool.h>
 
 const char comment_chars[] = ";";
 
@@ -164,7 +162,7 @@ md_parse_option (int c, const char *arg)
       register_prefix = xstrdup (arg);
       break;
     case OPTION_DOLLAR_HEX:
-      literal_prefix_dollar_hex = TRUE;
+      literal_prefix_dollar_hex = true;
       break;
     default:
       return 0;
@@ -181,7 +179,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 valueT
@@ -200,7 +198,7 @@ void
 s12z_init_after_args (void)
 {
   if (flag_traditional_format)
-    literal_prefix_dollar_hex = TRUE;
+    literal_prefix_dollar_hex = true;
 }
 
 /* Builtin help.  */
@@ -231,9 +229,9 @@ s12z_new_insn (int size)
 
 
 
-static bfd_boolean lex_reg_name (uint16_t which, int *reg);
+static bool lex_reg_name (uint16_t which, int *reg);
 
-static bfd_boolean
+static bool
 lex_constant (long *v)
 {
   char *end = NULL;
@@ -259,7 +257,7 @@ lex_constant (long *v)
   return false;
 }
 
-static bfd_boolean
+static bool
 lex_match (char x)
 {
   char *p = input_line_pointer;
@@ -271,7 +269,7 @@ lex_match (char x)
 }
 
 
-static bfd_boolean
+static bool
 lex_expression (expressionS *exp)
 {
   char *ilp = input_line_pointer;
@@ -298,7 +296,7 @@ lex_expression (expressionS *exp)
    If EXP_O is non-null, then a symbolic expression is permitted,
    in which case, EXP_O will be populated with the parsed expression.
  */
-static bfd_boolean
+static bool
 lex_imm (long *v, expressionS *exp_o)
 {
   char *ilp = input_line_pointer;
@@ -322,14 +320,14 @@ lex_imm (long *v, expressionS *exp_o)
   *v = exp.X_add_number;
   return true;
 
-fail:
+ fail:
   fail_line_pointer = input_line_pointer;
   input_line_pointer = ilp;
   return false;
 }
 
 /* Short mmediate operand */
-static bfd_boolean
+static bool
 lex_imm_e4 (long *val)
 {
   char *ilp = input_line_pointer;
@@ -345,7 +343,7 @@ lex_imm_e4 (long *val)
   return false;
 }
 
-static bfd_boolean
+static bool
 lex_match_string (const char *s)
 {
   char *p = input_line_pointer;
@@ -373,7 +371,7 @@ lex_match_string (const char *s)
    On success, REG will be filled with the index of the register which
    was successfully scanned.
 */
-static bfd_boolean
+static bool
 lex_reg_name (uint16_t which, int *reg)
 {
   char *p = input_line_pointer;
@@ -425,7 +423,7 @@ lex_reg_name (uint16_t which, int *reg)
   return false;
 }
 
-static int
+static bool
 lex_force_match (char x)
 {
   char *p = input_line_pointer;
@@ -439,7 +437,7 @@ lex_force_match (char x)
   return true;
 }
 
-static bfd_boolean
+static bool
 lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp,
 	 bool immediate_ok)
 {
@@ -751,7 +749,7 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp,
   return false;
 }
 
-static bfd_boolean
+static bool
 lex_offset (long *val)
 {
   char *end = NULL;
@@ -783,7 +781,7 @@ lex_offset (long *val)
 
 struct instruction;
 
-typedef int (*parse_operand_func) (const struct instruction *);
+typedef bool (*parse_operand_func) (const struct instruction *);
 
 struct instruction
 {
@@ -805,7 +803,7 @@ struct instruction
   uint8_t alt_opc;
 };
 
-static int
+static bool
 no_operands (const struct instruction *insn)
 {
   if (*input_line_pointer != '\0')
@@ -833,7 +831,7 @@ emit_reloc (expressionS *exp, char *f, int size, enum bfd_reloc_code_real reloc)
 			       f - frag_now->fr_literal,
 			       size,
 			       exp,
-			       FALSE,
+			       false,
                                reloc);
       /* Some third party tools seem to use the lower bits
          of this addend for flags.   They don't get added
@@ -867,7 +865,7 @@ emit_ext24 (char *f, long v)
   return f + 3;
 }
 
-static bfd_boolean 
+static bool
 opr (const struct instruction *insn)
 {
   uint8_t buffer[4];
@@ -906,7 +904,7 @@ opr (const struct instruction *insn)
 /* Parse a 15 bit offset, as an expression.
    LONG_DISPLACEMENT will be set to true if the offset is wider than 7 bits.
    */
-static bfd_boolean
+static bool
 lex_15_bit_offset (bool *long_displacement, expressionS *exp)
 {
   char *ilp = input_line_pointer;
@@ -964,7 +962,7 @@ emit_15_bit_offset (char *f, int where, expressionS *exp)
 		   f - frag_now->fr_literal,
 		   2,
 		   exp,
-		   TRUE,
+		   true,
 		   BFD_RELOC_16_PCREL);
       fix->fx_addnumber = where - 2;
     }
@@ -981,7 +979,7 @@ emit_15_bit_offset (char *f, int where, expressionS *exp)
     }
 }
 
-static bfd_boolean
+static bool
 rel (const struct instruction *insn)
 {
   bool long_displacement;
@@ -996,7 +994,7 @@ rel (const struct instruction *insn)
   return true;
 }
 
-static bfd_boolean
+static bool
 reg_inh (const struct instruction *insn)
 {
   int reg;
@@ -1015,7 +1013,7 @@ reg_inh (const struct instruction *insn)
 
 
 /* Special case for CLR X and CLR Y */
-static bfd_boolean
+static bool
 clr_xy (const struct instruction *insn ATTRIBUTE_UNUSED)
 {
   int reg;
@@ -1031,7 +1029,7 @@ clr_xy (const struct instruction *insn ATTRIBUTE_UNUSED)
 
 /* Some instructions have a suffix like ".l", ".b", ".w" etc
    which indicates the size of the operands. */
-static bfd_boolean
+static int
 size_from_suffix  (const struct instruction *insn, int idx)
 {
   const char *dot = strchr (insn->name, '.');
@@ -1061,7 +1059,7 @@ size_from_suffix  (const struct instruction *insn, int idx)
   return size;
 }
 
-static bfd_boolean
+static bool
 mul_reg_reg_reg (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1118,7 +1116,7 @@ mul_reg_reg_reg (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 mul_reg_reg_imm (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1179,7 +1177,7 @@ mul_reg_reg_imm (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 mul_reg_reg_opr (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1241,7 +1239,7 @@ mul_reg_reg_opr (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 mul_reg_opr_opr (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1325,24 +1323,24 @@ mul_reg_opr_opr (const struct instruction *insn)
 
 static const uint8_t reg_map [] =
   {
-    0x02,  // D2
-    0x01,  // D3
+    0x02,  /* D2 */
+    0x01,  /* D3 */
     0x20,
-    0x10,  // D5
-    0x08,  // D0
-    0x04,  // D1
-    0x08,  // D6
-    0x04,  // D7
+    0x10,  /* D5 */
+    0x08,  /* D0 */
+    0x04,  /* D1 */
+    0x08,  /* D6 */
+    0x04,  /* D7 */
     0x02,
-    0x01,  // Y
+    0x01,  /* Y */
     0x00,
     0x00,
-    0x20,   // CCH
-    0x10,   // CCL
+    0x20,  /* CCH */
+    0x10,  /* CCL */
     0x00
   };
 
-static  int
+static bool
 lex_reg_list (uint16_t grp, uint16_t *reg_bits)
 {
   if (lex_match (','))
@@ -1358,7 +1356,7 @@ lex_reg_list (uint16_t grp, uint16_t *reg_bits)
   return true;
 }
 
-static bfd_boolean
+static bool
 psh_pull (const struct instruction *insn)
 {
   uint8_t pb =
@@ -1410,7 +1408,7 @@ psh_pull (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 tfr (const struct instruction *insn)
 {
   int reg1;
@@ -1446,7 +1444,7 @@ tfr (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 imm8 (const struct instruction *insn)
 {
   long imm;
@@ -1465,7 +1463,7 @@ imm8 (const struct instruction *insn)
   return true;
 }
 
-static bfd_boolean
+static bool
 reg_imm (const struct instruction *insn, int allowed_reg)
 {
   char *ilp = input_line_pointer;
@@ -1495,26 +1493,26 @@ reg_imm (const struct instruction *insn, int allowed_reg)
 }
 
 
-static bfd_boolean
+static bool
 regd_imm (const struct instruction *insn)
 {
   return reg_imm (insn, REG_BIT_Dn);
 }
 
-static bfd_boolean
+static bool
 regdxy_imm (const struct instruction *insn)
 {
   return reg_imm (insn, REG_BIT_Dn | REG_BIT_XY);
 }
 
 
-static bfd_boolean
+static bool
 regs_imm (const struct instruction *insn)
 {
   return reg_imm (insn, 0x1U << REG_S);
 }
 
-static bfd_boolean
+static bool
 trap_imm (const struct instruction *insn ATTRIBUTE_UNUSED)
 {
   long imm = -1;
@@ -1546,7 +1544,7 @@ trap_imm (const struct instruction *insn ATTRIBUTE_UNUSED)
 
 
 /* Special one byte instruction CMP X, Y */
-static bfd_boolean
+static bool
 regx_regy (const struct instruction *insn)
 {
   int reg;
@@ -1566,7 +1564,7 @@ regx_regy (const struct instruction *insn)
 }
 
 /* Special one byte instruction SUB D6, X, Y */
-static bfd_boolean
+static bool
 regd6_regx_regy (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1597,7 +1595,7 @@ regd6_regx_regy (const struct instruction *insn)
 }
 
 /* Special one byte instruction SUB D6, Y, X */
-static bfd_boolean
+static bool
 regd6_regy_regx (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1627,7 +1625,7 @@ regd6_regy_regx (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 reg_opr (const struct instruction *insn, int allowed_regs,
 	 bool immediate_ok)
 {
@@ -1681,20 +1679,20 @@ reg_opr (const struct instruction *insn, int allowed_regs,
 }
 
 
-static bfd_boolean
+static bool
 regdxy_opr_dest (const struct instruction *insn)
 {
   return reg_opr (insn, REG_BIT_Dn | REG_BIT_XY, false);
 }
 
-static bfd_boolean
+static bool
 regdxy_opr_src (const struct instruction *insn)
 {
   return reg_opr (insn, REG_BIT_Dn | REG_BIT_XY, true);
 }
 
 
-static bfd_boolean
+static bool
 regd_opr (const struct instruction *insn)
 {
   return reg_opr (insn, REG_BIT_Dn, true);
@@ -1702,20 +1700,20 @@ regd_opr (const struct instruction *insn)
 
 
 /* OP0: S; OP1: destination OPR */
-static bfd_boolean
+static bool
 regs_opr_dest (const struct instruction *insn)
 {
   return reg_opr (insn, 0x1U << REG_S, false);
 }
 
 /* OP0: S; OP1: source OPR */
-static bfd_boolean
+static bool
 regs_opr_src (const struct instruction *insn)
 {
   return reg_opr (insn, 0x1U << REG_S, true);
 }
 
-static bfd_boolean
+static bool
 imm_opr  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1763,7 +1761,7 @@ imm_opr  (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 opr_opr  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -1798,7 +1796,7 @@ opr_opr  (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 reg67sxy_opr  (const struct instruction *insn)
 {
   int reg;
@@ -1821,7 +1819,7 @@ reg67sxy_opr  (const struct instruction *insn)
   return true;
 }
 
-static bfd_boolean
+static bool
 rotate  (const struct instruction *insn, short dir)
 {
   uint8_t buffer[4];
@@ -1847,13 +1845,13 @@ rotate  (const struct instruction *insn, short dir)
   return false;
 }
 
-static bfd_boolean
+static bool
 rol  (const struct instruction *insn)
 {
   return rotate (insn, 1);
 }
 
-static bfd_boolean
+static bool
 ror  (const struct instruction *insn)
 {
   return rotate (insn, 0);
@@ -1864,7 +1862,7 @@ ror  (const struct instruction *insn)
    left = 1; right = 0;
    logical = 0; arithmetic = 1;
 */
-static bfd_boolean
+static bool
 lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
 {
   /*
@@ -1925,7 +1923,7 @@ lex_shift_reg_imm1  (const struct instruction *insn, short type, short dir)
 /* Shift instruction with a register operand.
    left = 1; right = 0;
    logical = 0; arithmetic = 1; */
-static bfd_boolean
+static bool
 lex_shift_reg  (const struct instruction *insn, short type, short dir)
 {
   int Dd, Ds, Dn;
@@ -2031,7 +2029,7 @@ impute_shift_dir_and_type (const struct instruction *insn, short *type, short *d
 }
 
 /* Shift instruction with a OPR operand */
-static bfd_boolean
+static bool
 shift_two_operand  (const struct instruction *insn)
 {
   uint8_t sb = 0x34;
@@ -2079,7 +2077,7 @@ shift_two_operand  (const struct instruction *insn)
 }
 
 /* Shift instruction with a OPR operand */
-static bfd_boolean
+static bool
 shift_opr_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2176,7 +2174,7 @@ shift_opr_imm  (const struct instruction *insn)
 }
 
 /* Shift instruction with a register operand */
-static bfd_boolean
+static bool
 shift_reg  (const struct instruction *insn)
 {
   short dir = -1;
@@ -2189,7 +2187,7 @@ shift_reg  (const struct instruction *insn)
   return lex_shift_reg (insn, type, dir);
 }
 
-static bfd_boolean
+static bool
 bm_regd_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2220,7 +2218,7 @@ bm_regd_imm  (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 bm_opr_reg  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2259,7 +2257,7 @@ bm_opr_reg  (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 bm_opr_imm  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2310,7 +2308,7 @@ bm_opr_imm  (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 bm_regd_reg  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2347,7 +2345,7 @@ bm_regd_reg  (const struct instruction *insn)
 
 
 
-static bfd_boolean
+static bool
 bf_reg_opr_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2417,7 +2415,7 @@ bf_reg_opr_imm  (const struct instruction *insn, short ie)
 }
 
 
-static bfd_boolean
+static bool
 bf_opr_reg_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2487,7 +2485,7 @@ bf_opr_reg_imm  (const struct instruction *insn, short ie)
 
 
 
-static bfd_boolean
+static bool
 bf_reg_reg_imm  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2550,7 +2548,7 @@ bf_reg_reg_imm  (const struct instruction *insn, short ie)
   return false;
 }
 
-static bfd_boolean
+static bool
 bf_reg_reg_reg  (const struct instruction *insn ATTRIBUTE_UNUSED, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2593,7 +2591,7 @@ bf_reg_reg_reg  (const struct instruction *insn ATTRIBUTE_UNUSED, short ie)
   return false;
 }
 
-static bfd_boolean
+static bool
 bf_opr_reg_reg  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2646,7 +2644,7 @@ bf_opr_reg_reg  (const struct instruction *insn, short ie)
 }
 
 
-static bfd_boolean
+static bool
 bf_reg_opr_reg  (const struct instruction *insn, short ie)
 {
   char *ilp = input_line_pointer;
@@ -2698,75 +2696,75 @@ bf_reg_opr_reg  (const struct instruction *insn, short ie)
 
 
 
-static bfd_boolean
+static bool
 bfe_reg_reg_reg  (const struct instruction *insn)
 {
   return bf_reg_reg_reg (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_reg_reg_reg  (const struct instruction *insn)
 {
   return bf_reg_reg_reg (insn, 1);
 }
 
-static bfd_boolean
+static bool
 bfe_reg_reg_imm  (const struct instruction *insn)
 {
   return bf_reg_reg_imm (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_reg_reg_imm  (const struct instruction *insn)
 {
   return bf_reg_reg_imm (insn, 1);
 }
 
 
-static bfd_boolean
+static bool
 bfe_reg_opr_reg  (const struct instruction *insn)
 {
   return bf_reg_opr_reg (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_reg_opr_reg  (const struct instruction *insn)
 {
   return bf_reg_opr_reg (insn, 1);
 }
 
 
-static bfd_boolean
+static bool
 bfe_opr_reg_reg  (const struct instruction *insn)
 {
   return bf_opr_reg_reg (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_opr_reg_reg  (const struct instruction *insn)
 {
   return bf_opr_reg_reg (insn, 1);
 }
 
-static bfd_boolean
+static bool
 bfe_reg_opr_imm  (const struct instruction *insn)
 {
   return bf_reg_opr_imm (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_reg_opr_imm  (const struct instruction *insn)
 {
   return bf_reg_opr_imm (insn, 1);
 }
 
-static bfd_boolean
+static bool
 bfe_opr_reg_imm  (const struct instruction *insn)
 {
   return bf_opr_reg_imm (insn, 0);
 }
 
-static bfd_boolean
+static bool
 bfi_opr_reg_imm  (const struct instruction *insn)
 {
   return bf_opr_reg_imm (insn, 1);
@@ -2775,7 +2773,7 @@ bfi_opr_reg_imm  (const struct instruction *insn)
 
 
 
-static bfd_boolean
+static bool
 tb_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2804,17 +2802,17 @@ tb_reg_rel  (const struct instruction *insn)
   if (reg == REG_Y)
     lb |= 0x01;
 
-  if (0 == strncmp (insn->name + 2, "ne", 2))
+  if (startswith (insn->name + 2, "ne"))
     lb |= 0x00 << 4;
-  else if (0 == strncmp (insn->name + 2, "eq", 2))
+  else if (startswith (insn->name + 2, "eq"))
     lb |= 0x01 << 4;
-  else if (0 == strncmp (insn->name + 2, "pl", 2))
+  else if (startswith (insn->name + 2, "pl"))
     lb |= 0x02 << 4;
-  else if (0 == strncmp (insn->name + 2, "mi", 2))
+  else if (startswith (insn->name + 2, "mi"))
     lb |= 0x03 << 4;
-  else if (0 == strncmp (insn->name + 2, "gt", 2))
+  else if (startswith (insn->name + 2, "gt"))
     lb |= 0x04 << 4;
-  else if (0 == strncmp (insn->name + 2, "le", 2))
+  else if (startswith (insn->name + 2, "le"))
     lb |= 0x05 << 4;
 
   switch (insn->name[0])
@@ -2844,7 +2842,7 @@ tb_reg_rel  (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 tb_opr_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2865,17 +2863,17 @@ tb_opr_rel  (const struct instruction *insn)
 
   uint8_t lb = 0x0C;
 
-  if (0 == strncmp (insn->name + 2, "ne", 2))
+  if (startswith (insn->name + 2, "ne"))
     lb |= 0x00 << 4;
-  else if (0 == strncmp (insn->name + 2, "eq", 2))
+  else if (startswith (insn->name + 2, "eq"))
     lb |= 0x01 << 4;
-  else if (0 == strncmp (insn->name + 2, "pl", 2))
+  else if (startswith (insn->name + 2, "pl"))
     lb |= 0x02 << 4;
-  else if (0 == strncmp (insn->name + 2, "mi", 2))
+  else if (startswith (insn->name + 2, "mi"))
     lb |= 0x03 << 4;
-  else if (0 == strncmp (insn->name + 2, "gt", 2))
+  else if (startswith (insn->name + 2, "gt"))
     lb |= 0x04 << 4;
-  else if (0 == strncmp (insn->name + 2, "le", 2))
+  else if (startswith (insn->name + 2, "le"))
     lb |= 0x05 << 4;
 
   switch (insn->name[0])
@@ -2912,7 +2910,7 @@ tb_opr_rel  (const struct instruction *insn)
 
 
 
-static bfd_boolean
+static bool
 test_br_reg_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -2959,7 +2957,7 @@ test_br_reg_reg_rel  (const struct instruction *insn)
   return false;
 }
 
-static bfd_boolean
+static bool
 test_br_opr_reg_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -3008,7 +3006,7 @@ test_br_opr_reg_rel  (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 test_br_opr_imm_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -3063,7 +3061,7 @@ test_br_opr_imm_rel  (const struct instruction *insn)
 }
 
 
-static bfd_boolean
+static bool
 test_br_reg_imm_rel  (const struct instruction *insn)
 {
   char *ilp = input_line_pointer;
@@ -3595,8 +3593,6 @@ static const struct instruction opcodes[] = {
   {"divu.lp", 2,  0x30,  mul_reg_opr_opr, 0},
   {"divu.ll", 2,  0x30,  mul_reg_opr_opr, 0},
 
-  //
-
   {"qmuls",   2,  0xb0,  mul_reg_reg_reg, 0},
   {"qmulu",   2,  0xb0,  mul_reg_reg_reg, 0},
 
@@ -3656,9 +3652,6 @@ static const struct instruction opcodes[] = {
   {"qmulu.lp", 2,  0xb0,  mul_reg_opr_opr, 0},
   {"qmulu.ll", 2,  0xb0,  mul_reg_opr_opr, 0},
 
-
-  //
-
   {"macs",   2,  0x48,  mul_reg_reg_reg, 0},
   {"macu",   2,  0x48,  mul_reg_reg_reg, 0},
 
@@ -3717,9 +3710,6 @@ static const struct instruction opcodes[] = {
   {"macu.lw", 2,  0x48,  mul_reg_opr_opr, 0},
   {"macu.lp", 2,  0x48,  mul_reg_opr_opr, 0},
   {"macu.ll", 2,  0x48,  mul_reg_opr_opr, 0},
-
-
-  //
 
   {"mods",   2,  0x38,  mul_reg_reg_reg, 0},
   {"modu",   2,  0x38,  mul_reg_reg_reg, 0},
@@ -3866,7 +3856,7 @@ long
 s12z_relax_frag (segT seg ATTRIBUTE_UNUSED, fragS *fragP ATTRIBUTE_UNUSED,
 		   long stretch ATTRIBUTE_UNUSED)
 {
-  return false;
+  return 0;
 }
 
 void
@@ -3885,7 +3875,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, asection *sec ATTRIBUTE_UNUSED,
 int
 md_estimate_size_before_relax (fragS *fragP ATTRIBUTE_UNUSED, asection *segment ATTRIBUTE_UNUSED)
 {
-  return false;
+  return 0;
 }
 
 
@@ -3927,7 +3917,7 @@ tc_s12z_force_relocation (fixS *fixP)
    we need to make sure that the linker relaxation is done
    correctly, so in some cases we force the original symbol to be
    used.  */
-bfd_boolean
+bool
 tc_s12z_fix_adjustable (fixS *fixP ATTRIBUTE_UNUSED)
 {
   return true;
@@ -3943,7 +3933,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
   /* We don't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("Expression too complex."));
+    as_bad_subtract (fixP);
 
   /*
     Patch the instruction with the resolved operand.  Elf relocation

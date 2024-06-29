@@ -1,6 +1,6 @@
 // arm.h -- ELF definitions specific to EM_ARM  -*- C++ -*-
 
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of elfcpp.
@@ -254,7 +254,15 @@ enum
   TAG_CPU_ARCH_V6S_M,
   TAG_CPU_ARCH_V7E_M,
   TAG_CPU_ARCH_V8,
-  MAX_TAG_CPU_ARCH = TAG_CPU_ARCH_V8,
+  TAG_CPU_ARCH_V8R,
+  TAG_CPU_ARCH_V8M_BASE,
+  TAG_CPU_ARCH_V8M_MAIN,
+  TAG_CPU_ARCH_8_1A,
+  TAG_CPU_ARCH_8_2A,
+  TAG_CPU_ARCH_8_3A,
+  TAG_CPU_ARCH_V8_1M_MAIN,
+  TAG_CPU_ARCH_V9,
+  MAX_TAG_CPU_ARCH = TAG_CPU_ARCH_V9,
   // Pseudo-architecture to allow objects to be compatible with the subset of
   // armv4t and armv6-m.  This value should never be stored in object files.
   TAG_CPU_ARCH_V4T_PLUS_V6_M = (MAX_TAG_CPU_ARCH + 1)
@@ -306,6 +314,10 @@ enum
   Tag_undefined43 = 43,
   Tag_DIV_use = 44,
   Tag_MVE_arch = 48,
+  Tag_PAC_extension = 50,
+  Tag_BTI_extension = 52,
+  Tag_BTI_use = 74,
+  Tag_PACRET_use = 76,
   Tag_nodefaults = 64,
   Tag_also_compatible_with = 65,
   Tag_T2EE_use = 66,

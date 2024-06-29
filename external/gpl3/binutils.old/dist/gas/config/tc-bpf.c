@@ -1,5 +1,5 @@
 /* tc-bpf.c -- Assembler for the Linux eBPF.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by Oracle, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -97,13 +97,15 @@ static CGEN_BITSET *bpf_isa;
 enum options
 {
   OPTION_LITTLE_ENDIAN = OPTION_MD_BASE,
-  OPTION_BIG_ENDIAN
+  OPTION_BIG_ENDIAN,
+  OPTION_XBPF
 };
 
 struct option md_longopts[] =
 {
   { "EL", no_argument, NULL, OPTION_LITTLE_ENDIAN },
   { "EB", no_argument, NULL, OPTION_BIG_ENDIAN },
+  { "mxbpf", no_argument, NULL, OPTION_XBPF },
   { NULL,          no_argument, NULL, 0 },
 };
 
@@ -116,6 +118,10 @@ extern int target_big_endian;
 /* Whether target_big_endian has been set while parsing command-line
    arguments.  */
 static int set_target_endian = 0;
+
+static int target_xbpf = 0;
+
+static int set_xbpf = 0;
 
 int
 md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
@@ -130,6 +136,10 @@ md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
       set_target_endian = 1;
       target_big_endian = 0;
       break;
+    case OPTION_XBPF:
+      set_xbpf = 1;
+      target_xbpf = 1;
+      break;
     default:
       return 0;
     }
@@ -143,7 +153,8 @@ md_show_usage (FILE * stream)
   fprintf (stream, _("\nBPF options:\n"));
   fprintf (stream, _("\
   --EL			generate code for a little endian machine\n\
-  --EB			generate code for a big endian machine\n"));
+  --EB			generate code for a big endian machine\n\
+  -mxbpf                generate xBPF instructions\n"));
 }
 
 
@@ -163,17 +174,34 @@ md_begin (void)
 #endif
     }
 
+  /* If not specified in the command line, use eBPF rather
+     than xBPF.  */
+  if (!set_xbpf)
+      target_xbpf = 0;
+
   /* Set the ISA, which depends on the target endianness. */
   bpf_isa = cgen_bitset_create (ISA_MAX);
   if (target_big_endian)
-    cgen_bitset_set (bpf_isa, ISA_EBPFBE);
+    {
+      if (target_xbpf)
+	cgen_bitset_set (bpf_isa, ISA_XBPFBE);
+      else
+	cgen_bitset_set (bpf_isa, ISA_EBPFBE);
+    }
   else
-    cgen_bitset_set (bpf_isa, ISA_EBPFLE);
+    {
+      if (target_xbpf)
+	cgen_bitset_set (bpf_isa, ISA_XBPFLE);
+      else
+	cgen_bitset_set (bpf_isa, ISA_EBPFLE);
+    }
 
   /* Set the machine number and endian.  */
   gas_cgen_cpu_desc = bpf_cgen_cpu_open (CGEN_CPU_OPEN_ENDIAN,
                                          target_big_endian ?
                                          CGEN_ENDIAN_BIG : CGEN_ENDIAN_LITTLE,
+                                         CGEN_CPU_OPEN_INSN_ENDIAN,
+                                         CGEN_ENDIAN_LITTLE,
                                          CGEN_CPU_OPEN_ISAS,
                                          bpf_isa,
                                          CGEN_CPU_OPEN_END);
@@ -322,9 +350,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 
              Note that the CALL instruction has only one operand, so
              this code is executed only once per instruction.  */
-          where = fixP->fx_frag->fr_literal + fixP->fx_where;
-          cgen_put_insn_value (gas_cgen_cpu_desc, (unsigned char *) where + 1, 8,
-                               target_big_endian ? 0x01 : 0x10);
+          where = fixP->fx_frag->fr_literal + fixP->fx_where + 1;
+          where[0] = target_big_endian ? 0x01 : 0x10;
           /* Fallthrough.  */
         case BPF_OPERAND_DISP16:
           /* The PC-relative displacement fields in jump instructions
@@ -353,10 +380,6 @@ md_assemble (char *str)
   CGEN_INSN_INT buffer[CGEN_MAX_INSN_SIZE / sizeof (CGEN_INT_INSN_P)];
 #else
   unsigned char buffer[CGEN_MAX_INSN_SIZE];
-  memset (buffer, 0, CGEN_MAX_INSN_SIZE); /* XXX to remove when CGEN
-                                             is fixed to handle
-                                             opcodes-in-words
-                                             properly.  */
 #endif
 
   gas_cgen_init_parse ();
@@ -396,5 +419,5 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, FALSE);
+  return ieee_md_atof (type, litP, sizeP, false);
 }

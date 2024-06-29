@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -16,7 +16,7 @@
 #         __RODATA_PM_OFFSET__ (which defaults to RODATA_PM_OFFSET).
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -271,7 +271,7 @@ cat <<EOF
   .noinit ${RELOCATING+ ADDR(.bss) + SIZEOF (.bss)} ${RELOCATING-0}: ${RELOCATING+ AT (ADDR (.noinit))}
   {
     ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
-    *(.noinit*)
+    *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
     ${RELOCATING+ PROVIDE (__noinit_end = .) ; }
     ${RELOCATING+ _end = . ;  }
     ${RELOCATING+ PROVIDE (__heap_start = .) ; }

@@ -1,5 +1,5 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.
@@ -350,7 +350,7 @@ run (const char *what, char *args)
   int pid, wait_status, retcode;
   int i;
   const char **argv;
-  char *errmsg_fmt, *errmsg_arg;
+  char *errmsg_fmt = NULL, *errmsg_arg = NULL;
   char *temp_base = choose_temp_base ();
   int in_quote;
   char sep;
@@ -630,14 +630,15 @@ main (int argc, char **argv)
 
   prog_name = argv[0];
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+
+  warn (_("WARNING: %s is deprecated, use gcc -shared or ld -shared instead\n"),
+	prog_name);
 
   expandargv (&argc, &argv);
 
@@ -837,11 +838,11 @@ Creating one, but that may not be what you want"));
   else
     which_target = UNKNOWN_TARGET;
 
-  if (! strncmp (target, "arm", 3))
+  if (startswith (target, "arm"))
     which_cpu = ARM_CPU;
-  else if (!strncmp (target, "x86_64", 6)
-	   || !strncmp (target, "athlon64", 8)
-	   || !strncmp (target, "amd64", 5))
+  else if (startswith (target, "x86_64")
+	   || startswith (target, "athlon64")
+	   || startswith (target, "amd64"))
     which_cpu = X64_CPU;
   else if (target[0] == 'i' && (target[1] >= '3' && target[1] <= '6')
 	   && target[2] == '8' && target[3] == '6')

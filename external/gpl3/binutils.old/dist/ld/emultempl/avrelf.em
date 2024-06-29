@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -39,10 +39,10 @@ static asection *avr_stub_section;
 /* Variables set by the command-line parameters and transferred
    to the bfd without use of global shared variables.  */
 
-static bfd_boolean avr_no_stubs = FALSE;
-static bfd_boolean avr_debug_relax = FALSE;
-static bfd_boolean avr_debug_stubs = FALSE;
-static bfd_boolean avr_replace_call_ret_sequences = TRUE;
+static bool avr_no_stubs = false;
+static bool avr_debug_relax = false;
+static bool avr_debug_stubs = false;
+static bool avr_replace_call_ret_sequences = true;
 static bfd_vma avr_pc_wrap_around = 0x10000000;
 
 /* Transfers information to the bfd frontend.  */
@@ -73,7 +73,7 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
 
   if (bfd_get_flavour (link_info.output_bfd) != bfd_target_elf_flavour)
     {
-      avr_no_stubs = TRUE;
+      avr_no_stubs = true;
       return;
     }
 
@@ -81,14 +81,14 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
   if (strcmp ("${EMULATION_NAME}", "avr6") != 0
       && strcmp ("${EMULATION_NAME}", "avrxmega6") != 0
       && strcmp ("${EMULATION_NAME}", "avrxmega7") != 0)
-    avr_no_stubs = TRUE;
+    avr_no_stubs = true;
 
   avr_elf_set_global_bfd_parameters ();
 
   /* If generating a relocatable output file, then
      we don't  have to generate the trampolines.  */
   if (bfd_link_relocatable (&link_info))
-    avr_no_stubs = TRUE;
+    avr_no_stubs = true;
 
   if (avr_no_stubs)
     return;
@@ -102,7 +102,7 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
     return;
 
   /* Call into the BFD backend to do the real "stub"-work.  */
-  if (! elf32_avr_size_stubs (link_info.output_bfd, &link_info, TRUE))
+  if (! elf32_avr_size_stubs (link_info.output_bfd, &link_info, true))
     einfo (_("%X%P: can not size stub section: %E\n"));
 }
 
@@ -134,6 +134,7 @@ avr_elf_create_output_section_statements (void)
       einfo (_("%X%P: can not create stub BFD: %E\n"));
       return;
     }
+  stub_file->the_bfd->flags |= BFD_LINKER_CREATED;
 
   /* Now we add the stub section.  */
 
@@ -165,7 +166,7 @@ avr_elf_after_allocation (void)
     {
       /* If relaxing, elf32_avr_size_stubs will be called from
 	 elf32_avr_relax_section.  */
-      if (!elf32_avr_size_stubs (link_info.output_bfd, &link_info, TRUE))
+      if (!elf32_avr_size_stubs (link_info.output_bfd, &link_info, true))
 	einfo (_("%X%P: can not size stub section: %E\n"));
     }
 
@@ -184,7 +185,7 @@ avr_elf_before_parse (void)
 {
   /* Don't create a demand-paged executable, since this feature isn't
      meaningful in AVR. */
-  config.magic_demand_paged = FALSE;
+  config.magic_demand_paged = false;
 
   gld${EMULATION_NAME}_before_parse ();
 }
@@ -193,11 +194,11 @@ static void
 avr_finish (void)
 {
   bfd *abfd;
-  bfd_boolean avr_link_relax;
+  bool avr_link_relax;
 
   if (bfd_link_relocatable (&link_info))
     {
-      avr_link_relax = TRUE;
+      avr_link_relax = true;
       for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
 	{
 	  /* Don't let the linker stubs prevent the final object being
@@ -206,7 +207,7 @@ avr_finish (void)
 	       & EF_AVR_LINKRELAX_PREPARED) == 0
 	      && abfd != stub_file->the_bfd)
 	    {
-	      avr_link_relax = FALSE;
+	      avr_link_relax = false;
 	      break;
 	    }
 	}
@@ -296,26 +297,26 @@ PARSE_AND_LIST_ARGS_CASES='
 	else if ((!strcmp (optarg,"64k")) || (!strcmp (optarg,"64K")))
 	  avr_pc_wrap_around = 0x10000;
 	else
-	  return FALSE;
+	  return false;
       }
       break;
 
     case OPTION_DEBUG_STUBS:
-      avr_debug_stubs = TRUE;
+      avr_debug_stubs = true;
       break;
 
     case OPTION_DEBUG_RELAX:
-      avr_debug_relax = TRUE;
+      avr_debug_relax = true;
       break;
 
     case OPTION_NO_STUBS:
-      avr_no_stubs = TRUE;
+      avr_no_stubs = true;
       break;
 
     case OPTION_NO_CALL_RET_REPLACEMENT:
       {
 	/* This variable is defined in the bfd library.  */
-	avr_replace_call_ret_sequences = FALSE;
+	avr_replace_call_ret_sequences = false;
       }
       break;
 '

@@ -1,6 +1,6 @@
 // output.h -- manage the output file for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2459,83 +2459,65 @@ class Output_data_got : public Output_data_got_base
     this->free_list_.init(data_size, false);
   }
 
-  // Add an entry for a global symbol to the GOT.  Return true if this
-  // is a new GOT entry, false if the symbol was already in the GOT.
+  // Add an entry for a global symbol GSYM plus ADDEND to the GOT.
+  // Return true if this is a new GOT entry, false if the symbol plus
+  // addend was already in the GOT.
   bool
-  add_global(Symbol* gsym, unsigned int got_type);
+  add_global(Symbol* gsym, unsigned int got_type, uint64_t addend = 0);
 
   // Like add_global, but use the PLT offset of the global symbol if
   // it has one.
   bool
-  add_global_plt(Symbol* gsym, unsigned int got_type);
+  add_global_plt(Symbol* gsym, unsigned int got_type, uint64_t addend = 0);
 
   // Like add_global, but for a TLS symbol where the value will be
   // offset using Target::tls_offset_for_global.
   bool
-  add_global_tls(Symbol* gsym, unsigned int got_type)
-  { return add_global_plt(gsym, got_type); }
+  add_global_tls(Symbol* gsym, unsigned int got_type, uint64_t addend = 0)
+  { return this->add_global_plt(gsym, got_type, addend); }
 
-  // Add an entry for a global symbol to the GOT, and add a dynamic
-  // relocation of type R_TYPE for the GOT entry.
+  // Add an entry for a global symbol GSYM plus ADDEND to the GOT, and
+  // add a dynamic relocation of type R_TYPE for the GOT entry.
   void
   add_global_with_rel(Symbol* gsym, unsigned int got_type,
-		      Output_data_reloc_generic* rel_dyn, unsigned int r_type);
+		      Output_data_reloc_generic* rel_dyn, unsigned int r_type,
+		      uint64_t addend = 0);
 
-  // Add a pair of entries for a global symbol to the GOT, and add
-  // dynamic relocations of type R_TYPE_1 and R_TYPE_2, respectively.
+  // Add a pair of entries for a global symbol GSYM plus ADDEND to the
+  // GOT, and add dynamic relocations of type R_TYPE_1 and R_TYPE_2,
+  // respectively.
   void
   add_global_pair_with_rel(Symbol* gsym, unsigned int got_type,
 			   Output_data_reloc_generic* rel_dyn,
-			   unsigned int r_type_1, unsigned int r_type_2);
-
-  // Add an entry for a local symbol to the GOT.  This returns true if
-  // this is a new GOT entry, false if the symbol already has a GOT
-  // entry.
-  bool
-  add_local(Relobj* object, unsigned int sym_index, unsigned int got_type);
+			   unsigned int r_type_1, unsigned int r_type_2,
+			   uint64_t addend = 0);
 
   // Add an entry for a local symbol plus ADDEND to the GOT.  This returns
   // true if this is a new GOT entry, false if the symbol already has a GOT
   // entry.
   bool
   add_local(Relobj* object, unsigned int sym_index, unsigned int got_type,
-	    uint64_t addend);
+	    uint64_t addend = 0);
 
   // Like add_local, but use the PLT offset of the local symbol if it
   // has one.
   bool
-  add_local_plt(Relobj* object, unsigned int sym_index, unsigned int got_type);
+  add_local_plt(Relobj* object, unsigned int sym_index, unsigned int got_type,
+		uint64_t addend = 0);
 
   // Like add_local, but for a TLS symbol where the value will be
   // offset using Target::tls_offset_for_local.
   bool
-  add_local_tls(Relobj* object, unsigned int sym_index, unsigned int got_type)
-  { return add_local_plt(object, sym_index, got_type); }
-
-  // Add an entry for a local symbol to the GOT, and add a dynamic
-  // relocation of type R_TYPE for the GOT entry.
-  void
-  add_local_with_rel(Relobj* object, unsigned int sym_index,
-		     unsigned int got_type, Output_data_reloc_generic* rel_dyn,
-		     unsigned int r_type);
+  add_local_tls(Relobj* object, unsigned int sym_index, unsigned int got_type,
+		uint64_t addend = 0)
+  { return this->add_local_plt(object, sym_index, got_type, addend); }
 
   // Add an entry for a local symbol plus ADDEND to the GOT, and add a dynamic
   // relocation of type R_TYPE for the GOT entry.
   void
   add_local_with_rel(Relobj* object, unsigned int sym_index,
 		     unsigned int got_type, Output_data_reloc_generic* rel_dyn,
-		     unsigned int r_type, uint64_t addend);
-
-  // Add a pair of entries for a local symbol to the GOT, and add
-  // a dynamic relocation of type R_TYPE using the section symbol of
-  // the output section to which input section SHNDX maps, on the first.
-  // The first got entry will have a value of zero, the second the
-  // value of the local symbol.
-  void
-  add_local_pair_with_rel(Relobj* object, unsigned int sym_index,
-			  unsigned int shndx, unsigned int got_type,
-			  Output_data_reloc_generic* rel_dyn,
-			  unsigned int r_type);
+		     unsigned int r_type, uint64_t addend = 0);
 
   // Add a pair of entries for a local symbol plus ADDEND to the GOT, and add
   // a dynamic relocation of type R_TYPE using the section symbol of
@@ -2546,17 +2528,18 @@ class Output_data_got : public Output_data_got_base
   add_local_pair_with_rel(Relobj* object, unsigned int sym_index,
 			  unsigned int shndx, unsigned int got_type,
 			  Output_data_reloc_generic* rel_dyn,
-			  unsigned int r_type, uint64_t addend);
+			  unsigned int r_type, uint64_t addend = 0);
 
-  // Add a pair of entries for a local symbol to the GOT, and add
-  // a dynamic relocation of type R_TYPE using STN_UNDEF on the first.
-  // The first got entry will have a value of zero, the second the
-  // value of the local symbol offset by Target::tls_offset_for_local.
+  // Add a pair of entries for a local symbol plus ADDEND to the GOT,
+  // and add a dynamic relocation of type R_TYPE using STN_UNDEF on
+  // the first.  The first got entry will have a value of zero, the
+  // second the value of the local symbol plus ADDEND offset by
+  // Target::tls_offset_for_local.
   void
   add_local_tls_pair(Relobj* object, unsigned int sym_index,
 		     unsigned int got_type,
 		     Output_data_reloc_generic* rel_dyn,
-		     unsigned int r_type);
+		     unsigned int r_type, uint64_t addend = 0);
 
   // Add a constant to the GOT.  This returns the offset of the new
   // entry from the start of the GOT.
@@ -2577,14 +2560,15 @@ class Output_data_got : public Output_data_got_base
     this->replace_got_entry(i, Got_entry(constant));
   }
 
-  // Reserve a slot in the GOT for a local symbol.
+  // Reserve a slot in the GOT for a local symbol plus ADDEND.
   void
   reserve_local(unsigned int i, Relobj* object, unsigned int sym_index,
-		unsigned int got_type);
+		unsigned int got_type, uint64_t addend = 0);
 
-  // Reserve a slot in the GOT for a global symbol.
+  // Reserve a slot in the GOT for a global symbol plus ADDEND.
   void
-  reserve_global(unsigned int i, Symbol* gsym, unsigned int got_type);
+  reserve_global(unsigned int i, Symbol* gsym, unsigned int got_type,
+		 uint64_t addend = 0);
 
  protected:
   // Write out the GOT table.
@@ -2623,34 +2607,21 @@ class Output_data_got : public Output_data_got_base
     { this->u_.constant = 0; }
 
     // Create a global symbol entry.
-    Got_entry(Symbol* gsym, bool use_plt_or_tls_offset)
+    Got_entry(Symbol* gsym, bool use_plt_or_tls_offset, uint64_t addend)
       : local_sym_index_(GSYM_CODE),
-	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(0)
+	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(addend)
     { this->u_.gsym = gsym; }
 
     // Create a local symbol entry.
     Got_entry(Relobj* object, unsigned int local_sym_index,
-	      bool use_plt_or_tls_offset)
+	      bool use_plt_or_tls_offset, uint64_t addend)
       : local_sym_index_(local_sym_index),
-	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(0)
+	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(addend)
     {
       gold_assert(local_sym_index != GSYM_CODE
 		  && local_sym_index != CONSTANT_CODE
 		  && local_sym_index != RESERVED_CODE
 		  && local_sym_index == this->local_sym_index_);
-      this->u_.object = object;
-    }
-
-    // Create a local symbol entry plus addend.
-    Got_entry(Relobj* object, unsigned int local_sym_index,
-	bool use_plt_or_tls_offset, uint64_t addend)
-      : local_sym_index_(local_sym_index),
-	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(addend)
-    {
-      gold_assert(local_sym_index != GSYM_CODE
-      && local_sym_index != CONSTANT_CODE
-      && local_sym_index != RESERVED_CODE
-      && local_sym_index == this->local_sym_index_);
       this->u_.object = object;
     }
 
@@ -2662,7 +2633,8 @@ class Output_data_got : public Output_data_got_base
 
     // Write the GOT entry to an output view.
     void
-    write(unsigned int got_indx, unsigned char* pov) const;
+    write(Output_data_got_base* got, unsigned int got_indx,
+	  unsigned char* pov) const;
 
    private:
     enum
@@ -4688,6 +4660,16 @@ class Output_segment
   offset() const
   { return this->offset_; }
 
+  // Return the segment alignment.
+  uint64_t
+  align() const
+  { return this->align_; }
+
+  // Set the segment alignment.
+  void
+  set_align(uint64_t align)
+  { this->align_ = align; }
+
   // Whether this is a segment created to hold large data sections.
   bool
   is_large_data_segment() const
@@ -4910,6 +4892,8 @@ class Output_segment
   uint64_t paddr_;
   // The size of the segment in memory.
   uint64_t memsz_;
+  // The segment alignment.
+  uint64_t align_;
   // The maximum section alignment.  The is_max_align_known_ field
   // indicates whether this has been finalized.
   uint64_t max_align_;

@@ -15,7 +15,25 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
+#
+#   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -107,12 +125,20 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 @NEED_CTF_QSORT_R_TRUE@am__append_1 = ctf-qsort_r.c
+@TCL_TRY_TRUE@am__append_2 = site.exp development.exp
+@BUILD_INFO_TRUE@am__append_3 = doc/ctf-spec.texi
+@BUILD_INFO_TRUE@am__append_4 = texput.log
+@BUILD_INFO_TRUE@am__append_5 = doc/ctf-spec.info
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
+	$(top_srcdir)/../config/enable.m4 \
+	$(top_srcdir)/../config/gettext-sister.m4 \
+	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/warnings.m4 \
@@ -158,19 +184,27 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(infodir)" \
+	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libctf_nobfd_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__libctf_nobfd_la_SOURCES_DIST = ctf-archive.c ctf-dump.c \
 	ctf-create.c ctf-decl.c ctf-error.c ctf-hash.c ctf-labels.c \
-	ctf-link.c ctf-lookup.c ctf-open.c ctf-string.c ctf-subr.c \
-	ctf-types.c ctf-util.c ctf-qsort_r.c
-@NEED_CTF_QSORT_R_TRUE@am__objects_1 = ctf-qsort_r.lo
-am_libctf_nobfd_la_OBJECTS = ctf-archive.lo ctf-dump.lo ctf-create.lo \
-	ctf-decl.lo ctf-error.lo ctf-hash.lo ctf-labels.lo ctf-link.lo \
-	ctf-lookup.lo ctf-open.lo ctf-string.lo ctf-subr.lo \
-	ctf-types.lo ctf-util.lo $(am__objects_1)
+	ctf-dedup.c ctf-link.c ctf-lookup.c ctf-open.c ctf-serialize.c \
+	ctf-sha1.c ctf-string.c ctf-subr.c ctf-types.c ctf-util.c \
+	ctf-qsort_r.c
+@NEED_CTF_QSORT_R_TRUE@am__objects_1 = libctf_nobfd_la-ctf-qsort_r.lo
+am_libctf_nobfd_la_OBJECTS = libctf_nobfd_la-ctf-archive.lo \
+	libctf_nobfd_la-ctf-dump.lo libctf_nobfd_la-ctf-create.lo \
+	libctf_nobfd_la-ctf-decl.lo libctf_nobfd_la-ctf-error.lo \
+	libctf_nobfd_la-ctf-hash.lo libctf_nobfd_la-ctf-labels.lo \
+	libctf_nobfd_la-ctf-dedup.lo libctf_nobfd_la-ctf-link.lo \
+	libctf_nobfd_la-ctf-lookup.lo libctf_nobfd_la-ctf-open.lo \
+	libctf_nobfd_la-ctf-serialize.lo libctf_nobfd_la-ctf-sha1.lo \
+	libctf_nobfd_la-ctf-string.lo libctf_nobfd_la-ctf-subr.lo \
+	libctf_nobfd_la-ctf-types.lo libctf_nobfd_la-ctf-util.lo \
+	$(am__objects_1)
 libctf_nobfd_la_OBJECTS = $(am_libctf_nobfd_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -183,15 +217,23 @@ libctf_nobfd_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 @INSTALL_LIBBFD_FALSE@am_libctf_nobfd_la_rpath =
 @INSTALL_LIBBFD_TRUE@am_libctf_nobfd_la_rpath = -rpath $(libdir)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+libctf_la_DEPENDENCIES = ../bfd/libbfd.la $(am__DEPENDENCIES_2)
 am__libctf_la_SOURCES_DIST = ctf-archive.c ctf-dump.c ctf-create.c \
-	ctf-decl.c ctf-error.c ctf-hash.c ctf-labels.c ctf-link.c \
-	ctf-lookup.c ctf-open.c ctf-string.c ctf-subr.c ctf-types.c \
-	ctf-util.c ctf-qsort_r.c ctf-open-bfd.c
-am__objects_2 = ctf-archive.lo ctf-dump.lo ctf-create.lo ctf-decl.lo \
-	ctf-error.lo ctf-hash.lo ctf-labels.lo ctf-link.lo \
-	ctf-lookup.lo ctf-open.lo ctf-string.lo ctf-subr.lo \
-	ctf-types.lo ctf-util.lo $(am__objects_1)
-am_libctf_la_OBJECTS = $(am__objects_2) ctf-open-bfd.lo
+	ctf-decl.c ctf-error.c ctf-hash.c ctf-labels.c ctf-dedup.c \
+	ctf-link.c ctf-lookup.c ctf-open.c ctf-serialize.c ctf-sha1.c \
+	ctf-string.c ctf-subr.c ctf-types.c ctf-util.c ctf-qsort_r.c \
+	ctf-open-bfd.c
+@NEED_CTF_QSORT_R_TRUE@am__objects_2 = libctf_la-ctf-qsort_r.lo
+am__objects_3 = libctf_la-ctf-archive.lo libctf_la-ctf-dump.lo \
+	libctf_la-ctf-create.lo libctf_la-ctf-decl.lo \
+	libctf_la-ctf-error.lo libctf_la-ctf-hash.lo \
+	libctf_la-ctf-labels.lo libctf_la-ctf-dedup.lo \
+	libctf_la-ctf-link.lo libctf_la-ctf-lookup.lo \
+	libctf_la-ctf-open.lo libctf_la-ctf-serialize.lo \
+	libctf_la-ctf-sha1.lo libctf_la-ctf-string.lo \
+	libctf_la-ctf-subr.lo libctf_la-ctf-types.lo \
+	libctf_la-ctf-util.lo $(am__objects_2)
+am_libctf_la_OBJECTS = $(am__objects_3) libctf_la-ctf-open-bfd.lo
 libctf_la_OBJECTS = $(am_libctf_la_OBJECTS)
 libctf_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -235,6 +277,47 @@ am__v_CCLD_1 =
 SOURCES = $(libctf_nobfd_la_SOURCES) $(libctf_la_SOURCES)
 DIST_SOURCES = $(am__libctf_nobfd_la_SOURCES_DIST) \
 	$(am__libctf_la_SOURCES_DIST)
+AM_V_DVIPS = $(am__v_DVIPS_@AM_V@)
+am__v_DVIPS_ = $(am__v_DVIPS_@AM_DEFAULT_V@)
+am__v_DVIPS_0 = @echo "  DVIPS   " $@;
+am__v_DVIPS_1 = 
+AM_V_MAKEINFO = $(am__v_MAKEINFO_@AM_V@)
+am__v_MAKEINFO_ = $(am__v_MAKEINFO_@AM_DEFAULT_V@)
+am__v_MAKEINFO_0 = @echo "  MAKEINFO" $@;
+am__v_MAKEINFO_1 = 
+AM_V_INFOHTML = $(am__v_INFOHTML_@AM_V@)
+am__v_INFOHTML_ = $(am__v_INFOHTML_@AM_DEFAULT_V@)
+am__v_INFOHTML_0 = @echo "  INFOHTML" $@;
+am__v_INFOHTML_1 = 
+AM_V_TEXI2DVI = $(am__v_TEXI2DVI_@AM_V@)
+am__v_TEXI2DVI_ = $(am__v_TEXI2DVI_@AM_DEFAULT_V@)
+am__v_TEXI2DVI_0 = @echo "  TEXI2DVI" $@;
+am__v_TEXI2DVI_1 = 
+AM_V_TEXI2PDF = $(am__v_TEXI2PDF_@AM_V@)
+am__v_TEXI2PDF_ = $(am__v_TEXI2PDF_@AM_DEFAULT_V@)
+am__v_TEXI2PDF_0 = @echo "  TEXI2PDF" $@;
+am__v_TEXI2PDF_1 = 
+AM_V_texinfo = $(am__v_texinfo_@AM_V@)
+am__v_texinfo_ = $(am__v_texinfo_@AM_DEFAULT_V@)
+am__v_texinfo_0 = -q
+am__v_texinfo_1 = 
+AM_V_texidevnull = $(am__v_texidevnull_@AM_V@)
+am__v_texidevnull_ = $(am__v_texidevnull_@AM_DEFAULT_V@)
+am__v_texidevnull_0 = > /dev/null
+am__v_texidevnull_1 = 
+am__dirstamp = $(am__leading_dot)dirstamp
+INFO_DEPS = doc/ctf-spec.info
+am__TEXINFO_TEX_DIR = $(srcdir)
+DVIS = doc/ctf-spec.dvi
+PDFS = doc/ctf-spec.pdf
+PSS = doc/ctf-spec.ps
+HTMLS = doc/ctf-spec.html
+TEXINFOS = $(am__append_3)
+TEXI2DVI = texi2dvi
+TEXI2PDF = $(TEXI2DVI) --pdf --batch
+MAKEINFOHTML = $(MAKEINFO) --html
+AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
+DVIPS = dvips
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -264,12 +347,15 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 AM_RECURSIVE_TARGETS = cscope
+DEJATOOL = $(PACKAGE)
+RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/../ar-lib $(top_srcdir)/../compile \
-	$(top_srcdir)/../config.guess $(top_srcdir)/../config.sub \
-	$(top_srcdir)/../depcomp $(top_srcdir)/../install-sh \
-	$(top_srcdir)/../ltmain.sh $(top_srcdir)/../missing \
-	$(top_srcdir)/../mkinstalldirs ChangeLog
+	$(srcdir)/doc/local.mk $(top_srcdir)/../ar-lib \
+	$(top_srcdir)/../compile $(top_srcdir)/../config.guess \
+	$(top_srcdir)/../config.sub $(top_srcdir)/../depcomp \
+	$(top_srcdir)/../install-sh $(top_srcdir)/../ltmain.sh \
+	$(top_srcdir)/../missing $(top_srcdir)/../mkinstalldirs \
+	ChangeLog NEWS
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -295,14 +381,16 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BFD_DEPENDENCIES = @BFD_DEPENDENCIES@
-BFD_LIBADD = @BFD_LIBADD@
+CATALOGS = @CATALOGS@
+CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CTF_LIBADD = @CTF_LIBADD@
 CYGPATH_W = @CYGPATH_W@
+DATADIRNAME = @DATADIRNAME@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DSYMUTIL = @DSYMUTIL@
@@ -312,15 +400,24 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+
+# Setup the testing framework, if you have one
+EXPECT = expect
 FGREP = @FGREP@
+GENCAT = @GENCAT@
+GMSGFMT = @GMSGFMT@
 GREP = @GREP@
+INCINTL = @INCINTL@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+INSTOBJEXT = @INSTOBJEXT@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBINTL = @LIBINTL@
+LIBINTL_DEP = @LIBINTL_DEP@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
@@ -344,17 +441,20 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+POSUB = @POSUB@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHARED_LDFLAGS = @SHARED_LDFLAGS@
-SHARED_LIBADD = @SHARED_LIBADD@
 SHELL = @SHELL@
 STRIP = @STRIP@
+USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 VERSION_FLAGS = @VERSION_FLAGS@
+VERSION_FLAGS_NOBFD = @VERSION_FLAGS_NOBFD@
 WARN_PEDANTIC = @WARN_PEDANTIC@
 WERROR = @WERROR@
+XGETTEXT = @XGETTEXT@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -406,8 +506,12 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
 target_noncanonical = @target_noncanonical@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
@@ -415,38 +519,74 @@ warn = @warn@
 zlibdir = @zlibdir@
 zlibinc = @zlibinc@
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
-AUTOMAKE_OPTIONS = foreign no-texinfo.tex
+AUTOMAKE_OPTIONS = dejagnu foreign info-in-builddir no-texinfo.tex
+
+# Variables that we might accumulate conditionally or in subdirs.
+info_TEXINFOS = $(am__append_3)
+DISTCLEANFILES = $(am__append_2) $(am__append_4)
+MAINTAINERCLEANFILES = $(am__append_5)
 
 # This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
 # -I../zlib, unless we were configured with --with-system-zlib, in which
 # case both are empty.
 ZLIB = @zlibdir@ -lz
 ZLIBINC = @zlibinc@
+BASEDIR = $(srcdir)/..
+BFDDIR = $(BASEDIR)/bfd
 INCDIR = $(srcdir)/../include
-AM_CPPFLAGS = -D_GNU_SOURCE -I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../bfd -I../bfd
+AM_CPPFLAGS = -D_GNU_SOURCE -I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../bfd -I../bfd @INCINTL@
 AM_CFLAGS = -std=gnu99 @ac_libctf_warn_cflags@ @warn@ @c_warn@ @WARN_PEDANTIC@ @WERROR@ $(ZLIBINC)
 @INSTALL_LIBBFD_TRUE@lib_LTLIBRARIES = libctf.la libctf-nobfd.la
 @INSTALL_LIBBFD_FALSE@include_HEADERS = 
 @INSTALL_LIBBFD_TRUE@include_HEADERS = $(INCDIR)/ctf.h $(INCDIR)/ctf-api.h
 @INSTALL_LIBBFD_FALSE@noinst_LTLIBRARIES = libctf.la libctf-nobfd.la
-libctf_nobfd_la_LIBADD = @SHARED_LIBADD@ $(ZLIB)
-libctf_nobfd_la_LDFLAGS = -version-info 0:0:0 @SHARED_LDFLAGS@ @VERSION_FLAGS@
+libctf_nobfd_la_LIBADD = @CTF_LIBADD@ $(ZLIB)
+libctf_ldflags_nover = -version-info 0:0:0 @SHARED_LDFLAGS@
+libctf_nobfd_la_LDFLAGS = $(libctf_ldflags_nover) @VERSION_FLAGS_NOBFD@
+libctf_nobfd_la_CPPFLAGS = $(AM_CPPFLAGS) -DNOBFD=1
 libctf_nobfd_la_SOURCES = ctf-archive.c ctf-dump.c ctf-create.c \
-	ctf-decl.c ctf-error.c ctf-hash.c ctf-labels.c ctf-link.c \
-	ctf-lookup.c ctf-open.c ctf-string.c ctf-subr.c ctf-types.c \
-	ctf-util.c $(am__append_1)
-libctf_la_LIBADD = @BFD_LIBADD@ $(libctf_nobfd_la_LIBADD)
-libctf_la_DEPENDENCIES = @BFD_DEPENDENCIES@
-libctf_la_LDFLAGS = $(libctf_nobfd_la_LDFLAGS)
+	ctf-decl.c ctf-error.c ctf-hash.c ctf-labels.c ctf-dedup.c \
+	ctf-link.c ctf-lookup.c ctf-open.c ctf-serialize.c ctf-sha1.c \
+	ctf-string.c ctf-subr.c ctf-types.c ctf-util.c $(am__append_1)
+
+# @CTF_LIBADD@ appears here twice: once, to force libiberty to get searched before
+# install-time libbfd adds a -L to the install dir (possibly pointing at an
+# incompatible libiberty), and once via lictf_nobfd_la_LIBADD so that the
+# references in there get picked up.
+libctf_la_LIBADD = @CTF_LIBADD@ ../bfd/libbfd.la $(libctf_nobfd_la_LIBADD)
+libctf_la_CPPFLAGS = $(AM_CPPFLAGS) -DNOBFD=0
+libctf_la_LDFLAGS = $(libctf_ldflags_nover) @VERSION_FLAGS@
 libctf_la_SOURCES = $(libctf_nobfd_la_SOURCES) ctf-open-bfd.c
+RUNTEST = runtest
+RUNTESTFLAGS = 
+@TCL_TRY_TRUE@CC_FOR_TARGET = ` \
+@TCL_TRY_TRUE@  if [ -f $$r/../gcc/xgcc ] ; then \
+@TCL_TRY_TRUE@    if [ -f $$r/../newlib/Makefile ] ; then \
+@TCL_TRY_TRUE@      echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
+@TCL_TRY_TRUE@    else \
+@TCL_TRY_TRUE@      echo $$r/../gcc/xgcc -B$$r/../gcc/; \
+@TCL_TRY_TRUE@    fi; \
+@TCL_TRY_TRUE@  else \
+@TCL_TRY_TRUE@    if [ "@host@" = "@target@" ] ; then \
+@TCL_TRY_TRUE@      echo $(CC); \
+@TCL_TRY_TRUE@    else \
+@TCL_TRY_TRUE@      echo gcc | sed '$(transform)'; \
+@TCL_TRY_TRUE@    fi; \
+@TCL_TRY_TRUE@  fi`
+
+
+# development.sh is used to determine -Werror default.
+@TCL_TRY_TRUE@CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
+@TCL_TRY_TRUE@EXTRA_DEJAGNU_SITE_CONFIG = development.exp
+@BUILD_INFO_TRUE@AM_MAKEINFOFLAGS = --no-split
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .dvi .lo .o .obj .ps
 am--refresh: Makefile
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/doc/local.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -468,6 +608,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
 	esac;
+$(srcdir)/doc/local.mk $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -551,22 +692,43 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-archive.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-create.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-decl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-dump.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-error.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-hash.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-labels.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-link.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-lookup.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-open-bfd.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-qsort_r.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-string.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-subr.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-types.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ctf-util.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-archive.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-create.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-decl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-dedup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-dump.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-hash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-labels.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-link.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-lookup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-open-bfd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-qsort_r.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-serialize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-sha1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-string.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-subr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-types.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_la-ctf-util.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-archive.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-create.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-decl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-dedup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-dump.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-hash.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-labels.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-link.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-lookup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-qsort_r.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-serialize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-sha1.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-string.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-subr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-types.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libctf_nobfd_la-ctf-util.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -589,6 +751,265 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
+libctf_nobfd_la-ctf-archive.lo: ctf-archive.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-archive.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-archive.Tpo -c -o libctf_nobfd_la-ctf-archive.lo `test -f 'ctf-archive.c' || echo '$(srcdir)/'`ctf-archive.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-archive.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-archive.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-archive.c' object='libctf_nobfd_la-ctf-archive.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-archive.lo `test -f 'ctf-archive.c' || echo '$(srcdir)/'`ctf-archive.c
+
+libctf_nobfd_la-ctf-dump.lo: ctf-dump.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-dump.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-dump.Tpo -c -o libctf_nobfd_la-ctf-dump.lo `test -f 'ctf-dump.c' || echo '$(srcdir)/'`ctf-dump.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-dump.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-dump.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-dump.c' object='libctf_nobfd_la-ctf-dump.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-dump.lo `test -f 'ctf-dump.c' || echo '$(srcdir)/'`ctf-dump.c
+
+libctf_nobfd_la-ctf-create.lo: ctf-create.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-create.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-create.Tpo -c -o libctf_nobfd_la-ctf-create.lo `test -f 'ctf-create.c' || echo '$(srcdir)/'`ctf-create.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-create.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-create.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-create.c' object='libctf_nobfd_la-ctf-create.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-create.lo `test -f 'ctf-create.c' || echo '$(srcdir)/'`ctf-create.c
+
+libctf_nobfd_la-ctf-decl.lo: ctf-decl.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-decl.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-decl.Tpo -c -o libctf_nobfd_la-ctf-decl.lo `test -f 'ctf-decl.c' || echo '$(srcdir)/'`ctf-decl.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-decl.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-decl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-decl.c' object='libctf_nobfd_la-ctf-decl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-decl.lo `test -f 'ctf-decl.c' || echo '$(srcdir)/'`ctf-decl.c
+
+libctf_nobfd_la-ctf-error.lo: ctf-error.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-error.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-error.Tpo -c -o libctf_nobfd_la-ctf-error.lo `test -f 'ctf-error.c' || echo '$(srcdir)/'`ctf-error.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-error.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-error.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-error.c' object='libctf_nobfd_la-ctf-error.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-error.lo `test -f 'ctf-error.c' || echo '$(srcdir)/'`ctf-error.c
+
+libctf_nobfd_la-ctf-hash.lo: ctf-hash.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-hash.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-hash.Tpo -c -o libctf_nobfd_la-ctf-hash.lo `test -f 'ctf-hash.c' || echo '$(srcdir)/'`ctf-hash.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-hash.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-hash.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-hash.c' object='libctf_nobfd_la-ctf-hash.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-hash.lo `test -f 'ctf-hash.c' || echo '$(srcdir)/'`ctf-hash.c
+
+libctf_nobfd_la-ctf-labels.lo: ctf-labels.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-labels.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-labels.Tpo -c -o libctf_nobfd_la-ctf-labels.lo `test -f 'ctf-labels.c' || echo '$(srcdir)/'`ctf-labels.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-labels.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-labels.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-labels.c' object='libctf_nobfd_la-ctf-labels.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-labels.lo `test -f 'ctf-labels.c' || echo '$(srcdir)/'`ctf-labels.c
+
+libctf_nobfd_la-ctf-dedup.lo: ctf-dedup.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-dedup.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-dedup.Tpo -c -o libctf_nobfd_la-ctf-dedup.lo `test -f 'ctf-dedup.c' || echo '$(srcdir)/'`ctf-dedup.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-dedup.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-dedup.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-dedup.c' object='libctf_nobfd_la-ctf-dedup.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-dedup.lo `test -f 'ctf-dedup.c' || echo '$(srcdir)/'`ctf-dedup.c
+
+libctf_nobfd_la-ctf-link.lo: ctf-link.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-link.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-link.Tpo -c -o libctf_nobfd_la-ctf-link.lo `test -f 'ctf-link.c' || echo '$(srcdir)/'`ctf-link.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-link.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-link.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-link.c' object='libctf_nobfd_la-ctf-link.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-link.lo `test -f 'ctf-link.c' || echo '$(srcdir)/'`ctf-link.c
+
+libctf_nobfd_la-ctf-lookup.lo: ctf-lookup.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-lookup.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-lookup.Tpo -c -o libctf_nobfd_la-ctf-lookup.lo `test -f 'ctf-lookup.c' || echo '$(srcdir)/'`ctf-lookup.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-lookup.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-lookup.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-lookup.c' object='libctf_nobfd_la-ctf-lookup.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-lookup.lo `test -f 'ctf-lookup.c' || echo '$(srcdir)/'`ctf-lookup.c
+
+libctf_nobfd_la-ctf-open.lo: ctf-open.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-open.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-open.Tpo -c -o libctf_nobfd_la-ctf-open.lo `test -f 'ctf-open.c' || echo '$(srcdir)/'`ctf-open.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-open.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-open.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-open.c' object='libctf_nobfd_la-ctf-open.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-open.lo `test -f 'ctf-open.c' || echo '$(srcdir)/'`ctf-open.c
+
+libctf_nobfd_la-ctf-serialize.lo: ctf-serialize.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-serialize.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-serialize.Tpo -c -o libctf_nobfd_la-ctf-serialize.lo `test -f 'ctf-serialize.c' || echo '$(srcdir)/'`ctf-serialize.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-serialize.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-serialize.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-serialize.c' object='libctf_nobfd_la-ctf-serialize.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-serialize.lo `test -f 'ctf-serialize.c' || echo '$(srcdir)/'`ctf-serialize.c
+
+libctf_nobfd_la-ctf-sha1.lo: ctf-sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-sha1.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-sha1.Tpo -c -o libctf_nobfd_la-ctf-sha1.lo `test -f 'ctf-sha1.c' || echo '$(srcdir)/'`ctf-sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-sha1.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-sha1.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-sha1.c' object='libctf_nobfd_la-ctf-sha1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-sha1.lo `test -f 'ctf-sha1.c' || echo '$(srcdir)/'`ctf-sha1.c
+
+libctf_nobfd_la-ctf-string.lo: ctf-string.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-string.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-string.Tpo -c -o libctf_nobfd_la-ctf-string.lo `test -f 'ctf-string.c' || echo '$(srcdir)/'`ctf-string.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-string.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-string.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-string.c' object='libctf_nobfd_la-ctf-string.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-string.lo `test -f 'ctf-string.c' || echo '$(srcdir)/'`ctf-string.c
+
+libctf_nobfd_la-ctf-subr.lo: ctf-subr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-subr.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-subr.Tpo -c -o libctf_nobfd_la-ctf-subr.lo `test -f 'ctf-subr.c' || echo '$(srcdir)/'`ctf-subr.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-subr.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-subr.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-subr.c' object='libctf_nobfd_la-ctf-subr.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-subr.lo `test -f 'ctf-subr.c' || echo '$(srcdir)/'`ctf-subr.c
+
+libctf_nobfd_la-ctf-types.lo: ctf-types.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-types.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-types.Tpo -c -o libctf_nobfd_la-ctf-types.lo `test -f 'ctf-types.c' || echo '$(srcdir)/'`ctf-types.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-types.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-types.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-types.c' object='libctf_nobfd_la-ctf-types.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-types.lo `test -f 'ctf-types.c' || echo '$(srcdir)/'`ctf-types.c
+
+libctf_nobfd_la-ctf-util.lo: ctf-util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-util.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-util.Tpo -c -o libctf_nobfd_la-ctf-util.lo `test -f 'ctf-util.c' || echo '$(srcdir)/'`ctf-util.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-util.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-util.c' object='libctf_nobfd_la-ctf-util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-util.lo `test -f 'ctf-util.c' || echo '$(srcdir)/'`ctf-util.c
+
+libctf_nobfd_la-ctf-qsort_r.lo: ctf-qsort_r.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_nobfd_la-ctf-qsort_r.lo -MD -MP -MF $(DEPDIR)/libctf_nobfd_la-ctf-qsort_r.Tpo -c -o libctf_nobfd_la-ctf-qsort_r.lo `test -f 'ctf-qsort_r.c' || echo '$(srcdir)/'`ctf-qsort_r.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_nobfd_la-ctf-qsort_r.Tpo $(DEPDIR)/libctf_nobfd_la-ctf-qsort_r.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-qsort_r.c' object='libctf_nobfd_la-ctf-qsort_r.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_nobfd_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_nobfd_la-ctf-qsort_r.lo `test -f 'ctf-qsort_r.c' || echo '$(srcdir)/'`ctf-qsort_r.c
+
+libctf_la-ctf-archive.lo: ctf-archive.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-archive.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-archive.Tpo -c -o libctf_la-ctf-archive.lo `test -f 'ctf-archive.c' || echo '$(srcdir)/'`ctf-archive.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-archive.Tpo $(DEPDIR)/libctf_la-ctf-archive.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-archive.c' object='libctf_la-ctf-archive.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-archive.lo `test -f 'ctf-archive.c' || echo '$(srcdir)/'`ctf-archive.c
+
+libctf_la-ctf-dump.lo: ctf-dump.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-dump.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-dump.Tpo -c -o libctf_la-ctf-dump.lo `test -f 'ctf-dump.c' || echo '$(srcdir)/'`ctf-dump.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-dump.Tpo $(DEPDIR)/libctf_la-ctf-dump.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-dump.c' object='libctf_la-ctf-dump.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-dump.lo `test -f 'ctf-dump.c' || echo '$(srcdir)/'`ctf-dump.c
+
+libctf_la-ctf-create.lo: ctf-create.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-create.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-create.Tpo -c -o libctf_la-ctf-create.lo `test -f 'ctf-create.c' || echo '$(srcdir)/'`ctf-create.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-create.Tpo $(DEPDIR)/libctf_la-ctf-create.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-create.c' object='libctf_la-ctf-create.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-create.lo `test -f 'ctf-create.c' || echo '$(srcdir)/'`ctf-create.c
+
+libctf_la-ctf-decl.lo: ctf-decl.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-decl.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-decl.Tpo -c -o libctf_la-ctf-decl.lo `test -f 'ctf-decl.c' || echo '$(srcdir)/'`ctf-decl.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-decl.Tpo $(DEPDIR)/libctf_la-ctf-decl.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-decl.c' object='libctf_la-ctf-decl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-decl.lo `test -f 'ctf-decl.c' || echo '$(srcdir)/'`ctf-decl.c
+
+libctf_la-ctf-error.lo: ctf-error.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-error.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-error.Tpo -c -o libctf_la-ctf-error.lo `test -f 'ctf-error.c' || echo '$(srcdir)/'`ctf-error.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-error.Tpo $(DEPDIR)/libctf_la-ctf-error.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-error.c' object='libctf_la-ctf-error.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-error.lo `test -f 'ctf-error.c' || echo '$(srcdir)/'`ctf-error.c
+
+libctf_la-ctf-hash.lo: ctf-hash.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-hash.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-hash.Tpo -c -o libctf_la-ctf-hash.lo `test -f 'ctf-hash.c' || echo '$(srcdir)/'`ctf-hash.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-hash.Tpo $(DEPDIR)/libctf_la-ctf-hash.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-hash.c' object='libctf_la-ctf-hash.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-hash.lo `test -f 'ctf-hash.c' || echo '$(srcdir)/'`ctf-hash.c
+
+libctf_la-ctf-labels.lo: ctf-labels.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-labels.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-labels.Tpo -c -o libctf_la-ctf-labels.lo `test -f 'ctf-labels.c' || echo '$(srcdir)/'`ctf-labels.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-labels.Tpo $(DEPDIR)/libctf_la-ctf-labels.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-labels.c' object='libctf_la-ctf-labels.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-labels.lo `test -f 'ctf-labels.c' || echo '$(srcdir)/'`ctf-labels.c
+
+libctf_la-ctf-dedup.lo: ctf-dedup.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-dedup.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-dedup.Tpo -c -o libctf_la-ctf-dedup.lo `test -f 'ctf-dedup.c' || echo '$(srcdir)/'`ctf-dedup.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-dedup.Tpo $(DEPDIR)/libctf_la-ctf-dedup.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-dedup.c' object='libctf_la-ctf-dedup.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-dedup.lo `test -f 'ctf-dedup.c' || echo '$(srcdir)/'`ctf-dedup.c
+
+libctf_la-ctf-link.lo: ctf-link.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-link.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-link.Tpo -c -o libctf_la-ctf-link.lo `test -f 'ctf-link.c' || echo '$(srcdir)/'`ctf-link.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-link.Tpo $(DEPDIR)/libctf_la-ctf-link.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-link.c' object='libctf_la-ctf-link.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-link.lo `test -f 'ctf-link.c' || echo '$(srcdir)/'`ctf-link.c
+
+libctf_la-ctf-lookup.lo: ctf-lookup.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-lookup.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-lookup.Tpo -c -o libctf_la-ctf-lookup.lo `test -f 'ctf-lookup.c' || echo '$(srcdir)/'`ctf-lookup.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-lookup.Tpo $(DEPDIR)/libctf_la-ctf-lookup.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-lookup.c' object='libctf_la-ctf-lookup.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-lookup.lo `test -f 'ctf-lookup.c' || echo '$(srcdir)/'`ctf-lookup.c
+
+libctf_la-ctf-open.lo: ctf-open.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-open.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-open.Tpo -c -o libctf_la-ctf-open.lo `test -f 'ctf-open.c' || echo '$(srcdir)/'`ctf-open.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-open.Tpo $(DEPDIR)/libctf_la-ctf-open.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-open.c' object='libctf_la-ctf-open.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-open.lo `test -f 'ctf-open.c' || echo '$(srcdir)/'`ctf-open.c
+
+libctf_la-ctf-serialize.lo: ctf-serialize.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-serialize.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-serialize.Tpo -c -o libctf_la-ctf-serialize.lo `test -f 'ctf-serialize.c' || echo '$(srcdir)/'`ctf-serialize.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-serialize.Tpo $(DEPDIR)/libctf_la-ctf-serialize.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-serialize.c' object='libctf_la-ctf-serialize.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-serialize.lo `test -f 'ctf-serialize.c' || echo '$(srcdir)/'`ctf-serialize.c
+
+libctf_la-ctf-sha1.lo: ctf-sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-sha1.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-sha1.Tpo -c -o libctf_la-ctf-sha1.lo `test -f 'ctf-sha1.c' || echo '$(srcdir)/'`ctf-sha1.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-sha1.Tpo $(DEPDIR)/libctf_la-ctf-sha1.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-sha1.c' object='libctf_la-ctf-sha1.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-sha1.lo `test -f 'ctf-sha1.c' || echo '$(srcdir)/'`ctf-sha1.c
+
+libctf_la-ctf-string.lo: ctf-string.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-string.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-string.Tpo -c -o libctf_la-ctf-string.lo `test -f 'ctf-string.c' || echo '$(srcdir)/'`ctf-string.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-string.Tpo $(DEPDIR)/libctf_la-ctf-string.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-string.c' object='libctf_la-ctf-string.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-string.lo `test -f 'ctf-string.c' || echo '$(srcdir)/'`ctf-string.c
+
+libctf_la-ctf-subr.lo: ctf-subr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-subr.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-subr.Tpo -c -o libctf_la-ctf-subr.lo `test -f 'ctf-subr.c' || echo '$(srcdir)/'`ctf-subr.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-subr.Tpo $(DEPDIR)/libctf_la-ctf-subr.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-subr.c' object='libctf_la-ctf-subr.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-subr.lo `test -f 'ctf-subr.c' || echo '$(srcdir)/'`ctf-subr.c
+
+libctf_la-ctf-types.lo: ctf-types.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-types.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-types.Tpo -c -o libctf_la-ctf-types.lo `test -f 'ctf-types.c' || echo '$(srcdir)/'`ctf-types.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-types.Tpo $(DEPDIR)/libctf_la-ctf-types.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-types.c' object='libctf_la-ctf-types.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-types.lo `test -f 'ctf-types.c' || echo '$(srcdir)/'`ctf-types.c
+
+libctf_la-ctf-util.lo: ctf-util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-util.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-util.Tpo -c -o libctf_la-ctf-util.lo `test -f 'ctf-util.c' || echo '$(srcdir)/'`ctf-util.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-util.Tpo $(DEPDIR)/libctf_la-ctf-util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-util.c' object='libctf_la-ctf-util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-util.lo `test -f 'ctf-util.c' || echo '$(srcdir)/'`ctf-util.c
+
+libctf_la-ctf-qsort_r.lo: ctf-qsort_r.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-qsort_r.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-qsort_r.Tpo -c -o libctf_la-ctf-qsort_r.lo `test -f 'ctf-qsort_r.c' || echo '$(srcdir)/'`ctf-qsort_r.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-qsort_r.Tpo $(DEPDIR)/libctf_la-ctf-qsort_r.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-qsort_r.c' object='libctf_la-ctf-qsort_r.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-qsort_r.lo `test -f 'ctf-qsort_r.c' || echo '$(srcdir)/'`ctf-qsort_r.c
+
+libctf_la-ctf-open-bfd.lo: ctf-open-bfd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libctf_la-ctf-open-bfd.lo -MD -MP -MF $(DEPDIR)/libctf_la-ctf-open-bfd.Tpo -c -o libctf_la-ctf-open-bfd.lo `test -f 'ctf-open-bfd.c' || echo '$(srcdir)/'`ctf-open-bfd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libctf_la-ctf-open-bfd.Tpo $(DEPDIR)/libctf_la-ctf-open-bfd.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctf-open-bfd.c' object='libctf_la-ctf-open-bfd.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libctf_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libctf_la-ctf-open-bfd.lo `test -f 'ctf-open-bfd.c' || echo '$(srcdir)/'`ctf-open-bfd.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -597,6 +1018,143 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+doc/$(am__dirstamp):
+	@$(MKDIR_P) doc
+	@: > doc/$(am__dirstamp)
+
+@BUILD_INFO_TRUE@doc/ctf-spec.info: doc/ctf-spec.texi 
+@BUILD_INFO_TRUE@	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
+@BUILD_INFO_TRUE@	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
+@BUILD_INFO_TRUE@	rm -rf $$backupdir && mkdir $$backupdir && \
+@BUILD_INFO_TRUE@	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
+@BUILD_INFO_TRUE@	  for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
+@BUILD_INFO_TRUE@	    if test -f $$f; then mv $$f $$backupdir; restore=mv; else :; fi; \
+@BUILD_INFO_TRUE@	  done; \
+@BUILD_INFO_TRUE@	else :; fi && \
+@BUILD_INFO_TRUE@	if $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
+@BUILD_INFO_TRUE@	 -o $@ `test -f 'doc/ctf-spec.texi' || echo '$(srcdir)/'`doc/ctf-spec.texi; \
+@BUILD_INFO_TRUE@	then \
+@BUILD_INFO_TRUE@	  rc=0; \
+@BUILD_INFO_TRUE@	else \
+@BUILD_INFO_TRUE@	  rc=$$?; \
+@BUILD_INFO_TRUE@	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
+@BUILD_INFO_TRUE@	fi; \
+@BUILD_INFO_TRUE@	rm -rf $$backupdir; exit $$rc
+
+doc/ctf-spec.dvi: doc/ctf-spec.texi  doc/$(am__dirstamp)
+	$(AM_V_TEXI2DVI)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc' \
+	$(TEXI2DVI) $(AM_V_texinfo) --build-dir=$(@:.dvi=.t2d) -o $@ $(AM_V_texidevnull) \
+	`test -f 'doc/ctf-spec.texi' || echo '$(srcdir)/'`doc/ctf-spec.texi
+
+doc/ctf-spec.pdf: doc/ctf-spec.texi  doc/$(am__dirstamp)
+	$(AM_V_TEXI2PDF)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	MAKEINFO='$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc' \
+	$(TEXI2PDF) $(AM_V_texinfo) --build-dir=$(@:.pdf=.t2p) -o $@ $(AM_V_texidevnull) \
+	`test -f 'doc/ctf-spec.texi' || echo '$(srcdir)/'`doc/ctf-spec.texi
+
+doc/ctf-spec.html: doc/ctf-spec.texi  doc/$(am__dirstamp)
+	$(AM_V_MAKEINFO)rm -rf $(@:.html=.htp)
+	$(AM_V_at)if $(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) -I doc -I $(srcdir)/doc \
+	 -o $(@:.html=.htp) `test -f 'doc/ctf-spec.texi' || echo '$(srcdir)/'`doc/ctf-spec.texi; \
+	then \
+	  rm -rf $@ && mv $(@:.html=.htp) $@; \
+	else \
+	  rm -rf $(@:.html=.htp); exit 1; \
+	fi
+.dvi.ps:
+	$(AM_V_DVIPS)TEXINPUTS="$(am__TEXINFO_TEX_DIR)$(PATH_SEPARATOR)$$TEXINPUTS" \
+	$(DVIPS) $(AM_V_texinfo) -o $@ $<
+
+uninstall-dvi-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(dvidir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(dvidir)/$$f"; \
+	done
+
+uninstall-html-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(HTMLS)'; test -n "$(htmldir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -rf '$(DESTDIR)$(htmldir)/$$f'"; \
+	  rm -rf "$(DESTDIR)$(htmldir)/$$f"; \
+	done
+
+uninstall-info-am:
+	@$(PRE_UNINSTALL)
+	@if test -d '$(DESTDIR)$(infodir)' && $(am__can_run_installinfo); then \
+	  list='$(INFO_DEPS)'; \
+	  for file in $$list; do \
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' --remove '$(DESTDIR)$(infodir)/$$relfile'"; \
+	    if install-info --info-dir="$(DESTDIR)$(infodir)" --remove "$(DESTDIR)$(infodir)/$$relfile"; \
+	    then :; else test ! -f "$(DESTDIR)$(infodir)/$$relfile" || exit 1; fi; \
+	  done; \
+	else :; fi
+	@$(NORMAL_UNINSTALL)
+	@list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	  relfile_i=`echo "$$relfile" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  (if test -d "$(DESTDIR)$(infodir)" && cd "$(DESTDIR)$(infodir)"; then \
+	     echo " cd '$(DESTDIR)$(infodir)' && rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]"; \
+	     rm -f $$relfile $$relfile-[0-9] $$relfile-[0-9][0-9] $$relfile_i[0-9] $$relfile_i[0-9][0-9]; \
+	   else :; fi); \
+	done
+
+uninstall-pdf-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pdfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pdfdir)/$$f"; \
+	done
+
+uninstall-ps-am:
+	@$(NORMAL_UNINSTALL)
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(psdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(psdir)/$$f"; \
+	done
+
+dist-info: $(INFO_DEPS)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; \
+	for base in $$list; do \
+	  case $$base in \
+	    $(srcdir)/*) base=`echo "$$base" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$base; then d=.; else d=$(srcdir); fi; \
+	  base_i=`echo "$$base" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for file in $$d/$$base $$d/$$base-[0-9] $$d/$$base-[0-9][0-9] $$d/$$base_i[0-9] $$d/$$base_i[0-9][0-9]; do \
+	    if test -f $$file; then \
+	      relfile=`expr "$$file" : "$$d/\(.*\)"`; \
+	      test -f "$(distdir)/$$relfile" || \
+		cp -p $$file "$(distdir)/$$relfile"; \
+	    else :; fi; \
+	  done; \
+	done
+
+mostlyclean-aminfo:
+	-rm -rf doc/ctf-spec.t2d doc/ctf-spec.t2p
+
+clean-aminfo:
+	-test -z "doc/ctf-spec.dvi doc/ctf-spec.pdf doc/ctf-spec.ps doc/ctf-spec.html" \
+	|| rm -rf doc/ctf-spec.dvi doc/ctf-spec.pdf doc/ctf-spec.ps doc/ctf-spec.html
+
+maintainer-clean-aminfo:
+	@list='$(INFO_DEPS)'; for i in $$list; do \
+	  i_i=`echo "$$i" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  echo " rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]"; \
+	  rm -f $$i $$i-[0-9] $$i-[0-9][0-9] $$i_i[0-9] $$i_i[0-9][0-9]; \
+	done
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
@@ -678,6 +1236,50 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 	-rm -f cscope.out cscope.in.out cscope.po.out cscope.files
 
+@TCL_TRY_FALSE@check-DEJAGNU: site.exp
+@TCL_TRY_FALSE@	srcdir='$(srcdir)'; export srcdir; \
+@TCL_TRY_FALSE@	EXPECT=$(EXPECT); export EXPECT; \
+@TCL_TRY_FALSE@	if $(SHELL) -c "$(RUNTEST) --version" > /dev/null 2>&1; then \
+@TCL_TRY_FALSE@	  exit_status=0; l='$(DEJATOOL)'; for tool in $$l; do \
+@TCL_TRY_FALSE@	    if $(RUNTEST) $(AM_RUNTESTFLAGS) $(RUNTESTDEFAULTFLAGS) $(RUNTESTFLAGS); \
+@TCL_TRY_FALSE@	    then :; else exit_status=1; fi; \
+@TCL_TRY_FALSE@	  done; \
+@TCL_TRY_FALSE@	else echo "WARNING: could not find '$(RUNTEST)'" 1>&2; :;\
+@TCL_TRY_FALSE@	fi; \
+@TCL_TRY_FALSE@	exit $$exit_status
+site.exp: Makefile $(EXTRA_DEJAGNU_SITE_CONFIG)
+	@echo 'Making a new site.exp file ...'
+	@echo '## these variables are automatically generated by make ##' >site.tmp
+	@echo '# Do not edit here.  If you wish to override these values' >>site.tmp
+	@echo '# edit the last section' >>site.tmp
+	@echo 'set srcdir "$(srcdir)"' >>site.tmp
+	@echo "set objdir `pwd`" >>site.tmp
+	@echo 'set build_alias "$(build_alias)"' >>site.tmp
+	@echo 'set build_triplet $(build_triplet)' >>site.tmp
+	@echo 'set host_alias "$(host_alias)"' >>site.tmp
+	@echo 'set host_triplet $(host_triplet)' >>site.tmp
+	@echo 'set target_alias "$(target_alias)"' >>site.tmp
+	@echo 'set target_triplet $(target_triplet)' >>site.tmp
+	@list='$(EXTRA_DEJAGNU_SITE_CONFIG)'; for f in $$list; do \
+	  echo "## Begin content included from file $$f.  Do not modify. ##" \
+	   && cat `test -f "$$f" || echo '$(srcdir)/'`$$f \
+	   && echo "## End content included from file $$f. ##" \
+	   || exit 1; \
+	 done >> site.tmp
+	@echo "## End of auto-generated content; you can edit from here. ##" >> site.tmp
+	@if test -f site.exp; then \
+	   sed -e '1,/^## End of auto-generated content.*##/d' site.exp >> site.tmp; \
+	 fi
+	@-rm -f site.bak
+	@test ! -f site.exp || mv site.exp site.bak
+	@mv site.tmp site.exp
+
+distclean-DEJAGNU:
+	-rm -f site.exp site.bak
+	-l='$(DEJATOOL)'; for tool in $$l; do \
+	  rm -f $$tool.sum $$tool.log; \
+	done
+
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	test -d "$(distdir)" || mkdir "$(distdir)"
@@ -710,6 +1312,9 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  dist-info
 	-test -n "$(am__skip_mode_fix)" \
 	|| find "$(distdir)" -type d ! -perm -755 \
 		-exec chmod u+rwx,go+rx {} \; -o \
@@ -842,10 +1447,11 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-DEJAGNU
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS) config.h
+all-am: Makefile $(INFO_DEPS) $(LTLIBRARIES) $(HEADERS) config.h
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(infodir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -874,60 +1480,156 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f doc/$(am__dirstamp)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
+@BUILD_INFO_FALSE@html-local:
 clean: clean-am
 
-clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstLTLIBRARIES mostlyclean-am
+clean-am: clean-aminfo clean-generic clean-libLTLIBRARIES \
+	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags
+distclean-am: clean-am distclean-DEJAGNU distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags
 
 dvi: dvi-am
 
-dvi-am:
+dvi-am: $(DVIS)
 
 html: html-am
 
-html-am:
+html-am: $(HTMLS) html-local
 
 info: info-am
 
-info-am:
+info-am: $(INFO_DEPS)
 
-install-data-am: install-includeHEADERS
+install-data-am: install-includeHEADERS install-info-am
 
 install-dvi: install-dvi-am
 
-install-dvi-am:
-
+install-dvi-am: $(DVIS)
+	@$(NORMAL_INSTALL)
+	@list='$(DVIS)'; test -n "$(dvidir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(dvidir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(dvidir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(dvidir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(dvidir)" || exit $$?; \
+	done
 install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-am
 
-install-html-am:
-
+install-html-am: $(HTMLS)
+	@$(NORMAL_INSTALL)
+	@list='$(HTMLS)'; list2=; test -n "$(htmldir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(htmldir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(htmldir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p" || test -d "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  $(am__strip_dir) \
+	  d2=$$d$$p; \
+	  if test -d "$$d2"; then \
+	    echo " $(MKDIR_P) '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(MKDIR_P) "$(DESTDIR)$(htmldir)/$$f" || exit 1; \
+	    echo " $(INSTALL_DATA) '$$d2'/* '$(DESTDIR)$(htmldir)/$$f'"; \
+	    $(INSTALL_DATA) "$$d2"/* "$(DESTDIR)$(htmldir)/$$f" || exit $$?; \
+	  else \
+	    list2="$$list2 $$d2"; \
+	  fi; \
+	done; \
+	test -z "$$list2" || { echo "$$list2" | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(htmldir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(htmldir)" || exit $$?; \
+	done; }
 install-info: install-info-am
 
-install-info-am:
-
+install-info-am: $(INFO_DEPS)
+	@$(NORMAL_INSTALL)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
+	list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(infodir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(infodir)" || exit 1; \
+	fi; \
+	for file in $$list; do \
+	  case $$file in \
+	    $(srcdir)/*) file=`echo "$$file" | sed "s|^$$srcdirstrip/||"`;; \
+	  esac; \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+	  file_i=`echo "$$file" | sed 's|\.info$$||;s|$$|.i|'`; \
+	  for ifile in $$d/$$file $$d/$$file-[0-9] $$d/$$file-[0-9][0-9] \
+	               $$d/$$file_i[0-9] $$d/$$file_i[0-9][0-9] ; do \
+	    if test -f $$ifile; then \
+	      echo "$$ifile"; \
+	    else : ; fi; \
+	  done; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(infodir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(infodir)" || exit $$?; done
+	@$(POST_INSTALL)
+	@if $(am__can_run_installinfo); then \
+	  list='$(INFO_DEPS)'; test -n "$(infodir)" || list=; \
+	  for file in $$list; do \
+	    relfile=`echo "$$file" | sed 's|^.*/||'`; \
+	    echo " install-info --info-dir='$(DESTDIR)$(infodir)' '$(DESTDIR)$(infodir)/$$relfile'";\
+	    install-info --info-dir="$(DESTDIR)$(infodir)" "$(DESTDIR)$(infodir)/$$relfile" || :;\
+	  done; \
+	else : ; fi
 install-man:
 
 install-pdf: install-pdf-am
 
-install-pdf-am:
-
+install-pdf-am: $(PDFS)
+	@$(NORMAL_INSTALL)
+	@list='$(PDFS)'; test -n "$(pdfdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pdfdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pdfdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pdfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pdfdir)" || exit $$?; done
 install-ps: install-ps-am
 
-install-ps-am:
-
+install-ps-am: $(PSS)
+	@$(NORMAL_INSTALL)
+	@list='$(PSS)'; test -n "$(psdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(psdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(psdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(psdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(psdir)" || exit $$?; done
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
@@ -935,46 +1637,80 @@ maintainer-clean: maintainer-clean-am
 	-rm -rf $(top_srcdir)/autom4te.cache
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
-maintainer-clean-am: distclean-am maintainer-clean-generic
+maintainer-clean-am: distclean-am maintainer-clean-aminfo \
+	maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool
+mostlyclean-am: mostlyclean-aminfo mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-am
 
-pdf-am:
+pdf-am: $(PDFS)
 
 ps: ps-am
 
-ps-am:
+ps-am: $(PSS)
 
-uninstall-am: uninstall-includeHEADERS uninstall-libLTLIBRARIES
+uninstall-am: uninstall-dvi-am uninstall-html-am \
+	uninstall-includeHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-pdf-am uninstall-ps-am
 
-.MAKE: all install-am install-strip
+.MAKE: all check-am install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
-	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
-	clean-noinstLTLIBRARIES cscope cscopelist-am ctags ctags-am \
-	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
-	dist-tarZ dist-xz dist-zip distcheck distclean \
+.PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-DEJAGNU \
+	check-am clean clean-aminfo clean-cscope clean-generic \
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-info dist-lzip dist-shar dist-tarZ dist-xz \
+	dist-zip distcheck distclean distclean-DEJAGNU \
 	distclean-compile distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-includeHEADERS install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-includeHEADERS \
-	uninstall-libLTLIBRARIES
+	distuninstallcheck dvi dvi-am html html-am html-local info \
+	info-am install install-am install-data install-data-am \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-includeHEADERS \
+	install-info install-info-am install-libLTLIBRARIES \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-aminfo \
+	maintainer-clean-generic mostlyclean mostlyclean-aminfo \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-dvi-am uninstall-html-am uninstall-includeHEADERS \
+	uninstall-info-am uninstall-libLTLIBRARIES uninstall-pdf-am \
+	uninstall-ps-am
 
 .PRECIOUS: Makefile
 
+
+@TCL_TRY_TRUE@check-DEJAGNU: site.exp development.exp
+@TCL_TRY_TRUE@	srcroot=`cd $(srcdir) && pwd`; export srcroot; \
+@TCL_TRY_TRUE@	r=`pwd`; export r; \
+@TCL_TRY_TRUE@	LC_ALL=C; export LC_ALL; \
+@TCL_TRY_TRUE@	EXPECT=$(EXPECT); export EXPECT; \
+@TCL_TRY_TRUE@	runtest=$(RUNTEST); \
+@TCL_TRY_TRUE@	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
+@TCL_TRY_TRUE@	  $$runtest --tool $(DEJATOOL) --srcdir $${srcroot}/testsuite \
+@TCL_TRY_TRUE@		CC="$(CC)" CC_FOR_TARGET="$(CC_FOR_TARGET)" \
+@TCL_TRY_TRUE@		CFLAGS="$(CFLAGS) -I$(INCDIR) -I$(srcdir) -I$(builddir) -I$(builddir)/../bfd $(ZLIBINC)" \
+@TCL_TRY_TRUE@		LIBS="$(libctf_nobfd_la_LIBADD) $(LIBS)" $(RUNTESTFLAGS); \
+@TCL_TRY_TRUE@	else echo "WARNING: could not find \`runtest'" 1>&2; :;\
+@TCL_TRY_TRUE@	fi
+
+@TCL_TRY_TRUE@development.exp: $(BFDDIR)/development.sh
+@TCL_TRY_TRUE@	$(AM_V_GEN)$(EGREP) "(development|experimental)=" $(BFDDIR)/development.sh  \
+@TCL_TRY_TRUE@	  | $(AWK) -F= '{ print "set " $$1 " " $$2 }' > $@
+
+@BUILD_INFO_TRUE@html-local: doc/ctf-spec/index.html
+@BUILD_INFO_TRUE@doc/ctf-spec/index.html: doc/ctf-spec.texi doc/$(am__dirstamp)
+@BUILD_INFO_TRUE@	$(AM_V_GEN)$(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) \
+@BUILD_INFO_TRUE@	  --split=node -I$(srcdir) --output doc/ctf-spec $(srcdir)/doc/ctf-spec.texi
+
+# Workaround bug in automake: it can't handle conditionally building info pages
+# since GNU projects normally include info pages in the source distributions.
+@BUILD_INFO_FALSE@doc/ctf-spec.info:
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -29,10 +29,6 @@
 
 #ifdef COFF_WITH_PE
 #include "coff/pe.h"
-#endif
-
-#ifdef COFF_GO32_EXE
-#include "coff/go32exe.h"
 #endif
 
 #ifndef bfd_pe_print_pdata
@@ -113,14 +109,14 @@ coff_i386_reloc (bfd *abfd,
 	  reloc_howto_type *howto = reloc_entry->howto;
 
 	  /* Although PC relative relocations are very similar between
-	     PE and non-PE formats, but they are off by 1 << howto->size
+	     PE and non-PE formats, but they are off by howto->size
 	     bytes. For the external relocation, PE is very different
 	     from others. See md_apply_fix3 () in gas/config/tc-i386.c.
 	     When we link PE and non-PE object files together to
 	     generate a non-PE executable, we have to compensate it
 	     here.  */
 	  if (howto->pc_relative && howto->pcrel_offset)
-	    diff = -(1 << howto->size);
+	    diff = -bfd_get_reloc_size (howto);
 	  else if (symbol->flags & BSF_WEAK)
 	    diff = reloc_entry->addend - symbol->value;
 	  else
@@ -152,9 +148,9 @@ coff_i386_reloc (bfd *abfd,
       if (!bfd_reloc_offset_in_range (howto, abfd, input_section, octets))
 	return bfd_reloc_outofrange;
 
-      switch (howto->size)
+      switch (bfd_get_reloc_size (howto))
 	{
-	case 0:
+	case 1:
 	  {
 	    char x = bfd_get_8 (abfd, addr);
 	    DOIT (x);
@@ -162,7 +158,7 @@ coff_i386_reloc (bfd *abfd,
 	  }
 	  break;
 
-	case 1:
+	case 2:
 	  {
 	    short x = bfd_get_16 (abfd, addr);
 	    DOIT (x);
@@ -170,7 +166,7 @@ coff_i386_reloc (bfd *abfd,
 	  }
 	  break;
 
-	case 2:
+	case 4:
 	  {
 	    long x = bfd_get_32 (abfd, addr);
 	    DOIT (x);
@@ -191,16 +187,18 @@ coff_i386_reloc (bfd *abfd,
 /* Return TRUE if this relocation should appear in the output .reloc
    section.  */
 
-static bfd_boolean in_reloc_p (bfd * abfd ATTRIBUTE_UNUSED,
-			       reloc_howto_type *howto)
+static bool
+in_reloc_p (bfd *abfd ATTRIBUTE_UNUSED, reloc_howto_type *howto)
 {
-  return ! howto->pc_relative && howto->type != R_IMAGEBASE
-	 && howto->type != R_SECREL32;
+  return ! howto->pc_relative
+    && howto->type != R_IMAGEBASE
+    && howto->type != R_SECREL32
+    && howto->type != R_SECTION;
 }
 #endif /* COFF_WITH_PE */
 
 #ifndef PCRELOFFSET
-#define PCRELOFFSET FALSE
+#define PCRELOFFSET false
 #endif
 
 static reloc_howto_type howto_table[] =
@@ -213,50 +211,64 @@ static reloc_howto_type howto_table[] =
   EMPTY_HOWTO (5),
   HOWTO (R_DIR32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "dir32",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
   /* PE IMAGE_REL_I386_DIR32NB relocation (7).	*/
   HOWTO (R_IMAGEBASE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "rva32",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
   EMPTY_HOWTO (010),
   EMPTY_HOWTO (011),
-  EMPTY_HOWTO (012),
 #ifdef COFF_WITH_PE
+  /* 16-bit word section relocation (012).  */
+  HOWTO (R_SECTION,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size */
+	 16,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 coff_i386_reloc,	/* special_function */
+	 "secidx",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 true),			/* pcrel_offset */
   /* 32-bit longword section relative relocation (013).  */
   HOWTO (R_SECREL32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "secrel32",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 #else
+  EMPTY_HOWTO (012),
   EMPTY_HOWTO (013),
 #endif
   EMPTY_HOWTO (014),
@@ -265,84 +277,84 @@ static reloc_howto_type howto_table[] =
   /* Byte relocation (017).  */
   HOWTO (R_RELBYTE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "8",			/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x000000ff,		/* src_mask */
 	 0x000000ff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
   /* 16-bit word relocation (020).  */
   HOWTO (R_RELWORD,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "16",			/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
   /* 32-bit longword relocation (021).	*/
   HOWTO (R_RELLONG,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "32",			/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
   /* Byte PC relative relocation (022).	 */
   HOWTO (R_PCRBYTE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "DISP8",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x000000ff,		/* src_mask */
 	 0x000000ff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
   /* 16-bit word PC relative relocation (023).	*/
   HOWTO (R_PCRWORD,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "DISP16",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0x0000ffff,		/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 PCRELOFFSET),		/* pcrel_offset */
   /* 32-bit longword PC relative relocation (024).  */
   HOWTO (R_PCRLONG,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 coff_i386_reloc,	/* special_function */
 	 "DISP32",		/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 PCRELOFFSET)		/* pcrel_offset */
@@ -411,11 +423,11 @@ static reloc_howto_type howto_table[] =
 
 #else /* COFF_WITH_PE */
 
-/* The PE relocate section routine.  The only difference between this
-   and the regular routine is that we don't want to do anything for a
-   relocatable link.  */
+/* The PE relocate section routine.  We handle secidx relocations here,
+   as well as making sure that we don't do anything for a relocatable
+   link.  */
 
-static bfd_boolean
+static bool
 coff_pe_i386_relocate_section (bfd *output_bfd,
 			       struct bfd_link_info *info,
 			       bfd *input_bfd,
@@ -425,8 +437,77 @@ coff_pe_i386_relocate_section (bfd *output_bfd,
 			       struct internal_syment *syms,
 			       asection **sections)
 {
+  struct internal_reloc *rel;
+  struct internal_reloc *relend;
+
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
+
+  rel = relocs;
+  relend = rel + input_section->reloc_count;
+
+  for (; rel < relend; rel++)
+    {
+      long symndx;
+      struct coff_link_hash_entry *h;
+      asection *sec, *s;
+      uint16_t idx = 0, i = 1;
+
+      if (rel->r_type != R_SECTION)
+	continue;
+
+      /* Make sure that _bfd_coff_generic_relocate_section won't parse
+         this reloc after us.  */
+      rel->r_type = 0;
+
+      symndx = rel->r_symndx;
+
+      if (symndx < 0
+	  || (unsigned long) symndx >= obj_raw_syment_count (input_bfd))
+	continue;
+
+      h = obj_coff_sym_hashes (input_bfd)[symndx];
+
+      if (h == NULL)
+	sec = sections[symndx];
+      else
+	{
+	  if (h->root.type == bfd_link_hash_defined
+	      || h->root.type == bfd_link_hash_defweak)
+	    {
+	      /* Defined weak symbols are a GNU extension.  */
+	      sec = h->root.u.def.section;
+	    }
+	  else
+	    {
+	      sec = NULL;
+	    }
+	}
+
+      if (!sec)
+	continue;
+
+      if (bfd_is_abs_section (sec))
+	continue;
+
+      if (discarded_section (sec))
+	continue;
+
+      s = output_bfd->sections;
+      while (s)
+	{
+	  if (s == sec->output_section)
+	    {
+	      idx = i;
+	      break;
+	    }
+
+	  i++;
+	  s = s->next;
+	}
+
+      bfd_putl16 (idx, contents + rel->r_vaddr - input_section->vma);
+    }
 
   return _bfd_coff_generic_relocate_section (output_bfd, info, input_bfd,
 					     input_section, contents,
@@ -577,6 +658,8 @@ coff_i386_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 #ifdef COFF_WITH_PE
     case BFD_RELOC_32_SECREL:
       return howto_table + R_SECREL32;
+    case BFD_RELOC_16_SECIDX:
+      return howto_table + R_SECTION;
 #endif
     default:
       BFD_FAIL ();
@@ -606,11 +689,11 @@ coff_i386_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    a leading dot for local labels, so if TARGET_UNDERSCORE is defined
    we treat all symbols starting with L as local.  */
 
-static bfd_boolean
+static bool
 coff_i386_is_local_label_name (bfd *abfd, const char *name)
 {
   if (name[0] == 'L')
-    return TRUE;
+    return true;
 
   return _bfd_coff_is_local_label_name (abfd, name);
 }
@@ -655,6 +738,7 @@ const bfd_target
   '/',				/* ar_pad_char */
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
 
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
@@ -663,23 +747,21 @@ const bfd_target
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
+#ifndef COFF_CHECK_FORMAT
+#define COFF_CHECK_FORMAT coff_object_p
+#endif
+#ifndef COFF_WRITE_CONTENTS
+#define COFF_WRITE_CONTENTS coff_write_object_contents
+#endif
+
 /* Note that we allow an object file to be treated as a core file as well.  */
 
-#ifdef COFF_CHECK_FORMAT
   {				/* bfd_check_format */
     _bfd_dummy_target,
     COFF_CHECK_FORMAT,
     bfd_generic_archive_p,
     COFF_CHECK_FORMAT
   },
-#else
-  {
-    _bfd_dummy_target,
-    coff_object_p,
-    bfd_generic_archive_p,
-    coff_object_p
-  },
-#endif
   {				/* bfd_set_format */
     _bfd_bool_bfd_false_error,
     coff_mkobject,
@@ -688,7 +770,7 @@ const bfd_target
   },
   {				/* bfd_write_contents */
     _bfd_bool_bfd_false_error,
-    coff_write_object_contents,
+    COFF_WRITE_CONTENTS,
     _bfd_write_archive_contents,
     _bfd_bool_bfd_false_error
   },
@@ -707,3 +789,76 @@ const bfd_target
 
   COFF_SWAP_TABLE
 };
+
+#ifdef COFF_WITH_PE_BIGOBJ
+const bfd_target
+  TARGET_SYM_BIG =
+{
+  TARGET_NAME_BIG,
+  bfd_target_coff_flavour,
+  BFD_ENDIAN_LITTLE,		/* data byte order is little */
+  BFD_ENDIAN_LITTLE,		/* header byte order is little */
+
+  (HAS_RELOC | EXEC_P |		/* object flags */
+   HAS_LINENO | HAS_DEBUG |
+   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS ),
+
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
+#ifdef COFF_WITH_PE
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
+#endif
+   | SEC_CODE | SEC_DATA | SEC_EXCLUDE ),
+
+#ifdef TARGET_UNDERSCORE
+  TARGET_UNDERSCORE,		/* leading underscore */
+#else
+  0,				/* leading underscore */
+#endif
+  '/',				/* ar_pad_char */
+  15,				/* ar_max_namelen */
+  0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
+
+/* Note that we allow an object file to be treated as a core file as well.  */
+
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    COFF_CHECK_FORMAT,
+    bfd_generic_archive_p,
+    COFF_CHECK_FORMAT
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    COFF_WRITE_CONTENTS,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
+
+  BFD_JUMP_TABLE_GENERIC (coff),
+  BFD_JUMP_TABLE_COPY (coff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
+  BFD_JUMP_TABLE_SYMBOLS (coff),
+  BFD_JUMP_TABLE_RELOCS (coff),
+  BFD_JUMP_TABLE_WRITE (coff),
+  BFD_JUMP_TABLE_LINK (coff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+
+  NULL,
+
+  &bigobj_swap_table
+};
+#endif

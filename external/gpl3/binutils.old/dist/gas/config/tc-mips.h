@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -149,7 +149,7 @@ extern int mips_force_relocation (struct fix *);
    || mips_force_relocation (FIX))
 
 #define TC_FORCE_RELOCATION_ABS(FIX) mips_force_relocation_abs (FIX)
-extern bfd_boolean mips_force_relocation_abs (struct fix *);
+extern bool mips_force_relocation_abs (struct fix *);
 
 /* Register mask variables.  These are set by the MIPS assembly code
    and used by ECOFF and possibly other object file formats.  */

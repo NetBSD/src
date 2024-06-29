@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for binutils
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,50 +20,21 @@
 #ifndef _BIN_SYSDEP_H
 #define _BIN_SYSDEP_H
 
-#include "alloca-conf.h"
-#include "ansidecl.h"
+#include "config.h"
 #include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-
-#include "bfdver.h"
-
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
-
-#ifdef USE_BINARY_FOPEN
-#include "fopen-bin.h"
-#else
-#include "fopen-same.h"
-#endif
-
 #include <errno.h>
-#ifndef errno
-extern int errno;
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#ifdef STRING_WITH_STRINGS
-#include <string.h>
-#include <strings.h>
-#else
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#else
-extern char *strchr ();
-extern char *strrchr ();
-#endif
-#endif
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #else
@@ -72,8 +43,13 @@ extern char *strrchr ();
 #endif
 #endif
 
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#include "ansidecl.h"
+#include "bfdver.h"
+
+#ifdef USE_BINARY_FOPEN
+#include "fopen-bin.h"
+#else
+#include "fopen-same.h"
 #endif
 
 #include "binary-io.h"
@@ -82,38 +58,14 @@ extern char *strrchr ();
 extern char *stpcpy (char *, const char *);
 #endif
 
-#if !HAVE_DECL_STRSTR
-extern char *strstr ();
-#endif
-
 #ifdef HAVE_SBRK
 #if !HAVE_DECL_SBRK
 extern char *sbrk ();
 #endif
 #endif
 
-#if !HAVE_DECL_GETENV
-extern char *getenv ();
-#endif
-
 #if !HAVE_DECL_ENVIRON
 extern char **environ;
-#endif
-
-#if !HAVE_DECL_FPRINTF
-extern int fprintf (FILE *, const char *, ...);
-#endif
-
-#if !HAVE_DECL_SNPRINTF
-extern int snprintf(char *, size_t, const char *, ...);
-#endif
-
-#if !HAVE_DECL_VSNPRINTF
-extern int vsnprintf(char *, size_t, const char *, va_list);
-#endif
-
-#if !HAVE_DECL_STRNLEN
-size_t strnlen (const char *, size_t);
 #endif
 
 #ifndef O_RDONLY
@@ -134,18 +86,16 @@ size_t strnlen (const char *, size_t);
 #define SEEK_END 2
 #endif
 
-#ifdef HAVE_LOCALE_H
-# ifndef ENABLE_NLS
-   /* The Solaris version of locale.h always includes libintl.h.  If we have
-      been configured with --disable-nls then ENABLE_NLS will not be defined
-      and the dummy definitions of bindtextdomain (et al) below will conflict
-      with the defintions in libintl.h.  So we define these values to prevent
-      the bogus inclusion of libintl.h.  */
-#  define _LIBINTL_H
-#  define _LIBGETTEXT_H
-# endif
-# include <locale.h>
+#ifndef ENABLE_NLS
+  /* The Solaris version of locale.h always includes libintl.h.  If we have
+     been configured with --disable-nls then ENABLE_NLS will not be defined
+     and the dummy definitions of bindtextdomain (et al) below will conflict
+     with the defintions in libintl.h.  So we define these values to prevent
+     the bogus inclusion of libintl.h.  */
+# define _LIBINTL_H
+# define _LIBGETTEXT_H
 #endif
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 # include <libintl.h>
@@ -174,31 +124,16 @@ size_t strnlen (const char *, size_t);
 /* Used by ar.c and objcopy.c.  */
 #define BUFSIZE 8192
 
-/* For PATH_MAX.  */
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
-#ifndef PATH_MAX
-/* For MAXPATHLEN.  */
-# ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
-# endif
-# ifndef PATH_MAX
-#  ifdef MAXPATHLEN
-#   define PATH_MAX MAXPATHLEN
-#  else
-#   define PATH_MAX 1024
-#  endif
-# endif
-#endif
-
-#if defined HAVE_LONG_LONG && SIZEOF_LONG_LONG > SIZEOF_LONG
+#if SIZEOF_LONG_LONG > SIZEOF_LONG
 /* We can't use any bfd types here since readelf may define BFD64 and
    objdump may not.  */
 #define HOST_WIDEST_INT	long long
 #else
 #define HOST_WIDEST_INT long
 #endif
+
+#define POISON_BFD_BOOLEAN 1
 
 #endif /* _BIN_SYSDEP_H */

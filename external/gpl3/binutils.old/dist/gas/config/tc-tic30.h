@@ -1,5 +1,5 @@
 /* tc-tic30.h -- Header file for tc-tic30.c
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of GAS, the GNU Assembler.
@@ -23,10 +23,6 @@
 #define _TC_TIC30_H_
 
 #define TC_TIC30 1
-
-#ifdef OBJ_AOUT
-#define TARGET_FORMAT "a.out-tic30"
-#endif
 
 #define TARGET_ARCH		bfd_arch_tic30
 #define TARGET_BYTES_BIG_ENDIAN	1

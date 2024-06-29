@@ -1,5 +1,5 @@
 /* Disassemble from a buffer, for GNU.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -87,20 +87,20 @@ generic_print_address (bfd_vma addr, struct disassemble_info *info)
   (*info->fprintf_func) (info->stream, "0x%s", buf);
 }
 
-/* Just return true.  */
+/* Just return NULL.  */
 
-int
+asymbol *
 generic_symbol_at_address (bfd_vma addr ATTRIBUTE_UNUSED,
 			   struct disassemble_info *info ATTRIBUTE_UNUSED)
 {
-  return 1;
+  return NULL;
 }
 
 /* Just return TRUE.  */
 
-bfd_boolean
+bool
 generic_symbol_is_valid (asymbol * sym ATTRIBUTE_UNUSED,
 			 struct disassemble_info *info ATTRIBUTE_UNUSED)
 {
-  return TRUE;
+  return true;
 }

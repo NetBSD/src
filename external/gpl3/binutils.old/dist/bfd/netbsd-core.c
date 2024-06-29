@@ -1,5 +1,5 @@
 /* BFD back end for NetBSD style core files
-   Copyright (C) 1988-2020 Free Software Foundation, Inc.
+   Copyright (C) 1988-2022 Free Software Foundation, Inc.
    Written by Paul Kranenburg, EUR
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -51,7 +51,7 @@ struct netbsd_core_struct
 
 /* Handle NetBSD-style core dump file.  */
 
-static const bfd_target *
+static bfd_cleanup
 netbsd_core_file_p (bfd *abfd)
 {
   int val;
@@ -60,7 +60,7 @@ netbsd_core_file_p (bfd *abfd)
   asection *asect;
   struct core core;
   struct coreseg coreseg;
-  bfd_size_type amt = sizeof core;
+  size_t amt = sizeof core;
 
   val = bfd_bread (&core, amt, abfd);
   if (val != sizeof core)
@@ -222,7 +222,7 @@ netbsd_core_file_p (bfd *abfd)
     }
 
   /* OK, we believe you.  You're a core file (sure, sure).  */
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  punt:
   bfd_release (abfd, abfd->tdata.any);
@@ -257,9 +257,9 @@ swap_abort (void)
 #define	NO_GET ((bfd_vma (*) (const void *)) swap_abort)
 #define	NO_PUT ((void (*) (bfd_vma, void *)) swap_abort)
 #define	NO_GETS ((bfd_signed_vma (*) (const void *)) swap_abort)
-#define	NO_GET64 ((bfd_uint64_t (*) (const void *)) swap_abort)
-#define	NO_PUT64 ((void (*) (bfd_uint64_t, void *)) swap_abort)
-#define	NO_GETS64 ((bfd_int64_t (*) (const void *)) swap_abort)
+#define	NO_GET64 ((uint64_t (*) (const void *)) swap_abort)
+#define	NO_PUT64 ((void (*) (uint64_t, void *)) swap_abort)
+#define	NO_GETS64 ((int64_t (*) (const void *)) swap_abort)
 
 const bfd_target core_netbsd_vec =
   {
@@ -276,6 +276,7 @@ const bfd_target core_netbsd_vec =
     ' ',			/* ar_pad_char.  */
     16,				/* ar_max_namelen.  */
     0,				/* Match priority.  */
+    TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data.  */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data.  */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data.  */

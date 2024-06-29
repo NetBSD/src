@@ -1,5 +1,5 @@
 /* tc-mn10300.h -- Header file for tc-mn10300.c.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,7 +26,7 @@
 #define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
 
 #define TC_FORCE_RELOCATION(FIX) mn10300_force_relocation (FIX)
-extern bfd_boolean mn10300_force_relocation (struct fix *);
+extern bool mn10300_force_relocation (struct fix *);
 
 /* tc-mn10300.c uses TC_FORCE_RELOCATION_LOCAL, a macro that should
    only appear in write.c.  The use is likely incorrect.  Duplicating
@@ -107,7 +107,7 @@ void mn10300_cons_fix_new (fragS *, int, int, expressionS *,
 #define md_number_to_chars number_to_chars_littleendian
 
 #define tc_fix_adjustable(FIX) mn10300_fix_adjustable (FIX)
-extern bfd_boolean mn10300_fix_adjustable (struct fix *);
+extern bool mn10300_fix_adjustable (struct fix *);
 
 /* We do relaxing in the assembler as well as the linker.  */
 extern const struct relax_type md_relax_table[];
@@ -118,12 +118,12 @@ extern const struct relax_type md_relax_table[];
 /* The difference between same-section symbols may be affected by linker
    relaxation, so do not resolve such expressions in the assembler.  */
 #define md_allow_local_subtract(l,r,s) mn10300_allow_local_subtract (l, r, s)
-extern bfd_boolean mn10300_allow_local_subtract (expressionS *, expressionS *, segT);
+extern bool mn10300_allow_local_subtract (expressionS *, expressionS *, segT);
 
 #define RELOC_EXPANSION_POSSIBLE
 #define MAX_RELOC_EXPANSION 2
 
-#define TC_FRAG_TYPE bfd_boolean
+#define TC_FRAG_TYPE bool
 
 #define HANDLE_ALIGN(frag) mn10300_handle_align (frag)
 extern void mn10300_handle_align (fragS *);

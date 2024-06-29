@@ -1,5 +1,5 @@
 /* NFP-specific support for 64-bit ELF
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,128 +40,41 @@ elf64_nfp_reloc (bfd * abfd ATTRIBUTE_UNUSED,
    names.
    Most of these are mainly used by the NFP toolchain to resolve things
    before the final ELF file is created.  */
+#define NFP_HOWTO(type) \
+  HOWTO (type, 0, 0, 0, false, 0, complain_overflow_dont, elf64_nfp_reloc, \
+	 #type, false, 0, 0, false)
 static reloc_howto_type elf_nfp_howto_table[] =
 {
-  HOWTO (R_NFP_NOTYPE,		/* Type.  */
-	 0,			/* Rightshift.  */
-	 3,			/* Size.  */
-	 0,			/* Bitsize.  */
-	 FALSE,			/* PC_relative.  */
-	 0,			/* Bitpos.  */
-	 complain_overflow_dont,/* Complain_on_overflow.  */
-	 elf64_nfp_reloc,	/* Special_function.  */
-	 "R_NFP_NOTYPE",	/* Name.  */
-	 FALSE,			/* Partial_inplace.  */
-	 0,			/* Src_mask.  */
-	 0,			/* Dst_mask.  */
-	 FALSE),		/* PCrel_offset.  */
-  HOWTO (R_NFP_W32LE, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32LE",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC8_A, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC8_A",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC8_B, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC8_B",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_IMMED8_I, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_IMMED8_I",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SC, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SC",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_IMMED_LO16_I_A, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_IMMED_LO16_I_A",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_IMMED_LO16_I_B, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_IMMED_LO16_I_B",
-	 TRUE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC7_B, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC7_B",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC7_A, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC7_A",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC8_I_B, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC8_I_B",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SRC8_I_A, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SRC8_I_A",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_IMMED_HI16_I_A, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_IMMED_HI16_I_A",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_IMMED_HI16_I_B, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_IMMED_HI16_I_B",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64LE, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64LE",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_SH_INFO, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_SH_INFO",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32BE, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32BE",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64BE, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64BE",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32_29_24, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32_29_24",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32LE_AND, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32LE_AND",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32BE_AND, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32BE_AND",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32LE_OR, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32LE_OR",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W32BE_OR, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W32BE_OR",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64LE_AND, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64LE_AND",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64BE_AND, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64BE_AND",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64LE_OR, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64LE_OR",
-	 FALSE, 0, 0, FALSE),
-  HOWTO (R_NFP_W64BE_OR, 0, 3, 0, FALSE, 0,
-	 complain_overflow_dont, elf64_nfp_reloc,
-	 "R_NFP_W64BE_OR",
-	 FALSE, 0, 0, FALSE)
+  NFP_HOWTO (R_NFP_NOTYPE),
+  NFP_HOWTO (R_NFP_W32LE),
+  NFP_HOWTO (R_NFP_SRC8_A),
+  NFP_HOWTO (R_NFP_SRC8_B),
+  NFP_HOWTO (R_NFP_IMMED8_I),
+  NFP_HOWTO (R_NFP_SC),
+  NFP_HOWTO (R_NFP_IMMED_LO16_I_A),
+  NFP_HOWTO (R_NFP_IMMED_LO16_I_B),
+  NFP_HOWTO (R_NFP_SRC7_B),
+  NFP_HOWTO (R_NFP_SRC7_A),
+  NFP_HOWTO (R_NFP_SRC8_I_B),
+  NFP_HOWTO (R_NFP_SRC8_I_A),
+  NFP_HOWTO (R_NFP_IMMED_HI16_I_A),
+  NFP_HOWTO (R_NFP_IMMED_HI16_I_B),
+  NFP_HOWTO (R_NFP_W64LE),
+  NFP_HOWTO (R_NFP_SH_INFO),
+  NFP_HOWTO (R_NFP_W32BE),
+  NFP_HOWTO (R_NFP_W64BE),
+  NFP_HOWTO (R_NFP_W32_29_24),
+  NFP_HOWTO (R_NFP_W32LE_AND),
+  NFP_HOWTO (R_NFP_W32BE_AND),
+  NFP_HOWTO (R_NFP_W32LE_OR),
+  NFP_HOWTO (R_NFP_W32BE_OR),
+  NFP_HOWTO (R_NFP_W64LE_AND),
+  NFP_HOWTO (R_NFP_W64BE_AND),
+  NFP_HOWTO (R_NFP_W64LE_OR),
+  NFP_HOWTO (R_NFP_W64BE_OR)
 };
 
-static bfd_boolean
+static bool
 elf64_nfp_object_p (bfd * abfd)
 {
   /* If the e_machine value is one of the unofficial ones, we convert
@@ -188,16 +101,16 @@ elf64_nfp_object_p (bfd * abfd)
 	case E_NFP_MACH_3200:
 	case E_NFP_MACH_6000:
 	  if (!bfd_default_set_arch_mach (abfd, bfd_arch_nfp, e_mach))
-	    return FALSE;
+	    return false;
 	default:
 	  break;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf64_nfp_section_from_shdr (bfd * abfd,
 			     Elf_Internal_Shdr * hdr,
 			     const char *name, int shindex)
@@ -209,7 +122,7 @@ elf64_nfp_section_from_shdr (bfd * abfd,
     case SHT_NFP_UDEBUG:
       return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
     default:
-      return FALSE;
+      return false;
     }
 }
 
@@ -225,7 +138,7 @@ elf64_nfp_reloc (bfd * abfd ATTRIBUTE_UNUSED,
   return bfd_reloc_ok;
 }
 
-static bfd_boolean
+static bool
 elf64_nfp_info_to_howto (bfd * abfd ATTRIBUTE_UNUSED,
 			 arelent * cache_ptr, Elf_Internal_Rela * dst)
 {
@@ -238,10 +151,10 @@ elf64_nfp_info_to_howto (bfd * abfd ATTRIBUTE_UNUSED,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = &elf_nfp_howto_table[r_type];
-  return TRUE;
+  return true;
 }
 
 static reloc_howto_type *

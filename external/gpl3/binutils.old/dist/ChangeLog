@@ -1,3 +1,827 @@
+2022-07-08  Nick Clifton  <nickc@redhat.com>
+
+	* 2.39 branch created.
+
+2022-07-04  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Synchronize with GCC.  Bring in:
+	2022-07-01  Nick Clifton  <nickc@redhat.com>
+
+	PR demangler/105039
+	* rust-demangle.c (demangle_const): Add recursion limit.
+
+	2022-06-26  Simon Marchi  <simon.marchi@efficios.com>
+
+	* configure.ac: Add AC_CONFIG_MACRO_DIRS call.
+	* configure: Re-generate.
+
+2022-04-12  Nick Clifton  <nickc@redhat.com>
+
+	* zlib: Rebase to the 1.2.12 release.
+
+2022-04-08  Simon Marchi  <simon.marchi@efficios.com>
+
+	* configure.ac: Add AC_SUBST(PKG_CONFIG_PATH).
+	* configure: Re-generate.
+	* Makefile.tpl (HOST_EXPORTS): Pass PKG_CONFIG_PATH.
+	(PKG_CONFIG_PATH): New.
+	* Makefile.in: Re-generate.
+
+2022-03-15  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* gprofng/src/gp-collect-app.cc (collect::check_args): Use
+	fallthrough comment instead of attribute.
+
+2022-03-11  Vladimir Mezentsev  <vladimir.mezentsev@oracle.com>
+
+	* Makefile.def: Add gprofng module.
+	* configure.ac: Add --enable-gprofng option.
+	* src-release.sh: Add gprofng.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* gprofng: New directory.
+
+2022-01-22  Nick Clifton  <nickc@redhat.com>
+
+	* 2.38 release branch created.
+
+2022-01-17  Nick Clifton  <nickc@redhat.com>
+
+	Update config.[guess|sub] from upstream:
+
+	2022-01-09  Idan Horowitz  <idan.horowitz@gmail.com>
+
+	config.guess: recognize SerenityOS
+	* config.guess (*:SerenityOS:*:*): Recognize.
+	(timestamp): Update.
+
+	2022-01-03  Bernhard Voelker  <mail@bernhard-voelker.de>
+
+	Fix GPLv3 license headers to use a comma instead of semicolon
+	See: https://www.gnu.org/licenses/gpl-3.0.html#howto
+
+	Update license headers automatically using the following script:
+
+	  $ git grep -l 'Foundation; either version 3' \
+	    | xargs sed -i '/Foundation; either version 3/ s/n; e/n, e/'
+
+	* config.guess: Adjust via the above command.
+	(timestamp): Update.
+	* config.sub: Likewise.
+	* doc/config.guess.1: Regenerate.
+	* doc/config.sub.1: Likewise.
+
+	2022-01-01  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Update copyright years
+	* config.guess: Update copyright years.
+	* config.sub: Likewise.
+
+	2021-12-25  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.sub: alias armh to armv7l
+	ALT uses armh as an alias for armv7l-alt-linux-gnueabihf since 2012.
+
+	* config.sub (armh-unknown|armh-alt): Set cpu, vendor, and basic_os.
+	(timestamp): Update.
+
+	2021-12-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.sub: alias aarch64le to aarch64
+	Apparently, QNX reports aarch64 as aarch64le on little-endian machines.
+
+	* config.sub (aarch64le-*): Set cpu to aarch64.
+	(timestamp): Update.
+
+	2021-12-13  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.sub: fix typo in timestamp
+	* config.sub: Fix timestamp.
+
+	2021-11-30  Andreas F. Borchert  <github@andreas-borchert.de>
+
+	config.guess: x86_64-pc-solaris2.11 is not properly recognized
+	config.guess guesses Solaris 11 to run on a 32-bit platform
+	despite Solaris 11 no longer supporting any 32-bit platform.
+
+	See the following code at lines 434 to 445:
+
+	| SUN_ARCH=i386
+	| # If there is a compiler, see if it is configured for 64-bit objects.
+	| # Note that the Sun cc does not turn __LP64__ into 1 like gcc does.
+	| # This test works for both compilers.
+	| if test "$CC_FOR_BUILD" != no_compiler_found; then
+	|     if (echo '#ifdef __amd64'; echo IS_64BIT_ARCH; echo '#endif') | \
+	|         (CCOPTS="" $CC_FOR_BUILD -E - 2>/dev/null) | \
+	|         grep IS_64BIT_ARCH >/dev/null
+	|     then
+	|         SUN_ARCH=x86_64
+	|     fi
+	| fi
+
+	If "cc" is installed, i.e. the Oracle Studio compiler, this one is
+	chosen for $CC_FOR_BUILD.  This compiler, the gcc provided by Oracle
+	and also gcc bootstrapped from sources on that platform with a default
+	configuration will by default generate 32-bit binaries -- even on
+	a 64-bit platform.  And __amd64 will not be defined for compilations
+	targeting a 32-bit platform.  This is different from the corresponding
+	behaviour on GNU/Linux systems where the local platform is targeted by
+	default.
+
+	Thus, as long as you do not add "-m64" or if you have a custom-built
+	gcc which defaults to 64 bit, you will get 32-bit binaries on Solaris
+	despite living on a 64-bit platform.
+
+	* config.guess (i86pc:SunOS:5.*:* || i86xen:SunOS:5.*:*): Adapt the
+	test by adding the "-m64" flag.  This will work properly for Solaris
+	10 as well (the last Solaris release that supported x86 32-bit
+	platforms).
+
+	2021-10-27  Jordi Sanfeliu  <jordi@fibranet.cat>
+
+	Recognize Fiwix
+	$ make check
+	cd testsuite && bash config-guess.sh && rm uname
+	PASS: config.guess checks (137 tests)
+	cd testsuite && bash config-sub.sh
+	PASS: config.sub checks (882 tests)
+	PASS: config.sub idempotency checks (819 tests)
+	PASS: config.sub canonicalise each config.guess testcase (137 tests)
+
+	* config.guess (i*86:Fiwix:*:*): Recognize.
+	* config.sub (fiwix*): Likewise.
+
+	2021-10-18  Kinshuk Dua  <kinshukdua@gmail.com>
+
+	config.sub: Fix typo in comment
+	Fixes: 5e531d391852a54e7fab2d8ff55625fca514b305
+
+	2021-08-14  Nick Bowler  <nbowler@draconx.ca>
+
+	config.sub: work around command assignment bug in some shells
+	When combining variable assignments with a shell command, some older
+	shells (notably heirloom-sh and presumably also Solaris 10 /bin/sh)
+	have a bug which causes the assignment to alter the current execution
+	environment whenever the command is a shell built-in.  For example:
+
+	  % dash -c 'x=good; x=bad echo >/dev/null; echo $x'
+	  good
+
+	  % jsh -c 'x=good; x=bad echo >/dev/null; echo $x'
+	  bad
+
+	The config.sub script contains a few commands of the form:
+
+	  IFS=- read ...
+
+	which triggers this bug, causing the IFS assignment to persist for the
+	remainder of the script.  This can cause misbehaviour in certain cases,
+	for example:
+
+	  % jsh config.sub i386-linux-gnu
+	  config.sub: test: unknown operator gnu
+
+	  % jsh config.sub i386-gnu/linux
+	  sed: can't read s|gnu/linux|gnu|: No such file or directory
+	  Invalid configuration `i386-gnu/linux': OS `' not recognized
+
+	* config.sub: Save and restore IFS explicitly to avoid shell bugs.
+	* doc/config.sub.1: Regenerate.
+
+	2021-08-04  Jeremy Soller  <jackpot51@gmail.com>
+
+	config.sub: add Linux Relibc Target
+	$ make check
+	cd testsuite && bash config-guess.sh && rm uname
+	PASS: config.guess checks (136 tests)
+	cd testsuite && bash config-sub.sh
+	PASS: config.sub checks (881 tests)
+	PASS: config.sub idempotency checks (818 tests)
+	PASS: config.sub canonicalise each config.guess testcase (136 tests)
+
+	* config.sub (relibc*): Recognize.
+	* doc/config.sub.1: Regenerate.
+	* testsuite/config-sub.data (x86_64-linux-relibc): New test.
+
+	2021-07-06  Stephanos Ioannidis  <root@stephanos.io>
+
+	config.sub: add Zephyr RTOS support
+	This adds the Zephyr RTOS targets in preparation for implementing the
+	Zephyr RTOS-specific toolchain support.
+
+	$ make check
+	cd testsuite && bash config-guess.sh && rm uname
+	PASS: config.guess checks (136 tests)
+	cd testsuite && bash config-sub.sh
+	PASS: config.sub checks (880 tests)
+	PASS: config.sub idempotency checks (817 tests)
+	PASS: config.sub canonicalise each config.guess testcase (136 tests)
+
+	* config.sub (zephyr*): Recognize.
+	* doc/config.sub.1: Regenerate.
+	* testsuite/config-sub.data: Add testcases for *-zephyr.
+
+	2021-07-03  Ozkan Sezer  <sezero@users.sourceforge.net>
+
+	config.sub: disable shellcheck SC2006 / SC2268 warnings
+	This is in line with the recent config.guess change in commit
+	12fcf67c9108f4c4b581eaa302088782f0ee40ea
+
+	* config.sub (shellcheck disable): Add SC2006,SC2268.
+
+	Suggested-by: Jacob Bachmeyer <jcb@gnu.org>
+
+	2021-07-03  Ozkan Sezer  <sezero@users.sourceforge.net>
+
+	config.sub: normalize the quoting in the `echo FOO | sed ...`
+	Some cases quote the argument to echo and some do not.  At runtime
+	it probably does not matter because the substituted values will never
+	contain whitespace, but quoting them all would make shellcheck more
+	useful.
+
+	* config.sub: Consistently quote the argument of echo.
+	* doc/config.sub.1: Regenerate.
+
+	Suggested-by: Jacob Bachmeyer <jcb@gnu.org>
+
+	2021-07-02  Ozkan Sezer  <sezero@users.sourceforge.net>
+
+	config.sub: replace POSIX $( ) with classic ` ` throughout
+	This is in line with the recent config.guess change in commit
+	d70c4fa934de164178054c3a60aaa0024ed07c91.
+
+	The patch was generated using patch-6.gawk script introduced in that
+	commit.
+
+	* config.sub: Revert POSIX command substitutions to classic form.
+
+	2021-06-04  Vineet Gupta  <Vineet.Gupta1@synopsys.com>
+
+	Recognize arc32
+	This is the 32-bit variant of ARCv3 ISA (which is not compatible with the
+	32-bit ARCv2 ISA)
+
+	| make check
+	| cd testsuite && bash config-guess.sh && rm uname
+	| PASS: config.guess checks (136 tests)
+	| cd testsuite && bash config-sub.sh
+	| PASS: config.sub checks (864 tests)
+	| PASS: config.sub idempotency checks (801 tests)
+	| PASS: config.sub canonicalise each config.guess testcase (136 tests)
+
+	* config.guess (arc32:Linux:*:*): Recognize.
+	* config.sub (arc32): Likewise.
+
+	2021-05-27  Jacob Bachmeyer  <jcb@gnu.org>
+
+	Remove automatic patch generators
+	These tools have served their purposes and need not be kept outside of
+	the repository history any longer.  This patch as a diff also collects
+	the contents of the various tools in one convenient place.
+
+	* patch-1.gawk: Remove.
+	* patch-3.gawk: Likewise.
+	* patch-6.gawk: Likewise.
+
+	2021-05-26  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: manual fixups after previous automatic patch
+	The tool could not handle command substitutions that span lines, but
+	fortunately there were only two such substitutions in the script.
+
+	The test for which universe is active on Pyramid is rewritten into a
+	case block because it was the only use of a command substitution as an
+	argument to the test command, which would require quoting.
+
+	* config.guess: Rewrite "if" for Pyramid systems to "case".
+
+	2021-05-26  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: replace POSIX $( ) with classic ` ` throughout
+	The previous replacement of backticks with POSIX command substitutions
+	was ill-considered and illogical: this script recognizes many archaic
+	machine types that probably never had POSIX shells, therefore it needs
+	to be able to run successfully under pre-POSIX shells.
+
+	This patch was generated using the included GNU Awk program.
+
+	* config.guess: Revert POSIX command substitutions to classic form.
+	* patch-6.gawk: Store the tool that produced the automated patch.
+
+	2021-05-26  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: manual fixup after previous automated patches
+	This patch provides the special handling for the GNU system.  As these
+	were two small and unique edits, they were not included in the scripts.
+
+	This patch also cleans up other minor issues that must be addressed
+	before reverting to classic command substitutions and updates
+	"shellcheck" directives to account for changes in this script and the
+	change in "shellcheck" towards reporting individual portability issues.
+
+	2021-05-26  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: automatic fixups after previous automated patch
+	This patch was generated using the following command:
+
+	  sed -i config.guess \
+	      -e '/="[^"]\+"\(-\|$\)/s/="\([^"([:space:])]\+\)"/=\1/' \
+	      -e '/="[^"]\+"[[:alnum:]]/s/="\$\([^([:space:])]\+\)"/=${\1}/' \
+	      -e \
+	'/\$(echo[^|]\+|/s/\([^[:space:]]\)[[:space:]]*|[[:space:]]*sed/\1 | sed/g'
+
+	* config.guess: Remove unneeded quotes in other variable assignments,
+	standardize spacing for "echo ... | sed" substitutions.
+
+	2021-05-26  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: remove unneeded quotes and factor command substitutions
+	This is further cleanup and simplifies some constructs that can confuse
+	Emacs' syntax highlighting while generally reducing required quoting.
+
+	This patch was generated using the included GNU Awk program.
+
+	* config.guess: Remove unneeded variable quotes and factor out command
+	substitutions when setting GUESS.
+	* patch-3.gawk: Store the tool that produced the automated patch.
+
+	2021-05-25  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: manual fixups after previous automatic patch
+	* config.guess: Adjust a few "leftover" cases that the tool could not
+	easily recognize and fixes comment indentation in a few other special
+	cases.
+
+	2021-05-25  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: use intermediate variable with uname results
+	This will allow quoting to be significantly simplified in another
+	pass through the file.
+
+	This patch was generated using the included GNU Awk program.
+
+	* config.guess: Use GUESS variable to hold results of uname analysis.
+	* patch-1.gawk: Store the tool that produced the automated patch.
+
+	2021-05-25  Jacob Bachmeyer  <jcb@gnu.org>
+
+	config.guess: introduce intermediate variable with uname results
+	This will allow quoting to be significantly simplified in another
+	pass through the file.
+
+	* config.guess: Introduce GUESS variable to hold results of uname analysis.
+
+	2021-05-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.guess: fix shellcheck warning SC2154
+	While, according to Plan 9 documentation, the environment variable
+	$cputype is set to the name of the kernel's CPU's architecture,
+	shellcheck warns that cputype is referenced but not assigned.
+	Be on the safe side and do not use cputype if it is not defined
+	or empty.
+
+	* config.guess (*:Plan9:*:*): Fix shellcheck warning SC2154.
+
+	2021-05-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.guess: remove redundant quotes in case commands
+	According to the GNU Autoconf Portable Shell Programming manual,
+	the Bourne shell does not systematically split variables and back-quoted
+	expressions, in particular on the right-hand side of assignments and in
+	the argument of 'case'.
+
+	The change is made automatically using the following command:
+	$ sed -E -i 's/(\<case )"(\$[^"]+)"( in\>)/\1\2\3/' config.guess
+
+	* config.guess: Simplify case commands by removing quotes around the
+	argument.
+
+	Suggested-by: Jacob Bachmeyer <jcb@gnu.org>
+
+	2021-05-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	config.guess: simplify exit status workaround on alphaev67-dec-osf5.1
+	Commit 29865ea8a5622cdd80b7a69a0afa78004b4cd311 introduced an exit trap
+	reset before exiting to avoid a spurious non-zero exit status on
+	alphaev67-dec-osf5.1.  Simplify that code a bit by moving the exit trap
+	reset around.
+
+	* config.guess (alpha:OSF1:*:*): Reset exit trap earlier.
+	* doc/config.guess.1: Regenerate.
+
+2021-10-29  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb/doc/gdb.texinfo (Command Options): (Data): Document
+	'-memory-tag-violations'.  Update the example.
+
+2021-09-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* src-release.sh (GDB_SUPPPORT_DIRS): Add libbacktrace.
+
+2021-09-27  Nick Alcock  <nick.alcock@oracle.com>
+
+	PR libctf/27967
+	* libtool.m4 (LT_PATH_NM): Try BSDization flags with a user-provided
+	NM, if there is one.  Run nm on itself, not on /dev/null, to avoid
+	errors from nms that refuse to work on non-regular files.  Remove
+	other workarounds for this problem.  Strip out blank lines from the
+	nm output.
+
+2021-09-27  Nick Alcock  <nick.alcock@oracle.com>
+
+	PR libctf/27967
+	* libtool.m4 (lt_cv_sys_global_symbol_pipe): Augment symcode for
+	Solaris 11.
+
+2021-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* 2.37 release branch created.
+
+2021-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2021-06-30  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* make-temp-file.c (usrtmp): Remove.
+	(choose_tmpdir): Remove use of usrtmp.
+
+	2021-06-28  Indu Bhagat  <indu.bhagat@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Copy over .BTF section.
+
+	2021-06-28  Indu Bhagat  <indu.bhagat@oracle.com>
+	    David Faust  <david.faust@oracle.com>
+	    Jose E. Marchesi  <jose.marchesi@oracle.com>
+	    Weimin Pan  <weimin.pan@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Copy over .ctf
+	sections.
+
+	2021-06-05  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR target/100734
+	* configure.ac: Use libiberty snprintf and vsnprintf on
+	hppa*-*-hpux*.
+	* configure: Regenerate.
+
+	2021-05-06  Tom Tromey  <tom@tromey.com>
+
+	* hashtab.c (htab_eq_string): New function.
+
+	2021-05-04  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* configure.ac: Make test for variables more robust.
+	* configure: Regenerate.
+
+	2021-05-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/99703
+	* configure: Regenerated.
+
+	2021-04-21  Andreas Schwab  <schwab@linux-m68k.org>
+
+	PR demangler/100177
+	* rust-demangle.c (demangle_const_char): Properly print the
+	character value.
+
+	2021-03-31  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/88115
+	* cp-demangle.c (d_dump, d_make_comp, d_expression_1)
+	(d_count_templates_scopes): Handle DEMANGLE_COMPONENT_VENDOR_EXPR.
+	(d_print_comp_inner): Likewise.
+	<case DEMANGLE_COMPONENT_EXTENDED_OPERATOR>: Revert r11-4926
+	change.
+	<case DEMANGLE_COMPONENT_UNARY>: Likewise.
+	* testsuite/demangle-expected: Adjust __alignof__ tests.
+
+	2021-03-16  Nick Clifton  <nickc@redhat.com>
+
+	* sha1.c (sha1_process_bytes): Use memmove in place of memcpy.
+
+	2021-02-20  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (ACLOCAL, ACLOCAL_AMFLAGS, $(srcdir)/aclocal.m4): Define.
+	(configure_deps): Rename to ...
+	(aclocal_deps): ... this.  Replace aclocal.m4 with acinclude.m4.
+	($(srcdir)/configure): Replace $(configure_deps) with
+	$(srcdir)/aclocal.m4.
+	* aclocal.m4: Move libiberty macros to acinclude.m4, then regenerate.
+	* acinclude.m4: New file.
+	* configure: Regenerate.
+
+	2021-02-19  Ayush Mittal  <ayush.m@samsung.com>
+
+	* argv.c (expandargv): free allocated buffer if read fails.
+
+	2021-02-01  Martin Sebor  <msebor@redhat.com>
+
+	* dyn-string.c (dyn_string_insert_cstr): Use memcpy instead of strncpy
+	to avoid -Wstringop-truncation.
+
+2021-05-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Add gnulib to configdirs for sim.
+	* configure: Regenerate.
+
+2021-05-24  Maciej W. Rozycki  <macro@orcam.me.uk>
+
+	* MAINTAINERS: Update path to readline config.{sub,guess} files.
+
+2021-05-24  Maciej W. Rozycki  <macro@orcam.me.uk>
+
+	* config.guess: Import from upstream.
+	* config.sub: Likewise.
+
+2021-05-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.def: Add configure-sim dependency on all-gnulib.
+	* Makefile.in: Regenerated.
+
+2021-05-04  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac (AC_PROG_CC): Replace with AC_PROG_CC_C99.
+	* configure: Regenerate.
+
+2021-03-18  Nick Alcock  <nick.alcock@oracle.com>
+
+	PR libctf/27482
+	* Makefile.def: Add install-bfd dependencies for install-libctf and
+	install-ld, and install-strip-bfd dependencies for
+	install-strip-libctf and install-strip-ld; move the install-ld
+	dependency on install-libctf to join it.
+	* Makefile.in: Regenerated.
+
+2021-03-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.def: Remove all-sim dependency on configure-gdb.
+	* Makefile.in: Regenerated.
+
+2021-02-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26766
+	* Makefile.tpl (PGO_BUILD_TRAINING_FLAGS_TO_PASS): Add
+	PGO_BUILD_TRAINING=yes.
+	(PGO_BUILD_TRAINING_MFLAGS): New.
+	(all): Pass $(PGO_BUILD_TRAINING_MFLAGS) to the PGO build.
+
+2021-02-09  Alan Modra  <amodra@gmail.com>
+
+	* configure.ac: Delete arm*-*-symbianelf* entry.
+	* configure: Regenerate.
+
+2021-01-26  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def: Add install-libctf dependency to install-ld.
+	* Makefile.in: Regenerated.
+
+2021-01-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* src-release.sh (do_proto_toplev): Rewrite indentation.
+
+2021-01-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26766
+	* configure.ac:
+	* configure: Regenerated.
+
+2021-01-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/27173
+	* configure: Regenerated.
+	* libtool.m4 (_LT_CMD_OLD_ARCHIVE): Check if AR works with
+	--plugin and rc before enabling --plugin.
+
+2021-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/26766
+	* Makefile.tpl (BUILD_CFLAGS): New.
+	(CFLAGS): Append $(BUILD_CFLAGS).
+	(CXXFLAGS): Likewise.
+	(PGO_BUILD_GEN_FLAGS_TO_PASS): New.
+	(PGO_BUILD_TRAINING_CFLAGS): Likewise.
+	(PGO_BUILD_TRAINING_CXXFLAGS): Likewise.
+	(PGO_BUILD_TRAINING_FLAGS_TO_PASS): Likewise.
+	(PGO_BUILD_TRAINING_MFLAGS): Likewise.
+	(PGO_BUILD_USE_FLAGS_TO_PASS): Likewise.
+	(PGO-TRAINING-TARGETS): Likewise.
+	(PGO_BUILD_TRAINING): Likewise.
+	(all): Add '+' to the command line for recursive make.  Support
+	the PGO build.
+	* configure.ac: Add --enable-pgo-build[=lto].
+	AC_SUBST PGO_BUILD_GEN_CFLAGS, PGO_BUILD_USE_CFLAGS and
+	PGO_BUILD_LTO_CFLAGS.  Enable the PGO build in Makefile.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
+2021-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.tpl (AR): Add @AR_PLUGIN_OPTION@
+	(RANLIB): Add @RANLIB_PLUGIN_OPTION@.
+	* configure.ac: Include config/gcc-plugin.m4.
+	AC_SUBST AR_PLUGIN_OPTION and RANLIB_PLUGIN_OPTION.
+	* libtool.m4 (_LT_CMD_OLD_ARCHIVE): Pass --plugin to AR and
+	RANLIB if possible.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
+2021-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* 2.36 release branch crated.
+
+2021-01-07  Samuel Thibault  <samuel.thibault@gnu.org>
+
+	* libtool.m4: Match gnu* along with other GNU systems.
+
+2021-01-07  Alan Modra  <amodra@gmail.com>
+
+	* config.sub: Accept OS of eabi* and gnueabi*.
+
+2021-01-05  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.def (libctf): No longer no_check.  Checking depends on
+	all-ld.
+	* Makefile.in: Regenerated.
+
+2021-01-05  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2021-01-04  Martin Liska  <mliska@suse.cz>
+
+	* strverscmp.c: Convert to utf8 from iso8859.
+
+	2020-12-22  Jason Merrill  <jason@redhat.com>
+
+	PR c++/67343
+	* cp-demangle.h (struct d_info): Add unresolved_name_state.
+	* cp-demangle.c (d_prefix): Add subst parm.
+	(d_nested_name): Pass it.
+	(d_unresolved_name): Split out from...
+	(d_expression_1): ...here.
+	(d_demangle_callback): Maybe retry with old sr mangling.
+	* testsuite/demangle-expected: Add test.
+
+	2020-12-21  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_expression_1): Recognize qualified-id
+	on RHS of dt/pt.
+	* testsuite/demangle-expected: Add test.
+
+	2020-12-21  Jason Merrill  <jason@redhat.com>
+
+	* cp-demangle.c (d_unqualified_name): Clear is_expression.
+	* testsuite/demangle-expected: Add tests.
+
+	2020-11-25  Matthew Malcomson  <matthew.malcomson@arm.com>
+
+	* configure: Regenerate.
+	* configure.ac: Avoid using sanitizer.
+
+	2020-11-13  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* rust-demangle.c (struct rust_demangler): Add
+	skipping_printing and bound_lifetime_depth fields.
+	(eat): Add (v0-only).
+	(parse_integer_62): Add (v0-only).
+	(parse_opt_integer_62): Add (v0-only).
+	(parse_disambiguator): Add (v0-only).
+	(struct rust_mangled_ident): Add punycode{,_len} fields.
+	(parse_ident): Support v0 identifiers.
+	(print_str): Respect skipping_printing.
+	(print_uint64): Add (v0-only).
+	(print_uint64_hex): Add (v0-only).
+	(print_ident): Respect skipping_printing,
+	Support v0 identifiers.
+	(print_lifetime_from_index): Add (v0-only).
+	(demangle_binder): Add (v0-only).
+	(demangle_path): Add (v0-only).
+	(demangle_generic_arg): Add (v0-only).
+	(demangle_type): Add (v0-only).
+	(demangle_path_maybe_open_generics): Add (v0-only).
+	(demangle_dyn_trait): Add (v0-only).
+	(demangle_const): Add (v0-only).
+	(demangle_const_uint): Add (v0-only).
+	(basic_type): Add (v0-only).
+	(rust_demangle_callback): Support v0 symbols.
+	* testsuite/rust-demangle-expected: Add v0 testcases.
+
+	2020-11-13  Seija Kijin  <doremylover456@gmail.com>
+
+	* strstr.c (strstr): Make implementation ANSI/POSIX compliant.
+
+	2020-11-11  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/88115
+	* cp-demangle.c (d_print_comp_inner)
+	<case DEMANGLE_COMPONENT_EXTENDED_OPERATOR>: Don't print the
+	"operator " prefix for __alignof__.
+	<case DEMANGLE_COMPONENT_UNARY>: Always print parens around the
+	operand of __alignof__.
+	* testsuite/demangle-expected: Test demangling for __alignof__.
+
+	2020-11-09  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* pex-win32.c (pex_win32_exec_child): Initialize orig_err.
+
+	2020-10-06  Martin Liska  <mliska@suse.cz>
+
+	PR lto/97290
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Use sh_link of a .symtab_shndx section.
+
+2021-01-05  Alan Modra  <amodra@gmail.com>
+
+	* config.guess: Import from upstream.
+	* config.sub: Likewise.
+
+2020-12-16  Martin Liska  <mliska@suse.cz>
+	    Tom de Vries  <tdevries@suse.de>
+
+	* gdb/debuginfod-support.c (struct user_data): Remove has_printed
+	field.  Add meter field.
+	(progressfn): Print progress using meter.
+
+2020-12-02  Enze Li  <lienze2010@hotmail.com>
+
+	* .gitignore: Add gnu global outputs.
+
+2020-12-02  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* .gitignore: Sync with gcc.
+
+2020-10-26  Andreas Rammhold <andreas@rammhold.de>
+
+	* src-release.sh: Use sha256sum instead of md5sum.
+
+2020-10-14  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* Makefile.in: Rebuild.
+	* Makefile.def: Make distclean-gnulib depend on distclean-gdb and
+	distclean-gdbserver.
+
+2020-07-24  Aaron Merey  <amerey@redhat.com>
+
+	* configure: Rebuild.
+	* configure.ac: Remove AC_DEBUGINFOD.
+
+2020-07-04  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.35 branch created.
+
+2020-04-21  Stephen Casner  <casner@acm.org>
+
+	PR 25830
+	* configure.ac (noconfigdirs): Exclude gdb & gprof for pdp11.
+	* configure: Rebuild.
+
+2020-03-12  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in: Rebuild.
+	* Makefile.def (gdbserver): Depend on gdbsupport.
+
+2020-03-12  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in: Rebuild.
+	* Makefile.def (gdbsupport): Don't depend on bfd.
+
+2020-03-12  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in: Rebuild.
+	* Makefile.def (gdbsupport): Depend on intl.
+
+2020-02-17  Tom Tromey  <tom@tromey.com>
+
+	* configure: Rebuild.
+	* configure.ac (configdirs): Add gnulib and gdbsupport when building
+	gdbserver.
+
+2020-02-14  Tom Tromey  <tom@tromey.com>
+
+	* Makefile.in: Rebuild.
+	* Makefile.def: Make gdbserver require gnulib and libiberty.
+
+2020-02-07  Tom Tromey  <tom@tromey.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add gdbserver.
+	* gdbserver: New directory, moved from gdb/gdbserver.
+	* configure.ac (host_tools): Add gdbserver.
+	Only build gdbserver on certain systems.
+	* Makefile.in, configure: Rebuild.
+	* Makefile.def (host_modules, dependencies): Add gdbserver.
+	* MAINTAINERS: Add gdbserver.
+
+2020-01-28  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* src-release.sh (getver): Look for gdbsupport's
+	create-version.sh script at the current directory if tool is
+	"gdb".
+
+2020-01-19  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* remote-sim.c (gdbsim_target::wait): Return
+	sim_data->remote_sim_ptid instead of inferior_ptid.
+
 2020-01-18  Nick Clifton  <nickc@redhat.com>
 
 	Binutils 2.34 branch created.

@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,8 +21,6 @@
 #ifndef LD_H
 #define LD_H
 
-#ifdef HAVE_LOCALE_H
-#endif
 #ifndef SEEK_CUR
 #define SEEK_CUR 1
 #endif
@@ -30,18 +28,16 @@
 #define SEEK_END 2
 #endif
 
-#ifdef HAVE_LOCALE_H
-# ifndef ENABLE_NLS
-   /* The Solaris version of locale.h always includes libintl.h.  If we have
-      been configured with --disable-nls then ENABLE_NLS will not be defined
-      and the dummy definitions of bindtextdomain (et al) below will conflict
-      with the defintions in libintl.h.  So we define these values to prevent
-      the bogus inclusion of libintl.h.  */
-#  define _LIBINTL_H
-#  define _LIBGETTEXT_H
-# endif
-# include <locale.h>
+#ifndef ENABLE_NLS
+  /* The Solaris version of locale.h always includes libintl.h.  If we have
+     been configured with --disable-nls then ENABLE_NLS will not be defined
+     and the dummy definitions of bindtextdomain (et al) below will conflict
+     with the defintions in libintl.h.  So we define these values to prevent
+     the bogus inclusion of libintl.h.  */
+# define _LIBINTL_H
+# define _LIBGETTEXT_H
 #endif
+#include <locale.h>
 
 #ifdef ENABLE_NLS
 # include <libintl.h>
@@ -122,25 +118,25 @@ enum endian_enum { ENDIAN_UNSET = 0, ENDIAN_BIG, ENDIAN_LITTLE };
 typedef struct
 {
   /* 1 => assign space to common symbols even if `relocatable_output'.  */
-  bfd_boolean force_common_definition;
+  bool force_common_definition;
 
   /* If TRUE, build MIPS embedded PIC relocation tables in the output
      file.  */
-  bfd_boolean embedded_relocs;
+  bool embedded_relocs;
 
   /* If TRUE, force generation of a file with a .exe file.  */
-  bfd_boolean force_exe_suffix;
+  bool force_exe_suffix;
 
   /* If TRUE, generate a cross reference report.  */
-  bfd_boolean cref;
+  bool cref;
 
   /* If TRUE (which is the default), warn about mismatched input
      files.  */
-  bfd_boolean warn_mismatch;
+  bool warn_mismatch;
 
   /* Warn on attempting to open an incompatible library during a library
      search.  */
-  bfd_boolean warn_search_mismatch;
+  bool warn_search_mismatch;
 
   /* If non-zero check section addresses, once computed,
      for overlaps.  Relocatable links only check when this is > 0.  */
@@ -150,21 +146,21 @@ typedef struct
      assuming that the user knows what they are doing.  This was the old
      behaviour of the linker.  The new default behaviour is to reject such
      input files.  */
-  bfd_boolean accept_unknown_input_arch;
+  bool accept_unknown_input_arch;
 
   /* Name of the import library to generate.  */
   char *out_implib_filename;
 
   /* If TRUE we'll just print the default output on stdout.  */
-  bfd_boolean print_output_format;
+  bool print_output_format;
 
   /* If set, display the target memory usage (per memory region).  */
-  bfd_boolean print_memory_usage;
+  bool print_memory_usage;
 
   /* Should we force section groups to be resolved?  Controlled with
      --force-group-allocation on the command line or FORCE_GROUP_ALLOCATION
      in the linker script.  */
-  bfd_boolean force_group_allocation;
+  bool force_group_allocation;
 
   /* Big or little endian as set on command line.  */
   enum endian_enum endian;
@@ -224,61 +220,61 @@ enum orphan_handling_enum
 
 typedef struct
 {
-  bfd_boolean magic_demand_paged;
-  bfd_boolean make_executable;
+  bool magic_demand_paged;
+  bool make_executable;
 
   /* If TRUE, -shared is supported.  */
   /* ??? A better way to do this is perhaps to define this in the
      ld_emulation_xfer_struct since this is really a target dependent
      parameter.  */
-  bfd_boolean has_shared;
+  bool has_shared;
 
   /* If TRUE, build constructors.  */
-  bfd_boolean build_constructors;
+  bool build_constructors;
 
   /* If TRUE, warn about any constructors.  */
-  bfd_boolean warn_constructors;
+  bool warn_constructors;
 
   /* If TRUE, warn about merging common symbols with others.  */
-  bfd_boolean warn_common;
+  bool warn_common;
 
   /* If TRUE, only warn once about a particular undefined symbol.  */
-  bfd_boolean warn_once;
+  bool warn_once;
 
   /* How should we deal with orphan sections.  */
   enum orphan_handling_enum orphan_handling;
 
   /* If TRUE, warn if multiple global-pointers are needed (Alpha
      only).  */
-  bfd_boolean warn_multiple_gp;
+  bool warn_multiple_gp;
 
   /* If TRUE, warn if the starting address of an output section
      changes due to the alignment of an input section.  */
-  bfd_boolean warn_section_align;
+  bool warn_section_align;
 
   /* If TRUE, warning messages are fatal */
-  bfd_boolean fatal_warnings;
+  bool fatal_warnings;
 
   sort_order sort_common;
 
-  bfd_boolean text_read_only;
+  bool text_read_only;
 
-  bfd_boolean stats;
+  bool stats;
 
   /* If set, orphan input sections will be mapped to separate output
      sections.  */
-  bfd_boolean unique_orphan_sections;
+  bool unique_orphan_sections;
 
   /* If set, only search library directories explicitly selected
      on the command line.  */
-  bfd_boolean only_cmd_line_lib_dirs;
+  bool only_cmd_line_lib_dirs;
 
   /* If set, numbers and absolute symbols are simply treated as
      numbers everywhere.  */
-  bfd_boolean sane_expr;
+  bool sane_expr;
 
   /* If set, code and non-code sections should never be in one segment.  */
-  bfd_boolean separate_code;
+  bool separate_code;
 
   /* The rpath separation character.  Usually ':'.  */
   char rpath_separator;
@@ -286,30 +282,34 @@ typedef struct
   char *map_filename;
   FILE *map_file;
 
+  char *dependency_file;
+
   unsigned int split_by_reloc;
   bfd_size_type split_by_file;
 
   /* The size of the hash table to use.  */
   unsigned long hash_table_size;
 
-  /* The maximum page size for ELF.  */
-  bfd_vma maxpagesize;
-
-  /* The common page size for ELF.  */
-  bfd_vma commonpagesize;
-
   /* If set, print discarded sections in map file output.  */
-  bfd_boolean print_map_discarded;
+  bool print_map_discarded;
+
+  /* If set, emit the names and types of statically-linked variables
+     into the CTF.  */
+  bool ctf_variables;
+
+  /* If set, share only duplicated types in CTF, rather than sharing
+     all types that are not in conflict.  */
+  bool ctf_share_duplicated;
 } ld_config_type;
 
 extern ld_config_type config;
 
 extern FILE * saved_script_handle;
-extern bfd_boolean force_make_executable;
+extern bool force_make_executable;
 
 extern int yyparse (void);
 extern void add_cref (const char *, bfd *, asection *, bfd_vma);
-extern bfd_boolean handle_asneeded_cref (bfd *, enum notice_asneeded_action);
+extern bool handle_asneeded_cref (bfd *, enum notice_asneeded_action);
 extern void output_cref (FILE *);
 extern void check_nocrossrefs (void);
 extern void ld_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
