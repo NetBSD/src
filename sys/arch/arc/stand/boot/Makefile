@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2020/06/03 11:33:38 tsutsui Exp $
+# $NetBSD: Makefile,v 1.19 2024/06/29 08:02:06 rin Exp $
 
 .include <bsd.init.mk>
 
@@ -14,7 +14,7 @@ NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 .PATH:		${S}/dev/arcbios
 
 SRCS=	start.S arcbios_calls.S
-SRCS+=	boot.c bootinfo.c conf.c devopen.c disk.c getchar.c getopt.c putchar.c
+SRCS+=	boot.c bootinfo.c conf.c devopen.c disk.c getchar.c putchar.c
 
 .include "${S}/dev/arcbios/Makefile.inc"
 
