@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.51 2024/06/29 08:28:07 rin Exp $	*/
+/*	$NetBSD: libi386.h,v 1.52 2024/06/29 08:30:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -148,11 +148,6 @@ struct biosdisk_extinfo;
 __compactcall int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 void biosdisk_probe(void);
-
-int pcibios_cfgread(unsigned int, int, int *);
-int pcibios_cfgwrite(unsigned int, int, int);
-int pcibios_finddev(int, int, int, unsigned int *);
-int pcibios_present(int *);
 
 void dosclose(int);
 int dosopen(char *);
