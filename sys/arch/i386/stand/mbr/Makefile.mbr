@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.21 2018/07/25 23:45:32 kamil Exp $
+#	$NetBSD: Makefile.mbr,v 1.22 2024/06/29 13:22:08 rin Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -45,7 +45,6 @@ CLEANFILES+=	${PROG}.tmp
 LOADADDR=	0x8800
 
 AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
