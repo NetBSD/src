@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1775 2024/05/04 19:16:22 reed Exp $
+# $NetBSD: mi,v 1.1775.2.1 2024/06/29 19:43:24 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6239,6 +6239,7 @@
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/drvctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dump.8			man-sysutil-man		.man
+./usr/share/man/man8/dumpexfatfs.8		man-sysutil-man		.man,exfatfs
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/dumplfs.8			man-sysutil-man		.man
@@ -6278,6 +6279,7 @@
 ./usr/share/man/man8/flashctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/flush.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/fsck.8			man-sysutil-man		.man
+./usr/share/man/man8/fsck_exfatfs.8		man-sysutil-man		.man,exfatfs
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_lfs.8			man-sysutil-man		.man
@@ -6498,6 +6500,7 @@
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_chfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_efs.8		man-efs-man		.man
+./usr/share/man/man8/mount_exfatfs.8		man-exfatfs-man		.man,exfatfs
 ./usr/share/man/man8/mount_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/mount_fdesc.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_ffs.8		man-sysutil-man		.man
@@ -6563,6 +6566,7 @@
 ./usr/share/man/man8/netwinder/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/newbtconf.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs.8			man-sysutil-man		.man
+./usr/share/man/man8/newfs_exfatfs.8		man-sysutil-man		.man,exfatfs
 ./usr/share/man/man8/newfs_ext2fs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
@@ -6763,6 +6767,7 @@
 ./usr/share/man/man8/rtsold.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rump_cd9660.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_efs.8			man-puffs-man		.man,rump
+./usr/share/man/man8/rump_exfatfs.8		man-puffs-man		.man,rump,exfatfs
 ./usr/share/man/man8/rump_ext2fs.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_ffs.8			man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_hfs.8			man-puffs-man		.man,rump

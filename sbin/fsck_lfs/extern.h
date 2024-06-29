@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.16 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: extern.h,v 1.16.8.1 2024/06/29 19:43:25 perseant Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -81,8 +81,6 @@ int reply(const char *);
 void resetinodebuf(void);
 int setup(const char *);
 
-extern struct uvnodelst vnodelist;
-extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
 extern int nvnodes;
 extern void (*panic_func)(int, const char *, va_list);
 extern int fake_cleanseg;

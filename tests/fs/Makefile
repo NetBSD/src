@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2022/06/06 10:56:29 nia Exp $
+# $NetBSD: Makefile,v 1.25.4.1 2024/06/29 19:43:26 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,10 @@ TESTS_SUBDIRS+=	vfs cd9660
 
 .if ${MKZFS} != "no"
 TESTS_SUBDIRS+=	zfs
+.endif
+
+.if ${MKEXFATFS} != "no"
+TESTS_SUBDIRS+=	exfatfs
 .endif
 
 FILES= h_funcs.subr

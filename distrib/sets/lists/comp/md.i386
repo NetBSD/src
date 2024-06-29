@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.209 2024/06/22 23:45:09 mrg Exp $
+# $NetBSD: md.i386,v 1.208 2024/06/22 20:17:25 riastradh Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -1052,6 +1052,8 @@
 ./usr/include/gcc-10/rdseedintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/rtmintrin.h		comp-c-include		gcc=10
 ./usr/include/gcc-10/rtmintrin.h		comp-obsolete		obsolete,gcc=12
+./usr/include/gcc-10/sanitizer			comp-c-include		gcc=10
+./usr/include/gcc-10/sanitizer			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/sgxintrin.h		comp-c-include		gcc=10
 ./usr/include/gcc-10/sgxintrin.h		comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-10/shaintrin.h		comp-c-include		gcc=10

@@ -1,0 +1,6 @@
+* Convert IO size from disk sector size to MAXPHYS.
+* Use unions in directory entries instead of the cumbersome casting.
+* Use DataLength and ValidDataLength to refer to before and after
+  write data size, the way Windows does, rather than block and byte
+  allocation, as implied by the spec.
+* Test with and without TRIE and decide whether to keep it.

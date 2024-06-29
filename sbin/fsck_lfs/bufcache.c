@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.21 2020/04/03 19:36:33 joerg Exp $ */
+/* $NetBSD: bufcache.c,v 1.21.8.1 2024/06/29 19:43:25 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -222,6 +222,10 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 	static int warned;
 #endif
 
+#ifdef DEBUG_VERBOSE
+	printf("GETBLK(%p, %lu, %llu)\n",
+	       vp, (unsigned long)lbn, (unsigned long long)size);
+#endif
 	/*
 	 * First check the buffer cache lists.
 	 * We might sometimes need to resize a buffer.  If we are growing
@@ -305,6 +309,12 @@ brelse(struct ubuf * bp, int set)
 {
 	int age;
 
+#ifdef DEBUG_VERBOSE
+	printf("BRELSE(%p, %lu, %llu) (bp=%p)\n",
+	       bp->b_vp, (unsigned long)bp->b_lblkno,
+	       (unsigned long long)bp->b_bcount, bp);
+#endif
+
 	assert(bp->b_flags & B_BUSY);
 
 	bp->b_flags |= set;
@@ -339,7 +349,13 @@ bread(struct uvnode * vp, daddr_t lbn, int size, int flags, struct ubuf ** bpp)
 {
 	struct ubuf *bp;
 	daddr_t daddr;
+	int error;
 
+#ifdef DEBUG_VERBOSE
+	printf("bread(%p, %lu, %llu, %x, .)\n",
+	       vp, (unsigned long)lbn, (unsigned long long)size, flags);
+#endif
+	
 	bp = getblk(vp, lbn, size);
 	*bpp = bp;
 	if (bp->b_flags & (B_DELWRI | B_DONE)) {
@@ -353,11 +369,21 @@ bread(struct uvnode * vp, daddr_t lbn, int size, int flags, struct ubuf ** bpp)
 	 * and load it in.
 	 */
 	daddr = -1;
+#ifdef DEBUG_VERBOSE
+	printf("bread calling VOP_BMAP(%p, %lu, .)\n",
+	       vp, (unsigned long)lbn);
+#endif
 	(void)VOP_BMAP(vp, lbn, &daddr);
 	bp->b_blkno = daddr;
 	if (daddr >= 0) {
 		bp->b_flags |= B_READ;
-		return VOP_STRATEGY(bp);
+#ifdef DEBUG_VERBOSE
+		printf("bread calling VOP_STRATEGY(.)\n");
+#endif
+		error = VOP_STRATEGY(bp);
+		if (error)
+			printf("VOP_STRATEGY() returned %d\n", error);
+		return error;
 	}
 	memset(bp->b_data, 0, bp->b_bcount);
 	return 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.292 2023/08/26 05:27:15 riastradh Exp $
+#	$NetBSD: Makefile,v 1.292.2.1 2024/06/29 19:43:26 perseant Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -65,6 +65,10 @@ SUBDIR+=npf
 # PF
 .if (${MKPF} != "no")
 SUBDIR+=pf
+.endif
+
+.if ${MKEXFATFS} != "no"
+SUBDIR+=dumpexfatfs
 .endif
 
 .include <bsd.subdir.mk>

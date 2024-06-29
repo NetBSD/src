@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.205 2024/04/28 14:39:22 rillig Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.205.2.1 2024/06/29 19:43:25 perseant Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -231,6 +231,7 @@
 ./usr/tests/dev/usb
 ./usr/tests/fs
 ./usr/tests/fs/cd9660
+./usr/tests/fs/exfatfs
 ./usr/tests/fs/ffs
 ./usr/tests/fs/fifofs
 ./usr/tests/fs/hfs

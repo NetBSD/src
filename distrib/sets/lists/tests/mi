@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1324 2024/06/16 18:40:58 rillig Exp $
+# $NetBSD: mi,v 1.1324.2.1 2024/06/29 19:43:24 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1569,6 +1569,10 @@
 ./usr/tests/fs/cd9660/pr_48787.image.bz2		tests-obsolete		obsolete
 ./usr/tests/fs/cd9660/pr_48787.image.hex		tests-fs-tests		atf,rump
 ./usr/tests/fs/cd9660/t_high_ino_big_file		tests-fs-tests		atf,rump
+./usr/tests/fs/exfatfs					tests-fs-tests		compattestfile,atf
+./usr/tests/fs/exfatfs/Atffile				tests-fs-tests		exfatfs
+./usr/tests/fs/exfatfs/h_exfatfs_server			tests-fs-tests		exfatfs
+./usr/tests/fs/exfatfs/t_mount				tests-fs-tests		exfatfs
 ./usr/tests/fs/ffs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/ffs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/Kyuafile				tests-fs-tests		atf,rump,kyua
