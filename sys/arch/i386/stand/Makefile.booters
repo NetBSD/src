@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.98 2024/06/29 07:52:16 rin Exp $
+#	$NetBSD: Makefile.booters,v 1.99 2024/06/29 13:18:18 rin Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -85,16 +85,6 @@ ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
 	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
-
-CLEANFILES+= ${BASE}.rom ${BASE}.rom.tmp
-${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
-	${_MKTARGET_LINK}
-	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
-	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
-	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
-	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
-	    ( rm -f ${BASE}.rom && false )
-	rm -f ${BASE}.rom.tmp
 
 CLEANFILES+= ${BASE}.com
 ${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
