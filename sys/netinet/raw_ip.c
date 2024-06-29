@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.184 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.185 2024/06/29 12:59:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.184 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.185 2024/06/29 12:59:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -219,13 +219,13 @@ rip_input(struct mbuf *m, int off, int proto)
 	if (last != NULL) {
 		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, m);
 	} else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
-		uint64_t *ips;
+		net_stat_ref_t ips;
 
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 		    0, 0);
 		ips = IP_STAT_GETREF();
-		ips[IP_STAT_NOPROTO]++;
-		ips[IP_STAT_DELIVERED]--;
+		_NET_STATINC_REF(ips, IP_STAT_NOPROTO);
+		_NET_STATDEC_REF(ips, IP_STAT_DELIVERED);
 		IP_STAT_PUTREF();
 	} else {
 		m_freem(m);
