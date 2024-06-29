@@ -80,6 +80,8 @@ of space for the 15 bazillon byte table it is about to read.
 This function at least allows us to answer the question, "is the
 size reasonable?".
 
+A return value of zero indicates the file size is unknown.
+
 @findex bfd_get_file_size
 @subsubsection @code{bfd_get_file_size}
 @strong{Synopsis}

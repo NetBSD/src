@@ -1,5 +1,5 @@
 /* winduni.c -- unicode support for the windres program.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -832,7 +832,7 @@ wind_WideCharToMultiByte (rc_uint_type cp, const unichar *u, char *mb, rc_uint_t
 {
   rc_uint_type ret = 0;
 #if defined (_WIN32) || defined (__CYGWIN__)
-  WINBOOL used_def = FALSE;
+  WINBOOL used_def = false;
 
   ret = (rc_uint_type) WideCharToMultiByte (cp, 0, u, -1, mb, mb_len,
 				      	    NULL, & used_def);

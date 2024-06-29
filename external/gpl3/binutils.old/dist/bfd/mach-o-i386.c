@@ -1,5 +1,5 @@
 /* Intel i386 Mach-O support for BFD.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,26 +29,26 @@
 #define bfd_mach_o_core_p bfd_mach_o_i386_core_p
 #define bfd_mach_o_mkobject bfd_mach_o_i386_mkobject
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_i386_object_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0, 0, BFD_MACH_O_CPU_TYPE_I386);
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_i386_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,
 			      BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_I386);
 }
 
-static bfd_boolean
+static bool
 bfd_mach_o_i386_mkobject (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata;
 
   if (!bfd_mach_o_mkobject_init (abfd))
-    return FALSE;
+    return false;
 
   mdata = bfd_mach_o_get_data (abfd);
   mdata->header.magic = BFD_MACH_O_MH_MAGIC;
@@ -57,61 +57,61 @@ bfd_mach_o_i386_mkobject (bfd *abfd)
   mdata->header.byteorder = BFD_ENDIAN_LITTLE;
   mdata->header.version = 1;
 
-  return TRUE;
+  return true;
 }
 
 static reloc_howto_type i386_howto_table[]=
 {
   /* 0 */
-  HOWTO(BFD_RELOC_32, 0, 2, 32, FALSE, 0,
+  HOWTO(BFD_RELOC_32, 0, 4, 32, false, 0,
 	complain_overflow_bitfield,
 	NULL, "32",
-	FALSE, 0xffffffff, 0xffffffff, FALSE),
-  HOWTO(BFD_RELOC_16, 0, 1, 16, FALSE, 0,
+	false, 0xffffffff, 0xffffffff, false),
+  HOWTO(BFD_RELOC_16, 0, 2, 16, false, 0,
 	complain_overflow_bitfield,
 	NULL, "16",
-	FALSE, 0xffff, 0xffff, FALSE),
-  HOWTO(BFD_RELOC_8, 0, 0, 8, FALSE, 0,
+	false, 0xffff, 0xffff, false),
+  HOWTO(BFD_RELOC_8, 0, 1, 8, false, 0,
 	complain_overflow_bitfield,
 	NULL, "8",
-	FALSE, 0xff, 0xff, FALSE),
-  HOWTO(BFD_RELOC_32_PCREL, 0, 2, 32, TRUE, 0,
+	false, 0xff, 0xff, false),
+  HOWTO(BFD_RELOC_32_PCREL, 0, 4, 32, true, 0,
 	complain_overflow_bitfield,
 	NULL, "DISP32",
-	FALSE, 0xffffffff, 0xffffffff, TRUE),
+	false, 0xffffffff, 0xffffffff, true),
   /* 4 */
-  HOWTO(BFD_RELOC_16_PCREL, 0, 1, 16, TRUE, 0,
+  HOWTO(BFD_RELOC_16_PCREL, 0, 2, 16, true, 0,
 	complain_overflow_bitfield,
 	NULL, "DISP16",
-	FALSE, 0xffff, 0xffff, TRUE),
-  HOWTO(BFD_RELOC_MACH_O_SECTDIFF, 0, 2, 32, FALSE, 0,
+	false, 0xffff, 0xffff, true),
+  HOWTO(BFD_RELOC_MACH_O_SECTDIFF, 0, 4, 32, false, 0,
 	complain_overflow_bitfield,
 	NULL, "SECTDIFF_32",
-	FALSE, 0xffffffff, 0xffffffff, FALSE),
-  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 2, 32, FALSE, 0,
+	false, 0xffffffff, 0xffffffff, false),
+  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 4, 32, false, 0,
 	complain_overflow_bitfield,
 	NULL, "LSECTDIFF_32",
-	FALSE, 0xffffffff, 0xffffffff, FALSE),
-  HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 2, 32, FALSE, 0,
+	false, 0xffffffff, 0xffffffff, false),
+  HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 4, 32, false, 0,
 	complain_overflow_bitfield,
 	NULL, "PAIR_32",
-	FALSE, 0xffffffff, 0xffffffff, FALSE),
+	false, 0xffffffff, 0xffffffff, false),
   /* 8 */
-  HOWTO(BFD_RELOC_MACH_O_SECTDIFF, 0, 1, 16, FALSE, 0,
+  HOWTO(BFD_RELOC_MACH_O_SECTDIFF, 0, 2, 16, false, 0,
 	complain_overflow_bitfield,
 	NULL, "SECTDIFF_16",
-	FALSE, 0xffff, 0xffff, FALSE),
-  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 1, 16, FALSE, 0,
+	false, 0xffff, 0xffff, false),
+  HOWTO(BFD_RELOC_MACH_O_LOCAL_SECTDIFF, 0, 2, 16, false, 0,
 	complain_overflow_bitfield,
 	NULL, "LSECTDIFF_16",
-	FALSE, 0xffff, 0xffff, FALSE),
-  HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 1, 16, FALSE, 0,
+	false, 0xffff, 0xffff, false),
+  HOWTO(BFD_RELOC_MACH_O_PAIR, 0, 2, 16, false, 0,
 	complain_overflow_bitfield,
 	NULL, "PAIR_16",
-	FALSE, 0xffff, 0xffff, FALSE),
+	false, 0xffff, 0xffff, false),
 };
 
-static bfd_boolean
+static bool
 bfd_mach_o_i386_canonicalize_one_reloc (bfd *       abfd,
 					struct mach_o_reloc_info_external * raw,
 					arelent *   res,
@@ -121,7 +121,7 @@ bfd_mach_o_i386_canonicalize_one_reloc (bfd *       abfd,
   bfd_mach_o_reloc_info reloc;
 
   if (!bfd_mach_o_pre_canonicalize_one_reloc (abfd, raw, &reloc, res, syms))
-    return FALSE;
+    return false;
 
   if (reloc.r_scattered)
     {
@@ -130,44 +130,44 @@ bfd_mach_o_i386_canonicalize_one_reloc (bfd *       abfd,
 	case BFD_MACH_O_GENERIC_RELOC_PAIR:
 	  /* PR 21813: Check for a corrupt PAIR reloc at the start.  */
 	  if (res == res_base)
-	    return FALSE;
+	    return false;
 	  if (reloc.r_length == 2)
 	    {
 	      res->howto = &i386_howto_table[7];
 	      res->address = res[-1].address;
-	      return TRUE;
+	      return true;
 	    }
 	  else if (reloc.r_length == 1)
 	    {
 	      res->howto = &i386_howto_table[10];
 	      res->address = res[-1].address;
-	      return TRUE;
+	      return true;
 	    }
-	  return FALSE;
+	  return false;
 	case BFD_MACH_O_GENERIC_RELOC_SECTDIFF:
 	  if (reloc.r_length == 2)
 	    {
 	      res->howto = &i386_howto_table[5];
-	      return TRUE;
+	      return true;
 	    }
 	  else if (reloc.r_length == 1)
 	    {
 	      res->howto = &i386_howto_table[8];
-	      return TRUE;
+	      return true;
 	    }
-	  return FALSE;
+	  return false;
 	case BFD_MACH_O_GENERIC_RELOC_LOCAL_SECTDIFF:
 	  if (reloc.r_length == 2)
 	    {
 	      res->howto = &i386_howto_table[6];
-	      return TRUE;
+	      return true;
 	    }
 	  else if (reloc.r_length == 1)
 	    {
 	      res->howto = &i386_howto_table[9];
-	      return TRUE;
+	      return true;
 	    }
-	  return FALSE;
+	  return false;
 	default:
 	  break;
 	}
@@ -181,30 +181,30 @@ bfd_mach_o_i386_canonicalize_one_reloc (bfd *       abfd,
 	    {
 	    case 0: /* len = 0, pcrel = 0  */
 	      res->howto = &i386_howto_table[2];
-	      return TRUE;
+	      return true;
 	    case 2: /* len = 1, pcrel = 0  */
 	      res->howto = &i386_howto_table[1];
-	      return TRUE;
+	      return true;
 	    case 3: /* len = 1, pcrel = 1  */
 	      res->howto = &i386_howto_table[4];
-	      return TRUE;
+	      return true;
 	    case 4: /* len = 2, pcrel = 0  */
 	      res->howto = &i386_howto_table[0];
-	      return TRUE;
+	      return true;
 	    case 5: /* len = 2, pcrel = 1  */
 	      res->howto = &i386_howto_table[3];
-	      return TRUE;
+	      return true;
 	    default:
-	      return FALSE;
+	      return false;
 	    }
 	default:
 	  break;
 	}
     }
-  return FALSE;
+  return false;
 }
 
-static bfd_boolean
+static bool
 bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
 {
   rinfo->r_address = rel->address;
@@ -218,7 +218,7 @@ bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
       rinfo->r_scattered = 0;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_VANILLA;
       rinfo->r_pcrel = rel->howto->pc_relative;
-      rinfo->r_length = rel->howto->size; /* Correct in practice.  */
+      rinfo->r_length = bfd_log2 (bfd_get_reloc_size (rel->howto));
       if ((*rel->sym_ptr_ptr)->flags & BSF_SECTION_SYM)
 	{
 	  rinfo->r_extern = 0;
@@ -235,7 +235,7 @@ bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
       rinfo->r_scattered = 1;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_SECTDIFF;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = rel->howto->size;
+      rinfo->r_length = bfd_log2 (bfd_get_reloc_size (rel->howto));
       rinfo->r_extern = 0;
       rinfo->r_value = rel->addend;
       break;
@@ -243,7 +243,7 @@ bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
       rinfo->r_scattered = 1;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_LOCAL_SECTDIFF;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = rel->howto->size;
+      rinfo->r_length = bfd_log2 (bfd_get_reloc_size (rel->howto));
       rinfo->r_extern = 0;
       rinfo->r_value = rel->addend;
       break;
@@ -252,14 +252,14 @@ bfd_mach_o_i386_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
       rinfo->r_scattered = 1;
       rinfo->r_type = BFD_MACH_O_GENERIC_RELOC_PAIR;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = rel->howto->size;
+      rinfo->r_length = bfd_log2 (bfd_get_reloc_size (rel->howto));
       rinfo->r_extern = 0;
       rinfo->r_value = rel->addend;
       break;
     default:
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 static reloc_howto_type *
@@ -281,7 +281,7 @@ bfd_mach_o_i386_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static bfd_boolean
+static bool
 bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
 			      void *vfile, char *buf)
 {
@@ -291,7 +291,7 @@ bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
     {
     case BFD_MACH_O_x86_THREAD_STATE:
       if (thread->size < (8 + 16 * 4))
-	return FALSE;
+	return false;
       fprintf (file, "   x86_THREAD_STATE:\n");
       fprintf (file, "    flavor: 0x%08lx  count: 0x%08lx\n",
 	       (unsigned long)bfd_get_32 (abfd, buf + 0),
@@ -316,18 +316,18 @@ bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
 	       (unsigned long)bfd_get_32 (abfd, buf + 60),
 	       (unsigned long)bfd_get_32 (abfd, buf + 64),
 	       (unsigned long)bfd_get_32 (abfd, buf + 68));
-      return TRUE;
+      return true;
     case BFD_MACH_O_x86_FLOAT_STATE:
       if (thread->size < 8)
-	return FALSE;
+	return false;
       fprintf (file, "   x86_FLOAT_STATE:\n");
       fprintf (file, "    flavor: 0x%08lx  count: 0x%08lx\n",
 	       (unsigned long)bfd_get_32 (abfd, buf + 0),
 	       (unsigned long)bfd_get_32 (abfd, buf + 4));
-      return TRUE;
+      return true;
     case BFD_MACH_O_x86_EXCEPTION_STATE:
       if (thread->size < 8 + 3 * 4)
-	return FALSE;
+	return false;
       fprintf (file, "   x86_EXCEPTION_STATE:\n");
       fprintf (file, "    flavor: 0x%08lx  count: 0x%08lx\n",
 	       (unsigned long)bfd_get_32 (abfd, buf + 0),
@@ -336,11 +336,11 @@ bfd_mach_o_i386_print_thread (bfd *abfd, bfd_mach_o_thread_flavour *thread,
 	       (unsigned long)bfd_get_32 (abfd, buf + 8),
 	       (unsigned long)bfd_get_32 (abfd, buf + 12),
 	       (unsigned long)bfd_get_32 (abfd, buf + 16));
-      return TRUE;
+      return true;
     default:
       break;
     }
-  return FALSE;
+  return false;
 }
 
 static const mach_o_section_name_xlat text_section_names_xlat[] =

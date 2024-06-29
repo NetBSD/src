@@ -1,5 +1,5 @@
 /* moxie-opc.c -- Definitions for moxie opcodes.
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by Anthony Green (green@moxielogic.com).
 
    This file is part of the GNU opcodes library.
@@ -52,7 +52,7 @@
 
 const moxie_opc_info_t moxie_form1_opc_info[128] =
   {
-    { 0x00, MOXIE_BAD,     "bad" },  // Reserved as bad.
+    { 0x00, MOXIE_BAD,     "bad" },  /* Reserved as bad.  */
     { 0x01, MOXIE_F1_A4,   "ldi.l" },
     { 0x02, MOXIE_F1_AB,   "mov" },
     { 0x03, MOXIE_F1_M,    "jsra" },
@@ -207,5 +207,5 @@ const moxie_opc_info_t moxie_form3_opc_info[16] =
     { 0x0c, MOXIE_BAD,     "bad" },
     { 0x0d, MOXIE_BAD,     "bad" },
     { 0x0e, MOXIE_BAD,     "bad" },
-    { 0x0f, MOXIE_BAD,     "bad" }  // Reserved as bad.
+    { 0x0f, MOXIE_BAD,     "bad" }  /* Reserved as bad.  */
   };

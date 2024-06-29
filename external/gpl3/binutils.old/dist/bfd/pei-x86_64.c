@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 PE IMAGE COFF files.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,7 +28,7 @@
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
 #define COFF_WITH_pex64
-#define PCRELOFFSET		TRUE
+#define PCRELOFFSET		true
 #if defined (USE_MINGW64_LEADING_UNDERSCORES)
 #define TARGET_UNDERSCORE	'_'
 #else
@@ -98,7 +98,7 @@ pex64_get_runtime_function (bfd *abfd, struct pex64_runtime_function *rf,
 
 /* Swap in unwind info header.  */
 
-static bfd_boolean
+static bool
 pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui,
 		       void *data, void *data_end)
 {
@@ -110,7 +110,7 @@ pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui,
   memset (ui, 0, sizeof (struct pex64_unwind_info));
 
   if (ex_dta >= ex_dta_end || ex_dta + 4 >= ex_dta_end)
-    return FALSE;
+    return false;
 
   ui->Version = PEX64_UWI_VERSION (ex_ui->Version_Flags);
   ui->Flags = PEX64_UWI_FLAGS (ex_ui->Version_Flags);
@@ -125,28 +125,28 @@ pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui,
 
   ex_dta += ui->SizeOfBlock;
   if (ex_dta >= ex_dta_end)
-    return FALSE;
+    return false;
 
   switch (ui->Flags)
     {
     case UNW_FLAG_CHAININFO:
       if (ex_dta + 12 >= ex_dta_end)
-	return FALSE;
+	return false;
       ui->rva_BeginAddress = bfd_get_32 (abfd, ex_dta + 0);
       ui->rva_EndAddress = bfd_get_32 (abfd, ex_dta + 4);
       ui->rva_UnwindData = bfd_get_32 (abfd, ex_dta + 8);
       ui->SizeOfBlock += 12;
-      return TRUE;
+      return true;
     case UNW_FLAG_EHANDLER:
     case UNW_FLAG_UHANDLER:
     case UNW_FLAG_FHANDLER:
       if (ex_dta + 4 >= ex_dta_end)
-	return FALSE;
+	return false;
       ui->rva_ExceptionHandler = bfd_get_32 (abfd, ex_dta);
       ui->SizeOfBlock += 4;
-      return TRUE;
+      return true;
     default:
-      return TRUE;
+      return true;
     }
 }
 
@@ -168,7 +168,7 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
       If an FP reg is used, the any unwind code taking an offset must only be
       used after the FP reg is established in the prolog.
      But there are counter examples of that in system dlls...  */
-  save_allowed = TRUE;
+  save_allowed = true;
 
   i = 0;
 
@@ -225,7 +225,7 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
     {
       const bfd_byte *dta = ui->rawUnwindCodes + 2 * i;
       unsigned int info = PEX64_UNWCODE_INFO (dta[1]);
-      int unexpected = FALSE;
+      int unexpected = false;
 
       fprintf (file, "\t  pc+0x%02x: ", (unsigned int) dta[0]);
 
@@ -269,7 +269,7 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
 		   pex_regs[ui->FrameRegister],
 		   (unsigned int) ui->FrameOffset * 16, info);
 	  unexpected = ui->FrameRegister == 0;
-	  save_allowed = FALSE;
+	  save_allowed = false;
 	  break;
 
 	case UWOP_SAVE_NONVOL:
@@ -312,7 +312,7 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
 	  else if (ui->Version == 2)
 	    {
 	      fprintf (file, "epilog %02x %01x", dta[0], info);
-	      unexpected = TRUE;
+	      unexpected = true;
 	    }
 	  break;
 
@@ -549,7 +549,7 @@ sort_xdata_arr (const void *l, const void *r)
 
 /* Display unwind tables for x86-64.  */
 
-static bfd_boolean
+static bool
 pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 {
   FILE *file = (FILE *) vfile;
@@ -567,13 +567,13 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   int seen_error = 0;
   bfd_vma *xdata_arr = NULL;
   int xdata_arr_cnt;
-  bfd_boolean virt_size_is_zero = FALSE;
+  bool virt_size_is_zero = false;
 
   /* Sanity checks.  */
   if (pdata_section == NULL
       || coff_section_data (abfd, pdata_section) == NULL
       || pei_section_data (abfd, pdata_section) == NULL)
-    return TRUE;
+    return true;
 
   stop = pei_section_data (abfd, pdata_section)->virt_size;
   if ((stop % onaline) != 0)
@@ -588,14 +588,14 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
       if (stop)
 	fprintf (file, _("Warning: %s section size is zero\n"),
 		 pdata_section->name);
-      return TRUE;
+      return true;
     }
 
   /* virt_size might be zero for objects.  */
   if (stop == 0 && strcmp (abfd->xvec->name, "pe-x86-64") == 0)
     {
       stop = datasize;
-      virt_size_is_zero = TRUE;
+      virt_size_is_zero = true;
     }
   else if (datasize < stop)
       {
@@ -817,37 +817,44 @@ pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
   free (xdata_arr);
   free (xdata);
 
-  return TRUE;
+  return true;
 }
 
-/* Static counter of number of found pdata sections.  */
-static bfd_boolean pdata_count;
+struct pex64_paps
+{
+  void *obj;
+  /* Number of found pdata sections.  */
+  unsigned int pdata_count;
+};
 
 /* Functionn prototype.  */
-bfd_boolean pex64_bfd_print_pdata (bfd *, void *);
+bool pex64_bfd_print_pdata (bfd *, void *);
 
 /* Helper function for bfd_map_over_section.  */
 static void
-pex64_print_all_pdata_sections (bfd *abfd, asection *pdata, void *obj)
+pex64_print_all_pdata_sections (bfd *abfd, asection *pdata, void *arg)
 {
-  if (CONST_STRNEQ (pdata->name, ".pdata"))
+  struct pex64_paps *paps = arg;
+  if (startswith (pdata->name, ".pdata"))
     {
-      if (pex64_bfd_print_pdata_section (abfd, obj, pdata))
-	pdata_count++;
+      if (pex64_bfd_print_pdata_section (abfd, paps->obj, pdata))
+	paps->pdata_count++;
     }
 }
 
-bfd_boolean
+bool
 pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 {
   asection *pdata_section = bfd_get_section_by_name (abfd, ".pdata");
+  struct pex64_paps paps;
 
   if (pdata_section)
     return pex64_bfd_print_pdata_section (abfd, vfile, pdata_section);
 
-  pdata_count = 0;
-  bfd_map_over_sections (abfd, pex64_print_all_pdata_sections, vfile);
-  return (pdata_count > 0);
+  paps.obj = vfile;
+  paps.pdata_count = 0;
+  bfd_map_over_sections (abfd, pex64_print_all_pdata_sections, &paps);
+  return paps.pdata_count != 0;
 }
 
 #define bfd_pe_print_pdata   pex64_bfd_print_pdata

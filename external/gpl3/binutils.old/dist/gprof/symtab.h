@@ -1,6 +1,6 @@
 /* symtab.h
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -78,7 +78,7 @@ typedef struct sym
 	double child_time;	/* Cumulative ticks in children.  */
 	int index;		/* Index in the graph list.  */
 	int top_order;		/* Graph call chain top-sort order.  */
-	bfd_boolean print_flag;	/* Should this be printed?  */
+	bool print_flag;	/* Should this be printed?  */
 	struct
 	  {
 	    double fract;	/* What % of time propagates.  */

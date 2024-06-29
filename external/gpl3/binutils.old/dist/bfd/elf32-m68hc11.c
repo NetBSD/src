@@ -1,5 +1,5 @@
 /* Motorola 68HC11-specific support for 32-bit ELF
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
@@ -32,20 +32,20 @@
 /* Relocation functions.  */
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static bfd_boolean m68hc11_info_to_howto_rel
+static bool m68hc11_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
 
 /* Trampoline generation.  */
-static bfd_boolean m68hc11_elf_size_one_stub
+static bool m68hc11_elf_size_one_stub
   (struct bfd_hash_entry *gen_entry, void *in_arg);
-static bfd_boolean m68hc11_elf_build_one_stub
+static bool m68hc11_elf_build_one_stub
   (struct bfd_hash_entry *gen_entry, void *in_arg);
 static struct bfd_link_hash_table* m68hc11_elf_bfd_link_hash_table_create
   (bfd* abfd);
 
 /* Linker relaxation.  */
-static bfd_boolean m68hc11_elf_relax_section
-  (bfd *, asection *, struct bfd_link_info *, bfd_boolean *);
+static bool m68hc11_elf_relax_section
+  (bfd *, asection *, struct bfd_link_info *, bool *);
 static void m68hc11_elf_relax_delete_bytes
   (bfd *, asection *, bfd_vma, int);
 static void m68hc11_relax_group
@@ -65,213 +65,213 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
   /* This reloc does nothing.  */
   HOWTO (R_M68HC11_NONE,	/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit absolute relocation */
   HOWTO (R_M68HC11_8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit absolute relocation (upper address) */
   HOWTO (R_M68HC11_HI8,		/* type */
 	 8,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_HI8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit absolute relocation (upper address) */
   HOWTO (R_M68HC11_LO8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_LO8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 8 bit PC-rel relocation */
   HOWTO (R_M68HC11_PCREL_8,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_PCREL_8",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 16 bit absolute relocation */
   HOWTO (R_M68HC11_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont /*bitfield */ ,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute relocation.  This one is never used for the
      code relocation.  It's used by gas for -gstabs generation.  */
   HOWTO (R_M68HC11_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 3 bit absolute relocation */
   HOWTO (R_M68HC11_3B,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 3,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_4B",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x003,			/* src_mask */
 	 0x003,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16 bit PC-rel relocation */
   HOWTO (R_M68HC11_PCREL_16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_PCREL_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* GNU extension to record C++ vtable hierarchy */
   HOWTO (R_M68HC11_GNU_VTINHERIT,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 NULL,			/* special_function */
 	 "R_M68HC11_GNU_VTINHERIT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage */
   HOWTO (R_M68HC11_GNU_VTENTRY,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
 	 "R_M68HC11_GNU_VTENTRY",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 24 bit relocation */
   HOWTO (R_M68HC11_24,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 24,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_24",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffff,		/* src_mask */
 	 0xffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 16-bit low relocation */
   HOWTO (R_M68HC11_LO16,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_LO16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A page relocation */
   HOWTO (R_M68HC11_PAGE,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_M68HC11_PAGE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x00ff,		/* src_mask */
 	 0x00ff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   EMPTY_HOWTO (14),
   EMPTY_HOWTO (15),
@@ -283,32 +283,32 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
   /* Mark beginning of a jump instruction (any form).  */
   HOWTO (R_M68HC11_RL_JUMP,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 m68hc11_elf_ignore_reloc,	/* special_function */
 	 "R_M68HC11_RL_JUMP",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* Mark beginning of Gcc relaxation group instruction.  */
   HOWTO (R_M68HC11_RL_GROUP,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 m68hc11_elf_ignore_reloc,	/* special_function */
 	 "R_M68HC11_RL_GROUP",	/* name */
-	 TRUE,			/* partial_inplace */
+	 true,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 };
 
 /* Map BFD reloc types to M68HC11 ELF reloc types.  */
@@ -377,7 +377,7 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an M68HC11 ELF reloc.  */
 
-static bfd_boolean
+static bool
 m68hc11_info_to_howto_rel (bfd *abfd,
 			   arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
@@ -390,17 +390,17 @@ m68hc11_info_to_howto_rel (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = &elf_m68hc11_howto_table[r_type];
-  return TRUE;
+  return true;
 }
 
 
 /* Far trampoline generation.  */
 
 /* Build a 68HC11 trampoline stub.  */
-static bfd_boolean
+static bool
 m68hc11_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 {
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
@@ -415,9 +415,17 @@ m68hc11_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
   stub_entry = (struct elf32_m68hc11_stub_hash_entry *) gen_entry;
   info = (struct bfd_link_info *) in_arg;
 
+  /* Fail if the target section could not be assigned to an output
+     section.  The user should fix his linker script.  */
+  if (stub_entry->target_section->output_section == NULL
+      && info->non_contiguous_regions)
+    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+			      "Retry without --enable-non-contiguous-regions.\n"),
+			    stub_entry->target_section);
+
   htab = m68hc11_elf_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   stub_sec = stub_entry->stub_sec;
 
@@ -458,13 +466,13 @@ m68hc11_elf_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
   bfd_put_8 (stub_bfd, 0x7E, loc);
   bfd_put_16 (stub_bfd, htab->pinfo.trampoline_addr, loc + 1);
 
-  return TRUE;
+  return true;
 }
 
 /* As above, but don't actually build the stub.  Just bump offset so
    we know stub section sizes.  */
 
-static bfd_boolean
+static bool
 m68hc11_elf_size_one_stub (struct bfd_hash_entry *gen_entry,
 			   void *in_arg ATTRIBUTE_UNUSED)
 {
@@ -474,7 +482,7 @@ m68hc11_elf_size_one_stub (struct bfd_hash_entry *gen_entry,
   stub_entry = (struct elf32_m68hc11_stub_hash_entry *) gen_entry;
 
   stub_entry->stub_sec->size += 10;
-  return TRUE;
+  return true;
 }
 
 /* Create a 68HC11 ELF linker hash table.  */
@@ -497,7 +505,7 @@ m68hc11_elf_bfd_link_hash_table_create (bfd *abfd)
 
 /* 68HC11 Linker Relaxation.  */
 
-struct m68hc11_direct_relax
+const struct m68hc11_direct_relax
 {
   const char *name;
   unsigned char code;
@@ -540,7 +548,7 @@ struct m68hc11_direct_relax
   { 0, 0, 0 }
 };
 
-static struct m68hc11_direct_relax *
+static const struct m68hc11_direct_relax *
 find_relaxable_insn (unsigned char code)
 {
   int i;
@@ -678,9 +686,9 @@ m68hc11_relax_group (bfd *abfd, asection *sec, bfd_byte *contents,
 
 	and somewhat more difficult to support.  */
 
-static bfd_boolean
+static bool
 m68hc11_elf_relax_section (bfd *abfd, asection *sec,
-			   struct bfd_link_info *link_info, bfd_boolean *again)
+			   struct bfd_link_info *link_info, bool *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *internal_relocs;
@@ -695,7 +703,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
   Elf_Internal_Sym *isymbuf = NULL;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
@@ -704,7 +712,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -945,7 +953,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
 					      irel->r_offset + 1, 3);
 	    }
 	  prev_insn_branch = 0;
-	  *again = TRUE;
+	  *again = true;
 	}
 
       /* Try to turn a 16 bit address into a 8 bit page0 address.  */
@@ -954,7 +962,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
 	{
 	  unsigned char code;
 	  unsigned short offset;
-	  struct m68hc11_direct_relax *rinfo;
+	  const struct m68hc11_direct_relax *rinfo;
 
 	  prev_insn_branch = 0;
 	  offset = bfd_get_16 (abfd, contents + irel->r_offset);
@@ -987,7 +995,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
 	      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 					   R_M68HC11_NONE);
 	      if (sec->size != old_sec_size)
-		*again = TRUE;
+		*again = true;
 	      continue;
 	    }
 
@@ -1024,7 +1032,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
 				       R_M68HC11_8);
 
 	  /* That will change things, so, we should relax again.  */
-	  *again = TRUE;
+	  *again = true;
 	}
       else if (ELF32_R_TYPE (irel->r_info) == R_M68HC11_16 && !is_far)
 	{
@@ -1066,7 +1074,7 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
 		  m68hc11_elf_relax_delete_bytes (abfd, sec,
 						  irel->r_offset + 1, 1);
 		  /* That will change things, so, we should relax again.  */
-		  *again = TRUE;
+		  *again = true;
 		}
 	    }
 	}
@@ -1074,11 +1082,8 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
       prev_insn_group = 0;
     }
 
-  if (free_relocs != NULL)
-    {
-      free (free_relocs);
-      free_relocs = NULL;
-    }
+  free (free_relocs);
+  free_relocs = NULL;
 
   if (free_contents != NULL)
     {
@@ -1104,16 +1109,13 @@ m68hc11_elf_relax_section (bfd *abfd, asection *sec,
       free_extsyms = NULL;
     }
 
-  return TRUE;
+  return true;
 
  error_return:
-  if (free_relocs != NULL)
-    free (free_relocs);
-  if (free_contents != NULL)
-    free (free_contents);
-  if (free_extsyms != NULL)
-    free (free_extsyms);
-  return FALSE;
+  free (free_relocs);
+  free (free_contents);
+  free (free_extsyms);
+  return false;
 }
 
 /* Delete some bytes from a section while relaxing.  */

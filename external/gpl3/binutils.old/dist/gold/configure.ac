@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+dnl   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ AC_CONFIG_SRCDIR(gold.cc)
 AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([no-dist parallel-tests])
+AM_SILENT_RULES([yes])
 
 AM_CONFIG_HEADER(config.h:config.in)
 
@@ -372,6 +373,26 @@ dnl Whether we can test -mcmodel=medium.
 AM_CONDITIONAL(MCMODEL_MEDIUM,
 [test "$target_cpu" = "x86_64" -a "$have_mcmodel_medium" = "yes" -a "$gold_cv_prog_gcc41" = "yes"])
 
+dnl Test for gcc 9 or later.  Some incremental tests fail with GCC 9 or
+dnl later.
+AC_CACHE_CHECK([for gcc >= 9], [gold_cv_prog_gcc9],
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#if !defined __GNUC__ || __GNUC__ < 9
+error
+#endif
+])], [gold_cv_prog_gcc9=yes], [gold_cv_prog_gcc9=no])])
+AM_CONDITIONAL(GCC9, [test "$gold_cv_prog_gcc9" = "yes"])
+
+dnl Test for -fcf-protection on x86-64.  Some incremental tests fail with
+dnl -fcf-protection.
+AC_CACHE_CHECK([for -fcf-protection], [gold_cv_cflags_cf_protection],
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#if !defined __x86_64__ || !defined __CET__
+error
+#endif
+])], [gold_cv_cflags_cf_protection=yes], [gold_cv_cflags_cf_protection=no])])
+AM_CONDITIONAL(CFLAGS_CF_PROTECTION, [test "$gold_cv_cflags_cf_protection" = "yes"])
+
 AC_CACHE_CHECK([whether $CC supports -fmerge-constants],
 	       [gold_cv_merge_constants], [
 save_CFLAGS="$CFLAGS"
@@ -602,6 +623,9 @@ AC_CHECK_HEADERS(tr1/unordered_set tr1/unordered_map)
 AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
 AC_CHECK_HEADERS(byteswap.h)
 
+dnl Check for bswap_{16,32,64}
+AC_CHECK_DECLS([bswap_16, bswap_32, bswap_64], [], [], [[#include <byteswap.h>]])
+
 dnl When plugins enabled dynamic loader interface is required. Check headers
 dnl which may provide this interface. Add the necessary library to link.
 AC_CHECK_HEADERS(windows.h)
@@ -613,7 +637,7 @@ case "$ac_cv_search_dlopen" in
 esac
 AC_SUBST(DLOPEN_LIBS)
 
-AC_CHECK_FUNCS(mallinfo posix_fallocate fallocate readv sysconf times mkdtemp)
+AC_CHECK_FUNCS(mallinfo mallinfo2 posix_fallocate fallocate readv sysconf times mkdtemp)
 AC_CHECK_DECLS([basename, ffs, asprintf, vasprintf, snprintf, vsnprintf, strverscmp, strndup, memmem])
 
 # Use of ::std::tr1::unordered_map::rehash causes undefined symbols

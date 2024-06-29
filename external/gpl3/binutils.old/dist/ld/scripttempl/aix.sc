@@ -3,14 +3,14 @@
 # unimportant.  The native linker aligns the sections on boundaries
 # specified by the -H option.
 #
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -37,7 +37,35 @@ SECTIONS
     ${RELOCATING+PROVIDE (_etext = .);}
   }
 
-  . = ALIGN (ALIGN (0x10000000) + (. & 0xfff), 32);
+  /* .tdata and .tbss addresses are representing the offset from
+     the TLS pointer. It starts at -0x7800 for 64bit and -0x7c00
+     for 32bit.
+     TODO: 32bit should have -0x7c00 but it works like this for
+     now.
+     The other particularity is that they must be before .data
+     sections. But .data must be aligned correctly as if the
+     addresses were contiguous. This means that the correct
+     address must be restored, taking into account: the size of
+     .text, its alignment 2^5, the size of .tdata and its
+     aligment 2^4.  */
+  .tdata -0x7800 : {
+    *(.tdata)
+    *(.tl)
+  }
+
+  .tbss : {
+    *(.tbss)
+    *(.ul)
+  }
+
+  . = ${RELOCATING+(ALIGN (0x10000000 + SIZEOF_HEADERS, 32)) + }SIZEOF(.text);
+  . = ALIGN (.,32);
+  . = . + SIZEOF(.tdata);
+  . = ALIGN (.,16);
+
+  /* .data starting address must be in a different segment than
+     the .text addresses. Thus, 0x10000000 is added.  */
+  . = ALIGN (0x10000000) + (. & 0xfff);
   .data . : {
     ${RELOCATING+PROVIDE (_data = .);}
     *(.data)
@@ -52,6 +80,7 @@ SECTIONS
     *(.tc0)
     *(.tc)
     *(.td)
+    *(.te)
     ${RELOCATING+PROVIDE (_edata = .);}
   }
   .bss : {

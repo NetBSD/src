@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C4X coff binaries.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -41,13 +41,13 @@ tic4x_reloc_processing (arelent *, struct internal_reloc *,
 
 /* Replace the stock _bfd_coff_is_local_label_name to recognize TI COFF local
    labels.  */
-static bfd_boolean
+static bool
 ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 				const char *name)
 {
   if (TICOFF_LOCAL_LABEL_P(name))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 #define coff_bfd_is_local_label_name ticoff_bfd_is_local_label_name
@@ -92,20 +92,20 @@ tic4x_relocation (bfd *abfd ATTRIBUTE_UNUSED,
 
 reloc_howto_type tic4x_howto_table[] =
 {
-    HOWTO(R_RELWORD,	 0,  2, 16, FALSE, 0, complain_overflow_signed,   tic4x_relocation, "RELWORD",   TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_REL24,	 0,  2, 24, FALSE, 0, complain_overflow_bitfield, tic4x_relocation, "REL24",     TRUE, 0x00ffffff, 0x00ffffff, FALSE),
-    HOWTO(R_RELLONG,	 0,  2, 32, FALSE, 0, complain_overflow_dont,     tic4x_relocation, "RELLONG",   TRUE, 0xffffffff, 0xffffffff, FALSE),
-    HOWTO(R_PCRWORD,	 0,  2, 16, TRUE,  0, complain_overflow_signed,   tic4x_relocation, "PCRWORD",   TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_PCR24,	 0,  2, 24, TRUE,  0, complain_overflow_signed,   tic4x_relocation, "PCR24",     TRUE, 0x00ffffff, 0x00ffffff, FALSE),
-    HOWTO(R_PARTLS16,	 0,  2, 16, FALSE, 0, complain_overflow_dont,     tic4x_relocation, "PARTLS16",  TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_PARTMS8,	16,  2, 16, FALSE, 0, complain_overflow_dont,     tic4x_relocation, "PARTMS8",   TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_RELWORD,	 0,  2, 16, FALSE, 0, complain_overflow_signed,   tic4x_relocation, "ARELWORD",  TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_REL24,	 0,  2, 24, FALSE, 0, complain_overflow_signed,   tic4x_relocation, "AREL24",    TRUE, 0x00ffffff, 0x00ffffff, FALSE),
-    HOWTO(R_RELLONG,	 0,  2, 32, FALSE, 0, complain_overflow_signed,   tic4x_relocation, "ARELLONG",  TRUE, 0xffffffff, 0xffffffff, FALSE),
-    HOWTO(R_PCRWORD,	 0,  2, 16, TRUE,  0, complain_overflow_signed,   tic4x_relocation, "APCRWORD",  TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_PCR24,	 0,  2, 24, TRUE,  0, complain_overflow_signed,   tic4x_relocation, "APCR24",    TRUE, 0x00ffffff, 0x00ffffff, FALSE),
-    HOWTO(R_PARTLS16,	 0,  2, 16, FALSE, 0, complain_overflow_dont,     tic4x_relocation, "APARTLS16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
-    HOWTO(R_PARTMS8,	16,  2, 16, FALSE, 0, complain_overflow_dont,     tic4x_relocation, "APARTMS8",  TRUE, 0x0000ffff, 0x0000ffff, FALSE),
+    HOWTO(R_RELWORD,	 0,  4, 16, false, 0, complain_overflow_signed,   tic4x_relocation, "RELWORD",   true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_REL24,	 0,  4, 24, false, 0, complain_overflow_bitfield, tic4x_relocation, "REL24",     true, 0x00ffffff, 0x00ffffff, false),
+    HOWTO(R_RELLONG,	 0,  4, 32, false, 0, complain_overflow_dont,     tic4x_relocation, "RELLONG",   true, 0xffffffff, 0xffffffff, false),
+    HOWTO(R_PCRWORD,	 0,  4, 16, true,  0, complain_overflow_signed,   tic4x_relocation, "PCRWORD",   true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_PCR24,	 0,  4, 24, true,  0, complain_overflow_signed,   tic4x_relocation, "PCR24",     true, 0x00ffffff, 0x00ffffff, false),
+    HOWTO(R_PARTLS16,	 0,  4, 16, false, 0, complain_overflow_dont,     tic4x_relocation, "PARTLS16",  true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_PARTMS8,	16,  4, 16, false, 0, complain_overflow_dont,     tic4x_relocation, "PARTMS8",   true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_RELWORD,	 0,  4, 16, false, 0, complain_overflow_signed,   tic4x_relocation, "ARELWORD",  true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_REL24,	 0,  4, 24, false, 0, complain_overflow_signed,   tic4x_relocation, "AREL24",    true, 0x00ffffff, 0x00ffffff, false),
+    HOWTO(R_RELLONG,	 0,  4, 32, false, 0, complain_overflow_signed,   tic4x_relocation, "ARELLONG",  true, 0xffffffff, 0xffffffff, false),
+    HOWTO(R_PCRWORD,	 0,  4, 16, true,  0, complain_overflow_signed,   tic4x_relocation, "APCRWORD",  true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_PCR24,	 0,  4, 24, true,  0, complain_overflow_signed,   tic4x_relocation, "APCR24",    true, 0x00ffffff, 0x00ffffff, false),
+    HOWTO(R_PARTLS16,	 0,  4, 16, false, 0, complain_overflow_dont,     tic4x_relocation, "APARTLS16", true, 0x0000ffff, 0x0000ffff, false),
+    HOWTO(R_PARTMS8,	16,  4, 16, false, 0, complain_overflow_dont,     tic4x_relocation, "APARTMS8",  true, 0x0000ffff, 0x0000ffff, false),
 };
 #define HOWTO_SIZE (sizeof(tic4x_howto_table) / sizeof(tic4x_howto_table[0]))
 

@@ -1,5 +1,5 @@
 /* dwarf2dbg.h - DWARF2 debug support
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -36,7 +36,12 @@ struct dwarf2_line_info
   unsigned int isa;
   unsigned int flags;
   unsigned int discriminator;
-  symbolS *view;
+  /* filenum == -1u chooses filename, otherwise view.  */
+  union
+  {
+    symbolS *view;
+    const char *filename;
+  } u;
 };
 
 /* Implements the .file FILENO "FILENAME" directive.  FILENO can be 0
@@ -88,12 +93,12 @@ extern void dwarf2_emit_label (symbolS *);
 
 /* True when we've seen a .loc directive recently.  Used to avoid
    doing work when there's nothing to do.  */
-extern bfd_boolean dwarf2_loc_directive_seen;
+extern bool dwarf2_loc_directive_seen;
 
 /* True when we're supposed to set the basic block mark whenever a label
    is seen.  Unless the target is doing Something Weird, just call
    dwarf2_emit_label.  */
-extern bfd_boolean dwarf2_loc_mark_labels;
+extern bool dwarf2_loc_mark_labels;
 
 extern void dwarf2_init (void);
 

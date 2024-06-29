@@ -1,6 +1,6 @@
 /* script-c.h -- C interface for linker scripts in gold.  */
 
-/* Copyright (C) 2006-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.

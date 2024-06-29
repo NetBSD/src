@@ -1,6 +1,6 @@
 // icf.cc -- Identical Code Folding.
 //
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -973,6 +973,8 @@ Icf::find_identical_sections(const Input_objects* input_objects,
 
       for (unsigned int i = 0; i < (*p)->shnum(); ++i)
         {
+          if ((*p)->section_size(i) == 0)
+            continue;
 	  const std::string section_name = (*p)->section_name(i);
           if (!is_section_foldable_candidate(section_name))
 	    {

@@ -34,7 +34,7 @@ BFD supports the following configure options:
 	Use mmap when accessing files.  This is faster on some hosts,
 	but slower on others.  It may not work on all hosts.
 
-Report bugs with BFD to bug-binutils@gnu.org.
+Report bugs in BFD to https://sourceware.org/bugzilla/
 
 Patches are encouraged.  When sending patches, always send the output
 of diff -u or diff -c from the original file to the new file.  Do not
@@ -48,7 +48,7 @@ gcc manual.
 Bug reports without patches will be remembered, but they may never get
 fixed until somebody volunteers to fix them.
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

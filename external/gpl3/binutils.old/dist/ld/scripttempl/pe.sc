@@ -1,6 +1,6 @@
 # Linker script for PE.
 #
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -70,7 +70,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -300,15 +300,6 @@ SECTIONS
     *(.zdebug_pubnames)
   }
 
-  .debug_pubtypes ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
-  {
-    *(.debug_pubtypes)
-  }
-  .zdebug_pubtypes ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
-  {
-    *(.zdebug_pubtypes)
-  }
-
   /* DWARF 2.  */
   .debug_info ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
@@ -410,16 +401,16 @@ SECTIONS
     *(.zdebug_varnames)
   }
 
-  .debug_macro ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  /* DWARF 3.  */
+  .debug_pubtypes ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
-    *(.debug_macro)
+    *(.debug_pubtypes)
   }
-  .zdebug_macro ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  .zdebug_pubtypes ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
-    *(.zdebug_macro)
+    *(.zdebug_pubtypes)
   }
 
-  /* DWARF 3.  */
   .debug_ranges ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
     *(.debug_ranges)
@@ -437,6 +428,68 @@ SECTIONS
   .zdebug_types ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
   {
     *(.zdebug_types${RELOCATING+ .gnu.linkonce.wt.*})
+  }
+
+  /* DWARF 5.  */
+  .debug_addr ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_addr)
+  }
+  .zdebug_addr ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_addr)
+  }
+  .debug_line_str ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_line_str)
+  }
+  .zdebug_line_str ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_line_str)
+  }
+  .debug_loclists ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_loclists)
+  }
+  .zdebug_loclists ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_loclists)
+  }
+  .debug_macro ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_macro)
+  }
+  .zdebug_macro ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_macro)
+  }
+  .debug_names ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_names)
+  }
+  .zdebug_names ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_names)
+  }
+  .debug_rnglists ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_rnglists)
+  }
+  .zdebug_rnglists ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_rnglists)
+  }
+  .debug_str_offsets ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_str_offsets)
+  }
+  .zdebug_str_offsets ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.zdebug_str_offsets)
+  }
+  .debug_sup ${RELOCATING+BLOCK(__section_alignment__)} ${RELOCATING+(NOLOAD)} :
+  {
+    *(.debug_sup)
   }
 
   /* For Go and Rust.  */

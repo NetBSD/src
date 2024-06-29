@@ -115,20 +115,6 @@
   )
 
 ;
-; Hardware: virtual registerts for FPU (double precision)
-;           mapped to GPRs
-;
-(define-hardware
-  (name h-fdr)
-  (comment "or64 floating point registers (double, virtual)")
-  (attrs VIRTUAL (MACH ORFPX64-MACHS))
-  (type register DF (32))
-  (indices keyword "" REG-INDICES)
-  (get (index) (subword DF (trunc DI (reg h-gpr index)) 0))
-  (set (index newval) (set UDI (reg h-gpr index) (zext UDI (subword DI newval 0))))
-  )
-
-;
 ; Register pairs are offset by 2 for registers r16 and above.  This is to
 ; be able to allow registers to be call saved in GCC across function calls.
 ;

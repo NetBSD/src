@@ -1,5 +1,5 @@
 /* ldctor.h - linker constructor support
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -27,7 +27,7 @@ extern lang_statement_list_type constructor_list;
 /* Whether the constructors should be sorted.  Note that this is
    global for the entire link; we assume that there is only a single
    CONSTRUCTORS command in the linker script.  */
-extern bfd_boolean constructors_sorted;
+extern bool constructors_sorted;
 
 /* We keep a list of these structures for each set we build.  */
 

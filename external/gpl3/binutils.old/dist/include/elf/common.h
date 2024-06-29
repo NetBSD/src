@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -77,8 +77,11 @@
 #define ELFOSABI_OPENVOS     18 /* Stratus Technologies OpenVOS */
 
 #define ELFOSABI_C6000_ELFABI 64 /* Bare-metal TMS320C6000 */
+#define ELFOSABI_AMDGPU_HSA  64 /* AMD HSA Runtime */
 #define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
+#define ELFOSABI_AMDGPU_PAL  65 /* AMD PAL Runtime */
 #define ELFOSABI_ARM_FDPIC   65 /* ARM FDPIC */
+#define ELFOSABI_AMDGPU_MESA3D 66 /* AMD Mesa3D Runtime */
 #define ELFOSABI_ARM	     97	/* ARM */
 #define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
 
@@ -91,8 +94,9 @@
 
 #define ET_NONE		0	/* No file type */
 #define ET_REL		1	/* Relocatable file */
-#define ET_EXEC		2	/* Executable file */
-#define ET_DYN		3	/* Shared object file */
+#define ET_EXEC		2	/* Position-dependent executable file */
+#define ET_DYN		3	/* Position-independent executable or
+				   shared object file */
 #define ET_CORE		4	/* Core file */
 #define ET_LOOS		0xFE00	/* Operating system-specific */
 #define ET_HIOS		0xFEFF	/* Operating system-specific */
@@ -316,7 +320,7 @@
 #define EM_BA2 		202 	/* Beyond BA2 CPU architecture */
 #define EM_XCORE 	203 	/* XMOS xCORE processor family */
 #define EM_MCHP_PIC 	204 	/* Microchip 8-bit PIC(r) family */
-#define EM_INTEL205	205	/* Reserved by Intel */
+#define EM_INTELGT	205	/* Intel Graphics Technology */
 #define EM_INTEL206	206	/* Reserved by Intel */
 #define EM_INTEL207	207	/* Reserved by Intel */
 #define EM_INTEL208	208	/* Reserved by Intel */
@@ -338,9 +342,24 @@
 #define EM_AMDGPU 	224 	/* AMD GPU architecture */
 #define EM_RISCV 	243 	/* RISC-V */
 #define EM_LANAI	244	/* Lanai 32-bit processor.  */
+#define EM_CEVA		245	/* CEVA Processor Architecture Family */
+#define EM_CEVA_X2	246	/* CEVA X2 Processor Family */
 #define EM_BPF		247	/* Linux BPF – in-kernel virtual machine.  */
+#define EM_GRAPHCORE_IPU 248	/* Graphcore Intelligent Processing Unit */
+#define EM_IMG1		249	/* Imagination Technologies */
 #define EM_NFP		250	/* Netronome Flow Processor.  */
+#define EM_VE		251	/* NEC Vector Engine */
 #define EM_CSKY		252	/* C-SKY processor family.  */
+#define EM_ARC_COMPACT3_64 253	/* Synopsys ARCv2.3 64-bit */
+#define EM_MCS6502	254	/* MOS Technology MCS 6502 processor */
+#define EM_ARC_COMPACT3	255	/* Synopsys ARCv2.3 32-bit */
+#define EM_KVX		256	/* Kalray VLIW core of the MPPA processor family */
+#define EM_65816	257	/* WDC 65816/65C816 */
+#define EM_LOONGARCH	258	/* LoongArch */
+#define EM_KF32		259	/* ChipON KungFu32 */
+#define EM_U16_U8CORE	260	/* LAPIS nX-U16/U8 */
+#define EM_TACHYUM	261	/* Tachyum */
+#define EM_56800EF	262	/* NXP 56800EF Digital Signal Controller (DSC) */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
@@ -471,6 +490,11 @@
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
 #define PT_GNU_PROPERTY	(PT_LOOS + 0x474e553) /* GNU property */
 
+/* OpenBSD segment types.  */
+#define PT_OPENBSD_RANDOMIZE (PT_LOOS + 0x5a3dbe6)  /* Fill with random data.  */
+#define PT_OPENBSD_WXNEEDED  (PT_LOOS + 0x5a3dbe7)  /* Program does W^X violations.  */
+#define PT_OPENBSD_BOOTDATA  (PT_LOOS + 0x5a41be6)  /* Section for boot arguments.  */
+
 /* Mbind segments */
 #define PT_GNU_MBIND_NUM 4096
 #define PT_GNU_MBIND_LO (PT_LOOS + 0x474e555)
@@ -505,6 +529,7 @@
 #define SHT_PREINIT_ARRAY 16		/* Array of ptrs to pre-init funcs */
 #define SHT_GROUP	  17		/* Section contains a section group */
 #define SHT_SYMTAB_SHNDX  18		/* Indices for SHN_XINDEX entries */
+#define SHT_RELR	  19		/* RELR relative relocations */
 
 #define SHT_LOOS	0x60000000	/* First of OS specific semantics */
 #define SHT_HIOS	0x6fffffff	/* Last of OS specific semantics */
@@ -547,7 +572,7 @@
 
 /* #define SHF_MASKOS	0x0F000000    *//* OS-specific semantics */
 #define SHF_MASKOS	0x0FF00000	/* New value, Oct 4, 1999 Draft */
-#define SHF_GNU_BUILD_NOTE    (1 << 20)	/* Section contains GNU BUILD ATTRIBUTE notes.  */
+#define SHF_GNU_RETAIN	      (1 << 21)	/* Section should not be garbage collected by the linker.  */
 #define SHF_MASKPROC	0xF0000000	/* Processor-specific semantics */
 
 /* This used to be implemented as a processor specific section flag.
@@ -613,6 +638,8 @@
 					/*   note name must be "LINUX".  */
 #define NT_X86_XSTATE	0x202		/* x86 XSAVE extended state */
 					/*   note name must be "LINUX".  */
+#define NT_X86_CET	0x203		/* x86 CET state.  */
+					/*   note name must be "LINUX".  */
 #define NT_S390_HIGH_GPRS 0x300		/* S/390 upper halves of GPRs  */
 					/*   note name must be "LINUX".  */
 #define NT_S390_TIMER	0x301		/* S390 timer */
@@ -648,12 +675,44 @@
 					/*   note name must be "LINUX".  */
 #define NT_ARM_HW_WATCH	0x403		/* AArch hardware watchpoint registers */
 					/*   note name must be "LINUX".  */
+#define NT_ARM_SYSTEM_CALL      0x404   /* AArch ARM system call number */
+					/*   note name must be "LINUX".  */
 #define NT_ARM_SVE	0x405		/* AArch SVE registers.  */
 					/*   note name must be "LINUX".  */
 #define NT_ARM_PAC_MASK	0x406		/* AArch pointer authentication code masks */
 					/*   note name must be "LINUX".  */
+#define NT_ARM_PACA_KEYS  0x407		/* ARM pointer authentication address
+					   keys */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_PACG_KEYS  0x408		/* ARM pointer authentication generic
+					   keys */
+					/*  note name must be "LINUX".  */
+#define NT_ARM_TAGGED_ADDR_CTRL	0x409	/* AArch64 tagged address control
+					   (prctl()) */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_PAC_ENABLED_KEYS	0x40a	/* AArch64 pointer authentication
+					   enabled keys (prctl()) */
+					/*   note name must be "LINUX".  */
+#define NT_ARC_V2	0x600		/* ARC HS accumulator/extra registers.  */
+					/*   note name must be "LINUX".  */
+#define NT_LARCH_CPUCFG 0xa00		/* LoongArch CPU config registers */
+					/*   note name must be "LINUX".  */
+#define NT_LARCH_CSR    0xa01		/* LoongArch Control State Registers */
+					/*   note name must be "LINUX".  */
+#define NT_LARCH_LSX    0xa02		/* LoongArch SIMD eXtension registers */
+					/*   note name must be "LINUX".  */
+#define NT_LARCH_LASX   0xa03		/* LoongArch Advanced SIMD eXtension registers */
+					/*   note name must be "LINUX".  */
+#define NT_LARCH_LBT    0xa04		/* LoongArch Binary Translation registers */
+					/*   note name must be "CORE".  */
+#define NT_RISCV_CSR    0x900		/* RISC-V Control and Status Registers */
+					/*   note name must be "LINUX".  */
 #define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
 #define NT_FILE		0x46494c45	/* Description of mapped files.  */
+
+/* The range 0xff000000 to 0xffffffff is set aside for notes that don't
+   originate from any particular operating system.  */
+#define NT_GDB_TDESC	0xff000000	/* Contains copy of GDB's target description XML.  */
 
 /* Note segments for core files on dir-style procfs systems.  */
 
@@ -681,12 +740,14 @@
 #define	NT_FREEBSD_PROCSTAT_PSSTRINGS	15	/* Procstat ps_strings data. */
 #define	NT_FREEBSD_PROCSTAT_AUXV	16	/* Procstat auxv data. */
 #define	NT_FREEBSD_PTLWPINFO	17	/* Thread ptrace miscellaneous info. */
+#define	NT_FREEBSD_X86_SEGBASES	0x200	/* x86 segment base registers */
 
 /* Note segments for core files on NetBSD systems.  Note name
    must start with "NetBSD-CORE".  */
 
 #define NT_NETBSDCORE_PROCINFO	1	/* Has a struct procinfo */
-#define	NT_NETBSDCORE_AUXV	2	/* Has ELF Auxiliary vector */
+#define NT_NETBSDCORE_AUXV	2	/* Has auxv data */
+#define NT_NETBSDCORE_LWPSTATUS	24	/* Has LWPSTATUS data */
 #define NT_NETBSDCORE_FIRSTMACH	32	/* start of machdep note types */
 
 
@@ -701,6 +762,29 @@
 #define NT_OPENBSD_WCOOKIE	23
 
 
+/* Note segments for core files on Solaris systems.  Note name
+   must start with "CORE".  */
+#define SOLARIS_NT_PRSTATUS    1
+#define SOLARIS_NT_PRFPREG     2
+#define SOLARIS_NT_PRPSINFO    3
+#define SOLARIS_NT_PRXREG      4
+#define SOLARIS_NT_PLATFORM    5
+#define SOLARIS_NT_AUXV        6
+#define SOLARIS_NT_GWINDOWS    7
+#define SOLARIS_NT_ASRS        8
+#define SOLARIS_NT_LDT         9
+#define SOLARIS_NT_PSTATUS    10
+#define SOLARIS_NT_PSINFO     13
+#define SOLARIS_NT_PRCRED     14
+#define SOLARIS_NT_UTSNAME    15
+#define SOLARIS_NT_LWPSTATUS  16
+#define SOLARIS_NT_LWPSINFO   17
+#define SOLARIS_NT_PRPRIV     18
+#define SOLARIS_NT_PRPRIVINFO 19
+#define SOLARIS_NT_CONTENT    20
+#define SOLARIS_NT_ZONENAME   21
+#define SOLARIS_NT_PRCPUXREG  22
+
 /* Note segments for core files on SPU systems.  Note name
    must start with "SPU/".  */
 
@@ -710,6 +794,7 @@
 
 #define NT_VERSION	1		/* Contains a version string.  */
 #define NT_ARCH		2		/* Contains an architecture string.  */
+#define NT_GO_BUILDID	4		/* Contains GO buildid data.  */
 
 /* Values for notes in non-core files using name "GNU".  */
 
@@ -742,6 +827,23 @@
 /* Values used in GNU .note.gnu.property notes (NT_GNU_PROPERTY_TYPE_0).  */
 #define GNU_PROPERTY_STACK_SIZE			1
 #define GNU_PROPERTY_NO_COPY_ON_PROTECTED	2
+
+/* A 4-byte unsigned integer property: A bit is set if it is set in all
+   relocatable inputs.  */
+#define GNU_PROPERTY_UINT32_AND_LO	0xb0000000
+#define GNU_PROPERTY_UINT32_AND_HI	0xb0007fff
+
+/* A 4-byte unsigned integer property: A bit is set if it is set in any
+   relocatable inputs.  */
+#define GNU_PROPERTY_UINT32_OR_LO	0xb0008000
+#define GNU_PROPERTY_UINT32_OR_HI	0xb000ffff
+
+/* The needed properties by the object file.  */
+#define GNU_PROPERTY_1_NEEDED		GNU_PROPERTY_UINT32_OR_LO
+
+/* Set if the object file requires canonical function pointers and
+   cannot be used with copy relocation.  */
+#define GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS	(1U << 0)
 
 /* Processor-specific semantics, lo */
 #define GNU_PROPERTY_LOPROC  0xc0000000
@@ -794,43 +896,33 @@
   (GNU_PROPERTY_X86_UINT32_AND_LO + 0)
 
 #define GNU_PROPERTY_X86_ISA_1_NEEDED \
-  (GNU_PROPERTY_X86_UINT32_OR_LO + 0)
+  (GNU_PROPERTY_X86_UINT32_OR_LO + 2)
 #define GNU_PROPERTY_X86_FEATURE_2_NEEDED \
   (GNU_PROPERTY_X86_UINT32_OR_LO + 1)
 
 #define GNU_PROPERTY_X86_ISA_1_USED \
-  (GNU_PROPERTY_X86_UINT32_OR_AND_LO + 0)
+  (GNU_PROPERTY_X86_UINT32_OR_AND_LO + 2)
 #define GNU_PROPERTY_X86_FEATURE_2_USED \
   (GNU_PROPERTY_X86_UINT32_OR_AND_LO + 1)
 
+/* GNU_PROPERTY_X86_ISA_1_BASELINE: CMOV, CX8 (cmpxchg8b), FPU (fld),
+   MMX, OSFXSR (fxsave), SCE (syscall), SSE and SSE2.  */
+#define GNU_PROPERTY_X86_ISA_1_BASELINE		(1U << 0)
+/* GNU_PROPERTY_X86_ISA_1_V2: GNU_PROPERTY_X86_ISA_1_BASELINE,
+   CMPXCHG16B (cmpxchg16b), LAHF-SAHF (lahf), POPCNT (popcnt), SSE3,
+   SSSE3, SSE4.1 and SSE4.2.  */
+#define GNU_PROPERTY_X86_ISA_1_V2		(1U << 1)
+/* GNU_PROPERTY_X86_ISA_1_V3: GNU_PROPERTY_X86_ISA_1_V2, AVX, AVX2, BMI1,
+   BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE.  */
+#define GNU_PROPERTY_X86_ISA_1_V3		(1U << 2)
+/* GNU_PROPERTY_X86_ISA_1_V4: GNU_PROPERTY_X86_ISA_1_V3, AVX512F,
+   AVX512BW, AVX512CD, AVX512DQ and AVX512VL.  */
+#define GNU_PROPERTY_X86_ISA_1_V4		(1U << 3)
+
 #define GNU_PROPERTY_X86_FEATURE_1_IBT		(1U << 0)
 #define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(1U << 1)
-
-#define GNU_PROPERTY_X86_ISA_1_CMOV		(1U << 0)
-#define GNU_PROPERTY_X86_ISA_1_SSE		(1U << 1)
-#define GNU_PROPERTY_X86_ISA_1_SSE2		(1U << 2)
-#define GNU_PROPERTY_X86_ISA_1_SSE3		(1U << 3)
-#define GNU_PROPERTY_X86_ISA_1_SSSE3		(1U << 4)
-#define GNU_PROPERTY_X86_ISA_1_SSE4_1		(1U << 5)
-#define GNU_PROPERTY_X86_ISA_1_SSE4_2		(1U << 6)
-#define GNU_PROPERTY_X86_ISA_1_AVX		(1U << 7)
-#define GNU_PROPERTY_X86_ISA_1_AVX2		(1U << 8)
-#define GNU_PROPERTY_X86_ISA_1_FMA		(1U << 9)
-#define GNU_PROPERTY_X86_ISA_1_AVX512F		(1U << 10)
-#define GNU_PROPERTY_X86_ISA_1_AVX512CD		(1U << 11)
-#define GNU_PROPERTY_X86_ISA_1_AVX512ER		(1U << 12)
-#define GNU_PROPERTY_X86_ISA_1_AVX512PF		(1U << 13)
-#define GNU_PROPERTY_X86_ISA_1_AVX512VL		(1U << 14)
-#define GNU_PROPERTY_X86_ISA_1_AVX512DQ		(1U << 15)
-#define GNU_PROPERTY_X86_ISA_1_AVX512BW		(1U << 16)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_4FMAPS	(1U << 17)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_4VNNIW	(1U << 18)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_BITALG	(1U << 19)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_IFMA	(1U << 20)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_VBMI	(1U << 21)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_VBMI2	(1U << 22)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_VNNI	(1U << 23)
-#define GNU_PROPERTY_X86_ISA_1_AVX512_BF16	(1U << 24)
+#define GNU_PROPERTY_X86_FEATURE_1_LAM_U48	(1U << 2)
+#define GNU_PROPERTY_X86_FEATURE_1_LAM_U57	(1U << 3)
 
 #define GNU_PROPERTY_X86_FEATURE_2_X86		(1U << 0)
 #define GNU_PROPERTY_X86_FEATURE_2_X87		(1U << 1)
@@ -842,6 +934,40 @@
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVE	(1U << 7)
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVEOPT	(1U << 8)
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVEC	(1U << 9)
+#define GNU_PROPERTY_X86_FEATURE_2_TMM		(1U << 10)
+#define GNU_PROPERTY_X86_FEATURE_2_MASK		(1U << 11)
+
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_NEEDED \
+  (GNU_PROPERTY_X86_UINT32_OR_LO + 0)
+
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_USED \
+  (GNU_PROPERTY_X86_UINT32_OR_AND_LO + 0)
+
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_CMOV		(1U << 0)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSE		(1U << 1)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSE2		(1U << 2)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSE3		(1U << 3)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSSE3		(1U << 4)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSE4_1		(1U << 5)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_SSE4_2		(1U << 6)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX		(1U << 7)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX2		(1U << 8)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_FMA		(1U << 9)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512F		(1U << 10)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512CD	(1U << 11)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512ER	(1U << 12)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512PF	(1U << 13)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512VL	(1U << 14)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512DQ	(1U << 15)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512BW	(1U << 16)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_4FMAPS	(1U << 17)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_4VNNIW	(1U << 18)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_BITALG	(1U << 19)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_IFMA	(1U << 20)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_VBMI	(1U << 21)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_VBMI2	(1U << 22)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_VNNI	(1U << 23)
+#define GNU_PROPERTY_X86_COMPAT_2_ISA_1_AVX512_BF16	(1U << 24)
 
 /* AArch64 specific GNU PROPERTY.  */
 #define GNU_PROPERTY_AARCH64_FEATURE_1_AND	0xc0000000
@@ -865,12 +991,12 @@
 
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "PaX".  */
 #define NT_NETBSD_PAX		3
-#define NT_NETBSD_PAX_MPROTECT		0x01	/* Force enable Mprotect */
-#define NT_NETBSD_PAX_NOMPROTECT	0x02	/* Force disable Mprotect */
-#define NT_NETBSD_PAX_GUARD		0x04	/* Force enable Segvguard */
-#define NT_NETBSD_PAX_NOGUARD		0x08    /* Force disable Segvguard */
-#define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR */
-#define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR */
+#define NT_NETBSD_PAX_MPROTECT		0x01	/* Force enable Mprotect.  */
+#define NT_NETBSD_PAX_NOMPROTECT	0x02	/* Force disable Mprotect.  */
+#define NT_NETBSD_PAX_GUARD		0x04	/* Force enable Segvguard.  */
+#define NT_NETBSD_PAX_NOGUARD		0x08	/* Force disable Segvguard.  */
+#define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR.  */
+#define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR.  */
 
 /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
 
@@ -879,6 +1005,9 @@
 /* Values for FreeBSD .note.ABI-tag notes.  Note name is "FreeBSD".  */
 
 #define NT_FREEBSD_ABI_TAG	1
+
+/* Values for FDO .note.package notes as defined on https://systemd.io/COREDUMP_PACKAGE_METADATA/  */
+#define FDO_PACKAGING_METADATA	0xcafe1a7e
 
 /* These three macros disassemble and assemble a symbol table st_info field,
    which contains the symbol binding and symbol type.  The STB_ and STT_
@@ -946,7 +1075,7 @@
 
 #define ELF32_R_SYM(i)		((i) >> 8)
 #define ELF32_R_TYPE(i)		((i) & 0xff)
-#define ELF32_R_INFO(s,t)	(((s) << 8) + ((t) & 0xff))
+#define ELF32_R_INFO(s,t)	(((unsigned) (s) << 8) + ((t) & 0xff))
 
 #define ELF64_R_SYM(i)		((i) >> 32)
 #define ELF64_R_TYPE(i)		((i) & 0xffffffff)
@@ -985,10 +1114,13 @@
 #define DT_FINI_ARRAYSZ 28
 #define DT_RUNPATH	29
 #define DT_FLAGS	30
-#define DT_ENCODING	32
 #define DT_PREINIT_ARRAY   32
 #define DT_PREINIT_ARRAYSZ 33
 #define DT_SYMTAB_SHNDX    34
+#define DT_RELRSZ	35
+#define DT_RELR		36
+#define DT_RELRENT	37
+#define DT_ENCODING	38
 
 /* Note, the Oct 4, 1999 draft of the ELF ABI changed the values
    for DT_LOOS and DT_HIOS.  Some implementations however, use
@@ -1008,6 +1140,7 @@
    deliberate special case and we maintain it for backwards compatability.
  */
 #define DT_VALRNGLO	0x6ffffd00
+#define DT_GNU_FLAGS_1  0x6ffffdf4
 #define DT_GNU_PRELINKED 0x6ffffdf5
 #define DT_GNU_CONFLICTSZ 0x6ffffdf6
 #define DT_GNU_LIBLISTSZ 0x6ffffdf7
@@ -1070,6 +1203,9 @@
 /* Flag values used in the DT_POSFLAG_1 .dynamic entry.	 */
 #define DF_P1_LAZYLOAD	0x00000001
 #define DF_P1_GROUPPERM	0x00000002
+
+/* Flag value in the DT_GNU_FLAGS_1 /dynamic entry.  */
+#define DF_GNU_1_UNIQUE 0x00000001
 
 /* Flag value in in the DT_FLAGS_1 .dynamic entry.  */
 #define DF_1_NOW	0x00000001
@@ -1232,6 +1368,21 @@
 #define AT_L2_CACHESHAPE  36
 #define AT_L3_CACHESHAPE  37
 
+/* Shapes of the caches, with more room to describe them.
+   *GEOMETRY are comprised of cache line size in bytes in the bottom 16 bits
+   and the cache associativity in the next 16 bits.  */
+#define AT_L1I_CACHESIZE	40
+#define AT_L1I_CACHEGEOMETRY	41
+#define AT_L1D_CACHESIZE	42
+#define AT_L1D_CACHEGEOMETRY	43
+#define AT_L2_CACHESIZE		44
+#define AT_L2_CACHEGEOMETRY	45
+#define AT_L3_CACHESIZE		46
+#define AT_L3_CACHEGEOMETRY	47
+
+#define AT_MINSIGSTKSZ		51 /* Stack needed for signal delivery
+				      (AArch64).  */
+
 #define AT_FREEBSD_EXECPATH     15      /* Path to the executable. */
 #define AT_FREEBSD_CANARY       16      /* Canary for SSP. */
 #define AT_FREEBSD_CANARYLEN    17      /* Length of the canary. */
@@ -1244,6 +1395,14 @@
 #define AT_FREEBSD_EHDRFLAGS    24      /* e_flags field from ELF header. */
 #define AT_FREEBSD_HWCAP        25      /* CPU feature flags. */
 #define AT_FREEBSD_HWCAP2       26      /* CPU feature flags 2. */
+#define AT_FREEBSD_BSDFLAGS     27      /* ELF BSD Flags. */
+#define AT_FREEBSD_ARGC         28      /* Argument count. */
+#define AT_FREEBSD_ARGV         29      /* Argument vector. */
+#define AT_FREEBSD_ENVC         30      /* Environment count. */
+#define AT_FREEBSD_ENVV         31      /* Environment vvector. */
+#define AT_FREEBSD_PS_STRINGS   32      /* struct ps_strings. */
+#define AT_FREEBSD_FXRNG        33      /* Pointer to root RNG seed version. */
+#define AT_FREEBSD_KPRELOAD     34      /* Base of vdso. */
 
 #define AT_SUN_UID      2000    /* Effective user ID.  */
 #define AT_SUN_RUID     2001    /* Real user ID.  */
@@ -1256,7 +1415,9 @@
 #define AT_SUN_PLATFORM 2008    /* Platform name string.  */
 #define AT_SUN_CAP_HW1	2009	/* Machine dependent hints about
 				   processor capabilities.  */
+#ifndef AT_SUN_HWCAP
 #define AT_SUN_HWCAP	AT_SUN_CAP_HW1 /* For backward compat only.  */
+#endif
 #define AT_SUN_IFLUSH   2010    /* Should flush icache? */
 #define AT_SUN_CPU      2011    /* CPU name string.  */
 #define AT_SUN_EMUL_ENTRY 2012	/* COFF entry point address.  */

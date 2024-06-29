@@ -2,7 +2,7 @@
 
 %{/* deflex.l - Lexer for .def files */
 
-/* Copyright (C) 1995-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -69,14 +69,12 @@ int linenumber;
 		}
 
 "\""[^\"]*"\"" {
-		yylval.id = xstrdup (yytext+1);
-		yylval.id[yyleng-2] = 0;
+		yylval.id = xmemdup (yytext + 1, yyleng - 2, yyleng - 1);
 		return ID;
 		}
 
 "\'"[^\']*"\'" {
-		yylval.id = xstrdup (yytext+1);
-		yylval.id[yyleng-2] = 0;
+		yylval.id = xmemdup (yytext + 1, yyleng - 2, yyleng - 1);
 		return ID;
 		}
 "*".* 		{ }

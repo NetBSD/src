@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -500,7 +500,7 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
 	}
 
       size = exp.X_add_number;
-      size &= ((offsetT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
+      size &= ((valueT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
       if (exp.X_add_number != size || !exp.X_unsigned)
 	{
 	  as_warn (_("size (%ld) out of range, ignored"),
@@ -587,7 +587,7 @@ obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
 	S_CLEAR_EXTERNAL (sym);
     }
 
-done:
+ done:
   /* switch back to the section that was current before the .zerofill.  */
   subseg_set (old_seg, 0);
 }
@@ -1522,15 +1522,15 @@ obj_mach_o_process_stab (int what, const char *string,
   switch (what)
     {
       case 'd':
-	symbolP = symbol_new ("", now_seg, frag_now_fix (), frag_now);
+	symbolP = symbol_new ("", now_seg, frag_now, frag_now_fix ());
 	/* Special stabd NULL name indicator.  */
 	S_SET_NAME (symbolP, NULL);
 	break;
 
       case 'n':
       case 's':
-	symbolP = symbol_new (string, undefined_section, (valueT) 0,
-			      &zero_address_frag);
+	symbolP = symbol_new (string, undefined_section,
+			      &zero_address_frag, 0);
 	pseudo_set (symbolP);
 	break;
 
@@ -1907,8 +1907,8 @@ obj_mach_o_is_frame_section (segT sec)
 {
   int l;
   l = strlen (segment_name (sec));
-  if ((l == 9 && strncmp (".eh_frame", segment_name (sec), 9) == 0)
-       || (l == 12 && strncmp (".debug_frame", segment_name (sec), 12) == 0))
+  if ((l == 9 && startswith (segment_name (sec), ".eh_frame"))
+       || (l == 12 && startswith (segment_name (sec), ".debug_frame")))
     return 1;
   return 0;
 }
