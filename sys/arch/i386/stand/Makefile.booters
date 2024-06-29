@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.96 2023/06/03 08:52:56 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.97 2024/06/29 07:38:07 rin Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -25,11 +25,6 @@ COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .PATH: ${I386_STAND_DIR}/lib
-
-ROMSTART= start_rom.o
-GENPROMDIR= ${I386_STAND_DIR}/genprom
-GENPROMOBJDIR!= cd ${GENPROMDIR} && ${PRINTOBJDIR}
-GENPROM= ${GENPROMOBJDIR}/genprom
 
 .PATH: ${I386_STAND_DIR}/lib/crt/dos
 DOSSTART= start_dos.o doscommain.o
