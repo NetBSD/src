@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.219 2023/02/12 14:50:42 abs Exp $
+# $NetBSD: GENERIC,v 1.220 2024/06/29 07:12:47 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.219 $"
+#ident 		"GENERIC-$Revision: 1.220 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -100,6 +100,7 @@ file-system 	UMAPFS
 file-system 	UNION
 file-system 	CD9660
 file-system	PTYFS		# /dev/pts/N support
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
@@ -282,6 +283,11 @@ lkkbd0		at dz0 line 0
 wskbd*		at lkkbd? console ?
 lkms0		at dz0 line 1
 wsmouse*	at lkms?
+
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
+
+pseudo-device	putter			# for puffs and pud
 
 #
 # accept filters
