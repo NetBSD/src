@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.5 2016/01/24 22:02:48 christos Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.6 2024/06/29 06:52:34 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,9 +56,9 @@ __longjmp14(jmp_buf env, int val)
 	if (jb->jb_sc.sc_sp == 0)
 		goto err;
 
-	/* Ensure non-zero return value */
+	/* Return 1 if val is zero */
 	if (val == 0)
-		val = -1;
+		val = 1;
 
 	/* Set _UC_SIGMASK and _UC_CPU */
 	uc.uc_flags = _UC_SIGMASK | _UC_CPU;
