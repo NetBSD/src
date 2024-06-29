@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.256 2024/02/24 21:41:13 mlelstv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.257 2024/06/29 13:00:44 riastradh Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.256 2024/02/24 21:41:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.257 2024/06/29 13:00:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -694,9 +694,10 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
-			uint64_t *icmp6s = ICMP6_STAT_GETREF();
-			icmp6s[ICMP6_STAT_REFLECT]++;
-			icmp6s[ICMP6_STAT_OUTHIST + ICMP6_ECHO_REPLY]++;
+			net_stat_ref_t icmp6s = ICMP6_STAT_GETREF();
+			_NET_STATINC_REF(icmp6s, ICMP6_STAT_REFLECT);
+			_NET_STATINC_REF(icmp6s,
+			    ICMP6_STAT_OUTHIST + ICMP6_ECHO_REPLY);
 			ICMP6_STAT_PUTREF();
 			icmp6_reflect(n, off);
 		}
@@ -807,9 +808,10 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 			nicmp6->icmp6_code = 0;
 		}
 		if (n) {
-			uint64_t *icmp6s = ICMP6_STAT_GETREF();
-			icmp6s[ICMP6_STAT_REFLECT]++;
-			icmp6s[ICMP6_STAT_OUTHIST + ICMP6_WRUREPLY]++;
+			net_stat_ref_t icmp6s = ICMP6_STAT_GETREF();
+			_NET_STATINC_REF(icmp6s, ICMP6_STAT_REFLECT);
+			_NET_STATINC_REF(icmp6s,
+			    ICMP6_STAT_OUTHIST + ICMP6_WRUREPLY);
 			ICMP6_STAT_PUTREF();
 			icmp6_reflect(n, sizeof(struct ip6_hdr));
 		}

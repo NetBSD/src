@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.227 2022/10/28 05:18:39 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.228 2024/06/29 13:00:44 riastradh Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.227 2022/10/28 05:18:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.228 2024/06/29 13:00:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -421,9 +421,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		if (ingroup) {
 			ours = 1;
 		} else if (!ip6_mrouter) {
-			uint64_t *ip6s = IP6_STAT_GETREF();
-			ip6s[IP6_STAT_NOTMEMBER]++;
-			ip6s[IP6_STAT_CANTFORWARD]++;
+			net_stat_ref_t ip6s = IP6_STAT_GETREF();
+			_NET_STATINC_REF(ip6s, IP6_STAT_NOTMEMBER);
+			_NET_STATINC_REF(ip6s, IP6_STAT_CANTFORWARD);
 			IP6_STAT_PUTREF();
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
 			goto bad_unref;
