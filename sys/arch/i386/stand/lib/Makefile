@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2023/06/03 08:52:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.50 2024/06/29 07:24:38 rin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -23,7 +23,7 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 
 SRCS= pcio.c conio.S comio.S comio_direct.c biosvideomode.S
 SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosreboot.S gatea20.c
-SRCS+= biosmem.S getextmemx.c biosmemx.S printmemlist.c
+SRCS+= biosmem.S getextmemx.c biosmemx.S
 SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
 SRCS+= startprog.S multiboot.S

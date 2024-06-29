@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.47 2019/10/18 01:24:51 manu Exp $	*/
+/*	$NetBSD: libi386.h,v 1.48 2024/06/29 07:24:38 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -54,7 +54,6 @@ int biosvideomode(void);
 #else
 #define getextmem() getextmemx()
 #endif
-void printmemlist(void);
 void reboot(void);
 void gateA20(void);
 
