@@ -1,5 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright (C) 1991-2020 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2022 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -100,7 +100,7 @@
 This file documents the GNU Assembler "@value{AS}".
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -149,7 +149,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -230,7 +230,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--compress-debug-sections}]  [@b{--nocompress-debug-sections}]
  [@b{--debug-prefix-map} @var{old}=@var{new}]
  [@b{--defsym} @var{sym}=@var{val}] [@b{-f}] [@b{-g}] [@b{--gstabs}]
- [@b{--gstabs+}] [@b{--gdwarf-2}] [@b{--gdwarf-sections}]
+ [@b{--gstabs+}] [@b{--gdwarf-<N>}] [@b{--gdwarf-sections}]
  [@b{--gdwarf-cie-version}=@var{VERSION}]
  [@b{--help}] [@b{-I} @var{dir}] [@b{-J}]
  [@b{-K}] [@b{-L}] [@b{--listing-lhs-width}=@var{NUM}]
@@ -238,7 +238,6 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--listing-cont-lines}=@var{NUM}] [@b{--keep-locals}]
  [@b{--no-pad-sections}]
  [@b{-o} @var{objfile}] [@b{-R}]
- [@b{--hash-size}=@var{NUM}] [@b{--reduce-memory-overheads}]
  [@b{--statistics}]
  [@b{-v}] [@b{-version}] [@b{--version}]
  [@b{-W}] [@b{--warn}] [@b{--fatal-warnings}] [@b{-w}] [@b{-x}]
@@ -246,6 +245,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--sectname-subst}] [@b{--size-check=[error|warning]}]
  [@b{--elf-stt-common=[no|yes]}]
  [@b{--generate-missing-build-notes=[no|yes]}]
+ [@b{--multibyte-handling=[allow|warn|warn-sym-only]}]
  [@b{--target-help}] [@var{target-options}]
  [@b{--}|@var{files} @dots{}]
 @c
@@ -379,6 +379,11 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 
 @emph{Target IP2K options:}
    [@b{-mip2022}|@b{-mip2022ext}]
+@end ifset
+@ifset LOONGARCH
+
+@emph{Target LOONGARCH options:}
+   [@b{-fpic}|@b{-fPIC}|@b{-fno-pic}]
 @end ifset
 @ifset M32C
 
@@ -537,6 +542,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-fpic}|@b{-fPIC}|@b{-fno-pic}]
    [@b{-march}=@var{ISA}]
    [@b{-mabi}=@var{ABI}]
+   [@b{-mlittle-endian}|@b{-mbig-endian}]
 @end ifset
 @ifset RL78
 
@@ -626,25 +632,17 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
  [@b{--[no-]transform}]
  [@b{--rename-section} @var{oldname}=@var{newname}]
  [@b{--[no-]trampolines}]
+ [@b{--abi-windowed}|@b{--abi-call0}]
 @end ifset
 @ifset Z80
 
 @emph{Target Z80 options:}
-  [@b{-z80}]|[@b{-z180}]|[@b{-r800}]|[@b{-ez80}]|[@b{-ez80-adl}]
+  [@b{-march=@var{CPU}@var{[-EXT]}@var{[+EXT]}}]
   [@b{-local-prefix=}@var{PREFIX}]
   [@b{-colonless}]
   [@b{-sdcc}]
   [@b{-fp-s=}@var{FORMAT}]
   [@b{-fp-d=}@var{FORMAT}]
-  [@b{-strict}]|[@b{-full}]
-  [@b{-with-inst=@var{INST}[,...]}] [@b{-Wnins @var{INST}[,...]}]
-  [@b{-without-inst=@var{INST}[,...]}] [@b{-Fins @var{INST}[,...]}]
-  [@b{ -ignore-undocumented-instructions}] [@b{-Wnud}]
-  [@b{ -ignore-unportable-instructions}] [@b{-Wnup}]
-  [@b{ -warn-undocumented-instructions}] [@b{-Wud}]
-  [@b{ -warn-unportable-instructions}] [@b{-Wup}]
-  [@b{ -forbid-undocumented-instructions}] [@b{-Fud}]
-  [@b{ -forbid-unportable-instructions}] [@b{-Fup}]
 @end ifset
 @ifset Z8000
 
@@ -754,7 +752,9 @@ compiler output).
 @itemx --gen-debug
 Generate debugging information for each assembler source line using whichever
 debug format is preferred by the target.  This currently means either STABS,
-ECOFF or DWARF2.
+ECOFF or DWARF2.  When the debug format is DWARF then a @code{.debug_info} and
+@code{.debug_line} section is only emitted when the assembly file doesn't
+generate one itself.
 
 @item --gstabs
 Generate stabs debugging information for each assembler line.  This
@@ -771,6 +771,27 @@ the location of the current working directory at assembling time.
 Generate DWARF2 debugging information for each assembler line.  This
 may help debugging assembler code, if the debugger can handle it.  Note---this
 option is only supported by some targets, not all of them.
+
+@item --gdwarf-3
+This option is the same as the @option{--gdwarf-2} option, except that it
+allows for the possibility of the generation of extra debug information as per
+version 3 of the DWARF specification.  Note - enabling this option does not
+guarantee the generation of any extra information, the choice to do so is on a
+per target basis.
+
+@item --gdwarf-4
+This option is the same as the @option{--gdwarf-2} option, except that it
+allows for the possibility of the generation of extra debug information as per
+version 4 of the DWARF specification.  Note - enabling this option does not
+guarantee the generation of any extra information, the choice to do so is on a
+per target basis.
+
+@item --gdwarf-5
+This option is the same as the @option{--gdwarf-2} option, except that it
+allows for the possibility of the generation of extra debug information as per
+version 5 of the DWARF specification.  Note - enabling this option does not
+guarantee the generation of any extra information, the choice to do so is on a
+per target basis.
 
 @item --gdwarf-sections
 Instead of creating a .debug_line section, create a series of
@@ -851,6 +872,18 @@ Set the maximum width of an input source line, as displayed in a listing, to
 Set the maximum number of lines printed in a listing for a single line of input
 to @var{number} + 1.
 
+@item --multibyte-handling=allow
+@itemx --multibyte-handling=warn
+@itemx --multibyte-handling=warn-sym-only
+Controls how the assembler handles multibyte characters in the input.  The
+default (which can be restored by using the @option{allow} argument) is to
+allow such characters without complaint.  Using the @option{warn} argument will
+make the assembler generate a warning message whenever any multibyte character
+is encountered.  Using the @option{warn-sym-only} argument will only cause a
+warning to be generated when a symbol is defined with a name that contains
+multibyte characters.  (References to undefined symbols will not generate a
+warning).
+
 @item --no-pad-sections
 Stop the assembler for padding the ends of output sections to the alignment
 of that section.  The default is to pad the sections, but this can waste space
@@ -861,18 +894,6 @@ Name the object-file output from @command{@value{AS}} @var{objfile}.
 
 @item -R
 Fold the data section into the text section.
-
-@item --hash-size=@var{number}
-Set the default size of GAS's hash tables to a prime number close to
-@var{number}.  Increasing this value can reduce the length of time it takes the
-assembler to perform its tasks, at the expense of increasing the assembler's
-memory requirements.  Similarly reducing this value can reduce the memory
-requirements at the expense of speed.
-
-@item --reduce-memory-overheads
-This option reduces GAS's memory requirements, at the expense of making the
-assembly processes slower.  Currently this switch is a synonym for
-@samp{--hash-size=4051}, but in the future it may have other effects as well.
 
 @ifset ELF
 @item --sectname-subst
@@ -970,7 +991,7 @@ This option selects the core processor variant.
 @item -EB | -EL
 Select either big-endian (-EB) or little-endian (-EL) output.
 @item -mcode-density
-Enable Code Density extenssion instructions.
+Enable Code Density extension instructions.
 @end table
 @end ifset
 
@@ -1753,6 +1774,25 @@ Assemble for a little endian target.
 @end ifset
 @c man end
 
+@ifset LOONGARCH
+
+@ifclear man
+@xref{LoongArch-Options}, for the options available when @value{AS} is configured
+for a LoongArch processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for a
+LoongArch processor.
+@c man end
+@c man begin INCLUDE
+@include c-loongarch.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
+
 @ifset METAG
 
 @ifclear man
@@ -1857,8 +1897,8 @@ Specify which s390 processor variant is the target, @samp{g5} (or
 @samp{arch3}), @samp{g6}, @samp{z900} (or @samp{arch5}), @samp{z990} (or
 @samp{arch6}), @samp{z9-109}, @samp{z9-ec} (or @samp{arch7}), @samp{z10} (or
 @samp{arch8}), @samp{z196} (or @samp{arch9}), @samp{zEC12} (or @samp{arch10}),
-@samp{z13} (or @samp{arch11}), @samp{z14} (or @samp{arch12}), or @samp{z15}
-(or @samp{arch13}).
+@samp{z13} (or @samp{arch11}), @samp{z14} (or @samp{arch12}), @samp{z15}
+(or @samp{arch13}), or @samp{z16} (or @samp{arch14}).
 @item -mregnames
 @itemx -mno-regnames
 Allow or disallow symbolic names for registers.
@@ -2830,8 +2870,9 @@ anything else you may get from your C compiler's preprocessor.  You can
 do include file processing with the @code{.include} directive
 (@pxref{Include,,@code{.include}}).  You can use the @sc{gnu} C compiler driver
 to get other ``CPP'' style preprocessing by giving the input file a
-@samp{.S} suffix.  @xref{Overall Options, ,Options Controlling the Kind of
-Output, gcc info, Using GNU CC}.
+@samp{.S} suffix.  @url{https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html#Overall-Options,
+See the 'Options Controlling the Kind of Output' section of the GCC manual for
+more details}
 
 Excess whitespace, comments, and character constants
 cannot be used in the portions of the input text that are not
@@ -2938,13 +2979,15 @@ are noted in @ref{Machine Dependencies}.
 @end ifset
 No symbol may begin with a digit.  Case is significant.
 There is no length limit; all characters are significant.  Multibyte characters
-are supported.  Symbols are delimited by characters not in that set, or by the
-beginning of a file (since the source program must end with a newline, the end
-of a file is not a possible symbol delimiter).  @xref{Symbols}.
+are supported, but note that the setting of the
+@option{--multibyte-handling} option might prevent their use.  Symbols
+are delimited by characters not in that set, or by the beginning of a file
+(since the source program must end with a newline, the end of a file is not a
+possible symbol delimiter).  @xref{Symbols}.
 
 Symbol names may also be enclosed in double quote @code{"} characters.  In such
 cases any characters are allowed, except for the NUL character.  If a double
-quote character is to be included in the symbol name it must be preceeded by a
+quote character is to be included in the symbol name it must be preceded by a
 backslash @code{\} character.
 @cindex length of symbols
 
@@ -3813,7 +3856,10 @@ Symbol names begin with a letter or with one of @samp{._}.  On most
 machines, you can also use @code{$} in symbol names; exceptions are
 noted in @ref{Machine Dependencies}.  That character may be followed by any
 string of digits, letters, dollar signs (unless otherwise noted for a
-particular target machine), and underscores.
+particular target machine), and underscores.  These restrictions do not
+apply when quoting symbol names by @samp{"}, which is permitted for most
+targets.  Escaping characters in quoted symbol names with @samp{\} generally
+extends only to @samp{\} itself and @samp{"}, at the time of writing.
 @end ifclear
 @ifset SPECIAL-SYMS
 @ifset H8
@@ -3830,10 +3876,17 @@ than @code{Foo}.
 Symbol names do not start with a digit.  An exception to this rule is made for
 Local Labels.  See below.
 
-Multibyte characters are supported.  To generate a symbol name containing
+Multibyte characters are supported, but note that the setting of the
+@option{multibyte-handling} option might prevent their use.
+To generate a symbol name containing
 multibyte characters enclose it within double quotes and use escape codes. cf
 @xref{Strings}.  Generating a multibyte symbol name from a label is not
 currently supported.
+
+Since multibyte symbol names are unusual, and could possibly be used
+maliciously, @command{@value{AS}} provides a command line option
+(@option{--multibyte-handling=warn-sym-only}) which can be used to generate a
+warning message whenever a symbol name containing multibyte characters is defined.
 
 Each symbol has exactly one name.  Each name in an assembly language program
 refers to exactly one symbol.  You may use that symbol name any number of times
@@ -4302,7 +4355,7 @@ You may not subtract arguments from different sections.
 @item <=
 @dfn{Is Less Than Or Equal To}
 
-The comparison operators can be used as infix operators.  A true results has a
+The comparison operators can be used as infix operators.  A true result has a
 value of -1 whereas a false result has a value of 0.   Note, these operators
 perform signed comparisons.
 @end table
@@ -4359,7 +4412,9 @@ Some machine configurations provide additional directives.
 * Altmacro::                    @code{.altmacro}
 * Ascii::                       @code{.ascii "@var{string}"}@dots{}
 * Asciz::                       @code{.asciz "@var{string}"}@dots{}
+* Attach_to_group::             @code{.attach_to_group @var{name}}
 * Balign::                      @code{.balign [@var{abs-expr}[, @var{abs-expr}]]}
+* Bss::                         @code{.bss @var{subsection}}
 * Bundle directives::           @code{.bundle_align_mode @var{abs-expr}}, etc
 * Byte::                        @code{.byte @var{expressions}}
 * CFI directives::		@code{.cfi_startproc [simple]}, @code{.cfi_endproc}, etc.
@@ -4443,6 +4498,7 @@ Some machine configurations provide additional directives.
 * MRI::				@code{.mri @var{val}}
 * Noaltmacro::                  @code{.noaltmacro}
 * Nolist::                      @code{.nolist}
+* Nop::                         @code{.nop}
 * Nops::                        @code{.nops @var{size}[, @var{control}]}
 * Octa::                        @code{.octa @var{bignums}}
 * Offset::			@code{.offset @var{loc}}
@@ -4497,7 +4553,7 @@ Some machine configurations provide additional directives.
 * Struct::			@code{.struct @var{expression}}
 @ifset ELF
 * SubSection::                  @code{.subsection}
-* Symver::                      @code{.symver @var{name},@var{name2@@nodename}}
+* Symver::                      @code{.symver @var{name},@var{name2@@nodename}[,@var{visibility}]}
 @end ifset
 
 @ifset COFF
@@ -4506,6 +4562,9 @@ Some machine configurations provide additional directives.
 
 * Text::                        @code{.text @var{subsection}}
 * Title::                       @code{.title "@var{heading}"}
+@ifset ELF
+* Tls_common::                  @code{.tls_common @var{symbol}, @var{length}[, @var{alignment}]}
+@end ifset
 @ifset COFF-ELF
 * Type::                        @code{.type <@var{int} | @var{name} , @var{type description}>}
 @end ifset
@@ -4528,11 +4587,9 @@ Some machine configurations provide additional directives.
 @ifclear no-space-dir
 * Zero::                        @code{.zero @var{size}}
 @end ifclear
-@ifset ELF
 * 2byte::                       @code{.2byte @var{expressions}}
 * 4byte::                       @code{.4byte @var{expressions}}
 * 8byte::                       @code{.8byte @var{bignums}}
-@end ifset
 * Deprecated::                  Deprecated Directives
 @end menu
 
@@ -4654,7 +4711,16 @@ trailing zero byte) into consecutive addresses.
 @cindex zero-terminated strings
 @cindex null-terminated strings
 @code{.asciz} is just like @code{.ascii}, but each string is followed by
-a zero byte.  The ``z'' in @samp{.asciz} stands for ``zero''.
+a zero byte.  The ``z'' in @samp{.asciz} stands for ``zero''.  Note that
+multiple string arguments not separated by commas will be concatenated
+together and only one final zero byte will be stored.
+
+@node Attach_to_group
+@section @code{.attach_to_group @var{name}}
+Attaches the current section to the named group.  This is like declaring
+the section with the @code{G} attribute, but can be done after the section
+has been created.  Note if the group section  does not exist at the point that
+this directive is used then it will be created.
 
 @node Balign
 @section @code{.balign[wl] [@var{abs-expr}[, @var{abs-expr}[, @var{abs-expr}]]]}
@@ -4692,6 +4758,18 @@ fill pattern as a four byte longword value.  For example, @code{.balignw
 filled in with the value 0x368d (the exact placement of the bytes depends upon
 the endianness of the processor).  If it skips 1 or 3 bytes, the fill value is
 undefined.
+
+@node Bss
+@section @code{.bss @var{subsection}}
+@cindex @code{bss} directive
+
+@code{.bss} tells @command{@value{AS}} to assemble the following statements
+onto the end of the bss section.
+@ifset ELF
+For ELF based targets an optional @var{subsection} expression (which must
+evaluate to a positive integer) can be provided.  In this case the statements
+are appended to the end of the indicated bss subsection.
+@end ifset
 
 @node Bundle directives
 @section Bundle directives
@@ -5096,13 +5174,13 @@ Emits 8-byte values.
 @item @samp{.l}
 Emits 4-byte values.
 @item @samp{.p}
-Emits 12-byte values.
+Emits values with size matching packed-decimal floating-point ones.
 @item @samp{.s}
 Emits 4-byte values.
 @item @samp{.w}
 Emits 2-byte values.
 @item @samp{.x}
-Emits 12-byte values.
+Emits values with size matching long double precision floating-point ones.
 @end table
 
 Note - unlike the @code{.dcb} directive the @samp{.d}, @samp{.s} and @samp{.x}
@@ -5354,12 +5432,31 @@ to the @code{.debug_line} file name table.  The syntax is:
 
 The @var{fileno} operand should be a unique positive integer to use as the
 index of the entry in the table.  The @var{filename} operand is a C string
-literal.
+literal enclosed in double quotes.  The @var{filename} can include directory
+elements.  If it does, then the directory will be added to the directory table
+and the basename will be added to the file table.
 
 The detail of filename indices is exposed to the user because the filename
 table is shared with the @code{.debug_info} section of the DWARF2 debugging
 information, and thus the user must know the exact indices that table
 entries will have.
+
+If DWARF5 support has been enabled via the @option{-gdwarf-5} option then
+an extended version of @code{.file} is also allowed:
+
+@smallexample
+.file @var{fileno} [@var{dirname}] @var{filename} [md5 @var{value}]
+@end smallexample
+
+With this version a separate directory name is allowed, although if this is
+used then @var{filename} should not contain any directory component, except
+for @var{fileno} equal to 0: in this case, @var{dirname} is expected to be
+the current directory and @var{filename} the currently processed file, and
+the latter need not be located in the former. In addtion an MD5 hash value
+of the contents of @var{filename} can be provided. This will be stored in
+the the file table as well, and can be used by tools reading the debug
+information to verify that the contents of the source file match the
+contents of the compiled file.
 
 @node Fill
 @section @code{.fill @var{repeat} , @var{size} , @var{value}}
@@ -5837,7 +5934,8 @@ the @code{.loc} directive will add a row to the @code{.debug_line} line
 number matrix corresponding to the immediately following assembly
 instruction.  The @var{fileno}, @var{lineno}, and optional @var{column}
 arguments will be applied to the @code{.debug_line} state machine before
-the row is added.
+the row is added.  It is an error for the input assembly file to generate
+a non-empty @code{.debug_line} and also use @code{loc} directives.
 
 The @var{options} are a sequence of the following tokens in any order:
 
@@ -6088,6 +6186,27 @@ Note: this problem of correctly identifying string parameters to pseudo ops
 also applies to the identifiers used in @code{.irp} (@pxref{Irp})
 and @code{.irpc} (@pxref{Irpc}) as well.
 
+Another issue can occur with the actual arguments passed during macro
+invocation: Multiple arguments can be separated by blanks or commas.  To have
+arguments actually contain blanks or commas (or potentially other non-alpha-
+numeric characters), individual arguments will need to be enclosed in either
+parentheses @code{()}, square brackets @code{[]}, or double quote @code{"}
+characters.  The latter may be the only viable option in certain situations,
+as only double quotes are actually stripped while establishing arguments.  It
+may be important to be aware of two escaping models used when processing such
+quoted argument strings: For one two adjacent double quotes represent a single
+double quote in the resulting argument, going along the lines of the stripping
+of the enclosing quotes.  But then double quotes can also be escaped by a
+backslash @code{\}, but this backslash will not be retained in the resulting
+actual argument as then seen / used while expanding the macro.
+
+As a consequence to the first of these escaping mechanisms two string literals
+intended to be representing separate macro arguments need to be separated by
+white space (or, better yet, by a comma).  To state it differently, such
+adjacent string literals - even if separated only by a blank - will not be
+concatenated when determining macro arguments, even if they're only separated
+by white space.  This is unlike certain other pseudo ops, e.g. @code{.ascii}.
+
 @item .endm
 @cindex @code{endm} directive
 Mark the end of a macro definition.
@@ -6134,22 +6253,35 @@ internal counter (which is zero initially).   @code{.list} increments the
 counter, and @code{.nolist} decrements it.  Assembly listings are
 generated whenever the counter is greater than zero.
 
+@node Nop
+@section @code{.nop [@var{size}]}
+
+@cindex @code{nop} directive
+@cindex filling memory with no-op instructions
+This directive emits no-op instructions.  It is provided on all architectures,
+allowing the creation of architecture neutral tests involving actual code.  The
+size of the generated instruction is target specific, but if the optional
+@var{size} argument is given and resolves to an absolute positive value at that
+point in assembly (no forward expressions allowed) then the fewest no-op
+instructions are emitted that equal or exceed a total @var{size} in bytes.
+@code{.nop} does affect the generation of DWARF debug line information.
+Some targets do not support using @code{.nop} with @var{size}.
+
 @node Nops
 @section @code{.nops @var{size}[, @var{control}]}
 
 @cindex @code{nops} directive
 @cindex filling memory with no-op instructions
-This directive emits @var{size} bytes filled with no-op instructions.
-@var{size} is absolute expression, which must be a positve value.
-@var{control} controls how no-op instructions should be generated.  If
-the comma and @var{control} are omitted, @var{control} is assumed to be
-zero.
+This directive emits no-op instructions.  It is specific to the Intel 80386 and
+AMD x86-64 targets.  It takes a @var{size} argument and generates @var{size}
+bytes of no-op instructions.  @var{size} must be absolute and positive.  These
+bytes do not affect the generation of DWARF debug line information.
 
-Note: For Intel 80386 and AMD x86-64 targets, @var{control} specifies
-the size limit of a no-op instruction.  The valid values of @var{control}
-are between 0 and 4 in 16-bit mode, between 0 and 7 when tuning for
-older processors in 32-bit mode, between 0 and 11 in 64-bit mode or when
-tuning for newer processors in 32-bit mode.  When 0 is used, the no-op
+The optional @var{control} argument specifies a size limit for a single no-op
+instruction.  If not provided then a value of 0 is assumed.  The valid values
+of @var{control} are between 0 and 4 in 16-bit mode, between 0 and 7 when
+tuning for older processors in 32-bit mode, between 0 and 11 in 64-bit mode or
+when tuning for newer processors in 32-bit mode.  When 0 is used, the no-op
 instruction size limit is set to the maximum supported size.
 
 @node Octa
@@ -6599,6 +6731,9 @@ section is allocatable
 section is a GNU_MBIND section
 @item e
 section is excluded from executable and shared library.
+@item o
+section references a symbol defined in another section (the linked-to
+section) in the same file.
 @item w
 section is writable
 @item x
@@ -6613,6 +6748,9 @@ section is a member of a section group
 section is used for thread-local-storage
 @item ?
 section is a member of the previously-current section's group, if any
+@item R
+retained section (apply SHF_GNU_RETAIN to prevent linker garbage
+collection, GNU ELF extension)
 @item @code{<number>}
 a numeric value indicating the bits to be set in the ELF section header's flags
 field.  Note - if one or more of the alphabetic characters described above is
@@ -6627,7 +6765,9 @@ a few exceptions to this rule however.  Processor and application specific
 flags can be added to an already defined section.  The @code{.interp},
 @code{.strtab} and @code{.symtab} sections can have the allocate flag
 (@code{a}) set after they are initially defined, and the @code{.note-GNU-stack}
-section may have the executable (@code{x}) flag added.
+section may have the executable (@code{x}) flag added.  Also note that the
+@code{.attach_to_group} directive can be used to add a section to a group even
+if the section was not originally declared to be part of that group.
 
 The optional @var{type} argument may contain one of the following constants:
 
@@ -6678,6 +6818,26 @@ which is a suffix of a larger string is considered a duplicate.  Thus
 @code{"def"} will be merged with @code{"abcdef"};  A reference to the first
 @code{"def"} will be changed to a reference to @code{"abcdef"+3}.
 
+If @var{flags} contains the @code{o} flag, then the @var{type} argument
+must be present along with an additional field like this:
+
+@smallexample
+.section @var{name},"@var{flags}"o,@@@var{type},@var{SymbolName}|@var{SectionIndex}
+@end smallexample
+
+The @var{SymbolName} field specifies the symbol name which the section
+references.  Alternatively a numeric @var{SectionIndex} can be provided.  This
+is not generally a good idea as section indicies are rarely known at assembly
+time, but the facility is provided for testing purposes.  An index of zero is
+allowed.  It indicates that the linked-to section has already been discarded.
+
+Note: If both the @var{M} and @var{o} flags are present, then the fields
+for the Merge flag should come first, like this:
+
+@smallexample
+.section @var{name},"@var{flags}"Mo,@@@var{type},@var{entsize},@var{SymbolName}
+@end smallexample
+
 If @var{flags} contains the @code{G} symbol then the @var{type} argument must
 be present along with an additional field like this:
 
@@ -6702,12 +6862,31 @@ the Merge flag should come first, like this:
 .section @var{name} , "@var{flags}"MG, @@@var{type}, @var{entsize}, @var{GroupName}[, @var{linkage}]
 @end smallexample
 
+If both @code{o} flag and @code{G} flag are present, then the
+@var{SymbolName} field for @code{o} comes first, like this:
+
+@smallexample
+.section @var{name},"@var{flags}"oG,@@@var{type},@var{SymbolName},@var{GroupName}[,@var{linkage}]
+@end smallexample
+
 If @var{flags} contains the @code{?} symbol then it may not also contain the
 @code{G} symbol and the @var{GroupName} or @var{linkage} fields should not be
 present.  Instead, @code{?} says to consider the section that's current before
 this directive.  If that section used @code{G}, then the new section will use
 @code{G} with those same @var{GroupName} and @var{linkage} fields implicitly.
 If not, then the @code{?} symbol has no effect.
+
+The optional @var{unique,@code{<number>}} argument must come last.  It
+assigns @var{@code{<number>}} as a unique section ID to distinguish
+different sections with the same section name like these:
+
+@smallexample
+.section @var{name},"@var{flags}",@@@var{type},@var{unique,@code{<number>}}
+.section @var{name},"@var{flags}"G,@@@var{type},@var{GroupName},[@var{linkage}],@var{unique,@code{<number>}}
+.section @var{name},"@var{flags}"MG,@@@var{type},@var{entsize},@var{GroupName}[,@var{linkage}],@var{unique,@code{<number>}}
+@end smallexample
+
+The valid values of @var{@code{<number>}} are between 0 and 4294967295.
 
 If no flags are specified, the default flags depend upon the section name.  If
 the section name is not recognized, the default will be for the section to have
@@ -7045,9 +7224,9 @@ shared library.
 
 For ELF targets, the @code{.symver} directive can be used like this:
 @smallexample
-.symver @var{name}, @var{name2@@nodename}
+.symver @var{name}, @var{name2@@nodename}[ ,@var{visibility}]
 @end smallexample
-If the symbol @var{name} is defined within the file
+If the original symbol @var{name} is defined within the file
 being assembled, the @code{.symver} directive effectively creates a symbol
 alias with the name @var{name2@@nodename}, and in fact the main reason that we
 just don't try and create a regular alias is that the @var{@@} character isn't
@@ -7060,7 +7239,14 @@ function is being mentioned.  The @var{nodename} portion of the alias should be
 the name of a node specified in the version script supplied to the linker when
 building a shared library.  If you are attempting to override a versioned
 symbol from a shared library, then @var{nodename} should correspond to the
-nodename of the symbol you are trying to override.
+nodename of the symbol you are trying to override.  The optional argument
+@var{visibility} updates the visibility of the original symbol.  The valid
+visibilities are @code{local}, @code{hidden}, and @code{remove}.  The
+@code{local} visibility makes the original symbol a local symbol
+(@pxref{Local}).  The @code{hidden} visibility sets the visibility of the
+original symbol to @code{hidden} (@pxref{Hidden}).  The @code{remove}
+visibility removes the original symbol from the symbol table.  If visibility
+isn't specified, the original symbol is unchanged.
 
 If the symbol @var{name} is not defined within the file being assembled, all
 references to @var{name} will be changed to @var{name2@@nodename}.  If no
@@ -7118,6 +7304,16 @@ source file name and pagenumber) when generating assembly listings.
 
 This directive affects subsequent pages, as well as the current page if
 it appears within ten lines of the top of a page.
+
+@ifset ELF
+@node Tls_common
+@section @code{.tls_common @var{symbol}, @var{length}[, @var{alignment}]}
+
+@cindex @code{tls_common} directive
+This directive behaves in the same way as the @code{.comm} directive
+(@pxref{Comm}) except that @var{symbol} has type of STT_TLS instead of
+STT_OBJECT.
+@end ifset
 
 @ifset COFF-ELF
 @node Type
@@ -7393,7 +7589,6 @@ so it can take an optional second argument of the value to store in the bytes
 instead of zero.  Using @samp{.zero} in this way would be confusing however.
 @end ifclear
 
-@ifset ELF
 @node 2byte
 @section @code{.2byte @var{expression} [, @var{expression}]*}
 @cindex @code{2byte} directive
@@ -7413,8 +7608,6 @@ This directive does not apply any alignment before or after inserting the
 values.  As a result of this, if relocations are generated, they may be
 different from those used for inserting values with a guaranteed alignment.
 
-This directive is only available for ELF targets,
-
 @node 4byte
 @section @code{.4byte @var{expression} [, @var{expression}]*}
 @cindex @code{4byte} directive
@@ -7432,8 +7625,6 @@ long values into the output.
 
 Like the @option{.2byte} directive, except that it inserts unaligned, eight
 byte long bignum values into the output.
-
-@end ifset
 
 @node Deprecated
 @section Deprecated Directives
@@ -7505,6 +7696,22 @@ the flag value is 0, the file is compatible with other toolchains.  If it is 1,
 then the file is only compatible with the named toolchain.  If it is greater
 than 1, the file can only be processed by other toolchains under some private
 arrangement indicated by the flag value and the vendor name.
+@end table
+
+@subsection M680x0 Attributes
+
+@table @r
+@item Tag_GNU_M68K_ABI_FP (4)
+The floating-point ABI used by this object file.  The value will be:
+
+@itemize @bullet
+@item
+0 for files not affected by the floating-point ABI.
+@item
+1 for files using double-precision hardware floating-point ABI.
+@item
+2 for files using the software floating-point ABI.
+@end itemize
 @end table
 
 @subsection MIPS Attributes
@@ -7702,6 +7909,9 @@ subject, see the hardware manufacturer's manual.
 @end ifset
 @ifset IP2K
 * IP2K-Dependent::              IP2K Dependent Features
+@end ifset
+@ifset LOONGARCH
+* LoongArch-Dependent::         LoongArch Dependent Features
 @end ifset
 @ifset LM32
 * LM32-Dependent::              LM32 Dependent Features
@@ -7925,6 +8135,10 @@ family.
 
 @ifset LM32
 @include c-lm32.texi
+@end ifset
+
+@ifset LOONGARCH
+@include c-loongarch.texi
 @end ifset
 
 @ifset M32C
