@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.367 2023/03/26 19:10:32 andvar Exp $
+#	$NetBSD: BRANCHES,v 1.368 2024/06/29 18:44:36 perseant Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1449,6 +1449,26 @@ Base Tag:	nick-csl-alignment-base5
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
 Scope:		sys, lib/libpthread, lib/libpthread_dbg
 Notes:	
+
+Branch:		perseant-exfatfs
+Description:	exFAT filesystem development
+Status:		Active
+Start Date:	29 June 2024
+End Date:	
+Base Tag:	perseant-exfatfs-base
+Maintainer:	Konrad Schroder <perseant@NetBSD.org>
+Scope:		kernel & userland
+Notes:		
+
+Branch:		perseant-iso10646
+Description:	Implement __STDC_ISO_10646__.
+Status:		Dormant
+Start Date:	14 July 2017
+End Date:	
+Base Tag:	perseant-iso10646-base
+Maintainer:	Konrad Schroder <perseant@NetBSD.org>
+Scope:		lib/libc/citrus lib/libc/locale usr.bin/localedef
+Notes:		
 
 Branch:		perseant-lfsv2
 Description:	LFS incompatible on-disk data structure changes
