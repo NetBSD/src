@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.123 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.123 2023/07/10 02:31:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.124 2024/06/29 13:46:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,6 +897,24 @@ linux_to_bsd_atflags(int lflags)
 		bflags |= AT_SYMLINK_FOLLOW;
 
 	return bflags;
+}
+
+int
+linux_sys_faccessat2(lwp_t *l, const struct linux_sys_faccessat2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) amode;
+		syscallarg(int) flags;
+	}*/
+	int flag = linux_to_bsd_atflags(SCARG(uap, flags));
+	int mode = SCARG(uap, amode);
+	int fd = SCARG(uap, fd);
+	const char *path = SCARG(uap, path);
+
+	return do_sys_accessat(l, fd, path, mode, flag);
 }
 
 

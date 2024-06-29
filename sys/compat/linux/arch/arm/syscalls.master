@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.79 2023/08/19 17:49:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.80 2024/06/29 13:46:09 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -48,6 +48,8 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_sched.h>
+
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -563,7 +565,9 @@
 342	UNIMPL		tee
 343	UNIMPL		vmsplice
 344	UNIMPL		move_pages
-345	UNIMPL		getcpu
+345	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
+			    unsigned int *node, \
+			    struct linux_getcpu_cache *tcache); }
 346	STD		{ int|linux_sys||epoll_pwait(int epfd, \
 			    struct linux_epoll_event *events, int maxevents, \
 			    int timeout, const linux_sigset_t *sigmask); }
@@ -693,7 +697,8 @@
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL
 438	UNIMPL
-439	UNIMPL
+439	STD		{ int|linux_sys||faccessat2(int fd, const char *path, \
+			    int amode, int flags); }
 440	UNIMPL
 441	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
 			    struct linux_epoll_event *events, int maxevents, \
