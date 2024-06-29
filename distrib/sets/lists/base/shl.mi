@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.981 2024/06/10 07:47:06 kre Exp $
+# $NetBSD: shl.mi,v 1.981.2.1 2024/06/29 19:43:24 perseant Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -645,6 +645,9 @@
 ./usr/lib/librumpfs_ext2fs.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_ext2fs.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_ext2fs.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpfs_exfatfs.so			base-rump-shlib		rump,exfatfs
+./usr/lib/librumpfs_exfatfs.so.0		base-rump-shlib		rump,exfatfs
+./usr/lib/librumpfs_exfatfs.so.0.0		base-rump-shlib		rump,exfatfs
 ./usr/lib/librumpfs_fdesc.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_fdesc.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_fdesc.so.0.0		base-rump-shlib		rump

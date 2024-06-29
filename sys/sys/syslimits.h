@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.28 2015/08/21 07:19:39 uebayasi Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.28.54.1 2024/06/29 19:43:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -52,7 +52,11 @@
 #define	MAX_INPUT		  255	/* max bytes in terminal input */
 #define	NAME_MAX		  511	/* max bytes in a file name, must be */
 					/* kept in sync with MAXNAMLEN */
+#if 0
 #define	NGROUPS_MAX		   16	/* max supplemental group id's */
+#else
+#define	NGROUPS_MAX		 1024	/* max supplemental group id's */
+#endif
 #define	UID_MAX		   2147483647U	/* max value for a uid_t (2^31-2) */
 #ifndef OPEN_MAX
 #define	OPEN_MAX		  128	/* max open files per process */

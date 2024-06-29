@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.h,v 1.6 2021/09/17 22:41:48 christos Exp $ */
+/* $NetBSD: vnode.h,v 1.6.4.1 2024/06/29 19:43:25 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,15 +27,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef FSCK_LFS_VNODE_H_
+#define FSCK_LFS_VNODE_H_
 
 #include <sys/queue.h>
 
 #define VNODE_HASH_MAX   1024 /* Must be a PO2 */
-#define VNODE_CACHE_SIZE 1024 /* Need not be a PO2 */
+#define VNODE_CACHE_SIZE 10 /* Need not be a PO2 */
 
 LIST_HEAD(ubuflists, ubuf);
 LIST_HEAD(uvnodelst, uvnode);
 LIST_HEAD(vgrlst,    vget_reg);
+
+TAILQ_HEAD(uvnodetq, uvnode);
 
 struct uvnode {
 	int v_fd;
@@ -49,13 +53,18 @@ struct uvnode {
 	int v_usecount;
 	struct ubuflists v_cleanblkhd;	/* clean blocklist head */
 	struct ubuflists v_dirtyblkhd;	/* dirty blocklist head */
-	LIST_ENTRY(uvnode) v_mntvnodes;
+	TAILQ_ENTRY(uvnode) v_mntvnodes;
 	LIST_ENTRY(uvnode) v_getvnodes;
+	/* Unused, for source compatibility only */
+	int v_vflag;
+	int v_type;
+	int v_tag;
 };
 
 struct vget_reg {
 	void *vgr_fs;
-	struct uvnode *(*vgr_func) (void *, ino_t);
+	struct uvnode *(*vgr_getfunc) (void *, ino_t, void *);
+	int (*vgr_freefunc) (struct uvnode *);
 	LIST_ENTRY(vget_reg) vgr_list;
 };
 
@@ -64,7 +73,7 @@ struct vget_reg {
 #define VOP_BMAP(vp, lbn, daddrp) ((vp)->v_bmap_op((vp), (lbn), (daddrp)))
 
 extern int fsdirty;
-extern struct uvnodelst vnodelist;
+extern struct uvnodetq vnodetq;
 
 int raw_vop_strategy(struct ubuf *);
 int raw_vop_bwrite(struct ubuf *);
@@ -72,5 +81,11 @@ int raw_vop_bmap(struct uvnode *, daddr_t, daddr_t *);
 
 void vnode_destroy(struct uvnode *);
 struct uvnode *vget(void *, ino_t);
-void register_vget(void *, struct uvnode *(*)(void *, ino_t));
+struct uvnode *vget3(void *, ino_t, void *);
+void register_vget(void *, struct uvnode *(*)(void *, ino_t, void *),
+		   int (*)(struct uvnode *));
 void vfs_init(void);
+void vref(struct uvnode *);
+void vrele(struct uvnode *);
+
+#endif /* FSCK_LFS_VNODE_H_ */

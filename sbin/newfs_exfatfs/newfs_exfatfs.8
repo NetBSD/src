@@ -1,0 +1,85 @@
+.\"	$NetBSD: newfs_exfatfs.8,v 1.1.2.1 2024/06/29 19:43:25 perseant Exp $
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)newlfs.8	8.1 (Berkeley) 6/19/93
+.\"
+.Dd October 17, 2022
+.Dt NEWFS_EXFATFS 8
+.Os
+.Sh NAME
+.Nm newfs_exfatfs
+.Nd construct a new exFAT file system
+.Sh SYNOPSIS
+.Nm
+.Op Ar newfs_exfatfs-options
+.Ar special
+.Sh DESCRIPTION
+.Nm
+builds an exFAT file system on the specified special
+device basing its defaults on the information in the disk label.
+Before running
+.Nm
+the disk must be labeled using
+.Xr disklabel 8 ,
+the proper fstype is exFAT.
+.Pp
+The following options define the general layout policies.
+.Bl -tag -width Fl
+.It Fl b Ar cluster-size
+The cluster size of the file system in bytes.
+If not specified, the block size is generated based on the file system size.
+.It Fl F
+Force creation of a file system even on a partition labeled as another type.
+.It Fl L Ar label
+Specify the file system label.  The default label is "NONE GIVEN".
+.It Fl N
+Do not actually create the filesystem.
+.It Fl S Ar sector-size
+Use this as the size of filesystem sectors, in bytes.  The default is to
+use the sector size from the disk label.
+.It Fl s Ar size
+The size of the file system in sectors.
+.It Fl T Ar type
+Use the given disk type when there is no disk label.
+.El
+.Sh SEE ALSO
+.Xr disktab 5 ,
+.\" .Xr exfatfs 5 ,
+.Xr disklabel 8 ,
+.Xr diskpart 8
+.Rs
+.%A Microsoft
+.%T "exFAT file system specification"
+.%D April 14, 2022
+.Re
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.Nx 11.0 .

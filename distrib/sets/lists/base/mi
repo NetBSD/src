@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1345 2024/06/02 00:22:21 kre Exp $
+# $NetBSD: mi,v 1.1345.2.1 2024/06/29 19:43:24 perseant Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -379,6 +379,7 @@
 ./sbin/fdiscard					base-sysutil-root
 ./sbin/fdisk					base-sysutil-root
 ./sbin/fsck					base-sysutil-root
+./sbin/fsck_exfatfs				base-exfatfs-root	exfatfs
 ./sbin/fsck_ext2fs				base-ext2fs-root
 ./sbin/fsck_ffs					base-sysutil-root
 ./sbin/fsck_lfs					base-sysutil-root
@@ -410,6 +411,7 @@
 ./sbin/mount_cd9660				base-sysutil-root
 ./sbin/mount_chfs				base-sysutil-root
 ./sbin/mount_efs				base-efs-root
+./sbin/mount_exfatfs				base-exfatfs-root	exfatfs
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
@@ -442,6 +444,7 @@
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
+./sbin/newfs_exfatfs				base-sysutil-root	exfatfs
 ./sbin/newfs_ext2fs				base-sysutil-root
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
@@ -1494,6 +1497,7 @@
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
+./usr/sbin/dumpexfatfs				base-sysutil-bin	exfatfs
 ./usr/sbin/dumplfs				base-sysutil-bin
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
@@ -1736,6 +1740,7 @@
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
 ./usr/sbin/rump_cd9660				base-puffs-bin	rump
 ./usr/sbin/rump_efs				base-puffs-bin	rump
+./usr/sbin/rump_exfatfs				base-puffs-bin	rump,exfatfs
 ./usr/sbin/rump_ext2fs				base-puffs-bin	rump
 ./usr/sbin/rump_ffs				base-puffs-bin	rump
 ./usr/sbin/rump_hfs				base-puffs-bin	rump

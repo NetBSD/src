@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 2024/06/29 19:43:27 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,10 @@ SUBDIR=	mount_9p mount_psshfs mount_sysctlfs
 SUBDIR+=rump_cd9660 rump_efs rump_ext2fs rump_ffs rump_hfs rump_lfs
 SUBDIR+=rump_msdos rump_nfs rump_ntfs rump_syspuffs rump_sysvbfs
 SUBDIR+=rump_tmpfs rump_udf rump_v7fs
+
+.if (${MKEXFATFS} != "no")
+SUBDIR+=rump_exfatfs
+.endif
 
 #
 # The following are not built by default

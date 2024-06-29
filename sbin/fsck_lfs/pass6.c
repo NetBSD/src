@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.51 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: pass6.c,v 1.51.8.1 2024/06/29 19:43:25 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -814,7 +814,7 @@ pass6(void)
 	idesc.id_type = ADDR;
 	idesc.id_func = pass6check;
 	idesc.id_lblkno = 0;
-	LIST_FOREACH(vp, &vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &vnodetq, v_mntvnodes) {
 		if ((vp->v_uflag & VU_DIROP) == 0)
 			--n_files; /* Don't double count */
 		checkinode(VTOI(vp)->i_number, &idesc);

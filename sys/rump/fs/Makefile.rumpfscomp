@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpfscomp,v 1.10 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: Makefile.rumpfscomp,v 1.10.10.1 2024/06/29 19:43:26 perseant Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,10 @@ RUMPFSCOMP=	cd9660 efs ext2fs fdesc ffs hfs kernfs lfs mfs msdos	\
 
 .if ${MKZFS} != "no" || make(rumpdescribe)
 RUMPFSCOMP+=	zfs
+.endif
+
+.if ${MKEXFATFS} != "no"
+RUMPFSCOMP+=	exfatfs
 .endif
 
 RUMPFSCOMP+=	nfsserver

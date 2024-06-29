@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2022/06/06 13:28:55 nia Exp $
+#	$NetBSD: Makefile,v 1.139.4.1 2024/06/29 19:43:25 perseant Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -60,6 +60,10 @@ SUBDIR+= ping6
 
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsictl iscsid
+.endif
+
+.if ${MKEXFATFS} != "no"
+SUBDIR+= fsck_exfatfs mount_exfatfs newfs_exfatfs
 .endif
 
 # IPsec

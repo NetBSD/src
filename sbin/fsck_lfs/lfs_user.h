@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.14 2015/09/01 06:15:16 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.14.28.1 2024/06/29 19:43:25 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,7 +75,7 @@ struct indir {
 #define sbdirty()	++fsdirty
 
 extern int fsdirty;
-extern struct uvnodelst vnodelist;
+extern struct uvnodetq vnodetq;
 
 int lfs_vop_strategy(struct ubuf *);
 int lfs_vop_bwrite(struct ubuf *);

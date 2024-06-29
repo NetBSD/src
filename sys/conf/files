@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1313 2024/05/19 22:25:48 christos Exp $
+#	$NetBSD: files,v 1.1313.2.1 2024/06/29 19:43:25 perseant Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1577,6 +1577,12 @@ include "miscfs/umapfs/files.umapfs"
 include "nfs/files.nfs"
 include "ufs/files.ufs"
 include "fs/nfs/files.newnfs"
+
+# The exFAT filesystem is subject to
+# US patent 8,321,439 and possibly others.
+# Enable at your own risk.
+#
+include "fs/exfatfs/files.exfatfs"
 
 #
 # UVM (virtual memory)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.304 2022/10/26 23:40:30 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.304.8.1 2024/06/29 19:43:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ enum vtagtype	{
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
-	VT_RUMP, VT_NILFS, VT_V7FS, VT_CHFS, VT_AUTOFS
+	VT_RUMP, VT_NILFS, VT_V7FS, VT_CHFS, VT_AUTOFS, VT_EXFATFS
 };
 
 #define	VNODE_TAGS \
@@ -112,7 +112,8 @@ enum vtagtype	{
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
     "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
-    "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS", "VT_CHFS", "VT_AUTOFS"
+    "VT_ZFS", "VT_RUMP", "VT_NILFS", "VT_V7FS", "VT_CHFS", "VT_AUTOFS", \
+    "VT_EXFATFS"
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 struct vnode;

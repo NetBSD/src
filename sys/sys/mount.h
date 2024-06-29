@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.241 2023/04/22 14:30:54 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.241.6.1 2024/06/29 19:43:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -99,6 +99,7 @@
 #define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
 #define MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
 #define MOUNT_AUTOFS	"autofs"	/* Automounter Filesystem */
+#define MOUNT_EXFATFS   "exfatfs"       /* EXFATFS filesystem */
 
 /*
  * Sysctl CTL_VFS definitions.
