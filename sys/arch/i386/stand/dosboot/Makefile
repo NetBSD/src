@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.37 2024/06/29 08:05:13 rin Exp $
+#	$NetBSD: Makefile,v 1.38 2024/06/29 13:46:40 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
 BASE= dosboot
 PROG= ${BASE}.com
 NEWVERSWHAT=	"DOS Boot"
-STARTFILE=	${DOSSTART}
+STARTFILE=	start_dos.o doscommain.o
 RELOC=		0x100
 
-SRCS= main.c devopen.c exec.c exec_multiboot1.c exec_multiboot2.c
+SRCS=	main.c devopen.c exec.c
+SRCS+=	dosfile.c dos_file.S
+SRCS+=	exec_multiboot1.c exec_multiboot2.c
 
 #CPPFLAGS+= -DSLOW	# for libz; no longer available
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
@@ -27,7 +29,6 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 CPPFLAGS+= -DSTACK_START=0x10000
 SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no SA_ENABLE_LS_OP=yes
-I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 # DOS command line arguments are located at 0x0000.
 COPTS.doscommain.c+= -fno-delete-null-pointer-checks
