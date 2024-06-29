@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.27 2023/12/20 17:15:20 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.28 2024/06/29 18:03:32 riastradh Exp $	*/
 /* $OpenBSD: log.c,v 1.61 2023/12/06 21:06:48 djm Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.27 2023/12/20 17:15:20 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.28 2024/06/29 18:03:32 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -309,9 +309,7 @@ static void
 do_log(LogLevel level, int force, const char *suffix, const char *fmt,
     va_list args)
 {
-#ifdef SYSLOG_DATA_INIT
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
-#endif
 	char msgbuf[MSGBUFSIZ], *msgbufp;
 	char visbuf[MSGBUFSIZ * 4 + 1];
 	size_t len, len2;
@@ -389,15 +387,9 @@ do_log(LogLevel level, int force, const char *suffix, const char *fmt,
 		    (int)sizeof msgbuf - 10, visbuf);
 		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
-#ifdef SYSLOG_DATA_INIT
 		openlog_r(progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", visbuf);
 		closelog_r(&sdata);
-#else
-		openlog(progname, LOG_PID, log_facility);
-		syslog(pri, "%.500s", visbuf);
-		closelog();
-#endif
 	}
 	errno = saved_errno;
 }
