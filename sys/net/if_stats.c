@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.c,v 1.4 2021/06/29 21:19:58 riastradh Exp $	*/
+/*	$NetBSD: if_stats.c,v 1.5 2024/06/29 02:18:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,16 +30,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.4 2021/06/29 21:19:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.5 2024/06/29 02:18:35 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/mbuf.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
 
 #include <net/if.h>
 
 #define	IF_STATS_SIZE	(sizeof(uint64_t) * IF_NSTATS)
+
+SDT_PROBE_DEFINE3(sdt, net, interface, stat,
+    "struct ifnet *"/*ifp*/,
+    "if_stat_t"/*stat*/,
+    "int64_t"/*delta*/);
 
 /*
  * if_stats_init --
