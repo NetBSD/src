@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2017/04/08 19:53:22 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2024/06/29 08:06:56 rin Exp $
 
 PROG=	ip30boot
 NOMAN=	# defined
 
 SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
-	getopt.c disk.c arcbios_calls.S
+	disk.c arcbios_calls.S
 
 
 CLEANFILES+=	boot.map
