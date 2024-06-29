@@ -1,6 +1,6 @@
 // reduced_debug_output.cc -- output reduced debugging information to save space
 
-// Copyright (C) 2008-2020 Free Software Foundation, Inc.
+// Copyright (C) 2008-2022 Free Software Foundation, Inc.
 // Written by Caleb Howe <cshowe@google.com>.
 
 // This file is part of gold.

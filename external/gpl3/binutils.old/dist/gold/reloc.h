@@ -1,6 +1,6 @@
 // reloc.h -- relocate input files for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -1171,7 +1171,7 @@ class Track_relocs
   next_addend() const;
 
   // Advance to OFFSET within the data section, and return the number
-  // of relocs which would be skipped.
+  // of relocs which would be skipped, excluding r_info==0 relocs.
   int
   advance(off_t offset);
 

@@ -1,5 +1,5 @@
 /* unwind-ia64.c -- utility routines to dump IA-64 unwind info for readelf.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
@@ -155,6 +155,10 @@ unw_print_xyreg (char *cp, unsigned int x, unsigned int ytreg)
 
     case 2: /* br */
       sprintf (cp, "b%u", (ytreg & 0x1f));
+      break;
+
+    default:
+      strcpy (cp, "invalid");
       break;
     }
 }
@@ -544,21 +548,34 @@ static unw_word
 unw_decode_uleb128 (const unsigned char **dpp, const unsigned char * end)
 {
   unsigned shift = 0;
+  int status = 1;
   unw_word byte, result = 0;
   const unsigned char *bp = *dpp;
 
   while (bp < end)
     {
       byte = *bp++;
-      result |= (byte & 0x7f) << shift;
+      if (shift < sizeof (result) * 8)
+	{
+	  result |= (byte & 0x7f) << shift;
+	  if ((result >> shift) != (byte & 0x7f))
+	    /* Overflow.  */
+	    status |= 2;
+	  shift += 7;
+	}
+      else if ((byte & 0x7f) != 0)
+	status |= 2;
 
       if ((byte & 0x80) == 0)
-	break;
-
-      shift += 7;
+	{
+	  status &= ~1;
+	  break;
+	}
     }
 
   *dpp = bp;
+  if (status != 0)
+    printf (_("Bad uleb128\n"));
 
   return result;
 }

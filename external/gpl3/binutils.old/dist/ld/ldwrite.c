@@ -1,5 +1,5 @@
 /* ldwrite.c -- write out the linked file
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain sac@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -278,20 +278,20 @@ build_link_order (lang_statement_union_type *statement)
 /* Return true if NAME is the name of an unsplittable section. These
    are the stabs strings, dwarf strings.  */
 
-static bfd_boolean
+static bool
 unsplittable_name (const char *name)
 {
-  if (CONST_STRNEQ (name, ".stab"))
+  if (startswith (name, ".stab"))
     {
       /* There are several stab like string sections. We pattern match on
 	 ".stab...str"  */
       unsigned len = strlen (name);
       if (strcmp (&name[len-3], "str") == 0)
-	return TRUE;
+	return true;
     }
   else if (strcmp (name, "$GDB_STRINGS$") == 0)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 /* Wander around the input sections, make sure that
@@ -326,7 +326,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
     {
       /* Some section names cannot be truncated, as the name is
 	 used to locate some other section.  */
-      if (CONST_STRNEQ (name, ".stab")
+      if (startswith (name, ".stab")
 	  || strcmp (name, "$GDB_SYMBOLS$") == 0)
 	{
 	  einfo (_ ("%F%P: cannot create split section name for %s\n"), name);
@@ -339,7 +339,7 @@ clone_section (bfd *abfd, asection *s, const char *name, int *count)
   if ((sname = bfd_get_unique_section_name (abfd, tname, count)) == NULL
       || (n = bfd_make_section_anyway (abfd, sname)) == NULL
       || (h = bfd_link_hash_lookup (link_info.hash,
-				    sname, TRUE, TRUE, FALSE)) == NULL)
+				    sname, true, true, false)) == NULL)
     {
       einfo (_("%F%P: clone section failed: %E\n"));
       /* Silence gcc warnings.  einfo exits, so we never reach here.  */

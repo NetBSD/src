@@ -1,5 +1,5 @@
 /* Test plugin for the GNU linker.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -20,6 +20,7 @@
 
 #include "sysdep.h"
 #include "bfd.h"
+#if BFD_SUPPORTS_PLUGINS
 #include "plugin-api.h"
 /* For ARRAY_SIZE macro only - we don't link the library itself.  */
 #include "libiberty.h"
@@ -40,7 +41,7 @@ typedef struct claim_file
 {
   struct claim_file *next;
   struct ld_plugin_input_file file;
-  bfd_boolean claimed;
+  bool claimed;
   struct ld_plugin_symbol *symbols;
   int n_syms_allocated;
   int n_syms_used;
@@ -121,10 +122,10 @@ static enum ld_plugin_status onload_ret = LDPS_OK;
 static enum ld_plugin_status claim_file_ret = LDPS_OK;
 static enum ld_plugin_status all_symbols_read_ret = LDPS_OK;
 static enum ld_plugin_status cleanup_ret = LDPS_OK;
-static bfd_boolean register_claimfile_hook = FALSE;
-static bfd_boolean register_allsymbolsread_hook = FALSE;
-static bfd_boolean register_cleanup_hook = FALSE;
-static bfd_boolean dumpresolutions = FALSE;
+static bool register_claimfile_hook = false;
+static bool register_allsymbolsread_hook = false;
+static bool register_cleanup_hook = false;
+static bool dumpresolutions = false;
 
 /* The master list of all claimable/claimed files.  */
 static claim_file_t *claimfiles_list = NULL;
@@ -175,10 +176,7 @@ record_read_length (const char *length)
   while (*tmp != '\0' && isdigit (*tmp))
     ++tmp;
   if (*tmp != '\0' || *length == '\0')
-    {
-      fprintf (stderr, "APB: Bad length string: %s\n", tmp);
-      return LDPS_ERR;
-    }
+    return LDPS_ERR;
 
   bytes_to_read_before_claim = atoi (length);
   return LDPS_OK;
@@ -239,12 +237,15 @@ parse_symdefstr (const char *str, struct ld_plugin_symbol *sym)
   /* Finally we'll use sscanf to parse the numeric fields, then
      we'll split out the strings which we need to allocate separate
      storage for anyway so that we can add nul termination.  */
-  n = sscanf (colon2 + 1, "%i:%i:%lli", &sym->def, &sym->visibility, &size);
+  n = sscanf (colon2 + 1, "%hhi:%i:%lli", &sym->def, &sym->visibility, &size);
   if (n != 3)
     return LDPS_ERR;
 
   /* Parsed successfully, so allocate strings and fill out fields.  */
   sym->size = size;
+  sym->unused = 0;
+  sym->section_kind = 0;
+  sym->symbol_type = 0;
   sym->resolution = LDPR_UNKNOWN;
   sym->name = malloc (colon1 - str + 1);
   if (!sym->name)
@@ -323,7 +324,7 @@ set_ret_val (const char *whichval, enum ld_plugin_status retval)
 
 /* Records hooks which should be registered.  */
 static enum ld_plugin_status
-set_register_hook (const char *whichhook, bfd_boolean yesno)
+set_register_hook (const char *whichhook, bool yesno)
 {
   if (!strcmp ("claimfile", whichhook))
     register_claimfile_hook = yesno;
@@ -345,9 +346,9 @@ parse_option (const char *opt)
   else if (!strncmp ("pass", opt, 4))
     return set_ret_val (opt + 4, LDPS_OK);
   else if (!strncmp ("register", opt, 8))
-    return set_register_hook (opt + 8, TRUE);
+    return set_register_hook (opt + 8, true);
   else if (!strncmp ("noregister", opt, 10))
-    return set_register_hook (opt + 10, FALSE);
+    return set_register_hook (opt + 10, false);
   else if (!strncmp ("claim:", opt, 6))
     return record_claim_file (opt + 6);
   else if (!strncmp ("read:", opt, 5))
@@ -361,7 +362,7 @@ parse_option (const char *opt)
   else if (!strncmp ("dir:", opt, 4))
     return record_add_file (opt + 4, ADD_DIR);
   else if (!strcmp ("dumpresolutions", opt))
-    dumpresolutions = TRUE;
+    dumpresolutions = true;
   else
     return LDPS_ERR;
   return LDPS_OK;
@@ -588,7 +589,7 @@ onclaim_file (const struct ld_plugin_input_file *file, int *claimed)
   *claimed = (claimfile != 0);
   if (claimfile)
     {
-      claimfile->claimed = TRUE;
+      claimfile->claimed = true;
       claimfile->file = *file;
       if (claimfile->n_syms_used && !tv_add_symbols)
 	return LDPS_ERR;
@@ -666,3 +667,4 @@ oncleanup (void)
   fflush (NULL);
   return cleanup_ret;
 }
+#endif /* BFD_SUPPORTS_PLUGINS */

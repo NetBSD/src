@@ -1,6 +1,6 @@
 // dwp.cc -- DWARF packaging utility
 
-// Copyright (C) 2012-2020 Free Software Foundation, Inc.
+// Copyright (C) 2012-2022 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of dwp, the DWARF packaging utility.
@@ -1107,8 +1107,8 @@ Dwo_file::sized_make_object(const unsigned char* p, Input_file* input_file,
   if (output_file != NULL)
     output_file->record_target_info(
 	this->name_, ehdr.get_e_machine(), size, big_endian,
-	ehdr.get_e_ident()[elfcpp::EI_OSABI],
-	ehdr.get_e_ident()[elfcpp::EI_ABIVERSION]);
+	ehdr.get_ei_osabi(),
+	ehdr.get_ei_abiversion());
   return obj;
 }
 
@@ -2334,7 +2334,7 @@ print_version()
 {
   // This output is intended to follow the GNU standards.
   printf("GNU dwp %s\n", BFD_VERSION_STRING);
-  printf(_("Copyright (C) 2020 Free Software Foundation, Inc.\n"));
+  printf(_("Copyright (C) 2022 Free Software Foundation, Inc.\n"));
   printf(_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or (at your option) any later version.\n\

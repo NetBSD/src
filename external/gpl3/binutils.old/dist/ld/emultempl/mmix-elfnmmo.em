@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -30,7 +30,7 @@ static void gld${EMULATION_NAME}_before_parse (void);
 static void
 mmix_before_parse (void)
 {
-  link_info.check_relocs_after_open_input = TRUE;
+  link_info.check_relocs_after_open_input = true;
   gld${EMULATION_NAME}_before_parse ();
 }
 

@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 
 #include "sysdep.h"
 
-#include "bfd_stdint.h"
+#include <stdint.h>
 #include <assert.h>
 
 #include "safe-ctype.h"
@@ -99,7 +99,7 @@ static int parse_im6_ms (struct nds32_asm_desc *, struct nds32_asm_insn *,
 
    Field table for operands and bit-fields.  */
 
-const field_t operand_fields[] =
+const field_t nds32_operand_fields[] =
 {
   {"rt",	20, 5, 0, HW_GPR, NULL},
   {"ra",	15, 5, 0, HW_GPR, NULL},
@@ -1114,7 +1114,7 @@ struct nds32_opcode nds32_opcodes[] =
   {NULL, NULL, 0, 0, 0, 0, NULL, 0, NULL},
 };
 
-const keyword_t keyword_gpr[] =
+const keyword_t nds32_keyword_gpr[] =
 {
   /* Standard names.  */
   {"r0", 0, ATTR (RDREG)}, {"r1", 1, ATTR (RDREG)}, {"r2", 2, ATTR (RDREG)},
@@ -1160,7 +1160,7 @@ const keyword_t keyword_gpr[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_usr[] =
+static const keyword_t keyword_usr[] =
 {
   {"d0.lo", USRIDX (0, 0), 0},
   {"d0.hi", USRIDX (0, 1), 0},
@@ -1195,12 +1195,12 @@ const keyword_t keyword_usr[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_dxr[] =
+static const keyword_t keyword_dxr[] =
 {
   {"d0", 0, 0}, {"d1", 1, 0}, {NULL, 0, 0}
 };
 
-const keyword_t keyword_sr[] =
+static const keyword_t keyword_sr[] =
 {
   {"cpu_ver", SRIDX (0, 0, 0), 0},	{"cr0", SRIDX (0, 0, 0), 0},
   {"icm_cfg", SRIDX (0, 1, 0), 0},	{"cr1", SRIDX (0, 1, 0), 0},
@@ -1351,12 +1351,12 @@ const keyword_t keyword_sr[] =
   {NULL,0 ,0}
 };
 
-const keyword_t keyword_cp[] =
+static const keyword_t keyword_cp[] =
 {
   {"cp0", 0, 0}, {"cp1", 1, 0}, {"cp2", 2, 0}, {"cp3", 3, 0}, {NULL, 0, 0}
 };
 
-const keyword_t keyword_cpr[] =
+static const keyword_t keyword_cpr[] =
 {
   {"cpr0", 0, 0}, {"cpr1", 1, 0}, {"cpr2", 2, 0}, {"cpr3", 3, 0},
   {"cpr4", 4, 0}, {"cpr5", 5, 0}, {"cpr6", 6, 0}, {"cpr7", 7, 0},
@@ -1369,7 +1369,7 @@ const keyword_t keyword_cpr[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_fsr[] =
+static const keyword_t keyword_fsr[] =
 {
   {"fs0", 0, 0}, {"fs1", 1, 0}, {"fs2", 2, 0}, {"fs3", 3, 0}, {"fs4", 4, 0},
   {"fs5", 5, 0}, {"fs6", 6, 0}, {"fs7", 7, 0}, {"fs8", 8, 0}, {"fs9", 9, 0},
@@ -1381,7 +1381,7 @@ const keyword_t keyword_fsr[] =
   {"fs30", 30, 0}, {"fs31", 31, 0}, {NULL, 0 ,0}
 };
 
-const keyword_t keyword_fdr[] =
+static const keyword_t keyword_fdr[] =
 {
   {"fd0", 0, 0}, {"fd1", 1, 0}, {"fd2", 2, 0}, {"fd3", 3, 0}, {"fd4", 4, 0},
   {"fd5", 5, 0}, {"fd6", 6, 0}, {"fd7", 7, 0}, {"fd8", 8, 0}, {"fd9", 9, 0},
@@ -1393,14 +1393,14 @@ const keyword_t keyword_fdr[] =
   {"fd30", 30, 0}, {"fd31", 31, 0}, {NULL, 0, 0}
 };
 
-const keyword_t keyword_abdim[] =
+static const keyword_t keyword_abdim[] =
 {
   {"bi", 0, 0}, {"bim", 1, 0}, {"bd", 2, 0}, {"bdm", 3, 0},
   {"ai", 4, 0}, {"aim", 5, 0}, {"ad", 6, 0}, {"adm", 7, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_abm[] =
+static const keyword_t keyword_abm[] =
 {
   {"b", 0, 0}, {"bm", 1, 0}, {"bx", 2, 0}, {"bmx", 3, 0},
   {"a", 4, 0}, {"am", 5, 0}, {"ax", 6, 0}, {"amx", 7, 0},
@@ -1417,7 +1417,7 @@ static const keyword_t keyword_dtitoff[] =
   {"itoff", 1, 0}, {"toff", 3, 0}, {NULL, 0, 0}
 };
 
-const keyword_t keyword_dpref_st[] =
+static const keyword_t keyword_dpref_st[] =
 {
   {"srd", 0, 0}, {"mrd", 1, 0}, {"swr", 2, 0}, {"mwr", 3, 0},
   {"pte", 4, 0}, {"clwr", 5, 0}, {NULL, 0, 0}
@@ -1468,7 +1468,7 @@ static const keyword_t keyword_cctl_st5[] =
   {"l1d_wball", 0xf, 0}, {NULL, 0, 0}
 };
 
-const keyword_t keyword_cctl_lv[] =
+static const keyword_t keyword_cctl_lv[] =
 {
   {"1level", 0, 0}, {"alevel", 1, 0}, {"0", 0, 0}, {"1", 1, 0},
   {NULL, 0, 0},
@@ -1485,7 +1485,7 @@ static const keyword_t keyword_tlbop_st[] =
   {NULL, 0, 0},
 };
 
-const keyword_t keyword_standby_st[] =
+static const keyword_t keyword_standby_st[] =
 {
   {"no_wake_grant", 0, 0},
   {"wake_grant", 1, 0},
@@ -1497,33 +1497,33 @@ const keyword_t keyword_standby_st[] =
   {NULL, 0, 0},
 };
 
-const keyword_t keyword_msync_st[] =
+static const keyword_t keyword_msync_st[] =
 {
   {"all", 0, 0}, {"store", 1, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_im5_i[] =
+static const keyword_t keyword_im5_i[] =
 {
   {"i0", 0, 0}, {"i1", 1, 0}, {"i2", 2, 0}, {"i3", 3, 0},
   {"i4", 4, 0}, {"i5", 5, 0}, {"i6", 6, 0}, {"i7", 7, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_im5_m[] =
+static const keyword_t keyword_im5_m[] =
 {
   {"m0", 0, 0}, {"m1", 1, 0}, {"m2", 2, 0}, {"m3", 3, 0},
   {"m4", 4, 0}, {"m5", 5, 0}, {"m6", 6, 0}, {"m7", 7, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_accumulator[] =
+static const keyword_t keyword_accumulator[] =
 {
   {"d0.lo", 0, 0}, {"d0.hi", 1, 0}, {"d1.lo", 2, 0}, {"d1.hi", 3, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_aridx[] =
+static const keyword_t keyword_aridx[] =
 {
   {"i0", 0, 0}, {"i1", 1, 0}, {"i2", 2, 0}, {"i3", 3, 0},
   {"i4", 4, 0}, {"i5", 5, 0}, {"i6", 6, 0}, {"i7", 7, 0},
@@ -1535,7 +1535,7 @@ const keyword_t keyword_aridx[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_aridx2[] =
+static const keyword_t keyword_aridx2[] =
 {
   {"cbb0", 0, 0}, {"cbb1", 1, 0}, {"cbb2", 2, 0}, {"cbb3", 3, 0},
   {"cbe0", 4, 0}, {"cbe1", 5, 0}, {"cbe2", 6, 0}, {"cbe3", 7, 0},
@@ -1543,7 +1543,7 @@ const keyword_t keyword_aridx2[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_aridxi[] =
+static const keyword_t keyword_aridxi[] =
 {
   {"i0", 0, 0}, {"i1", 1, 0}, {"i2", 2, 0}, {"i3", 3, 0},
   {"i4", 4, 0}, {"i5", 5, 0}, {"i6", 6, 0}, {"i7", 7, 0},
@@ -1552,16 +1552,16 @@ const keyword_t keyword_aridxi[] =
   {NULL, 0, 0}
 };
 
-const keyword_t keyword_aridxi_mx[] =
+static const keyword_t keyword_aridxi_mx[] =
 {
   {"m1", 9, 0}, {"m2", 10, 0}, {"m3",11, 0},
   {"m5",13, 0}, {"m6",14, 0}, {"m7",15, 0},
   {NULL, 0, 0}
 };
 
-const keyword_t *keywords[_HW_LAST] =
+const keyword_t *nds32_keywords[_HW_LAST] =
 {
-  keyword_gpr, keyword_usr, keyword_dxr, keyword_sr, keyword_fsr,
+  nds32_keyword_gpr, keyword_usr, keyword_dxr, keyword_sr, keyword_fsr,
   keyword_fdr, keyword_cp, keyword_cpr, keyword_abdim, keyword_abm,
   keyword_dtiton, keyword_dtitoff, keyword_dpref_st,
   keyword_cctl_st0, keyword_cctl_st1, keyword_cctl_st2,
@@ -1774,7 +1774,7 @@ build_opcode_syntax (struct nds32_opcode *opc)
 	      k = i;
 	    }
 	}
-      assert (fidx >= 0 && fidx < (int) ARRAY_SIZE (operand_fields));
+      assert (fidx >= 0 && fidx < (int) ARRAY_SIZE (nds32_operand_fields));
       *plex |= LEX_SET_FIELD (k, fidx);
 
       str += len;
@@ -1850,10 +1850,10 @@ nds32_asm_init (nds32_asm_desc_t *pdesc, int flags)
   pdesc->mach = flags & NASM_OPEN_ARCH_MASK;
 
   /* Setup main core.  */
-  nds32_keyword_table[NDS32_MAIN_CORE] = &keywords[0];
+  nds32_keyword_table[NDS32_MAIN_CORE] = &nds32_keywords[0];
   nds32_keyword_count_table[NDS32_MAIN_CORE] = _HW_LAST;
   nds32_opcode_table[NDS32_MAIN_CORE] = &nds32_opcodes[0];
-  nds32_field_table[NDS32_MAIN_CORE] = &operand_fields[0];
+  nds32_field_table[NDS32_MAIN_CORE] = &nds32_operand_fields[0];
 
   /* Build operand hash table.  */
   build_operand_hash_table ();
@@ -2405,7 +2405,7 @@ parse_operand (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
       abort ();
     }
 
-done:
+ done:
   /* Don't silently discarding bits.  */
   if (value & __MASK (fld->shift))
     {
@@ -2533,7 +2533,7 @@ parse_insn (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
       if (*plex == 0 && (*p == '\0' || *p == '!' || *p == '#'))
 	return 1;
 
-reject:
+    reject:
       /* If not accepted, try another combination.  */
       variant++;
     }
@@ -2564,7 +2564,7 @@ nds32_assemble (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
     *s++ = '\0';
   dot = strchr (mnemoic, '.');
 
-retry_dot:
+ retry_dot:
   /* Lookup the opcode syntax.  */
   hash = htab_hash_string (mnemoic);
   opc = (struct nds32_opcode *)
@@ -2615,6 +2615,6 @@ retry_dot:
   /* A matched opcode is found.  Write the result to instruction buffer.  */
   pdesc->result = NASM_OK;
 
-out:
+ out:
   free (str);
 }

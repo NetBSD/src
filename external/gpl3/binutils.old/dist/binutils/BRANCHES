@@ -50,8 +50,13 @@ binutils-2_31-branch
 binutils-2_32-branch
 binutils-2_33-branch
 binutils-2_34-branch
+binutils-2_35-branch
+binutils-2_36-branch
+binutils-2_37-branch
+binutils-2_38-branch
+binutils-2_39-branch
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

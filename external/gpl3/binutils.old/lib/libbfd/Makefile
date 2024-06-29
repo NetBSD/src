@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.5 2022/12/23 17:02:12 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.6 2024/06/29 16:24:39 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -28,7 +28,7 @@ BINDIR=/usr/lib
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
 
-SHLIB_MAJOR=	17
+SHLIB_MAJOR=	18
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz
@@ -40,10 +40,6 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-DDEBUGDIR=\"${DEBUGDIR}\" -DLIBDIR=\"${LIBDIR}\" \
 		-DBINDIR=\"${BINDIR}\"
-
-.if (${BFD_MACHINE_ARCH} == "vax")
-CPPFLAGS.elf.c +=	-O0
-.endif
 
 COPTS.pei-x86_64.c+=	-Wno-stack-protector
 COPTS.elfxx-mips.c+=	-Wno-stack-protector
@@ -127,3 +123,7 @@ pepigen.c: peXXigen.c
 pex64igen.c: peXXigen.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/XX/pex64/g < $> > $@
+
+pe-aarch64igen.c: peXXigen.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/XX/peAArch64/g < $> > $@

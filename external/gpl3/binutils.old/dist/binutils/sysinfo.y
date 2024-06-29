@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of GNU binutils.
@@ -33,7 +33,7 @@ static int rdepth;
 static char *names[] = {" ","[n]","[n][m]"};
 static char *pnames[]= {"","*","**"};
 
-static int yyerror (char *s);
+static void yyerror (const char *s);
 extern int yylex (void);
 %}
 
@@ -434,9 +434,8 @@ if (writecode == 'd')
 return 0;
 }
 
-static int
-yyerror (char *s)
+static void
+yyerror (const char *s)
 {
   fprintf(stderr, "%s\n" , s);
-  return 0;
 }
