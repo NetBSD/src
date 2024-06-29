@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2024/06/29 07:24:38 rin Exp $
+#	$NetBSD: Makefile,v 1.51 2024/06/29 07:43:25 rin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -8,7 +8,6 @@ NOPROFILE=# defined
 
 I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no
-I386_INCLUDE_BUS?= no
 I386_INCLUDE_PS2?= yes
 
 AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -39,9 +38,6 @@ SRCS+= dosfile.c dos_file.S
 .endif
 .if (${I386_INCLUDE_DISK} == "yes") || (${I386_INCLUDE_DOS} == "yes")
 SRCS+= diskbuf.c
-.endif
-.if (${I386_INCLUDE_BUS} == "yes")
-SRCS+= biospci.c bios_pci.S isapnp.c isadma.c
 .endif
 .if (${I386_INCLUDE_PS2} == "yes")
 SRCS+= biosmca.S biosmemps2.S
