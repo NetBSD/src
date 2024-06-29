@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.19 2015/12/13 21:03:31 christos Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.1 2024/06/29 13:45:14 rin Exp $	 */
 
 /*
  * Copyright (c) 1996

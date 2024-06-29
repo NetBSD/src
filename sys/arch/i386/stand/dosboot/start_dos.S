@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.10 2010/12/20 01:12:44 jakllsch Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.1 2024/06/29 13:45:14 rin Exp $	*/
 	
 /*
  * startup for DOS .COM programs
