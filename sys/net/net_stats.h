@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.h,v 1.5 2020/01/29 03:04:55 thorpej Exp $	*/
+/*	$NetBSD: net_stats.h,v 1.6 2024/06/29 13:01:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -35,14 +35,21 @@
 #ifdef _KERNEL
 #include <sys/percpu.h>
 
-typedef void *net_stat_ref_t;
+typedef struct net_stat_ref {
+	/*
+	 * Flexible array member annoyingly requires some other
+	 * non-flexible array member.
+	 */
+	uint64_t	nsr_stat[1];
+	uint64_t	nsr_stats[];
+} *net_stat_ref_t;
 
 #define	_NET_STAT_GETREF(stat)	((net_stat_ref_t)percpu_getref((stat)))
 #define	_NET_STAT_PUTREF(stat)	percpu_putref((stat))
 
 #define	_NET_STATINC_REF(r, x)						\
 do {									\
-	uint64_t *_stat_ = (r);						\
+	uint64_t *_stat_ = (r)->nsr_stat;				\
 	_stat_[x]++;							\
 } while (/*CONSTCOND*/0)
 
@@ -55,7 +62,7 @@ do {									\
 
 #define	_NET_STATDEC_REF(r, x)						\
 do {									\
-	uint64_t *_stat_ = (r);						\
+	uint64_t *_stat_ = (r)->nsr_stat;				\
 	_stat_[x]--;							\
 } while (/*CONSTCOND*/0)
 
@@ -68,7 +75,7 @@ do {									\
 
 #define	_NET_STATADD_REF(r, x, v)					\
 do {									\
-	uint64_t *_stat_ = (r);						\
+	uint64_t *_stat_ = (r)->nsr_stat;				\
 	_stat_[x] += (v);						\
 } while (/*CONSTCOND*/0)
 
@@ -81,7 +88,7 @@ do {									\
 
 #define	_NET_STATSUB_REF(r, x, v)					\
 do {									\
-	uint64_t *_stat_ = (r);						\
+	uint64_t *_stat_ = (r)->nsr_stat;				\
 	_stat_[x] -= (v);						\
 } while (/*CONSTCOND*/0)
 
