@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.23 2024/06/29 03:01:29 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.24 2024/06/29 13:03:02 riastradh Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -500,6 +500,12 @@ SDT_PROVIDER_DECLARE(sdt);
 void sdt_init(void *);
 void sdt_exit(void);
 
+#ifdef KDTRACE_HOOKS
+SDT_PROBE_DECLARE(sdt, , , set__error);
+#define	SET_ERROR(err)	(SDT_PROBE1(sdt, , , set__error,  (err)), (err))
+#else
+#define	SET_ERROR(err)	(err)
+#endif	/* KDTRACE_HOOKS */
 
 #endif /* _KERNEL */
 

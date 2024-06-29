@@ -1,4 +1,4 @@
-/*	$NetBSD: opensolaris.c,v 1.4 2022/08/07 23:42:09 riastradh Exp $	*/
+/*	$NetBSD: opensolaris.c,v 1.5 2024/06/29 13:03:02 riastradh Exp $	*/
 /*-
  * Copyright 2007 John Birrell <jb@FreeBSD.org>
  *
@@ -67,5 +67,3 @@ void
 opensolaris_fini(void *dummy)
 {
 }
-
-SDT_PROBE_DEFINE1(sdt, , , set__error, "int");
