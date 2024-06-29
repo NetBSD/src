@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.42 2021/02/19 14:52:00 christos Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.43 2024/06/29 13:00:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.42 2021/02/19 14:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.43 2024/06/29 13:00:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -379,17 +379,17 @@ out:
 static void
 ip6flow_addstats_rt(struct rtentry *rt, struct ip6flow *ip6f)
 {
-	uint64_t *ip6s;
+	net_stat_ref_t ip6s;
 
 	if (rt != NULL)
 		rt->rt_use += ip6f->ip6f_uses;
 	ip6s = IP6_STAT_GETREF();
-	ip6s[IP6_STAT_FASTFORWARDFLOWS] = ip6flow_inuse;
-	ip6s[IP6_STAT_CANTFORWARD] += ip6f->ip6f_dropped;
-	ip6s[IP6_STAT_ODROPPED] += ip6f->ip6f_dropped;
-	ip6s[IP6_STAT_TOTAL] += ip6f->ip6f_uses;
-	ip6s[IP6_STAT_FORWARD] += ip6f->ip6f_forwarded;
-	ip6s[IP6_STAT_FASTFORWARD] += ip6f->ip6f_forwarded;
+	ip6s->nsr_stats[IP6_STAT_FASTFORWARDFLOWS-1] = ip6flow_inuse; /* XXX */
+	_NET_STATADD_REF(ip6s, IP6_STAT_CANTFORWARD, ip6f->ip6f_dropped);
+	_NET_STATADD_REF(ip6s, IP6_STAT_ODROPPED, ip6f->ip6f_dropped);
+	_NET_STATADD_REF(ip6s, IP6_STAT_TOTAL, ip6f->ip6f_uses);
+	_NET_STATADD_REF(ip6s, IP6_STAT_FORWARD, ip6f->ip6f_forwarded);
+	_NET_STATADD_REF(ip6s, IP6_STAT_FASTFORWARD, ip6f->ip6f_forwarded);
 	IP6_STAT_PUTREF();
 }
 

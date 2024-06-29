@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.102 2020/08/28 06:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.103 2024/06/29 13:00:44 riastradh Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.102 2020/08/28 06:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.103 2024/06/29 13:00:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -78,13 +78,13 @@ ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
 	char sbuf[INET6_ADDRSTRLEN], dbuf[INET6_ADDRSTRLEN];
 	char reason[256];
 	va_list ap;
-	uint64_t *ip6s;
+	net_stat_ref_t ip6s;
 
 	/* update statistics */
 	ip6s = IP6_STAT_GETREF();
-	ip6s[IP6_STAT_CANTFORWARD]++;
+	_NET_STATINC_REF(ip6s, IP6_STAT_CANTFORWARD);
 	if (dstifp)
-		ip6s[IP6_STAT_BADSCOPE]++;
+		_NET_STATINC_REF(ip6s, IP6_STAT_BADSCOPE);
 	IP6_STAT_PUTREF();
 
 	if (dstifp)
