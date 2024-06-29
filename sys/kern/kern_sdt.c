@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sdt.c,v 1.3 2016/04/04 03:53:25 knakahara Exp $	*/
+/*	$NetBSD: kern_sdt.c,v 1.4 2024/06/29 13:03:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -130,3 +130,5 @@ sdt_exit(void)
 
 	sdt_probe_func = sdt_probe_stub;
 }
+
+SDT_PROBE_DEFINE1(sdt, , , set__error, "int");
