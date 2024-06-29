@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.30 2024/01/19 18:41:38 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1 2024/06/29 07:55:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt.c,v 1.30 2024/01/19 18:41:38 christos Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.1 2024/06/29 07:55:05 rin Exp $");
 
 #include "namespace.h"
 
