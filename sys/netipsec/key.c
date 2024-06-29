@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.282 2023/08/10 06:44:12 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.283 2024/06/29 13:01:14 riastradh Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.282 2023/08/10 06:44:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.283 2024/06/29 13:01:14 riastradh Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -2958,9 +2958,9 @@ key_api_spddump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOENT);
 	}
 	{
-		uint64_t *ps = PFKEY_STAT_GETREF();
-		ps[PFKEY_STAT_IN_TOTAL]++;
-		ps[PFKEY_STAT_IN_BYTES] += len;
+		net_stat_ref_t ps = PFKEY_STAT_GETREF();
+		_NET_STATINC_REF(ps, PFKEY_STAT_IN_TOTAL);
+		_NET_STATADD_REF(ps, PFKEY_STAT_IN_BYTES, len);
 		PFKEY_STAT_PUTREF();
 	}
 
@@ -7744,9 +7744,9 @@ key_api_dump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOENT);
 	}
 	{
-		uint64_t *ps = PFKEY_STAT_GETREF();
-		ps[PFKEY_STAT_IN_TOTAL]++;
-		ps[PFKEY_STAT_IN_BYTES] += len;
+		net_stat_ref_t ps = PFKEY_STAT_GETREF();
+		_NET_STATINC_REF(ps, PFKEY_STAT_IN_TOTAL);
+		_NET_STATADD_REF(ps, PFKEY_STAT_IN_BYTES, len);
 		PFKEY_STAT_PUTREF();
 	}
 
