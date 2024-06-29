@@ -1,5 +1,5 @@
 /* tc-pj.c -- Assemble code for Pico Java
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,7 +31,7 @@ const char line_separator_chars[] = ";";
 const char line_comment_chars[]   = "/!#";
 
 static int pending_reloc;
-static struct hash_control *opcode_hash_control;
+static htab_t opcode_hash_control;
 
 static void
 little (int ignore ATTRIBUTE_UNUSED)
@@ -58,7 +58,7 @@ const char EXP_CHARS[] = "eE";
 void
 md_operand (expressionS *op)
 {
-  if (strncmp (input_line_pointer, "%hi16", 5) == 0)
+  if (startswith (input_line_pointer, "%hi16"))
     {
       if (pending_reloc)
 	as_bad (_("confusing relocation expressions"));
@@ -67,7 +67,7 @@ md_operand (expressionS *op)
       expression (op);
     }
 
-  if (strncmp (input_line_pointer, "%lo16", 5) == 0)
+  if (startswith (input_line_pointer, "%lo16"))
     {
       if (pending_reloc)
 	as_bad (_("confusing relocation expressions"));
@@ -176,7 +176,7 @@ fake_opcode (const char *name,
   fake->opcode = -1;
   fake->opcode_next = -1;
   fake->u.func = func;
-  hash_insert (opcode_hash_control, name, (char *) fake);
+  str_hash_insert (opcode_hash_control, name, fake, 0);
 }
 
 /* Enter another entry into the opcode hash table so the same opcode
@@ -185,8 +185,8 @@ fake_opcode (const char *name,
 static void
 alias (const char *new_name, const char *old)
 {
-  hash_insert (opcode_hash_control, new_name,
-	       (char *) hash_find (opcode_hash_control, old));
+  str_hash_insert (opcode_hash_control, new_name,
+		   str_hash_find (opcode_hash_control, old), 0);
 }
 
 /* This function is called once, at assembler startup time.  It sets
@@ -197,11 +197,11 @@ void
 md_begin (void)
 {
   const pj_opc_info_t *opcode;
-  opcode_hash_control = hash_new ();
+  opcode_hash_control = str_htab_create ();
 
   /* Insert names into hash table.  */
   for (opcode = pj_opc_info; opcode->u.name; opcode++)
-    hash_insert (opcode_hash_control, opcode->u.name, (char *) opcode);
+    str_hash_insert (opcode_hash_control, opcode->u.name, opcode, 0);
 
   /* Insert the only fake opcode.  */
   fake_opcode ("ipush", ipush_code);
@@ -252,7 +252,7 @@ md_assemble (char *str)
   if (nlen == 0)
     as_bad (_("can't find opcode "));
 
-  opcode = (pj_opc_info_t *) hash_find (opcode_hash_control, op_start);
+  opcode = (pj_opc_info_t *) str_hash_find (opcode_hash_control, op_start);
   *op_end = pend;
 
   if (opcode == NULL)
@@ -270,7 +270,7 @@ md_assemble (char *str)
     }
   else
     {
-      int an;
+      unsigned int an;
 
       output = frag_more (opcode->len);
       output[idx++] = opcode->opcode;
@@ -278,7 +278,7 @@ md_assemble (char *str)
       if (opcode->opcode_next != -1)
 	output[idx++] = opcode->opcode_next;
 
-      for (an = 0; opcode->arg[an]; an++)
+      for (an = 0; an < ARRAY_SIZE (opcode->arg) && opcode->arg[an]; an++)
 	{
 	  expressionS arg;
 
@@ -404,6 +404,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
       break;
 
     case BFD_RELOC_PJ_CODE_DIR32:
+    case BFD_RELOC_PJ_CODE_REL32:
       *buf++ = val >> 24;
       *buf++ = val >> 16;
       *buf++ = val >> 8;
@@ -439,10 +440,6 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
 	  *buf++ = val >> 8;
 	}
       break;
-
-    case BFD_RELOC_PJ_CODE_REL32:
-      fixP->fx_done = 0;
-      return;
 
     default:
       abort ();

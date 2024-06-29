@@ -1,5 +1,5 @@
 /* Common code for PA ELF implementations.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -49,286 +49,286 @@ static reloc_howto_type elf_hppa_howto_table[ELF_HOWTO_TABLE_SIZE] =
 {
 #define HOW(type, size, bitsize, pc_rel, complain, mask) \
   HOWTO (type, 0, size, bitsize, pc_rel, 0, complain_overflow_ ## complain, \
-	 bfd_elf_generic_reloc, #type, FALSE, 0, mask, FALSE)
+	 bfd_elf_generic_reloc, #type, false, 0, mask, false)
 
   /* The values in DIR32 are to placate the check in
      _bfd_stab_section_find_nearest_line.  */
-  HOW (R_PARISC_NONE,		3,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_DIR32,		2, 32, FALSE, bitfield, 0xffffffff),
-  HOW (R_PARISC_DIR21L,		2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR17R,		2, 17, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR17F,		2, 17, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR14R,		2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR14F,		2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_NONE,		0,  0, false,     dont, 0),
+  HOW (R_PARISC_DIR32,		4, 32, false, bitfield, 0xffffffff),
+  HOW (R_PARISC_DIR21L,		4, 21, false, bitfield, 0),
+  HOW (R_PARISC_DIR17R,		4, 17, false, bitfield, 0),
+  HOW (R_PARISC_DIR17F,		4, 17, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DIR14R,		4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DIR14F,		4, 14, false, bitfield, 0),
   /* 8 */
-  HOW (R_PARISC_PCREL12F,	2, 12,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL32,	2, 32,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL21L,	2, 21,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL17R,	2, 17,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL17F,	2, 17,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL17C,	2, 17,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL14R,	2, 14,  TRUE, bitfield, 0),
-  HOW (R_PARISC_PCREL14F,	2, 14,  TRUE, bitfield, 0),
+  HOW (R_PARISC_PCREL12F,	4, 12,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL32,	4, 32,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL21L,	4, 21,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL17R,	4, 17,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL17F,	4, 17,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL17C,	4, 17,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL14R,	4, 14,  true, bitfield, 0),
+  HOW (R_PARISC_PCREL14F,	4, 14,  true, bitfield, 0),
   /* 16 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DPREL21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_DPREL14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DPREL14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DPREL14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DPREL14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DPREL21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_DPREL14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DPREL14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DPREL14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DPREL14F,	4, 14, false, bitfield, 0),
   /* 24 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTREL21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTREL14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTREL14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTREL21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTREL14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DLTREL14F,	4, 14, false, bitfield, 0),
   /* 32 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTIND21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTIND14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTIND14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTIND21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTIND14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DLTIND14F,	4, 14, false, bitfield, 0),
   /* 40 */
-  HOW (R_PARISC_SETBASE,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_SECREL32,	2, 32, FALSE, bitfield, 0xffffffff),
-  HOW (R_PARISC_BASEREL21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL17R,	2, 17, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL17F,	2, 17, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_SETBASE,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_SECREL32,	4, 32, false, bitfield, 0xffffffff),
+  HOW (R_PARISC_BASEREL21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL17R,	4, 17, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL17F,	4, 17, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL14F,	4, 14, false, bitfield, 0),
   /* 48 */
-  HOW (R_PARISC_SEGBASE,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_SEGREL32,	2, 32, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_SEGBASE,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_SEGREL32,	4, 32, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF14F,	4, 14, false, bitfield, 0),
   /* 56 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR32,	2, 32, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR32,	4, 32, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 64 */
-  HOW (R_PARISC_FPTR64,		4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLABEL32,	2, 32, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLABEL21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLABEL14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_FPTR64,		8, 64, false, bitfield, 0),
+  HOW (R_PARISC_PLABEL32,	4, 32, false, bitfield, 0),
+  HOW (R_PARISC_PLABEL21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_PLABEL14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 72 */
-  HOW (R_PARISC_PCREL64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL22C,	2, 22, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL22F,	2, 22, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_PCREL16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_PCREL64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_PCREL22C,	4, 22, false, bitfield, 0),
+  HOW (R_PARISC_PCREL22F,	4, 22, false, bitfield, 0),
+  HOW (R_PARISC_PCREL14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_PCREL14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_PCREL16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_PCREL16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_PCREL16DF,	4, 16, false, bitfield, 0),
   /* 80 */
-  HOW (R_PARISC_DIR64,		4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR16F,		2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_DIR16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_DIR64,		8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DIR14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DIR14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DIR16F,		4, 16, false, bitfield, 0),
+  HOW (R_PARISC_DIR16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_DIR16DF,	4, 16, false, bitfield, 0),
   /* 88 */
-  HOW (R_PARISC_GPREL64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTREL14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTREL14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_GPREL16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_GPREL16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_GPREL16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_GPREL64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTREL14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DLTREL14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_GPREL16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_GPREL16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_GPREL16DF,	4, 16, false, bitfield, 0),
   /* 96 */
-  HOW (R_PARISC_LTOFF64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTIND14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_DLTIND14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_LTOFF64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_DLTIND14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_DLTIND14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF16DF,	4, 16, false, bitfield, 0),
   /* 104 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_BASEREL14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_BASEREL14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 112 */
-  HOW (R_PARISC_SEGREL64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_PLTOFF16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_SEGREL64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_PLTOFF16DF,	4, 16, false, bitfield, 0),
   /* 120 */
-  HOW (R_PARISC_LTOFF_FPTR64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_FPTR16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_FPTR16DF,	4, 16, false, bitfield, 0),
   /* 128 */
-  HOW (R_PARISC_COPY,		0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_IPLT,		0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_EPLT,		0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_COPY,		0,  0, false, bitfield, 0),
+  HOW (R_PARISC_IPLT,		0,  0, false, bitfield, 0),
+  HOW (R_PARISC_EPLT,		0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 136 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 144 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
   /* 152 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_TPREL32,	2, 32, FALSE,     dont, 0),
-  HOW (R_PARISC_TPREL21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_TPREL14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_TPREL32,	4, 32, false,     dont, 0),
+  HOW (R_PARISC_TPREL21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_TPREL14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
   /* 160 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_LTOFF_TP21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP14F,	2, 14, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_LTOFF_TP21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP14F,	4, 14, false, bitfield, 0),
   /* 168 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 176 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 184 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
   /* 192 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 200 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 208 */
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
   /* 216 */
-  HOW (R_PARISC_TPREL64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_TPREL14WR,	2, 14, FALSE,     dont, 0),
-  HOW (R_PARISC_TPREL14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_TPREL16F,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_TPREL16WF,	2, 16, FALSE,     dont, 0),
-  HOW (R_PARISC_TPREL16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_TPREL64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_TPREL14WR,	4, 14, false,     dont, 0),
+  HOW (R_PARISC_TPREL14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_TPREL16F,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_TPREL16WF,	4, 16, false,     dont, 0),
+  HOW (R_PARISC_TPREL16DF,	4, 16, false, bitfield, 0),
   /* 224 */
-  HOW (R_PARISC_LTOFF_TP64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP14WR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP14DR,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP16F,	2, 16, FALSE,     dont, 0),
-  HOW (R_PARISC_LTOFF_TP16WF,	2, 16, FALSE, bitfield, 0),
-  HOW (R_PARISC_LTOFF_TP16DF,	2, 16, FALSE, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_UNIMPLEMENTED,	0,  0, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP14WR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP14DR,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP16F,	4, 16, false,     dont, 0),
+  HOW (R_PARISC_LTOFF_TP16WF,	4, 16, false, bitfield, 0),
+  HOW (R_PARISC_LTOFF_TP16DF,	4, 16, false, bitfield, 0),
   /* 232 */
-  HOW (R_PARISC_GNU_VTENTRY,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_GNU_VTINHERIT,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_TLS_GD21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_GD14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_GDCALL,	0,  0, FALSE,     dont, 0),
-  HOW (R_PARISC_TLS_LDM21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_LDM14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_LDMCALL,	0,  0, FALSE,     dont, 0),
+  HOW (R_PARISC_GNU_VTENTRY,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_GNU_VTINHERIT,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_TLS_GD21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_TLS_GD14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_TLS_GDCALL,	0,  0, false,     dont, 0),
+  HOW (R_PARISC_TLS_LDM21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_TLS_LDM14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_TLS_LDMCALL,	0,  0, false,     dont, 0),
   /* 240 */
-  HOW (R_PARISC_TLS_LDO21L,	2, 21, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_LDO14R,	2, 14, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_DTPMOD32,	2, 32, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_DTPMOD64,	4, 64, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_DTPOFF32,	2, 32, FALSE, bitfield, 0),
-  HOW (R_PARISC_TLS_DTPOFF64,	4, 64, FALSE, bitfield, 0)
+  HOW (R_PARISC_TLS_LDO21L,	4, 21, false, bitfield, 0),
+  HOW (R_PARISC_TLS_LDO14R,	4, 14, false, bitfield, 0),
+  HOW (R_PARISC_TLS_DTPMOD32,	4, 32, false, bitfield, 0),
+  HOW (R_PARISC_TLS_DTPMOD64,	8, 64, false, bitfield, 0),
+  HOW (R_PARISC_TLS_DTPOFF32,	4, 32, false, bitfield, 0),
+  HOW (R_PARISC_TLS_DTPOFF64,	8, 64, false, bitfield, 0)
 #undef HOW
 };
 
@@ -754,7 +754,7 @@ _bfd_elf_hppa_gen_reloc_type (bfd *abfd,
 {
   elf_hppa_reloc_type *finaltype;
   elf_hppa_reloc_type **final_types;
-  bfd_size_type amt = sizeof (elf_hppa_reloc_type *) * 2;
+  size_t amt = sizeof (elf_hppa_reloc_type *) * 2;
 
   /* Allocate slots for the BFD relocation.  */
   final_types = bfd_alloc (abfd, amt);
@@ -778,7 +778,7 @@ _bfd_elf_hppa_gen_reloc_type (bfd *abfd,
 
 /* Translate from an elf into field into a howto relocation pointer.  */
 
-static bfd_boolean
+static bool
 elf_hppa_info_to_howto (bfd *abfd,
 			arelent *bfd_reloc,
 			Elf_Internal_Rela *elf_reloc)
@@ -798,15 +798,15 @@ elf_hppa_info_to_howto (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   bfd_reloc->howto = howto;
-  return TRUE;
+  return true;
 }
 
 /* Translate from an elf into field into a howto relocation pointer.  */
 
-static bfd_boolean
+static bool
 elf_hppa_info_to_howto_rel (bfd *abfd,
 			    arelent *bfd_reloc,
 			    Elf_Internal_Rela *elf_reloc)
@@ -826,10 +826,10 @@ elf_hppa_info_to_howto_rel (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   bfd_reloc->howto = howto;
-  return TRUE;
+  return true;
 }
 
 /* Return the address of the howto table entry to perform the CODE
@@ -865,18 +865,18 @@ elf_hppa_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Return TRUE if SYM represents a local label symbol.  */
 
-static bfd_boolean
+static bool
 elf_hppa_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
   if (name[0] == 'L' && name[1] == '$')
-    return TRUE;
+    return true;
   return _bfd_elf_is_local_label_name (abfd, name);
 }
 
 /* Set the correct type for an ELF section.  We do this by the
    section name, which is a hack, but ought to work.  */
 
-static bfd_boolean
+static bool
 elf_hppa_fake_sections (bfd *abfd, Elf_Internal_Shdr *hdr, asection *sec)
 {
   const char *name;
@@ -920,10 +920,10 @@ elf_hppa_fake_sections (bfd *abfd, Elf_Internal_Shdr *hdr, asection *sec)
 	 so it is allowed to change the rules).  Leave as it is for now.  */
       hdr->sh_entsize = 4;
     }
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elf_hppa_final_write_processing (bfd *abfd)
 {
   int mach = bfd_get_mach (abfd);
@@ -974,7 +974,7 @@ hppa_unwind_entry_compare (const void *a, const void *b)
   return av < bv ? -1 : av > bv ? 1 : 0;
 }
 
-static bfd_boolean
+static bool
 elf_hppa_sort_unwind (bfd *abfd)
 {
   asection *s;
@@ -990,16 +990,16 @@ elf_hppa_sort_unwind (bfd *abfd)
       bfd_byte *contents;
 
       if (!bfd_malloc_and_get_section (abfd, s, &contents))
-	return FALSE;
+	return false;
 
       size = s->size;
       qsort (contents, (size_t) (size / 16), 16, hppa_unwind_entry_compare);
 
       if (! bfd_set_section_contents (abfd, s, contents, (file_ptr) 0, size))
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* What to do when ld finds relocations against symbols defined in

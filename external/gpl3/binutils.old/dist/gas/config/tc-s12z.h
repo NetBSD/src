@@ -1,5 +1,5 @@
 /* tc-s12z.h -- Header file for tc-s12z.c.
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -91,7 +91,7 @@ extern long s12z_relax_frag (segT, fragS*, long);
 extern int tc_s12z_force_relocation (struct fix *);
 
 #define tc_fix_adjustable(X) tc_s12z_fix_adjustable(X)
-extern int tc_s12z_fix_adjustable (struct fix *);
+extern bool tc_s12z_fix_adjustable (struct fix *);
 
 #define md_operand(x)
 

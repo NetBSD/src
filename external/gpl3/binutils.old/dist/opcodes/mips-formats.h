@@ -1,5 +1,5 @@
 /* mips-formats.h
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
    This library is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,18 +30,18 @@
   INT_BIAS(SIZE, LSB, MAX_VAL, 0, SHIFT, PRINT_HEX)
 
 #define UINT(SIZE, LSB) \
-  INT_ADJ(SIZE, LSB, (1 << (SIZE)) - 1, 0, FALSE)
+  INT_ADJ(SIZE, LSB, (1 << (SIZE)) - 1, 0, false)
 
 #define SINT(SIZE, LSB) \
-  INT_ADJ(SIZE, LSB, (1 << ((SIZE) - 1)) - 1, 0, FALSE)
+  INT_ADJ(SIZE, LSB, (1 << ((SIZE) - 1)) - 1, 0, false)
 
 #define HINT(SIZE, LSB) \
-  INT_ADJ(SIZE, LSB, (1 << (SIZE)) - 1, 0, TRUE)
+  INT_ADJ(SIZE, LSB, (1 << (SIZE)) - 1, 0, true)
 
 #define BIT(SIZE, LSB, BIAS) \
   { \
     static const struct mips_int_operand op = { \
-      { OP_INT, SIZE, LSB }, (1 << (SIZE)) - 1, BIAS, 0, TRUE \
+      { OP_INT, SIZE, LSB }, (1 << (SIZE)) - 1, BIAS, 0, true \
     }; \
     return &op.root; \
   }
@@ -117,20 +117,20 @@
   { \
     static const struct mips_pcrel_operand op = { \
       { { OP_PCREL, SIZE, LSB }, \
-	(1 << ((SIZE) - (IS_SIGNED))) - 1, 0, SHIFT, TRUE }, \
+	(1 << ((SIZE) - (IS_SIGNED))) - 1, 0, SHIFT, true }, \
       ALIGN_LOG2, INCLUDE_ISA_BIT, FLIP_ISA_BIT \
     }; \
     return &op.root.root; \
   }
 
 #define JUMP(SIZE, LSB, SHIFT) \
-  PCREL (SIZE, LSB, FALSE, SHIFT, SIZE + SHIFT, TRUE, FALSE)
+  PCREL (SIZE, LSB, false, SHIFT, SIZE + SHIFT, true, false)
 
 #define JALX(SIZE, LSB, SHIFT) \
-  PCREL (SIZE, LSB, FALSE, SHIFT, SIZE + SHIFT, TRUE, TRUE)
+  PCREL (SIZE, LSB, false, SHIFT, SIZE + SHIFT, true, true)
 
 #define BRANCH(SIZE, LSB, SHIFT) \
-  PCREL (SIZE, LSB, TRUE, SHIFT, 0, TRUE, FALSE)
+  PCREL (SIZE, LSB, true, SHIFT, 0, true, false)
 
 #define SPECIAL(SIZE, LSB, TYPE) \
   { \

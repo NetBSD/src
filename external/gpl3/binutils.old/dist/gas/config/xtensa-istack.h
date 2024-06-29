@@ -1,5 +1,5 @@
 /* Declarations for stacks of tokenized Xtensa instructions.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,11 +42,11 @@ typedef struct tinsn_struct
   enum itype_enum insn_type;
 
   xtensa_opcode opcode;	/* Literals have an invalid opcode.  */
-  bfd_boolean is_specific_opcode;
-  bfd_boolean keep_wide;
+  bool is_specific_opcode;
+  bool keep_wide;
   int ntok;
   expressionS tok[MAX_INSN_ARGS];
-  bfd_boolean loc_directive_seen;
+  bool loc_directive_seen;
   struct dwarf2_line_info debug_line;
 
   /* This field is used for two types of special pseudo ops:
@@ -79,8 +79,8 @@ typedef struct tinsn_stack
 
 
 void istack_init (IStack *);
-bfd_boolean istack_empty (IStack *);
-bfd_boolean istack_full (IStack *);
+bool istack_empty (IStack *);
+bool istack_full (IStack *);
 TInsn *istack_top (IStack *);
 void istack_push (IStack *, TInsn *);
 TInsn *istack_push_space (IStack *);

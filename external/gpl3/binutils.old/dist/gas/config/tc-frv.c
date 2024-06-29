@@ -1,5 +1,5 @@
 /* tc-frv.c -- Assembler for the Fujitsu FRV.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -65,8 +65,8 @@ enum vliw_insn_type
 #define NOP_KEEP 1		/* Keep these NOPS.  */
 #define NOP_DELETE 2		/* Delete these NOPS.  */
 
-#define DO_COUNT    TRUE
-#define DONT_COUNT  FALSE
+#define DO_COUNT    true
+#define DONT_COUNT  false
 
 /* A list of insns within a VLIW insn.  */
 struct vliw_insn_list
@@ -168,7 +168,7 @@ static FRV_VLIW vliw;
 #endif
 
 static unsigned long frv_mach = bfd_mach_frv;
-static bfd_boolean fr400_audio;
+static bool fr400_audio;
 
 /* Flags to set in the elf header */
 static flagword frv_flags = DEFAULT_FLAGS | DEFAULT_FDPIC;
@@ -369,14 +369,14 @@ md_parse_option (int c, const char *arg)
 	  {
 	    cpu_flags = EF_FRV_CPU_FR405;
 	    frv_mach = bfd_mach_fr400;
-	    fr400_audio = TRUE;
+	    fr400_audio = true;
 	  }
 
 	else if (strcmp (p, "fr400") == 0)
 	  {
 	    cpu_flags = EF_FRV_CPU_FR400;
 	    frv_mach = bfd_mach_fr400;
-	    fr400_audio = FALSE;
+	    fr400_audio = false;
 	  }
 
 	else if (strcmp (p, "fr300") == 0)
@@ -507,7 +507,7 @@ md_begin (void)
   frv_vliw_reset (& vliw, frv_mach, frv_flags);
 }
 
-bfd_boolean
+bool
 frv_md_fdpic_enabled (void)
 {
   return (frv_flags & EF_FRV_FDPIC) != 0;
@@ -516,7 +516,7 @@ frv_md_fdpic_enabled (void)
 int chain_num = 0;
 
 static struct vliw_insn_list *
-frv_insert_vliw_insn (bfd_boolean count)
+frv_insert_vliw_insn (bool count)
 {
   struct vliw_insn_list *vliw_insn_list_entry;
   struct vliw_chain     *vliw_chain_entry;
@@ -672,7 +672,7 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
 		    struct vliw_insn_list *insert_before_insn)
 {
 
-  bfd_boolean pack_prev = FALSE;
+  bool pack_prev = false;
   struct vliw_chain *return_me = NULL;
   struct vliw_insn_list *prev_insn = NULL;
   struct vliw_insn_list *curr_insn = vliw_to_split->insn_list;
@@ -693,7 +693,7 @@ frv_tomcat_shuffle (enum vliw_nop_type this_nop_type,
 	Then don't set pack bit later.  */
 
       if (curr_insn->type != VLIW_LABEL_TYPE)
-	pack_prev = TRUE;
+	pack_prev = true;
       prev_insn = curr_insn;
       curr_insn = curr_insn->next;
     }
@@ -858,7 +858,7 @@ frv_tomcat_analyze_vliw_chains (void)
 
   vliw1 = vliw_chain_top;
 
-workaround_top:
+ workaround_top:
 
   FRV_SET_VLIW_WINDOW (vliw1, vliw2, vliw3);
 
@@ -1055,14 +1055,14 @@ fr550_check_acc_range (FRV_VLIW *vlw, frv_insn *insn)
 
 /* Return true if the target implements instruction INSN.  */
 
-static bfd_boolean
+static bool
 target_implements_insn_p (const CGEN_INSN *insn)
 {
   switch (frv_mach)
     {
     default:
       /* bfd_mach_frv or generic.  */
-      return TRUE;
+      return true;
 
     case bfd_mach_fr300:
     case bfd_mach_frvsimple:
@@ -1336,11 +1336,11 @@ md_cgen_lookup_reloc (const CGEN_INSN *insn ATTRIBUTE_UNUSED,
   switch (operand->type)
     {
     case FRV_OPERAND_LABEL16:
-      fixP->fx_pcrel = TRUE;
+      fixP->fx_pcrel = true;
       return BFD_RELOC_FRV_LABEL16;
 
     case FRV_OPERAND_LABEL24:
-      fixP->fx_pcrel = TRUE;
+      fixP->fx_pcrel = true;
 
       if (fixP->fx_cgen.opinfo != 0)
 	return fixP->fx_cgen.opinfo;
@@ -1515,10 +1515,10 @@ frv_md_number_to_chars (char *buf, valueT val, int n)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
-bfd_boolean
+bool
 frv_fix_adjustable (fixS *fixP)
 {
   bfd_reloc_code_real_type reloc_type;

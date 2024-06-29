@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -177,7 +177,7 @@ static const bfd_reloc_code_real_type or1k_imm16_relocs[][6] = {
     BFD_RELOC_OR1K_GOT_LO13,
     BFD_RELOC_UNUSED,
     BFD_RELOC_UNUSED,
-    BFD_RELOC_UNUSED },
+    BFD_RELOC_OR1K_GOT_AHI16 },
   { BFD_RELOC_OR1K_GOTPC_LO16,
     BFD_RELOC_UNUSED,
     BFD_RELOC_UNUSED,
@@ -279,6 +279,11 @@ parse_reloc (const char **strp)
       {
 	str += 5;
 	cls = RCLASS_TPOFF;
+      }
+    else if (strncasecmp (str, "got", 3) == 0)
+      {
+	str += 3;
+	cls = RCLASS_GOT;
       }
 
     if (strncasecmp (str, "hi(", 3) == 0)
@@ -519,9 +524,6 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RAD32F :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RAD32F, (unsigned long *) (& fields->f_rad32));
       break;
-    case OR1K_OPERAND_RADF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r2);
-      break;
     case OR1K_OPERAND_RADI :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RADI, (unsigned long *) (& fields->f_rad32));
       break;
@@ -534,9 +536,6 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RBD32F :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RBD32F, (unsigned long *) (& fields->f_rbd32));
       break;
-    case OR1K_OPERAND_RBDF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r3);
-      break;
     case OR1K_OPERAND_RBDI :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RBDI, (unsigned long *) (& fields->f_rbd32));
       break;
@@ -548,9 +547,6 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
       break;
     case OR1K_OPERAND_RDD32F :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RDD32F, (unsigned long *) (& fields->f_rdd32));
-      break;
-    case OR1K_OPERAND_RDDF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r1);
       break;
     case OR1K_OPERAND_RDDI :
       errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RDDI, (unsigned long *) (& fields->f_rdd32));

@@ -1,5 +1,5 @@
 /* ldfile.h -
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,7 +21,7 @@
 #ifndef LDFILE_H
 #define LDFILE_H
 
-extern bfd_boolean ldfile_assumed_script;
+extern bool ldfile_assumed_script;
 extern unsigned long ldfile_output_machine;
 extern enum bfd_architecture ldfile_output_architecture;
 extern const char *ldfile_output_machine_name;
@@ -35,7 +35,7 @@ typedef struct search_dirs {
   /* Name of directory.  */
   const char *name;
   /* TRUE if this is from the command line.  */
-  bfd_boolean cmdline;
+  bool cmdline;
 } search_dirs_type;
 
 extern search_dirs_type *search_head;
@@ -43,7 +43,7 @@ extern search_dirs_type *search_head;
 extern void ldfile_add_arch
   (const char *);
 extern void ldfile_add_library_path
-  (const char *, bfd_boolean cmdline);
+  (const char *, bool cmdline);
 extern void ldfile_open_command_file
   (const char *name);
 extern void ldfile_open_script_file
@@ -52,11 +52,11 @@ extern void ldfile_open_default_command_file
   (const char *name);
 extern void ldfile_open_file
   (struct lang_input_statement_struct *);
-extern bfd_boolean ldfile_try_open_bfd
+extern bool ldfile_try_open_bfd
   (const char *, struct lang_input_statement_struct *);
 extern void ldfile_set_output_arch
   (const char *, enum bfd_architecture);
-extern bfd_boolean ldfile_open_file_search
+extern bool ldfile_open_file_search
   (const char *arch, struct lang_input_statement_struct *,
    const char *lib, const char *suffix);
 

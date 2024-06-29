@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -100,11 +100,11 @@ struct hook_stub_info
 
 /* Traverse the linker tree to find the spot where the stub goes.  */
 
-static bfd_boolean
+static bool
 hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 {
   lang_statement_union_type *l;
-  bfd_boolean ret;
+  bool ret;
 
   for (; (l = *lp) != NULL; lp = &l->header.next)
     {
@@ -142,7 +142,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 		 before its associated input section.  */
 	      *lp = info->add.head;
 	      *(info->add.tail) = l;
-	      return TRUE;
+	      return true;
 	    }
 	  break;
 
@@ -163,7 +163,7 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 	  break;
 	}
     }
-  return FALSE;
+  return false;
 }
 
 
@@ -193,7 +193,7 @@ hppaelf_add_stub_section (const char *stub_sec_name, asection *input_section)
 
   info.input_section = input_section;
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, NULL, os);
+  lang_add_section (&info.add, stub_sec, NULL, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;
@@ -215,7 +215,7 @@ hppaelf_layout_sections_again (void)
   /* If we have changed sizes of the stub sections, then we need
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
-  ldelf_map_segments (TRUE);
+  ldelf_map_segments (true);
   need_laying_out = -1;
 }
 

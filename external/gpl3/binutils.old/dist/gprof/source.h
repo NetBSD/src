@@ -1,6 +1,6 @@
 /* source.h
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -36,7 +36,7 @@ Source_File;
 /* Options.  */
 
 /* Create annotated output files?  */
-extern bfd_boolean create_annotation_files;
+extern bool create_annotation_files;
 
 /* List of directories to search for source files.  */
 extern Search_List src_search_list;
@@ -58,6 +58,6 @@ extern Source_File *source_file_lookup_name (const char *);
    is not stdout, it should be closed when done with it.  */
 extern FILE *annotate_source
   (Source_File *sf, unsigned int max_width,
-	   void (*annote) (char *, unsigned int, int, PTR arg),
-	   PTR arg);
+	   void (*annote) (char *, unsigned int, int, void *),
+	   void *arg);
 #endif /* source_h */

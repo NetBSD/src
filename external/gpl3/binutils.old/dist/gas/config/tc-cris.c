@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -160,29 +160,29 @@ static void cris_sym_no_leading_underscore (void);
 static char *cris_insn_first_word_frag (void);
 
 /* Handle to the opcode hash table.  */
-static struct hash_control *op_hash = NULL;
+static htab_t op_hash = NULL;
 
 /* If we target cris-axis-linux-gnu (as opposed to generic cris-axis-elf),
    we default to no underscore and required register-prefixes.  The
    difference is in the default values.  */
 #ifdef TE_LINUX
-#define DEFAULT_CRIS_AXIS_LINUX_GNU TRUE
+#define DEFAULT_CRIS_AXIS_LINUX_GNU true
 #else
-#define DEFAULT_CRIS_AXIS_LINUX_GNU FALSE
+#define DEFAULT_CRIS_AXIS_LINUX_GNU false
 #endif
 
 /* Whether we demand that registers have a `$' prefix.  Default here.  */
-static bfd_boolean demand_register_prefix = DEFAULT_CRIS_AXIS_LINUX_GNU;
+static bool demand_register_prefix = DEFAULT_CRIS_AXIS_LINUX_GNU;
 
 /* Whether global user symbols have a leading underscore.  Default here.  */
-static bfd_boolean symbols_have_leading_underscore
+static bool symbols_have_leading_underscore
   = !DEFAULT_CRIS_AXIS_LINUX_GNU;
 
 /* Whether or not we allow PIC, and expand to PIC-friendly constructs.  */
-static bfd_boolean pic = FALSE;
+static bool pic = false;
 
 /* Whether or not we allow TLS suffixes.  For the moment, we always do.  */
-static const bfd_boolean tls = TRUE;
+static const bool tls = true;
 
 /* If we're configured for "cris", default to allow all v0..v10
    instructions and register names.  */
@@ -1186,30 +1186,27 @@ cris_insn_first_word_frag (void)
 void
 md_begin (void)
 {
-  const char *hashret = NULL;
   int i = 0;
 
   /* Set up a hash table for the instructions.  */
-  op_hash = hash_new ();
-  if (op_hash == NULL)
-    as_fatal (_("Virtual memory exhausted"));
+  op_hash = str_htab_create ();
 
   /* Enable use of ".if ..asm.arch.cris.v32"
      and ".if ..asm.arch.cris.common_v10_v32" and a few others.  */
   symbol_table_insert (symbol_new ("..asm.arch.cris.v32", absolute_section,
-				   (cris_arch == arch_crisv32),
-				   &zero_address_frag));
+				   &zero_address_frag,
+				   cris_arch == arch_crisv32));
   symbol_table_insert (symbol_new ("..asm.arch.cris.v10", absolute_section,
-				   (cris_arch == arch_crisv10),
-				   &zero_address_frag));
+				   &zero_address_frag,
+				   cris_arch == arch_crisv10));
   symbol_table_insert (symbol_new ("..asm.arch.cris.common_v10_v32",
 				   absolute_section,
-				   (cris_arch == arch_cris_common_v10_v32),
-				   &zero_address_frag));
+				   &zero_address_frag,
+				   cris_arch == arch_cris_common_v10_v32));
   symbol_table_insert (symbol_new ("..asm.arch.cris.any_v0_v10",
 				   absolute_section,
-				   (cris_arch == arch_cris_any_v0_v10),
-				   &zero_address_frag));
+				   &zero_address_frag,
+				   cris_arch == arch_cris_any_v0_v10));
 
   while (cris_opcodes[i].name != NULL)
     {
@@ -1222,12 +1219,9 @@ md_begin (void)
 	  continue;
 	}
 
-      /* Need to cast to get rid of "const".  FIXME: Fix hash_insert instead.  */
-      hashret = hash_insert (op_hash, name, (void *) &cris_opcodes[i]);
+      if (str_hash_insert (op_hash, name, &cris_opcodes[i], 0) != NULL)
+	as_fatal (_("duplicate %s"), name);
 
-      if (hashret != NULL && *hashret != '\0')
-	as_fatal (_("Can't hash `%s': %s\n"), cris_opcodes[i].name,
-		  *hashret == 0 ? _("(unknown reason)") : hashret);
       do
 	{
 	  if (cris_opcodes[i].match & cris_opcodes[i].lose)
@@ -1558,7 +1552,7 @@ cris_process_instruction (char *insn_text, struct cris_instruction *out_insnp,
     }
 
   /* Find the instruction.  */
-  instruction = (struct cris_opcode *) hash_find (op_hash, insn_text);
+  instruction = (struct cris_opcode *) str_hash_find (op_hash, insn_text);
   if (instruction == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), insn_text);
@@ -3497,14 +3491,14 @@ cris_get_reloc_suffix (char **cPP, bfd_reloc_code_real_type *relocp,
     const char *const suffix;
     unsigned int len;
     bfd_reloc_code_real_type reloc;
-    bfd_boolean pic_p;
-    bfd_boolean tls_p;
+    bool pic_p;
+    bool tls_p;
   } pic_suffixes[] =
     {
 #undef PICMAP
-#define PICMAP(s, r) {s, sizeof (s) - 1, r, TRUE, FALSE}
-#define PICTLSMAP(s, r) {s, sizeof (s) - 1, r, TRUE, TRUE}
-#define TLSMAP(s, r) {s, sizeof (s) - 1, r, FALSE, TRUE}
+#define PICMAP(s, r) {s, sizeof (s) - 1, r, true, false}
+#define PICTLSMAP(s, r) {s, sizeof (s) - 1, r, true, true}
+#define TLSMAP(s, r) {s, sizeof (s) - 1, r, false, true}
       /* Keep this in order with longest unambiguous prefix first.  */
       PICMAP ("GOTPLT16", BFD_RELOC_CRIS_16_GOTPLT),
       PICMAP ("GOTPLT", BFD_RELOC_CRIS_32_GOTPLT),
@@ -3817,23 +3811,23 @@ md_parse_option (int arg, const char *argp ATTRIBUTE_UNUSED)
       break;
 
     case OPTION_NO_US:
-      demand_register_prefix = TRUE;
+      demand_register_prefix = true;
 
       if (OUTPUT_FLAVOR == bfd_target_aout_flavour)
 	as_bad (_("--no-underscore is invalid with a.out format"));
       else
-	symbols_have_leading_underscore = FALSE;
+	symbols_have_leading_underscore = false;
       break;
 
     case OPTION_US:
-      demand_register_prefix = FALSE;
-      symbols_have_leading_underscore = TRUE;
+      demand_register_prefix = false;
+      symbols_have_leading_underscore = true;
       break;
 
     case OPTION_PIC:
       if (OUTPUT_FLAVOR != bfd_target_elf_flavour)
 	as_bad (_("--pic is invalid for this object format"));
-      pic = TRUE;
+      pic = true;
       if (cris_arch != arch_crisv32)
 	md_long_jump_size = cris_any_v0_v10_long_jump_size_pic;
       else
@@ -4056,8 +4050,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 
   /* We can't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line,
-		  _("expression too complex"));
+    as_bad_subtract (fixP);
 
   /* This operand-type is scaled.  */
   if (fixP->fx_r_type == BFD_RELOC_CRIS_LAPCQ_OFFSET)
@@ -4139,7 +4132,7 @@ tc_cris_check_adjusted_broken_word (offsetT new_offset, struct broken_word *brok
 static void
 cris_force_reg_prefix (void)
 {
-  demand_register_prefix = TRUE;
+  demand_register_prefix = true;
 }
 
 /* Do not demand a leading REGISTER_PREFIX_CHAR for all registers.  */
@@ -4147,7 +4140,7 @@ cris_force_reg_prefix (void)
 static void
 cris_relax_reg_prefix (void)
 {
-  demand_register_prefix = FALSE;
+  demand_register_prefix = false;
 }
 
 /* Adjust for having a leading '_' on all user symbols.  */
@@ -4250,7 +4243,7 @@ s_cris_dtpoff (int bytes)
 
   p = frag_more (bytes);
   md_number_to_chars (p, 0, bytes);
-  fix_new_exp (frag_now, p - frag_now->fr_literal, bytes, &ex, FALSE,
+  fix_new_exp (frag_now, p - frag_now->fr_literal, bytes, &ex, false,
 	       BFD_RELOC_CRIS_32_DTPREL);
 
   demand_empty_rest_of_line ();

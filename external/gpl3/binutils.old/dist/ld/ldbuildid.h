@@ -1,5 +1,5 @@
 /* ldbuildid.h -
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,7 +21,7 @@
 #ifndef LDBUILDID_H
 #define LDBUILDID_H
 
-extern bfd_boolean
+extern bool
 validate_build_id_style (const char *);
 
 extern bfd_size_type
@@ -29,11 +29,11 @@ compute_build_id_size (const char *);
 
 typedef void (*sum_fn) (const void *, size_t, void *);
 
-typedef bfd_boolean (*checksum_fn) (bfd *,
-				    void (*) (const void *, size_t, void *),
-				    void *);
+typedef bool (*checksum_fn) (bfd *,
+			     void (*) (const void *, size_t, void *),
+			     void *);
 
-extern bfd_boolean
+extern bool
 generate_build_id (bfd *, const char *, checksum_fn, unsigned char *, int);
 
 #endif /* LDBUILDID_H */

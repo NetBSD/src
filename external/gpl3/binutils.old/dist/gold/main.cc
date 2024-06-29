@@ -1,6 +1,6 @@
 // main.cc -- gold main function.
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -25,7 +25,7 @@
 #include <cstdio>
 #include <cstring>
 
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO) || defined(HAVE_MALLINFO2)
 #include <malloc.h>
 #endif
 
@@ -290,11 +290,16 @@ main(int argc, char** argv)
               elapsed.sys / 1000, (elapsed.sys % 1000) * 1000,
               elapsed.wall / 1000, (elapsed.wall % 1000) * 1000);
 
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO2)
+      struct mallinfo2 m = mallinfo2();
+      fprintf(stderr, _("%s: total space allocated by malloc: %lld bytes\n"),
+	      program_name, static_cast<long long>(m.arena));
+#elif defined(HAVE_MALLINFO)
       struct mallinfo m = mallinfo();
       fprintf(stderr, _("%s: total space allocated by malloc: %lld bytes\n"),
 	      program_name, static_cast<long long>(m.arena));
 #endif
+
       File_read::print_stats();
       Archive::print_stats();
       Lib_group::print_stats();

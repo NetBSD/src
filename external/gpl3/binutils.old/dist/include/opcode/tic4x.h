@@ -1,6 +1,6 @@
 /* Table of opcodes for the Texas Instruments TMS320C[34]X family.
 
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
   
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
    

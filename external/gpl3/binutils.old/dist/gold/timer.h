@@ -1,6 +1,6 @@
 // timer.h -- helper class for time accounting   -*- C++ -*-
 
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 // Written by Rafael Avila de Espindola <espindola@google.com>.
 
 // This file is part of gold.

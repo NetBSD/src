@@ -1,5 +1,5 @@
 /* Miscellaneous utilities.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -19,6 +19,7 @@
 
 #include <ctf-impl.h>
 #include <string.h>
+#include "ctf-endian.h"
 
 /* Simple doubly-linked list append routine.  This implementation assumes that
    each list element contains an embedded ctf_list_t as the first member.
@@ -88,17 +89,107 @@ ctf_list_empty_p (ctf_list_t *lp)
   return (lp->l_next == NULL && lp->l_prev == NULL);
 }
 
-/* Convert a 32-bit ELF symbol into Elf64 and return a pointer to it.  */
+/* Splice one entire list onto the end of another one.  The existing list is
+   emptied.  */
 
-Elf64_Sym *
-ctf_sym_to_elf64 (const Elf32_Sym *src, Elf64_Sym *dst)
+void
+ctf_list_splice (ctf_list_t *lp, ctf_list_t *append)
 {
-  dst->st_name = src->st_name;
-  dst->st_value = src->st_value;
-  dst->st_size = src->st_size;
-  dst->st_info = src->st_info;
-  dst->st_other = src->st_other;
-  dst->st_shndx = src->st_shndx;
+  if (ctf_list_empty_p (append))
+    return;
+
+  if (lp->l_prev != NULL)
+    lp->l_prev->l_next = append->l_next;
+  else
+    lp->l_next = append->l_next;
+
+  append->l_next->l_prev = lp->l_prev;
+  lp->l_prev = append->l_prev;
+  append->l_next = NULL;
+  append->l_prev = NULL;
+}
+
+/* Convert a 32-bit ELF symbol to a ctf_link_sym_t.  */
+
+ctf_link_sym_t *
+ctf_elf32_to_link_sym (ctf_dict_t *fp, ctf_link_sym_t *dst, const Elf32_Sym *src,
+		       uint32_t symidx)
+{
+  Elf32_Sym tmp;
+  int needs_flipping = 0;
+
+#ifdef WORDS_BIGENDIAN
+  if (fp->ctf_symsect_little_endian)
+    needs_flipping = 1;
+#else
+  if (!fp->ctf_symsect_little_endian)
+    needs_flipping = 1;
+#endif
+
+  memcpy (&tmp, src, sizeof (Elf32_Sym));
+  if (needs_flipping)
+    {
+      swap_thing (tmp.st_name);
+      swap_thing (tmp.st_size);
+      swap_thing (tmp.st_shndx);
+      swap_thing (tmp.st_value);
+    }
+  /* The name must be in the external string table.  */
+  if (tmp.st_name < fp->ctf_str[CTF_STRTAB_1].cts_len)
+    dst->st_name = (const char *) fp->ctf_str[CTF_STRTAB_1].cts_strs + tmp.st_name;
+  else
+    dst->st_name = _CTF_NULLSTR;
+  dst->st_nameidx_set = 0;
+  dst->st_symidx = symidx;
+  dst->st_shndx = tmp.st_shndx;
+  dst->st_type = ELF32_ST_TYPE (tmp.st_info);
+  dst->st_value = tmp.st_value;
+
+  return dst;
+}
+
+/* Convert a 64-bit ELF symbol to a ctf_link_sym_t.  */
+
+ctf_link_sym_t *
+ctf_elf64_to_link_sym (ctf_dict_t *fp, ctf_link_sym_t *dst, const Elf64_Sym *src,
+		       uint32_t symidx)
+{
+  Elf64_Sym tmp;
+  int needs_flipping = 0;
+
+#ifdef WORDS_BIGENDIAN
+  if (fp->ctf_symsect_little_endian)
+    needs_flipping = 1;
+#else
+  if (!fp->ctf_symsect_little_endian)
+    needs_flipping = 1;
+#endif
+
+  memcpy (&tmp, src, sizeof (Elf64_Sym));
+  if (needs_flipping)
+    {
+      swap_thing (tmp.st_name);
+      swap_thing (tmp.st_size);
+      swap_thing (tmp.st_shndx);
+      swap_thing (tmp.st_value);
+    }
+
+  /* The name must be in the external string table.  */
+  if (tmp.st_name < fp->ctf_str[CTF_STRTAB_1].cts_len)
+    dst->st_name = (const char *) fp->ctf_str[CTF_STRTAB_1].cts_strs + tmp.st_name;
+  else
+    dst->st_name = _CTF_NULLSTR;
+  dst->st_nameidx_set = 0;
+  dst->st_symidx = symidx;
+  dst->st_shndx = tmp.st_shndx;
+  dst->st_type = ELF32_ST_TYPE (tmp.st_info);
+
+  /* We only care if the value is zero, so avoid nonzeroes turning into
+     zeroes.  */
+  if (_libctf_unlikely_ (tmp.st_value != 0 && ((uint32_t) tmp.st_value == 0)))
+    dst->st_value = 1;
+  else
+    dst->st_value = (uint32_t) tmp.st_value;
 
   return dst;
 }
@@ -142,7 +233,7 @@ ctf_str_append_noerr (char *s, const char *append)
 
 /* A realloc() that fails noisily if called with any ctf_str_num_users.  */
 void *
-ctf_realloc (ctf_file_t *fp, void *ptr, size_t size)
+ctf_realloc (ctf_dict_t *fp, void *ptr, size_t size)
 {
   if (fp->ctf_str_num_refs > 0)
     {
@@ -164,12 +255,60 @@ ctf_set_open_errno (int *errp, int error)
   return NULL;
 }
 
-/* Store the specified error code into the CTF container, and then return
-   CTF_ERR / -1 for the benefit of the caller. */
+/* Store the specified error code into the CTF dict, and then return CTF_ERR /
+   -1 for the benefit of the caller. */
 
 unsigned long
-ctf_set_errno (ctf_file_t * fp, int err)
+ctf_set_errno (ctf_dict_t *fp, int err)
 {
   fp->ctf_errno = err;
   return CTF_ERR;
+}
+
+/* Create a ctf_next_t.  */
+
+ctf_next_t *
+ctf_next_create (void)
+{
+  return calloc (1, sizeof (struct ctf_next));
+}
+
+/* Destroy a ctf_next_t, for early exit from iterators.  */
+
+void
+ctf_next_destroy (ctf_next_t *i)
+{
+  if (i == NULL)
+    return;
+
+  if (i->ctn_iter_fun == (void (*) (void)) ctf_dynhash_next_sorted)
+    free (i->u.ctn_sorted_hkv);
+  if (i->ctn_next)
+    ctf_next_destroy (i->ctn_next);
+  free (i);
+}
+
+/* Copy a ctf_next_t.  */
+
+ctf_next_t *
+ctf_next_copy (ctf_next_t *i)
+{
+  ctf_next_t *i2;
+
+  if ((i2 = ctf_next_create()) == NULL)
+    return NULL;
+  memcpy (i2, i, sizeof (struct ctf_next));
+
+  if (i2->ctn_iter_fun == (void (*) (void)) ctf_dynhash_next_sorted)
+    {
+      size_t els = ctf_dynhash_elements ((ctf_dynhash_t *) i->cu.ctn_h);
+      if ((i2->u.ctn_sorted_hkv = calloc (els, sizeof (ctf_next_hkv_t))) == NULL)
+	{
+	  free (i2);
+	  return NULL;
+	}
+      memcpy (i2->u.ctn_sorted_hkv, i->u.ctn_sorted_hkv,
+	      els * sizeof (ctf_next_hkv_t));
+    }
+  return i2;
 }

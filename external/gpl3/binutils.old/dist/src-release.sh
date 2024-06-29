@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#   Copyright (C) 1990-2019 Free Software Foundation
+#   Copyright (C) 1990-2020 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ BZIPPROG=bzip2
 GZIPPROG=gzip
 LZIPPROG=lzip
 XZPROG=xz
-MD5PROG=md5sum
+SHA256PROG=sha256sum
 MAKE=make
 CC=gcc
 CXX=g++
@@ -61,8 +61,8 @@ getver()
 	$tool/common/create-version.sh $tool 'dummy-host' 'dummy-target' VER.tmp
 	cat VER.tmp | grep 'version\[\]' | sed 's/.*"\([^"]*\)".*/\1/' | sed 's/-git$//'
         rm -f VER.tmp
-    elif test -f $tool/gdbsupport/create-version.sh; then
-	$tool/gdbsupport/create-version.sh $tool 'dummy-host' 'dummy-target' VER.tmp
+    elif test $tool = "gdb"; then
+	./gdbsupport/create-version.sh $tool 'dummy-host' 'dummy-target' VER.tmp
 	cat VER.tmp | grep 'version\[\]' | sed 's/.*"\([^"]*\)".*/\1/' | sed 's/-git$//'
         rm -f VER.tmp
     elif test -f $tool/version.in; then
@@ -93,7 +93,7 @@ do_proto_toplev()
     # built in the gold dir.  The disables speed the build a little.
     enables=
     disables=
-    for dir in binutils gas gdb gold gprof ld libctf libdecnumber readline sim; do
+    for dir in binutils gas gdb gold gprof gprofng ld libctf libdecnumber readline sim; do
 	case " $tool $support_files " in
 	    *" $dir "*) enables="$enables --enable-$dir" ;;
 	    *) disables="$disables --disable-$dir" ;;
@@ -126,57 +126,55 @@ do_proto_toplev()
 	    fi
 	else
 	    if (echo x$d | grep / >/dev/null); then
-	      mkdir -p proto-toplev/`dirname $d`
-	      x=`dirname $d`
-	      ln -s ../`echo $x/ | sed -e 's,[^/]*/,../,g'`$d proto-toplev/$d
+		mkdir -p proto-toplev/`dirname $d`
+		x=`dirname $d`
+		ln -s ../`echo $x/ | sed -e 's,[^/]*/,../,g'`$d proto-toplev/$d
 	    else
-	      ln -s ../$d proto-toplev/$d
+		ln -s ../$d proto-toplev/$d
 	    fi
-	  fi
-	done
-	(cd etc; $MAKE MAKEINFOFLAGS="$MAKEINFOFLAGS" info)
-	$MAKE distclean
-	mkdir proto-toplev/etc
-	(cd proto-toplev/etc;
-	    for i in $ETC_SUPPORT; do
-		ln -s ../../etc/$i .
-		done)
-	#
-	# Take out texinfo from configurable dirs
-	rm proto-toplev/configure.ac
-	sed -e '/^host_tools=/s/texinfo //' \
-	    <configure.ac >proto-toplev/configure.ac
-	#
-	mkdir proto-toplev/texinfo
-	ln -s ../../texinfo/texinfo.tex	proto-toplev/texinfo/
-	if test -r texinfo/util/tex3patch ; then
-	    mkdir proto-toplev/texinfo/util && \
-		ln -s ../../../texinfo/util/tex3patch proto-toplev/texinfo/util
-	else
-	    true
 	fi
-	chmod -R og=u . || chmod og=u `find . -print`
-	#
-	# Create .gmo files from .po files.
-	for f in `find . -name '*.po' -type f -print`; do
-	    msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f
-	done
-	#
-	rm -f $package-$ver
-	ln -s proto-toplev $package-$ver
+    done
+    (cd etc; $MAKE MAKEINFOFLAGS="$MAKEINFOFLAGS" info)
+    $MAKE distclean
+    mkdir proto-toplev/etc
+    (cd proto-toplev/etc;
+	for i in $ETC_SUPPORT; do
+	    ln -s ../../etc/$i .
+	done)
+    #
+    # Take out texinfo from configurable dirs
+    rm proto-toplev/configure.ac
+    sed -e '/^host_tools=/s/texinfo //' \
+	<configure.ac >proto-toplev/configure.ac
+    #
+    mkdir proto-toplev/texinfo
+    ln -s ../../texinfo/texinfo.tex proto-toplev/texinfo/
+    if test -r texinfo/util/tex3patch ; then
+	mkdir proto-toplev/texinfo/util && \
+	    ln -s ../../../texinfo/util/tex3patch proto-toplev/texinfo/util
+    fi
+    chmod -R og=u . || chmod og=u `find . -print`
+    #
+    # Create .gmo files from .po files.
+    for f in `find . -name '*.po' -type f -print`; do
+	msgfmt -o `echo $f | sed -e 's/\.po$/.gmo/'` $f
+    done
+    #
+    rm -f $package-$ver
+    ln -s proto-toplev $package-$ver
 }
 
 CVS_NAMES='-name CVS -o -name .cvsignore'
 
-# Add an md5sum to the built tarball
-do_md5sum()
+# Add a sha256sum to the built tarball
+do_sha256sum()
 {
-    echo "==> Adding md5 checksum to top-level directory"
+    echo "==> Adding sha256 checksum to top-level directory"
     (cd proto-toplev && find * -follow \( $CVS_NAMES \) -prune \
 	-o -type f -print \
-	| xargs $MD5PROG > ../md5.new)
-    rm -f proto-toplev/md5.sum
-    mv md5.new proto-toplev/md5.sum
+	| xargs $SHA256PROG > ../sha256.new)
+    rm -f proto-toplev/sha256.sum
+    mv sha256.new proto-toplev/sha256.sum
 }
 
 # Build the release tarball
@@ -276,7 +274,7 @@ tar_compress()
     verdir=${5:-$tool}
     ver=$(getver $verdir)
     do_proto_toplev $package $ver $tool "$support_files"
-    do_md5sum
+    do_sha256sum
     do_tar $package $ver
     do_compress $package $ver "$compressors"
 }
@@ -290,14 +288,14 @@ gdb_tar_compress()
     compressors=$4
     ver=$(getver $tool)
     do_proto_toplev $package $ver $tool "$support_files"
-    do_md5sum
+    do_sha256sum
     do_djunpack $package $ver
     do_tar $package $ver
     do_compress $package $ver "$compressors"
 }
 
 # The FSF "binutils" release includes gprof and ld.
-BINUTILS_SUPPORT_DIRS="bfd gas include libiberty libctf opcodes ld elfcpp gold gprof intl setup.com makefile.vms cpu zlib"
+BINUTILS_SUPPORT_DIRS="bfd gas include libiberty libctf opcodes ld elfcpp gold gprof gprofng intl setup.com makefile.vms cpu zlib"
 binutils_release()
 {
     compressors=$1
@@ -315,7 +313,7 @@ gas_release()
     tar_compress $package $tool "$GAS_SUPPORT_DIRS" "$compressors"
 }
 
-GDB_SUPPORT_DIRS="bfd include libiberty libctf opcodes readline sim intl libdecnumber cpu zlib contrib gnulib gdbsupport"
+GDB_SUPPORT_DIRS="bfd include libiberty libctf opcodes readline sim intl libdecnumber cpu zlib contrib gnulib gdbsupport gdbserver libbacktrace"
 gdb_release()
 {
     compressors=$1

@@ -160,7 +160,7 @@ handle any last-minute setup.
 @subsubsection @code{aout_@var{size}_mkobject}
 @strong{Synopsis}
 @example
-bfd_boolean aout_@var{size}_mkobject, (bfd *abfd);
+bool aout_@var{size}_mkobject, (bfd *abfd);
 @end example
 @strong{Description}@*
 Initialize BFD @var{abfd} for use with a.out files.
@@ -172,7 +172,7 @@ Initialize BFD @var{abfd} for use with a.out files.
 enum machine_type  aout_@var{size}_machine_type
    (enum bfd_architecture arch,
     unsigned long machine,
-    bfd_boolean *unknown);
+    bool *unknown);
 @end example
 @strong{Description}@*
 Keep track of machine architecture and machine type for
@@ -187,7 +187,7 @@ is always understood.
 @subsubsection @code{aout_@var{size}_set_arch_mach}
 @strong{Synopsis}
 @example
-bfd_boolean aout_@var{size}_set_arch_mach,
+bool aout_@var{size}_set_arch_mach,
    (bfd *,
     enum bfd_architecture arch,
     unsigned long machine);
@@ -201,7 +201,7 @@ can support the architecture required.
 @subsubsection @code{aout_@var{size}_new_section_hook}
 @strong{Synopsis}
 @example
-bfd_boolean aout_@var{size}_new_section_hook,
+bool aout_@var{size}_new_section_hook,
    (bfd *abfd,
     asection *newsect);
 @end example

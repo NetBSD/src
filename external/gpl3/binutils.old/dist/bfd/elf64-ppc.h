@@ -1,5 +1,5 @@
 /* PowerPC64-specific support for 64-bit ELF.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,6 +27,7 @@ struct ppc64_elf_params
   /* Linker call-backs.  */
   asection * (*add_stub_section) (const char *, asection *);
   void (*layout_sections_again) (void);
+  void (*edit) (void);
 
   /* Maximum size of a group of input sections that can be handled by
      one stub section.  A value of +/-1 indicates the bfd back-end
@@ -35,6 +36,9 @@ struct ppc64_elf_params
 
   /* Whether to use a special call stub for __tls_get_addr.  */
   int tls_get_addr_opt;
+
+  /* Whether the special call stub should save r4..r12.  */
+  int no_tls_get_addr_regsave;
 
   /* Whether to allow multiple toc sections.  */
   int no_multi_toc;
@@ -51,6 +55,12 @@ struct ppc64_elf_params
   /* Set if PLT call stubs for localentry:0 functions should omit r2 save.  */
   int plt_localentry0;
 
+  /* Whether to use power10 instructions in linkage stubs.  */
+  int power10_stubs;
+
+  /* Whether R_PPC64_PCREL_OPT should be ignored.  */
+  int no_pcrel_opt;
+
   /* Whether to canonicalize .opd so that there are no overlapping
      .opd entries.  */
   int non_overlapping_opd;
@@ -65,19 +75,19 @@ struct ppc64_elf_params
   int object_in_toc;
 };
 
-bfd_boolean ppc64_elf_init_stub_bfd
+bool ppc64_elf_init_stub_bfd
   (struct bfd_link_info *, struct ppc64_elf_params *);
-bfd_boolean ppc64_elf_edit_opd
+bool ppc64_elf_edit_opd
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_inline_plt
+bool ppc64_elf_inline_plt
   (struct bfd_link_info *);
-asection *ppc64_elf_tls_setup
+bool ppc64_elf_tls_setup
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_tls_optimize
+bool ppc64_elf_tls_optimize
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_edit_toc
+bool ppc64_elf_edit_toc
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_has_small_toc_reloc
+bool ppc64_elf_has_small_toc_reloc
   (asection *);
 bfd_vma ppc64_elf_set_toc
   (struct bfd_link_info *, bfd *);
@@ -85,17 +95,17 @@ int ppc64_elf_setup_section_lists
   (struct bfd_link_info *);
 void ppc64_elf_start_multitoc_partition
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_next_toc_section
+bool ppc64_elf_next_toc_section
   (struct bfd_link_info *, asection *);
-bfd_boolean ppc64_elf_layout_multitoc
+bool ppc64_elf_layout_multitoc
   (struct bfd_link_info *);
 void ppc64_elf_finish_multitoc_partition
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_check_init_fini
+bool ppc64_elf_check_init_fini
   (struct bfd_link_info *);
-bfd_boolean ppc64_elf_next_input_section
+bool ppc64_elf_next_input_section
   (struct bfd_link_info *, asection *);
-bfd_boolean ppc64_elf_size_stubs
+bool ppc64_elf_size_stubs
 (struct bfd_link_info *);
-bfd_boolean ppc64_elf_build_stubs
+bool ppc64_elf_build_stubs
   (struct bfd_link_info *, char **);

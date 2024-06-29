@@ -1,5 +1,5 @@
 /* tc-pdp11.c - pdp11-specific -
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,9 +23,6 @@
 #include "opcode/pdp11.h"
 
 extern int flonum_gen2vax (int, FLONUM_TYPE * f, LITTLENUM_TYPE *);
-
-#define TRUE  1
-#define FALSE 0
 
 /* A representation for PDP-11 machine code.  */
 struct pdp11_code
@@ -82,7 +79,7 @@ const pseudo_typeS md_pseudo_table[] =
   { 0, 0, 0 },
 };
 
-static struct hash_control *insn_hash = NULL;
+static htab_t insn_hash = NULL;
 
 static int
 set_option (const char *arg)
@@ -103,7 +100,7 @@ set_option (const char *arg)
       return 1;
     }
 
-  if (strncmp (arg, "no-", 3) == 0)
+  if (startswith (arg, "no-"))
     {
       yes = 0;
       arg += 3;
@@ -143,9 +140,9 @@ set_option (const char *arg)
   else if (strcmp (arg, "mfpt") == 0)
     pdp11_extension[PDP11_MFPT] = yes;
   /* Multiprocessor insns:  */
-  else if (strncmp (arg, "mproc", 5) == 0
+  else if (startswith (arg, "mproc")
 	   /* TSTSET, WRTLCK */
-	   || strncmp (arg, "multiproc", 9) == 0)
+	   || startswith (arg, "multiproc"))
     pdp11_extension[PDP11_MPROC] = yes;
   /* Move from/to proc status.  */
   else if (strcmp (arg, "mxps") == 0)
@@ -188,14 +185,12 @@ md_begin (void)
 
   init_defaults ();
 
-  insn_hash = hash_new ();
-  if (insn_hash == NULL)
-    as_fatal (_("Virtual memory exhausted"));
+  insn_hash = str_htab_create ();
 
   for (i = 0; i < pdp11_num_opcodes; i++)
-    hash_insert (insn_hash, pdp11_opcodes[i].name, (void *) (pdp11_opcodes + i));
+    str_hash_insert (insn_hash, pdp11_opcodes[i].name, pdp11_opcodes + i, 0);
   for (i = 0; i < pdp11_num_aliases; i++)
-    hash_insert (insn_hash, pdp11_aliases[i].name, (void *) (pdp11_aliases + i));
+    str_hash_insert (insn_hash, pdp11_aliases[i].name, pdp11_aliases + i, 0);
 }
 
 void
@@ -222,6 +217,18 @@ md_number_to_chars (char con[], valueT value, int nbytes)
       con[2] =  value        & 0xff;
       con[3] = (value >>  8) & 0xff;
       break;
+#ifdef BFD64
+    case 8:
+      con[0] = (value >> 48) & 0xff;
+      con[1] = (value >> 56) & 0xff;
+      con[2] = (value >> 32) & 0xff;
+      con[3] = (value >> 40) & 0xff;
+      con[4] = (value >> 16) & 0xff;
+      con[5] = (value >> 24) & 0xff;
+      con[6] =  value        & 0xff;
+      con[7] = (value >>  8) & 0xff;
+      break;
+#endif
     default:
       BAD_CASE (nbytes);
     }
@@ -255,6 +262,10 @@ md_apply_fix (fixS *fixP,
     case BFD_RELOC_16:
     case BFD_RELOC_16_PCREL:
       mask = 0xffff;
+      shift = 0;
+      break;
+    case BFD_RELOC_32:
+      mask = 0xffffffff;
       shift = 0;
       break;
     case BFD_RELOC_PDP11_DISP_8_PCREL:
@@ -341,21 +352,30 @@ parse_reg (char *str, struct pdp11_code *operand)
 	  return str - 1;
 	}
     }
-  else if (strncmp (str, "sp", 2) == 0
-	   || strncmp (str, "SP", 2) == 0)
+  else if (startswith (str, "sp")
+	   || startswith (str, "SP"))
     {
       operand->code = 6;
       str += 2;
     }
-  else if (strncmp (str, "pc", 2) == 0
-	   || strncmp (str, "PC", 2) == 0)
+  else if (startswith (str, "pc")
+	   || startswith (str, "PC"))
     {
       operand->code = 7;
       str += 2;
     }
   else
-    operand->error = _("Bad register name");
+    {
+      operand->error = _("Bad register name");
+      return str;
+    }
 
+  if (ISALNUM (*str) || *str == '_' || *str == '.')
+    {
+      operand->error = _("Bad register name");
+      str -= 2;
+    }
+  
   return str;
 }
 
@@ -363,10 +383,10 @@ static char *
 parse_ac5 (char *str, struct pdp11_code *operand)
 {
   str = skip_whitespace (str);
-  if (strncmp (str, "fr", 2) == 0
-      || strncmp (str, "FR", 2) == 0
-      || strncmp (str, "ac", 2) == 0
-      || strncmp (str, "AC", 2) == 0)
+  if (startswith (str, "fr")
+      || startswith (str, "FR")
+      || startswith (str, "ac")
+      || startswith (str, "AC"))
     {
       str += 2;
       switch (*str)
@@ -464,7 +484,7 @@ parse_op_no_deferred (char *str, struct pdp11_code *operand)
       str = parse_expression (str + 1, operand);
       if (operand->error)
 	return str;
-      operand->additional = TRUE;
+      operand->additional = true;
       operand->word = operand->reloc.exp.X_add_number;
       switch (operand->reloc.exp.X_op)
 	{
@@ -499,7 +519,7 @@ parse_op_no_deferred (char *str, struct pdp11_code *operand)
       /* label, d(rn), -(rn)  */
     default:
       {
-	if (strncmp (str, "-(", 2) == 0)	/* -(rn) */
+	if (startswith (str, "-("))	/* -(rn) */
 	  {
 	    str = parse_reg (str + 2, operand);
 	    if (operand->error)
@@ -546,7 +566,7 @@ parse_op_no_deferred (char *str, struct pdp11_code *operand)
 	  }
 
 	str++;
-	operand->additional = TRUE;
+	operand->additional = true;
 	operand->code |= 060;
 	switch (operand->reloc.exp.X_op)
 	  {
@@ -690,7 +710,7 @@ md_assemble (char *instruction_string)
 
   c = *p;
   *p = '\0';
-  op = (struct pdp11_opcode *)hash_find (insn_hash, str);
+  op = (struct pdp11_opcode *)str_hash_find (insn_hash, str);
   *p = c;
   if (op == 0)
     {
@@ -708,10 +728,10 @@ md_assemble (char *instruction_string)
   insn.code = op->opcode;
   insn.reloc.type = BFD_RELOC_NONE;
   op1.error = NULL;
-  op1.additional = FALSE;
+  op1.additional = false;
   op1.reloc.type = BFD_RELOC_NONE;
   op2.error = NULL;
-  op2.additional = FALSE;
+  op2.additional = false;
   op2.reloc.type = BFD_RELOC_NONE;
 
   str = p;
@@ -1094,7 +1114,7 @@ set_cpu_model (const char *arg)
   if (arg[0] == '-')
     arg++;
 
-  if (strncmp (arg, "11", 2) != 0)
+  if (!startswith (arg, "11"))
     return 0;
   arg += 2;
 
@@ -1115,43 +1135,43 @@ set_cpu_model (const char *arg)
   set_option ("no-extensions");
 
   /* KA11 (11/15/20).  */
-  if (strncmp (buf, "a", 1) == 0)
+  if (startswith (buf, "a"))
     return 1; /* No extensions.  */
 
   /* KB11 (11/45/50/55/70).  */
-  else if (strncmp (buf, "b", 1) == 0)
+  else if (startswith (buf, "b"))
     return set_option ("eis") && set_option ("spl");
 
   /* KD11-A (11/35/40).  */
-  else if (strncmp (buf, "da", 2) == 0)
+  else if (startswith (buf, "da"))
     return set_option ("limited-eis");
 
   /* KD11-B (11/05/10).  */
-  else if (strncmp (buf, "db", 2) == 0
+  else if (startswith (buf, "db")
 	   /* KD11-D (11/04).  */
-	   || strncmp (buf, "dd", 2) == 0)
+	   || startswith (buf, "dd"))
     return 1; /* no extensions */
 
   /* KD11-E (11/34).  */
-  else if (strncmp (buf, "de", 2) == 0)
+  else if (startswith (buf, "de"))
     return set_option ("eis") && set_option ("mxps");
 
   /* KD11-F (11/03).  */
-  else if (strncmp (buf, "df", 2) == 0
+  else if (startswith (buf, "df")
 	   /* KD11-H (11/03).  */
-	   || strncmp (buf, "dh", 2) == 0
+	   || startswith (buf, "dh")
 	   /* KD11-Q (11/03).  */
-	   || strncmp (buf, "dq", 2) == 0)
+	   || startswith (buf, "dq"))
     return set_option ("limited-eis") && set_option ("mxps");
 
   /* KD11-K (11/60).  */
-  else if (strncmp (buf, "dk", 2) == 0)
+  else if (startswith (buf, "dk"))
     return set_option ("eis")
       && set_option ("mxps")
       && set_option ("ucode");
 
   /* KD11-Z (11/44).  */
-  else if (strncmp (buf, "dz", 2) == 0)
+  else if (startswith (buf, "dz"))
     return set_option ("csm")
       && set_option ("eis")
       && set_option ("mfpt")
@@ -1159,13 +1179,13 @@ set_cpu_model (const char *arg)
       && set_option ("spl");
 
   /* F11 (11/23/24).  */
-  else if (strncmp (buf, "f", 1) == 0)
+  else if (startswith (buf, "f"))
     return set_option ("eis")
       && set_option ("mfpt")
       && set_option ("mxps");
 
   /* J11 (11/53/73/83/84/93/94).  */
-  else if (strncmp (buf, "j", 1) == 0)
+  else if (startswith (buf, "j"))
     return set_option ("csm")
       && set_option ("eis")
       && set_option ("mfpt")
@@ -1174,7 +1194,7 @@ set_cpu_model (const char *arg)
       && set_option ("spl");
 
   /* T11 (11/21).  */
-  else if (strncmp (buf, "t", 1) == 0)
+  else if (startswith (buf, "t"))
     return set_option ("limited-eis")
       && set_option ("mxps");
 
@@ -1185,16 +1205,16 @@ set_cpu_model (const char *arg)
 static int
 set_machine_model (const char *arg)
 {
-  if (strncmp (arg, "pdp-11/", 7) != 0
-      && strncmp (arg, "pdp11/", 6) != 0
-      && strncmp (arg, "11/", 3) != 0)
+  if (!startswith (arg, "pdp-11/")
+      && !startswith (arg, "pdp11/")
+      && !startswith (arg, "11/"))
     return 0;
 
-  if (strncmp (arg, "pdp", 3) == 0)
+  if (startswith (arg, "pdp"))
     arg += 3;
   if (arg[0] == '-')
     arg++;
-  if (strncmp (arg, "11/", 3) == 0)
+  if (startswith (arg, "11/"))
     arg += 3;
 
   if (strcmp (arg, "03") == 0)
@@ -1419,22 +1439,22 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
   /* This is taken account for in md_apply_fix().  */
   reloc->addend = -symbol_get_bfdsym (fixp->fx_addsy)->section->vma;
 
-  switch (fixp->fx_r_type)
+  code = fixp->fx_r_type;
+  if (fixp->fx_pcrel)
     {
-    case BFD_RELOC_16:
-      if (fixp->fx_pcrel)
-	code = BFD_RELOC_16_PCREL;
-      else
-	code = BFD_RELOC_16;
-      break;
+      switch (code)
+	{
+	case BFD_RELOC_16:
+	  code = BFD_RELOC_16_PCREL;
+	  break;
 
-    case BFD_RELOC_16_PCREL:
-      code = BFD_RELOC_16_PCREL;
-      break;
+	case BFD_RELOC_16_PCREL:
+	  break;
 
-    default:
-      BAD_CASE (fixp->fx_r_type);
-      return NULL;
+	default:
+	  BAD_CASE (code);
+	  return NULL;
+	}
     }
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);

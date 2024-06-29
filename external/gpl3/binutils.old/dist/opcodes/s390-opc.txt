@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2020 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2022 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -246,10 +246,14 @@ d7 xc SS_L0RDRD "exclusive OR" g5 esa,zarch
 f8 zap SS_LLRDRD "zero and add" g5 esa,zarch
 a70a ahi RI_RI "add halfword immediate" g5 esa,zarch
 84 brxh RSI_RRP "branch relative on index high" g5 esa,zarch
+84 jxh RSI_RRP "branch relative on index high" g5 esa,zarch
 85 brxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch
+85 jxle RSI_RRP "branch relative on index low or equal" g5 esa,zarch
 a705 bras RI_RP "branch relative and save" g5 esa,zarch
+a705 jas RI_RP "branch relative and save" g5 esa,zarch
 a704 brc RI_UP "branch relative on condition" g5 esa,zarch
 a706 brct RI_RP "branch relative on count" g5 esa,zarch
+a706 jct RI_RP "branch relative on count" g5 esa,zarch
 b241 cksm RRE_RR "checksum" g5 esa,zarch
 a70e chi RI_RI "compare halfword immediate" g5 esa,zarch
 a9 clcle RS_RRRD "compare logical long extended" g5 esa,zarch
@@ -268,8 +272,11 @@ a701 tml RI_RU "test under mask low" g5 esa,zarch
 4700 nop RX_0RRD "no operation" g5 esa,zarch optparm
 4700 b*8 RX_0RRD "conditional branch" g5 esa,zarch
 47f0 b RX_0RRD "unconditional branch" g5 esa,zarch
+a704 jnop RI_0P "nop jump" g5 esa,zarch
 a704 j*8 RI_0P "conditional jump" g5 esa,zarch
+a704 br*8 RI_0P "conditional jump" g5 esa,zarch
 a7f4 j RI_0P "unconditional jump" g5 esa,zarch
+a7f4 bru RI_0P "unconditional jump" g5 esa,zarch
 b34a axbr RRE_FEFE "add extended bfp" g5 esa,zarch
 b31a adbr RRE_FF "add long bfp" g5 esa,zarch
 ed000000001a adb RXE_FRRD "add long bfp" g5 esa,zarch
@@ -437,7 +444,9 @@ e3000000001b slgf RXE_RRRD "subtract logical 64<32" z900 zarch
 e3000000000c msg RXE_RRRD "multiply single 64" z900 zarch
 e3000000001c msgf RXE_RRRD "multiply single 64<32" z900 zarch
 ec0000000044 brxhg RIE_RRP "branch relative on index high 64" z900 zarch
+ec0000000044 jxhg RIE_RRP "branch relative on index high 64" z900 zarch
 ec0000000045 brxlg RIE_RRP "branch relative on index low or equal 64" z900 zarch
+ec0000000045 jxleg RIE_RRP "branch relative on index low or equal 64" z900 zarch
 eb0000000044 bxhg RSE_RRRD "branch on index high 64" z900 zarch
 eb0000000045 bxleg RSE_RRRD "branch on index low or equal 64" z900 zarch
 eb000000000c srlg RSE_RRRD "shift right single logical 64" z900 zarch
@@ -462,10 +471,15 @@ eb0000000080 icmh RSE_RURD "insert characters under mask high" z900 zarch
 a702 tmhh RI_RU "test under mask high high" z900 zarch
 a703 tmhl RI_RU "test under mask high low" z900 zarch
 c004 brcl RIL_UP "branch relative on condition long" z900 esa,zarch
+c004 jgnop RIL_0P "nop jump long" z900 esa,zarch
 c004 jg*8 RIL_0P "conditional jump long" z900 esa,zarch
+c004 br*8l RIL_0P "conditional jump long" z900 esa,zarch
 c0f4 jg RIL_0P "unconditional jump long" z900 esa,zarch
+c0f4 brul RIL_0P "unconditional jump long" z900 esa,zarch
 c005 brasl RIL_RP "branch relative and save long" z900 esa,zarch
+c005 jasl RIL_RP "branch relative and save long" z900 esa,zarch
 a707 brctg RI_RP "branch relative on count 64" z900 zarch
+a707 jctg RI_RP "branch relative on count 64" z900 zarch
 a709 lghi RI_RI "load halfword immediate 64" z900 zarch
 a70b aghi RI_RI "add halfword immediate 64" z900 zarch
 a70d mghi RI_RI "multiply halfword immediate 64" z900 zarch
@@ -956,6 +970,7 @@ ec0000000054 rnsbg RIE_RRUUU "rotate then and selected bits" z10 zarch
 ec0000000057 rxsbg RIE_RRUUU "rotate then exclusive or selected bits" z10 zarch
 ec0000000056 rosbg RIE_RRUUU "rotate then or selected bits" z10 zarch
 ec0000000055 risbg RIE_RRUUU "rotate then insert selected bits" z10 zarch
+ec0000800055 risbgz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits" z10 zarch
 c40f strl RIL_RP "store relative long (32)" z10 zarch
 c40b stgrl RIL_RP "store relative long (64)" z10 zarch
 c407 sthrl RIL_RP "store halfword relative long" z10 zarch
@@ -1139,6 +1154,7 @@ eb0000000023 clt$12 RSY_R0RD "compare logical and trap 32 bit reg-mem" zEC12 zar
 eb000000002b clgt RSY_RURD "compare logical and trap 64 bit reg-mem" zEC12 zarch
 eb000000002b clgt$12 RSY_R0RD "compare logical and trap 64 bit reg-mem" zEC12 zarch
 ec0000000059 risbgn RIE_RRUUU "rotate then insert selected bits nocc" zEC12 zarch
+ec0000800059 risbgnz RIE_RRUUU2 "rotate then insert selected bits and zero remaining bits nocc" zEC12 zarch
 ed00000000aa cdzt RSL_LRDFU "convert from zoned long" zEC12 zarch
 ed00000000ab cxzt RSL_LRDFEU "convert from zoned extended" zEC12 zarch
 ed00000000a8 czdt RSL_LRDFU "convert to zoned long" zEC12 zarch
@@ -1159,7 +1175,6 @@ e70000000046 vgmb VRI_V0UU "vector generate mask byte" z13 zarch vx
 e70000001046 vgmh VRI_V0UU "vector generate mask halfword" z13 zarch vx
 e70000002046 vgmf VRI_V0UU "vector generate mask word" z13 zarch vx
 e70000003046 vgmg VRI_V0UU "vector generate mask double word" z13 zarch vx
-e70000000006 vl VRX_VRRD "vector memory load" z13 zarch vx
 e70000000056 vlr VRX_VV "vector register load" z13 zarch vx
 e70000000005 vlrep VRX_VRRDU "vector load and replicate" z13 zarch vx
 e70000000005 vlrepb VRX_VRRD "vector load and replicate byte elements" z13 zarch vx
@@ -1184,7 +1199,6 @@ e70000000004 vllezb VRX_VRRD "vector load logical byte element and zero" z13 zar
 e70000001004 vllezh VRX_VRRD "vector load logical halfword element and zero" z13 zarch vx
 e70000002004 vllezf VRX_VRRD "vector load logical word element and zero" z13 zarch vx
 e70000003004 vllezg VRX_VRRD "vector load logical double word element and zero" z13 zarch vx
-e70000000036 vlm VRS_VVRD "vector load multiple" z13 zarch vx
 e70000000007 vlbb VRX_VRRDU "vector load to block boundary" z13 zarch vx
 e70000000022 vlvg VRS_VRRDU "vector load VR element from GR" z13 zarch vx
 e70000000022 vlvgb VRS_VRRD "vector load VR byte element from GR" z13 zarch vx
@@ -1240,12 +1254,10 @@ e7000000005f vseg VRR_VV0U "vector sign extend to double word" z13 zarch vx
 e7000000005f vsegb VRR_VV "vector sign extend byte to double word" z13 zarch vx
 e7000000105f vsegh VRR_VV "vector sign extend halfword to double word" z13 zarch vx
 e7000000205f vsegf VRR_VV "vector sign extend word to double word" z13 zarch vx
-e7000000000e vst VRX_VRRD "vector store" z13 zarch vx
 e70000000008 vsteb VRX_VRRDU "vector store byte element" z13 zarch vx
 e70000000009 vsteh VRX_VRRDU "vector store halfword element" z13 zarch vx
 e7000000000b vstef VRX_VRRDU "vector store word element" z13 zarch vx
 e7000000000a vsteg VRX_VRRDU "vector store double word element" z13 zarch vx
-e7000000003e vstm VRS_VVRD "vector store multiple" z13 zarch vx
 e7000000003f vstl VRS_VRRD "vector store with length" z13 zarch vx
 e700000000d7 vuph VRR_VV0U "vector unpack high" z13 zarch vx
 e700000000d7 vuphb VRR_VV "vector unpack high byte" z13 zarch vx
@@ -1680,6 +1692,13 @@ e3000000003b lzrf RXY_RRRD "load and zero rightmost byte 32->32" z13 zarch
 e3000000002a lzrg RXY_RRRD "load and zero rightmost byte 64->64" z13 zarch
 b93c ppno RRE_RR "perform pseudorandom number operation" z13 zarch
 
+# Aligned vector store hints
+
+e70000000006 vl VRX_VRRDU "vector memory load" z13 zarch optparm,vx
+e70000000036 vlm VRS_VVRDU "vector load multiple" z13 zarch optparm,vx
+e7000000000e vst VRX_VRRDU "vector store" z13 zarch optparm,vx
+e7000000003e vstm VRS_VVRDU "vector store multiple" z13 zarch optparm,vx
+
 # arch12 instructions
 
 # Vector Enhancements Facility 1
@@ -1832,8 +1851,8 @@ e30000000038 agh RXY_RRRD "add halfword to 64 bit value" arch12 zarch
 e30000000047 bic RXY_URRD "branch indirect on condition" arch12 zarch
 e3f000000047 bi RXY_0RRD "unconditional indirect branch" arch12 zarch
 e30000000047 bi*8 RXY_0RRD "branch indirect on condition" arch12 zarch
-b9ec mgrk RRF_R0RR2 "multiply 64x64reg -> 128" arch12 zarch
-e30000000084 mg RXY_RRRD "multiply 64x64mem -> 128" arch12 zarch
+b9ec mgrk RRF_R0RER "multiply 64x64reg -> 128" arch12 zarch
+e30000000084 mg RXY_RERRD "multiply 64x64mem -> 128" arch12 zarch
 e3000000003c mgh RXY_RRRD "multiply halfword 64x16mem -> 64" arch12 zarch
 b9fd msrkc RRF_R0RR2 "multiply single 32x32 -> 32" arch12 zarch
 b9ed msgrkc RRF_R0RR2 "multiply single 64x64 -> 64" arch12 zarch
@@ -1880,14 +1899,6 @@ b929 kma RRF_R0RR "cipher message with galois counter mode" arch12 zarch
 b93c prno RRE_RR "perform pseudorandom number operation" arch12 zarch
 b9a1 tpei RRE_RR "test pending external interruption" arch12 zarch
 b9ac irbm RRE_RR "insert reference bits multiple" arch12 zarch
-
-# Aligned vector store hints
-
-e70000000006 vl VRX_VRRDU "vector memory load" arch12 zarch optparm
-e70000000036 vlm VRS_VVRDU "vector load multiple" arch12 zarch optparm
-e7000000000e vst VRX_VRRDU "vector store" arch12 zarch optparm
-e7000000003e vstm VRS_VVRDU "vector store multiple" arch12 zarch optparm
-
 
 # arch13 instructions
 
@@ -2005,3 +2016,33 @@ e60000000052 vcvbg VRR_RV0UU "vector convert to binary 64 bit" arch13 zarch optp
 # Message Security Assist Extension 9
 
 b93a kdsa RRE_RR "compute digital signature authentication" arch13 zarch
+
+
+# arch14 instructions
+
+e60000000074 vschp VRR_VVV0U0U " " arch14 zarch
+e60000002074 vschsp VRR_VVV0U0 " " arch14 zarch
+e60000003074 vschdp VRR_VVV0U0 " " arch14 zarch
+e60000004074 vschxp VRR_VVV0U0 " " arch14 zarch
+e6000000007c vscshp VRR_VVV " " arch14 zarch
+e6000000007d vcsph VRR_VVV0U0 " " arch14 zarch
+e60000000051 vclzdp VRR_VV0U2 " " arch14 zarch
+e60000000070 vpkzr VRI_VVV0UU2 " " arch14 zarch
+e60000000072 vsrpr VRI_VVV0UU2 " " arch14 zarch
+e60000000054 vupkzh VRR_VV0U2 " " arch14 zarch
+e6000000005c vupkzl VRR_VV0U2 " " arch14 zarch
+
+b93b nnpa RRE_00 " " arch14 zarch
+e60000000056 vclfnh VRR_VV0UU2 " " arch14 zarch
+e6000000005e vclfnl VRR_VV0UU2 " " arch14 zarch
+e60000000075 vcrnf VRR_VVV0UU " " arch14 zarch
+e6000000005d vcfn VRR_VV0UU2 " " arch14 zarch
+e60000000055 vcnf VRR_VV0UU2 " " arch14 zarch
+
+b98B rdp RRF_RURR2 " " arch14 zarch optparm
+
+eb0000000071 lpswey SIY_RD " " arch14 zarch
+b200 lbear S_RD " " arch14 zarch
+b201 stbear S_RD " " arch14 zarch
+
+b28f qpaci S_RD " " arch14 zarch

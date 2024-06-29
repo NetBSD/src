@@ -1,7 +1,7 @@
 %option noyywrap
 
 /* bfin-lex.l  ADI Blackfin lexer
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,10 +20,8 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 %{
-
-#include "as.h"
 #include "bfin-defs.h"
-#include "bfin-parse.h"
+#include "config/bfin-parse.h"
 
 static long parse_int (char **end);
 static int parse_halfreg (Register *r, int cl, char *hr);
@@ -32,6 +30,9 @@ int yylex (void);
 
 #define _REG yylval.reg
 
+/* Flex generates static functions "input" & "unput" which are not used.  */
+#define YY_NO_INPUT
+#define YY_NO_UNPUT
 
 %}
 
@@ -310,7 +311,7 @@ int yylex (void);
     char *ref = strdup (yytext);
     if (ref[1] == 'b' || ref[1] == 'B')
       {
-        name = fb_label_name ((int) (ref[0] - '0'), 0);
+        name = fb_label_name (ref[0] - '0', 0);
 	yylval.symbol = symbol_find (name);
 
 	if ((yylval.symbol != NULL)
@@ -328,7 +329,7 @@ int yylex (void);
            Construct a local label name, then an undefined symbol.
            Just return it as never seen before.  */
 
-        name = fb_label_name ((int) (ref[0] - '0'), 1);
+        name = fb_label_name (ref[0] - '0', 1);
 	yylval.symbol = symbol_find_or_make (name);
 	/* We have no need to check symbol properties.  */
 	return SYMBOL;
@@ -343,8 +344,8 @@ static long parse_int (char **end)
   char fmt = '\0';
   int not_done = 1;
   int shiftvalue = 0;
-  char * char_bag;
-  long value = 0;
+  const char *char_bag;
+  unsigned long value = 0;
   char *arg = *end;
 
   while (*arg && *arg == ' ')

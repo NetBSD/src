@@ -434,9 +434,6 @@ parse_type (CGEN_CPU_DESC cd,
 }
 
 /* -- dis.c */
-static void print_dollarhex (CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int);
-static void print_pcrel (CGEN_CPU_DESC, PTR, long, unsigned, bfd_vma, int);
-
 static void
 print_dollarhex (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 		 void * dis_info,

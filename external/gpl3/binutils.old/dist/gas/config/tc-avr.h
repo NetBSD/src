@@ -1,5 +1,5 @@
 /* This file is tc-avr.h
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -136,7 +136,6 @@ extern int avr_force_relocation (struct fix *);
    of a PC relative instruction is the next instruction, so this
    macro would return the length of an instruction.  */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section (FIX, SEC)
-extern long md_pcrel_from_section (struct fix *, segT);
 
 /* The number of bytes to put into a word in a listing.  This affects
    the way the bytes are clumped together in the listing.  For
@@ -144,7 +143,7 @@ extern long md_pcrel_from_section (struct fix *, segT);
    would print `12 34 56 78'.  The default value is 4.  */
 #define LISTING_WORD_SIZE 2
 
-/* AVR port uses `$' as a logical line separator.  */
+/* AVR port uses `$' as a logical line separator by default. */
 #define LEX_DOLLAR 0
 
 /* An `.lcomm' directive with no explicit alignment parameter will
@@ -215,7 +214,7 @@ extern void tc_cfi_frame_initial_instructions (void);
 /* The difference between same-section symbols may be affected by linker
    relaxation, so do not resolve such expressions in the assembler.  */
 #define md_allow_local_subtract(l,r,s) avr_allow_local_subtract (l, r, s)
-extern bfd_boolean avr_allow_local_subtract (expressionS *, expressionS *, segT);
+extern bool avr_allow_local_subtract (expressionS *, expressionS *, segT);
 
 #define elf_tc_final_processing 	avr_elf_final_processing
 extern void avr_elf_final_processing (void);
@@ -245,3 +244,9 @@ struct avr_frag_data
 #define TC_FRAG_TYPE			struct avr_frag_data
 #define TC_FRAG_INIT(frag, max_bytes)	avr_frag_init (frag)
 extern void avr_frag_init (fragS *);
+
+#define tc_line_separator_chars avr_line_separator_chars
+extern const char *avr_line_separator_chars;
+
+#define tc_fix_adjustable(FIX) avr_fix_adjustable (FIX)
+extern bool avr_fix_adjustable (struct fix *);

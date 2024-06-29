@@ -1,5 +1,5 @@
 /* This file is tc-sh.h
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -87,7 +87,6 @@ extern int sh_force_relocation (struct fix *);
    && sh_relax && SWITCH_TABLE (FIX))
 
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section (FIX, SEC)
-extern long md_pcrel_from_section (struct fix *, segT);
 
 /* SH_COUNT relocs are allowed outside of frag.
    The target is also buggy and sets fix size too large for other relocs.  */
@@ -141,9 +140,9 @@ extern void sh_frob_file (void);
 
 /* We align most sections to a 16 byte boundary.  */
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)			\
-  (strncmp (SEG_NAME (SEG), ".stabstr", 8) == 0		\
+  (startswith (SEG_NAME (SEG), ".stabstr")		\
    ? 0							\
-   : ((strncmp (SEG_NAME (SEG), ".stab", 5) == 0	\
+   : ((startswith (SEG_NAME (SEG), ".stab")	\
        || strcmp (SEG_NAME (SEG), ".ctors") == 0	\
        || strcmp (SEG_NAME (SEG), ".dtors") == 0)	\
       ? 2						\
@@ -186,7 +185,7 @@ extern void sh_elf_final_processing (void);
 #define TC_RELOC_GLOBAL_OFFSET_TABLE BFD_RELOC_SH_GOTPC
 
 #define tc_fix_adjustable(FIX) sh_fix_adjustable(FIX)
-extern bfd_boolean sh_fix_adjustable (struct fix *);
+extern bool sh_fix_adjustable (struct fix *);
 
 /* Values passed to md_apply_fix don't include symbol values.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0

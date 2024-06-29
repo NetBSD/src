@@ -1,7 +1,7 @@
 /* ftruncate emulations that work on some System V's.
    This file is in the public domain.  */
 
-/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
    This file is part of gold.
 

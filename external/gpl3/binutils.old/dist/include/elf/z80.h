@@ -1,5 +1,5 @@
 /* Z80 ELF support for BFD.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Sergey Belyashov <sergey.belyashov@gmail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -30,6 +30,7 @@
 #define EF_Z80_MACH_EZ80_Z80 0x04
 #define EF_Z80_MACH_EZ80_ADL 0x84
 #define EF_Z80_MACH_GBZ80    0x05
+#define EF_Z80_MACH_Z80N     0x06
 #define EF_Z80_MACH_MSK      0xff
 
 /* Relocations.  */
@@ -47,6 +48,7 @@ START_RELOC_NUMBERS (elf_z80_reloc_type)
      RELOC_NUMBER (R_Z80_BYTE3,		10)
      RELOC_NUMBER (R_Z80_WORD0,		11)
      RELOC_NUMBER (R_Z80_WORD1,		12)
+     RELOC_NUMBER (R_Z80_16_BE,		13)
 END_RELOC_NUMBERS (R_Z80_max)
 
 #endif /* _ELF_Z80_H */

@@ -1,5 +1,5 @@
 /* micromips-opc.c.  microMIPS opcode table.
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
    Contributed by Chao-ying Fu, MIPS Technologies, Inc.
 
    This file is part of the GNU opcodes library.
@@ -72,25 +72,25 @@ decode_micromips_operand (const char *p)
 	case 'y': MAPPED_REG (0, 0, GP, reg_31_map);
 	case 'z': MAPPED_REG (0, 0, GP, reg_0_map);
 
-	case 'A': INT_ADJ (7, 0, 63, 2, FALSE);	 /* (-64 .. 63) << 2 */
-	case 'B': MAPPED_INT (3, 1, int_b_map, FALSE);
-	case 'C': MAPPED_INT (4, 0, int_c_map, TRUE);
+	case 'A': INT_ADJ (7, 0, 63, 2, false);	 /* (-64 .. 63) << 2 */
+	case 'B': MAPPED_INT (3, 1, int_b_map, false);
+	case 'C': MAPPED_INT (4, 0, int_c_map, true);
 	case 'D': BRANCH (10, 0, 1);
 	case 'E': BRANCH (7, 0, 1);
 	case 'F': HINT (4, 0);
-	case 'G': INT_ADJ (4, 0, 14, 0, FALSE);	 /* (-1 .. 14) */
-	case 'H': INT_ADJ (4, 0, 15, 1, FALSE);	 /* (0 .. 15) << 1 */
-	case 'I': INT_ADJ (7, 0, 126, 0, FALSE); /* (-1 .. 126) */
-	case 'J': INT_ADJ (4, 0, 15, 2, FALSE);	 /* (0 .. 15) << 2 */
-	case 'L': INT_ADJ (4, 0, 15, 0, FALSE);	 /* (0 .. 15) */
-	case 'M': INT_ADJ (3, 1, 8, 0, FALSE);   /* (1 .. 8) */
+	case 'G': INT_ADJ (4, 0, 14, 0, false);	 /* (-1 .. 14) */
+	case 'H': INT_ADJ (4, 0, 15, 1, false);	 /* (0 .. 15) << 1 */
+	case 'I': INT_ADJ (7, 0, 126, 0, false); /* (-1 .. 126) */
+	case 'J': INT_ADJ (4, 0, 15, 2, false);	 /* (0 .. 15) << 2 */
+	case 'L': INT_ADJ (4, 0, 15, 0, false);	 /* (0 .. 15) */
+	case 'M': INT_ADJ (3, 1, 8, 0, false);   /* (1 .. 8) */
 	case 'N': SPECIAL (2, 4, LWM_SWM_LIST);
 	case 'O': HINT (4, 0);
-	case 'P': INT_ADJ (5, 0, 31, 2, FALSE);	 /* (0 .. 31) << 2 */
-	case 'Q': INT_ADJ (23, 0, 4194303, 2, FALSE);
+	case 'P': INT_ADJ (5, 0, 31, 2, false);	 /* (0 .. 31) << 2 */
+	case 'Q': INT_ADJ (23, 0, 4194303, 2, false);
 	  					 /* (-4194304 .. 4194303) */
-	case 'U': INT_ADJ (5, 0, 31, 2, FALSE);	 /* (0 .. 31) << 2 */
-	case 'W': INT_ADJ (6, 1, 63, 2, FALSE);	 /* (0 .. 63) << 2 */
+	case 'U': INT_ADJ (5, 0, 31, 2, false);	 /* (0 .. 31) << 2 */
+	case 'W': INT_ADJ (6, 1, 63, 2, false);	 /* (0 .. 63) << 2 */
 	case 'X': SINT (4, 1);
 	case 'Y': SPECIAL (9, 1, ADDIUSP_INT);
 	case 'Z': UINT (0, 0);			 /* 0 only */
@@ -101,17 +101,17 @@ decode_micromips_operand (const char *p)
       switch (p[1])
 	{
 	case 'A': BIT (5, 6, 0);		 /* (0 .. 31) */
-	case 'B': MSB (5, 11, 1, TRUE, 32);	 /* (1 .. 32), 32-bit op */
-	case 'C': MSB (5, 11, 1, FALSE, 32);	 /* (1 .. 32), 32-bit op */
+	case 'B': MSB (5, 11, 1, true, 32);	 /* (1 .. 32), 32-bit op */
+	case 'C': MSB (5, 11, 1, false, 32);	 /* (1 .. 32), 32-bit op */
 	case 'E': BIT (5, 6, 32);		 /* (32 .. 63) */
-	case 'F': MSB (5, 11, 33, TRUE, 64);	 /* (33 .. 64), 64-bit op */
-	case 'G': MSB (5, 11, 33, FALSE, 64);	 /* (33 .. 64), 64-bit op */
-	case 'H': MSB (5, 11, 1, FALSE, 64);	 /* (1 .. 32), 64-bit op */
+	case 'F': MSB (5, 11, 33, true, 64);	 /* (33 .. 64), 64-bit op */
+	case 'G': MSB (5, 11, 33, false, 64);	 /* (33 .. 64), 64-bit op */
+	case 'H': MSB (5, 11, 1, false, 64);	 /* (1 .. 32), 64-bit op */
 	case 'J': HINT (10, 16);
-	case 'T': INT_ADJ (10, 16, 511, 0, FALSE);	/* (-512 .. 511) << 0 */
-	case 'U': INT_ADJ (10, 16, 511, 1, FALSE);	/* (-512 .. 511) << 1 */
-	case 'V': INT_ADJ (10, 16, 511, 2, FALSE);	/* (-512 .. 511) << 2 */
-	case 'W': INT_ADJ (10, 16, 511, 3, FALSE);	/* (-512 .. 511) << 3 */
+	case 'T': INT_ADJ (10, 16, 511, 0, false);	/* (-512 .. 511) << 0 */
+	case 'U': INT_ADJ (10, 16, 511, 1, false);	/* (-512 .. 511) << 1 */
+	case 'V': INT_ADJ (10, 16, 511, 2, false);	/* (-512 .. 511) << 2 */
+	case 'W': INT_ADJ (10, 16, 511, 3, false);	/* (-512 .. 511) << 3 */
 
 	case 'd': REG (5, 6, MSA);
 	case 'e': REG (5, 11, MSA);
@@ -176,6 +176,7 @@ decode_micromips_operand (const char *p)
     case 'b': REG (5, 16, GP);
     case 'c': HINT (10, 16);
     case 'd': REG (5, 11, GP);
+    case 'g': REG (5, 16, CONTROL);
     case 'h': HINT (5, 11);
     case 'i': HINT (16, 0);
     case 'j': SINT (16, 0);
@@ -372,7 +373,7 @@ const struct mips_opcode micromips_opcodes[] =
 {"bc2tl",		"p",		0,    (int) M_BC2TL,	INSN_MACRO,		0,		I1,		0,	0 },
 {"bc2tl",		"N,p",		0,    (int) M_BC2TL,	INSN_MACRO,		0,		I1,		0,	0 },
 {"beqz",		"md,mE",	    0x8c00,     0xfc00,	RD_1|CBD,		0,		I1,		0,	0 },
-{"beqz",		"s,p",		0x94000000, 0xffe00000,	RD_1|CBD,		0,		I1,		0,	0 },
+{"beqz",		"s,p",		0x94000000, 0xffe00000,	RD_1|CBD,		INSN2_ALIAS,	I1,		0,	0 },
 {"beqzl",		"s,p",		0,    (int) M_BEQL,	INSN_MACRO,		0,		I1,		0,	0 },
 {"beq",			"md,mz,mE",	    0x8c00,     0xfc00,	RD_1|CBD,		0,		I1,		0,	0 }, /* beqz */
 {"beq",			"mz,md,mE",	    0x8c00,     0xfc00,	RD_2|CBD,		0,		I1,		0,	0 }, /* beqz */
@@ -430,7 +431,7 @@ const struct mips_opcode micromips_opcodes[] =
 {"bltzals",		"s,p",		0x42200000, 0xffe00000,	RD_1|WR_31|CBD,		BD16,		I1,		0,	0 },
 {"bltzall",		"s,p",		0,    (int) M_BLTZALL,	INSN_MACRO,		0,		I1,		0,	0 },
 {"bnez",		"md,mE",	    0xac00,     0xfc00,	RD_1|CBD,		0,		I1,		0,	0 },
-{"bnez",		"s,p",		0xb4000000, 0xffe00000,	RD_1|CBD,		0,		I1,		0,	0 },
+{"bnez",		"s,p",		0xb4000000, 0xffe00000,	RD_1|CBD,		INSN2_ALIAS,	I1,		0,	0 },
 {"bnezl",		"s,p",		0,    (int) M_BNEL,	INSN_MACRO,		0,		I1,		0,	0 },
 {"bne",			"md,mz,mE",	    0xac00,     0xfc00,	RD_1|CBD,		0,		I1,		0,	0 }, /* bnez */
 {"bne",			"mz,md,mE",	    0xac00,     0xfc00,	RD_2|CBD,		0,		I1,		0,	0 }, /* bnez */
@@ -548,15 +549,15 @@ const struct mips_opcode micromips_opcodes[] =
 {"ceil.l.s",		"T,S",		0x5400133b, 0xfc00ffff,	WR_1|RD_2|FP_S|FP_D,	0,		I1,		0,	0 },
 {"ceil.w.d",		"T,S",		0x54005b3b, 0xfc00ffff,	WR_1|RD_2|FP_S|FP_D,	0,		I1,		0,	0 },
 {"ceil.w.s",		"T,S",		0x54001b3b, 0xfc00ffff,	WR_1|RD_2|FP_S,		0,		I1,		0,	0 },
-{"cfc1",		"t,G",		0x5400103b, 0xfc00ffff,	WR_1|RD_C1,		0,		I1,		0,	0 },
+{"cfc1",		"t,g",		0x5400103b, 0xfc00ffff,	WR_1|RD_C1,		0,		I1,		0,	0 },
 {"cfc1",		"t,S",		0x5400103b, 0xfc00ffff,	WR_1|RD_C1,		0,		I1,		0,	0 },
-{"cfc2",		"t,G",		0x0000cd3c, 0xfc00ffff,	WR_1|RD_C2,		0,		I1,		0,	0 },
+{"cfc2",		"t,g",		0x0000cd3c, 0xfc00ffff,	WR_1|RD_C2,		0,		I1,		0,	0 },
 {"clo",			"t,s",		0x00004b3c, 0xfc00ffff,	WR_1|RD_2,		0,		I1,		0,	0 },
 {"clz",			"t,s",		0x00005b3c, 0xfc00ffff,	WR_1|RD_2,		0,		I1,		0,	0 },
 {"cop2",		"C",		0x00000002, 0xfc000007,	CP,			0,		I1,		0,	0 },
-{"ctc1",		"t,G",		0x5400183b, 0xfc00ffff,	RD_1|WR_CC,		0,		I1,		0,	0 },
+{"ctc1",		"t,g",		0x5400183b, 0xfc00ffff,	RD_1|WR_CC,		0,		I1,		0,	0 },
 {"ctc1",		"t,S",		0x5400183b, 0xfc00ffff,	RD_1|WR_CC,		0,		I1,		0,	0 },
-{"ctc2",		"t,G",		0x0000dd3c, 0xfc00ffff,	RD_1|WR_C2|WR_CC,	0,		I1,		0,	0 },
+{"ctc2",		"t,g",		0x0000dd3c, 0xfc00ffff,	RD_1|WR_C2|WR_CC,	0,		I1,		0,	0 },
 {"cvt.d.l",		"T,S",		0x5400537b, 0xfc00ffff,	WR_1|RD_2|FP_D,		0,		I1,		0,	0 },
 {"cvt.d.s",		"T,S",		0x5400137b, 0xfc00ffff,	WR_1|RD_2|FP_S|FP_D,	0,		I1,		0,	0 },
 {"cvt.d.w",		"T,S",		0x5400337b, 0xfc00ffff,	WR_1|RD_2|FP_S|FP_D,	0,		I1,		0,	0 },
@@ -633,8 +634,8 @@ const struct mips_opcode micromips_opcodes[] =
 {"dmtgc0",		"t,G,H",	0x580006fc, 0xfc00c7ff,	RD_1|WR_C0|WR_CC,	0,		0,		IVIRT64, 0 },
 {"dmfc1",		"t,S",		0x5400243b, 0xfc00ffff,	WR_1|RD_2|FP_S|LC,	0,		I3,		0,	0 },
 {"dmfc1",		"t,G",		0x5400243b, 0xfc00ffff,	WR_1|RD_2|FP_S|LC,	0,		I3,		0,	0 },
-{"dmtc1",		"t,G",		0x54002c3b, 0xfc00ffff,	RD_1|WR_2|FP_S|CM,	0,		I3,		0,	0 },
 {"dmtc1",		"t,S",		0x54002c3b, 0xfc00ffff,	RD_1|WR_2|FP_S|CM,	0,		I3,		0,	0 },
+{"dmtc1",		"t,G",		0x54002c3b, 0xfc00ffff,	RD_1|WR_2|FP_S|CM,	0,		I3,		0,	0 },
 {"dmfc2",		"t,G",		0x00006d3c, 0xfc00ffff,	WR_1|RD_C2,		0,		I3,		0,	0 },
 /*{"dmfc2",		"t,G,H",	0x58000283, 0xfc001fff,	WR_1|RD_C2,		0,		I3,		0,	0 },*/
 {"dmtc2",		"t,G",		0x00007d3c, 0xfc00ffff,	RD_1|WR_C2|WR_CC,	0,		I3,		0,	0 },

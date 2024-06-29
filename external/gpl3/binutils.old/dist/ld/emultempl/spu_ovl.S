@@ -1,6 +1,6 @@
 /* Overlay manager for SPU.
 
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

@@ -1,6 +1,6 @@
 /* microblaze-opcm.h -- Header used in microblaze-opc.h
 
-   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -42,7 +42,8 @@ enum microblaze_instr
   shr, sw, swr, swx, lbui, lhui, lwi,
   sbi, shi, swi, msrset, msrclr, tuqula, mbi_fadd, frsub, mbi_fmul, mbi_fdiv,
   fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt,
-  fint, fsqrt,
+  /* 'fsqrt' is a glibc:math.h symbol.  */
+  fint, microblaze_fsqrt,
   tget, tcget, tnget, tncget, tput, tcput, tnput, tncput,
   eget, ecget, neget, necget, eput, ecput, neput, necput,
   teget, tecget, tneget, tnecget, teput, tecput, tneput, tnecput,

@@ -1,5 +1,5 @@
 /* tc-d10v.h -- Header file for tc-d10v.c.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -21,6 +21,8 @@
 
 #define TC_D10V
 
+struct fix;
+
 #define TARGET_BYTES_BIG_ENDIAN 1
 
 /* The target BFD architecture.  */
@@ -30,8 +32,6 @@
 
 /* Call md_pcrel_from_section, not md_pcrel_from.  */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section (FIX, SEC)
-struct fix;
-long md_pcrel_from_section (struct fix *, segT);
 
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
@@ -51,7 +51,7 @@ void d10v_frob_label (symbolS *);
 #define tc_frob_label(sym)	     d10v_frob_label (sym)
 
 #define tc_fix_adjustable(FIX) d10v_fix_adjustable(FIX)
-bfd_boolean d10v_fix_adjustable (struct fix *);
+bool d10v_fix_adjustable (struct fix *);
 
 /* Values passed to md_apply_fix don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0

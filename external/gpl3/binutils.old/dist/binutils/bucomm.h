@@ -1,5 +1,5 @@
 /* bucomm.h -- binutils common include file.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -39,6 +39,8 @@ void fatal (const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_NORETURN;
 
 void non_fatal (const char *, ...) ATTRIBUTE_PRINTF_1;
 
+void *bfd_xalloc (bfd *, size_t);
+
 void set_default_bfd_target (void);
 
 void list_matching_formats (char **);
@@ -49,16 +51,16 @@ void list_supported_architectures (const char *, FILE *);
 
 int display_info (void);
 
-void print_arelt_descr (FILE *, bfd *, bfd_boolean, bfd_boolean);
+void print_arelt_descr (FILE *, bfd *, bool, bool);
 
-char *make_tempname (const char *);
+char *make_tempname (const char *, int *);
 char *make_tempdir (const char *);
 
 bfd_vma parse_vma (const char *, const char *);
 
 off_t get_file_size (const char *);
 
-bfd_boolean is_valid_archive_path (char const *);
+bool is_valid_archive_path (char const *);
 
 extern char *program_name;
 
@@ -71,11 +73,21 @@ extern void print_version (const char *);
 /* In rename.c.  */
 extern void set_times (const char *, const struct stat *);
 
-extern int smart_rename (const char *, const char *, int);
+extern int smart_rename (const char *, const char *, int,
+			 struct stat *, bool);
+
 
 /* In libiberty.  */
 void *xmalloc (size_t);
 
 void *xrealloc (void *, size_t);
+
+#if __GNUC__ >= 7
+#define _mul_overflow(a, b, res) __builtin_mul_overflow (a, b, res)
+#else
+/* Assumes unsigned values.  Careful!  Args evaluated multiple times.  */
+#define _mul_overflow(a, b, res) \
+  ((*res) = (a), (*res) *= (b), (b) != 0 && (*res) / (b) != (a))
+#endif
 
 #endif /* _BUCOMM_H */

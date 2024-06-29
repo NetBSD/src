@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -64,7 +64,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 static void
 gld${EMULATION_NAME}_after_allocation (void)
 {
-  ldelf_map_segments (FALSE);
+  ldelf_map_segments (false);
 }
 EOF
 # Put these extra routines in ld_${EMULATION_NAME}_emulation

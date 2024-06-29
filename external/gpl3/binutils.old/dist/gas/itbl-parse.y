@@ -1,5 +1,5 @@
 /* itbl-parse.y
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -274,7 +274,7 @@ FIXME! hex is ambiguous with any digit
 
 static int sbit, ebit;
 static struct itbl_entry *insn=0;
-static int yyerror (const char *);
+static void yyerror (const char *);
 
 %}
 
@@ -449,9 +449,8 @@ value:
 	;
 %%
 
-static int
+static void
 yyerror (const char *msg)
 {
   printf ("line %d: %s\n", insntbl_line, msg);
-  return 0;
 }

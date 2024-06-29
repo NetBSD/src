@@ -1,6 +1,6 @@
 /* tc-visium.h -- Header file for tc-visium.c.
 
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -43,7 +43,7 @@
 #define WORKING_DOT_WORD
 
 #define tc_fix_adjustable(FIXP) visium_fix_adjustable (FIXP)
-extern bfd_boolean visium_fix_adjustable (struct fix *);
+extern bool visium_fix_adjustable (struct fix *);
 
 #define HANDLE_ALIGN(FRAGP)		 \
   if ((FRAGP)->fr_type == rs_align_code) \
