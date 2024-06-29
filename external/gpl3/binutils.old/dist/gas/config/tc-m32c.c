@@ -1,5 +1,5 @@
 /* tc-m32c.c -- Assembler for the Renesas M32C.
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by RedHat.
 
    This file is part of GAS, the GNU Assembler.
@@ -215,7 +215,7 @@ m32c_start_line_hook (void)
 
 /* Process [[indirect-operands]] in instruction str.  */
 
-static bfd_boolean
+static bool
 m32c_indirect_operand (char *str)
 {
   char *new_str;
@@ -245,7 +245,7 @@ m32c_indirect_operand (char *str)
     }
 
   if (indirection[1] == none && indirection[2] == none)
-    return FALSE;
+    return false;
 
   operand = 1;
   ns_len = strlen (str);
@@ -287,7 +287,7 @@ m32c_indirect_operand (char *str)
       *ns = s[0];
       ns += 1;
       if (ns >= ns_end)
-	return FALSE;
+	return false;
       if (s[0] == 0)
 	break;
     }
@@ -307,7 +307,7 @@ m32c_indirect_operand (char *str)
 
   md_assemble (new_str);
   free (new_str);
-  return TRUE;
+  return true;
 }
 
 void
@@ -519,8 +519,8 @@ insn_to_subtype (int inum, const CGEN_INSN *insn)
   unsigned int i;
 
   if (insn
-      && (strncmp (insn->base->mnemonic, "adjnz", 5) == 0
-	  || strncmp (insn->base->mnemonic, "sbjnz", 5) == 0))
+      && (startswith (insn->base->mnemonic, "adjnz")
+	  || startswith (insn->base->mnemonic, "sbjnz")))
     {
       i = 23 + insn->base->bitsize/8 - 3;
       /*printf("mapping %d used for %s\n", i, insn->base->mnemonic);*/
@@ -1138,10 +1138,10 @@ md_number_to_chars (char * buf, valueT val, int n)
 const char *
 md_atof (int type, char * litP, int * sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
-bfd_boolean
+bool
 m32c_fix_adjustable (fixS * fixP)
 {
   int reloc;

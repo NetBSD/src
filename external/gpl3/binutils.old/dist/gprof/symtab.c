@@ -1,6 +1,6 @@
 /* symtab.c
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -26,7 +26,7 @@
 #include "cg_arcs.h"
 #include "corefile.h"
 
-static int cmp_addr (const PTR, const PTR);
+static int cmp_addr (const void *, const void *);
 
 Sym_Table symtab;
 
@@ -58,7 +58,7 @@ sym_init (Sym *sym)
    the global symbol survives.  */
 
 static int
-cmp_addr (const PTR lp, const PTR rp)
+cmp_addr (const void *lp, const void *rp)
 {
   const Sym *left = (const Sym *) lp;
   const Sym *right = (const Sym *) rp;

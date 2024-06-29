@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2022 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -18,7 +18,7 @@ and eleven chip levels. The architecture modes are the Enterprise System
 Architecture (ESA) and the newer z/Architecture mode. The chip levels
 are g5 (or arch3), g6, z900 (or arch5), z990 (or arch6), z9-109, z9-ec
 (or arch7), z10 (or arch8), z196 (or arch9), zEC12 (or arch10), z13
-(or arch11), z14 (or arch12), and z15 (or arch13).
+(or arch11), z14 (or arch12), z15 (or arch13), or z16 (or arch14).
 
 @menu
 * s390 Options::                Command-line Options.
@@ -70,8 +70,9 @@ are recognized:
 @code{z196} (or @code{arch9}),
 @code{zEC12} (or @code{arch10}),
 @code{z13} (or @code{arch11}),
-@code{z14} (or @code{arch12}), and
-@code{z15} (or @code{arch13}).
+@code{z14} (or @code{arch12}),
+@code{z15} (or @code{arch13}), and
+@code{z16} (or @code{arch14}).
 
 Assembling an instruction that is not supported on the target
 processor results in an error message.
@@ -312,7 +313,7 @@ field. The notation changes as follows:
 @cindex instruction formats, s390
 @cindex s390 instruction formats
 
-The Principles of Operation manuals lists 26 instruction formats where
+The Principles of Operation manuals lists 35 instruction formats where
 some of the formats have multiple variants. For the @samp{.insn}
 pseudo directive the assembler recognizes some of the formats.
 Typically, the most general variant of the instruction format is used
@@ -542,6 +543,54 @@ with the @samp{.insn} pseudo directive:
 | OpCode | R3 |OpCd| B1 |     D1      | B2 |     D2     |
 +--------+----+----+----+-------------+----+------------+
 0        8    12   16   20            32   36           47
+@end verbatim
+
+@item VRV format: <insn> V1,D2(V2,B2),M3
+@verbatim
++--------+----+----+----+-------------+----+------------+
+| OpCode | V1 | V2 | B2 |     D2      | M3 |   Opcode   |
++--------+----+----+----+-------------+----+------------+
+0        8    12   16   20            32   36           47
+@end verbatim
+
+@item VRI format: <insn> V1,V2,I3,M4,M5
+@verbatim
++--------+----+----+-------------+----+----+------------+
+| OpCode | V1 | V2 |     I3      | M5 | M4 |   Opcode   |
++--------+----+----+-------------+----+----+------------+
+0        8    12   16            28   32   36           47
+@end verbatim
+
+@item VRX format: <insn> V1,D2(R2,B2),M3
+@verbatim
++--------+----+----+----+-------------+----+------------+
+| OpCode | V1 | R2 | B2 |     D2      | M3 |   Opcode   |
++--------+----+----+----+-------------+----+------------+
+0        8    12   16   20            32   36           47
+@end verbatim
+
+@item VRS format: <insn> R1,V3,D2(B2),M4
+@verbatim
++--------+----+----+----+-------------+----+------------+
+| OpCode | R1 | V3 | B2 |     D2      | M4 |   Opcode   |
++--------+----+----+----+-------------+----+------------+
+0        8    12   16   20            32   36           47
+@end verbatim
+
+@item VRR format: <insn> V1,V2,V3,M4,M5,M6
+@verbatim
++--------+----+----+----+---+----+----+----+------------+
+| OpCode | V1 | V2 | V3 |///| M6 | M5 | M4 |   Opcode   |
++--------+----+----+----+---+----+----+----+------------+
+0        8    12   16       24   28   32   36           47
+@end verbatim
+
+@item VSI format: <insn> V1,D2(B2),I3
+@verbatim
++--------+---------+----+-------------+----+------------+
+| OpCode |   I3    | B2 |     D2      | V1 |   Opcode   |
++--------+---------+----+-------------+----+------------+
+0        8         16   20            32   36           47
 @end verbatim
 
 @end table
@@ -905,7 +954,7 @@ except instructions from the HTM facility.
 
 @cindex @code{.machinemode} directive, s390
 @item .machinemode string
-This directive allows to change the architecture mode for which code
+This directive allows one to change the architecture mode for which code
 is being generated.  @code{string} may be @code{esa}, @code{zarch},
 @code{zarch_nohighgprs}, @code{push}, or @code{pop}.
 @code{.machinemode zarch_nohighgprs} can be used to prevent the

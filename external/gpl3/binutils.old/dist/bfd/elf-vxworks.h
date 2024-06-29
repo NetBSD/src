@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -19,18 +19,19 @@
 #include "elf/common.h"
 #include "elf/internal.h"
 
-bfd_boolean elf_vxworks_add_symbol_hook
+bool elf_vxworks_add_symbol_hook
   (bfd *, struct bfd_link_info *, Elf_Internal_Sym *, const char **,
    flagword *, asection **, bfd_vma *);
-bfd_boolean elf_vxworks_link_output_symbol_hook
+int elf_vxworks_link_output_symbol_hook
   (struct bfd_link_info *, const char *name, Elf_Internal_Sym *,
    asection *, struct elf_link_hash_entry *);
-bfd_boolean elf_vxworks_emit_relocs
+bool elf_vxworks_emit_relocs
   (bfd *, asection *, Elf_Internal_Shdr *, Elf_Internal_Rela *,
    struct elf_link_hash_entry **);
-bfd_boolean elf_vxworks_final_write_processing (bfd *);
-bfd_boolean elf_vxworks_create_dynamic_sections
+bool elf_vxworks_final_write_processing (bfd *);
+bool elf_vxworks_create_dynamic_sections
   (bfd *, struct bfd_link_info *, asection **);
-bfd_boolean elf_vxworks_add_dynamic_entries (bfd *, struct bfd_link_info *);
-bfd_boolean elf_vxworks_finish_dynamic_entry (bfd *, Elf_Internal_Dyn *);
-
+bool elf_vxworks_add_dynamic_entries (bfd *, struct bfd_link_info *);
+bool elf_vxworks_finish_dynamic_entry (bfd *, Elf_Internal_Dyn *);
+bool _bfd_elf_maybe_vxworks_add_dynamic_tags
+  (bfd *, struct bfd_link_info *, bool);

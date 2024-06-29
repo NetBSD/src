@@ -1,5 +1,5 @@
 /* Disassembler code for CR16.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com).
 
    This file is part of GAS, GDB and the GNU binutils.
@@ -29,18 +29,12 @@
 #define ESCAPE_16_BIT  0xB
 
 /* Extract 'n_bits' from 'a' starting from offset 'offs'.  */
-#define EXTRACT(a, offs, n_bits)                    \
+#define EXTRACT(a, offs, n_bits) \
   (((a) >> (offs)) & ((1ul << ((n_bits) - 1) << 1) - 1))
 
 /* Set Bit Mask - a mask to set all bits in a 32-bit word starting
    from offset 'offs'.  */
 #define SBM(offs)  ((1ul << 31 << 1) - (1ul << (offs)))
-
-typedef struct
-{
-  dwordU val;
-  int nbits;
-} parameter;
 
 /* Structure to map valid 'cinv' instruction options.  */
 
@@ -287,14 +281,10 @@ getprocpregname (int reg_index)
                        0         16        32        48
     words                  [0]       [1]       [2]      */
 
-static parameter
+static inline dwordU
 makelongparameter (ULONGLONG val, int start, int end)
 {
-  parameter p;
-
-  p.val = (dwordU) EXTRACT (val, 48 - end, end - start);
-  p.nbits = end - start;
-  return p;
+  return EXTRACT (val, 48 - end, end - start);
 }
 
 /* Build a mask of the instruction's 'constant' opcode,
@@ -330,10 +320,10 @@ cr16_match_opcode (void)
       mask = build_mask ();
 
       if ((doubleWord & mask) == BIN (instruction->match,
-                                      instruction->match_bits))
-        return 1;
+				      instruction->match_bits))
+	return 1;
       else
-        instruction--;
+	instruction--;
     }
   return 0;
 }
@@ -344,7 +334,7 @@ static void
 make_argument (argument * a, int start_bits)
 {
   int inst_bit_size;
-  parameter p;
+  dwordU p;
 
   if ((instruction->size == 3) && a->size >= 16)
     inst_bit_size = 48;
@@ -357,75 +347,72 @@ make_argument (argument * a, int start_bits)
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-      a->r = p.val;
+      a->r = p;
       break;
 
     case arg_rp:
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-      a->rp = p.val;
+      a->rp = p;
       break;
 
     case arg_pr:
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-      a->pr = p.val;
+      a->pr = p;
       break;
 
     case arg_prp:
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-      a->prp = p.val;
+      a->prp = p;
       break;
 
     case arg_ic:
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-      a->constant = p.val;
+      a->constant = p;
       break;
 
     case arg_cc:
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - (start_bits + a->size),
 			     inst_bit_size - start_bits);
-
-      a->cc = p.val;
+      a->cc = p;
       break;
 
     case arg_idxr:
-      if ((IS_INSN_MNEMONIC ("cbitb"))
-	  || (IS_INSN_MNEMONIC ("sbitb"))
-	  || (IS_INSN_MNEMONIC ("tbitb")))
+      if (IS_INSN_TYPE (CSTBIT_INS) && instruction->mnemonic[4] == 'b')
 	p = makelongparameter (cr16_allWords, 8, 9);
       else
 	p = makelongparameter (cr16_allWords, 9, 10);
-      a->i_r = p.val;
+      a->i_r = p;
       p = makelongparameter (cr16_allWords,
 			     inst_bit_size - a->size, inst_bit_size);
-      a->constant = p.val;
+      a->constant = p;
       break;
 
     case arg_idxrp:
       p = makelongparameter (cr16_allWords, start_bits + 12, start_bits + 13);
-      a->i_r = p.val;
+      a->i_r = p;
       p = makelongparameter (cr16_allWords, start_bits + 13, start_bits + 16);
-      a->rp = p.val;
+      a->rp = p;
       if (inst_bit_size > 32)
 	{
 	  p = makelongparameter (cr16_allWords, inst_bit_size - start_bits - 12,
 				 inst_bit_size);
-	  a->constant = ((p.val & 0xffff) | (p.val >> 8 & 0xf0000));
+	  a->constant = (p & 0xffff) | (p >> 8 & 0xf0000);
 	}
       else if (instruction->size == 2)
 	{
 	  p = makelongparameter (cr16_allWords, inst_bit_size - 22,
 				 inst_bit_size);
-	  a->constant = (p.val & 0xf) | (((p.val >>20) & 0x3) << 4)
-	    | ((p.val >>14 & 0x3) << 6) | (((p.val >>7) & 0x1f) <<7);
+	  a->constant = ((p & 0xf) | (((p >> 20) & 0x3) << 4)
+			 | ((p >> 14 & 0x3) << 6) | (((p >>7) & 0x1f) << 7));
 	}
       else if (instruction->size == 1 && a->size == 0)
 	a->constant = 0;
@@ -434,17 +421,17 @@ make_argument (argument * a, int start_bits)
 
     case arg_rbase:
       p = makelongparameter (cr16_allWords, inst_bit_size, inst_bit_size);
-      a->constant = p.val;
+      a->constant = p;
       p = makelongparameter (cr16_allWords, inst_bit_size - (start_bits + 4),
-                             inst_bit_size - start_bits);
-      a->r = p.val;
+			     inst_bit_size - start_bits);
+      a->r = p;
       break;
 
     case arg_cr:
       p = makelongparameter (cr16_allWords, start_bits + 12, start_bits + 16);
-      a->r = p.val;
-      p = makelongparameter (cr16_allWords, inst_bit_size - 16, inst_bit_size);
-      a->constant = p.val;
+      a->r = p;
+      p = makelongparameter (cr16_allWords, inst_bit_size - 28, inst_bit_size);
+      a->constant = ((p >> 8) & 0xf0000) | (p & 0xffff);
       break;
 
     case arg_crp:
@@ -452,19 +439,19 @@ make_argument (argument * a, int start_bits)
 	p = makelongparameter (cr16_allWords, 12, 16);
       else
 	p = makelongparameter (cr16_allWords, start_bits + 12, start_bits + 16);
-      a->rp = p.val;
+      a->rp = p;
 
       if (inst_bit_size > 32)
 	{
 	  p = makelongparameter (cr16_allWords, inst_bit_size - start_bits - 12,
 				 inst_bit_size);
-	  a->constant = ((p.val & 0xffff) | (p.val >> 8 & 0xf0000));
+	  a->constant = ((p & 0xffff) | (p >> 8 & 0xf0000));
 	}
       else if (instruction->size == 2)
 	{
 	  p = makelongparameter (cr16_allWords, inst_bit_size - 16,
 				 inst_bit_size);
-	  a->constant = p.val;
+	  a->constant = p;
 	}
       else if (instruction->size == 1 && a->size != 0)
 	{
@@ -473,9 +460,9 @@ make_argument (argument * a, int start_bits)
 	      || IS_INSN_MNEMONIC ("loadd")
 	      || IS_INSN_MNEMONIC ("storw")
 	      || IS_INSN_MNEMONIC ("stord"))
-	    a->constant = (p.val * 2);
+	    a->constant = p * 2;
 	  else
-	    a->constant = p.val;
+	    a->constant = p;
 	}
       else /* below case for 0x0(reg pair) */
 	a->constant = 0;
@@ -493,21 +480,21 @@ make_argument (argument * a, int start_bits)
 	    {
 	    case 8 :
 	      p = makelongparameter (cr16_allWords, 0, start_bits);
-	      a->constant = ((((p.val&0xf00)>>4)) | (p.val&0xf));
+	      a->constant = ((p & 0xf00) >> 4) | (p & 0xf);
 	      break;
 
 	    case 24:
 	      if (instruction->size == 3)
 		{
 		  p = makelongparameter (cr16_allWords, 16, inst_bit_size);
-		  a->constant = ((((p.val>>16)&0xf) << 20)
-				 | (((p.val>>24)&0xf) << 16)
-				 | (p.val & 0xffff));
+		  a->constant = ((((p >> 16) & 0xf) << 20)
+				 | (((p >> 24) & 0xf) << 16)
+				 | (p & 0xffff));
 		}
 	      else if (instruction->size == 2)
 		{
 		  p = makelongparameter (cr16_allWords, 8, inst_bit_size);
-		  a->constant = p.val;
+		  a->constant = p;
 		}
 	      break;
 
@@ -515,7 +502,7 @@ make_argument (argument * a, int start_bits)
 	      p = makelongparameter (cr16_allWords,
 				     inst_bit_size - (start_bits + a->size),
 				     inst_bit_size - start_bits);
-	      a->constant = p.val;
+	      a->constant = p;
 	      break;
 	    }
 	}
@@ -524,7 +511,7 @@ make_argument (argument * a, int start_bits)
 	  p = makelongparameter (cr16_allWords,
 				 inst_bit_size - (start_bits + a->size),
 				 inst_bit_size - start_bits);
-	  a->constant = p.val;
+	  a->constant = p;
 	}
       break;
 
@@ -542,7 +529,7 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
   int sign_flag = 0;
   int relative = 0;
   bfd_vma number;
-  PTR stream = info->stream;
+  void *stream = info->stream;
   fprintf_ftype func = info->fprintf_func;
 
   switch (a->type)
@@ -721,18 +708,18 @@ print_arguments (ins *currentInsn, bfd_vma memaddr, struct disassemble_info *inf
 
       /* For "bal (ra), disp17" instruction only.  */
       if ((IS_INSN_MNEMONIC ("bal")) && (i == 0) && instruction->size == 2)
-        {
-          info->fprintf_func (info->stream, "(ra),");
-          continue;
-        }
+	{
+	  info->fprintf_func (info->stream, "(ra),");
+	  continue;
+	}
 
       if ((INST_HAS_REG_LIST) && (i == 2))
-        info->fprintf_func (info->stream, "RA");
+	info->fprintf_func (info->stream, "RA");
       else
-        print_arg (&currentInsn->arg[i], memaddr, info);
+	print_arg (&currentInsn->arg[i], memaddr, info);
 
       if ((i != currentInsn->nargs - 1) && (!IS_INSN_MNEMONIC ("b")))
-        info->fprintf_func (info->stream, ",");
+	info->fprintf_func (info->stream, ",");
     }
 }
 
@@ -813,18 +800,19 @@ print_insn_cr16 (bfd_vma memaddr, struct disassemble_info *info)
   /* If found, print the instruction's mnemonic and arguments.  */
   if (is_decoded > 0 && (cr16_words[0] != 0 || cr16_words[1] != 0))
     {
-      if (strneq (instruction->mnemonic, "cinv", 4))
-        info->fprintf_func (info->stream,"%s", getcinvstring (instruction->mnemonic));
+      if (startswith (instruction->mnemonic, "cinv"))
+	info->fprintf_func (info->stream,"%s",
+			    getcinvstring (instruction->mnemonic));
       else
-        info->fprintf_func (info->stream, "%s", instruction->mnemonic);
+	info->fprintf_func (info->stream, "%s", instruction->mnemonic);
 
       if (((cr16_currInsn.nargs = get_number_of_operands ()) != 0)
 	  && ! (IS_INSN_MNEMONIC ("b")))
-        info->fprintf_func (info->stream, "\t");
+	info->fprintf_func (info->stream, "\t");
       cr16_make_instruction ();
       /* For push/pop/pushrtn with RA instructions.  */
       if ((INST_HAS_REG_LIST) && ((cr16_words[0] >> 7) & 0x1))
-        cr16_currInsn.nargs +=1;
+	cr16_currInsn.nargs +=1;
       print_arguments (&cr16_currInsn, memaddr, info);
       return cr16_currInsn.size;
     }

@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -446,7 +446,7 @@ invalid_float (float_type_u *p, int len)
    bit position of the addressing extension.  BUFFER contains the
    instruction.  ADDR is where BUFFER was read from.  Put the disassembled
    version of the operand in RESULT.  INDEX_OFFSET is the bit position
-   of the index byte (it contains garbage if this operand is not a
+   of the index byte (it contains -1 if this operand is not a
    general operand using scaled indexed addressing mode).  */
 
 static int
@@ -524,9 +524,7 @@ print_insn_arg (int d,
 	  /* Immediate.  */
 	  switch (d)
 	    {
-	    case 'I':
-	    case 'Z':
-	    case 'A':
+	    default:
 	      /* I and Z are output operands and can`t be immediate
 	         A is an address and we can`t have the address of
 	         an immediate either. We don't know how much to increase
@@ -790,10 +788,8 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
   if (*d)
     {
       /* Offset in bits of the first thing beyond each index byte.
-	 Element 0 is for operand A and element 1 is for operand B.
-	 The rest are irrelevant, but we put them here so we don't
-	 index outside the array.  */
-      int index_offset[MAX_ARGS];
+	 Element 0 is for operand A and element 1 is for operand B.  */
+      int index_offset[2];
 
       /* 0 for operand A, 1 for operand B, greater for other args.  */
       int whicharg = 0;
@@ -806,6 +802,8 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
 	 if we are using scaled indexed addressing mode, since the index
 	 bytes occur right after the basic instruction, not as part
 	 of the addressing extension.  */
+      index_offset[0] = -1;
+      index_offset[1] = -1;
       if (Is_gen (d[1]))
 	{
 	  int bitoff = d[1] == 'f' ? 10 : 5;
@@ -832,15 +830,16 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
       while (*d)
 	{
 	  argnum = *d - '1';
+	  if (argnum >= MAX_ARGS)
+	    abort ();
 	  d++;
-	  if (argnum > maxarg && argnum < MAX_ARGS)
+	  if (argnum > maxarg)
 	    maxarg = argnum;
 	  ioffset = print_insn_arg (*d, ioffset, &aoffset, buffer,
 				    memaddr, arg_bufs[argnum],
-				    index_offset[whicharg]);
+				    whicharg > 1 ? -1 : index_offset[whicharg]);
 	  d++;
-	  if (whicharg++ >= 1)
-	    break;
+	  whicharg++;
 	}
 
       for (argnum = 0; argnum <= maxarg; argnum++)

@@ -1,5 +1,5 @@
 /* rx-parse.y  Renesas RX parser
-   Copyright (C) 2008-2020 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1316,7 +1316,7 @@ token_table[] =
 
   { "DPSW", DCREG, 0 },
   { "DCMR", DCREG, 1 },
-  { "DCENT", DCREG, 2 },
+  { "DECNT", DCREG, 2 },
   { "DEPC", DCREG, 3 },
   { "DCR0", DCREG, 0 },
   { "DCR1", DCREG, 1 },
@@ -1725,8 +1725,8 @@ rx_error (const char * str)
 static int
 rx_intop (expressionS exp, int nbits, int opbits)
 {
-  long v;
-  long mask, msb;
+  valueT v;
+  valueT mask, msb;
 
   if (exp.X_op == O_big)
     {
@@ -1739,24 +1739,24 @@ rx_intop (expressionS exp, int nbits, int opbits)
     return 0;
   v = exp.X_add_number;
 
-  msb = 1UL << (opbits - 1);
-  mask = (1UL << opbits) - 1;
+  msb = (valueT) 1 << (opbits - 1);
+  mask = (msb << 1) - 1;
 
   if ((v & msb) && ! (v & ~mask))
-    v -= 1UL << opbits;
+    v -= mask + 1;
 
   switch (nbits)
     {
     case 4:
-      return -0x8 <= v && v <= 0x7;
+      return v + 0x8 <= 0x7 + 0x8;
     case 5:
-      return -0x10 <= v && v <= 0x17;
+      return v + 0x10 <= 0xf + 0x10;
     case 8:
-      return -0x80 <= v && v <= 0x7f;
+      return v + 0x80 <= 0x7f + 0x80;
     case 16:
-      return -0x8000 <= v && v <= 0x7fff;
+      return v + 0x8000 <= 0x7fff + 0x8000;
     case 24:
-      return -0x800000 <= v && v <= 0x7fffff;
+      return v + 0x800000 <= 0x7fffff + 0x800000;
     case 32:
       return 1;
     default:
@@ -1769,7 +1769,7 @@ rx_intop (expressionS exp, int nbits, int opbits)
 static int
 rx_uintop (expressionS exp, int nbits)
 {
-  unsigned long v;
+  valueT v;
 
   if (exp.X_op != O_constant)
     return 0;
@@ -1795,7 +1795,7 @@ rx_uintop (expressionS exp, int nbits)
 static int
 rx_disp3op (expressionS exp)
 {
-  unsigned long v;
+  valueT v;
 
   if (exp.X_op != O_constant)
     return 0;
@@ -1808,7 +1808,7 @@ rx_disp3op (expressionS exp)
 static int
 rx_disp5op (expressionS * exp, int msize)
 {
-  long v;
+  valueT v;
 
   if (exp->X_op != O_constant)
     return 0;
@@ -1817,13 +1817,13 @@ rx_disp5op (expressionS * exp, int msize)
   switch (msize)
     {
     case BSIZE:
-      if (0 <= v && v <= 31)
+      if (v <= 31)
 	return 1;
       break;
     case WSIZE:
       if (v & 1)
 	return 0;
-      if (0 <= v && v <= 63)
+      if (v <= 63)
 	{
 	  exp->X_add_number >>= 1;
 	  return 1;
@@ -1832,7 +1832,7 @@ rx_disp5op (expressionS * exp, int msize)
     case LSIZE:
       if (v & 3)
 	return 0;
-      if (0 <= v && v <= 127)
+      if (v <= 127)
 	{
 	  exp->X_add_number >>= 2;
 	  return 1;
@@ -1931,7 +1931,7 @@ immediate (expressionS exp, int type, int pos, int bits)
 static int
 displacement (expressionS exp, int msize)
 {
-  int val;
+  valueT val;
   int vshift = 0;
 
   if (exp.X_op == O_symbol
@@ -2001,18 +2001,18 @@ displacement (expressionS exp, int msize)
   val >>= vshift;
   exp.X_add_number = val;
 
-  if (0 <= val && val <= 255 )
+  if (val <= 255 )
     {
       O1 (exp);
       return 1;
     }
 
-  if (0 <= val && val <= 65535)
+  if (val <= 65535)
     {
       O2 (exp);
       return 2;
     }
-  if (val < 0)
+  if ((offsetT) val < 0)
     rx_error (_("negative displacements not allowed"));
   else
     rx_error (_("displacement too large"));
@@ -2022,7 +2022,7 @@ displacement (expressionS exp, int msize)
 static void
 rtsd_immediate (expressionS exp)
 {
-  int val;
+  valueT val;
 
   if (exp.X_op != O_constant)
     {
@@ -2033,7 +2033,7 @@ rtsd_immediate (expressionS exp)
   if (val & 3)
     rx_error (_("rtsd size must be multiple of 4"));
 
-  if (val < 0 || val > 1020)
+  if (val > 1020)
     rx_error (_("rtsd size must be 0..1020"));
 
   val >>= 2;
@@ -2044,14 +2044,14 @@ rtsd_immediate (expressionS exp)
 static void
 rx_range (expressionS exp, int minv, int maxv)
 {
-  int val;
+  offsetT val;
 
   if (exp.X_op != O_constant)
     return;
 
   val = exp.X_add_number;
   if (val < minv || val > maxv)
-    as_warn (_("Value %d out of range %d..%d"), val, minv, maxv);
+    as_warn (_("Value %ld out of range %d..%d"), (long) val, minv, maxv);
 }
 
 static void

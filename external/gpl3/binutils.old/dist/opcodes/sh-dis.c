@@ -1,5 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -597,13 +597,17 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 	    case IMM1_4BY4:
 	      imm = nibs[3] << 2;
 	      goto ok;
-	    case IMM0_8:
+	    case IMM0_8S:
 	    case IMM1_8:
 	      imm = (nibs[2] << 4) | nibs[3];
 	      disp = imm;
 	      has_disp = 1;
 	      if (imm & 0x80)
 		imm -= 0x100;
+	      goto ok;
+	    case IMM0_8U:
+	      disp = imm = (nibs[2] << 4) | nibs[3];
+	      has_disp = 1;
 	      goto ok;
 	    case PCRELIMM_8BY2:
 	      imm = ((nibs[2] << 4) | nibs[3]) << 1;

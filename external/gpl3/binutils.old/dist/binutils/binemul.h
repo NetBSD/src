@@ -1,5 +1,5 @@
 /* Binutils emulation layer.
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.
@@ -28,19 +28,15 @@
 
 extern void ar_emul_usage (FILE *);
 extern void ar_emul_default_usage (FILE *);
-extern bfd_boolean ar_emul_append (bfd **, char *, const char *,
-				   bfd_boolean, bfd_boolean);
-extern bfd_boolean ar_emul_default_append (bfd **, char *, const char *,
-					   bfd_boolean, bfd_boolean);
-extern bfd_boolean do_ar_emul_append (bfd **, bfd *,
-				      bfd_boolean, bfd_boolean,
-				      bfd_boolean (*)(bfd *));
-extern bfd_boolean ar_emul_replace (bfd **, char *, const char *,
-				    bfd_boolean);
-extern bfd_boolean ar_emul_default_replace (bfd **, char *,
-					    const char *, bfd_boolean);
-extern bfd_boolean ar_emul_parse_arg (char *);
-extern bfd_boolean ar_emul_default_parse_arg (char *);
+extern bool ar_emul_append (bfd **, char *, const char *, bool, bool);
+extern bool ar_emul_append_bfd (bfd **, bfd *, bool, bool);
+extern bool ar_emul_default_append (bfd **, bfd *, bool, bool);
+extern bool do_ar_emul_append (bfd **, bfd *, bool, bool, bool (*)(bfd *));
+extern bool ar_emul_replace (bfd **, char *, const char *, bool);
+extern bool ar_emul_replace_bfd (bfd **, bfd *, bool);
+extern bool ar_emul_default_replace (bfd **, bfd *, bool);
+extern bool ar_emul_parse_arg (char *);
+extern bool ar_emul_default_parse_arg (char *);
 
 /* Macros for common output.  */
 
@@ -60,11 +56,10 @@ extern bfd_boolean ar_emul_default_parse_arg (char *);
 typedef struct bin_emulation_xfer_struct
 {
   /* Print out the extra options.  */
-  void (* ar_usage) (FILE *fp);
-  bfd_boolean (* ar_append) (bfd **, char *, const char *, bfd_boolean,
-			     bfd_boolean);
-  bfd_boolean (* ar_replace) (bfd **, char *, const char *, bfd_boolean);
-  bfd_boolean (* ar_parse_arg) (char *);
+  void (*ar_usage) (FILE *fp);
+  bool (*ar_append) (bfd **, bfd *, bool, bool);
+  bool (*ar_replace) (bfd **, bfd *, bool);
+  bool (*ar_parse_arg) (char *);
 }
 bin_emulation_xfer_type;
 

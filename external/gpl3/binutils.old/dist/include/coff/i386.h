@@ -1,6 +1,6 @@
 /* coff information for Intel 386/486.
    
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -91,3 +91,15 @@ struct external_reloc
 #define RELOC struct external_reloc
 #define RELSZ 10
 
+/* i386 Relocations.  */
+
+#define R_DIR32		 6
+#define R_IMAGEBASE	 7
+#define R_SECTION	10
+#define R_SECREL32	11
+#define R_RELBYTE	15
+#define R_RELWORD	16
+#define R_RELLONG	17
+#define R_PCRBYTE	18
+#define R_PCRWORD	19
+#define R_PCRLONG	20

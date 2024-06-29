@@ -1,6 +1,6 @@
 // powerpc.h -- ELF definitions specific to EM_PPC and EM_PPC64  -*- C++ -*-
 
-// Copyright (C) 2008-2020 Free Software Foundation, Inc.
+// Copyright (C) 2008-2022 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of elfcpp.
@@ -184,6 +184,7 @@ enum
   R_PPC64_PLTSEQ_NOTOC = 121,
   R_PPC64_PLTCALL_NOTOC = 122,
   R_PPC64_PCREL_OPT = 123,
+  R_PPC64_REL24_P9NOTOC = 124,
 
   R_PPC64_D34 = 128,
   R_PPC64_D34_LO = 129,
@@ -205,10 +206,10 @@ enum
   R_PPC64_PCREL28 = 145,
   R_PPC64_TPREL34 = 146,
   R_PPC64_DTPREL34 = 147,
-  R_PPC64_GOT_TLSGD34 = 148,
-  R_PPC64_GOT_TLSLD34 = 149,
-  R_PPC64_GOT_TPREL34 = 150,
-  R_PPC64_GOT_DTPREL34 = 151,
+  R_PPC64_GOT_TLSGD_PCREL34 = 148,
+  R_PPC64_GOT_TLSLD_PCREL34 = 149,
+  R_PPC64_GOT_TPREL_PCREL34 = 150,
+  R_PPC64_GOT_DTPREL_PCREL34 = 151,
 
   R_PPC_VLE_REL8 = 216,
   R_PPC_VLE_REL15 = 217,

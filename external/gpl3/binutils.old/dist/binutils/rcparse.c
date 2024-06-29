@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -40,11 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
-#define YYBISON 1
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30802
 
-/* Bison version.  */
-#define YYBISON_VERSION "3.0.5"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.8.2"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -61,10 +66,10 @@
 
 
 
-/* Copy the first part of user declarations.  */
-#line 1 "rcparse.y" /* yacc.c:339  */
+/* First part of user prologue.  */
+#line 1 "rcparse.y"
  /* rcparse.y -- parser for Windows rc files
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Extended by Kai Tietz, Onevision.
 
@@ -128,26 +133,31 @@ static unichar null_unichar;
 static const rc_res_id res_null_text = { 1, {{0, &null_unichar}}};
 
 
-#line 132 "rcparse.c" /* yacc.c:339  */
+#line 137 "rcparse.c"
 
-# ifndef YY_NULLPTR
-#  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+# ifndef YY_CAST
+#  ifdef __cplusplus
+#   define YY_CAST(Type, Val) static_cast<Type> (Val)
+#   define YY_REINTERPRET_CAST(Type, Val) reinterpret_cast<Type> (Val)
 #  else
-#   define YY_NULLPTR 0
+#   define YY_CAST(Type, Val) ((Type) (Val))
+#   define YY_REINTERPRET_CAST(Type, Val) ((Type) (Val))
+#  endif
+# endif
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* In a future release of Bison, this section will be replaced
-   by #include "y.tab.h".  */
+/* Use api.header.include to #include this header
+   instead of duplicating it here.  */
 #ifndef YY_YY_RCPARSE_H_INCLUDED
 # define YY_YY_RCPARSE_H_INCLUDED
 /* Debug traces.  */
@@ -158,110 +168,120 @@ static const rc_res_id res_null_text = { 1, {{0, &null_unichar}}};
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    BEG = 258,
-    END = 259,
-    ACCELERATORS = 260,
-    VIRTKEY = 261,
-    ASCII = 262,
-    NOINVERT = 263,
-    SHIFT = 264,
-    CONTROL = 265,
-    ALT = 266,
-    BITMAP = 267,
-    CURSOR = 268,
-    DIALOG = 269,
-    DIALOGEX = 270,
-    EXSTYLE = 271,
-    CAPTION = 272,
-    CLASS = 273,
-    STYLE = 274,
-    AUTO3STATE = 275,
-    AUTOCHECKBOX = 276,
-    AUTORADIOBUTTON = 277,
-    CHECKBOX = 278,
-    COMBOBOX = 279,
-    CTEXT = 280,
-    DEFPUSHBUTTON = 281,
-    EDITTEXT = 282,
-    GROUPBOX = 283,
-    LISTBOX = 284,
-    LTEXT = 285,
-    PUSHBOX = 286,
-    PUSHBUTTON = 287,
-    RADIOBUTTON = 288,
-    RTEXT = 289,
-    SCROLLBAR = 290,
-    STATE3 = 291,
-    USERBUTTON = 292,
-    BEDIT = 293,
-    HEDIT = 294,
-    IEDIT = 295,
-    FONT = 296,
-    ICON = 297,
-    ANICURSOR = 298,
-    ANIICON = 299,
-    DLGINCLUDE = 300,
-    DLGINIT = 301,
-    FONTDIR = 302,
-    HTML = 303,
-    MANIFEST = 304,
-    PLUGPLAY = 305,
-    VXD = 306,
-    TOOLBAR = 307,
-    BUTTON = 308,
-    LANGUAGE = 309,
-    CHARACTERISTICS = 310,
-    VERSIONK = 311,
-    MENU = 312,
-    MENUEX = 313,
-    MENUITEM = 314,
-    SEPARATOR = 315,
-    POPUP = 316,
-    CHECKED = 317,
-    GRAYED = 318,
-    HELP = 319,
-    INACTIVE = 320,
-    MENUBARBREAK = 321,
-    MENUBREAK = 322,
-    MESSAGETABLE = 323,
-    RCDATA = 324,
-    STRINGTABLE = 325,
-    VERSIONINFO = 326,
-    FILEVERSION = 327,
-    PRODUCTVERSION = 328,
-    FILEFLAGSMASK = 329,
-    FILEFLAGS = 330,
-    FILEOS = 331,
-    FILETYPE = 332,
-    FILESUBTYPE = 333,
-    BLOCKSTRINGFILEINFO = 334,
-    BLOCKVARFILEINFO = 335,
-    VALUE = 336,
-    BLOCK = 337,
-    MOVEABLE = 338,
-    FIXED = 339,
-    PURE = 340,
-    IMPURE = 341,
-    PRELOAD = 342,
-    LOADONCALL = 343,
-    DISCARDABLE = 344,
-    NOT = 345,
-    QUOTEDUNISTRING = 346,
-    QUOTEDSTRING = 347,
-    STRING = 348,
-    NUMBER = 349,
-    SIZEDUNISTRING = 350,
-    SIZEDSTRING = 351,
-    IGNORED_TOKEN = 352,
-    NEG = 353
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    BEG = 258,                     /* BEG  */
+    END = 259,                     /* END  */
+    ACCELERATORS = 260,            /* ACCELERATORS  */
+    VIRTKEY = 261,                 /* VIRTKEY  */
+    ASCII = 262,                   /* ASCII  */
+    NOINVERT = 263,                /* NOINVERT  */
+    SHIFT = 264,                   /* SHIFT  */
+    CONTROL = 265,                 /* CONTROL  */
+    ALT = 266,                     /* ALT  */
+    BITMAP = 267,                  /* BITMAP  */
+    CURSOR = 268,                  /* CURSOR  */
+    DIALOG = 269,                  /* DIALOG  */
+    DIALOGEX = 270,                /* DIALOGEX  */
+    EXSTYLE = 271,                 /* EXSTYLE  */
+    CAPTION = 272,                 /* CAPTION  */
+    CLASS = 273,                   /* CLASS  */
+    STYLE = 274,                   /* STYLE  */
+    AUTO3STATE = 275,              /* AUTO3STATE  */
+    AUTOCHECKBOX = 276,            /* AUTOCHECKBOX  */
+    AUTORADIOBUTTON = 277,         /* AUTORADIOBUTTON  */
+    CHECKBOX = 278,                /* CHECKBOX  */
+    COMBOBOX = 279,                /* COMBOBOX  */
+    CTEXT = 280,                   /* CTEXT  */
+    DEFPUSHBUTTON = 281,           /* DEFPUSHBUTTON  */
+    EDITTEXT = 282,                /* EDITTEXT  */
+    GROUPBOX = 283,                /* GROUPBOX  */
+    LISTBOX = 284,                 /* LISTBOX  */
+    LTEXT = 285,                   /* LTEXT  */
+    PUSHBOX = 286,                 /* PUSHBOX  */
+    PUSHBUTTON = 287,              /* PUSHBUTTON  */
+    RADIOBUTTON = 288,             /* RADIOBUTTON  */
+    RTEXT = 289,                   /* RTEXT  */
+    SCROLLBAR = 290,               /* SCROLLBAR  */
+    STATE3 = 291,                  /* STATE3  */
+    USERBUTTON = 292,              /* USERBUTTON  */
+    BEDIT = 293,                   /* BEDIT  */
+    HEDIT = 294,                   /* HEDIT  */
+    IEDIT = 295,                   /* IEDIT  */
+    FONT = 296,                    /* FONT  */
+    ICON = 297,                    /* ICON  */
+    ANICURSOR = 298,               /* ANICURSOR  */
+    ANIICON = 299,                 /* ANIICON  */
+    DLGINCLUDE = 300,              /* DLGINCLUDE  */
+    DLGINIT = 301,                 /* DLGINIT  */
+    FONTDIR = 302,                 /* FONTDIR  */
+    HTML = 303,                    /* HTML  */
+    MANIFEST = 304,                /* MANIFEST  */
+    PLUGPLAY = 305,                /* PLUGPLAY  */
+    VXD = 306,                     /* VXD  */
+    TOOLBAR = 307,                 /* TOOLBAR  */
+    BUTTON = 308,                  /* BUTTON  */
+    LANGUAGE = 309,                /* LANGUAGE  */
+    CHARACTERISTICS = 310,         /* CHARACTERISTICS  */
+    VERSIONK = 311,                /* VERSIONK  */
+    MENU = 312,                    /* MENU  */
+    MENUEX = 313,                  /* MENUEX  */
+    MENUITEM = 314,                /* MENUITEM  */
+    SEPARATOR = 315,               /* SEPARATOR  */
+    POPUP = 316,                   /* POPUP  */
+    CHECKED = 317,                 /* CHECKED  */
+    GRAYED = 318,                  /* GRAYED  */
+    HELP = 319,                    /* HELP  */
+    INACTIVE = 320,                /* INACTIVE  */
+    OWNERDRAW = 321,               /* OWNERDRAW  */
+    MENUBARBREAK = 322,            /* MENUBARBREAK  */
+    MENUBREAK = 323,               /* MENUBREAK  */
+    MESSAGETABLE = 324,            /* MESSAGETABLE  */
+    RCDATA = 325,                  /* RCDATA  */
+    STRINGTABLE = 326,             /* STRINGTABLE  */
+    VERSIONINFO = 327,             /* VERSIONINFO  */
+    FILEVERSION = 328,             /* FILEVERSION  */
+    PRODUCTVERSION = 329,          /* PRODUCTVERSION  */
+    FILEFLAGSMASK = 330,           /* FILEFLAGSMASK  */
+    FILEFLAGS = 331,               /* FILEFLAGS  */
+    FILEOS = 332,                  /* FILEOS  */
+    FILETYPE = 333,                /* FILETYPE  */
+    FILESUBTYPE = 334,             /* FILESUBTYPE  */
+    BLOCKSTRINGFILEINFO = 335,     /* BLOCKSTRINGFILEINFO  */
+    BLOCKVARFILEINFO = 336,        /* BLOCKVARFILEINFO  */
+    VALUE = 337,                   /* VALUE  */
+    BLOCK = 338,                   /* BLOCK  */
+    MOVEABLE = 339,                /* MOVEABLE  */
+    FIXED = 340,                   /* FIXED  */
+    PURE = 341,                    /* PURE  */
+    IMPURE = 342,                  /* IMPURE  */
+    PRELOAD = 343,                 /* PRELOAD  */
+    LOADONCALL = 344,              /* LOADONCALL  */
+    DISCARDABLE = 345,             /* DISCARDABLE  */
+    NOT = 346,                     /* NOT  */
+    QUOTEDUNISTRING = 347,         /* QUOTEDUNISTRING  */
+    QUOTEDSTRING = 348,            /* QUOTEDSTRING  */
+    STRING = 349,                  /* STRING  */
+    NUMBER = 350,                  /* NUMBER  */
+    SIZEDUNISTRING = 351,          /* SIZEDUNISTRING  */
+    SIZEDSTRING = 352,             /* SIZEDSTRING  */
+    IGNORED_TOKEN = 353,           /* IGNORED_TOKEN  */
+    NEG = 354                      /* NEG  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define BEG 258
 #define END 259
 #define ACCELERATORS 260
@@ -325,46 +345,46 @@ extern int yydebug;
 #define GRAYED 318
 #define HELP 319
 #define INACTIVE 320
-#define MENUBARBREAK 321
-#define MENUBREAK 322
-#define MESSAGETABLE 323
-#define RCDATA 324
-#define STRINGTABLE 325
-#define VERSIONINFO 326
-#define FILEVERSION 327
-#define PRODUCTVERSION 328
-#define FILEFLAGSMASK 329
-#define FILEFLAGS 330
-#define FILEOS 331
-#define FILETYPE 332
-#define FILESUBTYPE 333
-#define BLOCKSTRINGFILEINFO 334
-#define BLOCKVARFILEINFO 335
-#define VALUE 336
-#define BLOCK 337
-#define MOVEABLE 338
-#define FIXED 339
-#define PURE 340
-#define IMPURE 341
-#define PRELOAD 342
-#define LOADONCALL 343
-#define DISCARDABLE 344
-#define NOT 345
-#define QUOTEDUNISTRING 346
-#define QUOTEDSTRING 347
-#define STRING 348
-#define NUMBER 349
-#define SIZEDUNISTRING 350
-#define SIZEDSTRING 351
-#define IGNORED_TOKEN 352
-#define NEG 353
+#define OWNERDRAW 321
+#define MENUBARBREAK 322
+#define MENUBREAK 323
+#define MESSAGETABLE 324
+#define RCDATA 325
+#define STRINGTABLE 326
+#define VERSIONINFO 327
+#define FILEVERSION 328
+#define PRODUCTVERSION 329
+#define FILEFLAGSMASK 330
+#define FILEFLAGS 331
+#define FILEOS 332
+#define FILETYPE 333
+#define FILESUBTYPE 334
+#define BLOCKSTRINGFILEINFO 335
+#define BLOCKVARFILEINFO 336
+#define VALUE 337
+#define BLOCK 338
+#define MOVEABLE 339
+#define FIXED 340
+#define PURE 341
+#define IMPURE 342
+#define PRELOAD 343
+#define LOADONCALL 344
+#define DISCARDABLE 345
+#define NOT 346
+#define QUOTEDUNISTRING 347
+#define QUOTEDSTRING 348
+#define STRING 349
+#define NUMBER 350
+#define SIZEDUNISTRING 351
+#define SIZEDSTRING 352
+#define IGNORED_TOKEN 353
+#define NEG 354
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 68 "rcparse.y" /* yacc.c:355  */
+#line 68 "rcparse.y"
 
   rc_accelerator acc;
   rc_accelerator *pacc;
@@ -410,9 +430,9 @@ union YYSTYPE
     const unichar *s;
   } suni;
 
-#line 414 "rcparse.c" /* yacc.c:355  */
-};
+#line 434 "rcparse.c"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -421,40 +441,321 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
+
 int yyparse (void);
 
+
 #endif /* !YY_YY_RCPARSE_H_INCLUDED  */
+/* Symbol kind.  */
+enum yysymbol_kind_t
+{
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_BEG = 3,                        /* BEG  */
+  YYSYMBOL_END = 4,                        /* END  */
+  YYSYMBOL_ACCELERATORS = 5,               /* ACCELERATORS  */
+  YYSYMBOL_VIRTKEY = 6,                    /* VIRTKEY  */
+  YYSYMBOL_ASCII = 7,                      /* ASCII  */
+  YYSYMBOL_NOINVERT = 8,                   /* NOINVERT  */
+  YYSYMBOL_SHIFT = 9,                      /* SHIFT  */
+  YYSYMBOL_CONTROL = 10,                   /* CONTROL  */
+  YYSYMBOL_ALT = 11,                       /* ALT  */
+  YYSYMBOL_BITMAP = 12,                    /* BITMAP  */
+  YYSYMBOL_CURSOR = 13,                    /* CURSOR  */
+  YYSYMBOL_DIALOG = 14,                    /* DIALOG  */
+  YYSYMBOL_DIALOGEX = 15,                  /* DIALOGEX  */
+  YYSYMBOL_EXSTYLE = 16,                   /* EXSTYLE  */
+  YYSYMBOL_CAPTION = 17,                   /* CAPTION  */
+  YYSYMBOL_CLASS = 18,                     /* CLASS  */
+  YYSYMBOL_STYLE = 19,                     /* STYLE  */
+  YYSYMBOL_AUTO3STATE = 20,                /* AUTO3STATE  */
+  YYSYMBOL_AUTOCHECKBOX = 21,              /* AUTOCHECKBOX  */
+  YYSYMBOL_AUTORADIOBUTTON = 22,           /* AUTORADIOBUTTON  */
+  YYSYMBOL_CHECKBOX = 23,                  /* CHECKBOX  */
+  YYSYMBOL_COMBOBOX = 24,                  /* COMBOBOX  */
+  YYSYMBOL_CTEXT = 25,                     /* CTEXT  */
+  YYSYMBOL_DEFPUSHBUTTON = 26,             /* DEFPUSHBUTTON  */
+  YYSYMBOL_EDITTEXT = 27,                  /* EDITTEXT  */
+  YYSYMBOL_GROUPBOX = 28,                  /* GROUPBOX  */
+  YYSYMBOL_LISTBOX = 29,                   /* LISTBOX  */
+  YYSYMBOL_LTEXT = 30,                     /* LTEXT  */
+  YYSYMBOL_PUSHBOX = 31,                   /* PUSHBOX  */
+  YYSYMBOL_PUSHBUTTON = 32,                /* PUSHBUTTON  */
+  YYSYMBOL_RADIOBUTTON = 33,               /* RADIOBUTTON  */
+  YYSYMBOL_RTEXT = 34,                     /* RTEXT  */
+  YYSYMBOL_SCROLLBAR = 35,                 /* SCROLLBAR  */
+  YYSYMBOL_STATE3 = 36,                    /* STATE3  */
+  YYSYMBOL_USERBUTTON = 37,                /* USERBUTTON  */
+  YYSYMBOL_BEDIT = 38,                     /* BEDIT  */
+  YYSYMBOL_HEDIT = 39,                     /* HEDIT  */
+  YYSYMBOL_IEDIT = 40,                     /* IEDIT  */
+  YYSYMBOL_FONT = 41,                      /* FONT  */
+  YYSYMBOL_ICON = 42,                      /* ICON  */
+  YYSYMBOL_ANICURSOR = 43,                 /* ANICURSOR  */
+  YYSYMBOL_ANIICON = 44,                   /* ANIICON  */
+  YYSYMBOL_DLGINCLUDE = 45,                /* DLGINCLUDE  */
+  YYSYMBOL_DLGINIT = 46,                   /* DLGINIT  */
+  YYSYMBOL_FONTDIR = 47,                   /* FONTDIR  */
+  YYSYMBOL_HTML = 48,                      /* HTML  */
+  YYSYMBOL_MANIFEST = 49,                  /* MANIFEST  */
+  YYSYMBOL_PLUGPLAY = 50,                  /* PLUGPLAY  */
+  YYSYMBOL_VXD = 51,                       /* VXD  */
+  YYSYMBOL_TOOLBAR = 52,                   /* TOOLBAR  */
+  YYSYMBOL_BUTTON = 53,                    /* BUTTON  */
+  YYSYMBOL_LANGUAGE = 54,                  /* LANGUAGE  */
+  YYSYMBOL_CHARACTERISTICS = 55,           /* CHARACTERISTICS  */
+  YYSYMBOL_VERSIONK = 56,                  /* VERSIONK  */
+  YYSYMBOL_MENU = 57,                      /* MENU  */
+  YYSYMBOL_MENUEX = 58,                    /* MENUEX  */
+  YYSYMBOL_MENUITEM = 59,                  /* MENUITEM  */
+  YYSYMBOL_SEPARATOR = 60,                 /* SEPARATOR  */
+  YYSYMBOL_POPUP = 61,                     /* POPUP  */
+  YYSYMBOL_CHECKED = 62,                   /* CHECKED  */
+  YYSYMBOL_GRAYED = 63,                    /* GRAYED  */
+  YYSYMBOL_HELP = 64,                      /* HELP  */
+  YYSYMBOL_INACTIVE = 65,                  /* INACTIVE  */
+  YYSYMBOL_OWNERDRAW = 66,                 /* OWNERDRAW  */
+  YYSYMBOL_MENUBARBREAK = 67,              /* MENUBARBREAK  */
+  YYSYMBOL_MENUBREAK = 68,                 /* MENUBREAK  */
+  YYSYMBOL_MESSAGETABLE = 69,              /* MESSAGETABLE  */
+  YYSYMBOL_RCDATA = 70,                    /* RCDATA  */
+  YYSYMBOL_STRINGTABLE = 71,               /* STRINGTABLE  */
+  YYSYMBOL_VERSIONINFO = 72,               /* VERSIONINFO  */
+  YYSYMBOL_FILEVERSION = 73,               /* FILEVERSION  */
+  YYSYMBOL_PRODUCTVERSION = 74,            /* PRODUCTVERSION  */
+  YYSYMBOL_FILEFLAGSMASK = 75,             /* FILEFLAGSMASK  */
+  YYSYMBOL_FILEFLAGS = 76,                 /* FILEFLAGS  */
+  YYSYMBOL_FILEOS = 77,                    /* FILEOS  */
+  YYSYMBOL_FILETYPE = 78,                  /* FILETYPE  */
+  YYSYMBOL_FILESUBTYPE = 79,               /* FILESUBTYPE  */
+  YYSYMBOL_BLOCKSTRINGFILEINFO = 80,       /* BLOCKSTRINGFILEINFO  */
+  YYSYMBOL_BLOCKVARFILEINFO = 81,          /* BLOCKVARFILEINFO  */
+  YYSYMBOL_VALUE = 82,                     /* VALUE  */
+  YYSYMBOL_BLOCK = 83,                     /* BLOCK  */
+  YYSYMBOL_MOVEABLE = 84,                  /* MOVEABLE  */
+  YYSYMBOL_FIXED = 85,                     /* FIXED  */
+  YYSYMBOL_PURE = 86,                      /* PURE  */
+  YYSYMBOL_IMPURE = 87,                    /* IMPURE  */
+  YYSYMBOL_PRELOAD = 88,                   /* PRELOAD  */
+  YYSYMBOL_LOADONCALL = 89,                /* LOADONCALL  */
+  YYSYMBOL_DISCARDABLE = 90,               /* DISCARDABLE  */
+  YYSYMBOL_NOT = 91,                       /* NOT  */
+  YYSYMBOL_QUOTEDUNISTRING = 92,           /* QUOTEDUNISTRING  */
+  YYSYMBOL_QUOTEDSTRING = 93,              /* QUOTEDSTRING  */
+  YYSYMBOL_STRING = 94,                    /* STRING  */
+  YYSYMBOL_NUMBER = 95,                    /* NUMBER  */
+  YYSYMBOL_SIZEDUNISTRING = 96,            /* SIZEDUNISTRING  */
+  YYSYMBOL_SIZEDSTRING = 97,               /* SIZEDSTRING  */
+  YYSYMBOL_IGNORED_TOKEN = 98,             /* IGNORED_TOKEN  */
+  YYSYMBOL_99_ = 99,                       /* '|'  */
+  YYSYMBOL_100_ = 100,                     /* '^'  */
+  YYSYMBOL_101_ = 101,                     /* '&'  */
+  YYSYMBOL_102_ = 102,                     /* '+'  */
+  YYSYMBOL_103_ = 103,                     /* '-'  */
+  YYSYMBOL_104_ = 104,                     /* '*'  */
+  YYSYMBOL_105_ = 105,                     /* '/'  */
+  YYSYMBOL_106_ = 106,                     /* '%'  */
+  YYSYMBOL_107_ = 107,                     /* '~'  */
+  YYSYMBOL_NEG = 108,                      /* NEG  */
+  YYSYMBOL_109_ = 109,                     /* ','  */
+  YYSYMBOL_110_ = 110,                     /* '='  */
+  YYSYMBOL_111_ = 111,                     /* '('  */
+  YYSYMBOL_112_ = 112,                     /* ')'  */
+  YYSYMBOL_YYACCEPT = 113,                 /* $accept  */
+  YYSYMBOL_input = 114,                    /* input  */
+  YYSYMBOL_accelerator = 115,              /* accelerator  */
+  YYSYMBOL_acc_entries = 116,              /* acc_entries  */
+  YYSYMBOL_acc_entry = 117,                /* acc_entry  */
+  YYSYMBOL_acc_event = 118,                /* acc_event  */
+  YYSYMBOL_acc_options = 119,              /* acc_options  */
+  YYSYMBOL_acc_option = 120,               /* acc_option  */
+  YYSYMBOL_bitmap = 121,                   /* bitmap  */
+  YYSYMBOL_cursor = 122,                   /* cursor  */
+  YYSYMBOL_dialog = 123,                   /* dialog  */
+  YYSYMBOL_124_1 = 124,                    /* $@1  */
+  YYSYMBOL_125_2 = 125,                    /* $@2  */
+  YYSYMBOL_126_3 = 126,                    /* $@3  */
+  YYSYMBOL_exstyle = 127,                  /* exstyle  */
+  YYSYMBOL_styles = 128,                   /* styles  */
+  YYSYMBOL_controls = 129,                 /* controls  */
+  YYSYMBOL_control = 130,                  /* control  */
+  YYSYMBOL_131_4 = 131,                    /* $@4  */
+  YYSYMBOL_132_5 = 132,                    /* $@5  */
+  YYSYMBOL_133_6 = 133,                    /* $@6  */
+  YYSYMBOL_134_7 = 134,                    /* $@7  */
+  YYSYMBOL_135_8 = 135,                    /* $@8  */
+  YYSYMBOL_136_9 = 136,                    /* $@9  */
+  YYSYMBOL_137_10 = 137,                   /* $@10  */
+  YYSYMBOL_138_11 = 138,                   /* $@11  */
+  YYSYMBOL_139_12 = 139,                   /* $@12  */
+  YYSYMBOL_140_13 = 140,                   /* $@13  */
+  YYSYMBOL_141_14 = 141,                   /* $@14  */
+  YYSYMBOL_142_15 = 142,                   /* $@15  */
+  YYSYMBOL_143_16 = 143,                   /* $@16  */
+  YYSYMBOL_144_17 = 144,                   /* $@17  */
+  YYSYMBOL_145_18 = 145,                   /* $@18  */
+  YYSYMBOL_146_19 = 146,                   /* $@19  */
+  YYSYMBOL_147_20 = 147,                   /* $@20  */
+  YYSYMBOL_148_21 = 148,                   /* $@21  */
+  YYSYMBOL_149_22 = 149,                   /* $@22  */
+  YYSYMBOL_150_23 = 150,                   /* $@23  */
+  YYSYMBOL_151_24 = 151,                   /* $@24  */
+  YYSYMBOL_control_params = 152,           /* control_params  */
+  YYSYMBOL_cresid = 153,                   /* cresid  */
+  YYSYMBOL_optresidc = 154,                /* optresidc  */
+  YYSYMBOL_resid = 155,                    /* resid  */
+  YYSYMBOL_opt_control_data = 156,         /* opt_control_data  */
+  YYSYMBOL_control_styleexpr = 157,        /* control_styleexpr  */
+  YYSYMBOL_158_25 = 158,                   /* $@25  */
+  YYSYMBOL_icon_styleexpr = 159,           /* icon_styleexpr  */
+  YYSYMBOL_160_26 = 160,                   /* $@26  */
+  YYSYMBOL_control_params_styleexpr = 161, /* control_params_styleexpr  */
+  YYSYMBOL_162_27 = 162,                   /* $@27  */
+  YYSYMBOL_font = 163,                     /* font  */
+  YYSYMBOL_icon = 164,                     /* icon  */
+  YYSYMBOL_language = 165,                 /* language  */
+  YYSYMBOL_menu = 166,                     /* menu  */
+  YYSYMBOL_menuitems = 167,                /* menuitems  */
+  YYSYMBOL_menuitem = 168,                 /* menuitem  */
+  YYSYMBOL_menuitem_flags = 169,           /* menuitem_flags  */
+  YYSYMBOL_menuitem_flag = 170,            /* menuitem_flag  */
+  YYSYMBOL_menuex = 171,                   /* menuex  */
+  YYSYMBOL_menuexitems = 172,              /* menuexitems  */
+  YYSYMBOL_menuexitem = 173,               /* menuexitem  */
+  YYSYMBOL_messagetable = 174,             /* messagetable  */
+  YYSYMBOL_optrcdata_data = 175,           /* optrcdata_data  */
+  YYSYMBOL_176_28 = 176,                   /* $@28  */
+  YYSYMBOL_optrcdata_data_int = 177,       /* optrcdata_data_int  */
+  YYSYMBOL_rcdata_data = 178,              /* rcdata_data  */
+  YYSYMBOL_stringtable = 179,              /* stringtable  */
+  YYSYMBOL_180_29 = 180,                   /* $@29  */
+  YYSYMBOL_string_data = 181,              /* string_data  */
+  YYSYMBOL_rcdata_id = 182,                /* rcdata_id  */
+  YYSYMBOL_user = 183,                     /* user  */
+  YYSYMBOL_toolbar = 184,                  /* toolbar  */
+  YYSYMBOL_toolbar_data = 185,             /* toolbar_data  */
+  YYSYMBOL_versioninfo = 186,              /* versioninfo  */
+  YYSYMBOL_fixedverinfo = 187,             /* fixedverinfo  */
+  YYSYMBOL_verblocks = 188,                /* verblocks  */
+  YYSYMBOL_verstringtables = 189,          /* verstringtables  */
+  YYSYMBOL_vervals = 190,                  /* vervals  */
+  YYSYMBOL_vertrans = 191,                 /* vertrans  */
+  YYSYMBOL_id = 192,                       /* id  */
+  YYSYMBOL_resname = 193,                  /* resname  */
+  YYSYMBOL_resref = 194,                   /* resref  */
+  YYSYMBOL_suboptions = 195,               /* suboptions  */
+  YYSYMBOL_memflags_move_discard = 196,    /* memflags_move_discard  */
+  YYSYMBOL_memflags_move = 197,            /* memflags_move  */
+  YYSYMBOL_memflag = 198,                  /* memflag  */
+  YYSYMBOL_file_name = 199,                /* file_name  */
+  YYSYMBOL_res_unicode_string_concat = 200, /* res_unicode_string_concat  */
+  YYSYMBOL_res_unicode_string = 201,       /* res_unicode_string  */
+  YYSYMBOL_res_unicode_sizedstring = 202,  /* res_unicode_sizedstring  */
+  YYSYMBOL_res_unicode_sizedstring_concat = 203, /* res_unicode_sizedstring_concat  */
+  YYSYMBOL_sizedstring = 204,              /* sizedstring  */
+  YYSYMBOL_sizedunistring = 205,           /* sizedunistring  */
+  YYSYMBOL_styleexpr = 206,                /* styleexpr  */
+  YYSYMBOL_parennumber = 207,              /* parennumber  */
+  YYSYMBOL_optcnumexpr = 208,              /* optcnumexpr  */
+  YYSYMBOL_cnumexpr = 209,                 /* cnumexpr  */
+  YYSYMBOL_numexpr = 210,                  /* numexpr  */
+  YYSYMBOL_sizednumexpr = 211,             /* sizednumexpr  */
+  YYSYMBOL_cposnumexpr = 212,              /* cposnumexpr  */
+  YYSYMBOL_posnumexpr = 213,               /* posnumexpr  */
+  YYSYMBOL_sizedposnumexpr = 214           /* sizedposnumexpr  */
+};
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
-/* Copy the second part of user declarations.  */
 
-#line 431 "rcparse.c" /* yacc.c:358  */
+
 
 #ifdef short
 # undef short
 #endif
 
-#ifdef YYTYPE_UINT8
-typedef YYTYPE_UINT8 yytype_uint8;
-#else
-typedef unsigned char yytype_uint8;
+/* On compilers that do not define __PTRDIFF_MAX__ etc., make sure
+   <limits.h> and (if available) <stdint.h> are included
+   so that the code can choose integer types of a good width.  */
+
+#ifndef __PTRDIFF_MAX__
+# include <limits.h> /* INFRINGES ON USER NAME SPACE */
+# if defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
+#  include <stdint.h> /* INFRINGES ON USER NAME SPACE */
+#  define YY_STDINT_H
+# endif
 #endif
 
-#ifdef YYTYPE_INT8
-typedef YYTYPE_INT8 yytype_int8;
+/* Narrow types that promote to a signed type and that can represent a
+   signed or unsigned integer of at least N bits.  In tables they can
+   save space and decrease cache pressure.  Promoting to a signed type
+   helps avoid bugs in integer arithmetic.  */
+
+#ifdef __INT_LEAST8_MAX__
+typedef __INT_LEAST8_TYPE__ yytype_int8;
+#elif defined YY_STDINT_H
+typedef int_least8_t yytype_int8;
 #else
 typedef signed char yytype_int8;
 #endif
 
-#ifdef YYTYPE_UINT16
-typedef YYTYPE_UINT16 yytype_uint16;
+#ifdef __INT_LEAST16_MAX__
+typedef __INT_LEAST16_TYPE__ yytype_int16;
+#elif defined YY_STDINT_H
+typedef int_least16_t yytype_int16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef short yytype_int16;
 #endif
 
-#ifdef YYTYPE_INT16
-typedef YYTYPE_INT16 yytype_int16;
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
+#endif
+
+#if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST8_TYPE__ yytype_uint8;
+#elif (!defined __UINT_LEAST8_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST8_MAX <= INT_MAX)
+typedef uint_least8_t yytype_uint8;
+#elif !defined __UINT_LEAST8_MAX__ && UCHAR_MAX <= INT_MAX
+typedef unsigned char yytype_uint8;
 #else
-typedef short int yytype_int16;
+typedef short yytype_uint8;
+#endif
+
+#if defined __UINT_LEAST16_MAX__ && __UINT_LEAST16_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST16_TYPE__ yytype_uint16;
+#elif (!defined __UINT_LEAST16_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST16_MAX <= INT_MAX)
+typedef uint_least16_t yytype_uint16;
+#elif !defined __UINT_LEAST16_MAX__ && USHRT_MAX <= INT_MAX
+typedef unsigned short yytype_uint16;
+#else
+typedef int yytype_uint16;
+#endif
+
+#ifndef YYPTRDIFF_T
+# if defined __PTRDIFF_TYPE__ && defined __PTRDIFF_MAX__
+#  define YYPTRDIFF_T __PTRDIFF_TYPE__
+#  define YYPTRDIFF_MAXIMUM __PTRDIFF_MAX__
+# elif defined PTRDIFF_MAX
+#  ifndef ptrdiff_t
+#   include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  endif
+#  define YYPTRDIFF_T ptrdiff_t
+#  define YYPTRDIFF_MAXIMUM PTRDIFF_MAX
+# else
+#  define YYPTRDIFF_T long
+#  define YYPTRDIFF_MAXIMUM LONG_MAX
+# endif
 #endif
 
 #ifndef YYSIZE_T
@@ -462,15 +763,28 @@ typedef short int yytype_int16;
 #  define YYSIZE_T __SIZE_TYPE__
 # elif defined size_t
 #  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T
+# elif defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+#define YYSIZE_MAXIMUM                                  \
+  YY_CAST (YYPTRDIFF_T,                                 \
+           (YYPTRDIFF_MAXIMUM < YY_CAST (YYSIZE_T, -1)  \
+            ? YYPTRDIFF_MAXIMUM                         \
+            : YY_CAST (YYSIZE_T, -1)))
+
+#define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
+
+
+/* Stored state numbers (used for stacks). */
+typedef yytype_int16 yy_state_t;
+
+/* State numbers in computations.  */
+typedef int yy_state_fast_t;
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
@@ -484,47 +798,43 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE
-# if (defined __GNUC__                                               \
-      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
-     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
-#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
+
+#ifndef YY_ATTRIBUTE_PURE
+# if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_PURE __attribute__ ((__pure__))
 # else
-#  define YY_ATTRIBUTE(Spec) /* empty */
+#  define YY_ATTRIBUTE_PURE
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE_PURE
-# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
-#endif
-
 #ifndef YY_ATTRIBUTE_UNUSED
-# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
-#endif
-
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
+# if defined __GNUC__ && 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 # else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
+#  define YY_ATTRIBUTE_UNUSED
 # endif
 #endif
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
-    _Pragma ("GCC diagnostic push") \
-    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")\
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
-# define YY_IGNORE_MAYBE_UNINITIALIZED_END \
+# endif
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
 # define YY_INITIAL_VALUE(Value) Value
@@ -537,8 +847,22 @@ typedef short int yytype_int16;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+#if defined __cplusplus && defined __GNUC__ && ! defined __ICC && 6 <= __GNUC__
+# define YY_IGNORE_USELESS_CAST_BEGIN                          \
+    _Pragma ("GCC diagnostic push")                            \
+    _Pragma ("GCC diagnostic ignored \"-Wuseless-cast\"")
+# define YY_IGNORE_USELESS_CAST_END            \
+    _Pragma ("GCC diagnostic pop")
+#endif
+#ifndef YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_END
+#endif
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+
+#define YY_ASSERT(E) ((void) (0 && (E)))
+
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -603,8 +927,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -613,17 +936,17 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
+  yy_state_t yyss_alloc;
   YYSTYPE yyvs_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
@@ -636,11 +959,11 @@ union yyalloc
 # define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
     do                                                                  \
       {                                                                 \
-        YYSIZE_T yynewbytes;                                            \
+        YYPTRDIFF_T yynewbytes;                                         \
         YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
         Stack = &yyptr->Stack_alloc;                                    \
-        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-        yyptr += yynewbytes / sizeof (*yyptr);                          \
+        yynewbytes = yystacksize * YYSIZEOF (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / YYSIZEOF (*yyptr);                        \
       }                                                                 \
     while (0)
 
@@ -652,12 +975,12 @@ union yyalloc
 # ifndef YYCOPY
 #  if defined __GNUC__ && 1 < __GNUC__
 #   define YYCOPY(Dst, Src, Count) \
-      __builtin_memcpy (Dst, Src, (Count) * sizeof (*(Src)))
+      __builtin_memcpy (Dst, Src, YY_CAST (YYSIZE_T, (Count)) * sizeof (*(Src)))
 #  else
 #   define YYCOPY(Dst, Src, Count)              \
       do                                        \
         {                                       \
-          YYSIZE_T yyi;                         \
+          YYPTRDIFF_T yyi;                      \
           for (yyi = 0; yyi < (Count); yyi++)   \
             (Dst)[yyi] = (Src)[yyi];            \
         }                                       \
@@ -669,42 +992,45 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   830
+#define YYLAST   842
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  112
+#define YYNTOKENS  113
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  102
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  276
+#define YYNRULES  278
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  520
+#define YYNSTATES  522
 
-/* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
-   by yylex, with out-of-bounds checking.  */
-#define YYUNDEFTOK  2
-#define YYMAXUTOK   353
+/* YYMAXUTOK -- Last valid token kind.  */
+#define YYMAXUTOK   354
 
-#define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+
+/* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, with out-of-bounds checking.  */
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
-   as returned by yylex, without out-of-bounds checking.  */
-static const yytype_uint8 yytranslate[] =
+   as returned by yylex.  */
+static const yytype_int8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,   105,   100,     2,
-     110,   111,   103,   101,   108,   102,     2,   104,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,   106,   101,     2,
+     111,   112,   104,   102,   109,   103,     2,   105,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,   109,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,    99,     2,     2,     2,     2,     2,
+       2,   110,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,    98,     2,   106,     2,     2,     2,
+       2,     2,     2,     2,   100,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,    99,     2,   107,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -727,12 +1053,12 @@ static const yytype_uint8 yytranslate[] =
       65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
       75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
       85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
-      95,    96,    97,   107
+      95,    96,    97,    98,   108
 };
 
 #if YYDEBUG
-  /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
+/* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
+static const yytype_int16 yyrline[] =
 {
        0,   178,   178,   180,   181,   182,   183,   184,   185,   186,
      187,   188,   189,   190,   191,   192,   193,   194,   200,   211,
@@ -748,520 +1074,519 @@ static const yytype_uint16 yyrline[] =
      895,   907,   918,   921,   925,   930,   940,   943,   953,   952,
      959,   958,   965,   964,   972,   984,   997,  1006,  1017,  1020,
     1037,  1041,  1045,  1053,  1056,  1060,  1067,  1071,  1075,  1079,
-    1083,  1087,  1096,  1107,  1110,  1127,  1131,  1135,  1139,  1143,
-    1147,  1151,  1155,  1165,  1178,  1178,  1190,  1194,  1201,  1209,
-    1217,  1225,  1234,  1243,  1252,  1262,  1261,  1266,  1268,  1273,
-    1278,  1286,  1290,  1295,  1300,  1305,  1310,  1315,  1320,  1325,
-    1330,  1341,  1348,  1358,  1364,  1365,  1384,  1409,  1420,  1425,
-    1432,  1439,  1444,  1449,  1454,  1459,  1474,  1477,  1481,  1489,
-    1492,  1500,  1503,  1511,  1514,  1523,  1528,  1537,  1541,  1551,
-    1556,  1560,  1571,  1577,  1583,  1588,  1593,  1604,  1609,  1621,
-    1626,  1638,  1643,  1648,  1653,  1658,  1663,  1668,  1678,  1682,
-    1690,  1695,  1710,  1714,  1723,  1727,  1739,  1744,  1760,  1764,
-    1776,  1780,  1802,  1806,  1810,  1814,  1821,  1825,  1835,  1838,
-    1847,  1856,  1865,  1869,  1873,  1878,  1883,  1888,  1893,  1898,
-    1903,  1908,  1913,  1918,  1929,  1938,  1949,  1953,  1957,  1962,
-    1967,  1972,  1978,  1983,  1988,  1993,  1998
+    1083,  1087,  1091,  1095,  1104,  1115,  1118,  1135,  1139,  1143,
+    1147,  1151,  1155,  1159,  1163,  1173,  1186,  1186,  1198,  1202,
+    1209,  1217,  1225,  1233,  1242,  1251,  1260,  1270,  1269,  1274,
+    1276,  1281,  1286,  1294,  1298,  1303,  1308,  1313,  1318,  1323,
+    1328,  1333,  1338,  1349,  1356,  1366,  1372,  1373,  1392,  1417,
+    1428,  1433,  1440,  1447,  1452,  1457,  1462,  1467,  1482,  1485,
+    1489,  1497,  1500,  1508,  1511,  1519,  1522,  1531,  1536,  1545,
+    1549,  1559,  1564,  1568,  1579,  1585,  1591,  1596,  1601,  1612,
+    1617,  1629,  1634,  1646,  1651,  1656,  1661,  1666,  1671,  1676,
+    1686,  1690,  1698,  1703,  1718,  1722,  1731,  1735,  1747,  1752,
+    1768,  1772,  1784,  1788,  1810,  1814,  1818,  1822,  1829,  1833,
+    1843,  1846,  1855,  1864,  1873,  1877,  1881,  1886,  1891,  1896,
+    1901,  1906,  1911,  1916,  1921,  1926,  1937,  1946,  1957,  1961,
+    1965,  1970,  1975,  1980,  1986,  1991,  1996,  2001,  2006
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if YYDEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "BEG", "END", "ACCELERATORS", "VIRTKEY",
-  "ASCII", "NOINVERT", "SHIFT", "CONTROL", "ALT", "BITMAP", "CURSOR",
-  "DIALOG", "DIALOGEX", "EXSTYLE", "CAPTION", "CLASS", "STYLE",
-  "AUTO3STATE", "AUTOCHECKBOX", "AUTORADIOBUTTON", "CHECKBOX", "COMBOBOX",
-  "CTEXT", "DEFPUSHBUTTON", "EDITTEXT", "GROUPBOX", "LISTBOX", "LTEXT",
-  "PUSHBOX", "PUSHBUTTON", "RADIOBUTTON", "RTEXT", "SCROLLBAR", "STATE3",
-  "USERBUTTON", "BEDIT", "HEDIT", "IEDIT", "FONT", "ICON", "ANICURSOR",
-  "ANIICON", "DLGINCLUDE", "DLGINIT", "FONTDIR", "HTML", "MANIFEST",
-  "PLUGPLAY", "VXD", "TOOLBAR", "BUTTON", "LANGUAGE", "CHARACTERISTICS",
-  "VERSIONK", "MENU", "MENUEX", "MENUITEM", "SEPARATOR", "POPUP",
-  "CHECKED", "GRAYED", "HELP", "INACTIVE", "MENUBARBREAK", "MENUBREAK",
-  "MESSAGETABLE", "RCDATA", "STRINGTABLE", "VERSIONINFO", "FILEVERSION",
-  "PRODUCTVERSION", "FILEFLAGSMASK", "FILEFLAGS", "FILEOS", "FILETYPE",
-  "FILESUBTYPE", "BLOCKSTRINGFILEINFO", "BLOCKVARFILEINFO", "VALUE",
-  "BLOCK", "MOVEABLE", "FIXED", "PURE", "IMPURE", "PRELOAD", "LOADONCALL",
-  "DISCARDABLE", "NOT", "QUOTEDUNISTRING", "QUOTEDSTRING", "STRING",
-  "NUMBER", "SIZEDUNISTRING", "SIZEDSTRING", "IGNORED_TOKEN", "'|'", "'^'",
-  "'&'", "'+'", "'-'", "'*'", "'/'", "'%'", "'~'", "NEG", "','", "'='",
-  "'('", "')'", "$accept", "input", "accelerator", "acc_entries",
-  "acc_entry", "acc_event", "acc_options", "acc_option", "bitmap",
-  "cursor", "dialog", "$@1", "$@2", "$@3", "exstyle", "styles", "controls",
-  "control", "$@4", "$@5", "$@6", "$@7", "$@8", "$@9", "$@10", "$@11",
-  "$@12", "$@13", "$@14", "$@15", "$@16", "$@17", "$@18", "$@19", "$@20",
-  "$@21", "$@22", "$@23", "$@24", "control_params", "cresid", "optresidc",
-  "resid", "opt_control_data", "control_styleexpr", "$@25",
-  "icon_styleexpr", "$@26", "control_params_styleexpr", "$@27", "font",
-  "icon", "language", "menu", "menuitems", "menuitem", "menuitem_flags",
-  "menuitem_flag", "menuex", "menuexitems", "menuexitem", "messagetable",
-  "optrcdata_data", "$@28", "optrcdata_data_int", "rcdata_data",
-  "stringtable", "$@29", "string_data", "rcdata_id", "user", "toolbar",
-  "toolbar_data", "versioninfo", "fixedverinfo", "verblocks",
-  "verstringtables", "vervals", "vertrans", "id", "resname", "resref",
-  "suboptions", "memflags_move_discard", "memflags_move", "memflag",
-  "file_name", "res_unicode_string_concat", "res_unicode_string",
+  "\"end of file\"", "error", "\"invalid token\"", "BEG", "END",
+  "ACCELERATORS", "VIRTKEY", "ASCII", "NOINVERT", "SHIFT", "CONTROL",
+  "ALT", "BITMAP", "CURSOR", "DIALOG", "DIALOGEX", "EXSTYLE", "CAPTION",
+  "CLASS", "STYLE", "AUTO3STATE", "AUTOCHECKBOX", "AUTORADIOBUTTON",
+  "CHECKBOX", "COMBOBOX", "CTEXT", "DEFPUSHBUTTON", "EDITTEXT", "GROUPBOX",
+  "LISTBOX", "LTEXT", "PUSHBOX", "PUSHBUTTON", "RADIOBUTTON", "RTEXT",
+  "SCROLLBAR", "STATE3", "USERBUTTON", "BEDIT", "HEDIT", "IEDIT", "FONT",
+  "ICON", "ANICURSOR", "ANIICON", "DLGINCLUDE", "DLGINIT", "FONTDIR",
+  "HTML", "MANIFEST", "PLUGPLAY", "VXD", "TOOLBAR", "BUTTON", "LANGUAGE",
+  "CHARACTERISTICS", "VERSIONK", "MENU", "MENUEX", "MENUITEM", "SEPARATOR",
+  "POPUP", "CHECKED", "GRAYED", "HELP", "INACTIVE", "OWNERDRAW",
+  "MENUBARBREAK", "MENUBREAK", "MESSAGETABLE", "RCDATA", "STRINGTABLE",
+  "VERSIONINFO", "FILEVERSION", "PRODUCTVERSION", "FILEFLAGSMASK",
+  "FILEFLAGS", "FILEOS", "FILETYPE", "FILESUBTYPE", "BLOCKSTRINGFILEINFO",
+  "BLOCKVARFILEINFO", "VALUE", "BLOCK", "MOVEABLE", "FIXED", "PURE",
+  "IMPURE", "PRELOAD", "LOADONCALL", "DISCARDABLE", "NOT",
+  "QUOTEDUNISTRING", "QUOTEDSTRING", "STRING", "NUMBER", "SIZEDUNISTRING",
+  "SIZEDSTRING", "IGNORED_TOKEN", "'|'", "'^'", "'&'", "'+'", "'-'", "'*'",
+  "'/'", "'%'", "'~'", "NEG", "','", "'='", "'('", "')'", "$accept",
+  "input", "accelerator", "acc_entries", "acc_entry", "acc_event",
+  "acc_options", "acc_option", "bitmap", "cursor", "dialog", "$@1", "$@2",
+  "$@3", "exstyle", "styles", "controls", "control", "$@4", "$@5", "$@6",
+  "$@7", "$@8", "$@9", "$@10", "$@11", "$@12", "$@13", "$@14", "$@15",
+  "$@16", "$@17", "$@18", "$@19", "$@20", "$@21", "$@22", "$@23", "$@24",
+  "control_params", "cresid", "optresidc", "resid", "opt_control_data",
+  "control_styleexpr", "$@25", "icon_styleexpr", "$@26",
+  "control_params_styleexpr", "$@27", "font", "icon", "language", "menu",
+  "menuitems", "menuitem", "menuitem_flags", "menuitem_flag", "menuex",
+  "menuexitems", "menuexitem", "messagetable", "optrcdata_data", "$@28",
+  "optrcdata_data_int", "rcdata_data", "stringtable", "$@29",
+  "string_data", "rcdata_id", "user", "toolbar", "toolbar_data",
+  "versioninfo", "fixedverinfo", "verblocks", "verstringtables", "vervals",
+  "vertrans", "id", "resname", "resref", "suboptions",
+  "memflags_move_discard", "memflags_move", "memflag", "file_name",
+  "res_unicode_string_concat", "res_unicode_string",
   "res_unicode_sizedstring", "res_unicode_sizedstring_concat",
   "sizedstring", "sizedunistring", "styleexpr", "parennumber",
   "optcnumexpr", "cnumexpr", "numexpr", "sizednumexpr", "cposnumexpr",
   "posnumexpr", "sizedposnumexpr", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
-/* YYTOKNUM[NUM] -- (External) token number corresponding to the
-   (internal) symbol number NUM (which must be that of a token).  */
-static const yytype_uint16 yytoknum[] =
-{
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
-     315,   316,   317,   318,   319,   320,   321,   322,   323,   324,
-     325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
-     335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
-     345,   346,   347,   348,   349,   350,   351,   352,   124,    94,
-      38,    43,    45,    42,    47,    37,   126,   353,    44,    61,
-      40,    41
-};
-# endif
+#define YYPACT_NINF (-328)
 
-#define YYPACT_NINF -446
+#define yypact_value_is_default(Yyn) \
+  ((Yyn) == YYPACT_NINF)
 
-#define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-446)))
+#define YYTABLE_NINF (-233)
 
-#define YYTABLE_NINF -231
-
-#define yytable_value_is_error(Yytable_value) \
+#define yytable_value_is_error(Yyn) \
   0
 
-  /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
-     STATE-NUM.  */
+/* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+   STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-    -446,    75,  -446,   317,  -446,  -446,  -446,  -446,  -446,  -446,
-     317,   317,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,   463,  -446,  -446,  -446,
-     589,  -446,   317,   317,   317,   -93,   626,   209,  -446,   437,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,   317,   317,   317,   317,   317,   317,   317,
-     317,  -446,  -446,   526,   317,  -446,   317,   317,   317,   317,
-     317,   317,   317,   317,  -446,   317,   317,   317,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,   267,   675,   675,
-     275,   275,   675,   675,   491,   404,   441,   675,   168,   256,
-     719,   379,   397,   213,   213,  -446,  -446,  -446,  -446,  -446,
-     719,   379,   397,   213,   213,  -446,  -446,  -446,  -446,   -93,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,   -65,
-     144,   144,  -446,  -446,   -93,  -446,  -446,  -446,  -446,   317,
-     317,   317,   317,   317,   317,   317,  -446,  -446,    18,  -446,
-      21,   317,   -93,   -93,    31,   140,   155,   126,   -93,   -93,
-    -446,  -446,  -446,  -446,  -446,    47,   177,  -446,  -446,   212,
-    -446,  -446,  -446,   -34,  -446,  -446,   -93,   -93,  -446,  -446,
-     -36,    -5,  -446,  -446,   -25,    -5,  -446,  -446,   119,   131,
-     -93,  -446,   -93,  -446,  -446,  -446,  -446,    54,    68,    84,
-     626,     2,  -446,     2,    68,    84,   144,    87,   -93,   -93,
-      25,  -446,    95,  -446,    -5,  -446,    95,    62,  -446,   102,
-     -93,   -93,   177,  -446,  -446,     2,  -446,  -446,   552,  -446,
-     -93,  -446,   306,  -446,  -446,  -446,    76,   -93,  -446,     8,
-       6,    -5,  -446,  -446,    68,    84,   626,  -446,  -446,  -446,
-    -446,  -446,  -446,   167,  -446,  -446,  -446,  -446,  -446,   271,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,   763,  -446,   -93,
-     161,  -446,    11,  -446,   197,    -5,   552,  -446,   374,   548,
-    -446,   178,  -446,  -446,  -446,   190,  -446,   -93,  -446,     3,
-    -446,  -446,   317,    -5,   306,   -47,   317,   317,   317,   317,
-     306,  -446,   565,  -446,  -446,   194,   201,    -1,  -446,   -93,
-     639,  -446,    -5,  -446,    -5,   143,   -33,  -446,   317,   110,
-    -446,   105,   -93,  -446,  -446,  -446,   676,  -446,  -446,  -446,
-    -446,    -5,  -446,  -446,   311,   311,   311,   311,   311,  -446,
-     311,   311,  -446,   311,  -446,   311,   311,   311,   311,   311,
-    -446,   311,   306,   311,   311,   311,   306,  -446,  -446,   104,
-     -42,    -5,  -446,  -446,   713,   207,    99,   317,   113,    -5,
-    -446,  -446,  -446,  -446,  -446,   317,  -446,  -446,   317,  -446,
-     317,  -446,  -446,  -446,  -446,  -446,   317,  -446,   115,   317,
-     120,  -446,  -446,  -446,   317,  -446,   -33,  -446,    95,  -446,
-    -446,    -5,   152,  -446,   317,   317,   317,   317,  -446,   -93,
-     317,   317,  -446,   317,  -446,   317,   317,   317,   317,   317,
-    -446,   317,  -446,   153,  -446,   317,   317,   317,   -93,  -446,
-     -93,    -5,   311,   159,  -446,  -446,  -446,  -446,   -93,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,   317,  -446,
-    -446,  -446,   -93,   -93,  -446,  -446,   -93,   -93,   173,    15,
-    -446,   -47,   -93,   -93,   317,  -446,  -446,   -93,   110,   -93,
-      27,   180,   244,    29,   -93,  -446,  -446,   -93,   317,  -446,
-    -446,  -446,   -93,   -93,   -47,   273,   -93,   192,   -47,   273,
-     -93,   273,   -93,   110,  -446,   273,   317,   110,  -446,   273,
-    -446,   273,  -446,   193,  -446,  -446,  -446,   -47,   -75,  -446
+    -328,    74,  -328,   302,  -328,  -328,  -328,  -328,  -328,  -328,
+     302,   302,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,   465,  -328,  -328,  -328,
+     513,  -328,   302,   302,   302,   -80,   583,   209,  -328,   654,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,   302,   302,   302,   302,   302,   302,   302,
+     302,  -328,  -328,   703,   302,  -328,   302,   302,   302,   302,
+     302,   302,   302,   302,  -328,   302,   302,   302,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,   258,   732,   732,
+     405,   405,   732,   732,   443,   265,   338,   732,   287,   190,
+     619,   234,   327,   181,   181,  -328,  -328,  -328,  -328,  -328,
+     619,   234,   327,   181,   181,  -328,  -328,  -328,  -328,   -80,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,   -76,
+     104,   104,  -328,  -328,   -80,  -328,  -328,  -328,  -328,   302,
+     302,   302,   302,   302,   302,   302,  -328,  -328,    18,  -328,
+      23,   302,   -80,   -80,    94,   155,   169,    -1,   -80,   -80,
+    -328,  -328,  -328,  -328,  -328,   133,   498,  -328,  -328,   -32,
+    -328,  -328,  -328,    56,  -328,  -328,   -80,   -80,  -328,  -328,
+     -50,   -17,  -328,  -328,   -25,   -17,  -328,  -328,   132,   171,
+     -80,  -328,   -80,  -328,  -328,  -328,  -328,    75,    90,    99,
+     583,    -9,  -328,    -9,    90,    99,   104,    81,   -80,   -80,
+      13,  -328,    70,  -328,   -17,  -328,    70,    30,  -328,   118,
+     -80,   -80,   498,  -328,  -328,    -9,  -328,  -328,   831,  -328,
+     -80,  -328,   360,  -328,  -328,  -328,   141,   -80,  -328,     1,
+      28,   -17,  -328,  -328,    90,    99,   583,  -328,  -328,  -328,
+    -328,  -328,  -328,    45,  -328,  -328,  -328,  -328,  -328,   158,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,   500,
+    -328,   -80,   174,  -328,     6,  -328,   198,   -17,   831,  -328,
+     485,   566,  -328,   178,  -328,  -328,  -328,   179,  -328,   -80,
+    -328,     3,  -328,  -328,   302,   -17,   360,   -67,   302,   302,
+     302,   302,   360,  -328,   570,  -328,  -328,   182,   210,    16,
+    -328,   -80,   634,  -328,   -17,  -328,   -17,    49,   -33,  -328,
+     302,   143,  -328,   139,   -80,  -328,  -328,  -328,   671,  -328,
+    -328,  -328,  -328,   -17,  -328,  -328,   389,   389,   389,   389,
+     389,  -328,   389,   389,  -328,   389,  -328,   389,   389,   389,
+     389,   389,  -328,   389,   360,   389,   389,   389,   360,  -328,
+    -328,   137,    80,   -17,  -328,  -328,   708,   194,   164,   302,
+     150,   -17,  -328,  -328,  -328,  -328,  -328,   302,  -328,  -328,
+     302,  -328,   302,  -328,  -328,  -328,  -328,  -328,   302,  -328,
+     151,   302,   160,  -328,  -328,  -328,   302,  -328,   -33,  -328,
+      70,  -328,  -328,   -17,   161,  -328,   302,   302,   302,   302,
+    -328,   -80,   302,   302,  -328,   302,  -328,   302,   302,   302,
+     302,   302,  -328,   302,  -328,   163,  -328,   302,   302,   302,
+     -80,  -328,   -80,   -17,   389,   172,  -328,  -328,  -328,  -328,
+     -80,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+     302,  -328,  -328,  -328,   -80,   -80,  -328,  -328,   -80,   -80,
+     180,    10,  -328,   -67,   -80,   -80,   302,  -328,  -328,   -80,
+     143,   -80,    15,   191,   298,    22,   -80,  -328,  -328,   -80,
+     302,  -328,  -328,  -328,   -80,   -80,   -67,   300,   -80,   200,
+     -67,   300,   -80,   300,   -80,   143,  -328,   300,   302,   143,
+    -328,   300,  -328,   300,  -328,   201,  -328,  -328,  -328,   -67,
+     -52,  -328
 };
 
-  /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
-     Performed when YYTABLE does not specify something else to do.  Zero
-     means the default is an error.  */
-static const yytype_uint16 yydefact[] =
+/* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+   Performed when YYTABLE does not specify something else to do.  Zero
+   means the default is an error.  */
+static const yytype_int16 yydefact[] =
 {
-       2,     0,     1,     0,   212,   232,   233,   208,   266,    17,
+       2,     0,     1,     0,   214,   234,   235,   210,   268,    17,
        0,     0,     3,     4,     5,     6,     7,     8,     9,    10,
-      11,    12,    13,    15,    14,    16,     0,   206,   207,   205,
-     265,   252,     0,     0,     0,     0,   251,     0,   268,     0,
-     212,   219,   217,   219,   219,   217,   217,   179,   180,   177,
-     178,   172,   174,   175,   176,   212,   212,   212,   219,   173,
-     188,   212,   171,     0,     0,     0,     0,     0,     0,     0,
-       0,   255,   254,     0,     0,   126,     0,     0,     0,     0,
-       0,     0,     0,     0,   165,     0,     0,     0,   221,   222,
-     223,   224,   225,   226,   227,   213,   267,     0,     0,     0,
+      11,    12,    13,    15,    14,    16,     0,   208,   209,   207,
+     267,   254,     0,     0,     0,     0,   253,     0,   270,     0,
+     214,   221,   219,   221,   221,   219,   219,   181,   182,   179,
+     180,   174,   176,   177,   178,   214,   214,   214,   221,   175,
+     190,   214,   173,     0,     0,     0,     0,     0,     0,     0,
+       0,   257,   256,     0,     0,   126,     0,     0,     0,     0,
+       0,     0,     0,     0,   167,     0,     0,     0,   223,   224,
+     225,   226,   227,   228,   229,   215,   269,     0,     0,     0,
       42,    42,     0,     0,     0,     0,     0,     0,     0,     0,
-     276,   275,   274,   272,   273,   269,   270,   271,   253,   250,
-     263,   262,   261,   259,   260,   256,   257,   258,   167,     0,
-     214,   216,    19,   228,   229,   220,    34,   218,    35,     0,
-       0,     0,   124,   125,     0,   128,   143,   153,   196,     0,
-       0,     0,     0,     0,     0,     0,   154,   182,     0,   215,
-       0,     0,     0,     0,     0,     0,     0,     0,   248,   248,
-     191,   192,   193,   194,   195,     0,   156,   170,   166,     0,
-      18,    23,    20,     0,    24,    43,     0,     0,   184,   127,
-       0,     0,   129,   142,     0,     0,   144,   187,     0,     0,
-     248,   249,   248,   181,   240,   238,   155,   157,   158,   159,
-     160,     0,   236,   168,   235,   234,     0,    21,     0,     0,
-       0,   131,     0,   230,   133,   148,   145,     0,   199,     0,
-     248,   248,   164,   239,   241,   169,   237,   264,     0,    36,
-      38,   183,     0,   186,   231,   133,     0,   146,   143,     0,
-       0,     0,   189,   190,   161,   162,   163,    28,    29,    30,
-      31,    32,    33,    22,    25,    44,    44,    40,   185,   130,
-     128,   136,   137,   138,   139,   140,   141,     0,   135,   248,
-       0,   143,     0,   197,     0,   203,     0,    27,     0,     0,
-      44,     0,   134,   147,   149,     0,   143,   248,   201,     0,
-      26,    58,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    58,     0,   132,   150,     0,     0,     0,   198,     0,
-       0,    48,    45,    46,    49,   207,     0,   246,     0,    47,
-     242,     0,     0,    55,    57,    54,     0,    58,   151,   143,
-     200,     0,   204,    37,   112,   112,   112,   112,   112,    70,
-     112,   112,    78,   112,    90,   112,   112,   112,   112,   112,
-     102,   112,     0,   112,   112,   112,     0,    59,   243,     0,
-       0,     0,    56,    39,     0,     0,     0,     0,     0,   115,
-     114,    60,    62,    64,    68,     0,    74,    76,     0,    80,
-       0,    92,    94,    96,    98,   100,     0,   104,   210,     0,
-       0,    66,    82,    88,     0,   247,     0,   244,    50,    41,
-     152,     0,     0,   113,     0,     0,     0,     0,    71,     0,
-       0,     0,    79,     0,    91,     0,     0,     0,     0,     0,
-     103,     0,   211,     0,   209,     0,     0,     0,     0,   245,
-      51,   202,     0,     0,    61,    63,    65,    69,     0,    75,
-      77,    81,    93,    95,    97,    99,   101,   105,     0,    67,
-      83,    89,     0,    52,   111,   118,     0,     0,     0,   116,
-      53,     0,     0,     0,     0,   154,    84,     0,   119,     0,
-     116,     0,     0,   116,     0,   122,   108,   248,     0,   117,
-     120,    85,   248,   248,     0,   116,   249,     0,     0,   116,
-     249,   116,   249,   123,   109,   116,     0,   121,    86,   116,
-      72,   116,   110,     0,    87,    73,   106,     0,   248,   107
+     278,   277,   276,   274,   275,   271,   272,   273,   255,   252,
+     265,   264,   263,   261,   262,   258,   259,   260,   169,     0,
+     216,   218,    19,   230,   231,   222,    34,   220,    35,     0,
+       0,     0,   124,   125,     0,   128,   145,   155,   198,     0,
+       0,     0,     0,     0,     0,     0,   156,   184,     0,   217,
+       0,     0,     0,     0,     0,     0,     0,     0,   250,   250,
+     193,   194,   195,   196,   197,     0,   158,   172,   168,     0,
+      18,    23,    20,     0,    24,    43,     0,     0,   186,   127,
+       0,     0,   129,   144,     0,     0,   146,   189,     0,     0,
+     250,   251,   250,   183,   242,   240,   157,   159,   160,   161,
+     162,     0,   238,   170,   237,   236,     0,    21,     0,     0,
+       0,   131,     0,   232,   133,   150,   147,     0,   201,     0,
+     250,   250,   166,   241,   243,   171,   239,   266,     0,    36,
+      38,   185,     0,   188,   233,   133,     0,   148,   145,     0,
+       0,     0,   191,   192,   163,   164,   165,    28,    29,    30,
+      31,    32,    33,    22,    25,    44,    44,    40,   187,   130,
+     128,   142,   136,   137,   138,   139,   143,   140,   141,     0,
+     135,   250,     0,   145,     0,   199,     0,   205,     0,    27,
+       0,     0,    44,     0,   134,   149,   151,     0,   145,   250,
+     203,     0,    26,    58,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    58,     0,   132,   152,     0,     0,     0,
+     200,     0,     0,    48,    45,    46,    49,   209,     0,   248,
+       0,    47,   244,     0,     0,    55,    57,    54,     0,    58,
+     153,   145,   202,     0,   206,    37,   112,   112,   112,   112,
+     112,    70,   112,   112,    78,   112,    90,   112,   112,   112,
+     112,   112,   102,   112,     0,   112,   112,   112,     0,    59,
+     245,     0,     0,     0,    56,    39,     0,     0,     0,     0,
+       0,   115,   114,    60,    62,    64,    68,     0,    74,    76,
+       0,    80,     0,    92,    94,    96,    98,   100,     0,   104,
+     212,     0,     0,    66,    82,    88,     0,   249,     0,   246,
+      50,    41,   154,     0,     0,   113,     0,     0,     0,     0,
+      71,     0,     0,     0,    79,     0,    91,     0,     0,     0,
+       0,     0,   103,     0,   213,     0,   211,     0,     0,     0,
+       0,   247,    51,   204,     0,     0,    61,    63,    65,    69,
+       0,    75,    77,    81,    93,    95,    97,    99,   101,   105,
+       0,    67,    83,    89,     0,    52,   111,   118,     0,     0,
+       0,   116,    53,     0,     0,     0,     0,   156,    84,     0,
+     119,     0,   116,     0,     0,   116,     0,   122,   108,   250,
+       0,   117,   120,    85,   250,   250,     0,   116,   251,     0,
+       0,   116,   251,   116,   251,   123,   109,   116,     0,   121,
+      86,   116,    72,   116,   110,     0,    87,    73,   106,     0,
+     250,   107
 };
 
-  /* YYPGOTO[NTERM-NUM].  */
+/* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -236,  -446,  -446,
-    -446,  -446,  -446,  -446,   184,  -262,  -273,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,   219,
-    -446,   442,  -123,   274,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,    77,  -446,   101,    88,  -446,  -239,
-    -446,  -446,  -109,  -446,  -446,  -446,  -446,  -446,  -446,  -446,
-    -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,  -446,   -24,
-    -245,     4,   169,   211,   270,   710,   175,  -178,     5,  -173,
-     157,  -156,  -122,  -445,  -325,  -161,   -30,    -3,    26,  -446,
-      20,  -446
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -225,  -328,  -328,
+    -328,  -328,  -328,  -328,   214,  -252,  -290,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,   212,
+    -328,   434,  -128,   267,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,    48,  -328,    77,    44,  -328,  -198,
+    -328,  -328,  -153,  -328,  -328,  -328,  -328,  -328,  -328,  -328,
+    -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,  -328,   -24,
+    -228,   -43,   345,   131,   208,   729,   268,  -179,     5,  -187,
+     119,  -146,  -115,  -101,  -327,  -161,   -30,    -3,    26,  -328,
+      20,  -328
 };
 
-  /* YYDEFGOTO[NTERM-NUM].  */
+/* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,     1,    12,   160,   182,   183,   263,   264,    13,    14,
-      15,   265,   266,   290,   140,   288,   320,   367,   414,   415,
-     416,   435,   417,   385,   420,   421,   388,   423,   436,   437,
-     390,   425,   426,   427,   428,   429,   396,   431,   517,   418,
-     443,   377,   378,   476,   466,   471,   492,   498,   487,   494,
-      16,    17,    18,    19,   165,   192,   246,   278,    20,   166,
+       0,     1,    12,   160,   182,   183,   263,   264,    13,    14,
+      15,   265,   266,   292,   140,   290,   322,   369,   416,   417,
+     418,   437,   419,   387,   422,   423,   390,   425,   438,   439,
+     392,   427,   428,   429,   430,   431,   398,   433,   519,   420,
+     445,   379,   380,   478,   468,   473,   494,   500,   489,   496,
+      16,    17,    18,    19,   165,   192,   246,   280,    20,   166,
      196,    21,   175,   176,   206,   207,    22,   128,   158,    61,
-      23,    24,   220,    25,   108,   167,   250,   317,   299,    26,
-      27,   399,    37,    99,    98,    95,   136,   379,   223,   212,
-     213,   214,   215,   329,   330,   200,   201,   419,    36,   217,
-     380,    30
+      23,    24,   220,    25,   108,   167,   250,   319,   301,    26,
+      27,   401,    37,    99,    98,    95,   136,   381,   223,   212,
+     213,   214,   215,   331,   332,   200,   201,   421,    36,   217,
+     382,    30
 };
 
-  /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
-     positive, shift that token.  If negative, reduce the rule whose
-     number is the opposite.  If YYTABLE_NINF, syntax error.  */
+/* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+   positive, shift that token.  If negative, reduce the rule whose
+   number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      35,   368,    62,   340,   289,    75,    28,   318,   202,   280,
-     283,   281,   222,   224,   296,    74,   226,   227,   475,   177,
-     208,    29,   178,   370,   221,   180,   478,   287,   312,   241,
-     475,    28,   475,    74,   188,   225,    38,    39,   336,   230,
-     236,   231,   295,   326,   161,   407,    29,   327,   406,   503,
-     300,   203,   327,   507,   209,     5,     6,   315,    71,    72,
-      73,   327,   236,   328,   374,   248,     5,     6,   328,   252,
-     253,   119,   518,   285,   216,     2,   254,   328,   242,   270,
-     341,   439,   129,   130,   131,   243,     5,     6,   284,   110,
-     111,   112,   113,   114,   115,   116,   117,   204,   205,   159,
-     375,   144,   120,   121,   122,   123,   124,   125,   126,   127,
-     255,    74,    31,   181,   164,     8,    74,   398,   293,    74,
-      32,   398,   228,    74,    33,   322,   324,    10,    34,     3,
-     197,    11,   186,   187,   229,   485,   316,   490,   271,   272,
-     273,   274,   275,   276,   189,     4,   168,   169,   170,   171,
-     172,   173,   174,     5,     6,   179,   218,   219,   185,   193,
-     162,   163,   232,   376,   233,   294,     5,     6,     7,     8,
-      74,   148,     9,   257,   258,   259,   260,   261,   262,   234,
-     184,    10,   313,   251,   277,    11,     5,     6,   239,   240,
-       5,     6,   245,   408,   314,   238,   247,   249,   338,   190,
-     298,   191,   210,    74,   339,   198,   199,   411,   370,    97,
-     267,   410,    84,   371,   194,   405,   195,   279,   268,   282,
-     194,   413,   195,   432,   104,   105,   106,   244,   434,   244,
-     109,   244,   244,   441,  -230,  -230,   237,   190,     8,   191,
-     149,   150,   151,   152,   153,   154,   155,    28,   489,   194,
-      10,   195,   297,   194,    11,   195,   102,   103,   256,   156,
-     442,   458,    29,    85,    86,    87,   194,   465,   195,   319,
-     132,    31,   204,   205,   138,   286,   475,   142,   143,    32,
-     323,   474,   147,    33,   157,   141,   335,    34,   488,   342,
-     244,   139,    88,    89,    90,    91,    92,    93,    94,   321,
-     506,   516,   372,   331,   332,   333,   334,   204,   205,   325,
-      85,    86,    87,   100,   101,    28,    81,    82,    83,   464,
-     211,    85,    86,    87,    29,   369,   495,   244,   107,   244,
-      29,   499,   501,   271,   272,   273,   274,   275,   276,    88,
-      89,    90,    91,    92,    93,    94,   269,   291,   133,   134,
-      88,    89,    90,    91,    92,    93,    94,   519,    88,    89,
-      90,    91,    92,    93,    94,   292,   482,    28,   235,     0,
-     404,    28,     0,     0,   412,     0,     0,   301,   440,   277,
-       0,   244,   400,     0,   244,     0,   400,     0,     0,   448,
-     302,   303,   304,   305,     0,     0,   433,     5,     6,     7,
-       8,   438,     5,     6,     0,     8,     0,   145,   462,     0,
-     463,    31,    10,   244,     0,   306,    11,    10,   467,    32,
-       0,    11,     0,    33,     0,     0,     0,    34,   307,   308,
-     309,   310,   469,   470,     0,     0,   472,   473,     0,   477,
-       0,     0,   479,   480,   146,     0,   244,   483,     0,   484,
-       0,     0,     0,     0,   493,   468,     0,   496,    85,    86,
-      87,     0,   500,   502,     0,     0,   505,     0,    40,     0,
-     509,   481,   511,     0,     0,    41,    42,    43,    44,    78,
-      79,    80,    81,    82,    83,   497,     0,    88,    89,    90,
-      91,    92,    93,    94,     0,    85,    86,    87,    79,    80,
-      81,    82,    83,   513,    45,    46,    47,    48,    49,    50,
-       0,    51,    52,    53,    54,    55,     0,     0,     0,     0,
-      56,    57,     0,     0,    88,    89,    90,    91,    92,    93,
-      94,    58,    59,     0,    60,    76,    77,    78,    79,    80,
-      81,    82,    83,     0,     0,    85,    86,    87,    96,     0,
-       0,   311,     0,     0,     5,     6,     7,     8,   257,   258,
-     259,   260,   261,   262,   302,   303,   304,   305,   337,    10,
-       0,     0,     0,    11,    88,    89,    90,    91,    92,    93,
-      94,   302,   303,   304,   305,    31,     0,     0,     0,   306,
-       0,     0,     0,    32,     0,     0,     0,    33,     0,     0,
-       0,    34,   307,   308,   309,   310,   306,   422,     0,   424,
-       0,     0,     0,     0,     0,   430,     0,     0,     0,   307,
-     308,   309,   310,     0,    76,    77,    78,    79,    80,    81,
-      82,    83,     0,   444,   445,   446,   447,   118,     0,   449,
-     450,     0,   451,   343,   452,   453,   454,   455,   456,   344,
-     457,     0,     0,     0,   459,   460,   461,     0,     0,   345,
-     346,   347,   348,   349,   350,   351,   352,   353,   354,   355,
+      35,   370,    62,   197,   283,    75,    28,   320,   202,   298,
+     221,   222,   224,   477,   291,   226,   227,   241,   477,   177,
+     342,    29,   178,   338,   328,   477,   236,   180,   329,    74,
+     208,    28,   285,   248,   161,   225,    38,    39,   289,   230,
+     314,   231,     5,     6,   330,   409,    29,   372,   236,   376,
+     282,   257,   258,   259,   260,   261,   262,    74,    71,    72,
+      73,   209,   329,   302,   204,   205,   242,     5,     6,   252,
+     253,   119,   287,   243,     2,     5,     6,   211,   330,   198,
+     199,   441,   129,   130,   131,   297,   254,   204,   205,   110,
+     111,   112,   113,   114,   115,   116,   117,   188,   343,   159,
+     317,   144,   120,   121,   122,   123,   124,   125,   126,   127,
+      74,   286,    74,    31,   164,    74,   181,   255,     8,    74,
+     295,    32,     5,     6,   487,    33,   324,   326,     3,    34,
+      10,   492,   186,   187,    11,   228,   400,   203,   318,    74,
+     400,  -232,  -232,   377,   270,     4,   168,   169,   170,   171,
+     172,   173,   174,   271,   288,   179,   218,   219,   185,   189,
+     162,   163,     5,     6,   378,   216,     5,     6,     7,     8,
+     271,   408,     9,   193,   229,   329,   102,   103,   296,    74,
+     184,    10,   315,   316,   232,    11,   340,   233,   239,   240,
+     238,   330,   245,   156,   410,   234,   247,   249,   412,     8,
+     251,   300,   210,   272,   273,   274,   275,   276,   277,   278,
+     267,    10,    84,   341,   190,    11,   191,   281,   268,   284,
+     272,   273,   274,   275,   276,   277,   278,   244,   194,   244,
+     195,   244,   244,   194,   443,   195,   237,   190,   194,   191,
+     195,   194,   372,   195,    85,    86,    87,    28,   373,   407,
+     279,   100,   101,   194,   299,   195,     5,     6,   256,   415,
+     434,   132,    29,    85,    86,    87,   107,   279,   145,   436,
+     444,   321,   460,   413,    88,    89,    90,    91,    92,    93,
+      94,   467,   325,   133,   134,    81,    82,    83,   337,   476,
+     148,   344,   244,    88,    89,    90,    91,    92,    93,    94,
+     490,   323,   491,   477,   374,   333,   334,   335,   336,   508,
+     518,   327,    85,    86,    87,   141,   466,    28,   293,    85,
+      86,    87,   269,   294,   484,   406,    29,   371,   497,   244,
+     235,   244,    29,   501,   503,    78,    79,    80,    81,    82,
+      83,   146,    88,    89,    90,    91,    92,    93,    94,    88,
+      89,    90,    91,    92,    93,    94,     0,     0,     0,   521,
+     149,   150,   151,   152,   153,   154,   155,   138,     0,    28,
+     142,   143,   480,    28,     0,   147,   414,   157,     0,     0,
+     442,     0,     0,   244,   402,    97,   244,     0,   402,     0,
+       0,   450,    85,    86,    87,   505,     0,    31,   435,   509,
+     104,   105,   106,   440,     0,    32,   109,     0,     0,    33,
+     464,     0,   465,    34,     0,   244,     0,     0,   520,     0,
+     469,   139,    88,    89,    90,    91,    92,    93,    94,    79,
+      80,    81,    82,    83,   471,   472,     0,     0,   474,   475,
+       0,   479,     0,     0,   481,   482,     0,     0,   244,   485,
+       0,   486,     5,     6,     7,     8,   495,   470,     0,   498,
+       0,     0,     0,     0,   502,   504,     0,    10,   507,     0,
+      40,    11,   511,   483,   513,     0,     0,    41,    42,    43,
+      44,     5,     6,     0,     8,     0,     0,   499,   303,    88,
+      89,    90,    91,    92,    93,    94,    10,    85,    86,    87,
+      11,   304,   305,   306,   307,   515,    45,    46,    47,    48,
+      49,    50,   271,    51,    52,    53,    54,    55,     0,     0,
+       0,     0,    56,    57,     0,     0,   308,    88,    89,    90,
+      91,    92,    93,    94,    58,    59,     0,    60,    31,   309,
+     310,   311,   312,     0,     0,     0,    32,     0,     0,     0,
+      33,     0,     0,     0,    34,     0,     0,     5,     6,     7,
+       8,     0,   272,   273,   274,   275,   276,   277,   278,   313,
+       0,     0,    10,   339,     0,     0,    11,     0,     0,     0,
+       0,     0,   304,   305,   306,   307,   304,   305,   306,   307,
+       0,     0,     0,    31,   204,   205,     0,     0,     0,     0,
+       0,    32,   424,     0,   426,    33,     0,   308,     0,    34,
+     432,   308,    63,    64,    65,    66,    67,    68,    69,    70,
+     309,   310,   311,   312,   309,   310,   311,   312,   446,   447,
+     448,   449,     0,     0,   451,   452,     0,   453,   345,   454,
+     455,   456,   457,   458,   346,   459,     0,     0,     0,   461,
+     462,   463,     0,     0,   347,   348,   349,   350,   351,   352,
+     353,   354,   355,   356,   357,   358,   359,   360,   361,   362,
+     363,   364,   365,   366,   367,   375,   368,     0,     0,     0,
+       0,   346,    76,    77,    78,    79,    80,    81,    82,    83,
+       0,   347,   348,   349,   350,   351,   352,   353,   354,   355,
      356,   357,   358,   359,   360,   361,   362,   363,   364,   365,
-     373,   366,     0,     0,     0,     0,   344,    63,    64,    65,
-      66,    67,    68,    69,    70,     0,   345,   346,   347,   348,
+     366,   367,   411,   368,     0,     0,     0,     0,   346,    77,
+      78,    79,    80,    81,    82,    83,     0,     0,   347,   348,
      349,   350,   351,   352,   353,   354,   355,   356,   357,   358,
-     359,   360,   361,   362,   363,   364,   365,   409,   366,     0,
-       0,     0,     0,   344,    76,    77,    78,    79,    80,    81,
-      82,    83,     0,   345,   346,   347,   348,   349,   350,   351,
-     352,   353,   354,   355,   356,   357,   358,   359,   360,   361,
-     362,   363,   364,   365,   486,   366,     0,   491,    88,    89,
-      90,    91,    92,    93,    94,     0,     0,   133,   134,   504,
-       0,     0,     0,   508,     0,   510,     0,     0,     0,   512,
-       0,     0,     0,   514,     0,   515,     0,   381,   382,   383,
-     384,     0,   386,   387,     0,   389,     0,   391,   392,   393,
-     394,   395,     0,   397,     0,   401,   402,   403,   135,   137,
-     135,   135,   137,   137,     0,     0,     0,   135,    77,    78,
-      79,    80,    81,    82,    83,   271,   272,   273,   274,   275,
-     276
+     359,   360,   361,   362,   363,   364,   365,   366,   367,   488,
+     368,     0,   493,    76,    77,    78,    79,    80,    81,    82,
+      83,     0,     0,     0,   506,     0,    96,     0,   510,     0,
+     512,     0,     0,     0,   514,     0,     0,     0,   516,     0,
+     517,   383,   384,   385,   386,     0,   388,   389,     0,   391,
+       0,   393,   394,   395,   396,   397,     0,   399,     0,   403,
+     404,   405,    76,    77,    78,    79,    80,    81,    82,    83,
+       0,     0,     0,     0,     0,   118,    88,    89,    90,    91,
+      92,    93,    94,     0,     0,   133,   134,   135,   137,   135,
+     135,   137,   137,     0,     0,     0,   135,   257,   258,   259,
+     260,   261,   262
 };
 
 static const yytype_int16 yycheck[] =
 {
-       3,   326,    26,     4,   266,    35,     1,     4,   169,   248,
-       4,     3,   190,   191,     3,   108,   194,   195,     3,     1,
-     176,     1,     4,    98,    60,     4,   471,   263,   290,     4,
-       3,    26,     3,   108,     3,    60,    10,    11,   311,   200,
-     213,   202,   281,    90,   109,   370,    26,    94,    90,   494,
-     286,     4,    94,   498,   176,    91,    92,   296,    32,    33,
-      34,    94,   235,   110,   337,     3,    91,    92,   110,   230,
-     231,    74,   517,   251,   108,     0,   232,   110,    53,     3,
-      81,   406,    85,    86,    87,    60,    91,    92,    82,    63,
-      64,    65,    66,    67,    68,    69,    70,    95,    96,   129,
-     339,   104,    76,    77,    78,    79,    80,    81,    82,    83,
-     232,   108,    94,    92,   144,    94,   108,   362,   279,   108,
-     102,   366,     3,   108,   106,   303,   304,   106,   110,    54,
-       4,   110,   162,   163,     3,   108,   297,   108,    62,    63,
-      64,    65,    66,    67,     4,    70,   149,   150,   151,   152,
-     153,   154,   155,    91,    92,   158,   186,   187,   161,     4,
-     140,   141,   108,   341,    96,     4,    91,    92,    93,    94,
-     108,     3,    97,     6,     7,     8,     9,    10,    11,    95,
-     160,   106,     4,    81,   108,   110,    91,    92,   218,   219,
-      91,    92,   222,   371,     4,   108,   226,   227,     4,    59,
-       3,    61,   176,   108,     3,    79,    80,   108,    98,    40,
-     240,     4,     3,   108,    59,   111,    61,   247,   242,   249,
-      59,   108,    61,   108,    55,    56,    57,   222,   108,   224,
-      61,   226,   227,   411,    91,    92,   216,    59,    94,    61,
-      72,    73,    74,    75,    76,    77,    78,   242,     4,    59,
-     106,    61,   282,    59,   110,    61,    45,    46,   232,     3,
-     108,   108,   242,    54,    55,    56,    59,   108,    61,   299,
-       3,    94,    95,    96,    99,   108,     3,   102,   103,   102,
-     304,   108,   107,   106,   109,   101,   310,   110,   108,   319,
-     285,    16,    83,    84,    85,    86,    87,    88,    89,   302,
-     108,   108,   332,   306,   307,   308,   309,    95,    96,   304,
-      54,    55,    56,    43,    44,   310,   103,   104,   105,   442,
-     108,    54,    55,    56,   304,   328,   487,   322,    58,   324,
-     310,   492,   493,    62,    63,    64,    65,    66,    67,    83,
-      84,    85,    86,    87,    88,    89,   245,   270,    92,    93,
-      83,    84,    85,    86,    87,    88,    89,   518,    83,    84,
-      85,    86,    87,    88,    89,   277,   475,   362,   211,    -1,
-     366,   366,    -1,    -1,   377,    -1,    -1,     3,   408,   108,
-      -1,   376,   362,    -1,   379,    -1,   366,    -1,    -1,   419,
-      16,    17,    18,    19,    -1,    -1,   399,    91,    92,    93,
-      94,   404,    91,    92,    -1,    94,    -1,     3,   438,    -1,
-     440,    94,   106,   408,    -1,    41,   110,   106,   448,   102,
-      -1,   110,    -1,   106,    -1,    -1,    -1,   110,    54,    55,
-      56,    57,   462,   463,    -1,    -1,   466,   467,    -1,   469,
-      -1,    -1,   472,   473,     3,    -1,   441,   477,    -1,   479,
-      -1,    -1,    -1,    -1,   484,   458,    -1,   487,    54,    55,
-      56,    -1,   492,   493,    -1,    -1,   496,    -1,     5,    -1,
-     500,   474,   502,    -1,    -1,    12,    13,    14,    15,   100,
-     101,   102,   103,   104,   105,   488,    -1,    83,    84,    85,
-      86,    87,    88,    89,    -1,    54,    55,    56,   101,   102,
-     103,   104,   105,   506,    41,    42,    43,    44,    45,    46,
-      -1,    48,    49,    50,    51,    52,    -1,    -1,    -1,    -1,
-      57,    58,    -1,    -1,    83,    84,    85,    86,    87,    88,
-      89,    68,    69,    -1,    71,    98,    99,   100,   101,   102,
-     103,   104,   105,    -1,    -1,    54,    55,    56,   111,    -1,
-      -1,     3,    -1,    -1,    91,    92,    93,    94,     6,     7,
-       8,     9,    10,    11,    16,    17,    18,    19,     3,   106,
-      -1,    -1,    -1,   110,    83,    84,    85,    86,    87,    88,
-      89,    16,    17,    18,    19,    94,    -1,    -1,    -1,    41,
-      -1,    -1,    -1,   102,    -1,    -1,    -1,   106,    -1,    -1,
-      -1,   110,    54,    55,    56,    57,    41,   388,    -1,   390,
-      -1,    -1,    -1,    -1,    -1,   396,    -1,    -1,    -1,    54,
-      55,    56,    57,    -1,    98,    99,   100,   101,   102,   103,
-     104,   105,    -1,   414,   415,   416,   417,   111,    -1,   420,
-     421,    -1,   423,     4,   425,   426,   427,   428,   429,    10,
-     431,    -1,    -1,    -1,   435,   436,   437,    -1,    -1,    20,
-      21,    22,    23,    24,    25,    26,    27,    28,    29,    30,
-      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
-       4,    42,    -1,    -1,    -1,    -1,    10,    98,    99,   100,
-     101,   102,   103,   104,   105,    -1,    20,    21,    22,    23,
-      24,    25,    26,    27,    28,    29,    30,    31,    32,    33,
-      34,    35,    36,    37,    38,    39,    40,     4,    42,    -1,
-      -1,    -1,    -1,    10,    98,    99,   100,   101,   102,   103,
-     104,   105,    -1,    20,    21,    22,    23,    24,    25,    26,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,   480,    42,    -1,   483,    83,    84,
-      85,    86,    87,    88,    89,    -1,    -1,    92,    93,   495,
-      -1,    -1,    -1,   499,    -1,   501,    -1,    -1,    -1,   505,
-      -1,    -1,    -1,   509,    -1,   511,    -1,   345,   346,   347,
-     348,    -1,   350,   351,    -1,   353,    -1,   355,   356,   357,
-     358,   359,    -1,   361,    -1,   363,   364,   365,    98,    99,
-     100,   101,   102,   103,    -1,    -1,    -1,   107,    99,   100,
-     101,   102,   103,   104,   105,    62,    63,    64,    65,    66,
-      67
+       3,   328,    26,     4,     3,    35,     1,     4,   169,     3,
+      60,   190,   191,     3,   266,   194,   195,     4,     3,     1,
+       4,     1,     4,   313,    91,     3,   213,     4,    95,   109,
+     176,    26,     4,     3,   110,    60,    10,    11,   263,   200,
+     292,   202,    92,    93,   111,   372,    26,    99,   235,   339,
+     248,     6,     7,     8,     9,    10,    11,   109,    32,    33,
+      34,   176,    95,   288,    96,    97,    53,    92,    93,   230,
+     231,    74,   251,    60,     0,    92,    93,   109,   111,    80,
+      81,   408,    85,    86,    87,   283,   232,    96,    97,    63,
+      64,    65,    66,    67,    68,    69,    70,     3,    82,   129,
+     298,   104,    76,    77,    78,    79,    80,    81,    82,    83,
+     109,    83,   109,    95,   144,   109,    93,   232,    95,   109,
+     281,   103,    92,    93,   109,   107,   305,   306,    54,   111,
+     107,   109,   162,   163,   111,     3,   364,     4,   299,   109,
+     368,    92,    93,   341,     3,    71,   149,   150,   151,   152,
+     153,   154,   155,    12,   109,   158,   186,   187,   161,     4,
+     140,   141,    92,    93,   343,   109,    92,    93,    94,    95,
+      12,    91,    98,     4,     3,    95,    45,    46,     4,   109,
+     160,   107,     4,     4,   109,   111,     4,    97,   218,   219,
+     109,   111,   222,     3,   373,    96,   226,   227,     4,    95,
+      82,     3,   176,    62,    63,    64,    65,    66,    67,    68,
+     240,   107,     3,     3,    59,   111,    61,   247,   242,   249,
+      62,    63,    64,    65,    66,    67,    68,   222,    59,   224,
+      61,   226,   227,    59,   413,    61,   216,    59,    59,    61,
+      61,    59,    99,    61,    54,    55,    56,   242,   109,   112,
+     109,    43,    44,    59,   284,    61,    92,    93,   232,   109,
+     109,     3,   242,    54,    55,    56,    58,   109,     3,   109,
+     109,   301,   109,   109,    84,    85,    86,    87,    88,    89,
+      90,   109,   306,    93,    94,   104,   105,   106,   312,   109,
+       3,   321,   287,    84,    85,    86,    87,    88,    89,    90,
+     109,   304,     4,     3,   334,   308,   309,   310,   311,   109,
+     109,   306,    54,    55,    56,   101,   444,   312,   270,    54,
+      55,    56,   245,   279,   477,   368,   306,   330,   489,   324,
+     211,   326,   312,   494,   495,   101,   102,   103,   104,   105,
+     106,     3,    84,    85,    86,    87,    88,    89,    90,    84,
+      85,    86,    87,    88,    89,    90,    -1,    -1,    -1,   520,
+      73,    74,    75,    76,    77,    78,    79,    99,    -1,   364,
+     102,   103,   473,   368,    -1,   107,   379,   109,    -1,    -1,
+     410,    -1,    -1,   378,   364,    40,   381,    -1,   368,    -1,
+      -1,   421,    54,    55,    56,   496,    -1,    95,   401,   500,
+      55,    56,    57,   406,    -1,   103,    61,    -1,    -1,   107,
+     440,    -1,   442,   111,    -1,   410,    -1,    -1,   519,    -1,
+     450,    16,    84,    85,    86,    87,    88,    89,    90,   102,
+     103,   104,   105,   106,   464,   465,    -1,    -1,   468,   469,
+      -1,   471,    -1,    -1,   474,   475,    -1,    -1,   443,   479,
+      -1,   481,    92,    93,    94,    95,   486,   460,    -1,   489,
+      -1,    -1,    -1,    -1,   494,   495,    -1,   107,   498,    -1,
+       5,   111,   502,   476,   504,    -1,    -1,    12,    13,    14,
+      15,    92,    93,    -1,    95,    -1,    -1,   490,     3,    84,
+      85,    86,    87,    88,    89,    90,   107,    54,    55,    56,
+     111,    16,    17,    18,    19,   508,    41,    42,    43,    44,
+      45,    46,    12,    48,    49,    50,    51,    52,    -1,    -1,
+      -1,    -1,    57,    58,    -1,    -1,    41,    84,    85,    86,
+      87,    88,    89,    90,    69,    70,    -1,    72,    95,    54,
+      55,    56,    57,    -1,    -1,    -1,   103,    -1,    -1,    -1,
+     107,    -1,    -1,    -1,   111,    -1,    -1,    92,    93,    94,
+      95,    -1,    62,    63,    64,    65,    66,    67,    68,     3,
+      -1,    -1,   107,     3,    -1,    -1,   111,    -1,    -1,    -1,
+      -1,    -1,    16,    17,    18,    19,    16,    17,    18,    19,
+      -1,    -1,    -1,    95,    96,    97,    -1,    -1,    -1,    -1,
+      -1,   103,   390,    -1,   392,   107,    -1,    41,    -1,   111,
+     398,    41,    99,   100,   101,   102,   103,   104,   105,   106,
+      54,    55,    56,    57,    54,    55,    56,    57,   416,   417,
+     418,   419,    -1,    -1,   422,   423,    -1,   425,     4,   427,
+     428,   429,   430,   431,    10,   433,    -1,    -1,    -1,   437,
+     438,   439,    -1,    -1,    20,    21,    22,    23,    24,    25,
+      26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
+      36,    37,    38,    39,    40,     4,    42,    -1,    -1,    -1,
+      -1,    10,    99,   100,   101,   102,   103,   104,   105,   106,
+      -1,    20,    21,    22,    23,    24,    25,    26,    27,    28,
+      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,     4,    42,    -1,    -1,    -1,    -1,    10,   100,
+     101,   102,   103,   104,   105,   106,    -1,    -1,    20,    21,
+      22,    23,    24,    25,    26,    27,    28,    29,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,    39,    40,   482,
+      42,    -1,   485,    99,   100,   101,   102,   103,   104,   105,
+     106,    -1,    -1,    -1,   497,    -1,   112,    -1,   501,    -1,
+     503,    -1,    -1,    -1,   507,    -1,    -1,    -1,   511,    -1,
+     513,   347,   348,   349,   350,    -1,   352,   353,    -1,   355,
+      -1,   357,   358,   359,   360,   361,    -1,   363,    -1,   365,
+     366,   367,    99,   100,   101,   102,   103,   104,   105,   106,
+      -1,    -1,    -1,    -1,    -1,   112,    84,    85,    86,    87,
+      88,    89,    90,    -1,    -1,    93,    94,    98,    99,   100,
+     101,   102,   103,    -1,    -1,    -1,   107,     6,     7,     8,
+       9,    10,    11
 };
 
-  /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-     symbol of state STATE-NUM.  */
+/* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+   state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,   113,     0,    54,    70,    91,    92,    93,    94,    97,
-     106,   110,   114,   120,   121,   122,   162,   163,   164,   165,
-     170,   173,   178,   182,   183,   185,   191,   192,   200,   212,
-     213,    94,   102,   106,   110,   209,   210,   194,   210,   210,
+       0,   114,     0,    54,    71,    92,    93,    94,    95,    98,
+     107,   111,   115,   121,   122,   123,   163,   164,   165,   166,
+     171,   174,   179,   183,   184,   186,   192,   193,   201,   213,
+     214,    95,   103,   107,   111,   210,   211,   195,   211,   211,
        5,    12,    13,    14,    15,    41,    42,    43,    44,    45,
-      46,    48,    49,    50,    51,    52,    57,    58,    68,    69,
-      71,   181,   191,    98,    99,   100,   101,   102,   103,   104,
-     105,   210,   210,   210,   108,   208,    98,    99,   100,   101,
-     102,   103,   104,   105,     3,    54,    55,    56,    83,    84,
-      85,    86,    87,    88,    89,   197,   111,   194,   196,   195,
-     196,   196,   195,   195,   194,   194,   194,   196,   186,   194,
-     210,   210,   210,   210,   210,   210,   210,   210,   111,   209,
-     210,   210,   210,   210,   210,   210,   210,   210,   179,   209,
-     209,   209,     3,    92,    93,   197,   198,   197,   198,    16,
-     126,   126,   198,   198,   209,     3,     3,   198,     3,    72,
-      73,    74,    75,    76,    77,    78,     3,   198,   180,   208,
-     115,   109,   212,   212,   208,   166,   171,   187,   209,   209,
-     209,   209,   209,   209,   209,   174,   175,     1,     4,   209,
-       4,    92,   116,   117,   212,   209,   208,   208,     3,     4,
-      59,    61,   167,     4,    59,    61,   172,     4,    79,    80,
-     207,   208,   207,     4,    95,    96,   176,   177,   203,   204,
-     210,   108,   201,   202,   203,   204,   108,   211,   208,   208,
-     184,    60,   199,   200,   199,    60,   199,   199,     3,     3,
-     207,   207,   108,    96,    95,   202,   201,   212,   108,   208,
-     208,     4,    53,    60,   200,   208,   168,   208,     3,   208,
-     188,    81,   207,   207,   203,   204,   210,     6,     7,     8,
-       9,    10,    11,   118,   119,   123,   124,   208,   191,   168,
-       3,    62,    63,    64,    65,    66,    67,   108,   169,   208,
-     171,     3,   208,     4,    82,   199,   108,   119,   127,   127,
-     125,   166,   169,   207,     4,   171,     3,   208,     3,   190,
-     119,     3,    16,    17,    18,    19,    41,    54,    55,    56,
-      57,     3,   127,     4,     4,   171,   207,   189,     4,   208,
-     128,   209,   199,   191,   199,   200,    90,    94,   110,   205,
-     206,   209,   209,   209,   209,   191,   128,     3,     4,     3,
-       4,    81,   208,     4,    10,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    42,   129,   206,   209,
-      98,   108,   208,     4,   128,   171,   199,   153,   154,   199,
-     212,   153,   153,   153,   153,   135,   153,   153,   138,   153,
-     142,   153,   153,   153,   153,   153,   148,   153,   192,   193,
-     212,   153,   153,   153,   193,   111,    90,   206,   199,     4,
-       4,   108,   209,   108,   130,   131,   132,   134,   151,   209,
-     136,   137,   151,   139,   151,   143,   144,   145,   146,   147,
-     151,   149,   108,   209,   108,   133,   140,   141,   209,   206,
-     208,   199,   108,   152,   151,   151,   151,   151,   208,   151,
-     151,   151,   151,   151,   151,   151,   151,   151,   108,   151,
-     151,   151,   208,   208,   154,   108,   156,   208,   209,   208,
-     208,   157,   208,   208,   108,     3,   155,   208,   205,   208,
-     208,   209,   174,   208,   208,   108,   155,   160,   108,     4,
-     108,   155,   158,   208,   161,   207,   208,   209,   159,   207,
-     208,   207,   208,   205,   155,   208,   108,   205,   155,   208,
-     155,   208,   155,   209,   155,   155,   108,   150,   205,   207
+      46,    48,    49,    50,    51,    52,    57,    58,    69,    70,
+      72,   182,   192,    99,   100,   101,   102,   103,   104,   105,
+     106,   211,   211,   211,   109,   209,    99,   100,   101,   102,
+     103,   104,   105,   106,     3,    54,    55,    56,    84,    85,
+      86,    87,    88,    89,    90,   198,   112,   195,   197,   196,
+     197,   197,   196,   196,   195,   195,   195,   197,   187,   195,
+     211,   211,   211,   211,   211,   211,   211,   211,   112,   210,
+     211,   211,   211,   211,   211,   211,   211,   211,   180,   210,
+     210,   210,     3,    93,    94,   198,   199,   198,   199,    16,
+     127,   127,   199,   199,   210,     3,     3,   199,     3,    73,
+      74,    75,    76,    77,    78,    79,     3,   199,   181,   209,
+     116,   110,   213,   213,   209,   167,   172,   188,   210,   210,
+     210,   210,   210,   210,   210,   175,   176,     1,     4,   210,
+       4,    93,   117,   118,   213,   210,   209,   209,     3,     4,
+      59,    61,   168,     4,    59,    61,   173,     4,    80,    81,
+     208,   209,   208,     4,    96,    97,   177,   178,   204,   205,
+     211,   109,   202,   203,   204,   205,   109,   212,   209,   209,
+     185,    60,   200,   201,   200,    60,   200,   200,     3,     3,
+     208,   208,   109,    97,    96,   203,   202,   213,   109,   209,
+     209,     4,    53,    60,   201,   209,   169,   209,     3,   209,
+     189,    82,   208,   208,   204,   205,   211,     6,     7,     8,
+       9,    10,    11,   119,   120,   124,   125,   209,   192,   169,
+       3,    12,    62,    63,    64,    65,    66,    67,    68,   109,
+     170,   209,   172,     3,   209,     4,    83,   200,   109,   120,
+     128,   128,   126,   167,   170,   208,     4,   172,     3,   209,
+       3,   191,   120,     3,    16,    17,    18,    19,    41,    54,
+      55,    56,    57,     3,   128,     4,     4,   172,   208,   190,
+       4,   209,   129,   210,   200,   192,   200,   201,    91,    95,
+     111,   206,   207,   210,   210,   210,   210,   192,   129,     3,
+       4,     3,     4,    82,   209,     4,    10,    20,    21,    22,
+      23,    24,    25,    26,    27,    28,    29,    30,    31,    32,
+      33,    34,    35,    36,    37,    38,    39,    40,    42,   130,
+     207,   210,    99,   109,   209,     4,   129,   172,   200,   154,
+     155,   200,   213,   154,   154,   154,   154,   136,   154,   154,
+     139,   154,   143,   154,   154,   154,   154,   154,   149,   154,
+     193,   194,   213,   154,   154,   154,   194,   112,    91,   207,
+     200,     4,     4,   109,   210,   109,   131,   132,   133,   135,
+     152,   210,   137,   138,   152,   140,   152,   144,   145,   146,
+     147,   148,   152,   150,   109,   210,   109,   134,   141,   142,
+     210,   207,   209,   200,   109,   153,   152,   152,   152,   152,
+     209,   152,   152,   152,   152,   152,   152,   152,   152,   152,
+     109,   152,   152,   152,   209,   209,   155,   109,   157,   209,
+     210,   209,   209,   158,   209,   209,   109,     3,   156,   209,
+     206,   209,   209,   210,   175,   209,   209,   109,   156,   161,
+     109,     4,   109,   156,   159,   209,   162,   208,   209,   210,
+     160,   208,   209,   208,   209,   206,   156,   209,   109,   206,
+     156,   209,   156,   209,   156,   210,   156,   156,   109,   151,
+     206,   208
 };
 
-  /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
+/* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,   112,   113,   113,   113,   113,   113,   113,   113,   113,
-     113,   113,   113,   113,   113,   113,   113,   113,   114,   115,
-     115,   116,   116,   117,   117,   118,   118,   118,   119,   119,
-     119,   119,   119,   119,   120,   121,   123,   122,   124,   122,
-     125,   122,   126,   126,   127,   127,   127,   127,   127,   127,
-     127,   127,   127,   127,   127,   127,   127,   127,   128,   128,
-     130,   129,   131,   129,   132,   129,   133,   129,   134,   129,
-     135,   129,   129,   129,   136,   129,   137,   129,   138,   129,
-     139,   129,   140,   129,   129,   129,   129,   129,   141,   129,
-     142,   129,   143,   129,   144,   129,   145,   129,   146,   129,
-     147,   129,   148,   129,   149,   129,   150,   129,   151,   151,
-     151,   152,   153,   153,   154,   154,   155,   155,   157,   156,
-     159,   158,   161,   160,   162,   163,   164,   165,   166,   166,
-     167,   167,   167,   168,   168,   168,   169,   169,   169,   169,
-     169,   169,   170,   171,   171,   172,   172,   172,   172,   172,
-     172,   172,   172,   173,   175,   174,   176,   176,   177,   177,
-     177,   177,   177,   177,   177,   179,   178,   180,   180,   180,
-     180,   181,   181,   181,   181,   181,   181,   181,   181,   181,
-     181,   182,   182,   183,   184,   184,   184,   185,   186,   186,
-     186,   186,   186,   186,   186,   186,   187,   187,   187,   188,
+       0,   113,   114,   114,   114,   114,   114,   114,   114,   114,
+     114,   114,   114,   114,   114,   114,   114,   114,   115,   116,
+     116,   117,   117,   118,   118,   119,   119,   119,   120,   120,
+     120,   120,   120,   120,   121,   122,   124,   123,   125,   123,
+     126,   123,   127,   127,   128,   128,   128,   128,   128,   128,
+     128,   128,   128,   128,   128,   128,   128,   128,   129,   129,
+     131,   130,   132,   130,   133,   130,   134,   130,   135,   130,
+     136,   130,   130,   130,   137,   130,   138,   130,   139,   130,
+     140,   130,   141,   130,   130,   130,   130,   130,   142,   130,
+     143,   130,   144,   130,   145,   130,   146,   130,   147,   130,
+     148,   130,   149,   130,   150,   130,   151,   130,   152,   152,
+     152,   153,   154,   154,   155,   155,   156,   156,   158,   157,
+     160,   159,   162,   161,   163,   164,   165,   166,   167,   167,
+     168,   168,   168,   169,   169,   169,   170,   170,   170,   170,
+     170,   170,   170,   170,   171,   172,   172,   173,   173,   173,
+     173,   173,   173,   173,   173,   174,   176,   175,   177,   177,
+     178,   178,   178,   178,   178,   178,   178,   180,   179,   181,
+     181,   181,   181,   182,   182,   182,   182,   182,   182,   182,
+     182,   182,   182,   183,   183,   184,   185,   185,   185,   186,
+     187,   187,   187,   187,   187,   187,   187,   187,   188,   188,
      188,   189,   189,   190,   190,   191,   191,   192,   192,   193,
-     193,   193,   194,   194,   194,   194,   194,   195,   195,   196,
-     196,   197,   197,   197,   197,   197,   197,   197,   198,   198,
+     193,   194,   194,   194,   195,   195,   195,   195,   195,   196,
+     196,   197,   197,   198,   198,   198,   198,   198,   198,   198,
      199,   199,   200,   200,   201,   201,   202,   202,   203,   203,
-     204,   204,   205,   205,   205,   205,   206,   206,   207,   207,
-     208,   209,   210,   210,   210,   210,   210,   210,   210,   210,
-     210,   210,   210,   210,   211,   212,   213,   213,   213,   213,
-     213,   213,   213,   213,   213,   213,   213
+     204,   204,   205,   205,   206,   206,   206,   206,   207,   207,
+     208,   208,   209,   210,   211,   211,   211,   211,   211,   211,
+     211,   211,   211,   211,   211,   211,   212,   213,   214,   214,
+     214,   214,   214,   214,   214,   214,   214,   214,   214
 };
 
-  /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
+/* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
+static const yytype_int8 yyr2[] =
 {
        0,     2,     0,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     6,     0,
@@ -1277,56 +1602,56 @@ static const yytype_uint8 yyr2[] =
        9,     2,     0,     2,     1,     1,     0,     3,     0,     3,
        0,     3,     0,     3,     4,     4,     3,     6,     0,     2,
        4,     2,     6,     0,     3,     2,     1,     1,     1,     1,
-       1,     1,     6,     0,     2,     2,     3,     5,     2,     5,
-       6,     7,     9,     4,     0,     2,     0,     1,     1,     1,
-       1,     3,     3,     3,     2,     0,     6,     0,     3,     4,
-       2,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     6,     4,     8,     0,     3,     2,     6,     0,     6,
-       6,     3,     3,     3,     3,     3,     0,     5,     7,     0,
-       5,     0,     5,     0,     3,     1,     1,     1,     1,     2,
-       1,     2,     0,     2,     3,     4,     3,     0,     2,     0,
-       2,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     2,     1,     1,     1,     1,     1,     2,     1,     2,
-       1,     2,     1,     2,     3,     4,     1,     3,     0,     1,
-       2,     1,     1,     3,     2,     2,     3,     3,     3,     3,
-       3,     3,     3,     3,     2,     1,     1,     3,     2,     3,
-       3,     3,     3,     3,     3,     3,     3
+       1,     1,     1,     1,     6,     0,     2,     2,     3,     5,
+       2,     5,     6,     7,     9,     4,     0,     2,     0,     1,
+       1,     1,     1,     3,     3,     3,     2,     0,     6,     0,
+       3,     4,     2,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     6,     4,     8,     0,     3,     2,     6,
+       0,     6,     6,     3,     3,     3,     3,     3,     0,     5,
+       7,     0,     5,     0,     5,     0,     3,     1,     1,     1,
+       1,     2,     1,     2,     0,     2,     3,     4,     3,     0,
+       2,     0,     2,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     2,     1,     1,     1,     1,     1,     2,
+       1,     2,     1,     2,     1,     2,     3,     4,     1,     3,
+       0,     1,     2,     1,     1,     3,     2,     2,     3,     3,
+       3,     3,     3,     3,     3,     3,     2,     1,     1,     3,
+       2,     3,     3,     3,     3,     3,     3,     3,     3
 };
 
 
+enum { YYENOMEM = -2 };
+
 #define yyerrok         (yyerrstatus = 0)
 #define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
 #define YYERROR         goto yyerrorlab
+#define YYNOMEM         goto yyexhaustedlab
 
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)                                  \
-do                                                              \
-  if (yychar == YYEMPTY)                                        \
-    {                                                           \
-      yychar = (Token);                                         \
-      yylval = (Value);                                         \
-      YYPOPSTACK (yylen);                                       \
-      yystate = *yyssp;                                         \
-      goto yybackup;                                            \
-    }                                                           \
-  else                                                          \
-    {                                                           \
-      yyerror (YY_("syntax error: cannot back up")); \
-      YYERROR;                                                  \
-    }                                                           \
-while (0)
+#define YYBACKUP(Token, Value)                                    \
+  do                                                              \
+    if (yychar == YYEMPTY)                                        \
+      {                                                           \
+        yychar = (Token);                                         \
+        yylval = (Value);                                         \
+        YYPOPSTACK (yylen);                                       \
+        yystate = *yyssp;                                         \
+        goto yybackup;                                            \
+      }                                                           \
+    else                                                          \
+      {                                                           \
+        yyerror (YY_("syntax error: cannot back up")); \
+        YYERROR;                                                  \
+      }                                                           \
+  while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use YYerror or YYUNDEF. */
+#define YYERRCODE YYUNDEF
 
 
 /* Enable debugging if requested.  */
@@ -1343,55 +1668,52 @@ do {                                            \
     YYFPRINTF Args;                             \
 } while (0)
 
-/* This macro is provided for backward compatibility. */
-#ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-#endif
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Kind, Value); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
 
 
-/*----------------------------------------.
-| Print this symbol's value on YYOUTPUT.  |
-`----------------------------------------*/
+/*-----------------------------------.
+| Print this symbol's value on YYO.  |
+`-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
-  FILE *yyo = yyoutput;
-  YYUSE (yyo);
+  FILE *yyoutput = yyo;
+  YY_USE (yyoutput);
   if (!yyvaluep)
     return;
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# endif
-  YYUSE (yytype);
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+  YY_USE (yykind);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+/*---------------------------.
+| Print this symbol on YYO.  |
+`---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
-  YYFPRINTF (yyoutput, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+  YYFPRINTF (yyo, "%s %s (",
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
-  YYFPRINTF (yyoutput, ")");
+  yy_symbol_value_print (yyo, yykind, yyvaluep);
+  YYFPRINTF (yyo, ")");
 }
 
 /*------------------------------------------------------------------.
@@ -1400,7 +1722,7 @@ yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
 `------------------------------------------------------------------*/
 
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)
 {
   YYFPRINTF (stderr, "Stack now");
   for (; yybottom <= yytop; yybottom++)
@@ -1423,21 +1745,21 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %d):\n",
              yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[yyssp[yyi + 1 - yynrhs]],
-                       &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              );
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)]);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1452,8 +1774,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1476,256 +1798,38 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen strlen
-#  else
-/* Return the length of YYSTR.  */
-static YYSIZE_T
-yystrlen (const char *yystr)
-{
-  YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYSIZE_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYSIZE_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-        switch (*++yyp)
-          {
-          case '\'':
-          case ',':
-            goto do_not_strip_quotes;
-
-          case '\\':
-            if (*++yyp != '\\')
-              goto do_not_strip_quotes;
-            /* Fall through.  */
-          default:
-            if (yyres)
-              yyres[yyn] = *yyp;
-            yyn++;
-            break;
-
-          case '"':
-            if (yyres)
-              yyres[yyn] = '\0';
-            return yyn;
-          }
-    do_not_strip_quotes: ;
-    }
-
-  if (! yyres)
-    return yystrlen (yystr);
-
-  return yystpcpy (yyres, yystr) - yyres;
-}
-# endif
-
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
-
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
-static int
-yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
-                yytype_int16 *yyssp, int yytoken)
-{
-  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-  YYSIZE_T yysize = yysize0;
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat. */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Number of reported tokens (one for the "unexpected", one per
-     "expected"). */
-  int yycount = 0;
-
-  /* There are many possibilities here to consider:
-     - If this state is a consistent state with a default action, then
-       the only way this function was invoked is if the default action
-       is an error action.  In that case, don't check for expected
-       tokens because there are none.
-     - The only way there can be no lookahead present (in yychar) is if
-       this state is a consistent state with a default action.  Thus,
-       detecting the absence of a lookahead is sufficient to determine
-       that there is no unexpected or expected token to report.  In that
-       case, just report a simple "syntax error".
-     - Don't assume there isn't a lookahead just because this state is a
-       consistent state with a default action.  There might have been a
-       previous inconsistent state, consistent state with a non-default
-       action, or user semantic action that manipulated yychar.
-     - Of course, the expected token list depends on states to have
-       correct lookahead information, and it depends on the parser not
-       to perform extra reductions after fetching a lookahead from the
-       scanner and before detecting a syntax error.  Thus, state merging
-       (from LALR or IELR) and default reductions corrupt the expected
-       token list.  However, the list is correct for canonical LR with
-       one exception: it will still contain any token that will not be
-       accepted due to an error action in a later state.
-  */
-  if (yytoken != YYEMPTY)
-    {
-      int yyn = yypact[*yyssp];
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (! (yysize <= yysize1
-                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
-                    return 2;
-                  yysize = yysize1;
-                }
-              }
-        }
-    }
-
-  switch (yycount)
-    {
-# define YYCASE_(N, S)                      \
-      case N:                               \
-        yyformat = S;                       \
-      break
-    default: /* Avoid compiler warnings. */
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
-    }
-
-  {
-    YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
-    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
-      return 2;
-    yysize = yysize1;
-  }
-
-  if (*yymsg_alloc < yysize)
-    {
-      *yymsg_alloc = 2 * yysize;
-      if (! (yysize <= *yymsg_alloc
-             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
-        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
-    }
-
-  /* Avoid sprintf, as that infringes on the user's name space.
-     Don't have undefined behavior even if the translation
-     produced a string with the wrong number of "%s"s.  */
-  {
-    char *yyp = *yymsg;
-    int yyi = 0;
-    while ((*yyp = *yyformat) != '\0')
-      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
-        {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
-          yyformat += 2;
-        }
-      else
-        {
-          yyp++;
-          yyformat++;
-        }
-  }
-  return 0;
-}
-#endif /* YYERROR_VERBOSE */
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
 {
-  YYUSE (yyvaluep);
+  YY_USE (yyvaluep);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-
-
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
+
+
 
 
 /*----------.
@@ -1735,43 +1839,36 @@ int yynerrs;
 int
 yyparse (void)
 {
-    int yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
 
-    /* The semantic value stack.  */
+    /* The state stack: array, bottom, top.  */
+    yy_state_t yyssa[YYINITDEPTH];
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
+
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYSIZE_T yystacksize;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
-#endif
+
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
@@ -1779,71 +1876,75 @@ yyparse (void)
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
+
   goto yysetstate;
 
+
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- push a new state, which is found in yystate.  |
 `------------------------------------------------------------*/
- yynewstate:
+yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
- yysetstate:
-  *yyssp = yystate;
+
+/*--------------------------------------------------------------------.
+| yysetstate -- set current state (the top of the stack) to yystate.  |
+`--------------------------------------------------------------------*/
+yysetstate:
+  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+  YY_ASSERT (0 <= yystate && yystate < YYNSTATES);
+  YY_IGNORE_USELESS_CAST_BEGIN
+  *yyssp = YY_CAST (yy_state_t, yystate);
+  YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
+#if !defined yyoverflow && !defined YYSTACK_RELOCATE
+    YYNOMEM;
+#else
     {
       /* Get the current used size of the three stacks, in elements.  */
-      YYSIZE_T yysize = yyssp - yyss + 1;
+      YYPTRDIFF_T yysize = yyssp - yyss + 1;
 
-#ifdef yyoverflow
+# if defined yyoverflow
       {
         /* Give user a chance to reallocate the stack.  Use copies of
            these so that the &'s don't force the real ones into
            memory.  */
+        yy_state_t *yyss1 = yyss;
         YYSTYPE *yyvs1 = yyvs;
-        yytype_int16 *yyss1 = yyss;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
            conditional around just the two extra args, but that might
            be undefined if yyoverflow is a macro.  */
         yyoverflow (YY_("memory exhausted"),
-                    &yyss1, yysize * sizeof (*yyssp),
-                    &yyvs1, yysize * sizeof (*yyvsp),
+                    &yyss1, yysize * YYSIZEOF (*yyssp),
+                    &yyvs1, yysize * YYSIZEOF (*yyvsp),
                     &yystacksize);
-
         yyss = yyss1;
         yyvs = yyvs1;
       }
-#else /* no yyoverflow */
-# ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
-# else
+# else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-        goto yyexhaustedlab;
+        YYNOMEM;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
         yystacksize = YYMAXDEPTH;
 
       {
-        yytype_int16 *yyss1 = yyss;
+        yy_state_t *yyss1 = yyss;
         union yyalloc *yyptr =
-          (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
+          YY_CAST (union yyalloc *,
+                   YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
-          goto yyexhaustedlab;
+          YYNOMEM;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
@@ -1851,30 +1952,31 @@ yyparse (void)
           YYSTACK_FREE (yyss1);
       }
 # endif
-#endif /* no yyoverflow */
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+      YY_IGNORE_USELESS_CAST_BEGIN
+      YYDPRINTF ((stderr, "Stack size increased to %ld\n",
+                  YY_CAST (long, yystacksize)));
+      YY_IGNORE_USELESS_CAST_END
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
     }
+#endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
 
-  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
   if (yystate == YYFINAL)
     YYACCEPT;
 
   goto yybackup;
 
+
 /*-----------.
 | yybackup.  |
 `-----------*/
 yybackup:
-
   /* Do appropriate processing given the current state.  Read a
      lookahead token if we need one and don't already have one.  */
 
@@ -1885,17 +1987,28 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
   if (yychar == YYEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex ();
     }
 
   if (yychar <= YYEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = YYEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == YYerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = YYUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -1924,15 +2037,13 @@ yybackup:
 
   /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
-
   yystate = yyn;
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
   goto yynewstate;
 
 
@@ -1947,7 +2058,7 @@ yydefault:
 
 
 /*-----------------------------.
-| yyreduce -- Do a reduction.  |
+| yyreduce -- do a reduction.  |
 `-----------------------------*/
 yyreduce:
   /* yyn is the number of a rule to reduce with.  */
@@ -1967,28 +2078,28 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 18:
-#line 201 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 18: /* accelerator: id ACCELERATORS suboptions BEG acc_entries END  */
+#line 201 "rcparse.y"
+          {
 	    define_accelerator ((yyvsp[-5].id), &(yyvsp[-3].res_info), (yyvsp[-1].pacc));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 1979 "rcparse.c" /* yacc.c:1648  */
+#line 2090 "rcparse.c"
     break;
 
-  case 19:
-#line 211 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 19: /* acc_entries: %empty  */
+#line 211 "rcparse.y"
+          {
 	    (yyval.pacc) = NULL;
 	  }
-#line 1987 "rcparse.c" /* yacc.c:1648  */
+#line 2098 "rcparse.c"
     break;
 
-  case 20:
-#line 215 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 20: /* acc_entries: acc_entries acc_entry  */
+#line 215 "rcparse.y"
+          {
 	    rc_accelerator *a;
 
 	    a = (rc_accelerator *) res_alloc (sizeof *a);
@@ -2005,21 +2116,21 @@ yyreduce:
 		(yyval.pacc) = (yyvsp[-1].pacc);
 	      }
 	  }
-#line 2009 "rcparse.c" /* yacc.c:1648  */
+#line 2120 "rcparse.c"
     break;
 
-  case 21:
-#line 236 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 21: /* acc_entry: acc_event cposnumexpr  */
+#line 236 "rcparse.y"
+          {
 	    (yyval.acc) = (yyvsp[-1].acc);
 	    (yyval.acc).id = (yyvsp[0].il);
 	  }
-#line 2018 "rcparse.c" /* yacc.c:1648  */
+#line 2129 "rcparse.c"
     break;
 
-  case 22:
-#line 241 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 22: /* acc_entry: acc_event cposnumexpr ',' acc_options  */
+#line 241 "rcparse.y"
+          {
 	    (yyval.acc) = (yyvsp[-3].acc);
 	    (yyval.acc).id = (yyvsp[-2].il);
 	    (yyval.acc).flags |= (yyvsp[0].is);
@@ -2027,12 +2138,12 @@ yyreduce:
 		&& ((yyval.acc).flags & (ACC_SHIFT | ACC_CONTROL)) != 0)
 	      rcparse_warning (_("inappropriate modifiers for non-VIRTKEY"));
 	  }
-#line 2031 "rcparse.c" /* yacc.c:1648  */
+#line 2142 "rcparse.c"
     break;
 
-  case 23:
-#line 253 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 23: /* acc_event: QUOTEDSTRING  */
+#line 253 "rcparse.y"
+          {
 	    const char *s = (yyvsp[0].s);
 	    char ch;
 
@@ -2051,118 +2162,118 @@ yyreduce:
 	    if (s[1] != '\0')
 	      rcparse_warning (_("accelerator should only be one character"));
 	  }
-#line 2055 "rcparse.c" /* yacc.c:1648  */
+#line 2166 "rcparse.c"
     break;
 
-  case 24:
-#line 273 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 24: /* acc_event: posnumexpr  */
+#line 273 "rcparse.y"
+          {
 	    (yyval.acc).next = NULL;
 	    (yyval.acc).flags = 0;
 	    (yyval.acc).id = 0;
 	    (yyval.acc).key = (yyvsp[0].il);
 	  }
-#line 2066 "rcparse.c" /* yacc.c:1648  */
+#line 2177 "rcparse.c"
     break;
 
-  case 25:
-#line 283 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 25: /* acc_options: acc_option  */
+#line 283 "rcparse.y"
+          {
 	    (yyval.is) = (yyvsp[0].is);
 	  }
-#line 2074 "rcparse.c" /* yacc.c:1648  */
+#line 2185 "rcparse.c"
     break;
 
-  case 26:
-#line 287 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 26: /* acc_options: acc_options ',' acc_option  */
+#line 287 "rcparse.y"
+          {
 	    (yyval.is) = (yyvsp[-2].is) | (yyvsp[0].is);
 	  }
-#line 2082 "rcparse.c" /* yacc.c:1648  */
+#line 2193 "rcparse.c"
     break;
 
-  case 27:
-#line 292 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 27: /* acc_options: acc_options acc_option  */
+#line 292 "rcparse.y"
+          {
 	    (yyval.is) = (yyvsp[-1].is) | (yyvsp[0].is);
 	  }
-#line 2090 "rcparse.c" /* yacc.c:1648  */
+#line 2201 "rcparse.c"
     break;
 
-  case 28:
-#line 299 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 28: /* acc_option: VIRTKEY  */
+#line 299 "rcparse.y"
+          {
 	    (yyval.is) = ACC_VIRTKEY;
 	  }
-#line 2098 "rcparse.c" /* yacc.c:1648  */
+#line 2209 "rcparse.c"
     break;
 
-  case 29:
-#line 303 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 29: /* acc_option: ASCII  */
+#line 303 "rcparse.y"
+          {
 	    /* This is just the absence of VIRTKEY.  */
 	    (yyval.is) = 0;
 	  }
-#line 2107 "rcparse.c" /* yacc.c:1648  */
+#line 2218 "rcparse.c"
     break;
 
-  case 30:
-#line 308 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 30: /* acc_option: NOINVERT  */
+#line 308 "rcparse.y"
+          {
 	    (yyval.is) = ACC_NOINVERT;
 	  }
-#line 2115 "rcparse.c" /* yacc.c:1648  */
+#line 2226 "rcparse.c"
     break;
 
-  case 31:
-#line 312 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 31: /* acc_option: SHIFT  */
+#line 312 "rcparse.y"
+          {
 	    (yyval.is) = ACC_SHIFT;
 	  }
-#line 2123 "rcparse.c" /* yacc.c:1648  */
+#line 2234 "rcparse.c"
     break;
 
-  case 32:
-#line 316 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 32: /* acc_option: CONTROL  */
+#line 316 "rcparse.y"
+          {
 	    (yyval.is) = ACC_CONTROL;
 	  }
-#line 2131 "rcparse.c" /* yacc.c:1648  */
+#line 2242 "rcparse.c"
     break;
 
-  case 33:
-#line 320 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 33: /* acc_option: ALT  */
+#line 320 "rcparse.y"
+          {
 	    (yyval.is) = ACC_ALT;
 	  }
-#line 2139 "rcparse.c" /* yacc.c:1648  */
+#line 2250 "rcparse.c"
     break;
 
-  case 34:
-#line 329 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 34: /* bitmap: id BITMAP memflags_move file_name  */
+#line 329 "rcparse.y"
+          {
 	    define_bitmap ((yyvsp[-3].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 2150 "rcparse.c" /* yacc.c:1648  */
+#line 2261 "rcparse.c"
     break;
 
-  case 35:
-#line 341 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 35: /* cursor: id CURSOR memflags_move_discard file_name  */
+#line 341 "rcparse.y"
+          {
 	    define_cursor ((yyvsp[-3].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 2161 "rcparse.c" /* yacc.c:1648  */
+#line 2272 "rcparse.c"
     break;
 
-  case 36:
-#line 354 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 36: /* $@1: %empty  */
+#line 354 "rcparse.y"
+            {
 	      memset (&dialog, 0, sizeof dialog);
 	      dialog.x = (yyvsp[-3].il);
 	      dialog.y = (yyvsp[-2].il);
@@ -2178,23 +2289,23 @@ yyreduce:
 	      sub_res_info = (yyvsp[-5].res_info);
 	      style = 0;
 	    }
-#line 2182 "rcparse.c" /* yacc.c:1648  */
+#line 2293 "rcparse.c"
     break;
 
-  case 37:
-#line 371 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 37: /* dialog: id DIALOG memflags_move exstyle posnumexpr cnumexpr cnumexpr cnumexpr $@1 styles BEG controls END  */
+#line 371 "rcparse.y"
+          {
 	    define_dialog ((yyvsp[-12].id), &sub_res_info, &dialog);
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 2193 "rcparse.c" /* yacc.c:1648  */
+#line 2304 "rcparse.c"
     break;
 
-  case 38:
-#line 379 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 38: /* $@2: %empty  */
+#line 379 "rcparse.y"
+            {
 	      memset (&dialog, 0, sizeof dialog);
 	      dialog.x = (yyvsp[-3].il);
 	      dialog.y = (yyvsp[-2].il);
@@ -2212,23 +2323,23 @@ yyreduce:
 	      sub_res_info = (yyvsp[-5].res_info);
 	      style = 0;
 	    }
-#line 2216 "rcparse.c" /* yacc.c:1648  */
+#line 2327 "rcparse.c"
     break;
 
-  case 39:
-#line 398 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 39: /* dialog: id DIALOGEX memflags_move exstyle posnumexpr cnumexpr cnumexpr cnumexpr $@2 styles BEG controls END  */
+#line 398 "rcparse.y"
+          {
 	    define_dialog ((yyvsp[-12].id), &sub_res_info, &dialog);
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 2227 "rcparse.c" /* yacc.c:1648  */
+#line 2338 "rcparse.c"
     break;
 
-  case 40:
-#line 406 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 40: /* $@3: %empty  */
+#line 406 "rcparse.y"
+            {
 	      memset (&dialog, 0, sizeof dialog);
 	      dialog.x = (yyvsp[-4].il);
 	      dialog.y = (yyvsp[-3].il);
@@ -2247,81 +2358,81 @@ yyreduce:
 	      sub_res_info = (yyvsp[-6].res_info);
 	      style = 0;
 	    }
-#line 2251 "rcparse.c" /* yacc.c:1648  */
+#line 2362 "rcparse.c"
     break;
 
-  case 41:
-#line 426 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 41: /* dialog: id DIALOGEX memflags_move exstyle posnumexpr cnumexpr cnumexpr cnumexpr cnumexpr $@3 styles BEG controls END  */
+#line 426 "rcparse.y"
+          {
 	    define_dialog ((yyvsp[-13].id), &sub_res_info, &dialog);
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 2262 "rcparse.c" /* yacc.c:1648  */
+#line 2373 "rcparse.c"
     break;
 
-  case 42:
-#line 436 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 42: /* exstyle: %empty  */
+#line 436 "rcparse.y"
+          {
 	    (yyval.il) = 0;
 	  }
-#line 2270 "rcparse.c" /* yacc.c:1648  */
+#line 2381 "rcparse.c"
     break;
 
-  case 43:
-#line 440 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 43: /* exstyle: EXSTYLE '=' numexpr  */
+#line 440 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].il);
 	  }
-#line 2278 "rcparse.c" /* yacc.c:1648  */
+#line 2389 "rcparse.c"
     break;
 
-  case 45:
-#line 448 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 45: /* styles: styles CAPTION res_unicode_string_concat  */
+#line 448 "rcparse.y"
+          {
 	    dialog.style |= WS_CAPTION;
 	    style |= WS_CAPTION;
 	    dialog.caption = (yyvsp[0].uni);
 	  }
-#line 2288 "rcparse.c" /* yacc.c:1648  */
+#line 2399 "rcparse.c"
     break;
 
-  case 46:
-#line 454 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 46: /* styles: styles CLASS id  */
+#line 454 "rcparse.y"
+          {
 	    dialog.class = (yyvsp[0].id);
 	  }
-#line 2296 "rcparse.c" /* yacc.c:1648  */
+#line 2407 "rcparse.c"
     break;
 
-  case 47:
-#line 459 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 47: /* styles: styles STYLE styleexpr  */
+#line 459 "rcparse.y"
+          {
 	    dialog.style = style;
 	  }
-#line 2304 "rcparse.c" /* yacc.c:1648  */
+#line 2415 "rcparse.c"
     break;
 
-  case 48:
-#line 463 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 48: /* styles: styles EXSTYLE numexpr  */
+#line 463 "rcparse.y"
+          {
 	    dialog.exstyle = (yyvsp[0].il);
 	  }
-#line 2312 "rcparse.c" /* yacc.c:1648  */
+#line 2423 "rcparse.c"
     break;
 
-  case 49:
-#line 467 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 49: /* styles: styles CLASS res_unicode_string_concat  */
+#line 467 "rcparse.y"
+          {
 	    res_unistring_to_id (& dialog.class, (yyvsp[0].uni));
 	  }
-#line 2320 "rcparse.c" /* yacc.c:1648  */
+#line 2431 "rcparse.c"
     break;
 
-  case 50:
-#line 471 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 50: /* styles: styles FONT numexpr ',' res_unicode_string_concat  */
+#line 471 "rcparse.y"
+          {
 	    dialog.style |= DS_SETFONT;
 	    style |= DS_SETFONT;
 	    dialog.pointsize = (yyvsp[-2].il);
@@ -2333,12 +2444,12 @@ yyreduce:
 		dialog.ex->charset = 1;
 	      }
 	  }
-#line 2337 "rcparse.c" /* yacc.c:1648  */
+#line 2448 "rcparse.c"
     break;
 
-  case 51:
-#line 484 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 51: /* styles: styles FONT numexpr ',' res_unicode_string_concat cnumexpr  */
+#line 484 "rcparse.y"
+          {
 	    dialog.style |= DS_SETFONT;
 	    style |= DS_SETFONT;
 	    dialog.pointsize = (yyvsp[-3].il);
@@ -2352,12 +2463,12 @@ yyreduce:
 		dialog.ex->charset = 1;
 	      }
 	  }
-#line 2356 "rcparse.c" /* yacc.c:1648  */
+#line 2467 "rcparse.c"
     break;
 
-  case 52:
-#line 499 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 52: /* styles: styles FONT numexpr ',' res_unicode_string_concat cnumexpr cnumexpr  */
+#line 499 "rcparse.y"
+          {
 	    dialog.style |= DS_SETFONT;
 	    style |= DS_SETFONT;
 	    dialog.pointsize = (yyvsp[-4].il);
@@ -2371,12 +2482,12 @@ yyreduce:
 		dialog.ex->charset = 1;
 	      }
 	  }
-#line 2375 "rcparse.c" /* yacc.c:1648  */
+#line 2486 "rcparse.c"
     break;
 
-  case 53:
-#line 514 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 53: /* styles: styles FONT numexpr ',' res_unicode_string_concat cnumexpr cnumexpr cnumexpr  */
+#line 514 "rcparse.y"
+          {
 	    dialog.style |= DS_SETFONT;
 	    style |= DS_SETFONT;
 	    dialog.pointsize = (yyvsp[-5].il);
@@ -2390,159 +2501,159 @@ yyreduce:
 		dialog.ex->charset = (yyvsp[0].il);
 	      }
 	  }
-#line 2394 "rcparse.c" /* yacc.c:1648  */
+#line 2505 "rcparse.c"
     break;
 
-  case 54:
-#line 529 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 54: /* styles: styles MENU id  */
+#line 529 "rcparse.y"
+          {
 	    dialog.menu = (yyvsp[0].id);
 	  }
-#line 2402 "rcparse.c" /* yacc.c:1648  */
+#line 2513 "rcparse.c"
     break;
 
-  case 55:
-#line 533 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 55: /* styles: styles CHARACTERISTICS numexpr  */
+#line 533 "rcparse.y"
+          {
 	    sub_res_info.characteristics = (yyvsp[0].il);
 	  }
-#line 2410 "rcparse.c" /* yacc.c:1648  */
+#line 2521 "rcparse.c"
     break;
 
-  case 56:
-#line 537 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 56: /* styles: styles LANGUAGE numexpr cnumexpr  */
+#line 537 "rcparse.y"
+          {
 	    sub_res_info.language = (yyvsp[-1].il) | ((yyvsp[0].il) << SUBLANG_SHIFT);
 	  }
-#line 2418 "rcparse.c" /* yacc.c:1648  */
+#line 2529 "rcparse.c"
     break;
 
-  case 57:
-#line 541 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 57: /* styles: styles VERSIONK numexpr  */
+#line 541 "rcparse.y"
+          {
 	    sub_res_info.version = (yyvsp[0].il);
 	  }
-#line 2426 "rcparse.c" /* yacc.c:1648  */
+#line 2537 "rcparse.c"
     break;
 
-  case 59:
-#line 549 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 59: /* controls: controls control  */
+#line 549 "rcparse.y"
+          {
 	    rc_dialog_control **pp;
 
 	    for (pp = &dialog.controls; *pp != NULL; pp = &(*pp)->next)
 	      ;
 	    *pp = (yyvsp[0].dialog_control);
 	  }
-#line 2438 "rcparse.c" /* yacc.c:1648  */
+#line 2549 "rcparse.c"
     break;
 
-  case 60:
-#line 560 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 60: /* $@4: %empty  */
+#line 560 "rcparse.y"
+            {
 	      default_style = BS_AUTO3STATE | WS_TABSTOP;
 	      base_style = BS_AUTO3STATE;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2450 "rcparse.c" /* yacc.c:1648  */
+#line 2561 "rcparse.c"
     break;
 
-  case 61:
-#line 568 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 61: /* control: AUTO3STATE optresidc $@4 control_params  */
+#line 568 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2458 "rcparse.c" /* yacc.c:1648  */
+#line 2569 "rcparse.c"
     break;
 
-  case 62:
-#line 572 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 62: /* $@5: %empty  */
+#line 572 "rcparse.y"
+            {
 	      default_style = BS_AUTOCHECKBOX | WS_TABSTOP;
-	      base_style = BS_AUTOCHECKBOX;
+	      base_style = BS_AUTOCHECKBOX | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2470 "rcparse.c" /* yacc.c:1648  */
+#line 2581 "rcparse.c"
     break;
 
-  case 63:
-#line 580 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 63: /* control: AUTOCHECKBOX optresidc $@5 control_params  */
+#line 580 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2478 "rcparse.c" /* yacc.c:1648  */
+#line 2589 "rcparse.c"
     break;
 
-  case 64:
-#line 584 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 64: /* $@6: %empty  */
+#line 584 "rcparse.y"
+            {
 	      default_style = BS_AUTORADIOBUTTON | WS_TABSTOP;
 	      base_style = BS_AUTORADIOBUTTON;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2490 "rcparse.c" /* yacc.c:1648  */
+#line 2601 "rcparse.c"
     break;
 
-  case 65:
-#line 592 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 65: /* control: AUTORADIOBUTTON optresidc $@6 control_params  */
+#line 592 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2498 "rcparse.c" /* yacc.c:1648  */
+#line 2609 "rcparse.c"
     break;
 
-  case 66:
-#line 596 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 66: /* $@7: %empty  */
+#line 596 "rcparse.y"
+            {
 	      default_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      base_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_EDIT;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2510 "rcparse.c" /* yacc.c:1648  */
+#line 2621 "rcparse.c"
     break;
 
-  case 67:
-#line 604 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 67: /* control: BEDIT optresidc $@7 control_params  */
+#line 604 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	    if (dialog.ex == NULL)
 	      rcparse_warning (_("BEDIT requires DIALOGEX"));
 	    res_string_to_id (&(yyval.dialog_control)->class, "BEDIT");
 	  }
-#line 2521 "rcparse.c" /* yacc.c:1648  */
+#line 2632 "rcparse.c"
     break;
 
-  case 68:
-#line 611 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 68: /* $@8: %empty  */
+#line 611 "rcparse.y"
+            {
 	      default_style = BS_CHECKBOX | WS_TABSTOP;
 	      base_style = BS_CHECKBOX | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2533 "rcparse.c" /* yacc.c:1648  */
+#line 2644 "rcparse.c"
     break;
 
-  case 69:
-#line 619 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 69: /* control: CHECKBOX optresidc $@8 control_params  */
+#line 619 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2541 "rcparse.c" /* yacc.c:1648  */
+#line 2652 "rcparse.c"
     break;
 
-  case 70:
-#line 623 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 70: /* $@9: %empty  */
+#line 623 "rcparse.y"
+            {
 	      /* This is as per MSDN documentation.  With some (???)
 		 versions of MS rc.exe their is no default style.  */
 	      default_style = CBS_SIMPLE | WS_TABSTOP;
@@ -2551,20 +2662,20 @@ yyreduce:
 	      class.u.id = CTL_COMBOBOX;
 	      res_text_field = res_null_text;
 	    }
-#line 2555 "rcparse.c" /* yacc.c:1648  */
+#line 2666 "rcparse.c"
     break;
 
-  case 71:
-#line 633 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 71: /* control: COMBOBOX $@9 control_params  */
+#line 633 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2563 "rcparse.c" /* yacc.c:1648  */
+#line 2674 "rcparse.c"
     break;
 
-  case 72:
-#line 638 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 72: /* control: CONTROL optresidc numexpr cresid control_styleexpr cnumexpr cnumexpr cnumexpr cnumexpr optcnumexpr opt_control_data  */
+#line 638 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_control ((yyvsp[-9].id), (yyvsp[-8].il), (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), (yyvsp[-2].il), (yyvsp[-7].id), style, (yyvsp[-1].il));
 	    if ((yyvsp[0].rcdata_item) != NULL)
 	      {
@@ -2573,363 +2684,363 @@ yyreduce:
 		(yyval.dialog_control)->data = (yyvsp[0].rcdata_item);
 	      }
 	  }
-#line 2577 "rcparse.c" /* yacc.c:1648  */
+#line 2688 "rcparse.c"
     break;
 
-  case 73:
-#line 649 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 73: /* control: CONTROL optresidc numexpr cresid control_styleexpr cnumexpr cnumexpr cnumexpr cnumexpr cnumexpr cnumexpr opt_control_data  */
+#line 649 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_control ((yyvsp[-10].id), (yyvsp[-9].il), (yyvsp[-6].il), (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), (yyvsp[-8].id), style, (yyvsp[-2].il));
 	    if (dialog.ex == NULL)
 	      rcparse_warning (_("help ID requires DIALOGEX"));
 	    (yyval.dialog_control)->help = (yyvsp[-1].il);
 	    (yyval.dialog_control)->data = (yyvsp[0].rcdata_item);
 	  }
-#line 2589 "rcparse.c" /* yacc.c:1648  */
+#line 2700 "rcparse.c"
     break;
 
-  case 74:
-#line 657 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 74: /* $@10: %empty  */
+#line 657 "rcparse.y"
+            {
 	      default_style = SS_CENTER | WS_GROUP;
 	      base_style = SS_CENTER;
 	      class.named = 0;
 	      class.u.id = CTL_STATIC;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2601 "rcparse.c" /* yacc.c:1648  */
+#line 2712 "rcparse.c"
     break;
 
-  case 75:
-#line 665 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 75: /* control: CTEXT optresidc $@10 control_params  */
+#line 665 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2609 "rcparse.c" /* yacc.c:1648  */
+#line 2720 "rcparse.c"
     break;
 
-  case 76:
-#line 669 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 76: /* $@11: %empty  */
+#line 669 "rcparse.y"
+            {
 	      default_style = BS_DEFPUSHBUTTON | WS_TABSTOP;
 	      base_style = BS_DEFPUSHBUTTON | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2621 "rcparse.c" /* yacc.c:1648  */
+#line 2732 "rcparse.c"
     break;
 
-  case 77:
-#line 677 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 77: /* control: DEFPUSHBUTTON optresidc $@11 control_params  */
+#line 677 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2629 "rcparse.c" /* yacc.c:1648  */
+#line 2740 "rcparse.c"
     break;
 
-  case 78:
-#line 681 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 78: /* $@12: %empty  */
+#line 681 "rcparse.y"
+            {
 	      default_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      base_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_EDIT;
 	      res_text_field = res_null_text;
 	    }
-#line 2641 "rcparse.c" /* yacc.c:1648  */
+#line 2752 "rcparse.c"
     break;
 
-  case 79:
-#line 689 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 79: /* control: EDITTEXT $@12 control_params  */
+#line 689 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2649 "rcparse.c" /* yacc.c:1648  */
+#line 2760 "rcparse.c"
     break;
 
-  case 80:
-#line 693 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 80: /* $@13: %empty  */
+#line 693 "rcparse.y"
+            {
 	      default_style = BS_GROUPBOX;
 	      base_style = BS_GROUPBOX;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2661 "rcparse.c" /* yacc.c:1648  */
+#line 2772 "rcparse.c"
     break;
 
-  case 81:
-#line 701 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 81: /* control: GROUPBOX optresidc $@13 control_params  */
+#line 701 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2669 "rcparse.c" /* yacc.c:1648  */
+#line 2780 "rcparse.c"
     break;
 
-  case 82:
-#line 705 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 82: /* $@14: %empty  */
+#line 705 "rcparse.y"
+            {
 	      default_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      base_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_EDIT;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2681 "rcparse.c" /* yacc.c:1648  */
+#line 2792 "rcparse.c"
     break;
 
-  case 83:
-#line 713 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 83: /* control: HEDIT optresidc $@14 control_params  */
+#line 713 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	    if (dialog.ex == NULL)
 	      rcparse_warning (_("IEDIT requires DIALOGEX"));
 	    res_string_to_id (&(yyval.dialog_control)->class, "HEDIT");
 	  }
-#line 2692 "rcparse.c" /* yacc.c:1648  */
+#line 2803 "rcparse.c"
     break;
 
-  case 84:
-#line 720 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 84: /* control: ICON resref numexpr cnumexpr cnumexpr opt_control_data  */
+#line 720 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_icon_control ((yyvsp[-4].id), (yyvsp[-3].il), (yyvsp[-2].il), (yyvsp[-1].il), 0, 0, 0, (yyvsp[0].rcdata_item),
 				      dialog.ex);
           }
-#line 2701 "rcparse.c" /* yacc.c:1648  */
+#line 2812 "rcparse.c"
     break;
 
-  case 85:
-#line 726 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 85: /* control: ICON resref numexpr cnumexpr cnumexpr cnumexpr cnumexpr opt_control_data  */
+#line 726 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_icon_control ((yyvsp[-6].id), (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), 0, 0, 0, (yyvsp[0].rcdata_item),
 				      dialog.ex);
           }
-#line 2710 "rcparse.c" /* yacc.c:1648  */
+#line 2821 "rcparse.c"
     break;
 
-  case 86:
-#line 732 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 86: /* control: ICON resref numexpr cnumexpr cnumexpr cnumexpr cnumexpr icon_styleexpr optcnumexpr opt_control_data  */
+#line 732 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_icon_control ((yyvsp[-8].id), (yyvsp[-7].il), (yyvsp[-6].il), (yyvsp[-5].il), style, (yyvsp[-1].il), 0, (yyvsp[0].rcdata_item),
 				      dialog.ex);
           }
-#line 2719 "rcparse.c" /* yacc.c:1648  */
+#line 2830 "rcparse.c"
     break;
 
-  case 87:
-#line 738 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 87: /* control: ICON resref numexpr cnumexpr cnumexpr cnumexpr cnumexpr icon_styleexpr cnumexpr cnumexpr opt_control_data  */
+#line 738 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_icon_control ((yyvsp[-9].id), (yyvsp[-8].il), (yyvsp[-7].il), (yyvsp[-6].il), style, (yyvsp[-2].il), (yyvsp[-1].il), (yyvsp[0].rcdata_item),
 				      dialog.ex);
           }
-#line 2728 "rcparse.c" /* yacc.c:1648  */
+#line 2839 "rcparse.c"
     break;
 
-  case 88:
-#line 743 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 88: /* $@15: %empty  */
+#line 743 "rcparse.y"
+            {
 	      default_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      base_style = ES_LEFT | WS_BORDER | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_EDIT;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2740 "rcparse.c" /* yacc.c:1648  */
+#line 2851 "rcparse.c"
     break;
 
-  case 89:
-#line 751 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 89: /* control: IEDIT optresidc $@15 control_params  */
+#line 751 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	    if (dialog.ex == NULL)
 	      rcparse_warning (_("IEDIT requires DIALOGEX"));
 	    res_string_to_id (&(yyval.dialog_control)->class, "IEDIT");
 	  }
-#line 2751 "rcparse.c" /* yacc.c:1648  */
+#line 2862 "rcparse.c"
     break;
 
-  case 90:
-#line 758 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 90: /* $@16: %empty  */
+#line 758 "rcparse.y"
+            {
 	      default_style = LBS_NOTIFY | WS_BORDER;
 	      base_style = LBS_NOTIFY | WS_BORDER;
 	      class.named = 0;
 	      class.u.id = CTL_LISTBOX;
 	      res_text_field = res_null_text;
 	    }
-#line 2763 "rcparse.c" /* yacc.c:1648  */
+#line 2874 "rcparse.c"
     break;
 
-  case 91:
-#line 766 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 91: /* control: LISTBOX $@16 control_params  */
+#line 766 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2771 "rcparse.c" /* yacc.c:1648  */
+#line 2882 "rcparse.c"
     break;
 
-  case 92:
-#line 770 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 92: /* $@17: %empty  */
+#line 770 "rcparse.y"
+            {
 	      default_style = SS_LEFT | WS_GROUP;
 	      base_style = SS_LEFT;
 	      class.named = 0;
 	      class.u.id = CTL_STATIC;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2783 "rcparse.c" /* yacc.c:1648  */
+#line 2894 "rcparse.c"
     break;
 
-  case 93:
-#line 778 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 93: /* control: LTEXT optresidc $@17 control_params  */
+#line 778 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2791 "rcparse.c" /* yacc.c:1648  */
+#line 2902 "rcparse.c"
     break;
 
-  case 94:
-#line 782 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 94: /* $@18: %empty  */
+#line 782 "rcparse.y"
+            {
 	      default_style = BS_PUSHBOX | WS_TABSTOP;
 	      base_style = BS_PUSHBOX;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	    }
-#line 2802 "rcparse.c" /* yacc.c:1648  */
+#line 2913 "rcparse.c"
     break;
 
-  case 95:
-#line 789 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 95: /* control: PUSHBOX optresidc $@18 control_params  */
+#line 789 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2810 "rcparse.c" /* yacc.c:1648  */
+#line 2921 "rcparse.c"
     break;
 
-  case 96:
-#line 793 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 96: /* $@19: %empty  */
+#line 793 "rcparse.y"
+            {
 	      default_style = BS_PUSHBUTTON | WS_TABSTOP;
 	      base_style = BS_PUSHBUTTON | WS_TABSTOP;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2822 "rcparse.c" /* yacc.c:1648  */
+#line 2933 "rcparse.c"
     break;
 
-  case 97:
-#line 801 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 97: /* control: PUSHBUTTON optresidc $@19 control_params  */
+#line 801 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2830 "rcparse.c" /* yacc.c:1648  */
+#line 2941 "rcparse.c"
     break;
 
-  case 98:
-#line 805 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 98: /* $@20: %empty  */
+#line 805 "rcparse.y"
+            {
 	      default_style = BS_RADIOBUTTON | WS_TABSTOP;
 	      base_style = BS_RADIOBUTTON;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2842 "rcparse.c" /* yacc.c:1648  */
+#line 2953 "rcparse.c"
     break;
 
-  case 99:
-#line 813 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 99: /* control: RADIOBUTTON optresidc $@20 control_params  */
+#line 813 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2850 "rcparse.c" /* yacc.c:1648  */
+#line 2961 "rcparse.c"
     break;
 
-  case 100:
-#line 817 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 100: /* $@21: %empty  */
+#line 817 "rcparse.y"
+            {
 	      default_style = SS_RIGHT | WS_GROUP;
 	      base_style = SS_RIGHT;
 	      class.named = 0;
 	      class.u.id = CTL_STATIC;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2862 "rcparse.c" /* yacc.c:1648  */
+#line 2973 "rcparse.c"
     break;
 
-  case 101:
-#line 825 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 101: /* control: RTEXT optresidc $@21 control_params  */
+#line 825 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2870 "rcparse.c" /* yacc.c:1648  */
+#line 2981 "rcparse.c"
     break;
 
-  case 102:
-#line 829 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 102: /* $@22: %empty  */
+#line 829 "rcparse.y"
+            {
 	      default_style = SBS_HORZ;
 	      base_style = 0;
 	      class.named = 0;
 	      class.u.id = CTL_SCROLLBAR;
 	      res_text_field = res_null_text;
 	    }
-#line 2882 "rcparse.c" /* yacc.c:1648  */
+#line 2993 "rcparse.c"
     break;
 
-  case 103:
-#line 837 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 103: /* control: SCROLLBAR $@22 control_params  */
+#line 837 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2890 "rcparse.c" /* yacc.c:1648  */
+#line 3001 "rcparse.c"
     break;
 
-  case 104:
-#line 841 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 104: /* $@23: %empty  */
+#line 841 "rcparse.y"
+            {
 	      default_style = BS_3STATE | WS_TABSTOP;
 	      base_style = BS_3STATE;
 	      class.named = 0;
 	      class.u.id = CTL_BUTTON;
 	      res_text_field = (yyvsp[0].id);
 	    }
-#line 2902 "rcparse.c" /* yacc.c:1648  */
+#line 3013 "rcparse.c"
     break;
 
-  case 105:
-#line 849 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 105: /* control: STATE3 optresidc $@23 control_params  */
+#line 849 "rcparse.y"
+          {
 	    (yyval.dialog_control) = (yyvsp[0].dialog_control);
 	  }
-#line 2910 "rcparse.c" /* yacc.c:1648  */
+#line 3021 "rcparse.c"
     break;
 
-  case 106:
-#line 854 "rcparse.y" /* yacc.c:1648  */
-    { style = WS_CHILD | WS_VISIBLE; }
-#line 2916 "rcparse.c" /* yacc.c:1648  */
+  case 106: /* $@24: %empty  */
+#line 854 "rcparse.y"
+            { style = WS_CHILD | WS_VISIBLE; }
+#line 3027 "rcparse.c"
     break;
 
-  case 107:
-#line 856 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 107: /* control: USERBUTTON resref numexpr ',' numexpr ',' numexpr ',' numexpr ',' numexpr ',' $@24 styleexpr optcnumexpr  */
+#line 856 "rcparse.y"
+          {
 	    rc_res_id cid;
 	    cid.named = 0;
 	    cid.u.id = CTL_BUTTON;
 	    (yyval.dialog_control) = define_control ((yyvsp[-13].id), (yyvsp[-12].il), (yyvsp[-10].il), (yyvsp[-8].il), (yyvsp[-6].il), (yyvsp[-4].il), cid,
 				 style, (yyvsp[0].il));
 	  }
-#line 2928 "rcparse.c" /* yacc.c:1648  */
+#line 3039 "rcparse.c"
     break;
 
-  case 108:
-#line 874 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 108: /* control_params: numexpr cnumexpr cnumexpr cnumexpr cnumexpr opt_control_data  */
+#line 874 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_control (res_text_field, (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), (yyvsp[-2].il), (yyvsp[-1].il), class,
 				 default_style | WS_CHILD | WS_VISIBLE, 0);
 	    if ((yyvsp[0].rcdata_item) != NULL)
@@ -2939,12 +3050,12 @@ yyreduce:
 		(yyval.dialog_control)->data = (yyvsp[0].rcdata_item);
 	      }
 	  }
-#line 2943 "rcparse.c" /* yacc.c:1648  */
+#line 3054 "rcparse.c"
     break;
 
-  case 109:
-#line 886 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 109: /* control_params: numexpr cnumexpr cnumexpr cnumexpr cnumexpr control_params_styleexpr optcnumexpr opt_control_data  */
+#line 886 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_control (res_text_field, (yyvsp[-7].il), (yyvsp[-6].il), (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), class, style, (yyvsp[-1].il));
 	    if ((yyvsp[0].rcdata_item) != NULL)
 	      {
@@ -2953,151 +3064,151 @@ yyreduce:
 		(yyval.dialog_control)->data = (yyvsp[0].rcdata_item);
 	      }
 	  }
-#line 2957 "rcparse.c" /* yacc.c:1648  */
+#line 3068 "rcparse.c"
     break;
 
-  case 110:
-#line 897 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 110: /* control_params: numexpr cnumexpr cnumexpr cnumexpr cnumexpr control_params_styleexpr cnumexpr cnumexpr opt_control_data  */
+#line 897 "rcparse.y"
+          {
 	    (yyval.dialog_control) = define_control (res_text_field, (yyvsp[-8].il), (yyvsp[-7].il), (yyvsp[-6].il), (yyvsp[-5].il), (yyvsp[-4].il), class, style, (yyvsp[-2].il));
 	    if (dialog.ex == NULL)
 	      rcparse_warning (_("help ID requires DIALOGEX"));
 	    (yyval.dialog_control)->help = (yyvsp[-1].il);
 	    (yyval.dialog_control)->data = (yyvsp[0].rcdata_item);
 	  }
-#line 2969 "rcparse.c" /* yacc.c:1648  */
+#line 3080 "rcparse.c"
     break;
 
-  case 111:
-#line 908 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 111: /* cresid: ',' resid  */
+#line 908 "rcparse.y"
+          {
 	    if ((yyvsp[0].id).named)
 	      res_unistring_to_id (&(yyval.id), (yyvsp[0].id).u.n.name);
 	    else
 	      (yyval.id)=(yyvsp[0].id);
 	  }
-#line 2980 "rcparse.c" /* yacc.c:1648  */
+#line 3091 "rcparse.c"
     break;
 
-  case 112:
-#line 918 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 112: /* optresidc: %empty  */
+#line 918 "rcparse.y"
+          {
 	    res_string_to_id (&(yyval.id), "");
 	  }
-#line 2988 "rcparse.c" /* yacc.c:1648  */
+#line 3099 "rcparse.c"
     break;
 
-  case 113:
-#line 921 "rcparse.y" /* yacc.c:1648  */
-    { (yyval.id)=(yyvsp[-1].id); }
-#line 2994 "rcparse.c" /* yacc.c:1648  */
+  case 113: /* optresidc: resid ','  */
+#line 921 "rcparse.y"
+                    { (yyval.id)=(yyvsp[-1].id); }
+#line 3105 "rcparse.c"
     break;
 
-  case 114:
-#line 926 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 114: /* resid: posnumexpr  */
+#line 926 "rcparse.y"
+          {
 	    (yyval.id).named = 0;
 	    (yyval.id).u.id = (yyvsp[0].il);
 	  }
-#line 3003 "rcparse.c" /* yacc.c:1648  */
+#line 3114 "rcparse.c"
     break;
 
-  case 115:
-#line 931 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 115: /* resid: res_unicode_string_concat  */
+#line 931 "rcparse.y"
+          {
 	    (yyval.id).named = 1;
 	    (yyval.id).u.n.name = (yyvsp[0].uni);
 	    (yyval.id).u.n.length = unichar_len ((yyvsp[0].uni));
 	  }
-#line 3013 "rcparse.c" /* yacc.c:1648  */
+#line 3124 "rcparse.c"
     break;
 
-  case 116:
-#line 940 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 116: /* opt_control_data: %empty  */
+#line 940 "rcparse.y"
+          {
 	    (yyval.rcdata_item) = NULL;
 	  }
-#line 3021 "rcparse.c" /* yacc.c:1648  */
+#line 3132 "rcparse.c"
     break;
 
-  case 117:
-#line 944 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 117: /* opt_control_data: BEG optrcdata_data END  */
+#line 944 "rcparse.y"
+          {
 	    (yyval.rcdata_item) = (yyvsp[-1].rcdata).first;
 	  }
-#line 3029 "rcparse.c" /* yacc.c:1648  */
+#line 3140 "rcparse.c"
     break;
 
-  case 118:
-#line 953 "rcparse.y" /* yacc.c:1648  */
-    { style = WS_CHILD | WS_VISIBLE; }
-#line 3035 "rcparse.c" /* yacc.c:1648  */
+  case 118: /* $@25: %empty  */
+#line 953 "rcparse.y"
+          { style = WS_CHILD | WS_VISIBLE; }
+#line 3146 "rcparse.c"
     break;
 
-  case 120:
-#line 959 "rcparse.y" /* yacc.c:1648  */
-    { style = SS_ICON | WS_CHILD | WS_VISIBLE; }
-#line 3041 "rcparse.c" /* yacc.c:1648  */
+  case 120: /* $@26: %empty  */
+#line 959 "rcparse.y"
+          { style = SS_ICON | WS_CHILD | WS_VISIBLE; }
+#line 3152 "rcparse.c"
     break;
 
-  case 122:
-#line 965 "rcparse.y" /* yacc.c:1648  */
-    { style = base_style | WS_CHILD | WS_VISIBLE; }
-#line 3047 "rcparse.c" /* yacc.c:1648  */
+  case 122: /* $@27: %empty  */
+#line 965 "rcparse.y"
+          { style = base_style | WS_CHILD | WS_VISIBLE; }
+#line 3158 "rcparse.c"
     break;
 
-  case 124:
-#line 973 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 124: /* font: id FONT memflags_move_discard file_name  */
+#line 973 "rcparse.y"
+          {
 	    define_font ((yyvsp[-3].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3058 "rcparse.c" /* yacc.c:1648  */
+#line 3169 "rcparse.c"
     break;
 
-  case 125:
-#line 985 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 125: /* icon: id ICON memflags_move_discard file_name  */
+#line 985 "rcparse.y"
+          {
 	    define_icon ((yyvsp[-3].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3069 "rcparse.c" /* yacc.c:1648  */
+#line 3180 "rcparse.c"
     break;
 
-  case 126:
-#line 998 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 126: /* language: LANGUAGE numexpr cnumexpr  */
+#line 998 "rcparse.y"
+          {
 	    language = (yyvsp[-1].il) | ((yyvsp[0].il) << SUBLANG_SHIFT);
 	  }
-#line 3077 "rcparse.c" /* yacc.c:1648  */
+#line 3188 "rcparse.c"
     break;
 
-  case 127:
-#line 1007 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 127: /* menu: id MENU suboptions BEG menuitems END  */
+#line 1007 "rcparse.y"
+          {
 	    define_menu ((yyvsp[-5].id), &(yyvsp[-3].res_info), (yyvsp[-1].menuitem));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3088 "rcparse.c" /* yacc.c:1648  */
+#line 3199 "rcparse.c"
     break;
 
-  case 128:
-#line 1017 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 128: /* menuitems: %empty  */
+#line 1017 "rcparse.y"
+          {
 	    (yyval.menuitem) = NULL;
 	  }
-#line 3096 "rcparse.c" /* yacc.c:1648  */
+#line 3207 "rcparse.c"
     break;
 
-  case 129:
-#line 1021 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 129: /* menuitems: menuitems menuitem  */
+#line 1021 "rcparse.y"
+          {
 	    if ((yyvsp[-1].menuitem) == NULL)
 	      (yyval.menuitem) = (yyvsp[0].menuitem);
 	    else
@@ -3110,127 +3221,143 @@ yyreduce:
 		(yyval.menuitem) = (yyvsp[-1].menuitem);
 	      }
 	  }
-#line 3114 "rcparse.c" /* yacc.c:1648  */
+#line 3225 "rcparse.c"
     break;
 
-  case 130:
-#line 1038 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 130: /* menuitem: MENUITEM res_unicode_string_concat cnumexpr menuitem_flags  */
+#line 1038 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-2].uni), (yyvsp[-1].il), (yyvsp[0].is), 0, 0, NULL);
 	  }
-#line 3122 "rcparse.c" /* yacc.c:1648  */
+#line 3233 "rcparse.c"
     break;
 
-  case 131:
-#line 1042 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 131: /* menuitem: MENUITEM SEPARATOR  */
+#line 1042 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem (NULL, 0, 0, 0, 0, NULL);
 	  }
-#line 3130 "rcparse.c" /* yacc.c:1648  */
+#line 3241 "rcparse.c"
     break;
 
-  case 132:
-#line 1046 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 132: /* menuitem: POPUP res_unicode_string_concat menuitem_flags BEG menuitems END  */
+#line 1046 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-4].uni), 0, (yyvsp[-3].is), 0, 0, (yyvsp[-1].menuitem));
 	  }
-#line 3138 "rcparse.c" /* yacc.c:1648  */
+#line 3249 "rcparse.c"
     break;
 
-  case 133:
-#line 1053 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 133: /* menuitem_flags: %empty  */
+#line 1053 "rcparse.y"
+          {
 	    (yyval.is) = 0;
 	  }
-#line 3146 "rcparse.c" /* yacc.c:1648  */
+#line 3257 "rcparse.c"
     break;
 
-  case 134:
-#line 1057 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 134: /* menuitem_flags: menuitem_flags ',' menuitem_flag  */
+#line 1057 "rcparse.y"
+          {
 	    (yyval.is) = (yyvsp[-2].is) | (yyvsp[0].is);
 	  }
-#line 3154 "rcparse.c" /* yacc.c:1648  */
+#line 3265 "rcparse.c"
     break;
 
-  case 135:
-#line 1061 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 135: /* menuitem_flags: menuitem_flags menuitem_flag  */
+#line 1061 "rcparse.y"
+          {
 	    (yyval.is) = (yyvsp[-1].is) | (yyvsp[0].is);
 	  }
-#line 3162 "rcparse.c" /* yacc.c:1648  */
+#line 3273 "rcparse.c"
     break;
 
-  case 136:
-#line 1068 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 136: /* menuitem_flag: CHECKED  */
+#line 1068 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_CHECKED;
 	  }
-#line 3170 "rcparse.c" /* yacc.c:1648  */
+#line 3281 "rcparse.c"
     break;
 
-  case 137:
-#line 1072 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 137: /* menuitem_flag: GRAYED  */
+#line 1072 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_GRAYED;
 	  }
-#line 3178 "rcparse.c" /* yacc.c:1648  */
+#line 3289 "rcparse.c"
     break;
 
-  case 138:
-#line 1076 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 138: /* menuitem_flag: HELP  */
+#line 1076 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_HELP;
 	  }
-#line 3186 "rcparse.c" /* yacc.c:1648  */
+#line 3297 "rcparse.c"
     break;
 
-  case 139:
-#line 1080 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 139: /* menuitem_flag: INACTIVE  */
+#line 1080 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_INACTIVE;
 	  }
-#line 3194 "rcparse.c" /* yacc.c:1648  */
+#line 3305 "rcparse.c"
     break;
 
-  case 140:
-#line 1084 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 140: /* menuitem_flag: MENUBARBREAK  */
+#line 1084 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_MENUBARBREAK;
 	  }
-#line 3202 "rcparse.c" /* yacc.c:1648  */
+#line 3313 "rcparse.c"
     break;
 
-  case 141:
-#line 1088 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 141: /* menuitem_flag: MENUBREAK  */
+#line 1088 "rcparse.y"
+          {
 	    (yyval.is) = MENUITEM_MENUBREAK;
 	  }
-#line 3210 "rcparse.c" /* yacc.c:1648  */
+#line 3321 "rcparse.c"
     break;
 
-  case 142:
-#line 1097 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 142: /* menuitem_flag: BITMAP  */
+#line 1092 "rcparse.y"
+          {
+	    (yyval.is) = MENUITEM_BITMAP;
+	  }
+#line 3329 "rcparse.c"
+    break;
+
+  case 143: /* menuitem_flag: OWNERDRAW  */
+#line 1096 "rcparse.y"
+          {
+	    (yyval.is) = MENUITEM_OWNERDRAW;
+	  }
+#line 3337 "rcparse.c"
+    break;
+
+  case 144: /* menuex: id MENUEX suboptions BEG menuexitems END  */
+#line 1105 "rcparse.y"
+          {
 	    define_menu ((yyvsp[-5].id), &(yyvsp[-3].res_info), (yyvsp[-1].menuitem));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3221 "rcparse.c" /* yacc.c:1648  */
+#line 3348 "rcparse.c"
     break;
 
-  case 143:
-#line 1107 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 145: /* menuexitems: %empty  */
+#line 1115 "rcparse.y"
+          {
 	    (yyval.menuitem) = NULL;
 	  }
-#line 3229 "rcparse.c" /* yacc.c:1648  */
+#line 3356 "rcparse.c"
     break;
 
-  case 144:
-#line 1111 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 146: /* menuexitems: menuexitems menuexitem  */
+#line 1119 "rcparse.y"
+          {
 	    if ((yyvsp[-1].menuitem) == NULL)
 	      (yyval.menuitem) = (yyvsp[0].menuitem);
 	    else
@@ -3243,157 +3370,157 @@ yyreduce:
 		(yyval.menuitem) = (yyvsp[-1].menuitem);
 	      }
 	  }
-#line 3247 "rcparse.c" /* yacc.c:1648  */
+#line 3374 "rcparse.c"
     break;
 
-  case 145:
-#line 1128 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 147: /* menuexitem: MENUITEM res_unicode_string_concat  */
+#line 1136 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[0].uni), 0, 0, 0, 0, NULL);
 	  }
-#line 3255 "rcparse.c" /* yacc.c:1648  */
+#line 3382 "rcparse.c"
     break;
 
-  case 146:
-#line 1132 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 148: /* menuexitem: MENUITEM res_unicode_string_concat cnumexpr  */
+#line 1140 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-1].uni), (yyvsp[0].il), 0, 0, 0, NULL);
 	  }
-#line 3263 "rcparse.c" /* yacc.c:1648  */
+#line 3390 "rcparse.c"
     break;
 
-  case 147:
-#line 1136 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 149: /* menuexitem: MENUITEM res_unicode_string_concat cnumexpr cnumexpr optcnumexpr  */
+#line 1144 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-3].uni), (yyvsp[-2].il), (yyvsp[-1].il), (yyvsp[0].il), 0, NULL);
 	  }
-#line 3271 "rcparse.c" /* yacc.c:1648  */
+#line 3398 "rcparse.c"
     break;
 
-  case 148:
-#line 1140 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 150: /* menuexitem: MENUITEM SEPARATOR  */
+#line 1148 "rcparse.y"
+          {
  	    (yyval.menuitem) = define_menuitem (NULL, 0, 0, 0, 0, NULL);
  	  }
-#line 3279 "rcparse.c" /* yacc.c:1648  */
+#line 3406 "rcparse.c"
     break;
 
-  case 149:
-#line 1144 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 151: /* menuexitem: POPUP res_unicode_string_concat BEG menuexitems END  */
+#line 1152 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-3].uni), 0, 0, 0, 0, (yyvsp[-1].menuitem));
 	  }
-#line 3287 "rcparse.c" /* yacc.c:1648  */
+#line 3414 "rcparse.c"
     break;
 
-  case 150:
-#line 1148 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 152: /* menuexitem: POPUP res_unicode_string_concat cnumexpr BEG menuexitems END  */
+#line 1156 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-4].uni), (yyvsp[-3].il), 0, 0, 0, (yyvsp[-1].menuitem));
 	  }
-#line 3295 "rcparse.c" /* yacc.c:1648  */
+#line 3422 "rcparse.c"
     break;
 
-  case 151:
-#line 1152 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 153: /* menuexitem: POPUP res_unicode_string_concat cnumexpr cnumexpr BEG menuexitems END  */
+#line 1160 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-5].uni), (yyvsp[-4].il), (yyvsp[-3].il), 0, 0, (yyvsp[-1].menuitem));
 	  }
-#line 3303 "rcparse.c" /* yacc.c:1648  */
+#line 3430 "rcparse.c"
     break;
 
-  case 152:
-#line 1157 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 154: /* menuexitem: POPUP res_unicode_string_concat cnumexpr cnumexpr cnumexpr optcnumexpr BEG menuexitems END  */
+#line 1165 "rcparse.y"
+          {
 	    (yyval.menuitem) = define_menuitem ((yyvsp[-7].uni), (yyvsp[-6].il), (yyvsp[-5].il), (yyvsp[-4].il), (yyvsp[-3].il), (yyvsp[-1].menuitem));
 	  }
-#line 3311 "rcparse.c" /* yacc.c:1648  */
+#line 3438 "rcparse.c"
     break;
 
-  case 153:
-#line 1166 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 155: /* messagetable: id MESSAGETABLE memflags_move file_name  */
+#line 1174 "rcparse.y"
+          {
 	    define_messagetable ((yyvsp[-3].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3322 "rcparse.c" /* yacc.c:1648  */
+#line 3449 "rcparse.c"
     break;
 
-  case 154:
-#line 1178 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 156: /* $@28: %empty  */
+#line 1186 "rcparse.y"
+          {
 	    rcparse_rcdata ();
 	  }
-#line 3330 "rcparse.c" /* yacc.c:1648  */
+#line 3457 "rcparse.c"
     break;
 
-  case 155:
-#line 1182 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 157: /* optrcdata_data: $@28 optrcdata_data_int  */
+#line 1190 "rcparse.y"
+          {
 	    rcparse_normal ();
 	    (yyval.rcdata) = (yyvsp[0].rcdata);
 	  }
-#line 3339 "rcparse.c" /* yacc.c:1648  */
+#line 3466 "rcparse.c"
     break;
 
-  case 156:
-#line 1190 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 158: /* optrcdata_data_int: %empty  */
+#line 1198 "rcparse.y"
+          {
 	    (yyval.rcdata).first = NULL;
 	    (yyval.rcdata).last = NULL;
 	  }
-#line 3348 "rcparse.c" /* yacc.c:1648  */
+#line 3475 "rcparse.c"
     break;
 
-  case 157:
-#line 1195 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 159: /* optrcdata_data_int: rcdata_data  */
+#line 1203 "rcparse.y"
+          {
 	    (yyval.rcdata) = (yyvsp[0].rcdata);
 	  }
-#line 3356 "rcparse.c" /* yacc.c:1648  */
+#line 3483 "rcparse.c"
     break;
 
-  case 158:
-#line 1202 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 160: /* rcdata_data: sizedstring  */
+#line 1210 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_string ((yyvsp[0].ss).s, (yyvsp[0].ss).length);
 	    (yyval.rcdata).first = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3368 "rcparse.c" /* yacc.c:1648  */
+#line 3495 "rcparse.c"
     break;
 
-  case 159:
-#line 1210 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 161: /* rcdata_data: sizedunistring  */
+#line 1218 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_unistring ((yyvsp[0].suni).s, (yyvsp[0].suni).length);
 	    (yyval.rcdata).first = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3380 "rcparse.c" /* yacc.c:1648  */
+#line 3507 "rcparse.c"
     break;
 
-  case 160:
-#line 1218 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 162: /* rcdata_data: sizednumexpr  */
+#line 1226 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_number ((yyvsp[0].i).val, (yyvsp[0].i).dword);
 	    (yyval.rcdata).first = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3392 "rcparse.c" /* yacc.c:1648  */
+#line 3519 "rcparse.c"
     break;
 
-  case 161:
-#line 1226 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 163: /* rcdata_data: rcdata_data ',' sizedstring  */
+#line 1234 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_string ((yyvsp[0].ss).s, (yyvsp[0].ss).length);
@@ -3401,12 +3528,12 @@ yyreduce:
 	    (yyvsp[-2].rcdata).last->next = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3405 "rcparse.c" /* yacc.c:1648  */
+#line 3532 "rcparse.c"
     break;
 
-  case 162:
-#line 1235 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 164: /* rcdata_data: rcdata_data ',' sizedunistring  */
+#line 1243 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_unistring ((yyvsp[0].suni).s, (yyvsp[0].suni).length);
@@ -3414,12 +3541,12 @@ yyreduce:
 	    (yyvsp[-2].rcdata).last->next = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3418 "rcparse.c" /* yacc.c:1648  */
+#line 3545 "rcparse.c"
     break;
 
-  case 163:
-#line 1244 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 165: /* rcdata_data: rcdata_data ',' sizednumexpr  */
+#line 1252 "rcparse.y"
+          {
 	    rc_rcdata_item *ri;
 
 	    ri = define_rcdata_number ((yyvsp[0].i).val, (yyvsp[0].i).dword);
@@ -3427,184 +3554,184 @@ yyreduce:
 	    (yyvsp[-2].rcdata).last->next = ri;
 	    (yyval.rcdata).last = ri;
 	  }
-#line 3431 "rcparse.c" /* yacc.c:1648  */
+#line 3558 "rcparse.c"
     break;
 
-  case 164:
-#line 1253 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 166: /* rcdata_data: rcdata_data ','  */
+#line 1261 "rcparse.y"
+          {
 	    (yyval.rcdata)=(yyvsp[-1].rcdata);
 	  }
-#line 3439 "rcparse.c" /* yacc.c:1648  */
+#line 3566 "rcparse.c"
     break;
 
-  case 165:
-#line 1262 "rcparse.y" /* yacc.c:1648  */
-    { sub_res_info = (yyvsp[-1].res_info); rcparse_rcdata (); }
-#line 3445 "rcparse.c" /* yacc.c:1648  */
+  case 167: /* $@29: %empty  */
+#line 1270 "rcparse.y"
+            { sub_res_info = (yyvsp[-1].res_info); rcparse_rcdata (); }
+#line 3572 "rcparse.c"
     break;
 
-  case 166:
-#line 1263 "rcparse.y" /* yacc.c:1648  */
-    { rcparse_normal (); }
-#line 3451 "rcparse.c" /* yacc.c:1648  */
+  case 168: /* stringtable: STRINGTABLE suboptions BEG $@29 string_data END  */
+#line 1271 "rcparse.y"
+                            { rcparse_normal (); }
+#line 3578 "rcparse.c"
     break;
 
-  case 168:
-#line 1269 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 170: /* string_data: string_data numexpr res_unicode_sizedstring_concat  */
+#line 1277 "rcparse.y"
+          {
 	    define_stringtable (&sub_res_info, (yyvsp[-1].il), (yyvsp[0].suni).s, (yyvsp[0].suni).length);
 	    rcparse_discard_strings ();
 	  }
-#line 3460 "rcparse.c" /* yacc.c:1648  */
+#line 3587 "rcparse.c"
     break;
 
-  case 169:
-#line 1274 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 171: /* string_data: string_data numexpr ',' res_unicode_sizedstring_concat  */
+#line 1282 "rcparse.y"
+          {
 	    define_stringtable (&sub_res_info, (yyvsp[-2].il), (yyvsp[0].suni).s, (yyvsp[0].suni).length);
 	    rcparse_discard_strings ();
 	  }
-#line 3469 "rcparse.c" /* yacc.c:1648  */
+#line 3596 "rcparse.c"
     break;
 
-  case 170:
-#line 1279 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 172: /* string_data: string_data error  */
+#line 1287 "rcparse.y"
+          {
 	    rcparse_warning (_("invalid stringtable resource."));
 	    abort ();
 	  }
-#line 3478 "rcparse.c" /* yacc.c:1648  */
+#line 3605 "rcparse.c"
     break;
 
-  case 171:
-#line 1287 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 173: /* rcdata_id: id  */
+#line 1295 "rcparse.y"
+          {
 	    (yyval.id)=(yyvsp[0].id);
 	  }
-#line 3486 "rcparse.c" /* yacc.c:1648  */
+#line 3613 "rcparse.c"
     break;
 
-  case 172:
-#line 1291 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 174: /* rcdata_id: HTML  */
+#line 1299 "rcparse.y"
+        {
 	  (yyval.id).named = 0;
 	  (yyval.id).u.id = 23;
 	}
-#line 3495 "rcparse.c" /* yacc.c:1648  */
+#line 3622 "rcparse.c"
     break;
 
-  case 173:
-#line 1296 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 175: /* rcdata_id: RCDATA  */
+#line 1304 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_RCDATA;
         }
-#line 3504 "rcparse.c" /* yacc.c:1648  */
+#line 3631 "rcparse.c"
     break;
 
-  case 174:
-#line 1301 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 176: /* rcdata_id: MANIFEST  */
+#line 1309 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_MANIFEST;
         }
-#line 3513 "rcparse.c" /* yacc.c:1648  */
+#line 3640 "rcparse.c"
     break;
 
-  case 175:
-#line 1306 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 177: /* rcdata_id: PLUGPLAY  */
+#line 1314 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_PLUGPLAY;
         }
-#line 3522 "rcparse.c" /* yacc.c:1648  */
+#line 3649 "rcparse.c"
     break;
 
-  case 176:
-#line 1311 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 178: /* rcdata_id: VXD  */
+#line 1319 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_VXD;
         }
-#line 3531 "rcparse.c" /* yacc.c:1648  */
+#line 3658 "rcparse.c"
     break;
 
-  case 177:
-#line 1316 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 179: /* rcdata_id: DLGINCLUDE  */
+#line 1324 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_DLGINCLUDE;
         }
-#line 3540 "rcparse.c" /* yacc.c:1648  */
+#line 3667 "rcparse.c"
     break;
 
-  case 178:
-#line 1321 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 180: /* rcdata_id: DLGINIT  */
+#line 1329 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_DLGINIT;
         }
-#line 3549 "rcparse.c" /* yacc.c:1648  */
+#line 3676 "rcparse.c"
     break;
 
-  case 179:
-#line 1326 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 181: /* rcdata_id: ANICURSOR  */
+#line 1334 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_ANICURSOR;
         }
-#line 3558 "rcparse.c" /* yacc.c:1648  */
+#line 3685 "rcparse.c"
     break;
 
-  case 180:
-#line 1331 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 182: /* rcdata_id: ANIICON  */
+#line 1339 "rcparse.y"
+        {
           (yyval.id).named = 0;
           (yyval.id).u.id = RT_ANIICON;
         }
-#line 3567 "rcparse.c" /* yacc.c:1648  */
+#line 3694 "rcparse.c"
     break;
 
-  case 181:
-#line 1342 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 183: /* user: id rcdata_id suboptions BEG optrcdata_data END  */
+#line 1350 "rcparse.y"
+          {
 	    define_user_data ((yyvsp[-5].id), (yyvsp[-4].id), &(yyvsp[-3].res_info), (yyvsp[-1].rcdata).first);
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3578 "rcparse.c" /* yacc.c:1648  */
+#line 3705 "rcparse.c"
     break;
 
-  case 182:
-#line 1349 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 184: /* user: id rcdata_id suboptions file_name  */
+#line 1357 "rcparse.y"
+          {
 	    define_user_file ((yyvsp[-3].id), (yyvsp[-2].id), &(yyvsp[-1].res_info), (yyvsp[0].s));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3589 "rcparse.c" /* yacc.c:1648  */
+#line 3716 "rcparse.c"
     break;
 
-  case 183:
-#line 1359 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 185: /* toolbar: id TOOLBAR suboptions numexpr cnumexpr BEG toolbar_data END  */
+#line 1367 "rcparse.y"
+        {
 	  define_toolbar ((yyvsp[-7].id), &(yyvsp[-5].res_info), (yyvsp[-4].il), (yyvsp[-3].il), (yyvsp[-1].toobar_item));
 	}
-#line 3597 "rcparse.c" /* yacc.c:1648  */
+#line 3724 "rcparse.c"
     break;
 
-  case 184:
-#line 1364 "rcparse.y" /* yacc.c:1648  */
-    { (yyval.toobar_item)= NULL; }
-#line 3603 "rcparse.c" /* yacc.c:1648  */
+  case 186: /* toolbar_data: %empty  */
+#line 1372 "rcparse.y"
+                          { (yyval.toobar_item)= NULL; }
+#line 3730 "rcparse.c"
     break;
 
-  case 185:
-#line 1366 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 187: /* toolbar_data: toolbar_data BUTTON id  */
+#line 1374 "rcparse.y"
+        {
 	  rc_toolbar_item *c,*n;
 	  c = (yyvsp[-2].toobar_item);
 	  n= (rc_toolbar_item *)
@@ -3622,12 +3749,12 @@ yyreduce:
 	  else
 	    (yyval.toobar_item) = (yyvsp[-2].toobar_item);
 	}
-#line 3626 "rcparse.c" /* yacc.c:1648  */
+#line 3753 "rcparse.c"
     break;
 
-  case 186:
-#line 1385 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 188: /* toolbar_data: toolbar_data SEPARATOR  */
+#line 1393 "rcparse.y"
+        {
 	  rc_toolbar_item *c,*n;
 	  c = (yyvsp[-1].toobar_item);
 	  n= (rc_toolbar_item *)
@@ -3646,405 +3773,405 @@ yyreduce:
 	  else
 	    (yyval.toobar_item) = (yyvsp[-1].toobar_item);
 	}
-#line 3650 "rcparse.c" /* yacc.c:1648  */
+#line 3777 "rcparse.c"
     break;
 
-  case 187:
-#line 1410 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 189: /* versioninfo: id VERSIONINFO fixedverinfo BEG verblocks END  */
+#line 1418 "rcparse.y"
+          {
 	    define_versioninfo ((yyvsp[-5].id), language, (yyvsp[-3].fixver), (yyvsp[-1].verinfo));
 	    if (yychar != YYEMPTY)
 	      YYERROR;
 	    rcparse_discard_strings ();
 	  }
-#line 3661 "rcparse.c" /* yacc.c:1648  */
+#line 3788 "rcparse.c"
     break;
 
-  case 188:
-#line 1420 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 190: /* fixedverinfo: %empty  */
+#line 1428 "rcparse.y"
+          {
 	    (yyval.fixver) = ((rc_fixed_versioninfo *)
 		  res_alloc (sizeof (rc_fixed_versioninfo)));
 	    memset ((yyval.fixver), 0, sizeof (rc_fixed_versioninfo));
 	  }
-#line 3671 "rcparse.c" /* yacc.c:1648  */
+#line 3798 "rcparse.c"
     break;
 
-  case 189:
-#line 1427 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 191: /* fixedverinfo: fixedverinfo FILEVERSION numexpr optcnumexpr optcnumexpr optcnumexpr  */
+#line 1435 "rcparse.y"
+          {
 	    (yyvsp[-5].fixver)->file_version_ms = ((yyvsp[-3].il) << 16) | ((yyvsp[-2].il) & 0xffff);
 	    (yyvsp[-5].fixver)->file_version_ls = ((yyvsp[-1].il) << 16) | ((yyvsp[0].il) & 0xffff);
 	    (yyval.fixver) = (yyvsp[-5].fixver);
 	  }
-#line 3681 "rcparse.c" /* yacc.c:1648  */
+#line 3808 "rcparse.c"
     break;
 
-  case 190:
-#line 1434 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 192: /* fixedverinfo: fixedverinfo PRODUCTVERSION numexpr optcnumexpr optcnumexpr optcnumexpr  */
+#line 1442 "rcparse.y"
+          {
 	    (yyvsp[-5].fixver)->product_version_ms = ((yyvsp[-3].il) << 16) | ((yyvsp[-2].il) & 0xffff);
 	    (yyvsp[-5].fixver)->product_version_ls = ((yyvsp[-1].il) << 16) | ((yyvsp[0].il) & 0xffff);
 	    (yyval.fixver) = (yyvsp[-5].fixver);
 	  }
-#line 3691 "rcparse.c" /* yacc.c:1648  */
+#line 3818 "rcparse.c"
     break;
 
-  case 191:
-#line 1440 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 193: /* fixedverinfo: fixedverinfo FILEFLAGSMASK numexpr  */
+#line 1448 "rcparse.y"
+          {
 	    (yyvsp[-2].fixver)->file_flags_mask = (yyvsp[0].il);
 	    (yyval.fixver) = (yyvsp[-2].fixver);
 	  }
-#line 3700 "rcparse.c" /* yacc.c:1648  */
+#line 3827 "rcparse.c"
     break;
 
-  case 192:
-#line 1445 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 194: /* fixedverinfo: fixedverinfo FILEFLAGS numexpr  */
+#line 1453 "rcparse.y"
+          {
 	    (yyvsp[-2].fixver)->file_flags = (yyvsp[0].il);
 	    (yyval.fixver) = (yyvsp[-2].fixver);
 	  }
-#line 3709 "rcparse.c" /* yacc.c:1648  */
+#line 3836 "rcparse.c"
     break;
 
-  case 193:
-#line 1450 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 195: /* fixedverinfo: fixedverinfo FILEOS numexpr  */
+#line 1458 "rcparse.y"
+          {
 	    (yyvsp[-2].fixver)->file_os = (yyvsp[0].il);
 	    (yyval.fixver) = (yyvsp[-2].fixver);
 	  }
-#line 3718 "rcparse.c" /* yacc.c:1648  */
+#line 3845 "rcparse.c"
     break;
 
-  case 194:
-#line 1455 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 196: /* fixedverinfo: fixedverinfo FILETYPE numexpr  */
+#line 1463 "rcparse.y"
+          {
 	    (yyvsp[-2].fixver)->file_type = (yyvsp[0].il);
 	    (yyval.fixver) = (yyvsp[-2].fixver);
 	  }
-#line 3727 "rcparse.c" /* yacc.c:1648  */
+#line 3854 "rcparse.c"
     break;
 
-  case 195:
-#line 1460 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 197: /* fixedverinfo: fixedverinfo FILESUBTYPE numexpr  */
+#line 1468 "rcparse.y"
+          {
 	    (yyvsp[-2].fixver)->file_subtype = (yyvsp[0].il);
 	    (yyval.fixver) = (yyvsp[-2].fixver);
 	  }
-#line 3736 "rcparse.c" /* yacc.c:1648  */
+#line 3863 "rcparse.c"
     break;
 
-  case 196:
-#line 1474 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 198: /* verblocks: %empty  */
+#line 1482 "rcparse.y"
+          {
 	    (yyval.verinfo) = NULL;
 	  }
-#line 3744 "rcparse.c" /* yacc.c:1648  */
+#line 3871 "rcparse.c"
     break;
 
-  case 197:
-#line 1478 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 199: /* verblocks: verblocks BLOCKSTRINGFILEINFO BEG verstringtables END  */
+#line 1486 "rcparse.y"
+          {
 	    (yyval.verinfo) = append_ver_stringfileinfo ((yyvsp[-4].verinfo), (yyvsp[-1].verstringtable));
 	  }
-#line 3752 "rcparse.c" /* yacc.c:1648  */
+#line 3879 "rcparse.c"
     break;
 
-  case 198:
-#line 1482 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 200: /* verblocks: verblocks BLOCKVARFILEINFO BEG VALUE res_unicode_string_concat vertrans END  */
+#line 1490 "rcparse.y"
+          {
 	    (yyval.verinfo) = append_ver_varfileinfo ((yyvsp[-6].verinfo), (yyvsp[-2].uni), (yyvsp[-1].vervar));
 	  }
-#line 3760 "rcparse.c" /* yacc.c:1648  */
+#line 3887 "rcparse.c"
     break;
 
-  case 199:
-#line 1489 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 201: /* verstringtables: %empty  */
+#line 1497 "rcparse.y"
+          {
 	    (yyval.verstringtable) = NULL;
 	  }
-#line 3768 "rcparse.c" /* yacc.c:1648  */
+#line 3895 "rcparse.c"
     break;
 
-  case 200:
-#line 1493 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 202: /* verstringtables: verstringtables BLOCK BEG vervals END  */
+#line 1501 "rcparse.y"
+          {
 	    (yyval.verstringtable) = append_ver_stringtable ((yyvsp[-4].verstringtable), (yyvsp[-3].s), (yyvsp[-1].verstring));
 	  }
-#line 3776 "rcparse.c" /* yacc.c:1648  */
+#line 3903 "rcparse.c"
     break;
 
-  case 201:
-#line 1500 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 203: /* vervals: %empty  */
+#line 1508 "rcparse.y"
+          {
 	    (yyval.verstring) = NULL;
 	  }
-#line 3784 "rcparse.c" /* yacc.c:1648  */
+#line 3911 "rcparse.c"
     break;
 
-  case 202:
-#line 1504 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 204: /* vervals: vervals VALUE res_unicode_string_concat ',' res_unicode_string_concat  */
+#line 1512 "rcparse.y"
+          {
 	    (yyval.verstring) = append_verval ((yyvsp[-4].verstring), (yyvsp[-2].uni), (yyvsp[0].uni));
 	  }
-#line 3792 "rcparse.c" /* yacc.c:1648  */
+#line 3919 "rcparse.c"
     break;
 
-  case 203:
-#line 1511 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 205: /* vertrans: %empty  */
+#line 1519 "rcparse.y"
+          {
 	    (yyval.vervar) = NULL;
 	  }
-#line 3800 "rcparse.c" /* yacc.c:1648  */
+#line 3927 "rcparse.c"
     break;
 
-  case 204:
-#line 1515 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 206: /* vertrans: vertrans cnumexpr cnumexpr  */
+#line 1523 "rcparse.y"
+          {
 	    (yyval.vervar) = append_vertrans ((yyvsp[-2].vervar), (yyvsp[-1].il), (yyvsp[0].il));
 	  }
-#line 3808 "rcparse.c" /* yacc.c:1648  */
+#line 3935 "rcparse.c"
     break;
 
-  case 205:
-#line 1524 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 207: /* id: posnumexpr  */
+#line 1532 "rcparse.y"
+          {
 	    (yyval.id).named = 0;
 	    (yyval.id).u.id = (yyvsp[0].il);
 	  }
-#line 3817 "rcparse.c" /* yacc.c:1648  */
+#line 3944 "rcparse.c"
     break;
 
-  case 206:
-#line 1529 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 208: /* id: resname  */
+#line 1537 "rcparse.y"
+          {
 	    res_unistring_to_id (&(yyval.id), (yyvsp[0].uni));
 	  }
-#line 3825 "rcparse.c" /* yacc.c:1648  */
+#line 3952 "rcparse.c"
     break;
 
-  case 207:
-#line 1538 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 209: /* resname: res_unicode_string  */
+#line 1546 "rcparse.y"
+          {
 	    (yyval.uni) = (yyvsp[0].uni);
 	  }
-#line 3833 "rcparse.c" /* yacc.c:1648  */
+#line 3960 "rcparse.c"
     break;
 
-  case 208:
-#line 1542 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 210: /* resname: STRING  */
+#line 1550 "rcparse.y"
+          {
 	    unichar *h = NULL;
 	    unicode_from_ascii ((rc_uint_type *) NULL, &h, (yyvsp[0].s));
 	    (yyval.uni) = h;
 	  }
-#line 3843 "rcparse.c" /* yacc.c:1648  */
+#line 3970 "rcparse.c"
     break;
 
-  case 209:
-#line 1552 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 211: /* resref: posnumexpr ','  */
+#line 1560 "rcparse.y"
+          {
 	    (yyval.id).named = 0;
 	    (yyval.id).u.id = (yyvsp[-1].il);
 	  }
-#line 3852 "rcparse.c" /* yacc.c:1648  */
+#line 3979 "rcparse.c"
     break;
 
-  case 210:
-#line 1557 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 212: /* resref: resname  */
+#line 1565 "rcparse.y"
+          {
 	    res_unistring_to_id (&(yyval.id), (yyvsp[0].uni));
 	  }
-#line 3860 "rcparse.c" /* yacc.c:1648  */
+#line 3987 "rcparse.c"
     break;
 
-  case 211:
-#line 1561 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 213: /* resref: resname ','  */
+#line 1569 "rcparse.y"
+          {
 	    res_unistring_to_id (&(yyval.id), (yyvsp[-1].uni));
 	  }
-#line 3868 "rcparse.c" /* yacc.c:1648  */
+#line 3995 "rcparse.c"
     break;
 
-  case 212:
-#line 1571 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 214: /* suboptions: %empty  */
+#line 1579 "rcparse.y"
+          {
 	    memset (&(yyval.res_info), 0, sizeof (rc_res_res_info));
 	    (yyval.res_info).language = language;
 	    /* FIXME: Is this the right default?  */
 	    (yyval.res_info).memflags = MEMFLAG_MOVEABLE | MEMFLAG_PURE | MEMFLAG_DISCARDABLE;
 	  }
-#line 3879 "rcparse.c" /* yacc.c:1648  */
+#line 4006 "rcparse.c"
     break;
 
-  case 213:
-#line 1578 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 215: /* suboptions: suboptions memflag  */
+#line 1586 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-1].res_info);
 	    (yyval.res_info).memflags |= (yyvsp[0].memflags).on;
 	    (yyval.res_info).memflags &=~ (yyvsp[0].memflags).off;
 	  }
-#line 3889 "rcparse.c" /* yacc.c:1648  */
+#line 4016 "rcparse.c"
     break;
 
-  case 214:
-#line 1584 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 216: /* suboptions: suboptions CHARACTERISTICS numexpr  */
+#line 1592 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-2].res_info);
 	    (yyval.res_info).characteristics = (yyvsp[0].il);
 	  }
-#line 3898 "rcparse.c" /* yacc.c:1648  */
+#line 4025 "rcparse.c"
     break;
 
-  case 215:
-#line 1589 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 217: /* suboptions: suboptions LANGUAGE numexpr cnumexpr  */
+#line 1597 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-3].res_info);
 	    (yyval.res_info).language = (yyvsp[-1].il) | ((yyvsp[0].il) << SUBLANG_SHIFT);
 	  }
-#line 3907 "rcparse.c" /* yacc.c:1648  */
+#line 4034 "rcparse.c"
     break;
 
-  case 216:
-#line 1594 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 218: /* suboptions: suboptions VERSIONK numexpr  */
+#line 1602 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-2].res_info);
 	    (yyval.res_info).version = (yyvsp[0].il);
 	  }
-#line 3916 "rcparse.c" /* yacc.c:1648  */
+#line 4043 "rcparse.c"
     break;
 
-  case 217:
-#line 1604 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 219: /* memflags_move_discard: %empty  */
+#line 1612 "rcparse.y"
+          {
 	    memset (&(yyval.res_info), 0, sizeof (rc_res_res_info));
 	    (yyval.res_info).language = language;
 	    (yyval.res_info).memflags = MEMFLAG_MOVEABLE | MEMFLAG_DISCARDABLE;
 	  }
-#line 3926 "rcparse.c" /* yacc.c:1648  */
+#line 4053 "rcparse.c"
     break;
 
-  case 218:
-#line 1610 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 220: /* memflags_move_discard: memflags_move_discard memflag  */
+#line 1618 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-1].res_info);
 	    (yyval.res_info).memflags |= (yyvsp[0].memflags).on;
 	    (yyval.res_info).memflags &=~ (yyvsp[0].memflags).off;
 	  }
-#line 3936 "rcparse.c" /* yacc.c:1648  */
+#line 4063 "rcparse.c"
     break;
 
-  case 219:
-#line 1621 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 221: /* memflags_move: %empty  */
+#line 1629 "rcparse.y"
+          {
 	    memset (&(yyval.res_info), 0, sizeof (rc_res_res_info));
 	    (yyval.res_info).language = language;
 	    (yyval.res_info).memflags = MEMFLAG_MOVEABLE | MEMFLAG_PURE | MEMFLAG_DISCARDABLE;
 	  }
-#line 3946 "rcparse.c" /* yacc.c:1648  */
+#line 4073 "rcparse.c"
     break;
 
-  case 220:
-#line 1627 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 222: /* memflags_move: memflags_move memflag  */
+#line 1635 "rcparse.y"
+          {
 	    (yyval.res_info) = (yyvsp[-1].res_info);
 	    (yyval.res_info).memflags |= (yyvsp[0].memflags).on;
 	    (yyval.res_info).memflags &=~ (yyvsp[0].memflags).off;
 	  }
-#line 3956 "rcparse.c" /* yacc.c:1648  */
+#line 4083 "rcparse.c"
     break;
 
-  case 221:
-#line 1639 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 223: /* memflag: MOVEABLE  */
+#line 1647 "rcparse.y"
+          {
 	    (yyval.memflags).on = MEMFLAG_MOVEABLE;
 	    (yyval.memflags).off = 0;
 	  }
-#line 3965 "rcparse.c" /* yacc.c:1648  */
+#line 4092 "rcparse.c"
     break;
 
-  case 222:
-#line 1644 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 224: /* memflag: FIXED  */
+#line 1652 "rcparse.y"
+          {
 	    (yyval.memflags).on = 0;
 	    (yyval.memflags).off = MEMFLAG_MOVEABLE;
 	  }
-#line 3974 "rcparse.c" /* yacc.c:1648  */
+#line 4101 "rcparse.c"
     break;
 
-  case 223:
-#line 1649 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 225: /* memflag: PURE  */
+#line 1657 "rcparse.y"
+          {
 	    (yyval.memflags).on = MEMFLAG_PURE;
 	    (yyval.memflags).off = 0;
 	  }
-#line 3983 "rcparse.c" /* yacc.c:1648  */
+#line 4110 "rcparse.c"
     break;
 
-  case 224:
-#line 1654 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 226: /* memflag: IMPURE  */
+#line 1662 "rcparse.y"
+          {
 	    (yyval.memflags).on = 0;
 	    (yyval.memflags).off = MEMFLAG_PURE;
 	  }
-#line 3992 "rcparse.c" /* yacc.c:1648  */
+#line 4119 "rcparse.c"
     break;
 
-  case 225:
-#line 1659 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 227: /* memflag: PRELOAD  */
+#line 1667 "rcparse.y"
+          {
 	    (yyval.memflags).on = MEMFLAG_PRELOAD;
 	    (yyval.memflags).off = 0;
 	  }
-#line 4001 "rcparse.c" /* yacc.c:1648  */
+#line 4128 "rcparse.c"
     break;
 
-  case 226:
-#line 1664 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 228: /* memflag: LOADONCALL  */
+#line 1672 "rcparse.y"
+          {
 	    (yyval.memflags).on = 0;
 	    (yyval.memflags).off = MEMFLAG_PRELOAD;
 	  }
-#line 4010 "rcparse.c" /* yacc.c:1648  */
+#line 4137 "rcparse.c"
     break;
 
-  case 227:
-#line 1669 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 229: /* memflag: DISCARDABLE  */
+#line 1677 "rcparse.y"
+          {
 	    (yyval.memflags).on = MEMFLAG_DISCARDABLE;
 	    (yyval.memflags).off = 0;
 	  }
-#line 4019 "rcparse.c" /* yacc.c:1648  */
+#line 4146 "rcparse.c"
     break;
 
-  case 228:
-#line 1679 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 230: /* file_name: QUOTEDSTRING  */
+#line 1687 "rcparse.y"
+          {
 	    (yyval.s) = (yyvsp[0].s);
 	  }
-#line 4027 "rcparse.c" /* yacc.c:1648  */
+#line 4154 "rcparse.c"
     break;
 
-  case 229:
-#line 1683 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 231: /* file_name: STRING  */
+#line 1691 "rcparse.y"
+          {
 	    (yyval.s) = (yyvsp[0].s);
 	  }
-#line 4035 "rcparse.c" /* yacc.c:1648  */
+#line 4162 "rcparse.c"
     break;
 
-  case 230:
-#line 1691 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 232: /* res_unicode_string_concat: res_unicode_string  */
+#line 1699 "rcparse.y"
+          {
 	    (yyval.uni) = (yyvsp[0].uni);
 	  }
-#line 4043 "rcparse.c" /* yacc.c:1648  */
+#line 4170 "rcparse.c"
     break;
 
-  case 231:
-#line 1696 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 233: /* res_unicode_string_concat: res_unicode_string_concat res_unicode_string  */
+#line 1704 "rcparse.y"
+          {
 	    rc_uint_type l1 = unichar_len ((yyvsp[-1].uni));
 	    rc_uint_type l2 = unichar_len ((yyvsp[0].uni));
 	    unichar *h = (unichar *) res_alloc ((l1 + l2 + 1) * sizeof (unichar));
@@ -4055,58 +4182,58 @@ yyreduce:
 	    h[l1 + l2] = 0;
 	    (yyval.uni) = h;
 	  }
-#line 4059 "rcparse.c" /* yacc.c:1648  */
+#line 4186 "rcparse.c"
     break;
 
-  case 232:
-#line 1711 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 234: /* res_unicode_string: QUOTEDUNISTRING  */
+#line 1719 "rcparse.y"
+          {
 	    (yyval.uni) = unichar_dup ((yyvsp[0].uni));
 	  }
-#line 4067 "rcparse.c" /* yacc.c:1648  */
+#line 4194 "rcparse.c"
     break;
 
-  case 233:
-#line 1715 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 235: /* res_unicode_string: QUOTEDSTRING  */
+#line 1723 "rcparse.y"
+          {
 	    unichar *h = NULL;
 	    unicode_from_ascii ((rc_uint_type *) NULL, &h, (yyvsp[0].s));
 	    (yyval.uni) = h;
 	  }
-#line 4077 "rcparse.c" /* yacc.c:1648  */
+#line 4204 "rcparse.c"
     break;
 
-  case 234:
-#line 1724 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 236: /* res_unicode_sizedstring: sizedunistring  */
+#line 1732 "rcparse.y"
+          {
 	    (yyval.suni) = (yyvsp[0].suni);
 	  }
-#line 4085 "rcparse.c" /* yacc.c:1648  */
+#line 4212 "rcparse.c"
     break;
 
-  case 235:
-#line 1728 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 237: /* res_unicode_sizedstring: sizedstring  */
+#line 1736 "rcparse.y"
+          {
 	    unichar *h = NULL;
 	    rc_uint_type l = 0;
 	    unicode_from_ascii_len (&l, &h, (yyvsp[0].ss).s, (yyvsp[0].ss).length);
 	    (yyval.suni).s = h;
 	    (yyval.suni).length = l;
 	  }
-#line 4097 "rcparse.c" /* yacc.c:1648  */
+#line 4224 "rcparse.c"
     break;
 
-  case 236:
-#line 1740 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 238: /* res_unicode_sizedstring_concat: res_unicode_sizedstring  */
+#line 1748 "rcparse.y"
+          {
 	    (yyval.suni) = (yyvsp[0].suni);
 	  }
-#line 4105 "rcparse.c" /* yacc.c:1648  */
+#line 4232 "rcparse.c"
     break;
 
-  case 237:
-#line 1745 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 239: /* res_unicode_sizedstring_concat: res_unicode_sizedstring_concat res_unicode_sizedstring  */
+#line 1753 "rcparse.y"
+          {
 	    rc_uint_type l1 = (yyvsp[-1].suni).length;
 	    rc_uint_type l2 = (yyvsp[0].suni).length;
 	    unichar *h = (unichar *) res_alloc ((l1 + l2 + 1) * sizeof (unichar));
@@ -4118,20 +4245,20 @@ yyreduce:
 	    (yyval.suni).length = l1 + l2;
 	    (yyval.suni).s = h;
 	  }
-#line 4122 "rcparse.c" /* yacc.c:1648  */
+#line 4249 "rcparse.c"
     break;
 
-  case 238:
-#line 1761 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 240: /* sizedstring: SIZEDSTRING  */
+#line 1769 "rcparse.y"
+          {
 	    (yyval.ss) = (yyvsp[0].ss);
 	  }
-#line 4130 "rcparse.c" /* yacc.c:1648  */
+#line 4257 "rcparse.c"
     break;
 
-  case 239:
-#line 1765 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 241: /* sizedstring: sizedstring SIZEDSTRING  */
+#line 1773 "rcparse.y"
+          {
 	    rc_uint_type l = (yyvsp[-1].ss).length + (yyvsp[0].ss).length;
 	    char *h = (char *) res_alloc (l);
 	    memcpy (h, (yyvsp[-1].ss).s, (yyvsp[-1].ss).length);
@@ -4139,20 +4266,20 @@ yyreduce:
 	    (yyval.ss).s = h;
 	    (yyval.ss).length = l;
 	  }
-#line 4143 "rcparse.c" /* yacc.c:1648  */
+#line 4270 "rcparse.c"
     break;
 
-  case 240:
-#line 1777 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 242: /* sizedunistring: SIZEDUNISTRING  */
+#line 1785 "rcparse.y"
+          {
 	    (yyval.suni) = (yyvsp[0].suni);
 	  }
-#line 4151 "rcparse.c" /* yacc.c:1648  */
+#line 4278 "rcparse.c"
     break;
 
-  case 241:
-#line 1781 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 243: /* sizedunistring: sizedunistring SIZEDUNISTRING  */
+#line 1789 "rcparse.y"
+          {
 	    rc_uint_type l = (yyvsp[-1].suni).length + (yyvsp[0].suni).length;
 	    unichar *h = (unichar *) res_alloc (l * sizeof (unichar));
 	    memcpy (h, (yyvsp[-1].suni).s, (yyvsp[-1].suni).length * sizeof (unichar));
@@ -4160,311 +4287,312 @@ yyreduce:
 	    (yyval.suni).s = h;
 	    (yyval.suni).length = l;
 	  }
-#line 4164 "rcparse.c" /* yacc.c:1648  */
+#line 4291 "rcparse.c"
     break;
 
-  case 242:
-#line 1803 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 244: /* styleexpr: parennumber  */
+#line 1811 "rcparse.y"
+          {
 	    style |= (yyvsp[0].il);
 	  }
-#line 4172 "rcparse.c" /* yacc.c:1648  */
+#line 4299 "rcparse.c"
     break;
 
-  case 243:
-#line 1807 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 245: /* styleexpr: NOT parennumber  */
+#line 1815 "rcparse.y"
+          {
 	    style &=~ (yyvsp[0].il);
 	  }
-#line 4180 "rcparse.c" /* yacc.c:1648  */
+#line 4307 "rcparse.c"
     break;
 
-  case 244:
-#line 1811 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 246: /* styleexpr: styleexpr '|' parennumber  */
+#line 1819 "rcparse.y"
+          {
 	    style |= (yyvsp[0].il);
 	  }
-#line 4188 "rcparse.c" /* yacc.c:1648  */
+#line 4315 "rcparse.c"
     break;
 
-  case 245:
-#line 1815 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 247: /* styleexpr: styleexpr '|' NOT parennumber  */
+#line 1823 "rcparse.y"
+          {
 	    style &=~ (yyvsp[0].il);
 	  }
-#line 4196 "rcparse.c" /* yacc.c:1648  */
+#line 4323 "rcparse.c"
     break;
 
-  case 246:
-#line 1822 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 248: /* parennumber: NUMBER  */
+#line 1830 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].i).val;
 	  }
-#line 4204 "rcparse.c" /* yacc.c:1648  */
+#line 4331 "rcparse.c"
     break;
 
-  case 247:
-#line 1826 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 249: /* parennumber: '(' numexpr ')'  */
+#line 1834 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[-1].il);
 	  }
-#line 4212 "rcparse.c" /* yacc.c:1648  */
+#line 4339 "rcparse.c"
     break;
 
-  case 248:
-#line 1835 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 250: /* optcnumexpr: %empty  */
+#line 1843 "rcparse.y"
+          {
 	    (yyval.il) = 0;
 	  }
-#line 4220 "rcparse.c" /* yacc.c:1648  */
+#line 4347 "rcparse.c"
     break;
 
-  case 249:
-#line 1839 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 251: /* optcnumexpr: cnumexpr  */
+#line 1847 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].il);
 	  }
-#line 4228 "rcparse.c" /* yacc.c:1648  */
+#line 4355 "rcparse.c"
     break;
 
-  case 250:
-#line 1848 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 252: /* cnumexpr: ',' numexpr  */
+#line 1856 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].il);
 	  }
-#line 4236 "rcparse.c" /* yacc.c:1648  */
+#line 4363 "rcparse.c"
     break;
 
-  case 251:
-#line 1857 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 253: /* numexpr: sizednumexpr  */
+#line 1865 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].i).val;
 	  }
-#line 4244 "rcparse.c" /* yacc.c:1648  */
+#line 4371 "rcparse.c"
     break;
 
-  case 252:
-#line 1866 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 254: /* sizednumexpr: NUMBER  */
+#line 1874 "rcparse.y"
+          {
 	    (yyval.i) = (yyvsp[0].i);
 	  }
-#line 4252 "rcparse.c" /* yacc.c:1648  */
+#line 4379 "rcparse.c"
     break;
 
-  case 253:
-#line 1870 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 255: /* sizednumexpr: '(' sizednumexpr ')'  */
+#line 1878 "rcparse.y"
+          {
 	    (yyval.i) = (yyvsp[-1].i);
 	  }
-#line 4260 "rcparse.c" /* yacc.c:1648  */
+#line 4387 "rcparse.c"
     break;
 
-  case 254:
-#line 1874 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 256: /* sizednumexpr: '~' sizednumexpr  */
+#line 1882 "rcparse.y"
+          {
 	    (yyval.i).val = ~ (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[0].i).dword;
 	  }
-#line 4269 "rcparse.c" /* yacc.c:1648  */
+#line 4396 "rcparse.c"
     break;
 
-  case 255:
-#line 1879 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 257: /* sizednumexpr: '-' sizednumexpr  */
+#line 1887 "rcparse.y"
+          {
 	    (yyval.i).val = - (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[0].i).dword;
 	  }
-#line 4278 "rcparse.c" /* yacc.c:1648  */
+#line 4405 "rcparse.c"
     break;
 
-  case 256:
-#line 1884 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 258: /* sizednumexpr: sizednumexpr '*' sizednumexpr  */
+#line 1892 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val * (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4287 "rcparse.c" /* yacc.c:1648  */
+#line 4414 "rcparse.c"
     break;
 
-  case 257:
-#line 1889 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 259: /* sizednumexpr: sizednumexpr '/' sizednumexpr  */
+#line 1897 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val / ((yyvsp[0].i).val ? (yyvsp[0].i).val : 1);
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4296 "rcparse.c" /* yacc.c:1648  */
+#line 4423 "rcparse.c"
     break;
 
-  case 258:
-#line 1894 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 260: /* sizednumexpr: sizednumexpr '%' sizednumexpr  */
+#line 1902 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val % ((yyvsp[0].i).val ? (yyvsp[0].i).val : 1);
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4305 "rcparse.c" /* yacc.c:1648  */
+#line 4432 "rcparse.c"
     break;
 
-  case 259:
-#line 1899 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 261: /* sizednumexpr: sizednumexpr '+' sizednumexpr  */
+#line 1907 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val + (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4314 "rcparse.c" /* yacc.c:1648  */
+#line 4441 "rcparse.c"
     break;
 
-  case 260:
-#line 1904 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 262: /* sizednumexpr: sizednumexpr '-' sizednumexpr  */
+#line 1912 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val - (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4323 "rcparse.c" /* yacc.c:1648  */
+#line 4450 "rcparse.c"
     break;
 
-  case 261:
-#line 1909 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 263: /* sizednumexpr: sizednumexpr '&' sizednumexpr  */
+#line 1917 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val & (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4332 "rcparse.c" /* yacc.c:1648  */
+#line 4459 "rcparse.c"
     break;
 
-  case 262:
-#line 1914 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 264: /* sizednumexpr: sizednumexpr '^' sizednumexpr  */
+#line 1922 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val ^ (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4341 "rcparse.c" /* yacc.c:1648  */
+#line 4468 "rcparse.c"
     break;
 
-  case 263:
-#line 1919 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 265: /* sizednumexpr: sizednumexpr '|' sizednumexpr  */
+#line 1927 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val | (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4350 "rcparse.c" /* yacc.c:1648  */
+#line 4477 "rcparse.c"
     break;
 
-  case 264:
-#line 1930 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 266: /* cposnumexpr: ',' posnumexpr  */
+#line 1938 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].il);
 	  }
-#line 4358 "rcparse.c" /* yacc.c:1648  */
+#line 4485 "rcparse.c"
     break;
 
-  case 265:
-#line 1939 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 267: /* posnumexpr: sizedposnumexpr  */
+#line 1947 "rcparse.y"
+          {
 	    (yyval.il) = (yyvsp[0].i).val;
 	  }
-#line 4366 "rcparse.c" /* yacc.c:1648  */
+#line 4493 "rcparse.c"
     break;
 
-  case 266:
-#line 1950 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 268: /* sizedposnumexpr: NUMBER  */
+#line 1958 "rcparse.y"
+          {
 	    (yyval.i) = (yyvsp[0].i);
 	  }
-#line 4374 "rcparse.c" /* yacc.c:1648  */
+#line 4501 "rcparse.c"
     break;
 
-  case 267:
-#line 1954 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 269: /* sizedposnumexpr: '(' sizednumexpr ')'  */
+#line 1962 "rcparse.y"
+          {
 	    (yyval.i) = (yyvsp[-1].i);
 	  }
-#line 4382 "rcparse.c" /* yacc.c:1648  */
+#line 4509 "rcparse.c"
     break;
 
-  case 268:
-#line 1958 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 270: /* sizedposnumexpr: '~' sizednumexpr  */
+#line 1966 "rcparse.y"
+          {
 	    (yyval.i).val = ~ (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[0].i).dword;
 	  }
-#line 4391 "rcparse.c" /* yacc.c:1648  */
+#line 4518 "rcparse.c"
     break;
 
-  case 269:
-#line 1963 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 271: /* sizedposnumexpr: sizedposnumexpr '*' sizednumexpr  */
+#line 1971 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val * (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4400 "rcparse.c" /* yacc.c:1648  */
+#line 4527 "rcparse.c"
     break;
 
-  case 270:
-#line 1968 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 272: /* sizedposnumexpr: sizedposnumexpr '/' sizednumexpr  */
+#line 1976 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val / ((yyvsp[0].i).val ? (yyvsp[0].i).val : 1);
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4409 "rcparse.c" /* yacc.c:1648  */
+#line 4536 "rcparse.c"
     break;
 
-  case 271:
-#line 1973 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 273: /* sizedposnumexpr: sizedposnumexpr '%' sizednumexpr  */
+#line 1981 "rcparse.y"
+          {
 	    /* PR 17512: file: 89105a25.  */
 	    (yyval.i).val = (yyvsp[-2].i).val % ((yyvsp[0].i).val ? (yyvsp[0].i).val : 1);
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4419 "rcparse.c" /* yacc.c:1648  */
+#line 4546 "rcparse.c"
     break;
 
-  case 272:
-#line 1979 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 274: /* sizedposnumexpr: sizedposnumexpr '+' sizednumexpr  */
+#line 1987 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val + (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4428 "rcparse.c" /* yacc.c:1648  */
+#line 4555 "rcparse.c"
     break;
 
-  case 273:
-#line 1984 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 275: /* sizedposnumexpr: sizedposnumexpr '-' sizednumexpr  */
+#line 1992 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val - (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4437 "rcparse.c" /* yacc.c:1648  */
+#line 4564 "rcparse.c"
     break;
 
-  case 274:
-#line 1989 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 276: /* sizedposnumexpr: sizedposnumexpr '&' sizednumexpr  */
+#line 1997 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val & (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4446 "rcparse.c" /* yacc.c:1648  */
+#line 4573 "rcparse.c"
     break;
 
-  case 275:
-#line 1994 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 277: /* sizedposnumexpr: sizedposnumexpr '^' sizednumexpr  */
+#line 2002 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val ^ (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4455 "rcparse.c" /* yacc.c:1648  */
+#line 4582 "rcparse.c"
     break;
 
-  case 276:
-#line 1999 "rcparse.y" /* yacc.c:1648  */
-    {
+  case 278: /* sizedposnumexpr: sizedposnumexpr '|' sizednumexpr  */
+#line 2007 "rcparse.y"
+          {
 	    (yyval.i).val = (yyvsp[-2].i).val | (yyvsp[0].i).val;
 	    (yyval.i).dword = (yyvsp[-2].i).dword || (yyvsp[0].i).dword;
 	  }
-#line 4464 "rcparse.c" /* yacc.c:1648  */
+#line 4591 "rcparse.c"
     break;
 
 
-#line 4468 "rcparse.c" /* yacc.c:1648  */
+#line 4595 "rcparse.c"
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -4478,25 +4606,23 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
-
-  yyn = yyr1[yyn];
-
-  yystate = yypgoto[yyn - YYNTOKENS] + *yyssp;
-  if (0 <= yystate && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTOKENS];
+  {
+    const int yylhs = yyr1[yyn] - YYNTOKENS;
+    const int yyi = yypgoto[yylhs] + *yyssp;
+    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+               ? yytable[yyi]
+               : yydefgoto[yylhs]);
+  }
 
   goto yynewstate;
 
@@ -4507,49 +4633,13 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == YYEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
       yyerror (YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
-      {
-        char const *yymsgp = YY_("syntax error");
-        int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
-        if (yysyntax_error_status == 0)
-          yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
-          {
-            if (yymsg != yymsgbuf)
-              YYSTACK_FREE (yymsg);
-            yymsg = (char *) YYSTACK_ALLOC (yymsg_alloc);
-            if (!yymsg)
-              {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
-              }
-            else
-              {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
-              }
-          }
-        yyerror (yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
-      }
-# undef YYSYNTAX_ERROR
-#endif
     }
-
-
 
   if (yyerrstatus == 3)
     {
@@ -4579,12 +4669,11 @@ yyerrlab:
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
 yyerrorlab:
-
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
-  if (/*CONSTCOND*/ 0)
-     goto yyerrorlab;
+  /* Pacify compilers when the user code never invokes YYERROR and the
+     label yyerrorlab therefore never appears in user code.  */
+  if (0)
+    YYERROR;
+  ++yynerrs;
 
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
@@ -4601,13 +4690,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -4621,7 +4711,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -4633,7 +4723,7 @@ yyerrlab1:
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -4644,26 +4734,30 @@ yyerrlab1:
 `-------------------------------------*/
 yyacceptlab:
   yyresult = 0;
-  goto yyreturn;
+  goto yyreturnlab;
+
 
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
-  goto yyreturn;
+  goto yyreturnlab;
 
-#if !defined yyoverflow || YYERROR_VERBOSE
-/*-------------------------------------------------.
-| yyexhaustedlab -- memory exhaustion comes here.  |
-`-------------------------------------------------*/
+
+/*-----------------------------------------------------------.
+| yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
+`-----------------------------------------------------------*/
 yyexhaustedlab:
   yyerror (YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
-#endif
+  goto yyreturnlab;
 
-yyreturn:
+
+/*----------------------------------------------------------.
+| yyreturnlab -- parsing is finished, clean up and return.  |
+`----------------------------------------------------------*/
+yyreturnlab:
   if (yychar != YYEMPTY)
     {
       /* Make sure we have latest lookahead translation.  See comments at
@@ -4679,20 +4773,18 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
+
   return yyresult;
 }
-#line 2005 "rcparse.y" /* yacc.c:1907  */
+
+#line 2013 "rcparse.y"
 
 
 /* Set the language from the command line.  */
