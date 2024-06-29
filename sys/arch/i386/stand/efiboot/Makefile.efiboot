@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.22 2023/07/24 01:56:59 rin Exp $
+# $NetBSD: Makefile.efiboot,v 1.23 2024/06/29 07:52:16 rin Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -21,9 +21,7 @@ LIBI386SRCS= biosdisk.c bootinfo.c bootinfo_biosgeom.c bootmenu.c
 LIBI386SRCS+= comio_direct.c
 LIBI386SRCS+= diskbuf.c exec.c menuutils.c parseutils.c pread.c
 LIBI386SRCS+= exec_multiboot1.c exec_multiboot2.c
-# use our own nfs implementation
-LIBSASRCS+= nfs.c
-SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS} ${LIBSASRCS}
+SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
 
 .include <bsd.init.mk>
 
@@ -86,6 +84,7 @@ GNUEFIARCH?= ${MACHINE_CPU}
 CPPFLAGS+= -I${EFIDIR}/inc -I${EFIDIR}/inc/${GNUEFIARCH}
 CPPFLAGS+= -I${EFIDIR}/inc/protocol
 
+SAMISCCPPFLAGS+= -DLIBSA_NFS_IMPLICIT_MOUNT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
 SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
