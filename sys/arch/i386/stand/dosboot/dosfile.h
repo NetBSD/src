@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.h,v 1.1 2024/06/29 13:45:14 rin Exp $	*/
+/*	$NetBSD: dosfile.h,v 1.2 2024/06/29 13:46:40 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -25,5 +25,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+void dosclose(int);
+int dosopen(const char *);
+int dosread(int, char *, int);
+int dosseek(int, int, int);
+extern int doserrno;	/* in dos_file.S */
 
 FS_DEF(dos);

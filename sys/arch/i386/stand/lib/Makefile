@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2024/06/29 07:43:25 rin Exp $
+#	$NetBSD: Makefile,v 1.52 2024/06/29 13:46:40 rin Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -7,7 +7,6 @@ NOPIC=# defined
 NOPROFILE=# defined
 
 I386_INCLUDE_DISK?= yes
-I386_INCLUDE_DOS?= no
 I386_INCLUDE_PS2?= yes
 
 AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -32,9 +31,6 @@ SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
 CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
-.endif
-.if (${I386_INCLUDE_DOS} == "yes")
-SRCS+= dosfile.c dos_file.S
 .endif
 .if (${I386_INCLUDE_DISK} == "yes") || (${I386_INCLUDE_DOS} == "yes")
 SRCS+= diskbuf.c

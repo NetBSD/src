@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.1 2024/06/29 13:45:14 rin Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.2 2024/06/29 13:46:40 rin Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -36,11 +36,6 @@
 
 #include "diskbuf.h"
 #include "dosfile.h"
-
-extern int dosopen(const char *);
-extern void dosclose(int);
-extern int dosread(int, char *, int);
-extern int dosseek(int, int, int);
 
 struct dosfile {
 	int doshandle, off;

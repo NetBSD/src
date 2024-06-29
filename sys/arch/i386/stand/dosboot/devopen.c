@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.11 2009/03/14 15:36:07 dsl Exp $	 */
+/*	$NetBSD: devopen.c,v 1.12 2024/06/29 13:46:40 rin Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -32,8 +32,9 @@
 
 #include <libi386.h>
 #include <biosdisk.h>
-#include <dosfile.h>
 #include <bootinfo.h>
+
+#include "dosfile.h"
 
 struct devsw devsw[] = {
 	{"disk", biosdisk_strategy, biosdisk_open, biosdisk_close, biosdisk_ioctl},

@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.52 2024/06/29 08:30:49 rin Exp $	*/
+/*	$NetBSD: libi386.h,v 1.53 2024/06/29 13:46:40 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -148,12 +148,6 @@ struct biosdisk_extinfo;
 __compactcall int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 void biosdisk_probe(void);
-
-void dosclose(int);
-int dosopen(char *);
-int dosread(int, char *, int);
-int dosseek(int, int, int);
-extern int doserrno;	/* in dos_file.S */
 
 void module_add(char *);
 void splash_add(char *);
