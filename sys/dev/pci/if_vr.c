@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.137 2022/09/24 18:12:43 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.138 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.137 2022/09/24 18:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.138 2024/06/29 12:11:12 riastradh Exp $");
 
 
 
@@ -881,16 +881,16 @@ vr_txeof(struct vr_softc *sc)
 
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & VR_TXSTAT_ERRSUM) {
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 			if (txstat & VR_TXSTAT_DEFER)
-				if_statinc_ref(nsr, if_collisions);
+				if_statinc_ref(ifp, nsr, if_collisions);
 			if (txstat & VR_TXSTAT_LATECOLL)
-				if_statinc_ref(nsr, if_collisions);
+				if_statinc_ref(ifp, nsr, if_collisions);
 		}
 
-		if_statadd_ref(nsr, if_collisions,
+		if_statadd_ref(ifp, nsr, if_collisions,
 		    (txstat & VR_TXSTAT_COLLCNT) >> 3);
-		if_statinc_ref(nsr, if_opackets);
+		if_statinc_ref(ifp, nsr, if_opackets);
 		IF_STAT_PUTREF(ifp);
 	}
 

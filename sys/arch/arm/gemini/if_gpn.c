@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.17 2023/05/26 21:40:46 andvar Exp $ */
+/* $NetBSD: if_gpn.c,v 1.18 2024/06/29 12:11:10 riastradh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.17 2023/05/26 21:40:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.18 2024/06/29 12:11:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -444,7 +444,7 @@ gpn_ifstart(struct ifnet *ifp)
 			    mtod(m, void *), m->m_len, NULL,
 			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error) {
-				if_statinc_ref(nsr, if_oerrors);
+				if_statinc_ref(ifp, nsr, if_oerrors);
 				m_freem(m);
 				break;
 			}
@@ -467,9 +467,9 @@ gpn_ifstart(struct ifnet *ifp)
 			gd.gd_txid = id;
 			ti->ti_mbuf = m;
 			last_gd = &gd;
-			if_statadd_ref(nsr, if_obytes, m->m_len);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_len);
 		}
-		if_statinc_ref(nsr, if_opackets);
+		if_statinc_ref(ifp, nsr, if_opackets);
 		IF_STAT_PUTREF(ifp);
 
 		if (last_gd != NULL) {

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.351 2024/05/30 08:55:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.352 2024/06/29 12:11:12 riastradh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.351 2024/05/30 08:55:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.352 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1798,7 +1798,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	 * normal RX counters are prepared in ether_input().
 	 */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_iqdrops, total_missed_rx + total_qprdc);
+	if_statadd_ref(ifp, nsr, if_iqdrops, total_missed_rx + total_qprdc);
 
 	/*
 	 * Aggregate following types of errors as RX errors:
@@ -1810,7 +1810,7 @@ ixgbe_update_stats_counters(struct ixgbe_softc *sc)
 	 * - oversized packets count,
 	 * - jabber count.
 	 */
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    crcerrs + illerrc + rlec + ruc + rfc + roc + rjc);
 
 	IF_STAT_PUTREF(ifp);

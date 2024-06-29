@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.59 2024/02/09 22:08:33 andvar Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.60 2024/06/29 12:11:11 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.59 2024/02/09 22:08:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.60 2024/06/29 12:11:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2217,12 +2217,12 @@ pq3etsec_txq_consume(
 				m_adj(m, sizeof(struct txfcb));
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_opackets);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(ifp, nsr, if_omcasts);
 			if (txbd_flags & TXBD_ERRORS)
-				if_statinc_ref(nsr, if_oerrors);
+				if_statinc_ref(ifp, nsr, if_oerrors);
 			IF_STAT_PUTREF(ifp);
 			m_freem(m);
 #ifdef ETSEC_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.529 2023/02/24 11:02:45 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.530 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.529 2023/02/24 11:02:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.530 2024/06/29 12:11:12 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3785,9 +3785,9 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_obytes, pktlen);
+	if_statadd_ref(ifp, nsr, if_obytes, pktlen);
 	if (mcast)
-		if_statinc_ref(nsr, if_omcasts);
+		if_statinc_ref(ifp, nsr, if_omcasts);
 	IF_STAT_PUTREF(ifp);
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.136 2024/02/10 09:30:06 andvar Exp $ */
+/*	$NetBSD: gem.c,v 1.137 2024/06/29 12:11:11 riastradh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.136 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.137 2024/06/29 12:11:11 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1642,10 +1642,10 @@ gem_tint(struct gem_softc *sc)
 	/* Unload collision counters ... */
 	v = bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
-	if_statadd_ref(nsr, if_collisions, v +
+	if_statadd_ref(ifp, nsr, if_collisions, v +
 	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
 	    bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT));
-	if_statadd_ref(nsr, if_oerrors, v);
+	if_statadd_ref(ifp, nsr, if_oerrors, v);
 
 	/* ... then clear the hardware counters. */
 	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
@@ -1715,7 +1715,7 @@ gem_tint(struct gem_softc *sc)
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
-		if_statinc_ref(nsr, if_opackets);
+		if_statinc_ref(ifp, nsr, if_opackets);
 		progress = 1;
 	}
 

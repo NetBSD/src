@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.49 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.50 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.49 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.50 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -668,13 +668,15 @@ sonic_txintr(struct sonic_softc *sc)
 		 */
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (status & TCR_PTX) {
-			if_statinc_ref(nsr, if_opackets);
+			if_statinc_ref(ifp, nsr, if_opackets);
 			count++;
-		} else
-			if_statinc_ref(nsr, if_oerrors);
-		if (TDA_STATUS_NCOL(status))
-			if_statadd_ref(nsr, if_collisions,
+		} else {
+			if_statinc_ref(ifp, nsr, if_oerrors);
+		}
+		if (TDA_STATUS_NCOL(status)) {
+			if_statadd_ref(ifp, nsr, if_collisions,
 			    TDA_STATUS_NCOL(status));
+		}
 		IF_STAT_PUTREF(ifp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.73 2022/09/17 13:51:09 thorpej Exp $ */
+/*	$NetBSD: if_age.c,v 1.74 2024/06/29 12:11:11 riastradh Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.73 2022/09/17 13:51:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.74 2024/06/29 12:11:11 riastradh Exp $");
 
 #include "vlan.h"
 
@@ -2055,19 +2055,19 @@ age_stats_update(struct age_softc *sc)
 	/* Update counters in ifnet. */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+	if_statadd_ref(ifp, nsr, if_opackets, smb->tx_frames);
 
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    smb->tx_single_colls +
 	    smb->tx_multi_colls + smb->tx_late_colls +
 	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT);
 
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	    smb->tx_excess_colls +
 	    smb->tx_late_colls + smb->tx_underrun +
 	    smb->tx_pkts_truncated);
 
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_desc_oflows +

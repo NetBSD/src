@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.15 2024/03/06 20:02:24 andvar Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.16 2024/06/29 12:11:12 riastradh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.15 2024/03/06 20:02:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -2160,10 +2160,10 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->vmx_dmat, txb->vtxb_dmamap);
 
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_opackets);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(ifp, nsr, if_omcasts);
 
 			m_freem(m);
 			txb->vtxb_m = NULL;
@@ -2338,8 +2338,8 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 		vlan_set_tag(m, rxcd->vtag);
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statinc_ref(nsr, if_ipackets);
-	if_statadd_ref(nsr, if_ibytes, m->m_pkthdr.len);
+	if_statinc_ref(ifp, nsr, if_ipackets);
+	if_statadd_ref(ifp, nsr, if_ibytes, m->m_pkthdr.len);
 	IF_STAT_PUTREF(ifp);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);

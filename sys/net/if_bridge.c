@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.190 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.189 2022/07/29 07:58:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.190 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1523,10 +1523,10 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	}
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(&sc->sc_if);
-	if_statinc_ref(nsr, if_opackets);
-	if_statadd_ref(nsr, if_obytes, len);
+	if_statinc_ref(&sc->sc_if, nsr, if_opackets);
+	if_statadd_ref(&sc->sc_if, nsr, if_obytes, len);
 	if (mflags & M_MCAST)
-		if_statinc_ref(nsr, if_omcasts);
+		if_statinc_ref(&sc->sc_if, nsr, if_omcasts);
 	IF_STAT_PUTREF(&sc->sc_if);
 }
 

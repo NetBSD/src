@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.41 2023/12/20 18:09:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.42 2024/06/29 12:11:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2946,12 +2946,13 @@ ena_start_xmit(struct ena_ring *tx_ring)
 		    mbuf, mbuf->m_flags, (uint64_t)mbuf->m_pkthdr.csum_flags);
 
 		if (likely((ret = ena_xmit_mbuf(tx_ring, &mbuf)) == 0)) {
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, mbuf->m_pkthdr.len);
+			if_statinc_ref(adapter->ifp, nsr, if_opackets);
+			if_statadd_ref(adapter->ifp, nsr, if_obytes,
+			    mbuf->m_pkthdr.len);
 			if (ISSET(mbuf->m_flags, M_MCAST))
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(adapter->ifp, nsr, if_omcasts);
 		} else {
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(adapter->ifp, nsr, if_oerrors);
 			m_freem(mbuf);
 			break;
 		}

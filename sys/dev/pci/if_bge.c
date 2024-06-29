@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.391 2024/04/01 22:56:55 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.392 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.391 2024/04/01 22:56:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.392 2024/06/29 12:11:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4878,7 +4878,7 @@ bge_stats_update_regs(struct bge_softc *sc)
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    CSR_READ_4(sc, BGE_MAC_STATS +
 	    offsetof(struct bge_mac_stats_regs, etherStatsCollisions)));
 
@@ -4891,12 +4891,12 @@ bge_stats_update_regs(struct bge_softc *sc)
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5719_A0 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5720_A0) {
-		if_statadd_ref(nsr, if_ierrors,
+		if_statadd_ref(ifp, nsr, if_ierrors,
 		    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS));
 	}
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS));
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS));
 
 	IF_STAT_PUTREF(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.58 2024/02/10 08:24:51 andvar Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.58 2024/02/10 08:24:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -879,15 +879,15 @@ sca_output(
 		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (error != 0) {
-		if_statinc_ref(nsr, if_oerrors);
-		if_statinc_ref(nsr, if_collisions);
+		if_statinc_ref(ifp, nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_collisions);
 		IF_STAT_PUTREF(ifp);
 		splx(s);
 		return (error);
 	}
-	if_statadd_ref(nsr, if_obytes, len);
+	if_statadd_ref(ifp, nsr, if_obytes, len);
 	if (mflags & M_MCAST)
-		if_statinc_ref(nsr, if_omcasts);
+		if_statinc_ref(ifp, nsr, if_omcasts);
 	IF_STAT_PUTREF(ifp);
 
 	sca_start(ifp);

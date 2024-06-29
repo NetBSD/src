@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.100 2022/09/18 18:03:51 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.101 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.100 2022/09/18 18:03:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.101 2024/06/29 12:11:11 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -688,7 +688,7 @@ dp8390_intr(void *arg)
 				}
 
 				/* Update output errors counter. */
-				if_statinc_ref(nsr, if_oerrors);
+				if_statinc_ref(ifp, nsr, if_oerrors);
 			} else {
 				/*
 				 * Throw away the non-error status bits.
@@ -703,7 +703,7 @@ dp8390_intr(void *arg)
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				if_statinc_ref(nsr, if_opackets);
+				if_statinc_ref(ifp, nsr, if_opackets);
 			}
 
 			/* Clear watchdog timer. */
@@ -713,8 +713,10 @@ dp8390_intr(void *arg)
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			if (collisions)
-				if_statadd_ref(nsr, if_collisions, collisions);
+			if (collisions) {
+				if_statadd_ref(ifp, nsr, if_collisions,
+				    collisions);
+			}
 
 			IF_STAT_PUTREF(ifp);
 

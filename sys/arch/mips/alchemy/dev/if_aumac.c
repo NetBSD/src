@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.52 2022/09/29 07:00:46 skrll Exp $ */
+/* $NetBSD: if_aumac.c,v 1.53 2024/06/29 12:11:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.52 2022/09/29 07:00:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.53 2024/06/29 12:11:11 riastradh Exp $");
 
 
 
@@ -566,14 +566,17 @@ aumac_txintr(struct aumac_softc *sc)
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (stat & TX_STAT_FA) {
 			/* XXX STATS */
-			if_statinc_ref(nsr, if_oerrors);
-		} else
-			if_statinc_ref(nsr, if_opackets);
+			if_statinc_ref(ifp, nsr, if_oerrors);
+		} else {
+			if_statinc_ref(ifp, nsr, if_opackets);
+		}
 
-		if (stat & TX_STAT_EC)
-			if_statadd_ref(nsr, if_collisions, 16);
-		else if (TX_STAT_CC(stat))
-			if_statadd_ref(nsr, if_collisions, TX_STAT_CC(stat));
+		if (stat & TX_STAT_EC) {
+			if_statadd_ref(ifp, nsr, if_collisions, 16);
+		} else if (TX_STAT_CC(stat)) {
+			if_statadd_ref(ifp, nsr, if_collisions,
+			    TX_STAT_CC(stat));
+		}
 		IF_STAT_PUTREF(ifp);
 
 		sc->sc_txfree++;

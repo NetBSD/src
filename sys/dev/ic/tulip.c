@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.211 2024/02/10 09:30:06 andvar Exp $	*/
+/*	$NetBSD: tulip.c,v 1.212 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.211 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.212 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -1485,17 +1485,17 @@ tlp_txintr(struct tulip_softc *sc)
 #endif
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (TDSTAT_Tx_UF | TDSTAT_Tx_TO))
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 
 		if (txstat & TDSTAT_Tx_EC)
-			if_statadd_ref(nsr, if_collisions, 16);
+			if_statadd_ref(ifp, nsr, if_collisions, 16);
 		else
-			if_statadd_ref(nsr, if_collisions,
+			if_statadd_ref(ifp, nsr, if_collisions,
 			    TDSTAT_Tx_COLLISIONS(txstat));
 		if (txstat & TDSTAT_Tx_LC)
-			if_statinc_ref(nsr, if_collisions);
+			if_statinc_ref(ifp, nsr, if_collisions);
 
-		if_statinc_ref(nsr, if_opackets);
+		if_statinc_ref(ifp, nsr, if_opackets);
 		IF_STAT_PUTREF(ifp);
 	}
 

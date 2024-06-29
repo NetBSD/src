@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.43 2022/08/22 15:59:42 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.44 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.43 2022/08/22 15:59:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.44 2024/06/29 12:11:11 riastradh Exp $");
 
 #include "vlan.h"
 
@@ -1253,9 +1253,9 @@ ale_stats_update(struct ale_softc *sc)
 	/* Update counters in ifnet. */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+	if_statadd_ref(ifp, nsr, if_opackets, smb->tx_frames);
 
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
 	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT);
@@ -1267,11 +1267,11 @@ ale_stats_update(struct ale_softc *sc)
 	 * the counter name is not correct one so I've removed the
 	 * counter in output errors.
 	 */
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	    smb->tx_abort + smb->tx_late_colls +
 	    smb->tx_underrun);
 
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_rrs_errs +

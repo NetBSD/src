@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.125 2022/09/02 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.126 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.125 2022/09/02 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.126 2024/06/29 12:11:12 riastradh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1497,7 +1497,7 @@ tl_read_stats(tl_softc_t *sc)
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_TX);
-	if_statadd_ref(nsr, if_opackets, reg & 0x00ffffff);
+	if_statadd_ref(ifp, nsr, if_opackets, reg & 0x00ffffff);
 	oerr_underr = reg >> 24;
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_RX);
@@ -1517,10 +1517,11 @@ tl_read_stats(tl_softc_t *sc)
 	oerr_latecoll = (reg & TL_LERR_LCOLL) >> 8;
 	oerr_carrloss = (reg & TL_LERR_CL) >> 16;
 
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	   oerr_underr + oerr_exesscoll + oerr_latecoll + oerr_carrloss);
-	if_statadd_ref(nsr, if_collisions, oerr_coll + oerr_multicoll);
-	if_statadd_ref(nsr, if_ierrors, ierr_overr + ierr_code + ierr_crc);
+	if_statadd_ref(ifp, nsr, if_collisions, oerr_coll + oerr_multicoll);
+	if_statadd_ref(ifp, nsr, if_ierrors,
+	    ierr_overr + ierr_code + ierr_crc);
 	IF_STAT_PUTREF(ifp);
 
 	if (ierr_overr)

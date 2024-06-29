@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.14 2024/06/12 06:21:37 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.15 2024/06/29 12:11:12 riastradh Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.14 2024/06/12 06:21:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.15 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -1713,7 +1713,7 @@ igc_tx_common_locked(struct ifnet *ifp, struct tx_ring *txr, int caller)
 			if (caller == IGC_TX_TRANSMIT)
 				IGC_QUEUE_EVENT(q, tx_pcq_drop, 1);
 			m_freem(m);
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 			continue;
 		}
 
@@ -1757,9 +1757,9 @@ igc_tx_common_locked(struct ifnet *ifp, struct tx_ring *txr, int caller)
 
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
-		if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+		if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 		if (m->m_flags & M_MCAST)
-			if_statinc_ref(nsr, if_omcasts);
+			if_statinc_ref(ifp, nsr, if_omcasts);
 		IGC_QUEUE_EVENT(q, tx_packets, 1);
 		IGC_QUEUE_EVENT(q, tx_bytes, m->m_pkthdr.len);
 

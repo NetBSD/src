@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.114 2023/05/21 18:01:38 andvar Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.115 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.114 2023/05/21 18:01:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.115 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -1118,13 +1118,13 @@ rtk_txeof(struct rtk_softc *sc)
 		txd->txd_mbuf = NULL;
 
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-		if_statadd_ref(nsr, if_collisions,
+		if_statadd_ref(ifp, nsr, if_collisions,
 		    (txstat & RTK_TXSTAT_COLLCNT) >> 24);
 
 		if (txstat & RTK_TXSTAT_TX_OK)
-			if_statinc_ref(nsr, if_opackets);
+			if_statinc_ref(ifp, nsr, if_opackets);
 		else {
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 
 			/*
 			 * Increase Early TX threshold if underrun occurred.

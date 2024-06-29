@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.51 2022/09/18 10:54:52 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.52 2024/06/29 12:11:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.51 2022/09/18 10:54:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.52 2024/06/29 12:11:10 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -491,24 +491,24 @@ mc_tint(struct mc_softc *sc)
 	net_stat_ref_t nsr = IF_STAT_GETREF(&sc->sc_if);
 	if (xmtfs & LCOL) {
 		printf("%s: late collision\n", device_xname(sc->sc_dev));
-		if_statinc_ref(nsr, if_oerrors);
-		if_statinc_ref(nsr, if_collisions);
+		if_statinc_ref(&sc->sc_if, nsr, if_oerrors);
+		if_statinc_ref(&sc->sc_if, nsr, if_collisions);
 	}
 
 	if (xmtfs & MORE)
 		/* Real number is unknown. */
-		if_statadd_ref(nsr, if_collisions, 2);
+		if_statadd_ref(&sc->sc_if, nsr, if_collisions, 2);
 	else if (xmtfs & ONE)
-		if_statinc_ref(nsr, if_collisions);
+		if_statinc_ref(&sc->sc_if, nsr, if_collisions);
 	else if (xmtfs & RTRY) {
-		if_statadd_ref(nsr, if_collisions, 16);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statadd_ref(&sc->sc_if, nsr, if_collisions, 16);
+		if_statinc_ref(&sc->sc_if, nsr, if_oerrors);
 	}
 
 	if (xmtfs & LCAR) {
 		sc->sc_havecarrier = 0;
 		printf("%s: lost carrier\n", device_xname(sc->sc_dev));
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(&sc->sc_if, nsr, if_oerrors);
 	}
 	IF_STAT_PUTREF(&sc->sc_if);
 
