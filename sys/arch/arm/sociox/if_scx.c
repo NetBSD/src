@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.43 2023/06/15 07:21:45 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.44 2024/06/29 11:27:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.43 2023/06/15 07:21:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.44 2024/06/29 11:27:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1399,7 +1399,7 @@ scx_start(struct ifnet *ifp)
 				    "DMA segments, dropping...\n");
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				m_freem(m0);
-				if_statinc_ref(ifp, if_oerrors);
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			/* Short on resources, just stop for now. */
