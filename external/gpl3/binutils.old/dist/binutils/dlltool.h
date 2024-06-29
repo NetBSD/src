@@ -1,5 +1,5 @@
 /* dlltool.h -- header file for dlltool
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -31,7 +31,7 @@ extern void def_section (const char *, int);
 extern void def_stacksize (int, int);
 extern void def_version (int, int);
 extern int  yyparse (void);
-extern int  yyerror (const char *);
+extern void yyerror (const char *);
 extern int  yylex (void);
 
 extern int yydebug;

@@ -1,5 +1,5 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -37,7 +37,6 @@ extern const char *m32r_target_format (void);
 #endif
 
 /* Call md_pcrel_from_section, not md_pcrel_from.  */
-long md_pcrel_from_section (struct fix *, segT);
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)
 
 /* Permit temporary numeric labels.  */
@@ -71,7 +70,7 @@ extern void m32r_handle_align (fragS *);
 #define md_apply_fix gas_cgen_md_apply_fix
 
 #define tc_fix_adjustable(FIX) m32r_fix_adjustable (FIX)
-bfd_boolean m32r_fix_adjustable (struct fix *);
+extern bool m32r_fix_adjustable (struct fix *);
 
 /* After creating a fixup for an instruction operand, we need to check for
    HI16 relocs and queue them up for later sorting.  */
@@ -80,12 +79,6 @@ bfd_boolean m32r_fix_adjustable (struct fix *);
 #define TC_HANDLES_FX_DONE
 
 extern int pic_code;
-
-extern bfd_boolean m32r_fix_adjustable (struct fix *);
-
-/* This arranges for gas/write.c to not apply a relocation if
-   obj_fix_adjustable() says it is not adjustable.  */
-#define TC_FIX_ADJUSTABLE(fixP) obj_fix_adjustable (fixP)
 
 #define tc_frob_file_before_fix() m32r_frob_file ()
 extern void m32r_frob_file (void);

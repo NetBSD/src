@@ -1,5 +1,5 @@
 /* tc-score.h -- Score specific file for assembler
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -49,7 +49,7 @@ extern void score_validate_fix (struct fix *);
 extern int score_force_relocation (struct fix *);
 
 #define tc_fix_adjustable(fixp)  score_fix_adjustable (fixp)
-extern bfd_boolean score_fix_adjustable (struct fix *);
+extern bool score_fix_adjustable (struct fix *);
 
 #define elf_tc_final_processing  score_elf_final_processing
 extern void score_elf_final_processing (void);

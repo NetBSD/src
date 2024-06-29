@@ -1,4 +1,4 @@
-@c Copyright (C) 2006-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2006-2022 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -159,6 +159,12 @@ information.
 @item -mgcc-isr
 Enable the @code{__gcc_isr} pseudo instruction.
 
+@cindex @code{-mno-dollar-line-separator} command line option, AVR
+@item -mno-dollar-line-separator
+Do not treat the @code{$} character as a line separator character.
+This is for languages where @code{$} is valid character inside symbol
+names.
+
 @end table
 
 
@@ -189,7 +195,8 @@ control command (@pxref{Preprocessing}).
 @cindex AVR line separator
 
 The @samp{$} character can be used instead of a newline to separate
-statements.
+statements.  Note: the @option{-mno-dollar-line-separator} option
+disables this behaviour.
 
 @node AVR-Regs
 @subsection Register Names
@@ -230,12 +237,12 @@ modifier(relocatable-expression)
 @item lo8
 
 This modifier allows you to use bits 0 through 7 of
-an address expression as 8 bit relocatable expression.
+an address expression as an 8 bit relocatable expression.
 
 @item hi8
 
 This modifier allows you to use bits 7 through 15 of an address expression
-as 8 bit relocatable expression.  This is useful with, for example, the
+as an 8 bit relocatable expression. This is useful with, for example, the
 AVR @samp{ldi} instruction and @samp{lo8} modifier.
 
 For example
@@ -248,7 +255,7 @@ ldi r27, hi8(sym+10)
 @item hh8
 
 This modifier allows you to use bits 16 through 23 of
-an address expression as 8 bit relocatable expression.
+an address expression as an 8 bit relocatable expression.
 Also, can be useful for loading 32 bit constants.
 
 @item hlo8
@@ -258,7 +265,7 @@ Synonym of @samp{hh8}.
 @item hhi8
 
 This modifier allows you to use bits 24 through 31 of
-an expression as 8 bit expression. This is useful with, for example, the
+an expression as an 8 bit expression. This is useful with, for example, the
 AVR @samp{ldi} instruction and @samp{lo8}, @samp{hi8}, @samp{hlo8},
 @samp{hhi8}, modifier.
 
@@ -275,24 +282,33 @@ ldi r29, hhi8(285774925)
 @item pm_lo8
 
 This modifier allows you to use bits 0 through 7 of
-an address expression as 8 bit relocatable expression.
-This modifier useful for addressing data or code from
-Flash/Program memory. The using of @samp{pm_lo8} similar
-to @samp{lo8}.
+an address expression as an 8 bit relocatable expression.
+This modifier is useful for addressing data or code from
+Flash/Program memory by two-byte words. The use of @samp{pm_lo8}
+is similar to @samp{lo8}.
 
 @item pm_hi8
 
 This modifier allows you to use bits 8 through 15 of
-an address expression as 8 bit relocatable expression.
-This modifier useful for addressing data or code from
-Flash/Program memory.
+an address expression as an 8 bit relocatable expression.
+This modifier is useful for addressing data or code from
+Flash/Program memory by two-byte words.
+
+For example, when setting the AVR @samp{Z} register with the @samp{ldi}
+instruction for subsequent use by the @samp{ijmp} instruction:
+
+@smallexample
+ldi r30, pm_lo8(sym)
+ldi r31, pm_hi8(sym)
+ijmp
+@end smallexample
 
 @item pm_hh8
 
 This modifier allows you to use bits 15 through 23 of
-an address expression as 8 bit relocatable expression.
-This modifier useful for addressing data or code from
-Flash/Program memory.
+an address expression as an 8 bit relocatable expression.
+This modifier is useful for addressing data or code from
+Flash/Program memory by two-byte words.
 
 @end table
 

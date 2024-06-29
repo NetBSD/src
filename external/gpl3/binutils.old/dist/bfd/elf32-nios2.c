@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -82,651 +82,651 @@ static reloc_howto_type elf_nios2_r1_howto_table_rel[] = {
   /* No relocation.  */
   HOWTO (R_NIOS2_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_NIOS2_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16-bit signed immediate relocation.  */
   HOWTO (R_NIOS2_S16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_signed,	/* complain on overflow */
 	 bfd_elf_generic_reloc,	/* special function */
 	 "R_NIOS2_S16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x003fffc0,		/* src_mask */
 	 0x003fffc0,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16-bit unsigned immediate relocation.  */
   HOWTO (R_NIOS2_U16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_unsigned,	/* complain on overflow */
 	 bfd_elf_generic_reloc,	/* special function */
 	 "R_NIOS2_U16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x003fffc0,		/* src_mask */
 	 0x003fffc0,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_PCREL16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_signed,	/* complain on overflow */
 	 nios2_elf32_pcrel16_relocate,	/* special function */
 	 "R_NIOS2_PCREL16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0x003fffc0,		/* src_mask */
 	 0x003fffc0,		/* dest_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_NIOS2_CALL26,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_dont,	/* complain on overflow */
 	 nios2_elf32_call26_relocate,	/* special function */
 	 "R_NIOS2_CALL26",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffc0,		/* src_mask */
 	 0xffffffc0,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_IMM5,
 	 0,
-	 2,
+	 4,
 	 5,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM5",
-	 FALSE,
+	 false,
 	 0x000007c0,
 	 0x000007c0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CACHE_OPX,
 	 0,
-	 2,
+	 4,
 	 5,
-	 FALSE,
+	 false,
 	 22,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CACHE_OPX",
-	 FALSE,
+	 false,
 	 0x07c00000,
 	 0x07c00000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_IMM6,
 	 0,
-	 2,
+	 4,
 	 6,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM6",
-	 FALSE,
+	 false,
 	 0x00000fc0,
 	 0x00000fc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_IMM8,
 	 0,
-	 2,
+	 4,
 	 8,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM8",
-	 FALSE,
+	 false,
 	 0x00003fc0,
 	 0x00003fc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_HI16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_hi16_relocate,
 	 "R_NIOS2_HI16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_LO16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_lo16_relocate,
 	 "R_NIOS2_LO16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_HIADJ16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_hiadj16_relocate,
 	 "R_NIOS2_HIADJ16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_32,
 	 0,
-	 2,			/* long */
+	 4,			/* long */
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC32",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_16,
 	 0,
-	 1,			/* short */
+	 2,			/* short */
 	 16,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC16",
-	 FALSE,
+	 false,
 	 0x0000ffff,
 	 0x0000ffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_8,
 	 0,
-	 0,			/* byte */
+	 1,			/* byte */
 	 8,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC8",
-	 FALSE,
+	 false,
 	 0x000000ff,
 	 0x000000ff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_gprel_relocate,
 	 "R_NIOS2_GPREL",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GNU_VTINHERIT,
 	 0,
-	 2,			/* short */
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 NULL,
 	 "R_NIOS2_GNU_VTINHERIT",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GNU_VTENTRY,
 	 0,
-	 2,			/* byte */
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 _bfd_elf_rel_vtable_reloc_fn,
 	 "R_NIOS2_GNU_VTENTRY",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_UJMP,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_ujmp_relocate,
 	 "R_NIOS2_UJMP",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CJMP,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_cjmp_relocate,
 	 "R_NIOS2_CJMP",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALLR,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_callr_relocate,
 	 "R_NIOS2_CALLR",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_ALIGN,
 	 0,
-	 2,
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 nios2_elf32_ignore_reloc,
 	 "R_NIOS2_ALIGN",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 TRUE),
+	 true),
 
 
   HOWTO (R_NIOS2_GOT16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF_LO",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF_HA",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_PCREL_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 TRUE,
+	 true,
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_pcrel_lo16_relocate,
 	 "R_NIOS2_PCREL_LO",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_PCREL_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE, /* This is a PC-relative relocation, but we need to subtract
+	 false, /* This is a PC-relative relocation, but we need to subtract
 		   PC ourselves before the HIADJ.  */
 	 6,
 	 complain_overflow_dont,
 	 nios2_elf32_pcrel_hiadj16_relocate,
 	 "R_NIOS2_PCREL_HA",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_TLS_GD16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_GD16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LDM16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LDM16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LDO16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LDO16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_IE16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_IE16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LE16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LE16",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_DTPMOD,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_DTPMOD",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_DTPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_DTPREL",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_TPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_TPREL",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_COPY,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_COPY",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GLOB_DAT,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GLOB_DAT",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_JUMP_SLOT,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_JUMP_SLOT",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_RELATIVE,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_RELATIVE",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL26_NOAT,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_dont,	/* complain on overflow */
 	 nios2_elf32_call26_relocate,	/* special function */
 	 "R_NIOS2_CALL26_NOAT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffc0,		/* src_mask */
 	 0xffffffc0,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_GOT_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT_LO",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOT_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT_HA",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL_LO",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL_HA",
-	 FALSE,
+	 false,
 	 0x003fffc0,
 	 0x003fffc0,
-	 FALSE),
+	 false),
 
 /* Add other relocations here.  */
 };
@@ -735,832 +735,832 @@ static reloc_howto_type elf_nios2_r2_howto_table_rel[] = {
   /* No relocation.  */
   HOWTO (R_NIOS2_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_NIOS2_NONE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16-bit signed immediate relocation.  */
   HOWTO (R_NIOS2_S16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,	/* complain on overflow */
 	 bfd_elf_generic_reloc,	/* special function */
 	 "R_NIOS2_S16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff0000,		/* src_mask */
 	 0xffff0000,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 16-bit unsigned immediate relocation.  */
   HOWTO (R_NIOS2_U16,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_unsigned,	/* complain on overflow */
 	 bfd_elf_generic_reloc,	/* special function */
 	 "R_NIOS2_U16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff0000,		/* src_mask */
 	 0xffff0000,		/* dest_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_PCREL16,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 16,			/* bitpos */
 	 complain_overflow_signed,	/* complain on overflow */
 	 nios2_elf32_pcrel16_relocate,	/* special function */
 	 "R_NIOS2_PCREL16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffff0000,		/* src_mask */
 	 0xffff0000,		/* dest_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_NIOS2_CALL26,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_dont,	/* complain on overflow */
 	 nios2_elf32_call26_relocate,	/* special function */
 	 "R_NIOS2_CALL26",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffc0,		/* src_mask */
 	 0xffffffc0,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_IMM5,
 	 0,
-	 2,
+	 4,
 	 5,
-	 FALSE,
+	 false,
 	 21,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM5",
-	 FALSE,
+	 false,
 	 0x03e00000,
 	 0x03e00000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CACHE_OPX,
 	 0,
-	 2,
+	 4,
 	 5,
-	 FALSE,
+	 false,
 	 11,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CACHE_OPX",
-	 FALSE,
+	 false,
 	 0x0000f800,
 	 0x0000f800,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_IMM6,
 	 0,
-	 2,
+	 4,
 	 6,
-	 FALSE,
+	 false,
 	 26,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM6",
-	 FALSE,
+	 false,
 	 0xfc000000,
 	 0xfc000000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_IMM8,
 	 0,
-	 2,
+	 4,
 	 8,
-	 FALSE,
+	 false,
 	 24,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_IMM8",
-	 FALSE,
+	 false,
 	 0xff000000,
 	 0xff000000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_HI16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_hi16_relocate,
 	 "R_NIOS2_HI16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_LO16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_lo16_relocate,
 	 "R_NIOS2_LO16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_HIADJ16,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_hiadj16_relocate,
 	 "R_NIOS2_HIADJ16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_32,
 	 0,
-	 2,			/* long */
+	 4,			/* long */
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC32",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_16,
 	 0,
-	 1,			/* short */
+	 2,			/* short */
 	 16,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC16",
-	 FALSE,
+	 false,
 	 0x0000ffff,
 	 0x0000ffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_BFD_RELOC_8,
 	 0,
-	 0,			/* byte */
+	 1,			/* byte */
 	 8,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_BFD_RELOC8",
-	 FALSE,
+	 false,
 	 0x000000ff,
 	 0x000000ff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_gprel_relocate,
 	 "R_NIOS2_GPREL",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GNU_VTINHERIT,
 	 0,
-	 2,			/* short */
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 NULL,
 	 "R_NIOS2_GNU_VTINHERIT",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GNU_VTENTRY,
 	 0,
-	 2,			/* byte */
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 _bfd_elf_rel_vtable_reloc_fn,
 	 "R_NIOS2_GNU_VTENTRY",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_UJMP,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_ujmp_relocate,
 	 "R_NIOS2_UJMP",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CJMP,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_cjmp_relocate,
 	 "R_NIOS2_CJMP",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALLR,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_callr_relocate,
 	 "R_NIOS2_CALLR",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_ALIGN,
 	 0,
-	 2,
+	 4,
 	 0,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 nios2_elf32_ignore_reloc,
 	 "R_NIOS2_ALIGN",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_GOT16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF_LO",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF_HA",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_PCREL_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 TRUE,
+	 true,
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_pcrel_lo16_relocate,
 	 "R_NIOS2_PCREL_LO",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_PCREL_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE, /* This is a PC-relative relocation, but we need to subtract
+	 false, /* This is a PC-relative relocation, but we need to subtract
 		   PC ourselves before the HIADJ.  */
 	 16,
 	 complain_overflow_dont,
 	 nios2_elf32_pcrel_hiadj16_relocate,
 	 "R_NIOS2_PCREL_HA",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_TLS_GD16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_GD16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LDM16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LDM16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LDO16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LDO16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_IE16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_IE16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_LE16,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_bitfield,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_LE16",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_DTPMOD,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_DTPMOD",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_DTPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_DTPREL",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_TLS_TPREL,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_TLS_TPREL",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_COPY,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_COPY",
-	 FALSE,
+	 false,
 	 0,
 	 0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GLOB_DAT,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GLOB_DAT",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_JUMP_SLOT,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_JUMP_SLOT",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_RELATIVE,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_RELATIVE",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOTOFF,
 	 0,
-	 2,
+	 4,
 	 32,
-	 FALSE,
+	 false,
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOTOFF",
-	 FALSE,
+	 false,
 	 0xffffffff,
 	 0xffffffff,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL26_NOAT,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 26,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 6,			/* bitpos */
 	 complain_overflow_dont,	/* complain on overflow */
 	 nios2_elf32_call26_relocate,	/* special function */
 	 "R_NIOS2_CALL26_NOAT",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0xffffffc0,		/* src_mask */
 	 0xffffffc0,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_NIOS2_GOT_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT_LO",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_GOT_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_GOT_HA",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL_LO,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL_LO",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_CALL_HA,
 	 0,
-	 2,
+	 4,
 	 16,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_CALL_HA",
-	 FALSE,
+	 false,
 	 0xffff0000,
 	 0xffff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_S12,
 	 0,
-	 2,
+	 4,
 	 12,
-	 FALSE,
+	 false,
 	 16,
 	 complain_overflow_signed,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_S12",
-	 FALSE,
+	 false,
 	 0x0fff0000,
 	 0x0fff0000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_I10_1_PCREL,
 	 1,
-	 1,
+	 2,
 	 10,
-	 TRUE,
+	 true,
 	 6,
 	 complain_overflow_signed,
 	 bfd_elf_generic_reloc,		/* FIXME? */
 	 "R_NIOS2_R2_I10_1_PCREL",
-	 FALSE,
+	 false,
 	 0xffc0,
 	 0xffc0,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_R2_T1I7_1_PCREL,
 	 1,
-	 1,
+	 2,
 	 7,
-	 TRUE,
+	 true,
 	 9,
 	 complain_overflow_signed,
 	 bfd_elf_generic_reloc,		/* FIXME? */
 	 "R_NIOS2_R2_T1I7_1_PCREL",
-	 FALSE,
+	 false,
 	 0xfe00,
 	 0xfe00,
-	 TRUE),
+	 true),
 
   HOWTO (R_NIOS2_R2_T1I7_2,
 	 2,
-	 1,
+	 2,
 	 7,
-	 FALSE,
+	 false,
 	 9,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T1I7_2",
-	 FALSE,
+	 false,
 	 0xfe00,
 	 0xfe00,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_T2I4,
 	 0,
-	 1,
+	 2,
 	 4,
-	 FALSE,
+	 false,
 	 12,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T2I4",
-	 FALSE,
+	 false,
 	 0xf000,
 	 0xf000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_T2I4_1,
 	 1,
-	 1,
+	 2,
 	 4,
-	 FALSE,
+	 false,
 	 12,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T2I4_1",
-	 FALSE,
+	 false,
 	 0xf000,
 	 0xf000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_T2I4_2,
 	 2,
-	 1,
+	 2,
 	 4,
-	 FALSE,
+	 false,
 	 12,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T2I4_2",
-	 FALSE,
+	 false,
 	 0xf000,
 	 0xf000,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_X1I7_2,
 	 2,
-	 1,
+	 2,
 	 7,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_X1I7_2",
-	 FALSE,
+	 false,
 	 0x1fc0,
 	 0x1fc0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_X2L5,
 	 0,
-	 1,
+	 2,
 	 5,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_X2L5",
-	 FALSE,
+	 false,
 	 0x07c0,
 	 0x07c0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_F1I5_2,
 	 2,
-	 1,
+	 2,
 	 5,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_F1L5_2",
-	 FALSE,
+	 false,
 	 0x07c0,
 	 0x07c0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_L5I4X1,
 	 2,
-	 1,
+	 2,
 	 4,
-	 FALSE,
+	 false,
 	 6,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_L5I4X1",
-	 FALSE,
+	 false,
 	 0x03c0,
 	 0x03c0,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_T1X1I6,
 	 0,
-	 1,
+	 2,
 	 6,
-	 FALSE,
+	 false,
 	 9,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T1X1I6",
-	 FALSE,
+	 false,
 	 0x7e00,
 	 0x7e00,
-	 FALSE),
+	 false),
 
   HOWTO (R_NIOS2_R2_T1X1I6_2,
 	 2,
-	 2,
+	 4,
 	 6,
-	 FALSE,
+	 false,
 	 9,
 	 complain_overflow_unsigned,
 	 bfd_elf_generic_reloc,
 	 "R_NIOS2_R2_T1I1X6_2",
-	 FALSE,
+	 false,
 	 0x7e00,
 	 0x7e00,
-	 FALSE),
+	 false),
 
 /* Add other relocations here.  */
 };
@@ -1737,9 +1737,6 @@ struct elf32_nios2_link_hash_entry
      symbol.  */
   struct elf32_nios2_stub_hash_entry *hsh_cache;
 
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-
 #define GOT_UNKNOWN	0
 #define GOT_NORMAL	1
 #define GOT_TLS_GD	2
@@ -1779,7 +1776,7 @@ struct elf32_nios2_link_hash_table
     bfd *stub_bfd;
 
     /* Linker call-backs.  */
-    asection * (*add_stub_section) (const char *, asection *, bfd_boolean);
+    asection * (*add_stub_section) (const char *, asection *, bool);
     void (*layout_sections_again) (void);
 
     /* Array to keep track of which stub sections have been created, and
@@ -1811,9 +1808,6 @@ struct elf32_nios2_link_hash_table
       bfd_vma offset;
     } tls_ldm_got;
 
-    /* Small local sym cache.  */
-    struct sym_cache sym_cache;
-
     bfd_vma res_n_size;
   };
 
@@ -1825,7 +1819,7 @@ struct nios2_elf32_obj_tdata
   char *local_got_tls_type;
 
   /* TRUE if TLS GD relocs have been seen for this object.  */
-  bfd_boolean has_tlsgd;
+  bool has_tlsgd;
 };
 
 #define elf32_nios2_tdata(abfd) \
@@ -1917,7 +1911,7 @@ bfd_vma hiadj (bfd_vma symbol_value)
 
 /* Implement elf_backend_grok_prstatus:
    Support for core dump NOTE sections.  */
-static bfd_boolean
+static bool
 nios2_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 {
   int offset;
@@ -1926,7 +1920,7 @@ nios2_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
   switch (note->descsz)
     {
     default:
-      return FALSE;
+      return false;
 
     case 212:	      /* Linux/Nios II */
       /* pr_cursig */
@@ -1948,13 +1942,13 @@ nios2_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 }
 
 /* Implement elf_backend_grok_psinfo.  */
-static bfd_boolean
+static bool
 nios2_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   switch (note->descsz)
     {
     default:
-      return FALSE;
+      return false;
 
     case 124:	      /* Linux/Nios II elf_prpsinfo */
       elf_tdata (abfd)->core->program
@@ -1975,7 +1969,7 @@ nios2_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       command[n - 1] = '\0';
   }
 
-  return TRUE;
+  return true;
 }
 
 /* Assorted hash table functions.  */
@@ -2039,7 +2033,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
 
       eh = (struct elf32_nios2_link_hash_entry *) entry;
       eh->hsh_cache = NULL;
-      eh->dyn_relocs = NULL;
       eh->tls_type = GOT_UNKNOWN;
       eh->got_types_used = 0;
     }
@@ -2133,7 +2126,7 @@ nios2_get_stub_entry (const asection *input_section,
 	return NULL;
 
       hsh = nios2_stub_hash_lookup (&htab->bstab,
-				    stub_name, FALSE, FALSE);
+				    stub_name, false, false);
 
       if (hh != NULL)
 	hh->hsh_cache = hsh;
@@ -2156,21 +2149,21 @@ nios2_add_stub (const char *stub_name,
   asection *stub_sec;
   asection **secptr, **linkptr;
   struct elf32_nios2_stub_hash_entry *hsh;
-  bfd_boolean afterp;
+  bool afterp;
 
   if (stub_type == nios2_stub_call26_before)
     {
       link_sec = htab->stub_group[section->id].first_sec;
       secptr = &(htab->stub_group[section->id].first_stub_sec);
       linkptr = &(htab->stub_group[link_sec->id].first_stub_sec);
-      afterp = FALSE;
+      afterp = false;
     }
   else
     {
       link_sec = htab->stub_group[section->id].last_sec;
       secptr = &(htab->stub_group[section->id].last_stub_sec);
       linkptr = &(htab->stub_group[link_sec->id].last_stub_sec);
-      afterp = TRUE;
+      afterp = true;
     }
   stub_sec = *secptr;
   if (stub_sec == NULL)
@@ -2201,7 +2194,7 @@ nios2_add_stub (const char *stub_name,
 
   /* Enter this entry into the linker stub hash table.  */
   hsh = nios2_stub_hash_lookup (&htab->bstab, stub_name,
-				TRUE, FALSE);
+				true, false);
   if (hsh == NULL)
     {
       /* xgettext:c-format */
@@ -2228,7 +2221,7 @@ nios2_elf32_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
   unsigned int top_id, top_index;
   asection *section;
   asection **input_list, **list;
-  bfd_size_type amt;
+  size_t amt;
   struct elf32_nios2_link_hash_table *htab = elf32_nios2_hash_table (info);
 
   /* Count the number of input BFDs and find the top input section id.  */
@@ -2483,13 +2476,24 @@ nios2_type_of_stub (asection *input_sec,
     return nios2_stub_none;
 }
 
-static bfd_boolean
+static bool
 nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf32_nios2_stub_hash_entry *hsh
     = (struct elf32_nios2_stub_hash_entry *) gen_entry;
   asection *stub_sec = hsh->stub_sec;
   bfd_vma sym_value;
+  struct bfd_link_info *info;
+
+  info = (struct bfd_link_info *) in_arg;
+
+  /* Fail if the target section could not be assigned to an output
+     section.  The user should fix his linker script.  */
+  if (hsh->target_section->output_section == NULL
+      && info->non_contiguous_regions)
+    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+			      "Retry without --enable-non-contiguous-regions.\n"),
+			    hsh->target_section);
 
   /* Make a note of the offset within the stubs for this entry.  */
   hsh->stub_offset = stub_sec->size;
@@ -2519,15 +2523,15 @@ nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_U
       break;
     default:
       BFD_FAIL ();
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* As above, but don't actually build the stub.  Just bump offset so
    we know stub section sizes.  */
-static bfd_boolean
+static bool
 nios2_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf32_nios2_stub_hash_entry *hsh
@@ -2541,9 +2545,9 @@ nios2_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_UN
       break;
     default:
       BFD_FAIL ();
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 /* Read in all local syms for all input bfds.
@@ -2560,7 +2564,7 @@ get_local_syms (bfd *output_bfd ATTRIBUTE_UNUSED, bfd *input_bfd,
   /* We want to read in symbol extension records only once.  To do this
      we need to read in the local symbols in parallel and save them for
      later use; so hold pointers to the local symbols in an array.  */
-  bfd_size_type amt = sizeof (Elf_Internal_Sym *) * htab->bfd_count;
+  size_t amt = sizeof (Elf_Internal_Sym *) * htab->bfd_count;
   all_local_syms = bfd_zmalloc (amt);
   htab->all_local_syms = all_local_syms;
   if (all_local_syms == NULL)
@@ -2598,14 +2602,14 @@ get_local_syms (bfd *output_bfd ATTRIBUTE_UNUSED, bfd *input_bfd,
 }
 
 /* Determine and set the size of the stub section for a final link.  */
-bfd_boolean
+bool
 nios2_elf32_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 			struct bfd_link_info *info,
 			asection *(*add_stub_section) (const char *,
-						       asection *, bfd_boolean),
+						       asection *, bool),
 			void (*layout_sections_again) (void))
 {
-  bfd_boolean stub_changed = FALSE;
+  bool stub_changed = false;
   struct elf32_nios2_link_hash_table *htab = elf32_nios2_hash_table (info);
 
   /* Stash our params away.  */
@@ -2623,7 +2627,7 @@ nios2_elf32_size_stubs (bfd *output_bfd, bfd *stub_bfd,
     {
       if (htab->all_local_syms)
 	goto error_ret_free_local;
-      return FALSE;
+      return false;
     }
 
   while (1)
@@ -2796,7 +2800,7 @@ nios2_elf32_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 
 		  hsh = nios2_stub_hash_lookup (&htab->bstab,
 						stub_name,
-						FALSE, FALSE);
+						false, false);
 		  if (hsh != NULL)
 		    {
 		      /* The proper stub has already been created.  */
@@ -2815,7 +2819,7 @@ nios2_elf32_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 		  hsh->stub_type = stub_type;
 		  hsh->hh = hh;
 		  hsh->addend = irela->r_addend;
-		  stub_changed = TRUE;
+		  stub_changed = true;
 		}
 
 	      /* We're done with the internal relocs, free them.  */
@@ -2838,21 +2842,21 @@ nios2_elf32_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 
       /* Ask the linker to do its stuff.  */
       (*htab->layout_sections_again) ();
-      stub_changed = FALSE;
+      stub_changed = false;
     }
 
   free (htab->all_local_syms);
-  return TRUE;
+  return true;
 
  error_ret_free_local:
   free (htab->all_local_syms);
-  return FALSE;
+  return false;
 }
 
 /* Build all the stubs associated with the current output file.  The
    stubs are kept in a hash table attached to the main linker hash
    table.  This function is called via nios2elf_finish in the linker.  */
-bfd_boolean
+bool
 nios2_elf32_build_stubs (struct bfd_link_info *info)
 {
   asection *stub_sec;
@@ -2876,7 +2880,7 @@ nios2_elf32_build_stubs (struct bfd_link_info *info)
 	size = stub_sec->size;
 	stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
 	if (stub_sec->contents == NULL && size != 0)
-	  return FALSE;
+	  return false;
 	stub_sec->size = 0;
       }
 
@@ -2884,7 +2888,7 @@ nios2_elf32_build_stubs (struct bfd_link_info *info)
   table = &htab->bstab;
   bfd_hash_traverse (table, nios2_build_one_stub, info);
 
-  return TRUE;
+  return true;
 }
 
 
@@ -2895,7 +2899,7 @@ nios2_elf32_build_stubs (struct bfd_link_info *info)
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 nios2_elf32_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
@@ -2903,18 +2907,18 @@ nios2_elf32_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword new_flags;
 
   if (!is_nios2_elf (ibfd) || !is_nios2_elf (obfd))
-    return TRUE;
+    return true;
 
   /* Check if we have the same endianness.  */
   if (! _bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
   if (!elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = new_flags;
 
       switch (new_flags)
@@ -2929,7 +2933,7 @@ nios2_elf32_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	      _bfd_error_handler
 		(_("error: %pB: big-endian R2 is not supported"), ibfd);
 	      bfd_set_error (bfd_error_bad_value);
-	      return FALSE;
+	      return false;
 	    }
 	  bfd_default_set_arch_mach (obfd, bfd_arch_nios2, bfd_mach_nios2r2);
 	  break;
@@ -2946,13 +2950,13 @@ nios2_elf32_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	(_("error: %pB: conflicting CPU architectures %d/%d"),
 	 ibfd, new_flags, old_flags);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
   /* Merge Tag_compatibility attributes and any common GNU ones.  */
   _bfd_elf_merge_object_attributes (ibfd, info);
 
-  return TRUE;
+  return true;
 }
 
 /* Implement bfd_elf32_bfd_reloc_type_lookup:
@@ -3002,7 +3006,7 @@ nios2_elf32_bfd_reloc_name_lookup (bfd *abfd,
 /* Implement elf_info_to_howto:
    Given a ELF32 relocation, fill in a arelent structure.  */
 
-static bfd_boolean
+static bool
 nios2_elf32_info_to_howto (bfd *abfd, arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
 {
@@ -3015,9 +3019,9 @@ nios2_elf32_info_to_howto (bfd *abfd, arelent *cache_ptr,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
@@ -3047,22 +3051,22 @@ tpoff (struct bfd_link_info *info, bfd_vma address)
 
 /* Set the GP value for OUTPUT_BFD.  Returns FALSE if this is a
    dangerous relocation.  */
-static bfd_boolean
+static bool
 nios2_elf_assign_gp (bfd *output_bfd, bfd_vma *pgp, struct bfd_link_info *info)
 {
 
-  bfd_boolean gp_found;
+  bool gp_found;
   struct bfd_hash_entry *h;
   struct bfd_link_hash_entry *lh;
 
   /* If we've already figured out what GP will be, just return it. */
   *pgp = _bfd_get_gp_value (output_bfd);
   if (*pgp)
-    return TRUE;
+    return true;
 
-  h = bfd_hash_lookup (&info->hash->table, "_gp", FALSE, FALSE);
+  h = bfd_hash_lookup (&info->hash->table, "_gp", false, false);
   lh = (struct bfd_link_hash_entry *) h;
-lookup:
+ lookup:
   if (lh)
     {
       switch (lh->type)
@@ -3070,11 +3074,11 @@ lookup:
 	case bfd_link_hash_undefined:
 	case bfd_link_hash_undefweak:
 	case bfd_link_hash_common:
-	  gp_found = FALSE;
+	  gp_found = false;
 	  break;
 	case bfd_link_hash_defined:
 	case bfd_link_hash_defweak:
-	  gp_found = TRUE;
+	  gp_found = true;
 	  {
 	    asection *sym_sec = lh->u.def.section;
 	    bfd_vma sym_value = lh->u.def.value;
@@ -3096,19 +3100,19 @@ lookup:
 	}
     }
   else
-    gp_found = FALSE;
+    gp_found = false;
 
   if (!gp_found)
     {
       /* Only get the error once. */
       *pgp = 4;
       _bfd_set_gp_value (output_bfd, *pgp);
-      return FALSE;
+      return false;
     }
 
   _bfd_set_gp_value (output_bfd, *pgp);
 
-  return TRUE;
+  return true;
 }
 
 /* Retrieve the previously cached _gp pointer, returning bfd_reloc_dangerous
@@ -3117,7 +3121,7 @@ lookup:
    symbol value for an external symbol if we are producing relocatable
    output.  */
 static bfd_reloc_status_type
-nios2_elf_final_gp (bfd *output_bfd, asymbol *symbol, bfd_boolean relocatable,
+nios2_elf_final_gp (bfd *output_bfd, asymbol *symbol, bool relocatable,
 		    char **error_message, bfd_vma *pgp)
 {
   if (bfd_is_und_section (symbol->section) && !relocatable)
@@ -3568,7 +3572,7 @@ nios2_elf32_gprel_relocate (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 		+ symbol->section->output_offset);
 
   /* This assumes we've already cached the _gp symbol.  */
-  r = nios2_elf_final_gp (abfd, symbol, FALSE, msg, &gp);
+  r = nios2_elf_final_gp (abfd, symbol, false, msg, &gp);
   if (r == bfd_reloc_ok)
     {
       relocation = relocation + reloc_entry->addend - gp;
@@ -3671,7 +3675,7 @@ nios2_elf32_callr_relocate (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 
 
 /* Implement elf_backend_relocate_section.  */
-static bfd_boolean
+static int
 nios2_elf32_relocate_section (bfd *output_bfd,
 			      struct bfd_link_info *info,
 			      bfd *input_bfd,
@@ -3722,7 +3726,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       const char *format;
       char *msgbuf = NULL;
       char *msg = NULL;
-      bfd_boolean unresolved_reloc;
+      bool unresolved_reloc;
       bfd_vma off;
       int use_plt;
 
@@ -3742,7 +3746,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -3760,7 +3764,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 
       if (howto)
 	{
-	  bfd_boolean resolved_to_zero;
+	  bool resolved_to_zero;
 
 	  resolved_to_zero = (h != NULL
 			      && UNDEFWEAK_NO_DYNAMIC_RELOC (info, h));
@@ -3918,7 +3922,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 				+ splt->output_offset
 				+ h->plt.offset);
 
-		  unresolved_reloc = FALSE;
+		  unresolved_reloc = false;
 		}
 	      /* Detect R_NIOS2_CALL26 relocations that would overflow the
 		 256MB segment.  Replace the target with a reference to a
@@ -3994,7 +3998,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 
 	      if (h != NULL)
 		{
-		  bfd_boolean dyn;
+		  bool dyn;
 
 		  eh = (struct elf32_nios2_link_hash_entry *)h;
 		  use_plt = (eh->got_types_used == CALL_USED
@@ -4032,7 +4036,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 			}
 		    }
 		  else
-		    unresolved_reloc = FALSE;
+		    unresolved_reloc = false;
 		}
 	      else
 		{
@@ -4221,7 +4225,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		indx = 0;
 		if (h != NULL)
 		  {
-		    bfd_boolean dyn;
+		    bool dyn;
 		    dyn = htab->root.dynamic_sections_created;
 		    if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
 							 bfd_link_pic (info),
@@ -4229,7 +4233,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 			&& (!bfd_link_pic (info)
 			    || !SYMBOL_REFERENCES_LOCAL (info, h)))
 		      {
-			unresolved_reloc = FALSE;
+			unresolved_reloc = false;
 			indx = h->dynindx;
 		      }
 		    off = h->got.offset;
@@ -4252,7 +4256,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		  off &= ~1;
 		else
 		  {
-		    bfd_boolean need_relocs = FALSE;
+		    bool need_relocs = false;
 		    Elf_Internal_Rela outrel;
 		    bfd_byte *loc = NULL;
 		    int cur_off = off;
@@ -4267,7 +4271,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 				&& !resolved_to_zero)
 			    || h->root.type != bfd_link_hash_undefweak))
 		      {
-			need_relocs = TRUE;
+			need_relocs = true;
 			if (htab->root.srelgot == NULL)
 			  abort ();
 			loc = htab->root.srelgot->contents;
@@ -4379,7 +4383,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		       "permitted in shared object"),
 		     input_bfd, input_section,
 		     (uint64_t) rel->r_offset, howto->name);
-		  return FALSE;
+		  return false;
 		}
 	      else
 		relocation = tpoff (info, relocation) - TP_OFFSET;
@@ -4399,22 +4403,22 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		{
 		  Elf_Internal_Rela outrel;
 		  bfd_byte *loc;
-		  bfd_boolean skip, relocate;
+		  bool skip, relocate;
 
 		  /* When generating a shared object, these relocations
 		     are copied into the output file to be resolved at run
 		     time.  */
 
-		  skip = FALSE;
-		  relocate = FALSE;
+		  skip = false;
+		  relocate = false;
 
 		  outrel.r_offset
 		    = _bfd_elf_section_offset (output_bfd, info,
 					       input_section, rel->r_offset);
 		  if (outrel.r_offset == (bfd_vma) -1)
-		    skip = TRUE;
+		    skip = true;
 		  else if (outrel.r_offset == (bfd_vma) -2)
-		    skip = TRUE, relocate = TRUE;
+		    skip = true, relocate = true;
 		  outrel.r_offset += (input_section->output_section->vma
 				      + input_section->output_offset);
 
@@ -4433,7 +4437,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 		    {
 		      /* This symbol is local, or marked to become local.  */
 		      outrel.r_addend = relocation + rel->r_addend;
-		      relocate = TRUE;
+		      relocate = true;
 		      outrel.r_info = ELF32_R_INFO (0, R_NIOS2_RELATIVE);
 		    }
 
@@ -4499,7 +4503,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol) (info, name, input_bfd,
 						    input_section,
-						    rel->r_offset, TRUE);
+						    rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -4527,30 +4531,29 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
-	      if (msgbuf)
-		free (msgbuf);
-	      return FALSE;
+	      free (msgbuf);
+	      return false;
 	    }
 	}
     }
-  return TRUE;
+  return true;
 }
 
 /* Implement elf-backend_section_flags:
    Convert NIOS2 specific section flags to bfd internal section flags.  */
-static bfd_boolean
-nios2_elf32_section_flags (flagword *flags, const Elf_Internal_Shdr *hdr)
+static bool
+nios2_elf32_section_flags (const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_NIOS2_GPREL)
-    *flags |= SEC_SMALL_DATA;
+    hdr->bfd_section->flags |= SEC_SMALL_DATA;
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_fake_sections:
    Set the correct type for an NIOS2 ELF section.  We do this by the
    section name, which is a hack, but ought to work.  */
-static bfd_boolean
+static bool
 nios2_elf32_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 			   Elf_Internal_Shdr *hdr, asection *sec)
 {
@@ -4562,12 +4565,12 @@ nios2_elf32_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
       || strcmp (name, ".lit4") == 0 || strcmp (name, ".lit8") == 0)
     hdr->sh_flags |= SHF_NIOS2_GPREL;
 
-  return TRUE;
+  return true;
 }
 
 /* Create .got, .gotplt, and .rela.got sections in DYNOBJ, and set up
    shortcuts to them in our hash table.  */
-static bfd_boolean
+static bool
 create_got_section (bfd *dynobj, struct bfd_link_info *info)
 {
   struct elf32_nios2_link_hash_table *htab;
@@ -4576,12 +4579,12 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
   htab = elf32_nios2_hash_table (info);
 
   if (! _bfd_elf_create_got_section (dynobj, info))
-    return FALSE;
+    return false;
 
   /* In order for the two loads in .PLTresolve to share the same %hiadj,
      _GLOBAL_OFFSET_TABLE_ must be aligned to a 16-byte boundary.  */
   if (!bfd_set_section_alignment (htab->root.sgotplt, 4))
-    return FALSE;
+    return false;
 
   /* The Nios II ABI specifies that GOT-relative relocations are relative
      to the linker-created symbol _gp_got, rather than using
@@ -4591,26 +4594,26 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 				   "_gp_got");
   htab->h_gp_got = h;
   if (h == NULL)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_create_dynamic_sections:
    Create .plt, .rela.plt, .got, .got.plt, .rela.got, .dynbss, and
    .rela.bss sections in DYNOBJ, and set up shortcuts to them in our
    hash table.  */
-static bfd_boolean
+static bool
 nios2_elf32_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
 {
   struct elf32_nios2_link_hash_table *htab;
 
   htab = elf32_nios2_hash_table (info);
   if (!htab->root.sgot && !create_got_section (dynobj, info))
-    return FALSE;
+    return false;
 
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
-    return FALSE;
+    return false;
 
   /* In order for the two loads in a shared object .PLTresolve to share the
      same %hiadj, the start of the PLT (as well as the GOT) must be aligned
@@ -4631,37 +4634,6 @@ nios2_elf32_copy_indirect_symbol (struct bfd_link_info *info,
   edir = (struct elf32_nios2_link_hash_entry *) dir;
   eind = (struct elf32_nios2_link_hash_entry *) ind;
 
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
-
   if (ind->root.type == bfd_link_hash_indirect
       && dir->got.refcount <= 0)
     {
@@ -4676,7 +4648,7 @@ nios2_elf32_copy_indirect_symbol (struct bfd_link_info *info,
 
 /* Set the right machine number for a NIOS2 ELF file.  */
 
-static bfd_boolean
+static bool
 nios2_elf32_object_p (bfd *abfd)
 {
   unsigned long mach;
@@ -4694,17 +4666,17 @@ nios2_elf32_object_p (bfd *abfd)
       break;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_check_relocs:
    Look through the relocs for a section during the first phase.  */
-static bfd_boolean
+static bool
 nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			  asection *sec, const Elf_Internal_Rela *relocs)
 {
   Elf_Internal_Shdr *symtab_hdr;
-  struct elf_link_hash_entry **sym_hashes, **sym_hashes_end;
+  struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
   struct elf32_nios2_link_hash_table *htab;
@@ -4712,14 +4684,10 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
   bfd_signed_vma *local_got_refcounts;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-  sym_hashes_end = (sym_hashes
-		    + symtab_hdr->sh_size / sizeof (Elf32_External_Sym));
-  if (!elf_bad_symtab (abfd))
-    sym_hashes_end -= symtab_hdr->sh_info;
   local_got_refcounts = elf_local_got_refcounts (abfd);
 
   htab = elf32_nios2_hash_table (info);
@@ -4810,7 +4778,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    local_got_refcounts
 		      = ((bfd_signed_vma *) bfd_zalloc (abfd, size));
 		    if (local_got_refcounts == NULL)
-		      return FALSE;
+		      return false;
 		    elf_local_got_refcounts (abfd) = local_got_refcounts;
 		    elf32_nios2_local_got_tls_type (abfd)
 		      = (char *) (local_got_refcounts + symtab_hdr->sh_info);
@@ -4841,7 +4809,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      if (htab->root.dynobj == NULL)
 		htab->root.dynobj = abfd;
 	      if (!create_got_section (htab->root.dynobj, info))
-		return FALSE;
+		return false;
 	    }
 	  break;
 
@@ -4853,14 +4821,14 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	     Reconstruct it for later use during GC.  */
 	case R_NIOS2_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_NIOS2_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 
 	case R_NIOS2_BFD_RELOC_32:
@@ -4908,15 +4876,15 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    htab->root.dynobj = abfd;
 
 		  sreloc = _bfd_elf_make_dynamic_reloc_section
-		    (sec, htab->root.dynobj, 2, abfd, TRUE);
+		    (sec, htab->root.dynobj, 2, abfd, true);
 		  if (sreloc == NULL)
-		    return FALSE;
+		    return false;
 		}
 
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
-		head = &((struct elf32_nios2_link_hash_entry *) h)->dyn_relocs;
+		head = &h->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -4927,10 +4895,10 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  void *vpp;
 		  Elf_Internal_Sym *isym;
 
-		  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+		  isym = bfd_sym_from_r_symndx (&htab->root.sym_cache,
 						abfd, r_symndx);
 		  if (isym == NULL)
-		    return FALSE;
+		    return false;
 
 		  s = bfd_section_from_elf_index (abfd, isym->st_shndx);
 		  if (s == NULL)
@@ -4943,11 +4911,11 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->root.dynobj, amt));
 		  if (p == NULL)
-		    return FALSE;
+		    return false;
 		  p->next = *head;
 		  *head = p;
 		  p->sec = sec;
@@ -4962,7 +4930,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -4989,7 +4957,7 @@ nios2_elf32_gc_mark_hook (asection *sec,
 /* Implement elf_backend_finish_dynamic_symbols:
    Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
-static bfd_boolean
+static bool
 nios2_elf32_finish_dynamic_symbol (bfd *output_bfd,
 				   struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h,
@@ -5173,11 +5141,11 @@ nios2_elf32_finish_dynamic_symbol (bfd *output_bfd,
       || h == htab->h_gp_got)
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_finish_dynamic_sections.  */
-static bfd_boolean
+static bool
 nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 				     struct bfd_link_info *info)
 {
@@ -5306,7 +5274,7 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	elf_section_data (sgotplt->output_section)->this_hdr.sh_entsize = 4;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_adjust_dynamic_symbol:
@@ -5315,7 +5283,7 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
    dynamic object, but we're not including those sections.  We have to
    change the definition to something the rest of the link can
    understand.  */
-static bfd_boolean
+static bool
 nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
 				   struct elf_link_hash_entry *h)
 {
@@ -5354,7 +5322,7 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
 	  h->needs_plt = 0;
 	}
 
-      return TRUE;
+      return true;
     }
 
   /* Reinitialize the plt offset now that it is not used as a reference
@@ -5370,13 +5338,13 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
       BFD_ASSERT (def->root.type == bfd_link_hash_defined);
       h->root.u.def.section = def->root.u.def.section;
       h->root.u.def.value = def->root.u.def.value;
-      return TRUE;
+      return true;
     }
 
   /* If there are no non-GOT references, we do not need a copy
      relocation.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* This is a reference to a symbol defined by a dynamic object which
      is not a function.
@@ -5385,13 +5353,13 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_pic (info))
-    return TRUE;
+    return true;
 
   if (h->size == 0)
     {
       _bfd_error_handler (_("dynamic variable `%s' is zero size"),
 			  h->root.root.string);
-      return TRUE;
+      return true;
     }
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -5431,7 +5399,7 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
   s->size = BFD_ALIGN (s->size, (bfd_size_type)1 << align2);
   if (align2 > bfd_section_alignment (s)
       && !bfd_set_section_alignment (s, align2))
-    return FALSE;
+    return false;
 
   /* Define the symbol as being at this point in the section.  */
   h->root.u.def.section = s;
@@ -5440,18 +5408,18 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* Increment the section size to make room for the symbol.  */
   s->size += h->size;
 
-  return TRUE;
+  return true;
 }
 
 /* Worker function for nios2_elf32_size_dynamic_sections.  */
-static bfd_boolean
-adjust_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
+static bool
+adjust_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
   struct elf32_nios2_link_hash_table *htab;
 
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
   if (h->root.type == bfd_link_hash_warning)
     /* When warning symbols are created, they **replace** the "real"
@@ -5467,14 +5435,14 @@ adjust_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
   if (htab->root.splt == h->root.u.def.section)
     h->root.u.def.value += htab->res_n_size;
 
-  return TRUE;
+  return true;
 }
 
 /* Another worker function for nios2_elf32_size_dynamic_sections.
    Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
-static bfd_boolean
-allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
+static bool
+allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
   struct elf32_nios2_link_hash_table *htab;
@@ -5483,7 +5451,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
   int use_plt;
 
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
   if (h->root.type == bfd_link_hash_warning)
     /* When warning symbols are created, they **replace** the "real"
@@ -5502,7 +5470,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
       if (h->dynindx == -1
 	  && !h->forced_local
 	  && !bfd_elf_link_record_dynamic_symbol (info, h))
-	return FALSE;
+	return false;
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
 	{
@@ -5559,7 +5527,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
   if (h->got.refcount > 0)
     {
       asection *s;
-      bfd_boolean dyn;
+      bool dyn;
       int tls_type = eh->tls_type;
       int indx;
 
@@ -5568,7 +5536,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
       if (h->dynindx == -1
 	  && !h->forced_local
 	  && !bfd_elf_link_record_dynamic_symbol (info, h))
-	return FALSE;
+	return false;
 
       s = htab->root.sgot;
       h->got.offset = s->size;
@@ -5621,8 +5589,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  if (eh->dyn_relocs == NULL)
-    return TRUE;
+  if (h->dyn_relocs == NULL)
+    return true;
 
   /* In the shared -Bsymbolic case, discard space allocated for
      dynamic pc-relative relocs against symbols which turn out to be
@@ -5637,7 +5605,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -5650,19 +5618,19 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
 	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
 	  else if (h->dynindx == -1
 		   && !h->forced_local
 		   && !bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
     }
   else
@@ -5682,7 +5650,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	  if (h->dynindx == -1
 	      && !h->forced_local
 	      && !bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 
 	  /* If that succeeded, we know we'll be keeping all the
 	     relocs.  */
@@ -5690,30 +5658,30 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc = elf_section_data (p->sec)->sreloc;
       sreloc->size += p->count * sizeof (Elf32_External_Rela);
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_size_dynamic_sections:
    Set the sizes of the dynamic sections.  */
-static bfd_boolean
+static bool
 nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 				   struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
-  bfd_boolean relocs;
+  bool relocs;
   bfd *ibfd;
   struct elf32_nios2_link_hash_table *htab;
 
@@ -5777,8 +5745,6 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		{
 		  srel = elf_section_data (p->sec)->sreloc;
 		  srel->size += p->count * sizeof (Elf32_External_Rela);
-		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
 		}
 	    }
 	}
@@ -5843,7 +5809,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
-  relocs = FALSE;
+  relocs = false;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       const char *name;
@@ -5855,12 +5821,12 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 of the dynobj section names depend upon the input files.  */
       name = bfd_section_name (s);
 
-      if (CONST_STRNEQ (name, ".rela"))
+      if (startswith (name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
 	      if (s != htab->root.srelplt)
-		relocs = TRUE;
+		relocs = true;
 
 	      /* We use the reloc_count field as a counter if we need
 		 to copy relocs into the output file.  */
@@ -5896,7 +5862,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Allocate memory for the section contents.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
   /* Adjust dynamic symbols that point to the plt to account for the
@@ -5904,45 +5870,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab->res_n_size)
     elf_link_hash_traverse (& htab->root, adjust_dynrelocs, info);
 
-  if (htab->root.dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in elf_nios2_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (!bfd_link_pic (info) && !add_dynamic_entry (DT_DEBUG, 0))
-	return FALSE;
-
-      if (htab->root.sgotplt->size != 0
-	  && !add_dynamic_entry (DT_PLTGOT, 0))
-	return FALSE;
-
-      if (htab->root.splt->size != 0
-	  && (!add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0)))
-	return FALSE;
-
-      if (relocs
-	  && (!add_dynamic_entry (DT_RELA, 0)
-	      || !add_dynamic_entry (DT_RELASZ, 0)
-	      || !add_dynamic_entry (DT_RELAENT, sizeof (Elf32_External_Rela))))
-	return FALSE;
-
-      if (!bfd_link_pic (info) && !add_dynamic_entry (DT_NIOS2_GP, 0))
-	return FALSE;
-
-      if ((info->flags & DF_TEXTREL) != 0
-	  && !add_dynamic_entry (DT_TEXTREL, 0))
-	return FALSE;
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Free the derived linker hash table.  */
@@ -5961,7 +5889,7 @@ static struct bfd_link_hash_table *
 nios2_elf32_link_hash_table_create (bfd *abfd)
 {
   struct elf32_nios2_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf32_nios2_link_hash_table);
+  size_t amt = sizeof (struct elf32_nios2_link_hash_table);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
@@ -6009,7 +5937,7 @@ nios2_elf32_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 }
 
 /* Return 1 if target is one of ours.  */
-static bfd_boolean
+static bool
 is_nios2_elf_target (const struct bfd_target *targ)
 {
   return (targ == &nios2_elf32_le_vec
@@ -6019,7 +5947,7 @@ is_nios2_elf_target (const struct bfd_target *targ)
 /* Implement elf_backend_add_symbol_hook.
    This hook is called by the linker when adding symbols from an object
    file.  We use it to put .comm items in .sbss, and not .bss.  */
-static bfd_boolean
+static bool
 nios2_elf_add_symbol_hook (bfd *abfd,
 			   struct bfd_link_info *info,
 			   Elf_Internal_Sym *sym,
@@ -6040,7 +5968,7 @@ nios2_elf_add_symbol_hook (bfd *abfd,
       htab = elf32_nios2_hash_table (info);
       if (htab->sbss == NULL)
 	{
-	  flagword flags = SEC_IS_COMMON | SEC_LINKER_CREATED;
+	  flagword flags = SEC_IS_COMMON | SEC_SMALL_DATA | SEC_LINKER_CREATED;
 
 	  if (htab->root.dynobj == NULL)
 	    htab->root.dynobj = abfd;
@@ -6048,20 +5976,20 @@ nios2_elf_add_symbol_hook (bfd *abfd,
 	  htab->sbss = bfd_make_section_anyway_with_flags (htab->root.dynobj,
 							   ".sbss", flags);
 	  if (htab->sbss == NULL)
-	    return FALSE;
+	    return false;
 	}
 
       *secp = htab->sbss;
       *valp = sym->st_size;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Implement elf_backend_can_make_relative_eh_frame:
    Decide whether to attempt to turn absptr or lsda encodings in
    shared libraries into pcrel within the given input section.  */
-static bfd_boolean
+static bool
 nios2_elf32_can_make_relative_eh_frame (bfd *input_bfd ATTRIBUTE_UNUSED,
 					struct bfd_link_info *info
 					ATTRIBUTE_UNUSED,
@@ -6069,7 +5997,7 @@ nios2_elf32_can_make_relative_eh_frame (bfd *input_bfd ATTRIBUTE_UNUSED,
 					ATTRIBUTE_UNUSED)
 {
   /* We can't use PC-relative encodings in the .eh_frame section.  */
-  return FALSE;
+  return false;
 }
 
 /* Implement elf_backend_special_sections.  */

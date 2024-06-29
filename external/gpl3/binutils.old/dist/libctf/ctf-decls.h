@@ -1,5 +1,5 @@
 /* Declarations for missing functions.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -46,7 +46,7 @@ ctf_qsort_compar_thunk (void *arg, const void *a, const void *b)
 {
   struct ctf_qsort_arg *qsort_arg = (struct ctf_qsort_arg *) arg;
 
-  return qsort_arg->compar (a, b, arg);
+  return qsort_arg->compar (a, b, qsort_arg->arg);
 }
 
 static inline void
@@ -71,5 +71,9 @@ void ctf_qsort_r (void *base, size_t nmemb, size_t size,
 #undef MIN
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+#if !HAVE_DECL_STPCPY
+extern char *stpcpy (char *, const char *);
+#endif
 
 #endif /* _CTF_DECLS_H */

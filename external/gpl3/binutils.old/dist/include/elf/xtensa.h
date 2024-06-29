@@ -1,5 +1,5 @@
 /* Xtensa ELF support for BFD.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -87,6 +87,12 @@ START_RELOC_NUMBERS (elf_xtensa_reloc_type)
      RELOC_NUMBER (R_XTENSA_TLS_FUNC, 54)
      RELOC_NUMBER (R_XTENSA_TLS_ARG, 55)
      RELOC_NUMBER (R_XTENSA_TLS_CALL, 56)
+     RELOC_NUMBER (R_XTENSA_PDIFF8, 57)
+     RELOC_NUMBER (R_XTENSA_PDIFF16, 58)
+     RELOC_NUMBER (R_XTENSA_PDIFF32, 59)
+     RELOC_NUMBER (R_XTENSA_NDIFF8, 60)
+     RELOC_NUMBER (R_XTENSA_NDIFF16, 61)
+     RELOC_NUMBER (R_XTENSA_NDIFF32, 62)
 END_RELOC_NUMBERS (R_XTENSA_max)
 
 /* Processor-specific flags for the ELF header e_flags field.  */
@@ -215,9 +221,12 @@ xtensa_read_table_entries (bfd *abfd,
 			   asection *section,
 			   property_table_entry **table_p,
 			   const char *sec_name,
-			   bfd_boolean output_addr);
+			   bool output_addr);
 extern int
 xtensa_compute_fill_extra_space (property_table_entry *entry);
+
+extern int
+xtensa_abi_choice (void);
 
 #ifdef __cplusplus
 }

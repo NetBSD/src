@@ -1,6 +1,6 @@
 // gold.h -- general definitions for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -98,6 +98,10 @@ gold_warning(const char* msg, ...) ATTRIBUTE_PRINTF_1;
 // This function is called to print an informational message.
 extern void
 gold_info(const char* msg, ...) ATTRIBUTE_PRINTF_1;
+
+// This function is called to print a trace message.
+extern void
+gold_trace(const char* msg, ...) ATTRIBUTE_PRINTF_1;
 
 // This function is called to emit an error message and then
 // immediately exit with fallback status (e.g., when

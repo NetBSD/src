@@ -1,6 +1,162 @@
 -*- text -*-
 
+Changes in 2.39:
+
+* The ELF linker will now generate a warning message if the stack is made
+  executable.  By default this warning is not issued if the user has
+  specifically requested an executable stack via the "-z execstack"
+  command line option, but the warning can be forced via the new
+  "--warn-execstack" option.  Alternatively all warnings about creating
+  an executable stack can be suppressed via the "--no-warn-execstack"
+  option.
+
+  In addition the ELF linker will also warn if it creates a memory resident
+  segment with all three of the Read, Write and eXecute permissions set, or
+  if it creates a thread local data segment with the eXecute permission set.
+  These warnings can be disabled via --no-warn-rwx-segments option and
+  re-enabled via the --warn-rwx-segments option.
+
+  New configure options can also control these new features:
+  
+  --enable-warn-execstack=no
+     will disable the warnings about creating an executable stack.
+     
+  --enable-warn-execstack=yes
+     will make --warn-execstack enabled by default.
+     
+  --enable-warn-rwx-segments=no
+     will make --no-warn-rwx-segments enabled by default.
+     
+  --enable-defaul-execstack=no
+     will stop the creation of an executable stack simply because an input file
+     is missing a .note.GNU-stack section, even on architectures where this
+     ehaviour is the default.
+
+* TYPE=<type> is now supported in an output section description to set the
+  section type value.
+
+* Remove (rudimentary) support for the x86-64 sub-architectures Intel L1OM and
+  Intel K1OM.
+
+* The ELF linker now supports a new --package-metadata option that allows
+  embedding a JSON payload in accordance to the Package Metadata specification.
+  If support for libjansson is enabled at build time, the linker will use it to
+  validate the input. This can be enabled with --enable-jansson.
+  For more details, see: https://systemd.io/ELF_PACKAGE_METADATA/
+
+Changes in 2.38:
+
+* Add -z pack-relative-relocs/-z no pack-relative-relocs to x86 ELF
+  linker to pack relative relocations in the DT_RELR section.
+
+* Add support for the LoongArch architecture.
+
+* Add -z indirect-extern-access/-z noindirect-extern-access to x86 ELF
+  linker to control canonical function pointers and copy relocation.
+
+* Add --max-cache-size=SIZE to set the the maximum cache size to SIZE
+  bytes.
+
+Changes in 2.37:
+
+* arm-symbianelf support removed.
+
+* Add -z report-relative-reloc to x86 ELF linker to report dynamic
+  relative relocations.
+
+* Add -z start-stop-gc to disable special treatment of __start_*/__stop_*
+  references when --gc-sections.
+
+* Add -Bno-symbolic to cancel -Bsymbolic and -Bsymbolic-functions.
+
+Changes in 2.36:
+
+* Add libdep plugin, for linking dependencies of static libraries that
+  were recorded by ar in the __.LIBDEP archive member.
+
+* Add --error-handling-script=<NAME> command line option to allow a helper
+  script to be invoked when an undefined symbol or a missing library is
+  encountered.  This option can be suppressed via the configure time
+  switch: --enable-error-handling-script=no.
+
+* Add -z lam-u48 to x86-64 ELF linker to generate LAM_U48 property.
+
+* Add -z lam-u57 to x86-64 ELF linker to enerate LAM_U57 property.
+
+* Add -z lam-u48-report=[none|warning|error] to report missing LAM_U48
+  property.
+
+* Add -z lam-u57-report=[none|warning|error] to report missing LAM_U57
+  property.
+
+* Add -z lam-report=[none|warning|error] to report missing LAM_U48 and
+  LAM_U57 properties.
+
+* Add -z x86-64-{baseline|v[234]} to the x86 ELF linker to mark
+  x86-64-{baseline|v[234]} ISA level as needed.
+
+* Add -z unique-symbol to avoid duplicated local symbol names.
+
+* The creation of PE format DLLs now defaults to using a more secure set of DLL
+  characteristics.
+
+* The linker now deduplicates the types in .ctf sections.  The new
+  command-line option --ctf-share-types describes how to do this:
+  its default value, share-unconflicted, produces the most compact
+  output.
+
+* The linker now omits the "variable section" from .ctf sections by
+  default, saving space.  This is almost certainly what you want
+  unless you are working on a project that has its own analogue
+  of symbol tables that are not reflected in the ELF symtabs.
+
+* Add support for the SHF_GNU_RETAIN ELF section flag.
+  This flag specifies that the section should not be garbage collected by the
+  linker.
+
+Changes in 2.35:
+
+* X86 NaCl target support is removed.
+
+* Add ELF linker command-line options, --export-dynamic-symbol and
+  --export-dynamic-symbol-list, to make symbols dynamic.
+
+* Add a configure option, --enable-textrel-check=[no|yes|warning|error],
+  to decide what ELF linker should do by default with DT_TEXTREL in an
+  executable or shared library.  Default to yes for Linux/x86 targets.
+
+* The -Map=<filename> command line option has been extended so that if
+  <filename> is a directory then <filename>/<output-filename>.map will be
+  created.
+
+* Add a command-line option for ELF linker, --warn-textrel, to warn that
+  DT_TEXTREL is set in a position-independent executable or shared object.
+
+* Add command-line options --enable-non-contiguous-regions and
+  --enable-non-contiguous-regions-warnings.
+
+* Add command-line option --imagic for the pdp11-aout target to output format
+  IMAGIC (0411) for separate instruction and data spaces, and change the
+  default format option for pdp11-aout to be --omagic.
+
+* Relative pathnames in INPUT() and GROUP() directives in linker scripts are
+  searched relative to the directory of the linker script before other search
+  paths.
+
+* Add ELF linker command-line option `-z start-stop-visibility=...' to control
+  the visibility of synthetic `__start_SECNAME` and `__stop_SECNAME` symbols.
+
+* Add command-line option --dependency-file to write a Make-style dependency
+  file listing the input files consulted by the linker, like the files written
+  by the compiler's -M -MP options.
+
 Changes in 2.34:
+
+* The ld check for "PHDR segment not covered by LOAD segment" is more
+  effective, catching cases that were wrongly allowed by previous versions of
+  ld.  If you see this error it is likely you are linking with a bad linker
+  script or the binary you are building is not intended to be loaded by a
+  dynamic loader.  In the latter case --no-dynamic-linker is appropriate.
 
 * cr16c support removed.
 
@@ -775,7 +931,7 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
-Copyright (C) 2012-2020 Free Software Foundation, Inc.
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

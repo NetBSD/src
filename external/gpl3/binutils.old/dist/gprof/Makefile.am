@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ NO_WERROR = @NO_WERROR@
 AM_CFLAGS = $(WARN_CFLAGS)
 
 AM_CPPFLAGS = -DDEBUG -I../bfd -I$(srcdir)/../include \
-	-I$(srcdir)/../bfd @INCINTL@ -I. \
+	-I$(srcdir)/../bfd @INCINTL@ @LARGEFILE_CPPFLAGS@ -I. \
 	-DLOCALEDIR="\"$(datadir)/locale\""
 
 bin_PROGRAMS = gprof
@@ -65,7 +65,7 @@ CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 %.o:%.m
 
 .m.c:
-	awk -f $(srcdir)/gen-c-prog.awk > $@ \
+	$(AM_V_GEN)awk -f $(srcdir)/gen-c-prog.awk > $@ \
 	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
 	    FILE=$*.m $<
 
@@ -84,22 +84,29 @@ info_TEXINFOS = gprof.texi
 gprof_TEXINFOS = config.texi
 man_MANS = gprof.1
 
-AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc
+AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc \
+		   --no-split
 TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../bfd/doc" -I ../bfd/doc
 
 config.texi:
-	echo "@set top_srcdir $(top_srcdir)" >> ./config.texi
+	$(AM_V_GEN)echo "@set top_srcdir $(top_srcdir)" >> ./config.texi
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 gprof.1: $(srcdir)/gprof.texi config.texi
-	touch $@
-	-$(TEXI2POD) $(MANCONF) -Dgprof < $(srcdir)/gprof.texi > gprof.pod
-	-($(POD2MAN) gprof.pod | \
+	$(AM_V_GEN)touch $@
+	$(AM_V_at)-$(TEXI2POD) $(MANCONF) -Dgprof < $(srcdir)/gprof.texi > gprof.pod
+	$(AM_V_at)-($(POD2MAN) gprof.pod | \
 	       sed -e '/^.if n .na/d' > $@.T$$$$ && \
 	       mv -f $@.T$$$$ $@) || \
 	       (rm -f $@.T$$$$ && exit 1)
-	rm -f gprof.pod
+	$(AM_V_at)rm -f gprof.pod
+
+html-local: doc/gprof/index.html
+doc/gprof/index.html: gprof.texi $(gprof_TEXINFOS)
+	$(AM_V_at)$(MKDIR_P) doc
+	$(AM_V_GEN)$(MAKEINFOHTML) $(AM_MAKEINFOHTMLFLAGS) $(MAKEINFOFLAGS) \
+	  --split=node -I$(srcdir) $(srcdir)/gprof.texi -o doc/gprof
 
 MAINTAINERCLEANFILES = gprof.info

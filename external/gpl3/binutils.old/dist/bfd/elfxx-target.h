@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -130,13 +130,13 @@
 #define elf_backend_extern_protected_data 0
 #endif
 #ifndef elf_backend_always_renumber_dynsyms
-#define elf_backend_always_renumber_dynsyms FALSE
+#define elf_backend_always_renumber_dynsyms false
 #endif
 #ifndef elf_backend_linux_prpsinfo32_ugid16
-#define elf_backend_linux_prpsinfo32_ugid16 FALSE
+#define elf_backend_linux_prpsinfo32_ugid16 false
 #endif
 #ifndef elf_backend_linux_prpsinfo64_ugid16
-#define elf_backend_linux_prpsinfo64_ugid16 FALSE
+#define elf_backend_linux_prpsinfo64_ugid16 false
 #endif
 #ifndef elf_backend_stack_align
 #define elf_backend_stack_align 16
@@ -362,6 +362,10 @@
 #define ELF_TARGET_ID	GENERIC_ELF_DATA
 #endif
 
+#ifndef ELF_TARGET_OS
+#define ELF_TARGET_OS	is_normal
+#endif
+
 #ifndef ELF_OSABI
 #define ELF_OSABI ELFOSABI_NONE
 #endif
@@ -375,10 +379,6 @@
 #define ELF_COMMONPAGESIZE ELF_MAXPAGESIZE
 #endif
 
-#ifndef ELF_RELROPAGESIZE
-#define ELF_RELROPAGESIZE ELF_COMMONPAGESIZE
-#endif
-
 #ifndef ELF_MINPAGESIZE
 #define ELF_MINPAGESIZE ELF_COMMONPAGESIZE
 #endif
@@ -386,14 +386,12 @@
 #if ELF_COMMONPAGESIZE > ELF_MAXPAGESIZE
 # error ELF_COMMONPAGESIZE > ELF_MAXPAGESIZE
 #endif
-#if ELF_RELROPAGESIZE > ELF_MAXPAGESIZE
-# error ELF_RELROPAGESIZE > ELF_MAXPAGESIZE
-#endif
 #if ELF_MINPAGESIZE > ELF_COMMONPAGESIZE
 # error ELF_MINPAGESIZE > ELF_COMMONPAGESIZE
 #endif
-#if ELF_MINPAGESIZE > ELF_RELROPAGESIZE
-# error ELF_MINPAGESIZE > ELF_RELROPAGESIZE
+
+#ifndef ELF_P_ALIGN
+#define ELF_P_ALIGN 0
 #endif
 
 #ifndef ELF_DYNAMIC_SEC_FLAGS
@@ -404,10 +402,10 @@
 #endif
 
 #ifndef elf_backend_collect
-#define elf_backend_collect FALSE
+#define elf_backend_collect false
 #endif
 #ifndef elf_backend_type_change_ok
-#define elf_backend_type_change_ok FALSE
+#define elf_backend_type_change_ok false
 #endif
 
 #ifndef elf_backend_sym_is_global
@@ -470,6 +468,12 @@
 #ifndef elf_backend_check_relocs
 #define elf_backend_check_relocs	0
 #endif
+#ifndef elf_backend_size_relative_relocs
+#define elf_backend_size_relative_relocs 0
+#endif
+#ifndef elf_backend_finish_relative_relocs
+#define elf_backend_finish_relative_relocs 0
+#endif
 #ifndef elf_backend_check_directives
 #define elf_backend_check_directives	0
 #endif
@@ -484,6 +488,9 @@
 #endif
 #ifndef elf_backend_size_dynamic_sections
 #define elf_backend_size_dynamic_sections 0
+#endif
+#ifndef elf_backend_strip_zero_sized_dynamic_sections
+#define elf_backend_strip_zero_sized_dynamic_sections 0
 #endif
 #ifndef elf_backend_init_index_section
 #define elf_backend_init_index_section _bfd_void_bfd_link
@@ -653,6 +660,9 @@
 #ifndef elf_backend_write_section
 #define elf_backend_write_section		NULL
 #endif
+#ifndef elf_backend_elfsym_local_is_section
+#define elf_backend_elfsym_local_is_section	NULL
+#endif
 #ifndef elf_backend_mips_irix_compat
 #define elf_backend_mips_irix_compat		NULL
 #endif
@@ -758,7 +768,7 @@
 #endif
 
 #ifndef elf_backend_copy_special_section_fields
-#define elf_backend_copy_special_section_fields NULL
+#define elf_backend_copy_special_section_fields _bfd_elf_copy_special_section_fields
 #endif
 
 #ifndef elf_backend_compact_eh_encoding
@@ -766,9 +776,25 @@
 #endif
 
 #ifndef elf_backend_cant_unwind_opcode
-#define elf_backend_cant_unwind_opcode 0
+#define elf_backend_cant_unwind_opcode NULL
 #endif
 
+#ifndef elf_backend_init_secondary_reloc_section
+#define elf_backend_init_secondary_reloc_section _bfd_elf_init_secondary_reloc_section
+#endif
+
+#ifndef elf_backend_slurp_secondary_reloc_section
+#define elf_backend_slurp_secondary_reloc_section _bfd_elf_slurp_secondary_reloc_section
+#endif
+
+#ifndef elf_backend_write_secondary_reloc_section
+#define elf_backend_write_secondary_reloc_section _bfd_elf_write_secondary_reloc_section
+#endif
+
+#ifndef elf_backend_symbol_section_index
+#define elf_backend_symbol_section_index NULL
+#endif
+ 
 #ifndef elf_match_priority
 #define elf_match_priority \
   (ELF_ARCH == bfd_arch_unknown ? 2 : ELF_OSABI == ELFOSABI_NONE ? 1 : 0)
@@ -776,16 +802,17 @@
 
 extern const struct elf_size_info _bfd_elfNN_size_info;
 
-static struct elf_backend_data elfNN_bed =
+static const struct elf_backend_data elfNN_bed =
 {
   ELF_ARCH,			/* arch */
   ELF_TARGET_ID,		/* target_id */
+  ELF_TARGET_OS,		/* target_os */
   ELF_MACHINE_CODE,		/* elf_machine_code */
   ELF_OSABI,			/* elf_osabi  */
   ELF_MAXPAGESIZE,		/* maxpagesize */
   ELF_MINPAGESIZE,		/* minpagesize */
   ELF_COMMONPAGESIZE,		/* commonpagesize */
-  ELF_RELROPAGESIZE,		/* commonpagesize to use with -z relro */
+  ELF_P_ALIGN,			/* p_align */
   ELF_DYNAMIC_SEC_FLAGS,	/* dynamic_sec_flags */
   elf_backend_arch_data,
   elf_info_to_howto,
@@ -810,11 +837,14 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_omit_section_dynsym,
   elf_backend_relocs_compatible,
   elf_backend_check_relocs,
+  elf_backend_size_relative_relocs,
+  elf_backend_finish_relative_relocs,
   elf_backend_check_directives,
   elf_backend_notice_as_needed,
   elf_backend_adjust_dynamic_symbol,
   elf_backend_always_size_sections,
   elf_backend_size_dynamic_sections,
+  elf_backend_strip_zero_sized_dynamic_sections,
   elf_backend_init_index_section,
   elf_backend_relocate_section,
   elf_backend_finish_dynamic_symbol,
@@ -859,6 +889,7 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_can_make_lsda_relative_eh_frame,
   elf_backend_encode_eh_address,
   elf_backend_write_section,
+  elf_backend_elfsym_local_is_section,
   elf_backend_mips_irix_compat,
   elf_backend_mips_rtype_to_howto,
   elf_backend_ecoff_debug_swap,
@@ -895,6 +926,10 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_fixup_gnu_properties,
   elf_backend_compact_eh_encoding,
   elf_backend_cant_unwind_opcode,
+  elf_backend_symbol_section_index,
+  elf_backend_init_secondary_reloc_section,
+  elf_backend_slurp_secondary_reloc_section,
+  elf_backend_write_secondary_reloc_section,
   elf_backend_static_tls_alignment,
   elf_backend_stack_align,
   elf_backend_strtab_flags,
@@ -973,6 +1008,9 @@ const bfd_target TARGET_BIG_SYM =
   15,
 
   elf_match_priority,
+
+  /* TRUE if unused section symbols should be kept.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
@@ -1074,6 +1112,9 @@ const bfd_target TARGET_LITTLE_SYM =
   15,
 
   elf_match_priority,
+
+  /* TRUE if unused section symbols should be kept.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,

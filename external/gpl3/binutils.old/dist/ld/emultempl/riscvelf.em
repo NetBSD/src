@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2022 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -61,6 +61,20 @@ gld${EMULATION_NAME}_after_allocation (void)
 	  return;
 	}
     }
+
+  /* PR 27566, if the phase of data segment is exp_seg_relro_adjust,
+     that means we are still adjusting the relro, and shouldn't do the
+     relaxations at this stage.  Otherwise, we will get the symbol
+     values beofore handling the relro, and may cause truncated fails
+     when the relax range crossing the data segment.  One of the solution
+     is to monitor the data segment phase while relaxing, to know whether
+     the relro has been handled or not.
+
+     I think we probably need to record more information about data
+     segment or alignments in the future, to make sure it is safe
+     to doing relaxations.  */
+  enum phase_enum *phase = &(expld.dataseg.phase);
+  bfd_elf${ELFSIZE}_riscv_set_data_segment_info (&link_info, (int *) phase);
 
   ldelf_map_segments (need_layout);
 }

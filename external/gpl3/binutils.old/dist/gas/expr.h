@@ -1,5 +1,5 @@
 /* expr.h -> header file for expr.c
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,28 +18,27 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-/*
- * By popular demand, we define a struct to represent an expression.
- * This will no doubt mutate as expressions become baroque.
- *
- * Currently, we support expressions like "foo OP bar + 42".  In other
- * words we permit a (possibly undefined) symbol, a (possibly
- * undefined) symbol and the operation used to combine the symbols,
- * and an (absolute) augend.  RMS says this is so we can have 1-pass
- * assembly for any compiler emissions, and a 'case' statement might
- * emit 'undefined1 - undefined2'.
- *
- * The type of an expression used to be stored as a segment.  That got
- * confusing because it overloaded the concept of a segment.  I added
- * an operator field, instead.
- */
+/* By popular demand, we define a struct to represent an expression.
+   This will no doubt mutate as expressions become baroque.
+
+   Currently, we support expressions like "foo OP bar + 42".  In other
+   words we permit a (possibly undefined) symbol, a (possibly
+   undefined) symbol and the operation used to combine the symbols,
+   and an (absolute) augend.  RMS says this is so we can have 1-pass
+   assembly for any compiler emissions, and a 'case' statement might
+   emit 'undefined1 - undefined2'.
+
+   The type of an expression used to be stored as a segment.  That got
+   confusing because it overloaded the concept of a segment.  I added
+   an operator field, instead.  */
 
 /* This is the type of an expression.  The operator types are also
    used while parsing an expression.
 
    NOTE: This enumeration must match the op_rank array in expr.c.  */
 
-typedef enum {
+typedef enum
+{
   /* An illegal expression.  */
   O_illegal,
   /* A nonexistent expression.  */
@@ -50,6 +49,8 @@ typedef enum {
   O_symbol,
   /* X_add_symbol + X_add_number - the base address of the image.  */
   O_symbol_rva,
+  /* The section index of X_add_symbol.  */
+  O_secidx,
   /* A register (X_add_number is register number).  */
   O_register,
   /* A big value.  If X_add_number is negative or 0, the value is in
@@ -112,7 +113,8 @@ typedef enum {
   O_max
 } operatorT;
 
-typedef struct expressionS {
+typedef struct expressionS
+{
   /* The main symbol.  */
   symbolS *X_add_symbol;
   /* The second symbol, if needed.  */
@@ -182,10 +184,10 @@ extern unsigned int get_single_number (void);
 extern symbolS *make_expr_symbol (expressionS * expressionP);
 extern int expr_symbol_where (symbolS *, const char **, unsigned int *);
 extern void current_location (expressionS *);
-
 extern symbolS *expr_build_uconstant (offsetT);
 extern symbolS *expr_build_dot (void);
+extern uint32_t generic_bignum_to_int32 (void);
+extern uint64_t generic_bignum_to_int64 (void);
+extern int resolve_expression (expressionS *);
 
-int resolve_expression (expressionS *);
-
-extern bfd_boolean literal_prefix_dollar_hex;
+extern bool literal_prefix_dollar_hex;

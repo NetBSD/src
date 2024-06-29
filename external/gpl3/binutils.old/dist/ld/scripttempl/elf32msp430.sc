@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2020 Free Software Foundation, Inc.
+# Copyright (C) 2014-2022 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -23,7 +23,7 @@ fi
 
 
 cat <<EOF
-/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -208,15 +208,18 @@ SECTIONS
 
     KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
 
+    . = ALIGN(2);
     PROVIDE (__preinit_array_start = .);
     KEEP (*(.preinit_array))
     PROVIDE (__preinit_array_end = .);
 
+    . = ALIGN(2);
     PROVIDE (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array))
     PROVIDE (__init_array_end = .);
 
+    . = ALIGN(2);
     PROVIDE (__fini_array_start = .);
     KEEP (*(.fini_array))
     KEEP (*(SORT(.fini_array.*)))
@@ -299,17 +302,25 @@ SECTIONS
   } ${RELOCATING+ > data}
   ${RELOCATING+ PROVIDE (__bsssize = SIZEOF(.bss)); }
 
+  /* This section contains data that is not initialized during load,
+     or during the application's initialization sequence.  */
   .noinit ${RELOCATING-0}${RELOCATING+SIZEOF(.bss) + ADDR(.bss)} :
   {
+    ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
-    *(.noinit)
+    *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
+    ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__noinit_end = .) ; }
   } ${RELOCATING+ > data}
 
+  /* This section contains data that is initialized during load,
+     but not during the application's initialization sequence.  */
   .persistent ${RELOCATING-0}${RELOCATING+SIZEOF(.noinit) + ADDR(.noinit)} :
   {
+    ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__persistent_start = .) ; }
-    *(.persistent)
+    *(.persistent${RELOCATING+ .persistent.* .gnu.linkonce.p.*})
+    ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__persistent_end = .) ; }
   } ${RELOCATING+ > data}
 

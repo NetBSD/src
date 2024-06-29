@@ -1,5 +1,5 @@
 /* This file is tc-alpha.h
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -116,6 +116,11 @@ extern void alpha_handle_align (struct frag *);
 #ifdef OBJ_ECOFF
 #define tc_frob_file_before_adjust() alpha_frob_file_before_adjust ()
 extern void alpha_frob_file_before_adjust (void);
+
+#define TC_VALIDATE_FIX_SUB(FIX, SEG) \
+  ((md_register_arithmetic || (SEG) != reg_section)	\
+   && ((FIX)->fx_r_type == BFD_RELOC_GPREL32		\
+       || (FIX)->fx_r_type == BFD_RELOC_GPREL16))
 #endif
 
 #define DIFF_EXPR_OK   /* foo-. gets turned into PC relative relocs.  */

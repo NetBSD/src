@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ld.info
-@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2022 Free Software Foundation, Inc.
 @syncodeindex ky cp
 @c man begin INCLUDE
 @include configdoc.texi
@@ -31,6 +31,7 @@
 @set MSP430
 @set NDS32
 @set NIOSII
+@set PDP11
 @set POWERPC
 @set POWERPC64
 @set Renesas
@@ -56,7 +57,7 @@ This file documents the @sc{gnu} linker LD
 @end ifset
 version @value{VERSION}.
 
-Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -93,7 +94,7 @@ section entitled ``GNU Free Documentation License''.
 
 @vskip 0pt plus 1filll
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -125,6 +126,7 @@ in the section entitled ``GNU Free Documentation License''.
 * Overview::                    Overview
 * Invocation::                  Invocation
 * Scripts::                     Linker Scripts
+* Plugins::                     Linker Plugins
 @ifset GENERIC
 * Machine Dependent::           Machine Dependent Features
 @end ifset
@@ -459,6 +461,48 @@ will contain a colon separated list of audit interfaces to use.  This
 option is only meaningful on ELF platforms supporting the rtld-audit interface.
 The -P option is provided for Solaris compatibility.
 
+@kindex --enable-non-contiguous-regions
+@item --enable-non-contiguous-regions
+This option avoids generating an error if an input section does not
+fit a matching output section. The linker tries to allocate the input
+section to subseque nt matching output sections, and generates an
+error only if no output section is large enough.  This is useful when
+several non-contiguous memory regions are available and the input
+section does not require a particular one.  The order in which input
+sections are evaluated does not change, for instance:
+
+@smallexample
+  MEMORY @{
+    MEM1 (rwx) : ORIGIN : 0x1000, LENGTH = 0x14
+    MEM2 (rwx) : ORIGIN : 0x1000, LENGTH = 0x40
+    MEM3 (rwx) : ORIGIN : 0x2000, LENGTH = 0x40
+  @}
+  SECTIONS @{
+    mem1 : @{ *(.data.*); @} > MEM1
+    mem2 : @{ *(.data.*); @} > MEM2
+    mem3 : @{ *(.data.*); @} > MEM2
+  @}
+
+  with input sections:
+  .data.1: size 8
+  .data.2: size 0x10
+  .data.3: size 4
+
+  results in .data.1 affected to mem1, and .data.2 and .data.3
+  affected to mem2, even though .data.3 would fit in mem3.
+@end smallexample
+
+This option is incompatible with INSERT statements because it changes
+the way input sections are mapped to output sections.
+
+@kindex --enable-non-contiguous-regions-warnings
+@item --enable-non-contiguous-regions-warnings
+This option enables warnings when
+@code{--enable-non-contiguous-regions} allows possibly unexpected
+matches in sections mapping, potentially leading to silently
+discarding a section instead of failing because it does not fit any
+output region.
+
 @cindex entry point, from command line
 @kindex -e @var{entry}
 @kindex --entry=@var{entry}
@@ -525,6 +569,24 @@ See the description of @samp{--dynamic-list}.
 Note that this option is specific to ELF targeted ports.  PE targets
 support a similar function to export all symbols from a DLL or EXE; see
 the description of @samp{--export-all-symbols} below.
+
+@kindex --export-dynamic-symbol=@var{glob}
+@cindex export dynamic symbol
+@item --export-dynamic-symbol=@var{glob}
+When creating a dynamically linked executable, symbols matching
+@var{glob} will be added to the dynamic symbol table. When creating a
+shared library, references to symbols matching @var{glob} will not be
+bound to the definitions within the shared library. This option is a
+no-op when creating a shared library and @samp{-Bsymbolic} or
+@samp{--dynamic-list} are not specified. This option is only meaningful
+on ELF platforms which support shared libraries.
+
+@kindex --export-dynamic-symbol-list=@var{file}
+@cindex export dynamic symbol list
+@item --export-dynamic-symbol-list=@var{file}
+Specify a @samp{--export-dynamic-symbol} for each pattern in the file.
+The format of the file is the same as the version node without
+scope and node name.  See @ref{VERSION} for more information.
 
 @ifclear SingleFormat
 @cindex big-endian objects
@@ -621,7 +683,7 @@ When creating an ELF shared object, set the internal DT_SONAME field to
 the specified name.  When an executable is linked with a shared object
 which has a DT_SONAME field, then when the executable is run the dynamic
 linker will attempt to load the shared object specified by the DT_SONAME
-field rather than the using the file name given to the linker.
+field rather than using the file name given to the linker.
 
 @kindex -i
 @cindex incremental link
@@ -832,6 +894,21 @@ Use @var{output} as the name for the program produced by @command{ld}; if this
 option is not specified, the name @file{a.out} is used by default.  The
 script command @code{OUTPUT} can also specify the output file name.
 
+@kindex --dependency-file=@var{depfile}
+@cindex dependency file
+@item --dependency-file=@var{depfile}
+Write a @dfn{dependency file} to @var{depfile}.  This file contains a rule
+suitable for @code{make} describing the output file and all the input files
+that were read to produce it.  The output is similar to the compiler's
+output with @samp{-M -MP} (@pxref{Preprocessor Options,, Options
+Controlling the Preprocessor, gcc.info, Using the GNU Compiler
+Collection}).  Note that there is no option like the compiler's @samp{-MM},
+to exclude ``system files'' (which is not a well-specified concept in the
+linker, unlike ``system headers'' in the compiler).  So the output from
+@samp{--dependency-file} is always specific to the exact state of the
+installation where it was produced, and should not be copied into
+distributed makefiles without careful editing.
+
 @kindex -O @var{level}
 @cindex generating optimized output
 @item -O @var{level}
@@ -862,7 +939,7 @@ just copy in the newest one.
 @kindex --push-state
 @cindex push state governing input file handling
 @item --push-state
-The @option{--push-state} allows to preserve the current state of the
+The @option{--push-state} allows one to preserve the current state of the
 flags which govern the input file handling so that they can all be
 restored with one corresponding @option{--pop-state} option.
 
@@ -1216,6 +1293,18 @@ Generate GNU_PROPERTY_X86_FEATURE_1_IBT in .note.gnu.property section
 to indicate compatibility with IBT.  This also implies @option{ibtplt}.
 Supported for Linux/i386 and Linux/x86_64.
 
+@item indirect-extern-access
+@itemx noindirect-extern-access
+Generate GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS in
+.note.gnu.property section to indicate that object file requires
+canonical function pointers and cannot be used with copy relocation.
+This option also implies @option{noextern-protected-data} and
+@option{nocopyreloc}.  Supported for i386 and x86-64.
+
+@option{noindirect-extern-access} removes
+GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS from .note.gnu.property
+section.
+
 @item initfirst
 This option is only meaningful when building a shared object.
 It marks the object so that its runtime initialization will occur
@@ -1228,6 +1317,60 @@ objects.
 Specify that the dynamic loader should modify its symbol search order
 so that symbols in this shared library interpose all other shared
 libraries not so marked.
+
+@item unique
+@itemx nounique
+When generating a shared library or other dynamically loadable ELF
+object mark it as one that should (by default) only ever be loaded once,
+and only in the main namespace (when using @code{dlmopen}). This is
+primarily used to mark fundamental libraries such as libc, libpthread et
+al which do not usually function correctly unless they are the sole instances
+of themselves. This behaviour can be overridden by the @code{dlmopen} caller
+and does not apply to certain loading mechanisms (such as audit libraries).
+
+@item lam-u48
+Generate GNU_PROPERTY_X86_FEATURE_1_LAM_U48 in .note.gnu.property section
+to indicate compatibility with Intel LAM_U48.  Supported for Linux/x86_64.
+
+@item lam-u57
+Generate GNU_PROPERTY_X86_FEATURE_1_LAM_U57 in .note.gnu.property section
+to indicate compatibility with Intel LAM_U57.  Supported for Linux/x86_64.
+
+@item lam-u48-report=none
+@itemx lam-u48-report=warning
+@itemx lam-u48-report=error
+Specify how to report the missing GNU_PROPERTY_X86_FEATURE_1_LAM_U48
+property in input .note.gnu.property section.
+@option{lam-u48-report=none}, which is the default, will make the
+linker not report missing properties in input files.
+@option{lam-u48-report=warning} will make the linker issue a warning for
+missing properties in input files.  @option{lam-u48-report=error} will
+make the linker issue an error for missing properties in input files.
+Supported for Linux/x86_64.
+
+@item lam-u57-report=none
+@itemx lam-u57-report=warning
+@itemx lam-u57-report=error
+Specify how to report the missing GNU_PROPERTY_X86_FEATURE_1_LAM_U57
+property in input .note.gnu.property section.
+@option{lam-u57-report=none}, which is the default, will make the
+linker not report missing properties in input files.
+@option{lam-u57-report=warning} will make the linker issue a warning for
+missing properties in input files.  @option{lam-u57-report=error} will
+make the linker issue an error for missing properties in input files.
+Supported for Linux/x86_64.
+
+@item lam-report=none
+@itemx lam-report=warning
+@itemx lam-report=error
+Specify how to report the missing GNU_PROPERTY_X86_FEATURE_1_LAM_U48 and
+GNU_PROPERTY_X86_FEATURE_1_LAM_U57 properties in input .note.gnu.property
+section.  @option{lam-report=none}, which is the default, will make the
+linker not report missing properties in input files.
+@option{lam-report=warning} will make the linker issue a warning for
+missing properties in input files.  @option{lam-report=error} will make
+the linker issue an error for missing properties in input files.
+Supported for Linux/x86_64.
 
 @item lazy
 When generating an executable or shared library, mark it to tell the
@@ -1287,6 +1430,17 @@ called.
 @item origin
 Specify that the object requires @samp{$ORIGIN} handling in paths.
 
+@item pack-relative-relocs
+@itemx nopack-relative-relocs
+Generate compact relative relocation in position-independent executable
+and shared library.  It adds @code{DT_RELR}, @code{DT_RELRSZ} and
+@code{DT_RELRENT} entries to the dynamic section.  It is ignored when
+building position-dependent executable and relocatable output.
+@option{nopack-relative-relocs} is the default, which disables compact
+relative relocation.  When linked against the GNU C Library, a
+GLIBC_ABI_DT_RELR symbol version dependency on the shared C Library is
+added to the output.  Supported for i386 and x86-64.
+
 @item relro
 @itemx norelro
 Create an ELF @code{PT_GNU_RELRO} segment header in the object.  This
@@ -1294,6 +1448,10 @@ specifies a memory segment that should be made read-only after
 relocation, if supported.  Specifying @samp{common-page-size} smaller
 than the system page size will render this protection ineffective.
 Don't create an ELF @code{PT_GNU_RELRO} segment if @samp{norelro}.
+
+@item report-relative-reloc
+Report dynamic relative relocations generated by linker.  Supported for
+Linux/i386 and Linux/x86_64.
 
 @item separate-code
 @itemx noseparate-code
@@ -1312,17 +1470,64 @@ Specify a stack size for an ELF @code{PT_GNU_STACK} segment.
 Specifying zero will override any default non-zero sized
 @code{PT_GNU_STACK} segment creation.
 
+@item start-stop-gc
+@itemx nostart-stop-gc
+@cindex start-stop-gc
+When @samp{--gc-sections} is in effect, a reference from a retained
+section to @code{__start_SECNAME} or @code{__stop_SECNAME} causes all
+input sections named @code{SECNAME} to also be retained, if
+@code{SECNAME} is representable as a C identifier and either
+@code{__start_SECNAME} or @code{__stop_SECNAME} is synthesized by the
+linker.  @samp{-z start-stop-gc} disables this effect, allowing
+sections to be garbage collected as if the special synthesized symbols
+were not defined.  @samp{-z start-stop-gc} has no effect on a
+definition of @code{__start_SECNAME} or @code{__stop_SECNAME} in an
+object file or linker script.  Such a definition will prevent the
+linker providing a synthesized @code{__start_SECNAME} or
+@code{__stop_SECNAME} respectively, and therefore the special
+treatment by garbage collection for those references.
+
+@item start-stop-visibility=@var{value}
+@cindex visibility
+@cindex ELF symbol visibility
+Specify the ELF symbol visibility for synthesized
+@code{__start_SECNAME} and @code{__stop_SECNAME} symbols (@pxref{Input
+Section Example}).  @var{value} must be exactly @samp{default},
+@samp{internal}, @samp{hidden}, or @samp{protected}.  If no @samp{-z
+start-stop-visibility} option is given, @samp{protected} is used for
+compatibility with historical practice.  However, it's highly
+recommended to use @samp{-z start-stop-visibility=hidden} in new
+programs and shared libraries so that these symbols are not exported
+between shared objects, which is not usually what's intended.
+
 @item text
 @itemx notext
 @itemx textoff
-Report an error if DT_TEXTREL is set, i.e., if the binary has dynamic
-relocations in read-only sections.  Don't report an error if
-@samp{notext} or @samp{textoff}.
+Report an error if DT_TEXTREL is set, i.e., if the position-independent
+or shared object has dynamic relocations in read-only sections.  Don't
+report an error if @samp{notext} or @samp{textoff}.
 
 @item undefs
 Do not report unresolved symbol references from regular object files,
 either when creating an executable, or when creating a shared library.
 This option is the inverse of @samp{-z defs}.
+
+@item unique-symbol
+@itemx nounique-symbol
+Avoid duplicated local symbol names in the symbol string table.  Append
+".@code{number}" to duplicated local symbol names if @samp{unique-symbol}
+is used.  @option{nounique-symbol} is the default.
+
+@item x86-64-baseline
+@item x86-64-v2
+@item x86-64-v3
+@itemx x86-64-v4
+Specify the x86-64 ISA level needed in .note.gnu.property section.
+@option{x86-64-baseline} generates @code{GNU_PROPERTY_X86_ISA_1_BASELINE}.
+@option{x86-64-v2} generates @code{GNU_PROPERTY_X86_ISA_1_V2}.
+@option{x86-64-v3} generates @code{GNU_PROPERTY_X86_ISA_1_V3}.
+@option{x86-64-v4} generates @code{GNU_PROPERTY_X86_ISA_1_V4}.
+Supported for Linux/i386 and Linux/x86_64.
 
 @end table
 
@@ -1377,6 +1582,11 @@ Object files or libraries appearing on the command line @emph{after}
 the library in question do not affect whether the library is seen as
 needed.  This is similar to the rules for extraction of object files
 from archives.  @option{--no-as-needed} restores the default behaviour.
+
+Note: On Linux based systems the @option{--as-needed} option also has
+an affect on the behaviour of the @option{--rpath} and
+@option{--rpath-link} options.  See the description of
+@option{--rpath-link} for more details.
 
 @kindex --add-needed
 @kindex --no-add-needed
@@ -1445,6 +1655,11 @@ When creating a shared library, bind references to global function
 symbols to the definition within the shared library, if any.
 This option is only meaningful on ELF platforms which support shared
 libraries.
+
+@kindex -Bno-symbolic
+@item -Bno-symbolic
+This option can cancel previously specified @samp{-Bsymbolic} and
+@samp{-Bsymbolic-functions}.
 
 @kindex --dynamic-list=@var{dynamic-list-file}
 @item --dynamic-list=@var{dynamic-list-file}
@@ -1523,6 +1738,40 @@ definition.  If the symbol is defined as a common value then any files
 where this happens appear next.  Finally any files that reference the
 symbol are listed.
 
+@cindex ctf variables
+@kindex --ctf-variables
+@kindex --no-ctf-variables
+@item --ctf-variables
+@item --no-ctf-variables
+The CTF debuginfo format supports a section which encodes the names and
+types of variables found in the program which do not appear in any symbol
+table. These variables clearly cannot be looked up by address by
+conventional debuggers, so the space used for their types and names is
+usually wasted: the types are usually small but the names are often not.
+@option{--ctf-variables} causes the generation of such a section.
+The default behaviour can be restored with @option{--no-ctf-variables}.
+
+@cindex ctf type sharing
+@kindex --ctf-share-types
+@item --ctf-share-types=@var{method}
+Adjust the method used to share types between translation units in CTF.
+
+@table @samp
+@item share-unconflicted
+Put all types that do not have ambiguous definitions into the shared dictionary,
+where debuggers can easily access them, even if they only occur in one
+translation unit.  This is the default.
+
+@item share-duplicated
+Put only types that occur in multiple translation units into the shared
+dictionary: types with only one definition go into per-translation-unit
+dictionaries.  Types with ambiguous definitions in multiple translation units
+always go into per-translation-unit dictionaries.  This tends to make the CTF
+larger, but may reduce the amount of CTF in the shared dictionary.  For very
+large projects this may speed up opening the CTF and save memory in the CTF
+consumer at runtime.
+@end table
+
 @cindex common allocation
 @kindex --no-define-common
 @item --no-define-common
@@ -1566,6 +1815,15 @@ constants or symbols.  If you need more elaborate expressions, consider
 using the linker command language from a script (@pxref{Assignments}).
 @emph{Note:} there should be no white space between @var{symbol}, the
 equals sign (``@key{=}''), and @var{expression}.
+
+The linker processes @samp{--defsym} arguments and @samp{-T} arguments
+in order, placing @samp{--defsym} before @samp{-T} will define the
+symbol before the linker script from @samp{-T} is processed, while
+placing @samp{--defsym} after @samp{-T} will define the symbol after
+the linker script has been processed.  This difference has
+consequences for expressions within the linker script that use the
+@samp{--defsym} symbols, which order is correct will depend on what
+you are trying to achieve.
 
 @cindex demangling, from command line
 @kindex --demangle[=@var{style}]
@@ -1658,6 +1916,9 @@ specified either by one of the options @samp{--entry},
 @samp{--undefined}, or @samp{--gc-keep-exported} or by a @code{ENTRY}
 command in the linker script.
 
+As a GNU extension, ELF input sections marked with the
+@code{SHF_GNU_RETAIN} flag will not be garbage collected.
+
 @kindex --print-gc-sections
 @kindex --no-print-gc-sections
 @cindex garbage collection
@@ -1717,7 +1978,34 @@ Print a summary of all target-specific options on the standard output and exit.
 @kindex -Map=@var{mapfile}
 @item -Map=@var{mapfile}
 Print a link map to the file @var{mapfile}.  See the description of the
-@option{-M} option, above.
+@option{-M} option, above.  If @var{mapfile} is just the character
+@code{-} then the map will be written to stdout.
+
+Specifying a directory as @var{mapfile} causes the linker map to be
+written as a file inside the directory.  Normally name of the file
+inside the directory is computed as the basename of the @var{output}
+file with @code{.map} appended.   If however the special character
+@code{%} is used then this will be replaced by the full path of the
+output file.  Additionally if there are any characters after the
+@var{%} symbol then @code{.map} will no longer be appended.
+
+@smallexample
+ -o foo.exe -Map=bar                  [Creates ./bar]
+ -o ../dir/foo.exe -Map=bar           [Creates ./bar]
+ -o foo.exe -Map=../dir               [Creates ../dir/foo.exe.map]
+ -o ../dir2/foo.exe -Map=../dir       [Creates ../dir/foo.exe.map]
+ -o foo.exe -Map=%                    [Creates ./foo.exe.map]
+ -o ../dir/foo.exe -Map=%             [Creates ../dir/foo.exe.map]
+ -o foo.exe -Map=%.bar                [Creates ./foo.exe.bar]
+ -o ../dir/foo.exe -Map=%.bar         [Creates ../dir/foo.exe.bar]
+ -o ../dir2/foo.exe -Map=../dir/%     [Creates ../dir/../dir2/foo.exe.map]
+ -o ../dir2/foo.exe -Map=../dir/%.bar [Creates ../dir/../dir2/foo.exe.bar]
+@end smallexample
+
+It is an error to specify more than one @code{%} character.
+
+If the map file already exists then it will be overwritten by this
+operation.
 
 @cindex memory usage
 @kindex --no-keep-memory
@@ -1781,6 +2069,21 @@ select whichever function is most appropriate for the current
 architecture.  This is used, for example, to dynamically select an
 appropriate memset function.
 @end itemize
+
+@kindex --error-handling-script=@var{scriptname}
+@item --error-handling-script=@var{scriptname}
+If this option is provided then the linker will invoke
+@var{scriptname} whenever an error is encountered.  Currently however
+only two kinds of error are supported: missing symbols and missing
+libraries.  Two arguments will be passed to script: the keyword
+``undefined-symbol'' or `missing-lib'' and the @var{name} of the
+undefined symbol or missing library.  The intention is that the script
+will provide suggestions to the user as to where the symbol or library
+might be found.  After the script has finished then the normal linker
+error message will be displayed.
+
+The availability of this option is controlled by a configure time
+switch, so it may not be present in specific implementations.
 
 @kindex --no-undefined-version
 @item --no-undefined-version
@@ -1870,6 +2173,11 @@ address the OS chooses for them (which can vary between invocations).  Like
 normal dynamically linked executables they can be executed and symbols
 defined in the executable cannot be overridden by shared libraries.
 
+@kindex -no-pie
+@item -no-pie
+@cindex position dependent executables
+Create a position dependent executable.  This is the default.
+
 @kindex -qmagic
 @item -qmagic
 This option is ignored for Linux compatibility.
@@ -1904,7 +2212,7 @@ This option is only supported on a few targets.
 @xref{PowerPC ELF32,,@command{ld} and PowerPC 32-bit ELF Support}.
 @end ifset
 
-On some platforms the @samp{--relax} option performs target-specific,
+On some platforms the @option{--relax} option performs target specific,
 global optimizations that become possible when the linker resolves
 addressing in the program, such as relaxing address modes,
 synthesizing new instructions, selecting shorter version of current
@@ -1917,13 +2225,11 @@ This is known to be the case for the Matsushita MN10200 and MN10300
 family of processors.
 @end ifset
 
-@ifset GENERIC
-On platforms where this is not supported, @samp{--relax} is accepted,
-but ignored.
-@end ifset
+On platforms where the feature is supported, the option
+@option{--no-relax} will disable it.
 
-On platforms where @samp{--relax} is accepted the option
-@samp{--no-relax} can be used to disable the feature.
+On platforms where the feature is not supported, both @option{--relax}
+and @option{--no-relax} are accepted, but ignored.
 
 @cindex retaining specified symbols
 @cindex stripping all but some symbols
@@ -2011,6 +2317,7 @@ runtime linker would do.
 
 The linker uses the following search paths to locate required shared
 libraries:
+
 @enumerate
 @item
 Any directories specified by @option{-rpath-link} options.
@@ -2038,14 +2345,41 @@ For a native ELF linker, the directories in @code{DT_RUNPATH} or
 libraries needed by it. The @code{DT_RPATH} entries are ignored if
 @code{DT_RUNPATH} entries exist.
 @item
+For a linker for a Linux system, if the file @file{/etc/ld.so.conf}
+exists, the list of directories found in that file.  Note: the path
+to this file is prefixed with the @code{sysroot} value, if that is
+defined, and then any @code{prefix} string if the linker was
+configured with the @command{--prefix=<path>} option.
+@item
+For a native linker on a FreeBSD system, any directories specified by
+the @code{_PATH_ELF_HINTS} macro defined in the @file{elf-hints.h}
+header file.
+@item
+Any directories specified by a @code{SEARCH_DIR} command in a
+linker script given on the command line, including scripts specified
+by @option{-T} (but not @option{-dT}).
+@item
 The default directories, normally @file{/lib} and @file{/usr/lib}.
 @item
-For a native linker on an ELF system, if the file @file{/etc/ld.so.conf}
-exists, the list of directories found in that file.
+Any directories specified by a plugin LDPT_SET_EXTRA_LIBRARY_PATH.
+@item
+Any directories specified by a @code{SEARCH_DIR} command in a default
+linker script.
 @end enumerate
+
+Note however on Linux based systems there is an additional caveat:  If
+the @option{--as-needed} option is active @emph{and} a shared library
+is located which would normally satisfy the search @emph{and} this
+library does not have DT_NEEDED tag for @file{libc.so}
+@emph{and} there is a shared library later on in the set of search
+directories which also satisfies the search @emph{and}
+this second shared library does have a DT_NEEDED tag for
+@file{libc.so} @emph{then} the second library will be selected instead
+of the first.
 
 If the required shared library is not found, the linker will issue a
 warning and continue with the link.
+
 @end ifset
 
 @kindex -shared
@@ -2319,6 +2653,33 @@ Warn if any global constructors are used.  This is only useful for a few
 object file formats.  For formats like COFF or ELF, the linker can not
 detect the use of global constructors.
 
+@kindex --warn-execstack
+@cindex warnings, on executable stack
+@cindex executable stack, warnings on
+@item --warn-execstack
+@itemx --no-warn-execstack
+On ELF platforms this option controls how the linker generates warning
+messages when it creates an output file with an executable stack.  By
+default the linker will not warn if the @command{-z execstack} command
+line option has been used, but this behaviour can be overridden by the
+@option{--warn-execstack} option.
+
+On the other hand the linker will normally warn if the stack is made
+executable because one or more of the input files need an execuable
+stack and neither of the @command{-z execstack} or @command{-z
+noexecstack} command line options have been specified.  This warning
+can be disabled via the @command{--no-warn-execstack} option.
+
+Note: ELF format input files specify that they need an executable
+stack by having a @var{.note.GNU-stack} section with the executable
+bit set in its section flags.  They can specify that they do not need
+an executable stack by having that section, but without the executable
+flag bit set.  If an input file does not have a @var{.note.GNU-stack}
+section present then the default behaviour is target specific.  For
+some targets, then absence of such a section implies that an
+executable stack @emph{is} required.  This is often a problem for hand
+crafted assembler files.
+
 @kindex --warn-multiple-gp
 @item --warn-multiple-gp
 Warn if multiple global pointer values are required in the output file.
@@ -2340,6 +2701,22 @@ option causes a warning to be issued whenever this case occurs.
 Only warn once for each undefined symbol, rather than once per module
 which refers to it.
 
+@kindex --warn-rwx-segments
+@cindex warnings, on writeable and exectuable segments
+@cindex executable segments, warnings on
+@item --warn-rwx-segments
+@itemx --no-warn-rwx-segments
+Warn if the linker creates a loadable, non-zero sized segment that has
+all three of the read, write and execute permission flags set.  Such a
+segment represents a potential security vulnerability.  In addition
+warnings will be generated if a thread local storage segment is
+created with the execute permission flag set, regardless of whether or
+not it has the read and/or write flags set.
+
+These warnings are enabled by default.  They can be disabled via the
+@option{--no-warn-rwx-segments} option and re-enabled via the
+@option{--warn-rwx-segments} option.
+
 @kindex --warn-section-align
 @cindex warnings, on section alignment
 @cindex section alignment, warnings on
@@ -2350,9 +2727,10 @@ The address will only be changed if it not explicitly specified; that
 is, if the @code{SECTIONS} command does not specify a start address for
 the section (@pxref{SECTIONS}).
 
-@kindex --warn-shared-textrel
-@item --warn-shared-textrel
-Warn if the linker adds a DT_TEXTREL to a shared object.
+@kindex --warn-textrel
+@item --warn-textrel
+Warn if the linker adds DT_TEXTREL to a position-independent executable
+or shared object.
 
 @kindex --warn-alternate-em
 @item --warn-alternate-em
@@ -2527,6 +2905,12 @@ has been used.
 The @option{--reduce-memory-overheads} switch may be also be used to
 enable other tradeoffs in future versions of the linker.
 
+@kindex --max-cache-size=@var{size}
+@item --max-cache-size=@var{size}
+@command{ld} normally caches the relocation information and symbol tables
+of input files in memory with the unlimited size.  This option sets the
+maximum cache size to @var{size}.
+
 @kindex --build-id
 @kindex --build-id=@var{style}
 @item --build-id
@@ -2551,6 +2935,18 @@ string identifying the original linked file does not change.
 
 Passing @code{none} for @var{style} disables the setting from any
 @code{--build-id} options earlier on the command line.
+
+@kindex --package-metadata=@var{JSON}
+@item --package-metadata=@var{JSON}
+Request the creation of a @code{.note.package} ELF note section.  The
+contents of the note are in JSON format, as per the package metadata
+specification.  For more information see:
+https://systemd.io/ELF_PACKAGE_METADATA/
+If the JSON argument is missing/empty then this will disable the
+creation of the metadata note, if one had been enabled by an earlier
+occurrence of the --package-metdata option.
+If the linker has been built with libjansson, then the JSON string
+will be validated.
 @end table
 
 @c man end
@@ -2993,47 +3389,63 @@ of the PE file header:
 
 @kindex --high-entropy-va
 @item --high-entropy-va
+@itemx --disable-high-entropy-va
 Image is compatible with 64-bit address space layout randomization
-(ASLR).
+(ASLR).  This option is enabled by default for 64-bit PE images.
+
 This option also implies @option{--dynamicbase} and
 @option{--enable-reloc-section}.
 
 @kindex --dynamicbase
 @item --dynamicbase
+@itemx --disable-dynamicbase
 The image base address may be relocated using address space layout
 randomization (ASLR).  This feature was introduced with MS Windows
-Vista for i386 PE targets.
+Vista for i386 PE targets.  This option is enabled by default but
+can be disabled via the @option{--disable-dynamicbase} option.
 This option also implies @option{--enable-reloc-section}.
 
 @kindex --forceinteg
 @item --forceinteg
-Code integrity checks are enforced.
+@itemx --disable-forceinteg
+Code integrity checks are enforced.  This option is disabled by
+default.
 
 @kindex --nxcompat
 @item --nxcompat
+@item --disable-nxcompat
 The image is compatible with the Data Execution Prevention.
-This feature was introduced with MS Windows XP SP2 for i386 PE targets.
+This feature was introduced with MS Windows XP SP2 for i386 PE
+targets.  The option is enabled by default.
 
 @kindex --no-isolation
 @item --no-isolation
+@itemx --disable-no-isolation
 Although the image understands isolation, do not isolate the image.
+This option is disabled by default.
 
 @kindex --no-seh
 @item --no-seh
+@itemx --disable-no-seh
 The image does not use SEH. No SE handler may be called from
-this image.
+this image.  This option is disabled by default.
 
 @kindex --no-bind
 @item --no-bind
-Do not bind this image.
+@itemx --disable-no-bind
+Do not bind this image.  This option is disabled by default.
 
 @kindex --wdmdriver
 @item --wdmdriver
-The driver uses the MS Windows Driver Model.
+@itemx --disable-wdmdriver
+The driver uses the MS Windows Driver Model.  This option is disabled
+by default.
 
 @kindex --tsaware
 @item --tsaware
-The image is Terminal Server aware.
+@itemx --disable-tsaware
+The image is Terminal Server aware.  This option is disabled by
+default.
 
 @kindex --insert-timestamp
 @item --insert-timestamp
@@ -3049,8 +3461,10 @@ identically.
 
 @kindex --enable-reloc-section
 @item --enable-reloc-section
+@itemx --disable-reloc-section
 Create the base relocation table, which is necessary if the image
 is loaded at a different image base than specified in the PE header.
+This option is enabled by default.
 @end table
 
 @c man end
@@ -3207,9 +3621,76 @@ an error.
 @kindex --compact-branches
 @item --compact-branches
 @kindex --no-compact-branches
-@item --compact-branches
+@itemx --no-compact-branches
 These options control the generation of compact instructions by the linker
 in the PLT entries for MIPS R6.
+
+@end table
+
+@c man end
+@end ifset
+
+
+@ifset PDP11
+@subsection Options specific to PDP11 targets
+
+@c man begin OPTIONS
+
+For the pdp11-aout target, three variants of the output format can be
+produced as selected by the following options.  The default variant
+for pdp11-aout is the @samp{--omagic} option, whereas for other
+targets @samp{--nmagic} is the default.  The @samp{--imagic} option is
+defined only for the pdp11-aout target, while the others are described
+here as they apply to the pdp11-aout target.
+
+@table @gcctabopt
+
+@kindex -N
+@item -N
+@kindex --omagic
+@itemx --omagic
+
+Mark the output as @code{OMAGIC} (0407) in the @file{a.out} header to
+indicate that the text segment is not to be write-protected and
+shared.  Since the text and data sections are both readable and
+writable, the data section is allocated immediately contiguous after
+the text segment.  This is the oldest format for PDP11 executable
+programs and is the default for @command{ld} on PDP11 Unix systems
+from the beginning through 2.11BSD.
+
+@kindex -n
+@item -n
+@kindex --nmagic
+@itemx --nmagic
+
+Mark the output as @code{NMAGIC} (0410) in the @file{a.out} header to
+indicate that when the output file is executed, the text portion will
+be read-only and shareable among all processes executing the same
+file.  This involves moving the data areas up to the first possible 8K
+byte page boundary following the end of the text.  This option creates
+a @emph{pure executable} format.
+
+@kindex -z
+@item -z
+@kindex --imagic
+@itemx --imagic
+
+Mark the output as @code{IMAGIC} (0411) in the @file{a.out} header to
+indicate that when the output file is executed, the program text and
+data areas will be loaded into separate address spaces using the split
+instruction and data space feature of the memory management unit in
+larger models of the PDP11.  This doubles the address space available
+to the program.  The text segment is again pure, write-protected, and
+shareable.  The only difference in the output format between this
+option and the others, besides the magic number, is that both the text
+and data sections start at location 0.  The @samp{-z} option selected
+this format in 2.11BSD.  This option creates a @emph{separate
+executable} format.
+
+@kindex --no-omagic
+@item --no-omagic
+
+Equivalent to @samp{--nmagic} for pdp11-aout.
 
 @end table
 
@@ -3495,7 +3976,9 @@ the value of a target-specific symbol, if it is defined;  For many
 targets this is @code{start}, but PE- and BeOS-based systems for example
 check a list of possible entry symbols, matching the first one found.
 @item
-the address of the first byte of the @samp{.text} section, if present;
+the address of the first byte of the code section, if present and an
+executable is being created - the code section is usually
+@samp{.text}, but can be something else;
 @item
 The address @code{0}.
 @end itemize
@@ -3536,13 +4019,16 @@ script, and then invoke the linker with nothing but a @samp{-T} option.
 In case a @dfn{sysroot prefix} is configured, and the filename starts
 with the @samp{/} character, and the script being processed was
 located inside the @dfn{sysroot prefix}, the filename will be looked
-for in the @dfn{sysroot prefix}.  Otherwise, the linker will try to
-open the file in the current directory.  If it is not found, the
-linker will search through the archive library search path.
-The @dfn{sysroot prefix} can also be forced by specifying @code{=}
-as the first character in the filename path, or prefixing the filename
-path with @code{$SYSROOT}.  See also the description of @samp{-L} in
-@ref{Options,,Command-line Options}.
+for in the @dfn{sysroot prefix}.  The @dfn{sysroot prefix} can also be forced by specifying
+@code{=} as the first character in the filename path, or prefixing the
+filename path with @code{$SYSROOT}. See also the description of
+@samp{-L} in @ref{Options,,Command-line Options}.
+
+If a @dfn{sysroot prefix} is not used then the linker will try to open
+the file in the directory containing the linker script.  If it is not
+found the linker will then search the current directory.  If it is still
+not found the linker will search through the archive library search
+path.
 
 If you use @samp{INPUT (-l@var{file})}, @command{ld} will transform the
 name to @code{lib@var{file}.a}, as with the command-line argument
@@ -4096,8 +4582,8 @@ SECTIONS
 @end smallexample
 
 In this example, if the program defines @samp{_etext} (with a leading
-underscore), the linker will give a multiple definition error.  If, on
-the other hand, the program defines @samp{etext} (with no leading
+underscore), the linker will give a multiple definition diagnostic.  If,
+on the other hand, the program defines @samp{etext} (with no leading
 underscore), the linker will silently use the definition in the program.
 If the program references @samp{etext} but does not define it, the
 linker will use the definition in the linker script.
@@ -4602,13 +5088,6 @@ character may be used to specify a range of characters, as in
 quotes the following character
 @end table
 
-When a file name is matched with a wildcard, the wildcard characters
-will not match a @samp{/} character (used to separate directory names on
-Unix).  A pattern consisting of a single @samp{*} character is an
-exception; it will always match any file name, whether it contains a
-@samp{/} or not.  In a section name, the wildcard characters will match
-a @samp{/} character.
-
 File name wildcard patterns only match files which are explicitly
 specified on the command line or in an @code{INPUT} command.  The linker
 does not search directories to expand wildcards.
@@ -5002,6 +5481,10 @@ The special output section name @samp{/DISCARD/} may be used to discard
 input sections.  Any input sections which are assigned to an output
 section named @samp{/DISCARD/} are not included in the output file.
 
+This can be used to discard input sections marked with the ELF flag
+@code{SHF_GNU_RETAIN}, which would otherwise have been saved from linker
+garbage collection.
+
 Note, sections that match the @samp{/DISCARD/} output section will be
 discarded even if they are in an ELF section group which has other
 members which are not being discarded.  This is deliberate.
@@ -5052,14 +5535,26 @@ parentheses.  The following types are defined:
 @item NOLOAD
 The section should be marked as not loadable, so that it will not be
 loaded into memory when the program is run.
+@item READONLY
+The section should be marked as read-only.
 @item DSECT
-@itemx COPY
-@itemx INFO
-@itemx OVERLAY
+@item COPY
+@item INFO
+@item OVERLAY
 These type names are supported for backward compatibility, and are
 rarely used.  They all have the same effect: the section should be
 marked as not allocatable, so that no memory is allocated for the
 section when the program is run.
+@item TYPE = @var{type}
+Set the section type to the integer @var{type}. When generating an ELF
+output file, type names @code{SHT_PROGBITS}, @code{SHT_STRTAB},
+@code{SHT_NOTE}, @code{SHT_NOBITS}, @code{SHT_INIT_ARRAY},
+@code{SHT_FINI_ARRAY}, and @code{SHT_PREINIT_ARRAY} are also allowed
+for @var{type}.  It is the user's responsibility to ensure that any
+special requirements of the section type are met.
+@item READONLY ( TYPE = @var{type} )
+This form of the syntax combines the @var{READONLY} type with the
+type specified by @var{type}.
 @end table
 
 @kindex NOLOAD
@@ -5862,9 +6357,11 @@ expect when you upgrade.
 @cindex expressions
 @cindex arithmetic
 The syntax for expressions in the linker script language is identical to
-that of C expressions.  All expressions are evaluated as integers.  All
-expressions are evaluated in the same size, which is 32 bits if both the
-host and target are 32 bits, and is otherwise 64 bits.
+that of C expressions, except that whitespace is required in some
+places to resolve syntactic ambiguities.  All expressions are
+evaluated as integers.  All expressions are evaluated in the same
+size, which is 32 bits if both the host and target are 32 bits, and is
+otherwise 64 bits.
 
 You can use and set symbol values in expressions.
 
@@ -6618,7 +7115,6 @@ SECTIONS@{ @dots{}
 @end smallexample
 
 @item SIZEOF_HEADERS
-@itemx sizeof_headers
 @kindex SIZEOF_HEADERS
 @cindex header size
 Return the size in bytes of the output file's headers.  This is
@@ -6657,6 +7153,58 @@ commands.
 Any input files read because of an implicit linker script will be read
 at the position in the command line where the implicit linker script was
 read.  This can affect archive searching.
+
+@node Plugins
+@chapter Linker Plugins
+
+@cindex plugins
+@cindex linker plugins
+The linker can use dynamically loaded plugins to modify its behavior.
+For example, the link-time optimization feature that some compilers
+support is implemented with a linker plugin.
+
+Currently there is only one plugin shipped by default, but more may
+be added here later.
+
+@menu
+* libdep Plugin::	Static Library Dependencies Plugin
+@end menu
+
+@node libdep Plugin
+@section Static Library Dependencies Plugin
+@cindex static library dependencies
+Originally, static libraries were contained in an archive file consisting
+just of a collection of relocatable object files.  Later they evolved to
+optionally include a symbol table, to assist in finding the needed objects
+within a library.  There their evolution ended, and dynamic libraries
+rose to ascendance.
+
+One useful feature of dynamic libraries was that, more than just collecting
+multiple objects into a single file, they also included a list of their
+dependencies, such that one could specify just the name of a single dynamic
+library at link time, and all of its dependencies would be implicitly
+referenced as well.  But static libraries lacked this feature, so if a
+link invocation was switched from using dynamic libraries to static
+libraries, the link command would usually fail unless it was rewritten to
+explicitly list the dependencies of the static library.
+
+The GNU @command{ar} utility now supports a @option{--record-libdeps} option
+to embed dependency lists into static libraries as well, and the @file{libdep}
+plugin may be used to read this dependency information at link time.  The
+dependency information is stored as a single string, carrying @option{-l}
+and @option{-L} arguments as they would normally appear in a linker
+command line.  As such, the information can be written with any text
+utility and stored into any archive, even if GNU @command{ar} is not
+being used to create the archive.  The information is stored in an
+archive member named @samp{__.LIBDEP}.
+
+For example, given a library @file{libssl.a} that depends on another
+library @file{libcrypto.a} which may be found in @file{/usr/local/lib},
+the @samp{__.LIBDEP} member of @file{libssl.a} would contain
+
+@smallexample
+-L/usr/local/lib -lcrypto
+@end smallexample
 
 @ifset GENERIC
 @node Machine Dependent
@@ -6909,7 +7457,7 @@ meanings, and target defaults are as follows:
 @item rel
 @samp{R_ARM_REL32} (arm*-*-elf, arm*-*-eabi)
 @item abs
-@samp{R_ARM_ABS32} (arm*-*-symbianelf)
+@samp{R_ARM_ABS32}
 @item got-rel
 @samp{R_ARM_GOT_PREL} (arm*-*-linux, arm*-*-*bsd)
 @end table
@@ -6950,9 +7498,6 @@ BLX instructions (available on ARMv5t and above) in various
 situations. Currently it is used to perform calls via the PLT from Thumb
 code using BLX rather than using BX and a mode-switching stub before
 each PLT entry. This should lead to such calls executing slightly faster.
-
-This option is enabled implicitly for SymbianOS, so there is no need to
-specify it if you are using that target.
 
 @cindex VFP11_DENORM_FIX
 @kindex --vfp11-denorm-fix
@@ -7595,18 +8140,27 @@ disable the optimization.
 @cindex PowerPC64 __tls_get_addr optimization
 @kindex --tls-get-addr-optimize
 @kindex --no-tls-get-addr-optimize
+@kindex --tls-get-addr-regsave
+@kindex --no-tls-get-addr-regsave
 @item --tls-get-addr-optimize
 @itemx --no-tls-get-addr-optimize
-These options control whether PowerPC64 @command{ld} uses a special
+These options control how PowerPC64 @command{ld} uses a special
 stub to call __tls_get_addr.  PowerPC64 glibc 2.22 and later support
 an optimization that allows the second and subsequent calls to
 @code{__tls_get_addr} for a given symbol to be resolved by the special
-stub without calling in to glibc.  By default the linker enables this
-option when glibc advertises the availability of __tls_get_addr_opt.
-Forcing this option on when using an older glibc won't do much besides
-slow down your applications, but may be useful if linking an
-application against an older glibc with the expectation that it will
-normally be used on systems having a newer glibc.
+stub without calling in to glibc.  By default the linker enables
+generation of the stub when glibc advertises the availability of
+__tls_get_addr_opt.
+Using @option{--tls-get-addr-optimize} with an older glibc won't do
+much besides slow down your applications, but may be useful if linking
+an application against an older glibc with the expectation that it
+will normally be used on systems having a newer glibc.
+@option{--tls-get-addr-regsave} forces generation of a stub that saves
+and restores volatile registers around the call into glibc.  Normally,
+this is done when the linker detects a call to __tls_get_addr_desc.
+Such calls then go via the register saving stub to __tls_get_addr_opt.
+@option{--no-tls-get-addr-regsave} disables generation of the
+register saves.
 
 @cindex PowerPC64 OPD optimization
 @kindex --no-opd-optimize
@@ -7639,6 +8193,16 @@ discarded as per the nearest marked preceding word.  This works
 reliably for compiler generated code, but may be incorrect if assembly
 code is used to insert TOC entries.  Use this option to disable the
 optimization.
+
+@cindex PowerPC64 inline PLT call optimization
+@kindex --no-inline-optimize
+@item --no-inline-optimize
+PowerPC64 @command{ld} normally replaces inline PLT call sequences
+marked with @code{R_PPC64_PLTSEQ}, @code{R_PPC64_PLTCALL},
+@code{R_PPC64_PLT16_HA} and @code{R_PPC64_PLT16_LO_DS} relocations by
+a number of @code{nop}s and a direct call when the function is defined
+locally and can't be overridden by some other definition.  This option
+disables that optimization.
 
 @cindex PowerPC64 multi-TOC
 @kindex --no-multi-toc
@@ -7721,6 +8285,21 @@ including system libraries, can cause a function that was localentry:0
 to become localentry:8.  This will result in a dynamic loader
 complaint and failure to run.  The option is experimental, use with
 care.  @option{--no-plt-localentry} is the default.
+
+@cindex PowerPC64 Power10 stubs
+@kindex --power10-stubs
+@kindex --no-power10-stubs
+@item --power10-stubs
+@itemx --no-power10-stubs
+When PowerPC64 @command{ld} links input object files containing
+relocations used on power10 prefixed instructions it normally creates
+linkage stubs (PLT call and long branch) using power10 instructions
+for @code{@@notoc} PLT calls where @code{r2} is not known.  The
+power10 notoc stubs are smaller and faster, so are preferred for
+power10.  @option{--power10-stubs} and @option{--no-power10-stubs}
+allow you to override the linker's selection of stub instructions.
+@option{--power10-stubs=auto} allows the user to select the default
+auto mode.
 @end table
 
 @ifclear GENERIC
@@ -8397,6 +8976,17 @@ more than performance.  With this option, the linker will not insert
 no-ops or widen density instructions to preserve branch target
 alignment.  There may still be some cases where no-ops are required to
 preserve the correctness of the code.
+
+@item --abi-windowed
+@itemx --abi-call0
+Choose ABI for the output object and for the generated PLT code.
+PLT code inserted by the linker must match ABI of the output object
+because windowed and call0 ABI use incompatible function call
+conventions.
+Default ABI is chosen by the ABI tag in the @code{.xtensa.info} section
+of the first input object.
+A warning is issued if ABI tags of input objects do not match each other
+or the chosen output object ABI.
 @end table
 
 @ifclear GENERIC

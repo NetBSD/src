@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright (C) 1998-2020 Free Software Foundation, Inc.
+   Copyright (C) 1998-2022 Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
    Rewritten by Kai Tietz, Onevision.
 
@@ -619,7 +619,7 @@ skip_null_resource (windres_bfd *wrbfd, rc_uint_type *off, rc_uint_type omax)
 
   return;
 
-skip_err:
+ skip_err:
   fprintf (stderr, "%s: %s: Not a valid WIN32 resource file\n", program_name,
 	   filename);
   xexit (1);

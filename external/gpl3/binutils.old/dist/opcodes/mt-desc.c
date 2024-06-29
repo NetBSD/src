@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -26,6 +26,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "sysdep.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ansidecl.h"
 #include "bfd.h"
 #include "symcat.h"
@@ -196,7 +197,7 @@ const CGEN_HW_ENTRY mt_cgen_hw_table[] =
   { "h-uint", HW_H_UINT, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-addr", HW_H_ADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-iaddr", HW_H_IADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-spr", HW_H_SPR, CGEN_ASM_KEYWORD, (PTR) & mt_cgen_opval_h_spr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-spr", HW_H_SPR, CGEN_ASM_KEYWORD, & mt_cgen_opval_h_spr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-pc", HW_H_PC, CGEN_ASM_NONE, 0, { 0|A(PROFILE)|A(PC), { { { (1<<MACH_BASE), 0 } } } } },
   { 0, 0, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
@@ -311,227 +312,227 @@ const CGEN_OPERAND mt_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", MT_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_NIL] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frsr1: register */
   { "frsr1", MT_OPERAND_FRSR1, HW_H_SPR, 23, 4,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_SR1] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_SR1] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frsr2: register */
   { "frsr2", MT_OPERAND_FRSR2, HW_H_SPR, 19, 4,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_SR2] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_SR2] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frdr: register */
   { "frdr", MT_OPERAND_FRDR, HW_H_SPR, 19, 4,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_DR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_DR] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* frdrrr: register */
   { "frdrrr", MT_OPERAND_FRDRRR, HW_H_SPR, 15, 4,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_DRRR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_DRRR] } },
     { 0|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm16: immediate value - sign extd */
   { "imm16", MT_OPERAND_IMM16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_IMM16S] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_IMM16S] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm16z: immediate value - zero extd */
   { "imm16z", MT_OPERAND_IMM16Z, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_IMM16U] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_IMM16U] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm16o: immediate value */
   { "imm16o", MT_OPERAND_IMM16O, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_IMM16S] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_IMM16S] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* rc: rc */
   { "rc", MT_OPERAND_RC, HW_H_UINT, 15, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RC] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RC] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rcnum: rcnum */
   { "rcnum", MT_OPERAND_RCNUM, HW_H_UINT, 14, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RCNUM] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RCNUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* contnum: context number */
   { "contnum", MT_OPERAND_CONTNUM, HW_H_UINT, 8, 9,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CONTNUM] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CONTNUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rbbc: omega network configuration */
   { "rbbc", MT_OPERAND_RBBC, HW_H_UINT, 25, 2,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RBBC] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RBBC] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* colnum: column number */
   { "colnum", MT_OPERAND_COLNUM, HW_H_UINT, 18, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_COLNUM] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_COLNUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rownum: row number */
   { "rownum", MT_OPERAND_ROWNUM, HW_H_UINT, 14, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_ROWNUM] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_ROWNUM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rownum1: row number */
   { "rownum1", MT_OPERAND_ROWNUM1, HW_H_UINT, 12, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_ROWNUM1] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_ROWNUM1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rownum2: row number */
   { "rownum2", MT_OPERAND_ROWNUM2, HW_H_UINT, 9, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_ROWNUM2] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_ROWNUM2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rc1: rc1 */
   { "rc1", MT_OPERAND_RC1, HW_H_UINT, 11, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RC1] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RC1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rc2: rc2 */
   { "rc2", MT_OPERAND_RC2, HW_H_UINT, 6, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RC2] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RC2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbrb: data-bus orientation */
   { "cbrb", MT_OPERAND_CBRB, HW_H_UINT, 10, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CBRB] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CBRB] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cell: cell */
   { "cell", MT_OPERAND_CELL, HW_H_UINT, 9, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CELL] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CELL] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* dup: dup */
   { "dup", MT_OPERAND_DUP, HW_H_UINT, 6, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_DUP] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_DUP] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* ctxdisp: context displacement */
   { "ctxdisp", MT_OPERAND_CTXDISP, HW_H_UINT, 5, 6,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CTXDISP] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CTXDISP] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* fbdisp: frame buffer displacement */
   { "fbdisp", MT_OPERAND_FBDISP, HW_H_UINT, 15, 6,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_FBDISP] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_FBDISP] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* type: type */
   { "type", MT_OPERAND_TYPE, HW_H_UINT, 21, 2,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_TYPE] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_TYPE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* mask: mask */
   { "mask", MT_OPERAND_MASK, HW_H_UINT, 25, 16,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_MASK] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_MASK] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* bankaddr: bank address */
   { "bankaddr", MT_OPERAND_BANKADDR, HW_H_UINT, 25, 13,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_BANKADDR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_BANKADDR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* incamt: increment amount */
   { "incamt", MT_OPERAND_INCAMT, HW_H_UINT, 19, 8,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_INCAMT] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_INCAMT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* xmode: xmode */
   { "xmode", MT_OPERAND_XMODE, HW_H_UINT, 23, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_XMODE] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_XMODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* mask1: mask1 */
   { "mask1", MT_OPERAND_MASK1, HW_H_UINT, 22, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_MASK1] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_MASK1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* ball: b_all */
   { "ball", MT_OPERAND_BALL, HW_H_UINT, 19, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_BALL] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_BALL] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* brc: b_r_c */
   { "brc", MT_OPERAND_BRC, HW_H_UINT, 18, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_BRC] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_BRC] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* rda: rd */
   { "rda", MT_OPERAND_RDA, HW_H_UINT, 25, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RDA] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RDA] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* wr: wr */
   { "wr", MT_OPERAND_WR, HW_H_UINT, 24, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_WR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_WR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* ball2: b_all2 */
   { "ball2", MT_OPERAND_BALL2, HW_H_UINT, 15, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_BALL2] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_BALL2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* brc2: b_r_c2 */
   { "brc2", MT_OPERAND_BRC2, HW_H_UINT, 14, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_BRC2] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_BRC2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* perm: perm */
   { "perm", MT_OPERAND_PERM, HW_H_UINT, 25, 2,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_PERM] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_PERM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* a23: a23 */
   { "a23", MT_OPERAND_A23, HW_H_UINT, 23, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_A23] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_A23] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cr: c-r */
   { "cr", MT_OPERAND_CR, HW_H_UINT, 22, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbs: cbs */
   { "cbs", MT_OPERAND_CBS, HW_H_UINT, 19, 2,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CBS] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CBS] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* incr: incr */
   { "incr", MT_OPERAND_INCR, HW_H_UINT, 17, 6,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_INCR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_INCR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* length: length */
   { "length", MT_OPERAND_LENGTH, HW_H_UINT, 15, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_LENGTH] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_LENGTH] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbx: cbx */
   { "cbx", MT_OPERAND_CBX, HW_H_UINT, 14, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CBX] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CBX] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* ccb: ccb */
   { "ccb", MT_OPERAND_CCB, HW_H_UINT, 11, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CCB] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CCB] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* cdb: cdb */
   { "cdb", MT_OPERAND_CDB, HW_H_UINT, 10, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CDB] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CDB] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* mode: mode */
   { "mode", MT_OPERAND_MODE, HW_H_UINT, 25, 2,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_MODE] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_MODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* id: i/d */
   { "id", MT_OPERAND_ID, HW_H_UINT, 14, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_ID] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_ID] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* size: size */
   { "size", MT_OPERAND_SIZE, HW_H_UINT, 13, 14,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_SIZE] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_SIZE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* fbincr: fb incr */
   { "fbincr", MT_OPERAND_FBINCR, HW_H_UINT, 23, 4,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_FBINCR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_FBINCR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* loopsize: immediate value */
   { "loopsize", MT_OPERAND_LOOPSIZE, HW_H_UINT, 7, 8,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_LOOPO] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_LOOPO] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_MS2), 0 } } } }  },
 /* imm16l: immediate value */
   { "imm16l", MT_OPERAND_IMM16L, HW_H_UINT, 23, 16,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_IMM16L] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_IMM16L] } },
     { 0, { { { (1<<MACH_MS2), 0 } } } }  },
 /* rc3: rc3 */
   { "rc3", MT_OPERAND_RC3, HW_H_UINT, 7, 1,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_RC3] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_RC3] } },
     { 0, { { { (1<<MACH_MS2), 0 } } } }  },
 /* cb1sel: cb1sel */
   { "cb1sel", MT_OPERAND_CB1SEL, HW_H_UINT, 25, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CB1SEL] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CB1SEL] } },
     { 0, { { { (1<<MACH_MS2), 0 } } } }  },
 /* cb2sel: cb2sel */
   { "cb2sel", MT_OPERAND_CB2SEL, HW_H_UINT, 22, 3,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CB2SEL] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CB2SEL] } },
     { 0, { { { (1<<MACH_MS2), 0 } } } }  },
 /* cb1incr: cb1incr */
   { "cb1incr", MT_OPERAND_CB1INCR, HW_H_SINT, 19, 6,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CB1INCR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CB1INCR] } },
     { 0|A(SIGNED), { { { (1<<MACH_MS2), 0 } } } }  },
 /* cb2incr: cb2incr */
   { "cb2incr", MT_OPERAND_CB2INCR, HW_H_SINT, 13, 6,
-    { 0, { (const PTR) &mt_cgen_ifld_table[MT_F_CB2INCR] } },
+    { 0, { &mt_cgen_ifld_table[MT_F_CB2INCR] } },
     { 0|A(SIGNED), { { { (1<<MACH_MS2), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
 
@@ -1176,6 +1177,7 @@ mt_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_MACHS:   bitmap of values in enum mach_attr
    CGEN_CPU_OPEN_BFDMACH: specify 1 mach using bfd name
    CGEN_CPU_OPEN_ENDIAN:  specify endian choice
+   CGEN_CPU_OPEN_INSN_ENDIAN: specify instruction endian choice
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
@@ -1189,6 +1191,7 @@ mt_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   CGEN_BITSET *isas = 0;  /* 0 = "unspecified" */
   unsigned int machs = 0; /* 0 = "unspecified" */
   enum cgen_endian endian = CGEN_ENDIAN_UNKNOWN;
+  enum cgen_endian insn_endian = CGEN_ENDIAN_UNKNOWN;
   va_list ap;
 
   if (! init_p)
@@ -1223,6 +1226,9 @@ mt_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	case CGEN_CPU_OPEN_ENDIAN :
 	  endian = va_arg (ap, enum cgen_endian);
 	  break;
+	case CGEN_CPU_OPEN_INSN_ENDIAN :
+	  insn_endian = va_arg (ap, enum cgen_endian);
+	  break;
 	default :
 	  opcodes_error_handler
 	    (/* xgettext:c-format */
@@ -1252,11 +1258,8 @@ mt_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->isas = cgen_bitset_copy (isas);
   cd->machs = machs;
   cd->endian = endian;
-  /* FIXME: for the sparc case we can determine insn-endianness statically.
-     The worry here is where both data and insn endian can be independently
-     chosen, in which case this function will need another argument.
-     Actually, will want to allow for more arguments in the future anyway.  */
-  cd->insn_endian = endian;
+  cd->insn_endian
+    = (insn_endian == CGEN_ENDIAN_UNKNOWN ? endian : insn_endian);
 
   /* Table (re)builder.  */
   cd->rebuild_tables = mt_cgen_rebuild_tables;
@@ -1306,18 +1309,10 @@ mt_cgen_cpu_close (CGEN_CPU_DESC cd)
 	  regfree (CGEN_INSN_RX (insns));
     }
 
-  if (cd->macro_insn_table.init_entries)
-    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
-
-  if (cd->insn_table.init_entries)
-    free ((CGEN_INSN *) cd->insn_table.init_entries);
-
-  if (cd->hw_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
-
-  if (cd->operand_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
-
+  free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+  free ((CGEN_INSN *) cd->insn_table.init_entries);
+  free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+  free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
   free (cd);
 }
 

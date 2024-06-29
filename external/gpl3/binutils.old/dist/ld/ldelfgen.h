@@ -1,5 +1,5 @@
 /* Emulation code used by all ELF targets.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -18,12 +18,13 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-struct elf_sym_strtab;
+struct elf_internal_sym;
 struct elf_strtab_hash;
-struct ctf_file;
+struct ctf_dict;
 
-extern void ldelf_map_segments (bfd_boolean);
+extern void ldelf_map_segments (bool);
 extern int ldelf_emit_ctf_early (void);
-extern void ldelf_examine_strtab_for_ctf
-  (struct ctf_file *ctf_output, struct elf_sym_strtab *syms,
-   bfd_size_type symcount, struct elf_strtab_hash *symstrtab);
+extern void ldelf_acquire_strings_for_ctf
+  (struct ctf_dict *ctf_output, struct elf_strtab_hash *strtab);
+extern void ldelf_new_dynsym_for_ctf
+  (struct ctf_dict *ctf_output, int symidx, struct elf_internal_sym *sym);

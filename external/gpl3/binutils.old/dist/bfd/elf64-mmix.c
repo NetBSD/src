@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -79,8 +79,8 @@ struct _mmix_elf_section_data
      linked due to a specific cause.  FIXME: a way to access the
      linker info or output section, then stuff the limiter guard
      there. */
-  bfd_boolean has_warned_bpo;
-  bfd_boolean has_warned_pushj;
+  bool has_warned_bpo;
+  bool has_warned_pushj;
 };
 
 #define mmix_elf_section_data(sec) \
@@ -125,7 +125,7 @@ struct bpo_reloc_request
     /* Set when the value is computed.  Better than coding "guard values"
        into the other members.  Is FALSE only for BPO relocs in a GC:ed
        section.  */
-    bfd_boolean valid;
+    bool valid;
   };
 
 /* We attach this as mmix_elf_section_data (sec)->bpo in the linker-allocated
@@ -166,7 +166,7 @@ struct bpo_greg_section_info
   };
 
 
-extern bfd_boolean mmix_elf_final_link (bfd *, struct bfd_link_info *);
+extern bool mmix_elf_final_link (bfd *, struct bfd_link_info *);
 
 extern void mmix_elf_symbol_processing (bfd *, asymbol *);
 
@@ -192,197 +192,197 @@ static reloc_howto_type elf_mmix_howto_table[] =
   /* This reloc does nothing.  */
   HOWTO (R_MMIX_NONE,		/* type */
 	 0,			/* rightshift */
-	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_NONE",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 8 bit absolute relocation.  */
   HOWTO (R_MMIX_8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 16 bit absolute relocation.  */
   HOWTO (R_MMIX_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_16",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 24 bit absolute relocation.  */
   HOWTO (R_MMIX_24,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 24,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_24",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0xffffff,		/* src_mask */
 	 0xffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_MMIX_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_32",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* 64 bit relocation.  */
   HOWTO (R_MMIX_64,		/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_64",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 MINUS_ONE,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* An 8 bit PC-relative relocation.  */
   HOWTO (R_MMIX_PC_8,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 1,			/* size */
 	 8,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_PC_8",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* An 16 bit PC-relative relocation.  */
   HOWTO (R_MMIX_PC_16,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 16,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_PC_16",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* An 24 bit PC-relative relocation.  */
   HOWTO (R_MMIX_PC_24,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 24,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_PC_24",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0xffffff,		/* src_mask */
 	 0xffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A 32 bit absolute PC-relative relocation.  */
   HOWTO (R_MMIX_PC_32,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 32,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_PC_32",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* 64 bit PC-relative relocation.  */
   HOWTO (R_MMIX_PC_64,		/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MMIX_PC_64",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 MINUS_ONE,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* GNU extension to record C++ vtable hierarchy.  */
   HOWTO (R_MMIX_GNU_VTINHERIT, /* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 NULL,			/* special_function */
 	 "R_MMIX_GNU_VTINHERIT", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* GNU extension to record C++ vtable member usage.  */
   HOWTO (R_MMIX_GNU_VTENTRY,	/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 _bfd_elf_rel_vtable_reloc_fn,	/* special_function */
 	 "R_MMIX_GNU_VTENTRY", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* The GETA relocation is supposed to get any address that could
      possibly be reached by the GETA instruction.  It can silently expand
@@ -390,59 +390,59 @@ static reloc_howto_type elf_mmix_howto_table[] =
      significant bits are set.  The howto members reflect a simple GETA.  */
   HOWTO (R_MMIX_GETA,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_GETA",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_GETA_1,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_GETA_1",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_GETA_2,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_GETA_2",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_GETA_3,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_GETA_3",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* The conditional branches are supposed to reach any (code) address.
      It can silently expand to a 64-bit operand, but will emit an error if
@@ -450,73 +450,73 @@ static reloc_howto_type elf_mmix_howto_table[] =
      reflect a simple branch.  */
   HOWTO (R_MMIX_CBRANCH,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_CBRANCH",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_CBRANCH_J,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_CBRANCH_J",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_CBRANCH_1,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_CBRANCH_1",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_CBRANCH_2,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_CBRANCH_2",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_CBRANCH_3,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_CBRANCH_3",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* The PUSHJ instruction can reach any (code) address, as long as it's
      the beginning of a function (no usable restriction).  It can silently
@@ -526,59 +526,59 @@ static reloc_howto_type elf_mmix_howto_table[] =
      PUSHJ.  */
   HOWTO (R_MMIX_PUSHJ,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_PUSHJ",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_PUSHJ_1,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_PUSHJ_1",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_PUSHJ_2,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_PUSHJ_2",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_PUSHJ_3,	/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_PUSHJ_3",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A JMP is supposed to reach any (code) address.  By itself, it can
      reach +-64M; the expansion can reach all 64 bits.  Note that the 64M
@@ -586,139 +586,139 @@ static reloc_howto_type elf_mmix_howto_table[] =
      memory segments.  The howto members reflect a trivial JMP.  */
   HOWTO (R_MMIX_JMP,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_JMP",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x1ffffff,		/* src_mask */
 	 0x1ffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_JMP_1,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_JMP_1",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x1ffffff,		/* src_mask */
 	 0x1ffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_JMP_2,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_JMP_2",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x1ffffff,		/* src_mask */
 	 0x1ffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   HOWTO (R_MMIX_JMP_3,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_JMP_3",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x1ffffff,		/* src_mask */
 	 0x1ffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* When we don't emit link-time-relaxable code from the assembler, or
      when relaxation has done all it can do, these relocs are used.  For
      GETA/PUSHJ/branches.  */
   HOWTO (R_MMIX_ADDR19,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_ADDR19",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* For JMP.  */
   HOWTO (R_MMIX_ADDR27,		/* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 27,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_ADDR27",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x1ffffff,		/* src_mask */
 	 0x1ffffff,		/* dst_mask */
-	 TRUE),			/* pcrel_offset */
+	 true),			/* pcrel_offset */
 
   /* A general register or the value 0..255.  If a value, then the
      instruction (offset -3) needs adjusting.  */
   HOWTO (R_MMIX_REG_OR_BYTE,	/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_REG_OR_BYTE",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A general register.  */
   HOWTO (R_MMIX_REG,		/* type */
 	 0,			/* rightshift */
-	 1,			/* size (0 = byte, 1 = short, 2 = long) */
+	 2,			/* size */
 	 8,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_REG",		/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xff,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A register plus an index, corresponding to the relocation expression.
      The sizes must correspond to the valid range of the expression, while
      the bitmasks correspond to what we store in the image.  */
   HOWTO (R_MMIX_BASE_PLUS_OFFSET,	/* type */
 	 0,			/* rightshift */
-	 4,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* size */
 	 64,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_BASE_PLUS_OFFSET", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   /* A "magic" relocation for a LOCAL expression, asserting that the
      expression is less than the number of global registers.  No actual
@@ -727,31 +727,31 @@ static reloc_howto_type elf_mmix_howto_table[] =
      section to discard *after* relocation.  */
   HOWTO (R_MMIX_LOCAL,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* size */
 	 0,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_LOCAL",	/* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 0,			/* src_mask */
 	 0,			/* dst_mask */
-	 FALSE),		/* pcrel_offset */
+	 false),		/* pcrel_offset */
 
   HOWTO (R_MMIX_PUSHJ_STUBBABLE, /* type */
 	 2,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 4,			/* size */
 	 19,			/* bitsize */
-	 TRUE,			/* pc_relative */
+	 true,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 mmix_elf_reloc,	/* special_function */
 	 "R_MMIX_PUSHJ_STUBBABLE", /* name */
-	 FALSE,			/* partial_inplace */
+	 false,			/* partial_inplace */
 	 ~0x0100ffff,		/* src_mask */
 	 0x0100ffff,		/* dst_mask */
-	 TRUE)			/* pcrel_offset */
+	 true)			/* pcrel_offset */
  };
 
 
@@ -825,17 +825,17 @@ bfd_elf64_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static bfd_boolean
+static bool
 mmix_elf_new_section_hook (bfd *abfd, asection *sec)
 {
   if (!sec->used_by_bfd)
     {
       struct _mmix_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+      size_t amt = sizeof (*sdata);
 
       sdata = bfd_zalloc (abfd, amt);
       if (sdata == NULL)
-	return FALSE;
+	return false;
       sec->used_by_bfd = sdata;
     }
 
@@ -987,7 +987,7 @@ mmix_elf_perform_relocation (asection *isec, reloc_howto_type *howto,
 			" ELF or mmo,"
 			" or assemble using"
 			" \"-no-expand\" (for gcc, \"-Wa,-no-expand\"");
-		  mmix_elf_section_data (isec)->has_warned_pushj = TRUE;
+		  mmix_elf_section_data (isec)->has_warned_pushj = true;
 		  return bfd_reloc_dangerous;
 		}
 
@@ -1171,7 +1171,7 @@ mmix_elf_perform_relocation (asection *isec, reloc_howto_type *howto,
 		      " ELF or mmo,"
 		      " or compile using the gcc-option"
 		      " \"-mno-base-addresses\".");
-		mmix_elf_section_data (isec)->has_warned_bpo = TRUE;
+		mmix_elf_section_data (isec)->has_warned_bpo = true;
 		return bfd_reloc_dangerous;
 	      }
 
@@ -1250,7 +1250,7 @@ mmix_elf_perform_relocation (asection *isec, reloc_howto_type *howto,
 
 /* Set the howto pointer for an MMIX ELF reloc (type RELA).  */
 
-static bfd_boolean
+static bool
 mmix_info_to_howto_rela (bfd *abfd,
 			 arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
@@ -1264,10 +1264,10 @@ mmix_info_to_howto_rela (bfd *abfd,
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
   cache_ptr->howto = &elf_mmix_howto_table[r_type];
-  return TRUE;
+  return true;
 }
 
 /* Any MMIX-specific relocation gets here at assembly time or when linking
@@ -1350,7 +1350,7 @@ mmix_elf_reloc (bfd *abfd,
 /* Relocate an MMIX ELF section.  Modified from elf32-fr30.c; look to it
    for guidance if you're thinking of copying this.  */
 
-static bfd_boolean
+static int
 mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 			   struct bfd_link_info *info,
 			   bfd *input_bfd,
@@ -1389,7 +1389,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_reloc_status_type r;
       const char *name = NULL;
       int r_type;
-      bfd_boolean undefined_signalled = FALSE;
+      bool undefined_signalled = false;
 
       r_type = ELF64_R_TYPE (rel->r_info);
 
@@ -1418,7 +1418,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, ignored;
+	  bool unresolved_reloc, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -1476,7 +1476,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 						+ mmix_elf_section_data (input_section)
 						->pjs.stub_offset,
 						NULL, NULL, NULL) != bfd_reloc_ok)
-		    return FALSE;
+		    return false;
 
 		  /* Put a JMP insn at the stub; it goes with the
 		     R_MMIX_JMP reloc.  */
@@ -1533,8 +1533,8 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      /* We may have sent this message above.  */
 	      if (! undefined_signalled)
 		info->callbacks->undefined_symbol
-		  (info, name, input_bfd, input_section, rel->r_offset, TRUE);
-	      undefined_signalled = TRUE;
+		  (info, name, input_bfd, input_section, rel->r_offset, true);
+	      undefined_signalled = true;
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -1560,7 +1560,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Perform a single relocation.  By default we use the standard BFD
@@ -1815,7 +1815,7 @@ mmix_elf_sort_relocs (const void * p1, const void * p2)
 
 /* Subset of mmix_elf_check_relocs, common to ELF and mmo linking.  */
 
-static bfd_boolean
+static bool
 mmix_elf_check_common_relocs  (bfd *abfd,
 			       struct bfd_link_info *info,
 			       asection *sec,
@@ -1875,12 +1875,12 @@ mmix_elf_check_common_relocs  (bfd *abfd,
 		 GREG allocations, and that works.  */
 	      if (allocated_gregs_section == NULL
 		  || !bfd_set_section_alignment (allocated_gregs_section, 3))
-		return FALSE;
+		return false;
 
 	      gregdata = (struct bpo_greg_section_info *)
 		bfd_zalloc (bpo_greg_owner, sizeof (struct bpo_greg_section_info));
 	      if (gregdata == NULL)
-		return FALSE;
+		return false;
 	      mmix_elf_section_data (allocated_gregs_section)->bpo.greg
 		= gregdata;
 	    }
@@ -1898,7 +1898,7 @@ mmix_elf_check_common_relocs  (bfd *abfd,
 			   sizeof (struct bpo_reloc_section_info)
 			   * (sec->reloc_count + 1));
 	      if (bpodata == NULL)
-		return FALSE;
+		return false;
 	      mmix_elf_section_data (sec)->bpo.reloc = bpodata;
 	      bpodata->first_base_plus_offset_reloc
 		= bpodata->bpo_index
@@ -1934,18 +1934,18 @@ mmix_elf_check_common_relocs  (bfd *abfd,
 		     * sizeof (mmix_elf_section_data (sec)
 			       ->pjs.stub_size[0]));
       if (mmix_elf_section_data (sec)->pjs.stub_size == NULL)
-	return FALSE;
+	return false;
 
       for (i = 0; i < mmix_elf_section_data (sec)->pjs.n_pushj_relocs; i++)
 	mmix_elf_section_data (sec)->pjs.stub_size[i] = MAX_PUSHJ_STUB_SIZE;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Look through the relocs for a section during the first phase.  */
 
-static bfd_boolean
+static bool
 mmix_elf_check_relocs (bfd *abfd,
 		       struct bfd_link_info *info,
 		       asection *sec,
@@ -1966,10 +1966,10 @@ mmix_elf_check_relocs (bfd *abfd,
 
   /* Do the common part.  */
   if (!mmix_elf_check_common_relocs (abfd, info, sec, relocs))
-    return FALSE;
+    return false;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   rel_end = relocs + sec->reloc_count;
   for (rel = relocs; rel < rel_end; rel++)
@@ -1994,25 +1994,25 @@ mmix_elf_check_relocs (bfd *abfd,
 	   Reconstruct it for later use during GC.  */
 	case R_MMIX_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	/* This relocation describes which C++ vtable entries are actually
 	   used.  Record for later use during GC.  */
 	case R_MMIX_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Wrapper for mmix_elf_check_common_relocs, called when linking to mmo.
    Copied from elf_link_add_object_symbols.  */
 
-bfd_boolean
+bool
 _bfd_mmix_check_all_relocs (bfd *abfd, struct bfd_link_info *info)
 {
   asection *o;
@@ -2020,7 +2020,7 @@ _bfd_mmix_check_all_relocs (bfd *abfd, struct bfd_link_info *info)
   for (o = abfd->sections; o != NULL; o = o->next)
     {
       Elf_Internal_Rela *internal_relocs;
-      bfd_boolean ok;
+      bool ok;
 
       if ((o->flags & SEC_RELOC) == 0
 	  || o->reloc_count == 0
@@ -2034,7 +2034,7 @@ _bfd_mmix_check_all_relocs (bfd *abfd, struct bfd_link_info *info)
 				     (Elf_Internal_Rela *) NULL,
 				     info->keep_memory);
       if (internal_relocs == NULL)
-	return FALSE;
+	return false;
 
       ok = mmix_elf_check_common_relocs (abfd, info, o, internal_relocs);
 
@@ -2042,10 +2042,10 @@ _bfd_mmix_check_all_relocs (bfd *abfd, struct bfd_link_info *info)
 	free (internal_relocs);
 
       if (! ok)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Change symbols relative to the reg contents section to instead be to
@@ -2076,8 +2076,11 @@ mmix_elf_link_output_symbol_hook (struct bfd_link_info *info ATTRIBUTE_UNUSED,
    formats (e.g. mmo) than for example a STT_REGISTER attribute.
    This section faking is based on a construct in elf32-mips.c.  */
 static asection mmix_elf_reg_section;
-static asymbol mmix_elf_reg_section_symbol;
-static asymbol *mmix_elf_reg_section_symbol_ptr;
+static const asymbol mmix_elf_reg_section_symbol =
+  GLOBAL_SYM_INIT (MMIX_REG_SECTION_NAME, &mmix_elf_reg_section);
+static asection mmix_elf_reg_section =
+  BFD_FAKE_SECTION (mmix_elf_reg_section, &mmix_elf_reg_section_symbol,
+		    MMIX_REG_SECTION_NAME, 0, SEC_NO_FLAGS);
 
 /* Handle the special section numbers that a symbol may use.  */
 
@@ -2090,19 +2093,6 @@ mmix_elf_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
   switch (elfsym->internal_elf_sym.st_shndx)
     {
     case SHN_REGISTER:
-      if (mmix_elf_reg_section.name == NULL)
-	{
-	  /* Initialize the register section.  */
-	  mmix_elf_reg_section.name = MMIX_REG_SECTION_NAME;
-	  mmix_elf_reg_section.flags = SEC_NO_FLAGS;
-	  mmix_elf_reg_section.output_section = &mmix_elf_reg_section;
-	  mmix_elf_reg_section.symbol = &mmix_elf_reg_section_symbol;
-	  mmix_elf_reg_section.symbol_ptr_ptr = &mmix_elf_reg_section_symbol_ptr;
-	  mmix_elf_reg_section_symbol.name = MMIX_REG_SECTION_NAME;
-	  mmix_elf_reg_section_symbol.flags = BSF_SECTION_SYM;
-	  mmix_elf_reg_section_symbol.section = &mmix_elf_reg_section;
-	  mmix_elf_reg_section_symbol_ptr = &mmix_elf_reg_section_symbol;
-	}
       asym->section = &mmix_elf_reg_section;
       break;
 
@@ -2114,7 +2104,7 @@ mmix_elf_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
 /* Given a BFD section, try to locate the corresponding ELF section
    index.  */
 
-static bfd_boolean
+static bool
 mmix_elf_section_from_bfd_section (bfd *       abfd ATTRIBUTE_UNUSED,
 				   asection *  sec,
 				   int *       retval)
@@ -2122,9 +2112,9 @@ mmix_elf_section_from_bfd_section (bfd *       abfd ATTRIBUTE_UNUSED,
   if (strcmp (bfd_section_name (sec), MMIX_REG_SECTION_NAME) == 0)
     *retval = SHN_REGISTER;
   else
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Hook called by the linker routine which adds symbols from an object
@@ -2134,7 +2124,7 @@ mmix_elf_section_from_bfd_section (bfd *       abfd ATTRIBUTE_UNUSED,
    symbols, since otherwise having two with the same value would cause
    them to be "merged", but with the contents serialized.  */
 
-static bfd_boolean
+static bool
 mmix_elf_add_symbol_hook (bfd *abfd,
 			  struct bfd_link_info *info ATTRIBUTE_UNUSED,
 			  Elf_Internal_Sym *sym,
@@ -2149,14 +2139,14 @@ mmix_elf_add_symbol_hook (bfd *abfd,
       (*secp)->flags |= SEC_LINKER_CREATED;
     }
   else if ((*namep)[0] == '_' && (*namep)[1] == '_' && (*namep)[2] == '.'
-	   && CONST_STRNEQ (*namep, MMIX_LOC_SECTION_START_SYMBOL_PREFIX))
+	   && startswith (*namep, MMIX_LOC_SECTION_START_SYMBOL_PREFIX))
     {
       /* See if we have another one.  */
       struct bfd_link_hash_entry *h = bfd_link_hash_lookup (info->hash,
 							    *namep,
-							    FALSE,
-							    FALSE,
-							    FALSE);
+							    false,
+							    false,
+							    false);
 
       if (h != NULL && h->type != bfd_link_hash_undefined)
 	{
@@ -2169,16 +2159,16 @@ mmix_elf_add_symbol_hook (bfd *abfd,
 	     abfd, *namep,
 	     *namep + strlen (MMIX_LOC_SECTION_START_SYMBOL_PREFIX));
 	   bfd_set_error (bfd_error_bad_value);
-	   return FALSE;
+	   return false;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* We consider symbols matching "L.*:[0-9]+" to be local symbols.  */
 
-static bfd_boolean
+static bool
 mmix_elf_is_local_label_name (bfd *abfd, const char *name)
 {
   const char *colpos;
@@ -2186,19 +2176,19 @@ mmix_elf_is_local_label_name (bfd *abfd, const char *name)
 
   /* Also include the default local-label definition.  */
   if (_bfd_elf_is_local_label_name (abfd, name))
-    return TRUE;
+    return true;
 
   if (*name != 'L')
-    return FALSE;
+    return false;
 
   /* If there's no ":", or more than one, it's not a local symbol.  */
   colpos = strchr (name, ':');
   if (colpos == NULL || strchr (colpos + 1, ':') != NULL)
-    return FALSE;
+    return false;
 
   /* Check that there are remaining characters and that they are digits.  */
   if (colpos[1] == 0)
-    return FALSE;
+    return false;
 
   digits = strspn (colpos + 1, "0123456789");
   return digits != 0 && colpos[1 + digits] == 0;
@@ -2206,7 +2196,7 @@ mmix_elf_is_local_label_name (bfd *abfd, const char *name)
 
 /* We get rid of the register section here.  */
 
-bfd_boolean
+bool
 mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 {
   /* We never output a register section, though we create one for
@@ -2230,7 +2220,7 @@ mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
     }
 
   if (! bfd_elf_final_link (abfd, info))
-    return FALSE;
+    return false;
 
   /* Since this section is marked SEC_LINKER_CREATED, it isn't output by
      the regular linker machinery.  We do it here, like other targets with
@@ -2245,9 +2235,9 @@ mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 				     greg_section->contents,
 				     (file_ptr) greg_section->output_offset,
 				     greg_section->size))
-	return FALSE;
+	return false;
     }
-  return TRUE;
+  return true;
 }
 
 /* We need to include the maximum size of PUSHJ-stubs in the initial
@@ -2280,7 +2270,7 @@ mmix_set_relaxable_size (bfd *abfd ATTRIBUTE_UNUSED,
 /* Initialize stuff for the linker-generated GREGs to match
    R_MMIX_BASE_PLUS_OFFSET relocs seen by the linker.  */
 
-bfd_boolean
+bool
 _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
 				    struct bfd_link_info *info)
 {
@@ -2302,19 +2292,19 @@ _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
      If there is no such object, there was no R_MMIX_BASE_PLUS_OFFSET.  */
   bpo_greg_owner = (bfd *) info->base_file;
   if (bpo_greg_owner == NULL)
-    return TRUE;
+    return true;
 
   bpo_gregs_section
     = bfd_get_section_by_name (bpo_greg_owner,
 			       MMIX_LD_ALLOCATED_REG_CONTENTS_SECTION_NAME);
 
   if (bpo_gregs_section == NULL)
-    return TRUE;
+    return true;
 
   /* We use the target-data handle in the ELF section data.  */
   gregdata = mmix_elf_section_data (bpo_gregs_section)->bpo.greg;
   if (gregdata == NULL)
-    return FALSE;
+    return false;
 
   n_gregs = gregdata->n_bpo_relocs;
   gregdata->n_allocated_bpo_gregs = n_gregs;
@@ -2327,7 +2317,7 @@ _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
   gregs_size = n_gregs * 8;
 
   if (!bfd_set_section_size (bpo_gregs_section, gregs_size))
-    return FALSE;
+    return false;
 
   /* Allocate and set up the GREG arrays.  They're filled in at relaxation
      time.  Note that we must use the max number ever noted for the array,
@@ -2343,7 +2333,7 @@ _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
 		 gregdata->n_max_bpo_relocs
 		 * sizeof (size_t));
   if (bpo_reloc_indexes == NULL)
-    return FALSE;
+    return false;
 
   /* The default order is an identity mapping.  */
   for (i = 0; i < gregdata->n_max_bpo_relocs; i++)
@@ -2352,13 +2342,13 @@ _bfd_mmix_before_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
       gregdata->reloc_request[i].bpo_reloc_no = i;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Fill in contents in the linker allocated gregs.  Everything is
    calculated at this point; we just move the contents into place here.  */
 
-bfd_boolean
+bool
 _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
 				   struct bfd_link_info *link_info)
 {
@@ -2375,7 +2365,7 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
      object, there was no R_MMIX_BASE_PLUS_OFFSET.  */
   bpo_greg_owner = (bfd *) link_info->base_file;
   if (bpo_greg_owner == NULL)
-    return TRUE;
+    return true;
 
   bpo_gregs_section
     = bfd_get_section_by_name (bpo_greg_owner,
@@ -2385,20 +2375,20 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
      without any R_MMIX_BASE_PLUS_OFFSET seen, there will be no such
      section.  */
   if (bpo_gregs_section == NULL)
-    return TRUE;
+    return true;
 
   /* We use the target-data handle in the ELF section data.  */
 
   gregdata = mmix_elf_section_data (bpo_gregs_section)->bpo.greg;
   if (gregdata == NULL)
-    return FALSE;
+    return false;
 
   n_gregs = gregdata->n_allocated_bpo_gregs;
 
   bpo_gregs_section->contents
     = contents = bfd_alloc (bpo_greg_owner, bpo_gregs_section->size);
   if (contents == NULL)
-    return FALSE;
+    return false;
 
   /* Sanity check: If these numbers mismatch, some relocation has not been
      accounted for and the rest of gregdata is probably inconsistent.
@@ -2413,7 +2403,7 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
 	   " please report this bug"),
 	 (unsigned long) gregdata->n_remaining_bpo_relocs_this_relaxation_round,
 	 (unsigned long) gregdata->n_bpo_relocs);
-      return FALSE;
+      return false;
     }
 
   for (lastreg = 255, i = 0, j = 0; j < n_gregs; i++)
@@ -2425,7 +2415,7 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
 	j++;
       }
 
-  return TRUE;
+  return true;
 }
 
 /* Sort valid relocs to come before non-valid relocs, then on increasing
@@ -2521,11 +2511,11 @@ mmix_dump_bpo_gregs (struct bfd_link_info *link_info,
 
    Symbol- and reloc-reading infrastructure copied from elf-m10200.c.  */
 
-static bfd_boolean
+static bool
 mmix_elf_relax_section (bfd *abfd,
 			asection *sec,
 			struct bfd_link_info *link_info,
-			bfd_boolean *again)
+			bool *again)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *internal_relocs;
@@ -2538,13 +2528,14 @@ mmix_elf_relax_section (bfd *abfd,
      spot a missing actual initialization.  */
   size_t bpono = (size_t) -1;
   size_t pjsno = 0;
+  size_t pjsno_undefs = 0;
   Elf_Internal_Sym *isymbuf = NULL;
   bfd_size_type size = sec->rawsize ? sec->rawsize : sec->size;
 
   mmix_elf_section_data (sec)->pjs.stubs_size_sum = 0;
 
   /* Assume nothing changes.  */
-  *again = FALSE;
+  *again = false;
 
   /* We don't have to do anything if this section does not have relocs, or
      if this is not a code section.  */
@@ -2556,7 +2547,7 @@ mmix_elf_relax_section (bfd *abfd,
 	 then nothing to do.  */
       || (bpodata == NULL
 	  && mmix_elf_section_data (sec)->pjs.n_pushj_relocs == 0))
-    return TRUE;
+    return true;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -2703,6 +2694,11 @@ mmix_elf_relax_section (bfd *abfd,
 		  gregdata->n_remaining_bpo_relocs_this_relaxation_round--;
 		  bpono++;
 		}
+
+	      /* Similarly, keep accounting consistent for PUSHJ
+		 referring to an undefined symbol.  */
+	      if (ELF64_R_TYPE (irel->r_info) == R_MMIX_PUSHJ_STUBBABLE)
+		pjsno_undefs++;
 	      continue;
 	    }
 	}
@@ -2765,7 +2761,7 @@ mmix_elf_relax_section (bfd *abfd,
 
       gregdata->reloc_request[gregdata->bpo_reloc_indexes[bpono]].value
 	= symval + irel->r_addend;
-      gregdata->reloc_request[gregdata->bpo_reloc_indexes[bpono++]].valid = TRUE;
+      gregdata->reloc_request[gregdata->bpo_reloc_indexes[bpono++]].valid = true;
       gregdata->n_remaining_bpo_relocs_this_relaxation_round--;
     }
 
@@ -2799,7 +2795,7 @@ mmix_elf_relax_section (bfd *abfd,
 	  {
 	    gregdata->bpo_reloc_indexes[gregdata->reloc_request[i].bpo_reloc_no]
 	      = i;
-	    *again = TRUE;
+	    *again = true;
 	  }
 
       /* Allocate register numbers (indexing from 0).  Stop at the first
@@ -2825,7 +2821,7 @@ mmix_elf_relax_section (bfd *abfd,
       if (gregdata->n_allocated_bpo_gregs != regindex + 1)
 	{
 	  gregdata->n_allocated_bpo_gregs = regindex + 1;
-	  *again = TRUE;
+	  *again = true;
 	}
 
       bpo_gregs_section->size = (regindex + 1) * 8;
@@ -2842,10 +2838,10 @@ mmix_elf_relax_section (bfd *abfd,
 	}
     }
 
-  BFD_ASSERT(pjsno == mmix_elf_section_data (sec)->pjs.n_pushj_relocs);
+  BFD_ASSERT(pjsno + pjsno_undefs
+	     == mmix_elf_section_data (sec)->pjs.n_pushj_relocs);
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   if (sec->size < size + mmix_elf_section_data (sec)->pjs.stubs_size_sum)
@@ -2854,18 +2850,17 @@ mmix_elf_relax_section (bfd *abfd,
   if (sec->size > size + mmix_elf_section_data (sec)->pjs.stubs_size_sum)
     {
       sec->size = size + mmix_elf_section_data (sec)->pjs.stubs_size_sum;
-      *again = TRUE;
+      *again = true;
     }
 
-  return TRUE;
+  return true;
 
  error_return:
-  if (isymbuf != NULL && (unsigned char *) isymbuf != symtab_hdr->contents)
+  if ((unsigned char *) isymbuf != symtab_hdr->contents)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
-  return FALSE;
+  return false;
 }
 
 #define ELF_ARCH		bfd_arch_mmix

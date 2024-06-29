@@ -1,4 +1,4 @@
-@c Copyright (C) 1996-2020 Free Software Foundation, Inc.
+@c Copyright (C) 1996-2022 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -131,6 +131,10 @@ recognized:
 @code{cortex-a76},
 @code{cortex-a76ae},
 @code{cortex-a77},
+@code{cortex-a78},
+@code{cortex-a78ae},
+@code{cortex-a78c},
+@code{cortex-a710},
 @code{ares},
 @code{cortex-r4},
 @code{cortex-r4f},
@@ -138,6 +142,7 @@ recognized:
 @code{cortex-r7},
 @code{cortex-r8},
 @code{cortex-r52},
+@code{cortex-r52plus},
 @code{cortex-m35p},
 @code{cortex-m33},
 @code{cortex-m23},
@@ -147,10 +152,13 @@ recognized:
 @code{cortex-m1},
 @code{cortex-m0},
 @code{cortex-m0plus},
+@code{cortex-x1},
 @code{exynos-m1},
 @code{marvell-pj4},
 @code{marvell-whitney},
 @code{neoverse-n1},
+@code{neoverse-n2},
+@code{neoverse-v1},
 @code{xgene1},
 @code{xgene2},
 @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
@@ -257,6 +265,9 @@ names are recognized:
 @code{armv8-m.main},
 @code{armv8.1-m.main},
 @code{armv8.6-a},
+@code{armv8.7-a},
+@code{armv8.8-a},
+@code{armv9-a},
 @code{iwmmxt},
 @code{iwmmxt2}
 and
@@ -359,6 +370,14 @@ For @code{armv8-m.main}:
 @code{+fp}: Enables single-precision only VFPv5 instructions with 16
 double-word registers.
 @code{+fp.dp}: Enables VFPv5 instructions with 16 double-word registers.
+@code{+cdecp0} (CDE extensions for v8-m architecture with coprocessor 0),
+@code{+cdecp1} (CDE extensions for v8-m architecture with coprocessor 1),
+@code{+cdecp2} (CDE extensions for v8-m architecture with coprocessor 2),
+@code{+cdecp3} (CDE extensions for v8-m architecture with coprocessor 3),
+@code{+cdecp4} (CDE extensions for v8-m architecture with coprocessor 4),
+@code{+cdecp5} (CDE extensions for v8-m architecture with coprocessor 5),
+@code{+cdecp6} (CDE extensions for v8-m architecture with coprocessor 6),
+@code{+cdecp7} (CDE extensions for v8-m architecture with coprocessor 7),
 @code{+nofp}: Disables all FPU instructions.
 @code{+nodsp}: Disables DSP Extension.
 
