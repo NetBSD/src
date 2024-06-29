@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.35 2022/09/24 18:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.36 2024/06/29 12:11:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,25 +926,25 @@ vte_stats_update(struct vte_softc *sc)
 	stat->rx_mcast_frames += (value & 0xFF);
 
 	value = CSR_READ_2(sc, VTE_CNT_MECNT1);
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    (value >> 8) +			/* rx_runts */
 	    (value & 0xFF));			/* rx_crcerrs */
 
 	value = CSR_READ_2(sc, VTE_CNT_MECNT2);
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    (value & 0xFF));			/* rx_long_frames */
 
 	value = CSR_READ_2(sc, VTE_CNT_MECNT3);
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    (value >> 8));			/* rx_fifo_full */
 	stat->rx_desc_unavail += (value & 0xFF);
 
 	/* TX stats. */
-	if_statadd_ref(nsr, if_opackets,
+	if_statadd_ref(ifp, nsr, if_opackets,
 	    CSR_READ_2(sc, VTE_CNT_TX_DONE));	/* tx_frames */
 
 	value = CSR_READ_2(sc, VTE_CNT_MECNT4);
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	    (value >> 8) +			/* tx_underruns */
 	    (value & 0xFF));			/* tx_late_colls */
 

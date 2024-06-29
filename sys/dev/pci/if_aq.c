@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.47 2024/03/09 22:03:32 mrg Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.47 2024/03/09 22:03:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -5439,10 +5439,10 @@ aq_tx_intr(void *arg)
 			bus_dmamap_unload(sc->sc_dmat,
 			    txring->txr_mbufs[idx].dmamap);
 
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_opackets);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(ifp, nsr, if_omcasts);
 
 			m_freem(m);
 			txring->txr_mbufs[idx].m = NULL;
@@ -5526,7 +5526,7 @@ aq_rx_intr(void *arg)
 
 		if ((rxd_status & RXDESC_STATUS_MACERR) ||
 		    (rxd_type & RXDESC_TYPE_MAC_DMA_ERR)) {
-			if_statinc_ref(nsr, if_ierrors);
+			if_statinc_ref(ifp, nsr, if_ierrors);
 			if (m0 != NULL) {
 				m_freem(m0);
 				m0 = mprev = NULL;
@@ -5546,7 +5546,7 @@ aq_rx_intr(void *arg)
 			 * cannot allocate new mbuf.
 			 * discard this packet, and reuse mbuf for next.
 			 */
-			if_statinc_ref(nsr, if_iqdrops);
+			if_statinc_ref(ifp, nsr, if_iqdrops);
 			if (m0 != NULL) {
 				m_freem(m0);
 				m0 = mprev = NULL;
@@ -5657,8 +5657,8 @@ aq_rx_intr(void *arg)
 			}
 
 			m_set_rcvif(m0, ifp);
-			if_statinc_ref(nsr, if_ipackets);
-			if_statadd_ref(nsr, if_ibytes, m0->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_ipackets);
+			if_statadd_ref(ifp, nsr, if_ibytes, m0->m_pkthdr.len);
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
 			m0 = mprev = NULL;
 		}

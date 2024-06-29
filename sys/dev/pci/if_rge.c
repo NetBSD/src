@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.31 2024/01/18 03:47:26 msaitoh Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.32 2024/06/29 12:11:12 riastradh Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.31 2024/01/18 03:47:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.32 2024/06/29 12:11:12 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -1394,11 +1394,11 @@ rge_txeof(struct rge_softc *sc)
 
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (RGE_TDCMDSTS_EXCESSCOLL | RGE_TDCMDSTS_COLL))
-			if_statinc_ref(nsr, if_collisions);
+			if_statinc_ref(ifp, nsr, if_collisions);
 		if (txstat & RGE_TDCMDSTS_TXERR)
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 		else
-			if_statinc_ref(nsr, if_opackets);
+			if_statinc_ref(ifp, nsr, if_opackets);
 		IF_STAT_PUTREF(ifp);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_tx_list_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.97 2024/02/10 09:30:06 andvar Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.97 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -760,11 +760,11 @@ epic_intr(void *arg)
 			 */
 			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 			if ((txstatus & ET_TXSTAT_PACKETTX) == 0)
-				if_statinc_ref(nsr, if_oerrors);
+				if_statinc_ref(ifp, nsr, if_oerrors);
 			else
-				if_statinc_ref(nsr, if_opackets);
+				if_statinc_ref(ifp, nsr, if_opackets);
 			if (TXSTAT_COLLISIONS(txstatus))
-				if_statadd_ref(nsr, if_collisions,
+				if_statadd_ref(ifp, nsr, if_collisions,
 				    TXSTAT_COLLISIONS(txstatus));
 			if (txstatus & ET_TXSTAT_CARSENSELOST)
 				printf("%s: lost carrier\n",

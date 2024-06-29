@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.53 2022/09/27 06:13:42 skrll Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.54 2024/06/29 12:11:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.53 2022/09/27 06:13:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.54 2024/06/29 12:11:10 riastradh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -688,18 +688,18 @@ npe_addstats(struct npe_softc *sc)
 	struct npestats *ns = sc->sc_stats;
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 		  be32toh(ns->dot3StatsInternalMacTransmitErrors)
 		+ be32toh(ns->dot3StatsCarrierSenseErrors)
 		+ be32toh(ns->TxVLANIdFilterDiscards)
 		);
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 		  be32toh(ns->dot3StatsFCSErrors)
 		+ be32toh(ns->dot3StatsInternalMacReceiveErrors)
 		+ be32toh(ns->RxOverrunDiscards)
 		+ be32toh(ns->RxUnderflowEntryDiscards)
 		);
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 		  be32toh(ns->dot3StatsSingleCollisionFrames)
 		+ be32toh(ns->dot3StatsMultipleCollisionFrames)
 		);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.171 2023/11/02 09:48:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.172 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.171 2023/11/02 09:48:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.172 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1424,12 +1424,12 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (error) {
 		/* mbuf is already freed */
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 	} else {
-		if_statinc_ref(nsr, if_opackets);
-		if_statadd_ref(nsr, if_obytes, pktlen);
+		if_statinc_ref(ifp, nsr, if_opackets);
+		if_statadd_ref(ifp, nsr, if_obytes, pktlen);
 		if (mcast)
-			if_statinc_ref(nsr, if_omcasts);
+			if_statinc_ref(ifp, nsr, if_omcasts);
 	}
 	IF_STAT_PUTREF(ifp);
 

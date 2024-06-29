@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.175 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.176 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.175 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.176 2024/06/29 12:11:11 riastradh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1471,11 +1471,11 @@ re_txeof(struct rtk_softc *sc)
 
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (RE_TDESC_STAT_EXCESSCOL | RE_TDESC_STAT_COLCNT))
-			if_statinc_ref(nsr, if_collisions);
+			if_statinc_ref(ifp, nsr, if_collisions);
 		if (txstat & RE_TDESC_STAT_TXERRSUM)
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 		else
-			if_statinc_ref(nsr, if_opackets);
+			if_statinc_ref(ifp, nsr, if_opackets);
 		IF_STAT_PUTREF(ifp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.161 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: i82557.c,v 1.162 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.161 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.162 2024/06/29 12:11:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1480,14 +1480,15 @@ fxp_tick(void *arg)
 
 	FXP_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
 
-	if_statadd_ref(nsr, if_opackets, le32toh(sp->tx_good));
-	if_statadd_ref(nsr, if_collisions, le32toh(sp->tx_total_collisions));
+	if_statadd_ref(ifp, nsr, if_opackets, le32toh(sp->tx_good));
+	if_statadd_ref(ifp, nsr, if_collisions,
+	    le32toh(sp->tx_total_collisions));
 	if (sp->rx_good) {
 		sc->sc_rxidle = 0;
 	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
 	}
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    le32toh(sp->rx_crc_errors) +
 	    le32toh(sp->rx_alignment_errors) +
 	    le32toh(sp->rx_rnr_errors) +
@@ -1497,7 +1498,8 @@ fxp_tick(void *arg)
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {
-		if_statadd_ref(nsr, if_oerrors, le32toh(sp->tx_underruns));
+		if_statadd_ref(ifp, nsr, if_oerrors,
+		    le32toh(sp->tx_underruns));
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}

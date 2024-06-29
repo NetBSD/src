@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.58 2024/02/10 09:30:06 andvar Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.58 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.59 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -1070,19 +1070,19 @@ sq_txintr(struct sq_softc *sc)
 	tmp = (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD;
 	if ((status & tmp) == 0) {
 		if (status & TXSTAT_COLL)
-			if_statinc_ref(nsr, if_collisions);
+			if_statinc_ref(ifp, nsr, if_collisions);
 
 		if (status & TXSTAT_UFLOW) {
 			printf("%s: transmit underflow\n",
 			    device_xname(sc->sc_dev));
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 		}
 
 		if (status & TXSTAT_16COLL) {
 			printf("%s: max collisions reached\n",
 			    device_xname(sc->sc_dev));
-			if_statinc_ref(nsr, if_oerrors);
-			if_statadd_ref(nsr, if_collisions, 16);
+			if_statinc_ref(ifp, nsr, if_oerrors);
+			if_statadd_ref(ifp, nsr, if_collisions, 16);
 		}
 	}
 	IF_STAT_PUTREF(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.97 2023/06/02 08:51:47 andvar Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.97 2023/06/02 08:51:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -819,9 +819,9 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 		 * Update statistics.
 		 */
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-		if_statadd_ref(nsr, if_collisions, 16);
-		if_statinc_ref(nsr, if_oerrors);
-		if_statadd_ref(nsr, if_opackets, sc->txb_sched - left);
+		if_statadd_ref(ifp, nsr, if_collisions, 16);
+		if_statinc_ref(ifp, nsr, if_oerrors);
+		if_statadd_ref(ifp, nsr, if_opackets, sc->txb_sched - left);
 		IF_STAT_PUTREF(ifp);
 
 		/*

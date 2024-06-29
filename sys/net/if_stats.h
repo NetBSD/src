@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.h,v 1.4 2024/06/29 02:18:35 riastradh Exp $	*/
+/*	$NetBSD: if_stats.h,v 1.5 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ if_statinc(ifnet_t *ifp, if_stat_t x)
 }
 
 static inline void
-if_statinc_ref(net_stat_ref_t nsr, if_stat_t x)
+if_statinc_ref(ifnet_t *ifp, net_stat_ref_t nsr, if_stat_t x)
 {
 	/* XXX sdt probe needs ifp */
 	_NET_STATINC_REF(nsr, x);
@@ -84,7 +84,7 @@ if_statdec(ifnet_t *ifp, if_stat_t x)
 }
 
 static inline void
-if_statdec_ref(net_stat_ref_t nsr, if_stat_t x)
+if_statdec_ref(ifnet_t *ifp, net_stat_ref_t nsr, if_stat_t x)
 {
 	/* XXX sdt probe needs ifp */
 	_NET_STATDEC_REF(nsr, x);
@@ -98,7 +98,7 @@ if_statadd(ifnet_t *ifp, if_stat_t x, uint64_t v)
 }
 
 static inline void
-if_statadd_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
+if_statadd_ref(ifnet_t *ifp, net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 {
 	/* XXX sdt probe needs ifp */
 	_NET_STATADD_REF(nsr, x, v);
@@ -123,7 +123,7 @@ if_statsub(ifnet_t *ifp, if_stat_t x, uint64_t v)
 }
 
 static inline void
-if_statsub_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
+if_statsub_ref(ifnet_t *ifp, net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 {
 	/* XXX sdt probe needs ifp */
 	_NET_STATSUB_REF(nsr, x, v);

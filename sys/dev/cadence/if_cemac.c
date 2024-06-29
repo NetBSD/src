@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.26 2022/11/12 16:54:36 jmcneill Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.26 2022/11/12 16:54:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.27 2024/06/29 12:11:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -303,14 +303,14 @@ cemac_intr(void *arg)
 		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
 		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
 		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
-		if_statinc_ref(nsr, if_ierrors);
-		if_statinc_ref(nsr, if_ipackets);
+		if_statinc_ref(ifp, nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
 		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
-		if_statinc_ref(nsr, if_ierrors);
-		if_statinc_ref(nsr, if_ipackets);
+		if_statinc_ref(ifp, nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
@@ -374,7 +374,7 @@ cemac_intr(void *arg)
 				 */
 				if (m != NULL)
 					m_freem(m);
-				if_statinc_ref(nsr, if_ierrors);
+				if_statinc_ref(ifp, nsr, if_ierrors);
 			}
 			sc->rxqi++;
 		}

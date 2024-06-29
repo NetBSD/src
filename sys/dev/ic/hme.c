@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.109 2022/05/29 10:43:46 rin Exp $	*/
+/*	$NetBSD: hme.c,v 1.110 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.109 2022/05/29 10:43:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.110 2024/06/29 12:11:11 riastradh Exp $");
 
 /* #define HMEDEBUG */
 
@@ -989,10 +989,10 @@ hme_tint(struct hme_softc *sc)
 	/*
 	 * Unload collision counters
 	 */
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 		bus_space_read_4(t, mac, HME_MACI_NCCNT) +
 		bus_space_read_4(t, mac, HME_MACI_FCCNT));
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 		bus_space_read_4(t, mac, HME_MACI_EXCNT) +
 		bus_space_read_4(t, mac, HME_MACI_LTCNT));
 
@@ -1017,7 +1017,7 @@ hme_tint(struct hme_softc *sc)
 			break;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		if_statinc_ref(nsr, if_opackets);
+		if_statinc_ref(ifp, nsr, if_opackets);
 
 		if (++ri == sc->sc_rb.rb_ntbuf)
 			ri = 0;
@@ -1114,13 +1114,13 @@ hme_eint(struct hme_softc *sc, u_int status)
 	/* Receive error counters rolled over */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (status & HME_SEB_STAT_ACNTEXP)
-		if_statadd_ref(nsr, if_ierrors, 0xff);
+		if_statadd_ref(ifp, nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_CCNTEXP)
-		if_statadd_ref(nsr, if_ierrors, 0xff);
+		if_statadd_ref(ifp, nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_LCNTEXP)
-		if_statadd_ref(nsr, if_ierrors, 0xff);
+		if_statadd_ref(ifp, nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_CVCNTEXP)
-		if_statadd_ref(nsr, if_ierrors, 0xff);
+		if_statadd_ref(ifp, nsr, if_ierrors, 0xff);
 	IF_STAT_PUTREF(ifp);
 
 	/* RXTERR locks up the interface, so do a reset */

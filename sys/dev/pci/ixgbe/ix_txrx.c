@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.116 2023/12/30 06:16:44 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.117 2024/06/29 12:11:12 riastradh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.116 2023/12/30 06:16:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.117 2024/06/29 12:11:12 riastradh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -561,9 +561,9 @@ retry:
 	IXGBE_WRITE_REG(&sc->hw, txr->tail, i);
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_obytes, m_head->m_pkthdr.len);
+	if_statadd_ref(ifp, nsr, if_obytes, m_head->m_pkthdr.len);
 	if (m_head->m_flags & M_MCAST)
-		if_statinc_ref(nsr, if_omcasts);
+		if_statinc_ref(ifp, nsr, if_omcasts);
 	IF_STAT_PUTREF(ifp);
 
 	/* Mark queue as having work */

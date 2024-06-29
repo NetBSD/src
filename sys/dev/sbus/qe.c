@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.79 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.80 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.79 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.80 2024/06/29 12:11:12 riastradh Exp $");
 
 #define QEDEBUG
 
@@ -702,18 +702,18 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 	if (why & QE_CR_STAT_EDEFER) {
 		printf("%s: excessive tx defers.\n", xname);
 		r |= 1;
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 	}
 
 	if (why & QE_CR_STAT_CLOSS) {
 		printf("%s: no carrier, link down?\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_ERETRIES) {
 		printf("%s: excessive tx retries\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
@@ -721,14 +721,14 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 
 	if (why & QE_CR_STAT_LCOLL) {
 		printf("%s: late tx transmission\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_FUFLOW) {
 		printf("%s: tx fifo underflow\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
@@ -744,8 +744,8 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 	}
 
 	if (why & QE_CR_STAT_TCCOFLOW) {
-		if_statadd_ref(nsr, if_collisions, 256);
-		if_statadd_ref(nsr, if_oerrors, 256);
+		if_statadd_ref(ifp, nsr, if_collisions, 256);
+		if_statadd_ref(ifp, nsr, if_oerrors, 256);
 		r |= 1;
 	}
 
@@ -757,94 +757,94 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 
 	if (why & QE_CR_STAT_TXLERR) {
 		printf("%s: tx late error\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXPERR) {
 		printf("%s: tx DMA parity error\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXSERR) {
 		printf("%s: tx DMA sbus error ack\n", xname);
-		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(ifp, nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RCCOFLOW) {
-		if_statadd_ref(nsr, if_collisions, 256);
-		if_statadd_ref(nsr, if_ierrors, 256);
+		if_statadd_ref(ifp, nsr, if_collisions, 256);
+		if_statadd_ref(ifp, nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RUOFLOW) {
-		if_statadd_ref(nsr, if_ierrors, 256);
+		if_statadd_ref(ifp, nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_MCOFLOW) {
-		if_statadd_ref(nsr, if_ierrors, 256);
+		if_statadd_ref(ifp, nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXFOFLOW) {
 		printf("%s: rx fifo overflow\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RLCOLL) {
 		printf("%s: rx late collision\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
-		if_statinc_ref(nsr, if_collisions);
+		if_statinc_ref(ifp, nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_collisions);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_FCOFLOW) {
-		if_statadd_ref(nsr, if_ierrors, 256);
+		if_statadd_ref(ifp, nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_CECOFLOW) {
-		if_statadd_ref(nsr, if_ierrors, 256);
+		if_statadd_ref(ifp, nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXDROP) {
 		printf("%s: rx packet dropped\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXSMALL) {
 		printf("%s: rx buffer too small\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXLERR) {
 		printf("%s: rx late error\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXPERR) {
 		printf("%s: rx DMA parity error\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXSERR) {
 		printf("%s: rx DMA sbus error ack\n", xname);
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.17 2024/06/02 19:27:12 andvar Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.17 2024/06/02 19:27:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18 2024/06/29 12:11:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2710,12 +2710,12 @@ iavf_rxeof(struct iavf_softc *sc, struct iavf_rx_ring *rxr, u_int rxlimit,
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
 				m_set_rcvif(m, ifp);
-				if_statinc_ref(nsr, if_ipackets);
-				if_statadd_ref(nsr, if_ibytes,
+				if_statinc_ref(ifp, nsr, if_ipackets);
+				if_statadd_ref(ifp, nsr, if_ibytes,
 				    m->m_pkthdr.len);
 				if_percpuq_enqueue(sc->sc_ipq, m);
 			} else {
-				if_statinc_ref(nsr, if_ierrors);
+				if_statinc_ref(ifp, nsr, if_ierrors);
 				m_freem(m);
 			}
 
@@ -2733,7 +2733,7 @@ iavf_rxeof(struct iavf_softc *sc, struct iavf_rx_ring *rxr, u_int rxlimit,
 		ecnt->ev_count++;
 		rxr->rxr_cons = cons;
 		if (iavf_rxfill(sc, rxr) == -1)
-			if_statinc_ref(nsr, if_iqdrops);
+			if_statinc_ref(ifp, nsr, if_iqdrops);
 	}
 
 	IF_STAT_PUTREF(ifp);
@@ -2830,10 +2830,10 @@ iavf_txeof(struct iavf_softc *sc, struct iavf_tx_ring *txr, u_int txlimit,
 
 		m = txm->txm_m;
 		if (m != NULL) {
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_opackets);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 			if (ISSET(m->m_flags, M_MCAST))
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(ifp, nsr, if_omcasts);
 			m_freem(m);
 		}
 

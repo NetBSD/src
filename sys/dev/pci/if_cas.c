@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.47 2022/09/24 18:12:42 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.47 2022/09/24 18:12:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -839,13 +839,13 @@ cas_tick(void *arg)
 	/* unload collisions counters */
 	v = bus_space_read_4(t, mac, CAS_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_LATE_COLL_CNT);
-	if_statadd_ref(nsr, if_collisions, v +
+	if_statadd_ref(ifp, nsr, if_collisions, v +
 	    bus_space_read_4(t, mac, CAS_MAC_NORM_COLL_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT));
-	if_statadd_ref(nsr, if_oerrors, v);
+	if_statadd_ref(ifp, nsr, if_oerrors, v);
 
 	/* read error counters */
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    bus_space_read_4(t, mac, CAS_MAC_RX_LEN_ERR_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_ALIGN_ERR) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_CRC_ERR_CNT) +

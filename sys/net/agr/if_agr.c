@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.56 2022/09/18 19:24:14 thorpej Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.57 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.56 2022/09/18 19:24:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.57 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -398,13 +398,13 @@ agr_start(struct ifnet *ifp)
 
 			error = agr_xmit_frame(port->port_ifp, m);
 			if (error) {
-				if_statinc_ref(nsr, if_oerrors);
+				if_statinc_ref(ifp, nsr, if_oerrors);
 			} else {
-				if_statinc_ref(nsr, if_opackets);
+				if_statinc_ref(ifp, nsr, if_opackets);
 			}
 		} else {
 			m_freem(m);
-			if_statinc_ref(nsr, if_oerrors);
+			if_statinc_ref(ifp, nsr, if_oerrors);
 		}
 		IF_STAT_PUTREF(ifp);
 	}

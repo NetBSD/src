@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.98 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.99 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.98 2024/02/09 22:08:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.99 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -2823,10 +2823,10 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 
 		m = txm->txm_m;
 		if (m != NULL) {
-			if_statinc_ref(nsr, if_opackets);
-			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
+			if_statinc_ref(ifp, nsr, if_opackets);
+			if_statadd_ref(ifp, nsr, if_obytes, m->m_pkthdr.len);
 			if (ISSET(m->m_flags, M_MCAST))
-				if_statinc_ref(nsr, if_omcasts);
+				if_statinc_ref(ifp, nsr, if_omcasts);
 			m_freem(m);
 		}
 
@@ -3255,12 +3255,12 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
 				m_set_rcvif(m, ifp);
-				if_statinc_ref(nsr, if_ipackets);
-				if_statadd_ref(nsr, if_ibytes,
+				if_statinc_ref(ifp, nsr, if_ipackets);
+				if_statadd_ref(ifp, nsr, if_ibytes,
 				    m->m_pkthdr.len);
 				if_percpuq_enqueue(sc->sc_ipq, m);
 			} else {
-				if_statinc_ref(nsr, if_ierrors);
+				if_statinc_ref(ifp, nsr, if_ierrors);
 				m_freem(m);
 			}
 
@@ -3277,7 +3277,7 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 	if (done) {
 		rxr->rxr_cons = cons;
 		if (ixl_rxfill(sc, rxr) == -1)
-			if_statinc_ref(nsr, if_iqdrops);
+			if_statinc_ref(ifp, nsr, if_iqdrops);
 	}
 
 	IF_STAT_PUTREF(ifp);

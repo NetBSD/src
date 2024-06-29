@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.70 2024/04/05 06:48:22 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.71 2024/06/29 12:11:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.70 2024/04/05 06:48:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.71 2024/06/29 12:11:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1082,10 +1082,10 @@ lagg_output(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 		if_statinc(ifp, if_oerrors);
 	} else {
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-		if_statinc_ref(nsr, if_opackets);
-		if_statadd_ref(nsr, if_obytes, len);
+		if_statinc_ref(ifp, nsr, if_opackets);
+		if_statadd_ref(ifp, nsr, if_obytes, len);
 		if (mflags & M_MCAST)
-			if_statinc_ref(nsr, if_omcasts);
+			if_statinc_ref(ifp, nsr, if_omcasts);
 		IF_STAT_PUTREF(ifp);
 	}
 }

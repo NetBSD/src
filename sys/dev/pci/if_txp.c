@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.75 2024/02/10 09:30:06 andvar Exp $ */
+/* $NetBSD: if_txp.c,v 1.76 2024/06/29 12:11:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.75 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.76 2024/06/29 12:11:12 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1421,14 +1421,14 @@ txp_tick(void *vsc)
 	ext = (struct txp_ext_desc *)(rsp + 1);
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    ext[3].ext_2 + ext[3].ext_3 + ext[3].ext_4 +
 	    ext[4].ext_1 + ext[4].ext_4);
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	    ext[0].ext_1 + ext[1].ext_1 + ext[1].ext_4 + ext[2].ext_1);
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 + ext[1].ext_3);
-	if_statadd_ref(nsr, if_opackets, rsp->rsp_par2);
+	if_statadd_ref(ifp, nsr, if_opackets, rsp->rsp_par2);
 	IF_STAT_PUTREF(ifp);
 
 out:

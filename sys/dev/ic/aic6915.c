@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.46 2024/02/02 22:39:10 andvar Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.47 2024/06/29 12:11:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.46 2024/02/02 22:39:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.47 2024/06/29 12:11:11 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -843,18 +843,18 @@ sf_stats_update(struct sf_softc *sc)
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	if_statadd_ref(nsr, if_opackets, stats.TransmitOKFrames);
+	if_statadd_ref(ifp, nsr, if_opackets, stats.TransmitOKFrames);
 
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    stats.SingleCollisionFrames +
 	    stats.MultipleCollisionFrames);
 
-	if_statadd_ref(nsr, if_oerrors,
+	if_statadd_ref(ifp, nsr, if_oerrors,
 	    stats.TransmitAbortDueToExcessiveCollisions +
 	    stats.TransmitAbortDueToExcessingDeferral +
 	    stats.FramesLostDueToInternalTransmitErrors);
 
-	if_statadd_ref(nsr, if_ierrors,
+	if_statadd_ref(ifp, nsr, if_ierrors,
 	    stats.ReceiveCRCErrors + stats.AlignmentErrors +
 	    stats.ReceiveFramesTooLong + stats.ReceiveFramesTooShort +
 	    stats.ReceiveFramesJabbersError +

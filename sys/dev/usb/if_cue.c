@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.108 2022/08/20 14:09:10 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.109 2024/06/29 12:11:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.108 2022/08/20 14:09:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.109 2024/06/29 12:11:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -545,13 +545,13 @@ cue_uno_tick(struct usbnet *un)
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (cue_csr_read_2(un, CUE_RX_FRAMEERR))
-		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(ifp, nsr, if_ierrors);
 
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    cue_csr_read_2(un, CUE_TX_SINGLECOLL));
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    cue_csr_read_2(un, CUE_TX_MULTICOLL));
-	if_statadd_ref(nsr, if_collisions,
+	if_statadd_ref(ifp, nsr, if_collisions,
 	    cue_csr_read_2(un, CUE_TX_EXCESSCOLL));
 	IF_STAT_PUTREF(ifp);
 }
