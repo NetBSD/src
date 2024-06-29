@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_core_wait.h,v 1.8 2023/08/24 05:55:25 rin Exp $	*/
+/*	$NetBSD: t_ptrace_core_wait.h,v 1.9 2024/06/29 07:10:27 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 #if defined(__aarch64__) || defined(__arm__) || defined(__hppa__) || \
     defined(__powerpc__) || defined(__riscv__) || defined(__sh3__) || \
-    defined(sparc)
+    defined(sparc) || defined(__vax__)
 	/*
 	 * For these archs, program counter is not automatically incremented
 	 * by a trap instruction. We cannot increment PC in the trap handler,
