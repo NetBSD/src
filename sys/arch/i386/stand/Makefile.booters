@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.100 2024/06/29 13:46:40 rin Exp $
+#	$NetBSD: Makefile.booters,v 1.101 2024/06/29 13:52:39 rin Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -25,9 +25,6 @@ COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .PATH: ${I386_STAND_DIR}/lib
-
-.PATH: ${I386_STAND_DIR}/lib/crt/pxe
-PXESTART= start_pxe.o
 
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE

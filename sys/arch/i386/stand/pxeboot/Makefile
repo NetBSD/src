@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.29 2024/06/29 07:52:16 rin Exp $
+#	$NetBSD: Makefile,v 1.30 2024/06/29 13:52:39 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
 BASE?= pxeboot_ia32
 PROG= ${BASE}.bin
 NEWVERSWHAT=	"PXE Boot"
-STARTFILE=	${PXESTART}
+STARTFILE=	start_pxe.o
 RELOC=		0x0
 
 .if (${BASE} != "pxeboot_ia32")
