@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.52 2023/12/14 05:39:00 rin Exp $	*/
+/*	$NetBSD: nfs.c,v 1.53 2024/06/29 07:49:36 rin Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -603,6 +603,11 @@ nfs_open(const char *path, struct open_file *f)
 #ifdef NFS_DEBUG
  	if (debug)
 		printf("%s: %s\n", __func__, path);
+#endif
+
+#ifdef LIBSA_NFS_IMPLICIT_MOUNT
+	if (nfs_mount(*((int *)(f->f_devdata)), rootip, rootpath))
+		return errno;
 #endif
 
 	if (nfs_root_node.iodesc == NULL) {
