@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2023/11/06 07:09:08 rin Exp $
+#	$NetBSD: Makefile,v 1.37 2024/06/29 08:05:13 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -21,8 +21,6 @@ CPPFLAGS+= -DNO_MULTIBOOT2 # keep the binary small
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
-# XXX should go into library
-SRCS+= getopt.c
 .PATH: ${.CURDIR}/../libsa
 
 # XXX these should depend on the size of the image
