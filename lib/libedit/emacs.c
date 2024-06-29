@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.37 2024/06/29 14:09:35 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.38 2024/06/29 17:28:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.37 2024/06/29 14:09:35 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.38 2024/06/29 17:28:07 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -452,7 +452,7 @@ em_copy_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 	cp = c__prev_word(el->el_line.cursor, el->el_line.buffer,
 	    el->el_state.argument, ce__isword);
 
-	c_insert(el, (int)(oldc - cp));
+	c_insert(el, (int)(el->el_line.cursor - cp));
 	oldc = el->el_line.cursor;
 	for (dp = oldc; cp < oldc && dp < el->el_line.lastchar; cp++)
 		*dp++ = *cp;
