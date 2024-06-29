@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -56,9 +56,6 @@
 #define TARGET_PAGE_SIZE SEGMENT_SIZE
 #define TARGETNAME "a.out-cris"
 
-/* The definition here seems not used; just provided as a convention.  */
-#define DEFAULT_ARCH bfd_arch_cris
-
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
@@ -72,7 +69,7 @@
 #define MY_exec_hdr_flags 1
 
 #define MY_write_object_contents MY (write_object_contents)
-static bfd_boolean MY (write_object_contents) (bfd *);
+static bool MY (write_object_contents) (bfd *);
 
 /* Forward this, so we can use a pointer to it in PARAMS.  */
 struct reloc_ext_external;
@@ -85,16 +82,15 @@ static void MY (swap_ext_reloc_in) (bfd *, struct reloc_ext_external *,
 				    arelent *, asymbol **, bfd_size_type);
 
 #define MY_set_sizes MY (set_sizes)
-static bfd_boolean MY (set_sizes) (bfd *);
+static bool MY (set_sizes) (bfd *);
 
 /* To set back reloc_size to ext, we make MY (set_sizes) be called
    through this construct.  Note that MY_set_arch_mach is only called
    through SET_ARCH_MACH.  The default bfd_default_set_arch_mach will
    not call set_sizes.  */
 
-#define MY_set_arch_mach NAME (aout, set_arch_mach)
 #define SET_ARCH_MACH(BFD, EXECP) \
- MY_set_arch_mach (BFD, DEFAULT_ARCH, N_MACHTYPE (EXECP))
+  bfd_set_arch_mach (BFD, bfd_arch_cris, N_MACHTYPE (EXECP))
 
 /* These macros describe the binary layout of the reloc information we
    use in a file.  */
@@ -114,7 +110,7 @@ static bfd_boolean MY (set_sizes) (bfd *);
 
 /* We need our own version to set header flags.  */
 
-static bfd_boolean
+static bool
 MY (write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
@@ -135,7 +131,7 @@ MY (write_object_contents) (bfd *abfd)
 
   WRITE_HEADERS (abfd, execp);
 
-  return TRUE;
+  return true;
 }
 
 /* We need our own for these reasons:
@@ -231,12 +227,14 @@ MY (swap_ext_reloc_in) (bfd *abfd,
   cache_ptr->address = (GET_SWORD (abfd, bytes->r_address));
 
   /* Now the fun stuff.  */
-  r_index =  (bytes->r_index[2] << 16)
-    | (bytes->r_index[1] << 8)
-    |  bytes->r_index[0];
+  r_index =  (((unsigned int) bytes->r_index[2] << 16)
+    | ((unsigned int) bytes->r_index[1] << 8)
+    |  bytes->r_index[0]);
+  
   r_extern = (0 != (bytes->r_type[0] & RELOC_EXT_BITS_EXTERN_LITTLE));
-  r_type = ((bytes->r_type[0]) >> RELOC_EXT_BITS_TYPE_SH_LITTLE)
-    & RELOC_EXT_BITS_TYPE_LITTLE;
+
+  r_type = ((bytes->r_type[0] & RELOC_EXT_BITS_TYPE_LITTLE)
+    >> RELOC_EXT_BITS_TYPE_SH_LITTLE);
 
   if (r_type > 2)
     {
@@ -271,7 +269,7 @@ MY (swap_ext_reloc_in) (bfd *abfd,
    "obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;", to avoid changing
    NAME (aout, set_arch_mach) in aoutx.  */
 
-static bfd_boolean
+static bool
 MY (set_sizes) (bfd *abfd)
 {
   /* Just as the default in aout-target.h (with some #ifdefs folded)...  */
@@ -288,5 +286,5 @@ MY (set_sizes) (bfd *abfd)
 
   obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;
 
-  return TRUE;
+  return true;
 }

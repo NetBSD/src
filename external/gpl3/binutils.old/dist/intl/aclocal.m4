@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.16.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.15.1 -*- Autoconf -*-
 
-# Copyright (C) 1996-2018 Free Software Foundation, Inc.
+# Copyright (C) 1996-2017 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -26,6 +26,7 @@ m4_include([../config/lib-link.m4])
 m4_include([../config/lib-prefix.m4])
 m4_include([../config/nls.m4])
 m4_include([../config/override.m4])
+m4_include([../config/picflag.m4])
 m4_include([../config/po.m4])
 m4_include([../config/progtest.m4])
 m4_include([../config/stdint_h.m4])

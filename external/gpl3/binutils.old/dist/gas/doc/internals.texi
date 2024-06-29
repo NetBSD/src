@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2020 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2022 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -1106,7 +1106,8 @@ You may define this macro to generate a fixup for a data allocation pseudo-op.
 @item TC_ADDRESS_BYTES
 @cindex TC_ADDRESS_BYTES
 Define this macro to specify the number of bytes used to store an address.
-Used to implement @code{dc.a}.  The target must have a reloc for this size.
+Used to implement @code{dc.a}.  If not defined by the target, a default will
+be supplied.  Targets are assumed to have a reloc for this size.
 
 @item TC_INIT_FIX_DATA (@var{fixp})
 @cindex TC_INIT_FIX_DATA
@@ -1547,6 +1548,16 @@ The function should return the debug format that is preferred by the CPU
 backend.  This format will be used when generating assembler specific debug
 information.
 
+@item md_emit_single_noop_insn
+@itemx md_single_noop_insn
+These macro facilitate the @var{.nop} directive.  If defined the
+@var{md_emit_single_noop_insn) macro provides code to insert a single no-op
+instruction into the output stream.  If this involves calling @var{md_assemble}
+with a fixed string then the alternative macro @var{md_single_noop_insn} can be
+defined, specifying the string to pass.  If neither of these macros are defined
+then the @var{.nop} directive will call @var{md_assemble} with the string
+@option{nop}.
+
 @item md_allow_local_subtract (@var{left}, @var{right}, @var{section})
 If defined, GAS will call this macro when evaluating an expression which is the
 difference of two symbols defined in the same section.  It takes three
@@ -1906,45 +1917,6 @@ used when problems are detected when reprocessing information saved away when
 processing some earlier part of the file.  For example, fixups are processed
 after all input has been read, but messages about fixups should refer to the
 original filename and line number that they are applicable to.
-@end deftypefun
-
-@deftypefun @{@} void sprint_value (char *@var{buf}, valueT @var{val})
-This function is helpful for converting a @code{valueT} value into printable
-format, in case it's wider than modes that @code{*printf} can handle.  If the
-type is narrow enough, a decimal number will be produced; otherwise, it will be
-in hexadecimal.  The value itself is not examined to make this determination.
-@end deftypefun
-
-@node Hash tables
-@subsection Hash tables
-@cindex hash tables
-
-@deftypefun @{@} @{struct hash_control *@} hash_new (void)
-Creates the hash table control structure.
-@end deftypefun
-
-@deftypefun @{@} void hash_die (struct hash_control *)
-Destroy a hash table.
-@end deftypefun
-
-@deftypefun @{@} void *hash_delete (struct hash_control *, const char *, int)
-Deletes entry from the hash table, returns the value it had.  If the last
-arg is non-zero, free memory allocated for this entry and all entries
-allocated more recently than this entry.
-@end deftypefun
-
-@deftypefun @{@} void *hash_replace (struct hash_control *, const char *, void *)
-Updates the value for an entry already in the table, returning the old value.
-If no entry was found, just returns NULL.
-@end deftypefun
-
-@deftypefun @{@} @{const char *@} hash_insert (struct hash_control *, const char *, void *)
-Inserting a value already in the table is an error.
-Returns an error message or NULL.
-@end deftypefun
-
-@deftypefun @{@} @{const char *@} hash_jam (struct hash_control *, const char *, void *)
-Inserts if the value isn't already present, updates it if it is.
 @end deftypefun
 
 @node Test suite

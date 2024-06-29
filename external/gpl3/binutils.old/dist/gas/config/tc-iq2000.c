@@ -1,5 +1,5 @@
 /* tc-iq2000.c -- Assembler for the Sitera IQ2000.
-   Copyright (C) 2003-2020 Free Software Foundation, Inc.
+   Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -106,7 +106,7 @@ struct iq2000_hi_fixup
 static struct iq2000_hi_fixup * iq2000_hi_fixup_list;
 
 /* Macro hash table, which we will add to.  */
-extern struct hash_control *macro_hash;
+extern struct htab *macro_hash;
 
 const char *md_shortopts = "";
 struct option md_longopts[] =
@@ -246,7 +246,10 @@ iq2000_add_macro (const char *  name,
       formal_entry ** p = &macro->formals;
 
       macro->formal_count = 0;
-      macro->formal_hash = hash_new ();
+      macro->formal_hash = htab_create_alloc (7, hash_formal_entry,
+					      eq_formal_entry,
+					      NULL, xcalloc, free);
+
 
       while (*arguments != NULL)
 	{
@@ -272,8 +275,10 @@ iq2000_add_macro (const char *  name,
 	    sb_add_string (& formal->name, *arguments);
 
 	  /* Add to macro's hash table.  */
-	  hash_jam (macro->formal_hash, sb_terminate (& formal->name), formal);
-
+	  htab_insert (macro->formal_hash,
+		       formal_entry_alloc (sb_terminate (& formal->name),
+					   formal),
+		       1);
 	  formal->index = macro->formal_count;
 	  macro->formal_count++;
 	  *p = formal;
@@ -285,7 +290,7 @@ iq2000_add_macro (const char *  name,
 
   sb_add_string (&macro_name, name);
   namestr = sb_terminate (&macro_name);
-  hash_jam (macro_hash, namestr, macro);
+  htab_insert (macro_hash, macro_entry_alloc (namestr, macro), 1);
 
   macro_defined = 1;
 }
@@ -726,10 +731,10 @@ md_operand (expressionS * exp)
 const char *
 md_atof (int type, char * litP, int * sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
-bfd_boolean
+bool
 iq2000_fix_adjustable (fixS * fixP)
 {
   bfd_reloc_code_real_type reloc_type;
@@ -746,21 +751,21 @@ iq2000_fix_adjustable (fixS * fixP)
     reloc_type = fixP->fx_r_type;
 
   if (fixP->fx_addsy == NULL)
-    return TRUE;
+    return true;
 
   /* Prevent all adjustments to global symbols.  */
   if (S_IS_EXTERNAL (fixP->fx_addsy))
-    return FALSE;
+    return false;
 
   if (S_IS_WEAK (fixP->fx_addsy))
-    return FALSE;
+    return false;
 
   /* We need the symbol name for the VTABLE entries.  */
   if (   reloc_type == BFD_RELOC_VTABLE_INHERIT
       || reloc_type == BFD_RELOC_VTABLE_ENTRY)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 static void

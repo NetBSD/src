@@ -1,6 +1,6 @@
 /* `a.out' object-file definitions, including extensions to 64-bit fields
 
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ struct external_exec
 #else
 #define OMAGIC 0407		/* Object file or impure executable.  */
 #define NMAGIC 0410		/* Code indicating pure executable.  */
+#define IMAGIC 0411		/* Separate instruction & data spaces for PDP-11. */
 #define ZMAGIC 0413		/* Code indicating demand-paged executable.  */
 #define BMAGIC 0415		/* Used by a b.out object.  */
 
@@ -211,7 +212,9 @@ struct external_exec
    up to a N_SEGSIZE boundary for pure or pageable files.  */
 #ifndef N_DATADDR
 #define N_DATADDR(x) \
-  (N_MAGIC (x) == OMAGIC						\
+  (N_MAGIC (x) == IMAGIC						\
+   ? (bfd_vma) 0							\
+   : N_MAGIC (x) == OMAGIC						\
    ? (N_TXTADDR (x) + N_TXTSIZE (x))					\
    : (N_SEGSIZE (x) + ((N_TXTADDR (x) + N_TXTSIZE (x) - 1)		\
 		       & ~ (bfd_vma) (N_SEGSIZE (x) - 1))))

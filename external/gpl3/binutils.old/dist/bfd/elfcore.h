@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,7 +36,7 @@ elf_core_file_pid (bfd *abfd)
   return elf_tdata (abfd)->core->pid;
 }
 
-bfd_boolean
+bool
 elf_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 {
   char* corename;
@@ -46,7 +46,7 @@ elf_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
   if (core_bfd->xvec != exec_bfd->xvec)
     {
       bfd_set_error (bfd_error_system_call);
-      return FALSE;
+      return false;
     }
 
   /* If both BFDs have identical build-ids, then they match.  */
@@ -55,21 +55,21 @@ elf_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
       && core_bfd->build_id->size == exec_bfd->build_id->size
       && memcmp (core_bfd->build_id->data, exec_bfd->build_id->data,
 		 core_bfd->build_id->size) == 0)
-    return TRUE;
+    return true;
 
   /* See if the name in the corefile matches the executable name.  */
   corename = elf_tdata (core_bfd)->core->program;
   if (corename != NULL)
     {
-      const char* execname = strrchr (exec_bfd->filename, '/');
+      const char* execname = strrchr (bfd_get_filename (exec_bfd), '/');
 
-      execname = execname ? execname + 1 : exec_bfd->filename;
+      execname = execname ? execname + 1 : bfd_get_filename (exec_bfd);
 
       if (strcmp (execname, corename) != 0)
-	return FALSE;
+	return false;
     }
 
-  return TRUE;
+  return true;
 }
 
 /*  Core files are simply standard ELF formatted files that partition
@@ -83,7 +83,7 @@ elf_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
     that allow standard bfd access to the general registers (.reg) and the
     floating point registers (.reg2).  */
 
-const bfd_target *
+bfd_cleanup
 elf_core_file_p (bfd *abfd)
 {
   Elf_External_Ehdr x_ehdr;	/* Elf file header, external form.  */
@@ -92,6 +92,7 @@ elf_core_file_p (bfd *abfd)
   unsigned int phindex;
   const struct elf_backend_data *ebd;
   bfd_size_type amt;
+  ufile_ptr filesize;
 
   /* Read in the ELF header in external format.  */
   if (bfd_bread (&x_ehdr, sizeof (x_ehdr), abfd) != sizeof (x_ehdr))
@@ -148,37 +149,14 @@ elf_core_file_p (bfd *abfd)
       && (ebd->elf_machine_alt1 == 0
 	  || i_ehdrp->e_machine != ebd->elf_machine_alt1)
       && (ebd->elf_machine_alt2 == 0
-	  || i_ehdrp->e_machine != ebd->elf_machine_alt2))
-    {
-      const bfd_target * const *target_ptr;
+	  || i_ehdrp->e_machine != ebd->elf_machine_alt2)
+      && ebd->elf_machine_code != EM_NONE)
+    goto wrong;
 
-      if (ebd->elf_machine_code != EM_NONE)
-	goto wrong;
-
-      /* This is the generic ELF target.  Let it match any ELF target
-	 for which we do not have a specific backend.  */
-
-      for (target_ptr = bfd_target_vector; *target_ptr != NULL; target_ptr++)
-	{
-	  const struct elf_backend_data *back;
-
-	  if ((*target_ptr)->flavour != bfd_target_elf_flavour)
-	    continue;
-	  back = xvec_get_elf_backend_data (*target_ptr);
-	  if (back->s->arch_size != ARCH_SIZE)
-	    continue;
-	  if (back->elf_machine_code == i_ehdrp->e_machine
-	      || (back->elf_machine_alt1 != 0
-		  && i_ehdrp->e_machine == back->elf_machine_alt1)
-	      || (back->elf_machine_alt2 != 0
-		  && i_ehdrp->e_machine == back->elf_machine_alt2))
-	    {
-	      /* target_ptr is an ELF backend which matches this
-		 object file, so reject the generic ELF target.  */
-	      goto wrong;
-	    }
-	}
-    }
+  if (ebd->elf_machine_code != EM_NONE
+      && i_ehdrp->e_ident[EI_OSABI] != ebd->elf_osabi
+      && ebd->elf_osabi != ELFOSABI_NONE)
+    goto wrong;
 
   /* If there is no program header, or the type is not a core file, then
      we are hosed.  */
@@ -197,6 +175,9 @@ elf_core_file_p (bfd *abfd)
       Elf_External_Shdr x_shdr;
       Elf_Internal_Shdr i_shdr;
       file_ptr where = (file_ptr) i_ehdrp->e_shoff;
+
+      if (i_ehdrp->e_shoff < sizeof (x_ehdr))
+	goto wrong;
 
       /* Seek to the section header table in the file.  */
       if (bfd_seek (abfd, where, SEEK_SET) != 0)
@@ -286,39 +267,31 @@ elf_core_file_p (bfd *abfd)
       goto fail;
 
   /* Check for core truncation.  */
-  {
-    bfd_size_type high = 0;
-    struct stat statbuf;
-    for (phindex = 0; phindex < i_ehdrp->e_phnum; ++phindex)
-      {
-	Elf_Internal_Phdr *p = i_phdrp + phindex;
-	if (p->p_filesz)
-	  {
-	    bfd_size_type current = p->p_offset + p->p_filesz;
-	    if (high < current)
-	      high = current;
-	  }
-      }
-    if (bfd_stat (abfd, &statbuf) == 0)
-      {
-	if ((bfd_size_type) statbuf.st_size < high)
-	  {
-	    _bfd_error_handler
-	      /* xgettext:c-format */
-	      (_("warning: %pB is truncated: expected core file "
-		 "size >= %" PRIu64 ", found: %" PRIu64),
-	       abfd, (uint64_t) high, (uint64_t) statbuf.st_size);
-	  }
+  filesize = bfd_get_file_size (abfd);
+  if (filesize != 0)
+    {
+      for (phindex = 0; phindex < i_ehdrp->e_phnum; ++phindex)
+	{
+	  Elf_Internal_Phdr *p = i_phdrp + phindex;
+	  if (p->p_filesz
+	      && (p->p_offset >= filesize
+		  || p->p_filesz > filesize - p->p_offset))
+	    {
+	      _bfd_error_handler (_("warning: %pB has a segment "
+				    "extending past end of file"), abfd);
+	      abfd->read_only = 1;
+	      break;
+	    }
       }
   }
 
   /* Save the entry point from the ELF header.  */
   abfd->start_address = i_ehdrp->e_entry;
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
-wrong:
+ wrong:
   bfd_set_error (bfd_error_wrong_format);
-fail:
+ fail:
   return NULL;
 }
 
@@ -326,7 +299,7 @@ fail:
    OFFSET is the file offset to a PT_LOAD segment that may contain
    the build-id note.  Returns TRUE upon success, FALSE otherwise.  */
 
-bfd_boolean
+bool
 NAME(_bfd_elf, core_find_build_id)
   (bfd *abfd,
    bfd_vma offset)
@@ -335,6 +308,7 @@ NAME(_bfd_elf, core_find_build_id)
   Elf_Internal_Ehdr i_ehdr;	/* Elf file header, internal form.   */
   Elf_Internal_Phdr *i_phdr;
   unsigned int i;
+  size_t amt;
 
   /* Seek to the position of the segment at OFFSET.  */
   if (bfd_seek (abfd, offset, SEEK_SET) != 0)
@@ -384,8 +358,12 @@ NAME(_bfd_elf, core_find_build_id)
     goto fail;
 
   /* Read in program headers.  */
-  i_phdr = (Elf_Internal_Phdr *) bfd_alloc2 (abfd, i_ehdr.e_phnum,
-					     sizeof (*i_phdr));
+  if (_bfd_mul_overflow (i_ehdr.e_phnum, sizeof (*i_phdr), &amt))
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      goto fail;
+    }
+  i_phdr = (Elf_Internal_Phdr *) bfd_alloc (abfd, amt);
   if (i_phdr == NULL)
     goto fail;
 
@@ -405,8 +383,15 @@ NAME(_bfd_elf, core_find_build_id)
 	{
 	  elf_read_notes (abfd, offset + i_phdr->p_offset,
 			  i_phdr->p_filesz, i_phdr->p_align);
+
+	  /* Make sure ABFD returns to processing the program headers.  */
+	  if (bfd_seek (abfd, (file_ptr) (offset + i_ehdr.e_phoff
+					  + (i + 1) * sizeof (x_phdr)),
+			SEEK_SET) != 0)
+	    goto fail;
+
 	  if (abfd->build_id != NULL)
-	    return TRUE;
+	    return true;
 	}
     }
 
@@ -414,8 +399,8 @@ NAME(_bfd_elf, core_find_build_id)
      build-id was found.  */
   goto fail;
 
-wrong:
+ wrong:
   bfd_set_error (bfd_error_wrong_format);
-fail:
-  return FALSE;
+ fail:
+  return false;
 }

@@ -16,7 +16,6 @@ DATA_ADDR='DEFINED (__.MMIX.start..data) ? __.MMIX.start..data : 0x2000000000000
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 ARCH=mmix
 MACHINE=
-COMPILE_IN=yes
 EXTRA_EM_FILE=mmixelf
 
 # The existence of a symbol __start (or _start) should overrule Main, so
@@ -43,6 +42,10 @@ ${RELOCATING+
 	    : (DEFINED (Main) ? Main : (DEFINED (.text) ? .text : 0)));
  PROVIDE (Main = DEFINED (Main) ? Main : (DEFINED (_start) ? _start : _start.));
 }"
+
+# We need a symbol at the end of the read-only data, which is
+# colocated with the code.  We make __etext fit.
+ETEXT_LAST_IN_RODATA_SEGMENT=" "
 
 OTHER_SECTIONS='
  .MMIX.reg_contents :

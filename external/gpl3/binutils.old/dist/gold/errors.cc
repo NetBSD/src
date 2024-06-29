@@ -1,6 +1,6 @@
 // errors.cc -- handle errors for gold
 
-// Copyright (C) 2006-2020 Free Software Foundation, Inc.
+// Copyright (C) 2006-2022 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -126,6 +126,15 @@ Errors::info(const char* format, va_list args)
 {
   vfprintf(stderr, format, args);
   fputc('\n', stderr);
+}
+
+// Print a trace message.
+
+void
+Errors::trace(const char* format, va_list args)
+{
+  vfprintf(stdout, format, args);
+  fputc('\n', stdout);
 }
 
 // Report an error at a reloc location.
@@ -272,6 +281,17 @@ gold_info(const char* format, ...)
   va_list args;
   va_start(args, format);
   parameters->errors()->info(format, args);
+  va_end(args);
+}
+
+// Print a trace message (to stdout).
+
+void
+gold_trace(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  parameters->errors()->trace(format, args);
   va_end(args);
 }
 

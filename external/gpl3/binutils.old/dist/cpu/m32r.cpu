@@ -742,7 +742,7 @@
 (dnop disp16 "16 bit displacement" () h-iaddr f-disp16)
 (dnop disp24 "24 bit displacement" (RELAX) h-iaddr f-disp24)
 
-; These hardware elements are refered to frequently.
+; These hardware elements are referred to frequently.
 
 (dnop condbit "condition bit" (SEM-ONLY) h-cond f-nil)
 (dnop accum "accumulator" (SEM-ONLY) h-accum f-nil)

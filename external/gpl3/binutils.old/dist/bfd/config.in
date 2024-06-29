@@ -14,12 +14,12 @@
    default. */
 #undef DEFAULT_LD_Z_SEPARATE_CODE
 
+/* Define if you want run-time sanity checks. */
+#undef ENABLE_CHECKING
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
-
-/* Define to 1 if you have the <alloca.h> header file. */
-#undef HAVE_ALLOCA_H
 
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
@@ -32,9 +32,9 @@
 /* Define to 1 if you have the declaration of `ffs', and to 0 if you don't. */
 #undef HAVE_DECL_FFS
 
-/* Define to 1 if you have the declaration of `free', and to 0 if you don't.
-   */
-#undef HAVE_DECL_FREE
+/* Define to 1 if you have the declaration of `fopen64', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FOPEN64
 
 /* Define to 1 if you have the declaration of `fseeko', and to 0 if you don't.
    */
@@ -52,22 +52,6 @@
    don't. */
 #undef HAVE_DECL_FTELLO64
 
-/* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
-   */
-#undef HAVE_DECL_GETENV
-
-/* Define to 1 if you have the declaration of `malloc', and to 0 if you don't.
-   */
-#undef HAVE_DECL_MALLOC
-
-/* Define to 1 if you have the declaration of `realloc', and to 0 if you
-   don't. */
-#undef HAVE_DECL_REALLOC
-
-/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_SNPRINTF
-
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
 #undef HAVE_DECL_STPCPY
@@ -76,21 +60,9 @@
    don't. */
 #undef HAVE_DECL_STRNLEN
 
-/* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
-   */
-#undef HAVE_DECL_STRSTR
-
 /* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VASPRINTF
-
-/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_VSNPRINTF
-
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
-   */
-#undef HAVE_DIRENT_H
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -143,12 +115,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if the system has the type `long double'. */
-#undef HAVE_LONG_DOUBLE
-
-/* Define to 1 if the system has the type `long long'. */
-#undef HAVE_LONG_LONG
-
 /* Define if <sys/procfs.h> has lwpstatus_t. */
 #undef HAVE_LWPSTATUS_T
 
@@ -175,9 +141,6 @@
 
 /* Define to 1 if you have the `mprotect' function. */
 #undef HAVE_MPROTECT
-
-/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
-#undef HAVE_NDIR_H
 
 /* Define if <sys/procfs.h> has prpsinfo32_t. */
 #undef HAVE_PRPSINFO32_T
@@ -224,12 +187,6 @@
 /* Define if <sys/procfs.h> has pxstatus_t. */
 #undef HAVE_PXSTATUS_T
 
-/* Define to 1 if you have the `setitimer' function. */
-#undef HAVE_SETITIMER
-
-/* Define to 1 if you have the <stddef.h> header file. */
-#undef HAVE_STDDEF_H
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -242,25 +199,14 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strtoull' function. */
-#undef HAVE_STRTOULL
-
 /* Define if struct core_dumpx has member c_impl */
 #undef HAVE_ST_C_IMPL
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
 
-/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
-   */
-#undef HAVE_SYS_DIR_H
-
 /* Define to 1 if you have the <sys/file.h> header file. */
 #undef HAVE_SYS_FILE_H
-
-/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
-   */
-#undef HAVE_SYS_NDIR_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
@@ -274,23 +220,11 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
-
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <time.h> header file. */
-#undef HAVE_TIME_H
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the <wchar.h> header file. */
-#undef HAVE_WCHAR_H
-
-/* Define to 1 if you have the <wctype.h> header file. */
-#undef HAVE_WCTYPE_H
 
 /* Define if <sys/procfs.h> has win32_pstatus_t. */
 #undef HAVE_WIN32_PSTATUS_T
@@ -323,9 +257,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of `char', as computed by sizeof. */
-#undef SIZEOF_CHAR
-
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
@@ -338,20 +269,11 @@
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
 
-/* The size of `short', as computed by sizeof. */
-#undef SIZEOF_SHORT
-
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define if you can safely include both <string.h> and <strings.h>. */
-#undef STRING_WITH_STRINGS
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
 
 /* Name of host specific header file to include in trad-core.c. */
 #undef TRAD_HEADER
@@ -416,3 +338,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Use structured /proc on Solaris. */
+#undef _STRUCTURED_PROC

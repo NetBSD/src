@@ -1,5 +1,5 @@
 /* BFD library support routines for the Renesas / SuperH SH architecture.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -45,29 +45,29 @@
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_sh2,          "sh2",       FALSE, arch_info_struct + 1),
-  N (bfd_mach_sh2e,         "sh2e",      FALSE, arch_info_struct + 2),
-  N (bfd_mach_sh_dsp,       "sh-dsp",    FALSE, arch_info_struct + 3),
-  N (bfd_mach_sh3,          "sh3",       FALSE, arch_info_struct + 4),
-  N (bfd_mach_sh3_nommu,    "sh3-nommu", FALSE, arch_info_struct + 5),
-  N (bfd_mach_sh3_dsp,      "sh3-dsp",   FALSE, arch_info_struct + 6),
-  N (bfd_mach_sh3e,         "sh3e",      FALSE, arch_info_struct + 7),
-  N (bfd_mach_sh4,          "sh4",       FALSE, arch_info_struct + 8),
-  N (bfd_mach_sh4a,         "sh4a",      FALSE, arch_info_struct + 9),
-  N (bfd_mach_sh4al_dsp,    "sh4al-dsp", FALSE, arch_info_struct + 10),
-  N (bfd_mach_sh4_nofpu,    "sh4-nofpu", FALSE, arch_info_struct + 11),
-  N (bfd_mach_sh4_nommu_nofpu, "sh4-nommu-nofpu", FALSE, arch_info_struct + 12),
-  N (bfd_mach_sh4a_nofpu,   "sh4a-nofpu", FALSE, arch_info_struct + 13),
-  N (bfd_mach_sh2a,         "sh2a",       FALSE, arch_info_struct + 14),
-  N (bfd_mach_sh2a_nofpu,   "sh2a-nofpu", FALSE, arch_info_struct + 15),
-  N (bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu, "sh2a-nofpu-or-sh4-nommu-nofpu", FALSE, arch_info_struct + 16),
-  N (bfd_mach_sh2a_nofpu_or_sh3_nommu, "sh2a-nofpu-or-sh3-nommu", FALSE, arch_info_struct + 17),
-  N (bfd_mach_sh2a_or_sh4,  "sh2a-or-sh4",  FALSE, arch_info_struct + 18),
-  N (bfd_mach_sh2a_or_sh3e, "sh2a-or-sh3e", FALSE, NULL)
+  N (bfd_mach_sh2,          "sh2",       false, arch_info_struct + 1),
+  N (bfd_mach_sh2e,         "sh2e",      false, arch_info_struct + 2),
+  N (bfd_mach_sh_dsp,       "sh-dsp",    false, arch_info_struct + 3),
+  N (bfd_mach_sh3,          "sh3",       false, arch_info_struct + 4),
+  N (bfd_mach_sh3_nommu,    "sh3-nommu", false, arch_info_struct + 5),
+  N (bfd_mach_sh3_dsp,      "sh3-dsp",   false, arch_info_struct + 6),
+  N (bfd_mach_sh3e,         "sh3e",      false, arch_info_struct + 7),
+  N (bfd_mach_sh4,          "sh4",       false, arch_info_struct + 8),
+  N (bfd_mach_sh4a,         "sh4a",      false, arch_info_struct + 9),
+  N (bfd_mach_sh4al_dsp,    "sh4al-dsp", false, arch_info_struct + 10),
+  N (bfd_mach_sh4_nofpu,    "sh4-nofpu", false, arch_info_struct + 11),
+  N (bfd_mach_sh4_nommu_nofpu, "sh4-nommu-nofpu", false, arch_info_struct + 12),
+  N (bfd_mach_sh4a_nofpu,   "sh4a-nofpu", false, arch_info_struct + 13),
+  N (bfd_mach_sh2a,         "sh2a",       false, arch_info_struct + 14),
+  N (bfd_mach_sh2a_nofpu,   "sh2a-nofpu", false, arch_info_struct + 15),
+  N (bfd_mach_sh2a_nofpu_or_sh4_nommu_nofpu, "sh2a-nofpu-or-sh4-nommu-nofpu", false, arch_info_struct + 16),
+  N (bfd_mach_sh2a_nofpu_or_sh3_nommu, "sh2a-nofpu-or-sh3-nommu", false, arch_info_struct + 17),
+  N (bfd_mach_sh2a_or_sh4,  "sh2a-or-sh4",  false, arch_info_struct + 18),
+  N (bfd_mach_sh2a_or_sh3e, "sh2a-or-sh3e", false, NULL)
 };
 
 const bfd_arch_info_type bfd_sh_arch =
-  N (bfd_mach_sh, "sh", TRUE, arch_info_struct + 0);
+  N (bfd_mach_sh, "sh", true, arch_info_struct + 0);
 
 /* This table defines the mappings from the BFD internal numbering
    system to the opcodes internal flags system.

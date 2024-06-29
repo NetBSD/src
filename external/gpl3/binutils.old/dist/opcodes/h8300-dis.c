@@ -1,5 +1,5 @@
 /* Disassemble h8300 instructions.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -29,7 +29,7 @@
 
 struct h8_instruction
 {
-  int length;
+  unsigned int length;
   const struct h8_opcode *opcode;
 };
 
@@ -56,13 +56,7 @@ bfd_h8_disassemble_init (void)
 	 that the count is the same as the length.  */
       for (i = 0; p->data.nib[i] != (op_type) E; i++)
 	;
-
-      if (i & 1)
-	{
-	  /* xgettext:c-format */
-	  opcodes_error_handler (_("internal error, h8_disassemble_init"));
-	  abort ();
-	}
+      OPCODES_ASSERT (!(i & 1));
 
       pi->length = i / 2;
       pi->opcode = p;
@@ -323,12 +317,12 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
   int dispregno[3] = { 0, 0, 0 };
   int cst[3] = { 0, 0, 0 };
   int cstlen[3] = { 0, 0, 0 };
-  static bfd_boolean init = 0;
+  static bool init = 0;
   const struct h8_instruction *qi;
   char const **pregnames = mach != 0 ? lregnames : wregnames;
   int status;
-  unsigned int l;
-  unsigned char data[MAX_CODE_NIBBLES];
+  unsigned int maxlen;
+  unsigned char data[MAX_CODE_NIBBLES / 2];
   void *stream = info->stream;
   fprintf_ftype outfn = info->fprintf_func;
 
@@ -345,22 +339,34 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
       return -1;
     }
 
-  for (l = 2; status == 0 && l < sizeof (data) / 2; l += 2)
-    status = info->read_memory_func (addr + l, data + l, 2, info);
+  for (maxlen = 2; maxlen < sizeof (data); maxlen += 2)
+    {
+      status = info->read_memory_func (addr + maxlen, data + maxlen, 2, info);
+      if (status != 0)
+	break;
+    }
 
   /* Find the exact opcode/arg combo.  */
   for (qi = h8_instructions; qi->opcode->name; qi++)
     {
-      const struct h8_opcode *q = qi->opcode;
-      const op_type *nib = q->data.nib;
-      unsigned int len = 0;
+      const struct h8_opcode *q;
+      const op_type *nib;
+      unsigned int len;
+      op_type looking_for;
 
-      while (1)
+      if (qi->length > maxlen)
+	continue;
+
+      q = qi->opcode;
+      nib = q->data.nib;
+      len = 0;
+      while ((looking_for = *nib) != (op_type) E)
 	{
-	  op_type looking_for = *nib;
-	  int thisnib = data[len / 2];
+	  int thisnib;
 	  int opnr;
 
+	  OPCODES_ASSERT (len / 2 < maxlen);
+	  thisnib = data[len / 2];
 	  thisnib = (len & 1) ? (thisnib & 0xf) : ((thisnib / 16) & 0xf);
 	  opnr = ((looking_for & OP3) == OP3 ? 2
 		  : (looking_for & DST) == DST ? 1 : 0);
@@ -462,6 +468,21 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		       || (looking_for & MODE) == INDEXW
 		       || (looking_for & MODE) == INDEXL)
 		{
+		  int extra;
+		  switch (looking_for & SIZE)
+		    {
+		    case L_16:
+		    case L_16U:
+		      extra = 1;
+		      break;
+		    case L_32:
+		      extra = 3;
+		      break;
+		    default:
+		      extra = 0;
+		      break;
+		    }
+		  OPCODES_ASSERT (len / 2 + extra < maxlen);
 		  extract_immediate (stream, looking_for, thisnib,
 				     data + len / 2, cst + opnr,
 				     cstlen + opnr, q);
@@ -516,6 +537,7 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 	      else if ((looking_for & SIZE) == L_16
 		       || (looking_for & SIZE) == L_16U)
 		{
+		  OPCODES_ASSERT (len / 2 + 1 < maxlen);
 		  cst[opnr] = (data[len / 2]) * 256 + data[(len + 2) / 2];
 		  cstlen[opnr] = 16;
 		}
@@ -529,8 +551,9 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		}
 	      else if ((looking_for & SIZE) == L_32)
 		{
-		  int i = len / 2;
+		  unsigned int i = len / 2;
 
+		  OPCODES_ASSERT (i + 3 < maxlen);
 		  cst[opnr] = (((unsigned) data[i] << 24)
 			       | (data[i + 1] << 16)
 			       | (data[i + 2] << 8)
@@ -540,8 +563,9 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		}
 	      else if ((looking_for & SIZE) == L_24)
 		{
-		  int i = len / 2;
+		  unsigned int i = len / 2;
 
+		  OPCODES_ASSERT (i + 2 < maxlen);
 		  cst[opnr] =
 		    (data[i] << 16) | (data[i + 1] << 8) | (data[i + 2]);
 		  cstlen[opnr] = 24;
@@ -588,105 +612,6 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		{
 		  cst[opnr] = (thisnib == 3);
 		}
-	      else if (looking_for == (op_type) E)
-		{
-		  outfn (stream, "%s\t", q->name);
-
-		  /* Gross.  Disgusting.  */
-		  if (strcmp (q->name, "ldm.l") == 0)
-		    {
-		      int count, high;
-
-		      count = (data[1] / 16) & 0x3;
-		      high = regno[1];
-
-		      outfn (stream, "@sp+,er%d-er%d", high - count, high);
-		      return qi->length;
-		    }
-
-		  if (strcmp (q->name, "stm.l") == 0)
-		    {
-		      int count, low;
-
-		      count = (data[1] / 16) & 0x3;
-		      low = regno[0];
-
-		      outfn (stream, "er%d-er%d,@-sp", low, low + count);
-		      return qi->length;
-		    }
-		  if (strcmp (q->name, "rte/l") == 0
-		      || strcmp (q->name, "rts/l") == 0)
-		    {
-		      if (regno[0] == 0)
-			outfn (stream, "er%d", regno[1]);
-		      else
-			outfn (stream, "er%d-er%d", regno[1] - regno[0],
-			       regno[1]);
-		      return qi->length;
-		    }
-		  if (CONST_STRNEQ (q->name, "mova"))
-		    {
-		      const op_type *args = q->args.nib;
-
-		      if (args[1] == (op_type) E)
-			{
-			  /* Short form.  */
-			  print_one_arg (info, addr, args[0], cst[0],
-					 cstlen[0], dispregno[0], regno[0],
-					 pregnames, qi->length);
-			  outfn (stream, ",er%d", dispregno[0]);
-			}
-		      else
-			{
-			  outfn (stream, "@(0x%x:%d,", cst[0], cstlen[0]);
-			  print_one_arg (info, addr, args[1], cst[1],
-					 cstlen[1], dispregno[1], regno[1],
-					 pregnames, qi->length);
-			  outfn (stream, ".%c),",
-				 (args[0] & MODE) == INDEXB ? 'b' : 'w');
-			  print_one_arg (info, addr, args[2], cst[2],
-					 cstlen[2], dispregno[2], regno[2],
-					 pregnames, qi->length);
-			}
-		      return qi->length;
-		    }
-		  /* Fill in the args.  */
-		  {
-		    const op_type *args = q->args.nib;
-		    int hadone = 0;
-		    int nargs;
-
-		    /* Special case handling for the adds and subs instructions
-		       since in H8 mode thay can only take the r0-r7 registers
-		       but in other (higher) modes they can take the er0-er7
-		       registers as well.  */
-		    if (strcmp (qi->opcode->name, "adds") == 0
-			|| strcmp (qi->opcode->name, "subs") == 0)
-		      {
-			outfn (stream, "#%d,%s", cst[0], pregnames[regno[1] & 0x7]);
-			return qi->length;
-		      }
-
-		    for (nargs = 0;
-			 nargs < 3 && args[nargs] != (op_type) E;
-			 nargs++)
-		      {
-			int x = args[nargs];
-
-			if (hadone)
-			  outfn (stream, ",");
-
-			print_one_arg (info, addr, x,
-				       cst[nargs], cstlen[nargs],
-				       dispregno[nargs], regno[nargs],
-				       pregnames, qi->length);
-
-			hadone = 1;
-		      }
-		  }
-
-		  return qi->length;
-		}
 	      else
 		/* xgettext:c-format */
 		outfn (stream, _("Don't understand 0x%x \n"), looking_for);
@@ -695,6 +620,102 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 	  len++;
 	  nib++;
 	}
+
+      outfn (stream, "%s\t", q->name);
+
+      /* Gross.  Disgusting.  */
+      if (strcmp (q->name, "ldm.l") == 0)
+	{
+	  int count, high;
+
+	  count = (data[1] / 16) & 0x3;
+	  high = regno[1];
+
+	  outfn (stream, "@sp+,er%d-er%d", high - count, high);
+	  return qi->length;
+	}
+
+      if (strcmp (q->name, "stm.l") == 0)
+	{
+	  int count, low;
+
+	  count = (data[1] / 16) & 0x3;
+	  low = regno[0];
+
+	  outfn (stream, "er%d-er%d,@-sp", low, low + count);
+	  return qi->length;
+	}
+      if (strcmp (q->name, "rte/l") == 0
+	  || strcmp (q->name, "rts/l") == 0)
+	{
+	  if (regno[0] == 0)
+	    outfn (stream, "er%d", regno[1]);
+	  else
+	    outfn (stream, "er%d-er%d", regno[1] - regno[0],
+		   regno[1]);
+	  return qi->length;
+	}
+      if (startswith (q->name, "mova"))
+	{
+	  const op_type *args = q->args.nib;
+
+	  if (args[1] == (op_type) E)
+	    {
+	      /* Short form.  */
+	      print_one_arg (info, addr, args[0], cst[0],
+			     cstlen[0], dispregno[0], regno[0],
+			     pregnames, qi->length);
+	      outfn (stream, ",er%d", dispregno[0]);
+	    }
+	  else
+	    {
+	      outfn (stream, "@(0x%x:%d,", cst[0], cstlen[0]);
+	      print_one_arg (info, addr, args[1], cst[1],
+			     cstlen[1], dispregno[1], regno[1],
+			     pregnames, qi->length);
+	      outfn (stream, ".%c),",
+		     (args[0] & MODE) == INDEXB ? 'b' : 'w');
+	      print_one_arg (info, addr, args[2], cst[2],
+			     cstlen[2], dispregno[2], regno[2],
+			     pregnames, qi->length);
+	    }
+	  return qi->length;
+	}
+      /* Fill in the args.  */
+      {
+	const op_type *args = q->args.nib;
+	int hadone = 0;
+	int nargs;
+
+	/* Special case handling for the adds and subs instructions
+	   since in H8 mode thay can only take the r0-r7 registers
+	   but in other (higher) modes they can take the er0-er7
+	   registers as well.  */
+	if (strcmp (qi->opcode->name, "adds") == 0
+	    || strcmp (qi->opcode->name, "subs") == 0)
+	  {
+	    outfn (stream, "#%d,%s", cst[0], pregnames[regno[1] & 0x7]);
+	    return qi->length;
+	  }
+
+	for (nargs = 0;
+	     nargs < 3 && args[nargs] != (op_type) E;
+	     nargs++)
+	  {
+	    int x = args[nargs];
+
+	    if (hadone)
+	      outfn (stream, ",");
+
+	    print_one_arg (info, addr, x,
+			   cst[nargs], cstlen[nargs],
+			   dispregno[nargs], regno[nargs],
+			   pregnames, qi->length);
+
+	    hadone = 1;
+	  }
+      }
+      return qi->length;
 
     fail:
       ;

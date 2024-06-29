@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -26,6 +26,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "sysdep.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ansidecl.h"
 #include "bfd.h"
 #include "symcat.h"
@@ -567,15 +568,15 @@ const CGEN_HW_ENTRY mep_cgen_hw_table[] =
   { "h-addr", HW_H_ADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
   { "h-iaddr", HW_H_IADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
   { "h-pc", HW_H_PC, CGEN_ASM_NONE, 0, { 0|A(PROFILE)|A(PC), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-gpr", HW_H_GPR, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_gpr, { 0|A(PROFILE)|A(CACHE_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-csr", HW_H_CSR, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_csr, { 0|A(PROFILE), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-cr64", HW_H_CR64, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_cr64, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-gpr", HW_H_GPR, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_gpr, { 0|A(PROFILE)|A(CACHE_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-csr", HW_H_CSR, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_csr, { 0|A(PROFILE), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-cr64", HW_H_CR64, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_cr64, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
   { "h-cr64-w", HW_H_CR64_W, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-cr", HW_H_CR, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_cr, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-ccr", HW_H_CCR, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_ccr, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-cr", HW_H_CR, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_cr, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-ccr", HW_H_CCR, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_ccr, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
   { "h-ccr-w", HW_H_CCR_W, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
-  { "h-cr-ivc2", HW_H_CR_IVC2, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_cr_ivc2, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } } } } },
-  { "h-ccr-ivc2", HW_H_CCR_IVC2, CGEN_ASM_KEYWORD, (PTR) & mep_cgen_opval_h_ccr_ivc2, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
+  { "h-cr-ivc2", HW_H_CR_IVC2, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_cr_ivc2, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } } } } },
+  { "h-ccr-ivc2", HW_H_CCR_IVC2, CGEN_ASM_KEYWORD, & mep_cgen_opval_h_ccr_ivc2, { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } } } } },
   { 0, 0, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } } } } }
 };
 
@@ -775,101 +776,101 @@ const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_CRNX_MULTI_IFIELD [];
 
 const CGEN_MAYBE_MULTI_IFLD MEP_F_CSRN_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CSRN_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CSRN_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_CSRN_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CSRN_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_CRNX_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CRNX_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CRNX_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_CRNX_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CRNX_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_24S5A2N_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24S5A2N_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24S5A2N_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_24S5A2N_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_24S5A2N_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_24U5A2N_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U5A2N_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U5A2N_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U5A2N_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U5A2N_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_24U8A4N_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U8A4N_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U8A4N_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U8A4N_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U8A4N_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_24U8N_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U8N_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U8N_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U8N_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U8N_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_24U4N_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U4N_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_24U4N_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U4N_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_24U4N_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_CALLNUM_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_5] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_6] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_7] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_11] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_5] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_7] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_11] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_CCRN_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CCRN_HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CCRN_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_CCRN_HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CCRN_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_C5_RMUIMM20_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_C5_RM] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_C5_16U16] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_C5_RM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_C5_16U16] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_C5_RNMUIMM24_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_C5_RNM] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_C5_16U16] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_C5_RNM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_C5_16U16] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_IMM16P0_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_SIMM16P0_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_CCRN_C3_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_C3HI] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_C3LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_C3HI] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_C3LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_CCRN_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_H2] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_H2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_LO] } },
+    { 0, { 0 } }
 };
 const CGEN_MAYBE_MULTI_IFLD MEP_F_IVC2_CRNX_MULTI_IFIELD [] =
 {
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_H1] } },
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_LO] } },
-    { 0, { (const PTR) 0 } }
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_H1] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CCRN_LO] } },
+    { 0, { 0 } }
 };
 
 /* The operand table.  */
@@ -881,587 +882,587 @@ const CGEN_OPERAND mep_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", MEP_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_NIL] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* r0: register 0 */
   { "r0", MEP_OPERAND_R0, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn: register Rn */
   { "rn", MEP_OPERAND_RN, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rm: register Rm */
   { "rm", MEP_OPERAND_RM, HW_H_GPR, 8, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RM] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rl: register Rl */
   { "rl", MEP_OPERAND_RL, HW_H_GPR, 12, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RL] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RL] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3: register 0-7 */
   { "rn3", MEP_OPERAND_RN3, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rma: register Rm holding pointer */
   { "rma", MEP_OPERAND_RMA, HW_H_GPR, 8, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RM] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_POINTER, 0 } }, { { 1, 0 } } } }  },
 /* rnc: register Rn holding char */
   { "rnc", MEP_OPERAND_RNC, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rnuc: register Rn holding unsigned char */
   { "rnuc", MEP_OPERAND_RNUC, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rns: register Rn holding short */
   { "rns", MEP_OPERAND_RNS, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rnus: register Rn holding unsigned short */
   { "rnus", MEP_OPERAND_RNUS, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rnl: register Rn holding long */
   { "rnl", MEP_OPERAND_RNL, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rnul: register Rn holding unsigned  long */
   { "rnul", MEP_OPERAND_RNUL, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_ULONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3c: register 0-7 holding unsigned char */
   { "rn3c", MEP_OPERAND_RN3C, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3uc: register 0-7 holding byte */
   { "rn3uc", MEP_OPERAND_RN3UC, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3s: register 0-7 holding unsigned short */
   { "rn3s", MEP_OPERAND_RN3S, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3us: register 0-7 holding short */
   { "rn3us", MEP_OPERAND_RN3US, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3l: register 0-7 holding unsigned long */
   { "rn3l", MEP_OPERAND_RN3L, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rn3ul: register 0-7 holding long */
   { "rn3ul", MEP_OPERAND_RN3UL, HW_H_GPR, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_ULONG, 0 } }, { { 1, 0 } } } }  },
 /* lp: link pointer */
   { "lp", MEP_OPERAND_LP, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* sar: shift amount register */
   { "sar", MEP_OPERAND_SAR, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* hi: high result */
   { "hi", MEP_OPERAND_HI, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* lo: low result */
   { "lo", MEP_OPERAND_LO, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* mb0: modulo begin register 0 */
   { "mb0", MEP_OPERAND_MB0, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* me0: modulo end register 0 */
   { "me0", MEP_OPERAND_ME0, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* mb1: modulo begin register 1 */
   { "mb1", MEP_OPERAND_MB1, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* me1: modulo end register 1 */
   { "me1", MEP_OPERAND_ME1, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* psw: program status word */
   { "psw", MEP_OPERAND_PSW, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* epc: exception prog counter */
   { "epc", MEP_OPERAND_EPC, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* exc: exception cause */
   { "exc", MEP_OPERAND_EXC, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* npc: nmi program counter */
   { "npc", MEP_OPERAND_NPC, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* dbg: debug register */
   { "dbg", MEP_OPERAND_DBG, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* depc: debug exception pc */
   { "depc", MEP_OPERAND_DEPC, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* opt: option register */
   { "opt", MEP_OPERAND_OPT, HW_H_CSR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* r1: register 1 */
   { "r1", MEP_OPERAND_R1, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* tp: tiny data area pointer */
   { "tp", MEP_OPERAND_TP, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* sp: stack pointer */
   { "sp", MEP_OPERAND_SP, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* tpr: comment */
   { "tpr", MEP_OPERAND_TPR, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* spr: comment */
   { "spr", MEP_OPERAND_SPR, HW_H_GPR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* csrn: control/special register */
   { "csrn", MEP_OPERAND_CSRN, HW_H_CSR, 8, 5,
-    { 2, { (const PTR) &MEP_F_CSRN_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_CSRN_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_REGNUM, 0 } }, { { 1, 0 } } } }  },
 /* csrn-idx: control/special reg idx */
   { "csrn-idx", MEP_OPERAND_CSRN_IDX, HW_H_UINT, 8, 5,
-    { 2, { (const PTR) &MEP_F_CSRN_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_CSRN_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* crn64: copro Rn (64-bit) */
   { "crn64", MEP_OPERAND_CRN64, HW_H_CR64, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CRN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CRN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crn: copro Rn (32-bit) */
   { "crn", MEP_OPERAND_CRN, HW_H_CR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CRN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CRN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crnx64: copro Rn (0-31, 64-bit) */
   { "crnx64", MEP_OPERAND_CRNX64, HW_H_CR64, 4, 5,
-    { 2, { (const PTR) &MEP_F_CRNX_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_CRNX_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crnx: copro Rn (0-31, 32-bit) */
   { "crnx", MEP_OPERAND_CRNX, HW_H_CR, 4, 5,
-    { 2, { (const PTR) &MEP_F_CRNX_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_CRNX_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* ccrn: copro control reg CCRn */
   { "ccrn", MEP_OPERAND_CCRN, HW_H_CCR, 4, 6,
-    { 2, { (const PTR) &MEP_F_CCRN_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_CCRN_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_REGNUM, 0 } }, { { 1, 0 } } } }  },
 /* cccc: copro flags */
   { "cccc", MEP_OPERAND_CCCC, HW_H_UINT, 8, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RM] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* pcrel8a2: comment */
   { "pcrel8a2", MEP_OPERAND_PCREL8A2, HW_H_SINT, 8, 7,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_8S8A2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_8S8A2] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LABEL, 0 } }, { { 1, 0 } } } }  },
 /* pcrel12a2: comment */
   { "pcrel12a2", MEP_OPERAND_PCREL12A2, HW_H_SINT, 4, 11,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_12S4A2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_12S4A2] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LABEL, 0 } }, { { 1, 0 } } } }  },
 /* pcrel17a2: comment */
   { "pcrel17a2", MEP_OPERAND_PCREL17A2, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_17S16A2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_17S16A2] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LABEL, 0 } }, { { 1, 0 } } } }  },
 /* pcrel24a2: comment */
   { "pcrel24a2", MEP_OPERAND_PCREL24A2, HW_H_SINT, 5, 23,
-    { 2, { (const PTR) &MEP_F_24S5A2N_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_24S5A2N_MULTI_IFIELD[0] } },
     { 0|A(PCREL_ADDR)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LABEL, 0 } }, { { 1, 0 } } } }  },
 /* pcabs24a2: comment */
   { "pcabs24a2", MEP_OPERAND_PCABS24A2, HW_H_UINT, 5, 23,
-    { 2, { (const PTR) &MEP_F_24U5A2N_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_24U5A2N_MULTI_IFIELD[0] } },
     { 0|A(ABS_ADDR)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LABEL, 0 } }, { { 1, 0 } } } }  },
 /* sdisp16: comment */
   { "sdisp16", MEP_OPERAND_SDISP16, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_16S16] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_16S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm16: comment */
   { "simm16", MEP_OPERAND_SIMM16, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_16S16] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_16S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* uimm16: comment */
   { "uimm16", MEP_OPERAND_UIMM16, HW_H_UINT, 16, 16,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_16U16] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_16U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* code16: uci/dsp code (16 bits) */
   { "code16", MEP_OPERAND_CODE16, HW_H_UINT, 16, 16,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_16U16] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_16U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* udisp2: SSARB addend (2 bits) */
   { "udisp2", MEP_OPERAND_UDISP2, HW_H_SINT, 6, 2,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_2U6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_2U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* uimm2: interrupt (2 bits) */
   { "uimm2", MEP_OPERAND_UIMM2, HW_H_UINT, 10, 2,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_2U10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_2U10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm6: add const (6 bits) */
   { "simm6", MEP_OPERAND_SIMM6, HW_H_SINT, 8, 6,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_6S8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_6S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm8: mov const (8 bits) */
   { "simm8", MEP_OPERAND_SIMM8, HW_H_SINT, 8, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_8S8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_8S8] } },
     { 0|A(RELOC_IMPLIES_OVERFLOW), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* addr24a4: comment */
   { "addr24a4", MEP_OPERAND_ADDR24A4, HW_H_UINT, 8, 22,
-    { 2, { (const PTR) &MEP_F_24U8A4N_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_24U8A4N_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 4, 0 } } } }  },
 /* code24: coprocessor code */
   { "code24", MEP_OPERAND_CODE24, HW_H_UINT, 4, 24,
-    { 2, { (const PTR) &MEP_F_24U4N_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_24U4N_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* callnum: system call number */
   { "callnum", MEP_OPERAND_CALLNUM, HW_H_UINT, 5, 4,
-    { 4, { (const PTR) &MEP_F_CALLNUM_MULTI_IFIELD[0] } },
+    { 4, { &MEP_F_CALLNUM_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* uimm3: bit immediate (3 bits) */
   { "uimm3", MEP_OPERAND_UIMM3, HW_H_UINT, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_3U5] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_3U5] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* uimm4: bCC const (4 bits) */
   { "uimm4", MEP_OPERAND_UIMM4, HW_H_UINT, 8, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_4U8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_4U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* uimm5: bit/shift val (5 bits) */
   { "uimm5", MEP_OPERAND_UIMM5, HW_H_UINT, 8, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_5U8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_5U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* udisp7: comment */
   { "udisp7", MEP_OPERAND_UDISP7, HW_H_UINT, 9, 7,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_7U9] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_7U9] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* udisp7a2: comment */
   { "udisp7a2", MEP_OPERAND_UDISP7A2, HW_H_UINT, 9, 6,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_7U9A2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_7U9A2] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 2, 0 } } } }  },
 /* udisp7a4: comment */
   { "udisp7a4", MEP_OPERAND_UDISP7A4, HW_H_UINT, 9, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_7U9A4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_7U9A4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 4, 0 } } } }  },
 /* uimm7a4: comment */
   { "uimm7a4", MEP_OPERAND_UIMM7A4, HW_H_UINT, 9, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_7U9A4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_7U9A4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 4, 0 } } } }  },
 /* uimm24: immediate (24 bits) */
   { "uimm24", MEP_OPERAND_UIMM24, HW_H_UINT, 8, 24,
-    { 2, { (const PTR) &MEP_F_24U8N_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_24U8N_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cimm4: cache immed'te (4 bits) */
   { "cimm4", MEP_OPERAND_CIMM4, HW_H_UINT, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RN] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RN] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cimm5: clip immediate (5 bits) */
   { "cimm5", MEP_OPERAND_CIMM5, HW_H_UINT, 24, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_5U24] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_5U24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cdisp10: comment */
   { "cdisp10", MEP_OPERAND_CDISP10, HW_H_SINT, 22, 10,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CDISP10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CDISP10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cdisp10a2: comment */
   { "cdisp10a2", MEP_OPERAND_CDISP10A2, HW_H_SINT, 22, 10,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CDISP10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CDISP10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cdisp10a4: comment */
   { "cdisp10a4", MEP_OPERAND_CDISP10A4, HW_H_SINT, 22, 10,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CDISP10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CDISP10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cdisp10a8: comment */
   { "cdisp10a8", MEP_OPERAND_CDISP10A8, HW_H_SINT, 22, 10,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_CDISP10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_CDISP10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* zero: Zero operand */
   { "zero", MEP_OPERAND_ZERO, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* rl5: register Rl c5 */
   { "rl5", MEP_OPERAND_RL5, HW_H_GPR, 20, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_RL5] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_RL5] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cdisp12: copro addend (12 bits) */
   { "cdisp12", MEP_OPERAND_CDISP12, HW_H_SINT, 20, 12,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_12S20] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_12S20] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* c5rmuimm20: 20-bit immediate in rm and imm16 */
   { "c5rmuimm20", MEP_OPERAND_C5RMUIMM20, HW_H_UINT, 8, 20,
-    { 2, { (const PTR) &MEP_F_C5_RMUIMM20_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_C5_RMUIMM20_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* c5rnmuimm24: 24-bit immediate in rn, rm, and imm16 */
   { "c5rnmuimm24", MEP_OPERAND_C5RNMUIMM24, HW_H_UINT, 4, 24,
-    { 2, { (const PTR) &MEP_F_C5_RNMUIMM24_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_C5_RNMUIMM24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xd0" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* cp_flag: branch condition register */
   { "cp_flag", MEP_OPERAND_CP_FLAG, HW_H_CCR, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_csar0: ivc2_csar0 */
   { "ivc2_csar0", MEP_OPERAND_IVC2_CSAR0, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_cc: ivc2_cc */
   { "ivc2_cc", MEP_OPERAND_IVC2_CC, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_cofr0: ivc2_cofr0 */
   { "ivc2_cofr0", MEP_OPERAND_IVC2_COFR0, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_cofr1: ivc2_cofr1 */
   { "ivc2_cofr1", MEP_OPERAND_IVC2_COFR1, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_cofa0: ivc2_cofa0 */
   { "ivc2_cofa0", MEP_OPERAND_IVC2_COFA0, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_cofa1: ivc2_cofa1 */
   { "ivc2_cofa1", MEP_OPERAND_IVC2_COFA1, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_csar1: ivc2_csar1 */
   { "ivc2_csar1", MEP_OPERAND_IVC2_CSAR1, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_0: acc0_0 */
   { "ivc2_acc0_0", MEP_OPERAND_IVC2_ACC0_0, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_1: acc0_1 */
   { "ivc2_acc0_1", MEP_OPERAND_IVC2_ACC0_1, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_2: acc0_2 */
   { "ivc2_acc0_2", MEP_OPERAND_IVC2_ACC0_2, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_3: acc0_3 */
   { "ivc2_acc0_3", MEP_OPERAND_IVC2_ACC0_3, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_4: acc0_4 */
   { "ivc2_acc0_4", MEP_OPERAND_IVC2_ACC0_4, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_5: acc0_5 */
   { "ivc2_acc0_5", MEP_OPERAND_IVC2_ACC0_5, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_6: acc0_6 */
   { "ivc2_acc0_6", MEP_OPERAND_IVC2_ACC0_6, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc0_7: acc0_7 */
   { "ivc2_acc0_7", MEP_OPERAND_IVC2_ACC0_7, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_0: acc1_0 */
   { "ivc2_acc1_0", MEP_OPERAND_IVC2_ACC1_0, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_1: acc1_1 */
   { "ivc2_acc1_1", MEP_OPERAND_IVC2_ACC1_1, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_2: acc1_2 */
   { "ivc2_acc1_2", MEP_OPERAND_IVC2_ACC1_2, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_3: acc1_3 */
   { "ivc2_acc1_3", MEP_OPERAND_IVC2_ACC1_3, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_4: acc1_4 */
   { "ivc2_acc1_4", MEP_OPERAND_IVC2_ACC1_4, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_5: acc1_5 */
   { "ivc2_acc1_5", MEP_OPERAND_IVC2_ACC1_5, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_6: acc1_6 */
   { "ivc2_acc1_6", MEP_OPERAND_IVC2_ACC1_6, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2_acc1_7: acc1_7 */
   { "ivc2_acc1_7", MEP_OPERAND_IVC2_ACC1_7, HW_H_CCR_IVC2, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x7c" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* croc: $CRo C3 */
   { "croc", MEP_OPERAND_CROC, HW_H_CR64, 7, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U7] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U7] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crqc: $CRq C3 */
   { "crqc", MEP_OPERAND_CRQC, HW_H_CR64, 21, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U21] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U21] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crpc: $CRp C3 */
   { "crpc", MEP_OPERAND_CRPC, HW_H_CR64, 26, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U26] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U26] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-6-1: filler */
   { "ivc-x-6-1", MEP_OPERAND_IVC_X_6_1, HW_H_UINT, 6, 1,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_1U6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_1U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-6-2: filler */
   { "ivc-x-6-2", MEP_OPERAND_IVC_X_6_2, HW_H_UINT, 6, 2,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_2U6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_2U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-6-3: filler */
   { "ivc-x-6-3", MEP_OPERAND_IVC_X_6_3, HW_H_UINT, 6, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm3p4: Imm3p4 */
   { "imm3p4", MEP_OPERAND_IMM3P4, HW_H_UINT, 4, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm3p9: Imm3p9 */
   { "imm3p9", MEP_OPERAND_IMM3P9, HW_H_UINT, 9, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U9] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U9] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm4p8: Imm4p8 */
   { "imm4p8", MEP_OPERAND_IMM4P8, HW_H_UINT, 8, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_4U8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_4U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm5p7: Imm5p7 */
   { "imm5p7", MEP_OPERAND_IMM5P7, HW_H_UINT, 7, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U7] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U7] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm6p6: Imm6p6 */
   { "imm6p6", MEP_OPERAND_IMM6P6, HW_H_UINT, 6, 6,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_6U6] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_6U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm8p4: Imm8p4 */
   { "imm8p4", MEP_OPERAND_IMM8P4, HW_H_UINT, 4, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm8p4: sImm8p4 */
   { "simm8p4", MEP_OPERAND_SIMM8P4, HW_H_SINT, 4, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8S4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm3p5: Imm3p5 */
   { "imm3p5", MEP_OPERAND_IMM3P5, HW_H_UINT, 5, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U5] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U5] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm3p12: Imm3p12 */
   { "imm3p12", MEP_OPERAND_IMM3P12, HW_H_UINT, 12, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U12] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U12] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm4p4: Imm4p4 */
   { "imm4p4", MEP_OPERAND_IMM4P4, HW_H_UINT, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_4U4] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_4U4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm4p10: Imm4p10 */
   { "imm4p10", MEP_OPERAND_IMM4P10, HW_H_UINT, 10, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_4U10] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_4U10] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm5p8: Imm5p8 */
   { "imm5p8", MEP_OPERAND_IMM5P8, HW_H_UINT, 8, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U8] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm5p3: Imm5p3 */
   { "imm5p3", MEP_OPERAND_IMM5P3, HW_H_UINT, 3, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U3] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm6p2: Imm6p2 */
   { "imm6p2", MEP_OPERAND_IMM6P2, HW_H_UINT, 2, 6,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_6U2] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_6U2] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm5p23: Imm5p23 */
   { "imm5p23", MEP_OPERAND_IMM5P23, HW_H_UINT, 23, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U23] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U23] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm3p25: Imm3p25 */
   { "imm3p25", MEP_OPERAND_IMM3P25, HW_H_UINT, 25, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U25] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U25] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm8p0: Imm8p0 */
   { "imm8p0", MEP_OPERAND_IMM8P0, HW_H_UINT, 0, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm8p0: sImm8p0 */
   { "simm8p0", MEP_OPERAND_SIMM8P0, HW_H_SINT, 0, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8S0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8S0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm8p20: sImm8p20 */
   { "simm8p20", MEP_OPERAND_SIMM8P20, HW_H_SINT, 20, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8S20] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8S20] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm8p20: Imm8p20 */
   { "imm8p20", MEP_OPERAND_IMM8P20, HW_H_UINT, 20, 8,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_8U20] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* crop: $CRo Pn */
   { "crop", MEP_OPERAND_CROP, HW_H_CR64, 23, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U23] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U23] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crqp: $CRq Pn */
   { "crqp", MEP_OPERAND_CRQP, HW_H_CR64, 13, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U13] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U13] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* crpp: $CRp Pn */
   { "crpp", MEP_OPERAND_CRPP, HW_H_CR64, 18, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U18] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U18] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-0-2: filler */
   { "ivc-x-0-2", MEP_OPERAND_IVC_X_0_2, HW_H_UINT, 0, 2,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_2U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_2U0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-0-3: filler */
   { "ivc-x-0-3", MEP_OPERAND_IVC_X_0_3, HW_H_UINT, 0, 3,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_3U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_3U0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-0-4: filler */
   { "ivc-x-0-4", MEP_OPERAND_IVC_X_0_4, HW_H_UINT, 0, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_4U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_4U0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc-x-0-5: filler */
   { "ivc-x-0-5", MEP_OPERAND_IVC_X_0_5, HW_H_UINT, 0, 5,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_5U0] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_5U0] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* imm16p0: comment */
   { "imm16p0", MEP_OPERAND_IMM16P0, HW_H_UINT, 0, 16,
-    { 2, { (const PTR) &MEP_F_IVC2_IMM16P0_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_IVC2_IMM16P0_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* simm16p0: comment */
   { "simm16p0", MEP_OPERAND_SIMM16P0, HW_H_SINT, 0, 16,
-    { 2, { (const PTR) &MEP_F_IVC2_SIMM16P0_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_IVC2_SIMM16P0_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2rm: reg Rm */
   { "ivc2rm", MEP_OPERAND_IVC2RM, HW_H_GPR, 4, 4,
-    { 0, { (const PTR) &mep_cgen_ifld_table[MEP_F_IVC2_CRM] } },
+    { 0, { &mep_cgen_ifld_table[MEP_F_IVC2_CRM] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } }  },
 /* ivc2crn: copro Rn (0-31, 64-bit */
   { "ivc2crn", MEP_OPERAND_IVC2CRN, HW_H_CR64, 0, 5,
-    { 2, { (const PTR) &MEP_F_IVC2_CRNX_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_IVC2_CRNX_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_CP_DATA_BUS_INT, 0 } }, { { 1, 0 } } } }  },
 /* ivc2ccrn: copro control reg CCRn */
   { "ivc2ccrn", MEP_OPERAND_IVC2CCRN, HW_H_CCR_IVC2, 0, 6,
-    { 2, { (const PTR) &MEP_F_IVC2_CCRN_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_IVC2_CCRN_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_REGNUM, 0 } }, { { 1, 0 } } } }  },
 /* ivc2c3ccrn: copro control reg CCRn */
   { "ivc2c3ccrn", MEP_OPERAND_IVC2C3CCRN, HW_H_CCR_IVC2, 4, 6,
-    { 2, { (const PTR) &MEP_F_IVC2_CCRN_C3_MULTI_IFIELD[0] } },
+    { 2, { &MEP_F_IVC2_CCRN_C3_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xfc" } }, { { CDATA_REGNUM, 0 } }, { { 1, 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { CDATA_LONG, 0 } }, { { 1, 0 } } } } }
 };
 
@@ -6256,6 +6257,7 @@ mep_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_MACHS:   bitmap of values in enum mach_attr
    CGEN_CPU_OPEN_BFDMACH: specify 1 mach using bfd name
    CGEN_CPU_OPEN_ENDIAN:  specify endian choice
+   CGEN_CPU_OPEN_INSN_ENDIAN: specify instruction endian choice
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
@@ -6269,6 +6271,7 @@ mep_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   CGEN_BITSET *isas = 0;  /* 0 = "unspecified" */
   unsigned int machs = 0; /* 0 = "unspecified" */
   enum cgen_endian endian = CGEN_ENDIAN_UNKNOWN;
+  enum cgen_endian insn_endian = CGEN_ENDIAN_UNKNOWN;
   va_list ap;
 
   if (! init_p)
@@ -6303,6 +6306,9 @@ mep_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	case CGEN_CPU_OPEN_ENDIAN :
 	  endian = va_arg (ap, enum cgen_endian);
 	  break;
+	case CGEN_CPU_OPEN_INSN_ENDIAN :
+	  insn_endian = va_arg (ap, enum cgen_endian);
+	  break;
 	default :
 	  opcodes_error_handler
 	    (/* xgettext:c-format */
@@ -6332,11 +6338,8 @@ mep_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->isas = cgen_bitset_copy (isas);
   cd->machs = machs;
   cd->endian = endian;
-  /* FIXME: for the sparc case we can determine insn-endianness statically.
-     The worry here is where both data and insn endian can be independently
-     chosen, in which case this function will need another argument.
-     Actually, will want to allow for more arguments in the future anyway.  */
-  cd->insn_endian = endian;
+  cd->insn_endian
+    = (insn_endian == CGEN_ENDIAN_UNKNOWN ? endian : insn_endian);
 
   /* Table (re)builder.  */
   cd->rebuild_tables = mep_cgen_rebuild_tables;
@@ -6386,18 +6389,10 @@ mep_cgen_cpu_close (CGEN_CPU_DESC cd)
 	  regfree (CGEN_INSN_RX (insns));
     }
 
-  if (cd->macro_insn_table.init_entries)
-    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
-
-  if (cd->insn_table.init_entries)
-    free ((CGEN_INSN *) cd->insn_table.init_entries);
-
-  if (cd->hw_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
-
-  if (cd->operand_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
-
+  free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+  free ((CGEN_INSN *) cd->insn_table.init_entries);
+  free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+  free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
   free (cd);
 }
 

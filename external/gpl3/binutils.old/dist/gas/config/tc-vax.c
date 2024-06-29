@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -280,8 +280,31 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
   valueT value = * valueP;
 
   if (fixP->fx_subsy != (symbolS *) NULL)
-    as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+    as_bad_subtract (fixP);
 
+  if (fixP->fx_pcrel)
+    {
+      switch (fixP->fx_r_type)
+	{
+	case BFD_RELOC_32:
+	  /* change the relocation type to 32 bit PC-relative */
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
+	  if (fixP->fx_addsy != NULL)
+	    {
+	      /* Hack around bfd_install_relocation brain damage.  */
+	      value += fixP->fx_frag->fr_address + fixP->fx_where;
+	    }
+	  if (fixP->fx_addsy == abs_section_sym)
+	    fixP->fx_done = 1;
+	  break;
+	default:
+	  break;
+	}
+    }
+
+  /*
+   * Common code for pc-relative and non-pc-relative cases
+   */
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
@@ -382,7 +405,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 	  int old_fr_fix;
 
 	  old_fr_fix = fragP->fr_fix;
-	  p = fragP->fr_literal + old_fr_fix;
+	  p = &fragP->fr_literal[0] + old_fr_fix;
 #ifdef OBJ_ELF
 	  /* If this is to an undefined symbol, then if it's an indirect
 	     reference indicate that is can mutated into a GLOB_DAT or
@@ -529,7 +552,7 @@ md_convert_frag (bfd *headers ATTRIBUTE_UNUSED,
 
   know (fragP->fr_type == rs_machine_dependent);
   where = fragP->fr_fix;
-  addressP = fragP->fr_literal + where;
+  addressP = &fragP->fr_literal[0] + where;
   opcodeP = fragP->fr_opcode;
   symbolP = fragP->fr_symbol;
   know (symbolP);
@@ -740,7 +763,7 @@ md_ri_to_chars (char *the_bytes, struct reloc_info_generic ri)
   	source file, and changed the makefile.  */
 
 /* Handle of the OPCODE hash table.  */
-static struct hash_control *op_hash;
+static htab_t op_hash;
 
 /* In:	1 character, from "bdfghloqpw" being the data-type of an operand
   	of a vax instruction.
@@ -954,29 +977,28 @@ vip_op_defaults (const char *immediate, const char *indirect, const char *disple
    instruction table.
    You must nominate metacharacters for eg DEC's "#", "@", "^".  */
 
-static const char *
+static void
 vip_begin (int synthetic_too,		/* 1 means include jXXX op-codes.  */
 	   const char *immediate,
 	   const char *indirect,
 	   const char *displen)
 {
   const struct vot *vP;		/* scan votstrs */
-  const char *retval = 0;	/* error text */
 
-  op_hash = hash_new ();
+  op_hash = str_htab_create ();
 
-  for (vP = votstrs; *vP->vot_name && !retval; vP++)
-    retval = hash_insert (op_hash, vP->vot_name, (void *) &vP->vot_detail);
+  for (vP = votstrs; *vP->vot_name; vP++)
+    if (str_hash_insert (op_hash, vP->vot_name, &vP->vot_detail, 0) != NULL)
+      as_fatal (_("duplicate %s"), vP->vot_name);
 
   if (synthetic_too)
-    for (vP = synthetic_votstrs; *vP->vot_name && !retval; vP++)
-      retval = hash_insert (op_hash, vP->vot_name, (void *) &vP->vot_detail);
+    for (vP = synthetic_votstrs; *vP->vot_name; vP++)
+      if (str_hash_insert (op_hash, vP->vot_name, &vP->vot_detail, 0) != NULL)
+	as_fatal (_("duplicate %s"), vP->vot_name);
 
 #ifndef CONST_TABLE
   vip_op_defaults (immediate, indirect, displen);
 #endif
-
-  return retval;
 }
 
 /* Take 3 char.s, the last of which may be `\0` (non-existent)
@@ -1111,14 +1133,6 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
       | (!S_IS_DEFINED (fixP->fx_addsy) ? 8 : 0)	/* extern */
       | ((nbytes_r_length[fixP->fx_size] & 3) << 1);
 
-#if 0
-  r_flags |= ((!S_IS_DEFINED(fixP->fx_addsy)
-      && fixP->fx_pcrel
-      && fixP->fx_addsy != GOT_symbol
-      && fixP->fx_addsy != PLT_symbol
-      && flags_want_pic) ? 0x10 : 0);
-#endif
-	
   switch (fixP->fx_r_type) {
 	case NO_RELOC:
 		break;
@@ -1163,71 +1177,6 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 }
 #endif /* !BFD_ASSEMBLER */
 #endif /* OBJ_AOUT */
-
-/*
- *       BUGS, GRIPES,  APOLOGIA, etc.
- *
- * The opcode table 'votstrs' needs to be sorted on opcode frequency.
- * That is, AFTER we hash it with hash_...(), we want most-used opcodes
- * to come out of the hash table faster.
- *
- * I am sorry to inflict yet another VAX assembler on the world, but
- * RMS says we must do everything from scratch, to prevent pin-heads
- * restricting this software.
- */
-
-/*
- * This is a vaguely modular set of routines in C to parse VAX
- * assembly code using DEC mnemonics. It is NOT un*x specific.
- *
- * The idea here is that the assembler has taken care of all:
- *   labels
- *   macros
- *   listing
- *   pseudo-ops
- *   line continuation
- *   comments
- *   condensing any whitespace down to exactly one space
- * and all we have to do is parse 1 line into a vax instruction
- * partially formed. We will accept a line, and deliver:
- *   an error message (hopefully empty)
- *   a skeleton VAX instruction (tree structure)
- *   textual pointers to all the operand expressions
- *   a warning message that notes a silly operand (hopefully empty)
- */
-
-/*
- *		E D I T   H I S T O R Y
- *
- * 17may86 Dean Elsner. Bug if line ends immediately after opcode.
- * 30apr86 Dean Elsner. New vip_op() uses arg block so change call.
- *  6jan86 Dean Elsner. Crock vip_begin() to call vip_op_defaults().
- *  2jan86 Dean Elsner. Invent synthetic opcodes.
- *	Widen vax_opcodeT to 32 bits. Use a bit for VIT_OPCODE_SYNTHETIC,
- *	which means this is not a real opcode, it is like a macro; it will
- *	be relax()ed into 1 or more instructions.
- *	Use another bit for VIT_OPCODE_SPECIAL if the op-code is not optimised
- *	like a regular branch instruction. Option added to vip_begin():
- *	exclude	synthetic opcodes. Invent synthetic_votstrs[].
- * 31dec85 Dean Elsner. Invent vit_opcode_nbytes.
- *	Also make vit_opcode into a char[]. We now have n-byte vax opcodes,
- *	so caller's don't have to know the difference between a 1-byte & a
- *	2-byte op-code. Still need vax_opcodeT concept, so we know how
- *	big an object must be to hold an op.code.
- * 30dec85 Dean Elsner. Widen typedef vax_opcodeT in "vax-inst.h"
- *	because vax opcodes may be 16 bits. Our crufty C compiler was
- *	happily initialising 8-bit vot_codes with 16-bit numbers!
- *	(Wouldn't the 'phone company like to compress data so easily!)
- * 29dec85 Dean Elsner. New static table vax_operand_width_size[].
- *	Invented so we know hw many bytes a "I^#42" needs in its immediate
- *	operand. Revised struct vop in "vax-inst.h": explicitly include
- *	byte length of each operand, and it's letter-code datum type.
- * 17nov85 Dean Elsner. Name Change.
- *	Due to ar(1) truncating names, we learned the hard way that
- *	"vax-inst-parse.c" -> "vax-inst-parse." dropping the "o" off
- *	the archived object name. SO... we shortened the name of this
- *	source file, and changed the makefile.
- */
 
 /* Parse a vax operand in DEC assembler notation.
    For speed, expect a string of whitespace to be reduced to a single ' '.
@@ -2039,7 +1988,7 @@ vip (struct vit *vitP,		/* We build an exploded instruction here.  */
       /* Here with instring pointing to what better be an op-name, and p
          pointing to character just past that.
          We trust instring points to an op-name, with no whitespace.  */
-      vwP = (struct vot_wot *) hash_find (op_hash, instring);
+      vwP = (struct vot_wot *) str_hash_find (op_hash, instring);
       /* Restore char after op-code.  */
       *p = c;
       if (vwP == 0)
@@ -2138,8 +2087,7 @@ main (void)
   printf ("enter displen symbols   eg enter ^   ");
   gets (my_displen);
 
-  if (p = vip_begin (mysynth, my_immediate, my_indirect, my_displen))
-    error ("vip_begin=%s", p);
+  vip_begin (mysynth, my_immediate, my_indirect, my_displen)
 
   printf ("An empty input line will quit you from the vax instruction parser\n");
   for (;;)
@@ -2332,18 +2280,19 @@ md_create_short_jump (char *ptr,
 
 void
 md_create_long_jump (char *ptr,
-		     addressT from_addr ATTRIBUTE_UNUSED,
+		     addressT from_addr,
 		     addressT to_addr,
-		     fragS *frag,
-		     symbolS *to_symbol)
+		     fragS *frag ATTRIBUTE_UNUSED,
+		     symbolS *to_symbol ATTRIBUTE_UNUSED)
 {
   valueT offset;
 
-  offset = to_addr - S_GET_VALUE (to_symbol);
-  *ptr++ = VAX_JMP;		/* Arbitrary jump.  */
-  *ptr++ = VAX_ABSOLUTE_MODE;
+  /* Account for 1 byte instruction, 1 byte of address specifier and
+     4 bytes of offset from PC.  */
+  offset = to_addr - (from_addr + 1 + 1 + 4);
+  *ptr++ = VAX_JMP;
+  *ptr++ = VAX_PC_RELATIVE_MODE;
   md_number_to_chars (ptr, offset, 4);
-  fix_new (frag, ptr - frag->fr_literal, 4, to_symbol, (long) 0, 0, NO_RELOC);
 }
 
 #ifdef OBJ_VMS
@@ -3416,12 +3365,10 @@ md_assemble (char *instruction_string)
 void
 md_begin (void)
 {
-  const char *errtxt;
   FLONUM_TYPE *fP;
   int i;
 
-  if ((errtxt = vip_begin (1, "$", "*", "`")) != 0)
-    as_fatal (_("VIP_BEGIN error:%s"), errtxt);
+  vip_begin (1, "$", "*", "`");
 
   for (i = 0, fP = float_operand;
        fP < float_operand + VIT_MAX_OPERANDS;
@@ -3443,7 +3390,7 @@ vax_cons (expressionS *exp, int size)
   save = input_line_pointer;
   if (input_line_pointer[0] == '%')
     {
-      if (strncmp (input_line_pointer + 1, "pcrel", 5) == 0)
+      if (startswith (input_line_pointer + 1, "pcrel"))
 	{
 	  input_line_pointer += 6;
 	  vax_cons_special_reloc = "pcrel";
@@ -3557,12 +3504,39 @@ void
 vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
 		  bfd_reloc_code_real_type r)
 {
-  if (r == NO_RELOC)
+  int pcrel;
+  // fix PC relative frags too ...
+  switch (r)
+    {
+    case BFD_RELOC_8_PCREL:
+    case BFD_RELOC_16_PCREL:
+    case BFD_RELOC_32_PCREL:
+      pcrel = 1;
+      /*
+       * Displacement mode addressing (of which PC relative is one
+       * type) uses the updated contents of the register as the base
+       * address.  VARM, Leonard 1987, pp34
+       */
+      switch (exp->X_op)
+	{
+	case O_constant:
+	case O_symbol:
+	  exp->X_add_number += nbytes;
+	  break;
+	}
+      break;
+    case NO_RELOC:
     r = (nbytes == 1 ? BFD_RELOC_8
 	 : nbytes == 2 ? BFD_RELOC_16
 	 : BFD_RELOC_32);
+      pcrel = 0;
+      break;
+    default:
+      pcrel = 0;
+      break;
+    }
 
-  fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
+  fix_new_exp (frag, where, (int) nbytes, exp, pcrel, r);
 }
 
 const char *
@@ -3600,6 +3574,11 @@ tc_vax_regname_to_dw2regnum (char *regname)
 void
 vax_cfi_emit_pcrel_expr (expressionS *expP, unsigned int nbytes)
 {
+  expressionS tmp = *expP;
+
+  tmp.X_op = O_subtract;
+  tmp.X_op_symbol = symbol_temp_new_now ();
+  expP = &tmp;
   expP->X_add_number += nbytes;
   emit_expr (expP, nbytes);
 }
