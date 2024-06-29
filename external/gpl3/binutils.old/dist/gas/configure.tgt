@@ -1,6 +1,6 @@
 # gas target specific configuration file.  This is a -*- sh -*- file.
 #
-#   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,6 +67,8 @@ case ${cpu} in
   ip2k)			cpu_type=ip2k endian=big ;;
   iq2000)		cpu_type=iq2000 endian=big ;;
   lm32)			cpu_type=lm32 ;;
+  loongarch32)		cpu_type=loongarch arch=loongarch32;;
+  loongarch64)		cpu_type=loongarch arch=loongarch64;;
   m32c)			cpu_type=m32c endian=little ;;
   m32r)			cpu_type=m32r endian=big ;;
   m32rle)		cpu_type=m32r endian=little ;;
@@ -89,7 +91,9 @@ case ${cpu} in
   pj*)			cpu_type=pj endian=big ;;
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
+  riscv64be*)		cpu_type=riscv endian=big arch=riscv64 ;;
   riscv64*)		cpu_type=riscv endian=little arch=riscv64 ;;
+  riscv32be*|riscvbe*)	cpu_type=riscv endian=big arch=riscv32 ;;
   riscv32* | riscv*)	cpu_type=riscv endian=little arch=riscv32 ;;
   rs6000*)		cpu_type=ppc ;;
   rl78*)		cpu_type=rl78 ;;
@@ -123,11 +127,13 @@ generic_target=${cpu_type}-$vendor-$os
 case ${generic_target} in
   aarch64*-*-elf*)			fmt=elf;;
   aarch64*-*-fuchsia*)			fmt=elf;;
-  aarch64*-*-netbsd*)			fmt=elf em=nbsd ;;
+  aarch64*-*-haiku*)			fmt=elf em=haiku ;;
+  aarch64*-*-genode*)			fmt=elf;;
   aarch64*-*-linux*)			fmt=elf em=linux
     case ${cpu}-${os} in
       aarch64*-linux-gnu_ilp32)		arch=aarch64:32 ;;
     esac ;;
+  aarch64*-*-netbsd*)			fmt=elf em=nbsd;;
 
   alpha-*-*vms*)			fmt=evax ;;
   alpha-*-osf*)				fmt=ecoff ;;
@@ -140,10 +146,7 @@ case ${generic_target} in
 
   arm-*-phoenix*)			fmt=elf ;;
   arm-*-elf)				fmt=elf ;;
-  arm-*-netbsdelf*-*eabihf*)		fmt=elf em=armnbsdeabihf ;;
-  arm-*-netbsdelf*-*eabi*)		fmt=elf em=armnbsdeabi ;;
-  arm-*-eabi* | arm-*-rtems*)		fmt=elf em=armeabi ;;
-  arm-*-symbianelf*)			fmt=elf em=symbian ;;
+  arm-*-eabi* | arm-*-rtems* | arm-*-genode*)	fmt=elf em=armeabi ;;
   arm-*-kaos*)				fmt=elf ;;
   arm-*-conix*)				fmt=elf ;;
   arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
@@ -155,12 +158,13 @@ case ${generic_target} in
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
   arm-*-nacl*)				fmt=elf  em=nacl ;;
-  arm-*-netbsdelf*)			fmt=elf  em=armnbsd ;;
+  arm-*-netbsd*)			fmt=elf  em=nbsd ;;
   arm-*-nto*)				fmt=elf ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
 					fmt=coff em=wince-pe ;;
   arm-*-pe)				fmt=coff em=pe ;;
   arm-*-fuchsia*)			fmt=elf ;;
+  arm-*-haiku*)				fmt=elf em=haiku ;;
 
   avr-*-*)				fmt=elf bfd_gas=yes ;;
 
@@ -222,12 +226,9 @@ case ${generic_target} in
   i386-*-elfiamcu)			fmt=elf arch=iamcu ;;
   i386-*-elf*)				fmt=elf ;;
   i386-*-fuchsia*)			fmt=elf ;;
+  i386-*-haiku*)			fmt=elf em=haiku ;;
+  i386-*-genode*)			fmt=elf ;;
   i386-*-bsd*)				fmt=aout em=386bsd ;;
-  i386-*-nacl*)				fmt=elf em=nacl
-    case ${cpu} in
-      x86_64*)				arch=x86_64:32 ;;
-    esac ;;
-  i386-*-netbsdpe*)			fmt=coff em=pe ;;
   i386-*-netbsd*-gnu* | \
   i386-*-knetbsd*-gnu | \
   i386-*-netbsd* | \
@@ -278,6 +279,8 @@ case ${generic_target} in
 
   lm32-*-*)				fmt=elf ;;
 
+  loongarch*)				fmt=elf ;;
+
   m32c-*-elf)				fmt=elf ;;
 
   m32r-*-elf*)				fmt=elf ;;
@@ -291,7 +294,8 @@ case ${generic_target} in
   m68k-*-linux-*)			fmt=elf em=linux ;;
   m68k-*-uclinux*)			fmt=elf em=uclinux ;;
   m68k-*-gnu*)				fmt=elf ;;
-  m68k-*-netbsdelf*)			fmt=elf em=nbsd ;;
+  m68k-*-netbsd*)			fmt=elf em=nbsd ;;
+  m68k-*-haiku*)			fmt=elf em=haiku ;;
 
   s12z-*-*)				fmt=elf ;;
 
@@ -313,6 +317,7 @@ case ${generic_target} in
   mips-*-sysv4* | mips-*-gnu*)		fmt=elf em=tmips ;;
   mips*-sde-elf* | mips*-mti-elf* | mips*-img-elf*)
 					fmt=elf em=tmips ;;
+  mips-*-haiku*)			fmt=elf em=haiku ;;
   mips-*-elf*)				fmt=elf ;;
   mips-*-netbsd*)			fmt=elf em=tmips ;;
   mips-*-openbsd*)			fmt=elf em=tmips ;;
@@ -350,24 +355,23 @@ case ${generic_target} in
 
   pj*)					fmt=elf ;;
 
-  ppc-*-pe | ppc-*-cygwin*)		fmt=coff em=pe ;;
-  ppc-*-winnt*)				fmt=coff em=pe ;;
   ppc-*-aix5.[01])			fmt=coff em=aix5 ;;
   ppc-*-aix[5-9].*)			fmt=coff em=aix5 ;;
   ppc-*-aix*)				fmt=coff em=aix ;;
   ppc-*-beos*)				fmt=coff ;;
   ppc-*-*n*bsd* | ppc-*-elf*)		fmt=elf ;;
   ppc-*-eabi* | ppc-*-sysv4*)		fmt=elf ;;
+  ppc-*-haiku*)				fmt=elf em=haiku ;;
   ppc-*-linux-*)			fmt=elf em=linux ;;
   ppc-*-solaris*)			fmt=elf em=solaris ;;
   ppc-*-macos*)				fmt=coff em=macos ;;
   ppc-*-nto*)				fmt=elf ;;
   ppc-*-kaos*)				fmt=elf ;;
-  ppc-*-lynxos*)			fmt=elf em=lynx ;;
 
   pru-*-*)				fmt=elf ;;
 
-  riscv*-*-*)				fmt=elf endian=little ;;
+  riscv*-*-haiku*)			fmt=elf endian=little em=haiku ;;
+  riscv*-*-*)				fmt=elf ;;
 
   rx-*-linux*)				fmt=elf em=linux ;;
 
@@ -381,7 +385,7 @@ case ${generic_target} in
       sh*eb)	endian=big ;;
       *)	endian=little ;;
     esac ;;
-  sh*-*-netbsdelf*)			fmt=elf em=nbsd
+  sh*-*-netbsd*)			fmt=elf em=nbsd
     case ${cpu} in
       sh*l*)	endian=little ;;
       *)	endian=big ;;
@@ -390,10 +394,11 @@ case ${generic_target} in
   sh-*-uclinux* | sh[12]-*-uclinux*)	fmt=elf em=uclinux ;;
   sh-*-coff*)				fmt=coff ;;
   sh-*-nto*)				fmt=elf ;;
-  sh-*-pe*)				fmt=coff em=pe bfd_gas=yes endian=little ;;
+  sh-*-pe*)				fmt=coff em=pe endian=little ;;
   sh-*-kaos*)				fmt=elf ;;
   shle*-*-kaos*)			fmt=elf ;;
 
+  sparc-*-haiku*)			fmt=elf em=haiku ;;
   sparc-*-linux-*)			fmt=elf em=linux ;;
   sparc-*-solaris*)			fmt=elf em=solaris ;;
   sparc-*-freebsd*)			fmt=elf em=freebsd ;;
@@ -401,7 +406,6 @@ case ${generic_target} in
 
   spu-*-elf)				fmt=elf ;;
 
-  tic30-*-*aout*)			fmt=aout bfd_gas=yes ;;
   tic30-*-*coff*)			fmt=coff bfd_gas=yes ;;
   tic4x-*-* | c4x-*-*)			fmt=coff bfd_gas=yes ;;
   tic54x-*-* | c54x*-*-*)		fmt=coff bfd_gas=yes need_libm=yes;;
@@ -411,7 +415,8 @@ case ${generic_target} in
 
   v850*-*-*)				fmt=elf ;;
 
-  vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
+  vax-*-netbsdaout)			fmt=aout em=nbsd ;;
+  vax-*-netbsd*)			fmt=elf em=nbsd ;;
   vax-*-linux-*)			fmt=elf em=linux ;;
 
   visium-*-elf)				fmt=elf ;;
@@ -442,7 +447,8 @@ case ${generic_target} in
 esac
 
 case ${cpu_type} in
-  aarch64 | alpha | arm | csky | i386 | ia64 | microblaze | mips | ns32k | or1k | or1knd | pdp11 | ppc | riscv | sparc | z80 | z8k)
+  aarch64 | alpha | arm | csky | i386 | ia64 | microblaze | mips | ns32k | \
+  or1k | or1knd | pdp11 | ppc | riscv | sh | sparc | z80 | z8k | loongarch)
     bfd_gas=yes
     ;;
 esac

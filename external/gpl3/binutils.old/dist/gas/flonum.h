@@ -1,5 +1,5 @@
 /* flonum.h - Floating point package
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -47,6 +47,10 @@
 /* JF:  A sign value of 0 means we have been asked to assemble NaN
    A sign value of 'P' means we've been asked to assemble +Inf
    A sign value of 'N' means we've been asked to assemble -Inf
+   A sign value of 'Q' means we've been asked to assemble +QNaN
+   A sign value of 'q' means we've been asked to assemble -QNaN
+   A sign value of 'S' means we've been asked to assemble +SNaN
+   A sign value of 's' means we've been asked to assemble -SNaN
    */
 struct FLONUM_STRUCT {
   LITTLENUM_TYPE *low;		/* low order littlenum of a bignum */

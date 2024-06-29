@@ -1,5 +1,5 @@
 /* alpha-dis.c -- Disassemble Alpha AXP instructions
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>,
    patterned after the PPC opcode handling written by Ian Lance Taylor.
 
@@ -146,7 +146,7 @@ print_insn_alpha (bfd_vma memaddr, struct disassemble_info *info)
 
   return 4;
 
-found:
+ found:
   (*info->fprintf_func) (info->stream, "%s", opcode->name);
   if (opcode->operands[0] != 0)
     (*info->fprintf_func) (info->stream, "\t");

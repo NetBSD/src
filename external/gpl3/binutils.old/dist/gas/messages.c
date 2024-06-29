@@ -1,5 +1,5 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -356,22 +356,6 @@ signal_init (void)
 
 /* Support routines.  */
 
-void
-sprint_value (char *buf, valueT val)
-{
-  if (sizeof (val) <= sizeof (long))
-    {
-      sprintf (buf, "%ld", (long) val);
-      return;
-    }
-  if (sizeof (val) <= sizeof (bfd_vma))
-    {
-      sprintf_vma (buf, val);
-      return;
-    }
-  abort ();
-}
-
 #define HEX_MAX_THRESHOLD	1024
 #define HEX_MIN_THRESHOLD	-(HEX_MAX_THRESHOLD)
 
@@ -382,9 +366,15 @@ as_internal_value_out_of_range (const char *prefix,
 				offsetT max,
 				const char *file,
 				unsigned line,
-				int bad)
+				bool bad)
 {
   const char * err;
+  /* These buffer sizes are excessive, but better to be safe than sorry.
+     Note - these buffers are used in order to make the error message
+     string translateable.  */
+  char val_buf [128];
+  char min_buf [128];
+  char max_buf [128];
 
   if (prefix == NULL)
     prefix = "";
@@ -396,41 +386,38 @@ as_internal_value_out_of_range (const char *prefix,
       if (max <= 1)
 	abort ();
 
+      sprintf (val_buf, "%" BFD_VMA_FMT "d", val);
+      sprintf (min_buf, "%" BFD_VMA_FMT "d", right);
+
       /* xgettext:c-format  */
-      err = _("%s out of domain (%" BFD_VMA_FMT "d is not a multiple of %" \
-	      BFD_VMA_FMT "d)");
+      err = _("%s out of domain (%s is not a multiple of %s)");
+
       if (bad)
-	as_bad_where (file, line, err, prefix, val, right);
+	as_bad_where (file, line, err, prefix, val_buf, min_buf);
       else
-	as_warn_where (file, line, err, prefix, val, right);
-      return;
+	as_warn_where (file, line, err, prefix, val_buf, min_buf);
     }
-
-  if (   val < HEX_MAX_THRESHOLD
-      && min < HEX_MAX_THRESHOLD
-      && max < HEX_MAX_THRESHOLD
-      && val > HEX_MIN_THRESHOLD
-      && min > HEX_MIN_THRESHOLD
-      && max > HEX_MIN_THRESHOLD)
+  else if (   val < HEX_MAX_THRESHOLD
+	   && min < HEX_MAX_THRESHOLD
+	   && max < HEX_MAX_THRESHOLD
+	   && val > HEX_MIN_THRESHOLD
+	   && min > HEX_MIN_THRESHOLD
+	   && max > HEX_MIN_THRESHOLD)
     {
-      /* xgettext:c-format  */
-      err = _("%s out of range (%" BFD_VMA_FMT "d is not between %" \
-	      BFD_VMA_FMT "d and %" BFD_VMA_FMT "d)");
+      sprintf (val_buf, "%" BFD_VMA_FMT "d", val);
+      sprintf (min_buf, "%" BFD_VMA_FMT "d", min);
+      sprintf (max_buf, "%" BFD_VMA_FMT "d", max);
+
+      /* xgettext:c-format.  */
+      err = _("%s out of range (%s is not between %s and %s)");
 
       if (bad)
-	as_bad_where (file, line, err, prefix, val, min, max);
+	as_bad_where (file, line, err, prefix, val_buf, min_buf, max_buf);
       else
-	as_warn_where (file, line, err, prefix, val, min, max);
+	as_warn_where (file, line, err, prefix, val_buf, min_buf, max_buf);
     }
   else
     {
-      char val_buf [sizeof (val) * 3 + 2];
-      char min_buf [sizeof (val) * 3 + 2];
-      char max_buf [sizeof (val) * 3 + 2];
-
-      if (sizeof (val) > sizeof (bfd_vma))
-	abort ();
-
       sprintf_vma (val_buf, (bfd_vma) val);
       sprintf_vma (min_buf, (bfd_vma) min);
       sprintf_vma (max_buf, (bfd_vma) max);
@@ -453,7 +440,7 @@ as_warn_value_out_of_range (const char *prefix,
 			   const char *file,
 			   unsigned line)
 {
-  as_internal_value_out_of_range (prefix, value, min, max, file, line, 0);
+  as_internal_value_out_of_range (prefix, value, min, max, file, line, false);
 }
 
 void
@@ -464,5 +451,5 @@ as_bad_value_out_of_range (const char *prefix,
 			   const char *file,
 			   unsigned line)
 {
-  as_internal_value_out_of_range (prefix, value, min, max, file, line, 1);
+  as_internal_value_out_of_range (prefix, value, min, max, file, line, true);
 }

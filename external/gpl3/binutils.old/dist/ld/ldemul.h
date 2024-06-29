@@ -1,5 +1,5 @@
 /* ld-emul.h - Linker emulation header file
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -32,9 +32,13 @@ extern void ldemul_after_parse
   (void);
 extern void ldemul_before_parse
   (void);
+extern void ldemul_before_plugin_all_symbols_read
+  (void);
 extern void ldemul_after_open
   (void);
 extern void ldemul_after_check_relocs
+  (void);
+extern void ldemul_before_place_orphans
   (void);
 extern void ldemul_after_allocation
   (void);
@@ -60,17 +64,17 @@ extern void ldemul_create_output_section_statements
   (void);
 extern lang_output_section_statement_type *ldemul_place_orphan
   (asection *, const char *, int);
-extern bfd_boolean ldemul_parse_args
+extern bool ldemul_parse_args
   (int, char **);
 extern void ldemul_add_options
   (int, char **, int, struct option **, int, struct option **);
-extern bfd_boolean ldemul_handle_option
+extern bool ldemul_handle_option
   (int);
-extern bfd_boolean ldemul_unrecognized_file
+extern bool ldemul_unrecognized_file
   (struct lang_input_statement_struct *);
-extern bfd_boolean ldemul_recognized_file
+extern bool ldemul_recognized_file
   (struct lang_input_statement_struct *);
-extern bfd_boolean ldemul_open_dynamic_archive
+extern bool ldemul_open_dynamic_archive
   (const char *, struct search_dirs *, struct lang_input_statement_struct *);
 extern char *ldemul_default_target
   (int, char**);
@@ -79,6 +83,8 @@ extern void after_parse_default
 extern void after_open_default
   (void);
 extern void after_check_relocs_default
+  (void);
+extern void before_place_orphans_default
   (void);
 extern void after_allocation_default
   (void);
@@ -105,9 +111,13 @@ extern void ldemul_extra_map_file_text
 extern int ldemul_emit_ctf_early
   (void);
 /* Called from per-target code to examine the strtab and symtab.  */
-extern void ldemul_examine_strtab_for_ctf
-  (struct ctf_file *, struct elf_sym_strtab *, bfd_size_type,
-   struct elf_strtab_hash *);
+extern void ldemul_acquire_strings_for_ctf
+  (struct ctf_dict *, struct elf_strtab_hash *);
+extern void ldemul_new_dynsym_for_ctf
+  (struct ctf_dict *, int symidx, struct elf_internal_sym *);
+
+extern bool ldemul_print_symbol
+  (struct bfd_link_hash_entry *hash_entry, void *ptr);
 
 typedef struct ld_emulation_xfer_struct {
   /* Run before parsing the command line and script file.
@@ -123,11 +133,17 @@ typedef struct ld_emulation_xfer_struct {
   /* Run after parsing the command line and script file.  */
   void   (*after_parse) (void);
 
+  /* Run before calling plugin 'all symbols read' hook.  */
+  void   (*before_plugin_all_symbols_read)  (void);
+
   /* Run after opening all input files, and loading the symbols.  */
   void   (*after_open) (void);
 
   /* Run after checking relocations.  */
   void   (*after_check_relocs)  (void);
+
+  /* Run before placing orphans.  */
+  void   (*before_place_orphans)  (void);
 
   /* Run after allocating output sections.  */
   void   (*after_allocation)  (void);
@@ -159,7 +175,7 @@ typedef struct ld_emulation_xfer_struct {
   /* Try to open a dynamic library.  ARCH is an architecture name, and
      is normally the empty string.  ENTRY is the lang_input_statement
      that should be opened.  */
-  bfd_boolean (*open_dynamic_archive)
+  bool (*open_dynamic_archive)
     (const char *arch, struct search_dirs *,
      struct lang_input_statement_struct *entry);
 
@@ -175,7 +191,7 @@ typedef struct ld_emulation_xfer_struct {
 
   /* Parse args which the base linker doesn't understand.
      Return TRUE if the arg needs no further processing.  */
-  bfd_boolean (*parse_args) (int, char **);
+  bool (*parse_args) (int, char **);
 
   /* Hook to add options to parameters passed by the base linker to
      getopt_long and getopt_long_only calls.  */
@@ -184,11 +200,11 @@ typedef struct ld_emulation_xfer_struct {
 
   /* Companion to the above to handle an option.  Returns TRUE if it is
      one of our options.  */
-  bfd_boolean (*handle_option) (int);
+  bool (*handle_option) (int);
 
   /* Run to handle files which are not recognized as object files or
      archives.  Return TRUE if the file was handled.  */
-  bfd_boolean (*unrecognized_file)
+  bool (*unrecognized_file)
     (struct lang_input_statement_struct *);
 
   /* Run to list the command line options which parse_args handles.  */
@@ -196,7 +212,7 @@ typedef struct ld_emulation_xfer_struct {
 
   /* Run to specially handle files which *are* recognized as object
      files or archives.  Return TRUE if the file was handled.  */
-  bfd_boolean (*recognized_file)
+  bool (*recognized_file)
     (struct lang_input_statement_struct *);
 
   /* Called when looking for libraries in a directory specified
@@ -221,14 +237,28 @@ typedef struct ld_emulation_xfer_struct {
   int (*emit_ctf_early)
     (void);
 
-  /* Called to examine the string and symbol table late enough in linking that
-     they are finally laid out.  If emit_ctf_early returns true, this is not
-     called and ldemul_maybe_emit_ctf() emits CTF in 'early' mode: otherwise, it
-     waits until 'late'. (Late mode needs explicit support at per-target link
-     time to get called at all).  If set, called by ld when the examine_strtab
+  /* Called to examine the string table late enough in linking that it is
+     finally laid out.  If emit_ctf_early returns true, this is not called, and
+     ldemul_maybe_emit_ctf emits CTF in 'early' mode: otherwise, it waits
+     until 'late'. (Late mode needs explicit support at per-target link time to
+     get called at all).  If set, called by ld when the examine_strtab
      bfd_link_callback is invoked by per-target code.  */
-  void (*examine_strtab_for_ctf) (struct ctf_file *, struct elf_sym_strtab *,
-				  bfd_size_type, struct elf_strtab_hash *);
+  void (*acquire_strings_for_ctf) (struct ctf_dict *, struct elf_strtab_hash *);
+
+  /* Called when a new symbol is added to the dynamic symbol table.  If
+     emit_ctf_early returns true, this is not called, and ldemul_maybe_emit_ctf
+     emits CTF in 'early' mode: otherwise, it waits until 'late'. (Late mode
+     needs explicit support at per-target link time to get called at all).  If
+     set, called by ld when the ctf_new_symbol bfd_link_callback is invoked by
+     per-target code.  Called with a NULL symbol when no further symbols will be
+     provided.  */
+  void (*new_dynsym_for_ctf) (struct ctf_dict *, int, struct elf_internal_sym *);
+
+  /* Called when printing a symbol to the map file.   AIX uses this
+     hook to flag gc'd symbols.  */
+  bool (*print_symbol)
+    (struct bfd_link_hash_entry *hash_entry, void *ptr);
+
 } ld_emulation_xfer_type;
 
 typedef enum {

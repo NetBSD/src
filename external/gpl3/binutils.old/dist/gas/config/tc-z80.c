@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80, Z180, EZ80 and ASCII R800
-   Copyright (C) 2005-2020 Free Software Foundation, Inc.
+   Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -24,6 +24,7 @@
 #include "subsegs.h"
 #include "elf/z80.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 
 /* Exported constants.  */
 const char comment_chars[] = ";\0";
@@ -37,12 +38,12 @@ const char * md_shortopts = ""; /* None yet.  */
 
 enum options
 {
-  OPTION_MACH_Z80 = OPTION_MD_BASE,
+  OPTION_MARCH = OPTION_MD_BASE,
+  OPTION_MACH_Z80,
   OPTION_MACH_R800,
   OPTION_MACH_Z180,
   OPTION_MACH_EZ80_Z80,
   OPTION_MACH_EZ80_ADL,
-  OPTION_MACH_GBZ80,
   OPTION_MACH_INST,
   OPTION_MACH_NO_INST,
   OPTION_MACH_IUD,
@@ -63,6 +64,7 @@ enum options
 #define INS_GBZ80    (1 << 2)
 #define INS_Z180     (1 << 3)
 #define INS_EZ80     (1 << 4)
+#define INS_Z80N     (1 << 5)
 #define INS_MARCH_MASK 0xffff
 
 #define INS_IDX_HALF (1 << 16)
@@ -72,7 +74,7 @@ enum options
 #define INS_ROT_II_LD (1 << 20)  /* instructions like SLA (ii+d),r; which is: LD r,(ii+d); SLA r; LD (ii+d),r */
 #define INS_TUNE_MASK 0xffff0000
 
-#define INS_NOT_GBZ80 (INS_Z80 | INS_Z180 | INS_R800 | INS_EZ80)
+#define INS_NOT_GBZ80 (INS_Z80 | INS_Z180 | INS_R800 | INS_EZ80 | INS_Z80N)
 
 #define INS_ALL 0
 #define INS_UNDOC (INS_IDX_HALF | INS_IN_F_C)
@@ -80,6 +82,7 @@ enum options
 
 struct option md_longopts[] =
 {
+  { "march",     required_argument, NULL, OPTION_MARCH},
   { "z80",       no_argument, NULL, OPTION_MACH_Z80},
   { "r800",      no_argument, NULL, OPTION_MACH_R800},
   { "z180",      no_argument, NULL, OPTION_MACH_Z180},
@@ -139,6 +142,88 @@ static str_to_float_t str_to_double;
 #define INST_MODE_IL 1     /* long instruction mode */
 #define INST_MODE_FORCED 4 /* CPU mode changed by instruction suffix*/
 static char inst_mode;
+
+struct match_info
+{
+  const char *name;
+  int ins_ok;
+  int ins_err;
+  int cpu_mode;
+  const char *comment;
+};
+
+static const struct match_info
+match_cpu_table [] =
+{
+  {"z80",     INS_Z80, 0, 0, "Zilog Z80" },
+  {"ez80",    INS_EZ80, 0, 0, "Zilog eZ80" },
+  {"gbz80",   INS_GBZ80, INS_UNDOC|INS_UNPORT, 0, "GameBoy Z80" },
+  {"r800",    INS_R800, INS_UNPORT, 0, "Ascii R800" },
+  {"z180",    INS_Z180, INS_UNDOC|INS_UNPORT, 0, "Zilog Z180" },
+  {"z80n",    INS_Z80N, 0, 0, "Z80 Next" }
+};
+
+static const struct match_info
+match_ext_table [] =
+{
+  {"full",    INS_UNDOC|INS_UNPORT, 0, 0, "assemble all known instructions" },
+  {"adl",     0, 0, 1, "eZ80 ADL mode by default" },
+  {"xyhl",    INS_IDX_HALF, 0, 0, "instructions with halves of index registers" },
+  {"infc",    INS_IN_F_C, 0, 0, "instruction IN F,(C)" },
+  {"outc0",   INS_OUT_C_0, 0, 0, "instruction OUT (C),0" },
+  {"sli",     INS_SLI, 0, 0, "instruction known as SLI, SLL, or SL1" },
+  {"xdcb",    INS_ROT_II_LD, 0, 0, "instructions like RL (IX+d),R (DD/FD CB dd oo)" }
+};
+
+
+static int signed_overflow (signed long value, unsigned bitsize);
+static int unsigned_overflow (unsigned long value, unsigned bitsize);
+static int is_overflow (long value, unsigned bitsize);
+
+static void
+setup_march (const char *name, int *ok, int *err, int *mode)
+{
+  unsigned i;
+  size_t len = strcspn (name, "+-");
+  for (i = 0; i < ARRAY_SIZE (match_cpu_table); ++i)
+    if (!strncasecmp (name, match_cpu_table[i].name, len)
+	&& strlen (match_cpu_table[i].name) == len)
+      {
+	*ok = match_cpu_table[i].ins_ok;
+	*err = match_cpu_table[i].ins_err;
+	*mode = match_cpu_table[i].cpu_mode;
+	break;
+      }
+
+  if (i >= ARRAY_SIZE (match_cpu_table))
+    as_fatal (_("Invalid CPU is specified: %s"), name);
+
+  while (name[len])
+    {
+      name = &name[len + 1];
+      len = strcspn (name, "+-");
+      for (i = 0; i < ARRAY_SIZE (match_ext_table); ++i)
+	if (!strncasecmp (name, match_ext_table[i].name, len)
+	    && strlen (match_ext_table[i].name) == len)
+	  {
+	    if (name[-1] == '+')
+	      {
+		*ok |= match_ext_table[i].ins_ok;
+		*err &= ~match_ext_table[i].ins_ok;
+		*mode |= match_ext_table[i].cpu_mode;
+	      }
+	    else
+	      {
+		*ok &= ~match_ext_table[i].ins_ok;
+		*err |= match_ext_table[i].ins_ok;
+		*mode &= ~match_ext_table[i].cpu_mode;
+	      }
+	    break;
+	  }
+      if (i >= ARRAY_SIZE (match_ext_table))
+	as_fatal (_("Invalid EXTENSION is specified: %s"), name);
+    }
+}
 
 static int
 setup_instruction (const char *inst, int *add, int *sub)
@@ -238,31 +323,23 @@ md_parse_option (int c, const char* arg)
     {
     default:
       return 0;
+    case OPTION_MARCH:
+      setup_march (arg, & ins_ok, & ins_err, & cpu_mode);
+      break;
     case OPTION_MACH_Z80:
-      ins_ok = (ins_ok & INS_TUNE_MASK) | INS_Z80;
-      ins_err = (ins_err & INS_MARCH_MASK) | (~INS_Z80 & INS_MARCH_MASK);
+      setup_march ("z80", & ins_ok, & ins_err, & cpu_mode);
       break;
     case OPTION_MACH_R800:
-      ins_ok = INS_R800 | INS_IDX_HALF;
-      ins_err = INS_UNPORT;
+      setup_march ("r800", & ins_ok, & ins_err, & cpu_mode);
       break;
     case OPTION_MACH_Z180:
-      ins_ok = INS_Z180;
-      ins_err = INS_UNDOC | INS_UNPORT;
+      setup_march ("z180", & ins_ok, & ins_err, & cpu_mode);
       break;
     case OPTION_MACH_EZ80_Z80:
-      ins_ok = INS_EZ80;
-      ins_err = (INS_UNDOC | INS_UNPORT) & ~INS_IDX_HALF;
-      cpu_mode = 0;
+      setup_march ("ez80", & ins_ok, & ins_err, & cpu_mode);
       break;
     case OPTION_MACH_EZ80_ADL:
-      ins_ok = INS_EZ80;
-      ins_err = (INS_UNDOC | INS_UNPORT) & ~INS_IDX_HALF;
-      cpu_mode = 1;
-      break;
-    case OPTION_MACH_GBZ80:
-      ins_ok = INS_GBZ80;
-      ins_err = INS_UNDOC | INS_UNPORT;
+      setup_march ("ez80+adl", & ins_ok, & ins_err, & cpu_mode);
       break;
     case OPTION_FP_SINGLE_FORMAT:
       str_to_float = get_str_to_float (arg);
@@ -310,7 +387,6 @@ md_parse_option (int c, const char* arg)
       break;
     case OPTION_COMPAT_SDCC:
       sdcc_compat = 1;
-      local_label_prefix = "_";
       break;
     case OPTION_COMPAT_COLONLESS:
       colonless_labels = 1;
@@ -323,57 +399,32 @@ md_parse_option (int c, const char* arg)
 void
 md_show_usage (FILE * f)
 {
-  fprintf (f, "\n\
+  unsigned i;
+  fprintf (f, _("\n\
 CPU model options:\n\
-  -z80\t\t\t  assemble for Z80\n\
-  -r800\t\t\t  assemble for R800\n\
-  -z180\t\t\t  assemble for Z180\n\
-  -ez80\t\t\t  assemble for eZ80 in Z80 mode by default\n\
-  -ez80-adl\t\t  assemble for eZ80 in ADL mode by default\n\
-\n\
+  -march=CPU[+EXT...][-EXT...]\n\
+\t\t\t  generate code for CPU, where CPU is one of:\n"));
+  for (i = 0; i < ARRAY_SIZE(match_cpu_table); ++i)
+    fprintf (f, "  %-8s\t\t  %s\n", match_cpu_table[i].name, match_cpu_table[i].comment);
+  fprintf (f, _("And EXT is combination (+EXT - add, -EXT - remove) of:\n"));
+  for (i = 0; i < ARRAY_SIZE(match_ext_table); ++i)
+    fprintf (f, "  %-8s\t\t  %s\n", match_ext_table[i].name, match_ext_table[i].comment);
+  fprintf (f, _("\n\
 Compatibility options:\n\
   -local-prefix=TEXT\t  treat labels prefixed by TEXT as local\n\
   -colonless\t\t  permit colonless labels\n\
   -sdcc\t\t\t  accept SDCC specific instruction syntax\n\
-  -fp-s=FORMAT\t\t  set single precission FP numbers format\n\
-  -fp-d=FORMAT\t\t  set double precission FP numbers format\n\
+  -fp-s=FORMAT\t\t  set single precision FP numbers format\n\
+  -fp-d=FORMAT\t\t  set double precision FP numbers format\n\
 Where FORMAT one of:\n\
-  ieee754\t\t  IEEE754 compatible\n\
+  ieee754\t\t  IEEE754 compatible (depends on directive)\n\
   half\t\t\t  IEEE754 half precision (16 bit)\n\
   single\t\t  IEEE754 single precision (32 bit)\n\
   double\t\t  IEEE754 double precision (64 bit)\n\
   zeda32\t\t  Zeda z80float library 32 bit format\n\
   math48\t\t  48 bit format from Math48 library\n\
 \n\
-Support for known undocumented instructions:\n\
-  -strict\t\t  assemble only documented instructions\n\
-  -full\t\t\t  assemble all undocumented instructions\n\
-  -with-inst=INST[,...]\n\
-  -Wnins INST[,...]\t  assemble specified instruction(s)\n\
-  -without-inst=INST[,...]\n\
-  -Fins INST[,...]\t  do not assemble specified instruction(s)\n\
-Where INST is one of:\n\
-  idx-reg-halves\t  instructions with halves of index registers\n\
-  sli\t\t\t  instruction SLI/SLL\n\
-  op-ii-ld\t\t  instructions like SLA (II+dd),R (opcodes DD/FD CB dd xx)\n\
-  in-f-c\t\t  instruction IN F,(C)\n\
-  out-c-0\t\t  instruction OUT (C),0\n\
-\n\
-Obsolete options:\n\
-  -ignore-undocumented-instructions\n\
-  -Wnud\t\t\t  silently assemble undocumented Z80-instructions that work on R800\n\
-  -ignore-unportable-instructions\n\
-  -Wnup\t\t\t  silently assemble all undocumented Z80-instructions\n\
-  -warn-undocumented-instructions\n\
-  -Wud\t\t\t  issue warnings for undocumented Z80-instructions that work on R800\n\
-  -warn-unportable-instructions\n\
-  -Wup\t\t\t  issue warnings for other undocumented Z80-instructions\n\
-  -forbid-undocumented-instructions\n\
-  -Fud\t\t\t  treat all undocumented Z80-instructions as errors\n\
-  -forbid-unportable-instructions\n\
-  -Fup\t\t\t  treat undocumented Z80-instructions that do not work on R800 as errors\n\
-\n\
-Default: -z80 -ignore-undocumented-instructions -warn-unportable-instructions.\n");
+Default: -march=z80+xyhl+infc\n"));
 }
 
 static symbolS * zero;
@@ -382,6 +433,7 @@ struct reg_entry
 {
   const char* name;
   int number;
+  int isa;
 };
 #define R_STACKABLE (0x80)
 #define R_ARITH     (0x40)
@@ -411,28 +463,28 @@ struct reg_entry
 
 static const struct reg_entry regtable[] =
 {
-  {"a",  REG_A },
-  {"af", REG_AF },
-  {"b",  REG_B },
-  {"bc", REG_BC },
-  {"c",  REG_C },
-  {"d",  REG_D },
-  {"de", REG_DE },
-  {"e",  REG_E },
-  {"f",  REG_F },
-  {"h",  REG_H },
-  {"hl", REG_HL },
-  {"i",  REG_I },
-  {"ix", REG_IX },
-  {"ixh",REG_H | R_IX },
-  {"ixl",REG_L | R_IX },
-  {"iy", REG_IY },
-  {"iyh",REG_H | R_IY },
-  {"iyl",REG_L | R_IY },
-  {"l",  REG_L },
-  {"mb", REG_MB },
-  {"r",  REG_R },
-  {"sp", REG_SP },
+  {"a",   REG_A,        INS_ALL },
+  {"af",  REG_AF,       INS_ALL },
+  {"b",   REG_B,        INS_ALL },
+  {"bc",  REG_BC,       INS_ALL },
+  {"c",   REG_C,        INS_ALL },
+  {"d",   REG_D,        INS_ALL },
+  {"de",  REG_DE,       INS_ALL },
+  {"e",   REG_E,        INS_ALL },
+  {"f",   REG_F,        INS_IN_F_C | INS_Z80N | INS_R800 },
+  {"h",   REG_H,        INS_ALL },
+  {"hl",  REG_HL,       INS_ALL },
+  {"i",   REG_I,        INS_NOT_GBZ80 },
+  {"ix",  REG_IX,       INS_NOT_GBZ80 },
+  {"ixh", REG_H | R_IX, INS_IDX_HALF | INS_EZ80 | INS_R800 | INS_Z80N },
+  {"ixl", REG_L | R_IX, INS_IDX_HALF | INS_EZ80 | INS_R800 | INS_Z80N },
+  {"iy",  REG_IY,       INS_NOT_GBZ80 },
+  {"iyh", REG_H | R_IY, INS_IDX_HALF | INS_EZ80 | INS_R800 | INS_Z80N },
+  {"iyl", REG_L | R_IY, INS_IDX_HALF | INS_EZ80 | INS_R800 | INS_Z80N },
+  {"l",   REG_L,        INS_ALL },
+  {"mb",  REG_MB,       INS_EZ80 },
+  {"r",   REG_R,        INS_NOT_GBZ80 },
+  {"sp",  REG_SP,       INS_ALL },
 } ;
 
 #define BUFLEN 8 /* Large enough for any keyword.  */
@@ -445,6 +497,9 @@ md_begin (void)
   unsigned int i, j, k;
   char buf[BUFLEN];
 
+  memset (&reg, 0, sizeof (reg));
+  memset (&nul, 0, sizeof (nul));
+
   if (ins_ok & INS_EZ80)   /* if select EZ80 cpu then */
     listing_lhs_width = 6; /* use 6 bytes per line in the listing */
 
@@ -453,6 +508,8 @@ md_begin (void)
   reg.X_add_symbol = reg.X_op_symbol = 0;
   for ( i = 0 ; i < ARRAY_SIZE ( regtable ) ; ++i )
     {
+      if (regtable[i].isa && !(regtable[i].isa & ins_ok))
+	continue;
       reg.X_add_number = regtable[i].number;
       k = strlen ( regtable[i].name );
       buf[k] = 0;
@@ -488,12 +545,7 @@ z80_md_end (void)
   switch (ins_ok & INS_MARCH_MASK)
     {
     case INS_Z80:
-      if (ins_ok & INS_UNPORT)
-        mach_type = bfd_mach_z80full;
-      else if (ins_ok & INS_UNDOC)
-        mach_type = bfd_mach_z80;
-      else
-        mach_type = bfd_mach_z80strict;
+      mach_type = bfd_mach_z80;
       break;
     case INS_R800:
       mach_type = bfd_mach_r800;
@@ -507,40 +559,23 @@ z80_md_end (void)
     case INS_EZ80:
       mach_type = cpu_mode ? bfd_mach_ez80_adl : bfd_mach_ez80_z80;
       break;
+    case INS_Z80N:
+      mach_type = bfd_mach_z80n;
+      break;
     default:
       mach_type = 0;
     }
-
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, mach_type);
 }
 
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
 void
 z80_elf_final_processing (void)
-{
+{/* nothing to do, all is done by BFD itself */
+/*
   unsigned elf_flags;
-  switch (ins_ok & INS_MARCH_MASK)
-    {
-    case INS_Z80:
-      elf_flags = EF_Z80_MACH_Z80;
-      break;
-    case INS_R800:
-      elf_flags = EF_Z80_MACH_R800;
-      break;
-    case INS_Z180:
-      elf_flags = EF_Z80_MACH_Z180;
-      break;
-    case INS_GBZ80:
-      elf_flags = EF_Z80_MACH_GBZ80;
-      break;
-    case INS_EZ80:
-      elf_flags = cpu_mode ? EF_Z80_MACH_EZ80_ADL : EF_Z80_MACH_EZ80_Z80;
-      break;
-    default:
-      elf_flags = 0;
-    }
-
   elf_elfheader (stdoutput)->e_flags = elf_flags;
+*/
 }
 #endif
 
@@ -585,13 +620,20 @@ z80_start_line_hook (void)
 	      return 1;
 	    }
 	  break;
-	case '#':
-	  if (sdcc_compat)
-	    *p = (*skip_space (p + 1) == '(') ? '+' : ' ';
+	case '#': /* force to use next expression as immediate value in SDCC */
+	  if (!sdcc_compat)
+	   break;
+	  if (ISSPACE(p[1]) && *skip_space (p + 1) == '(')
+	    { /* ld a,# (expr)... -> ld a,0+(expr)... */
+	      *p++ = '0';
+	      *p = '+';
+	    }
+	  else /* ld a,#(expr)... -> ld a,+(expr); ld a,#expr -> ld a, expr */
+	    *p = (p[1] == '(') ? '+' : ' ';
 	  break;
 	}
     }
-  /* Check for <label>[:] [.](EQU|DEFL) <value>.  */
+  /* Check for <label>[:] =|([.](EQU|DEFL)) <value>.  */
   if (is_name_beginner (*input_line_pointer))
     {
       char *name;
@@ -601,22 +643,9 @@ z80_start_line_hook (void)
       line_start = input_line_pointer;
       if (ignore_input ())
 	return 0;
-
       c = get_symbol_name (&name);
       rest = input_line_pointer + 1;
-
-      if (ISSPACE (c) && colonless_labels)
-        {
-          if (c == '\n')
-            {
-              bump_line_counters ();
-              LISTING_NEWLINE ();
-            }
-          c = ':';
-        }
-      if (c == ':' && sdcc_compat && rest[-2] != '$')
-        dollar_label_clear ();
-      if (*rest == ':')
+      if (c == ':' && *rest == ':')
         {
           /* remove second colon if SDCC compatibility enabled */
           if (sdcc_compat)
@@ -624,15 +653,20 @@ z80_start_line_hook (void)
           ++rest;
         }
       rest = (char*)skip_space (rest);
-      if (*rest == '.')
-	++rest;
-      if (strncasecmp (rest, "EQU", 3) == 0)
-	len = 3;
-      else if (strncasecmp (rest, "DEFL", 4) == 0)
-	len = 4;
+      if (*rest == '=')
+	len = (rest[1] == '=') ? 2 : 1;
       else
-	len = 0;
-      if (len && (!ISALPHA (rest[len])))
+	{
+	  if (*rest == '.')
+	    ++rest;
+	  if (strncasecmp (rest, "EQU", 3) == 0)
+	    len = 3;
+	  else if (strncasecmp (rest, "DEFL", 4) == 0)
+	    len = 4;
+	  else
+	    len = 0;
+	}
+      if (len && (len <= 2 || !ISALPHA (rest[len])))
 	{
 	  /* Handle assignment here.  */
 	  if (line_start[-1] == '\n')
@@ -642,7 +676,17 @@ z80_start_line_hook (void)
 	    }
 	  input_line_pointer = rest + len - 1;
 	  /* Allow redefining with "DEFL" (len == 4), but not with "EQU".  */
-	  equals (name, len == 4);
+	  switch (len)
+	    {
+	    case 1: /* label = expr */
+	    case 4: /* label DEFL expr */
+	      equals (name, 1);
+	      break;
+	    case 2: /* label == expr */
+	    case 3: /* label EQU expr */
+	      equals (name, 0);
+	      break;
+	    }
 	  return 1;
 	}
       else
@@ -681,7 +725,7 @@ md_atof (int type, char *litP, int *sizeP)
 	return str_to_double (litP, sizeP);
       break;
     }
-  return ieee_md_atof (type, litP, sizeP, FALSE);
+  return ieee_md_atof (type, litP, sizeP, false);
 }
 
 valueT
@@ -803,19 +847,35 @@ is_indir (const char *s)
 }
 
 /* Check whether a symbol involves a register.  */
-static int
+static bool
 contains_register (symbolS *sym)
 {
   if (sym)
     {
-      expressionS * ex = symbol_get_value_expression(sym);
+      expressionS * ex = symbol_get_value_expression (sym);
 
-      return (O_register == ex->X_op)
-	|| (ex->X_add_symbol && contains_register(ex->X_add_symbol))
-	|| (ex->X_op_symbol && contains_register(ex->X_op_symbol));
+      switch (ex->X_op)
+	{
+	case O_register:
+	  return true;
+
+	case O_add:
+	case O_subtract:
+	  if (ex->X_op_symbol && contains_register (ex->X_op_symbol))
+	    return true;
+	  /* Fall through.  */
+	case O_uminus:
+	case O_symbol:
+	  if (ex->X_add_symbol && contains_register (ex->X_add_symbol))
+	    return true;
+	  break;
+
+	default:
+	  break;
+	}
     }
 
-  return 0;
+  return false;
 }
 
 /* Parse general expression, not looking for indexed addressing.  */
@@ -826,6 +886,7 @@ parse_exp_not_indexed (const char *s, expressionS *op)
   int indir;
   int make_shift = -1;
 
+  memset (op, 0, sizeof (*op));
   p = skip_space (s);
   if (sdcc_compat && (*p == '<' || *p == '>'))
     {
@@ -842,7 +903,27 @@ parse_exp_not_indexed (const char *s, expressionS *op)
       p = skip_space (p);
     }
 
-  op->X_md = indir = is_indir (p);
+  if (make_shift == -1)
+    indir = is_indir (p);
+  else
+    indir = 0;
+  op->X_md = indir;
+  if (indir && (ins_ok & INS_GBZ80))
+    { /* check for instructions like ld a,(hl+), ld (hl-),a */
+      p = skip_space (p+1);
+      if (!strncasecmp (p, "hl", 2))
+	{
+	  p = skip_space(p+2);
+	  if (*skip_space(p+1) == ')' && (*p == '+' || *p == '-'))
+	    {
+	      op->X_op = O_md1;
+	      op->X_add_symbol = NULL;
+	      op->X_add_number = (*p == '+') ? REG_HL : -REG_HL;
+	      input_line_pointer = (char*)skip_space(p + 1) + 1;
+	      return input_line_pointer;
+	    }
+	}
+    }
   input_line_pointer = (char*) s ;
   expression (op);
   switch (op->X_op)
@@ -889,10 +970,9 @@ unify_indexed (expressionS *op)
   if (O_subtract == op->X_op)
     {
       expressionS minus;
+      memset (&minus, 0, sizeof (minus));
       minus.X_op = O_uminus;
-      minus.X_add_number = 0;
       minus.X_add_symbol = op->X_op_symbol;
-      minus.X_op_symbol = 0;
       op->X_op_symbol = make_expr_symbol (&minus);
       op->X_op = O_add;
     }
@@ -905,7 +985,6 @@ unify_indexed (expressionS *op)
       add.X_op = O_symbol;
       add.X_add_number = op->X_add_number;
       add.X_add_symbol = op->X_op_symbol;
-      add.X_op_symbol = 0;
       op->X_add_symbol = make_expr_symbol (&add);
     }
   else
@@ -957,20 +1036,20 @@ parse_exp (const char *s, expressionS *op)
 /* Condition codes, including some synonyms provided by HiTech zas.  */
 static const struct reg_entry cc_tab[] =
 {
-  { "age", 6 << 3 },
-  { "alt", 7 << 3 },
-  { "c",   3 << 3 },
-  { "di",  4 << 3 },
-  { "ei",  5 << 3 },
-  { "lge", 2 << 3 },
-  { "llt", 3 << 3 },
-  { "m",   7 << 3 },
-  { "nc",  2 << 3 },
-  { "nz",  0 << 3 },
-  { "p",   6 << 3 },
-  { "pe",  5 << 3 },
-  { "po",  4 << 3 },
-  { "z",   1 << 3 },
+  { "age", 6 << 3, INS_ALL },
+  { "alt", 7 << 3, INS_ALL },
+  { "c",   3 << 3, INS_ALL },
+  { "di",  4 << 3, INS_ALL },
+  { "ei",  5 << 3, INS_ALL },
+  { "lge", 2 << 3, INS_ALL },
+  { "llt", 3 << 3, INS_ALL },
+  { "m",   7 << 3, INS_ALL },
+  { "nc",  2 << 3, INS_ALL },
+  { "nz",  0 << 3, INS_ALL },
+  { "p",   6 << 3, INS_ALL },
+  { "pe",  5 << 3, INS_ALL },
+  { "po",  4 << 3, INS_ALL },
+  { "z",   1 << 3, INS_ALL },
 } ;
 
 /* Parse condition code.  */
@@ -1055,6 +1134,16 @@ emit_data_val (expressionS * val, int size)
   if (val->X_op == O_constant)
     {
       int i;
+
+       /* PR 28791:
+	  Check for overflow, but ignore values that were generated by bit
+	  manipulation operators (eg ~0xe6 and -7).  This does mean that
+	  manipluated overlarge values will not be reported (eg ~0x1234),
+	  but it does help to maintain compatibility with earlier versions
+	  of the assembler.  */
+      if (! val->X_extrabit
+	  && is_overflow (val->X_add_number, size*8))
+	as_warn ( _("%d-bit overflow (%+ld)"), size*8, val->X_add_number);
       for (i = 0; i < size; ++i)
 	p[i] = (char)(val->X_add_number >> (i*8));
       return;
@@ -1079,7 +1168,7 @@ emit_data_val (expressionS * val, int size)
 
   if (size <= 2 && val->X_op_symbol)
     {
-      bfd_boolean simplify = TRUE;
+      bool simplify = true;
       int shift = symbol_get_value_expression (val->X_op_symbol)->X_add_number;
       if (val->X_op == O_bit_and && shift == (1 << (size*8))-1)
 	shift = 0;
@@ -1094,7 +1183,7 @@ emit_data_val (expressionS * val, int size)
 	    case 8: r_type = BFD_RELOC_Z80_BYTE1; break;
 	    case 16: r_type = BFD_RELOC_Z80_BYTE2; break;
 	    case 24: r_type = BFD_RELOC_Z80_BYTE3; break;
-	    default: simplify = FALSE;
+	    default: simplify = false;
 	    }
 	}
       else /* if (size == 2) */
@@ -1103,7 +1192,24 @@ emit_data_val (expressionS * val, int size)
 	    {
 	    case 0: r_type = BFD_RELOC_Z80_WORD0; break;
 	    case 16: r_type = BFD_RELOC_Z80_WORD1; break;
-	    default: simplify = FALSE;
+	    case 8:
+	    case 24: /* add two byte fixups */
+	      val->X_op = O_symbol;
+	      val->X_op_symbol = NULL;
+	      val->X_add_number = 0;
+	      if (shift == 8)
+		{
+		  fix_new_exp (frag_now, p++ - frag_now->fr_literal, 1, val, false,
+			       BFD_RELOC_Z80_BYTE1);
+		  /* prepare to next byte */
+		  r_type = BFD_RELOC_Z80_BYTE2;
+		}
+	      else
+		r_type = BFD_RELOC_Z80_BYTE3; /* high byte will be 0 */
+	      size = 1;
+	      simplify = false;
+	      break;
+	    default: simplify = false;
 	    }
 	}
 
@@ -1115,14 +1221,13 @@ emit_data_val (expressionS * val, int size)
 	}
     }
 
-  fix_new_exp (frag_now, p - frag_now->fr_literal, size, val, FALSE, r_type);
+  fix_new_exp (frag_now, p - frag_now->fr_literal, size, val, false, r_type);
 }
 
 static void
 emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
 {
   char *p;
-  int lo, hi;
 
   if (r_type == BFD_RELOC_8)
     {
@@ -1131,7 +1236,7 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
     }
   p = frag_more (1);
   *p = val->X_add_number;
-  if ( contains_register (val->X_add_symbol) || contains_register (val->X_op_symbol) )
+  if (contains_register (val->X_add_symbol) || contains_register (val->X_op_symbol))
     {
       ill_op ();
     }
@@ -1141,22 +1246,19 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
     }
   else if (val->X_op == O_constant)
     {
-      lo = -128;
-      hi = (BFD_RELOC_8 == r_type) ? 255 : 127;
-
-      if ((val->X_add_number < lo) || (val->X_add_number > hi))
+      if ((val->X_add_number < -128) || (val->X_add_number >= 128))
 	{
 	  if (r_type == BFD_RELOC_Z80_DISP8)
-	    as_bad (_("offset too large"));
+	    as_bad (_("index overflow (%+ld)"), val->X_add_number);
 	  else
-	    as_warn (_("overflow"));
+	    as_bad (_("offset overflow (%+ld)"), val->X_add_number);
 	}
     }
   else
     {
-      /* For symbols only, constants are stored at begin of function */
+      /* For symbols only, constants are stored at begin of function.  */
       fix_new_exp (frag_now, p - frag_now->fr_literal, 1, val,
-		   (r_type == BFD_RELOC_8_PCREL) ? TRUE : FALSE, r_type);
+		   r_type == BFD_RELOC_8_PCREL, r_type);
     }
 }
 
@@ -1193,7 +1295,7 @@ emit_mx (char prefix, char opcode, int shift, expressionS * arg)
 	  if ((prefix == 0) && (rnum & R_INDEX))
 	    {
 	      prefix = (rnum & R_IX) ? 0xDD : 0xFD;
-              if (!(ins_ok & INS_EZ80))
+	      if (!(ins_ok & (INS_EZ80|INS_R800|INS_Z80N)))
                 check_mach (INS_IDX_HALF);
 	      rnum &= ~R_INDEX;
 	    }
@@ -1283,7 +1385,8 @@ emit_mr (char prefix, char opcode, const char *args)
 	      ill_op ();
 	      break;
 	    }
-	  check_mach (INS_ROT_II_LD);
+	  if (!(ins_ok & INS_Z80N))
+	    check_mach (INS_ROT_II_LD);
 	}
       /* Fall through.  */
     case O_register:
@@ -1336,6 +1439,51 @@ emit_s (char prefix, char opcode, const char *args)
       p = parse_exp (p, & arg_s);
     }
   emit_sx (prefix, opcode, & arg_s);
+  return p;
+}
+
+static const char *
+emit_sub (char prefix, char opcode, const char *args)
+{
+  expressionS arg_s;
+  const char *p;
+
+  if (!(ins_ok & INS_GBZ80))
+    return emit_s (prefix, opcode, args);
+  p = parse_exp (args, & arg_s);
+  if (*p++ != ',')
+    {
+      error (_("bad instruction syntax"));
+      return p;
+    }
+
+  if (arg_s.X_md != 0 || arg_s.X_op != O_register || arg_s.X_add_number != REG_A)
+    ill_op ();
+
+  p = parse_exp (p, & arg_s);
+
+  emit_sx (prefix, opcode, & arg_s);
+  return p;
+}
+
+static const char *
+emit_swap (char prefix, char opcode, const char *args)
+{
+  expressionS reg;
+  const char *p;
+  char *q;
+
+  if (!(ins_ok & INS_Z80N))
+    return emit_mr (prefix, opcode, args);
+
+  /* check for alias swap a for swapnib of Z80N */
+  p = parse_exp (args, &reg);
+  if (reg.X_md != 0 || reg.X_op != O_register || reg.X_add_number != REG_A)
+    ill_op ();
+
+  q = frag_more (2);
+  *q++ = 0xED;
+  *q = 0x23;
   return p;
 }
 
@@ -1425,6 +1573,12 @@ emit_jp (char prefix, char opcode, const char * args)
 	    *q++ = (rnum & R_IX) ? 0xDD : 0xFD;
 	  *q = prefix;
 	}
+      else if (addr.X_op == O_register && rnum == REG_C && (ins_ok & INS_Z80N))
+	{
+	  q = frag_more (2);
+	  *q++ = 0xED;
+	  *q = 0x98;
+	}
       else
 	ill_op ();
     }
@@ -1491,6 +1645,31 @@ emit_pop (char prefix ATTRIBUTE_UNUSED, char opcode, const char * args)
     }
   else
     ill_op ();
+
+  return p;
+}
+
+static const char *
+emit_push (char prefix, char opcode, const char * args)
+{
+  expressionS arg;
+  const char *p;
+  char *q;
+
+  p = parse_exp (args, & arg);
+  if (arg.X_op == O_register)
+    return emit_pop (prefix, opcode, args);
+
+  if (arg.X_md || arg.X_op == O_md1 || !(ins_ok & INS_Z80N))
+    ill_op ();
+
+  q = frag_more (2);
+  *q++ = 0xED;
+  *q = 0x8A;
+
+  q = frag_more (2);
+  fix_new_exp (frag_now, q - frag_now->fr_literal, 2, &arg, false,
+               BFD_RELOC_Z80_16_BE);
 
   return p;
 }
@@ -1571,24 +1750,61 @@ emit_add (char prefix, char opcode, const char * args)
   if ((term.X_md) || (term.X_op != O_register))
     ill_op ();
   else
-    switch (term.X_add_number & ~R_INDEX)
+    switch (term.X_add_number)
       {
       case REG_A:
 	p = emit_s (0, prefix, p);
 	break;
+      case REG_SP:
+	p = parse_exp (p, &term);
+	if (!(ins_ok & INS_GBZ80) || term.X_md || term.X_op == O_register)
+	  ill_op ();
+	q = frag_more (1);
+	*q = 0xE8;
+	emit_byte (&term, BFD_RELOC_Z80_DISP8);
+	break;
+      case REG_BC:
+      case REG_DE:
+	if (!(ins_ok & INS_Z80N))
+	  {
+	    ill_op ();
+	    break;
+	  }
+	/* Fall through.  */
       case REG_HL:
+      case REG_IX:
+      case REG_IY:
 	lhs = term.X_add_number;
 	p = parse_exp (p, &term);
-	if ((!term.X_md) && (term.X_op == O_register))
+	rhs = term.X_add_number;
+	if (term.X_md != 0 || term.X_op == O_md1)
+	  ill_op ();
+	else if ((term.X_op == O_register) && (rhs & R_ARITH) && (rhs == lhs || (rhs & ~R_INDEX) != REG_HL))
 	  {
-	    rhs = term.X_add_number;
-	    if ((rhs & R_ARITH)
-		&& ((rhs == lhs) || ((rhs & ~R_INDEX) != REG_HL)))
+	    if (1)
 	      {
 		q = frag_more ((lhs & R_INDEX) ? 2 : 1);
 		if (lhs & R_INDEX)
 		  *q++ = (lhs & R_IX) ? 0xDD : 0xFD;
 		*q = opcode + ((rhs & 3) << 4);
+		break;
+	      }
+	  }
+	else if (!(lhs & R_INDEX) && (ins_ok & INS_Z80N))
+	  {
+	    if (term.X_op == O_register && rhs == REG_A)
+	      { /* ADD BC/DE/HL,A */
+		q = frag_more (2);
+		*q++ = 0xED;
+		*q = 0x33 - (lhs & 3);
+		break;
+	      }
+	    else if (term.X_op != O_register && term.X_op != O_md1)
+	      { /* ADD BC/DE/HL,nn */
+		q = frag_more (2);
+		*q++ = 0xED;
+		*q = 0x36 - (lhs & 3);
+		emit_word (&term);
 		break;
 	      }
 	  }
@@ -1625,6 +1841,27 @@ emit_bit (char prefix, char opcode, const char * args)
     }
   else
     ill_op ();
+  return p;
+}
+
+/* BSLA DE,B; BSRA DE,B; BSRL DE,B; BSRF DE,B; BRLC DE,B (Z80N only) */
+static const char *
+emit_bshft (char prefix, char opcode, const char * args)
+{
+  expressionS r1, r2;
+  const char *p;
+  char *q;
+
+  p = parse_exp (args, & r1);
+  if (*p++ != ',')
+    error (_("bad instruction syntax"));
+  p = parse_exp (p, & r2);
+  if (r1.X_md || r1.X_op != O_register || r1.X_add_number != REG_DE ||
+      r2.X_md || r2.X_op != O_register || r2.X_add_number != REG_B)
+    ill_op ();
+  q = frag_more (2);
+  *q++ = prefix;
+  *q = opcode;
   return p;
 }
 
@@ -1726,13 +1963,21 @@ emit_in (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
   char *q;
 
   p = parse_exp (args, &reg);
-  if (*p++ != ',')
-    {
-      error (_("bad instruction syntax"));
-      return p;
+  if (reg.X_md && reg.X_op == O_register && reg.X_add_number == REG_C)
+    { /* permit instruction in (c) as alias for in f,(c) */
+      port = reg;
+      reg.X_md = 0;
+      reg.X_add_number = REG_F;
     }
-
-  p = parse_exp (p, &port);
+  else
+    {
+      if (*p++ != ',')
+	{
+	  error (_("bad instruction syntax"));
+	  return p;
+	}
+      p = parse_exp (p, &port);
+    }
   if (reg.X_md == 0
       && reg.X_op == O_register
       && (reg.X_add_number <= 7 || reg.X_add_number == REG_F)
@@ -1755,7 +2000,7 @@ emit_in (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
 	    {
               if (port.X_add_number == REG_BC && !(ins_ok & INS_EZ80))
                 ill_op ();
-              else if (reg.X_add_number == REG_F && !(ins_ok & INS_R800))
+	      else if (reg.X_add_number == REG_F && !(ins_ok & (INS_R800|INS_Z80N)))
                 check_mach (INS_IN_F_C);
           q = frag_more (2);
           *q++ = 0xED;
@@ -1823,7 +2068,8 @@ emit_out (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
   /* Allow "out (c), 0" as unportable instruction.  */
   if (reg.X_op == O_constant && reg.X_add_number == 0)
     {
-      check_mach (INS_OUT_C_0);
+      if (!(ins_ok & INS_Z80N))
+	check_mach (INS_OUT_C_0);
       reg.X_op = O_register;
       reg.X_add_number = 6;
     }
@@ -1958,7 +2204,15 @@ emit_ld_m_r (expressionS *dst, expressionS *src)
   switch (dst->X_op)
     {
     case O_md1:
-      prefix = (dst->X_add_number == REG_IX) ? 0xDD : 0xFD;
+      if (ins_ok & INS_GBZ80)
+	{ /* LD (HL+),A or LD (HL-),A */
+	  if (src->X_op != O_register || src->X_add_number != REG_A)
+	    break;
+	  *frag_more (1) = (dst->X_add_number == REG_HL) ? 0x22 : 0x32;
+	  return;
+	}
+      else
+	prefix = (dst->X_add_number == REG_IX) ? 0xDD : 0xFD;
       /* Fall through.  */
     case O_register:
       switch (dst->X_add_number)
@@ -1998,7 +2252,7 @@ emit_ld_m_r (expressionS *dst, expressionS *src)
       if (src->X_add_number == REG_A)
         {
           q = frag_more (1);
-          *q = 0x32;
+	  *q = (ins_ok & INS_GBZ80) ? 0xEA : 0x32;
           emit_word (dst);
           return;
         }
@@ -2112,6 +2366,15 @@ emit_ld_r_m (expressionS *dst, expressionS *src)
   switch (src->X_op)
     {
     case O_md1:
+      if (ins_ok & INS_GBZ80)
+	{ /* LD A,(HL+) or LD A,(HL-) */
+	  if (dst->X_op == O_register && dst->X_add_number == REG_A)
+	    *frag_more (1) = (src->X_add_number == REG_HL) ? 0x2A : 0x3A;
+	  else
+	    ill_op ();
+	  break;
+	}
+      /* Fall through. */
     case O_register:
       if (dst->X_add_number > 7)
         ill_op ();
@@ -2140,9 +2403,11 @@ emit_ld_r_m (expressionS *dst, expressionS *src)
       if (dst->X_add_number == REG_A)
         {
           q = frag_more (1);
-          *q = 0x3A;
+	  *q = (ins_ok & INS_GBZ80) ? 0xFA : 0x3A;
           emit_word (src);
         }
+      else
+	ill_op ();
     }
 }
 
@@ -2172,7 +2437,6 @@ emit_ld_r_n (expressionS *dst, expressionS *src)
       break;
     default:
       ill_op ();
-//      return;
     }
 
   q = frag_more (prefix ? 2 : 1);
@@ -2180,7 +2444,7 @@ emit_ld_r_n (expressionS *dst, expressionS *src)
     {
       if (ins_ok & INS_GBZ80)
         ill_op ();
-      else if (!(ins_ok & INS_EZ80))
+      else if (!(ins_ok & (INS_EZ80|INS_R800|INS_Z80N)))
         check_mach (INS_IDX_HALF);
       *q++ = prefix;
     }
@@ -2208,8 +2472,6 @@ emit_ld_r_r (expressionS *dst, expressionS *src)
         default:
           ill_op ();
         }
-      if (ins_ok & INS_GBZ80)
-        ill_op ();
       opcode = 0xF9;
       break;
     case REG_HL:
@@ -2343,7 +2605,7 @@ emit_ld_r_r (expressionS *dst, expressionS *src)
     }
   if ((ins_ok & INS_GBZ80) && prefix != 0)
     ill_op ();
-  if (ii_halves && !(ins_ok & INS_EZ80))
+  if (ii_halves && !(ins_ok & (INS_EZ80|INS_R800|INS_Z80N)))
     check_mach (INS_IDX_HALF);
   if (prefix == 0 && (ins_ok & INS_EZ80))
     {
@@ -2392,8 +2654,8 @@ emit_ld_rr_m (expressionS *dst, expressionS *src)
         case REG_BC: opcode = 0x07; break;
         case REG_DE: opcode = 0x17; break;
         case REG_HL: opcode = 0x27; break;
-	case REG_IX: opcode = (!prefix || prefix == 0xDD) ? 0x37 : 0x31; break;
-	case REG_IY: opcode = prefix ? ((prefix == 0xDD) ? 0x31 : 0x37) : 0x36; break;
+	case REG_IX: opcode = (prefix == 0xED || prefix == 0xDD) ? 0x37 : 0x31; break;
+	case REG_IY: opcode = (prefix == 0xED || prefix == 0xDD) ? 0x31 : 0x37; break;
         default:
           ill_op ();
         }
@@ -2522,7 +2784,7 @@ emit_lddldi (char prefix, char opcode, const char * args)
   p = parse_exp (args, & dst);
   if (*p++ != ',')
     error (_("bad instruction syntax"));
-  p = parse_exp (args, & src);
+  p = parse_exp (p, & src);
 
   if (dst.X_op != O_register || src.X_op != O_register)
     ill_op ();
@@ -2568,12 +2830,18 @@ emit_ldh (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
       && dst.X_op == O_register
       && dst.X_add_number == REG_A
       && src.X_md != 0
-      && src.X_op != O_md1
-      && src.X_op != O_register)
+      && src.X_op != O_md1)
     {
-      q = frag_more (1);
-      *q = 0xF0;
-      emit_byte (& src, BFD_RELOC_8);
+      if (src.X_op != O_register)
+	{
+	  q = frag_more (1);
+	  *q = 0xF0;
+	  emit_byte (& src, BFD_RELOC_8);
+	}
+      else if (src.X_add_number == REG_C)
+	*frag_more (1) = 0xF2;
+      else
+	ill_op ();
     }
   else if (dst.X_md != 0
       && dst.X_op != O_md1
@@ -2601,6 +2869,29 @@ emit_ldh (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
   else
     ill_op ();
 
+  return p;
+}
+
+static const char *
+emit_ldhl (char prefix ATTRIBUTE_UNUSED, char opcode, const char * args)
+{
+  expressionS dst, src;
+  const char *p;
+  char *q;
+  p = parse_exp (args, & dst);
+  if (*p++ != ',')
+    {
+      error (_("bad instruction syntax"));
+      return p;
+    }
+
+  p = parse_exp (p, & src);
+  if (dst.X_md || dst.X_op != O_register || dst.X_add_number != REG_SP
+      || src.X_md || src.X_op == O_register || src.X_op == O_md1)
+    ill_op ();
+  q = frag_more (1);
+  *q = opcode;
+  emit_byte (& src, BFD_RELOC_Z80_DISP8);
   return p;
 }
 
@@ -2700,9 +2991,72 @@ emit_mlt (char prefix, char opcode, const char * args)
     ill_op ();
 
   q = frag_more (2);
-  *q++ = prefix;
-  *q = opcode | ((arg.X_add_number & 3) << 4);
+  if (ins_ok & INS_Z80N)
+    {
+      if (arg.X_add_number != REG_DE)
+	ill_op ();
+      *q++ = 0xED;
+      *q = 0x30;
+    }
+  else
+    {
+      *q++ = prefix;
+      *q = opcode | ((arg.X_add_number & 3) << 4);
+    }
 
+  return p;
+}
+
+/* MUL D,E (Z80N only) */
+static const char *
+emit_mul (char prefix, char opcode, const char * args)
+{
+  expressionS r1, r2;
+  const char *p;
+  char *q;
+
+  p = parse_exp (args, & r1);
+  if (*p++ != ',')
+    error (_("bad instruction syntax"));
+  p = parse_exp (p, & r2);
+
+  if (r1.X_md != 0 || r1.X_op != O_register || r1.X_add_number != REG_D ||
+      r2.X_md != 0 || r2.X_op != O_register || r2.X_add_number != REG_E)
+    ill_op ();
+
+  q = frag_more (2);
+  *q++ = prefix;
+  *q = opcode;
+
+  return p;
+}
+
+static const char *
+emit_nextreg (char prefix, char opcode ATTRIBUTE_UNUSED, const char * args)
+{
+  expressionS rr, nn;
+  const char *p;
+  char *q;
+
+  p = parse_exp (args, & rr);
+  if (*p++ != ',')
+    error (_("bad instruction syntax"));
+  p = parse_exp (p, & nn);
+  if (rr.X_md != 0 || rr.X_op == O_register || rr.X_op == O_md1 ||
+      nn.X_md != 0 || nn.X_op == O_md1)
+    ill_op ();
+  q = frag_more (2);
+  *q++ = prefix;
+  emit_byte (&rr, BFD_RELOC_8);
+  if (nn.X_op == O_register && nn.X_add_number == REG_A)
+    *q = 0x92;
+  else if (nn.X_op != O_register)
+    {
+      *q = 0x91;
+      emit_byte (&nn, BFD_RELOC_8);
+    }
+  else
+    ill_op ();
   return p;
 }
 
@@ -2783,15 +3137,23 @@ emit_tst (char prefix, char opcode, const char *args)
       if (arg_s.X_md)
         ill_op ();
       q = frag_more (2);
-      *q++ = prefix;
-      *q = opcode | 0x60;
+      if (ins_ok & INS_Z80N)
+	{
+	  *q++ = 0xED;
+	  *q = 0x27;
+	}
+      else
+	{
+	  *q++ = prefix;
+	  *q = opcode | 0x60;
+	}
       emit_byte (& arg_s, BFD_RELOC_8);
     }
   return p;
 }
 
 static const char *
-emit_tstio (char prefix, char opcode, const char *args)
+emit_insn_n (char prefix, char opcode, const char *args)
 {
   expressionS arg;
   const char *p;
@@ -3117,6 +3479,15 @@ area (int arg)
     psect (arg);
 }
 
+/* Handle the .bss pseudo-op.  */
+
+static void
+s_bss (int ignore ATTRIBUTE_UNUSED)
+{
+  subseg_set (bss_section, 0);
+  demand_empty_rest_of_line ();
+}
+
 /* Port specific pseudo ops.  */
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -3129,7 +3500,10 @@ const pseudo_typeS md_pseudo_table[] =
   { ".r800", set_inss, INS_R800},
   { ".set", s_set, 0},
   { ".z180", set_inss, INS_Z180},
+  { ".hd64", set_inss, INS_Z180},
   { ".z80", set_inss, INS_Z80},
+  { ".z80n", set_inss, INS_Z80N},
+  { "bss", s_bss, 0},
   { "db" , emit_data, 1},
   { "d24", z80_cons, 3},
   { "d32", z80_cons, 4},
@@ -3143,6 +3517,8 @@ const pseudo_typeS md_pseudo_table[] =
   { "dw", z80_cons, 2},
   { "psect", psect, 0}, /* TODO: Translate attributes.  */
   { "set", 0, 0}, 		/* Real instruction on z80.  */
+  { "xdef", s_globl, 0},	/* Synonym for .GLOBAL */
+  { "xref", s_ignore, 0},	/* Synonym for .EXTERN */
   { NULL, 0, 0 }
 } ;
 
@@ -3152,6 +3528,11 @@ static table_t instab[] =
   { "add",  0x80, 0x09, emit_add,  INS_ALL },
   { "and",  0x00, 0xA0, emit_s,    INS_ALL },
   { "bit",  0xCB, 0x40, emit_bit,  INS_ALL },
+  { "brlc", 0xED, 0x2C, emit_bshft,INS_Z80N },
+  { "bsla", 0xED, 0x28, emit_bshft,INS_Z80N },
+  { "bsra", 0xED, 0x29, emit_bshft,INS_Z80N },
+  { "bsrf", 0xED, 0x2B, emit_bshft,INS_Z80N },
+  { "bsrl", 0xED, 0x2A, emit_bshft,INS_Z80N },
   { "call", 0xCD, 0xC4, emit_jpcc, INS_ALL },
   { "ccf",  0x00, 0x3F, emit_insn, INS_ALL },
   { "cp",   0x00, 0xB8, emit_s,    INS_ALL },
@@ -3191,15 +3572,24 @@ static table_t instab[] =
   { "ld",   0x00, 0x00, emit_ld,   INS_ALL },
   { "ldd",  0xED, 0xA8, emit_lddldi,INS_ALL }, /* GBZ80 has special meaning */
   { "lddr", 0xED, 0xB8, emit_insn, INS_NOT_GBZ80 },
+  { "lddrx",0xED, 0xBC, emit_insn, INS_Z80N },
+  { "lddx", 0xED, 0xAC, emit_insn, INS_Z80N },
   { "ldh",  0xE0, 0x00, emit_ldh,  INS_GBZ80 },
-  { "ldhl", 0xE0, 0x00, emit_ldh,  INS_GBZ80 },
+  { "ldhl", 0x00, 0xF8, emit_ldhl, INS_GBZ80 },
   { "ldi",  0xED, 0xA0, emit_lddldi,INS_ALL }, /* GBZ80 has special meaning */
   { "ldir", 0xED, 0xB0, emit_insn, INS_NOT_GBZ80 },
+  { "ldirx",0xED, 0xB4, emit_insn, INS_Z80N },
+  { "ldix", 0xED, 0xA4, emit_insn, INS_Z80N },
+  { "ldpirx",0xED,0xB7, emit_insn, INS_Z80N },
+  { "ldws", 0xED, 0xA5, emit_insn, INS_Z80N },
   { "lea",  0xED, 0x02, emit_lea,  INS_EZ80 },
-  { "mlt",  0xED, 0x4C, emit_mlt,  INS_Z180|INS_EZ80 },
+  { "mirror",0xED,0x24, emit_insn, INS_Z80N },
+  { "mlt",  0xED, 0x4C, emit_mlt,  INS_Z180|INS_EZ80|INS_Z80N },
+  { "mul",  0xED, 0x30, emit_mul,  INS_Z80N },
   { "mulub",0xED, 0xC5, emit_mulub,INS_R800 },
   { "muluw",0xED, 0xC3, emit_muluw,INS_R800 },
-  { "neg",  0xed, 0x44, emit_insn, INS_NOT_GBZ80 },
+  { "neg",  0xED, 0x44, emit_insn, INS_NOT_GBZ80 },
+  { "nextreg",0xED,0x91,emit_nextreg,INS_Z80N },
   { "nop",  0x00, 0x00, emit_insn, INS_ALL },
   { "or",   0x00, 0xB0, emit_s,    INS_ALL },
   { "otd2r",0xED, 0xBC, emit_insn, INS_EZ80 },
@@ -3218,9 +3608,12 @@ static table_t instab[] =
   { "outd2",0xED, 0xAC, emit_insn, INS_EZ80 },
   { "outi", 0xED, 0xA3, emit_insn, INS_NOT_GBZ80 },
   { "outi2",0xED, 0xA4, emit_insn, INS_EZ80 },
+  { "outinb",0xED,0x90, emit_insn, INS_Z80N },
   { "pea",  0xED, 0x65, emit_pea,  INS_EZ80 },
+  { "pixelad",0xED,0x94,emit_insn, INS_Z80N },
+  { "pixeldn",0xED,0x93,emit_insn, INS_Z80N },
   { "pop",  0x00, 0xC1, emit_pop,  INS_ALL },
-  { "push", 0x00, 0xC5, emit_pop,  INS_ALL },
+  { "push", 0x00, 0xC5, emit_push, INS_ALL },
   { "res",  0xCB, 0x80, emit_bit,  INS_ALL },
   { "ret",  0xC9, 0xC0, emit_retcc,INS_ALL },
   { "reti", 0xED, 0x4D, emit_reti, INS_ALL }, /*GBZ80 has its own opcode for it*/
@@ -3240,18 +3633,22 @@ static table_t instab[] =
   { "sbc",  0x98, 0x42, emit_adc,  INS_ALL },
   { "scf",  0x00, 0x37, emit_insn, INS_ALL },
   { "set",  0xCB, 0xC0, emit_bit,  INS_ALL },
+  { "setae",0xED, 0x95, emit_insn, INS_Z80N },
+  { "sl1",  0xCB, 0x30, emit_mr,   INS_SLI|INS_Z80N },
   { "sla",  0xCB, 0x20, emit_mr,   INS_ALL },
-  { "sli",  0xCB, 0x30, emit_mr,   INS_SLI },
-  { "sll",  0xCB, 0x30, emit_mr,   INS_SLI },
+  { "sli",  0xCB, 0x30, emit_mr,   INS_SLI|INS_Z80N },
+  { "sll",  0xCB, 0x30, emit_mr,   INS_SLI|INS_Z80N },
   { "slp",  0xED, 0x76, emit_insn, INS_Z180|INS_EZ80 },
   { "sra",  0xCB, 0x28, emit_mr,   INS_ALL },
   { "srl",  0xCB, 0x38, emit_mr,   INS_ALL },
   { "stmix",0xED, 0x7D, emit_insn, INS_EZ80 },
   { "stop", 0x00, 0x10, emit_insn, INS_GBZ80 },
-  { "sub",  0x00, 0x90, emit_s,    INS_ALL },
-  { "swap", 0xCB, 0x30, emit_mr,   INS_GBZ80 },
-  { "tst",  0xED, 0x04, emit_tst,  INS_Z180|INS_EZ80 },
-  { "tstio",0xED, 0x74, emit_tstio,INS_Z180|INS_EZ80 },
+  { "sub",  0x00, 0x90, emit_sub,  INS_ALL },
+  { "swap", 0xCB, 0x30, emit_swap, INS_GBZ80|INS_Z80N },
+  { "swapnib",0xED,0x23,emit_insn, INS_Z80N },
+  { "test", 0xED, 0x27, emit_insn_n, INS_Z80N },
+  { "tst",  0xED, 0x04, emit_tst,  INS_Z180|INS_EZ80|INS_Z80N },
+  { "tstio",0xED, 0x74, emit_insn_n,INS_Z180|INS_EZ80 },
   { "xor",  0x00, 0xA8, emit_s,    INS_ALL },
 } ;
 
@@ -3294,139 +3691,155 @@ md_assemble (char *str)
       insp = bsearch (&key, instab, ARRAY_SIZE (instab),
 		    sizeof (instab[0]), key_cmp);
       if (!insp || (insp->inss && !(insp->inss & ins_ok)))
-        {
-          as_bad (_("Unknown instruction '%s'"), buf);
-          *frag_more (1) = 0;
-        }
+	{
+	  *frag_more (1) = 0;
+	  as_bad (_("Unknown instruction `%s'"), buf);
+	}
       else
 	{
 	  p = insp->fp (insp->prefix, insp->opcode, p);
 	  p = skip_space (p);
-	if ((!err_flag) && *p)
-	  as_bad (_("junk at end of line, first unrecognized character is `%c'"),
-		  *p);
+	  if ((!err_flag) && *p)
+	    as_bad (_("junk at end of line, "
+		      "first unrecognized character is `%c'"), *p);
 	}
     }
-end:
+ end:
   input_line_pointer = old_ptr;
 }
 
-void
-md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
+static int
+signed_overflow (signed long value, unsigned bitsize)
 {
-  long val = * (long *) valP;
+  signed long max = (signed long) ((1UL << (bitsize - 1)) - 1);
+  return value < -max - 1 || value > max;
+}
+
+static int
+unsigned_overflow (unsigned long value, unsigned bitsize)
+{
+  return value >> (bitsize - 1) >> 1 != 0;
+}
+
+static int
+is_overflow (long value, unsigned bitsize)
+{
+  if (value < 0)
+    return signed_overflow (value, bitsize);
+  return unsigned_overflow ((unsigned long)value, bitsize);
+}
+
+void
+md_apply_fix (fixS * fixP, valueT* valP, segT seg)
+{
+  long val = *valP;
   char *p_lit = fixP->fx_where + fixP->fx_frag->fr_literal;
+
+  if (fixP->fx_addsy == NULL)
+    fixP->fx_done = 1;
+  else if (fixP->fx_pcrel)
+    {
+      segT s = S_GET_SEGMENT (fixP->fx_addsy);
+      if (s == seg || s == absolute_section)
+	{
+	  val += S_GET_VALUE (fixP->fx_addsy);
+	  fixP->fx_done = 1;
+	}
+    }
 
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8_PCREL:
-      if (fixP->fx_addsy)
-        {
-          fixP->fx_no_overflow = 1;
-          fixP->fx_done = 0;
-        }
-      else
-        {
-	  fixP->fx_no_overflow = (-128 <= val && val < 128);
-	  if (!fixP->fx_no_overflow)
-            as_bad_where (fixP->fx_file, fixP->fx_line,
-			  _("relative jump out of range"));
-	  *p_lit++ = val;
-          fixP->fx_done = 1;
-        }
-      break;
-
     case BFD_RELOC_Z80_DISP8:
-      if (fixP->fx_addsy)
-        {
-          fixP->fx_no_overflow = 1;
-          fixP->fx_done = 0;
-        }
-      else
-        {
-	  fixP->fx_no_overflow = (-128 <= val && val < 128);
-	  if (!fixP->fx_no_overflow)
-            as_bad_where (fixP->fx_file, fixP->fx_line,
-			  _("index offset out of range"));
-	  *p_lit++ = val;
-          fixP->fx_done = 1;
-        }
+    case BFD_RELOC_8:
+    case BFD_RELOC_16:
+    case BFD_RELOC_24:
+    case BFD_RELOC_32:
+    case BFD_RELOC_Z80_16_BE:
+      fixP->fx_no_overflow = 0;
+      break;
+    default:
+      fixP->fx_no_overflow = 1;
+      break;
+    }
+
+  switch (fixP->fx_r_type)
+    {
+    case BFD_RELOC_8_PCREL:
+    case BFD_RELOC_Z80_DISP8:
+      if (fixP->fx_done && signed_overflow (val, 8))
+	as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("8-bit signed offset out of range (%+ld)"), val);
+      *p_lit++ = val;
       break;
 
     case BFD_RELOC_Z80_BYTE0:
       *p_lit++ = val;
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-        fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_Z80_BYTE1:
       *p_lit++ = (val >> 8);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-        fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_Z80_BYTE2:
       *p_lit++ = (val >> 16);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-        fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_Z80_BYTE3:
       *p_lit++ = (val >> 24);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-        fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_8:
-      if (val > 255 || val < -128)
-	as_warn_where (fixP->fx_file, fixP->fx_line, _("overflow"));
+      if (fixP->fx_done && is_overflow(val, 8))
+	as_warn_where (fixP->fx_file, fixP->fx_line,
+		       _("8-bit overflow (%+ld)"), val);
       *p_lit++ = val;
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-	fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_Z80_WORD1:
       *p_lit++ = (val >> 16);
       *p_lit++ = (val >> 24);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-        fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_Z80_WORD0:
-    case BFD_RELOC_16:
       *p_lit++ = val;
       *p_lit++ = (val >> 8);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-	fixP->fx_done = 1;
+      break;
+
+    case BFD_RELOC_16:
+      if (fixP->fx_done && is_overflow(val, 16))
+	as_warn_where (fixP->fx_file, fixP->fx_line,
+		       _("16-bit overflow (%+ld)"), val);
+      *p_lit++ = val;
+      *p_lit++ = (val >> 8);
       break;
 
     case BFD_RELOC_24: /* Def24 may produce this.  */
+      if (fixP->fx_done && is_overflow(val, 24))
+	as_warn_where (fixP->fx_file, fixP->fx_line,
+		       _("24-bit overflow (%+ld)"), val);
       *p_lit++ = val;
       *p_lit++ = (val >> 8);
       *p_lit++ = (val >> 16);
-      fixP->fx_no_overflow = 1;
-      if (fixP->fx_addsy == NULL)
-	fixP->fx_done = 1;
       break;
 
     case BFD_RELOC_32: /* Def32 and .long may produce this.  */
+      if (fixP->fx_done && is_overflow(val, 32))
+	as_warn_where (fixP->fx_file, fixP->fx_line,
+		       _("32-bit overflow (%+ld)"), val);
       *p_lit++ = val;
       *p_lit++ = (val >> 8);
       *p_lit++ = (val >> 16);
       *p_lit++ = (val >> 24);
-      if (fixP->fx_addsy == NULL)
-	fixP->fx_done = 1;
+      break;
+
+    case BFD_RELOC_Z80_16_BE: /* Z80N PUSH nn instruction produce this.  */
+      *p_lit++ = val >> 8;
+      *p_lit++ = val;
       break;
 
     default:
-      printf (_("md_apply_fix: unknown r_type 0x%x\n"), fixP->fx_r_type);
+      printf (_("md_apply_fix: unknown reloc type 0x%x\n"), fixP->fx_r_type);
       abort ();
     }
 }
@@ -3446,11 +3859,9 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED , fixS *fixp)
 {
   arelent *reloc;
 
-  if (! bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type))
+  if (fixp->fx_subsy != NULL)
     {
-      as_bad_where (fixp->fx_file, fixp->fx_line,
-		    _("reloc %d not supported by object file format"),
-		    (int) fixp->fx_r_type);
+      as_bad_subtract (fixp);
       return NULL;
     }
 
@@ -3458,10 +3869,27 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED , fixS *fixp)
   reloc->sym_ptr_ptr  = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc->howto        = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   reloc->addend       = fixp->fx_offset;
+  reloc->howto        = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+  if (reloc->howto == NULL)
+    {
+      as_bad_where (fixp->fx_file, fixp->fx_line,
+		    _("reloc %d not supported by object file format"),
+		    (int) fixp->fx_r_type);
+      return NULL;
+    }
+
+  if (fixp->fx_r_type == BFD_RELOC_VTABLE_INHERIT
+      || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+    reloc->address = fixp->fx_offset;
 
   return reloc;
+}
+
+int
+z80_tc_labels_without_colon (void)
+{
+  return colonless_labels;
 }
 
 int
@@ -3482,11 +3910,11 @@ z80_tc_label_is_local (const char *name)
 #define EXP_MIN -0x10000
 #define EXP_MAX 0x10000
 static int
-str_to_broken_float (bfd_boolean *signP, bfd_uint64_t *mantissaP, int *expP)
+str_to_broken_float (bool *signP, uint64_t *mantissaP, int *expP)
 {
   char *p;
-  bfd_boolean sign;
-  bfd_uint64_t mantissa = 0;
+  bool sign;
+  uint64_t mantissa = 0;
   int exponent = 0;
   int i;
 
@@ -3526,7 +3954,7 @@ str_to_broken_float (bfd_boolean *signP, bfd_uint64_t *mantissaP, int *expP)
   if (*p == '.')
     {
       p++;
-      if (!exponent) /* If no precission overflow.  */
+      if (!exponent) /* If no precision overflow.  */
 	{
 	  for (; ISDIGIT (*p); ++p, --exponent)
 	    {
@@ -3601,8 +4029,8 @@ str_to_broken_float (bfd_boolean *signP, bfd_uint64_t *mantissaP, int *expP)
 static const char *
 str_to_zeda32(char *litP, int *sizeP)
 {
-  bfd_uint64_t mantissa;
-  bfd_boolean sign;
+  uint64_t mantissa;
+  bool sign;
   int exponent;
   unsigned i;
 
@@ -3660,8 +4088,8 @@ str_to_zeda32(char *litP, int *sizeP)
 static const char *
 str_to_float48(char *litP, int *sizeP)
 {
-  bfd_uint64_t mantissa;
-  bfd_boolean sign;
+  uint64_t mantissa;
+  bool sign;
   int exponent;
   unsigned i;
 
@@ -3698,17 +4126,63 @@ str_to_float48(char *litP, int *sizeP)
 static const char *
 str_to_ieee754_h(char *litP, int *sizeP)
 {
-  return ieee_md_atof ('h', litP, sizeP, FALSE);
+  return ieee_md_atof ('h', litP, sizeP, false);
 }
 
 static const char *
 str_to_ieee754_s(char *litP, int *sizeP)
 {
-  return ieee_md_atof ('s', litP, sizeP, FALSE);
+  return ieee_md_atof ('s', litP, sizeP, false);
 }
 
 static const char *
 str_to_ieee754_d(char *litP, int *sizeP)
 {
-  return ieee_md_atof ('d', litP, sizeP, FALSE);
+  return ieee_md_atof ('d', litP, sizeP, false);
+}
+
+#ifdef TARGET_USE_CFIPOP
+/* Initialize the DWARF-2 unwind information for this procedure. */
+void
+z80_tc_frame_initial_instructions (void)
+{
+  static int sp_regno = -1;
+
+  if (sp_regno < 0)
+    sp_regno = z80_tc_regname_to_dw2regnum ("sp");
+
+  cfi_add_CFA_def_cfa (sp_regno, 0);
+}
+
+int
+z80_tc_regname_to_dw2regnum (const char *regname)
+{
+  static const char *regs[] =
+    { /* same registers as for GDB */
+      "af", "bc", "de", "hl",
+      "sp", "pc", "ix", "iy",
+      "af_", "bc_", "de_", "hl_",
+      "ir"
+    };
+  unsigned i;
+
+  for (i = 0; i < ARRAY_SIZE(regs); ++i)
+    if (!strcasecmp (regs[i], regname))
+      return i;
+
+  return -1;
+}
+#endif
+
+/* Implement DWARF2_ADDR_SIZE.  */
+int
+z80_dwarf2_addr_size (const bfd *abfd)
+{
+  switch (bfd_get_mach (abfd))
+    {
+    case bfd_mach_ez80_adl:
+      return 3;
+    default:
+      return 2;
+    }
 }

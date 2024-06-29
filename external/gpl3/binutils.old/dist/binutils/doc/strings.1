@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "STRINGS 1"
-.TH STRINGS 1 "2020-04-03" "binutils-2.34" "GNU Development Tools"
+.TH STRINGS 1 "2022-12-24" "binutils-2.39" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -146,10 +146,11 @@ strings [\fB\-afovV\fR] [\fB\-\fR\fImin-len\fR]
         [\fB\-n\fR \fImin-len\fR] [\fB\-\-bytes=\fR\fImin-len\fR]
         [\fB\-t\fR \fIradix\fR] [\fB\-\-radix=\fR\fIradix\fR]
         [\fB\-e\fR \fIencoding\fR] [\fB\-\-encoding=\fR\fIencoding\fR]
+        [\fB\-U\fR \fImethod\fR] [\fB\-\-unicode=\fR\fImethod\fR]
         [\fB\-\fR] [\fB\-\-all\fR] [\fB\-\-print\-file\-name\fR]
         [\fB\-T\fR \fIbfdname\fR] [\fB\-\-target=\fR\fIbfdname\fR]
         [\fB\-w\fR] [\fB\-\-include\-all\-whitespace\fR]
-        [\fB\-s\fR] [\fB\-\-output\-separator\fR\fIsep_string\fR]
+        [\fB\-s\fR] [\fB\-\-output\-separator\fR \fIsep_string\fR]
         [\fB\-\-help\fR] [\fB\-\-version\fR] \fIfile\fR...
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -161,7 +162,7 @@ unprintable character.
 Depending upon how the strings program was configured it will default
 to either displaying all the printable sequences that it can find in
 each file, or only those sequences that are in loadable, initialized
-data sections.  If the file type in unrecognizable, or if strings is
+data sections.  If the file type is unrecognizable, or if strings is
 reading from stdin then it will always display all of the printable
 sequences that it can find.
 .PP
@@ -221,8 +222,13 @@ Print a summary of the program usage on the standard output and exit.
 .IP "\fB\-\-bytes=\fR\fImin-len\fR" 4
 .IX Item "--bytes=min-len"
 .PD
-Print sequences of characters that are at least \fImin-len\fR characters
-long, instead of the default 4.
+Print sequences of displayable characters that are at least
+\&\fImin-len\fR characters long.  If not specified a default minimum
+length of 4 is used.  The distinction between displayable and
+non-displayable characters depends upon the setting of the 
+\&\fB\-e\fR and \fB\-U\fR options.  Sequences are always terminated
+at control characters such as new-line and carriage-return, but not
+the tab character.
 .IP "\fB\-o\fR" 4
 .IX Item "-o"
 Like \fB\-t o\fR.  Some other versions of \fBstrings\fR have \fB\-o\fR
@@ -250,6 +256,31 @@ single\-8\-bit\-byte characters, \fBb\fR = 16\-bit bigendian, \fBl\fR =
 16\-bit littleendian, \fBB\fR = 32\-bit bigendian, \fBL\fR = 32\-bit
 littleendian.  Useful for finding wide character strings. (\fBl\fR
 and \fBb\fR apply to, for example, Unicode \s-1UTF\-16/UCS\-2\s0 encodings).
+.IP "\fB\-U\fR \fI[d|i|l|e|x|h]\fR" 4
+.IX Item "-U [d|i|l|e|x|h]"
+.PD 0
+.IP "\fB\-\-unicode=\fR\fI[default|invalid|locale|escape|hex|highlight]\fR" 4
+.IX Item "--unicode=[default|invalid|locale|escape|hex|highlight]"
+.PD
+Controls the display of \s-1UTF\-8\s0 encoded multibyte characters in strings.
+The default (\fB\-\-unicode=default\fR) is to give them no special
+treatment, and instead rely upon the setting of the
+\&\fB\-\-encoding\fR option.  The other values for this option
+automatically enable \fB\-\-encoding=S\fR.
+.Sp
+The \fB\-\-unicode=invalid\fR option treats them as non-graphic
+characters and hence not part of a valid string.  All the remaining
+options treat them as valid string characters.
+.Sp
+The \fB\-\-unicode=locale\fR option displays them in the current
+locale, which may or may not support \s-1UTF\-8\s0 encoding.  The
+\&\fB\-\-unicode=hex\fR option displays them as hex byte sequences
+enclosed between \fI<>\fR characters.  The \fB\-\-unicode=escape\fR
+option displays them as escape sequences (\fI\euxxxx\fR) and the
+\&\fB\-\-unicode=highlight\fR option displays them as escape sequences
+highlighted in red (if supported by the output device).  The colouring
+is intended to draw attention to the presence of unicode sequences
+where they might not be expected.
 .IP "\fB\-T\fR \fIbfdname\fR" 4
 .IX Item "-T bfdname"
 .PD 0
@@ -305,7 +336,7 @@ with a backslash.  The \fIfile\fR may itself contain additional
 and the Info entries for \fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1991\-2020 Free Software Foundation, Inc.
+Copyright (c) 1991\-2022 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3

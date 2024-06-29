@@ -1,5 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright (C) 1996-2020 Free Software Foundation, Inc.
+   Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -101,7 +101,7 @@ const pseudo_typeS md_pseudo_table[] =
 };
 
 /* Opcode hash table.  */
-static struct hash_control *mn10200_hash;
+static htab_t mn10200_hash;
 
 /* This table is sorted. Suitable for searching by a binary search.  */
 static const struct reg_name data_registers[] =
@@ -172,7 +172,7 @@ reg_name_search (const struct reg_name *regs,
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 data_register_name (expressionS *expressionP)
 {
   int reg_number;
@@ -198,12 +198,12 @@ data_register_name (expressionS *expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
   input_line_pointer = start;
-  return FALSE;
+  return false;
 }
 
 /* Summary of register_name().
@@ -216,7 +216,7 @@ data_register_name (expressionS *expressionP)
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 address_register_name (expressionS *expressionP)
 {
   int reg_number;
@@ -242,12 +242,12 @@ address_register_name (expressionS *expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
   input_line_pointer = start;
-  return FALSE;
+  return false;
 }
 
 /* Summary of register_name().
@@ -260,7 +260,7 @@ address_register_name (expressionS *expressionP)
   	Input_line_pointer->(next non-blank) char after operand, or is in
   	its original state.  */
 
-static bfd_boolean
+static bool
 other_register_name (expressionS *expressionP)
 {
   int reg_number;
@@ -286,12 +286,12 @@ other_register_name (expressionS *expressionP)
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
 
-      return TRUE;
+      return true;
     }
 
   /* Reset the line as if we had not done anything.  */
   input_line_pointer = start;
-  return FALSE;
+  return false;
 }
 
 void
@@ -317,7 +317,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 const char *
 md_atof (int type, char *litp, int *sizep)
 {
-  return ieee_md_atof (type, litp, sizep, FALSE);
+  return ieee_md_atof (type, litp, sizep, false);
 }
 
 void
@@ -382,7 +382,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       /* Create a fixup for the reversed conditional branch.  */
       sprintf (buf, ".%s_%ld", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
-	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       symbol_new (buf, sec, fragP->fr_next, 0),
 	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
@@ -439,7 +439,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       /* Create a fixup for the reversed conditional branch.  */
       sprintf (buf, ".%s_%ld", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
-	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       symbol_new (buf, sec, fragP->fr_next, 0),
 	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
@@ -528,7 +528,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       /* Create a fixup for the reversed conditional branch.  */
       sprintf (buf, ".%s_%ld", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
-	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       symbol_new (buf, sec, fragP->fr_next, 0),
 	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
@@ -609,7 +609,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       /* Create a fixup for the reversed conditional branch.  */
       sprintf (buf, ".%s_%ld", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
-	       symbol_new (buf, sec, 0, fragP->fr_next),
+	       symbol_new (buf, sec, fragP->fr_next, 0),
 	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
@@ -685,7 +685,7 @@ md_begin (void)
   const char *prev_name = "";
   const struct mn10200_opcode *op;
 
-  mn10200_hash = hash_new ();
+  mn10200_hash = str_htab_create ();
 
   /* Insert unique names into hash table.  The MN10200 instruction set
      has many identical opcode names that have different opcodes based
@@ -698,7 +698,7 @@ md_begin (void)
       if (strcmp (prev_name, op->name))
 	{
 	  prev_name = (char *) op->name;
-	  hash_insert (mn10200_hash, op->name, (char *) op);
+	  str_hash_insert (mn10200_hash, op->name, op, 0);
 	}
       op++;
     }
@@ -762,14 +762,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	/* FIXME: We should try more ways to resolve difference expressions
 	   here.  At least this is better than silently ignoring the
 	   subtrahend.  */
-	as_bad_where (fixp->fx_file, fixp->fx_line,
-		      _("can't resolve `%s' {%s section} - `%s' {%s section}"),
-		      fixp->fx_addsy ? S_GET_NAME (fixp->fx_addsy) : "0",
-		      segment_name (fixp->fx_addsy
-				    ? S_GET_SEGMENT (fixp->fx_addsy)
-				    : absolute_section),
-		      S_GET_NAME (fixp->fx_subsy),
-		      segment_name (S_GET_SEGMENT (fixp->fx_addsy)));
+	as_bad_subtract (fixp);
     }
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
@@ -890,7 +883,7 @@ md_assemble (char *str)
     *s++ = '\0';
 
   /* Find the first opcode with the proper name.  */
-  opcode = (struct mn10200_opcode *) hash_find (mn10200_hash, str);
+  opcode = (struct mn10200_opcode *) str_hash_find (mn10200_hash, str);
   if (opcode == NULL)
     {
       as_bad (_("Unrecognized opcode: `%s'"), str);
@@ -1103,7 +1096,7 @@ md_assemble (char *str)
 	      break;
 	    }
 
-keep_going:
+	keep_going:
 	  str = input_line_pointer;
 	  input_line_pointer = hold;
 

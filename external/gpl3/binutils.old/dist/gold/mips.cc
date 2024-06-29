@@ -1,6 +1,6 @@
 // mips.cc -- mips target support for gold.
 
-// Copyright (C) 2011-2020 Free Software Foundation, Inc.
+// Copyright (C) 2011-2022 Free Software Foundation, Inc.
 // Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
 //        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 // This file contains borrowed and adapted code from bfd/elfxx-mips.c.

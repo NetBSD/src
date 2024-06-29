@@ -1,5 +1,5 @@
 /* s390.h -- Header file for S390 opcode table
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -44,6 +44,7 @@ enum s390_opcode_cpu_val
     S390_OPCODE_Z13,
     S390_OPCODE_ARCH12,
     S390_OPCODE_ARCH13,
+    S390_OPCODE_ARCH14,
     S390_OPCODE_MAXCPU
   };
 

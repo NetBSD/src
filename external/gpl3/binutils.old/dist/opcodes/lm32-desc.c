@@ -3,7 +3,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2020 Free Software Foundation, Inc.
+Copyright (C) 1996-2022 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -26,6 +26,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #include "sysdep.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ansidecl.h"
 #include "bfd.h"
 #include "symcat.h"
@@ -223,8 +224,8 @@ const CGEN_HW_ENTRY lm32_cgen_hw_table[] =
   { "h-addr", HW_H_ADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-iaddr", HW_H_IADDR, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { "h-pc", HW_H_PC, CGEN_ASM_NONE, 0, { 0|A(PC), { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-gr", HW_H_GR, CGEN_ASM_KEYWORD, (PTR) & lm32_cgen_opval_h_gr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
-  { "h-csr", HW_H_CSR, CGEN_ASM_KEYWORD, (PTR) & lm32_cgen_opval_h_csr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-gr", HW_H_GR, CGEN_ASM_KEYWORD, & lm32_cgen_opval_h_gr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
+  { "h-csr", HW_H_CSR, CGEN_ASM_KEYWORD, & lm32_cgen_opval_h_csr, { 0, { { { (1<<MACH_BASE), 0 } } } } },
   { 0, 0, CGEN_ASM_NONE, 0, { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
 
@@ -275,79 +276,79 @@ const CGEN_OPERAND lm32_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", LM32_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_NIL] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* r0: register 0 */
   { "r0", LM32_OPERAND_R0, HW_H_GR, 25, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R0] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_R0] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* r1: register 1 */
   { "r1", LM32_OPERAND_R1, HW_H_GR, 20, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R1] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_R1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* r2: register 2 */
   { "r2", LM32_OPERAND_R2, HW_H_GR, 15, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_R2] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_R2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* shift: shift amout */
   { "shift", LM32_OPERAND_SHIFT, HW_H_UINT, 4, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_SHIFT] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_SHIFT] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* imm: signed immediate */
   { "imm", LM32_OPERAND_IMM, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* uimm: unsigned immediate */
   { "uimm", LM32_OPERAND_UIMM, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* branch: branch offset */
   { "branch", LM32_OPERAND_BRANCH, HW_H_IADDR, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_BRANCH] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_BRANCH] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* call: call offset */
   { "call", LM32_OPERAND_CALL, HW_H_IADDR, 25, 26,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CALL] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_CALL] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* csr: csr */
   { "csr", LM32_OPERAND_CSR, HW_H_CSR, 25, 5,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_CSR] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_CSR] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* user: user */
   { "user", LM32_OPERAND_USER, HW_H_UINT, 10, 11,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_USER] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_USER] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* exception: exception */
   { "exception", LM32_OPERAND_EXCEPTION, HW_H_UINT, 25, 26,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_EXCEPTION] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_EXCEPTION] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* hi16: high 16-bit immediate */
   { "hi16", LM32_OPERAND_HI16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* lo16: low 16-bit immediate */
   { "lo16", LM32_OPERAND_LO16, HW_H_UINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_UIMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_UIMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gp16: gp relative 16-bit immediate */
   { "gp16", LM32_OPERAND_GP16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* got16: got 16-bit immediate */
   { "got16", LM32_OPERAND_GOT16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gotoffhi16: got offset high 16-bit immediate */
   { "gotoffhi16", LM32_OPERAND_GOTOFFHI16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* gotofflo16: got offset low 16-bit immediate */
   { "gotofflo16", LM32_OPERAND_GOTOFFLO16, HW_H_SINT, 15, 16,
-    { 0, { (const PTR) &lm32_cgen_ifld_table[LM32_F_IMM] } },
+    { 0, { &lm32_cgen_ifld_table[LM32_F_IMM] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
-    { 0, { (const PTR) 0 } },
+    { 0, { 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } } } } }
 };
 
@@ -1032,6 +1033,7 @@ lm32_cgen_rebuild_tables (CGEN_CPU_TABLE *cd)
    CGEN_CPU_OPEN_MACHS:   bitmap of values in enum mach_attr
    CGEN_CPU_OPEN_BFDMACH: specify 1 mach using bfd name
    CGEN_CPU_OPEN_ENDIAN:  specify endian choice
+   CGEN_CPU_OPEN_INSN_ENDIAN: specify instruction endian choice
    CGEN_CPU_OPEN_END:     terminates arguments
 
    ??? Simultaneous multiple isas might not make sense, but it's not (yet)
@@ -1045,6 +1047,7 @@ lm32_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   CGEN_BITSET *isas = 0;  /* 0 = "unspecified" */
   unsigned int machs = 0; /* 0 = "unspecified" */
   enum cgen_endian endian = CGEN_ENDIAN_UNKNOWN;
+  enum cgen_endian insn_endian = CGEN_ENDIAN_UNKNOWN;
   va_list ap;
 
   if (! init_p)
@@ -1079,6 +1082,9 @@ lm32_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 	case CGEN_CPU_OPEN_ENDIAN :
 	  endian = va_arg (ap, enum cgen_endian);
 	  break;
+	case CGEN_CPU_OPEN_INSN_ENDIAN :
+	  insn_endian = va_arg (ap, enum cgen_endian);
+	  break;
 	default :
 	  opcodes_error_handler
 	    (/* xgettext:c-format */
@@ -1108,11 +1114,8 @@ lm32_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
   cd->isas = cgen_bitset_copy (isas);
   cd->machs = machs;
   cd->endian = endian;
-  /* FIXME: for the sparc case we can determine insn-endianness statically.
-     The worry here is where both data and insn endian can be independently
-     chosen, in which case this function will need another argument.
-     Actually, will want to allow for more arguments in the future anyway.  */
-  cd->insn_endian = endian;
+  cd->insn_endian
+    = (insn_endian == CGEN_ENDIAN_UNKNOWN ? endian : insn_endian);
 
   /* Table (re)builder.  */
   cd->rebuild_tables = lm32_cgen_rebuild_tables;
@@ -1162,18 +1165,10 @@ lm32_cgen_cpu_close (CGEN_CPU_DESC cd)
 	  regfree (CGEN_INSN_RX (insns));
     }
 
-  if (cd->macro_insn_table.init_entries)
-    free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
-
-  if (cd->insn_table.init_entries)
-    free ((CGEN_INSN *) cd->insn_table.init_entries);
-
-  if (cd->hw_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
-
-  if (cd->operand_table.entries)
-    free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
-
+  free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
+  free ((CGEN_INSN *) cd->insn_table.init_entries);
+  free ((CGEN_HW_ENTRY *) cd->hw_table.entries);
+  free ((CGEN_HW_ENTRY *) cd->operand_table.entries);
   free (cd);
 }
 

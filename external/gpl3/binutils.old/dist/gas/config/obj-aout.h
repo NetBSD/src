@@ -1,5 +1,5 @@
 /* obj-aout.h, a.out object file format for gas, the assembler.
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

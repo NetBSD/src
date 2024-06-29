@@ -1,5 +1,5 @@
 /* tc-dlx.c -- Assemble for the DLX
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -43,7 +43,7 @@
 #define RELOC_DLX_VTENTRY   BFD_RELOC_VTABLE_ENTRY
 
 /* handle of the OPCODE hash table */
-static struct hash_control *op_hash = NULL;
+static htab_t op_hash = NULL;
 
 struct machine_it
 {
@@ -92,14 +92,14 @@ insert_sreg (const char *regname, int regnum)
   char buf[80];
   int i;
 
-  symbol_table_insert (symbol_new (regname, reg_section, (valueT) regnum,
-				   &zero_address_frag));
+  symbol_table_insert (symbol_new (regname, reg_section,
+				   &zero_address_frag, regnum));
   for (i = 0; regname[i]; i++)
     buf[i] = ISLOWER (regname[i]) ? TOUPPER (regname[i]) : regname[i];
   buf[i] = '\0';
 
-  symbol_table_insert (symbol_new (buf, reg_section, (valueT) regnum,
-				   &zero_address_frag));
+  symbol_table_insert (symbol_new (buf, reg_section,
+				   &zero_address_frag, regnum));
 }
 
 /* Install symbol definitions for assorted special registers.
@@ -276,30 +276,18 @@ s_proc (int end_p)
 void
 md_begin (void)
 {
-  const char *retval = NULL;
-  int lose = 0;
   unsigned int i;
 
   /* Create a new hash table.  */
-  op_hash = hash_new ();
+  op_hash = str_htab_create ();
 
   /* Hash up all the opcodes for fast use later.  */
   for (i = 0; i < num_dlx_opcodes; i++)
     {
       const char *name = machine_opcodes[i].name;
-
-      retval = hash_insert (op_hash, name, (void *) &machine_opcodes[i]);
-
-      if (retval != NULL)
-	{
-	  fprintf (stderr, _("internal error: can't hash `%s': %s\n"),
-		   machine_opcodes[i].name, retval);
-	  lose = 1;
-	}
+      if (str_hash_insert (op_hash, name, &machine_opcodes[i], 0) != NULL)
+	as_fatal (_("duplicate %s"), name);
     }
-
-  if (lose)
-    as_fatal (_("Broken assembler.  No assembly attempted."));
 
   define_some_regs ();
 }
@@ -604,14 +592,14 @@ parse_operand (char *s, expressionS *operandp)
   the_insn.HI = the_insn.LO = 0;
 
   /* Search for %hi and %lo, make a mark and skip it.  */
-  if (strncmp (s, "%hi", 3) == 0)
+  if (startswith (s, "%hi"))
     {
       s += 3;
       the_insn.HI = 1;
     }
   else
     {
-      if (strncmp (s, "%lo", 3) == 0)
+      if (startswith (s, "%lo"))
 	{
 	  s += 3;
 	  the_insn.LO = 1;
@@ -694,7 +682,7 @@ machine_ip (char *str)
     }
 
   /* Hash the opcode, insn will have the string from opcode table.  */
-  if ((insn = (struct machine_opcode *) hash_find (op_hash, str)) == NULL)
+  if ((insn = (struct machine_opcode *) str_hash_find (op_hash, str)) == NULL)
     {
       /* Handle the ret and return macro here.  */
       if ((strcmp (str, "ret") == 0) || (strcmp (str, "return") == 0))
@@ -980,7 +968,7 @@ md_assemble (char *str)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 /* Write out big-endian.  */
@@ -990,7 +978,7 @@ md_number_to_chars (char *buf, valueT val, int n)
   number_to_chars_bigendian (buf, val, n);
 }
 
-bfd_boolean
+bool
 md_dlx_fix_adjustable (fixS *fixP)
 {
   /* We need the symbol name for the VTABLE entries.  */

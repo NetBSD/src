@@ -1,5 +1,5 @@
 /* srconv.c -- Sysroff conversion program
-   Copyright (C) 1994-2020 Free Software Foundation, Inc.
+   Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -316,6 +316,7 @@ wr_hd (struct coff_ofile *p)
   struct IT_hd hd;
 
   hd.spare1 = 0;
+  hd.spare2 = 0;
   if (bfd_get_file_flags (abfd) & EXEC_P)
     hd.mt = MTYPE_ABS_LM;
   else
@@ -1687,8 +1688,6 @@ prescan (struct coff_ofile *otree)
     }
 }
 
-char *program_name;
-
 ATTRIBUTE_NORETURN static void
 show_usage (FILE *ffile, int status)
 {
@@ -1724,12 +1723,10 @@ main (int ac, char **av)
   char *input_file;
   char *output_file;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -1831,10 +1828,7 @@ main (int ac, char **av)
       bfd_nonfatal (input_file);
 
       if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
-	{
-	  list_matching_formats (matching);
-	  free (matching);
-	}
+	list_matching_formats (matching);
       exit (1);
     }
 

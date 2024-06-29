@@ -1,5 +1,5 @@
 /* resrc.c -- read and write Windows rc files.
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -75,7 +75,8 @@
 
 /* The default preprocessor.  */
 
-#define DEFAULT_PREPROCESSOR "gcc -E -xc -DRC_INVOKED"
+#define DEFAULT_PREPROCESSOR_CMD "gcc"
+#define DEFAULT_PREPROCESSOR_ARGS "-E -xc -DRC_INVOKED"
 
 /* We read the directory entries in a cursor or icon file into
    instances of this structure.  */
@@ -200,7 +201,7 @@ run_cmd (char *cmd, const char *redir)
   int pid, wait_status, retcode;
   int i;
   const char **argv;
-  char *errmsg_fmt, *errmsg_arg;
+  char *errmsg_fmt = NULL, *errmsg_arg = NULL;
   char *temp_base = choose_temp_base ();
   int in_quote;
   char sep;
@@ -378,17 +379,13 @@ static FILE *
 look_for_default (char *cmd, const char *prefix, int end_prefix,
 		  const char *preprocargs, const char *filename)
 {
-  char *space;
   int found;
   struct stat s;
   const char *fnquotes = (filename_need_quotes (filename) ? "\"" : "");
 
   strcpy (cmd, prefix);
 
-  sprintf (cmd + end_prefix, "%s", DEFAULT_PREPROCESSOR);
-  space = strchr (cmd + end_prefix, ' ');
-  if (space)
-    *space = 0;
+  sprintf (cmd + end_prefix, "%s", DEFAULT_PREPROCESSOR_CMD);
 
   if (
 #if defined (__DJGPP__) || defined (__CYGWIN__) || defined (_WIN32)
@@ -410,10 +407,16 @@ look_for_default (char *cmd, const char *prefix, int end_prefix,
 	}
     }
 
-  strcpy (cmd, prefix);
+  if (filename_need_quotes (cmd))
+    {
+      char *cmd_copy = xmalloc (strlen (cmd));
+      strcpy (cmd_copy, cmd);
+      sprintf (cmd, "\"%s\"", cmd_copy);
+      free (cmd_copy);
+    }
 
-  sprintf (cmd + end_prefix, "%s %s %s%s%s",
-	   DEFAULT_PREPROCESSOR, preprocargs, fnquotes, filename, fnquotes);
+  sprintf (cmd + strlen (cmd), " %s %s %s%s%s",
+	   DEFAULT_PREPROCESSOR_ARGS, preprocargs, fnquotes, filename, fnquotes);
 
   if (verbose)
     fprintf (stderr, _("Using `%s'\n"), cmd);
@@ -490,10 +493,9 @@ read_rc_file (const char *filename, const char *preprocessor,
     {
       char *dash, *slash, *cp;
 
-      preprocessor = DEFAULT_PREPROCESSOR;
-
       cmd = xmalloc (strlen (program_name)
-		     + strlen (preprocessor)
+		     + strlen (DEFAULT_PREPROCESSOR_CMD)
+		     + strlen (DEFAULT_PREPROCESSOR_ARGS)
 		     + strlen (preprocargs)
 		     + strlen (filename)
 		     + strlen (fnquotes) * 2
@@ -674,7 +676,7 @@ get_long (FILE *e, const char *msg)
 static void
 get_data (FILE *e, bfd_byte *p, rc_uint_type c, const char *msg)
 {
-  rc_uint_type got; // $$$d
+  rc_uint_type got; /* $$$d */
 
   got = (rc_uint_type) fread (p, 1, c, e);
   if (got == c)
@@ -2841,6 +2843,10 @@ write_rc_menuitems (FILE *e, const rc_menuitem *menuitems, int menuex,
 	    fprintf (e, ", MENUBARBREAK");
 	  if ((mi->type & MENUITEM_MENUBREAK) != 0)
 	    fprintf (e, ", MENUBREAK");
+	  if ((mi->type & MENUITEM_OWNERDRAW) != 0)
+	    fprintf (e, ", OWNERDRAW");
+	  if ((mi->type & MENUITEM_BITMAP) != 0)
+	    fprintf (e, ", BITMAP");
 	}
       else
 	{

@@ -1,5 +1,5 @@
 /* ldver.h -- Header file for ldver.c.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

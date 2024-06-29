@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2022/12/23 17:09:41 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2024/06/29 16:36:03 christos Exp $
 
 BINDIR?=	/usr/bin
 NOGCCERROR=	# defined

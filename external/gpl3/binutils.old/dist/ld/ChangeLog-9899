@@ -1873,7 +1873,7 @@ Thu Mar 19 14:54:45 1998  Geoffrey Noer  <noer@cygnus.com>
 	section to avoid copying certain data on fork.  The linker used to
 	include this between __data_start__ and __data_end__, but that
 	breaks building the cygwin32 dll.  The fix is to rename the
-	section	".data_cygwin_nocopy" and explictly include it after
+	section	".data_cygwin_nocopy" and explicitly include it after
 	__data_end__.
 
 Wed Mar 18 09:42:24 1998  Nick Clifton  <nickc@cygnus.com>

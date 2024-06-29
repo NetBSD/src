@@ -1,5 +1,5 @@
 /* input_file.c - Deal with Input Files -
-   Copyright (C) 1987-2020 Free Software Foundation, Inc.
+   Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -170,20 +170,20 @@ input_file_open (const char *filename,
       c = getc (f_in);
       if (c == 'N')
 	{
-	  if (fgets (buf, sizeof (buf), f_in)
-	      && !strncmp (buf, "O_APP", 5) && ISSPACE (buf[5]))
+	  char *p = fgets (buf, sizeof (buf), f_in);
+	  if (p && startswith (p, "O_APP") && ISSPACE (p[5]))
 	    preprocess = 0;
-	  if (!strchr (buf, '\n'))
-	    ungetc ('#', f_in);	/* It was longer.  */
+	  if (!p || !strchr (p, '\n'))
+	    ungetc ('#', f_in);
 	  else
 	    ungetc ('\n', f_in);
 	}
       else if (c == 'A')
 	{
-	  if (fgets (buf, sizeof (buf), f_in)
-	      && !strncmp (buf, "PP", 2) && ISSPACE (buf[2]))
+	  char *p = fgets (buf, sizeof (buf), f_in);
+	  if (p && startswith (p, "PP") && ISSPACE (p[2]))
 	    preprocess = 1;
-	  if (!strchr (buf, '\n'))
+	  if (!p || !strchr (p, '\n'))
 	    ungetc ('#', f_in);
 	  else
 	    ungetc ('\n', f_in);

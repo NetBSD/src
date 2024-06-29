@@ -1,5 +1,5 @@
 /* simple-object.c -- simple routines to read and write object files.
-   Copyright (C) 2010-2020 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 This program is free software; you can redistribute it and/or modify it
@@ -293,10 +293,22 @@ handle_lto_debug_sections (const char *name, int rename)
   /* Copy over .note.GNU-stack section under the same name if present.  */
   else if (strcmp (name, ".note.GNU-stack") == 0)
     return strcpy (newname, name);
+  /* Copy over .note.gnu.property section under the same name if present.  */
+  else if (strcmp (name, ".note.gnu.property") == 0)
+    return strcpy (newname, name);
   /* Copy over .comment section under the same name if present.  Solaris
      ld uses them to relax its checking of ELF gABI access rules for
      COMDAT sections in objects produced by GCC.  */
   else if (strcmp (name, ".comment") == 0)
+    return strcpy (newname, name);
+  /* Copy over .GCC.command.line section under the same name if present.  */
+  else if (strcmp (name, ".GCC.command.line") == 0)
+    return strcpy (newname, name);
+  /* Copy over .ctf section under the same name if present.  */
+  else if (strcmp (name, ".ctf") == 0)
+    return strcpy (newname, name);
+  /* Copy over .BTF section under the same name if present.  */
+  else if (strcmp (name, ".BTF") == 0)
     return strcpy (newname, name);
   free (newname);
   return NULL;

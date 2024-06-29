@@ -1,5 +1,5 @@
 /* cr16-opc.c -- Table of opcodes for the CR16 processor.
-   Copyright (C) 2007-2020 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
    Contributed by M R Swami Reddy (MR.Swami.Reddy@nsc.com)
 
    This file is part of the GNU opcodes library.
@@ -493,7 +493,7 @@ const reg_entry cr16_regptab[] =
   REG_RP(9,8), REG_RP(10,9), REG_RP(11,10), REG_RP(12,11),
   REG((r12), 0xc, CR16_RP_REGTYPE),
   REG((r13), 0xd, CR16_RP_REGTYPE),
-  //REG((r14), 0xe, CR16_RP_REGTYPE),
+  /* REG((r14), 0xe, CR16_RP_REGTYPE), */
   REG((ra), 0xe, CR16_RP_REGTYPE),
   REG((sp), 0xf, CR16_RP_REGTYPE),
 };

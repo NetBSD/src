@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI, for BFD.
-   Copyright (C) 1995-2020 Free Software Foundation, Inc.
+   Copyright (C) 1995-2022 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -56,7 +56,7 @@
 
 #include "libpei.h"
 
-static bfd_boolean (*pe_saved_coff_bfd_print_private_bfd_data) (bfd *, void *) =
+static bool (*pe_saved_coff_bfd_print_private_bfd_data) (bfd *, void *) =
 #ifndef coff_bfd_print_private_bfd_data
      NULL;
 #else
@@ -64,10 +64,10 @@ static bfd_boolean (*pe_saved_coff_bfd_print_private_bfd_data) (bfd *, void *) =
 #undef coff_bfd_print_private_bfd_data
 #endif
 
-static bfd_boolean			pe_print_private_bfd_data (bfd *, void *);
+static bool pe_print_private_bfd_data (bfd *, void *);
 #define coff_bfd_print_private_bfd_data pe_print_private_bfd_data
 
-static bfd_boolean (*pe_saved_coff_bfd_copy_private_bfd_data) (bfd *, bfd *) =
+static bool (*pe_saved_coff_bfd_copy_private_bfd_data) (bfd *, bfd *) =
 #ifndef coff_bfd_copy_private_bfd_data
      NULL;
 #else
@@ -75,7 +75,7 @@ static bfd_boolean (*pe_saved_coff_bfd_copy_private_bfd_data) (bfd *, bfd *) =
 #undef coff_bfd_copy_private_bfd_data
 #endif
 
-static bfd_boolean		       pe_bfd_copy_private_bfd_data (bfd *, bfd *);
+static bool pe_bfd_copy_private_bfd_data (bfd *, bfd *);
 #define coff_bfd_copy_private_bfd_data pe_bfd_copy_private_bfd_data
 
 #define coff_mkobject	   pe_mkobject
@@ -122,7 +122,7 @@ typedef struct
 pe_ILF_vars;
 #endif /* COFF_IMAGE_WITH_PE */
 
-const bfd_target *coff_real_object_p
+bfd_cleanup coff_real_object_p
   (bfd *, unsigned, struct internal_filehdr *, struct internal_aouthdr *);
 
 #ifndef NO_COFF_RELOCS
@@ -231,7 +231,7 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
     {
       scnhdr_int->s_vaddr += pe_data (abfd)->pe_opthdr.ImageBase;
       /* Do not cut upper 32-bits for 64-bit vma.  */
-#ifndef COFF_WITH_pex64
+#if !defined(COFF_WITH_pex64) && !defined(COFF_WITH_peAArch64)
       scnhdr_int->s_vaddr &= 0xffffffff;
 #endif
     }
@@ -253,16 +253,16 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
 #endif
 }
 
-static bfd_boolean
+static bool
 pe_mkobject (bfd * abfd)
 {
   pe_data_type *pe;
-  bfd_size_type amt = sizeof (pe_data_type);
+  size_t amt = sizeof (pe_data_type);
 
   abfd->tdata.pe_obj_data = (struct pe_tdata *) bfd_zalloc (abfd, amt);
 
   if (abfd->tdata.pe_obj_data == 0)
-    return FALSE;
+    return false;
 
   pe = pe_data (abfd);
 
@@ -290,7 +290,7 @@ pe_mkobject (bfd * abfd)
   pe->dos_message[15] = 0x0;
 
   memset (& pe->pe_opthdr, 0, sizeof pe->pe_opthdr);
-  return TRUE;
+  return true;
 }
 
 /* Create the COFF backend specific information.  */
@@ -349,16 +349,16 @@ pe_mkobject_hook (bfd * abfd,
   return (void *) pe;
 }
 
-static bfd_boolean
+static bool
 pe_print_private_bfd_data (bfd *abfd, void * vfile)
 {
   FILE *file = (FILE *) vfile;
 
   if (!_bfd_XX_print_private_bfd_data_common (abfd, vfile))
-    return FALSE;
+    return false;
 
   if (pe_saved_coff_bfd_print_private_bfd_data == NULL)
-    return TRUE;
+    return true;
 
   fputc ('\n', file);
 
@@ -368,7 +368,7 @@ pe_print_private_bfd_data (bfd *abfd, void * vfile)
 /* Copy any private info we understand from the input bfd
    to the output bfd.  */
 
-static bfd_boolean
+static bool
 pe_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   /* PR binutils/716: Copy the large address aware flag.
@@ -380,12 +380,12 @@ pe_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
     pe_data (obfd)->real_flags |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
 
   if (!_bfd_XX_bfd_copy_private_bfd_data_common (ibfd, obfd))
-    return FALSE;
+    return false;
 
   if (pe_saved_coff_bfd_copy_private_bfd_data)
     return pe_saved_coff_bfd_copy_private_bfd_data (ibfd, obfd);
 
-  return TRUE;
+  return true;
 }
 
 #define coff_bfd_copy_private_section_data \
@@ -489,7 +489,7 @@ pe_ILF_make_a_symbol_reloc (pe_ILF_vars *		vars,
 
   internal->r_vaddr  = address;
   internal->r_symndx = sym_index;
-  internal->r_type   = entry->howto->type;
+  internal->r_type   = entry->howto ? entry->howto->type : 0;
 
   vars->relcount ++;
 
@@ -520,7 +520,7 @@ pe_ILF_save_relocs (pe_ILF_vars * vars,
     abort ();
 
   coff_section_data (vars->abfd, sec)->relocs = vars->int_reltab;
-  coff_section_data (vars->abfd, sec)->keep_relocs = TRUE;
+  coff_section_data (vars->abfd, sec)->keep_relocs = true;
 
   sec->relocation  = vars->reltab;
   sec->reloc_count = vars->relcount;
@@ -588,8 +588,8 @@ pe_ILF_make_a_symbol (pe_ILF_vars *  vars,
   /* Initialise the internal symbol structure.  */
   ent->u.syment.n_sclass	  = sclass;
   ent->u.syment.n_scnum		  = section->target_index;
-  ent->u.syment._n._n_n._n_offset = (bfd_hostptr_t) sym;
-  ent->is_sym = TRUE;
+  ent->u.syment._n._n_n._n_offset = (uintptr_t) sym;
+  ent->is_sym = true;
 
   sym->symbol.the_bfd = vars->abfd;
   sym->symbol.name    = vars->string_ptr;
@@ -622,6 +622,7 @@ pe_ILF_make_a_section (pe_ILF_vars * vars,
 {
   asection_ptr sec;
   flagword     flags;
+  intptr_t alignment;
 
   sec = bfd_make_section_old_way (vars->abfd, name);
   if (sec == NULL)
@@ -652,20 +653,18 @@ pe_ILF_make_a_section (pe_ILF_vars * vars,
   if (size & 1)
     vars->data --;
 
-# if (GCC_VERSION >= 3000)
   /* PR 18758: See note in pe_ILF_buid_a_bfd.  We must make sure that we
-     preserve host alignment requirements.  We test 'size' rather than
-     vars.data as we cannot perform binary arithmetic on pointers.  We assume
-     that vars.data was sufficiently aligned upon entry to this function.
-     The BFD_ASSERTs in this functions will warn us if we run out of room,
-     but we should already have enough padding built in to ILF_DATA_SIZE.  */
-  {
-    unsigned int alignment = __alignof__ (struct coff_section_tdata);
-
-    if (size & (alignment - 1))
-      vars->data += alignment - (size & (alignment - 1));
-  }
+     preserve host alignment requirements.  The BFD_ASSERTs in this
+     functions will warn us if we run out of room, but we should
+     already have enough padding built in to ILF_DATA_SIZE.  */
+#if GCC_VERSION >= 3000
+  alignment = __alignof__ (struct coff_section_tdata);
+#else
+  alignment = 8;
 #endif
+  vars->data
+    = (bfd_byte *) (((intptr_t) vars->data + alignment - 1) & -alignment);
+
   /* Create a coff_section_tdata structure for our use.  */
   sec->used_by_bfd = (struct coff_section_tdata *) vars->data;
   vars->data += sizeof (struct coff_section_tdata);
@@ -700,7 +699,7 @@ typedef struct
 }
 jump_table;
 
-static jump_table jtab[] =
+static const jump_table jtab[] =
 {
 #ifdef I386MAGIC
   { I386MAGIC,
@@ -739,6 +738,16 @@ static jump_table jtab[] =
   },
 #endif
 
+#ifdef AARCH64MAGIC
+/* We don't currently support jumping to DLLs, so if
+   someone does try emit a runtime trap.  Through UDF #0.  */
+  { AARCH64MAGIC,
+    { 0x00, 0x00, 0x00, 0x00 },
+    4, 0
+  },
+
+#endif
+
 #ifdef  ARMPEMAGIC
   { ARMPEMAGIC,
     { 0x00, 0xc0, 0x9f, 0xe5, 0x00, 0xf0,
@@ -763,7 +772,7 @@ static jump_table jtab[] =
 
 /* Build a full BFD from the information supplied in a ILF object.  */
 
-static bfd_boolean
+static bool
 pe_ILF_build_a_bfd (bfd *	    abfd,
 		    unsigned int    magic,
 		    char *	    symbol_name,
@@ -779,6 +788,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
   asection_ptr		   id4, id5, id6 = NULL, text = NULL;
   coff_symbol_type **	   imp_sym;
   unsigned int		   imp_index;
+  intptr_t alignment;
 
   /* Decode and verify the types field of the ILF structure.  */
   import_type = types & 0x3;
@@ -795,13 +805,13 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unhandled import type; %x"),
 			  abfd, import_type);
-      return FALSE;
+      return false;
 
     default:
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unrecognized import type; %x"),
 			  abfd, import_type);
-      return FALSE;
+      return false;
     }
 
   switch (import_name_type)
@@ -816,7 +826,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unrecognized import name type; %x"),
 			  abfd, import_name_type);
-      return FALSE;
+      return false;
     }
 
   /* Initialise local variables.
@@ -829,7 +839,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
   vars.bim
     = (struct bfd_in_memory *) bfd_malloc ((bfd_size_type) sizeof (*vars.bim));
   if (vars.bim == NULL)
-    return FALSE;
+    return false;
 
   ptr = (bfd_byte *) bfd_zmalloc ((bfd_size_type) ILF_DATA_SIZE);
   vars.bim->buffer = ptr;
@@ -874,23 +884,17 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
 
   /* The remaining space in bim->buffer is used
      by the pe_ILF_make_a_section() function.  */
-# if (GCC_VERSION >= 3000)
+
   /* PR 18758: Make sure that the data area is sufficiently aligned for
-     pointers on the host.  __alignof__ is a gcc extension, hence the test
-     above.  For other compilers we will have to assume that the alignment is
-     unimportant, or else extra code can be added here and in
-     pe_ILF_make_a_section.
-
-     Note - we cannot test 'ptr' directly as it is illegal to perform binary
-     arithmetic on pointers, but we know that the strings section is the only
-     one that might end on an unaligned boundary.  */
-  {
-    unsigned int alignment = __alignof__ (char *);
-
-    if (SIZEOF_ILF_STRINGS & (alignment - 1))
-      ptr += alignment - (SIZEOF_ILF_STRINGS & (alignment - 1));
-  }
+     struct coff_section_tdata.  __alignof__ is a gcc extension, hence
+     the test of GCC_VERSION.  For other compilers we assume 8 byte
+     alignment.  */
+#if GCC_VERSION >= 3000
+  alignment = __alignof__ (struct coff_section_tdata);
+#else
+  alignment = 8;
 #endif
+  ptr = (bfd_byte *) (((intptr_t) ptr + alignment - 1) & -alignment);
 
   vars.data = ptr;
   vars.abfd = abfd;
@@ -916,7 +920,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
 	/* See PR 20907 for a reproducer.  */
 	goto error_return;
 
-#ifdef COFF_WITH_pex64
+#if defined(COFF_WITH_pex64) || defined(COFF_WITH_peAArch64)
       ((unsigned int *) id4->contents)[0] = ordinal;
       ((unsigned int *) id4->contents)[1] = 0x80000000;
       ((unsigned int *) id5->contents)[0] = ordinal;
@@ -1120,29 +1124,28 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
   obj_raw_syment_count (abfd) = vars.sym_index;
 
   obj_coff_external_syms (abfd) = (void *) vars.esym_table;
-  obj_coff_keep_syms (abfd) = TRUE;
+  obj_coff_keep_syms (abfd) = true;
 
   obj_convert (abfd) = vars.sym_table;
   obj_conv_table_size (abfd) = vars.sym_index;
 
   obj_coff_strings (abfd) = vars.string_table;
-  obj_coff_keep_strings (abfd) = TRUE;
+  obj_coff_keep_strings (abfd) = true;
 
   abfd->flags |= HAS_SYMS;
 
-  return TRUE;
+  return true;
 
  error_return:
-  if (vars.bim->buffer != NULL)
-    free (vars.bim->buffer);
+  free (vars.bim->buffer);
   free (vars.bim);
-  return FALSE;
+  return false;
 }
 
 /* We have detected a Image Library Format archive element.
    Decode the element and return the appropriate target.  */
 
-static const bfd_target *
+static bfd_cleanup
 pe_ILF_object_p (bfd * abfd)
 {
   bfd_byte	  buffer[14];
@@ -1213,6 +1216,12 @@ pe_ILF_object_p (bfd * abfd)
 #endif
       break;
 
+    case IMAGE_FILE_MACHINE_ARM64:
+#ifdef AARCH64MAGIC
+      magic = AARCH64MAGIC;
+#endif
+      break;
+
     case IMAGE_FILE_MACHINE_THUMB:
 #ifdef THUMBPEMAGIC
       {
@@ -1273,15 +1282,9 @@ pe_ILF_object_p (bfd * abfd)
   /* ptr += 2; */
 
   /* Now read in the two strings that follow.  */
-  ptr = (bfd_byte *) bfd_alloc (abfd, size);
+  ptr = (bfd_byte *) _bfd_alloc_and_read (abfd, size, size);
   if (ptr == NULL)
     return NULL;
-
-  if (bfd_bread (ptr, size, abfd) != size)
-    {
-      bfd_release (abfd, ptr);
-      return NULL;
-    }
 
   symbol_name = (char *) ptr;
   /* See PR 20905 for an example of where the strnlen is necessary.  */
@@ -1306,7 +1309,7 @@ pe_ILF_object_p (bfd * abfd)
       return NULL;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 static void
@@ -1356,8 +1359,7 @@ pe_bfd_read_buildid (bfd *abfd)
   /* Read the whole section. */
   if (!bfd_malloc_and_get_section (abfd, section, &data))
     {
-      if (data != NULL)
-	free (data);
+      free (data);
       return;
     }
 
@@ -1400,7 +1402,7 @@ pe_bfd_read_buildid (bfd *abfd)
   free (data);
 }
 
-static const bfd_target *
+static bfd_cleanup
 pe_bfd_object_p (bfd * abfd)
 {
   bfd_byte buffer[6];
@@ -1408,9 +1410,9 @@ pe_bfd_object_p (bfd * abfd)
   struct external_PEI_IMAGE_hdr image_hdr;
   struct internal_filehdr internal_f;
   struct internal_aouthdr internal_a;
-  file_ptr opt_hdr_size;
+  bfd_size_type opt_hdr_size;
   file_ptr offset;
-  const bfd_target *result;
+  bfd_cleanup result;
 
   /* Detect if this a Microsoft Import Library Format element.  */
   /* First read the beginning of the header.  */
@@ -1488,18 +1490,17 @@ pe_bfd_object_p (bfd * abfd)
   if (opt_hdr_size != 0)
     {
       bfd_size_type amt = opt_hdr_size;
-      void * opthdr;
+      bfd_byte * opthdr;
 
       /* PR 17521 file: 230-131433-0.004.  */
       if (amt < sizeof (PEAOUTHDR))
 	amt = sizeof (PEAOUTHDR);
 
-      opthdr = bfd_zalloc (abfd, amt);
+      opthdr = _bfd_alloc_and_read (abfd, amt, opt_hdr_size);
       if (opthdr == NULL)
 	return NULL;
-      if (bfd_bread (opthdr, opt_hdr_size, abfd)
-	  != (bfd_size_type) opt_hdr_size)
-	return NULL;
+      if (amt > opt_hdr_size)
+	memset (opthdr + opt_hdr_size, 0, amt - opt_hdr_size);
 
       bfd_set_error (bfd_error_no_error);
       bfd_coff_swap_aouthdr_in (abfd, opthdr, & internal_a);

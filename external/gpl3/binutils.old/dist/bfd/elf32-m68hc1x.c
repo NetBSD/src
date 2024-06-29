@@ -1,5 +1,5 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2020 Free Software Foundation, Inc.
+   Copyright (C) 1999-2022 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,7 +20,6 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "alloca-conf.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
@@ -46,7 +45,7 @@ static void m68hc11_elf_set_symbol (bfd* abfd, struct bfd_link_info *info,
 				    const char* name, bfd_vma value,
 				    asection* sec);
 
-static bfd_boolean m68hc11_elf_export_one_stub
+static bool m68hc11_elf_export_one_stub
   (struct bfd_hash_entry *gen_entry, void *in_arg);
 
 static void scan_sections_for_abi (bfd*, asection*, void *);
@@ -54,7 +53,7 @@ static void scan_sections_for_abi (bfd*, asection*, void *);
 struct m68hc11_scan_param
 {
    struct m68hc11_page_info* pinfo;
-   bfd_boolean use_memory_banks;
+   bool use_memory_banks;
 };
 
 
@@ -77,7 +76,7 @@ struct m68hc11_elf_link_hash_table*
 m68hc11_elf_hash_table_create (bfd *abfd)
 {
   struct m68hc11_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct m68hc11_elf_link_hash_table);
+  size_t amt = sizeof (struct m68hc11_elf_link_hash_table);
 
   ret = (struct m68hc11_elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct m68hc11_elf_link_hash_table *) NULL)
@@ -158,7 +157,7 @@ m68hc12_add_stub (const char *stub_name, asection *section,
 
   /* Enter this entry into the linker stub hash table.  */
   stub_entry = m68hc12_stub_hash_lookup (htab->stub_hash_table, stub_name,
-					 TRUE, FALSE);
+					 true, false);
   if (stub_entry == NULL)
     {
       /* xgettext:c-format */
@@ -182,7 +181,7 @@ m68hc12_add_stub (const char *stub_name, asection *section,
    file.  We use it for identify far symbols and force a loading of
    the trampoline handler.  */
 
-bfd_boolean
+bool
 elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 			       Elf_Internal_Sym *sym,
 			       const char **namep ATTRIBUTE_UNUSED,
@@ -196,7 +195,7 @@ elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
       h = (struct elf_link_hash_entry *)
 	bfd_link_hash_lookup (info->hash, "__far_trampoline",
-			      FALSE, FALSE, FALSE);
+			      false, false, false);
       if (h == NULL)
 	{
 	  struct bfd_link_hash_entry* entry = NULL;
@@ -206,11 +205,11 @@ elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 					    BSF_GLOBAL,
 					    bfd_und_section_ptr,
 					    (bfd_vma) 0, (const char*) NULL,
-					    FALSE, FALSE, &entry);
+					    false, false, &entry);
 	}
 
     }
-  return TRUE;
+  return true;
 }
 
 /* Merge non-visibility st_other attributes, STO_M68HC12_FAR and
@@ -218,12 +217,12 @@ elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
 void
 elf32_m68hc11_merge_symbol_attribute (struct elf_link_hash_entry *h,
-				      const Elf_Internal_Sym *isym,
-				      bfd_boolean definition,
-				      bfd_boolean dynamic ATTRIBUTE_UNUSED)
+				      unsigned int st_other,
+				      bool definition,
+				      bool dynamic ATTRIBUTE_UNUSED)
 {
   if (definition)
-    h->other = ((isym->st_other & ~ELF_ST_VISIBILITY (-1))
+    h->other = ((st_other & ~ELF_ST_VISIBILITY (-1))
 		| ELF_ST_VISIBILITY (h->other));
 }
 
@@ -241,7 +240,7 @@ elf32_m68hc11_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
   unsigned int top_id, top_index;
   asection *section;
   asection **input_list, **list;
-  bfd_size_type amt;
+  size_t amt;
   asection *text_section;
   struct m68hc11_elf_link_hash_table *htab;
 
@@ -325,7 +324,7 @@ elf32_m68hc11_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
    PC-relative calls to a target that is unreachable with a "bl"
    instruction.  */
 
-bfd_boolean
+bool
 elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 			  struct bfd_link_info *info,
 			  asection * (*add_stub_section) (const char*, asection*))
@@ -334,12 +333,12 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
   asection *section;
   Elf_Internal_Sym *local_syms, **all_local_syms;
   unsigned int bfd_indx, bfd_count;
-  bfd_size_type amt;
+  size_t amt;
   asection *stub_sec;
   struct m68hc11_elf_link_hash_table *htab = m68hc11_elf_hash_table (info);
 
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   /* Stash our params away.  */
   htab->stub_bfd = stub_bfd;
@@ -357,7 +356,7 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
   amt = sizeof (Elf_Internal_Sym *) * bfd_count;
   all_local_syms = (Elf_Internal_Sym **) bfd_zmalloc (amt);
   if (all_local_syms == NULL)
-    return FALSE;
+    return false;
 
   /* Walk over all the input BFDs, swapping in local symbols.  */
   for (input_bfd = info->input_bfds, bfd_indx = 0;
@@ -384,7 +383,7 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
       if (local_syms == NULL)
 	{
 	  free (all_local_syms);
-	  return FALSE;
+	  return false;
 	}
 
       all_local_syms[bfd_indx] = local_syms;
@@ -459,7 +458,7 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 		{
 		  /* It's a local symbol.  */
 		  Elf_Internal_Shdr *hdr;
-		  bfd_boolean is_far;
+		  bool is_far;
 
 		  sym = local_syms + r_indx;
 		  is_far = (sym && (sym->st_other & STO_M68HC12_FAR));
@@ -524,7 +523,7 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
 	      stub_entry = m68hc12_stub_hash_lookup
 		(htab->stub_hash_table,
 		 stub_name,
-		 FALSE, FALSE);
+		 false, false);
 	      if (stub_entry == NULL)
 		{
 		  if (add_stub_section == 0)
@@ -564,27 +563,27 @@ elf32_m68hc11_size_stubs (bfd *output_bfd, bfd *stub_bfd,
       bfd_hash_traverse (htab->stub_hash_table, htab->size_one_stub, htab);
     }
   free (all_local_syms);
-  return TRUE;
+  return true;
 
  error_ret_free_local:
   free (all_local_syms);
-  return FALSE;
+  return false;
 }
 
 /* Export the trampoline addresses in the symbol table.  */
-static bfd_boolean
+static bool
 m68hc11_elf_export_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 {
   struct bfd_link_info *info;
   struct m68hc11_elf_link_hash_table *htab;
   struct elf32_m68hc11_stub_hash_entry *stub_entry;
   char* name;
-  bfd_boolean result;
+  bool result;
 
   info = (struct bfd_link_info *) in_arg;
   htab = m68hc11_elf_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   /* Massage our args to the form they really have.  */
   stub_entry = (struct elf32_m68hc11_stub_hash_entry *) gen_entry;
@@ -611,7 +610,7 @@ m68hc11_elf_set_symbol (bfd *abfd, struct bfd_link_info *info,
   struct elf_link_hash_entry *h;
 
   h = (struct elf_link_hash_entry *)
-    bfd_link_hash_lookup (info->hash, name, FALSE, FALSE, FALSE);
+    bfd_link_hash_lookup (info->hash, name, false, false, false);
   if (h == NULL)
     {
       _bfd_generic_link_add_one_symbol (info, abfd,
@@ -620,7 +619,7 @@ m68hc11_elf_set_symbol (bfd *abfd, struct bfd_link_info *info,
 					sec,
 					value,
 					(const char*) NULL,
-					TRUE, FALSE, NULL);
+					true, false, NULL);
     }
   else
     {
@@ -636,7 +635,7 @@ m68hc11_elf_set_symbol (bfd *abfd, struct bfd_link_info *info,
    table.  This function is called via m68hc12elf_finish in the
    linker.  */
 
-bfd_boolean
+bool
 elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
 {
   asection *stub_sec;
@@ -647,7 +646,7 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
   m68hc11_elf_get_bank_parameters (info);
   htab = m68hc11_elf_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   for (stub_sec = htab->stub_bfd->sections;
        stub_sec != NULL;
@@ -659,7 +658,7 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
       size = stub_sec->size;
       stub_sec->contents = (unsigned char *) bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
-	return FALSE;
+	return false;
       stub_sec->size = 0;
     }
 
@@ -672,7 +671,7 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
      are mapped.  This is used by gdb and the simulator to obtain
      the information.  It can be used by programs to burn the eprom
      at the good addresses.  */
-  param.use_memory_banks = FALSE;
+  param.use_memory_banks = false;
   param.pinfo = &htab->pinfo;
   bfd_map_over_sections (abfd, scan_sections_for_abi, &param);
   if (param.use_memory_banks)
@@ -688,7 +687,7 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
 			      bfd_abs_section_ptr);
     }
 
-  return TRUE;
+  return true;
 }
 
 void
@@ -714,7 +713,7 @@ m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
   pinfo->bank_size = 1 << M68HC12_BANK_SHIFT;
 
   h = bfd_link_hash_lookup (info->hash, BFD_M68HC11_BANK_START_NAME,
-			    FALSE, FALSE, TRUE);
+			    false, false, true);
   if (h != (struct bfd_link_hash_entry*) NULL
       && h->type == bfd_link_hash_defined)
     pinfo->bank_physical = (h->u.def.value
@@ -722,7 +721,7 @@ m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
 			    + h->u.def.section->output_offset);
 
   h = bfd_link_hash_lookup (info->hash, BFD_M68HC11_BANK_VIRTUAL_NAME,
-			    FALSE, FALSE, TRUE);
+			    false, false, true);
   if (h != (struct bfd_link_hash_entry*) NULL
       && h->type == bfd_link_hash_defined)
     pinfo->bank_virtual = (h->u.def.value
@@ -730,7 +729,7 @@ m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
 			   + h->u.def.section->output_offset);
 
   h = bfd_link_hash_lookup (info->hash, BFD_M68HC11_BANK_SIZE_NAME,
-			    FALSE, FALSE, TRUE);
+			    false, false, true);
   if (h != (struct bfd_link_hash_entry*) NULL
       && h->type == bfd_link_hash_defined)
     pinfo->bank_size = (h->u.def.value
@@ -745,8 +744,8 @@ m68hc11_elf_get_bank_parameters (struct bfd_link_info *info)
   pinfo->bank_physical_end = pinfo->bank_physical + pinfo->bank_size;
   pinfo->bank_param_initialized = 1;
 
-  h = bfd_link_hash_lookup (info->hash, "__far_trampoline", FALSE,
-			    FALSE, TRUE);
+  h = bfd_link_hash_lookup (info->hash, "__far_trampoline", false,
+			    false, true);
   if (h != (struct bfd_link_hash_entry*) NULL
       && h->type == bfd_link_hash_defined)
     pinfo->trampoline_addr = (h->u.def.value
@@ -845,7 +844,7 @@ m68hc11_elf_special_reloc (bfd *abfd ATTRIBUTE_UNUSED,
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
 
-bfd_boolean
+bool
 elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			    asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -855,7 +854,7 @@ elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
   const Elf_Internal_Rela *	rel_end;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
@@ -884,22 +883,22 @@ elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	   Reconstruct it for later use during GC.  */
 	case R_M68HC11_GNU_VTINHERIT:
 	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-	    return FALSE;
+	    return false;
 	  break;
 
 	/* This relocation describes which C++ vtable entries are actually
 	   used.  Record for later use during GC.  */
 	case R_M68HC11_GNU_VTENTRY:
 	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-	    return FALSE;
+	    return false;
 	  break;
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean ATTRIBUTE_PRINTF (6, 7)
+static bool ATTRIBUTE_PRINTF (6, 7)
 reloc_warning (struct bfd_link_info *info, const char *name, bfd *input_bfd,
 	       asection *input_section, const Elf_Internal_Rela *rel,
 	       const char *fmt, ...)
@@ -914,16 +913,16 @@ reloc_warning (struct bfd_link_info *info, const char *name, bfd *input_bfd,
   if (ret < 0)
     {
       bfd_set_error (bfd_error_no_memory);
-      return FALSE;
+      return false;
     }
   info->callbacks->warning (info, buf, name, input_bfd, input_section,
 			    rel->r_offset);
   free (buf);
-  return TRUE;
+  return true;
 }
 
 /* Relocate a 68hc11/68hc12 ELF section.  */
-bfd_boolean
+int
 elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 				struct bfd_link_info *info,
 				bfd *input_bfd, asection *input_section,
@@ -946,7 +945,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   htab = m68hc11_elf_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
   /* Get memory bank parameters.  */
   m68hc11_elf_get_bank_parameters (info);
@@ -969,9 +968,9 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_vma phys_addr;
       bfd_vma insn_addr;
       bfd_vma insn_page;
-      bfd_boolean is_far = FALSE;
-      bfd_boolean is_xgate_symbol = FALSE;
-      bfd_boolean is_section_symbol = FALSE;
+      bool is_far = false;
+      bool is_xgate_symbol = false;
+      bool is_section_symbol = false;
       struct elf_link_hash_entry *h;
       bfd_vma val;
       const char *msg;
@@ -1003,7 +1002,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bool unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -1044,13 +1043,13 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  struct elf32_m68hc11_stub_hash_entry* stub;
 
 	  stub = m68hc12_stub_hash_lookup (htab->stub_hash_table,
-					   name, FALSE, FALSE);
+					   name, false, false);
 	  if (stub)
 	    {
 	      relocation = stub->stub_offset
 		+ stub->stub_sec->output_section->vma
 		+ stub->stub_sec->output_offset;
-	      is_far = FALSE;
+	      is_far = false;
 	    }
 	}
 
@@ -1136,7 +1135,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 				  _("reference to the far symbol `%s' using a "
 				    "wrong relocation may result in incorrect "
 				    "execution"), name))
-		return FALSE;
+		return false;
 	    }
 
 	  /* Get virtual address of instruction having the relocation.  */
@@ -1169,7 +1168,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 					"you must manually offset the address, "
 					"and possibly manage the page, in your "
 					"code."), (long) phys_addr))
-		    return FALSE;
+		    return false;
 		  break;
 		}
 	    }
@@ -1188,7 +1187,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 				  (long) insn_page,
 				  (long) m68hc11_phys_addr (pinfo, insn_addr),
 				  (long) insn_addr))
-		return FALSE;
+		return false;
 	      break;
 	    }
 
@@ -1199,7 +1198,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 				    "in the normal address space at %04lx"),
 				  (long) phys_page, (long) phys_addr,
 				  (long) insn_addr))
-		return FALSE;
+		return false;
 	      relocation = phys_addr;
 	      break;
 	    }
@@ -1235,7 +1234,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 					"shared RAM(0x2000-0x4000), therefore "
 					"you must manually offset the address "
 					"in your code"), (long) phys_addr))
-		    return FALSE;
+		    return false;
 		  break;
 		}
 	    }
@@ -1265,7 +1264,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	    case bfd_reloc_undefined:
 	      (*info->callbacks->undefined_symbol)
-		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+		(info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -1292,42 +1291,42 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 
 
 /* Set and control ELF flags in ELF header.  */
 
-bfd_boolean
+bool
 _bfd_m68hc11_elf_set_private_flags (bfd *abfd, flagword flags)
 {
   BFD_ASSERT (!elf_flags_init (abfd)
 	      || elf_elfheader (abfd)->e_flags == flags);
 
   elf_elfheader (abfd)->e_flags = flags;
-  elf_flags_init (abfd) = TRUE;
-  return TRUE;
+  elf_flags_init (abfd) = true;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-bfd_boolean
+bool
 _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
   flagword old_flags;
   flagword new_flags;
-  bfd_boolean ok = TRUE;
+  bool ok = true;
 
   /* Check if we have the same endianness */
   if (!_bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   elf_elfheader (obfd)->e_flags |= new_flags & EF_M68HC11_ABI;
@@ -1335,7 +1334,7 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
   if (! elf_flags_init (obfd))
     {
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = new_flags;
       elf_elfheader (obfd)->e_ident[EI_CLASS]
 	= elf_elfheader (ibfd)->e_ident[EI_CLASS];
@@ -1345,10 +1344,10 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	{
 	  if (! bfd_set_arch_mach (obfd, bfd_get_arch (ibfd),
 				   bfd_get_mach (ibfd)))
-	    return FALSE;
+	    return false;
 	}
 
-      return TRUE;
+      return true;
     }
 
   /* Check ABI compatibility.  */
@@ -1357,14 +1356,14 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("%pB: linking files compiled for 16-bit integers (-mshort) "
 	   "and others for 32-bit integers"), ibfd);
-      ok = FALSE;
+      ok = false;
     }
   if ((new_flags & E_M68HC11_F64) != (old_flags & E_M68HC11_F64))
     {
       _bfd_error_handler
 	(_("%pB: linking files compiled for 32-bit double (-fshort-double) "
 	   "and others for 64-bit double"), ibfd);
-      ok = FALSE;
+      ok = false;
     }
 
   /* Processor compatibility.  */
@@ -1373,7 +1372,7 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       _bfd_error_handler
 	(_("%pB: linking files compiled for HCS12 with "
 	   "others compiled for HC12"), ibfd);
-      ok = FALSE;
+      ok = false;
     }
   new_flags = ((new_flags & ~EF_M68HC11_MACH_MASK)
 	       | (EF_M68HC11_MERGE_MACH (new_flags, old_flags)));
@@ -1390,19 +1389,19 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	/* xgettext:c-format */
 	(_("%pB: uses different e_flags (%#x) fields than previous modules (%#x)"),
 	 ibfd, new_flags, old_flags);
-      ok = FALSE;
+      ok = false;
     }
 
   if (! ok)
     {
       bfd_set_error (bfd_error_bad_value);
-      return FALSE;
+      return false;
     }
 
-  return TRUE;
+  return true;
 }
 
-bfd_boolean
+bool
 _bfd_m68hc11_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -1442,7 +1441,7 @@ _bfd_m68hc11_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 
   fputc ('\n', file);
 
-  return TRUE;
+  return true;
 }
 
 static void scan_sections_for_abi (bfd *abfd ATTRIBUTE_UNUSED,
@@ -1451,30 +1450,30 @@ static void scan_sections_for_abi (bfd *abfd ATTRIBUTE_UNUSED,
   struct m68hc11_scan_param* p = (struct m68hc11_scan_param*) arg;
 
   if (asect->vma >= p->pinfo->bank_virtual)
-    p->use_memory_banks = TRUE;
+    p->use_memory_banks = true;
 }
 
 /* Tweak the OSABI field of the elf header.  */
 
-bfd_boolean
+bool
 elf32_m68hc11_init_file_header (bfd *abfd, struct bfd_link_info *link_info)
 {
   struct m68hc11_scan_param param;
   struct m68hc11_elf_link_hash_table *htab;
 
   if (!_bfd_elf_init_file_header (abfd, link_info))
-    return FALSE;
+    return false;
 
   if (link_info == NULL)
-    return TRUE;
+    return true;
 
   htab = m68hc11_elf_hash_table (link_info);
   if (htab == NULL)
-    return TRUE;
+    return true;
 
   m68hc11_elf_get_bank_parameters (link_info);
 
-  param.use_memory_banks = FALSE;
+  param.use_memory_banks = false;
   param.pinfo = & htab->pinfo;
 
   bfd_map_over_sections (abfd, scan_sections_for_abi, &param);
@@ -1486,5 +1485,5 @@ elf32_m68hc11_init_file_header (bfd *abfd, struct bfd_link_info *link_info)
       i_ehdrp = elf_elfheader (abfd);
       i_ehdrp->e_flags |= E_M68HC12_BANKS;
     }
-  return TRUE;
+  return true;
 }

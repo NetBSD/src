@@ -1,5 +1,5 @@
 /* tc-hppa.c -- Assemble for the PA
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -550,7 +550,7 @@ static struct call_info *last_call_info;
 static struct call_desc last_call_desc;
 
 /* handle of the OPCODE hash table */
-static struct hash_control *op_hash = NULL;
+static htab_t op_hash = NULL;
 
 /* These characters can be suffixes of opcode names and they may be
    followed by meaningful whitespace.  We don't include `,' and `!'
@@ -1322,7 +1322,7 @@ pa_parse_nullif (char **s)
 const char *
 md_atof (int type, char *litP, int *sizeP)
 {
-  return ieee_md_atof (type, litP, sizeP, TRUE);
+  return ieee_md_atof (type, litP, sizeP, true);
 }
 
 /* Write out big-endian.  */
@@ -2029,7 +2029,7 @@ pa_parse_number (char **s, int is_float)
   symbolS *sym;
   int status;
   char *p = *s;
-  bfd_boolean have_prefix;
+  bool have_prefix;
 
   /* Skip whitespace before the number.  */
   while (*p == ' ' || *p == '\t')
@@ -2168,7 +2168,7 @@ pa_parse_number (char **s, int is_float)
 	      num = S_GET_VALUE (sym);
 	      /* Well, we don't really have one, but we do have a
 		 register, so...  */
-	      have_prefix = TRUE;
+	      have_prefix = true;
 	    }
 	  else if (S_GET_SEGMENT (sym) == bfd_abs_section_ptr)
 	    num = S_GET_VALUE (sym);
@@ -2223,10 +2223,10 @@ need_pa11_opcode (void)
 	  if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, pa11))
 	    as_warn (_("could not update architecture and machine"));
 	}
-      return TRUE;
+      return true;
     }
   else
-    return FALSE;
+    return false;
 }
 
 /* Parse a condition for a fcmp instruction.  Return the numerical
@@ -2432,24 +2432,37 @@ pa_chk_field_selector (char **str)
   int middle, low, high;
   int cmp;
   char name[4];
+  char *s = *str;
 
   /* Read past any whitespace.  */
-  /* FIXME: should we read past newlines and formfeeds??? */
-  while (**str == ' ' || **str == '\t' || **str == '\n' || **str == '\f')
-    *str = *str + 1;
+  while (*s == ' ' || *s == '\t')
+    s++;
+  *str = s;
 
-  if ((*str)[1] == '\'' || (*str)[1] == '%')
-    name[0] = TOLOWER ((*str)[0]),
-    name[1] = 0;
-  else if ((*str)[2] == '\'' || (*str)[2] == '%')
-    name[0] = TOLOWER ((*str)[0]),
-    name[1] = TOLOWER ((*str)[1]),
-    name[2] = 0;
-  else if ((*str)[3] == '\'' || (*str)[3] == '%')
-    name[0] = TOLOWER ((*str)[0]),
-    name[1] = TOLOWER ((*str)[1]),
-    name[2] = TOLOWER ((*str)[2]),
-    name[3] = 0;
+  if (is_end_of_line [(unsigned char) s[0]])
+    return e_fsel;
+  else if (s[1] == '\'' || s[1] == '%')
+    {
+      name[0] = TOLOWER (s[0]);
+      name[1] = 0;
+    }
+  else if (is_end_of_line [(unsigned char) s[1]])
+    return e_fsel;
+  else if (s[2] == '\'' || s[2] == '%')
+    {
+      name[0] = TOLOWER (s[0]);
+      name[1] = TOLOWER (s[1]);
+      name[2] = 0;
+    }
+  else if (is_end_of_line [(unsigned char) s[2]])
+    return e_fsel;
+  else if (s[3] == '\'' || s[3] == '%')
+    {
+      name[0] = TOLOWER (s[0]);
+      name[1] = TOLOWER (s[1]);
+      name[2] = TOLOWER (s[2]);
+      name[3] = 0;
+    }
   else
     return e_fsel;
 
@@ -3170,7 +3183,7 @@ pa_ip (char *str)
   const char *error_message = "";
   char *s, c, *argstart, *name, *save_s;
   const char *args;
-  int match = FALSE;
+  int match = false;
   int comma = 0;
   int cmpltr, nullif, flag, cond, need_cond, num;
   int immediate_check = 0, pos = -1, len = -1;
@@ -3214,7 +3227,7 @@ pa_ip (char *str)
     }
 
   /* Look up the opcode in the hash table.  */
-  if ((insn = (struct pa_opcode *) hash_find (op_hash, str)) == NULL)
+  if ((insn = (struct pa_opcode *) str_hash_find (op_hash, str)) == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), str);
       return;
@@ -3253,7 +3266,7 @@ pa_ip (char *str)
 	    /* End of arguments.  */
 	    case '\0':
 	      if (*s == '\0')
-		match = TRUE;
+		match = true;
 	      break;
 
 	    case '+':
@@ -3553,7 +3566,7 @@ pa_ip (char *str)
 		/* Handle load cache hint completer.  */
 		case 'c':
 		  cmpltr = 0;
-		  if (!strncmp (s, ",sl", 3))
+		  if (startswith (s, ",sl"))
 		    {
 		      s += 3;
 		      cmpltr = 2;
@@ -3563,12 +3576,12 @@ pa_ip (char *str)
 		/* Handle store cache hint completer.  */
 		case 'C':
 		  cmpltr = 0;
-		  if (!strncmp (s, ",sl", 3))
+		  if (startswith (s, ",sl"))
 		    {
 		      s += 3;
 		      cmpltr = 2;
 		    }
-		  else if (!strncmp (s, ",bc", 3))
+		  else if (startswith (s, ",bc"))
 		    {
 		      s += 3;
 		      cmpltr = 1;
@@ -3578,7 +3591,7 @@ pa_ip (char *str)
 		/* Handle load and clear cache hint completer.  */
 		case 'd':
 		  cmpltr = 0;
-		  if (!strncmp (s, ",co", 3))
+		  if (startswith (s, ",co"))
 		    {
 		      s += 3;
 		      cmpltr = 1;
@@ -3587,7 +3600,7 @@ pa_ip (char *str)
 
 		/* Handle load ordering completer.  */
 		case 'o':
-		  if (strncmp (s, ",o", 2) != 0)
+		  if (!startswith (s, ",o"))
 		    break;
 		  s += 2;
 		  continue;
@@ -4098,12 +4111,12 @@ pa_ip (char *str)
 			else if (*s == '*')
 			  break;
 
-			if (strncmp (s, "<", 1) == 0)
+			if (startswith (s, "<"))
 			  {
 			    cmpltr = 0;
 			    s++;
 			  }
-			else if (strncmp (s, ">=", 2) == 0)
+			else if (startswith (s, ">="))
 			  {
 			    cmpltr = 1;
 			    s += 2;
@@ -5690,7 +5703,7 @@ pa_ip (char *str)
 	  && !bfd_set_arch_mach (stdoutput, bfd_arch_hppa, insn->arch))
 	{
 	  as_warn (_("could not update architecture and machine"));
-	  match = FALSE;
+	  match = false;
 	}
 
  failed:
@@ -5989,8 +6002,8 @@ pa_build_unwind_subspace (struct call_info *call_info)
   else
     {
       symbolP = symbol_new (name, now_seg,
-			    S_GET_VALUE (call_info->start_symbol),
-			    symbol_get_frag (call_info->start_symbol));
+			    symbol_get_frag (call_info->start_symbol),
+			    S_GET_VALUE (call_info->start_symbol));
       gas_assert (symbolP);
       S_CLEAR_EXTERNAL (symbolP);
       symbol_table_insert (symbolP);
@@ -6070,7 +6083,7 @@ pa_callinfo (int unused ATTRIBUTE_UNUSED)
 
   /* Mark the fact that we found the .CALLINFO for the
      current procedure.  */
-  callinfo_found = TRUE;
+  callinfo_found = true;
 
   /* Iterate over the .CALLINFO arguments.  */
   while (!is_end_of_statement ())
@@ -6304,7 +6317,7 @@ pa_entry (int unused ATTRIBUTE_UNUSED)
 	as_bad (_("Missing .callinfo."));
     }
   demand_empty_rest_of_line ();
-  within_entry_exit = TRUE;
+  within_entry_exit = true;
 
 #ifdef OBJ_SOM
   /* SOM defers building of unwind descriptors until the link phase.
@@ -6439,8 +6452,7 @@ hppa_elf_mark_end_of_function (void)
     {
       /* symbol value should be the offset of the
 	 last instruction of the function */
-      symbolP = symbol_new (name, now_seg, (valueT) (frag_now_fix () - 4),
-			    frag_now);
+      symbolP = symbol_new (name, now_seg, frag_now, frag_now_fix () - 4);
 
       gas_assert (symbolP);
       S_CLEAR_EXTERNAL (symbolP);
@@ -6511,7 +6523,7 @@ pa_exit (int unused ATTRIBUTE_UNUSED)
 	    as_bad (_("No .ENTRY for this .EXIT"));
 	  else
 	    {
-	      within_entry_exit = FALSE;
+	      within_entry_exit = false;
 	      process_exit ();
 	    }
 	}
@@ -6814,25 +6826,25 @@ pa_level (int unused ATTRIBUTE_UNUSED)
   char *level;
 
   level = input_line_pointer;
-  if (strncmp (level, "1.0", 3) == 0)
+  if (startswith (level, "1.0"))
     {
       input_line_pointer += 3;
       if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 10))
 	as_warn (_("could not set architecture and machine"));
     }
-  else if (strncmp (level, "1.1", 3) == 0)
+  else if (startswith (level, "1.1"))
     {
       input_line_pointer += 3;
       if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 11))
 	as_warn (_("could not set architecture and machine"));
     }
-  else if (strncmp (level, "2.0w", 4) == 0)
+  else if (startswith (level, "2.0w"))
     {
       input_line_pointer += 4;
       if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 25))
 	as_warn (_("could not set architecture and machine"));
     }
-  else if (strncmp (level, "2.0", 3) == 0)
+  else if (startswith (level, "2.0"))
     {
       input_line_pointer += 3;
       if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 20))
@@ -6908,8 +6920,8 @@ pa_proc (int unused ATTRIBUTE_UNUSED)
     as_fatal (_("Nested procedures"));
 
   /* Reset global variables for new procedure.  */
-  callinfo_found = FALSE;
-  within_procedure = TRUE;
+  callinfo_found = false;
+  within_procedure = true;
 
   /* Create another call_info structure.  */
   call_info = XNEW (struct call_info);
@@ -7027,7 +7039,7 @@ pa_procend (int unused ATTRIBUTE_UNUSED)
   hppa_elf_mark_end_of_function ();
 #endif
 
-  within_procedure = FALSE;
+  within_procedure = false;
   demand_empty_rest_of_line ();
   pa_undefine_label ();
 }
@@ -7078,9 +7090,9 @@ pa_parse_space_stmt (const char *space_name, int create_flag)
   /* Load default values.  */
   spnum = 0;
   sort = 0;
-  loadable = TRUE;
-  defined = TRUE;
-  private = FALSE;
+  loadable = true;
+  defined = true;
+  private = false;
   if (strcmp (space_name, "$TEXT$") == 0)
     {
       seg = pa_def_spaces[0].segment;
@@ -7100,7 +7112,7 @@ pa_parse_space_stmt (const char *space_name, int create_flag)
 
   if (!is_end_of_statement ())
     {
-      print_errors = FALSE;
+      print_errors = false;
       ptemp = input_line_pointer + 1;
       /* First see if the space was specified as a number rather than
 	 as a name.  According to the PA assembly manual the rest of
@@ -7133,17 +7145,17 @@ pa_parse_space_stmt (const char *space_name, int create_flag)
 	      else if ((strncasecmp (name, "unloadable", 10) == 0))
 		{
 		  (void) restore_line_pointer (c);
-		  loadable = FALSE;
+		  loadable = false;
 		}
 	      else if ((strncasecmp (name, "notdefined", 10) == 0))
 		{
 		  (void) restore_line_pointer (c);
-		  defined = FALSE;
+		  defined = false;
 		}
 	      else if ((strncasecmp (name, "private", 7) == 0))
 		{
 		  (void) restore_line_pointer (c);
-		  private = TRUE;
+		  private = true;
 		}
 	      else
 		{
@@ -7154,7 +7166,7 @@ pa_parse_space_stmt (const char *space_name, int create_flag)
 		}
 	    }
 	}
-      print_errors = TRUE;
+      print_errors = true;
     }
 
   if (create_flag && seg == NULL)
@@ -7203,7 +7215,7 @@ pa_space (int unused ATTRIBUTE_UNUSED)
 	 and place them into a subroutine or something similar?  */
       /* FIXME Is this (and the next IF stmt) really right?
 	 What if INPUT_LINE_POINTER points to "$TEXT$FOO"?  */
-      if (strncmp (input_line_pointer, "$TEXT$", 6) == 0)
+      if (startswith (input_line_pointer, "$TEXT$"))
 	{
 	  input_line_pointer += 6;
 	  sd_chain = is_defined_space ("$TEXT$");
@@ -7220,7 +7232,7 @@ pa_space (int unused ATTRIBUTE_UNUSED)
 	  demand_empty_rest_of_line ();
 	  return;
 	}
-      if (strncmp (input_line_pointer, "$PRIVATE$", 9) == 0)
+      if (startswith (input_line_pointer, "$PRIVATE$"))
 	{
 	  input_line_pointer += 9;
 	  sd_chain = is_defined_space ("$PRIVATE$");
@@ -8215,7 +8227,6 @@ pa_lsym (int unused ATTRIBUTE_UNUSED)
 void
 md_begin (void)
 {
-  const char *retval = NULL;
   int lose = 0;
   unsigned int i = 0;
 
@@ -8238,18 +8249,14 @@ md_begin (void)
   pa_spaces_begin ();
 #endif
 
-  op_hash = hash_new ();
+  op_hash = str_htab_create ();
 
   while (i < NUMOPCODES)
     {
       const char *name = pa_opcodes[i].name;
 
-      retval = hash_insert (op_hash, name, (struct pa_opcode *) &pa_opcodes[i]);
-      if (retval != NULL && *retval != '\0')
-	{
-	  as_fatal (_("Internal error: can't hash `%s': %s\n"), name, retval);
-	  lose = 1;
-	}
+      if (str_hash_insert (op_hash, name, &pa_opcodes[i], 0) != NULL)
+	as_fatal (_("duplicate %s"), name);
 
       do
 	{

@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993-2020 Free Software Foundation, Inc.
+   Copyright (C) 1993-2022 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,11 +29,6 @@
 #include "bfd/som.h"
 #include "som/reloc.h"
 #include "targ-cpu.h"
-
-#ifndef FALSE
-#define FALSE 0
-#define TRUE !FALSE
-#endif
 
 /* should be conditional on address size!  */
 #define som_symbol(asymbol) ((som_symbol_type *) (&(asymbol)->the_bfd))

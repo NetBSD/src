@@ -1,6 +1,6 @@
 // arm-reloc-property.cc -- ARM relocation property.
 
-// Copyright (C) 2010-2020 Free Software Foundation, Inc.
+// Copyright (C) 2010-2022 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of gold.

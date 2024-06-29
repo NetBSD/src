@@ -1,5 +1,5 @@
 /* addr2line.c -- convert addresses to line number and function name
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Contributed by Ulrich Lauther <Ulrich.Lauther@mchp.siemens.de>
 
    This file is part of GNU Binutils.
@@ -37,13 +37,14 @@
 #include "demangle.h"
 #include "bucomm.h"
 #include "elf-bfd.h"
+#include "safe-ctype.h"
 
-static bfd_boolean unwind_inlines;	/* -i, unwind inlined functions. */
-static bfd_boolean with_addresses;	/* -a, show addresses.  */
-static bfd_boolean with_functions;	/* -f, show function names.  */
-static bfd_boolean do_demangle;		/* -C, demangle names.  */
-static bfd_boolean pretty_print;	/* -p, print on one line.  */
-static bfd_boolean base_names;		/* -s, strip directory names.  */
+static bool unwind_inlines;	/* -i, unwind inlined functions. */
+static bool with_addresses;	/* -a, show addresses.  */
+static bool with_functions;	/* -f, show function names.  */
+static bool do_demangle;	/* -C, demangle names.  */
+static bool pretty_print;	/* -p, print on one line.  */
+static bool base_names;		/* -s, strip directory names.  */
 
 /* Flags passed to the name demangler.  */
 static int demangle_flags = DMGL_PARAMS | DMGL_ANSI;
@@ -51,6 +52,7 @@ static int demangle_flags = DMGL_PARAMS | DMGL_ANSI;
 static int naddr;		/* Number of addresses to process.  */
 static char **addr;		/* Hex addresses to process.  */
 
+static long symcount;
 static asymbol **syms;		/* Symbol table.  */
 
 static struct option long_options[] =
@@ -116,8 +118,7 @@ static void
 slurp_symtab (bfd *abfd)
 {
   long storage;
-  long symcount;
-  bfd_boolean dynamic = FALSE;
+  bool dynamic = false;
 
   if ((bfd_get_file_flags (abfd) & HAS_SYMS) == 0)
     return;
@@ -126,7 +127,7 @@ slurp_symtab (bfd *abfd)
   if (storage == 0)
     {
       storage = bfd_get_dynamic_symtab_upper_bound (abfd);
-      dynamic = TRUE;
+      dynamic = true;
     }
   if (storage < 0)
     bfd_fatal (bfd_get_filename (abfd));
@@ -167,7 +168,7 @@ static const char *filename;
 static const char *functionname;
 static unsigned int line;
 static unsigned int discriminator;
-static bfd_boolean found;
+static bool found;
 
 /* Look for an address in a section.  This is called via
    bfd_map_over_sections.  */
@@ -220,32 +221,94 @@ find_offset_in_section (bfd *abfd, asection *section)
                                                &line, &discriminator);
 }
 
-/* Read hexadecimal addresses from stdin, translate into
+/* Lookup a symbol with offset in symbol table.  */
+
+static bfd_vma
+lookup_symbol (bfd *abfd, char *sym, size_t offset)
+{
+  long i;
+
+  for (i = 0; i < symcount; i++)
+    {
+      if (!strcmp (syms[i]->name, sym))
+	return syms[i]->value + offset + bfd_asymbol_section (syms[i])->vma;
+    }
+  /* Try again mangled */
+  for (i = 0; i < symcount; i++)
+    {
+      char *d = bfd_demangle (abfd, syms[i]->name, demangle_flags);
+      bool match = d && !strcmp (d, sym);
+      free (d);
+
+      if (match)
+	return syms[i]->value + offset + bfd_asymbol_section (syms[i])->vma;
+    }
+  return 0;
+}
+
+/* Split an symbol+offset expression. adr is modified.  */
+
+static bool
+is_symbol (char *adr, char **symp, size_t *offset)
+{
+  char *end;
+
+  while (ISSPACE (*adr))
+    adr++;
+  if (ISDIGIT (*adr) || *adr == 0)
+    return false;
+  /* Could be either symbol or hex number. Check if it has +.  */
+  if (TOUPPER(*adr) >= 'A' && TOUPPER(*adr) <= 'F' && !strchr (adr, '+'))
+    return false;
+
+  *symp = adr;
+  while (*adr && !ISSPACE (*adr) && *adr != '+')
+    adr++;
+  end = adr;
+  while (ISSPACE (*adr))
+    adr++;
+  *offset = 0;
+  if (*adr == '+')
+    {
+      adr++;
+      *offset = strtoul(adr, NULL, 0);
+    }
+  *end = 0;
+  return true;
+}
+
+/* Read hexadecimal or symbolic with offset addresses from stdin, translate into
    file_name:line_number and optionally function name.  */
 
 static void
 translate_addresses (bfd *abfd, asection *section)
 {
   int read_stdin = (naddr == 0);
+  char *adr;
+  char addr_hex[100];
+  char *symp;
+  size_t offset;
 
   for (;;)
     {
       if (read_stdin)
 	{
-	  char addr_hex[100];
-
 	  if (fgets (addr_hex, sizeof addr_hex, stdin) == NULL)
 	    break;
-	  pc = bfd_scan_vma (addr_hex, NULL, 16);
+	  adr = addr_hex;
 	}
       else
 	{
 	  if (naddr <= 0)
 	    break;
 	  --naddr;
-	  pc = bfd_scan_vma (*addr++, NULL, 16);
+	  adr = *addr++;
 	}
 
+      if (is_symbol (adr, &symp, &offset))
+        pc = lookup_symbol (abfd, symp, offset);
+      else
+        pc = bfd_scan_vma (adr, NULL, 16);
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
 	{
 	  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
@@ -267,7 +330,7 @@ translate_addresses (bfd *abfd, asection *section)
             printf ("\n");
         }
 
-      found = FALSE;
+      found = false;
       if (section)
 	find_offset_in_section (abfd, section);
       else
@@ -314,8 +377,7 @@ translate_addresses (bfd *abfd, asection *section)
                   else
                     printf ("\n");
 
-                  if (alloc != NULL)
-                    free (alloc);
+		  free (alloc);
                 }
 
               if (base_names && filename != NULL)
@@ -338,7 +400,7 @@ translate_addresses (bfd *abfd, asection *section)
 	      else
 		printf ("?\n");
               if (!unwind_inlines)
-                found = FALSE;
+                found = false;
               else
                 found = bfd_find_inliner_info (abfd, &filename, &functionname,
 					       &line);
@@ -390,10 +452,7 @@ process_file (const char *file_name, const char *section_name,
     {
       bfd_nonfatal (bfd_get_filename (abfd));
       if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
-	{
-	  list_matching_formats (matching);
-	  free (matching);
-	}
+	list_matching_formats (matching);
       xexit (1);
     }
 
@@ -410,11 +469,8 @@ process_file (const char *file_name, const char *section_name,
 
   translate_addresses (abfd, section);
 
-  if (syms != NULL)
-    {
-      free (syms);
-      syms = NULL;
-    }
+  free (syms);
+  syms = NULL;
 
   bfd_close (abfd);
 
@@ -429,12 +485,10 @@ main (int argc, char **argv)
   char *target;
   int c;
 
-#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+#ifdef HAVE_LC_MESSAGES
   setlocale (LC_MESSAGES, "");
 #endif
-#if defined (HAVE_SETLOCALE)
   setlocale (LC_CTYPE, "");
-#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
@@ -459,13 +513,13 @@ main (int argc, char **argv)
 	case 0:
 	  break;		/* We've been given a long option.  */
 	case 'a':
-	  with_addresses = TRUE;
+	  with_addresses = true;
 	  break;
 	case 'b':
 	  target = optarg;
 	  break;
 	case 'C':
-	  do_demangle = TRUE;
+	  do_demangle = true;
 	  if (optarg != NULL)
 	    {
 	      enum demangling_styles style;
@@ -488,13 +542,13 @@ main (int argc, char **argv)
 	  file_name = optarg;
 	  break;
 	case 's':
-	  base_names = TRUE;
+	  base_names = true;
 	  break;
 	case 'f':
-	  with_functions = TRUE;
+	  with_functions = true;
 	  break;
         case 'p':
-          pretty_print = TRUE;
+          pretty_print = true;
           break;
 	case 'v':
 	case 'V':
@@ -505,7 +559,7 @@ main (int argc, char **argv)
 	  usage (stdout, 0);
 	  break;
 	case 'i':
-	  unwind_inlines = TRUE;
+	  unwind_inlines = true;
 	  break;
 	case 'j':
 	  section_name = optarg;

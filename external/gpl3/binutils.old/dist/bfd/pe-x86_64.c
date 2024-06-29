@@ -1,5 +1,5 @@
 /* BFD back-end for Intel/AMD x86_64 PECOFF files.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,15 +20,24 @@
 
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
+#define PEI_HEADERS
 #include "sysdep.h"
 #include "bfd.h"
+#include "libbfd.h"
+#include "libiberty.h"
+#include "coff/x86_64.h"
+#include "coff/internal.h"
+#include "coff/pe.h"
+#include "libcoff.h"
 
 #define TARGET_SYM		x86_64_pe_vec
 #define TARGET_NAME		"pe-x86-64"
+#define TARGET_SYM_BIG		x86_64_pe_big_vec
+#define TARGET_NAME_BIG		"pe-bigobj-x86-64"
 #define COFF_WITH_PE
 #define COFF_WITH_pex64
 #define COFF_WITH_PE_BIGOBJ
-#define PCRELOFFSET		TRUE
+#define PCRELOFFSET		true
 #if defined (USE_MINGW64_LEADING_UNDERSCORES)
 #define TARGET_UNDERSCORE	'_'
 #else
@@ -60,73 +69,37 @@
 
 /* The function pex64_bfd_print_pdata is implemented in pei-x86_64.c
    source, but has be extended to also handle pe objects.  */
-extern bfd_boolean pex64_bfd_print_pdata (bfd *, void *);
+extern bool pex64_bfd_print_pdata (bfd *, void *);
 
 #define bfd_pe_print_pdata   pex64_bfd_print_pdata
 
-#include "coff-x86_64.c"
-
-/* Entry for big object files.  */
-
-const bfd_target
-x86_64_pe_be_vec =
+static bool
+pex64_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 {
-  "pe-bigobj-x86-64",			/* Name.  */
-  bfd_target_coff_flavour,
-  BFD_ENDIAN_LITTLE,		/* Data byte order is little.  */
-  BFD_ENDIAN_LITTLE,		/* Header byte order is little.  */
+  if (bfd_link_pde (info)
+      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
+    {
+      /* NB: When linking Windows x86-64 relocatable object files to
+	 generate ELF executable, create an indirect reference to
+	 __executable_start for __ImageBase to support R_AMD64_IMAGEBASE
+	 relocation which is relative to __ImageBase.  */
+      struct bfd_link_hash_entry *h, *hi;
+      hi = bfd_link_hash_lookup (info->hash, "__ImageBase", true, false,
+				 false);
+      if (hi->type == bfd_link_hash_new
+	  || hi->type == bfd_link_hash_undefined
+	  || hi->type == bfd_link_hash_undefweak)
+	{
+	  h = bfd_link_hash_lookup (info->hash, "__executable_start",
+				    true, false, true);
+	  hi->type = bfd_link_hash_indirect;
+	  hi->u.i.link = h;
+	}
+    }
 
-  (HAS_RELOC | EXEC_P		/* Object flags.  */
-   | HAS_LINENO | HAS_DEBUG
-   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+  return _bfd_coff_link_add_symbols (abfd, info);
+}
 
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* Section flags.  */
-   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
-   | SEC_CODE | SEC_DATA | SEC_EXCLUDE ),
+#define coff_bfd_link_add_symbols pex64_link_add_symbols
 
-  TARGET_UNDERSCORE,		/* Leading underscore.  */
-  '/',				/* Ar_pad_char.  */
-  15,				/* Ar_max_namelen.  */
-  0,				/* match priority.  */
-
-  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
-     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
-     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Data.  */
-  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
-     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
-     bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Hdrs.  */
-
-  /* Note that we allow an object file to be treated as a core file as well.  */
-  {				/* bfd_check_format.  */
-    _bfd_dummy_target,
-    amd64coff_object_p,
-    bfd_generic_archive_p,
-    amd64coff_object_p
-  },
-  {				/* bfd_set_format.  */
-    _bfd_bool_bfd_false_error,
-    coff_mkobject,
-    _bfd_generic_mkarchive,
-    _bfd_bool_bfd_false_error
-  },
-  {				/* bfd_write_contents.  */
-    _bfd_bool_bfd_false_error,
-    coff_write_object_contents,
-    _bfd_write_archive_contents,
-    _bfd_bool_bfd_false_error
-  },
-
-  BFD_JUMP_TABLE_GENERIC (coff),
-  BFD_JUMP_TABLE_COPY (coff),
-  BFD_JUMP_TABLE_CORE (_bfd_nocore),
-  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
-  BFD_JUMP_TABLE_SYMBOLS (coff),
-  BFD_JUMP_TABLE_RELOCS (coff),
-  BFD_JUMP_TABLE_WRITE (coff),
-  BFD_JUMP_TABLE_LINK (coff),
-  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
-
-  NULL,
-
-  &bigobj_swap_table
-};
+#include "coff-x86_64.c"

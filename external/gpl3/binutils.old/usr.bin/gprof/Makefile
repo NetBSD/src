@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2022/12/23 17:09:48 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2024/06/29 16:36:10 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 
