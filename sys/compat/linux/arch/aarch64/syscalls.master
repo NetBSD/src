@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 2023/08/19 17:49:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.12 2024/06/29 13:46:09 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -58,6 +58,7 @@
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_msg.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_siginfo.h>
@@ -345,7 +346,9 @@
 			    struct rusage50 *rusage); }
 166	NOARGS		{ int|sys||umask(int newmask); }
 167	UNIMPL		prctl
-168	UNIMPL		getcpu
+168	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
+			    unsigned int *node, \
+			    struct linux_getcpu_cache *tcache); }
 169	STD		{ int|linux_sys||gettimeofday(struct timeval50 *tp, \
 			    struct timezone *tzp); }
 170	STD		{ int|linux_sys||settimeofday(struct timeval50 *tp, \
@@ -683,7 +686,8 @@
 			    unsigned int last, unsigned int flags); }
 437	UNIMPL		openat2
 438	UNIMPL		pidfd_getfd
-439	UNIMPL		faccessat2
+439	STD		{ int|linux_sys||faccessat2(int fd, const char *path, \
+			    int amode, int flags); }
 
 ; we want a "nosys" syscall, we'll just add an extra entry for it.
 440	STD		{ int|linux_sys||nosys(void); }

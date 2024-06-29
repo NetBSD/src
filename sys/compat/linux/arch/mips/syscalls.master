@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.79 2023/08/19 17:49:49 christos Exp $  
+	$NetBSD: syscalls.master,v 1.80 2024/06/29 13:46:10 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -53,6 +53,7 @@
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_socketcall.h>
+#include <compat/linux/common/linux_sched.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -535,7 +536,9 @@
 310	NOARGS		{ int|sys||__futex_get_robust_list(lwpid_t lwpid, \
 			    void **headp, size_t *lenp); }
 311	UNIMPL		kexec_load
-312	UNIMPL		getcpu
+312	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
+			    unsigned int *node, \
+			    struct linux_getcpu_cache *tcache); }
 313	STD		{ int|linux_sys||epoll_pwait(int epfd, \
 			    struct linux_epoll_event *events, int maxevents, \
 			    int timeout, const linux_sigset_t *sigmask); }

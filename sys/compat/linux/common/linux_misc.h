@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.32 2024/05/12 19:54:48 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.33 2024/06/29 13:46:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,10 +162,15 @@ extern const int linux_fstypes_cnt;
  */
 #define linux_to_bsd_posix_fadv(advice) (advice)
 
+struct linux_getcpu_cache{
+	unsigned long blob[128 / sizeof(long)];
+};
+
 struct linux_epoll_event {
 	uint32_t	events;
 	uint64_t	data;
 }
+
 #if defined(__amd64__)
 /* Only for x86_64. See include/uapi/linux/eventpoll.h. */
 __packed

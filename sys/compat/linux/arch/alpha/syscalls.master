@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.106 2023/08/19 17:49:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.107 2024/06/29 13:46:09 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -72,6 +72,7 @@
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_msg.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_mmap.h>
@@ -765,7 +766,9 @@
 470	UNIMPL		tee
 471	UNIMPL		vmsplice
 472	UNIMPL		move_pages
-473	UNIMPL		getcpu
+473	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
+			    unsigned int *node, \
+			    struct linux_getcpu_cache *tcache); }
 474	STD		{ int|linux_sys||epoll_pwait(int epfd, \
 			    struct linux_epoll_event *events, int maxevents, \
 			    int timeout, const linux_sigset_t *sigmask); }
@@ -864,7 +867,8 @@
 			    unsigned int last, unsigned int flags); }
 547	UNIMPL
 548	UNIMPL
-549	UNIMPL
+549	STD		{ int|linux_sys||faccessat2(int fd, const char *path, \
+			    int amode, int flags); }
 550	UNIMPL
 551	STD		{ int|linux_sys||epoll_pwait2(int epfd, \
 			    struct linux_epoll_event *events, int maxevents, \
