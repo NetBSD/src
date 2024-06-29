@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.52 2024/05/20 11:21:46 riastradh Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.53 2024/06/29 06:58:23 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -486,7 +486,8 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	 * same for armv8 or newer */
 #if (defined(__m68k__) && !defined(__mc68010__)) || \
     defined(__aarch64__) || \
-    defined(__riscv__)
+    defined(__riscv__) || \
+    defined(__vax__)
 	atf_tc_skip("No SIGBUS signal for unaligned accesses");
 #endif
 
