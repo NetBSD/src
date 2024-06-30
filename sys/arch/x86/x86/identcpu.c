@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.128 2023/10/17 14:17:42 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.129 2024/06/30 15:49:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.128 2023/10/17 14:17:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.129 2024/06/30 15:49:56 andvar Exp $");
 
 #include "opt_xen.h"
 
@@ -481,10 +481,6 @@ cpu_probe_c3(struct cpu_info *ci)
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
-	/* Determine the largest extended function value. */
-	x86_cpuid(0x80000000, descs);
-	lfunc = descs[0];
-
 	if (family == 6) {
 		/*
 		 * VIA Eden ESP.
@@ -582,6 +578,10 @@ cpu_probe_c3(struct cpu_info *ci)
 		msr = rdmsr(MSR_VIA_ACE);
 		wrmsr(MSR_VIA_ACE, msr & ~VIA_ACE_ALTINST);
 	}
+
+	/* Determine the largest extended function value. */
+	x86_cpuid(0x80000000, descs);
+	lfunc = descs[0];
 
 	/*
 	 * Determine L1 cache/TLB info.
